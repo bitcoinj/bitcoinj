@@ -279,7 +279,7 @@ public class Peer {
      * a {@link Wallet}. After the broadcast completes, confirm the send using the wallet confirmSend() method.
      * @throws IOException
      */
-    public void broadcastTransaction(Transaction tx) throws IOException {
+    void broadcastTransaction(Transaction tx) throws IOException {
         conn.writeMessage(NetworkConnection.MSG_TX, tx);
     }
 

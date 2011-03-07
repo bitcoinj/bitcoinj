@@ -34,7 +34,7 @@ import java.math.BigInteger;
 import java.security.SecureRandom;
 
 /**
- * Represents either an elliptic curve keypair that we own and can use for signing transactions. Currently,
+ * Represents an elliptic curve keypair that we own and can use for signing transactions. Currently,
  * Bouncy Castle is used. In future this may become an interface with multiple implementations using different crypto
  * libraries. The class also provides a static method that can verify a signature with just the public key.<p>
  */
