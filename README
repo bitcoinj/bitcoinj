@@ -1,0 +1,12 @@
+To get started, ensure you have the latest JDK installed and then just run "ant".
+
+- A JAR will be placed in dist/
+- JavaDocs will be placed in docs/
+- Unit tests will be run
+
+Now ensure you're running a BitCoin node locally and run the example app:
+
+   cd out
+   java com.google.bitcoin.examples.PingService
+
+It will print a BitCoin address. If you send coins to it, you should get them back a few minutes later when a block is solved.

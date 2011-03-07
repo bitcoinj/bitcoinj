@@ -1,0 +1,104 @@
+/**
+ * Copyright 2011 Google Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.google.bitcoin.core;
+
+import com.google.bitcoin.bouncycastle.util.encoders.Hex;
+
+import java.io.ByteArrayOutputStream;
+import java.io.Serializable;
+import java.math.BigInteger;
+
+/**
+ * NetworkParameters contains the data needed for working with an instantiation of a BitCoin chain.
+ *
+ * Currently there are only two, the production chain and the test chain. But in future as BitCoin
+ * evolves there may be more. You can create your own as long as they don't conflict.
+ */
+public class NetworkParameters implements Serializable {
+    private static final long serialVersionUID = 2579833727976661964L;
+
+    // TODO: Seed nodes and checkpoint values should be here as well.
+
+    /** Genesis block for this chain */
+    public Block genesisBlock;
+    /** What the easiest allowable proof of work should be. */
+    public BigInteger proofOfWorkLimit;
+    /** Default TCP port on which to connect to nodes. */
+    public int port;
+    /** The header bytes that identify the start of a packet on this network. */
+    public long packetMagic;
+    /** First byte of a base58 encoded address. */
+    public byte addressHeader;
+
+    // The genesis block is the first block in the chain and is a shared, well known block of data containin a
+    // headline from the Times, as well as initialization values for that chain. The testnet uses a similar genesis
+    // block to the production network but with different times and nonces.
+    private static Block createGenesis(NetworkParameters n) {
+        Block genesisBlock = new Block(n);
+        Transaction t = new Transaction(n);
+        try {
+            // A script containing the difficulty bits and the following message:
+            //
+            //   "The Times 03/Jan/2009 Chancellor on brink of second bailout for banks"
+            byte[] bytes = Hex.decode
+                        ("04ffff001d0104455468652054696d65732030332f4a616e2f32303039204368616e63656c6c6f72206f6e206272696e6b206f66207365636f6e64206261696c6f757420666f722062616e6b73");
+            t.inputs.add(new TransactionInput(n, bytes));
+            ByteArrayOutputStream scriptPubKeyBytes = new ByteArrayOutputStream();
+            Script.writeBytes(scriptPubKeyBytes, Hex.decode
+                            ("04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5f"));
+            scriptPubKeyBytes.write(Script.OP_CHECKSIG);
+            t.outputs.add(new TransactionOutput(n, scriptPubKeyBytes.toByteArray()));
+        } catch (Exception e) {
+            // Cannot happen.
+        }
+        genesisBlock.addTransaction(t);
+        return genesisBlock;
+    }
+
+    /** The test chain created by Gavin. */
+    public static NetworkParameters testNet() {
+        NetworkParameters n = new NetworkParameters();
+        // Genesis hash is 0000000224b1593e3ff16a0e3b61285bbc393a39f78c8aa48c456142671f7110
+        n.proofOfWorkLimit = new BigInteger("0000000fffffffffffffffffffffffffffffffffffffffffffffffffffffffff", 16);
+        n.packetMagic = 0xfabfb5daL;
+        n.port = 18333;
+        n.addressHeader = 111;
+        n.genesisBlock = createGenesis(n);
+        n.genesisBlock.time = 1296688602L;
+        n.genesisBlock.difficultyTarget = 0x1d07fff8L;
+        n.genesisBlock.nonce = 384568319;
+        String genesisHash = n.genesisBlock.getHashAsString();
+        assert genesisHash.equals("00000007199508e34a9ff81e6ec0c477a4cccff2a4767a8eee39c11db367b008");
+        return n;
+    }
+
+    /** The primary BitCoin chain created by Satoshi. */
+    public static NetworkParameters prodNet() {
+        NetworkParameters n = new NetworkParameters();
+        n.proofOfWorkLimit = new BigInteger("00000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffff", 16);
+        n.port = 8333;
+        n.packetMagic = 0xf9beb4d9L;
+        n.addressHeader = 0;
+        n.genesisBlock = createGenesis(n);
+        n.genesisBlock.difficultyTarget = 0x1d00ffffL;
+        n.genesisBlock.time = 1231006505;
+        n.genesisBlock.nonce = 2083236893;
+        String genesisHash = n.genesisBlock.getHashAsString();
+        assert genesisHash.equals("000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f");
+        return n;
+    }
+}
