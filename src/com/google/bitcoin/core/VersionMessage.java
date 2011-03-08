@@ -23,13 +23,21 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 
 public class VersionMessage extends Message {
+    /**
+     * The protocol version this library implements. A value of 31800 means 0.3.18.00.
+     */
     public static final int PROTOCOL_VERSION = 31800;
+
+    /**
+     * A services flag that denotes whether the peer has a copy of the block chain or not.
+     */
+    public static final int NODE_NETWORK = 1;
 
     public int clientVersion;
     // Flags defining what the other side supports. Right now there's only one flag and it's
     // always set 1 by the official client, but we have to set it to zero as we don't store
     // the block chain. In future there may be more services bits.
-    public int localServices = 0;
+    public long localServices;
     public BigInteger time;
 
     public VersionMessage(NetworkParameters params, byte[] msg) throws ProtocolException {
@@ -47,7 +55,7 @@ public class VersionMessage extends Message {
     public void parse() throws ProtocolException {
         // There is probably a more Java-ish way to do this.
         clientVersion = (int) readUint32();
-        localServices = (int) readUint32();
+        localServices = readUint64().longValue();
         time = readUint64();
         // The next fields are:
         //   CAddress my address
@@ -89,5 +97,13 @@ public class VersionMessage extends Message {
         buf.write(0);
         // Size of known block chain. Claim we never saw any blocks.
         Utils.uint32ToByteStreamLE(0, buf);
+    }
+
+    /**
+     * Returns true if the version message indicates the sender has a full copy of the block chain,
+     * or if it's running in client mode (only has the headers).
+     */
+    public boolean hasBlockChain() {
+        return (localServices & NODE_NETWORK) == NODE_NETWORK;
     }
 }

@@ -23,6 +23,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.SocketException;
+import java.util.Date;
 
 import static com.google.bitcoin.core.Utils.*;
 
@@ -82,6 +83,12 @@ public class NetworkConnection {
         readMessage();
         // Switch to the new protocol version.
         int peerVersion = (int) ver.clientVersion;
+        LOG("Connected to peer, version is " + peerVersion + ", services=" + Long.toHexString(
+                ver.localServices) + ", time=" + new Date(ver.time.longValue() * 1000).toString());
+        // BitCoinJ is a client mode implementation. That means there's not much point in us talking to other client
+        // mode nodes because we can't download the data from them we need to find/verify transactions.
+        if (!ver.hasBlockChain())
+            throw new ProtocolException("Peer does not have a copy of the block chain.");
         usesChecksumming = peerVersion >= 209;
         // Handshake is done!
     }
@@ -110,6 +117,31 @@ public class NetworkConnection {
                 "disconnected") + ")";
     }
 
+    private void seekPastMagicBytes() throws IOException {
+        int magicCursor = 3;  // Which byte of the magic we're looking for currently.
+        while (true) {
+            int b = in.read();  // Read a byte.
+            if (b == -1) {
+                // There's no more data to read.
+                throw new IOException("Socket is disconnected");
+            }
+            // We're looking for a run of bytes that is the same as the packet magic but we want to ignore partial
+            // magics that aren't complete. So we keep track of where we're up to with magicCursor.
+            int expectedByte = 0xFF & (int)(params.packetMagic >>> (magicCursor * 8));
+            if (b == expectedByte) {
+                magicCursor--;
+                if (magicCursor < 0) {
+                    // We found the magic sequence.
+                    return;
+                } else {
+                    // We still have further to go to find the next message.
+                }
+            } else {
+                magicCursor = 3;
+            }
+        }
+    }
+
     /**
      * Reads a network message from the wire, blocking until the message is fully received.
      *
@@ -128,7 +160,12 @@ public class NetworkConnection {
         //
         // The checksum is the first 4 bytes of a SHA256 hash of the message payload. It isn't
         // present for all messages, notably, the first one on a connection.
-        byte[] header = new byte[4 + COMMAND_LEN + 4 + (usesChecksumming ? 4 : 0)];
+        //
+        // Satoshis implementation ignores garbage before the magic header bytes. We have to do the same because
+        // sometimes it sends us stuff that isn't part of any message.
+        seekPastMagicBytes();
+        // Now read in the header.
+        byte[] header = new byte[COMMAND_LEN + 4 + (usesChecksumming ? 4 : 0)];
         int readCursor = 0;
         while (readCursor < header.length) {
             int bytesRead = in.read(header, readCursor, header.length - readCursor);
@@ -140,10 +177,6 @@ public class NetworkConnection {
         }
 
         int cursor = 0;
-        long magic = Utils.readUint32BE(header, 0);
-        cursor += 4;
-        if (magic != params.packetMagic)
-            throw new ProtocolException(String.format("Unexpected magic number: 0x%x", magic));
 
         // The command is a NULL terminated string, unless the command fills all twelve bytes
         // in which case the termination is implicit.
@@ -182,7 +215,7 @@ public class NetworkConnection {
         while (readCursor < payloadBytes.length - 1) {
             int bytesRead = in.read(payloadBytes, readCursor, size - readCursor);
             if (bytesRead == -1) {
-                throw new ProtocolException("Socket disconnected half way through a message");
+                throw new IOException("Socket is disconnected");
             }
             readCursor += bytesRead;
         }
@@ -199,7 +232,7 @@ public class NetworkConnection {
         }
 
         try {
-            Message message = null;
+            Message message;
             if (command.equals(MSG_VERSION))
                 message = new VersionMessage(params, payloadBytes);
             else if (command.equals(MSG_INVENTORY))
