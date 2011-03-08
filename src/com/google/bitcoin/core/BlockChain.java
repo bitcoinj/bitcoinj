@@ -102,7 +102,7 @@ public class BlockChain {
         // We don't need the transaction data anymore. Free up some memory.
         block.transactions = null;
         // We know prev is OK because it's in the blockMap, that means we accepted it.
-        Block prev = blockChain.peekLast();
+        Block prev = blockChain.getLast();
         if (prev.equals(block)) {
             LOG("Re-received block that is currently on top of the chain.");
             return true;
@@ -159,7 +159,7 @@ public class BlockChain {
     static private final int INTERVAL = TARGET_TIMESPAN / TARGET_SPACING;
 
     private void checkDifficultyTransitions(Block top) throws VerificationException {
-        Block prev = blockChain.peekLast();
+        Block prev = blockChain.getLast();
         // Is this supposed to be a difficulty transition point?
         if (blockChain.size() % INTERVAL != 0) {
             // No ... so check the difficulty didn't actually change.
@@ -233,7 +233,7 @@ public class BlockChain {
      * Returns the highest known block or null if the chain is empty (top block is genesis).
      */
     public synchronized Block getTopBlock() {
-        return blockChain.peekLast();
+        return blockChain.getLast();
     }
 
 
