@@ -162,6 +162,14 @@ A NetworkConnection handles talking to a remote BitCoin peer at a low level. It 
 </TR>
 <TR BGCOLOR="white" CLASS="TableRowColor">
 <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;java.lang.String</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/NetworkConnection.html#toString()">toString</A></B>()</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
 <CODE>&nbsp;void</CODE></FONT></TD>
 <TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/NetworkConnection.html#writeMessage(java.lang.String, com.google.bitcoin.core.Message)">writeMessage</A></B>(java.lang.String&nbsp;tag,
              <A HREF="../../../../com/google/bitcoin/core/Message.html" title="class in com.google.bitcoin.core">Message</A>&nbsp;message)</CODE>
@@ -176,7 +184,7 @@ A NetworkConnection handles talking to a remote BitCoin peer at a low level. It 
 <TH ALIGN="left"><B>Methods inherited from class java.lang.Object</B></TH>
 </TR>
 <TR BGCOLOR="white" CLASS="TableRowColor">
-<TD><CODE>clone, equals, finalize, getClass, hashCode, notify, notifyAll, toString, wait, wait, wait</CODE></TD>
+<TD><CODE>clone, equals, finalize, getClass, hashCode, notify, notifyAll, wait, wait, wait</CODE></TD>
 </TR>
 </TABLE>
 &nbsp;
@@ -253,19 +261,35 @@ public void <B>shutdown</B>()
 </DL>
 <HR>
 
+<A NAME="toString()"><!-- --></A><H3>
+toString</H3>
+<PRE>
+public java.lang.String <B>toString</B>()</PRE>
+<DL>
+<DD><DL>
+<DT><B>Overrides:</B><DD><CODE>toString</CODE> in class <CODE>java.lang.Object</CODE></DL>
+</DD>
+<DD><DL>
+</DL>
+</DD>
+</DL>
+<HR>
+
 <A NAME="readMessage()"><!-- --></A><H3>
 readMessage</H3>
 <PRE>
 public <A HREF="../../../../com/google/bitcoin/core/Message.html" title="class in com.google.bitcoin.core">Message</A> <B>readMessage</B>()
-                    throws <A HREF="../../../../com/google/bitcoin/core/ProtocolException.html" title="class in com.google.bitcoin.core">ProtocolException</A></PRE>
+                    throws java.io.IOException,
+                           <A HREF="../../../../com/google/bitcoin/core/ProtocolException.html" title="class in com.google.bitcoin.core">ProtocolException</A></PRE>
 <DL>
 <DD>Reads a network message from the wire, blocking until the message is fully received.
 <P>
 <DD><DL>
 
-<DT><B>Returns:</B><DD>An instance of a Message subclass.
+<DT><B>Returns:</B><DD>An instance of a Message subclass
 <DT><B>Throws:</B>
-<DD><CODE><A HREF="../../../../com/google/bitcoin/core/ProtocolException.html" title="class in com.google.bitcoin.core">ProtocolException</A></CODE> - if the message is badly formatted, failed checksum or there was a protocol failure.</DL>
+<DD><CODE><A HREF="../../../../com/google/bitcoin/core/ProtocolException.html" title="class in com.google.bitcoin.core">ProtocolException</A></CODE> - if the message is badly formatted, failed checksum or there was a TCP failure.
+<DD><CODE>java.io.IOException</CODE></DL>
 </DD>
 </DL>
 <HR>

@@ -78,9 +78,9 @@ public class NetworkParameters implements Serializable {
         n.port = 18333;
         n.addressHeader = 111;
         n.genesisBlock = createGenesis(n);
-        n.genesisBlock.time = 1296688602L;
-        n.genesisBlock.difficultyTarget = 0x1d07fff8L;
-        n.genesisBlock.nonce = 384568319;
+        n.genesisBlock.setTime(1296688602L);
+        n.genesisBlock.setDifficultyTarget(0x1d07fff8L);
+        n.genesisBlock.setNonce(384568319);
         String genesisHash = n.genesisBlock.getHashAsString();
         assert genesisHash.equals("00000007199508e34a9ff81e6ec0c477a4cccff2a4767a8eee39c11db367b008");
         return n;
@@ -94,11 +94,19 @@ public class NetworkParameters implements Serializable {
         n.packetMagic = 0xf9beb4d9L;
         n.addressHeader = 0;
         n.genesisBlock = createGenesis(n);
-        n.genesisBlock.difficultyTarget = 0x1d00ffffL;
-        n.genesisBlock.time = 1231006505;
-        n.genesisBlock.nonce = 2083236893;
+        n.genesisBlock.setDifficultyTarget(0x1d00ffffL);
+        n.genesisBlock.setTime(1231006505L);
+        n.genesisBlock.setNonce(2083236893);
         String genesisHash = n.genesisBlock.getHashAsString();
-        assert genesisHash.equals("000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f");
+        assert genesisHash.equals("000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f") : genesisHash;
+        return n;
+    }
+
+    /** Returns a testnet params modified to allow any difficulty target. */
+    static NetworkParameters unitTests() {
+        NetworkParameters n = NetworkParameters.testNet();
+        n.proofOfWorkLimit = new BigInteger("00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", 16);
+        n.genesisBlock.setDifficultyTarget(Block.EASIEST_DIFFICULTY_TARGET);
         return n;
     }
 }

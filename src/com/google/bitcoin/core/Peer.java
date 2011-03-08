@@ -98,7 +98,6 @@ public class Peer {
                 LOG("Shutting down peer thread");
             } else {
                 // We caught an unexpected exception.
-                System.err.println(e.toString());
                 e.printStackTrace();
             }
         }

@@ -112,9 +112,6 @@ Variable in class com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core/Net
 <DT><A HREF="./com/google/bitcoin/core/AddressMessage.html" title="class in com.google.bitcoin.core"><B>AddressMessage</B></A> - Class in <A HREF="./com/google/bitcoin/core/package-summary.html">com.google.bitcoin.core</A><DD>&nbsp;<DT><A HREF="./com/google/bitcoin/core/Block.html#addTransaction(com.google.bitcoin.core.Transaction)"><B>addTransaction(Transaction)</B></A> - 
 Method in class com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core/Block.html" title="class in com.google.bitcoin.core">Block</A>
 <DD>Adds a transaction to this block.
-<DT><A HREF="./com/google/bitcoin/core/Block.html#ALLOWED_TIME_DRIFT"><B>ALLOWED_TIME_DRIFT</B></A> - 
-Static variable in class com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core/Block.html" title="class in com.google.bitcoin.core">Block</A>
-<DD>&nbsp;
 </DL>
 <HR>
 <A NAME="_B_"><!-- --></A><H2>
@@ -272,6 +269,12 @@ Constructor for class com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core
 <DT><A HREF="./com/google/bitcoin/core/GetDataMessage.html" title="class in com.google.bitcoin.core"><B>GetDataMessage</B></A> - Class in <A HREF="./com/google/bitcoin/core/package-summary.html">com.google.bitcoin.core</A><DD>&nbsp;<DT><A HREF="./com/google/bitcoin/core/GetDataMessage.html#GetDataMessage(com.google.bitcoin.core.NetworkParameters, byte[])"><B>GetDataMessage(NetworkParameters, byte[])</B></A> - 
 Constructor for class com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core/GetDataMessage.html" title="class in com.google.bitcoin.core">GetDataMessage</A>
 <DD>&nbsp;
+<DT><A HREF="./com/google/bitcoin/core/Block.html#getDifficultyTarget()"><B>getDifficultyTarget()</B></A> - 
+Method in class com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core/Block.html" title="class in com.google.bitcoin.core">Block</A>
+<DD>Returns the difficulty of the proof of work that this block should meet encoded in compact form.
+<DT><A HREF="./com/google/bitcoin/core/Block.html#getDifficultyTargetBI()"><B>getDifficultyTargetBI()</B></A> - 
+Method in class com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core/Block.html" title="class in com.google.bitcoin.core">Block</A>
+<DD>Returns the difficulty target as a 256 bit value that can be compared to a SHA-256 hash.
 <DT><A HREF="./com/google/bitcoin/core/Script.html#getFromAddress()"><B>getFromAddress()</B></A> - 
 Method in class com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core/Script.html" title="class in com.google.bitcoin.core">Script</A>
 <DD>Convenience wrapper around getPubKey.
@@ -300,6 +303,13 @@ Method in class com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core/Trans
 <DT><A HREF="./com/google/bitcoin/core/Block.html#getMerkleRoot()"><B>getMerkleRoot()</B></A> - 
 Method in class com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core/Block.html" title="class in com.google.bitcoin.core">Block</A>
 <DD>Returns the merkle root in big endian form, calculating it from transactions if necessary.
+<DT><A HREF="./com/google/bitcoin/core/Block.html#getNonce()"><B>getNonce()</B></A> - 
+Method in class com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core/Block.html" title="class in com.google.bitcoin.core">Block</A>
+<DD>Returns the nonce, an arbitrary value that exists only to make the hash of the block header fall below the
+ difficulty target.
+<DT><A HREF="./com/google/bitcoin/core/Block.html#getPrevBlockHash()"><B>getPrevBlockHash()</B></A> - 
+Method in class com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core/Block.html" title="class in com.google.bitcoin.core">Block</A>
+<DD>Returns the hash of the previous block in the chain, as defined by the block header.
 <DT><A HREF="./com/google/bitcoin/core/ECKey.html#getPubKey()"><B>getPubKey()</B></A> - 
 Method in class com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core/ECKey.html" title="class in com.google.bitcoin.core">ECKey</A>
 <DD>Gets the raw public key value.
@@ -325,6 +335,9 @@ Method in class com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core/Trans
 <DT><A HREF="./com/google/bitcoin/core/VarInt.html#getSizeInBytes()"><B>getSizeInBytes()</B></A> - 
 Method in class com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core/VarInt.html" title="class in com.google.bitcoin.core">VarInt</A>
 <DD>&nbsp;
+<DT><A HREF="./com/google/bitcoin/core/Block.html#getTime()"><B>getTime()</B></A> - 
+Method in class com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core/Block.html" title="class in com.google.bitcoin.core">Block</A>
+<DD>Returns the time at which the block was solved and broadcast, according to the clock of the solving node.
 <DT><A HREF="./com/google/bitcoin/core/Script.html#getToAddress()"><B>getToAddress()</B></A> - 
 Method in class com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core/Script.html" title="class in com.google.bitcoin.core">Script</A>
 <DD>Gets the destination address from this script, if it's in the required form (see getPubKey).
@@ -340,6 +353,9 @@ Method in class com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core/Trans
 <DT><A HREF="./com/google/bitcoin/core/Transaction.html#getValueSentToMe(com.google.bitcoin.core.Wallet)"><B>getValueSentToMe(Wallet)</B></A> - 
 Method in class com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core/Transaction.html" title="class in com.google.bitcoin.core">Transaction</A>
 <DD>Returns the sum of the outputs that are sending coins to a key in our wallet.
+<DT><A HREF="./com/google/bitcoin/core/Block.html#getVersion()"><B>getVersion()</B></A> - 
+Method in class com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core/Block.html" title="class in com.google.bitcoin.core">Block</A>
+<DD>Returns the version of the block data structure as defined by the BitCoin protocol.
 </DL>
 <HR>
 <A NAME="_H_"><!-- --></A><H2>
@@ -594,9 +610,27 @@ Constructor for exception com.google.bitcoin.core.<A HREF="./com/google/bitcoin/
 <DT><A HREF="./com/google/bitcoin/core/Wallet.html#sendCoins(com.google.bitcoin.core.Peer, com.google.bitcoin.core.Address, java.math.BigInteger)"><B>sendCoins(Peer, Address, BigInteger)</B></A> - 
 Method in class com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core/Wallet.html" title="class in com.google.bitcoin.core">Wallet</A>
 <DD>Sends coins to the given address, via the given <A HREF="./com/google/bitcoin/core/Peer.html" title="class in com.google.bitcoin.core"><CODE>Peer</CODE></A>.
+<DT><A HREF="./com/google/bitcoin/core/Block.html#setDifficultyTarget(long)"><B>setDifficultyTarget(long)</B></A> - 
+Method in class com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core/Block.html" title="class in com.google.bitcoin.core">Block</A>
+<DD>&nbsp;
+<DT><A HREF="./com/google/bitcoin/core/Block.html#setMerkleRoot(byte[])"><B>setMerkleRoot(byte[])</B></A> - 
+Method in class com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core/Block.html" title="class in com.google.bitcoin.core">Block</A>
+<DD>&nbsp;
+<DT><A HREF="./com/google/bitcoin/core/Block.html#setNonce(long)"><B>setNonce(long)</B></A> - 
+Method in class com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core/Block.html" title="class in com.google.bitcoin.core">Block</A>
+<DD>&nbsp;
+<DT><A HREF="./com/google/bitcoin/core/Block.html#setPrevBlockHash(byte[])"><B>setPrevBlockHash(byte[])</B></A> - 
+Method in class com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core/Block.html" title="class in com.google.bitcoin.core">Block</A>
+<DD>&nbsp;
+<DT><A HREF="./com/google/bitcoin/core/Block.html#setTime(long)"><B>setTime(long)</B></A> - 
+Method in class com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core/Block.html" title="class in com.google.bitcoin.core">Block</A>
+<DD>&nbsp;
 <DT><A HREF="./com/google/bitcoin/core/Script.html#setTracing(boolean)"><B>setTracing(boolean)</B></A> - 
 Method in class com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core/Script.html" title="class in com.google.bitcoin.core">Script</A>
 <DD>If true, running a program will log its instructions.
+<DT><A HREF="./com/google/bitcoin/core/Block.html#setVersion(long)"><B>setVersion(long)</B></A> - 
+Method in class com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core/Block.html" title="class in com.google.bitcoin.core">Block</A>
+<DD>&nbsp;
 <DT><A HREF="./com/google/bitcoin/core/Utils.html#sha256hash160(byte[])"><B>sha256hash160(byte[])</B></A> - 
 Static method in class com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core/Utils.html" title="class in com.google.bitcoin.core">Utils</A>
 <DD>Calculates RIPEMD160(SHA256(input)).
@@ -649,6 +683,9 @@ Method in class com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core/GetBl
 <DD>&nbsp;
 <DT><A HREF="./com/google/bitcoin/core/InventoryItem.html#toString()"><B>toString()</B></A> - 
 Method in class com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core/InventoryItem.html" title="class in com.google.bitcoin.core">InventoryItem</A>
+<DD>&nbsp;
+<DT><A HREF="./com/google/bitcoin/core/NetworkConnection.html#toString()"><B>toString()</B></A> - 
+Method in class com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core/NetworkConnection.html" title="class in com.google.bitcoin.core">NetworkConnection</A>
 <DD>&nbsp;
 <DT><A HREF="./com/google/bitcoin/core/PeerAddress.html#toString()"><B>toString()</B></A> - 
 Method in class com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core/PeerAddress.html" title="class in com.google.bitcoin.core">PeerAddress</A>

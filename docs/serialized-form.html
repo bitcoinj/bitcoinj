@@ -204,6 +204,8 @@ transactions</H3>
 <PRE>
 java.util.List&lt;E&gt; <B>transactions</B></PRE>
 <DL>
+<DD>If null, it means this object holds only the headers.
+<P>
 <DL>
 </DL>
 </DL>
@@ -213,6 +215,8 @@ hash</H3>
 <PRE>
 byte[] <B>hash</B></PRE>
 <DL>
+<DD>Stores the hash of the block. If null, getHash() will recalculate it.
+<P>
 <DL>
 </DL>
 </DL>

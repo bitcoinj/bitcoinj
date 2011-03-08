@@ -107,7 +107,7 @@ public class BlockChain {
             LOG("Re-received block that is currently on top of the chain.");
             return true;
         }
-        if (!Arrays.equals(block.prevBlockHash, prev.getHash())) {
+        if (!Arrays.equals(block.getPrevBlockHash(), prev.getHash())) {
             // The block does not fit onto the top of the chain. It can either be:
             //   - Entirely unconnected. This can happen when a new block is solved and broadcast whilst we are in
             //     the process of downloading the block chain.
@@ -140,7 +140,7 @@ public class BlockChain {
             blocksConnectedThisRound = 0;
             for (int i = 0; i < unconnectedBlocks.size(); i++) {
                 Block block = unconnectedBlocks.get(i);
-                if (Arrays.equals(block.prevBlockHash, blockChain.getLast().getHash())) {
+                if (Arrays.equals(block.getPrevBlockHash(), blockChain.getLast().getHash())) {
                     // False here ensures we don't recurse infinitely downwards when connecting huge chains.
                     add(block, false);
                     unconnectedBlocks.remove(i);
@@ -163,21 +163,22 @@ public class BlockChain {
         // Is this supposed to be a difficulty transition point?
         if (blockChain.size() % INTERVAL != 0) {
             // No ... so check the difficulty didn't actually change.
-            if (top.difficultyTarget != prev.difficultyTarget)
+            if (top.getDifficultyTarget() != prev.getDifficultyTarget())
                 throw new VerificationException("Unexpected change in difficulty at height " + blockChain.size() +
-                        ": " + Long.toHexString(top.difficultyTarget) + " vs " + Long.toHexString(prev.difficultyTarget));
+                        ": " + Long.toHexString(top.getDifficultyTarget()) + " vs " +
+                        Long.toHexString(prev.getDifficultyTarget()));
             return;
         }
 
         Block blockIntervalAgo = blockChain.get(blockChain.size() - INTERVAL);
-        int timespan = (int) (prev.time - blockIntervalAgo.time);
+        int timespan = (int) (prev.getTime() - blockIntervalAgo.getTime());
         // Limit the adjustment step.
         if (timespan < TARGET_TIMESPAN / 4)
             timespan = TARGET_TIMESPAN / 4;
         if (timespan > TARGET_TIMESPAN * 4)
             timespan = TARGET_TIMESPAN * 4;
 
-        BigInteger newDifficulty = Utils.decodeCompactBits(blockIntervalAgo.difficultyTarget);
+        BigInteger newDifficulty = Utils.decodeCompactBits(blockIntervalAgo.getDifficultyTarget());
         newDifficulty = newDifficulty.multiply(BigInteger.valueOf(timespan));
         newDifficulty = newDifficulty.divide(BigInteger.valueOf(TARGET_TIMESPAN));
 
@@ -185,8 +186,8 @@ public class BlockChain {
             newDifficulty = params.proofOfWorkLimit;
         }
 
-        int accuracyBytes = (int) (top.difficultyTarget >>> 24) - 3;
-        BigInteger receivedDifficulty = Utils.decodeCompactBits(top.difficultyTarget);
+        int accuracyBytes = (int) (top.getDifficultyTarget() >>> 24) - 3;
+        BigInteger receivedDifficulty = top.getDifficultyTargetBI();
 
         // The calculated difficulty is to a higher precision than received, so reduce here.
         BigInteger mask = BigInteger.valueOf(0xFFFFFFL).shiftLeft(accuracyBytes * 8);

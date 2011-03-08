@@ -25,13 +25,10 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.Arrays;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 public class BlockTest {
     static final NetworkParameters params = NetworkParameters.testNet();
-
     static final byte[] blockBytes;
 
     static {
@@ -44,6 +41,38 @@ public class BlockTest {
     public void testBlockVerification() throws Exception {
         Block block = new Block(params, blockBytes);
         block.verify();
+        assertEquals("00000000a6e5eb79dcec11897af55e90cd571a4335383a3ccfbc12ec81085935", block.getHashAsString());
+    }
+
+    @Test
+    public void testProofOfWork() throws Exception {
+        // This params accepts any difficulty target.
+        NetworkParameters params = NetworkParameters.unitTests();
+        Block block = new Block(params, blockBytes);
+        block.setNonce(12346);
+        try {
+            block.verify();
+            fail();
+        } catch (VerificationException e) {
+            // Expected.
+        }
+        // Blocks contain their own difficulty target. The BlockChain verification mechanism is what stops real blocks
+        // from containing artificially weak difficulties.
+        block.setDifficultyTarget(Block.EASIEST_DIFFICULTY_TARGET);
+        // Now it should pass.
+        block.verify();
+        // Break the nonce again at the lower difficulty level so we can try solving for it.
+        block.setNonce(1);
+        try {
+            block.verify();
+            fail();
+        } catch (VerificationException e) {
+            // Expected to fail as the nonce is no longer correct.
+        }
+        // Should find an acceptable nonce.
+        block.solve();
+        block.verify();
+        assertEquals(block.getNonce(), 2);
     }
 
     @Test
@@ -56,7 +85,7 @@ public class BlockTest {
         block.transactions.set(1, tx1);
         try {
             block.verify();
-            assertTrue("Verified when should not.", false);
+            fail();
         } catch (VerificationException e) {
             // We should get here.
         }

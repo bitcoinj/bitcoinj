@@ -73,9 +73,9 @@ function windowTitle()
 </TR>
 <TR>
 <TD VALIGN="top" CLASS="NavBarCell3"><FONT SIZE="-2">
-  SUMMARY:&nbsp;NESTED&nbsp;|&nbsp;<A HREF="#field_summary">FIELD</A>&nbsp;|&nbsp;<A HREF="#constructor_summary">CONSTR</A>&nbsp;|&nbsp;<A HREF="#method_summary">METHOD</A></FONT></TD>
+  SUMMARY:&nbsp;NESTED&nbsp;|&nbsp;<A HREF="#fields_inherited_from_class_com.google.bitcoin.core.Message">FIELD</A>&nbsp;|&nbsp;<A HREF="#constructor_summary">CONSTR</A>&nbsp;|&nbsp;<A HREF="#method_summary">METHOD</A></FONT></TD>
 <TD VALIGN="top" CLASS="NavBarCell3"><FONT SIZE="-2">
-DETAIL:&nbsp;<A HREF="#field_detail">FIELD</A>&nbsp;|&nbsp;<A HREF="#constructor_detail">CONSTR</A>&nbsp;|&nbsp;<A HREF="#method_detail">METHOD</A></FONT></TD>
+DETAIL:&nbsp;FIELD&nbsp;|&nbsp;<A HREF="#constructor_detail">CONSTR</A>&nbsp;|&nbsp;<A HREF="#method_detail">METHOD</A></FONT></TD>
 </TR>
 </TABLE>
 <A NAME="skip-navbar_top"></A>
@@ -123,14 +123,6 @@ A block is the foundation of the BitCoin system. It records a set of <A HREF="..
 <TR BGCOLOR="#CCCCFF" CLASS="TableHeadingColor">
 <TH ALIGN="left" COLSPAN="2"><FONT SIZE="+2">
 <B>Field Summary</B></FONT></TH>
-</TR>
-<TR BGCOLOR="white" CLASS="TableRowColor">
-<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
-<CODE>static&nbsp;long</CODE></FONT></TD>
-<TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/Block.html#ALLOWED_TIME_DRIFT">ALLOWED_TIME_DRIFT</A></B></CODE>
-
-<BR>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
 </TR>
 </TABLE>
 &nbsp;<A NAME="fields_inherited_from_class_com.google.bitcoin.core.Message"><!-- --></A>
@@ -186,6 +178,22 @@ A block is the foundation of the BitCoin system. It records a set of <A HREF="..
 </TR>
 <TR BGCOLOR="white" CLASS="TableRowColor">
 <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;long</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/Block.html#getDifficultyTarget()">getDifficultyTarget</A></B>()</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Returns the difficulty of the proof of work that this block should meet encoded in compact form.</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;java.math.BigInteger</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/Block.html#getDifficultyTargetBI()">getDifficultyTargetBI</A></B>()</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Returns the difficulty target as a 256 bit value that can be compared to a SHA-256 hash.</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
 <CODE>&nbsp;byte[]</CODE></FONT></TD>
 <TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/Block.html#getHash()">getHash</A></B>()</CODE>
 
@@ -211,8 +219,89 @@ A block is the foundation of the BitCoin system. It records a set of <A HREF="..
 </TR>
 <TR BGCOLOR="white" CLASS="TableRowColor">
 <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;long</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/Block.html#getNonce()">getNonce</A></B>()</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Returns the nonce, an arbitrary value that exists only to make the hash of the block header fall below the
+ difficulty target.</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;byte[]</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/Block.html#getPrevBlockHash()">getPrevBlockHash</A></B>()</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Returns the hash of the previous block in the chain, as defined by the block header.</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;long</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/Block.html#getTime()">getTime</A></B>()</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Returns the time at which the block was solved and broadcast, according to the clock of the solving node.</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;long</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/Block.html#getVersion()">getVersion</A></B>()</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Returns the version of the block data structure as defined by the BitCoin protocol.</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
 <CODE>&nbsp;int</CODE></FONT></TD>
 <TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/Block.html#hashCode()">hashCode</A></B>()</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;void</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/Block.html#setDifficultyTarget(long)">setDifficultyTarget</A></B>(long&nbsp;compactForm)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;void</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/Block.html#setMerkleRoot(byte[])">setMerkleRoot</A></B>(byte[]&nbsp;value)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;void</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/Block.html#setNonce(long)">setNonce</A></B>(long&nbsp;nonce)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;void</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/Block.html#setPrevBlockHash(byte[])">setPrevBlockHash</A></B>(byte[]&nbsp;prevBlockHash)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;void</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/Block.html#setTime(long)">setTime</A></B>(long&nbsp;time)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;void</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/Block.html#setVersion(long)">setVersion</A></B>(long&nbsp;version)</CODE>
 
 <BR>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
@@ -254,25 +343,6 @@ A block is the foundation of the BitCoin system. It records a set of <A HREF="..
 </TABLE>
 &nbsp;
 <P>
-
-<!-- ============ FIELD DETAIL =========== -->
-
-<A NAME="field_detail"><!-- --></A>
-<TABLE BORDER="1" WIDTH="100%" CELLPADDING="3" CELLSPACING="0" SUMMARY="">
-<TR BGCOLOR="#CCCCFF" CLASS="TableHeadingColor">
-<TH ALIGN="left" COLSPAN="1"><FONT SIZE="+2">
-<B>Field Detail</B></FONT></TH>
-</TR>
-</TABLE>
-
-<A NAME="ALLOWED_TIME_DRIFT"><!-- --></A><H3>
-ALLOWED_TIME_DRIFT</H3>
-<PRE>
-public static final long <B>ALLOWED_TIME_DRIFT</B></PRE>
-<DL>
-<DL>
-<DT><B>See Also:</B><DD><A HREF="../../../../constant-values.html#com.google.bitcoin.core.Block.ALLOWED_TIME_DRIFT">Constant Field Values</A></DL>
-</DL>
 
 <!-- ========= CONSTRUCTOR DETAIL ======== -->
 
@@ -414,6 +484,17 @@ public byte[] <B>getMerkleRoot</B>()</PRE>
 </DL>
 <HR>
 
+<A NAME="setMerkleRoot(byte[])"><!-- --></A><H3>
+setMerkleRoot</H3>
+<PRE>
+public void <B>setMerkleRoot</B>(byte[]&nbsp;value)</PRE>
+<DL>
+<DD><DL>
+</DL>
+</DD>
+</DL>
+<HR>
+
 <A NAME="addTransaction(com.google.bitcoin.core.Transaction)"><!-- --></A><H3>
 addTransaction</H3>
 <PRE>
@@ -421,6 +502,142 @@ public void <B>addTransaction</B>(<A HREF="../../../../com/google/bitcoin/core/T
 <DL>
 <DD>Adds a transaction to this block.
 <P>
+<DD><DL>
+</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="getVersion()"><!-- --></A><H3>
+getVersion</H3>
+<PRE>
+public long <B>getVersion</B>()</PRE>
+<DL>
+<DD>Returns the version of the block data structure as defined by the BitCoin protocol.
+<P>
+<DD><DL>
+</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="setVersion(long)"><!-- --></A><H3>
+setVersion</H3>
+<PRE>
+public void <B>setVersion</B>(long&nbsp;version)</PRE>
+<DL>
+<DD><DL>
+</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="getPrevBlockHash()"><!-- --></A><H3>
+getPrevBlockHash</H3>
+<PRE>
+public byte[] <B>getPrevBlockHash</B>()</PRE>
+<DL>
+<DD>Returns the hash of the previous block in the chain, as defined by the block header.
+<P>
+<DD><DL>
+</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="setPrevBlockHash(byte[])"><!-- --></A><H3>
+setPrevBlockHash</H3>
+<PRE>
+public void <B>setPrevBlockHash</B>(byte[]&nbsp;prevBlockHash)</PRE>
+<DL>
+<DD><DL>
+</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="getTime()"><!-- --></A><H3>
+getTime</H3>
+<PRE>
+public long <B>getTime</B>()</PRE>
+<DL>
+<DD>Returns the time at which the block was solved and broadcast, according to the clock of the solving node.
+<P>
+<DD><DL>
+</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="setTime(long)"><!-- --></A><H3>
+setTime</H3>
+<PRE>
+public void <B>setTime</B>(long&nbsp;time)</PRE>
+<DL>
+<DD><DL>
+</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="getDifficultyTarget()"><!-- --></A><H3>
+getDifficultyTarget</H3>
+<PRE>
+public long <B>getDifficultyTarget</B>()</PRE>
+<DL>
+<DD>Returns the difficulty of the proof of work that this block should meet encoded in compact form. The
+ <A HREF="../../../../com/google/bitcoin/core/BlockChain.html" title="class in com.google.bitcoin.core"><CODE>BlockChain</CODE></A> verifies that this is not too easy by looking at the length of the chain when the block is
+ added. To find the actual value the hash should be compared against, use getDifficultyTargetBI.
+<P>
+<DD><DL>
+</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="getDifficultyTargetBI()"><!-- --></A><H3>
+getDifficultyTargetBI</H3>
+<PRE>
+public java.math.BigInteger <B>getDifficultyTargetBI</B>()</PRE>
+<DL>
+<DD>Returns the difficulty target as a 256 bit value that can be compared to a SHA-256 hash.
+<P>
+<DD><DL>
+</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="setDifficultyTarget(long)"><!-- --></A><H3>
+setDifficultyTarget</H3>
+<PRE>
+public void <B>setDifficultyTarget</B>(long&nbsp;compactForm)</PRE>
+<DL>
+<DD><DL>
+</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="getNonce()"><!-- --></A><H3>
+getNonce</H3>
+<PRE>
+public long <B>getNonce</B>()</PRE>
+<DL>
+<DD>Returns the nonce, an arbitrary value that exists only to make the hash of the block header fall below the
+ difficulty target.
+<P>
+<DD><DL>
+</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="setNonce(long)"><!-- --></A><H3>
+setNonce</H3>
+<PRE>
+public void <B>setNonce</B>(long&nbsp;nonce)</PRE>
+<DL>
 <DD><DL>
 </DL>
 </DD>
@@ -476,9 +693,9 @@ public void <B>addTransaction</B>(<A HREF="../../../../com/google/bitcoin/core/T
 </TR>
 <TR>
 <TD VALIGN="top" CLASS="NavBarCell3"><FONT SIZE="-2">
-  SUMMARY:&nbsp;NESTED&nbsp;|&nbsp;<A HREF="#field_summary">FIELD</A>&nbsp;|&nbsp;<A HREF="#constructor_summary">CONSTR</A>&nbsp;|&nbsp;<A HREF="#method_summary">METHOD</A></FONT></TD>
+  SUMMARY:&nbsp;NESTED&nbsp;|&nbsp;<A HREF="#fields_inherited_from_class_com.google.bitcoin.core.Message">FIELD</A>&nbsp;|&nbsp;<A HREF="#constructor_summary">CONSTR</A>&nbsp;|&nbsp;<A HREF="#method_summary">METHOD</A></FONT></TD>
 <TD VALIGN="top" CLASS="NavBarCell3"><FONT SIZE="-2">
-DETAIL:&nbsp;<A HREF="#field_detail">FIELD</A>&nbsp;|&nbsp;<A HREF="#constructor_detail">CONSTR</A>&nbsp;|&nbsp;<A HREF="#method_detail">METHOD</A></FONT></TD>
+DETAIL:&nbsp;FIELD&nbsp;|&nbsp;<A HREF="#constructor_detail">CONSTR</A>&nbsp;|&nbsp;<A HREF="#method_detail">METHOD</A></FONT></TD>
 </TR>
 </TABLE>
 <A NAME="skip-navbar_bottom"></A>

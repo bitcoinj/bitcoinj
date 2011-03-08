@@ -33,18 +33,22 @@ import static com.google.bitcoin.core.Utils.*;
  * you grab it from a downloaded {@link BlockChain}.
  */
 public class Block extends Message {
-    public static final long ALLOWED_TIME_DRIFT = 2 * 60 * 60;  // Same value as official client.
+    static final long ALLOWED_TIME_DRIFT = 2 * 60 * 60;  // Same value as official client.
 
-    long version;
-    byte[] prevBlockHash;
-    byte[] merkleRoot;
-    long time;
-    long difficultyTarget;  // "nBits"
-    long nonce;
+    /** A value for difficultyTarget (nBits) that allows half of all possible hash solutions. Used in unit testing. */
+    static final long EASIEST_DIFFICULTY_TARGET = 0x207fFFFFL;
 
-    // If null, it means this object holds only the headers.
+    private long version;
+    private byte[] prevBlockHash;
+    private byte[] merkleRoot;
+    private long time;
+    private long difficultyTarget;  // "nBits"
+    private long nonce;
+
+    /** If null, it means this object holds only the headers. */
     List<Transaction> transactions;
-    byte[] hash;
+    /** Stores the hash of the block. If null, getHash() will recalculate it. */
+    private byte[] hash;
 
     // If set, points towards the previous block in the chain. Note that a block may have multiple other blocks
     // pointing back to it because despite being called a "chain", the block chain is in fact a tree. There can be
@@ -106,7 +110,9 @@ public class Block extends Message {
         }
     }
 
-    /** Returns hash in little endian form */
+    /**
+     * Calculates the block hash by serializing the block and hashing the resulting bytes.
+     */
     private byte[] calculateHash() {
         try {
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
@@ -155,8 +161,29 @@ public class Block extends Message {
         }
         return s.toString();
     }
-    
-    private void checkProofOfWork() throws VerificationException {
+
+    /**
+     * Finds a value of nonce that makes the blocks hash lower than the difficulty target. This is called mining,
+     * but solve() is far too slow to do real mining with. It exists only for unit testing purposes and is not a part
+     * of the public API.
+     *
+     * This can loop forever if a solution cannot be found solely by incrementing nonce. It doesn't change extraNonce.
+     */
+    void solve() {
+        while (true) {
+            try {
+                // Is our proof of work valid yet?
+                if (checkProofOfWork(false)) return;
+                // No, so increment the nonce and try again.
+                setNonce(getNonce() + 1);
+            } catch (VerificationException e) {
+                throw new RuntimeException(e);  // Cannot happen.
+            }
+        }
+    }
+
+    /** Returns true if the hash of the block is OK (lower than difficulty target). */
+    private boolean checkProofOfWork(boolean throwException) throws VerificationException {
         // This part is key - it is what proves the block was as difficult to make as it claims
         // to be. Note however that in the context of this function, the block can claim to be
         // as difficult as it wants to be .... if somebody was able to take control of our network
@@ -170,11 +197,16 @@ public class Block extends Message {
         if (target.compareTo(BigInteger.valueOf(0)) <= 0 || target.compareTo(params.proofOfWorkLimit) > 0)
             throw new VerificationException("Difficulty target is bad");
 
-        byte[] hashBytes = (hash == null ? calculateHash() : hash);
-        BigInteger h = new BigInteger(1, hashBytes);
-        if (h.compareTo(target) > 0)
-            throw new VerificationException("Hash is higher than target: " + bytesToHexString(hashBytes) + " vs " +
-                    target.toString(16));
+        BigInteger h = new BigInteger(1, getHash());
+        if (h.compareTo(target) > 0) {
+            // Proof of work check failed!
+            if (throwException)
+                throw new VerificationException("Hash is higher than target: " + getHashAsString() + " vs " +
+                        target.toString(16));
+            else
+                return false;
+        }
+        return true;
     }
     
     private void checkTimestamp() throws VerificationException {
@@ -260,7 +292,7 @@ public class Block extends Message {
         //
         // Firstly we need to ensure this block does in fact represent real work done. If the
         // difficulty is high enough, it's probably been done by the network.
-        checkProofOfWork();
+        checkProofOfWork(true);
         checkTimestamp();
         // Now we need to check that the body of the block actually matches the headers. The
         // network won't generate an invalid block, but if we didn't validate this then an
@@ -281,14 +313,12 @@ public class Block extends Message {
         if (hash != null && other.hash != null)
             return Arrays.equals(hash, other.hash);
         // Otherwise we have to do it the slow way.
-        byte[] me = bitcoinSerialize();
-        byte[] them = other.bitcoinSerialize();
-        return Arrays.equals(me, them);
+        return Arrays.equals(getHash(), other.getHash());
     }
 
     @Override
     public int hashCode() {
-        return Arrays.hashCode(hash);
+        return Arrays.hashCode(getHash());
     }
 
     /** Returns the merkle root in big endian form, calculating it from transactions if necessary. */
@@ -296,6 +326,11 @@ public class Block extends Message {
         if (merkleRoot == null)
             merkleRoot = calculateMerkleRoot();
         return merkleRoot;
+    }
+
+    public void setMerkleRoot(byte[] value) {
+        merkleRoot = value;
+        hash = null;
     }
 
     /**
@@ -309,5 +344,83 @@ public class Block extends Message {
         // Force a recalculation next time the values are needed.
         merkleRoot = null;
         hash = null;
+    }
+
+    /**
+     * Returns the version of the block data structure as defined by the BitCoin protocol.
+     */
+    public long getVersion() {
+        return version;
+    }
+
+    public void setVersion(long version) {
+        this.version = version;
+        this.hash = null;
+    }
+
+    /**
+     * Returns the hash of the previous block in the chain, as defined by the block header.
+     */
+    public byte[] getPrevBlockHash() {
+        return prevBlockHash;
+    }
+
+    public void setPrevBlockHash(byte[] prevBlockHash) {
+        this.prevBlockHash = prevBlockHash;
+        this.hash = null;
+    }
+
+    /**
+     * Returns the time at which the block was solved and broadcast, according to the clock of the solving node.
+     */
+    public long getTime() {
+        return time;
+    }
+
+    public void setTime(long time) {
+        this.time = time;
+        this.hash = null;
+    }
+
+    /**
+     * Returns the difficulty of the proof of work that this block should meet encoded in compact form. The
+     * {@link BlockChain} verifies that this is not too easy by looking at the length of the chain when the block is
+     * added. To find the actual value the hash should be compared against, use getDifficultyTargetBI.
+     */
+    public long getDifficultyTarget() {
+        return difficultyTarget;
+    }
+
+    /**
+     * Returns the difficulty target as a 256 bit value that can be compared to a SHA-256 hash.
+     */
+    public BigInteger getDifficultyTargetBI() {
+        return Utils.decodeCompactBits(getDifficultyTarget());
+    }
+
+    public void setDifficultyTarget(long compactForm) {
+        this.difficultyTarget = compactForm;
+        this.hash = null;
+    }
+
+    /**
+     * Returns the nonce, an arbitrary value that exists only to make the hash of the block header fall below the
+     * difficulty target.
+     */
+    public long getNonce() {
+        return nonce;
+    }
+
+    public void setNonce(long nonce) {
+        this.nonce = nonce;
+        this.hash = null;
+    }
+
+    /** Adds a fake coinbase transaction for unit tests. */
+    void addFakeTransaction() {
+        transactions = new ArrayList<Transaction>();
+        Transaction coinbase = new Transaction(params);
+        coinbase.setFakeHashForTesting(Utils.doubleDigest("test tx".getBytes()));
+        transactions.add(coinbase);
     }
 }
