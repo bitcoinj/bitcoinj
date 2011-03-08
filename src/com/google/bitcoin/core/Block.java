@@ -269,7 +269,7 @@ public class Block extends Message {
         // reference spent or non-existant inputs.
         if (transactions != null) {
             assert transactions.size() > 0;
-            //checkTransactions();
+            checkTransactions();
             checkMerkleHash();
         }
     }
