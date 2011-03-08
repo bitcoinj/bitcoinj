@@ -22,6 +22,7 @@ import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.net.SocketException;
 
 import static com.google.bitcoin.core.Utils.*;
 
@@ -49,7 +50,8 @@ public class NetworkConnection {
     private final Socket socket;
     private final OutputStream out;
     private final InputStream in;
-
+    // The IP address to which we are connecting.
+    private InetAddress remoteIp;
     private boolean usesChecksumming;
     private final NetworkParameters params;
     static final private boolean PROTOCOL_LOG = false;
@@ -64,6 +66,7 @@ public class NetworkConnection {
      */
     public NetworkConnection(InetAddress remoteIp, NetworkParameters params) throws IOException, ProtocolException {
         this.params = params;
+        this.remoteIp = remoteIp;
         socket = new Socket(remoteIp, params.port);
         out = socket.getOutputStream();
         in = socket.getInputStream();
@@ -101,13 +104,19 @@ public class NetworkConnection {
         socket.close();
     }
 
+    @Override
+    public String toString() {
+        return "[" + remoteIp.getHostAddress() + "]:" + params.port + " (" + (socket.isConnected() ? "connected" :
+                "disconnected") + ")";
+    }
+
     /**
      * Reads a network message from the wire, blocking until the message is fully received.
      *
-     * @return An instance of a Message subclass.
-     * @throws ProtocolException if the message is badly formatted, failed checksum or there was a protocol failure.
+     * @return An instance of a Message subclass
+     * @throws ProtocolException if the message is badly formatted, failed checksum or there was a TCP failure.
      */
-    public Message readMessage() throws ProtocolException {
+    public Message readMessage() throws IOException, ProtocolException {
         // A BitCoin protocol message has the following format.
         //
         //   - 4 byte magic number: 0xfabfb5da for the testnet or
@@ -120,17 +129,14 @@ public class NetworkConnection {
         // The checksum is the first 4 bytes of a SHA256 hash of the message payload. It isn't
         // present for all messages, notably, the first one on a connection.
         byte[] header = new byte[4 + COMMAND_LEN + 4 + (usesChecksumming ? 4 : 0)];
-        try {
-            int readCursor = 0;
-            while (readCursor < header.length) {
-                int bytesRead = in.read(header, readCursor, header.length - readCursor);
-                if (bytesRead == -1) {
-                    throw new ProtocolException("Socket disconnected half way through a message");
-                }
-                readCursor += bytesRead;
+        int readCursor = 0;
+        while (readCursor < header.length) {
+            int bytesRead = in.read(header, readCursor, header.length - readCursor);
+            if (bytesRead == -1) {
+                // There's no more data to read.
+                throw new IOException("Socket is disconnected");
             }
-        } catch (IOException e) {
-            throw new ProtocolException(e);
+            readCursor += bytesRead;
         }
 
         int cursor = 0;
@@ -171,18 +177,14 @@ public class NetworkConnection {
         }
 
         // Now try to read the whole message.
-        int readCursor = 0;
+        readCursor = 0;
         byte[] payloadBytes = new byte[size];
-        try {
-            while (readCursor < payloadBytes.length - 1) {
-                int bytesRead = in.read(payloadBytes, readCursor, size - readCursor);
-                if (bytesRead == -1) {
-                    throw new ProtocolException("Socket disconnected half way through a message");
-                }
-                readCursor += bytesRead;
+        while (readCursor < payloadBytes.length - 1) {
+            int bytesRead = in.read(payloadBytes, readCursor, size - readCursor);
+            if (bytesRead == -1) {
+                throw new ProtocolException("Socket disconnected half way through a message");
             }
-        } catch (IOException e) {
-            throw new ProtocolException(e);
+            readCursor += bytesRead;
         }
 
         // Verify the checksum.

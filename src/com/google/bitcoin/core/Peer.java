@@ -35,6 +35,8 @@ public class Peer {
     private final NetworkConnection conn;
     private final NetworkParameters params;
     private Thread thread;
+    // Whether the peer thread is supposed to be running or not. Set to false during shutdown so the peer thread
+    // knows to quit when the socket goes away.
     private boolean running;
     private final BlockChain blockChain;
 
@@ -42,7 +44,7 @@ public class Peer {
     private CountDownLatch chainCompletionLatch;
     // When we want to download a block or transaction from a peer, the InventoryItem is put here whilst waiting for
     // the response. Synchronized on itself.
-    private List<GetDataFuture> pendingGetDataFutures;
+    private List<GetDataFuture<Block>> pendingGetBlockFutures;
 
     /**
      * Construct a peer that handles the given network connection and reads/writes from the given block chain. Note that
@@ -52,7 +54,7 @@ public class Peer {
         this.conn = conn;
         this.params = params;
         this.blockChain = blockChain;
-        this.pendingGetDataFutures = new ArrayList<GetDataFuture>();
+        this.pendingGetBlockFutures = new ArrayList<GetDataFuture<Block>>();
     }
 
     /** Starts the background thread that processes messages. */
@@ -62,6 +64,10 @@ public class Peer {
                 Peer.this.run();
             }
         });
+        synchronized (this) {
+            running = true;
+        }
+        this.thread.setName("Bitcoin peer thread: " + conn.toString());
         this.thread.start();
     }
 
@@ -70,17 +76,8 @@ public class Peer {
      */
     private void run() {
         assert Thread.currentThread() == thread;
-        // Synchronization here is unnecessary but makes FindBugs happy.
-        synchronized (this) {
-            this.running = true;
-        }
-        while (true) {
-            synchronized (this) {
-                if (!this.running) break;
-            }
-            // TODO: This isn't a good way to handle network I/O, we should probably switch to nio.
-            // TODO: Improve the exception handling here.
-            try {
+        try {
+            while (true) {
                 Message m = conn.readMessage();
                 if (m instanceof InventoryMessage) {
                     processInv((InventoryMessage) m);
@@ -94,18 +91,15 @@ public class Peer {
                     // TODO: Handle the other messages we can receive.
                     LOG("Received unhandled message: " + m.toString());
                 }
-            } catch (ProtocolException e) {
-                if (!(e.getCause() instanceof SocketException)) {
-                    LOG(e.toString());
-                    e.printStackTrace();
-                } else {
-                    // Time to die ...
-                    break;
-                }
-            } catch (IOException e) {
-                LOG(e.toString());
+            }
+        } catch (Exception e) {
+            if (e instanceof IOException && !running) {
+                // This exception was expected because we are tearing down the socket as part of quitting.
+                LOG("Shutting down peer thread");
+            } else {
+                // We caught an unexpected exception.
+                System.err.println(e.toString());
                 e.printStackTrace();
-                break;
             }
         }
         synchronized (this) {
@@ -120,14 +114,14 @@ public class Peer {
         assert Thread.currentThread() == thread;
         try {
             // Was this block requested by getBlock()?
-            synchronized (pendingGetDataFutures) {
-                for (int i = 0; i < pendingGetDataFutures.size(); i++) {
-                    GetDataFuture f = pendingGetDataFutures.get(i);
+            synchronized (pendingGetBlockFutures) {
+                for (int i = 0; i < pendingGetBlockFutures.size(); i++) {
+                    GetDataFuture<Block> f = pendingGetBlockFutures.get(i);
                     if (Arrays.equals(f.getItem().hash, m.getHash())) {
                         // Yes, it was. So pass it through the future.
                         f.setResult(m);
                         // Blocks explicitly requested don't get sent to the block chain.
-                        pendingGetDataFutures.remove(i);
+                        pendingGetBlockFutures.remove(i);
                         return;
                     }
                 }
@@ -210,11 +204,11 @@ public class Peer {
         InventoryMessage getdata = new InventoryMessage(params);
         InventoryItem inventoryItem = new InventoryItem(InventoryItem.Type.Block, blockHash);
         getdata.items.add(inventoryItem);
-        GetDataFuture future = new GetDataFuture(inventoryItem);
+        GetDataFuture<Block> future = new GetDataFuture<Block>(inventoryItem);
         // Add to the list of things we're waiting for. It's important this come before the network send to avoid
         // race conditions.
-        synchronized (pendingGetDataFutures) {
-          pendingGetDataFutures.add(future);
+        synchronized (pendingGetBlockFutures) {
+          pendingGetBlockFutures.add(future);
         }
         conn.writeMessage(NetworkConnection.MSG_GETDATA, getdata);
         return future;
