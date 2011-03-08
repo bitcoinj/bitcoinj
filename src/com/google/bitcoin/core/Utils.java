@@ -26,12 +26,19 @@ import java.security.NoSuchAlgorithmException;
 
 /**
  * A collection of various utility methods that are helpful for working with the BitCoin protocol.
+ * To enable debug logging from the library, run with -Dbitcoinj.logging=true on your command line.
  */
 public class Utils {
     /** How many nanocoins there are in a BitCoin. */
     public static final BigInteger COIN = new BigInteger("100000000", 10);
     /** How many nanocoins there are in 0.01 BitCoins. */
     public static final BigInteger CENT = new BigInteger("1000000", 10);
+
+    private static boolean logging;
+
+    static {
+        logging = Boolean.parseBoolean(System.getProperty("bitcoinj.logging", "false"));
+    }
 
     /** Convert an amount expressed in the way humans are used to into nanocoins. */
     public static BigInteger toNanoCoins(int coins, int cents) {
@@ -159,7 +166,7 @@ public class Utils {
 
     static void LOG(String msg) {
         // Set this to true to see debug prints from the library.
-        if (false) {
+        if (logging) {
             System.out.print("BitCoin: ");
             System.out.println(msg);
         }
