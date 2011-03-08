@@ -46,7 +46,6 @@ public class PingService {
 
         // Connect to the localhost node.
         System.out.println("Please wait, connecting and downloading block chain. This may take a while.");
-        System.out.println("Send coins to: " + key.toAddress(params).toString());
 
         NetworkConnection conn = new NetworkConnection(InetAddress.getLocalHost(), params);
         BlockChain chain = new BlockChain(params, wallet);
@@ -83,6 +82,7 @@ public class PingService {
             }
         });
 
+        System.out.println("Send coins to: " + key.toAddress(params).toString());
         System.out.println("Waiting for coins to arrive. Press Ctrl-C to quit.");
         // The peer thread keeps us alive until something kills the process.
     }
