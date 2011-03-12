@@ -138,4 +138,17 @@ public class WalletTest {
         wallet.confirmSend(send2);
         assertEquals(bitcoinValueToFriendlyString(wallet.getBalance()), "0.80");
     }
+
+    @Test
+    public void testBalances() throws Exception {
+        BigInteger nanos = Utils.toNanoCoins(1, 0);
+        Transaction tx1 = createFakeTx(nanos, myAddress);
+        wallet.receive(tx1);
+        assertEquals(nanos, tx1.getValueSentToMe(wallet));
+        // Send 0.10 to somebody else.
+        Transaction send1 = wallet.createSend(new ECKey().toAddress(params), toNanoCoins(0, 10), myAddress);
+        // Reserialize.
+        Transaction send2 = new Transaction(params, send1.bitcoinSerialize());
+        assertEquals(nanos, send2.getValueSentFromMe(wallet));
+    }
 }

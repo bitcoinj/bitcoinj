@@ -98,13 +98,37 @@ public class Transaction extends Message implements Serializable {
     }
 
     /**
-     * Returns the sum of the outputs that are sending coins to a key in our wallet.
+     * Calculates the sum of the outputs that are sending coins to a key in the wallet.
+     * @return sum in nanocoins
      */
     public BigInteger getValueSentToMe(Wallet wallet) {
+        // This is tested in WalletTest.
         BigInteger v = BigInteger.ZERO;
         for (TransactionOutput o : outputs) {
             if (o.isMine(wallet)) {
                 v = v.add(o.getValue());
+            }
+        }
+        return v;
+    }
+
+    /**
+     * Calculates the sum of the inputs that are spending coins with keys in the wallet. This requires the
+     * transactions sending coins to those keys to be in the wallet. This method will not attempt to download the
+     * blocks containing the input transactions if the key is in the wallet but the transactions are not.
+     *
+     * @return sum in nanocoins.
+     */
+    public BigInteger getValueSentFromMe(Wallet wallet) throws ScriptException {
+        // This is tested in WalletTest.
+        BigInteger v = BigInteger.ZERO;
+        for (TransactionInput input : inputs) {
+            boolean connected = input.outpoint.connect(wallet.unspent) ||
+                                input.outpoint.connect(wallet.fullySpent);
+            if (connected) {
+                // This input is taking value from an transaction in our wallet. To discover the value,
+                // we must find the connected transaction.
+                v = v.add(input.outpoint.getConnectedOutput().getValue());
             }
         }
         return v;
@@ -223,7 +247,7 @@ public class Transaction extends Message implements Serializable {
     /**
      * Once a transaction has some inputs and outputs added, the signatures in the inputs can be calculated. The
      * signature is over the transaction itself, to prove the redeemer actually created that transaction,
-     * so we have to do this step last.
+     * so we have to do this step last.<p>
      *
      * This method is similar to SignatureHash in script.cpp
      *

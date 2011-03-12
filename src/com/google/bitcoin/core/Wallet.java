@@ -35,17 +35,21 @@ import java.util.List;
 public class Wallet implements Serializable {
     private static final long serialVersionUID = -4501424466753895784L;
 
-    // A list of transactions with outputs we can spend. Note that some of these transactions may be partially spent,
-    // that is, they have outputs some of which are redeemed and others which aren't already. The spentness of each
-    // output is tracked in the TransactionOutput object. The value of all unspent outputs is the balance of the
-    // wallet.
+    /**
+     * A list of transactions with outputs we can spend. Note that some of these transactions may be partially spent,
+     * that is, they have outputs some of which are redeemed and others which aren't already. The spentness of each
+     * output is tracked in the TransactionOutput object. The value of all unspent outputs is the balance of the
+     * wallet.
+     */
     public final ArrayList<Transaction> unspent;
 
-    // When all the outputs of a transaction are spent, it gets put here. These transactions aren't useful for
-    // anything except record keeping and presentation to the user.
-    private final LinkedList<Transaction> fullySpent;
+    /**
+     * When all the outputs of a transaction are spent, it gets put here. These transactions aren't useful for
+     * anything except record keeping and presentation to the user.
+     */
+    final LinkedList<Transaction> fullySpent;
 
-    // A list of public/private EC keys owned by this user.
+    /** A list of public/private EC keys owned by this user. */
     public final ArrayList<ECKey> keychain;
     private final NetworkParameters params;
 
@@ -320,7 +324,8 @@ public class Wallet implements Serializable {
 
     /**
      * Locates a keypair from the keychain given the hash of the public key. This is needed when finding out which
-     * key we need to use to redeem a transaction output. Returns null if no key was found.
+     * key we need to use to redeem a transaction output.
+     * @return ECKey object or null if no such key was found.
      */
     public synchronized ECKey findKeyFromPubHash(byte[] pubkeyHash) {
         for (ECKey key : keychain) {
