@@ -44,7 +44,7 @@ public class Peer {
     private CountDownLatch chainCompletionLatch;
     // When we want to download a block or transaction from a peer, the InventoryItem is put here whilst waiting for
     // the response. Synchronized on itself.
-    private List<GetDataFuture<Block>> pendingGetBlockFutures;
+    private final List<GetDataFuture<Block>> pendingGetBlockFutures;
 
     /**
      * Construct a peer that handles the given network connection and reads/writes from the given block chain. Note that
@@ -217,8 +217,8 @@ public class Peer {
     // decide whether to wait forever, wait for a short while or check later after doing other work.
     private class GetDataFuture<T extends Message> implements Future<T> {
         private boolean cancelled;
-        private InventoryItem item;
-        private CountDownLatch latch;
+        private final InventoryItem item;
+        private final CountDownLatch latch;
         private T result;
 
         GetDataFuture(InventoryItem item) {

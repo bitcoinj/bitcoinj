@@ -52,7 +52,7 @@ public class NetworkConnection {
     private final OutputStream out;
     private final InputStream in;
     // The IP address to which we are connecting.
-    private InetAddress remoteIp;
+    private final InetAddress remoteIp;
     private boolean usesChecksumming;
     private final NetworkParameters params;
     static final private boolean PROTOCOL_LOG = false;
@@ -82,7 +82,7 @@ public class NetworkConnection {
         // And get one back ...
         readMessage();
         // Switch to the new protocol version.
-        int peerVersion = (int) ver.clientVersion;
+        int peerVersion = ver.clientVersion;
         LOG("Connected to peer, version is " + peerVersion + ", services=" + Long.toHexString(
                 ver.localServices) + ", time=" + new Date(ver.time.longValue() * 1000).toString());
         // BitCoinJ is a client mode implementation. That means there's not much point in us talking to other client

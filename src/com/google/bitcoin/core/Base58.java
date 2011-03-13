@@ -48,8 +48,8 @@ public class Base58 {
         }
         s.insert(0, ALPHABET.charAt(bi.intValue()));
         // Convert leading zeros too.
-        for (int i = 0; i < input.length; i++) {
-            if (input[i] == 0)
+        for (byte anInput : input) {
+            if (anInput == 0)
                 s.insert(0, ALPHABET.charAt(0));
             else
                 break;

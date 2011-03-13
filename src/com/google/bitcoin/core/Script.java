@@ -51,12 +51,12 @@ public class Script {
     private int cursor;
     
     // The stack consists of an ordered series of data buffers growing from zero up.
-    private Stack<byte[]> stack;
+    private final Stack<byte[]> stack;
     // The program is a set of byte[]s where each element is either [opcode] or [data, data, data ...]
     private List<byte[]> chunks;
     private boolean tracing;
     byte[] programCopy;      // TODO: remove this
-    private NetworkParameters params;
+    private final NetworkParameters params;
 
     /** Concatenates two scripts to form a new one. This is used when verifying transactions. */
     public static Script join(Script a,  Script b) throws ScriptException {
@@ -321,6 +321,7 @@ public class Script {
         pushBool(true);
     }
 
+    @SuppressWarnings({"SameParameterValue"})
     private void pushBool(boolean val) {
         stack.push(new byte[] { val ? (byte)1 : (byte)0 });
     }

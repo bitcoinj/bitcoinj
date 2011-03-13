@@ -28,13 +28,14 @@ import java.security.NoSuchAlgorithmException;
  * A collection of various utility methods that are helpful for working with the BitCoin protocol.
  * To enable debug logging from the library, run with -Dbitcoinj.logging=true on your command line.
  */
+@SuppressWarnings({"SameParameterValue"})
 public class Utils {
     /** How many nanocoins there are in a BitCoin. */
     public static final BigInteger COIN = new BigInteger("100000000", 10);
     /** How many nanocoins there are in 0.01 BitCoins. */
     public static final BigInteger CENT = new BigInteger("1000000", 10);
 
-    private static boolean logging;
+    private static final boolean logging;
 
     static {
         logging = Boolean.parseBoolean(System.getProperty("bitcoinj.logging", "false"));
@@ -98,8 +99,7 @@ public class Utils {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
             digest.update(input, offset, length);
             byte[] first = digest.digest();
-            byte[] second = digest.digest(first);
-            return second;
+            return digest.digest(first);
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException(e);  // Cannot happen.
         }
@@ -115,8 +115,7 @@ public class Utils {
             digest.update(input1, offset1, length1);
             digest.update(input2, offset2, length2);
             byte[] first = digest.digest();
-            byte[] second = digest.digest(first);
-            return second;
+            return digest.digest(first);
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException(e);  // Cannot happen.
         }
@@ -154,7 +153,7 @@ public class Utils {
         return ((bytes[offset++] & 0xFFL) <<  0) |
                ((bytes[offset++] & 0xFFL) <<  8) |
                ((bytes[offset++] & 0xFFL) << 16) |
-               ((bytes[offset++] & 0xFFL) << 24);
+               ((bytes[offset] & 0xFFL) << 24);
     }
     
     public static long readUint32BE(byte[] bytes, int offset) {
