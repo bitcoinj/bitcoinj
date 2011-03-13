@@ -26,6 +26,8 @@ import java.util.List;
  * This message is a reference or pointer to an output of a different transaction.
  */
 public class TransactionOutPoint extends Message implements Serializable {
+    private static final long serialVersionUID = -6320880638344662579L;
+
     /** Hash of the transaction to which we refer. */
     byte[] hash;
     /** Which output of that transaction we are talking about. */
