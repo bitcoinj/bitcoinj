@@ -264,7 +264,6 @@ public class Wallet implements Serializable {
      * our coins. This should be an address we own (is in the keychain).
      * @return a new {@link Transaction} or null if we cannot afford this send.
      */
-
     synchronized Transaction createSend(Address address,  BigInteger nanocoins, Address changeAddress) {
         Utils.LOG("Creating send tx to " + address.toString() + " for " +
                 Utils.bitcoinValueToFriendlyString(nanocoins));

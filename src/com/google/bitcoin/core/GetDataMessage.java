@@ -17,6 +17,8 @@
 package com.google.bitcoin.core;
 
 public class GetDataMessage extends Message {
+    private static final long serialVersionUID = 2754681589501709887L;
+
     public GetDataMessage(NetworkParameters params, byte[] payloadBytes) throws ProtocolException {
         super(params, payloadBytes, 0);
     }

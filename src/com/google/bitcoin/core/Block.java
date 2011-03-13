@@ -33,8 +33,9 @@ import static com.google.bitcoin.core.Utils.*;
  * you grab it from a downloaded {@link BlockChain}.
  */
 public class Block extends Message {
-    static final long ALLOWED_TIME_DRIFT = 2 * 60 * 60;  // Same value as official client.
+    private static final long serialVersionUID = -2834162413473103042L;
 
+    static final long ALLOWED_TIME_DRIFT = 2 * 60 * 60;  // Same value as official client.
     /** A value for difficultyTarget (nBits) that allows half of all possible hash solutions. Used in unit testing. */
     static final long EASIEST_DIFFICULTY_TARGET = 0x207fFFFFL;
 

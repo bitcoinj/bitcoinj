@@ -24,8 +24,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class InventoryMessage extends Message {
+    private static final long serialVersionUID = -7050246551646107066L;
     private static final long MAX_INVENTORY_ITEMS = 50000;
-    
+
     // For some reason the compiler complains if this is inside InventoryItem
     public List<InventoryItem> items;
 

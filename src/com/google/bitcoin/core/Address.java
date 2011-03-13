@@ -54,7 +54,7 @@ public class Address {
      *
      * <pre>new Address(NetworkParameters.prodNet(), "17kzeh4N8g49GFvdDzSf8PjaPfyoD1MndL");</pre>
      */
-    public Address(NetworkParameters params,  String address) throws AddressFormatException {
+    public Address(NetworkParameters params, String address) throws AddressFormatException {
         this.params = params;
         this.hash160 = strToHash160(address);
     }

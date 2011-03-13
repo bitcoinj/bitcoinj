@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class AddressMessage extends Message {
+    private static final long serialVersionUID = 8058283864924679460L;
     private static final long MAX_ADDRESSES = 1024;
     List<PeerAddress> addresses;
 

@@ -23,6 +23,8 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 
 public class VersionMessage extends Message {
+    private static final long serialVersionUID = 7313594258967483180L;
+
     /**
      * The protocol version this library implements. A value of 31800 means 0.3.18.00.
      */

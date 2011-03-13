@@ -17,6 +17,7 @@
 package com.google.bitcoin.core;
 
 public class UnknownMessage extends Message {
+    private static final long serialVersionUID = 3614705938207918775L;
     private String name;
 
     public UnknownMessage(NetworkParameters params, String name, byte[] payloadBytes) throws ProtocolException {

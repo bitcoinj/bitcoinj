@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.util.List;
 
 public class GetBlocksMessage extends Message {
+    private static final long serialVersionUID = 3479412877853645644L;
     private final List<byte[]> locator;
     private final byte[] stopHash;
 

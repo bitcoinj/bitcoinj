@@ -31,6 +31,8 @@ import java.util.Arrays;
  * This class is not useful for library users. If you want to talk to the network see the {@link Peer} class.
  */
 public abstract class Message implements Serializable {
+    private static final long serialVersionUID = -3561053461717079135L;
+
     public static final int MAX_SIZE = 0x02000000;
 
     // Useful to ensure serialize/deserialize are consistent with each other.
