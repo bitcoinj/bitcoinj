@@ -16,6 +16,8 @@
 
 package com.google.bitcoin.core;
 
+import static com.google.bitcoin.core.Utils.isLessThanUnsigned;
+
 public class VarInt {
     public final long value;
     
@@ -44,13 +46,12 @@ public class VarInt {
     }
     
     public int getSizeInBytes() {
-        // Java doesn't have the actual value of MAX_INT, as all types in Java
-        // are signed *headsmash*.
-        if (value < 253)
+        // Java doesn't have the actual value of MAX_INT, as all types in Java are signed.
+        if (isLessThanUnsigned(value, 253))
             return 1;
-        else if (value <= 65536)
+        else if (isLessThanUnsigned(value, 65536))
             return 3;  // 1 marker + 2 data bytes
-        else if (value <= 4294967295L)
+        else if (isLessThanUnsigned(value, 4294967296L))
             return 5;  // 1 marker + 4 data bytes
         else
             return 9;  // 1 marker + 8 data bytes
@@ -63,11 +64,11 @@ public class VarInt {
     
 
     public byte[] encodeBE() {
-        if (Utils.isLessThanUnsigned(value, 253)) {
+        if (isLessThanUnsigned(value, 253)) {
             return new byte[] { (byte)value };
-        } else if (Utils.isLessThanUnsigned(value, 65536)) {
+        } else if (isLessThanUnsigned(value, 65536)) {
             return new byte[] { (byte) 253, (byte) (value), (byte) (value >> 8) };
-        } else if (Utils.isLessThanUnsigned(value, 4294967295L)) {
+        } else if (isLessThanUnsigned(value, 4294967295L)) {
             byte[] bytes = new byte[5];
             bytes[0] = (byte) 254;
             Utils.uint32ToByteArrayLE(value, bytes, 1);
@@ -75,8 +76,8 @@ public class VarInt {
         } else {
             byte[] bytes = new byte[9];
             bytes[0] = (byte) 255;
-            Utils.uint32ToByteArrayLE(value & 0xFFFFFFFF, bytes, 1);
-            Utils.uint32ToByteArrayLE(value >> 32, bytes, 5);
+            Utils.uint32ToByteArrayLE(value, bytes, 1);
+            Utils.uint32ToByteArrayLE(value >>> 32, bytes, 5);
             return bytes;
         }
     }

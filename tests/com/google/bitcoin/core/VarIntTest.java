@@ -19,25 +19,33 @@ package com.google.bitcoin.core;
 import junit.framework.TestCase;
 
 public class VarIntTest extends TestCase {
-    public void testVarInts() throws Exception {
-        VarInt a;
-
-        // Bytes
-        a = new VarInt(10);
+    public void testBytes() throws Exception {
+        VarInt a = new VarInt(10);
         assertEquals(1, a.getSizeInBytes());
         assertEquals(1, a.encode().length);
         assertEquals(10, new VarInt(a.encode(), 0).value);
+    }
 
-        // Shorts
-        a = new VarInt(64000);
+    public void testShorts() throws Exception {
+        VarInt a = new VarInt(64000);
         assertEquals(3, a.getSizeInBytes());
         assertEquals(3, a.encode().length);
         assertEquals(64000, new VarInt(a.encode(), 0).value);
+    }
 
-        a = new VarInt(0xAABBCCDDL);
+    public void testInts() throws Exception {
+        VarInt a = new VarInt(0xAABBCCDDL);
         assertEquals(5, a.getSizeInBytes());
         assertEquals(5, a.encode().length);
         byte[] bytes = a.encode();
         assertEquals(0xAABBCCDDL, 0xFFFFFFFFL & new VarInt(bytes, 0).value);
+    }
+
+    public void testLong() throws Exception {
+        VarInt a = new VarInt(0xCAFEBABEDEADBEEFL);
+        assertEquals(9, a.getSizeInBytes());
+        assertEquals(9, a.encode().length);
+        byte[] bytes = a.encode();
+        assertEquals(0xCAFEBABEDEADBEEFL, new VarInt(bytes, 0).value);
     }
 }
