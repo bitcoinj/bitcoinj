@@ -417,11 +417,20 @@ public class Block extends Message {
         this.hash = null;
     }
 
-    /** Adds a fake coinbase transaction for unit tests. */
-    void addFakeTransaction() {
+    static private int coinbaseCounter;
+    /** Adds a coinbase transaction to the block. This exists for unit tests. */
+    void addCoinbaseTransaction(Address to) {
         transactions = new ArrayList<Transaction>();
         Transaction coinbase = new Transaction(params);
-        coinbase.setFakeHashForTesting(Utils.doubleDigest("test tx".getBytes()));
+        // A real coinbase transaction has some stuff in the scriptSig like the extraNonce and difficulty. The
+        // transactions are distinguished by every TX output going to a different key.
+        //
+        // Here we will do things a bit differently so a new address isn't needed every time. We'll put a simple
+        // counter in the scriptSig so every transaction has a different hash. The output is also different.
+        // Real coinbase transactions use <pubkey> OP_CHECKSIG rather than a send to an address though there's
+        // nothing in the system that enforces that and both are just as valid.
+        coinbase.inputs.add(new TransactionInput(params, new byte[] { (byte) coinbaseCounter++ } ));
+        coinbase.outputs.add(new TransactionOutput(params, Utils.toNanoCoins(50, 0), to));
         transactions.add(coinbase);
     }
 }

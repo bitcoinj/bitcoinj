@@ -18,6 +18,7 @@ package com.google.bitcoin.core;
 
 import com.google.bitcoin.bouncycastle.util.encoders.Hex;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.math.BigInteger;
@@ -60,6 +61,64 @@ public class BlockChainTest {
             b2.setNonce(n);
         }
         assertTrue(chain.add(b2));
+    }
+
+    private Block createNextBlock(Address to, Block prev) throws VerificationException {
+        Block b = new Block(prev.params);
+        b.setDifficultyTarget(Block.EASIEST_DIFFICULTY_TARGET);
+        b.addCoinbaseTransaction(to);
+        b.setPrevBlockHash(prev.getHash());
+        b.solve();
+        b.verify();
+        return b;
+    }
+
+    @Test @Ignore
+    public void testForking() throws Exception {
+        // Check that if the block chain forks, we end up using the right one.
+        NetworkParameters unitTestParams = NetworkParameters.unitTests();
+        Wallet wallet = new Wallet(unitTestParams);
+        wallet.addKey(new ECKey());
+        Address coinbaseTo = wallet.keychain.get(0).toAddress(unitTestParams);
+        // Start by building a couple of blocks on top of the genesis block.
+        Block b1 = createNextBlock(coinbaseTo, unitTestParams.genesisBlock);
+        Block b2 = createNextBlock(coinbaseTo, b1);
+        chain = new BlockChain(unitTestParams, wallet);
+        chain.add(b1);
+        chain.add(b2);
+        // We got two blocks which generated 50 coins each, to us.
+        assertEquals("100.00", Utils.bitcoinValueToFriendlyString(wallet.getBalance()));
+        // We now have the following chain:
+        //     genesis -> b1 -> b2
+        //
+        // so fork like this:
+        //
+        //     genesis -> b1 -> b2
+        //                  \-> b3
+        //
+        // Nothing should happen at this point. We saw b2 first so it takes priority.
+        Address someOtherGuy = new ECKey().toAddress(unitTestParams);
+        Block b3 = createNextBlock(someOtherGuy, b1);
+        chain.add(b3);
+        assertEquals("100.00", Utils.bitcoinValueToFriendlyString(wallet.getBalance()));
+        // Now we add another block to make the alternative chain longer.
+        chain.add(createNextBlock(someOtherGuy, b3));
+        //
+        //     genesis -> b1 -> b2
+        //                  \-> b3 -> b4
+        //
+        // We lost some coins! b2 is no longer a part of the best chain so our balance should drop to 50 again.
+        assertEquals("50.00", Utils.bitcoinValueToFriendlyString(wallet.getBalance()));
+        // ... and back to the first chain
+        Block b5 = createNextBlock(coinbaseTo, b2);
+        Block b6 = createNextBlock(coinbaseTo, b5);
+        chain.add(b5);
+        chain.add(b6);
+        //
+        //     genesis -> b1 -> b2 -> b5 -> b6
+        //                  \-> b3 -> b4
+        //
+        assertEquals("200.00", Utils.bitcoinValueToFriendlyString(wallet.getBalance()));
     }
 
     @Test

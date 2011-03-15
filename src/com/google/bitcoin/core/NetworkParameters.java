@@ -69,9 +69,8 @@ public class NetworkParameters implements Serializable {
         return genesisBlock;
     }
 
-    /** The test chain created by Gavin. */
-    public static NetworkParameters testNet() {
-        NetworkParameters n = new NetworkParameters();
+    /** Sets up the given NetworkParameters with testnet values. */
+    private static NetworkParameters createTestNet(NetworkParameters n) {
         // Genesis hash is 0000000224b1593e3ff16a0e3b61285bbc393a39f78c8aa48c456142671f7110
         n.proofOfWorkLimit = new BigInteger("0000000fffffffffffffffffffffffffffffffffffffffffffffffffffffffff", 16);
         n.packetMagic = 0xfabfb5daL;
@@ -84,6 +83,12 @@ public class NetworkParameters implements Serializable {
         String genesisHash = n.genesisBlock.getHashAsString();
         assert genesisHash.equals("00000007199508e34a9ff81e6ec0c477a4cccff2a4767a8eee39c11db367b008");
         return n;
+    }
+
+    /** The test chain created by Gavin. */
+    public static NetworkParameters testNet() {
+        NetworkParameters n = new NetworkParameters();
+        return createTestNet(n);
     }
 
     /** The primary BitCoin chain created by Satoshi. */
@@ -104,7 +109,8 @@ public class NetworkParameters implements Serializable {
 
     /** Returns a testnet params modified to allow any difficulty target. */
     static NetworkParameters unitTests() {
-        NetworkParameters n = NetworkParameters.testNet();
+        NetworkParameters n = new NetworkParameters();
+        n = createTestNet(n);
         n.proofOfWorkLimit = new BigInteger("00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", 16);
         n.genesisBlock.setDifficultyTarget(Block.EASIEST_DIFFICULTY_TARGET);
         return n;
