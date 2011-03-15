@@ -199,8 +199,8 @@ public class BlockChain {
     }
 
     private void scanTransaction(Transaction tx) throws ScriptException, VerificationException {
-        if (tx.isCoinBase()) return;
         for (TransactionOutput i : tx.outputs) {
+            // TODO: Handle more types of outputs, not just regular to address outputs.
             if (i.getScriptPubKey().isSentToIP()) return;
             byte[] pubKeyHash;
             pubKeyHash = i.getScriptPubKey().getPubKeyHash();
@@ -208,12 +208,18 @@ public class BlockChain {
                 for (ECKey key : wallet.keychain) {
                     if (Arrays.equals(pubKeyHash, key.getPubKeyHash())) {
                         // We found a transaction that sends us money.
-                        if (!wallet.isTransactionPresent(tx))
+                        if (!wallet.isTransactionPresent(tx)) {
                             wallet.receive(tx);
+                        }
                     }
                 }
             }
         }
+
+        // Coinbase transactions don't have anything useful in their inputs (as they create coins out of thin air),
+        // so we can stop scanning at this point.
+        if (tx.isCoinBase()) return;
+
         for (TransactionInput i : tx.inputs) {
             byte[] pubkey = i.getScriptSig().getPubKey();
             synchronized (wallet) {
