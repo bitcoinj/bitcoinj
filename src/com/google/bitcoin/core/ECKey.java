@@ -98,7 +98,10 @@ public class ECKey implements Serializable {
         return pubKeyHash;
     }
 
-    /** Gets the raw public key value. */
+    /**
+     * Gets the raw public key value. This appears in transaction scriptSigs. Note that this is <b>not</b> the same
+     * as the pubKeyHash/address.
+     */
     public byte[] getPubKey() {
         return pub;
     }
@@ -110,7 +113,10 @@ public class ECKey implements Serializable {
         return b.toString();
     }
 
-
+    /**
+     * Returns the address that corresponds to the public part of this ECKey. Note that an address is derived from
+     * the RIPEMD-160 hash of the public key and is not the public key itself (which is too large to be convenient).
+     */
     public Address toAddress(NetworkParameters params) {
         byte[] hash160 = Utils.sha256hash160(pub);
         return new Address(params, hash160);
