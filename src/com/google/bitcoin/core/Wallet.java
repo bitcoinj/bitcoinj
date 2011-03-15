@@ -347,4 +347,26 @@ public class Wallet implements Serializable {
         }
         return balance;
     }
+
+    @Override
+    public String toString() {
+        StringBuilder builder = new StringBuilder();
+        builder.append("Wallet containing ");
+        builder.append(Utils.bitcoinValueToFriendlyString(getBalance()));
+        builder.append("BTC in ");
+        builder.append(unspent.size());
+        builder.append(" unspent transactions/");
+        builder.append(fullySpent.size());
+        builder.append(" spent transactions");
+        // Do the keys.
+        builder.append("\nKeys:\n");
+        for (ECKey key : keychain) {
+            builder.append("  addr:");
+            builder.append(key.toAddress(params));
+            builder.append(" ");
+            builder.append(key.toString());
+            builder.append("\n");
+        }
+        return builder.toString();
+    }
 }
