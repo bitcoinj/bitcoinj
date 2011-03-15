@@ -206,6 +206,9 @@ Static method in class com.google.bitcoin.core.<A HREF="./com/google/bitcoin/cor
 <DT><A HREF="./com/google/bitcoin/core/Utils.html#doubleDigestTwoBuffers(byte[], int, int, byte[], int, int)"><B>doubleDigestTwoBuffers(byte[], int, int, byte[], int, int)</B></A> - 
 Static method in class com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core/Utils.html" title="class in com.google.bitcoin.core">Utils</A>
 <DD>Calculates SHA256(SHA256(byte range 1 + byte range 2)).
+<DT><A HREF="./com/google/bitcoin/examples/DumpWallet.html" title="class in com.google.bitcoin.examples"><B>DumpWallet</B></A> - Class in <A HREF="./com/google/bitcoin/examples/package-summary.html">com.google.bitcoin.examples</A><DD>DumpWallet loads a serialized wallet and prints information about what it contains.<DT><A HREF="./com/google/bitcoin/examples/DumpWallet.html#DumpWallet()"><B>DumpWallet()</B></A> - 
+Constructor for class com.google.bitcoin.examples.<A HREF="./com/google/bitcoin/examples/DumpWallet.html" title="class in com.google.bitcoin.examples">DumpWallet</A>
+<DD>&nbsp;
 </DL>
 <HR>
 <A NAME="_E_"><!-- --></A><H2>
@@ -361,6 +364,10 @@ Method in class com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core/Block
 <A NAME="_H_"><!-- --></A><H2>
 <B>H</B></H2>
 <DL>
+<DT><A HREF="./com/google/bitcoin/core/VersionMessage.html#hasBlockChain()"><B>hasBlockChain()</B></A> - 
+Method in class com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core/VersionMessage.html" title="class in com.google.bitcoin.core">VersionMessage</A>
+<DD>Returns true if the version message indicates the sender has a full copy of the block chain,
+ or if it's running in client mode (only has the headers).
 <DT><A HREF="./com/google/bitcoin/core/InventoryItem.html#hash"><B>hash</B></A> - 
 Variable in class com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core/InventoryItem.html" title="class in com.google.bitcoin.core">InventoryItem</A>
 <DD>&nbsp;
@@ -441,6 +448,9 @@ Variable in class com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core/Ver
 <A NAME="_M_"><!-- --></A><H2>
 <B>M</B></H2>
 <DL>
+<DT><A HREF="./com/google/bitcoin/examples/DumpWallet.html#main(java.lang.String[])"><B>main(String[])</B></A> - 
+Static method in class com.google.bitcoin.examples.<A HREF="./com/google/bitcoin/examples/DumpWallet.html" title="class in com.google.bitcoin.examples">DumpWallet</A>
+<DD>&nbsp;
 <DT><A HREF="./com/google/bitcoin/examples/PingService.html#main(java.lang.String[])"><B>main(String[])</B></A> - 
 Static method in class com.google.bitcoin.examples.<A HREF="./com/google/bitcoin/examples/PingService.html" title="class in com.google.bitcoin.examples">PingService</A>
 <DD>&nbsp;
@@ -465,6 +475,9 @@ Constructor for class com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core
 <DT><A HREF="./com/google/bitcoin/core/NetworkParameters.html" title="class in com.google.bitcoin.core"><B>NetworkParameters</B></A> - Class in <A HREF="./com/google/bitcoin/core/package-summary.html">com.google.bitcoin.core</A><DD>NetworkParameters contains the data needed for working with an instantiation of a BitCoin chain.<DT><A HREF="./com/google/bitcoin/core/NetworkParameters.html#NetworkParameters()"><B>NetworkParameters()</B></A> - 
 Constructor for class com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core/NetworkParameters.html" title="class in com.google.bitcoin.core">NetworkParameters</A>
 <DD>&nbsp;
+<DT><A HREF="./com/google/bitcoin/core/VersionMessage.html#NODE_NETWORK"><B>NODE_NETWORK</B></A> - 
+Static variable in class com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core/VersionMessage.html" title="class in com.google.bitcoin.core">VersionMessage</A>
+<DD>A services flag that denotes whether the peer has a copy of the block chain or not.
 </DL>
 <HR>
 <A NAME="_O_"><!-- --></A><H2>
@@ -560,7 +573,7 @@ Variable in class com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core/Net
 <DD>What the easiest allowable proof of work should be.
 <DT><A HREF="./com/google/bitcoin/core/VersionMessage.html#PROTOCOL_VERSION"><B>PROTOCOL_VERSION</B></A> - 
 Static variable in class com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core/VersionMessage.html" title="class in com.google.bitcoin.core">VersionMessage</A>
-<DD>&nbsp;
+<DD>The protocol version this library implements.
 <DT><A HREF="./com/google/bitcoin/core/ProtocolException.html" title="class in com.google.bitcoin.core"><B>ProtocolException</B></A> - Exception in <A HREF="./com/google/bitcoin/core/package-summary.html">com.google.bitcoin.core</A><DD>&nbsp;<DT><A HREF="./com/google/bitcoin/core/ProtocolException.html#ProtocolException(java.lang.String)"><B>ProtocolException(String)</B></A> - 
 Constructor for exception com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core/ProtocolException.html" title="class in com.google.bitcoin.core">ProtocolException</A>
 <DD>&nbsp;
@@ -662,7 +675,7 @@ Variable in class com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core/Ver
 <DD>&nbsp;
 <DT><A HREF="./com/google/bitcoin/core/ECKey.html#toAddress(com.google.bitcoin.core.NetworkParameters)"><B>toAddress(NetworkParameters)</B></A> - 
 Method in class com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core/ECKey.html" title="class in com.google.bitcoin.core">ECKey</A>
-<DD>&nbsp;
+<DD>Returns the address that corresponds to the public part of this ECKey.
 <DT><A HREF="./com/google/bitcoin/core/Utils.html#toNanoCoins(int, int)"><B>toNanoCoins(int, int)</B></A> - 
 Static method in class com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core/Utils.html" title="class in com.google.bitcoin.core">Utils</A>
 <DD>Convert an amount expressed in the way humans are used to into nanocoins.
@@ -704,6 +717,9 @@ Method in class com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core/Trans
 <DD>Returns a human readable debug string.
 <DT><A HREF="./com/google/bitcoin/core/UnknownMessage.html#toString()"><B>toString()</B></A> - 
 Method in class com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core/UnknownMessage.html" title="class in com.google.bitcoin.core">UnknownMessage</A>
+<DD>&nbsp;
+<DT><A HREF="./com/google/bitcoin/core/Wallet.html#toString()"><B>toString()</B></A> - 
+Method in class com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core/Wallet.html" title="class in com.google.bitcoin.core">Wallet</A>
 <DD>&nbsp;
 <DT><A HREF="./com/google/bitcoin/core/Transaction.html" title="class in com.google.bitcoin.core"><B>Transaction</B></A> - Class in <A HREF="./com/google/bitcoin/core/package-summary.html">com.google.bitcoin.core</A><DD>A transaction represents the movement of coins from some addresses to some other addresses.<DT><A HREF="./com/google/bitcoin/core/Transaction.html#Transaction(com.google.bitcoin.core.NetworkParameters, byte[])"><B>Transaction(NetworkParameters, byte[])</B></A> - 
 Constructor for class com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core/Transaction.html" title="class in com.google.bitcoin.core">Transaction</A>

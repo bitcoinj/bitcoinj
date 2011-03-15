@@ -125,7 +125,7 @@ java.lang.Object
 </TR>
 <TR BGCOLOR="white" CLASS="TableRowColor">
 <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
-<CODE>&nbsp;int</CODE></FONT></TD>
+<CODE>&nbsp;long</CODE></FONT></TD>
 <TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/VersionMessage.html#localServices">localServices</A></B></CODE>
 
 <BR>
@@ -134,10 +134,18 @@ java.lang.Object
 <TR BGCOLOR="white" CLASS="TableRowColor">
 <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
 <CODE>static&nbsp;int</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/VersionMessage.html#NODE_NETWORK">NODE_NETWORK</A></B></CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;A services flag that denotes whether the peer has a copy of the block chain or not.</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>static&nbsp;int</CODE></FONT></TD>
 <TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/VersionMessage.html#PROTOCOL_VERSION">PROTOCOL_VERSION</A></B></CODE>
 
 <BR>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The protocol version this library implements.</TD>
 </TR>
 <TR BGCOLOR="white" CLASS="TableRowColor">
 <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
@@ -199,6 +207,15 @@ java.lang.Object
 </TR>
 <TR BGCOLOR="white" CLASS="TableRowColor">
 <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;boolean</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/VersionMessage.html#hasBlockChain()">hasBlockChain</A></B>()</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Returns true if the version message indicates the sender has a full copy of the block chain,
+ or if it's running in client mode (only has the headers).</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
 <CODE>&nbsp;void</CODE></FONT></TD>
 <TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/VersionMessage.html#parse()">parse</A></B>()</CODE>
 
@@ -242,8 +259,22 @@ PROTOCOL_VERSION</H3>
 <PRE>
 public static final int <B>PROTOCOL_VERSION</B></PRE>
 <DL>
+<DD>The protocol version this library implements. A value of 31800 means 0.3.18.00.
+<P>
 <DL>
 <DT><B>See Also:</B><DD><A HREF="../../../../constant-values.html#com.google.bitcoin.core.VersionMessage.PROTOCOL_VERSION">Constant Field Values</A></DL>
+</DL>
+<HR>
+
+<A NAME="NODE_NETWORK"><!-- --></A><H3>
+NODE_NETWORK</H3>
+<PRE>
+public static final int <B>NODE_NETWORK</B></PRE>
+<DL>
+<DD>A services flag that denotes whether the peer has a copy of the block chain or not.
+<P>
+<DL>
+<DT><B>See Also:</B><DD><A HREF="../../../../constant-values.html#com.google.bitcoin.core.VersionMessage.NODE_NETWORK">Constant Field Values</A></DL>
 </DL>
 <HR>
 
@@ -260,7 +291,7 @@ public int <B>clientVersion</B></PRE>
 <A NAME="localServices"><!-- --></A><H3>
 localServices</H3>
 <PRE>
-public int <B>localServices</B></PRE>
+public long <B>localServices</B></PRE>
 <DL>
 <DL>
 </DL>
@@ -350,6 +381,20 @@ public void <B>bitcoinSerializeToStream</B>(java.io.OutputStream&nbsp;buf)
 
 <DT><B>Throws:</B>
 <DD><CODE>java.io.IOException</CODE></DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="hasBlockChain()"><!-- --></A><H3>
+hasBlockChain</H3>
+<PRE>
+public boolean <B>hasBlockChain</B>()</PRE>
+<DL>
+<DD>Returns true if the version message indicates the sender has a full copy of the block chain,
+ or if it's running in client mode (only has the headers).
+<P>
+<DD><DL>
+</DL>
 </DD>
 </DL>
 <!-- ========= END OF CLASS DATA ========= -->

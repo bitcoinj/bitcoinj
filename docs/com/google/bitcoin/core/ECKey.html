@@ -181,7 +181,7 @@ Represents an elliptic curve keypair that we own and can use for signing transac
 <TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/ECKey.html#toAddress(com.google.bitcoin.core.NetworkParameters)">toAddress</A></B>(<A HREF="../../../../com/google/bitcoin/core/NetworkParameters.html" title="class in com.google.bitcoin.core">NetworkParameters</A>&nbsp;params)</CODE>
 
 <BR>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Returns the address that corresponds to the public part of this ECKey.</TD>
 </TR>
 <TR BGCOLOR="white" CLASS="TableRowColor">
 <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
@@ -301,7 +301,8 @@ getPubKey</H3>
 <PRE>
 public byte[] <B>getPubKey</B>()</PRE>
 <DL>
-<DD>Gets the raw public key value.
+<DD>Gets the raw public key value. This appears in transaction scriptSigs. Note that this is <b>not</b> the same
+ as the pubKeyHash/address.
 <P>
 <DD><DL>
 </DL>
@@ -331,6 +332,9 @@ toAddress</H3>
 <PRE>
 public <A HREF="../../../../com/google/bitcoin/core/Address.html" title="class in com.google.bitcoin.core">Address</A> <B>toAddress</B>(<A HREF="../../../../com/google/bitcoin/core/NetworkParameters.html" title="class in com.google.bitcoin.core">NetworkParameters</A>&nbsp;params)</PRE>
 <DL>
+<DD>Returns the address that corresponds to the public part of this ECKey. Note that an address is derived from
+ the RIPEMD-160 hash of the public key and is not the public key itself (which is too large to be convenient).
+<P>
 <DD><DL>
 </DL>
 </DD>
