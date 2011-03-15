@@ -36,7 +36,7 @@ public class TransactionOutPoint extends Message implements Serializable {
     // This is not part of bitcoin serialization.
     Transaction fromTx;
 
-    TransactionOutPoint(NetworkParameters params, long index,  Transaction fromTx) {
+    TransactionOutPoint(NetworkParameters params, long index, Transaction fromTx) {
         super(params);
         this.index = index;
         if (fromTx != null) {

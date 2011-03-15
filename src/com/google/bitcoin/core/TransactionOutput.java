@@ -58,7 +58,7 @@ public class TransactionOutput extends Message implements Serializable {
         this.scriptBytes = Script.createOutputScript(to);
     }
 
-    /** Used only in creation of the genesis block. */
+    /** Used only in creation of the genesis blocks and in unit tests. */
     TransactionOutput(NetworkParameters params, byte[] scriptBytes) {
         super(params);
         this.scriptBytes = scriptBytes;
