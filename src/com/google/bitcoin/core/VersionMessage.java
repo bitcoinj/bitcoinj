@@ -26,21 +26,27 @@ public class VersionMessage extends Message {
     private static final long serialVersionUID = 7313594258967483180L;
 
     /**
-     * The protocol version this library implements. A value of 31800 means 0.3.18.00.
-     */
-    public static final int PROTOCOL_VERSION = 31800;
-
-    /**
      * A services flag that denotes whether the peer has a copy of the block chain or not.
      */
     public static final int NODE_NETWORK = 1;
 
+    /** The version number of the protocol spoken. */
     public int clientVersion;
-    // Flags defining what the other side supports. Right now there's only one flag and it's
-    // always set 1 by the official client, but we have to set it to zero as we don't store
-    // the block chain. In future there may be more services bits.
+    /** Flags defining what is supported. Right now {@link #NODE_NETWORK} is the only flag defined. */
     public long localServices;
-    public BigInteger time;
+    /** What the other side believes the current time to be, in seconds. */
+    public long time;
+    /** What the other side believes the address of this program is. Not used. */
+    public PeerAddress myAddr;
+    /** What the other side believes their own address is. Not used. */
+    public PeerAddress theirAddr;
+    /**
+     * An additional string that today the official client sets to the empty string. We treat it as something like an
+     * HTTP User-Agent header.
+     */
+    public String subVer;
+    /** How many blocks are in the chain, according to the other side. */
+    public long bestHeight;
 
     public VersionMessage(NetworkParameters params, byte[] msg) throws ProtocolException {
         super(params, msg, 0);
@@ -48,43 +54,51 @@ public class VersionMessage extends Message {
 
     public VersionMessage(NetworkParameters params) {
         super(params);
-        clientVersion = PROTOCOL_VERSION;
+        clientVersion = NetworkParameters.PROTOCOL_VERSION;
         localServices = 0;
-        time = BigInteger.valueOf(System.currentTimeMillis() / 1000);
+        time = System.currentTimeMillis() / 1000;
+        // Note that the official client doesn't do anything with these, and finding out your own external IP address
+        // is kind of tricky anyway, so we just put nonsense here for now.
+        try {
+            myAddr = new PeerAddress(InetAddress.getLocalHost(), params.port);
+            theirAddr = new PeerAddress(InetAddress.getLocalHost(), params.port);
+        } catch (UnknownHostException e) {
+            throw new RuntimeException(e);  // Cannot happen.
+        }
+        subVer = "BitCoinJ 0.1.99";
+        bestHeight = 0;
     }
     
     @Override
     public void parse() throws ProtocolException {
-        // There is probably a more Java-ish way to do this.
         clientVersion = (int) readUint32();
         localServices = readUint64().longValue();
-        time = readUint64();
-        // The next fields are:
-        //   CAddress my address
-        //   CAddress their address
-        //   uint64 localHostNonce  (random data)
+        time = readUint64().longValue();
+        myAddr = new PeerAddress(params, bytes, cursor, 0);
+        cursor += myAddr.getMessageSize();
+        theirAddr = new PeerAddress(params, bytes, cursor, 0);
+        cursor += theirAddr.getMessageSize();
+        // uint64 localHostNonce  (random data)
+        // We don't care about the localhost nonce. It's used to detect connecting back to yourself in cases where
+        // there are NATs and proxies in the way. However we don't listen for inbound connections so it's irrelevant.
+        readUint64();
         //   string subVer  (currently "")
+        subVer = readStr();
         //   int bestHeight (size of known block chain).
-        //
-        // However, we don't care about these fields right now.
+        bestHeight = readUint32();
     }
-    
     
     @Override
     public void bitcoinSerializeToStream(OutputStream buf) throws IOException {
         Utils.uint32ToByteStreamLE(clientVersion, buf);
         Utils.uint32ToByteStreamLE(localServices, buf);
-        long ltime = time.longValue();
-        Utils.uint32ToByteStreamLE(ltime >> 32, buf);
-        Utils.uint32ToByteStreamLE(ltime, buf);
+        Utils.uint32ToByteStreamLE(time >> 32, buf);
+        Utils.uint32ToByteStreamLE(time, buf);
         try {
-            // Now there are two address structures. Note that the official client doesn't do anything with these, and
-            // finding out your own external IP address is kind of tricky anyway, so we just serialize nonsense here.
-
             // My address.
-            new PeerAddress(InetAddress.getLocalHost(), params.port).bitcoinSerializeToStream(buf);
+            myAddr.bitcoinSerializeToStream(buf);
             // Their address.
-            new PeerAddress(InetAddress.getLocalHost(), params.port).bitcoinSerializeToStream(buf);
+            theirAddr.bitcoinSerializeToStream(buf);
         } catch (UnknownHostException e) {
             throw new RuntimeException(e);  // Can't happen.
         } catch (IOException e) {
@@ -95,10 +109,12 @@ public class VersionMessage extends Message {
         // connections.
         Utils.uint32ToByteStreamLE(0, buf);
         Utils.uint32ToByteStreamLE(0, buf);
-        // Now comes an empty string.
-        buf.write(0);
-        // Size of known block chain. Claim we never saw any blocks.
-        Utils.uint32ToByteStreamLE(0, buf);
+        // Now comes subVer.
+        byte[] subVerBytes = subVer.getBytes("UTF-8");
+        buf.write(new VarInt(subVerBytes.length).encode());
+        buf.write(subVerBytes);
+        // Size of known block chain.
+        Utils.uint32ToByteStreamLE(bestHeight, buf);
     }
 
     /**

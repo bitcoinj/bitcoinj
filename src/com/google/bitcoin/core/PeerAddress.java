@@ -36,9 +36,10 @@ public class PeerAddress extends Message {
     InetAddress addr;
     int port;
     BigInteger services;
+    long time;
 
-    public PeerAddress(NetworkParameters params, byte[] payload, int offset) throws ProtocolException {
-        super(params, payload, offset);
+    public PeerAddress(NetworkParameters params, byte[] payload, int offset, int protocolVersion) throws ProtocolException {
+        super(params, payload, offset, protocolVersion);
     }
     
     public PeerAddress(InetAddress addr, int port) {
@@ -72,7 +73,10 @@ public class PeerAddress extends Message {
         //   uint64 services   (flags determining what the node can do)
         //   16 bytes ip address
         //   2 bytes port num
-        long time = readUint32();
+        if (protocolVersion > 31402)
+            time = readUint32();
+        else
+            time = -1;
         services = readUint64();
         byte[] addrBytes = readBytes(16);
         try {

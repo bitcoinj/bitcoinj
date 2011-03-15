@@ -29,6 +29,11 @@ import java.math.BigInteger;
  * evolves there may be more. You can create your own as long as they don't conflict.
  */
 public class NetworkParameters implements Serializable {
+    /**
+     * The protocol version this library implements. A value of 31800 means 0.3.18.00.
+     */
+    public static final int PROTOCOL_VERSION = 31800;
+
     private static final long serialVersionUID = 2579833727976661964L;
 
     // TODO: Seed nodes and checkpoint values should be here as well.

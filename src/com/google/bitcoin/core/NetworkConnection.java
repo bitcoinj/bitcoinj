@@ -55,7 +55,8 @@ public class NetworkConnection {
     private final InetAddress remoteIp;
     private boolean usesChecksumming;
     private final NetworkParameters params;
-    static final private boolean PROTOCOL_LOG = false;
+    private final VersionMessage versionMessage;
+    private static final boolean PROTOCOL_LOG = false;
 
     /**
      * Connect to the given IP address using the port specified as part of the network parameters. Once construction
@@ -74,7 +75,7 @@ public class NetworkConnection {
 
         // When connecting, the remote peer sends us a version message with various bits of
         // useful data in it. We need to know the peer protocol version before we can talk to it.
-        VersionMessage ver = (VersionMessage) readMessage();
+        versionMessage = (VersionMessage) readMessage();
         // Now it's our turn ...
         writeMessage(MSG_VERSION, new VersionMessage(params));
         // Send an ACK message stating we accept the peers protocol version.
@@ -82,12 +83,13 @@ public class NetworkConnection {
         // And get one back ...
         readMessage();
         // Switch to the new protocol version.
-        int peerVersion = ver.clientVersion;
-        LOG("Connected to peer, version is " + peerVersion + ", services=" + Long.toHexString(
-                ver.localServices) + ", time=" + new Date(ver.time.longValue() * 1000).toString());
+        int peerVersion = versionMessage.clientVersion;
+        LOG(String.format("Connected to peer: version=%d, subVer='%s', services=0x%x, time=%s, blocks=%d",
+                peerVersion, versionMessage.subVer,
+                versionMessage.localServices, new Date(versionMessage.time * 1000).toString(), versionMessage.bestHeight));
         // BitCoinJ is a client mode implementation. That means there's not much point in us talking to other client
         // mode nodes because we can't download the data from them we need to find/verify transactions.
-        if (!ver.hasBlockChain())
+        if (!versionMessage.hasBlockChain())
             throw new ProtocolException("Peer does not have a copy of the block chain.");
         usesChecksumming = peerVersion >= 209;
         // Handshake is done!
@@ -198,9 +200,6 @@ public class NetworkConnection {
         if (size > Message.MAX_SIZE)
             throw new ProtocolException("Message size too large: " + size);
 
-        if (PROTOCOL_LOG)
-            LOG("Received " + size + " byte '" + command + "' command");
-
         // Old clients don't send the checksum.
         byte[] checksum = new byte[4];
         if (usesChecksumming) {
@@ -230,6 +229,9 @@ public class NetworkConnection {
                         " vs " + bytesToHexString(checksum));
             }
         }
+
+        if (PROTOCOL_LOG)
+            LOG("Received " + size + " byte '" + command + "' message: " + Utils.bytesToHexString(payloadBytes));
 
         try {
             Message message;
@@ -291,5 +293,10 @@ public class NetworkConnection {
     public void writeMessage(String tag,  Message message) throws IOException {
         // TODO: Requiring "tag" here is redundant, the message object should know its own protocol tag.
         writeMessage(tag, message.bitcoinSerialize());
+    }
+
+    /** Returns the version message received from the other end of the connection during the handshake. */
+    public VersionMessage getVersionMessage() {
+        return versionMessage;
     }
 }

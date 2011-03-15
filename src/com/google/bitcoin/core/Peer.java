@@ -106,9 +106,6 @@ public class Peer {
         }
     }
 
-    // This tracks whether we have received a block we could not connect to the chain in this session.
-    private boolean hasSeenUnconnectedBlock = false;
-
     private void processBlock(Block m) throws IOException {
         assert Thread.currentThread() == thread;
         try {
@@ -128,17 +125,13 @@ public class Peer {
             // Otherwise it's a block sent to us because the peer thought we needed it, so add it to the block chain.
             // This call will synchronize on blockChain.
             if (blockChain.add(m)) {
-                // The block was successfully linked into the chain.
-                if (hasSeenUnconnectedBlock && blockChain.getUnconnectedBlock() == null) {
-                    // We cleared out our unconnected blocks. This likely means block chain download is "done" in the
-                    // sense that we were downloading blocks as part of the chained download,
-                    // and there's no more to come. To some extent of course the download is never done.
-                    LOG("Block chain download done.");
-                    if (chainCompletionLatch != null) {
-                        chainCompletionLatch.countDown();
+                // The block was successfully linked into the chain. Notify the user of our progress.
+                if (chainCompletionLatch != null) {
+                    chainCompletionLatch.countDown();
+                    if (chainCompletionLatch.getCount() == 0) {
+                        // All blocks fetched, so we don't need this anymore.
                         chainCompletionLatch = null;
                     }
-                    hasSeenUnconnectedBlock = false;
                 }
             } else {
                 // This block is unconnected - we don't know how to get from it back to the genesis block yet. That
@@ -148,7 +141,6 @@ public class Peer {
                 // the others.
 
                 // TODO: Should actually request root of orphan chain here.
-                hasSeenUnconnectedBlock = true;
                 blockChainDownload(m.getHash());
             }
         } catch (VerificationException e) {
@@ -319,14 +311,20 @@ public class Peer {
     }
 
     /**
-     * Starts an asynchronous download of the block chain. Completion of the download is a somewhat vague concept in
-     * BitCoin as the chain is constantly growing, but essentially we deem the download complete once we have
-     * received the block that the peer told us was the head when we first started the download.
+     * Starts an asynchronous download of the block chain. The chain download is deemed to be complete once we've
+     * downloaded the same number of blocks that the peer advertised having in its version handshake message.
      *
-     * @return a {@link CountDownLatch} that can be used to wait until the chain download is "complete".
+     * @return a {@link CountDownLatch} that can be used to track progress and wait for completion.
      */
     public CountDownLatch startBlockChainDownload() throws IOException {
-        chainCompletionLatch = new CountDownLatch(1);
+        // Chain will overflow signed int blocks in ~41,000 years.
+        int chainHeight = (int) conn.getVersionMessage().bestHeight;
+        if (chainHeight <= 0) {
+            // This should not happen because we shouldn't have given the user a Peer that is to another client-mode
+            // node. If that happens it means the user overrode us somewhere.
+            throw new  RuntimeException("Peer does not have block chain");
+        }
+        chainCompletionLatch = new CountDownLatch(chainHeight);
         blockChainDownload(params.genesisBlock.getHash());
         return chainCompletionLatch;
     }

@@ -48,7 +48,7 @@ public class GetBlocksMessage extends Message {
         try {
             ByteArrayOutputStream buf = new ByteArrayOutputStream();
             // Version, for some reason.
-            Utils.uint32ToByteStreamLE(VersionMessage.PROTOCOL_VERSION, buf);
+            Utils.uint32ToByteStreamLE(NetworkParameters.PROTOCOL_VERSION, buf);
             // Then a vector of block hashes. This is actually a "block locator", a set of block
             // identifiers that spans the entire chain with exponentially increasing gaps between
             // them, until we end up at the genesis block. See CBlockLocator::Set()

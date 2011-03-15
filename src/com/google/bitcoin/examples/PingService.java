@@ -22,6 +22,8 @@ import java.io.File;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.net.InetAddress;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 /**
  * PingService demonstrates basic usage of the library. It sits on the network and when it receives coins, simply
@@ -29,7 +31,7 @@ import java.net.InetAddress;
  */
 public class PingService {
     public static void main(String[] args) throws Exception {
-        final NetworkParameters params = NetworkParameters.prodNet();
+        final NetworkParameters params = NetworkParameters.testNet();
 
         // Try to read the wallet from storage, create a new one if not possible.
         Wallet wallet;
@@ -51,7 +53,6 @@ public class PingService {
         BlockChain chain = new BlockChain(params, wallet);
         final Peer peer = new Peer(params, conn, chain);
         peer.start();
-        peer.startBlockChainDownload().await();
 
         // We want to know when the balance changes.
         wallet.addEventListener(new WalletEventListener() {
@@ -82,6 +83,15 @@ public class PingService {
             }
         });
 
+        CountDownLatch progress = peer.startBlockChainDownload();
+        long max = progress.getCount();  // Racy but no big deal.
+        long current = max;
+        while (current > 0) {
+            double pct = 100.0 - (100.0 * (current / (double)max));
+            System.out.println(String.format("Chain download %d%% done", (int)pct));
+            progress.await(1, TimeUnit.SECONDS);
+            current = progress.getCount();
+        }
         System.out.println("Send coins to: " + key.toAddress(params).toString());
         System.out.println("Waiting for coins to arrive. Press Ctrl-C to quit.");
         // The peer thread keeps us alive until something kills the process.

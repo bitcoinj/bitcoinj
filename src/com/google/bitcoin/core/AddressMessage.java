@@ -24,7 +24,7 @@ public class AddressMessage extends Message {
             throw new ProtocolException("Address message too large.");
         addresses = new ArrayList<PeerAddress>((int)numAddresses);
         for (int i = 0; i < numAddresses; i++) {
-            PeerAddress addr = new PeerAddress(params, bytes, cursor);
+            PeerAddress addr = new PeerAddress(params, bytes, cursor, protocolVersion);
             addresses.add(addr);
             cursor += addr.getMessageSize();
         }

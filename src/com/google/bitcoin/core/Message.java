@@ -16,10 +16,7 @@
 
 package com.google.bitcoin.core;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.Serializable;
+import java.io.*;
 import java.math.BigInteger;
 import java.util.Arrays;
 
@@ -44,7 +41,10 @@ public abstract class Message implements Serializable {
     // Note that it's relative to the start of the array NOT the start of the message.
     protected transient int cursor;
 
+    // The raw message bytes themselves.
     protected transient byte[] bytes;
+
+    protected transient int protocolVersion;
 
     // This will be saved by subclasses that implement Serializable.
     protected NetworkParameters params;
@@ -58,7 +58,8 @@ public abstract class Message implements Serializable {
     }
 
     @SuppressWarnings("unused")
-    Message(NetworkParameters params, byte[] msg, int offset) throws ProtocolException {
+    Message(NetworkParameters params, byte[] msg, int offset, int protocolVersion) throws ProtocolException {
+        this.protocolVersion = protocolVersion;
         this.params = params;
         this.bytes = msg;
         this.cursor = this.offset = offset;
@@ -73,6 +74,10 @@ public abstract class Message implements Serializable {
                         Utils.bytesToHexString(msgbytes));
         }
         this.bytes = null;
+    }
+
+    Message(NetworkParameters params, byte[] msg, int offset) throws ProtocolException {
+        this(params, msg, offset, NetworkParameters.PROTOCOL_VERSION);
     }
     
     // These methods handle the serialization/deserialization using the custom BitCoin protocol.
@@ -140,5 +145,21 @@ public abstract class Message implements Serializable {
         System.arraycopy(bytes, cursor, b, 0, length);
         cursor += length;
         return b;
+    }
+
+    String readStr() {
+        VarInt varInt = new VarInt(bytes, cursor);
+        if (varInt.value == 0) {
+            cursor += 1;
+            return "";
+        }
+        byte[] characters = new byte[(int)varInt.value];
+        System.arraycopy(bytes, cursor, characters, 0, characters.length);
+        cursor += varInt.getSizeInBytes();
+        try {
+            return new String(characters, "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            throw new RuntimeException(e);  // Cannot happen, UTF-8 is always supported.
+        }
     }
 }
