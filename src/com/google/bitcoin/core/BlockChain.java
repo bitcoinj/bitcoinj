@@ -22,7 +22,6 @@ import java.util.Arrays;
 import java.util.LinkedList;
 
 import static com.google.bitcoin.core.Utils.LOG;
-import static com.google.bitcoin.core.Utils.bytesToHexString;
 
 /**
  * A BlockChain holds a series of {@link Block} objects, links them together, and knows how to verify that the
@@ -50,10 +49,7 @@ import static com.google.bitcoin.core.Utils.bytesToHexString;
  */
 public class BlockChain {
     // This is going away.
-    private final LinkedList<Block> blockChain = new LinkedList<Block>();
-
-    /** Each chain head that we saw so far. */
-    private final ArrayList<Block> chainHeads = new ArrayList<Block>();
+    private final LinkedList<Block> blockChain;
 
     private final NetworkParameters params;
     private final Wallet wallet;
@@ -63,6 +59,7 @@ public class BlockChain {
     private final ArrayList<Block> unconnectedBlocks = new ArrayList<Block>();
 
     public BlockChain(NetworkParameters params, Wallet wallet) {
+        blockChain = new LinkedList<Block>();
         blockChain.add(params.genesisBlock);
         this.params = params;
         this.wallet = wallet;
@@ -119,7 +116,7 @@ public class BlockChain {
             unconnectedBlocks.add(block);
             return false;
         }
-        checkDifficultyTransitions(block);
+        checkDifficultyTransitions(prev, block);
         // The block is OK so let's build the rest of the chain on it.
         block.prevBlock = prev;
         blockChain.add(block);
@@ -158,14 +155,13 @@ public class BlockChain {
     static private final int TARGET_SPACING = 10 * 60;
     static private final int INTERVAL = TARGET_TIMESPAN / TARGET_SPACING;
 
-    private void checkDifficultyTransitions(Block top) throws VerificationException {
-        Block prev = blockChain.getLast();
+    private void checkDifficultyTransitions(Block prev, Block next) throws VerificationException {
         // Is this supposed to be a difficulty transition point?
         if (blockChain.size() % INTERVAL != 0) {
             // No ... so check the difficulty didn't actually change.
-            if (top.getDifficultyTarget() != prev.getDifficultyTarget())
+            if (next.getDifficultyTarget() != prev.getDifficultyTarget())
                 throw new VerificationException("Unexpected change in difficulty at height " + blockChain.size() +
-                        ": " + Long.toHexString(top.getDifficultyTarget()) + " vs " +
+                        ": " + Long.toHexString(next.getDifficultyTarget()) + " vs " +
                         Long.toHexString(prev.getDifficultyTarget()));
             return;
         }
@@ -186,8 +182,8 @@ public class BlockChain {
             newDifficulty = params.proofOfWorkLimit;
         }
 
-        int accuracyBytes = (int) (top.getDifficultyTarget() >>> 24) - 3;
-        BigInteger receivedDifficulty = top.getDifficultyTargetBI();
+        int accuracyBytes = (int) (next.getDifficultyTarget() >>> 24) - 3;
+        BigInteger receivedDifficulty = next.getDifficultyTargetAsInteger();
 
         // The calculated difficulty is to a higher precision than received, so reduce here.
         BigInteger mask = BigInteger.valueOf(0xFFFFFFL).shiftLeft(accuracyBytes * 8);

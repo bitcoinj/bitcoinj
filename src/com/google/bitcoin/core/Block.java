@@ -27,10 +27,10 @@ import static com.google.bitcoin.core.Utils.*;
 /**
  * A block is the foundation of the BitCoin system. It records a set of {@link Transaction}s together with
  * some data that links it into a place in the global block chain, and proves that a difficult calculation was done
- * over its contents. See the BitCoin technical paper for more detail on blocks.
+ * over its contents. See the BitCoin technical paper for more detail on blocks.<p>
  *
- * To get a block, you can either build one from the raw bytes you can get from another implementation, or more likely
- * you grab it from a downloaded {@link BlockChain}.
+ * To get a block, you can either build one from the raw bytes you can get from another implementation,
+ * or request one specifically using {@link Peer#getBlock(byte[])}, or grab one from a downloaded {@link BlockChain}.
  */
 public class Block extends Message {
     private static final long serialVersionUID = 2738848929966035281L;
@@ -142,6 +142,21 @@ public class Block extends Message {
         return hash;
     }
 
+    /** The number that is one greater than the largest representable SHA-256 hash. */
+    static private BigInteger LARGEST_HASH = BigInteger.ONE.shiftLeft(256);
+
+    /**
+     * Returns the work represented by this block.<p>
+     *
+     * Work is defined as the number of tries needed to solve a block in the average case. Consider a difficulty
+     * target that covers 5% of all possible hash values. Then the work of the block will be 20. As the target gets
+     * lower, the amount of work goes up.
+     */
+    public BigInteger getWork() throws VerificationException {
+        BigInteger target = getDifficultyTargetAsInteger();
+        return LARGEST_HASH.divide(target.add(BigInteger.ONE));
+    }
+
     /**
      * Returns a multi-line string containing a description of the contents of the block. Use for debugging purposes
      * only.
@@ -183,6 +198,18 @@ public class Block extends Message {
         }
     }
 
+    /**
+     * Returns the difficulty target as a 256 bit value that can be compared to a SHA-256 hash. Inside a block the
+     * target is represented using a compact form. If this form decodes to a value that is out of bounds,
+     * an exception is thrown.
+     */
+    public BigInteger getDifficultyTargetAsInteger() throws VerificationException {
+        BigInteger target = Utils.decodeCompactBits(difficultyTarget);
+        if (target.compareTo(BigInteger.valueOf(0)) <= 0 || target.compareTo(params.proofOfWorkLimit) > 0)
+            throw new VerificationException("Difficulty target is bad");
+        return target;
+    }
+
     /** Returns true if the hash of the block is OK (lower than difficulty target). */
     private boolean checkProofOfWork(boolean throwException) throws VerificationException {
         // This part is key - it is what proves the block was as difficult to make as it claims
@@ -193,10 +220,7 @@ public class Block extends Message {
         //
         // To prevent this attack from being possible, elsewhere we check that the difficultyTarget
         // field is of the right value. This requires us to have the preceeding blocks.
-        BigInteger target = Utils.decodeCompactBits(difficultyTarget);
-        
-        if (target.compareTo(BigInteger.valueOf(0)) <= 0 || target.compareTo(params.proofOfWorkLimit) > 0)
-            throw new VerificationException("Difficulty target is bad");
+        BigInteger target = getDifficultyTargetAsInteger();
 
         BigInteger h = new BigInteger(1, getHash());
         if (h.compareTo(target) > 0) {
@@ -390,13 +414,6 @@ public class Block extends Message {
      */
     public long getDifficultyTarget() {
         return difficultyTarget;
-    }
-
-    /**
-     * Returns the difficulty target as a 256 bit value that can be compared to a SHA-256 hash.
-     */
-    public BigInteger getDifficultyTargetBI() {
-        return Utils.decodeCompactBits(getDifficultyTarget());
     }
 
     public void setDifficultyTarget(long compactForm) {
