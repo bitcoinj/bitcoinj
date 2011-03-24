@@ -39,6 +39,9 @@ public class Block extends Message {
     /** A value for difficultyTarget (nBits) that allows half of all possible hash solutions. Used in unit testing. */
     static final long EASIEST_DIFFICULTY_TARGET = 0x207fFFFFL;
 
+    // For unit testing. If not zero, use this instead of the current time.
+    static long fakeClock = 0;
+
     private long version;
     private byte[] prevBlockHash;
     private byte[] merkleRoot;
@@ -157,6 +160,18 @@ public class Block extends Message {
         return LARGEST_HASH.divide(target.add(BigInteger.ONE));
     }
 
+    /** Returns a copy of the block, but without any transactions. */
+    public Block cloneAsHeader() {
+        try {
+            Block block = new Block(params, bitcoinSerialize());
+            block.transactions = null;
+            return block;
+        } catch (ProtocolException e) {
+            // Should not be able to happen unless our state is internally inconsistent.
+            throw new RuntimeException(e);
+        }
+    }
+
     /**
      * Returns a multi-line string containing a description of the contents of the block. Use for debugging purposes
      * only.
@@ -206,7 +221,7 @@ public class Block extends Message {
     public BigInteger getDifficultyTargetAsInteger() throws VerificationException {
         BigInteger target = Utils.decodeCompactBits(difficultyTarget);
         if (target.compareTo(BigInteger.valueOf(0)) <= 0 || target.compareTo(params.proofOfWorkLimit) > 0)
-            throw new VerificationException("Difficulty target is bad");
+            throw new VerificationException("Difficulty target is bad: " + target.toString());
         return target;
     }
 
@@ -235,7 +250,9 @@ public class Block extends Message {
     }
     
     private void checkTimestamp() throws VerificationException {
-        if (time > (System.currentTimeMillis() / 1000) + ALLOWED_TIME_DRIFT)
+        // Allow injection of a fake clock to allow unit testing.
+        long currentTime = fakeClock != 0 ? fakeClock : System.currentTimeMillis() / 1000;
+        if (time > currentTime + ALLOWED_TIME_DRIFT)
             throw new VerificationException("Block too far in future");
     }
     

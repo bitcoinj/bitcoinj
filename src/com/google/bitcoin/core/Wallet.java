@@ -23,6 +23,8 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
+import static com.google.bitcoin.core.Utils.LOG;
+
 /**
  * A Wallet stores keys and a record of transactions that have not yet been spent. Thus, it is capable of
  * providing transactions on demand that meet a given combined value. Once a transaction
@@ -133,7 +135,7 @@ public class Wallet implements Serializable {
                 }
                 TransactionOutput linkedOutput = t.outputs.get((int) input.outpoint.index);
                 assert !linkedOutput.isSpent : "Double spend was accepted by network?";
-                Utils.LOG("Saw a record of me spending " + Utils.bitcoinValueToFriendlyString(linkedOutput.getValue())
+                LOG("Saw a record of me spending " + Utils.bitcoinValueToFriendlyString(linkedOutput.getValue())
                         + " BTC");
                 linkedOutput.isSpent = true;
                 // Are all the outputs on this TX that are mine now spent? Note that some of the outputs may not
@@ -156,9 +158,9 @@ public class Wallet implements Serializable {
                 }
             }
         }
-        Utils.LOG("Received " + Utils.bitcoinValueToFriendlyString(tx.getValueSentToMe(this)));
+        LOG("Received " + Utils.bitcoinValueToFriendlyString(tx.getValueSentToMe(this)));
         unspent.add(tx);
-        Utils.LOG("Balance is now: " + Utils.bitcoinValueToFriendlyString(getBalance()));
+        LOG("Balance is now: " + Utils.bitcoinValueToFriendlyString(getBalance()));
 
         // Inform anyone interested that we have new coins. Note: we may be re-entered by the event listener,
         // so we must not make assumptions about our state after this loop returns! For example,
@@ -265,7 +267,7 @@ public class Wallet implements Serializable {
      * @return a new {@link Transaction} or null if we cannot afford this send.
      */
     synchronized Transaction createSend(Address address,  BigInteger nanocoins, Address changeAddress) {
-        Utils.LOG("Creating send tx to " + address.toString() + " for " +
+        LOG("Creating send tx to " + address.toString() + " for " +
                 Utils.bitcoinValueToFriendlyString(nanocoins));
         // To send money to somebody else, we need to do the following:
         //  - Gather up transactions with unspent outputs until we have sufficient value.
@@ -283,7 +285,7 @@ public class Wallet implements Serializable {
         }
         // Can we afford this?
         if (valueGathered.compareTo(nanocoins) < 0) {
-            Utils.LOG("Insufficient value in wallet for send, missing " +
+            LOG("Insufficient value in wallet for send, missing " +
                     Utils.bitcoinValueToFriendlyString(nanocoins.subtract(valueGathered)));
             // TODO: Should throw an exception here.
             return null;
@@ -295,7 +297,7 @@ public class Wallet implements Serializable {
             // The value of the inputs is greater than what we want to send. Just like in real life then,
             // we need to take back some coins ... this is called "change". Add another output that sends the change
             // back to us.
-            Utils.LOG("  with " + Utils.bitcoinValueToFriendlyString(change) + " coins change");
+            LOG("  with " + Utils.bitcoinValueToFriendlyString(change) + " coins change");
             sendTx.addOutput(new TransactionOutput(params, change, changeAddress));
         }
         for (TransactionOutput output : gathered) {
@@ -368,5 +370,37 @@ public class Wallet implements Serializable {
             builder.append("\n");
         }
         return builder.toString();
+    }
+
+    /**
+     * Called by the {@link BlockChain} when the best chain (representing total work done) has changed. In this case,
+     * we need to go through our transactions and find out if any have become invalid. It's possible for our balance
+     * to go down in this case: money we thought we had can suddenly vanish if the rest of the network agrees it
+     * should be so.
+     */
+    void reorganize(StoredBlock chainHead, StoredBlock newStoredBlock) {
+        // This runs on any peer thread with the block chain synchronized. Thus we do not have to worry about it
+        // being called simultaneously or repeatedly.
+        LOG("Re-organize!");
+        LOG("Old chain head: " + chainHead.header.toString());
+        LOG("New chain head: " + newStoredBlock.header.toString());
+
+        // TODO: Implement me!
+        // For each transaction we have to track which blocks they appeared in. Once a re-org takes place,
+        // we will have to find all transactions in the old branch, all transactions in the new branch and find the
+        // difference of those sets. If there is no difference it means we the user doesn't really care about this
+        // re-org but we still need to update the transaction block pointers.
+        boolean affectedUs = true;
+
+        // We should only trigger this event if the re-org actually impacted our wallet. Otherwise the user is
+        // unlikely to care.
+        if (affectedUs) {
+            // Inform event listeners that a re-org took place.
+            for (WalletEventListener l : eventListeners) {
+                synchronized (l) {
+                    l.onReorganize();
+                }
+            }
+        }
     }
 }

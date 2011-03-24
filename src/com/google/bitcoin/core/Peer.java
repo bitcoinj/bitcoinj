@@ -17,7 +17,6 @@
 package com.google.bitcoin.core;
 
 import java.io.IOException;
-import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
@@ -145,9 +144,11 @@ public class Peer {
             }
         } catch (VerificationException e) {
             // We don't want verification failures to kill the thread.
-            LOG("Ignoring verification exception.");
+            LOG(e.toString());
+            e.printStackTrace();
         } catch (ScriptException e) {
             // We don't want script failures to kill the thread.
+            LOG(e.toString());
             e.printStackTrace();
         }
     }
@@ -296,16 +297,16 @@ public class Peer {
         //
         // So this is a complicated process but it has the advantage that we can download a chain of enormous length
         // in a relatively stateless manner and with constant/bounded memory usage.
+        LOG("Peer.blockChainDownload: " + Utils.bytesToHexString(toHash));
 
         // TODO: Block locators should be abstracted out rather than special cased here.
         List<byte[]> blockLocator = new LinkedList<byte[]>();
         // We don't do the exponential thinning here, so if we get onto a fork of the chain we will end up
         // redownloading the whole thing again.
         blockLocator.add(params.genesisBlock.getHash());
-        Block topBlock = blockChain.getTopBlock();
-        if (topBlock != null) {
+        Block topBlock = blockChain.getChainHead().header;
+        if (!topBlock.equals(params.genesisBlock))
             blockLocator.add(0, topBlock.getHash());
-        }
         GetBlocksMessage message = new GetBlocksMessage(params, blockLocator, toHash);
         conn.writeMessage(NetworkConnection.MSG_GETBLOCKS, message);
     }

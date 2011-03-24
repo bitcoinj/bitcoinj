@@ -48,6 +48,15 @@ public class NetworkParameters implements Serializable {
     public long packetMagic;
     /** First byte of a base58 encoded address. */
     public byte addressHeader;
+    /** How many blocks pass between difficulty adjustment periods. BitCoin standardises this to be 2015. */
+    public int interval;
+    /**
+     * How much time in seconds is supposed to pass between "interval" blocks. If the actual elapsed time is
+     * significantly different from this value, the network difficulty formula will produce a different value. Both
+     * test and production BitCoin networks use 2 weeks (1209600 seconds).
+     */
+    public int targetTimespan;
+
 
     // The genesis block is the first block in the chain and is a shared, well known block of data containin a
     // headline from the Times, as well as initialization values for that chain. The testnet uses a similar genesis
@@ -74,13 +83,20 @@ public class NetworkParameters implements Serializable {
         return genesisBlock;
     }
 
+    static private final int TARGET_TIMESPAN = 14 * 24 * 60 * 60;  // 2 weeks per difficulty cycle, on average.
+    static private final int TARGET_SPACING = 10 * 60;  // 10 minutes per block.
+    static private final int INTERVAL = TARGET_TIMESPAN / TARGET_SPACING;
+
     /** Sets up the given NetworkParameters with testnet values. */
     private static NetworkParameters createTestNet(NetworkParameters n) {
         // Genesis hash is 0000000224b1593e3ff16a0e3b61285bbc393a39f78c8aa48c456142671f7110
+        // The proof of work limit has to start with 00, as otherwise the value will be interpreted as negative.
         n.proofOfWorkLimit = new BigInteger("0000000fffffffffffffffffffffffffffffffffffffffffffffffffffffffff", 16);
         n.packetMagic = 0xfabfb5daL;
         n.port = 18333;
         n.addressHeader = 111;
+        n.interval = INTERVAL;
+        n.targetTimespan = TARGET_TIMESPAN;
         n.genesisBlock = createGenesis(n);
         n.genesisBlock.setTime(1296688602L);
         n.genesisBlock.setDifficultyTarget(0x1d07fff8L);
@@ -103,6 +119,8 @@ public class NetworkParameters implements Serializable {
         n.port = 8333;
         n.packetMagic = 0xf9beb4d9L;
         n.addressHeader = 0;
+        n.interval = INTERVAL;
+        n.targetTimespan = TARGET_TIMESPAN;
         n.genesisBlock = createGenesis(n);
         n.genesisBlock.setDifficultyTarget(0x1d00ffffL);
         n.genesisBlock.setTime(1231006505L);
@@ -118,6 +136,8 @@ public class NetworkParameters implements Serializable {
         n = createTestNet(n);
         n.proofOfWorkLimit = new BigInteger("00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", 16);
         n.genesisBlock.setDifficultyTarget(Block.EASIEST_DIFFICULTY_TARGET);
+        n.interval = 10;
+        n.targetTimespan = 200000000;  // 6 years. Just a very big number.
         return n;
     }
 }
