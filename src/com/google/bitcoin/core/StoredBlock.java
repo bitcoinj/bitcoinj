@@ -56,4 +56,11 @@ class StoredBlock {
     boolean moreWorkThan(StoredBlock other) {
         return chainWork.compareTo(other.chainWork) > 0;
     }
+
+    @Override
+    public boolean equals(Object other) {
+        if (!(other instanceof StoredBlock)) return false;
+        StoredBlock o = (StoredBlock) other;
+        return o.header.equals(header) && o.chainWork.equals(chainWork) && o.height == height;
+    }
 }

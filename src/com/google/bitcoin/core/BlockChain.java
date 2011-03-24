@@ -145,7 +145,7 @@ public class BlockChain {
             // Store it.
             blockStore.put(newStoredBlock);
             // TODO: Break the assumption of object equality here.
-            if (storedPrev == chainHead) {
+            if (storedPrev.equals(chainHead)) {
                 // This block connects to the best known block, it is a normal continuation of the system.
                 chainHead = newStoredBlock;
                 LOG("Received new block, chain is now " + chainHead.height + " blocks high");
