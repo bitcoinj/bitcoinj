@@ -38,7 +38,17 @@ public class NetworkParameters implements Serializable {
 
     // TODO: Seed nodes and checkpoint values should be here as well.
 
-    /** Genesis block for this chain */
+    /**
+     * Genesis block for this chain.<p>
+     *
+     * The first block in every chain is a well known constant shared between all BitCoin implemenetations. For a
+     * block to be valid, it must be eventually possible to work backwards to the genesis block by following the
+     * prevBlockHash pointers in the block headers.<p>
+     *
+     * The genesis blocks for both test and prod networks contain the timestamp of when they were created,
+     * and a message in the coinbase transaction. It says, <i>"The Times 03/Jan/2009 Chancellor on brink of second
+     * bailout for banks"</i>.
+     */
     public Block genesisBlock;
     /** What the easiest allowable proof of work should be. */
     public BigInteger proofOfWorkLimit;
@@ -57,10 +67,6 @@ public class NetworkParameters implements Serializable {
      */
     public int targetTimespan;
 
-
-    // The genesis block is the first block in the chain and is a shared, well known block of data containin a
-    // headline from the Times, as well as initialization values for that chain. The testnet uses a similar genesis
-    // block to the production network but with different times and nonces.
     private static Block createGenesis(NetworkParameters n) {
         Block genesisBlock = new Block(n);
         Transaction t = new Transaction(n);

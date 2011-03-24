@@ -35,8 +35,7 @@ function windowTitle()
 <A NAME="navbar_top_firstrow"><!-- --></A>
 <TABLE BORDER="0" CELLPADDING="0" CELLSPACING="3" SUMMARY="">
   <TR ALIGN="center" VALIGN="top">
-  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../../overview-summary.html"><FONT CLASS="NavBarFont1"><B>Overview</B></FONT></A>&nbsp;</TD>
-  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="package-summary.html"><FONT CLASS="NavBarFont1"><B>Package</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../../com/google/bitcoin/core/package-summary.html"><FONT CLASS="NavBarFont1"><B>Package</B></FONT></A>&nbsp;</TD>
   <TD BGCOLOR="#FFFFFF" CLASS="NavBarCell1Rev"> &nbsp;<FONT CLASS="NavBarFont1Rev"><B>Class</B></FONT>&nbsp;</TD>
   <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="package-tree.html"><FONT CLASS="NavBarFont1"><B>Tree</B></FONT></A>&nbsp;</TD>
   <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../../deprecated-list.html"><FONT CLASS="NavBarFont1"><B>Deprecated</B></FONT></A>&nbsp;</TD>
@@ -127,7 +126,7 @@ A PeerAddress holds an IP address and port number representing the network locat
 <TH ALIGN="left"><B>Fields inherited from class com.google.bitcoin.core.<A HREF="../../../../com/google/bitcoin/core/Message.html" title="class in com.google.bitcoin.core">Message</A></B></TH>
 </TR>
 <TR BGCOLOR="white" CLASS="TableRowColor">
-<TD><CODE><A HREF="../../../../com/google/bitcoin/core/Message.html#bytes">bytes</A>, <A HREF="../../../../com/google/bitcoin/core/Message.html#cursor">cursor</A>, <A HREF="../../../../com/google/bitcoin/core/Message.html#MAX_SIZE">MAX_SIZE</A>, <A HREF="../../../../com/google/bitcoin/core/Message.html#offset">offset</A>, <A HREF="../../../../com/google/bitcoin/core/Message.html#params">params</A></CODE></TD>
+<TD><CODE><A HREF="../../../../com/google/bitcoin/core/Message.html#bytes">bytes</A>, <A HREF="../../../../com/google/bitcoin/core/Message.html#cursor">cursor</A>, <A HREF="../../../../com/google/bitcoin/core/Message.html#MAX_SIZE">MAX_SIZE</A>, <A HREF="../../../../com/google/bitcoin/core/Message.html#offset">offset</A>, <A HREF="../../../../com/google/bitcoin/core/Message.html#params">params</A>, <A HREF="../../../../com/google/bitcoin/core/Message.html#protocolVersion">protocolVersion</A></CODE></TD>
 </TR>
 </TABLE>
 &nbsp;
@@ -147,9 +146,10 @@ A PeerAddress holds an IP address and port number representing the network locat
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
 </TR>
 <TR BGCOLOR="white" CLASS="TableRowColor">
-<TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/PeerAddress.html#PeerAddress(com.google.bitcoin.core.NetworkParameters, byte[], int)">PeerAddress</A></B>(<A HREF="../../../../com/google/bitcoin/core/NetworkParameters.html" title="class in com.google.bitcoin.core">NetworkParameters</A>&nbsp;params,
+<TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/PeerAddress.html#PeerAddress(com.google.bitcoin.core.NetworkParameters, byte[], int, int)">PeerAddress</A></B>(<A HREF="../../../../com/google/bitcoin/core/NetworkParameters.html" title="class in com.google.bitcoin.core">NetworkParameters</A>&nbsp;params,
             byte[]&nbsp;payload,
-            int&nbsp;offset)</CODE>
+            int&nbsp;offset,
+            int&nbsp;protocolVersion)</CODE>
 
 <BR>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
@@ -220,12 +220,13 @@ A PeerAddress holds an IP address and port number representing the network locat
 </TR>
 </TABLE>
 
-<A NAME="PeerAddress(com.google.bitcoin.core.NetworkParameters, byte[], int)"><!-- --></A><H3>
+<A NAME="PeerAddress(com.google.bitcoin.core.NetworkParameters, byte[], int, int)"><!-- --></A><H3>
 PeerAddress</H3>
 <PRE>
 public <B>PeerAddress</B>(<A HREF="../../../../com/google/bitcoin/core/NetworkParameters.html" title="class in com.google.bitcoin.core">NetworkParameters</A>&nbsp;params,
                    byte[]&nbsp;payload,
-                   int&nbsp;offset)
+                   int&nbsp;offset,
+                   int&nbsp;protocolVersion)
             throws <A HREF="../../../../com/google/bitcoin/core/ProtocolException.html" title="class in com.google.bitcoin.core">ProtocolException</A></PRE>
 <DL>
 <DL>
@@ -315,8 +316,7 @@ public java.lang.String <B>toString</B>()</PRE>
 <A NAME="navbar_bottom_firstrow"><!-- --></A>
 <TABLE BORDER="0" CELLPADDING="0" CELLSPACING="3" SUMMARY="">
   <TR ALIGN="center" VALIGN="top">
-  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../../overview-summary.html"><FONT CLASS="NavBarFont1"><B>Overview</B></FONT></A>&nbsp;</TD>
-  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="package-summary.html"><FONT CLASS="NavBarFont1"><B>Package</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../../com/google/bitcoin/core/package-summary.html"><FONT CLASS="NavBarFont1"><B>Package</B></FONT></A>&nbsp;</TD>
   <TD BGCOLOR="#FFFFFF" CLASS="NavBarCell1Rev"> &nbsp;<FONT CLASS="NavBarFont1Rev"><B>Class</B></FONT>&nbsp;</TD>
   <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="package-tree.html"><FONT CLASS="NavBarFont1"><B>Tree</B></FONT></A>&nbsp;</TD>
   <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../../deprecated-list.html"><FONT CLASS="NavBarFont1"><B>Deprecated</B></FONT></A>&nbsp;</TD>

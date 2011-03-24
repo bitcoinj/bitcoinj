@@ -35,8 +35,7 @@ function windowTitle()
 <A NAME="navbar_top_firstrow"><!-- --></A>
 <TABLE BORDER="0" CELLPADDING="0" CELLSPACING="3" SUMMARY="">
   <TR ALIGN="center" VALIGN="top">
-  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../../overview-summary.html"><FONT CLASS="NavBarFont1"><B>Overview</B></FONT></A>&nbsp;</TD>
-  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="package-summary.html"><FONT CLASS="NavBarFont1"><B>Package</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../../com/google/bitcoin/core/package-summary.html"><FONT CLASS="NavBarFont1"><B>Package</B></FONT></A>&nbsp;</TD>
   <TD BGCOLOR="#FFFFFF" CLASS="NavBarCell1Rev"> &nbsp;<FONT CLASS="NavBarFont1Rev"><B>Class</B></FONT>&nbsp;</TD>
   <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="package-tree.html"><FONT CLASS="NavBarFont1"><B>Tree</B></FONT></A>&nbsp;</TD>
   <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../../deprecated-list.html"><FONT CLASS="NavBarFont1"><B>Deprecated</B></FONT></A>&nbsp;</TD>
@@ -117,11 +116,19 @@ java.lang.Object
 </TR>
 <TR BGCOLOR="white" CLASS="TableRowColor">
 <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;long</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/VersionMessage.html#bestHeight">bestHeight</A></B></CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;How many blocks are in the chain, according to the other side.</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
 <CODE>&nbsp;int</CODE></FONT></TD>
 <TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/VersionMessage.html#clientVersion">clientVersion</A></B></CODE>
 
 <BR>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The version number of the protocol spoken.</TD>
 </TR>
 <TR BGCOLOR="white" CLASS="TableRowColor">
 <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
@@ -129,7 +136,15 @@ java.lang.Object
 <TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/VersionMessage.html#localServices">localServices</A></B></CODE>
 
 <BR>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Flags defining what is supported.</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;<A HREF="../../../../com/google/bitcoin/core/PeerAddress.html" title="class in com.google.bitcoin.core">PeerAddress</A></CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/VersionMessage.html#myAddr">myAddr</A></B></CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;What the other side believes the address of this program is.</TD>
 </TR>
 <TR BGCOLOR="white" CLASS="TableRowColor">
 <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
@@ -141,19 +156,27 @@ java.lang.Object
 </TR>
 <TR BGCOLOR="white" CLASS="TableRowColor">
 <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
-<CODE>static&nbsp;int</CODE></FONT></TD>
-<TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/VersionMessage.html#PROTOCOL_VERSION">PROTOCOL_VERSION</A></B></CODE>
+<CODE>&nbsp;java.lang.String</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/VersionMessage.html#subVer">subVer</A></B></CODE>
 
 <BR>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The protocol version this library implements.</TD>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;An additional string that today the official client sets to the empty string.</TD>
 </TR>
 <TR BGCOLOR="white" CLASS="TableRowColor">
 <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
-<CODE>&nbsp;java.math.BigInteger</CODE></FONT></TD>
+<CODE>&nbsp;<A HREF="../../../../com/google/bitcoin/core/PeerAddress.html" title="class in com.google.bitcoin.core">PeerAddress</A></CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/VersionMessage.html#theirAddr">theirAddr</A></B></CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;What the other side believes their own address is.</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;long</CODE></FONT></TD>
 <TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/VersionMessage.html#time">time</A></B></CODE>
 
 <BR>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;What the other side believes the current time to be, in seconds.</TD>
 </TR>
 </TABLE>
 &nbsp;<A NAME="fields_inherited_from_class_com.google.bitcoin.core.Message"><!-- --></A>
@@ -162,7 +185,7 @@ java.lang.Object
 <TH ALIGN="left"><B>Fields inherited from class com.google.bitcoin.core.<A HREF="../../../../com/google/bitcoin/core/Message.html" title="class in com.google.bitcoin.core">Message</A></B></TH>
 </TR>
 <TR BGCOLOR="white" CLASS="TableRowColor">
-<TD><CODE><A HREF="../../../../com/google/bitcoin/core/Message.html#bytes">bytes</A>, <A HREF="../../../../com/google/bitcoin/core/Message.html#cursor">cursor</A>, <A HREF="../../../../com/google/bitcoin/core/Message.html#MAX_SIZE">MAX_SIZE</A>, <A HREF="../../../../com/google/bitcoin/core/Message.html#offset">offset</A>, <A HREF="../../../../com/google/bitcoin/core/Message.html#params">params</A></CODE></TD>
+<TD><CODE><A HREF="../../../../com/google/bitcoin/core/Message.html#bytes">bytes</A>, <A HREF="../../../../com/google/bitcoin/core/Message.html#cursor">cursor</A>, <A HREF="../../../../com/google/bitcoin/core/Message.html#MAX_SIZE">MAX_SIZE</A>, <A HREF="../../../../com/google/bitcoin/core/Message.html#offset">offset</A>, <A HREF="../../../../com/google/bitcoin/core/Message.html#params">params</A>, <A HREF="../../../../com/google/bitcoin/core/Message.html#protocolVersion">protocolVersion</A></CODE></TD>
 </TR>
 </TABLE>
 &nbsp;
@@ -254,18 +277,6 @@ java.lang.Object
 </TR>
 </TABLE>
 
-<A NAME="PROTOCOL_VERSION"><!-- --></A><H3>
-PROTOCOL_VERSION</H3>
-<PRE>
-public static final int <B>PROTOCOL_VERSION</B></PRE>
-<DL>
-<DD>The protocol version this library implements. A value of 31800 means 0.3.18.00.
-<P>
-<DL>
-<DT><B>See Also:</B><DD><A HREF="../../../../constant-values.html#com.google.bitcoin.core.VersionMessage.PROTOCOL_VERSION">Constant Field Values</A></DL>
-</DL>
-<HR>
-
 <A NAME="NODE_NETWORK"><!-- --></A><H3>
 NODE_NETWORK</H3>
 <PRE>
@@ -283,6 +294,8 @@ clientVersion</H3>
 <PRE>
 public int <B>clientVersion</B></PRE>
 <DL>
+<DD>The version number of the protocol spoken.
+<P>
 <DL>
 </DL>
 </DL>
@@ -293,6 +306,8 @@ localServices</H3>
 <PRE>
 public long <B>localServices</B></PRE>
 <DL>
+<DD>Flags defining what is supported. Right now <A HREF="../../../../com/google/bitcoin/core/VersionMessage.html#NODE_NETWORK"><CODE>NODE_NETWORK</CODE></A> is the only flag defined.
+<P>
 <DL>
 </DL>
 </DL>
@@ -301,8 +316,59 @@ public long <B>localServices</B></PRE>
 <A NAME="time"><!-- --></A><H3>
 time</H3>
 <PRE>
-public java.math.BigInteger <B>time</B></PRE>
+public long <B>time</B></PRE>
 <DL>
+<DD>What the other side believes the current time to be, in seconds.
+<P>
+<DL>
+</DL>
+</DL>
+<HR>
+
+<A NAME="myAddr"><!-- --></A><H3>
+myAddr</H3>
+<PRE>
+public <A HREF="../../../../com/google/bitcoin/core/PeerAddress.html" title="class in com.google.bitcoin.core">PeerAddress</A> <B>myAddr</B></PRE>
+<DL>
+<DD>What the other side believes the address of this program is. Not used.
+<P>
+<DL>
+</DL>
+</DL>
+<HR>
+
+<A NAME="theirAddr"><!-- --></A><H3>
+theirAddr</H3>
+<PRE>
+public <A HREF="../../../../com/google/bitcoin/core/PeerAddress.html" title="class in com.google.bitcoin.core">PeerAddress</A> <B>theirAddr</B></PRE>
+<DL>
+<DD>What the other side believes their own address is. Not used.
+<P>
+<DL>
+</DL>
+</DL>
+<HR>
+
+<A NAME="subVer"><!-- --></A><H3>
+subVer</H3>
+<PRE>
+public java.lang.String <B>subVer</B></PRE>
+<DL>
+<DD>An additional string that today the official client sets to the empty string. We treat it as something like an
+ HTTP User-Agent header.
+<P>
+<DL>
+</DL>
+</DL>
+<HR>
+
+<A NAME="bestHeight"><!-- --></A><H3>
+bestHeight</H3>
+<PRE>
+public long <B>bestHeight</B></PRE>
+<DL>
+<DD>How many blocks are in the chain, according to the other side.
+<P>
 <DL>
 </DL>
 </DL>
@@ -410,8 +476,7 @@ public boolean <B>hasBlockChain</B>()</PRE>
 <A NAME="navbar_bottom_firstrow"><!-- --></A>
 <TABLE BORDER="0" CELLPADDING="0" CELLSPACING="3" SUMMARY="">
   <TR ALIGN="center" VALIGN="top">
-  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../../overview-summary.html"><FONT CLASS="NavBarFont1"><B>Overview</B></FONT></A>&nbsp;</TD>
-  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="package-summary.html"><FONT CLASS="NavBarFont1"><B>Package</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../../com/google/bitcoin/core/package-summary.html"><FONT CLASS="NavBarFont1"><B>Package</B></FONT></A>&nbsp;</TD>
   <TD BGCOLOR="#FFFFFF" CLASS="NavBarCell1Rev"> &nbsp;<FONT CLASS="NavBarFont1Rev"><B>Class</B></FONT>&nbsp;</TD>
   <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="package-tree.html"><FONT CLASS="NavBarFont1"><B>Tree</B></FONT></A>&nbsp;</TD>
   <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../../deprecated-list.html"><FONT CLASS="NavBarFont1"><B>Deprecated</B></FONT></A>&nbsp;</TD>

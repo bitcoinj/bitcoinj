@@ -16,7 +16,7 @@
 
   <target name="docs" depends="init">
     <javadoc sourcepath="src" 
-             excludepackagenames="com.google.bitcoin.bouncycastle.*"
+             excludepackagenames="com.google.bitcoin.bouncycastle.*,com.google.bitcoin.examples.*"
              destdir="docs"
              additionalparam="-notimestamp"/>
   </target>

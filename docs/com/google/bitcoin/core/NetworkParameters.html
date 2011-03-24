@@ -35,8 +35,7 @@ function windowTitle()
 <A NAME="navbar_top_firstrow"><!-- --></A>
 <TABLE BORDER="0" CELLPADDING="0" CELLSPACING="3" SUMMARY="">
   <TR ALIGN="center" VALIGN="top">
-  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../../overview-summary.html"><FONT CLASS="NavBarFont1"><B>Overview</B></FONT></A>&nbsp;</TD>
-  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="package-summary.html"><FONT CLASS="NavBarFont1"><B>Package</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../../com/google/bitcoin/core/package-summary.html"><FONT CLASS="NavBarFont1"><B>Package</B></FONT></A>&nbsp;</TD>
   <TD BGCOLOR="#FFFFFF" CLASS="NavBarCell1Rev"> &nbsp;<FONT CLASS="NavBarFont1Rev"><B>Class</B></FONT>&nbsp;</TD>
   <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="package-tree.html"><FONT CLASS="NavBarFont1"><B>Tree</B></FONT></A>&nbsp;</TD>
   <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../../deprecated-list.html"><FONT CLASS="NavBarFont1"><B>Deprecated</B></FONT></A>&nbsp;</TD>
@@ -135,7 +134,15 @@ NetworkParameters contains the data needed for working with an instantiation of 
 <TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/NetworkParameters.html#genesisBlock">genesisBlock</A></B></CODE>
 
 <BR>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Genesis block for this chain</TD>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Genesis block for this chain.</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;int</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/NetworkParameters.html#interval">interval</A></B></CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;How many blocks pass between difficulty adjustment periods.</TD>
 </TR>
 <TR BGCOLOR="white" CLASS="TableRowColor">
 <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
@@ -160,6 +167,22 @@ NetworkParameters contains the data needed for working with an instantiation of 
 
 <BR>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;What the easiest allowable proof of work should be.</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>static&nbsp;int</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/NetworkParameters.html#PROTOCOL_VERSION">PROTOCOL_VERSION</A></B></CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The protocol version this library implements.</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;int</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/NetworkParameters.html#targetTimespan">targetTimespan</A></B></CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;How much time in seconds is supposed to pass between "interval" blocks.</TD>
 </TR>
 </TABLE>
 &nbsp;
@@ -226,12 +249,32 @@ NetworkParameters contains the data needed for working with an instantiation of 
 </TR>
 </TABLE>
 
+<A NAME="PROTOCOL_VERSION"><!-- --></A><H3>
+PROTOCOL_VERSION</H3>
+<PRE>
+public static final int <B>PROTOCOL_VERSION</B></PRE>
+<DL>
+<DD>The protocol version this library implements. A value of 31800 means 0.3.18.00.
+<P>
+<DL>
+<DT><B>See Also:</B><DD><A HREF="../../../../constant-values.html#com.google.bitcoin.core.NetworkParameters.PROTOCOL_VERSION">Constant Field Values</A></DL>
+</DL>
+<HR>
+
 <A NAME="genesisBlock"><!-- --></A><H3>
 genesisBlock</H3>
 <PRE>
 public <A HREF="../../../../com/google/bitcoin/core/Block.html" title="class in com.google.bitcoin.core">Block</A> <B>genesisBlock</B></PRE>
 <DL>
-<DD>Genesis block for this chain
+<DD>Genesis block for this chain.<p>
+
+ The first block in every chain is a well known constant shared between all BitCoin implemenetations. For a
+ block to be valid, it must be eventually possible to work backwards to the genesis block by following the
+ prevBlockHash pointers in the block headers.<p>
+
+ The genesis blocks for both test and prod networks contain the timestamp of when they were created,
+ and a message in the coinbase transaction. It says, <i>"The Times 03/Jan/2009 Chancellor on brink of second
+ bailout for banks"</i>.
 <P>
 <DL>
 </DL>
@@ -280,6 +323,32 @@ addressHeader</H3>
 public byte <B>addressHeader</B></PRE>
 <DL>
 <DD>First byte of a base58 encoded address.
+<P>
+<DL>
+</DL>
+</DL>
+<HR>
+
+<A NAME="interval"><!-- --></A><H3>
+interval</H3>
+<PRE>
+public int <B>interval</B></PRE>
+<DL>
+<DD>How many blocks pass between difficulty adjustment periods. BitCoin standardises this to be 2015.
+<P>
+<DL>
+</DL>
+</DL>
+<HR>
+
+<A NAME="targetTimespan"><!-- --></A><H3>
+targetTimespan</H3>
+<PRE>
+public int <B>targetTimespan</B></PRE>
+<DL>
+<DD>How much time in seconds is supposed to pass between "interval" blocks. If the actual elapsed time is
+ significantly different from this value, the network difficulty formula will produce a different value. Both
+ test and production BitCoin networks use 2 weeks (1209600 seconds).
 <P>
 <DL>
 </DL>
@@ -355,8 +424,7 @@ public static <A HREF="../../../../com/google/bitcoin/core/NetworkParameters.htm
 <A NAME="navbar_bottom_firstrow"><!-- --></A>
 <TABLE BORDER="0" CELLPADDING="0" CELLSPACING="3" SUMMARY="">
   <TR ALIGN="center" VALIGN="top">
-  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../../overview-summary.html"><FONT CLASS="NavBarFont1"><B>Overview</B></FONT></A>&nbsp;</TD>
-  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="package-summary.html"><FONT CLASS="NavBarFont1"><B>Package</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../../com/google/bitcoin/core/package-summary.html"><FONT CLASS="NavBarFont1"><B>Package</B></FONT></A>&nbsp;</TD>
   <TD BGCOLOR="#FFFFFF" CLASS="NavBarCell1Rev"> &nbsp;<FONT CLASS="NavBarFont1Rev"><B>Class</B></FONT>&nbsp;</TD>
   <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="package-tree.html"><FONT CLASS="NavBarFont1"><B>Tree</B></FONT></A>&nbsp;</TD>
   <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../../deprecated-list.html"><FONT CLASS="NavBarFont1"><B>Deprecated</B></FONT></A>&nbsp;</TD>

@@ -35,8 +35,7 @@ function windowTitle()
 <A NAME="navbar_top_firstrow"><!-- --></A>
 <TABLE BORDER="0" CELLPADDING="0" CELLSPACING="3" SUMMARY="">
   <TR ALIGN="center" VALIGN="top">
-  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../../overview-summary.html"><FONT CLASS="NavBarFont1"><B>Overview</B></FONT></A>&nbsp;</TD>
-  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="package-summary.html"><FONT CLASS="NavBarFont1"><B>Package</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../../com/google/bitcoin/core/package-summary.html"><FONT CLASS="NavBarFont1"><B>Package</B></FONT></A>&nbsp;</TD>
   <TD BGCOLOR="#FFFFFF" CLASS="NavBarCell1Rev"> &nbsp;<FONT CLASS="NavBarFont1Rev"><B>Class</B></FONT>&nbsp;</TD>
   <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="package-tree.html"><FONT CLASS="NavBarFont1"><B>Tree</B></FONT></A>&nbsp;</TD>
   <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../../deprecated-list.html"><FONT CLASS="NavBarFont1"><B>Deprecated</B></FONT></A>&nbsp;</TD>
@@ -53,7 +52,7 @@ function windowTitle()
 <TR>
 <TD BGCOLOR="white" CLASS="NavBarCell2"><FONT SIZE="-2">
 &nbsp;<A HREF="../../../../com/google/bitcoin/core/VersionMessage.html" title="class in com.google.bitcoin.core"><B>PREV CLASS</B></A>&nbsp;
-&nbsp;<A HREF="../../../../com/google/bitcoin/core/WalletEventListener.html" title="interface in com.google.bitcoin.core"><B>NEXT CLASS</B></A></FONT></TD>
+&nbsp;<A HREF="../../../../com/google/bitcoin/core/WalletEventListener.html" title="class in com.google.bitcoin.core"><B>NEXT CLASS</B></A></FONT></TD>
 <TD BGCOLOR="white" CLASS="NavBarCell2"><FONT SIZE="-2">
   <A HREF="../../../../index.html?com/google/bitcoin/core/Wallet.html" target="_top"><B>FRAMES</B></A>  &nbsp;
 &nbsp;<A HREF="Wallet.html" target="_top"><B>NO FRAMES</B></A>  &nbsp;
@@ -130,7 +129,7 @@ A Wallet stores keys and a record of transactions that have not yet been spent. 
 <TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/Wallet.html#keychain">keychain</A></B></CODE>
 
 <BR>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;A list of public/private EC keys owned by this user.</TD>
 </TR>
 <TR BGCOLOR="white" CLASS="TableRowColor">
 <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
@@ -138,7 +137,7 @@ A Wallet stores keys and a record of transactions that have not yet been spent. 
 <TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/Wallet.html#unspent">unspent</A></B></CODE>
 
 <BR>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;A list of transactions with outputs we can spend.</TD>
 </TR>
 </TABLE>
 &nbsp;
@@ -169,7 +168,7 @@ A Wallet stores keys and a record of transactions that have not yet been spent. 
 <TR BGCOLOR="white" CLASS="TableRowColor">
 <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
 <CODE>&nbsp;void</CODE></FONT></TD>
-<TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/Wallet.html#addEventListener(com.google.bitcoin.core.WalletEventListener)">addEventListener</A></B>(<A HREF="../../../../com/google/bitcoin/core/WalletEventListener.html" title="interface in com.google.bitcoin.core">WalletEventListener</A>&nbsp;listener)</CODE>
+<TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/Wallet.html#addEventListener(com.google.bitcoin.core.WalletEventListener)">addEventListener</A></B>(<A HREF="../../../../com/google/bitcoin/core/WalletEventListener.html" title="class in com.google.bitcoin.core">WalletEventListener</A>&nbsp;listener)</CODE>
 
 <BR>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Adds an event listener object.</TD>
@@ -269,6 +268,11 @@ unspent</H3>
 <PRE>
 public final java.util.ArrayList&lt;<A HREF="../../../../com/google/bitcoin/core/Transaction.html" title="class in com.google.bitcoin.core">Transaction</A>&gt; <B>unspent</B></PRE>
 <DL>
+<DD>A list of transactions with outputs we can spend. Note that some of these transactions may be partially spent,
+ that is, they have outputs some of which are redeemed and others which aren't already. The spentness of each
+ output is tracked in the TransactionOutput object. The value of all unspent outputs is the balance of the
+ wallet.
+<P>
 <DL>
 </DL>
 </DL>
@@ -279,6 +283,8 @@ keychain</H3>
 <PRE>
 public final java.util.ArrayList&lt;<A HREF="../../../../com/google/bitcoin/core/ECKey.html" title="class in com.google.bitcoin.core">ECKey</A>&gt; <B>keychain</B></PRE>
 <DL>
+<DD>A list of public/private EC keys owned by this user.
+<P>
 <DL>
 </DL>
 </DL>
@@ -372,7 +378,7 @@ public boolean <B>isTransactionPresent</B>(<A HREF="../../../../com/google/bitco
 <A NAME="addEventListener(com.google.bitcoin.core.WalletEventListener)"><!-- --></A><H3>
 addEventListener</H3>
 <PRE>
-public void <B>addEventListener</B>(<A HREF="../../../../com/google/bitcoin/core/WalletEventListener.html" title="interface in com.google.bitcoin.core">WalletEventListener</A>&nbsp;listener)</PRE>
+public void <B>addEventListener</B>(<A HREF="../../../../com/google/bitcoin/core/WalletEventListener.html" title="class in com.google.bitcoin.core">WalletEventListener</A>&nbsp;listener)</PRE>
 <DL>
 <DD>Adds an event listener object. Methods on this object are called when something interesting happens,
  like receiving money.<p>
@@ -434,13 +440,14 @@ findKeyFromPubHash</H3>
 public <A HREF="../../../../com/google/bitcoin/core/ECKey.html" title="class in com.google.bitcoin.core">ECKey</A> <B>findKeyFromPubHash</B>(byte[]&nbsp;pubkeyHash)</PRE>
 <DL>
 <DD>Locates a keypair from the keychain given the hash of the public key. This is needed when finding out which
- key we need to use to redeem a transaction output. Returns null if no key was found.
+ key we need to use to redeem a transaction output.
 <P>
 <DD><DL>
 </DL>
 </DD>
 <DD><DL>
-</DL>
+
+<DT><B>Returns:</B><DD>ECKey object or null if no such key was found.</DL>
 </DD>
 </DL>
 <HR>
@@ -486,8 +493,7 @@ public java.lang.String <B>toString</B>()</PRE>
 <A NAME="navbar_bottom_firstrow"><!-- --></A>
 <TABLE BORDER="0" CELLPADDING="0" CELLSPACING="3" SUMMARY="">
   <TR ALIGN="center" VALIGN="top">
-  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../../overview-summary.html"><FONT CLASS="NavBarFont1"><B>Overview</B></FONT></A>&nbsp;</TD>
-  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="package-summary.html"><FONT CLASS="NavBarFont1"><B>Package</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../../com/google/bitcoin/core/package-summary.html"><FONT CLASS="NavBarFont1"><B>Package</B></FONT></A>&nbsp;</TD>
   <TD BGCOLOR="#FFFFFF" CLASS="NavBarCell1Rev"> &nbsp;<FONT CLASS="NavBarFont1Rev"><B>Class</B></FONT>&nbsp;</TD>
   <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="package-tree.html"><FONT CLASS="NavBarFont1"><B>Tree</B></FONT></A>&nbsp;</TD>
   <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../../deprecated-list.html"><FONT CLASS="NavBarFont1"><B>Deprecated</B></FONT></A>&nbsp;</TD>
@@ -504,7 +510,7 @@ public java.lang.String <B>toString</B>()</PRE>
 <TR>
 <TD BGCOLOR="white" CLASS="NavBarCell2"><FONT SIZE="-2">
 &nbsp;<A HREF="../../../../com/google/bitcoin/core/VersionMessage.html" title="class in com.google.bitcoin.core"><B>PREV CLASS</B></A>&nbsp;
-&nbsp;<A HREF="../../../../com/google/bitcoin/core/WalletEventListener.html" title="interface in com.google.bitcoin.core"><B>NEXT CLASS</B></A></FONT></TD>
+&nbsp;<A HREF="../../../../com/google/bitcoin/core/WalletEventListener.html" title="class in com.google.bitcoin.core"><B>NEXT CLASS</B></A></FONT></TD>
 <TD BGCOLOR="white" CLASS="NavBarCell2"><FONT SIZE="-2">
   <A HREF="../../../../index.html?com/google/bitcoin/core/Wallet.html" target="_top"><B>FRAMES</B></A>  &nbsp;
 &nbsp;<A HREF="Wallet.html" target="_top"><B>NO FRAMES</B></A>  &nbsp;

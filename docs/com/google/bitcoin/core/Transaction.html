@@ -35,8 +35,7 @@ function windowTitle()
 <A NAME="navbar_top_firstrow"><!-- --></A>
 <TABLE BORDER="0" CELLPADDING="0" CELLSPACING="3" SUMMARY="">
   <TR ALIGN="center" VALIGN="top">
-  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../../overview-summary.html"><FONT CLASS="NavBarFont1"><B>Overview</B></FONT></A>&nbsp;</TD>
-  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="package-summary.html"><FONT CLASS="NavBarFont1"><B>Package</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../../com/google/bitcoin/core/package-summary.html"><FONT CLASS="NavBarFont1"><B>Package</B></FONT></A>&nbsp;</TD>
   <TD BGCOLOR="#FFFFFF" CLASS="NavBarCell1Rev"> &nbsp;<FONT CLASS="NavBarFont1Rev"><B>Class</B></FONT>&nbsp;</TD>
   <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="package-tree.html"><FONT CLASS="NavBarFont1"><B>Tree</B></FONT></A>&nbsp;</TD>
   <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../../deprecated-list.html"><FONT CLASS="NavBarFont1"><B>Deprecated</B></FONT></A>&nbsp;</TD>
@@ -149,7 +148,7 @@ A transaction represents the movement of coins from some addresses to some other
 <TH ALIGN="left"><B>Fields inherited from class com.google.bitcoin.core.<A HREF="../../../../com/google/bitcoin/core/Message.html" title="class in com.google.bitcoin.core">Message</A></B></TH>
 </TR>
 <TR BGCOLOR="white" CLASS="TableRowColor">
-<TD><CODE><A HREF="../../../../com/google/bitcoin/core/Message.html#bytes">bytes</A>, <A HREF="../../../../com/google/bitcoin/core/Message.html#cursor">cursor</A>, <A HREF="../../../../com/google/bitcoin/core/Message.html#MAX_SIZE">MAX_SIZE</A>, <A HREF="../../../../com/google/bitcoin/core/Message.html#offset">offset</A>, <A HREF="../../../../com/google/bitcoin/core/Message.html#params">params</A></CODE></TD>
+<TD><CODE><A HREF="../../../../com/google/bitcoin/core/Message.html#bytes">bytes</A>, <A HREF="../../../../com/google/bitcoin/core/Message.html#cursor">cursor</A>, <A HREF="../../../../com/google/bitcoin/core/Message.html#MAX_SIZE">MAX_SIZE</A>, <A HREF="../../../../com/google/bitcoin/core/Message.html#offset">offset</A>, <A HREF="../../../../com/google/bitcoin/core/Message.html#params">params</A>, <A HREF="../../../../com/google/bitcoin/core/Message.html#protocolVersion">protocolVersion</A></CODE></TD>
 </TR>
 </TABLE>
 &nbsp;
@@ -245,10 +244,18 @@ A transaction represents the movement of coins from some addresses to some other
 <TR BGCOLOR="white" CLASS="TableRowColor">
 <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
 <CODE>&nbsp;java.math.BigInteger</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/Transaction.html#getValueSentFromMe(com.google.bitcoin.core.Wallet)">getValueSentFromMe</A></B>(<A HREF="../../../../com/google/bitcoin/core/Wallet.html" title="class in com.google.bitcoin.core">Wallet</A>&nbsp;wallet)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Calculates the sum of the inputs that are spending coins with keys in the wallet.</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;java.math.BigInteger</CODE></FONT></TD>
 <TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/Transaction.html#getValueSentToMe(com.google.bitcoin.core.Wallet)">getValueSentToMe</A></B>(<A HREF="../../../../com/google/bitcoin/core/Wallet.html" title="class in com.google.bitcoin.core">Wallet</A>&nbsp;wallet)</CODE>
 
 <BR>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Returns the sum of the outputs that are sending coins to a key in our wallet.</TD>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Calculates the sum of the outputs that are sending coins to a key in the wallet.</TD>
 </TR>
 <TR BGCOLOR="white" CLASS="TableRowColor">
 <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
@@ -418,13 +425,36 @@ getValueSentToMe</H3>
 <PRE>
 public java.math.BigInteger <B>getValueSentToMe</B>(<A HREF="../../../../com/google/bitcoin/core/Wallet.html" title="class in com.google.bitcoin.core">Wallet</A>&nbsp;wallet)</PRE>
 <DL>
-<DD>Returns the sum of the outputs that are sending coins to a key in our wallet.
+<DD>Calculates the sum of the outputs that are sending coins to a key in the wallet.
 <P>
 <DD><DL>
 </DL>
 </DD>
 <DD><DL>
+
+<DT><B>Returns:</B><DD>sum in nanocoins</DL>
+</DD>
 </DL>
+<HR>
+
+<A NAME="getValueSentFromMe(com.google.bitcoin.core.Wallet)"><!-- --></A><H3>
+getValueSentFromMe</H3>
+<PRE>
+public java.math.BigInteger <B>getValueSentFromMe</B>(<A HREF="../../../../com/google/bitcoin/core/Wallet.html" title="class in com.google.bitcoin.core">Wallet</A>&nbsp;wallet)
+                                        throws <A HREF="../../../../com/google/bitcoin/core/ScriptException.html" title="class in com.google.bitcoin.core">ScriptException</A></PRE>
+<DL>
+<DD>Calculates the sum of the inputs that are spending coins with keys in the wallet. This requires the
+ transactions sending coins to those keys to be in the wallet. This method will not attempt to download the
+ blocks containing the input transactions if the key is in the wallet but the transactions are not.
+<P>
+<DD><DL>
+</DL>
+</DD>
+<DD><DL>
+
+<DT><B>Returns:</B><DD>sum in nanocoins.
+<DT><B>Throws:</B>
+<DD><CODE><A HREF="../../../../com/google/bitcoin/core/ScriptException.html" title="class in com.google.bitcoin.core">ScriptException</A></CODE></DL>
 </DD>
 </DL>
 <HR>
@@ -507,7 +537,7 @@ public void <B>signInputs</B>(<A HREF="../../../../com/google/bitcoin/core/Trans
 <DL>
 <DD>Once a transaction has some inputs and outputs added, the signatures in the inputs can be calculated. The
  signature is over the transaction itself, to prove the redeemer actually created that transaction,
- so we have to do this step last.
+ so we have to do this step last.<p>
 
  This method is similar to SignatureHash in script.cpp
 <P>
@@ -606,8 +636,7 @@ public int <B>hashCode</B>()</PRE>
 <A NAME="navbar_bottom_firstrow"><!-- --></A>
 <TABLE BORDER="0" CELLPADDING="0" CELLSPACING="3" SUMMARY="">
   <TR ALIGN="center" VALIGN="top">
-  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../../overview-summary.html"><FONT CLASS="NavBarFont1"><B>Overview</B></FONT></A>&nbsp;</TD>
-  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="package-summary.html"><FONT CLASS="NavBarFont1"><B>Package</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../../com/google/bitcoin/core/package-summary.html"><FONT CLASS="NavBarFont1"><B>Package</B></FONT></A>&nbsp;</TD>
   <TD BGCOLOR="#FFFFFF" CLASS="NavBarCell1Rev"> &nbsp;<FONT CLASS="NavBarFont1Rev"><B>Class</B></FONT>&nbsp;</TD>
   <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="package-tree.html"><FONT CLASS="NavBarFont1"><B>Tree</B></FONT></A>&nbsp;</TD>
   <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../../deprecated-list.html"><FONT CLASS="NavBarFont1"><B>Deprecated</B></FONT></A>&nbsp;</TD>

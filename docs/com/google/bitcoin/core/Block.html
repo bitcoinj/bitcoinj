@@ -35,8 +35,7 @@ function windowTitle()
 <A NAME="navbar_top_firstrow"><!-- --></A>
 <TABLE BORDER="0" CELLPADDING="0" CELLSPACING="3" SUMMARY="">
   <TR ALIGN="center" VALIGN="top">
-  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../../overview-summary.html"><FONT CLASS="NavBarFont1"><B>Overview</B></FONT></A>&nbsp;</TD>
-  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="package-summary.html"><FONT CLASS="NavBarFont1"><B>Package</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../../com/google/bitcoin/core/package-summary.html"><FONT CLASS="NavBarFont1"><B>Package</B></FONT></A>&nbsp;</TD>
   <TD BGCOLOR="#FFFFFF" CLASS="NavBarCell1Rev"> &nbsp;<FONT CLASS="NavBarFont1Rev"><B>Class</B></FONT>&nbsp;</TD>
   <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="package-tree.html"><FONT CLASS="NavBarFont1"><B>Tree</B></FONT></A>&nbsp;</TD>
   <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../../deprecated-list.html"><FONT CLASS="NavBarFont1"><B>Deprecated</B></FONT></A>&nbsp;</TD>
@@ -104,10 +103,10 @@ java.lang.Object
 <P>
 A block is the foundation of the BitCoin system. It records a set of <A HREF="../../../../com/google/bitcoin/core/Transaction.html" title="class in com.google.bitcoin.core"><CODE>Transaction</CODE></A>s together with
  some data that links it into a place in the global block chain, and proves that a difficult calculation was done
- over its contents. See the BitCoin technical paper for more detail on blocks.
+ over its contents. See the BitCoin technical paper for more detail on blocks.<p>
 
- To get a block, you can either build one from the raw bytes you can get from another implementation, or more likely
- you grab it from a downloaded <A HREF="../../../../com/google/bitcoin/core/BlockChain.html" title="class in com.google.bitcoin.core"><CODE>BlockChain</CODE></A>.
+ To get a block, you can either build one from the raw bytes you can get from another implementation,
+ or request one specifically using <A HREF="../../../../com/google/bitcoin/core/Peer.html#getBlock(byte[])"><CODE>Peer.getBlock(byte[])</CODE></A>, or grab one from a downloaded <A HREF="../../../../com/google/bitcoin/core/BlockChain.html" title="class in com.google.bitcoin.core"><CODE>BlockChain</CODE></A>.
 <P>
 
 <P>
@@ -131,7 +130,7 @@ A block is the foundation of the BitCoin system. It records a set of <A HREF="..
 <TH ALIGN="left"><B>Fields inherited from class com.google.bitcoin.core.<A HREF="../../../../com/google/bitcoin/core/Message.html" title="class in com.google.bitcoin.core">Message</A></B></TH>
 </TR>
 <TR BGCOLOR="white" CLASS="TableRowColor">
-<TD><CODE><A HREF="../../../../com/google/bitcoin/core/Message.html#bytes">bytes</A>, <A HREF="../../../../com/google/bitcoin/core/Message.html#cursor">cursor</A>, <A HREF="../../../../com/google/bitcoin/core/Message.html#MAX_SIZE">MAX_SIZE</A>, <A HREF="../../../../com/google/bitcoin/core/Message.html#offset">offset</A>, <A HREF="../../../../com/google/bitcoin/core/Message.html#params">params</A></CODE></TD>
+<TD><CODE><A HREF="../../../../com/google/bitcoin/core/Message.html#bytes">bytes</A>, <A HREF="../../../../com/google/bitcoin/core/Message.html#cursor">cursor</A>, <A HREF="../../../../com/google/bitcoin/core/Message.html#MAX_SIZE">MAX_SIZE</A>, <A HREF="../../../../com/google/bitcoin/core/Message.html#offset">offset</A>, <A HREF="../../../../com/google/bitcoin/core/Message.html#params">params</A>, <A HREF="../../../../com/google/bitcoin/core/Message.html#protocolVersion">protocolVersion</A></CODE></TD>
 </TR>
 </TABLE>
 &nbsp;
@@ -170,6 +169,14 @@ A block is the foundation of the BitCoin system. It records a set of <A HREF="..
 </TR>
 <TR BGCOLOR="white" CLASS="TableRowColor">
 <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;<A HREF="../../../../com/google/bitcoin/core/Block.html" title="class in com.google.bitcoin.core">Block</A></CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/Block.html#cloneAsHeader()">cloneAsHeader</A></B>()</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Returns a copy of the block, but without any transactions.</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
 <CODE>&nbsp;boolean</CODE></FONT></TD>
 <TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/Block.html#equals(java.lang.Object)">equals</A></B>(java.lang.Object&nbsp;o)</CODE>
 
@@ -187,7 +194,7 @@ A block is the foundation of the BitCoin system. It records a set of <A HREF="..
 <TR BGCOLOR="white" CLASS="TableRowColor">
 <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
 <CODE>&nbsp;java.math.BigInteger</CODE></FONT></TD>
-<TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/Block.html#getDifficultyTargetBI()">getDifficultyTargetBI</A></B>()</CODE>
+<TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/Block.html#getDifficultyTargetAsInteger()">getDifficultyTargetAsInteger</A></B>()</CODE>
 
 <BR>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Returns the difficulty target as a 256 bit value that can be compared to a SHA-256 hash.</TD>
@@ -249,6 +256,14 @@ A block is the foundation of the BitCoin system. It records a set of <A HREF="..
 
 <BR>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Returns the version of the block data structure as defined by the BitCoin protocol.</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;java.math.BigInteger</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/Block.html#getWork()">getWork</A></B>()</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Returns the work represented by this block.</TD>
 </TR>
 <TR BGCOLOR="white" CLASS="TableRowColor">
 <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
@@ -407,6 +422,39 @@ public byte[] <B>getHash</B>()</PRE>
 </DL>
 <HR>
 
+<A NAME="getWork()"><!-- --></A><H3>
+getWork</H3>
+<PRE>
+public java.math.BigInteger <B>getWork</B>()
+                             throws <A HREF="../../../../com/google/bitcoin/core/VerificationException.html" title="class in com.google.bitcoin.core">VerificationException</A></PRE>
+<DL>
+<DD>Returns the work represented by this block.<p>
+
+ Work is defined as the number of tries needed to solve a block in the average case. Consider a difficulty
+ target that covers 5% of all possible hash values. Then the work of the block will be 20. As the target gets
+ lower, the amount of work goes up.
+<P>
+<DD><DL>
+
+<DT><B>Throws:</B>
+<DD><CODE><A HREF="../../../../com/google/bitcoin/core/VerificationException.html" title="class in com.google.bitcoin.core">VerificationException</A></CODE></DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="cloneAsHeader()"><!-- --></A><H3>
+cloneAsHeader</H3>
+<PRE>
+public <A HREF="../../../../com/google/bitcoin/core/Block.html" title="class in com.google.bitcoin.core">Block</A> <B>cloneAsHeader</B>()</PRE>
+<DL>
+<DD>Returns a copy of the block, but without any transactions.
+<P>
+<DD><DL>
+</DL>
+</DD>
+</DL>
+<HR>
+
 <A NAME="toString()"><!-- --></A><H3>
 toString</H3>
 <PRE>
@@ -420,6 +468,24 @@ public java.lang.String <B>toString</B>()</PRE>
 </DD>
 <DD><DL>
 </DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="getDifficultyTargetAsInteger()"><!-- --></A><H3>
+getDifficultyTargetAsInteger</H3>
+<PRE>
+public java.math.BigInteger <B>getDifficultyTargetAsInteger</B>()
+                                                  throws <A HREF="../../../../com/google/bitcoin/core/VerificationException.html" title="class in com.google.bitcoin.core">VerificationException</A></PRE>
+<DL>
+<DD>Returns the difficulty target as a 256 bit value that can be compared to a SHA-256 hash. Inside a block the
+ target is represented using a compact form. If this form decodes to a value that is out of bounds,
+ an exception is thrown.
+<P>
+<DD><DL>
+
+<DT><B>Throws:</B>
+<DD><CODE><A HREF="../../../../com/google/bitcoin/core/VerificationException.html" title="class in com.google.bitcoin.core">VerificationException</A></CODE></DL>
 </DD>
 </DL>
 <HR>
@@ -595,19 +661,6 @@ public long <B>getDifficultyTarget</B>()</PRE>
 </DL>
 <HR>
 
-<A NAME="getDifficultyTargetBI()"><!-- --></A><H3>
-getDifficultyTargetBI</H3>
-<PRE>
-public java.math.BigInteger <B>getDifficultyTargetBI</B>()</PRE>
-<DL>
-<DD>Returns the difficulty target as a 256 bit value that can be compared to a SHA-256 hash.
-<P>
-<DD><DL>
-</DL>
-</DD>
-</DL>
-<HR>
-
 <A NAME="setDifficultyTarget(long)"><!-- --></A><H3>
 setDifficultyTarget</H3>
 <PRE>
@@ -655,8 +708,7 @@ public void <B>setNonce</B>(long&nbsp;nonce)</PRE>
 <A NAME="navbar_bottom_firstrow"><!-- --></A>
 <TABLE BORDER="0" CELLPADDING="0" CELLSPACING="3" SUMMARY="">
   <TR ALIGN="center" VALIGN="top">
-  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../../overview-summary.html"><FONT CLASS="NavBarFont1"><B>Overview</B></FONT></A>&nbsp;</TD>
-  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="package-summary.html"><FONT CLASS="NavBarFont1"><B>Package</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../../com/google/bitcoin/core/package-summary.html"><FONT CLASS="NavBarFont1"><B>Package</B></FONT></A>&nbsp;</TD>
   <TD BGCOLOR="#FFFFFF" CLASS="NavBarCell1Rev"> &nbsp;<FONT CLASS="NavBarFont1Rev"><B>Class</B></FONT>&nbsp;</TD>
   <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="package-tree.html"><FONT CLASS="NavBarFont1"><B>Tree</B></FONT></A>&nbsp;</TD>
   <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../../deprecated-list.html"><FONT CLASS="NavBarFont1"><B>Deprecated</B></FONT></A>&nbsp;</TD>

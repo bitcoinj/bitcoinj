@@ -35,8 +35,7 @@ function windowTitle()
 <A NAME="navbar_top_firstrow"><!-- --></A>
 <TABLE BORDER="0" CELLPADDING="0" CELLSPACING="3" SUMMARY="">
   <TR ALIGN="center" VALIGN="top">
-  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../../overview-summary.html"><FONT CLASS="NavBarFont1"><B>Overview</B></FONT></A>&nbsp;</TD>
-  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="package-summary.html"><FONT CLASS="NavBarFont1"><B>Package</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../../com/google/bitcoin/core/package-summary.html"><FONT CLASS="NavBarFont1"><B>Package</B></FONT></A>&nbsp;</TD>
   <TD BGCOLOR="#FFFFFF" CLASS="NavBarCell1Rev"> &nbsp;<FONT CLASS="NavBarFont1Rev"><B>Class</B></FONT>&nbsp;</TD>
   <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="package-tree.html"><FONT CLASS="NavBarFont1"><B>Tree</B></FONT></A>&nbsp;</TD>
   <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../../deprecated-list.html"><FONT CLASS="NavBarFont1"><B>Deprecated</B></FONT></A>&nbsp;</TD>
@@ -53,7 +52,7 @@ function windowTitle()
 <TR>
 <TD BGCOLOR="white" CLASS="NavBarCell2"><FONT SIZE="-2">
 &nbsp;<A HREF="../../../../com/google/bitcoin/core/Block.html" title="class in com.google.bitcoin.core"><B>PREV CLASS</B></A>&nbsp;
-&nbsp;<A HREF="../../../../com/google/bitcoin/core/ECKey.html" title="class in com.google.bitcoin.core"><B>NEXT CLASS</B></A></FONT></TD>
+&nbsp;<A HREF="../../../../com/google/bitcoin/core/BlockStoreException.html" title="class in com.google.bitcoin.core"><B>NEXT CLASS</B></A></FONT></TD>
 <TD BGCOLOR="white" CLASS="NavBarCell2"><FONT SIZE="-2">
   <A HREF="../../../../index.html?com/google/bitcoin/core/BlockChain.html" target="_top"><B>FRAMES</B></A>  &nbsp;
 &nbsp;<A HREF="BlockChain.html" target="_top"><B>NO FRAMES</B></A>  &nbsp;
@@ -73,9 +72,9 @@ function windowTitle()
 </TR>
 <TR>
 <TD VALIGN="top" CLASS="NavBarCell3"><FONT SIZE="-2">
-  SUMMARY:&nbsp;NESTED&nbsp;|&nbsp;FIELD&nbsp;|&nbsp;<A HREF="#constructor_summary">CONSTR</A>&nbsp;|&nbsp;<A HREF="#method_summary">METHOD</A></FONT></TD>
+  SUMMARY:&nbsp;NESTED&nbsp;|&nbsp;<A HREF="#field_summary">FIELD</A>&nbsp;|&nbsp;<A HREF="#constructor_summary">CONSTR</A>&nbsp;|&nbsp;<A HREF="#method_summary">METHOD</A></FONT></TD>
 <TD VALIGN="top" CLASS="NavBarCell3"><FONT SIZE="-2">
-DETAIL:&nbsp;FIELD&nbsp;|&nbsp;<A HREF="#constructor_detail">CONSTR</A>&nbsp;|&nbsp;<A HREF="#method_detail">METHOD</A></FONT></TD>
+DETAIL:&nbsp;<A HREF="#field_detail">FIELD</A>&nbsp;|&nbsp;<A HREF="#constructor_detail">CONSTR</A>&nbsp;|&nbsp;<A HREF="#method_detail">METHOD</A></FONT></TD>
 </TR>
 </TABLE>
 <A NAME="skip-navbar_top"></A>
@@ -126,7 +125,48 @@ A BlockChain holds a series of <A HREF="../../../../com/google/bitcoin/core/Bloc
 <HR>
 
 <P>
+<!-- =========== FIELD SUMMARY =========== -->
 
+<A NAME="field_summary"><!-- --></A>
+<TABLE BORDER="1" WIDTH="100%" CELLPADDING="3" CELLSPACING="0" SUMMARY="">
+<TR BGCOLOR="#CCCCFF" CLASS="TableHeadingColor">
+<TH ALIGN="left" COLSPAN="2"><FONT SIZE="+2">
+<B>Field Summary</B></FONT></TH>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>protected &nbsp;com.google.bitcoin.core.BlockStore</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/BlockChain.html#blockStore">blockStore</A></B></CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Keeps a map of block hashes to StoredBlocks.</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>protected &nbsp;com.google.bitcoin.core.StoredBlock</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/BlockChain.html#chainHead">chainHead</A></B></CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Tracks the top of the best known chain.</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>protected &nbsp;<A HREF="../../../../com/google/bitcoin/core/NetworkParameters.html" title="class in com.google.bitcoin.core">NetworkParameters</A></CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/BlockChain.html#params">params</A></B></CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>protected &nbsp;<A HREF="../../../../com/google/bitcoin/core/Wallet.html" title="class in com.google.bitcoin.core">Wallet</A></CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/BlockChain.html#wallet">wallet</A></B></CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+</TR>
+</TABLE>
+&nbsp;
 <!-- ======== CONSTRUCTOR SUMMARY ======== -->
 
 <A NAME="constructor_summary"><!-- --></A>
@@ -162,11 +202,11 @@ A BlockChain holds a series of <A HREF="../../../../com/google/bitcoin/core/Bloc
 </TR>
 <TR BGCOLOR="white" CLASS="TableRowColor">
 <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
-<CODE>&nbsp;<A HREF="../../../../com/google/bitcoin/core/Block.html" title="class in com.google.bitcoin.core">Block</A></CODE></FONT></TD>
-<TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/BlockChain.html#getTopBlock()">getTopBlock</A></B>()</CODE>
+<CODE>&nbsp;com.google.bitcoin.core.StoredBlock</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/BlockChain.html#getChainHead()">getChainHead</A></B>()</CODE>
 
 <BR>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Returns the highest known block or null if the chain is empty (top block is genesis).</TD>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Returns the block at the head of the current best chain.</TD>
 </TR>
 <TR BGCOLOR="white" CLASS="TableRowColor">
 <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
@@ -188,6 +228,64 @@ A BlockChain holds a series of <A HREF="../../../../com/google/bitcoin/core/Bloc
 </TABLE>
 &nbsp;
 <P>
+
+<!-- ============ FIELD DETAIL =========== -->
+
+<A NAME="field_detail"><!-- --></A>
+<TABLE BORDER="1" WIDTH="100%" CELLPADDING="3" CELLSPACING="0" SUMMARY="">
+<TR BGCOLOR="#CCCCFF" CLASS="TableHeadingColor">
+<TH ALIGN="left" COLSPAN="1"><FONT SIZE="+2">
+<B>Field Detail</B></FONT></TH>
+</TR>
+</TABLE>
+
+<A NAME="blockStore"><!-- --></A><H3>
+blockStore</H3>
+<PRE>
+protected com.google.bitcoin.core.BlockStore <B>blockStore</B></PRE>
+<DL>
+<DD>Keeps a map of block hashes to StoredBlocks.
+<P>
+<DL>
+</DL>
+</DL>
+<HR>
+
+<A NAME="chainHead"><!-- --></A><H3>
+chainHead</H3>
+<PRE>
+protected com.google.bitcoin.core.StoredBlock <B>chainHead</B></PRE>
+<DL>
+<DD>Tracks the top of the best known chain.<p>
+
+ Following this one down to the genesis block produces the story of the economy from the creation of BitCoin
+ until the present day. The chain head can change if a new set of blocks is received that results in a chain of
+ greater work than the one obtained by following this one down. In that case a reorganize is triggered,
+ potentially invalidating transactions in our wallet.
+<P>
+<DL>
+</DL>
+</DL>
+<HR>
+
+<A NAME="params"><!-- --></A><H3>
+params</H3>
+<PRE>
+protected final <A HREF="../../../../com/google/bitcoin/core/NetworkParameters.html" title="class in com.google.bitcoin.core">NetworkParameters</A> <B>params</B></PRE>
+<DL>
+<DL>
+</DL>
+</DL>
+<HR>
+
+<A NAME="wallet"><!-- --></A><H3>
+wallet</H3>
+<PRE>
+protected final <A HREF="../../../../com/google/bitcoin/core/Wallet.html" title="class in com.google.bitcoin.core">Wallet</A> <B>wallet</B></PRE>
+<DL>
+<DL>
+</DL>
+</DL>
 
 <!-- ========= CONSTRUCTOR DETAIL ======== -->
 
@@ -237,12 +335,13 @@ public boolean <B>add</B>(<A HREF="../../../../com/google/bitcoin/core/Block.htm
 </DL>
 <HR>
 
-<A NAME="getTopBlock()"><!-- --></A><H3>
-getTopBlock</H3>
+<A NAME="getChainHead()"><!-- --></A><H3>
+getChainHead</H3>
 <PRE>
-public <A HREF="../../../../com/google/bitcoin/core/Block.html" title="class in com.google.bitcoin.core">Block</A> <B>getTopBlock</B>()</PRE>
+public com.google.bitcoin.core.StoredBlock <B>getChainHead</B>()</PRE>
 <DL>
-<DD>Returns the highest known block or null if the chain is empty (top block is genesis).
+<DD>Returns the block at the head of the current best chain. This is the block which represents the greatest
+ amount of cumulative work done.
 <P>
 <DD><DL>
 </DL>
@@ -274,8 +373,7 @@ public <A HREF="../../../../com/google/bitcoin/core/Block.html" title="class in 
 <A NAME="navbar_bottom_firstrow"><!-- --></A>
 <TABLE BORDER="0" CELLPADDING="0" CELLSPACING="3" SUMMARY="">
   <TR ALIGN="center" VALIGN="top">
-  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../../overview-summary.html"><FONT CLASS="NavBarFont1"><B>Overview</B></FONT></A>&nbsp;</TD>
-  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="package-summary.html"><FONT CLASS="NavBarFont1"><B>Package</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../../com/google/bitcoin/core/package-summary.html"><FONT CLASS="NavBarFont1"><B>Package</B></FONT></A>&nbsp;</TD>
   <TD BGCOLOR="#FFFFFF" CLASS="NavBarCell1Rev"> &nbsp;<FONT CLASS="NavBarFont1Rev"><B>Class</B></FONT>&nbsp;</TD>
   <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="package-tree.html"><FONT CLASS="NavBarFont1"><B>Tree</B></FONT></A>&nbsp;</TD>
   <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../../deprecated-list.html"><FONT CLASS="NavBarFont1"><B>Deprecated</B></FONT></A>&nbsp;</TD>
@@ -292,7 +390,7 @@ public <A HREF="../../../../com/google/bitcoin/core/Block.html" title="class in 
 <TR>
 <TD BGCOLOR="white" CLASS="NavBarCell2"><FONT SIZE="-2">
 &nbsp;<A HREF="../../../../com/google/bitcoin/core/Block.html" title="class in com.google.bitcoin.core"><B>PREV CLASS</B></A>&nbsp;
-&nbsp;<A HREF="../../../../com/google/bitcoin/core/ECKey.html" title="class in com.google.bitcoin.core"><B>NEXT CLASS</B></A></FONT></TD>
+&nbsp;<A HREF="../../../../com/google/bitcoin/core/BlockStoreException.html" title="class in com.google.bitcoin.core"><B>NEXT CLASS</B></A></FONT></TD>
 <TD BGCOLOR="white" CLASS="NavBarCell2"><FONT SIZE="-2">
   <A HREF="../../../../index.html?com/google/bitcoin/core/BlockChain.html" target="_top"><B>FRAMES</B></A>  &nbsp;
 &nbsp;<A HREF="BlockChain.html" target="_top"><B>NO FRAMES</B></A>  &nbsp;
@@ -312,9 +410,9 @@ public <A HREF="../../../../com/google/bitcoin/core/Block.html" title="class in 
 </TR>
 <TR>
 <TD VALIGN="top" CLASS="NavBarCell3"><FONT SIZE="-2">
-  SUMMARY:&nbsp;NESTED&nbsp;|&nbsp;FIELD&nbsp;|&nbsp;<A HREF="#constructor_summary">CONSTR</A>&nbsp;|&nbsp;<A HREF="#method_summary">METHOD</A></FONT></TD>
+  SUMMARY:&nbsp;NESTED&nbsp;|&nbsp;<A HREF="#field_summary">FIELD</A>&nbsp;|&nbsp;<A HREF="#constructor_summary">CONSTR</A>&nbsp;|&nbsp;<A HREF="#method_summary">METHOD</A></FONT></TD>
 <TD VALIGN="top" CLASS="NavBarCell3"><FONT SIZE="-2">
-DETAIL:&nbsp;FIELD&nbsp;|&nbsp;<A HREF="#constructor_detail">CONSTR</A>&nbsp;|&nbsp;<A HREF="#method_detail">METHOD</A></FONT></TD>
+DETAIL:&nbsp;<A HREF="#field_detail">FIELD</A>&nbsp;|&nbsp;<A HREF="#constructor_detail">CONSTR</A>&nbsp;|&nbsp;<A HREF="#method_detail">METHOD</A></FONT></TD>
 </TR>
 </TABLE>
 <A NAME="skip-navbar_bottom"></A>

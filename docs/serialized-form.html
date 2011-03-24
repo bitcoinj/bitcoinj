@@ -35,10 +35,9 @@ function windowTitle()
 <A NAME="navbar_top_firstrow"><!-- --></A>
 <TABLE BORDER="0" CELLPADDING="0" CELLSPACING="3" SUMMARY="">
   <TR ALIGN="center" VALIGN="top">
-  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="overview-summary.html"><FONT CLASS="NavBarFont1"><B>Overview</B></FONT></A>&nbsp;</TD>
-  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <FONT CLASS="NavBarFont1">Package</FONT>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="com/google/bitcoin/core/package-summary.html"><FONT CLASS="NavBarFont1"><B>Package</B></FONT></A>&nbsp;</TD>
   <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <FONT CLASS="NavBarFont1">Class</FONT>&nbsp;</TD>
-  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="overview-tree.html"><FONT CLASS="NavBarFont1"><B>Tree</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="com/google/bitcoin/core/package-tree.html"><FONT CLASS="NavBarFont1"><B>Tree</B></FONT></A>&nbsp;</TD>
   <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="deprecated-list.html"><FONT CLASS="NavBarFont1"><B>Deprecated</B></FONT></A>&nbsp;</TD>
   <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="index-all.html"><FONT CLASS="NavBarFont1"><B>Index</B></FONT></A>&nbsp;</TD>
   <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="help-doc.html"><FONT CLASS="NavBarFont1"><B>Help</B></FONT></A>&nbsp;</TD>
@@ -108,6 +107,9 @@ Serialized Form</H1>
 <B>Class <A HREF="com/google/bitcoin/core/AddressMessage.html" title="class in com.google.bitcoin.core">com.google.bitcoin.core.AddressMessage</A> extends <A HREF="com/google/bitcoin/core/Message.html" title="class in com.google.bitcoin.core">Message</A> implements Serializable</B></FONT></TH>
 </TR>
 </TABLE>
+
+<P>
+<B>serialVersionUID:&nbsp;</B>8058283864924679460L
 
 <P>
 <A NAME="serializedForm"><!-- --></A>
@@ -234,6 +236,17 @@ prevBlock</H3>
 </DL>
 
 <P>
+<A NAME="com.google.bitcoin.core.BlockStoreException"><!-- --></A>
+<TABLE BORDER="1" WIDTH="100%" CELLPADDING="3" CELLSPACING="0" SUMMARY="">
+<TR BGCOLOR="#CCCCFF" CLASS="TableSubHeadingColor">
+<TH ALIGN="left" COLSPAN="2"><FONT SIZE="+2">
+<B>Class <A HREF="com/google/bitcoin/core/BlockStoreException.html" title="class in com.google.bitcoin.core">com.google.bitcoin.core.BlockStoreException</A> extends java.lang.Exception implements Serializable</B></FONT></TH>
+</TR>
+</TABLE>
+
+<P>
+
+<P>
 <A NAME="com.google.bitcoin.core.ECKey"><!-- --></A>
 <TABLE BORDER="1" WIDTH="100%" CELLPADDING="3" CELLSPACING="0" SUMMARY="">
 <TR BGCOLOR="#CCCCFF" CLASS="TableSubHeadingColor">
@@ -282,6 +295,9 @@ byte[] <B>pub</B></PRE>
 </TABLE>
 
 <P>
+<B>serialVersionUID:&nbsp;</B>3479412877853645644L
+
+<P>
 <A NAME="serializedForm"><!-- --></A>
 <TABLE BORDER="1" WIDTH="100%" CELLPADDING="3" CELLSPACING="0" SUMMARY="">
 <TR BGCOLOR="#CCCCFF" CLASS="TableHeadingColor">
@@ -318,6 +334,9 @@ byte[] <B>stopHash</B></PRE>
 </TABLE>
 
 <P>
+<B>serialVersionUID:&nbsp;</B>2754681589501709887L
+
+<P>
 
 <P>
 <A NAME="com.google.bitcoin.core.InventoryMessage"><!-- --></A>
@@ -327,6 +346,9 @@ byte[] <B>stopHash</B></PRE>
 <B>Class <A HREF="com/google/bitcoin/core/InventoryMessage.html" title="class in com.google.bitcoin.core">com.google.bitcoin.core.InventoryMessage</A> extends <A HREF="com/google/bitcoin/core/Message.html" title="class in com.google.bitcoin.core">Message</A> implements Serializable</B></FONT></TH>
 </TR>
 </TABLE>
+
+<P>
+<B>serialVersionUID:&nbsp;</B>-7050246551646107066L
 
 <P>
 <A NAME="serializedForm"><!-- --></A>
@@ -354,6 +376,9 @@ java.util.List&lt;E&gt; <B>items</B></PRE>
 <B>Class <A HREF="com/google/bitcoin/core/Message.html" title="class in com.google.bitcoin.core">com.google.bitcoin.core.Message</A> extends java.lang.Object implements Serializable</B></FONT></TH>
 </TR>
 </TABLE>
+
+<P>
+<B>serialVersionUID:&nbsp;</B>-3561053461717079135L
 
 <P>
 <A NAME="serializedForm"><!-- --></A>
@@ -399,7 +424,15 @@ genesisBlock</H3>
 <PRE>
 <A HREF="com/google/bitcoin/core/Block.html" title="class in com.google.bitcoin.core">Block</A> <B>genesisBlock</B></PRE>
 <DL>
-<DD>Genesis block for this chain
+<DD>Genesis block for this chain.<p>
+
+ The first block in every chain is a well known constant shared between all BitCoin implemenetations. For a
+ block to be valid, it must be eventually possible to work backwards to the genesis block by following the
+ prevBlockHash pointers in the block headers.<p>
+
+ The genesis blocks for both test and prod networks contain the timestamp of when they were created,
+ and a message in the coinbase transaction. It says, <i>"The Times 03/Jan/2009 Chancellor on brink of second
+ bailout for banks"</i>.
 <P>
 <DL>
 </DL>
@@ -448,6 +481,30 @@ byte <B>addressHeader</B></PRE>
 <DL>
 </DL>
 </DL>
+<HR>
+<H3>
+interval</H3>
+<PRE>
+int <B>interval</B></PRE>
+<DL>
+<DD>How many blocks pass between difficulty adjustment periods. BitCoin standardises this to be 2015.
+<P>
+<DL>
+</DL>
+</DL>
+<HR>
+<H3>
+targetTimespan</H3>
+<PRE>
+int <B>targetTimespan</B></PRE>
+<DL>
+<DD>How much time in seconds is supposed to pass between "interval" blocks. If the actual elapsed time is
+ significantly different from this value, the network difficulty formula will produce a different value. Both
+ test and production BitCoin networks use 2 weeks (1209600 seconds).
+<P>
+<DL>
+</DL>
+</DL>
 
 <P>
 <A NAME="com.google.bitcoin.core.PeerAddress"><!-- --></A>
@@ -492,6 +549,15 @@ int <B>port</B></PRE>
 services</H3>
 <PRE>
 java.math.BigInteger <B>services</B></PRE>
+<DL>
+<DL>
+</DL>
+</DL>
+<HR>
+<H3>
+time</H3>
+<PRE>
+long <B>time</B></PRE>
 <DL>
 <DL>
 </DL>
@@ -634,6 +700,9 @@ byte[] <B>scriptBytes</B></PRE>
 </TABLE>
 
 <P>
+<B>serialVersionUID:&nbsp;</B>-6320880638344662579L
+
+<P>
 <A NAME="serializedForm"><!-- --></A>
 <TABLE BORDER="1" WIDTH="100%" CELLPADDING="3" CELLSPACING="0" SUMMARY="">
 <TR BGCOLOR="#CCCCFF" CLASS="TableHeadingColor">
@@ -647,6 +716,8 @@ hash</H3>
 <PRE>
 byte[] <B>hash</B></PRE>
 <DL>
+<DD>Hash of the transaction to which we refer.
+<P>
 <DL>
 </DL>
 </DL>
@@ -656,6 +727,8 @@ index</H3>
 <PRE>
 long <B>index</B></PRE>
 <DL>
+<DD>Which output of that transaction we are talking about.
+<P>
 <DL>
 </DL>
 </DL>
@@ -736,6 +809,9 @@ parentTransaction</H3>
 </TABLE>
 
 <P>
+<B>serialVersionUID:&nbsp;</B>3614705938207918775L
+
+<P>
 <A NAME="serializedForm"><!-- --></A>
 <TABLE BORDER="1" WIDTH="100%" CELLPADDING="3" CELLSPACING="0" SUMMARY="">
 <TR BGCOLOR="#CCCCFF" CLASS="TableHeadingColor">
@@ -774,6 +850,9 @@ java.lang.String <B>name</B></PRE>
 </TABLE>
 
 <P>
+<B>serialVersionUID:&nbsp;</B>7313594258967483180L
+
+<P>
 <A NAME="serializedForm"><!-- --></A>
 <TABLE BORDER="1" WIDTH="100%" CELLPADDING="3" CELLSPACING="0" SUMMARY="">
 <TR BGCOLOR="#CCCCFF" CLASS="TableHeadingColor">
@@ -787,6 +866,8 @@ clientVersion</H3>
 <PRE>
 int <B>clientVersion</B></PRE>
 <DL>
+<DD>The version number of the protocol spoken.
+<P>
 <DL>
 </DL>
 </DL>
@@ -796,6 +877,8 @@ localServices</H3>
 <PRE>
 long <B>localServices</B></PRE>
 <DL>
+<DD>Flags defining what is supported. Right now <A HREF="com/google/bitcoin/core/VersionMessage.html#NODE_NETWORK"><CODE>VersionMessage.NODE_NETWORK</CODE></A> is the only flag defined.
+<P>
 <DL>
 </DL>
 </DL>
@@ -803,8 +886,55 @@ long <B>localServices</B></PRE>
 <H3>
 time</H3>
 <PRE>
-java.math.BigInteger <B>time</B></PRE>
+long <B>time</B></PRE>
 <DL>
+<DD>What the other side believes the current time to be, in seconds.
+<P>
+<DL>
+</DL>
+</DL>
+<HR>
+<H3>
+myAddr</H3>
+<PRE>
+<A HREF="com/google/bitcoin/core/PeerAddress.html" title="class in com.google.bitcoin.core">PeerAddress</A> <B>myAddr</B></PRE>
+<DL>
+<DD>What the other side believes the address of this program is. Not used.
+<P>
+<DL>
+</DL>
+</DL>
+<HR>
+<H3>
+theirAddr</H3>
+<PRE>
+<A HREF="com/google/bitcoin/core/PeerAddress.html" title="class in com.google.bitcoin.core">PeerAddress</A> <B>theirAddr</B></PRE>
+<DL>
+<DD>What the other side believes their own address is. Not used.
+<P>
+<DL>
+</DL>
+</DL>
+<HR>
+<H3>
+subVer</H3>
+<PRE>
+java.lang.String <B>subVer</B></PRE>
+<DL>
+<DD>An additional string that today the official client sets to the empty string. We treat it as something like an
+ HTTP User-Agent header.
+<P>
+<DL>
+</DL>
+</DL>
+<HR>
+<H3>
+bestHeight</H3>
+<PRE>
+long <B>bestHeight</B></PRE>
+<DL>
+<DD>How many blocks are in the chain, according to the other side.
+<P>
 <DL>
 </DL>
 </DL>
@@ -858,6 +988,11 @@ unspent</H3>
 <PRE>
 java.util.ArrayList&lt;E&gt; <B>unspent</B></PRE>
 <DL>
+<DD>A list of transactions with outputs we can spend. Note that some of these transactions may be partially spent,
+ that is, they have outputs some of which are redeemed and others which aren't already. The spentness of each
+ output is tracked in the TransactionOutput object. The value of all unspent outputs is the balance of the
+ wallet.
+<P>
 <DL>
 </DL>
 </DL>
@@ -867,6 +1002,9 @@ fullySpent</H3>
 <PRE>
 java.util.LinkedList&lt;E&gt; <B>fullySpent</B></PRE>
 <DL>
+<DD>When all the outputs of a transaction are spent, it gets put here. These transactions aren't useful for
+ anything except record keeping and presentation to the user.
+<P>
 <DL>
 </DL>
 </DL>
@@ -876,6 +1014,8 @@ keychain</H3>
 <PRE>
 java.util.ArrayList&lt;E&gt; <B>keychain</B></PRE>
 <DL>
+<DD>A list of public/private EC keys owned by this user.
+<P>
 <DL>
 </DL>
 </DL>
@@ -902,10 +1042,9 @@ params</H3>
 <A NAME="navbar_bottom_firstrow"><!-- --></A>
 <TABLE BORDER="0" CELLPADDING="0" CELLSPACING="3" SUMMARY="">
   <TR ALIGN="center" VALIGN="top">
-  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="overview-summary.html"><FONT CLASS="NavBarFont1"><B>Overview</B></FONT></A>&nbsp;</TD>
-  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <FONT CLASS="NavBarFont1">Package</FONT>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="com/google/bitcoin/core/package-summary.html"><FONT CLASS="NavBarFont1"><B>Package</B></FONT></A>&nbsp;</TD>
   <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <FONT CLASS="NavBarFont1">Class</FONT>&nbsp;</TD>
-  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="overview-tree.html"><FONT CLASS="NavBarFont1"><B>Tree</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="com/google/bitcoin/core/package-tree.html"><FONT CLASS="NavBarFont1"><B>Tree</B></FONT></A>&nbsp;</TD>
   <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="deprecated-list.html"><FONT CLASS="NavBarFont1"><B>Deprecated</B></FONT></A>&nbsp;</TD>
   <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="index-all.html"><FONT CLASS="NavBarFont1"><B>Index</B></FONT></A>&nbsp;</TD>
   <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="help-doc.html"><FONT CLASS="NavBarFont1"><B>Help</B></FONT></A>&nbsp;</TD>
