@@ -73,11 +73,13 @@ public class NetworkConnection {
         out = socket.getOutputStream();
         in = socket.getInputStream();
 
+        // Announce ourselves. This has to come first to connect to clients beyond v0.30.20.2 which wait to hear
+        // from us until they send their version message back.
+        writeMessage(MSG_VERSION, new VersionMessage(params));
         // When connecting, the remote peer sends us a version message with various bits of
         // useful data in it. We need to know the peer protocol version before we can talk to it.
         versionMessage = (VersionMessage) readMessage();
         // Now it's our turn ...
-        writeMessage(MSG_VERSION, new VersionMessage(params));
         // Send an ACK message stating we accept the peers protocol version.
         writeMessage(MSG_VERACK, new byte[] {});
         // And get one back ...
