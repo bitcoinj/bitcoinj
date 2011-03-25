@@ -52,7 +52,7 @@ public class Block extends Message {
     /** If null, it means this object holds only the headers. */
     List<Transaction> transactions;
     /** Stores the hash of the block. If null, getHash() will recalculate it. */
-    private byte[] hash;
+    transient private byte[] hash;
 
     // If set, points towards the previous block in the chain. Note that a block may have multiple other blocks
     // pointing back to it because despite being called a "chain", the block chain is in fact a tree. There can be
@@ -352,9 +352,6 @@ public class Block extends Message {
     public boolean equals(Object o) {
         if (!(o instanceof Block)) return false;
         Block other = (Block) o;
-        if (hash != null && other.hash != null)
-            return Arrays.equals(hash, other.hash);
-        // Otherwise we have to do it the slow way.
         return Arrays.equals(getHash(), other.getHash());
     }
 
