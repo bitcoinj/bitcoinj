@@ -51,14 +51,9 @@ public class Block extends Message {
 
     /** If null, it means this object holds only the headers. */
     List<Transaction> transactions;
+
     /** Stores the hash of the block. If null, getHash() will recalculate it. */
     transient private byte[] hash;
-
-    // If set, points towards the previous block in the chain. Note that a block may have multiple other blocks
-    // pointing back to it because despite being called a "chain", the block chain is in fact a tree. There can be
-    // splits which are resolved by selecting the head that has the largest total cumulative work when measured down
-    // to the genesis block.
-    Block prevBlock;
 
     /** Special case constructor, used for the genesis node and unit tests. */
     Block(NetworkParameters params) {
@@ -328,19 +323,17 @@ public class Block extends Message {
      * @throws VerificationException
      */
     public void verify() throws VerificationException {
-        // Now we need to prove that this block is OK. It might seem that we can just ignore
-        // most of these checks, given that the network is also verifying the blocks, but we
-        // cannot as it'd open us to a variety of obscure attacks.
+        // Prove that this block is OK. It might seem that we can just ignore most of these checks given that the
+        // network is also verifying the blocks, but we cannot as it'd open us to a variety of obscure attacks.
         //
-        // Firstly we need to ensure this block does in fact represent real work done. If the
-        // difficulty is high enough, it's probably been done by the network.
+        // Firstly we need to ensure this block does in fact represent real work done. If the difficulty is high
+        // enough, it's probably been done by the network.
         checkProofOfWork(true);
         checkTimestamp();
-        // Now we need to check that the body of the block actually matches the headers. The
-        // network won't generate an invalid block, but if we didn't validate this then an
-        // untrusted man-in-the-middle could obtain the next valid block from the network and
-        // simply replace the transactions in it with their own fictional transactions that
-        // reference spent or non-existant inputs.
+        // Now we need to check that the body of the block actually matches the headers. The network won't generate
+        // an invalid block, but if we didn't validate this then an untrusted man-in-the-middle could obtain the next
+        // valid block from the network and simply replace the transactions in it with their own fictional
+        // transactions that reference spent or non-existant inputs.
         if (transactions != null) {
             assert transactions.size() > 0;
             checkTransactions();
@@ -367,15 +360,14 @@ public class Block extends Message {
         return merkleRoot;
     }
 
-    public void setMerkleRoot(byte[] value) {
+    /** Exists only for unit testing. */
+    void setMerkleRoot(byte[] value) {
         merkleRoot = value;
         hash = null;
     }
 
-    /**
-     * Adds a transaction to this block.
-     */
-    public void addTransaction(Transaction t) {
+    /** Adds a transaction to this block. */
+    void addTransaction(Transaction t) {
         if (transactions == null) {
             transactions = new ArrayList<Transaction>();
         }
@@ -385,38 +377,27 @@ public class Block extends Message {
         hash = null;
     }
 
-    /**
-     * Returns the version of the block data structure as defined by the BitCoin protocol.
-     */
+    /** Returns the version of the block data structure as defined by the BitCoin protocol. */
     public long getVersion() {
         return version;
     }
 
-    public void setVersion(long version) {
-        this.version = version;
-        this.hash = null;
-    }
-
-    /**
-     * Returns the hash of the previous block in the chain, as defined by the block header.
-     */
+    /** Returns the hash of the previous block in the chain, as defined by the block header. */
     public byte[] getPrevBlockHash() {
         return prevBlockHash;
     }
 
-    public void setPrevBlockHash(byte[] prevBlockHash) {
+    void setPrevBlockHash(byte[] prevBlockHash) {
         this.prevBlockHash = prevBlockHash;
         this.hash = null;
     }
 
-    /**
-     * Returns the time at which the block was solved and broadcast, according to the clock of the solving node.
-     */
+    /** Returns the time at which the block was solved and broadcast, according to the clock of the solving node. */
     public long getTime() {
         return time;
     }
 
-    public void setTime(long time) {
+    void setTime(long time) {
         this.time = time;
         this.hash = null;
     }
@@ -430,7 +411,7 @@ public class Block extends Message {
         return difficultyTarget;
     }
 
-    public void setDifficultyTarget(long compactForm) {
+    void setDifficultyTarget(long compactForm) {
         this.difficultyTarget = compactForm;
         this.hash = null;
     }
@@ -443,7 +424,7 @@ public class Block extends Message {
         return nonce;
     }
 
-    public void setNonce(long nonce) {
+    void setNonce(long nonce) {
         this.nonce = nonce;
         this.hash = null;
     }
