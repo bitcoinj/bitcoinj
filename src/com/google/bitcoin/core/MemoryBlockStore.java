@@ -50,7 +50,7 @@ class MemoryBlockStore implements BlockStore {
     }
 
     public synchronized void put(StoredBlock block) throws BlockStoreException {
-        byte[] hash = block.header.getHash();
+        byte[] hash = block.getHeader().getHash();
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         try {
             ObjectOutputStream oos = new ObjectOutputStream(bos);

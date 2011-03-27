@@ -304,7 +304,7 @@ public class Peer {
         // We don't do the exponential thinning here, so if we get onto a fork of the chain we will end up
         // redownloading the whole thing again.
         blockLocator.add(params.genesisBlock.getHash());
-        Block topBlock = blockChain.getChainHead().header;
+        Block topBlock = blockChain.getChainHead().getHeader();
         if (!topBlock.equals(params.genesisBlock))
             blockLocator.add(0, topBlock.getHash());
         GetBlocksMessage message = new GetBlocksMessage(params, blockLocator, toHash);

@@ -28,35 +28,46 @@ import java.math.BigInteger;
  *
  * StoredBlocks are put inside a {@link BlockStore} which saves them to memory or disk.
  */
-class StoredBlock implements Serializable {
+public class StoredBlock implements Serializable {
     private static final long serialVersionUID = -6097565241243701771L;
 
-    /**
-     * The block header this object wraps. The referenced block object must not have any transactions in it.
-     */
-    Block header;
+    private Block header;
+    private BigInteger chainWork;
+    private int height;
 
-    /**
-     * The total sum of work done in this block, and all the blocks below it in the chain. Work is a measure of how
-     * many tries are needed to solve a block. If the target is set to cover 10% of the total hash value space,
-     * then the work represented by a block is 10.
-     */
-    BigInteger chainWork;
-
-    /**
-     * Position in the chain for this block. The genesis block has a height of zero.
-     */
-    int height;
-
-    StoredBlock(Block header, BigInteger chainWork, int height) {
+    public StoredBlock(Block header, BigInteger chainWork, int height) {
         assert header.transactions == null : "Should not have transactions in a block header object";
         this.header = header;
         this.chainWork = chainWork;
         this.height = height;
     }
 
+
+    /**
+     * The block header this object wraps. The referenced block object must not have any transactions in it.
+     */
+    public Block getHeader() {
+        return header;
+    }
+
+    /**
+     * The total sum of work done in this block, and all the blocks below it in the chain. Work is a measure of how
+     * many tries are needed to solve a block. If the target is set to cover 10% of the total hash value space,
+     * then the work represented by a block is 10.
+     */
+    public BigInteger getChainWork() {
+        return chainWork;
+    }
+
+    /**
+     * Position in the chain for this block. The genesis block has a height of zero.
+     */
+    public int getHeight() {
+        return height;
+    }
+
     /** Returns true if this objects chainWork is higher than the others. */
-    boolean moreWorkThan(StoredBlock other) {
+    public boolean moreWorkThan(StoredBlock other) {
         return chainWork.compareTo(other.chainWork) > 0;
     }
 
@@ -65,5 +76,17 @@ class StoredBlock implements Serializable {
         if (!(other instanceof StoredBlock)) return false;
         StoredBlock o = (StoredBlock) other;
         return o.header.equals(header) && o.chainWork.equals(chainWork) && o.height == height;
+    }
+
+
+    /**
+     * Creates a new StoredBlock, calculating the additional fields by adding to the values in this block.
+     */
+    public StoredBlock build(Block block) throws VerificationException {
+        // Stored blocks track total work done in this chain, because the canonical chain is the one that represents
+        // the largest amount of work done not the tallest.
+        BigInteger chainWork = this.chainWork.add(block.getWork());
+        int height = this.height + 1;
+        return new StoredBlock(block, chainWork, height);
     }
 }

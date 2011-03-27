@@ -383,8 +383,8 @@ public class Wallet implements Serializable {
         // This runs on any peer thread with the block chain synchronized. Thus we do not have to worry about it
         // being called simultaneously or repeatedly.
         LOG("Re-organize!");
-        LOG("Old chain head: " + chainHead.header.toString());
-        LOG("New chain head: " + newStoredBlock.header.toString());
+        LOG("Old chain head: " + chainHead.getHeader().toString());
+        LOG("New chain head: " + newStoredBlock.getHeader().toString());
 
         // TODO: Implement me!
         // For each transaction we have to track which blocks they appeared in. Once a re-org takes place,

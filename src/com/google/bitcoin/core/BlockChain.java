@@ -72,7 +72,7 @@ public class BlockChain {
         try {
             blockStore = new MemoryBlockStore(params);
             chainHead = blockStore.getChainHead();
-            LOG("chain head is: " + chainHead.header.toString());
+            LOG("chain head is: " + chainHead.getHeader().toString());
         } catch (BlockStoreException e) {
             throw new RuntimeException(e);
         }
@@ -137,13 +137,13 @@ public class BlockChain {
         } else {
             // The block connects to somewhere on the chain. Not necessarily the top of the best known chain.
             checkDifficultyTransitions(storedPrev, block);
-            StoredBlock newStoredBlock = buildStoredBlock(storedPrev, block);
+            StoredBlock newStoredBlock = storedPrev.build(block);
             // Store it.
             blockStore.put(newStoredBlock);
             if (storedPrev.equals(chainHead)) {
                 // This block connects to the best known block, it is a normal continuation of the system.
                 setChainHead(newStoredBlock);
-                LOG("Received new block, chain is now " + chainHead.height + " blocks high");
+                LOG("Received new block, chain is now " + chainHead.getHeight() + " blocks high");
             } else {
                 // This block connects to somewhere other than the top of the chain.
                 if (newStoredBlock.moreWorkThan(chainHead)) {
@@ -170,17 +170,6 @@ public class BlockChain {
         } catch (BlockStoreException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    /**
-     * Calculates the additional fields a StoredBlock holds given the previous block in the chain and the new block.
-     */
-    private StoredBlock buildStoredBlock(StoredBlock storedPrev, Block block) throws VerificationException {
-        // Stored blocks track total work done in this chain, because the canonical chain is the one that represents
-        // the largest amount of work done not the tallest.
-        BigInteger chainWork = storedPrev.chainWork.add(block.getWork());
-        int height = storedPrev.height + 1;
-        return new StoredBlock(block, chainWork, height);
     }
 
     /**
@@ -219,12 +208,12 @@ public class BlockChain {
      */
     private void checkDifficultyTransitions(StoredBlock storedPrev, Block next)
             throws BlockStoreException, VerificationException {
-        Block prev = storedPrev.header;
+        Block prev = storedPrev.getHeader();
         // Is this supposed to be a difficulty transition point?
-        if ((storedPrev.height + 1) % params.interval != 0) {
+        if ((storedPrev.getHeight() + 1) % params.interval != 0) {
             // No ... so check the difficulty didn't actually change.
             if (next.getDifficultyTarget() != prev.getDifficultyTarget())
-                throw new VerificationException("Unexpected change in difficulty at height " + storedPrev.height +
+                throw new VerificationException("Unexpected change in difficulty at height " + storedPrev.getHeight() +
                         ": " + Long.toHexString(next.getDifficultyTarget()) + " vs " +
                         Long.toHexString(prev.getDifficultyTarget()));
             return;
@@ -239,10 +228,10 @@ public class BlockChain {
                 throw new VerificationException(
                         "Difficulty transition point but we did not find a way back to the genesis block.");
             }
-            cursor = blockStore.get(cursor.header.getPrevBlockHash());
+            cursor = blockStore.get(cursor.getHeader().getPrevBlockHash());
         }
 
-        Block blockIntervalAgo = cursor.header;
+        Block blockIntervalAgo = cursor.getHeader();
         int timespan = (int) (prev.getTime() - blockIntervalAgo.getTime());
         // Limit the adjustment step.
         if (timespan < params.targetTimespan / 4)
