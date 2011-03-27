@@ -53,6 +53,7 @@ public class Wallet implements Serializable {
 
     /** A list of public/private EC keys owned by this user. */
     public final ArrayList<ECKey> keychain;
+
     private final NetworkParameters params;
 
     transient private ArrayList<WalletEventListener> eventListeners;
@@ -81,7 +82,7 @@ public class Wallet implements Serializable {
     /**
      * Returns a wallet deserialized from the given file.
      */
-    static public Wallet loadFromFile(File f) throws IOException {
+    public static Wallet loadFromFile(File f) throws IOException {
         ObjectInputStream ois = null;
         try {
             ois = new ObjectInputStream(new FileInputStream(f));
@@ -351,7 +352,7 @@ public class Wallet implements Serializable {
     }
 
     @Override
-    public String toString() {
+    public synchronized String toString() {
         StringBuilder builder = new StringBuilder();
         builder.append("Wallet containing ");
         builder.append(Utils.bitcoinValueToFriendlyString(getBalance()));
@@ -378,7 +379,7 @@ public class Wallet implements Serializable {
      * to go down in this case: money we thought we had can suddenly vanish if the rest of the network agrees it
      * should be so.
      */
-    void reorganize(StoredBlock chainHead, StoredBlock newStoredBlock) {
+    synchronized void reorganize(StoredBlock chainHead, StoredBlock newStoredBlock) {
         // This runs on any peer thread with the block chain synchronized. Thus we do not have to worry about it
         // being called simultaneously or repeatedly.
         LOG("Re-organize!");
