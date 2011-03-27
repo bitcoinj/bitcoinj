@@ -69,16 +69,12 @@ public class BlockChain {
 
     public BlockChain(NetworkParameters params, Wallet wallet) {
         // TODO: Let the user pass in a BlockStore object so they can choose how to store the headers.
-        blockStore = new MemoryBlockStore();
         try {
-            // Set up the genesis block. When we start out fresh, it is by definition the top of the chain.
-            Block genesisHeader = params.genesisBlock.cloneAsHeader();
-            chainHead = new StoredBlock(genesisHeader, genesisHeader.getWork(), 0);
-            blockStore.put(chainHead);
+            blockStore = new MemoryBlockStore(params);
+            chainHead = blockStore.getChainHead();
+            LOG("chain head is: " + chainHead.header.toString());
         } catch (BlockStoreException e) {
-            // Cannot happen.
-        } catch (VerificationException e) {
-            // Genesis block always verifies.
+            throw new RuntimeException(e);
         }
 
         this.params = params;
@@ -146,7 +142,7 @@ public class BlockChain {
             blockStore.put(newStoredBlock);
             if (storedPrev.equals(chainHead)) {
                 // This block connects to the best known block, it is a normal continuation of the system.
-                chainHead = newStoredBlock;
+                setChainHead(newStoredBlock);
                 LOG("Received new block, chain is now " + chainHead.height + " blocks high");
             } else {
                 // This block connects to somewhere other than the top of the chain.
@@ -154,7 +150,7 @@ public class BlockChain {
                     // This chain has overtaken the one we currently believe is best. Reorganize is required.
                     wallet.reorganize(chainHead, newStoredBlock);
                     // Update the pointer to the best known block.
-                    chainHead = newStoredBlock;
+                    setChainHead(newStoredBlock);
                 } else {
                     LOG("Received a block which forks the chain, but it did not cause a reorganize.");
                 }
@@ -165,6 +161,15 @@ public class BlockChain {
             tryConnectingUnconnected();
 
         return true;
+    }
+
+    private void setChainHead(StoredBlock chainHead) {
+        this.chainHead = chainHead;
+        try {
+            blockStore.setChainHead(chainHead);
+        } catch (BlockStoreException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     /**

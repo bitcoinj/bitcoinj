@@ -39,4 +39,14 @@ interface BlockStore {
      * parameter. If no such block is found, returns null.
      */
     StoredBlock get(byte[] hash) throws BlockStoreException;
+
+    /**
+     * Returns the {@link StoredBlock} that represents the top of the chain of greatest total work.
+     */
+    StoredBlock getChainHead() throws BlockStoreException;
+
+    /**
+     * Sets the {@link StoredBlock} that represents the top of the chain of greatest total work.
+     */
+    void setChainHead(StoredBlock chainHead) throws BlockStoreException;
 }
