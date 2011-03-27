@@ -71,27 +71,11 @@ public class BlockChainTest {
         assertTrue(testNetChain.add(b2));
     }
 
-    private Block createNextBlock(Address to, Block prev) throws VerificationException {
-        return createNextBlock(to, prev, Block.EASIEST_DIFFICULTY_TARGET, System.currentTimeMillis() / 1000);
-    }
-
-    private Block createNextBlock(Address to, Block prev, long difficultyTarget,
-                                  long time) throws VerificationException {
-        Block b = new Block(prev.params);
-        b.setDifficultyTarget(difficultyTarget);
-        b.addCoinbaseTransaction(to);
-        b.setPrevBlockHash(prev.getHash());
-        b.setTime(time);
-        b.solve();
-        b.verify();
-        return b;
-    }
-
     @Test
     public void testUnconnectedBlocks() throws Exception {
-        Block b1 = createNextBlock(coinbaseTo, unitTestParams.genesisBlock);
-        Block b2 = createNextBlock(coinbaseTo, b1);
-        Block b3 = createNextBlock(coinbaseTo, b2);
+        Block b1 = unitTestParams.genesisBlock.createNextBlock(coinbaseTo);
+        Block b2 = b1.createNextBlock(coinbaseTo);
+        Block b3 = b2.createNextBlock(coinbaseTo);
         // Connected.
         assertTrue(chain.add(b1));
         // Unconnected.
@@ -111,8 +95,8 @@ public class BlockChainTest {
             }
         });
 
-        Block b1 = createNextBlock(coinbaseTo, unitTestParams.genesisBlock);
-        Block b2 = createNextBlock(coinbaseTo, b1);
+        Block b1 = unitTestParams.genesisBlock.createNextBlock(coinbaseTo);
+        Block b2 = b1.createNextBlock(coinbaseTo);
         assertTrue(chain.add(b1));
         assertTrue(chain.add(b2));
         assertFalse(flags[0]);
@@ -128,12 +112,12 @@ public class BlockChainTest {
         //
         // Nothing should happen at this point. We saw b2 first so it takes priority.
         Address someOtherGuy = new ECKey().toAddress(unitTestParams);
-        Block b3 = createNextBlock(someOtherGuy, b1);
+        Block b3 = b1.createNextBlock(someOtherGuy);
         assertTrue(chain.add(b3));
         assertFalse(flags[0]);  // No re-org took place.
         assertEquals("100.00", Utils.bitcoinValueToFriendlyString(wallet.getBalance()));
         // Now we add another block to make the alternative chain longer.
-        assertTrue(chain.add(createNextBlock(someOtherGuy, b3)));
+        assertTrue(chain.add(b3.createNextBlock(someOtherGuy)));
         assertTrue(flags[0]);  // Re-org took place.
         flags[0] = false;
         //
@@ -145,8 +129,8 @@ public class BlockChainTest {
             // These tests do not pass currently, as wallet handling of re-orgs isn't implemented.
             assertEquals("50.00", Utils.bitcoinValueToFriendlyString(wallet.getBalance()));
             // ... and back to the first testNetChain
-            Block b5 = createNextBlock(coinbaseTo, b2);
-            Block b6 = createNextBlock(coinbaseTo, b5);
+            Block b5 = b2.createNextBlock(coinbaseTo);
+            Block b6 = b5.createNextBlock(coinbaseTo);
             assertTrue(chain.add(b5));
             assertTrue(chain.add(b6));
             //
@@ -164,7 +148,7 @@ public class BlockChainTest {
         Block prev = unitTestParams.genesisBlock;
         Block.fakeClock = System.currentTimeMillis() / 1000;
         for (int i = 0; i < unitTestParams.interval - 1; i++) {
-            Block newBlock = createNextBlock(coinbaseTo, prev, Block.EASIEST_DIFFICULTY_TARGET, Block.fakeClock);
+            Block newBlock = prev.createNextBlock(coinbaseTo, Block.fakeClock);
             assertTrue(chain.add(newBlock));
             prev = newBlock;
             // The fake chain should seem to be "fast" for the purposes of difficulty calculations.
@@ -172,13 +156,15 @@ public class BlockChainTest {
         }
         // Now add another block that has no difficulty adjustment, it should be rejected.
         try {
-            chain.add(createNextBlock(coinbaseTo, prev));
+            chain.add(prev.createNextBlock(coinbaseTo));
             fail();
         } catch (VerificationException e) {
         }
         // Create a new block with the right difficulty target given our blistering speed relative to the huge amount
         // of time it's supposed to take (set in the unit test network parameters).
-        Block b = createNextBlock(coinbaseTo, prev, 0x201fFFFFL, Block.fakeClock);
+        Block b = prev.createNextBlock(coinbaseTo, Block.fakeClock);
+        b.setDifficultyTarget(0x201fFFFFL);
+        b.solve();
         assertTrue(chain.add(b));
         // Successfully traversed a difficulty transition period.
     }

@@ -35,25 +35,28 @@ import static com.google.bitcoin.core.Utils.*;
 public class Block extends Message {
     private static final long serialVersionUID = 2738848929966035281L;
 
+    /** How many bytes are required to represent a block header. */
+    public static final int HEADER_SIZE = 80;
+
     static final long ALLOWED_TIME_DRIFT = 2 * 60 * 60;  // Same value as official client.
+
     /** A value for difficultyTarget (nBits) that allows half of all possible hash solutions. Used in unit testing. */
     static final long EASIEST_DIFFICULTY_TARGET = 0x207fFFFFL;
 
     // For unit testing. If not zero, use this instead of the current time.
     static long fakeClock = 0;
-
     private long version;
     private byte[] prevBlockHash;
     private byte[] merkleRoot;
     private long time;
     private long difficultyTarget;  // "nBits"
+
     private long nonce;
 
     /** If null, it means this object holds only the headers. */
     List<Transaction> transactions;
-
     /** Stores the hash of the block. If null, getHash() will recalculate it. */
-    transient private byte[] hash;
+    private transient byte[] hash;
 
     /** Special case constructor, used for the genesis node and unit tests. */
     Block(NetworkParameters params) {
@@ -429,6 +432,9 @@ public class Block extends Message {
         this.hash = null;
     }
 
+    /////////////////////////////////////////////////////////////////////////////////////////////////
+    // Unit testing related methods.
+
     static private int coinbaseCounter;
     /** Adds a coinbase transaction to the block. This exists for unit tests. */
     void addCoinbaseTransaction(Address to) {
@@ -444,5 +450,25 @@ public class Block extends Message {
         coinbase.inputs.add(new TransactionInput(params, new byte[] { (byte) coinbaseCounter++ } ));
         coinbase.outputs.add(new TransactionOutput(params, Utils.toNanoCoins(50, 0), to));
         transactions.add(coinbase);
+    }
+
+    /** Returns a solved block that builds on top of this one. This exists for unit tests. */
+    Block createNextBlock(Address to, long time) {
+        Block b = new Block(params);
+        b.setDifficultyTarget(difficultyTarget);
+        b.addCoinbaseTransaction(to);
+        b.setPrevBlockHash(getHash());
+        b.setTime(time);
+        b.solve();
+        try {
+            b.verify();
+        } catch (VerificationException e) {
+            throw new RuntimeException(e);  // Cannot happen.
+        }
+        return b;
+    }
+
+    Block createNextBlock(Address to) {
+        return createNextBlock(to, System.currentTimeMillis() / 1000);
     }
 }
