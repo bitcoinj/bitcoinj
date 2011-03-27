@@ -16,6 +16,7 @@
 
 package com.google.bitcoin.core;
 
+import java.io.Serializable;
 import java.math.BigInteger;
 
 /**
@@ -27,7 +28,9 @@ import java.math.BigInteger;
  *
  * StoredBlocks are put inside a {@link BlockStore} which saves them to memory or disk.
  */
-class StoredBlock {
+class StoredBlock implements Serializable {
+    private static final long serialVersionUID = -6097565241243701771L;
+
     /**
      * The block header this object wraps. The referenced block object must not have any transactions in it.
      */
