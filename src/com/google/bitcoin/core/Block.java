@@ -82,7 +82,12 @@ public class Block extends Message {
         nonce = readUint32();
         
         hash = Utils.reverseBytes(Utils.doubleDigest(bytes, 0, cursor));
-        
+
+        if (cursor == bytes.length) {
+            // This message is just a header, it has no transactions.
+            return;
+        }
+
         int numTransactions = (int) readVarInt();
         transactions = new ArrayList<Transaction>(numTransactions);
         for (int i = 0; i < numTransactions; i++) {

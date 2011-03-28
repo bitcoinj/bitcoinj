@@ -325,8 +325,12 @@ public class Peer {
             // node. If that happens it means the user overrode us somewhere.
             throw new  RuntimeException("Peer does not have block chain");
         }
-        chainCompletionLatch = new CountDownLatch(chainHeight);
-        blockChainDownload(params.genesisBlock.getHash());
+        int blocksToGet = chainHeight - blockChain.getChainHead().getHeight();
+        chainCompletionLatch = new CountDownLatch(blocksToGet);
+        if (blocksToGet > 0) {
+            // When we just want as many blocks as possible, we can set the target hash to zero.
+            blockChainDownload(new byte[32]);
+        }
         return chainCompletionLatch;
     }
 

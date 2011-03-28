@@ -16,6 +16,7 @@
 
 package com.google.bitcoin.core;
 
+import java.io.File;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -67,10 +68,17 @@ public class BlockChain {
     // were downloading the block chain.
     private final ArrayList<Block> unconnectedBlocks = new ArrayList<Block>();
 
-    public BlockChain(NetworkParameters params, Wallet wallet) {
-        // TODO: Let the user pass in a BlockStore object so they can choose how to store the headers.
+    /**
+     * Constructs a BlockChain connected to the given wallet and store. To obtain a {@link Wallet} you can construct
+     * one from scratch, or you can deserialize a saved wallet from disk using {@link Wallet#loadFromFile(java.io.File)}
+     * <p>
+     *
+     * For the store you can use a {@link MemoryBlockStore} if you don't care about saving the downloaded data, or a
+     * {@link DiskBlockStore} if you'd like to ensure fast startup the next time you run the program.
+     */
+    public BlockChain(NetworkParameters params, Wallet wallet, BlockStore blockStore) {
         try {
-            blockStore = new MemoryBlockStore(params);
+            this.blockStore = blockStore;
             chainHead = blockStore.getChainHead();
             LOG("chain head is: " + chainHead.getHeader().toString());
         } catch (BlockStoreException e) {
@@ -143,7 +151,8 @@ public class BlockChain {
             if (storedPrev.equals(chainHead)) {
                 // This block connects to the best known block, it is a normal continuation of the system.
                 setChainHead(newStoredBlock);
-                LOG("Received new block, chain is now " + chainHead.getHeight() + " blocks high");
+                LOG("Received block " + block.getHashAsString() + ", chain is now " + chainHead.getHeight() +
+                    " blocks high");
             } else {
                 // This block connects to somewhere other than the top of the chain.
                 if (newStoredBlock.moreWorkThan(chainHead)) {

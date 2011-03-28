@@ -1,0 +1,164 @@
+/**
+ * Copyright 2011 Google Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.google.bitcoin.core;
+
+import java.io.*;
+import java.nio.ByteBuffer;
+import java.util.HashMap;
+import java.util.Map;
+
+import static com.google.bitcoin.core.Utils.LOG;
+
+/**
+ * Stores the block chain to disk but still holds it in memory. This is intended for desktop apps and tests.
+ * Constrained environments like mobile phones probably won't want to or be able to store all the block headers in RAM.
+ */
+public class DiskBlockStore implements BlockStore {
+    private FileOutputStream stream;
+    private Map<Sha256Hash, StoredBlock> blockMap;
+    private Sha256Hash chainHead;
+    private NetworkParameters params;
+
+    public DiskBlockStore(NetworkParameters params, File file) throws BlockStoreException {
+        this.params = params;
+        blockMap = new HashMap<Sha256Hash, StoredBlock>();
+        try {
+            load(file);
+            stream = new FileOutputStream(file, true);    // Do append.
+        } catch (IOException e) {
+            LOG(e.toString());
+            createNewStore(params, file);
+        }
+    }
+
+    private void createNewStore(NetworkParameters params, File file) throws BlockStoreException {
+        // Create a new block store if the file wasn't found or anything went wrong whilst reading.
+        blockMap.clear();
+        try {
+            stream = new FileOutputStream(file, false);  // Do not append, create fresh.
+            stream.write(1);  // Version.
+        } catch (IOException e1) {
+            // We could not load a block store nor could we create a new one!
+            throw new BlockStoreException(e1);
+        }
+        try {
+            // Set up the genesis block. When we start out fresh, it is by definition the top of the chain.
+            Block genesis = params.genesisBlock.cloneAsHeader();
+            StoredBlock storedGenesis = new StoredBlock(genesis, genesis.getWork(), 0);
+            this.chainHead = new Sha256Hash(storedGenesis.getHeader().getHash());
+            stream.write(this.chainHead.hash);
+            put(storedGenesis);
+        } catch (VerificationException e1) {
+            throw new RuntimeException(e1);  // Cannot happen.
+        } catch (IOException e) {
+            throw new BlockStoreException(e);
+        }
+    }
+
+    private void load(File file) throws IOException, BlockStoreException {
+        LOG("Reading block store from " + file.getAbsolutePath());
+        FileInputStream input = new FileInputStream(file);
+        // Read a version byte.
+        int version = input.read();
+        if (version == -1) {
+            // No such file or the file was empty.
+            throw new FileNotFoundException(file.getName() + " does not exist or is empty");
+        }
+        if (version != 1) {
+            throw new BlockStoreException("Bad version number: " + version);
+        }
+        // Chain head pointer is the first thing in the file.
+        byte[] chainHeadHash = new byte[32];
+        input.read(chainHeadHash);
+        this.chainHead = new Sha256Hash(chainHeadHash);
+        LOG("Read chain head from disk: " + this.chainHead);
+        long now = System.currentTimeMillis();
+        // Rest of file is raw block headers.
+        byte[] headerBytes = new byte[Block.HEADER_SIZE];
+        try {
+            while (true) {
+                // Read a block from disk.
+                if (input.read(headerBytes) < 80) {
+                    // End of file.
+                    break;
+                }
+                // Parse it.
+                Block b = new Block(params, headerBytes);
+                // Look up the previous block it connects to.
+                StoredBlock prev = get(b.getPrevBlockHash());
+                StoredBlock s;
+                if (prev == null) {
+                    // First block in the stored chain has to be treated specially.
+                    if (b.equals(params.genesisBlock)) {
+                        s = new StoredBlock(params.genesisBlock.cloneAsHeader(), params.genesisBlock.getWork(), 0);
+                    } else {
+                        throw new BlockStoreException("Could not connect " + Utils.bytesToHexString(b.getHash()) + " to "
+                            + Utils.bytesToHexString(b.getPrevBlockHash()));
+                    }
+                } else {
+                    // Don't try to verify the genesis block to avoid upsetting the unit tests.
+                    b.verify();
+                    // Calculate its height and total chain work.
+                    s = prev.build(b);
+                }
+                // Save in memory.
+                blockMap.put(new Sha256Hash(b.getHash()), s);
+            }
+        } catch (ProtocolException e) {
+            // Corrupted file.
+            throw new BlockStoreException(e);
+        } catch (VerificationException e) {
+            // Should not be able to happen unless the file contains bad blocks.
+            throw new BlockStoreException(e);
+        }
+        long elapsed = System.currentTimeMillis() - now;
+        LOG("Block chain read complete in " + elapsed + "ms");
+    }
+
+    public synchronized void put(StoredBlock block) throws BlockStoreException {
+        try {
+            Sha256Hash hash = new Sha256Hash(block.getHeader().getHash());
+            assert blockMap.get(hash) == null : "Attempt to insert duplicate";
+            // Append to the end of the file. The other fields in StoredBlock will be recalculated when it's reloaded.
+            byte[] bytes = block.getHeader().bitcoinSerialize();
+            stream.write(bytes);
+            stream.flush();
+            blockMap.put(hash, block);
+        } catch (IOException e) {
+            throw new BlockStoreException(e);
+        }
+    }
+
+    public synchronized StoredBlock get(byte[] hash) throws BlockStoreException {
+        return blockMap.get(new Sha256Hash(hash));
+    }
+
+    public synchronized StoredBlock getChainHead() throws BlockStoreException {
+        return blockMap.get(chainHead);
+    }
+
+    public synchronized void setChainHead(StoredBlock chainHead) throws BlockStoreException {
+        try {
+            byte[] hash = chainHead.getHeader().getHash();
+            this.chainHead = new Sha256Hash(hash);
+            // Write out new hash to the first 32 bytes of the file past one (first byte is version number).
+            stream.getChannel().write(ByteBuffer.wrap(hash), 1);
+        } catch (IOException e) {
+            throw new BlockStoreException(e);
+        }
+    }
+}

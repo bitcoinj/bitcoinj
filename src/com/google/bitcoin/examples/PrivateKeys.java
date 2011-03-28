@@ -47,7 +47,7 @@ public class PrivateKeys {
 
             // Find the transactions that involve those coins.
             NetworkConnection conn = new NetworkConnection(InetAddress.getLocalHost(), params);
-            BlockChain chain = new BlockChain(params, wallet);
+            BlockChain chain = new BlockChain(params, wallet, new MemoryBlockStore(params));
             Peer peer = new Peer(params, conn, chain);
             peer.start();
             peer.startBlockChainDownload().await();

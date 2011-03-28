@@ -40,13 +40,13 @@ public class BlockChainTest {
 
     @Before
     public void setUp() {
-        testNetChain = new BlockChain(testNet, new Wallet(testNet));
+        testNetChain = new BlockChain(testNet, new Wallet(testNet), new MemoryBlockStore(testNet));
 
         unitTestParams = NetworkParameters.unitTests();
         wallet = new Wallet(unitTestParams);
         wallet.addKey(new ECKey());
         coinbaseTo = wallet.keychain.get(0).toAddress(unitTestParams);
-        chain = new BlockChain(unitTestParams, wallet);
+        chain = new BlockChain(unitTestParams, wallet, new MemoryBlockStore(unitTestParams));
     }
 
     @Test

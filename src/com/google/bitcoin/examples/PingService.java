@@ -31,7 +31,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class PingService {
     public static void main(String[] args) throws Exception {
-        final NetworkParameters params = NetworkParameters.testNet();
+        final NetworkParameters params = NetworkParameters.prodNet();
 
         // Try to read the wallet from storage, create a new one if not possible.
         Wallet wallet;
@@ -46,11 +46,14 @@ public class PingService {
         // Fetch the first key in the wallet (should be the only key).
         ECKey key = wallet.keychain.get(0);
 
-        // Connect to the localhost node.
-        System.out.println("Please wait, connecting and downloading block chain. This may take a while.");
+        // Load the block chain, if there is one stored locally.
+        System.out.println("Reading block store from disk");
+        BlockStore blockStore = new DiskBlockStore(params, new File("pingservice.blockchain"));
 
+        // Connect to the localhost node.
+        System.out.println("Connecting ...");
         NetworkConnection conn = new NetworkConnection(InetAddress.getLocalHost(), params);
-        BlockChain chain = new BlockChain(params, wallet);
+        BlockChain chain = new BlockChain(params, wallet, blockStore);
         final Peer peer = new Peer(params, conn, chain);
         peer.start();
 
@@ -85,12 +88,15 @@ public class PingService {
 
         CountDownLatch progress = peer.startBlockChainDownload();
         long max = progress.getCount();  // Racy but no big deal.
-        long current = max;
-        while (current > 0) {
-            double pct = 100.0 - (100.0 * (current / (double)max));
-            System.out.println(String.format("Chain download %d%% done", (int)pct));
-            progress.await(1, TimeUnit.SECONDS);
-            current = progress.getCount();
+        if (max > 0) {
+            System.out.println("Downloading block chain. " + (max > 1000 ? "This may take a while." : ""));
+            long current = max;
+            while (current > 0) {
+                double pct = 100.0 - (100.0 * (current / (double)max));
+                System.out.println(String.format("Chain download %d%% done", (int)pct));
+                progress.await(1, TimeUnit.SECONDS);
+                current = progress.getCount();
+            }
         }
         System.out.println("Send coins to: " + key.toAddress(params).toString());
         System.out.println("Waiting for coins to arrive. Press Ctrl-C to quit.");

@@ -102,6 +102,14 @@ public class BlockTest {
     }
 
     @Test
+    public void testHeaderParse() throws Exception {
+        Block block = new Block(params, blockBytes);
+        Block header = block.cloneAsHeader();
+        Block reparsed = new Block(params, header.bitcoinSerialize());
+        assertEquals(reparsed, header);
+    }
+
+    @Test
     public void testBitCoinSerialization() throws Exception {
         // We have to be able to reserialize everything exactly as we found it for hashing to work. This test also
         // proves that transaction serialization works, along with all its subobjects like scripts and in/outpoints.

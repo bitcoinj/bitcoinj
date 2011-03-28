@@ -24,7 +24,7 @@ import java.util.Map;
 /**
  * Keeps {@link StoredBlock}s in memory. Used primarily for unit testing.
  */
-class MemoryBlockStore implements BlockStore {
+public class MemoryBlockStore implements BlockStore {
     // We use a ByteBuffer to hold hashes here because the Java array equals()/hashcode() methods do not operate on
     // the contents of the array but just inherit the default Object behavior. ByteBuffer provides the functionality
     // needed to act as a key in a map.
@@ -34,7 +34,7 @@ class MemoryBlockStore implements BlockStore {
     private Map<ByteBuffer, byte[]> blockMap;
     private StoredBlock chainHead;
 
-    MemoryBlockStore(NetworkParameters params) {
+    public MemoryBlockStore(NetworkParameters params) {
         blockMap = new HashMap<ByteBuffer, byte[]>();
         // Insert the genesis block.
         try {
