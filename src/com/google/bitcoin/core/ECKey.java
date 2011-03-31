@@ -16,7 +16,20 @@
 
 package com.google.bitcoin.core;
 
-import com.google.bitcoin.bouncycastle.asn1.*;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.Serializable;
+import java.math.BigInteger;
+import java.security.SecureRandom;
+
+import com.google.bitcoin.bouncycastle.asn1.ASN1InputStream;
+import com.google.bitcoin.bouncycastle.asn1.ASN1OutputStream;
+import com.google.bitcoin.bouncycastle.asn1.DERBitString;
+import com.google.bitcoin.bouncycastle.asn1.DERInteger;
+import com.google.bitcoin.bouncycastle.asn1.DEROctetString;
+import com.google.bitcoin.bouncycastle.asn1.DERSequence;
+import com.google.bitcoin.bouncycastle.asn1.DERSequenceGenerator;
+import com.google.bitcoin.bouncycastle.asn1.DERTaggedObject;
 import com.google.bitcoin.bouncycastle.asn1.sec.SECNamedCurves;
 import com.google.bitcoin.bouncycastle.asn1.x9.X9ECParameters;
 import com.google.bitcoin.bouncycastle.crypto.AsymmetricCipherKeyPair;
@@ -26,12 +39,6 @@ import com.google.bitcoin.bouncycastle.crypto.params.ECKeyGenerationParameters;
 import com.google.bitcoin.bouncycastle.crypto.params.ECPrivateKeyParameters;
 import com.google.bitcoin.bouncycastle.crypto.params.ECPublicKeyParameters;
 import com.google.bitcoin.bouncycastle.crypto.signers.ECDSASigner;
-
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.Serializable;
-import java.math.BigInteger;
-import java.security.SecureRandom;
 
 /**
  * Represents an elliptic curve keypair that we own and can use for signing transactions. Currently,
@@ -75,6 +82,34 @@ public class ECKey implements Serializable {
      */
     public static ECKey fromASN1(byte[] asn1privkey) {
         return new ECKey(extractPrivateKeyFromASN1(asn1privkey));
+    }
+
+    /**
+     * Output this ECKey as an ASN.1 encoded private key, as understood by OpenSSL or used by the BitCoin reference
+     * implementation in its wallet storage format.
+     */
+    public byte[] toASN1(){
+         try {
+             ByteArrayOutputStream baos = new ByteArrayOutputStream(400);
+             ASN1OutputStream encoder = new ASN1OutputStream(baos);
+
+             // ASN1_SEQUENCE(EC_PRIVATEKEY) = {
+             //   ASN1_SIMPLE(EC_PRIVATEKEY, version, LONG),
+             //   ASN1_SIMPLE(EC_PRIVATEKEY, privateKey, ASN1_OCTET_STRING),
+             //   ASN1_EXP_OPT(EC_PRIVATEKEY, parameters, ECPKPARAMETERS, 0),
+             //   ASN1_EXP_OPT(EC_PRIVATEKEY, publicKey, ASN1_BIT_STRING, 1)
+             // } ASN1_SEQUENCE_END(EC_PRIVATEKEY)
+             DERSequenceGenerator seq = new DERSequenceGenerator(encoder);
+             seq.addObject(new DERInteger(1)); // version
+             seq.addObject(new DEROctetString(priv.toByteArray()));
+             seq.addObject(new DERTaggedObject(0, SECNamedCurves.getByName("secp256k1").getDERObject()));
+             seq.addObject(new DERTaggedObject(1, new DERBitString(getPubKey())));
+             seq.close();
+             encoder.close();
+             return baos.toByteArray();
+         } catch (IOException e) {
+             throw new RuntimeException(e);  // Cannot happen, writing to memory stream.
+         }
     }
 
     /**
