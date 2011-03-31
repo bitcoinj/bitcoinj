@@ -78,6 +78,12 @@ public class StoredBlock implements Serializable {
         return o.header.equals(header) && o.chainWork.equals(chainWork) && o.height == height;
     }
 
+    @Override
+    public int hashCode() {
+        // A better hashCode is possible, but this works for now.
+        return header.hashCode() ^ chainWork.hashCode() ^ height;
+    }
+
 
     /**
      * Creates a new StoredBlock, calculating the additional fields by adding to the values in this block.
