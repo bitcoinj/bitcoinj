@@ -71,7 +71,7 @@ public class DiskBlockStore implements BlockStore {
 
     private void load(File file) throws IOException, BlockStoreException {
         LOG("Reading block store from " + file.getAbsolutePath());
-        FileInputStream input = new FileInputStream(file);
+        InputStream input = new BufferedInputStream(new FileInputStream(file));
         // Read a version byte.
         int version = input.read();
         if (version == -1) {
