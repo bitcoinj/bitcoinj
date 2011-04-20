@@ -20,6 +20,7 @@ import com.google.bitcoin.bouncycastle.crypto.digests.RIPEMD160Digest;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -30,9 +31,24 @@ import java.security.NoSuchAlgorithmException;
  */
 @SuppressWarnings({"SameParameterValue"})
 public class Utils {
-    /** How many nanocoins there are in a BitCoin. */
+    // TODO: Replace this nanocoins business with something better.
+
+    /**
+     * How many "nanocoins" there are in a BitCoin.
+     *
+     * A nanocoin is the smallest unit that can be transferred using BitCoin.
+     * The term nanocoin is very misleading, though, because there are only 100 million
+     * of them in a coin (whereas one would expect 1 billion.
+     */
     public static final BigInteger COIN = new BigInteger("100000000", 10);
-    /** How many nanocoins there are in 0.01 BitCoins. */
+
+    /**
+     * How many "nanocoins" there are in 0.01 BitCoins.
+     *
+     * A nanocoin is the smallest unit that can be transferred using BitCoin.
+     * The term nanocoin is very misleading, though, because there are only 100 million
+     * of them in a coin (whereas one would expect 1 billion).
+     */
     public static final BigInteger CENT = new BigInteger("1000000", 10);
 
     private static final boolean logging;
@@ -47,6 +63,18 @@ public class Utils {
         BigInteger bi = BigInteger.valueOf(coins).multiply(COIN);
         bi = bi.add(BigInteger.valueOf(cents).multiply(CENT));
         return bi;
+    }
+
+    /**
+     * Convert an amount expressed in the way humans are used to into nanocoins.<p>
+     *
+     * This takes string in a format understood by {@link BigDecimal#BigDecimal(String)},
+     * for example "0", "1", "0.10", "1.23E3", "1234.5E-5".
+     * 
+     * @throws ArithmeticException if you try to specify fractional nanocoins
+     **/
+    public static BigInteger toNanoCoins(String coins){
+        return new BigDecimal(coins).movePointRight(8).toBigIntegerExact();
     }
 
     public static void uint32ToByteArrayBE(long val, byte[] out, int offset) {
