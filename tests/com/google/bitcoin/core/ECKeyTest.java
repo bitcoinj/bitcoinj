@@ -61,5 +61,11 @@ public class ECKeyTest {
                     "304502206faa2ebc614bf4a0b31f0ce4ed9012eb193302ec2bcaccc7ae8bb40577f47549022100c73a1a1acc209f3f860bf9b9f5e13e9433db6f8b7bd527a088a0e0cd0a4c83e9");
             assertTrue(key.verify(message, output));
         }
+        
+        // Try to sign with one key and verify with the other.
+        byte[] message = reverseBytes(Hex.decode(
+            "11da3761e86431e4a54c176789e41f1651b324d240d599a7067bee23d328ec2a"));
+        assertTrue(roundtripKey.verify(message, decodedKey.sign(message)));
+        assertTrue(decodedKey.verify(message, roundtripKey.sign(message)));
     }
 }
