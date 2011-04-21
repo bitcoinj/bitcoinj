@@ -25,7 +25,6 @@ import java.math.BigInteger;
 import static org.junit.Assert.*;
 
 // Tests still to write:
-//   - Rest of checkDifficultyTransitions: verify we don't accept invalid transitions.
 //   - Fragmented chains can be joined together.
 //   - Longest testNetChain is selected based on total difficulty not length.
 //   - Many more ...
@@ -78,8 +77,12 @@ public class BlockChainTest {
         Block b3 = b2.createNextBlock(coinbaseTo);
         // Connected.
         assertTrue(chain.add(b1));
-        // Unconnected.
+        // Unconnected but stored. The head of the chain is still b1.
         assertFalse(chain.add(b3));
+        assertEquals(chain.getChainHead().getHeader(), b1.cloneAsHeader());
+        // Add in the middle block.
+        assertTrue(chain.add(b2));
+        assertEquals(chain.getChainHead().getHeader(), b3.cloneAsHeader());
     }
 
     @Test

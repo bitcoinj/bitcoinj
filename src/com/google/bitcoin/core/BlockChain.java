@@ -16,10 +16,10 @@
 
 package com.google.bitcoin.core;
 
-import java.io.File;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 
 import static com.google.bitcoin.core.Utils.LOG;
 
@@ -186,13 +186,14 @@ public class BlockChain {
      */
     private void tryConnectingUnconnected() throws VerificationException, ScriptException, BlockStoreException {
         // For each block in our unconnected list, try and fit it onto the head of the chain. If we succeed remove it
-        // from the list and keep going. If we changed the head of the list at the end of the round,
-        // try again until we can't fit anything else on the top.
+        // from the list and keep going. If we changed the head of the list at the end of the round try again until
+        // we can't fit anything else on the top.
         int blocksConnectedThisRound;
         do {
             blocksConnectedThisRound = 0;
-            for (int i = 0; i < unconnectedBlocks.size(); i++) {
-                Block block = unconnectedBlocks.get(i);
+            Iterator<Block> iter = unconnectedBlocks.iterator();
+            while (iter.hasNext()) {
+                Block block = iter.next();
                 // Look up the blocks previous.
                 StoredBlock prev = blockStore.get(block.getPrevBlockHash());
                 if (prev == null) {
@@ -202,8 +203,7 @@ public class BlockChain {
                 // Otherwise we can connect it now.
                 // False here ensures we don't recurse infinitely downwards when connecting huge chains.
                 add(block, false);
-                unconnectedBlocks.remove(i);
-                i--;  // The next iteration of the for loop will make "i" point to the right index again.
+                iter.remove();
                 blocksConnectedThisRound++;
             }
             if (blocksConnectedThisRound > 0) {
