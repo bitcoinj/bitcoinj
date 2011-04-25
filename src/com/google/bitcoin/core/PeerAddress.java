@@ -42,15 +42,18 @@ public class PeerAddress extends Message {
         super(params, payload, offset, protocolVersion);
     }
     
-    public PeerAddress(InetAddress addr, int port) {
+    public PeerAddress(InetAddress addr, int port, int protocolVersion) {
         this.addr = addr;
         this.port = port;
+        this.protocolVersion = protocolVersion;
     }
     
     public void bitcoinSerializeToStream(OutputStream stream) throws IOException {
-        int secs = (int)(new Date().getTime() / 1000);
-        uint32ToByteStreamLE(secs, stream);
-        uint64ToByteStreamLE(BigInteger.ZERO, stream);
+        if (protocolVersion >= 31402) {
+            int secs = (int)(new Date().getTime() / 1000);
+            uint32ToByteStreamLE(secs, stream);
+        }
+        uint64ToByteStreamLE(BigInteger.ZERO, stream);  // nServices.
         // Java does not provide any utility to map an IPv4 address into IPv6 space, so we have to do it by hand.
         byte[] ipBytes = addr.getAddress();
         if (ipBytes.length == 4) {

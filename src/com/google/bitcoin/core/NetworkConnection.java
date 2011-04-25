@@ -61,12 +61,15 @@ public class NetworkConnection {
     /**
      * Connect to the given IP address using the port specified as part of the network parameters. Once construction
      * is complete a functioning network channel is set up and running.
+     *
      * @param remoteIp IP address to connect to. IPv6 is not currently supported by BitCoin.
      * @param params Defines which network to connect to and details of the protocol.
+     * @param bestHeight How many blocks are in our best chain
      * @throws IOException if there is a network related failure.
      * @throws ProtocolException if the version negotiation failed.
      */
-    public NetworkConnection(InetAddress remoteIp, NetworkParameters params) throws IOException, ProtocolException {
+    public NetworkConnection(InetAddress remoteIp, NetworkParameters params, int bestHeight)
+            throws IOException, ProtocolException {
         this.params = params;
         this.remoteIp = remoteIp;
         socket = new Socket(remoteIp, params.port);
@@ -75,7 +78,7 @@ public class NetworkConnection {
 
         // Announce ourselves. This has to come first to connect to clients beyond v0.30.20.2 which wait to hear
         // from us until they send their version message back.
-        writeMessage(MSG_VERSION, new VersionMessage(params));
+        writeMessage(MSG_VERSION, new VersionMessage(params, bestHeight));
         // When connecting, the remote peer sends us a version message with various bits of
         // useful data in it. We need to know the peer protocol version before we can talk to it.
         versionMessage = (VersionMessage) readMessage();

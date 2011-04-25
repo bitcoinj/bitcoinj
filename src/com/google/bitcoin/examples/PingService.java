@@ -31,11 +31,13 @@ import java.util.concurrent.TimeUnit;
  */
 public class PingService {
     public static void main(String[] args) throws Exception {
-        final NetworkParameters params = NetworkParameters.prodNet();
+        boolean testNet = args.length > 0 && args[0].equalsIgnoreCase("testnet");
+        final NetworkParameters params = testNet ? NetworkParameters.testNet() : NetworkParameters.prodNet();
+        String filePrefix = testNet ? "pingservice-testnet" : "pingservice-prodnet";
 
         // Try to read the wallet from storage, create a new one if not possible.
         Wallet wallet;
-        final File walletFile = new File("pingservice.wallet");
+        final File walletFile = new File(filePrefix + ".wallet");
         try {
             wallet = Wallet.loadFromFile(walletFile);
         } catch (IOException e) {
@@ -48,11 +50,12 @@ public class PingService {
 
         // Load the block chain, if there is one stored locally.
         System.out.println("Reading block store from disk");
-        BlockStore blockStore = new DiskBlockStore(params, new File("pingservice.blockchain"));
+        BlockStore blockStore = new DiskBlockStore(params, new File(filePrefix + ".blockchain"));
 
         // Connect to the localhost node.
         System.out.println("Connecting ...");
-        NetworkConnection conn = new NetworkConnection(InetAddress.getLocalHost(), params);
+        NetworkConnection conn = new NetworkConnection(InetAddress.getLocalHost(), params,
+                                                       blockStore.getChainHead().getHeight());
         BlockChain chain = new BlockChain(params, wallet, blockStore);
         final Peer peer = new Peer(params, conn, chain);
         peer.start();
@@ -61,7 +64,7 @@ public class PingService {
         wallet.addEventListener(new WalletEventListener() {
             public void onCoinsReceived(Wallet w, Transaction tx, BigInteger prevBalance, BigInteger newBalance) {
                 // Running on a peer thread.
-
+                assert !newBalance.equals(BigInteger.ZERO);
                 // It's impossible to pick one specific identity that you receive coins from in BitCoin as there
                 // could be inputs from many addresses. So instead we just pick the first and assume they were all
                 // owned by the same person.

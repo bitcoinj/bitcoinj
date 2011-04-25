@@ -18,7 +18,6 @@ package com.google.bitcoin.core;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
@@ -52,7 +51,7 @@ public class VersionMessage extends Message {
         super(params, msg, 0);
     }
 
-    public VersionMessage(NetworkParameters params) {
+    public VersionMessage(NetworkParameters params, int newBestHeight) {
         super(params);
         clientVersion = NetworkParameters.PROTOCOL_VERSION;
         localServices = 0;
@@ -60,13 +59,13 @@ public class VersionMessage extends Message {
         // Note that the official client doesn't do anything with these, and finding out your own external IP address
         // is kind of tricky anyway, so we just put nonsense here for now.
         try {
-            myAddr = new PeerAddress(InetAddress.getLocalHost(), params.port);
-            theirAddr = new PeerAddress(InetAddress.getLocalHost(), params.port);
+            myAddr = new PeerAddress(InetAddress.getLocalHost(), params.port, 0);
+            theirAddr = new PeerAddress(InetAddress.getLocalHost(), params.port, 0);
         } catch (UnknownHostException e) {
             throw new RuntimeException(e);  // Cannot happen.
         }
-        subVer = "BitCoinJ 0.1.99";
-        bestHeight = 0;
+        subVer = "BitCoinJ 0.2";
+        bestHeight = newBestHeight;
     }
     
     @Override
@@ -92,8 +91,9 @@ public class VersionMessage extends Message {
     public void bitcoinSerializeToStream(OutputStream buf) throws IOException {
         Utils.uint32ToByteStreamLE(clientVersion, buf);
         Utils.uint32ToByteStreamLE(localServices, buf);
-        Utils.uint32ToByteStreamLE(time >> 32, buf);
+        Utils.uint32ToByteStreamLE(localServices >> 32, buf);
         Utils.uint32ToByteStreamLE(time, buf);
+        Utils.uint32ToByteStreamLE(time >> 32, buf);
         try {
             // My address.
             myAddr.bitcoinSerializeToStream(buf);
