@@ -119,8 +119,9 @@ A NetworkConnection handles talking to a remote BitCoin peer at a low level. It 
 <B>Constructor Summary</B></FONT></TH>
 </TR>
 <TR BGCOLOR="white" CLASS="TableRowColor">
-<TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/NetworkConnection.html#NetworkConnection(java.net.InetAddress, com.google.bitcoin.core.NetworkParameters)">NetworkConnection</A></B>(java.net.InetAddress&nbsp;remoteIp,
-                  <A HREF="../../../../com/google/bitcoin/core/NetworkParameters.html" title="class in com.google.bitcoin.core">NetworkParameters</A>&nbsp;params)</CODE>
+<TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/NetworkConnection.html#NetworkConnection(java.net.InetAddress, com.google.bitcoin.core.NetworkParameters, int)">NetworkConnection</A></B>(java.net.InetAddress&nbsp;remoteIp,
+                  <A HREF="../../../../com/google/bitcoin/core/NetworkParameters.html" title="class in com.google.bitcoin.core">NetworkParameters</A>&nbsp;params,
+                  int&nbsp;bestHeight)</CODE>
 
 <BR>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Connect to the given IP address using the port specified as part of the network parameters.</TD>
@@ -207,11 +208,12 @@ A NetworkConnection handles talking to a remote BitCoin peer at a low level. It 
 </TR>
 </TABLE>
 
-<A NAME="NetworkConnection(java.net.InetAddress, com.google.bitcoin.core.NetworkParameters)"><!-- --></A><H3>
+<A NAME="NetworkConnection(java.net.InetAddress, com.google.bitcoin.core.NetworkParameters, int)"><!-- --></A><H3>
 NetworkConnection</H3>
 <PRE>
 public <B>NetworkConnection</B>(java.net.InetAddress&nbsp;remoteIp,
-                         <A HREF="../../../../com/google/bitcoin/core/NetworkParameters.html" title="class in com.google.bitcoin.core">NetworkParameters</A>&nbsp;params)
+                         <A HREF="../../../../com/google/bitcoin/core/NetworkParameters.html" title="class in com.google.bitcoin.core">NetworkParameters</A>&nbsp;params,
+                         int&nbsp;bestHeight)
                   throws java.io.IOException,
                          <A HREF="../../../../com/google/bitcoin/core/ProtocolException.html" title="class in com.google.bitcoin.core">ProtocolException</A></PRE>
 <DL>
@@ -219,7 +221,7 @@ public <B>NetworkConnection</B>(java.net.InetAddress&nbsp;remoteIp,
  is complete a functioning network channel is set up and running.
 <P>
 <DL>
-<DT><B>Parameters:</B><DD><CODE>remoteIp</CODE> - IP address to connect to. IPv6 is not currently supported by BitCoin.<DD><CODE>params</CODE> - Defines which network to connect to and details of the protocol.
+<DT><B>Parameters:</B><DD><CODE>remoteIp</CODE> - IP address to connect to. IPv6 is not currently supported by BitCoin.<DD><CODE>params</CODE> - Defines which network to connect to and details of the protocol.<DD><CODE>bestHeight</CODE> - How many blocks are in our best chain
 <DT><B>Throws:</B>
 <DD><CODE>java.io.IOException</CODE> - if there is a network related failure.
 <DD><CODE><A HREF="../../../../com/google/bitcoin/core/ProtocolException.html" title="class in com.google.bitcoin.core">ProtocolException</A></CODE> - if the version negotiation failed.</DL>

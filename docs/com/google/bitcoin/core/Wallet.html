@@ -131,14 +131,6 @@ A Wallet stores keys and a record of transactions that have not yet been spent. 
 <BR>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;A list of public/private EC keys owned by this user.</TD>
 </TR>
-<TR BGCOLOR="white" CLASS="TableRowColor">
-<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
-<CODE>&nbsp;java.util.ArrayList&lt;<A HREF="../../../../com/google/bitcoin/core/Transaction.html" title="class in com.google.bitcoin.core">Transaction</A>&gt;</CODE></FONT></TD>
-<TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/Wallet.html#unspent">unspent</A></B></CODE>
-
-<BR>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;A list of transactions with outputs we can spend.</TD>
-</TR>
 </TABLE>
 &nbsp;
 <!-- ======== CONSTRUCTOR SUMMARY ======== -->
@@ -191,11 +183,43 @@ A Wallet stores keys and a record of transactions that have not yet been spent. 
 </TR>
 <TR BGCOLOR="white" CLASS="TableRowColor">
 <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;<A HREF="../../../../com/google/bitcoin/core/ECKey.html" title="class in com.google.bitcoin.core">ECKey</A></CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/Wallet.html#findKeyFromPubKey(byte[])">findKeyFromPubKey</A></B>(byte[]&nbsp;pubkey)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Locates a keypair from the keychain given the raw public key bytes.</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
 <CODE>&nbsp;java.math.BigInteger</CODE></FONT></TD>
 <TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/Wallet.html#getBalance()">getBalance</A></B>()</CODE>
 
 <BR>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Returns the balance of this wallet in nanocoins by summing up all unspent outputs that were sent to us.</TD>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Returns the balance of this wallet by summing up all unspent outputs that were sent to us.</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;java.util.Collection&lt;<A HREF="../../../../com/google/bitcoin/core/Transaction.html" title="class in com.google.bitcoin.core">Transaction</A>&gt;</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/Wallet.html#getPendingTransactions()">getPendingTransactions</A></B>()</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Returns an immutable view of the transactions currently waiting for network confirmations.</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;boolean</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/Wallet.html#isPubKeyHashMine(byte[])">isPubKeyHashMine</A></B>(byte[]&nbsp;pubkeyHash)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Returns true if this wallet contains a public key which hashes to the given hash.</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;boolean</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/Wallet.html#isPubKeyMine(byte[])">isPubKeyMine</A></B>(byte[]&nbsp;pubkey)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Returns true if this wallet contains a keypair with the given public key.</TD>
 </TR>
 <TR BGCOLOR="white" CLASS="TableRowColor">
 <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
@@ -262,21 +286,6 @@ A Wallet stores keys and a record of transactions that have not yet been spent. 
 <B>Field Detail</B></FONT></TH>
 </TR>
 </TABLE>
-
-<A NAME="unspent"><!-- --></A><H3>
-unspent</H3>
-<PRE>
-public final java.util.ArrayList&lt;<A HREF="../../../../com/google/bitcoin/core/Transaction.html" title="class in com.google.bitcoin.core">Transaction</A>&gt; <B>unspent</B></PRE>
-<DL>
-<DD>A list of transactions with outputs we can spend. Note that some of these transactions may be partially spent,
- that is, they have outputs some of which are redeemed and others which aren't already. The spentness of each
- output is tracked in the TransactionOutput object. The value of all unspent outputs is the balance of the
- wallet.
-<P>
-<DL>
-</DL>
-</DL>
-<HR>
 
 <A NAME="keychain"><!-- --></A><H3>
 keychain</H3>
@@ -452,12 +461,61 @@ public <A HREF="../../../../com/google/bitcoin/core/ECKey.html" title="class in 
 </DL>
 <HR>
 
+<A NAME="isPubKeyHashMine(byte[])"><!-- --></A><H3>
+isPubKeyHashMine</H3>
+<PRE>
+public boolean <B>isPubKeyHashMine</B>(byte[]&nbsp;pubkeyHash)</PRE>
+<DL>
+<DD>Returns true if this wallet contains a public key which hashes to the given hash.
+<P>
+<DD><DL>
+</DL>
+</DD>
+<DD><DL>
+</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="findKeyFromPubKey(byte[])"><!-- --></A><H3>
+findKeyFromPubKey</H3>
+<PRE>
+public <A HREF="../../../../com/google/bitcoin/core/ECKey.html" title="class in com.google.bitcoin.core">ECKey</A> <B>findKeyFromPubKey</B>(byte[]&nbsp;pubkey)</PRE>
+<DL>
+<DD>Locates a keypair from the keychain given the raw public key bytes.
+<P>
+<DD><DL>
+</DL>
+</DD>
+<DD><DL>
+
+<DT><B>Returns:</B><DD>ECKey or null if no such key was found.</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="isPubKeyMine(byte[])"><!-- --></A><H3>
+isPubKeyMine</H3>
+<PRE>
+public boolean <B>isPubKeyMine</B>(byte[]&nbsp;pubkey)</PRE>
+<DL>
+<DD>Returns true if this wallet contains a keypair with the given public key.
+<P>
+<DD><DL>
+</DL>
+</DD>
+<DD><DL>
+</DL>
+</DD>
+</DL>
+<HR>
+
 <A NAME="getBalance()"><!-- --></A><H3>
 getBalance</H3>
 <PRE>
 public java.math.BigInteger <B>getBalance</B>()</PRE>
 <DL>
-<DD>Returns the balance of this wallet in nanocoins by summing up all unspent outputs that were sent to us.
+<DD>Returns the balance of this wallet by summing up all unspent outputs that were sent to us.
 <P>
 <DD><DL>
 </DL>
@@ -475,6 +533,22 @@ public java.lang.String <B>toString</B>()</PRE>
 <DL>
 <DD><DL>
 <DT><B>Overrides:</B><DD><CODE>toString</CODE> in class <CODE>java.lang.Object</CODE></DL>
+</DD>
+<DD><DL>
+</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="getPendingTransactions()"><!-- --></A><H3>
+getPendingTransactions</H3>
+<PRE>
+public java.util.Collection&lt;<A HREF="../../../../com/google/bitcoin/core/Transaction.html" title="class in com.google.bitcoin.core">Transaction</A>&gt; <B>getPendingTransactions</B>()</PRE>
+<DL>
+<DD>Returns an immutable view of the transactions currently waiting for network confirmations.
+<P>
+<DD><DL>
+</DL>
 </DD>
 <DD><DL>
 </DL>

@@ -51,7 +51,7 @@ function windowTitle()
 
 <TR>
 <TD BGCOLOR="white" CLASS="NavBarCell2"><FONT SIZE="-2">
-&nbsp;<A HREF="../../../../com/google/bitcoin/core/BlockStoreException.html" title="class in com.google.bitcoin.core"><B>PREV CLASS</B></A>&nbsp;
+&nbsp;<A HREF="../../../../com/google/bitcoin/core/DiskBlockStore.html" title="class in com.google.bitcoin.core"><B>PREV CLASS</B></A>&nbsp;
 &nbsp;<A HREF="../../../../com/google/bitcoin/core/GetBlocksMessage.html" title="class in com.google.bitcoin.core"><B>NEXT CLASS</B></A></FONT></TD>
 <TD BGCOLOR="white" CLASS="NavBarCell2"><FONT SIZE="-2">
   <A HREF="../../../../index.html?com/google/bitcoin/core/ECKey.html" target="_top"><B>FRAMES</B></A>  &nbsp;
@@ -184,6 +184,15 @@ Represents an elliptic curve keypair that we own and can use for signing transac
 </TR>
 <TR BGCOLOR="white" CLASS="TableRowColor">
 <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;byte[]</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/ECKey.html#toASN1()">toASN1</A></B>()</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Output this ECKey as an ASN.1 encoded private key, as understood by OpenSSL or used by the BitCoin reference
+ implementation in its wallet storage format.</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
 <CODE>&nbsp;java.lang.String</CODE></FONT></TD>
 <TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/ECKey.html#toString()">toString</A></B>()</CODE>
 
@@ -269,6 +278,23 @@ public static <A HREF="../../../../com/google/bitcoin/core/ECKey.html" title="cl
 <DL>
 <DD>Construct an ECKey from an ASN.1 encoded private key. These are produced by OpenSSL and stored by the BitCoin
  reference implementation in its wallet.
+<P>
+<DD><DL>
+</DL>
+</DD>
+<DD><DL>
+</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="toASN1()"><!-- --></A><H3>
+toASN1</H3>
+<PRE>
+public byte[] <B>toASN1</B>()</PRE>
+<DL>
+<DD>Output this ECKey as an ASN.1 encoded private key, as understood by OpenSSL or used by the BitCoin reference
+ implementation in its wallet storage format.
 <P>
 <DD><DL>
 </DL>
@@ -422,7 +448,7 @@ public boolean <B>verify</B>(byte[]&nbsp;data,
 
 <TR>
 <TD BGCOLOR="white" CLASS="NavBarCell2"><FONT SIZE="-2">
-&nbsp;<A HREF="../../../../com/google/bitcoin/core/BlockStoreException.html" title="class in com.google.bitcoin.core"><B>PREV CLASS</B></A>&nbsp;
+&nbsp;<A HREF="../../../../com/google/bitcoin/core/DiskBlockStore.html" title="class in com.google.bitcoin.core"><B>PREV CLASS</B></A>&nbsp;
 &nbsp;<A HREF="../../../../com/google/bitcoin/core/GetBlocksMessage.html" title="class in com.google.bitcoin.core"><B>NEXT CLASS</B></A></FONT></TD>
 <TD BGCOLOR="white" CLASS="NavBarCell2"><FONT SIZE="-2">
   <A HREF="../../../../index.html?com/google/bitcoin/core/ECKey.html" target="_top"><B>FRAMES</B></A>  &nbsp;

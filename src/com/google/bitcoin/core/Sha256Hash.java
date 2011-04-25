@@ -41,7 +41,7 @@ public class Sha256Hash implements Serializable {
     }
 
     /**
-     * Hash code of the byte array as calculated by {@link Arrays.hashCode()}. Note the difference between a SHA256
+     * Hash code of the byte array as calculated by {@link Arrays#hashCode()}. Note the difference between a SHA256
      * secure hash and the type of quick/dirty hash used by the Java hashCode method which is designed for use in
      * hash tables.
      */

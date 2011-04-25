@@ -119,7 +119,7 @@ A collection of various utility methods that are helpful for working with the Bi
 <TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/Utils.html#CENT">CENT</A></B></CODE>
 
 <BR>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;How many nanocoins there are in 0.01 BitCoins.</TD>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;How many "nanocoins" there are in 0.01 BitCoins.</TD>
 </TR>
 <TR BGCOLOR="white" CLASS="TableRowColor">
 <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
@@ -127,7 +127,7 @@ A collection of various utility methods that are helpful for working with the Bi
 <TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/Utils.html#COIN">COIN</A></B></CODE>
 
 <BR>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;How many nanocoins there are in a BitCoin.</TD>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;How many "nanocoins" there are in a BitCoin.</TD>
 </TR>
 </TABLE>
 &nbsp;
@@ -256,6 +256,14 @@ A collection of various utility methods that are helpful for working with the Bi
 </TR>
 <TR BGCOLOR="white" CLASS="TableRowColor">
 <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>static&nbsp;java.math.BigInteger</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/Utils.html#toNanoCoins(java.lang.String)">toNanoCoins</A></B>(java.lang.String&nbsp;coins)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Convert an amount expressed in the way humans are used to into nanocoins.</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
 <CODE>static&nbsp;void</CODE></FONT></TD>
 <TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/Utils.html#uint32ToByteArrayBE(long, byte[], int)">uint32ToByteArrayBE</A></B>(long&nbsp;val,
                     byte[]&nbsp;out,
@@ -320,7 +328,11 @@ COIN</H3>
 <PRE>
 public static final java.math.BigInteger <B>COIN</B></PRE>
 <DL>
-<DD>How many nanocoins there are in a BitCoin.
+<DD>How many "nanocoins" there are in a BitCoin.
+
+ A nanocoin is the smallest unit that can be transferred using BitCoin.
+ The term nanocoin is very misleading, though, because there are only 100 million
+ of them in a coin (whereas one would expect 1 billion.
 <P>
 <DL>
 </DL>
@@ -332,7 +344,11 @@ CENT</H3>
 <PRE>
 public static final java.math.BigInteger <B>CENT</B></PRE>
 <DL>
-<DD>How many nanocoins there are in 0.01 BitCoins.
+<DD>How many "nanocoins" there are in 0.01 BitCoins.
+
+ A nanocoin is the smallest unit that can be transferred using BitCoin.
+ The term nanocoin is very misleading, though, because there are only 100 million
+ of them in a coin (whereas one would expect 1 billion).
 <P>
 <DL>
 </DL>
@@ -375,6 +391,24 @@ public static java.math.BigInteger <B>toNanoCoins</B>(int&nbsp;coins,
 <P>
 <DD><DL>
 </DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="toNanoCoins(java.lang.String)"><!-- --></A><H3>
+toNanoCoins</H3>
+<PRE>
+public static java.math.BigInteger <B>toNanoCoins</B>(java.lang.String&nbsp;coins)</PRE>
+<DL>
+<DD>Convert an amount expressed in the way humans are used to into nanocoins.<p>
+
+ This takes string in a format understood by <CODE>BigDecimal.BigDecimal(String)</CODE>,
+ for example "0", "1", "0.10", "1.23E3", "1234.5E-5".
+<P>
+<DD><DL>
+
+<DT><B>Throws:</B>
+<DD><CODE>java.lang.ArithmeticException</CODE> - if you try to specify fractional nanocoins</DL>
 </DD>
 </DL>
 <HR>

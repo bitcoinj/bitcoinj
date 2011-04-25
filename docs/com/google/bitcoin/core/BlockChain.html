@@ -52,7 +52,7 @@ function windowTitle()
 <TR>
 <TD BGCOLOR="white" CLASS="NavBarCell2"><FONT SIZE="-2">
 &nbsp;<A HREF="../../../../com/google/bitcoin/core/Block.html" title="class in com.google.bitcoin.core"><B>PREV CLASS</B></A>&nbsp;
-&nbsp;<A HREF="../../../../com/google/bitcoin/core/BlockStoreException.html" title="class in com.google.bitcoin.core"><B>NEXT CLASS</B></A></FONT></TD>
+&nbsp;<A HREF="../../../../com/google/bitcoin/core/BlockStore.html" title="interface in com.google.bitcoin.core"><B>NEXT CLASS</B></A></FONT></TD>
 <TD BGCOLOR="white" CLASS="NavBarCell2"><FONT SIZE="-2">
   <A HREF="../../../../index.html?com/google/bitcoin/core/BlockChain.html" target="_top"><B>FRAMES</B></A>  &nbsp;
 &nbsp;<A HREF="BlockChain.html" target="_top"><B>NO FRAMES</B></A>  &nbsp;
@@ -135,7 +135,7 @@ A BlockChain holds a series of <A HREF="../../../../com/google/bitcoin/core/Bloc
 </TR>
 <TR BGCOLOR="white" CLASS="TableRowColor">
 <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
-<CODE>protected &nbsp;com.google.bitcoin.core.BlockStore</CODE></FONT></TD>
+<CODE>protected &nbsp;<A HREF="../../../../com/google/bitcoin/core/BlockStore.html" title="interface in com.google.bitcoin.core">BlockStore</A></CODE></FONT></TD>
 <TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/BlockChain.html#blockStore">blockStore</A></B></CODE>
 
 <BR>
@@ -143,7 +143,7 @@ A BlockChain holds a series of <A HREF="../../../../com/google/bitcoin/core/Bloc
 </TR>
 <TR BGCOLOR="white" CLASS="TableRowColor">
 <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
-<CODE>protected &nbsp;com.google.bitcoin.core.StoredBlock</CODE></FONT></TD>
+<CODE>protected &nbsp;<A HREF="../../../../com/google/bitcoin/core/StoredBlock.html" title="class in com.google.bitcoin.core">StoredBlock</A></CODE></FONT></TD>
 <TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/BlockChain.html#chainHead">chainHead</A></B></CODE>
 
 <BR>
@@ -176,11 +176,12 @@ A BlockChain holds a series of <A HREF="../../../../com/google/bitcoin/core/Bloc
 <B>Constructor Summary</B></FONT></TH>
 </TR>
 <TR BGCOLOR="white" CLASS="TableRowColor">
-<TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/BlockChain.html#BlockChain(com.google.bitcoin.core.NetworkParameters, com.google.bitcoin.core.Wallet)">BlockChain</A></B>(<A HREF="../../../../com/google/bitcoin/core/NetworkParameters.html" title="class in com.google.bitcoin.core">NetworkParameters</A>&nbsp;params,
-           <A HREF="../../../../com/google/bitcoin/core/Wallet.html" title="class in com.google.bitcoin.core">Wallet</A>&nbsp;wallet)</CODE>
+<TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/BlockChain.html#BlockChain(com.google.bitcoin.core.NetworkParameters, com.google.bitcoin.core.Wallet, com.google.bitcoin.core.BlockStore)">BlockChain</A></B>(<A HREF="../../../../com/google/bitcoin/core/NetworkParameters.html" title="class in com.google.bitcoin.core">NetworkParameters</A>&nbsp;params,
+           <A HREF="../../../../com/google/bitcoin/core/Wallet.html" title="class in com.google.bitcoin.core">Wallet</A>&nbsp;wallet,
+           <A HREF="../../../../com/google/bitcoin/core/BlockStore.html" title="interface in com.google.bitcoin.core">BlockStore</A>&nbsp;blockStore)</CODE>
 
 <BR>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Constructs a BlockChain connected to the given wallet and store.</TD>
 </TR>
 </TABLE>
 &nbsp;
@@ -202,7 +203,7 @@ A BlockChain holds a series of <A HREF="../../../../com/google/bitcoin/core/Bloc
 </TR>
 <TR BGCOLOR="white" CLASS="TableRowColor">
 <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
-<CODE>&nbsp;com.google.bitcoin.core.StoredBlock</CODE></FONT></TD>
+<CODE>&nbsp;<A HREF="../../../../com/google/bitcoin/core/StoredBlock.html" title="class in com.google.bitcoin.core">StoredBlock</A></CODE></FONT></TD>
 <TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/BlockChain.html#getChainHead()">getChainHead</A></B>()</CODE>
 
 <BR>
@@ -242,7 +243,7 @@ A BlockChain holds a series of <A HREF="../../../../com/google/bitcoin/core/Bloc
 <A NAME="blockStore"><!-- --></A><H3>
 blockStore</H3>
 <PRE>
-protected com.google.bitcoin.core.BlockStore <B>blockStore</B></PRE>
+protected <A HREF="../../../../com/google/bitcoin/core/BlockStore.html" title="interface in com.google.bitcoin.core">BlockStore</A> <B>blockStore</B></PRE>
 <DL>
 <DD>Keeps a map of block hashes to StoredBlocks.
 <P>
@@ -254,7 +255,7 @@ protected com.google.bitcoin.core.BlockStore <B>blockStore</B></PRE>
 <A NAME="chainHead"><!-- --></A><H3>
 chainHead</H3>
 <PRE>
-protected com.google.bitcoin.core.StoredBlock <B>chainHead</B></PRE>
+protected <A HREF="../../../../com/google/bitcoin/core/StoredBlock.html" title="class in com.google.bitcoin.core">StoredBlock</A> <B>chainHead</B></PRE>
 <DL>
 <DD>Tracks the top of the best known chain.<p>
 
@@ -297,12 +298,20 @@ protected final <A HREF="../../../../com/google/bitcoin/core/Wallet.html" title=
 </TR>
 </TABLE>
 
-<A NAME="BlockChain(com.google.bitcoin.core.NetworkParameters, com.google.bitcoin.core.Wallet)"><!-- --></A><H3>
+<A NAME="BlockChain(com.google.bitcoin.core.NetworkParameters, com.google.bitcoin.core.Wallet, com.google.bitcoin.core.BlockStore)"><!-- --></A><H3>
 BlockChain</H3>
 <PRE>
 public <B>BlockChain</B>(<A HREF="../../../../com/google/bitcoin/core/NetworkParameters.html" title="class in com.google.bitcoin.core">NetworkParameters</A>&nbsp;params,
-                  <A HREF="../../../../com/google/bitcoin/core/Wallet.html" title="class in com.google.bitcoin.core">Wallet</A>&nbsp;wallet)</PRE>
+                  <A HREF="../../../../com/google/bitcoin/core/Wallet.html" title="class in com.google.bitcoin.core">Wallet</A>&nbsp;wallet,
+                  <A HREF="../../../../com/google/bitcoin/core/BlockStore.html" title="interface in com.google.bitcoin.core">BlockStore</A>&nbsp;blockStore)</PRE>
 <DL>
+<DD>Constructs a BlockChain connected to the given wallet and store. To obtain a <A HREF="../../../../com/google/bitcoin/core/Wallet.html" title="class in com.google.bitcoin.core"><CODE>Wallet</CODE></A> you can construct
+ one from scratch, or you can deserialize a saved wallet from disk using <A HREF="../../../../com/google/bitcoin/core/Wallet.html#loadFromFile(java.io.File)"><CODE>Wallet.loadFromFile(java.io.File)</CODE></A>
+ <p>
+
+ For the store you can use a <A HREF="../../../../com/google/bitcoin/core/MemoryBlockStore.html" title="class in com.google.bitcoin.core"><CODE>MemoryBlockStore</CODE></A> if you don't care about saving the downloaded data, or a
+ <A HREF="../../../../com/google/bitcoin/core/DiskBlockStore.html" title="class in com.google.bitcoin.core"><CODE>DiskBlockStore</CODE></A> if you'd like to ensure fast startup the next time you run the program.
+<P>
 </DL>
 
 <!-- ============ METHOD DETAIL ========== -->
@@ -338,7 +347,7 @@ public boolean <B>add</B>(<A HREF="../../../../com/google/bitcoin/core/Block.htm
 <A NAME="getChainHead()"><!-- --></A><H3>
 getChainHead</H3>
 <PRE>
-public com.google.bitcoin.core.StoredBlock <B>getChainHead</B>()</PRE>
+public <A HREF="../../../../com/google/bitcoin/core/StoredBlock.html" title="class in com.google.bitcoin.core">StoredBlock</A> <B>getChainHead</B>()</PRE>
 <DL>
 <DD>Returns the block at the head of the current best chain. This is the block which represents the greatest
  amount of cumulative work done.
@@ -390,7 +399,7 @@ public <A HREF="../../../../com/google/bitcoin/core/Block.html" title="class in 
 <TR>
 <TD BGCOLOR="white" CLASS="NavBarCell2"><FONT SIZE="-2">
 &nbsp;<A HREF="../../../../com/google/bitcoin/core/Block.html" title="class in com.google.bitcoin.core"><B>PREV CLASS</B></A>&nbsp;
-&nbsp;<A HREF="../../../../com/google/bitcoin/core/BlockStoreException.html" title="class in com.google.bitcoin.core"><B>NEXT CLASS</B></A></FONT></TD>
+&nbsp;<A HREF="../../../../com/google/bitcoin/core/BlockStore.html" title="interface in com.google.bitcoin.core"><B>NEXT CLASS</B></A></FONT></TD>
 <TD BGCOLOR="white" CLASS="NavBarCell2"><FONT SIZE="-2">
   <A HREF="../../../../index.html?com/google/bitcoin/core/BlockChain.html" target="_top"><B>FRAMES</B></A>  &nbsp;
 &nbsp;<A HREF="BlockChain.html" target="_top"><B>NO FRAMES</B></A>  &nbsp;

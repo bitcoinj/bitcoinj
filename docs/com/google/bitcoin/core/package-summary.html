@@ -82,6 +82,20 @@ Package com.google.bitcoin.core
 <TABLE BORDER="1" WIDTH="100%" CELLPADDING="3" CELLSPACING="0" SUMMARY="">
 <TR BGCOLOR="#CCCCFF" CLASS="TableHeadingColor">
 <TH ALIGN="left" COLSPAN="2"><FONT SIZE="+2">
+<B>Interface Summary</B></FONT></TH>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD WIDTH="15%"><B><A HREF="../../../../com/google/bitcoin/core/BlockStore.html" title="interface in com.google.bitcoin.core">BlockStore</A></B></TD>
+<TD>An implementor of BlockStore saves StoredBlock objects to disk.</TD>
+</TR>
+</TABLE>
+&nbsp;
+
+<P>
+
+<TABLE BORDER="1" WIDTH="100%" CELLPADDING="3" CELLSPACING="0" SUMMARY="">
+<TR BGCOLOR="#CCCCFF" CLASS="TableHeadingColor">
+<TH ALIGN="left" COLSPAN="2"><FONT SIZE="+2">
 <B>Class Summary</B></FONT></TH>
 </TR>
 <TR BGCOLOR="white" CLASS="TableRowColor">
@@ -106,6 +120,10 @@ Package com.google.bitcoin.core
  chain follows the rules of the <A HREF="../../../../com/google/bitcoin/core/NetworkParameters.html" title="class in com.google.bitcoin.core"><CODE>NetworkParameters</CODE></A> for this chain.</TD>
 </TR>
 <TR BGCOLOR="white" CLASS="TableRowColor">
+<TD WIDTH="15%"><B><A HREF="../../../../com/google/bitcoin/core/DiskBlockStore.html" title="class in com.google.bitcoin.core">DiskBlockStore</A></B></TD>
+<TD>Stores the block chain to disk but still holds it in memory.</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
 <TD WIDTH="15%"><B><A HREF="../../../../com/google/bitcoin/core/ECKey.html" title="class in com.google.bitcoin.core">ECKey</A></B></TD>
 <TD>Represents an elliptic curve keypair that we own and can use for signing transactions.</TD>
 </TR>
@@ -124,6 +142,10 @@ Package com.google.bitcoin.core
 <TR BGCOLOR="white" CLASS="TableRowColor">
 <TD WIDTH="15%"><B><A HREF="../../../../com/google/bitcoin/core/InventoryMessage.html" title="class in com.google.bitcoin.core">InventoryMessage</A></B></TD>
 <TD>&nbsp;</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD WIDTH="15%"><B><A HREF="../../../../com/google/bitcoin/core/MemoryBlockStore.html" title="class in com.google.bitcoin.core">MemoryBlockStore</A></B></TD>
+<TD>Keeps <A HREF="../../../../com/google/bitcoin/core/StoredBlock.html" title="class in com.google.bitcoin.core"><CODE>StoredBlock</CODE></A>s in memory.</TD>
 </TR>
 <TR BGCOLOR="white" CLASS="TableRowColor">
 <TD WIDTH="15%"><B><A HREF="../../../../com/google/bitcoin/core/Message.html" title="class in com.google.bitcoin.core">Message</A></B></TD>
@@ -150,6 +172,16 @@ Package com.google.bitcoin.core
 <TR BGCOLOR="white" CLASS="TableRowColor">
 <TD WIDTH="15%"><B><A HREF="../../../../com/google/bitcoin/core/Script.html" title="class in com.google.bitcoin.core">Script</A></B></TD>
 <TD>BitCoin transactions don't specify what they do directly.</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD WIDTH="15%"><B><A HREF="../../../../com/google/bitcoin/core/Sha256Hash.html" title="class in com.google.bitcoin.core">Sha256Hash</A></B></TD>
+<TD>A Sha256Hash just wraps a byte[] so that equals and hashcode work correctly, allowing it to be used as keys in a
+ map.</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD WIDTH="15%"><B><A HREF="../../../../com/google/bitcoin/core/StoredBlock.html" title="class in com.google.bitcoin.core">StoredBlock</A></B></TD>
+<TD>Wraps a <A HREF="../../../../com/google/bitcoin/core/Block.html" title="class in com.google.bitcoin.core"><CODE>Block</CODE></A> object with extra data that can be derived from the block chain but is slow or inconvenient to
+ calculate.</TD>
 </TR>
 <TR BGCOLOR="white" CLASS="TableRowColor">
 <TD WIDTH="15%"><B><A HREF="../../../../com/google/bitcoin/core/Transaction.html" title="class in com.google.bitcoin.core">Transaction</A></B></TD>

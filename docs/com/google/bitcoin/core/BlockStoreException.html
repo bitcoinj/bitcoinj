@@ -3,7 +3,7 @@
 <HTML>
 <HEAD>
 <TITLE>
-ScriptException
+BlockStoreException
 </TITLE>
 
 
@@ -13,7 +13,7 @@ ScriptException
 function windowTitle()
 {
     if (location.href.indexOf('is-external=true') == -1) {
-        parent.document.title="ScriptException";
+        parent.document.title="BlockStoreException";
     }
 }
 </SCRIPT>
@@ -51,11 +51,11 @@ function windowTitle()
 
 <TR>
 <TD BGCOLOR="white" CLASS="NavBarCell2"><FONT SIZE="-2">
-&nbsp;<A HREF="../../../../com/google/bitcoin/core/Script.html" title="class in com.google.bitcoin.core"><B>PREV CLASS</B></A>&nbsp;
-&nbsp;<A HREF="../../../../com/google/bitcoin/core/Sha256Hash.html" title="class in com.google.bitcoin.core"><B>NEXT CLASS</B></A></FONT></TD>
+&nbsp;<A HREF="../../../../com/google/bitcoin/core/BlockStore.html" title="interface in com.google.bitcoin.core"><B>PREV CLASS</B></A>&nbsp;
+&nbsp;<A HREF="../../../../com/google/bitcoin/core/DiskBlockStore.html" title="class in com.google.bitcoin.core"><B>NEXT CLASS</B></A></FONT></TD>
 <TD BGCOLOR="white" CLASS="NavBarCell2"><FONT SIZE="-2">
-  <A HREF="../../../../index.html?com/google/bitcoin/core/ScriptException.html" target="_top"><B>FRAMES</B></A>  &nbsp;
-&nbsp;<A HREF="ScriptException.html" target="_top"><B>NO FRAMES</B></A>  &nbsp;
+  <A HREF="../../../../index.html?com/google/bitcoin/core/BlockStoreException.html" target="_top"><B>FRAMES</B></A>  &nbsp;
+&nbsp;<A HREF="BlockStoreException.html" target="_top"><B>NO FRAMES</B></A>  &nbsp;
 &nbsp;<SCRIPT type="text/javascript">
   <!--
   if(window==top) {
@@ -86,24 +86,28 @@ DETAIL:&nbsp;FIELD&nbsp;|&nbsp;<A HREF="#constructor_detail">CONSTR</A>&nbsp;|&n
 <FONT SIZE="-1">
 com.google.bitcoin.core</FONT>
 <BR>
-Class ScriptException</H2>
+Class BlockStoreException</H2>
 <PRE>
 java.lang.Object
   <IMG SRC="../../../../resources/inherit.gif" ALT="extended by ">java.lang.Throwable
       <IMG SRC="../../../../resources/inherit.gif" ALT="extended by ">java.lang.Exception
-          <IMG SRC="../../../../resources/inherit.gif" ALT="extended by "><B>com.google.bitcoin.core.ScriptException</B>
+          <IMG SRC="../../../../resources/inherit.gif" ALT="extended by "><B>com.google.bitcoin.core.BlockStoreException</B>
 </PRE>
 <DL>
 <DT><B>All Implemented Interfaces:</B> <DD>java.io.Serializable</DD>
 </DL>
 <HR>
 <DL>
-<DT><PRE>public class <B>ScriptException</B><DT>extends java.lang.Exception</DL>
+<DT><PRE>public class <B>BlockStoreException</B><DT>extends java.lang.Exception</DL>
 </PRE>
 
 <P>
+Thrown when something goes wrong with storing a block. Examples: out of disk space.
+<P>
+
+<P>
 <DL>
-<DT><B>See Also:</B><DD><A HREF="../../../../serialized-form.html#com.google.bitcoin.core.ScriptException">Serialized Form</A></DL>
+<DT><B>See Also:</B><DD><A HREF="../../../../serialized-form.html#com.google.bitcoin.core.BlockStoreException">Serialized Form</A></DL>
 <HR>
 
 <P>
@@ -117,14 +121,13 @@ java.lang.Object
 <B>Constructor Summary</B></FONT></TH>
 </TR>
 <TR BGCOLOR="white" CLASS="TableRowColor">
-<TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/ScriptException.html#ScriptException(java.lang.String)">ScriptException</A></B>(java.lang.String&nbsp;msg)</CODE>
+<TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/BlockStoreException.html#BlockStoreException(java.lang.String)">BlockStoreException</A></B>(java.lang.String&nbsp;message)</CODE>
 
 <BR>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
 </TR>
 <TR BGCOLOR="white" CLASS="TableRowColor">
-<TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/ScriptException.html#ScriptException(java.lang.String, java.lang.Exception)">ScriptException</A></B>(java.lang.String&nbsp;msg,
-                java.lang.Exception&nbsp;e)</CODE>
+<TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/BlockStoreException.html#BlockStoreException(java.lang.Throwable)">BlockStoreException</A></B>(java.lang.Throwable&nbsp;t)</CODE>
 
 <BR>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
@@ -171,19 +174,18 @@ java.lang.Object
 </TR>
 </TABLE>
 
-<A NAME="ScriptException(java.lang.String)"><!-- --></A><H3>
-ScriptException</H3>
+<A NAME="BlockStoreException(java.lang.String)"><!-- --></A><H3>
+BlockStoreException</H3>
 <PRE>
-public <B>ScriptException</B>(java.lang.String&nbsp;msg)</PRE>
+public <B>BlockStoreException</B>(java.lang.String&nbsp;message)</PRE>
 <DL>
 </DL>
 <HR>
 
-<A NAME="ScriptException(java.lang.String, java.lang.Exception)"><!-- --></A><H3>
-ScriptException</H3>
+<A NAME="BlockStoreException(java.lang.Throwable)"><!-- --></A><H3>
+BlockStoreException</H3>
 <PRE>
-public <B>ScriptException</B>(java.lang.String&nbsp;msg,
-                       java.lang.Exception&nbsp;e)</PRE>
+public <B>BlockStoreException</B>(java.lang.Throwable&nbsp;t)</PRE>
 <DL>
 </DL>
 <!-- ========= END OF CLASS DATA ========= -->
@@ -215,11 +217,11 @@ public <B>ScriptException</B>(java.lang.String&nbsp;msg,
 
 <TR>
 <TD BGCOLOR="white" CLASS="NavBarCell2"><FONT SIZE="-2">
-&nbsp;<A HREF="../../../../com/google/bitcoin/core/Script.html" title="class in com.google.bitcoin.core"><B>PREV CLASS</B></A>&nbsp;
-&nbsp;<A HREF="../../../../com/google/bitcoin/core/Sha256Hash.html" title="class in com.google.bitcoin.core"><B>NEXT CLASS</B></A></FONT></TD>
+&nbsp;<A HREF="../../../../com/google/bitcoin/core/BlockStore.html" title="interface in com.google.bitcoin.core"><B>PREV CLASS</B></A>&nbsp;
+&nbsp;<A HREF="../../../../com/google/bitcoin/core/DiskBlockStore.html" title="class in com.google.bitcoin.core"><B>NEXT CLASS</B></A></FONT></TD>
 <TD BGCOLOR="white" CLASS="NavBarCell2"><FONT SIZE="-2">
-  <A HREF="../../../../index.html?com/google/bitcoin/core/ScriptException.html" target="_top"><B>FRAMES</B></A>  &nbsp;
-&nbsp;<A HREF="ScriptException.html" target="_top"><B>NO FRAMES</B></A>  &nbsp;
+  <A HREF="../../../../index.html?com/google/bitcoin/core/BlockStoreException.html" target="_top"><B>FRAMES</B></A>  &nbsp;
+&nbsp;<A HREF="BlockStoreException.html" target="_top"><B>NO FRAMES</B></A>  &nbsp;
 &nbsp;<SCRIPT type="text/javascript">
   <!--
   if(window==top) {

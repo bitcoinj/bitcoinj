@@ -107,10 +107,9 @@ java.lang.Object
 These constants are a part of a scriptSig signature on the inputs. They define the details of how a
  transaction can be redeemed, specifically, they control how the hash of the transaction is calculated.
  
- Note: in the official client, this enum also has another flag, SIGHASH_ANYONECANPAY. In this implementation,
- that's kept separate.
-
- Also note: only SIGHASH_ALL is actually used in the official client today.
+ In the official client, this enum also has another flag, SIGHASH_ANYONECANPAY. In this implementation,
+ that's kept separate. Only SIGHASH_ALL is actually used in the official client today. The other flags
+ exist to allow for distributed contracts.
 <P>
 
 <P>
