@@ -91,14 +91,14 @@ public class Utils {
         out[offset + 3] = (byte) (0xFF & (val >> 24));      
     }
     
-    public static void uint32ToByteStreamLE(long val,  OutputStream stream) throws IOException {
+    public static void uint32ToByteStreamLE(long val, OutputStream stream) throws IOException {
         stream.write((int)(0xFF & (val >>  0)));
         stream.write((int)(0xFF & (val >>  8)));
         stream.write((int)(0xFF & (val >> 16)));
         stream.write((int)(0xFF & (val >> 24)));
     }
     
-    public static void uint64ToByteStreamLE( BigInteger val,  OutputStream stream) throws IOException {
+    public static void uint64ToByteStreamLE(BigInteger val, OutputStream stream) throws IOException {
         byte[] bytes = val.toByteArray();
         if (bytes.length > 8) { 
             throw new RuntimeException("Input too large to encode into a uint64");
@@ -194,8 +194,10 @@ public class Utils {
     static void LOG(String msg) {
         // Set this to true to see debug prints from the library.
         if (logging) {
-            System.out.print("BitCoin: ");
-            System.out.println(msg);
+            System.err.print("BitCoin: ");
+            System.err.println(msg);
+            System.err.flush();
+            System.out.flush();
         }
     }
 
@@ -217,9 +219,12 @@ public class Utils {
 
     /** Returns the given value in nanocoins as a 0.12 type string. */
     public static String bitcoinValueToFriendlyString(BigInteger value) {
+        boolean negative = value.compareTo(BigInteger.ZERO) < 0;
+        if (negative)
+            value = value.negate();
         BigInteger coins = value.divide(COIN);
         BigInteger cents = value.remainder(COIN);
-        return String.format("%d.%02d", coins.intValue(), cents.intValue() / 1000000);
+        return String.format("%s%d.%02d", negative ? "-" : "", coins.intValue(), cents.intValue() / 1000000);
     }
     
     /**
