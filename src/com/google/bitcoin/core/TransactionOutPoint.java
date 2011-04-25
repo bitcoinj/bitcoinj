@@ -20,7 +20,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Serializable;
 import java.util.Arrays;
-import java.util.List;
+import java.util.Collection;
 
 /**
  * This message is a reference or pointer to an output of a different transaction.
@@ -40,7 +40,7 @@ public class TransactionOutPoint extends Message implements Serializable {
         super(params);
         this.index = index;
         if (fromTx != null) {
-            this.hash = fromTx.getHash();
+            this.hash = fromTx.getHash().hash;
             this.fromTx = fromTx;
         } else {
             // This happens when constructing the genesis block.
@@ -71,9 +71,9 @@ public class TransactionOutPoint extends Message implements Serializable {
      * getConnectedOutput().
      * @return true if connection took place, false if the referenced transaction was not in the list.
      */
-    boolean connect(List<Transaction> transactions) {
+    boolean connect(Collection<Transaction> transactions) {
         for (Transaction tx : transactions) {
-            if (Arrays.equals(tx.getHash(), hash)) {
+            if (Arrays.equals(tx.getHash().hash, hash)) {
                 fromTx = tx;
                 return true;
             }
@@ -84,7 +84,6 @@ public class TransactionOutPoint extends Message implements Serializable {
     /**
      * If this transaction was created using the explicit constructor rather than deserialized,
      * retrieves the connected output transaction. Asserts if there is no connected transaction.
-     * @return
      */
     TransactionOutput getConnectedOutput() {
         assert fromTx != null;

@@ -294,7 +294,7 @@ public class Block extends Message {
         ArrayList<byte[]> tree = new ArrayList<byte[]>();
         // Start by adding all the hashes of the transactions as leaves of the tree.
         for (Transaction t : transactions) {
-            tree.add(t.getHash());
+            tree.add(t.getHash().hash);
         }
         int j = 0;
         // Now step through each level ...
@@ -453,7 +453,7 @@ public class Block extends Message {
         // Real coinbase transactions use <pubkey> OP_CHECKSIG rather than a send to an address though there's
         // nothing in the system that enforces that and both are just as valid.
         coinbase.inputs.add(new TransactionInput(params, new byte[] { (byte) coinbaseCounter++ } ));
-        coinbase.outputs.add(new TransactionOutput(params, Utils.toNanoCoins(50, 0), to));
+        coinbase.outputs.add(new TransactionOutput(params, Utils.toNanoCoins(50, 0), to, coinbase));
         transactions.add(coinbase);
     }
 

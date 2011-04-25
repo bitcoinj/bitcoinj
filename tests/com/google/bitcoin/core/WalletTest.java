@@ -26,29 +26,57 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 public class WalletTest {
-    static final NetworkParameters params = NetworkParameters.testNet();
+    static final NetworkParameters params = NetworkParameters.unitTests();
 
     private Address myAddress;
     private Wallet wallet;
+    private BlockStore blockStore;
 
     @Before
-    public void setUp() {
+    public void setUp() throws Exception {
         ECKey myKey = new ECKey();
         myAddress = myKey.toAddress(params);
         wallet = new Wallet(params);
         wallet.addKey(myKey);
+        blockStore = new MemoryBlockStore(params);
     }
 
+    private static byte fakeHashCounter = 0;
     private Transaction createFakeTx(BigInteger nanocoins,  Address to) {
         Transaction t = new Transaction(params);
-        TransactionOutput o1 = new TransactionOutput(params, nanocoins, to);
+        TransactionOutput o1 = new TransactionOutput(params, nanocoins, to, t);
         t.addOutput(o1);
         // t1 is not a valid transaction - it has no inputs. Nonetheless, if we set it up with a fake hash it'll be
         // valid enough for these tests.
         byte[] hash = new byte[32];
-        for (byte i = 0; i < 32; i++) hash[i] = i;
-        t.setFakeHashForTesting(hash);
+        hash[0] = fakeHashCounter++;
+        t.setFakeHashForTesting(new Sha256Hash(hash));
         return t;
+    }
+
+    class BlockPair {
+        StoredBlock storedBlock;
+        Block block;
+    }
+
+    // Emulates receiving a valid block that builds on top of the chain.
+    private BlockPair createFakeBlock(Transaction... transactions) {
+        try {
+            Block b = blockStore.getChainHead().getHeader().createNextBlock(new ECKey().toAddress(params));
+            for (Transaction tx : transactions)
+                b.addTransaction(tx);
+            b.solve();
+            BlockPair pair = new BlockPair();
+            pair.block = b;
+            pair.storedBlock = blockStore.getChainHead().build(b);
+            blockStore.put(pair.storedBlock);
+            blockStore.setChainHead(pair.storedBlock);
+            return pair;
+        } catch (VerificationException e) {
+            throw new RuntimeException(e);  // Cannot happen.
+        } catch (BlockStoreException e) {
+            throw new RuntimeException(e);  // Cannot happen.
+        }
     }
 
     @Test
@@ -57,7 +85,7 @@ public class WalletTest {
         BigInteger v1 = Utils.toNanoCoins(1, 0);
         Transaction t1 = createFakeTx(v1, myAddress);
 
-        wallet.receive(t1);
+        wallet.receive(t1, null, BlockChain.NewBlockType.BEST_CHAIN);
         assertEquals(v1, wallet.getBalance());
 
         ECKey k2 = new ECKey();
@@ -66,10 +94,25 @@ public class WalletTest {
 
         // Do some basic sanity checks.
         assertEquals(1, t2.inputs.size());
-        LOG(t2.inputs.get(0).getScriptSig().toString());
         assertEquals(myAddress, t2.inputs.get(0).getScriptSig().getFromAddress());
 
         // We have NOT proven that the signature is correct!
+    }
+
+    @Test
+    public void testSideChain() throws Exception {
+        // The wallet receives a coin on the main chain, then on a side chain. Only main chain counts towards balance.
+        BigInteger v1 = Utils.toNanoCoins(1, 0);
+        Transaction t1 = createFakeTx(v1, myAddress);
+
+        wallet.receive(t1, null, BlockChain.NewBlockType.BEST_CHAIN);
+        assertEquals(v1, wallet.getBalance());
+
+        BigInteger v2 = toNanoCoins(0, 50);
+        Transaction t2 = createFakeTx(v2, myAddress);
+        wallet.receive(t2, null, BlockChain.NewBlockType.SIDE_CHAIN);
+
+        assertEquals(v1, wallet.getBalance());
     }
 
     @Test
@@ -86,7 +129,7 @@ public class WalletTest {
             }
         };
         wallet.addEventListener(listener);
-        wallet.receive(fakeTx);
+        wallet.receive(fakeTx, null, BlockChain.NewBlockType.BEST_CHAIN);
         assertTrue(didRun[0]);
     }
 
@@ -97,23 +140,28 @@ public class WalletTest {
         BigInteger v2 = toNanoCoins(0, 50);
         Transaction t1 = createFakeTx(v1, myAddress);
         Transaction t2 = createFakeTx(v2, myAddress);
+        StoredBlock b1 = createFakeBlock(t1).storedBlock;
+        StoredBlock b2 = createFakeBlock(t2).storedBlock;
         BigInteger expected = toNanoCoins(5, 50);
-        wallet.receive(t1);
-        wallet.receive(t2);
+        wallet.receive(t1, b1, BlockChain.NewBlockType.BEST_CHAIN);
+        wallet.receive(t2, b2, BlockChain.NewBlockType.BEST_CHAIN);
         assertEquals(expected, wallet.getBalance());
 
         // Now spend one coin.
         BigInteger v3 = toNanoCoins(1, 0);
         Transaction spend = wallet.createSend(new ECKey().toAddress(params), v3);
         wallet.confirmSend(spend);
-        // We started with 5.50 so we should have 4.50 left.
+
+        // Balance should be 0.50 because the change output is pending confirmation by the network.
+        assertEquals(toNanoCoins(0, 50), wallet.getBalance());
+
+        // Now confirm the transaction by including it into a block.
+        StoredBlock b3 = createFakeBlock(spend).storedBlock;
+        wallet.receive(spend, b3, BlockChain.NewBlockType.BEST_CHAIN);
+
+        // Change is confirmed. We started with 5.50 so we should have 4.50 left.
         BigInteger v4 = toNanoCoins(4, 50);
         assertEquals(bitcoinValueToFriendlyString(v4),
-                     bitcoinValueToFriendlyString(wallet.getBalance()));
-        // And spend another coin ...
-        wallet.confirmSend(wallet.createSend(new ECKey().toAddress(params), v3));
-        BigInteger v5 = toNanoCoins(3, 50);
-        assertEquals(bitcoinValueToFriendlyString(v5),
                      bitcoinValueToFriendlyString(wallet.getBalance()));
     }
 
@@ -125,17 +173,22 @@ public class WalletTest {
     @Test
     public void testBlockChainCatchup() throws Exception {
         Transaction tx1 = createFakeTx(Utils.toNanoCoins(1, 0), myAddress);
-        wallet.receive(tx1);
+        StoredBlock b1 = createFakeBlock(tx1).storedBlock;
+        wallet.receive(tx1, b1, BlockChain.NewBlockType.BEST_CHAIN);
         // Send 0.10 to somebody else.
         Transaction send1 = wallet.createSend(new ECKey().toAddress(params), toNanoCoins(0, 10), myAddress);
         // Pretend it makes it into the block chain, our wallet state is cleared but we still have the keys, and we
-        // want to get back to our previous state.
-        wallet.receive(send1);
+        // want to get back to our previous state. We can do this by just not confirming the transaction as
+        // createSend is stateless.
+        StoredBlock b2 = createFakeBlock(send1).storedBlock;
+        wallet.receive(send1, b2, BlockChain.NewBlockType.BEST_CHAIN);
         assertEquals(bitcoinValueToFriendlyString(wallet.getBalance()), "0.90");
         // And we do it again after the catchup.
         Transaction send2 = wallet.createSend(new ECKey().toAddress(params), toNanoCoins(0, 10), myAddress);
         // What we'd really like to do is prove the official client would accept it .... no such luck unfortunately.
         wallet.confirmSend(send2);
+        StoredBlock b3 = createFakeBlock(send2).storedBlock;
+        wallet.receive(send2, b3, BlockChain.NewBlockType.BEST_CHAIN);
         assertEquals(bitcoinValueToFriendlyString(wallet.getBalance()), "0.80");
     }
 
@@ -143,8 +196,8 @@ public class WalletTest {
     public void testBalances() throws Exception {
         BigInteger nanos = Utils.toNanoCoins(1, 0);
         Transaction tx1 = createFakeTx(nanos, myAddress);
-        wallet.receive(tx1);
-        assertEquals(nanos, tx1.getValueSentToMe(wallet));
+        wallet.receive(tx1, null, BlockChain.NewBlockType.BEST_CHAIN);
+        assertEquals(nanos, tx1.getValueSentToMe(wallet, true));
         // Send 0.10 to somebody else.
         Transaction send1 = wallet.createSend(new ECKey().toAddress(params), toNanoCoins(0, 10), myAddress);
         // Reserialize.

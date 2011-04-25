@@ -20,7 +20,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Serializable;
 import java.math.BigInteger;
-import java.util.Arrays;
 
 /**
  * A TransactionOutput message contains a scriptPubKey that controls who is able to spend its value. It is a sub-part
@@ -52,10 +51,11 @@ public class TransactionOutput extends Message implements Serializable {
         parentTransaction = parent;
     }
 
-    TransactionOutput(NetworkParameters params, BigInteger value, Address to) {
+    TransactionOutput(NetworkParameters params, BigInteger value, Address to, Transaction parent) {
         super(params);
         this.value = value;
         this.scriptBytes = Script.createOutputScript(to);
+        parentTransaction = parent;
     }
 
     /** Used only in creation of the genesis blocks and in unit tests. */
@@ -112,11 +112,7 @@ public class TransactionOutput extends Message implements Serializable {
     public boolean isMine(Wallet wallet) {
         try {
             byte[] pubkeyHash = getScriptPubKey().getPubKeyHash();
-            for (ECKey key : wallet.keychain) {
-                if (Arrays.equals(key.getPubKeyHash(), pubkeyHash))
-                    return true;
-            }
-            return false;
+            return wallet.isPubKeyHashMine(pubkeyHash);
         } catch (ScriptException e) {
             throw new RuntimeException(e);
         }

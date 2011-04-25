@@ -36,7 +36,6 @@ public class StoredBlock implements Serializable {
     private int height;
 
     public StoredBlock(Block header, BigInteger chainWork, int height) {
-        assert header.transactions == null : "Should not have transactions in a block header object";
         this.header = header;
         this.chainWork = chainWork;
         this.height = height;
@@ -93,6 +92,21 @@ public class StoredBlock implements Serializable {
         // the largest amount of work done not the tallest.
         BigInteger chainWork = this.chainWork.add(block.getWork());
         int height = this.height + 1;
-        return new StoredBlock(block, chainWork, height);
+        return new StoredBlock(block.cloneAsHeader(), chainWork, height);
+    }
+
+    /**
+     * Given a block store, looks up the previous block in this chain. Convenience method for doing
+     * <tt>store.get(this.getHeader().getPrevBlockHash())</tt>.
+     *
+     * @return the previous block in the chain or null if it was not found in the store.
+     */
+    public StoredBlock getPrev(BlockStore store) throws BlockStoreException {
+        return store.get(getHeader().getPrevBlockHash());
+    }
+
+    @Override
+    public String toString() {
+        return "Block at height " + getHeight() + ": " + getHeader().toString();
     }
 }

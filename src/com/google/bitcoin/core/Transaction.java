@@ -21,10 +21,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Serializable;
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 import static com.google.bitcoin.core.Utils.*;
 
@@ -46,14 +43,24 @@ public class Transaction extends Message implements Serializable {
     ArrayList<TransactionOutput> outputs;
     long lockTime;
 
+    // This is only stored in Java serialization. It records which blocks (and their height + work) the transaction
+    // has been included in. For most transactions this set will have a single member. In the case of a chain split a
+    // transaction may appear in multiple blocks but only one of them is part of the best chain. It's not valid to
+    // have an identical transaction appear in two blocks in the same chain but this invariant is expensive to check,
+    // so it's not directly enforced anywhere.
+    //
+    // If this transaction is not stored in the wallet, appearsIn is null.
+    Set<StoredBlock> appearsIn;
+
     // This is an in memory helper only.
-    transient byte[] hash;
+    transient Sha256Hash hash;
 
     Transaction(NetworkParameters params) {
         super(params);
         version = 1;
         inputs = new ArrayList<TransactionInput>();
         outputs = new ArrayList<TransactionOutput>();
+        // We don't initialize appearsIn deliberately as it's only useful for transactions stored in the wallet.
     }
 
     /**
@@ -81,35 +88,62 @@ public class Transaction extends Message implements Serializable {
     /**
      * Returns the transaction hash as you see them in the block explorer.
      */
-    public byte[] getHash() {
+    public Sha256Hash getHash() {
         if (hash == null) {
             byte[] bits = bitcoinSerialize();
-            hash = reverseBytes(doubleDigest(bits));
+            hash = new Sha256Hash(reverseBytes(doubleDigest(bits)));
         }
         return hash;
     }
 
     public String getHashAsString() {
-        return Utils.bytesToHexString(getHash());
+        return getHash().toString();
     }
 
-    void setFakeHashForTesting(byte[] hash) {
+    void setFakeHashForTesting(Sha256Hash hash) {
         this.hash = hash;
     }
 
     /**
-     * Calculates the sum of the outputs that are sending coins to a key in the wallet.
-     * @return sum in nanocoins
+     * Calculates the sum of the outputs that are sending coins to a key in the wallet. The flag controls whether to
+     * include spent outputs or not.
      */
-    public BigInteger getValueSentToMe(Wallet wallet) {
+    BigInteger getValueSentToMe(Wallet wallet, boolean includeSpent) {
         // This is tested in WalletTest.
         BigInteger v = BigInteger.ZERO;
         for (TransactionOutput o : outputs) {
-            if (o.isMine(wallet)) {
-                v = v.add(o.getValue());
-            }
+            if (!o.isMine(wallet)) continue;
+            if (!includeSpent && o.isSpent) continue;
+            v = v.add(o.getValue());
         }
         return v;
+    }
+
+    /**
+     * Calculates the sum of the outputs that are sending coins to a key in the wallet.
+     */
+    public BigInteger getValueSentToMe(Wallet wallet) {
+        return getValueSentToMe(wallet, true);
+    }
+
+    /**
+     * Returns a set of blocks which contain the transaction, or null if this transaction doesn't have that data
+     * because it's not stored in the wallet or because it has never appeared in a block.
+     */
+    Set<StoredBlock> getAppearsIn() {
+        return appearsIn;
+    }
+
+    /**
+     * Adds the given block to the internal serializable set of blocks in which this transaction appears. This is
+     * used by the wallet to ensure transactions that appear on side chains are recorded properly even though the
+     * block stores do not save the transaction data at all.
+     */
+    void addBlockAppearance(StoredBlock block) {
+        if (appearsIn == null) {
+            appearsIn = new HashSet<StoredBlock>();
+        }
+        appearsIn.add(block);
     }
 
     /**
@@ -123,8 +157,8 @@ public class Transaction extends Message implements Serializable {
         // This is tested in WalletTest.
         BigInteger v = BigInteger.ZERO;
         for (TransactionInput input : inputs) {
-            boolean connected = input.outpoint.connect(wallet.unspent) ||
-                                input.outpoint.connect(wallet.fullySpent);
+            boolean connected = input.outpoint.connect(wallet.unspent.values()) ||
+                                input.outpoint.connect(wallet.spent.values());
             if (connected) {
                 // This input is taking value from an transaction in our wallet. To discover the value,
                 // we must find the connected transaction.
@@ -138,10 +172,9 @@ public class Transaction extends Message implements Serializable {
      * These constants are a part of a scriptSig signature on the inputs. They define the details of how a
      * transaction can be redeemed, specifically, they control how the hash of the transaction is calculated.
      * 
-     * Note: in the official client, this enum also has another flag, SIGHASH_ANYONECANPAY. In this implementation,
-     * that's kept separate.
-     *
-     * Also note: only SIGHASH_ALL is actually used in the official client today.
+     * In the official client, this enum also has another flag, SIGHASH_ANYONECANPAY. In this implementation,
+     * that's kept separate. Only SIGHASH_ALL is actually used in the official client today. The other flags
+     * exist to allow for distributed contracts.
      */
     public enum SigHash {
         ALL,         // 1
@@ -170,7 +203,7 @@ public class Transaction extends Message implements Serializable {
         lockTime = readUint32();
         
         // Store a hash, it may come in useful later (want to avoid reserialization costs).
-        hash = reverseBytes(doubleDigest(bytes, offset, cursor - offset));
+        hash = new Sha256Hash(reverseBytes(doubleDigest(bytes, offset, cursor - offset)));
     }
 
     /**
@@ -315,7 +348,7 @@ public class Transaction extends Message implements Serializable {
         // Every input is now complete.
     }
 
-    private byte[] hashTransactionForSignature( SigHash type, boolean anyoneCanPay) {
+    private byte[] hashTransactionForSignature(SigHash type, boolean anyoneCanPay) {
         try {
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
             bitcoinSerializeToStream(bos);
@@ -377,13 +410,11 @@ public class Transaction extends Message implements Serializable {
         if (!(other instanceof Transaction)) return false;
         Transaction t = (Transaction) other;
 
-        byte[] hash1 = t.getHash();
-        byte[] hash2 = getHash();
-        return Arrays.equals(hash2, hash1);
+        return t.getHash().equals(getHash());
     }
 
     @Override
     public int hashCode() {
-        return Arrays.hashCode(hash);
+        return Arrays.hashCode(getHash().hash);
     }
 }
