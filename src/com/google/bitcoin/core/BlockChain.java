@@ -163,8 +163,8 @@ public class BlockChain {
             //
             // Note that we send the transactions to the wallet FIRST, even if we're about to re-organize this block
             // to become the new best chain head. This simplifies handling of the re-org in the Wallet class.
-            boolean causedSplit = newStoredBlock.moreWorkThan(chainHead);
-            if (causedSplit) {
+            boolean haveNewBestChain = newStoredBlock.moreWorkThan(chainHead);
+            if (haveNewBestChain) {
                 log.info("Block is causing a re-organize");
             } else {
                 log.info("Block forks the chain, but it did not cause a reorganize.");
@@ -176,15 +176,15 @@ public class BlockChain {
                 sendTransactionsToWallet(newStoredBlock, NewBlockType.SIDE_CHAIN, newTransactions);
             }
 
-            if (causedSplit)
-                handleChainSplit(newStoredBlock);
+            if (haveNewBestChain)
+                handleNewBestChain(newStoredBlock);
         }
     }
 
     /**
      * Called as part of connecting a block when the new block results in a different chain having higher total work.
      */
-    private void handleChainSplit(StoredBlock newChainHead) throws BlockStoreException, VerificationException {
+    private void handleNewBestChain(StoredBlock newChainHead) throws BlockStoreException, VerificationException {
         // This chain has overtaken the one we currently believe is best. Reorganize is required.
         //
         // Firstly, calculate the block at which the chain diverged. We only need to examine the

@@ -16,6 +16,9 @@
 
 package com.google.bitcoin.core;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Serializable;
@@ -26,6 +29,7 @@ import java.math.BigInteger;
  * of the Transaction message.
  */
 public class TransactionOutput extends Message implements Serializable {
+    private static final Logger log = LoggerFactory.getLogger(TransactionOutput.class);
     private static final long serialVersionUID = -590332479859256824L;
 
     // A transaction output has some value and a script used for authenticating that the redeemer is allowed to spend
@@ -114,7 +118,8 @@ public class TransactionOutput extends Message implements Serializable {
             byte[] pubkeyHash = getScriptPubKey().getPubKeyHash();
             return wallet.isPubKeyHashMine(pubkeyHash);
         } catch (ScriptException e) {
-            throw new RuntimeException(e);
+            log.error("Could not parse tx output script: {}", e.toString());
+            return false;
         }
     }
 
