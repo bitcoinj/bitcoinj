@@ -235,23 +235,13 @@ public class BlockChain {
         //
         // findSplit will return block B. chainHead = D and newChainHead = G.
         while (!currentChainCursor.equals(newChainCursor)) {
-            // Move the new chain cursor backwards until it is at the same height as the current chain head.
-            while (newChainCursor.getHeight() > currentChainCursor.getHeight()) {
-                newChainCursor = blockStore.get(newChainCursor.getHeader().getPrevBlockHash());
-                // Stores contain the genesis block which has a height of zero. Thus we should always be able to find
-                // a block of equal height in this loop. If we fall off the end of the chain it means there is a bug
-                // in the library.
+            if (currentChainCursor.getHeight() > newChainCursor.getHeight()) {
+                currentChainCursor = currentChainCursor.getPrev(blockStore);
+                assert currentChainCursor != null : "Attempt to follow an orphan chain";
+            } else {
+                newChainCursor = newChainCursor.getPrev(blockStore);
                 assert newChainCursor != null : "Attempt to follow an orphan chain";
             }
-            // We found a place where the chains have equal height. In the first iteration with the above example
-            // newChainCursor will be F. Did we find the fork yet?
-            if (newChainCursor.equals(currentChainCursor))
-                break;
-            // No, we did not. First iteration D != F so move currentChainCursor backwards one and try again.
-            currentChainCursor = blockStore.get(currentChainCursor.getHeader().getPrevBlockHash());
-            assert currentChainCursor != null : "Attempt to follow an orphan chain";
-            // Eventually currentChainCursor will move from C to B, the inner while loop will move newChainCursor
-            // from E to B and we will exit.
         }
         return currentChainCursor;
     }
