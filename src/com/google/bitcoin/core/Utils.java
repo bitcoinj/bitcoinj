@@ -190,6 +190,10 @@ public class Utils {
                ((bytes[offset + 2] & 0xFFL) <<  8) |
                ((bytes[offset + 3] & 0xFFL) <<  0);
     }
+    
+    public static int readUint16BE(byte[] bytes, int offset) {
+	    return ((bytes[offset] & 0xff) << 8) | bytes[offset + 1] & 0xff;
+    }
 
     static void LOG(String msg) {
         // Set this to true to see debug prints from the library.
