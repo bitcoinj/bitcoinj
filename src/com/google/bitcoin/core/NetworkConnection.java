@@ -21,8 +21,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.Socket;
-import java.net.SocketException;
 import java.util.Date;
 
 import static com.google.bitcoin.core.Utils.*;
@@ -65,14 +65,19 @@ public class NetworkConnection {
      * @param remoteIp IP address to connect to. IPv6 is not currently supported by BitCoin.
      * @param params Defines which network to connect to and details of the protocol.
      * @param bestHeight How many blocks are in our best chain
+     * @param connectTimeout Timeout in milliseconds when initially connecting to peer
      * @throws IOException if there is a network related failure.
      * @throws ProtocolException if the version negotiation failed.
      */
-    public NetworkConnection(InetAddress remoteIp, NetworkParameters params, int bestHeight)
+    public NetworkConnection(InetAddress remoteIp, NetworkParameters params, int bestHeight, int connectTimeout)
             throws IOException, ProtocolException {
         this.params = params;
         this.remoteIp = remoteIp;
-        socket = new Socket(remoteIp, params.port);
+        
+        InetSocketAddress address = new InetSocketAddress(remoteIp, params.port);
+        socket = new Socket();
+        socket.connect(address, connectTimeout);
+        
         out = socket.getOutputStream();
         in = socket.getInputStream();
 

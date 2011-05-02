@@ -52,10 +52,10 @@ public class PingService {
         System.out.println("Reading block store from disk");
         BlockStore blockStore = new DiskBlockStore(params, new File(filePrefix + ".blockchain"));
 
-        // Connect to the localhost node.
+        // Connect to the localhost node. One minute timeout since we won't try any other peers
         System.out.println("Connecting ...");
         NetworkConnection conn = new NetworkConnection(InetAddress.getLocalHost(), params,
-                                                       blockStore.getChainHead().getHeight());
+                                                       blockStore.getChainHead().getHeight(), 60000);
         BlockChain chain = new BlockChain(params, wallet, blockStore);
         final Peer peer = new Peer(params, conn, chain);
         peer.start();
