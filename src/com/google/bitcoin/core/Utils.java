@@ -51,12 +51,6 @@ public class Utils {
      */
     public static final BigInteger CENT = new BigInteger("1000000", 10);
 
-    private static final boolean logging;
-
-    static {
-        logging = Boolean.parseBoolean(System.getProperty("bitcoinj.logging", "false"));
-    }
-
     /** Convert an amount expressed in the way humans are used to into nanocoins. */
     public static BigInteger toNanoCoins(int coins, int cents) {
         assert cents < 100;
@@ -193,16 +187,6 @@ public class Utils {
     
     public static int readUint16BE(byte[] bytes, int offset) {
 	    return ((bytes[offset] & 0xff) << 8) | bytes[offset + 1] & 0xff;
-    }
-
-    static void LOG(String msg) {
-        // Set this to true to see debug prints from the library.
-        if (logging) {
-            System.err.print("BitCoin: ");
-            System.err.println(msg);
-            System.err.flush();
-            System.out.flush();
-        }
     }
 
     /**

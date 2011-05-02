@@ -16,6 +16,9 @@
 
 package com.google.bitcoin.core;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.net.*;
 import java.util.HashSet;
 import java.util.Set;
@@ -31,6 +34,8 @@ import java.util.Vector;
  * However, if all hosts passed fail to resolve a PeerDiscoveryException will be thrown during getPeers().
  */
 public class DnsDiscovery implements PeerDiscovery {
+    private static final Logger log = LoggerFactory.getLogger(DnsDiscovery.class);
+
     private String[] hostNames;
     private NetworkParameters netParams;
     private static final String[] defaultHosts = new String[] {"bitseed.xf2.org","bitseed.bitcoin.org.uk"};
@@ -83,7 +88,7 @@ public class DnsDiscovery implements PeerDiscovery {
                 }
             } catch (Exception e) {
                 failedLookups++;
-                Utils.LOG("DNS lookup for " + hostName + " failed.");
+                log.info("DNS lookup for " + hostName + " failed.");
                 
                 if (failedLookups == hostNames.length) {
                     // All the lookups failed.

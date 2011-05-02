@@ -16,11 +16,13 @@
 
 package com.google.bitcoin.core;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.*;
 import java.math.BigInteger;
 import java.util.*;
 
-import static com.google.bitcoin.core.Utils.LOG;
 import static com.google.bitcoin.core.Utils.bitcoinValueToFriendlyString;
 
 /**
@@ -33,6 +35,7 @@ import static com.google.bitcoin.core.Utils.bitcoinValueToFriendlyString;
  * pull in a potentially large (code-size) third party serialization library.<p>
  */
 public class Wallet implements Serializable {
+    private static final Logger log = LoggerFactory.getLogger(Wallet.class);
     private static final long serialVersionUID = 2L;
 
     // Algorithm for movement of transactions between pools. Outbound tx = us spending coins. Inbound tx = us
@@ -203,14 +206,14 @@ public class Wallet implements Serializable {
         BigInteger valueSentToMe = tx.getValueSentToMe(this);
         BigInteger valueDifference = valueSentToMe.subtract(valueSentFromMe);
 
-        LOG("Wallet: Received tx" + (sideChain ? " on a side chain" :"") + " for " +
+        log.info("Wallet: Received tx" + (sideChain ? " on a side chain" :"") + " for " +
                     bitcoinValueToFriendlyString(valueDifference) + " BTC");
 
         // If this transaction is already in the wallet we may need to move it into a different pool. At the very
         // least we need to ensure we're manipulating the canonical object rather than a duplicate.
         Transaction wtx = null;
         if ((wtx = pending.remove(txHash)) != null) {
-            LOG("  <-pending");
+            log.info("  <-pending");
             // A transaction we created appeared in a block. Probably this is a spend we broadcast that has been
             // accepted by the network.
             //
@@ -219,19 +222,19 @@ public class Wallet implements Serializable {
             if (bestChain) {
                 if (valueSentToMe.equals(BigInteger.ZERO)) {
                     // There were no change transactions so this tx is fully spent.
-                    LOG("  ->spent");
+                    log.info("  ->spent");
                     boolean alreadyPresent = spent.put(wtx.getHash(), wtx) != null;
                     assert !alreadyPresent : "TX in both pending and spent pools";
                 } else {
                     // There was change back to us, or this tx was purely a spend back to ourselves (perhaps for
                     // anonymization purposes).
-                    LOG("  ->unspent");
+                    log.info("  ->unspent");
                     boolean alreadyPresent = unspent.put(wtx.getHash(), wtx) != null;
                     assert !alreadyPresent : "TX in both pending and unspent pools";
                 }
             } else if (sideChain) {
                 // The transaction was accepted on an inactive side chain, but not yet by the best chain.
-                LOG("  ->inactive");
+                log.info("  ->inactive");
                 // It's OK for this to already be in the inactive pool because there can be multiple independent side
                 // chains in which it appears:
                 //
@@ -240,7 +243,7 @@ public class Wallet implements Serializable {
                 //        \-> b4 (at this point it's already present in 'inactive'
                 boolean alreadyPresent = inactive.put(wtx.getHash(), wtx) != null;
                 if (alreadyPresent)
-                    LOG("Saw a transaction be incorporated into multiple independent side chains");
+                    log.info("Saw a transaction be incorporated into multiple independent side chains");
                 // Put it back into the pending pool, because 'pending' means 'waiting to be included in best chain'.
                 pending.put(wtx.getHash(), wtx);
             }
@@ -250,14 +253,14 @@ public class Wallet implements Serializable {
             // This TX didn't originate with us. It could be sending us coins and also spending our own coins if keys
             // are being shared between different wallets.
             if (sideChain) {
-                LOG("  ->inactive");
+                log.info("  ->inactive");
                 inactive.put(tx.getHash(), tx);
             } else if (bestChain) {
                 processTxFromBestChain(tx);
             }
         }
 
-        LOG("Balance is now: " + bitcoinValueToFriendlyString(getBalance()));
+        log.info("Balance is now: " + bitcoinValueToFriendlyString(getBalance()));
 
         // Inform anyone interested that we have new coins. Note: we may be re-entered by the event listener,
         // so we must not make assumptions about our state after this loop returns! For example,
@@ -281,12 +284,12 @@ public class Wallet implements Serializable {
         updateForSpends(tx);
         if (!tx.getValueSentToMe(this).equals(BigInteger.ZERO)) {
             // It's sending us coins.
-            LOG("  ->unspent");
+            log.info("  ->unspent");
             boolean alreadyPresent = unspent.put(tx.getHash(), tx) != null;
             assert !alreadyPresent : "TX was received twice";
         } else {
             // It spent some of our coins and did not send us any.
-            LOG("  ->spent");
+            log.info("  ->spent");
             boolean alreadyPresent = spent.put(tx.getHash(), tx) != null;
             assert !alreadyPresent : "TX was received twice";
         }
@@ -302,16 +305,16 @@ public class Wallet implements Serializable {
             if (input.outpoint.connect(unspent.values())) {
                 TransactionOutput output = input.outpoint.getConnectedOutput();
                 assert !output.isSpent : "Double spend accepted by the network?";
-                LOG("  Saw some of my unspent outputs be spent by someone else who has my keys.");
-                LOG("  Total spent value is " + bitcoinValueToFriendlyString(output.getValue()));
+                log.info("  Saw some of my unspent outputs be spent by someone else who has my keys.");
+                log.info("  Total spent value is " + bitcoinValueToFriendlyString(output.getValue()));
                 output.isSpent = true;
                 Transaction connectedTx = input.outpoint.fromTx;
                 if (connectedTx.getValueSentToMe(this, false).equals(BigInteger.ZERO)) {
                     // There's nothing left I can spend in this transaction.
                     if (unspent.remove(connectedTx.getHash()) != null);
-                        LOG("  prevtx <-unspent");
+                        log.info("  prevtx <-unspent");
                     spent.put(connectedTx.getHash(), connectedTx);
-                    LOG("  prevtx ->spent");
+                    log.info("  prevtx ->spent");
                 }
             }
         }
@@ -400,7 +403,7 @@ public class Wallet implements Serializable {
      * @return a new {@link Transaction} or null if we cannot afford this send.
      */
     synchronized Transaction createSend(Address address, BigInteger nanocoins, Address changeAddress) {
-        LOG("Creating send tx to " + address.toString() + " for " +
+        log.info("Creating send tx to " + address.toString() + " for " +
                 bitcoinValueToFriendlyString(nanocoins));
         // To send money to somebody else, we need to do gather up transactions with unspent outputs until we have
         // sufficient value. Many coin selection algorithms are possible, we use a simple but suboptimal one.
@@ -418,7 +421,7 @@ public class Wallet implements Serializable {
         }
         // Can we afford this?
         if (valueGathered.compareTo(nanocoins) < 0) {
-            LOG("Insufficient value in wallet for send, missing " +
+            log.info("Insufficient value in wallet for send, missing " +
                     bitcoinValueToFriendlyString(nanocoins.subtract(valueGathered)));
             // TODO: Should throw an exception here.
             return null;
@@ -431,7 +434,7 @@ public class Wallet implements Serializable {
             // The value of the inputs is greater than what we want to send. Just like in real life then,
             // we need to take back some coins ... this is called "change". Add another output that sends the change
             // back to us.
-            LOG("  with " + bitcoinValueToFriendlyString(change) + " coins change");
+            log.info("  with " + bitcoinValueToFriendlyString(change) + " coins change");
             sendTx.addOutput(new TransactionOutput(params, change, changeAddress, sendTx));
         }
         for (TransactionOutput output : gathered) {
@@ -567,7 +570,7 @@ public class Wallet implements Serializable {
         // If there is no difference it means we the user doesn't really care about this re-org but we still need to
         // update the transaction block pointers for next time.
         boolean affectedUs = !oldChainTransactions.equals(newChainTransactions);
-        LOG(affectedUs ? "Re-org affected our transactions" : "Re-org had no effect on our transactions");
+        log.info(affectedUs ? "Re-org affected our transactions" : "Re-org had no effect on our transactions");
         if (!affectedUs) return;
 
         // Transactions that were in the old chain but aren't in the new chain. These will become inactive.
@@ -579,7 +582,7 @@ public class Wallet implements Serializable {
         assert !(gone.isEmpty() && fresh.isEmpty()) : "There must have been some changes to get here";
 
         for (Transaction tx : gone) {
-            LOG("tx not in new chain: <-unspent/spent  ->inactive\n" + tx.toString());
+            log.info("tx not in new chain: <-unspent/spent  ->inactive\n" + tx.toString());
             unspent.remove(tx.getHash());
             spent.remove(tx.getHash());
             inactive.put(tx.getHash(), tx);

@@ -23,7 +23,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.*;
 
-import static com.google.bitcoin.core.Utils.LOG;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A Peer handles the high level communication with a BitCoin node. It requires a NetworkConnection to be set up for
@@ -31,6 +32,8 @@ import static com.google.bitcoin.core.Utils.LOG;
  * with the network. All these threads synchronize on the block chain.
  */
 public class Peer {
+	private static final Logger log = LoggerFactory.getLogger(Peer.class);
+	
     private final NetworkConnection conn;
     private final NetworkParameters params;
     private Thread thread;
@@ -88,13 +91,13 @@ public class Peer {
                     // properly explore the network.
                 } else {
                     // TODO: Handle the other messages we can receive.
-                    LOG("Received unhandled message: " + m.toString());
+                    log.warn("Received unhandled message: {}", m);
                 }
             }
         } catch (Exception e) {
             if (e instanceof IOException && !running) {
                 // This exception was expected because we are tearing down the socket as part of quitting.
-                LOG("Shutting down peer thread");
+                log.info("Shutting down peer thread");
             } else {
                 // We caught an unexpected exception.
                 e.printStackTrace();
@@ -144,12 +147,10 @@ public class Peer {
             }
         } catch (VerificationException e) {
             // We don't want verification failures to kill the thread.
-            LOG(e.toString());
-            e.printStackTrace();
+        	log.warn("block verification failed", e);
         } catch (ScriptException e) {
             // We don't want script failures to kill the thread.
-            LOG(e.toString());
-            e.printStackTrace();
+        	log.warn("script exception", e);
         }
     }
 
@@ -297,7 +298,7 @@ public class Peer {
         //
         // So this is a complicated process but it has the advantage that we can download a chain of enormous length
         // in a relatively stateless manner and with constant/bounded memory usage.
-        LOG("Peer.blockChainDownload: " + Utils.bytesToHexString(toHash));
+        log.info("blockChainDownload({})", Utils.bytesToHexString(toHash));
 
         // TODO: Block locators should be abstracted out rather than special cased here.
         List<byte[]> blockLocator = new LinkedList<byte[]>();

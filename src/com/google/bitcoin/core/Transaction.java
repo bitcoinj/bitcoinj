@@ -23,6 +23,9 @@ import java.io.Serializable;
 import java.math.BigInteger;
 import java.util.*;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import static com.google.bitcoin.core.Utils.*;
 
 /**
@@ -35,6 +38,7 @@ import static com.google.bitcoin.core.Utils.*;
  * or UI purposes.
  */
 public class Transaction extends Message implements Serializable {
+    private static final Logger log = LoggerFactory.getLogger(Transaction.class);
     private static final long serialVersionUID = -8567546957352643140L;
 
     // These are serialized in both bitcoin and java serialization.
@@ -319,7 +323,7 @@ public class Transaction extends Message implements Serializable {
             // The anyoneCanPay feature isn't used at the moment.
             boolean anyoneCanPay = false;
             byte[] hash = hashTransactionForSignature(hashType, anyoneCanPay);
-            Utils.LOG("  signInputs hash=" + Utils.bytesToHexString(hash));
+            log.info("  signInputs hash={}", Utils.bytesToHexString(hash));
             // Set the script to empty again for the next input.
             input.scriptBytes = TransactionInput.EMPTY_ARRAY;
 

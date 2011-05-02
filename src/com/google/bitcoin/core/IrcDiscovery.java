@@ -16,6 +16,9 @@
 
 package com.google.bitcoin.core;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.*;
 import java.net.*;
 import java.util.*;
@@ -24,6 +27,8 @@ import java.util.*;
  * IrcDiscovery provides a way to find network peers by joining a pre-agreed rendevouz point on the LFnet IRC network.
  */
 public class IrcDiscovery implements PeerDiscovery {
+    private static final Logger log = LoggerFactory.getLogger(IrcDiscovery.class);
+
     private String channel;
     private int port = 6667;
     private String server;
@@ -157,7 +162,7 @@ public class IrcDiscovery implements PeerDiscovery {
                 // decodeChecked removes the checksum from the returned bytes.
                 addressBytes = Base58.decodeChecked(user.substring(1));
             } catch (AddressFormatException e) {
-                Utils.LOG("IRC nick does not parse as base58: " + user);
+                log.warn("IRC nick does not parse as base58: " + user);
                 continue;
             }
 

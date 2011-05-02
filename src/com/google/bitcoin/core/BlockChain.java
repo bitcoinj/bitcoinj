@@ -19,7 +19,8 @@ package com.google.bitcoin.core;
 import java.math.BigInteger;
 import java.util.*;
 
-import static com.google.bitcoin.core.Utils.LOG;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A BlockChain holds a series of {@link Block} objects, links them together, and knows how to verify that the
@@ -46,6 +47,8 @@ import static com.google.bitcoin.core.Utils.LOG;
  * or if we connect to a peer that doesn't send us blocks in order.
  */
 public class BlockChain {
+    private static final Logger log = LoggerFactory.getLogger(BlockChain.class);
+
     /** Keeps a map of block hashes to StoredBlocks. */
     protected BlockStore blockStore;
 
@@ -78,7 +81,7 @@ public class BlockChain {
         try {
             this.blockStore = blockStore;
             chainHead = blockStore.getChainHead();
-            LOG("chain head is: " + chainHead.getHeader().toString());
+            log.info("chain head is:\n{}", chainHead.getHeader());
         } catch (BlockStoreException e) {
             throw new RuntimeException(e);
         }
@@ -103,9 +106,9 @@ public class BlockChain {
 
     private synchronized boolean add(Block block, boolean tryConnecting)
             throws BlockStoreException, VerificationException, ScriptException {
-        LOG("Adding block " + block.getHashAsString() + " to the chain");
+        log.info("Adding block " + block.getHashAsString() + " to the chain");
         if (blockStore.get(block.getHash()) != null) {
-            LOG("Already have block");
+            log.info("Already have block");
             return true;
         }
 
@@ -113,8 +116,8 @@ public class BlockChain {
         try {
             block.verify();
         } catch (VerificationException e) {
-            LOG("Failed to verify block: " + e.toString());
-            LOG(block.toString());
+            log.error("Failed to verify block:", e);
+            log.error(block.toString());
             throw e;
         }
 
@@ -125,7 +128,7 @@ public class BlockChain {
             // We can't find the previous block. Probably we are still in the process of downloading the chain and a
             // block was solved whilst we were doing it. We put it to one side and try to connect it later when we
             // have more blocks.
-            LOG("Block does not connect: " + block.getHashAsString());
+            log.warn("Block does not connect: {}", block.getHashAsString());
             unconnectedBlocks.add(block);
             return false;
         } else {
@@ -152,7 +155,7 @@ public class BlockChain {
         if (storedPrev.equals(chainHead)) {
             // This block connects to the best known block, it is a normal continuation of the system.
             setChainHead(newStoredBlock);
-            LOG("Chain is now " + chainHead.getHeight() + " blocks high");
+            log.info("Chain is now {} blocks high", chainHead.getHeight());
             if (newTransactions != null)
                 sendTransactionsToWallet(newStoredBlock, NewBlockType.BEST_CHAIN, newTransactions);
         } else {
@@ -162,9 +165,9 @@ public class BlockChain {
             // to become the new best chain head. This simplifies handling of the re-org in the Wallet class.
             boolean causedSplit = newStoredBlock.moreWorkThan(chainHead);
             if (causedSplit) {
-                LOG("Block is causing a re-organize");
+                log.info("Block is causing a re-organize");
             } else {
-                LOG("Block forks the chain, but it did not cause a reorganize.");
+                log.info("Block forks the chain, but it did not cause a reorganize.");
             }
 
             // We may not have any transactions if we received only a header. That never happens today but will in
@@ -187,10 +190,10 @@ public class BlockChain {
         // Firstly, calculate the block at which the chain diverged. We only need to examine the
         // chain from beyond this block to find differences.
         StoredBlock splitPoint = findSplit(newChainHead, chainHead);
-        LOG("Re-organize after split at height " + splitPoint.getHeight());
-        LOG("Old chain head: " + chainHead.getHeader().getHashAsString());
-        LOG("New chain head: " + newChainHead.getHeader().getHashAsString());
-        LOG("Split at block: " + splitPoint.getHeader().getHashAsString());
+        log.info("Re-organize after split at height {}", splitPoint.getHeight());
+        log.info("Old chain head: {}", chainHead.getHeader().getHashAsString());
+        log.info("New chain head: {}", newChainHead.getHeader().getHashAsString());
+        log.info("Split at block: {}", splitPoint.getHeader().getHashAsString());
         // Then build a list of all blocks in the old part of the chain and the new part.
         Set<StoredBlock> oldBlocks = getPartialChain(chainHead, splitPoint);
         Set<StoredBlock> newBlocks = getPartialChain(newChainHead, splitPoint);
@@ -267,7 +270,7 @@ public class BlockChain {
             } catch (ScriptException e) {
                 // We don't want scripts we don't understand to break the block chain,
                 // so just note that this tx was not scanned here and continue.
-                LOG("Failed to parse a script: " + e.toString());
+                log.warn("Failed to parse a script: " + e.toString());
             }
         }
     }
@@ -307,7 +310,7 @@ public class BlockChain {
                 blocksConnectedThisRound++;
             }
             if (blocksConnectedThisRound > 0) {
-                LOG("Connected " + blocksConnectedThisRound + " floating blocks.");
+                log.info("Connected {} floating blocks.", blocksConnectedThisRound);
             }
         } while (blocksConnectedThisRound > 0);
     }
@@ -353,7 +356,7 @@ public class BlockChain {
         newDifficulty = newDifficulty.divide(BigInteger.valueOf(params.targetTimespan));
 
         if (newDifficulty.compareTo(params.proofOfWorkLimit) > 0) {
-            LOG("Difficulty hit proof of work limit: " + newDifficulty.toString(16));
+            log.warn("Difficulty hit proof of work limit: {}", newDifficulty.toString(16));
             newDifficulty = params.proofOfWorkLimit;
         }
 

@@ -21,13 +21,16 @@ import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.google.bitcoin.core.Utils.LOG;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Stores the block chain to disk but still holds it in memory. This is intended for desktop apps and tests.
  * Constrained environments like mobile phones probably won't want to or be able to store all the block headers in RAM.
  */
 public class DiskBlockStore implements BlockStore {
+	private static final Logger log = LoggerFactory.getLogger(DiskBlockStore.class);
+	
     private FileOutputStream stream;
     private Map<Sha256Hash, StoredBlock> blockMap;
     private Sha256Hash chainHead;
@@ -40,7 +43,7 @@ public class DiskBlockStore implements BlockStore {
             load(file);
             stream = new FileOutputStream(file, true);    // Do append.
         } catch (IOException e) {
-            LOG(e.toString());
+            log.error("failed to load block store from file", e);
             createNewStore(params, file);
         }
     }
@@ -70,7 +73,7 @@ public class DiskBlockStore implements BlockStore {
     }
 
     private void load(File file) throws IOException, BlockStoreException {
-        LOG("Reading block store from " + file.getAbsolutePath());
+        log.info("Reading block store from {}", file);
         InputStream input = new BufferedInputStream(new FileInputStream(file));
         // Read a version byte.
         int version = input.read();
@@ -85,7 +88,7 @@ public class DiskBlockStore implements BlockStore {
         byte[] chainHeadHash = new byte[32];
         input.read(chainHeadHash);
         this.chainHead = new Sha256Hash(chainHeadHash);
-        LOG("Read chain head from disk: " + this.chainHead);
+        log.info("Read chain head from disk: {}", this.chainHead);
         long now = System.currentTimeMillis();
         // Rest of file is raw block headers.
         byte[] headerBytes = new byte[Block.HEADER_SIZE];
@@ -126,7 +129,7 @@ public class DiskBlockStore implements BlockStore {
             throw new BlockStoreException(e);
         }
         long elapsed = System.currentTimeMillis() - now;
-        LOG("Block chain read complete in " + elapsed + "ms");
+        log.info("Block chain read complete in {}ms", elapsed);
     }
 
     public synchronized void put(StoredBlock block) throws BlockStoreException {

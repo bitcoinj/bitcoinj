@@ -25,6 +25,9 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.Date;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import static com.google.bitcoin.core.Utils.*;
 
 /**
@@ -36,6 +39,8 @@ import static com.google.bitcoin.core.Utils.*;
  * Construction is blocking whilst the protocol version is negotiated.
  */
 public class NetworkConnection {
+	private static final Logger log = LoggerFactory.getLogger(NetworkConnection.class);
+	
     static final int COMMAND_LEN = 12;
 
     // Message strings.
@@ -94,9 +99,13 @@ public class NetworkConnection {
         readMessage();
         // Switch to the new protocol version.
         int peerVersion = versionMessage.clientVersion;
-        LOG(String.format("Connected to peer: version=%d, subVer='%s', services=0x%x, time=%s, blocks=%d",
-                peerVersion, versionMessage.subVer,
-                versionMessage.localServices, new Date(versionMessage.time * 1000).toString(), versionMessage.bestHeight));
+        log.info("Connected to peer: version={}, subVer='{}', services=0x{}, time={}, blocks={}", new Object[] {
+        		peerVersion, 
+        		versionMessage.subVer,
+                versionMessage.localServices, 
+                new Date(versionMessage.time * 1000),
+                versionMessage.bestHeight
+        });
         // BitCoinJ is a client mode implementation. That means there's not much point in us talking to other client
         // mode nodes because we can't download the data from them we need to find/verify transactions.
         if (!versionMessage.hasBlockChain())
@@ -240,8 +249,11 @@ public class NetworkConnection {
             }
         }
 
-        if (PROTOCOL_LOG)
-            LOG("Received " + size + " byte '" + command + "' message: " + Utils.bytesToHexString(payloadBytes));
+        log.debug("Received {} byte '{}' message: {}", new Object[]{
+        		size,
+        		command,
+        		Utils.bytesToHexString(payloadBytes)	
+        });
 
         try {
             Message message;
@@ -283,8 +295,7 @@ public class NetworkConnection {
             System.arraycopy(hash, 0, header, 4 + COMMAND_LEN + 4, 4);
         }
 
-        if (PROTOCOL_LOG)
-            LOG("Sending " + name + " message: " + bytesToHexString(payload));
+        log.debug("Sending {} message: {}", name, bytesToHexString(payload));
 
         // Another writeMessage call may be running concurrently.
         synchronized (out) {

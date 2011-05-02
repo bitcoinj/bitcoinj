@@ -18,6 +18,8 @@ package com.google.bitcoin.core;
 
 import com.google.bitcoin.bouncycastle.util.encoders.Hex;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -29,7 +31,9 @@ import java.util.Arrays;
 import static org.junit.Assert.*;
 
 public class BlockTest {
+    private static Logger log = LoggerFactory.getLogger(BlockTest.class);
     static final NetworkParameters params = NetworkParameters.testNet();
+
     static final byte[] blockBytes;
 
     static {
@@ -139,8 +143,6 @@ public class BlockTest {
         // Note that this will actually check the transactions are equal by doing bitcoin serialization and checking
         // the bytestreams are the same! A true "deep equals" is not implemented for Transaction. The primary purpose
         // of this test is to ensure no errors occur during the Java serialization/deserialization process.
-        Utils.LOG(Utils.bytesToHexString(tx.bitcoinSerialize()));
-        Utils.LOG(Utils.bytesToHexString(tx2.bitcoinSerialize()));
         assertEquals(tx, tx2);
     }
 }
