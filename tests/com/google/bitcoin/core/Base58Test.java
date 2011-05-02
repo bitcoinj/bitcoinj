@@ -22,7 +22,7 @@ import java.math.BigInteger;
 import java.util.Arrays;
 
 public class Base58Test extends TestCase {
-    public void testEncode() {
+    public void testEncode() throws Exception {
         byte[] testbytes = "Hello World".getBytes();
         assertEquals("JxF12TrwUP45BMd", Base58.encode(testbytes));
         
@@ -30,9 +30,17 @@ public class Base58Test extends TestCase {
         assertEquals("16Ho7Hs", Base58.encode(bi.toByteArray()));
     }
     
-    public void testDecode() {
+    public void testDecode() throws Exception {
         byte[] testbytes = "Hello World".getBytes();
         byte[] actualbytes = Base58.decode("JxF12TrwUP45BMd");
         assertTrue(new String(actualbytes), Arrays.equals(testbytes, actualbytes));
+
+        try {
+            Base58.decode("This isn't valid base58");
+            fail();
+        } catch (AddressFormatException e) {
+        }
+
+        Base58.decodeChecked("4stwEBjT6FYyVV");
     }
 }

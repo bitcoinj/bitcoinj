@@ -17,6 +17,7 @@
 package com.google.bitcoin.core;
 
 import java.math.BigInteger;
+import java.util.Arrays;
 
 /**
  * A custom form of base58 is used to encode BitCoin addresses. Note that this is not the same base58 as used by
@@ -33,7 +34,6 @@ import java.math.BigInteger;
  * </ul>
  */
 public class Base58 {
-
     private static final String ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
     private static final BigInteger BASE = BigInteger.valueOf(58);
 
@@ -57,17 +57,42 @@ public class Base58 {
         return s.toString();
     }
     
-    public static byte[] decode(String input) {
+    public static byte[] decode(String input) throws AddressFormatException {
         return decodeToBigInteger(input).toByteArray();
     }
 
-    public static BigInteger decodeToBigInteger(String input) {
+    public static BigInteger decodeToBigInteger(String input) throws AddressFormatException {
         BigInteger bi = BigInteger.valueOf(0);
         // Work backwards through the string.
         for (int i = input.length() - 1; i >= 0; i--) {
             int alphaIndex = ALPHABET.indexOf(input.charAt(i));
+            if (alphaIndex == -1) {
+                throw new AddressFormatException("Illegal character " + input.charAt(i) + " at " + i);
+            }
             bi = bi.add(BigInteger.valueOf(alphaIndex).multiply(BASE.pow(input.length() - 1 - i)));
         }
         return bi;
+    }
+
+    /**
+     * Uses the checksum in the last 4 bytes of the decoded data to verify the rest are correct. The checksum is
+     * removed from the returned data.
+     *
+     * @throws AddressFormatException if the input is not base 58 or the checksum does not validate.
+     */
+    public static byte[] decodeChecked(String input) throws AddressFormatException {
+        byte[] tmp = decode(input);
+        if (tmp.length < 4)
+            throw new AddressFormatException("Input too short");
+        byte[] checksum = new byte[4];
+        System.arraycopy(tmp, tmp.length - 4, checksum, 0, 4);
+        byte[] bytes = new byte[tmp.length - 4];
+        System.arraycopy(tmp, 0, bytes, 0, tmp.length - 4);
+        tmp = Utils.doubleDigest(bytes);
+        byte[] hash = new byte[4];
+        System.arraycopy(tmp, 0, hash, 0, 4);
+        if (!Arrays.equals(hash, checksum))
+            throw new AddressFormatException("Checksum does not validate");
+        return bytes;
     }
 }
