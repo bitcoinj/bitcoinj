@@ -11,6 +11,8 @@
       <src path="src"/>
       <src path="tests"/>
       <classpath path="lib/junit-4.8.2.jar"/>
+      <classpath path="lib/slf4j-api-1.6.1.jar"/>
+      <classpath path="lib/slf4j-simple-1.6.1.jar"/>
     </javac>
   </target>
 
