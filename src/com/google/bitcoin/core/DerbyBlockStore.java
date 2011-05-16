@@ -33,6 +33,11 @@ import java.sql.Statement;
  * @author miron@google.com (Miron Cuperman)
  */
 public class DerbyBlockStore implements BlockStore {
+    /**
+     * 
+     */
+    private static final int COMMIT_INTERVAL = 2 * 1000;
+
     private static final Logger log = LoggerFactory.getLogger(DerbyBlockStore.class);
 
     private StoredBlock chainHeadBlock;
@@ -41,6 +46,8 @@ public class DerbyBlockStore implements BlockStore {
     private Connection conn;
 
     private String dbName;
+
+    private Thread committerThread;
 
     static final String driver = "org.apache.derby.jdbc.EmbeddedDriver";
     static final String CREATE_SETTINGS_TABLE = "CREATE TABLE settings ( "
@@ -60,10 +67,16 @@ public class DerbyBlockStore implements BlockStore {
         store.resetStore();
     }
 
-    public void close() {
+    public synchronized void close() {
         String connectionURL = "jdbc:derby:" + dbName + ";shutdown=true";
         try {
-            conn = DriverManager.getConnection(connectionURL);
+            if (conn != null) {
+                conn.commit();
+                conn = null;
+            }
+            if (committerThread != null)
+                committerThread.interrupt();
+            DriverManager.getConnection(connectionURL);
         } catch (SQLException ex) {
             if (( (ex.getErrorCode() == 45000)
                     && ("08006".equals(ex.getSQLState()) ))) {
@@ -75,6 +88,16 @@ public class DerbyBlockStore implements BlockStore {
             else {
                 throw new RuntimeException(ex);
             }
+        }
+    }
+    
+    private synchronized void commit() throws BlockStoreException {
+        try {
+            if (conn != null)
+                conn.commit();
+        } catch (SQLException ex) {
+            log.error("commit failed", ex);
+            throw new BlockStoreException(ex);
         }
     }
 
@@ -92,6 +115,7 @@ public class DerbyBlockStore implements BlockStore {
 
         try {
             conn = DriverManager.getConnection(connectionURL);
+            conn.setAutoCommit(false);
             log.info("Connected to database " + connectionURL);
 
             // Create tables if needed
@@ -110,15 +134,16 @@ public class DerbyBlockStore implements BlockStore {
             s = conn.createStatement();
             s.executeUpdate("DROP TABLE settings");
             s.executeUpdate("DROP TABLE blocks");
+            s.close();
             createTables();
             initFromDatabase();
+            startCommitter();
         } catch (SQLException ex) {
             throw new RuntimeException(ex);
         }
     }
 
-    private void createTables()
-    throws SQLException, BlockStoreException {
+    private void createTables() throws SQLException, BlockStoreException {
         Statement s = conn.createStatement();
         log.debug("DerbyBlockStore : CREATE blocks table");
         s.executeUpdate(CREATE_BLOCKS_TABLE);
@@ -130,8 +155,7 @@ public class DerbyBlockStore implements BlockStore {
         createNewStore(params);
     }
 
-    private void initFromDatabase() throws SQLException,
-    BlockStoreException {
+    private void initFromDatabase() throws SQLException, BlockStoreException {
         Statement s = conn.createStatement();
         ResultSet rs = s.executeQuery("SELECT value FROM settings WHERE name = 'chainhead'");
         if (!rs.next()) {
@@ -146,8 +170,7 @@ public class DerbyBlockStore implements BlockStore {
         this.chainHeadHash = new Sha256Hash(hash);
     }
 
-    private void createNewStore(NetworkParameters params)
-    throws BlockStoreException {
+    private void createNewStore(NetworkParameters params) throws BlockStoreException {
         try {
             // Set up the genesis block. When we start out fresh, it is by
             // definition the top of the chain.
@@ -188,6 +211,7 @@ public class DerbyBlockStore implements BlockStore {
             s.setBytes(4, stored.getHeader().bitcoinSerialize());
             s.executeUpdate();
             s.close();
+            startCommitter();
         } catch (SQLException ex) {
             throw new BlockStoreException(ex);
         }
@@ -245,11 +269,12 @@ public class DerbyBlockStore implements BlockStore {
         this.chainHeadBlock = chainHead;
         try {
             PreparedStatement s = conn
-            .prepareStatement("UPDATE settings SET value = ? WHERE name = ?");
+                .prepareStatement("UPDATE settings SET value = ? WHERE name = ?");
             s.setString(2, CHAIN_HEAD_SETTING);
             s.setBytes(1, hash);
             s.executeUpdate();
             s.close();
+            startCommitter();
         } catch (SQLException ex) {
             throw new BlockStoreException(ex);
         }
@@ -282,5 +307,45 @@ public class DerbyBlockStore implements BlockStore {
         rs.close();
         System.out.println("end");
         s.close();
+    }
+    
+    protected synchronized void startCommitter() {
+        if (committerThread != null)
+            return;
+
+        // A thread that is guaranteed to try a commit as long as
+        // committerThread is not null
+        Runnable committer = new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    log.info("commit scheduled");
+                    Thread.sleep(COMMIT_INTERVAL);
+                } catch (InterruptedException ex) {
+                    // ignore
+                }
+                synchronized (DerbyBlockStore.this) {
+                    try {
+                        if (conn != null) {
+                            commit();
+                            log.info("commit success");
+                        }
+                        else {
+                            log.info("committer noticed that we are shutting down");
+                        }
+                    }
+                    catch (BlockStoreException e) {
+                        log.warn("commit failed");
+                        // ignore
+                    }
+                    finally {
+                        committerThread = null;
+                    }
+                }
+            }
+        };
+        
+        committerThread = new Thread(committer, "DerbyBlockStore committer");
+        committerThread.start();
     }
 }
