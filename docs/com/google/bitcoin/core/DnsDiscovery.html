@@ -3,7 +3,7 @@
 <HTML>
 <HEAD>
 <TITLE>
-Base58
+DnsDiscovery
 </TITLE>
 
 
@@ -13,7 +13,7 @@ Base58
 function windowTitle()
 {
     if (location.href.indexOf('is-external=true') == -1) {
-        parent.document.title="Base58";
+        parent.document.title="DnsDiscovery";
     }
 }
 </SCRIPT>
@@ -51,11 +51,11 @@ function windowTitle()
 
 <TR>
 <TD BGCOLOR="white" CLASS="NavBarCell2"><FONT SIZE="-2">
-&nbsp;<A HREF="../../../../com/google/bitcoin/core/AddressMessage.html" title="class in com.google.bitcoin.core"><B>PREV CLASS</B></A>&nbsp;
-&nbsp;<A HREF="../../../../com/google/bitcoin/core/Block.html" title="class in com.google.bitcoin.core"><B>NEXT CLASS</B></A></FONT></TD>
+&nbsp;<A HREF="../../../../com/google/bitcoin/core/DiskBlockStore.html" title="class in com.google.bitcoin.core"><B>PREV CLASS</B></A>&nbsp;
+&nbsp;<A HREF="../../../../com/google/bitcoin/core/ECKey.html" title="class in com.google.bitcoin.core"><B>NEXT CLASS</B></A></FONT></TD>
 <TD BGCOLOR="white" CLASS="NavBarCell2"><FONT SIZE="-2">
-  <A HREF="../../../../index.html?com/google/bitcoin/core/Base58.html" target="_top"><B>FRAMES</B></A>  &nbsp;
-&nbsp;<A HREF="Base58.html" target="_top"><B>NO FRAMES</B></A>  &nbsp;
+  <A HREF="../../../../index.html?com/google/bitcoin/core/DnsDiscovery.html" target="_top"><B>FRAMES</B></A>  &nbsp;
+&nbsp;<A HREF="DnsDiscovery.html" target="_top"><B>NO FRAMES</B></A>  &nbsp;
 &nbsp;<SCRIPT type="text/javascript">
   <!--
   if(window==top) {
@@ -86,29 +86,27 @@ DETAIL:&nbsp;FIELD&nbsp;|&nbsp;<A HREF="#constructor_detail">CONSTR</A>&nbsp;|&n
 <FONT SIZE="-1">
 com.google.bitcoin.core</FONT>
 <BR>
-Class Base58</H2>
+Class DnsDiscovery</H2>
 <PRE>
 java.lang.Object
-  <IMG SRC="../../../../resources/inherit.gif" ALT="extended by "><B>com.google.bitcoin.core.Base58</B>
+  <IMG SRC="../../../../resources/inherit.gif" ALT="extended by "><B>com.google.bitcoin.core.DnsDiscovery</B>
 </PRE>
+<DL>
+<DT><B>All Implemented Interfaces:</B> <DD><A HREF="../../../../com/google/bitcoin/core/PeerDiscovery.html" title="interface in com.google.bitcoin.core">PeerDiscovery</A></DD>
+</DL>
 <HR>
 <DL>
-<DT><PRE>public class <B>Base58</B><DT>extends java.lang.Object</DL>
+<DT><PRE>public class <B>DnsDiscovery</B><DT>extends java.lang.Object<DT>implements <A HREF="../../../../com/google/bitcoin/core/PeerDiscovery.html" title="interface in com.google.bitcoin.core">PeerDiscovery</A></DL>
 </PRE>
 
 <P>
-A custom form of base58 is used to encode BitCoin addresses. Note that this is not the same base58 as used by
- Flickr, which you may see reference to around the internet.<p>
- 
- Satoshi says: why base-58 instead of standard base-64 encoding?<p>
+Supports peer discovery through DNS.<p>
 
- <ul>
- <li>Don't want 0OIl characters that look the same in some fonts and
-    could be used to create visually identical looking account numbers.</li>
- <li>A string with non-alphanumeric characters is not as easily accepted as an account number.</li>
- <li>E-mail usually won't line-break if there's no punctuation to break at.</li>
- <li>Doubleclicking selects the whole number as one word if it's all alphanumeric.</li>
- </ul>
+ This class does not support the testnet as currently there are no DNS servers providing testnet hosts.
+ If this class is being used for testnet you must specify the hostnames to use.<p>
+ 
+ Failure to resolve individual host names will not cause an Exception to be thrown.
+ However, if all hosts passed fail to resolve a PeerDiscoveryException will be thrown during getPeers().
 <P>
 
 <P>
@@ -125,10 +123,17 @@ A custom form of base58 is used to encode BitCoin addresses. Note that this is n
 <B>Constructor Summary</B></FONT></TH>
 </TR>
 <TR BGCOLOR="white" CLASS="TableRowColor">
-<TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/Base58.html#Base58()">Base58</A></B>()</CODE>
+<TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/DnsDiscovery.html#DnsDiscovery(com.google.bitcoin.core.NetworkParameters)">DnsDiscovery</A></B>(<A HREF="../../../../com/google/bitcoin/core/NetworkParameters.html" title="class in com.google.bitcoin.core">NetworkParameters</A>&nbsp;netParams)</CODE>
 
 <BR>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Supports finding peers through DNS A records.</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/DnsDiscovery.html#DnsDiscovery(java.lang.String[], com.google.bitcoin.core.NetworkParameters)">DnsDiscovery</A></B>(java.lang.String[]&nbsp;hostNames,
+             <A HREF="../../../../com/google/bitcoin/core/NetworkParameters.html" title="class in com.google.bitcoin.core">NetworkParameters</A>&nbsp;netParams)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Supports finding peers through DNS A records.</TD>
 </TR>
 </TABLE>
 &nbsp;
@@ -142,35 +147,19 @@ A custom form of base58 is used to encode BitCoin addresses. Note that this is n
 </TR>
 <TR BGCOLOR="white" CLASS="TableRowColor">
 <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
-<CODE>static&nbsp;byte[]</CODE></FONT></TD>
-<TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/Base58.html#decode(java.lang.String)">decode</A></B>(java.lang.String&nbsp;input)</CODE>
+<CODE>static&nbsp;java.lang.String[]</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/DnsDiscovery.html#getDefaultHostNames()">getDefaultHostNames</A></B>()</CODE>
 
 <BR>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Returns the well known discovery host names on the production network.</TD>
 </TR>
 <TR BGCOLOR="white" CLASS="TableRowColor">
 <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
-<CODE>static&nbsp;byte[]</CODE></FONT></TD>
-<TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/Base58.html#decodeChecked(java.lang.String)">decodeChecked</A></B>(java.lang.String&nbsp;input)</CODE>
+<CODE>&nbsp;java.net.InetSocketAddress[]</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/DnsDiscovery.html#getPeers()">getPeers</A></B>()</CODE>
 
 <BR>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Uses the checksum in the last 4 bytes of the decoded data to verify the rest are correct.</TD>
-</TR>
-<TR BGCOLOR="white" CLASS="TableRowColor">
-<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
-<CODE>static&nbsp;java.math.BigInteger</CODE></FONT></TD>
-<TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/Base58.html#decodeToBigInteger(java.lang.String)">decodeToBigInteger</A></B>(java.lang.String&nbsp;input)</CODE>
-
-<BR>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
-</TR>
-<TR BGCOLOR="white" CLASS="TableRowColor">
-<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
-<CODE>static&nbsp;java.lang.String</CODE></FONT></TD>
-<TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/Base58.html#encode(byte[])">encode</A></B>(byte[]&nbsp;input)</CODE>
-
-<BR>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Returns an array of addresses.</TD>
 </TR>
 </TABLE>
 &nbsp;<A NAME="methods_inherited_from_class_java.lang.Object"><!-- --></A>
@@ -195,11 +184,28 @@ A custom form of base58 is used to encode BitCoin addresses. Note that this is n
 </TR>
 </TABLE>
 
-<A NAME="Base58()"><!-- --></A><H3>
-Base58</H3>
+<A NAME="DnsDiscovery(com.google.bitcoin.core.NetworkParameters)"><!-- --></A><H3>
+DnsDiscovery</H3>
 <PRE>
-public <B>Base58</B>()</PRE>
+public <B>DnsDiscovery</B>(<A HREF="../../../../com/google/bitcoin/core/NetworkParameters.html" title="class in com.google.bitcoin.core">NetworkParameters</A>&nbsp;netParams)</PRE>
 <DL>
+<DD>Supports finding peers through DNS A records. Community run DNS entry points will be used.
+<P>
+<DL>
+<DT><B>Parameters:</B><DD><CODE>netParams</CODE> - Network parameters to be used for port information.</DL>
+</DL>
+<HR>
+
+<A NAME="DnsDiscovery(java.lang.String[], com.google.bitcoin.core.NetworkParameters)"><!-- --></A><H3>
+DnsDiscovery</H3>
+<PRE>
+public <B>DnsDiscovery</B>(java.lang.String[]&nbsp;hostNames,
+                    <A HREF="../../../../com/google/bitcoin/core/NetworkParameters.html" title="class in com.google.bitcoin.core">NetworkParameters</A>&nbsp;netParams)</PRE>
+<DL>
+<DD>Supports finding peers through DNS A records.
+<P>
+<DL>
+<DT><B>Parameters:</B><DD><CODE>hostNames</CODE> - Host names to be examined for seed addresses.<DD><CODE>netParams</CODE> - Network parameters to be used for port information.</DL>
 </DL>
 
 <!-- ============ METHOD DETAIL ========== -->
@@ -212,58 +218,38 @@ public <B>Base58</B>()</PRE>
 </TR>
 </TABLE>
 
-<A NAME="encode(byte[])"><!-- --></A><H3>
-encode</H3>
+<A NAME="getPeers()"><!-- --></A><H3>
+getPeers</H3>
 <PRE>
-public static java.lang.String <B>encode</B>(byte[]&nbsp;input)</PRE>
+public java.net.InetSocketAddress[] <B>getPeers</B>()
+                                      throws <A HREF="../../../../com/google/bitcoin/core/PeerDiscoveryException.html" title="class in com.google.bitcoin.core">PeerDiscoveryException</A></PRE>
 <DL>
-<DD><DL>
-</DL>
-</DD>
-</DL>
-<HR>
-
-<A NAME="decode(java.lang.String)"><!-- --></A><H3>
-decode</H3>
-<PRE>
-public static byte[] <B>decode</B>(java.lang.String&nbsp;input)
-                     throws <A HREF="../../../../com/google/bitcoin/core/AddressFormatException.html" title="class in com.google.bitcoin.core">AddressFormatException</A></PRE>
-<DL>
-<DD><DL>
-
-<DT><B>Throws:</B>
-<DD><CODE><A HREF="../../../../com/google/bitcoin/core/AddressFormatException.html" title="class in com.google.bitcoin.core">AddressFormatException</A></CODE></DL>
-</DD>
-</DL>
-<HR>
-
-<A NAME="decodeToBigInteger(java.lang.String)"><!-- --></A><H3>
-decodeToBigInteger</H3>
-<PRE>
-public static java.math.BigInteger <B>decodeToBigInteger</B>(java.lang.String&nbsp;input)
-                                               throws <A HREF="../../../../com/google/bitcoin/core/AddressFormatException.html" title="class in com.google.bitcoin.core">AddressFormatException</A></PRE>
-<DL>
-<DD><DL>
-
-<DT><B>Throws:</B>
-<DD><CODE><A HREF="../../../../com/google/bitcoin/core/AddressFormatException.html" title="class in com.google.bitcoin.core">AddressFormatException</A></CODE></DL>
-</DD>
-</DL>
-<HR>
-
-<A NAME="decodeChecked(java.lang.String)"><!-- --></A><H3>
-decodeChecked</H3>
-<PRE>
-public static byte[] <B>decodeChecked</B>(java.lang.String&nbsp;input)
-                            throws <A HREF="../../../../com/google/bitcoin/core/AddressFormatException.html" title="class in com.google.bitcoin.core">AddressFormatException</A></PRE>
-<DL>
-<DD>Uses the checksum in the last 4 bytes of the decoded data to verify the rest are correct. The checksum is
- removed from the returned data.
+<DD><B>Description copied from interface: <CODE><A HREF="../../../../com/google/bitcoin/core/PeerDiscovery.html#getPeers()">PeerDiscovery</A></CODE></B></DD>
+<DD>Returns an array of addresses. This method may block.
 <P>
 <DD><DL>
+<DT><B>Specified by:</B><DD><CODE><A HREF="../../../../com/google/bitcoin/core/PeerDiscovery.html#getPeers()">getPeers</A></CODE> in interface <CODE><A HREF="../../../../com/google/bitcoin/core/PeerDiscovery.html" title="interface in com.google.bitcoin.core">PeerDiscovery</A></CODE></DL>
+</DD>
+<DD><DL>
 
 <DT><B>Throws:</B>
-<DD><CODE><A HREF="../../../../com/google/bitcoin/core/AddressFormatException.html" title="class in com.google.bitcoin.core">AddressFormatException</A></CODE> - if the input is not base 58 or the checksum does not validate.</DL>
+<DD><CODE><A HREF="../../../../com/google/bitcoin/core/PeerDiscoveryException.html" title="class in com.google.bitcoin.core">PeerDiscoveryException</A></CODE></DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="getDefaultHostNames()"><!-- --></A><H3>
+getDefaultHostNames</H3>
+<PRE>
+public static java.lang.String[] <B>getDefaultHostNames</B>()</PRE>
+<DL>
+<DD>Returns the well known discovery host names on the production network.
+<P>
+<DD><DL>
+</DL>
+</DD>
+<DD><DL>
+</DL>
 </DD>
 </DL>
 <!-- ========= END OF CLASS DATA ========= -->
@@ -295,11 +281,11 @@ public static byte[] <B>decodeChecked</B>(java.lang.String&nbsp;input)
 
 <TR>
 <TD BGCOLOR="white" CLASS="NavBarCell2"><FONT SIZE="-2">
-&nbsp;<A HREF="../../../../com/google/bitcoin/core/AddressMessage.html" title="class in com.google.bitcoin.core"><B>PREV CLASS</B></A>&nbsp;
-&nbsp;<A HREF="../../../../com/google/bitcoin/core/Block.html" title="class in com.google.bitcoin.core"><B>NEXT CLASS</B></A></FONT></TD>
+&nbsp;<A HREF="../../../../com/google/bitcoin/core/DiskBlockStore.html" title="class in com.google.bitcoin.core"><B>PREV CLASS</B></A>&nbsp;
+&nbsp;<A HREF="../../../../com/google/bitcoin/core/ECKey.html" title="class in com.google.bitcoin.core"><B>NEXT CLASS</B></A></FONT></TD>
 <TD BGCOLOR="white" CLASS="NavBarCell2"><FONT SIZE="-2">
-  <A HREF="../../../../index.html?com/google/bitcoin/core/Base58.html" target="_top"><B>FRAMES</B></A>  &nbsp;
-&nbsp;<A HREF="Base58.html" target="_top"><B>NO FRAMES</B></A>  &nbsp;
+  <A HREF="../../../../index.html?com/google/bitcoin/core/DnsDiscovery.html" target="_top"><B>FRAMES</B></A>  &nbsp;
+&nbsp;<A HREF="DnsDiscovery.html" target="_top"><B>NO FRAMES</B></A>  &nbsp;
 &nbsp;<SCRIPT type="text/javascript">
   <!--
   if(window==top) {

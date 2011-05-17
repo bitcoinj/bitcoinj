@@ -20,7 +20,8 @@
     <javadoc sourcepath="src" 
              excludepackagenames="com.google.bitcoin.bouncycastle.*,com.google.bitcoin.examples.*"
              destdir="docs"
-             additionalparam="-notimestamp"/>
+             additionalparam="-notimestamp"
+             classpath="lib/slf4j-api-1.6.1.jar"/>
   </target>
 
   <target name="test" depends="compile">

@@ -52,7 +52,7 @@ function windowTitle()
 <TR>
 <TD BGCOLOR="white" CLASS="NavBarCell2"><FONT SIZE="-2">
 &nbsp;<A HREF="../../../../com/google/bitcoin/core/VersionMessage.html" title="class in com.google.bitcoin.core"><B>PREV CLASS</B></A>&nbsp;
-&nbsp;<A HREF="../../../../com/google/bitcoin/core/WalletEventListener.html" title="class in com.google.bitcoin.core"><B>NEXT CLASS</B></A></FONT></TD>
+&nbsp;<A HREF="../../../../com/google/bitcoin/core/Wallet.BalanceType.html" title="enum in com.google.bitcoin.core"><B>NEXT CLASS</B></A></FONT></TD>
 <TD BGCOLOR="white" CLASS="NavBarCell2"><FONT SIZE="-2">
   <A HREF="../../../../index.html?com/google/bitcoin/core/Wallet.html" target="_top"><B>FRAMES</B></A>  &nbsp;
 &nbsp;<A HREF="Wallet.html" target="_top"><B>NO FRAMES</B></A>  &nbsp;
@@ -72,7 +72,7 @@ function windowTitle()
 </TR>
 <TR>
 <TD VALIGN="top" CLASS="NavBarCell3"><FONT SIZE="-2">
-  SUMMARY:&nbsp;NESTED&nbsp;|&nbsp;<A HREF="#field_summary">FIELD</A>&nbsp;|&nbsp;<A HREF="#constructor_summary">CONSTR</A>&nbsp;|&nbsp;<A HREF="#method_summary">METHOD</A></FONT></TD>
+  SUMMARY:&nbsp;<A HREF="#nested_class_summary">NESTED</A>&nbsp;|&nbsp;<A HREF="#field_summary">FIELD</A>&nbsp;|&nbsp;<A HREF="#constructor_summary">CONSTR</A>&nbsp;|&nbsp;<A HREF="#method_summary">METHOD</A></FONT></TD>
 <TD VALIGN="top" CLASS="NavBarCell3"><FONT SIZE="-2">
 DETAIL:&nbsp;<A HREF="#field_detail">FIELD</A>&nbsp;|&nbsp;<A HREF="#constructor_detail">CONSTR</A>&nbsp;|&nbsp;<A HREF="#method_detail">METHOD</A></FONT></TD>
 </TR>
@@ -101,12 +101,11 @@ java.lang.Object
 
 <P>
 A Wallet stores keys and a record of transactions that have not yet been spent. Thus, it is capable of
- providing transactions on demand that meet a given combined value. Once a transaction
- output is used, it is removed from the wallet as it is no longer available for spending.<p>
+ providing transactions on demand that meet a given combined value.<p>
 
- The Wallet is read and written from disk, so be sure to follow the Java serialization
- versioning rules here. We use the built in Java serialization to avoid the need to
- pull in a potentially large (code-size) third party serialization library.<p>
+ The Wallet is read and written from disk, so be sure to follow the Java serialization versioning rules here. We
+ use the built in Java serialization to avoid the need to pull in a potentially large (code-size) third party
+ serialization library.<p>
 <P>
 
 <P>
@@ -115,7 +114,24 @@ A Wallet stores keys and a record of transactions that have not yet been spent. 
 <HR>
 
 <P>
-<!-- =========== FIELD SUMMARY =========== -->
+<!-- ======== NESTED CLASS SUMMARY ======== -->
+
+<A NAME="nested_class_summary"><!-- --></A>
+<TABLE BORDER="1" WIDTH="100%" CELLPADDING="3" CELLSPACING="0" SUMMARY="">
+<TR BGCOLOR="#CCCCFF" CLASS="TableHeadingColor">
+<TH ALIGN="left" COLSPAN="2"><FONT SIZE="+2">
+<B>Nested Class Summary</B></FONT></TH>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>static&nbsp;class</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/Wallet.BalanceType.html" title="enum in com.google.bitcoin.core">Wallet.BalanceType</A></B></CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;It's possible to calculate a wallets balance from multiple points of view.</TD>
+</TR>
+</TABLE>
+&nbsp;<!-- =========== FIELD SUMMARY =========== -->
 
 <A NAME="field_summary"><!-- --></A>
 <TABLE BORDER="1" WIDTH="100%" CELLPADDING="3" CELLSPACING="0" SUMMARY="">
@@ -195,7 +211,15 @@ A Wallet stores keys and a record of transactions that have not yet been spent. 
 <TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/Wallet.html#getBalance()">getBalance</A></B>()</CODE>
 
 <BR>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Returns the balance of this wallet by summing up all unspent outputs that were sent to us.</TD>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Returns the AVAILABLE balance of this wallet.</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;java.math.BigInteger</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/Wallet.html#getBalance(com.google.bitcoin.core.Wallet.BalanceType)">getBalance</A></B>(<A HREF="../../../../com/google/bitcoin/core/Wallet.BalanceType.html" title="enum in com.google.bitcoin.core">Wallet.BalanceType</A>&nbsp;balanceType)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Returns the balance of this wallet as calculated by the provided balanceType.</TD>
 </TR>
 <TR BGCOLOR="white" CLASS="TableRowColor">
 <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
@@ -515,7 +539,28 @@ getBalance</H3>
 <PRE>
 public java.math.BigInteger <B>getBalance</B>()</PRE>
 <DL>
-<DD>Returns the balance of this wallet by summing up all unspent outputs that were sent to us.
+<DD>Returns the AVAILABLE balance of this wallet. See <A HREF="../../../../com/google/bitcoin/core/Wallet.BalanceType.html#AVAILABLE"><CODE>Wallet.BalanceType.AVAILABLE</CODE></A> for details on what this
+ means.<p>
+
+ Note: the estimated balance is usually the one you want to show to the end user - however attempting to
+ actually spend these coins may result in temporary failure. This method returns how much you can safely
+ provide to <A HREF="../../../../com/google/bitcoin/core/Wallet.html#createSend(com.google.bitcoin.core.Address, java.math.BigInteger)"><CODE>createSend(Address, java.math.BigInteger)</CODE></A>.
+<P>
+<DD><DL>
+</DL>
+</DD>
+<DD><DL>
+</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="getBalance(com.google.bitcoin.core.Wallet.BalanceType)"><!-- --></A><H3>
+getBalance</H3>
+<PRE>
+public java.math.BigInteger <B>getBalance</B>(<A HREF="../../../../com/google/bitcoin/core/Wallet.BalanceType.html" title="enum in com.google.bitcoin.core">Wallet.BalanceType</A>&nbsp;balanceType)</PRE>
+<DL>
+<DD>Returns the balance of this wallet as calculated by the provided balanceType.
 <P>
 <DD><DL>
 </DL>
@@ -584,7 +629,7 @@ public java.util.Collection&lt;<A HREF="../../../../com/google/bitcoin/core/Tran
 <TR>
 <TD BGCOLOR="white" CLASS="NavBarCell2"><FONT SIZE="-2">
 &nbsp;<A HREF="../../../../com/google/bitcoin/core/VersionMessage.html" title="class in com.google.bitcoin.core"><B>PREV CLASS</B></A>&nbsp;
-&nbsp;<A HREF="../../../../com/google/bitcoin/core/WalletEventListener.html" title="class in com.google.bitcoin.core"><B>NEXT CLASS</B></A></FONT></TD>
+&nbsp;<A HREF="../../../../com/google/bitcoin/core/Wallet.BalanceType.html" title="enum in com.google.bitcoin.core"><B>NEXT CLASS</B></A></FONT></TD>
 <TD BGCOLOR="white" CLASS="NavBarCell2"><FONT SIZE="-2">
   <A HREF="../../../../index.html?com/google/bitcoin/core/Wallet.html" target="_top"><B>FRAMES</B></A>  &nbsp;
 &nbsp;<A HREF="Wallet.html" target="_top"><B>NO FRAMES</B></A>  &nbsp;
@@ -604,7 +649,7 @@ public java.util.Collection&lt;<A HREF="../../../../com/google/bitcoin/core/Tran
 </TR>
 <TR>
 <TD VALIGN="top" CLASS="NavBarCell3"><FONT SIZE="-2">
-  SUMMARY:&nbsp;NESTED&nbsp;|&nbsp;<A HREF="#field_summary">FIELD</A>&nbsp;|&nbsp;<A HREF="#constructor_summary">CONSTR</A>&nbsp;|&nbsp;<A HREF="#method_summary">METHOD</A></FONT></TD>
+  SUMMARY:&nbsp;<A HREF="#nested_class_summary">NESTED</A>&nbsp;|&nbsp;<A HREF="#field_summary">FIELD</A>&nbsp;|&nbsp;<A HREF="#constructor_summary">CONSTR</A>&nbsp;|&nbsp;<A HREF="#method_summary">METHOD</A></FONT></TD>
 <TD VALIGN="top" CLASS="NavBarCell3"><FONT SIZE="-2">
 DETAIL:&nbsp;<A HREF="#field_detail">FIELD</A>&nbsp;|&nbsp;<A HREF="#constructor_detail">CONSTR</A>&nbsp;|&nbsp;<A HREF="#method_detail">METHOD</A></FONT></TD>
 </TR>

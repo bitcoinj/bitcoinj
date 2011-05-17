@@ -3,7 +3,7 @@
 <HTML>
 <HEAD>
 <TITLE>
-ProtocolException
+PeerDiscoveryException
 </TITLE>
 
 
@@ -13,7 +13,7 @@ ProtocolException
 function windowTitle()
 {
     if (location.href.indexOf('is-external=true') == -1) {
-        parent.document.title="ProtocolException";
+        parent.document.title="PeerDiscoveryException";
     }
 }
 </SCRIPT>
@@ -51,11 +51,11 @@ function windowTitle()
 
 <TR>
 <TD BGCOLOR="white" CLASS="NavBarCell2"><FONT SIZE="-2">
-&nbsp;<A HREF="../../../../com/google/bitcoin/core/PeerDiscoveryException.html" title="class in com.google.bitcoin.core"><B>PREV CLASS</B></A>&nbsp;
-&nbsp;<A HREF="../../../../com/google/bitcoin/core/Script.html" title="class in com.google.bitcoin.core"><B>NEXT CLASS</B></A></FONT></TD>
+&nbsp;<A HREF="../../../../com/google/bitcoin/core/PeerDiscovery.html" title="interface in com.google.bitcoin.core"><B>PREV CLASS</B></A>&nbsp;
+&nbsp;<A HREF="../../../../com/google/bitcoin/core/ProtocolException.html" title="class in com.google.bitcoin.core"><B>NEXT CLASS</B></A></FONT></TD>
 <TD BGCOLOR="white" CLASS="NavBarCell2"><FONT SIZE="-2">
-  <A HREF="../../../../index.html?com/google/bitcoin/core/ProtocolException.html" target="_top"><B>FRAMES</B></A>  &nbsp;
-&nbsp;<A HREF="ProtocolException.html" target="_top"><B>NO FRAMES</B></A>  &nbsp;
+  <A HREF="../../../../index.html?com/google/bitcoin/core/PeerDiscoveryException.html" target="_top"><B>FRAMES</B></A>  &nbsp;
+&nbsp;<A HREF="PeerDiscoveryException.html" target="_top"><B>NO FRAMES</B></A>  &nbsp;
 &nbsp;<SCRIPT type="text/javascript">
   <!--
   if(window==top) {
@@ -86,24 +86,24 @@ DETAIL:&nbsp;FIELD&nbsp;|&nbsp;<A HREF="#constructor_detail">CONSTR</A>&nbsp;|&n
 <FONT SIZE="-1">
 com.google.bitcoin.core</FONT>
 <BR>
-Class ProtocolException</H2>
+Class PeerDiscoveryException</H2>
 <PRE>
 java.lang.Object
   <IMG SRC="../../../../resources/inherit.gif" ALT="extended by ">java.lang.Throwable
       <IMG SRC="../../../../resources/inherit.gif" ALT="extended by ">java.lang.Exception
-          <IMG SRC="../../../../resources/inherit.gif" ALT="extended by "><B>com.google.bitcoin.core.ProtocolException</B>
+          <IMG SRC="../../../../resources/inherit.gif" ALT="extended by "><B>com.google.bitcoin.core.PeerDiscoveryException</B>
 </PRE>
 <DL>
 <DT><B>All Implemented Interfaces:</B> <DD>java.io.Serializable</DD>
 </DL>
 <HR>
 <DL>
-<DT><PRE>public class <B>ProtocolException</B><DT>extends java.lang.Exception</DL>
+<DT><PRE>public class <B>PeerDiscoveryException</B><DT>extends java.lang.Exception</DL>
 </PRE>
 
 <P>
 <DL>
-<DT><B>See Also:</B><DD><A HREF="../../../../serialized-form.html#com.google.bitcoin.core.ProtocolException">Serialized Form</A></DL>
+<DT><B>See Also:</B><DD><A HREF="../../../../serialized-form.html#com.google.bitcoin.core.PeerDiscoveryException">Serialized Form</A></DL>
 <HR>
 
 <P>
@@ -117,20 +117,26 @@ java.lang.Object
 <B>Constructor Summary</B></FONT></TH>
 </TR>
 <TR BGCOLOR="white" CLASS="TableRowColor">
-<TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/ProtocolException.html#ProtocolException(java.lang.Exception)">ProtocolException</A></B>(java.lang.Exception&nbsp;e)</CODE>
+<TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/PeerDiscoveryException.html#PeerDiscoveryException()">PeerDiscoveryException</A></B>()</CODE>
 
 <BR>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
 </TR>
 <TR BGCOLOR="white" CLASS="TableRowColor">
-<TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/ProtocolException.html#ProtocolException(java.lang.String)">ProtocolException</A></B>(java.lang.String&nbsp;msg)</CODE>
+<TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/PeerDiscoveryException.html#PeerDiscoveryException(java.lang.String)">PeerDiscoveryException</A></B>(java.lang.String&nbsp;message)</CODE>
 
 <BR>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
 </TR>
 <TR BGCOLOR="white" CLASS="TableRowColor">
-<TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/ProtocolException.html#ProtocolException(java.lang.String, java.lang.Exception)">ProtocolException</A></B>(java.lang.String&nbsp;msg,
-                  java.lang.Exception&nbsp;e)</CODE>
+<TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/PeerDiscoveryException.html#PeerDiscoveryException(java.lang.String, java.lang.Throwable)">PeerDiscoveryException</A></B>(java.lang.String&nbsp;message,
+                       java.lang.Throwable&nbsp;arg0)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/PeerDiscoveryException.html#PeerDiscoveryException(java.lang.Throwable)">PeerDiscoveryException</A></B>(java.lang.Throwable&nbsp;arg0)</CODE>
 
 <BR>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
@@ -177,27 +183,35 @@ java.lang.Object
 </TR>
 </TABLE>
 
-<A NAME="ProtocolException(java.lang.String)"><!-- --></A><H3>
-ProtocolException</H3>
+<A NAME="PeerDiscoveryException()"><!-- --></A><H3>
+PeerDiscoveryException</H3>
 <PRE>
-public <B>ProtocolException</B>(java.lang.String&nbsp;msg)</PRE>
+public <B>PeerDiscoveryException</B>()</PRE>
 <DL>
 </DL>
 <HR>
 
-<A NAME="ProtocolException(java.lang.Exception)"><!-- --></A><H3>
-ProtocolException</H3>
+<A NAME="PeerDiscoveryException(java.lang.String)"><!-- --></A><H3>
+PeerDiscoveryException</H3>
 <PRE>
-public <B>ProtocolException</B>(java.lang.Exception&nbsp;e)</PRE>
+public <B>PeerDiscoveryException</B>(java.lang.String&nbsp;message)</PRE>
 <DL>
 </DL>
 <HR>
 
-<A NAME="ProtocolException(java.lang.String, java.lang.Exception)"><!-- --></A><H3>
-ProtocolException</H3>
+<A NAME="PeerDiscoveryException(java.lang.Throwable)"><!-- --></A><H3>
+PeerDiscoveryException</H3>
 <PRE>
-public <B>ProtocolException</B>(java.lang.String&nbsp;msg,
-                         java.lang.Exception&nbsp;e)</PRE>
+public <B>PeerDiscoveryException</B>(java.lang.Throwable&nbsp;arg0)</PRE>
+<DL>
+</DL>
+<HR>
+
+<A NAME="PeerDiscoveryException(java.lang.String, java.lang.Throwable)"><!-- --></A><H3>
+PeerDiscoveryException</H3>
+<PRE>
+public <B>PeerDiscoveryException</B>(java.lang.String&nbsp;message,
+                              java.lang.Throwable&nbsp;arg0)</PRE>
 <DL>
 </DL>
 <!-- ========= END OF CLASS DATA ========= -->
@@ -229,11 +243,11 @@ public <B>ProtocolException</B>(java.lang.String&nbsp;msg,
 
 <TR>
 <TD BGCOLOR="white" CLASS="NavBarCell2"><FONT SIZE="-2">
-&nbsp;<A HREF="../../../../com/google/bitcoin/core/PeerDiscoveryException.html" title="class in com.google.bitcoin.core"><B>PREV CLASS</B></A>&nbsp;
-&nbsp;<A HREF="../../../../com/google/bitcoin/core/Script.html" title="class in com.google.bitcoin.core"><B>NEXT CLASS</B></A></FONT></TD>
+&nbsp;<A HREF="../../../../com/google/bitcoin/core/PeerDiscovery.html" title="interface in com.google.bitcoin.core"><B>PREV CLASS</B></A>&nbsp;
+&nbsp;<A HREF="../../../../com/google/bitcoin/core/ProtocolException.html" title="class in com.google.bitcoin.core"><B>NEXT CLASS</B></A></FONT></TD>
 <TD BGCOLOR="white" CLASS="NavBarCell2"><FONT SIZE="-2">
-  <A HREF="../../../../index.html?com/google/bitcoin/core/ProtocolException.html" target="_top"><B>FRAMES</B></A>  &nbsp;
-&nbsp;<A HREF="ProtocolException.html" target="_top"><B>NO FRAMES</B></A>  &nbsp;
+  <A HREF="../../../../index.html?com/google/bitcoin/core/PeerDiscoveryException.html" target="_top"><B>FRAMES</B></A>  &nbsp;
+&nbsp;<A HREF="PeerDiscoveryException.html" target="_top"><B>NO FRAMES</B></A>  &nbsp;
 &nbsp;<SCRIPT type="text/javascript">
   <!--
   if(window==top) {

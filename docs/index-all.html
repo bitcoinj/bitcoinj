@@ -208,6 +208,9 @@ Variable in class com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core/Mes
 <DT><A HREF="./com/google/bitcoin/core/Base58.html#decode(java.lang.String)"><B>decode(String)</B></A> - 
 Static method in class com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core/Base58.html" title="class in com.google.bitcoin.core">Base58</A>
 <DD>&nbsp;
+<DT><A HREF="./com/google/bitcoin/core/Base58.html#decodeChecked(java.lang.String)"><B>decodeChecked(String)</B></A> - 
+Static method in class com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core/Base58.html" title="class in com.google.bitcoin.core">Base58</A>
+<DD>Uses the checksum in the last 4 bytes of the decoded data to verify the rest are correct.
 <DT><A HREF="./com/google/bitcoin/core/Base58.html#decodeToBigInteger(java.lang.String)"><B>decodeToBigInteger(String)</B></A> - 
 Static method in class com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core/Base58.html" title="class in com.google.bitcoin.core">Base58</A>
 <DD>&nbsp;
@@ -217,6 +220,12 @@ Method in class com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core/Peer.
 <DT><A HREF="./com/google/bitcoin/core/DiskBlockStore.html" title="class in com.google.bitcoin.core"><B>DiskBlockStore</B></A> - Class in <A HREF="./com/google/bitcoin/core/package-summary.html">com.google.bitcoin.core</A><DD>Stores the block chain to disk but still holds it in memory.<DT><A HREF="./com/google/bitcoin/core/DiskBlockStore.html#DiskBlockStore(com.google.bitcoin.core.NetworkParameters, java.io.File)"><B>DiskBlockStore(NetworkParameters, File)</B></A> - 
 Constructor for class com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core/DiskBlockStore.html" title="class in com.google.bitcoin.core">DiskBlockStore</A>
 <DD>&nbsp;
+<DT><A HREF="./com/google/bitcoin/core/DnsDiscovery.html" title="class in com.google.bitcoin.core"><B>DnsDiscovery</B></A> - Class in <A HREF="./com/google/bitcoin/core/package-summary.html">com.google.bitcoin.core</A><DD>Supports peer discovery through DNS.<DT><A HREF="./com/google/bitcoin/core/DnsDiscovery.html#DnsDiscovery(com.google.bitcoin.core.NetworkParameters)"><B>DnsDiscovery(NetworkParameters)</B></A> - 
+Constructor for class com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core/DnsDiscovery.html" title="class in com.google.bitcoin.core">DnsDiscovery</A>
+<DD>Supports finding peers through DNS A records.
+<DT><A HREF="./com/google/bitcoin/core/DnsDiscovery.html#DnsDiscovery(java.lang.String[], com.google.bitcoin.core.NetworkParameters)"><B>DnsDiscovery(String[], NetworkParameters)</B></A> - 
+Constructor for class com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core/DnsDiscovery.html" title="class in com.google.bitcoin.core">DnsDiscovery</A>
+<DD>Supports finding peers through DNS A records.
 <DT><A HREF="./com/google/bitcoin/core/Utils.html#doubleDigest(byte[])"><B>doubleDigest(byte[])</B></A> - 
 Static method in class com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core/Utils.html" title="class in com.google.bitcoin.core">Utils</A>
 <DD>See <A HREF="./com/google/bitcoin/core/Utils.html#doubleDigest(byte[], int, int)"><CODE>Utils.doubleDigest(byte[],int,int)</CODE></A>.
@@ -297,7 +306,10 @@ Method in class com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core/Memor
 <DD>&nbsp;
 <DT><A HREF="./com/google/bitcoin/core/Wallet.html#getBalance()"><B>getBalance()</B></A> - 
 Method in class com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core/Wallet.html" title="class in com.google.bitcoin.core">Wallet</A>
-<DD>Returns the balance of this wallet by summing up all unspent outputs that were sent to us.
+<DD>Returns the AVAILABLE balance of this wallet.
+<DT><A HREF="./com/google/bitcoin/core/Wallet.html#getBalance(com.google.bitcoin.core.Wallet.BalanceType)"><B>getBalance(Wallet.BalanceType)</B></A> - 
+Method in class com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core/Wallet.html" title="class in com.google.bitcoin.core">Wallet</A>
+<DD>Returns the balance of this wallet as calculated by the provided balanceType.
 <DT><A HREF="./com/google/bitcoin/core/Peer.html#getBlock(byte[])"><B>getBlock(byte[])</B></A> - 
 Method in class com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core/Peer.html" title="class in com.google.bitcoin.core">Peer</A>
 <DD>Asks the connected peer for the block of the given hash, and returns a Future representing the answer.
@@ -322,6 +334,9 @@ Method in class com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core/Store
 <DT><A HREF="./com/google/bitcoin/core/GetDataMessage.html" title="class in com.google.bitcoin.core"><B>GetDataMessage</B></A> - Class in <A HREF="./com/google/bitcoin/core/package-summary.html">com.google.bitcoin.core</A><DD>&nbsp;<DT><A HREF="./com/google/bitcoin/core/GetDataMessage.html#GetDataMessage(com.google.bitcoin.core.NetworkParameters, byte[])"><B>GetDataMessage(NetworkParameters, byte[])</B></A> - 
 Constructor for class com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core/GetDataMessage.html" title="class in com.google.bitcoin.core">GetDataMessage</A>
 <DD>&nbsp;
+<DT><A HREF="./com/google/bitcoin/core/DnsDiscovery.html#getDefaultHostNames()"><B>getDefaultHostNames()</B></A> - 
+Static method in class com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core/DnsDiscovery.html" title="class in com.google.bitcoin.core">DnsDiscovery</A>
+<DD>Returns the well known discovery host names on the production network.
 <DT><A HREF="./com/google/bitcoin/core/Block.html#getDifficultyTarget()"><B>getDifficultyTarget()</B></A> - 
 Method in class com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core/Block.html" title="class in com.google.bitcoin.core">Block</A>
 <DD>Returns the difficulty of the proof of work that this block should meet encoded in compact form.
@@ -366,6 +381,15 @@ Method in class com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core/Block
 Method in class com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core/Block.html" title="class in com.google.bitcoin.core">Block</A>
 <DD>Returns the nonce, an arbitrary value that exists only to make the hash of the block header fall below the
  difficulty target.
+<DT><A HREF="./com/google/bitcoin/core/DnsDiscovery.html#getPeers()"><B>getPeers()</B></A> - 
+Method in class com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core/DnsDiscovery.html" title="class in com.google.bitcoin.core">DnsDiscovery</A>
+<DD>&nbsp;
+<DT><A HREF="./com/google/bitcoin/core/IrcDiscovery.html#getPeers()"><B>getPeers()</B></A> - 
+Method in class com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core/IrcDiscovery.html" title="class in com.google.bitcoin.core">IrcDiscovery</A>
+<DD>Returns a list of peers that were found in the IRC channel.
+<DT><A HREF="./com/google/bitcoin/core/PeerDiscovery.html#getPeers()"><B>getPeers()</B></A> - 
+Method in interface com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core/PeerDiscovery.html" title="interface in com.google.bitcoin.core">PeerDiscovery</A>
+<DD>Returns an array of addresses.
 <DT><A HREF="./com/google/bitcoin/core/Wallet.html#getPendingTransactions()"><B>getPendingTransactions()</B></A> - 
 Method in class com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core/Wallet.html" title="class in com.google.bitcoin.core">Wallet</A>
 <DD>Returns an immutable view of the transactions currently waiting for network confirmations.
@@ -477,6 +501,14 @@ Constructor for class com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core
 <DT><A HREF="./com/google/bitcoin/core/InventoryMessage.html#InventoryMessage(com.google.bitcoin.core.NetworkParameters)"><B>InventoryMessage(NetworkParameters)</B></A> - 
 Constructor for class com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core/InventoryMessage.html" title="class in com.google.bitcoin.core">InventoryMessage</A>
 <DD>&nbsp;
+<DT><A HREF="./com/google/bitcoin/core/IrcDiscovery.html" title="class in com.google.bitcoin.core"><B>IrcDiscovery</B></A> - Class in <A HREF="./com/google/bitcoin/core/package-summary.html">com.google.bitcoin.core</A><DD>IrcDiscovery provides a way to find network peers by joining a pre-agreed rendevouz point on the LFnet IRC network.<DT><A HREF="./com/google/bitcoin/core/IrcDiscovery.html#IrcDiscovery(java.lang.String)"><B>IrcDiscovery(String)</B></A> - 
+Constructor for class com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core/IrcDiscovery.html" title="class in com.google.bitcoin.core">IrcDiscovery</A>
+<DD>Finds a list of peers by connecting to an IRC network, joining a channel, decoding the nicks and then
+ disconnecting.
+<DT><A HREF="./com/google/bitcoin/core/IrcDiscovery.html#IrcDiscovery(java.lang.String, java.lang.String, int)"><B>IrcDiscovery(String, String, int)</B></A> - 
+Constructor for class com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core/IrcDiscovery.html" title="class in com.google.bitcoin.core">IrcDiscovery</A>
+<DD>Finds a list of peers by connecting to an IRC network, joining a channel, decoding the nicks and then
+ disconnecting.
 <DT><A HREF="./com/google/bitcoin/core/Transaction.html#isCoinBase()"><B>isCoinBase()</B></A> - 
 Method in class com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core/Transaction.html" title="class in com.google.bitcoin.core">Transaction</A>
 <DD>A coinbase transaction is one that creates a new coin.
@@ -558,7 +590,7 @@ Variable in class com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core/Ver
 <A NAME="_N_"><!-- --></A><H2>
 <B>N</B></H2>
 <DL>
-<DT><A HREF="./com/google/bitcoin/core/NetworkConnection.html" title="class in com.google.bitcoin.core"><B>NetworkConnection</B></A> - Class in <A HREF="./com/google/bitcoin/core/package-summary.html">com.google.bitcoin.core</A><DD>A NetworkConnection handles talking to a remote BitCoin peer at a low level.<DT><A HREF="./com/google/bitcoin/core/NetworkConnection.html#NetworkConnection(java.net.InetAddress, com.google.bitcoin.core.NetworkParameters, int)"><B>NetworkConnection(InetAddress, NetworkParameters, int)</B></A> - 
+<DT><A HREF="./com/google/bitcoin/core/NetworkConnection.html" title="class in com.google.bitcoin.core"><B>NetworkConnection</B></A> - Class in <A HREF="./com/google/bitcoin/core/package-summary.html">com.google.bitcoin.core</A><DD>A NetworkConnection handles talking to a remote BitCoin peer at a low level.<DT><A HREF="./com/google/bitcoin/core/NetworkConnection.html#NetworkConnection(java.net.InetAddress, com.google.bitcoin.core.NetworkParameters, int, int)"><B>NetworkConnection(InetAddress, NetworkParameters, int, int)</B></A> - 
 Constructor for class com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core/NetworkConnection.html" title="class in com.google.bitcoin.core">NetworkConnection</A>
 <DD>Connect to the given IP address using the port specified as part of the network parameters.
 <DT><A HREF="./com/google/bitcoin/core/NetworkParameters.html" title="class in com.google.bitcoin.core"><B>NetworkParameters</B></A> - Class in <A HREF="./com/google/bitcoin/core/package-summary.html">com.google.bitcoin.core</A><DD>NetworkParameters contains the data needed for working with an instantiation of a BitCoin chain.<DT><A HREF="./com/google/bitcoin/core/NetworkParameters.html#NetworkParameters()"><B>NetworkParameters()</B></A> - 
@@ -578,6 +610,15 @@ Variable in class com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core/Mes
 <DT><A HREF="./com/google/bitcoin/core/WalletEventListener.html#onCoinsReceived(com.google.bitcoin.core.Wallet, com.google.bitcoin.core.Transaction, java.math.BigInteger, java.math.BigInteger)"><B>onCoinsReceived(Wallet, Transaction, BigInteger, BigInteger)</B></A> - 
 Method in class com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core/WalletEventListener.html" title="class in com.google.bitcoin.core">WalletEventListener</A>
 <DD>This is called on a Peer thread when a block is received that sends some coins to you.
+<DT><A HREF="./com/google/bitcoin/core/WalletEventListener.html#onDeadTransaction(com.google.bitcoin.core.Transaction, com.google.bitcoin.core.Transaction)"><B>onDeadTransaction(Transaction, Transaction)</B></A> - 
+Method in class com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core/WalletEventListener.html" title="class in com.google.bitcoin.core">WalletEventListener</A>
+<DD>This is called on a Peer thread when a transaction becomes <i>dead</i>.
+<DT><A HREF="./com/google/bitcoin/core/IrcDiscovery.html#onIRCReceive(java.lang.String)"><B>onIRCReceive(String)</B></A> - 
+Method in class com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core/IrcDiscovery.html" title="class in com.google.bitcoin.core">IrcDiscovery</A>
+<DD>&nbsp;
+<DT><A HREF="./com/google/bitcoin/core/IrcDiscovery.html#onIRCSend(java.lang.String)"><B>onIRCSend(String)</B></A> - 
+Method in class com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core/IrcDiscovery.html" title="class in com.google.bitcoin.core">IrcDiscovery</A>
+<DD>&nbsp;
 <DT><A HREF="./com/google/bitcoin/core/WalletEventListener.html#onReorganize()"><B>onReorganize()</B></A> - 
 Method in class com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core/WalletEventListener.html" title="class in com.google.bitcoin.core">WalletEventListener</A>
 <DD>This is called on a Peer thread when a block is received that triggers a block chain re-organization.
@@ -644,6 +685,18 @@ Constructor for class com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core
 <DT><A HREF="./com/google/bitcoin/core/PeerAddress.html#PeerAddress(java.net.InetAddress, int, int)"><B>PeerAddress(InetAddress, int, int)</B></A> - 
 Constructor for class com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core/PeerAddress.html" title="class in com.google.bitcoin.core">PeerAddress</A>
 <DD>&nbsp;
+<DT><A HREF="./com/google/bitcoin/core/PeerDiscovery.html" title="interface in com.google.bitcoin.core"><B>PeerDiscovery</B></A> - Interface in <A HREF="./com/google/bitcoin/core/package-summary.html">com.google.bitcoin.core</A><DD>A PeerDiscovery object is responsible for finding addresses of other nodes in the BitCoin P2P network.<DT><A HREF="./com/google/bitcoin/core/PeerDiscoveryException.html" title="class in com.google.bitcoin.core"><B>PeerDiscoveryException</B></A> - Exception in <A HREF="./com/google/bitcoin/core/package-summary.html">com.google.bitcoin.core</A><DD>&nbsp;<DT><A HREF="./com/google/bitcoin/core/PeerDiscoveryException.html#PeerDiscoveryException()"><B>PeerDiscoveryException()</B></A> - 
+Constructor for exception com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core/PeerDiscoveryException.html" title="class in com.google.bitcoin.core">PeerDiscoveryException</A>
+<DD>&nbsp;
+<DT><A HREF="./com/google/bitcoin/core/PeerDiscoveryException.html#PeerDiscoveryException(java.lang.String)"><B>PeerDiscoveryException(String)</B></A> - 
+Constructor for exception com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core/PeerDiscoveryException.html" title="class in com.google.bitcoin.core">PeerDiscoveryException</A>
+<DD>&nbsp;
+<DT><A HREF="./com/google/bitcoin/core/PeerDiscoveryException.html#PeerDiscoveryException(java.lang.Throwable)"><B>PeerDiscoveryException(Throwable)</B></A> - 
+Constructor for exception com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core/PeerDiscoveryException.html" title="class in com.google.bitcoin.core">PeerDiscoveryException</A>
+<DD>&nbsp;
+<DT><A HREF="./com/google/bitcoin/core/PeerDiscoveryException.html#PeerDiscoveryException(java.lang.String, java.lang.Throwable)"><B>PeerDiscoveryException(String, Throwable)</B></A> - 
+Constructor for exception com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core/PeerDiscoveryException.html" title="class in com.google.bitcoin.core">PeerDiscoveryException</A>
+<DD>&nbsp;
 <DT><A HREF="./com/google/bitcoin/core/NetworkConnection.html#ping()"><B>ping()</B></A> - 
 Method in class com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core/NetworkConnection.html" title="class in com.google.bitcoin.core">NetworkConnection</A>
 <DD>Sends a "ping" message to the remote node.
@@ -688,6 +741,9 @@ Method in class com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core/Memor
 <DT><A HREF="./com/google/bitcoin/core/NetworkConnection.html#readMessage()"><B>readMessage()</B></A> - 
 Method in class com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core/NetworkConnection.html" title="class in com.google.bitcoin.core">NetworkConnection</A>
 <DD>Reads a network message from the wire, blocking until the message is fully received.
+<DT><A HREF="./com/google/bitcoin/core/Utils.html#readUint16BE(byte[], int)"><B>readUint16BE(byte[], int)</B></A> - 
+Static method in class com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core/Utils.html" title="class in com.google.bitcoin.core">Utils</A>
+<DD>&nbsp;
 <DT><A HREF="./com/google/bitcoin/core/Utils.html#readUint32(byte[], int)"><B>readUint32(byte[], int)</B></A> - 
 Static method in class com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core/Utils.html" title="class in com.google.bitcoin.core">Utils</A>
 <DD>&nbsp;
@@ -895,12 +951,19 @@ Static method in enum com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core
 <DT><A HREF="./com/google/bitcoin/core/Transaction.SigHash.html#valueOf(java.lang.String)"><B>valueOf(String)</B></A> - 
 Static method in enum com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core/Transaction.SigHash.html" title="enum in com.google.bitcoin.core">Transaction.SigHash</A>
 <DD>Returns the enum constant of this type with the specified name.
+<DT><A HREF="./com/google/bitcoin/core/Wallet.BalanceType.html#valueOf(java.lang.String)"><B>valueOf(String)</B></A> - 
+Static method in enum com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core/Wallet.BalanceType.html" title="enum in com.google.bitcoin.core">Wallet.BalanceType</A>
+<DD>Returns the enum constant of this type with the specified name.
 <DT><A HREF="./com/google/bitcoin/core/InventoryItem.Type.html#values()"><B>values()</B></A> - 
 Static method in enum com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core/InventoryItem.Type.html" title="enum in com.google.bitcoin.core">InventoryItem.Type</A>
 <DD>Returns an array containing the constants of this enum type, in
 the order they are declared.
 <DT><A HREF="./com/google/bitcoin/core/Transaction.SigHash.html#values()"><B>values()</B></A> - 
 Static method in enum com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core/Transaction.SigHash.html" title="enum in com.google.bitcoin.core">Transaction.SigHash</A>
+<DD>Returns an array containing the constants of this enum type, in
+the order they are declared.
+<DT><A HREF="./com/google/bitcoin/core/Wallet.BalanceType.html#values()"><B>values()</B></A> - 
+Static method in enum com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core/Wallet.BalanceType.html" title="enum in com.google.bitcoin.core">Wallet.BalanceType</A>
 <DD>Returns an array containing the constants of this enum type, in
 the order they are declared.
 <DT><A HREF="./com/google/bitcoin/core/VarInt.html" title="class in com.google.bitcoin.core"><B>VarInt</B></A> - Class in <A HREF="./com/google/bitcoin/core/package-summary.html">com.google.bitcoin.core</A><DD>&nbsp;<DT><A HREF="./com/google/bitcoin/core/VarInt.html#VarInt(long)"><B>VarInt(long)</B></A> - 
@@ -942,7 +1005,7 @@ Variable in class com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core/Blo
 <DT><A HREF="./com/google/bitcoin/core/Wallet.html" title="class in com.google.bitcoin.core"><B>Wallet</B></A> - Class in <A HREF="./com/google/bitcoin/core/package-summary.html">com.google.bitcoin.core</A><DD>A Wallet stores keys and a record of transactions that have not yet been spent.<DT><A HREF="./com/google/bitcoin/core/Wallet.html#Wallet(com.google.bitcoin.core.NetworkParameters)"><B>Wallet(NetworkParameters)</B></A> - 
 Constructor for class com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core/Wallet.html" title="class in com.google.bitcoin.core">Wallet</A>
 <DD>Creates a new, empty wallet with no keys and no transactions.
-<DT><A HREF="./com/google/bitcoin/core/WalletEventListener.html" title="class in com.google.bitcoin.core"><B>WalletEventListener</B></A> - Class in <A HREF="./com/google/bitcoin/core/package-summary.html">com.google.bitcoin.core</A><DD>Implementing a subclass WalletEventListener allows you to learn when the contents of the wallet changes due to
+<DT><A HREF="./com/google/bitcoin/core/Wallet.BalanceType.html" title="enum in com.google.bitcoin.core"><B>Wallet.BalanceType</B></A> - Enum in <A HREF="./com/google/bitcoin/core/package-summary.html">com.google.bitcoin.core</A><DD>It's possible to calculate a wallets balance from multiple points of view.<DT><A HREF="./com/google/bitcoin/core/WalletEventListener.html" title="class in com.google.bitcoin.core"><B>WalletEventListener</B></A> - Class in <A HREF="./com/google/bitcoin/core/package-summary.html">com.google.bitcoin.core</A><DD>Implementing a subclass WalletEventListener allows you to learn when the contents of the wallet changes due to
  receiving money or a block chain re-organize.<DT><A HREF="./com/google/bitcoin/core/WalletEventListener.html#WalletEventListener()"><B>WalletEventListener()</B></A> - 
 Constructor for class com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core/WalletEventListener.html" title="class in com.google.bitcoin.core">WalletEventListener</A>
 <DD>&nbsp;

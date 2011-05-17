@@ -88,6 +88,10 @@ Package com.google.bitcoin.core
 <TD WIDTH="15%"><B><A HREF="../../../../com/google/bitcoin/core/BlockStore.html" title="interface in com.google.bitcoin.core">BlockStore</A></B></TD>
 <TD>An implementor of BlockStore saves StoredBlock objects to disk.</TD>
 </TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD WIDTH="15%"><B><A HREF="../../../../com/google/bitcoin/core/PeerDiscovery.html" title="interface in com.google.bitcoin.core">PeerDiscovery</A></B></TD>
+<TD>A PeerDiscovery object is responsible for finding addresses of other nodes in the BitCoin P2P network.</TD>
+</TR>
 </TABLE>
 &nbsp;
 
@@ -124,6 +128,10 @@ Package com.google.bitcoin.core
 <TD>Stores the block chain to disk but still holds it in memory.</TD>
 </TR>
 <TR BGCOLOR="white" CLASS="TableRowColor">
+<TD WIDTH="15%"><B><A HREF="../../../../com/google/bitcoin/core/DnsDiscovery.html" title="class in com.google.bitcoin.core">DnsDiscovery</A></B></TD>
+<TD>Supports peer discovery through DNS.</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
 <TD WIDTH="15%"><B><A HREF="../../../../com/google/bitcoin/core/ECKey.html" title="class in com.google.bitcoin.core">ECKey</A></B></TD>
 <TD>Represents an elliptic curve keypair that we own and can use for signing transactions.</TD>
 </TR>
@@ -142,6 +150,10 @@ Package com.google.bitcoin.core
 <TR BGCOLOR="white" CLASS="TableRowColor">
 <TD WIDTH="15%"><B><A HREF="../../../../com/google/bitcoin/core/InventoryMessage.html" title="class in com.google.bitcoin.core">InventoryMessage</A></B></TD>
 <TD>&nbsp;</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD WIDTH="15%"><B><A HREF="../../../../com/google/bitcoin/core/IrcDiscovery.html" title="class in com.google.bitcoin.core">IrcDiscovery</A></B></TD>
+<TD>IrcDiscovery provides a way to find network peers by joining a pre-agreed rendevouz point on the LFnet IRC network.</TD>
 </TR>
 <TR BGCOLOR="white" CLASS="TableRowColor">
 <TD WIDTH="15%"><B><A HREF="../../../../com/google/bitcoin/core/MemoryBlockStore.html" title="class in com.google.bitcoin.core">MemoryBlockStore</A></B></TD>
@@ -243,6 +255,10 @@ Package com.google.bitcoin.core
 <TD WIDTH="15%"><B><A HREF="../../../../com/google/bitcoin/core/Transaction.SigHash.html" title="enum in com.google.bitcoin.core">Transaction.SigHash</A></B></TD>
 <TD>These constants are a part of a scriptSig signature on the inputs.</TD>
 </TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD WIDTH="15%"><B><A HREF="../../../../com/google/bitcoin/core/Wallet.BalanceType.html" title="enum in com.google.bitcoin.core">Wallet.BalanceType</A></B></TD>
+<TD>It's possible to calculate a wallets balance from multiple points of view.</TD>
+</TR>
 </TABLE>
 &nbsp;
 
@@ -260,6 +276,10 @@ Package com.google.bitcoin.core
 <TR BGCOLOR="white" CLASS="TableRowColor">
 <TD WIDTH="15%"><B><A HREF="../../../../com/google/bitcoin/core/BlockStoreException.html" title="class in com.google.bitcoin.core">BlockStoreException</A></B></TD>
 <TD>Thrown when something goes wrong with storing a block.</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD WIDTH="15%"><B><A HREF="../../../../com/google/bitcoin/core/PeerDiscoveryException.html" title="class in com.google.bitcoin.core">PeerDiscoveryException</A></B></TD>
+<TD>&nbsp;</TD>
 </TR>
 <TR BGCOLOR="white" CLASS="TableRowColor">
 <TD WIDTH="15%"><B><A HREF="../../../../com/google/bitcoin/core/ProtocolException.html" title="class in com.google.bitcoin.core">ProtocolException</A></B></TD>

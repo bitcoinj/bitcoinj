@@ -51,7 +51,7 @@ function windowTitle()
 
 <TR>
 <TD BGCOLOR="white" CLASS="NavBarCell2"><FONT SIZE="-2">
-&nbsp;<A HREF="../../../../com/google/bitcoin/core/Wallet.html" title="class in com.google.bitcoin.core"><B>PREV CLASS</B></A>&nbsp;
+&nbsp;<A HREF="../../../../com/google/bitcoin/core/Wallet.BalanceType.html" title="enum in com.google.bitcoin.core"><B>PREV CLASS</B></A>&nbsp;
 &nbsp;NEXT CLASS</FONT></TD>
 <TD BGCOLOR="white" CLASS="NavBarCell2"><FONT SIZE="-2">
   <A HREF="../../../../index.html?com/google/bitcoin/core/WalletEventListener.html" target="_top"><B>FRAMES</B></A>  &nbsp;
@@ -145,6 +145,15 @@ Implementing a subclass WalletEventListener allows you to learn when the content
 <TR BGCOLOR="white" CLASS="TableRowColor">
 <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
 <CODE>&nbsp;void</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/WalletEventListener.html#onDeadTransaction(com.google.bitcoin.core.Transaction, com.google.bitcoin.core.Transaction)">onDeadTransaction</A></B>(<A HREF="../../../../com/google/bitcoin/core/Transaction.html" title="class in com.google.bitcoin.core">Transaction</A>&nbsp;deadTx,
+                  <A HREF="../../../../com/google/bitcoin/core/Transaction.html" title="class in com.google.bitcoin.core">Transaction</A>&nbsp;replacementTx)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This is called on a Peer thread when a transaction becomes <i>dead</i>.</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;void</CODE></FONT></TD>
 <TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/WalletEventListener.html#onReorganize()">onReorganize</A></B>()</CODE>
 
 <BR>
@@ -229,6 +238,26 @@ public void <B>onReorganize</B>()</PRE>
 </DL>
 </DD>
 </DL>
+<HR>
+
+<A NAME="onDeadTransaction(com.google.bitcoin.core.Transaction, com.google.bitcoin.core.Transaction)"><!-- --></A><H3>
+onDeadTransaction</H3>
+<PRE>
+public void <B>onDeadTransaction</B>(<A HREF="../../../../com/google/bitcoin/core/Transaction.html" title="class in com.google.bitcoin.core">Transaction</A>&nbsp;deadTx,
+                              <A HREF="../../../../com/google/bitcoin/core/Transaction.html" title="class in com.google.bitcoin.core">Transaction</A>&nbsp;replacementTx)</PRE>
+<DL>
+<DD>This is called on a Peer thread when a transaction becomes <i>dead</i>. A dead transaction is one that has
+ been overridden by a double spend from the network and so will never confirm no matter how long you wait.<p>
+
+ A dead transaction can occur if somebody is attacking the network, or by accident if keys are being shared.
+ You can use this event handler to inform the user of the situation. A dead spend will show up in the BitCoin
+ C++ client of the recipient as 0/unconfirmed forever, so if it was used to purchase something,
+ the user needs to know their goods will never arrive.
+<P>
+<DD><DL>
+<DT><B>Parameters:</B><DD><CODE>deadTx</CODE> - The transaction that is newly dead.<DD><CODE>replacementTx</CODE> - The transaction that killed it.</DL>
+</DD>
+</DL>
 <!-- ========= END OF CLASS DATA ========= -->
 <HR>
 
@@ -258,7 +287,7 @@ public void <B>onReorganize</B>()</PRE>
 
 <TR>
 <TD BGCOLOR="white" CLASS="NavBarCell2"><FONT SIZE="-2">
-&nbsp;<A HREF="../../../../com/google/bitcoin/core/Wallet.html" title="class in com.google.bitcoin.core"><B>PREV CLASS</B></A>&nbsp;
+&nbsp;<A HREF="../../../../com/google/bitcoin/core/Wallet.BalanceType.html" title="enum in com.google.bitcoin.core"><B>PREV CLASS</B></A>&nbsp;
 &nbsp;NEXT CLASS</FONT></TD>
 <TD BGCOLOR="white" CLASS="NavBarCell2"><FONT SIZE="-2">
   <A HREF="../../../../index.html?com/google/bitcoin/core/WalletEventListener.html" target="_top"><B>FRAMES</B></A>  &nbsp;
