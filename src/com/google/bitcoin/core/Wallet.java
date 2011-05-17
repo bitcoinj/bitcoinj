@@ -174,17 +174,6 @@ public class Wallet implements Serializable {
     }
 
     /**
-     * Returns true if the given transaction is present in the wallet, comparing by hash value (not by object
-     * reference). So you can create a transaction object from scratch and get true from this method if the
-     * transaction is logically equal.
-     */
-    public synchronized boolean isTransactionPresent(Transaction transaction) {
-        // TODO: Redefine or delete this method.
-        Sha256Hash hash = transaction.getHash();
-        return unspent.containsKey(hash) || spent.containsKey(hash);
-    }
-
-    /**
      * Called by the {@link BlockChain} when we receive a new block that sends coins to one of our addresses or
      * spends coins from one of our addresses (note that a single transaction can do both).<p>
      *
