@@ -457,7 +457,7 @@ public class Block extends Message {
         // Real coinbase transactions use <pubkey> OP_CHECKSIG rather than a send to an address though there's
         // nothing in the system that enforces that and both are just as valid.
         coinbase.inputs.add(new TransactionInput(params, new byte[] { (byte) coinbaseCounter++ } ));
-        coinbase.outputs.add(new TransactionOutput(params, Utils.toNanoCoins(50, 0), to, coinbase));
+        coinbase.outputs.add(new TransactionOutput(params, coinbase, Utils.toNanoCoins(50, 0), to));
         transactions.add(coinbase);
     }
 

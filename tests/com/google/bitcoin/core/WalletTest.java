@@ -23,6 +23,7 @@ import java.math.BigInteger;
 
 import static com.google.bitcoin.core.Utils.*;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 public class WalletTest {
@@ -41,16 +42,17 @@ public class WalletTest {
         blockStore = new MemoryBlockStore(params);
     }
 
-    private static byte fakeHashCounter = 0;
     private Transaction createFakeTx(BigInteger nanocoins,  Address to) {
         Transaction t = new Transaction(params);
-        TransactionOutput o1 = new TransactionOutput(params, nanocoins, to, t);
+        TransactionOutput o1 = new TransactionOutput(params, t, nanocoins, to);
         t.addOutput(o1);
-        // t1 is not a valid transaction - it has no inputs. Nonetheless, if we set it up with a fake hash it'll be
-        // valid enough for these tests.
-        byte[] hash = new byte[32];
-        hash[0] = fakeHashCounter++;
-        t.setFakeHashForTesting(new Sha256Hash(hash));
+        // Make a previous tx simply to send us sufficient coins. This prev tx is not really valid but it doesn't
+        // matter for our purposes.
+        Transaction prevTx = new Transaction(params);
+        TransactionOutput prevOut = new TransactionOutput(params, prevTx, nanocoins, to);
+        prevTx.addOutput(prevOut);
+        // Connect it.
+        t.addInput(prevOut);
         return t;
     }
 
@@ -152,8 +154,11 @@ public class WalletTest {
         Transaction spend = wallet.createSend(new ECKey().toAddress(params), v3);
         wallet.confirmSend(spend);
 
-        // Balance should be 0.50 because the change output is pending confirmation by the network.
-        assertEquals(toNanoCoins(0, 50), wallet.getBalance());
+        // Available and estimated balances should not be the same. We don't check the exact available balance here
+        // because it depends on the coin selection algorithm.
+        assertEquals(toNanoCoins(4, 50), wallet.getBalance(Wallet.BalanceType.ESTIMATED));
+        assertFalse(wallet.getBalance(Wallet.BalanceType.AVAILABLE).equals(
+                    wallet.getBalance(Wallet.BalanceType.ESTIMATED)));
 
         // Now confirm the transaction by including it into a block.
         StoredBlock b3 = createFakeBlock(spend).storedBlock;
@@ -161,8 +166,7 @@ public class WalletTest {
 
         // Change is confirmed. We started with 5.50 so we should have 4.50 left.
         BigInteger v4 = toNanoCoins(4, 50);
-        assertEquals(bitcoinValueToFriendlyString(v4),
-                     bitcoinValueToFriendlyString(wallet.getBalance()));
+        assertEquals(v4, wallet.getBalance(Wallet.BalanceType.AVAILABLE));
     }
 
     // Intuitively you'd expect to be able to create a transaction with identical inputs and outputs and get an

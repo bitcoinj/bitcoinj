@@ -19,6 +19,7 @@ package com.google.bitcoin.core;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Serializable;
+import java.util.Map;
 
 /**
  * A transfer of coins from one address to another creates a transaction in which the outputs
@@ -27,11 +28,14 @@ import java.io.Serializable;
  * to the outputs of another. The exceptions are coinbase transactions, which create new coins.
  */
 public class TransactionInput extends Message implements Serializable {
-    private static final long serialVersionUID = -7687665228438202968L;
-    // An apparently unused field intended for altering transactions after they were broadcast.
-    long sequence;
-    // The output of the transaction we're gathering coins from.
+    private static final long serialVersionUID = 2;
+    public static final byte[] EMPTY_ARRAY = new byte[0];
 
+    // Allows for altering transactions after they were broadcast. Tx replacement is currently disabled in the C++
+    // client so this is always the UINT_MAX.
+    // TODO: Document this in more detail and build features that use it.
+    long sequence;
+    // Data needed to connect to the output of the transaction we're gathering coins from.
     TransactionOutPoint outpoint;
     // The "script bytes" might not actually be a script. In coinbase transactions where new coins are minted there
     // is no input transaction, so instead the scriptBytes contains some extra stuff (like a rollover nonce) that we
@@ -40,8 +44,6 @@ public class TransactionInput extends Message implements Serializable {
     // The Script object obtained from parsing scriptBytes. Only filled in on demand and if the transaction is not
     // coinbase.
     transient private Script scriptSig;
-
-    static public final byte[] EMPTY_ARRAY = new byte[0];
 
     /** Used only in creation of the genesis block. */
     TransactionInput(NetworkParameters params, byte[] scriptBytes) {
@@ -52,7 +54,7 @@ public class TransactionInput extends Message implements Serializable {
     }
 
     /** Creates an UNSIGNED input that links to the given output */
-    TransactionInput(NetworkParameters params,  TransactionOutput output) {
+    TransactionInput(NetworkParameters params, TransactionOutput output) {
         super(params);
         long outputIndex = output.getIndex();
         outpoint = new TransactionOutPoint(params, outputIndex, output.parentTransaction);
@@ -123,5 +125,63 @@ public class TransactionInput extends Message implements Serializable {
         } catch (ScriptException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    enum ConnectionResult {
+        NO_SUCH_TX,
+        ALREADY_SPENT,
+        SUCCESS
+    }
+
+    // TODO: Clean all this up once TransactionOutPoint disappears.
+
+    /**
+     * Locates the referenced output from the given pool of transactions.
+     * @return The TransactionOutput or null if the transactions map doesn't contain the referenced tx.
+     */
+    TransactionOutput getConnectedOutput(Map<Sha256Hash, Transaction> transactions) {
+        Sha256Hash h = new Sha256Hash(outpoint.hash);
+        Transaction tx = transactions.get(h);
+        if (tx == null)
+            return null;
+        TransactionOutput out = tx.outputs.get((int)outpoint.index);
+        return out;
+    }
+
+    /**
+     * Connects this input to the relevant output of the referenced transaction if it's in the given map.
+     * Connecting means updating the internal pointers and spent flags.
+     *
+     * @param transactions Map of txhash->transaction.
+     * @param disconnect Whether to abort if there's a pre-existing connection or not.
+     * @return true if connection took place, false if the referenced transaction was not in the list.
+     */
+    ConnectionResult connect(Map<Sha256Hash, Transaction> transactions, boolean disconnect) {
+        Sha256Hash h = new Sha256Hash(outpoint.hash);
+        Transaction tx = transactions.get(h);
+        if (tx == null)
+            return TransactionInput.ConnectionResult.NO_SUCH_TX;
+        TransactionOutput out = tx.outputs.get((int)outpoint.index);
+        if (!out.isAvailableForSpending()) {
+            if (disconnect)
+                out.markAsUnspent();
+            else
+                return TransactionInput.ConnectionResult.ALREADY_SPENT;
+        }
+        outpoint.fromTx = tx;
+        out.markAsSpent(this);
+        return TransactionInput.ConnectionResult.SUCCESS;
+    }
+
+    /**
+     * Release the connected output, making it spendable once again.
+     *
+     * @return true if the disconnection took place, false if it was not connected.
+     */
+    boolean disconnect() {
+        if (outpoint.fromTx == null) return false;
+        outpoint.fromTx.outputs.get((int)outpoint.index).markAsUnspent();
+        outpoint.fromTx = null;
+        return true;
     }
 }

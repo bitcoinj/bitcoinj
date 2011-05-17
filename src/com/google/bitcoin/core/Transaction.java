@@ -117,7 +117,7 @@ public class Transaction extends Message implements Serializable {
         BigInteger v = BigInteger.ZERO;
         for (TransactionOutput o : outputs) {
             if (!o.isMine(wallet)) continue;
-            if (!includeSpent && o.isSpent) continue;
+            if (!includeSpent && !o.isAvailableForSpending()) continue;
             v = v.add(o.getValue());
         }
         return v;
@@ -161,15 +161,42 @@ public class Transaction extends Message implements Serializable {
         // This is tested in WalletTest.
         BigInteger v = BigInteger.ZERO;
         for (TransactionInput input : inputs) {
-            boolean connected = input.outpoint.connect(wallet.unspent.values()) ||
-                                input.outpoint.connect(wallet.spent.values());
-            if (connected) {
-                // This input is taking value from an transaction in our wallet. To discover the value,
-                // we must find the connected transaction.
-                v = v.add(input.outpoint.getConnectedOutput().getValue());
-            }
+            // This input is taking value from an transaction in our wallet. To discover the value,
+            // we must find the connected transaction.
+            TransactionOutput connected = input.getConnectedOutput(wallet.unspent);
+            if (connected == null)
+                connected = input.getConnectedOutput(wallet.spent);
+            if (connected == null)
+                connected = input.getConnectedOutput(wallet.pending);
+            if (connected == null)
+                continue;
+            v = v.add(connected.getValue());
         }
         return v;
+    }
+
+    boolean disconnectInputs() {
+        boolean disconnected = false;
+        for (TransactionInput input : inputs) {
+            disconnected |= input.disconnect();
+        }
+        return disconnected;
+    }
+
+    /**
+     * Connects all inputs using the provided transactions. If any input cannot be connected returns that input or
+     * null on success.
+     */
+    TransactionInput connectInputs(Map<Sha256Hash, Transaction> transactions, boolean disconnect) {
+        for (TransactionInput input : inputs) {
+            // Coinbase transactions, by definition, do not have connectable inputs.
+            if (input.isCoinBase()) continue;
+            if (input.connect(transactions, disconnect) != TransactionInput.ConnectionResult.SUCCESS) {
+                // Could not connect this input, so return it and abort.
+                return input;
+            }
+        }
+        return null;
     }
 
     /**
@@ -225,6 +252,9 @@ public class Transaction extends Message implements Serializable {
      */
     public String toString() {
         StringBuffer s = new StringBuffer();
+        s.append("  ");
+        s.append(getHashAsString());
+        s.append("\n");
         if (isCoinBase()) {
             String script = "???";
             String script2 = "???";
@@ -323,7 +353,6 @@ public class Transaction extends Message implements Serializable {
             // The anyoneCanPay feature isn't used at the moment.
             boolean anyoneCanPay = false;
             byte[] hash = hashTransactionForSignature(hashType, anyoneCanPay);
-            log.info("  signInputs hash={}", Utils.bytesToHexString(hash));
             // Set the script to empty again for the next input.
             input.scriptBytes = TransactionInput.EMPTY_ARRAY;
 

@@ -24,10 +24,8 @@ import java.math.BigInteger;
 
 import static org.junit.Assert.*;
 
-// Tests still to write:
-//   - Fragmented chains can be joined together.
-//   - Longest testNetChain is selected based on total difficulty not length.
-//   - Many more ...
+// NOTE: Handling of chain splits/reorgs are in ChainSplitTests.
+
 public class BlockChainTest {
     private static final NetworkParameters testNet = NetworkParameters.testNet();
     private BlockChain testNetChain;
@@ -86,140 +84,6 @@ public class BlockChainTest {
         // Add in the middle block.
         assertTrue(chain.add(b2));
         assertEquals(chain.getChainHead().getHeader(), b3.cloneAsHeader());
-    }
-
-    @Test
-    public void testForking1() throws Exception {
-        // Check that if the block chain forks, we end up using the right chain. Only tests inbound transactions
-        // (receiving coins). Checking that we understand reversed spends is in testForking2.
-
-        // TODO: Change this test to not use coinbase transactions as they are special (maturity rules).
-        final boolean[] reorgHappened = new boolean[1];
-        reorgHappened[0] = false;
-        wallet.addEventListener(new WalletEventListener() {
-            @Override
-            public void onReorganize() {
-                reorgHappened[0] = true;
-            }
-        });
-
-        // Start by building a couple of blocks on top of the genesis block.
-        Block b1 = unitTestParams.genesisBlock.createNextBlock(coinbaseTo);
-        Block b2 = b1.createNextBlock(coinbaseTo);
-        assertTrue(chain.add(b1));
-        assertTrue(chain.add(b2));
-        assertFalse(reorgHappened[0]);
-        // We got two blocks which generated 50 coins each, to us.
-        assertEquals("100.00", Utils.bitcoinValueToFriendlyString(wallet.getBalance()));
-        // We now have the following chain:
-        //     genesis -> b1 -> b2
-        //
-        // so fork like this:
-        //
-        //     genesis -> b1 -> b2
-        //                  \-> b3
-        //
-        // Nothing should happen at this point. We saw b2 first so it takes priority.
-        Block b3 = b1.createNextBlock(someOtherGuy);
-        assertTrue(chain.add(b3));
-        assertFalse(reorgHappened[0]);  // No re-org took place.
-        assertEquals("100.00", Utils.bitcoinValueToFriendlyString(wallet.getBalance()));
-        // Now we add another block to make the alternative chain longer.
-        assertTrue(chain.add(b3.createNextBlock(someOtherGuy)));
-        assertTrue(reorgHappened[0]);  // Re-org took place.
-        reorgHappened[0] = false;
-        //
-        //     genesis -> b1 -> b2
-        //                  \-> b3 -> b4
-        //
-        // We lost some coins! b2 is no longer a part of the best chain so our balance should drop to 50 again.
-        assertEquals("50.00", Utils.bitcoinValueToFriendlyString(wallet.getBalance()));
-        // ... and back to the first chain.
-        Block b5 = b2.createNextBlock(coinbaseTo);
-        Block b6 = b5.createNextBlock(coinbaseTo);
-        assertTrue(chain.add(b5));
-        assertTrue(chain.add(b6));
-        //
-        //     genesis -> b1 -> b2 -> b5 -> b6
-        //                  \-> b3 -> b4
-        //
-        assertTrue(reorgHappened[0]);
-        assertEquals("200.00", Utils.bitcoinValueToFriendlyString(wallet.getBalance()));
-    }
-
-    @Test
-    public void testForking2() throws Exception {
-        // Check that if the chain forks and new coins are received in the alternate chain our balance goes up.
-        Block b1 = unitTestParams.genesisBlock.createNextBlock(someOtherGuy);
-        Block b2 = b1.createNextBlock(someOtherGuy);
-        assertTrue(chain.add(b1));
-        assertTrue(chain.add(b2));
-        //     genesis -> b1 -> b2
-        //                  \-> b3 -> b4
-        assertEquals(BigInteger.ZERO, wallet.getBalance());
-        Block b3 = b1.createNextBlock(coinbaseTo);
-        Block b4 = b3.createNextBlock(someOtherGuy);
-        assertTrue(chain.add(b3));
-        assertTrue(chain.add(b4));
-        assertEquals("50.00", Utils.bitcoinValueToFriendlyString(wallet.getBalance()));
-    }
-
-    @Test
-    public void testForking3() throws Exception {
-        // Check that we can handle our own spends being rolled back by a fork.
-        Block b1 = unitTestParams.genesisBlock.createNextBlock(coinbaseTo);
-        chain.add(b1);
-        assertEquals("50.00", Utils.bitcoinValueToFriendlyString(wallet.getBalance()));
-        Address dest = new ECKey().toAddress(unitTestParams);
-        Transaction spend = wallet.createSend(dest, Utils.toNanoCoins(10, 0));
-        wallet.confirmSend(spend);
-        // Waiting for confirmation ...
-        assertEquals(BigInteger.ZERO, wallet.getBalance());
-        Block b2 = b1.createNextBlock(someOtherGuy);
-        b2.addTransaction(spend);
-        b2.solve();
-        chain.add(b2);
-        assertEquals(Utils.toNanoCoins(40, 0), wallet.getBalance());
-        // genesis -> b1 (receive coins) -> b2 (spend coins)
-        //                               \-> b3 -> b4
-        Block b3 = b1.createNextBlock(someOtherGuy);
-        Block b4 = b3.createNextBlock(someOtherGuy);
-        chain.add(b3);
-        chain.add(b4);
-        // b4 causes a re-org that should make our spend go inactive. Because the inputs are already spent our balance
-        // drops to zero again.
-        assertEquals(BigInteger.ZERO, wallet.getBalance());
-        // Not pending .... we don't know if our spend will EVER become active again (if there's an attack it may not).
-        assertEquals(0, wallet.getPendingTransactions().size());
-    }
-
-    @Test
-    public void testForking4() throws Exception {
-        // Check that we can handle external spends on an inactive chain becoming active. An external spend is where
-        // we see a transaction that spends our own coins but we did not broadcast it ourselves. This happens when
-        // keys are being shared between wallets.
-        Block b1 = unitTestParams.genesisBlock.createNextBlock(coinbaseTo);
-        chain.add(b1);
-        assertEquals("50.00", Utils.bitcoinValueToFriendlyString(wallet.getBalance()));
-        Address dest = new ECKey().toAddress(unitTestParams);
-        Transaction spend = wallet.createSend(dest, Utils.toNanoCoins(50, 0));
-        // We do NOT confirm the spend here. That means it's not considered to be pending because createSend is
-        // stateless. For our purposes it is as if some other program with our keys created the tx.
-        //
-        // genesis -> b1 (receive 50) --> b2
-        //                            \-> b3 (external spend) -> b4
-        Block b2 = b1.createNextBlock(someOtherGuy);
-        chain.add(b2);
-        Block b3 = b1.createNextBlock(someOtherGuy);
-        b3.addTransaction(spend);
-        b3.solve();
-        chain.add(b3);
-        // The external spend is not active yet.
-        assertEquals(Utils.toNanoCoins(50, 0), wallet.getBalance());
-        Block b4 = b3.createNextBlock(someOtherGuy);
-        chain.add(b4);
-        // The external spend is now active.
-        assertEquals(Utils.toNanoCoins(0, 0), wallet.getBalance());
     }
 
     @Test

@@ -40,10 +40,12 @@ public class TransactionOutput extends Message implements Serializable {
     // The script bytes are parsed and turned into a Script on demand.
     private transient Script scriptPubKey;
 
-    // This field is Java serialized but not BitCoin serialized. It's used for tracking purposes in our wallet only.
-    // If this flag is set to true, it means we have spent this outputs value and it shouldn't be used again or
-    // counted towards our balance.
-    boolean isSpent;
+    // These fields are Java serialized but not BitCoin serialized. They are used for tracking purposes in our wallet
+    // only. If set to true, this output is counted towards our balance. If false and spentBy is null the tx output
+    // was owned by us and was sent to somebody else. If false and spentBy is true it means this output was owned by
+    // us and used in one of our own transactions (eg, because it is a change output).
+    private boolean availableForSpending;
+    private TransactionInput spentBy;
 
     // A reference to the transaction which holds this output.
     Transaction parentTransaction;
@@ -53,13 +55,15 @@ public class TransactionOutput extends Message implements Serializable {
                              int offset) throws ProtocolException {
         super(params, payload, offset);
         parentTransaction = parent;
+        availableForSpending = true;
     }
 
-    TransactionOutput(NetworkParameters params, BigInteger value, Address to, Transaction parent) {
+    TransactionOutput(NetworkParameters params, Transaction parent, BigInteger value, Address to) {
         super(params);
         this.value = value;
         this.scriptBytes = Script.createOutputScript(to);
         parentTransaction = parent;
+        availableForSpending = true;
     }
 
     /** Used only in creation of the genesis blocks and in unit tests. */
@@ -67,6 +71,7 @@ public class TransactionOutput extends Message implements Serializable {
         super(params);
         this.scriptBytes = scriptBytes;
         this.value = Utils.toNanoCoins(50, 0);
+        availableForSpending = true;
     }
 
     public Script getScriptPubKey() throws ScriptException {
@@ -106,6 +111,25 @@ public class TransactionOutput extends Message implements Serializable {
         }
         // Should never happen.
         throw new RuntimeException("Output linked to wrong parent transaction?");
+    }
+
+    /**
+     * Sets this objects availableToSpend flag to false and the spentBy pointer to the given input.
+     * If the input is null, it means this output was signed over to somebody else rather than one of our own keys.
+     */
+    void markAsSpent(TransactionInput input) {
+        assert availableForSpending;
+        availableForSpending = false;
+        spentBy = input;
+    }
+
+    void markAsUnspent() {
+        availableForSpending = true;
+        spentBy = null;
+    }
+
+    boolean isAvailableForSpending() {
+        return availableForSpending;
     }
 
     public byte[] getScriptBytes() {

@@ -195,8 +195,8 @@ public class BlockChain {
         log.info("New chain head: {}", newChainHead.getHeader().getHashAsString());
         log.info("Split at block: {}", splitPoint.getHeader().getHashAsString());
         // Then build a list of all blocks in the old part of the chain and the new part.
-        Set<StoredBlock> oldBlocks = getPartialChain(chainHead, splitPoint);
-        Set<StoredBlock> newBlocks = getPartialChain(newChainHead, splitPoint);
+        List<StoredBlock> oldBlocks = getPartialChain(chainHead, splitPoint);
+        List<StoredBlock> newBlocks = getPartialChain(newChainHead, splitPoint);
         // Now inform the wallet. This is necessary so the set of currently active transactions (that we can spend)
         // can be updated to take into account the re-organize. We might also have received new coins we didn't have
         // before and our previous spends might have been undone.
@@ -208,9 +208,9 @@ public class BlockChain {
     /**
      * Returns the set of contiguous blocks between 'higher' and 'lower'. Higher is included, lower is not.
      */
-    private Set<StoredBlock> getPartialChain(StoredBlock higher, StoredBlock lower) throws BlockStoreException {
+    private List<StoredBlock> getPartialChain(StoredBlock higher, StoredBlock lower) throws BlockStoreException {
         assert higher.getHeight() > lower.getHeight();
-        Set<StoredBlock> results = new HashSet<StoredBlock>();
+        LinkedList<StoredBlock> results = new LinkedList<StoredBlock>();
         StoredBlock cursor = higher;
         while (true) {
             results.add(cursor);

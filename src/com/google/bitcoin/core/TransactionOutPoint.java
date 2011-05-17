@@ -19,8 +19,8 @@ package com.google.bitcoin.core;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Serializable;
-import java.util.Arrays;
-import java.util.Collection;
+
+// TODO: Fold this class into the TransactionInput class. It's not necessary.
 
 /**
  * This message is a reference or pointer to an output of a different transaction.
@@ -33,7 +33,8 @@ public class TransactionOutPoint extends Message implements Serializable {
     /** Which output of that transaction we are talking about. */
     long index;
 
-    // This is not part of bitcoin serialization.
+    // This is not part of Bitcoin serialization. It's included in Java serialization.
+    // It points to the connected transaction.
     Transaction fromTx;
 
     TransactionOutPoint(NetworkParameters params, long index, Transaction fromTx) {
@@ -67,26 +68,11 @@ public class TransactionOutPoint extends Message implements Serializable {
     }
 
     /**
-     * Scans the list for the transaction this outpoint refers to, and sets up the internal reference used by
-     * getConnectedOutput().
-     * @return true if connection took place, false if the referenced transaction was not in the list.
-     */
-    boolean connect(Collection<Transaction> transactions) {
-        for (Transaction tx : transactions) {
-            if (Arrays.equals(tx.getHash().hash, hash)) {
-                fromTx = tx;
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /**
      * If this transaction was created using the explicit constructor rather than deserialized,
      * retrieves the connected output transaction. Asserts if there is no connected transaction.
      */
     TransactionOutput getConnectedOutput() {
-        assert fromTx != null;
+        if (fromTx == null) return null;
         return fromTx.outputs.get((int)index);
     }
 
