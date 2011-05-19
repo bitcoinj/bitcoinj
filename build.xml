@@ -27,8 +27,11 @@
   <target name="test" depends="compile">
     <junit showoutput="false">
       <classpath path="lib/junit-4.8.2.jar:out"/>
+      <classpath path="lib/slf4j-api-1.6.1.jar:out"/>
+      <classpath path="lib/slf4j-simple-1.6.1.jar:out"/>
+/
       <batchtest>
-	<fileset dir="tests"><include name="**/*.java"/></fileset>
+	    <fileset dir="tests"><include name="**/*.java"/></fileset>
         <formatter type="brief" usefile="no"/> 
       </batchtest>
     </junit>
