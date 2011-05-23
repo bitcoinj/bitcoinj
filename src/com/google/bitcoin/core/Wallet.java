@@ -52,25 +52,26 @@ public class Wallet implements Serializable {
     //     ->unspent/spent
     // 5. Inbound tx is accepted into a side chain:
     //     ->inactive
-    //
     //     Whilst it's also 'pending' in some sense, in that miners will probably try and incorporate it into the
     //     best chain, we don't mark it as such here. It'll eventually show up after a re-org.
+    // 6. Outbound tx that is pending shares inputs with a tx that appears in the main chain:
+    //     <-pending ->dead
     //
     // Re-orgs:
     // 1. Tx is present in old chain and not present in new chain
     //       <-unspent/spent  ->pending
-    //
     //       These newly inactive transactions will (if they are relevant to us) eventually come back via receive()
     //       as miners resurrect them and re-include into the new best chain.
-    //
     // 2. Tx is not present in old chain and is present in new chain
     //       <-inactive  and  ->unspent/spent
+    // 3. Tx is present in new chain and shares inputs with a pending transaction, including those that were resurrected
+    //    due to point (1)
+    //       <-pending ->dead
     //
     // Balance:
     // 1. Sum up all unspent outputs of the transactions in unspent.
     // 2. Subtract the inputs of transactions in pending.
-    // 3. In future: re-add the outputs of pending transactions that are mine. Don't do this today because those
-    //    change outputs would not be considered spendable.
+    // 3. If requested, re-add the outputs of pending transactions that are mine. This is the estimated balance.
 
     /**
      * Map of txhash->Transactions that have not made it into the best chain yet. They are eligible to move there but
