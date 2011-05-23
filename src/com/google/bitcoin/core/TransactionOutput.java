@@ -156,4 +156,9 @@ public class TransactionOutput extends Message implements Serializable {
             throw new RuntimeException(e);
         }
     }
+
+    /** Returns the connected input. */
+    TransactionInput getSpentBy() {
+        return spentBy;
+    }
 }

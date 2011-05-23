@@ -219,7 +219,7 @@ public class Transaction extends Message implements Serializable {
         long numInputs = readVarInt();
         inputs = new ArrayList<TransactionInput>((int)numInputs);
         for (long i = 0; i < numInputs; i++) {
-            TransactionInput input = new TransactionInput(params, bytes, cursor);
+            TransactionInput input = new TransactionInput(params, this, bytes, cursor);
             inputs.add(input);
             cursor += input.getMessageSize();
         }
@@ -300,7 +300,7 @@ public class Transaction extends Message implements Serializable {
      * accepted by the network.
      */
     public void addInput(TransactionOutput from) {
-        inputs.add(new TransactionInput(params, from));
+        inputs.add(new TransactionInput(params, this, from));
     }
 
     /**

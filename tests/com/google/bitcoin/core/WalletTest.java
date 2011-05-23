@@ -208,4 +208,43 @@ public class WalletTest {
         Transaction send2 = new Transaction(params, send1.bitcoinSerialize());
         assertEquals(nanos, send2.getValueSentFromMe(wallet));
     }
+
+    @Test
+    public void testFinneyAttack() throws Exception {
+        // A Finney attack is where a miner includes a transaction spending coins to themselves but does not
+        // broadcast it. When they find a solved block, they hold it back temporarily whilst they buy something with
+        // those same coins. After purchasing, they broadcast the block thus reversing the transaction. It can be
+        // done by any miner for products that can be bought at a chosen time and very quickly (as every second you
+        // withold your block means somebody else might find it first, invalidating your work).
+        //
+        // Test that we handle ourselves performing the attack correctly: a double spend on the chain moves
+        // transactions from pending to dead.
+        //
+        // Note that the other way around, where a pending transaction sending us coins becomes dead,
+        // isn't tested because today BitCoinJ only learns about such transactions when they appear in the chain.
+        final Transaction[] eventDead = new Transaction[1];
+        final Transaction[] eventReplacement = new Transaction[1];
+        wallet.addEventListener(new WalletEventListener() {
+            @Override
+            public void onDeadTransaction(Transaction deadTx, Transaction replacementTx) {
+                eventDead[0] = deadTx;
+                eventReplacement[0] = replacementTx;
+            }
+        });
+
+        // Receive 1 BTC.
+        BigInteger nanos = Utils.toNanoCoins(1, 0);
+        Transaction t1 = createFakeTx(nanos, myAddress);
+        wallet.receive(t1, null, BlockChain.NewBlockType.BEST_CHAIN);
+        // Create a send to a merchant.
+        Transaction send1 = wallet.createSend(new ECKey().toAddress(params), toNanoCoins(0, 50));
+        // Create a double spend.
+        Transaction send2 = wallet.createSend(new ECKey().toAddress(params), toNanoCoins(0, 50));
+        // Broadcast send1.
+        wallet.confirmSend(send1);
+        // Receive a block that overrides it.
+        wallet.receive(send2, null, BlockChain.NewBlockType.BEST_CHAIN);
+        assertEquals(send1, eventDead[0]);
+        assertEquals(send2, eventReplacement[0]);
+    }
 }

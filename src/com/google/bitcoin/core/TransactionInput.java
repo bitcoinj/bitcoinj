@@ -44,27 +44,33 @@ public class TransactionInput extends Message implements Serializable {
     // The Script object obtained from parsing scriptBytes. Only filled in on demand and if the transaction is not
     // coinbase.
     transient private Script scriptSig;
+    // A pointer to the transaction that owns this input.
+    Transaction parentTransaction;
 
     /** Used only in creation of the genesis block. */
-    TransactionInput(NetworkParameters params, byte[] scriptBytes) {
+    TransactionInput(NetworkParameters params, Transaction parentTransaction, byte[] scriptBytes) {
         super(params);
         this.scriptBytes = scriptBytes;
         this.outpoint = new TransactionOutPoint(params, -1, null);
         this.sequence = 0xFFFFFFFFL;
+        this.parentTransaction = parentTransaction;
     }
 
     /** Creates an UNSIGNED input that links to the given output */
-    TransactionInput(NetworkParameters params, TransactionOutput output) {
+    TransactionInput(NetworkParameters params, Transaction parentTransaction, TransactionOutput output) {
         super(params);
         long outputIndex = output.getIndex();
         outpoint = new TransactionOutPoint(params, outputIndex, output.parentTransaction);
         scriptBytes = EMPTY_ARRAY;
-        this.sequence = 0xFFFFFFFFL;
+        sequence = 0xFFFFFFFFL;
+        this.parentTransaction = parentTransaction;
     }
 
     /** Deserializes an input message. This is usually part of a transaction message. */
-    public TransactionInput(NetworkParameters params, byte[] payload, int offset) throws ProtocolException {
+    public TransactionInput(NetworkParameters params, Transaction parentTransaction,
+                            byte[] payload, int offset) throws ProtocolException {
         super(params, payload, offset);
+        this.parentTransaction = parentTransaction;
     }
     
     void parse() throws ProtocolException {

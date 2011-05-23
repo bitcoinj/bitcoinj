@@ -316,7 +316,13 @@ public class Wallet implements Serializable {
             } else if (result == TransactionInput.ConnectionResult.ALREADY_SPENT) {
                 // Double spend! This must have overridden a pending tx, or the block is bad (contains transactions
                 // that illegally double spend: should never occur if we are connected to an honest node).
-                Transaction connected = input.outpoint.fromTx;
+                //
+                // Work backwards like so:
+                //
+                //   A  -> spent by B [pending]
+                //     \-> spent by C [chain]
+                Transaction doubleSpent = input.outpoint.fromTx;   // == A
+                Transaction connected = doubleSpent.outputs.get((int)input.outpoint.index).getSpentBy().parentTransaction;
                 if (pending.containsKey(connected.getHash())) {
                     log.info("Saw double spend from chain override pending tx {}", connected.getHashAsString());
                     log.info("  <-pending ->dead");
