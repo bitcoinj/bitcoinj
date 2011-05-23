@@ -802,13 +802,14 @@ public class Wallet implements Serializable {
                 isDead = true;
                 // This transaction was replaced by a double spend on the new chain. Did you just reverse
                 // your own transaction? I hope not!!
-                log.info("   ->dead, will not confirm now unless there's another re-org",
-                         tx.getHashAsString());
+                log.info("   ->dead, will not confirm now unless there's another re-org", tx.getHashAsString());
+                TransactionOutput doubleSpent = input.getConnectedOutput(pool);
+                Transaction replacement = doubleSpent.getSpentBy().parentTransaction;
                 dead.put(tx.getHash(), tx);
                 // Inform the event listeners of the newly dead tx.
                 for (WalletEventListener listener : eventListeners) {
                     synchronized (listener) {
-                        listener.onDeadTransaction(input.outpoint.fromTx, tx);
+                        listener.onDeadTransaction(tx, replacement);
                     }
                 }
                 break;

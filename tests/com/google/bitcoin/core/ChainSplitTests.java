@@ -222,11 +222,13 @@ public class ChainSplitTests {
         // Check what happens when a re-org happens and one of our UNconfirmed transactions becomes invalidated by a
         // double spend on the new best chain.
 
-        final boolean[] eventCalled = new boolean[1];
+        final Transaction[] eventDead = new Transaction[1];
+        final Transaction[] eventReplacement = new Transaction[1];
         wallet.addEventListener(new WalletEventListener() {
             @Override
             public void onDeadTransaction(Transaction deadTx, Transaction replacementTx) {
-                eventCalled[0] = true;
+                eventDead[0] = deadTx;
+                eventReplacement[0] = replacementTx;
             }
         });
 
@@ -255,7 +257,8 @@ public class ChainSplitTests {
         chain.add(b4);  // New best chain.
 
         // Should have seen a double spend against the pending pool.
-        assertTrue(eventCalled[0]);
+        assertEquals(t1, eventDead[0]);
+        assertEquals(t2, eventReplacement[0]);
         assertEquals(Utils.toNanoCoins(30, 0), wallet.getBalance());
 
         // ... and back to our own parallel universe.
