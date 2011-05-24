@@ -56,9 +56,20 @@ public class Base58 {
         }
         return s.toString();
     }
-    
+
     public static byte[] decode(String input) throws AddressFormatException {
-        return decodeToBigInteger(input).toByteArray();
+        byte[] bytes = decodeToBigInteger(input).toByteArray();
+        // We may have got one more byte than we wanted, if the high bit of the next-to-last byte was not zero. This
+        // is because BigIntegers are represented with twos-compliment notation, thus if the high bit of the last
+        // byte happens to be 1 another 8 zero bits will be added to ensure the number parses as positive. Detect
+        // that case here and chop it off.
+        if ((bytes.length > 1) && (bytes[0] == 0) && (bytes[1] < 0)) {
+            // Java 6 has a convenience for this, but Android can't use it.
+            byte[] tmp = new byte[bytes.length - 1];
+            System.arraycopy(bytes, 1, tmp, 0, bytes.length - 1);
+            bytes = tmp;
+        }
+        return bytes;
     }
 
     public static BigInteger decodeToBigInteger(String input) throws AddressFormatException {

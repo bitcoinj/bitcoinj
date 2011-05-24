@@ -42,5 +42,9 @@ public class Base58Test extends TestCase {
         }
 
         Base58.decodeChecked("4stwEBjT6FYyVV");
+
+        // Now check we can correctly decode the case where the high bit of the first byte is not zero, so BigInteger
+        // sign extends. Fix for a bug that stopped us parsing keys exported using sipas patch.
+        Base58.decodeChecked("93VYUMzRG9DdbRP72uQXjaWibbQwygnvaCu9DumcqDjGybD864T");
     }
 }
