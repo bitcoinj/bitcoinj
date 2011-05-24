@@ -29,12 +29,12 @@ import java.math.BigInteger;
  * evolves there may be more. You can create your own as long as they don't conflict.
  */
 public class NetworkParameters implements Serializable {
+    private static final long serialVersionUID = 3L;
+
     /**
      * The protocol version this library implements. A value of 31800 means 0.3.18.00.
      */
     public static final int PROTOCOL_VERSION = 31800;
-
-    private static final long serialVersionUID = 2579833727976661964L;
 
     // TODO: Seed nodes and checkpoint values should be here as well.
 
@@ -56,8 +56,10 @@ public class NetworkParameters implements Serializable {
     public int port;
     /** The header bytes that identify the start of a packet on this network. */
     public long packetMagic;
-    /** First byte of a base58 encoded address. */
-    public byte addressHeader;
+    /** First byte of a base58 encoded address. See {@link Address}*/
+    public int addressHeader;
+    /** First byte of a base58 encoded dumped private key. See {@link DumpedPrivateKey}. */
+    public int dumpedPrivateKeyHeader;
     /** How many blocks pass between difficulty adjustment periods. BitCoin standardises this to be 2015. */
     public int interval;
     /**
@@ -101,6 +103,7 @@ public class NetworkParameters implements Serializable {
         n.packetMagic = 0xfabfb5daL;
         n.port = 18333;
         n.addressHeader = 111;
+        n.dumpedPrivateKeyHeader = 239;
         n.interval = INTERVAL;
         n.targetTimespan = TARGET_TIMESPAN;
         n.genesisBlock = createGenesis(n);
@@ -125,6 +128,7 @@ public class NetworkParameters implements Serializable {
         n.port = 8333;
         n.packetMagic = 0xf9beb4d9L;
         n.addressHeader = 0;
+        n.dumpedPrivateKeyHeader = 128;
         n.interval = INTERVAL;
         n.targetTimespan = TARGET_TIMESPAN;
         n.genesisBlock = createGenesis(n);

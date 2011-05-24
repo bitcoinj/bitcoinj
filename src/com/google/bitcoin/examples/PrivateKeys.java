@@ -32,11 +32,19 @@ import java.net.InetAddress;
  */
 public class PrivateKeys {
     public static void main(String[] args) throws Exception {
+        // TODO: Assumes production network not testnet. Make it selectable.
         NetworkParameters params = NetworkParameters.prodNet();
         try {
-            // Decode the private key from Satoshis Base58 variant.
-            BigInteger privKey = Base58.decodeToBigInteger(args[0]);
-            ECKey key = new ECKey(privKey);
+            // Decode the private key from Satoshis Base58 variant. If 51 characters long then it's from Bitcoins
+            // dumpprivkey command and includes a version byte and checksum. Otherwise assume it's a raw key.
+            ECKey key;
+            if (args[0].length() == 51) {
+                DumpedPrivateKey dumpedPrivateKey = new DumpedPrivateKey(params, args[0]);
+                key = dumpedPrivateKey.getKey();
+            } else {
+                BigInteger privKey = Base58.decodeToBigInteger(args[0]);
+                key = new ECKey(privKey);
+            }
             System.out.println("Address from private key is: " + key.toAddress(params).toString());
             // And the address ...
             Address destination = new Address(params, args[1]);

@@ -34,19 +34,16 @@ import java.util.Arrays;
  *
  * Note that an address is specific to a network because the first byte is a discriminator value.
  */
-public class Address {
-    private byte[] hash160;
-    private NetworkParameters params;
-
+public class Address extends VersionedChecksummedBytes {
     /**
      * Construct an address from parameters and the hash160 form. Example:<p>
      *
      * <pre>new Address(NetworkParameters.prodNet(), Hex.decode("4a22c3c4cbb31e4d03b15550636762bda0baf85a"));</pre>
      */
     public Address(NetworkParameters params,  byte[] hash160) {
-        assert hash160.length == 20;
-        this.hash160 = hash160;
-        this.params = params;
+        super(params.addressHeader, hash160);
+        if (hash160.length != 20)  // 160 = 8 * 20
+            throw new RuntimeException("Addresses are 160-bit hashes, so you must provide 20 bytes");
     }
 
     /**
@@ -55,57 +52,14 @@ public class Address {
      * <pre>new Address(NetworkParameters.prodNet(), "17kzeh4N8g49GFvdDzSf8PjaPfyoD1MndL");</pre>
      */
     public Address(NetworkParameters params, String address) throws AddressFormatException {
-        this.params = params;
-        this.hash160 = strToHash160(address);
+        super(address);
+        if (version != params.addressHeader)
+            throw new AddressFormatException("Mismatched version number, trying to cross networks? " + version +
+                                             " vs " + params.addressHeader);
     }
 
     /** The (big endian) 20 byte hash that is the core of a BitCoin address. */
     public byte[] getHash160() {
-        assert hash160 != null;
-        return hash160;
-    }
-    
-    // TODO: Make this use Base58.decodeChecked
-    private byte[] strToHash160(String address) throws AddressFormatException {
-        byte[] bytes = Base58.decode(address);
-        if (bytes.length != 25) {
-            // Zero pad the result.
-            byte[] tmp = new byte[25];
-            System.arraycopy(bytes, 0, tmp, tmp.length - bytes.length, bytes.length);
-            bytes = tmp;
-        }
-        if (bytes[0] != params.addressHeader)
-            throw new AddressFormatException("Address header incorrect: from a different network?");
-        byte[] check = Utils.doubleDigest(bytes, 0, 21);
-        if (check[0] != bytes[21] || check[1] != bytes[22] || check[2] != bytes[23] || check[3] != bytes[24])
-            throw new AddressFormatException("Checksum failed: check the address for typos");
-        byte[] hash160 = new byte[20];
-        System.arraycopy(bytes, 1, hash160, 0, 20);
-        return hash160;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (!(o instanceof Address)) return false;
-        Address a = (Address) o;
-        return Arrays.equals(a.getHash160(), getHash160());
-    }
-
-    @Override
-    public int hashCode() {
-        return Arrays.hashCode(getHash160());
-    }
-
-    @Override
-    public String toString() {
-        byte[] input = hash160;
-        // A stringified address is:
-        //   1 byte version + 20 bytes hash + 4 bytes check code (itself a truncated hash)
-        byte[] addressBytes = new byte[1 + 20 + 4];
-        addressBytes[0] = params.addressHeader;
-        System.arraycopy(input, 0, addressBytes, 1, 20);
-        byte[] check = Utils.doubleDigest(addressBytes, 0, 21);
-        System.arraycopy(check, 0, addressBytes, 21, 4);
-        return Base58.encode(addressBytes);
+        return bytes;
     }
 }

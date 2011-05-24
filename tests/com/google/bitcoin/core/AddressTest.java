@@ -25,7 +25,8 @@ public class AddressTest {
     static final NetworkParameters testParams = NetworkParameters.testNet();
     static final NetworkParameters prodParams = NetworkParameters.prodNet();
 
-    @Test public void testStringification() throws Exception {
+    @Test
+    public void testStringification() throws Exception {
         // Test a testnet address.
         Address a = new Address(testParams, Hex.decode("fda79a24e50ff70ff42f7d89585da5bd19d9e5cc"));
         assertEquals("n4eA2nbYqErp7H6jebchxAN59DmNpksexv", a.toString());
@@ -34,7 +35,8 @@ public class AddressTest {
         assertEquals("17kzeh4N8g49GFvdDzSf8PjaPfyoD1MndL", b.toString());
     }
     
-    @Test public void testDecoding() throws Exception {
+    @Test
+    public void testDecoding() throws Exception {
         Address a = new Address(testParams, "n4eA2nbYqErp7H6jebchxAN59DmNpksexv");
         assertEquals("fda79a24e50ff70ff42f7d89585da5bd19d9e5cc", Utils.bytesToHexString(a.getHash160()));
 
