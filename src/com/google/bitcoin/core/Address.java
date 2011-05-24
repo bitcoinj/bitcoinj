@@ -65,7 +65,7 @@ public class Address {
         return hash160;
     }
     
-
+    // TODO: Make this use Base58.decodeChecked
     private byte[] strToHash160(String address) throws AddressFormatException {
         byte[] bytes = Base58.decode(address);
         if (bytes.length != 25) {
@@ -75,10 +75,10 @@ public class Address {
             bytes = tmp;
         }
         if (bytes[0] != params.addressHeader)
-            throw new AddressFormatException();
+            throw new AddressFormatException("Address header incorrect: from a different network?");
         byte[] check = Utils.doubleDigest(bytes, 0, 21);
         if (check[0] != bytes[21] || check[1] != bytes[22] || check[2] != bytes[23] || check[3] != bytes[24])
-            throw new AddressFormatException();
+            throw new AddressFormatException("Checksum failed: check the address for typos");
         byte[] hash160 = new byte[20];
         System.arraycopy(bytes, 1, hash160, 0, 20);
         return hash160;
