@@ -249,11 +249,13 @@ public class NetworkConnection {
             }
         }
 
-        log.debug("Received {} byte '{}' message: {}", new Object[]{
+        if (log.isDebugEnabled()) {
+            log.debug("Received {} byte '{}' message: {}", new Object[]{
         		size,
         		command,
         		Utils.bytesToHexString(payloadBytes)	
-        });
+            });
+        }
 
         try {
             Message message;
