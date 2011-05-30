@@ -75,7 +75,7 @@ public class BlockChain {
      * <p>
      *
      * For the store you can use a {@link MemoryBlockStore} if you don't care about saving the downloaded data, or a
-     * {@link DiskBlockStore} if you'd like to ensure fast startup the next time you run the program.
+     * {@link BoundedOverheadBlockStore} if you'd like to ensure fast startup the next time you run the program.
      */
     public BlockChain(NetworkParameters params, Wallet wallet, BlockStore blockStore) {
         try {
@@ -104,13 +104,19 @@ public class BlockChain {
         }
     }
 
+    // Stat counters.
+    private long statsLastTime = System.currentTimeMillis();
+    private long statsBlocksAdded;
+
     private synchronized boolean add(Block block, boolean tryConnecting)
             throws BlockStoreException, VerificationException, ScriptException {
-        log.info("Adding block " + block.getHashAsString() + " to the chain");
-        if (blockStore.get(block.getHash()) != null) {
-            log.info("Already have block");
-            return true;
+        if (System.currentTimeMillis() - statsLastTime > 1000) {
+            // More than a second passed since last stats logging.
+            log.info("{} blocks per second", statsBlocksAdded);
+            statsLastTime = System.currentTimeMillis();
+            statsBlocksAdded = 0;
         }
+        // We don't check for double adds here to avoid potentially expensive block chain misses.
 
         // Prove the block is internally valid: hash is lower than target, merkle root is correct and so on.
         try {
@@ -136,8 +142,8 @@ public class BlockChain {
             //
             // Create a new StoredBlock from this block. It will throw away the transaction data so when block goes
             // out of scope we will reclaim the used memory.
-            checkDifficultyTransitions(storedPrev, block);
             StoredBlock newStoredBlock = storedPrev.build(block);
+            checkDifficultyTransitions(storedPrev, newStoredBlock);
             blockStore.put(newStoredBlock);
             // block.transactions may be null here if we received only a header and not a full block. This does not
             // happen currently but might in future if getheaders is implemented.
@@ -147,6 +153,7 @@ public class BlockChain {
         if (tryConnecting)
             tryConnectingUnconnected();
 
+        statsBlocksAdded++;
         return true;
     }
 
@@ -308,9 +315,10 @@ public class BlockChain {
     /**
      * Throws an exception if the blocks difficulty is not correct.
      */
-    private void checkDifficultyTransitions(StoredBlock storedPrev, Block next)
+    private void checkDifficultyTransitions(StoredBlock storedPrev, StoredBlock storedNext)
             throws BlockStoreException, VerificationException {
         Block prev = storedPrev.getHeader();
+        Block next = storedNext.getHeader();
         // Is this supposed to be a difficulty transition point?
         if ((storedPrev.getHeight() + 1) % params.interval != 0) {
             // No ... so check the difficulty didn't actually change.
@@ -323,6 +331,7 @@ public class BlockChain {
 
         // We need to find a block far back in the chain. It's OK that this is expensive because it only occurs every
         // two weeks after the initial block chain download.
+        long now = System.currentTimeMillis();
         StoredBlock cursor = blockStore.get(prev.getHash());
         for (int i = 0; i < params.interval - 1; i++) {
             if (cursor == null) {
@@ -332,6 +341,7 @@ public class BlockChain {
             }
             cursor = blockStore.get(cursor.getHeader().getPrevBlockHash());
         }
+        log.info("Difficulty transition traversal took {}msec", System.currentTimeMillis() - now);
 
         Block blockIntervalAgo = cursor.getHeader();
         int timespan = (int) (prev.getTime() - blockIntervalAgo.getTime());

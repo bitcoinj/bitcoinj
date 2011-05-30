@@ -50,7 +50,7 @@ public class PingService {
 
         // Load the block chain, if there is one stored locally.
         System.out.println("Reading block store from disk");
-        BlockStore blockStore = new DiskBlockStore(params, new File(filePrefix + ".blockchain"));
+        BlockStore blockStore = new BoundedOverheadBlockStore(params, new File(filePrefix + ".blockchain"));
 
         // Connect to the localhost node. One minute timeout since we won't try any other peers
         System.out.println("Connecting ...");
