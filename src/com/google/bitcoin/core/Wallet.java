@@ -149,18 +149,33 @@ public class Wallet implements Serializable {
      * Uses Java serialization to save the wallet to the given file.
      */
     public synchronized void saveToFile(File f) throws IOException {
-        ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(f));
+        saveToFileStream(new FileOutputStream(f));
+    }
+
+    /**
+     * Uses Java serialization to save the wallet to the given file stream.
+     */
+    public synchronized void saveToFileStream(FileOutputStream f) throws IOException {
+        ObjectOutputStream oos = new ObjectOutputStream(f);
         oos.writeObject(this);
         oos.close();
     }
+
 
     /**
      * Returns a wallet deserialized from the given file.
      */
     public static Wallet loadFromFile(File f) throws IOException {
+        return loadFromFileStream(new FileInputStream(f));
+    }
+
+    /**
+     * Returns a wallet deserialied from the given file input stream.
+     */
+    public static Wallet loadFromFileStream(FileInputStream f) throws IOException {
         ObjectInputStream ois = null;
         try {
-            ois = new ObjectInputStream(new FileInputStream(f));
+            ois = new ObjectInputStream(f);
             return (Wallet) ois.readObject();
         } catch (ClassNotFoundException e) {
             throw new RuntimeException(e);
