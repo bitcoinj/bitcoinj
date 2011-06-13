@@ -16,20 +16,14 @@
 
 package com.google.bitcoin.core;
 
-public class GetDataMessage extends Message {
+public class GetDataMessage extends ListMessage {
     private static final long serialVersionUID = 2754681589501709887L;
 
     public GetDataMessage(NetworkParameters params, byte[] payloadBytes) throws ProtocolException {
-        super(params, payloadBytes, 0);
+        super(params, payloadBytes);
     }
 
-
-    public byte[] bitcoinSerialize() {
-        return new byte[] {};
-    }
-
-    @Override
-    public void parse() throws ProtocolException {
-        // TODO Auto-generated method stub
+    public GetDataMessage(NetworkParameters params) {
+        super(params);
     }
 }

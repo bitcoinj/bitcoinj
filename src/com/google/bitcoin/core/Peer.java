@@ -16,15 +16,15 @@
 
 package com.google.bitcoin.core;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.*;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * A Peer handles the high level communication with a BitCoin node. It requires a NetworkConnection to be set up for
@@ -162,8 +162,9 @@ public class Peer {
         // enough to be a problem.
         Block topBlock = blockChain.getUnconnectedBlock();
         byte[] topHash = (topBlock != null ? topBlock.getHash() : null);
-        if (inv.items.size() == 1 && inv.items.get(0).type == InventoryItem.Type.Block && topHash != null &&
-                Arrays.equals(inv.items.get(0).hash, topHash)) {
+        List<InventoryItem> items = inv.getItems();
+        if (items.size() == 1 && items.get(0).type == InventoryItem.Type.Block && topHash != null &&
+                Arrays.equals(items.get(0).hash, topHash)) {
             // An inv with a single hash containing our most recent unconnected block is a special inv,
             // it's kind of like a tickle from the peer telling us that it's time to download more blocks to catch up to
             // the block chain. We could just ignore this and treat it as a regular inv but then we'd download the head
@@ -171,17 +172,19 @@ public class Peer {
             blockChainDownload(topHash);
             return;
         }
-        InventoryMessage getdata = new InventoryMessage(params);
-        for (InventoryItem item : inv.items) {
+        GetDataMessage getdata = new GetDataMessage(params);
+        boolean dirty = false;
+        for (InventoryItem item : items) {
             if (item.type != InventoryItem.Type.Block) continue;
-            getdata.items.add(item);
+            getdata.addItem(item);
+            dirty = true;
         }
         // No blocks to download. This probably contained transactions instead, but right now we can't prove they are
         // valid so we don't bother downloading transactions that aren't in blocks yet.
-        if (getdata.items.size() == 0)
+        if (!dirty)
             return;
         // This will cause us to receive a bunch of block messages.
-        conn.writeMessage(NetworkConnection.MSG_GETDATA, getdata);
+        conn.writeMessage(getdata);
     }
 
     /**
@@ -196,14 +199,14 @@ public class Peer {
     public Future<Block> getBlock(byte[] blockHash) throws IOException {
         InventoryMessage getdata = new InventoryMessage(params);
         InventoryItem inventoryItem = new InventoryItem(InventoryItem.Type.Block, blockHash);
-        getdata.items.add(inventoryItem);
+        getdata.addItem(inventoryItem);
         GetDataFuture<Block> future = new GetDataFuture<Block>(inventoryItem);
         // Add to the list of things we're waiting for. It's important this come before the network send to avoid
         // race conditions.
         synchronized (pendingGetBlockFutures) {
           pendingGetBlockFutures.add(future);
         }
-        conn.writeMessage(NetworkConnection.MSG_GETDATA, getdata);
+        conn.writeMessage(getdata);
         return future;
     }
 
@@ -267,7 +270,7 @@ public class Peer {
      * @throws IOException
      */
     void broadcastTransaction(Transaction tx) throws IOException {
-        conn.writeMessage(NetworkConnection.MSG_TX, tx);
+        conn.writeMessage(tx);
     }
 
     private void blockChainDownload(byte[] toHash) throws IOException {
@@ -309,7 +312,7 @@ public class Peer {
         if (!topBlock.equals(params.genesisBlock))
             blockLocator.add(0, topBlock.getHash());
         GetBlocksMessage message = new GetBlocksMessage(params, blockLocator, toHash);
-        conn.writeMessage(NetworkConnection.MSG_GETBLOCKS, message);
+        conn.writeMessage(message);
     }
 
     /**

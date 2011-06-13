@@ -1,5 +1,5 @@
 /**
- * Copyright 2011 Google Inc.
+ * Copyright 2011 Noa Resare.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,17 +14,28 @@
  * limitations under the License.
  */
 
+
 package com.google.bitcoin.core;
 
-public class InventoryMessage extends ListMessage {
-    private static final long serialVersionUID = -7050246551646107066L;
+/**
+ * The verack message, sent by a client accepting the version message they received from their peer.
+ */
+public class VersionAck
+    extends Message
+{
+    public VersionAck()
+    {
 
-    public InventoryMessage(NetworkParameters params, byte[] bytes) throws ProtocolException {
-        super(params, bytes);
     }
 
-    public InventoryMessage(NetworkParameters params) {
-        super(params);
+    // this is needed by the BitcoinSerializer
+    public VersionAck(NetworkParameters params, byte[] payload) {
+
     }
 
+    @Override
+    void parse() throws ProtocolException
+    {
+        // nothing to parse for now
+    }
 }
