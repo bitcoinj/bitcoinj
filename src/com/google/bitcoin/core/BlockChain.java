@@ -116,7 +116,11 @@ public class BlockChain {
             statsLastTime = System.currentTimeMillis();
             statsBlocksAdded = 0;
         }
-        // We don't check for double adds here to avoid potentially expensive block chain misses.
+        // We check only the chain head for double adds here to avoid potentially expensive block chain misses.
+        if (block.equals(chainHead.getHeader())) {
+            // Duplicate add of the block at the top of the chain, can be a natural artifact of the download process.
+            return true;
+        }
 
         // Prove the block is internally valid: hash is lower than target, merkle root is correct and so on.
         try {
@@ -174,7 +178,11 @@ public class BlockChain {
             if (haveNewBestChain) {
                 log.info("Block is causing a re-organize");
             } else {
-                log.info("Block forks the chain, but it did not cause a reorganize.");
+                StoredBlock splitPoint = findSplit(newStoredBlock, chainHead);
+                String splitPointHash =
+                        splitPoint != null ? splitPoint.getHeader().getHashAsString() : "?";
+                log.info("Block forks the chain at {}, but it did not cause a reorganize:\n{}",
+                          splitPointHash, newStoredBlock);
             }
 
             // We may not have any transactions if we received only a header. That never happens today but will in
