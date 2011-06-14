@@ -30,6 +30,7 @@ import java.util.concurrent.TimeUnit;
  * PingService demonstrates basic usage of the library. It sits on the network and when it receives coins, simply
  * sends them right back to the previous owner, determined rather arbitrarily by the address of the first input.
  * </p>
+ *
  * <p>
  * If running on TestNet (slow but better than using real coins on prodnet) do the following:
  * <ol>
@@ -43,6 +44,9 @@ import java.util.concurrent.TimeUnit;
  * <li>Leave it running until you get the coins back again</li>
  * </ol>
  * </p>
+ *
+ * <p>The testnet can be slow or flaky as it's a shared resource. You can use the <a href="http://sourceforge
+ * .net/projects/bitcoin/files/Bitcoin/testnet-in-a-box/">testnet in a box</a> to do everything purely locally.</p>
  */
 public class PingService {
     public static void main(String[] args) throws Exception {
