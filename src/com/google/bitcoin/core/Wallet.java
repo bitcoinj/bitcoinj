@@ -386,7 +386,7 @@ public class Wallet implements Serializable {
      * Call this when we have successfully transmitted the send tx to the network, to update the wallet.
      */
     synchronized void confirmSend(Transaction tx) {
-        assert !pending.containsKey(tx) : "confirmSend called on the same transaction twice";
+        assert !pending.containsKey(tx.getHash()) : "confirmSend called on the same transaction twice";
         log.info("confirmSend of {}", tx.getHashAsString());
         // Mark the outputs of the used transcations as spent, so we don't try and spend it again.
         for (TransactionInput input : tx.inputs) {
