@@ -107,6 +107,7 @@ public class StoredBlock implements Serializable {
 
     @Override
     public String toString() {
-        return "Block at height " + getHeight() + ": " + getHeader().toString();
+        return String.format("Block %s at height %d: %s",
+                getHeader().getHashAsString(), getHeight(), getHeader().toString());
     }
 }
