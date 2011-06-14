@@ -607,13 +607,12 @@ public class Wallet implements Serializable {
     @Override
     public synchronized String toString() {
         StringBuilder builder = new StringBuilder();
-        builder.append("Wallet containing ");
-        builder.append(bitcoinValueToFriendlyString(getBalance()));
-        builder.append("BTC in ");
-        builder.append(unspent.size());
-        builder.append(" unspent transactions/");
-        builder.append(spent.size());
-        builder.append(" spent transactions");
+        builder.append(String.format("Wallet containing %s BTC in:\n", bitcoinValueToFriendlyString(getBalance())));
+        builder.append(String.format("  %d unspent transactions\n", unspent.size()));
+        builder.append(String.format("  %d spent transactions\n", spent.size()));
+        builder.append(String.format("  %d pending transactions\n", pending.size()));
+        builder.append(String.format("  %d inactive transactions\n", inactive.size()));
+        builder.append(String.format("  %d dead transactions\n", dead.size()));
         // Do the keys.
         builder.append("\nKeys:\n");
         for (ECKey key : keychain) {
@@ -622,6 +621,27 @@ public class Wallet implements Serializable {
             builder.append(" ");
             builder.append(key.toString());
             builder.append("\n");
+        }
+        // Print the transactions themselves
+        if (unspent.size() > 0) {
+            builder.append("\nUNSPENT:\n");
+            for (Transaction tx : unspent.values()) builder.append(tx);
+        }
+        if (spent.size() > 0) {
+            builder.append("\nSPENT:\n");
+            for (Transaction tx : spent.values()) builder.append(tx);
+        }
+        if (pending.size() > 0) {
+            builder.append("\nPENDING:\n");
+            for (Transaction tx : pending.values()) builder.append(tx);
+        }
+        if (inactive.size() > 0) {
+            builder.append("\nINACTIVE:\n");
+            for (Transaction tx : inactive.values()) builder.append(tx);
+        }
+        if (dead.size() > 0) {
+            builder.append("\nDEAD:\n");
+            for (Transaction tx : dead.values()) builder.append(tx);
         }
         return builder.toString();
     }
