@@ -26,8 +26,23 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 /**
+ * <p>
  * PingService demonstrates basic usage of the library. It sits on the network and when it receives coins, simply
  * sends them right back to the previous owner, determined rather arbitrarily by the address of the first input.
+ * </p>
+ * <p>
+ * If running on TestNet (slow but better than using real coins on prodnet) do the following:
+ * <ol>
+ * <li>Backup your current wallet.dat in case of unforeseen problems</li>
+ * <li>Start your bitcoin client in test mode <code>bitcoin -testnet</code>. This will create a new sub-directory called testnet and should not interfere with normal wallets or operations.</li>
+ * <li>(Optional) Choose a fresh address</li>
+ * <li>(Optional) Visit the Testnet faucet (https://testnet.freebitcoins.appspot.com/) to load your client with test coins</li>
+ * <li>Run <code>PingService -testnet</code></li>
+ * <li>Wait for the block chain to download</li>
+ * <li>Send some coins from your bitcoin client to the address provided in the PingService console</li>
+ * <li>Leave it running until you get the coins back again</li>
+ * </ol>
+ * </p>
  */
 public class PingService {
     public static void main(String[] args) throws Exception {
@@ -95,8 +110,8 @@ public class PingService {
             System.out.println("Downloading block chain. " + (max > 1000 ? "This may take a while." : ""));
             long current = max;
             while (current > 0) {
-                double pct = 100.0 - (100.0 * (current / (double)max));
-                System.out.println(String.format("Chain download %d%% done", (int)pct));
+                double pct = 100.0 - (100.0 * (current / (double) max));
+                System.out.println(String.format("Chain download %d%% done", (int) pct));
                 progress.await(1, TimeUnit.SECONDS);
                 current = progress.getCount();
             }
