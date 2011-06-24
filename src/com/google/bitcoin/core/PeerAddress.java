@@ -53,7 +53,7 @@ public class PeerAddress extends Message {
             int secs = (int)(new Date().getTime() / 1000);
             uint32ToByteStreamLE(secs, stream);
         }
-        uint64ToByteStreamLE(BigInteger.ZERO, stream);  // nServices.
+        uint64ToByteStreamLE(services, stream);  // nServices.
         // Java does not provide any utility to map an IPv4 address into IPv6 space, so we have to do it by hand.
         byte[] ipBytes = addr.getAddress();
         if (ipBytes.length == 4) {
@@ -64,9 +64,9 @@ public class PeerAddress extends Message {
             ipBytes = v6addr;
         }
         stream.write(ipBytes);
-        // And write out the port.
+        // And write out the port. Unlike the rest of the protocol, address and port is in big endian byte order.
+        stream.write((byte) (0xFF & port >> 8));
         stream.write((byte) (0xFF & port));
-        stream.write((byte) (0xFF & (port >> 8)));
     }
 
     @Override
