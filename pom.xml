@@ -215,6 +215,9 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-javadoc-plugin</artifactId>
         <version>${maven-javadoc-plugin.version}</version>
+        <configuration>
+            <excludePackageNames>com.google.bitcoin.bouncycastle.*</excludePackageNames>
+        </configuration>
       </plugin>
       <!-- Generate a FindBugs report -->
       <plugin>
@@ -242,6 +245,9 @@
             <ignores>
               <ignore>org.slf4j.*</ignore>
             </ignores>
+            <excludes>
+              <exclude>com.google.bitcoin.bouncycastle.*</exclude>
+            </excludes>
           </instrumentation>
           <formats>
             <format>html</format>
