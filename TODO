@@ -1,18 +1,20 @@
 Here is a brief list of things that still need to be done.
 
 More unit tests:
-   - Implement more unit tests for block chain functionality
    - Create a MockNetworkConnection and use it to test the Peer.
 
+API:
+   - Reorganize the package layout to be more modular.
+   - Support multiple active wallets.
+   - Allow sorting of transactions by time.
+
 Protocol:
-   - Properly support multiple chains
    - Start up faster
-      - Store a block locator in the wallet
-      - Parse the stored headers at startup, then download the rest
-   - Provide a seed node list in the NetworkParameters.
+      - Store a block locator in the persisted chain
+      - Use the getheaders command to speed up the initial chain download
    - Implement tx fees.
-   - Support import of private keys and then extracting its transactions from the block chain.
    - Longer term potentially add a getmerklebranch protocol command so we can check 0-confirmation transactions.
+   - Support PeerGroups for holding open/using multiple connections at once.
 
 Examples/documentation:
    - Implement a simple Swing GUI payment app.
