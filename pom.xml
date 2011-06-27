@@ -1,36 +1,186 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.google</groupId>
   <artifactId>bitcoinj</artifactId>
-  <version>0.0.1-SNAPSHOT</version>
-  
+  <version>0.2</version>
+  <name>BitCoinJ</name>
+  <description>A Java implementation of a Bitcoin client-only node</description>
+  <url>http://code.google.com/p/bitcoinj</url>
+  <!-- This POM has been tested with the following versions of Maven:
+       2.2.0, 2.2.1, 3.0.2
+
+       Use "mvn clean package" to build quickly without all the reports
+       Use "mvn clean verify" before submitting a patch
+
+       Use "mvn site:site" to generate a complete website under target/site
+       Use "mvn site:run" to run a local webserver localhost:8080/index.html
+
+       -->
+  <ciManagement>
+    <url>http://ci.bitcoinj.org/</url>
+  </ciManagement>
+  <licenses>
+    <license>
+      <name>Apache 2</name>
+      <url>http://www.apache.org/licenses/LICENSE-2.0</url>
+      <distribution>repo</distribution>
+      <comments>A business-friendly OSS license</comments>
+    </license>
+  </licenses>
+  <!-- Committers -->
+  <developers>
+    <!-- Information already public -->
+    <developer>
+      <name>Mike Hearn</name>
+      <email>hearn@google.com</email>
+    </developer>
+    <developer>
+      <name>Miron Cuperman</name>
+      <email>miron@google.com</email>
+    </developer>
+    <developer>
+      <name>Xiaofeng Guo</name>
+      <email>xiaofengguo@google.com</email>
+    </developer>
+  </developers>
+  <!-- Patchers and contributors -->
+  <contributors>
+    <!-- Information already public -->
+    <contributor>
+      <name>Thilo Planz</name>
+      <email>thilo@cpan.org</email>
+    </contributor>
+    <contributor>
+      <name>Micheal Swiggs</name>
+      <email>bobby.simpson87@gmail.com</email>
+    </contributor>
+    <contributor>
+      <name>Gary Rowe</name>
+      <email>g.rowe@froot.co.uk</email>
+    </contributor>
+    <contributor>
+      <name>Noa Resare</name>
+      <email>noa@resare.com</email>
+    </contributor>
+    <contributor>
+      <name>John Sample</name>
+      <email>jwsample@gmail.com</email>
+    </contributor>
+  </contributors>
+  <issueManagement>
+    <system>Google Code</system>
+    <url>http://code.google.com/p/bitcoinj/issues/list</url>
+  </issueManagement>
+  <mailingLists>
+    <mailingList>
+      <name>BitcoinJ Google Group</name>
+      <post>https://groups.google.com/forum/#!forum/bitcoinj</post>
+    </mailingList>
+  </mailingLists>
+  <scm>
+    <!-- Public read-only source -->
+    <url>http://bitcoinj.googlecode.com/svn/trunk/</url>
+  </scm>
+  <profiles>
+    <profile>
+      <id>maven-3</id>
+      <activation>
+        <file>
+          <!-- This relies on basedir is only recognized by Maven 3.x (see MNG-2363) -->
+          <exists>${basedir}</exists>
+        </file>
+      </activation>
+      <build>
+        <pluginManagement>
+          <plugins>
+            <plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-site-plugin</artifactId>
+              <version>3.0-beta-3</version>
+            </plugin>
+          </plugins>
+        </pluginManagement>
+        <plugins>
+          <plugin>
+            <artifactId>maven-site-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>attach-descriptor</id>
+                <goals>
+                  <goal>attach-descriptor</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
   <build>
     <sourceDirectory>src</sourceDirectory>
     <testSourceDirectory>tests</testSourceDirectory>
-    
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
-        <version>2.3.2</version>
+        <version>${maven-site-plugin.version}.2</version>
         <configuration>
           <source>1.5</source>
           <target>1.5</target>
         </configuration>
       </plugin>
+      <!-- Unit testing -->
       <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>findbugs-maven-plugin</artifactId>
-        <version>1.2</version>
-        <configuration>
-          <findbugsXmlOutput>true</findbugsXmlOutput>
-          <findbugsXmlWithMessages>true</findbugsXmlWithMessages>
-          <xmlOutput>true</xmlOutput>
-        </configuration>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>${maven-surefire-plugin.version}</version>
       </plugin>
+      <!-- Unit test reporting -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-report-plugin</artifactId>
+        <version>${maven-surefire-report-plugin.version}</version>
+      </plugin>
+      <!-- Generates a source code JAR during package -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-source-plugin</artifactId>
+        <version>${maven-source-plugin.version}</version>
+        <executions>
+          <execution>
+            <id>attach-sources</id>
+            <goals>
+              <goal>jar</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <!-- Execute FindBugs during verify phase
+           Will fail the build if it finds a bug
+           Enable when ready -->
+      <!--<plugin>-->
+        <!--<groupId>org.codehaus.mojo</groupId>-->
+        <!--<artifactId>findbugs-maven-plugin</artifactId>-->
+        <!--<version>${findbugs-maven-plugin.version}</version>-->
+        <!--<configuration>-->
+          <!--<xmlOutput>true</xmlOutput>-->
+          <!--<xmlOutputDirectory>target/site</xmlOutputDirectory>-->
+          <!--<findbugsXmlOutput>true</findbugsXmlOutput>-->
+          <!--<findbugsXmlOutputDirectory>target/site</findbugsXmlOutputDirectory>-->
+          <!--<effort>Max</effort>-->
+          <!--<threshold>Low</threshold>-->
+        <!--</configuration>-->
+        <!--<executions>-->
+          <!--<execution>-->
+            <!--<phase>verify</phase>-->
+            <!--<goals>-->
+              <!--<goal>check</goal>-->
+            <!--</goals>-->
+          <!--</execution>-->
+        <!--</executions>-->
+      <!--</plugin>-->
     </plugins>
-    
   </build>
   <dependencies>
     <dependency>
@@ -38,7 +188,7 @@
       <artifactId>junit</artifactId>
       <version>4.8.2</version>
       <type>jar</type>
-      <scope>compile</scope>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.slf4j</groupId>
@@ -55,4 +205,119 @@
       <scope>compile</scope>
     </dependency>
   </dependencies>
+  <!-- The reporting section is deprecated in Maven3,
+       but can be read by site plugin (see MNG-4162) -->
+  <reporting>
+    <outputDirectory>${basedir}/target/site</outputDirectory>
+    <plugins>
+      <!-- Generates Javadocs -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-javadoc-plugin</artifactId>
+        <version>${maven-javadoc-plugin.version}</version>
+      </plugin>
+      <!-- Generate a FindBugs report -->
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>findbugs-maven-plugin</artifactId>
+        <version>${findbugs-maven-plugin.version}</version>
+        <configuration>
+          <!-- Findbugs takes about 2mins to complete -->
+          <skip>true</skip>
+          <xmlOutput>true</xmlOutput>
+          <xmlOutputDirectory>target/site</xmlOutputDirectory>
+          <findbugsXmlOutput>true</findbugsXmlOutput>
+          <findbugsXmlOutputDirectory>target/site</findbugsXmlOutputDirectory>
+          <effort>Max</effort>
+          <threshold>Low</threshold>
+        </configuration>
+      </plugin>
+      <!-- Generate a code coverage report -->
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>cobertura-maven-plugin</artifactId>
+        <version>${cobertura-maven-plugin.version}</version>
+        <configuration>
+          <instrumentation>
+            <ignores>
+              <ignore>org.slf4j.*</ignore>
+            </ignores>
+          </instrumentation>
+          <formats>
+            <format>html</format>
+            <format>xml</format>
+          </formats>
+        </configuration>
+      </plugin>
+      <!-- Generate an HTML report for unit tests -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-report-plugin</artifactId>
+        <version>${maven-surefire-report-plugin.version}</version>
+      </plugin>
+      <!-- Generate a mini-site for the project -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-site-plugin</artifactId>
+        <version>${maven-site-plugin.version}</version>
+      </plugin>
+      <!-- Generate cross-referenced HTML source code listing -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jxr-plugin</artifactId>
+        <version>${maven-jxr-plugin.version}</version>
+      </plugin>
+      <!-- Execute Taglist to add TODOs, REFACTORs
+           and so on to the project site during verify
+      -->
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>taglist-maven-plugin</artifactId>
+        <version>${taglist-maven-plugin.version}</version>
+        <configuration>
+          <tagListOptions>
+            <tagClasses>
+              <tagClass>
+                <displayName>Pre-release Project Development Work (Peer Review)</displayName>
+                <tags>
+                  <tag>
+                    <matchString>TODO</matchString>
+                    <matchType>ignoreCase</matchType>
+                  </tag>
+                  <tag>
+                    <matchString>FIXME</matchString>
+                    <matchType>ignoreCase</matchType>
+                  </tag>
+                </tags>
+              </tagClass>
+              <tagClass>
+                <displayName>Ongoing Refactoring and Maintenance Work (Technical Debt)</displayName>
+                <tags>
+                  <tag>
+                    <matchString>REFACTOR</matchString>
+                    <matchType>ignoreCase</matchType>
+                  </tag>
+                </tags>
+              </tagClass>
+            </tagClasses>
+          </tagListOptions>
+        </configuration>
+      </plugin>
+    </plugins>
+  </reporting>
+  <properties>
+    <!-- Source encoding -->
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <!-- Plugin versions -->
+    <!-- Require lower version for Maven3 compatibility -->
+    <maven-surefire-report-plugin.version>2.4.3</maven-surefire-report-plugin.version>
+    <maven-jxr-plugin.version>2.1</maven-jxr-plugin.version>
+    <maven-site-plugin.version>2.3</maven-site-plugin.version>
+    <maven-surefire-plugin.version>2.8.1</maven-surefire-plugin.version>
+    <maven-source-plugin.version>2.0.4</maven-source-plugin.version>
+    <maven-javadoc-plugin.version>2.6.1</maven-javadoc-plugin.version>
+    <findbugs-maven-plugin.version>2.3.1</findbugs-maven-plugin.version>
+    <taglist-maven-plugin.version>2.4</taglist-maven-plugin.version>
+    <cobertura-maven-plugin.version>2.3</cobertura-maven-plugin.version>
+  </properties>
 </project>
