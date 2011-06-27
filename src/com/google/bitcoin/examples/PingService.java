@@ -113,9 +113,13 @@ public class PingService {
         if (max > 0) {
             System.out.println("Downloading block chain. " + (max > 1000 ? "This may take a while." : ""));
             long current = max;
+            int lastPercent = 0;
             while (current > 0) {
                 double pct = 100.0 - (100.0 * (current / (double) max));
-                System.out.println(String.format("Chain download %d%% done", (int) pct));
+                if ((int)pct != lastPercent) {
+                    System.out.println(String.format("Chain download %d%% done", (int) pct));
+                    lastPercent = (int) pct;
+                }
                 progress.await(1, TimeUnit.SECONDS);
                 current = progress.getCount();
             }
