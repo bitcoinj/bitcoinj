@@ -166,7 +166,7 @@ public class BlockChain {
         if (storedPrev.equals(chainHead)) {
             // This block connects to the best known block, it is a normal continuation of the system.
             setChainHead(newStoredBlock);
-            log.info("Chain is now {} blocks high", chainHead.getHeight());
+            log.trace("Chain is now {} blocks high", chainHead.getHeight());
             if (newTransactions != null)
                 sendTransactionsToWallet(newStoredBlock, NewBlockType.BEST_CHAIN, newTransactions);
         } else {
