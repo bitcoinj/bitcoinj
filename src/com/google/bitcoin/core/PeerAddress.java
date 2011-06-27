@@ -46,6 +46,7 @@ public class PeerAddress extends Message {
         this.addr = addr;
         this.port = port;
         this.protocolVersion = protocolVersion;
+        this.services = BigInteger.ZERO;
     }
     
     public void bitcoinSerializeToStream(OutputStream stream) throws IOException {
