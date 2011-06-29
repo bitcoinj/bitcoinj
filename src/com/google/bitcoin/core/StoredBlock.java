@@ -16,6 +16,9 @@
 
 package com.google.bitcoin.core;
 
+import com.google.bitcoin.store.BlockStore;
+import com.google.bitcoin.store.BlockStoreException;
+
 import java.io.Serializable;
 import java.math.BigInteger;
 

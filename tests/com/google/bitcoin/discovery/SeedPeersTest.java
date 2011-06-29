@@ -13,10 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.bitcoin.core;
+package com.google.bitcoin.discovery;
 
 import static org.junit.Assert.*;
 import static org.hamcrest.CoreMatchers.*;
+
+import com.google.bitcoin.core.NetworkParameters;
+import com.google.bitcoin.discovery.SeedPeers;
 import org.junit.Test;
 
 import java.net.InetSocketAddress;

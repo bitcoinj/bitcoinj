@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.google.bitcoin.core;
+package com.google.bitcoin.discovery;
 
 import static org.junit.Assert.*;
 
@@ -22,6 +22,7 @@ import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 
+import com.google.bitcoin.discovery.IrcDiscovery;
 import org.junit.Test;
 
 public class IrcDiscoveryTest {

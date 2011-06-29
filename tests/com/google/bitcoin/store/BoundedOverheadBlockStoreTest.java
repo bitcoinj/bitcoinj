@@ -13,8 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.bitcoin.core;
+package com.google.bitcoin.store;
 
+import com.google.bitcoin.core.Address;
+import com.google.bitcoin.core.ECKey;
+import com.google.bitcoin.core.NetworkParameters;
+import com.google.bitcoin.core.StoredBlock;
+import com.google.bitcoin.store.BoundedOverheadBlockStore;
 import org.junit.Test;
 import java.io.File;
 import static org.junit.Assert.assertEquals;

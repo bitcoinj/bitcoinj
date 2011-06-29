@@ -141,7 +141,7 @@ public class NetworkParameters implements Serializable {
     }
 
     /** Returns a testnet params modified to allow any difficulty target. */
-    static NetworkParameters unitTests() {
+    public static NetworkParameters unitTests() {
         NetworkParameters n = new NetworkParameters();
         n = createTestNet(n);
         n.proofOfWorkLimit = new BigInteger("00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", 16);

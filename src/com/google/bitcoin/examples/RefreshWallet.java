@@ -17,6 +17,7 @@
 package com.google.bitcoin.examples;
 
 import com.google.bitcoin.core.*;
+import com.google.bitcoin.store.*;
 
 import java.io.File;
 import java.math.BigInteger;

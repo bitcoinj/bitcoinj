@@ -13,8 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.bitcoin.core;
+package com.google.bitcoin.store;
 
+import com.google.bitcoin.core.Address;
+import com.google.bitcoin.core.ECKey;
+import com.google.bitcoin.core.NetworkParameters;
+import com.google.bitcoin.core.StoredBlock;
+import com.google.bitcoin.store.DiskBlockStore;
 import org.junit.Test;
 import java.io.File;
 import static org.junit.Assert.assertEquals;
@@ -24,7 +29,6 @@ public class DiskBlockStoreTest {
     public void testStorage() throws Exception {
         File temp = File.createTempFile("bitcoinj-test", null, null);
         System.out.println(temp.getAbsolutePath());
-        //temp.deleteOnExit();
 
         NetworkParameters params = NetworkParameters.unitTests();
         Address to = new ECKey().toAddress(params);

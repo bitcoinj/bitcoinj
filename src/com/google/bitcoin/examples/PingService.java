@@ -17,6 +17,8 @@
 package com.google.bitcoin.examples;
 
 import com.google.bitcoin.core.*;
+import com.google.bitcoin.store.BlockStore;
+import com.google.bitcoin.store.BoundedOverheadBlockStore;
 
 import java.io.File;
 import java.io.IOException;

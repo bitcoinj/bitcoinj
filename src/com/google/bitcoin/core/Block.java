@@ -497,7 +497,8 @@ public class Block extends Message {
         return b;
     }
 
-    Block createNextBlock(Address to) {
+    // Visible for testing.
+    public Block createNextBlock(Address to) {
         return createNextBlock(to, System.currentTimeMillis() / 1000);
     }
 }

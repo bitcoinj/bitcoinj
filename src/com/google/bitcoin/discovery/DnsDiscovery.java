@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-package com.google.bitcoin.core;
+package com.google.bitcoin.discovery;
 
+import com.google.bitcoin.core.NetworkParameters;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.*;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.Vector;
 
 /**
  * Supports peer discovery through DNS.<p>

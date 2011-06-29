@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 
-package com.google.bitcoin.core;
+package com.google.bitcoin.store;
+
+import com.google.bitcoin.core.*;
 
 import java.io.*;
 import java.nio.ByteBuffer;
@@ -22,7 +24,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Keeps {@link StoredBlock}s in memory. Used primarily for unit testing.
+ * Keeps {@link com.google.bitcoin.core.StoredBlock}s in memory. Used primarily for unit testing.
  */
 public class MemoryBlockStore implements BlockStore {
     // We use a ByteBuffer to hold hashes here because the Java array equals()/hashcode() methods do not operate on

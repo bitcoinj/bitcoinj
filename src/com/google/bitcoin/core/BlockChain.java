@@ -19,6 +19,8 @@ package com.google.bitcoin.core;
 import java.math.BigInteger;
 import java.util.*;
 
+import com.google.bitcoin.store.BlockStore;
+import com.google.bitcoin.store.BlockStoreException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -74,8 +76,8 @@ public class BlockChain {
      * one from scratch, or you can deserialize a saved wallet from disk using {@link Wallet#loadFromFile(java.io.File)}
      * <p>
      *
-     * For the store you can use a {@link MemoryBlockStore} if you don't care about saving the downloaded data, or a
-     * {@link BoundedOverheadBlockStore} if you'd like to ensure fast startup the next time you run the program.
+     * For the store you can use a {@link com.google.bitcoin.store.MemoryBlockStore} if you don't care about saving the downloaded data, or a
+     * {@link com.google.bitcoin.store.BoundedOverheadBlockStore} if you'd like to ensure fast startup the next time you run the program.
      */
     public BlockChain(NetworkParameters params, Wallet wallet, BlockStore blockStore) {
         try {
