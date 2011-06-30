@@ -63,8 +63,8 @@ public class DiskBlockStore implements BlockStore {
             // Set up the genesis block. When we start out fresh, it is by definition the top of the chain.
             Block genesis = params.genesisBlock.cloneAsHeader();
             StoredBlock storedGenesis = new StoredBlock(genesis, genesis.getWork(), 0);
-            this.chainHead = new Sha256Hash(storedGenesis.getHeader().getHash());
-            stream.write(this.chainHead.hash);
+            this.chainHead = storedGenesis.getHeader().getHash();
+            stream.write(this.chainHead.getBytes());
             put(storedGenesis);
         } catch (VerificationException e1) {
             throw new RuntimeException(e1);  // Cannot happen.
@@ -110,8 +110,8 @@ public class DiskBlockStore implements BlockStore {
                     if (b.equals(params.genesisBlock)) {
                         s = new StoredBlock(params.genesisBlock.cloneAsHeader(), params.genesisBlock.getWork(), 0);
                     } else {
-                        throw new BlockStoreException("Could not connect " + Utils.bytesToHexString(b.getHash()) + " to "
-                            + Utils.bytesToHexString(b.getPrevBlockHash()));
+                        throw new BlockStoreException("Could not connect " + b.getHash().toString() + " to "
+                            + b.getPrevBlockHash().toString());
                     }
                 } else {
                     // Don't try to verify the genesis block to avoid upsetting the unit tests.
@@ -120,7 +120,7 @@ public class DiskBlockStore implements BlockStore {
                     s = prev.build(b);
                 }
                 // Save in memory.
-                blockMap.put(new Sha256Hash(b.getHash()), s);
+                blockMap.put(b.getHash(), s);
             }
         } catch (ProtocolException e) {
             // Corrupted file.
@@ -135,7 +135,7 @@ public class DiskBlockStore implements BlockStore {
 
     public synchronized void put(StoredBlock block) throws BlockStoreException {
         try {
-            Sha256Hash hash = new Sha256Hash(block.getHeader().getHash());
+            Sha256Hash hash = block.getHeader().getHash();
             assert blockMap.get(hash) == null : "Attempt to insert duplicate";
             // Append to the end of the file. The other fields in StoredBlock will be recalculated when it's reloaded.
             byte[] bytes = block.getHeader().bitcoinSerialize();
@@ -147,8 +147,8 @@ public class DiskBlockStore implements BlockStore {
         }
     }
 
-    public synchronized StoredBlock get(byte[] hash) throws BlockStoreException {
-        return blockMap.get(new Sha256Hash(hash));
+    public synchronized StoredBlock get(Sha256Hash hash) throws BlockStoreException {
+        return blockMap.get(hash);
     }
 
     public synchronized StoredBlock getChainHead() throws BlockStoreException {
@@ -157,10 +157,9 @@ public class DiskBlockStore implements BlockStore {
 
     public synchronized void setChainHead(StoredBlock chainHead) throws BlockStoreException {
         try {
-            byte[] hash = chainHead.getHeader().getHash();
-            this.chainHead = new Sha256Hash(hash);
+            this.chainHead = chainHead.getHeader().getHash();
             // Write out new hash to the first 32 bytes of the file past one (first byte is version number).
-            stream.getChannel().write(ByteBuffer.wrap(hash), 1);
+            stream.getChannel().write(ByteBuffer.wrap(this.chainHead.getBytes()), 1);
         } catch (IOException e) {
             throw new BlockStoreException(e);
         }

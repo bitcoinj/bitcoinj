@@ -448,6 +448,6 @@ public class Transaction extends Message implements Serializable {
 
     @Override
     public int hashCode() {
-        return Arrays.hashCode(getHash().hash);
+        return getHash().hashCode();
     }
 }

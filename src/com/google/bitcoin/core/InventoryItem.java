@@ -24,15 +24,15 @@ public class InventoryItem {
     }
     
     public final Type type;
-    public final byte[] hash;
+    public final Sha256Hash hash;
     
-    public InventoryItem(Type type, byte[] hash) {
+    public InventoryItem(Type type, Sha256Hash hash) {
         this.type = type;
         this.hash = hash;
     }
     
 
     public String toString() {
-        return type.toString() + ": " + Utils.bytesToHexString(hash);
+        return type.toString() + ": " + hash;
     }
 }

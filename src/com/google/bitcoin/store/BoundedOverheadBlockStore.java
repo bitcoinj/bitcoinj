@@ -166,8 +166,8 @@ public class BoundedOverheadBlockStore implements BlockStore {
             // Set up the genesis block. When we start out fresh, it is by definition the top of the chain.
             Block genesis = params.genesisBlock.cloneAsHeader();
             StoredBlock storedGenesis = new StoredBlock(genesis, genesis.getWork(), 0);
-            this.chainHead = new Sha256Hash(storedGenesis.getHeader().getHash());
-            this.file.write(this.chainHead.hash);
+            this.chainHead = storedGenesis.getHeader().getHash();
+            this.file.write(this.chainHead.getBytes());
             put(storedGenesis);
         } catch (VerificationException e1) {
             throw new RuntimeException(e1);  // Cannot happen.
@@ -202,7 +202,7 @@ public class BoundedOverheadBlockStore implements BlockStore {
 
     public synchronized void put(StoredBlock block) throws BlockStoreException {
         try {
-            Sha256Hash hash = new Sha256Hash(block.getHeader().getHash());
+            Sha256Hash hash = block.getHeader().getHash();
             // Append to the end of the file.
             dummyRecord.write(channel, block);
             blockCache.put(hash, block);
@@ -211,9 +211,8 @@ public class BoundedOverheadBlockStore implements BlockStore {
         }
     }
 
-    public synchronized StoredBlock get(byte[] hashBytes) throws BlockStoreException {
+    public synchronized StoredBlock get(Sha256Hash hash) throws BlockStoreException {
         // Check the memory cache first.
-        Sha256Hash hash = new Sha256Hash(hashBytes);
         StoredBlock fromMem = blockCache.get(hash);
         if (fromMem != null) {
             return fromMem;
@@ -248,7 +247,7 @@ public class BoundedOverheadBlockStore implements BlockStore {
         do {
             if (!record.read(channel, pos, buf))
                 throw new IOException("Failed to read buffer");
-            if (Arrays.equals(record.getHeader(params).getHash(), hash.hash)) {
+            if (record.getHeader(params).getHash().equals(hash)) {
                 // Found it. Update file position for next time.
                 channel.position(pos);
                 return record;
@@ -269,15 +268,14 @@ public class BoundedOverheadBlockStore implements BlockStore {
     }
 
     public synchronized StoredBlock getChainHead() throws BlockStoreException {
-        return get(chainHead.hash);
+        return get(chainHead);
     }
 
     public synchronized void setChainHead(StoredBlock chainHead) throws BlockStoreException {
         try {
-            byte[] hash = chainHead.getHeader().getHash();
-            this.chainHead = new Sha256Hash(hash);
+            this.chainHead = chainHead.getHeader().getHash();
             // Write out new hash to the first 32 bytes of the file past one (first byte is version number).
-            channel.write(ByteBuffer.wrap(hash), 1);
+            channel.write(ByteBuffer.wrap(this.chainHead.getBytes()), 1);
         } catch (IOException e) {
             throw new BlockStoreException(e);
         }

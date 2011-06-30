@@ -113,14 +113,14 @@ public abstract class Message implements Serializable {
         return u;
     }
     
-    byte[] readHash() {
+    Sha256Hash readHash() {
         byte[] hash = new byte[32];
         System.arraycopy(bytes, cursor, hash, 0, 32);
         // We have to flip it around, as it's been read off the wire in little endian.
         // Not the most efficient way to do this but the clearest.
         hash = Utils.reverseBytes(hash);        
         cursor += 32;
-        return hash;
+        return new Sha256Hash(hash);
     }
 
 

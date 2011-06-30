@@ -50,8 +50,8 @@ public class Block extends Message {
     // For unit testing. If not zero, use this instead of the current time.
     static long fakeClock = 0;
     private long version;
-    private byte[] prevBlockHash;
-    private byte[] merkleRoot;
+    private Sha256Hash prevBlockHash;
+    private Sha256Hash merkleRoot;
     private long time;
     private long difficultyTarget;  // "nBits"
 
@@ -60,7 +60,7 @@ public class Block extends Message {
     /** If null, it means this object holds only the headers. */
     List<Transaction> transactions;
     /** Stores the hash of the block. If null, getHash() will recalculate it. */
-    private transient byte[] hash;
+    private transient Sha256Hash hash;
 
     /** Special case constructor, used for the genesis node and unit tests. */
     Block(NetworkParameters params) {
@@ -69,7 +69,7 @@ public class Block extends Message {
         version = 1;
         difficultyTarget = 0x1d07fff8L;
         time = System.currentTimeMillis() / 1000;
-        prevBlockHash = new byte[32];  // All zeros.
+        prevBlockHash = Sha256Hash.ZERO_HASH;
     }
 
     /** Constructs a block object from the BitCoin wire format. */
@@ -85,7 +85,7 @@ public class Block extends Message {
         difficultyTarget = readUint32();
         nonce = readUint32();
         
-        hash = Utils.reverseBytes(Utils.doubleDigest(bytes, 0, cursor));
+        hash = new Sha256Hash(Utils.reverseBytes(Utils.doubleDigest(bytes, 0, cursor)));
 
         if (cursor == bytes.length) {
             // This message is just a header, it has no transactions.
@@ -103,8 +103,8 @@ public class Block extends Message {
 
     private void writeHeader(OutputStream stream) throws IOException {
         Utils.uint32ToByteStreamLE(version, stream);
-        stream.write(Utils.reverseBytes(prevBlockHash));
-        stream.write(Utils.reverseBytes(getMerkleRoot()));
+        stream.write(Utils.reverseBytes(prevBlockHash.getBytes()));
+        stream.write(Utils.reverseBytes(getMerkleRoot().getBytes()));
         Utils.uint32ToByteStreamLE(time, stream);
         Utils.uint32ToByteStreamLE(difficultyTarget, stream);
         Utils.uint32ToByteStreamLE(nonce, stream);
@@ -124,11 +124,11 @@ public class Block extends Message {
     /**
      * Calculates the block hash by serializing the block and hashing the resulting bytes.
      */
-    private byte[] calculateHash() {
+    private Sha256Hash calculateHash() {
         try {
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
             writeHeader(bos);
-            return Utils.reverseBytes(doubleDigest(bos.toByteArray()));
+            return new Sha256Hash(Utils.reverseBytes(doubleDigest(bos.toByteArray())));
         } catch (IOException e) {
             throw new RuntimeException(e);  // Cannot happen.
         }
@@ -140,13 +140,13 @@ public class Block extends Message {
      * "00000000839a8e6886ab5951d76f411475428afc90947ee320161bbf18eb6048".
      */
     public String getHashAsString() {
-        return Utils.bytesToHexString(getHash());
+        return getHash().toString();
     }
 
     /**
      * Returns the hash of the block (which for a valid, solved block should be below the target). Big endian.
      */
-    public byte[] getHash() {
+    public Sha256Hash getHash() {
         if (hash == null)
             hash = calculateHash();
         return hash;
@@ -186,8 +186,8 @@ public class Block extends Message {
     @Override
     public String toString() {
         StringBuffer s = new StringBuffer("v" + version + " block: \n" +
-               "   previous block: " + bytesToHexString(prevBlockHash) + "\n" +
-               "   merkle root: " + bytesToHexString(getMerkleRoot()) + "\n" +
+               "   previous block: " + prevBlockHash.toString() + "\n" +
+               "   merkle root: " + getMerkleRoot().toString() + "\n" +
                "   time: [" + time + "] " + new Date(time * 1000).toString() + "\n" +
                "   difficulty target (nBits): " + difficultyTarget + "\n" +
                "   nonce: " + nonce + "\n");
@@ -244,7 +244,7 @@ public class Block extends Message {
         // field is of the right value. This requires us to have the preceeding blocks.
         BigInteger target = getDifficultyTargetAsInteger();
 
-        BigInteger h = new BigInteger(1, getHash());
+        BigInteger h = getHash().toBigInteger();
         if (h.compareTo(target) > 0) {
             // Proof of work check failed!
             if (throwException)
@@ -263,21 +263,18 @@ public class Block extends Message {
             throw new VerificationException("Block too far in future");
     }
     
-    private void checkMerkleHash() throws VerificationException {
-        List<byte[]> tree = buildMerkleTree();
-        byte[] calculatedRoot = tree.get(tree.size() - 1);
-        if (!Arrays.equals(calculatedRoot, merkleRoot)) {
-            log.error("Merkle tree did not verify: ");
-            for (byte[] b : tree) log.error(Utils.bytesToHexString(b));
-
+    private void checkMerkleRoot() throws VerificationException {
+        Sha256Hash calculatedRoot = calculateMerkleRoot();
+        if (!calculatedRoot.equals(merkleRoot)) {
+            log.error("Merkle tree did not verify");
             throw new VerificationException("Merkle hashes do not match: " +
-                    bytesToHexString(calculatedRoot) + " vs " + bytesToHexString(merkleRoot));
+                    calculatedRoot + " vs " + merkleRoot);
         }
     }
 
-    private byte[] calculateMerkleRoot() {
+    private Sha256Hash calculateMerkleRoot() {
         List<byte[]> tree = buildMerkleTree();
-        return tree.get(tree.size() - 1);
+        return new Sha256Hash(tree.get(tree.size() - 1));
     }
 
     private List<byte[]> buildMerkleTree() {
@@ -315,7 +312,7 @@ public class Block extends Message {
         ArrayList<byte[]> tree = new ArrayList<byte[]>();
         // Start by adding all the hashes of the transactions as leaves of the tree.
         for (Transaction t : transactions) {
-            tree.add(t.getHash().hash);
+            tree.add(t.getHash().getBytes());
         }
         int levelOffset = 0;  // Offset in the list where the currently processed level starts.
         // Step through each level, stopping when we reach the root (levelSize == 1).
@@ -369,7 +366,7 @@ public class Block extends Message {
         if (transactions != null) {
             assert transactions.size() > 0;
             checkTransactions();
-            checkMerkleHash();
+            checkMerkleRoot();
         }
     }
 
@@ -377,23 +374,23 @@ public class Block extends Message {
     public boolean equals(Object o) {
         if (!(o instanceof Block)) return false;
         Block other = (Block) o;
-        return Arrays.equals(getHash(), other.getHash());
+        return getHash().equals(other.getHash());
     }
 
     @Override
     public int hashCode() {
-        return Arrays.hashCode(getHash());
+        return getHash().hashCode();
     }
 
     /** Returns the merkle root in big endian form, calculating it from transactions if necessary. */
-    public byte[] getMerkleRoot() {
+    public Sha256Hash getMerkleRoot() {
         if (merkleRoot == null)
             merkleRoot = calculateMerkleRoot();
         return merkleRoot;
     }
 
     /** Exists only for unit testing. */
-    void setMerkleRoot(byte[] value) {
+    void setMerkleRoot(Sha256Hash value) {
         merkleRoot = value;
         hash = null;
     }
@@ -415,11 +412,11 @@ public class Block extends Message {
     }
 
     /** Returns the hash of the previous block in the chain, as defined by the block header. */
-    public byte[] getPrevBlockHash() {
+    public Sha256Hash getPrevBlockHash() {
         return prevBlockHash;
     }
 
-    void setPrevBlockHash(byte[] prevBlockHash) {
+    void setPrevBlockHash(Sha256Hash prevBlockHash) {
         this.prevBlockHash = prevBlockHash;
         this.hash = null;
     }

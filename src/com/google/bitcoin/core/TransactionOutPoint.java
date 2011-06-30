@@ -29,7 +29,7 @@ public class TransactionOutPoint extends Message implements Serializable {
     private static final long serialVersionUID = -6320880638344662579L;
 
     /** Hash of the transaction to which we refer. */
-    byte[] hash;
+    Sha256Hash hash;
     /** Which output of that transaction we are talking about. */
     long index;
 
@@ -41,11 +41,11 @@ public class TransactionOutPoint extends Message implements Serializable {
         super(params);
         this.index = index;
         if (fromTx != null) {
-            this.hash = fromTx.getHash().hash;
+            this.hash = fromTx.getHash();
             this.fromTx = fromTx;
         } else {
             // This happens when constructing the genesis block.
-            hash = new byte[32];  // All zeros.
+            hash = Sha256Hash.ZERO_HASH;
         }
     }
 
@@ -62,8 +62,7 @@ public class TransactionOutPoint extends Message implements Serializable {
 
     @Override
     public void bitcoinSerializeToStream(OutputStream stream) throws IOException {
-        assert hash.length == 32;
-        stream.write(Utils.reverseBytes(hash));
+        stream.write(Utils.reverseBytes(hash.getBytes()));
         Utils.uint32ToByteStreamLE(index, stream);
     }
 

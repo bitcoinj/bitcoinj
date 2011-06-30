@@ -115,7 +115,7 @@ public class Peer {
             synchronized (pendingGetBlockFutures) {
                 for (int i = 0; i < pendingGetBlockFutures.size(); i++) {
                     GetDataFuture<Block> f = pendingGetBlockFutures.get(i);
-                    if (Arrays.equals(f.getItem().hash, m.getHash())) {
+                    if (f.getItem().hash.equals(m.getHash())) {
                         // Yes, it was. So pass it through the future.
                         f.setResult(m);
                         // Blocks explicitly requested don't get sent to the block chain.
@@ -161,10 +161,10 @@ public class Peer {
         // chain, we may end up requesting blocks we already requested before. This shouldn't (in theory) happen
         // enough to be a problem.
         Block topBlock = blockChain.getUnconnectedBlock();
-        byte[] topHash = (topBlock != null ? topBlock.getHash() : null);
+        Sha256Hash topHash = (topBlock != null ? topBlock.getHash() : null);
         List<InventoryItem> items = inv.getItems();
         if (items.size() == 1 && items.get(0).type == InventoryItem.Type.Block && topHash != null &&
-                Arrays.equals(items.get(0).hash, topHash)) {
+                items.get(0).hash.equals(topHash)) {
             // An inv with a single hash containing our most recent unconnected block is a special inv,
             // it's kind of like a tickle from the peer telling us that it's time to download more blocks to catch up to
             // the block chain. We could just ignore this and treat it as a regular inv but then we'd download the head
@@ -196,7 +196,7 @@ public class Peer {
      * @param blockHash Hash of the block you wareare requesting.
      * @throws IOException
      */
-    public Future<Block> getBlock(byte[] blockHash) throws IOException {
+    public Future<Block> getBlock(Sha256Hash blockHash) throws IOException {
         InventoryMessage getdata = new InventoryMessage(params);
         InventoryItem inventoryItem = new InventoryItem(InventoryItem.Type.Block, blockHash);
         getdata.addItem(inventoryItem);
@@ -273,7 +273,7 @@ public class Peer {
         conn.writeMessage(tx);
     }
 
-    private void blockChainDownload(byte[] toHash) throws IOException {
+    private void blockChainDownload(Sha256Hash toHash) throws IOException {
         // This may run in ANY thread.
 
         // The block chain download process is a bit complicated. Basically, we start with zero or more blocks in a
@@ -301,10 +301,10 @@ public class Peer {
         //
         // So this is a complicated process but it has the advantage that we can download a chain of enormous length
         // in a relatively stateless manner and with constant/bounded memory usage.
-        log.info("blockChainDownload({})", Utils.bytesToHexString(toHash));
+        log.info("blockChainDownload({})", toHash.toString());
 
         // TODO: Block locators should be abstracted out rather than special cased here.
-        List<byte[]> blockLocator = new LinkedList<byte[]>();
+        List<Sha256Hash> blockLocator = new LinkedList<Sha256Hash>();
         // We don't do the exponential thinning here, so if we get onto a fork of the chain we will end up
         // redownloading the whole thing again.
         blockLocator.add(params.genesisBlock.getHash());
@@ -333,7 +333,7 @@ public class Peer {
         chainCompletionLatch = new CountDownLatch(blocksToGet);
         if (blocksToGet > 0) {
             // When we just want as many blocks as possible, we can set the target hash to zero.
-            blockChainDownload(new byte[32]);
+            blockChainDownload(Sha256Hash.ZERO_HASH);
         }
         return chainCompletionLatch;
     }

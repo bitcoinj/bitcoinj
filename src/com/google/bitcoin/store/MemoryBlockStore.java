@@ -27,17 +27,11 @@ import java.util.Map;
  * Keeps {@link com.google.bitcoin.core.StoredBlock}s in memory. Used primarily for unit testing.
  */
 public class MemoryBlockStore implements BlockStore {
-    // We use a ByteBuffer to hold hashes here because the Java array equals()/hashcode() methods do not operate on
-    // the contents of the array but just inherit the default Object behavior. ByteBuffer provides the functionality
-    // needed to act as a key in a map.
-    //
-    // The StoredBlocks are also stored as serialized objects to ensure we don't have assumptions that would make
-    // things harder for disk based implementations.
-    private Map<ByteBuffer, byte[]> blockMap;
+    private Map<Sha256Hash, StoredBlock> blockMap;
     private StoredBlock chainHead;
 
     public MemoryBlockStore(NetworkParameters params) {
-        blockMap = new HashMap<ByteBuffer, byte[]>();
+        blockMap = new HashMap<Sha256Hash, StoredBlock>();
         // Insert the genesis block.
         try {
             Block genesisHeader = params.genesisBlock.cloneAsHeader();
@@ -52,31 +46,12 @@ public class MemoryBlockStore implements BlockStore {
     }
 
     public synchronized void put(StoredBlock block) throws BlockStoreException {
-        byte[] hash = block.getHeader().getHash();
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        try {
-            ObjectOutputStream oos = new ObjectOutputStream(bos);
-            oos.writeObject(block);
-            oos.close();
-            blockMap.put(ByteBuffer.wrap(hash), bos.toByteArray());
-        } catch (IOException e) {
-            throw new BlockStoreException(e);
-        }
+        Sha256Hash hash = block.getHeader().getHash();
+        blockMap.put(hash, block);
     }
 
-    public synchronized StoredBlock get(byte[] hash) throws BlockStoreException {
-        try {
-            byte[] serializedBlock = blockMap.get(ByteBuffer.wrap(hash));
-            if (serializedBlock == null)
-                return null;
-            ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(serializedBlock));
-            StoredBlock storedBlock = (StoredBlock) ois.readObject();
-            return storedBlock;
-        } catch (IOException e) {
-            throw new BlockStoreException(e);
-        } catch (ClassNotFoundException e) {
-            throw new BlockStoreException(e);
-        }
+    public synchronized StoredBlock get(Sha256Hash hash) throws BlockStoreException {
+        return blockMap.get(hash);
     }
 
     public StoredBlock getChainHead() {

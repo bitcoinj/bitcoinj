@@ -81,14 +81,14 @@ public abstract class ListMessage extends Message
 
 
     @Override
-    public void bitcoinSerializeToStream( OutputStream stream) throws IOException
+    public void bitcoinSerializeToStream(OutputStream stream) throws IOException
     {
         stream.write(new VarInt(items.size()).encode());
         for (InventoryItem i : items) {
             // Write out the type code.
             Utils.uint32ToByteStreamLE(i.type.ordinal(), stream);
             // And now the hash.
-            stream.write(Utils.reverseBytes(i.hash));
+            stream.write(Utils.reverseBytes(i.hash.getBytes()));
         }
     }
 }

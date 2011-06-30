@@ -22,10 +22,10 @@ import java.util.List;
 
 public class GetBlocksMessage extends Message {
     private static final long serialVersionUID = 3479412877853645644L;
-    private final List<byte[]> locator;
-    private final byte[] stopHash;
+    private final List<Sha256Hash> locator;
+    private final Sha256Hash stopHash;
 
-    public GetBlocksMessage(NetworkParameters params, List<byte[]> locator, byte[] stopHash) {
+    public GetBlocksMessage(NetworkParameters params, List<Sha256Hash> locator, Sha256Hash stopHash) {
         super(params);
         this.locator = locator;
         this.stopHash = stopHash;
@@ -37,8 +37,8 @@ public class GetBlocksMessage extends Message {
     public String toString() {
         StringBuffer b = new StringBuffer();
         b.append("getblocks: ");
-        for (byte[] hash : locator) {
-            b.append(Utils.bytesToHexString(hash));
+        for (Sha256Hash hash : locator) {
+            b.append(hash.toString());
             b.append(" ");
         }
         return b.toString();
@@ -53,12 +53,12 @@ public class GetBlocksMessage extends Message {
             // identifiers that spans the entire chain with exponentially increasing gaps between
             // them, until we end up at the genesis block. See CBlockLocator::Set()
             buf.write(new VarInt(locator.size()).encode());
-            for (byte[] hash : locator) {
+            for (Sha256Hash hash : locator) {
                 // Have to reverse as wire format is little endian.
-                buf.write(Utils.reverseBytes(hash));
+                buf.write(Utils.reverseBytes(hash.getBytes()));
             }
             // Next, a block ID to stop at.
-            buf.write(stopHash);
+            buf.write(stopHash.getBytes());
             return buf.toByteArray();
         } catch (IOException e) {
             throw new RuntimeException(e);  // Cannot happen.
