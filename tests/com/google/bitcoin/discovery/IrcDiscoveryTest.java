@@ -42,8 +42,9 @@ public class IrcDiscoveryTest {
         InetSocketAddress[] decoded = addresses.toArray(new InetSocketAddress[]{});
         
         for (int i = 0; i < decoded.length; i++) {
-            String formattedIP = decoded[0].getAddress().getHostAddress() + ":" + ((Integer)decoded[i].getPort()).toString();
-            assertEquals("IPs decoded improperly", ips[0], formattedIP);
+            String formattedIP = decoded[i].getAddress().getHostAddress() + ":" + ((Integer)decoded[i].getPort())
+                    .toString();
+            assertEquals("IPs decoded improperly", ips[i], formattedIP);
         }        
     }
 
