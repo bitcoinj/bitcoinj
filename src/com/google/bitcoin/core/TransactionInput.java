@@ -16,8 +16,6 @@
 
 package com.google.bitcoin.core;
 
-import com.sun.tools.internal.ws.wsdl.document.Output;
-
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Serializable;
