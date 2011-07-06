@@ -33,7 +33,7 @@ import static com.google.bitcoin.core.Utils.*;
  * over its contents. See the BitCoin technical paper for more detail on blocks.<p>
  *
  * To get a block, you can either build one from the raw bytes you can get from another implementation,
- * or request one specifically using {@link Peer#getBlock(byte[])}, or grab one from a downloaded {@link BlockChain}.
+ * or request one specifically using {@link Peer#getBlock(Sha256Hash)}, or grab one from a downloaded {@link BlockChain}.
  */
 public class Block extends Message {
     private static final Logger log = LoggerFactory.getLogger(Block.class);
@@ -49,12 +49,13 @@ public class Block extends Message {
 
     // For unit testing. If not zero, use this instead of the current time.
     static long fakeClock = 0;
+
+    // Fields defined as part of the protocol format.
     private long version;
     private Sha256Hash prevBlockHash;
     private Sha256Hash merkleRoot;
     private long time;
     private long difficultyTarget;  // "nBits"
-
     private long nonce;
 
     /** If null, it means this object holds only the headers. */
@@ -62,7 +63,7 @@ public class Block extends Message {
     /** Stores the hash of the block. If null, getHash() will recalculate it. */
     private transient Sha256Hash hash;
 
-    /** Special case constructor, used for the genesis node and unit tests. */
+    /** Special case constructor, used for the genesis node, cloneAsHeader and unit tests. */
     Block(NetworkParameters params) {
         super(params);
         // Set up a few basic things. We are not complete after this though.
@@ -169,14 +170,16 @@ public class Block extends Message {
 
     /** Returns a copy of the block, but without any transactions. */
     public Block cloneAsHeader() {
-        try {
-            Block block = new Block(params, bitcoinSerialize());
-            block.transactions = null;
-            return block;
-        } catch (ProtocolException e) {
-            // Should not be able to happen unless our state is internally inconsistent.
-            throw new RuntimeException(e);
-        }
+        Block block = new Block(params);
+        block.nonce = nonce;
+        block.prevBlockHash = prevBlockHash.clone();
+        block.merkleRoot = getMerkleRoot().clone();
+        block.version = version;
+        block.time = time;
+        block.difficultyTarget = difficultyTarget;
+        block.transactions = null;
+        block.hash = null;
+        return block;
     }
 
     /**
