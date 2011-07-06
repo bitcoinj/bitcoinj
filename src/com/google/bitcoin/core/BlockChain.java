@@ -65,7 +65,7 @@ public class BlockChain {
     protected StoredBlock chainHead;
 
     protected final NetworkParameters params;
-    protected final Wallet wallet;
+    protected final List<Wallet> wallets;
 
     // Holds blocks that we have received but can't plug into the chain yet, eg because they were created whilst we
     // were downloading the block chain.
@@ -80,6 +80,14 @@ public class BlockChain {
      * {@link com.google.bitcoin.store.BoundedOverheadBlockStore} if you'd like to ensure fast startup the next time you run the program.
      */
     public BlockChain(NetworkParameters params, Wallet wallet, BlockStore blockStore) {
+        this(params, new ArrayList<Wallet>(), blockStore);
+        addWallet(wallet);
+    }
+    
+    /**
+     * Constructs a BlockChain connected to the given list of wallets and a store. 
+     */
+    public BlockChain(NetworkParameters params, List<Wallet> wallets, BlockStore blockStore){
         try {
             this.blockStore = blockStore;
             chainHead = blockStore.getChainHead();
@@ -87,9 +95,17 @@ public class BlockChain {
         } catch (BlockStoreException e) {
             throw new RuntimeException(e);
         }
-
         this.params = params;
-        this.wallet = wallet;
+        this.wallets = new ArrayList<Wallet>(wallets);
+    }
+
+    /**
+     * Add a wallet to the BlockChain. Note that the wallet will be unaffected by any blocks received while it
+     * was not part of this BlockChain. This method is useful if the wallet has just been created, and its keys 
+     * have never been in use, or if the wallet has been loaded along with the BlockChain
+     */
+    public synchronized void addWallet(Wallet wallet) {
+        wallets.add(wallet);
     }
 
     /**
@@ -214,10 +230,12 @@ public class BlockChain {
         // Then build a list of all blocks in the old part of the chain and the new part.
         List<StoredBlock> oldBlocks = getPartialChain(chainHead, splitPoint);
         List<StoredBlock> newBlocks = getPartialChain(newChainHead, splitPoint);
-        // Now inform the wallet. This is necessary so the set of currently active transactions (that we can spend)
+        // Now inform the wallets. This is necessary so the set of currently active transactions (that we can spend)
         // can be updated to take into account the re-organize. We might also have received new coins we didn't have
         // before and our previous spends might have been undone.
-        wallet.reorganize(oldBlocks, newBlocks);
+        for (Wallet wallet : wallets) {
+            wallet.reorganize(oldBlocks, newBlocks);
+        }
         // Update the pointer to the best known block.
         setChainHead(newChainHead);
     }
@@ -384,29 +402,31 @@ public class BlockChain {
 
     private void scanTransaction(StoredBlock block, Transaction tx, NewBlockType blockType)
             throws ScriptException, VerificationException {
-        boolean shouldReceive = false;
-        for (TransactionOutput output : tx.outputs) {
-            // TODO: Handle more types of outputs, not just regular to address outputs.
-            if (output.getScriptPubKey().isSentToIP()) return;
-            // This is not thread safe as a key could be removed between the call to isMine and receive.
-            if (output.isMine(wallet)) {
-                shouldReceive = true;
-            }
-        }
-
-        // Coinbase transactions don't have anything useful in their inputs (as they create coins out of thin air).
-        if (!tx.isCoinBase()) {
-            for (TransactionInput i : tx.inputs) {
-                byte[] pubkey = i.getScriptSig().getPubKey();
-                // This is not thread safe as a key could be removed between the call to isPubKeyMine and receive.
-                if (wallet.isPubKeyMine(pubkey)) {
+        for (Wallet wallet : wallets) {
+            boolean shouldReceive = false;
+            for (TransactionOutput output : tx.outputs) {
+                // TODO: Handle more types of outputs, not just regular to address outputs.
+                if (output.getScriptPubKey().isSentToIP()) return;
+                // This is not thread safe as a key could be removed between the call to isMine and receive.
+                if (output.isMine(wallet)) {
                     shouldReceive = true;
                 }
             }
-        }
-
-        if (shouldReceive)
-            wallet.receive(tx, block, blockType);
+    
+            // Coinbase transactions don't have anything useful in their inputs (as they create coins out of thin air).
+            if (!tx.isCoinBase()) {
+                for (TransactionInput i : tx.inputs) {
+                    byte[] pubkey = i.getScriptSig().getPubKey();
+                    // This is not thread safe as a key could be removed between the call to isPubKeyMine and receive.
+                    if (wallet.isPubKeyMine(pubkey)) {
+                        shouldReceive = true;
+                    }
+                }
+            }
+    
+            if (shouldReceive)
+                wallet.receive(tx, block, blockType);
+            }
     }
 
     /**
