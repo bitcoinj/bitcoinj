@@ -85,7 +85,7 @@ public class WalletTest {
     }
 
     @Test
-    public void testBasicSpending() throws Exception {
+    public void basicSpending() throws Exception {
         // We'll set up a wallet that receives a coin, then sends a coin of lesser value and keeps the change.
         BigInteger v1 = Utils.toNanoCoins(1, 0);
         Transaction t1 = createFakeTx(v1, myAddress);
@@ -105,7 +105,7 @@ public class WalletTest {
     }
 
     @Test
-    public void testSideChain() throws Exception {
+    public void sideChain() throws Exception {
         // The wallet receives a coin on the main chain, then on a side chain. Only main chain counts towards balance.
         BigInteger v1 = Utils.toNanoCoins(1, 0);
         Transaction t1 = createFakeTx(v1, myAddress);
@@ -121,7 +121,7 @@ public class WalletTest {
     }
 
     @Test
-    public void testListener() throws Exception {
+    public void listeners() throws Exception {
         final Transaction fakeTx = createFakeTx(Utils.toNanoCoins(1, 0), myAddress);
         final boolean[] didRun = new boolean[1];
         WalletEventListener listener = new WalletEventListener() {
@@ -139,7 +139,7 @@ public class WalletTest {
     }
 
     @Test
-    public void testBalance() throws Exception {
+    public void balance() throws Exception {
         // Receive 5 coins then half a coin.
         BigInteger v1 = toNanoCoins(5, 0);
         BigInteger v2 = toNanoCoins(0, 50);
@@ -178,7 +178,7 @@ public class WalletTest {
     // suite.
 
     @Test
-    public void testBlockChainCatchup() throws Exception {
+    public void blockChainCatchup() throws Exception {
         Transaction tx1 = createFakeTx(Utils.toNanoCoins(1, 0), myAddress);
         StoredBlock b1 = createFakeBlock(tx1).storedBlock;
         wallet.receive(tx1, b1, BlockChain.NewBlockType.BEST_CHAIN);
@@ -200,7 +200,7 @@ public class WalletTest {
     }
 
     @Test
-    public void testBalances() throws Exception {
+    public void balances() throws Exception {
         BigInteger nanos = Utils.toNanoCoins(1, 0);
         Transaction tx1 = createFakeTx(nanos, myAddress);
         wallet.receive(tx1, null, BlockChain.NewBlockType.BEST_CHAIN);
@@ -213,7 +213,7 @@ public class WalletTest {
     }
 
     @Test
-    public void testFinneyAttack() throws Exception {
+    public void finneyAttack() throws Exception {
         // A Finney attack is where a miner includes a transaction spending coins to themselves but does not
         // broadcast it. When they find a solved block, they hold it back temporarily whilst they buy something with
         // those same coins. After purchasing, they broadcast the block thus reversing the transaction. It can be
