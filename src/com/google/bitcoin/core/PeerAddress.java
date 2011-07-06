@@ -49,6 +49,15 @@ public class PeerAddress extends Message {
         this.services = BigInteger.ZERO;
     }
     
+    public PeerAddress(InetAddress addr, int port) {
+        this(addr, port, NetworkParameters.PROTOCOL_VERSION);
+    }
+    
+    public PeerAddress(InetAddress addr) {
+        this(addr, 0);
+    }
+    
+    @Override
     public void bitcoinSerializeToStream(OutputStream stream) throws IOException {
         if (protocolVersion >= 31402) {
             int secs = (int)(new Date().getTime() / 1000);
@@ -71,7 +80,7 @@ public class PeerAddress extends Message {
     }
 
     @Override
-    protected void parse() throws ProtocolException {
+    protected void parse() {
         // Format of a serialized address:
         //   uint32 timestamp
         //   uint64 services   (flags determining what the node can do)
