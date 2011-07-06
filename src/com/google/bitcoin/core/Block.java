@@ -178,7 +178,7 @@ public class Block extends Message {
         block.time = time;
         block.difficultyTarget = difficultyTarget;
         block.transactions = null;
-        block.hash = null;
+        block.hash = getHash().clone();
         return block;
     }
 
