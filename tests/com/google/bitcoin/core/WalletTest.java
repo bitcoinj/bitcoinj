@@ -35,10 +35,11 @@ public class WalletTest {
     private Address myAddress;
     private Wallet wallet;
     private BlockStore blockStore;
+    private ECKey myKey;
 
     @Before
     public void setUp() throws Exception {
-        ECKey myKey = new ECKey();
+        myKey = new ECKey();
         myAddress = myKey.toAddress(params);
         wallet = new Wallet(params);
         wallet.addKey(myKey);
@@ -210,6 +211,23 @@ public class WalletTest {
         // Reserialize.
         Transaction send2 = new Transaction(params, send1.bitcoinSerialize());
         assertEquals(nanos, send2.getValueSentFromMe(wallet));
+    }
+
+    @Test
+    public void transactions() throws Exception {
+        // This test covers a bug in which Transaction.getValueSentFromMe was calculating incorrectly.
+        Transaction tx = createFakeTx(Utils.toNanoCoins(1, 0), myAddress);
+        // Now add another output (ie, change) that goes to some other address.
+        Address someOtherGuy = new ECKey().toAddress(params);
+        TransactionOutput output = new TransactionOutput(params, tx, Utils.toNanoCoins(0, 5), someOtherGuy);
+        tx.addOutput(output);
+        wallet.receive(tx, null, BlockChain.NewBlockType.BEST_CHAIN);
+        // Now the other guy creates a transaction which spends that change.
+        Transaction tx2 = new Transaction(params);
+        tx2.addInput(output);
+        tx2.addOutput(new TransactionOutput(params, tx2, Utils.toNanoCoins(0, 5), myAddress));
+        // tx2 doesn't send any coins from us, even though the output is in the wallet.
+        assertEquals(Utils.toNanoCoins(0, 0), tx2.getValueSentFromMe(wallet));
     }
 
     @Test

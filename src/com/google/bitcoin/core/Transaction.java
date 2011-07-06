@@ -170,6 +170,10 @@ public class Transaction extends Message implements Serializable {
                 connected = input.getConnectedOutput(wallet.pending);
             if (connected == null)
                 continue;
+            // The connected output may be the change to the sender of a previous input sent to this wallet. In this
+            // case we ignore it.
+            if (!connected.isMine(wallet))
+                continue;
             v = v.add(connected.getValue());
         }
         return v;
