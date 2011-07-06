@@ -121,7 +121,8 @@ public class BitcoinSerializer
         out.write(header);
         out.write(payload);
 
-        log.debug("Sending {} message: {}", name, bytesToHexString(header) + bytesToHexString(payload));
+        if (log.isDebugEnabled())
+            log.debug("Sending {} message: {}", name, bytesToHexString(header) + bytesToHexString(payload));
     }
 
     /**
