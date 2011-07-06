@@ -81,7 +81,16 @@ public class BlockChain {
      */
     public BlockChain(NetworkParameters params, Wallet wallet, BlockStore blockStore) {
         this(params, new ArrayList<Wallet>(), blockStore);
-        addWallet(wallet);
+        if (wallet != null)
+            addWallet(wallet);
+    }
+
+    /**
+     * Constructs a BlockChain that has no wallet at all. This is helpful when you don't actually care about sending
+     * and receiving coins but rather, just want to explore the network data structures.
+     */
+    public BlockChain(NetworkParameters params, BlockStore blockStore) {
+        this(params, new ArrayList<Wallet>(), blockStore);
     }
     
     /**
