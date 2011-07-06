@@ -16,14 +16,9 @@
 
 package com.google.bitcoin.core;
 
-import java.math.BigInteger;
-
-// TODO: Make this be an interface with a convenience abstract impl.
-
 /**
- * Implementing a subclass WalletEventListener allows you to learn when the contents of the wallet changes due to
- * receiving money or a block chain re-organize. Methods are called with the event listener object locked so your
- * implementation does not have to be thread safe. The default method implementations do nothing.
+ * Implementing a PeerEventListener allows you to learn when significant Peer communication
+ * has occurred. 
  */
 public interface PeerEventListener {
     /**
