@@ -64,7 +64,7 @@ public class VersionMessage extends Message {
         } catch (UnknownHostException e) {
             throw new RuntimeException(e);  // Cannot happen.
         }
-        subVer = "BitCoinJ 0.2";
+        subVer = "BitCoinJ 0.3-SNAPSHOT";
         bestHeight = newBestHeight;
     }
     

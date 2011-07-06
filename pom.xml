@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.google</groupId>
   <artifactId>bitcoinj</artifactId>
-  <version>0.2</version>
+  <version>0.3-SNAPSHOT</version>
   <name>BitCoinJ</name>
   <description>A Java implementation of a Bitcoin client-only node</description>
   <url>http://code.google.com/p/bitcoinj</url>
