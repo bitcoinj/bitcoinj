@@ -104,10 +104,6 @@ public class Transaction extends Message implements Serializable {
         return getHash().toString();
     }
 
-    void setFakeHashForTesting(Sha256Hash hash) {
-        this.hash = hash;
-    }
-
     /**
      * Calculates the sum of the outputs that are sending coins to a key in the wallet. The flag controls whether to
      * include spent outputs or not.
