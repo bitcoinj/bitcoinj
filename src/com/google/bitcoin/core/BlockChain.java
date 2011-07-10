@@ -149,12 +149,27 @@ public class BlockChain {
             return true;
         }
 
-        // Prove the block is internally valid: hash is lower than target, merkle root is correct and so on.
+        // Does this block contain any transactions we might care about? Check this up front before verifying the
+        // blocks validity so we can skip the merkle root verification if the contents aren't interesting. This saves
+        // a lot of time for big blocks.
+        boolean contentsImportant = false;
+        HashMap<Wallet, List<Transaction>> walletToTxMap = new HashMap<Wallet, List<Transaction>>();;
+        if (block.transactions != null) {
+            scanTransactions(block, walletToTxMap);
+            contentsImportant = walletToTxMap.size() > 0;
+        }
+
+        // Prove the block is internally valid: hash is lower than target, etc. This only checks the block contents
+        // if there is a tx sending or receiving coins using an address in one of our wallets. And those transactions
+        // are only lightly verified: presence in a valid connecting block is taken as proof of validity. See the
+        // article here for more details: http://code.google.com/p/bitcoinj/wiki/SecurityModel
         try {
-            block.verify();
+            block.verifyHeader();
+            if (contentsImportant)
+                block.verifyTransactions();
         } catch (VerificationException e) {
-            log.error("Failed to verify block:", e);
-            log.error(block.toString());
+            log.error("Failed to verify block: ", e);
+            log.error(block.getHashAsString());
             throw e;
         }
 
@@ -176,9 +191,7 @@ public class BlockChain {
             StoredBlock newStoredBlock = storedPrev.build(block);
             checkDifficultyTransitions(storedPrev, newStoredBlock);
             blockStore.put(newStoredBlock);
-            // block.transactions may be null here if we received only a header and not a full block. This does not
-            // happen currently but might in future if getheaders is implemented.
-            connectBlock(newStoredBlock, storedPrev, block.transactions);
+            connectBlock(newStoredBlock, storedPrev, walletToTxMap);
         }
 
         if (tryConnecting)
@@ -188,7 +201,8 @@ public class BlockChain {
         return true;
     }
 
-    private void connectBlock(StoredBlock newStoredBlock, StoredBlock storedPrev, List<Transaction> newTransactions)
+    private void connectBlock(StoredBlock newStoredBlock, StoredBlock storedPrev,
+                              HashMap<Wallet, List<Transaction>> newTransactions)
             throws BlockStoreException, VerificationException {
         if (storedPrev.equals(chainHead)) {
             // This block connects to the best known block, it is a normal continuation of the system.
@@ -296,14 +310,16 @@ public class BlockChain {
     }
 
     private void sendTransactionsToWallet(StoredBlock block, NewBlockType blockType,
-                                          List<Transaction> newTransactions) throws VerificationException {
-        // Scan the transactions to find out if any mention addresses we own.
-        for (Transaction tx : newTransactions) {
+                                          HashMap<Wallet, List<Transaction>> newTransactions) throws VerificationException {
+        for (Wallet wallet : newTransactions.keySet()) {
             try {
-                scanTransaction(block, tx, blockType);
+                List<Transaction> txns = newTransactions.get(wallet);
+                for (Transaction tx : txns) {
+                    wallet.receive(tx, block, blockType);
+                }
             } catch (ScriptException e) {
-                // We don't want scripts we don't understand to break the block chain,
-                // so just note that this tx was not scanned here and continue.
+                // We don't want scripts we don't understand to break the block chain so just note that this tx was
+                // not scanned here and continue.
                 log.warn("Failed to parse a script: " + e.toString());
             }
         }
@@ -409,33 +425,50 @@ public class BlockChain {
                     receivedDifficulty.toString(16) + " vs " + newDifficulty.toString(16));
     }
 
-    private void scanTransaction(StoredBlock block, Transaction tx, NewBlockType blockType)
-            throws ScriptException, VerificationException {
-        for (Wallet wallet : wallets) {
-            boolean shouldReceive = false;
-            for (TransactionOutput output : tx.outputs) {
-                // TODO: Handle more types of outputs, not just regular to address outputs.
-                if (output.getScriptPubKey().isSentToIP()) return;
-                // This is not thread safe as a key could be removed between the call to isMine and receive.
-                if (output.isMine(wallet)) {
-                    shouldReceive = true;
-                }
-            }
-    
-            // Coinbase transactions don't have anything useful in their inputs (as they create coins out of thin air).
-            if (!tx.isCoinBase()) {
-                for (TransactionInput i : tx.inputs) {
-                    byte[] pubkey = i.getScriptSig().getPubKey();
-                    // This is not thread safe as a key could be removed between the call to isPubKeyMine and receive.
-                    if (wallet.isPubKeyMine(pubkey)) {
-                        shouldReceive = true;
+    /**
+     * For the transactions in the given block, update the txToWalletMap such that each wallet maps to a list of
+     * transactions for which it is relevant.
+     */
+    private void scanTransactions(Block block, HashMap<Wallet, List<Transaction>> walletToTxMap)
+            throws VerificationException {
+        for (Transaction tx : block.transactions) {
+            try {
+                for (Wallet wallet : wallets) {
+                    boolean shouldReceive = false;
+                    for (TransactionOutput output : tx.outputs) {
+                        // TODO: Handle more types of outputs, not just regular to address outputs.
+                        if (output.getScriptPubKey().isSentToIP()) return;
+                        // This is not thread safe as a key could be removed between the call to isMine and receive.
+                        if (output.isMine(wallet)) {
+                            shouldReceive = true;
+                        }
                     }
+
+                    // Coinbase transactions don't have anything useful in their inputs (as they create coins out of thin air).
+                    if (!shouldReceive && !tx.isCoinBase()) {
+                        for (TransactionInput i : tx.inputs) {
+                            byte[] pubkey = i.getScriptSig().getPubKey();
+                            // This is not thread safe as a key could be removed between the call to isPubKeyMine and receive.
+                            if (wallet.isPubKeyMine(pubkey)) {
+                                shouldReceive = true;
+                            }
+                        }
+                    }
+
+                    if (!shouldReceive) continue;
+                    List<Transaction> txList = walletToTxMap.get(wallet);
+                    if (txList == null) {
+                        txList = new LinkedList<Transaction>();
+                        walletToTxMap.put(wallet, txList);
+                    }
+                    txList.add(tx);
                 }
+            } catch (ScriptException e) {
+                // We don't want scripts we don't understand to break the block chain so just note that this tx was
+                // not scanned here and continue.
+                log.warn("Failed to parse a script: " + e.toString());
             }
-    
-            if (shouldReceive)
-                wallet.receive(tx, block, blockType);
-            }
+        }
     }
 
     /**

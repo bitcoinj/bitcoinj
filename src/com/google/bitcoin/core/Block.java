@@ -348,13 +348,13 @@ public class Block extends Message {
 
     /**
      * Checks the block data to ensure it follows the rules laid out in the network parameters. Specifically, throws
-     * an exception if the proof of work is invalid, if the timestamp is too far from what it should be, or if the
-     * transactions don't hash to the value in the merkle root field. This is <b>not</b> everything that is required
-     * for a block to be valid, only what is checkable independent of the chain.
+     * an exception if the proof of work is invalid, or if the timestamp is too far from what it should be. This is
+     * <b>not</b> everything that is required for a block to be valid, only what is checkable independent of the
+     * chain and without a transaction index.
      *
      * @throws VerificationException
      */
-    public void verify() throws VerificationException {
+    public void verifyHeader() throws VerificationException {
         // Prove that this block is OK. It might seem that we can just ignore most of these checks given that the
         // network is also verifying the blocks, but we cannot as it'd open us to a variety of obscure attacks.
         //
@@ -362,15 +362,28 @@ public class Block extends Message {
         // enough, it's probably been done by the network.
         checkProofOfWork(true);
         checkTimestamp();
+    }
+
+    /**
+     * Checks the block contents
+     * @throws VerificationException
+     */
+    public void verifyTransactions() throws VerificationException {
         // Now we need to check that the body of the block actually matches the headers. The network won't generate
         // an invalid block, but if we didn't validate this then an untrusted man-in-the-middle could obtain the next
         // valid block from the network and simply replace the transactions in it with their own fictional
         // transactions that reference spent or non-existant inputs.
-        if (transactions != null) {
-            assert transactions.size() > 0;
-            checkTransactions();
-            checkMerkleRoot();
-        }
+        assert transactions.size() > 0;
+        checkTransactions();
+        checkMerkleRoot();
+    }
+
+    /**
+     * Verifies both the header and that the transactions hash to the merkle root.
+     */
+    public void verify() throws VerificationException {
+        verifyHeader();
+        verifyTransactions();
     }
 
     @Override
@@ -490,7 +503,7 @@ public class Block extends Message {
         b.setTime(time);
         b.solve();
         try {
-            b.verify();
+            b.verifyHeader();
         } catch (VerificationException e) {
             throw new RuntimeException(e);  // Cannot happen.
         }
