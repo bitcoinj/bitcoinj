@@ -232,9 +232,6 @@ public class Transaction extends Message implements Serializable {
             cursor += output.getMessageSize();
         }
         lockTime = readUint32();
-        
-        // Store a hash, it may come in useful later (want to avoid reserialization costs).
-        hash = new Sha256Hash(reverseBytes(doubleDigest(bytes, offset, cursor - offset)));
     }
 
     /**

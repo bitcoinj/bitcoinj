@@ -106,6 +106,7 @@ public class BlockChainTest {
         Block b2 = createFakeBlock(unitTestParams, blockStore, tx2).block;
         hash = b2.getMerkleRoot();
         b2.setMerkleRoot(Sha256Hash.ZERO_HASH);
+        b2.solve();
         chain.add(b2);  // Broken block is accepted because its contents don't matter to us.
     }
 
