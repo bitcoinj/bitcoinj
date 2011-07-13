@@ -327,9 +327,14 @@ public class Peer {
         if (chainHeight <= 0) {
             // This should not happen because we shouldn't have given the user a Peer that is to another client-mode
             // node. If that happens it means the user overrode us somewhere.
-            throw new  RuntimeException("Peer does not have block chain");
+            throw new RuntimeException("Peer does not have block chain");
         }
         int blocksToGet = chainHeight - blockChain.getChainHead().getHeight();
+        if (blocksToGet < 0) {
+            // This peer has fewer blocks than we do. It isn't usable.
+            // TODO: We can't do the right thing here until Mirons patch lands. For now just return a zero latch.
+            return new CountDownLatch(0);
+        }
         chainCompletionLatch = new CountDownLatch(blocksToGet);
         if (blocksToGet > 0) {
             // When we just want as many blocks as possible, we can set the target hash to zero.
