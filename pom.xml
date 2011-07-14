@@ -3,6 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.google</groupId>
   <artifactId>bitcoinj</artifactId>
+  <!-- This should always be a SNAPSHOT until release build -->
   <version>0.3-SNAPSHOT</version>
   <name>BitCoinJ</name>
   <description>A Java implementation of a Bitcoin client-only node</description>
@@ -82,6 +83,36 @@
     <!-- Public read-only source -->
     <url>http://bitcoinj.googlecode.com/svn/trunk/</url>
   </scm>
+  <!-- Distribution management handled by build server (no external authentication) -->
+  <distributionManagement>
+    <repository>
+      <id>central</id>
+      <name>repo</name>
+      <url>http://localhost:8081/artifactory/internal-release</url>
+    </repository>
+    <snapshotRepository>
+      <id>snapshots</id>
+      <name>repo</name>
+      <url>http://localhost:8081/artifactory/internal-snapshot</url>
+    </snapshotRepository>
+  </distributionManagement>
+  <!-- Include the BitCoinJ repositories in your project if required -->
+  <repositories>
+    <!-- Released versions of the library are stable -->
+    <repository>
+      <id>bitcoinj-release</id>
+      <name>BitCoinJ Release</name>
+      <releases />
+      <url>http://ci.bitcoinj.org/artifactory/internal-release</url>
+    </repository>
+    <!-- Snapshot versions of the library are subject to frequent change -->
+    <repository>
+      <id>bitcoinj-snapshot</id>
+      <name>BitCoinJ Snapshot</name>
+      <snapshots />
+      <url>http://ci.bitcoinj.org/artifactory/internal-snapshot</url>
+    </repository>
+  </repositories>
   <profiles>
     <profile>
       <id>maven-3</id>
