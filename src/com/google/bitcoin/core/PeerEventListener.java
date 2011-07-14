@@ -18,14 +18,24 @@ package com.google.bitcoin.core;
 
 /**
  * Implementing a PeerEventListener allows you to learn when significant Peer communication
- * has occurred. 
+ * has occurred.
+ * 
+ * <p>Methods are called with the event listener object locked so your
+ * implementation does not have to be thread safe. 
+ *  
+ * @author miron@google.com (Miron Cuperman a.k.a devrandom)
+ * 
  */
 public interface PeerEventListener {
     /**
-     * This is called on a Peer thread when a block is received.
+     * This is called on a Peer thread when a block is received.  It is also called when a download
+     * is started with the initial number of blocks to be downloaded.
+     * 
+     * <p>The block may have transactions or may be a header only once getheaders is implemented
      *
-     * @param peer The peer receiving the block
-     * @param blocksLeft The number of blocks left to download
+     * @param peer the peer receiving the block
+     * @param block the downloaded block, or null if this is the initial callback
+     * @param blocksLeft the number of blocks left to download
      */
-    public void onBlocksDownloaded(Peer peer, int blocksLeft);
+    public void onBlocksDownloaded(Peer peer, Block block, int blocksLeft);
 }

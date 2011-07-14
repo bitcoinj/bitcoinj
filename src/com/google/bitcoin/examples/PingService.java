@@ -18,6 +18,7 @@ package com.google.bitcoin.examples;
 
 import com.google.bitcoin.core.Address;
 import com.google.bitcoin.core.BlockChain;
+import com.google.bitcoin.core.DownloadListener;
 import com.google.bitcoin.core.ECKey;
 import com.google.bitcoin.core.NetworkParameters;
 import com.google.bitcoin.core.PeerAddress;

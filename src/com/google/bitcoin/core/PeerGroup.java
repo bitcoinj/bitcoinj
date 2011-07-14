@@ -17,6 +17,8 @@
 
 package com.google.bitcoin.core;
 
+import com.google.bitcoin.discovery.PeerDiscovery;
+import com.google.bitcoin.discovery.PeerDiscoveryException;
 import com.google.bitcoin.store.BlockStore;
 import com.google.bitcoin.store.BlockStoreException;
 
@@ -24,6 +26,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -36,6 +39,18 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
+ * Maintain a number of connections to peers.
+ * 
+ * <p>PeerGroup tries to maintain a constant number of connections to a set of distinct peers.
+ * Each peer runs a network listener in its own thread.  When a connection is lost, a new peer
+ * will be tried after a delay as long as the number of connections less than the maximum.
+ * 
+ * <p>Connections are made to addresses from a provided list.  When that list is exhausted,
+ * we start again from the head of the list.
+ * 
+ * <p>The PeerGroup can broadcast a transaction to the currently connected set of peers.  It can
+ * also handle download of the blockchain from peers, restarting the process when peers die.
+ * 
  * @author miron@google.com (Miron Cuperman a.k.a devrandom)
  *
  */
@@ -48,21 +63,33 @@ public class PeerGroup {
 
     // Maximum number of connections this peerGroup will make
     private int maxConnections;
+    // Addresses to try to connect to, excluding active peers
     private BlockingQueue<PeerAddress> inactives;
+    // Connection initiation thread
     private Thread thread;
+    // True if the connection initiation thread should be running
     private boolean running;
+    // A pool of threads for peers, of size maxConnection
     private ThreadPoolExecutor executor;
+    // Currently active peers
+    private Set<Peer> peers;
+    // The peer we are currently downloading the chain from
+    private Peer downloadPeer;
+    // Callback for events related to chain download
+    private PeerEventListener downloadListener;
+    
     private NetworkParameters params;
     private BlockStore blockStore;
     private BlockChain chain;
-    private Set<Peer> peers;
-    private Peer downloadPeer;
-
-    private PeerEventListener downloadListener;
 
     /**
+     * Create a PeerGroup
+     * 
+     * @param maxConnections the maximum number of peer connections that this group will try to make.
+     * Depending on the environment, this is normally between 1 and 10.
      */
-    public PeerGroup(int maxConnections, BlockStore blockStore, NetworkParameters params, BlockChain chain) {
+    public PeerGroup(int maxConnections, BlockStore blockStore, NetworkParameters params,
+            BlockChain chain) {
         this.maxConnections = maxConnections;
         this.blockStore = blockStore;
         this.params = params;
@@ -79,7 +106,24 @@ public class PeerGroup {
 
     /** Add an address to the list of potential peers to connect to */
     public void addAddress(PeerAddress peerAddress) {
+        // TODO(miron) consider deduplication
         inactives.add(peerAddress);
+    }
+    
+    /** Add addresses from a discovery source to the list of potential peers to connect to */
+    public void addPeerDiscovery(PeerDiscovery peerDiscovery) {
+        // TODO(miron) consider remembering the discovery source and retrying occasionally 
+        InetSocketAddress[] addresses;
+        try {
+            addresses = peerDiscovery.getPeers();
+        } catch (PeerDiscoveryException e) {
+            log.error("Failed to discover peer addresses from discovery source", e);
+            return;
+        }
+        
+        for (int i = 0; i < addresses.length; i++) {
+            inactives.add(new PeerAddress(addresses[i]));
+        }
     }
     
     /** Starts the background thread that makes connections. */
@@ -90,7 +134,10 @@ public class PeerGroup {
     }
 
     /**
-     * Stop this PeerGroup 
+     * Stop this PeerGroup
+     * 
+     * <p>The peer group will be asynchronously shut down.  After it is shut down
+     * all peers will be disconnected and no threads will be running.
      */
     public synchronized void stop() {
         if (running) {
@@ -120,6 +167,10 @@ public class PeerGroup {
         /**
          * Repeatedly get the next peer address from the inactive queue
          * and try to connect.
+         * 
+         * <p>We can be terminated with Thread.interrupt.  When an interrupt is received,
+         * we will ask the executor to shutdown and ask each peer to disconnect.  At that point
+         * no threads or network connections will be active.
          */
         @Override
         public void run() {
@@ -165,7 +216,8 @@ public class PeerGroup {
                                 peer.run();
                             } 
                             finally {
-                                // In all cases, put the address back on the queue
+                                // In all cases, put the address back on the queue.
+                                // We will retry this peer after all other peers have been tried.
                                 inactives.add(address);
                                 peers.remove(peer);
                                 handlePeerDeath(peer);
@@ -174,11 +226,13 @@ public class PeerGroup {
                     };
                     executor.execute(command);
                     break;
-                }
-                catch (RejectedExecutionException e) {
+                } catch (RejectedExecutionException e) {
                     // Reached maxConnections, try again after a delay
                 } catch (BlockStoreException e) {
-                    log.error("block store corrupt?", e);
+                    // Fatal error
+                    log.error("Block store corrupt?", e);
+                    running = false;
+                    break;
                 }
                 
                 // If we got here, we should retry this address because an error unrelated
@@ -193,6 +247,8 @@ public class PeerGroup {
      * 
      * <p>If no peers are currently connected, the download will be started
      * once a peer starts.  If the peer dies, the download will resume with another peer.
+     * 
+     * @param listener a listener for chain download events, may not be null
      */
     public synchronized void startBlockChainDownload(PeerEventListener listener) {
         this.downloadListener = listener;
@@ -213,7 +269,7 @@ public class PeerGroup {
         }
     }
 
-    private void startBlockChainDownloadFromPeer(Peer peer) {
+    private synchronized void startBlockChainDownloadFromPeer(Peer peer) {
         peer.addEventListener(downloadListener);
         try {
             peer.startBlockChainDownload();
@@ -231,9 +287,7 @@ public class PeerGroup {
         final String namePrefix;
 
         PeerGroupThreadFactory() {
-            SecurityManager s = System.getSecurityManager();
-            group = (s != null)? s.getThreadGroup() :
-                                 Thread.currentThread().getThreadGroup();
+            group = Thread.currentThread().getThreadGroup();
             namePrefix = "PeerGroup-" +
                           poolNumber.getAndIncrement() +
                          "-thread-";

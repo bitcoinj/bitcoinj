@@ -57,6 +57,8 @@ public class Peer {
     /**
      * Construct a peer that handles the given network connection and reads/writes from the given block chain. Note that
      * communication won't occur until you call connect().
+     * 
+     * @param bestHeight our current best chain height, to facilitate downloading
      */
     public Peer(NetworkParameters params, PeerAddress address, int bestHeight, BlockChain blockChain) {
         this.params = params;
@@ -101,6 +103,7 @@ public class Peer {
      * <p>connect() must be called first
      */
     public void run() {
+        // This should be called in the network loop thread for this peer
         if (conn == null)
             throw new RuntimeException("please call connect() first");
         
@@ -143,6 +146,7 @@ public class Peer {
     }
 
     private void processBlock(Block m) throws IOException {
+        // This should called in the network loop thread for this peer
         try {
             // Was this block requested by getBlock()?
             synchronized (pendingGetBlockFutures) {
@@ -162,7 +166,9 @@ public class Peer {
             if (blockChain.add(m)) {
                 // The block was successfully linked into the chain. Notify the user of our progress.
                 for (PeerEventListener listener : eventListeners) {
-                    listener.onBlocksDownloaded(this, getPeerBlocksToGet());
+                    synchronized (listener) {
+                        listener.onBlocksDownloaded(this, m, getPeerBlocksToGet());
+                    }
                 }
             } else {
                 // This block is unconnected - we don't know how to get from it back to the genesis block yet. That
@@ -176,14 +182,16 @@ public class Peer {
             }
         } catch (VerificationException e) {
             // We don't want verification failures to kill the thread.
-            log.warn("block verification failed", e);
+            log.warn("Block verification failed", e);
         } catch (ScriptException e) {
             // We don't want script failures to kill the thread.
-            log.warn("script exception", e);
+            log.warn("Script exception", e);
         }
     }
 
     private void processInv(InventoryMessage inv) throws IOException {
+        // This should be called in the network loop thread for this peer
+
         // The peer told us about some blocks or transactions they have. For now we only care about blocks.
         // Note that as we don't actually want to store the entire block chain or even the headers of the block
         // chain, we may end up requesting blocks we already requested before. This shouldn't (in theory) happen
@@ -284,6 +292,7 @@ public class Peer {
 
         /** Called by the Peer when the result has arrived. Completes the task. */
         void setResult(T result) {
+            // This should be called in the network loop thread for this peer
             this.result = result;
             // Now release the thread that is waiting. We don't need to synchronize here as the latch establishes
             // a memory barrier.
@@ -348,7 +357,9 @@ public class Peer {
      */
     public void startBlockChainDownload() throws IOException {
         for (PeerEventListener listener : eventListeners) {
-            listener.onBlocksDownloaded(this, getPeerBlocksToGet());
+            synchronized (listener) {
+                listener.onBlocksDownloaded(this, null, getPeerBlocksToGet());
+            }
         }
 
         if (getPeerBlocksToGet() > 0) {
