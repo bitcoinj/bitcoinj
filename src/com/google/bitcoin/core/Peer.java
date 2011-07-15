@@ -69,6 +69,14 @@ public class Peer {
         this.eventListeners = new ArrayList<PeerEventListener>();
     }
 
+    /**
+     * Construct a peer that handles the given network connection and reads/writes from the given block chain. Note that
+     * communication won't occur until you call connect().
+     */
+    public Peer(NetworkParameters params, PeerAddress address, BlockChain blockChain) {
+        this(params, address, 0, blockChain);
+    }
+    
     public synchronized void addEventListener(PeerEventListener listener) {
         eventListeners.add(listener);
     }

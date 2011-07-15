@@ -29,12 +29,18 @@ import java.util.concurrent.Future;
 public class FetchBlock {
     public static void main(String[] args) throws Exception {
         System.out.println("Connecting to node");
-        final NetworkParameters params = NetworkParameters.prodNet();
-        NetworkConnection conn = new NetworkConnection(InetAddress.getLocalHost(), params, 0, 60000);
+        final NetworkParameters params = NetworkParameters.testNet();
+
         BlockStore blockStore = new MemoryBlockStore(params);
         BlockChain chain = new BlockChain(params, blockStore);
-        Peer peer = new Peer(params, conn, chain);
-        peer.start();
+        final Peer peer = new Peer(params, new PeerAddress(InetAddress.getLocalHost()), chain);
+        peer.connect();
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                peer.run();
+            }
+        }).start();
 
         Sha256Hash blockHash = new Sha256Hash(args[0]);
         Future<Block> future = peer.getBlock(blockHash);
