@@ -20,6 +20,8 @@ import com.google.bitcoin.core.AbstractPeerEventListener;
 import com.google.bitcoin.core.Block;
 import com.google.bitcoin.core.Peer;
 
+import java.text.DateFormat;
+import java.util.Date;
 import java.util.concurrent.Semaphore;
 
 /**
@@ -36,8 +38,14 @@ import java.util.concurrent.Semaphore;
  */
 public class DownloadListener extends AbstractPeerEventListener {
     private int originalBlocksLeft = -1;
-    private int lastPercent = -1;
+    private int lastPercent = 0;
     Semaphore done = new Semaphore(0);
+    
+    @Override
+    public void onChainDownloadStarted(Peer peer, int blocksLeft) {
+        startDownload(blocksLeft);
+        originalBlocksLeft = blocksLeft;
+    }
     
     @Override
     public void onBlocksDownloaded(Peer peer, Block block, int blocksLeft) {
@@ -46,17 +54,12 @@ public class DownloadListener extends AbstractPeerEventListener {
             done.release();
         }
         
-        if (blocksLeft <= 0)
+        if (blocksLeft < 0 || originalBlocksLeft <= 0)
             return;
 
-        if (originalBlocksLeft < 0) {
-            startDownload(blocksLeft);
-            originalBlocksLeft = blocksLeft;
-        }
-        
         double pct = 100.0 - (100.0 * (blocksLeft / (double) originalBlocksLeft));
         if ((int)pct != lastPercent) {
-            progress(pct);
+            progress(pct, new Date(block.getTime()));
             lastPercent = (int)pct;
         }
     }
@@ -65,9 +68,11 @@ public class DownloadListener extends AbstractPeerEventListener {
      * Called when download progress is made.
      * 
      * @param pct the percentage of chain downloaded, estimated
+     * @param date the date of the last block downloaded 
      */
-    protected void progress(double pct) {
-        System.out.println(String.format("Chain download %d%% done", (int) pct));
+    protected void progress(double pct, Date date) {
+        System.out.println(String.format("Chain download %d%% done, block date %s", (int) pct,
+                DateFormat.getDateInstance().format(date)));
     }
 
     /**
@@ -77,7 +82,7 @@ public class DownloadListener extends AbstractPeerEventListener {
      */
     protected void startDownload(int blocks) {
         System.out.println("Downloading block chain of size " + blocks + ". " +
-                (lastPercent > 1000 ? "This may take a while." : ""));
+                (blocks > 1000 ? "This may take a while." : ""));
     }
 
     /**

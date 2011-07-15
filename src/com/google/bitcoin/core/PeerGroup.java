@@ -55,6 +55,8 @@ import java.util.concurrent.atomic.AtomicInteger;
  *
  */
 public class PeerGroup {
+     private static final int DEFAULT_CONNECTIONS = 10;
+
     private static final Logger log = LoggerFactory.getLogger(PeerGroup.class);
     
     private static final int CONNECTION_DELAY_MILLIS = 5 * 1000;
@@ -66,11 +68,11 @@ public class PeerGroup {
     // Addresses to try to connect to, excluding active peers
     private BlockingQueue<PeerAddress> inactives;
     // Connection initiation thread
-    private Thread thread;
+    private Thread connectThread;
     // True if the connection initiation thread should be running
     private boolean running;
     // A pool of threads for peers, of size maxConnection
-    private ThreadPoolExecutor executor;
+    private ThreadPoolExecutor peerPool;
     // Currently active peers
     private Set<Peer> peers;
     // The peer we are currently downloading the chain from
@@ -84,13 +86,9 @@ public class PeerGroup {
 
     /**
      * Create a PeerGroup
-     * 
-     * @param maxConnections the maximum number of peer connections that this group will try to make.
-     * Depending on the environment, this is normally between 1 and 10.
      */
-    public PeerGroup(int maxConnections, BlockStore blockStore, NetworkParameters params,
-            BlockChain chain) {
-        this.maxConnections = maxConnections;
+    public PeerGroup(BlockStore blockStore, NetworkParameters params, BlockChain chain) {
+        this.maxConnections = DEFAULT_CONNECTIONS;
         this.blockStore = blockStore;
         this.params = params;
         this.chain = chain;
@@ -98,12 +96,25 @@ public class PeerGroup {
         inactives = new LinkedBlockingQueue<PeerAddress>();
         
         peers = Collections.synchronizedSet(new HashSet<Peer>());
-        executor = new ThreadPoolExecutor(CORE_THREADS, this.maxConnections,
+        peerPool = new ThreadPoolExecutor(CORE_THREADS, this.maxConnections,
                 THREAD_KEEP_ALIVE_SECONDS, TimeUnit.SECONDS,
                 new LinkedBlockingQueue<Runnable>(1),
                 new PeerGroupThreadFactory());
     }
 
+    /**
+     * @param maxConnections the maximum number of peer connections that this group will try to make.
+     * 
+     * Depending on the environment, this should normally be between 1 and 10, default is 10.
+     */
+    public void setMaxConnections(int maxConnections) {
+        this.maxConnections = maxConnections;
+    }
+    
+    public int getMaxConnections() {
+        return maxConnections;
+    }
+    
     /** Add an address to the list of potential peers to connect to */
     public void addAddress(PeerAddress peerAddress) {
         // TODO(miron) consider deduplication
@@ -128,9 +139,9 @@ public class PeerGroup {
     
     /** Starts the background thread that makes connections. */
     public void start() {
-        this.thread = new Thread(new PeerExecutionRunnable(), "Peer group thread");
+        this.connectThread = new Thread(new PeerExecutionRunnable(), "Peer group thread");
         running = true;
-        this.thread.start();
+        this.connectThread.start();
     }
 
     /**
@@ -141,7 +152,7 @@ public class PeerGroup {
      */
     public synchronized void stop() {
         if (running) {
-            thread.interrupt();
+            connectThread.interrupt();
         }
     }
 
@@ -187,7 +198,7 @@ public class PeerGroup {
                 }
             }
 
-            executor.shutdownNow();
+            peerPool.shutdownNow();
 
             for (Peer peer : peers) {
                 peer.disconnect();
@@ -224,10 +235,15 @@ public class PeerGroup {
                             }
                         }
                     };
-                    executor.execute(command);
+                    peerPool.execute(command);
                     break;
                 } catch (RejectedExecutionException e) {
                     // Reached maxConnections, try again after a delay
+
+                    // TODO - consider being smarter about retry.  No need to retry
+                    // if we reached maxConnections or if peer queue is empty.  Also consider
+                    // exponential backoff on peers and adjusting the sleep time according to the
+                    // lowest backoff value in queue.
                 } catch (BlockStoreException e) {
                     // Fatal error
                     log.error("Block store corrupt?", e);
@@ -252,8 +268,27 @@ public class PeerGroup {
      */
     public synchronized void startBlockChainDownload(PeerEventListener listener) {
         this.downloadListener = listener;
+        // TODO be more nuanced about which peer to download from.  We can also try
+        // downloading from multiple peers and handle the case when a new peer comes along
+        // with a longer chain after we thought we were done.
         if (!peers.isEmpty())
             startBlockChainDownloadFromPeer(peers.iterator().next());
+    }
+    
+    /**
+     * Download the blockchain from peers.
+     * 
+     * <p>This method wait until the download is complete.  "Complete" is defined as downloading
+     * from at least one peer all the blocks that are in that peer's inventory.
+     */
+    public void downloadBlockChain() {
+        DownloadListener listener = new DownloadListener();
+        startBlockChainDownload(listener);
+        try {
+            listener.await();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
     }
     
     protected synchronized void handleNewPeer(Peer peer) {

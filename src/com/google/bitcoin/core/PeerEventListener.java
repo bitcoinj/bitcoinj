@@ -28,14 +28,21 @@ package com.google.bitcoin.core;
  */
 public interface PeerEventListener {
     /**
-     * This is called on a Peer thread when a block is received.  It is also called when a download
-     * is started with the initial number of blocks to be downloaded.
+     * Called on a Peer thread when a block is received.
      * 
-     * <p>The block may have transactions or may be a header only once getheaders is implemented
+     * <p>The block may have transactions or may be a header only once getheaders is implemented.
      *
      * @param peer the peer receiving the block
-     * @param block the downloaded block, or null if this is the initial callback
+     * @param block the downloaded block
      * @param blocksLeft the number of blocks left to download
      */
     public void onBlocksDownloaded(Peer peer, Block block, int blocksLeft);
+
+    /**
+     * Called when a download is started with the initial number of blocks to be downloaded.
+     * 
+     * @param peer the peer receiving the block
+     * @param blocksLeft the number of blocks left to download
+     */
+    public void onChainDownloadStarted(Peer peer, int blocksLeft);
 }

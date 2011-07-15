@@ -358,7 +358,7 @@ public class Peer {
     public void startBlockChainDownload() throws IOException {
         for (PeerEventListener listener : eventListeners) {
             synchronized (listener) {
-                listener.onBlocksDownloaded(this, null, getPeerBlocksToGet());
+                listener.onChainDownloadStarted(this, getPeerBlocksToGet());
             }
         }
 

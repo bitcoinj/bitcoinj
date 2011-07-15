@@ -87,7 +87,7 @@ public class PingService {
         System.out.println("Connecting ...");
         BlockChain chain = new BlockChain(params, wallet, blockStore);
         
-        final PeerGroup peerGroup = new PeerGroup(1, blockStore, params, chain);
+        final PeerGroup peerGroup = new PeerGroup(blockStore, params, chain);
         peerGroup.addAddress(new PeerAddress(InetAddress.getLocalHost()));
         peerGroup.start();
 
@@ -121,9 +121,7 @@ public class PingService {
             }
         });
 
-        final DownloadListener listener = new DownloadListener();
-        peerGroup.startBlockChainDownload(listener);
-        listener.await();
+        peerGroup.downloadBlockChain();
         System.out.println("Send coins to: " + key.toAddress(params).toString());
         System.out.println("Waiting for coins to arrive. Press Ctrl-C to quit.");
         // The PeerGroup thread keeps us alive until something kills the process.

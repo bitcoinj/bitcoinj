@@ -58,13 +58,10 @@ public class PrivateKeys {
             final MemoryBlockStore blockStore = new MemoryBlockStore(params);
             BlockChain chain = new BlockChain(params, wallet, blockStore);
             
-            final PeerGroup peerGroup = new PeerGroup(1, blockStore, params, chain);
+            final PeerGroup peerGroup = new PeerGroup(blockStore, params, chain);
             peerGroup.addAddress(new PeerAddress(InetAddress.getLocalHost()));
             peerGroup.start();
-            DownloadListener listener = new DownloadListener();
-            peerGroup.startBlockChainDownload(listener);
-            listener.await();
-
+            peerGroup.downloadBlockChain();
             peerGroup.stop();
 
             // And take them!
