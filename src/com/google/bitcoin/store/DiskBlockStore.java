@@ -115,7 +115,7 @@ public class DiskBlockStore implements BlockStore {
                     }
                 } else {
                     // Don't try to verify the genesis block to avoid upsetting the unit tests.
-                    b.verify();
+                    b.verifyHeader();
                     // Calculate its height and total chain work.
                     s = prev.build(b);
                 }

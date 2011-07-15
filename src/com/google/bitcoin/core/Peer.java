@@ -233,7 +233,7 @@ public class Peer {
      * @throws IOException
      */
     public Future<Block> getBlock(Sha256Hash blockHash) throws IOException {
-        InventoryMessage getdata = new InventoryMessage(params);
+        GetDataMessage getdata = new GetDataMessage(params);
         InventoryItem inventoryItem = new InventoryItem(InventoryItem.Type.Block, blockHash);
         getdata.addItem(inventoryItem);
         GetDataFuture<Block> future = new GetDataFuture<Block>(inventoryItem);

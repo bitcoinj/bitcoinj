@@ -16,16 +16,18 @@
 
 package com.google.bitcoin.core;
 
-import com.google.bitcoin.bouncycastle.util.encoders.Hex;
+import com.google.bitcoin.store.BlockStore;
 import com.google.bitcoin.store.MemoryBlockStore;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.math.BigInteger;
 
+import static com.google.bitcoin.core.TestUtils.createFakeBlock;
+import static com.google.bitcoin.core.TestUtils.createFakeTx;
 import static org.junit.Assert.*;
 
-// NOTE: Handling of chain splits/reorgs are in ChainSplitTests.
+// Handling of chain splits/reorgs are in ChainSplitTests.
 
 public class BlockChainTest {
     private static final NetworkParameters testNet = NetworkParameters.testNet();
@@ -33,21 +35,27 @@ public class BlockChainTest {
 
     private Wallet wallet;
     private BlockChain chain;
+    private BlockStore blockStore;
     private Address coinbaseTo;
     private NetworkParameters unitTestParams;
-    private Address someOtherGuy;
+
+    private void resetBlockStore() {
+        blockStore = new MemoryBlockStore(unitTestParams);
+    }
 
     @Before
     public void setUp() {
+
         testNetChain = new BlockChain(testNet, new Wallet(testNet), new MemoryBlockStore(testNet));
 
         unitTestParams = NetworkParameters.unitTests();
         wallet = new Wallet(unitTestParams);
         wallet.addKey(new ECKey());
-        chain = new BlockChain(unitTestParams, wallet, new MemoryBlockStore(unitTestParams));
+
+        resetBlockStore();
+        chain = new BlockChain(unitTestParams, wallet, blockStore);
 
         coinbaseTo = wallet.keychain.get(0).toAddress(unitTestParams);
-        someOtherGuy = new ECKey().toAddress(unitTestParams);
     }
 
     @Test
@@ -68,8 +76,38 @@ public class BlockChainTest {
         } catch (VerificationException e) {
             b2.setNonce(n);
         }
+
         // Now it works because we reset the nonce.
         assertTrue(testNetChain.add(b2));
+    }
+
+    @Test
+    public void merkleRoots() throws Exception {
+        // Test that merkle root verification takes place when a relevant transaction is present and doesn't when
+        // there isn't any such tx present (as an optimization).
+        Transaction tx1 = createFakeTx(unitTestParams,
+                                       Utils.toNanoCoins(1, 0),
+                                       wallet.keychain.get(0).toAddress(unitTestParams));
+        Block b1 = createFakeBlock(unitTestParams, blockStore, tx1).block;
+        chain.add(b1);
+        resetBlockStore();
+        Sha256Hash hash = b1.getMerkleRoot();
+        b1.setMerkleRoot(Sha256Hash.ZERO_HASH);
+        try {
+            chain.add(b1);
+            fail();
+        } catch (VerificationException e) {
+            // Expected.
+            b1.setMerkleRoot(hash);
+        }
+        // Now add a second block with no relevant transactions and then break it.
+        Transaction tx2 = createFakeTx(unitTestParams, Utils.toNanoCoins(1, 0),
+                                       new ECKey().toAddress(unitTestParams));
+        Block b2 = createFakeBlock(unitTestParams, blockStore, tx2).block;
+        hash = b2.getMerkleRoot();
+        b2.setMerkleRoot(Sha256Hash.ZERO_HASH);
+        b2.solve();
+        chain.add(b2);  // Broken block is accepted because its contents don't matter to us.
     }
 
     @Test
@@ -163,7 +201,7 @@ public class BlockChainTest {
         b2.setTime(1296734343L);
         b2.setPrevBlockHash(new Sha256Hash("000000033cc282bc1fa9dcae7a533263fd7fe66490f550d80076433340831604"));
         assertEquals("000000037b21cac5d30fc6fda2581cf7b2612908aed2abbcc429c45b0557a15f", b2.getHashAsString());
-        b2.verify();
+        b2.verifyHeader();
         return b2;
     }
 
@@ -174,7 +212,7 @@ public class BlockChainTest {
         b1.setTime(1296734340);
         b1.setPrevBlockHash(new Sha256Hash("00000007199508e34a9ff81e6ec0c477a4cccff2a4767a8eee39c11db367b008"));
         assertEquals("000000033cc282bc1fa9dcae7a533263fd7fe66490f550d80076433340831604", b1.getHashAsString());
-        b1.verify();
+        b1.verifyHeader();
         return b1;
     }
 }

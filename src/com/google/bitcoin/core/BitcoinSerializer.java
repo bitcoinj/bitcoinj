@@ -51,8 +51,6 @@ public class BitcoinSerializer
     private boolean usesChecksumming;
 
     private static Map<Class<? extends Message>, String> names = new HashMap<Class<? extends Message>,String>();
-    private static Map<String, Constructor<? extends Message>>
-            messageConstructors = new HashMap<String, Constructor<? extends Message>>();
 
     static {
         names.put(VersionMessage.class, "version");
@@ -75,14 +73,6 @@ public class BitcoinSerializer
     public BitcoinSerializer(NetworkParameters params, boolean usesChecksumming) {
         this.params = params;
         this.usesChecksumming = usesChecksumming;
-
-        // some Message subclasses can only be sent for now, ignore missing constructors
-        for (Class<? extends Message> c : names.keySet()) {
-            Constructor<? extends Message> ct = makeConstructor(c);
-            if (ct != null) {
-                messageConstructors.put(names.get(c),ct);
-            }
-        }
     }
 
     public void useChecksumming(boolean usesChecksumming) {
@@ -121,7 +111,8 @@ public class BitcoinSerializer
         out.write(header);
         out.write(payload);
 
-        log.debug("Sending {} message: {}", name, bytesToHexString(header) + bytesToHexString(payload));
+        if (log.isDebugEnabled())
+            log.debug("Sending {} message: {}", name, bytesToHexString(header) + bytesToHexString(payload));
     }
 
     /**
@@ -216,15 +207,34 @@ public class BitcoinSerializer
         }
 
         try {
-            Constructor<? extends Message> c = messageConstructors.get(command);
-            if (c == null) {
-                throw new ProtocolException("No support for deserializing message with name " + command);
-            }
-            return c.newInstance(params, payloadBytes);
+            return makeMessage(command, payloadBytes);
         } catch (Exception e) {
             throw new ProtocolException("Error deserializing message " + Utils.bytesToHexString(payloadBytes) + "\n", e);
         }
 
+    }
+
+    private Message makeMessage(String command, byte[] payloadBytes) throws ProtocolException {
+        // We use an if ladder rather than reflection because reflection is very slow on Android.
+        if (command.equals("version")) {
+            return new VersionMessage(params, payloadBytes);
+        } else if (command.equals("inv")) {
+            return new InventoryMessage(params, payloadBytes);
+        } else if (command.equals("block")) {
+            return new Block(params, payloadBytes);
+        } else if (command.equals("getdata")) {
+            return new GetDataMessage(params, payloadBytes);
+        } else if (command.equals("tx")) {
+            return new Transaction(params, payloadBytes);
+        } else if (command.equals("addr")) {
+            return new AddressMessage(params, payloadBytes);
+        } else if (command.equals("ping")) {
+            return new Ping();
+        } else if (command.equals("verack")) {
+            return new VersionAck(params, payloadBytes);
+        } else {
+            throw new ProtocolException("No support for deserializing message with name " + command);
+        }
     }
 
     private Constructor<? extends Message> makeConstructor(Class<? extends Message> c) {

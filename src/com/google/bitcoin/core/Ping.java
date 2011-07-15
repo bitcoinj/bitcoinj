@@ -16,12 +16,9 @@
 
 package com.google.bitcoin.core;
 
-public class Ping
-    extends Message
-{
+public class Ping extends Message {
     @Override
-    void parse() throws ProtocolException
-    {
+    void parse() throws ProtocolException {
         // nothing to parse
     }
 }

@@ -38,7 +38,12 @@ public class DnsDiscovery implements PeerDiscovery {
 
     private String[] hostNames;
     private NetworkParameters netParams;
-    private static final String[] defaultHosts = new String[] {"bitseed.xf2.org","bitseed.bitcoin.org.uk"};
+
+    public static final String[] defaultHosts = new String[] {
+            "dnsseed.bluematt.me",      // Auto generated
+            "bitseed.xf2.org",          // Static
+            "bitseed.bitcoin.org.uk"    // Static
+    };
     
     /**
      * Supports finding peers through DNS A records. Community run DNS entry points will be used.

@@ -338,7 +338,10 @@ public class Wallet implements Serializable {
                 //   A  -> spent by B [pending]
                 //     \-> spent by C [chain]
                 Transaction doubleSpent = input.outpoint.fromTx;   // == A
-                Transaction connected = doubleSpent.outputs.get((int)input.outpoint.index).getSpentBy().parentTransaction;
+                int index = (int) input.outpoint.index;
+                TransactionOutput output = doubleSpent.outputs.get(index);
+                TransactionInput spentBy = output.getSpentBy();
+                Transaction connected = spentBy.parentTransaction;
                 if (pending.containsKey(connected.getHash())) {
                     log.info("Saw double spend from chain override pending tx {}", connected.getHashAsString());
                     log.info("  <-pending ->dead");
@@ -380,6 +383,14 @@ public class Wallet implements Serializable {
      */
     public synchronized void addEventListener(WalletEventListener listener) {
         eventListeners.add(listener);
+    }
+
+    /**
+     * Removes the given event listener object. Returns true if the listener was removed,
+     * false if that listener was never added.
+     */
+    public synchronized boolean removeEventListener(WalletEventListener listener) {
+        return eventListeners.remove(listener);
     }
 
     /**

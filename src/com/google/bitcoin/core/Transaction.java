@@ -104,10 +104,6 @@ public class Transaction extends Message implements Serializable {
         return getHash().toString();
     }
 
-    void setFakeHashForTesting(Sha256Hash hash) {
-        this.hash = hash;
-    }
-
     /**
      * Calculates the sum of the outputs that are sending coins to a key in the wallet. The flag controls whether to
      * include spent outputs or not.
@@ -169,6 +165,10 @@ public class Transaction extends Message implements Serializable {
             if (connected == null)
                 connected = input.getConnectedOutput(wallet.pending);
             if (connected == null)
+                continue;
+            // The connected output may be the change to the sender of a previous input sent to this wallet. In this
+            // case we ignore it.
+            if (!connected.isMine(wallet))
                 continue;
             v = v.add(connected.getValue());
         }
@@ -232,9 +232,6 @@ public class Transaction extends Message implements Serializable {
             cursor += output.getMessageSize();
         }
         lockTime = readUint32();
-        
-        // Store a hash, it may come in useful later (want to avoid reserialization costs).
-        hash = new Sha256Hash(reverseBytes(doubleDigest(bytes, offset, cursor - offset)));
     }
 
     /**
