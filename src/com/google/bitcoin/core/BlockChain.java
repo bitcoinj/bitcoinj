@@ -207,7 +207,7 @@ public class BlockChain {
         if (storedPrev.equals(chainHead)) {
             // This block connects to the best known block, it is a normal continuation of the system.
             setChainHead(newStoredBlock);
-            log.trace("Chain is now {} blocks high", chainHead.getHeight());
+            log.info("Chain is now {} blocks high", chainHead.getHeight());
             if (newTransactions != null)
                 sendTransactionsToWallet(newStoredBlock, NewBlockType.BEST_CHAIN, newTransactions);
         } else {
@@ -437,10 +437,11 @@ public class BlockChain {
                     boolean shouldReceive = false;
                     for (TransactionOutput output : tx.outputs) {
                         // TODO: Handle more types of outputs, not just regular to address outputs.
-                        if (output.getScriptPubKey().isSentToIP()) return;
+                        if (output.getScriptPubKey().isSentToIP()) continue;
                         // This is not thread safe as a key could be removed between the call to isMine and receive.
                         if (output.isMine(wallet)) {
                             shouldReceive = true;
+                            break;
                         }
                     }
 

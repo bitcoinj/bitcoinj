@@ -29,7 +29,7 @@ import java.util.Arrays;
 public class Sha256Hash implements Serializable {
     private byte[] bytes;
 
-    public static Sha256Hash ZERO_HASH = new Sha256Hash(new byte[32]);
+    public static final Sha256Hash ZERO_HASH = new Sha256Hash(new byte[32]);
 
     /** Creates a Sha256Hash by wrapping the given byte array. It must be 32 bytes long. */
     public Sha256Hash(byte[] bytes) {

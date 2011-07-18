@@ -124,7 +124,8 @@ public class TransactionInput extends Message implements Serializable {
         if (isCoinBase())
             return "TxIn: COINBASE";
         try {
-            return "TxIn from " + Utils.bytesToHexString(getScriptSig().getPubKey()) + " script:" +
+            return "TxIn from tx " + outpoint + " (pubkey: " + Utils.bytesToHexString(getScriptSig().getPubKey()) +
+                    ") script:" +
                     getScriptSig().toString();
         } catch (ScriptException e) {
             throw new RuntimeException(e);

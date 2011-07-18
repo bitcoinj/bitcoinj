@@ -187,14 +187,19 @@ public class Transaction extends Message implements Serializable {
      * Connects all inputs using the provided transactions. If any input cannot be connected returns that input or
      * null on success.
      */
-    TransactionInput connectInputs(Map<Sha256Hash, Transaction> transactions, boolean disconnect) {
+    TransactionInput connectForReorganize(Map<Sha256Hash, Transaction> transactions) {
         for (TransactionInput input : inputs) {
             // Coinbase transactions, by definition, do not have connectable inputs.
             if (input.isCoinBase()) continue;
-            if (input.connect(transactions, disconnect) != TransactionInput.ConnectionResult.SUCCESS) {
-                // Could not connect this input, so return it and abort.
-                return input;
-            }
+            TransactionInput.ConnectionResult result = input.connect(transactions, false);
+            // Connected to another tx in the wallet?
+            if (result == TransactionInput.ConnectionResult.SUCCESS)
+                continue;
+            // The input doesn't exist in the wallet, eg because it belongs to somebody else (inbound spend).
+            if (result == TransactionInput.ConnectionResult.NO_SUCH_TX)
+                continue;
+            // Could not connect this input, so return it and abort.
+            return input;
         }
         return null;
     }
@@ -297,7 +302,12 @@ public class Transaction extends Message implements Serializable {
      * accepted by the network.
      */
     public void addInput(TransactionOutput from) {
-        inputs.add(new TransactionInput(params, this, from));
+        addInput(new TransactionInput(params, this, from));
+    }
+
+    /** Adds an input directly, with no checking that it's valid. */
+    public void addInput(TransactionInput input) {
+        inputs.add(input);
     }
 
     /**

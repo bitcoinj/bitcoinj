@@ -22,7 +22,7 @@ import com.google.bitcoin.store.BlockStoreException;
 import java.math.BigInteger;
 
 public class TestUtils {
-    public static Transaction createFakeTx(NetworkParameters params, BigInteger nanocoins,  Address to) {
+    public static Transaction createFakeTx(NetworkParameters params, BigInteger nanocoins, Address to) {
         Transaction t = new Transaction(params);
         TransactionOutput o1 = new TransactionOutput(params, t, nanocoins, to);
         t.addOutput(o1);
@@ -46,6 +46,7 @@ public class TestUtils {
                                             Transaction... transactions) {
         try {
             Block b = blockStore.getChainHead().getHeader().createNextBlock(new ECKey().toAddress(params));
+            // Coinbase tx was already added.
             for (Transaction tx : transactions)
                 b.addTransaction(tx);
             b.solve();

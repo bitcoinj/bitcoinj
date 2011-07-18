@@ -69,13 +69,15 @@ public class PingService {
         // Fetch the first key in the wallet (should be the only key).
         ECKey key = wallet.keychain.get(0);
 
+        System.out.println(wallet);
+
         // Load the block chain, if there is one stored locally.
         System.out.println("Reading block store from disk");
         BlockStore blockStore = new BoundedOverheadBlockStore(params, new File(filePrefix + ".blockchain"));
 
         // Connect to the localhost node. One minute timeout since we won't try any other peers
         System.out.println("Connecting ...");
-        NetworkConnection conn = new NetworkConnection(InetAddress.getLocalHost(), params,
+        NetworkConnection conn = new NetworkConnection(InetAddress.getByName("plan99.net"), params,
                                                        blockStore.getChainHead().getHeight(), 60000);
         BlockChain chain = new BlockChain(params, wallet, blockStore);
         final Peer peer = new Peer(params, conn, chain);

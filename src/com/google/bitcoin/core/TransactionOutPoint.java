@@ -91,4 +91,9 @@ public class TransactionOutPoint extends Message implements Serializable {
     byte[] getConnectedPubKeyHash() throws ScriptException {
         return getConnectedOutput().getScriptPubKey().getPubKeyHash();
     }
+
+    @Override
+    public String toString() {
+        return "outpoint " + index + ":" + hash.toString();
+    }
 }

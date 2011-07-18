@@ -67,10 +67,11 @@ public class TransactionOutput extends Message implements Serializable {
     }
 
     /** Used only in creation of the genesis blocks and in unit tests. */
-    TransactionOutput(NetworkParameters params, byte[] scriptBytes) {
+    TransactionOutput(NetworkParameters params, Transaction parent, byte[] scriptBytes) {
         super(params);
         this.scriptBytes = scriptBytes;
         this.value = Utils.toNanoCoins(50, 0);
+        parentTransaction = parent;
         availableForSpending = true;
     }
 

@@ -477,28 +477,44 @@ public class Block extends Message {
     /////////////////////////////////////////////////////////////////////////////////////////////////
     // Unit testing related methods.
 
-    static private int coinbaseCounter;
+    // Used to make transactions unique.
+    static private int txCounter;
+
     /** Adds a coinbase transaction to the block. This exists for unit tests. */
-    void addCoinbaseTransaction(Address to) {
+    void addCoinbaseTransaction(byte[] pubKeyTo) {
         transactions = new ArrayList<Transaction>();
         Transaction coinbase = new Transaction(params);
         // A real coinbase transaction has some stuff in the scriptSig like the extraNonce and difficulty. The
         // transactions are distinguished by every TX output going to a different key.
         //
         // Here we will do things a bit differently so a new address isn't needed every time. We'll put a simple
-        // counter in the scriptSig so every transaction has a different hash. The output is also different.
-        // Real coinbase transactions use <pubkey> OP_CHECKSIG rather than a send to an address though there's
-        // nothing in the system that enforces that and both are just as valid.
-        coinbase.inputs.add(new TransactionInput(params, coinbase, new byte[] { (byte) coinbaseCounter++ } ));
-        coinbase.outputs.add(new TransactionOutput(params, coinbase, Utils.toNanoCoins(50, 0), to));
+        // counter in the scriptSig so every transaction has a different hash.
+        coinbase.inputs.add(new TransactionInput(params, coinbase, new byte[] { (byte) txCounter++ } ));
+        coinbase.outputs.add(new TransactionOutput(params, coinbase, Script.createOutputScript(pubKeyTo)));
         transactions.add(coinbase);
     }
+
+    static final byte[] EMPTY_BYTES = new byte[32];
 
     /** Returns a solved block that builds on top of this one. This exists for unit tests. */
     Block createNextBlock(Address to, long time) {
         Block b = new Block(params);
         b.setDifficultyTarget(difficultyTarget);
-        b.addCoinbaseTransaction(to);
+        b.addCoinbaseTransaction(EMPTY_BYTES);
+
+        // Add a transaction paying 50 coins to the "to" address.
+        Transaction t = new Transaction(params);
+        t.addOutput(new TransactionOutput(params, t, Utils.toNanoCoins(50, 0), to));
+        // The input does not really need to be a valid signature, as long as it has the right general form.
+        TransactionInput input = new TransactionInput(params, t, Script.createInputScript(EMPTY_BYTES, EMPTY_BYTES));
+        // Importantly the outpoint hash cannot be zero as that's how we detect a coinbase transaction in isolation
+        // but it must be unique to avoid 'different' transactions looking the same.
+        byte[] counter = new byte[32];
+        counter[0] = (byte) txCounter++;
+        input.outpoint.hash = new Sha256Hash(counter);
+        t.addInput(input);
+        b.addTransaction(t);
+
         b.setPrevBlockHash(getHash());
         b.setTime(time);
         b.solve();

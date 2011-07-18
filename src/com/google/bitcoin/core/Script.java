@@ -388,6 +388,19 @@ public class Script {
         }
     }
 
+    /** Create a script that sends coins directly to the given public key (eg in a coinbase transaction). */
+    static byte[] createOutputScript(byte[] pubkey) {
+        try {
+            // TODO: Do this by creating a Script *first* then having the script reassemble itself into bytes.
+            ByteArrayOutputStream bits = new ByteArrayOutputStream();
+            writeBytes(bits, pubkey);
+            bits.write(OP_CHECKSIG);
+            return bits.toByteArray();
+        } catch (IOException e) {
+            throw new RuntimeException(e);  // Cannot happen.
+        }
+    }
+
     static byte[] createInputScript(byte[] signature,  byte[] pubkey) {
         try {
             // TODO: Do this by creating a Script *first* then having the script reassemble itself into bytes.

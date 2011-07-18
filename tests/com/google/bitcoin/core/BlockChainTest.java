@@ -45,7 +45,6 @@ public class BlockChainTest {
 
     @Before
     public void setUp() {
-
         testNetChain = new BlockChain(testNet, new Wallet(testNet), new MemoryBlockStore(testNet));
 
         unitTestParams = NetworkParameters.unitTests();
@@ -79,6 +78,17 @@ public class BlockChainTest {
 
         // Now it works because we reset the nonce.
         assertTrue(testNetChain.add(b2));
+    }
+
+    @Test
+    public void receiveCoins() throws Exception {
+        // Quick check that we can actually receive coins.
+        Transaction tx1 = createFakeTx(unitTestParams,
+                                       Utils.toNanoCoins(1, 0),
+                                       wallet.keychain.get(0).toAddress(unitTestParams));
+        Block b1 = createFakeBlock(unitTestParams, blockStore, tx1).block;
+        chain.add(b1);
+        assertTrue(wallet.getBalance().compareTo(BigInteger.ZERO) > 0);
     }
 
     @Test
