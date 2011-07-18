@@ -104,9 +104,11 @@ public class IrcDiscovery implements PeerDiscovery {
 
             // Join the channel.
             logAndSend("JOIN " + channel);
+            // List users in channel.
+            logAndSend("NAMES " + channel);
             writer.flush();
 
-            // A list of the users should be returned when we join. Look for code 353 and parse until code 366.
+            // A list of the users should be returned. Look for code 353 and parse until code 366.
             while ((currLine = reader.readLine()) != null) {
                 onIRCReceive(currLine);
                 if (checkLineStatus("353", currLine)) {
@@ -117,7 +119,7 @@ public class IrcDiscovery implements PeerDiscovery {
                     }
 
                     String spacedList = currLine.substring(currLine.indexOf(":", subIndex));
-                    addresses.addAll(parseUserList(spacedList.split(" ")));
+                    addresses.addAll(parseUserList(spacedList.substring(1).split(" ")));
                 } else if (checkLineStatus("366", currLine)) {
                     // End of user list.
                     break;
