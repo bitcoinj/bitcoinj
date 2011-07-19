@@ -55,7 +55,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  *
  */
 public class PeerGroup {
-     private static final int DEFAULT_CONNECTIONS = 10;
+    private static final int DEFAULT_CONNECTIONS = 4;
 
     private static final Logger log = LoggerFactory.getLogger(PeerGroup.class);
     
@@ -103,9 +103,9 @@ public class PeerGroup {
     }
 
     /**
-     * @param maxConnections the maximum number of peer connections that this group will try to make.
+     * Depending on the environment, this should normally be between 1 and 10, default is 4.
      * 
-     * Depending on the environment, this should normally be between 1 and 10, default is 10.
+     * @param maxConnections the maximum number of peer connections that this group will try to make.
      */
     public void setMaxConnections(int maxConnections) {
         this.maxConnections = maxConnections;
