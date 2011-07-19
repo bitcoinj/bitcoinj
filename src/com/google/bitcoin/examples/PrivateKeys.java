@@ -55,18 +55,21 @@ public class PrivateKeys {
             wallet.addKey(key);
 
             // Find the transactions that involve those coins.
-            NetworkConnection conn = new NetworkConnection(InetAddress.getLocalHost(), params, 0, 60000);
-            BlockChain chain = new BlockChain(params, wallet, new MemoryBlockStore(params));
-            Peer peer = new Peer(params, conn, chain);
-            peer.start();
-            peer.startBlockChainDownload().await();
+            final MemoryBlockStore blockStore = new MemoryBlockStore(params);
+            BlockChain chain = new BlockChain(params, wallet, blockStore);
+            
+            final PeerGroup peerGroup = new PeerGroup(blockStore, params, chain);
+            peerGroup.addAddress(new PeerAddress(InetAddress.getLocalHost()));
+            peerGroup.start();
+            peerGroup.downloadBlockChain();
+            peerGroup.stop();
 
             // And take them!
             System.out.println("Claiming " + Utils.bitcoinValueToFriendlyString(wallet.getBalance()) + " coins");
-            wallet.sendCoins(peer, destination, wallet.getBalance());
+            wallet.sendCoins(peerGroup, destination, wallet.getBalance());
             // Wait a few seconds to let the packets flush out to the network (ugly).
             Thread.sleep(5000);
-            peer.disconnect();
+            System.exit(0);
         } catch (ArrayIndexOutOfBoundsException e) {
             System.out.println("First arg should be private key in Base58 format. Second argument should be address " +
                     "to send to.");

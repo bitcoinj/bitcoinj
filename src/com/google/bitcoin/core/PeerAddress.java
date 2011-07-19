@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.math.BigInteger;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.Date;
 
@@ -38,10 +39,16 @@ public class PeerAddress extends Message {
     BigInteger services;
     long time;
 
+    /**
+     * Construct a peer address from a serialized payload.
+     */
     public PeerAddress(NetworkParameters params, byte[] payload, int offset, int protocolVersion) throws ProtocolException {
         super(params, payload, offset, protocolVersion);
     }
     
+    /**
+     * Construct a peer address from a memorized or hardcoded address.
+     */
     public PeerAddress(InetAddress addr, int port, int protocolVersion) {
         this.addr = addr;
         this.port = port;
@@ -49,6 +56,19 @@ public class PeerAddress extends Message {
         this.services = BigInteger.ZERO;
     }
     
+    public PeerAddress(InetAddress addr, int port) {
+        this(addr, port, NetworkParameters.PROTOCOL_VERSION);
+    }
+    
+    public PeerAddress(InetAddress addr) {
+        this(addr, 0);
+    }
+    
+    public PeerAddress(InetSocketAddress addr) {
+        this(addr.getAddress(), addr.getPort());
+    }
+
+    @Override
     public void bitcoinSerializeToStream(OutputStream stream) throws IOException {
         if (protocolVersion >= 31402) {
             int secs = (int)(new Date().getTime() / 1000);
@@ -71,7 +91,7 @@ public class PeerAddress extends Message {
     }
 
     @Override
-    protected void parse() throws ProtocolException {
+    protected void parse() {
         // Format of a serialized address:
         //   uint32 timestamp
         //   uint64 services   (flags determining what the node can do)

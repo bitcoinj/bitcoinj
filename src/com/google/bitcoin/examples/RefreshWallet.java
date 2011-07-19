@@ -16,14 +16,20 @@
 
 package com.google.bitcoin.examples;
 
-import com.google.bitcoin.core.*;
-import com.google.bitcoin.store.*;
+import com.google.bitcoin.core.BlockChain;
+import com.google.bitcoin.core.DownloadListener;
+import com.google.bitcoin.core.NetworkParameters;
+import com.google.bitcoin.core.PeerAddress;
+import com.google.bitcoin.core.PeerGroup;
+import com.google.bitcoin.core.Transaction;
+import com.google.bitcoin.core.Wallet;
+import com.google.bitcoin.core.WalletEventListener;
+import com.google.bitcoin.store.BlockStore;
+import com.google.bitcoin.store.MemoryBlockStore;
 
 import java.io.File;
 import java.math.BigInteger;
 import java.net.InetAddress;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
 /**
  * RefreshWallet loads a wallet, then processes the block chain to update the transaction pools within it.
@@ -37,13 +43,14 @@ public class RefreshWallet {
         // Set up the components and link them together.
         final NetworkParameters params = NetworkParameters.testNet();
         BlockStore blockStore = new MemoryBlockStore(params);
-        NetworkConnection conn = new NetworkConnection(InetAddress.getLocalHost(), params,
-                                                       blockStore.getChainHead().getHeight(), 60000);
         BlockChain chain = new BlockChain(params, wallet, blockStore);
-        Peer peer = new Peer(params, conn, chain);
-        peer.start();
+
+        final PeerGroup peerGroup = new PeerGroup(blockStore, params, chain);
+        peerGroup.addAddress(new PeerAddress(InetAddress.getLocalHost()));
+        peerGroup.start();
 
         wallet.addEventListener(new WalletEventListener() {
+            @Override
             public void onCoinsReceived(Wallet w, Transaction tx, BigInteger prevBalance, BigInteger newBalance) {
                 System.out.println("\nReceived tx " + tx.getHashAsString());
                 System.out.println(tx.toString());
@@ -51,19 +58,8 @@ public class RefreshWallet {
         });
 
         // Now download and process the block chain.
-        CountDownLatch progress = peer.startBlockChainDownload();
-        long max = progress.getCount();  // Racy but no big deal.
-        if (max > 0) {
-            System.out.println("Downloading block chain. " + (max > 1000 ? "This may take a while." : ""));
-            long current = max;
-            while (current > 0) {
-                double pct = 100.0 - (100.0 * (current / (double) max));
-                System.out.println(String.format("Chain download %d%% done", (int) pct));
-                progress.await(1, TimeUnit.SECONDS);
-                current = progress.getCount();
-            }
-        }
-        peer.disconnect();
+        peerGroup.downloadBlockChain();
+        peerGroup.stop();
         wallet.saveToFile(file);
         System.out.println("\nDone!\n");
         System.out.println(wallet.toString());

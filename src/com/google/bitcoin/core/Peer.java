@@ -21,63 +21,101 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.*;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
- * A Peer handles the high level communication with a BitCoin node. It requires a NetworkConnection to be set up for
- * it. After that it takes ownership of the connection, creates and manages its own thread used for communication
- * with the network. All these threads synchronize on the block chain.
+ * A Peer handles the high level communication with a BitCoin node. 
+ * 
+ * <p>After making the connection with connect(), call run() to start the message handling loop.
  */
 public class Peer {
-	private static final Logger log = LoggerFactory.getLogger(Peer.class);
+    private static final Logger log = LoggerFactory.getLogger(Peer.class);
 	
-    private final NetworkConnection conn;
+    private NetworkConnection conn;
     private final NetworkParameters params;
-    private Thread thread;
-    // Whether the peer thread is supposed to be running or not. Set to false during shutdown so the peer thread
+    // Whether the peer loop is supposed to be running or not. Set to false during shutdown so the peer loop
     // knows to quit when the socket goes away.
     private boolean running;
     private final BlockChain blockChain;
 
-    // Used to notify clients when the initial block chain download is finished.
-    private CountDownLatch chainCompletionLatch;
     // When we want to download a block or transaction from a peer, the InventoryItem is put here whilst waiting for
     // the response. Synchronized on itself.
     private final List<GetDataFuture<Block>> pendingGetBlockFutures;
 
+    private int bestHeight;
+
+    private PeerAddress address;
+
+    private List<PeerEventListener> eventListeners;
+
     /**
      * Construct a peer that handles the given network connection and reads/writes from the given block chain. Note that
-     * communication won't occur until you call start().
+     * communication won't occur until you call connect().
+     * 
+     * @param bestHeight our current best chain height, to facilitate downloading
      */
-    public Peer(NetworkParameters params, NetworkConnection conn, BlockChain blockChain) {
-        this.conn = conn;
+    public Peer(NetworkParameters params, PeerAddress address, int bestHeight, BlockChain blockChain) {
         this.params = params;
+        this.address = address;
+        this.bestHeight = bestHeight;
         this.blockChain = blockChain;
         this.pendingGetBlockFutures = new ArrayList<GetDataFuture<Block>>();
-    }
-
-    /** Starts the background thread that processes messages. */
-    public void start() {
-        this.thread = new Thread(new Runnable() {
-            public void run() {
-                Peer.this.run();
-            }
-        });
-        synchronized (this) {
-            running = true;
-        }
-        this.thread.setName("Bitcoin peer thread: " + conn.toString());
-        this.thread.start();
+        this.eventListeners = new ArrayList<PeerEventListener>();
     }
 
     /**
-     * Runs in the peers network thread and manages communication with the peer.
+     * Construct a peer that handles the given network connection and reads/writes from the given block chain. Note that
+     * communication won't occur until you call connect().
      */
-    private void run() {
-        assert Thread.currentThread() == thread;
+    public Peer(NetworkParameters params, PeerAddress address, BlockChain blockChain) {
+        this(params, address, 0, blockChain);
+    }
+    
+    public synchronized void addEventListener(PeerEventListener listener) {
+        eventListeners.add(listener);
+    }
+
+    public synchronized void removeEventListener(PeerEventListener listener) {
+        eventListeners.remove(listener);
+    }
+
+    @Override
+    public String toString() {
+        return "Peer(" + address.addr + ":" + address.port + ")";
+    }
+
+    /**
+     * Connects to the peer.
+     */
+    public void connect() {
+        try {
+            conn = new NetworkConnection(address, params, bestHeight, 60000);
+        } catch (IOException ex) {
+            log.error("while trying to open connection", ex);
+            throw new RuntimeException(ex);
+        } catch (ProtocolException ex) {
+            log.error("while trying to negotiate connection", ex);
+            throw new RuntimeException(ex);
+        }
+    }
+
+    /**
+     * Runs in the peers network loop and manages communication with the peer.
+     * 
+     * <p>connect() must be called first
+     */
+    public void run() {
+        // This should be called in the network loop thread for this peer
+        if (conn == null)
+            throw new RuntimeException("please call connect() first");
+        
+        running = true;
         try {
             while (true) {
                 Message m = conn.readMessage();
@@ -97,19 +135,26 @@ public class Peer {
         } catch (Exception e) {
             if (e instanceof IOException && !running) {
                 // This exception was expected because we are tearing down the socket as part of quitting.
-                log.info("Shutting down peer thread");
+                log.info("Shutting down peer loop");
             } else {
                 // We caught an unexpected exception.
                 e.printStackTrace();
             }
         }
+
+        try {
+            conn.shutdown();
+        } catch (IOException e) {
+            // Ignore exceptions on shutdown, socket might be dead
+        }
+        
         synchronized (this) {
             running = false;
         }
     }
 
     private void processBlock(Block m) throws IOException {
-        assert Thread.currentThread() == thread;
+        // This should called in the network loop thread for this peer
         try {
             // Was this block requested by getBlock()?
             synchronized (pendingGetBlockFutures) {
@@ -128,11 +173,9 @@ public class Peer {
             // This call will synchronize on blockChain.
             if (blockChain.add(m)) {
                 // The block was successfully linked into the chain. Notify the user of our progress.
-                if (chainCompletionLatch != null) {
-                    chainCompletionLatch.countDown();
-                    if (chainCompletionLatch.getCount() == 0) {
-                        // All blocks fetched, so we don't need this anymore.
-                        chainCompletionLatch = null;
+                for (PeerEventListener listener : eventListeners) {
+                    synchronized (listener) {
+                        listener.onBlocksDownloaded(this, m, getPeerBlocksToGet());
                     }
                 }
             } else {
@@ -147,15 +190,16 @@ public class Peer {
             }
         } catch (VerificationException e) {
             // We don't want verification failures to kill the thread.
-        	log.warn("block verification failed", e);
+            log.warn("Block verification failed", e);
         } catch (ScriptException e) {
             // We don't want script failures to kill the thread.
-        	log.warn("script exception", e);
+            log.warn("Script exception", e);
         }
     }
 
     private void processInv(InventoryMessage inv) throws IOException {
-        assert Thread.currentThread() == thread;
+        // This should be called in the network loop thread for this peer
+
         // The peer told us about some blocks or transactions they have. For now we only care about blocks.
         // Note that as we don't actually want to store the entire block chain or even the headers of the block
         // chain, we may end up requesting blocks we already requested before. This shouldn't (in theory) happen
@@ -256,7 +300,7 @@ public class Peer {
 
         /** Called by the Peer when the result has arrived. Completes the task. */
         void setResult(T result) {
-            assert Thread.currentThread() == thread;  // Called from peer thread.
+            // This should be called in the network loop thread for this peer
             this.result = result;
             // Now release the thread that is waiting. We don't need to synchronize here as the latch establishes
             // a memory barrier.
@@ -318,10 +362,24 @@ public class Peer {
     /**
      * Starts an asynchronous download of the block chain. The chain download is deemed to be complete once we've
      * downloaded the same number of blocks that the peer advertised having in its version handshake message.
-     *
-     * @return a {@link CountDownLatch} that can be used to track progress and wait for completion.
      */
-    public CountDownLatch startBlockChainDownload() throws IOException {
+    public void startBlockChainDownload() throws IOException {
+        for (PeerEventListener listener : eventListeners) {
+            synchronized (listener) {
+                listener.onChainDownloadStarted(this, getPeerBlocksToGet());
+            }
+        }
+
+        if (getPeerBlocksToGet() > 0) {
+            // When we just want as many blocks as possible, we can set the target hash to zero.
+            blockChainDownload(Sha256Hash.ZERO_HASH);
+        }
+    }
+
+    /**
+     * @return the number of blocks to get, based on our chain height and the peer reported height
+     */
+    private int getPeerBlocksToGet() {
         // Chain will overflow signed int blocks in ~41,000 years.
         int chainHeight = (int) conn.getVersionMessage().bestHeight;
         if (chainHeight <= 0) {
@@ -330,28 +388,18 @@ public class Peer {
             throw new RuntimeException("Peer does not have block chain");
         }
         int blocksToGet = chainHeight - blockChain.getChainHead().getHeight();
-        if (blocksToGet < 0) {
-            // This peer has fewer blocks than we do. It isn't usable.
-            // TODO: We can't do the right thing here until Mirons patch lands. For now just return a zero latch.
-            return new CountDownLatch(0);
-        }
-        chainCompletionLatch = new CountDownLatch(blocksToGet);
-        if (blocksToGet > 0) {
-            // When we just want as many blocks as possible, we can set the target hash to zero.
-            blockChainDownload(Sha256Hash.ZERO_HASH);
-        }
-        return chainCompletionLatch;
+        return blocksToGet;
     }
 
     /**
-     * Terminates the network connection and stops the background thread.
+     * Terminates the network connection and stops the message handling loop.
      */
     public void disconnect() {
         synchronized (this) {
             running = false;
         }
         try {
-            // This will cause the background thread to die, but it's really ugly. We must do a better job of this.
+            // This is the correct way to stop an IO bound loop
             conn.shutdown();
         } catch (IOException e) {
             // Don't care about this.

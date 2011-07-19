@@ -45,6 +45,7 @@ public class BlockChainTest {
 
     @Before
     public void setUp() {
+
         testNetChain = new BlockChain(testNet, new Wallet(testNet), new MemoryBlockStore(testNet));
 
         unitTestParams = NetworkParameters.unitTests();
