@@ -100,8 +100,15 @@ public class NetworkConnection {
         });
         // BitCoinJ is a client mode implementation. That means there's not much point in us talking to other client
         // mode nodes because we can't download the data from them we need to find/verify transactions.
-        if (!versionMessage.hasBlockChain())
+        if (!versionMessage.hasBlockChain()) {
+            // Shut down the socket
+            try {
+                shutdown();
+            } catch (IOException ex) {
+                // ignore exceptions while aborting
+            }
             throw new ProtocolException("Peer does not have a copy of the block chain.");
+        }
         // newer clients use checksumming
         serializer.useChecksumming(peerVersion >= 209);
         // Handshake is done!

@@ -223,13 +223,15 @@ public class PeerGroup {
                                 handleNewPeer(peer);
                                 log.info("running " + peer);
                                 peer.run();
-                            } 
-                            finally {
+                            } catch (RuntimeException ex) {
+                                // do not propagate RuntimeException - log and try next peer
+                                log.error("error while talking to peer", ex);
+                            } finally {
                                 // In all cases, put the address back on the queue.
                                 // We will retry this peer after all other peers have been tried.
                                 inactives.add(address);
-                                peers.remove(peer);
-                                handlePeerDeath(peer);
+                                if (peers.remove(peer))
+                                    handlePeerDeath(peer);
                             }
                         }
                     };
