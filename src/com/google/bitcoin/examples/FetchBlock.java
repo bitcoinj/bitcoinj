@@ -36,7 +36,6 @@ public class FetchBlock {
         final Peer peer = new Peer(params, new PeerAddress(InetAddress.getLocalHost()), chain);
         peer.connect();
         new Thread(new Runnable() {
-            @Override
             public void run() {
                 peer.run();
             }

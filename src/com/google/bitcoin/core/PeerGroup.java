@@ -183,7 +183,6 @@ public class PeerGroup {
          * we will ask the executor to shutdown and ask each peer to disconnect.  At that point
          * no threads or network connections will be active.
          */
-        @Override
         public void run() {
             try {
                 while (running) {
@@ -216,7 +215,6 @@ public class PeerGroup {
                     final Peer peer = new Peer(params, address,
                             blockStore.getChainHead().getHeight(), chain);
                     Runnable command = new Runnable() {
-                        @Override
                         public void run() {
                             try {
                                 log.info("connecting to " + peer);
@@ -328,7 +326,6 @@ public class PeerGroup {
                          "-thread-";
         }
 
-        @Override
         public Thread newThread(Runnable r) {
             Thread t = new Thread(group, r,
                                   namePrefix + threadNumber.getAndIncrement(),

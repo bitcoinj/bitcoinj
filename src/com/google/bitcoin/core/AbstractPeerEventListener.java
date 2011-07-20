@@ -25,11 +25,9 @@ package com.google.bitcoin.core;
  *
  */
 public class AbstractPeerEventListener extends Object implements PeerEventListener {
-    @Override
     public void onBlocksDownloaded(Peer peer, Block block, int blocksLeft) {
     }
 
-    @Override
     public void onChainDownloadStarted(Peer peer, int blocksLeft) {
     }
 }
