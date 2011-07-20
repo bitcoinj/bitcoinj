@@ -103,14 +103,14 @@
       <id>bitcoinj-release</id>
       <name>BitCoinJ Release</name>
       <releases />
-      <url>http://ci.bitcoinj.org/artifactory/internal-release</url>
+      <url>http://ci.bitcoinj.org/artifactory/release</url>
     </repository>
     <!-- Snapshot versions of the library are subject to frequent change -->
     <repository>
       <id>bitcoinj-snapshot</id>
       <name>BitCoinJ Snapshot</name>
       <snapshots />
-      <url>http://ci.bitcoinj.org/artifactory/internal-snapshot</url>
+      <url>http://ci.bitcoinj.org/artifactory/snapshot</url>
     </repository>
   </repositories>
   <profiles>
