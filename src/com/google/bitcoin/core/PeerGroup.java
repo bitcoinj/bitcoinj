@@ -228,8 +228,14 @@ public class PeerGroup {
                                 // do not propagate RuntimeException - log and try next peer
                                 log.error("error while talking to peer", ex);
                             } finally {
-                                // In all cases, put the address back on the queue.
+                                // In all cases, disconnect and put the address back on the queue.
                                 // We will retry this peer after all other peers have been tried.
+                                try {
+                                    peer.disconnect();
+                                } catch (RuntimeException ex) {
+                                    // ignore
+                                }
+
                                 inactives.add(address);
                                 if (peers.remove(peer))
                                     handlePeerDeath(peer);
