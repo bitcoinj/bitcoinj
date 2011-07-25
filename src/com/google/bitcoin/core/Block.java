@@ -437,7 +437,7 @@ public class Block extends Message {
         this.hash = null;
     }
 
-    /** Returns the time at which the block was solved and broadcast, according to the clock of the solving node. */
+    /** Returns the time in seconds at which the block was solved and broadcast, according to the clock of the solving node. */
     public long getTime() {
         return time;
     }

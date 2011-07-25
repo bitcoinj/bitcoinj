@@ -63,8 +63,6 @@ public class PeerGroup {
     private static final int CORE_THREADS = 1;
     private static final int THREAD_KEEP_ALIVE_SECONDS = 1;
 
-    // Maximum number of connections this peerGroup will make
-    private int maxConnections;
     // Addresses to try to connect to, excluding active peers
     private BlockingQueue<PeerAddress> inactives;
     // Connection initiation thread
@@ -88,7 +86,6 @@ public class PeerGroup {
      * Create a PeerGroup
      */
     public PeerGroup(BlockStore blockStore, NetworkParameters params, BlockChain chain) {
-        this.maxConnections = DEFAULT_CONNECTIONS;
         this.blockStore = blockStore;
         this.params = params;
         this.chain = chain;
@@ -96,7 +93,7 @@ public class PeerGroup {
         inactives = new LinkedBlockingQueue<PeerAddress>();
         
         peers = Collections.synchronizedSet(new HashSet<Peer>());
-        peerPool = new ThreadPoolExecutor(CORE_THREADS, this.maxConnections,
+        peerPool = new ThreadPoolExecutor(CORE_THREADS, DEFAULT_CONNECTIONS,
                 THREAD_KEEP_ALIVE_SECONDS, TimeUnit.SECONDS,
                 new LinkedBlockingQueue<Runnable>(1),
                 new PeerGroupThreadFactory());
@@ -108,11 +105,11 @@ public class PeerGroup {
      * @param maxConnections the maximum number of peer connections that this group will try to make.
      */
     public void setMaxConnections(int maxConnections) {
-        this.maxConnections = maxConnections;
+        peerPool.setMaximumPoolSize(maxConnections);
     }
     
     public int getMaxConnections() {
-        return maxConnections;
+        return peerPool.getMaximumPoolSize();
     }
     
     /** Add an address to the list of potential peers to connect to */
