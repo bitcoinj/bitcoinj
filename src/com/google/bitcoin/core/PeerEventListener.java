@@ -45,4 +45,20 @@ public interface PeerEventListener {
      * @param blocksLeft the number of blocks left to download
      */
     public void onChainDownloadStarted(Peer peer, int blocksLeft);
+    
+    /**
+     * Called when a peer is connected
+     * 
+     * @param peer 
+     * @param peerCount the total number of connected peers
+     */
+    public void onPeerConnected(Peer peer, int peerCount);
+    
+    /**
+     * Called when a peer is disconnected
+     * 
+     * @param peer 
+     * @param peerCount the total number of connected peers
+     */
+    public void onPeerDisconnected(Peer peer, int peerCount);
 }

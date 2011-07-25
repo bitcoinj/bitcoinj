@@ -30,4 +30,10 @@ public class AbstractPeerEventListener extends Object implements PeerEventListen
 
     public void onChainDownloadStarted(Peer peer, int blocksLeft) {
     }
+    
+    public void onPeerConnected(Peer peer, int peerCount) {
+    }
+    
+    public void onPeerDisconnected(Peer peer, int peerCount) {
+    }
 }
