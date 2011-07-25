@@ -160,12 +160,14 @@ public class PeerGroup {
      */
     public boolean broadcastTransaction(Transaction tx) {
         boolean success = false;
-        for (Peer peer : peers) {
-            try {
-                peer.broadcastTransaction(tx);
-                success = true;
-            } catch (IOException e) {
-                log.error("failed to broadcast to " + peer, e);
+        synchronized (peers) {
+            for (Peer peer : peers) {
+                try {
+                    peer.broadcastTransaction(tx);
+                    success = true;
+                } catch (IOException e) {
+                    log.error("failed to broadcast to " + peer, e);
+                }
             }
         }
         return success;
@@ -196,8 +198,10 @@ public class PeerGroup {
 
             peerPool.shutdownNow();
 
-            for (Peer peer : peers) {
-                peer.disconnect();
+            synchronized (peers) {
+                for (Peer peer : peers) {
+                    peer.disconnect();
+                }
             }
         }
 
@@ -268,8 +272,12 @@ public class PeerGroup {
         // TODO be more nuanced about which peer to download from.  We can also try
         // downloading from multiple peers and handle the case when a new peer comes along
         // with a longer chain after we thought we were done.
-        if (!peers.isEmpty())
-            startBlockChainDownloadFromPeer(peers.iterator().next());
+        synchronized (peers) {
+            if (!peers.isEmpty())
+            {
+                startBlockChainDownloadFromPeer(peers.iterator().next());
+            }
+        }
     }
     
     /**
@@ -296,8 +304,11 @@ public class PeerGroup {
     protected synchronized void handlePeerDeath(Peer peer) {
         if (peer == downloadPeer) {
             downloadPeer = null;
-            if (downloadListener != null && !peers.isEmpty())
-                startBlockChainDownloadFromPeer(peers.iterator().next());
+            synchronized (peers) {
+                if (downloadListener != null && !peers.isEmpty()) {
+                    startBlockChainDownloadFromPeer(peers.iterator().next());
+                }
+            }
         }
     }
 
