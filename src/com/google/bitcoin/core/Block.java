@@ -301,17 +301,16 @@ public class Block extends Message {
         // derive the root, which can be checked against the block header. These proofs aren't used right now but
         // will be helpful later when we want to download partial block contents.
         //
-        // Note that if the number of transactions is not a power of two the last tx is repeated to make it so (see
+        // Note that if the number of transactions is not even the last tx is repeated to make it so (see
         // tx3 above). A tree with 5 transactions would look like this:
         //
-        //                    root
-        //                  /      \
-        //                /          \
-        //              1             6
-        //            /  \          /   \
-        //          2     3       4      5
-        //         / \   / \    /  \   /  \
-        //       t1 t2  t3 t4  t5 t5  t5  t5
+        //                root
+        //                /  \
+        //              1     \
+        //            /  \     \
+        //          2     3     4
+        //         / \   / \   /  \
+        //       t1 t2  t3 t4  t5 t5
         ArrayList<byte[]> tree = new ArrayList<byte[]>();
         // Start by adding all the hashes of the transactions as leaves of the tree.
         for (Transaction t : transactions) {
@@ -323,7 +322,7 @@ public class Block extends Message {
             // For each pair of nodes on that level:
             for (int left = 0; left < levelSize; left += 2) {
                 // The right hand node can be the same as the left hand, in the case where we don't have enough
-                // transactions to be a power of two.
+                // transactions.
                 int right = Math.min(left + 1, levelSize - 1);
                 byte[] leftBytes = Utils.reverseBytes(tree.get(levelOffset + left));
                 byte[] rightBytes = Utils.reverseBytes(tree.get(levelOffset + right));
