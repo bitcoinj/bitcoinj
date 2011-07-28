@@ -25,6 +25,7 @@ import com.google.bitcoin.store.BlockStoreException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOError;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.Collections;
@@ -242,17 +243,13 @@ public class PeerGroup {
                                 handleNewPeer(peer);
                                 log.info("running " + peer);
                                 peer.run();
-                            } catch (RuntimeException ex) {
-                                // do not propagate RuntimeException - log and try next peer
+                            } catch (PeerException ex) {
+                                // do not propagate PeerException - log and try next peer
                                 log.error("error while talking to peer", ex);
                             } finally {
                                 // In all cases, disconnect and put the address back on the queue.
                                 // We will retry this peer after all other peers have been tried.
-                                try {
-                                    peer.disconnect();
-                                } catch (RuntimeException ex) {
-                                    // ignore
-                                }
+                                peer.disconnect();
 
                                 inactives.add(address);
                                 if (peers.remove(peer))
@@ -273,7 +270,7 @@ public class PeerGroup {
                     // Fatal error
                     log.error("Block store corrupt?", e);
                     running = false;
-                    break;
+                    throw new IOError(e);
                 }
                 
                 // If we got here, we should retry this address because an error unrelated

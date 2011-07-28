@@ -92,14 +92,16 @@ public class Peer {
 
     /**
      * Connects to the peer.
+     * 
+     * @throws PeerException when there is a temporary problem with the peer and we should retry later
      */
-    public void connect() {
+    public void connect() throws PeerException {
         try {
             conn = new NetworkConnection(address, params, bestHeight, 60000);
         } catch (IOException ex) {
-            throw new RuntimeException(ex);
+            throw new PeerException(ex);
         } catch (ProtocolException ex) {
-            throw new RuntimeException(ex);
+            throw new PeerException(ex);
         }
     }
 
@@ -107,13 +109,16 @@ public class Peer {
      * Runs in the peers network loop and manages communication with the peer.
      * 
      * <p>connect() must be called first
+     * 
+     * @throws PeerException when there is a temporary problem with the peer and we should retry later
      */
-    public void run() {
+    public void run() throws PeerException {
         // This should be called in the network loop thread for this peer
         if (conn == null)
             throw new RuntimeException("please call connect() first");
         
         running = true;
+        
         try {
             while (true) {
                 Message m = conn.readMessage();
@@ -130,25 +135,24 @@ public class Peer {
                     log.warn("Received unhandled message: {}", m);
                 }
             }
-        } catch (Exception e) {
-            if (e instanceof IOException && !running) {
+        } catch (IOException e) {
+            disconnect();
+            if (!running) {
                 // This exception was expected because we are tearing down the socket as part of quitting.
                 log.info("Shutting down peer loop");
             } else {
-                // We caught an unexpected exception.
-                e.printStackTrace();
+                throw new PeerException(e);
             }
+        } catch (ProtocolException e) {
+            disconnect();
+            throw new PeerException(e);
+        } catch (RuntimeException e) {
+            disconnect();
+            log.error("unexpected exception in peer loop", e);
+            throw e;
         }
 
-        try {
-            conn.shutdown();
-        } catch (IOException e) {
-            // Ignore exceptions on shutdown, socket might be dead
-        }
-        
-        synchronized (this) {
-            running = false;
-        }
+        disconnect();
     }
 
     private void processBlock(Block m) throws IOException {
@@ -383,7 +387,7 @@ public class Peer {
         if (chainHeight <= 0) {
             // This should not happen because we shouldn't have given the user a Peer that is to another client-mode
             // node. If that happens it means the user overrode us somewhere.
-            throw new RuntimeException("Peer does not have block chain");
+            return -1;
         }
         int blocksToGet = chainHeight - blockChain.getChainHead().getHeight();
         return blocksToGet;
@@ -398,7 +402,8 @@ public class Peer {
         }
         try {
             // This is the correct way to stop an IO bound loop
-            conn.shutdown();
+            if (conn != null)
+                conn.shutdown();
         } catch (IOException e) {
             // Don't care about this.
         }
