@@ -366,13 +366,15 @@ public class Peer {
      * downloaded the same number of blocks that the peer advertised having in its version handshake message.
      */
     public void startBlockChainDownload() throws IOException {
-        for (PeerEventListener listener : eventListeners) {
-            synchronized (listener) {
-                listener.onChainDownloadStarted(this, getPeerBlocksToGet());
-            }
-        }
-
+        // TODO: peer might still have blocks that we don't have, and even have a heavier
+        // chain even if the chain block count is lower.
         if (getPeerBlocksToGet() > 0) {
+            for (PeerEventListener listener : eventListeners) {
+                synchronized (listener) {
+                    listener.onChainDownloadStarted(this, getPeerBlocksToGet());
+                }
+            }
+
             // When we just want as many blocks as possible, we can set the target hash to zero.
             blockChainDownload(Sha256Hash.ZERO_HASH);
         }
