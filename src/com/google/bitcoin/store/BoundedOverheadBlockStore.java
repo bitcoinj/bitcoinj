@@ -268,7 +268,10 @@ public class BoundedOverheadBlockStore implements BlockStore {
     }
 
     public synchronized StoredBlock getChainHead() throws BlockStoreException {
-        return get(chainHead);
+        StoredBlock head = get(chainHead);
+        if (head == null)
+            throw new BlockStoreException("Corrupted block store: chain head not found");
+        return head;
     }
 
     public synchronized void setChainHead(StoredBlock chainHead) throws BlockStoreException {
