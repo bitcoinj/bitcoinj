@@ -404,34 +404,6 @@ public class Transaction extends Message implements Serializable {
             throw new RuntimeException(e);  // Cannot happen.
         }
     }
-
-    /**
-     * Given a named input and the transaction output it connects to, runs the script formed from the
-     * concatenation of the input and output scripts, returning true if the link is valid. In
-     * this way, we prove that the creator of this transaction is allowed to redeem the output
-     * of the connectedTx and thus spend the money.<p>
-     *
-     * <b>WARNING: NOT FINISHED</b><p>
-     * 
-     * @param inputIndex Which input to verify.
-     * @param connectedTx The Transaction that the input is connected to.
-     */
-    @SuppressWarnings("unused")
-    public boolean verifyInput(int inputIndex, Transaction connectedTx) throws ScriptException {
-        TransactionInput input = inputs.get(inputIndex);
-        //int outputIndex = (int) input.outpoint.index;
-        //assert outputIndex >= 0 && outputIndex < connectedTx.outputs.size();
-        //Script outScript = connectedTx.outputs.get(outputIndex).getScriptPubKey();
-        Script inScript = input.getScriptSig();
-        //Script script = Script.join(inScript, outScript);
-        //if (script.run(this)) {
-        //  LOG("Transaction input successfully verified!");
-        //  return true;
-        //}
-        byte[] pubkey = inScript.getPubKey();
-
-        return false;
-    }
     
     @Override
     public void bitcoinSerializeToStream(OutputStream stream) throws IOException {
