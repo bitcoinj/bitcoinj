@@ -322,13 +322,9 @@ public class BlockChain {
         }
     }
 
-    private void setChainHead(StoredBlock chainHead) {
+    private void setChainHead(StoredBlock chainHead) throws BlockStoreException {
+        blockStore.setChainHead(chainHead);
         this.chainHead = chainHead;
-        try {
-            blockStore.setChainHead(chainHead);
-        } catch (BlockStoreException e) {
-            throw new RuntimeException(e);
-        }
     }
 
     /**
