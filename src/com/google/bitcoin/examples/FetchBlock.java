@@ -37,7 +37,11 @@ public class FetchBlock {
         peer.connect();
         new Thread(new Runnable() {
             public void run() {
-                peer.run();
+                try {
+                    peer.run();
+                } catch (PeerException e) {
+                    throw new RuntimeException(e);
+                }
             }
         }).start();
 
