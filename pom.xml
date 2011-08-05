@@ -187,6 +187,34 @@
           </execution>
         </executions>
       </plugin>
+      <!-- Automatically downloads and renames Bouncy Castle to avoid conflicts on Android. -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-shade-plugin</artifactId>
+        <version>1.4</version>
+        <executions>
+            <execution>
+                <phase>package</phase>
+                <goals>
+                    <goal>shade</goal>
+                </goals>
+                <configuration>
+                    <relocations>
+                        <relocation>
+                            <pattern>org.bouncycastle</pattern>
+                            <shadedPattern>com.google.bitcoin.bouncycastle</shadedPattern>
+                        </relocation>
+                    </relocations>
+                    <artifactSet>
+                        <includes>
+                            <include>org.bouncycastle</include>
+                        </includes>
+                    </artifactSet>
+                    <minimizeJar>true</minimizeJar>
+                </configuration>
+            </execution>
+        </executions>
+      </plugin>
       <!-- Execute FindBugs during verify phase
            Will fail the build if it finds a bug
            Enable when ready -->
@@ -235,6 +263,13 @@
       <type>jar</type>
       <scope>compile</scope>
     </dependency>
+    <dependency>
+      <groupId>org.bouncycastle</groupId>
+      <artifactId>bcprov-jdk15</artifactId>
+      <version>1.46</version>
+      <type>jar</type>
+      <scope>compile</scope>
+     </dependency>
   </dependencies>
   <!-- The reporting section is deprecated in Maven3,
        but can be read by site plugin (see MNG-4162) -->

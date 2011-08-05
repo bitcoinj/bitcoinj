@@ -22,23 +22,23 @@ import java.io.Serializable;
 import java.math.BigInteger;
 import java.security.SecureRandom;
 
-import com.google.bitcoin.bouncycastle.asn1.ASN1InputStream;
-import com.google.bitcoin.bouncycastle.asn1.ASN1OutputStream;
-import com.google.bitcoin.bouncycastle.asn1.DERBitString;
-import com.google.bitcoin.bouncycastle.asn1.DERInteger;
-import com.google.bitcoin.bouncycastle.asn1.DEROctetString;
-import com.google.bitcoin.bouncycastle.asn1.DERSequence;
-import com.google.bitcoin.bouncycastle.asn1.DERSequenceGenerator;
-import com.google.bitcoin.bouncycastle.asn1.DERTaggedObject;
-import com.google.bitcoin.bouncycastle.asn1.sec.SECNamedCurves;
-import com.google.bitcoin.bouncycastle.asn1.x9.X9ECParameters;
-import com.google.bitcoin.bouncycastle.crypto.AsymmetricCipherKeyPair;
-import com.google.bitcoin.bouncycastle.crypto.generators.ECKeyPairGenerator;
-import com.google.bitcoin.bouncycastle.crypto.params.ECDomainParameters;
-import com.google.bitcoin.bouncycastle.crypto.params.ECKeyGenerationParameters;
-import com.google.bitcoin.bouncycastle.crypto.params.ECPrivateKeyParameters;
-import com.google.bitcoin.bouncycastle.crypto.params.ECPublicKeyParameters;
-import com.google.bitcoin.bouncycastle.crypto.signers.ECDSASigner;
+import org.bouncycastle.asn1.ASN1InputStream;
+import org.bouncycastle.asn1.ASN1OutputStream;
+import org.bouncycastle.asn1.DERBitString;
+import org.bouncycastle.asn1.DERInteger;
+import org.bouncycastle.asn1.DEROctetString;
+import org.bouncycastle.asn1.DERSequence;
+import org.bouncycastle.asn1.DERSequenceGenerator;
+import org.bouncycastle.asn1.DERTaggedObject;
+import org.bouncycastle.asn1.sec.SECNamedCurves;
+import org.bouncycastle.asn1.x9.X9ECParameters;
+import org.bouncycastle.crypto.AsymmetricCipherKeyPair;
+import org.bouncycastle.crypto.generators.ECKeyPairGenerator;
+import org.bouncycastle.crypto.params.ECDomainParameters;
+import org.bouncycastle.crypto.params.ECKeyGenerationParameters;
+import org.bouncycastle.crypto.params.ECPrivateKeyParameters;
+import org.bouncycastle.crypto.params.ECPublicKeyParameters;
+import org.bouncycastle.crypto.signers.ECDSASigner;
 
 /**
  * Represents an elliptic curve keypair that we own and can use for signing transactions. Currently,

@@ -16,7 +16,7 @@
 
 package com.google.bitcoin.core;
 
-import com.google.bitcoin.bouncycastle.util.encoders.Hex;
+import org.bouncycastle.util.encoders.Hex;
 import org.junit.Test;
 
 import java.math.BigInteger;
