@@ -458,14 +458,12 @@ public class Wallet implements Serializable {
      * @return The {@link Transaction} that was created or null if there was insufficient balance to send the coins.
      * @throws IOException if there was a problem broadcasting the transaction
      */
-    public synchronized Transaction sendCoins(Peer peer, Address to, BigInteger nanocoins)
-        throws IOException {
+    public synchronized Transaction sendCoins(Peer peer, Address to, BigInteger nanocoins) throws IOException {
         Transaction tx = createSend(to, nanocoins);
         if (tx == null)   // Not enough money! :-(
             return null;
         peer.broadcastTransaction(tx);
         confirmSend(tx);
-
         return tx;
     }
 
