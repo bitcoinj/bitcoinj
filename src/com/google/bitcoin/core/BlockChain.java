@@ -308,11 +308,11 @@ public class BlockChain {
 
     private void sendTransactionsToWallet(StoredBlock block, NewBlockType blockType,
                                           HashMap<Wallet, List<Transaction>> newTransactions) throws VerificationException {
-        for (Wallet wallet : newTransactions.keySet()) {
+        for (Map.Entry<Wallet, List<Transaction>> entry : newTransactions.entrySet()) {
             try {
-                List<Transaction> txns = newTransactions.get(wallet);
+                List<Transaction> txns = entry.getValue();
                 for (Transaction tx : txns) {
-                    wallet.receive(tx, block, blockType);
+                    entry.getKey().receive(tx, block, blockType);
                 }
             } catch (ScriptException e) {
                 // We don't want scripts we don't understand to break the block chain so just note that this tx was
