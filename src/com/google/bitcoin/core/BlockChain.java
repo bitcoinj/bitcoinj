@@ -204,7 +204,7 @@ public class BlockChain {
         if (storedPrev.equals(chainHead)) {
             // This block connects to the best known block, it is a normal continuation of the system.
             setChainHead(newStoredBlock);
-            log.info("Chain is now {} blocks high", chainHead.getHeight());
+            log.debug("Chain is now {} blocks high", chainHead.getHeight());
             if (newTransactions != null)
                 sendTransactionsToWallet(newStoredBlock, NewBlockType.BEST_CHAIN, newTransactions);
         } else {
@@ -391,7 +391,7 @@ public class BlockChain {
             }
             cursor = blockStore.get(cursor.getHeader().getPrevBlockHash());
         }
-        log.info("Difficulty transition traversal took {}msec", System.currentTimeMillis() - now);
+        log.debug("Difficulty transition traversal took {}msec", System.currentTimeMillis() - now);
 
         Block blockIntervalAgo = cursor.getHeader();
         int timespan = (int) (prev.getTimeSeconds() - blockIntervalAgo.getTimeSeconds());
@@ -406,7 +406,7 @@ public class BlockChain {
         newDifficulty = newDifficulty.divide(BigInteger.valueOf(params.targetTimespan));
 
         if (newDifficulty.compareTo(params.proofOfWorkLimit) > 0) {
-            log.warn("Difficulty hit proof of work limit: {}", newDifficulty.toString(16));
+            log.debug("Difficulty hit proof of work limit: {}", newDifficulty.toString(16));
             newDifficulty = params.proofOfWorkLimit;
         }
 
