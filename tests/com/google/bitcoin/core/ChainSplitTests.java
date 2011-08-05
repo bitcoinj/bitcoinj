@@ -34,7 +34,7 @@ public class ChainSplitTests {
     private Address someOtherGuy;
 
     @Before
-    public void setUp() {
+    public void setUp() throws Exception {
         unitTestParams = NetworkParameters.unitTests();
         wallet = new Wallet(unitTestParams);
         wallet.addKey(new ECKey());

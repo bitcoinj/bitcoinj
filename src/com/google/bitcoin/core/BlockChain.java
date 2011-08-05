@@ -79,7 +79,7 @@ public class BlockChain {
      * For the store you can use a {@link com.google.bitcoin.store.MemoryBlockStore} if you don't care about saving the downloaded data, or a
      * {@link com.google.bitcoin.store.BoundedOverheadBlockStore} if you'd like to ensure fast startup the next time you run the program.
      */
-    public BlockChain(NetworkParameters params, Wallet wallet, BlockStore blockStore) {
+    public BlockChain(NetworkParameters params, Wallet wallet, BlockStore blockStore) throws BlockStoreException {
         this(params, new ArrayList<Wallet>(), blockStore);
         if (wallet != null)
             addWallet(wallet);
@@ -89,21 +89,18 @@ public class BlockChain {
      * Constructs a BlockChain that has no wallet at all. This is helpful when you don't actually care about sending
      * and receiving coins but rather, just want to explore the network data structures.
      */
-    public BlockChain(NetworkParameters params, BlockStore blockStore) {
+    public BlockChain(NetworkParameters params, BlockStore blockStore) throws BlockStoreException {
         this(params, new ArrayList<Wallet>(), blockStore);
     }
     
     /**
      * Constructs a BlockChain connected to the given list of wallets and a store. 
      */
-    public BlockChain(NetworkParameters params, List<Wallet> wallets, BlockStore blockStore){
-        try {
-            this.blockStore = blockStore;
-            chainHead = blockStore.getChainHead();
-            log.info("chain head is:\n{}", chainHead.getHeader());
-        } catch (BlockStoreException e) {
-            throw new RuntimeException(e);
-        }
+    public BlockChain(NetworkParameters params, List<Wallet> wallets,
+                      BlockStore blockStore) throws BlockStoreException {
+        this.blockStore = blockStore;
+        chainHead = blockStore.getChainHead();
+        log.info("chain head is:\n{}", chainHead.getHeader());
         this.params = params;
         this.wallets = new ArrayList<Wallet>(wallets);
     }
@@ -397,7 +394,7 @@ public class BlockChain {
         log.info("Difficulty transition traversal took {}msec", System.currentTimeMillis() - now);
 
         Block blockIntervalAgo = cursor.getHeader();
-        int timespan = (int) (prev.getTime() - blockIntervalAgo.getTime());
+        int timespan = (int) (prev.getTimeSeconds() - blockIntervalAgo.getTimeSeconds());
         // Limit the adjustment step.
         if (timespan < params.targetTimespan / 4)
             timespan = params.targetTimespan / 4;

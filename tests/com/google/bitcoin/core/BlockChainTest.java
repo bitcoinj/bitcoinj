@@ -44,10 +44,8 @@ public class BlockChainTest {
     }
 
     @Before
-    public void setUp() {
-
+    public void setUp() throws Exception {
         testNetChain = new BlockChain(testNet, new Wallet(testNet), new MemoryBlockStore(testNet));
-
         unitTestParams = NetworkParameters.unitTests();
         wallet = new Wallet(unitTestParams);
         wallet.addKey(new ECKey());
