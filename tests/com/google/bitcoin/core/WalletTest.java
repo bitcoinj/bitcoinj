@@ -184,6 +184,9 @@ public class WalletTest {
         Address someOtherGuy = new ECKey().toAddress(params);
         TransactionOutput output = new TransactionOutput(params, tx, Utils.toNanoCoins(0, 5), someOtherGuy);
         tx.addOutput(output);
+        // Note that tx is no longer valid: it spends more than it imports. However checking transactions balance
+        // correctly isn't possible in SPV mode because value is a property of outputs not inputs. Without all
+        // transactions you can't check they add up.
         wallet.receive(tx, null, BlockChain.NewBlockType.BEST_CHAIN);
         // Now the other guy creates a transaction which spends that change.
         Transaction tx2 = new Transaction(params);
@@ -191,6 +194,29 @@ public class WalletTest {
         tx2.addOutput(new TransactionOutput(params, tx2, Utils.toNanoCoins(0, 5), myAddress));
         // tx2 doesn't send any coins from us, even though the output is in the wallet.
         assertEquals(Utils.toNanoCoins(0, 0), tx2.getValueSentFromMe(wallet));
+    }
+
+    @Test
+    public void bounce() throws Exception {
+        // This test covers bug 64 (False double spends). Check that if we create a spend and it's immediately sent
+        // back to us, this isn't considered as a double spend.
+        BigInteger coin1 = Utils.toNanoCoins(1, 0);
+        BigInteger coinHalf = Utils.toNanoCoins(0, 50);
+        // Start by giving us 1 coin.
+        Transaction inbound1 = createFakeTx(params, coin1, myAddress);
+        wallet.receive(inbound1, null, BlockChain.NewBlockType.BEST_CHAIN);
+        // Send half to some other guy. Sending only half then waiting for a confirm is important to ensure the tx is
+        // in the unspent pool, not pending or spent.
+        Address someOtherGuy = new ECKey().toAddress(params);
+        Transaction outbound1 = wallet.createSend(someOtherGuy, coinHalf);
+        wallet.confirmSend(outbound1);
+        wallet.receive(outbound1, null, BlockChain.NewBlockType.BEST_CHAIN);
+        // That other guy gives us the coins right back.
+        Transaction inbound2 = new Transaction(params);
+        inbound2.addOutput(new TransactionOutput(params, inbound2, coinHalf, myAddress));
+        inbound2.addInput(outbound1.outputs.get(0));
+        wallet.receive(inbound2, null, BlockChain.NewBlockType.BEST_CHAIN);
+        assertEquals(coin1, wallet.getBalance());
     }
 
     @Test
