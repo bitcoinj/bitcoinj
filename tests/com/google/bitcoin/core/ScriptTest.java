@@ -37,7 +37,6 @@ public class ScriptTest {
     public void testScriptSig() throws Exception {
         byte[] sigProgBytes = Hex.decode(sigProg);
         Script script = new Script(params, sigProgBytes, 0, sigProgBytes.length);
-        script.setTracing(true);
         // Test we can extract the from address.
         byte[] hash160 = Utils.sha256hash160(script.getPubKey());
         Address a = new Address(params, hash160);
@@ -51,22 +50,12 @@ public class ScriptTest {
         Script pubkey = new Script(params, pubkeyBytes, 0, pubkeyBytes.length);
         Address toAddr = new Address(params, pubkey.getPubKeyHash());
         assertEquals("mkFQohBpy2HDXrCwyMrYL5RtfrmeiuuPY2", toAddr.toString());
-        
-        // To verify a transaction as legitimate, both scripts are concatenated and then the whole
-        // thing is run. So check we can do that.
-        byte[] sigBytes = Hex.decode(sigProg);
-        Script sig = new Script(params, sigBytes, 0, sigBytes.length);
-        Script allScript = Script.join(sig, pubkey);
-        allScript.setTracing(true);
-        assertTrue(allScript.run(null));
-        allScript.logStack();
     }
 
     @Test
     public void testIp() throws Exception {
         byte[] bytes = Hex.decode("41043e96222332ea7848323c08116dddafbfa917b8e37f0bdf63841628267148588a09a43540942d58d49717ad3fabfe14978cf4f0a8b84d2435dad16e9aa4d7f935ac");
         Script s = new Script(params, bytes, 0, bytes.length);
-        s.setTracing(true);
         assertTrue(s.isSentToIP());
     }
 }

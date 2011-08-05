@@ -54,22 +54,10 @@ public class Script {
     byte[] program;
     private int cursor;
     
-    // The stack consists of an ordered series of data buffers growing from zero up.
-    private final Stack<byte[]> stack;
     // The program is a set of byte[]s where each element is either [opcode] or [data, data, data ...]
     private List<byte[]> chunks;
-    private boolean tracing;
     byte[] programCopy;      // TODO: remove this
     private final NetworkParameters params;
-
-    /** Concatenates two scripts to form a new one. This is used when verifying transactions. */
-    public static Script join(Script a,  Script b) throws ScriptException {
-        assert a.params == b.params;
-        byte[] fullProg = new byte[a.programCopy.length + b.programCopy.length];
-        System.arraycopy(a.programCopy, 0, fullProg, 0, a.programCopy.length);
-        System.arraycopy(b.programCopy, 0, fullProg, a.programCopy.length, b.programCopy.length);
-        return new Script(a.params, fullProg, 0, fullProg.length);
-    }
 
     /**
      * Construct a Script using the given network parameters and a range of the programBytes array.
@@ -81,13 +69,7 @@ public class Script {
      */
     public Script(NetworkParameters params, byte[] programBytes, int offset, int length) throws ScriptException {
         this.params = params;
-        stack = new Stack<byte[]>();
         parse(programBytes, offset, length);
-    }
-
-    /** If true, running a program will log its instructions. */
-    public void setTracing(boolean value) {
-        this.tracing = value;
     }
 
     /** Returns the program opcodes as a string, for example "[1234] DUP HAHS160" */
@@ -240,117 +222,12 @@ public class Script {
         return new Address(params, Utils.sha256hash160(getPubKey()));
     }
 
-
     /**
      * Gets the destination address from this script, if it's in the required form (see getPubKey).
      * @throws ScriptException
      */
     public Address getToAddress() throws ScriptException {
         return new Address(params, getPubKeyHash());
-    }
-    
-    /**
-     * Runs the script with the given Transaction as the "context". Some operations like CHECKSIG
-     * require a transaction to operate on (eg to hash). The context transaction is typically
-     * the transaction having its inputs verified, ie the one where the scriptSig comes from.
-     */
-    public boolean run(Transaction context) throws ScriptException {
-        for (byte[] chunk : chunks) {
-            if (chunk.length == 1) {
-                int opcode = 0xFF & chunk[0];
-                switch (opcode) {
-                    case OP_DUP: opDup(); break;
-                    case OP_HASH160: opHash160(); break;
-                    case OP_EQUALVERIFY: opEqualVerify(); break;
-                    case OP_CHECKSIG: opCheckSig(context); break;
-                    default:
-                        log.debug("Unknown/unimplemented opcode: {}", opcode);
-                }
-            } else {
-                // Data block, push it onto the stack.
-                log.debug("Push {}", Utils.bytesToHexString(chunk));
-                stack.add(chunk);
-            }
-        }
-        byte[] result = stack.pop();
-        if (result.length != 1)
-            throw new ScriptException("Script left junk at the top of the stack: " + Utils.bytesToHexString(result));
-        return result[0] == 1;
-    }
-    
-    void logStack() {
-        for (int i = 0; i < stack.size(); i++) { 
-            log.debug("Stack[{}]: {}",i , Utils.bytesToHexString(stack.get(i)));
-        }
-    }
-
-    // WARNING: Unfinished and untested!
-    @SuppressWarnings("unused")
-    private void opCheckSig( Transaction context) throws ScriptException {
-        byte[] pubkey = stack.pop();
-        byte[] sigAndHashType = stack.pop();
-        // The signature has an extra byte on the end to indicate the type of hash. The signature 
-        // is over the contents of the program, minus the signature itself of course.
-        byte hashType = sigAndHashType[sigAndHashType.length - 1];
-        // The high bit of the hashType byte is set to indicate "anyone can pay".
-        boolean anyoneCanPay = hashType < 0;
-        // Mask out the top bit.
-        hashType &= (byte)-1 >>> 1;
-        Transaction.SigHash sigHash;
-        switch (hashType) {
-        case 1: sigHash = SigHash.ALL; break;
-        case 2: sigHash = SigHash.NONE; break;
-        case 3: sigHash = SigHash.SINGLE; break;
-        default:
-            // TODO: This should probably not be an exception.
-            throw new ScriptException("Unknown sighash byte: " + sigAndHashType[sigAndHashType.length - 1]);
-        }
-
-        byte[] sig = new byte[sigAndHashType.length - 1];
-        System.arraycopy(sigAndHashType, 0, sig, 0, sig.length);
-        
-        log.debug("CHECKSIG: hashtype={} anyoneCanPay={}", sigHash, anyoneCanPay);
-        if (context == null) {
-            // TODO: Fix the unit tests to run scripts in transaction context then remove this.
-            pushBool(true);
-            return;
-        }
-        // TODO: Implement me!
-        // Transaction tx = context.simplify(sigHash, 0, anyoneCanPay);
-
-        // The steps to do so are as follows:
-        //   - Use the hashtype to fiddle the transaction as appropriate
-        //   - Serialize the transaction and hash it
-        //   - Use EC code to verify the hash matches the signature
-        pushBool(true);
-    }
-
-    @SuppressWarnings({"SameParameterValue"})
-    private void pushBool(boolean val) {
-        stack.push(new byte[] { val ? (byte)1 : (byte)0 });
-    }
-
-    private void opEqualVerify() throws ScriptException {
-        log.debug("EQUALVERIFY");
-        byte[] a = stack.pop();
-        byte[] b = stack.pop();
-        if (!Arrays.areEqual(a, b))
-            throw new ScriptException("EQUALVERIFY failed: " + Utils.bytesToHexString(a) + " vs " +
-                    Utils.bytesToHexString(b));
-    }
-
-    /** Replaces the top item in the stack with a hash160 of it */
-    private void opHash160() {
-        byte[] buf = stack.pop();
-        byte[] hash = Utils.sha256hash160(buf);
-        stack.add(hash);
-        log.debug("HASH160: output is {}", Utils.bytesToHexString(hash));
-    }
-
-    /** Duplicates the top item on the stack */
-    private void opDup() {
-        log.debug("DUP");
-        stack.add(Arrays.clone(stack.lastElement()));
     }
 
     ////////////////////// Interface for writing scripts from scratch ////////////////////////////////
