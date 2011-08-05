@@ -86,6 +86,7 @@ public class NetworkParameters implements Serializable {
             t.outputs.add(new TransactionOutput(n, t, scriptPubKeyBytes.toByteArray()));
         } catch (Exception e) {
             // Cannot happen.
+            throw new RuntimeException(e);
         }
         genesisBlock.addTransaction(t);
         return genesisBlock;

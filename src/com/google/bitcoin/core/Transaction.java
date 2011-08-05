@@ -258,12 +258,15 @@ public class Transaction extends Message implements Serializable {
         s.append(getHashAsString());
         s.append("\n");
         if (isCoinBase()) {
-            String script = "???";
-            String script2 = "???";
+            String script;
+            String script2;
             try {
                 script = inputs.get(0).getScriptSig().toString();
                 script2 = outputs.get(0).getScriptPubKey().toString();
-            } catch (ScriptException e) {}
+            } catch (ScriptException e) {
+                script = "???";
+                script2 = "???";
+            }
             return "     == COINBASE TXN (scriptSig " + script + ")  (scriptPubKey " + script2 + ")";
         }
         for (TransactionInput in : inputs) {

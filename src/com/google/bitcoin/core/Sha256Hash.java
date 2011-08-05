@@ -74,8 +74,7 @@ public class Sha256Hash implements Serializable {
         return bytes;
     }
 
-    @Override
-    public Sha256Hash clone() {
+    public Sha256Hash duplicate() {
         return new Sha256Hash(bytes);
     }
 }

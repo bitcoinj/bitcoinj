@@ -18,6 +18,7 @@ package com.google.bitcoin.core;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.io.OutputStream;
 import java.math.BigInteger;
 import java.util.*;
@@ -76,6 +77,13 @@ public class Block extends Message {
     /** Constructs a block object from the BitCoin wire format. */
     public Block(NetworkParameters params, byte[] payloadBytes) throws ProtocolException {
         super(params, payloadBytes, 0);
+    }
+
+    private void readObject(ObjectInputStream ois) throws ClassNotFoundException, IOException {
+        ois.defaultReadObject();
+        // This code is not actually necessary, as transient fields are initialized to the default value which is in
+        // this case null. However it clears out a FindBugs warning and makes it explicit what we're doing.
+        hash = null;
     }
 
     void parse() throws ProtocolException {
@@ -172,13 +180,13 @@ public class Block extends Message {
     public Block cloneAsHeader() {
         Block block = new Block(params);
         block.nonce = nonce;
-        block.prevBlockHash = prevBlockHash.clone();
-        block.merkleRoot = getMerkleRoot().clone();
+        block.prevBlockHash = prevBlockHash.duplicate();
+        block.merkleRoot = getMerkleRoot().duplicate();
         block.version = version;
         block.time = time;
         block.difficultyTarget = difficultyTarget;
         block.transactions = null;
-        block.hash = getHash().clone();
+        block.hash = getHash().duplicate();
         return block;
     }
 

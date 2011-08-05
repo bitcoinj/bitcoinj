@@ -75,62 +75,68 @@ public class DiskBlockStore implements BlockStore {
 
     private void load(File file) throws IOException, BlockStoreException {
         log.info("Reading block store from {}", file);
-        InputStream input = new BufferedInputStream(new FileInputStream(file));
-        // Read a version byte.
-        int version = input.read();
-        if (version == -1) {
-            // No such file or the file was empty.
-            throw new FileNotFoundException(file.getName() + " does not exist or is empty");
-        }
-        if (version != 1) {
-            throw new BlockStoreException("Bad version number: " + version);
-        }
-        // Chain head pointer is the first thing in the file.
-        byte[] chainHeadHash = new byte[32];
-        input.read(chainHeadHash);
-        this.chainHead = new Sha256Hash(chainHeadHash);
-        log.info("Read chain head from disk: {}", this.chainHead);
-        long now = System.currentTimeMillis();
-        // Rest of file is raw block headers.
-        byte[] headerBytes = new byte[Block.HEADER_SIZE];
+        InputStream input = null;
         try {
-            while (true) {
-                // Read a block from disk.
-                if (input.read(headerBytes) < 80) {
-                    // End of file.
-                    break;
-                }
-                // Parse it.
-                Block b = new Block(params, headerBytes);
-                // Look up the previous block it connects to.
-                StoredBlock prev = get(b.getPrevBlockHash());
-                StoredBlock s;
-                if (prev == null) {
-                    // First block in the stored chain has to be treated specially.
-                    if (b.equals(params.genesisBlock)) {
-                        s = new StoredBlock(params.genesisBlock.cloneAsHeader(), params.genesisBlock.getWork(), 0);
-                    } else {
-                        throw new BlockStoreException("Could not connect " + b.getHash().toString() + " to "
-                            + b.getPrevBlockHash().toString());
-                    }
-                } else {
-                    // Don't try to verify the genesis block to avoid upsetting the unit tests.
-                    b.verifyHeader();
-                    // Calculate its height and total chain work.
-                    s = prev.build(b);
-                }
-                // Save in memory.
-                blockMap.put(b.getHash(), s);
+            input = new BufferedInputStream(new FileInputStream(file));
+            // Read a version byte.
+            int version = input.read();
+            if (version == -1) {
+                // No such file or the file was empty.
+                throw new FileNotFoundException(file.getName() + " does not exist or is empty");
             }
-        } catch (ProtocolException e) {
-            // Corrupted file.
-            throw new BlockStoreException(e);
-        } catch (VerificationException e) {
-            // Should not be able to happen unless the file contains bad blocks.
-            throw new BlockStoreException(e);
+            if (version != 1) {
+                throw new BlockStoreException("Bad version number: " + version);
+            }
+            // Chain head pointer is the first thing in the file.
+            byte[] chainHeadHash = new byte[32];
+            if (input.read(chainHeadHash) < chainHeadHash.length)
+                throw new BlockStoreException("Truncated block store: cannot read chain head hash");
+            this.chainHead = new Sha256Hash(chainHeadHash);
+            log.info("Read chain head from disk: {}", this.chainHead);
+            long now = System.currentTimeMillis();
+            // Rest of file is raw block headers.
+            byte[] headerBytes = new byte[Block.HEADER_SIZE];
+            try {
+                while (true) {
+                    // Read a block from disk.
+                    if (input.read(headerBytes) < 80) {
+                        // End of file.
+                        break;
+                    }
+                    // Parse it.
+                    Block b = new Block(params, headerBytes);
+                    // Look up the previous block it connects to.
+                    StoredBlock prev = get(b.getPrevBlockHash());
+                    StoredBlock s;
+                    if (prev == null) {
+                        // First block in the stored chain has to be treated specially.
+                        if (b.equals(params.genesisBlock)) {
+                            s = new StoredBlock(params.genesisBlock.cloneAsHeader(), params.genesisBlock.getWork(), 0);
+                        } else {
+                            throw new BlockStoreException("Could not connect " + b.getHash().toString() + " to "
+                                + b.getPrevBlockHash().toString());
+                        }
+                    } else {
+                        // Don't try to verify the genesis block to avoid upsetting the unit tests.
+                        b.verifyHeader();
+                        // Calculate its height and total chain work.
+                        s = prev.build(b);
+                    }
+                    // Save in memory.
+                    blockMap.put(b.getHash(), s);
+                }
+            } catch (ProtocolException e) {
+                // Corrupted file.
+                throw new BlockStoreException(e);
+            } catch (VerificationException e) {
+                // Should not be able to happen unless the file contains bad blocks.
+                throw new BlockStoreException(e);
+            }
+            long elapsed = System.currentTimeMillis() - now;
+            log.info("Block chain read complete in {}ms", elapsed);
+        } finally {
+            if (input != null) input.close();
         }
-        long elapsed = System.currentTimeMillis() - now;
-        log.info("Block chain read complete in {}ms", elapsed);
     }
 
     public synchronized void put(StoredBlock block) throws BlockStoreException {
