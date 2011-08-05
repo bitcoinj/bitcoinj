@@ -72,7 +72,7 @@ public class DownloadListener extends AbstractPeerEventListener {
      */
     protected void progress(double pct, Date date) {
         System.out.println(String.format("Chain download %d%% done, block date %s", (int) pct,
-                DateFormat.getDateInstance().format(date)));
+                DateFormat.getDateTimeInstance().format(date)));
     }
 
     /**
