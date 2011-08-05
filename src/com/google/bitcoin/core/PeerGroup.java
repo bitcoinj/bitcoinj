@@ -25,7 +25,6 @@ import com.google.bitcoin.store.BlockStoreException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOError;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.Collections;
@@ -270,7 +269,7 @@ public class PeerGroup {
                     // Fatal error
                     log.error("Block store corrupt?", e);
                     running = false;
-                    throw new IOError(e);
+                    throw new RuntimeException(e);
                 }
                 
                 // If we got here, we should retry this address because an error unrelated
