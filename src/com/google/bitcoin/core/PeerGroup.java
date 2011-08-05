@@ -375,6 +375,10 @@ public class PeerGroup {
             Thread t = new Thread(group, r,
                                   namePrefix + threadNumber.getAndIncrement(),
                                   0);
+            // Lower the priority of the peer threads. This is to avoid competing with UI threads created by the API
+            // user when doing lots of work, like downloading the block chain. We select a priority level one lower
+            // than the parent thread, or the minimum.
+            t.setPriority(Math.max(Thread.MIN_PRIORITY, group.getMaxPriority() - 1));
             t.setDaemon(true);
             return t;
         }
