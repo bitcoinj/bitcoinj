@@ -149,7 +149,13 @@ public class Wallet implements Serializable {
      * Uses Java serialization to save the wallet to the given file.
      */
     public synchronized void saveToFile(File f) throws IOException {
-        saveToFileStream(new FileOutputStream(f));
+        FileOutputStream stream = null;
+        try {
+            stream = new FileOutputStream(f);
+            saveToFileStream(stream);
+        } finally {
+            if (stream != null) stream.close();
+        }
     }
 
     /**
