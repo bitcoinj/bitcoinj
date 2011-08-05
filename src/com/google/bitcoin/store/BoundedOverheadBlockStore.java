@@ -73,7 +73,7 @@ public class BoundedOverheadBlockStore implements BlockStore {
     private NetworkParameters params;
     private FileChannel channel;
 
-    private class Record {
+    private static class Record {
         // A BigInteger representing the total amount of work done so far on this chain. As of May 2011 it takes 8
         // bytes to represent this field, so 16 bytes should be plenty for a long time.
         private static final int CHAIN_WORK_BYTES = 16;
@@ -154,7 +154,10 @@ public class BoundedOverheadBlockStore implements BlockStore {
         // Create a new block store if the file wasn't found or anything went wrong whilst reading.
         blockCache.clear();
         try {
-            file.delete();
+            if (file.exists()) {
+                if (!file.delete())
+                    throw new BlockStoreException("Could not delete old store in order to recreate it");
+            }
             this.file = new RandomAccessFile(file, "rw");  // Create fresh.
             this.channel = this.file.getChannel();
             this.file.write(FILE_FORMAT_VERSION);
@@ -191,7 +194,8 @@ public class BoundedOverheadBlockStore implements BlockStore {
         }
         // Chain head pointer is the first thing in the file.
         byte[] chainHeadHash = new byte[32];
-        this.file.read(chainHeadHash);
+        if (this.file.read(chainHeadHash) < chainHeadHash.length)
+            throw new BlockStoreException("Truncated store: could not read chain head hash.");
         this.chainHead = new Sha256Hash(chainHeadHash);
         log.info("Read chain head from disk: {}", this.chainHead);
         channel.position(channel.size() - Record.SIZE);

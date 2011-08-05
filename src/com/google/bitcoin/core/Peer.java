@@ -258,7 +258,7 @@ public class Peer {
 
     // A GetDataFuture wraps the result of a getBlock or (in future) getTransaction so the owner of the object can
     // decide whether to wait forever, wait for a short while or check later after doing other work.
-    private class GetDataFuture<T extends Message> implements Future<T> {
+    private static class GetDataFuture<T extends Message> implements Future<T> {
         private boolean cancelled;
         private final InventoryItem item;
         private final CountDownLatch latch;
