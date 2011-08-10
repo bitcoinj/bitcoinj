@@ -36,7 +36,7 @@ import java.util.concurrent.TimeoutException;
  */
 public class Peer {
     private static final Logger log = LoggerFactory.getLogger(Peer.class);
-	
+    
     private NetworkConnection conn;
     private final NetworkParameters params;
     // Whether the peer loop is supposed to be running or not. Set to false during shutdown so the peer loop
@@ -95,7 +95,7 @@ public class Peer {
      * 
      * @throws PeerException when there is a temporary problem with the peer and we should retry later
      */
-    public void connect() throws PeerException {
+    public synchronized void connect() throws PeerException {
         try {
             conn = new NetworkConnection(address, params, bestHeight, 60000);
         } catch (IOException ex) {
@@ -136,11 +136,11 @@ public class Peer {
                 }
             }
         } catch (IOException e) {
-            disconnect();
             if (!running) {
                 // This exception was expected because we are tearing down the socket as part of quitting.
                 log.info("Shutting down peer loop");
             } else {
+                disconnect();
                 throw new PeerException(e);
             }
         } catch (ProtocolException e) {
@@ -398,10 +398,8 @@ public class Peer {
     /**
      * Terminates the network connection and stops the message handling loop.
      */
-    public void disconnect() {
-        synchronized (this) {
-            running = false;
-        }
+    public synchronized void disconnect() {
+        running = false;
         try {
             // This is the correct way to stop an IO bound loop
             if (conn != null)
