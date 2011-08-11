@@ -45,7 +45,7 @@ public class TestUtils {
     public static BlockPair createFakeBlock(NetworkParameters params, BlockStore blockStore,
                                             Transaction... transactions) {
         try {
-            Block b = blockStore.getChainHead().getHeader().createNextBlock(new ECKey().toAddress(params));
+            Block b = makeTestBlock(params, blockStore);
             // Coinbase tx was already added.
             for (Transaction tx : transactions)
                 b.addTransaction(tx);
@@ -61,5 +61,24 @@ public class TestUtils {
         } catch (BlockStoreException e) {
             throw new RuntimeException(e);  // Cannot happen.
         }
+    }
+
+    public static Block makeTestBlock(NetworkParameters params,
+            BlockStore blockStore) throws BlockStoreException {
+        return blockStore.getChainHead().getHeader().createNextBlock(new ECKey().toAddress(params));
+    }
+
+    public static Block makeSolvedTestBlock(NetworkParameters params,
+            BlockStore blockStore) throws BlockStoreException {
+        Block b = blockStore.getChainHead().getHeader().createNextBlock(new ECKey().toAddress(params));
+        b.solve();
+        return b;
+    }
+
+    public static Block makeSolvedTestBlock(NetworkParameters params,
+            Block prev) throws BlockStoreException {
+        Block b = prev.createNextBlock(new ECKey().toAddress(params));
+        b.solve();
+        return b;
     }
 }

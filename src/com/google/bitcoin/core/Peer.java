@@ -81,8 +81,8 @@ public class Peer {
         eventListeners.add(listener);
     }
 
-    public synchronized void removeEventListener(PeerEventListener listener) {
-        eventListeners.remove(listener);
+    public synchronized boolean removeEventListener(PeerEventListener listener) {
+        return eventListeners.remove(listener);
     }
 
     @Override
@@ -103,6 +103,11 @@ public class Peer {
         } catch (ProtocolException ex) {
             throw new PeerException(ex);
         }
+    }
+
+    // For testing
+    void setConnection(NetworkConnection conn) {
+        this.conn = conn;
     }
 
     /**

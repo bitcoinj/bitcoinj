@@ -33,6 +33,14 @@ public class GetBlocksMessage extends Message {
     
     public void parse() {
     }
+    
+    public List<Sha256Hash> getLocator() {
+        return locator;
+    }
+    
+    public Sha256Hash getStopHash() {
+        return stopHash;
+    }
 
     public String toString() {
         StringBuffer b = new StringBuffer();
