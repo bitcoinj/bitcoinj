@@ -112,12 +112,7 @@ public class PeerTest {
     // Check that it runs through the event loop and shut down correctly
     @Test
     public void testRun_normal() throws Exception {
-        expectPeerDisconnect();
-
-        control.replay();
-
-        peer.run();
-        control.verify();
+        runPeerAndVerify();
     }
 
     // Check that when we receive a block that does not connect to our chain, we send a 
@@ -140,12 +135,7 @@ public class PeerTest {
         conn.writeMessage(capture(message));
         expectLastCall();
 
-        expectPeerDisconnect();
-
-        control.replay();
-
-        peer.run();
-        control.verify();
+        runPeerAndVerify();
         
         List<Sha256Hash> expectedLocator = new ArrayList<Sha256Hash>();
         expectedLocator.add(b1.getHash());
@@ -182,12 +172,7 @@ public class PeerTest {
         conn.writeMessage(capture(message));
         expectLastCall();
         
-        expectPeerDisconnect();
-
-        control.replay();
-
-        peer.run();
-        control.verify();
+        runPeerAndVerify();
         
         List<Sha256Hash> expectedLocator = new ArrayList<Sha256Hash>();
         expectedLocator.add(b1.getHash());
@@ -225,12 +210,7 @@ public class PeerTest {
         conn.writeMessage(capture(message));
         expectLastCall();
         
-        expectPeerDisconnect();
-
-        control.replay();
-
-        peer.run();
-        control.verify();
+        runPeerAndVerify();
         
         List<InventoryItem> items = message.getValue().getItems();
         assertEquals(1, items.size());
@@ -319,6 +299,12 @@ public class PeerTest {
         expect(conn.getVersionMessage()).andReturn(new VersionMessage(unitTestParams, 100));
         listener.onBlocksDownloaded(eq(peer), anyObject(Block.class), eq(99));
         expectLastCall();
+        runPeerAndVerify();
+    }
+
+    // Stage a disconnect, replay the mocks, run and verify
+    private void runPeerAndVerify() throws IOException, ProtocolException,
+            PeerException {
         expectPeerDisconnect();
 
         control.replay();
