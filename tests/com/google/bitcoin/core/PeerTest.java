@@ -52,7 +52,7 @@ public class PeerTest {
         blockStore = new MemoryBlockStore(unitTestParams);
         blockChain = new BlockChain(unitTestParams, new Wallet(unitTestParams), blockStore);
         PeerAddress address = new PeerAddress(InetAddress.getLocalHost());
-        //peer = new Peer(unitTestParams, address , testNetChain );
+
         conn = createMockBuilder(NetworkConnection.class)
             .addMockedMethod("getVersionMessage")
             .addMockedMethod("readMessage")
@@ -60,7 +60,7 @@ public class PeerTest {
             .addMockedMethod("shutdown")
             .addMockedMethod("toString")
             .createMock(control);
-        peer = new Peer(unitTestParams, address , blockChain);
+        peer = new Peer(unitTestParams, address, blockChain);
         peer.setConnection(conn);
     }
 
@@ -72,6 +72,7 @@ public class PeerTest {
         assertFalse(peer.removeEventListener(listener));
     }
     
+    // Check that the connection is shut down if there's a read error and the exception is propagated.
     @Test
     public void testRun_exception() throws Exception {
         expect(conn.readMessage()).andThrow(new IOException("done"));
@@ -108,6 +109,7 @@ public class PeerTest {
         control.verify();
     }
 
+    // Check that it runs through the event loop and shut down correctly
     @Test
     public void testRun_normal() throws Exception {
         expectPeerDisconnect();
@@ -118,6 +120,8 @@ public class PeerTest {
         control.verify();
     }
 
+    // Check that when we receive a block that does not connect to our chain, we send a 
+    // getblocks to fetch the intermediates.
     @Test
     public void testRun_unconnected_block() throws Exception {
         PeerEventListener listener = control.createMock(PeerEventListener.class);
@@ -129,11 +133,8 @@ public class PeerTest {
         Block prev = TestUtils.makeSolvedTestBlock(unitTestParams, blockStore);
         final Block block = TestUtils.makeSolvedTestBlock(unitTestParams, prev);
         
-        expect(conn.readMessage()).andAnswer(new IAnswer<Message>() {
-            public Message answer() throws Throwable {
-                return block;
-            }
-        });
+        expect(conn.readMessage()).andReturn(block);
+        
         Capture<GetBlocksMessage> message = new Capture<GetBlocksMessage>();
 
         conn.writeMessage(capture(message));
@@ -154,6 +155,7 @@ public class PeerTest {
         assertEquals(message.getValue().getStopHash(), block.getHash());
     }
 
+    // Check that an inventory tickle is processed correctly
     @Test
     public void testRun_inv_tickle() throws Exception {
         PeerEventListener listener = control.createMock(PeerEventListener.class);
@@ -165,23 +167,16 @@ public class PeerTest {
         Block prev = TestUtils.makeSolvedTestBlock(unitTestParams, blockStore);
         final Block block = TestUtils.makeSolvedTestBlock(unitTestParams, prev);
         
-        expect(conn.readMessage()).andAnswer(new IAnswer<Message>() {
-            public Message answer() throws Throwable {
-                return block;
-            }
-        });
+        expect(conn.readMessage()).andReturn(block);
         
         conn.writeMessage(anyObject(Message.class));
         expectLastCall();
 
-        expect(conn.readMessage()).andAnswer(new IAnswer<Message>() {
-            public Message answer() throws Throwable {
-                InventoryMessage inv = new InventoryMessage(unitTestParams);
-                InventoryItem item = new InventoryItem(InventoryItem.Type.Block, block.getHash());
-                inv.addItem(item);
-                return inv;
-            }
-        });
+        InventoryMessage inv = new InventoryMessage(unitTestParams);
+        InventoryItem item = new InventoryItem(InventoryItem.Type.Block, block.getHash());
+        inv.addItem(item);
+        
+        expect(conn.readMessage()).andReturn(inv);
 
         Capture<GetBlocksMessage> message = new Capture<GetBlocksMessage>();
         conn.writeMessage(capture(message));
@@ -202,6 +197,7 @@ public class PeerTest {
         assertEquals(message.getValue().getStopHash(), block.getHash());
     }
 
+    // Check that inventory message containing a block is processed correctly
     @Test
     public void testRun_inv_block() throws Exception {
         PeerEventListener listener = control.createMock(PeerEventListener.class);
@@ -214,23 +210,16 @@ public class PeerTest {
         final Block b2 = TestUtils.makeSolvedTestBlock(unitTestParams, prev);
         final Block b3 = TestUtils.makeSolvedTestBlock(unitTestParams, b2);
         
-        expect(conn.readMessage()).andAnswer(new IAnswer<Message>() {
-            public Message answer() throws Throwable {
-                return b2;
-            }
-        });
+        expect(conn.readMessage()).andReturn(b2);
         
         conn.writeMessage(anyObject(Message.class));
         expectLastCall();
 
-        expect(conn.readMessage()).andAnswer(new IAnswer<Message>() {
-            public Message answer() throws Throwable {
-                InventoryMessage inv = new InventoryMessage(unitTestParams);
-                InventoryItem item = new InventoryItem(InventoryItem.Type.Block, b3.getHash());
-                inv.addItem(item);
-                return inv;
-            }
-        });
+        InventoryMessage inv = new InventoryMessage(unitTestParams);
+        InventoryItem item = new InventoryItem(InventoryItem.Type.Block, b3.getHash());
+        inv.addItem(item);
+
+        expect(conn.readMessage()).andReturn(inv);
 
         Capture<GetDataMessage> message = new Capture<GetDataMessage>();
         conn.writeMessage(capture(message));
@@ -249,6 +238,7 @@ public class PeerTest {
         assertEquals(InventoryItem.Type.Block, items.get(0).type);
     }
 
+    // Check that it starts downloading the block chain correctly
     @Test
     public void testStartBlockChainDownload() throws Exception {
         PeerEventListener listener = control.createMock(PeerEventListener.class);
@@ -319,16 +309,13 @@ public class PeerTest {
         assertEquals(InventoryItem.Type.Block, items.get(0).type);
     }
 
+    // Check that the next block on the chain is processed correctly and that the listener is notified
     @Test
     public void testRun_new_block() throws Exception {
         PeerEventListener listener = control.createMock(PeerEventListener.class);
         peer.addEventListener(listener);
 
-        expect(conn.readMessage()).andAnswer(new IAnswer<Message>() {
-            public Message answer() throws Throwable {
-                return TestUtils.makeSolvedTestBlock(unitTestParams, blockStore); 
-            }
-        });
+        expect(conn.readMessage()).andReturn(TestUtils.makeSolvedTestBlock(unitTestParams, blockStore)); 
         expect(conn.getVersionMessage()).andReturn(new VersionMessage(unitTestParams, 100));
         listener.onBlocksDownloaded(eq(peer), anyObject(Block.class), eq(99));
         expectLastCall();
@@ -340,6 +327,7 @@ public class PeerTest {
         control.verify();
     }
 
+    // Step the peer through a disconnection event
     private void expectPeerDisconnect() throws IOException, ProtocolException {
         expect(conn.readMessage()).andAnswer(new IAnswer<Message>() {
             public Message answer() throws Throwable {
