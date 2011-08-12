@@ -130,10 +130,7 @@ public class PeerTest {
         
         expect(conn.readMessage()).andReturn(block);
         
-        Capture<GetBlocksMessage> message = new Capture<GetBlocksMessage>();
-
-        conn.writeMessage(capture(message));
-        expectLastCall();
+        Capture<GetBlocksMessage> message = captureGetBlocksMessage();
 
         runPeerAndVerify();
         
@@ -168,9 +165,7 @@ public class PeerTest {
         
         expect(conn.readMessage()).andReturn(inv);
 
-        Capture<GetBlocksMessage> message = new Capture<GetBlocksMessage>();
-        conn.writeMessage(capture(message));
-        expectLastCall();
+        Capture<GetBlocksMessage> message = captureGetBlocksMessage();
         
         runPeerAndVerify();
         
@@ -206,9 +201,7 @@ public class PeerTest {
 
         expect(conn.readMessage()).andReturn(inv);
 
-        Capture<GetDataMessage> message = new Capture<GetDataMessage>();
-        conn.writeMessage(capture(message));
-        expectLastCall();
+        Capture<GetDataMessage> message = captureGetDataMessage();
         
         runPeerAndVerify();
         
@@ -232,9 +225,7 @@ public class PeerTest {
         listener.onChainDownloadStarted(peer, 99);
         expectLastCall();
 
-        Capture<GetBlocksMessage> message = new Capture<GetBlocksMessage>();
-        conn.writeMessage(capture(message));
-        expectLastCall();
+        Capture<GetBlocksMessage> message = captureGetBlocksMessage();
         
         control.replay();
 
@@ -262,9 +253,7 @@ public class PeerTest {
 
         expect(conn.getVersionMessage()).andStubReturn(new VersionMessage(unitTestParams, 100));
 
-        Capture<GetDataMessage> message = new Capture<GetDataMessage>();
-        conn.writeMessage(capture(message));
-        expectLastCall();
+        Capture<GetDataMessage> message = captureGetDataMessage();
 
         expect(conn.readMessage()).andReturn(b2);
         
@@ -302,9 +291,22 @@ public class PeerTest {
         runPeerAndVerify();
     }
 
+    private Capture<GetBlocksMessage> captureGetBlocksMessage() throws IOException {
+        Capture<GetBlocksMessage> message = new Capture<GetBlocksMessage>();
+        conn.writeMessage(capture(message));
+        expectLastCall();
+        return message;
+    }
+
+    private Capture<GetDataMessage> captureGetDataMessage() throws IOException {
+        Capture<GetDataMessage> message = new Capture<GetDataMessage>();
+        conn.writeMessage(capture(message));
+        expectLastCall();
+        return message;
+    }
+
     // Stage a disconnect, replay the mocks, run and verify
-    private void runPeerAndVerify() throws IOException, ProtocolException,
-            PeerException {
+    private void runPeerAndVerify() throws IOException, ProtocolException, PeerException {
         expectPeerDisconnect();
 
         control.replay();
