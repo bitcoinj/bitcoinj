@@ -236,4 +236,24 @@ public class ECKey implements Serializable {
             throw new RuntimeException(e);  // Cannot happen, reading from memory stream.
         }
     }
+
+    /** Returns a 32 byte array containing the private key. */
+    public byte[] getPrivKeyBytes() {
+        // Getting the bytes out of a BigInteger gives us an extra null byte on the end (for signedness), so snip
+        // it off here.
+        byte[] bytes = new byte[32];
+        System.arraycopy(priv.toByteArray(), 1, bytes, 0, 32);
+        return bytes;
+    }
+
+    /**
+     * Exports the private key in the form used by the Satoshi client "dumpprivkey" and "importprivkey" commands. Use
+     * the {@link com.google.bitcoin.core.DumpedPrivateKey#toString()} method to get the string.
+     *
+     * @param params The network this key is intended for use on.
+     * @return Private key bytes as a {@link DumpedPrivateKey}.
+     */
+    public DumpedPrivateKey getPrivateKeyEncoded(NetworkParameters params) {
+        return new DumpedPrivateKey(params, getPrivKeyBytes());
+    }
 }

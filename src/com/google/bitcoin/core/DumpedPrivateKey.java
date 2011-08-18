@@ -23,16 +23,12 @@ import java.math.BigInteger;
  * bytes with a header byte and 4 checksum bytes at the end.
  */
 public class DumpedPrivateKey extends VersionedChecksummedBytes {
-    /**
-     * Allows the output of a private key in versioned, checksummed form.
-     *
-     * @param params The network parameters of this key, needed for the version byte.
-     * @param keyBytes The 256-bit private key.
-     */
-    public DumpedPrivateKey(NetworkParameters params, byte[] keyBytes) {
+    // Used by ECKey.getPrivateKeyEncoded()
+    DumpedPrivateKey(NetworkParameters params, byte[] keyBytes) {
         super(params.dumpedPrivateKeyHeader, keyBytes);
         if (keyBytes.length != 32)  // 256 bit keys
-            throw new RuntimeException("Keys are 256 bits, so you must provide 32 bytes.");
+            throw new RuntimeException("Keys are 256 bits, so you must provide 32 bytes, got " +
+                    keyBytes.length + " bytes");
     }
 
     /**

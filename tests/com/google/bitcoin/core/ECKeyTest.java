@@ -20,8 +20,10 @@ import org.bouncycastle.util.encoders.Hex;
 import org.junit.Test;
 
 import java.math.BigInteger;
+import java.security.PrivateKey;
 
 import static com.google.bitcoin.core.Utils.*;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 public class ECKeyTest {
@@ -67,5 +69,14 @@ public class ECKeyTest {
             "11da3761e86431e4a54c176789e41f1651b324d240d599a7067bee23d328ec2a"));
         assertTrue(roundtripKey.verify(message, decodedKey.sign(message)));
         assertTrue(decodedKey.verify(message, roundtripKey.sign(message)));
+    }
+
+    @Test
+    public void base58Encoding() throws Exception {
+        String addr = "mqAJmaxMcG5pPHHc3H3NtyXzY7kGbJLuMF";
+        String privkey = "92shANodC6Y4evT5kFzjNFQAdjqTtHAnDTLzqBBq4BbKUPyx6CD";
+        ECKey key = new DumpedPrivateKey(NetworkParameters.testNet(), privkey).getKey();
+        assertEquals(privkey, key.getPrivateKeyEncoded(NetworkParameters.testNet()).toString());
+        assertEquals(addr, key.toAddress(NetworkParameters.testNet()).toString());
     }
 }
