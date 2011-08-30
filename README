@@ -19,3 +19,7 @@ block per second or less). Find a node that isn't heavily loaded to connect to.
 If you get a SocketDisconnectedException, the node you've connected to has its max send buffer set to low
 (unfortunately the default is too low). Connect to a node that has a bigger send buffer,
 settable by passing -maxsendbuffer=25600 to the Bitcoin C++ software.
+
+For the convenience of Eclipse users, you can copy dependency jars to target/dependency using:
+
+    mvn dependency:copy-dependencies
