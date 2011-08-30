@@ -239,10 +239,15 @@ public class ECKey implements Serializable {
 
     /** Returns a 32 byte array containing the private key. */
     public byte[] getPrivKeyBytes() {
-        // Getting the bytes out of a BigInteger gives us an extra null byte on the end (for signedness), so snip
-        // it off here.
+        // Getting the bytes out of a BigInteger gives us an extra zero byte on the end (for signedness)
+        // or less than 32 bytes (leading zeros).  Coerce to 32 bytes in all cases.
         byte[] bytes = new byte[32];
-        System.arraycopy(priv.toByteArray(), 1, bytes, 0, 32);
+
+        byte[] privArray = priv.toByteArray();
+        int privStart = (privArray.length == 33) ? 1 : 0;
+        int privLength = Math.min(privArray.length, 32);
+        System.arraycopy(privArray, privStart, bytes, 32 - privLength, privLength);
+
         return bytes;
     }
 

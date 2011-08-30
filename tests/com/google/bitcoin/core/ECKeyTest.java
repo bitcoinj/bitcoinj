@@ -79,4 +79,24 @@ public class ECKeyTest {
         assertEquals(privkey, key.getPrivateKeyEncoded(NetworkParameters.testNet()).toString());
         assertEquals(addr, key.toAddress(NetworkParameters.testNet()).toString());
     }
+
+    @Test
+    public void base58Encoding_leadingZero() throws Exception {
+        String privkey = "91axuYLa8xK796DnBXXsMbjuc8pDYxYgJyQMvFzrZ6UfXaGYuqL";
+        ECKey key = new DumpedPrivateKey(NetworkParameters.testNet(), privkey).getKey();
+        assertEquals(privkey, key.getPrivateKeyEncoded(NetworkParameters.testNet()).toString());
+        assertEquals(0, key.getPrivKeyBytes()[0]);
+    }
+
+    @Test
+    public void base58Encoding_stress() throws Exception {
+        // Replace the loop bound with 1000 to get some keys with leading zero byte
+        for (int i = 0 ; i < 20 ; i++) {
+            ECKey key = new ECKey();
+            ECKey key1 = new DumpedPrivateKey(NetworkParameters.testNet(),
+                    key.getPrivateKeyEncoded(NetworkParameters.testNet()).toString()).getKey();
+            assertEquals(Utils.bytesToHexString(key.getPrivKeyBytes()),
+                    Utils.bytesToHexString(key1.getPrivKeyBytes()));
+        }
+    }
 }
