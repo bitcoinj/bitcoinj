@@ -61,7 +61,7 @@ public class BoundedOverheadBlockStore implements BlockStore {
     //
     // We don't care about the value in this cache. It is always notFoundMarker. Unfortunately LinkedHashSet does not
     // provide the removeEldestEntry control.
-    private StoredBlock notFoundMarker;
+    private final StoredBlock notFoundMarker = new StoredBlock(null, null, -1);
     private LinkedHashMap<Sha256Hash, StoredBlock> notFoundCache = new LinkedHashMap<Sha256Hash, StoredBlock>() {
         @Override
         protected boolean removeEldestEntry(Map.Entry<Sha256Hash, StoredBlock> entry) {
@@ -70,14 +70,14 @@ public class BoundedOverheadBlockStore implements BlockStore {
     };
 
     private Sha256Hash chainHead;
-    private NetworkParameters params;
+    private final NetworkParameters params;
     private FileChannel channel;
 
     private static class Record {
         // A BigInteger representing the total amount of work done so far on this chain. As of May 2011 it takes 8
         // bytes to represent this field, so 16 bytes should be plenty for a long time.
         private static final int CHAIN_WORK_BYTES = 16;
-        private final byte[] EMPTY_BYTES = new byte[CHAIN_WORK_BYTES];
+        private static final byte[] EMPTY_BYTES = new byte[CHAIN_WORK_BYTES];
 
         private int height;           // 4 bytes
         private byte[] chainWork;     // 16 bytes
@@ -91,8 +91,7 @@ public class BoundedOverheadBlockStore implements BlockStore {
             blockHeader = new byte[Block.HEADER_SIZE];
         }
 
-        // This should be static but the language does not allow for it.
-        public void write(FileChannel channel, StoredBlock block) throws IOException {
+        public static void write(FileChannel channel, StoredBlock block) throws IOException {
             ByteBuffer buf = ByteBuffer.allocate(Record.SIZE);
             buf.putInt(block.getHeight());
             byte[] chainWorkBytes = block.getChainWork().toByteArray();
@@ -141,7 +140,6 @@ public class BoundedOverheadBlockStore implements BlockStore {
 
     public BoundedOverheadBlockStore(NetworkParameters params, File file) throws BlockStoreException {
         this.params = params;
-        notFoundMarker = new StoredBlock(null, null, -1);
         try {
             load(file);
         } catch (Exception e) {
@@ -182,33 +180,38 @@ public class BoundedOverheadBlockStore implements BlockStore {
     private void load(File file) throws IOException, BlockStoreException {
         log.info("Reading block store from {}", file);
         this.file = new RandomAccessFile(file, "rw");
-        channel = this.file.getChannel();
-        // Read a version byte.
-        int version = this.file.read();
-        if (version == -1) {
-            // No such file or the file was empty.
-            throw new FileNotFoundException(file.getName() + " does not exist or is empty");
+        try {
+            channel = this.file.getChannel();
+            // Read a version byte.
+            int version = this.file.read();
+            if (version == -1) {
+                // No such file or the file was empty.
+                throw new FileNotFoundException(file.getName() + " does not exist or is empty");
+            }
+            if (version != FILE_FORMAT_VERSION) {
+                throw new BlockStoreException("Bad version number: " + version);
+            }
+            // Chain head pointer is the first thing in the file.
+            byte[] chainHeadHash = new byte[32];
+            if (this.file.read(chainHeadHash) < chainHeadHash.length)
+                throw new BlockStoreException("Truncated store: could not read chain head hash.");
+            this.chainHead = new Sha256Hash(chainHeadHash);
+            log.info("Read chain head from disk: {}", this.chainHead);
+            channel.position(channel.size() - Record.SIZE);
+        } catch (IOException e) {
+            this.file.close();
+            throw e;
+        } catch (BlockStoreException e) {
+            this.file.close();
+            throw e;
         }
-        if (version != FILE_FORMAT_VERSION) {
-            throw new BlockStoreException("Bad version number: " + version);
-        }
-        // Chain head pointer is the first thing in the file.
-        byte[] chainHeadHash = new byte[32];
-        if (this.file.read(chainHeadHash) < chainHeadHash.length)
-            throw new BlockStoreException("Truncated store: could not read chain head hash.");
-        this.chainHead = new Sha256Hash(chainHeadHash);
-        log.info("Read chain head from disk: {}", this.chainHead);
-        channel.position(channel.size() - Record.SIZE);
     }
-
-    // TODO: This is ugly, fixinate!
-    private Record dummyRecord = new Record();
 
     public synchronized void put(StoredBlock block) throws BlockStoreException {
         try {
             Sha256Hash hash = block.getHeader().getHash();
             // Append to the end of the file.
-            dummyRecord.write(channel, block);
+            Record.write(channel, block);
             blockCache.put(hash, block);
         } catch (IOException e) {
             throw new BlockStoreException(e);
