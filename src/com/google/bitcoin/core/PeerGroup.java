@@ -26,7 +26,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.net.ConnectException;
 import java.net.InetSocketAddress;
+import java.net.SocketTimeoutException;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -236,15 +238,24 @@ public class PeerGroup {
                     Runnable command = new Runnable() {
                         public void run() {
                             try {
-                                log.info("connecting to " + peer);
+                                log.info("Connecting to " + peer);
                                 peer.connect();
                                 peers.add(peer);
                                 handleNewPeer(peer);
-                                log.info("running " + peer);
                                 peer.run();
                             } catch (PeerException ex) {
-                                // do not propagate PeerException - log and try next peer
-                                log.error("error while talking to peer", ex);
+                                // Do not propagate PeerException - log and try next peer. Suppress stack traces for
+                                // exceptions we expect as part of normal network behaviour.
+                                final Throwable cause = ex.getCause();
+                                if (cause instanceof SocketTimeoutException) {
+                                    log.info("Timeout talking to " + peer + ": " + cause.getMessage());
+                                } else if (cause instanceof ConnectException) {
+                                    log.info("Could not connect to " + peer + ": " + cause.getMessage());
+                                } else if (cause instanceof IOException) {
+                                    log.info("Error talking to " + peer + ": " + cause.getMessage());
+                                } else {
+                                    log.error("Unexpected exception whilst talking to " + peer, ex);
+                                }
                             } finally {
                                 // In all cases, disconnect and put the address back on the queue.
                                 // We will retry this peer after all other peers have been tried.
