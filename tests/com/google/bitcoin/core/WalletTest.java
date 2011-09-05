@@ -56,16 +56,25 @@ public class WalletTest {
 
         wallet.receive(t1, null, BlockChain.NewBlockType.BEST_CHAIN);
         assertEquals(v1, wallet.getBalance());
+        assertEquals(1, wallet.getPoolSize(Wallet.Pool.UNSPENT));
+        assertEquals(1, wallet.getPoolSize(Wallet.Pool.ALL));
 
         ECKey k2 = new ECKey();
         BigInteger v2 = toNanoCoins(0, 50);
         Transaction t2 = wallet.createSend(k2.toAddress(params), v2);
+        assertEquals(1, wallet.getPoolSize(Wallet.Pool.UNSPENT));
+        assertEquals(1, wallet.getPoolSize(Wallet.Pool.ALL));
 
         // Do some basic sanity checks.
         assertEquals(1, t2.inputs.size());
         assertEquals(myAddress, t2.inputs.get(0).getScriptSig().getFromAddress());
 
         // We have NOT proven that the signature is correct!
+
+        wallet.confirmSend(t2);
+        assertEquals(1, wallet.getPoolSize(Wallet.Pool.PENDING));
+        assertEquals(1, wallet.getPoolSize(Wallet.Pool.SPENT));
+        assertEquals(2, wallet.getPoolSize(Wallet.Pool.ALL));
     }
 
     @Test
@@ -76,10 +85,14 @@ public class WalletTest {
 
         wallet.receive(t1, null, BlockChain.NewBlockType.BEST_CHAIN);
         assertEquals(v1, wallet.getBalance());
+        assertEquals(1, wallet.getPoolSize(Wallet.Pool.UNSPENT));
+        assertEquals(1, wallet.getPoolSize(Wallet.Pool.ALL));
 
         BigInteger v2 = toNanoCoins(0, 50);
         Transaction t2 = createFakeTx(params, v2, myAddress);
         wallet.receive(t2, null, BlockChain.NewBlockType.SIDE_CHAIN);
+        assertEquals(1, wallet.getPoolSize(Wallet.Pool.INACTIVE));
+        assertEquals(2, wallet.getPoolSize(Wallet.Pool.ALL));
 
         assertEquals(v1, wallet.getBalance());
     }
@@ -207,6 +220,8 @@ public class WalletTest {
         wallet.receive(inbound1, null, BlockChain.NewBlockType.BEST_CHAIN);
         // Send half to some other guy. Sending only half then waiting for a confirm is important to ensure the tx is
         // in the unspent pool, not pending or spent.
+        assertEquals(1, wallet.getPoolSize(Wallet.Pool.UNSPENT));
+        assertEquals(1, wallet.getPoolSize(Wallet.Pool.ALL));
         Address someOtherGuy = new ECKey().toAddress(params);
         Transaction outbound1 = wallet.createSend(someOtherGuy, coinHalf);
         wallet.confirmSend(outbound1);

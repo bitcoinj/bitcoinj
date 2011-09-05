@@ -205,6 +205,17 @@ public class Transaction extends Message implements Serializable {
     }
 
     /**
+     * @return true if every output is marked as spent.
+     */
+    public boolean isEveryOutputSpent() {
+        for (TransactionOutput output : outputs) {
+            if (output.isAvailableForSpending())
+                return false;
+        }
+        return true;
+    }
+
+    /**
      * These constants are a part of a scriptSig signature on the inputs. They define the details of how a
      * transaction can be redeemed, specifically, they control how the hash of the transaction is calculated.
      * 
