@@ -156,7 +156,8 @@ public class BoundedOverheadBlockStore implements BlockStore {
                 if (!file.delete())
                     throw new BlockStoreException("Could not delete old store in order to recreate it");
             }
-            this.file = new RandomAccessFile(file, "rw");  // Create fresh.
+            // Create fresh. The s stands for synchronous and ensures data is fsynced to disk at the right times.
+            this.file = new RandomAccessFile(file, "rws");
             this.channel = this.file.getChannel();
             this.file.write(FILE_FORMAT_VERSION);
         } catch (IOException e1) {
@@ -179,7 +180,8 @@ public class BoundedOverheadBlockStore implements BlockStore {
 
     private void load(File file) throws IOException, BlockStoreException {
         log.info("Reading block store from {}", file);
-        this.file = new RandomAccessFile(file, "rw");
+        // Open in synchronous mode. See above.
+        this.file = new RandomAccessFile(file, "rws");
         try {
             channel = this.file.getChannel();
             // Read a version byte.
