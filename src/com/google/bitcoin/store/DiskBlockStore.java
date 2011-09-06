@@ -32,29 +32,31 @@ import org.slf4j.LoggerFactory;
 public class DiskBlockStore implements BlockStore {
 	private static final Logger log = LoggerFactory.getLogger(DiskBlockStore.class);
 	
-    private FileOutputStream stream;
+    private RandomAccessFile file;
     private Map<Sha256Hash, StoredBlock> blockMap;
     private Sha256Hash chainHead;
     private NetworkParameters params;
 
-    public DiskBlockStore(NetworkParameters params, File file) throws BlockStoreException {
+    public DiskBlockStore(NetworkParameters params, File theFile) throws BlockStoreException {
         this.params = params;
         blockMap = new HashMap<Sha256Hash, StoredBlock>();
         try {
-            load(file);
-            stream = new FileOutputStream(file, true);    // Do append.
+            file = new RandomAccessFile(theFile, "rwd");
+            // The file position is at BOF
+            load(theFile);
+            // The file position is at EOF
         } catch (IOException e) {
             log.error("failed to load block store from file", e);
-            createNewStore(params, file);
+            createNewStore(params);
+            // The file position is at EOF
         }
     }
 
-    private void createNewStore(NetworkParameters params, File file) throws BlockStoreException {
+    private void createNewStore(NetworkParameters params) throws BlockStoreException {
         // Create a new block store if the file wasn't found or anything went wrong whilst reading.
         blockMap.clear();
         try {
-            stream = new FileOutputStream(file, false);  // Do not append, create fresh.
-            stream.write(1);  // Version.
+            file.write(1);  // Version.
         } catch (IOException e1) {
             // We could not load a block store nor could we create a new one!
             throw new BlockStoreException(e1);
@@ -64,7 +66,7 @@ public class DiskBlockStore implements BlockStore {
             Block genesis = params.genesisBlock.cloneAsHeader();
             StoredBlock storedGenesis = new StoredBlock(genesis, genesis.getWork(), 0);
             this.chainHead = storedGenesis.getHeader().getHash();
-            stream.write(this.chainHead.getBytes());
+            file.write(this.chainHead.getBytes());
             put(storedGenesis);
         } catch (VerificationException e1) {
             throw new RuntimeException(e1);  // Cannot happen.
@@ -73,23 +75,21 @@ public class DiskBlockStore implements BlockStore {
         }
     }
 
-    private void load(File file) throws IOException, BlockStoreException {
-        log.info("Reading block store from {}", file);
-        InputStream input = null;
+    private void load(File theFile) throws IOException, BlockStoreException {
+        log.info("Reading block store from {}", theFile);
         try {
-            input = new BufferedInputStream(new FileInputStream(file));
             // Read a version byte.
-            int version = input.read();
+            int version = file.read();
             if (version == -1) {
                 // No such file or the file was empty.
-                throw new FileNotFoundException(file.getName() + " does not exist or is empty");
+                throw new FileNotFoundException(theFile.getName() + " is empty");
             }
             if (version != 1) {
                 throw new BlockStoreException("Bad version number: " + version);
             }
             // Chain head pointer is the first thing in the file.
             byte[] chainHeadHash = new byte[32];
-            if (input.read(chainHeadHash) < chainHeadHash.length)
+            if (file.read(chainHeadHash) < chainHeadHash.length)
                 throw new BlockStoreException("Truncated block store: cannot read chain head hash");
             this.chainHead = new Sha256Hash(chainHeadHash);
             log.info("Read chain head from disk: {}", this.chainHead);
@@ -99,9 +99,13 @@ public class DiskBlockStore implements BlockStore {
             try {
                 while (true) {
                     // Read a block from disk.
-                    if (input.read(headerBytes) < 80) {
+                    int read = file.read(headerBytes); 
+                    if (read == -1) {
                         // End of file.
                         break;
+                    }
+                    if (read < headerBytes.length) {
+                        throw new BlockStoreException("Truncated block store: partial block read");
                     }
                     // Parse it.
                     Block b = new Block(params, headerBytes);
@@ -135,7 +139,6 @@ public class DiskBlockStore implements BlockStore {
             long elapsed = System.currentTimeMillis() - now;
             log.info("Block chain read complete in {}ms", elapsed);
         } finally {
-            if (input != null) input.close();
         }
     }
 
@@ -145,8 +148,7 @@ public class DiskBlockStore implements BlockStore {
             assert blockMap.get(hash) == null : "Attempt to insert duplicate";
             // Append to the end of the file. The other fields in StoredBlock will be recalculated when it's reloaded.
             byte[] bytes = block.getHeader().bitcoinSerialize();
-            stream.write(bytes);
-            stream.flush();
+            file.write(bytes);
             blockMap.put(hash, block);
         } catch (IOException e) {
             throw new BlockStoreException(e);
@@ -165,7 +167,7 @@ public class DiskBlockStore implements BlockStore {
         try {
             this.chainHead = chainHead.getHeader().getHash();
             // Write out new hash to the first 32 bytes of the file past one (first byte is version number).
-            stream.getChannel().write(ByteBuffer.wrap(this.chainHead.getBytes()), 1);
+            file.getChannel().write(ByteBuffer.wrap(this.chainHead.getBytes()), 1);
         } catch (IOException e) {
             throw new BlockStoreException(e);
         }

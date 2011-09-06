@@ -48,4 +48,32 @@ public class DiskBlockStoreTest {
         // Check the chain head was stored correctly also.
         assertEquals(b1, store.getChainHead());
     }
+
+    @Test
+    public void testStorage_existing() throws Exception {
+        File temp = File.createTempFile("bitcoinj-test", null, null);
+        System.out.println(temp.getAbsolutePath());
+
+        NetworkParameters params = NetworkParameters.unitTests();
+        Address to = new ECKey().toAddress(params);
+        DiskBlockStore store = new DiskBlockStore(params, temp);
+        // Check the first block in a new store is the genesis block.
+        
+        StoredBlock genesis = store.getChainHead();
+
+        // Reopen.
+        store = new DiskBlockStore(params, temp);
+        
+        // Build a new block.
+        StoredBlock b1 = genesis.build(genesis.getHeader().createNextBlock(to).cloneAsHeader());
+        store.put(b1);
+        store.setChainHead(b1);
+        
+        // Check we can get it back out again if we reopen the store.
+        store = new DiskBlockStore(params, temp);
+        StoredBlock b2 = store.get(b1.getHeader().getHash());
+        assertEquals(b1, b2);
+        // Check the chain head was stored correctly also.
+        assertEquals(b1, store.getChainHead());
+    }
 }
