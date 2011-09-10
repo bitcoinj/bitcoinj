@@ -27,6 +27,8 @@ import java.util.Arrays;
  * map. It also checks that the length is correct and provides a bit more type safety.
  */
 public class Sha256Hash implements Serializable {
+    private static final long serialVersionUID = 3778897922647016546L;
+
     private byte[] bytes;
 
     public static final Sha256Hash ZERO_HASH = new Sha256Hash(new byte[32]);
