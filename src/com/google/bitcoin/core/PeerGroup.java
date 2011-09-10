@@ -25,7 +25,6 @@ import com.google.bitcoin.store.BlockStoreException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.xml.bind.annotation.XmlElementRef;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.InetSocketAddress;
