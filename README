@@ -7,8 +7,7 @@ useful information like JavaDocs. The outputs are under the target/ directory.
 
 Now ensure you're running a BitCoin node locally and run the example app:
 
-   cd out
-   java com.google.bitcoin.examples.PingService
+  mvn exec:java -Dexec.mainClass=com.google.bitcoin.examples.PingService
 
 It will download the block chain and eventually print a BitCoin address. If you send coins to it,
 you should get them back a few minutes later when a block is solved.
