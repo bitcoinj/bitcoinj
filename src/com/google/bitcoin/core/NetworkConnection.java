@@ -93,7 +93,12 @@ public class NetworkConnection {
         writeMessage(new VersionMessage(params, bestHeight));
         // When connecting, the remote peer sends us a version message with various bits of
         // useful data in it. We need to know the peer protocol version before we can talk to it.
-        versionMessage = (VersionMessage) readMessage();
+        Message m = readMessage();
+        if (!(m instanceof VersionMessage)) {
+            // Bad peers might not follow the protocol. This has been seen in the wild (issue 81).
+            throw new ProtocolException("First message received was not a version message but rather " + m);
+        }
+        versionMessage = (VersionMessage) m;
         // Now it's our turn ...
         // Send an ACK message stating we accept the peers protocol version.
         writeMessage(new VersionAck());
