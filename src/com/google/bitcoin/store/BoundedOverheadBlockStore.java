@@ -61,7 +61,7 @@ public class BoundedOverheadBlockStore implements BlockStore {
     //
     // We don't care about the value in this cache. It is always notFoundMarker. Unfortunately LinkedHashSet does not
     // provide the removeEldestEntry control.
-    private final StoredBlock notFoundMarker = new StoredBlock(null, null, -1);
+    private static final StoredBlock notFoundMarker = new StoredBlock(null, null, -1);
     private LinkedHashMap<Sha256Hash, StoredBlock> notFoundCache = new LinkedHashMap<Sha256Hash, StoredBlock>() {
         @Override
         protected boolean removeEldestEntry(Map.Entry<Sha256Hash, StoredBlock> entry) {
