@@ -26,12 +26,19 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.Date;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
 
 /**
  * A NetworkConnection handles talking to a remote BitCoin peer at a low level. It understands how to read and write
  * messages off the network, but doesn't asynchronously communicate with the peer or handle the higher level details
  * of the protocol. After constructing a NetworkConnection, use a {@link Peer} to hand off communication to a
- * background thread.
+ * background thread.<p>
+ *
+ * Multiple NetworkConnections will, by default, wait if another NetworkConnection instance is deserializing a
+ * message and discard duplicates before reading them. This is intended to avoid memory usage spikes in constrained
+ * environments like Android where deserializing a large message (like a block) on multiple threads simultaneously is
+ * both wasteful and can cause OOM failures.<p>
  *
  * Construction is blocking whilst the protocol version is negotiated.
  */
@@ -45,8 +52,9 @@ public class NetworkConnection {
     private final InetAddress remoteIp;
     private final NetworkParameters params;
     private final VersionMessage versionMessage;
-    private static final boolean PROTOCOL_LOG = false;
 
+    // Given to the BitcoinSerializer to de-duplicate messages.
+    private static final LinkedHashMap<Sha256Hash, Integer> dedupeList = BitcoinSerializer.createDedupeList();
     private BitcoinSerializer serializer = null;
 
     /**
@@ -58,10 +66,12 @@ public class NetworkConnection {
      * @param params Defines which network to connect to and details of the protocol.
      * @param bestHeight How many blocks are in our best chain
      * @param connectTimeout Timeout in milliseconds when initially connecting to peer
+     * @param dedupe Whether to avoid parsing duplicate messages from the network (ie from other peers).
      * @throws IOException if there is a network related failure.
      * @throws ProtocolException if the version negotiation failed.
      */
-    public NetworkConnection(PeerAddress peerAddress, NetworkParameters params, int bestHeight, int connectTimeout)
+    public NetworkConnection(PeerAddress peerAddress, NetworkParameters params,
+                             int bestHeight, int connectTimeout, boolean dedupe)
             throws IOException, ProtocolException {
         this.params = params;
         this.remoteIp = peerAddress.addr;
@@ -75,8 +85,8 @@ public class NetworkConnection {
         out = socket.getOutputStream();
         in = socket.getInputStream();
 
-        // the version message never uses checksumming. Update checkumming property after version is read.
-        this.serializer = new BitcoinSerializer(params, false);
+        // The version message never uses checksumming. Update checkumming property after version is read.
+        this.serializer = new BitcoinSerializer(params, false, dedupe ? dedupeList : null);
 
         // Announce ourselves. This has to come first to connect to clients beyond v0.30.20.2 which wait to hear
         // from us until they send their version message back.
@@ -116,7 +126,7 @@ public class NetworkConnection {
 
     public NetworkConnection(InetAddress inetAddress, NetworkParameters params, int bestHeight, int connectTimeout)
             throws IOException, ProtocolException {
-        this(new PeerAddress(inetAddress), params, bestHeight, connectTimeout);
+        this(new PeerAddress(inetAddress), params, bestHeight, connectTimeout, true);
     }
 
     /**
@@ -150,7 +160,13 @@ public class NetworkConnection {
      * @throws ProtocolException if the message is badly formatted, failed checksum or there was a TCP failure.
      */
     public Message readMessage() throws IOException, ProtocolException {
-        return serializer.deserialize(in);
+        Message message;
+        do {
+            message = serializer.deserialize(in);
+            // If message is null, it means deduping was enabled, we read a duplicated message and skipped parsing to
+            // avoid doing redundant work. So go around and wait for another message.
+        } while (message == null);
+        return message;
     }
 
     /**

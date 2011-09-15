@@ -55,6 +55,12 @@ public class Peer {
     private List<PeerEventListener> eventListeners;
 
     /**
+     * If true, we do some things that may only make sense on constrained devices like Android phones. Currently this
+     * only controls message deduplication.
+     */
+    public static boolean MOBILE_OPTIMIZED = true;
+
+    /**
      * Construct a peer that handles the given network connection and reads/writes from the given block chain. Note that
      * communication won't occur until you call connect().
      * 
@@ -97,7 +103,7 @@ public class Peer {
      */
     public synchronized void connect() throws PeerException {
         try {
-            conn = new NetworkConnection(address, params, bestHeight, 60000);
+            conn = new NetworkConnection(address, params, bestHeight, 60000, MOBILE_OPTIMIZED);
         } catch (IOException ex) {
             throw new PeerException(ex);
         } catch (ProtocolException ex) {

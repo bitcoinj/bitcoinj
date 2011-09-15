@@ -25,21 +25,25 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import static com.google.bitcoin.core.Utils.*;
 
 /**
- * Methods to serialize and de-serialize messages to the bitcoin network format as defined in the bitcoin protocol
- * specification at https://en.bitcoin.it/wiki/Protocol_specification
+ * Methods to serialize and de-serialize messages to the bitcoin network format as defined in
+ * <a href="https://en.bitcoin.it/wiki/Protocol_specification">the bitcoin protocol specification</a>.<p>
  *
  * To be able to serialize and deserialize new Message subclasses the following criteria needs to be met.
  * <ul>
  *     <li>The proper Class instance needs to be mapped to it's message name in the names variable below</li>
  *     <li>There needs to be a constructor matching: NetworkParameters params, byte[] payload</li>
  *     <li>Message.bitcoinSerializeToStream() needs to be properly subclassed</li>
- * </ul>
+ * </ul><p>
  *
+ * BitcoinSerializers can be given a map which will be locked during reading/deserialization. This is used to
+ * avoid deserializing identical messages more than once, which is helpful in memory-constrained environments like
+ * smartphones.
  */
 public class BitcoinSerializer {
     private static final Logger log = LoggerFactory.getLogger(BitcoinSerializer.class);
@@ -64,14 +68,37 @@ public class BitcoinSerializer {
     }
 
     /**
+     * A doubly-linked map of message-hash to counts. When a new message is received we increment the count in
+     * this list. The count isn't currently used, but will be helpful later to know how many peers relayed a
+     * particular transaction. We can use that as a heuristic to estimate validity.
+     */
+    private LinkedHashMap<Sha256Hash, Integer> dedupeList;
+
+    /*
+     * Returns a {@link LinkedHashMap} that evicts old entries, making it suitable for passing to the constructor
+     * if you wish to use message deduplication.
+     */
+    public static LinkedHashMap<Sha256Hash, Integer> createDedupeList() {
+        return new LinkedHashMap<Sha256Hash, Integer>() {
+            @Override
+            protected boolean removeEldestEntry(Map.Entry<Sha256Hash, Integer> entry) {
+                // Keep 100 message hashcodes in the list. This choice is fairly arbitrary.
+                return size() > 100;
+            }
+        };
+    }
+
+    /**
      * Constructs a BitcoinSerializer with the given behavior.
      *
      * @param params networkParams used to create Messages instances and termining packetMagic
      * @param usesChecksumming set to true if checkums should be included and expected in headers
      */
-    public BitcoinSerializer(NetworkParameters params, boolean usesChecksumming) {
+    public BitcoinSerializer(NetworkParameters params, boolean usesChecksumming,
+                             LinkedHashMap<Sha256Hash, Integer> dedupeList) {
         this.params = params;
         this.usesChecksumming = usesChecksumming;
+        this.dedupeList = dedupeList;
     }
 
     public void setUseChecksumming(boolean usesChecksumming) {
@@ -125,7 +152,10 @@ public class BitcoinSerializer {
             log.debug("Sending {} message: {}", name, bytesToHexString(header) + bytesToHexString(payload));
     }
 
-    /** Reads a message from the given InputStream and returns it. */
+    /**
+     * Reads a message from the given InputStream and returns it. If deduping is enabled and the message has already
+     * been parsed/returned, it will return null.
+     */
     public Message deserialize(InputStream in) throws ProtocolException, IOException {
         // A BitCoin protocol message has the following format.
         //
@@ -145,7 +175,13 @@ public class BitcoinSerializer {
         BitcoinPacketHeader header = new BitcoinPacketHeader(usesChecksumming, in);
         // Now try to read the whole message.
         return deserializePayload(header, in);
+    }
 
+    private boolean canDedupeMessageType(String command) {
+        // We don't attempt to deduplicate messages that may be legitimately duplicated like ping or versions nor do
+        // we dedupe addr messages which are always different even if they contain redundant data. Trying to dedupe
+        // them would just fill up the shared hashmap.
+        return command.equals("block") || command.equals("tx");
     }
 
     /**
@@ -157,12 +193,9 @@ public class BitcoinSerializer {
     }
 
     /**
-     * Deserialize payload only.  You must provide a header typically obtained by calling deserializeHeader.
-     * @param header
-     * @param in
-     * @return
-     * @throws ProtocolException
-     * @throws IOException
+     * Deserialize payload only.  You must provide a header, typically obtained by calling
+     * {@link BitcoinSerializer#deserializeHeader}. If the deduping feature is active, may return NULL if the
+     * message was seen before.
      */
     public Message deserializePayload(BitcoinPacketHeader header, InputStream in) throws ProtocolException, IOException {
         int readCursor = 0;
@@ -173,6 +206,28 @@ public class BitcoinSerializer {
                 throw new IOException("Socket is disconnected");
             }
             readCursor += bytesRead;
+        }
+
+        // Check for duplicates. This is to avoid the cost (cpu and memory) of parsing the message twice, which can
+        // be an issue on constrained devices.
+        if (dedupeList != null && canDedupeMessageType(header.command)) {
+            // We use a secure hash here rather than the faster and simpler array hashes because otherwise a malicious
+            // node on the network could broadcast a message designed to mask a different message. They would not
+            // necessarily have to be connected directly to this program.
+            synchronized (dedupeList) {
+                // Calculate hash inside the lock to avoid unnecessary battery power spent on hashing messages arriving
+                // on different threads simultaneously.
+                Sha256Hash hash = Sha256Hash.create(payloadBytes);
+                Integer count = dedupeList.get(hash);
+                if (count != null) {
+                    int newCount = count + 1;
+                    log.info("Received duplicate {} message, now seen {} times", header.command, newCount);
+                    dedupeList.put(hash, newCount);
+                    return null;
+                } else {
+                    dedupeList.put(hash, 1);
+                }
+            }
         }
 
         // Verify the checksum.
