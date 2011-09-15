@@ -245,6 +245,7 @@ public class Script {
             os.write(OP_PUSHDATA2);
             os.write(0xFF & (buf.length));
             os.write(0xFF & (buf.length >> 8));
+            os.write(buf);
         } else {
             throw new RuntimeException("Unimplemented");
         }
