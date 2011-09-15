@@ -102,14 +102,14 @@
     <repository>
       <id>bitcoinj-release</id>
       <name>BitCoinJ Release</name>
-      <releases />
+      <releases/>
       <url>http://ci.bitcoinj.org/artifactory/release</url>
     </repository>
     <!-- Snapshot versions of the library are subject to frequent change -->
     <repository>
       <id>bitcoinj-snapshot</id>
       <name>BitCoinJ Snapshot</name>
-      <snapshots />
+      <snapshots/>
       <url>http://ci.bitcoinj.org/artifactory/snapshot</url>
     </repository>
   </repositories>
@@ -145,18 +145,18 @@
             </executions>
           </plugin>
           <plugin>
-              <artifactId>maven-dependency-plugin</artifactId>
-              <executions>
-                  <execution>
-                      <phase>install</phase>
-                      <goals>
-                          <goal>copy-dependencies</goal>
-                      </goals>
-                      <configuration>
-                          <outputDirectory>${project.build.directory}/lib</outputDirectory>
-                      </configuration>
-                  </execution>
-              </executions>
+            <artifactId>maven-dependency-plugin</artifactId>
+            <executions>
+              <execution>
+                <phase>install</phase>
+                <goals>
+                  <goal>copy-dependencies</goal>
+                </goals>
+                <configuration>
+                  <outputDirectory>${project.build.directory}/lib</outputDirectory>
+                </configuration>
+              </execution>
+            </executions>
           </plugin>
         </plugins>
       </build>
@@ -207,51 +207,65 @@
         <artifactId>maven-shade-plugin</artifactId>
         <version>1.4</version>
         <executions>
-            <execution>
-                <phase>package</phase>
-                <goals>
-                    <goal>shade</goal>
-                </goals>
-                <configuration>
-                    <relocations>
-                        <relocation>
-                            <pattern>org.bouncycastle</pattern>
-                            <shadedPattern>com.google.bitcoin.bouncycastle</shadedPattern>
-                        </relocation>
-                    </relocations>
-                    <artifactSet>
-                        <includes>
-                            <include>org.bouncycastle</include>
-                        </includes>
-                    </artifactSet>
-                    <minimizeJar>true</minimizeJar>
-                </configuration>
-            </execution>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+            <configuration>
+              <filters>
+                <filter>
+                  <!-- Remove the original signature meta information from all sources -->
+                  <artifact>*:*</artifact>
+                  <excludes>
+                    <exclude>META-INF/*.SF</exclude>
+                    <exclude>META-INF/*.DSA</exclude>
+                    <exclude>META-INF/*.RSA</exclude>
+                  </excludes>
+                </filter>
+              </filters>
+              <relocations>
+                <relocation>
+                  <pattern>org.bouncycastle</pattern>
+                  <shadedPattern>com.google.bitcoin.bouncycastle</shadedPattern>
+                </relocation>
+              </relocations>
+              <artifactSet>
+                <includes>
+                  <include>org.bouncycastle</include>
+                </includes>
+              </artifactSet>
+              <minimizeJar>true</minimizeJar>
+              <!-- bitcoinj-<version>-android.jar contains the shaded Bouncy Castle libraries -->
+              <shadedArtifactAttached>true</shadedArtifactAttached>
+              <shadedClassifierName>android</shadedClassifierName>
+            </configuration>
+          </execution>
         </executions>
       </plugin>
       <!-- Execute FindBugs during verify phase
            Will fail the build if it finds a bug
            Enable when ready -->
       <!--<plugin>-->
-        <!--<groupId>org.codehaus.mojo</groupId>-->
-        <!--<artifactId>findbugs-maven-plugin</artifactId>-->
-        <!--<version>${findbugs-maven-plugin.version}</version>-->
-        <!--<configuration>-->
-          <!--<xmlOutput>true</xmlOutput>-->
-          <!--<xmlOutputDirectory>target/site</xmlOutputDirectory>-->
-          <!--<findbugsXmlOutput>true</findbugsXmlOutput>-->
-          <!--<findbugsXmlOutputDirectory>target/site</findbugsXmlOutputDirectory>-->
-          <!--<effort>Max</effort>-->
-          <!--<threshold>Low</threshold>-->
-        <!--</configuration>-->
-        <!--<executions>-->
-          <!--<execution>-->
-            <!--<phase>verify</phase>-->
-            <!--<goals>-->
-              <!--<goal>check</goal>-->
-            <!--</goals>-->
-          <!--</execution>-->
-        <!--</executions>-->
+      <!--<groupId>org.codehaus.mojo</groupId>-->
+      <!--<artifactId>findbugs-maven-plugin</artifactId>-->
+      <!--<version>${findbugs-maven-plugin.version}</version>-->
+      <!--<configuration>-->
+      <!--<xmlOutput>true</xmlOutput>-->
+      <!--<xmlOutputDirectory>target/site</xmlOutputDirectory>-->
+      <!--<findbugsXmlOutput>true</findbugsXmlOutput>-->
+      <!--<findbugsXmlOutputDirectory>target/site</findbugsXmlOutputDirectory>-->
+      <!--<effort>Max</effort>-->
+      <!--<threshold>Low</threshold>-->
+      <!--</configuration>-->
+      <!--<executions>-->
+      <!--<execution>-->
+      <!--<phase>verify</phase>-->
+      <!--<goals>-->
+      <!--<goal>check</goal>-->
+      <!--</goals>-->
+      <!--</execution>-->
+      <!--</executions>-->
       <!--</plugin>-->
     </plugins>
   </build>
@@ -295,13 +309,15 @@
       <type>jar</type>
       <scope>compile</scope>
     </dependency>
+    <!-- In Android these libraries are incomplete,
+         so use the dedicated artifact (bitcoinj-<version>-android.jar) -->
     <dependency>
       <groupId>org.bouncycastle</groupId>
       <artifactId>bcprov-jdk15</artifactId>
       <version>1.46</version>
       <type>jar</type>
       <scope>compile</scope>
-     </dependency>
+    </dependency>
   </dependencies>
   <!-- The reporting section is deprecated in Maven3,
        but can be read by site plugin (see MNG-4162) -->
@@ -314,7 +330,7 @@
         <artifactId>maven-javadoc-plugin</artifactId>
         <version>${maven-javadoc-plugin.version}</version>
         <configuration>
-            <excludePackageNames>com.google.bitcoin.bouncycastle.*</excludePackageNames>
+          <excludePackageNames>com.google.bitcoin.bouncycastle.*</excludePackageNames>
         </configuration>
       </plugin>
       <!-- Generate a FindBugs report -->
