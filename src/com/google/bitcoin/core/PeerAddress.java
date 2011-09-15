@@ -115,4 +115,14 @@ public class PeerAddress extends Message {
     public String toString() {
         return "[" + addr.getHostAddress() + "]:" + port;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (!(o instanceof PeerAddress)) return false;
+        PeerAddress other = (PeerAddress) o;
+        return other.addr.equals(addr) &&
+               other.port == port &&
+               other.services.equals(services) &&
+               other.time == time;
+    }
 }

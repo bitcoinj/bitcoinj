@@ -153,9 +153,10 @@ public abstract class Message implements Serializable {
             cursor += 1;
             return "";
         }
+        cursor += varInt.getSizeInBytes();
         byte[] characters = new byte[(int)varInt.value];
         System.arraycopy(bytes, cursor, characters, 0, characters.length);
-        cursor += varInt.getSizeInBytes();
+        cursor += characters.length;
         try {
             return new String(characters, "UTF-8");
         } catch (UnsupportedEncodingException e) {

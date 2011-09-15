@@ -124,4 +124,17 @@ public class VersionMessage extends Message {
     public boolean hasBlockChain() {
         return (localServices & NODE_NETWORK) == NODE_NETWORK;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (!(o instanceof VersionMessage)) return false;
+        VersionMessage other = (VersionMessage) o;
+        return other.bestHeight == bestHeight &&
+               other.clientVersion == clientVersion &&
+               other.localServices == localServices &&
+               other.time == time &&
+               other.subVer.equals(subVer) &&
+               other.myAddr.equals(myAddr) &&
+               other.theirAddr.equals(theirAddr);
+    }
 }

@@ -62,6 +62,12 @@ public class BitcoinSerializerTest {
         assertEquals(31900, vm.clientVersion);
         assertEquals(1292899814L, vm.time);
         assertEquals(98645L, vm.bestHeight);
+
+        // Standard version messsages don't use strings. Create one and round-trip here to check that works OK.
+        vm.subVer = "test string";
+        byte[] bits = vm.bitcoinSerialize();
+        VersionMessage vm2 = new VersionMessage(NetworkParameters.prodNet(), bits);
+        assertEquals(vm, vm2);
     }
 
 
