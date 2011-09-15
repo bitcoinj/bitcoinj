@@ -110,7 +110,7 @@ public class NetworkConnection {
             throw new ProtocolException("Peer does not have a copy of the block chain.");
         }
         // newer clients use checksumming
-        serializer.useChecksumming(peerVersion >= 209);
+        serializer.setUseChecksumming(peerVersion >= 209);
         // Handshake is done!
     }
 
