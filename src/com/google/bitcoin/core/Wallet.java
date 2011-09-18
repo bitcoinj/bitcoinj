@@ -429,6 +429,8 @@ public class Wallet implements Serializable {
             connectedOutput.markAsSpent(input);
             maybeMoveTxToSpent(connectedTx, "spent tx");
         }
+        // Refresh the timestamp.
+        tx.updatedAt = new Date();
         // Add to the pending pool. It'll be moved out once we receive this transaction on the best chain.
         pending.put(tx.getHash(), tx);
     }

@@ -296,14 +296,25 @@ public class WalletTest {
         assertEquals(1, transactions.size());
         assertEquals(tx2,  transactions.get(0));
 
+        // Create a spend.
+        Transaction tx3 = wallet.createSend(new ECKey().toAddress(params), Utils.toNanoCoins(0, 5));
+        // Does not appear in list yet.
+        assertEquals(2, wallet.getTransactionsByTime().size());
+        wallet.confirmSend(tx3);
+        // Now it does.
+        transactions = wallet.getTransactionsByTime();
+        assertEquals(3, transactions.size());
+        assertEquals(tx3, transactions.get(0));
+
         // Verify we can handle the case of older wallets in which the timestamp is null (guessed from the
         // block appearances list).
         tx1.updatedAt = null;
         tx2.updatedAt = null;
         // Check we got them back in order.
         transactions = wallet.getTransactionsByTime();
-        assertEquals(tx2,  transactions.get(0));
-        assertEquals(tx1,  transactions.get(1));
-        assertEquals(2, transactions.size());
+        assertEquals(tx3,  transactions.get(0));
+        assertEquals(tx2,  transactions.get(1));
+        assertEquals(tx1,  transactions.get(2));
+        assertEquals(3, transactions.size());
     }
 }
