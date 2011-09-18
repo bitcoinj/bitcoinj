@@ -51,7 +51,7 @@ public abstract class AbstractWalletEventListener implements WalletEventListener
      *
      * TODO: Finish this interface.
      */
-    public void onReorganize() {
+    public void onReorganize(Wallet wallet) {
         onChange();
     }
 
@@ -68,7 +68,7 @@ public abstract class AbstractWalletEventListener implements WalletEventListener
      * @param deadTx The transaction that is newly dead.
      * @param replacementTx The transaction that killed it.
      */
-    public void onDeadTransaction(Transaction deadTx, Transaction replacementTx) {
+    public void onDeadTransaction(Wallet wallet, Transaction deadTx, Transaction replacementTx) {
         onChange();
     }
 

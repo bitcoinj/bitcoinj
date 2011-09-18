@@ -53,7 +53,7 @@ public class ChainSplitTests {
         reorgHappened[0] = false;
         wallet.addEventListener(new AbstractWalletEventListener() {
             @Override
-            public void onReorganize() {
+            public void onReorganize(Wallet wallet) {
                 reorgHappened[0] = true;
             }
         });
@@ -187,7 +187,7 @@ public class ChainSplitTests {
         final boolean[] eventCalled = new boolean[1];
         wallet.addEventListener(new AbstractWalletEventListener() {
             @Override
-            public void onDeadTransaction(Transaction deadTx, Transaction replacementTx) {
+            public void onDeadTransaction(Wallet wallet, Transaction deadTx, Transaction replacementTx) {
                 eventCalled[0] = true;
             }
         });
@@ -227,7 +227,7 @@ public class ChainSplitTests {
         final Transaction[] eventReplacement = new Transaction[1];
         wallet.addEventListener(new AbstractWalletEventListener() {
             @Override
-            public void onDeadTransaction(Transaction deadTx, Transaction replacementTx) {
+            public void onDeadTransaction(Wallet wallet, Transaction deadTx, Transaction replacementTx) {
                 eventDead[0] = deadTx;
                 eventReplacement[0] = replacementTx;
             }

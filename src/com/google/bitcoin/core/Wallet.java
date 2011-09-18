@@ -294,8 +294,8 @@ public class Wallet implements Serializable {
         log.info("Balance is now: " + bitcoinValueToFriendlyString(getBalance()));
 
         // Inform anyone interested that we have new coins. Note: we may be re-entered by the event listener,
-        // so we must not make assumptions about our state after this loop returns! For example,
-        // the balance we just received might already be spent!
+        // so we must not make assumptions about our state after this loop returns! For example the balance we just
+        // received might already be spent!
         if (!reorg && bestChain && valueDifference.compareTo(BigInteger.ZERO) > 0) {
             for (WalletEventListener l : eventListeners) {
                 synchronized (l) {
@@ -370,7 +370,7 @@ public class Wallet implements Serializable {
                     // Inform the event listeners of the newly dead tx.
                     for (WalletEventListener listener : eventListeners) {
                         synchronized (listener) {
-                            listener.onDeadTransaction(connected, tx);
+                            listener.onDeadTransaction(this, connected, tx);
                         }
                     }
                 }
@@ -928,7 +928,7 @@ public class Wallet implements Serializable {
             // Synchronize on the event listener as well. This allows a single listener to handle events from
             // multiple wallets without needing to worry about being thread safe.
             synchronized (l) {
-                l.onReorganize();
+                l.onReorganize(this);
             }
         }
     }
@@ -962,7 +962,7 @@ public class Wallet implements Serializable {
                 // Inform the event listeners of the newly dead tx.
                 for (WalletEventListener listener : eventListeners) {
                     synchronized (listener) {
-                        listener.onDeadTransaction(tx, replacement);
+                        listener.onDeadTransaction(this, tx, replacement);
                     }
                 }
                 break;

@@ -251,7 +251,7 @@ public class WalletTest {
         final Transaction[] eventReplacement = new Transaction[1];
         wallet.addEventListener(new AbstractWalletEventListener() {
             @Override
-            public void onDeadTransaction(Transaction deadTx, Transaction replacementTx) {
+            public void onDeadTransaction(Wallet wallet, Transaction deadTx, Transaction replacementTx) {
                 eventDead[0] = deadTx;
                 eventReplacement[0] = replacementTx;
             }

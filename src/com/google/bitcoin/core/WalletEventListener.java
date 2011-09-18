@@ -50,7 +50,7 @@ public interface WalletEventListener {
      *
      * TODO: Finish this interface.
      */
-    void onReorganize();
+    void onReorganize(Wallet wallet);
 
     /**
      * This is called on a Peer thread when a transaction becomes <i>dead</i>. A dead transaction is one that has
@@ -64,5 +64,5 @@ public interface WalletEventListener {
      * @param deadTx The transaction that is newly dead.
      * @param replacementTx The transaction that killed it.
      */
-    void onDeadTransaction(Transaction deadTx, Transaction replacementTx);
+    void onDeadTransaction(Wallet wallet, Transaction deadTx, Transaction replacementTx);
 }
