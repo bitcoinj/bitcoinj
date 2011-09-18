@@ -125,4 +125,9 @@ public class PeerAddress extends Message {
                other.services.equals(services) &&
                other.time == time;
     }
+
+    @Override
+    public int hashCode() {
+        return addr.hashCode() ^ port ^ (int)time ^ services.hashCode();
+    }
 }

@@ -137,4 +137,10 @@ public class VersionMessage extends Message {
                other.myAddr.equals(myAddr) &&
                other.theirAddr.equals(theirAddr);
     }
+
+    @Override
+    public int hashCode() {
+        return (int)bestHeight ^ clientVersion ^ (int)localServices ^ (int)time ^ subVer.hashCode() ^ myAddr.hashCode()
+                ^ theirAddr.hashCode();
+    }
 }
