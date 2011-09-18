@@ -16,14 +16,7 @@
 
 package com.google.bitcoin.examples;
 
-import com.google.bitcoin.core.BlockChain;
-import com.google.bitcoin.core.DownloadListener;
-import com.google.bitcoin.core.NetworkParameters;
-import com.google.bitcoin.core.PeerAddress;
-import com.google.bitcoin.core.PeerGroup;
-import com.google.bitcoin.core.Transaction;
-import com.google.bitcoin.core.Wallet;
-import com.google.bitcoin.core.WalletEventListener;
+import com.google.bitcoin.core.*;
 import com.google.bitcoin.store.BlockStore;
 import com.google.bitcoin.store.MemoryBlockStore;
 
@@ -49,7 +42,7 @@ public class RefreshWallet {
         peerGroup.addAddress(new PeerAddress(InetAddress.getLocalHost()));
         peerGroup.start();
 
-        wallet.addEventListener(new WalletEventListener() {
+        wallet.addEventListener(new AbstractWalletEventListener() {
             @Override
             public void onCoinsReceived(Wallet w, Transaction tx, BigInteger prevBalance, BigInteger newBalance) {
                 System.out.println("\nReceived tx " + tx.getHashAsString());

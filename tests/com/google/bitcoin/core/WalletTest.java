@@ -101,7 +101,7 @@ public class WalletTest {
     public void listeners() throws Exception {
         final Transaction fakeTx = createFakeTx(params, Utils.toNanoCoins(1, 0), myAddress);
         final boolean[] didRun = new boolean[1];
-        WalletEventListener listener = new WalletEventListener() {
+        WalletEventListener listener = new AbstractWalletEventListener() {
             public void onCoinsReceived(Wallet w, Transaction tx, BigInteger prevBalance, BigInteger newBalance) {
                 assertTrue(prevBalance.equals(BigInteger.ZERO));
                 assertTrue(newBalance.equals(Utils.toNanoCoins(1, 0)));
@@ -249,7 +249,7 @@ public class WalletTest {
         // isn't tested because today BitCoinJ only learns about such transactions when they appear in the chain.
         final Transaction[] eventDead = new Transaction[1];
         final Transaction[] eventReplacement = new Transaction[1];
-        wallet.addEventListener(new WalletEventListener() {
+        wallet.addEventListener(new AbstractWalletEventListener() {
             @Override
             public void onDeadTransaction(Transaction deadTx, Transaction replacementTx) {
                 eventDead[0] = deadTx;

@@ -16,19 +16,7 @@
 
 package com.google.bitcoin.examples;
 
-import com.google.bitcoin.core.Address;
-import com.google.bitcoin.core.BlockChain;
-import com.google.bitcoin.core.DownloadListener;
-import com.google.bitcoin.core.ECKey;
-import com.google.bitcoin.core.NetworkParameters;
-import com.google.bitcoin.core.PeerAddress;
-import com.google.bitcoin.core.PeerGroup;
-import com.google.bitcoin.core.ScriptException;
-import com.google.bitcoin.core.Transaction;
-import com.google.bitcoin.core.TransactionInput;
-import com.google.bitcoin.core.Utils;
-import com.google.bitcoin.core.Wallet;
-import com.google.bitcoin.core.WalletEventListener;
+import com.google.bitcoin.core.*;
 import com.google.bitcoin.store.BlockStore;
 import com.google.bitcoin.store.BoundedOverheadBlockStore;
 
@@ -94,7 +82,7 @@ public class PingService {
         peerGroup.start();
 
         // We want to know when the balance changes.
-        wallet.addEventListener(new WalletEventListener() {
+        wallet.addEventListener(new AbstractWalletEventListener() {
             @Override
             public void onCoinsReceived(Wallet w, Transaction tx, BigInteger prevBalance, BigInteger newBalance) {
                 // Running on a peer thread.

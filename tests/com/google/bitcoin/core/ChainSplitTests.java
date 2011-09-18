@@ -51,7 +51,7 @@ public class ChainSplitTests {
         // TODO: Change this test to not use coinbase transactions as they are special (maturity rules).
         final boolean[] reorgHappened = new boolean[1];
         reorgHappened[0] = false;
-        wallet.addEventListener(new WalletEventListener() {
+        wallet.addEventListener(new AbstractWalletEventListener() {
             @Override
             public void onReorganize() {
                 reorgHappened[0] = true;
@@ -185,7 +185,7 @@ public class ChainSplitTests {
         // double spend on the new best chain.
 
         final boolean[] eventCalled = new boolean[1];
-        wallet.addEventListener(new WalletEventListener() {
+        wallet.addEventListener(new AbstractWalletEventListener() {
             @Override
             public void onDeadTransaction(Transaction deadTx, Transaction replacementTx) {
                 eventCalled[0] = true;
@@ -225,7 +225,7 @@ public class ChainSplitTests {
 
         final Transaction[] eventDead = new Transaction[1];
         final Transaction[] eventReplacement = new Transaction[1];
-        wallet.addEventListener(new WalletEventListener() {
+        wallet.addEventListener(new AbstractWalletEventListener() {
             @Override
             public void onDeadTransaction(Transaction deadTx, Transaction replacementTx) {
                 eventDead[0] = deadTx;
