@@ -436,30 +436,45 @@ public class Wallet implements Serializable {
         pending.put(tx.getHash(), tx);
     }
 
-    /** Returns all transactions in the wallet ordered by recency. See {@link Wallet#getRecentTransactions(int)}. */
+    /**
+     * Returns a set of all transactions in the wallet.
+     *
+     * @param includeDead If true, transactions that were overridden by a double spend are included.
+     * @param includeInactive If true, transactions that are on side chains (are unspendable) are included.
+     */
+    public Set<Transaction> getTransactions(boolean includeDead, boolean includeInactive) {
+        Set<Transaction> all = new HashSet<Transaction>();
+        all.addAll(unspent.values());
+        all.addAll(spent.values());
+        all.addAll(pending.values());
+        if (includeDead)
+            all.addAll(dead.values());
+        if (includeInactive)
+            all.addAll(inactive.values());
+        return all;
+    }
+
+    /** Returns all non-dead, active transactions ordered by recency. */
     public List<Transaction> getTransactionsByTime() {
-        return getRecentTransactions(0);
+        return getRecentTransactions(0, false);
     }
 
     /**
-     * Returns an list of N transactions, ordered by increasing age. Transactions which exist only on
-     * inactive side-chains are not included or which are dead (overridden by double spends) are not included.<p>
+     * Returns an list of N transactions, ordered by increasing age. Transactions on side chains are not included.
+     * Dead transactions (overridden by double spends) are optionally included. <p>
      *
      * Note: the current implementation is O(num transactions in wallet). Regardless of how many transactions are
      * requested, the cost is always the same. In future, requesting smaller numbers of transactions may be faster
      * depending on how the wallet is implemented (eg if backed by a database).
      */
-    public List<Transaction> getRecentTransactions(int numTransactions) {
+    public List<Transaction> getRecentTransactions(int numTransactions, boolean includeDead) {
         assert numTransactions >= 0;
         // Firstly, put all transactions into an array.
         int size = getPoolSize(Pool.UNSPENT) + getPoolSize(Pool.SPENT) + getPoolSize(Pool.PENDING);
         if (numTransactions > size || numTransactions == 0) {
             numTransactions = size;
         }
-        ArrayList<Transaction> all = new ArrayList<Transaction>(size);
-        all.addAll(unspent.values());
-        all.addAll(spent.values());
-        all.addAll(pending.values());
+        ArrayList<Transaction> all = new ArrayList<Transaction>(getTransactions(includeDead, false));
         // Order by date.
         Collections.sort(all, Collections.reverseOrder(new Comparator<Transaction>() {
             public int compare(Transaction t1, Transaction t2) {
