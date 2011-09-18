@@ -276,15 +276,15 @@ public class WalletTest {
     @Test
     public void transactionsList() throws Exception {
         // Check the wallet can give us an ordered list of all received transactions.
-        long time = System.currentTimeMillis() / 1000;
+        Utils.rollMockClock(0);
         // Receive a coin.
         Transaction tx1 = createFakeTx(params, Utils.toNanoCoins(1, 0), myAddress);
-        StoredBlock b1 = createFakeBlock(params, blockStore, time, tx1).storedBlock;
+        StoredBlock b1 = createFakeBlock(params, blockStore, tx1).storedBlock;
         wallet.receive(tx1, b1, BlockChain.NewBlockType.BEST_CHAIN);
         // Receive half a coin 10 minutes later.
-        time += 60 * 10;
+        Utils.rollMockClock(60 * 10);
         Transaction tx2 = createFakeTx(params, Utils.toNanoCoins(0, 5), myAddress);
-        StoredBlock b2 = createFakeBlock(params, blockStore, time, tx1).storedBlock;
+        StoredBlock b2 = createFakeBlock(params, blockStore, tx1).storedBlock;
         wallet.receive(tx2, b2, BlockChain.NewBlockType.BEST_CHAIN);
         // Check we got them back in order.
         List<Transaction> transactions = wallet.getTransactionsByTime();
@@ -296,7 +296,8 @@ public class WalletTest {
         assertEquals(1, transactions.size());
         assertEquals(tx2,  transactions.get(0));
 
-        // Create a spend.
+        // Create a spend five minutes later.
+        Utils.rollMockClock(60 * 5);
         Transaction tx3 = wallet.createSend(new ECKey().toAddress(params), Utils.toNanoCoins(0, 5));
         // Does not appear in list yet.
         assertEquals(2, wallet.getTransactionsByTime().size());

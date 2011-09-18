@@ -71,7 +71,7 @@ public class PeerAddress extends Message {
     @Override
     public void bitcoinSerializeToStream(OutputStream stream) throws IOException {
         if (protocolVersion >= 31402) {
-            int secs = (int)(new Date().getTime() / 1000);
+            int secs = (int)(Utils.now().getTime() / 1000);
             uint32ToByteStreamLE(secs, stream);
         }
         uint64ToByteStreamLE(services, stream);  // nServices.

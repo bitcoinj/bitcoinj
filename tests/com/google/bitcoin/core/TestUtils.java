@@ -65,7 +65,7 @@ public class TestUtils {
 
     public static BlockPair createFakeBlock(NetworkParameters params, BlockStore blockStore,
                                             Transaction... transactions) {
-        return createFakeBlock(params, blockStore, System.currentTimeMillis() / 1000, transactions);
+        return createFakeBlock(params, blockStore, Utils.now().getTime() / 1000, transactions);
     }
 
     public static Block makeSolvedTestBlock(NetworkParameters params,

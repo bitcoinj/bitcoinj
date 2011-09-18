@@ -24,6 +24,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Date;
 
 /**
  * A collection of various utility methods that are helpful for working with the BitCoin protocol.
@@ -237,5 +238,24 @@ public class Utils {
         if (size >= 2) bytes[5] = (byte) ((compact >>  8) & 0xFF);
         if (size >= 3) bytes[6] = (byte) ((compact >>  0) & 0xFF);
         return decodeMPI(bytes);
+    }
+
+    /** If non-null, overrides the return value of now(). */
+    public static Date mockTime;
+
+    /** Advances (or rewinds) the mock clock by the given number of seconds. */
+    public static Date rollMockClock(int seconds) {
+        if (mockTime == null)
+            mockTime = new Date();
+        mockTime = new Date(mockTime.getTime() + (seconds * 1000));
+        return mockTime;
+    }
+
+    /** Returns the current time, or a mocked out equivalent. */
+    public static Date now() {
+        if (mockTime != null)
+            return mockTime;
+        else
+            return new Date();
     }
 }

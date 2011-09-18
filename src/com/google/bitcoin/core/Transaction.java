@@ -149,7 +149,7 @@ public class Transaction extends Message implements Serializable {
      */
     void addBlockAppearance(StoredBlock block, boolean bestChain) {
         if (bestChain && updatedAt == null) {
-            updatedAt = new Date(block.getHeader().getTimeSeconds());
+            updatedAt = new Date(block.getHeader().getTimeSeconds() * 1000);
         }
         if (appearsIn == null) {
             appearsIn = new HashSet<StoredBlock>();
@@ -247,7 +247,7 @@ public class Transaction extends Message implements Serializable {
             for (StoredBlock b : appearsIn) {
                 earliestTimeSecs = Math.min(b.getHeader().getTimeSeconds(), earliestTimeSecs);
             }
-            updatedAt = new Date(earliestTimeSecs);
+            updatedAt = new Date(earliestTimeSecs * 1000);
         }
         return updatedAt;
     }
