@@ -245,7 +245,7 @@ public class Wallet implements Serializable {
             // accepted by the network.
             //
             // Mark the tx as appearing in this block so we can find it later after a re-org.
-            wtx.addBlockAppearance(block);
+            wtx.addBlockAppearance(block, bestChain);
             if (bestChain) {
                 if (valueSentToMe.equals(BigInteger.ZERO)) {
                     // There were no change transactions so this tx is fully spent.
@@ -277,7 +277,7 @@ public class Wallet implements Serializable {
         } else {
             if (!reorg) {
                 // Mark the tx as appearing in this block so we can find it later after a re-org.
-                tx.addBlockAppearance(block);
+                tx.addBlockAppearance(block, bestChain);
             }
             // This TX didn't originate with us. It could be sending us coins and also spending our own coins if keys
             // are being shared between different wallets.
@@ -431,6 +431,44 @@ public class Wallet implements Serializable {
         }
         // Add to the pending pool. It'll be moved out once we receive this transaction on the best chain.
         pending.put(tx.getHash(), tx);
+    }
+
+    /** Returns all transactions in the wallet ordered by recency. See {@link Wallet#getRecentTransactions(int)}. */
+    public List<Transaction> getTransactionsByTime() {
+        return getRecentTransactions(0);
+    }
+
+    /**
+     * Returns an list of N transactions, ordered by increasing age. Transactions which exist only on
+     * inactive side-chains are not included or which are dead (overridden by double spends) are not included.<p>
+     *
+     * Note: the current implementation is O(num transactions in wallet). Regardless of how many transactions are
+     * requested, the cost is always the same. In future, requesting smaller numbers of transactions may be faster
+     * depending on how the wallet is implemented (eg if backed by a database).
+     */
+    public List<Transaction> getRecentTransactions(int numTransactions) {
+        assert numTransactions >= 0;
+        // Firstly, put all transactions into an array.
+        int size = getPoolSize(Pool.UNSPENT) + getPoolSize(Pool.SPENT) + getPoolSize(Pool.PENDING);
+        if (numTransactions > size || numTransactions == 0) {
+            numTransactions = size;
+        }
+        ArrayList<Transaction> all = new ArrayList<Transaction>(size);
+        all.addAll(unspent.values());
+        all.addAll(spent.values());
+        all.addAll(pending.values());
+        // Order by date.
+        Collections.sort(all, Collections.reverseOrder(new Comparator<Transaction>() {
+            public int compare(Transaction t1, Transaction t2) {
+                return t1.getUpdateTime().compareTo(t2.getUpdateTime());
+            }
+        }));
+        if (numTransactions == all.size()) {
+            return all;
+        } else {
+            all.subList(numTransactions, all.size()).clear();
+            return all;
+        }
     }
 
     // This is used only for unit testing, it's an internal API.

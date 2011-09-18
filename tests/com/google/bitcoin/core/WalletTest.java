@@ -17,12 +17,12 @@
 package com.google.bitcoin.core;
 
 import com.google.bitcoin.store.BlockStore;
-import com.google.bitcoin.store.BlockStoreException;
 import com.google.bitcoin.store.MemoryBlockStore;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.math.BigInteger;
+import java.util.List;
 
 import static com.google.bitcoin.core.TestUtils.createFakeBlock;
 import static com.google.bitcoin.core.TestUtils.createFakeTx;
@@ -271,5 +271,39 @@ public class WalletTest {
         wallet.receive(send2, null, BlockChain.NewBlockType.BEST_CHAIN);
         assertEquals(send1, eventDead[0]);
         assertEquals(send2, eventReplacement[0]);
+    }
+
+    @Test
+    public void transactionsList() throws Exception {
+        // Check the wallet can give us an ordered list of all received transactions.
+        long time = System.currentTimeMillis() / 1000;
+        // Receive a coin.
+        Transaction tx1 = createFakeTx(params, Utils.toNanoCoins(1, 0), myAddress);
+        StoredBlock b1 = createFakeBlock(params, blockStore, time, tx1).storedBlock;
+        wallet.receive(tx1, b1, BlockChain.NewBlockType.BEST_CHAIN);
+        // Receive half a coin 10 minutes later.
+        time += 60 * 10;
+        Transaction tx2 = createFakeTx(params, Utils.toNanoCoins(0, 5), myAddress);
+        StoredBlock b2 = createFakeBlock(params, blockStore, time, tx1).storedBlock;
+        wallet.receive(tx2, b2, BlockChain.NewBlockType.BEST_CHAIN);
+        // Check we got them back in order.
+        List<Transaction> transactions = wallet.getTransactionsByTime();
+        assertEquals(tx2,  transactions.get(0));
+        assertEquals(tx1,  transactions.get(1));
+        assertEquals(2, transactions.size());
+        // Check we get only the last transaction if we request a subrage.
+        transactions = wallet.getRecentTransactions(1);
+        assertEquals(1, transactions.size());
+        assertEquals(tx2,  transactions.get(0));
+
+        // Verify we can handle the case of older wallets in which the timestamp is null (guessed from the
+        // block appearances list).
+        tx1.updatedAt = null;
+        tx2.updatedAt = null;
+        // Check we got them back in order.
+        transactions = wallet.getTransactionsByTime();
+        assertEquals(tx2,  transactions.get(0));
+        assertEquals(tx1,  transactions.get(1));
+        assertEquals(2, transactions.size());
     }
 }

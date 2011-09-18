@@ -56,6 +56,13 @@ public class Transaction extends Message implements Serializable {
     // If this transaction is not stored in the wallet, appearsIn is null.
     Set<StoredBlock> appearsIn;
 
+    // Stored only in Java serialization. This is either the time the transaction was broadcast as measured from the
+    // local clock, or the time from the block in which it was included. Note that this can be changed by re-orgs so
+    // the wallet may update this field. Old serialized transactions don't have this field, thus null is valid.
+    // It is used for returning an ordered list of transactions from a wallet, which is helpful for presenting to
+    // users.
+    Date updatedAt;
+
     // This is an in memory helper only.
     transient Sha256Hash hash;
 
@@ -119,9 +126,7 @@ public class Transaction extends Message implements Serializable {
         return v;
     }
 
-    /**
-     * Calculates the sum of the outputs that are sending coins to a key in the wallet.
-     */
+    /** Calculates the sum of the outputs that are sending coins to a key in the wallet. */
     public BigInteger getValueSentToMe(Wallet wallet) {
         return getValueSentToMe(wallet, true);
     }
@@ -138,8 +143,14 @@ public class Transaction extends Message implements Serializable {
      * Adds the given block to the internal serializable set of blocks in which this transaction appears. This is
      * used by the wallet to ensure transactions that appear on side chains are recorded properly even though the
      * block stores do not save the transaction data at all.
+     *
+     * @param block The {@link StoredBlock} in which the transaction has appeared.
+     * @param bestChain whether to set the updatedAt timestamp from the block header (only if not already set)
      */
-    void addBlockAppearance(StoredBlock block) {
+    void addBlockAppearance(StoredBlock block, boolean bestChain) {
+        if (bestChain && updatedAt == null) {
+            updatedAt = new Date(block.getHeader().getTimeSeconds());
+        }
         if (appearsIn == null) {
             appearsIn = new HashSet<StoredBlock>();
         }
@@ -213,6 +224,32 @@ public class Transaction extends Message implements Serializable {
                 return false;
         }
         return true;
+    }
+
+    /**
+     * Returns the earliest time at which the transaction was seen (broadcast or included into the chain),
+     * or null if that information isn't available.
+     */
+    public Date getUpdateTime() {
+        if (updatedAt == null) {
+            // Older wallets did not store this field. If we can, fill it out based on the block pointers. We might
+            // "guess wrong" in the case of transactions appearing on chain forks, but this is unlikely to matter in
+            // practice. Note, some patched copies of BitCoinJ store dates in this field that do not correspond to any
+            // block but rather broadcast time.
+            if (appearsIn == null || appearsIn.size() == 0) {
+                // Transaction came from somewhere that doesn't provide time info.
+                return null;
+            }
+            long earliestTimeSecs = Long.MAX_VALUE;
+            // We might return a time that is different to the best chain, as we don't know here which block is part
+            // of the active chain and which are simply inactive. We just ignore this for now.
+            // TODO: At some point we'll want to store storing full block headers in the wallet. Remove at that time.
+            for (StoredBlock b : appearsIn) {
+                earliestTimeSecs = Math.min(b.getHeader().getTimeSeconds(), earliestTimeSecs);
+            }
+            updatedAt = new Date(earliestTimeSecs);
+        }
+        return updatedAt;
     }
 
     /**
