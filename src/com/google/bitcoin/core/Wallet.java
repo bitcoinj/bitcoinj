@@ -245,7 +245,8 @@ public class Wallet implements Serializable {
             // accepted by the network.
             //
             // Mark the tx as appearing in this block so we can find it later after a re-org.
-            wtx.addBlockAppearance(block, bestChain);
+            if (block != null)
+                wtx.addBlockAppearance(block, bestChain);
             if (bestChain) {
                 if (valueSentToMe.equals(BigInteger.ZERO)) {
                     // There were no change transactions so this tx is fully spent.
@@ -277,7 +278,8 @@ public class Wallet implements Serializable {
         } else {
             if (!reorg) {
                 // Mark the tx as appearing in this block so we can find it later after a re-org.
-                tx.addBlockAppearance(block, bestChain);
+                if (block != null)
+                    tx.addBlockAppearance(block, bestChain);
             }
             // This TX didn't originate with us. It could be sending us coins and also spending our own coins if keys
             // are being shared between different wallets.
