@@ -16,8 +16,8 @@
 
 package com.google.bitcoin.core;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.List;
 
 public class GetBlocksMessage extends Message {
@@ -52,24 +52,19 @@ public class GetBlocksMessage extends Message {
         return b.toString();
     }
 
-    public byte[] bitcoinSerialize() {
-        try {
-            ByteArrayOutputStream buf = new ByteArrayOutputStream();
+    void bitcoinSerializeToStream(OutputStream stream) throws IOException {
             // Version, for some reason.
-            Utils.uint32ToByteStreamLE(NetworkParameters.PROTOCOL_VERSION, buf);
+            Utils.uint32ToByteStreamLE(NetworkParameters.PROTOCOL_VERSION, stream);
             // Then a vector of block hashes. This is actually a "block locator", a set of block
             // identifiers that spans the entire chain with exponentially increasing gaps between
             // them, until we end up at the genesis block. See CBlockLocator::Set()
-            buf.write(new VarInt(locator.size()).encode());
+            stream.write(new VarInt(locator.size()).encode());
             for (Sha256Hash hash : locator) {
                 // Have to reverse as wire format is little endian.
-                buf.write(Utils.reverseBytes(hash.getBytes()));
+            	stream.write(Utils.reverseBytes(hash.getBytes()));
             }
             // Next, a block ID to stop at.
-            buf.write(stopHash.getBytes());
-            return buf.toByteArray();
-        } catch (IOException e) {
-            throw new RuntimeException(e);  // Cannot happen.
-        }
+            stream.write(stopHash.getBytes());
+           
     }
 }

@@ -16,7 +16,7 @@
 
 package com.google.bitcoin.core;
 
-public class GetAddrMessage extends Message {
+public class GetAddrMessage extends EmptyMessage {
 	public GetAddrMessage(NetworkParameters params) {
 		super(params);
 	}
@@ -25,4 +25,5 @@ public class GetAddrMessage extends Message {
 	void parse() throws ProtocolException {
     // TODO: Implement this.
 	}
+
 }

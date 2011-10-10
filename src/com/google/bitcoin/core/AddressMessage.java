@@ -40,4 +40,5 @@ public class AddressMessage extends Message {
         }
         return builder.toString();
     }
+
 }

@@ -37,7 +37,7 @@ import static com.google.bitcoin.core.Utils.*;
  * or request one specifically using {@link Peer#getBlock(Sha256Hash)}, or grab one from a downloaded {@link BlockChain}.
  */
 public class Block extends Message {
-    private static final Logger log = LoggerFactory.getLogger(Block.class);
+	private static final Logger log = LoggerFactory.getLogger(Block.class);
     private static final long serialVersionUID = 2738848929966035281L;
 
     /** How many bytes are required to represent a block header. */

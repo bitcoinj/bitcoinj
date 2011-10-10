@@ -16,7 +16,7 @@
 
 package com.google.bitcoin.core;
 
-public class UnknownMessage extends Message {
+public class UnknownMessage extends EmptyMessage {
     private static final long serialVersionUID = 3614705938207918775L;
     private String name;
 
@@ -33,4 +33,5 @@ public class UnknownMessage extends Message {
     @Override
     public void parse() throws ProtocolException {
     }
+    
 }

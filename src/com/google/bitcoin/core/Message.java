@@ -20,6 +20,9 @@ import java.io.*;
 import java.math.BigInteger;
 import java.util.Arrays;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * A Message is a data structure that can be serialized/deserialized using both the BitCoin proprietary serialization
  * format and built-in Java object serialization. Specific types of messages that are used both in the block chain,
@@ -28,7 +31,8 @@ import java.util.Arrays;
  * This class is not useful for library users. If you want to talk to the network see the {@link Peer} class.
  */
 public abstract class Message implements Serializable {
-    private static final long serialVersionUID = -3561053461717079135L;
+	private static final Logger log = LoggerFactory.getLogger(Message.class);
+	private static final long serialVersionUID = -3561053461717079135L;
 
     public static final int MAX_SIZE = 0x02000000;
 
@@ -86,7 +90,7 @@ public abstract class Message implements Serializable {
     // are serialized to the wallet.
     abstract void parse() throws ProtocolException;
     
-    public byte[] bitcoinSerialize() {
+    final public byte[] bitcoinSerialize() {
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
         try {
             bitcoinSerializeToStream(stream);
@@ -101,6 +105,7 @@ public abstract class Message implements Serializable {
      * Serializes this message to the provided stream. If you just want the raw bytes use bitcoinSerialize().
      */
     void bitcoinSerializeToStream(OutputStream stream) throws IOException {
+    	log.debug("Warning: {} class has not implemented bitcoinSerializeToStream method.  Generating message with no payload", getClass());
     }
     
     int getMessageSize() {

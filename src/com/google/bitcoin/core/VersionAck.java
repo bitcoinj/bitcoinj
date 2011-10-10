@@ -14,28 +14,25 @@
  * limitations under the License.
  */
 
-
 package com.google.bitcoin.core;
 
 /**
- * The verack message, sent by a client accepting the version message they received from their peer.
+ * The verack message, sent by a client accepting the version message they
+ * received from their peer.
  */
-public class VersionAck
-    extends Message
-{
-    public VersionAck()
-    {
+public class VersionAck extends EmptyMessage {
+	public VersionAck() {
 
-    }
+	}
 
-    // this is needed by the BitcoinSerializer
-    public VersionAck(NetworkParameters params, byte[] payload) {
+	// this is needed by the BitcoinSerializer
+	public VersionAck(NetworkParameters params, byte[] payload) {
 
-    }
+	}
 
-    @Override
-    void parse() throws ProtocolException
-    {
-        // nothing to parse for now
-    }
+	@Override
+	void parse() throws ProtocolException {
+		// nothing to parse for now
+	}
+
 }
