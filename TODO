@@ -23,3 +23,15 @@ Cleanup:
    - Find a way to avoid some horrid hacks when shutting down the network connection.
    - Implement a BitCoin class that encapsulates a BigInteger and formatting.
    - Make NetworkParameters use subclasses instead of static methods to construct.
+
+
+
+==========
+
+Impacts from Steves changes:
+- Reformat affected files
+- JavaDocs for the c'tors that take parseLazy/parseRetain
+- Copyright header/correct author for EmptyMessage/ChildMessage
+- Remove superfluous empty lines in ListMessage.java
+- Remove VersionMessage check in Message serialization roundtrip checks
+- Delete dead code in Message.checkParsed

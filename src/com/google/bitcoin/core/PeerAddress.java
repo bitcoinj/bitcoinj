@@ -31,7 +31,7 @@ import static com.google.bitcoin.core.Utils.uint64ToByteStreamLE;
  * A PeerAddress holds an IP address and port number representing the network location of
  * a peer in the BitCoin P2P network. It exists primarily for serialization purposes.
  */
-public class PeerAddress extends Message {
+public class PeerAddress extends ChildMessage {
     private static final long serialVersionUID = 7501293709324197411L;
 
     InetAddress addr;
@@ -46,7 +46,18 @@ public class PeerAddress extends Message {
         super(params, payload, offset, protocolVersion);
     }
     
+
     /**
+     * Construct a peer address from a serialized payload.
+     */
+	public PeerAddress(NetworkParameters params, byte[] msg, int offset, int protocolVersion, Message parent, boolean parseLazy,
+			boolean parseRetain) throws ProtocolException {
+		super(params, msg, offset, protocolVersion, parent, parseLazy, parseRetain);
+	}
+
+
+
+	/**
      * Construct a peer address from a memorized or hardcoded address.
      */
     public PeerAddress(InetAddress addr, int port, int protocolVersion) {
@@ -68,8 +79,8 @@ public class PeerAddress extends Message {
         this(addr.getAddress(), addr.getPort());
     }
 
-    @Override
-    public void bitcoinSerializeToStream(OutputStream stream) throws IOException {
+	@Override
+	protected void bitcoinSerializeToStream(OutputStream stream) throws IOException {
         if (protocolVersion >= 31402) {
             int secs = (int)(Utils.now().getTime() / 1000);
             uint32ToByteStreamLE(secs, stream);

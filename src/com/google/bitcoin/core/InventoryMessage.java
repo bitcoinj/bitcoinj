@@ -23,7 +23,12 @@ public class InventoryMessage extends ListMessage {
         super(params, bytes);
     }
 
-    public InventoryMessage(NetworkParameters params) {
+    public InventoryMessage(NetworkParameters params, byte[] msg, boolean parseLazy, boolean parseRetain)
+			throws ProtocolException {
+		super(params, msg, parseLazy, parseRetain);
+	}
+
+	public InventoryMessage(NetworkParameters params) {
         super(params);
     }
 

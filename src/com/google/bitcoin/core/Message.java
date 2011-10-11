@@ -47,6 +47,10 @@ public abstract class Message implements Serializable {
 
     // The raw message bytes themselves.
     protected transient byte[] bytes;
+    
+    private transient boolean parsed = false;
+    protected transient final boolean parseLazy;
+    protected transient final boolean parseRetain;
 
     protected transient int protocolVersion;
 
@@ -55,21 +59,37 @@ public abstract class Message implements Serializable {
 
     /** This exists for the Java serialization framework to use only. */
     protected Message() {
+    	parsed = true;
+    	parseLazy = false;
+    	parseRetain = false;
     }
     
     Message(NetworkParameters params) {
         this.params = params;
+        parsed = true;
+        parseLazy = false;
+    	parseRetain = false;
     }
 
-    @SuppressWarnings("unused")
     Message(NetworkParameters params, byte[] msg, int offset, int protocolVersion) throws ProtocolException {
-        this.protocolVersion = protocolVersion;
+    	this(params, msg, offset, protocolVersion, false, false);
+    }
+    
+    @SuppressWarnings("unused")
+    Message(NetworkParameters params, byte[] msg, int offset, int protocolVersion, final boolean parseLazy, final boolean parseRetain) throws ProtocolException {
+        this.parseLazy = parseLazy;
+        this.parseRetain = parseRetain;
+    	this.protocolVersion = protocolVersion;
         this.params = params;
         this.bytes = msg;
         this.cursor = this.offset = offset;
-        parse();
+        if (!parseLazy) {
+        	parse();
+        	parsed = true;
+        }
         if (SELF_CHECK && !this.getClass().getSimpleName().equals("VersionMessage"))  {
-            byte[] msgbytes = new byte[cursor - offset];
+            checkParse();
+        	byte[] msgbytes = new byte[cursor - offset];
             System.arraycopy(msg, offset, msgbytes, 0, cursor - offset);
             byte[] reserialized = bitcoinSerialize();
             if (!Arrays.equals(reserialized, msgbytes))
@@ -77,11 +97,17 @@ public abstract class Message implements Serializable {
                         Utils.bytesToHexString(reserialized) + " vs \n" +
                         Utils.bytesToHexString(msgbytes));
         }
+        if (parseRetain || !parsed)
+        	return;
         this.bytes = null;
     }
 
     Message(NetworkParameters params, byte[] msg, int offset) throws ProtocolException {
-        this(params, msg, offset, NetworkParameters.PROTOCOL_VERSION);
+        this(params, msg, offset, NetworkParameters.PROTOCOL_VERSION, false, false);
+    }
+    
+    Message(NetworkParameters params, byte[] msg, int offset, final boolean parseLazy, final boolean parseRetain) throws ProtocolException {
+        this(params, msg, offset, NetworkParameters.PROTOCOL_VERSION, parseLazy, parseRetain);
     }
     
     // These methods handle the serialization/deserialization using the custom BitCoin protocol.
@@ -90,8 +116,87 @@ public abstract class Message implements Serializable {
     // are serialized to the wallet.
     abstract void parse() throws ProtocolException;
     
+    /**
+     * Ensure the object is parsed if needed.  This should be called in every getter before returning a value.
+     * If the lazy parse flag is not set this is a method returns immediately.  
+     */
+    protected synchronized void checkParse() {
+    	if (parsed || bytes == null)
+    		return;
+    	try {
+			parse();
+			parsed = true;
+			//if (!parseRetain)
+				//bytes = null;
+		} catch (ProtocolException e) {
+			throw new RuntimeException("Lazy parsing of message failed", e);
+		}
+    }
+    
+    /**
+     * To be called before any change of internal values including any setters.  This ensures any cached byte array is removed after performing
+     * a lazy parse if necessary to ensure the object is fully populated.
+     * 
+     * Child messages of this object(e.g. Transactions belonging to a Block) will not have their internal byte caches invalidated unless
+     * they are also modified internally.
+     */
+    protected void unCache() {
+    	
+    	/*
+    	 * 	   This is a NOP at the moment.  Will complete lazy parsing as a separate patch first.
+    	 *     safe retention of backing byte array is tricky in cases where a parent Message object
+    	 *     may have child message objects (e.g. block - tx).  There has to be a way to either
+    	 *     mark the cursor at the end of the parent portion of the array or a way the child can
+    	 *     invalidate the parent array. This might require a ByteArrayView class which implements List
+    	 *     and retains a reference to it's parent ByteArrayView so it can invalidate it.  
+    	 *     Alternately the child message can hold a reference to
+    	 *     it's parent and propagate a call to unCache up the chain to the parent.  This way only those children on the
+    	 *     invalidated branch lose their caching.  On the other hand this might introduce more overhead than it's worth
+    	 *     since this call has to made in every setter.
+    	 *     Perhaps a simpler approach where in the special cases where a cached array is wanted it is the callers responsibility
+    	 *     to keep track of whether the cache is valid or not.
+    	 */
+
+    	
+    	//if (!parseRetain)
+    	//	return;
+    	//checkParse();
+    	//bytes = null;
+    }
+    
+    /**
+     * Serialize this message to a byte array that conforms to the bitcoin wire protocol.
+     * <br/>
+     * This method may return the original byte array used to construct this message if the 
+     * following conditions are met:
+     * <ol>
+     * <li>1) The message was parsed from a byte array with parseRetain = true</li>
+     * <li>2) The message has not been modified</li>
+     * <li>3) The array had an offset of 0 and no surplus bytes</li>
+     * </ol>
+     * 
+     * If condition 3 is not met then an copy of the relevant portion of the array will be returned.
+     * Otherwise a full serialize will occur. 
+     * 
+     * @return 
+     */
     final public byte[] bitcoinSerialize() {
-        ByteArrayOutputStream stream = new ByteArrayOutputStream();
+    	
+    	//1st attempt to use a cached array
+    	if (bytes != null) {
+    		if (offset == 0 && cursor == bytes.length) {
+    			//cached byte array is the entire message with no extras
+    			//so we can return as is and avoid an array copy.
+    			return bytes;
+    		}
+    		int len = cursor - offset;
+    		byte[] buf = new byte[len];
+    		System.arraycopy(bytes, offset, buf, 0, len);
+    		return buf;
+    	}
+    	
+    	//no cached array available so serialize parts by stream.
+    	ByteArrayOutputStream stream = new ByteArrayOutputStream();
         try {
             bitcoinSerializeToStream(stream);
         } catch (IOException e) {
@@ -99,6 +204,20 @@ public abstract class Message implements Serializable {
             throw new RuntimeException(e);
         }
         return stream.toByteArray();
+    }
+    
+    /**
+     * Serialize this message to the provided OutputStream using the bitcoin wire format.
+     * @param stream
+     * @throws IOException
+     */
+    final public void bitcoinSerialize(OutputStream stream) throws IOException {
+    	//1st check for cached bytes
+    	if (bytes != null) {
+    		stream.write(bytes, offset, cursor - offset);
+    		return;
+    	}
+    	bitcoinSerializeToStream(stream);
     }
 
     /**

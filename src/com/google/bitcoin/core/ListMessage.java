@@ -36,8 +36,16 @@ public abstract class ListMessage extends Message
         super(params, bytes, 0);
     }
 
+    
 
-    public ListMessage(NetworkParameters params) {
+    public ListMessage(NetworkParameters params, byte[] msg, boolean parseLazy, boolean parseRetain)
+			throws ProtocolException {
+		super(params, msg, 0, parseLazy, parseRetain);
+	}
+
+
+
+	public ListMessage(NetworkParameters params) {
         super(params);
         items = new ArrayList<InventoryItem>();
     }

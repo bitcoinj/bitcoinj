@@ -8,12 +8,20 @@ public class AddressMessage extends Message {
     private static final long MAX_ADDRESSES = 1024;
     List<PeerAddress> addresses;
 
+    AddressMessage(NetworkParameters params, byte[] payload, int offset, boolean parseLazy, boolean parseRetain) throws ProtocolException {
+        super(params, payload, offset, parseLazy, parseRetain);
+    }
+    
+    AddressMessage(NetworkParameters params, byte[] payload, boolean parseLazy, boolean parseRetain) throws ProtocolException {
+        super(params, payload, 0, parseLazy, parseRetain);
+    }
+    
     AddressMessage(NetworkParameters params, byte[] payload, int offset) throws ProtocolException {
-        super(params, payload, offset);
+        super(params, payload, offset, false, false);
     }
 
     AddressMessage(NetworkParameters params, byte[] payload) throws ProtocolException {
-        super(params, payload, 0);
+        super(params, payload, 0, false, false);
     }
 
     @Override
@@ -24,7 +32,7 @@ public class AddressMessage extends Message {
             throw new ProtocolException("Address message too large.");
         addresses = new ArrayList<PeerAddress>((int)numAddresses);
         for (int i = 0; i < numAddresses; i++) {
-            PeerAddress addr = new PeerAddress(params, bytes, cursor, protocolVersion);
+            PeerAddress addr = new PeerAddress(params, bytes, cursor, protocolVersion, this, parseLazy, parseRetain);
             addresses.add(addr);
             cursor += addr.getMessageSize();
         }

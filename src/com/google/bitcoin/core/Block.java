@@ -78,6 +78,10 @@ public class Block extends Message {
     public Block(NetworkParameters params, byte[] payloadBytes) throws ProtocolException {
         super(params, payloadBytes, 0);
     }
+    
+    public Block(NetworkParameters params, byte[] payloadBytes, boolean parseLazy, boolean parseRetain) throws ProtocolException {
+        super(params, payloadBytes, 0, parseLazy, parseRetain);
+    }
 
     private void readObject(ObjectInputStream ois) throws ClassNotFoundException, IOException {
         ois.defaultReadObject();
@@ -104,7 +108,7 @@ public class Block extends Message {
         int numTransactions = (int) readVarInt();
         transactions = new ArrayList<Transaction>(numTransactions);
         for (int i = 0; i < numTransactions; i++) {
-            Transaction tx = new Transaction(params, bytes, cursor);
+            Transaction tx = new Transaction(params, bytes, cursor, this, parseLazy, parseRetain);
             transactions.add(tx);
             cursor += tx.getMessageSize();
         }
@@ -120,13 +124,13 @@ public class Block extends Message {
     }
     
     @Override
-    void bitcoinSerializeToStream(OutputStream stream) throws IOException {
+    protected void bitcoinSerializeToStream(OutputStream stream) throws IOException {
         writeHeader(stream);
         // We may only have enough data to write the header.
         if (transactions == null) return;
         stream.write(new VarInt(transactions.size()).encode());
         for (Transaction tx : transactions) {
-            tx.bitcoinSerializeToStream(stream);
+            tx.bitcoinSerialize(stream);
         }
     }
 

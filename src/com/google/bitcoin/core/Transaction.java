@@ -18,6 +18,7 @@ package com.google.bitcoin.core;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.io.Serializable;
 import java.math.BigInteger;
@@ -37,7 +38,7 @@ import static com.google.bitcoin.core.Utils.*;
  * serialization which is used for the wallet. This allows us to easily add extra fields used for our own accounting
  * or UI purposes.
  */
-public class Transaction extends Message implements Serializable {
+public class Transaction extends ChildMessage implements Serializable {
     private static final Logger log = LoggerFactory.getLogger(Transaction.class);
     private static final long serialVersionUID = -8567546957352643140L;
 
@@ -80,7 +81,7 @@ public class Transaction extends Message implements Serializable {
     public Transaction(NetworkParameters params, byte[] payloadBytes) throws ProtocolException {
         super(params, payloadBytes, 0);
     }
-
+    
     /**
      * Creates a transaction by reading payload starting from offset bytes in. Length of a transaction is fixed.
      */
@@ -88,8 +89,24 @@ public class Transaction extends Message implements Serializable {
         super(params, payload, offset);
         // inputs/outputs will be created in parse()
     }
-
+    
     /**
+     * Creates a transaction by reading payload starting from offset bytes in. Length of a transaction is fixed.
+     */
+    public Transaction(NetworkParameters params, byte[] msg, int offset, Message parent, boolean parseLazy, boolean parseRetain)
+			throws ProtocolException {
+		super(params, msg, offset, parent, parseLazy, parseRetain);
+	}
+    
+    /**
+     * Creates a transaction by reading payload starting from offset bytes in. Length of a transaction is fixed.
+     */
+    public Transaction(NetworkParameters params, byte[] msg, Message parent, boolean parseLazy, boolean parseRetain)
+			throws ProtocolException {
+		super(params, msg, 0, parent, parseLazy, parseRetain);
+	}
+
+	/**
      * Returns a read-only list of the inputs of this transaction.
      */
     public List<TransactionInput> getInputs() {
@@ -272,7 +289,7 @@ public class Transaction extends Message implements Serializable {
         long numInputs = readVarInt();
         inputs = new ArrayList<TransactionInput>((int)numInputs);
         for (long i = 0; i < numInputs; i++) {
-            TransactionInput input = new TransactionInput(params, this, bytes, cursor);
+            TransactionInput input = new TransactionInput(params, this, bytes, cursor, parseLazy, parseRetain);
             inputs.add(input);
             cursor += input.getMessageSize();
         }
@@ -280,7 +297,7 @@ public class Transaction extends Message implements Serializable {
         long numOutputs = readVarInt();
         outputs = new ArrayList<TransactionOutput>((int)numOutputs);
         for (long i = 0; i < numOutputs; i++) {
-            TransactionOutput output = new TransactionOutput(params, this, bytes, cursor);
+            TransactionOutput output = new TransactionOutput(params, this, bytes, cursor, parseLazy, parseRetain);
             outputs.add(output);
             cursor += output.getMessageSize();
         }
@@ -457,14 +474,14 @@ public class Transaction extends Message implements Serializable {
     }
     
     @Override
-    public void bitcoinSerializeToStream(OutputStream stream) throws IOException {
+    protected void bitcoinSerializeToStream(OutputStream stream) throws IOException {
         uint32ToByteStreamLE(version, stream);
         stream.write(new VarInt(inputs.size()).encode());
         for (TransactionInput in : inputs)
-            in.bitcoinSerializeToStream(stream);
+            in.bitcoinSerialize(stream);
         stream.write(new VarInt(outputs.size()).encode());
         for (TransactionOutput out : outputs)
-            out.bitcoinSerializeToStream(stream);
+            out.bitcoinSerialize(stream);
         uint32ToByteStreamLE(lockTime, stream);
     }
 
@@ -480,4 +497,15 @@ public class Transaction extends Message implements Serializable {
     public int hashCode() {
         return getHash().hashCode();
     }
+    
+    /**
+     * Ensure object is fully parsed before invoking java serialization.  The backing byte array
+     * is transient so if the object has parseLazy = true and hasn't invoked checkParse yet
+     * then data will be lost during serialization.
+     */
+    private void writeObject(ObjectOutputStream out) throws IOException {
+    	checkParse();
+    	out.defaultWriteObject();
+    }
+    
 }

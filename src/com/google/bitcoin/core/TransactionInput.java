@@ -17,6 +17,7 @@
 package com.google.bitcoin.core;
 
 import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.io.Serializable;
 import java.util.Map;
@@ -27,7 +28,7 @@ import java.util.Map;
  * transaction as being a module which is wired up to others, the inputs of one have to be wired
  * to the outputs of another. The exceptions are coinbase transactions, which create new coins.
  */
-public class TransactionInput extends Message implements Serializable {
+public class TransactionInput extends ChildMessage implements Serializable {
     private static final long serialVersionUID = 2;
     public static final byte[] EMPTY_ARRAY = new byte[0];
 
@@ -73,8 +74,15 @@ public class TransactionInput extends Message implements Serializable {
         this.parentTransaction = parentTransaction;
     }
     
-    void parse() throws ProtocolException {
-        outpoint = new TransactionOutPoint(params, bytes, cursor);
+    /** Deserializes an input message. This is usually part of a transaction message. */
+    public TransactionInput(NetworkParameters params, Transaction parentTransaction, byte[] msg, int offset, boolean parseLazy, boolean parseRetain)
+			throws ProtocolException {
+		super(params, msg, offset, parentTransaction, parseLazy, parseRetain);
+		this.parentTransaction = parentTransaction;
+	}
+
+	void parse() throws ProtocolException {
+        outpoint = new TransactionOutPoint(params, bytes, cursor, this, parseLazy, parseRetain);
         cursor += outpoint.getMessageSize(); 
         int scriptLen = (int) readVarInt();
         scriptBytes = readBytes(scriptLen);
@@ -82,8 +90,8 @@ public class TransactionInput extends Message implements Serializable {
     }
     
     @Override
-    public void bitcoinSerializeToStream(OutputStream stream) throws IOException {
-        outpoint.bitcoinSerializeToStream(stream);
+    protected void bitcoinSerializeToStream(OutputStream stream) throws IOException {
+        outpoint.bitcoinSerialize(stream);
         stream.write(new VarInt(scriptBytes.length).encode());
         stream.write(scriptBytes);
         Utils.uint32ToByteStreamLE(sequence, stream);
@@ -186,5 +194,15 @@ public class TransactionInput extends Message implements Serializable {
         outpoint.fromTx.outputs.get((int)outpoint.index).markAsUnspent();
         outpoint.fromTx = null;
         return true;
+    }
+    
+    /**
+     * Ensure object is fully parsed before invoking java serialization.  The backing byte array
+     * is transient so if the object has parseLazy = true and hasn't invoked checkParse yet
+     * then data will be lost during serialization.
+     */
+    private void writeObject(ObjectOutputStream out) throws IOException {
+    	checkParse();
+    	out.defaultWriteObject();
     }
 }

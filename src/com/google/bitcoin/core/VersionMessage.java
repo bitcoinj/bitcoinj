@@ -50,6 +50,15 @@ public class VersionMessage extends Message {
     public VersionMessage(NetworkParameters params, byte[] msg) throws ProtocolException {
         super(params, msg, 0);
     }
+    
+    /**
+     * It doesn't really make sense to ever lazily parse a version message or to retain the backing bytes.
+     * If you're receiving this on the wire you need to check the protocol version and it will never need to be sent
+     * back down the wire.
+     */
+//    public VersionMessage(NetworkParameters params, byte[] msg, boolean parseLazy, boolean parseRetain) throws ProtocolException {
+//        super(params, msg, 0, parseLazy, parseRetain);
+//    }
 
     public VersionMessage(NetworkParameters params, int newBestHeight) {
         super(params);
@@ -96,9 +105,9 @@ public class VersionMessage extends Message {
         Utils.uint32ToByteStreamLE(time >> 32, buf);
         try {
             // My address.
-            myAddr.bitcoinSerializeToStream(buf);
+            myAddr.bitcoinSerialize(buf);
             // Their address.
-            theirAddr.bitcoinSerializeToStream(buf);
+            theirAddr.bitcoinSerialize(buf);
         } catch (UnknownHostException e) {
             throw new RuntimeException(e);  // Can't happen.
         } catch (IOException e) {
@@ -142,5 +151,18 @@ public class VersionMessage extends Message {
     public int hashCode() {
         return (int)bestHeight ^ clientVersion ^ (int)localServices ^ (int)time ^ subVer.hashCode() ^ myAddr.hashCode()
                 ^ theirAddr.hashCode();
+    }
+    
+    public String toString() {
+    	StringBuilder sb = new StringBuilder();
+    	sb.append("\n");
+    	sb.append("client version: ").append(clientVersion).append("\n");
+    	sb.append("local services: ").append(localServices).append("\n");
+    	sb.append("time:           ").append(time).append("\n");
+    	sb.append("my addr:        ").append(myAddr).append("\n");
+    	sb.append("their addr:     ").append(theirAddr).append("\n");
+    	sb.append("sub version:    ").append(subVer).append("\n");
+    	sb.append("best height:    ").append(bestHeight).append("\n");
+    	return sb.toString();
     }
 }

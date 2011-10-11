@@ -17,6 +17,7 @@
 package com.google.bitcoin.core;
 
 public class GetAddrMessage extends EmptyMessage {
+	
 	public GetAddrMessage(NetworkParameters params) {
 		super(params);
 	}

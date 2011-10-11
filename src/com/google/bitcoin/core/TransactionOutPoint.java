@@ -17,6 +17,7 @@
 package com.google.bitcoin.core;
 
 import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.io.Serializable;
 
@@ -25,7 +26,7 @@ import java.io.Serializable;
 /**
  * This message is a reference or pointer to an output of a different transaction.
  */
-public class TransactionOutPoint extends Message implements Serializable {
+public class TransactionOutPoint extends ChildMessage implements Serializable {
     private static final long serialVersionUID = -6320880638344662579L;
 
     /** Hash of the transaction to which we refer. */
@@ -54,6 +55,11 @@ public class TransactionOutPoint extends Message implements Serializable {
         super(params, payload, offset);
     }
     
+    /** Deserializes the message. This is usually part of a transaction message. */
+    public TransactionOutPoint(NetworkParameters params, byte[] payload, int offset, Message parent, boolean parseLazy, boolean parseRetain) throws ProtocolException {
+        super(params, payload, offset, parent, parseLazy, parseRetain);
+    }
+    
     @Override
     void parse() throws ProtocolException {
         hash = readHash();
@@ -61,7 +67,7 @@ public class TransactionOutPoint extends Message implements Serializable {
     }
 
     @Override
-    public void bitcoinSerializeToStream(OutputStream stream) throws IOException {
+    protected void bitcoinSerializeToStream(OutputStream stream) throws IOException {
         stream.write(Utils.reverseBytes(hash.getBytes()));
         Utils.uint32ToByteStreamLE(index, stream);
     }
@@ -95,5 +101,15 @@ public class TransactionOutPoint extends Message implements Serializable {
     @Override
     public String toString() {
         return "outpoint " + index + ":" + hash.toString();
+    }
+    
+    /**
+     * Ensure object is fully parsed before invoking java serialization.  The backing byte array
+     * is transient so if the object has parseLazy = true and hasn't invoked checkParse yet
+     * then data will be lost during serialization.
+     */
+    private void writeObject(ObjectOutputStream out) throws IOException {
+    	checkParse();
+    	out.defaultWriteObject();
     }
 }

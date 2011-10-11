@@ -4,7 +4,8 @@ import java.io.IOException;
 import java.io.OutputStream;
 
 /**
- * Parent class for header only message that don't have a payload
+ * Parent class for header only messages that don't have a payload.
+ * Currently this includes getaddr, ping, verack as well as the special bitcoinj class UnknownMessage
  * @author git
  *
  */
@@ -17,16 +18,12 @@ public abstract class EmptyMessage extends Message {
 		super(params);
 	}
 
-	public EmptyMessage(NetworkParameters params, byte[] msg, int offset, int protocolVersion) throws ProtocolException {
-		super(params, msg, offset, protocolVersion);
-	}
-
 	public EmptyMessage(NetworkParameters params, byte[] msg, int offset) throws ProtocolException {
 		super(params, msg, offset);
 	}
 
 	@Override
-	final void bitcoinSerializeToStream(OutputStream stream) throws IOException {
+	final protected void bitcoinSerializeToStream(OutputStream stream) throws IOException {
 	}
 
 }

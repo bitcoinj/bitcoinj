@@ -20,6 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.io.Serializable;
 import java.math.BigInteger;
@@ -28,7 +29,7 @@ import java.math.BigInteger;
  * A TransactionOutput message contains a scriptPubKey that controls who is able to spend its value. It is a sub-part
  * of the Transaction message.
  */
-public class TransactionOutput extends Message implements Serializable {
+public class TransactionOutput extends ChildMessage implements Serializable {
     private static final Logger log = LoggerFactory.getLogger(TransactionOutput.class);
     private static final long serialVersionUID = -590332479859256824L;
 
@@ -53,12 +54,20 @@ public class TransactionOutput extends Message implements Serializable {
     /** Deserializes a transaction output message. This is usually part of a transaction message. */
     public TransactionOutput(NetworkParameters params, Transaction parent, byte[] payload,
                              int offset) throws ProtocolException {
-        super(params, payload, offset);
-        parentTransaction = parent;
+    	super(params, payload, offset);
+    	parentTransaction = parent;
         availableForSpending = true;
     }
+    
+    /** Deserializes a transaction output message. This is usually part of a transaction message. */
+    public TransactionOutput(NetworkParameters params, Transaction parent, byte[] msg, int offset, boolean parseLazy, boolean parseRetain)
+			throws ProtocolException {
+		super(params, msg, offset, parent, parseLazy, parseRetain);
+		parentTransaction = parent;
+        availableForSpending = true;
+	}
 
-    TransactionOutput(NetworkParameters params, Transaction parent, BigInteger value, Address to) {
+	TransactionOutput(NetworkParameters params, Transaction parent, BigInteger value, Address to) {
         super(params);
         this.value = value;
         this.scriptBytes = Script.createOutputScript(to);
@@ -75,7 +84,7 @@ public class TransactionOutput extends Message implements Serializable {
         availableForSpending = true;
     }
 
-    public Script getScriptPubKey() throws ScriptException {
+	public Script getScriptPubKey() throws ScriptException {
         if (scriptPubKey == null)
             scriptPubKey = new Script(params, scriptBytes, 0, scriptBytes.length);
         return scriptPubKey;
@@ -88,7 +97,7 @@ public class TransactionOutput extends Message implements Serializable {
     }
     
     @Override
-    public void bitcoinSerializeToStream( OutputStream stream) throws IOException {
+    protected void bitcoinSerializeToStream( OutputStream stream) throws IOException {
         assert scriptBytes != null;
         Utils.uint64ToByteStreamLE(getValue(), stream);
         // TODO: Move script serialization into the Script class, where it belongs.
@@ -161,5 +170,15 @@ public class TransactionOutput extends Message implements Serializable {
     /** Returns the connected input. */
     TransactionInput getSpentBy() {
         return spentBy;
+    }
+    
+    /**
+     * Ensure object is fully parsed before invoking java serialization.  The backing byte array
+     * is transient so if the object has parseLazy = true and hasn't invoked checkParse yet
+     * then data will be lost during serialization.
+     */
+    private void writeObject(ObjectOutputStream out) throws IOException {
+    	checkParse();
+    	out.defaultWriteObject();
     }
 }
