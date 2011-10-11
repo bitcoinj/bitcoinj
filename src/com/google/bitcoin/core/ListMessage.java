@@ -19,6 +19,7 @@ package com.google.bitcoin.core;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -26,7 +27,8 @@ import java.util.List;
  */
 public abstract class ListMessage extends Message
 {
-    // For some reason the compiler complains if this is inside InventoryItem
+    private long arrayLen;
+	// For some reason the compiler complains if this is inside InventoryItem
     private List<InventoryItem> items;
 
     private static final long MAX_INVENTORY_ITEMS = 50000;
@@ -38,9 +40,9 @@ public abstract class ListMessage extends Message
 
     
 
-    public ListMessage(NetworkParameters params, byte[] msg, boolean parseLazy, boolean parseRetain)
+    public ListMessage(NetworkParameters params, byte[] msg, boolean parseLazy, boolean parseRetain, int length)
 			throws ProtocolException {
-		super(params, msg, 0, parseLazy, parseRetain);
+		super(params, msg, 0, parseLazy, parseRetain, length);
 	}
 
 
@@ -52,21 +54,34 @@ public abstract class ListMessage extends Message
 
     public List<InventoryItem> getItems()
     {
-        return items;
+    	checkParse();
+		return Collections.unmodifiableList(items);
     }
 
     public void addItem(InventoryItem item)
     {
-        items.add(item);
+        unCache();
+    	items.add(item);
+    }
+    
+    public void removeItem(int index)
+    {
+        unCache();
+    	items.remove(index);
     }
 
     @Override
+    protected void parseLite() throws ProtocolException {
+    	 arrayLen = readVarInt();
+         if (arrayLen > MAX_INVENTORY_ITEMS)
+             throw new ProtocolException("Too many items in INV message: " + arrayLen);
+         length = (int) (cursor - offset + (arrayLen * 36));
+    }
+    
+    @Override
     public void parse() throws ProtocolException {
         // An inv is vector<CInv> where CInv is int+hash. The int is either 1 or 2 for tx or block.
-        long arrayLen = readVarInt();
-        if (arrayLen > MAX_INVENTORY_ITEMS)
-            throw new ProtocolException("Too many items in INV message: " + arrayLen);
-        items = new ArrayList<InventoryItem>((int)arrayLen);
+    	 items = new ArrayList<InventoryItem>((int)arrayLen);
         for (int i = 0; i < arrayLen; i++) {
             if (cursor + 4 + 32 > bytes.length) {
                 throw new ProtocolException("Ran off the end of the INV");

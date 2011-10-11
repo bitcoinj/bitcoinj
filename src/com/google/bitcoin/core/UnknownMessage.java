@@ -34,4 +34,6 @@ public class UnknownMessage extends EmptyMessage {
     public void parse() throws ProtocolException {
     }
     
+    
+    
 }

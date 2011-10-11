@@ -35,3 +35,27 @@ Impacts from Steves changes:
 - Remove superfluous empty lines in ListMessage.java
 - Remove VersionMessage check in Message serialization roundtrip checks
 - Delete dead code in Message.checkParsed
+- LazyParseByteCacheTest:
+   - copyright/comments/unused things
+   - debug prints
+   - some redundant asserts
+   - huge functions
+   - dead code
+- Magic number 36 in ListMessage.parseLite
+- Manipulator.java needs docs
+- Assert in Message c'tor needs an English version.
+- Spelling in PeerAddress.bitcoinSerializeToStream
+- SpeedTest has a lot of unused fields, large functions. See if it can be simplified/densified.
+- Caching immutable lists?
+- Dead code in Transaction.parse
+- javadocs on Transaction{Input,Output,} getters
+
+
+Block.java:
+- Reformat
+- Replace magic number 80 with HEADER_SIZE_BYTES in Block.parseTransactions
+- The parseLight stuff isn't clear without referring to superclass.
+- Delete dead code in writeTransactions
+- checkParse{Header,Transactions} should be maybeParse...
+- immutableTransactions is misleading, it allows you to mutate the contents.
+- Unit-test only getters should be package private.

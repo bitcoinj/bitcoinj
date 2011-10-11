@@ -93,7 +93,7 @@ public class Peer {
 
     @Override
     public String toString() {
-        return "Peer(" + address.addr + ":" + address.port + ")";
+        return "Peer(" + address.getAddr() + ":" + address.getPort() + ")";
     }
 
     /**

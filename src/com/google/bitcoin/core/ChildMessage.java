@@ -23,8 +23,8 @@ public abstract class ChildMessage extends Message {
 	}
 
 	public ChildMessage(NetworkParameters params, byte[] msg, int offset, int protocolVersion, Message parent, boolean parseLazy,
-			boolean parseRetain) throws ProtocolException {
-		super(params, msg, offset, protocolVersion, parseLazy, parseRetain);
+			boolean parseRetain, int length) throws ProtocolException {
+		super(params, msg, offset, protocolVersion, parseLazy, parseRetain, length);
 		this.parent = parent;
 	}
 
@@ -32,9 +32,9 @@ public abstract class ChildMessage extends Message {
 		super(params, msg, offset);
 	}
 
-	public ChildMessage(NetworkParameters params, byte[] msg, int offset, Message parent, boolean parseLazy, boolean parseRetain)
+	public ChildMessage(NetworkParameters params, byte[] msg, int offset, Message parent, boolean parseLazy, boolean parseRetain, int length)
 			throws ProtocolException {
-		super(params, msg, offset, parseLazy, parseRetain);
+		super(params, msg, offset, parseLazy, parseRetain, length);
 		this.parent = parent;
 	}
 

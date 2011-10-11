@@ -333,7 +333,7 @@ public class Wallet implements Serializable {
      */
     private void updateForSpends(Transaction tx) throws VerificationException {
         // tx is on the best chain by this point.
-        for (TransactionInput input : tx.inputs) {
+        for (TransactionInput input : tx.getInputs()) {
             TransactionInput.ConnectionResult result = input.connect(unspent, false);
             if (result == TransactionInput.ConnectionResult.NO_SUCH_TX) {
                 // Not found in the unspent map. Try again with the spent map.
@@ -352,13 +352,13 @@ public class Wallet implements Serializable {
                 //
                 //   A  -> spent by B [pending]
                 //     \-> spent by C [chain]
-                Transaction doubleSpent = input.outpoint.fromTx;   // == A
+                Transaction doubleSpent = input.getOutpoint().fromTx;   // == A
                 assert doubleSpent != null;
-                int index = (int) input.outpoint.index;
-                TransactionOutput output = doubleSpent.outputs.get(index);
+                int index = (int) input.getOutpoint().getIndex();
+                TransactionOutput output = doubleSpent.getOutputs().get(index);
                 TransactionInput spentBy = output.getSpentBy();
                 assert spentBy != null;
-                Transaction connected = spentBy.parentTransaction;
+                Transaction connected = spentBy.getParentTransaction();
                 assert connected != null;
                 if (pending.containsKey(connected.getHash())) {
                     log.info("Saw double spend from chain override pending tx {}", connected.getHashAsString());
@@ -378,7 +378,7 @@ public class Wallet implements Serializable {
                 // Otherwise we saw a transaction spend our coins, but we didn't try and spend them ourselves yet.
                 // The outputs are already marked as spent by the connect call above, so check if there are any more for
                 // us to use. Move if not.
-                Transaction connected = input.outpoint.fromTx;
+                Transaction connected = input.getOutpoint().fromTx;
                 maybeMoveTxToSpent(connected, "prevtx");
             }
         }
@@ -425,8 +425,8 @@ public class Wallet implements Serializable {
         assert !pending.containsKey(tx.getHash()) : "confirmSend called on the same transaction twice";
         log.info("confirmSend of {}", tx.getHashAsString());
         // Mark the outputs of the used transcations as spent, so we don't try and spend it again.
-        for (TransactionInput input : tx.inputs) {
-            TransactionOutput connectedOutput = input.outpoint.getConnectedOutput();
+        for (TransactionInput input : tx.getInputs()) {
+            TransactionOutput connectedOutput = input.getOutpoint().getConnectedOutput();
             Transaction connectedTx = connectedOutput.parentTransaction;
             connectedOutput.markAsSpent(input);
             maybeMoveTxToSpent(connectedTx, "spent tx");
@@ -590,7 +590,7 @@ public class Wallet implements Serializable {
         BigInteger valueGathered = BigInteger.ZERO;
         List<TransactionOutput> gathered = new LinkedList<TransactionOutput>();
         for (Transaction tx : unspent.values()) {
-            for (TransactionOutput output : tx.outputs) {
+            for (TransactionOutput output : tx.getOutputs()) {
                 if (!output.isAvailableForSpending()) continue;
                 if (!output.isMine(this)) continue;
                 gathered.add(output);
@@ -714,7 +714,7 @@ public class Wallet implements Serializable {
     public synchronized BigInteger getBalance(BalanceType balanceType) {
         BigInteger available = BigInteger.ZERO;
         for (Transaction tx : unspent.values()) {
-            for (TransactionOutput output : tx.outputs) {
+            for (TransactionOutput output : tx.getOutputs()) {
                 if (!output.isMine(this)) continue;
                 if (!output.isAvailableForSpending()) continue;
                 available = available.add(output.getValue());
@@ -726,7 +726,7 @@ public class Wallet implements Serializable {
         // Now add back all the pending outputs to assume the transaction goes through.
         BigInteger estimated = available;
         for (Transaction tx : pending.values()) {
-            for (TransactionOutput output : tx.outputs) {
+            for (TransactionOutput output : tx.getOutputs()) {
                 if (!output.isMine(this)) continue;
                 estimated = estimated.add(output.getValue());
             }
@@ -871,7 +871,7 @@ public class Wallet implements Serializable {
         inactive.clear();
         for (Transaction tx : commonChainTransactions.values()) {
             int unspentOutputs = 0;
-            for (TransactionOutput output : tx.outputs) {
+            for (TransactionOutput output : tx.getOutputs()) {
                 if (output.isAvailableForSpending()) unspentOutputs++;
             }
             if (unspentOutputs > 0) {
@@ -949,11 +949,11 @@ public class Wallet implements Serializable {
 
     private void reprocessTxAfterReorg(Map<Sha256Hash, Transaction> pool, Transaction tx) {
         log.info("  TX {}", tx.getHashAsString());
-        int numInputs = tx.inputs.size();
+        int numInputs = tx.getInputs().size();
         int noSuchTx = 0;
         int success = 0;
         boolean isDead = false;
-        for (TransactionInput input : tx.inputs) {
+        for (TransactionInput input : tx.getInputs()) {
             if (input.isCoinBase()) {
                 // Input is not in our wallet so there is "no such input tx", bit of an abuse.
                 noSuchTx++;
@@ -970,7 +970,7 @@ public class Wallet implements Serializable {
                 // your own transaction? I hope not!!
                 log.info("   ->dead, will not confirm now unless there's another re-org", tx.getHashAsString());
                 TransactionOutput doubleSpent = input.getConnectedOutput(pool);
-                Transaction replacement = doubleSpent.getSpentBy().parentTransaction;
+                Transaction replacement = doubleSpent.getSpentBy().getParentTransaction();
                 dead.put(tx.getHash(), tx);
                 pending.remove(tx.getHash());
                 // Inform the event listeners of the newly dead tx.

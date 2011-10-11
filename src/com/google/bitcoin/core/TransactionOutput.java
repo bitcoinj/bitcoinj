@@ -50,6 +50,7 @@ public class TransactionOutput extends ChildMessage implements Serializable {
 
     // A reference to the transaction which holds this output.
     Transaction parentTransaction;
+	private transient int scriptLen;
     
     /** Deserializes a transaction output message. This is usually part of a transaction message. */
     public TransactionOutput(NetworkParameters params, Transaction parent, byte[] payload,
@@ -62,7 +63,7 @@ public class TransactionOutput extends ChildMessage implements Serializable {
     /** Deserializes a transaction output message. This is usually part of a transaction message. */
     public TransactionOutput(NetworkParameters params, Transaction parent, byte[] msg, int offset, boolean parseLazy, boolean parseRetain)
 			throws ProtocolException {
-		super(params, msg, offset, parent, parseLazy, parseRetain);
+		super(params, msg, offset, parent, parseLazy, parseRetain, UNKNOWN_LENGTH);
 		parentTransaction = parent;
         availableForSpending = true;
 	}
@@ -85,14 +86,20 @@ public class TransactionOutput extends ChildMessage implements Serializable {
     }
 
 	public Script getScriptPubKey() throws ScriptException {
-        if (scriptPubKey == null)
-            scriptPubKey = new Script(params, scriptBytes, 0, scriptBytes.length);
+        if (scriptPubKey == null) {
+            checkParse();
+        	scriptPubKey = new Script(params, scriptBytes, 0, scriptBytes.length);
+        }
         return scriptPubKey;
     }
+	
+	protected void parseLite() {
+		value = readUint64();
+        scriptLen = (int) readVarInt();
+        length = cursor - offset + scriptLen;
+	}
     
     void parse() throws ProtocolException {
-        value = readUint64();
-        int scriptLen = (int) readVarInt();
         scriptBytes = readBytes(scriptLen);
     }
     
@@ -110,13 +117,14 @@ public class TransactionOutput extends ChildMessage implements Serializable {
      * receives.
      */
     public BigInteger getValue() {
-        return value;
+        checkParse();
+    	return value;
     }
 
     int getIndex() {
         assert parentTransaction != null;
-        for (int i = 0; i < parentTransaction.outputs.size(); i++) {
-            if (parentTransaction.outputs.get(i) == this)
+        for (int i = 0; i < parentTransaction.getOutputs().size(); i++) {
+            if (parentTransaction.getOutputs().get(i) == this)
                 return i;
         }
         // Should never happen.
@@ -143,7 +151,8 @@ public class TransactionOutput extends ChildMessage implements Serializable {
     }
 
     public byte[] getScriptBytes() {
-        return scriptBytes;
+        checkParse();
+    	return scriptBytes;
     }
 
     /** Returns true if this output is to an address we have the keys for in the wallet. */

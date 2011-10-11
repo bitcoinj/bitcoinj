@@ -428,7 +428,7 @@ public class BlockChain {
             try {
                 for (Wallet wallet : wallets) {
                     boolean shouldReceive = false;
-                    for (TransactionOutput output : tx.outputs) {
+                    for (TransactionOutput output : tx.getOutputs()) {
                         // TODO: Handle more types of outputs, not just regular to address outputs.
                         if (output.getScriptPubKey().isSentToIP()) continue;
                         // This is not thread safe as a key could be removed between the call to isMine and receive.
@@ -440,7 +440,7 @@ public class BlockChain {
 
                     // Coinbase transactions don't have anything useful in their inputs (as they create coins out of thin air).
                     if (!shouldReceive && !tx.isCoinBase()) {
-                        for (TransactionInput i : tx.inputs) {
+                        for (TransactionInput i : tx.getInputs()) {
                             byte[] pubkey = i.getScriptSig().getPubKey();
                             // This is not thread safe as a key could be removed between the call to isPubKeyMine and receive.
                             if (wallet.isPubKeyMine(pubkey)) {

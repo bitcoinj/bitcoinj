@@ -79,7 +79,11 @@ public class VersionMessage extends Message {
     
     @Override
     public void parse() throws ProtocolException {
-        clientVersion = (int) readUint32();
+        if (parsed)
+        	return;
+        parsed = true;
+        
+    	clientVersion = (int) readUint32();
         localServices = readUint64().longValue();
         time = readUint64().longValue();
         myAddr = new PeerAddress(params, bytes, cursor, 0);

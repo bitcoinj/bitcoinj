@@ -51,6 +51,8 @@ public class BitcoinSerializer {
 
     private NetworkParameters params;
     private boolean usesChecksumming;
+    private boolean parseLazy = false;
+    private boolean parseRetain = false;
 
     private static Map<Class<? extends Message>, String> names = new HashMap<Class<? extends Message>,String>();
 
@@ -96,9 +98,25 @@ public class BitcoinSerializer {
      */
     public BitcoinSerializer(NetworkParameters params, boolean usesChecksumming,
                              LinkedHashMap<Sha256Hash, Integer> dedupeList) {
+        this(params, usesChecksumming, false, false, dedupeList);
+    }
+    
+    /**
+     * Constructs a BitcoinSerializer with the given behavior.
+     * 
+     * @param params networkParams used to create Messages instances and termining packetMagic
+     * @param usesChecksumming set to true if checkums should be included and expected in headers
+     * @param parseLazy deserialize messages in lazy mode.
+     * @param parseRetain retain the backing byte array of a message for fast reserialization.
+     * @param dedupeList possibly shared list of previously received messages used to avoid parsing duplicates.
+     */
+    public BitcoinSerializer(NetworkParameters params, boolean usesChecksumming, boolean parseLazy, boolean parseRetain,
+                             LinkedHashMap<Sha256Hash, Integer> dedupeList) {
         this.params = params;
         this.usesChecksumming = usesChecksumming;
         this.dedupeList = dedupeList;
+        this.parseLazy = parseLazy;
+        this.parseRetain = parseRetain;
     }
 
     public void setUseChecksumming(boolean usesChecksumming) {
@@ -250,26 +268,26 @@ public class BitcoinSerializer {
         }
 
         try {
-            return makeMessage(header.command, payloadBytes);
+            return makeMessage(header.command, header.size, payloadBytes);
         } catch (Exception e) {
             throw new ProtocolException("Error deserializing message " + Utils.bytesToHexString(payloadBytes) + "\n", e);
         }
     }
 
-    private Message makeMessage(String command, byte[] payloadBytes) throws ProtocolException {
+    private Message makeMessage(String command, int length, byte[] payloadBytes) throws ProtocolException {
         // We use an if ladder rather than reflection because reflection is very slow on Android.
         if (command.equals("version")) {
             return new VersionMessage(params, payloadBytes);
         } else if (command.equals("inv")) {
-            return new InventoryMessage(params, payloadBytes);
+            return new InventoryMessage(params, payloadBytes, parseLazy, parseRetain, length);
         } else if (command.equals("block")) {
-            return new Block(params, payloadBytes);
+            return new Block(params, payloadBytes, parseLazy, parseRetain, length);
         } else if (command.equals("getdata")) {
-            return new GetDataMessage(params, payloadBytes);
+            return new GetDataMessage(params, payloadBytes, parseLazy, parseRetain, length);
         } else if (command.equals("tx")) {
-            return new Transaction(params, payloadBytes);
+            return new Transaction(params, payloadBytes, null, parseLazy, parseRetain, length);
         } else if (command.equals("addr")) {
-            return new AddressMessage(params, payloadBytes);
+            return new AddressMessage(params, payloadBytes, parseLazy, parseRetain, length);
         } else if (command.equals("ping")) {
             return new Ping();
         } else if (command.equals("verack")) {
@@ -303,8 +321,24 @@ public class BitcoinSerializer {
             }
         }
     }
+    
+    /**
+	 * Whether the serializer will produce lazy parse mode Messages
+	 */
+	public boolean isParseLazyMode() {
+		return parseLazy;
+	}
 
-    public class BitcoinPacketHeader {
+	/**
+	 * Whether the serializer will produce cached mode Messages
+	 */
+	public boolean isParseRetainMode() {
+		return parseRetain;
+	}
+
+
+
+	public class BitcoinPacketHeader {
         final byte[] header;
         final String command;
         final int size;

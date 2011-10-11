@@ -35,18 +35,18 @@ public class TransactionInput extends ChildMessage implements Serializable {
     // Allows for altering transactions after they were broadcast. Tx replacement is currently disabled in the C++
     // client so this is always the UINT_MAX.
     // TODO: Document this in more detail and build features that use it.
-    long sequence;
+    private long sequence;
     // Data needed to connect to the output of the transaction we're gathering coins from.
-    TransactionOutPoint outpoint;
+    private TransactionOutPoint outpoint;
     // The "script bytes" might not actually be a script. In coinbase transactions where new coins are minted there
     // is no input transaction, so instead the scriptBytes contains some extra stuff (like a rollover nonce) that we
     // don't care about much. The bytes are turned into a Script object (cached below) on demand via a getter.
-    byte[] scriptBytes;
+    private byte[] scriptBytes;
     // The Script object obtained from parsing scriptBytes. Only filled in on demand and if the transaction is not
     // coinbase.
     transient private Script scriptSig;
     // A pointer to the transaction that owns this input.
-    Transaction parentTransaction;
+    private Transaction parentTransaction;
 
     /** Used only in creation of the genesis block. */
     TransactionInput(NetworkParameters params, Transaction parentTransaction, byte[] scriptBytes) {
@@ -77,10 +77,17 @@ public class TransactionInput extends ChildMessage implements Serializable {
     /** Deserializes an input message. This is usually part of a transaction message. */
     public TransactionInput(NetworkParameters params, Transaction parentTransaction, byte[] msg, int offset, boolean parseLazy, boolean parseRetain)
 			throws ProtocolException {
-		super(params, msg, offset, parentTransaction, parseLazy, parseRetain);
+		super(params, msg, offset, parentTransaction, parseLazy, parseRetain, UNKNOWN_LENGTH);
 		this.parentTransaction = parentTransaction;
 	}
 
+    protected void parseLite() {
+    	int curs = cursor;
+    	int scriptLen = (int) readVarInt(36);
+    	length = cursor - offset + scriptLen + 4;
+    	cursor = curs;
+    }
+    
 	void parse() throws ProtocolException {
         outpoint = new TransactionOutPoint(params, bytes, cursor, this, parseLazy, parseRetain);
         cursor += outpoint.getMessageSize(); 
@@ -101,7 +108,7 @@ public class TransactionInput extends ChildMessage implements Serializable {
      * Coinbase transactions have special inputs with hashes of zero. If this is such an input, returns true.
      */
     public boolean isCoinBase() {
-        return outpoint.hash.equals(Sha256Hash.ZERO_HASH);
+        return outpoint.getHash().equals(Sha256Hash.ZERO_HASH);
     }
 
     /**
@@ -111,7 +118,8 @@ public class TransactionInput extends ChildMessage implements Serializable {
         // Transactions that generate new coins don't actually have a script. Instead this
         // parameter is overloaded to be something totally different.
         if (scriptSig == null) {
-            assert scriptBytes != null;
+            checkParse();
+        	assert scriptBytes != null;
             scriptSig = new Script(params, scriptBytes, 0, scriptBytes.length);
         }
         return scriptSig;
@@ -125,9 +133,55 @@ public class TransactionInput extends ChildMessage implements Serializable {
         assert !isCoinBase();
         return getScriptSig().getFromAddress();
     }
+    
+    /**
+	 * @return the sequence
+	 */
+	public long getSequence() {
+		checkParse();
+		return sequence;
+	}
 
+	/**
+	 * @param sequence the sequence to set
+	 */
+	public void setSequence(long sequence) {
+		unCache();
+		this.sequence = sequence;
+	}
 
-    /** Returns a human readable debug string. */
+	/**
+	 * @return the outpoint
+	 */
+	public TransactionOutPoint getOutpoint() {
+		checkParse();
+		return outpoint;
+	}
+
+	/**
+	 * @return the scriptBytes
+	 */
+	public byte[] getScriptBytes() {
+		checkParse();
+		return scriptBytes;
+	}
+	
+	/**
+	 * @param scriptBytes the scriptBytes to set
+	 */
+	void setScriptBytes(byte[] scriptBytes) {
+		unCache();
+		this.scriptBytes = scriptBytes;
+	}
+
+	/**
+	 * @return the parentTransaction
+	 */
+	public Transaction getParentTransaction() {
+		return parentTransaction;
+	}
+
+	/** Returns a human readable debug string. */
     public String toString() {
         if (isCoinBase())
             return "TxIn: COINBASE";
@@ -153,10 +207,10 @@ public class TransactionInput extends ChildMessage implements Serializable {
      * @return The TransactionOutput or null if the transactions map doesn't contain the referenced tx.
      */
     TransactionOutput getConnectedOutput(Map<Sha256Hash, Transaction> transactions) {
-        Transaction tx = transactions.get(outpoint.hash);
+        Transaction tx = transactions.get(outpoint.getHash());
         if (tx == null)
             return null;
-        TransactionOutput out = tx.outputs.get((int)outpoint.index);
+        TransactionOutput out = tx.getOutputs().get((int)outpoint.getIndex());
         return out;
     }
 
@@ -169,10 +223,10 @@ public class TransactionInput extends ChildMessage implements Serializable {
      * @return true if connection took place, false if the referenced transaction was not in the list.
      */
     ConnectionResult connect(Map<Sha256Hash, Transaction> transactions, boolean disconnect) {
-        Transaction tx = transactions.get(outpoint.hash);
+        Transaction tx = transactions.get(outpoint.getHash());
         if (tx == null)
             return TransactionInput.ConnectionResult.NO_SUCH_TX;
-        TransactionOutput out = tx.outputs.get((int)outpoint.index);
+        TransactionOutput out = tx.getOutputs().get((int)outpoint.getIndex());
         if (!out.isAvailableForSpending()) {
             if (disconnect)
                 out.markAsUnspent();
@@ -191,7 +245,7 @@ public class TransactionInput extends ChildMessage implements Serializable {
      */
     boolean disconnect() {
         if (outpoint.fromTx == null) return false;
-        outpoint.fromTx.outputs.get((int)outpoint.index).markAsUnspent();
+        outpoint.fromTx.getOutputs().get((int)outpoint.getIndex()).markAsUnspent();
         outpoint.fromTx = null;
         return true;
     }

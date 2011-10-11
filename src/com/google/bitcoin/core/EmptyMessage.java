@@ -26,4 +26,42 @@ public abstract class EmptyMessage extends Message {
 	final protected void bitcoinSerializeToStream(OutputStream stream) throws IOException {
 	}
 
+	@Override
+	int getMessageSize() {
+		return 0;
+	}
+
+	/* (non-Javadoc)
+	 * @see com.google.bitcoin.core.Message#parse()
+	 */
+	@Override
+	void parse() throws ProtocolException {
+	}
+
+	/* (non-Javadoc)
+	 * @see com.google.bitcoin.core.Message#parseLite()
+	 */
+	@Override
+	protected void parseLite() throws ProtocolException {
+		length = 0;
+	}
+
+	/* (non-Javadoc)
+	 * @see com.google.bitcoin.core.Message#ensureParsed()
+	 */
+	@Override
+	public void ensureParsed() throws ProtocolException {
+		parsed = true;
+	}
+
+	/* (non-Javadoc)
+	 * @see com.google.bitcoin.core.Message#bitcoinSerialize()
+	 */
+	@Override
+	public byte[] bitcoinSerialize() {
+		return new byte[0];
+	}
+	
+	
+
 }

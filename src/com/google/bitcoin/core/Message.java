@@ -35,6 +35,8 @@ public abstract class Message implements Serializable {
 	private static final long serialVersionUID = -3561053461717079135L;
 
     public static final int MAX_SIZE = 0x02000000;
+	
+	public static final int UNKNOWN_LENGTH = -1;
 
     // Useful to ensure serialize/deserialize are consistent with each other.
     private static final boolean SELF_CHECK = false;
@@ -44,11 +46,13 @@ public abstract class Message implements Serializable {
     // The cursor keeps track of where we are in the byte array as we parse it.
     // Note that it's relative to the start of the array NOT the start of the message.
     protected transient int cursor;
+    
+    protected transient int length = UNKNOWN_LENGTH;
 
     // The raw message bytes themselves.
     protected transient byte[] bytes;
     
-    private transient boolean parsed = false;
+    protected transient boolean parsed = false;
     protected transient final boolean parseLazy;
     protected transient final boolean parseRetain;
 
@@ -72,21 +76,31 @@ public abstract class Message implements Serializable {
     }
 
     Message(NetworkParameters params, byte[] msg, int offset, int protocolVersion) throws ProtocolException {
-    	this(params, msg, offset, protocolVersion, false, false);
+    	this(params, msg, offset, protocolVersion, false, false, UNKNOWN_LENGTH);
     }
     
     @SuppressWarnings("unused")
-    Message(NetworkParameters params, byte[] msg, int offset, int protocolVersion, final boolean parseLazy, final boolean parseRetain) throws ProtocolException {
+    Message(NetworkParameters params, byte[] msg, int offset, int protocolVersion, final boolean parseLazy, final boolean parseRetain, int length) throws ProtocolException {
         this.parseLazy = parseLazy;
         this.parseRetain = parseRetain;
     	this.protocolVersion = protocolVersion;
         this.params = params;
         this.bytes = msg;
         this.cursor = this.offset = offset;
-        if (!parseLazy) {
+        this.length = length;
+        if (parseLazy) {
+        	parseLite();
+        } else {
+        	parseLite();
         	parse();
         	parsed = true;
         }
+        
+        assert (parseLazy ? !parsed : parsed && (parseRetain ? bytes != null : bytes == null)) 
+        	: "parseLazy : " + parseLazy + " parsed: " + parsed 
+        	+ " parseRetain:" + parseRetain 
+        	+ " bytes == null" + bytes == null;
+        
         if (SELF_CHECK && !this.getClass().getSimpleName().equals("VersionMessage"))  {
             checkParse();
         	byte[] msgbytes = new byte[cursor - offset];
@@ -103,11 +117,11 @@ public abstract class Message implements Serializable {
     }
 
     Message(NetworkParameters params, byte[] msg, int offset) throws ProtocolException {
-        this(params, msg, offset, NetworkParameters.PROTOCOL_VERSION, false, false);
+        this(params, msg, offset, NetworkParameters.PROTOCOL_VERSION, false, false, UNKNOWN_LENGTH);
     }
     
-    Message(NetworkParameters params, byte[] msg, int offset, final boolean parseLazy, final boolean parseRetain) throws ProtocolException {
-        this(params, msg, offset, NetworkParameters.PROTOCOL_VERSION, parseLazy, parseRetain);
+    Message(NetworkParameters params, byte[] msg, int offset, final boolean parseLazy, final boolean parseRetain, int length) throws ProtocolException {
+        this(params, msg, offset, NetworkParameters.PROTOCOL_VERSION, parseLazy, parseRetain, length);
     }
     
     // These methods handle the serialization/deserialization using the custom BitCoin protocol.
@@ -115,6 +129,19 @@ public abstract class Message implements Serializable {
     // serialization mechanism - the standard Java serialization system. This is used when things 
     // are serialized to the wallet.
     abstract void parse() throws ProtocolException;
+    
+    /**
+     * Perform the most minimal parse possible to calculate the length of the message.
+     * This is only required for subclasses of ChildClass as root level messages will have their length passed
+     * into the constructor.
+     * 
+     * It is expected that the length field will be set before this method returns.
+     * @return 
+     * @throws ProtocolException 
+     */
+    protected void parseLite() throws ProtocolException {
+    	length = getMessageSize();
+    }
     
     /**
      * Ensure the object is parsed if needed.  This should be called in every getter before returning a value.
@@ -126,11 +153,30 @@ public abstract class Message implements Serializable {
     	try {
 			parse();
 			parsed = true;
-			//if (!parseRetain)
-				//bytes = null;
+			if (!parseRetain)
+				bytes = null;
 		} catch (ProtocolException e) {
-			throw new RuntimeException("Lazy parsing of message failed", e);
+			 throw new LazyParseException("ProtocolException caught during lazy parse.  For safe access to fields call ensureParsed before attempting read or write access", e);
 		}
+    }
+    
+    /**
+     * In lazy parsing mode access to getters and setters may throw an unchecked LazyParseException.  If guaranteed safe access is required
+     * this method will force parsing to occur immediately thus ensuring LazyParseExeption will never be thrown from this Message.
+     * If the Message contains child messages (e.g. a Block containing Transaction messages) this will not force child messages to parse.
+     * 
+     * This could be overidden for Transaction and it's child classes to ensure the entire tree of Message objects is parsed.
+     * 
+     * @throws ProtocolException
+     */
+    public void ensureParsed() throws ProtocolException {
+    	try {
+    		checkParse();
+    	} catch (LazyParseException e) {
+    		if (e.getCause() instanceof ProtocolException)
+    			throw (ProtocolException) e.getCause();
+    		throw new ProtocolException(e);
+    	}
     }
     
     /**
@@ -158,10 +204,25 @@ public abstract class Message implements Serializable {
     	 */
 
     	
-    	//if (!parseRetain)
-    	//	return;
-    	//checkParse();
-    	//bytes = null;
+    	if (parseRetain) {
+    		checkParse();
+    		bytes = null;
+    	}
+    }
+    
+    /**
+     * used for unit testing
+     */
+    public boolean isParsed() {
+    	return parsed;
+    }
+    
+    /**
+     * used for unit testing
+     */
+    public boolean isCached() {
+    	//return parseLazy ? parsed && bytes != null : bytes != null;
+    	return bytes != null;
     }
     
     /**
@@ -180,20 +241,23 @@ public abstract class Message implements Serializable {
      * 
      * @return 
      */
-    final public byte[] bitcoinSerialize() {
+    public byte[] bitcoinSerialize() {
     	
     	//1st attempt to use a cached array
     	if (bytes != null) {
-    		if (offset == 0 && cursor == bytes.length) {
+    		if (offset == 0 && length == bytes.length) {
     			//cached byte array is the entire message with no extras
     			//so we can return as is and avoid an array copy.
     			return bytes;
     		}
+    		
     		int len = cursor - offset;
     		byte[] buf = new byte[len];
     		System.arraycopy(bytes, offset, buf, 0, len);
     		return buf;
     	}
+    	
+    	assert bytes == null : "cached bytes present but failed to use them for serialization";
     	
     	//no cached array available so serialize parts by stream.
     	ByteArrayOutputStream stream = new ByteArrayOutputStream();
@@ -201,7 +265,6 @@ public abstract class Message implements Serializable {
             bitcoinSerializeToStream(stream);
         } catch (IOException e) {
             // Cannot happen, we are serializing to a memory stream.
-            throw new RuntimeException(e);
         }
         return stream.toByteArray();
     }
@@ -213,10 +276,11 @@ public abstract class Message implements Serializable {
      */
     final public void bitcoinSerialize(OutputStream stream) throws IOException {
     	//1st check for cached bytes
-    	if (bytes != null) {
-    		stream.write(bytes, offset, cursor - offset);
+    	if (bytes != null && length != UNKNOWN_LENGTH) {
+    		stream.write(bytes, offset, length);
     		return;
     	}
+    	
     	bitcoinSerializeToStream(stream);
     }
 
@@ -227,8 +291,19 @@ public abstract class Message implements Serializable {
     	log.debug("Warning: {} class has not implemented bitcoinSerializeToStream method.  Generating message with no payload", getClass());
     }
     
+    /**
+     * This should be overidden to extract correct message size in the case of lazy parsing.  Until this method is
+     * implemented in a subclass of ChildMessage lazy parsing will have no effect.
+     * 
+     * This default implementation is a safe fall back that will ensure it returns a correct value.
+     * @return
+     */
     int getMessageSize() {
-        return cursor - offset;
+        if (length != UNKNOWN_LENGTH)
+        	return length;
+    	checkParse();
+    	length = cursor - offset;
+    	return length;
     }
     
     long readUint32() {
@@ -262,6 +337,12 @@ public abstract class Message implements Serializable {
         cursor += varint.getSizeInBytes();
         return varint.value;
     }
+    
+    long readVarInt(int offset) {
+        VarInt varint = new VarInt(bytes, cursor + offset);
+        cursor += offset + varint.getSizeInBytes();
+        return varint.value;
+    }
 
 
     byte[] readBytes(int length) {
@@ -286,5 +367,17 @@ public abstract class Message implements Serializable {
         } catch (UnsupportedEncodingException e) {
             throw new RuntimeException(e);  // Cannot happen, UTF-8 is always supported.
         }
+    }
+    
+    public class LazyParseException extends RuntimeException {
+
+		public LazyParseException(String message, Throwable cause) {
+			super(message, cause);
+		}
+
+		public LazyParseException(String message) {
+			super(message);
+		}
+    	
     }
 }

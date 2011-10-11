@@ -66,8 +66,8 @@ public class WalletTest {
         assertEquals(1, wallet.getPoolSize(Wallet.Pool.ALL));
 
         // Do some basic sanity checks.
-        assertEquals(1, t2.inputs.size());
-        assertEquals(myAddress, t2.inputs.get(0).getScriptSig().getFromAddress());
+        assertEquals(1, t2.getInputs().size());
+        assertEquals(myAddress, t2.getInputs().get(0).getScriptSig().getFromAddress());
 
         // We have NOT proven that the signature is correct!
 
@@ -229,7 +229,7 @@ public class WalletTest {
         // That other guy gives us the coins right back.
         Transaction inbound2 = new Transaction(params);
         inbound2.addOutput(new TransactionOutput(params, inbound2, coinHalf, myAddress));
-        inbound2.addInput(outbound1.outputs.get(0));
+        inbound2.addInput(outbound1.getOutputs().get(0));
         wallet.receive(inbound2, null, BlockChain.NewBlockType.BEST_CHAIN);
         assertEquals(coin1, wallet.getBalance());
     }

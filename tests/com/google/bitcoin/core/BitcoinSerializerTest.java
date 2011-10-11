@@ -21,11 +21,14 @@ import org.bouncycastle.util.encoders.Hex;
 import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 public class BitcoinSerializerTest {
     private final byte[] addrMessage = Hex.decode("f9beb4d96164647200000000000000001f000000" +
@@ -53,7 +56,7 @@ public class BitcoinSerializerTest {
 
     @Test
     public void testVersion() throws Exception {
-        BitcoinSerializer bs = new BitcoinSerializer(NetworkParameters.prodNet(), false, null);
+    	BitcoinSerializer bs = new BitcoinSerializer(NetworkParameters.prodNet(), false, null);
         // the actual data from https://en.bitcoin.it/wiki/Protocol_specification#version
         ByteArrayInputStream bais = new ByteArrayInputStream(Hex.decode("f9beb4d976657273696f6e0000000000550000009" +
                 "c7c00000100000000000000e615104d00000000010000000000000000000000000000000000ffff0a000001daf6010000" +
@@ -82,14 +85,19 @@ public class BitcoinSerializerTest {
 
     @Test
     public void testAddr() throws Exception {
-        BitcoinSerializer bs = new BitcoinSerializer(NetworkParameters.prodNet(), true, null);
+    	BitcoinSerializer bs = new BitcoinSerializer(NetworkParameters.prodNet(), true, null);
         // the actual data from https://en.bitcoin.it/wiki/Protocol_specification#addr
         ByteArrayInputStream bais = new ByteArrayInputStream(addrMessage);
         AddressMessage a = (AddressMessage)bs.deserialize(bais);
-        assertEquals(1, a.addresses.size());
-        PeerAddress pa = a.addresses.get(0);
-        assertEquals(8333, pa.port);
-        assertEquals("10.0.0.1", pa.addr.getHostAddress());
+        assertEquals(1, a.getAddresses().size());
+        PeerAddress pa = a.getAddresses().get(0);
+        assertEquals(8333, pa.getPort());
+        assertEquals("10.0.0.1", pa.getAddr().getHostAddress());
+        ByteArrayOutputStream bos = new ByteArrayOutputStream(addrMessage.length);
+        bs.serialize(a, bos);
+        
+        //this wont be true due to dynamic timestamps.
+        //assertTrue(LazyParseByteCacheTest.arrayContains(bos.toByteArray(), addrMessage));
     }
 
     @Test
@@ -103,4 +111,93 @@ public class BitcoinSerializerTest {
         tx = (Transaction)bs.deserialize(bais);
         assertNull(tx);
     }
+    
+    @Test 
+    public void testLazyParsing()  throws Exception {
+    	BitcoinSerializer bs = new BitcoinSerializer(NetworkParameters.prodNet(), true, true, false, null);
+    	
+    	ByteArrayInputStream bais = new ByteArrayInputStream(txMessage);
+    	Transaction tx = (Transaction)bs.deserialize(bais);
+        assertNotNull(tx);
+        assertEquals(false, tx.isParsed());
+        assertEquals(true, tx.isCached());
+        tx.getInputs();
+        assertEquals(true, tx.isParsed());
+        
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        bs.serialize(tx, bos);
+        System.out.println(Utils.bytesToHexString(txMessage));
+        System.out.println(Utils.bytesToHexString(bos.toByteArray()));
+        assertEquals(true, Arrays.equals(txMessage, bos.toByteArray()));
+        
+    }
+    
+    @Test 
+    public void testCachedParsing()  throws Exception {
+    	testCachedParsing(true);
+    	testCachedParsing(false);
+    }
+    
+    private void testCachedParsing(boolean lazy)  throws Exception {
+    	BitcoinSerializer bs = new BitcoinSerializer(NetworkParameters.prodNet(), true, lazy, true, null);
+    	
+    	//first try writing to a fields to ensure uncaching and children are not affected
+    	ByteArrayInputStream bais = new ByteArrayInputStream(txMessage);
+    	Transaction tx = (Transaction)bs.deserialize(bais);
+        assertNotNull(tx);
+        assertEquals(!lazy, tx.isParsed());
+        assertEquals(true, tx.isCached());
+        
+        tx.setLockTime(1);
+        //parent should have been uncached
+        assertEquals(false, tx.isCached());
+        //child should remain cached.
+        assertEquals(true, tx.getInputs().get(0).isCached());
+        
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        bs.serialize(tx, bos);
+        assertEquals(true, !Arrays.equals(txMessage, bos.toByteArray()));
+    	
+      //now try writing to a child to ensure uncaching is propagated up to parent but not to siblings
+    	bais = new ByteArrayInputStream(txMessage);
+    	tx = (Transaction)bs.deserialize(bais);
+    	assertNotNull(tx);
+        assertEquals(!lazy, tx.isParsed());
+        assertEquals(true, tx.isCached());
+        
+        tx.getInputs().get(0).setSequence(1);
+        //parent should have been uncached
+        assertEquals(false, tx.isCached());
+        //so should child
+        assertEquals(false, tx.getInputs().get(0).isCached());
+        
+        bos = new ByteArrayOutputStream();
+        bs.serialize(tx, bos);
+        assertEquals(true, !Arrays.equals(txMessage, bos.toByteArray()));
+        
+      //deserialize/reserialize to check for equals.
+        bais = new ByteArrayInputStream(txMessage);
+    	tx = (Transaction)bs.deserialize(bais);
+    	assertNotNull(tx);
+        assertEquals(!lazy, tx.isParsed());
+        assertEquals(true, tx.isCached());
+        bos = new ByteArrayOutputStream();
+        bs.serialize(tx, bos);
+        assertEquals(true, Arrays.equals(txMessage, bos.toByteArray()));
+        
+      //deserialize/reserialize to check for equals.  Set a field to it's existing value to trigger uncache
+        bais = new ByteArrayInputStream(txMessage);
+    	tx = (Transaction)bs.deserialize(bais);
+    	assertNotNull(tx);
+        assertEquals(!lazy, tx.isParsed());
+        assertEquals(true, tx.isCached());
+       
+        tx.getInputs().get(0).setSequence(tx.getInputs().get(0).getSequence());
+        
+        bos = new ByteArrayOutputStream();
+        bs.serialize(tx, bos);
+        assertEquals(true, Arrays.equals(txMessage, bos.toByteArray()));
+        
+    }
+    
 }

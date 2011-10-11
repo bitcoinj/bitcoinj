@@ -43,10 +43,16 @@ public class Transaction extends ChildMessage implements Serializable {
     private static final long serialVersionUID = -8567546957352643140L;
 
     // These are serialized in both bitcoin and java serialization.
-    long version;
-    ArrayList<TransactionInput> inputs;
-    ArrayList<TransactionOutput> outputs;
-    long lockTime;
+    private long version;
+    private ArrayList<TransactionInput> inputs;
+    //a cached copy to prevent constantly rewrapping
+    private transient List<TransactionInput> immutableInputs;
+    
+    private ArrayList<TransactionOutput> outputs;
+    //a cached copy to prevent constantly rewrapping
+    private transient List<TransactionOutput> immutableOutputs;
+    
+    private long lockTime;
 
     // This is only stored in Java serialization. It records which blocks (and their height + work) the transaction
     // has been included in. For most transactions this set will have a single member. In the case of a chain split a
@@ -93,25 +99,18 @@ public class Transaction extends ChildMessage implements Serializable {
     /**
      * Creates a transaction by reading payload starting from offset bytes in. Length of a transaction is fixed.
      */
-    public Transaction(NetworkParameters params, byte[] msg, int offset, Message parent, boolean parseLazy, boolean parseRetain)
+    public Transaction(NetworkParameters params, byte[] msg, int offset, Message parent, boolean parseLazy, boolean parseRetain, int length)
 			throws ProtocolException {
-		super(params, msg, offset, parent, parseLazy, parseRetain);
+		super(params, msg, offset, parent, parseLazy, parseRetain, length);
 	}
     
     /**
      * Creates a transaction by reading payload starting from offset bytes in. Length of a transaction is fixed.
      */
-    public Transaction(NetworkParameters params, byte[] msg, Message parent, boolean parseLazy, boolean parseRetain)
+    public Transaction(NetworkParameters params, byte[] msg, Message parent, boolean parseLazy, boolean parseRetain, int length)
 			throws ProtocolException {
-		super(params, msg, 0, parent, parseLazy, parseRetain);
+		super(params, msg, 0, parent, parseLazy, parseRetain, length);
 	}
-
-	/**
-     * Returns a read-only list of the inputs of this transaction.
-     */
-    public List<TransactionInput> getInputs() {
-        return Collections.unmodifiableList(inputs);
-    }
 
     /**
      * Returns the transaction hash as you see them in the block explorer.
@@ -283,9 +282,35 @@ public class Transaction extends ChildMessage implements Serializable {
         SINGLE,      // 3
     }
 
+    protected void parseLite() throws ProtocolException {
+    	
+    	//skip this if the length has been provided i.e. the tx is not part of a block
+    	if (parseLazy && length == UNKNOWN_LENGTH) {
+    		//If length hasn't been provided this tx is probably contained within a block.
+    		//In parseRetain mode the block needs to know how long the transaction is
+    		//unfortunately this requires a fairly deep (though not total) parse. 
+    		//This is due to the fact that transactions in the block's list do not include a
+    		//size header and inputs/outputs are also variable length due the contained
+    		//script so each must be instantiated so the scriptlength varint can be read
+    		//to calculate total length of the transaction.
+    		//We will still persist will this semi-light parsing because getting the lengths
+    		//of the various components gains us the ability to cache the backing bytearrays
+    		//so that only those subcomponents that have changed will need to be reserialized.
+    	
+    		parse();
+    		parsed = true;
+    	}
+    }
+    
     void parse() throws ProtocolException {
-        version = readUint32();
-        // First come the inputs.
+    	
+    	if (parsed)
+    		return;
+    	
+    	version = readUint32();
+    	int marker = cursor;
+    	
+    	// First come the inputs.
         long numInputs = readVarInt();
         inputs = new ArrayList<TransactionInput>((int)numInputs);
         for (long i = 0; i < numInputs; i++) {
@@ -302,6 +327,7 @@ public class Transaction extends ChildMessage implements Serializable {
             cursor += output.getMessageSize();
         }
         lockTime = readUint32();
+        length = cursor - offset;
     }
 
     /**
@@ -375,6 +401,9 @@ public class Transaction extends ChildMessage implements Serializable {
 
     /** Adds an input directly, with no checking that it's valid. */
     public void addInput(TransactionInput input) {
+        unCache();
+        input.setParent(this);
+        immutableInputs = null;
         inputs.add(input);
     }
 
@@ -382,7 +411,13 @@ public class Transaction extends ChildMessage implements Serializable {
      * Adds the given output to this transaction. The output must be completely initialized.
      */
     public void addOutput(TransactionOutput to) {
+        unCache();
+        
+        //these could be merged into one but would need parentTransaction to be cast whenever it was accessed.
+        to.setParent(this); 
         to.parentTransaction = this;
+        
+        immutableOutputs = null;
         outputs.add(to);
     }
 
@@ -415,11 +450,11 @@ public class Transaction extends ChildMessage implements Serializable {
         ECKey[] signingKeys = new ECKey[inputs.size()];
         for (int i = 0; i < inputs.size(); i++) {
             TransactionInput input = inputs.get(i);
-            assert input.scriptBytes.length == 0 : "Attempting to sign a non-fresh transaction";
+            assert input.getScriptBytes().length == 0 : "Attempting to sign a non-fresh transaction";
             // Set the input to the script of its output.
-            input.scriptBytes = input.outpoint.getConnectedPubKeyScript();
+            input.setScriptBytes(input.getOutpoint().getConnectedPubKeyScript());
             // Find the signing key we'll need to use.
-            byte[] connectedPubKeyHash = input.outpoint.getConnectedPubKeyHash();
+            byte[] connectedPubKeyHash = input.getOutpoint().getConnectedPubKeyHash();
             ECKey key = wallet.findKeyFromPubHash(connectedPubKeyHash);
             // This assert should never fire. If it does, it means the wallet is inconsistent.
             assert key != null : "Transaction exists in wallet that we cannot redeem: " + Utils.bytesToHexString(connectedPubKeyHash);
@@ -429,7 +464,7 @@ public class Transaction extends ChildMessage implements Serializable {
             boolean anyoneCanPay = false;
             byte[] hash = hashTransactionForSignature(hashType, anyoneCanPay);
             // Set the script to empty again for the next input.
-            input.scriptBytes = TransactionInput.EMPTY_ARRAY;
+            input.setScriptBytes(TransactionInput.EMPTY_ARRAY);
 
             // Now sign for the output so we can redeem it. We use the keypair to sign the hash,
             // and then put the resulting signature in the script along with the public key (below).
@@ -448,9 +483,9 @@ public class Transaction extends ChildMessage implements Serializable {
         // output.
         for (int i = 0; i < inputs.size(); i++) {
             TransactionInput input = inputs.get(i);
-            assert input.scriptBytes.length == 0;
+            assert input.getScriptBytes().length == 0;
             ECKey key = signingKeys[i];
-            input.scriptBytes = Script.createInputScript(signatures[i], key.getPubKey());
+            input.setScriptBytes(Script.createInputScript(signatures[i], key.getPubKey()));
         }
 
         // Every input is now complete.
@@ -484,8 +519,56 @@ public class Transaction extends ChildMessage implements Serializable {
             out.bitcoinSerialize(stream);
         uint32ToByteStreamLE(lockTime, stream);
     }
+    
+    
 
-    @Override
+    /**
+	 * @return the lockTime
+	 */
+	public long getLockTime() {
+		checkParse();
+		return lockTime;
+	}
+
+	/**
+	 * @param lockTime the lockTime to set
+	 */
+	public void setLockTime(long lockTime) {
+		unCache();
+		this.lockTime = lockTime;
+	}
+
+	/**
+	 * @return the version
+	 */
+	public long getVersion() {
+		checkParse();
+		return version;
+	}
+	
+	/**
+     * @return a read-only list of the inputs of this transaction.
+     */
+    public List<TransactionInput> getInputs() {
+        if (immutableInputs == null) {
+        	checkParse();
+        	immutableInputs = Collections.unmodifiableList(inputs);
+        }
+    	return immutableInputs;
+    }
+
+	/**
+	 * @return a read-only list of the outputs of this transaction.
+	 */
+	public List<TransactionOutput> getOutputs() {
+		if (immutableOutputs == null) {
+			checkParse();
+			immutableOutputs = Collections.unmodifiableList(outputs);
+		}
+		return immutableOutputs;
+	}
+
+	@Override
     public boolean equals(Object other) {
         if (!(other instanceof Transaction)) return false;
         Transaction t = (Transaction) other;

@@ -74,9 +74,9 @@ public class NetworkConnection {
                              int bestHeight, int connectTimeout, boolean dedupe)
             throws IOException, ProtocolException {
         this.params = params;
-        this.remoteIp = peerAddress.addr;
+        this.remoteIp = peerAddress.getAddr();
 
-        int port = (peerAddress.port > 0) ? peerAddress.port : params.port;
+        int port = (peerAddress.getPort() > 0) ? peerAddress.getPort() : params.port;
 
         InetSocketAddress address = new InetSocketAddress(remoteIp, port);
         socket = new Socket();
