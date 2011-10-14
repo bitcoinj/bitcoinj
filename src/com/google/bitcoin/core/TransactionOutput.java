@@ -74,6 +74,7 @@ public class TransactionOutput extends ChildMessage implements Serializable {
         this.scriptBytes = Script.createOutputScript(to);
         parentTransaction = parent;
         availableForSpending = true;
+        length = 8 + VarInt.sizeOf(scriptBytes.length) + scriptBytes.length;
     }
 
     /** Used only in creation of the genesis blocks and in unit tests. */

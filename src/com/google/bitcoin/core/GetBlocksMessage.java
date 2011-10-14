@@ -18,20 +18,36 @@ package com.google.bitcoin.core;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.List;
 
 public class GetBlocksMessage extends Message {
     private static final long serialVersionUID = 3479412877853645644L;
-    private final List<Sha256Hash> locator;
-    private final Sha256Hash stopHash;
+    private long version;
+    private List<Sha256Hash> locator;
+    private Sha256Hash stopHash;
 
     public GetBlocksMessage(NetworkParameters params, List<Sha256Hash> locator, Sha256Hash stopHash) {
         super(params);
+        this.version = protocolVersion;
         this.locator = locator;
         this.stopHash = stopHash;
     }
     
-    public void parse() {
+    protected void parseLite() throws ProtocolException {
+    	//NOP.  This is a root level message and should always be provided with a length.
+    }
+    
+    public void parse() throws ProtocolException {
+    	cursor = offset;
+    	version = readUint32();
+    	int startCount = (int) readVarInt();
+    	if (startCount > 500)
+    		throw new ProtocolException("Number of locators cannot be > 500, received: " + startCount);locator = new ArrayList(startCount);
+    	for (int i = 0; i < startCount; i++) {
+    		locator.add(readHash());
+    	}
+    	stopHash = readHash();
     }
     
     public List<Sha256Hash> getLocator() {

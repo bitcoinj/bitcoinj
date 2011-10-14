@@ -12,14 +12,17 @@ import java.io.OutputStream;
 public abstract class EmptyMessage extends Message {
 
 	public EmptyMessage() {
+		length = 0;
 	}
 
 	public EmptyMessage(NetworkParameters params) {
 		super(params);
+		length = 0;
 	}
 
 	public EmptyMessage(NetworkParameters params, byte[] msg, int offset) throws ProtocolException {
 		super(params, msg, offset);
+		length = 0;
 	}
 
 	@Override

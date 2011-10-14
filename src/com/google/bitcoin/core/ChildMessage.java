@@ -58,6 +58,11 @@ public abstract class ChildMessage extends Message {
 			parent.unCache();
 	}
 	
-	
+    protected void adjustLength(int adjustment) {
+    	if (length != UNKNOWN_LENGTH)
+    		length += adjustment;
+    	if (parent != null)
+			parent.adjustLength(adjustment);
+    }
 
 }

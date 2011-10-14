@@ -140,9 +140,10 @@ public abstract class Message implements Serializable {
      * @return 
      * @throws ProtocolException 
      */
-    protected void parseLite() throws ProtocolException {
-    	length = getMessageSize();
-    }
+    protected abstract void parseLite() throws ProtocolException;
+//    {
+//    	length = getMessageSize();
+//    }
     
     /**
      * Ensure the object is parsed if needed.  This should be called in every getter before returning a value.
@@ -209,6 +210,12 @@ public abstract class Message implements Serializable {
     	recached = false;
     }
     
+    protected void adjustLength(int adjustment) {
+    	if (length != UNKNOWN_LENGTH)
+    		//our own length is now unknown if we have an unknown length adjustment.
+    		length = adjustment == UNKNOWN_LENGTH ? UNKNOWN_LENGTH : length + adjustment;
+    }
+    
     /**
      * used for unit testing
      */
@@ -263,7 +270,7 @@ public abstract class Message implements Serializable {
     	assert bytes == null : "cached bytes present but failed to use them for serialization";
     	
     	//no cached array available so serialize parts by stream.
-    	ByteArrayOutputStream stream = new ByteArrayOutputStream();
+    	ByteArrayOutputStream stream = new ByteArrayOutputStream(length < 32 ? 32 : length + 32);
         try {
             bitcoinSerializeToStream(stream);
         } catch (IOException e) {
@@ -286,8 +293,12 @@ public abstract class Message implements Serializable {
         	length = bytes.length;
         	return bytes;
         }
-        
-        return stream.toByteArray();
+        //record length.  If this Message wasn't parsed from a but stream it won't have length field
+        //set (except for static length message types).  Setting it makes future streaming more efficient
+        //because we can preallocate the ByteArrayOutputStream buffer and avoid resizing.
+        byte[] buf = stream.toByteArray();
+        length = buf.length;
+        return buf;
     }
     
     /**
@@ -322,17 +333,18 @@ public abstract class Message implements Serializable {
     }
     
     /**
-     * This should be overidden to extract correct message size in the case of lazy parsing.  Until this method is
-     * implemented in a subclass of ChildMessage lazy parsing will have no effect.
+     * This should be overridden to extract correct message size in the case of lazy parsing.  Until this method is
+     * implemented in a subclass of ChildMessage lazy parsing may have no effect.
      * 
-     * This default implementation is a safe fall back that will ensure it returns a correct value.
+     * This default implementation is a safe fall back that will ensure it returns a correct value by parsing the message.
      * @return
      */
     int getMessageSize() {
         if (length != UNKNOWN_LENGTH)
         	return length;
     	checkParse();
-    	length = cursor - offset;
+    	if (length != UNKNOWN_LENGTH)
+    		length = cursor - offset;
     	return length;
     }
     

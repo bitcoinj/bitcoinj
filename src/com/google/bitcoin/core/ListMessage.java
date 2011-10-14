@@ -50,6 +50,7 @@ public abstract class ListMessage extends Message
 	public ListMessage(NetworkParameters params) {
         super(params);
         items = new ArrayList<InventoryItem>();
+        length = 1; //length of 0 varint;
     }
 
     public List<InventoryItem> getItems()
@@ -61,13 +62,17 @@ public abstract class ListMessage extends Message
     public void addItem(InventoryItem item)
     {
         unCache();
+        length -= VarInt.sizeOf(items.size());
     	items.add(item);
+    	length += VarInt.sizeOf(items.size()) + 36;
     }
     
     public void removeItem(int index)
     {
         unCache();
+        length -= VarInt.sizeOf(items.size());
     	items.remove(index);
+    	length += VarInt.sizeOf(items.size()) - 36;
     }
 
     @Override

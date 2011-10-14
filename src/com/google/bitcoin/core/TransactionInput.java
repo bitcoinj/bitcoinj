@@ -55,6 +55,8 @@ public class TransactionInput extends ChildMessage implements Serializable {
         this.outpoint = new TransactionOutPoint(params, -1, null);
         this.sequence = 0xFFFFFFFFL;
         this.parentTransaction = parentTransaction;
+        
+        length = 40 + (scriptBytes == null ? 1 : VarInt.sizeOf(scriptBytes.length) + scriptBytes.length);
     }
 
     /** Creates an UNSIGNED input that links to the given output */
@@ -65,6 +67,8 @@ public class TransactionInput extends ChildMessage implements Serializable {
         scriptBytes = EMPTY_ARRAY;
         sequence = 0xFFFFFFFFL;
         this.parentTransaction = parentTransaction;
+        
+        length = 41;
     }
 
     /** Deserializes an input message. This is usually part of a transaction message. */
@@ -172,7 +176,10 @@ public class TransactionInput extends ChildMessage implements Serializable {
 	 */
 	void setScriptBytes(byte[] scriptBytes) {
 		unCache();
+		int oldLength = length;
 		this.scriptBytes = scriptBytes;
+		int newLength = 40 + (scriptBytes == null ? 1 : VarInt.sizeOf(scriptBytes.length) + scriptBytes.length);
+		adjustLength(newLength - oldLength);
 	}
 
 	/**

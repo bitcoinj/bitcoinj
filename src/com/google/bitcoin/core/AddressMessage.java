@@ -48,6 +48,7 @@ public class AddressMessage extends Message {
             addresses.add(addr);
             cursor += addr.getMessageSize();
         }
+        length = cursor - offset;
     }
     
     /* (non-Javadoc)
@@ -63,6 +64,15 @@ public class AddressMessage extends Message {
 		}
            
 	}
+	
+    int getMessageSize() {
+        if (length != UNKNOWN_LENGTH)
+        	return length;
+        length = new VarInt(addresses.size()).getSizeInBytes();
+        if (addresses != null)
+        	length += addresses.size() * (protocolVersion > 31402 ? PeerAddress.MESSAGE_SIZE : PeerAddress.MESSAGE_SIZE - 4);
+        return length;
+    }
 
 	/**
 	 * @return An unmodifiableList view of the backing List of addresses.  Addresses contained within the list may be safely modified.
@@ -77,6 +87,10 @@ public class AddressMessage extends Message {
 		checkParse();
 		address.setParent(this);
 		addresses.add(address);
+		if (length == UNKNOWN_LENGTH)
+			getMessageSize();
+		else
+			length += address.getMessageSize();;
 	}
 	
 	public void removeAddress(int index) {
@@ -84,6 +98,10 @@ public class AddressMessage extends Message {
 		PeerAddress address = addresses.remove(index);
 		if (address != null)
 			address.setParent(null);
+		if (length == UNKNOWN_LENGTH)
+			getMessageSize();
+		else
+			length -= address.getMessageSize();
 	}
 
 	@Override

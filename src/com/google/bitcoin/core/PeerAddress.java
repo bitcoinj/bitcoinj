@@ -33,7 +33,7 @@ import static com.google.bitcoin.core.Utils.uint64ToByteStreamLE;
  */
 public class PeerAddress extends ChildMessage {
     private static final long serialVersionUID = 7501293709324197411L;
-    private static final int MESSAGE_SIZE = 30;
+    static final int MESSAGE_SIZE = 30;
 
     private InetAddress addr;
     private int port;
@@ -68,6 +68,7 @@ public class PeerAddress extends ChildMessage {
         this.port = port;
         this.protocolVersion = protocolVersion;
         this.services = BigInteger.ZERO;
+        length = protocolVersion > 31402 ? MESSAGE_SIZE : MESSAGE_SIZE - 4;
     }
     
     public PeerAddress(InetAddress addr, int port) {
@@ -137,6 +138,7 @@ public class PeerAddress extends ChildMessage {
 	 */
 	@Override
 	int getMessageSize() {
+		length = protocolVersion > 31402 ? MESSAGE_SIZE : MESSAGE_SIZE - 4;
 		return length;
 	}
 

@@ -79,6 +79,7 @@ public class Transaction extends ChildMessage implements Serializable {
         inputs = new ArrayList<TransactionInput>();
         outputs = new ArrayList<TransactionOutput>();
         // We don't initialize appearsIn deliberately as it's only useful for transactions stored in the wallet.
+        length = 10; //8 for std fields + 1 for each 0 varint
     }
 
     /**
@@ -461,6 +462,7 @@ public class Transaction extends ChildMessage implements Serializable {
         input.setParent(this);
         immutableInputs = null;
         inputs.add(input);
+        adjustLength(input.length);
     }
 
     /**
@@ -475,6 +477,7 @@ public class Transaction extends ChildMessage implements Serializable {
         
         immutableOutputs = null;
         outputs.add(to);
+        adjustLength(to.length);
     }
 
     /**
@@ -549,8 +552,8 @@ public class Transaction extends ChildMessage implements Serializable {
 
     private byte[] hashTransactionForSignature(SigHash type, boolean anyoneCanPay) {
         try {
-            ByteArrayOutputStream bos = new ByteArrayOutputStream();
-            bitcoinSerializeToStream(bos);
+            ByteArrayOutputStream bos = new ByteArrayOutputStream(length == UNKNOWN_LENGTH ? 256 : length + 4);
+            bitcoinSerialize(bos);
             // We also have to write a hash type.
             int hashType = type.ordinal() + 1;
             if (anyoneCanPay)

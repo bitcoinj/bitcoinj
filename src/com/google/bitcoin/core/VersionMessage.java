@@ -75,7 +75,17 @@ public class VersionMessage extends Message {
         }
         subVer = "BitCoinJ 0.3-SNAPSHOT";
         bestHeight = newBestHeight;
+        
+        length = 84;
+        if (protocolVersion > 31402)
+        	length += 8;
+        length += subVer == null ? 1 : VarInt.sizeOf(subVer.length()) + subVer.length();
     }
+
+	@Override
+	protected void parseLite() throws ProtocolException {
+		//NOP.  VersionMessage is never lazy parsed.
+	}
     
     @Override
     public void parse() throws ProtocolException {
@@ -98,6 +108,7 @@ public class VersionMessage extends Message {
         subVer = readStr();
         //   int bestHeight (size of known block chain).
         bestHeight = readUint32();
+        length = cursor - offset;
     }
     
     @Override
@@ -169,4 +180,5 @@ public class VersionMessage extends Message {
     	sb.append("best height:    ").append(bestHeight).append("\n");
     	return sb.toString();
     }
+
 }

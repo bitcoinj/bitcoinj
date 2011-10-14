@@ -32,6 +32,7 @@ public class Sha256Hash implements Serializable {
     private static final long serialVersionUID = 3778897922647016546L;
 
     private byte[] bytes;
+    private int hash = -1;
 
     public static final Sha256Hash ZERO_HASH = new Sha256Hash(new byte[32]);
 
@@ -39,6 +40,12 @@ public class Sha256Hash implements Serializable {
     public Sha256Hash(byte[] bytes) {
         assert bytes.length == 32;
         this.bytes = bytes;
+    }
+    
+    private Sha256Hash(byte[] bytes, int hash) {
+        assert bytes.length == 32;
+        this.bytes = bytes;
+        this.hash = hash;
     }
 
     /** Creates a Sha256Hash by decoding the given hex string. It must be 64 characters long. */
@@ -71,7 +78,9 @@ public class Sha256Hash implements Serializable {
      */
     @Override
     public int hashCode() {
-        return Arrays.hashCode(bytes);
+        if (hash == -1)
+        	hash = Arrays.hashCode(bytes);
+        return hash;
     }
 
     @Override
@@ -89,6 +98,6 @@ public class Sha256Hash implements Serializable {
     }
 
     public Sha256Hash duplicate() {
-        return new Sha256Hash(bytes);
+    	return new Sha256Hash(bytes, hash);
     }
 }

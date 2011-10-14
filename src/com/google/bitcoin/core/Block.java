@@ -94,6 +94,8 @@ public class Block extends Message {
 		difficultyTarget = 0x1d07fff8L;
 		time = System.currentTimeMillis() / 1000;
 		prevBlockHash = Sha256Hash.ZERO_HASH;
+		
+		length = 80;
 	}
 
 	/** Constructs a block object from the BitCoin wire format. */
@@ -364,8 +366,8 @@ public class Block extends Message {
 		}
 
 		// At least one of the two cacheable components is invalid
-		// so fall back to stream write since we can't be sure of the length.
-		ByteArrayOutputStream stream = new ByteArrayOutputStream();
+		// so fall back to stream write since we can't be sure of the length. 
+		ByteArrayOutputStream stream = new ByteArrayOutputStream(length == UNKNOWN_LENGTH ? 80 + guessTransactionsLength()	: length);
 		try {
 			writeHeader(stream);
 			writeTransactions(stream);
@@ -380,6 +382,26 @@ public class Block extends Message {
 		writeHeader(stream);
 		// We may only have enough data to write the header.
 		writeTransactions(stream);
+	}
+	
+	/**
+	 * Provides a reasonable guess at the byte length of the transactions part of the block.
+	 * The returned value will be accurate in 99% of cases and in those cases where not will probably
+	 * slightly oversize.
+	 * 
+	 * This is used to preallocate the underlying byte array for a ByteArrayOutputStream.  If the size
+	 * is under the real value the only penalty is resizing of the underlying byte array.
+	 */
+	private int guessTransactionsLength() {
+		if (transactionBytesValid)
+			return bytes.length - 80;
+		if (transactions == null)
+			return 0;
+		int len = VarInt.sizeOf(transactions.size());
+		for (Transaction tx: transactions) {
+			len += tx.length == UNKNOWN_LENGTH ? 255 : tx.length;
+		}
+		return len;
 	}
 
 	protected void unCache() {
@@ -772,6 +794,7 @@ public class Block extends Message {
 		}
 		t.setParent(this);
 		transactions.add(t);
+		adjustLength(t.length);
 		// Force a recalculation next time the values are needed.
 		merkleRoot = null;
 		hash = null;

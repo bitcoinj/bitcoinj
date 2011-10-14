@@ -29,7 +29,7 @@ import java.io.Serializable;
 public class TransactionOutPoint extends ChildMessage implements Serializable {
     private static final long serialVersionUID = -6320880638344662579L;
     
-    private static final int MESSAGE_LENGTH = 36;
+    static final int MESSAGE_LENGTH = 36;
 
     /** Hash of the transaction to which we refer. */
     private Sha256Hash hash;
@@ -50,6 +50,7 @@ public class TransactionOutPoint extends ChildMessage implements Serializable {
             // This happens when constructing the genesis block.
             hash = Sha256Hash.ZERO_HASH;
         }
+        length = MESSAGE_LENGTH;
     }
 
     /** Deserializes the message. This is usually part of a transaction message. */
@@ -60,6 +61,10 @@ public class TransactionOutPoint extends ChildMessage implements Serializable {
     /** Deserializes the message. This is usually part of a transaction message. */
     public TransactionOutPoint(NetworkParameters params, byte[] payload, int offset, Message parent, boolean parseLazy, boolean parseRetain) throws ProtocolException {
         super(params, payload, offset, parent, parseLazy, parseRetain, MESSAGE_LENGTH);
+    }
+    
+    protected void parseLite() throws ProtocolException {
+    	length = MESSAGE_LENGTH;
     }
     
     @Override
