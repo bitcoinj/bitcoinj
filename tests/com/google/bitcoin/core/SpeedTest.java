@@ -78,6 +78,8 @@ public class SpeedTest {
 	List<Manipulator<Block>> blockMans = new ArrayList();
 	List<Manipulator<AddressMessage>> addrMans = new ArrayList();
 	List<Manipulator> genericMans = new ArrayList();
+	
+	List<Float[]> gains = new ArrayList();
 
 	public static void main(String[] args) throws Exception {
 		SpeedTest test = new SpeedTest();
@@ -119,37 +121,54 @@ public class SpeedTest {
 		System.out.println("***      Generic Tests     ***");
 		System.out.println("******************************");
 		for (Manipulator<AddressMessage> man : genericMans) {
-			testManipulator(man, "warmup", warmupIterations * 10, singleBs, null, b1Bytes);
+			testManipulator(man, "warmup", warmupIterations * 10, singleBs, null, b1Bytes, null);
 		}
 		for (Manipulator<AddressMessage> man : genericMans) {
-			testManipulator(man, "main test", iterations * 10, singleBs, null, b1Bytes);
+			testManipulator(man, "main test", iterations * 10, singleBs, null, b1Bytes, null);
 		}
 		
 		System.out.println("******************************");
 		System.out.println("***      WARMUP PHASE      ***");
 		System.out.println("******************************");
 		for (Manipulator<AddressMessage> man : addrMans) {
-			testManipulator(man, "warmup", warmupIterations, bss, addr1, addr1BytesWithHeader);
+			testManipulator(man, "warmup", warmupIterations, bss, addr1, addr1BytesWithHeader, null);
 		}
 		for (Manipulator<Transaction> man : txMans) {
-			testManipulator(man, "warmup", warmupIterations, bss, tx1, tx1BytesWithHeader);
+			testManipulator(man, "warmup", warmupIterations, bss, tx1, tx1BytesWithHeader, null);
 		}
 		for (Manipulator<Block> man : blockMans) {
-			testManipulator(man, "warmup", warmupIterations, bss, b1, b1BytesWithHeader);
+			testManipulator(man, "warmup", warmupIterations, bss, b1, b1BytesWithHeader, null);
 		}
 
 		System.out.println("******************************");
 		System.out.println("***      TEST PHASE        ***");
 		System.out.println("******************************");
 		for (Manipulator<AddressMessage> man : addrMans) {
-			testManipulator(man, "main test", iterations, bss, addr1, addr1BytesWithHeader);
+			testManipulator(man, "main test", iterations, bss, addr1, addr1BytesWithHeader, gains);
 		}
 		for (Manipulator<Transaction> man : txMans) {
-			testManipulator(man, "main test", iterations, bss, tx1, tx1BytesWithHeader);
+			testManipulator(man, "main test", iterations, bss, tx1, tx1BytesWithHeader, gains);
 		}
 		for (Manipulator<Block> man : blockMans) {
-			testManipulator(man, "main test", iterations, bss, b1, b1BytesWithHeader);
+			testManipulator(man, "main test", iterations, bss, b1, b1BytesWithHeader, gains);
 		}
+		
+		float total = 0;
+		float r224total = 0;
+		int rcount = 0;
+		for (Float[] f: gains) {
+			total += f[0];
+			if (f[1] != -1) {
+				rcount++;
+				r224total += f[1];
+			}
+		}
+				NumberFormat nf = NumberFormat.getInstance();
+				nf.setMaximumFractionDigits(2);
+				
+				float avg = total / gains.size();
+				float r224Avg = r224total / rcount;
+				System.out.println("\n Average performance gain across all main run tests [" + gains.size() + "]: " + nf.format(avg) + "% - against r224 client: [" + rcount + "]: " + nf.format(r224Avg) + "%");
 	}
 
 	private void resetBlockStore() {
@@ -235,6 +254,7 @@ public class SpeedTest {
 			public String getDescription() {
 				return "Reverse 32 bytes";
 			}
+			
 
 		};
 		genericMans.add(reverseBytes);
@@ -301,6 +321,10 @@ public class SpeedTest {
 			@Override
 			public String getDescription() {
 				return "Serialize Address";
+			}
+			
+			public long timeForR224Test() {
+				return 103;
 			}
 
 		};
@@ -425,6 +449,10 @@ public class SpeedTest {
 			public String getDescription() {
 				return "Serialize Transaction";
 			}
+			
+			public long timeForR224Test() {
+				return 215;
+			}
 
 		};
 		txMans.add(seralizeTx);
@@ -446,6 +474,9 @@ public class SpeedTest {
 				return "Deserialize Transaction";
 			}
 
+			public long timeForR224Test() {
+				return 214;
+			}
 		};
 		txMans.add(deSeralizeTx);
 		
@@ -468,6 +499,10 @@ public class SpeedTest {
 			@Override
 			public String getDescription() {
 				return "Deserialize Transaction, Serialize";
+			}
+			
+			public long timeForR224Test() {
+				return 451;
 			}
 
 		};
@@ -493,6 +528,10 @@ public class SpeedTest {
 			@Override
 			public String getDescription() {
 				return "Deserialize Transaction, modify, Serialize";
+			}
+			
+			public long timeForR224Test() {
+				return 478;
 			}
 
 		};
@@ -525,6 +564,10 @@ public class SpeedTest {
 			public String getDescription() {
 				return "Serialize cached Transaction";
 			}
+			
+			public long timeForR224Test() {
+				return 244;
+			}
 
 		};
 		txMans.add(deSeralizeTx_1);
@@ -547,6 +590,10 @@ public class SpeedTest {
 			public String getDescription() {
 				return "Serialize Block";
 			}
+			
+			public long timeForR224Test() {
+				return 578;
+			}
 
 		};
 		blockMans.add(seralizeBlock);
@@ -566,6 +613,10 @@ public class SpeedTest {
 			@Override
 			public String getDescription() {
 				return "Deserialize Block";
+			}
+			
+			public long timeForR224Test() {
+				return 673;
 			}
 
 		};
@@ -598,6 +649,10 @@ public class SpeedTest {
 			public String getDescription() {
 				return "Serialize cached Block";
 			}
+			
+			public long timeForR224Test() {
+				return 597;
+			}
 
 		};
 		blockMans.add(deSeralizeBlock_1);
@@ -624,6 +679,9 @@ public class SpeedTest {
 				return "Deserialize Block, Read nonce header, Serialize";
 			}
 
+			public long timeForR224Test() {
+				return 1304;
+			}
 		};
 		blockMans.add(deSerReadReser1);
 
@@ -647,6 +705,10 @@ public class SpeedTest {
 				return "Deserialize Block, Calculate hash";
 			}
 
+			public long timeForR224Test() {
+				return 703;
+			}
+			
 		};
 		blockMans.add(deSerReadReser1_1);
 
@@ -672,6 +734,9 @@ public class SpeedTest {
 				return "Deserialize Block, Calculate hash, Serialize";
 			}
 
+			public long timeForR224Test() {
+				return 1296;
+			}
 		};
 		blockMans.add(deSerReadReser1_2);
 
@@ -697,6 +762,10 @@ public class SpeedTest {
 				return "Deserialize Block, Read tx input address, Serialize";
 			}
 
+			public long timeForR224Test() {
+				return 1696;
+			}
+			
 		};
 		blockMans.add(deSerReadReser2);
 
@@ -733,6 +802,10 @@ public class SpeedTest {
 			public String getDescription() {
 				return "Deserialize Block, read all tx fields, Serialize";
 			}
+			
+			public long timeForR224Test() {
+				return 1452;
+			}
 
 		};
 		blockMans.add(deSerReadReser2_1);
@@ -759,6 +832,10 @@ public class SpeedTest {
 				return "Deserialize Block, Write nonce, Serialize";
 			}
 
+			public long timeForR224Test() {
+				return 1317;
+			}
+			
 		};
 		blockMans.add(deSerReadReser3);
 
@@ -794,6 +871,10 @@ public class SpeedTest {
 			public String getDescription() {
 				return "Deserialize Block, add tx, Serialize";
 			}
+			
+			public long timeForR224Test() {
+				return 3058;
+			}
 
 		};
 		blockMans.add(deSerReadReser4);
@@ -818,6 +899,10 @@ public class SpeedTest {
 			@Override
 			public String getDescription() {
 				return "Deserialize Block, scan tx hashes";
+			}
+			
+			public long timeForR224Test() {
+				return 1462;
 			}
 
 		};
@@ -847,13 +932,17 @@ public class SpeedTest {
 				return "Deserialize Block, scan tx hashes, Serialize";
 			}
 
+			public long timeForR224Test() {
+				return 2057;
+			}
+			
 		};
 		blockMans.add(deSerReadReser6);
 
 	}
 
 	public <M extends Message> void testManipulator(Manipulator<M> man, String phaseName, int iterations, List<SerializerEntry> bss,
-			M message, byte[] bytes) {
+			M message, byte[] bytes, List<Float[]> gains) {
 		long allStart = System.currentTimeMillis();
 		System.out.println("Beginning " + phaseName + " run for manipulator: [" + man.getDescription() + "]");
 		int pause = iterations / 100;
@@ -884,10 +973,14 @@ public class SpeedTest {
 				System.out.println("Test failed after " + completed + " iterations");
 			} else {
 				long time = System.currentTimeMillis() - start;
-				if (time < bestTime)
-					bestTime = time;
-				if (time > worstTime)
-					worstTime = time;
+//				if (time < bestTime)
+//				bestTime = time;
+//			if (time > worstTime)
+//				worstTime = time;
+			if (entry.bs.isParseLazyMode() && entry.bs.isParseRetainMode())
+				bestTime = time;
+			if (!entry.bs.isParseLazyMode() && !entry.bs.isParseRetainMode())
+				worstTime = time;
 				long mem = (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory() - memStart) / (1024);
 				System.out.println("Completed " + iterations + " iterations in " + time + "ms.  Consumed memory: "
 						+ mem + "kb. Using Serializer: [" + entry.name + "]");
@@ -900,7 +993,16 @@ public class SpeedTest {
 		long diff = worstTime - bestTime;
 		float perc = ((float) worstTime / bestTime - 1) * 100;
 		float perc2 = (1 - (float) bestTime / worstTime) * 100;
-		System.out.println("Best/Worst time diff: " + diff + "ms. (" + nf.format(perc2) + "% gain)\n");
+		
+		float r224Perc = ((float) man.timeForR224Test() / bestTime - 1) * 100;
+		long r224Diff = man.timeForR224Test() - bestTime;
+		
+		System.out.println("Best/Worst time diff: " + diff + "ms. (" + nf.format(perc) + "% gain).  Against r224 client: (" + man.timeForR224Test() + "ms) diff: "  + r224Diff + "ms. (" + nf.format(r224Perc) + "% gain)\n");
+		
+		if (man.timeForR224Test() == -1)
+			r224Perc = -1;
+		if (gains != null)
+			gains.add(new Float[] {perc, r224Perc});
 	}
 
 	public static void pause(int millis) {

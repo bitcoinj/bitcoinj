@@ -407,7 +407,7 @@ public class Block extends Message {
 		// to a tx
 		// will alter the merkle root. In future we can go more granular and
 		// cache merkle root
-		// seperately to rest of the header does not need to be rewritten
+		// Separately so rest of the header does not need to be rewritten
 		unCacheHeader();
 		// clear merkleRoot last as it may end up being parsed during
 		// unCacheHeader().
@@ -747,7 +747,10 @@ public class Block extends Message {
 	public Sha256Hash getMerkleRoot() {
 		checkParseHeader();
 		if (merkleRoot == null) {
+			
+			//TODO check if this is really necessary.
 			unCacheHeader();
+			
 			merkleRoot = calculateMerkleRoot();
 		}
 		return merkleRoot;

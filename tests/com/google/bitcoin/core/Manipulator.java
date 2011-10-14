@@ -11,4 +11,6 @@ public abstract class Manipulator<M extends Message> {
 	public void beforeTest() {}
 	
 	public void afterTest() {}
+	
+	public long timeForR224Test() {return -1l;}
 }
