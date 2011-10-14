@@ -155,12 +155,18 @@ public class SpeedTest {
 		
 		float total = 0;
 		float r224total = 0;
+		
+		float totalTime = 0;
+		float totalr224Time = 0;
+		
 		int rcount = 0;
 		for (Float[] f: gains) {
 			total += f[0];
 			if (f[1] != -1) {
 				rcount++;
 				r224total += f[1];
+				totalTime += f[2];
+				totalr224Time += f[3];
 			}
 		}
 				NumberFormat nf = NumberFormat.getInstance();
@@ -169,6 +175,10 @@ public class SpeedTest {
 				float avg = total / gains.size();
 				float r224Avg = r224total / rcount;
 				System.out.println("\n Average performance gain across all main run tests [" + gains.size() + "]: " + nf.format(avg) + "% - against r224 client: [" + rcount + "]: " + nf.format(r224Avg) + "%");
+				
+				float perc = ((float) totalr224Time / totalTime - 1) * 100;
+				
+				System.out.println("Total time to run main run tests: [Lazy]" + totalTime + "ms, [r224] " + totalr224Time + "ms. Diff: " + (totalr224Time - totalTime) + "ms - " + nf.format(perc) + "% gain");
 	}
 
 	private void resetBlockStore() {
@@ -1002,7 +1012,7 @@ public class SpeedTest {
 		if (man.timeForR224Test() == -1)
 			r224Perc = -1;
 		if (gains != null)
-			gains.add(new Float[] {perc, r224Perc});
+			gains.add(new Float[] {perc, r224Perc, (float) bestTime, (float) man.timeForR224Test()});
 	}
 
 	public static void pause(int millis) {
