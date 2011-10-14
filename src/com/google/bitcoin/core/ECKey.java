@@ -170,7 +170,8 @@ public class ECKey implements Serializable {
         // of the type used by BitCoin we have to encode them using DER encoding, which is just a way to pack the two
         // components into a structure.
         try {
-            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        	//usually 70-72 bytes.
+            ByteArrayOutputStream bos = new UnsafeByteArrayOutputStream(72);
             DERSequenceGenerator seq = new DERSequenceGenerator(bos);
             seq.addObject(new DERInteger(sigs[0]));
             seq.addObject(new DERInteger(sigs[1]));

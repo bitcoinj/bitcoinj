@@ -528,7 +528,8 @@ public class Transaction extends ChildMessage implements Serializable {
             // Now sign for the output so we can redeem it. We use the keypair to sign the hash,
             // and then put the resulting signature in the script along with the public key (below).
             try {
-                ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            	//usually 71-73 bytes
+                ByteArrayOutputStream bos = new UnsafeByteArrayOutputStream(73);
                 bos.write(key.sign(hash));
                 bos.write((hashType.ordinal() + 1) | (anyoneCanPay ? 0x80 : 0)) ;
                 signatures[i] = bos.toByteArray();
@@ -552,7 +553,7 @@ public class Transaction extends ChildMessage implements Serializable {
 
     private byte[] hashTransactionForSignature(SigHash type, boolean anyoneCanPay) {
         try {
-            ByteArrayOutputStream bos = new ByteArrayOutputStream(length == UNKNOWN_LENGTH ? 256 : length + 4);
+            ByteArrayOutputStream bos = new UnsafeByteArrayOutputStream(length == UNKNOWN_LENGTH ? 256 : length + 4);
             bitcoinSerialize(bos);
             // We also have to write a hash type.
             int hashType = type.ordinal() + 1;

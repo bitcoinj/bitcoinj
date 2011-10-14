@@ -31,7 +31,7 @@ Cleanup:
 Impacts from Steves changes:
 - Reformat affected files
 - JavaDocs for the c'tors that take parseLazy/parseRetain
-- Copyright header/correct author for EmptyMessage/ChildMessage
+- Copyright header/correct author for EmptyMessage/ChildMessage/UnsafeByteArrayOutputStream
 - Remove superfluous empty lines in ListMessage.java
 - Remove VersionMessage check in Message serialization roundtrip checks
 - Delete dead code in Message.checkParsed
@@ -52,7 +52,7 @@ Impacts from Steves changes:
 
 - Delete the code related to deduping. The new network management code to be checked in later makes it unnecessary.
   Also remove singleDigest as a result (it duplicates Sha256Hash).
-
+- More thoroughly review UnsafeByteArrayOutputStream
 
 Block.java:
 - Reformat

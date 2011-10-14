@@ -270,7 +270,7 @@ public abstract class Message implements Serializable {
     	assert bytes == null : "cached bytes present but failed to use them for serialization";
     	
     	//no cached array available so serialize parts by stream.
-    	ByteArrayOutputStream stream = new ByteArrayOutputStream(length < 32 ? 32 : length + 32);
+    	ByteArrayOutputStream stream = new UnsafeByteArrayOutputStream(length < 32 ? 32 : length + 32);
         try {
             bitcoinSerializeToStream(stream);
         } catch (IOException e) {

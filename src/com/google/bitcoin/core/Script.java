@@ -254,7 +254,7 @@ public class Script {
     static byte[] createOutputScript(Address to) {
         try {
             // TODO: Do this by creating a Script *first* then having the script reassemble itself into bytes.
-            ByteArrayOutputStream bits = new ByteArrayOutputStream();
+            ByteArrayOutputStream bits = new UnsafeByteArrayOutputStream(24);
             bits.write(OP_DUP);
             bits.write(OP_HASH160);
             writeBytes(bits, to.getHash160());
@@ -270,7 +270,7 @@ public class Script {
     static byte[] createOutputScript(byte[] pubkey) {
         try {
             // TODO: Do this by creating a Script *first* then having the script reassemble itself into bytes.
-            ByteArrayOutputStream bits = new ByteArrayOutputStream();
+            ByteArrayOutputStream bits = new UnsafeByteArrayOutputStream(pubkey.length + 1);
             writeBytes(bits, pubkey);
             bits.write(OP_CHECKSIG);
             return bits.toByteArray();
@@ -282,7 +282,7 @@ public class Script {
     static byte[] createInputScript(byte[] signature,  byte[] pubkey) {
         try {
             // TODO: Do this by creating a Script *first* then having the script reassemble itself into bytes.
-            ByteArrayOutputStream bits = new ByteArrayOutputStream();
+            ByteArrayOutputStream bits = new UnsafeByteArrayOutputStream(signature.length + pubkey.length);
             writeBytes(bits, signature);
             writeBytes(bits, pubkey);
             return bits.toByteArray();
