@@ -243,6 +243,11 @@ public class BitcoinSerializer {
 
         // Check for duplicates. This is to avoid the cost (cpu and memory) of parsing the message twice, which can
         // be an issue on constrained devices.
+        
+        //save this for reuse later.  Hashing is expensive so checksumming starting with a single hash
+        //is a significant saving.
+        Sha256Hash singleHash = null;
+        
         if (dedupeList != null && canDedupeMessageType(header.command)) {
             // We use a secure hash here rather than the faster and simpler array hashes because otherwise a malicious
             // node on the network could broadcast a message designed to mask a different message. They would not
@@ -250,15 +255,15 @@ public class BitcoinSerializer {
             synchronized (dedupeList) {
                 // Calculate hash inside the lock to avoid unnecessary battery power spent on hashing messages arriving
                 // on different threads simultaneously.
-                Sha256Hash hash = Sha256Hash.create(payloadBytes);
-                Integer count = dedupeList.get(hash);
+            	singleHash = Sha256Hash.create(payloadBytes);
+                Integer count = dedupeList.get(singleHash);
                 if (count != null) {
                     int newCount = count + 1;
                     log.info("Received duplicate {} message, now seen {} times", header.command, newCount);
-                    dedupeList.put(hash, newCount);
+                    dedupeList.put(singleHash, newCount);
                     return null;
                 } else {
-                    dedupeList.put(hash, 1);
+                    dedupeList.put(singleHash, 1);
                 }
             }
         }
@@ -266,7 +271,11 @@ public class BitcoinSerializer {
         // Verify the checksum.
         byte[] hash = null;
         if (usesChecksumming) {
-        	hash = doubleDigest(payloadBytes);
+        	if (singleHash != null) {
+        		hash = singleDigest(singleHash.getBytes(), 0, 32);
+        	} else {
+        		hash = doubleDigest(payloadBytes);
+        	}
             if (header.checksum[0] != hash[0] || header.checksum[1] != hash[1] ||
                     header.checksum[2] != hash[2] || header.checksum[3] != hash[3]) {
                 throw new ProtocolException("Checksum failed to verify, actual " +

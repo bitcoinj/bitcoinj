@@ -127,6 +127,16 @@ public class Utils {
             throw new RuntimeException(e);  // Cannot happen.
         }
     }
+    
+    public static byte[] singleDigest(byte[] input, int offset, int length) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            digest.update(input, offset, length);
+            return digest.digest();
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);  // Cannot happen.
+        }
+    }
 
     /**
      * Calculates SHA256(SHA256(byte range 1 + byte range 2)).

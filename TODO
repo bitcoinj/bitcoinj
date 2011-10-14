@@ -50,6 +50,9 @@ Impacts from Steves changes:
 - Dead code in Transaction.parse
 - javadocs on Transaction{Input,Output,} getters
 
+- Delete the code related to deduping. The new network management code to be checked in later makes it unnecessary.
+  Also remove singleDigest as a result (it duplicates Sha256Hash).
+
 
 Block.java:
 - Reformat

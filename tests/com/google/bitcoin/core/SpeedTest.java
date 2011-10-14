@@ -85,8 +85,6 @@ public class SpeedTest {
 		test.start(50000, 50000, false);
 	}
 
-	public static final boolean RECACHE = false;
-	
 	public void start(int warmupIterations, int iterations, boolean pauseForKeyPress) {
 
 		if (pauseForKeyPress) {
