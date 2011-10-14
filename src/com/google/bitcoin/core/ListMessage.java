@@ -25,10 +25,9 @@ import java.util.List;
 /**
  * Abstract superclass of classes with list based payload, i.e. InventoryMessage and GetDataMessage.
  */
-public abstract class ListMessage extends Message
-{
+public abstract class ListMessage extends Message {
     private long arrayLen;
-	// For some reason the compiler complains if this is inside InventoryItem
+    // For some reason the compiler complains if this is inside InventoryItem
     private List<InventoryItem> items;
 
     private static final long MAX_INVENTORY_ITEMS = 50000;
@@ -38,55 +37,50 @@ public abstract class ListMessage extends Message
         super(params, bytes, 0);
     }
 
-    
 
     public ListMessage(NetworkParameters params, byte[] msg, boolean parseLazy, boolean parseRetain, int length)
-			throws ProtocolException {
-		super(params, msg, 0, parseLazy, parseRetain, length);
-	}
+            throws ProtocolException {
+        super(params, msg, 0, parseLazy, parseRetain, length);
+    }
 
 
-
-	public ListMessage(NetworkParameters params) {
+    public ListMessage(NetworkParameters params) {
         super(params);
         items = new ArrayList<InventoryItem>();
         length = 1; //length of 0 varint;
     }
 
-    public List<InventoryItem> getItems()
-    {
-    	checkParse();
-		return Collections.unmodifiableList(items);
+    public List<InventoryItem> getItems() {
+        checkParse();
+        return Collections.unmodifiableList(items);
     }
 
-    public void addItem(InventoryItem item)
-    {
+    public void addItem(InventoryItem item) {
         unCache();
         length -= VarInt.sizeOf(items.size());
-    	items.add(item);
-    	length += VarInt.sizeOf(items.size()) + 36;
+        items.add(item);
+        length += VarInt.sizeOf(items.size()) + 36;
     }
-    
-    public void removeItem(int index)
-    {
+
+    public void removeItem(int index) {
         unCache();
         length -= VarInt.sizeOf(items.size());
-    	items.remove(index);
-    	length += VarInt.sizeOf(items.size()) - 36;
+        items.remove(index);
+        length += VarInt.sizeOf(items.size()) - 36;
     }
 
     @Override
     protected void parseLite() throws ProtocolException {
-    	 arrayLen = readVarInt();
-         if (arrayLen > MAX_INVENTORY_ITEMS)
-             throw new ProtocolException("Too many items in INV message: " + arrayLen);
-         length = (int) (cursor - offset + (arrayLen * 36));
+        arrayLen = readVarInt();
+        if (arrayLen > MAX_INVENTORY_ITEMS)
+            throw new ProtocolException("Too many items in INV message: " + arrayLen);
+        length = (int) (cursor - offset + (arrayLen * 36));
     }
-    
+
     @Override
     public void parse() throws ProtocolException {
         // An inv is vector<CInv> where CInv is int+hash. The int is either 1 or 2 for tx or block.
-    	 items = new ArrayList<InventoryItem>((int)arrayLen);
+        items = new ArrayList<InventoryItem>((int) arrayLen);
         for (int i = 0; i < arrayLen; i++) {
             if (cursor + 4 + 32 > bytes.length) {
                 throw new ProtocolException("Ran off the end of the INV");
@@ -95,11 +89,17 @@ public abstract class ListMessage extends Message
             InventoryItem.Type type;
             // See ppszTypeName in net.h
             switch (typeCode) {
-              case 0: type = InventoryItem.Type.Error; break;
-              case 1: type = InventoryItem.Type.Transaction; break;
-              case 2: type = InventoryItem.Type.Block; break;
-              default:
-                  throw new ProtocolException("Unknown CInv type: " + typeCode);
+                case 0:
+                    type = InventoryItem.Type.Error;
+                    break;
+                case 1:
+                    type = InventoryItem.Type.Transaction;
+                    break;
+                case 2:
+                    type = InventoryItem.Type.Block;
+                    break;
+                default:
+                    throw new ProtocolException("Unknown CInv type: " + typeCode);
             }
             InventoryItem item = new InventoryItem(type, readHash());
             items.add(item);
@@ -109,8 +109,7 @@ public abstract class ListMessage extends Message
 
 
     @Override
-    public void bitcoinSerializeToStream(OutputStream stream) throws IOException
-    {
+    public void bitcoinSerializeToStream(OutputStream stream) throws IOException {
         stream.write(new VarInt(items.size()).encode());
         for (InventoryItem i : items) {
             // Write out the type code.

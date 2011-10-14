@@ -26,7 +26,7 @@ public class ProtocolException extends Exception {
     public ProtocolException(Exception e) {
         super(e);
     }
-    
+
     public ProtocolException(String msg, Exception e) {
         super(msg, e);
     }

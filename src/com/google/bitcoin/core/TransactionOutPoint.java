@@ -28,7 +28,7 @@ import java.io.Serializable;
  */
 public class TransactionOutPoint extends ChildMessage implements Serializable {
     private static final long serialVersionUID = -6320880638344662579L;
-    
+
     static final int MESSAGE_LENGTH = 36;
 
     /** Hash of the transaction to which we refer. */
@@ -53,35 +53,39 @@ public class TransactionOutPoint extends ChildMessage implements Serializable {
         length = MESSAGE_LENGTH;
     }
 
-    /** Deserializes the message. This is usually part of a transaction message. */
+    /**
+     * Deserializes the message. This is usually part of a transaction message.
+     */
     public TransactionOutPoint(NetworkParameters params, byte[] payload, int offset) throws ProtocolException {
         super(params, payload, offset);
     }
-    
-    /** Deserializes the message. This is usually part of a transaction message. */
+
+    /**
+     * Deserializes the message. This is usually part of a transaction message.
+     */
     public TransactionOutPoint(NetworkParameters params, byte[] payload, int offset, Message parent, boolean parseLazy, boolean parseRetain) throws ProtocolException {
         super(params, payload, offset, parent, parseLazy, parseRetain, MESSAGE_LENGTH);
     }
-    
+
     protected void parseLite() throws ProtocolException {
-    	length = MESSAGE_LENGTH;
+        length = MESSAGE_LENGTH;
     }
-    
+
     @Override
     void parse() throws ProtocolException {
         hash = readHash();
         index = readUint32();
     }
-    
-    /* (non-Javadoc)
-	 * @see com.google.bitcoin.core.Message#getMessageSize()
-	 */
-	@Override
-	int getMessageSize() {
-		return MESSAGE_LENGTH;
-	}
 
-	@Override
+    /* (non-Javadoc)
+      * @see com.google.bitcoin.core.Message#getMessageSize()
+      */
+    @Override
+    int getMessageSize() {
+        return MESSAGE_LENGTH;
+    }
+
+    @Override
     protected void bitcoinSerializeToStream(OutputStream stream) throws IOException {
         stream.write(Utils.reverseBytes(hash.getBytes()));
         Utils.uint32ToByteStreamLE(index, stream);
@@ -93,7 +97,7 @@ public class TransactionOutPoint extends ChildMessage implements Serializable {
      */
     TransactionOutput getConnectedOutput() {
         if (fromTx == null) return null;
-        return fromTx.getOutputs().get((int)index);
+        return fromTx.getOutputs().get((int) index);
     }
 
     /**
@@ -117,31 +121,30 @@ public class TransactionOutPoint extends ChildMessage implements Serializable {
     public String toString() {
         return "outpoint " + index + ":" + hash.toString();
     }
-    
-    
-    
+
+
     /**
-	 * @return the hash
-	 */
-	public Sha256Hash getHash() {
-		checkParse();
-		return hash;
-	}
+     * @return the hash
+     */
+    public Sha256Hash getHash() {
+        checkParse();
+        return hash;
+    }
 
-	/**
-	 * @param hash the hash to set
-	 */
-	void setHash(Sha256Hash hash) {
-		this.hash = hash;
-	}
+    /**
+     * @param hash the hash to set
+     */
+    void setHash(Sha256Hash hash) {
+        this.hash = hash;
+    }
 
-	/**
-	 * @return the index
-	 */
-	public long getIndex() {
-		checkParse();
-		return index;
-	}
+    /**
+     * @return the index
+     */
+    public long getIndex() {
+        checkParse();
+        return index;
+    }
 
 //	/**
 //	 * @param index the index to set
@@ -151,13 +154,13 @@ public class TransactionOutPoint extends ChildMessage implements Serializable {
 //		this.index = index;
 //	}
 
-	/**
+    /**
      * Ensure object is fully parsed before invoking java serialization.  The backing byte array
      * is transient so if the object has parseLazy = true and hasn't invoked checkParse yet
      * then data will be lost during serialization.
      */
     private void writeObject(ObjectOutputStream out) throws IOException {
-    	checkParse();
-    	out.defaultWriteObject();
+        checkParse();
+        out.defaultWriteObject();
     }
 }

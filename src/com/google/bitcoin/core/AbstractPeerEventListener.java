@@ -18,11 +18,10 @@ package com.google.bitcoin.core;
 
 /**
  * Convenience abstract class for implmenting a PeerEventListener.
- * 
- * <p>The default method implementations do nothing.
- * 
- * @author miron@google.com (Miron Cuperman)
  *
+ * <p>The default method implementations do nothing.
+ *
+ * @author miron@google.com (Miron Cuperman)
  */
 public class AbstractPeerEventListener extends Object implements PeerEventListener {
     public void onBlocksDownloaded(Peer peer, Block block, int blocksLeft) {
@@ -30,10 +29,10 @@ public class AbstractPeerEventListener extends Object implements PeerEventListen
 
     public void onChainDownloadStarted(Peer peer, int blocksLeft) {
     }
-    
+
     public void onPeerConnected(Peer peer, int peerCount) {
     }
-    
+
     public void onPeerDisconnected(Peer peer, int peerCount) {
     }
 }

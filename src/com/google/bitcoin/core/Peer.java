@@ -23,20 +23,16 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.*;
 
 /**
- * A Peer handles the high level communication with a BitCoin node. 
- * 
+ * A Peer handles the high level communication with a BitCoin node.
+ *
  * <p>After making the connection with connect(), call run() to start the message handling loop.
  */
 public class Peer {
     private static final Logger log = LoggerFactory.getLogger(Peer.class);
-    
+
     private NetworkConnection conn;
     private final NetworkParameters params;
     // Whether the peer loop is supposed to be running or not. Set to false during shutdown so the peer loop
@@ -63,7 +59,7 @@ public class Peer {
     /**
      * Construct a peer that handles the given network connection and reads/writes from the given block chain. Note that
      * communication won't occur until you call connect().
-     * 
+     *
      * @param bestHeight our current best chain height, to facilitate downloading
      */
     public Peer(NetworkParameters params, PeerAddress address, int bestHeight, BlockChain blockChain) {
@@ -82,7 +78,7 @@ public class Peer {
     public Peer(NetworkParameters params, PeerAddress address, BlockChain blockChain) {
         this(params, address, 0, blockChain);
     }
-    
+
     public synchronized void addEventListener(PeerEventListener listener) {
         eventListeners.add(listener);
     }
@@ -98,7 +94,7 @@ public class Peer {
 
     /**
      * Connects to the peer.
-     * 
+     *
      * @throws PeerException when there is a temporary problem with the peer and we should retry later
      */
     public synchronized void connect() throws PeerException {
@@ -118,18 +114,18 @@ public class Peer {
 
     /**
      * Runs in the peers network loop and manages communication with the peer.
-     * 
+     *
      * <p>connect() must be called first
-     * 
+     *
      * @throws PeerException when there is a temporary problem with the peer and we should retry later
      */
     public void run() throws PeerException {
         // This should be called in the network loop thread for this peer
         if (conn == null)
             throw new RuntimeException("please call connect() first");
-        
+
         running = true;
-        
+
         try {
             while (true) {
                 Message m = conn.readMessage();
@@ -137,7 +133,7 @@ public class Peer {
                     processInv((InventoryMessage) m);
                 } else if (m instanceof Block) {
                     processBlock((Block) m);
-                } else if (m  instanceof AddressMessage) {
+                } else if (m instanceof AddressMessage) {
                     // We don't care about addresses of the network right now. But in future,
                     // we should save them in the wallet so we don't put too much load on the seed nodes and can
                     // properly explore the network.
@@ -261,7 +257,7 @@ public class Peer {
         // Add to the list of things we're waiting for. It's important this come before the network send to avoid
         // race conditions.
         synchronized (pendingGetBlockFutures) {
-          pendingGetBlockFutures.add(future);
+            pendingGetBlockFutures.add(future);
         }
         conn.writeMessage(getdata);
         return future;

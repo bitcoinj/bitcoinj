@@ -20,7 +20,8 @@ import com.google.bitcoin.core.NetworkParameters;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.*;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -29,7 +30,7 @@ import java.util.Set;
  *
  * This class does not support the testnet as currently there are no DNS servers providing testnet hosts.
  * If this class is being used for testnet you must specify the hostnames to use.<p>
- * 
+ *
  * Failure to resolve individual host names will not cause an Exception to be thrown.
  * However, if all hosts passed fail to resolve a PeerDiscoveryException will be thrown during getPeers().
  */
@@ -39,30 +40,28 @@ public class DnsDiscovery implements PeerDiscovery {
     private String[] hostNames;
     private NetworkParameters netParams;
 
-    public static final String[] defaultHosts = new String[] {
+    public static final String[] defaultHosts = new String[]{
             "dnsseed.bluematt.me",      // Auto generated
             "bitseed.xf2.org",          // Static
             "bitseed.bitcoin.org.uk"    // Static
     };
-    
+
     /**
      * Supports finding peers through DNS A records. Community run DNS entry points will be used.
-     * 
+     *
      * @param netParams Network parameters to be used for port information.
      */
-    public DnsDiscovery(NetworkParameters netParams)
-    {
+    public DnsDiscovery(NetworkParameters netParams) {
         this(getDefaultHostNames(), netParams);
     }
-    
+
     /**
      * Supports finding peers through DNS A records.
-     * 
+     *
      * @param hostNames Host names to be examined for seed addresses.
      * @param netParams Network parameters to be used for port information.
      */
-    public DnsDiscovery(String[] hostNames, NetworkParameters netParams)
-    {
+    public DnsDiscovery(String[] hostNames, NetworkParameters netParams) {
         this.hostNames = hostNames;
         this.netParams = netParams;
     }
@@ -76,16 +75,16 @@ public class DnsDiscovery implements PeerDiscovery {
          * We don't want to throw an exception if only one of many lookups fails.
          */
         int failedLookups = 0;
-        
+
         for (String hostName : hostNames) {
             try {
                 InetAddress[] hostAddresses = InetAddress.getAllByName(hostName);
-                
+
                 for (InetAddress inetAddress : hostAddresses) {
                     // DNS isn't going to provide us with the port.
                     // Grab the port from the specified NetworkParameters.
                     InetSocketAddress socketAddress = new InetSocketAddress(inetAddress, netParams.port);
-                    
+
                     // Only add the new address if it's not already in the combined list.
                     if (!addresses.contains(socketAddress)) {
                         addresses.add(socketAddress);
@@ -94,7 +93,7 @@ public class DnsDiscovery implements PeerDiscovery {
             } catch (Exception e) {
                 failedLookups++;
                 log.info("DNS lookup for " + hostName + " failed.");
-                
+
                 if (failedLookups == hostNames.length) {
                     // All the lookups failed.
                     // Throw the discovery exception and include the last inner exception.
@@ -104,12 +103,11 @@ public class DnsDiscovery implements PeerDiscovery {
         }
         return addresses.toArray(new InetSocketAddress[]{});
     }
-    
+
     /**
      * Returns the well known discovery host names on the production network.
      */
-    public static String[] getDefaultHostNames()
-    {
+    public static String[] getDefaultHostNames() {
         return defaultHosts;
     }
 

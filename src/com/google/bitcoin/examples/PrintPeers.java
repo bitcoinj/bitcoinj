@@ -16,12 +16,12 @@
 
 package com.google.bitcoin.examples;
 
-import java.net.InetSocketAddress;
-
-import com.google.bitcoin.core.*;
+import com.google.bitcoin.core.NetworkParameters;
 import com.google.bitcoin.discovery.DnsDiscovery;
 import com.google.bitcoin.discovery.IrcDiscovery;
 import com.google.bitcoin.discovery.PeerDiscoveryException;
+
+import java.net.InetSocketAddress;
 
 /**
  * Prints a list of IP addresses connected to the rendezvous point on the LFnet IRC channel.

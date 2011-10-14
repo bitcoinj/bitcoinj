@@ -18,8 +18,6 @@ package com.google.bitcoin.store;
 
 import com.google.bitcoin.core.*;
 
-import java.io.*;
-import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
 

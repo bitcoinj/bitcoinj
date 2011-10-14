@@ -25,8 +25,8 @@ import java.net.InetAddress;
 /**
  * This example shows how to solve the challenge Hal posted here:<p>
  *
- *   <a href="http://www.bitcoin.org/smf/index.php?topic=3638.0">http://www.bitcoin.org/smf/index.php?topic=3638
- *   .0</a><p>
+ * <a href="http://www.bitcoin.org/smf/index.php?topic=3638.0">http://www.bitcoin.org/smf/index.php?topic=3638
+ * .0</a><p>
  *
  * in which a private key with some coins associated with it is published. The goal is to import the private key,
  * claim the coins and then send them to a different address.
@@ -57,7 +57,7 @@ public class PrivateKeys {
             // Find the transactions that involve those coins.
             final MemoryBlockStore blockStore = new MemoryBlockStore(params);
             BlockChain chain = new BlockChain(params, wallet, blockStore);
-            
+
             final PeerGroup peerGroup = new PeerGroup(blockStore, params, chain);
             peerGroup.addAddress(new PeerAddress(InetAddress.getLocalHost()));
             peerGroup.start();

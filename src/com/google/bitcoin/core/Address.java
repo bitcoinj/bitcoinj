@@ -16,16 +16,14 @@
 
 package com.google.bitcoin.core;
 
-import java.util.Arrays;
-
 /**
  * A BitCoin address is fundamentally derived from an elliptic curve public key and a set of network parameters.
  * It has several possible representations:<p>
  *
  * <ol>
- *     <li>The raw public key bytes themselves.
- *     <li>RIPEMD160 hash of the public key bytes.
- *     <li>A base58 encoded "human form" that includes a version and check code, to guard against typos.
+ * <li>The raw public key bytes themselves.
+ * <li>RIPEMD160 hash of the public key bytes.
+ * <li>A base58 encoded "human form" that includes a version and check code, to guard against typos.
  * </ol><p>
  *
  * One may question whether the base58 form is really an improvement over the hash160 form, given
@@ -40,7 +38,7 @@ public class Address extends VersionedChecksummedBytes {
      *
      * <pre>new Address(NetworkParameters.prodNet(), Hex.decode("4a22c3c4cbb31e4d03b15550636762bda0baf85a"));</pre>
      */
-    public Address(NetworkParameters params,  byte[] hash160) {
+    public Address(NetworkParameters params, byte[] hash160) {
         super(params.addressHeader, hash160);
         if (hash160.length != 20)  // 160 = 8 * 20
             throw new RuntimeException("Addresses are 160-bit hashes, so you must provide 20 bytes");

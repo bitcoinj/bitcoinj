@@ -28,7 +28,7 @@ import static com.google.bitcoin.core.Utils.bitcoinValueToFriendlyString;
 /**
  * A Wallet stores keys and a record of transactions that have not yet been spent. Thus, it is capable of
  * providing transactions on demand that meet a given combined value.<p>
- *
+ * <p/>
  * The Wallet is read and written from disk, so be sure to follow the Java serialization versioning rules here. We
  * use the built in Java serialization to avoid the need to pull in a potentially large (code-size) third party
  * serialization library.<p>
@@ -86,7 +86,7 @@ public class Wallet implements Serializable {
      * to pay other people and so count towards our balance. Transactions only appear in this map if they are part
      * of the best chain. Transactions we have broacast that are not confirmed yet appear in pending even though they
      * may have unspent "change" outputs.<p>
-     *
+     * <p/>
      * Note: for now we will not allow spends of transactions that did not make it into the block chain. The code
      * that handles this in BitCoin C++ is complicated. Satoshis code will not allow you to spend unconfirmed coins,
      * however, it does seem to support dependency resolution entirely within the context of the memory pool so
@@ -100,7 +100,7 @@ public class Wallet implements Serializable {
      * the time to create a spend does not grow infinitely as wallets become more used. Some of these transactions
      * may not have appeared in a block yet if they were created by us to spend coins and that spend is still being
      * worked on by miners.<p>
-     *
+     * <p/>
      * Transactions only appear in this map if they are part of the best chain.
      */
     final Map<Sha256Hash, Transaction> spent;
@@ -109,7 +109,7 @@ public class Wallet implements Serializable {
      * An inactive transaction is one that is seen only in a block that is not a part of the best chain. We keep it
      * around in case a re-org promotes a different chain to be the best. In this case some (not necessarily all)
      * inactive transactions will be moved out to unspent and spent, and some might be moved in.<p>
-     *
+     * <p/>
      * Note that in the case where a transaction appears in both the best chain and a side chain as well, it is not
      * placed in this map. It's an error for a transaction to be in both the inactive pool and unspent/spent.
      */
@@ -123,7 +123,9 @@ public class Wallet implements Serializable {
      */
     private Map<Sha256Hash, Transaction> dead;
 
-    /** A list of public/private EC keys owned by this user. */
+    /**
+     * A list of public/private EC keys owned by this user.
+     */
     public final ArrayList<ECKey> keychain;
 
     private final NetworkParameters params;
@@ -198,16 +200,16 @@ public class Wallet implements Serializable {
     /**
      * Called by the {@link BlockChain} when we receive a new block that sends coins to one of our addresses or
      * spends coins from one of our addresses (note that a single transaction can do both).<p>
-     *
+     * <p/>
      * This is necessary for the internal book-keeping Wallet does. When a transaction is received that sends us
      * coins it is added to a pool so we can use it later to create spends. When a transaction is received that
      * consumes outputs they are marked as spent so they won't be used in future.<p>
-     *
+     * <p/>
      * A transaction that spends our own coins can be received either because a spend we created was accepted by the
      * network and thus made it into a block, or because our keys are being shared between multiple instances and
      * some other node spent the coins instead. We still have to know about that to avoid accidentally trying to
      * double spend.<p>
-     *
+     * <p/>
      * A transaction may be received multiple times if is included into blocks in parallel chains. The blockType
      * parameter describes whether the containing block is on the main/best chain or whether it's on a presently
      * inactive side chain. We must still record these transactions and the blocks they appear in because a future
@@ -232,7 +234,7 @@ public class Wallet implements Serializable {
         BigInteger valueDifference = valueSentToMe.subtract(valueSentFromMe);
 
         if (!reorg) {
-            log.info("Received tx{} for {} BTC: {}", new Object[] { sideChain ? " on a side chain" : "",
+            log.info("Received tx{} for {} BTC: {}", new Object[]{sideChain ? " on a side chain" : "",
                     bitcoinValueToFriendlyString(valueDifference), tx.getHashAsString()});
         }
 
@@ -384,7 +386,9 @@ public class Wallet implements Serializable {
         }
     }
 
-    /** If the transactions outputs are all marked as spent, and it's in the unspent map, move it. */
+    /**
+     * If the transactions outputs are all marked as spent, and it's in the unspent map, move it.
+     */
     private void maybeMoveTxToSpent(Transaction tx, String context) {
         if (tx.isEveryOutputSpent()) {
             // There's nothing left I can spend in this transaction.
@@ -401,7 +405,7 @@ public class Wallet implements Serializable {
     /**
      * Adds an event listener object. Methods on this object are called when something interesting happens,
      * like receiving money.<p>
-     *
+     * <p/>
      * Threading: Event listener methods are dispatched on library provided threads and the both the wallet and the
      * listener objects are locked during dispatch, so your listeners do not have to be thread safe. However they
      * should not block as the Peer will be unresponsive to network traffic whilst your listener is running.
@@ -439,7 +443,7 @@ public class Wallet implements Serializable {
     /**
      * Returns a set of all transactions in the wallet.
      *
-     * @param includeDead If true, transactions that were overridden by a double spend are included.
+     * @param includeDead     If true, transactions that were overridden by a double spend are included.
      * @param includeInactive If true, transactions that are on side chains (are unspendable) are included.
      */
     public Set<Transaction> getTransactions(boolean includeDead, boolean includeInactive) {
@@ -454,7 +458,9 @@ public class Wallet implements Serializable {
         return all;
     }
 
-    /** Returns all non-dead, active transactions ordered by recency. */
+    /**
+     * Returns all non-dead, active transactions ordered by recency.
+     */
     public List<Transaction> getTransactionsByTime() {
         return getRecentTransactions(0, false);
     }
@@ -462,7 +468,7 @@ public class Wallet implements Serializable {
     /**
      * Returns an list of N transactions, ordered by increasing age. Transactions on side chains are not included.
      * Dead transactions (overridden by double spends) are optionally included. <p>
-     *
+     * <p/>
      * Note: the current implementation is O(num transactions in wallet). Regardless of how many transactions are
      * requested, the cost is always the same. In future, requesting smaller numbers of transactions may be faster
      * depending on how the wallet is implemented (eg if backed by a database).
@@ -501,12 +507,18 @@ public class Wallet implements Serializable {
 
     int getPoolSize(Pool pool) {
         switch (pool) {
-            case UNSPENT: return unspent.size();
-            case SPENT: return spent.size();
-            case PENDING: return pending.size();
-            case INACTIVE: return inactive.size();
-            case DEAD: return dead.size();
-            case ALL: return unspent.size() + spent.size() + pending.size() + inactive.size() + dead.size();
+            case UNSPENT:
+                return unspent.size();
+            case SPENT:
+                return spent.size();
+            case PENDING:
+                return pending.size();
+            case INACTIVE:
+                return inactive.size();
+            case DEAD:
+                return dead.size();
+            case ALL:
+                return unspent.size() + spent.size() + pending.size() + inactive.size() + dead.size();
         }
         throw new RuntimeException("Unreachable");
     }
@@ -514,12 +526,12 @@ public class Wallet implements Serializable {
     /**
      * Statelessly creates a transaction that sends the given number of nanocoins to address. The change is sent to
      * the first address in the wallet, so you must have added at least one key.<p>
-     *
+     * <p/>
      * This method is stateless in the sense that calling it twice with the same inputs will result in two
      * Transaction objects which are equal. The wallet is not updated to track its pending status or to mark the
      * coins as spent until confirmSend is called on the result.
      */
-    synchronized Transaction createSend(Address address,  BigInteger nanocoins) {
+    synchronized Transaction createSend(Address address, BigInteger nanocoins) {
         // For now let's just pick the first key in our keychain. In future we might want to do something else to
         // give the user better privacy here, eg in incognito mode.
         assert keychain.size() > 0 : "Can't send value without an address to use for receiving change";
@@ -530,8 +542,8 @@ public class Wallet implements Serializable {
     /**
      * Sends coins to the given address, via the given {@link PeerGroup}.
      * Change is returned to the first key in the wallet.
-     * 
-     * @param to Which address to send coins to.
+     *
+     * @param to        Which address to send coins to.
      * @param nanocoins How many nanocoins to send. You can use Utils.toNanoCoins() to calculate this.
      * @return The {@link Transaction} that was created or null if there was insufficient balance to send the coins.
      * @throws IOException if there was a problem broadcasting the transaction
@@ -543,7 +555,7 @@ public class Wallet implements Serializable {
         if (!peerGroup.broadcastTransaction(tx)) {
             throw new IOException("Failed to broadcast tx to all connected peers");
         }
-        
+
         // TODO - retry logic
         confirmSend(tx);
         return tx;
@@ -552,8 +564,8 @@ public class Wallet implements Serializable {
     /**
      * Sends coins to the given address, via the given {@link Peer}.
      * Change is returned to the first key in the wallet.
-     * 
-     * @param to Which address to send coins to.
+     *
+     * @param to        Which address to send coins to.
      * @param nanocoins How many nanocoins to send. You can use Utils.toNanoCoins() to calculate this.
      * @return The {@link Transaction} that was created or null if there was insufficient balance to send the coins.
      * @throws IOException if there was a problem broadcasting the transaction
@@ -569,16 +581,16 @@ public class Wallet implements Serializable {
 
     /**
      * Creates a transaction that sends $coins.$cents BTC to the given address.<p>
-     *
+     * <p/>
      * IMPORTANT: This method does NOT update the wallet. If you call createSend again you may get two transactions
      * that spend the same coins. You have to call confirmSend on the created transaction to prevent this,
      * but that should only occur once the transaction has been accepted by the network. This implies you cannot have
      * more than one outstanding sending tx at once.
      *
-     * @param address The BitCoin address to send the money to.
-     * @param nanocoins How much currency to send, in nanocoins.
+     * @param address       The BitCoin address to send the money to.
+     * @param nanocoins     How much currency to send, in nanocoins.
      * @param changeAddress Which address to send the change to, in case we can't make exactly the right value from
-     * our coins. This should be an address we own (is in the keychain).
+     *                      our coins. This should be an address we own (is in the keychain).
      * @return a new {@link Transaction} or null if we cannot afford this send.
      */
     synchronized Transaction createSend(Address address, BigInteger nanocoins, Address changeAddress) {
@@ -643,6 +655,7 @@ public class Wallet implements Serializable {
     /**
      * Locates a keypair from the keychain given the hash of the public key. This is needed when finding out which
      * key we need to use to redeem a transaction output.
+     *
      * @return ECKey object or null if no such key was found.
      */
     public synchronized ECKey findKeyFromPubHash(byte[] pubkeyHash) {
@@ -652,13 +665,16 @@ public class Wallet implements Serializable {
         return null;
     }
 
-    /** Returns true if this wallet contains a public key which hashes to the given hash. */
+    /**
+     * Returns true if this wallet contains a public key which hashes to the given hash.
+     */
     public synchronized boolean isPubKeyHashMine(byte[] pubkeyHash) {
         return findKeyFromPubHash(pubkeyHash) != null;
     }
 
     /**
      * Locates a keypair from the keychain given the raw public key bytes.
+     *
      * @return ECKey or null if no such key was found.
      */
     public synchronized ECKey findKeyFromPubKey(byte[] pubkey) {
@@ -668,7 +684,9 @@ public class Wallet implements Serializable {
         return null;
     }
 
-    /** Returns true if this wallet contains a keypair with the given public key. */
+    /**
+     * Returns true if this wallet contains a keypair with the given public key.
+     */
     public synchronized boolean isPubKeyMine(byte[] pubkey) {
         return findKeyFromPubKey(pubkey) != null;
     }
@@ -676,7 +694,7 @@ public class Wallet implements Serializable {
     /**
      * It's possible to calculate a wallets balance from multiple points of view. This enum selects which
      * getBalance() should use.<p>
-     *
+     * <p/>
      * Consider a real-world example: you buy a snack costing $5 but you only have a $10 bill. At the start you have
      * $10 viewed from every possible angle. After you order the snack you hand over your $10 bill. From the
      * perspective of your wallet you have zero dollars (AVAILABLE). But you know in a few seconds the shopkeeper
@@ -694,12 +712,14 @@ public class Wallet implements Serializable {
          * spent by pending transactions, but not including the outputs of those pending transactions.
          */
         AVAILABLE
-    };
+    }
+
+    ;
 
     /**
      * Returns the AVAILABLE balance of this wallet. See {@link BalanceType#AVAILABLE} for details on what this
      * means.<p>
-     *
+     * <p/>
      * Note: the estimated balance is usually the one you want to show to the end user - however attempting to
      * actually spend these coins may result in temporary failure. This method returns how much you can safely
      * provide to {@link Wallet#createSend(Address, java.math.BigInteger)}.
@@ -781,7 +801,7 @@ public class Wallet implements Serializable {
      * we need to go through our transactions and find out if any have become invalid. It's possible for our balance
      * to go down in this case: money we thought we had can suddenly vanish if the rest of the network agrees it
      * should be so.<p>
-     *
+     * <p/>
      * The oldBlocks/newBlocks lists are ordered height-wise from top first to bottom last.
      */
     synchronized void reorganize(List<StoredBlock> oldBlocks, List<StoredBlock> newBlocks) throws VerificationException {

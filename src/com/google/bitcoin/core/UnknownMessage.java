@@ -24,7 +24,6 @@ public class UnknownMessage extends EmptyMessage {
         super(params, payloadBytes, 0);
         this.name = name;
     }
-    
 
     public String toString() {
         return "Unknown message [" + name + "]: " + (bytes == null ? "" : Utils.bytesToHexString(bytes));
@@ -33,7 +32,4 @@ public class UnknownMessage extends EmptyMessage {
     @Override
     public void parse() throws ProtocolException {
     }
-    
-    
-    
 }

@@ -33,13 +33,13 @@ public class Sha256Hash implements Serializable {
 
     private byte[] bytes;
     private int hash = -1;
-    
+
     /**
      * @see setHashcodeByteLength(int hashcodeByteLength)
      */
     private static int HASHCODE_BYTES_TO_CHECK = 5;
     private static boolean HASHCODE_BYTES_TO_CHECK_CHANGED = false;
-    
+
 
     public static final Sha256Hash ZERO_HASH = new Sha256Hash(new byte[32]);
 
@@ -49,41 +49,48 @@ public class Sha256Hash implements Serializable {
      * The default value of 5 gives approximately 1 trillion possible unique combinations.
      * Given that an int hashcode only has 4 billion possible values it should be more than enough.
      * <br/><br/>
-     * Changing this value after Sha256Hashes have been stored in hashed collections breaks the 
+     * Changing this value after Sha256Hashes have been stored in hashed collections breaks the
      * hashCode contract and will result in unpredictable behaviour.  If this
-     * needs to be set to a different value it should be done once and only once 
+     * needs to be set to a different value it should be done once and only once
      * and before any calls to hashCode() are made on any instance of Sha256Hash instances.
      * <br/>
+     *
      * @param hashcodeByteLength the number of bytes in the hash to use for generating the hashcode.
-     * @throws IllegalStateException if called more than once.  
+     * @throws IllegalStateException if called more than once.
      */
     public static void setHashcodeByteLength(int hashcodeByteLength) {
-    	if (HASHCODE_BYTES_TO_CHECK_CHANGED)
-    		throw new IllegalStateException("setHashcodeByteLength can only be called once and should be called before any instances of Sha256Hash are constructed");
-    	HASHCODE_BYTES_TO_CHECK = hashcodeByteLength;
-    	HASHCODE_BYTES_TO_CHECK_CHANGED = true;
+        if (HASHCODE_BYTES_TO_CHECK_CHANGED)
+            throw new IllegalStateException("setHashcodeByteLength can only be called once and should be called before any instances of Sha256Hash are constructed");
+        HASHCODE_BYTES_TO_CHECK = hashcodeByteLength;
+        HASHCODE_BYTES_TO_CHECK_CHANGED = true;
     }
-    
-    /** Creates a Sha256Hash by wrapping the given byte array. It must be 32 bytes long. */
+
+    /**
+     * Creates a Sha256Hash by wrapping the given byte array. It must be 32 bytes long.
+     */
     public Sha256Hash(byte[] bytes) {
         assert bytes.length == 32;
         this.bytes = bytes;
-        
+
     }
-    
+
     private Sha256Hash(byte[] bytes, int hash) {
         assert bytes.length == 32;
         this.bytes = bytes;
         this.hash = hash;
     }
 
-    /** Creates a Sha256Hash by decoding the given hex string. It must be 64 characters long. */
+    /**
+     * Creates a Sha256Hash by decoding the given hex string. It must be 64 characters long.
+     */
     public Sha256Hash(String string) {
         assert string.length() == 64;
         this.bytes = Hex.decode(string);
     }
 
-    /** Calculates the (one-time) hash of contents and returns it as a new wrapped hash. */
+    /**
+     * Calculates the (one-time) hash of contents and returns it as a new wrapped hash.
+     */
     public static Sha256Hash create(byte[] contents) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
@@ -93,11 +100,13 @@ public class Sha256Hash implements Serializable {
         }
     }
 
-    /** Returns true if the hashes are equal. */
+    /**
+     * Returns true if the hashes are equal.
+     */
     @Override
     public boolean equals(Object other) {
         if (!(other instanceof Sha256Hash)) return false;
-        return Arrays.equals(bytes, ((Sha256Hash)other).bytes);
+        return Arrays.equals(bytes, ((Sha256Hash) other).bytes);
     }
 
     /**
@@ -110,7 +119,7 @@ public class Sha256Hash implements Serializable {
         if (hash == -1) {
             hash = 1;
             for (int i = 0; i < HASHCODE_BYTES_TO_CHECK; i++)
-                hash = 31 * hash + bytes[i];	
+                hash = 31 * hash + bytes[i];
         }
         return hash;
     }
@@ -120,7 +129,9 @@ public class Sha256Hash implements Serializable {
         return Utils.bytesToHexString(bytes);
     }
 
-    /** Returns the bytes interpreted as a positive integer. */
+    /**
+     * Returns the bytes interpreted as a positive integer.
+     */
     public BigInteger toBigInteger() {
         return new BigInteger(1, bytes);
     }
@@ -130,6 +141,6 @@ public class Sha256Hash implements Serializable {
     }
 
     public Sha256Hash duplicate() {
-    	return new Sha256Hash(bytes, hash);
+        return new Sha256Hash(bytes, hash);
     }
 }

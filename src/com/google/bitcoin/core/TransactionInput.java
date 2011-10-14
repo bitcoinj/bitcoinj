@@ -48,18 +48,22 @@ public class TransactionInput extends ChildMessage implements Serializable {
     // A pointer to the transaction that owns this input.
     private Transaction parentTransaction;
 
-    /** Used only in creation of the genesis block. */
+    /**
+     * Used only in creation of the genesis block.
+     */
     TransactionInput(NetworkParameters params, Transaction parentTransaction, byte[] scriptBytes) {
         super(params);
         this.scriptBytes = scriptBytes;
         this.outpoint = new TransactionOutPoint(params, -1, null);
         this.sequence = 0xFFFFFFFFL;
         this.parentTransaction = parentTransaction;
-        
+
         length = 40 + (scriptBytes == null ? 1 : VarInt.sizeOf(scriptBytes.length) + scriptBytes.length);
     }
 
-    /** Creates an UNSIGNED input that links to the given output */
+    /**
+     * Creates an UNSIGNED input that links to the given output
+     */
     TransactionInput(NetworkParameters params, Transaction parentTransaction, TransactionOutput output) {
         super(params);
         long outputIndex = output.getIndex();
@@ -67,39 +71,43 @@ public class TransactionInput extends ChildMessage implements Serializable {
         scriptBytes = EMPTY_ARRAY;
         sequence = 0xFFFFFFFFL;
         this.parentTransaction = parentTransaction;
-        
+
         length = 41;
     }
 
-    /** Deserializes an input message. This is usually part of a transaction message. */
+    /**
+     * Deserializes an input message. This is usually part of a transaction message.
+     */
     public TransactionInput(NetworkParameters params, Transaction parentTransaction,
                             byte[] payload, int offset) throws ProtocolException {
         super(params, payload, offset);
         this.parentTransaction = parentTransaction;
     }
-    
-    /** Deserializes an input message. This is usually part of a transaction message. */
+
+    /**
+     * Deserializes an input message. This is usually part of a transaction message.
+     */
     public TransactionInput(NetworkParameters params, Transaction parentTransaction, byte[] msg, int offset, boolean parseLazy, boolean parseRetain)
-			throws ProtocolException {
-		super(params, msg, offset, parentTransaction, parseLazy, parseRetain, UNKNOWN_LENGTH);
-		this.parentTransaction = parentTransaction;
-	}
+            throws ProtocolException {
+        super(params, msg, offset, parentTransaction, parseLazy, parseRetain, UNKNOWN_LENGTH);
+        this.parentTransaction = parentTransaction;
+    }
 
     protected void parseLite() {
-    	int curs = cursor;
-    	int scriptLen = (int) readVarInt(36);
-    	length = cursor - offset + scriptLen + 4;
-    	cursor = curs;
+        int curs = cursor;
+        int scriptLen = (int) readVarInt(36);
+        length = cursor - offset + scriptLen + 4;
+        cursor = curs;
     }
-    
-	void parse() throws ProtocolException {
+
+    void parse() throws ProtocolException {
         outpoint = new TransactionOutPoint(params, bytes, cursor, this, parseLazy, parseRetain);
-        cursor += outpoint.getMessageSize(); 
+        cursor += outpoint.getMessageSize();
         int scriptLen = (int) readVarInt();
         scriptBytes = readBytes(scriptLen);
         sequence = readUint32();
     }
-    
+
     @Override
     protected void bitcoinSerializeToStream(OutputStream stream) throws IOException {
         outpoint.bitcoinSerialize(stream);
@@ -113,7 +121,7 @@ public class TransactionInput extends ChildMessage implements Serializable {
      */
     public boolean isCoinBase() {
         checkParse();
-    	return outpoint.getHash().equals(Sha256Hash.ZERO_HASH);
+        return outpoint.getHash().equals(Sha256Hash.ZERO_HASH);
     }
 
     /**
@@ -124,7 +132,7 @@ public class TransactionInput extends ChildMessage implements Serializable {
         // parameter is overloaded to be something totally different.
         if (scriptSig == null) {
             checkParse();
-        	assert scriptBytes != null;
+            assert scriptBytes != null;
             scriptSig = new Script(params, scriptBytes, 0, scriptBytes.length);
         }
         return scriptSig;
@@ -132,64 +140,67 @@ public class TransactionInput extends ChildMessage implements Serializable {
 
     /**
      * Convenience method that returns the from address of this input by parsing the scriptSig.
+     *
      * @throws ScriptException if the scriptSig could not be understood (eg, if this is a coinbase transaction).
      */
     public Address getFromAddress() throws ScriptException {
         assert !isCoinBase();
         return getScriptSig().getFromAddress();
     }
-    
+
     /**
-	 * @return the sequence
-	 */
-	public long getSequence() {
-		checkParse();
-		return sequence;
-	}
+     * @return the sequence
+     */
+    public long getSequence() {
+        checkParse();
+        return sequence;
+    }
 
-	/**
-	 * @param sequence the sequence to set
-	 */
-	public void setSequence(long sequence) {
-		unCache();
-		this.sequence = sequence;
-	}
+    /**
+     * @param sequence the sequence to set
+     */
+    public void setSequence(long sequence) {
+        unCache();
+        this.sequence = sequence;
+    }
 
-	/**
-	 * @return the outpoint
-	 */
-	public TransactionOutPoint getOutpoint() {
-		checkParse();
-		return outpoint;
-	}
+    /**
+     * @return the outpoint
+     */
+    public TransactionOutPoint getOutpoint() {
+        checkParse();
+        return outpoint;
+    }
 
-	/**
-	 * @return the scriptBytes
-	 */
-	public byte[] getScriptBytes() {
-		checkParse();
-		return scriptBytes;
-	}
-	
-	/**
-	 * @param scriptBytes the scriptBytes to set
-	 */
-	void setScriptBytes(byte[] scriptBytes) {
-		unCache();
-		int oldLength = length;
-		this.scriptBytes = scriptBytes;
-		int newLength = 40 + (scriptBytes == null ? 1 : VarInt.sizeOf(scriptBytes.length) + scriptBytes.length);
-		adjustLength(newLength - oldLength);
-	}
+    /**
+     * @return the scriptBytes
+     */
+    public byte[] getScriptBytes() {
+        checkParse();
+        return scriptBytes;
+    }
 
-	/**
-	 * @return the parentTransaction
-	 */
-	public Transaction getParentTransaction() {
-		return parentTransaction;
-	}
+    /**
+     * @param scriptBytes the scriptBytes to set
+     */
+    void setScriptBytes(byte[] scriptBytes) {
+        unCache();
+        int oldLength = length;
+        this.scriptBytes = scriptBytes;
+        int newLength = 40 + (scriptBytes == null ? 1 : VarInt.sizeOf(scriptBytes.length) + scriptBytes.length);
+        adjustLength(newLength - oldLength);
+    }
 
-	/** Returns a human readable debug string. */
+    /**
+     * @return the parentTransaction
+     */
+    public Transaction getParentTransaction() {
+        return parentTransaction;
+    }
+
+    /**
+     * Returns a human readable debug string.
+     */
     public String toString() {
         if (isCoinBase())
             return "TxIn: COINBASE";
@@ -212,13 +223,14 @@ public class TransactionInput extends ChildMessage implements Serializable {
 
     /**
      * Locates the referenced output from the given pool of transactions.
+     *
      * @return The TransactionOutput or null if the transactions map doesn't contain the referenced tx.
      */
     TransactionOutput getConnectedOutput(Map<Sha256Hash, Transaction> transactions) {
         Transaction tx = transactions.get(outpoint.getHash());
         if (tx == null)
             return null;
-        TransactionOutput out = tx.getOutputs().get((int)outpoint.getIndex());
+        TransactionOutput out = tx.getOutputs().get((int) outpoint.getIndex());
         return out;
     }
 
@@ -227,14 +239,14 @@ public class TransactionInput extends ChildMessage implements Serializable {
      * Connecting means updating the internal pointers and spent flags.
      *
      * @param transactions Map of txhash->transaction.
-     * @param disconnect Whether to abort if there's a pre-existing connection or not.
+     * @param disconnect   Whether to abort if there's a pre-existing connection or not.
      * @return true if connection took place, false if the referenced transaction was not in the list.
      */
     ConnectionResult connect(Map<Sha256Hash, Transaction> transactions, boolean disconnect) {
         Transaction tx = transactions.get(outpoint.getHash());
         if (tx == null)
             return TransactionInput.ConnectionResult.NO_SUCH_TX;
-        TransactionOutput out = tx.getOutputs().get((int)outpoint.getIndex());
+        TransactionOutput out = tx.getOutputs().get((int) outpoint.getIndex());
         if (!out.isAvailableForSpending()) {
             if (disconnect)
                 out.markAsUnspent();
@@ -253,18 +265,18 @@ public class TransactionInput extends ChildMessage implements Serializable {
      */
     boolean disconnect() {
         if (outpoint.fromTx == null) return false;
-        outpoint.fromTx.getOutputs().get((int)outpoint.getIndex()).markAsUnspent();
+        outpoint.fromTx.getOutputs().get((int) outpoint.getIndex()).markAsUnspent();
         outpoint.fromTx = null;
         return true;
     }
-    
+
     /**
      * Ensure object is fully parsed before invoking java serialization.  The backing byte array
      * is transient so if the object has parseLazy = true and hasn't invoked checkParse yet
      * then data will be lost during serialization.
      */
     private void writeObject(ObjectOutputStream out) throws IOException {
-    	checkParse();
-    	out.defaultWriteObject();
+        checkParse();
+        out.defaultWriteObject();
     }
 }

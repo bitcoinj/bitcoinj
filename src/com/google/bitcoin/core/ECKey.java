@@ -16,20 +16,7 @@
 
 package com.google.bitcoin.core;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.Serializable;
-import java.math.BigInteger;
-import java.security.SecureRandom;
-
-import org.bouncycastle.asn1.ASN1InputStream;
-import org.bouncycastle.asn1.ASN1OutputStream;
-import org.bouncycastle.asn1.DERBitString;
-import org.bouncycastle.asn1.DERInteger;
-import org.bouncycastle.asn1.DEROctetString;
-import org.bouncycastle.asn1.DERSequence;
-import org.bouncycastle.asn1.DERSequenceGenerator;
-import org.bouncycastle.asn1.DERTaggedObject;
+import org.bouncycastle.asn1.*;
 import org.bouncycastle.asn1.sec.SECNamedCurves;
 import org.bouncycastle.asn1.x9.X9ECParameters;
 import org.bouncycastle.crypto.AsymmetricCipherKeyPair;
@@ -39,6 +26,12 @@ import org.bouncycastle.crypto.params.ECKeyGenerationParameters;
 import org.bouncycastle.crypto.params.ECPrivateKeyParameters;
 import org.bouncycastle.crypto.params.ECPublicKeyParameters;
 import org.bouncycastle.crypto.signers.ECDSASigner;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.Serializable;
+import java.math.BigInteger;
+import java.security.SecureRandom;
 
 /**
  * Represents an elliptic curve keypair that we own and can use for signing transactions. Currently,
@@ -54,13 +47,13 @@ public class ECKey implements Serializable {
     static {
         // All clients must agree on the curve to use by agreement. BitCoin uses secp256k1.
         X9ECParameters params = SECNamedCurves.getByName("secp256k1");
-        ecParams = new ECDomainParameters(params.getCurve(), params.getG(), params.getN(),  params.getH());
+        ecParams = new ECDomainParameters(params.getCurve(), params.getG(), params.getN(), params.getH());
         secureRandom = new SecureRandom();
     }
 
     private final BigInteger priv;
     private final byte[] pub;
-    
+
     transient private byte[] pubKeyHash;
 
     /** Generates an entirely new keypair. */
@@ -88,28 +81,28 @@ public class ECKey implements Serializable {
      * Output this ECKey as an ASN.1 encoded private key, as understood by OpenSSL or used by the BitCoin reference
      * implementation in its wallet storage format.
      */
-    public byte[] toASN1(){
-         try {
-             ByteArrayOutputStream baos = new ByteArrayOutputStream(400);
-             ASN1OutputStream encoder = new ASN1OutputStream(baos);
+    public byte[] toASN1() {
+        try {
+            ByteArrayOutputStream baos = new ByteArrayOutputStream(400);
+            ASN1OutputStream encoder = new ASN1OutputStream(baos);
 
-             // ASN1_SEQUENCE(EC_PRIVATEKEY) = {
-             //   ASN1_SIMPLE(EC_PRIVATEKEY, version, LONG),
-             //   ASN1_SIMPLE(EC_PRIVATEKEY, privateKey, ASN1_OCTET_STRING),
-             //   ASN1_EXP_OPT(EC_PRIVATEKEY, parameters, ECPKPARAMETERS, 0),
-             //   ASN1_EXP_OPT(EC_PRIVATEKEY, publicKey, ASN1_BIT_STRING, 1)
-             // } ASN1_SEQUENCE_END(EC_PRIVATEKEY)
-             DERSequenceGenerator seq = new DERSequenceGenerator(encoder);
-             seq.addObject(new DERInteger(1)); // version
-             seq.addObject(new DEROctetString(priv.toByteArray()));
-             seq.addObject(new DERTaggedObject(0, SECNamedCurves.getByName("secp256k1").getDERObject()));
-             seq.addObject(new DERTaggedObject(1, new DERBitString(getPubKey())));
-             seq.close();
-             encoder.close();
-             return baos.toByteArray();
-         } catch (IOException e) {
-             throw new RuntimeException(e);  // Cannot happen, writing to memory stream.
-         }
+            // ASN1_SEQUENCE(EC_PRIVATEKEY) = {
+            //   ASN1_SIMPLE(EC_PRIVATEKEY, version, LONG),
+            //   ASN1_SIMPLE(EC_PRIVATEKEY, privateKey, ASN1_OCTET_STRING),
+            //   ASN1_EXP_OPT(EC_PRIVATEKEY, parameters, ECPKPARAMETERS, 0),
+            //   ASN1_EXP_OPT(EC_PRIVATEKEY, publicKey, ASN1_BIT_STRING, 1)
+            // } ASN1_SEQUENCE_END(EC_PRIVATEKEY)
+            DERSequenceGenerator seq = new DERSequenceGenerator(encoder);
+            seq.addObject(new DERInteger(1)); // version
+            seq.addObject(new DEROctetString(priv.toByteArray()));
+            seq.addObject(new DERTaggedObject(0, SECNamedCurves.getByName("secp256k1").getDERObject()));
+            seq.addObject(new DERTaggedObject(1, new DERBitString(getPubKey())));
+            seq.close();
+            encoder.close();
+            return baos.toByteArray();
+        } catch (IOException e) {
+            throw new RuntimeException(e);  // Cannot happen, writing to memory stream.
+        }
     }
 
     /**
@@ -170,7 +163,7 @@ public class ECKey implements Serializable {
         // of the type used by BitCoin we have to encode them using DER encoding, which is just a way to pack the two
         // components into a structure.
         try {
-        	//usually 70-72 bytes.
+            //usually 70-72 bytes.
             ByteArrayOutputStream bos = new UnsafeByteArrayOutputStream(72);
             DERSequenceGenerator seq = new DERSequenceGenerator(bos);
             seq.addObject(new DERInteger(sigs[0]));
@@ -184,9 +177,10 @@ public class ECKey implements Serializable {
 
     /**
      * Verifies the given ASN.1 encoded ECDSA signature against a hash using the public key.
-     * @param data Hash of the data to verify.
+     *
+     * @param data      Hash of the data to verify.
      * @param signature ASN.1 encoded signature.
-     * @param pub The public key bytes to use.
+     * @param pub       The public key bytes to use.
      */
     public static boolean verify(byte[] data, byte[] signature, byte[] pub) {
         ECDSASigner signer = new ECDSASigner();
@@ -206,7 +200,8 @@ public class ECKey implements Serializable {
 
     /**
      * Verifies the given ASN.1 encoded ECDSA signature against a hash using the public key.
-     * @param data Hash of the data to verify.
+     *
+     * @param data      Hash of the data to verify.
      * @param signature ASN.1 encoded signature.
      */
     public boolean verify(byte[] data, byte[] signature) {
@@ -238,7 +233,9 @@ public class ECKey implements Serializable {
         }
     }
 
-    /** Returns a 32 byte array containing the private key. */
+    /**
+     * Returns a 32 byte array containing the private key.
+     */
     public byte[] getPrivKeyBytes() {
         // Getting the bytes out of a BigInteger gives us an extra zero byte on the end (for signedness)
         // or less than 32 bytes (leading zeros).  Coerce to 32 bytes in all cases.

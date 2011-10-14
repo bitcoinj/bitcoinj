@@ -16,22 +16,25 @@
 
 package com.google.bitcoin.store;
 
-import java.io.*;
-import java.nio.ByteBuffer;
-import java.util.HashMap;
-import java.util.Map;
-
 import com.google.bitcoin.core.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.RandomAccessFile;
+import java.nio.ByteBuffer;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Stores the block chain to disk but still holds it in memory. This is intended for desktop apps and tests.
  * Constrained environments like mobile phones probably won't want to or be able to store all the block headers in RAM.
  */
 public class DiskBlockStore implements BlockStore {
-	private static final Logger log = LoggerFactory.getLogger(DiskBlockStore.class);
-	
+    private static final Logger log = LoggerFactory.getLogger(DiskBlockStore.class);
+
     private RandomAccessFile file;
     private Map<Sha256Hash, StoredBlock> blockMap;
     private Sha256Hash chainHead;
@@ -99,7 +102,7 @@ public class DiskBlockStore implements BlockStore {
             try {
                 while (true) {
                     // Read a block from disk.
-                    int read = file.read(headerBytes); 
+                    int read = file.read(headerBytes);
                     if (read == -1) {
                         // End of file.
                         break;
@@ -118,7 +121,7 @@ public class DiskBlockStore implements BlockStore {
                             s = new StoredBlock(params.genesisBlock.cloneAsHeader(), params.genesisBlock.getWork(), 0);
                         } else {
                             throw new BlockStoreException("Could not connect " + b.getHash().toString() + " to "
-                                + b.getPrevBlockHash().toString());
+                                    + b.getPrevBlockHash().toString());
                         }
                     } else {
                         // Don't try to verify the genesis block to avoid upsetting the unit tests.

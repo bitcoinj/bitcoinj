@@ -20,7 +20,7 @@ import static com.google.bitcoin.core.Utils.isLessThanUnsigned;
 
 public class VarInt {
     public final long value;
-    
+
     public VarInt(long value) {
         this.value = value;
     }
@@ -44,11 +44,11 @@ public class VarInt {
         }
         this.value = val;
     }
-    
+
     public int getSizeInBytes() {
-    	return sizeOf(value);
+        return sizeOf(value);
     }
-    
+
     public static int sizeOf(int value) {
         // Java doesn't have the actual value of MAX_INT, as all types in Java are signed.
         if (value < 253)
@@ -57,7 +57,7 @@ public class VarInt {
             return 3;  // 1 marker + 2 data bytes
         return 5;  // 1 marker + 4 data bytes
     }
-    
+
     public static int sizeOf(long value) {
         // Java doesn't have the actual value of MAX_INT, as all types in Java are signed.
         if (isLessThanUnsigned(value, 253))
@@ -73,13 +73,13 @@ public class VarInt {
     public byte[] encode() {
         return encodeBE();
     }
-    
+
 
     public byte[] encodeBE() {
         if (isLessThanUnsigned(value, 253)) {
-            return new byte[] { (byte)value };
+            return new byte[]{(byte) value};
         } else if (isLessThanUnsigned(value, 65536)) {
-            return new byte[] { (byte) 253, (byte) (value), (byte) (value >> 8) };
+            return new byte[]{(byte) 253, (byte) (value), (byte) (value >> 8)};
         } else if (isLessThanUnsigned(value, 4294967295L)) {
             byte[] bytes = new byte[5];
             bytes[0] = (byte) 254;

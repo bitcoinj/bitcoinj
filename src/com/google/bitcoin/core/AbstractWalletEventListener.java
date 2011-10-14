@@ -30,10 +30,10 @@ public abstract class AbstractWalletEventListener implements WalletEventListener
      * register the event listener after the chain is downloaded. It's safe to use methods of wallet during the
      * execution of this callback.
      *
-     * @param wallet The wallet object that received the coins/
-     * @param tx The transaction which sent us the coins.
+     * @param wallet      The wallet object that received the coins/
+     * @param tx          The transaction which sent us the coins.
      * @param prevBalance Balance before the coins were received.
-     * @param newBalance Current balance of the wallet.
+     * @param newBalance  Current balance of the wallet.
      */
     public void onCoinsReceived(Wallet wallet, Transaction tx, BigInteger prevBalance, BigInteger newBalance) {
         onChange();
@@ -65,7 +65,7 @@ public abstract class AbstractWalletEventListener implements WalletEventListener
      * C++ client of the recipient as 0/unconfirmed forever, so if it was used to purchase something,
      * the user needs to know their goods will never arrive.
      *
-     * @param deadTx The transaction that is newly dead.
+     * @param deadTx        The transaction that is newly dead.
      * @param replacementTx The transaction that killed it.
      */
     public void onDeadTransaction(Wallet wallet, Transaction deadTx, Transaction replacementTx) {

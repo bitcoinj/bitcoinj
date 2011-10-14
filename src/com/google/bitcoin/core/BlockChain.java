@@ -16,13 +16,13 @@
 
 package com.google.bitcoin.core;
 
-import java.math.BigInteger;
-import java.util.*;
-
 import com.google.bitcoin.store.BlockStore;
 import com.google.bitcoin.store.BlockStoreException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.math.BigInteger;
+import java.util.*;
 
 /**
  * A BlockChain holds a series of {@link Block} objects, links them together, and knows how to verify that the
@@ -74,7 +74,7 @@ public class BlockChain {
     /**
      * Constructs a BlockChain connected to the given wallet and store. To obtain a {@link Wallet} you can construct
      * one from scratch, or you can deserialize a saved wallet from disk using {@link Wallet#loadFromFile(java.io.File)}
-     * <p>
+     * <p/>
      *
      * For the store you can use a {@link com.google.bitcoin.store.MemoryBlockStore} if you don't care about saving the downloaded data, or a
      * {@link com.google.bitcoin.store.BoundedOverheadBlockStore} if you'd like to ensure fast startup the next time you run the program.
@@ -92,9 +92,9 @@ public class BlockChain {
     public BlockChain(NetworkParameters params, BlockStore blockStore) throws BlockStoreException {
         this(params, new ArrayList<Wallet>(), blockStore);
     }
-    
+
     /**
-     * Constructs a BlockChain connected to the given list of wallets and a store. 
+     * Constructs a BlockChain connected to the given list of wallets and a store.
      */
     public BlockChain(NetworkParameters params, List<Wallet> wallets,
                       BlockStore blockStore) throws BlockStoreException {
@@ -107,7 +107,7 @@ public class BlockChain {
 
     /**
      * Add a wallet to the BlockChain. Note that the wallet will be unaffected by any blocks received while it
-     * was not part of this BlockChain. This method is useful if the wallet has just been created, and its keys 
+     * was not part of this BlockChain. This method is useful if the wallet has just been created, and its keys
      * have never been in use, or if the wallet has been loaded along with the BlockChain
      */
     public synchronized void addWallet(Wallet wallet) {
@@ -150,7 +150,7 @@ public class BlockChain {
         // blocks validity so we can skip the merkle root verification if the contents aren't interesting. This saves
         // a lot of time for big blocks.
         boolean contentsImportant = false;
-        HashMap<Wallet, List<Transaction>> walletToTxMap = new HashMap<Wallet, List<Transaction>>();;
+        HashMap<Wallet, List<Transaction>> walletToTxMap = new HashMap<Wallet, List<Transaction>>();
         if (block.transactions != null) {
             scanTransactions(block, walletToTxMap);
             contentsImportant = walletToTxMap.size() > 0;
@@ -220,7 +220,7 @@ public class BlockChain {
                 String splitPointHash =
                         splitPoint != null ? splitPoint.getHeader().getHashAsString() : "?";
                 log.info("Block forks the chain at {}, but it did not cause a reorganize:\n{}",
-                          splitPointHash, newStoredBlock);
+                        splitPointHash, newStoredBlock);
             }
 
             // We may not have any transactions if we received only a header. That never happens today but will in

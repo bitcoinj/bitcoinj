@@ -18,7 +18,7 @@ package com.google.bitcoin.core;
 
 /**
  * Thrown when a problem occurs in communicating with a peer, and we should
- * retry. 
+ * retry.
  */
 public class PeerException extends Exception {
     @SuppressWarnings("serial")

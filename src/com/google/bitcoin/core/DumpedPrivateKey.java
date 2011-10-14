@@ -34,7 +34,7 @@ public class DumpedPrivateKey extends VersionedChecksummedBytes {
     /**
      * Parses the given private key as created by the "dumpprivkey" Bitcoin C++ RPC.
      *
-     * @param params The expected network parameters of the key. If you don't care, provide null.
+     * @param params  The expected network parameters of the key. If you don't care, provide null.
      * @param encoded The base58 encoded string.
      * @throws AddressFormatException If the string is invalid or the header byte doesn't match the network params.
      */
@@ -42,7 +42,7 @@ public class DumpedPrivateKey extends VersionedChecksummedBytes {
         super(encoded);
         if (params != null && version != params.dumpedPrivateKeyHeader)
             throw new AddressFormatException("Mismatched version number, trying to cross networks? " + version +
-                                             " vs " + params.dumpedPrivateKeyHeader);
+                    " vs " + params.dumpedPrivateKeyHeader);
     }
 
     /**

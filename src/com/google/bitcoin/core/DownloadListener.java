@@ -16,59 +16,54 @@
 
 package com.google.bitcoin.core;
 
-import com.google.bitcoin.core.AbstractPeerEventListener;
-import com.google.bitcoin.core.Block;
-import com.google.bitcoin.core.Peer;
-
 import java.text.DateFormat;
 import java.util.Date;
 import java.util.concurrent.Semaphore;
 
 /**
  * Listen to chain download events and print useful informational messages.
- * 
- * <p>progress, startDownload, doneDownload maybe be overridden to change the way the user
- * is notified.  
- * 
- * <p>Methods are called with the event listener object locked so your
- * implementation does not have to be thread safe. 
- * 
- * @author miron@google.com (Miron Cuperman a.k.a. devrandom)
  *
+ * <p>progress, startDownload, doneDownload maybe be overridden to change the way the user
+ * is notified.
+ *
+ * <p>Methods are called with the event listener object locked so your
+ * implementation does not have to be thread safe.
+ *
+ * @author miron@google.com (Miron Cuperman a.k.a. devrandom)
  */
 public class DownloadListener extends AbstractPeerEventListener {
     private int originalBlocksLeft = -1;
     private int lastPercent = 0;
     Semaphore done = new Semaphore(0);
-    
+
     @Override
     public void onChainDownloadStarted(Peer peer, int blocksLeft) {
         startDownload(blocksLeft);
         originalBlocksLeft = blocksLeft;
     }
-    
+
     @Override
     public void onBlocksDownloaded(Peer peer, Block block, int blocksLeft) {
         if (blocksLeft == 0) {
             doneDownload();
             done.release();
         }
-        
+
         if (blocksLeft < 0 || originalBlocksLeft <= 0)
             return;
 
         double pct = 100.0 - (100.0 * (blocksLeft / (double) originalBlocksLeft));
-        if ((int)pct != lastPercent) {
+        if ((int) pct != lastPercent) {
             progress(pct, new Date(block.getTimeSeconds() * 1000));
-            lastPercent = (int)pct;
+            lastPercent = (int) pct;
         }
     }
 
     /**
      * Called when download progress is made.
-     * 
-     * @param pct the percentage of chain downloaded, estimated
-     * @param date the date of the last block downloaded 
+     *
+     * @param pct  the percentage of chain downloaded, estimated
+     * @param date the date of the last block downloaded
      */
     protected void progress(double pct, Date date) {
         System.out.println(String.format("Chain download %d%% done, block date %s", (int) pct,
@@ -77,7 +72,7 @@ public class DownloadListener extends AbstractPeerEventListener {
 
     /**
      * Called when download is initiated.
-     * 
+     *
      * @param blocks the number of blocks to download, estimated
      */
     protected void startDownload(int blocks) {
@@ -93,7 +88,7 @@ public class DownloadListener extends AbstractPeerEventListener {
     }
 
     /**
-     * Wait for the chain to be downloaded. 
+     * Wait for the chain to be downloaded.
      */
     public void await() throws InterruptedException {
         done.acquire();

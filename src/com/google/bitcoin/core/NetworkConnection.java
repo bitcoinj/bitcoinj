@@ -27,7 +27,6 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.Date;
 import java.util.LinkedHashMap;
-import java.util.LinkedList;
 
 /**
  * A NetworkConnection handles talking to a remote BitCoin peer at a low level. It understands how to read and write
@@ -43,8 +42,8 @@ import java.util.LinkedList;
  * Construction is blocking whilst the protocol version is negotiated.
  */
 public class NetworkConnection {
-	private static final Logger log = LoggerFactory.getLogger(NetworkConnection.class);
-	
+    private static final Logger log = LoggerFactory.getLogger(NetworkConnection.class);
+
     private final Socket socket;
     private final OutputStream out;
     private final InputStream in;
@@ -61,13 +60,13 @@ public class NetworkConnection {
      * Connect to the given IP address using the port specified as part of the network parameters. Once construction
      * is complete a functioning network channel is set up and running.
      *
-     * @param peerAddress address to connect to. IPv6 is not currently supported by BitCoin.  If
-     * port is not positive the default port from params is used.
-     * @param params Defines which network to connect to and details of the protocol.
-     * @param bestHeight How many blocks are in our best chain
+     * @param peerAddress    address to connect to. IPv6 is not currently supported by BitCoin.  If
+     *                       port is not positive the default port from params is used.
+     * @param params         Defines which network to connect to and details of the protocol.
+     * @param bestHeight     How many blocks are in our best chain
      * @param connectTimeout Timeout in milliseconds when initially connecting to peer
-     * @param dedupe Whether to avoid parsing duplicate messages from the network (ie from other peers).
-     * @throws IOException if there is a network related failure.
+     * @param dedupe         Whether to avoid parsing duplicate messages from the network (ie from other peers).
+     * @throws IOException       if there is a network related failure.
      * @throws ProtocolException if the version negotiation failed.
      */
     public NetworkConnection(PeerAddress peerAddress, NetworkParameters params,
@@ -81,7 +80,7 @@ public class NetworkConnection {
         InetSocketAddress address = new InetSocketAddress(remoteIp, port);
         socket = new Socket();
         socket.connect(address, connectTimeout);
-        
+
         out = socket.getOutputStream();
         in = socket.getInputStream();
 
@@ -106,10 +105,10 @@ public class NetworkConnection {
         readMessage();
         // Switch to the new protocol version.
         int peerVersion = versionMessage.clientVersion;
-        log.info("Connected to peer: version={}, subVer='{}', services=0x{}, time={}, blocks={}", new Object[] {
-        		peerVersion, 
-        		versionMessage.subVer,
-                versionMessage.localServices, 
+        log.info("Connected to peer: version={}, subVer='{}', services=0x{}, time={}, blocks={}", new Object[]{
+                peerVersion,
+                versionMessage.subVer,
+                versionMessage.localServices,
                 new Date(versionMessage.time * 1000),
                 versionMessage.bestHeight
         });
@@ -136,6 +135,7 @@ public class NetworkConnection {
 
     /**
      * Sends a "ping" message to the remote node. The protocol doesn't presently use this feature much.
+     *
      * @throws IOException
      */
     public void ping() throws IOException {
@@ -187,7 +187,9 @@ public class NetworkConnection {
         }
     }
 
-    /** Returns the version message received from the other end of the connection during the handshake. */
+    /**
+     * Returns the version message received from the other end of the connection during the handshake.
+     */
     public VersionMessage getVersionMessage() {
         return versionMessage;
     }

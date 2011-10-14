@@ -16,15 +16,19 @@
 
 package com.google.bitcoin.store;
 
-import java.io.*;
-import java.math.BigInteger;
-import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
-import java.util.*;
-
 import com.google.bitcoin.core.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.RandomAccessFile;
+import java.math.BigInteger;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * Stores the block chain to disk.<p>
@@ -43,7 +47,7 @@ import org.slf4j.LoggerFactory;
  * expensive on Android.
  */
 public class BoundedOverheadBlockStore implements BlockStore {
-	private static final Logger log = LoggerFactory.getLogger(BoundedOverheadBlockStore.class);
+    private static final Logger log = LoggerFactory.getLogger(BoundedOverheadBlockStore.class);
     private static final byte FILE_FORMAT_VERSION = 1;
 
     private RandomAccessFile file;
@@ -248,6 +252,7 @@ public class BoundedOverheadBlockStore implements BlockStore {
     }
 
     private ByteBuffer buf = ByteBuffer.allocateDirect(Record.SIZE);
+
     private Record getRecord(Sha256Hash hash) throws BlockStoreException, IOException, ProtocolException {
         long startPos = channel.position();
         // Use our own file pointer within the tight loop as updating channel positions is really expensive.

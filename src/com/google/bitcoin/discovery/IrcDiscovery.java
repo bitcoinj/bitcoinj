@@ -22,9 +22,16 @@ import com.google.bitcoin.core.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
-import java.net.*;
-import java.util.*;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.Socket;
+import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.Random;
 
 /**
  * IrcDiscovery provides a way to find network peers by joining a pre-agreed rendevouz point on the LFnet IRC network.
@@ -42,8 +49,8 @@ public class IrcDiscovery implements PeerDiscovery {
      * Finds a list of peers by connecting to an IRC network, joining a channel, decoding the nicks and then
      * disconnecting.
      *
-     * @param channel  The IRC channel to join, either "#bitcoin" or "#bitcoinTEST" for the production and test networks
-     * respectively.
+     * @param channel The IRC channel to join, either "#bitcoin" or "#bitcoinTEST" for the production and test networks
+     *                respectively.
      */
     public IrcDiscovery(String channel) {
         this(channel, "irc.lfnet.org", 6667);
@@ -53,7 +60,7 @@ public class IrcDiscovery implements PeerDiscovery {
      * Finds a list of peers by connecting to an IRC network, joining a channel, decoding the nicks and then
      * disconnecting.
      *
-     * @param server Name or textual IP address of the IRC server to join.
+     * @param server  Name or textual IP address of the IRC server to join.
      * @param channel The IRC channel to join, either "#bitcoin" or "#bitcoinTEST" for the production and test networks
      */
     public IrcDiscovery(String channel, String server, int port) {
@@ -137,7 +144,8 @@ public class IrcDiscovery implements PeerDiscovery {
             try {
                 // No matter what try to close the connection.
                 connection.close();
-            } catch (Exception e2) {}
+            } catch (Exception e2) {
+            }
         }
         return addresses.toArray(new InetSocketAddress[]{});
     }

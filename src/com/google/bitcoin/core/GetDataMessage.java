@@ -22,13 +22,13 @@ public class GetDataMessage extends ListMessage {
     public GetDataMessage(NetworkParameters params, byte[] payloadBytes) throws ProtocolException {
         super(params, payloadBytes);
     }
-    
-    public GetDataMessage(NetworkParameters params, byte[] msg, boolean parseLazy, boolean parseRetain, int length)
-			throws ProtocolException {
-		super(params, msg, parseLazy, parseRetain, length);
-	}
 
-	public GetDataMessage(NetworkParameters params) {
+    public GetDataMessage(NetworkParameters params, byte[] msg, boolean parseLazy, boolean parseRetain, int length)
+            throws ProtocolException {
+        super(params, msg, parseLazy, parseRetain, length);
+    }
+
+    public GetDataMessage(NetworkParameters params) {
         super(params);
     }
 }

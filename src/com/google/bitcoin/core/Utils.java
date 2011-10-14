@@ -36,7 +36,7 @@ public class Utils {
 
     /**
      * How many "nanocoins" there are in a BitCoin.
-     *
+     * <p/>
      * A nanocoin is the smallest unit that can be transferred using BitCoin.
      * The term nanocoin is very misleading, though, because there are only 100 million
      * of them in a coin (whereas one would expect 1 billion.
@@ -45,14 +45,16 @@ public class Utils {
 
     /**
      * How many "nanocoins" there are in 0.01 BitCoins.
-     *
+     * <p/>
      * A nanocoin is the smallest unit that can be transferred using BitCoin.
      * The term nanocoin is very misleading, though, because there are only 100 million
      * of them in a coin (whereas one would expect 1 billion).
      */
     public static final BigInteger CENT = new BigInteger("1000000", 10);
 
-    /** Convert an amount expressed in the way humans are used to into nanocoins. */
+    /**
+     * Convert an amount expressed in the way humans are used to into nanocoins.
+     */
     public static BigInteger toNanoCoins(int coins, int cents) {
         assert cents < 100;
         BigInteger bi = BigInteger.valueOf(coins).multiply(COIN);
@@ -62,40 +64,40 @@ public class Utils {
 
     /**
      * Convert an amount expressed in the way humans are used to into nanocoins.<p>
-     *
+     * <p/>
      * This takes string in a format understood by {@link BigDecimal#BigDecimal(String)},
      * for example "0", "1", "0.10", "1.23E3", "1234.5E-5".
-     * 
+     *
      * @throws ArithmeticException if you try to specify fractional nanocoins
-     **/
-    public static BigInteger toNanoCoins(String coins){
+     */
+    public static BigInteger toNanoCoins(String coins) {
         return new BigDecimal(coins).movePointRight(8).toBigIntegerExact();
     }
 
     public static void uint32ToByteArrayBE(long val, byte[] out, int offset) {
         out[offset + 0] = (byte) (0xFF & (val >> 24));
         out[offset + 1] = (byte) (0xFF & (val >> 16));
-        out[offset + 2] = (byte) (0xFF & (val >>  8));
-        out[offset + 3] = (byte) (0xFF & (val >>  0));      
+        out[offset + 2] = (byte) (0xFF & (val >> 8));
+        out[offset + 3] = (byte) (0xFF & (val >> 0));
     }
 
     public static void uint32ToByteArrayLE(long val, byte[] out, int offset) {
-        out[offset + 0] = (byte) (0xFF & (val >>  0));
-        out[offset + 1] = (byte) (0xFF & (val >>  8));
+        out[offset + 0] = (byte) (0xFF & (val >> 0));
+        out[offset + 1] = (byte) (0xFF & (val >> 8));
         out[offset + 2] = (byte) (0xFF & (val >> 16));
-        out[offset + 3] = (byte) (0xFF & (val >> 24));      
+        out[offset + 3] = (byte) (0xFF & (val >> 24));
     }
-    
+
     public static void uint32ToByteStreamLE(long val, OutputStream stream) throws IOException {
-        stream.write((int)(0xFF & (val >>  0)));
-        stream.write((int)(0xFF & (val >>  8)));
-        stream.write((int)(0xFF & (val >> 16)));
-        stream.write((int)(0xFF & (val >> 24)));
+        stream.write((int) (0xFF & (val >> 0)));
+        stream.write((int) (0xFF & (val >> 8)));
+        stream.write((int) (0xFF & (val >> 16)));
+        stream.write((int) (0xFF & (val >> 24)));
     }
-    
+
     public static void uint64ToByteStreamLE(BigInteger val, OutputStream stream) throws IOException {
         byte[] bytes = val.toByteArray();
-        if (bytes.length > 8) { 
+        if (bytes.length > 8) {
             throw new RuntimeException("Input too large to encode into a uint64");
         }
         bytes = reverseBytes(bytes);
@@ -107,7 +109,7 @@ public class Utils {
     }
 
     /**
-     * See {@link Utils#doubleDigest(byte[],int,int)}.
+     * See {@link Utils#doubleDigest(byte[], int, int)}.
      */
     public static byte[] doubleDigest(byte[] input) {
         return doubleDigest(input, 0, input.length);
@@ -127,7 +129,7 @@ public class Utils {
             throw new RuntimeException(e);  // Cannot happen.
         }
     }
-    
+
     public static byte[] singleDigest(byte[] input, int offset, int length) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
@@ -154,12 +156,16 @@ public class Utils {
         }
     }
 
-    /** Work around lack of unsigned types in Java. */
-    public static boolean isLessThanUnsigned(long n1, long n2) { 
+    /**
+     * Work around lack of unsigned types in Java.
+     */
+    public static boolean isLessThanUnsigned(long n1, long n2) {
         return (n1 < n2) ^ ((n1 < 0) != (n2 < 0));
     }
 
-    /** Returns the given byte array hex encoded. */
+    /**
+     * Returns the given byte array hex encoded.
+     */
     public static String bytesToHexString(byte[] bytes) {
         StringBuffer buf = new StringBuffer(bytes.length * 2);
         for (byte b : bytes) {
@@ -170,9 +176,11 @@ public class Utils {
         }
         return buf.toString();
     }
-    
 
-    /** Returns a copy of the given byte array in reverse order. */
+
+    /**
+     * Returns a copy of the given byte array in reverse order.
+     */
     public static byte[] reverseBytes(byte[] bytes) {
         // We could use the XOR trick here but it's easier to understand if we don't. If we find this is really a
         // performance issue the matter can be revisited.
@@ -183,21 +191,21 @@ public class Utils {
     }
 
     public static long readUint32(byte[] bytes, int offset) {
-        return ((bytes[offset++] & 0xFFL) <<  0) |
-               ((bytes[offset++] & 0xFFL) <<  8) |
-               ((bytes[offset++] & 0xFFL) << 16) |
-               ((bytes[offset] & 0xFFL) << 24);
+        return ((bytes[offset++] & 0xFFL) << 0) |
+                ((bytes[offset++] & 0xFFL) << 8) |
+                ((bytes[offset++] & 0xFFL) << 16) |
+                ((bytes[offset] & 0xFFL) << 24);
     }
-    
+
     public static long readUint32BE(byte[] bytes, int offset) {
         return ((bytes[offset + 0] & 0xFFL) << 24) |
-               ((bytes[offset + 1] & 0xFFL) << 16) |
-               ((bytes[offset + 2] & 0xFFL) <<  8) |
-               ((bytes[offset + 3] & 0xFFL) <<  0);
+                ((bytes[offset + 1] & 0xFFL) << 16) |
+                ((bytes[offset + 2] & 0xFFL) << 8) |
+                ((bytes[offset + 3] & 0xFFL) << 0);
     }
-    
+
     public static int readUint16BE(byte[] bytes, int offset) {
-	    return ((bytes[offset] & 0xff) << 8) | bytes[offset + 1] & 0xff;
+        return ((bytes[offset] & 0xff) << 8) | bytes[offset + 1] & 0xff;
     }
 
     /**
@@ -216,7 +224,9 @@ public class Utils {
         }
     }
 
-    /** Returns the given value in nanocoins as a 0.12 type string. */
+    /**
+     * Returns the given value in nanocoins as a 0.12 type string.
+     */
     public static String bitcoinValueToFriendlyString(BigInteger value) {
         boolean negative = value.compareTo(BigInteger.ZERO) < 0;
         if (negative)
@@ -225,7 +235,7 @@ public class Utils {
         BigInteger cents = value.remainder(COIN);
         return String.format("%s%d.%02d", negative ? "-" : "", coins.intValue(), cents.intValue() / 1000000);
     }
-    
+
     /**
      * MPI encoded numbers are produced by the OpenSSL BN_bn2mpi function. They consist of
      * a 4 byte big endian length field, followed by the stated number of bytes representing
@@ -241,19 +251,23 @@ public class Utils {
     // The representation of nBits uses another home-brew encoding, as a way to represent a large
     // hash value in only 32 bits.
     static BigInteger decodeCompactBits(long compact) {
-        int size = ((int)(compact >> 24)) & 0xFF;
+        int size = ((int) (compact >> 24)) & 0xFF;
         byte[] bytes = new byte[4 + size];
         bytes[3] = (byte) size;
         if (size >= 1) bytes[4] = (byte) ((compact >> 16) & 0xFF);
-        if (size >= 2) bytes[5] = (byte) ((compact >>  8) & 0xFF);
-        if (size >= 3) bytes[6] = (byte) ((compact >>  0) & 0xFF);
+        if (size >= 2) bytes[5] = (byte) ((compact >> 8) & 0xFF);
+        if (size >= 3) bytes[6] = (byte) ((compact >> 0) & 0xFF);
         return decodeMPI(bytes);
     }
 
-    /** If non-null, overrides the return value of now(). */
+    /**
+     * If non-null, overrides the return value of now().
+     */
     public static Date mockTime;
 
-    /** Advances (or rewinds) the mock clock by the given number of seconds. */
+    /**
+     * Advances (or rewinds) the mock clock by the given number of seconds.
+     */
     public static Date rollMockClock(int seconds) {
         if (mockTime == null)
             mockTime = new Date();
@@ -261,7 +275,9 @@ public class Utils {
         return mockTime;
     }
 
-    /** Returns the current time, or a mocked out equivalent. */
+    /**
+     * Returns the current time, or a mocked out equivalent.
+     */
     public static Date now() {
         if (mockTime != null)
             return mockTime;

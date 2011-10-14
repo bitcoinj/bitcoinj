@@ -20,9 +20,9 @@ import java.util.Arrays;
 
 /**
  * <p>In Bitcoin the following format is often used to represent some type of key:</p>
- *
+ * <p/>
  * <pre>[one version byte] [data bytes] [4 checksum bytes]</pre>
- *
+ * <p/>
  * <p>and the result is then Base58 encoded. This format is used for addresses, and private keys exported using the
  * dumpprivkey command.</p>
  */
@@ -48,7 +48,7 @@ public class VersionedChecksummedBytes {
         // A stringified buffer is:
         //   1 byte version + data bytes + 4 bytes check code (a truncated hash)
         byte[] addressBytes = new byte[1 + bytes.length + 4];
-        addressBytes[0] = (byte)version;
+        addressBytes[0] = (byte) version;
         System.arraycopy(bytes, 0, addressBytes, 1, bytes.length);
         byte[] check = Utils.doubleDigest(addressBytes, 0, bytes.length + 1);
         System.arraycopy(check, 0, addressBytes, bytes.length + 1, 4);
@@ -70,6 +70,7 @@ public class VersionedChecksummedBytes {
     /**
      * Returns the "version" or "header" byte: the first byte of the data. This is used to disambiguate what the
      * contents apply to, for example, which network the key or address is valid on.
+     *
      * @return A positive number between 0 and 255.
      */
     public int getVersion() {
