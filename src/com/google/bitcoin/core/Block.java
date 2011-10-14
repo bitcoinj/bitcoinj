@@ -418,6 +418,7 @@ public class Block extends Message {
 		if (!transactionBytesValid)
 			bytes = null;
 		hash = null;
+		checksum = null;
 	}
 
 	private void unCacheTransactions() {

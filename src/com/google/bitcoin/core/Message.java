@@ -58,6 +58,8 @@ public abstract class Message implements Serializable {
     protected transient final boolean parseRetain;
 
     protected transient int protocolVersion;
+    
+    protected transient byte[] checksum;
 
     // This will be saved by subclasses that implement Serializable.
     protected NetworkParameters params;
@@ -206,6 +208,7 @@ public abstract class Message implements Serializable {
     	 */
 
     	checkParse();
+    	checksum = null;
     	bytes = null;
     	recached = false;
     }
@@ -236,6 +239,24 @@ public abstract class Message implements Serializable {
     }
     
     /**
+     * Should only used by BitcoinSerializer for cached checksum
+	 * @return the checksum
+	 */
+	byte[] getChecksum() {
+		return checksum;
+	}
+
+	/**
+	 * Should only used by BitcoinSerializer for caching checksum
+	 * @param checksum the checksum to set
+	 */
+	void setChecksum(byte[] checksum) {
+		if (checksum.length != 4)
+			throw new IllegalArgumentException("Checksum length must be 4 bytes, actual length: " + checksum.length);
+		this.checksum = checksum;
+	}
+
+	/**
      * Serialize this message to a byte array that conforms to the bitcoin wire protocol.
      * <br/>
      * This method may return the original byte array used to construct this message if the 

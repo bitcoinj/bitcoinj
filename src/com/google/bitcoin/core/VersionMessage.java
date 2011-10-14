@@ -161,8 +161,24 @@ public class VersionMessage extends Message {
                other.myAddr.equals(myAddr) &&
                other.theirAddr.equals(theirAddr);
     }
-
+    
+	/**
+	 * VersionMessage does not handle cached byte array so should not have a cached checksum.
+	 */
     @Override
+	byte[] getChecksum() {
+		return null;
+	}
+
+	/**
+	 * VersionMessage does not handle cached byte array so should not have a cached checksum.
+	 */
+	@Override
+	void setChecksum(byte[] checksum) {
+		
+	}
+
+	@Override
     public int hashCode() {
         return (int)bestHeight ^ clientVersion ^ (int)localServices ^ (int)time ^ subVer.hashCode() ^ myAddr.hashCode()
                 ^ theirAddr.hashCode();

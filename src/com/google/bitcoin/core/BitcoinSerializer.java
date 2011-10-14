@@ -160,22 +160,31 @@ public class BitcoinSerializer {
         Utils.uint32ToByteArrayLE(payload.length, header, 4 + COMMAND_LEN);
 
         if (usesChecksumming) {
-            Sha256Hash msgHash = message.getHash();
-        	if (msgHash != null && message instanceof Transaction) {
-        		//if the message happens to have a precalculated hash use it.
-        		//reverse copying 4 bytes is about 1600 times faster than
-        		//calculating a new hash
-        		//this is only possible for transactions as block hashes
-        		//are hashes of the header only
-        		byte[] hash = msgHash.getBytes();
-        		int start = 4 + COMMAND_LEN + 4;
-                for (int i = start; i < start + 4; i++)
-                    header[i] = hash[31 - i + start];
-                
-        	} else {
-        		byte[] hash = doubleDigest(payload);
-        		System.arraycopy(hash, 0, header, 4 + COMMAND_LEN + 4, 4);
-        	}
+            byte[] checksum = message.getChecksum();
+			if (checksum == null) {
+				Sha256Hash msgHash = message.getHash();
+				if (msgHash != null && message instanceof Transaction) {
+					// if the message happens to have a precalculated hash use
+					// it.
+					// reverse copying 4 bytes is about 1600 times faster than
+					// calculating a new hash
+					// this is only possible for transactions as block hashes
+					// are hashes of the header only
+					byte[] hash = msgHash.getBytes();
+					int start = 4 + COMMAND_LEN + 4;
+					for (int i = start; i < start + 4; i++)
+						header[i] = hash[31 - i + start];
+
+				} else {
+					byte[] hash = doubleDigest(payload);
+					System.arraycopy(hash, 0, header, 4 + COMMAND_LEN + 4, 4);
+				}
+            } else {
+            	assert Arrays.equals(checksum, Arrays.copyOf(doubleDigest(payload), 4)) 
+            	: "Checksum match failure on serialization.  Cached: " + Arrays.toString(checksum) 
+            	+ " Calculated: " + Arrays.toString(Arrays.copyOf(doubleDigest(payload), 4));
+            	System.arraycopy(checksum, 0, header, 4 + COMMAND_LEN + 4, 4);
+            }
         }
 
         out.write(header);
@@ -293,29 +302,30 @@ public class BitcoinSerializer {
         }
 
         try {
-            return makeMessage(header.command, header.size, payloadBytes, hash);
+            return makeMessage(header.command, header.size, payloadBytes, hash, header.checksum);
         } catch (Exception e) {
             throw new ProtocolException("Error deserializing message " + Utils.bytesToHexString(payloadBytes) + "\n", e);
         }
     }
 
-    private Message makeMessage(String command, int length, byte[] payloadBytes, byte[] hash) throws ProtocolException {
+    private Message makeMessage(String command, int length, byte[] payloadBytes, byte[] hash, byte[] checksum) throws ProtocolException {
         // We use an if ladder rather than reflection because reflection is very slow on Android.
-        if (command.equals("version")) {
+        Message message;
+    	if (command.equals("version")) {
             return new VersionMessage(params, payloadBytes);
         } else if (command.equals("inv")) {
-            return new InventoryMessage(params, payloadBytes, parseLazy, parseRetain, length);
+        	message = new InventoryMessage(params, payloadBytes, parseLazy, parseRetain, length);
         } else if (command.equals("block")) {
-        	return new Block(params, payloadBytes, parseLazy, parseRetain, length);
+        	message = new Block(params, payloadBytes, parseLazy, parseRetain, length);
         } else if (command.equals("getdata")) {
-            return new GetDataMessage(params, payloadBytes, parseLazy, parseRetain, length);
+        	message = new GetDataMessage(params, payloadBytes, parseLazy, parseRetain, length);
         } else if (command.equals("tx")) {
         	Transaction tx = new Transaction(params, payloadBytes, null, parseLazy, parseRetain, length);
         	if (hash != null)
         		tx.setHash(new Sha256Hash(Utils.reverseBytes(hash)));
-        	return tx;
+        	message = tx;
         } else if (command.equals("addr")) {
-            return new AddressMessage(params, payloadBytes, parseLazy, parseRetain, length);
+        	message = new AddressMessage(params, payloadBytes, parseLazy, parseRetain, length);
         } else if (command.equals("ping")) {
             return new Ping();
         } else if (command.equals("verack")) {
@@ -323,6 +333,9 @@ public class BitcoinSerializer {
         } else {
             throw new ProtocolException("No support for deserializing message with name " + command);
         }
+    	if (checksum != null)
+    		message.setChecksum(checksum);
+    	return message;
     }
 
     public void seekPastMagicBytes(InputStream in) throws IOException {

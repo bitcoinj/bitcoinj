@@ -73,6 +73,17 @@ public class AddressMessage extends Message {
         	length += addresses.size() * (protocolVersion > 31402 ? PeerAddress.MESSAGE_SIZE : PeerAddress.MESSAGE_SIZE - 4);
         return length;
     }
+    
+	/**
+	* AddressMessage cannot cache checksum in non-retain mode due to dynamic time being used.
+	 */
+	@Override
+	void setChecksum(byte[] checksum) {
+		if (parseRetain)
+			super.setChecksum(checksum);
+		else
+			this.checksum = null;
+	}
 
 	/**
 	 * @return An unmodifiableList view of the backing List of addresses.  Addresses contained within the list may be safely modified.
