@@ -122,6 +122,16 @@ public class Transaction extends ChildMessage implements Serializable {
         }
         return hash;
     }
+    
+	/**
+	 * Used by BitcoinSerializer.  The serializer has to calculate a hash for checksumming so to
+	 * avoid wasting the considerable effort a set method is provided so the serializer can set it.
+	 * 
+	 * No verification is performed on this hash.
+	 */
+	void setHash(Sha256Hash hash) {
+		this.hash = hash;
+	}
 
     public String getHashAsString() {
         return getHash().toString();
@@ -132,7 +142,8 @@ public class Transaction extends ChildMessage implements Serializable {
      * include spent outputs or not.
      */
     BigInteger getValueSentToMe(Wallet wallet, boolean includeSpent) {
-        // This is tested in WalletTest.
+        checkParse();
+    	// This is tested in WalletTest.
         BigInteger v = BigInteger.ZERO;
         for (TransactionOutput o : outputs) {
             if (!o.isMine(wallet)) continue;
@@ -181,7 +192,8 @@ public class Transaction extends ChildMessage implements Serializable {
      * @return sum in nanocoins.
      */
     public BigInteger getValueSentFromMe(Wallet wallet) throws ScriptException {
-        // This is tested in WalletTest.
+    	checkParse();
+    	// This is tested in WalletTest.
         BigInteger v = BigInteger.ZERO;
         for (TransactionInput input : inputs) {
             // This input is taking value from an transaction in our wallet. To discover the value,
@@ -204,6 +216,7 @@ public class Transaction extends ChildMessage implements Serializable {
 
     boolean disconnectInputs() {
         boolean disconnected = false;
+        checkParse();
         for (TransactionInput input : inputs) {
             disconnected |= input.disconnect();
         }
@@ -215,7 +228,8 @@ public class Transaction extends ChildMessage implements Serializable {
      * null on success.
      */
     TransactionInput connectForReorganize(Map<Sha256Hash, Transaction> transactions) {
-        for (TransactionInput input : inputs) {
+        checkParse();
+    	for (TransactionInput input : inputs) {
             // Coinbase transactions, by definition, do not have connectable inputs.
             if (input.isCoinBase()) continue;
             TransactionInput.ConnectionResult result = input.connect(transactions, false);
@@ -235,7 +249,8 @@ public class Transaction extends ChildMessage implements Serializable {
      * @return true if every output is marked as spent.
      */
     public boolean isEveryOutputSpent() {
-        for (TransactionOutput output : outputs) {
+        checkParse();
+    	for (TransactionOutput output : outputs) {
             if (output.isAvailableForSpending())
                 return false;
         }
@@ -281,6 +296,11 @@ public class Transaction extends ChildMessage implements Serializable {
         NONE,        // 2
         SINGLE,      // 3
     }
+    
+    protected void unCache() {
+    	super.unCache();
+    	hash = null;
+    }
 
     protected void parseLite() throws ProtocolException {
     	
@@ -297,15 +317,50 @@ public class Transaction extends ChildMessage implements Serializable {
     		//of the various components gains us the ability to cache the backing bytearrays
     		//so that only those subcomponents that have changed will need to be reserialized.
     	
-    		parse();
-    		parsed = true;
+    		//parse();
+    		//parsed = true;
+    		length = calcLength(bytes, cursor, offset);
+    		cursor = offset + length;
     	}
+    }
+    
+    protected static int calcLength(byte[] buf, int cursor, int offset) {
+    	VarInt varint;
+    	cursor = offset + 4;
+    	
+    	int i;
+    	long scriptLen;
+    	
+    	varint = new VarInt(buf, cursor);
+    	long txInCount = varint.value;
+    	cursor += varint.getSizeInBytes();
+    	
+    	for (i = 0; i < txInCount; i++) {
+    		cursor += 36;
+    		varint = new VarInt(buf, cursor);
+    		scriptLen = varint.value;
+    		cursor += scriptLen + 4 + varint.getSizeInBytes();
+    	}
+    	
+    	varint = new VarInt(buf, cursor);
+    	long txOutCount = varint.value;
+    	cursor += varint.getSizeInBytes();
+    	
+    	for (i = 0; i < txOutCount; i++) {
+    		cursor += 8;
+    		varint = new VarInt(buf, cursor);
+    		scriptLen = varint.value;
+    		cursor += scriptLen + varint.getSizeInBytes();
+    	}
+    	return cursor - offset + 4;
     }
     
     void parse() throws ProtocolException {
     	
     	if (parsed)
     		return;
+    	
+    	cursor = offset;
     	
     	version = readUint32();
     	int marker = cursor;
@@ -337,7 +392,8 @@ public class Transaction extends ChildMessage implements Serializable {
      * position in a block but by the data in the inputs.
      */
     public boolean isCoinBase() {
-        return inputs.get(0).isCoinBase();
+        checkParse();
+    	return inputs.get(0).isCoinBase();
     }
 
     /**

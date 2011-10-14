@@ -108,7 +108,8 @@ public class TransactionInput extends ChildMessage implements Serializable {
      * Coinbase transactions have special inputs with hashes of zero. If this is such an input, returns true.
      */
     public boolean isCoinBase() {
-        return outpoint.getHash().equals(Sha256Hash.ZERO_HASH);
+        checkParse();
+    	return outpoint.getHash().equals(Sha256Hash.ZERO_HASH);
     }
 
     /**

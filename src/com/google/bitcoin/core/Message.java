@@ -53,6 +53,7 @@ public abstract class Message implements Serializable {
     protected transient byte[] bytes;
     
     protected transient boolean parsed = false;
+    protected transient boolean recached = false;
     protected transient final boolean parseLazy;
     protected transient final boolean parseRetain;
 
@@ -203,11 +204,9 @@ public abstract class Message implements Serializable {
     	 *     to keep track of whether the cache is valid or not.
     	 */
 
-    	
-    	if (parseRetain) {
-    		checkParse();
-    		bytes = null;
-    	}
+    	checkParse();
+    	bytes = null;
+    	recached = false;
     }
     
     /**
@@ -223,6 +222,10 @@ public abstract class Message implements Serializable {
     public boolean isCached() {
     	//return parseLazy ? parsed && bytes != null : bytes != null;
     	return bytes != null;
+    }
+    
+    public boolean isRecached() {
+    	return recached;
     }
     
     /**
@@ -251,9 +254,9 @@ public abstract class Message implements Serializable {
     			return bytes;
     		}
     		
-    		int len = cursor - offset;
-    		byte[] buf = new byte[len];
-    		System.arraycopy(bytes, offset, buf, 0, len);
+    		//int len = cursor - offset;
+    		byte[] buf = new byte[length];
+    		System.arraycopy(bytes, offset, buf, 0, length);
     		return buf;
     	}
     	
@@ -266,6 +269,24 @@ public abstract class Message implements Serializable {
         } catch (IOException e) {
             // Cannot happen, we are serializing to a memory stream.
         }
+        
+        if (parseRetain) {
+        	//a free set of steak knives!
+        	//If there happens to be a call to this method we gain an opportunity to recache
+        	//the byte array and in this case it contains no bytes from parent messages.
+        	//This give a dual benefit.  Releasing references to the larger byte array so that it
+        	//it is more likely to be GC'd.  A preventing double serializations.  E.g. calculating
+        	//merkle root calls this method.  It is will frequently happen prior to serializing the block
+        	//which means another call to bitcoinSerialize is coming.  If we didn't recache then internal
+        	//serialization would occur a 2nd time and every subsequent time the message is serialized.
+        	bytes = stream.toByteArray();
+        	cursor = cursor - offset;
+        	offset = 0;
+        	recached = true;
+        	length = bytes.length;
+        	return bytes;
+        }
+        
         return stream.toByteArray();
     }
     
@@ -289,6 +310,15 @@ public abstract class Message implements Serializable {
      */
     void bitcoinSerializeToStream(OutputStream stream) throws IOException {
     	log.debug("Warning: {} class has not implemented bitcoinSerializeToStream method.  Generating message with no payload", getClass());
+    }
+    
+    /**
+     * This method is a NOP for all classes except Block and Transaction.  It is only declared in Message
+     * so BitcoinSerializer can avoid 2 instanceof checks + a casting.
+     * @return
+     */
+    public Sha256Hash getHash() {
+    	return null;
     }
     
     /**
@@ -339,7 +369,7 @@ public abstract class Message implements Serializable {
     }
     
     long readVarInt(int offset) {
-        VarInt varint = new VarInt(bytes, cursor + offset);
+    	VarInt varint = new VarInt(bytes, cursor + offset);
         cursor += offset + varint.getSizeInBytes();
         return varint.value;
     }

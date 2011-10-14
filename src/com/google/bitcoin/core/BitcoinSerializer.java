@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -159,8 +160,22 @@ public class BitcoinSerializer {
         Utils.uint32ToByteArrayLE(payload.length, header, 4 + COMMAND_LEN);
 
         if (usesChecksumming) {
-            byte[] hash = doubleDigest(payload);
-            System.arraycopy(hash, 0, header, 4 + COMMAND_LEN + 4, 4);
+            Sha256Hash msgHash = message.getHash();
+        	if (msgHash != null && message instanceof Transaction) {
+        		//if the message happens to have a precalculated hash use it.
+        		//reverse copying 4 bytes is about 1600 times faster than
+        		//calculating a new hash
+        		//this is only possible for transactions as block hashes
+        		//are hashes of the header only
+        		byte[] hash = msgHash.getBytes();
+        		int start = 4 + COMMAND_LEN + 4;
+                for (int i = start; i < start + 4; i++)
+                    header[i] = hash[31 - i + start];
+                
+        	} else {
+        		byte[] hash = doubleDigest(payload);
+        		System.arraycopy(hash, 0, header, 4 + COMMAND_LEN + 4, 4);
+        	}
         }
 
         out.write(header);
@@ -249,8 +264,9 @@ public class BitcoinSerializer {
         }
 
         // Verify the checksum.
+        byte[] hash = null;
         if (usesChecksumming) {
-            byte[] hash = doubleDigest(payloadBytes);
+        	hash = doubleDigest(payloadBytes);
             if (header.checksum[0] != hash[0] || header.checksum[1] != hash[1] ||
                     header.checksum[2] != hash[2] || header.checksum[3] != hash[3]) {
                 throw new ProtocolException("Checksum failed to verify, actual " +
@@ -268,24 +284,27 @@ public class BitcoinSerializer {
         }
 
         try {
-            return makeMessage(header.command, header.size, payloadBytes);
+            return makeMessage(header.command, header.size, payloadBytes, hash);
         } catch (Exception e) {
             throw new ProtocolException("Error deserializing message " + Utils.bytesToHexString(payloadBytes) + "\n", e);
         }
     }
 
-    private Message makeMessage(String command, int length, byte[] payloadBytes) throws ProtocolException {
+    private Message makeMessage(String command, int length, byte[] payloadBytes, byte[] hash) throws ProtocolException {
         // We use an if ladder rather than reflection because reflection is very slow on Android.
         if (command.equals("version")) {
             return new VersionMessage(params, payloadBytes);
         } else if (command.equals("inv")) {
             return new InventoryMessage(params, payloadBytes, parseLazy, parseRetain, length);
         } else if (command.equals("block")) {
-            return new Block(params, payloadBytes, parseLazy, parseRetain, length);
+        	return new Block(params, payloadBytes, parseLazy, parseRetain, length);
         } else if (command.equals("getdata")) {
             return new GetDataMessage(params, payloadBytes, parseLazy, parseRetain, length);
         } else if (command.equals("tx")) {
-            return new Transaction(params, payloadBytes, null, parseLazy, parseRetain, length);
+        	Transaction tx = new Transaction(params, payloadBytes, null, parseLazy, parseRetain, length);
+        	if (hash != null)
+        		tx.setHash(new Sha256Hash(Utils.reverseBytes(hash)));
+        	return tx;
         } else if (command.equals("addr")) {
             return new AddressMessage(params, payloadBytes, parseLazy, parseRetain, length);
         } else if (command.equals("ping")) {

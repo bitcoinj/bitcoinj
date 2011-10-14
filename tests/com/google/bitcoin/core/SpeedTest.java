@@ -73,16 +73,20 @@ public class SpeedTest {
 	private byte[] tx2BytesWithHeader;
 
 	List<SerializerEntry> bss;
+	List<SerializerEntry> singleBs;
 	List<Manipulator<Transaction>> txMans = new ArrayList();
 	List<Manipulator<Block>> blockMans = new ArrayList();
 	List<Manipulator<AddressMessage>> addrMans = new ArrayList();
+	List<Manipulator> genericMans = new ArrayList();
 
 	public static void main(String[] args) throws Exception {
 		SpeedTest test = new SpeedTest();
 		test.setUp();
-		test.start(10000, 10000, false);
+		test.start(50000, 50000, false);
 	}
 
+	public static final boolean RECACHE = false;
+	
 	public void start(int warmupIterations, int iterations, boolean pauseForKeyPress) {
 
 		if (pauseForKeyPress) {
@@ -113,6 +117,16 @@ public class SpeedTest {
 
 		junk = null;
 
+		System.out.println("******************************");
+		System.out.println("***      Generic Tests     ***");
+		System.out.println("******************************");
+		for (Manipulator<AddressMessage> man : genericMans) {
+			testManipulator(man, "warmup", warmupIterations * 10, singleBs, null, b1Bytes);
+		}
+		for (Manipulator<AddressMessage> man : genericMans) {
+			testManipulator(man, "main test", iterations * 10, singleBs, null, b1Bytes);
+		}
+		
 		System.out.println("******************************");
 		System.out.println("***      WARMUP PHASE      ***");
 		System.out.println("******************************");
@@ -193,6 +207,7 @@ public class SpeedTest {
 
 		bss = new ArrayList();
 		bss.add(new SerializerEntry(bs, "Standard (Non-lazy, No cached)"));
+		singleBs = new ArrayList(bss);
 		// add 2 because when profiling the first seems to take a lot longer
 		// than usual.
 		// bss.add(new SerializerEntry(bs, "Standard (Non-lazy, No cached)"));
@@ -204,6 +219,72 @@ public class SpeedTest {
 	}
 
 	private void buildManipulators() {
+		
+		Manipulator reverseBytes = new Manipulator<AddressMessage>() {
+
+			byte[] bytes = new byte[32];
+			
+			@Override
+			public void manipulate(BitcoinSerializer bs, AddressMessage message) throws Exception {
+				Utils.reverseBytes(bytes);
+			}
+
+			@Override
+			public void manipulate(BitcoinSerializer bs, byte[] bytes) throws Exception {
+			}
+
+			@Override
+			public String getDescription() {
+				return "Reverse 32 bytes";
+			}
+
+		};
+		genericMans.add(reverseBytes);
+		
+		Manipulator doubleDigest32Bytes = new Manipulator<AddressMessage>() {
+
+			byte[] bytes = new byte[32];
+			
+			@Override
+			public void manipulate(BitcoinSerializer bs, AddressMessage message) throws Exception {
+				Utils.doubleDigest(bytes);
+			}
+
+			@Override
+			public void manipulate(BitcoinSerializer bs, byte[] bytes) throws Exception {
+			}
+
+			@Override
+			public String getDescription() {
+				return "Double Digest 32 bytes";
+			}
+
+		};
+		genericMans.add(doubleDigest32Bytes);
+		
+		Manipulator doubleDigestBytes = new Manipulator<AddressMessage>() {
+
+			int len = -1;
+			
+			@Override
+			public void manipulate(BitcoinSerializer bs, AddressMessage message) throws Exception {
+				
+			}
+
+			@Override
+			public void manipulate(BitcoinSerializer bs, byte[] bytes) throws Exception {
+				if (len == -1)
+					len = bytes.length;
+				Utils.doubleDigest(bytes);
+			}
+
+			@Override
+			public String getDescription() {
+				return "Double Digest " + len + " bytes";
+				
+			}
+		};
+		genericMans.add(doubleDigestBytes);
 
 		Manipulator seralizeAddr = new Manipulator<AddressMessage>() {
 
@@ -369,6 +450,55 @@ public class SpeedTest {
 
 		};
 		txMans.add(deSeralizeTx);
+		
+		Manipulator serDeeralizeTx_1 = new Manipulator<Transaction>() {
+
+			ByteArrayOutputStream bos = new ByteArrayOutputStream();
+			
+			@Override
+			public void manipulate(BitcoinSerializer bs, Transaction message) throws Exception {
+			}
+
+			@Override
+			public void manipulate(BitcoinSerializer bs, byte[] bytes) throws Exception {
+				ByteArrayInputStream bis = new ByteArrayInputStream(bytes);
+				Transaction tx = (Transaction) bs.deserialize(bis);
+				bos.reset();
+				bs.serialize(tx, bos);
+			}
+
+			@Override
+			public String getDescription() {
+				return "Deserialize Transaction, Serialize";
+			}
+
+		};
+		txMans.add(serDeeralizeTx_1);
+		
+		Manipulator serDeeralizeTx = new Manipulator<Transaction>() {
+
+			ByteArrayOutputStream bos = new ByteArrayOutputStream();
+			
+			@Override
+			public void manipulate(BitcoinSerializer bs, Transaction message) throws Exception {
+			}
+
+			@Override
+			public void manipulate(BitcoinSerializer bs, byte[] bytes) throws Exception {
+				ByteArrayInputStream bis = new ByteArrayInputStream(bytes);
+				Transaction tx = (Transaction) bs.deserialize(bis);
+				tx.addInput(tx.getInputs().get(0));
+				bos.reset();
+				bs.serialize(tx, bos);
+			}
+
+			@Override
+			public String getDescription() {
+				return "Deserialize Transaction, modify, Serialize";
+			}
+
+		};
+		txMans.add(serDeeralizeTx);
 
 		Manipulator deSeralizeTx_1 = new Manipulator<Transaction>() {
 
@@ -728,7 +858,7 @@ public class SpeedTest {
 			M message, byte[] bytes) {
 		long allStart = System.currentTimeMillis();
 		System.out.println("Beginning " + phaseName + " run for manipulator: [" + man.getDescription() + "]");
-		int pause = iterations / 20;
+		int pause = iterations / 100;
 		pause = pause < 200 ? 200 : pause;
 		pause = pause > 1000 ? 1000 : pause;
 		long bestTime = Long.MAX_VALUE;

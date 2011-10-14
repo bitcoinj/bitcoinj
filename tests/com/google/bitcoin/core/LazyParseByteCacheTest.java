@@ -219,12 +219,16 @@ public class LazyParseByteCacheTest {
     	if (b1.getTransactions().size() > 0) {
     		assertTrue(b1.isParsedTransactions());
     		Transaction tx1 = b1.getTransactions().get(0);
-    		if (lazy == tx1.isParsed())
-    			System.out.print("");
+    		
     		//this will always be true for all children of a block once they are retrieved.
     		//the tx child inputs/outputs may not be parsed however.
-    		assertEquals(true, tx1.isParsed());
-        	assertEquals(retain, tx1.isCached());	
+    		
+    		//no longer forced to parse if length not provided.
+    		//assertEquals(true, tx1.isParsed());
+        	if (tx1.isParsed())
+        		assertEquals(retain, tx1.isCached());
+        	else
+        		assertTrue(tx1.isCached());
         	
         	//does it still match ref block?
         	serDeser(bs, b1, bos.toByteArray(), null, null);
@@ -259,8 +263,14 @@ public class LazyParseByteCacheTest {
     	if (b1.getTransactions().size() > 0) {
     		assertTrue(b1.isParsedTransactions());
     		Transaction tx1 = b1.getTransactions().get(0);
-    		assertEquals(true, tx1.isParsed());
-        	assertEquals(retain, tx1.isCached());	
+    		
+    		//no longer forced to parse if length not provided.
+    		//assertEquals(true, tx1.isParsed());
+        	
+        	if (tx1.isParsed())
+        		assertEquals(retain, tx1.isCached());
+        	else
+        		assertTrue(tx1.isCached());	
         }
     	//does it still match ref block?
     	serDeser(bs, b1, bos.toByteArray(), null, null);
@@ -310,6 +320,8 @@ public class LazyParseByteCacheTest {
         	serDeser(bs, b1, bos.toByteArray(), null, null);
         }
     	
+    	if (lazy && retain)
+    		System.out.print("");
     	//refresh block
     	b1 = (Block) bs.deserialize(new ByteArrayInputStream(blockBytes));
     	bRef = (Block) bsRef.deserialize(new ByteArrayInputStream(blockBytes));
@@ -337,7 +349,7 @@ public class LazyParseByteCacheTest {
         		}
         		
         		//this has to be false. Altering a tx invalidates the merkle root.
-        		//when we have seperate merkle caching then the entire won't need to be
+        		//when we have seperate merkle caching then the entire header won't need to be
         		//invalidated.
         		assertFalse(b1.isHeaderBytesValid());
         		
@@ -367,7 +379,7 @@ public class LazyParseByteCacheTest {
     		Transaction tx2 = b2.getTransactions().get(0);
     		
         	if (tx1.getInputs().size() > 0) {
-        		if (lazy && retain)
+        		if (lazy && !retain)
         			System.out.print("");
         		TransactionInput fromTx1 = tx1.getInputs().get(0);
         		tx2.addInput(fromTx1);
@@ -463,7 +475,7 @@ public class LazyParseByteCacheTest {
     	
     	//add an input
     	if (t1.getInputs().size() > 0) {
-    		if (lazy && !retain)
+    		if (lazy && retain)
     			System.out.print("");
     		
     		t1.addInput(t1.getInputs().get(0));
@@ -495,7 +507,8 @@ public class LazyParseByteCacheTest {
 		if (!message.equals(m2)) {
 			System.out.print("");
 		}
-    	assertEquals(message, m2);
+    	
+		assertEquals(message, m2);
  
     	bos.reset();
     	bs.serialize(m2, bos);
