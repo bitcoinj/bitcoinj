@@ -101,10 +101,10 @@ public abstract class Message implements Serializable {
             parsed = true;
         }
 
-        assert (parseLazy ? !parsed : parsed && (parseRetain ? bytes != null : bytes == null))
-                : "parseLazy : " + parseLazy + " parsed: " + parsed
-                + " parseRetain:" + parseRetain
-                + " bytes == null" + bytes == null;
+//        assert (parseLazy ? !parsed : parsed && (parseRetain ? bytes != null : bytes == null))
+//                : "parseLazy : " + parseLazy + " parsed: " + parsed
+//                + " parseRetain:" + parseRetain
+//                + " bytes == null" + bytes == null;
 
         if (SELF_CHECK && !this.getClass().getSimpleName().equals("VersionMessage")) {
             checkParse();
