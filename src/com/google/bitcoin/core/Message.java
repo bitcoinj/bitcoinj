@@ -100,11 +100,8 @@ public abstract class Message implements Serializable {
             parse();
             parsed = true;
         }
-
-//        assert (parseLazy ? !parsed : parsed && (parseRetain ? bytes != null : bytes == null))
-//                : "parseLazy : " + parseLazy + " parsed: " + parsed
-//                + " parseRetain:" + parseRetain
-//                + " bytes == null" + bytes == null;
+        
+        assert this.length != UNKNOWN_LENGTH: "Length field has not been set in constructor for " + getClass().getSimpleName() + " after " + (parseLazy ? "lite" : "full") + " parse.  Refer to Message.parseLite() for detail of required Length field contract.";
 
         if (SELF_CHECK && !this.getClass().getSimpleName().equals("VersionMessage")) {
             checkParse();
@@ -140,7 +137,10 @@ public abstract class Message implements Serializable {
      * This is only required for subclasses of ChildClass as root level messages will have their length passed
      * into the constructor.
      * <p/>
-     * It is expected that the length field will be set before this method returns.
+     * Implementations should adhere to the following contract:  If parseLazy = true the 'length'
+     * field must be set before returning.  If parseLazy = false the length field must be set either
+     * within the parseLite() method OR the parse() method.  The overriding requirement is that length
+     * must be set to non UNKNOWN_MESSAGE value by the time the constructor exits.
      *
      * @return
      * @throws ProtocolException
@@ -372,8 +372,9 @@ public abstract class Message implements Serializable {
         if (length != UNKNOWN_LENGTH)
             return length;
         checkParse();
-        if (length != UNKNOWN_LENGTH)
-            length = cursor - offset;
+        assert length != UNKNOWN_LENGTH: "Length field has not been set in " + getClass().getSimpleName() + " after full parse.";
+        //if (length == UNKNOWN_LENGTH)
+        //    length = cursor - offset;
         return length;
     }
 

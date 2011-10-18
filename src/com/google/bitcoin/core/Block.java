@@ -179,7 +179,7 @@ public class Block extends Message {
         // provided we will have to
         // invoke a light parse of transactions to calculate the length.
         if (length == UNKNOWN_LENGTH) {
-            log.warn("Performing lite parse of block transaction as block was initialised from byte array without providing length.  This should never need to happen.");
+            assert !parseLazy : "Performing lite parse of block transaction as block was initialised from byte array without providing length.  This should never need to happen." + " parseLazy: " + parseLazy;
             parseTransactions();
             length = cursor - offset;
         } else {
