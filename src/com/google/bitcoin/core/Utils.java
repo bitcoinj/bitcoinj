@@ -24,6 +24,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
 import java.util.Date;
 
 /**
@@ -286,7 +287,8 @@ public class Utils {
     
     public static byte[] copyOf(byte[] in, int length) {
         byte[] out = new byte[length];
-        System.arraycopy(in, 0, out, 0, length);
+        System.arraycopy(in, 0, out, 0, Math.min(length, in.length));
+        Arrays.copyOf(in, 6);
         return out;
     }
 }
