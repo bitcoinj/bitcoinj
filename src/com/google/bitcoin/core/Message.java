@@ -84,7 +84,6 @@ public abstract class Message implements Serializable {
         this(params, msg, offset, protocolVersion, false, false, UNKNOWN_LENGTH);
     }
 
-    @SuppressWarnings("unused")
     Message(NetworkParameters params, byte[] msg, int offset, int protocolVersion, final boolean parseLazy, final boolean parseRetain, int length) throws ProtocolException {
         this.parseLazy = parseLazy;
         this.parseRetain = parseRetain;
@@ -103,7 +102,17 @@ public abstract class Message implements Serializable {
         
         assert this.length != UNKNOWN_LENGTH: "Length field has not been set in constructor for " + getClass().getSimpleName() + " after " + (parseLazy ? "lite" : "full") + " parse.  Refer to Message.parseLite() for detail of required Length field contract.";
 
-        if (SELF_CHECK && !this.getClass().getSimpleName().equals("VersionMessage")) {
+        if (SELF_CHECK) {
+            selfCheck(msg, offset);
+        }
+        
+        if (parseRetain || !parsed)
+            return;
+        this.bytes = null;
+    }
+
+    private void selfCheck(byte[] msg, int offset) {
+        if (!(this instanceof VersionMessage)) {
             checkParse();
             byte[] msgbytes = new byte[cursor - offset];
             System.arraycopy(msg, offset, msgbytes, 0, cursor - offset);
@@ -113,9 +122,6 @@ public abstract class Message implements Serializable {
                         Utils.bytesToHexString(reserialized) + " vs \n" +
                         Utils.bytesToHexString(msgbytes));
         }
-        if (parseRetain || !parsed)
-            return;
-        this.bytes = null;
     }
 
     Message(NetworkParameters params, byte[] msg, int offset) throws ProtocolException {
@@ -442,6 +448,7 @@ public abstract class Message implements Serializable {
     }
 
     public class LazyParseException extends RuntimeException {
+        private static final long serialVersionUID = 6971943053112975594L;
 
         public LazyParseException(String message, Throwable cause) {
             super(message, cause);

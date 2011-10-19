@@ -10,6 +10,7 @@ import java.io.OutputStream;
  * @author git
  */
 public abstract class EmptyMessage extends Message {
+    private static final long serialVersionUID = 8240801253854151802L;
 
     public EmptyMessage() {
         length = 0;

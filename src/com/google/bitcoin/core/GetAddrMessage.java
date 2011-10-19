@@ -17,6 +17,7 @@
 package com.google.bitcoin.core;
 
 public class GetAddrMessage extends EmptyMessage {
+    private static final long serialVersionUID = 6204437624599661503L;
 
     public GetAddrMessage(NetworkParameters params) {
         super(params);

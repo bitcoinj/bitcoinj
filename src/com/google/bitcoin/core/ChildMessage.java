@@ -7,6 +7,7 @@ package com.google.bitcoin.core;
  * @author git
  */
 public abstract class ChildMessage extends Message {
+    private static final long serialVersionUID = -7657113383624517931L;
 
     private Message parent;
 
