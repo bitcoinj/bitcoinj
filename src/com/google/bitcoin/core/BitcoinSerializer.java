@@ -180,9 +180,9 @@ public class BitcoinSerializer {
                     System.arraycopy(hash, 0, header, 4 + COMMAND_LEN + 4, 4);
                 }
             } else {
-                assert Arrays.equals(checksum, Arrays.copyOf(doubleDigest(payload), 4))
+                assert Arrays.equals(checksum, Utils.copyOf(doubleDigest(payload), 4))
                         : "Checksum match failure on serialization.  Cached: " + Arrays.toString(checksum)
-                        + " Calculated: " + Arrays.toString(Arrays.copyOf(doubleDigest(payload), 4));
+                        + " Calculated: " + Arrays.toString(Utils.copyOf(doubleDigest(payload), 4));
                 System.arraycopy(checksum, 0, header, 4 + COMMAND_LEN + 4, 4);
             }
         }
