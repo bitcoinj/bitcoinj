@@ -136,6 +136,7 @@ public class PeerTest {
         
         List<Sha256Hash> expectedLocator = new ArrayList<Sha256Hash>();
         expectedLocator.add(b1.getHash());
+        expectedLocator.add(b1.getPrevBlockHash());
         expectedLocator.add(unitTestParams.genesisBlock.getHash());
         
         assertEquals(message.getValue().getLocator(), expectedLocator);
@@ -171,6 +172,7 @@ public class PeerTest {
         
         List<Sha256Hash> expectedLocator = new ArrayList<Sha256Hash>();
         expectedLocator.add(b1.getHash());
+        expectedLocator.add(b1.getPrevBlockHash());
         expectedLocator.add(unitTestParams.genesisBlock.getHash());
         
         assertEquals(message.getValue().getLocator(), expectedLocator);
@@ -234,6 +236,7 @@ public class PeerTest {
         
         List<Sha256Hash> expectedLocator = new ArrayList<Sha256Hash>();
         expectedLocator.add(b1.getHash());
+        expectedLocator.add(b1.getPrevBlockHash());
         expectedLocator.add(unitTestParams.genesisBlock.getHash());
         
         assertEquals(message.getValue().getLocator(), expectedLocator);

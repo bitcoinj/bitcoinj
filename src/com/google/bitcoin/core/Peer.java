@@ -358,12 +358,25 @@ public class Peer {
 
         // TODO: Block locators should be abstracted out rather than special cased here.
         List<Sha256Hash> blockLocator = new LinkedList<Sha256Hash>();
-        // We don't do the exponential thinning here, so if we get onto a fork of the chain we will end up
-        // redownloading the whole thing again.
+        // For now we don't do the exponential thinning as suggested here: 
+        //  https://en.bitcoin.it/wiki/Protocol_specification#getblocks
+        // However, this should be taken seriously going forward. The old implementation only added the hash of the 
+        // genesis block and the current chain head, which randomly led us to halt block fetching when ending on a
+        // chain that turned out not to be the longest. This happened roughly once a week. 
+        // Now we add three hashes to the locator:
+        // 1. Hash of genesis block
+        // 2. Hash of the block previous to the chain head
+        // 3. Hash of the chain head
+        // This allows our peer to see that we are on the wrong track if we ended up on the wrong side of a chain fork
+        // if the fork is only one block deep.
         blockLocator.add(params.genesisBlock.getHash());
         Block topBlock = blockChain.getChainHead().getHeader();
-        if (!topBlock.equals(params.genesisBlock))
+        if (!topBlock.equals(params.genesisBlock)) {
+            if (!topBlock.getPrevBlockHash().equals(params.genesisBlock)){
+                blockLocator.add(0, topBlock.getPrevBlockHash());
+            }
             blockLocator.add(0, topBlock.getHash());
+        }
         GetBlocksMessage message = new GetBlocksMessage(params, blockLocator, toHash);
         conn.writeMessage(message);
     }
