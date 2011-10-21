@@ -19,49 +19,26 @@ package com.google.bitcoin.core;
 import static org.junit.Assert.*;
 
 import java.io.IOException;
-import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Future;
 
 import static org.easymock.EasyMock.*;
 
-import org.easymock.Capture;
-import org.easymock.IAnswer;
-import org.easymock.IMocksControl;
 import org.junit.Before;
 import org.junit.Test;
 
-
-import com.google.bitcoin.store.MemoryBlockStore;
-
-public class PeerTest {
-
+public class PeerTest extends TestWithNetworkConnections {
     private Peer peer;
-    private IMocksControl control;
-    private NetworkConnection conn;
-    private NetworkParameters unitTestParams;
-    private MemoryBlockStore blockStore;
-    private BlockChain blockChain;
+    private MockNetworkConnection conn;
 
+    @Override
     @Before
     public void setUp() throws Exception {
-        control = createStrictControl();
-        control.checkOrder(true);
-        unitTestParams = NetworkParameters.unitTests();
-        blockStore = new MemoryBlockStore(unitTestParams);
-        blockChain = new BlockChain(unitTestParams, new Wallet(unitTestParams), blockStore);
-        PeerAddress address = new PeerAddress(InetAddress.getLocalHost());
+        super.setUp();
 
-        conn = createMockBuilder(NetworkConnection.class)
-            .addMockedMethod("getVersionMessage")
-            .addMockedMethod("readMessage")
-            .addMockedMethod("writeMessage")
-            .addMockedMethod("shutdown")
-            .addMockedMethod("toString")
-            .createMock(control);
-        peer = new Peer(unitTestParams, address, blockChain);
-        peer.setConnection(conn);
+        conn = createMockNetworkConnection();
+        peer = new Peer(unitTestParams, blockChain, conn);
     }
 
     @Test
@@ -72,32 +49,17 @@ public class PeerTest {
         assertFalse(peer.removeEventListener(listener));
     }
     
-    // Check that the connection is shut down if there's a read error and the exception is propagated.
+    // Check that the connection is shut down if there's a read error and that the exception is propagated.
     @Test
     public void testRun_exception() throws Exception {
-        expect(conn.readMessage()).andThrow(new IOException("done"));
-        conn.shutdown();
-        expectLastCall();
-
-        control.replay();
-
+        conn.exceptionOnRead(new IOException("done"));
         try {
             peer.run();
             fail("did not throw");
         } catch (PeerException e) {
-            // expected
             assertTrue(e.getCause() instanceof IOException);
         }
-        
-        control.verify();
-        
-        control.reset();
-        expect(conn.readMessage()).andThrow(new ProtocolException("proto"));
-        conn.shutdown();
-        expectLastCall();
-
-        control.replay();
-
+        conn.exceptionOnRead(new ProtocolException("proto"));
         try {
             peer.run();
             fail("did not throw");
@@ -105,228 +67,161 @@ public class PeerTest {
             // expected
             assertTrue(e.toString(), e.getCause() instanceof ProtocolException);
         }
-        
-        control.verify();
     }
 
     // Check that it runs through the event loop and shut down correctly
     @Test
-    public void testRun_normal() throws Exception {
-        runPeerAndVerify();
+    public void shutdown() throws Exception {
+        runPeer(peer, conn);
     }
 
-    // Check that when we receive a block that does not connect to our chain, we send a 
-    // getblocks to fetch the intermediates.
+    // Check that when we receive a block that does not connect to our chain, we send a getblocks to fetch
+    // the intermediates.
     @Test
-    public void testRun_unconnected_block() throws Exception {
-        PeerEventListener listener = control.createMock(PeerEventListener.class);
-        peer.addEventListener(listener);
-
+    public void unconnectedBlock() throws Exception {
         Block b1 = TestUtils.createFakeBlock(unitTestParams, blockStore).block;
         blockChain.add(b1);
-
-        Block prev = TestUtils.makeSolvedTestBlock(unitTestParams, blockStore);
-        final Block block = TestUtils.makeSolvedTestBlock(unitTestParams, prev);
-        
-        expect(conn.readMessage()).andReturn(block);
-        
-        Capture<GetBlocksMessage> message = captureGetBlocksMessage();
-
-        runPeerAndVerify();
-        
+        Block b2 = TestUtils.makeSolvedTestBlock(unitTestParams, b1);
+        Block b3 = TestUtils.makeSolvedTestBlock(unitTestParams, b2);
+        conn.inbound(b3);
+        runPeer(peer, conn);
+        GetBlocksMessage getblocks = (GetBlocksMessage) conn.popOutbound();
         List<Sha256Hash> expectedLocator = new ArrayList<Sha256Hash>();
         expectedLocator.add(b1.getHash());
         expectedLocator.add(b1.getPrevBlockHash());
         expectedLocator.add(unitTestParams.genesisBlock.getHash());
-        
-        assertEquals(message.getValue().getLocator(), expectedLocator);
-        assertEquals(message.getValue().getStopHash(), block.getHash());
+        assertEquals(getblocks.getLocator(), expectedLocator);
+        assertEquals(getblocks.getStopHash(), b3.getHash());
     }
 
-    // Check that an inventory tickle is processed correctly
+    // Check that an inventory tickle is processed correctly when downloading missing blocks is active.
     @Test
-    public void testRun_inv_tickle() throws Exception {
-        PeerEventListener listener = control.createMock(PeerEventListener.class);
-        peer.addEventListener(listener);
-
+    public void invTickle() throws Exception {
         Block b1 = TestUtils.createFakeBlock(unitTestParams, blockStore).block;
         blockChain.add(b1);
-
-        Block prev = TestUtils.makeSolvedTestBlock(unitTestParams, blockStore);
-        final Block block = TestUtils.makeSolvedTestBlock(unitTestParams, prev);
-        
-        expect(conn.readMessage()).andReturn(block);
-        
-        conn.writeMessage(anyObject(Message.class));
-        expectLastCall();
-
-        InventoryMessage inv = new InventoryMessage(unitTestParams);
-        InventoryItem item = new InventoryItem(InventoryItem.Type.Block, block.getHash());
-        inv.addItem(item);
-        
-        expect(conn.readMessage()).andReturn(inv);
-
-        Capture<GetBlocksMessage> message = captureGetBlocksMessage();
-        
-        runPeerAndVerify();
-        
-        List<Sha256Hash> expectedLocator = new ArrayList<Sha256Hash>();
-        expectedLocator.add(b1.getHash());
-        expectedLocator.add(b1.getPrevBlockHash());
-        expectedLocator.add(unitTestParams.genesisBlock.getHash());
-        
-        assertEquals(message.getValue().getLocator(), expectedLocator);
-        assertEquals(message.getValue().getStopHash(), block.getHash());
-    }
-
-    // Check that inventory message containing a block is processed correctly
-    @Test
-    public void testRun_inv_block() throws Exception {
-        PeerEventListener listener = control.createMock(PeerEventListener.class);
-        peer.addEventListener(listener);
-
-        Block b1 = TestUtils.createFakeBlock(unitTestParams, blockStore).block;
-        blockChain.add(b1);
-
-        Block prev = TestUtils.makeSolvedTestBlock(unitTestParams, blockStore);
-        final Block b2 = TestUtils.makeSolvedTestBlock(unitTestParams, prev);
-        final Block b3 = TestUtils.makeSolvedTestBlock(unitTestParams, b2);
-        
-        expect(conn.readMessage()).andReturn(b2);
-        
-        conn.writeMessage(anyObject(Message.class));
-        expectLastCall();
-
+        // Make a missing block.
+        Block b2 = TestUtils.makeSolvedTestBlock(unitTestParams, b1);
+        Block b3 = TestUtils.makeSolvedTestBlock(unitTestParams, b2);
+        conn.inbound(b3);
         InventoryMessage inv = new InventoryMessage(unitTestParams);
         InventoryItem item = new InventoryItem(InventoryItem.Type.Block, b3.getHash());
         inv.addItem(item);
-
-        expect(conn.readMessage()).andReturn(inv);
-
-        Capture<GetDataMessage> message = captureGetDataMessage();
-        
-        runPeerAndVerify();
-        
-        List<InventoryItem> items = message.getValue().getItems();
-        assertEquals(1, items.size());
-        assertEquals(b3.getHash(), items.get(0).hash);
-        assertEquals(InventoryItem.Type.Block, items.get(0).type);
-    }
-
-    // Check that it starts downloading the block chain correctly
-    @Test
-    public void testStartBlockChainDownload() throws Exception {
-        PeerEventListener listener = control.createMock(PeerEventListener.class);
-        peer.addEventListener(listener);
-
-        Block b1 = TestUtils.createFakeBlock(unitTestParams, blockStore).block;
-        blockChain.add(b1);
-
-        expect(conn.getVersionMessage()).andStubReturn(new VersionMessage(unitTestParams, 100));
-
-        listener.onChainDownloadStarted(peer, 99);
-        expectLastCall();
-
-        Capture<GetBlocksMessage> message = captureGetBlocksMessage();
-        
-        control.replay();
-
-        peer.startBlockChainDownload();
-        control.verify();
-        
+        conn.inbound(inv);
+        runPeer(peer, conn);
+        GetBlocksMessage getblocks = (GetBlocksMessage) conn.popOutbound();
         List<Sha256Hash> expectedLocator = new ArrayList<Sha256Hash>();
         expectedLocator.add(b1.getHash());
         expectedLocator.add(b1.getPrevBlockHash());
         expectedLocator.add(unitTestParams.genesisBlock.getHash());
         
-        assertEquals(message.getValue().getLocator(), expectedLocator);
-        assertEquals(message.getValue().getStopHash(), Sha256Hash.ZERO_HASH);
+        assertEquals(getblocks.getLocator(), expectedLocator);
+        assertEquals(getblocks.getStopHash(), b3.getHash());
     }
 
+    // Check that an inv to a peer that is not set to download missing blocks does nothing.
     @Test
-    public void testGetBlock() throws Exception {
+    public void invNoDownload() throws Exception {
+        // Don't download missing blocks.
+        peer.setDownloadData(false);
+
+        // Make a missing block that we receive.
+        Block b1 = TestUtils.createFakeBlock(unitTestParams, blockStore).block;
+        blockChain.add(b1);
+        Block b2 = TestUtils.makeSolvedTestBlock(unitTestParams, b1);
+
+        // Receive an inv.
+        InventoryMessage inv = new InventoryMessage(unitTestParams);
+        InventoryItem item = new InventoryItem(InventoryItem.Type.Block, b2.getHash());
+        inv.addItem(item);
+        conn.inbound(inv);
+        // Peer does nothing with it.
+        runPeer(peer, conn);
+        Message message = conn.popOutbound();
+        assertNull(message != null ? message.toString() : "", message);
+    }
+
+    // Check that inventory message containing blocks we want is processed correctly.
+    @Test
+    public void newBlock() throws Exception {
         PeerEventListener listener = control.createMock(PeerEventListener.class);
         peer.addEventListener(listener);
 
         Block b1 = TestUtils.createFakeBlock(unitTestParams, blockStore).block;
         blockChain.add(b1);
+        Block b2 = TestUtils.makeSolvedTestBlock(unitTestParams, b1);
+        Block b3 = TestUtils.makeSolvedTestBlock(unitTestParams, b2);
+        conn.setVersionMessageForHeight(unitTestParams, 100);
+        // Receive notification of a new block.
+        InventoryMessage inv = new InventoryMessage(unitTestParams);
+        InventoryItem item = new InventoryItem(InventoryItem.Type.Block, b2.getHash());
+        inv.addItem(item);
+        conn.inbound(inv);
+        // Response to the getdata message.
+        conn.inbound(b2);
 
-        Block prev = TestUtils.makeSolvedTestBlock(unitTestParams, blockStore);
-        final Block b2 = TestUtils.makeSolvedTestBlock(unitTestParams, prev);
-
-        expect(conn.getVersionMessage()).andStubReturn(new VersionMessage(unitTestParams, 100));
-
-        Capture<GetDataMessage> message = captureGetDataMessage();
-
-        expect(conn.readMessage()).andReturn(b2);
-        
-        expectPeerDisconnect();
+        listener.onBlocksDownloaded(eq(peer), anyObject(Block.class), eq(98));
+        expectLastCall();
 
         control.replay();
-
-        Future<Block> resultFuture = peer.getBlock(b2.getHash());
-        peer.run();
-        
-        assertEquals(b2.getHash(), resultFuture.get().getHash());
-        
+        runPeer(peer, conn);
         control.verify();
         
-        List<Sha256Hash> expectedLocator = new ArrayList<Sha256Hash>();
-        expectedLocator.add(b1.getHash());
-        expectedLocator.add(unitTestParams.genesisBlock.getHash());
-        
-        List<InventoryItem> items = message.getValue().getItems();
+        GetDataMessage getdata = (GetDataMessage) conn.popOutbound();
+        List<InventoryItem> items = getdata.getItems();
         assertEquals(1, items.size());
         assertEquals(b2.getHash(), items.get(0).hash);
         assertEquals(InventoryItem.Type.Block, items.get(0).type);
     }
 
-    // Check that the next block on the chain is processed correctly and that the listener is notified
+    // Check that it starts downloading the block chain correctly on request.
     @Test
-    public void testRun_new_block() throws Exception {
+    public void startBlockChainDownload() throws Exception {
         PeerEventListener listener = control.createMock(PeerEventListener.class);
         peer.addEventListener(listener);
 
-        expect(conn.readMessage()).andReturn(TestUtils.makeSolvedTestBlock(unitTestParams, blockStore)); 
-        expect(conn.getVersionMessage()).andReturn(new VersionMessage(unitTestParams, 100));
-        listener.onBlocksDownloaded(eq(peer), anyObject(Block.class), eq(99));
-        expectLastCall();
-        runPeerAndVerify();
-    }
+        Block b1 = TestUtils.createFakeBlock(unitTestParams, blockStore).block;
+        blockChain.add(b1);
+        Block b2 = TestUtils.makeSolvedTestBlock(unitTestParams, b1);
+        blockChain.add(b2);
+        conn.setVersionMessageForHeight(unitTestParams, 100);
 
-    private Capture<GetBlocksMessage> captureGetBlocksMessage() throws IOException {
-        Capture<GetBlocksMessage> message = new Capture<GetBlocksMessage>();
-        conn.writeMessage(capture(message));
+        listener.onChainDownloadStarted(peer, 98);
         expectLastCall();
-        return message;
-    }
-
-    private Capture<GetDataMessage> captureGetDataMessage() throws IOException {
-        Capture<GetDataMessage> message = new Capture<GetDataMessage>();
-        conn.writeMessage(capture(message));
-        expectLastCall();
-        return message;
-    }
-
-    // Stage a disconnect, replay the mocks, run and verify
-    private void runPeerAndVerify() throws IOException, ProtocolException, PeerException {
-        expectPeerDisconnect();
 
         control.replay();
-
-        peer.run();
+        peer.startBlockChainDownload();
+        runPeer(peer, conn);
         control.verify();
+        
+        List<Sha256Hash> expectedLocator = new ArrayList<Sha256Hash>();
+        expectedLocator.add(b2.getHash());
+        expectedLocator.add(b1.getHash());
+        expectedLocator.add(unitTestParams.genesisBlock.getHash());
+
+        GetBlocksMessage message = (GetBlocksMessage) conn.popOutbound();
+        assertEquals(message.getLocator(), expectedLocator);
+        assertEquals(message.getStopHash(), Sha256Hash.ZERO_HASH);
     }
 
-    // Step the peer through a disconnection event
-    private void expectPeerDisconnect() throws IOException, ProtocolException {
-        expect(conn.readMessage()).andAnswer(new IAnswer<Message>() {
-            public Message answer() throws Throwable {
-                peer.disconnect();
-                throw new IOException("done");
-            }
-        });
-        conn.shutdown();
-        expectLastCall().times(2);
+    @Test
+    public void getBlock() throws Exception {
+        Block b1 = TestUtils.createFakeBlock(unitTestParams, blockStore).block;
+        blockChain.add(b1);
+        Block b2 = TestUtils.makeSolvedTestBlock(unitTestParams, b1);
+        Block b3 = TestUtils.makeSolvedTestBlock(unitTestParams, b2);
+        conn.setVersionMessageForHeight(unitTestParams, 100);
+        runPeerAsync(peer, conn);
+        // Request the block.
+        Future<Block> resultFuture = peer.getBlock(b3.getHash());
+        assertFalse(resultFuture.isDone());
+        // Peer asks for it.
+        GetDataMessage message = (GetDataMessage) conn.outbound();
+        assertEquals(message.getItems().get(0).hash, b3.getHash());
+        assertFalse(resultFuture.isDone());
+        // Peer receives it.
+        conn.inbound(b3);
+        Block b = resultFuture.get();
+        assertEquals(b, b3);
+        conn.disconnect();
     }
 }

@@ -55,7 +55,6 @@ public class PeerGroup {
     private static final Logger log = LoggerFactory.getLogger(PeerGroup.class);
 
     public static final int DEFAULT_CONNECTION_DELAY_MILLIS = 5 * 1000;
-    private static final int CORE_THREADS = 1;
     private static final int THREAD_KEEP_ALIVE_SECONDS = 1;
 
     // Addresses to try to connect to, excluding active peers
@@ -103,7 +102,9 @@ public class PeerGroup {
         peers = Collections.synchronizedSet(new HashSet<Peer>());
         peerEventListeners = Collections.synchronizedSet(new HashSet<PeerEventListener>());
         peerDiscoverers = Collections.synchronizedSet(new HashSet<PeerDiscovery>());
-        peerPool = new ThreadPoolExecutor(CORE_THREADS, DEFAULT_CONNECTIONS,
+        peerPool = new ThreadPoolExecutor(
+                DEFAULT_CONNECTIONS,
+                DEFAULT_CONNECTIONS,
                 THREAD_KEEP_ALIVE_SECONDS, TimeUnit.SECONDS,
                 new LinkedBlockingQueue<Runnable>(1),
                 new PeerGroupThreadFactory());
@@ -122,15 +123,38 @@ public class PeerGroup {
     }
 
     /**
+     * Use this to directly add an already initialized and connected {@link Peer} object. Normally, you would prefer
+     * to use {@link PeerGroup#addAddress(PeerAddress)} and let this object handle construction of the peer for you.
+     * This method is useful when you are working closely with the network code (and in unit tests).<p>
+     *
+     * Note that if this peer group already has the maximum number of peers running (see {@link PeerGroup#DEFAULT_CONNECTIONS})
+     * then this method will block until other peers are disconnected.<p>
+     *
+     * Calling this will result in calls to any registered {@link PeerEventListener}s. Block chain download may occur.
+     */
+    public synchronized void addPeer(Peer peer) {
+        // TODO: Reconsider the behavior of this method. It probably should never block.
+        if (!running)
+            throw new IllegalStateException("Must call start() before adding peers.");
+        log.info("Adding directly to group: {}", peer);
+        // Set download mode to be false whilst we spin up the peer thread. Otherwise there is a race.
+        peer.setDownloadData(false);
+        // This starts the peer thread running.
+        executePeer(null, peer, false);
+        // This ensures downloadPeer is set up correctly and triggers block chain retrieval if necesssary.
+        handleNewPeer(peer);
+    }
+    
+    /**
      * Depending on the environment, this should normally be between 1 and 10, default is 4.
      *
      * @param maxConnections the maximum number of peer connections that this group will try to make.
      */
-    public void setMaxConnections(int maxConnections) {
+    public synchronized void setMaxConnections(int maxConnections) {
         peerPool.setMaximumPoolSize(maxConnections);
     }
 
-    public int getMaxConnections() {
+    public synchronized int getMaxConnections() {
         return peerPool.getMaximumPoolSize();
     }
 
@@ -152,7 +176,7 @@ public class PeerGroup {
     /**
      * Starts the background thread that makes connections.
      */
-    public void start() {
+    public synchronized void start() {
         this.connectThread = new Thread(new PeerExecutionRunnable(), "Peer group thread");
         running = true;
         this.connectThread.start();
@@ -191,10 +215,9 @@ public class PeerGroup {
     }
 
     private final class PeerExecutionRunnable implements Runnable {
-        /**
-         * Repeatedly get the next peer address from the inactive queue
-         * and try to connect.
-         * <p/>
+        /*
+         * Repeatedly get the next peer address from the inactive queue and try to connect.
+         * 
          * <p>We can be terminated with Thread.interrupt.  When an interrupt is received,
          * we will ask the executor to shutdown and ask each peer to disconnect.  At that point
          * no threads or network connections will be active.
@@ -250,40 +273,8 @@ public class PeerGroup {
             final PeerAddress address = inactives.take();
             while (true) {
                 try {
-                    final Peer peer = new Peer(params, address, blockStore.getChainHead().getHeight(), chain);
-                    Runnable command = new Runnable() {
-                        public void run() {
-                            try {
-                                log.info("Connecting to " + peer);
-                                peer.connect();
-                                peers.add(peer);
-                                handleNewPeer(peer);
-                                peer.run();
-                            } catch (PeerException ex) {
-                                // Do not propagate PeerException - log and try next peer. Suppress stack traces for
-                                // exceptions we expect as part of normal network behaviour.
-                                final Throwable cause = ex.getCause();
-                                if (cause instanceof SocketTimeoutException) {
-                                    log.info("Timeout talking to " + peer + ": " + cause.getMessage());
-                                } else if (cause instanceof ConnectException) {
-                                    log.info("Could not connect to " + peer + ": " + cause.getMessage());
-                                } else if (cause instanceof IOException) {
-                                    log.info("Error talking to " + peer + ": " + cause.getMessage());
-                                } else {
-                                    log.error("Unexpected exception whilst talking to " + peer, ex);
-                                }
-                            } finally {
-                                // In all cases, disconnect and put the address back on the queue.
-                                // We will retry this peer after all other peers have been tried.
-                                peer.disconnect();
-
-                                inactives.add(address);
-                                if (peers.remove(peer))
-                                    handlePeerDeath(peer);
-                            }
-                        }
-                    };
-                    peerPool.execute(command);
+                    Peer peer = new Peer(params, address, blockStore.getChainHead().getHeight(), chain);
+                    executePeer(address, peer, true);
                     break;
                 } catch (RejectedExecutionException e) {
                     // Reached maxConnections, try again after a delay
@@ -298,12 +289,51 @@ public class PeerGroup {
                     running = false;
                     throw new RuntimeException(e);
                 }
-
+                
                 // If we got here, we should retry this address because an error unrelated
                 // to the peer has occurred.
                 Thread.sleep(connectionDelayMillis);
             }
         }
+    }
+
+    private void executePeer(final PeerAddress address, final Peer peer, final boolean shouldConnect) {
+        peerPool.execute(new Runnable() {
+            public void run() {
+                try {
+                    if (shouldConnect) {
+                        log.info("Connecting to " + peer);
+                        peer.connect();
+                    }
+                    peers.add(peer);
+                    handleNewPeer(peer);
+                    peer.run();
+                } catch (PeerException ex) {
+                    // Do not propagate PeerException - log and try next peer. Suppress stack traces for
+                    // exceptions we expect as part of normal network behaviour.
+                    final Throwable cause = ex.getCause();
+                    if (cause instanceof SocketTimeoutException) {
+                        log.info("Timeout talking to " + peer + ": " + cause.getMessage());
+                    } else if (cause instanceof ConnectException) {
+                        log.info("Could not connect to " + peer + ": " + cause.getMessage());
+                    } else if (cause instanceof IOException) {
+                        log.info("Error talking to " + peer + ": " + cause.getMessage());
+                    } else {
+                        log.error("Unexpected exception whilst talking to " + peer, ex);
+                    }
+                } finally {
+                    // In all cases, disconnect and put the address back on the queue.
+                    // We will retry this peer after all other peers have been tried.
+                    peer.disconnect();
+
+                    // We may not know the address if the peer was added directly.
+                    if (address != null)
+                        inactives.add(address);
+                    if (peers.remove(peer))
+                        handlePeerDeath(peer);
+                }
+            }
+        });
     }
 
     /**
@@ -316,7 +346,7 @@ public class PeerGroup {
      */
     public synchronized void startBlockChainDownload(PeerEventListener listener) {
         this.downloadListener = listener;
-        // TODO be more nuanced about which peer to download from.  We can also try
+        // TODO: be more nuanced about which peer to download from.  We can also try
         // downloading from multiple peers and handle the case when a new peer comes along
         // with a longer chain after we thought we were done.
         synchronized (peers) {
@@ -343,8 +373,14 @@ public class PeerGroup {
     }
 
     protected synchronized void handleNewPeer(Peer peer) {
-        if (downloadListener != null && downloadPeer == null)
+        log.info("Handling new {}", peer);
+        // If we want to download the chain, and we aren't currently doing so, do so now.
+        if (downloadListener != null && downloadPeer == null) {
+            log.info("  starting block chain download");
             startBlockChainDownloadFromPeer(peer);
+        } else if (downloadPeer == null) {
+            setDownloadPeer(peer);
+        }
         synchronized (peerEventListeners) {
             for (PeerEventListener listener : peerEventListeners) {
                 synchronized (listener) {
@@ -354,12 +390,29 @@ public class PeerGroup {
         }
     }
 
+    private void setDownloadPeer(Peer peer) {
+        if (downloadPeer != null) {
+            downloadPeer.setDownloadData(false);
+        }
+        downloadPeer = peer;
+        if (downloadPeer != null) {
+            downloadPeer.setDownloadData(true);
+        }
+    }
+
     protected synchronized void handlePeerDeath(Peer peer) {
+        assert !peers.contains(peer);
         if (peer == downloadPeer) {
-            downloadPeer = null;
+            log.info("Download peer died. Picking a new one.");
+            setDownloadPeer(null);
+            // Pick a new one and possibly tell it to download the chain.
             synchronized (peers) {
-                if (downloadListener != null && !peers.isEmpty()) {
-                    startBlockChainDownloadFromPeer(peers.iterator().next());
+                if (!peers.isEmpty()) {
+                    Peer next = peers.iterator().next();
+                    setDownloadPeer(next);
+                    if (downloadListener != null) {
+                        startBlockChainDownloadFromPeer(next);
+                    }
                 }
             }
         }
@@ -374,14 +427,15 @@ public class PeerGroup {
     }
 
     private synchronized void startBlockChainDownloadFromPeer(Peer peer) {
-        peer.addEventListener(downloadListener);
         try {
+            peer.addEventListener(downloadListener);
+            setDownloadPeer(peer);
+            // startBlockChainDownload will setDownloadData(true) on itself automatically.
             peer.startBlockChainDownload();
         } catch (IOException e) {
             log.error("failed to start block chain download from " + peer, e);
             return;
         }
-        downloadPeer = peer;
     }
 
     static class PeerGroupThreadFactory implements ThreadFactory {

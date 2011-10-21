@@ -17,32 +17,50 @@
 package com.google.bitcoin.core;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import com.google.bitcoin.discovery.PeerDiscovery;
 import com.google.bitcoin.discovery.PeerDiscoveryException;
-import com.google.bitcoin.store.BlockStore;
 import com.google.bitcoin.store.MemoryBlockStore;
 
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.Semaphore;
 
-public class PeerGroupTest {
+public class PeerGroupTest extends TestWithNetworkConnections {
     static final NetworkParameters params = NetworkParameters.unitTests();
 
     private Wallet wallet;
-    private BlockStore blockStore;
     private PeerGroup peerGroup;
+    private final BlockingQueue<Peer> disconnectedPeers = new LinkedBlockingQueue<Peer>();
 
+    @Override
     @Before
     public void setUp() throws Exception {
+        super.setUp();
         wallet = new Wallet(params);
         blockStore = new MemoryBlockStore(params);
         BlockChain chain = new BlockChain(params, wallet, blockStore);
         peerGroup = new PeerGroup(blockStore, params, chain, 1000);
+
+        // Support for testing disconnect events in a non-racy manner.
+        peerGroup.addEventListener(new AbstractPeerEventListener() {
+            @Override
+            public void onPeerDisconnected(Peer peer, int peerCount) {
+                super.onPeerDisconnected(peer, peerCount);
+                try {
+                    disconnectedPeers.put(peer);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        });
     }
 
     @Test
@@ -78,5 +96,88 @@ public class PeerGroupTest {
         // again a bit later.
         assertTrue(result[0]);
         peerGroup.stop();
+    }
+
+    @Test
+    public void singleDownloadPeer1() throws Exception {
+        // Check that we don't attempt to retrieve blocks on multiple peers.
+
+        // Create a couple of peers.
+        MockNetworkConnection n1 = createMockNetworkConnection();
+        Peer p1 = new Peer(params, blockChain, n1);
+        MockNetworkConnection n2 = createMockNetworkConnection();
+        Peer p2 = new Peer(params, blockChain, n2);
+        peerGroup.start();
+        peerGroup.addPeer(p1);
+        peerGroup.addPeer(p2);
+
+        // Set up a little block chain. We heard about b1 but not b2 (it is pending download). b3 is solved whilst we
+        // are downloading the chain.
+        Block b1 = TestUtils.createFakeBlock(params, blockStore).block;
+        blockChain.add(b1);
+        Block b2 = TestUtils.makeSolvedTestBlock(params, b1);
+        Block b3 = TestUtils.makeSolvedTestBlock(params, b2);
+
+        // Peer 1 and 2 receives an inv advertising a newly solved block.
+        InventoryMessage inv = new InventoryMessage(params);
+        inv.addItem(new InventoryItem(InventoryItem.Type.Block, b3.getHash()));
+        n1.inbound(inv);
+        n2.inbound(inv);
+
+        // Only peer 1 tries to download it.
+        assertTrue(n1.outbound() instanceof GetDataMessage);
+        assertNull(n2.outbound());
+        // Peer 1 goes away.
+        disconnectAndWait(n1);
+        // Peer 2 fetches it next time it hears an inv (should it fetch immediately?).
+        n2.inbound(inv);
+        assertTrue(n2.outbound() instanceof GetDataMessage);
+        peerGroup.stop();
+    }
+
+    @Test
+    public void singleDownloadPeer2() throws Exception {
+        // Check that we don't attempt multiple simultaneous block chain downloads, when adding a new peer in the
+        // middle of an existing chain download.
+        // Create a couple of peers.
+        MockNetworkConnection n1 = createMockNetworkConnection();
+        Peer p1 = new Peer(params, blockChain, n1);
+        MockNetworkConnection n2 = createMockNetworkConnection();
+        Peer p2 = new Peer(params, blockChain, n2);
+        peerGroup.start();
+        peerGroup.addPeer(p1);
+
+        // Set up a little block chain.
+        Block b1 = TestUtils.createFakeBlock(params, blockStore).block;
+        Block b2 = TestUtils.makeSolvedTestBlock(params, b1);
+        Block b3 = TestUtils.makeSolvedTestBlock(params, b2);
+        n1.setVersionMessageForHeight(params, 3);
+        n2.setVersionMessageForHeight(params, 3);
+
+        // Expect a zero hash getblocks on p1. This is how the process starts.
+        peerGroup.startBlockChainDownload(new AbstractPeerEventListener() {
+        });
+        GetBlocksMessage getblocks = (GetBlocksMessage) n1.outbound();
+        assertEquals(Sha256Hash.ZERO_HASH, getblocks.getStopHash());
+        // We give back an inv with some blocks in it.
+        InventoryMessage inv = new InventoryMessage(params);
+        inv.addItem(new InventoryItem(InventoryItem.Type.Block, b1.getHash()));
+        inv.addItem(new InventoryItem(InventoryItem.Type.Block, b2.getHash()));
+        inv.addItem(new InventoryItem(InventoryItem.Type.Block, b3.getHash()));
+        n1.inbound(inv);
+        // Peer creates a getdata message.
+        GetDataMessage getdata = (GetDataMessage) n1.outbound();
+        // We hand back the first block.
+        n1.inbound(b1);
+
+        // Now we successfully connect to another peer. There should be no messages sent.
+        peerGroup.addPeer(p2);
+        Message message = n2.outbound();
+        assertNull(message == null ? "" : message.toString(), message);
+    }
+
+    private void disconnectAndWait(MockNetworkConnection conn) throws IOException, InterruptedException {
+        conn.disconnect();
+        disconnectedPeers.take();
     }
 }
