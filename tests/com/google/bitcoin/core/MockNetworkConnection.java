@@ -72,7 +72,7 @@ public class MockNetworkConnection implements NetworkConnection {
                 throw new RuntimeException("Unknown object in inbound queue.");
             }
         } catch (InterruptedException e) {
-            throw new IOException(e);
+            throw new IOException(e.getMessage());
         } finally {
             synchronized (this) {
                 waitingToRead = false;
@@ -84,7 +84,7 @@ public class MockNetworkConnection implements NetworkConnection {
         try {
             outboundMessageQ.put(message);
         } catch (InterruptedException e) {
-            throw new IOException(e);
+            throw new IOException(e.getMessage());
         }
     }
 
