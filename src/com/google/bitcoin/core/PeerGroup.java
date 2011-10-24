@@ -132,17 +132,15 @@ public class PeerGroup {
      *
      * Calling this will result in calls to any registered {@link PeerEventListener}s. Block chain download may occur.
      */
-    public synchronized void addPeer(Peer peer) {
-        // TODO: Reconsider the behavior of this method. It probably should never block.
-        if (!running)
-            throw new IllegalStateException("Must call start() before adding peers.");
-        log.info("Adding directly to group: {}", peer);
-        // Set download mode to be false whilst we spin up the peer thread. Otherwise there is a race.
-        peer.setDownloadData(false);
-        // This starts the peer thread running.
-        executePeer(null, peer, false);
-        // This ensures downloadPeer is set up correctly and triggers block chain retrieval if necesssary.
-        handleNewPeer(peer);
+    public void addPeer(Peer peer) {
+        synchronized (this) {
+            if (!running)
+                throw new IllegalStateException("Must call start() before adding peers.");
+            log.info("Adding directly to group: {}", peer);
+        }
+        // This starts the peer thread running. Note: this is not synchronized. If it were, we could not
+        // use WAIT_FOR_STARTUP mode below because the newly created thread will call handleNewPeer() which is locked.
+        executePeer(null, peer, false, ExecuteBlockMode.WAIT_FOR_STARTUP);
     }
     
     /**
@@ -275,7 +273,7 @@ public class PeerGroup {
             while (true) {
                 try {
                     Peer peer = new Peer(params, address, blockStore.getChainHead().getHeight(), chain);
-                    executePeer(address, peer, true);
+                    executePeer(address, peer, true, ExecuteBlockMode.RETURN_IMMEDIATELY);
                     break;
                 } catch (RejectedExecutionException e) {
                     // Reached maxConnections, try again after a delay
@@ -298,7 +296,13 @@ public class PeerGroup {
         }
     }
 
-    private void executePeer(final PeerAddress address, final Peer peer, final boolean shouldConnect) {
+    private enum ExecuteBlockMode {
+        WAIT_FOR_STARTUP, RETURN_IMMEDIATELY
+    }
+
+    private void executePeer(final PeerAddress address, final Peer peer, final boolean shouldConnect,
+                             final ExecuteBlockMode blockUntilRunning) {
+        final CountDownLatch latch = new CountDownLatch(1);
         peerPool.execute(new Runnable() {
             public void run() {
                 try {
@@ -308,6 +312,8 @@ public class PeerGroup {
                     }
                     peers.add(peer);
                     handleNewPeer(peer);
+                    if (blockUntilRunning == ExecuteBlockMode.WAIT_FOR_STARTUP)
+                        latch.countDown();
                     peer.run();
                 } catch (PeerException ex) {
                     // Do not propagate PeerException - log and try next peer. Suppress stack traces for
@@ -340,6 +346,13 @@ public class PeerGroup {
                 }
             }
         });
+
+        if (blockUntilRunning == ExecuteBlockMode.WAIT_FOR_STARTUP) {
+            try {
+                latch.await();
+            } catch (InterruptedException e) {
+            }
+        }
     }
 
     /**
@@ -386,6 +399,8 @@ public class PeerGroup {
             startBlockChainDownloadFromPeer(peer);
         } else if (downloadPeer == null) {
             setDownloadPeer(peer);
+        } else {
+            peer.setDownloadData(false);
         }
         synchronized (peerEventListeners) {
             for (PeerEventListener listener : peerEventListeners) {
@@ -396,7 +411,7 @@ public class PeerGroup {
         }
     }
 
-    private void setDownloadPeer(Peer peer) {
+    private synchronized void setDownloadPeer(Peer peer) {
         if (downloadPeer != null) {
             downloadPeer.setDownloadData(false);
         }
