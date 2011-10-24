@@ -59,13 +59,13 @@ public class TCPNetworkConnection implements NetworkConnection {
      * port is not positive the default port from params is used.
      * @param params Defines which network to connect to and details of the protocol.
      * @param bestHeight How many blocks are in our best chain
-     * @param connectTimeout Timeout in milliseconds when initially connecting to peer
+     * @param connectTimeoutMsec Timeout in milliseconds when initially connecting to peer
      * @param dedupe Whether to avoid parsing duplicate messages from the network (ie from other peers).
      * @throws IOException if there is a network related failure.
      * @throws ProtocolException if the version negotiation failed.
      */
     public TCPNetworkConnection(PeerAddress peerAddress, NetworkParameters params,
-                                int bestHeight, int connectTimeout, boolean dedupe)
+                                int bestHeight, int connectTimeoutMsec, boolean dedupe)
             throws IOException, ProtocolException {
         this.params = params;
         this.remoteIp = peerAddress.getAddr();
@@ -74,7 +74,7 @@ public class TCPNetworkConnection implements NetworkConnection {
 
         InetSocketAddress address = new InetSocketAddress(remoteIp, port);
         socket = new Socket();
-        socket.connect(address, connectTimeout);
+        socket.connect(address, connectTimeoutMsec);
         
         out = socket.getOutputStream();
         in = socket.getInputStream();
