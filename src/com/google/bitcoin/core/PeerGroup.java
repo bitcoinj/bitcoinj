@@ -151,6 +151,7 @@ public class PeerGroup {
      * @param maxConnections the maximum number of peer connections that this group will try to make.
      */
     public synchronized void setMaxConnections(int maxConnections) {
+        peerPool.setCorePoolSize(Math.min(maxConnections, DEFAULT_CONNECTIONS));
         peerPool.setMaximumPoolSize(maxConnections);
     }
 

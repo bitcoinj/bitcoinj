@@ -166,6 +166,7 @@ public class PeerGroupTest extends TestWithNetworkConnections {
         inv.addItem(new InventoryItem(InventoryItem.Type.Block, b3.getHash()));
         n1.inbound(inv);
         // Peer creates a getdata message.
+        @SuppressWarnings("unused")
         GetDataMessage getdata = (GetDataMessage) n1.outbound();
         // We hand back the first block.
         n1.inbound(b1);
@@ -179,5 +180,13 @@ public class PeerGroupTest extends TestWithNetworkConnections {
     private void disconnectAndWait(MockNetworkConnection conn) throws IOException, InterruptedException {
         conn.disconnect();
         disconnectedPeers.take();
+    }
+    
+    @Test
+    public void testSetMaximumConnections() {
+        peerGroup.setMaxConnections(1);
+        peerGroup.setMaxConnections(4);
+        peerGroup.setMaxConnections(10);
+        peerGroup.setMaxConnections(1);
     }
 }
