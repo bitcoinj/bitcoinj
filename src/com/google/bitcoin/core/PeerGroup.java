@@ -323,8 +323,13 @@ public class PeerGroup {
                         log.error("Unexpected exception whilst talking to " + peer, ex);
                     }
                 } finally {
-                    // In all cases, disconnect and put the address back on the queue.
-                    // We will retry this peer after all other peers have been tried.
+                    // We may be terminating because of a controlled shutdown. If so, don't inform the user of individual
+                    // peer connections or select a new download peer.
+                    if (!running)
+                        return;
+
+                    // Disconnect and put the address back on the queue. We will retry this peer after all
+                    // other peers have been tried.
                     peer.disconnect();
 
                     // We may not know the address if the peer was added directly.
