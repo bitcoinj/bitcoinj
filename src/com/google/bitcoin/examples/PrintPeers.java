@@ -109,6 +109,6 @@ public class PrintPeers {
                 }
             });
         }
-        pool.awaitTermination(1, TimeUnit.DAYS);
+        pool.awaitTermination(3600 * 24, TimeUnit.SECONDS); // 1 Day
     }
 }
