@@ -412,7 +412,7 @@ public class Peer {
         setDownloadData(true);
         // TODO: peer might still have blocks that we don't have, and even have a heavier
         // chain even if the chain block count is lower.
-        if (getPeerBlocksToGet() > 0) {
+        if (getPeerBlocksToGet() >= 0) {
             for (PeerEventListener listener : eventListeners) {
                 synchronized (listener) {
                     listener.onChainDownloadStarted(this, getPeerBlocksToGet());

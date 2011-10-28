@@ -40,6 +40,10 @@ public class DownloadListener extends AbstractPeerEventListener {
     public void onChainDownloadStarted(Peer peer, int blocksLeft) {
         startDownload(blocksLeft);
         originalBlocksLeft = blocksLeft;
+        if (blocksLeft == 0) {
+            doneDownload();
+            done.release();
+        }
     }
 
     @Override
