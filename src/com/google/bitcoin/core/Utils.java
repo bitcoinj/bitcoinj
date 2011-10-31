@@ -16,16 +16,15 @@
 
 package com.google.bitcoin.core;
 
-import org.bouncycastle.crypto.digests.RIPEMD160Digest;
-
 import java.io.IOException;
 import java.io.OutputStream;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Arrays;
 import java.util.Date;
+
+import org.bouncycastle.crypto.digests.RIPEMD160Digest;
 
 /**
  * A collection of various utility methods that are helpful for working with the BitCoin protocol.
@@ -189,6 +188,27 @@ public class Utils {
             buf[i] = bytes[bytes.length - 1 - i];
         return buf;
     }
+    
+    /**
+     * Returns a copy of the given byte array with the bytes of each double-word (4 bytes) reversed.
+     * 
+     * @param bytes length must be divisible by 4.
+     * @param trimLength trim output to this length.  If positive, must be divisible by 4.
+     */
+    public static byte[] reverseDwordBytes(byte[] bytes, int trimLength) {
+        assert bytes.length % 4 == 0;
+        assert trimLength < 0 || trimLength % 4 == 0;
+        
+        byte[] rev = new byte[trimLength >= 0 && bytes.length > trimLength ? trimLength : bytes.length];
+        
+        for (int i = 0; i < rev.length; i += 4) {
+            System.arraycopy(bytes, i, rev, i , 4);
+            for (int j = 0; j < 4; j++) {
+                rev[i + j] = bytes[i + 3 - j];
+            }
+        }
+        return rev;
+}
 
     public static long readUint32(byte[] bytes, int offset) {
         return ((bytes[offset++] & 0xFFL) << 0) |

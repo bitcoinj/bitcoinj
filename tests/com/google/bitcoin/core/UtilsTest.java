@@ -21,6 +21,7 @@ import static junit.framework.Assert.fail;
 
 import static com.google.bitcoin.core.Utils.*;
 
+import org.junit.Assert;
 import org.junit.Test;
 
 public class UtilsTest {
@@ -50,5 +51,18 @@ public class UtilsTest {
     public void testFormatting() {
         assertEquals("1.23", bitcoinValueToFriendlyString(toNanoCoins(1, 23)));
         assertEquals("-1.23", bitcoinValueToFriendlyString(toNanoCoins(1, 23).negate()));
+    }
+    
+    @Test
+    public void testReverseBytes() {
+        Assert.assertArrayEquals(new byte[] {1,2,3,4,5}, Utils.reverseBytes(new byte[] {5,4,3,2,1}));
+    }
+
+    @Test
+    public void testReverseDwordBytes() {
+        Assert.assertArrayEquals(new byte[] {1,2,3,4,5,6,7,8}, Utils.reverseDwordBytes(new byte[] {4,3,2,1,8,7,6,5}, -1));
+        Assert.assertArrayEquals(new byte[] {1,2,3,4}, Utils.reverseDwordBytes(new byte[] {4,3,2,1,8,7,6,5}, 4));
+        Assert.assertArrayEquals(new byte[0], Utils.reverseDwordBytes(new byte[] {4,3,2,1,8,7,6,5}, 0));
+        Assert.assertArrayEquals(new byte[0], Utils.reverseDwordBytes(new byte[0], 0));
     }
 }
