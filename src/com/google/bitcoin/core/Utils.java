@@ -270,7 +270,7 @@ public class Utils {
 
     // The representation of nBits uses another home-brew encoding, as a way to represent a large
     // hash value in only 32 bits.
-    static BigInteger decodeCompactBits(long compact) {
+    public static BigInteger decodeCompactBits(long compact) {
         int size = ((int) (compact >> 24)) & 0xFF;
         byte[] bytes = new byte[4 + size];
         bytes[3] = (byte) size;
