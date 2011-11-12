@@ -84,6 +84,20 @@ public abstract class Message implements Serializable {
         this(params, msg, offset, protocolVersion, false, false, UNKNOWN_LENGTH);
     }
 
+    /**
+     * 
+     * @param params NetworkParameters object.
+     * @param msg Bitcoin protocol formatted byte array containing message content.
+     * @param offset The location of the first msg byte within the array.
+     * @param protocolVersion Bitcoin protocol version.
+     * @param parseLazy Whether to perform a full parse immediately or delay until a read is requested.
+     * @param parseRetain Whether to retain the backing byte array for quick reserialization.  
+     * If true and the backing byte array is invalidated due to modification of a field then 
+     * the cached bytes may be repopulated and retained if the message is serialized again in the future.
+     * @param length The length of message if known.  Usually this is provided when deserializing of the wire
+     * as the length will be provided as part of the header.  If unknown then set to Message.UNKNOWN_LENGTH
+     * @throws ProtocolException
+     */
     Message(NetworkParameters params, byte[] msg, int offset, int protocolVersion, final boolean parseLazy, final boolean parseRetain, int length) throws ProtocolException {
         this.parseLazy = parseLazy;
         this.parseRetain = parseRetain;
@@ -113,7 +127,7 @@ public abstract class Message implements Serializable {
 
     private void selfCheck(byte[] msg, int offset) {
         if (!(this instanceof VersionMessage)) {
-            checkParse();
+            maybeParse();
             byte[] msgbytes = new byte[cursor - offset];
             System.arraycopy(msg, offset, msgbytes, 0, cursor - offset);
             byte[] reserialized = bitcoinSerialize();
@@ -152,15 +166,12 @@ public abstract class Message implements Serializable {
      * @throws ProtocolException
      */
     protected abstract void parseLite() throws ProtocolException;
-//    {
-//    	length = getMessageSize();
-//    }
 
     /**
      * Ensure the object is parsed if needed.  This should be called in every getter before returning a value.
      * If the lazy parse flag is not set this is a method returns immediately.
      */
-    protected synchronized void checkParse() {
+    protected synchronized void maybeParse() {
         if (parsed || bytes == null)
             return;
         try {
@@ -184,7 +195,7 @@ public abstract class Message implements Serializable {
      */
     public void ensureParsed() throws ProtocolException {
         try {
-            checkParse();
+            maybeParse();
         } catch (LazyParseException e) {
             if (e.getCause() instanceof ProtocolException)
                 throw (ProtocolException) e.getCause();
@@ -216,7 +227,7 @@ public abstract class Message implements Serializable {
            *     to keep track of whether the cache is valid or not.
            */
 
-        checkParse();
+        maybeParse();
         checksum = null;
         bytes = null;
         recached = false;
@@ -377,7 +388,7 @@ public abstract class Message implements Serializable {
     int getMessageSize() {
         if (length != UNKNOWN_LENGTH)
             return length;
-        checkParse();
+        maybeParse();
         assert length != UNKNOWN_LENGTH: "Length field has not been set in " + getClass().getSimpleName() + " after full parse.";
         //if (length == UNKNOWN_LENGTH)
         //    length = cursor - offset;

@@ -64,6 +64,17 @@ public class TransactionOutput extends ChildMessage implements Serializable {
 
     /**
      * Deserializes a transaction output message. This is usually part of a transaction message.
+     * @param params NetworkParameters object.
+     * @param msg Bitcoin protocol formatted byte array containing message content.
+     * @param offset The location of the first msg byte within the array.
+     * @param protocolVersion Bitcoin protocol version.
+     * @param parseLazy Whether to perform a full parse immediately or delay until a read is requested.
+     * @param parseRetain Whether to retain the backing byte array for quick reserialization.  
+     * If true and the backing byte array is invalidated due to modification of a field then 
+     * the cached bytes may be repopulated and retained if the message is serialized again in the future.
+     * @param length The length of message if known.  Usually this is provided when deserializing of the wire
+     * as the length will be provided as part of the header.  If unknown then set to Message.UNKNOWN_LENGTH
+     * @throws ProtocolException
      */
     public TransactionOutput(NetworkParameters params, Transaction parent, byte[] msg, int offset, boolean parseLazy, boolean parseRetain)
             throws ProtocolException {
@@ -94,7 +105,7 @@ public class TransactionOutput extends ChildMessage implements Serializable {
 
     public Script getScriptPubKey() throws ScriptException {
         if (scriptPubKey == null) {
-            checkParse();
+            maybeParse();
             scriptPubKey = new Script(params, scriptBytes, 0, scriptBytes.length);
         }
         return scriptPubKey;
@@ -124,7 +135,7 @@ public class TransactionOutput extends ChildMessage implements Serializable {
      * receives.
      */
     public BigInteger getValue() {
-        checkParse();
+        maybeParse();
         return value;
     }
 
@@ -157,8 +168,12 @@ public class TransactionOutput extends ChildMessage implements Serializable {
         return availableForSpending;
     }
 
+    /**
+     * The backing script bytes which can be turned into a Script object.
+     * @return the scriptBytes
+    */
     public byte[] getScriptBytes() {
-        checkParse();
+        maybeParse();
         return scriptBytes;
     }
 
@@ -200,7 +215,7 @@ public class TransactionOutput extends ChildMessage implements Serializable {
      * then data will be lost during serialization.
      */
     private void writeObject(ObjectOutputStream out) throws IOException {
-        checkParse();
+        maybeParse();
         out.defaultWriteObject();
     }
 }

@@ -29,7 +29,4 @@ public class UnknownMessage extends EmptyMessage {
         return "Unknown message [" + name + "]: " + (bytes == null ? "" : Utils.bytesToHexString(bytes));
     }
 
-    @Override
-    public void parse() throws ProtocolException {
-    }
 }

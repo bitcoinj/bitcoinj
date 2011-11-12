@@ -1,3 +1,19 @@
+/**
+ * Copyright 2011 Steve Coughlan.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.google.bitcoin.core;
 
 import java.io.ByteArrayInputStream;
@@ -175,8 +191,6 @@ public class LazyParseByteCacheTest {
     	BitcoinSerializer bs = new BitcoinSerializer(unitTestParams, true, lazy, retain, null);
     	Block b1;
     	Block bRef;
-    	if (lazy && !retain)
-    		System.out.print("");
     	b1 = (Block) bs.deserialize(new ByteArrayInputStream(blockBytes));
     	bRef = (Block) bsRef.deserialize(new ByteArrayInputStream(blockBytes));
     	
@@ -193,13 +207,9 @@ public class LazyParseByteCacheTest {
     	if (b1.isParsedTransactions())
     		assertEquals(retain, b1.isTransactionBytesValid());
     	
-    	if (lazy && !retain)
-    		System.out.print("");
     	serDeser(bs, b1, blockBytes, null, null);
     	
     	assertEquals(!lazy, b1.isParsedTransactions());
-    	if (lazy == b1.isParsedHeader())
-    		System.out.print("");
     	assertEquals(!lazy, b1.isParsedHeader());
     	if (b1.isParsedHeader())
     		assertEquals(retain, b1.isHeaderBytesValid());
@@ -212,8 +222,6 @@ public class LazyParseByteCacheTest {
 		serDeser(bs, b1, bos.toByteArray(), null, null);
 		
     	//retrieve a value from a child
-		if (lazy && retain)
-			System.out.print("");
 		b1.getTransactions();
     	assertTrue(b1.isParsedTransactions());
     	if (b1.getTransactions().size() > 0) {
@@ -239,8 +247,6 @@ public class LazyParseByteCacheTest {
     	bRef = (Block) bsRef.deserialize(new ByteArrayInputStream(blockBytes));
     	
     	//retrieve a value from header
-    	if (lazy && !retain)
-    		System.out.print("");
     	b1.getDifficultyTarget();
 		assertTrue(b1.isParsedHeader());
 		assertEquals(lazy, !b1.isParsedTransactions());
@@ -280,8 +286,6 @@ public class LazyParseByteCacheTest {
     	bRef = (Block) bsRef.deserialize(new ByteArrayInputStream(blockBytes));
     	
     	//change a value in header
-    	if (lazy && !retain)
-    		System.out.println("");
     	b1.setNonce(23);
     	bRef.setNonce(23);
     	assertTrue(b1.isParsedHeader());
@@ -320,8 +324,6 @@ public class LazyParseByteCacheTest {
         	serDeser(bs, b1, bos.toByteArray(), null, null);
         }
     	
-    	if (lazy && retain)
-    		System.out.print("");
     	//refresh block
     	b1 = (Block) bs.deserialize(new ByteArrayInputStream(blockBytes));
     	bRef = (Block) bsRef.deserialize(new ByteArrayInputStream(blockBytes));
@@ -379,8 +381,6 @@ public class LazyParseByteCacheTest {
     		Transaction tx2 = b2.getTransactions().get(0);
     		
         	if (tx1.getInputs().size() > 0) {
-        		if (lazy && !retain)
-        			System.out.print("");
         		TransactionInput fromTx1 = tx1.getInputs().get(0);
         		tx2.addInput(fromTx1);
         		
@@ -391,8 +391,6 @@ public class LazyParseByteCacheTest {
         		//b1 hasn't changed but it's no longer in the parent
         		//chain of fromTx1 so has to have been uncached since it won't be
         		//notified of changes throught the parent chain anymore.
-        		if (b1.isTransactionBytesValid())
-        			System.out.print("");
         		assertFalse(b1.isTransactionBytesValid());
         		
         		//b2 should have it's cache invalidated because it has changed.
@@ -439,8 +437,6 @@ public class LazyParseByteCacheTest {
     	
     	//check lazy and retain status survive both before and after a serialization
     	assertEquals(!lazy, t1.isParsed());
-    	if (retain != t1.isCached())
-    		System.out.print("");
     	if (t1.isParsed())
     		assertEquals(retain, t1.isCached());
     	
@@ -475,16 +471,12 @@ public class LazyParseByteCacheTest {
     	
     	//add an input
     	if (t1.getInputs().size() > 0) {
-    		if (lazy && retain)
-    			System.out.print("");
     		
     		t1.addInput(t1.getInputs().get(0));
     		
     		//replicate on reference tx
     		tRef.addInput(tRef.getInputs().get(0));
     		
-    		if (t1.isCached())
-    			System.out.print("BUGGER!");
     		assertFalse(t1.isCached());
     		assertTrue(t1.isParsed());
     		
@@ -504,10 +496,6 @@ public class LazyParseByteCacheTest {
     	
     	Message m2 = bs.deserialize(new ByteArrayInputStream(b1));
 
-		if (!message.equals(m2)) {
-			System.out.print("");
-		}
-    	
 		assertEquals(message, m2);
  
     	bos.reset();
@@ -516,9 +504,6 @@ public class LazyParseByteCacheTest {
     	assertTrue(Arrays.equals(b1, b2));
     	
     	if (sourceBytes != null) {
-    		if (!arrayContains(sourceBytes, b1)) {
-    			System.out.print("");
-    		}
     		assertTrue(arrayContains(sourceBytes, b1));
     		
     		assertTrue(arrayContains(sourceBytes, b2));
@@ -548,25 +533,10 @@ public class LazyParseByteCacheTest {
     	for (int i = 0; i < superstring.indexOf(substring); i++)
         	sb.append(" ");
     	
-    	System.out.println(superstring);
-    	System.out.println(sb.append(substring).toString());
-    	System.out.println();
+    	//System.out.println(superstring);
+    	//System.out.println(sb.append(substring).toString());
+    	//System.out.println();
     	return ind > -1;
     	
-//    	if (sup.length < sub.length)
-//		return false;
-//    	for (int i = 0; i < sup.length - sub.length; i++) {
-//    		boolean bad = false;
-//    		for (int j = 0; j < sub.length && !bad; j++) {
-//    			if (sup[i + j] == sub[j]) {
-//    				if (j == sub.length - 1)
-//    					return true;
-//    			} else {
-//    				bad = true;
-//    			}
-//    				
-//    		}
-//    	}
-//    	return false;
     }
 }

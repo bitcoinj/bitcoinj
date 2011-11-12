@@ -38,7 +38,7 @@ import java.net.InetAddress;
  * <li>Start your bitcoin client in test mode <code>bitcoin -testnet</code>. This will create a new sub-directory called testnet and should not interfere with normal wallets or operations.</li>
  * <li>(Optional) Choose a fresh address</li>
  * <li>(Optional) Visit the Testnet faucet (https://testnet.freebitcoins.appspot.com/) to load your client with test coins</li>
- * <li>Run <code>PingService -testnet</code></li>
+ * <li>Run <code>PingService testnet</code></li>
  * <li>Wait for the block chain to download</li>
  * <li>Send some coins from your bitcoin client to the address provided in the PingService console</li>
  * <li>Leave it running until you get the coins back again</li>

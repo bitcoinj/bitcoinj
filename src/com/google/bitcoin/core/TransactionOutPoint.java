@@ -62,6 +62,17 @@ public class TransactionOutPoint extends ChildMessage implements Serializable {
 
     /**
      * Deserializes the message. This is usually part of a transaction message.
+     * @param params NetworkParameters object.
+     * @param msg Bitcoin protocol formatted byte array containing message content.
+     * @param offset The location of the first msg byte within the array.
+     * @param protocolVersion Bitcoin protocol version.
+     * @param parseLazy Whether to perform a full parse immediately or delay until a read is requested.
+     * @param parseRetain Whether to retain the backing byte array for quick reserialization.  
+     * If true and the backing byte array is invalidated due to modification of a field then 
+     * the cached bytes may be repopulated and retained if the message is serialized again in the future.
+     * @param length The length of message if known.  Usually this is provided when deserializing of the wire
+     * as the length will be provided as part of the header.  If unknown then set to Message.UNKNOWN_LENGTH
+     * @throws ProtocolException
      */
     public TransactionOutPoint(NetworkParameters params, byte[] payload, int offset, Message parent, boolean parseLazy, boolean parseRetain) throws ProtocolException {
         super(params, payload, offset, parent, parseLazy, parseRetain, MESSAGE_LENGTH);
@@ -127,7 +138,7 @@ public class TransactionOutPoint extends ChildMessage implements Serializable {
      * @return the hash
      */
     public Sha256Hash getHash() {
-        checkParse();
+        maybeParse();
         return hash;
     }
 
@@ -142,7 +153,7 @@ public class TransactionOutPoint extends ChildMessage implements Serializable {
      * @return the index
      */
     public long getIndex() {
-        checkParse();
+        maybeParse();
         return index;
     }
 
@@ -160,7 +171,7 @@ public class TransactionOutPoint extends ChildMessage implements Serializable {
      * then data will be lost during serialization.
      */
     private void writeObject(ObjectOutputStream out) throws IOException {
-        checkParse();
+        maybeParse();
         out.defaultWriteObject();
     }
 }

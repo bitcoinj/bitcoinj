@@ -39,7 +39,6 @@ public abstract class ListMessage extends Message {
         super(params, bytes, 0);
     }
 
-
     public ListMessage(NetworkParameters params, byte[] msg, boolean parseLazy, boolean parseRetain, int length)
             throws ProtocolException {
         super(params, msg, 0, parseLazy, parseRetain, length);
@@ -53,7 +52,7 @@ public abstract class ListMessage extends Message {
     }
 
     public List<InventoryItem> getItems() {
-        checkParse();
+        maybeParse();
         return Collections.unmodifiableList(items);
     }
 
@@ -61,14 +60,14 @@ public abstract class ListMessage extends Message {
         unCache();
         length -= VarInt.sizeOf(items.size());
         items.add(item);
-        length += VarInt.sizeOf(items.size()) + 36;
+        length += VarInt.sizeOf(items.size()) + InventoryItem.MESSAGE_LENGTH;
     }
 
     public void removeItem(int index) {
         unCache();
         length -= VarInt.sizeOf(items.size());
         items.remove(index);
-        length += VarInt.sizeOf(items.size()) - 36;
+        length += VarInt.sizeOf(items.size()) - InventoryItem.MESSAGE_LENGTH;
     }
 
     @Override
@@ -76,7 +75,7 @@ public abstract class ListMessage extends Message {
         arrayLen = readVarInt();
         if (arrayLen > MAX_INVENTORY_ITEMS)
             throw new ProtocolException("Too many items in INV message: " + arrayLen);
-        length = (int) (cursor - offset + (arrayLen * 36));
+        length = (int) (cursor - offset + (arrayLen * InventoryItem.MESSAGE_LENGTH));
     }
 
     @Override
@@ -84,7 +83,7 @@ public abstract class ListMessage extends Message {
         // An inv is vector<CInv> where CInv is int+hash. The int is either 1 or 2 for tx or block.
         items = new ArrayList<InventoryItem>((int) arrayLen);
         for (int i = 0; i < arrayLen; i++) {
-            if (cursor + 4 + 32 > bytes.length) {
+            if (cursor + InventoryItem.MESSAGE_LENGTH > bytes.length) {
                 throw new ProtocolException("Ran off the end of the INV");
             }
             int typeCode = (int) readUint32();
@@ -108,7 +107,6 @@ public abstract class ListMessage extends Message {
         }
         bytes = null;
     }
-
 
     @Override
     public void bitcoinSerializeToStream(OutputStream stream) throws IOException {

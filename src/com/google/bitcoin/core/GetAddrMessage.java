@@ -23,9 +23,4 @@ public class GetAddrMessage extends EmptyMessage {
         super(params);
     }
 
-    @Override
-    void parse() throws ProtocolException {
-        // TODO: Implement this.
-    }
-
 }

@@ -30,9 +30,4 @@ public class VersionAck extends EmptyMessage {
 
     }
 
-    @Override
-    void parse() throws ProtocolException {
-        // nothing to parse for now
-    }
-
 }

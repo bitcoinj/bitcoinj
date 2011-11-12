@@ -73,9 +73,7 @@ public class Block extends Message {
 	/** If null, it means this object holds only the headers. */
     List<Transaction> transactions;
 
-    private transient List<Transaction> immutableTransactions;
-
-	/** Stores the hash of the block. If null, getHash() will recalculate it. */
+    /** Stores the hash of the block. If null, getHash() will recalculate it. */
     private transient Sha256Hash hash;
 
     private transient boolean headerParsed;
@@ -104,6 +102,19 @@ public class Block extends Message {
         super(params, payloadBytes, 0);
     }
 
+    /**
+     * Contruct a block object from the BitCoin wire format.
+     * @param params NetworkParameters object.
+     * @param msg Bitcoin protocol formatted byte array containing message content.
+     * @param protocolVersion Bitcoin protocol version.
+     * @param parseLazy Whether to perform a full parse immediately or delay until a read is requested.
+     * @param parseRetain Whether to retain the backing byte array for quick reserialization.  
+     * If true and the backing byte array is invalidated due to modification of a field then 
+     * the cached bytes may be repopulated and retained if the message is serialized again in the future.
+     * @param length The length of message if known.  Usually this is provided when deserializing of the wire
+     * as the length will be provided as part of the header.  If unknown then set to Message.UNKNOWN_LENGTH
+     * @throws ProtocolException
+     */
     public Block(NetworkParameters params, byte[] payloadBytes, boolean parseLazy, boolean parseRetain, int length)
             throws ProtocolException {
         super(params, payloadBytes, 0, parseLazy, parseRetain, length);
@@ -142,7 +153,7 @@ public class Block extends Message {
         if (transactionsParsed)
             return;
 
-        cursor = offset + 80;
+        cursor = offset + HEADER_SIZE;
         if (bytes.length == cursor) {
             // This message is just a header, it has no transactions.
             transactionsParsed = true;
@@ -173,8 +184,6 @@ public class Block extends Message {
     }
 
     protected void parseLite() throws ProtocolException {
-        // we already know parseLazy is true if this method was called so no
-        // need to check.
         // ignore the header since it has fixed length. If length is not
         // provided we will have to
         // invoke a light parse of transactions to calculate the length.
@@ -183,9 +192,9 @@ public class Block extends Message {
             parseTransactions();
             length = cursor - offset;
         } else {
-            transactionBytesValid = !transactionsParsed || parseRetain && length > 80;
+            transactionBytesValid = !transactionsParsed || parseRetain && length > HEADER_SIZE;
         }
-        headerBytesValid = !headerParsed || parseRetain && length >= 80;
+        headerBytesValid = !headerParsed || parseRetain && length >= HEADER_SIZE;
     }
 
     /*
@@ -196,14 +205,14 @@ public class Block extends Message {
      * access or change one or the other but not both.
      *
      * With this in mind we ignore the inherited checkParse() and unCache()
-     * methods and implement a separate version of them for both header and tx.
+     * methods and implement a separate version of them for both header and transactions.
      *
      * Serializing methods are also handled in their own way. Whilst they deal
-     * with seperate parts of the block structure there are some
+     * with separate parts of the block structure there are some
      * interdependencies. For example altering a tx requires invalidating the
      * Merkle root and therefore the cached header bytes.
      */
-    private synchronized void checkParseHeader() {
+    private synchronized void maybeParseHeader() {
         if (headerParsed || bytes == null)
             return;
         parseHeader();
@@ -211,7 +220,7 @@ public class Block extends Message {
             bytes = null;
     }
 
-    private synchronized void checkParseTransactions() {
+    private synchronized void maybeParseTransactions() {
         if (transactionsParsed || bytes == null)
             return;
         try {
@@ -233,7 +242,7 @@ public class Block extends Message {
      * getter before returning a value. If the lazy parse flag is not set this
      * is a method returns immediately.
      */
-    protected synchronized void checkParse() {
+    protected synchronized void maybeParse() {
         throw new LazyParseException(
                 "checkParse() should never be called on a Block.  Instead use checkParseHeader() and checkParseTransactions()");
     }
@@ -249,8 +258,8 @@ public class Block extends Message {
      */
     public void ensureParsed() throws ProtocolException {
         try {
-            checkParseHeader();
-            checkParseTransactions();
+            maybeParseHeader();
+            maybeParseTransactions();
         } catch (LazyParseException e) {
             if (e.getCause() instanceof ProtocolException)
                 throw (ProtocolException) e.getCause();
@@ -269,7 +278,7 @@ public class Block extends Message {
      */
     public void ensureParsedHeader() throws ProtocolException {
         try {
-            checkParseHeader();
+            maybeParseHeader();
         } catch (LazyParseException e) {
             if (e.getCause() instanceof ProtocolException)
                 throw (ProtocolException) e.getCause();
@@ -288,7 +297,7 @@ public class Block extends Message {
      */
     public void ensureParsedTransactions() throws ProtocolException {
         try {
-            checkParseTransactions();
+            maybeParseTransactions();
         } catch (LazyParseException e) {
             if (e.getCause() instanceof ProtocolException)
                 throw (ProtocolException) e.getCause();
@@ -298,12 +307,12 @@ public class Block extends Message {
 
     private void writeHeader(OutputStream stream) throws IOException {
         // try for cached write first
-        if (headerBytesValid && bytes != null && bytes.length >= offset + 80) {
-            stream.write(bytes, offset, 80);
+        if (headerBytesValid && bytes != null && bytes.length >= offset + HEADER_SIZE) {
+            stream.write(bytes, offset, HEADER_SIZE);
             return;
         }
         // fall back to manual write
-        checkParseHeader();
+        maybeParseHeader();
         Utils.uint32ToByteStreamLE(version, stream);
         stream.write(Utils.reverseBytes(prevBlockHash.getBytes()));
         stream.write(Utils.reverseBytes(getMerkleRoot().getBytes()));
@@ -319,23 +328,12 @@ public class Block extends Message {
             return;
         }
 
-        // if (transactions == null && !(parseRetain || !transactionsParsed))
-        // return;
-        // if (parseRetain && transactions == null && !transactionBytesValid)
-        // return;
-        // if (transactionBytesValid && bytes.length <= 80)
-        // return;
-
         // confirmed we must have transactions either cached or as objects.
         if (transactionBytesValid && bytes != null && bytes.length >= offset + length) {
-            stream.write(bytes, offset + 80, length - 80);
+            stream.write(bytes, offset + HEADER_SIZE, length - HEADER_SIZE);
             return;
         }
-        // if (transactionBytesValid && bytes != null && bytes.length >= offset
-        // + length) {
-        // stream.write(bytes, offset + 80, length - 80);
-        // return;
-        // }
+
         if (transactions != null) {
             stream.write(new VarInt(transactions.size()).encode());
             for (Transaction tx : transactions) {
@@ -367,7 +365,7 @@ public class Block extends Message {
 
         // At least one of the two cacheable components is invalid
         // so fall back to stream write since we can't be sure of the length.
-        ByteArrayOutputStream stream = new UnsafeByteArrayOutputStream(length == UNKNOWN_LENGTH ? 80 + guessTransactionsLength() : length);
+        ByteArrayOutputStream stream = new UnsafeByteArrayOutputStream(length == UNKNOWN_LENGTH ? HEADER_SIZE + guessTransactionsLength() : length);
         try {
             writeHeader(stream);
             writeTransactions(stream);
@@ -394,11 +392,12 @@ public class Block extends Message {
      */
     private int guessTransactionsLength() {
         if (transactionBytesValid)
-            return bytes.length - 80;
+            return bytes.length - HEADER_SIZE;
         if (transactions == null)
             return 0;
         int len = VarInt.sizeOf(transactions.size());
         for (Transaction tx : transactions) {
+        	// 255 is just a guess at an average tx length
             len += tx.length == UNKNOWN_LENGTH ? 255 : tx.length;
         }
         return len;
@@ -413,7 +412,7 @@ public class Block extends Message {
     }
 
     private void unCacheHeader() {
-        checkParseHeader();
+        maybeParseHeader();
         headerBytesValid = false;
         if (!transactionBytesValid)
             bytes = null;
@@ -422,7 +421,7 @@ public class Block extends Message {
     }
 
     private void unCacheTransactions() {
-        checkParseTransactions();
+        maybeParseTransactions();
         transactionBytesValid = false;
         if (!headerBytesValid)
             bytes = null;
@@ -443,7 +442,7 @@ public class Block extends Message {
      */
     private Sha256Hash calculateHash() {
         try {
-            ByteArrayOutputStream bos = new UnsafeByteArrayOutputStream(80);
+            ByteArrayOutputStream bos = new UnsafeByteArrayOutputStream(HEADER_SIZE);
             writeHeader(bos);
             return new Sha256Hash(Utils.reverseBytes(doubleDigest(bos.toByteArray())));
         } catch (IOException e) {
@@ -492,7 +491,7 @@ public class Block extends Message {
 
 	/** Returns a copy of the block, but without any transactions. */
     public Block cloneAsHeader() {
-        checkParseHeader();
+        maybeParseHeader();
         Block block = new Block(params);
         block.nonce = nonce;
         block.prevBlockHash = prevBlockHash.duplicate();
@@ -534,7 +533,7 @@ public class Block extends Message {
      * incrementing nonce. It doesn't change extraNonce.
      */
     void solve() {
-        checkParseHeader();
+        maybeParseHeader();
         while (true) {
             try {
                 // Is our proof of work valid yet?
@@ -555,7 +554,7 @@ public class Block extends Message {
      * is thrown.
      */
     public BigInteger getDifficultyTargetAsInteger() throws VerificationException {
-        checkParseHeader();
+        maybeParseHeader();
         BigInteger target = Utils.decodeCompactBits(difficultyTarget);
         if (target.compareTo(BigInteger.valueOf(0)) <= 0 || target.compareTo(params.proofOfWorkLimit) > 0)
             throw new VerificationException("Difficulty target is bad: " + target.toString());
@@ -596,7 +595,7 @@ public class Block extends Message {
     }
 
     private void checkTimestamp() throws VerificationException {
-        checkParseHeader();
+        maybeParseHeader();
         // Allow injection of a fake clock to allow unit testing.
         long currentTime = fakeClock != 0 ? fakeClock : System.currentTimeMillis() / 1000;
         if (time > currentTime + ALLOWED_TIME_DRIFT)
@@ -620,11 +619,10 @@ public class Block extends Message {
         // The Merkle root is based on a tree of hashes calculated from the
         // transactions:
         //
-        // root
-        // / \
-        // / \
-        // A B
-        // / \ / \
+        //     root
+        //      / \
+        //   A      B
+        //  / \    / \
         // t1 t2 t3 t4
         //
         // The tree is represented as a list: t1,t2,t3,t4,A,B,root where each
@@ -657,7 +655,7 @@ public class Block extends Message {
         // 2 3 4
         // / \ / \ / \
         // t1 t2 t3 t4 t5 t5
-        checkParseTransactions();
+        maybeParseTransactions();
         ArrayList<byte[]> tree = new ArrayList<byte[]>();
         // Start by adding all the hashes of the transactions as leaves of the
         // tree.
@@ -716,7 +714,7 @@ public class Block extends Message {
         // Firstly we need to ensure this block does in fact represent real work
         // done. If the difficulty is high
         // enough, it's probably been done by the network.
-        checkParseHeader();
+        maybeParseHeader();
         checkProofOfWork(true);
         checkTimestamp();
     }
@@ -735,7 +733,7 @@ public class Block extends Message {
         // it with their own fictional
         // transactions that reference spent or non-existant inputs.
         assert transactions.size() > 0;
-        checkParseTransactions();
+        maybeParseTransactions();
         checkTransactions();
         checkMerkleRoot();
     }
@@ -767,7 +765,7 @@ public class Block extends Message {
      * transactions if necessary.
      */
     public Sha256Hash getMerkleRoot() {
-        checkParseHeader();
+        maybeParseHeader();
         if (merkleRoot == null) {
 
             //TODO check if this is really necessary.
@@ -788,7 +786,6 @@ public class Block extends Message {
 	/** Adds a transaction to this block. */
     void addTransaction(Transaction t) {
         unCacheTransactions();
-        immutableTransactions = null;
         if (transactions == null) {
             transactions = new ArrayList<Transaction>();
         }
@@ -805,7 +802,7 @@ public class Block extends Message {
      * protocol.
      */
     public long getVersion() {
-        checkParseHeader();
+        maybeParseHeader();
         return version;
     }
 
@@ -814,7 +811,7 @@ public class Block extends Message {
      * block header.
      */
     public Sha256Hash getPrevBlockHash() {
-        checkParseHeader();
+        maybeParseHeader();
         return prevBlockHash;
     }
 
@@ -830,7 +827,7 @@ public class Block extends Message {
      * UNIX epoch (midnight Jan 1st 1970).
      */
     public long getTimeSeconds() {
-        checkParseHeader();
+        maybeParseHeader();
         return time;
     }
 
@@ -848,7 +845,7 @@ public class Block extends Message {
      * getDifficultyTargetBI.
      */
     public long getDifficultyTarget() {
-        checkParseHeader();
+        maybeParseHeader();
         return difficultyTarget;
     }
 
@@ -863,7 +860,7 @@ public class Block extends Message {
      * of the block header fall below the difficulty target.
      */
     public long getNonce() {
-        checkParseHeader();
+        maybeParseHeader();
         return nonce;
     }
 
@@ -874,12 +871,8 @@ public class Block extends Message {
     }
 
     public List<Transaction> getTransactions() {
-        if (immutableTransactions == null) {
-            checkParseTransactions();
-            if (transactions != null)
-                immutableTransactions = Collections.unmodifiableList(transactions);
-        }
-        return immutableTransactions;
+       maybeParseTransactions();
+       return Collections.unmodifiableList(transactions);
     }
 
     // ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -954,7 +947,7 @@ public class Block extends Message {
      *
      * @return the headerParsed
      */
-    public boolean isParsedHeader() {
+    boolean isParsedHeader() {
         return headerParsed;
     }
 
@@ -963,7 +956,7 @@ public class Block extends Message {
      *
      * @return the transactionsParsed
      */
-    public boolean isParsedTransactions() {
+    boolean isParsedTransactions() {
         return transactionsParsed;
     }
 
@@ -972,7 +965,7 @@ public class Block extends Message {
      *
      * @return the headerBytesValid
      */
-    public boolean isHeaderBytesValid() {
+    boolean isHeaderBytesValid() {
         return headerBytesValid;
     }
 
@@ -981,7 +974,7 @@ public class Block extends Message {
      *
      * @return the transactionBytesValid
      */
-    public boolean isTransactionBytesValid() {
+    boolean isTransactionBytesValid() {
         return transactionBytesValid;
     }
 

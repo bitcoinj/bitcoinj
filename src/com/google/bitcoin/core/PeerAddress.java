@@ -46,15 +46,26 @@ public class PeerAddress extends ChildMessage {
         super(params, payload, offset, protocolVersion);
     }
 
-
     /**
      * Construct a peer address from a serialized payload.
+     * @param params NetworkParameters object.
+     * @param msg Bitcoin protocol formatted byte array containing message content.
+     * @param offset The location of the first msg byte within the array.
+     * @param protocolVersion Bitcoin protocol version.
+     * @param parseLazy Whether to perform a full parse immediately or delay until a read is requested.
+     * @param parseRetain Whether to retain the backing byte array for quick reserialization.  
+     * If true and the backing byte array is invalidated due to modification of a field then 
+     * the cached bytes may be repopulated and retained if the message is serialized again in the future.
+     * @param length The length of message if known.  Usually this is provided when deserializing of the wire
+     * as the length will be provided as part of the header.  If unknown then set to Message.UNKNOWN_LENGTH
+     * @throws ProtocolException
      */
     public PeerAddress(NetworkParameters params, byte[] msg, int offset, int protocolVersion, Message parent, boolean parseLazy,
                        boolean parseRetain) throws ProtocolException {
         super(params, msg, offset, protocolVersion, parent, parseLazy, parseRetain, UNKNOWN_LENGTH);
-        //Message length is calculated in parseLite which is guaranteed to be called before it is ever read.
-        //Safer to leave it there as it will be set regardless of which constructor was used.
+        // Message length is calculated in parseLite which is guaranteed to be called before it is ever read.
+        // Even though message length is static for a PeerAddress it is safer to leave it there 
+        // as it will be set regardless of which constructor was used.
     }
 
 
@@ -86,7 +97,7 @@ public class PeerAddress extends ChildMessage {
         if (protocolVersion >= 31402) {
             //TODO this appears to be dynamic because the client only ever sends out it's own address
             //so assumes itself to be up.  For a fuller implementation this needs to be dynamic only if
-            //the address refers to this clinet.
+            //the address refers to this client.
             int secs = (int) (Utils.now().getTime() / 1000);
             uint32ToByteStreamLE(secs, stream);
         }
@@ -136,6 +147,7 @@ public class PeerAddress extends ChildMessage {
       */
     @Override
     int getMessageSize() {
+    	// The 4 byte difference is the uint32 timestamp that was introduced in version 31402 
         length = protocolVersion > 31402 ? MESSAGE_SIZE : MESSAGE_SIZE - 4;
         return length;
     }
@@ -144,7 +156,7 @@ public class PeerAddress extends ChildMessage {
      * @return the addr
      */
     public InetAddress getAddr() {
-        checkParse();
+        maybeParse();
         return addr;
     }
 
@@ -162,7 +174,7 @@ public class PeerAddress extends ChildMessage {
      * @return the port
      */
     public int getPort() {
-        checkParse();
+        maybeParse();
         return port;
     }
 
@@ -180,7 +192,7 @@ public class PeerAddress extends ChildMessage {
      * @return the services
      */
     public BigInteger getServices() {
-        checkParse();
+        maybeParse();
         return services;
     }
 
@@ -198,7 +210,7 @@ public class PeerAddress extends ChildMessage {
      * @return the time
      */
     public long getTime() {
-        checkParse();
+        maybeParse();
         return time;
     }
 

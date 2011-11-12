@@ -86,6 +86,17 @@ public class TransactionInput extends ChildMessage implements Serializable {
 
     /**
      * Deserializes an input message. This is usually part of a transaction message.
+     * @param params NetworkParameters object.
+     * @param msg Bitcoin protocol formatted byte array containing message content.
+     * @param offset The location of the first msg byte within the array.
+     * @param protocolVersion Bitcoin protocol version.
+     * @param parseLazy Whether to perform a full parse immediately or delay until a read is requested.
+     * @param parseRetain Whether to retain the backing byte array for quick reserialization.  
+     * If true and the backing byte array is invalidated due to modification of a field then 
+     * the cached bytes may be repopulated and retained if the message is serialized again in the future.
+     * @param length The length of message if known.  Usually this is provided when deserializing of the wire
+     * as the length will be provided as part of the header.  If unknown then set to Message.UNKNOWN_LENGTH
+     * @throws ProtocolException
      */
     public TransactionInput(NetworkParameters params, Transaction parentTransaction, byte[] msg, int offset, boolean parseLazy, boolean parseRetain)
             throws ProtocolException {
@@ -120,7 +131,7 @@ public class TransactionInput extends ChildMessage implements Serializable {
      * Coinbase transactions have special inputs with hashes of zero. If this is such an input, returns true.
      */
     public boolean isCoinBase() {
-        checkParse();
+        maybeParse();
         return outpoint.getHash().equals(Sha256Hash.ZERO_HASH);
     }
 
@@ -131,7 +142,7 @@ public class TransactionInput extends ChildMessage implements Serializable {
         // Transactions that generate new coins don't actually have a script. Instead this
         // parameter is overloaded to be something totally different.
         if (scriptSig == null) {
-            checkParse();
+            maybeParse();
             assert scriptBytes != null;
             scriptSig = new Script(params, scriptBytes, 0, scriptBytes.length);
         }
@@ -149,15 +160,15 @@ public class TransactionInput extends ChildMessage implements Serializable {
     }
 
     /**
-     * @return the sequence
+     * @return Transaction version as defined by the sender. Intended for "replacement" of transactions when information is updated before inclusion into a block. 
      */
     public long getSequence() {
-        checkParse();
+        maybeParse();
         return sequence;
     }
 
     /**
-     * @param sequence the sequence to set
+     * @param sequence Transaction version as defined by the sender. Intended for "replacement" of transactions when information is updated before inclusion into a block. 
      */
     public void setSequence(long sequence) {
         unCache();
@@ -165,18 +176,22 @@ public class TransactionInput extends ChildMessage implements Serializable {
     }
 
     /**
-     * @return the outpoint
+     * @return The previous output transaction reference, as an OutPoint structure.  This contains the 
+     * data needed to connect to the output of the transaction we're gathering coins from.
      */
     public TransactionOutPoint getOutpoint() {
-        checkParse();
+        maybeParse();
         return outpoint;
     }
 
     /**
+     * The "script bytes" might not actually be a script. In coinbase transactions where new coins are minted there
+     * is no input transaction, so instead the scriptBytes contains some extra stuff (like a rollover nonce) that we
+     * don't care about much. The bytes are turned into a Script object (cached below) on demand via a getter.
      * @return the scriptBytes
      */
     public byte[] getScriptBytes() {
-        checkParse();
+        maybeParse();
         return scriptBytes;
     }
 
@@ -187,12 +202,13 @@ public class TransactionInput extends ChildMessage implements Serializable {
         unCache();
         int oldLength = length;
         this.scriptBytes = scriptBytes;
+        // 40 = previous_outpoint (36) + sequence (4)
         int newLength = 40 + (scriptBytes == null ? 1 : VarInt.sizeOf(scriptBytes.length) + scriptBytes.length);
         adjustLength(newLength - oldLength);
     }
 
     /**
-     * @return the parentTransaction
+     * @return The Transaction that owns this input.
      */
     public Transaction getParentTransaction() {
         return parentTransaction;
@@ -276,7 +292,7 @@ public class TransactionInput extends ChildMessage implements Serializable {
      * then data will be lost during serialization.
      */
     private void writeObject(ObjectOutputStream out) throws IOException {
-        checkParse();
+        maybeParse();
         out.defaultWriteObject();
     }
 }

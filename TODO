@@ -14,7 +14,6 @@ Protocol:
       - Use the getheaders command to speed up the initial chain download
    - Implement tx fees.
    - Longer term potentially add a getmerklebranch protocol command so we can check 0-confirmation transactions.
-   - Support PeerGroups for holding open/using multiple connections at once.
 
 Examples/documentation:
    - Implement a simple Swing GUI payment app.
@@ -29,36 +28,12 @@ Cleanup:
 ==========
 
 Impacts from Steves changes:
-- Reformat affected files
-- JavaDocs for the c'tors that take parseLazy/parseRetain
-- Copyright header/correct author for EmptyMessage/ChildMessage/UnsafeByteArrayOutputStream
-- Remove superfluous empty lines in ListMessage.java
-- Remove VersionMessage check in Message serialization roundtrip checks
-- Delete dead code in Message.checkParsed
 - LazyParseByteCacheTest:
-   - copyright/comments/unused things
-   - debug prints
    - some redundant asserts
    - huge functions
-   - dead code
-- Magic number 36 in ListMessage.parseLite
-- Manipulator.java needs docs
-- Assert in Message c'tor needs an English version.
-- Spelling in PeerAddress.bitcoinSerializeToStream
-- SpeedTest has a lot of unused fields, large functions. See if it can be simplified/densified.
-- Caching immutable lists?
-- Dead code in Transaction.parse
-- javadocs on Transaction{Input,Output,} getters
+- Manipulator.java needs docs or to be removed
+- SpeedTest has a lot of unused fields, large functions. See if it can be simplified/densified. - or removed
 
 - Delete the code related to deduping. The new network management code to be checked in later makes it unnecessary.
   Also remove singleDigest as a result (it duplicates Sha256Hash).
 - More thoroughly review UnsafeByteArrayOutputStream
-
-Block.java:
-- Reformat
-- Replace magic number 80 with HEADER_SIZE_BYTES in Block.parseTransactions
-- The parseLight stuff isn't clear without referring to superclass.
-- Delete dead code in writeTransactions
-- checkParse{Header,Transactions} should be maybeParse...
-- immutableTransactions is misleading, it allows you to mutate the contents.
-- Unit-test only getters should be package private.

@@ -17,9 +17,5 @@
 package com.google.bitcoin.core;
 
 public class Ping extends EmptyMessage {
-    @Override
-    void parse() throws ProtocolException {
-        // nothing to parse
-    }
 
 }
