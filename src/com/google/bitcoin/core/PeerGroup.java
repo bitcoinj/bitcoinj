@@ -234,15 +234,16 @@ public class PeerGroup {
                     Thread.sleep(connectionDelayMillis);
                 }
             } catch (InterruptedException ex) {
-                synchronized (this) {
-                    running = false;
-                }
             }
-            peerPool.shutdownNow();
-            synchronized (peers) {
-                for (Peer peer : peers) {
-                    peer.disconnect();
+            synchronized (PeerGroup.this) {
+                running = false;
+                peerPool.shutdown();
+                synchronized (peers) {
+                    for (Peer peer : peers) {
+                        peer.disconnect();
+                    }
                 }
+                peers = null; // Fail quickly if someone tries to access peers while we are shutting down.
             }
         }
 
@@ -310,7 +311,16 @@ public class PeerGroup {
                         log.info("Connecting to " + peer);
                         peer.connect();
                     }
-                    peers.add(peer);
+                    synchronized (PeerGroup.this) {
+                        // We may have started shutting down the group since we started connecting.
+                        // In this case, we must not add ourself to the list of peers because the controller
+                        // thread already went through it.
+                        if (!running) {
+                            peer.disconnect();
+                            return;
+                        }
+                        peers.add(peer);
+                    }
                     handleNewPeer(peer);
                     if (blockUntilRunning == ExecuteBlockMode.WAIT_FOR_STARTUP)
                         latch.countDown();
@@ -330,7 +340,8 @@ public class PeerGroup {
                     }
                 } finally {
                     // We may be terminating because of a controlled shutdown. If so, don't inform the user of individual
-                    // peer connections or select a new download peer.
+                    // peer connections or select a new download peer.  Disconnection is the responsibility of the controlling
+                    // thread in this case.
                     if (!running)
                         return;
 
