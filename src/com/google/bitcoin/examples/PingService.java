@@ -19,11 +19,13 @@ package com.google.bitcoin.examples;
 import com.google.bitcoin.core.*;
 import com.google.bitcoin.store.BlockStore;
 import com.google.bitcoin.store.BoundedOverheadBlockStore;
+import com.google.bitcoin.utils.BriefLogFormatter;
 
 import java.io.File;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.net.InetAddress;
+import java.util.logging.LogManager;
 
 /**
  * <p>
@@ -50,6 +52,8 @@ import java.net.InetAddress;
  */
 public class PingService {
     public static void main(String[] args) throws Exception {
+        BriefLogFormatter.init();
+
         boolean testNet = args.length > 0 && args[0].equalsIgnoreCase("testnet");
         final NetworkParameters params = testNet ? NetworkParameters.testNet() : NetworkParameters.prodNet();
         String filePrefix = testNet ? "pingservice-testnet" : "pingservice-prodnet";
