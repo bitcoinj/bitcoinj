@@ -98,7 +98,7 @@
   <distributionManagement>
     <repository>
       <id>releases</id>
-      <url>http://nexus.bitcoinj.org/content/repositories/release</url>
+      <url>http://nexus.bitcoinj.org/content/repositories/releases</url>
     </repository>
     <snapshotRepository>
       <id>snapshots</id>
