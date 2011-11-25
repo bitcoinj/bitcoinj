@@ -98,7 +98,8 @@ public abstract class Message implements Serializable {
      * as the length will be provided as part of the header.  If unknown then set to Message.UNKNOWN_LENGTH
      * @throws ProtocolException
      */
-    Message(NetworkParameters params, byte[] msg, int offset, int protocolVersion, final boolean parseLazy, final boolean parseRetain, int length) throws ProtocolException {
+    Message(NetworkParameters params, byte[] msg, int offset, int protocolVersion, final boolean parseLazy,
+            final boolean parseRetain, int length) throws ProtocolException {
         this.parseLazy = parseLazy;
         this.parseRetain = parseRetain;
         this.protocolVersion = protocolVersion;
@@ -263,6 +264,19 @@ public abstract class Message implements Serializable {
     }
 
     /**
+     * Returns a copy of the array returned by {@link Message#unsafeBitcoinSerialize()}, which is safe to mutate.
+     * If you need extra performance and can guarantee you won't write to the array, you can use the unsafe version.
+     *
+     * @return a freshly allocated serialized byte array
+     */
+    public byte[] bitcoinSerialize() {
+        byte[] bytes = unsafeBitcoinSerialize();
+        byte[] copy = new byte[bytes.length];
+        System.arraycopy(bytes, 0, copy, 0, bytes.length);
+        return copy;
+    }
+
+    /**
      * Serialize this message to a byte array that conforms to the bitcoin wire protocol.
      * <br/>
      * This method may return the original byte array used to construct this message if the
@@ -274,11 +288,12 @@ public abstract class Message implements Serializable {
      * </ol>
      *
      * If condition 3 is not met then an copy of the relevant portion of the array will be returned.
-     * Otherwise a full serialize will occur.
+     * Otherwise a full serialize will occur. For this reason you should only use this API if you can guarantee you
+     * will treat the resulting array as read only.
      *
-     * @return
+     * @return a byte array owned by this object, do NOT mutate it.
      */
-    public byte[] bitcoinSerialize() {
+    public byte[] unsafeBitcoinSerialize() {
         // 1st attempt to use a cached array.
         if (bytes != null) {
             if (offset == 0 && length == bytes.length) {
