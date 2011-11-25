@@ -204,29 +204,13 @@ public abstract class Message implements Serializable {
     }
 
     /**
-     * To be called before any change of internal values including any setters.  This ensures any cached byte array is removed after performing
-     * a lazy parse if necessary to ensure the object is fully populated.
+     * To be called before any change of internal values including any setters.  This ensures any cached byte array is
+     * removed after performing a lazy parse if necessary to ensure the object is fully populated.
      * <p/>
-     * Child messages of this object(e.g. Transactions belonging to a Block) will not have their internal byte caches invalidated unless
-     * they are also modified internally.
+     * Child messages of this object(e.g. Transactions belonging to a Block) will not have their internal byte caches
+     * invalidated unless they are also modified internally.
      */
     protected void unCache() {
-
-        /*
-           * 	   This is a NOP at the moment.  Will complete lazy parsing as a separate patch first.
-           *     safe retention of backing byte array is tricky in cases where a parent Message object
-           *     may have child message objects (e.g. block - tx).  There has to be a way to either
-           *     mark the cursor at the end of the parent portion of the array or a way the child can
-           *     invalidate the parent array. This might require a ByteArrayView class which implements List
-           *     and retains a reference to it's parent ByteArrayView so it can invalidate it.
-           *     Alternately the child message can hold a reference to
-           *     it's parent and propagate a call to unCache up the chain to the parent.  This way only those children on the
-           *     invalidated branch lose their caching.  On the other hand this might introduce more overhead than it's worth
-           *     since this call has to made in every setter.
-           *     Perhaps a simpler approach where in the special cases where a cached array is wanted it is the callers responsibility
-           *     to keep track of whether the cache is valid or not.
-           */
-
         maybeParse();
         checksum = null;
         bytes = null;
@@ -235,7 +219,7 @@ public abstract class Message implements Serializable {
 
     protected void adjustLength(int adjustment) {
         if (length != UNKNOWN_LENGTH)
-            //our own length is now unknown if we have an unknown length adjustment.
+            // Our own length is now unknown if we have an unknown length adjustment.
             length = adjustment == UNKNOWN_LENGTH ? UNKNOWN_LENGTH : length + adjustment;
     }
 
@@ -295,16 +279,14 @@ public abstract class Message implements Serializable {
      * @return
      */
     public byte[] bitcoinSerialize() {
-
-        //1st attempt to use a cached array
+        // 1st attempt to use a cached array.
         if (bytes != null) {
             if (offset == 0 && length == bytes.length) {
-                //cached byte array is the entire message with no extras
-                //so we can return as is and avoid an array copy.
+                // Cached byte array is the entire message with no extras so we can return as is and avoid an array
+                // copy.
                 return bytes;
             }
 
-            //int len = cursor - offset;
             byte[] buf = new byte[length];
             System.arraycopy(bytes, offset, buf, 0, length);
             return buf;
@@ -312,7 +294,7 @@ public abstract class Message implements Serializable {
 
         assert bytes == null : "cached bytes present but failed to use them for serialization";
 
-        //no cached array available so serialize parts by stream.
+        // No cached array available so serialize parts by stream.
         ByteArrayOutputStream stream = new UnsafeByteArrayOutputStream(length < 32 ? 32 : length + 32);
         try {
             bitcoinSerializeToStream(stream);
@@ -321,14 +303,14 @@ public abstract class Message implements Serializable {
         }
 
         if (parseRetain) {
-            //a free set of steak knives!
-            //If there happens to be a call to this method we gain an opportunity to recache
-            //the byte array and in this case it contains no bytes from parent messages.
-            //This give a dual benefit.  Releasing references to the larger byte array so that it
-            //it is more likely to be GC'd.  A preventing double serializations.  E.g. calculating
-            //merkle root calls this method.  It is will frequently happen prior to serializing the block
-            //which means another call to bitcoinSerialize is coming.  If we didn't recache then internal
-            //serialization would occur a 2nd time and every subsequent time the message is serialized.
+            // A free set of steak knives!
+            // If there happens to be a call to this method we gain an opportunity to recache
+            // the byte array and in this case it contains no bytes from parent messages.
+            // This give a dual benefit.  Releasing references to the larger byte array so that it
+            // it is more likely to be GC'd.  And preventing double serializations.  E.g. calculating
+            // merkle root calls this method.  It is will frequently happen prior to serializing the block
+            // which means another call to bitcoinSerialize is coming.  If we didn't recache then internal
+            // serialization would occur a 2nd time and every subsequent time the message is serialized.
             bytes = stream.toByteArray();
             cursor = cursor - offset;
             offset = 0;
@@ -336,9 +318,9 @@ public abstract class Message implements Serializable {
             length = bytes.length;
             return bytes;
         }
-        //record length.  If this Message wasn't parsed from a but stream it won't have length field
-        //set (except for static length message types).  Setting it makes future streaming more efficient
-        //because we can preallocate the ByteArrayOutputStream buffer and avoid resizing.
+        // Record length. If this Message wasn't parsed from a byte stream it won't have length field
+        // set (except for static length message types).  Setting it makes future streaming more efficient
+        // because we can preallocate the ByteArrayOutputStream buffer and avoid resizing.
         byte[] buf = stream.toByteArray();
         length = buf.length;
         return buf;
@@ -351,7 +333,7 @@ public abstract class Message implements Serializable {
      * @throws IOException
      */
     final public void bitcoinSerialize(OutputStream stream) throws IOException {
-        //1st check for cached bytes
+        // 1st check for cached bytes.
         if (bytes != null && length != UNKNOWN_LENGTH) {
             stream.write(bytes, offset, length);
             return;
@@ -390,8 +372,6 @@ public abstract class Message implements Serializable {
             return length;
         maybeParse();
         assert length != UNKNOWN_LENGTH: "Length field has not been set in " + getClass().getSimpleName() + " after full parse.";
-        //if (length == UNKNOWN_LENGTH)
-        //    length = cursor - offset;
         return length;
     }
 
