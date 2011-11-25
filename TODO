@@ -31,8 +31,6 @@ Impacts from Steves changes:
 - LazyParseByteCacheTest:
    - some redundant asserts
    - huge functions
-- Manipulator.java needs docs or to be removed
-- SpeedTest has a lot of unused fields, large functions. See if it can be simplified/densified. - or removed
 
 - Delete the code related to deduping. The new network management code to be checked in later makes it unnecessary.
   Also remove singleDigest as a result (it duplicates Sha256Hash).
