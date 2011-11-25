@@ -63,14 +63,10 @@ public class VersionMessage extends Message {
         super(params, msg, 0);
     }
 
-    /**
-     * It doesn't really make sense to ever lazily parse a version message or to retain the backing bytes.
-     * If you're receiving this on the wire you need to check the protocol version and it will never need to be sent
-     * back down the wire.
-     */
-//    public VersionMessage(NetworkParameters params, byte[] msg, boolean parseLazy, boolean parseRetain) throws ProtocolException {
-//        super(params, msg, 0, parseLazy, parseRetain);
-//    }
+    // It doesn't really make sense to ever lazily parse a version message or to retain the backing bytes.
+    // If you're receiving this on the wire you need to check the protocol version and it will never need to be sent
+    // back down the wire.
+
     public VersionMessage(NetworkParameters params, int newBestHeight) {
         super(params);
         clientVersion = NetworkParameters.PROTOCOL_VERSION;
@@ -84,7 +80,7 @@ public class VersionMessage extends Message {
         } catch (UnknownHostException e) {
             throw new RuntimeException(e);  // Cannot happen.
         }
-        subVer = "BitCoinJ 0.3-SNAPSHOT";
+        subVer = "BitCoinJ 0.3";
         bestHeight = newBestHeight;
 
         length = 84;
