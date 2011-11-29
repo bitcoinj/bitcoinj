@@ -81,10 +81,11 @@ public class PingService {
         System.out.println("Connecting ...");
         BlockChain chain = new BlockChain(params, wallet, blockStore);
         
-        final PeerGroup peerGroup = new PeerGroup(blockStore, params, chain);
+        final PeerGroup peerGroup = new PeerGroup(params, chain);
         peerGroup.addAddress(new PeerAddress(InetAddress.getLocalHost()));
         // Download headers only until a day ago.
         peerGroup.setFastCatchupTimeSecs((new Date().getTime() / 1000) - (60 * 60 * 24));
+        peerGroup.addWallet(wallet);
         peerGroup.start();
 
         // We want to know when the balance changes.
@@ -93,13 +94,22 @@ public class PingService {
             public void onCoinsReceived(Wallet w, Transaction tx, BigInteger prevBalance, BigInteger newBalance) {
                 // Running on a peer thread.
                 assert !newBalance.equals(BigInteger.ZERO);
+
+                BigInteger value = tx.getValueSentToMe(w);
+
+                if (tx.isPending()) {
+                    System.out.println("Received pending tx for " + Utils.bitcoinValueToFriendlyString(value));
+                    // Ignore for now, as we won't be allowed to spend until the tx is no longer pending. We'll get
+                    // another callback here when the tx is confirmed.
+                    return;
+                }
+
                 // It's impossible to pick one specific identity that you receive coins from in BitCoin as there
                 // could be inputs from many addresses. So instead we just pick the first and assume they were all
                 // owned by the same person.
                 try {
                     TransactionInput input = tx.getInputs().get(0);
                     Address from = input.getFromAddress();
-                    BigInteger value = tx.getValueSentToMe(w);
                     System.out.println("Received " + Utils.bitcoinValueToFriendlyString(value) + " from " + from.toString());
                     // Now send the coins back!
                     Transaction sendTx = w.sendCoins(peerGroup, from, value);

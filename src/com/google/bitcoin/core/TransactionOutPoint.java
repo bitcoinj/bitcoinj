@@ -21,8 +21,6 @@ import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.io.Serializable;
 
-// TODO: Fold this class into the TransactionInput class. It's not necessary.
-
 /**
  * This message is a reference or pointer to an output of a different transaction.
  */
@@ -103,8 +101,9 @@ public class TransactionOutPoint extends ChildMessage implements Serializable {
     }
 
     /**
-     * If this transaction was created using the explicit constructor rather than deserialized,
-     * retrieves the connected output transaction. Asserts if there is no connected transaction.
+     * An outpoint is a part of a transaction input that points to the output of another transaction. If we have both
+     * sides in memory, and they have been linked together, this returns a pointer to the connected output, or null
+     * if there is no such connection.
      */
     TransactionOutput getConnectedOutput() {
         if (fromTx == null) return null;
@@ -157,14 +156,6 @@ public class TransactionOutPoint extends ChildMessage implements Serializable {
         return index;
     }
 
-//	/**
-//	 * @param index the index to set
-//	 */
-//	public void setIndex(long index) {
-//		unCache();
-//		this.index = index;
-//	}
-
     /**
      * Ensure object is fully parsed before invoking java serialization.  The backing byte array
      * is transient so if the object has parseLazy = true and hasn't invoked checkParse yet
@@ -173,5 +164,17 @@ public class TransactionOutPoint extends ChildMessage implements Serializable {
     private void writeObject(ObjectOutputStream out) throws IOException {
         maybeParse();
         out.defaultWriteObject();
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        if (!(other instanceof TransactionOutPoint)) return false;
+        TransactionOutPoint o = (TransactionOutPoint) other;
+        return o.getIndex() == getIndex() && o.getHash().equals(getHash());
+    }
+
+    @Override
+    public int hashCode() {
+        return getHash().hashCode();
     }
 }

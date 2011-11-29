@@ -312,7 +312,7 @@ public class BlockChain {
             try {
                 List<Transaction> txns = entry.getValue();
                 for (Transaction tx : txns) {
-                    entry.getKey().receive(tx, block, blockType);
+                    entry.getKey().receiveFromBlock(tx, block, blockType);
                 }
             } catch (ScriptException e) {
                 // We don't want scripts we don't understand to break the block chain so just note that this tx was
@@ -427,28 +427,9 @@ public class BlockChain {
         for (Transaction tx : block.transactions) {
             try {
                 for (Wallet wallet : wallets) {
-                    boolean shouldReceive = false;
-                    for (TransactionOutput output : tx.getOutputs()) {
-                        // TODO: Handle more types of outputs, not just regular to address outputs.
-                        if (output.getScriptPubKey().isSentToIP()) continue;
-                        // This is not thread safe as a key could be removed between the call to isMine and receive.
-                        if (output.isMine(wallet)) {
-                            shouldReceive = true;
-                            break;
-                        }
-                    }
-
-                    // Coinbase transactions don't have anything useful in their inputs (as they create coins out of thin air).
-                    if (!shouldReceive && !tx.isCoinBase()) {
-                        for (TransactionInput i : tx.getInputs()) {
-                            byte[] pubkey = i.getScriptSig().getPubKey();
-                            // This is not thread safe as a key could be removed between the call to isPubKeyMine and receive.
-                            if (wallet.isPubKeyMine(pubkey)) {
-                                shouldReceive = true;
-                            }
-                        }
-                    }
-
+                    if (tx.isCoinBase())
+                        continue;
+                    boolean shouldReceive = wallet.isTransactionRelevant(tx, true);
                     if (!shouldReceive) continue;
                     List<Transaction> txList = walletToTxMap.get(wallet);
                     if (txList == null) {

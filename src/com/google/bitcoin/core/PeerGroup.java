@@ -19,8 +19,6 @@ package com.google.bitcoin.core;
 
 import com.google.bitcoin.discovery.PeerDiscovery;
 import com.google.bitcoin.discovery.PeerDiscoveryException;
-import com.google.bitcoin.store.BlockStore;
-import com.google.bitcoin.store.BlockStoreException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -75,28 +73,33 @@ public class PeerGroup {
     private Set<PeerDiscovery> peerDiscoverers;
 
     private NetworkParameters params;
-    private BlockStore blockStore;
     private BlockChain chain;
     private int connectionDelayMillis;
     private long fastCatchupTimeSecs;
+    private Set<Wallet> wallets;
 
     /**
-     * Creates a PeerGroup with the given parameters and a default 5 second connection timeout.
+     * Creates a PeerGroup with the given parameters and a default 5 second connection timeout. If you don't care
+     * about blocks or pending transactions, you can just provide a MemoryBlockStore and a newly created Wallet.
+     *
+     * @param params Network parameters
+     * @param chain a BlockChain object that will receive and handle block messages.
+     * @param wallet a Wallet object that will receive pending transactions.
      */
-    public PeerGroup(BlockStore blockStore, NetworkParameters params, BlockChain chain) {
-        this(blockStore, params, chain, DEFAULT_CONNECTION_DELAY_MILLIS);
+    public PeerGroup(NetworkParameters params, BlockChain chain) {
+        this(params, chain, DEFAULT_CONNECTION_DELAY_MILLIS);
     }
 
     /**
      * Creates a PeerGroup with the given parameters. The connectionDelayMillis parameter controls how long the
      * PeerGroup will wait between attempts to connect to nodes or read from any added peer discovery sources.
      */
-    public PeerGroup(BlockStore blockStore, NetworkParameters params, BlockChain chain, int connectionDelayMillis) {
-        this.blockStore = blockStore;
+    public PeerGroup(NetworkParameters params, BlockChain chain, int connectionDelayMillis) {
         this.params = params;
         this.chain = chain;
         this.connectionDelayMillis = connectionDelayMillis;
         this.fastCatchupTimeSecs = params.genesisBlock.getTimeSeconds();
+        this.wallets = new HashSet<Wallet>();
 
         inactives = new LinkedBlockingQueue<PeerAddress>();
         peers = Collections.synchronizedSet(new HashSet<Peer>());
@@ -120,6 +123,20 @@ public class PeerGroup {
 
     public boolean removeEventListener(PeerEventListener listener) {
         return peerEventListeners.remove(listener);
+    }
+
+    /**
+     * The given wallet will receive broadcast/pending transactions that did not appear in a block yet.
+     * @return Whether the wallet was added successfully.
+     */
+    public boolean addWallet(Wallet wallet) {
+        if (wallet == null)
+            throw new IllegalArgumentException("Wallet must not be null");
+        return wallets.add(wallet);
+    }
+
+    public boolean removeWallet(Wallet wallet) {
+        return wallets.remove(wallet);
     }
 
     /**
@@ -291,7 +308,7 @@ public class PeerGroup {
             final PeerAddress address = inactives.take();
             while (true) {
                 try {
-                    Peer peer = new Peer(params, address, blockStore.getChainHead().getHeight(), chain);
+                    Peer peer = new Peer(params, address, chain.getChainHead().getHeight(), chain);
                     executePeer(address, peer, true, ExecuteBlockMode.RETURN_IMMEDIATELY);
                     break;
                 } catch (RejectedExecutionException e) {
@@ -301,11 +318,6 @@ public class PeerGroup {
                     // if we reached maxConnections or if peer queue is empty.  Also consider
                     // exponential backoff on peers and adjusting the sleep time according to the
                     // lowest backoff value in queue.
-                } catch (BlockStoreException e) {
-                    // Fatal error
-                    log.error("Block store corrupt?", e);
-                    running = false;
-                    throw new RuntimeException(e);
                 }
                 
                 // If we got here, we should retry this address because an error unrelated
@@ -442,10 +454,15 @@ public class PeerGroup {
 
     private synchronized void setDownloadPeer(Peer peer) {
         if (downloadPeer != null) {
+            log.info("Unsetting download peer: {}", downloadPeer);
             downloadPeer.setDownloadData(false);
+            for (Wallet w : wallets) {
+                downloadPeer.removeWallet(w);
+            }
         }
         downloadPeer = peer;
         if (downloadPeer != null) {
+            log.info("Setting download peer: {}", downloadPeer);
             downloadPeer.setDownloadData(true);
             downloadPeer.setFastCatchupTime(fastCatchupTimeSecs);
         }
@@ -459,6 +476,9 @@ public class PeerGroup {
         fastCatchupTimeSecs = secondsSinceEpoch;
         if (downloadPeer != null) {
             downloadPeer.setFastCatchupTime(secondsSinceEpoch);
+            for (Wallet w : wallets) {
+                downloadPeer.addWallet(w);
+            }
         }
     }
 

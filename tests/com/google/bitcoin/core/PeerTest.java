@@ -20,6 +20,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Future;
@@ -38,6 +39,7 @@ public class PeerTest extends TestWithNetworkConnections {
 
         conn = createMockNetworkConnection();
         peer = new Peer(unitTestParams, blockChain, conn);
+        peer.addWallet(wallet);
     }
 
     @Test
@@ -139,6 +141,26 @@ public class PeerTest extends TestWithNetworkConnections {
         assertNull(message != null ? message.toString() : "", message);
     }
 
+    @Test
+    public void invDownloadTx() throws Exception {
+        peer.setDownloadData(true);
+        // Make a transaction and tell the peer we have it.;
+        BigInteger value = Utils.toNanoCoins(1, 0);
+        Transaction tx = TestUtils.createFakeTx(unitTestParams, value, address);
+        InventoryMessage inv = new InventoryMessage(unitTestParams);
+        InventoryItem item = new InventoryItem(InventoryItem.Type.Transaction, tx.getHash());
+        inv.addItem(item);
+        conn.inbound(inv);
+        // Peer hasn't seen it before, so will ask for it.
+        runPeer(peer, conn);
+        GetDataMessage message = (GetDataMessage) conn.popOutbound();
+        assertEquals(1, message.getItems().size());
+        assertEquals(tx.getHash(), message.getItems().get(0).hash);
+        conn.inbound(tx);
+        runPeer(peer, conn);
+        assertEquals(value, wallet.getBalance(Wallet.BalanceType.ESTIMATED));
+    }
+
     // Check that inventory message containing blocks we want is processed correctly.
     @Test
     public void newBlock() throws Exception {
@@ -148,7 +170,6 @@ public class PeerTest extends TestWithNetworkConnections {
         Block b1 = TestUtils.createFakeBlock(unitTestParams, blockStore).block;
         blockChain.add(b1);
         Block b2 = TestUtils.makeSolvedTestBlock(unitTestParams, b1);
-        Block b3 = TestUtils.makeSolvedTestBlock(unitTestParams, b2);
         conn.setVersionMessageForHeight(unitTestParams, 100);
         // Receive notification of a new block.
         InventoryMessage inv = new InventoryMessage(unitTestParams);
@@ -158,6 +179,8 @@ public class PeerTest extends TestWithNetworkConnections {
         // Response to the getdata message.
         conn.inbound(b2);
 
+        expect(listener.onPreMessageReceived(eq(peer), eq(inv))).andReturn(inv);
+        expect(listener.onPreMessageReceived(eq(peer), eq(b2))).andReturn(b2);
         listener.onBlocksDownloaded(eq(peer), anyObject(Block.class), eq(98));
         expectLastCall();
 

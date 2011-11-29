@@ -75,7 +75,7 @@ public class Transaction extends ChildMessage implements Serializable {
         inputs = new ArrayList<TransactionInput>();
         outputs = new ArrayList<TransactionOutput>();
         // We don't initialize appearsIn deliberately as it's only useful for transactions stored in the wallet.
-        length = 10; //8 for std fields + 1 for each 0 varint
+        length = 10; // 8 for std fields + 1 for each 0 varint
     }
 
     /**
@@ -174,6 +174,15 @@ public class Transaction extends ChildMessage implements Serializable {
      */
     Set<StoredBlock> getAppearsIn() {
         return appearsIn;
+    }
+
+    /** Returns true if this transaction hasn't been seen in any block yet. */
+    public boolean isPending() {
+        if (appearsIn == null)
+            return true;
+        if (appearsIn.size() == 0)
+            return true;
+        return false;
     }
 
     /**
@@ -451,7 +460,6 @@ public class Transaction extends ChildMessage implements Serializable {
                 s.append(in.getScriptSig().getFromAddress().toString());
             } catch (Exception e) {
                 s.append("[exception: ").append(e.getMessage()).append("]");
-                throw new RuntimeException(e);
             }
             s.append("\n");
         }

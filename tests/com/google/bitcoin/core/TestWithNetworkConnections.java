@@ -17,6 +17,7 @@
 package com.google.bitcoin.core;
 
 import com.google.bitcoin.store.MemoryBlockStore;
+import com.google.bitcoin.utils.BriefLogFormatter;
 import org.easymock.IMocksControl;
 
 import java.io.IOException;
@@ -31,14 +32,23 @@ public class TestWithNetworkConnections {
     protected NetworkParameters unitTestParams;
     protected MemoryBlockStore blockStore;
     protected BlockChain blockChain;
+    protected Wallet wallet;
+    protected ECKey key;
+    protected Address address;
 
     public void setUp() throws Exception {
+        BriefLogFormatter.init();
+
         control = createStrictControl();
         control.checkOrder(true);
 
         unitTestParams = NetworkParameters.unitTests();
         blockStore = new MemoryBlockStore(unitTestParams);
-        blockChain = new BlockChain(unitTestParams, new Wallet(unitTestParams), blockStore);
+        wallet = new Wallet(unitTestParams);
+        key = new ECKey();
+        address = key.toAddress(unitTestParams);
+        wallet.addKey(key);
+        blockChain = new BlockChain(unitTestParams, wallet, blockStore);
     }
 
     protected MockNetworkConnection createMockNetworkConnection() {

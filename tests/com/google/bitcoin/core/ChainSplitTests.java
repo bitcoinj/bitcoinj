@@ -129,7 +129,7 @@ public class ChainSplitTests {
         assertEquals("50.00", Utils.bitcoinValueToFriendlyString(wallet.getBalance()));
         Address dest = new ECKey().toAddress(unitTestParams);
         Transaction spend = wallet.createSend(dest, Utils.toNanoCoins(10, 0));
-        wallet.confirmSend(spend);
+        wallet.commitTx(spend);
         // Waiting for confirmation ...
         assertEquals(BigInteger.ZERO, wallet.getBalance());
         Block b2 = b1.createNextBlock(someOtherGuy);
@@ -198,7 +198,7 @@ public class ChainSplitTests {
         Transaction t1 = wallet.createSend(someOtherGuy, Utils.toNanoCoins(10, 0));
         Address yetAnotherGuy = new ECKey().toAddress(unitTestParams);
         Transaction t2 = wallet.createSend(yetAnotherGuy, Utils.toNanoCoins(20, 0));
-        wallet.confirmSend(t1);
+        wallet.commitTx(t1);
         // Receive t1 as confirmed by the network.
         Block b2 = b1.createNextBlock(new ECKey().toAddress(unitTestParams));
         b2.addTransaction(t1);
@@ -240,7 +240,7 @@ public class ChainSplitTests {
         Transaction t1 = wallet.createSend(someOtherGuy, Utils.toNanoCoins(10, 0));
         Address yetAnotherGuy = new ECKey().toAddress(unitTestParams);
         Transaction t2 = wallet.createSend(yetAnotherGuy, Utils.toNanoCoins(20, 0));
-        wallet.confirmSend(t1);
+        wallet.commitTx(t1);
         // t1 is still pending ...
         Block b2 = b1.createNextBlock(new ECKey().toAddress(unitTestParams));
         chain.add(b2);

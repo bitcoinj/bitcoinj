@@ -41,6 +41,7 @@ public class Peer {
     private final BlockChain blockChain;
     // When an API user explicitly requests a block or transaction from a peer, the InventoryItem is put here
     // whilst waiting for the response. Synchronized on itself. Is not used for downloads Peer generates itself.
+    // TODO: Make this work for transactions as well.
     private final List<GetDataFuture<Block>> pendingGetBlockFutures;
     // Height of the chain advertised in the peers version message.
     private int bestHeight;
@@ -63,6 +64,9 @@ public class Peer {
     // is set AND our best block is before that date, switch to false until block headers beyond that point have been
     // received at which point it gets set to true again. This isn't relevant unless downloadData is true.
     private boolean downloadBlockBodies = true;
+
+    // Wallets that will be notified of pending transactions.
+    private ArrayList<Wallet> wallets = new ArrayList<Wallet>();
 
     /**
      * Construct a peer that reads/writes from the given block chain. Note that communication won't occur until
@@ -151,10 +155,23 @@ public class Peer {
         try {
             while (true) {
                 Message m = conn.readMessage();
+
+                // Allow event listeners to filter the message stream. Listeners are allowed to drop messages by
+                // returning null.
+                for (PeerEventListener listener : eventListeners) {
+                    synchronized (listener) {
+                        m = listener.onPreMessageReceived(this, m);
+                        if (m == null) break;
+                    }
+                }
+                if (m == null) continue;
+
                 if (m instanceof InventoryMessage) {
                     processInv((InventoryMessage) m);
                 } else if (m instanceof Block) {
                     processBlock((Block) m);
+                } else if (m instanceof Transaction) {
+                    processTransaction((Transaction) m);
                 } else if (m instanceof AddressMessage) {
                     // We don't care about addresses of the network right now. But in future,
                     // we should save them in the wallet so we don't put too much load on the seed nodes and can
@@ -225,8 +242,21 @@ public class Peer {
         }
     }
 
+    private void processTransaction(Transaction m) {
+        log.info("Received broadcast tx {}", m.getHashAsString());
+        for (Wallet wallet : wallets) {
+            try {
+                wallet.receivePending(m);
+            } catch (VerificationException e) {
+                log.warn("Received invalid transaction, ignoring", e);
+            } catch (ScriptException e) {
+                log.warn("Received invalid transaction, ignoring", e);
+            }
+        }
+    }
+
     private void processBlock(Block m) throws IOException {
-        // This should called in the network loop thread for this peer
+        log.info("Received broadcast block {}", m.getHashAsString());
         try {
             // Was this block requested by getBlock()?
             synchronized (pendingGetBlockFutures) {
@@ -293,18 +323,13 @@ public class Peer {
             blockChainDownload(topHash);
             return;
         }
+        // Just copy the message contents across - request whatever we're told about.
+        // TODO: Don't re-request items that were already fetched.
         GetDataMessage getdata = new GetDataMessage(params);
-        boolean dirty = false;
         for (InventoryItem item : items) {
-            if (item.type != InventoryItem.Type.Block) continue;
             getdata.addItem(item);
-            dirty = true;
         }
-        // No blocks to download. This probably contained transactions instead, but right now we can't prove they are
-        // valid so we don't bother downloading transactions that aren't in blocks yet.
-        if (!dirty)
-            return;
-        // This will cause us to receive a bunch of block messages.
+        // This will cause us to receive a bunch of block or tx messages.
         conn.writeMessage(getdata);
     }
 
@@ -360,6 +385,21 @@ public class Peer {
                 downloadBlockBodies = false;
             }
         }
+    }
+    
+    /**
+     * Add a wallet that will receive notifications of broadcast transactions. You need to connect the peer to each
+     * wallet this way if you care about handling un-confirmed transactions. If you don't,
+     * it's unnecessary as the wallet will be informed of transactions in new blocks via the block chain object.
+     */
+    public void addWallet(Wallet wallet) {
+        if (wallet == null)
+            throw new IllegalArgumentException("Wallet must not be null");
+        wallets.add(wallet);
+    }
+
+    public void removeWallet(Wallet wallet) {
+        wallets.remove(wallet);
     }
 
     // A GetDataFuture wraps the result of a getBlock or (in future) getTransaction so the owner of the object can
@@ -418,7 +458,7 @@ public class Peer {
 
     /**
      * Send the given Transaction, ie, make a payment with BitCoins. To create a transaction you can broadcast, use
-     * a {@link Wallet}. After the broadcast completes, confirm the send using the wallet confirmSend() method.
+     * a {@link Wallet}. After the broadcast completes, confirm the send using the wallet commitTx() method.
      * @throws IOException
      */
     void broadcastTransaction(Transaction tx) throws IOException {

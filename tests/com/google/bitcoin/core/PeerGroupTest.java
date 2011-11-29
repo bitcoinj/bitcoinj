@@ -23,6 +23,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.math.BigInteger;
 import java.net.InetSocketAddress;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -33,7 +34,6 @@ import static org.junit.Assert.*;
 public class PeerGroupTest extends TestWithNetworkConnections {
     static final NetworkParameters params = NetworkParameters.unitTests();
 
-    private Wallet wallet;
     private PeerGroup peerGroup;
     private final BlockingQueue<Peer> disconnectedPeers = new LinkedBlockingQueue<Peer>();
 
@@ -41,10 +41,10 @@ public class PeerGroupTest extends TestWithNetworkConnections {
     @Before
     public void setUp() throws Exception {
         super.setUp();
-        wallet = new Wallet(params);
+
         blockStore = new MemoryBlockStore(params);
         BlockChain chain = new BlockChain(params, wallet, blockStore);
-        peerGroup = new PeerGroup(blockStore, params, chain, 1000);
+        peerGroup = new PeerGroup(params, chain, 1000);
 
         // Support for testing disconnect events in a non-racy manner.
         peerGroup.addEventListener(new AbstractPeerEventListener() {
@@ -93,6 +93,33 @@ public class PeerGroupTest extends TestWithNetworkConnections {
         // again a bit later.
         assertTrue(result[0]);
         peerGroup.stop();
+    }
+
+    @Test
+    public void receiveTxBroadcast() throws Exception {
+        // Check that when we receive transactions on all our peers, we do the right thing.
+
+        // Create a couple of peers.
+        peerGroup.addWallet(wallet);
+        MockNetworkConnection n1 = createMockNetworkConnection();
+        Peer p1 = new Peer(params, blockChain, n1);
+        MockNetworkConnection n2 = createMockNetworkConnection();
+        Peer p2 = new Peer(params, blockChain, n2);
+        peerGroup.start();
+        peerGroup.addPeer(p1);
+        peerGroup.addPeer(p2);
+
+        BigInteger value = Utils.toNanoCoins(1, 0);
+        Transaction t1 = TestUtils.createFakeTx(unitTestParams, value, address);
+        InventoryMessage inv = new InventoryMessage(unitTestParams);
+        inv.addItem(new InventoryItem(InventoryItem.Type.Transaction, t1.getHash()));
+        n1.inbound(inv);
+        n2.inbound(inv);
+        GetDataMessage getdata = (GetDataMessage) n1.outbound();
+        assertNull(n2.outbound());  // Only one peer is used to download.
+        n1.inbound(t1);
+        n1.outbound();  // Wait for processing to complete.
+        assertEquals(value, wallet.getBalance(Wallet.BalanceType.ESTIMATED));
     }
 
     @Test

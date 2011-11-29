@@ -74,8 +74,9 @@ public class DerbyPingService {
         // Connect to the localhost node. One minute timeout since we won't try any other peers
         System.out.println("Connecting ...");
         BlockChain chain = new BlockChain(params, wallet, blockStore);
-        final PeerGroup peerGroup = new PeerGroup(blockStore, params, chain);
+        final PeerGroup peerGroup = new PeerGroup(params, chain);
         peerGroup.addAddress(new PeerAddress(InetAddress.getLocalHost()));
+        peerGroup.addWallet(wallet);
         peerGroup.start();
 
         // We want to know when the balance changes.

@@ -35,4 +35,9 @@ public class AbstractPeerEventListener extends Object implements PeerEventListen
 
     public void onPeerDisconnected(Peer peer, int peerCount) {
     }
+
+    public Message onPreMessageReceived(Peer peer, Message m) {
+        // Just pass the message right through for further processing.
+        return m;
+    }
 }
