@@ -68,6 +68,8 @@ public class BitcoinSerializer {
         names.put(VersionAck.class, "verack");
         names.put(GetBlocksMessage.class, "getblocks");
         names.put(GetAddrMessage.class, "getaddr");
+        names.put(HeadersMessage.class, "headers");
+
     }
 
     /**
@@ -330,6 +332,8 @@ public class BitcoinSerializer {
             return new Ping();
         } else if (command.equals("verack")) {
             return new VersionAck(params, payloadBytes);
+        } else if (command.equals("headers")) {
+            return new HeadersMessage(params, payloadBytes);
         } else {
             throw new ProtocolException("No support for deserializing message with name " + command);
         }
