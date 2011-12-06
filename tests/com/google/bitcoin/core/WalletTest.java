@@ -312,7 +312,9 @@ public class WalletTest {
         assertFalse(flags[0]);
         // Now check again when we receive it via a block.
         flags[1] = true;
-        wallet.receiveFromBlock(t1, createFakeBlock(params, blockStore, t1).storedBlock,
+        // Make a fresh copy of the tx to ensure we're testing realistically.
+        final Transaction t1Copy = new Transaction(params, t1.bitcoinSerialize());
+        wallet.receiveFromBlock(t1Copy, createFakeBlock(params, blockStore, t1Copy).storedBlock,
                                 BlockChain.NewBlockType.BEST_CHAIN);
         assertTrue(flags[0]);
         assertFalse(flags[1]);  // is not pending

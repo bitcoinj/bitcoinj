@@ -221,7 +221,7 @@ public class Wallet implements Serializable {
     }
 
     /**
-     * Called when we have found a tranasction (via network broadcast or otherwise) that is relevant to this wallet
+     * Called when we have found a transaction (via network broadcast or otherwise) that is relevant to this wallet
      * and want to record it. Note that we <b>cannot verify these transactions at all</b>, they may spend fictional
      * coins or be otherwise invalid. They are useful to inform the user about coins they can expect to receive soon,
      * and if you trust the sender of the transaction you can choose to assume they are in fact valid and will not
@@ -234,7 +234,6 @@ public class Wallet implements Serializable {
     synchronized void receivePending(Transaction tx) throws VerificationException, ScriptException {
         // TODO: Add a notion of confidence levels to this API.
         // Runs in a peer thread.
-        log.info(tx.getHashAsString());
 
         // Ignore it if we already know about this transaction. Receiving a pending transaction never moves it
         // between pools.
@@ -330,24 +329,28 @@ public class Wallet implements Serializable {
         // least we need to ensure we're manipulating the canonical object rather than a duplicate.
         Transaction wtx = null;
         if ((wtx = pending.remove(txHash)) != null) {
+            // Make sure "tx" is always the canonical object we want to manipulate, send to event handlers, etc.
+            tx = wtx;
+            wtx = null;
+
             log.info("  <-pending");
             // A transaction we created appeared in a block. Probably this is a spend we broadcast that has been
             // accepted by the network.
             //
             // Mark the tx as appearing in this block so we can find it later after a re-org.
             if (block != null)
-                wtx.addBlockAppearance(block, bestChain);
+                tx.addBlockAppearance(block, bestChain);
             if (bestChain) {
                 if (valueSentToMe.equals(BigInteger.ZERO)) {
                     // There were no change transactions so this tx is fully spent.
                     log.info("  ->spent");
-                    boolean alreadyPresent = spent.put(wtx.getHash(), wtx) != null;
+                    boolean alreadyPresent = spent.put(tx.getHash(), tx) != null;
                     assert !alreadyPresent : "TX in both pending and spent pools";
                 } else {
                     // There was change back to us, or this tx was purely a spend back to ourselves (perhaps for
                     // anonymization purposes).
                     log.info("  ->unspent");
-                    boolean alreadyPresent = unspent.put(wtx.getHash(), wtx) != null;
+                    boolean alreadyPresent = unspent.put(tx.getHash(), tx) != null;
                     assert !alreadyPresent : "TX in both pending and unspent pools";
                 }
             } else if (sideChain) {
@@ -359,11 +362,11 @@ public class Wallet implements Serializable {
                 //     b1 --> b2
                 //        \-> b3
                 //        \-> b4 (at this point it's already present in 'inactive'
-                boolean alreadyPresent = inactive.put(wtx.getHash(), wtx) != null;
+                boolean alreadyPresent = inactive.put(tx.getHash(), tx) != null;
                 if (alreadyPresent)
                     log.info("Saw a transaction be incorporated into multiple independent side chains");
                 // Put it back into the pending pool, because 'pending' means 'waiting to be included in best chain'.
-                pending.put(wtx.getHash(), wtx);
+                pending.put(tx.getHash(), tx);
             }
         } else {
             if (!reorg) {
@@ -420,18 +423,17 @@ public class Wallet implements Serializable {
             // received some money and then the sender co-operated with a miner to take back the coins, using a tx
             // that isn't involving our keys at all.
             Transaction doubleSpend = findDoubleSpendAgainstPending(tx);
-            if (doubleSpend != null) {
-                // This is mostly the same as the codepath in updateForSpends, but that one is only triggered when
-                // the transaction being double spent is actually in our wallet (ie, maybe we're double spending).
-                log.warn("Saw double spend from chain override pending tx {}", doubleSpend.getHashAsString());
-                log.warn("  <-pending ->dead");
-                pending.remove(doubleSpend.getHash());
-                dead.put(doubleSpend.getHash(), doubleSpend);
-                // Inform the event listeners of the newly dead tx.
-                for (WalletEventListener listener : eventListeners) {
-                    synchronized (listener) {
-                        listener.onDeadTransaction(this, doubleSpend, tx);
-                    }
+            assert doubleSpend != null;
+            // This is mostly the same as the codepath in updateForSpends, but that one is only triggered when
+            // the transaction being double spent is actually in our wallet (ie, maybe we're double spending).
+            log.warn("Saw double spend from chain override pending tx {}", doubleSpend.getHashAsString());
+            log.warn("  <-pending ->dead");
+            pending.remove(doubleSpend.getHash());
+            dead.put(doubleSpend.getHash(), doubleSpend);
+            // Inform the event listeners of the newly dead tx.
+            for (WalletEventListener listener : eventListeners) {
+                synchronized (listener) {
+                    listener.onDeadTransaction(this, doubleSpend, tx);
                 }
             }
         }
