@@ -17,6 +17,7 @@
 package com.google.bitcoin.examples;
 
 import com.google.bitcoin.core.*;
+import com.google.bitcoin.discovery.DnsDiscovery;
 import com.google.bitcoin.store.BlockStore;
 import com.google.bitcoin.store.BoundedOverheadBlockStore;
 import com.google.bitcoin.utils.BriefLogFormatter;
@@ -54,7 +55,10 @@ public class PingService {
     public static void main(String[] args) throws Exception {
         BriefLogFormatter.init();
 
-        boolean testNet = args.length > 0 && args[0].equalsIgnoreCase("testnet");
+        String peerHost = args.length > 0 ? args[0] : null;
+        int peerPort = args.length > 1 ? Integer.parseInt(args[1]) : 0;
+
+        boolean testNet = peerPort == NetworkParameters.testNet().port;
         final NetworkParameters params = testNet ? NetworkParameters.testNet() : NetworkParameters.prodNet();
         String filePrefix = testNet ? "pingservice-testnet" : "pingservice-prodnet";
 
@@ -82,9 +86,15 @@ public class PingService {
         BlockChain chain = new BlockChain(params, wallet, blockStore);
         
         final PeerGroup peerGroup = new PeerGroup(params, chain);
-        peerGroup.addAddress(new PeerAddress(InetAddress.getLocalHost()));
         // Download headers only until a day ago.
         peerGroup.setFastCatchupTimeSecs((new Date().getTime() / 1000) - (60 * 60 * 24));
+
+        if (peerHost != null) {
+            peerGroup.addAddress(new PeerAddress(InetAddress.getByName(peerHost), peerPort));
+        } else {
+            peerGroup.addPeerDiscovery(new DnsDiscovery(params));
+        }
+
         peerGroup.addWallet(wallet);
         peerGroup.start();
 
@@ -98,7 +108,13 @@ public class PingService {
                 BigInteger value = tx.getValueSentToMe(w);
 
                 if (tx.isPending()) {
-                    System.out.println("Received pending tx for " + Utils.bitcoinValueToFriendlyString(value));
+                    System.out.println("Received pending tx for " + Utils.bitcoinValueToFriendlyString(value) +
+                                       ": " + tx);
+                    try {
+                        w.saveToFile(walletFile);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
                     // Ignore for now, as we won't be allowed to spend until the tx is no longer pending. We'll get
                     // another callback here when the tx is confirmed.
                     return;
