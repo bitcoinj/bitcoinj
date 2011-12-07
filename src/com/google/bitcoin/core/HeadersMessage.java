@@ -42,7 +42,9 @@ public class HeadersMessage extends Message {
     @Override
     protected void parseLite() throws ProtocolException {
         if (length == UNKNOWN_LENGTH) {
+            int saveCursor = cursor;
             long numHeaders = readVarInt();
+            cursor = saveCursor;
 
             // Each header has 80 bytes and one more byte for transactions number which is 00.
             length = 81 * (int)numHeaders;
