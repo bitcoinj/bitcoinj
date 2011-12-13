@@ -13,20 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.bitcoin.core;
+package com.google.bitcoin.store;
 
 import static org.junit.Assert.assertEquals;
 
+import com.google.bitcoin.core.Address;
+import com.google.bitcoin.core.ECKey;
+import com.google.bitcoin.core.NetworkParameters;
+import com.google.bitcoin.core.StoredBlock;
+
 import org.junit.Test;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 
 public class DerbyBlockStoreTest {
     /**
-     * 
+     * This path will be deleted recursively!
      */
     private static final String DB_NAME = ".bitcoinj.unittest.derby";
 
     @Test
     public void testStorage() throws Exception {
+        deleteRecursively(new File(DB_NAME));
         NetworkParameters params = NetworkParameters.unitTests();
         Address to = new ECKey().toAddress(params);
         DerbyBlockStore store = new DerbyBlockStore(params, DB_NAME);
@@ -48,5 +58,14 @@ public class DerbyBlockStoreTest {
         // Check the chain head was stored correctly also.
         assertEquals(b1, store.getChainHead());
         store.dump();
+    }
+    
+    void deleteRecursively(File f) throws IOException {
+        if (f.isDirectory()) {
+            for (File c : f.listFiles())
+                deleteRecursively(c);
+        }
+        if (!f.delete())
+            throw new FileNotFoundException("Failed to delete file: " + f);
     }
 }

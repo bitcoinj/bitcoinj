@@ -1,4 +1,4 @@
-package com.google.bitcoin.core;
+package com.google.bitcoin.store;
 
 /**
  * Copyright 2011 Google Inc.
@@ -15,6 +15,14 @@ package com.google.bitcoin.core;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+import com.google.bitcoin.core.Block;
+import com.google.bitcoin.core.NetworkParameters;
+import com.google.bitcoin.core.ProtocolException;
+import com.google.bitcoin.core.Sha256Hash;
+import com.google.bitcoin.core.StoredBlock;
+import com.google.bitcoin.core.Utils;
+import com.google.bitcoin.core.VerificationException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,9 +41,6 @@ import java.sql.Statement;
  * @author miron@google.com (Miron Cuperman)
  */
 public class DerbyBlockStore implements BlockStore {
-    /**
-     * 
-     */
     private static final int COMMIT_INTERVAL = 2 * 1000;
 
     private static final Logger log = LoggerFactory.getLogger(DerbyBlockStore.class);
@@ -161,13 +166,13 @@ public class DerbyBlockStore implements BlockStore {
         if (!rs.next()) {
             throw new BlockStoreException("corrupt Derby block store - no chain head pointer");
         }
-        byte[] hash = rs.getBytes(1);
+        Sha256Hash hash = new Sha256Hash(rs.getBytes(1));
         this.chainHeadBlock = get(hash);
         if (this.chainHeadBlock == null)
         {
             throw new BlockStoreException("corrupt Derby block store - head block not found");
         }
-        this.chainHeadHash = new Sha256Hash(hash);
+        this.chainHeadHash = hash;
     }
 
     private void createNewStore(NetworkParameters params) throws BlockStoreException {
@@ -178,7 +183,7 @@ public class DerbyBlockStore implements BlockStore {
             StoredBlock storedGenesis = new StoredBlock(genesis,
                     genesis.getWork(), 0);
             this.chainHeadBlock = storedGenesis;
-            this.chainHeadHash = new Sha256Hash(storedGenesis.getHeader().getHash());
+            this.chainHeadHash = storedGenesis.getHeader().getHash();
             setChainHead(storedGenesis);
             put(storedGenesis);
         } catch (VerificationException e1) {
@@ -199,13 +204,12 @@ public class DerbyBlockStore implements BlockStore {
         }
     }
 
-    @Override
     public void put(StoredBlock stored) throws BlockStoreException {
         try {
             PreparedStatement s =
                 conn.prepareStatement("INSERT INTO blocks(hash, chainWork, height, header)"
                         + " VALUES(?, ?, ?, ?)");
-            s.setBytes(1, stored.getHeader().getHash());
+            s.setBytes(1, stored.getHeader().getHash().getBytes());
             s.setBytes(2, stored.getChainWork().toByteArray());
             s.setLong(3, stored.getHeight());
             s.setBytes(4, stored.getHeader().bitcoinSerialize());
@@ -217,15 +221,14 @@ public class DerbyBlockStore implements BlockStore {
         }
     }
 
-    @Override
-    public StoredBlock get(byte[] hash) throws BlockStoreException {
+    public StoredBlock get(Sha256Hash hash) throws BlockStoreException {
         // Optimize for chain head
-        if (chainHeadHash != null && chainHeadHash.equals(new Sha256Hash(hash)))
+        if (chainHeadHash != null && chainHeadHash.equals(hash))
             return chainHeadBlock;
         try {
             PreparedStatement s = conn
-            .prepareStatement("SELECT chainWork, height, header FROM blocks WHERE hash = ?");
-            s.setBytes(1, hash);
+                .prepareStatement("SELECT chainWork, height, header FROM blocks WHERE hash = ?");
+            s.setBytes(1, hash.getBytes());
             ResultSet results = s.executeQuery();
             if (!results.next()) {
                 return null;
@@ -240,7 +243,7 @@ public class DerbyBlockStore implements BlockStore {
                 stored = new StoredBlock(params.genesisBlock.cloneAsHeader(),
                         params.genesisBlock.getWork(), 0);
             } else {
-                b.verify();
+                b.verifyHeader();
                 stored = new StoredBlock(b, chainWork, height);
             }
             return stored;
@@ -257,21 +260,19 @@ public class DerbyBlockStore implements BlockStore {
     }
 
     @SuppressWarnings("unused")
-    @Override
     public StoredBlock getChainHead() throws BlockStoreException {
         return chainHeadBlock;
     }
 
-    @Override
     public void setChainHead(StoredBlock chainHead) throws BlockStoreException {
-        byte[] hash = chainHead.getHeader().getHash();
-        this.chainHeadHash = new Sha256Hash(hash);
+        Sha256Hash hash = chainHead.getHeader().getHash();
+        this.chainHeadHash = hash;
         this.chainHeadBlock = chainHead;
         try {
             PreparedStatement s = conn
                 .prepareStatement("UPDATE settings SET value = ? WHERE name = ?");
             s.setString(2, CHAIN_HEAD_SETTING);
-            s.setBytes(1, hash);
+            s.setBytes(1, hash.getBytes());
             s.executeUpdate();
             s.close();
             startCommitter();
@@ -316,7 +317,6 @@ public class DerbyBlockStore implements BlockStore {
         // A thread that is guaranteed to try a commit as long as
         // committerThread is not null
         Runnable committer = new Runnable() {
-            @Override
             public void run() {
                 try {
                     log.info("commit scheduled");

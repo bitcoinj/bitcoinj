@@ -16,14 +16,26 @@
 
 package com.google.bitcoin.examples;
 
-import com.google.bitcoin.core.*;
+import com.google.bitcoin.core.AbstractWalletEventListener;
+import com.google.bitcoin.core.Address;
+import com.google.bitcoin.core.BlockChain;
+import com.google.bitcoin.core.ECKey;
+import com.google.bitcoin.core.NetworkParameters;
+import com.google.bitcoin.core.PeerAddress;
+import com.google.bitcoin.core.PeerGroup;
+import com.google.bitcoin.core.ScriptException;
+import com.google.bitcoin.core.StoredBlock;
+import com.google.bitcoin.core.Transaction;
+import com.google.bitcoin.core.TransactionInput;
+import com.google.bitcoin.core.Utils;
+import com.google.bitcoin.core.Wallet;
+import com.google.bitcoin.store.BlockStoreException;
+import com.google.bitcoin.store.DerbyBlockStore;
 
 import java.io.File;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.net.InetAddress;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
 /**
  * PingService demonstrates basic usage of the library. It sits on the network and when it receives coins, simply
@@ -61,14 +73,14 @@ public class DerbyPingService {
 
         // Connect to the localhost node. One minute timeout since we won't try any other peers
         System.out.println("Connecting ...");
-        NetworkConnection conn = new NetworkConnection(InetAddress.getLocalHost(), params,
-                blockStore.getChainHead().getHeight(), 60000);
         BlockChain chain = new BlockChain(params, wallet, blockStore);
-        final Peer peer = new Peer(params, conn, chain);
-        peer.start();
+        final PeerGroup peerGroup = new PeerGroup(blockStore, params, chain);
+        peerGroup.addAddress(new PeerAddress(InetAddress.getLocalHost()));
+        peerGroup.start();
 
         // We want to know when the balance changes.
-        wallet.addEventListener(new WalletEventListener() {
+        wallet.addEventListener(new AbstractWalletEventListener() {
+            @Override
             public void onCoinsReceived(Wallet w, Transaction tx, BigInteger prevBalance, BigInteger newBalance) {
                 // Running on a peer thread.
                 assert !newBalance.equals(BigInteger.ZERO);
@@ -81,7 +93,7 @@ public class DerbyPingService {
                     BigInteger value = tx.getValueSentToMe(w);
                     System.out.println("Received " + Utils.bitcoinValueToFriendlyString(value) + " from " + from.toString());
                     // Now send the coins back!
-                    Transaction sendTx = w.sendCoins(peer, from, value);
+                    Transaction sendTx = w.sendCoins(peerGroup, from, value);
                     assert sendTx != null;  // We should never try to send more coins than we have!
                     System.out.println("Sent coins back! Transaction hash is " + sendTx.getHashAsString());
                     w.saveToFile(walletFile);
@@ -96,18 +108,8 @@ public class DerbyPingService {
             }
         });
 
-        CountDownLatch progress = peer.startBlockChainDownload();
-        long max = progress.getCount();  // Racy but no big deal.
-        if (max > 0) {
-            System.out.println("Downloading block chain. " + (max > 1000 ? "This may take a while." : ""));
-            long current = max;
-            while (current > 0) {
-                double pct = 100.0 - (100.0 * (current / (double)max));
-                System.out.println(String.format("Chain download %d%% done", (int)pct));
-                progress.await(1, TimeUnit.SECONDS);
-                current = progress.getCount();
-            }
-        }
+        peerGroup.downloadBlockChain();
+
         System.out.println("Send coins to: " + key.toAddress(params).toString());
         System.out.println("Waiting for coins to arrive. Press Ctrl-C to quit.");
         // The peer thread keeps us alive until something kills the process.
@@ -117,7 +119,7 @@ public class DerbyPingService {
      * @param blockStore
      * @throws BlockStoreException 
      */
-    private static void iterateAll(DerbyBlockStore blockStore) throws BlockStoreException {
+    static void iterateAll(DerbyBlockStore blockStore) throws BlockStoreException {
         long time = System.currentTimeMillis();
         StoredBlock block = blockStore.getChainHead();
         int count = 0;

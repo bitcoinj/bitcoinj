@@ -245,6 +245,12 @@
       <optional>true</optional>
     </dependency>
 
+    <dependency>
+      <groupId>org.apache.derby</groupId>
+      <artifactId>derby</artifactId>
+      <version>10.8.2.2</version>
+    </dependency>
+
     <!-- In Android these libraries are incomplete,
          so use the dedicated artifact (bitcoinj-<version>-android.jar) -->
     <dependency>
