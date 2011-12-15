@@ -17,18 +17,29 @@
 
 package com.google.bitcoin.core;
 
-import com.google.bitcoin.discovery.PeerDiscovery;
-import com.google.bitcoin.discovery.PeerDiscoveryException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.InetSocketAddress;
 import java.net.SocketTimeoutException;
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.google.bitcoin.discovery.PeerDiscovery;
+import com.google.bitcoin.discovery.PeerDiscoveryException;
 
 /**
  * Maintain a number of connections to peers.
@@ -76,7 +87,6 @@ public class PeerGroup {
     private BlockChain chain;
     private int connectionDelayMillis;
     private long fastCatchupTimeSecs;
-    private Set<Wallet> wallets;
 
     /**
      * Creates a PeerGroup with the given parameters and a default 5 second connection timeout. If you don't care
@@ -84,7 +94,6 @@ public class PeerGroup {
      *
      * @param params Network parameters
      * @param chain a BlockChain object that will receive and handle block messages.
-     * @param wallet a Wallet object that will receive pending transactions.
      */
     public PeerGroup(NetworkParameters params, BlockChain chain) {
         this(params, chain, DEFAULT_CONNECTION_DELAY_MILLIS);
@@ -99,7 +108,6 @@ public class PeerGroup {
         this.chain = chain;
         this.connectionDelayMillis = connectionDelayMillis;
         this.fastCatchupTimeSecs = params.genesisBlock.getTimeSeconds();
-        this.wallets = new HashSet<Wallet>();
 
         inactives = new LinkedBlockingQueue<PeerAddress>();
         peers = Collections.synchronizedSet(new HashSet<Peer>());
@@ -114,29 +122,25 @@ public class PeerGroup {
     }
 
     /**
-     * Callbacks to the listener are performed in the connection thread.  The callback
-     * should not perform time consuming tasks.
+     * <p>Adds a listener that will be notified on a library controlled thread when:</p>
+     * <ol>
+     *     <li>New peers are connected to.</li>
+     *     <li>Peers are disconnected from.</li>
+     *     <li>A message is received by the download peer (there is always one peer which is elected as a peer which
+     *     will be used to retrieve data).
+     *     <li>Blocks are downloaded by the download peer.</li>
+     *     </li>
+     * </ol>
+     * <p>The listener will be locked during callback execution, which in turn will cause network message processing
+     * to stop until the listener returns.</p>
      */
     public void addEventListener(PeerEventListener listener) {
         peerEventListeners.add(listener);
     }
 
+    /** The given event listener will no longer be called with events. */
     public boolean removeEventListener(PeerEventListener listener) {
         return peerEventListeners.remove(listener);
-    }
-
-    /**
-     * The given wallet will receive broadcast/pending transactions that did not appear in a block yet.
-     * @return Whether the wallet was added successfully.
-     */
-    public boolean addWallet(Wallet wallet) {
-        if (wallet == null)
-            throw new IllegalArgumentException("Wallet must not be null");
-        return wallets.add(wallet);
-    }
-
-    public boolean removeWallet(Wallet wallet) {
-        return wallets.remove(wallet);
     }
 
     /**
@@ -217,10 +221,10 @@ public class PeerGroup {
     }
 
     /**
-     * Stop this PeerGroup
-     * <p/>
-     * <p>The peer group will be asynchronously shut down.  After it is shut down
-     * all peers will be disconnected and no threads will be running.
+     * Stop this PeerGroup.<p>
+     *
+     * The peer group will be asynchronously shut down.  After it is shut down all peers will be disconnected and no
+     * threads will be running.
      */
     public synchronized void stop() {
         if (running) {
@@ -246,6 +250,21 @@ public class PeerGroup {
             }
         }
         return success;
+    }
+
+    /**
+     * Link the given wallet to this PeerGroup so it receives broadcast transactions. A convenience method that just
+     * does <tt>addEventListener(wallet.getPeerEventListener());</tt>. See also removeWallet.
+     */
+    public void addWallet(Wallet wallet) {
+        addEventListener(wallet.getPeerEventListener());
+    }
+
+    /**
+     * Unlinks the given wallet so it no longer receives broadcast transactions.
+     */
+    public void removeWallet(Wallet wallet) {
+        removeEventListener(wallet.getPeerEventListener());
     }
 
     private final class PeerExecutionRunnable implements Runnable {
@@ -456,8 +475,8 @@ public class PeerGroup {
         if (downloadPeer != null) {
             log.info("Unsetting download peer: {}", downloadPeer);
             downloadPeer.setDownloadData(false);
-            for (Wallet w : wallets) {
-                downloadPeer.removeWallet(w);
+            for (PeerEventListener listener : peerEventListeners) {
+                downloadPeer.removeEventListener(listener);
             }
         }
         downloadPeer = peer;
@@ -476,8 +495,8 @@ public class PeerGroup {
         fastCatchupTimeSecs = secondsSinceEpoch;
         if (downloadPeer != null) {
             downloadPeer.setFastCatchupTime(secondsSinceEpoch);
-            for (Wallet w : wallets) {
-                downloadPeer.addWallet(w);
+            for (PeerEventListener listener : peerEventListeners) {
+                downloadPeer.addEventListener(listener);
             }
         }
     }

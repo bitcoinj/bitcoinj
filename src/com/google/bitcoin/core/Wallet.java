@@ -1204,4 +1204,31 @@ public class Wallet implements Serializable {
         }
         return earliestTime;
     }
+    
+    // This object is used to receive events from a Peer or PeerGroup. Currently it is only used to receive
+    // transactions. Note that it does NOT pay attention to block message because they will be received from the
+    // BlockChain object along with extra data we need for correct handling of re-orgs.
+    private PeerEventListener peerEventListener = new AbstractPeerEventListener() {
+        @Override
+        public void onTransaction(Peer peer, Transaction t) {
+            // Runs locked on a peer thread.
+            try {
+                receivePending(t);
+            } catch (VerificationException e) {
+                log.warn("Received broadcast transaction that does not validate: {}", t);
+                log.warn("VerificationException caught", e);
+            } catch (ScriptException e) {
+                log.warn("Received broadcast transaction with not understood scripts: {}", t);
+                log.warn("ScriptException caught", e);
+            }
+        }
+    };
+
+    /**
+     * Use the returned object can be used to connect the wallet to a {@link Peer} or {@link PeerGroup} in order to
+     * receive and process blocks and transactions.
+     */
+    public PeerEventListener getPeerEventListener() {
+        return peerEventListener;
+    }
 }

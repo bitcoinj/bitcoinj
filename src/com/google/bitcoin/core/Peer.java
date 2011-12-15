@@ -65,9 +65,6 @@ public class Peer {
     // received at which point it gets set to true again. This isn't relevant unless downloadData is true.
     private boolean downloadBlockBodies = true;
 
-    // Wallets that will be notified of pending transactions.
-    private ArrayList<Wallet> wallets = new ArrayList<Wallet>();
-
     /**
      * Construct a peer that reads/writes from the given block chain. Note that communication won't occur until
      * you call connect(), which will set up a new NetworkConnection.
@@ -244,13 +241,9 @@ public class Peer {
 
     private void processTransaction(Transaction m) {
         log.info("Received broadcast tx {}", m.getHashAsString());
-        for (Wallet wallet : wallets) {
-            try {
-                wallet.receivePending(m);
-            } catch (VerificationException e) {
-                log.warn("Received invalid transaction, ignoring", e);
-            } catch (ScriptException e) {
-                log.warn("Received invalid transaction, ignoring", e);
+        for (PeerEventListener listener : eventListeners) {
+            synchronized (listener) {
+                listener.onTransaction(this, m);
             }
         }
     }
@@ -388,18 +381,17 @@ public class Peer {
     }
     
     /**
-     * Add a wallet that will receive notifications of broadcast transactions. You need to connect the peer to each
-     * wallet this way if you care about handling un-confirmed transactions. If you don't,
-     * it's unnecessary as the wallet will be informed of transactions in new blocks via the block chain object.
+     * Links the given wallet to this peer. If you have multiple peers, you should use a {@link PeerGroup} to manage
+     * them and use the {@link PeerGroup#addWallet(Wallet)} method instead of registering the wallet with each peer
+     * independently, otherwise the wallet will receive duplicate notifications.
      */
     public void addWallet(Wallet wallet) {
-        if (wallet == null)
-            throw new IllegalArgumentException("Wallet must not be null");
-        wallets.add(wallet);
+        addEventListener(wallet.getPeerEventListener());
     }
 
+    /** Unlinks the given wallet from peer. See {@link Peer#addWallet(Wallet)}. */
     public void removeWallet(Wallet wallet) {
-        wallets.remove(wallet);
+        removeEventListener(wallet.getPeerEventListener());
     }
 
     // A GetDataFuture wraps the result of a getBlock or (in future) getTransaction so the owner of the object can

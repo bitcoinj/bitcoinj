@@ -17,7 +17,7 @@
 package com.google.bitcoin.core;
 
 /**
- * Convenience abstract class for implmenting a PeerEventListener.
+ * Convenience abstract class for implementing a PeerEventListener.
  *
  * <p>The default method implementations do nothing.
  *
@@ -39,5 +39,8 @@ public class AbstractPeerEventListener extends Object implements PeerEventListen
     public Message onPreMessageReceived(Peer peer, Message m) {
         // Just pass the message right through for further processing.
         return m;
+    }
+
+    public void onTransaction(Peer peer, Transaction t) {
     }
 }

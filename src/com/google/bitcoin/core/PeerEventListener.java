@@ -27,9 +27,9 @@ package com.google.bitcoin.core;
  */
 public interface PeerEventListener {
     /**
-     * Called on a Peer thread when a block is received.
-     * <p/>
-     * <p>The block may have transactions or may be a header only once getheaders is implemented.
+     * Called on a Peer thread when a block is received.<p>
+     *
+     * The block may have transactions or may be a header only once getheaders is implemented.
      *
      * @param peer       the peer receiving the block
      * @param block      the downloaded block
@@ -68,4 +68,9 @@ public interface PeerEventListener {
      * callback is passed as "m" to the next, forming a chain.
      */
     public Message onPreMessageReceived(Peer peer, Message m);
+
+    /**
+     * Called when a new transaction is broadcast over the network.
+     */
+    public void onTransaction(Peer peer, Transaction t);
 }
