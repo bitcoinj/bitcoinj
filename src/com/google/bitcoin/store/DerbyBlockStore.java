@@ -212,7 +212,7 @@ public class DerbyBlockStore implements BlockStore {
             s.setBytes(1, stored.getHeader().getHash().getBytes());
             s.setBytes(2, stored.getChainWork().toByteArray());
             s.setLong(3, stored.getHeight());
-            s.setBytes(4, stored.getHeader().bitcoinSerialize());
+            s.setBytes(4, stored.getHeader().unsafeBitcoinSerialize());
             s.executeUpdate();
             s.close();
             startCommitter();
@@ -239,13 +239,8 @@ public class DerbyBlockStore implements BlockStore {
             int height = results.getInt(2);
             Block b = new Block(params, results.getBytes(3));
             StoredBlock stored;
-            if (b.equals(params.genesisBlock)) {
-                stored = new StoredBlock(params.genesisBlock.cloneAsHeader(),
-                        params.genesisBlock.getWork(), 0);
-            } else {
-                b.verifyHeader();
-                stored = new StoredBlock(b, chainWork, height);
-            }
+            b.verifyHeader();
+            stored = new StoredBlock(b, chainWork, height);
             return stored;
         } catch (SQLException ex) {
             throw new BlockStoreException(ex);

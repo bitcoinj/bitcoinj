@@ -57,6 +57,9 @@ public class DerbyBlockStoreTest {
         assertEquals(b1, b2);
         // Check the chain head was stored correctly also.
         assertEquals(b1, store.getChainHead());
+        
+        StoredBlock g1 = store.get(params.genesisBlock.getHash());
+        assertEquals(params.genesisBlock, g1.getHeader());
         store.dump();
     }
     
