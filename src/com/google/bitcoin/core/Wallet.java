@@ -337,9 +337,10 @@ public class Wallet implements Serializable {
             // A transaction we created appeared in a block. Probably this is a spend we broadcast that has been
             // accepted by the network.
             //
-            // Mark the tx as appearing in this block so we can find it later after a re-org.
+            // Mark the tx as appearing in this block so we can find it later after a re-org. This also lets the
+            // transaction update its confidence and timestamp bookkeeping data.
             if (block != null)
-                tx.addBlockAppearance(block, bestChain);
+                tx.setBlockAppearance(block, bestChain);
             if (bestChain) {
                 if (valueSentToMe.equals(BigInteger.ZERO)) {
                     // There were no change transactions so this tx is fully spent.
@@ -369,11 +370,11 @@ public class Wallet implements Serializable {
                 pending.put(tx.getHash(), tx);
             }
         } else {
-            if (!reorg) {
-                // Mark the tx as appearing in this block so we can find it later after a re-org.
-                if (block != null)
-                    tx.addBlockAppearance(block, bestChain);
-            }
+            // Mark the tx as appearing in this block so we can find it later after a re-org. If this IS a re-org taking
+            // place, this call will let the Transaction update its confidence and timestamp data to reflect the new
+            // best chain, as long as the new best chain blocks are passed to receive() last.
+            if (block != null)
+                tx.setBlockAppearance(block, bestChain);
             // This TX didn't originate with us. It could be sending us coins and also spending our own coins if keys
             // are being shared between different wallets.
             if (sideChain) {
@@ -961,7 +962,7 @@ public class Wallet implements Serializable {
      * we need to go through our transactions and find out if any have become invalid. It's possible for our balance
      * to go down in this case: money we thought we had can suddenly vanish if the rest of the network agrees it
      * should be so.<p>
-     * <p/>
+     *
      * The oldBlocks/newBlocks lists are ordered height-wise from top first to bottom last.
      */
     synchronized void reorganize(List<StoredBlock> oldBlocks, List<StoredBlock> newBlocks) throws VerificationException {
@@ -974,10 +975,10 @@ public class Wallet implements Serializable {
         //
         // receive() has been called on the block that is triggering the re-org before this is called.
 
-        log.info("  Old part of chain (top to bottom):");
-        for (StoredBlock b : oldBlocks) log.info("    {}", b.getHeader().getHashAsString());
-        log.info("  New part of chain (top to bottom):");
-        for (StoredBlock b : newBlocks) log.info("    {}", b.getHeader().getHashAsString());
+        log.info("Old part of chain (top to bottom):");
+        for (StoredBlock b : oldBlocks) log.info("  {}", b.getHeader().getHashAsString());
+        log.info("New part of chain (top to bottom):");
+        for (StoredBlock b : newBlocks) log.info("  {}", b.getHeader().getHashAsString());
 
         // Transactions that appear in the old chain segment.
         Map<Sha256Hash, Transaction> oldChainTransactions = new HashMap<Sha256Hash, Transaction>();
@@ -1046,6 +1047,7 @@ public class Wallet implements Serializable {
             assert badInput == null : "Failed to connect " + tx.getHashAsString() + ", " + badInput.toString();
         }
         // Recalculate the unspent/spent buckets for the transactions the re-org did not affect.
+        log.info("Moving transactions");
         unspent.clear();
         spent.clear();
         inactive.clear();
@@ -1061,6 +1063,11 @@ public class Wallet implements Serializable {
                 log.info("  TX {}: ->spent", tx.getHashAsString());
                 spent.put(tx.getHash(), tx);
             }
+        }
+        // Inform all transactions that exist only in the old chain that they have moved, so they can update confidence
+        // and timestamps. Transactions will be told they're on the new best chain when the blocks are replayed.
+        for (Transaction tx : onlyOldChainTransactions.values()) {
+            tx.notifyNotOnBestChain();
         }
         // Now replay the act of receiving the blocks that were previously in a side chain. This will:
         //   - Move any transactions that were pending and are now accepted into the right bucket.
@@ -1097,7 +1104,7 @@ public class Wallet implements Serializable {
         Map<Sha256Hash, Transaction> toReprocess = new HashMap<Sha256Hash, Transaction>();
         toReprocess.putAll(onlyOldChainTransactions);
         toReprocess.putAll(pending);
-        log.info("Reprocessing:");
+        log.info("Reprocessing transactions not in new best chain:");
         // Note, we must reprocess dead transactions first. The reason is that if there is a double spend across
         // chains from our own coins we get a complicated situation:
         //
@@ -1128,7 +1135,7 @@ public class Wallet implements Serializable {
     }
 
     private void reprocessTxAfterReorg(Map<Sha256Hash, Transaction> pool, Transaction tx) {
-        log.info("  TX {}", tx.getHashAsString());
+        log.info("TX {}", tx.getHashAsString());
         int numInputs = tx.getInputs().size();
         int noSuchTx = 0;
         int success = 0;
@@ -1208,27 +1215,31 @@ public class Wallet implements Serializable {
     // This object is used to receive events from a Peer or PeerGroup. Currently it is only used to receive
     // transactions. Note that it does NOT pay attention to block message because they will be received from the
     // BlockChain object along with extra data we need for correct handling of re-orgs.
-    private PeerEventListener peerEventListener = new AbstractPeerEventListener() {
-        @Override
-        public void onTransaction(Peer peer, Transaction t) {
-            // Runs locked on a peer thread.
-            try {
-                receivePending(t);
-            } catch (VerificationException e) {
-                log.warn("Received broadcast transaction that does not validate: {}", t);
-                log.warn("VerificationException caught", e);
-            } catch (ScriptException e) {
-                log.warn("Received broadcast transaction with not understood scripts: {}", t);
-                log.warn("ScriptException caught", e);
-            }
-        }
-    };
+    private transient PeerEventListener peerEventListener;
 
     /**
      * Use the returned object can be used to connect the wallet to a {@link Peer} or {@link PeerGroup} in order to
      * receive and process blocks and transactions.
      */
     public PeerEventListener getPeerEventListener() {
+        if (peerEventListener == null) {
+            // Instantiate here to avoid issues with wallets resurrected from serialized copies.
+            peerEventListener = new AbstractPeerEventListener() {
+                @Override
+                public void onTransaction(Peer peer, Transaction t) {
+                    // Runs locked on a peer thread.
+                    try {
+                        receivePending(t);
+                    } catch (VerificationException e) {
+                        log.warn("Received broadcast transaction that does not validate: {}", t);
+                        log.warn("VerificationException caught", e);
+                    } catch (ScriptException e) {
+                        log.warn("Received broadcast transaction with not understood scripts: {}", t);
+                        log.warn("ScriptException caught", e);
+                    }
+                }
+            };
+        }
         return peerEventListener;
     }
 }

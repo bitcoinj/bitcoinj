@@ -164,4 +164,8 @@ public class TCPNetworkConnection implements NetworkConnection {
     public VersionMessage getVersionMessage() {
         return versionMessage;
     }
+
+    public PeerAddress getPeerAddress() {
+        return new PeerAddress(remoteIp, params.port);
+    }
 }

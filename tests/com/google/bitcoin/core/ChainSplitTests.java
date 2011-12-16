@@ -17,29 +17,30 @@
 package com.google.bitcoin.core;
 
 import com.google.bitcoin.store.MemoryBlockStore;
+import com.google.bitcoin.utils.BriefLogFormatter;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 public class ChainSplitTests {
     private NetworkParameters unitTestParams;
     private Wallet wallet;
     private BlockChain chain;
-    private Address coinbaseTo;
+    private Address coinsTo;
     private Address someOtherGuy;
 
     @Before
     public void setUp() throws Exception {
+        BriefLogFormatter.init();
         unitTestParams = NetworkParameters.unitTests();
         wallet = new Wallet(unitTestParams);
         wallet.addKey(new ECKey());
         chain = new BlockChain(unitTestParams, wallet, new MemoryBlockStore(unitTestParams));
-        coinbaseTo = wallet.keychain.get(0).toAddress(unitTestParams);
+        coinsTo = wallet.keychain.get(0).toAddress(unitTestParams);
         someOtherGuy = new ECKey().toAddress(unitTestParams);
     }
 
@@ -48,7 +49,6 @@ public class ChainSplitTests {
         // Check that if the block chain forks, we end up using the right chain. Only tests inbound transactions
         // (receiving coins). Checking that we understand reversed spends is in testForking2.
 
-        // TODO: Change this test to not use coinbase transactions as they are special (maturity rules).
         final boolean[] reorgHappened = new boolean[1];
         reorgHappened[0] = false;
         wallet.addEventListener(new AbstractWalletEventListener() {
@@ -59,8 +59,8 @@ public class ChainSplitTests {
         });
 
         // Start by building a couple of blocks on top of the genesis block.
-        Block b1 = unitTestParams.genesisBlock.createNextBlock(coinbaseTo);
-        Block b2 = b1.createNextBlock(coinbaseTo);
+        Block b1 = unitTestParams.genesisBlock.createNextBlock(coinsTo);
+        Block b2 = b1.createNextBlock(coinsTo);
         assertTrue(chain.add(b1));
         assertTrue(chain.add(b2));
         assertFalse(reorgHappened[0]);
@@ -90,8 +90,8 @@ public class ChainSplitTests {
         // We lost some coins! b2 is no longer a part of the best chain so our available balance should drop to 50.
         assertEquals("50.00", Utils.bitcoinValueToFriendlyString(wallet.getBalance()));
         // ... and back to the first chain.
-        Block b5 = b2.createNextBlock(coinbaseTo);
-        Block b6 = b5.createNextBlock(coinbaseTo);
+        Block b5 = b2.createNextBlock(coinsTo);
+        Block b6 = b5.createNextBlock(coinsTo);
         assertTrue(chain.add(b5));
         assertTrue(chain.add(b6));
         //
@@ -113,7 +113,7 @@ public class ChainSplitTests {
         //     genesis -> b1 -> b2
         //                  \-> b3 -> b4
         assertEquals(BigInteger.ZERO, wallet.getBalance());
-        Block b3 = b1.createNextBlock(coinbaseTo);
+        Block b3 = b1.createNextBlock(coinsTo);
         Block b4 = b3.createNextBlock(someOtherGuy);
         assertTrue(chain.add(b3));
         assertEquals(BigInteger.ZERO, wallet.getBalance());
@@ -124,7 +124,7 @@ public class ChainSplitTests {
     @Test
     public void testForking3() throws Exception {
         // Check that we can handle our own spends being rolled back by a fork.
-        Block b1 = unitTestParams.genesisBlock.createNextBlock(coinbaseTo);
+        Block b1 = unitTestParams.genesisBlock.createNextBlock(coinsTo);
         chain.add(b1);
         assertEquals("50.00", Utils.bitcoinValueToFriendlyString(wallet.getBalance()));
         Address dest = new ECKey().toAddress(unitTestParams);
@@ -155,7 +155,7 @@ public class ChainSplitTests {
         // Check that we can handle external spends on an inactive chain becoming active. An external spend is where
         // we see a transaction that spends our own coins but we did not broadcast it ourselves. This happens when
         // keys are being shared between wallets.
-        Block b1 = unitTestParams.genesisBlock.createNextBlock(coinbaseTo);
+        Block b1 = unitTestParams.genesisBlock.createNextBlock(coinsTo);
         chain.add(b1);
         assertEquals("50.00", Utils.bitcoinValueToFriendlyString(wallet.getBalance()));
         Address dest = new ECKey().toAddress(unitTestParams);
@@ -192,7 +192,7 @@ public class ChainSplitTests {
             }
         });
 
-        Block b1 = unitTestParams.genesisBlock.createNextBlock(coinbaseTo);
+        Block b1 = unitTestParams.genesisBlock.createNextBlock(coinsTo);
         chain.add(b1);
 
         Transaction t1 = wallet.createSend(someOtherGuy, Utils.toNanoCoins(10, 0));
@@ -234,7 +234,7 @@ public class ChainSplitTests {
         });
 
         // Start with 50 coins.
-        Block b1 = unitTestParams.genesisBlock.createNextBlock(coinbaseTo);
+        Block b1 = unitTestParams.genesisBlock.createNextBlock(coinsTo);
         chain.add(b1);
 
         Transaction t1 = wallet.createSend(someOtherGuy, Utils.toNanoCoins(10, 0));
@@ -271,5 +271,68 @@ public class ChainSplitTests {
         //              \-> b3 [t2 inactive] -> b4
         assertEquals(Utils.toNanoCoins(0, 0), wallet.getBalance());
         assertEquals(Utils.toNanoCoins(40, 0), wallet.getBalance(Wallet.BalanceType.ESTIMATED));
+    }
+
+    @Test
+    public void txConfidenceLevels() throws Exception {
+        // Check that as the chain forks and re-orgs, the confidence data associated with each transaction is
+        // maintained correctly.
+        final ArrayList<Transaction> txns = new ArrayList<Transaction>(2);
+        wallet.addEventListener(new AbstractWalletEventListener() {
+            @Override
+            public void onCoinsReceived(Wallet wallet, Transaction tx, BigInteger prevBalance, BigInteger newBalance) {
+                txns.add(tx);
+            }
+        });
+
+        // Start by building a couple of blocks on top of the genesis block.
+        Block b1 = unitTestParams.genesisBlock.createNextBlock(coinsTo);
+        Block b2 = b1.createNextBlock(coinsTo);
+        assertTrue(chain.add(b1));
+        assertTrue(chain.add(b2));
+        // Check the transaction confidence levels are correct.
+        assertEquals(2, txns.size());
+        assertEquals(1, txns.get(0).getConfidence().getAppearedAtChainHeight());
+        assertEquals(2, txns.get(1).getConfidence().getAppearedAtChainHeight());
+        // We now have the following chain:
+        //     genesis -> b1 -> b2
+        //
+        // so fork like this:
+        //
+        //     genesis -> b1 -> b2
+        //                  \-> b3
+        //
+        // Nothing should happen at this point. We saw b2 first so it takes priority.
+        Block b3 = b1.createNextBlock(someOtherGuy);
+        assertTrue(chain.add(b3));
+        assertEquals(2, txns.size());
+        assertEquals(1, txns.get(0).getConfidence().getAppearedAtChainHeight());
+        assertEquals(2, txns.get(1).getConfidence().getAppearedAtChainHeight());
+        // Now we add another block to make the alternative chain longer.
+        assertTrue(chain.add(b3.createNextBlock(someOtherGuy)));
+        //
+        //     genesis -> b1 -> b2
+        //                  \-> b3 -> b4
+        //
+        assertEquals(2, txns.size());
+        assertEquals(1, txns.get(0).getConfidence().getAppearedAtChainHeight());
+        assertEquals(TransactionConfidence.NOT_IN_BEST_CHAIN, txns.get(1).getConfidence().getAppearedAtChainHeight());
+        // ... and back to the first chain.
+        Block b5 = b2.createNextBlock(coinsTo);
+        Block b6 = b5.createNextBlock(coinsTo);
+        assertTrue(chain.add(b5));
+        assertTrue(chain.add(b6));
+        //
+        //     genesis -> b1 -> b2 -> b5 -> b6
+        //                  \-> b3 -> b4
+        //
+
+        // This should be enabled, once we figure out the best way to inform the user of how the wallet is changing
+        // during the re-org.
+        // assertEquals(4, txns.size());
+
+        assertEquals(1, txns.get(0).getConfidence().getAppearedAtChainHeight());
+        assertEquals(2, txns.get(1).getConfidence().getAppearedAtChainHeight());
+        assertEquals("200.00", Utils.bitcoinValueToFriendlyString(wallet.getBalance()));
     }
 }

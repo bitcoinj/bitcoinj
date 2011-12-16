@@ -46,4 +46,11 @@ public class InventoryMessage extends ListMessage {
         super(params);
     }
 
+    public void addBlock(Block block) {
+        addItem(new InventoryItem(InventoryItem.Type.Block, block.getHash()));
+    }
+
+    public void addTransaction(Transaction tx) {
+        addItem(new InventoryItem(InventoryItem.Type.Transaction, tx.getHash()));
+    }
 }

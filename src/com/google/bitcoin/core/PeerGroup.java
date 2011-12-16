@@ -79,7 +79,7 @@ public class PeerGroup {
     // Callback for events related to chain download
     private PeerEventListener downloadListener;
     // Callbacks for events related to peer connection/disconnection
-    private Set<PeerEventListener> peerEventListeners;
+    private List<PeerEventListener> peerEventListeners;
     // Peer discovery sources, will be polled occasionally if there aren't enough inactives.
     private Set<PeerDiscovery> peerDiscoverers;
 
@@ -111,7 +111,6 @@ public class PeerGroup {
 
         inactives = new LinkedBlockingQueue<PeerAddress>();
         peers = Collections.synchronizedSet(new HashSet<Peer>());
-        peerEventListeners = Collections.synchronizedSet(new HashSet<PeerEventListener>());
         peerDiscoverers = Collections.synchronizedSet(new HashSet<PeerDiscovery>());
         peerPool = new ThreadPoolExecutor(
                 DEFAULT_CONNECTIONS,
@@ -119,6 +118,24 @@ public class PeerGroup {
                 THREAD_KEEP_ALIVE_SECONDS, TimeUnit.SECONDS,
                 new LinkedBlockingQueue<Runnable>(1),
                 new PeerGroupThreadFactory());
+        // Peer event listeners get a subset of events seen by the group. We add our own internal listener to this so
+        // when we download a transaction, we can distribute it to each Peer in the pool so they can update the
+        // transactions confidence level if they've seen it be announced/when they see it be announced.
+        peerEventListeners = Collections.synchronizedList(new ArrayList<PeerEventListener>());
+        addEventListener(new AbstractPeerEventListener() {
+            @Override
+            public void onTransaction(Peer peer, Transaction t) {
+                handleBroadcastTransaction(t);
+            }
+        });
+    }
+
+    private synchronized void handleBroadcastTransaction(Transaction tx) {
+        // Called on the download peer thread when we have downloaded an advertised Transaction. Distribute it to all
+        // the peers in the group so they can update the confidence if they saw it be advertised or when they do see it.
+        for (Peer p : peers) {
+            p.trackTransaction(tx);
+        }
     }
 
     /**
@@ -135,6 +152,7 @@ public class PeerGroup {
      * to stop until the listener returns.</p>
      */
     public void addEventListener(PeerEventListener listener) {
+        assert listener != null;
         peerEventListeners.add(listener);
     }
 

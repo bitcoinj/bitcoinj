@@ -32,7 +32,13 @@ import static com.google.bitcoin.core.Utils.*;
  * It implements TWO serialization protocols - the BitCoin proprietary format which is identical to the C++
  * implementation and is used for reading/writing transactions to the wire and for hashing. It also implements Java
  * serialization which is used for the wallet. This allows us to easily add extra fields used for our own accounting
- * or UI purposes.
+ * or UI purposes.<p>
+ *     
+ * All Bitcoin transactions are at risk of being reversed, though the risk is much less than with traditional payment 
+ * systems. Transactions have <i>confidence levels</i>, which help you decide whether to trust a transaction or not.
+ * Whether to trust a transaction is something that needs to be decided on a case by case basis - a rule that makes 
+ * sense for selling MP3s might not make sense for selling cars, or accepting payments from a family member. If you
+ * are building a wallet, how to present confidence to your users is something to consider carefully.
  */
 public class Transaction extends ChildMessage implements Serializable {
     private static final Logger log = LoggerFactory.getLogger(Transaction.class);
@@ -68,6 +74,9 @@ public class Transaction extends ChildMessage implements Serializable {
 
     // This is an in memory helper only.
     transient Sha256Hash hash;
+    
+    // Data about how confirmed this tx is. Serialized, may be null. 
+    private TransactionConfidence confidence;
 
     Transaction(NetworkParameters params) {
         super(params);
@@ -98,7 +107,6 @@ public class Transaction extends ChildMessage implements Serializable {
      * @param params NetworkParameters object.
      * @param msg Bitcoin protocol formatted byte array containing message content.
      * @param offset The location of the first msg byte within the array.
-     * @param protocolVersion Bitcoin protocol version.
      * @param parseLazy Whether to perform a full parse immediately or delay until a read is requested.
      * @param parseRetain Whether to retain the backing byte array for quick reserialization.  
      * If true and the backing byte array is invalidated due to modification of a field then 
@@ -176,31 +184,42 @@ public class Transaction extends ChildMessage implements Serializable {
         return appearsIn;
     }
 
-    /** Returns true if this transaction hasn't been seen in any block yet. */
+    /**
+     * Convenience wrapper around getConfidence().getAppearedAtChainHeight()
+     * @return true if this transaction hasn't been seen in any block yet.
+     */
     public boolean isPending() {
-        if (appearsIn == null)
-            return true;
-        if (appearsIn.size() == 0)
-            return true;
-        return false;
+        return getConfidence().getAppearedAtChainHeight() == TransactionConfidence.NOT_SEEN_IN_CHAIN;
     }
 
     /**
-     * Adds the given block to the internal serializable set of blocks in which this transaction appears. This is
+     * Puts the given block in the internal serializable set of blocks in which this transaction appears. This is
      * used by the wallet to ensure transactions that appear on side chains are recorded properly even though the
-     * block stores do not save the transaction data at all.
+     * block stores do not save the transaction data at all.<p>
+     *
+     * If there is a re-org this will be called once for each block that was previously seen, to update which block
+     * is the best chain. The best chain block is guaranteed to be called last. So this must be idempotent.
      *
      * @param block     The {@link StoredBlock} in which the transaction has appeared.
      * @param bestChain whether to set the updatedAt timestamp from the block header (only if not already set)
      */
-    void addBlockAppearance(StoredBlock block, boolean bestChain) {
-        if (bestChain && updatedAt == null) {
-            updatedAt = new Date(block.getHeader().getTimeSeconds() * 1000);
-        }
+    void setBlockAppearance(StoredBlock block, boolean bestChain) {
         if (appearsIn == null) {
             appearsIn = new HashSet<StoredBlock>();
         }
         appearsIn.add(block);
+
+        if (bestChain) {
+            if (updatedAt == null) {
+                updatedAt = new Date(block.getHeader().getTimeSeconds() * 1000);
+            }
+            getConfidence().setAppearedAtChainHeight(block.getHeight());
+        }
+    }
+
+    /** Called by the wallet once a re-org means we don't appear in the best chain anymore. */
+    void notifyNotOnBestChain() {
+        getConfidence().setAppearedAtChainHeight(TransactionConfidence.NOT_IN_BEST_CHAIN);
     }
 
     /**
@@ -654,6 +673,13 @@ public class Transaction extends ChildMessage implements Serializable {
         maybeParse();
         return Collections.unmodifiableList(outputs);
     }
+    
+    public synchronized TransactionConfidence getConfidence() {
+        if (confidence == null) {
+            confidence = new TransactionConfidence();
+        }
+        return confidence;
+    }
 
     @Override
     public boolean equals(Object other) {
@@ -677,5 +703,4 @@ public class Transaction extends ChildMessage implements Serializable {
         maybeParse();
         out.defaultWriteObject();
     }
-
 }

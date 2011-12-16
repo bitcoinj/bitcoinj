@@ -90,6 +90,8 @@ public class PingService {
         peerGroup.setFastCatchupTimeSecs((new Date().getTime() / 1000) - (60 * 60 * 24));
 
         if (peerHost != null) {
+            // TEMP!
+            peerGroup.addAddress(new PeerAddress(InetAddress.getLocalHost(), peerPort));
             peerGroup.addAddress(new PeerAddress(InetAddress.getByName(peerHost), peerPort));
         } else {
             peerGroup.addPeerDiscovery(new DnsDiscovery(params));
@@ -110,6 +112,7 @@ public class PingService {
                 if (tx.isPending()) {
                     System.out.println("Received pending tx for " + Utils.bitcoinValueToFriendlyString(value) +
                                        ": " + tx);
+                    System.out.println(tx.getConfidence());
                     try {
                         w.saveToFile(walletFile);
                     } catch (IOException e) {
@@ -118,6 +121,9 @@ public class PingService {
                     // Ignore for now, as we won't be allowed to spend until the tx is no longer pending. We'll get
                     // another callback here when the tx is confirmed.
                     return;
+                } else {
+                    System.out.println("Saw tx be incorporated into chain");
+                    System.out.println(tx.getConfidence());
                 }
 
                 // It's impossible to pick one specific identity that you receive coins from in BitCoin as there

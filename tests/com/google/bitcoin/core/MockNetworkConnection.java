@@ -17,6 +17,8 @@
 package com.google.bitcoin.core;
 
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
@@ -31,9 +33,17 @@ public class MockNetworkConnection implements NetworkConnection {
     private Object disconnectMarker = new Object();
     private VersionMessage versionMessage;
 
+    private static int fakePort = 1;
+    private PeerAddress peerAddress;
+
     public MockNetworkConnection() {
         inboundMessageQ = new ArrayBlockingQueue<Object>(10);
         outboundMessageQ = new ArrayBlockingQueue<Message>(10);
+        try {
+            peerAddress = new PeerAddress(InetAddress.getLocalHost(), fakePort++);
+        } catch (UnknownHostException e) {
+            throw new RuntimeException(e);  // Cannot happen.
+        }
     }
 
     public void ping() throws IOException {
@@ -99,6 +109,11 @@ public class MockNetworkConnection implements NetworkConnection {
     public VersionMessage getVersionMessage() {
         if (versionMessage == null) throw new RuntimeException("Need to call setVersionMessage first");
         return versionMessage;
+    }
+
+
+    public PeerAddress getPeerAddress() {
+        return peerAddress;
     }
 
     /** Call this to add a message which will be received by the NetworkConnection user. Wakes up the network thread. */

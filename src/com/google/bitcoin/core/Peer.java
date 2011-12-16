@@ -20,9 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.*;
 
 /**
@@ -51,6 +49,10 @@ public class Peer {
     // primary peer. This is to avoid redundant work and concurrency problems with downloading the same chain
     // in parallel.
     private boolean downloadData = true;
+    // Maps announced transaction hashes to the Transaction objects. If this is not a download peer, the Transaction
+    // objects must be provided from elsewhere (ie, a PeerGroup object). If the Transaction hasn't been downloaded or
+    // provided yet, the map value is null.
+    private Map<Sha256Hash, Transaction> announcedTransactionHashes;
 
     /**
      * If true, we do some things that may only make sense on constrained devices like Android phones. Currently this
@@ -79,6 +81,7 @@ public class Peer {
         this.pendingGetBlockFutures = new ArrayList<GetDataFuture<Block>>();
         this.eventListeners = new ArrayList<PeerEventListener>();
         this.fastCatchupTimeSecs = params.genesisBlock.getTimeSeconds();
+        this.announcedTransactionHashes = new HashMap<Sha256Hash, Transaction>();
     }
 
     /**
@@ -95,6 +98,7 @@ public class Peer {
     public Peer(NetworkParameters params, BlockChain blockChain, NetworkConnection connection) {
         this(params, null, 0, blockChain);
         this.conn = connection;
+        this.address = connection.getPeerAddress();
     }
     
     public synchronized void addEventListener(PeerEventListener listener) {
@@ -298,16 +302,16 @@ public class Peer {
 
     private void processInv(InventoryMessage inv) throws IOException {
         // This should be called in the network loop thread for this peer.
+        List<InventoryItem> items = inv.getItems();
+        updateTransactionConfidenceLevels(items);
 
-        // If this peer isn't responsible for downloading stuff, ignore inv messages.
-        // TODO: In future, we should not ignore but count them. This allows a guesstimate of trustworthyness.
+        // If this peer isn't responsible for downloading stuff, don't go further.
         if (!downloadData)
             return;
 
         // The peer told us about some blocks or transactions they have. For now we only care about blocks.
         Block topBlock = blockChain.getUnconnectedBlock();
         Sha256Hash topHash = (topBlock != null ? topBlock.getHash() : null);
-        List<InventoryItem> items = inv.getItems();
         if (isNewBlockTickle(topHash, items)) {
             // An inv with a single hash containing our most recent unconnected block is a special inv,
             // it's kind of like a tickle from the peer telling us that it's time to download more blocks to catch up to
@@ -324,6 +328,60 @@ public class Peer {
         }
         // This will cause us to receive a bunch of block or tx messages.
         conn.writeMessage(getdata);
+    }
+
+    /**
+     * When a peer broadcasts an "inv" containing a transaction hash, it means the peer validated it and won't accept 
+     * double spends of those coins. So by measuring what proportion of our total connected peers have seen a 
+     * transaction we can make a guesstimate of how likely it is to be included in a block, assuming our internet
+     * connection is trustworthy.<p>
+     *     
+     * This method keeps a map of transaction hashes to {@link Transaction} objects. It may not have the associated
+     * transaction objects available, if they weren't downloaded yet. Once a Transaction is downloaded, it's set as
+     * the value in the txSeen map. If this Peer isn't the download peer, the {@link PeerGroup} will manage distributing
+     * the Transaction objects to every peer, at which point the peer is expected to update the
+     * {@link TransactionConfidence} object itself.
+     * 
+     * @param items Inventory items that were just announced.
+     */
+    private void updateTransactionConfidenceLevels(List<InventoryItem> items) {
+        // Announced hashes may be updated by other threads in response to messages coming in from other peers.
+        synchronized (announcedTransactionHashes) {
+            for (InventoryItem item : items) {
+                if (item.type != InventoryItem.Type.Transaction) continue;
+                Transaction transaction = announcedTransactionHashes.get(item.hash);
+                if (transaction == null) {
+                    // We didn't see this tx before.
+                    log.debug("Newly announced undownloaded transaction ", item.hash);
+                    announcedTransactionHashes.put(item.hash, null);
+                } else {
+                    // It's been downloaded. Update the confidence levels. This may be called multiple times for
+                    // the same transaction and the same peer, there is no obligation in the protocol to avoid
+                    // redundant advertisements.
+                    log.debug("Marking tx {} as seen by {}", item.hash, toString());
+                    transaction.getConfidence().markBroadcastBy(address);
+                }
+            }
+        }
+    }
+
+    /**
+     * Called by {@link PeerGroup} to tell the Peer about a transaction that was just downloaded. If we have tracked
+     * the announcement, update the transactions confidence level at this time. Otherwise wait for it to appear.
+     */
+    void trackTransaction(Transaction tx) {
+        // May run on arbitrary peer threads.
+        synchronized (announcedTransactionHashes) {
+            if (announcedTransactionHashes.containsKey(tx.getHash())) {
+                Transaction storedTx = announcedTransactionHashes.get(tx.getHash());
+                assert storedTx == tx || storedTx == null : "single Transaction instance";
+                log.debug("Provided with a downloaded transaction we have seen before: {}", tx.getHash());
+                tx.getConfidence().markBroadcastBy(address);
+            } else {
+                log.debug("Provided with a downloaded transaction we didn't see broadcast yet: {}", tx.getHash());
+                announcedTransactionHashes.put(tx.getHash(), tx);
+            }
+        }
     }
 
     /** A new block tickle is an inv with a hash containing the topmost block. */

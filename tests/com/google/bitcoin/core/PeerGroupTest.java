@@ -112,13 +112,10 @@ public class PeerGroupTest extends TestWithNetworkConnections {
         BigInteger value = Utils.toNanoCoins(1, 0);
         Transaction t1 = TestUtils.createFakeTx(unitTestParams, value, address);
         InventoryMessage inv = new InventoryMessage(unitTestParams);
-        inv.addItem(new InventoryItem(InventoryItem.Type.Transaction, t1.getHash()));
-        n1.inbound(inv);
-        n2.inbound(inv);
-        GetDataMessage getdata = (GetDataMessage) n1.outbound();
-        assertNull(n2.outbound());  // Only one peer is used to download.
-        n1.inbound(t1);
-        n1.outbound();  // Wait for processing to complete.
+        inv.addTransaction(t1);
+        assertTrue(n1.exchange(inv) instanceof GetDataMessage);
+        assertNull(n2.exchange(inv));  // Only one peer is used to download.
+        assertNull(n1.exchange(t1));
         assertEquals(value, wallet.getBalance(Wallet.BalanceType.ESTIMATED));
     }
 
@@ -145,18 +142,14 @@ public class PeerGroupTest extends TestWithNetworkConnections {
 
         // Peer 1 and 2 receives an inv advertising a newly solved block.
         InventoryMessage inv = new InventoryMessage(params);
-        inv.addItem(new InventoryItem(InventoryItem.Type.Block, b3.getHash()));
-        n1.inbound(inv);
-        n2.inbound(inv);
-
+        inv.addBlock(b3);
         // Only peer 1 tries to download it.
-        assertTrue(n1.outbound() instanceof GetDataMessage);
-        assertNull(n2.outbound());
+        assertTrue(n1.exchange(inv) instanceof GetDataMessage);
+        assertNull(n2.exchange(inv));
         // Peer 1 goes away.
         disconnectAndWait(n1);
         // Peer 2 fetches it next time it hears an inv (should it fetch immediately?).
-        n2.inbound(inv);
-        assertTrue(n2.outbound() instanceof GetDataMessage);
+        assertTrue(n2.exchange(inv) instanceof GetDataMessage);
         peerGroup.stop();
     }
 
@@ -186,20 +179,50 @@ public class PeerGroupTest extends TestWithNetworkConnections {
         assertEquals(Sha256Hash.ZERO_HASH, getblocks.getStopHash());
         // We give back an inv with some blocks in it.
         InventoryMessage inv = new InventoryMessage(params);
-        inv.addItem(new InventoryItem(InventoryItem.Type.Block, b1.getHash()));
-        inv.addItem(new InventoryItem(InventoryItem.Type.Block, b2.getHash()));
-        inv.addItem(new InventoryItem(InventoryItem.Type.Block, b3.getHash()));
-        n1.inbound(inv);
-        // Peer creates a getdata message.
-        @SuppressWarnings("unused")
-        GetDataMessage getdata = (GetDataMessage) n1.outbound();
+        inv.addBlock(b1);
+        inv.addBlock(b2);
+        inv.addBlock(b3);
+        assertTrue(n1.exchange(inv) instanceof GetDataMessage);
         // We hand back the first block.
         n1.inbound(b1);
-
         // Now we successfully connect to another peer. There should be no messages sent.
         peerGroup.addPeer(p2);
         Message message = n2.outbound();
         assertNull(message == null ? "" : message.toString(), message);
+    }
+    
+    @Test
+    public void transactionConfidence() throws Exception {
+        // Checks that we correctly count how many peers broadcast a transaction, so we can establish some measure of
+        // its trustworthyness assuming an untampered with internet connection.
+        MockNetworkConnection n1 = createMockNetworkConnection();
+        Peer p1 = new Peer(params, blockChain, n1);
+        MockNetworkConnection n2 = createMockNetworkConnection();
+        Peer p2 = new Peer(params, blockChain, n2);
+        MockNetworkConnection n3 = createMockNetworkConnection();
+        Peer p3 = new Peer(params, blockChain, n3);
+        peerGroup.start();
+        peerGroup.addPeer(p1);
+        peerGroup.addPeer(p2);
+        peerGroup.addPeer(p3);
+        Transaction tx = TestUtils.createFakeTx(params, Utils.toNanoCoins(20, 0), address);
+        InventoryMessage inv = new InventoryMessage(params);
+        inv.addTransaction(tx);
+        
+        // Peer 2 advertises the tx but does not download it.
+        assertNull(n2.exchange(inv));
+        assertEquals(0, tx.getConfidence().numBroadcastPeers());
+        // Peer 1 (the download peer) advertises the tx, we download it.
+        n1.exchange(inv);  // returns getdata
+        n1.exchange(tx);   // returns nothing after a queue drain.
+        // Two peers saw this tx hash.
+        assertEquals(2, tx.getConfidence().numBroadcastPeers());
+        assertTrue(tx.getConfidence().getBroadcastBy().contains(n1.getPeerAddress()));
+        assertTrue(tx.getConfidence().getBroadcastBy().contains(n2.getPeerAddress()));
+        // A straggler reports in.
+        n3.exchange(inv);
+        assertEquals(3, tx.getConfidence().numBroadcastPeers());
+        assertTrue(tx.getConfidence().getBroadcastBy().contains(n3.getPeerAddress()));
     }
 
     private void disconnectAndWait(MockNetworkConnection conn) throws IOException, InterruptedException {
