@@ -25,10 +25,7 @@ import java.io.ByteArrayOutputStream;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 public class BitcoinSerializerTest {
     private final byte[] addrMessage = Hex.decode("f9beb4d96164647200000000000000001f000000" +
