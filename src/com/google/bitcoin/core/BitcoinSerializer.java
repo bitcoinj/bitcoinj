@@ -335,7 +335,8 @@ public class BitcoinSerializer {
         } else if (command.equals("headers")) {
             return new HeadersMessage(params, payloadBytes);
         } else {
-            throw new ProtocolException("No support for deserializing message with name " + command);
+            log.warn("No support for deserializing message with name {}", command);
+            return new UnknownMessage(params, command, payloadBytes);
         }
         if (checksum != null)
             message.setChecksum(checksum);
