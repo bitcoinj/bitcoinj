@@ -16,6 +16,9 @@
 
 package com.google.bitcoin.utils;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.io.Writer;
 import java.text.MessageFormat;
 import java.util.Date;
 import java.util.logging.Formatter;
@@ -26,7 +29,7 @@ import java.util.logging.LogRecord;
  * A Java logging formatter that writes more compact output than the default.
  */
 public class BriefLogFormatter extends Formatter {
-    private static final MessageFormat messageFormat = new MessageFormat("{3,date,hh:mm:ss} {0} {1}.{2}: {4}\n");
+    private static final MessageFormat messageFormat = new MessageFormat("{3,date,hh:mm:ss} {0} {1}.{2}: {4}\n{5}");
 
     /** Configures JDK logging to use this class for everything. */
     public static void init() {
@@ -35,7 +38,7 @@ public class BriefLogFormatter extends Formatter {
 
     @Override
     public String format(LogRecord logRecord) {
-        Object[] arguments = new Object[5];
+        Object[] arguments = new Object[6];
         arguments[0] = logRecord.getThreadID();
         String fullClassName = logRecord.getSourceClassName();
         int lastDot = fullClassName.lastIndexOf('.');
@@ -44,6 +47,13 @@ public class BriefLogFormatter extends Formatter {
         arguments[2] = logRecord.getSourceMethodName();
         arguments[3] = new Date(logRecord.getMillis());
         arguments[4] = logRecord.getMessage();
+        if (logRecord.getThrown() != null) {
+            Writer result = new StringWriter();
+            logRecord.getThrown().printStackTrace(new PrintWriter(result));
+            arguments[5] = result.toString();
+        } else {
+            arguments[5] = "";
+        }
         return messageFormat.format(arguments);
     }
 }
