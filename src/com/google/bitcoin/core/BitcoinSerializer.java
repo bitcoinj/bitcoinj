@@ -334,6 +334,9 @@ public class BitcoinSerializer {
             return new VersionAck(params, payloadBytes);
         } else if (command.equals("headers")) {
             return new HeadersMessage(params, payloadBytes);
+        } else if (command.equals("alert")) {
+            log.info("alert payload " + Utils.bytesToHexString(payloadBytes));
+            return new AlertMessage(params, payloadBytes);
         } else {
             log.warn("No support for deserializing message with name {}", command);
             return new UnknownMessage(params, command, payloadBytes);

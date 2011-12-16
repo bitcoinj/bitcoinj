@@ -36,6 +36,11 @@ public class NetworkParameters implements Serializable {
      */
     public static final int PROTOCOL_VERSION = 31800;
 
+    /**
+     * The alert signing key originally owned by Satoshi, and now passed on to Gavin along with a few others.
+     */
+    public static final byte[] SATOSHI_KEY = Hex.decode("04fc9702847840aaf195de8442ebecedf5b095cdbb9bc716bda9110971b28a49e0ead8564ff0db22209e0374782c093bb899692d524e9d6a6956e7c5ecbcd68284");
+
     // TODO: Seed nodes and checkpoint values should be here as well.
 
     /**
@@ -68,6 +73,11 @@ public class NetworkParameters implements Serializable {
      * test and production BitCoin networks use 2 weeks (1209600 seconds).
      */
     public int targetTimespan;
+    /**
+     * The key used to sign {@link AlertMessage}s. You can use {@link ECKey#verify(byte[], byte[], byte[])} to verify
+     * signatures using it.
+     */
+    public byte[] alertSigningKey;
 
     private static Block createGenesis(NetworkParameters n) {
         Block genesisBlock = new Block(n);
@@ -107,6 +117,7 @@ public class NetworkParameters implements Serializable {
         n.dumpedPrivateKeyHeader = 239;
         n.interval = INTERVAL;
         n.targetTimespan = TARGET_TIMESPAN;
+        n.alertSigningKey = SATOSHI_KEY;
         n.genesisBlock = createGenesis(n);
         n.genesisBlock.setTime(1296688602L);
         n.genesisBlock.setDifficultyTarget(0x1d07fff8L);
@@ -132,6 +143,7 @@ public class NetworkParameters implements Serializable {
         n.dumpedPrivateKeyHeader = 128;
         n.interval = INTERVAL;
         n.targetTimespan = TARGET_TIMESPAN;
+        n.alertSigningKey = SATOSHI_KEY;
         n.genesisBlock = createGenesis(n);
         n.genesisBlock.setDifficultyTarget(0x1d00ffffL);
         n.genesisBlock.setTime(1231006505L);
