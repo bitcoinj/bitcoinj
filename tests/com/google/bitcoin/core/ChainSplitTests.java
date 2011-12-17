@@ -294,6 +294,10 @@ public class ChainSplitTests {
         assertEquals(2, txns.size());
         assertEquals(1, txns.get(0).getConfidence().getAppearedAtChainHeight());
         assertEquals(2, txns.get(1).getConfidence().getAppearedAtChainHeight());
+        assertEquals(1, txns.get(1).getConfidence().getDepthInBlocks(chain));
+        assertEquals(2, txns.get(0).getConfidence().getDepthInBlocks(chain));
+        assertEquals(10, txns.get(0).getConfidence().getWorkDone(chain).intValue());
+        assertEquals(6,  txns.get(1).getConfidence().getWorkDone(chain).intValue());
         // We now have the following chain:
         //     genesis -> b1 -> b2
         //

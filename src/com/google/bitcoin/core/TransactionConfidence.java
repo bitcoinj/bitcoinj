@@ -16,7 +16,10 @@
 
 package com.google.bitcoin.core;
 
+import com.google.bitcoin.store.BlockStoreException;
+
 import java.io.Serializable;
+import java.math.BigInteger;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -122,5 +125,49 @@ public class TransactionConfidence implements Serializable {
             default: builder.append("Appeared in best chain at height "); builder.append(height); break;
         }
         return builder.toString();
+    }
+
+    /**
+     * Depth in the chain is an approximation of how much time has elapsed since the transaction has been confirmed. On
+     * average there is supposed to be a new block every 10 minutes, but the actual rate may vary. The reference
+     * (Satoshi) implementation considers a transaction impractical to reverse after 6 blocks, but as of EOY 2011 network
+     * security is high enough that often only one block is considered enough even for high value transactions. For low
+     * value transactions like songs, or other cheap items, no blocks at all may be necessary.<p>
+     *     
+     * If the transaction appears in the top block, the depth is one. The result may be < 0 if the transaction isn't
+     * in the best chain or wasn't seen in any blocks at all.
+     *
+     * @param chain a {@link BlockChain} instance.
+     * @return depth, or {@link TransactionConfidence#NOT_IN_BEST_CHAIN} or {@link TransactionConfidence#NOT_SEEN_IN_CHAIN}
+     */
+    public int getDepthInBlocks(BlockChain chain) {
+        int height = getAppearedAtChainHeight();
+        switch (height) {
+            case NOT_IN_BEST_CHAIN: return NOT_IN_BEST_CHAIN;
+            case NOT_SEEN_IN_CHAIN: return NOT_SEEN_IN_CHAIN;
+            default: return chain.getBestChainHeight() - height + 1;
+        }
+    }
+
+    /**
+     * Returns the estimated amount of work (number of hashes performed) on this transaction. Work done is a measure of
+     * security that is related to depth in blocks, but more predictable: the network will always attempt to produce six
+     * blocks per hour by adjusting the difficulty target. So to know how much real computation effort is needed to
+     * reverse a transaction, counting blocks is not enough.
+     *
+     * @param chain
+     * @return estimated number of hashes needed to reverse the transaction. Zero if not seen in any block yet.
+     */
+    public BigInteger getWorkDone(BlockChain chain) throws BlockStoreException {
+        BigInteger work = BigInteger.ZERO;
+        int depth = getDepthInBlocks(chain);
+        if (depth == NOT_IN_BEST_CHAIN || depth == NOT_SEEN_IN_CHAIN)
+            return BigInteger.ZERO;
+        StoredBlock block = chain.getChainHead();
+        for (; depth > 0; depth--) {
+            work = work.add(block.getChainWork());
+            block = block.getPrev(chain.blockStore);
+        }
+        return work;
     }
 }

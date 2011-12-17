@@ -301,6 +301,13 @@ public class BlockChain {
         return currentChainCursor;
     }
 
+    /**
+     * @return the height of the best known chain, convenience for <tt>getChainHead().getHeight()</tt>.
+     */
+    public int getBestChainHeight() {
+        return getChainHead().getHeight();
+    }
+
     enum NewBlockType {
         BEST_CHAIN,
         SIDE_CHAIN

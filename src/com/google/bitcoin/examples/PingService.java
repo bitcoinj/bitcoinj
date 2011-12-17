@@ -19,6 +19,7 @@ package com.google.bitcoin.examples;
 import com.google.bitcoin.core.*;
 import com.google.bitcoin.discovery.DnsDiscovery;
 import com.google.bitcoin.store.BlockStore;
+import com.google.bitcoin.store.BlockStoreException;
 import com.google.bitcoin.store.BoundedOverheadBlockStore;
 import com.google.bitcoin.utils.BriefLogFormatter;
 
@@ -27,6 +28,7 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.net.InetAddress;
 import java.util.Date;
+import java.util.Set;
 
 /**
  * <p>
@@ -56,22 +58,23 @@ public class PingService {
         BriefLogFormatter.init();
 
         String peerHost = args.length > 0 ? args[0] : null;
-        int peerPort = args.length > 1 ? Integer.parseInt(args[1]) : 0;
+        int peerPort = args.length > 1 ? Integer.parseInt(args[1]) : NetworkParameters.prodNet().port;
 
-        boolean testNet = peerPort == NetworkParameters.testNet().port;
+        boolean testNet = peerPort != NetworkParameters.prodNet().port;
         final NetworkParameters params = testNet ? NetworkParameters.testNet() : NetworkParameters.prodNet();
         String filePrefix = testNet ? "pingservice-testnet" : "pingservice-prodnet";
 
         // Try to read the wallet from storage, create a new one if not possible.
-        Wallet wallet;
+        Wallet w;
         final File walletFile = new File(filePrefix + ".wallet");
         try {
-            wallet = Wallet.loadFromFile(walletFile);
+            w = Wallet.loadFromFile(walletFile);
         } catch (IOException e) {
-            wallet = new Wallet(params);
-            wallet.keychain.add(new ECKey());
-            wallet.saveToFile(walletFile);
+            w = new Wallet(params);
+            w.keychain.add(new ECKey());
+            w.saveToFile(walletFile);
         }
+        final Wallet wallet = w;
         // Fetch the first key in the wallet (should be the only key).
         ECKey key = wallet.keychain.get(0);
 
@@ -83,15 +86,13 @@ public class PingService {
 
         // Connect to the localhost node. One minute timeout since we won't try any other peers
         System.out.println("Connecting ...");
-        BlockChain chain = new BlockChain(params, wallet, blockStore);
+        final BlockChain chain = new BlockChain(params, wallet, blockStore);
         
         final PeerGroup peerGroup = new PeerGroup(params, chain);
         // Download headers only until a day ago.
         peerGroup.setFastCatchupTimeSecs((new Date().getTime() / 1000) - (60 * 60 * 24));
 
         if (peerHost != null) {
-            // TEMP!
-            peerGroup.addAddress(new PeerAddress(InetAddress.getLocalHost(), peerPort));
             peerGroup.addAddress(new PeerAddress(InetAddress.getByName(peerHost), peerPort));
         } else {
             peerGroup.addPeerDiscovery(new DnsDiscovery(params));
@@ -99,6 +100,25 @@ public class PingService {
 
         peerGroup.addWallet(wallet);
         peerGroup.start();
+
+        peerGroup.addEventListener(new AbstractPeerEventListener() {
+            @Override
+            public void onBlocksDownloaded(Peer peer, Block block, int blocksLeft) {
+                super.onBlocksDownloaded(peer, block, blocksLeft);
+
+                Set<Transaction> transactions = wallet.getTransactions(false, false);
+                if (transactions.size() == 0) return;
+                System.out.println("Confidences of wallet transactions:");
+                for (Transaction tx : transactions) {
+                    System.out.println(tx);
+                    try {
+                        System.out.println("Work done: " + tx.getConfidence().getWorkDone(chain).toString());
+                    } catch (BlockStoreException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+            }
+        });
 
         // We want to know when the balance changes.
         wallet.addEventListener(new AbstractWalletEventListener() {
