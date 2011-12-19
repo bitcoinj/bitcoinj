@@ -379,8 +379,8 @@ public class Peer {
                 tx.getConfidence().markBroadcastBy(address);
             } else {
                 log.debug("Provided with a downloaded transaction we didn't see broadcast yet: {}", tx.getHash());
-                announcedTransactionHashes.put(tx.getHash(), tx);
             }
+            announcedTransactionHashes.put(tx.getHash(), tx);
         }
     }
 
