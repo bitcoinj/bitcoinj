@@ -320,7 +320,11 @@ public class ChainSplitTests {
         //
         assertEquals(2, txns.size());
         assertEquals(1, txns.get(0).getConfidence().getAppearedAtChainHeight());
-        assertEquals(TransactionConfidence.NOT_IN_BEST_CHAIN, txns.get(1).getConfidence().getAppearedAtChainHeight());
+        assertEquals(TransactionConfidence.ConfidenceType.NOT_IN_BEST_CHAIN, txns.get(1).getConfidence().getConfidenceType());
+        try {
+            txns.get(1).getConfidence().getAppearedAtChainHeight();
+            fail();
+        } catch (IllegalStateException e) {}
         // ... and back to the first chain.
         Block b5 = b2.createNextBlock(coinsTo);
         Block b6 = b5.createNextBlock(coinsTo);

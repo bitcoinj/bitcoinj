@@ -251,11 +251,8 @@ public class WalletTest {
         // done by any miner for products that can be bought at a chosen time and very quickly (as every second you
         // withold your block means somebody else might find it first, invalidating your work).
         //
-        // Test that we handle ourselves performing the attack correctly: a double spend on the chain moves
-        // transactions from pending to dead.
-        //
-        // Note that the other way around, where a pending transaction sending us coins becomes dead,
-        // isn't tested because today BitCoinJ only learns about such transactions when they appear in the chain.
+        // Test that we handle the attack correctly: a double spend on the chain moves transactions from pending to dead.
+        // This needs to work both for transactions we create, and that we receive from others.
         final Transaction[] eventDead = new Transaction[1];
         final Transaction[] eventReplacement = new Transaction[1];
         wallet.addEventListener(new AbstractWalletEventListener() {
@@ -280,6 +277,33 @@ public class WalletTest {
         wallet.receiveFromBlock(send2, null, BlockChain.NewBlockType.BEST_CHAIN);
         assertEquals(send1, eventDead[0]);
         assertEquals(send2, eventReplacement[0]);
+        assertEquals(TransactionConfidence.ConfidenceType.OVERRIDDEN_BY_DOUBLE_SPEND,
+                     send1.getConfidence().getConfidenceType());
+        
+        // Receive 10 BTC.
+        nanos = Utils.toNanoCoins(10, 0);
+
+        // Create a double spending tx.
+        Transaction t2 = new Transaction(params);
+        TransactionOutput o1 = new TransactionOutput(params, t2, nanos, myAddress);
+        t2.addOutput(o1);
+        Transaction prevTx = new Transaction(params);
+        Address someBadGuy = new ECKey().toAddress(params);
+        TransactionOutput prevOut = new TransactionOutput(params, prevTx, nanos, someBadGuy);
+        prevTx.addOutput(prevOut);
+        // Connect it.
+        t2.addInput(prevOut);
+        wallet.receivePending(t2);
+        assertEquals(TransactionConfidence.ConfidenceType.NOT_SEEN_IN_CHAIN, t2.getConfidence().getConfidenceType());
+        // Receive a tx from a block that overrides it.
+        Transaction t3 = new Transaction(params);
+        TransactionOutput o3 = new TransactionOutput(params, t3, nanos, someBadGuy);
+        t3.addOutput(o3);
+        t3.addInput(prevOut);
+        wallet.receiveFromBlock(t3, null, BlockChain.NewBlockType.BEST_CHAIN);
+        assertEquals(TransactionConfidence.ConfidenceType.OVERRIDDEN_BY_DOUBLE_SPEND, 
+                     t2.getConfidence().getConfidenceType());
+        assertEquals(t3, t2.getConfidence().getOverridingTransaction());
     }
 
     @Test
@@ -332,7 +356,7 @@ public class WalletTest {
 
         // Receive some coins.
         BigInteger nanos = Utils.toNanoCoins(1, 0);
-        Transaction t1 = createFakeTx(params, nanos,  myAddress);
+        Transaction t1 = createFakeTx(params, nanos, myAddress);
         StoredBlock b1 = createFakeBlock(params, blockStore, t1).storedBlock;
         wallet.receiveFromBlock(t1, b1, BlockChain.NewBlockType.BEST_CHAIN);
         assertEquals(nanos, wallet.getBalance());

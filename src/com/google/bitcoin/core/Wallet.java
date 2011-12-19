@@ -232,7 +232,6 @@ public class Wallet implements Serializable {
      * @throws ScriptException
      */
     synchronized void receivePending(Transaction tx) throws VerificationException, ScriptException {
-        // TODO: Add a notion of confidence levels to this API.
         // Runs in a peer thread.
 
         // Ignore it if we already know about this transaction. Receiving a pending transaction never moves it
@@ -254,6 +253,14 @@ public class Wallet implements Serializable {
         BigInteger value = tx.getValueSentToMe(this);
         log.info("Received a pending transaction {} that sends us {} BTC", tx.getHashAsString(),
                  Utils.bitcoinValueToFriendlyString(value));
+
+        // Mark the tx as having been seen but is not yet in the chain. This will normally have been done already by
+        // the Peer before we got to this point, but in some cases (unit tests, other sources of transactions) it may
+        // have been missed out.
+        TransactionConfidence.ConfidenceType currentConfidence = tx.getConfidence().getConfidenceType();
+        assert currentConfidence == TransactionConfidence.ConfidenceType.UNKNOWN ||
+               currentConfidence == TransactionConfidence.ConfidenceType.NOT_SEEN_IN_CHAIN : currentConfidence;
+        tx.getConfidence().setConfidenceType(TransactionConfidence.ConfidenceType.NOT_SEEN_IN_CHAIN);
 
         // If this tx spends any of our unspent outputs, mark them as spent now, then add to the pending pool. This
         // ensures that if some other client that has our keys broadcasts a spend we stay in sync. Also updates the
@@ -424,7 +431,8 @@ public class Wallet implements Serializable {
             // received some money and then the sender co-operated with a miner to take back the coins, using a tx
             // that isn't involving our keys at all.
             Transaction doubleSpend = findDoubleSpendAgainstPending(tx);
-            assert doubleSpend != null;
+            if (doubleSpend == null)
+                throw new IllegalStateException("Received an irrelevant tx that was not a double spend.");
             // This is mostly the same as the codepath in updateForSpends, but that one is only triggered when
             // the transaction being double spent is actually in our wallet (ie, maybe we're double spending).
             log.warn("Saw double spend from chain override pending tx {}", doubleSpend.getHashAsString());
@@ -432,6 +440,7 @@ public class Wallet implements Serializable {
             pending.remove(doubleSpend.getHash());
             dead.put(doubleSpend.getHash(), doubleSpend);
             // Inform the event listeners of the newly dead tx.
+            doubleSpend.getConfidence().setOverridingTransaction(tx);
             for (WalletEventListener listener : eventListeners) {
                 synchronized (listener) {
                     listener.onDeadTransaction(this, doubleSpend, tx);
@@ -491,6 +500,7 @@ public class Wallet implements Serializable {
                         // Now forcibly change the connection.
                         input.connect(unspent, true);
                         // Inform the event listeners of the newly dead tx.
+                        connected.getConfidence().setOverridingTransaction(tx);
                         for (WalletEventListener listener : eventListeners) {
                             synchronized (listener) {
                                 listener.onDeadTransaction(this, connected, tx);

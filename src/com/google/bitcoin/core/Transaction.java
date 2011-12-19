@@ -185,11 +185,11 @@ public class Transaction extends ChildMessage implements Serializable {
     }
 
     /**
-     * Convenience wrapper around getConfidence().getAppearedAtChainHeight()
+     * Convenience wrapper around getConfidence().getConfidenceType()
      * @return true if this transaction hasn't been seen in any block yet.
      */
     public boolean isPending() {
-        return getConfidence().getAppearedAtChainHeight() == TransactionConfidence.NOT_SEEN_IN_CHAIN;
+        return getConfidence().getConfidenceType() == TransactionConfidence.ConfidenceType.NOT_SEEN_IN_CHAIN;
     }
 
     /**
@@ -219,7 +219,7 @@ public class Transaction extends ChildMessage implements Serializable {
 
     /** Called by the wallet once a re-org means we don't appear in the best chain anymore. */
     void notifyNotOnBestChain() {
-        getConfidence().setAppearedAtChainHeight(TransactionConfidence.NOT_IN_BEST_CHAIN);
+        getConfidence().setConfidenceType(TransactionConfidence.ConfidenceType.NOT_IN_BEST_CHAIN);
     }
 
     /**
