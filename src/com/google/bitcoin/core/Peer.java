@@ -49,10 +49,25 @@ public class Peer {
     // primary peer. This is to avoid redundant work and concurrency problems with downloading the same chain
     // in parallel.
     private boolean downloadData = true;
+
+    /**
+     * Size of the pending transactions pool. Override this to reduce memory usage on constrained platforms. The pool
+     * is used to keep track of how many peers announced a transaction. With an untampered-with internet connection,
+     * the more peers announce a transaction, the more confidence you can have that it's valid.
+     */
+    public static int TRANSACTION_MEMORY_POOL_SIZE = 1000;
+
     // Maps announced transaction hashes to the Transaction objects. If this is not a download peer, the Transaction
     // objects must be provided from elsewhere (ie, a PeerGroup object). If the Transaction hasn't been downloaded or
-    // provided yet, the map value is null.
-    private Map<Sha256Hash, Transaction> announcedTransactionHashes;
+    // provided yet, the map value is null. This is somewhat equivalent to the reference implementations memory pool.
+    private LinkedHashMap<Sha256Hash, Transaction> announcedTransactionHashes = new LinkedHashMap<Sha256Hash, Transaction>() {
+        @Override
+        protected boolean removeEldestEntry(Map.Entry<Sha256Hash, Transaction> sha256HashTransactionEntry) {
+            // An arbitrary choice to stop the memory used by tracked transactions getting too huge. Mobile platforms
+            // may want to reduce this.
+            return size() > TRANSACTION_MEMORY_POOL_SIZE;
+        }
+    };
 
     /**
      * If true, we do some things that may only make sense on constrained devices like Android phones. Currently this
@@ -81,7 +96,6 @@ public class Peer {
         this.pendingGetBlockFutures = new ArrayList<GetDataFuture<Block>>();
         this.eventListeners = new ArrayList<PeerEventListener>();
         this.fastCatchupTimeSecs = params.genesisBlock.getTimeSeconds();
-        this.announcedTransactionHashes = new HashMap<Sha256Hash, Transaction>();
     }
 
     /**
