@@ -20,14 +20,15 @@ import com.google.bitcoin.store.BlockStoreException;
 
 import java.io.Serializable;
 import java.math.BigInteger;
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 
 /**
- * <p>A <tt>TransactionConfidence</tt> object tracks data you can use to make a confidence decision about a transaction.
+ * <p>A TransactionConfidence object tracks data you can use to make a confidence decision about a transaction.
  * It also contains some pre-canned rules for common scenarios: if you aren't really sure what level of confidence
- * you need, these should prove useful.</p>
+ * you need, these should prove useful. You can get a confidence object using {@link Transaction#getConfidence()}.
+ * They cannot be constructed directly.</p>
  *
  * <p>Confidence in a transaction can come in multiple ways:</p>
  *
@@ -49,7 +50,9 @@ import java.util.Set;
  *
  * <p>TransactionConfidence is purely a data structure, it doesn't try and keep itself up to date. To have fresh
  * confidence data, you need to ensure the owning {@link Transaction} is being updated by something, like
- * a {@link Wallet}.</p>
+ * a {@link Wallet}.</p>Confidence objects <b>are live</b> and can be updated by other threads running in parallel
+ * to your own. To make a copy that won't be changed, use
+ * {@link com.google.bitcoin.core.TransactionConfidence#duplicate()}.
  */
 public class TransactionConfidence implements Serializable {
     private static final long serialVersionUID = 4577920141400556444L;
@@ -60,6 +63,36 @@ public class TransactionConfidence implements Serializable {
      * to us, so only peers we explicitly connected to should go here.
      */
     private Set<PeerAddress> broadcastBy;
+    /** The Transaction that this confidence object is associated with. */
+    private Transaction transaction;
+    private transient ArrayList<Listener> listeners;
+
+    // TODO: The advice below is a mess. There should be block chain listeners, see issue 94.
+    /**
+     * <p>Adds an event listener that will be run when this confidence object is updated. The listener will be locked and
+     * is likely to be invoked on a peer thread.</p>
+     * 
+     * <p>Note that this is NOT called when every block is arrived. Instead it is called when the transaction 
+     * transitions between confidence states, ie, from not being seen in the chain to being seen (not necessarily in 
+     * the best chain). If you want to know when the transaction gets buried under another block, listen for new block
+     * events using {@link PeerEventListener#onBlocksDownloaded(Peer, Block, int)} and then use the getters on the
+     * confidence object to determine the new depth.</p>
+     */
+    public synchronized void addEventListener(Listener listener) {
+        if (listener == null)
+            throw new IllegalArgumentException("listener is null");
+        if (listeners == null)
+            listeners = new ArrayList<Listener>(1);
+        listeners.add(listener);
+    }
+
+    public synchronized void removeEventListener(Listener listener) {
+        if (listener == null)
+            throw new IllegalArgumentException("listener is null");
+        listeners.remove(listener);
+        if (listeners.size() == 0)
+            listeners = null;
+    }
 
     /** Describes the state of the transaction in general terms. Properties can be read to learn specifics. */
     public enum ConfidenceType {
@@ -94,17 +127,27 @@ public class TransactionConfidence implements Serializable {
         UNKNOWN
     };
 
+    /**
+     * A confidence listener is informed when the level of confidence in a transaction is updated by something, like
+     * for example a {@link Wallet}. You can add listeners to update your user interface or manage your order tracking
+     * system when confidence levels pass a certain threshold. <b>Note that confidence can go down as well as up.</b>
+     */
+    public interface Listener {
+        public void onConfidenceChanged(Transaction tx);
+    };
+
     private ConfidenceType confidenceType = ConfidenceType.UNKNOWN;
     private int appearedAtChainHeight = -1;
     private Transaction overridingTransaction;
-    
-    public TransactionConfidence() {
+
+    TransactionConfidence(Transaction tx) {
         // Assume a default number of peers for our set.
-        broadcastBy = Collections.synchronizedSet(new HashSet<PeerAddress>(10));
+        broadcastBy = new HashSet<PeerAddress>(10);
+        transaction = tx;
     }
 
     /**
-     * @return The chain height at which the transaction appeared if confidence type is BUILDING.
+     * Returns the chain height at which the transaction appeared if confidence type is BUILDING.
      * @throws IllegalStateException if the confidence type is not BUILDING.
      */
     public synchronized int getAppearedAtChainHeight() {
@@ -125,9 +168,9 @@ public class TransactionConfidence implements Serializable {
     }
 
     /**
-     * @return A general statement of the level of confidence you can have in this transaction.
+     * Returns a general statement of the level of confidence you can have in this transaction.
      */
-    public ConfidenceType getConfidenceType() {
+    public synchronized ConfidenceType getConfidenceType() {
         return confidenceType;
     }
 
@@ -135,8 +178,12 @@ public class TransactionConfidence implements Serializable {
      * Called by other objects in the system, like a {@link Wallet}, when new information about the confidence of a 
      * transaction becomes available.
      */
-    public void setConfidenceType(ConfidenceType confidenceType) {
+    public synchronized void setConfidenceType(ConfidenceType confidenceType) {
+        // Don't inform the event listeners if the confidence didn't really change.
+        if (confidenceType == this.confidenceType)
+            return;
         this.confidenceType = confidenceType;
+        runListeners();
     }
 
 
@@ -147,33 +194,37 @@ public class TransactionConfidence implements Serializable {
      *
      * @param address IP address of the peer, used as a proxy for identity.
      */
-    public void markBroadcastBy(PeerAddress address) {
+    public synchronized void markBroadcastBy(PeerAddress address) {
+        broadcastBy.add(address);
         if (getConfidenceType() == ConfidenceType.UNKNOWN)
             setConfidenceType(ConfidenceType.NOT_SEEN_IN_CHAIN);
-        broadcastBy.add(address);
     }
 
     /**
-     * @return how many peers have been passed to {@link TransactionConfidence#markBroadcastBy}.
+     * Returns how many peers have been passed to {@link TransactionConfidence#markBroadcastBy}.
      */
-    public int numBroadcastPeers() {
+    public synchronized int numBroadcastPeers() {
         return broadcastBy.size();
     }
 
     /**
-     * @return A synchronized set of {@link PeerAddress}es that announced the transaction.
+     * Returns a synchronized set of {@link PeerAddress}es that announced the transaction.
      */
-    public Set<PeerAddress> getBroadcastBy() {
+    public synchronized Set<PeerAddress> getBroadcastBy() {
         return broadcastBy;
     }
 
     @Override
-    public String toString() {
+    public synchronized String toString() {
         StringBuilder builder = new StringBuilder();
-        if (numBroadcastPeers() > 0) {
+        int peers = numBroadcastPeers();
+        if (peers > 0) {
             builder.append("Seen by ");
-            builder.append(numBroadcastPeers());
-            builder.append(" peers. ");
+            builder.append(peers);
+            if (peers > 1)
+                builder.append(" peers. ");
+            else
+                builder.append(" peer. ");
         }
         switch (getConfidenceType()) {
             case UNKNOWN:
@@ -213,7 +264,7 @@ public class TransactionConfidence implements Serializable {
      * @throws IllegalStateException if confidence type != BUILDING.
      * @return depth
      */
-    public int getDepthInBlocks(BlockChain chain) {
+    public synchronized int getDepthInBlocks(BlockChain chain) {
         if (getConfidenceType() != ConfidenceType.BUILDING) {
             throw new IllegalStateException("Confidence type is not BUILDING");
         }
@@ -232,10 +283,13 @@ public class TransactionConfidence implements Serializable {
      * @return estimated number of hashes needed to reverse the transaction.
      */
     public BigInteger getWorkDone(BlockChain chain) throws BlockStoreException {
-        if (getConfidenceType() != ConfidenceType.BUILDING)
-            throw new IllegalStateException("Confidence type is " + getConfidenceType() + ", not BUILDING");
+        int depth;
+        synchronized (this) {
+            if (getConfidenceType() != ConfidenceType.BUILDING)
+                throw new IllegalStateException("Confidence type is " + getConfidenceType() + ", not BUILDING");
+            depth = getDepthInBlocks(chain);
+        }
         BigInteger work = BigInteger.ZERO;
-        int depth = getDepthInBlocks(chain);
         StoredBlock block = chain.getChainHead();
         for (; depth > 0; depth--) {
             work = work.add(block.getChainWork());
@@ -249,7 +303,7 @@ public class TransactionConfidence implements Serializable {
      * @return the transaction that double spent this one
      * @throws IllegalStateException if confidence type is not OVERRIDDEN_BY_DOUBLE_SPEND.
      */
-    public Transaction getOverridingTransaction() {
+    public synchronized Transaction getOverridingTransaction() {
         if (getConfidenceType() != ConfidenceType.OVERRIDDEN_BY_DOUBLE_SPEND)
             throw new IllegalStateException("Confidence type is " + getConfidenceType() +
                                             ", not OVERRIDDEN_BY_DOUBLE_SPEND");
@@ -261,8 +315,27 @@ public class TransactionConfidence implements Serializable {
      * in such a way that the double-spending transaction takes precence over this one. It will not become valid now
      * unless there is a re-org. Automatically sets the confidence type to OVERRIDDEN_BY_DOUBLE_SPEND.
      */
-    public void setOverridingTransaction(Transaction overridingTransaction) {
-        setConfidenceType(ConfidenceType.OVERRIDDEN_BY_DOUBLE_SPEND);
+    public synchronized void setOverridingTransaction(Transaction overridingTransaction) {
         this.overridingTransaction = overridingTransaction;
-    }    
+        setConfidenceType(ConfidenceType.OVERRIDDEN_BY_DOUBLE_SPEND);
+    }
+
+    /** Returns a copy of this object. Event listeners are not duplicated. */
+    public synchronized TransactionConfidence duplicate() {
+        TransactionConfidence c = new TransactionConfidence(transaction);
+        c.broadcastBy.addAll(broadcastBy);
+        c.confidenceType = confidenceType;
+        c.overridingTransaction = overridingTransaction;
+        c.appearedAtChainHeight = appearedAtChainHeight;
+        return c;
+    }
+
+    private void runListeners() {
+        if (listeners == null) return;
+        for (Listener l : listeners) {
+            synchronized (l) {
+                l.onConfidenceChanged(transaction);
+            }
+        }
+    }
 }

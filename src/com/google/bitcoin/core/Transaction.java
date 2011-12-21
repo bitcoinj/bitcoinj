@@ -676,7 +676,7 @@ public class Transaction extends ChildMessage implements Serializable {
     
     public synchronized TransactionConfidence getConfidence() {
         if (confidence == null) {
-            confidence = new TransactionConfidence();
+            confidence = new TransactionConfidence(this);
         }
         return confidence;
     }
