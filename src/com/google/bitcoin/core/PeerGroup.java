@@ -285,6 +285,11 @@ public class PeerGroup {
         removeEventListener(wallet.getPeerEventListener());
     }
 
+    /** Returns how many remote nodes this peer group is connected to. */
+    public int numConnectedPeers() {
+        return peers.size();
+    }
+
     private final class PeerExecutionRunnable implements Runnable {
         /*
          * Repeatedly get the next peer address from the inactive queue and try to connect.
