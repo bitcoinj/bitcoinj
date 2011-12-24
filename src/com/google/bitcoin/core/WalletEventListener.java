@@ -22,7 +22,10 @@ import java.math.BigInteger;
  * Implementing WalletEventListener allows you to learn when the contents of the wallet changes due to
  * receiving money or a block chain re-organize. Methods are called with the event listener object locked so your
  * implementation does not have to be thread safe. It may be convenient to derive from
- * {@link AbstractWalletEventListener} instead.
+ * {@link AbstractWalletEventListener} instead.<p>
+ *
+ * It is safe to call methods of the wallet during event listener execution, and also for a listener to remove itself.
+ * Other types of modifications generally aren't safe.
  */
 public interface WalletEventListener {
     /**

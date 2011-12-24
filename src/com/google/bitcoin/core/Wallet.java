@@ -270,9 +270,18 @@ public class Wallet implements Serializable {
         // Event listeners may re-enter so we cannot make assumptions about wallet state after this loop completes.
         BigInteger balance = getBalance();
         BigInteger newBalance = balance.add(value);
-        for (WalletEventListener l : eventListeners) {
+        invokeOnCoinsReceived(tx, balance, newBalance);
+    }
+
+    private void invokeOnCoinsReceived(Transaction tx, BigInteger balance, BigInteger newBalance) {
+        for (int i = 0; i < eventListeners.size(); i++) {
+            WalletEventListener l = eventListeners.get(i);
             synchronized (l) {
                 l.onCoinsReceived(this, tx, balance, newBalance);
+            }
+            if (eventListeners.get(i) != l) {
+                // Listener removed itself.
+                i--;
             }
         }
     }
@@ -409,11 +418,7 @@ public class Wallet implements Serializable {
         //
         // TODO: Decide whether to run the event listeners, if a tx confidence listener already modified the wallet.
         if (!reorg && bestChain && valueDifference.compareTo(BigInteger.ZERO) > 0 && wtx == null) {
-            for (WalletEventListener l : eventListeners) {
-                synchronized (l) {
-                    l.onCoinsReceived(this, tx, prevBalance, getBalance());
-                }
-            }
+            invokeOnCoinsReceived(tx, prevBalance, getBalance());
         }
     }
 
@@ -452,11 +457,7 @@ public class Wallet implements Serializable {
             dead.put(doubleSpend.getHash(), doubleSpend);
             // Inform the event listeners of the newly dead tx.
             doubleSpend.getConfidence().setOverridingTransaction(tx);
-            for (WalletEventListener listener : eventListeners) {
-                synchronized (listener) {
-                    listener.onDeadTransaction(this, doubleSpend, tx);
-                }
-            }
+            invokeOnDeadTransaction(doubleSpend, tx);
         }
     }
 
@@ -1181,12 +1182,7 @@ public class Wallet implements Serializable {
                 Transaction replacement = doubleSpent.getSpentBy().getParentTransaction();
                 dead.put(tx.getHash(), tx);
                 pending.remove(tx.getHash());
-                // Inform the event listeners of the newly dead tx.
-                for (WalletEventListener listener : eventListeners) {
-                    synchronized (listener) {
-                        listener.onDeadTransaction(this, tx, replacement);
-                    }
-                }
+                invokeOnDeadTransaction(tx, replacement);
                 break;
             }
         }
@@ -1200,6 +1196,19 @@ public class Wallet implements Serializable {
             log.info("   ->pending", tx.getHashAsString());
             pending.put(tx.getHash(), tx);
             dead.remove(tx.getHash());
+        }
+    }
+
+    private void invokeOnDeadTransaction(Transaction tx, Transaction replacement) {
+        for (int i = 0; i < eventListeners.size(); i++) {
+            WalletEventListener listener = eventListeners.get(i);
+            synchronized (listener) {
+                listener.onDeadTransaction(this, tx, replacement);
+            }
+            if (eventListeners.get(i) != listener) {
+                // Listener removed itself.
+                i--;
+            }
         }
     }
 

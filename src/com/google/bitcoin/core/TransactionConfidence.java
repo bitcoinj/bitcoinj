@@ -65,7 +65,7 @@ public class TransactionConfidence implements Serializable {
     private Set<PeerAddress> broadcastBy;
     /** The Transaction that this confidence object is associated with. */
     private Transaction transaction;
-    private transient ArrayList<Listener> listeners;
+    private transient ArrayList<Listener> listeners = new ArrayList<Listener>(1);
 
     // TODO: The advice below is a mess. There should be block chain listeners, see issue 94.
     /**
@@ -81,8 +81,6 @@ public class TransactionConfidence implements Serializable {
     public synchronized void addEventListener(Listener listener) {
         if (listener == null)
             throw new IllegalArgumentException("listener is null");
-        if (listeners == null)
-            listeners = new ArrayList<Listener>(1);
         listeners.add(listener);
     }
 
@@ -90,8 +88,6 @@ public class TransactionConfidence implements Serializable {
         if (listener == null)
             throw new IllegalArgumentException("listener is null");
         listeners.remove(listener);
-        if (listeners.size() == 0)
-            listeners = null;
     }
 
     /** Describes the state of the transaction in general terms. Properties can be read to learn specifics. */
@@ -130,7 +126,8 @@ public class TransactionConfidence implements Serializable {
     /**
      * A confidence listener is informed when the level of confidence in a transaction is updated by something, like
      * for example a {@link Wallet}. You can add listeners to update your user interface or manage your order tracking
-     * system when confidence levels pass a certain threshold. <b>Note that confidence can go down as well as up.</b>
+     * system when confidence levels pass a certain threshold. <b>Note that confidence can go down as well as up.</b>.
+     * During listener execution, it's safe to remove the current listener but not others.
      */
     public interface Listener {
         public void onConfidenceChanged(Transaction tx);
@@ -331,10 +328,14 @@ public class TransactionConfidence implements Serializable {
     }
 
     private void runListeners() {
-        if (listeners == null) return;
-        for (Listener l : listeners) {
+        for (int i = 0; i < listeners.size(); i++) {
+            Listener l = listeners.get(i);
             synchronized (l) {
                 l.onConfidenceChanged(transaction);
+            }
+            if (listeners.get(i) != l) {
+                // Listener removed itself.
+                i--;
             }
         }
     }

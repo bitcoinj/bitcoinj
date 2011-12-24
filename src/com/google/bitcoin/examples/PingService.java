@@ -115,6 +115,10 @@ public class PingService {
             public void onBlocksDownloaded(Peer peer, Block block, int blocksLeft) {
                 super.onBlocksDownloaded(peer, block, blocksLeft);
 
+                // Don't bother printing during block chain downloads.
+                if (blocksLeft > 0)
+                    return;
+
                 Set<Transaction> transactions = wallet.getTransactions(false, false);
                 if (transactions.size() == 0) return;
                 System.out.println("Confidences of wallet transactions:");
@@ -149,9 +153,7 @@ public class PingService {
                             if (tx2.getConfidence().getConfidenceType() == TransactionConfidence.ConfidenceType.BUILDING) {
                                 // Coins were confirmed.
                                 bounceCoins(tx2);
-
-                                // TODO: Make this work.
-                                // tx2.getConfidence().removeEventListener(this);
+                                tx2.getConfidence().removeEventListener(this);
                             } else {
                                 System.out.println(String.format("Confidence of %s changed, is now: %s",
                                         tx2.getHashAsString(), tx2.getConfidence().toString()));
