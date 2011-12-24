@@ -314,6 +314,7 @@ public class WalletTest {
 
         // First one is "called" second is "pending".
         final boolean[] flags = new boolean[2];
+        final Transaction[] notifiedTx = new Transaction[1];
         wallet.addEventListener(new AbstractWalletEventListener() {
             @Override
             public void onCoinsReceived(Wallet wallet, Transaction tx, BigInteger prevBalance, BigInteger newBalance) {
@@ -324,6 +325,7 @@ public class WalletTest {
                 assertEquals(newBalance, nanos);
                 flags[0] = true;
                 flags[1] = tx.isPending();
+                notifiedTx[0] = tx;
             }
         });
 
@@ -334,14 +336,23 @@ public class WalletTest {
         // Check we don't get notified if we receive it again.
         wallet.receivePending(t1);
         assertFalse(flags[0]);
-        // Now check again when we receive it via a block.
-        flags[1] = true;
+        // Now check again, that we should NOT be notified when we receive it via a block (we were already notified).
+        // However the confidence should be updated.
         // Make a fresh copy of the tx to ensure we're testing realistically.
+        flags[0] = flags[1] = false;
+        notifiedTx[0].getConfidence().addEventListener(new TransactionConfidence.Listener() {
+            public void onConfidenceChanged(Transaction tx) {
+                flags[1] = true;
+            }
+        });
+        assertEquals(TransactionConfidence.ConfidenceType.NOT_SEEN_IN_CHAIN,
+                notifiedTx[0].getConfidence().getConfidenceType());
         final Transaction t1Copy = new Transaction(params, t1.bitcoinSerialize());
         wallet.receiveFromBlock(t1Copy, createFakeBlock(params, blockStore, t1Copy).storedBlock,
                                 BlockChain.NewBlockType.BEST_CHAIN);
-        assertTrue(flags[0]);
-        assertFalse(flags[1]);  // is not pending
+        assertFalse(flags[0]);
+        assertTrue(flags[1]);
+        assertEquals(TransactionConfidence.ConfidenceType.BUILDING, notifiedTx[0].getConfidence().getConfidenceType());
         // Check we don't get notified about an irrelevant transaction.
         flags[0] = false;
         flags[1] = false;

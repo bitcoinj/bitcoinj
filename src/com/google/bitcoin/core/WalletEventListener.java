@@ -26,10 +26,12 @@ import java.math.BigInteger;
  */
 public interface WalletEventListener {
     /**
-     * This is called on a Peer thread when a block is received that sends some coins to you. Note that this will
-     * also be called when downloading the block chain as the wallet balance catches up so if you don't want that
-     * register the event listener after the chain is downloaded. It's safe to use methods of wallet during the
-     * execution of this callback.
+     * This is called on a Peer thread when a transaction is seen that sends coins to this wallet, either because it
+     * was broadcast across the network or because a block was received. If a transaction is seen when it was broadcast,
+     * onCoinsReceived won't be called again when a block containing it is received. If you want to know when such a
+     * transaction receives its first confirmation, register a {@link TransactionConfidence} event listener using
+     * the object retrieved via {@link com.google.bitcoin.core.Transaction#getConfidence()}. It's safe to modify the
+     * wallet in this callback, for example, by spending the transaction just received.
      *
      * @param wallet      The wallet object that received the coins/
      * @param tx          The transaction which sent us the coins.

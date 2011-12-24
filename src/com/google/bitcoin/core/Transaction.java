@@ -213,6 +213,8 @@ public class Transaction extends ChildMessage implements Serializable {
             if (updatedAt == null) {
                 updatedAt = new Date(block.getHeader().getTimeSeconds() * 1000);
             }
+            // This can cause event listeners on TransactionConfidence to run. After this line completes, the wallets
+            // state may have changed!
             getConfidence().setAppearedAtChainHeight(block.getHeight());
         }
     }

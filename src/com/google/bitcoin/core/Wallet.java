@@ -334,20 +334,15 @@ public class Wallet implements Serializable {
 
         // If this transaction is already in the wallet we may need to move it into a different pool. At the very
         // least we need to ensure we're manipulating the canonical object rather than a duplicate.
-        Transaction wtx = null;
+        Transaction wtx;
         if ((wtx = pending.remove(txHash)) != null) {
             // Make sure "tx" is always the canonical object we want to manipulate, send to event handlers, etc.
             tx = wtx;
-            wtx = null;
 
             log.info("  <-pending");
             // A transaction we created appeared in a block. Probably this is a spend we broadcast that has been
             // accepted by the network.
             //
-            // Mark the tx as appearing in this block so we can find it later after a re-org. This also lets the
-            // transaction update its confidence and timestamp bookkeeping data.
-            if (block != null)
-                tx.setBlockAppearance(block, bestChain);
             if (bestChain) {
                 if (valueSentToMe.equals(BigInteger.ZERO)) {
                     // There were no change transactions so this tx is fully spent.
@@ -394,10 +389,26 @@ public class Wallet implements Serializable {
 
         log.info("Balance is now: " + bitcoinValueToFriendlyString(getBalance()));
 
-        // Inform anyone interested that we have new coins. Note: we may be re-entered by the event listener,
-        // so we must not make assumptions about our state after this loop returns! For example the balance we just
-        // received might already be spent!
-        if (!reorg && bestChain && valueDifference.compareTo(BigInteger.ZERO) > 0) {
+        // WARNING: The code beyond this point can trigger event listeners on transaction confidence objects, which are
+        // in turn allowed to re-enter the Wallet. This means we cannot assume anything about the state of the wallet
+        // from now on. The balance just received may already be spent.
+
+        // Mark the tx as appearing in this block so we can find it later after a re-org. This also lets the
+        // transaction update its confidence and timestamp bookkeeping data.
+        if (block != null) {
+            tx.setBlockAppearance(block, bestChain);
+        }
+
+        // Inform anyone interested that we have new coins but only if:
+        //  - This is not due to a re-org.
+        //  - The coins appeared on the best chain.
+        //  - We did in fact receive some new money.
+        //  - We have not already informed the user about the coins when we received the tx broadcast, or for our
+        //    own spends. If users want to know when a broadcast tx becomes confirmed, they need to use tx confidence
+        //    listeners.
+        //
+        // TODO: Decide whether to run the event listeners, if a tx confidence listener already modified the wallet.
+        if (!reorg && bestChain && valueDifference.compareTo(BigInteger.ZERO) > 0 && wtx == null) {
             for (WalletEventListener l : eventListeners) {
                 synchronized (l) {
                     l.onCoinsReceived(this, tx, prevBalance, getBalance());
