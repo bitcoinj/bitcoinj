@@ -169,6 +169,11 @@ public class Wallet implements Serializable {
         oos.close();
     }
 
+    /** Returns the parameters this wallet was created with. */
+    public NetworkParameters getParams() {
+        return params;
+    }
+
 
     /**
      * Returns a wallet deserialized from the given file.

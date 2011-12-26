@@ -65,7 +65,7 @@ public class TransactionConfidence implements Serializable {
     private Set<PeerAddress> broadcastBy;
     /** The Transaction that this confidence object is associated with. */
     private Transaction transaction;
-    private transient ArrayList<Listener> listeners = new ArrayList<Listener>(1);
+    private transient ArrayList<Listener> listeners;
 
     // TODO: The advice below is a mess. There should be block chain listeners, see issue 94.
     /**
@@ -81,6 +81,8 @@ public class TransactionConfidence implements Serializable {
     public synchronized void addEventListener(Listener listener) {
         if (listener == null)
             throw new IllegalArgumentException("listener is null");
+        if (listeners == null)
+            listeners = new ArrayList<Listener>(1);
         listeners.add(listener);
     }
 
@@ -328,6 +330,7 @@ public class TransactionConfidence implements Serializable {
     }
 
     private void runListeners() {
+        if (listeners == null) return;
         for (int i = 0; i < listeners.size(); i++) {
             Listener l = listeners.get(i);
             synchronized (l) {
