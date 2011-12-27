@@ -306,7 +306,7 @@ public class PeerGroup {
      *   <li>Announcing pending transactions that didn't get into the chain yet to our peers.</li>
      * </ol>
      */
-    public void addWallet(Wallet wallet) {
+    public synchronized void addWallet(Wallet wallet) {
         if (wallet == null)
             throw new IllegalArgumentException("wallet is null");
         wallets.add(wallet);
@@ -527,8 +527,8 @@ public class PeerGroup {
         // Now tell the peers about any transactions we have which didn't appear in the chain yet. These are not
         // necessarily spends we created. They may also be transactions broadcast across the network that we saw,
         // which are relevant to us, and which we therefore wish to help propagate (ie they send us coins).
-        announcePendingWalletTransactions(wallets, Collections.singleton(peer));
         peer.addEventListener(getDataListener);
+        announcePendingWalletTransactions(wallets, Collections.singleton(peer));
         synchronized (peerEventListeners) {
             for (PeerEventListener listener : peerEventListeners) {
                 synchronized (listener) {
