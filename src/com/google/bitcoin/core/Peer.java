@@ -382,7 +382,7 @@ public class Peer {
         // TODO: Block locators should be abstracted out rather than special cased here.
         List<Sha256Hash> blockLocator = new LinkedList<Sha256Hash>();
         // For now we don't do the exponential thinning as suggested here: 
-        //  https://en.bitcoin.it/wiki/Protocol_specification#getblocks
+        //   https://en.bitcoin.it/wiki/Protocol_specification#getblocks
         // However, this should be taken seriously going forward. The old implementation only added the hash of the 
         // genesis block and the current chain head, which randomly led us to halt block fetching when ending on a
         // chain that turned out not to be the longest. This happened roughly once a week. 

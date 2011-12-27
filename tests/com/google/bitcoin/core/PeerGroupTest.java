@@ -16,22 +16,20 @@
 
 package com.google.bitcoin.core;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-
 import com.google.bitcoin.discovery.PeerDiscovery;
 import com.google.bitcoin.discovery.PeerDiscoveryException;
 import com.google.bitcoin.store.MemoryBlockStore;
-
 import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.Semaphore;
+
+import static org.junit.Assert.*;
 
 public class PeerGroupTest extends TestWithNetworkConnections {
     static final NetworkParameters params = NetworkParameters.unitTests();
@@ -110,6 +108,12 @@ public class PeerGroupTest extends TestWithNetworkConnections {
         peerGroup.start();
         peerGroup.addPeer(p1);
         peerGroup.addPeer(p2);
+        
+        // Check the peer accessors.
+        assertEquals(2, peerGroup.numPeers());
+        List<Peer> tmp = peerGroup.getPeers();
+        assertEquals(p1, tmp.get(0));
+        assertEquals(p2, tmp.get(1));
 
         // Set up a little block chain. We heard about b1 but not b2 (it is pending download). b3 is solved whilst we
         // are downloading the chain.

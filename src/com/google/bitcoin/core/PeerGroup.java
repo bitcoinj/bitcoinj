@@ -28,9 +28,7 @@ import java.io.IOException;
 import java.net.ConnectException;
 import java.net.InetSocketAddress;
 import java.net.SocketTimeoutException;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -155,6 +153,24 @@ public class PeerGroup {
 
     public synchronized int getMaxConnections() {
         return peerPool.getMaximumPoolSize();
+    }
+    
+    /**
+     * Returns a newly allocated list containing the currently connected peers. If all you care about is the count,
+     * use numPeers().
+     */
+    public synchronized List<Peer> getPeers() {
+        ArrayList<Peer> result = new ArrayList<Peer>(peers.size());
+        result.addAll(peers);
+        return result;
+    }
+
+    /**
+     * Returns the number of currently connected peers. To be informed when this count changes, register a 
+     * {@link PeerEventListener} and use the onPeerConnected/onPeerDisconnected methods.
+     */
+    public synchronized int numPeers() {
+        return peers.size();
     }
 
     /**
