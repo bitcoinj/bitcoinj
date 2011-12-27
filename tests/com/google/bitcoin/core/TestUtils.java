@@ -23,9 +23,14 @@ import java.math.BigInteger;
 
 public class TestUtils {
     public static Transaction createFakeTx(NetworkParameters params, BigInteger nanocoins, Address to) {
+        // Create a fake TX of sufficient realism to exercise the unit tests. Two outputs, one to us, one to somewhere
+        // else to simulate change.
         Transaction t = new Transaction(params);
-        TransactionOutput o1 = new TransactionOutput(params, t, nanocoins, to);
-        t.addOutput(o1);
+        TransactionOutput outputToMe = new TransactionOutput(params, t, nanocoins, to);
+        t.addOutput(outputToMe);
+        TransactionOutput change = new TransactionOutput(params, t, Utils.toNanoCoins(1, 11), 
+                new ECKey().toAddress(params));
+        t.addOutput(change);
         // Make a previous tx simply to send us sufficient coins. This prev tx is not really valid but it doesn't
         // matter for our purposes.
         Transaction prevTx = new Transaction(params);

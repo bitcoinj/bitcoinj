@@ -390,7 +390,7 @@ public class Wallet implements Serializable {
      * If the transactions outputs are all marked as spent, and it's in the unspent map, move it.
      */
     private void maybeMoveTxToSpent(Transaction tx, String context) {
-        if (tx.isEveryOutputSpent()) {
+        if (tx.isEveryOwnedOutputSpent(this)) {
             // There's nothing left I can spend in this transaction.
             if (unspent.remove(tx.getHash()) != null) {
                 if (log.isInfoEnabled()) {

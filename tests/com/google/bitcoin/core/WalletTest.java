@@ -26,10 +26,9 @@ import java.util.List;
 
 import static com.google.bitcoin.core.TestUtils.createFakeBlock;
 import static com.google.bitcoin.core.TestUtils.createFakeTx;
-import static com.google.bitcoin.core.Utils.*;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static com.google.bitcoin.core.Utils.bitcoinValueToFriendlyString;
+import static com.google.bitcoin.core.Utils.toNanoCoins;
+import static org.junit.Assert.*;
 
 public class WalletTest {
     static final NetworkParameters params = NetworkParameters.unitTests();
@@ -125,14 +124,20 @@ public class WalletTest {
         StoredBlock b1 = createFakeBlock(params, blockStore, t1).storedBlock;
         StoredBlock b2 = createFakeBlock(params, blockStore, t2).storedBlock;
         BigInteger expected = toNanoCoins(5, 50);
+        assertEquals(0, wallet.getPoolSize(Wallet.Pool.ALL));
         wallet.receive(t1, b1, BlockChain.NewBlockType.BEST_CHAIN);
+        assertEquals(1, wallet.getPoolSize(Wallet.Pool.UNSPENT));
         wallet.receive(t2, b2, BlockChain.NewBlockType.BEST_CHAIN);
+        assertEquals(2, wallet.getPoolSize(Wallet.Pool.UNSPENT));
         assertEquals(expected, wallet.getBalance());
 
         // Now spend one coin.
         BigInteger v3 = toNanoCoins(1, 0);
         Transaction spend = wallet.createSend(new ECKey().toAddress(params), v3);
         wallet.confirmSend(spend);
+        assertEquals(1, wallet.getPoolSize(Wallet.Pool.UNSPENT));
+        assertEquals(1, wallet.getPoolSize(Wallet.Pool.SPENT));
+        assertEquals(1, wallet.getPoolSize(Wallet.Pool.PENDING));
 
         // Available and estimated balances should not be the same. We don't check the exact available balance here
         // because it depends on the coin selection algorithm.
@@ -288,7 +293,7 @@ public class WalletTest {
         wallet.receive(tx2, b2, BlockChain.NewBlockType.BEST_CHAIN);
         // Check we got them back in order.
         List<Transaction> transactions = wallet.getTransactionsByTime();
-        assertEquals(tx2,  transactions.get(0));
+        assertEquals(tx2, transactions.get(0));
         assertEquals(tx1,  transactions.get(1));
         assertEquals(2, transactions.size());
         // Check we get only the last transaction if we request a subrage.
@@ -315,7 +320,7 @@ public class WalletTest {
         transactions = wallet.getTransactionsByTime();
         assertEquals(tx3,  transactions.get(0));
         assertEquals(tx2,  transactions.get(1));
-        assertEquals(tx1,  transactions.get(2));
+        assertEquals(tx1, transactions.get(2));
         assertEquals(3, transactions.size());
     }
 }

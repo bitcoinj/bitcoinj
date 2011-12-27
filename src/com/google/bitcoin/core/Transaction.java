@@ -256,12 +256,24 @@ public class Transaction extends ChildMessage implements Serializable {
     }
 
     /**
-     * @return true if every output is marked as spent.
+     * Returns true if every output is marked as spent.
      */
     public boolean isEveryOutputSpent() {
         maybeParse();
         for (TransactionOutput output : outputs) {
             if (output.isAvailableForSpending())
+                return false;
+        }
+        return true;
+    }
+
+    /**
+     * Returns true if every output owned by the given wallet is spent.
+     */
+    public boolean isEveryOwnedOutputSpent(Wallet wallet) {
+        maybeParse();
+        for (TransactionOutput output : outputs) {
+            if (output.isAvailableForSpending() && output.isMine(wallet))
                 return false;
         }
         return true;
