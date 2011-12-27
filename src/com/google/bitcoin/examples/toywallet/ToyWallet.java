@@ -57,11 +57,28 @@ public class ToyWallet {
             params = NetworkParameters.prodNet();
         }
 
-        wallet = getWallet(params);
+        // Try to read the wallet from storage, create a new one if not possible.
+        boolean freshWallet = false;
+        walletFile = new File("toy.wallet");
+        try {
+            wallet = Wallet.loadFromFile(walletFile);
+        } catch (IOException e) {
+            wallet = new Wallet(params);
+            wallet.keychain.add(new ECKey());
+            wallet.saveToFile(walletFile);
+            freshWallet = true;
+        }
         System.out.println("Send to: " + wallet.keychain.get(0).toAddress(params));
         System.out.println(wallet);
 
-        chain = new BlockChain(params, wallet, new DiskBlockStore(params, new File("toy.blockchain")));
+        File blockChainFile = new File("toy.blockchain");
+        if (!blockChainFile.exists() && !freshWallet) {
+            // No block chain, but we had a wallet. So empty out the transactions in the wallet so when we rescan
+            // the blocks there are no problems (wallets don't support replays without being emptied).
+            wallet.clearTransactions(0);
+        }
+        chain = new BlockChain(params, wallet, new DiskBlockStore(params, blockChainFile));
+
         peerGroup = new PeerGroup(params, chain);
         if (testnet) {
             peerGroup.addAddress(new PeerAddress(InetAddress.getByName("plan99.net"), 18333));
@@ -89,6 +106,7 @@ public class ToyWallet {
             public void onBlocksDownloaded(Peer peer, Block block, int blocksLeft) {
                 super.onBlocksDownloaded(peer, block, blocksLeft);
                 handleNewBlock();
+                triggerNetworkStatsUpdate(peerGroup.numConnectedPeers());
             }
         });
         
@@ -132,20 +150,6 @@ public class ToyWallet {
         window.setVisible(true);
         peerGroup.start();
         peerGroup.downloadBlockChain();
-    }
-
-    private Wallet getWallet(NetworkParameters params) throws IOException {
-        // Try to read the wallet from storage, create a new one if not possible.
-        walletFile = new File("toy.wallet");
-        Wallet w;
-        try {
-            w = Wallet.loadFromFile(walletFile);
-        } catch (IOException e) {
-            w = new Wallet(params);
-            w.keychain.add(new ECKey());
-            w.saveToFile(walletFile);
-        }
-        return w;
     }
 
     private void handleNewBlock() {
@@ -204,6 +208,12 @@ public class ToyWallet {
                     // between confidence states.
                     int txIndex = transactions.indexOf(tx);
                     fireContentsChanged(this, txIndex, txIndex);
+                    // Confidences may have changed.
+                    try {
+                        wallet.saveToFile(walletFile);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
                 }
             });
             fireIntervalAdded(this, transactions.size() - 1, transactions.size() - 1);
@@ -233,7 +243,7 @@ public class ToyWallet {
               .replaceAll(key, "<i>" + key + "</i>");
             setText(value);
             setOpaque(true);
-            setBackground(index % 2 == 1 ? new Color(50, 50, 50) : Color.WHITE);
+            setBackground(index % 2 == 1 ? new Color(230, 230, 230) : Color.WHITE);
             return this;
         }
     }
