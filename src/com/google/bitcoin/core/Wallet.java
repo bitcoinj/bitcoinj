@@ -679,6 +679,22 @@ public class Wallet implements Serializable {
         return null;
     }
 
+    /**
+     * Deletes transactions which appeared above the given block height from the wallet, but does not touch the keys.
+     * This is useful if you have some keys and wish to replay the block chain into the wallet in order to pick them up.
+     */
+    public void clearTransactions(int fromHeight) {
+        if (fromHeight == 0) {
+            unspent.clear();
+            spent.clear();
+            pending.clear();
+            inactive.clear();
+            dead.clear();
+        } else {
+            throw new UnsupportedOperationException();
+        }
+    }
+
     // This is used only for unit testing, it's an internal API.
     enum Pool {
         UNSPENT,
