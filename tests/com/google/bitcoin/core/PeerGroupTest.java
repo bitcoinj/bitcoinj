@@ -18,7 +18,6 @@ package com.google.bitcoin.core;
 
 import com.google.bitcoin.discovery.PeerDiscovery;
 import com.google.bitcoin.discovery.PeerDiscoveryException;
-import com.google.bitcoin.store.MemoryBlockStore;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -42,9 +41,8 @@ public class PeerGroupTest extends TestWithNetworkConnections {
     public void setUp() throws Exception {
         super.setUp();
 
-        blockStore = new MemoryBlockStore(params);
-        BlockChain chain = new BlockChain(params, wallet, blockStore);
-        peerGroup = new PeerGroup(params, chain, 1000);
+        peerGroup = new PeerGroup(params, blockChain, 1000);
+        peerGroup.addWallet(wallet);
 
         // Support for testing disconnect events in a non-racy manner.
         peerGroup.addEventListener(new AbstractPeerEventListener() {
@@ -224,6 +222,61 @@ public class PeerGroupTest extends TestWithNetworkConnections {
         assertEquals(3, tx.getConfidence().numBroadcastPeers());
         assertTrue(tx.getConfidence().getBroadcastBy().contains(n3.getPeerAddress()));
     }
+
+    @Test
+    public void announce() throws Exception {
+        // Make sure we can create spends, and that they are announced. Then do the same with offline mode.
+
+        // Set up connections and block chain.
+        MockNetworkConnection n1 = createMockNetworkConnection();
+        Peer p1 = new Peer(params, blockChain, n1);
+        MockNetworkConnection n2 = createMockNetworkConnection();
+        Peer p2 = new Peer(params, blockChain, n2);
+        peerGroup.start();
+        peerGroup.addPeer(p1);
+        peerGroup.addPeer(p2);
+
+        // Send ourselves a bit of money.
+        Block b1 = TestUtils.makeSolvedTestBlock(params, blockStore, address);
+        n1.setVersionMessageForHeight(params, 2);
+        n1.exchange(b1);
+        assertEquals(Utils.toNanoCoins(50, 0), wallet.getBalance());
+
+        // Now create a spend, and expect the announcement.
+        Address dest = new ECKey().toAddress(params);
+        wallet.sendCoins(peerGroup, dest, Utils.toNanoCoins(1, 0));
+        Transaction t1 = (Transaction) n1.outbound();
+        assertNotNull(t1);
+        // 49 BTC in change.
+        assertEquals(Utils.toNanoCoins(49, 0), t1.getValueSentToMe(wallet));
+        Transaction t2 = (Transaction) n2.outbound();
+        assertEquals(t1, t2);
+        Block b2 = TestUtils.createFakeBlock(params, blockStore, t1).block;
+        n1.exchange(b2);
+        
+        // Do the same thing with an offline transaction.
+        peerGroup.removeWallet(wallet);
+        Transaction t3 = wallet.sendCoinsOffline(dest, Utils.toNanoCoins(2, 0));
+        assertNull(n1.outbound());  // Nothing sent.
+        // Add the wallet to the peer group (simulate initialization). Transactions should be announced.
+        peerGroup.addWallet(wallet);
+        // Transaction announced on the peers.
+        InventoryMessage inv1 = (InventoryMessage) n1.outbound();
+        InventoryMessage inv2 = (InventoryMessage) n2.outbound();
+        assertEquals(t3.getHash(), inv1.getItems().get(0).hash);
+        assertEquals(t3.getHash(), inv2.getItems().get(0).hash);
+        // Peers ask for the transaction, and get it.
+        GetDataMessage getdata = new GetDataMessage(params);
+        getdata.addItem(inv1.getItems().get(0));
+        Transaction t4 = (Transaction) n1.exchange(getdata);
+        assertEquals(t3, t4);
+        assertEquals(t3, n2.exchange(getdata));
+        MockNetworkConnection n3 = createMockNetworkConnection();
+        Peer p3 = new Peer(params, blockChain, n3);
+        peerGroup.addPeer(p3);
+        assertTrue(n3.outbound() instanceof InventoryMessage);
+    }
+
 
     private void disconnectAndWait(MockNetworkConnection conn) throws IOException, InterruptedException {
         conn.disconnect();

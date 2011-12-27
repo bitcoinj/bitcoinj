@@ -75,9 +75,13 @@ public class Wallet implements Serializable {
 
     /**
      * Map of txhash->Transactions that have not made it into the best chain yet. They are eligible to move there but
-     * are waiting for a miner to send a block on the best chain including them. These transactions inputs count as
+     * are waiting for a miner to create a block on the best chain including them. These transactions inputs count as
      * spent for the purposes of calculating our balance but their outputs are not available for spending yet. This
-     * means after a spend, our balance can actually go down temporarily before going up again!
+     * means after a spend, our balance can actually go down temporarily before going up again! We should fix this to
+     * allow spending of pending transactions.
+     *
+     * Pending transactions get announced to peers when they first connect. This means that if we're currently offline,
+     * we can still create spends and upload them to the network later.
      */
     final Map<Sha256Hash, Transaction> pending;
 
@@ -598,6 +602,7 @@ public class Wallet implements Serializable {
         // spends.
         updateForSpends(tx, false);
         // Add to the pending pool. It'll be moved out once we receive this transaction on the best chain.
+        log.info("->pending: {}", tx.getHashAsString());
         pending.put(tx.getHash(), tx);
     }
 
@@ -654,6 +659,24 @@ public class Wallet implements Serializable {
             all.subList(numTransactions, all.size()).clear();
             return all;
         }
+    }
+
+    /**
+     * Returns a transaction object given its hash, if it exists in this wallet, or null otherwise.
+     */
+    public Transaction getTransaction(Sha256Hash hash) {
+        Transaction tx;
+        if ((tx = pending.get(hash)) != null)
+            return tx;
+        else if ((tx = unspent.get(hash)) != null)
+            return tx;
+        else if ((tx = spent.get(hash)) != null)
+            return tx;
+        else if ((tx = inactive.get(hash)) != null)
+            return tx;
+        else if ((tx = dead.get(hash)) != null)
+            return tx;
+        return null;
     }
 
     // This is used only for unit testing, it's an internal API.
@@ -722,23 +745,18 @@ public class Wallet implements Serializable {
     }
 
     /**
-     * Sends coins to the given address, via the given {@link PeerGroup}.
-     * Change is returned to the first key in the wallet.
+     * Sends coins to the given address but does not broadcast the resulting pending transaction. It is still stored
+     * in the wallet, so when the wallet is added to a {@link PeerGroup} or {@link Peer} the transaction will be
+     * announced to the network.
      *
-     * @param to        Which address to send coins to.
-     * @param nanocoins How many nanocoins to send. You can use Utils.toNanoCoins() to calculate this.
-     * @return The {@link Transaction} that was created or null if there was insufficient balance to send the coins.
-     * @throws IOException if there was a problem broadcasting the transaction
+     * @param to Address to send the coins to.
+     * @param nanocoins How many coins to send.
+     * @return the Transaction that was created, or null if there are insufficient coins in thew allet.
      */
-    public synchronized Transaction sendCoins(PeerGroup peerGroup, Address to, BigInteger nanocoins) throws IOException {
+    public synchronized Transaction sendCoinsOffline(Address to, BigInteger nanocoins) {
         Transaction tx = createSend(to, nanocoins);
         if (tx == null)   // Not enough money! :-(
             return null;
-        if (!peerGroup.broadcastTransaction(tx)) {
-            throw new IOException("Failed to broadcast tx to all connected peers");
-        }
-
-        // TODO - retry logic
         try {
             commitTx(tx);
         } catch (VerificationException e) {
@@ -748,8 +766,35 @@ public class Wallet implements Serializable {
     }
 
     /**
-     * Sends coins to the given address, via the given {@link Peer}.
-     * Change is returned to the first key in the wallet.
+     * Sends coins to the given address, via the given {@link PeerGroup}. Change is returned to the first key in the
+     * wallet. If there is an exception thrown whilst sending to the peer group, the transaction will still be committed
+     * and the PeerGroup will try and rebroadcast it when it can.
+     *
+     * @param peerGroup a PeerGroup to use for broadcast or null.
+     * @param to        Which address to send coins to.
+     * @param nanocoins How many nanocoins to send. You can use Utils.toNanoCoins() to calculate this.
+     * @return The {@link Transaction} that was created or null if there was insufficient balance to send the coins.
+     * @throws IOException if there was a problem broadcasting the transaction
+     */
+    public synchronized Transaction sendCoins(PeerGroup peerGroup, Address to, BigInteger nanocoins) throws IOException {
+        Transaction tx = createSend(to, nanocoins);
+        if (tx == null)   // Not enough money! :-(
+            return null;
+        try {
+            commitTx(tx);
+        } catch (VerificationException e) {
+            throw new RuntimeException(e);  // Cannot happen unless there's a bug, as we just created this ourselves.
+        }
+        if (!peerGroup.broadcastTransaction(tx)) {
+            throw new IOException("Failed to broadcast tx to all connected peers");
+        }
+        return tx;
+    }
+
+    /**
+     * Sends coins to the given address, via the given {@link Peer}. Change is returned to the first key in the wallet.
+     * If an exception is thrown by {@link Peer#sendMessage(Message)} the transaction is still committed, so the
+     * pending transaction must be broadcast <b>by you</b> at some other time.
      *
      * @param to        Which address to send coins to.
      * @param nanocoins How many nanocoins to send. You can use Utils.toNanoCoins() to calculate this.
@@ -757,15 +802,19 @@ public class Wallet implements Serializable {
      * @throws IOException if there was a problem broadcasting the transaction
      */
     public synchronized Transaction sendCoins(Peer peer, Address to, BigInteger nanocoins) throws IOException {
+        // TODO: This API is fairly questionable and the function isn't tested. If anything goes wrong during sending
+        // on the peer you don't get access to the created Transaction object and must fish it out of the wallet then
+        // do your own retry later.
+
         Transaction tx = createSend(to, nanocoins);
         if (tx == null)   // Not enough money! :-(
             return null;
-        peer.broadcastTransaction(tx);
         try {
             commitTx(tx);
         } catch (VerificationException e) {
             throw new RuntimeException(e);  // Cannot happen unless there's a bug, as we just created this ourselves.
         }
+        peer.sendMessage(tx);
         return tx;
     }
 

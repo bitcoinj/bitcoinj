@@ -23,7 +23,9 @@ import java.net.InetSocketAddress;
 import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
@@ -87,6 +89,8 @@ public class PeerGroup {
     private BlockChain chain;
     private int connectionDelayMillis;
     private long fastCatchupTimeSecs;
+    private ArrayList<Wallet> wallets;
+    private AbstractPeerEventListener getDataListener;
 
     /**
      * Creates a PeerGroup with the given parameters and a default 5 second connection timeout. If you don't care
@@ -108,6 +112,7 @@ public class PeerGroup {
         this.chain = chain;
         this.connectionDelayMillis = connectionDelayMillis;
         this.fastCatchupTimeSecs = params.genesisBlock.getTimeSeconds();
+        this.wallets = new ArrayList<Wallet>(1);
 
         inactives = new LinkedBlockingQueue<PeerAddress>();
         peers = Collections.synchronizedSet(new HashSet<Peer>());
@@ -118,7 +123,7 @@ public class PeerGroup {
                 THREAD_KEEP_ALIVE_SECONDS, TimeUnit.SECONDS,
                 new LinkedBlockingQueue<Runnable>(1),
                 new PeerGroupThreadFactory());
-        // Peer event listeners get a subset of events seen by the group. We add our own internal listener to this so
+        // peerEventListeners get a subset of events seen by the group. We add our own internal listener to this so
         // when we download a transaction, we can distribute it to each Peer in the pool so they can update the
         // transactions confidence level if they've seen it be announced/when they see it be announced.
         peerEventListeners = Collections.synchronizedList(new ArrayList<PeerEventListener>());
@@ -128,6 +133,30 @@ public class PeerGroup {
                 handleBroadcastTransaction(t);
             }
         });
+
+        // This event listener is added to every peer. It's here so when we announce transactions via an "inv", every
+        // peer can fetch them.
+        getDataListener = new AbstractPeerEventListener() {
+            @Override
+            public List<Message> getData(Peer peer, GetDataMessage m) {
+                return handleGetData(m);
+            }
+        };
+    }
+
+    private synchronized List<Message> handleGetData(GetDataMessage m) {
+        // Scans the wallets for transactions in the getdata message and returns them. Invoked in parallel on peer threads.
+        HashMap<Sha256Hash, Message> transactions = new HashMap<Sha256Hash, Message>();
+        for (Wallet w : wallets) {
+            synchronized (w) {
+                for (InventoryItem item : m.getItems()) {
+                    Transaction tx = w.getTransaction(item.hash);
+                    if (tx == null) continue;
+                    transactions.put(tx.getHash(), tx);
+                }
+            }
+        }
+        return new LinkedList<Message>(transactions.values());
     }
 
     private synchronized void handleBroadcastTransaction(Transaction tx) {
@@ -251,7 +280,7 @@ public class PeerGroup {
     }
 
     /**
-     * Broadcast a transaction to all connected peers
+     * Broadcast a transaction to all connected peers.
      *
      * @return whether we sent to at least one peer
      */
@@ -260,7 +289,7 @@ public class PeerGroup {
         synchronized (peers) {
             for (Peer peer : peers) {
                 try {
-                    peer.broadcastTransaction(tx);
+                    peer.sendMessage(tx);
                     success = true;
                 } catch (IOException e) {
                     log.error("failed to broadcast to " + peer, e);
@@ -271,17 +300,27 @@ public class PeerGroup {
     }
 
     /**
-     * Link the given wallet to this PeerGroup so it receives broadcast transactions. A convenience method that just
-     * does <tt>addEventListener(wallet.getPeerEventListener());</tt>. See also removeWallet.
+     * Link the given wallet to this PeerGroup. This is used for two purposes:
+     * <ol>
+     *   <li>So the wallet receives broadcast transactions.</li>
+     *   <li>Announcing pending transactions that didn't get into the chain yet to our peers.</li>
+     * </ol>
      */
     public void addWallet(Wallet wallet) {
+        if (wallet == null)
+            throw new IllegalArgumentException("wallet is null");
+        wallets.add(wallet);
         addEventListener(wallet.getPeerEventListener());
+        announcePendingWalletTransactions(Collections.singletonList(wallet), peers);
     }
 
     /**
-     * Unlinks the given wallet so it no longer receives broadcast transactions.
+     * Unlinks the given wallet so it no longer receives broadcast transactions or has its transactions announced.
      */
     public void removeWallet(Wallet wallet) {
+        if (wallet == null)
+            throw new IllegalArgumentException("wallet is null");
+        wallets.remove(wallet);
         removeEventListener(wallet.getPeerEventListener());
     }
 
@@ -485,6 +524,11 @@ public class PeerGroup {
         } else {
             peer.setDownloadData(false);
         }
+        // Now tell the peers about any transactions we have which didn't appear in the chain yet. These are not
+        // necessarily spends we created. They may also be transactions broadcast across the network that we saw,
+        // which are relevant to us, and which we therefore wish to help propagate (ie they send us coins).
+        announcePendingWalletTransactions(wallets, Collections.singleton(peer));
+        peer.addEventListener(getDataListener);
         synchronized (peerEventListeners) {
             for (PeerEventListener listener : peerEventListeners) {
                 synchronized (listener) {
@@ -492,6 +536,32 @@ public class PeerGroup {
                 }
             }
         }
+    }
+
+    /** Returns true if at least one peer received an inv. */
+    private synchronized boolean announcePendingWalletTransactions(List<Wallet> announceWallets,
+                                                                   Set<Peer> announceToPeers) {
+        // Build up an inv announcing the hashes of all pending transactions in all our wallets.
+        InventoryMessage inv = new InventoryMessage(params);
+        for (Wallet w : announceWallets) {
+            for (Transaction tx : w.getPendingTransactions()) {
+                inv.addTransaction(tx);
+            }
+        }
+        // Don't send empty inv messages.
+        if (inv.getItems().size() == 0) {
+            return true;
+        }
+        boolean success = false;
+        for (Peer p : announceToPeers) {
+            try {
+                p.sendMessage(inv);
+                success = true;
+            } catch (IOException e) {
+                log.warn("Failed to announce 'inv' to peer: {}", p);
+            }
+        }
+        return success;
     }
 
     private synchronized void setDownloadPeer(Peer peer) {
@@ -540,7 +610,7 @@ public class PeerGroup {
                 }
             }
         }
-
+        peer.removeEventListener(getDataListener);
         synchronized (peerEventListeners) {
             for (PeerEventListener listener : peerEventListeners) {
                 synchronized (listener) {

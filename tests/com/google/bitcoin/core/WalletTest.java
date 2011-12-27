@@ -483,4 +483,5 @@ public class WalletTest {
         wallet.addKey(new ECKey());
         assertEquals(now + 60, wallet.getEarliestKeyCreationTime());
     }
+    // Support for offline spending is tested in PeerGroupTest
 }

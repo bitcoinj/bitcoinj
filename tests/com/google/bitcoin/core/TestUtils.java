@@ -74,10 +74,16 @@ public class TestUtils {
     }
 
     public static Block makeSolvedTestBlock(NetworkParameters params,
-                                            BlockStore blockStore) throws BlockStoreException {
-        Block b = blockStore.getChainHead().getHeader().createNextBlock(new ECKey().toAddress(params));
+                                            BlockStore blockStore,
+                                            Address coinsTo) throws BlockStoreException {
+        Block b = blockStore.getChainHead().getHeader().createNextBlock(coinsTo);
         b.solve();
         return b;
+    }
+
+    public static Block makeSolvedTestBlock(NetworkParameters params,
+                                            BlockStore blockStore) throws BlockStoreException {
+        return makeSolvedTestBlock(params, blockStore, new ECKey().toAddress(params));
     }
 
     public static Block makeSolvedTestBlock(NetworkParameters params,

@@ -16,6 +16,8 @@
 
 package com.google.bitcoin.core;
 
+import java.util.List;
+
 /**
  * Convenience abstract class for implementing a PeerEventListener.
  *
@@ -42,5 +44,9 @@ public class AbstractPeerEventListener extends Object implements PeerEventListen
     }
 
     public void onTransaction(Peer peer, Transaction t) {
+    }
+
+    public List<Message> getData(Peer peer, GetDataMessage m) {
+        return null;
     }
 }

@@ -187,6 +187,8 @@ public class Peer {
                     processBlock((Block) m);
                 } else if (m instanceof Transaction) {
                     processTransaction((Transaction) m);
+                } else if (m instanceof GetDataMessage) {
+                    processGetData((GetDataMessage) m);
                 } else if (m instanceof AddressMessage) {
                     // We don't care about addresses of the network right now. But in future,
                     // we should save them in the wallet so we don't put too much load on the seed nodes and can
@@ -254,6 +256,25 @@ public class Peer {
         } catch (ScriptException e) {
             // There are no transactions and thus no scripts in these blocks, so this should never happen.
             throw new RuntimeException(e);
+        }
+    }
+    
+    private void processGetData(GetDataMessage getdata) throws IOException {
+        log.info("Received getdata message: {}", getdata.toString());
+        ArrayList<Message> items = new ArrayList<Message>();
+        for (PeerEventListener listener : eventListeners) {
+            synchronized (listener) {
+                List<Message> listenerItems = listener.getData(this, getdata);
+                if (listenerItems == null) continue;
+                items.addAll(listenerItems);
+            }
+        }
+        if (items.size() == 0) {
+            return;
+        }
+        log.info("Sending {} items gathered from listeners to peer", items.size());
+        for (Message item : items) {
+            sendMessage(item);
         }
     }
 
@@ -521,12 +542,10 @@ public class Peer {
     }
 
     /**
-     * Send the given Transaction, ie, make a payment with BitCoins. To create a transaction you can broadcast, use
-     * a {@link Wallet}. After the broadcast completes, confirm the send using the wallet commitTx() method.
-     * @throws IOException
+     * Sends the given message on the peers network connection. Just uses {@link NetworkConnection#writeMessage(Message)}.
      */
-    void broadcastTransaction(Transaction tx) throws IOException {
-        conn.writeMessage(tx);
+    public void sendMessage(Message m) throws IOException {
+        conn.writeMessage(m);
     }
 
     private void blockChainDownload(Sha256Hash toHash) throws IOException {

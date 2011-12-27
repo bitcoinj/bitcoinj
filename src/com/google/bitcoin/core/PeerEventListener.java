@@ -16,6 +16,8 @@
 
 package com.google.bitcoin.core;
 
+import java.util.List;
+
 /**
  * Implementing a PeerEventListener allows you to learn when significant Peer communication
  * has occurred.
@@ -73,4 +75,10 @@ public interface PeerEventListener {
      * Called when a new transaction is broadcast over the network.
      */
     public void onTransaction(Peer peer, Transaction t);
+
+    /**
+     * Called when a peer receives a getdata message, usually in response to an "inv" being broadcast. Return as many
+     * items as possible which appear in the {@link GetDataMessage}, or null if you're not interested in responding.
+     */
+    public List<Message> getData(Peer peer, GetDataMessage m);
 }
