@@ -33,16 +33,12 @@ import static com.google.bitcoin.core.Utils.doubleDigest;
 import static com.google.bitcoin.core.Utils.doubleDigestTwoBuffers;
 
 /**
- * A block is the foundation of the BitCoin system. It records a set of
- * {@link Transaction}s together with some data that links it into a place in
- * the global block chain, and proves that a difficult calculation was done over
- * its contents. See the BitCoin technical paper for more detail on blocks.
- * <p/>
- * <p/>
- * To get a block, you can either build one from the raw bytes you can get from
- * another implementation, or request one specifically using
- * {@link Peer#getBlock(Sha256Hash)}, or grab one from a downloaded
- * {@link BlockChain}.
+ * A block is the foundation of the BitCoin system. It records a set of {@link Transaction}s together with some data
+ * that links it into a place in the global block chain, and proves that a difficult calculation was done over its
+ * contents. See the BitCoin technical paper for more detail on blocks. <p/>
+ *
+ * To get a block, you can either build one from the raw bytes you can get from another implementation, or request one
+ * specifically using {@link Peer#getBlock(Sha256Hash)}, or grab one from a downloaded {@link BlockChain}.
  */
 public class Block extends Message {
     private static final Logger log = LoggerFactory.getLogger(Block.class);
@@ -53,10 +49,7 @@ public class Block extends Message {
 
     static final long ALLOWED_TIME_DRIFT = 2 * 60 * 60; // Same value as official client.
 
-    /**
-     * A value for difficultyTarget (nBits) that allows half of all possible
-     * hash solutions. Used in unit testing.
-     */
+    /** A value for difficultyTarget (nBits) that allows half of all possible hash solutions. Used in unit testing. */
     static final long EASIEST_DIFFICULTY_TARGET = 0x207fFFFFL;
 
     // For unit testing. If not zero, use this instead of the current time.
@@ -82,10 +75,7 @@ public class Block extends Message {
     private transient boolean headerBytesValid;
     private transient boolean transactionBytesValid;
 
-    /**
-     * Special case constructor, used for the genesis node, cloneAsHeader and
-     * unit tests.
-     */
+    /** Special case constructor, used for the genesis node, cloneAsHeader and unit tests. */
     Block(NetworkParameters params) {
         super(params);
         // Set up a few basic things. We are not complete after this though.
@@ -122,10 +112,8 @@ public class Block extends Message {
 
     private void readObject(ObjectInputStream ois) throws ClassNotFoundException, IOException {
         ois.defaultReadObject();
-        // This code is not actually necessary, as transient fields are
-        // initialized to the default value which is in
-        // this case null. However it clears out a FindBugs warning and makes it
-        // explicit what we're doing.
+        // This code is not actually necessary, as transient fields are initialized to the default value which is in
+        // this case null. However it clears out a FindBugs warning and makes it explicit what we're doing.
         hash = null;
     }
 
@@ -168,11 +156,8 @@ public class Block extends Message {
             transactions.add(tx);
             cursor += tx.getMessageSize();
         }
-        // no need to set length here. If length was not provided then it should
-        // be set at the end
-        // of parseLight(). If this is a genuine lazy parse then length must
-        // have been provided to
-        // the constructor.
+        // No need to set length here. If length was not provided then it should be set at the end of parseLight().
+        // If this is a genuine lazy parse then length must have been provided to the constructor.
         transactionsParsed = true;
         transactionBytesValid = parseRetain;
     }
@@ -184,11 +169,11 @@ public class Block extends Message {
     }
 
     protected void parseLite() throws ProtocolException {
-        // ignore the header since it has fixed length. If length is not
-        // provided we will have to
+        // Ignore the header since it has fixed length. If length is not provided we will have to
         // invoke a light parse of transactions to calculate the length.
         if (length == UNKNOWN_LENGTH) {
-            assert !parseLazy : "Performing lite parse of block transaction as block was initialised from byte array without providing length.  This should never need to happen." + " parseLazy: " + parseLazy;
+            assert !parseLazy : "Performing lite parse of block transaction as block was initialised from byte array " +
+                    "without providing length.  This should never need to happen. parseLazy: " + parseLazy;
             parseTransactions();
             length = cursor - offset;
         } else {
@@ -198,19 +183,16 @@ public class Block extends Message {
     }
 
     /*
-     * Block uses some special handling for lazy parsing and retention of cached
-     * bytes. Parsing and serializing the block header and the transaction list
-     * are both non-trivial so there are good efficiency gains to be had by
-     * separating them. There are many cases where a user may need access to
-     * access or change one or the other but not both.
+     * Block uses some special handling for lazy parsing and retention of cached bytes. Parsing and serializing the
+     * block header and the transaction list are both non-trivial so there are good efficiency gains to be had by
+     * separating them. There are many cases where a user may need access to access or change one or the other but not both.
      *
-     * With this in mind we ignore the inherited checkParse() and unCache()
-     * methods and implement a separate version of them for both header and transactions.
+     * With this in mind we ignore the inherited checkParse() and unCache() methods and implement a separate version
+     * of them for both header and transactions.
      *
-     * Serializing methods are also handled in their own way. Whilst they deal
-     * with separate parts of the block structure there are some
-     * interdependencies. For example altering a tx requires invalidating the
-     * Merkle root and therefore the cached header bytes.
+     * Serializing methods are also handled in their own way. Whilst they deal with separate parts of the block structure
+     * there are some interdependencies. For example altering a tx requires invalidating the Merkle root and therefore
+     * the cached header bytes.
      */
     private synchronized void maybeParseHeader() {
         if (headerParsed || bytes == null)
@@ -238,9 +220,8 @@ public class Block extends Message {
     }
 
     /**
-     * Ensure the object is parsed if needed. This should be called in every
-     * getter before returning a value. If the lazy parse flag is not set this
-     * is a method returns immediately.
+     * Ensure the object is parsed if needed. This should be called in every getter before returning a value. If the
+     * lazy parse flag is not set this is a method returns immediately.
      */
     protected synchronized void maybeParse() {
         throw new LazyParseException(
@@ -248,9 +229,10 @@ public class Block extends Message {
     }
 
     /**
-     * In lazy parsing mode access to getters and setters may throw an unchecked LazyParseException.  If guaranteed safe access is required
-     * this method will force parsing to occur immediately thus ensuring LazyParseExeption will never be thrown from this Message.
-     * If the Message contains child messages (e.g. a Block containing Transaction messages) this will not force child messages to parse.
+     * In lazy parsing mode access to getters and setters may throw an unchecked LazyParseException.  If guaranteed
+     * safe access is required this method will force parsing to occur immediately thus ensuring LazyParseExeption will
+     * never be thrown from this Message. If the Message contains child messages (e.g. a Block containing Transaction
+     * messages) this will not force child messages to parse.
      *
      * This method ensures parsing of both headers and transactions.
      *
@@ -268,9 +250,10 @@ public class Block extends Message {
     }
 
     /**
-     * In lazy parsing mode access to getters and setters may throw an unchecked LazyParseException.  If guaranteed safe access is required
-     * this method will force parsing to occur immediately thus ensuring LazyParseExeption will never be thrown from this Message.
-     * If the Message contains child messages (e.g. a Block containing Transaction messages) this will not force child messages to parse.
+     * In lazy parsing mode access to getters and setters may throw an unchecked LazyParseException.  If guaranteed
+     * safe access is required this method will force parsing to occur immediately thus ensuring LazyParseExeption
+     * will never be thrown from this Message. If the Message contains child messages (e.g. a Block containing
+     * Transaction messages) this will not force child messages to parse.
      *
      * This method ensures parsing of headers only.
      *
@@ -287,9 +270,10 @@ public class Block extends Message {
     }
 
     /**
-     * In lazy parsing mode access to getters and setters may throw an unchecked LazyParseException.  If guaranteed safe access is required
-     * this method will force parsing to occur immediately thus ensuring LazyParseExeption will never be thrown from this Message.
-     * If the Message contains child messages (e.g. a Block containing Transaction messages) this will not force child messages to parse.
+     * In lazy parsing mode access to getters and setters may throw an unchecked LazyParseException.  If guaranteed
+     * safe access is required this method will force parsing to occur immediately thus ensuring LazyParseExeption will
+     * never be thrown from this Message. If the Message contains child messages (e.g. a Block containing Transaction
+     * messages) this will not force child messages to parse.
      *
      * This method ensures parsing of transactions only.
      *
@@ -384,11 +368,11 @@ public class Block extends Message {
 
     /**
      * Provides a reasonable guess at the byte length of the transactions part of the block.
-     * The returned value will be accurate in 99% of cases and in those cases where not will probably
-     * slightly oversize.
-	 *
-     * This is used to preallocate the underlying byte array for a ByteArrayOutputStream.  If the size
-     * is under the real value the only penalty is resizing of the underlying byte array.
+     * The returned value will be accurate in 99% of cases and in those cases where not will probably slightly
+     * oversize.
+     *
+     * This is used to preallocate the underlying byte array for a ByteArrayOutputStream.  If the size is under the
+     * real value the only penalty is resizing of the underlying byte array.
      */
     private int guessTransactionsLength() {
         if (transactionBytesValid)
@@ -404,10 +388,8 @@ public class Block extends Message {
     }
 
     protected void unCache() {
-        // Since we have alternate uncache methods to use internally this will
-        // only ever be called
-        // by a child transaction so we only need to invalidate that part of the
-        // cache.
+        // Since we have alternate uncache methods to use internally this will only ever be called by a child
+        // transaction so we only need to invalidate that part of the cache.
         unCacheTransactions();
     }
 
@@ -425,14 +407,11 @@ public class Block extends Message {
         transactionBytesValid = false;
         if (!headerBytesValid)
             bytes = null;
-        // current implementation has to uncache headers as well as any change
-        // to a tx
-        // will alter the merkle root. In future we can go more granular and
-        // cache merkle root
-        // Separately so rest of the header does not need to be rewritten
+        // Current implementation has to uncache headers as well as any change to a tx will alter the merkle root. In
+        // future we can go more granular and cache merkle root separately so rest of the header does not need to be
+        // rewritten.
         unCacheHeader();
-        // clear merkleRoot last as it may end up being parsed during
-        // unCacheHeader().
+        // Clear merkleRoot last as it may end up being parsed during unCacheHeader().
         merkleRoot = null;
     }
 
@@ -451,10 +430,9 @@ public class Block extends Message {
     }
 
     /**
-     * Returns the hash of the block (which for a valid, solved block should be
-     * below the target) in the form seen on the block explorer. If you call
-     * this on block 1 in the production chain, you will get
-     * "00000000839a8e6886ab5951d76f411475428afc90947ee320161bbf18eb6048".
+     * Returns the hash of the block (which for a valid, solved block should be below the target) in the form seen on
+     * the block explorer. If you call this on block 1 in the production chain
+     * you will get "00000000839a8e6886ab5951d76f411475428afc90947ee320161bbf18eb6048".
      */
     public String getHashAsString() {
         return getHash().toString();
@@ -524,13 +502,11 @@ public class Block extends Message {
     }
 
     /**
-     * Finds a value of nonce that makes the blocks hash lower than the
-     * difficulty target. This is called mining, but solve() is far too slow to
-     * do real mining with. It exists only for unit testing purposes and is not
-     * a part of the public API.
+     * Finds a value of nonce that makes the blocks hash lower than the difficulty target. This is called mining, but
+     * solve() is far too slow to do real mining with. It exists only for unit testing purposes and is not a part of
+     * the public API.
 	 *
-     * This can loop forever if a solution cannot be found solely by
-     * incrementing nonce. It doesn't change extraNonce.
+     * This can loop forever if a solution cannot be found solely by incrementing nonce. It doesn't change extraNonce.
      */
     void solve() {
         maybeParseHeader();
@@ -548,9 +524,8 @@ public class Block extends Message {
     }
 
     /**
-     * Returns the difficulty target as a 256 bit value that can be compared to
-     * a SHA-256 hash. Inside a block the target is represented using a compact
-     * form. If this form decodes to a value that is out of bounds, an exception
+     * Returns the difficulty target as a 256 bit value that can be compared to a SHA-256 hash. Inside a block the
+     * target is represented using a compact form. If this form decodes to a value that is out of bounds, an exception
      * is thrown.
      */
     public BigInteger getDifficultyTargetAsInteger() throws VerificationException {
@@ -561,25 +536,16 @@ public class Block extends Message {
         return target;
     }
 
-    /**
-     * Returns true if the hash of the block is OK (lower than difficulty
-     * target).
-     */
+    /** Returns true if the hash of the block is OK (lower than difficulty target). */
     private boolean checkProofOfWork(boolean throwException) throws VerificationException {
-        // This part is key - it is what proves the block was as difficult to
-        // make as it claims
-        // to be. Note however that in the context of this function, the block
-        // can claim to be
-        // as difficult as it wants to be .... if somebody was able to take
-        // control of our network
-        // connection and fork us onto a different chain, they could send us
-        // valid blocks with
+        // This part is key - it is what proves the block was as difficult to make as it claims
+        // to be. Note however that in the context of this function, the block can claim to be
+        // as difficult as it wants to be .... if somebody was able to take control of our network
+        // connection and fork us onto a different chain, they could send us valid blocks with
         // ridiculously easy difficulty and this function would accept them.
         //
-        // To prevent this attack from being possible, elsewhere we check that
-        // the difficultyTarget
-        // field is of the right value. This requires us to have the preceeding
-        // blocks.
+        // To prevent this attack from being possible, elsewhere we check that the difficultyTarget
+        // field is of the right value. This requires us to have the preceeding blocks.
         BigInteger target = getDifficultyTargetAsInteger();
 
         BigInteger h = getHash().toBigInteger();
@@ -616,8 +582,7 @@ public class Block extends Message {
     }
 
     private List<byte[]> buildMerkleTree() {
-        // The Merkle root is based on a tree of hashes calculated from the
-        // transactions:
+        // The Merkle root is based on a tree of hashes calculated from the transactions:
         //
         //     root
         //      / \
@@ -628,49 +593,37 @@ public class Block extends Message {
         // The tree is represented as a list: t1,t2,t3,t4,A,B,root where each
         // entry is a hash.
         //
-        // The hashing algorithm is double SHA-256. The leaves are a hash of the
-        // serialized contents of the
-        // transaction. The interior nodes are hashes of the concenation of the
-        // two child hashes.
+        // The hashing algorithm is double SHA-256. The leaves are a hash of the serialized contents of the transaction.
+        // The interior nodes are hashes of the concenation of the two child hashes.
         //
-        // This structure allows the creation of proof that a transaction was
-        // included into a block without having to
-        // provide the full block contents. Instead, you can provide only a
-        // Merkle branch. For example to prove tx2 was
-        // in a block you can just provide tx2, the hash(tx1) and B. Now the
-        // other party has everything they need to
-        // derive the root, which can be checked against the block header. These
-        // proofs aren't used right now but
-        // will be helpful later when we want to download partial block
-        // contents.
+        // This structure allows the creation of proof that a transaction was included into a block without having to
+        // provide the full block contents. Instead, you can provide only a Merkle branch. For example to prove tx2 was
+        // in a block you can just provide tx2, the hash(tx1) and B. Now the other party has everything they need to
+        // derive the root, which can be checked against the block header. These proofs aren't used right now but
+        // will be helpful later when we want to download partial block contents.
         //
-        // Note that if the number of transactions is not even the last tx is
-        // repeated to make it so (see
+        // Note that if the number of transactions is not even the last tx is repeated to make it so (see
         // tx3 above). A tree with 5 transactions would look like this:
         //
-        // root
-        // / \
-        // 1 \
-        // / \ \
-        // 2 3 4
-        // / \ / \ / \
+        //         root
+        //        /    \
+        //       1      \
+        //     /   \     \
+        //    2     3    4
+        //  / \   / \   / \
         // t1 t2 t3 t4 t5 t5
         maybeParseTransactions();
         ArrayList<byte[]> tree = new ArrayList<byte[]>();
-        // Start by adding all the hashes of the transactions as leaves of the
-        // tree.
+        // Start by adding all the hashes of the transactions as leaves of the tree.
         for (Transaction t : transactions) {
             tree.add(t.getHash().getBytes());
         }
-        int levelOffset = 0; // Offset in the list where the currently processed
-        // level starts.
-        // Step through each level, stopping when we reach the root (levelSize
-        // == 1).
+        int levelOffset = 0; // Offset in the list where the currently processed level starts.
+        // Step through each level, stopping when we reach the root (levelSize == 1).
         for (int levelSize = transactions.size(); levelSize > 1; levelSize = (levelSize + 1) / 2) {
             // For each pair of nodes on that level:
             for (int left = 0; left < levelSize; left += 2) {
-                // The right hand node can be the same as the left hand, in the
-                // case where we don't have enough
+                // The right hand node can be the same as the left hand, in the case where we don't have enough
                 // transactions.
                 int right = Math.min(left + 1, levelSize - 1);
                 byte[] leftBytes = Utils.reverseBytes(tree.get(levelOffset + left));
@@ -684,8 +637,7 @@ public class Block extends Message {
     }
 
     private void checkTransactions() throws VerificationException {
-        // The first transaction in a block must always be a coinbase
-        // transaction.
+        // The first transaction in a block must always be a coinbase transaction.
         if (!transactions.get(0).isCoinBase())
             throw new VerificationException("First tx is not coinbase");
         // The rest must not be.
@@ -696,23 +648,18 @@ public class Block extends Message {
     }
 
     /**
-     * Checks the block data to ensure it follows the rules laid out in the
-     * network parameters. Specifically, throws an exception if the proof of
-     * work is invalid, or if the timestamp is too far from what it should be.
-     * This is <b>not</b> everything that is required for a block to be valid,
-     * only what is checkable independent of the chain and without a transaction
-     * index.
+     * Checks the block data to ensure it follows the rules laid out in the network parameters. Specifically,
+     * throws an exception if the proof of work is invalid, or if the timestamp is too far from what it should be.
+     * This is <b>not</b> everything that is required for a block to be valid, only what is checkable independent
+     * of the chain and without a transaction index.
      *
      * @throws VerificationException
      */
     public void verifyHeader() throws VerificationException {
-        // Prove that this block is OK. It might seem that we can just ignore
-        // most of these checks given that the
-        // network is also verifying the blocks, but we cannot as it'd open us
-        // to a variety of obscure attacks.
+        // Prove that this block is OK. It might seem that we can just ignore most of these checks given that the
+        // network is also verifying the blocks, but we cannot as it'd open us to a variety of obscure attacks.
         //
-        // Firstly we need to ensure this block does in fact represent real work
-        // done. If the difficulty is high
+        // Firstly we need to ensure this block does in fact represent real work done. If the difficulty is high
         // enough, it's probably been done by the network.
         maybeParseHeader();
         checkProofOfWork(true);
@@ -725,12 +672,9 @@ public class Block extends Message {
      * @throws VerificationException
      */
     public void verifyTransactions() throws VerificationException {
-        // Now we need to check that the body of the block actually matches the
-        // headers. The network won't generate
-        // an invalid block, but if we didn't validate this then an untrusted
-        // man-in-the-middle could obtain the next
-        // valid block from the network and simply replace the transactions in
-        // it with their own fictional
+        // Now we need to check that the body of the block actually matches the headers. The network won't generate
+        // an invalid block, but if we didn't validate this then an untrusted man-in-the-middle could obtain the next
+        // valid block from the network and simply replace the transactions in it with their own fictional
         // transactions that reference spent or non-existant inputs.
         assert transactions.size() > 0;
         maybeParseTransactions();
@@ -739,8 +683,7 @@ public class Block extends Message {
     }
 
     /**
-     * Verifies both the header and that the transactions hash to the merkle
-     * root.
+     * Verifies both the header and that the transactions hash to the merkle root.
      */
     public void verify() throws VerificationException {
         verifyHeader();
@@ -761,8 +704,7 @@ public class Block extends Message {
     }
 
     /**
-     * Returns the merkle root in big endian form, calculating it from
-     * transactions if necessary.
+     * Returns the merkle root in big endian form, calculating it from transactions if necessary.
      */
     public Sha256Hash getMerkleRoot() {
         maybeParseHeader();
@@ -797,18 +739,14 @@ public class Block extends Message {
         hash = null;
     }
 
-    /**
-     * Returns the version of the block data structure as defined by the BitCoin
-     * protocol.
-     */
+    /** Returns the version of the block data structure as defined by the BitCoin protocol. */
     public long getVersion() {
         maybeParseHeader();
         return version;
     }
 
     /**
-     * Returns the hash of the previous block in the chain, as defined by the
-     * block header.
+     * Returns the hash of the previous block in the chain, as defined by the block header.
      */
     public Sha256Hash getPrevBlockHash() {
         maybeParseHeader();
@@ -822,9 +760,8 @@ public class Block extends Message {
     }
 
     /**
-     * Returns the time at which the block was solved and broadcast, according
-     * to the clock of the solving node. This is measured in seconds since the
-     * UNIX epoch (midnight Jan 1st 1970).
+     * Returns the time at which the block was solved and broadcast, according to the clock of the solving node. This
+     * is measured in seconds since the UNIX epoch (midnight Jan 1st 1970).
      */
     public long getTimeSeconds() {
         maybeParseHeader();
@@ -838,11 +775,9 @@ public class Block extends Message {
     }
 
     /**
-     * Returns the difficulty of the proof of work that this block should meet
-     * encoded in compact form. The {@link BlockChain} verifies that this is not
-     * too easy by looking at the length of the chain when the block is added.
-     * To find the actual value the hash should be compared against, use
-     * getDifficultyTargetBI.
+     * Returns the difficulty of the proof of work that this block should meet encoded in compact form. The {@link
+     * BlockChain} verifies that this is not too easy by looking at the length of the chain when the block is added.
+     * To find the actual value the hash should be compared against, use getDifficultyTargetBI.
      */
     public long getDifficultyTarget() {
         maybeParseHeader();
@@ -856,8 +791,8 @@ public class Block extends Message {
     }
 
     /**
-     * Returns the nonce, an arbitrary value that exists only to make the hash
-     * of the block header fall below the difficulty target.
+     * Returns the nonce, an arbitrary value that exists only to make the hash of the block header fall below the
+     * difficulty target.
      */
     public long getNonce() {
         maybeParseHeader();
@@ -886,13 +821,10 @@ public class Block extends Message {
         unCacheTransactions();
         transactions = new ArrayList<Transaction>();
         Transaction coinbase = new Transaction(params);
-        // A real coinbase transaction has some stuff in the scriptSig like the
-        // extraNonce and difficulty. The
-        // transactions are distinguished by every TX output going to a
-        // different key.
+        // A real coinbase transaction has some stuff in the scriptSig like the extraNonce and difficulty. The
+        // transactions are distinguished by every TX output going to a different key.
         //
-        // Here we will do things a bit differently so a new address isn't
-        // needed every time. We'll put a simple
+        // Here we will do things a bit differently so a new address isn't needed every time. We'll put a simple
         // counter in the scriptSig so every transaction has a different hash.
         coinbase.addInput(new TransactionInput(params, coinbase, new byte[]{(byte) txCounter++}));
         coinbase.addOutput(new TransactionOutput(params, coinbase, Script.createOutputScript(pubKeyTo)));
@@ -902,8 +834,7 @@ public class Block extends Message {
     static final byte[] EMPTY_BYTES = new byte[32];
 
     /**
-     * Returns a solved block that builds on top of this one. This exists for
-     * unit tests.
+     * Returns a solved block that builds on top of this one. This exists for unit tests.
      */
     Block createNextBlock(Address to, long time) {
         Block b = new Block(params);
@@ -913,13 +844,10 @@ public class Block extends Message {
         // Add a transaction paying 50 coins to the "to" address.
         Transaction t = new Transaction(params);
         t.addOutput(new TransactionOutput(params, t, Utils.toNanoCoins(50, 0), to));
-        // The input does not really need to be a valid signature, as long as it
-        // has the right general form.
+        // The input does not really need to be a valid signature, as long as it has the right general form.
         TransactionInput input = new TransactionInput(params, t, Script.createInputScript(EMPTY_BYTES, EMPTY_BYTES));
-        // Importantly the outpoint hash cannot be zero as that's how we detect
-        // a coinbase transaction in isolation
-        // but it must be unique to avoid 'different' transactions looking the
-        // same.
+        // Importantly the outpoint hash cannot be zero as that's how we detect a coinbase transaction in isolation
+        // but it must be unique to avoid 'different' transactions looking the same.
         byte[] counter = new byte[32];
         counter[0] = (byte) txCounter++;
         input.getOutpoint().setHash(new Sha256Hash(counter));
