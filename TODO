@@ -1,12 +1,8 @@
 Here is a brief list of things that still need to be done.
 
-More unit tests:
-   - Create a MockNetworkConnection and use it to test the Peer.
-
 API:
    - Reorganize the package layout to be more modular.
    - Support multiple active wallets.
-   - Allow sorting of transactions by time.
 
 Protocol:
    - Start up faster
@@ -22,8 +18,6 @@ Cleanup:
    - Find a way to avoid some horrid hacks when shutting down the network connection.
    - Implement a BitCoin class that encapsulates a BigInteger and formatting.
    - Make NetworkParameters use subclasses instead of static methods to construct.
-
-
 
 ==========
 
