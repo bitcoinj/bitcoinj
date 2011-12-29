@@ -95,8 +95,6 @@ public class Block extends Message {
     /**
      * Contruct a block object from the BitCoin wire format.
      * @param params NetworkParameters object.
-     * @param msg Bitcoin protocol formatted byte array containing message content.
-     * @param protocolVersion Bitcoin protocol version.
      * @param parseLazy Whether to perform a full parse immediately or delay until a read is requested.
      * @param parseRetain Whether to retain the backing byte array for quick reserialization.  
      * If true and the backing byte array is invalidated due to modification of a field then 
@@ -768,6 +766,13 @@ public class Block extends Message {
         return time;
     }
 
+    /**
+     * Returns the time at which the block was solved and broadcast, according to the clock of the solving node.
+     */
+    public Date getTime() {
+        return new Date(getTimeSeconds());
+    }
+
     void setTime(long time) {
         unCacheHeader();
         this.time = time;
@@ -867,7 +872,7 @@ public class Block extends Message {
 
     // Visible for testing.
     public Block createNextBlock(Address to) {
-        return createNextBlock(to, System.currentTimeMillis() / 1000);
+        return createNextBlock(to, Utils.now().getTime() / 1000);
     }
 
     /**

@@ -57,6 +57,13 @@ public class Peer {
      */
     public static boolean MOBILE_OPTIMIZED = false;
 
+    // A time before which we only download block headers, after that point we download block bodies.
+    private long fastCatchupTimeSecs;
+    // Whether we are currently downloading headers only or block bodies. Defaults to true, if the fast catchup time
+    // is set AND our best block is before that date, switch to false until block headers beyond that point have been
+    // received at which point it gets set to true again. This isn't relevant unless downloadData is true.
+    private boolean downloadBlockBodies = true;
+
     /**
      * Construct a peer that reads/writes from the given block chain. Note that communication won't occur until
      * you call connect(), which will set up a new NetworkConnection.
@@ -70,6 +77,7 @@ public class Peer {
         this.blockChain = blockChain;
         this.pendingGetBlockFutures = new ArrayList<GetDataFuture<Block>>();
         this.eventListeners = new ArrayList<PeerEventListener>();
+        this.fastCatchupTimeSecs = params.genesisBlock.getTimeSeconds();
     }
 
     /**
@@ -151,6 +159,8 @@ public class Peer {
                     // We don't care about addresses of the network right now. But in future,
                     // we should save them in the wallet so we don't put too much load on the seed nodes and can
                     // properly explore the network.
+                } else if (m instanceof HeadersMessage) {
+                    processHeaders((HeadersMessage) m);
                 } else {
                     // TODO: Handle the other messages we can receive.
                     log.warn("Received unhandled message: {}", m);
@@ -176,6 +186,45 @@ public class Peer {
         disconnect();
     }
 
+    private void processHeaders(HeadersMessage m) throws IOException, ProtocolException {
+        // Runs in network loop thread for this peer.
+        //
+        // This can happen if a peer just randomly sends us a "headers" message (should never happen), or more likely
+        // when we've requested them as part of chain download using fast catchup. We need to add each block to the
+        // chain if it pre-dates the fast catchup time. If we go past it, we can stop processing the headers and request
+        // the full blocks from that point on instead.
+        assert !downloadBlockBodies;
+        try {
+            for (int i = 0; i < m.getBlockHeaders().size(); i++) {
+                Block header = m.getBlockHeaders().get(i);
+                if (header.getTimeSeconds() < fastCatchupTimeSecs) {
+                    if (blockChain.add(header)) {
+                        // The block was successfully linked into the chain. Notify the user of our progress.
+                        invokeOnBlocksDownloaded(header);
+                    } else {
+                        // This block is unconnected - we don't know how to get from it back to the genesis block yet.
+                        // That must mean that the peer is buggy or malicious because we specifically requested for
+                        // headers that are part of the best chain.
+                        throw new ProtocolException("Got unconnected header from peer: " + header.getHashAsString());
+                    }
+                } else {
+                    log.info("Passed the fast catchup time, discarding {} headers and requesting full blocks",
+                            m.getBlockHeaders().size() - i);
+                    downloadBlockBodies = true;
+                    blockChainDownload(header.getHash());
+                    return;
+                }
+            }
+            // We added all headers in the message to the chain. Now request some more!
+            blockChainDownload(Sha256Hash.ZERO_HASH);
+        } catch (VerificationException e) {
+            log.warn("Block header verification failed", e);
+        } catch (ScriptException e) {
+            // There are no transactions and thus no scripts in these blocks, so this should never happen.
+            throw new RuntimeException(e);
+        }
+    }
+
     private void processBlock(Block m) throws IOException {
         // This should called in the network loop thread for this peer
         try {
@@ -196,11 +245,7 @@ public class Peer {
             // This call will synchronize on blockChain.
             if (blockChain.add(m)) {
                 // The block was successfully linked into the chain. Notify the user of our progress.
-                for (PeerEventListener listener : eventListeners) {
-                    synchronized (listener) {
-                        listener.onBlocksDownloaded(this, m, getPeerBlocksToGet());
-                    }
-                }
+                invokeOnBlocksDownloaded(m);
             } else {
                 // This block is unconnected - we don't know how to get from it back to the genesis block yet. That
                 // must mean that there are blocks we are missing, so do another getblocks with a new block locator
@@ -217,6 +262,14 @@ public class Peer {
         } catch (ScriptException e) {
             // We don't want script failures to kill the thread.
             log.warn("Script exception", e);
+        }
+    }
+
+    private void invokeOnBlocksDownloaded(Block m) {
+        for (PeerEventListener listener : eventListeners) {
+            synchronized (listener) {
+                listener.onBlocksDownloaded(this, m, getPeerBlockHeightDifference());
+            }
         }
     }
 
@@ -286,6 +339,29 @@ public class Peer {
         return future;
     }
 
+    /**
+     * When downloading the block chain, the bodies will be skipped for blocks created before the given date. Any
+     * transactions relevant to the wallet will therefore not be found, but if you know your wallet has no such
+     * transactions it doesn't matter and can save a lot of bandwidth and processing time. Note that the times of blocks
+     * isn't known until their headers are available and they are requested in chunks, so some headers may be downloaded
+     * twice using this scheme, but this optimization can still be a large win for newly created wallets.
+     *
+     * @param secondsSinceEpoch Time in seconds since the epoch or 0 to reset to always downloading block bodies.
+     */
+    public void setFastCatchupTime(long secondsSinceEpoch) {
+        if (secondsSinceEpoch == 0) {
+            fastCatchupTimeSecs = params.genesisBlock.getTimeSeconds();
+            downloadBlockBodies = true;
+        } else {
+            fastCatchupTimeSecs = secondsSinceEpoch;
+            // If the given time is before the current chains head block time, then this has no effect (we already
+            // downloaded everything we need).
+            if (fastCatchupTimeSecs >= blockChain.getChainHead().getHeader().getTimeSeconds()) {
+                downloadBlockBodies = false;
+            }
+        }
+    }
+
     // A GetDataFuture wraps the result of a getBlock or (in future) getTransaction so the owner of the object can
     // decide whether to wait forever, wait for a short while or check later after doing other work.
     private static class GetDataFuture<T extends Message> implements Future<T> {
@@ -352,7 +428,7 @@ public class Peer {
     private void blockChainDownload(Sha256Hash toHash) throws IOException {
         // This may run in ANY thread.
 
-        // The block chain download process is a bit complicated. Basically, we start with zero or more blocks in a
+        // The block chain download process is a bit complicated. Basically, we start with one or more blocks in a
         // chain that we have from a previous session. We want to catch up to the head of the chain BUT we don't know
         // where that chain is up to or even if the top block we have is even still in the chain - we
         // might have got ourselves onto a fork that was later resolved by the network.
@@ -376,7 +452,14 @@ public class Peer {
         // process.
         //
         // So this is a complicated process but it has the advantage that we can download a chain of enormous length
-        // in a relatively stateless manner and with constant/bounded memory usage.
+        // in a relatively stateless manner and with constant memory usage.
+        //
+        // All this is made more complicated by the desire to skip downloading the bodies of blocks that pre-date the
+        // 'fast catchup time', which is usually set to the creation date of the earliest key in the wallet. Because
+        // we know there are no transactions using our keys before that date, we need only the headers. To do that we
+        // use the "getheaders" command. Once we find we've gone past the target date, we throw away the downloaded
+        // headers and then request the blocks from that point onwards. "getheaders" does not send us an inv, it just
+        // sends us the data we requested in a "headers" message.
         log.info("blockChainDownload({})", toHash.toString());
 
         // TODO: Block locators should be abstracted out rather than special cased here.
@@ -400,8 +483,16 @@ public class Peer {
             }
             blockLocator.add(0, topBlock.getHash());
         }
-        GetBlocksMessage message = new GetBlocksMessage(params, blockLocator, toHash);
-        conn.writeMessage(message);
+        // The stopHash field is set to zero already by the constructor.
+        
+        if (downloadBlockBodies) {
+            GetBlocksMessage message = new GetBlocksMessage(params, blockLocator, toHash);
+            conn.writeMessage(message);
+        } else {
+            // Downloading headers for a while instead of full blocks.
+            GetHeadersMessage message = new GetHeadersMessage(params, blockLocator, toHash);
+            conn.writeMessage(message);
+        }
     }
 
     /**
@@ -412,10 +503,10 @@ public class Peer {
         setDownloadData(true);
         // TODO: peer might still have blocks that we don't have, and even have a heavier
         // chain even if the chain block count is lower.
-        if (getPeerBlocksToGet() >= 0) {
+        if (getPeerBlockHeightDifference() >= 0) {
             for (PeerEventListener listener : eventListeners) {
                 synchronized (listener) {
-                    listener.onChainDownloadStarted(this, getPeerBlocksToGet());
+                    listener.onChainDownloadStarted(this, getPeerBlockHeightDifference());
                 }
             }
 
@@ -425,15 +516,16 @@ public class Peer {
     }
 
     /**
-     * @return the number of blocks to get, based on our chain height and the peer reported height
+     * Returns the difference between our best chain height and the peers, which can either be positive if we are
+     * behind the peer, or negative if the peer is ahead of us.
      */
-    private int getPeerBlocksToGet() {
+    public int getPeerBlockHeightDifference() {
         // Chain will overflow signed int blocks in ~41,000 years.
         int chainHeight = (int) conn.getVersionMessage().bestHeight;
         if (chainHeight <= 0) {
             // This should not happen because we shouldn't have given the user a Peer that is to another client-mode
             // node. If that happens it means the user overrode us somewhere.
-            return -1;
+            throw new RuntimeException("Connected to peer advertising negative chain height.");
         }
         int blocksToGet = chainHeight - blockChain.getChainHead().getHeight();
         return blocksToGet;

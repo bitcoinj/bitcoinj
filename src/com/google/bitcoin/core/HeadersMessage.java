@@ -20,6 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -37,6 +38,11 @@ public class HeadersMessage extends Message {
 
     public HeadersMessage(NetworkParameters params, byte[] payload) throws ProtocolException {
         super(params, payload, 0);
+    }
+
+    public HeadersMessage(NetworkParameters params, Block... headers) throws ProtocolException {
+        super(params);
+        blockHeaders = Arrays.asList(headers);
     }
 
     @Override

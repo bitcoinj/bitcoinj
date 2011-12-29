@@ -78,6 +78,7 @@ public class PeerGroup {
     private BlockStore blockStore;
     private BlockChain chain;
     private int connectionDelayMillis;
+    private long fastCatchupTimeSecs;
 
     /**
      * Creates a PeerGroup with the given parameters and a default 5 second connection timeout.
@@ -95,6 +96,7 @@ public class PeerGroup {
         this.params = params;
         this.chain = chain;
         this.connectionDelayMillis = connectionDelayMillis;
+        this.fastCatchupTimeSecs = params.genesisBlock.getTimeSeconds();
 
         inactives = new LinkedBlockingQueue<PeerAddress>();
         peers = Collections.synchronizedSet(new HashSet<Peer>());
@@ -445,6 +447,18 @@ public class PeerGroup {
         downloadPeer = peer;
         if (downloadPeer != null) {
             downloadPeer.setDownloadData(true);
+            downloadPeer.setFastCatchupTime(fastCatchupTimeSecs);
+        }
+    }
+
+    /**
+     * Tells the PeerGroup to download only block headers before a certain time and bodies after that. See
+     * {@link Peer#setFastCatchupTime(long)} for further explanation.
+     */
+    public synchronized void setFastCatchupTimeSecs(long secondsSinceEpoch) {
+        fastCatchupTimeSecs = secondsSinceEpoch;
+        if (downloadPeer != null) {
+            downloadPeer.setFastCatchupTime(secondsSinceEpoch);
         }
     }
 

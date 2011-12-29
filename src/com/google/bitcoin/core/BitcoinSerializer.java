@@ -67,9 +67,9 @@ public class BitcoinSerializer {
         names.put(Ping.class, "ping");
         names.put(VersionAck.class, "verack");
         names.put(GetBlocksMessage.class, "getblocks");
+        names.put(GetHeadersMessage.class, "getheaders");
         names.put(GetAddrMessage.class, "getaddr");
         names.put(HeadersMessage.class, "headers");
-
     }
 
     /**

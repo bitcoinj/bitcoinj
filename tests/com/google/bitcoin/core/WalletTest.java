@@ -323,4 +323,20 @@ public class WalletTest {
         assertEquals(tx1, transactions.get(2));
         assertEquals(3, transactions.size());
     }
+
+    @Test
+    public void keyCreationTime() throws Exception {
+        wallet = new Wallet(params);
+        // No keys throws an exception.
+        try {
+            wallet.getEarliestKeyCreationTime();
+            fail();
+        } catch (IllegalStateException e) {}
+        long now = Utils.rollMockClock(0).getTime() / 1000;  // Fix the mock clock.
+        wallet.addKey(new ECKey());
+        assertEquals(now, wallet.getEarliestKeyCreationTime());
+        Utils.rollMockClock(60);
+        wallet.addKey(new ECKey());
+        assertEquals(now, wallet.getEarliestKeyCreationTime());
+    }
 }

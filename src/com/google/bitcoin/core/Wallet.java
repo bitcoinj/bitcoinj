@@ -1021,4 +1021,27 @@ public class Wallet implements Serializable {
     public Collection<Transaction> getPendingTransactions() {
         return Collections.unmodifiableCollection(pending.values());
     }
+
+    /**
+     * Returns the earliest creation time of the keys in this wallet, in seconds since the epoch, ie the min of 
+     * {@link com.google.bitcoin.core.ECKey#getCreationTimeSeconds()}. This can return zero if at least one key does
+     * not have that data (was created before key timestamping was implemented). <p>
+     *     
+     * This method is most often used in conjunction with {@link PeerGroup#setFastCatchupTimeSecs(long)} in order to
+     * optimize chain download for new users of wallet apps. Backwards compatibility notice: if you get zero from this
+     * method, you can instead use the time of the first release of your software, as it's guaranteed no users will
+     * have wallets pre-dating this time.
+     * 
+     * @throws IllegalStateException if there are no keys in the wallet.
+     */
+    public long getEarliestKeyCreationTime() {
+        if (keychain.size() == 0) {
+            throw new IllegalStateException("No keys in wallet");
+        }
+        long earliestTime = Long.MAX_VALUE;
+        for (ECKey key : keychain) {
+            earliestTime = Math.min(key.getCreationTimeSeconds(), earliestTime);
+        }
+        return earliestTime;
+    }
 }

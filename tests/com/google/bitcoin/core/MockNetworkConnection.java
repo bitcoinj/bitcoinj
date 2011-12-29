@@ -133,4 +133,10 @@ public class MockNetworkConnection implements NetworkConnection {
         else
             return null;
     }
+
+    /** Convenience that does an inbound() followed by returning the value of outbound() */
+    public Message exchange(Message m) throws InterruptedException {
+        inbound(m);
+        return outbound();
+    }
 }

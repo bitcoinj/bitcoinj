@@ -51,8 +51,14 @@ public class ECKey implements Serializable {
         secureRandom = new SecureRandom();
     }
 
+    // The two parts of the key. If "priv" is set, "pub" can always be calculated. If "pub" is set but not "priv", we
+    // can only verify signatures not make them.
+    // TODO: Redesign this class to use consistent internals and more efficient serialization.
     private final BigInteger priv;
     private final byte[] pub;
+    // Creation time of the key in seconds since the epoch, or zero if the key was deserialized from a version that did
+    // not have this field.
+    private long creationTimeSeconds;
 
     transient private byte[] pubKeyHash;
 
@@ -67,6 +73,15 @@ public class ECKey implements Serializable {
         priv = privParams.getD();
         // The public key is an encoded point on the elliptic curve. It has no meaning independent of the curve.
         pub = pubParams.getQ().getEncoded();
+        creationTimeSeconds = Utils.now().getTime() / 1000;
+    }
+
+    /**
+     * Returns the creation time of this key or zero if the key was deserialized from a version that did not store
+     * that data.
+     */
+    public long getCreationTimeSeconds() {
+        return creationTimeSeconds;
     }
 
     /**

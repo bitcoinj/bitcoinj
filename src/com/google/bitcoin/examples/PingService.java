@@ -25,7 +25,7 @@ import java.io.File;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.net.InetAddress;
-import java.util.logging.LogManager;
+import java.util.Date;
 
 /**
  * <p>
@@ -83,6 +83,8 @@ public class PingService {
         
         final PeerGroup peerGroup = new PeerGroup(blockStore, params, chain);
         peerGroup.addAddress(new PeerAddress(InetAddress.getLocalHost()));
+        // Download headers only until a day ago.
+        peerGroup.setFastCatchupTimeSecs((new Date().getTime() / 1000) - (60 * 60 * 24));
         peerGroup.start();
 
         // We want to know when the balance changes.

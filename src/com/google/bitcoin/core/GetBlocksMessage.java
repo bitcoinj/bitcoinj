@@ -35,7 +35,7 @@ public class GetBlocksMessage extends Message {
     }
 
     protected void parseLite() throws ProtocolException {
-        //NOP.  This is a root level message and should always be provided with a length.
+        // NOP.  This is a root level message and should always be provided with a length.
     }
 
     public void parse() throws ProtocolException {

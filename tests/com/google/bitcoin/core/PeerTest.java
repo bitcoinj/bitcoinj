@@ -16,7 +16,8 @@
 
 package com.google.bitcoin.core;
 
-import static org.junit.Assert.*;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -24,9 +25,7 @@ import java.util.List;
 import java.util.concurrent.Future;
 
 import static org.easymock.EasyMock.*;
-
-import org.junit.Before;
-import org.junit.Test;
+import static org.junit.Assert.*;
 
 public class PeerTest extends TestWithNetworkConnections {
     private Peer peer;
@@ -223,5 +222,49 @@ public class PeerTest extends TestWithNetworkConnections {
         Block b = resultFuture.get();
         assertEquals(b, b3);
         conn.disconnect();
+    }
+
+    @Test
+    public void fastCatchup() throws Exception {
+        // Check that blocks before the fast catchup point are retrieved using getheaders, and after using getblocks.
+        // This test is INCOMPLETE because it does not check we handle >2000 blocks correctly.
+        Block b1 = TestUtils.createFakeBlock(unitTestParams, blockStore).block;
+        blockChain.add(b1);
+        Utils.rollMockClock(60 * 10);  // 10 minutes later.
+        Block b2 = TestUtils.makeSolvedTestBlock(unitTestParams, b1);
+        Utils.rollMockClock(60 * 10);  // 10 minutes later.
+        Block b3 = TestUtils.makeSolvedTestBlock(unitTestParams, b2);
+        Utils.rollMockClock(60 * 10);
+        Block b4 = TestUtils.makeSolvedTestBlock(unitTestParams, b3);
+        conn.setVersionMessageForHeight(unitTestParams, 4);
+        // Request headers until the last 2 blocks.
+        peer.setFastCatchupTime((Utils.now().getTime() / 1000) - (600*2) + 1);
+        runPeerAsync(peer, conn);
+        peer.startBlockChainDownload();
+        GetHeadersMessage getheaders = (GetHeadersMessage) conn.outbound();
+        List<Sha256Hash> expectedLocator = new ArrayList<Sha256Hash>();
+        expectedLocator.add(b1.getHash());
+        expectedLocator.add(b1.getPrevBlockHash());
+        expectedLocator.add(unitTestParams.genesisBlock.getHash());
+        assertEquals(getheaders.getLocator(), expectedLocator);
+        assertEquals(getheaders.getStopHash(), Sha256Hash.ZERO_HASH);
+        // Now send all the headers.
+        HeadersMessage headers = new HeadersMessage(unitTestParams, b2.cloneAsHeader(),
+                b3.cloneAsHeader(), b4.cloneAsHeader());
+        // We expect to be asked for b3 and b4 again, but this time, with a body.
+        expectedLocator.clear();
+        expectedLocator.add(b2.getHash());
+        expectedLocator.add(b1.getHash());
+        expectedLocator.add(unitTestParams.genesisBlock.getHash());
+        GetBlocksMessage getblocks = (GetBlocksMessage) conn.exchange(headers);
+        assertEquals(expectedLocator, getblocks.getLocator());
+        assertEquals(b3.getHash(), getblocks.getStopHash());
+        // We're supposed to get an inv here.
+        InventoryMessage inv = new InventoryMessage(unitTestParams);
+        inv.addItem(new InventoryItem(InventoryItem.Type.Block, b3.getHash()));
+        GetDataMessage getdata = (GetDataMessage) conn.exchange(inv);
+        assertEquals(b3.getHash(), getdata.getItems().get(0).hash);
+        // All done.
+        assertEquals(null, conn.exchange(b3));
     }
 }
