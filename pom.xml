@@ -248,7 +248,9 @@
     <dependency>
       <groupId>org.apache.derby</groupId>
       <artifactId>derby</artifactId>
-      <version>10.8.2.2</version>
+      <version>${derby.version}</version>
+      <scope>runtime</scope>
+      <optional>true</optional>
     </dependency>
 
     <!-- In Android these libraries are incomplete,
@@ -267,6 +269,7 @@
     <easymock.version>3.0</easymock.version>
     <junit.version>4.8.2</junit.version>
     <slf4j.version>1.6.2</slf4j.version>
+    <derby.version>10.8.2.2</derby.version>
   </properties>
 
 </project>

@@ -68,7 +68,8 @@ public class DerbyBlockStoreTest {
             for (File c : f.listFiles())
                 deleteRecursively(c);
         }
-        if (!f.delete())
+        
+        if (f.exists() && !f.delete())
             throw new FileNotFoundException("Failed to delete file: " + f);
     }
 }
