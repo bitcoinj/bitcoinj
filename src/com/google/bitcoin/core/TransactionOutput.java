@@ -205,7 +205,7 @@ public class TransactionOutput extends ChildMessage implements Serializable {
     /**
      * Returns the connected input.
      */
-    TransactionInput getSpentBy() {
+    public TransactionInput getSpentBy() {
         return spentBy;
     }
 

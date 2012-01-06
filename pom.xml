@@ -213,6 +213,54 @@
           </execution>
         </executions>
       </plugin>
+      <plugin>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>compile-protoc</id>
+            <phase>generate-sources</phase>
+            <configuration>
+              <tasks>
+                <mkdir dir="${generated.sourceDirectory}" />
+                <path id="proto.path">
+                  <fileset dir="src">
+                    <include name="**/*.proto" />
+                  </fileset>
+                </path>
+                <pathconvert pathsep=" " property="proto.files" refid="proto.path" />
+                <exec executable="protoc" failonerror="true">
+                  <arg value="--java_out=${generated.sourceDirectory}" />
+                  <arg value="-I${project.basedir}/src" />
+                  <arg line="${proto.files}" />
+                </exec>
+              </tasks>
+            </configuration>
+            <goals>
+              <goal>run</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>build-helper-maven-plugin</artifactId>
+        <version>1.1</version>
+        <executions>
+          <execution>
+            <id>add-source</id>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>add-source</goal>
+            </goals>
+            <configuration>
+              <sources>
+                <source>gen</source>
+              </sources>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
     </plugins>
   </build>
 
@@ -260,6 +308,12 @@
       <artifactId>bcprov-jdk15</artifactId>
       <version>${bcprov-jdk15.version}</version>
     </dependency>
+
+    <dependency>
+      <groupId>com.google.protobuf</groupId>
+      <artifactId>protobuf-java</artifactId>
+      <version>${protobuf.version}</version>
+    </dependency>
   </dependencies>
 
   <properties>
@@ -270,6 +324,8 @@
     <junit.version>4.8.2</junit.version>
     <slf4j.version>1.6.2</slf4j.version>
     <derby.version>10.8.2.2</derby.version>
+    <protobuf.version>2.2.0</protobuf.version>
+    <generated.sourceDirectory>gen</generated.sourceDirectory>
   </properties>
 
 </project>

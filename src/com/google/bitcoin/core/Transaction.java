@@ -180,7 +180,7 @@ public class Transaction extends ChildMessage implements Serializable {
      * Returns a set of blocks which contain the transaction, or null if this transaction doesn't have that data
      * because it's not stored in the wallet or because it has never appeared in a block.
      */
-    Set<StoredBlock> getAppearsIn() {
+    public Set<StoredBlock> getAppearsIn() {
         return appearsIn;
     }
 
@@ -204,6 +204,9 @@ public class Transaction extends ChildMessage implements Serializable {
      * @param bestChain whether to set the updatedAt timestamp from the block header (only if not already set)
      */
     void setBlockAppearance(StoredBlock block, boolean bestChain) {
+        if (bestChain && updatedAt == null) {
+            updatedAt = new Date(block.getHeader().getTimeSeconds() * 1000);
+        }
         if (appearsIn == null) {
             appearsIn = new HashSet<StoredBlock>();
         }

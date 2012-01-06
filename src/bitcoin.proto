@@ -1,0 +1,80 @@
+/**
+ * Copyright 2012 Google Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*
+ * Author: Jim Burton
+ */
+
+package wallet;
+
+option java_package = "org.bitcoinj.wallet";
+option java_outer_classname = "Protos";
+
+message Wallet {
+  required string network_identifier = 1; // the network used by this wallet
+  // org.bitcoin.production = production network (Satoshi genesis block)
+  // org.bitcoin.test = test network (Andresen genesis block)
+
+  optional bytes last_seen_block_hash = 2; // the Sha256 hash of the block last seen by this wallet
+
+  message Key {
+    required string private_key = 1; // base58 representation of private key
+    optional string label = 2; // for presentation purposes
+    optional int64 creation_timestamp = 3;  // datetime stored as millis since epoch.
+  }
+  repeated Key key = 3;
+
+
+  message Transaction {
+    enum Pool {
+      UNSPENT = 0;
+      SPENT = 1;
+      PENDING = 2;
+      INACTIVE = 3;
+      DEAD = 4;
+    }
+
+    // See com.google.bitcoin.core.Wallet.java for detailed description of pool semantics
+    required Pool pool = 1;
+
+    optional int64 updated_at = 2; // millis since epoch the transaction was last updated
+
+    message TransactionInput {
+      required bytes transaction_out_point_hash = 1;
+      // Sha256Hash of transaction output this input is using
+      required int32 transaction_out_point_index = 2;
+      // index of transaction output used by this input if in this wallet
+
+      required bytes script_bytes = 3; // script of transaction input
+    }
+
+    repeated TransactionInput transaction_input = 3;
+
+    message TransactionOutput {
+      required int64 value = 1;
+      required bytes script_bytes = 2;    // script of transaction output
+      optional bytes spent_by_transaction_hash = 3; // if spent, the Sha256Hash of the transaction doing the spend
+      optional int32 spent_by_transaction_index = 4;
+      // if spent, the index of the transaction output of the transaction doing the spend
+    }
+    repeated TransactionOutput transaction_output = 4;
+
+
+    repeated bytes block_hash = 5;
+    // Sha256Hash of block in block chain in which this transaction appears
+  }
+  repeated Transaction transaction =   4;
+} // end of Wallet

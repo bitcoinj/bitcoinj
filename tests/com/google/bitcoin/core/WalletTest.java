@@ -61,14 +61,14 @@ public class WalletTest {
 
         wallet.receiveFromBlock(t1, null, BlockChain.NewBlockType.BEST_CHAIN);
         assertEquals(v1, wallet.getBalance());
-        assertEquals(1, wallet.getPoolSize(Wallet.Pool.UNSPENT));
-        assertEquals(1, wallet.getPoolSize(Wallet.Pool.ALL));
+        assertEquals(1, wallet.getPoolSize(WalletTransaction.Pool.UNSPENT));
+        assertEquals(1, wallet.getPoolSize(WalletTransaction.Pool.ALL));
 
         ECKey k2 = new ECKey();
         BigInteger v2 = toNanoCoins(0, 50);
         Transaction t2 = wallet.createSend(k2.toAddress(params), v2);
-        assertEquals(1, wallet.getPoolSize(Wallet.Pool.UNSPENT));
-        assertEquals(1, wallet.getPoolSize(Wallet.Pool.ALL));
+        assertEquals(1, wallet.getPoolSize(WalletTransaction.Pool.UNSPENT));
+        assertEquals(1, wallet.getPoolSize(WalletTransaction.Pool.ALL));
 
         // Do some basic sanity checks.
         assertEquals(1, t2.getInputs().size());
@@ -77,9 +77,9 @@ public class WalletTest {
         // We have NOT proven that the signature is correct!
 
         wallet.commitTx(t2);
-        assertEquals(1, wallet.getPoolSize(Wallet.Pool.PENDING));
-        assertEquals(1, wallet.getPoolSize(Wallet.Pool.SPENT));
-        assertEquals(2, wallet.getPoolSize(Wallet.Pool.ALL));
+        assertEquals(1, wallet.getPoolSize(WalletTransaction.Pool.PENDING));
+        assertEquals(1, wallet.getPoolSize(WalletTransaction.Pool.SPENT));
+        assertEquals(2, wallet.getPoolSize(WalletTransaction.Pool.ALL));
     }
 
     @Test
@@ -90,14 +90,14 @@ public class WalletTest {
 
         wallet.receiveFromBlock(t1, null, BlockChain.NewBlockType.BEST_CHAIN);
         assertEquals(v1, wallet.getBalance());
-        assertEquals(1, wallet.getPoolSize(Wallet.Pool.UNSPENT));
-        assertEquals(1, wallet.getPoolSize(Wallet.Pool.ALL));
+        assertEquals(1, wallet.getPoolSize(WalletTransaction.Pool.UNSPENT));
+        assertEquals(1, wallet.getPoolSize(WalletTransaction.Pool.ALL));
 
         BigInteger v2 = toNanoCoins(0, 50);
         Transaction t2 = createFakeTx(params, v2, myAddress);
         wallet.receiveFromBlock(t2, null, BlockChain.NewBlockType.SIDE_CHAIN);
-        assertEquals(1, wallet.getPoolSize(Wallet.Pool.INACTIVE));
-        assertEquals(2, wallet.getPoolSize(Wallet.Pool.ALL));
+        assertEquals(1, wallet.getPoolSize(WalletTransaction.Pool.INACTIVE));
+        assertEquals(2, wallet.getPoolSize(WalletTransaction.Pool.ALL));
 
         assertEquals(v1, wallet.getBalance());
     }
@@ -107,6 +107,7 @@ public class WalletTest {
         final Transaction fakeTx = createFakeTx(params, Utils.toNanoCoins(1, 0), myAddress);
         final boolean[] didRun = new boolean[1];
         WalletEventListener listener = new AbstractWalletEventListener() {
+            @Override
             public void onCoinsReceived(Wallet w, Transaction tx, BigInteger prevBalance, BigInteger newBalance) {
                 assertTrue(prevBalance.equals(BigInteger.ZERO));
                 assertTrue(newBalance.equals(Utils.toNanoCoins(1, 0)));
@@ -130,18 +131,18 @@ public class WalletTest {
         StoredBlock b1 = createFakeBlock(params, blockStore, t1).storedBlock;
         StoredBlock b2 = createFakeBlock(params, blockStore, t2).storedBlock;
         BigInteger expected = toNanoCoins(5, 50);
-        assertEquals(0, wallet.getPoolSize(Wallet.Pool.ALL));
+        assertEquals(0, wallet.getPoolSize(WalletTransaction.Pool.ALL));
         wallet.receiveFromBlock(t1, b1, BlockChain.NewBlockType.BEST_CHAIN);
-        assertEquals(1, wallet.getPoolSize(Wallet.Pool.UNSPENT));
+        assertEquals(1, wallet.getPoolSize(WalletTransaction.Pool.UNSPENT));
         wallet.receiveFromBlock(t2, b2, BlockChain.NewBlockType.BEST_CHAIN);
-        assertEquals(2, wallet.getPoolSize(Wallet.Pool.UNSPENT));
+        assertEquals(2, wallet.getPoolSize(WalletTransaction.Pool.UNSPENT));
         assertEquals(expected, wallet.getBalance());
 
         // Now spend one coin.
         BigInteger v3 = toNanoCoins(1, 0);
         Transaction spend = wallet.createSend(new ECKey().toAddress(params), v3);
         wallet.commitTx(spend);
-        assertEquals(1, wallet.getPoolSize(Wallet.Pool.PENDING));
+        assertEquals(1, wallet.getPoolSize(WalletTransaction.Pool.PENDING));
 
         // Available and estimated balances should not be the same. We don't check the exact available balance here
         // because it depends on the coin selection algorithm.
@@ -229,8 +230,8 @@ public class WalletTest {
         wallet.receiveFromBlock(inbound1, null, BlockChain.NewBlockType.BEST_CHAIN);
         // Send half to some other guy. Sending only half then waiting for a confirm is important to ensure the tx is
         // in the unspent pool, not pending or spent.
-        assertEquals(1, wallet.getPoolSize(Wallet.Pool.UNSPENT));
-        assertEquals(1, wallet.getPoolSize(Wallet.Pool.ALL));
+        assertEquals(1, wallet.getPoolSize(WalletTransaction.Pool.UNSPENT));
+        assertEquals(1, wallet.getPoolSize(WalletTransaction.Pool.ALL));
         Address someOtherGuy = new ECKey().toAddress(params);
         Transaction outbound1 = wallet.createSend(someOtherGuy, coinHalf);
         wallet.commitTx(outbound1);

@@ -16,6 +16,8 @@
 
 package com.google.bitcoin.core;
 
+import com.google.bitcoin.core.WalletTransaction.Pool;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -150,6 +152,14 @@ public class Wallet implements Serializable {
         dead = new HashMap<Sha256Hash, Transaction>();
         eventListeners = new ArrayList<WalletEventListener>();
     }
+    
+    public NetworkParameters getNetworkParameters() {
+        return params;
+    }
+    
+    public Iterable<ECKey> getKeys() {
+        return keychain;
+    }
 
     /**
      * Uses Java serialization to save the wallet to the given file.
@@ -184,6 +194,12 @@ public class Wallet implements Serializable {
      */
     public static Wallet loadFromFile(File f) throws IOException {
         return loadFromFileStream(new FileInputStream(f));
+    }
+    
+    private void checkInvariants() {
+        if (getTransactions(true, true).size() !=
+                unspent.size() + spent.size() + pending.size() + dead.size() + inactive.size())
+            throw new RuntimeException("Invariant broken - a tx appears in more than one pool");
     }
 
     /**
@@ -429,6 +445,8 @@ public class Wallet implements Serializable {
         if (!reorg && bestChain && valueDifference.compareTo(BigInteger.ZERO) > 0 && wtx == null) {
             invokeOnCoinsReceived(tx, prevBalance, getBalance());
         }
+        
+        checkInvariants();
     }
 
     /**
@@ -604,6 +622,8 @@ public class Wallet implements Serializable {
         // Add to the pending pool. It'll be moved out once we receive this transaction on the best chain.
         log.info("->pending: {}", tx.getHashAsString());
         pending.put(tx.getHash(), tx);
+        
+        checkInvariants();
     }
 
     /**
@@ -625,6 +645,48 @@ public class Wallet implements Serializable {
     }
 
     /**
+     * Returns a set of all WalletTransactions in the wallet.
+     */
+    public Iterable<WalletTransaction> getWalletTransactions() {
+        Set<WalletTransaction> all = new HashSet<WalletTransaction>();
+        addWalletTransactionsToSet(all, Pool.UNSPENT, unspent);
+        addWalletTransactionsToSet(all, Pool.SPENT, spent);
+        addWalletTransactionsToSet(all, Pool.PENDING, pending);
+        addWalletTransactionsToSet(all, Pool.DEAD, dead);
+        addWalletTransactionsToSet(all, Pool.INACTIVE, inactive);
+        return all;
+    }
+
+    static private void addWalletTransactionsToSet(Set<WalletTransaction> txs,
+            Pool poolType, Map<Sha256Hash, Transaction> pool) {
+        for (Transaction tx : pool.values()) {
+            txs.add(new WalletTransaction(poolType, tx));
+        }
+    }
+    
+    public void addWalletTransaction(WalletTransaction wtx) {
+        switch (wtx.getPool()) {
+        case UNSPENT:
+            unspent.put(wtx.getTransaction().getHash(), wtx.getTransaction());
+            break;
+        case SPENT:
+            spent.put(wtx.getTransaction().getHash(), wtx.getTransaction());
+            break;
+        case PENDING:
+            pending.put(wtx.getTransaction().getHash(), wtx.getTransaction());
+            break;
+        case DEAD:
+            dead.put(wtx.getTransaction().getHash(), wtx.getTransaction());
+            break;
+        case INACTIVE:
+            inactive.put(wtx.getTransaction().getHash(), wtx.getTransaction());
+            break;
+        default:
+            throw new RuntimeException("Unknown wallet transaction type " + wtx.getPool());
+        }
+    }
+
+    /**
      * Returns all non-dead, active transactions ordered by recency.
      */
     public List<Transaction> getTransactionsByTime() {
@@ -642,7 +704,9 @@ public class Wallet implements Serializable {
     public List<Transaction> getRecentTransactions(int numTransactions, boolean includeDead) {
         assert numTransactions >= 0;
         // Firstly, put all transactions into an array.
-        int size = getPoolSize(Pool.UNSPENT) + getPoolSize(Pool.SPENT) + getPoolSize(Pool.PENDING);
+        int size = getPoolSize(WalletTransaction.Pool.UNSPENT) +
+                getPoolSize(WalletTransaction.Pool.SPENT) +
+                getPoolSize(WalletTransaction.Pool.PENDING);
         if (numTransactions > size || numTransactions == 0) {
             numTransactions = size;
         }
@@ -695,16 +759,6 @@ public class Wallet implements Serializable {
         }
     }
 
-    // This is used only for unit testing, it's an internal API.
-    enum Pool {
-        UNSPENT,
-        SPENT,
-        PENDING,
-        INACTIVE,
-        DEAD,
-        ALL,
-    }
-
     EnumSet<Pool> getContainingPools(Transaction tx) {
         EnumSet<Pool> result = EnumSet.noneOf(Pool.class);
         Sha256Hash txHash = tx.getHash();
@@ -726,7 +780,7 @@ public class Wallet implements Serializable {
         return result;
     }
 
-    int getPoolSize(Pool pool) {
+    int getPoolSize(WalletTransaction.Pool pool) {
         switch (pool) {
             case UNSPENT:
                 return unspent.size();
@@ -1218,6 +1272,8 @@ public class Wallet implements Serializable {
                 l.onReorganize(this);
             }
         }
+        
+        checkInvariants();
     }
 
     private void reprocessTxAfterReorg(Map<Sha256Hash, Transaction> pool, Transaction tx) {

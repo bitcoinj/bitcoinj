@@ -78,6 +78,8 @@ public class NetworkParameters implements Serializable {
      * signatures using it.
      */
     public byte[] alertSigningKey;
+    
+    public String id;
 
     private static Block createGenesis(NetworkParameters n) {
         Block genesisBlock = new Block(n);
@@ -122,6 +124,7 @@ public class NetworkParameters implements Serializable {
         n.genesisBlock.setTime(1296688602L);
         n.genesisBlock.setDifficultyTarget(0x1d07fff8L);
         n.genesisBlock.setNonce(384568319);
+        n.id = "org.bitcoin.test";
         String genesisHash = n.genesisBlock.getHashAsString();
         assert genesisHash.equals("00000007199508e34a9ff81e6ec0c477a4cccff2a4767a8eee39c11db367b008") : genesisHash;
         return n;
@@ -148,6 +151,7 @@ public class NetworkParameters implements Serializable {
         n.genesisBlock.setDifficultyTarget(0x1d00ffffL);
         n.genesisBlock.setTime(1231006505L);
         n.genesisBlock.setNonce(2083236893);
+        n.id = "org.bitcoin.production";
         String genesisHash = n.genesisBlock.getHashAsString();
         assert genesisHash.equals("000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f") : genesisHash;
         return n;
@@ -162,6 +166,14 @@ public class NetworkParameters implements Serializable {
         n.genesisBlock.setDifficultyTarget(Block.EASIEST_DIFFICULTY_TARGET);
         n.interval = 10;
         n.targetTimespan = 200000000;  // 6 years. Just a very big number.
+        n.id = "com.google.bitcoin.unittest";
         return n;
+    }
+
+    /**
+     * A java package style string acting as unique ID for these parameters
+     */
+    public String getId() {
+        return id;
     }
 }
