@@ -92,6 +92,15 @@ public class TransactionOutput extends ChildMessage implements Serializable {
         length = 8 + VarInt.sizeOf(scriptBytes.length) + scriptBytes.length;
     }
 
+    public TransactionOutput(NetworkParameters params, Transaction parent, BigInteger value, byte[] scriptBytes) {
+        super(params);
+        this.value = value;
+        this.scriptBytes = scriptBytes;
+        parentTransaction = parent;
+        availableForSpending = true;
+        length = 8 + VarInt.sizeOf(scriptBytes.length) + scriptBytes.length;
+    }
+
     /**
      * Used only in creation of the genesis blocks and in unit tests.
      */
@@ -153,7 +162,7 @@ public class TransactionOutput extends ChildMessage implements Serializable {
      * Sets this objects availableToSpend flag to false and the spentBy pointer to the given input.
      * If the input is null, it means this output was signed over to somebody else rather than one of our own keys.
      */
-    void markAsSpent(TransactionInput input) {
+    public void markAsSpent(TransactionInput input) {
         assert availableForSpending;
         availableForSpending = false;
         spentBy = input;

@@ -78,13 +78,23 @@ public class Transaction extends ChildMessage implements Serializable {
     // Data about how confirmed this tx is. Serialized, may be null. 
     private TransactionConfidence confidence;
 
-    Transaction(NetworkParameters params) {
+    public Transaction(NetworkParameters params) {
         super(params);
         version = 1;
         inputs = new ArrayList<TransactionInput>();
         outputs = new ArrayList<TransactionOutput>();
         // We don't initialize appearsIn deliberately as it's only useful for transactions stored in the wallet.
         length = 10; // 8 for std fields + 1 for each 0 varint
+    }
+
+    public Transaction(NetworkParameters params, Sha256Hash hash) {
+        super(params);
+        version = 1;
+        inputs = new ArrayList<TransactionInput>();
+        outputs = new ArrayList<TransactionOutput>();
+        this.hash = hash;
+        // We don't initialize appearsIn deliberately as it's only useful for transactions stored in the wallet.
+        length = 10; //8 for std fields + 1 for each 0 varint
     }
 
     /**
@@ -336,6 +346,10 @@ public class Transaction extends ChildMessage implements Serializable {
             updatedAt = new Date(earliestTimeSecs * 1000);
         }
         return updatedAt;
+    }
+    
+    public void setUpdateTime(Date updatedAt) {
+        this.updatedAt = updatedAt;
     }
 
     /**

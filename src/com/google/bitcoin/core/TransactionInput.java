@@ -61,6 +61,18 @@ public class TransactionInput extends ChildMessage implements Serializable {
         length = 40 + (scriptBytes == null ? 1 : VarInt.sizeOf(scriptBytes.length) + scriptBytes.length);
     }
 
+    public TransactionInput(NetworkParameters params, Transaction parentTransaction,
+            byte[] scriptBytes,
+            TransactionOutPoint outpoint) {
+        super(params);
+        this.scriptBytes = scriptBytes;
+        this.outpoint = outpoint;
+        this.sequence = 0xFFFFFFFFL;
+        this.parentTransaction = parentTransaction;
+
+        length = 40 + (scriptBytes == null ? 1 : VarInt.sizeOf(scriptBytes.length) + scriptBytes.length);
+    }
+
     /**
      * Creates an UNSIGNED input that links to the given output
      */

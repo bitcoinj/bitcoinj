@@ -48,9 +48,10 @@ message Wallet {
     }
 
     // See com.google.bitcoin.core.Wallet.java for detailed description of pool semantics
-    required Pool pool = 1;
+    required bytes hash = 1;
+    required Pool pool = 2;
 
-    optional int64 updated_at = 2; // millis since epoch the transaction was last updated
+    optional int64 updated_at = 3; // millis since epoch the transaction was last updated
 
     message TransactionInput {
       required bytes transaction_out_point_hash = 1;
@@ -61,7 +62,7 @@ message Wallet {
       required bytes script_bytes = 3; // script of transaction input
     }
 
-    repeated TransactionInput transaction_input = 3;
+    repeated TransactionInput transaction_input = 4;
 
     message TransactionOutput {
       required int64 value = 1;
@@ -70,10 +71,10 @@ message Wallet {
       optional int32 spent_by_transaction_index = 4;
       // if spent, the index of the transaction output of the transaction doing the spend
     }
-    repeated TransactionOutput transaction_output = 4;
+    repeated TransactionOutput transaction_output = 5;
 
 
-    repeated bytes block_hash = 5;
+    repeated bytes block_hash = 6;
     // Sha256Hash of block in block chain in which this transaction appears
   }
   repeated Transaction transaction =   4;

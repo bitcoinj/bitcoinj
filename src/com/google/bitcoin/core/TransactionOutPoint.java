@@ -38,7 +38,7 @@ public class TransactionOutPoint extends ChildMessage implements Serializable {
     // It points to the connected transaction.
     Transaction fromTx;
 
-    TransactionOutPoint(NetworkParameters params, long index, Transaction fromTx) {
+    public TransactionOutPoint(NetworkParameters params, long index, Transaction fromTx) {
         super(params);
         this.index = index;
         if (fromTx != null) {

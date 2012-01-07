@@ -16,6 +16,7 @@
 
 package com.google.bitcoin.core;
 
+
 /**
  * A Transaction in a Wallet - includes the pool ID
  * 
@@ -37,6 +38,17 @@ public class WalletTransaction {
         
         public int getValue() {
             return value;
+        }
+
+        public static Pool valueOf(int value) {
+            switch (value) {
+            case 0: return UNSPENT;
+            case 1: return SPENT;
+            case 2: return PENDING;
+            case 3: return INACTIVE;
+            case 4: return DEAD;
+            default: return null;
+            }
         }
     }
     private Transaction transaction;
