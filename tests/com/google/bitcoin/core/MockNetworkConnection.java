@@ -50,6 +50,7 @@ public class MockNetworkConnection implements NetworkConnection {
     }
 
     public void shutdown() throws IOException {
+        inboundMessageQ.add(disconnectMarker);
     }
 
     public synchronized void disconnect() throws IOException {
@@ -140,7 +141,7 @@ public class MockNetworkConnection implements NetworkConnection {
     }
 
     /**
-     * Takes the most recently received message or returns NULL if there are none waiting.
+     * Takes the most recently sent message or returns NULL if there are none waiting.
      */
     public Message popOutbound() throws InterruptedException {
         if (outboundMessageQ.peek() != null)
@@ -149,6 +150,16 @@ public class MockNetworkConnection implements NetworkConnection {
             return null;
     }
 
+    /**
+     * Takes the most recently received message or returns NULL if there are none waiting.
+     */
+    public Object popInbound() throws InterruptedException {
+        if (inboundMessageQ.peek() != null)
+            return inboundMessageQ.take();
+        else
+            return null;
+    }
+    
     /** Convenience that does an inbound() followed by returning the value of outbound() */
     public Message exchange(Message m) throws InterruptedException {
         inbound(m);

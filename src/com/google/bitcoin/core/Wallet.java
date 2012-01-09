@@ -795,14 +795,6 @@ public class Wallet implements Serializable {
     public synchronized Transaction sendCoins(PeerGroup peerGroup, Address to, BigInteger nanocoins) throws IOException {
         Transaction tx = sendCoinsOffline(to, nanocoins);
         
-        if (tx == null)   // Not enough money! :-(
-            return null;
-        try {
-            commitTx(tx);
-        } catch (VerificationException e) {
-            throw new RuntimeException(e);  // Cannot happen unless there's a bug, as we just created this ourselves.
-        }
-        
         if (!peerGroup.broadcastTransaction(tx)) {
             throw new IOException("Failed to broadcast tx to all connected peers");
         }

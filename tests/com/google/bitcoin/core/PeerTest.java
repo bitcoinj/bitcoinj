@@ -60,6 +60,10 @@ public class PeerTest extends TestWithNetworkConnections {
         } catch (PeerException e) {
             assertTrue(e.getCause() instanceof IOException);
         }
+    }
+    
+    @Test
+    public void testRun_protocolException() throws Exception {
         conn.exceptionOnRead(new ProtocolException("proto"));
         try {
             peer.run();
@@ -153,6 +157,8 @@ public class PeerTest extends TestWithNetworkConnections {
         conn.inbound(inv);
         // Peer hasn't seen it before, so will ask for it.
         runPeer(peer, conn);
+        conn.popInbound(); // Pop the disconnect marker so we can reuse
+        
         GetDataMessage message = (GetDataMessage) conn.popOutbound();
         assertEquals(1, message.getItems().size());
         assertEquals(tx.getHash(), message.getItems().get(0).hash);

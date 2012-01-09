@@ -16,20 +16,25 @@
 
 package com.google.bitcoin.core;
 
-import com.google.bitcoin.discovery.PeerDiscovery;
-import com.google.bitcoin.discovery.PeerDiscoveryException;
-import org.junit.Before;
-import org.junit.Test;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.math.BigInteger;
 import java.net.InetSocketAddress;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.Semaphore;
 
-import static org.junit.Assert.*;
+import org.junit.Before;
+import org.junit.Test;
+
+import com.google.bitcoin.discovery.PeerDiscovery;
+import com.google.bitcoin.discovery.PeerDiscoveryException;
 
 public class PeerGroupTest extends TestWithNetworkConnections {
     static final NetworkParameters params = NetworkParameters.unitTests();
@@ -37,6 +42,9 @@ public class PeerGroupTest extends TestWithNetworkConnections {
     private PeerGroup peerGroup;
     private final BlockingQueue<Peer> disconnectedPeers = new LinkedBlockingQueue<Peer>();
 
+    // FIXME Some tests here are non-deterministic due to the peers running on a separate thread.
+    // FIXME Fix this by having exchangeAndWait and inboundAndWait methods in MockNetworkConnection. 
+    
     @Override
     @Before
     public void setUp() throws Exception {
@@ -110,9 +118,11 @@ public class PeerGroupTest extends TestWithNetworkConnections {
         
         // Check the peer accessors.
         assertEquals(2, peerGroup.numPeers());
-        List<Peer> tmp = peerGroup.getPeers();
-        assertEquals(p1, tmp.get(0));
-        assertEquals(p2, tmp.get(1));
+        Set<Peer> tmp = new HashSet<Peer>(peerGroup.getPeers());
+        Set<Peer> expectedPeers = new HashSet<Peer>();
+        expectedPeers.add(p1);
+        expectedPeers.add(p2);
+        assertEquals(tmp, expectedPeers);
 
         BigInteger value = Utils.toNanoCoins(1, 0);
         Transaction t1 = TestUtils.createFakeTx(unitTestParams, value, address);
@@ -122,6 +132,7 @@ public class PeerGroupTest extends TestWithNetworkConnections {
         assertNull(n2.exchange(inv));  // Only one peer is used to download.
         assertNull(n1.exchange(t1));
         assertEquals(value, wallet.getBalance(Wallet.BalanceType.ESTIMATED));
+        peerGroup.stop();
     }
 
     @Test
@@ -194,6 +205,7 @@ public class PeerGroupTest extends TestWithNetworkConnections {
         peerGroup.addPeer(p2);
         Message message = n2.outbound();
         assertNull(message == null ? "" : message.toString(), message);
+        peerGroup.stop();
     }
     
     @Test
@@ -282,6 +294,7 @@ public class PeerGroupTest extends TestWithNetworkConnections {
         Peer p3 = new Peer(params, blockChain, n3);
         peerGroup.addPeer(p3);
         assertTrue(n3.outbound() instanceof InventoryMessage);
+        peerGroup.stop();
     }
 
 

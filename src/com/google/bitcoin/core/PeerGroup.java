@@ -275,6 +275,7 @@ public class PeerGroup {
      */
     public synchronized void stop() {
         if (running) {
+            running = false;
             connectThread.interrupt();
         }
     }
@@ -577,6 +578,9 @@ public class PeerGroup {
             log.info("Setting download peer: {}", downloadPeer);
             downloadPeer.setDownloadData(true);
             downloadPeer.setFastCatchupTime(fastCatchupTimeSecs);
+            for (PeerEventListener listener : peerEventListeners) {
+                downloadPeer.addEventListener(listener);
+            }
         }
     }
 
@@ -588,9 +592,6 @@ public class PeerGroup {
         fastCatchupTimeSecs = secondsSinceEpoch;
         if (downloadPeer != null) {
             downloadPeer.setFastCatchupTime(secondsSinceEpoch);
-            for (PeerEventListener listener : peerEventListeners) {
-                downloadPeer.addEventListener(listener);
-            }
         }
     }
 
