@@ -158,6 +158,7 @@ public class NetworkParameters implements Serializable {
         NetworkParameters n = new NetworkParameters();
         n = createTestNet(n);
         n.proofOfWorkLimit = new BigInteger("00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", 16);
+        n.genesisBlock.setNonce(2); // Make this pass the difficulty test 
         n.genesisBlock.setDifficultyTarget(Block.EASIEST_DIFFICULTY_TARGET);
         n.interval = 10;
         n.targetTimespan = 200000000;  // 6 years. Just a very big number.
