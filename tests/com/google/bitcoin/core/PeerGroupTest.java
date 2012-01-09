@@ -24,6 +24,7 @@ import org.junit.Test;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.net.InetSocketAddress;
+import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.Semaphore;
@@ -106,6 +107,12 @@ public class PeerGroupTest extends TestWithNetworkConnections {
         peerGroup.start();
         peerGroup.addPeer(p1);
         peerGroup.addPeer(p2);
+        
+        // Check the peer accessors.
+        assertEquals(2, peerGroup.numPeers());
+        List<Peer> tmp = peerGroup.getPeers();
+        assertEquals(p1, tmp.get(0));
+        assertEquals(p2, tmp.get(1));
 
         BigInteger value = Utils.toNanoCoins(1, 0);
         Transaction t1 = TestUtils.createFakeTx(unitTestParams, value, address);
