@@ -453,7 +453,7 @@ public class PeerGroup {
 
     /**
      * Tells the PeerGroup to download only block headers before a certain time and bodies after that. See
-     * {@link Peer#setFastCatchupTime(long)} for further explanation.
+     * {@link Peer#setFastCatchupTime(long)} for further explanation. Call this before starting block chain download.
      */
     public synchronized void setFastCatchupTimeSecs(long secondsSinceEpoch) {
         fastCatchupTimeSecs = secondsSinceEpoch;

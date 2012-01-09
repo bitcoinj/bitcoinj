@@ -28,4 +28,36 @@ public class GetHeadersMessage extends GetBlocksMessage {
     public GetHeadersMessage(NetworkParameters params, List<Sha256Hash> locator, Sha256Hash stopHash) {
         super(params, locator, stopHash);
     }
+
+    @Override
+    public String toString() {
+        StringBuffer b = new StringBuffer();
+        b.append("getheaders: ");
+        for (Sha256Hash hash : locator) {
+            b.append(hash.toString());
+            b.append(" ");
+        }
+        return b.toString();
+    }
+
+    /**
+     * Compares two getheaders messages. Note that even though they are structurally identical a GetHeadersMessage
+     * will not compare equal to a GetBlocksMessage containing the same data.
+     */
+    @Override
+    public boolean equals(Object o) {
+        if (!(o instanceof GetHeadersMessage)) return false;
+        GetHeadersMessage other = (GetHeadersMessage) o;
+        return (other.version == version &&
+                locator.size() == other.locator.size() && locator.containsAll(other.locator) &&
+                stopHash.equals(other.stopHash));
+    }
+
+    @Override
+    public int hashCode() {
+        int hashCode = (int) version ^ "getheaders".hashCode();
+        for (int i = 0; i < locator.size(); i++) hashCode ^= locator.get(i).hashCode();
+        hashCode ^= stopHash.hashCode();
+        return hashCode;
+    }
 }

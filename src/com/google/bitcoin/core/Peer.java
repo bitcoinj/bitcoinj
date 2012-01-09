@@ -356,7 +356,7 @@ public class Peer {
             fastCatchupTimeSecs = secondsSinceEpoch;
             // If the given time is before the current chains head block time, then this has no effect (we already
             // downloaded everything we need).
-            if (fastCatchupTimeSecs >= blockChain.getChainHead().getHeader().getTimeSeconds()) {
+            if (fastCatchupTimeSecs > blockChain.getChainHead().getHeader().getTimeSeconds()) {
                 downloadBlockBodies = false;
             }
         }
@@ -483,7 +483,7 @@ public class Peer {
             }
             blockLocator.add(0, topBlock.getHash());
         }
-        // The stopHash field is set to zero already by the constructor.
+        // The toHash field is set to zero already by the constructor.
         
         if (downloadBlockBodies) {
             GetBlocksMessage message = new GetBlocksMessage(params, blockLocator, toHash);

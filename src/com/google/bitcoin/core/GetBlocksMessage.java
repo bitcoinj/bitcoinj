@@ -23,9 +23,9 @@ import java.util.List;
 
 public class GetBlocksMessage extends Message {
     private static final long serialVersionUID = 3479412877853645644L;
-    private long version;
-    private List<Sha256Hash> locator;
-    private Sha256Hash stopHash;
+    protected long version;
+    protected List<Sha256Hash> locator;
+    protected Sha256Hash stopHash;
 
     public GetBlocksMessage(NetworkParameters params, List<Sha256Hash> locator, Sha256Hash stopHash) {
         super(params);
@@ -82,5 +82,22 @@ public class GetBlocksMessage extends Message {
         }
         // Next, a block ID to stop at.
         stream.write(stopHash.getBytes());
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (!(o instanceof GetBlocksMessage)) return false;
+        GetBlocksMessage other = (GetBlocksMessage) o;
+        return (other.version == version &&
+                locator.size() == other.locator.size() && locator.containsAll(other.locator) &&
+                stopHash.equals(other.stopHash));
+    }
+
+    @Override
+    public int hashCode() {
+        int hashCode = (int) version ^ "getblocks".hashCode();
+        for (int i = 0; i < locator.size(); i++) hashCode ^= locator.get(i).hashCode();
+        hashCode ^= stopHash.hashCode();
+        return hashCode;
     }
 }

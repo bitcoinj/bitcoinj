@@ -1030,13 +1030,13 @@ public class Wallet implements Serializable {
      * This method is most often used in conjunction with {@link PeerGroup#setFastCatchupTimeSecs(long)} in order to
      * optimize chain download for new users of wallet apps. Backwards compatibility notice: if you get zero from this
      * method, you can instead use the time of the first release of your software, as it's guaranteed no users will
-     * have wallets pre-dating this time.
+     * have wallets pre-dating this time. <p>
      * 
-     * @throws IllegalStateException if there are no keys in the wallet.
+     * If there are no keys in the wallet, the current time is returned.
      */
     public long getEarliestKeyCreationTime() {
         if (keychain.size() == 0) {
-            throw new IllegalStateException("No keys in wallet");
+            return Utils.now().getTime() / 1000;
         }
         long earliestTime = Long.MAX_VALUE;
         for (ECKey key : keychain) {
