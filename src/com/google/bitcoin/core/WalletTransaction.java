@@ -26,9 +26,10 @@ public class WalletTransaction {
     public enum Pool {
         UNSPENT(0),
         SPENT(1),
-        PENDING(2),
-        INACTIVE(3),
-        DEAD(4),
+        INACTIVE(2),
+        DEAD(3),
+        PENDING(16),
+        PENDING_INACTIVE(18),
         ALL(-1);
         
         private int value;
@@ -44,9 +45,10 @@ public class WalletTransaction {
             switch (value) {
             case 0: return UNSPENT;
             case 1: return SPENT;
-            case 2: return PENDING;
-            case 3: return INACTIVE;
-            case 4: return DEAD;
+            case 2: return INACTIVE;
+            case 3: return DEAD;
+            case 16: return PENDING;
+            case 18: return PENDING_INACTIVE;
             default: return null;
             }
         }
@@ -55,6 +57,8 @@ public class WalletTransaction {
     private Pool pool;
     
     public WalletTransaction(Pool pool, Transaction transaction) {
+        assert pool != null;
+        
         this.pool = pool;
         this.transaction = transaction;
     }

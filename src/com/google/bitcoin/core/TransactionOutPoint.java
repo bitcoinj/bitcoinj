@@ -51,6 +51,14 @@ public class TransactionOutPoint extends ChildMessage implements Serializable {
         length = MESSAGE_LENGTH;
     }
 
+    public TransactionOutPoint(NetworkParameters params, long index, Sha256Hash hash) {
+        super(params);
+        this.index = index;
+        this.hash = hash;
+        length = MESSAGE_LENGTH;
+    }
+
+    /**
     /**
      * Deserializes the message. This is usually part of a transaction message.
      */

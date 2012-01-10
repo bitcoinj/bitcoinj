@@ -240,7 +240,7 @@ public class Wallet implements Serializable {
      * inactive side chain. We must still record these transactions and the blocks they appear in because a future
      * block might change which chain is best causing a reorganize. A re-org can totally change our balance!
      */
-    synchronized void receiveFromBlock(Transaction tx, StoredBlock block,
+    public synchronized void receiveFromBlock(Transaction tx, StoredBlock block,
                                        BlockChain.NewBlockType blockType) throws VerificationException, ScriptException {
         receive(tx, block, blockType, false);
     }
@@ -648,18 +648,30 @@ public class Wallet implements Serializable {
      * Returns a set of all WalletTransactions in the wallet.
      */
     public Iterable<WalletTransaction> getWalletTransactions() {
+        HashSet<Transaction> pendingInactive = new HashSet<Transaction>();
+        pendingInactive.addAll(pending.values());
+        pendingInactive.retainAll(inactive.values());
+        HashSet<Transaction> onlyPending = new HashSet<Transaction>();
+        HashSet<Transaction> onlyInactive = new HashSet<Transaction>();
+        onlyPending.addAll(pending.values());
+        onlyPending.removeAll(pendingInactive);
+        onlyInactive.addAll(inactive.values());
+        onlyInactive.removeAll(pendingInactive);
+        
         Set<WalletTransaction> all = new HashSet<WalletTransaction>();
-        addWalletTransactionsToSet(all, Pool.UNSPENT, unspent);
-        addWalletTransactionsToSet(all, Pool.SPENT, spent);
-        addWalletTransactionsToSet(all, Pool.PENDING, pending);
-        addWalletTransactionsToSet(all, Pool.DEAD, dead);
-        addWalletTransactionsToSet(all, Pool.INACTIVE, inactive);
+
+        addWalletTransactionsToSet(all, Pool.UNSPENT, unspent.values());
+        addWalletTransactionsToSet(all, Pool.SPENT, spent.values());
+        addWalletTransactionsToSet(all, Pool.DEAD, dead.values());
+        addWalletTransactionsToSet(all, Pool.PENDING, onlyPending);
+        addWalletTransactionsToSet(all, Pool.INACTIVE, onlyInactive);
+        addWalletTransactionsToSet(all, Pool.PENDING_INACTIVE, pendingInactive);
         return all;
     }
 
     static private void addWalletTransactionsToSet(Set<WalletTransaction> txs,
-            Pool poolType, Map<Sha256Hash, Transaction> pool) {
-        for (Transaction tx : pool.values()) {
+            Pool poolType, Collection<Transaction> pool) {
+        for (Transaction tx : pool) {
             txs.add(new WalletTransaction(poolType, tx));
         }
     }
@@ -679,6 +691,10 @@ public class Wallet implements Serializable {
             dead.put(wtx.getTransaction().getHash(), wtx.getTransaction());
             break;
         case INACTIVE:
+            inactive.put(wtx.getTransaction().getHash(), wtx.getTransaction());
+            break;
+        case PENDING_INACTIVE:
+            pending.put(wtx.getTransaction().getHash(), wtx.getTransaction());
             inactive.put(wtx.getTransaction().getHash(), wtx.getTransaction());
             break;
         default:

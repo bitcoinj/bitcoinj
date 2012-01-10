@@ -308,7 +308,7 @@ public class BlockChain {
         return getChainHead().getHeight();
     }
 
-    enum NewBlockType {
+    public enum NewBlockType {
         BEST_CHAIN,
         SIDE_CHAIN
     }

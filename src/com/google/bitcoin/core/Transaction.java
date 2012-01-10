@@ -87,9 +87,9 @@ public class Transaction extends ChildMessage implements Serializable {
         length = 10; // 8 for std fields + 1 for each 0 varint
     }
 
-    public Transaction(NetworkParameters params, Sha256Hash hash) {
+    public Transaction(int version, NetworkParameters params, Sha256Hash hash) {
         super(params);
-        version = 1;
+        this.version = version & ((1L<<32) - 1);
         inputs = new ArrayList<TransactionInput>();
         outputs = new ArrayList<TransactionOutput>();
         this.hash = hash;
@@ -213,7 +213,7 @@ public class Transaction extends ChildMessage implements Serializable {
      * @param block     The {@link StoredBlock} in which the transaction has appeared.
      * @param bestChain whether to set the updatedAt timestamp from the block header (only if not already set)
      */
-    void setBlockAppearance(StoredBlock block, boolean bestChain) {
+    public void setBlockAppearance(StoredBlock block, boolean bestChain) {
         if (bestChain && updatedAt == null) {
             updatedAt = new Date(block.getHeader().getTimeSeconds() * 1000);
         }

@@ -29,6 +29,7 @@ import java.util.Map;
  * to the outputs of another. The exceptions are coinbase transactions, which create new coins.
  */
 public class TransactionInput extends ChildMessage implements Serializable {
+    public static final long NO_SEQUENCE = 0xFFFFFFFFL;
     private static final long serialVersionUID = 2;
     public static final byte[] EMPTY_ARRAY = new byte[0];
 
@@ -54,8 +55,8 @@ public class TransactionInput extends ChildMessage implements Serializable {
     TransactionInput(NetworkParameters params, Transaction parentTransaction, byte[] scriptBytes) {
         super(params);
         this.scriptBytes = scriptBytes;
-        this.outpoint = new TransactionOutPoint(params, -1, null);
-        this.sequence = 0xFFFFFFFFL;
+        this.outpoint = new TransactionOutPoint(params, -1, (Transaction)null);
+        this.sequence = NO_SEQUENCE;
         this.parentTransaction = parentTransaction;
 
         length = 40 + (scriptBytes == null ? 1 : VarInt.sizeOf(scriptBytes.length) + scriptBytes.length);
@@ -67,7 +68,7 @@ public class TransactionInput extends ChildMessage implements Serializable {
         super(params);
         this.scriptBytes = scriptBytes;
         this.outpoint = outpoint;
-        this.sequence = 0xFFFFFFFFL;
+        this.sequence = NO_SEQUENCE;
         this.parentTransaction = parentTransaction;
 
         length = 40 + (scriptBytes == null ? 1 : VarInt.sizeOf(scriptBytes.length) + scriptBytes.length);
@@ -81,7 +82,7 @@ public class TransactionInput extends ChildMessage implements Serializable {
         long outputIndex = output.getIndex();
         outpoint = new TransactionOutPoint(params, outputIndex, output.parentTransaction);
         scriptBytes = EMPTY_ARRAY;
-        sequence = 0xFFFFFFFFL;
+        sequence = NO_SEQUENCE;
         this.parentTransaction = parentTransaction;
 
         length = 41;
@@ -306,5 +307,9 @@ public class TransactionInput extends ChildMessage implements Serializable {
     private void writeObject(ObjectOutputStream out) throws IOException {
         maybeParse();
         out.defaultWriteObject();
+    }
+
+    public boolean hasSequence() {
+        return sequence != NO_SEQUENCE;
     }
 }
