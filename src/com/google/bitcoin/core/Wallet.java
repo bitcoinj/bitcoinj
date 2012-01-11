@@ -196,10 +196,14 @@ public class Wallet implements Serializable {
         return loadFromFileStream(new FileInputStream(f));
     }
     
-    private void checkInvariants() {
-        if (getTransactions(true, true).size() !=
-                unspent.size() + spent.size() + pending.size() + dead.size() + inactive.size())
-            throw new RuntimeException("Invariant broken - a tx appears in more than one pool");
+    private boolean isConsistent() {
+        // Pending and inactive can overlap, so merge them before counting
+        HashSet<Transaction> pendingInactive = new HashSet<Transaction>();
+        pendingInactive.addAll(pending.values());
+        pendingInactive.retainAll(inactive.values());
+        
+        return getTransactions(true, true).size() ==
+               unspent.size() + spent.size() + pendingInactive.size() + dead.size();
     }
 
     /**
@@ -446,7 +450,7 @@ public class Wallet implements Serializable {
             invokeOnCoinsReceived(tx, prevBalance, getBalance());
         }
         
-        checkInvariants();
+        assert isConsistent();
     }
 
     /**
@@ -623,7 +627,7 @@ public class Wallet implements Serializable {
         log.info("->pending: {}", tx.getHashAsString());
         pending.put(tx.getHash(), tx);
         
-        checkInvariants();
+        assert isConsistent();
     }
 
     /**
@@ -1289,7 +1293,7 @@ public class Wallet implements Serializable {
             }
         }
         
-        checkInvariants();
+        assert isConsistent();
     }
 
     private void reprocessTxAfterReorg(Map<Sha256Hash, Transaction> pool, Transaction tx) {

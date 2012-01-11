@@ -87,9 +87,9 @@ public class Transaction extends ChildMessage implements Serializable {
         length = 10; // 8 for std fields + 1 for each 0 varint
     }
 
-    public Transaction(int version, NetworkParameters params, Sha256Hash hash) {
+    public Transaction(NetworkParameters params, int version, Sha256Hash hash) {
         super(params);
-        this.version = version & ((1L<<32) - 1);
+        this.version = version & ((1L<<32) - 1); // this field is unsigned - remove any sign extension
         inputs = new ArrayList<TransactionInput>();
         outputs = new ArrayList<TransactionOutput>();
         this.hash = hash;

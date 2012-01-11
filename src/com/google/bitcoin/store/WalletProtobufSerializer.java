@@ -82,7 +82,8 @@ public class WalletProtobufSerializer {
                     Protos.Key.newBuilder()
                         // .setCreationTimestamp() TODO
                         // .setLabel() TODO
-                        .setPrivateKey(ByteString.copyFrom(key.toASN1())));
+                        .setType(Protos.Key.Type.ORIGINAL)
+                        .setPrivateKey(ByteString.copyFrom(key.getPrivKeyBytes())));
         }
         return walletBuilder.build();
     }
@@ -127,8 +128,8 @@ public class WalletProtobufSerializer {
             final TransactionInput spentBy = output.getSpentBy();
             if (spentBy != null) {
                 outputBuilder
-                    .setSpentByTransactionHash(ByteString.copyFrom(spentBy.getOutpoint().getHash().getBytes()))
-                    .setSpentByTransactionIndex((int)spentBy.getOutpoint().getIndex()); // FIXME
+                    .setSpentByTransactionHash(ByteString.copyFrom(spentBy.getParentTransaction().getHash().getBytes()))
+                    .setSpentByTransactionIndex((int)spentBy.getParentTransaction().getInputs().indexOf(spentBy)); // FIXME
             }
             txBuilder.addTransactionOutput(outputBuilder);
         }
@@ -156,7 +157,10 @@ public class WalletProtobufSerializer {
         
         // Read all keys
         for (Protos.Key keyProto : walletProto.getKeyList()) {
-            wallet.addKey(ECKey.fromASN1(keyProto.getPrivateKey().toByteArray()));
+            if (keyProto.getType() != Protos.Key.Type.ORIGINAL) {
+                throw new IllegalArgumentException("Unknown key type in wallet");
+            }
+            wallet.addKey(ECKey.fromPrivKeyBytes(keyProto.getPrivateKey().toByteArray()));
         }
         
         // Read all transactions and create outputs
@@ -175,13 +179,19 @@ public class WalletProtobufSerializer {
             wallet.addWalletTransaction(wtx);
         }
         
+        for (Protos.Extension extProto : walletProto.getExtensionList()) {
+            if (extProto.getMandatory()) {
+                throw new IllegalArgumentException("Did not understand a mandatory extension in the wallet");
+            }
+        }
+        
         return wallet;
     }
 
 
     private void readTransaction(Protos.Transaction txProto,
             NetworkParameters params, BlockStore store) throws BlockStoreException {
-        Transaction tx = new Transaction(txProto.getVersion(), params, new Sha256Hash(txProto.getHash().toByteArray()));
+        Transaction tx = new Transaction(params, txProto.getVersion(), new Sha256Hash(txProto.getHash().toByteArray()));
         if (txProto.hasUpdatedAt())
             tx.setUpdateTime(new Date(txProto.getUpdatedAt()));
         

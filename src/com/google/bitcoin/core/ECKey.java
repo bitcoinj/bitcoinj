@@ -263,6 +263,10 @@ public class ECKey implements Serializable {
 
         return bytes;
     }
+    
+    public static ECKey fromPrivKeyBytes(byte[] bytes) {
+        return new ECKey(new BigInteger(1, bytes));
+    }
 
     /**
      * Exports the private key in the form used by the Satoshi client "dumpprivkey" and "importprivkey" commands. Use

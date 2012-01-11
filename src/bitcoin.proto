@@ -1,4 +1,4 @@
-/** * Copyright 2012 Google Inc.
+/** Copyright 2012 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,11 @@
  */
 
 /*
- * Author: Jim Burton
+ * Authors: Jim Burton, Miron Cuperman
+ */
+ 
+/* Notes:
+ * - Endianness: All byte arrays that represent numbers (such as hashes and private keys) are Big Endian (a.k.a. network order)
  */
 
 package wallet;
@@ -23,9 +27,13 @@ option java_package = "org.bitcoinj.wallet";
 option java_outer_classname = "Protos";
 
 message Key {
-  required bytes private_key = 1; // ASN.1 representation of the EC private key
-  optional string label = 2; // for presentation purposes
-  optional int64 creation_timestamp = 3;  // datetime stored as millis since epoch.
+  enum Type {
+    ORIGINAL = 1; // Original bitcoin secp256k1 curve
+  }
+  required bytes private_key = 1; // integer representation of the EC private key
+  required Type type = 2;
+  optional string label = 3; // for presentation purposes
+  optional int64 creation_timestamp = 4;  // datetime stored as millis since epoch.
 }
 
 message TransactionInput {
@@ -34,7 +42,7 @@ message TransactionInput {
   // index of transaction output used by this input if in this wallet
   required int32 transaction_out_point_index = 2;
   required bytes script_bytes = 3; // script of transaction input
-  optional uint32 sequence = 4;
+  optional uint32 sequence = 4; // currently unused field in bitcoin, was originally planned for contracts
 }
 
 message TransactionOutput {
@@ -47,12 +55,12 @@ message TransactionOutput {
 
 message Transaction {
   enum Pool {
-    UNSPENT = 0;
-    SPENT = 1;
-    INACTIVE = 2;
-    DEAD = 3;
-    PENDING = 16;
-    PENDING_INACTIVE = 18;
+    UNSPENT = 0; // In best chain, not all outputs spent
+    SPENT = 1; // In best chain, all outputs spent
+    INACTIVE = 2; // In non-best chain, not our transaction
+    DEAD = 3; // Double-spent by a transaction int he best chain
+    PENDING = 16; // Our transaction, not in any chain
+    PENDING_INACTIVE = 18; // In non-best chain, our transaction
   }
 
   // See com.google.bitcoin.core.Wallet.java for detailed description of pool semantics
@@ -60,7 +68,7 @@ message Transaction {
   required bytes hash = 2;
   required Pool pool = 3;
 
-  optional uint32 lock_time = 4;
+  optional uint32 lock_time = 4; // currently unused field in bitcoin, was originally planned for contracts
   optional int64 updated_at = 5; // millis since epoch the transaction was last updated
 
   repeated TransactionInput transaction_input = 6;
@@ -72,6 +80,15 @@ message Transaction {
   // Sha256Hash of block in block chain in which this transaction appears
 }
 
+message Extension {
+  required string id = 1;   // like org.whatever.foo.bar
+  required bytes data = 2;
+  // If we do not understand a mandatory extension, abort to prevent data loss.
+  // For example, this could be applied to a new type of holding, such as a contract, where
+  // dropping of an extension in a read/write cycle could cause loss of value.
+  required bool mandatory = 3;
+}
+
 message Wallet {
   required string network_identifier = 1; // the network used by this wallet
   // org.bitcoin.production = production network (Satoshi genesis block)
@@ -81,5 +98,7 @@ message Wallet {
 
   repeated Key key = 3;
 
-  repeated Transaction transaction =   4;
+  repeated Transaction transaction = 4;
+  
+  repeated Extension extension = 10; 
 } // end of Wallet
