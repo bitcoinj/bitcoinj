@@ -147,6 +147,48 @@
         </plugins>
       </build>
     </profile>
+    <profile>
+      <id>update-protobuf</id>
+      <activation>
+        <property>
+          <name>updateProtobuf</name>
+          <value>true</value>
+        </property>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <artifactId>maven-antrun-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>compile-protoc</id>
+                <phase>generate-sources</phase>
+                <configuration>
+                  <tasks>
+                    <mkdir dir="${project.basedir}/src/main/java/com/google/bitcoin/protobuf" />
+                    <path id="proto.path">
+                      <fileset dir="src">
+                        <include name="**/*.proto" />
+                      </fileset>
+                    </path>
+                    <pathconvert pathsep=" " property="proto.files" refid="proto.path" />
+                    <exec executable="protoc" failonerror="true">
+                      <arg value="--java_out=${project.basedir}/src/main/java/com/google/bitcoin/protobuf" />
+                      <arg value="-I${project.basedir}/src" />
+                      <arg line="${proto.files}" />
+                    </exec>
+                  </tasks>
+                </configuration>
+                <goals>
+                  <goal>run</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+
+        </plugins>
+      </build>
+    </profile>
   </profiles>
 
   <build>
@@ -210,34 +252,6 @@
               <shadedArtifactAttached>true</shadedArtifactAttached>
               <shadedClassifierName>android</shadedClassifierName>
             </configuration>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
-        <artifactId>maven-antrun-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>compile-protoc</id>
-            <phase>generate-sources</phase>
-            <configuration>
-              <tasks>
-                <mkdir dir="${generated.sourceDirectory}" />
-                <path id="proto.path">
-                  <fileset dir="src">
-                    <include name="**/*.proto" />
-                  </fileset>
-                </path>
-                <pathconvert pathsep=" " property="proto.files" refid="proto.path" />
-                <exec executable="protoc" failonerror="true">
-                  <arg value="--java_out=${generated.sourceDirectory}" />
-                  <arg value="-I${project.basedir}/src" />
-                  <arg line="${proto.files}" />
-                </exec>
-              </tasks>
-            </configuration>
-            <goals>
-              <goal>run</goal>
-            </goals>
           </execution>
         </executions>
       </plugin>

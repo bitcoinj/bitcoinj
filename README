@@ -2,14 +2,6 @@ To get started, ensure you have the latest JDK installed, and download Maven fro
 
   http://maven.apache.org/
 
-and install the protobuf compiler package version 2.4.x:
-
-  Debian/Ubuntu: apt-get install protobuf-compiler
-
-  Windows: http://code.google.com/p/protobuf/downloads/list
-
-  OSX: install from ports?
-
 Then run "mvn clean package" to compile the software. You can also run "mvn site:site" to generate a website with
 useful information like JavaDocs. The outputs are under the target/ directory.
 
@@ -27,6 +19,15 @@ If you get a SocketDisconnectedException, the node you've connected to has its m
 (unfortunately the default is too low). Connect to a node that has a bigger send buffer,
 settable by passing -maxsendbuffer=25600 to the Bitcoin C++ software.
 
-For the convenience of Eclipse users, you can copy dependency jars to target/dependency using:
+To regenerate the protobuf Java sources from src/bitcoin.proto, install the protobuf compiler package version 2.4.x:
 
-    mvn dependency:copy-dependencies
+  Debian/Ubuntu: apt-get install protobuf-compiler
+
+  Windows: http://code.google.com/p/protobuf/downloads/list
+
+  OSX: install from ports?
+
+and regenerate:
+
+  mvn clean package -DupdateProtobuf
+
