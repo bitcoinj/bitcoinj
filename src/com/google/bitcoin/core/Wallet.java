@@ -200,7 +200,7 @@ public class Wallet implements Serializable {
         // Pending and inactive can overlap, so merge them before counting
         HashSet<Transaction> pendingInactive = new HashSet<Transaction>();
         pendingInactive.addAll(pending.values());
-        pendingInactive.retainAll(inactive.values());
+        pendingInactive.addAll(inactive.values());
         
         return getTransactions(true, true).size() ==
                unspent.size() + spent.size() + pendingInactive.size() + dead.size();

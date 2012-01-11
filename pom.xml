@@ -324,7 +324,7 @@
     <junit.version>4.8.2</junit.version>
     <slf4j.version>1.6.2</slf4j.version>
     <derby.version>10.8.2.2</derby.version>
-    <protobuf.version>2.2.0</protobuf.version>
+    <protobuf.version>2.4.1</protobuf.version>
     <generated.sourceDirectory>gen</generated.sourceDirectory>
   </properties>
 

@@ -2,6 +2,14 @@ To get started, ensure you have the latest JDK installed, and download Maven fro
 
   http://maven.apache.org/
 
+and install the protobuf compiler package version 2.4.x:
+
+  Debian/Ubuntu: apt-get install protobuf-compiler
+
+  Windows: http://code.google.com/p/protobuf/downloads/list
+
+  OSX: install from ports?
+
 Then run "mvn clean package" to compile the software. You can also run "mvn site:site" to generate a website with
 useful information like JavaDocs. The outputs are under the target/ directory.
 
