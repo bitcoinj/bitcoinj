@@ -25,7 +25,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.bitcoinj.wallet.Protos;
-import org.bitcoinj.wallet.Protos.TransactionInput.Builder;
 
 import com.google.bitcoin.core.AddressFormatException;
 import com.google.bitcoin.core.ECKey;
@@ -108,7 +107,7 @@ public class WalletProtobufSerializer {
         
         // Handle inputs
         for (TransactionInput input : tx.getInputs()) {
-            Builder inputBuilder = Protos.TransactionInput.newBuilder()
+            Protos.TransactionInput.Builder inputBuilder = Protos.TransactionInput.newBuilder()
                 .setScriptBytes(ByteString.copyFrom(input.getScriptBytes()))
                 .setTransactionOutPointHash(ByteString.copyFrom(
                     input.getOutpoint().getHash().getBytes()))
@@ -203,7 +202,7 @@ public class WalletProtobufSerializer {
             tx.addOutput(output);
         }
 
-        if (txMap.containsKey(tx.getHash())) {
+        if (txMap.containsKey(ByteString.copyFrom(tx.getHash().getBytes()))) {
             throw new RuntimeException("Transaction " + tx.getHashAsString() + " appears twice");
         }
         

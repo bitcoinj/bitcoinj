@@ -165,7 +165,6 @@
                 <phase>generate-sources</phase>
                 <configuration>
                   <tasks>
-                    <mkdir dir="${project.basedir}/src/main/java/com/google/bitcoin/protobuf" />
                     <path id="proto.path">
                       <fileset dir="src">
                         <include name="**/*.proto" />
@@ -173,7 +172,7 @@
                     </path>
                     <pathconvert pathsep=" " property="proto.files" refid="proto.path" />
                     <exec executable="protoc" failonerror="true">
-                      <arg value="--java_out=${project.basedir}/src/main/java/com/google/bitcoin/protobuf" />
+                      <arg value="--java_out=${project.basedir}/src" />
                       <arg value="-I${project.basedir}/src" />
                       <arg line="${proto.files}" />
                     </exec>

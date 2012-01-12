@@ -31,3 +31,6 @@ and regenerate:
 
   mvn clean package -DupdateProtobuf
 
+For eclipse use the maven plugin and run:
+
+  mvn eclipse:eclipse
