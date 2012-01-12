@@ -54,11 +54,22 @@ message TransactionOutput {
 }
 
 message Transaction {
+  /**
+   * This is a bitfield oriented enum, with the following bits:
+   * 
+   * bit 0 - spent
+   * bit 1 - appears in alt chain
+   * bit 2 - appears in best chain
+   * bit 3 - double-spent
+   * bit 4 - pending (we would like the tx to go into the best chain)
+   * 
+   * Not all combinations are interesting, just the ones actually used in the enum.
+   */
   enum Pool {
-    UNSPENT = 0; // In best chain, not all outputs spent
-    SPENT = 1; // In best chain, all outputs spent
+    UNSPENT = 4; // In best chain, not all outputs spent
+    SPENT = 5; // In best chain, all outputs spent
     INACTIVE = 2; // In non-best chain, not our transaction
-    DEAD = 3; // Double-spent by a transaction int he best chain
+    DEAD = 10; // Double-spent by a transaction in the best chain
     PENDING = 16; // Our transaction, not in any chain
     PENDING_INACTIVE = 18; // In non-best chain, our transaction
   }

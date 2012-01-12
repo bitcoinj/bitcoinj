@@ -1796,18 +1796,18 @@ public final class Protos {
     
     public enum Pool
         implements com.google.protobuf.ProtocolMessageEnum {
-      UNSPENT(0, 0),
-      SPENT(1, 1),
+      UNSPENT(0, 4),
+      SPENT(1, 5),
       INACTIVE(2, 2),
-      DEAD(3, 3),
+      DEAD(3, 10),
       PENDING(4, 16),
       PENDING_INACTIVE(5, 18),
       ;
       
-      public static final int UNSPENT_VALUE = 0;
-      public static final int SPENT_VALUE = 1;
+      public static final int UNSPENT_VALUE = 4;
+      public static final int SPENT_VALUE = 5;
       public static final int INACTIVE_VALUE = 2;
-      public static final int DEAD_VALUE = 3;
+      public static final int DEAD_VALUE = 10;
       public static final int PENDING_VALUE = 16;
       public static final int PENDING_INACTIVE_VALUE = 18;
       
@@ -1816,10 +1816,10 @@ public final class Protos {
       
       public static Pool valueOf(int value) {
         switch (value) {
-          case 0: return UNSPENT;
-          case 1: return SPENT;
+          case 4: return UNSPENT;
+          case 5: return SPENT;
           case 2: return INACTIVE;
-          case 3: return DEAD;
+          case 10: return DEAD;
           case 16: return PENDING;
           case 18: return PENDING_INACTIVE;
           default: return null;
@@ -4946,8 +4946,8 @@ public final class Protos {
       " \003(\0132\030.wallet.TransactionInput\0225\n\022transa" +
       "ction_output\030\007 \003(\0132\031.wallet.TransactionO" +
       "utput\022\022\n\nblock_hash\030\010 \003(\014\"Y\n\004Pool\022\013\n\007UNS" +
-      "PENT\020\000\022\t\n\005SPENT\020\001\022\014\n\010INACTIVE\020\002\022\010\n\004DEAD\020" +
-      "\003\022\013\n\007PENDING\020\020\022\024\n\020PENDING_INACTIVE\020\022\"8\n\t" +
+      "PENT\020\004\022\t\n\005SPENT\020\005\022\014\n\010INACTIVE\020\002\022\010\n\004DEAD\020" +
+      "\n\022\013\n\007PENDING\020\020\022\024\n\020PENDING_INACTIVE\020\022\"8\n\t" +
       "Extension\022\n\n\002id\030\001 \002(\t\022\014\n\004data\030\002 \002(\014\022\021\n\tm",
       "andatory\030\003 \002(\010\"\254\001\n\006Wallet\022\032\n\022network_ide" +
       "ntifier\030\001 \002(\t\022\034\n\024last_seen_block_hash\030\002 " +

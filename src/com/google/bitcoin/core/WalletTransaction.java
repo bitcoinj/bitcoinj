@@ -23,13 +23,24 @@ package com.google.bitcoin.core;
  * @author Miron Cuperman
  */
 public class WalletTransaction {
+    /**
+     * This is a bitfield oriented enum, with the following bits:
+     * 
+     * <li>bit 0 - spent
+     * <li>bit 1 - appears in alt chain
+     * <li>bit 2 - appears in best chain
+     * <li>bit 3 - double-spent
+     * <li>bit 4 - pending (we would like the tx to go into the best chain)
+     * 
+     * <p>Not all combinations are interesting, just the ones actually used in the enum.
+     */
     public enum Pool {
-        UNSPENT(0),
-        SPENT(1),
-        INACTIVE(2),
-        DEAD(3),
-        PENDING(16),
-        PENDING_INACTIVE(18),
+        UNSPENT(4), // unspent in best chain
+        SPENT(5), // spent in best chain
+        INACTIVE(2), // in alt chain
+        DEAD(10), // double-spend in alt chain
+        PENDING(16), // a pending tx we would like to go into the best chain
+        PENDING_INACTIVE(18), // a pending tx in alt but not in best yet
         ALL(-1);
         
         private int value;
@@ -43,10 +54,10 @@ public class WalletTransaction {
 
         public static Pool valueOf(int value) {
             switch (value) {
-            case 0: return UNSPENT;
-            case 1: return SPENT;
+            case 4: return UNSPENT;
+            case 5: return SPENT;
             case 2: return INACTIVE;
-            case 3: return DEAD;
+            case 10: return DEAD;
             case 16: return PENDING;
             case 18: return PENDING_INACTIVE;
             default: return null;
