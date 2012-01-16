@@ -16,10 +16,10 @@
 
 package com.google.bitcoin.core;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import com.google.bitcoin.discovery.PeerDiscovery;
+import com.google.bitcoin.discovery.PeerDiscoveryException;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.io.IOException;
 import java.math.BigInteger;
@@ -30,11 +30,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.Semaphore;
 
-import org.junit.Before;
-import org.junit.Test;
-
-import com.google.bitcoin.discovery.PeerDiscovery;
-import com.google.bitcoin.discovery.PeerDiscoveryException;
+import static org.junit.Assert.*;
 
 public class PeerGroupTest extends TestWithNetworkConnections {
     static final NetworkParameters params = NetworkParameters.unitTests();
@@ -263,7 +259,7 @@ public class PeerGroupTest extends TestWithNetworkConnections {
 
         // Now create a spend, and expect the announcement.
         Address dest = new ECKey().toAddress(params);
-        wallet.sendCoins(peerGroup, dest, Utils.toNanoCoins(1, 0));
+        assertNotNull(wallet.sendCoins(peerGroup, dest, Utils.toNanoCoins(1, 0)));
         Transaction t1 = (Transaction) n1.outbound();
         assertNotNull(t1);
         // 49 BTC in change.

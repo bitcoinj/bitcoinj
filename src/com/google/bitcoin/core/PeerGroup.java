@@ -17,31 +17,18 @@
 
 package com.google.bitcoin.core;
 
+import com.google.bitcoin.discovery.PeerDiscovery;
+import com.google.bitcoin.discovery.PeerDiscoveryException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.InetSocketAddress;
 import java.net.SocketTimeoutException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.*;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.google.bitcoin.discovery.PeerDiscovery;
-import com.google.bitcoin.discovery.PeerDiscoveryException;
 
 /**
  * Maintain a number of connections to peers.
@@ -69,7 +56,7 @@ public class PeerGroup {
     // Addresses to try to connect to, excluding active peers
     private BlockingQueue<PeerAddress> inactives;
     // Connection initiation thread
-    private Thread connectThread;
+    private PeerGroupThread peerGroupThread;
     // True if the connection initiation thread should be running
     private boolean running;
     // A pool of threads for peers, of size maxConnection
@@ -115,6 +102,7 @@ public class PeerGroup {
         this.wallets = new ArrayList<Wallet>(1);
 
         inactives = new LinkedBlockingQueue<PeerAddress>();
+        // TODO: Remove usage of synchronized sets here in favor of simple coarse-grained locking.
         peers = Collections.synchronizedSet(new HashSet<Peer>());
         peerDiscoverers = Collections.synchronizedSet(new HashSet<PeerDiscovery>());
         peerPool = new ThreadPoolExecutor(
@@ -262,9 +250,9 @@ public class PeerGroup {
      * Starts the background thread that makes connections.
      */
     public synchronized void start() {
-        this.connectThread = new Thread(new PeerExecutionRunnable(), "Peer group thread");
+        this.peerGroupThread = new PeerGroupThread();
         running = true;
-        this.connectThread.start();
+        this.peerGroupThread.start();
     }
 
     /**
@@ -276,28 +264,34 @@ public class PeerGroup {
     public synchronized void stop() {
         if (running) {
             running = false;
-            connectThread.interrupt();
+            peerGroupThread.interrupt();
         }
     }
 
     /**
-     * Broadcast a transaction to all connected peers.
+     * Queues a transaction for asynchronous broadcast. The transaction will be considered broadcast and forgotten 
+     * about (by the PeerGroup) once it's been written out to at least one node, but that does not guarantee inclusion
+     * in the chain - incorrect fees or a flaky remote node can cause this as well. Wallets attached with 
+     * {@link PeerGroup#addWallet(Wallet)} will have their pending transactions announced to every newly connected
+     * node.
      *
-     * @return whether we sent to at least one peer
+     * @return a Future that can be used to wait for the async broadcast to complete.
      */
-    public boolean broadcastTransaction(Transaction tx) {
-        boolean success = false;
-        synchronized (peers) {
-            for (Peer peer : peers) {
-                try {
-                    peer.sendMessage(tx);
-                    success = true;
-                } catch (IOException e) {
-                    log.error("failed to broadcast to " + peer, e);
+    public Future<Transaction> broadcastTransaction(final Transaction tx) {
+        FutureTask<Transaction> future = new FutureTask<Transaction>(new Runnable() {
+            public void run() {
+                // This is run with the peer group already locked.
+                for (Peer peer : peers) {
+                    try {
+                        peer.sendMessage(tx);
+                    } catch (IOException e) {
+                        log.warn("Caught IOException whilst sending transaction: {}", e.getMessage());
+                    }
                 }
             }
-        }
-        return success;
+        }, tx);
+        peerGroupThread.addTask(future);
+        return future;
     }
 
     /**
@@ -330,25 +324,48 @@ public class PeerGroup {
         return peers.size();
     }
 
-    private final class PeerExecutionRunnable implements Runnable {
-        /*
-         * Repeatedly get the next peer address from the inactive queue and try to connect.
-         * 
-         * <p>We can be terminated with Thread.interrupt.  When an interrupt is received,
-         * we will ask the executor to shutdown and ask each peer to disconnect.  At that point
-         * no threads or network connections will be active.
-         */
+    /**
+     * Performs various tasks for the peer group: connects to new nodes to keep the currently connected node count at
+     * the right level, runs peer discovery if we run out, and broadcasts transactions that were submitted via
+     * broadcastTransaction().
+     */
+    private final class PeerGroupThread extends Thread {
+        private LinkedBlockingQueue<FutureTask> tasks;
+
+        public PeerGroupThread() {
+            super("Peer group thread");
+            tasks = new LinkedBlockingQueue<FutureTask>();
+        }
+
         public void run() {
             try {
                 while (running) {
-                    if (inactives.size() == 0) {
-                        discoverPeers();
-                    } else {
-                        tryNextPeer();
+                    // Modify the peer group under its lock, always.
+                    int numPeers;
+                    synchronized (PeerGroup.this) {
+                        numPeers = peers.size();
+                        if (inactives.size() == 0) {
+                            discoverPeers();
+                        } else if (numPeers < getMaxConnections()) {
+                            tryNextPeer();
+                        }
                     }
 
-                    // We started a new peer connection, delay before trying another one
-                    Thread.sleep(connectionDelayMillis);
+                    // Wait for a task or the connection polling timeout to elapse. Tasks are only eligible to run
+                    // when there is at least one active peer.
+                    // TODO: Remove the need for this polling, only wake up the peer group thread when there's actually
+                    // something useful to do.
+                    if (numPeers > 0) {
+                        FutureTask task = tasks.poll(connectionDelayMillis, TimeUnit.MILLISECONDS);
+                        if (task != null) {
+                            synchronized (PeerGroup.this) {
+                                task.run();
+                            }
+                        }
+                    } else {
+                        // TODO: This should actually be waiting for a peer to become active OR the timeout to elapse.
+                        Thread.sleep(connectionDelayMillis);
+                    }
                 }
             } catch (InterruptedException ex) {
             }
@@ -406,6 +423,14 @@ public class PeerGroup {
                 // to the peer has occurred.
                 Thread.sleep(connectionDelayMillis);
             }
+        }
+
+        /**
+         * Add a task to be executed on the peer thread. Tasks are run with the peer group locked and when there is
+         * at least one peer.
+         */
+        public synchronized <T> void addTask(FutureTask<T> task) {
+            tasks.add(task);
         }
     }
 
