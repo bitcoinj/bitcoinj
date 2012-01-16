@@ -17,7 +17,6 @@
 package com.google.bitcoin.core;
 
 import com.google.bitcoin.core.WalletTransaction.Pool;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -942,6 +941,7 @@ public class Wallet implements Serializable {
         }
         assert gathered.size() > 0;
         Transaction sendTx = new Transaction(params);
+        sendTx.getConfidence().setConfidenceType(TransactionConfidence.ConfidenceType.NOT_SEEN_IN_CHAIN);
         sendTx.addOutput(new TransactionOutput(params, sendTx, nanocoins, address));
         BigInteger change = valueGathered.subtract(nanocoins);
         if (change.compareTo(BigInteger.ZERO) > 0) {

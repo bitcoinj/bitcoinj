@@ -16,23 +16,20 @@
 
 package com.google.bitcoin.core;
 
-import static com.google.bitcoin.core.TestUtils.createFakeBlock;
-import static com.google.bitcoin.core.TestUtils.createFakeTx;
-import static com.google.bitcoin.core.Utils.bitcoinValueToFriendlyString;
-import static com.google.bitcoin.core.Utils.toNanoCoins;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import com.google.bitcoin.store.BlockStore;
+import com.google.bitcoin.store.MemoryBlockStore;
+import com.google.bitcoin.utils.BriefLogFormatter;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.math.BigInteger;
 import java.util.List;
 
-import org.junit.Before;
-import org.junit.Test;
-
-import com.google.bitcoin.store.BlockStore;
-import com.google.bitcoin.store.MemoryBlockStore;
-import com.google.bitcoin.utils.BriefLogFormatter;
+import static com.google.bitcoin.core.TestUtils.createFakeBlock;
+import static com.google.bitcoin.core.TestUtils.createFakeTx;
+import static com.google.bitcoin.core.Utils.bitcoinValueToFriendlyString;
+import static com.google.bitcoin.core.Utils.toNanoCoins;
+import static org.junit.Assert.*;
 
 public class WalletTest {
     static final NetworkParameters params = NetworkParameters.unitTests();
@@ -73,6 +70,7 @@ public class WalletTest {
         // Do some basic sanity checks.
         assertEquals(1, t2.getInputs().size());
         assertEquals(myAddress, t2.getInputs().get(0).getScriptSig().getFromAddress());
+        assertEquals(t2.getConfidence().getConfidenceType(), TransactionConfidence.ConfidenceType.NOT_SEEN_IN_CHAIN);
 
         // We have NOT proven that the signature is correct!
 
@@ -350,7 +348,7 @@ public class WalletTest {
                 notifiedTx[0].getConfidence().getConfidenceType());
         final Transaction t1Copy = new Transaction(params, t1.bitcoinSerialize());
         wallet.receiveFromBlock(t1Copy, createFakeBlock(params, blockStore, t1Copy).storedBlock,
-                                BlockChain.NewBlockType.BEST_CHAIN);
+                BlockChain.NewBlockType.BEST_CHAIN);
         assertFalse(flags[0]);
         assertTrue(flags[1]);
         assertEquals(TransactionConfidence.ConfidenceType.BUILDING, notifiedTx[0].getConfidence().getConfidenceType());
