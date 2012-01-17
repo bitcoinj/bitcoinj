@@ -22,7 +22,7 @@ import org.slf4j.LoggerFactory;
 import java.io.*;
 import java.math.BigInteger;
 import java.util.*;
-
+ 
 import static com.google.bitcoin.core.Utils.*;
 
 /**
@@ -56,15 +56,9 @@ public class Transaction extends ChildMessage implements Serializable {
 
     private long lockTime;
 
-    // This is only stored in Java serialization. It records which blocks (and their height + work) the transaction
-    // has been included in. For most transactions this set will have a single member. In the case of a chain split a
-    // transaction may appear in multiple blocks but only one of them is part of the best chain. It's not valid to
-    // have an identical transaction appear in two blocks in the same chain but this invariant is expensive to check,
-    // so it's not directly enforced anywhere.
-    //
-    // If this transaction is not stored in the wallet, appearsIn is null.
+    // This is being migrated to appearsInHashes
     Set<StoredBlock> appearsIn;
-
+    
     // Stored only in Java serialization. This is either the time the transaction was broadcast as measured from the
     // local clock, or the time from the block in which it was included. Note that this can be changed by re-orgs so
     // the wallet may update this field. Old serialized transactions don't have this field, thus null is valid.
@@ -77,6 +71,15 @@ public class Transaction extends ChildMessage implements Serializable {
     
     // Data about how confirmed this tx is. Serialized, may be null. 
     private TransactionConfidence confidence;
+
+    // This records which blocks the transaction
+    // has been included in. For most transactions this set will have a single member. In the case of a chain split a
+    // transaction may appear in multiple blocks but only one of them is part of the best chain. It's not valid to
+    // have an identical transaction appear in two blocks in the same chain but this invariant is expensive to check,
+    // so it's not directly enforced anywhere.
+    //
+    // If this transaction is not stored in the wallet, appearsInHashes is null.
+    Set<Sha256Hash> appearsInHashes;
 
     public Transaction(NetworkParameters params) {
         super(params);
@@ -190,8 +193,21 @@ public class Transaction extends ChildMessage implements Serializable {
      * Returns a set of blocks which contain the transaction, or null if this transaction doesn't have that data
      * because it's not stored in the wallet or because it has never appeared in a block.
      */
-    public Set<StoredBlock> getAppearsIn() {
-        return appearsIn;
+    public Collection<Sha256Hash> getAppearsInHashes() {
+        if (appearsInHashes != null)
+            return appearsInHashes;
+        
+        if (appearsIn != null) {
+            assert appearsInHashes == null;
+            log.info("Migrating a tx to appearsInHashes");
+            appearsInHashes = new HashSet<Sha256Hash>(appearsIn.size());
+            for (StoredBlock block : appearsIn) {
+                appearsInHashes.add(block.getHeader().getHash());
+            }
+            appearsIn = null;
+        }
+        
+        return appearsInHashes;
     }
 
     /**
@@ -207,29 +223,34 @@ public class Transaction extends ChildMessage implements Serializable {
      * used by the wallet to ensure transactions that appear on side chains are recorded properly even though the
      * block stores do not save the transaction data at all.<p>
      *
-     * If there is a re-org this will be called once for each block that was previously seen, to update which block
+     * <p>If there is a re-org this will be called once for each block that was previously seen, to update which block
      * is the best chain. The best chain block is guaranteed to be called last. So this must be idempotent.
      *
+     * <p>Sets updatedAt to be the earliest valid block time where this tx was seen
+     * 
      * @param block     The {@link StoredBlock} in which the transaction has appeared.
      * @param bestChain whether to set the updatedAt timestamp from the block header (only if not already set)
      */
     public void setBlockAppearance(StoredBlock block, boolean bestChain) {
-        if (bestChain && updatedAt == null) {
-            updatedAt = new Date(block.getHeader().getTimeSeconds() * 1000);
+        long blockTime = block.getHeader().getTimeSeconds() * 1000;
+        if (bestChain && (updatedAt == null || updatedAt.getTime() == 0 || updatedAt.getTime() > blockTime)) {
+            updatedAt = new Date(blockTime);
         }
-        if (appearsIn == null) {
-            appearsIn = new HashSet<StoredBlock>();
-        }
-        appearsIn.add(block);
+        
+        addBlockAppearance(block.getHeader().getHash());
 
         if (bestChain) {
-            if (updatedAt == null) {
-                updatedAt = new Date(block.getHeader().getTimeSeconds() * 1000);
-            }
             // This can cause event listeners on TransactionConfidence to run. After this line completes, the wallets
             // state may have changed!
             getConfidence().setAppearedAtChainHeight(block.getHeight());
         }
+    }
+
+    public void addBlockAppearance(final Sha256Hash blockHash) {
+        if (appearsInHashes == null) {
+            appearsInHashes = new HashSet<Sha256Hash>();
+        }
+        appearsInHashes.add(blockHash);
     }
 
     /** Called by the wallet once a re-org means we don't appear in the best chain anymore. */
@@ -324,26 +345,12 @@ public class Transaction extends ChildMessage implements Serializable {
 
     /**
      * Returns the earliest time at which the transaction was seen (broadcast or included into the chain),
-     * or null if that information isn't available.
+     * or the epoch if that information isn't available.
      */
     public Date getUpdateTime() {
         if (updatedAt == null) {
-            // Older wallets did not store this field. If we can, fill it out based on the block pointers. We might
-            // "guess wrong" in the case of transactions appearing on chain forks, but this is unlikely to matter in
-            // practice. Note, some patched copies of BitCoinJ store dates in this field that do not correspond to any
-            // block but rather broadcast time.
-            if (appearsIn == null || appearsIn.size() == 0) {
-                // Transaction came from somewhere that doesn't provide time info.
-                return null;
-            }
-            long earliestTimeSecs = Long.MAX_VALUE;
-            // We might return a time that is different to the best chain, as we don't know here which block is part
-            // of the active chain and which are simply inactive. We just ignore this for now.
-            // TODO: At some point we'll want to store storing full block headers in the wallet. Remove at that time.
-            for (StoredBlock b : appearsIn) {
-                earliestTimeSecs = Math.min(b.getHeader().getTimeSeconds(), earliestTimeSecs);
-            }
-            updatedAt = new Date(earliestTimeSecs * 1000);
+            // Older wallets did not store this field. Set to the epoch.
+            updatedAt = new Date(0);
         }
         return updatedAt;
     }

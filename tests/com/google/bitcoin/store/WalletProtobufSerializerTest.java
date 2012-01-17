@@ -3,18 +3,9 @@ package com.google.bitcoin.store;
 
 import static com.google.bitcoin.core.TestUtils.createFakeTx;
 import static com.google.bitcoin.core.Utils.toNanoCoins;
-
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.math.BigInteger;
-
-import org.bitcoinj.wallet.Protos;
-import org.junit.Before;
-import org.junit.Test;
+import static org.junit.Assert.*;
 
 import com.google.bitcoin.core.Address;
-import com.google.bitcoin.core.AddressFormatException;
 import com.google.bitcoin.core.BlockChain;
 import com.google.bitcoin.core.ECKey;
 import com.google.bitcoin.core.NetworkParameters;
@@ -22,14 +13,20 @@ import com.google.bitcoin.core.Transaction;
 import com.google.bitcoin.core.Utils;
 import com.google.bitcoin.core.Wallet;
 
-import static org.junit.Assert.*;
+import org.bitcoinj.wallet.Protos;
+import org.junit.Before;
+import org.junit.Test;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.math.BigInteger;
 
 public class WalletProtobufSerializerTest {
     static final NetworkParameters params = NetworkParameters.unitTests();
     private ECKey myKey;
     private Address myAddress;
     private Wallet wallet;
-    private MemoryBlockStore blockStore;
 
     @Before
     public void setUp() throws Exception {
@@ -37,7 +34,6 @@ public class WalletProtobufSerializerTest {
         myAddress = myKey.toAddress(params);
         wallet = new Wallet(params);
         wallet.addKey(myKey);
-        blockStore = new MemoryBlockStore(params);
     }
 
     @Test
@@ -101,11 +97,11 @@ public class WalletProtobufSerializerTest {
         }
     }
 
-    private Wallet roundTrip(Wallet wallet) throws IOException, AddressFormatException, BlockStoreException {
+    private Wallet roundTrip(Wallet wallet) throws IOException {
         ByteArrayOutputStream output = new ByteArrayOutputStream();
         //System.out.println(WalletProtobufSerializer.walletToText(wallet));
         WalletProtobufSerializer.writeWallet(wallet, output);
         ByteArrayInputStream input = new ByteArrayInputStream(output.toByteArray());
-        return WalletProtobufSerializer.readWallet(input, params, blockStore);
+        return WalletProtobufSerializer.readWallet(input, params);
     }
 }

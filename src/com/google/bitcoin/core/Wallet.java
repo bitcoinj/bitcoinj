@@ -1158,10 +1158,18 @@ public class Wallet implements Serializable {
         //
         // receive() has been called on the block that is triggering the re-org before this is called.
 
+        List<Sha256Hash> oldBlockHashes = new ArrayList<Sha256Hash>(oldBlocks.size());
+        List<Sha256Hash> newBlockHashes = new ArrayList<Sha256Hash>(newBlocks.size());
         log.info("Old part of chain (top to bottom):");
-        for (StoredBlock b : oldBlocks) log.info("  {}", b.getHeader().getHashAsString());
+        for (StoredBlock b : oldBlocks) {
+            log.info("  {}", b.getHeader().getHashAsString());
+            oldBlockHashes.add(b.getHeader().getHash());
+        }
         log.info("New part of chain (top to bottom):");
-        for (StoredBlock b : newBlocks) log.info("  {}", b.getHeader().getHashAsString());
+        for (StoredBlock b : newBlocks) {
+            log.info("  {}", b.getHeader().getHashAsString());
+            newBlockHashes.add(b.getHeader().getHash());
+        }
 
         // Transactions that appear in the old chain segment.
         Map<Sha256Hash, Transaction> oldChainTransactions = new HashMap<Sha256Hash, Transaction>();
@@ -1177,12 +1185,12 @@ public class Wallet implements Serializable {
         all.putAll(spent);
         all.putAll(inactive);
         for (Transaction tx : all.values()) {
-            Set<StoredBlock> appearsIn = tx.getAppearsIn();
+            Collection<Sha256Hash> appearsIn = tx.getAppearsInHashes();
             assert appearsIn != null;
             // If the set of blocks this transaction appears in is disjoint with one of the chain segments it means
             // the transaction was never incorporated by a miner into that side of the chain.
-            boolean inOldSection = !Collections.disjoint(appearsIn, oldBlocks);
-            boolean inNewSection = !Collections.disjoint(appearsIn, newBlocks);
+            boolean inOldSection = !Collections.disjoint(appearsIn, oldBlockHashes);
+            boolean inNewSection = !Collections.disjoint(appearsIn, newBlockHashes);
             boolean inCommonSection = !inNewSection && !inOldSection;
 
             if (inCommonSection) {

@@ -16,21 +16,9 @@
 
 package com.google.bitcoin.store;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.math.BigInteger;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-
-import org.bitcoinj.wallet.Protos;
-
-import com.google.bitcoin.core.AddressFormatException;
 import com.google.bitcoin.core.ECKey;
 import com.google.bitcoin.core.NetworkParameters;
 import com.google.bitcoin.core.Sha256Hash;
-import com.google.bitcoin.core.StoredBlock;
 import com.google.bitcoin.core.Transaction;
 import com.google.bitcoin.core.TransactionInput;
 import com.google.bitcoin.core.TransactionOutPoint;
@@ -39,6 +27,16 @@ import com.google.bitcoin.core.Wallet;
 import com.google.bitcoin.core.WalletTransaction;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.TextFormat;
+
+import org.bitcoinj.wallet.Protos;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.math.BigInteger;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Serialize and de-serialize a wallet to a protobuf stream.
@@ -59,7 +57,7 @@ public class WalletProtobufSerializer {
         walletProto.writeTo(output);
     }
 
-    public static String walletToText(Wallet wallet) throws IOException {
+    public static String walletToText(Wallet wallet) {
         Protos.Wallet walletProto = walletToProto(wallet);
         
         return TextFormat.printToString(walletProto);
@@ -128,23 +126,23 @@ public class WalletProtobufSerializer {
             if (spentBy != null) {
                 outputBuilder
                     .setSpentByTransactionHash(ByteString.copyFrom(spentBy.getParentTransaction().getHash().getBytes()))
-                    .setSpentByTransactionIndex((int)spentBy.getParentTransaction().getInputs().indexOf(spentBy)); // FIXME
+                    .setSpentByTransactionIndex(spentBy.getParentTransaction().getInputs().indexOf(spentBy));
             }
             txBuilder.addTransactionOutput(outputBuilder);
         }
         
         // Handle which blocks tx was seen in
-        if (tx.getAppearsIn() != null) {
-            for (StoredBlock block : tx.getAppearsIn()) {
-                txBuilder.addBlockHash(ByteString.copyFrom(block.getHeader().getHash().getBytes()));
+        if (tx.getAppearsInHashes() != null) {
+            for (Sha256Hash hash : tx.getAppearsInHashes()) {
+                txBuilder.addBlockHash(ByteString.copyFrom(hash.getBytes()));
             }
         }
         
         return txBuilder.build();
     }
 
-    public static Wallet readWallet(InputStream input, NetworkParameters params, BlockStore store)
-            throws IOException, AddressFormatException, BlockStoreException {
+    public static Wallet readWallet(InputStream input, NetworkParameters params)
+            throws IOException {
         WalletProtobufSerializer serializer = new WalletProtobufSerializer();
         Protos.Wallet walletProto = Protos.Wallet.parseFrom(input);
         if (!params.getId().equals(walletProto.getNetworkIdentifier()))
@@ -164,7 +162,7 @@ public class WalletProtobufSerializer {
         
         // Read all transactions and create outputs
         for (Protos.Transaction txProto : walletProto.getTransactionList()) {
-            serializer.readTransaction(txProto, params, store);
+            serializer.readTransaction(txProto, params);
         }
 
         // Create transactions inputs pointing to transactions
@@ -188,8 +186,7 @@ public class WalletProtobufSerializer {
     }
 
 
-    private void readTransaction(Protos.Transaction txProto,
-            NetworkParameters params, BlockStore store) throws BlockStoreException {
+    private void readTransaction(Protos.Transaction txProto, NetworkParameters params) {
         Transaction tx = new Transaction(params, txProto.getVersion(), new Sha256Hash(txProto.getHash().toByteArray()));
         if (txProto.hasUpdatedAt())
             tx.setUpdateTime(new Date(txProto.getUpdatedAt()));
@@ -207,7 +204,7 @@ public class WalletProtobufSerializer {
         }
         
         for (ByteString blockHash : txProto.getBlockHashList()) {
-            tx.setBlockAppearance(store.get(new Sha256Hash(blockHash.toByteArray())), false);
+            tx.addBlockAppearance(new Sha256Hash(blockHash.toByteArray()));
         }
 
         if (txProto.hasLockTime()) {
