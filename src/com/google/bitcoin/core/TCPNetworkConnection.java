@@ -50,6 +50,7 @@ public class TCPNetworkConnection implements NetworkConnection {
     // Given to the BitcoinSerializer to de-duplicate messages.
     private static final LinkedHashMap<Sha256Hash, Integer> dedupeList = BitcoinSerializer.createDedupeList();
     private BitcoinSerializer serializer = null;
+    private static final Date checksummingProtocolChangeDate = new Date(1329696000000L);
 
     /**
      * Connect to the given IP address using the port specified as part of the network parameters. Once construction
@@ -79,8 +80,10 @@ public class TCPNetworkConnection implements NetworkConnection {
         out = socket.getOutputStream();
         in = socket.getInputStream();
 
-        // The version message never uses checksumming. Update checkumming property after version is read.
+        // The version message does not use checksumming, until Feb 2012 when it magically does.
+        // So pre-Feb 2012, update checkumming property after version is read.
         this.serializer = new BitcoinSerializer(params, false, dedupe ? dedupeList : null);
+        this.serializer.setUseChecksumming(Utils.now().after(checksummingProtocolChangeDate));
 
         // Announce ourselves. This has to come first to connect to clients beyond v0.30.20.2 which wait to hear
         // from us until they send their version message back.
@@ -118,7 +121,7 @@ public class TCPNetworkConnection implements NetworkConnection {
             }
             throw new ProtocolException("Peer does not have a copy of the block chain.");
         }
-        // newer clients use checksumming
+        // Newer clients use checksumming.
         serializer.setUseChecksumming(peerVersion >= 209);
         // Handshake is done!
     }
