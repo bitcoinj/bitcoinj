@@ -25,7 +25,6 @@ import java.io.*;
 import java.math.BigInteger;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 
 import static com.google.bitcoin.core.Utils.bitcoinValueToFriendlyString;
 

@@ -20,11 +20,13 @@ import com.google.bitcoin.core.ECKey;
 import com.google.bitcoin.core.NetworkParameters;
 import com.google.bitcoin.core.Sha256Hash;
 import com.google.bitcoin.core.Transaction;
+import com.google.bitcoin.core.TransactionConfidence;
 import com.google.bitcoin.core.TransactionInput;
 import com.google.bitcoin.core.TransactionOutPoint;
 import com.google.bitcoin.core.TransactionOutput;
 import com.google.bitcoin.core.Wallet;
 import com.google.bitcoin.core.WalletTransaction;
+import com.google.bitcoin.core.TransactionConfidence.ConfidenceType;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.TextFormat;
 
@@ -138,6 +140,22 @@ public class WalletProtobufSerializer {
             }
         }
         
+        if (tx.hasConfidence()) {
+            TransactionConfidence confidence = tx.getConfidence();
+            Protos.TransactionConfidence.Builder confidenceBuilder =
+                Protos.TransactionConfidence.newBuilder();
+            
+            confidenceBuilder.setType(Protos.TransactionConfidence.Type.valueOf(confidence.getConfidenceType().getValue()));
+            if (confidence.getConfidenceType() == ConfidenceType.BUILDING) {
+                confidenceBuilder.setAppearedAtHeight(confidence.getAppearedAtChainHeight());
+            }
+            if (confidence.getConfidenceType() == ConfidenceType.OVERRIDDEN_BY_DOUBLE_SPEND) {
+                confidenceBuilder.setOverridingTransaction(ByteString.copyFrom(confidence.getOverridingTransaction().getHash().getBytes()));
+            }
+            
+            txBuilder.setConfidence(confidenceBuilder);
+        }
+        
         return txBuilder.build();
     }
 
@@ -246,6 +264,20 @@ public class WalletProtobufSerializer {
                     txMap.get(transactionOutput.getSpentByTransactionHash());
                 final int spendingIndex = transactionOutput.getSpentByTransactionIndex();
                 output.markAsSpent(spendingTx.getInputs().get(spendingIndex));
+            }
+        }
+        
+        if(txProto.hasConfidence()) {
+            Protos.TransactionConfidence confidenceProto = txProto.getConfidence();
+            TransactionConfidence confidence = tx.getConfidence();
+            confidence.setConfidenceType(TransactionConfidence.ConfidenceType.valueOf(confidenceProto.getType().getNumber()));
+            if (confidenceProto.hasAppearedAtHeight()) {
+                assert confidence.getConfidenceType() == ConfidenceType.BUILDING;
+                confidence.setAppearedAtChainHeight(confidenceProto.getAppearedAtHeight());
+            }
+            if (confidenceProto.hasOverridingTransaction()) {
+                assert confidence.getConfidenceType() == ConfidenceType.OVERRIDDEN_BY_DOUBLE_SPEND;
+                confidence.setOverridingTransaction(txMap.get(confidenceProto.getOverridingTransaction()));
             }
         }
 

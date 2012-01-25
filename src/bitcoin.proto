@@ -53,6 +53,20 @@ message TransactionOutput {
   // if spent, the index of the transaction output of the transaction doing the spend
 }
 
+message TransactionConfidence {
+  enum Type {
+    UNKNOWN = 0;
+    BUILDING = 1;
+    NOT_SEEN_IN_CHAIN = 2;
+    NOT_IN_BEST_CHAIN = 3;
+    OVERRIDDEN_BY_DOUBLE_SPEND = 4;
+  }
+
+  required Type type = 1;
+  optional int32 appeared_at_height = 2;
+  optional bytes overriding_transaction = 3;
+}
+
 message Transaction {
   /**
    * This is a bitfield oriented enum, with the following bits:
@@ -88,6 +102,8 @@ message Transaction {
 
 
   repeated bytes block_hash = 8;
+
+  optional TransactionConfidence confidence = 9;
   // Sha256Hash of block in block chain in which this transaction appears
 }
 

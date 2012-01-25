@@ -95,7 +95,7 @@ public class TransactionConfidence implements Serializable {
     /** Describes the state of the transaction in general terms. Properties can be read to learn specifics. */
     public enum ConfidenceType {
         /** If BUILDING, then the transaction is included in the best chain and your confidence in it is increasing. */
-        BUILDING,
+        BUILDING(1),
 
         /**
          * If NOT_SEEN_IN_CHAIN, then the transaction is pending and should be included shortly. You can estimate how
@@ -103,26 +103,47 @@ public class TransactionConfidence implements Serializable {
          * it, using {@link com.google.bitcoin.core.TransactionConfidence#numBroadcastPeers()}. Or if you saw it from
          * a trusted peer, you can assume it's valid and will get mined sooner or later as well.
          */
-        NOT_SEEN_IN_CHAIN,
+        NOT_SEEN_IN_CHAIN(2),
 
         /**
          * If NOT_IN_BEST_CHAIN, then the transaction has been included in a block, but that block is on a fork. A
          * transaction can change from BUILDING to NOT_IN_BEST_CHAIN and vice versa if a reorganization takes place,
          * due to a split in the consensus.
          */
-        NOT_IN_BEST_CHAIN,
+        NOT_IN_BEST_CHAIN(3),
 
         /**
          * If OVERRIDDEN_BY_DOUBLE_SPEND, then it means the transaction won't confirm unless there is another re-org,
          * because some other transaction is spending one of its inputs. Such transactions should be alerted to the user
          * so they can take action, eg, suspending shipment of goods if they are a merchant.
          */
-        OVERRIDDEN_BY_DOUBLE_SPEND,
+        OVERRIDDEN_BY_DOUBLE_SPEND(4),
 
         /**
          * If a transaction hasn't been broadcast yet, or there's no record of it, its confidence is UNKNOWN.
          */
-        UNKNOWN
+        UNKNOWN(0);
+        
+        private int value;
+        ConfidenceType(int value) {
+            this.value = value;
+        }
+        
+        public int getValue() {
+            return value;
+        }
+
+        public static ConfidenceType valueOf(int value) {
+            switch (value) {
+            case 0: return UNKNOWN;
+            case 1: return BUILDING;
+            case 2: return NOT_SEEN_IN_CHAIN;
+            case 3: return NOT_IN_BEST_CHAIN;
+            case 4: return OVERRIDDEN_BY_DOUBLE_SPEND;
+            default: return null;
+            }
+        }
+
     };
 
     /**
@@ -139,7 +160,7 @@ public class TransactionConfidence implements Serializable {
     private int appearedAtChainHeight = -1;
     private Transaction overridingTransaction;
 
-    TransactionConfidence(Transaction tx) {
+    public TransactionConfidence(Transaction tx) {
         // Assume a default number of peers for our set.
         broadcastBy = new HashSet<PeerAddress>(10);
         transaction = tx;
@@ -311,7 +332,7 @@ public class TransactionConfidence implements Serializable {
 
     /**
      * Called when the transaction becomes newly dead, that is, we learn that one of its inputs has already been spent
-     * in such a way that the double-spending transaction takes precence over this one. It will not become valid now
+     * in such a way that the double-spending transaction takes precedence over this one. It will not become valid now
      * unless there is a re-org. Automatically sets the confidence type to OVERRIDDEN_BY_DOUBLE_SPEND.
      */
     public synchronized void setOverridingTransaction(Transaction overridingTransaction) {

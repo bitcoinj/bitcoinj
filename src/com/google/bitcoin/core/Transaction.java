@@ -707,6 +707,11 @@ public class Transaction extends ChildMessage implements Serializable {
         return confidence;
     }
 
+
+    public boolean hasConfidence() {
+        return confidence != null && confidence.getConfidenceType() != TransactionConfidence.ConfidenceType.UNKNOWN;
+    }
+
     @Override
     public boolean equals(Object other) {
         if (!(other instanceof Transaction)) return false;

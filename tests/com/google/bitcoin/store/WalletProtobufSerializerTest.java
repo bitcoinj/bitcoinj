@@ -12,6 +12,7 @@ import com.google.bitcoin.core.NetworkParameters;
 import com.google.bitcoin.core.Transaction;
 import com.google.bitcoin.core.Utils;
 import com.google.bitcoin.core.Wallet;
+import com.google.bitcoin.core.TransactionConfidence.ConfidenceType;
 
 import org.bitcoinj.wallet.Protos;
 import org.junit.Before;
@@ -73,12 +74,20 @@ public class WalletProtobufSerializerTest {
         ECKey k2 = new ECKey();
         BigInteger v2 = toNanoCoins(0, 50);
         Transaction t2 = wallet.sendCoinsOffline(k2.toAddress(params), v2);
+        t2.getConfidence().setConfidenceType(ConfidenceType.OVERRIDDEN_BY_DOUBLE_SPEND);
+        t2.getConfidence().setOverridingTransaction(t1);
+        t1.getConfidence().setConfidenceType(ConfidenceType.BUILDING);
+        t1.getConfidence().setAppearedAtChainHeight(123);
         wallet1 = roundTrip(wallet);
         Transaction t1r = wallet1.getTransaction(t1.getHash());
         Transaction t2r = wallet1.getTransaction(t2.getHash());
         assertArrayEquals(t2.bitcoinSerialize(), t2r.bitcoinSerialize());
         assertArrayEquals(t1.bitcoinSerialize(), t1r.bitcoinSerialize());
         assertEquals(t1r.getOutputs().get(0).getSpentBy(), t2r.getInputs().get(0));
+        assertEquals(ConfidenceType.OVERRIDDEN_BY_DOUBLE_SPEND, t2r.getConfidence().getConfidenceType());
+        assertEquals(t1r, t2r.getConfidence().getOverridingTransaction());
+        assertEquals(ConfidenceType.BUILDING, t1r.getConfidence().getConfidenceType());
+        assertEquals(123, t1r.getConfidence().getAppearedAtChainHeight());
 
         assertEquals(1, wallet1.getPendingTransactions().size());
         assertEquals(2, wallet1.getTransactions(true, true).size());
