@@ -1267,8 +1267,9 @@ public class Wallet implements Serializable {
         for (StoredBlock b : newBlocks) {
             log.info("Replaying block {}", b.getHeader().getHashAsString());
             Set<Transaction> txns = new HashSet<Transaction>();
+            Sha256Hash blockHash = b.getHeader().getHash();
             for (Transaction tx : newChainTransactions.values()) {
-                if (tx.appearsIn.contains(b)) {
+                if (tx.getAppearsInHashes().contains(blockHash)) {
                     txns.add(tx);
                     log.info("  containing tx {}", tx.getHashAsString());
                 }
