@@ -85,6 +85,17 @@ public class ECKey implements Serializable {
     }
 
     /**
+     * Sets the creation time of this key. Zero is a convention to mean "unavailable". This method can be useful when
+     * you have a raw key you are importing from somewhere else.
+     * @param newCreationTimeSeconds
+     */
+    public void setCreationTimeSeconds(long newCreationTimeSeconds) {
+        if (newCreationTimeSeconds < 0)
+            throw new IllegalArgumentException("Cannot set creation time to negative value: " + newCreationTimeSeconds);
+        creationTimeSeconds = newCreationTimeSeconds;
+    }
+
+    /**
      * Construct an ECKey from an ASN.1 encoded private key. These are produced by OpenSSL and stored by the BitCoin
      * reference implementation in its wallet.
      */
@@ -127,6 +138,15 @@ public class ECKey implements Serializable {
     public ECKey(BigInteger privKey) {
         this.priv = privKey;
         this.pub = publicKeyFromPrivate(privKey);
+    }
+
+    /**
+     * Creates an ECKey given only the private key bytes. This is the same as using the BigInteger constructor, but
+     * is more convenient if you are importing a key from elsewhere. The public key will be automatically derived
+     * from the private key. Same as calling {@link ECKey#fromPrivKeyBytes(byte[])}.
+     */
+    public ECKey(byte[] privKeyBytes) {
+        this(new BigInteger(1, privKeyBytes));
     }
 
     /** Derive the public key by doing a point multiply of G * priv. */
