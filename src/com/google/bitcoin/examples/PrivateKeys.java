@@ -44,7 +44,7 @@ public class PrivateKeys {
                 key = dumpedPrivateKey.getKey();
             } else {
                 BigInteger privKey = Base58.decodeToBigInteger(args[0]);
-                key = new ECKey(privKey);
+                key = new ECKey(privKey, null);
             }
             System.out.println("Address from private key is: " + key.toAddress(params).toString());
             // And the address ...

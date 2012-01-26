@@ -20,8 +20,6 @@ import org.bouncycastle.util.encoders.Hex;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.math.BigInteger;
-
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertTrue;
 
@@ -31,7 +29,7 @@ public class AlertMessageTest {
 
     @Before
     public void setUp() throws Exception {
-        ECKey key = new ECKey(new BigInteger(1, TEST_KEY_PRIV));
+        ECKey key = new ECKey(TEST_KEY_PRIV, null);
         params = NetworkParameters.unitTests();
         params.alertSigningKey = key.getPubKey();
     }

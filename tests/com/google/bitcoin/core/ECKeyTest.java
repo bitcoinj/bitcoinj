@@ -20,9 +20,8 @@ import org.bouncycastle.util.encoders.Hex;
 import org.junit.Test;
 
 import java.math.BigInteger;
-import java.security.PrivateKey;
 
-import static com.google.bitcoin.core.Utils.*;
+import static com.google.bitcoin.core.Utils.reverseBytes;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -32,7 +31,7 @@ public class ECKeyTest {
         // Test that we can construct an ECKey from a private key (deriving the public from the private), then signing
         // a message with it.
         BigInteger privkey = new BigInteger(1, Hex.decode("180cb41c7c600be951b5d3d0a7334acc7506173875834f7a6c4c786a28fcbb19"));
-        ECKey key = new ECKey(privkey);
+        ECKey key = new ECKey(privkey, null);
         byte[] message = new byte[32];  // All zeroes.
         byte[] output = key.sign(message);
         assertTrue(key.verify(message, output));

@@ -49,6 +49,6 @@ public class DumpedPrivateKey extends VersionedChecksummedBytes {
      * Returns an ECKey created from this encoded private key.
      */
     public ECKey getKey() {
-        return new ECKey(new BigInteger(1, bytes));
+        return new ECKey(new BigInteger(1, bytes), null);
     }
 }

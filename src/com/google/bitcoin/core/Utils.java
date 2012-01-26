@@ -16,6 +16,8 @@
 
 package com.google.bitcoin.core;
 
+import org.bouncycastle.crypto.digests.RIPEMD160Digest;
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.math.BigDecimal;
@@ -23,8 +25,6 @@ import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Date;
-
-import org.bouncycastle.crypto.digests.RIPEMD160Digest;
 
 /**
  * A collection of various utility methods that are helpful for working with the BitCoin protocol.
@@ -59,6 +59,21 @@ public class Utils {
         BigInteger bi = BigInteger.valueOf(coins).multiply(COIN);
         bi = bi.add(BigInteger.valueOf(cents).multiply(CENT));
         return bi;
+    }
+
+    /**
+     * The regular {@link java.math.BigInteger#toByteArray()} method isn't quite what we often need: it appends a
+     * leading zero to indicate that the number is positive and may need padding.
+     * @param b
+     * @return 32 byte long array.
+     */
+    public static byte[] bigIntegerTo32Bytes(BigInteger b) {
+        byte[] bytes = new byte[32];
+        byte[] biBytes = b.toByteArray();
+        int start = (biBytes.length == 33) ? 1 : 0;
+        int length = Math.min(biBytes.length, 32);
+        System.arraycopy(biBytes, start, bytes, 32 - length, length);
+        return bytes;        
     }
 
     /**

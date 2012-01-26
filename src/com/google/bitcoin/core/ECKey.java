@@ -33,6 +33,9 @@ import java.io.Serializable;
 import java.math.BigInteger;
 import java.security.SecureRandom;
 
+// TODO: This class is quite a mess by now. Once users are migrated away from Java serialization for the wallets,
+// refactor this to have better internal layout and a more consistent API.
+
 /**
  * Represents an elliptic curve keypair that we own and can use for signing transactions. Currently,
  * Bouncy Castle is used. In future this may become an interface with multiple implementations using different crypto
@@ -45,7 +48,7 @@ public class ECKey implements Serializable {
     private static final long serialVersionUID = -728224901792295832L;
 
     static {
-        // All clients must agree on the curve to use by agreement. BitCoin uses secp256k1.
+        // All clients must agree on the curve to use by agreement. Bitcoin uses secp256k1.
         X9ECParameters params = SECNamedCurves.getByName("secp256k1");
         ecParams = new ECDomainParameters(params.getCurve(), params.getG(), params.getN(), params.getH());
         secureRandom = new SecureRandom();
@@ -54,12 +57,13 @@ public class ECKey implements Serializable {
     // The two parts of the key. If "priv" is set, "pub" can always be calculated. If "pub" is set but not "priv", we
     // can only verify signatures not make them.
     // TODO: Redesign this class to use consistent internals and more efficient serialization.
-    private final BigInteger priv;
-    private final byte[] pub;
+    private BigInteger priv;
+    private byte[] pub;
     // Creation time of the key in seconds since the epoch, or zero if the key was deserialized from a version that did
     // not have this field.
     private long creationTimeSeconds;
 
+    // Transient because it's calculated on demand.
     transient private byte[] pubKeyHash;
 
     /** Generates an entirely new keypair. */
@@ -77,30 +81,11 @@ public class ECKey implements Serializable {
     }
 
     /**
-     * Returns the creation time of this key or zero if the key was deserialized from a version that did not store
-     * that data.
-     */
-    public long getCreationTimeSeconds() {
-        return creationTimeSeconds;
-    }
-
-    /**
-     * Sets the creation time of this key. Zero is a convention to mean "unavailable". This method can be useful when
-     * you have a raw key you are importing from somewhere else.
-     * @param newCreationTimeSeconds
-     */
-    public void setCreationTimeSeconds(long newCreationTimeSeconds) {
-        if (newCreationTimeSeconds < 0)
-            throw new IllegalArgumentException("Cannot set creation time to negative value: " + newCreationTimeSeconds);
-        creationTimeSeconds = newCreationTimeSeconds;
-    }
-
-    /**
      * Construct an ECKey from an ASN.1 encoded private key. These are produced by OpenSSL and stored by the BitCoin
-     * reference implementation in its wallet.
+     * reference implementation in its wallet. Note that this is slow because it requires an EC point multiply.
      */
     public static ECKey fromASN1(byte[] asn1privkey) {
-        return new ECKey(extractPrivateKeyFromASN1(asn1privkey));
+        return new ECKey(extractPrivateKeyFromASN1(asn1privkey), null);
     }
 
     /**
@@ -132,12 +117,20 @@ public class ECKey implements Serializable {
     }
 
     /**
-     * Creates an ECKey given only the private key. This works because EC public keys are derivable from their
-     * private keys by doing a multiply with the generator value.
+     * Creates an ECKey given either the private key only, the public key only, or both. If only the private key 
+     * is supplied, the public key will be calculated from it (this is slow). If both are supplied, it's assumed
+     * the public key already correctly matches the public key. If only the public key is supplied, this ECKey cannot
+     * be used for signing.
      */
-    public ECKey(BigInteger privKey) {
+    public ECKey(BigInteger privKey, BigInteger pubKey) {
         this.priv = privKey;
-        this.pub = publicKeyFromPrivate(privKey);
+        this.pub = null;
+        if (pubKey == null && privKey != null) {
+            // Derive public from private.
+            this.pub = publicKeyFromPrivate(privKey);
+        } else if (pubKey != null) {
+            this.pub = Utils.bigIntegerTo32Bytes(pubKey);
+        }
     }
 
     /**
@@ -145,12 +138,20 @@ public class ECKey implements Serializable {
      * is more convenient if you are importing a key from elsewhere. The public key will be automatically derived
      * from the private key. Same as calling {@link ECKey#fromPrivKeyBytes(byte[])}.
      */
-    public ECKey(byte[] privKeyBytes) {
-        this(new BigInteger(1, privKeyBytes));
+    public ECKey(byte[] privKeyBytes, byte[] pubKeyBytes) {
+        priv = privKeyBytes == null ? null : new BigInteger(1, privKeyBytes);
+        pub = pubKeyBytes;
+        if (pub == null && priv != null) {
+            // Derive public from private.
+            pub = publicKeyFromPrivate(priv);
+        }
     }
 
-    /** Derive the public key by doing a point multiply of G * priv. */
-    private static byte[] publicKeyFromPrivate(BigInteger privKey) {
+    /**
+     * Returns public key bytes from the given private key. To convert a byte array into a BigInteger, use <tt>
+     * new BigInteger(1, bytes);</tt>
+     */
+    public static byte[] publicKeyFromPrivate(BigInteger privKey) {
         return ecParams.getG().multiply(privKey).getEncoded();
     }
 
@@ -172,7 +173,9 @@ public class ECKey implements Serializable {
     public String toString() {
         StringBuffer b = new StringBuffer();
         b.append("pub:").append(Utils.bytesToHexString(pub));
-        b.append(" priv:").append(Utils.bytesToHexString(priv.toByteArray()));
+        if (priv != null) {
+            b.append(" priv:").append(Utils.bytesToHexString(priv.toByteArray()));
+        }
         return b.toString();
     }
 
@@ -188,17 +191,20 @@ public class ECKey implements Serializable {
     /**
      * Calcuates an ECDSA signature in DER format for the given input hash. Note that the input is expected to be
      * 32 bytes long.
+     * @throws IllegalStateException if this ECKey has only a public key.
      */
     public byte[] sign(byte[] input) {
+        if (priv == null)
+            throw new IllegalStateException("This ECKey does not have the private key necessary for signing.");
         ECDSASigner signer = new ECDSASigner();
         ECPrivateKeyParameters privKey = new ECPrivateKeyParameters(priv, ecParams);
         signer.init(true, privKey);
         BigInteger[] sigs = signer.generateSignature(input);
         // What we get back from the signer are the two components of a signature, r and s. To get a flat byte stream
-        // of the type used by BitCoin we have to encode them using DER encoding, which is just a way to pack the two
+        // of the type used by Bitcoin we have to encode them using DER encoding, which is just a way to pack the two
         // components into a structure.
         try {
-            //usually 70-72 bytes.
+            // Usually 70-72 bytes.
             ByteArrayOutputStream bos = new UnsafeByteArrayOutputStream(72);
             DERSequenceGenerator seq = new DERSequenceGenerator(bos);
             seq.addObject(new DERInteger(sigs[0]));
@@ -272,20 +278,11 @@ public class ECKey implements Serializable {
      * Returns a 32 byte array containing the private key.
      */
     public byte[] getPrivKeyBytes() {
-        // Getting the bytes out of a BigInteger gives us an extra zero byte on the end (for signedness)
-        // or less than 32 bytes (leading zeros).  Coerce to 32 bytes in all cases.
-        byte[] bytes = new byte[32];
-
-        byte[] privArray = priv.toByteArray();
-        int privStart = (privArray.length == 33) ? 1 : 0;
-        int privLength = Math.min(privArray.length, 32);
-        System.arraycopy(privArray, privStart, bytes, 32 - privLength, privLength);
-
-        return bytes;
+        return Utils.bigIntegerTo32Bytes(priv);
     }
     
     public static ECKey fromPrivKeyBytes(byte[] bytes) {
-        return new ECKey(new BigInteger(1, bytes));
+        return new ECKey(new BigInteger(1, bytes), null);
     }
 
     /**
@@ -297,5 +294,24 @@ public class ECKey implements Serializable {
      */
     public DumpedPrivateKey getPrivateKeyEncoded(NetworkParameters params) {
         return new DumpedPrivateKey(params, getPrivKeyBytes());
+    }
+
+    /**
+     * Returns the creation time of this key or zero if the key was deserialized from a version that did not store
+     * that data.
+     */
+    public long getCreationTimeSeconds() {
+        return creationTimeSeconds;
+    }
+
+    /**
+     * Sets the creation time of this key. Zero is a convention to mean "unavailable". This method can be useful when
+     * you have a raw key you are importing from somewhere else.
+     * @param newCreationTimeSeconds
+     */
+    public void setCreationTimeSeconds(long newCreationTimeSeconds) {
+        if (newCreationTimeSeconds < 0)
+            throw new IllegalArgumentException("Cannot set creation time to negative value: " + newCreationTimeSeconds);
+        creationTimeSeconds = newCreationTimeSeconds;
     }
 }
