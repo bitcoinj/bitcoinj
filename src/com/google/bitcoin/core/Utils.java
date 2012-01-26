@@ -70,6 +70,9 @@ public class Utils {
      * @return 32 byte long array.
      */
     public static byte[] bigIntegerToBytes(BigInteger b, int numBytes) {
+        if (b == null) {
+            return null;
+        }
         byte[] bytes = new byte[numBytes];
         byte[] biBytes = b.toByteArray();
         int start = (biBytes.length == numBytes + 1) ? 1 : 0;

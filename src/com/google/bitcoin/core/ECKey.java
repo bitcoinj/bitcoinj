@@ -85,7 +85,7 @@ public class ECKey implements Serializable {
      * reference implementation in its wallet. Note that this is slow because it requires an EC point multiply.
      */
     public static ECKey fromASN1(byte[] asn1privkey) {
-        return new ECKey(extractPrivateKeyFromASN1(asn1privkey), null);
+        return new ECKey(extractPrivateKeyFromASN1(asn1privkey));
     }
 
     /**
@@ -122,7 +122,7 @@ public class ECKey implements Serializable {
      * the public key already correctly matches the public key. If only the public key is supplied, this ECKey cannot
      * be used for signing.
      */
-    public ECKey(BigInteger privKey, BigInteger pubKey) {
+    private ECKey(BigInteger privKey, byte[] pubKey) {
         this.priv = privKey;
         this.pub = null;
         if (pubKey == null && privKey != null) {
@@ -132,8 +132,18 @@ public class ECKey implements Serializable {
             // We expect the pubkey to be in regular encoded form, just as a BigInteger. Therefore the first byte is
             // a special marker byte.
             // TODO: This is probably not a useful API and may be confusing.
-            this.pub = Utils.bigIntegerToBytes(pubKey, 65);
+            this.pub = pubKey;
         }
+    }
+    
+    /** Creates an ECKey given the private key only.  The public key is calculated from it (this is slow) */
+    public ECKey(BigInteger privKey) {
+        this(privKey, (byte[])null);
+    }
+    
+    /** A constructor variant with BigInteger pubkey. See {@link ECKey#ECKey(BigInteger, byte[])}. */
+    public ECKey(BigInteger privKey, BigInteger pubKey) {
+        this(privKey, Utils.bigIntegerToBytes(pubKey, 65));
     }
 
     /**
@@ -141,13 +151,8 @@ public class ECKey implements Serializable {
      * is more convenient if you are importing a key from elsewhere. The public key will be automatically derived
      * from the private key. Same as calling {@link ECKey#fromPrivKeyBytes(byte[])}.
      */
-    public ECKey(byte[] privKeyBytes, byte[] pubKeyBytes) {
-        priv = privKeyBytes == null ? null : new BigInteger(1, privKeyBytes);
-        pub = pubKeyBytes;
-        if (pub == null && priv != null) {
-            // Derive public from private.
-            pub = publicKeyFromPrivate(priv);
-        }
+    public ECKey(byte[] privKeyBytes, byte[] pubKey) {
+        this(privKeyBytes == null ? null : new BigInteger(1, privKeyBytes), pubKey);
     }
 
     /**
@@ -284,10 +289,6 @@ public class ECKey implements Serializable {
         return Utils.bigIntegerToBytes(priv, 32);
     }
     
-    public static ECKey fromPrivKeyBytes(byte[] bytes) {
-        return new ECKey(new BigInteger(1, bytes), null);
-    }
-
     /**
      * Exports the private key in the form used by the Satoshi client "dumpprivkey" and "importprivkey" commands. Use
      * the {@link com.google.bitcoin.core.DumpedPrivateKey#toString()} method to get the string.

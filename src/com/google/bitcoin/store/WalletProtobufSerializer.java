@@ -31,6 +31,8 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.TextFormat;
 
 import org.bitcoinj.wallet.Protos;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -46,6 +48,8 @@ import java.util.Map;
  * @author Miron Cuperman
  */
 public class WalletProtobufSerializer {
+    private static final Logger log = LoggerFactory.getLogger(WalletProtobufSerializer.class);
+
     // Used for de-serialization
     private Map<ByteString, Transaction> txMap;
     
@@ -82,7 +86,9 @@ public class WalletProtobufSerializer {
                         // .setCreationTimestamp() TODO
                         // .setLabel() TODO
                         .setType(Protos.Key.Type.ORIGINAL)
-                        .setPrivateKey(ByteString.copyFrom(key.getPrivKeyBytes())));
+                        .setPrivateKey(ByteString.copyFrom(key.getPrivKeyBytes()))
+                        .setPublicKey(ByteString.copyFrom(key.getPubKey()))
+                        );
         }
         return walletBuilder.build();
     }
@@ -126,9 +132,11 @@ public class WalletProtobufSerializer {
                         .setValue(output.getValue().longValue());
             final TransactionInput spentBy = output.getSpentBy();
             if (spentBy != null) {
+                Sha256Hash spendingHash = spentBy.getParentTransaction().getHash();
                 outputBuilder
-                    .setSpentByTransactionHash(ByteString.copyFrom(spentBy.getParentTransaction().getHash().getBytes()))
-                    .setSpentByTransactionIndex(spentBy.getParentTransaction().getInputs().indexOf(spentBy));
+                    .setSpentByTransactionHash(hashToByteString(spendingHash))
+                    .setSpentByTransactionIndex(
+                            spentBy.getParentTransaction().getInputs().indexOf(spentBy));
             }
             txBuilder.addTransactionOutput(outputBuilder);
         }
@@ -136,7 +144,7 @@ public class WalletProtobufSerializer {
         // Handle which blocks tx was seen in
         if (tx.getAppearsInHashes() != null) {
             for (Sha256Hash hash : tx.getAppearsInHashes()) {
-                txBuilder.addBlockHash(ByteString.copyFrom(hash.getBytes()));
+                txBuilder.addBlockHash(hashToByteString(hash));
             }
         }
         
@@ -145,18 +153,31 @@ public class WalletProtobufSerializer {
             Protos.TransactionConfidence.Builder confidenceBuilder =
                 Protos.TransactionConfidence.newBuilder();
             
-            confidenceBuilder.setType(Protos.TransactionConfidence.Type.valueOf(confidence.getConfidenceType().getValue()));
-            if (confidence.getConfidenceType() == ConfidenceType.BUILDING) {
-                confidenceBuilder.setAppearedAtHeight(confidence.getAppearedAtChainHeight());
-            }
-            if (confidence.getConfidenceType() == ConfidenceType.OVERRIDDEN_BY_DOUBLE_SPEND) {
-                confidenceBuilder.setOverridingTransaction(ByteString.copyFrom(confidence.getOverridingTransaction().getHash().getBytes()));
-            }
-            
-            txBuilder.setConfidence(confidenceBuilder);
+            writeConfidence(txBuilder, confidence, confidenceBuilder);
         }
         
         return txBuilder.build();
+    }
+
+    private static void writeConfidence(
+            Protos.Transaction.Builder txBuilder,
+            TransactionConfidence confidence,
+            Protos.TransactionConfidence.Builder confidenceBuilder) {
+        confidenceBuilder.setType(
+                Protos.TransactionConfidence.Type.valueOf(confidence.getConfidenceType().getValue()));
+        if (confidence.getConfidenceType() == ConfidenceType.BUILDING) {
+            confidenceBuilder.setAppearedAtHeight(confidence.getAppearedAtChainHeight());
+        }
+        if (confidence.getConfidenceType() == ConfidenceType.OVERRIDDEN_BY_DOUBLE_SPEND) {
+            Sha256Hash overridingHash = confidence.getOverridingTransaction().getHash();
+            confidenceBuilder.setOverridingTransaction(hashToByteString(overridingHash));
+        }
+        
+        txBuilder.setConfidence(confidenceBuilder);
+    }
+
+    private static ByteString hashToByteString(Sha256Hash hash) {
+        return ByteString.copyFrom(hash.getBytes());
     }
 
     public static Wallet readWallet(InputStream input, NetworkParameters params)
@@ -175,7 +196,12 @@ public class WalletProtobufSerializer {
             if (keyProto.getType() != Protos.Key.Type.ORIGINAL) {
                 throw new IllegalArgumentException("Unknown key type in wallet");
             }
-            wallet.addKey(ECKey.fromPrivKeyBytes(keyProto.getPrivateKey().toByteArray()));
+            if (!keyProto.hasPrivateKey()) {
+                throw new IllegalArgumentException("Don't know how to handle pubkey-only keys");
+            }
+            
+            byte[] pubKey = keyProto.hasPublicKey() ? keyProto.getPublicKey().toByteArray() : null;
+            wallet.addKey(new ECKey(keyProto.getPrivateKey().toByteArray(), pubKey));
         }
         
         // Read all transactions and create outputs
@@ -205,7 +231,9 @@ public class WalletProtobufSerializer {
 
 
     private void readTransaction(Protos.Transaction txProto, NetworkParameters params) {
-        Transaction tx = new Transaction(params, txProto.getVersion(), new Sha256Hash(txProto.getHash().toByteArray()));
+        Transaction tx = 
+            new Transaction(params, txProto.getVersion(),
+                    new Sha256Hash(txProto.getHash().toByteArray()));
         if (txProto.hasUpdatedAt())
             tx.setUpdateTime(new Date(txProto.getUpdatedAt()));
         
@@ -270,17 +298,43 @@ public class WalletProtobufSerializer {
         if(txProto.hasConfidence()) {
             Protos.TransactionConfidence confidenceProto = txProto.getConfidence();
             TransactionConfidence confidence = tx.getConfidence();
-            confidence.setConfidenceType(TransactionConfidence.ConfidenceType.valueOf(confidenceProto.getType().getNumber()));
-            if (confidenceProto.hasAppearedAtHeight()) {
-                assert confidence.getConfidenceType() == ConfidenceType.BUILDING;
-                confidence.setAppearedAtChainHeight(confidenceProto.getAppearedAtHeight());
-            }
-            if (confidenceProto.hasOverridingTransaction()) {
-                assert confidence.getConfidenceType() == ConfidenceType.OVERRIDDEN_BY_DOUBLE_SPEND;
-                confidence.setOverridingTransaction(txMap.get(confidenceProto.getOverridingTransaction()));
-            }
+            readConfidence(tx, confidenceProto, confidence);
         }
 
         return new WalletTransaction(pool, tx);
+    }
+
+    private void readConfidence(
+            Transaction tx, Protos.TransactionConfidence confidenceProto,
+            TransactionConfidence confidence) {
+        // We are lenient here because tx confidence is not an essential part of the wallet.
+        // If the tx has an unknown type of confidence, ignore.
+        if (!confidenceProto.hasType()) {
+            log.warn("Unknown confidence type for tx {}", tx.getHashAsString());
+            return;
+        }
+        ConfidenceType confidenceType =
+            TransactionConfidence.ConfidenceType.valueOf(confidenceProto.getType().getNumber());
+        confidence.setConfidenceType(confidenceType);
+        if (confidenceProto.hasAppearedAtHeight()) {
+            if (confidence.getConfidenceType() != ConfidenceType.BUILDING) {
+                log.warn("Have appearedAtHeight but not BUILDING for tx {}", tx.getHashAsString());
+                return;
+            }
+            confidence.setAppearedAtChainHeight(confidenceProto.getAppearedAtHeight());
+        }
+        if (confidenceProto.hasOverridingTransaction()) {
+            if (confidence.getConfidenceType() != ConfidenceType.OVERRIDDEN_BY_DOUBLE_SPEND) {
+                log.warn("Have overridingTransaction but not OVERRIDDEN for tx {}", tx.getHashAsString());
+                return;
+            }
+            Transaction overridingTransaction =
+                txMap.get(confidenceProto.getOverridingTransaction());
+            if (overridingTransaction == null) {
+                log.warn("Have overridingTransaction that is not in wallet for tx {}", tx.getHashAsString());
+                return;
+            }
+            confidence.setOverridingTransaction(overridingTransaction);
+        }
     }
 }

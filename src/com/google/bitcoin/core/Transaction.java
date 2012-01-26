@@ -707,7 +707,7 @@ public class Transaction extends ChildMessage implements Serializable {
         return confidence;
     }
 
-
+    /** Check if the transaction has a known confidence */
     public boolean hasConfidence() {
         return confidence != null && confidence.getConfidenceType() != TransactionConfidence.ConfidenceType.UNKNOWN;
     }

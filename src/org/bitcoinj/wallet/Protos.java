@@ -11,19 +11,23 @@ public final class Protos {
   public interface KeyOrBuilder
       extends com.google.protobuf.MessageOrBuilder {
     
-    // required bytes private_key = 1;
-    boolean hasPrivateKey();
-    com.google.protobuf.ByteString getPrivateKey();
-    
-    // required .wallet.Key.Type type = 2;
+    // required .wallet.Key.Type type = 1;
     boolean hasType();
     org.bitcoinj.wallet.Protos.Key.Type getType();
     
-    // optional string label = 3;
+    // optional bytes private_key = 2;
+    boolean hasPrivateKey();
+    com.google.protobuf.ByteString getPrivateKey();
+    
+    // optional bytes public_key = 3;
+    boolean hasPublicKey();
+    com.google.protobuf.ByteString getPublicKey();
+    
+    // optional string label = 4;
     boolean hasLabel();
     String getLabel();
     
-    // optional int64 creation_timestamp = 4;
+    // optional int64 creation_timestamp = 5;
     boolean hasCreationTimestamp();
     long getCreationTimestamp();
   }
@@ -122,31 +126,41 @@ public final class Protos {
     }
     
     private int bitField0_;
-    // required bytes private_key = 1;
-    public static final int PRIVATE_KEY_FIELD_NUMBER = 1;
-    private com.google.protobuf.ByteString privateKey_;
-    public boolean hasPrivateKey() {
-      return ((bitField0_ & 0x00000001) == 0x00000001);
-    }
-    public com.google.protobuf.ByteString getPrivateKey() {
-      return privateKey_;
-    }
-    
-    // required .wallet.Key.Type type = 2;
-    public static final int TYPE_FIELD_NUMBER = 2;
+    // required .wallet.Key.Type type = 1;
+    public static final int TYPE_FIELD_NUMBER = 1;
     private org.bitcoinj.wallet.Protos.Key.Type type_;
     public boolean hasType() {
-      return ((bitField0_ & 0x00000002) == 0x00000002);
+      return ((bitField0_ & 0x00000001) == 0x00000001);
     }
     public org.bitcoinj.wallet.Protos.Key.Type getType() {
       return type_;
     }
     
-    // optional string label = 3;
-    public static final int LABEL_FIELD_NUMBER = 3;
+    // optional bytes private_key = 2;
+    public static final int PRIVATE_KEY_FIELD_NUMBER = 2;
+    private com.google.protobuf.ByteString privateKey_;
+    public boolean hasPrivateKey() {
+      return ((bitField0_ & 0x00000002) == 0x00000002);
+    }
+    public com.google.protobuf.ByteString getPrivateKey() {
+      return privateKey_;
+    }
+    
+    // optional bytes public_key = 3;
+    public static final int PUBLIC_KEY_FIELD_NUMBER = 3;
+    private com.google.protobuf.ByteString publicKey_;
+    public boolean hasPublicKey() {
+      return ((bitField0_ & 0x00000004) == 0x00000004);
+    }
+    public com.google.protobuf.ByteString getPublicKey() {
+      return publicKey_;
+    }
+    
+    // optional string label = 4;
+    public static final int LABEL_FIELD_NUMBER = 4;
     private java.lang.Object label_;
     public boolean hasLabel() {
-      return ((bitField0_ & 0x00000004) == 0x00000004);
+      return ((bitField0_ & 0x00000008) == 0x00000008);
     }
     public String getLabel() {
       java.lang.Object ref = label_;
@@ -174,19 +188,20 @@ public final class Protos {
       }
     }
     
-    // optional int64 creation_timestamp = 4;
-    public static final int CREATION_TIMESTAMP_FIELD_NUMBER = 4;
+    // optional int64 creation_timestamp = 5;
+    public static final int CREATION_TIMESTAMP_FIELD_NUMBER = 5;
     private long creationTimestamp_;
     public boolean hasCreationTimestamp() {
-      return ((bitField0_ & 0x00000008) == 0x00000008);
+      return ((bitField0_ & 0x00000010) == 0x00000010);
     }
     public long getCreationTimestamp() {
       return creationTimestamp_;
     }
     
     private void initFields() {
-      privateKey_ = com.google.protobuf.ByteString.EMPTY;
       type_ = org.bitcoinj.wallet.Protos.Key.Type.ORIGINAL;
+      privateKey_ = com.google.protobuf.ByteString.EMPTY;
+      publicKey_ = com.google.protobuf.ByteString.EMPTY;
       label_ = "";
       creationTimestamp_ = 0L;
     }
@@ -195,10 +210,6 @@ public final class Protos {
       byte isInitialized = memoizedIsInitialized;
       if (isInitialized != -1) return isInitialized == 1;
       
-      if (!hasPrivateKey()) {
-        memoizedIsInitialized = 0;
-        return false;
-      }
       if (!hasType()) {
         memoizedIsInitialized = 0;
         return false;
@@ -211,16 +222,19 @@ public final class Protos {
                         throws java.io.IOException {
       getSerializedSize();
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        output.writeBytes(1, privateKey_);
+        output.writeEnum(1, type_.getNumber());
       }
       if (((bitField0_ & 0x00000002) == 0x00000002)) {
-        output.writeEnum(2, type_.getNumber());
+        output.writeBytes(2, privateKey_);
       }
       if (((bitField0_ & 0x00000004) == 0x00000004)) {
-        output.writeBytes(3, getLabelBytes());
+        output.writeBytes(3, publicKey_);
       }
       if (((bitField0_ & 0x00000008) == 0x00000008)) {
-        output.writeInt64(4, creationTimestamp_);
+        output.writeBytes(4, getLabelBytes());
+      }
+      if (((bitField0_ & 0x00000010) == 0x00000010)) {
+        output.writeInt64(5, creationTimestamp_);
       }
       getUnknownFields().writeTo(output);
     }
@@ -233,19 +247,23 @@ public final class Protos {
       size = 0;
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeBytesSize(1, privateKey_);
+          .computeEnumSize(1, type_.getNumber());
       }
       if (((bitField0_ & 0x00000002) == 0x00000002)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeEnumSize(2, type_.getNumber());
+          .computeBytesSize(2, privateKey_);
       }
       if (((bitField0_ & 0x00000004) == 0x00000004)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeBytesSize(3, getLabelBytes());
+          .computeBytesSize(3, publicKey_);
       }
       if (((bitField0_ & 0x00000008) == 0x00000008)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeInt64Size(4, creationTimestamp_);
+          .computeBytesSize(4, getLabelBytes());
+      }
+      if (((bitField0_ & 0x00000010) == 0x00000010)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeInt64Size(5, creationTimestamp_);
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSerializedSize = size;
@@ -371,14 +389,16 @@ public final class Protos {
       
       public Builder clear() {
         super.clear();
-        privateKey_ = com.google.protobuf.ByteString.EMPTY;
-        bitField0_ = (bitField0_ & ~0x00000001);
         type_ = org.bitcoinj.wallet.Protos.Key.Type.ORIGINAL;
+        bitField0_ = (bitField0_ & ~0x00000001);
+        privateKey_ = com.google.protobuf.ByteString.EMPTY;
         bitField0_ = (bitField0_ & ~0x00000002);
-        label_ = "";
+        publicKey_ = com.google.protobuf.ByteString.EMPTY;
         bitField0_ = (bitField0_ & ~0x00000004);
-        creationTimestamp_ = 0L;
+        label_ = "";
         bitField0_ = (bitField0_ & ~0x00000008);
+        creationTimestamp_ = 0L;
+        bitField0_ = (bitField0_ & ~0x00000010);
         return this;
       }
       
@@ -420,17 +440,21 @@ public final class Protos {
         if (((from_bitField0_ & 0x00000001) == 0x00000001)) {
           to_bitField0_ |= 0x00000001;
         }
-        result.privateKey_ = privateKey_;
+        result.type_ = type_;
         if (((from_bitField0_ & 0x00000002) == 0x00000002)) {
           to_bitField0_ |= 0x00000002;
         }
-        result.type_ = type_;
+        result.privateKey_ = privateKey_;
         if (((from_bitField0_ & 0x00000004) == 0x00000004)) {
           to_bitField0_ |= 0x00000004;
         }
-        result.label_ = label_;
+        result.publicKey_ = publicKey_;
         if (((from_bitField0_ & 0x00000008) == 0x00000008)) {
           to_bitField0_ |= 0x00000008;
+        }
+        result.label_ = label_;
+        if (((from_bitField0_ & 0x00000010) == 0x00000010)) {
+          to_bitField0_ |= 0x00000010;
         }
         result.creationTimestamp_ = creationTimestamp_;
         result.bitField0_ = to_bitField0_;
@@ -449,11 +473,14 @@ public final class Protos {
       
       public Builder mergeFrom(org.bitcoinj.wallet.Protos.Key other) {
         if (other == org.bitcoinj.wallet.Protos.Key.getDefaultInstance()) return this;
+        if (other.hasType()) {
+          setType(other.getType());
+        }
         if (other.hasPrivateKey()) {
           setPrivateKey(other.getPrivateKey());
         }
-        if (other.hasType()) {
-          setType(other.getType());
+        if (other.hasPublicKey()) {
+          setPublicKey(other.getPublicKey());
         }
         if (other.hasLabel()) {
           setLabel(other.getLabel());
@@ -466,10 +493,6 @@ public final class Protos {
       }
       
       public final boolean isInitialized() {
-        if (!hasPrivateKey()) {
-          
-          return false;
-        }
         if (!hasType()) {
           
           return false;
@@ -500,29 +523,34 @@ public final class Protos {
               }
               break;
             }
-            case 10: {
-              bitField0_ |= 0x00000001;
-              privateKey_ = input.readBytes();
-              break;
-            }
-            case 16: {
+            case 8: {
               int rawValue = input.readEnum();
               org.bitcoinj.wallet.Protos.Key.Type value = org.bitcoinj.wallet.Protos.Key.Type.valueOf(rawValue);
               if (value == null) {
-                unknownFields.mergeVarintField(2, rawValue);
+                unknownFields.mergeVarintField(1, rawValue);
               } else {
-                bitField0_ |= 0x00000002;
+                bitField0_ |= 0x00000001;
                 type_ = value;
               }
               break;
             }
+            case 18: {
+              bitField0_ |= 0x00000002;
+              privateKey_ = input.readBytes();
+              break;
+            }
             case 26: {
               bitField0_ |= 0x00000004;
+              publicKey_ = input.readBytes();
+              break;
+            }
+            case 34: {
+              bitField0_ |= 0x00000008;
               label_ = input.readBytes();
               break;
             }
-            case 32: {
-              bitField0_ |= 0x00000008;
+            case 40: {
+              bitField0_ |= 0x00000010;
               creationTimestamp_ = input.readInt64();
               break;
             }
@@ -532,34 +560,10 @@ public final class Protos {
       
       private int bitField0_;
       
-      // required bytes private_key = 1;
-      private com.google.protobuf.ByteString privateKey_ = com.google.protobuf.ByteString.EMPTY;
-      public boolean hasPrivateKey() {
-        return ((bitField0_ & 0x00000001) == 0x00000001);
-      }
-      public com.google.protobuf.ByteString getPrivateKey() {
-        return privateKey_;
-      }
-      public Builder setPrivateKey(com.google.protobuf.ByteString value) {
-        if (value == null) {
-    throw new NullPointerException();
-  }
-  bitField0_ |= 0x00000001;
-        privateKey_ = value;
-        onChanged();
-        return this;
-      }
-      public Builder clearPrivateKey() {
-        bitField0_ = (bitField0_ & ~0x00000001);
-        privateKey_ = getDefaultInstance().getPrivateKey();
-        onChanged();
-        return this;
-      }
-      
-      // required .wallet.Key.Type type = 2;
+      // required .wallet.Key.Type type = 1;
       private org.bitcoinj.wallet.Protos.Key.Type type_ = org.bitcoinj.wallet.Protos.Key.Type.ORIGINAL;
       public boolean hasType() {
-        return ((bitField0_ & 0x00000002) == 0x00000002);
+        return ((bitField0_ & 0x00000001) == 0x00000001);
       }
       public org.bitcoinj.wallet.Protos.Key.Type getType() {
         return type_;
@@ -568,22 +572,70 @@ public final class Protos {
         if (value == null) {
           throw new NullPointerException();
         }
-        bitField0_ |= 0x00000002;
+        bitField0_ |= 0x00000001;
         type_ = value;
         onChanged();
         return this;
       }
       public Builder clearType() {
-        bitField0_ = (bitField0_ & ~0x00000002);
+        bitField0_ = (bitField0_ & ~0x00000001);
         type_ = org.bitcoinj.wallet.Protos.Key.Type.ORIGINAL;
         onChanged();
         return this;
       }
       
-      // optional string label = 3;
+      // optional bytes private_key = 2;
+      private com.google.protobuf.ByteString privateKey_ = com.google.protobuf.ByteString.EMPTY;
+      public boolean hasPrivateKey() {
+        return ((bitField0_ & 0x00000002) == 0x00000002);
+      }
+      public com.google.protobuf.ByteString getPrivateKey() {
+        return privateKey_;
+      }
+      public Builder setPrivateKey(com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000002;
+        privateKey_ = value;
+        onChanged();
+        return this;
+      }
+      public Builder clearPrivateKey() {
+        bitField0_ = (bitField0_ & ~0x00000002);
+        privateKey_ = getDefaultInstance().getPrivateKey();
+        onChanged();
+        return this;
+      }
+      
+      // optional bytes public_key = 3;
+      private com.google.protobuf.ByteString publicKey_ = com.google.protobuf.ByteString.EMPTY;
+      public boolean hasPublicKey() {
+        return ((bitField0_ & 0x00000004) == 0x00000004);
+      }
+      public com.google.protobuf.ByteString getPublicKey() {
+        return publicKey_;
+      }
+      public Builder setPublicKey(com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000004;
+        publicKey_ = value;
+        onChanged();
+        return this;
+      }
+      public Builder clearPublicKey() {
+        bitField0_ = (bitField0_ & ~0x00000004);
+        publicKey_ = getDefaultInstance().getPublicKey();
+        onChanged();
+        return this;
+      }
+      
+      // optional string label = 4;
       private java.lang.Object label_ = "";
       public boolean hasLabel() {
-        return ((bitField0_ & 0x00000004) == 0x00000004);
+        return ((bitField0_ & 0x00000008) == 0x00000008);
       }
       public String getLabel() {
         java.lang.Object ref = label_;
@@ -599,39 +651,39 @@ public final class Protos {
         if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000004;
+  bitField0_ |= 0x00000008;
         label_ = value;
         onChanged();
         return this;
       }
       public Builder clearLabel() {
-        bitField0_ = (bitField0_ & ~0x00000004);
+        bitField0_ = (bitField0_ & ~0x00000008);
         label_ = getDefaultInstance().getLabel();
         onChanged();
         return this;
       }
       void setLabel(com.google.protobuf.ByteString value) {
-        bitField0_ |= 0x00000004;
+        bitField0_ |= 0x00000008;
         label_ = value;
         onChanged();
       }
       
-      // optional int64 creation_timestamp = 4;
+      // optional int64 creation_timestamp = 5;
       private long creationTimestamp_ ;
       public boolean hasCreationTimestamp() {
-        return ((bitField0_ & 0x00000008) == 0x00000008);
+        return ((bitField0_ & 0x00000010) == 0x00000010);
       }
       public long getCreationTimestamp() {
         return creationTimestamp_;
       }
       public Builder setCreationTimestamp(long value) {
-        bitField0_ |= 0x00000008;
+        bitField0_ |= 0x00000010;
         creationTimestamp_ = value;
         onChanged();
         return this;
       }
       public Builder clearCreationTimestamp() {
-        bitField0_ = (bitField0_ & ~0x00000008);
+        bitField0_ = (bitField0_ & ~0x00000010);
         creationTimestamp_ = 0L;
         onChanged();
         return this;
@@ -1721,7 +1773,7 @@ public final class Protos {
   public interface TransactionConfidenceOrBuilder
       extends com.google.protobuf.MessageOrBuilder {
     
-    // required .wallet.TransactionConfidence.Type type = 1;
+    // optional .wallet.TransactionConfidence.Type type = 1;
     boolean hasType();
     org.bitcoinj.wallet.Protos.TransactionConfidence.Type getType();
     
@@ -1840,7 +1892,7 @@ public final class Protos {
     }
     
     private int bitField0_;
-    // required .wallet.TransactionConfidence.Type type = 1;
+    // optional .wallet.TransactionConfidence.Type type = 1;
     public static final int TYPE_FIELD_NUMBER = 1;
     private org.bitcoinj.wallet.Protos.TransactionConfidence.Type type_;
     public boolean hasType() {
@@ -1880,10 +1932,6 @@ public final class Protos {
       byte isInitialized = memoizedIsInitialized;
       if (isInitialized != -1) return isInitialized == 1;
       
-      if (!hasType()) {
-        memoizedIsInitialized = 0;
-        return false;
-      }
       memoizedIsInitialized = 1;
       return true;
     }
@@ -2131,10 +2179,6 @@ public final class Protos {
       }
       
       public final boolean isInitialized() {
-        if (!hasType()) {
-          
-          return false;
-        }
         return true;
       }
       
@@ -2188,7 +2232,7 @@ public final class Protos {
       
       private int bitField0_;
       
-      // required .wallet.TransactionConfidence.Type type = 1;
+      // optional .wallet.TransactionConfidence.Type type = 1;
       private org.bitcoinj.wallet.Protos.TransactionConfidence.Type type_ = org.bitcoinj.wallet.Protos.TransactionConfidence.Type.UNKNOWN;
       public boolean hasType() {
         return ((bitField0_ & 0x00000001) == 0x00000001);
@@ -2586,12 +2630,6 @@ public final class Protos {
       }
       for (int i = 0; i < getTransactionOutputCount(); i++) {
         if (!getTransactionOutput(i).isInitialized()) {
-          memoizedIsInitialized = 0;
-          return false;
-        }
-      }
-      if (hasConfidence()) {
-        if (!getConfidence().isInitialized()) {
           memoizedIsInitialized = 0;
           return false;
         }
@@ -3047,12 +3085,6 @@ public final class Protos {
         }
         for (int i = 0; i < getTransactionOutputCount(); i++) {
           if (!getTransactionOutput(i).isInitialized()) {
-            
-            return false;
-          }
-        }
-        if (hasConfidence()) {
-          if (!getConfidence().isInitialized()) {
             
             return false;
           }
@@ -5639,39 +5671,40 @@ public final class Protos {
       descriptor;
   static {
     java.lang.String[] descriptorData = {
-      "\n\rbitcoin.proto\022\006wallet\"{\n\003Key\022\023\n\013privat" +
-      "e_key\030\001 \002(\014\022\036\n\004type\030\002 \002(\0162\020.wallet.Key.T" +
-      "ype\022\r\n\005label\030\003 \001(\t\022\032\n\022creation_timestamp" +
-      "\030\004 \001(\003\"\024\n\004Type\022\014\n\010ORIGINAL\020\001\"\203\001\n\020Transac" +
-      "tionInput\022\"\n\032transaction_out_point_hash\030" +
-      "\001 \002(\014\022#\n\033transaction_out_point_index\030\002 \002" +
-      "(\005\022\024\n\014script_bytes\030\003 \002(\014\022\020\n\010sequence\030\004 \001" +
-      "(\r\"\177\n\021TransactionOutput\022\r\n\005value\030\001 \002(\003\022\024" +
-      "\n\014script_bytes\030\002 \002(\014\022!\n\031spent_by_transac" +
-      "tion_hash\030\003 \001(\014\022\"\n\032spent_by_transaction_",
-      "index\030\004 \001(\005\"\366\001\n\025TransactionConfidence\0220\n" +
-      "\004type\030\001 \002(\0162\".wallet.TransactionConfiden" +
-      "ce.Type\022\032\n\022appeared_at_height\030\002 \001(\005\022\036\n\026o" +
-      "verriding_transaction\030\003 \001(\014\"o\n\004Type\022\013\n\007U" +
-      "NKNOWN\020\000\022\014\n\010BUILDING\020\001\022\025\n\021NOT_SEEN_IN_CH" +
-      "AIN\020\002\022\025\n\021NOT_IN_BEST_CHAIN\020\003\022\036\n\032OVERRIDD" +
-      "EN_BY_DOUBLE_SPEND\020\004\"\211\003\n\013Transaction\022\017\n\007" +
-      "version\030\001 \002(\005\022\014\n\004hash\030\002 \002(\014\022&\n\004pool\030\003 \002(" +
-      "\0162\030.wallet.Transaction.Pool\022\021\n\tlock_time" +
-      "\030\004 \001(\r\022\022\n\nupdated_at\030\005 \001(\003\0223\n\021transactio",
-      "n_input\030\006 \003(\0132\030.wallet.TransactionInput\022" +
-      "5\n\022transaction_output\030\007 \003(\0132\031.wallet.Tra" +
-      "nsactionOutput\022\022\n\nblock_hash\030\010 \003(\014\0221\n\nco" +
-      "nfidence\030\t \001(\0132\035.wallet.TransactionConfi" +
-      "dence\"Y\n\004Pool\022\013\n\007UNSPENT\020\004\022\t\n\005SPENT\020\005\022\014\n" +
-      "\010INACTIVE\020\002\022\010\n\004DEAD\020\n\022\013\n\007PENDING\020\020\022\024\n\020PE" +
-      "NDING_INACTIVE\020\022\"8\n\tExtension\022\n\n\002id\030\001 \002(" +
-      "\t\022\014\n\004data\030\002 \002(\014\022\021\n\tmandatory\030\003 \002(\010\"\254\001\n\006W" +
-      "allet\022\032\n\022network_identifier\030\001 \002(\t\022\034\n\024las" +
-      "t_seen_block_hash\030\002 \001(\014\022\030\n\003key\030\003 \003(\0132\013.w",
-      "allet.Key\022(\n\013transaction\030\004 \003(\0132\023.wallet." +
-      "Transaction\022$\n\textension\030\n \003(\0132\021.wallet." +
-      "ExtensionB\035\n\023org.bitcoinj.walletB\006Protos"
+      "\n\rbitcoin.proto\022\006wallet\"\217\001\n\003Key\022\036\n\004type\030" +
+      "\001 \002(\0162\020.wallet.Key.Type\022\023\n\013private_key\030\002" +
+      " \001(\014\022\022\n\npublic_key\030\003 \001(\014\022\r\n\005label\030\004 \001(\t\022" +
+      "\032\n\022creation_timestamp\030\005 \001(\003\"\024\n\004Type\022\014\n\010O" +
+      "RIGINAL\020\001\"\203\001\n\020TransactionInput\022\"\n\032transa" +
+      "ction_out_point_hash\030\001 \002(\014\022#\n\033transactio" +
+      "n_out_point_index\030\002 \002(\005\022\024\n\014script_bytes\030" +
+      "\003 \002(\014\022\020\n\010sequence\030\004 \001(\r\"\177\n\021TransactionOu" +
+      "tput\022\r\n\005value\030\001 \002(\003\022\024\n\014script_bytes\030\002 \002(" +
+      "\014\022!\n\031spent_by_transaction_hash\030\003 \001(\014\022\"\n\032",
+      "spent_by_transaction_index\030\004 \001(\005\"\366\001\n\025Tra" +
+      "nsactionConfidence\0220\n\004type\030\001 \001(\0162\".walle" +
+      "t.TransactionConfidence.Type\022\032\n\022appeared" +
+      "_at_height\030\002 \001(\005\022\036\n\026overriding_transacti" +
+      "on\030\003 \001(\014\"o\n\004Type\022\013\n\007UNKNOWN\020\000\022\014\n\010BUILDIN" +
+      "G\020\001\022\025\n\021NOT_SEEN_IN_CHAIN\020\002\022\025\n\021NOT_IN_BES" +
+      "T_CHAIN\020\003\022\036\n\032OVERRIDDEN_BY_DOUBLE_SPEND\020" +
+      "\004\"\211\003\n\013Transaction\022\017\n\007version\030\001 \002(\005\022\014\n\004ha" +
+      "sh\030\002 \002(\014\022&\n\004pool\030\003 \002(\0162\030.wallet.Transact" +
+      "ion.Pool\022\021\n\tlock_time\030\004 \001(\r\022\022\n\nupdated_a",
+      "t\030\005 \001(\003\0223\n\021transaction_input\030\006 \003(\0132\030.wal" +
+      "let.TransactionInput\0225\n\022transaction_outp" +
+      "ut\030\007 \003(\0132\031.wallet.TransactionOutput\022\022\n\nb" +
+      "lock_hash\030\010 \003(\014\0221\n\nconfidence\030\t \001(\0132\035.wa" +
+      "llet.TransactionConfidence\"Y\n\004Pool\022\013\n\007UN" +
+      "SPENT\020\004\022\t\n\005SPENT\020\005\022\014\n\010INACTIVE\020\002\022\010\n\004DEAD" +
+      "\020\n\022\013\n\007PENDING\020\020\022\024\n\020PENDING_INACTIVE\020\022\"8\n" +
+      "\tExtension\022\n\n\002id\030\001 \002(\t\022\014\n\004data\030\002 \002(\014\022\021\n\t" +
+      "mandatory\030\003 \002(\010\"\254\001\n\006Wallet\022\032\n\022network_id" +
+      "entifier\030\001 \002(\t\022\034\n\024last_seen_block_hash\030\002",
+      " \001(\014\022\030\n\003key\030\003 \003(\0132\013.wallet.Key\022(\n\013transa" +
+      "ction\030\004 \003(\0132\023.wallet.Transaction\022$\n\texte" +
+      "nsion\030\n \003(\0132\021.wallet.ExtensionB\035\n\023org.bi" +
+      "tcoinj.walletB\006Protos"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
       new com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner() {
@@ -5683,7 +5716,7 @@ public final class Protos {
           internal_static_wallet_Key_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_wallet_Key_descriptor,
-              new java.lang.String[] { "PrivateKey", "Type", "Label", "CreationTimestamp", },
+              new java.lang.String[] { "Type", "PrivateKey", "PublicKey", "Label", "CreationTimestamp", },
               org.bitcoinj.wallet.Protos.Key.class,
               org.bitcoinj.wallet.Protos.Key.Builder.class);
           internal_static_wallet_TransactionInput_descriptor =

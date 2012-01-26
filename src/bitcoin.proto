@@ -26,14 +26,24 @@ package wallet;
 option java_package = "org.bitcoinj.wallet";
 option java_outer_classname = "Protos";
 
+/**
+ * A key use to control Bitcoin spending
+ *
+ * Either the private key, the public key or both may be present.  It is recommended that
+ * if the private key is provided that the public key is provided too because deriving it is slow.
+ *
+ * If only the public key is provided, the key can only be used to watch the blockchain and verify
+ * transactions, and not for spending.
+ */
 message Key {
   enum Type {
     ORIGINAL = 1; // Original bitcoin secp256k1 curve
   }
-  required bytes private_key = 1; // integer representation of the EC private key
-  required Type type = 2;
-  optional string label = 3; // for presentation purposes
-  optional int64 creation_timestamp = 4;  // datetime stored as millis since epoch.
+  required Type type = 1;
+  optional bytes private_key = 2; // integer representation of the EC private key
+  optional bytes public_key = 3; // integer representation of the EC public key
+  optional string label = 4; // for presentation purposes
+  optional int64 creation_timestamp = 5;  // datetime stored as millis since epoch.
 }
 
 message TransactionInput {
@@ -53,19 +63,29 @@ message TransactionOutput {
   // if spent, the index of the transaction output of the transaction doing the spend
 }
 
+/**
+ * A description of the confidence we have that a transaction cannot be reversed in the future.
+ *
+ * Parsing should be lenient, since this could change for different applications yet we should
+ * maintain backward compatibility.
+ */
+   
 message TransactionConfidence {
   enum Type {
     UNKNOWN = 0;
-    BUILDING = 1;
-    NOT_SEEN_IN_CHAIN = 2;
-    NOT_IN_BEST_CHAIN = 3;
-    OVERRIDDEN_BY_DOUBLE_SPEND = 4;
+    BUILDING = 1; // In best chain.  If and only if appeared_at_height is present.
+    NOT_SEEN_IN_CHAIN = 2; // Pending inclusion in best chain.
+    NOT_IN_BEST_CHAIN = 3; // In non-best chain, pending inclusion in best chain.
+    OVERRIDDEN_BY_DOUBLE_SPEND = 4; // If and only if overriding_transaction is present.
   }
 
-  required Type type = 1;
+  // This is optional in case we add confidence types to prevent parse errors - backwards compatible.
+  optional Type type = 1;
   optional int32 appeared_at_height = 2;
-  optional bytes overriding_transaction = 3;
+  optional bytes overriding_transaction = 3; // Hash of tx. Should be in this wallet.
 }
+
+/** A bitcoin transaction */
 
 message Transaction {
   /**
@@ -107,6 +127,7 @@ message Transaction {
   // Sha256Hash of block in block chain in which this transaction appears
 }
 
+/** An extension to the wallet */
 message Extension {
   required string id = 1;   // like org.whatever.foo.bar
   required bytes data = 2;
@@ -116,6 +137,7 @@ message Extension {
   required bool mandatory = 3;
 }
 
+/** A bitcoin wallet */
 message Wallet {
   required string network_identifier = 1; // the network used by this wallet
   // org.bitcoin.production = production network (Satoshi genesis block)
