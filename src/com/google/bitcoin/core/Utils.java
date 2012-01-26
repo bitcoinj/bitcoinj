@@ -64,15 +64,17 @@ public class Utils {
     /**
      * The regular {@link java.math.BigInteger#toByteArray()} method isn't quite what we often need: it appends a
      * leading zero to indicate that the number is positive and may need padding.
-     * @param b
+     *
+     * @param b the integer to format into a byte array
+     * @param numBytes the desired size of the resulting byte array
      * @return 32 byte long array.
      */
-    public static byte[] bigIntegerTo32Bytes(BigInteger b) {
-        byte[] bytes = new byte[32];
+    public static byte[] bigIntegerToBytes(BigInteger b, int numBytes) {
+        byte[] bytes = new byte[numBytes];
         byte[] biBytes = b.toByteArray();
-        int start = (biBytes.length == 33) ? 1 : 0;
-        int length = Math.min(biBytes.length, 32);
-        System.arraycopy(biBytes, start, bytes, 32 - length, length);
+        int start = (biBytes.length == numBytes + 1) ? 1 : 0;
+        int length = Math.min(biBytes.length, numBytes);
+        System.arraycopy(biBytes, start, bytes, numBytes - length, length);
         return bytes;        
     }
 

@@ -129,7 +129,10 @@ public class ECKey implements Serializable {
             // Derive public from private.
             this.pub = publicKeyFromPrivate(privKey);
         } else if (pubKey != null) {
-            this.pub = Utils.bigIntegerTo32Bytes(pubKey);
+            // We expect the pubkey to be in regular encoded form, just as a BigInteger. Therefore the first byte is
+            // a special marker byte.
+            // TODO: This is probably not a useful API and may be confusing.
+            this.pub = Utils.bigIntegerToBytes(pubKey, 65);
         }
     }
 
@@ -278,7 +281,7 @@ public class ECKey implements Serializable {
      * Returns a 32 byte array containing the private key.
      */
     public byte[] getPrivKeyBytes() {
-        return Utils.bigIntegerTo32Bytes(priv);
+        return Utils.bigIntegerToBytes(priv, 32);
     }
     
     public static ECKey fromPrivKeyBytes(byte[] bytes) {
