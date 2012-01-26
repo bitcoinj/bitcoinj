@@ -18,8 +18,6 @@ package com.google.bitcoin.core;
 
 import org.bouncycastle.util.encoders.Hex;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -31,7 +29,6 @@ import java.util.Arrays;
 import static org.junit.Assert.*;
 
 public class BlockTest {
-    private static Logger log = LoggerFactory.getLogger(BlockTest.class);
     static final NetworkParameters params = NetworkParameters.testNet();
 
     static final byte[] blockBytes;
@@ -56,6 +53,12 @@ public class BlockTest {
         Block block = new Block(params, blockBytes);
         block.verify();
         assertEquals("00000000a6e5eb79dcec11897af55e90cd571a4335383a3ccfbc12ec81085935", block.getHashAsString());
+    }
+    
+    @Test
+    public void testDate() throws Exception {
+        Block block = new Block(params, blockBytes);
+        assertEquals("Thu Nov 04 17:06:04 CET 2010", block.getTime().toString());
     }
 
     @Test

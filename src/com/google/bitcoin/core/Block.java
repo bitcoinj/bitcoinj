@@ -770,7 +770,7 @@ public class Block extends Message {
      * Returns the time at which the block was solved and broadcast, according to the clock of the solving node.
      */
     public Date getTime() {
-        return new Date(getTimeSeconds());
+        return new Date(getTimeSeconds()*1000);
     }
 
     void setTime(long time) {
