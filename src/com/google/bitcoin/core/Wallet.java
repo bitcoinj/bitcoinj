@@ -17,6 +17,7 @@
 package com.google.bitcoin.core;
 
 import com.google.bitcoin.core.WalletTransaction.Pool;
+import com.google.bitcoin.utils.EventListenerInvoker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -303,17 +304,21 @@ public class Wallet implements Serializable {
         invokeOnCoinsReceived(tx, balance, newBalance);
     }
 
-    private void invokeOnCoinsReceived(Transaction tx, BigInteger balance, BigInteger newBalance) {
-        for (int i = 0; i < eventListeners.size(); i++) {
-            WalletEventListener l = eventListeners.get(i);
-            synchronized (l) {
-                l.onCoinsReceived(this, tx, balance, newBalance);
+    // Boilerplate that allows event listeners to delete themselves during execution, and auto locks the listener.
+    private void invokeOnCoinsReceived(final Transaction tx, final BigInteger balance, final BigInteger newBalance) {
+        EventListenerInvoker.invoke(eventListeners, new EventListenerInvoker<WalletEventListener>() {
+            @Override public void invoke(WalletEventListener listener) {
+                listener.onCoinsReceived(Wallet.this, tx, balance, newBalance);
             }
-            if (eventListeners.get(i) != l) {
-                // Listener removed itself.
-                i--;
+        });
+    }
+
+    private void invokeOnCoinsSent(final Transaction tx, final BigInteger prevBalance, final BigInteger newBalance) {
+        EventListenerInvoker.invoke(eventListeners, new EventListenerInvoker<WalletEventListener>() {
+            @Override public void invoke(WalletEventListener listener) {
+                listener.onCoinsSent(Wallet.this, tx, prevBalance, newBalance);
             }
-        }
+        });
     }
 
     /**
@@ -353,7 +358,8 @@ public class Wallet implements Serializable {
     }
 
     private synchronized void receive(Transaction tx, StoredBlock block,
-                                      BlockChain.NewBlockType blockType, boolean reorg) throws VerificationException, ScriptException {
+                                      BlockChain.NewBlockType blockType,
+                                      boolean reorg) throws VerificationException, ScriptException {
         // Runs in a peer thread.
         BigInteger prevBalance = getBalance();
 
@@ -438,7 +444,7 @@ public class Wallet implements Serializable {
             tx.setBlockAppearance(block, bestChain);
         }
 
-        // Inform anyone interested that we have new coins but only if:
+        // Inform anyone interested that we have received or sent coins but only if:
         //  - This is not due to a re-org.
         //  - The coins appeared on the best chain.
         //  - We did in fact receive some new money.
@@ -447,8 +453,14 @@ public class Wallet implements Serializable {
         //    listeners.
         //
         // TODO: Decide whether to run the event listeners, if a tx confidence listener already modified the wallet.
-        if (!reorg && bestChain && valueDifference.compareTo(BigInteger.ZERO) > 0 && wtx == null) {
-            invokeOnCoinsReceived(tx, prevBalance, getBalance());
+        if (!reorg && bestChain && wtx == null) {
+            BigInteger newBalance = getBalance();
+            if (valueSentToMe.compareTo(BigInteger.ZERO) > 0) {
+                invokeOnCoinsReceived(tx, prevBalance, newBalance);
+            }
+            if (valueSentFromMe.compareTo(BigInteger.ZERO) > 0) {
+                invokeOnCoinsSent(tx, prevBalance, newBalance);
+            }
         }
         
         assert isConsistent();

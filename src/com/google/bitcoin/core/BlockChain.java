@@ -461,7 +461,6 @@ public class BlockChain {
         return chainHead;
     }
 
-
     /**
      * Returns the most recent unconnected block or null if there are none. This will all have to change.
      */

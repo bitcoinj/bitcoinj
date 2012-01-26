@@ -524,8 +524,8 @@ public class PeerGroup {
     }
 
     /**
-     * Download the blockchain from peers.<p>
-     * <p/>
+     * Download the blockchain from peers. Convenience that uses a {@link DownloadListener} for you.<p>
+     * 
      * This method waits until the download is complete.  "Complete" is defined as downloading
      * from at least one peer all the blocks that are in that peer's inventory.
      */

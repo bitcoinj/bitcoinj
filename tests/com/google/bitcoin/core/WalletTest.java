@@ -165,9 +165,36 @@ public class WalletTest {
 
     @Test
     public void blockChainCatchup() throws Exception {
-        Transaction tx1 = createFakeTx(params, Utils.toNanoCoins(1, 0), myAddress);
+        // Test that we correctly process transactions arriving from the chain, with callbacks for inbound and outbound.
+        final BigInteger bigints[] = new BigInteger[4];
+        final Transaction txn[] = new Transaction[2];
+        wallet.addEventListener(new AbstractWalletEventListener() {
+            @Override
+            public void onCoinsReceived(Wallet wallet, Transaction tx, BigInteger prevBalance, BigInteger newBalance) {
+                super.onCoinsReceived(wallet, tx, prevBalance, newBalance);
+                bigints[0] = prevBalance;
+                bigints[1] = newBalance;
+                txn[0] = tx;
+            }
+
+            @Override
+            public void onCoinsSent(Wallet wallet, Transaction tx, BigInteger prevBalance, BigInteger newBalance) {
+                super.onCoinsSent(wallet, tx, prevBalance, newBalance);
+                bigints[2] = prevBalance;
+                bigints[3] = newBalance;
+                txn[1] = tx;
+            }
+        });
+        
+        // Receive some money.
+        BigInteger oneCoin = Utils.toNanoCoins(1, 0);
+        Transaction tx1 = createFakeTx(params, oneCoin, myAddress);
         StoredBlock b1 = createFakeBlock(params, blockStore, tx1).storedBlock;
         wallet.receiveFromBlock(tx1, b1, BlockChain.NewBlockType.BEST_CHAIN);
+        assertEquals(null, txn[1]);  // onCoinsSent not called.
+        assertEquals(txn[0].getHash(), tx1.getHash());
+        assertEquals(BigInteger.ZERO, bigints[0]);
+        assertEquals(oneCoin, bigints[1]);
         // Send 0.10 to somebody else.
         Transaction send1 = wallet.createSend(new ECKey().toAddress(params), toNanoCoins(0, 10), myAddress);
         // Pretend it makes it into the block chain, our wallet state is cleared but we still have the keys, and we
@@ -176,6 +203,9 @@ public class WalletTest {
         StoredBlock b2 = createFakeBlock(params, blockStore, send1).storedBlock;
         wallet.receiveFromBlock(send1, b2, BlockChain.NewBlockType.BEST_CHAIN);
         assertEquals(bitcoinValueToFriendlyString(wallet.getBalance()), "0.90");
+        assertEquals(txn[1].getHash(), send1.getHash());
+        assertEquals(bitcoinValueToFriendlyString(bigints[2]), "1.00");
+        assertEquals(bitcoinValueToFriendlyString(bigints[3]), "0.90");
         // And we do it again after the catchup.
         Transaction send2 = wallet.createSend(new ECKey().toAddress(params), toNanoCoins(0, 10), myAddress);
         // What we'd really like to do is prove the official client would accept it .... no such luck unfortunately.
@@ -487,7 +517,7 @@ public class WalletTest {
         // Test migration from appearsIn to appearsInHashes
         Transaction tx1 = createFakeTx(params, Utils.toNanoCoins(1, 0), myAddress);
         StoredBlock b1 = createFakeBlock(params, blockStore, tx1).storedBlock;
-        tx1.appearsIn = new HashSet<StoredBlock>();
+        tx1 .appearsIn = new HashSet<StoredBlock>();
         tx1.appearsIn.add(b1);
         assertEquals(1, tx1.getAppearsInHashes().size());
         assertTrue(tx1.getAppearsInHashes().contains(b1.getHeader().getHash()));

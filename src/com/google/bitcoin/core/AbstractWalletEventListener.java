@@ -40,6 +40,26 @@ public abstract class AbstractWalletEventListener implements WalletEventListener
     }
 
     /**
+     * This is called on a Peer thread when a transaction is seen that sends coins <b>from</b> this wallet, either
+     * because it was broadcast across the network or because a block was received. This may at first glance seem
+     * useless, because in the common case you already know about such transactions because you created them with
+     * the Wallets createSend/sendCoins methods. However when you have a wallet containing only keys, and you wish
+     * to replay the block chain to fill it with transactions, it's useful to find out when a transaction is discovered
+     * that sends coins from the wallet.<p>
+     *
+     * It's safe to modify the wallet from inside this callback, but if you're replaying the block chain you should
+     * be careful to avoid such modifications. Otherwise your changes may be overridden by new data from the chain.
+     *
+     * @param wallet       The wallet object that this callback relates to (that sent the coins).
+     * @param tx           The transaction that sent the coins to someone else.
+     * @param prevBalance  The wallets balance before this transaction was seen.
+     * @param newBalance   The wallets balance after this transaction was seen (should be less than prevBalance).
+     */
+    public void onCoinsSent(Wallet wallet, Transaction tx, BigInteger prevBalance, BigInteger newBalance) {
+        onChange();
+    }
+
+    /**
      * This is called on a Peer thread when a block is received that triggers a block chain re-organization.<p>
      *
      * A re-organize means that the consensus (chain) of the network has diverged and now changed from what we
@@ -54,7 +74,6 @@ public abstract class AbstractWalletEventListener implements WalletEventListener
     public void onReorganize(Wallet wallet) {
         onChange();
     }
-
 
     /**
      * This is called on a Peer thread when a transaction becomes <i>dead</i>. A dead transaction is one that has

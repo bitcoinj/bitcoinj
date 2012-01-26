@@ -18,8 +18,9 @@ package com.google.bitcoin.examples.toywallet;
 
 import com.google.bitcoin.core.*;
 import com.google.bitcoin.discovery.DnsDiscovery;
-import com.google.bitcoin.store.DiskBlockStore;
+import com.google.bitcoin.store.BoundedOverheadBlockStore;
 import com.google.bitcoin.utils.BriefLogFormatter;
+import org.bouncycastle.util.encoders.Hex;
 
 import javax.swing.*;
 import java.awt.*;
@@ -28,6 +29,7 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.net.InetAddress;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
@@ -43,13 +45,14 @@ public class ToyWallet {
     private BlockChain chain;
     private JLabel networkStats;
     private File walletFile;
+    private JScrollPane txScrollPane;
 
     public static void main(String[] args) throws Exception {
         BriefLogFormatter.init();
-        new ToyWallet(true);
+        new ToyWallet(false, args);
     }
     
-    public ToyWallet(boolean testnet) throws Exception {
+    public ToyWallet(boolean testnet, String[] args) throws Exception {
         // Set up a Bitcoin connection + empty wallet. TODO: Simplify the setup for this use case.
         if (testnet) {
             params = NetworkParameters.testNet();
@@ -64,7 +67,29 @@ public class ToyWallet {
             wallet = Wallet.loadFromFile(walletFile);
         } catch (IOException e) {
             wallet = new Wallet(params);
-            wallet.keychain.add(new ECKey());
+
+            // Allow user to specify the first key on the command line as:
+            //   hex-encoded-key:creation-time-seconds
+            ECKey key;
+            if (args.length > 0) {
+                try {
+                    String[] parts = args[0].split(":");
+                    byte[] pubKey = Hex.decode(parts[0]);
+                    key = new ECKey(null, pubKey);
+                    long creationTimeSeconds = Long.parseLong(parts[1]);
+                    key.setCreationTimeSeconds(creationTimeSeconds);
+                    System.out.println(String.format("Using address from command line %s, created on %s",
+                        key.toAddress(params).toString(), new Date(creationTimeSeconds*1000).toString()));
+                } catch (Exception e2) {
+                    System.err.println("Could not understand argument. Try a hex encoded pub key with a creation " +
+                        "time in seconds appended with a colon in between: " + e2.toString());
+                    return;
+                }
+            } else {
+                key = new ECKey();  // Generate a fresh key.
+            }
+            wallet.keychain.add(key);
+            
             wallet.saveToFile(walletFile);
             freshWallet = true;
         }
@@ -77,7 +102,7 @@ public class ToyWallet {
             // the blocks there are no problems (wallets don't support replays without being emptied).
             wallet.clearTransactions(0);
         }
-        chain = new BlockChain(params, wallet, new DiskBlockStore(params, blockChainFile));
+        chain = new BlockChain(params, wallet, new BoundedOverheadBlockStore(params, blockChainFile));
 
         peerGroup = new PeerGroup(params, chain);
         if (testnet) {
@@ -87,33 +112,43 @@ public class ToyWallet {
             peerGroup.addPeerDiscovery(new DnsDiscovery(params));
         }
         peerGroup.addWallet(wallet);
+        peerGroup.setFastCatchupTimeSecs(wallet.getEarliestKeyCreationTime());
 
-        // Watch for peers coming and going, and new blocks, so we can update the UI.
+        // Watch for peers coming and going so we can update the UI.
         peerGroup.addEventListener(new AbstractPeerEventListener() {
             @Override
             public void onPeerConnected(Peer peer, int peerCount) {
                 super.onPeerConnected(peer, peerCount);
-                triggerNetworkStatsUpdate(peerCount);
+                triggerNetworkStatsUpdate(null, -1);
             }
 
             @Override
             public void onPeerDisconnected(Peer peer, int peerCount) {
                 super.onPeerDisconnected(peer, peerCount);
-                triggerNetworkStatsUpdate(peerCount);
+                triggerNetworkStatsUpdate(null, -1);
             }
 
             @Override
             public void onBlocksDownloaded(Peer peer, Block block, int blocksLeft) {
                 super.onBlocksDownloaded(peer, block, blocksLeft);
+                // Calculate chain height on this thread to avoid the UI and peer threads contending on the chain.
+                int chainHeight = chain.getBestChainHeight();
+                String blockDate = block.getTime().toString();
+                triggerNetworkStatsUpdate(blockDate, chainHeight);
                 handleNewBlock();
-                triggerNetworkStatsUpdate(peerGroup.numConnectedPeers());
             }
         });
-        
+
         wallet.addEventListener(new AbstractWalletEventListener() {
             @Override
             public void onCoinsReceived(Wallet wallet, Transaction tx, BigInteger prevBalance, BigInteger newBalance) {
                 super.onCoinsReceived(wallet, tx, prevBalance, newBalance);
+                handleNewTransaction(tx);
+            }
+
+            @Override
+            public void onCoinsSent(Wallet wallet, Transaction tx, BigInteger prevBalance, BigInteger newBalance) {
+                super.onCoinsSent(wallet, tx, prevBalance, newBalance);
                 handleNewTransaction(tx);
             }
 
@@ -169,12 +204,20 @@ public class ToyWallet {
         });
     }
 
-    private void triggerNetworkStatsUpdate(final int numPeersNow) {
+    private String blockDate;
+    private int chainHeight;
+    private void triggerNetworkStatsUpdate(String blockDate, int chainHeight) {
         // Running on a peer thread, switch to Swing thread before updating the peer count label.
+        if (blockDate != null) this.blockDate = blockDate;
+        if (chainHeight != -1) this.chainHeight = chainHeight;
+        
         SwingUtilities.invokeLater(new Runnable() {
             public void run() {
-                networkStats.setText(String.format("%d %s connected. %d blocks", numPeersNow, numPeersNow > 1 ? "peers" : "peer",
-                                                   chain.getBestChainHeight()));
+                int numPeers = peerGroup.numConnectedPeers();
+                String plural =  numPeers > 1 ? "peers" : "peer";
+                String status = String.format("%d %s connected. %d blocks: %s",
+                        numPeers, plural, ToyWallet.this.chainHeight, ToyWallet.this.blockDate);
+                networkStats.setText(status);
             }
         });
     }
@@ -188,7 +231,10 @@ public class ToyWallet {
         // The list of transactions.
         txList = new JList(txListModel);
         txList.setCellRenderer(new TxListLabel());
-        window.getContentPane().add(txList, BorderLayout.CENTER);
+        txList.setSelectionMode(ListSelectionModel.SINGLE_INTERVAL_SELECTION);
+        txList.setLayoutOrientation(JList.VERTICAL);
+        txScrollPane = new JScrollPane(txList);
+        window.getContentPane().add(txScrollPane, BorderLayout.CENTER);
         
         networkStats = new JLabel("Connecting to the Bitcoin network ...");
         window.getContentPane().add(networkStats, BorderLayout.SOUTH);
