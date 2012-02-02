@@ -58,7 +58,7 @@ public class BlockTest {
     @Test
     public void testDate() throws Exception {
         Block block = new Block(params, blockBytes);
-        assertEquals("Thu Nov 04 17:06:04 CET 2010", block.getTime().toString());
+        assertEquals("4 Nov 2010 16:06:04 GMT", block.getTime().toGMTString());
     }
 
     @Test
