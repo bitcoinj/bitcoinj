@@ -44,7 +44,7 @@ public class GetBlocksMessage extends Message {
         int startCount = (int) readVarInt();
         if (startCount > 500)
             throw new ProtocolException("Number of locators cannot be > 500, received: " + startCount);
-        locator = new ArrayList(startCount);
+        locator = new ArrayList<Sha256Hash>(startCount);
         for (int i = 0; i < startCount; i++) {
             locator.add(readHash());
         }

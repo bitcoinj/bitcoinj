@@ -243,4 +243,8 @@ public class AlertMessage extends Message {
     public void setReserved(String reserved) {
         this.reserved = reserved;
     }
+    
+    public long getVersion() {
+        return version;
+    }
 }

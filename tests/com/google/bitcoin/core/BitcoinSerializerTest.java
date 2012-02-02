@@ -77,7 +77,7 @@ public class BitcoinSerializerTest {
         // the actual data from https://en.bitcoin.it/wiki/Protocol_specification#verack
         ByteArrayInputStream bais = new ByteArrayInputStream(Hex.decode("f9beb4d976657261636b00000000000000000000"));
         VersionAck va = (VersionAck)bs.deserialize(bais);
-
+        assertNotNull(va);
     }
 
     @Test

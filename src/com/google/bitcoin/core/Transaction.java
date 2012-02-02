@@ -444,7 +444,6 @@ public class Transaction extends ChildMessage implements Serializable {
         cursor = offset;
 
         version = readUint32();
-        int marker = cursor;
 
         // First come the inputs.
         long numInputs = readVarInt();
@@ -569,7 +568,6 @@ public class Transaction extends ChildMessage implements Serializable {
      * @param hashType This should always be set to SigHash.ALL currently. Other types are unused.
      * @param wallet   A wallet is required to fetch the keys needed for signing.
      */
-    @SuppressWarnings({"SameParameterValue"})
     public void signInputs(SigHash hashType, Wallet wallet) throws ScriptException {
         assert inputs.size() > 0;
         assert outputs.size() > 0;

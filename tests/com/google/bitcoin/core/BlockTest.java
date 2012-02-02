@@ -55,6 +55,7 @@ public class BlockTest {
         assertEquals("00000000a6e5eb79dcec11897af55e90cd571a4335383a3ccfbc12ec81085935", block.getHashAsString());
     }
     
+    @SuppressWarnings("deprecation")
     @Test
     public void testDate() throws Exception {
         Block block = new Block(params, blockBytes);

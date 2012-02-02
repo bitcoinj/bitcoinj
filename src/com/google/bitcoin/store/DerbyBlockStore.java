@@ -254,7 +254,6 @@ public class DerbyBlockStore implements BlockStore {
         }
     }
 
-    @SuppressWarnings("unused")
     public StoredBlock getChainHead() throws BlockStoreException {
         return chainHeadBlock;
     }
@@ -280,12 +279,10 @@ public class DerbyBlockStore implements BlockStore {
         Statement s = conn.createStatement();
         System.out.println("settings");
         ResultSet rs = s.executeQuery("SELECT name, value FROM settings");
-        byte[] x = null;
         while (rs.next()) {
             System.out.print(rs.getString(1));
             System.out.print(" ");
             System.out.println(Utils.bytesToHexString(rs.getBytes(2)));
-            x = rs.getBytes(2);
         }
         rs.close();
         System.out.println("blocks");

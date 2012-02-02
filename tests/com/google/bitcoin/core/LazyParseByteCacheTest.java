@@ -18,7 +18,6 @@ package com.google.bitcoin.core;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.util.Arrays;
 
 import org.bouncycastle.util.encoders.Hex;
@@ -33,9 +32,6 @@ import com.google.bitcoin.store.BlockStore;
 import com.google.bitcoin.store.MemoryBlockStore;
 
 public class LazyParseByteCacheTest {
-
-	private final byte[] addrMessage = Hex.decode("f9beb4d96164647200000000000000001f000000" +
-            "ed52399b01e215104d010000000000000000000000000000000000ffff0a000001208d");
 
     private final byte[] txMessage = Hex.decode(
             "F9 BE B4 D9 74 78 00 00  00 00 00 00 00 00 00 00" +
@@ -63,13 +59,8 @@ public class LazyParseByteCacheTest {
             "00 8B 48 30 45 02 21 00  F3 58 1E 19 72 AE 8A C7" +
             "C7 36 7A 7A 25 3B C1 13  52 23 AD B9 A4 68 BB 3A");
     
-    private static final NetworkParameters testNet = NetworkParameters.testNet();
-    private BlockChain testNetChain;
-
     private Wallet wallet;
-    private BlockChain chain;
     private BlockStore blockStore;
-    private Address coinbaseTo;
     private NetworkParameters unitTestParams;
     
     private byte[] b1Bytes;
@@ -87,15 +78,11 @@ public class LazyParseByteCacheTest {
     
     @Before
     public void setUp() throws Exception {
-        testNetChain = new BlockChain(testNet, new Wallet(testNet), new MemoryBlockStore(testNet));
         unitTestParams = NetworkParameters.unitTests();
         wallet = new Wallet(unitTestParams);
         wallet.addKey(new ECKey());
 
         resetBlockStore();
-        chain = new BlockChain(unitTestParams, wallet, blockStore);
-
-        coinbaseTo = wallet.keychain.get(0).toAddress(unitTestParams);
         
         Transaction tx1 = createFakeTx(unitTestParams,
         		Utils.toNanoCoins(2, 0),
@@ -527,9 +514,6 @@ public class LazyParseByteCacheTest {
     	int ind = superstring.indexOf(substring);
     	
     	StringBuilder sb = new StringBuilder();
-    	int len = superstring.length() - substring.length();
-    	if (ind > -1)
-    		len = ind;
     	for (int i = 0; i < superstring.indexOf(substring); i++)
         	sb.append(" ");
     	
