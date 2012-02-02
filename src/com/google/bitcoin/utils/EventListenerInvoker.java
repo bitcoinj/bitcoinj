@@ -20,7 +20,7 @@ import java.util.List;
 
 /**
  * A utility class that makes it easier to run lists of event listeners that are allowed to
- * delete themselves during their execution.
+ * delete themselves during their execution. Event listeners are locked during execution. <p>
  *
  * Use like this:<p>
  *
