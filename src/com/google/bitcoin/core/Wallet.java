@@ -137,6 +137,11 @@ public class Wallet implements Serializable {
 
     private final NetworkParameters params;
 
+    // Primitive kind of versioning protocol that does not break serializability. If this is true it means the
+    // Transaction objects in this wallet have confidence objects. If false (the default for old wallets missing
+    // this field) then we need to migrate.
+    private boolean hasTransactionConfidences;
+
     transient private ArrayList<WalletEventListener> eventListeners;
 
     /**
@@ -152,6 +157,7 @@ public class Wallet implements Serializable {
         pending = new HashMap<Sha256Hash, Transaction>();
         dead = new HashMap<Sha256Hash, Transaction>();
         eventListeners = new ArrayList<WalletEventListener>();
+        hasTransactionConfidences = true;
     }
     
     public NetworkParameters getNetworkParameters() {
@@ -178,7 +184,7 @@ public class Wallet implements Serializable {
     /**
      * Uses Java serialization to save the wallet to the given file stream.
      */
-    public synchronized void saveToFileStream(FileOutputStream f) throws IOException {
+    public synchronized void saveToFileStream(OutputStream f) throws IOException {
         ObjectOutputStream oos = new ObjectOutputStream(f);
         oos.writeObject(this);
         oos.close();
@@ -208,9 +214,9 @@ public class Wallet implements Serializable {
     }
 
     /**
-     * Returns a wallet deserialized from the given file input stream.
+     * Returns a wallet deserialized from the given input stream.
      */
-    public static Wallet loadFromFileStream(FileInputStream f) throws IOException {
+    public static Wallet loadFromFileStream(InputStream f) throws IOException {
         ObjectInputStream ois = null;
         try {
             ois = new ObjectInputStream(f);
@@ -225,6 +231,44 @@ public class Wallet implements Serializable {
     private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
         in.defaultReadObject();
         eventListeners = new ArrayList<WalletEventListener>();
+        maybeMigrateToTransactionConfidences();
+    }
+
+    /** Migrate old wallets that don't have any tx confidences, filling out whatever information we can. */
+    private void maybeMigrateToTransactionConfidences() {
+        if (hasTransactionConfidences) return;
+        // We can't fill out tx confidence objects exactly, we don't have enough data to do that. But we do the
+        // best we can.
+        List<Transaction> transactions = new LinkedList<Transaction>();
+        transactions.addAll(unspent.values());
+        transactions.addAll(spent.values());
+        for (Transaction tx : transactions) {
+            TransactionConfidence confidence = tx.getConfidence();
+            confidence.setConfidenceType(TransactionConfidence.ConfidenceType.BUILDING);
+            Set<StoredBlock> appearsIn = tx.appearsIn;
+            // appearsIn is being migrated away from, in favor of just storing the hashes instead of full blocks.
+            // TODO: Clear this code out once old wallets fade away.
+            if (appearsIn != null) {
+                int minHeight = Integer.MAX_VALUE;
+                for (StoredBlock block : appearsIn) {
+                    minHeight = Math.min(minHeight, block.getHeight());
+                }
+                confidence.setAppearedAtChainHeight(minHeight);
+            }
+        }
+        for (Transaction tx : pending.values()) {
+            tx.getConfidence().setConfidenceType(TransactionConfidence.ConfidenceType.NOT_SEEN_IN_CHAIN);
+        }
+        for (Transaction tx : inactive.values()) {
+            tx.getConfidence().setConfidenceType(TransactionConfidence.ConfidenceType.NOT_IN_BEST_CHAIN);
+        }
+        for (Transaction tx : dead.values()) {
+            tx.getConfidence().setConfidenceType(TransactionConfidence.ConfidenceType.OVERRIDDEN_BY_DOUBLE_SPEND);
+            // We'd ideally like to set overridingTransaction here, but old wallets don't have that data.
+            // Dead transactions in the wallet should be rare, so API users will just have to handle this
+            // edge case until old wallets have gone away.
+        }
+        hasTransactionConfidences = true;
     }
 
     /**

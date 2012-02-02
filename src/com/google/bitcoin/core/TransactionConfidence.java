@@ -320,6 +320,9 @@ public class TransactionConfidence implements Serializable {
 
     /**
      * If this transaction has been overridden by a double spend (is dead), this call returns the overriding transaction.
+     * Note that this call <b>can return null</b> if you have migrated an old wallet, as pre-Jan 2012 wallets did not
+     * store this information.
+     *
      * @return the transaction that double spent this one
      * @throws IllegalStateException if confidence type is not OVERRIDDEN_BY_DOUBLE_SPEND.
      */

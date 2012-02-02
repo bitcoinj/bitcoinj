@@ -22,7 +22,7 @@ import org.slf4j.LoggerFactory;
 import java.io.*;
 import java.math.BigInteger;
 import java.util.*;
- 
+
 import static com.google.bitcoin.core.Utils.*;
 
 /**
@@ -56,7 +56,7 @@ public class Transaction extends ChildMessage implements Serializable {
 
     private long lockTime;
 
-    // This is being migrated to appearsInHashes
+    // This is being migrated to appearsInHashes. It's set to null after migration.
     Set<StoredBlock> appearsIn;
     
     // Stored only in Java serialization. This is either the time the transaction was broadcast as measured from the
