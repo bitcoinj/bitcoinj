@@ -105,6 +105,7 @@ public class ToyWallet {
         chain = new BlockChain(params, wallet, new BoundedOverheadBlockStore(params, blockChainFile));
 
         peerGroup = new PeerGroup(params, chain);
+        peerGroup.setUserAgent("ToyWallet", "1.0");
         if (testnet) {
             peerGroup.addAddress(new PeerAddress(InetAddress.getByName("plan99.net"), 18333));
             peerGroup.addAddress(new PeerAddress(InetAddress.getByName("localhost"), 18333));

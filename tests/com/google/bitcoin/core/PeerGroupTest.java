@@ -292,8 +292,7 @@ public class PeerGroupTest extends TestWithNetworkConnections {
         assertTrue(n3.outbound() instanceof InventoryMessage);
         peerGroup.stop();
     }
-
-
+    
     private void disconnectAndWait(MockNetworkConnection conn) throws IOException, InterruptedException {
         conn.disconnect();
         disconnectedPeers.take();

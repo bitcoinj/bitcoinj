@@ -21,6 +21,15 @@ import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
+/**
+ * A VersionMessage holds information exchanged during connection setup with another peer. Most of the fields are not
+ * particularly interesting. The subVer field, since BIP 14, acts as a User-Agent string would. You can and should 
+ * append to or change the subVer for your own software so other implementations can identify it, and you can look at
+ * the subVer field received from other nodes to see what they are running. If blank, it means the Satoshi client.<p>
+ *     
+ * After creating yourself a VersionMessage, you can pass it to {@link PeerGroup#setVersionMessage(VersionMessage)}
+ * to ensure it will be used for each new connection.
+ */
 public class VersionMessage extends Message {
     private static final long serialVersionUID = 7313594258967483180L;
 
@@ -94,7 +103,7 @@ public class VersionMessage extends Message {
 
     @Override
     protected void parseLite() throws ProtocolException {
-        //NOP.  VersionMessage is never lazy parsed.
+        // NOP.  VersionMessage is never lazy parsed.
     }
 
     @Override
@@ -185,7 +194,6 @@ public class VersionMessage extends Message {
      */
     @Override
     void setChecksum(byte[] checksum) {
-
     }
 
     @Override
@@ -207,4 +215,50 @@ public class VersionMessage extends Message {
         return sb.toString();
     }
 
+    public VersionMessage duplicate() {
+        VersionMessage v = new VersionMessage(params, (int) bestHeight);
+        v.clientVersion = clientVersion;
+        v.localServices = localServices;
+        v.time = time;
+        v.myAddr = myAddr;
+        v.theirAddr = theirAddr;
+        v.subVer = subVer;
+        return v;
+    }
+
+    /**
+     * Appends the given user-agent information to the subVer field. The subVer is composed of a series of
+     * name:version pairs separated by slashes in the form of a path. For example a typical subVer field for BitCoinJ
+     * users might look like "/BitCoinJ:0.4-SNAPSHOT/MultiBit:1.2/" where libraries come further to the left.<p>
+     *
+     * There can be as many components as you feel a need for, and the version string can be anything, but it is
+     * recommended to use A.B.C where A = major, B = minor and C = revision for software releases, and dates for
+     * auto-generated source repository snapshots. A valid subVer begins and ends with a slash, therefore name
+     * and version are not allowed to contain such characters. <p>
+     *
+     * Anything put in the "comments" field will appear in brackets and may be used for platform info, or anything
+     * else. For example, calling <tt>appendToSubVer("MultiBit", "1.0", "Windows")</tt> will result in a subVer being
+     * set of "/BitCoinJ:1.0/MultiBit:1.0(Windows)/. Therefore the / ( and ) characters are reserved in all these
+     * components. If you don't want to add a comment (recommended), pass null.<p>
+     *
+     * See <a href="https://en.bitcoin.it/wiki/BIP_0014">BIP 14</a> for more information.
+     *
+     * @param comments Optional (can be null) platform or other node specific information.
+     * @throws IllegalArgumentException if name, version or comments contains invalid characters.
+     */
+    public void appendToSubVer(String name, String version, String comments) {
+        checkSubVerComponent(name);
+        checkSubVerComponent(version);
+        if (comments != null) {
+            checkSubVerComponent(comments);
+            subVer = subVer.concat(String.format("%s:%s(%s)/", name, version, comments));
+        } else {
+            subVer = subVer.concat(String.format("%s:%s/", name, version));
+        }
+    }
+
+    private void checkSubVerComponent(String component) {
+        if (component.contains("/") || component.contains("(") || component.contains(")"))
+            throw new IllegalArgumentException("name contains invalid characters");
+    }
 }

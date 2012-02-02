@@ -31,16 +31,16 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * Maintain a number of connections to peers.
- * <p/>
- * <p>PeerGroup tries to maintain a constant number of connections to a set of distinct peers.
+ * Maintain a number of connections to peers.<p>
+ * 
+ * PeerGroup tries to maintain a constant number of connections to a set of distinct peers.
  * Each peer runs a network listener in its own thread.  When a connection is lost, a new peer
- * will be tried after a delay as long as the number of connections less than the maximum.
- * <p/>
- * <p>Connections are made to addresses from a provided list.  When that list is exhausted,
- * we start again from the head of the list.
- * <p/>
- * <p>The PeerGroup can broadcast a transaction to the currently connected set of peers.  It can
+ * will be tried after a delay as long as the number of connections less than the maximum.<p>
+ * 
+ * Connections are made to addresses from a provided list.  When that list is exhausted,
+ * we start again from the head of the list.<p>
+ * 
+ * The PeerGroup can broadcast a transaction to the currently connected set of peers.  It can
  * also handle download of the blockchain from peers, restarting the process when peers die.
  *
  * @author miron@google.com (Miron Cuperman a.k.a devrandom)
@@ -71,6 +71,8 @@ public class PeerGroup {
     private List<PeerEventListener> peerEventListeners;
     // Peer discovery sources, will be polled occasionally if there aren't enough inactives.
     private Set<PeerDiscovery> peerDiscoverers;
+    // The version message to use for new connections.
+    private VersionMessage versionMessage;
 
     private NetworkParameters params;
     private BlockChain chain;
@@ -100,6 +102,10 @@ public class PeerGroup {
         this.connectionDelayMillis = connectionDelayMillis;
         this.fastCatchupTimeSecs = params.genesisBlock.getTimeSeconds();
         this.wallets = new ArrayList<Wallet>(1);
+
+        // Set up a default template version message that doesn't tell the other side what kind of BitCoinJ user
+        // this is.
+        this.versionMessage = new VersionMessage(params, chain.getBestChainHeight());
 
         inactives = new LinkedBlockingQueue<PeerAddress>();
         // TODO: Remove usage of synchronized sets here in favor of simple coarse-grained locking.
@@ -154,6 +160,55 @@ public class PeerGroup {
             p.trackTransaction(tx);
         }
     }
+
+    /**
+     * Sets the {@link VersionMessage} that will be announced on newly created connections. A version message is
+     * primarily interesting because it lets you customize the "subVer" field which is used a bit like the User-Agent
+     * field from HTTP. It means your client tells the other side what it is, see
+     * <a href="https://en.bitcoin.it/wiki/BIP_0014">BIP 14</a>.
+     *
+     * The VersionMessage you provide is copied and the best chain height/time filled in for each new connection,
+     * therefore you don't have to worry about setting that. The provided object is really more of a template.
+     */
+    public synchronized void setVersionMessage(VersionMessage ver) {
+        versionMessage = ver;
+    }
+
+    /**
+     * Returns the version message provided by setVersionMessage or a default if none was given.
+     */
+    public synchronized VersionMessage getVersionMessage() {
+        return versionMessage;
+    }
+
+    /**
+     * Sets information that identifies this software to remote nodes. This is a convenience wrapper for creating 
+     * a new {@link VersionMessage}, calling {@link VersionMessage#appendToSubVer(String, String, String)} on it,
+     * and then calling {@link PeerGroup#setVersionMessage(VersionMessage)} on the result of that. See the docs for
+     * {@link VersionMessage#appendToSubVer(String, String, String)} for information on what the fields should contain.
+     *
+     * @param name
+     * @param version
+     */
+    public void setUserAgent(String name, String version, String comments) {
+        VersionMessage ver = new VersionMessage(params, 0);
+        ver.appendToSubVer(name, version, comments);
+        setVersionMessage(ver);
+    }
+
+    /**
+     * Sets information that identifies this software to remote nodes. This is a convenience wrapper for creating
+     * a new {@link VersionMessage}, calling {@link VersionMessage#appendToSubVer(String, String, String)} on it,
+     * and then calling {@link PeerGroup#setVersionMessage(VersionMessage)} on the result of that. See the docs for
+     * {@link VersionMessage#appendToSubVer(String, String, String)} for information on what the fields should contain.
+     *
+     * @param name
+     * @param version
+     */
+    public void setUserAgent(String name, String version) {
+        setUserAgent(name, version, null);
+    }
+
 
     /**
      * <p>Adds a listener that will be notified on a library controlled thread when:</p>
@@ -407,7 +462,10 @@ public class PeerGroup {
             final PeerAddress address = inactives.take();
             while (true) {
                 try {
-                    Peer peer = new Peer(params, address, chain.getChainHead().getHeight(), chain);
+                    VersionMessage ver = versionMessage.duplicate();
+                    ver.bestHeight = chain.getBestChainHeight();
+                    ver.time = Utils.now().getTime() / 1000;
+                    Peer peer = new Peer(params, address, chain, ver);
                     executePeer(address, peer, true, ExecuteBlockMode.RETURN_IMMEDIATELY);
                     break;
                 } catch (RejectedExecutionException e) {

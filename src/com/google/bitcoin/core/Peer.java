@@ -30,6 +30,7 @@ import java.util.concurrent.*;
  */
 public class Peer {
     private static final Logger log = LoggerFactory.getLogger(Peer.class);
+    public static final int CONNECT_TIMEOUT_MSEC = 60000;
 
     private NetworkConnection conn;
     private final NetworkParameters params;
@@ -49,6 +50,9 @@ public class Peer {
     // primary peer. This is to avoid redundant work and concurrency problems with downloading the same chain
     // in parallel.
     private boolean downloadData = true;
+    // The version data to announce to the other side of the connections we make: useful for setting our "user agent"
+    // equivalent and other things.
+    private VersionMessage versionMessage;
 
     /**
      * Size of the pending transactions pool. Override this to reduce memory usage on constrained platforms. The pool
@@ -69,12 +73,6 @@ public class Peer {
         }
     };
 
-    /**
-     * If true, we do some things that may only make sense on constrained devices like Android phones. Currently this
-     * only controls message deduplication.
-     */
-    public static boolean MOBILE_OPTIMIZED = false;
-
     // A time before which we only download block headers, after that point we download block bodies.
     private long fastCatchupTimeSecs;
     // Whether we are currently downloading headers only or block bodies. Defaults to true, if the fast catchup time
@@ -89,13 +87,23 @@ public class Peer {
      * @param bestHeight our current best chain height, to facilitate downloading
      */
     public Peer(NetworkParameters params, PeerAddress address, int bestHeight, BlockChain blockChain) {
+        this(params, address, blockChain, new VersionMessage(params, bestHeight));
+    }
+
+    /**
+     * Construct a peer that reads/writes from the given block chain. Note that communication won't occur until
+     * you call connect(), which will set up a new NetworkConnection.
+     *
+     * @param ver The version data to announce to the other side.
+     */
+    public Peer(NetworkParameters params, PeerAddress address, BlockChain blockChain, VersionMessage ver) {
         this.params = params;
         this.address = address;
-        this.bestHeight = bestHeight;
         this.blockChain = blockChain;
         this.pendingGetBlockFutures = new ArrayList<GetDataFuture<Block>>();
         this.eventListeners = new ArrayList<PeerEventListener>();
         this.fastCatchupTimeSecs = params.genesisBlock.getTimeSeconds();
+        this.versionMessage = ver;
     }
 
     /**
@@ -140,7 +148,7 @@ public class Peer {
      */
     public synchronized void connect() throws PeerException {
         try {
-            conn = new TCPNetworkConnection(address, params, bestHeight, 60000, MOBILE_OPTIMIZED);
+            conn = new TCPNetworkConnection(address, params, CONNECT_TIMEOUT_MSEC, false, versionMessage);
         } catch (IOException ex) {
             throw new PeerException(ex);
         } catch (ProtocolException ex) {

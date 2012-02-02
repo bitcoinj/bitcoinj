@@ -59,14 +59,14 @@ public class TCPNetworkConnection implements NetworkConnection {
      * @param peerAddress address to connect to. IPv6 is not currently supported by BitCoin.  If
      * port is not positive the default port from params is used.
      * @param params Defines which network to connect to and details of the protocol.
-     * @param bestHeight How many blocks are in our best chain
      * @param connectTimeoutMsec Timeout in milliseconds when initially connecting to peer
      * @param dedupe Whether to avoid parsing duplicate messages from the network (ie from other peers).
+     * @param ver The VersionMessage to announce to the other side of the connection.
      * @throws IOException if there is a network related failure.
      * @throws ProtocolException if the version negotiation failed.
      */
     public TCPNetworkConnection(PeerAddress peerAddress, NetworkParameters params,
-                                int bestHeight, int connectTimeoutMsec, boolean dedupe)
+                                int connectTimeoutMsec, boolean dedupe, VersionMessage ver)
             throws IOException, ProtocolException {
         this.params = params;
         this.remoteIp = peerAddress.getAddr();
@@ -76,7 +76,7 @@ public class TCPNetworkConnection implements NetworkConnection {
         InetSocketAddress address = new InetSocketAddress(remoteIp, port);
         socket = new Socket();
         socket.connect(address, connectTimeoutMsec);
-        
+
         out = socket.getOutputStream();
         in = socket.getInputStream();
 
@@ -87,7 +87,8 @@ public class TCPNetworkConnection implements NetworkConnection {
 
         // Announce ourselves. This has to come first to connect to clients beyond v0.30.20.2 which wait to hear
         // from us until they send their version message back.
-        writeMessage(new VersionMessage(params, bestHeight));
+        log.info("Announcing ourselves as: {}", ver.subVer);
+        writeMessage(ver);
         // When connecting, the remote peer sends us a version message with various bits of
         // useful data in it. We need to know the peer protocol version before we can talk to it.
         Message m = readMessage();
@@ -104,9 +105,9 @@ public class TCPNetworkConnection implements NetworkConnection {
         // Switch to the new protocol version.
         int peerVersion = versionMessage.clientVersion;
         log.info("Connected to peer: version={}, subVer='{}', services=0x{}, time={}, blocks={}", new Object[] {
-        		peerVersion, 
-        		versionMessage.subVer,
-                versionMessage.localServices, 
+                peerVersion,
+                versionMessage.subVer,
+                versionMessage.localServices,
                 new Date(versionMessage.time * 1000),
                 versionMessage.bestHeight
         });
@@ -124,6 +125,25 @@ public class TCPNetworkConnection implements NetworkConnection {
         // Newer clients use checksumming.
         serializer.setUseChecksumming(peerVersion >= 209);
         // Handshake is done!
+    }
+
+    /**
+     * Connect to the given IP address using the port specified as part of the network parameters. Once construction
+     * is complete a functioning network channel is set up and running.
+     *
+     * @param peerAddress address to connect to. IPv6 is not currently supported by BitCoin.  If
+     * port is not positive the default port from params is used.
+     * @param params Defines which network to connect to and details of the protocol.
+     * @param connectTimeoutMsec Timeout in milliseconds when initially connecting to peer
+     * @param dedupe Whether to avoid parsing duplicate messages from the network (ie from other peers).
+     * @param bestHeight The height of the best chain we know about, sent to the other side.
+     * @throws IOException if there is a network related failure.
+     * @throws ProtocolException if the version negotiation failed.
+     */
+    public TCPNetworkConnection(PeerAddress peerAddress, NetworkParameters params,
+                                int bestHeight, int connectTimeoutMsec, boolean dedupe)
+            throws IOException, ProtocolException {
+        this(peerAddress, params, connectTimeoutMsec, dedupe, new VersionMessage(params, bestHeight));
     }
 
     public TCPNetworkConnection(InetAddress inetAddress, NetworkParameters params, int bestHeight, int connectTimeout)

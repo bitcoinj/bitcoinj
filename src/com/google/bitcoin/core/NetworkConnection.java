@@ -61,7 +61,9 @@ public interface NetworkConnection {
      */
     void writeMessage(Message message) throws IOException;
 
-    /** Returns the version message received from the other end of the connection during the handshake. */
+    /**
+     * Returns the version message received from the other end of the connection during the handshake.
+     */
     VersionMessage getVersionMessage();
 
     /**

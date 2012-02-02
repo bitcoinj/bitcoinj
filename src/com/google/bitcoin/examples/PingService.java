@@ -98,7 +98,8 @@ public class PingService {
         chain = new BlockChain(params, wallet, blockStore);
 
         peerGroup = new PeerGroup(params, chain);
-
+        // Set some version info.
+        peerGroup.setUserAgent("PingService", "1.0");
         // Download headers only until a day ago.
         peerGroup.setFastCatchupTimeSecs((new Date().getTime() / 1000) - (60 * 60 * 24));
         if (peerHost != null) {
