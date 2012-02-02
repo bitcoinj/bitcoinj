@@ -102,25 +102,6 @@ public class WalletTest {
     }
 
     @Test
-    public void listeners() throws Exception {
-        final Transaction fakeTx = createFakeTx(params, Utils.toNanoCoins(1, 0), myAddress);
-        final boolean[] didRun = new boolean[1];
-        WalletEventListener listener = new AbstractWalletEventListener() {
-            @Override
-            public void onCoinsReceived(Wallet w, Transaction tx, BigInteger prevBalance, BigInteger newBalance) {
-                assertTrue(prevBalance.equals(BigInteger.ZERO));
-                assertTrue(newBalance.equals(Utils.toNanoCoins(1, 0)));
-                assertEquals(tx, fakeTx);  // Same object.
-                assertEquals(w, wallet);   // Same object.
-                didRun[0] = true;
-            }
-        };
-        wallet.addEventListener(listener);
-        wallet.receiveFromBlock(fakeTx, null, BlockChain.NewBlockType.BEST_CHAIN);
-        assertTrue(didRun[0]);
-    }
-
-    @Test
     public void balance() throws Exception {
         // Receive 5 coins then half a coin.
         BigInteger v1 = toNanoCoins(5, 0);
@@ -394,19 +375,34 @@ public class WalletTest {
     @Test
     public void pending2() throws Exception {
         // Check that if we receive a pending tx we did not send, it updates our spent flags correctly.
-
+        final Transaction txn[] = new Transaction[1];
+        final BigInteger bigints[] = new BigInteger[2];
+        wallet.addEventListener(new AbstractWalletEventListener() {
+            @Override
+            public void onCoinsSent(Wallet wallet, Transaction tx, BigInteger prevBalance, BigInteger newBalance) {
+                txn[0] = tx;
+                bigints[0] = prevBalance;
+                bigints[1] = newBalance;
+            }
+        });
         // Receive some coins.
         BigInteger nanos = Utils.toNanoCoins(1, 0);
         Transaction t1 = createFakeTx(params, nanos, myAddress);
         StoredBlock b1 = createFakeBlock(params, blockStore, t1).storedBlock;
         wallet.receiveFromBlock(t1, b1, BlockChain.NewBlockType.BEST_CHAIN);
         assertEquals(nanos, wallet.getBalance());
-        // Create a spend with them, but don't commit it (ie it's from somewhere else but using our keys).
-        Transaction t2 = wallet.createSend(new ECKey().toAddress(params), nanos);
+        // Create a spend with them, but don't commit it (ie it's from somewhere else but using our keys). This TX
+        // will have change as we don't spend our entire balance.
+        BigInteger halfNanos = Utils.toNanoCoins(0, 50);
+        Transaction t2 = wallet.createSend(new ECKey().toAddress(params), halfNanos);
         // Now receive it as pending.
         wallet.receivePending(t2);
-        // Our balance is now zero.
-        assertEquals(BigInteger.ZERO, wallet.getBalance());
+        // We received an onCoinsSent() callback.
+        assertEquals(t2, txn[0]);
+        assertEquals(nanos, bigints[0]);
+        assertEquals(halfNanos, bigints[1]);
+        // Our balance is now 0.50 BTC
+        assertEquals(halfNanos, wallet.getBalance(Wallet.BalanceType.ESTIMATED));
     }
 
     @Test
@@ -517,7 +513,7 @@ public class WalletTest {
         // Test migration from appearsIn to appearsInHashes
         Transaction tx1 = createFakeTx(params, Utils.toNanoCoins(1, 0), myAddress);
         StoredBlock b1 = createFakeBlock(params, blockStore, tx1).storedBlock;
-        tx1 .appearsIn = new HashSet<StoredBlock>();
+        tx1.appearsIn = new HashSet<StoredBlock>();
         tx1.appearsIn.add(b1);
         assertEquals(1, tx1.getAppearsInHashes().size());
         assertTrue(tx1.getAppearsInHashes().contains(b1.getHeader().getHash()));

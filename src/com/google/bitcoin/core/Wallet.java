@@ -281,9 +281,13 @@ public class Wallet implements Serializable {
             return;
         }
 
-        BigInteger value = tx.getValueSentToMe(this);
-        log.info("Received a pending transaction {} that sends us {} BTC", tx.getHashAsString(),
-                 Utils.bitcoinValueToFriendlyString(value));
+        BigInteger valueSentToMe = tx.getValueSentToMe(this);
+        BigInteger valueSentFromMe = tx.getValueSentFromMe(this);
+        if (log.isInfoEnabled()) {
+            log.info(String.format("Received a pending transaction %s that spends %s BTC and sends us %s BTC", tx.getHashAsString(),
+                 Utils.bitcoinValueToFriendlyString(valueSentFromMe),
+                 Utils.bitcoinValueToFriendlyString(valueSentToMe)));
+        }
 
         // Mark the tx as having been seen but is not yet in the chain. This will normally have been done already by
         // the Peer before we got to this point, but in some cases (unit tests, other sources of transactions) it may
@@ -293,15 +297,19 @@ public class Wallet implements Serializable {
                currentConfidence == TransactionConfidence.ConfidenceType.NOT_SEEN_IN_CHAIN : currentConfidence;
         tx.getConfidence().setConfidenceType(TransactionConfidence.ConfidenceType.NOT_SEEN_IN_CHAIN);
 
+        BigInteger balance = getBalance();
+
         // If this tx spends any of our unspent outputs, mark them as spent now, then add to the pending pool. This
         // ensures that if some other client that has our keys broadcasts a spend we stay in sync. Also updates the
         // timestamp on the transaction.
         commitTx(tx);
 
         // Event listeners may re-enter so we cannot make assumptions about wallet state after this loop completes.
-        BigInteger balance = getBalance();
-        BigInteger newBalance = balance.add(value);
-        invokeOnCoinsReceived(tx, balance, newBalance);
+        BigInteger newBalance = balance.add(valueSentToMe).subtract(valueSentFromMe);
+        if (valueSentToMe.compareTo(BigInteger.ZERO) > 0)
+            invokeOnCoinsReceived(tx, balance, newBalance);
+        if (valueSentFromMe.compareTo(BigInteger.ZERO) > 0)
+            invokeOnCoinsSent(tx, balance, newBalance);
     }
 
     // Boilerplate that allows event listeners to delete themselves during execution, and auto locks the listener.

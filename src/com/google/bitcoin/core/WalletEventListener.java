@@ -39,7 +39,7 @@ public interface WalletEventListener {
      * @param wallet      The wallet object that received the coins
      * @param tx          The transaction which sent us the coins.
      * @param prevBalance Balance before the coins were received.
-     * @param newBalance  Current balance of the wallet.
+     * @param newBalance  Current balance of the wallet. This is the 'estimated' balance.
      */
     void onCoinsReceived(Wallet wallet, Transaction tx, BigInteger prevBalance, BigInteger newBalance);
 
@@ -57,7 +57,7 @@ public interface WalletEventListener {
      * @param wallet       The wallet object that this callback relates to (that sent the coins).
      * @param tx           The transaction that sent the coins to someone else.
      * @param prevBalance  The wallets balance before this transaction was seen.
-     * @param newBalance   The wallets balance after this transaction was seen (should be less than prevBalance).
+     * @param newBalance   The wallets balance after this transaction was seen. This is the 'estimated' balance.
      */
     void onCoinsSent(Wallet wallet, Transaction tx, BigInteger prevBalance, BigInteger newBalance);
 
