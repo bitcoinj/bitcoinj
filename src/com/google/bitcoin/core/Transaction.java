@@ -628,7 +628,17 @@ public class Transaction extends ChildMessage implements Serializable {
         // Every input is now complete.
     }
 
-    private byte[] hashTransactionForSignature(SigHash type, boolean anyoneCanPay) {
+    /**
+     * Calculates a signature hash, that is, a hash of a simplified form of the transaction. How exactly the transaction
+     * is simplified is specified by the type and anyoneCanPay parameters.<p>
+     *
+     * You don't normally ever need to call this yourself. It will become more useful in future as the contracts
+     * features of Bitcoin are developed.
+     *
+     * @param type Should be SigHash.ALL
+     * @param anyoneCanPay should be false.
+     */
+    public byte[] hashTransactionForSignature(SigHash type, boolean anyoneCanPay) {
         try {
             ByteArrayOutputStream bos = new UnsafeByteArrayOutputStream(length == UNKNOWN_LENGTH ? 256 : length + 4);
             bitcoinSerialize(bos);
