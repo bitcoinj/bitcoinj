@@ -98,10 +98,12 @@ public class TransactionConfidence implements Serializable {
         BUILDING(1),
 
         /**
-         * If NOT_SEEN_IN_CHAIN, then the transaction is pending and should be included shortly. You can estimate how
-         * likely the transaction is to be included by connecting to a bunch of nodes then measuring how many announce
-         * it, using {@link com.google.bitcoin.core.TransactionConfidence#numBroadcastPeers()}. Or if you saw it from
-         * a trusted peer, you can assume it's valid and will get mined sooner or later as well.
+         * If NOT_SEEN_IN_CHAIN, then the transaction is pending and should be included shortly, as long as it is being
+         * announced and is considered valid by the network. A pending transaction will be announced if the containing
+         * wallet has been attached to a live {@link PeerGroup} using {@link PeerGroup#addWallet(Wallet)}.
+         * You can estimate how likely the transaction is to be included by connecting to a bunch of nodes then measuring
+         * how many announce it, using {@link com.google.bitcoin.core.TransactionConfidence#numBroadcastPeers()}.
+         * Or if you saw it from a trusted peer, you can assume it's valid and will get mined sooner or later as well.
          */
         NOT_SEEN_IN_CHAIN(2),
 

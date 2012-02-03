@@ -305,8 +305,8 @@ public class Wallet implements Serializable {
      * @throws VerificationException
      * @throws ScriptException
      */
-    synchronized void receivePending(Transaction tx) throws VerificationException, ScriptException {
-        // Runs in a peer thread.
+    public synchronized void receivePending(Transaction tx) throws VerificationException, ScriptException {
+        // Can run in a peer thread.
 
         // Ignore it if we already know about this transaction. Receiving a pending transaction never moves it
         // between pools.
