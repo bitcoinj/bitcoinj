@@ -327,9 +327,9 @@ public class Wallet implements Serializable {
         BigInteger valueSentToMe = tx.getValueSentToMe(this);
         BigInteger valueSentFromMe = tx.getValueSentFromMe(this);
         if (log.isInfoEnabled()) {
-            log.info(String.format("Received a pending transaction %s that spends %s BTC and sends us %s BTC", tx.getHashAsString(),
-                 Utils.bitcoinValueToFriendlyString(valueSentFromMe),
-                 Utils.bitcoinValueToFriendlyString(valueSentToMe)));
+            log.info(String.format("Received a pending transaction %s that spends %s BTC from our own wallet," +
+                    " and sends us %s BTC", tx.getHashAsString(), Utils.bitcoinValueToFriendlyString(valueSentFromMe),
+                    Utils.bitcoinValueToFriendlyString(valueSentToMe)));
         }
 
         // Mark the tx as having been seen but is not yet in the chain. This will normally have been done already by
@@ -924,7 +924,7 @@ public class Wallet implements Serializable {
      * wallet. The transaction will be announced to any connected nodes asynchronously. If you would like to know when
      * the transaction was successfully sent to at least one node, use 
      * {@link Wallet#sendCoinsOffline(Address, java.math.BigInteger)} and then {@link PeerGroup#broadcastTransaction(Transaction)}
-     * on the result to obtain a {@link Future<Transaction>}.
+     * on the result to obtain a {@link java.util.concurrent.Future<Transaction>}.
      *
      * @param peerGroup a PeerGroup to use for broadcast or null.
      * @param to        Which address to send coins to.
