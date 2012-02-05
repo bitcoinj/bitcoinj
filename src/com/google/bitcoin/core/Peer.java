@@ -296,7 +296,7 @@ public class Peer {
     }
 
     private void processBlock(Block m) throws IOException {
-        log.info("Received broadcast block {}", m.getHashAsString());
+        log.trace("Received broadcast block {}", m.getHashAsString());
         try {
             // Was this block requested by getBlock()?
             synchronized (pendingGetBlockFutures) {
@@ -352,7 +352,7 @@ public class Peer {
         if (!downloadData)
             return;
 
-        // The peer told us about some blocks or transactions they have. For now we only care about blocks.
+        // The peer told us about some blocks or transactions they have.
         Block topBlock = blockChain.getUnconnectedBlock();
         Sha256Hash topHash = (topBlock != null ? topBlock.getHash() : null);
         if (isNewBlockTickle(topHash, items)) {

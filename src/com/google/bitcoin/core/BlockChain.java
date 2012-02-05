@@ -52,7 +52,7 @@ public class BlockChain {
     private static final Logger log = LoggerFactory.getLogger(BlockChain.class);
 
     /** Keeps a map of block hashes to StoredBlocks. */
-    protected BlockStore blockStore;
+    protected final BlockStore blockStore;
 
     /**
      * Tracks the top of the best known chain.<p>
@@ -63,6 +63,10 @@ public class BlockChain {
      * potentially invalidating transactions in our wallet.
      */
     protected StoredBlock chainHead;
+    // chainHead is accessed under this lock rather than the BlockChain lock. This is to try and keep accessors
+    // responsive whilst the chain is downloading, without free-threading the entire chain add process (which could
+    // get very confusing in the case of multiple blocks being added simultaneously).
+    protected final Object chainHeadLock = new Object();
 
     protected final NetworkParameters params;
     protected final List<Wallet> wallets;
@@ -134,9 +138,15 @@ public class BlockChain {
 
     private synchronized boolean add(Block block, boolean tryConnecting)
             throws BlockStoreException, VerificationException, ScriptException {
+        // Note on locking: this method runs with the block chain locked. All mutations to the chain are serialized.
+        // This has the undesirable consequence that during block chain download, it's slow to read the current chain
+        // head and other chain info because the accessors are constantly waiting for the chain to become free. To
+        // solve this things viewable via accessors must use fine-grained locking as well as being mutated under the
+        // chain lock.
         if (System.currentTimeMillis() - statsLastTime > 1000) {
             // More than a second passed since last stats logging.
-            log.info("{} blocks per second", statsBlocksAdded);
+            if (statsBlocksAdded > 1)
+                log.info("{} blocks per second", statsBlocksAdded);
             statsLastTime = System.currentTimeMillis();
             statsBlocksAdded = 0;
         }
@@ -331,7 +341,9 @@ public class BlockChain {
 
     private void setChainHead(StoredBlock chainHead) throws BlockStoreException {
         blockStore.setChainHead(chainHead);
-        this.chainHead = chainHead;
+        synchronized (chainHeadLock) {
+            this.chainHead = chainHead;
+        }
     }
 
     /**
@@ -457,14 +469,17 @@ public class BlockChain {
      * Returns the block at the head of the current best chain. This is the block which represents the greatest
      * amount of cumulative work done.
      */
-    public synchronized StoredBlock getChainHead() {
-        return chainHead;
+    public StoredBlock getChainHead() {
+        synchronized (chainHeadLock) {
+            return chainHead;
+        }
     }
 
     /**
-     * Returns the most recent unconnected block or null if there are none. This will all have to change.
+     * Returns the most recent unconnected block or null if there are none. This will all have to change. It's used
+     * only in processing of inv messages.
      */
-    public synchronized Block getUnconnectedBlock() {
+    synchronized Block getUnconnectedBlock() {
         if (unconnectedBlocks.size() == 0)
             return null;
         return unconnectedBlocks.get(unconnectedBlocks.size() - 1);

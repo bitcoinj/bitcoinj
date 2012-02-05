@@ -120,22 +120,19 @@ public class ToyWallet {
             @Override
             public void onPeerConnected(Peer peer, int peerCount) {
                 super.onPeerConnected(peer, peerCount);
-                triggerNetworkStatsUpdate(null, -1);
+                triggerNetworkStatsUpdate();
             }
 
             @Override
             public void onPeerDisconnected(Peer peer, int peerCount) {
                 super.onPeerDisconnected(peer, peerCount);
-                triggerNetworkStatsUpdate(null, -1);
+                triggerNetworkStatsUpdate();
             }
 
             @Override
             public void onBlocksDownloaded(Peer peer, Block block, int blocksLeft) {
                 super.onBlocksDownloaded(peer, block, blocksLeft);
-                // Calculate chain height on this thread to avoid the UI and peer threads contending on the chain.
-                int chainHeight = chain.getBestChainHeight();
-                String blockDate = block.getTime().toString();
-                triggerNetworkStatsUpdate(blockDate, chainHeight);
+                triggerNetworkStatsUpdate();
                 handleNewBlock();
             }
         });
@@ -205,19 +202,15 @@ public class ToyWallet {
         });
     }
 
-    private String blockDate;
-    private int chainHeight;
-    private void triggerNetworkStatsUpdate(String blockDate, int chainHeight) {
-        // Running on a peer thread, switch to Swing thread before updating the peer count label.
-        if (blockDate != null) this.blockDate = blockDate;
-        if (chainHeight != -1) this.chainHeight = chainHeight;
-        
+    private void triggerNetworkStatsUpdate() {
         SwingUtilities.invokeLater(new Runnable() {
             public void run() {
                 int numPeers = peerGroup.numConnectedPeers();
+                StoredBlock chainHead = chain.getChainHead();
+                String date = chainHead.getHeader().getTime().toString();
                 String plural =  numPeers > 1 ? "peers" : "peer";
                 String status = String.format("%d %s connected. %d blocks: %s",
-                        numPeers, plural, ToyWallet.this.chainHeight, ToyWallet.this.blockDate);
+                        numPeers, plural, chainHead.getHeight(), date);
                 networkStats.setText(status);
             }
         });
