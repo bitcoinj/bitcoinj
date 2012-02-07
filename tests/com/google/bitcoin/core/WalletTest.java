@@ -18,6 +18,7 @@ package com.google.bitcoin.core;
 
 import com.google.bitcoin.store.BlockStore;
 import com.google.bitcoin.store.MemoryBlockStore;
+import com.google.bitcoin.store.WalletProtobufSerializer;
 import com.google.bitcoin.utils.BriefLogFormatter;
 import org.junit.Before;
 import org.junit.Test;
@@ -586,6 +587,11 @@ public class WalletTest {
         assertEquals(tx.getAppearsInHashes().iterator().next(), new Sha256Hash("00000000019380f5aef28393827737f55a1cf8abb51a36d46ab6f2db0a5b9cb8"));
         assertEquals(TransactionConfidence.ConfidenceType.BUILDING, tx.getConfidence().getConfidenceType());
         assertEquals(42814, tx.getConfidence().getAppearedAtChainHeight());
+
+        // Now check we can serialize old wallets to protocol buffers. Covers bug 134.
+        bios.reset();
+        WalletProtobufSerializer.writeWallet(wallet, bios);
+
     }
 
     // Support for offline spending is tested in PeerGroupTest

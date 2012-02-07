@@ -41,6 +41,16 @@ public class NetworkParameters implements Serializable {
      */
     public static final byte[] SATOSHI_KEY = Hex.decode("04fc9702847840aaf195de8442ebecedf5b095cdbb9bc716bda9110971b28a49e0ead8564ff0db22209e0374782c093bb899692d524e9d6a6956e7c5ecbcd68284");
 
+    /**
+     * The string returned by getId() for the main, production network where people trade things.
+     */
+    public static final String ID_PRODNET = "org.bitcoin.production";
+    /**
+     * The string returned by getId() for the testnet.
+     */
+    public static final String ID_TESTNET = "org.bitcoin.test";
+
+
     // TODO: Seed nodes and checkpoint values should be here as well.
 
     /**
@@ -78,9 +88,13 @@ public class NetworkParameters implements Serializable {
      * signatures using it.
      */
     public byte[] alertSigningKey;
-    
-    public String id;
 
+    /**
+     * See getId(). This may be null for old deserialized wallets. In that case we derive it heuristically
+     * by looking at the port number.
+     */
+    private String id;
+    
     private static Block createGenesis(NetworkParameters n) {
         Block genesisBlock = new Block(n);
         Transaction t = new Transaction(n);
@@ -124,7 +138,7 @@ public class NetworkParameters implements Serializable {
         n.genesisBlock.setTime(1296688602L);
         n.genesisBlock.setDifficultyTarget(0x1d07fff8L);
         n.genesisBlock.setNonce(384568319);
-        n.id = "org.bitcoin.test";
+        n.id = ID_TESTNET;
         String genesisHash = n.genesisBlock.getHashAsString();
         assert genesisHash.equals("00000007199508e34a9ff81e6ec0c477a4cccff2a4767a8eee39c11db367b008") : genesisHash;
         return n;
@@ -151,7 +165,7 @@ public class NetworkParameters implements Serializable {
         n.genesisBlock.setDifficultyTarget(0x1d00ffffL);
         n.genesisBlock.setTime(1231006505L);
         n.genesisBlock.setNonce(2083236893);
-        n.id = "org.bitcoin.production";
+        n.id = ID_PRODNET;
         String genesisHash = n.genesisBlock.getHashAsString();
         assert genesisHash.equals("000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f") : genesisHash;
         return n;
@@ -174,6 +188,14 @@ public class NetworkParameters implements Serializable {
      * A java package style string acting as unique ID for these parameters
      */
     public String getId() {
+        if (id == null) {
+            // Migrate from old serialized wallets which lack the ID field. This code can eventually be deleted.
+            if (port == 8333) {
+                id = ID_PRODNET;
+            } else if (port == 18333) {
+                id = ID_TESTNET;
+            }
+        }
         return id;
     }
 }
