@@ -559,6 +559,13 @@ public class Transaction extends ChildMessage implements Serializable {
     }
 
     /**
+     * Creates an output based on the given address and value, adds it to this transaction.
+     */
+    public void addOutput(BigInteger value, Address address) {
+        addOutput(new TransactionOutput(params, this, value, address));
+    }
+
+    /**
      * Once a transaction has some inputs and outputs added, the signatures in the inputs can be calculated. The
      * signature is over the transaction itself, to prove the redeemer actually created that transaction,
      * so we have to do this step last.<p>

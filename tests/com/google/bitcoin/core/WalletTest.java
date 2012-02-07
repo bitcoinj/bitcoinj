@@ -86,6 +86,43 @@ public class WalletTest {
     }
 
     @Test
+    public void customTransactionSpending() throws Exception {
+        // We'll set up a wallet that receives a coin, then sends a coin of lesser value and keeps the change.
+        BigInteger v1 = Utils.toNanoCoins(3, 0);
+        Transaction t1 = createFakeTx(params, v1, myAddress);
+
+        wallet.receiveFromBlock(t1, null, BlockChain.NewBlockType.BEST_CHAIN);
+        assertEquals(v1, wallet.getBalance());
+        assertEquals(1, wallet.getPoolSize(WalletTransaction.Pool.UNSPENT));
+        assertEquals(1, wallet.getPoolSize(WalletTransaction.Pool.ALL));
+
+        ECKey k2 = new ECKey();
+        Address a2 = k2.toAddress(params);
+        BigInteger v2 = toNanoCoins(0, 50);
+        BigInteger v3 = toNanoCoins(0, 75);
+        BigInteger v4 = toNanoCoins(1, 25);
+
+        Transaction t2 = new Transaction(params);
+        t2.addOutput(v2, a2);
+        t2.addOutput(v3, a2);
+        t2.addOutput(v4, a2);
+        boolean complete = wallet.completeTx(t2);
+
+        // Do some basic sanity checks.
+        assertTrue(complete);
+        assertEquals(1, t2.getInputs().size());
+        assertEquals(myAddress, t2.getInputs().get(0).getScriptSig().getFromAddress());
+        assertEquals(t2.getConfidence().getConfidenceType(), TransactionConfidence.ConfidenceType.NOT_SEEN_IN_CHAIN);
+
+        // We have NOT proven that the signature is correct!
+
+        wallet.commitTx(t2);
+        assertEquals(1, wallet.getPoolSize(WalletTransaction.Pool.PENDING));
+        assertEquals(1, wallet.getPoolSize(WalletTransaction.Pool.SPENT));
+        assertEquals(2, wallet.getPoolSize(WalletTransaction.Pool.ALL));
+    }
+
+    @Test
     public void sideChain() throws Exception {
         // The wallet receives a coin on the main chain, then on a side chain. Only main chain counts towards balance.
         BigInteger v1 = Utils.toNanoCoins(1, 0);

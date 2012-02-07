@@ -679,7 +679,7 @@ public class Wallet implements Serializable {
      *         and we did not create it, and it spends some of our outputs.</li>
      * </ol>
      */
-    synchronized void commitTx(Transaction tx) throws VerificationException {
+    public synchronized void commitTx(Transaction tx) throws VerificationException {
         assert !pending.containsKey(tx.getHash()) : "commitTx called on the same transaction twice";
         log.info("commitTx of {}", tx.getHashAsString());
         tx.updatedAt = Utils.now();
@@ -884,18 +884,14 @@ public class Wallet implements Serializable {
 
     /**
      * Statelessly creates a transaction that sends the given number of nanocoins to address. The change is sent to
-     * the first address in the wallet, so you must have added at least one key.<p>
+     * {@link Wallet#getChangeAddress()}, so you must have added at least one key.<p>
      * <p/>
      * This method is stateless in the sense that calling it twice with the same inputs will result in two
      * Transaction objects which are equal. The wallet is not updated to track its pending status or to mark the
      * coins as spent until commitTx is called on the result.
      */
     synchronized Transaction createSend(Address address, BigInteger nanocoins) {
-        // For now let's just pick the first key in our keychain. In future we might want to do something else to
-        // give the user better privacy here, eg in incognito mode.
-        assert keychain.size() > 0 : "Can't send value without an address to use for receiving change";
-        ECKey first = keychain.get(0);
-        return createSend(address, nanocoins, first.toAddress(params));
+        return createSend(address, nanocoins, getChangeAddress());
     }
 
     /**
@@ -920,8 +916,8 @@ public class Wallet implements Serializable {
     }
 
     /**
-     * Sends coins to the given address, via the given {@link PeerGroup}. Change is returned to the first key in the
-     * wallet. The transaction will be announced to any connected nodes asynchronously. If you would like to know when
+     * Sends coins to the given address, via the given {@link PeerGroup}. Change is returned to {@link Wallet#getChangeAddress()}.
+     * The transaction will be announced to any connected nodes asynchronously. If you would like to know when
      * the transaction was successfully sent to at least one node, use 
      * {@link Wallet#sendCoinsOffline(Address, java.math.BigInteger)} and then {@link PeerGroup#broadcastTransaction(Transaction)}
      * on the result to obtain a {@link java.util.concurrent.Future<Transaction>}.
@@ -941,8 +937,8 @@ public class Wallet implements Serializable {
     }
 
     /**
-     * Sends coins to the given address, via the given {@link PeerGroup}. Change is returned to the first key in the
-     * wallet. The method will block until the transaction has been announced to at least one node.
+     * Sends coins to the given address, via the given {@link PeerGroup}. Change is returned to {@link Wallet#getChangeAddress()}.
+     * The method will block until the transaction has been announced to at least one node.
      *
      * @param peerGroup a PeerGroup to use for broadcast or null.
      * @param to        Which address to send coins to.
@@ -961,7 +957,7 @@ public class Wallet implements Serializable {
     }
 
     /**
-     * Sends coins to the given address, via the given {@link Peer}. Change is returned to the first key in the wallet.
+     * Sends coins to the given address, via the given {@link Peer}. Change is returned to {@link Wallet#getChangeAddress()}.
      * If an exception is thrown by {@link Peer#sendMessage(Message)} the transaction is still committed, so the
      * pending transaction must be broadcast <b>by you</b> at some other time.
      *
@@ -1004,6 +1000,33 @@ public class Wallet implements Serializable {
     synchronized Transaction createSend(Address address, BigInteger nanocoins, Address changeAddress) {
         log.info("Creating send tx to " + address.toString() + " for " +
                 bitcoinValueToFriendlyString(nanocoins));
+
+        Transaction sendTx = new Transaction(params);
+        sendTx.addOutput(nanocoins, address);
+
+        if (completeTx(sendTx, changeAddress)) {
+            return sendTx;
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     * Takes a transaction with arbitrary outputs, gathers the necessary inputs for spending, and signs it
+     * @param sendTx           The transaction to complete
+     * @param changeAddress    Which address to send the change to, in case we can't make exactly the right value from
+     *                         our coins. This should be an address we own (is in the keychain).
+     * @return False if we cannot afford this send, true otherwise
+     */
+    public synchronized boolean completeTx(Transaction sendTx, Address changeAddress) {
+        // Calculate the transaction total
+        BigInteger nanocoins = BigInteger.ZERO;
+        for(TransactionOutput output : sendTx.getOutputs()) {
+            nanocoins = nanocoins.add(output.getValue());
+        }
+
+        log.info("Completing send tx with {} outputs totalling {}", sendTx.getOutputs().size(), bitcoinValueToFriendlyString(nanocoins));
+
         // To send money to somebody else, we need to do gather up transactions with unspent outputs until we have
         // sufficient value. Many coin selection algorithms are possible, we use a simple but suboptimal one.
         // TODO: Sort coins so we use the smallest first, to combat wallet fragmentation and reduce fees.
@@ -1023,12 +1046,10 @@ public class Wallet implements Serializable {
             log.info("Insufficient value in wallet for send, missing " +
                     bitcoinValueToFriendlyString(nanocoins.subtract(valueGathered)));
             // TODO: Should throw an exception here.
-            return null;
+            return false;
         }
         assert gathered.size() > 0;
-        Transaction sendTx = new Transaction(params);
         sendTx.getConfidence().setConfidenceType(TransactionConfidence.ConfidenceType.NOT_SEEN_IN_CHAIN);
-        sendTx.addOutput(new TransactionOutput(params, sendTx, nanocoins, address));
         BigInteger change = valueGathered.subtract(nanocoins);
         if (change.compareTo(BigInteger.ZERO) > 0) {
             // The value of the inputs is greater than what we want to send. Just like in real life then,
@@ -1049,8 +1070,26 @@ public class Wallet implements Serializable {
             // happen, if it does it means the wallet has got into an inconsistent state.
             throw new RuntimeException(e);
         }
-        log.info("  created {}", sendTx.getHashAsString());
-        return sendTx;
+        log.info("  completed {}", sendTx.getHashAsString());
+        return true;
+    }
+
+    /**
+     * Takes a transaction with arbitrary outputs, gathers the necessary inputs for spending, and signs it.
+     * Change goes to {@link Wallet#getChangeAddress()}
+     * @param sendTx           The transaction to complete
+     * @return False if we cannot afford this send, true otherwise
+     */
+    public synchronized boolean completeTx(Transaction sendTx) {
+        return completeTx(sendTx, getChangeAddress());
+    }
+
+    synchronized Address getChangeAddress() {
+        // For now let's just pick the first key in our keychain. In future we might want to do something else to
+        // give the user better privacy here, eg in incognito mode.
+        assert keychain.size() > 0 : "Can't send value without an address to use for receiving change";
+        ECKey first = keychain.get(0);
+        return first.toAddress(params);
     }
 
     /**
