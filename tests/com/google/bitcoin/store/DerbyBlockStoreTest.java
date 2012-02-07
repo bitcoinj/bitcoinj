@@ -20,6 +20,7 @@ import com.google.bitcoin.core.ECKey;
 import com.google.bitcoin.core.NetworkParameters;
 import com.google.bitcoin.core.StoredBlock;
 import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.io.File;
@@ -34,6 +35,12 @@ public class DerbyBlockStoreTest {
      */
     private static final String DB_NAME = "target/bitcoinj.unittest.derby";
 
+    @Before
+    public void shutUp() {
+        // Prevent Derby writing a useless error log file.
+        System.getProperties().setProperty("derby.stream.error.file", "");
+    }
+    
     @After
     public void clear() {
         try {
@@ -67,10 +74,11 @@ public class DerbyBlockStoreTest {
         assertEquals(b1, b2);
         // Check the chain head was stored correctly also.
         assertEquals(b1, store.getChainHead());
-        
+
         StoredBlock g1 = store.get(params.genesisBlock.getHash());
         assertEquals(params.genesisBlock, g1.getHeader());
         store.dump();
+        store.close();
     }
     
     void deleteRecursively(File f) throws IOException {
