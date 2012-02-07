@@ -890,7 +890,7 @@ public class Wallet implements Serializable {
      * Transaction objects which are equal. The wallet is not updated to track its pending status or to mark the
      * coins as spent until commitTx is called on the result.
      */
-    synchronized Transaction createSend(Address address, BigInteger nanocoins) {
+    public synchronized Transaction createSend(Address address, BigInteger nanocoins) {
         return createSend(address, nanocoins, getChangeAddress());
     }
 
@@ -997,7 +997,7 @@ public class Wallet implements Serializable {
      *                      our coins. This should be an address we own (is in the keychain).
      * @return a new {@link Transaction} or null if we cannot afford this send.
      */
-    synchronized Transaction createSend(Address address, BigInteger nanocoins, Address changeAddress) {
+    public synchronized Transaction createSend(Address address, BigInteger nanocoins, Address changeAddress) {
         log.info("Creating send tx to " + address.toString() + " for " +
                 bitcoinValueToFriendlyString(nanocoins));
 
