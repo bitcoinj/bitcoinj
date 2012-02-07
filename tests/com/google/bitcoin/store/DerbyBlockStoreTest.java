@@ -15,24 +15,34 @@
  */
 package com.google.bitcoin.store;
 
-import static org.junit.Assert.assertEquals;
-
 import com.google.bitcoin.core.Address;
 import com.google.bitcoin.core.ECKey;
 import com.google.bitcoin.core.NetworkParameters;
 import com.google.bitcoin.core.StoredBlock;
-
+import org.junit.After;
 import org.junit.Test;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 
+import static org.junit.Assert.assertEquals;
+
 public class DerbyBlockStoreTest {
     /**
      * This path will be deleted recursively!
      */
-    private static final String DB_NAME = ".bitcoinj.unittest.derby";
+    private static final String DB_NAME = "target/bitcoinj.unittest.derby";
+
+    @After
+    public void clear() {
+        try {
+            deleteRecursively(new File(DB_NAME));
+        } catch (IOException e) {
+            e.printStackTrace();
+            // Does not really matter.
+        }
+    }
 
     @Test
     public void testStorage() throws Exception {
