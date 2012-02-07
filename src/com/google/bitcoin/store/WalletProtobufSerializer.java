@@ -16,20 +16,10 @@
 
 package com.google.bitcoin.store;
 
-import com.google.bitcoin.core.ECKey;
-import com.google.bitcoin.core.NetworkParameters;
-import com.google.bitcoin.core.Sha256Hash;
-import com.google.bitcoin.core.Transaction;
-import com.google.bitcoin.core.TransactionConfidence;
-import com.google.bitcoin.core.TransactionInput;
-import com.google.bitcoin.core.TransactionOutPoint;
-import com.google.bitcoin.core.TransactionOutput;
-import com.google.bitcoin.core.Wallet;
-import com.google.bitcoin.core.WalletTransaction;
+import com.google.bitcoin.core.*;
 import com.google.bitcoin.core.TransactionConfidence.ConfidenceType;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.TextFormat;
-
 import org.bitcoinj.wallet.Protos;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,7 +33,21 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Serialize and de-serialize a wallet to a protobuf stream.
+ * Serialize and de-serialize a wallet to a byte stream containing a
+ * <a href="http://code.google.com/apis/protocolbuffers/docs/overview.html">protocol buffer</a>. Protocol buffers are
+ * a data interchange format developed by Google with an efficient binary representation, a type safe specification
+ * languaeg and compilers that generate code to work with those data structures for many languages. Protocol buffers
+ * can have their format evolved over time: conceptually they represent data using (tag, length, value) tuples. The
+ * format is defined by the <tt>bitcoin.proto</tt> file in the BitCoinJ source distribution.<p>
+ *
+ * This class is used through its static methods. The most common operations are writeWallet and readWallet, which do
+ * the obvious operations on Output/InputStreams. You can use a {@link java.io.ByteArrayInputStream} and equivalent
+ * {@link java.io.ByteArrayOutputStream} if you'd like byte arrays instead. The protocol buffer can also be manipulated
+ * in its object form if you'd like to modify the flattened data structure before serialization to binary.<p>
+ *
+ * You can extend the wallet format with additional fields specific to your application if you want, but make sure
+ * to either put the extra data in the provided extension areas, or select tag numbers that are unlikely to be used
+ * by anyone else.<p>
  * 
  * @author Miron Cuperman
  */
@@ -53,22 +57,35 @@ public class WalletProtobufSerializer {
     // Used for de-serialization
     private Map<ByteString, Transaction> txMap;
     
-    public WalletProtobufSerializer() {
+    private WalletProtobufSerializer() {
         txMap = new HashMap<ByteString, Transaction>();
     }
-    
+
+    /**
+     * Formats the given wallet (transactions and keys) to the given output stream in protocol buffer format.<p>
+     *     
+     * Equivalent to <tt>walletToProto(wallet).writeTo(output);</tt>
+     */
     public static void writeWallet(Wallet wallet, OutputStream output) throws IOException {
         Protos.Wallet walletProto = walletToProto(wallet);
-        
         walletProto.writeTo(output);
     }
 
+    /**
+     * Returns the given wallet formatted as text. The text format is that used by protocol buffers and although it
+     * can also be parsed using {@link TextFormat.merge()}, it is designed more for debugging than storage. It is not 
+     * well specified and wallets are largely binary data structures anyway, consisting as they do of keys (large
+     * random numbers) and {@link Transaction}s which also mostly contain keys and hashes.
+     */
     public static String walletToText(Wallet wallet) {
         Protos.Wallet walletProto = walletToProto(wallet);
-        
         return TextFormat.printToString(walletProto);
     }
 
+    /**
+     * Converts the given wallet to the object representation of the protocol buffers. This can be modified, or
+     * additional data fields set, before serialization takes place.
+     */
     public static Protos.Wallet walletToProto(Wallet wallet) {
         Protos.Wallet.Builder walletBuilder = Protos.Wallet.newBuilder();
         walletBuilder
@@ -180,14 +197,27 @@ public class WalletProtobufSerializer {
         return ByteString.copyFrom(hash.getBytes());
     }
 
-    public static Wallet readWallet(InputStream input, NetworkParameters params)
-            throws IOException {
+    /**
+     * Parses a wallet from the given stream. The stream is expected to contain a binary serialization of a 
+     * {@link Protos.Wallet} object. You must also specify the {@link NetworkParameters} the wallet will use,
+     * it will be checked against the stream to ensure the right params have been specified. In future this
+     * parameter will probably go away.<p>
+     *     
+     * If the stream is invalid or the serialized wallet contains unsupported features, 
+     * {@link IllegalArgumentException} is thrown.
+     *
+     * @param input
+     * @param params
+     * @return
+     * @throws IOException
+     */
+    public static Wallet readWallet(InputStream input, NetworkParameters params) throws IOException {
+        // TODO: This method should throw more specific exception types than IllegalArgumentException.
         WalletProtobufSerializer serializer = new WalletProtobufSerializer();
         Protos.Wallet walletProto = Protos.Wallet.parseFrom(input);
         if (!params.getId().equals(walletProto.getNetworkIdentifier()))
-            throw new IllegalArgumentException(
-                    "Trying to read a wallet with a different network id " +
-                    walletProto.getNetworkIdentifier());
+            throw new IllegalArgumentException("Trying to read a wallet with a different network id " +
+                                                walletProto.getNetworkIdentifier());
         
         Wallet wallet = new Wallet(params);
         
@@ -304,9 +334,8 @@ public class WalletProtobufSerializer {
         return new WalletTransaction(pool, tx);
     }
 
-    private void readConfidence(
-            Transaction tx, Protos.TransactionConfidence confidenceProto,
-            TransactionConfidence confidence) {
+    private void readConfidence(Transaction tx, Protos.TransactionConfidence confidenceProto,
+                                TransactionConfidence confidence) {
         // We are lenient here because tx confidence is not an essential part of the wallet.
         // If the tx has an unknown type of confidence, ignore.
         if (!confidenceProto.hasType()) {
