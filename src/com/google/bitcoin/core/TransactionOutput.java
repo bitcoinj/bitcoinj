@@ -41,9 +41,9 @@ public class TransactionOutput extends ChildMessage implements Serializable {
     // The script bytes are parsed and turned into a Script on demand.
     private transient Script scriptPubKey;
 
-    // These fields are Java serialized but not BitCoin serialized. They are used for tracking purposes in our wallet
+    // These fields are Java serialized but not Bitcoin serialized. They are used for tracking purposes in our wallet
     // only. If set to true, this output is counted towards our balance. If false and spentBy is null the tx output
-    // was owned by us and was sent to somebody else. If false and spentBy is true it means this output was owned by
+    // was owned by us and was sent to somebody else. If false and spentBy is set it means this output was owned by
     // us and used in one of our own transactions (eg, because it is a change output).
     private boolean availableForSpending;
     private TransactionInput spentBy;
