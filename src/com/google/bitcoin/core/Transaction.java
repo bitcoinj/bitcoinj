@@ -502,6 +502,10 @@ public class Transaction extends ChildMessage implements Serializable {
 
             try {
                 s.append(in.getScriptSig().getFromAddress().toString());
+                s.append(" / ");
+                s.append(in.getOutpoint().getHash());
+                s.append(":");
+                s.append(in.getOutpoint().getIndex());
             } catch (Exception e) {
                 s.append("[exception: ").append(e.getMessage()).append("]");
             }
@@ -516,6 +520,13 @@ public class Transaction extends ChildMessage implements Serializable {
                 s.append(" ");
                 s.append(bitcoinValueToFriendlyString(out.getValue()));
                 s.append(" BTC");
+                if (!out.isAvailableForSpending()) {
+                    s.append(" Spent");
+                }
+                if (out.getSpentBy() != null) {
+                    s.append(" by ");
+                    s.append(out.getSpentBy().getParentTransaction().getHashAsString());
+                }
             } catch (Exception e) {
                 s.append("[exception: ").append(e.getMessage()).append("]");
             }
