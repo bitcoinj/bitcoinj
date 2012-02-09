@@ -502,6 +502,8 @@ public class Transaction extends ChildMessage implements Serializable {
 
             try {
                 s.append(in.getScriptSig().getFromAddress().toString());
+                s.append(" / ");
+                s.append(in.getOutpoint().toString());
             } catch (Exception e) {
                 s.append("[exception: ").append(e.getMessage()).append("]");
             }
