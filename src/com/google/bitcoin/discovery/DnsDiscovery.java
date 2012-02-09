@@ -112,4 +112,7 @@ public class DnsDiscovery implements PeerDiscovery {
         return defaultHosts;
     }
 
+    /** We don't have a way to abort a DNS lookup, so this does nothing */
+    public void shutdown() {
+    }
 }

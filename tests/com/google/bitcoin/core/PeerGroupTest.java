@@ -89,6 +89,8 @@ public class PeerGroupTest extends TestWithNetworkConnections {
                     return new InetSocketAddress[]{new InetSocketAddress("localhost", 0)};
                 }
             }
+            public void shutdown() {
+            }
         });
         peerGroup.start();
         sem.acquire();

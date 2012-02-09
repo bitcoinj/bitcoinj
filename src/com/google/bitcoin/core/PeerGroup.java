@@ -110,7 +110,7 @@ public class PeerGroup {
         inactives = new LinkedBlockingQueue<PeerAddress>();
         // TODO: Remove usage of synchronized sets here in favor of simple coarse-grained locking.
         peers = Collections.synchronizedSet(new HashSet<Peer>());
-        peerDiscoverers = Collections.synchronizedSet(new HashSet<PeerDiscovery>());
+        peerDiscoverers = new CopyOnWriteArraySet<PeerDiscovery>(); 
         peerPool = new ThreadPoolExecutor(
                 DEFAULT_CONNECTIONS,
                 DEFAULT_CONNECTIONS,
@@ -397,13 +397,15 @@ public class PeerGroup {
                 while (running) {
                     // Modify the peer group under its lock, always.
                     int numPeers;
+                    
                     synchronized (PeerGroup.this) {
                         numPeers = peers.size();
-                        if (inactives.size() == 0) {
-                            discoverPeers();
-                        } else if (numPeers < getMaxConnections()) {
-                            tryNextPeer();
-                        }
+                    }
+                    
+                    if (inactives.size() == 0) {
+                        discoverPeers();
+                    } else if (numPeers < getMaxConnections()) {
+                        tryNextPeer();
                     }
 
                     // Wait for a task or the connection polling timeout to elapse. Tasks are only eligible to run
@@ -427,6 +429,7 @@ public class PeerGroup {
             synchronized (PeerGroup.this) {
                 running = false;
                 peerPool.shutdown();
+                shutdownPeerDiscovery();
                 synchronized (peers) {
                     for (Peer peer : peers) {
                         peer.disconnect();
@@ -454,12 +457,18 @@ public class PeerGroup {
                 if (inactives.size() > 0) break;
             }
         }
+        
+        private void shutdownPeerDiscovery() {
+            for (PeerDiscovery peerDiscovery : peerDiscoverers) {
+                peerDiscovery.shutdown();
+            }
+        }
 
         /**
          * Try connecting to a peer.  If we exceed the number of connections, delay and try again.
          */
         private void tryNextPeer() throws InterruptedException {
-            final PeerAddress address = inactives.take();
+            PeerAddress address = inactives.take();
             while (true) {
                 try {
                     VersionMessage ver = versionMessage.duplicate();
@@ -475,6 +484,12 @@ public class PeerGroup {
                     // if we reached maxConnections or if peer queue is empty.  Also consider
                     // exponential backoff on peers and adjusting the sleep time according to the
                     // lowest backoff value in queue.
+                }
+                
+                synchronized (PeerGroup.this) {
+                    // Check if we are shutting down before next try
+                    if (!running)
+                        break;
                 }
                 
                 // If we got here, we should retry this address because an error unrelated
@@ -534,21 +549,28 @@ public class PeerGroup {
                         log.error("Unexpected exception whilst talking to " + peer, ex);
                     }
                 } finally {
-                    // We may be terminating because of a controlled shutdown. If so, don't inform the user of individual
-                    // peer connections or select a new download peer.  Disconnection is the responsibility of the controlling
-                    // thread in this case.
-                    if (!running)
-                        return;
+                    boolean needHandleDeath;
+                    synchronized (PeerGroup.this) {
+                        // We may be terminating because of a controlled shutdown. If so, don't inform the user of individual
+                        // peer connections or select a new download peer.  Disconnection is the responsibility of the controlling
+                        // thread in this case.
+                        if (!running)
+                            return;
 
-                    // Disconnect and put the address back on the queue. We will retry this peer after all
-                    // other peers have been tried.
-                    peer.disconnect();
+                        // Disconnect and put the address back on the queue. We will retry this peer after all
+                        // other peers have been tried.
+                        peer.disconnect();
+
+                        needHandleDeath = peers.remove(peer);
+                    }
+                    
+                    // This is unsynchronized since it can take awhile
+                    if (needHandleDeath)
+                        handlePeerDeath(peer);
 
                     // We may not know the address if the peer was added directly.
                     if (address != null)
                         inactives.add(address);
-                    if (peers.remove(peer))
-                        handlePeerDeath(peer);
                 }
             }
         });

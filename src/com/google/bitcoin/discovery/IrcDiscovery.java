@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.InetAddress;
@@ -44,6 +45,8 @@ public class IrcDiscovery implements PeerDiscovery {
     private String server;
 
     private BufferedWriter writer = null;
+
+    private Socket connection;
 
     /**
      * Finds a list of peers by connecting to an IRC network, joining a channel, decoding the nicks and then
@@ -75,13 +78,22 @@ public class IrcDiscovery implements PeerDiscovery {
     protected void onIRCReceive(String message) {
     }
 
+    public void shutdown() {
+        try {
+            if (connection != null) {
+                connection.close();
+            }
+        } catch (IOException ex) {
+            // ignore
+        }
+    }
     /**
      * Returns a list of peers that were found in the IRC channel. Note that just because a peer appears in the list
      * does not mean it is accepting connections.
      */
     public InetSocketAddress[] getPeers() throws PeerDiscoveryException {
         ArrayList<InetSocketAddress> addresses = new ArrayList<InetSocketAddress>();
-        Socket connection = null;
+        connection = null;
         try {
             connection = new Socket(server, port);
             writer = new BufferedWriter(new OutputStreamWriter(connection.getOutputStream()));
