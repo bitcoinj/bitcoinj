@@ -144,12 +144,17 @@ public class BoundedOverheadBlockStore implements BlockStore {
 
     public BoundedOverheadBlockStore(NetworkParameters params, File file) throws BlockStoreException {
         this.params = params;
-        try {
-            load(file);
-        } catch (Exception e) {
-            log.error("failed to load block store from file", e);
-            createNewStore(params, file);
+        if (file.exists()) {
+            try {
+                load(file);
+                return;
+            } catch (Exception e) {
+                log.error("Failed to load block chain from " + file, e);
+                // Fall through and try to create a new one.
+            }
         }
+        
+        createNewStore(params, file);
     }
 
     private void createNewStore(NetworkParameters params, File file) throws BlockStoreException {
