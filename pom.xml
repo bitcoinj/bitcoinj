@@ -337,6 +337,12 @@
       <artifactId>protobuf-java</artifactId>
       <version>${protobuf.version}</version>
     </dependency>
+
+    <dependency>
+        <groupId>net.sf.jopt-simple</groupId>
+        <artifactId>jopt-simple</artifactId>
+        <version>${jopt.version}</version>
+    </dependency>
   </dependencies>
 
   <properties>
@@ -348,6 +354,7 @@
     <slf4j.version>1.6.2</slf4j.version>
     <derby.version>10.8.2.2</derby.version>
     <protobuf.version>2.4.1</protobuf.version>
+    <jopt.version>4.3</jopt.version>
     <generated.sourceDirectory>gen</generated.sourceDirectory>
   </properties>
 

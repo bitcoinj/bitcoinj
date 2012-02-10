@@ -922,7 +922,7 @@ public class Wallet implements Serializable {
      * {@link Wallet#sendCoinsOffline(Address, java.math.BigInteger)} and then {@link PeerGroup#broadcastTransaction(Transaction)}
      * on the result to obtain a {@link java.util.concurrent.Future<Transaction>}.
      *
-     * @param peerGroup a PeerGroup to use for broadcast or null.
+     * @param peerGroup a PeerGroup to use for broadcast.
      * @param to        Which address to send coins to.
      * @param nanocoins How many nanocoins to send. You can use Utils.toNanoCoins() to calculate this.
      * @return the Transaction
