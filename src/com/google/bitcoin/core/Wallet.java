@@ -163,9 +163,12 @@ public class Wallet implements Serializable {
     public NetworkParameters getNetworkParameters() {
         return params;
     }
-    
-    public Iterable<ECKey> getKeys() {
-        return keychain;
+
+    /**
+     * Returns a snapshot of the keychain. This view is not live.
+     */
+    public synchronized Iterable<ECKey> getKeys() {
+        return new ArrayList<ECKey>(keychain);
     }
 
     /**
@@ -380,7 +383,8 @@ public class Wallet implements Serializable {
      * Note that if the tx has inputs containing one of our keys, but the connected transaction is not in the wallet,
      * it will not be considered relevant.
      */
-    public boolean isTransactionRelevant(Transaction tx, boolean includeDoubleSpending) throws ScriptException {
+    public synchronized boolean isTransactionRelevant(Transaction tx,
+                                                      boolean includeDoubleSpending) throws ScriptException {
         return tx.getValueSentFromMe(this).compareTo(BigInteger.ZERO) > 0 ||
                tx.getValueSentToMe(this).compareTo(BigInteger.ZERO) > 0 ||
                (includeDoubleSpending && (findDoubleSpendAgainstPending(tx) != null));
@@ -700,7 +704,7 @@ public class Wallet implements Serializable {
      * @param includeDead     If true, transactions that were overridden by a double spend are included.
      * @param includeInactive If true, transactions that are on side chains (are unspendable) are included.
      */
-    public Set<Transaction> getTransactions(boolean includeDead, boolean includeInactive) {
+    public synchronized Set<Transaction> getTransactions(boolean includeDead, boolean includeInactive) {
         Set<Transaction> all = new HashSet<Transaction>();
         all.addAll(unspent.values());
         all.addAll(spent.values());
@@ -715,7 +719,7 @@ public class Wallet implements Serializable {
     /**
      * Returns a set of all WalletTransactions in the wallet.
      */
-    public Iterable<WalletTransaction> getWalletTransactions() {
+    public synchronized Iterable<WalletTransaction> getWalletTransactions() {
         HashSet<Transaction> pendingInactive = new HashSet<Transaction>();
         pendingInactive.addAll(pending.values());
         pendingInactive.retainAll(inactive.values());
@@ -737,14 +741,14 @@ public class Wallet implements Serializable {
         return all;
     }
 
-    static private void addWalletTransactionsToSet(Set<WalletTransaction> txs,
+    private static synchronized void addWalletTransactionsToSet(Set<WalletTransaction> txs,
             Pool poolType, Collection<Transaction> pool) {
         for (Transaction tx : pool) {
             txs.add(new WalletTransaction(poolType, tx));
         }
     }
     
-    public void addWalletTransaction(WalletTransaction wtx) {
+    public synchronized void addWalletTransaction(WalletTransaction wtx) {
         switch (wtx.getPool()) {
         case UNSPENT:
             unspent.put(wtx.getTransaction().getHash(), wtx.getTransaction());
@@ -785,7 +789,7 @@ public class Wallet implements Serializable {
      * requested, the cost is always the same. In future, requesting smaller numbers of transactions may be faster
      * depending on how the wallet is implemented (eg if backed by a database).
      */
-    public List<Transaction> getRecentTransactions(int numTransactions, boolean includeDead) {
+    public synchronized List<Transaction> getRecentTransactions(int numTransactions, boolean includeDead) {
         assert numTransactions >= 0;
         // Firstly, put all transactions into an array.
         int size = getPoolSize(WalletTransaction.Pool.UNSPENT) +
@@ -812,7 +816,7 @@ public class Wallet implements Serializable {
     /**
      * Returns a transaction object given its hash, if it exists in this wallet, or null otherwise.
      */
-    public Transaction getTransaction(Sha256Hash hash) {
+    public synchronized Transaction getTransaction(Sha256Hash hash) {
         Transaction tx;
         if ((tx = pending.get(hash)) != null)
             return tx;
@@ -831,7 +835,7 @@ public class Wallet implements Serializable {
      * Deletes transactions which appeared above the given block height from the wallet, but does not touch the keys.
      * This is useful if you have some keys and wish to replay the block chain into the wallet in order to pick them up.
      */
-    public void clearTransactions(int fromHeight) {
+    public synchronized void clearTransactions(int fromHeight) {
         if (fromHeight == 0) {
             unspent.clear();
             spent.clear();
@@ -843,7 +847,7 @@ public class Wallet implements Serializable {
         }
     }
 
-    EnumSet<Pool> getContainingPools(Transaction tx) {
+    synchronized EnumSet<Pool> getContainingPools(Transaction tx) {
         EnumSet<Pool> result = EnumSet.noneOf(Pool.class);
         Sha256Hash txHash = tx.getHash();
         if (unspent.containsKey(txHash)) {
@@ -864,7 +868,7 @@ public class Wallet implements Serializable {
         return result;
     }
 
-    int getPoolSize(WalletTransaction.Pool pool) {
+    synchronized int getPoolSize(WalletTransaction.Pool pool) {
         switch (pool) {
             case UNSPENT:
                 return unspent.size();
@@ -1489,7 +1493,7 @@ public class Wallet implements Serializable {
     /**
      * Returns an immutable view of the transactions currently waiting for network confirmations.
      */
-    public Collection<Transaction> getPendingTransactions() {
+    public synchronized Collection<Transaction> getPendingTransactions() {
         return Collections.unmodifiableCollection(pending.values());
     }
 
@@ -1505,7 +1509,7 @@ public class Wallet implements Serializable {
      * 
      * If there are no keys in the wallet, the current time is returned.
      */
-    public long getEarliestKeyCreationTime() {
+    public synchronized long getEarliestKeyCreationTime() {
         if (keychain.size() == 0) {
             return Utils.now().getTime() / 1000;
         }
@@ -1525,7 +1529,7 @@ public class Wallet implements Serializable {
      * Use the returned object can be used to connect the wallet to a {@link Peer} or {@link PeerGroup} in order to
      * receive and process blocks and transactions.
      */
-    public PeerEventListener getPeerEventListener() {
+    public synchronized PeerEventListener getPeerEventListener() {
         if (peerEventListener == null) {
             // Instantiate here to avoid issues with wallets resurrected from serialized copies.
             peerEventListener = new AbstractPeerEventListener() {
