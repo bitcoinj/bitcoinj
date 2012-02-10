@@ -934,6 +934,8 @@ public class Wallet implements Serializable {
      */
     public synchronized Transaction sendCoinsAsync(PeerGroup peerGroup, Address to, BigInteger nanocoins) throws IOException {
         Transaction tx = sendCoinsOffline(to, nanocoins);
+        if (tx == null)
+            return null;  // Not enough money.
         // Just throw away the Future here. If the user wants it, they can call sendCoinsOffline/broadcastTransaction
         // themselves.
         peerGroup.broadcastTransaction(tx);
@@ -951,6 +953,8 @@ public class Wallet implements Serializable {
      */
     public synchronized Transaction sendCoins(PeerGroup peerGroup, Address to, BigInteger nanocoins) {
         Transaction tx = sendCoinsOffline(to, nanocoins);
+        if (tx == null)
+            return null;  // Not enough money.
         try {
             return peerGroup.broadcastTransaction(tx).get();
         } catch (InterruptedException e) {
