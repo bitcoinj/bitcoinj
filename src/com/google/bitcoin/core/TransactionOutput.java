@@ -194,7 +194,8 @@ public class TransactionOutput extends ChildMessage implements Serializable {
             byte[] pubkeyHash = getScriptPubKey().getPubKeyHash();
             return wallet.isPubKeyHashMine(pubkeyHash);
         } catch (ScriptException e) {
-            log.error("Could not parse tx output script: {}", e.toString());
+            // Just means we didn't understand the output of this transaction: ignore it.
+            log.debug("Could not parse tx output script: {}", e.toString());
             return false;
         }
     }
