@@ -86,7 +86,7 @@ public class GetBlocksMessage extends Message {
 
     @Override
     public boolean equals(Object o) {
-        if (!(o instanceof GetBlocksMessage)) return false;
+        if (o == null || o.getClass() != getClass()) return false;
         GetBlocksMessage other = (GetBlocksMessage) o;
         return (other.version == version &&
                 locator.size() == other.locator.size() && locator.containsAll(other.locator) &&

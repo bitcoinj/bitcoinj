@@ -46,7 +46,7 @@ public class GetHeadersMessage extends GetBlocksMessage {
      */
     @Override
     public boolean equals(Object o) {
-        if (!(o instanceof GetHeadersMessage)) return false;
+        if (o == null || o.getClass() != getClass()) return false;
         GetHeadersMessage other = (GetHeadersMessage) o;
         return (other.version == version &&
                 locator.size() == other.locator.size() && locator.containsAll(other.locator) &&
