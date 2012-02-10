@@ -89,16 +89,15 @@ public class AddressMessage extends Message {
         for (PeerAddress addr : addresses) {
             addr.bitcoinSerialize(stream);
         }
-
     }
 
     int getMessageSize() {
         if (length != UNKNOWN_LENGTH)
             return length;
-        length = new VarInt(addresses.size()).getSizeInBytes();
         if (addresses != null) {
-        	// The 4 byte difference is the uint32 timestamp that was introduced in version 31402
-        	length += addresses.size() * (protocolVersion > 31402 ? PeerAddress.MESSAGE_SIZE : PeerAddress.MESSAGE_SIZE - 4);
+            length = new VarInt(addresses.size()).getSizeInBytes();
+            // The 4 byte difference is the uint32 timestamp that was introduced in version 31402
+            length += addresses.size() * (protocolVersion > 31402 ? PeerAddress.MESSAGE_SIZE : PeerAddress.MESSAGE_SIZE - 4);
         }
         return length;
     }
