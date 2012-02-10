@@ -184,6 +184,9 @@ public class ECKey implements Serializable {
         if (priv != null) {
             b.append(" priv:").append(Utils.bytesToHexString(priv.toByteArray()));
         }
+        if (creationTimeSeconds != 0) {
+            b.append(" timestamp:" + creationTimeSeconds);
+        }
         return b.toString();
     }
 
