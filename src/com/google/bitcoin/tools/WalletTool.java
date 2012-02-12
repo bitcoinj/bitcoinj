@@ -20,6 +20,7 @@ import com.google.bitcoin.core.*;
 import com.google.bitcoin.discovery.DnsDiscovery;
 import com.google.bitcoin.store.BlockStoreException;
 import com.google.bitcoin.store.BoundedOverheadBlockStore;
+import com.google.bitcoin.utils.BriefLogFormatter;
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
 import joptsimple.OptionSpec;
@@ -84,12 +85,10 @@ public class WalletTool {
     }
 
     public static void main(String[] args) throws Exception {
-        // Disable logspam.
-        LogManager.getLogManager().getLogger("").setLevel(Level.SEVERE);
-
         OptionParser parser = new OptionParser();
         parser.accepts("help");
         parser.accepts("force");
+        parser.accepts("debuglog");
         walletFileName = parser.accepts("wallet")
                 .withRequiredArg()
                 .defaultsTo("wallet");
@@ -115,6 +114,13 @@ public class WalletTool {
         if (args.length == 0 || options.hasArgument("help") || options.nonOptionArguments().size() > 0) {
             System.out.println(HELP_TEXT);
             return;
+        }
+        
+        if (options.has("debuglog")) {
+            BriefLogFormatter.init();
+        } else {
+            // Disable logspam unless there is a flag.
+            LogManager.getLogManager().getLogger("").setLevel(Level.SEVERE);
         }
 
         File chainFileName;
@@ -187,17 +193,19 @@ public class WalletTool {
             final int startTransactions = wallet.getTransactions(true, true).size();
             
             peers.start();
-            peers.startBlockChainDownload(new DownloadListener() {
-                @Override
-                protected void doneDownload() {
-                    super.doneDownload();
-                    peers.stop();
-                    int endTransactions = wallet.getTransactions(true, true).size();
-                    if (endTransactions > startTransactions) {
-                        System.out.println("Synced " + (endTransactions - startTransactions) + " transactions.");
-                    }
-                }
-            });
+            DownloadListener listener = new DownloadListener();
+            peers.startBlockChainDownload(listener);
+            try {
+                listener.await();
+            } catch (InterruptedException e) {
+                System.err.println("Chain download interrupted, quitting ...");
+                System.exit(1);
+            }
+            peers.stop();
+            int endTransactions = wallet.getTransactions(true, true).size();
+            if (endTransactions > startTransactions) {
+                System.out.println("Synced " + (endTransactions - startTransactions) + " transactions.");
+            }
         } catch (BlockStoreException e) {
             System.err.println("Error reading block chain file " + chainFileName + ": " + e.getMessage());
             e.printStackTrace();
