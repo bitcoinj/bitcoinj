@@ -104,7 +104,7 @@ public class BlockChain {
                       BlockStore blockStore) throws BlockStoreException {
         this.blockStore = blockStore;
         chainHead = blockStore.getChainHead();
-        log.info("chain head is:\n{}", chainHead.getHeader());
+        log.info("chain head is at height {}:\n{}", chainHead.getHeight(), chainHead.getHeader());
         this.params = params;
         this.wallets = new ArrayList<Wallet>(wallets);
     }
