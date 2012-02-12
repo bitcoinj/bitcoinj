@@ -87,16 +87,19 @@ public class PeerTest extends TestWithNetworkConnections {
         Block b1 = TestUtils.createFakeBlock(unitTestParams, blockStore).block;
         blockChain.add(b1);
         Block b2 = TestUtils.makeSolvedTestBlock(unitTestParams, b1);
+        blockChain.add(b2);  // b2 is top block.
         Block b3 = TestUtils.makeSolvedTestBlock(unitTestParams, b2);
-        conn.inbound(b3);
+        Block b4 = TestUtils.makeSolvedTestBlock(unitTestParams, b3);
+        conn.inbound(b4);
         runPeer(peer, conn);
         GetBlocksMessage getblocks = (GetBlocksMessage) conn.popOutbound();
         List<Sha256Hash> expectedLocator = new ArrayList<Sha256Hash>();
-        expectedLocator.add(b1.getHash());
-        expectedLocator.add(b1.getPrevBlockHash());
+        // Locator contains top block (b2), prev hash (b1), the genesis block.
+        expectedLocator.add(b2.getHash());
+        expectedLocator.add(b2.getPrevBlockHash());
         expectedLocator.add(unitTestParams.genesisBlock.getHash());
-        assertEquals(getblocks.getLocator(), expectedLocator);
-        assertEquals(getblocks.getStopHash(), b3.getHash());
+        assertEquals(expectedLocator, getblocks.getLocator());
+        assertEquals(b4.getHash(), getblocks.getStopHash());
     }
 
     // Check that an inventory tickle is processed correctly when downloading missing blocks is active.
@@ -116,7 +119,6 @@ public class PeerTest extends TestWithNetworkConnections {
         GetBlocksMessage getblocks = (GetBlocksMessage) conn.popOutbound();
         List<Sha256Hash> expectedLocator = new ArrayList<Sha256Hash>();
         expectedLocator.add(b1.getHash());
-        expectedLocator.add(b1.getPrevBlockHash());
         expectedLocator.add(unitTestParams.genesisBlock.getHash());
         
         assertEquals(getblocks.getLocator(), expectedLocator);
@@ -273,7 +275,6 @@ public class PeerTest extends TestWithNetworkConnections {
         GetHeadersMessage getheaders = (GetHeadersMessage) conn.outbound();
         List<Sha256Hash> expectedLocator = new ArrayList<Sha256Hash>();
         expectedLocator.add(b1.getHash());
-        expectedLocator.add(b1.getPrevBlockHash());
         expectedLocator.add(unitTestParams.genesisBlock.getHash());
         assertEquals(getheaders.getLocator(), expectedLocator);
         assertEquals(getheaders.getStopHash(), Sha256Hash.ZERO_HASH);

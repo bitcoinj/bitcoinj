@@ -609,7 +609,7 @@ public class Peer {
         blockLocator.add(params.genesisBlock.getHash());
         Block topBlock = blockChain.getChainHead().getHeader();
         if (!topBlock.equals(params.genesisBlock)) {
-            if (!topBlock.getPrevBlockHash().equals(params.genesisBlock)){
+            if (!topBlock.getPrevBlockHash().equals(params.genesisBlock.getHash())){
                 blockLocator.add(0, topBlock.getPrevBlockHash());
             }
             blockLocator.add(0, topBlock.getHash());

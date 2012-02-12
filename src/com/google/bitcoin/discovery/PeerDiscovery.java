@@ -27,6 +27,7 @@ public interface PeerDiscovery {
 
     /** Returns an array of addresses. This method may block. */
     InetSocketAddress[] getPeers() throws PeerDiscoveryException;
+
     /** Stops any discovery in progress when we want to shut down quickly. */
     void shutdown();
 }
