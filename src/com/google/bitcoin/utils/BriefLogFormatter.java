@@ -21,9 +21,7 @@ import java.io.StringWriter;
 import java.io.Writer;
 import java.text.MessageFormat;
 import java.util.Date;
-import java.util.logging.Formatter;
-import java.util.logging.LogManager;
-import java.util.logging.LogRecord;
+import java.util.logging.*;
 
 /**
  * A Java logging formatter that writes more compact output than the default.
@@ -34,6 +32,13 @@ public class BriefLogFormatter extends Formatter {
     /** Configures JDK logging to use this class for everything. */
     public static void init() {
         LogManager.getLogManager().getLogger("").getHandlers()[0].setFormatter(new BriefLogFormatter());
+    }
+
+    public static void initVerbose() {
+        Logger logger = LogManager.getLogManager().getLogger("");
+        logger.getHandlers()[0].setFormatter(new BriefLogFormatter());
+        logger.setLevel(Level.FINEST);
+        logger.log(Level.FINE, "test");
     }
 
     @Override
