@@ -65,12 +65,17 @@ public class MockNetworkConnection implements NetworkConnection {
         try {
             // Notify popOutbound() that the network thread is now waiting to receive input. This is needed because
             // otherwise it's impossible to tell apart "thread decided to not write any message" from "thread is still
-            // working on it" in a race-free manner.
+            // working on it".
             synchronized (this) {
                 waitingToRead = true;
                 notifyAll();
             }
             Object o = inboundMessageQ.take();
+            // BUG 141: There is a race at this point: inbound queue can be empty at the same time as waitingToRead is
+            // true, which is taken as an indication that all messages have been processed. In fact they have not.
+            synchronized (this) {
+                waitingToRead = false;
+            }
             if (o instanceof IOException) {
                 throw (IOException) o;
             } else if (o instanceof ProtocolException) {
@@ -84,10 +89,6 @@ public class MockNetworkConnection implements NetworkConnection {
             }
         } catch (InterruptedException e) {
             throw new IOException(e.getMessage());
-        } finally {
-            synchronized (this) {
-                waitingToRead = false;
-            }
         }
     }
 
