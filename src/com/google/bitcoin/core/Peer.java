@@ -16,12 +16,17 @@
 
 package com.google.bitcoin.core;
 
+import com.google.bitcoin.store.BlockStore;
+import com.google.bitcoin.store.BlockStoreException;
 import com.google.bitcoin.utils.EventListenerInvoker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.*;
 
 /**
@@ -600,27 +605,31 @@ public class Peer {
         log.info("blockChainDownload({})", toHash.toString());
 
         // TODO: Block locators should be abstracted out rather than special cased here.
-        List<Sha256Hash> blockLocator = new LinkedList<Sha256Hash>();
-        // For now we don't do the exponential thinning as suggested here: 
+        List<Sha256Hash> blockLocator = new ArrayList<Sha256Hash>(51);
+        // For now we don't do the exponential thinning as suggested here:
+        //
         //   https://en.bitcoin.it/wiki/Protocol_specification#getblocks
-        // However, this should be taken seriously going forward. The old implementation only added the hash of the 
-        // genesis block and the current chain head, which randomly led us to halt block fetching when ending on a
-        // chain that turned out not to be the longest. This happened roughly once a week.
-        // Now we add three hashes to the locator:
-        // 1. Hash of genesis block
-        // 2. Hash of the block previous to the chain head
-        // 3. Hash of the chain head
-        // This allows our peer to see that we are on the wrong track if we ended up on the wrong side of a chain fork
-        // if the fork is only one block deep.
-        blockLocator.add(params.genesisBlock.getHash());
-        Block topBlock = blockChain.getChainHead().getHeader();
-        if (!topBlock.equals(params.genesisBlock)) {
-            if (!topBlock.getPrevBlockHash().equals(params.genesisBlock.getHash())){
-                blockLocator.add(0, topBlock.getPrevBlockHash());
+        //
+        // This is because it requires scanning all the block chain headers, which is very slow. Instead we add the top
+        // 50 block headers. If there is a re-org deeper than that, we'll end up downloading the entire chain. We
+        // must always put the genesis block as the first entry.
+        BlockStore store = blockChain.getBlockStore();
+        StoredBlock cursor = blockChain.getChainHead();
+        for (int i = 50; cursor != null && i > 0; i--) {
+            blockLocator.add(cursor.getHeader().getHash());
+            try {
+                cursor = cursor.getPrev(store);
+            } catch (BlockStoreException e) {
+                log.error("Failed to walk the block chain whilst constructing a locator");
+                throw new RuntimeException(e);
             }
-            blockLocator.add(0, topBlock.getHash());
         }
-        // The toHash field is set to zero already by the constructor.
+        // Only add the locator if we didn't already do so. If the chain is < 50 blocks we already reached it.
+        if (cursor != null) {
+            blockLocator.add(params.genesisBlock.getHash());
+        }
+
+        // The toHash field is set to zero already by the constructor. This is how we indicate "never stop".
         
         if (downloadBlockBodies) {
             GetBlocksMessage message = new GetBlocksMessage(params, blockLocator, toHash);

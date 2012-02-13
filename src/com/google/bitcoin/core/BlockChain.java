@@ -119,6 +119,13 @@ public class BlockChain {
     }
 
     /**
+     * Returns the {@link BlockStore} the chain was constructed with. You can use this to iterate over the chain.
+     */
+    public BlockStore getBlockStore() {
+        return blockStore;
+    }
+
+    /**
      * Processes a received block and tries to add it to the chain. If there's something wrong with the block an
      * exception is thrown. If the block is OK but cannot be connected to the chain at this time, returns false.
      * If the block can be connected to the chain, returns true.
