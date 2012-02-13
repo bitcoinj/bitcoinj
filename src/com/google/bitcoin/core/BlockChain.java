@@ -153,6 +153,7 @@ public class BlockChain {
         // We check only the chain head for double adds here to avoid potentially expensive block chain misses.
         if (block.equals(chainHead.getHeader())) {
             // Duplicate add of the block at the top of the chain, can be a natural artifact of the download process.
+            log.debug("Chain head added more than once: {}", block.getHash());
             return true;
         }
 
@@ -187,6 +188,7 @@ public class BlockChain {
             // We can't find the previous block. Probably we are still in the process of downloading the chain and a
             // block was solved whilst we were doing it. We put it to one side and try to connect it later when we
             // have more blocks.
+            assert tryConnecting : "bug in tryConnectingUnconnected";
             log.warn("Block does not connect: {}", block.getHashAsString());
             unconnectedBlocks.add(block);
             return false;
@@ -227,14 +229,24 @@ public class BlockChain {
                 log.info("Block is causing a re-organize");
             } else {
                 StoredBlock splitPoint = findSplit(newStoredBlock, chainHead);
+                if (splitPoint == newStoredBlock) {
+                    // newStoredBlock is a part of the same chain, there's no fork. This happens when we receive a block
+                    // that we already saw and linked into the chain previously, which isn't the chain head.
+                    // Re-processing it is confusing for the wallet so just skip.
+                    log.debug("Saw duplicated block in main chain at height {}: {}",
+                            newStoredBlock.getHeight(), newStoredBlock.getHeader().getHash());
+                    return;
+                }
+                int splitPointHeight = splitPoint != null ? splitPoint.getHeight() : -1;
                 String splitPointHash =
                         splitPoint != null ? splitPoint.getHeader().getHashAsString() : "?";
-                log.info("Block forks the chain at {}, but it did not cause a reorganize:\n{}",
-                        splitPointHash, newStoredBlock);
+                log.info("Block forks the chain at height {}/block {}, but it did not cause a reorganize:\n{}",
+                        new Object[]{splitPointHeight, splitPointHash, newStoredBlock});
             }
 
-            // We may not have any transactions if we received only a header. That never happens today but will in
-            // future when getheaders is used as an optimization.
+            // We may not have any transactions if we received only a header, which can happen during fast catchup.
+            // If we do, send them to the wallet but state that they are on a side chain so it knows not to try and
+            // spend them until they become activated.
             if (newTransactions != null) {
                 sendTransactionsToWallet(newStoredBlock, NewBlockType.SIDE_CHAIN, newTransactions);
             }
@@ -288,7 +300,8 @@ public class BlockChain {
 
     /**
      * Locates the point in the chain at which newStoredBlock and chainHead diverge. Returns null if no split point was
-     * found (ie they are part of the same chain).
+     * found (ie they are not part of the same chain). Returns newChainHead or chainHead if they don't actually diverge
+     * but are part of the same chain.
      */
     private StoredBlock findSplit(StoredBlock newChainHead, StoredBlock chainHead) throws BlockStoreException {
         StoredBlock currentChainCursor = chainHead;
@@ -359,10 +372,12 @@ public class BlockChain {
             Iterator<Block> iter = unconnectedBlocks.iterator();
             while (iter.hasNext()) {
                 Block block = iter.next();
+                log.debug("Trying to connect {}", block.getHash());
                 // Look up the blocks previous.
                 StoredBlock prev = blockStore.get(block.getPrevBlockHash());
                 if (prev == null) {
                     // This is still an unconnected/orphan block.
+                    log.debug("  but it is not connectable right now");
                     continue;
                 }
                 // Otherwise we can connect it now.

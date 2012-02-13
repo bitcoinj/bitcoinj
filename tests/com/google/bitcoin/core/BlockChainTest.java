@@ -18,6 +18,7 @@ package com.google.bitcoin.core;
 
 import com.google.bitcoin.store.BlockStore;
 import com.google.bitcoin.store.MemoryBlockStore;
+import com.google.bitcoin.utils.BriefLogFormatter;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -38,6 +39,7 @@ public class BlockChainTest {
     private BlockStore blockStore;
     private Address coinbaseTo;
     private NetworkParameters unitTestParams;
+    private final StoredBlock[] block = new StoredBlock[1];
 
     private void resetBlockStore() {
         blockStore = new MemoryBlockStore(unitTestParams);
@@ -45,9 +47,16 @@ public class BlockChainTest {
 
     @Before
     public void setUp() throws Exception {
+        BriefLogFormatter.initVerbose();
         testNetChain = new BlockChain(testNet, new Wallet(testNet), new MemoryBlockStore(testNet));
         unitTestParams = NetworkParameters.unitTests();
-        wallet = new Wallet(unitTestParams);
+        wallet = new Wallet(unitTestParams) {
+            @Override
+            public void receiveFromBlock(Transaction tx, StoredBlock block, BlockChain.NewBlockType blockType) throws VerificationException, ScriptException {
+                super.receiveFromBlock(tx, block, blockType);
+                BlockChainTest.this.block[0] = block;
+            }
+        };
         wallet.addKey(new ECKey());
 
         resetBlockStore();
@@ -120,7 +129,7 @@ public class BlockChainTest {
     }
 
     @Test
-    public void testUnconnectedBlocks() throws Exception {
+    public void unconnectedBlocks() throws Exception {
         Block b1 = unitTestParams.genesisBlock.createNextBlock(coinbaseTo);
         Block b2 = b1.createNextBlock(coinbaseTo);
         Block b3 = b2.createNextBlock(coinbaseTo);
@@ -135,7 +144,7 @@ public class BlockChainTest {
     }
 
     @Test
-    public void testDifficultyTransitions() throws Exception {
+    public void difficultyTransitions() throws Exception {
         // Add a bunch of blocks in a loop until we reach a difficulty transition point. The unit test params have an
         // artificially shortened period.
         Block prev = unitTestParams.genesisBlock;
@@ -163,7 +172,7 @@ public class BlockChainTest {
     }
 
     @Test
-    public void testBadDifficulty() throws Exception {
+    public void badDifficulty() throws Exception {
         assertTrue(testNetChain.add(getBlock1()));
         Block b2 = getBlock2();
         assertTrue(testNetChain.add(b2));
@@ -200,6 +209,25 @@ public class BlockChainTest {
         }
 
         // TODO: Test difficulty change is not out of range when a transition period becomes valid.
+    }
+
+    @Test
+    public void duplicates() throws Exception {
+        // Adding a block twice should not have any effect, in particular it should not send the block to the wallet.
+        Block b1 = unitTestParams.genesisBlock.createNextBlock(coinbaseTo);
+        Block b2 = b1.createNextBlock(coinbaseTo);
+        Block b3 = b2.createNextBlock(coinbaseTo);
+        assertTrue(chain.add(b1));
+        assertEquals(b1, block[0].getHeader());
+        assertTrue(chain.add(b2));
+        assertEquals(b2, block[0].getHeader());
+        assertTrue(chain.add(b3));
+        assertEquals(b3, block[0].getHeader());
+        assertEquals(b3, chain.getChainHead().getHeader());
+        assertTrue(chain.add(b2));
+        assertEquals(b3, chain.getChainHead().getHeader());
+        // Wallet was NOT called with the new block because the duplicate add was spotted.
+        assertEquals(b3, block[0].getHeader());
     }
 
     // Some blocks from the test net.
