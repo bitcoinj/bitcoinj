@@ -34,7 +34,7 @@ import java.util.concurrent.Semaphore;
 public class DownloadListener extends AbstractPeerEventListener {
     private int originalBlocksLeft = -1;
     private int lastPercent = 0;
-    Semaphore done = new Semaphore(0);
+    private Semaphore done = new Semaphore(0);
 
     @Override
     public void onChainDownloadStarted(Peer peer, int blocksLeft) {
