@@ -456,7 +456,7 @@ public abstract class Message implements Serializable {
         }
     }
 
-    public class LazyParseException extends RuntimeException {
+    public static class LazyParseException extends RuntimeException {
         private static final long serialVersionUID = 6971943053112975594L;
 
         public LazyParseException(String message, Throwable cause) {
