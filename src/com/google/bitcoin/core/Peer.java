@@ -16,6 +16,7 @@
 
 package com.google.bitcoin.core;
 
+import com.google.bitcoin.utils.EventListenerInvoker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -335,12 +336,17 @@ public class Peer {
         }
     }
 
-    private void invokeOnBlocksDownloaded(Block m) {
-        for (PeerEventListener listener : eventListeners) {
-            synchronized (listener) {
-                listener.onBlocksDownloaded(this, m, getPeerBlockHeightDifference());
+    private void invokeOnBlocksDownloaded(final Block m) {
+        // It is possible for the peer block height difference to be negative when blocks have been solved and broadcast
+        // since the time we first connected to the peer. However, it's weird and unexpected to receive a callback
+        // with negative "blocks left" in this case, so we clamp to zero so the API user doesn't have to think about it.
+        final int blocksLeft = Math.max(0, getPeerBlockHeightDifference());
+        EventListenerInvoker.invoke(eventListeners, new EventListenerInvoker<PeerEventListener>() {
+            @Override
+            public void invoke(PeerEventListener listener) {
+                listener.onBlocksDownloaded(Peer.this, m, blocksLeft);
             }
-        }
+        });
     }
 
     private void processInv(InventoryMessage inv) throws IOException {
@@ -599,7 +605,7 @@ public class Peer {
         //   https://en.bitcoin.it/wiki/Protocol_specification#getblocks
         // However, this should be taken seriously going forward. The old implementation only added the hash of the 
         // genesis block and the current chain head, which randomly led us to halt block fetching when ending on a
-        // chain that turned out not to be the longest. This happened roughly once a week. 
+        // chain that turned out not to be the longest. This happened roughly once a week.
         // Now we add three hashes to the locator:
         // 1. Hash of genesis block
         // 2. Hash of the block previous to the chain head
@@ -658,8 +664,7 @@ public class Peer {
             // node. If that happens it means the user overrode us somewhere.
             throw new RuntimeException("Connected to peer advertising negative chain height.");
         }
-        int blocksToGet = chainHeight - blockChain.getChainHead().getHeight();
-        return blocksToGet;
+        return chainHeight - blockChain.getChainHead().getHeight();
     }
 
     /**
