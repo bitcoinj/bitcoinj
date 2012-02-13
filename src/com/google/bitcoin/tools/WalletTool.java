@@ -25,10 +25,14 @@ import joptsimple.OptionParser;
 import joptsimple.OptionSet;
 import joptsimple.OptionSpec;
 import org.bouncycastle.util.encoders.Hex;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
 import java.math.BigInteger;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.Date;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
@@ -40,15 +44,19 @@ import static joptsimple.util.DateConverter.datePattern;
  * 
  */
 public class WalletTool {
+    private static final Logger log = LoggerFactory.getLogger(WalletTool.class);
+
     private static final String HELP_TEXT =
             "WalletTool: print and manipulate wallets\n\n" +
 
             "Usage:\n" +
             ">>> GENERAL OPTIONS\n" +
+            "  --debuglog           Enables logging from the core library.\n" +
             "  --wallet=<file>      Specifies what wallet file to load and save.\n" +
             "  --chain=<file>       Specifies the name of the file that stores the block chain.\n" +
             "  --force              Overrides any safety checks on the requested action.\n" +
             "  --date               Provide a date in form YYYY/MM/DD to any action that requires one.\n" +
+            "  --peer=1.2.3.4       Use the given IP address for connections instead of peer discovery.\n" +
 
             "\n>>> ACTIONS\n" +
             "  --action=DUMP        Prints the given wallet in textual form to stdout.\n" +
@@ -56,8 +64,8 @@ public class WalletTool {
             "                       Will complain and require --force if the wallet already exists.\n" +
             "  --action=ADD_KEY     Adds a new key to the wallet, either specified or freshly generated.\n" +
             "                       If --date is specified, that's the creation date.\n" +
-            "                       If --privkey is specified, use as a hex encoded private key. " +
-                                   "Don't specify --pubkey in that case, it will be derived automatically.\n" +
+            "                       If --privkey is specified, use as a hex encoded private key.\n" +
+            "                       Don't specify --pubkey in that case, it will be derived automatically.\n" +
             "                       If --pubkey is specified, use as a hex encoded non-compressed public key.\n" +
             "  --action=DELETE_KEY  Removes the key specified by --pubkey or --addr from the wallet.\n" +
             "  --action=SYNC        Sync the wallet with the latest block chain (download new transactions).\n" +
@@ -70,13 +78,15 @@ public class WalletTool {
     private static OptionSpec<Date> dateFlag;
     private static NetworkParameters params;
     private static File walletFile;
+    private static OptionSet options;
 
     public enum ActionEnum {
         DUMP,
         CREATE,
         ADD_KEY,
         DELETE_KEY,
-        SYNC
+        SYNC,
+        RESET
     };
     
     public enum NetworkEnum {
@@ -109,7 +119,8 @@ public class WalletTool {
         parser.accepts("pubkey").withRequiredArg();
         parser.accepts("privkey").withRequiredArg();
         parser.accepts("addr").withRequiredArg();
-        OptionSet options = parser.parse(args);
+        parser.accepts("peer").withRequiredArg();
+        options = parser.parse(args);
         
         if (args.length == 0 || options.hasArgument("help") || options.nonOptionArguments().size() > 0) {
             System.out.println(HELP_TEXT);
@@ -118,6 +129,7 @@ public class WalletTool {
         
         if (options.has("debuglog")) {
             BriefLogFormatter.init();
+            log.info("Starting up ...");
         } else {
             // Disable logspam unless there is a flag.
             LogManager.getLogManager().getLogger("").setLevel(Level.SEVERE);
@@ -164,10 +176,17 @@ public class WalletTool {
         // What should we do?
         switch (action) {
             case DUMP: dumpWallet(wallet); break;
-            case ADD_KEY: addKey(wallet, options); break;
-            case DELETE_KEY: deleteKey(wallet, options); break;
+            case ADD_KEY: addKey(wallet); break;
+            case DELETE_KEY: deleteKey(wallet); break;
             case SYNC: syncChain(wallet, chainFileName); break;
+            case RESET: reset(wallet); break;
         }
+        saveWallet(walletFile, wallet);
+    }
+
+    private static void reset(Wallet wallet) {
+        // Delete the transactions and save. In future, reset the chain head pointer.
+        wallet.clearTransactions(0);
         saveWallet(walletFile, wallet);
     }
 
@@ -177,12 +196,7 @@ public class WalletTool {
             System.out.println("Connecting ..." );
             final BoundedOverheadBlockStore store = new BoundedOverheadBlockStore(params, chainFileName);
             final BlockChain chain = new BlockChain(params, wallet, store);
-            final PeerGroup peers = new PeerGroup(params, chain);
-            peers.setUserAgent("WalletTool", "1.0");
-            peers.addWallet(wallet);
-            peers.addPeerDiscovery(new DnsDiscovery(params));
-            peers.setFastCatchupTimeSecs(wallet.getEarliestKeyCreationTime());
-            
+
             wallet.addEventListener(new AbstractWalletEventListener() {
                 @Override
                 public void onChange() {
@@ -190,9 +204,9 @@ public class WalletTool {
                 }
             });
             
-            final int startTransactions = wallet.getTransactions(true, true).size();
-            
-            peers.start();
+            int startTransactions = wallet.getTransactions(true, true).size();
+
+            PeerGroup peers = connect(wallet, chain);
             DownloadListener listener = new DownloadListener();
             peers.startBlockChainDownload(listener);
             try {
@@ -210,6 +224,26 @@ public class WalletTool {
             System.err.println("Error reading block chain file " + chainFileName + ": " + e.getMessage());
             e.printStackTrace();
         }
+    }
+
+    private static PeerGroup connect(Wallet wallet, BlockChain chain) {
+        PeerGroup peers = new PeerGroup(params, chain);
+        peers.setUserAgent("WalletTool", "1.0");
+        peers.addWallet(wallet);
+        peers.setFastCatchupTimeSecs(wallet.getEarliestKeyCreationTime());
+        if (options.has("peer")) {
+            String peer = (String) options.valueOf("peer");
+            try {
+                peers.addAddress(new PeerAddress(InetAddress.getByName(peer), params.port));
+            } catch (UnknownHostException e) {
+                System.err.println("Could not understand peer domain name/IP address: " + peer + ": " + e.getMessage());
+                System.exit(1);
+            }
+        } else {
+            peers.addPeerDiscovery(new DnsDiscovery(params));
+        }
+        peers.start();
+        return peers;
     }
 
     private static void createWallet(OptionSet options, NetworkParameters params, File walletFile) throws IOException {
@@ -238,7 +272,7 @@ public class WalletTool {
         }
     }
 
-    private static void addKey(Wallet wallet, OptionSet options) {
+    private static void addKey(Wallet wallet) {
         ECKey key;
         long creationTimeSeconds = 0;
         if (options.has(dateFlag)) {
@@ -268,7 +302,7 @@ public class WalletTool {
         System.out.println("addr:" + key.toAddress(params) + " " + key);
     }
 
-    private static void deleteKey(Wallet wallet, OptionSet options) {
+    private static void deleteKey(Wallet wallet) {
         String pubkey = (String) options.valueOf("pubkey");
         String addr = (String) options.valueOf("addr");
         if (pubkey == null && addr == null) {
