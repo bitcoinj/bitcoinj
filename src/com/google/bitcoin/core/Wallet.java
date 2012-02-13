@@ -323,7 +323,7 @@ public class Wallet implements Serializable {
         //   - Send us coins
         //   - Spend our coins
         if (!isTransactionRelevant(tx, true)) {
-            log.info("Received tx that isn't relevant to this wallet, discarding.");
+            log.debug("Received tx that isn't relevant to this wallet, discarding.");
             return;
         }
 
