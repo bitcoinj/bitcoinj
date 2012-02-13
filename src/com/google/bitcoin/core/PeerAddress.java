@@ -80,12 +80,18 @@ public class PeerAddress extends ChildMessage {
         length = protocolVersion > 31402 ? MESSAGE_SIZE : MESSAGE_SIZE - 4;
     }
 
+    /**
+     * Constructs a peer address from the given IP address and port. Protocol version is the default.
+     */
     public PeerAddress(InetAddress addr, int port) {
         this(addr, port, NetworkParameters.PROTOCOL_VERSION);
     }
 
+    /**
+     * Constructs a peer address from the given IP address. Port and protocol version are default for the prodnet.
+     */
     public PeerAddress(InetAddress addr) {
-        this(addr, 0);
+        this(addr, NetworkParameters.prodNet().port);
     }
 
     public PeerAddress(InetSocketAddress addr) {
