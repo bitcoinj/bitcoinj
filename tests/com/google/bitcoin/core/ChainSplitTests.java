@@ -231,8 +231,11 @@ public class ChainSplitTests {
             @Override
             public void onTransactionConfidenceChanged(Wallet wallet, Transaction tx) {
                 super.onTransactionConfidenceChanged(wallet, tx);
-                eventDead[0] = tx;
-                eventReplacement[0] = tx.getConfidence().getOverridingTransaction();
+                if (tx.getConfidence().getConfidenceType() ==
+                        TransactionConfidence.ConfidenceType.OVERRIDDEN_BY_DOUBLE_SPEND) {
+                    eventDead[0] = tx;
+                    eventReplacement[0] = tx.getConfidence().getOverridingTransaction();
+                }
             }
         });
 
