@@ -209,6 +209,8 @@ public class Peer {
                     // properly explore the network.
                 } else if (m instanceof HeadersMessage) {
                     processHeaders((HeadersMessage) m);
+                } else if (m instanceof AlertMessage) {
+                    processAlert((AlertMessage)m);
                 } else {
                     // TODO: Handle the other messages we can receive.
                     log.warn("Received unhandled message: {}", m);
@@ -232,6 +234,14 @@ public class Peer {
         }
 
         disconnect();
+    }
+
+    private void processAlert(AlertMessage m) {
+        if (m.isSignatureValid()) {
+            log.info("Received alert from peer {}: {}", toString(), m.getStatusBar());
+        } else {
+            log.warn("Received alert with invalid signature from peer {}: {}", toString(), m.getStatusBar());
+        }
     }
 
     private void processHeaders(HeadersMessage m) throws IOException, ProtocolException {
