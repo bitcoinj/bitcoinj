@@ -187,8 +187,10 @@ public class ChainSplitTests {
         final boolean[] eventCalled = new boolean[1];
         wallet.addEventListener(new AbstractWalletEventListener() {
             @Override
-            public void onDeadTransaction(Wallet wallet, Transaction deadTx, Transaction replacementTx) {
-                eventCalled[0] = true;
+            public void onTransactionConfidenceChanged(Wallet wallet, Transaction tx) {
+                super.onTransactionConfidenceChanged(wallet, tx);
+                if (tx.getConfidence().getConfidenceType() == TransactionConfidence.ConfidenceType.OVERRIDDEN_BY_DOUBLE_SPEND)
+                    eventCalled[0] = true;
             }
         });
 
@@ -227,9 +229,10 @@ public class ChainSplitTests {
         final Transaction[] eventReplacement = new Transaction[1];
         wallet.addEventListener(new AbstractWalletEventListener() {
             @Override
-            public void onDeadTransaction(Wallet wallet, Transaction deadTx, Transaction replacementTx) {
-                eventDead[0] = deadTx;
-                eventReplacement[0] = replacementTx;
+            public void onTransactionConfidenceChanged(Wallet wallet, Transaction tx) {
+                super.onTransactionConfidenceChanged(wallet, tx);
+                eventDead[0] = tx;
+                eventReplacement[0] = tx.getConfidence().getOverridingTransaction();
             }
         });
 

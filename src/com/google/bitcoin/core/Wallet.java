@@ -339,9 +339,10 @@ public class Wallet implements Serializable {
         // the Peer before we got to this point, but in some cases (unit tests, other sources of transactions) it may
         // have been missed out.
         TransactionConfidence.ConfidenceType currentConfidence = tx.getConfidence().getConfidenceType();
-        assert currentConfidence == TransactionConfidence.ConfidenceType.UNKNOWN ||
-               currentConfidence == TransactionConfidence.ConfidenceType.NOT_SEEN_IN_CHAIN : currentConfidence;
-        tx.getConfidence().setConfidenceType(TransactionConfidence.ConfidenceType.NOT_SEEN_IN_CHAIN);
+        if (currentConfidence == TransactionConfidence.ConfidenceType.UNKNOWN) {
+            tx.getConfidence().setConfidenceType(TransactionConfidence.ConfidenceType.NOT_SEEN_IN_CHAIN);
+            invokeOnTransactionConfidenceChanged(tx);
+        }
 
         BigInteger balance = getBalance();
 
@@ -472,17 +473,14 @@ public class Wallet implements Serializable {
                 pending.put(tx.getHash(), tx);
             }
         } else {
-            // Mark the tx as appearing in this block so we can find it later after a re-org. If this IS a re-org taking
-            // place, this call will let the Transaction update its confidence and timestamp data to reflect the new
-            // best chain, as long as the new best chain blocks are passed to receive() last.
-            if (block != null)
-                tx.setBlockAppearance(block, bestChain);
             // This TX didn't originate with us. It could be sending us coins and also spending our own coins if keys
             // are being shared between different wallets.
             if (sideChain) {
                 log.info("  ->inactive");
                 inactive.put(tx.getHash(), tx);
             } else if (bestChain) {
+                // This can trigger tx confidence listeners to be run in the case of double spends. We may need to
+                // delay the execution of the listeners until the bottom to avoid the wallet mutating during updates.
                 processTxFromBestChain(tx);
             }
         }
@@ -497,6 +495,7 @@ public class Wallet implements Serializable {
         // transaction update its confidence and timestamp bookkeeping data.
         if (block != null) {
             tx.setBlockAppearance(block, bestChain);
+            invokeOnTransactionConfidenceChanged(tx);
         }
 
         // Inform anyone interested that we have received or sent coins but only if:
@@ -508,7 +507,8 @@ public class Wallet implements Serializable {
         //    listeners.
         //
         // TODO: Decide whether to run the event listeners, if a tx confidence listener already modified the wallet.
-        if (!reorg && bestChain && wtx == null) {
+        boolean wasPending = wtx != null;
+        if (!reorg && bestChain && !wasPending) {
             BigInteger newBalance = getBalance();
             if (valueSentToMe.compareTo(BigInteger.ZERO) > 0) {
                 invokeOnCoinsReceived(tx, prevBalance, newBalance);
@@ -556,7 +556,7 @@ public class Wallet implements Serializable {
             dead.put(doubleSpend.getHash(), doubleSpend);
             // Inform the event listeners of the newly dead tx.
             doubleSpend.getConfidence().setOverridingTransaction(tx);
-            invokeOnDeadTransaction(doubleSpend, tx);
+            invokeOnTransactionConfidenceChanged(doubleSpend);
         }
     }
 
@@ -610,13 +610,9 @@ public class Wallet implements Serializable {
                         dead.put(connected.getHash(), connected);
                         // Now forcibly change the connection.
                         input.connect(unspent, true);
-                        // Inform the event listeners of the newly dead tx.
+                        // Inform the [tx] event listeners of the newly dead tx. This sets confidence type also.
                         connected.getConfidence().setOverridingTransaction(tx);
-                        for (WalletEventListener listener : eventListeners) {
-                            synchronized (listener) {
-                                listener.onDeadTransaction(this, connected, tx);
-                            }
-                        }
+                        invokeOnTransactionConfidenceChanged(connected);
                     }
                 } else {
                     // A pending transaction that tried to double spend our coins - we log and ignore it, because either
@@ -1426,15 +1422,13 @@ public class Wallet implements Serializable {
 
         log.info("post-reorg balance is {}", Utils.bitcoinValueToFriendlyString(getBalance()));
 
-        // Inform event listeners that a re-org took place.
-        for (WalletEventListener l : eventListeners) {
-            // Synchronize on the event listener as well. This allows a single listener to handle events from
-            // multiple wallets without needing to worry about being thread safe.
-            synchronized (l) {
-                l.onReorganize(this);
+        // Inform event listeners that a re-org took place. They should save the wallet at this point.
+        EventListenerInvoker.invoke(eventListeners, new EventListenerInvoker<WalletEventListener>() {
+            @Override
+            public void invoke(WalletEventListener listener) {
+                listener.onReorganize(Wallet.this);
             }
-        }
-        
+        });
         assert isConsistent();
     }
 
@@ -1464,7 +1458,9 @@ public class Wallet implements Serializable {
                 Transaction replacement = doubleSpent.getSpentBy().getParentTransaction();
                 dead.put(tx.getHash(), tx);
                 pending.remove(tx.getHash());
-                invokeOnDeadTransaction(tx, replacement);
+                // This updates the tx confidence type automatically.
+                tx.getConfidence().setOverridingTransaction(replacement);
+                invokeOnTransactionConfidenceChanged(tx);
                 break;
             }
         }
@@ -1481,18 +1477,15 @@ public class Wallet implements Serializable {
         }
     }
 
-    private void invokeOnDeadTransaction(Transaction tx, Transaction replacement) {
-        for (int i = 0; i < eventListeners.size(); i++) {
-            WalletEventListener listener = eventListeners.get(i);
-            synchronized (listener) {
-                listener.onDeadTransaction(this, tx, replacement);
+    private void invokeOnTransactionConfidenceChanged(final Transaction tx) {
+        EventListenerInvoker.invoke(eventListeners, new EventListenerInvoker<WalletEventListener>() {
+            @Override
+            public void invoke(WalletEventListener listener) {
+                listener.onTransactionConfidenceChanged(Wallet.this, tx);
             }
-            if (eventListeners.get(i) != listener) {
-                // Listener removed itself.
-                i--;
-            }
-        }
+        });
     }
+
 
     /**
      * Returns an immutable view of the transactions currently waiting for network confirmations.

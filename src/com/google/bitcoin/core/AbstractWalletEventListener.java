@@ -76,18 +76,18 @@ public abstract class AbstractWalletEventListener implements WalletEventListener
     }
 
     /**
-     * This is called on a Peer thread when a transaction becomes <i>dead</i>. A dead transaction is one that has
-     * been overridden by a double spend from the network and so will never confirm no matter how long you wait.<p>
+     * Called on a Peer thread when a transaction changes its confidence level. You can also attach event listeners to
+     * the individual transactions, if you don't care about all of them. Usually you would save the wallet to disk after
+     * receiving this callback.<p>
      *
-     * A dead transaction can occur if somebody is attacking the network, or by accident if keys are being shared.
-     * You can use this event handler to inform the user of the situation. A dead spend will show up in the BitCoin
-     * C++ client of the recipient as 0/unconfirmed forever, so if it was used to purchase something,
-     * the user needs to know their goods will never arrive.
+     * You should pay attention to this callback in case a transaction becomes <i>dead</i>, that is, somebody
+     * successfully executed a double spend against you. This is a (very!) rare situation but the user should be
+     * notified that money they thought they had, was taken away from them.<p>
      *
-     * @param deadTx        The transaction that is newly dead.
-     * @param replacementTx The transaction that killed it.
+     * @param wallet
+     * @param tx
      */
-    public void onDeadTransaction(Wallet wallet, Transaction deadTx, Transaction replacementTx) {
+    public void onTransactionConfidenceChanged(Wallet wallet, Transaction tx) {
         onChange();
     }
 

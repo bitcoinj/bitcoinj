@@ -310,9 +310,13 @@ public class WalletTest {
         final Transaction[] eventReplacement = new Transaction[1];
         wallet.addEventListener(new AbstractWalletEventListener() {
             @Override
-            public void onDeadTransaction(Wallet wallet, Transaction deadTx, Transaction replacementTx) {
-                eventDead[0] = deadTx;
-                eventReplacement[0] = replacementTx;
+            public void onTransactionConfidenceChanged(Wallet wallet, Transaction tx) {
+                super.onTransactionConfidenceChanged(wallet, tx);
+                if (tx.getConfidence().getConfidenceType() ==
+                        TransactionConfidence.ConfidenceType.OVERRIDDEN_BY_DOUBLE_SPEND) {
+                    eventDead[0] = tx;
+                    eventReplacement[0] = tx.getConfidence().getOverridingTransaction();
+                }
             }
         });
 
@@ -474,9 +478,14 @@ public class WalletTest {
                 called[0] = tx;
             }
 
-            public void onDeadTransaction(Wallet wallet, Transaction deadTx, Transaction replacementTx) {
-                called[0] = deadTx;
-                called[1] = replacementTx;
+            @Override
+            public void onTransactionConfidenceChanged(Wallet wallet, Transaction tx) {
+                super.onTransactionConfidenceChanged(wallet, tx);
+                if (tx.getConfidence().getConfidenceType() == 
+                        TransactionConfidence.ConfidenceType.OVERRIDDEN_BY_DOUBLE_SPEND) {
+                    called[0] = tx;
+                    called[1] = tx.getConfidence().getOverridingTransaction();
+                }
             }
         });
 

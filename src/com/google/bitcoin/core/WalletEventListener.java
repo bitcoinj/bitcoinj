@@ -75,17 +75,28 @@ public interface WalletEventListener {
      */
     void onReorganize(Wallet wallet);
 
+    // TODO: Flesh out the docs below some more to clarify what happens during re-orgs and other edge cases.
     /**
-     * This is called on a Peer thread when a transaction becomes <i>dead</i>. A dead transaction is one that has
-     * been overridden by a double spend from the network and so will never confirm no matter how long you wait.<p>
-     * <p/>
-     * A dead transaction can occur if somebody is attacking the network, or by accident if keys are being shared.
-     * You can use this event handler to inform the user of the situation. A dead spend will show up in the BitCoin
-     * C++ client of the recipient as 0/unconfirmed forever, so if it was used to purchase something,
-     * the user needs to know their goods will never arrive.
+     * Called on a Peer thread when a transaction changes its confidence level. You can also attach event listeners to
+     * the individual transactions, if you don't care about all of them. Usually you would save the wallet to disk after
+     * receiving this callback.<p>
      *
-     * @param deadTx        The transaction that is newly dead.
-     * @param replacementTx The transaction that killed it.
+     * You should pay attention to this callback in case a transaction becomes <i>dead</i>, that is, a transaction you
+     * believed to be active (send or receive) becomes overridden by the network. This can happen if<p>
+     *
+     * <ol>
+     *     <li>You are sharing keys between wallets and accidentally create/broadcast a double spend.</li>
+     *     <li>Somebody is attacking the network and reversing transactions, ie, the user is a victim of fraud.</li>
+     *     <li>A bug: for example you create a transaction, broadcast it but fail to commit it. The {@link Wallet}
+     *     will then re-use the same outputs when creating the next spend.</li>
+     * </ol><p>
+     *
+     * To find if the transaction is dead, you can use <tt>tx.getConfidence().getConfidenceType() ==
+     * TransactionConfidence.ConfidenceType.OVERRIDDEN_BY_DOUBLE_SPEND</tt>. If it is, you should notify the user
+     * in some way so they know the thing they bought may not arrive/the thing they sold should not be dispatched.
+     *
+     * @param wallet
+     * @param tx
      */
-    void onDeadTransaction(Wallet wallet, Transaction deadTx, Transaction replacementTx);
+    void onTransactionConfidenceChanged(Wallet wallet, Transaction tx);
 }
