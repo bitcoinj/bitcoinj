@@ -223,9 +223,11 @@ public class WalletTest {
         // Pretend it makes it into the block chain, our wallet state is cleared but we still have the keys, and we
         // want to get back to our previous state. We can do this by just not confirming the transaction as
         // createSend is stateless.
+        txn[0] = txn[1] = null;
         StoredBlock b2 = createFakeBlock(params, blockStore, send1).storedBlock;
         wallet.receiveFromBlock(send1, b2, BlockChain.NewBlockType.BEST_CHAIN);
         assertEquals(bitcoinValueToFriendlyString(wallet.getBalance()), "0.90");
+        assertEquals(null, txn[0]);
         assertEquals(txn[1].getHash(), send1.getHash());
         assertEquals(bitcoinValueToFriendlyString(bigints[2]), "1.00");
         assertEquals(bitcoinValueToFriendlyString(bigints[3]), "0.90");

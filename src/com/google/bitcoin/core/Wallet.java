@@ -510,10 +510,15 @@ public class Wallet implements Serializable {
         boolean wasPending = wtx != null;
         if (!reorg && bestChain && !wasPending) {
             BigInteger newBalance = getBalance();
-            if (valueSentToMe.compareTo(BigInteger.ZERO) > 0) {
+            int diff = valueDifference.compareTo(BigInteger.ZERO);
+            // We pick one callback based on the value difference, though a tx can of course both send and receive
+            // coins from the wallet.
+            if (diff > 0) {
                 invokeOnCoinsReceived(tx, prevBalance, newBalance);
-            }
-            if (valueSentFromMe.compareTo(BigInteger.ZERO) > 0) {
+            } else if (diff == 0) {
+                // Hack. Invoke onCoinsSent in order to let the client save the wallet. This needs to go away.
+                invokeOnCoinsSent(tx, prevBalance, newBalance);
+            } else {
                 invokeOnCoinsSent(tx, prevBalance, newBalance);
             }
         }
