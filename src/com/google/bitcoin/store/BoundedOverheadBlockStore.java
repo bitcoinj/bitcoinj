@@ -27,6 +27,7 @@ import java.io.RandomAccessFile;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -263,12 +264,18 @@ public class BoundedOverheadBlockStore implements BlockStore {
         // Use our own file pointer within the tight loop as updating channel positions is really expensive.
         long pos = startPos;
         Record record = new Record();
+        int numMoves = 0;
+        long startTime = new Date().getTime();
         do {
             if (!record.read(channel, pos, buf))
                 throw new IOException("Failed to read buffer");
             if (record.getHeader(params).getHash().equals(hash)) {
                 // Found it. Update file position for next time.
                 channel.position(pos);
+                long endTime = new Date().getTime();
+                if (endTime - startTime > 100) {
+                    log.info("Spent {} seconds doing {} backwards seeks", (endTime - startTime) / 1000.0, numMoves);
+                }
                 return record;
             }
             // Did not find it.
@@ -280,13 +287,19 @@ public class BoundedOverheadBlockStore implements BlockStore {
                 pos = pos - Record.SIZE;
                 assert pos >= 1 + 32 : pos;
             }
+            numMoves++;
         } while (pos != startPos);
         // Was never stored.
         channel.position(pos);
+        long endTime = new Date().getTime();
+        if (endTime - startTime > 1000) {
+            log.info("Spent {} seconds doing {} backwards seeks", (endTime - startTime) / 1000.0, numMoves);
+        }
         return null;
     }
 
     public synchronized StoredBlock getChainHead() throws BlockStoreException {
+        // This will hit the cache
         StoredBlock head = get(chainHead);
         if (head == null)
             throw new BlockStoreException("Corrupted block store: chain head not found");
