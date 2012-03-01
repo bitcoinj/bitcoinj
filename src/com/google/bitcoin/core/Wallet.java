@@ -1230,25 +1230,42 @@ public class Wallet implements Serializable {
         // Print the transactions themselves
         if (unspent.size() > 0) {
             builder.append("\nUNSPENT:\n");
-            for (Transaction tx : unspent.values()) builder.append(tx);
+            toStringHelper(builder, unspent);
         }
         if (spent.size() > 0) {
             builder.append("\nSPENT:\n");
-            for (Transaction tx : spent.values()) builder.append(tx);
+            toStringHelper(builder, spent);
         }
         if (pending.size() > 0) {
             builder.append("\nPENDING:\n");
-            for (Transaction tx : pending.values()) builder.append(tx);
+            toStringHelper(builder, pending);
         }
         if (inactive.size() > 0) {
             builder.append("\nINACTIVE:\n");
-            for (Transaction tx : inactive.values()) builder.append(tx);
+            toStringHelper(builder, inactive);
         }
         if (dead.size() > 0) {
             builder.append("\nDEAD:\n");
-            for (Transaction tx : dead.values()) builder.append(tx);
+            toStringHelper(builder, dead);
         }
         return builder.toString();
+    }
+
+    private void toStringHelper(StringBuilder builder, Map<Sha256Hash, Transaction> transactionMap) {
+        for (Transaction tx : transactionMap.values()) {
+            try {
+                builder.append("Sends ");
+                builder.append(Utils.bitcoinValueToFriendlyString(tx.getValueSentFromMe(this)));
+                builder.append(" and receives ");
+                builder.append(Utils.bitcoinValueToFriendlyString(tx.getValueSentToMe(this)));
+                builder.append(", total value ");
+                builder.append(Utils.bitcoinValueToFriendlyString(tx.getValue(this)));
+                builder.append(".\n");
+            } catch (ScriptException e) {
+                // Ignore and don't print this line.
+            }
+            builder.append(tx);
+        }
     }
 
     /**
