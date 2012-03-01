@@ -251,6 +251,7 @@ public class WalletTest {
         // Reserialize.
         Transaction send2 = new Transaction(params, send1.bitcoinSerialize());
         assertEquals(nanos, send2.getValueSentFromMe(wallet));
+        assertEquals(BigInteger.ZERO.subtract(toNanoCoins(0, 10)), send2.getValue(wallet));
     }
 
     @Test

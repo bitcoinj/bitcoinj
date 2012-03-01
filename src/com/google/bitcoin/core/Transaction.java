@@ -288,6 +288,13 @@ public class Transaction extends ChildMessage implements Serializable {
         return v;
     }
 
+    /**
+     * Returns the difference of {@link Transaction#getValueSentFromMe(Wallet)} and {@link Transaction#getValueSentToMe(Wallet)}.
+     */
+    public BigInteger getValue(Wallet wallet) throws ScriptException {
+        return getValueSentToMe(wallet).subtract(getValueSentFromMe(wallet));
+    }
+
     boolean disconnectInputs() {
         boolean disconnected = false;
         maybeParse();
