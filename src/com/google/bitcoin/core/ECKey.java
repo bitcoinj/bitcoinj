@@ -181,11 +181,17 @@ public class ECKey implements Serializable {
     public String toString() {
         StringBuffer b = new StringBuffer();
         b.append("pub:").append(Utils.bytesToHexString(pub));
-        if (priv != null) {
-            b.append(" priv:").append(Utils.bytesToHexString(priv.toByteArray()));
-        }
         if (creationTimeSeconds != 0) {
             b.append(" timestamp:" + creationTimeSeconds);
+        }
+        return b.toString();
+    }
+
+    public String toStringWithPrivate() {
+        StringBuffer b = new StringBuffer();
+        b.append(toString());
+        if (priv != null) {
+            b.append(" priv:").append(Utils.bytesToHexString(priv.toByteArray()));
         }
         return b.toString();
     }
