@@ -248,12 +248,6 @@ public class ToyWallet {
                     // between confidence states.
                     int txIndex = transactions.indexOf(tx);
                     fireContentsChanged(this, txIndex, txIndex);
-                    // Confidences may have changed.
-                    try {
-                        wallet.saveToFile(walletFile);
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
                 }
             });
             fireIntervalAdded(this, transactions.size() - 1, transactions.size() - 1);
