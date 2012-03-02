@@ -19,6 +19,7 @@ package com.google.bitcoin.core;
 
 import com.google.bitcoin.discovery.PeerDiscovery;
 import com.google.bitcoin.discovery.PeerDiscoveryException;
+import com.google.bitcoin.utils.EventListenerInvoker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -379,6 +380,10 @@ public class PeerGroup {
         return peers.size();
     }
 
+    public synchronized boolean isRunning() {
+        return running;
+    }
+
     /**
      * Performs various tasks for the peer group: connects to new nodes to keep the currently connected node count at
      * the right level, runs peer discovery if we run out, and broadcasts transactions that were submitted via
@@ -394,7 +399,7 @@ public class PeerGroup {
 
         public void run() {
             try {
-                while (running) {
+                while (isRunning()) {
                     // Modify the peer group under its lock, always.
                     int numPeers;
                     
@@ -619,7 +624,7 @@ public class PeerGroup {
         }
     }
 
-    protected synchronized void handleNewPeer(Peer peer) {
+    protected synchronized void handleNewPeer(final Peer peer) {
         log.info("Handling new {}", peer);
         // If we want to download the chain, and we aren't currently doing so, do so now.
         if (downloadListener != null && downloadPeer == null) {
@@ -635,13 +640,12 @@ public class PeerGroup {
         // which are relevant to us, and which we therefore wish to help propagate (ie they send us coins).
         peer.addEventListener(getDataListener);
         announcePendingWalletTransactions(wallets, Collections.singleton(peer));
-        synchronized (peerEventListeners) {
-            for (PeerEventListener listener : peerEventListeners) {
-                synchronized (listener) {
-                    listener.onPeerConnected(peer, peers.size());
-                }
+        EventListenerInvoker.invoke(peerEventListeners, new EventListenerInvoker<PeerEventListener>() {
+            @Override
+            public void invoke(PeerEventListener listener) {
+                listener.onPeerConnected(peer, peers.size());
             }
-        }
+        });
     }
 
     /** Returns true if at least one peer received an inv. */
@@ -700,7 +704,7 @@ public class PeerGroup {
         }
     }
 
-    protected synchronized void handlePeerDeath(Peer peer) {
+    protected synchronized void handlePeerDeath(final Peer peer) {
         assert !peers.contains(peer);
         if (peer == downloadPeer) {
             log.info("Download peer died. Picking a new one.");
@@ -717,13 +721,12 @@ public class PeerGroup {
             }
         }
         peer.removeEventListener(getDataListener);
-        synchronized (peerEventListeners) {
-            for (PeerEventListener listener : peerEventListeners) {
-                synchronized (listener) {
-                    listener.onPeerDisconnected(peer, peers.size());
-                }
+        EventListenerInvoker.invoke(peerEventListeners, new EventListenerInvoker<PeerEventListener>() {
+            @Override
+            public void invoke(PeerEventListener listener) {
+                listener.onPeerDisconnected(peer, peers.size());
             }
-        }
+        });
     }
 
     private synchronized void startBlockChainDownloadFromPeer(Peer peer) {
