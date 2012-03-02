@@ -121,7 +121,7 @@ public class PeerGroup {
         // peerEventListeners get a subset of events seen by the group. We add our own internal listener to this so
         // when we download a transaction, we can distribute it to each Peer in the pool so they can update the
         // transactions confidence level if they've seen it be announced/when they see it be announced.
-        peerEventListeners = Collections.synchronizedList(new ArrayList<PeerEventListener>());
+        peerEventListeners = new ArrayList<PeerEventListener>();
         addEventListener(new AbstractPeerEventListener() {
             @Override
             public void onTransaction(Peer peer, Transaction t) {
@@ -224,13 +224,13 @@ public class PeerGroup {
      * <p>The listener will be locked during callback execution, which in turn will cause network message processing
      * to stop until the listener returns.</p>
      */
-    public void addEventListener(PeerEventListener listener) {
+    public synchronized void addEventListener(PeerEventListener listener) {
         assert listener != null;
         peerEventListeners.add(listener);
     }
 
     /** The given event listener will no longer be called with events. */
-    public boolean removeEventListener(PeerEventListener listener) {
+    public synchronized boolean removeEventListener(PeerEventListener listener) {
         return peerEventListeners.remove(listener);
     }
 
@@ -569,7 +569,7 @@ public class PeerGroup {
                         needHandleDeath = peers.remove(peer);
                     }
                     
-                    // This is unsynchronized since it can take awhile
+                    // This is unsynchronized since it can take a while.
                     if (needHandleDeath)
                         handlePeerDeath(peer);
 
