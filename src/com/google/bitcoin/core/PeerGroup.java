@@ -476,7 +476,7 @@ public class PeerGroup {
             PeerAddress address = inactives.take();
             while (true) {
                 try {
-                    VersionMessage ver = versionMessage.duplicate();
+                    VersionMessage ver = getVersionMessage().duplicate();
                     ver.bestHeight = chain.getBestChainHeight();
                     ver.time = Utils.now().getTime() / 1000;
                     Peer peer = new Peer(params, address, chain, ver);
