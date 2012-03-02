@@ -39,13 +39,15 @@ public abstract class EventListenerInvoker<E> {
     
     public static <E> void invoke(List<E> listeners,
                                   EventListenerInvoker<E> invoker) {
-        for (int i = 0; i < listeners.size(); i++) {
-            E l = listeners.get(i);
-            synchronized (l) {
-                invoker.invoke(l);
-            }
-            if (listeners.get(i) != l) {
-                i--;  // Listener removed itself.
+        synchronized (listeners) {
+            for (int i = 0; i < listeners.size(); i++) {
+                E l = listeners.get(i);
+                synchronized (l) {
+                    invoker.invoke(l);
+                }
+                if (listeners.get(i) != l) {
+                    i--;  // Listener removed itself.
+                }
             }
         }
     }
