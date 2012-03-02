@@ -395,6 +395,9 @@ public class PeerGroup {
         public PeerGroupThread() {
             super("Peer group thread");
             tasks = new LinkedBlockingQueue<FutureTask>();
+            // Ensure we don't fight with UI threads.
+            setPriority(Math.max(Thread.MIN_PRIORITY, Thread.currentThread().getPriority() - 1));
+            setDaemon(true);
         }
 
         public void run() {
