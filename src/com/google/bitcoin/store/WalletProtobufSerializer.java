@@ -100,7 +100,7 @@ public class WalletProtobufSerializer {
         for (ECKey key : wallet.getKeys()) {
             walletBuilder.addKey(
                     Protos.Key.newBuilder()
-                        // .setCreationTimestamp() TODO
+                        .setCreationTimestamp(key.getCreationTimeSeconds() * 1000)
                         // .setLabel() TODO
                         .setType(Protos.Key.Type.ORIGINAL)
                         .setPrivateKey(ByteString.copyFrom(key.getPrivKeyBytes()))
@@ -231,7 +231,9 @@ public class WalletProtobufSerializer {
             }
             
             byte[] pubKey = keyProto.hasPublicKey() ? keyProto.getPublicKey().toByteArray() : null;
-            wallet.addKey(new ECKey(keyProto.getPrivateKey().toByteArray(), pubKey));
+            ECKey ecKey = new ECKey(keyProto.getPrivateKey().toByteArray(), pubKey);
+            ecKey.setCreationTimeSeconds((keyProto.getCreationTimestamp() + 500) / 1000);
+            wallet.addKey(ecKey);
         }
         
         // Read all transactions and create outputs

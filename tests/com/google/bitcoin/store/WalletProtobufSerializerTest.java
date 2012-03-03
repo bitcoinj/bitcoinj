@@ -32,6 +32,7 @@ public class WalletProtobufSerializerTest {
     @Before
     public void setUp() throws Exception {
         myKey = new ECKey();
+        myKey.setCreationTimeSeconds(123456789L);
         myAddress = myKey.toAddress(params);
         wallet = new Wallet(params);
         wallet.addKey(myKey);
@@ -49,11 +50,16 @@ public class WalletProtobufSerializerTest {
         wallet.receiveFromBlock(t1, null, BlockChain.NewBlockType.BEST_CHAIN);
         
         wallet1 = roundTrip(wallet);
-        assertArrayEquals(myKey.getPubKey(), wallet1.findKeyFromPubHash(myKey.getPubKeyHash()).getPubKey());
-        assertArrayEquals(myKey.getPrivKeyBytes(), wallet1.findKeyFromPubHash(myKey.getPubKeyHash()).getPrivKeyBytes());
+        assertArrayEquals(myKey.getPubKey(),
+                wallet1.findKeyFromPubHash(myKey.getPubKeyHash()).getPubKey());
+        assertArrayEquals(myKey.getPrivKeyBytes(),
+                wallet1.findKeyFromPubHash(myKey.getPubKeyHash()).getPrivKeyBytes());
+        assertEquals(myKey.getCreationTimeSeconds(),
+                wallet1.findKeyFromPubHash(myKey.getPubKeyHash()).getCreationTimeSeconds());
         assertEquals(1, wallet1.getTransactions(true, true).size());
         assertEquals(v1, wallet1.getBalance());
-        assertArrayEquals(t1.bitcoinSerialize(),wallet1.getTransaction(t1.getHash()).bitcoinSerialize());
+        assertArrayEquals(t1.bitcoinSerialize(),
+                wallet1.getTransaction(t1.getHash()).bitcoinSerialize());
         
         Protos.Wallet walletProto = WalletProtobufSerializer.walletToProto(wallet);
         assertEquals(Protos.Key.Type.ORIGINAL, walletProto.getKey(0).getType());
