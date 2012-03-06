@@ -688,6 +688,8 @@ public class Peer {
 
     /**
      * Terminates the network connection and stops the message handling loop.
+     * 
+     * <p>This does not wait for the loop to terminate.
      */
     public synchronized void disconnect() {
         running = false;

@@ -115,8 +115,8 @@ public class PeerGroupTest extends TestWithNetworkConnections {
         peerGroup.addPeer(p2);
         
         // Check the peer accessors.
-        assertEquals(2, peerGroup.numPeers());
-        Set<Peer> tmp = new HashSet<Peer>(peerGroup.getPeers());
+        assertEquals(2, peerGroup.numConnectedPeers());
+        Set<Peer> tmp = new HashSet<Peer>(peerGroup.getConnectedPeers());
         Set<Peer> expectedPeers = new HashSet<Peer>();
         expectedPeers.add(p1);
         expectedPeers.add(p2);
@@ -145,7 +145,7 @@ public class PeerGroupTest extends TestWithNetworkConnections {
         peerGroup.start();
         peerGroup.addPeer(p1);
         peerGroup.addPeer(p2);
-        assertEquals(2, peerGroup.numPeers());
+        assertEquals(2, peerGroup.numConnectedPeers());
 
         // Set up a little block chain. We heard about b1 but not b2 (it is pending download). b3 is solved whilst we
         // are downloading the chain.

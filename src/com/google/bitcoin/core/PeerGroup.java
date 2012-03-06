@@ -271,20 +271,12 @@ public class PeerGroup {
     
     /**
      * Returns a newly allocated list containing the currently connected peers. If all you care about is the count,
-     * use numPeers().
+     * use numConnectedPeers().
      */
-    public synchronized List<Peer> getPeers() {
+    public synchronized List<Peer> getConnectedPeers() {
         ArrayList<Peer> result = new ArrayList<Peer>(peers.size());
         result.addAll(peers);
         return result;
-    }
-
-    /**
-     * Returns the number of currently connected peers. To be informed when this count changes, register a 
-     * {@link PeerEventListener} and use the onPeerConnected/onPeerDisconnected methods.
-     */
-    public synchronized int numPeers() {
-        return peers.size();
     }
 
     /**
@@ -312,10 +304,12 @@ public class PeerGroup {
     }
 
     /**
-     * Stop this PeerGroup.<p>
+     * Stop this PeerGroup.
      *
-     * The peer group will be asynchronously shut down.  After it is shut down all peers will be disconnected and no
-     * threads will be running.
+     * <p>The peer group will be asynchronously shut down.  Some time after it is shut down all peers
+     * will be disconnected and no threads will be running.
+     * 
+     * <p>It is an error to call any other method on PeerGroup after calling this one.
      */
     public synchronized void stop() {
         if (running) {
@@ -375,9 +369,14 @@ public class PeerGroup {
         removeEventListener(wallet.getPeerEventListener());
     }
 
-    /** Returns how many remote nodes this peer group is connected to. */
-    public int numConnectedPeers() {
-        return peers.size();
+    /**
+     * Returns the number of currently connected peers. To be informed when this count changes, register a 
+     * {@link PeerEventListener} and use the onPeerConnected/onPeerDisconnected methods.
+     */
+    public synchronized int numConnectedPeers() {
+        synchronized (peers) {
+            return peers.size();
+        }
     }
 
     public synchronized boolean isRunning() {
@@ -434,6 +433,9 @@ public class PeerGroup {
                 }
             } catch (InterruptedException ex) {
             }
+            
+            // We were asked to stop.  Reset running flag and disconnect all peers.  Peers could
+            // still linger until their event loop is scheduled.
             synchronized (PeerGroup.this) {
                 running = false;
                 peerPool.shutdown();
@@ -708,6 +710,10 @@ public class PeerGroup {
     }
 
     protected synchronized void handlePeerDeath(final Peer peer) {
+        if (!isRunning()) {
+            log.info("Peer death while shutting down");
+            return;
+        }
         assert !peers.contains(peer);
         if (peer == downloadPeer) {
             log.info("Download peer died. Picking a new one.");
