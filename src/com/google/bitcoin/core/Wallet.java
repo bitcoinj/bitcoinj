@@ -344,19 +344,12 @@ public class Wallet implements Serializable {
             invokeOnTransactionConfidenceChanged(tx);
         }
 
-        BigInteger balance = getBalance();
-
         // If this tx spends any of our unspent outputs, mark them as spent now, then add to the pending pool. This
         // ensures that if some other client that has our keys broadcasts a spend we stay in sync. Also updates the
-        // timestamp on the transaction.
+        // timestamp on the transaction and runs event listeners.
+        //
+        // Note that after we return from this function, the wallet may have been modified.
         commitTx(tx);
-
-        // Event listeners may re-enter so we cannot make assumptions about wallet state after this loop completes.
-        BigInteger newBalance = balance.add(valueSentToMe).subtract(valueSentFromMe);
-        if (valueSentToMe.compareTo(BigInteger.ZERO) > 0)
-            invokeOnCoinsReceived(tx, balance, newBalance);
-        if (valueSentFromMe.compareTo(BigInteger.ZERO) > 0)
-            invokeOnCoinsSent(tx, balance, newBalance);
     }
 
     // Boilerplate that allows event listeners to delete themselves during execution, and auto locks the listener.
@@ -675,18 +668,18 @@ public class Wallet implements Serializable {
     }
 
     /**
-     * Updates the wallet with the given transaction: puts it into the pending pool and sets the spent flags. Used in
-     * two situations:<p>
+     * Updates the wallet with the given transaction: puts it into the pending pool, sets the spent flags and runs
+     * the onCoinsSent/onCoinsReceived event listener. Used in two situations:<p>
      *
      * <ol>
      *     <li>When we have just successfully transmitted the tx we created to the network.</li>
-     *     <li>When we receive a pending transaction that didn't appear in the chain yet,
-     *         and we did not create it, and it spends some of our outputs.</li>
+     *     <li>When we receive a pending transaction that didn't appear in the chain yet, and we did not create it.</li>
      * </ol>
      */
     public synchronized void commitTx(Transaction tx) throws VerificationException {
         assert !pending.containsKey(tx.getHash()) : "commitTx called on the same transaction twice";
         log.info("commitTx of {}", tx.getHashAsString());
+        BigInteger balance = getBalance();
         tx.updatedAt = Utils.now();
         // Mark the outputs we're spending as spent so we won't try and use them in future creations. This will also
         // move any transactions that are now fully spent to the spent map so we can skip them when creating future
@@ -695,7 +688,21 @@ public class Wallet implements Serializable {
         // Add to the pending pool. It'll be moved out once we receive this transaction on the best chain.
         log.info("->pending: {}", tx.getHashAsString());
         pending.put(tx.getHash(), tx);
-        
+
+        // Event listeners may re-enter so we cannot make assumptions about wallet state after this loop completes.
+        try {
+            BigInteger valueSentFromMe = tx.getValueSentFromMe(this);
+            BigInteger valueSentToMe = tx.getValueSentToMe(this);
+            BigInteger newBalance = balance.add(valueSentToMe).subtract(valueSentFromMe);
+            if (valueSentToMe.compareTo(BigInteger.ZERO) > 0)
+                invokeOnCoinsReceived(tx, balance, newBalance);
+            if (valueSentFromMe.compareTo(BigInteger.ZERO) > 0)
+                invokeOnCoinsSent(tx, balance, newBalance);
+        } catch (ScriptException e) {
+            // Cannot happen as we just created this transaction ourselves.
+            throw new RuntimeException(e);
+        }
+
         assert isConsistent();
     }
 

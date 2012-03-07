@@ -80,10 +80,19 @@ public class WalletTest {
 
         // We have NOT proven that the signature is correct!
 
+        final Transaction[] txns = new Transaction[1];
+        wallet.addEventListener(new AbstractWalletEventListener() {
+            @Override
+            public void onCoinsSent(Wallet wallet, Transaction tx, BigInteger prevBalance, BigInteger newBalance) {
+                assertNull(txns[0]);
+                txns[0] = tx;
+            }
+        });
         wallet.commitTx(t2);
         assertEquals(1, wallet.getPoolSize(WalletTransaction.Pool.PENDING));
         assertEquals(1, wallet.getPoolSize(WalletTransaction.Pool.SPENT));
         assertEquals(2, wallet.getPoolSize(WalletTransaction.Pool.ALL));
+        assertEquals(t2, txns[0]);
     }
 
     @Test
