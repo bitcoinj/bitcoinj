@@ -92,7 +92,7 @@ public class VersionMessage extends Message {
         } catch (UnknownHostException e) {
             throw new RuntimeException(e);  // Cannot happen (illegal IP length).
         }
-        subVer = "/BitCoinJ:0.4-SNAPSHOT/";
+        subVer = "/BitCoinJ:0.4/";
         bestHeight = newBestHeight;
 
         length = 84;

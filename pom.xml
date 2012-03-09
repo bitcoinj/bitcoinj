@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.google</groupId>
   <artifactId>bitcoinj</artifactId>
-  <version>0.4-SNAPSHOT</version>
+  <version>0.4</version>
   <name>BitCoinJ</name>
   <description>A Java implementation of a Bitcoin client-only node</description>
   <url>http://code.google.com/p/bitcoinj</url>
@@ -31,10 +31,6 @@
     <developer>
       <name>Miron Cuperman</name>
       <email>miron@google.com</email>
-    </developer>
-    <developer>
-      <name>Xiaofeng Guo</name>
-      <email>xiaofengguo@google.com</email>
     </developer>
   </developers>
 
@@ -77,6 +73,18 @@
       <name>Steve Coughlan</name>
       <email>shadders.del@gmail.com</email>
     </contributor>
+    <contributor>
+      <name>Roman Mandeleil</name>
+      <email>roman.mandeleil@gmail.com</email>
+    </contributor>
+    <contributor>
+      <name>Chris Rico</name>
+      <email>chrisrico@gmail.com</email>
+    </contributor>
+    <contributor>
+      <name>Vasile Rotaru</name>
+      <email>vrotaru.md@gmail.com</email>
+    </contributor>
   </contributors>
 
   <issueManagement>
@@ -92,7 +100,7 @@
   </mailingLists>
 
   <scm>
-    <url>http://bitcoinj.googlecode.com/svn/trunk/</url>
+    <url>http://code.google.com/p/bitcoinj/source/checkout</url>
   </scm>
 
   <distributionManagement>
@@ -262,6 +270,22 @@
           </execution>
         </executions>
       </plugin>
+
+      <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-source-plugin</artifactId>
+          <version>2.1.2</version>
+          <executions>
+            <execution>
+              <id>attach-sources</id>
+              <phase>verify</phase>
+              <goals>
+                <goal>jar-no-fork</goal>
+              </goals>
+            </execution>
+          </executions>
+      </plugin>
+
 <!--
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
