@@ -7,7 +7,7 @@ useful information like JavaDocs. The outputs are under the target/ directory.
 
 Now ensure you're running a Bitcoin node locally and run the example app:
 
-  mvn exec:java -Dexec.mainClass=com.google.bitcoin.examples.PingService
+  mvn exec:java -Dexec.mainClass=PingService
 
 It will download the block chain and eventually print a Bitcoin address. If you send coins to it,
 you should get them back a few minutes later when a block is solved.
@@ -15,7 +15,7 @@ you should get them back a few minutes later when a block is solved.
 You can also use a command line tool that exposes basic Bitcoin operations
 
   ./wallet-tool   (on UNIX, if you have Maven installed)
-  mvn exec:java -Dexec.mainClass=com.google.bitcoin.tools.WalletTool --help   (on other platforms)
+  mvn exec:java -Dexec.mainClass=WalletTool --help   (on other platforms)
 
 Note that if you connect to a node that is itself downloading the block chain, you will see very slow progress (1
 block per second or less). Find a node that isn't heavily loaded to connect to.

@@ -1,0 +1,153 @@
+/** Copyright 2012 Google Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*
+ * Authors: Jim Burton, Miron Cuperman
+ */
+ 
+/* Notes:
+ * - Endianness: All byte arrays that represent numbers (such as hashes and private keys) are Big Endian (a.k.a. network order)
+ */
+
+package wallet;
+
+option java_package = "org.bitcoinj.wallet";
+option java_outer_classname = "Protos";
+
+/**
+ * A key use to control Bitcoin spending
+ *
+ * Either the private key, the public key or both may be present.  It is recommended that
+ * if the private key is provided that the public key is provided too because deriving it is slow.
+ *
+ * If only the public key is provided, the key can only be used to watch the blockchain and verify
+ * transactions, and not for spending.
+ */
+message Key {
+  enum Type {
+    ORIGINAL = 1; // Original bitcoin secp256k1 curve
+  }
+  required Type type = 1;
+  optional bytes private_key = 2; // integer representation of the EC private key
+  optional bytes public_key = 3; // integer representation of the EC public key
+  optional string label = 4; // for presentation purposes
+  optional int64 creation_timestamp = 5;  // datetime stored as millis since epoch.
+}
+
+message TransactionInput {
+  // Sha256Hash of transaction output this input is using
+  required bytes transaction_out_point_hash = 1;
+  // index of transaction output used by this input if in this wallet
+  required int32 transaction_out_point_index = 2;
+  required bytes script_bytes = 3; // script of transaction input
+  optional uint32 sequence = 4; // currently unused field in bitcoin, was originally planned for contracts
+}
+
+message TransactionOutput {
+  required int64 value = 1;
+  required bytes script_bytes = 2;    // script of transaction output
+  optional bytes spent_by_transaction_hash = 3; // if spent, the Sha256Hash of the transaction doing the spend
+  optional int32 spent_by_transaction_index = 4;
+  // if spent, the index of the transaction output of the transaction doing the spend
+}
+
+/**
+ * A description of the confidence we have that a transaction cannot be reversed in the future.
+ *
+ * Parsing should be lenient, since this could change for different applications yet we should
+ * maintain backward compatibility.
+ */
+   
+message TransactionConfidence {
+  enum Type {
+    UNKNOWN = 0;
+    BUILDING = 1; // In best chain.  If and only if appeared_at_height is present.
+    NOT_SEEN_IN_CHAIN = 2; // Pending inclusion in best chain.
+    NOT_IN_BEST_CHAIN = 3; // In non-best chain, pending inclusion in best chain.
+    OVERRIDDEN_BY_DOUBLE_SPEND = 4; // If and only if overriding_transaction is present.
+  }
+
+  // This is optional in case we add confidence types to prevent parse errors - backwards compatible.
+  optional Type type = 1;
+  optional int32 appeared_at_height = 2;
+  optional bytes overriding_transaction = 3; // Hash of tx. Should be in this wallet.
+}
+
+/** A bitcoin transaction */
+
+message Transaction {
+  /**
+   * This is a bitfield oriented enum, with the following bits:
+   * 
+   * bit 0 - spent
+   * bit 1 - appears in alt chain
+   * bit 2 - appears in best chain
+   * bit 3 - double-spent
+   * bit 4 - pending (we would like the tx to go into the best chain)
+   * 
+   * Not all combinations are interesting, just the ones actually used in the enum.
+   */
+  enum Pool {
+    UNSPENT = 4; // In best chain, not all outputs spent
+    SPENT = 5; // In best chain, all outputs spent
+    INACTIVE = 2; // In non-best chain, not our transaction
+    DEAD = 10; // Double-spent by a transaction in the best chain
+    PENDING = 16; // Our transaction, not in any chain
+    PENDING_INACTIVE = 18; // In non-best chain, our transaction
+  }
+
+  // See Wallet.java for detailed description of pool semantics
+  required int32 version = 1;
+  required bytes hash = 2;
+  required Pool pool = 3;
+
+  optional uint32 lock_time = 4; // currently unused field in bitcoin, was originally planned for contracts
+  optional int64 updated_at = 5; // millis since epoch the transaction was last updated
+
+  repeated TransactionInput transaction_input = 6;
+
+  repeated TransactionOutput transaction_output = 7;
+
+
+  repeated bytes block_hash = 8;
+
+  optional TransactionConfidence confidence = 9;
+  // Sha256Hash of block in block chain in which this transaction appears
+}
+
+/** An extension to the wallet */
+message Extension {
+  required string id = 1;   // like org.whatever.foo.bar
+  required bytes data = 2;
+  // If we do not understand a mandatory extension, abort to prevent data loss.
+  // For example, this could be applied to a new type of holding, such as a contract, where
+  // dropping of an extension in a read/write cycle could cause loss of value.
+  required bool mandatory = 3;
+}
+
+/** A bitcoin wallet */
+message Wallet {
+  required string network_identifier = 1; // the network used by this wallet
+  // org.bitcoin.production = production network (Satoshi genesis block)
+  // org.bitcoin.test = test network (Andresen genesis block)
+
+  optional bytes last_seen_block_hash = 2; // the Sha256 hash of the block last seen by this wallet
+
+  repeated Key key = 3;
+
+  repeated Transaction transaction = 4;
+  
+  repeated Extension extension = 10; 
+} // end of Wallet
