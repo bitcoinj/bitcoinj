@@ -25,7 +25,7 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>bitcoinj-lib</artifactId>
+    <artifactId>bitcoinj-core</artifactId>
 
     <profiles>
         <profile>
@@ -75,14 +75,14 @@
                                     <tasks>
                                         <path id="proto.path">
                                             <fileset dir="src">
-                                                <include name="**/*.proto" />
+                                                <include name="**/*.proto"/>
                                             </fileset>
                                         </path>
-                                        <pathconvert pathsep=" " property="proto.files" refid="proto.path" />
+                                        <pathconvert pathsep=" " property="proto.files" refid="proto.path"/>
                                         <exec executable="protoc" failonerror="true">
-                                            <arg value="--java_out=${project.basedir}/src" />
-                                            <arg value="-I${project.basedir}/src" />
-                                            <arg line="${proto.files}" />
+                                            <arg value="--java_out=${project.basedir}/src"/>
+                                            <arg value="-I${project.basedir}/src"/>
+                                            <arg line="${proto.files}"/>
                                         </exec>
                                     </tasks>
                                 </configuration>
@@ -99,17 +99,6 @@
     </profiles>
 
     <build>
-        <!-- Non-standard Maven structure -->
-        <sourceDirectory>src</sourceDirectory>
-        <testSourceDirectory>tests</testSourceDirectory>
-        <testResources>
-            <testResource>
-                <directory>tests</directory>
-                <excludes>
-                    <exclude>**/*.java</exclude>
-                </excludes>
-            </testResource>
-        </testResources>
         <plugins>
             <plugin>
                 <artifactId>maven-compiler-plugin</artifactId>

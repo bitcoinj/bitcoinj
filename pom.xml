@@ -3,12 +3,14 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.google</groupId>
   <artifactId>bitcoinj</artifactId>
-    <packaging>pom</packaging>
-    <version>0.5-SNAPSHOT</version>
-    <modules>
-        <module>lib</module>
-    </modules>
-    <name>BitCoinJ</name>
+  <packaging>pom</packaging>
+  <version>0.5-SNAPSHOT</version>
+  <modules>
+    <module>core</module>
+    <module>examples</module>
+      <module>tools</module>
+  </modules>
+  <name>BitCoinJ</name>
   <description>A Java implementation of a Bitcoin client-only node</description>
   <url>http://code.google.com/p/bitcoinj</url>
 
