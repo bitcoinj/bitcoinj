@@ -18,14 +18,18 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
     <parent>
-        <artifactId>bitcoinj</artifactId>
         <groupId>com.google</groupId>
+        <artifactId>bitcoinj-parent</artifactId>
         <version>0.5-SNAPSHOT</version>
     </parent>
-    <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>bitcoinj-core</artifactId>
+    <groupId>com.google</groupId>
+    <artifactId>bitcoinj</artifactId>
+
+    <name>BitCoinJ</name>
+    <description>A Java Bitcoin library</description>
 
     <profiles>
         <profile>
@@ -181,19 +185,14 @@
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <version>${junit.version}</version>
-            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.easymock</groupId>
             <artifactId>easymock</artifactId>
-            <version>${easymock.version}</version>
-            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
-            <version>${slf4j.version}</version>
         </dependency>
         <!-- BitCoinJ consumers are expected to provide their own SLF4J adapters
              such as logback, slf4j-log4j12, slf4j-jcl and so on
@@ -201,17 +200,11 @@
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-jdk14</artifactId>
-            <version>${slf4j.version}</version>
-            <scope>runtime</scope>
-            <optional>true</optional>
         </dependency>
 
         <dependency>
             <groupId>org.apache.derby</groupId>
             <artifactId>derby</artifactId>
-            <version>${derby.version}</version>
-            <scope>runtime</scope>
-            <optional>true</optional>
         </dependency>
 
         <!-- In Android these libraries are incomplete,
@@ -219,25 +212,12 @@
         <dependency>
             <groupId>org.bouncycastle</groupId>
             <artifactId>bcprov-jdk15</artifactId>
-            <version>${bcprov-jdk15.version}</version>
         </dependency>
 
         <dependency>
             <groupId>com.google.protobuf</groupId>
             <artifactId>protobuf-java</artifactId>
-            <version>${protobuf.version}</version>
         </dependency>
     </dependencies>
 
-    <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <!-- Third-party dependencies -->
-        <bcprov-jdk15.version>1.46</bcprov-jdk15.version>
-        <easymock.version>3.0</easymock.version>
-        <junit.version>4.8.2</junit.version>
-        <slf4j.version>1.6.2</slf4j.version>
-        <derby.version>10.8.2.2</derby.version>
-        <protobuf.version>2.4.1</protobuf.version>
-        <generated.sourceDirectory>gen</generated.sourceDirectory>
-    </properties>
 </project>

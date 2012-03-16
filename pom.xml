@@ -1,17 +1,20 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
+
   <groupId>com.google</groupId>
-  <artifactId>bitcoinj</artifactId>
-  <packaging>pom</packaging>
+  <artifactId>bitcoinj-parent</artifactId>
   <version>0.5-SNAPSHOT</version>
+  <packaging>pom</packaging>
+
   <modules>
     <module>core</module>
     <module>examples</module>
-      <module>tools</module>
+    <module>tools</module>
   </modules>
-  <name>BitCoinJ</name>
-  <description>A Java implementation of a Bitcoin client-only node</description>
+
+  <name>BitCoinJ Parent</name>
+  <description>Provides the common configuration for the BitCoinJ modules</description>
   <url>http://code.google.com/p/bitcoinj</url>
 
   <ciManagement>
@@ -132,4 +135,94 @@
       <url>http://nexus.bitcoinj.org/content/repositories/snapshots</url>
     </repository>
   </repositories>
+
+  <!-- Common build plugin configuration -->
+  <build>
+      <pluginManagement>
+        <plugins>
+          <!-- Ensure compilation is done under Java 5 for backwards compatibility -->
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-compiler-plugin</artifactId>
+            <version>2.3.2</version>
+            <configuration>
+              <source>1.5</source>
+              <target>1.5</target>
+              <showDeprecation>true</showDeprecation>
+              <showWarnings>true</showWarnings>
+            </configuration>
+          </plugin>
+        </plugins>
+    </pluginManagement>
+  </build>
+
+  <!-- Common dependencies -->
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>junit</groupId>
+        <artifactId>junit</artifactId>
+        <version>${junit.version}</version>
+        <scope>test</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.easymock</groupId>
+        <artifactId>easymock</artifactId>
+        <version>${easymock.version}</version>
+        <scope>test</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.slf4j</groupId>
+        <artifactId>slf4j-api</artifactId>
+        <version>${slf4j.version}</version>
+      </dependency>
+      <!-- BitCoinJ consumers are expected to provide their own SLF4J adapters
+    such as logback, slf4j-log4j12, slf4j-jcl and so on
+    see http://www.slf4j.org/faq.html -->
+      <dependency>
+        <groupId>org.slf4j</groupId>
+        <artifactId>slf4j-jdk14</artifactId>
+        <version>${slf4j.version}</version>
+        <scope>runtime</scope>
+        <optional>true</optional>
+      </dependency>
+
+      <dependency>
+        <groupId>org.apache.derby</groupId>
+        <artifactId>derby</artifactId>
+        <version>${derby.version}</version>
+        <scope>runtime</scope>
+        <optional>true</optional>
+      </dependency>
+
+      <!-- In Android these libraries are incomplete,
+           so use the dedicated artifact (bitcoinj-<version>-android.jar) -->
+      <dependency>
+        <groupId>org.bouncycastle</groupId>
+        <artifactId>bcprov-jdk15</artifactId>
+        <version>${bcprov-jdk15.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>com.google.protobuf</groupId>
+        <artifactId>protobuf-java</artifactId>
+        <version>${protobuf.version}</version>
+      </dependency>
+    </dependencies>
+
+  </dependencyManagement>
+
+  <!-- Common properties -->
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <!-- Third-party dependencies -->
+    <bcprov-jdk15.version>1.46</bcprov-jdk15.version>
+    <easymock.version>3.0</easymock.version>
+    <junit.version>4.8.2</junit.version>
+    <slf4j.version>1.6.2</slf4j.version>
+    <derby.version>10.8.2.2</derby.version>
+    <protobuf.version>2.4.1</protobuf.version>
+    <generated.sourceDirectory>gen</generated.sourceDirectory>
+  </properties>
+
 </project>

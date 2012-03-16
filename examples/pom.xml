@@ -19,18 +19,23 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
-        <artifactId>bitcoinj</artifactId>
         <groupId>com.google</groupId>
+        <artifactId>bitcoinj-parent</artifactId>
         <version>0.5-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
+    <groupId>com.google</groupId>
     <artifactId>bitcoinj-examples</artifactId>
+    <version>0.5-SNAPSHOT</version>
+
+    <name>BitCoinJ Examples</name>
+    <description>A collection of examples using the BitCoinJ library</description>
 
     <dependencies>
         <dependency>
             <groupId>com.google</groupId>
-            <artifactId>bitcoinj-core</artifactId>
+            <artifactId>bitcoinj</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
     </dependencies>
