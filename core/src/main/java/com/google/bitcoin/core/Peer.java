@@ -717,4 +717,32 @@ public class Peer {
     public void setDownloadData(boolean downloadData) {
         this.downloadData = downloadData;
     }
+    
+    /**
+     * @return the IP address and port of peer.
+     */
+    public PeerAddress getAddress() {
+        return address;
+    }
+
+    /**
+     * @return various version numbers claimed by peer.
+     */
+    public VersionMessage getVersionMessage() {
+      return versionMessage;
+    }
+
+    /**
+     * @return the height of the best chain as claimed by peer.
+     */
+    public int getBestHeight() {
+      return bestHeight;
+    }
+    
+    /**
+     * @return whether the peer is currently connected and the message loop is running. 
+     */
+    public boolean isConnected() {
+      return running;
+    }
 }
