@@ -729,7 +729,7 @@ public class Peer {
      * @return various version numbers claimed by peer.
      */
     public VersionMessage getVersionMessage() {
-      return versionMessage;
+      return conn.getVersionMessage();
     }
 
     /**
