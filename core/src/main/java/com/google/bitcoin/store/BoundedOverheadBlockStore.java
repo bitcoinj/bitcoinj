@@ -152,7 +152,7 @@ public class BoundedOverheadBlockStore implements BlockStore {
             try {
                 load(file);
                 return;
-            } catch (Exception e) {
+            } catch (IOException e) {
                 log.error("Failed to load block chain from " + file, e);
                 // Fall through and try to create a new one.
             }
@@ -172,6 +172,7 @@ public class BoundedOverheadBlockStore implements BlockStore {
             // Create fresh. The d makes writes synchronous.
             this.file = new RandomAccessFile(file, "rwd");
             this.channel = this.file.getChannel();
+            lock();
             this.file.write(FILE_FORMAT_VERSION);
         } catch (IOException e1) {
             // We could not load a block store nor could we create a new one!
@@ -195,21 +196,9 @@ public class BoundedOverheadBlockStore implements BlockStore {
         log.info("Reading block store from {}", file);
         // Open in synchronous mode. See above.
         this.file = new RandomAccessFile(file, "rwd");
+        channel = this.file.getChannel();
+        lock();
         try {
-            lock = this.file.getChannel().tryLock();
-        } catch (OverlappingFileLockException e) {
-            lock = null;
-        }
-        if (lock == null) {
-            try {
-                this.file.close();
-            } finally {
-                this.file = null;
-            }
-            throw new BlockStoreException("Could not lock file");
-        }
-        try {
-            channel = this.file.getChannel();
             // Read a version byte.
             int version = this.file.read();
             if (version == -1) {
@@ -232,6 +221,22 @@ public class BoundedOverheadBlockStore implements BlockStore {
         } catch (BlockStoreException e) {
             this.file.close();
             throw e;
+        }
+    }
+
+    private void lock() throws IOException, BlockStoreException {
+        try {
+            lock = channel.tryLock();
+        } catch (OverlappingFileLockException e) {
+            lock = null;
+        }
+        if (lock == null) {
+            try {
+                this.file.close();
+            } finally {
+                this.file = null;
+            }
+            throw new BlockStoreException("Could not lock file");
         }
     }
 

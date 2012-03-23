@@ -24,6 +24,7 @@ import org.junit.Test;
 import java.io.File;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 public class BoundedOverheadBlockStoreTest {
     @Test
@@ -43,11 +44,29 @@ public class BoundedOverheadBlockStoreTest {
         StoredBlock b1 = genesis.build(genesis.getHeader().createNextBlock(to).cloneAsHeader());
         store.put(b1);
         store.setChainHead(b1);
+        store.close();
+        
         // Check we can get it back out again if we rebuild the store object.
         store = new BoundedOverheadBlockStore(params, temp);
         StoredBlock b2 = store.get(b1.getHeader().getHash());
         assertEquals(b1, b2);
         // Check the chain head was stored correctly also.
         assertEquals(b1, store.getChainHead());
+    }
+    
+    @Test
+    public void testLocking() throws Exception {
+        File temp = File.createTempFile("bitcoinj-test", null, null);
+        System.out.println(temp.getAbsolutePath());
+        temp.deleteOnExit();
+
+        NetworkParameters params = NetworkParameters.unitTests();
+        BoundedOverheadBlockStore store = new BoundedOverheadBlockStore(params, temp);
+        try {
+            BoundedOverheadBlockStore store1 = new BoundedOverheadBlockStore(params, temp);
+            fail();
+        } catch (BlockStoreException e) {
+            // Expected
+        }
     }
 }
