@@ -17,6 +17,8 @@
 package com.google.bitcoin.store;
 
 import com.google.bitcoin.core.*;
+import com.google.bitcoin.utils.NamedSemaphores;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,6 +54,7 @@ import java.util.Map;
 public class BoundedOverheadBlockStore implements BlockStore {
     private static final Logger log = LoggerFactory.getLogger(BoundedOverheadBlockStore.class);
     private static final byte FILE_FORMAT_VERSION = 1;
+    private static NamedSemaphores semaphores = new NamedSemaphores();
 
     private RandomAccessFile file;
     // We keep some recently found blocks in the blockCache. It can help to optimize some cases where we are
@@ -80,6 +83,7 @@ public class BoundedOverheadBlockStore implements BlockStore {
     private final NetworkParameters params;
     private FileChannel channel;
     private FileLock lock;
+    private String fileName;
 
     private static class Record {
         // A BigInteger representing the total amount of work done so far on this chain. As of May 2011 it takes 8
@@ -148,6 +152,12 @@ public class BoundedOverheadBlockStore implements BlockStore {
 
     public BoundedOverheadBlockStore(NetworkParameters params, File file) throws BlockStoreException {
         this.params = params;
+        try {
+            this.fileName = file.getCanonicalPath();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        
         if (file.exists()) {
             try {
                 load(file);
@@ -203,6 +213,7 @@ public class BoundedOverheadBlockStore implements BlockStore {
             int version = this.file.read();
             if (version == -1) {
                 // No such file or the file was empty.
+                close();
                 throw new FileNotFoundException(file.getName() + " does not exist or is empty");
             }
             if (version != FILE_FORMAT_VERSION) {
@@ -216,7 +227,8 @@ public class BoundedOverheadBlockStore implements BlockStore {
             log.info("Read chain head from disk: {}", this.chainHead);
             channel.position(channel.size() - Record.SIZE);
         } catch (IOException e) {
-            this.file.close();
+            if (this.file != null)
+                this.file.close();
             throw e;
         } catch (BlockStoreException e) {
             this.file.close();
@@ -225,9 +237,13 @@ public class BoundedOverheadBlockStore implements BlockStore {
     }
 
     private void lock() throws IOException, BlockStoreException {
+        if (!semaphores.tryAcquire(fileName)) {
+            throw new BlockStoreException("File in use");
+        }
         try {
             lock = channel.tryLock();
         } catch (OverlappingFileLockException e) {
+            semaphores.release(fileName);
             lock = null;
         }
         if (lock == null) {
@@ -354,6 +370,7 @@ public class BoundedOverheadBlockStore implements BlockStore {
         } catch (IOException e) {
             throw new BlockStoreException(e);
         } finally {
+            semaphores.release(this.fileName);
             file = null;
         }
     }
