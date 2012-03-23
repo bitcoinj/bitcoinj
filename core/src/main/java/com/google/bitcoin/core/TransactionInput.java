@@ -168,7 +168,9 @@ public class TransactionInput extends ChildMessage implements Serializable {
      * @throws ScriptException if the scriptSig could not be understood (eg, if this is a coinbase transaction).
      */
     public Address getFromAddress() throws ScriptException {
-        assert !isCoinBase();
+        if (isCoinBase()) {
+            throw new ScriptException("coinbase transaction");
+        }
         return getScriptSig().getFromAddress();
     }
 
