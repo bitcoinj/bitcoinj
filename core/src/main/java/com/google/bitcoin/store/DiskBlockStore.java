@@ -25,6 +25,8 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
+import java.nio.channels.FileLock;
+import java.nio.channels.OverlappingFileLockException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -39,12 +41,27 @@ public class DiskBlockStore implements BlockStore {
     private Map<Sha256Hash, StoredBlock> blockMap;
     private Sha256Hash chainHead;
     private NetworkParameters params;
+    private FileLock lock;
 
     public DiskBlockStore(NetworkParameters params, File theFile) throws BlockStoreException {
         this.params = params;
         blockMap = new HashMap<Sha256Hash, StoredBlock>();
         try {
             file = new RandomAccessFile(theFile, "rwd");
+            // Lock the file from other processes.
+            try {
+                lock = file.getChannel().tryLock();
+            } catch (OverlappingFileLockException e) {
+                lock = null;
+            }
+            if (lock == null) {
+                try {
+                    this.file.close();
+                } finally {
+                    this.file = null;
+                }
+                throw new BlockStoreException("Could not lock file");
+            }
             // The file position is at BOF
             load(theFile);
             // The file position is at EOF
@@ -52,6 +69,17 @@ public class DiskBlockStore implements BlockStore {
             log.error("failed to load block store from file", e);
             createNewStore(params);
             // The file position is at EOF
+        }
+    }
+    
+    public void close() throws BlockStoreException {
+        ensureOpen();
+        try {
+            file.close();
+        } catch (IOException e) {
+            throw new BlockStoreException(e);
+        } finally {
+            file = null;
         }
     }
 
@@ -145,7 +173,14 @@ public class DiskBlockStore implements BlockStore {
         }
     }
 
+    private void ensureOpen() throws BlockStoreException {
+        if (file == null) {
+            throw new BlockStoreException("BlockStore was closed");
+        }
+    }
+
     public synchronized void put(StoredBlock block) throws BlockStoreException {
+        ensureOpen();
         try {
             Sha256Hash hash = block.getHeader().getHash();
             assert blockMap.get(hash) == null : "Attempt to insert duplicate";
@@ -159,14 +194,17 @@ public class DiskBlockStore implements BlockStore {
     }
 
     public synchronized StoredBlock get(Sha256Hash hash) throws BlockStoreException {
+        ensureOpen();
         return blockMap.get(hash);
     }
 
     public synchronized StoredBlock getChainHead() throws BlockStoreException {
+        ensureOpen();
         return blockMap.get(chainHead);
     }
 
     public synchronized void setChainHead(StoredBlock chainHead) throws BlockStoreException {
+        ensureOpen();
         try {
             this.chainHead = chainHead.getHeader().getHash();
             // Write out new hash to the first 32 bytes of the file past one (first byte is version number).

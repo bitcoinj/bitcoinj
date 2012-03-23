@@ -27,6 +27,8 @@ import java.io.RandomAccessFile;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+import java.nio.channels.FileLock;
+import java.nio.channels.OverlappingFileLockException;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -77,6 +79,7 @@ public class BoundedOverheadBlockStore implements BlockStore {
     private Sha256Hash chainHead;
     private final NetworkParameters params;
     private FileChannel channel;
+    private FileLock lock;
 
     private static class Record {
         // A BigInteger representing the total amount of work done so far on this chain. As of May 2011 it takes 8
@@ -193,6 +196,19 @@ public class BoundedOverheadBlockStore implements BlockStore {
         // Open in synchronous mode. See above.
         this.file = new RandomAccessFile(file, "rwd");
         try {
+            lock = this.file.getChannel().tryLock();
+        } catch (OverlappingFileLockException e) {
+            lock = null;
+        }
+        if (lock == null) {
+            try {
+                this.file.close();
+            } finally {
+                this.file = null;
+            }
+            throw new BlockStoreException("Could not lock file");
+        }
+        try {
             channel = this.file.getChannel();
             // Read a version byte.
             int version = this.file.read();
@@ -219,7 +235,14 @@ public class BoundedOverheadBlockStore implements BlockStore {
         }
     }
 
+    private void ensureOpen() throws BlockStoreException {
+        if (file == null) {
+            throw new BlockStoreException("BlockStore was closed");
+        }
+    }
+
     public synchronized void put(StoredBlock block) throws BlockStoreException {
+        ensureOpen();
         try {
             Sha256Hash hash = block.getHeader().getHash();
             // Append to the end of the file.
@@ -231,6 +254,7 @@ public class BoundedOverheadBlockStore implements BlockStore {
     }
 
     public synchronized StoredBlock get(Sha256Hash hash) throws BlockStoreException {
+        ensureOpen();
         // Check the memory cache first.
         StoredBlock fromMem = blockCache.get(hash);
         if (fromMem != null) {
@@ -259,7 +283,7 @@ public class BoundedOverheadBlockStore implements BlockStore {
 
     private ByteBuffer buf = ByteBuffer.allocateDirect(Record.SIZE);
 
-    private Record getRecord(Sha256Hash hash) throws BlockStoreException, IOException, ProtocolException {
+    private Record getRecord(Sha256Hash hash) throws IOException, ProtocolException {
         long startPos = channel.position();
         // Use our own file pointer within the tight loop as updating channel positions is really expensive.
         long pos = startPos;
@@ -299,6 +323,7 @@ public class BoundedOverheadBlockStore implements BlockStore {
     }
 
     public synchronized StoredBlock getChainHead() throws BlockStoreException {
+        ensureOpen();
         // This will hit the cache
         StoredBlock head = get(chainHead);
         if (head == null)
@@ -307,12 +332,24 @@ public class BoundedOverheadBlockStore implements BlockStore {
     }
 
     public synchronized void setChainHead(StoredBlock chainHead) throws BlockStoreException {
+        ensureOpen();
         try {
             this.chainHead = chainHead.getHeader().getHash();
             // Write out new hash to the first 32 bytes of the file past one (first byte is version number).
             channel.write(ByteBuffer.wrap(this.chainHead.getBytes()), 1);
         } catch (IOException e) {
             throw new BlockStoreException(e);
+        }
+    }
+
+    public void close() throws BlockStoreException {
+        ensureOpen();
+        try {
+            file.close();
+        } catch (IOException e) {
+            throw new BlockStoreException(e);
+        } finally {
+            file = null;
         }
     }
 }

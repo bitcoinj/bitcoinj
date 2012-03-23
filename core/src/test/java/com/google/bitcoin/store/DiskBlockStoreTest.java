@@ -19,20 +19,32 @@ import com.google.bitcoin.core.Address;
 import com.google.bitcoin.core.ECKey;
 import com.google.bitcoin.core.NetworkParameters;
 import com.google.bitcoin.core.StoredBlock;
+
+import org.junit.Before;
 import org.junit.Test;
 
 import java.io.File;
+import java.io.IOException;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 public class DiskBlockStoreTest {
-    @Test
-    public void testStorage() throws Exception {
-        File temp = File.createTempFile("bitcoinj-test", null, null);
+    private NetworkParameters params;
+    private Address to;
+    private File temp;
+
+    @Before
+    public void setUp() throws IOException {
+        temp = File.createTempFile("bitcoinj-test", null, null);
         System.out.println(temp.getAbsolutePath());
 
-        NetworkParameters params = NetworkParameters.unitTests();
-        Address to = new ECKey().toAddress(params);
+        params = NetworkParameters.unitTests();
+        to = new ECKey().toAddress(params);
+    }
+    
+    @Test
+    public void testStorage() throws Exception {
         DiskBlockStore store = new DiskBlockStore(params, temp);
         // Check the first block in a new store is the genesis block.
         StoredBlock genesis = store.getChainHead();
@@ -42,25 +54,31 @@ public class DiskBlockStoreTest {
         StoredBlock b1 = genesis.build(genesis.getHeader().createNextBlock(to).cloneAsHeader());
         store.put(b1);
         store.setChainHead(b1);
+        store.close();
         // Check we can get it back out again if we rebuild the store object.
         store = new DiskBlockStore(params, temp);
         StoredBlock b2 = store.get(b1.getHeader().getHash());
         assertEquals(b1, b2);
         // Check the chain head was stored correctly also.
         assertEquals(b1, store.getChainHead());
+        store.close();
     }
 
     @Test
     public void testStorage_existing() throws Exception {
-        File temp = File.createTempFile("bitcoinj-test", null, null);
-        System.out.println(temp.getAbsolutePath());
-
-        NetworkParameters params = NetworkParameters.unitTests();
-        Address to = new ECKey().toAddress(params);
         DiskBlockStore store = new DiskBlockStore(params, temp);
         // Check the first block in a new store is the genesis block.
         
         StoredBlock genesis = store.getChainHead();
+        
+        // Test locking
+        try {
+            store = new DiskBlockStore(params, temp);
+            fail();
+        } catch (BlockStoreException ex) {
+            // expected
+        }
+        store.close();
 
         // Reopen.
         store = new DiskBlockStore(params, temp);
@@ -69,6 +87,7 @@ public class DiskBlockStoreTest {
         StoredBlock b1 = genesis.build(genesis.getHeader().createNextBlock(to).cloneAsHeader());
         store.put(b1);
         store.setChainHead(b1);
+        store.close();
         
         // Check we can get it back out again if we reopen the store.
         store = new DiskBlockStore(params, temp);
@@ -76,5 +95,6 @@ public class DiskBlockStoreTest {
         assertEquals(b1, b2);
         // Check the chain head was stored correctly also.
         assertEquals(b1, store.getChainHead());
+        store.close();
     }
 }

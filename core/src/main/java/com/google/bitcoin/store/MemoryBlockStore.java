@@ -44,19 +44,27 @@ public class MemoryBlockStore implements BlockStore {
     }
 
     public synchronized void put(StoredBlock block) throws BlockStoreException {
+        if (blockMap == null) throw new BlockStoreException("MemoryBlockStore is closed");
         Sha256Hash hash = block.getHeader().getHash();
         blockMap.put(hash, block);
     }
 
     public synchronized StoredBlock get(Sha256Hash hash) throws BlockStoreException {
+        if (blockMap == null) throw new BlockStoreException("MemoryBlockStore is closed");
         return blockMap.get(hash);
     }
 
-    public StoredBlock getChainHead() {
+    public StoredBlock getChainHead() throws BlockStoreException {
+        if (blockMap == null) throw new BlockStoreException("MemoryBlockStore is closed");
         return chainHead;
     }
 
     public void setChainHead(StoredBlock chainHead) throws BlockStoreException {
+        if (blockMap == null) throw new BlockStoreException("MemoryBlockStore is closed");
         this.chainHead = chainHead;
+    }
+    
+    public void close() {
+        blockMap = null;
     }
 }
