@@ -42,7 +42,7 @@ public class Peer {
     private final NetworkParameters params;
     // Whether the peer loop is supposed to be running or not. Set to false during shutdown so the peer loop
     // knows to quit when the socket goes away.
-    private boolean running;
+    private volatile boolean running;
     private final BlockChain blockChain;
     // When an API user explicitly requests a block or transaction from a peer, the InventoryItem is put here
     // whilst waiting for the response. Synchronized on itself. Is not used for downloads Peer generates itself.
@@ -182,7 +182,7 @@ public class Peer {
         running = true;
 
         try {
-            while (true) {
+            while (running) {
                 Message m = conn.readMessage();
 
                 // Allow event listeners to filter the message stream. Listeners are allowed to drop messages by
