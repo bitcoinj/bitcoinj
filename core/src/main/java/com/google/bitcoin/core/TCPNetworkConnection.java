@@ -25,6 +25,7 @@ import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.net.SocketException;
 import java.util.Date;
 import java.util.LinkedHashMap;
 
@@ -164,8 +165,12 @@ public class TCPNetworkConnection implements NetworkConnection {
     }
 
     public void shutdown() throws IOException {
-        socket.shutdownOutput();
-        socket.shutdownInput();
+        try {
+            socket.shutdownOutput();
+            socket.shutdownInput();
+        } catch (SocketException e) {
+            // ignore - might be still connecting
+        }
         socket.close();
     }
 
