@@ -32,6 +32,15 @@ import java.io.IOException;
  */
 public interface NetworkConnection {
     /**
+     * Connect to the remote peer.
+     * 
+     * @param peerAddress the address of the remote peer
+     * @param connectTimeoutMsec timeout in milliseconds
+     */
+    public void connect(PeerAddress peerAddress, int connectTimeoutMsec)
+            throws IOException, ProtocolException;
+
+     /**
      * Sends a "ping" message to the remote node. The protocol doesn't presently use this feature much.
      *
      * @throws IOException

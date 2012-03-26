@@ -40,16 +40,18 @@ public class TCPNetworkConnection implements NetworkConnection {
 	private static final Logger log = LoggerFactory.getLogger(TCPNetworkConnection.class);
 	
     private final Socket socket;
-    private final OutputStream out;
-    private final InputStream in;
+    private OutputStream out;
+    private InputStream in;
     // The IP address to which we are connecting.
-    private final InetAddress remoteIp;
+    private InetAddress remoteIp;
     private final NetworkParameters params;
-    private final VersionMessage versionMessage;
+    private VersionMessage versionMessage;
 
     // Given to the BitcoinSerializer to de-duplicate messages.
     private static final LinkedHashMap<Sha256Hash, Integer> dedupeList = BitcoinSerializer.createDedupeList();
     private BitcoinSerializer serializer = null;
+
+    private VersionMessage myVersionMessage;
     private static final Date checksummingProtocolChangeDate = new Date(1329696000000L);
 
     /**
@@ -65,30 +67,35 @@ public class TCPNetworkConnection implements NetworkConnection {
      * @throws IOException if there is a network related failure.
      * @throws ProtocolException if the version negotiation failed.
      */
-    public TCPNetworkConnection(PeerAddress peerAddress, NetworkParameters params,
-                                int connectTimeoutMsec, boolean dedupe, VersionMessage ver)
+    public TCPNetworkConnection(NetworkParameters params, boolean dedupe, VersionMessage ver)
             throws IOException, ProtocolException {
         this.params = params;
-        this.remoteIp = peerAddress.getAddr();
+        this.myVersionMessage = ver;
 
-        int port = (peerAddress.getPort() > 0) ? peerAddress.getPort() : params.port;
+        socket = new Socket();
+
+        // So pre-Feb 2012, update checkumming property after version is read.
+        this.serializer = new BitcoinSerializer(this.params, false, dedupe ? dedupeList : null);
+        this.serializer.setUseChecksumming(Utils.now().after(checksummingProtocolChangeDate));
+    }
+
+    public void connect(PeerAddress peerAddress, int connectTimeoutMsec)
+            throws IOException, ProtocolException {
+        remoteIp = peerAddress.getAddr();
+        int port = (peerAddress.getPort() > 0) ? peerAddress.getPort() : this.params.port;
 
         InetSocketAddress address = new InetSocketAddress(remoteIp, port);
-        socket = new Socket();
+
         socket.connect(address, connectTimeoutMsec);
 
         out = socket.getOutputStream();
         in = socket.getInputStream();
 
         // The version message does not use checksumming, until Feb 2012 when it magically does.
-        // So pre-Feb 2012, update checkumming property after version is read.
-        this.serializer = new BitcoinSerializer(params, false, dedupe ? dedupeList : null);
-        this.serializer.setUseChecksumming(Utils.now().after(checksummingProtocolChangeDate));
-
         // Announce ourselves. This has to come first to connect to clients beyond v0.30.20.2 which wait to hear
         // from us until they send their version message back.
-        log.info("Announcing ourselves as: {}", ver.subVer);
-        writeMessage(ver);
+        log.info("Announcing ourselves as: {}", myVersionMessage.subVer);
+        writeMessage(myVersionMessage);
         // When connecting, the remote peer sends us a version message with various bits of
         // useful data in it. We need to know the peer protocol version before we can talk to it.
         Message m = readMessage();
@@ -140,15 +147,15 @@ public class TCPNetworkConnection implements NetworkConnection {
      * @throws IOException if there is a network related failure.
      * @throws ProtocolException if the version negotiation failed.
      */
-    public TCPNetworkConnection(PeerAddress peerAddress, NetworkParameters params,
-                                int bestHeight, int connectTimeoutMsec, boolean dedupe)
+    public TCPNetworkConnection(NetworkParameters params,
+                                int bestHeight, boolean dedupe)
             throws IOException, ProtocolException {
-        this(peerAddress, params, connectTimeoutMsec, dedupe, new VersionMessage(params, bestHeight));
+        this(params, dedupe, new VersionMessage(params, bestHeight));
     }
 
-    public TCPNetworkConnection(InetAddress inetAddress, NetworkParameters params, int bestHeight, int connectTimeout)
+    public TCPNetworkConnection(NetworkParameters params, int bestHeight)
             throws IOException, ProtocolException {
-        this(new PeerAddress(inetAddress), params, bestHeight, connectTimeout, true);
+        this(params, bestHeight, true);
     }
 
 

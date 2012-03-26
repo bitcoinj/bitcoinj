@@ -18,6 +18,7 @@ package com.google.bitcoin.examples;
 
 import com.google.bitcoin.core.NetworkConnection;
 import com.google.bitcoin.core.NetworkParameters;
+import com.google.bitcoin.core.PeerAddress;
 import com.google.bitcoin.core.TCPNetworkConnection;
 import com.google.bitcoin.discovery.DnsDiscovery;
 import com.google.bitcoin.discovery.IrcDiscovery;
@@ -94,8 +95,9 @@ public class PrintPeers {
             pool.submit(new Runnable() {
                 public void run() {
                     try {
-                        NetworkConnection conn = new TCPNetworkConnection(addr,
-                                NetworkParameters.prodNet(), 0, 1000);
+                        NetworkConnection conn =
+                            new TCPNetworkConnection(NetworkParameters.prodNet(), 0);
+                        conn.connect(new PeerAddress(addr), 1000);
                         synchronized (lock) {
                             long nodeHeight = conn.getVersionMessage().bestHeight;
                             long diff = bestHeight[0] - nodeHeight;

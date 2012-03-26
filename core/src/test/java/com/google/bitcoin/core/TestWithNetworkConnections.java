@@ -21,6 +21,8 @@ import com.google.bitcoin.utils.BriefLogFormatter;
 import org.easymock.IMocksControl;
 
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 
 import static org.easymock.EasyMock.createStrictControl;
 
@@ -35,6 +37,7 @@ public class TestWithNetworkConnections {
     protected Wallet wallet;
     protected ECKey key;
     protected Address address;
+    private static int fakePort;
 
     public void setUp() throws Exception {
         BriefLogFormatter.init();
@@ -52,7 +55,13 @@ public class TestWithNetworkConnections {
     }
 
     protected MockNetworkConnection createMockNetworkConnection() {
-        return new MockNetworkConnection();
+        MockNetworkConnection conn = new MockNetworkConnection();
+        try {
+            conn.connect(new PeerAddress(InetAddress.getLocalHost(), fakePort++), 0);
+        } catch (UnknownHostException e) {
+            throw new RuntimeException(e); // Cannot happen
+        }
+        return conn;
     }
 
     protected void runPeer(Peer peer, MockNetworkConnection connection) throws IOException, PeerException {
@@ -65,7 +74,7 @@ public class TestWithNetworkConnections {
         }
     }
 
-    protected void runPeerAsync(final Peer peer, MockNetworkConnection connection) throws IOException, PeerException {
+    protected void runPeerAsync(final Peer peer, MockNetworkConnection connection) {
         new Thread("Test Peer Thread") {
             @Override
             public void run() {

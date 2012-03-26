@@ -37,13 +37,13 @@ public class MockNetworkConnection implements NetworkConnection {
     private PeerAddress peerAddress;
 
     public MockNetworkConnection() {
+    }
+
+
+    public void connect(PeerAddress peerAddress, int connectTimeoutMsec) {
         inboundMessageQ = new ArrayBlockingQueue<Object>(10);
         outboundMessageQ = new ArrayBlockingQueue<Message>(10);
-        try {
-            peerAddress = new PeerAddress(InetAddress.getLocalHost(), fakePort++);
-        } catch (UnknownHostException e) {
-            throw new RuntimeException(e);  // Cannot happen.
-        }
+        this.peerAddress = peerAddress;
     }
 
     public void ping() throws IOException {

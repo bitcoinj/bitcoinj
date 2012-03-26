@@ -154,7 +154,8 @@ public class Peer {
      */
     public synchronized void connect() throws PeerException {
         try {
-            conn = new TCPNetworkConnection(address, params, CONNECT_TIMEOUT_MSEC, false, versionMessage);
+            conn = new TCPNetworkConnection(params, false, versionMessage);
+            conn.connect(address, CONNECT_TIMEOUT_MSEC);
         } catch (IOException ex) {
             throw new PeerException(ex);
         } catch (ProtocolException ex) {
