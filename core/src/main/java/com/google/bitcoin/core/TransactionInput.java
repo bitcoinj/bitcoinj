@@ -170,7 +170,8 @@ public class TransactionInput extends ChildMessage implements Serializable {
      */
     public Address getFromAddress() throws ScriptException {
         if (isCoinBase()) {
-            throw new ScriptException("coinbase transaction");
+            throw new ScriptException(
+                    "This is a coinbase transaction which generates new coins. It does not have a from address.");
         }
         return getScriptSig().getFromAddress();
     }
