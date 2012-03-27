@@ -700,6 +700,7 @@ public class Peer {
      * <p>This does not wait for the loop to terminate.
      */
     public synchronized void disconnect() {
+        log.debug("Disconnecting peer");
         running = false;
         try {
             // This is the correct way to stop an IO bound loop

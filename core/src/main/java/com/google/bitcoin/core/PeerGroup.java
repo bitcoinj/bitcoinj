@@ -64,6 +64,8 @@ public class PeerGroup {
     private ThreadPoolExecutor peerPool;
     // Currently active peers
     private Set<Peer> peers;
+    // Currently connecting peers
+    private Set<Peer> pendingPeers;
     // The peer we are currently downloading the chain from
     private Peer downloadPeer;
     // Callback for events related to chain download
@@ -111,6 +113,7 @@ public class PeerGroup {
         inactives = new LinkedBlockingQueue<PeerAddress>();
         // TODO: Remove usage of synchronized sets here in favor of simple coarse-grained locking.
         peers = Collections.synchronizedSet(new HashSet<Peer>());
+        pendingPeers = Collections.synchronizedSet(new HashSet<Peer>());
         peerDiscoverers = new CopyOnWriteArraySet<PeerDiscovery>(); 
         peerPool = new ThreadPoolExecutor(
                 DEFAULT_CONNECTIONS,
@@ -446,6 +449,12 @@ public class PeerGroup {
                     }
                 }
                 peers = null; // Fail quickly if someone tries to access peers while we are shutting down.
+                synchronized (pendingPeers) {
+                    for (Peer peer : pendingPeers) {
+                        peer.disconnect();
+                    }
+                }
+                pendingPeers = null;
             }
         }
 
@@ -527,11 +536,18 @@ public class PeerGroup {
         peerPool.execute(new Runnable() {
             public void run() {
                 try {
-                    if (shouldConnect) {
+                    synchronized (PeerGroup.this) {
+                        // Add peer to pendingPeers so that we can shut it down if PeerGroup shuts down
+                        pendingPeers.add(peer);
+                    }
+                    
+                    // Recheck if running, in case we shut down in the mean time
+                    if (running && shouldConnect) {
                         log.info("Connecting to " + peer);
                         peer.connect();
                     }
                     synchronized (PeerGroup.this) {
+                        pendingPeers.remove(peer);
                         // We may have started shutting down the group since we started connecting.
                         // In this case, we must not add ourself to the list of peers because the controller
                         // thread already went through it.

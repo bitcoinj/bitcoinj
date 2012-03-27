@@ -165,12 +165,6 @@ public class TCPNetworkConnection implements NetworkConnection {
     }
 
     public void shutdown() throws IOException {
-        try {
-            socket.shutdownOutput();
-            socket.shutdownInput();
-        } catch (SocketException e) {
-            // ignore - might be still connecting
-        }
         socket.close();
     }
 
