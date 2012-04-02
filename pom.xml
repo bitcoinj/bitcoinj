@@ -363,6 +363,12 @@
     </dependency>
 
     <dependency>
+	<groupId>com.google.guava</groupId>
+	<artifactId>guava-base</artifactId>
+	<version>r03</version>
+    </dependency>
+
+    <dependency>
         <groupId>net.sf.jopt-simple</groupId>
         <artifactId>jopt-simple</artifactId>
         <version>${jopt.version}</version>
