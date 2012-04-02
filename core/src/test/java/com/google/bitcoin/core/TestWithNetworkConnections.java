@@ -16,15 +16,19 @@
 
 package com.google.bitcoin.core;
 
-import com.google.bitcoin.store.MemoryBlockStore;
-import com.google.bitcoin.utils.BriefLogFormatter;
-import org.easymock.IMocksControl;
+import static org.easymock.EasyMock.*;
 
-import java.io.IOException;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.net.UnknownHostException;
 
-import static org.easymock.EasyMock.createStrictControl;
+import org.easymock.EasyMock;
+import org.easymock.IMocksControl;
+import org.jboss.netty.channel.*;
+
+import com.google.bitcoin.store.MemoryBlockStore;
+import com.google.bitcoin.utils.BriefLogFormatter;
 
 /**
  * Utility class that makes it easy to work with mock NetworkConnections.
@@ -38,12 +42,16 @@ public class TestWithNetworkConnections {
     protected ECKey key;
     protected Address address;
     private static int fakePort;
-
+    protected ChannelHandlerContext ctx;
+    protected Channel channel;
+    protected SocketAddress socketAddress;
+    protected ChannelPipeline pipeline;
+    
     public void setUp() throws Exception {
         BriefLogFormatter.init();
 
         control = createStrictControl();
-        control.checkOrder(true);
+        control.checkOrder(false);
 
         unitTestParams = NetworkParameters.unitTests();
         blockStore = new MemoryBlockStore(unitTestParams);
@@ -52,6 +60,33 @@ public class TestWithNetworkConnections {
         address = key.toAddress(unitTestParams);
         wallet.addKey(key);
         blockChain = new BlockChain(unitTestParams, wallet, blockStore);
+
+        socketAddress = new InetSocketAddress("127.0.0.1", 1111);
+
+        ctx = createChannelHandlerContext();
+        channel = createChannel();
+        pipeline = createPipeline(channel);
+    }
+
+    protected ChannelPipeline createPipeline(Channel channel) {
+        ChannelPipeline pipeline = control.createMock(ChannelPipeline.class);
+        expect(channel.getPipeline()).andStubReturn(pipeline);
+        return pipeline;
+    }
+
+    protected Channel createChannel() {
+        Channel channel = control.createMock(Channel.class);
+        expect(channel.getRemoteAddress()).andStubReturn(socketAddress);
+        return channel;
+    }
+
+    protected ChannelHandlerContext createChannelHandlerContext() {
+        ChannelHandlerContext ctx1 = control.createMock(ChannelHandlerContext.class);
+        ctx1.sendDownstream(EasyMock.anyObject(ChannelEvent.class));
+        EasyMock.expectLastCall().anyTimes();
+        ctx1.sendUpstream(EasyMock.anyObject(ChannelEvent.class));
+        EasyMock.expectLastCall().anyTimes();
+        return ctx1;
     }
 
     protected MockNetworkConnection createMockNetworkConnection() {
@@ -64,26 +99,28 @@ public class TestWithNetworkConnections {
         return conn;
     }
 
-    protected void runPeer(Peer peer, MockNetworkConnection connection) throws IOException, PeerException {
-        connection.disconnect();
-        try {
-            peer.run();
-        } catch (PeerException e) {
-            if (!e.getCause().getMessage().equals("done"))
-                throw e;
-        }
+    protected void closePeer(Peer peer) throws Exception {
+        peer.getHandler().channelClosed(ctx,
+                new UpstreamChannelStateEvent(channel, ChannelState.CONNECTED, null));
+    }
+    
+    protected void inbound(Peer peer, Message message) throws Exception {
+        peer.getHandler().messageReceived(ctx,
+                new UpstreamMessageEvent(channel, message, socketAddress));
     }
 
-    protected void runPeerAsync(final Peer peer, MockNetworkConnection connection) {
-        new Thread("Test Peer Thread") {
-            @Override
-            public void run() {
-                try {
-                    peer.run();
-                } catch (PeerException e) {
-                    if (!e.getCause().getMessage().equals("done")) throw new RuntimeException(e);
-                }
-            }
-        }.start();
+    protected void inbound(FakeChannel peerChannel, Message message) {
+        Channels.fireMessageReceived(peerChannel, message);
+    }
+
+    protected Object outbound(FakeChannel p1) {
+        MessageEvent nextEvent = (MessageEvent)p1.nextEvent();
+        if (nextEvent == null)
+            return null;
+        return nextEvent.getMessage();
+    }
+
+    protected Peer peerOf(Channel ch) {
+        return PeerGroup.peerFromChannel(ch);
     }
 }

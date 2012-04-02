@@ -16,32 +16,33 @@
 
 package com.google.bitcoin.core;
 
+import java.io.IOException;
+import java.net.ConnectException;
+import java.net.InetSocketAddress;
+import java.net.SocketAddress;
+import java.util.*;
+import java.util.concurrent.*;
+
+import org.jboss.netty.channel.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.google.bitcoin.store.BlockStore;
 import com.google.bitcoin.store.BlockStoreException;
 import com.google.bitcoin.utils.EventListenerInvoker;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
-import java.util.*;
-import java.util.concurrent.*;
 
 /**
  * A Peer handles the high level communication with a BitCoin node.
  *
- * <p>After making the connection with connect(), call run() to start the message handling loop.
+ * <p>{@link Peer#getHandler()} is part of a Netty Pipeline with a Bitcoin serializer downstream of it.
  */
 public class Peer {
     private static final Logger log = LoggerFactory.getLogger(Peer.class);
     public static final int CONNECT_TIMEOUT_MSEC = 60000;
 
-    private NetworkConnection conn;
     private final NetworkParameters params;
-    // Whether the peer loop is supposed to be running or not. Set to false during shutdown so the peer loop
-    // knows to quit when the socket goes away.
-    private volatile boolean running;
     private final BlockChain blockChain;
     // When an API user explicitly requests a block or transaction from a peer, the InventoryItem is put here
     // whilst waiting for the response. Synchronized on itself. Is not used for downloads Peer generates itself.
@@ -73,49 +74,25 @@ public class Peer {
     // simultaneously if we were to receive a newly solved block whilst parts of the chain are streaming to us.
     private HashSet<Sha256Hash> pendingBlockDownloads = new HashSet<Sha256Hash>();
 
-    /**
-     * Construct a peer that reads/writes from the given block chain. Note that communication won't occur until
-     * you call connect(), which will set up a new NetworkConnection.
-     *
-     * @param bestHeight our current best chain height, to facilitate downloading
-     */
-    public Peer(NetworkParameters params, PeerAddress address, int bestHeight, BlockChain blockChain) {
-        this(params, address, blockChain, new VersionMessage(params, bestHeight));
-    }
+    private Channel channel;
+    private VersionMessage peerVersionMessage;
+    boolean isAcked;
+    private PeerHandler handler;
 
     /**
-     * Construct a peer that reads/writes from the given block chain. Note that communication won't occur until
-     * you call connect(), which will set up a new NetworkConnection.
-     *
-     * @param ver The version data to announce to the other side.
+     * Construct a peer that reads/writes from the given block chain.
      */
-    public Peer(NetworkParameters params, PeerAddress address, BlockChain blockChain, VersionMessage ver) {
+    public Peer(NetworkParameters params, BlockChain blockChain, VersionMessage ver) {
         this.params = params;
-        this.address = address;
         this.blockChain = blockChain;
-        this.pendingGetBlockFutures = new ArrayList<GetDataFuture<Block>>();
-        this.eventListeners = new ArrayList<PeerEventListener>();
-        this.fastCatchupTimeSecs = params.genesisBlock.getTimeSeconds();
         this.versionMessage = ver;
+        this.pendingGetBlockFutures = new ArrayList<GetDataFuture<Block>>();
+        this.eventListeners = new CopyOnWriteArrayList<PeerEventListener>();
+        this.fastCatchupTimeSecs = params.genesisBlock.getTimeSeconds();
+        this.isAcked = false;
+        this.handler = new PeerHandler();
     }
 
-    /**
-     * Construct a peer that reads/writes from the given block chain. Note that communication won't occur until
-     * you call connect(), which will set up a new NetworkConnection.
-     */
-    public Peer(NetworkParameters params, PeerAddress address, BlockChain blockChain) {
-        this(params, address, 0, blockChain);
-    }
-
-    /**
-     * Construct a peer that uses the given, already connected network connection object.
-     */
-    public Peer(NetworkParameters params, BlockChain blockChain, NetworkConnection connection) {
-        this(params, null, 0, blockChain);
-        this.conn = connection;
-        this.address = connection.getPeerAddress();
-    }
-    
     public synchronized void addEventListener(PeerEventListener listener) {
         eventListeners.add(listener);
     }
@@ -140,100 +117,108 @@ public class Peer {
     public String toString() {
         if (address == null) {
             // User-provided NetworkConnection object.
-            return "Peer(NetworkConnection:" + conn + ")";
+            return "Peer()";
         } else {
             return "Peer(" + address.getAddr() + ":" + address.getPort() + ")";
         }
     }
 
-    /**
-     * Connects to the peer.
-     *
-     * @throws PeerException when there is a temporary problem with the peer and we should retry later
-     */
-    public synchronized void connect() throws PeerException {
-        try {
-            conn = new TCPNetworkConnection(params, versionMessage);
-            conn.connect(address, CONNECT_TIMEOUT_MSEC);
-        } catch (IOException ex) {
-            throw new PeerException(ex);
-        } catch (ProtocolException ex) {
-            throw new PeerException(ex);
+    private void notifyDisconnect() {
+        for (PeerEventListener listener : eventListeners) {
+            synchronized (listener) {
+                listener.onPeerDisconnected(Peer.this, 0);
+            }
         }
     }
 
-    // For testing
-    void setConnection(NetworkConnection conn) {
-        this.conn = conn;
-    }
+    class PeerHandler extends SimpleChannelHandler {
+        @Override
+        public void channelClosed(ChannelHandlerContext ctx, ChannelStateEvent e)
+        throws Exception {
+            super.channelClosed(ctx, e);
+            notifyDisconnect();
+        }
 
-    /**
-     * Runs in the peers network loop and manages communication with the peer.
-     *
-     * <p>connect() must be called first
-     *
-     * @throws PeerException when there is a temporary problem with the peer and we should retry later
-     */
-    public void run() throws PeerException {
-        // This should be called in the network loop thread for this peer
-        if (conn == null)
-            throw new RuntimeException("please call connect() first");
+        @Override
+        public void connectRequested(ChannelHandlerContext ctx, ChannelStateEvent e)
+        throws Exception {
+            super.connectRequested(ctx, e);
+            channel = e.getChannel();
+            address = new PeerAddress((InetSocketAddress)e.getValue());
+        }
 
-        running = true;
-
-        try {
-            while (running) {
-                Message m = conn.readMessage();
-
-                // Allow event listeners to filter the message stream. Listeners are allowed to drop messages by
-                // returning null.
-                for (PeerEventListener listener : eventListeners) {
-                    synchronized (listener) {
-                        m = listener.onPreMessageReceived(this, m);
-                        if (m == null) break;
-                    }
-                }
-                if (m == null) continue;
-
-                if (m instanceof InventoryMessage) {
-                    processInv((InventoryMessage) m);
-                } else if (m instanceof Block) {
-                    processBlock((Block) m);
-                } else if (m instanceof Transaction) {
-                    processTransaction((Transaction) m);
-                } else if (m instanceof GetDataMessage) {
-                    processGetData((GetDataMessage) m);
-                } else if (m instanceof AddressMessage) {
-                    // We don't care about addresses of the network right now. But in future,
-                    // we should save them in the wallet so we don't put too much load on the seed nodes and can
-                    // properly explore the network.
-                } else if (m instanceof HeadersMessage) {
-                    processHeaders((HeadersMessage) m);
-                } else if (m instanceof AlertMessage) {
-                    processAlert((AlertMessage)m);
-                } else {
-                    // TODO: Handle the other messages we can receive.
-                    log.warn("Received unhandled message: {}", m);
-                }
-            }
-        } catch (IOException e) {
-            if (!running) {
-                // This exception was expected because we are tearing down the socket as part of quitting.
-                log.info("{}: Shutting down peer loop", address);
+        /** Catch any exceptions, logging them and then closing the channel. */ 
+        @Override
+        public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e)
+        throws Exception {
+            if (e.getCause() instanceof ConnectException || e.getCause() instanceof IOException) {
+                // Short message for network errors
+                log.info(toString() + " - " + e.getCause().getMessage());
             } else {
-                disconnect();
-                throw new PeerException(e);
+                log.warn(toString() + " - ", e.getCause());
             }
-        } catch (ProtocolException e) {
-            disconnect();
-            throw new PeerException(e);
-        } catch (RuntimeException e) {
-            log.error("Unexpected exception in peer loop", e);
-            disconnect();
-            throw e;
+
+            e.getChannel().close();
         }
 
-        disconnect();
+        /** Handle incoming Bitcoin messages */
+        @Override
+        public void messageReceived(ChannelHandlerContext ctx, MessageEvent e)
+        throws Exception {
+            Message m = (Message)e.getMessage();
+            
+            // Allow event listeners to filter the message stream. Listeners are allowed to drop messages by    178             synchronized (listener) {
+            // returning null.
+            for (PeerEventListener listener : eventListeners) {
+                synchronized (listener) {
+                    m = listener.onPreMessageReceived(Peer.this, m);
+                    if (m == null) break;
+                }
+            }
+
+            if (m == null) return;
+
+            if (m instanceof InventoryMessage) {
+                processInv((InventoryMessage) m);
+            } else if (m instanceof Block) {
+                processBlock((Block) m);
+            } else if (m instanceof Transaction) {
+                processTransaction((Transaction) m);
+            } else if (m instanceof GetDataMessage) {
+                processGetData((GetDataMessage) m);
+            } else if (m instanceof AddressMessage) {
+                // We don't care about addresses of the network right now. But in future,
+                // we should save them in the wallet so we don't put too much load on the seed nodes and can
+                // properly explore the network.
+            } else if (m instanceof HeadersMessage) {
+                processHeaders((HeadersMessage) m);
+            } else if (m instanceof AlertMessage) {
+                processAlert((AlertMessage)m);
+            } else if (m instanceof VersionMessage) {
+                peerVersionMessage = (VersionMessage)m;
+                EventListenerInvoker.invoke(eventListeners, new EventListenerInvoker<PeerEventListener>() {
+                    @Override
+                    public void invoke(PeerEventListener listener) {
+                        listener.onPeerConnected(Peer.this, 1);
+                    }
+                });
+            } else if (m instanceof VersionAck) {
+                if (peerVersionMessage == null) {
+                    throw new ProtocolException("got a version ack before version");
+                }
+                if (isAcked) {
+                    throw new ProtocolException("got more than one version ack");
+                }
+                isAcked = true;
+            } else {
+                // TODO: Handle the other messages we can receive.
+                log.warn("Received unhandled message: {}", m);
+            }
+        }
+
+        public Peer getPeer() {
+            return Peer.this;
+        }
     }
 
     private void processAlert(AlertMessage m) {
@@ -249,6 +234,11 @@ public class Peer {
             // useful, we just swallow the error here.
             log.error("Failed to check signature: bug in platform libraries?", t);
         }
+    }
+    
+    /** Returns the Netty Pipeline stage handling the high level Bitcoin protocol. */
+    public PeerHandler getHandler() {
+        return handler;
     }
 
     private void processHeaders(HeadersMessage m) throws IOException, ProtocolException {
@@ -470,7 +460,7 @@ public class Peer {
 
         if (!getdata.getItems().isEmpty()) {
             // This will cause us to receive a bunch of block or tx messages.
-            conn.writeMessage(getdata);
+            sendMessage(getdata);
         }
     }
 
@@ -494,7 +484,8 @@ public class Peer {
         synchronized (pendingGetBlockFutures) {
             pendingGetBlockFutures.add(future);
         }
-        conn.writeMessage(getdata);
+        
+        sendMessage(getdata);
         return future;
     }
 
@@ -588,10 +579,10 @@ public class Peer {
     }
 
     /**
-     * Sends the given message on the peers network connection. Just uses {@link NetworkConnection#writeMessage(Message)}.
+     * Sends the given message on the peers Channel.
      */
     public void sendMessage(Message m) throws IOException {
-        conn.writeMessage(m);
+        Channels.write(channel, m);
     }
 
     // Keep track of the last request we made to the peer in blockChainDownload so we can avoid redundant and harmful
@@ -676,11 +667,11 @@ public class Peer {
 
         if (downloadBlockBodies) {
             GetBlocksMessage message = new GetBlocksMessage(params, blockLocator, toHash);
-            conn.writeMessage(message);
+            sendMessage(message);
         } else {
             // Downloading headers for a while instead of full blocks.
             GetHeadersMessage message = new GetHeadersMessage(params, blockLocator, toHash);
-            conn.writeMessage(message);
+            sendMessage(message);
         }
     }
 
@@ -710,29 +701,12 @@ public class Peer {
      */
     public int getPeerBlockHeightDifference() {
         // Chain will overflow signed int blocks in ~41,000 years.
-        int chainHeight = (int) conn.getVersionMessage().bestHeight;
+        int chainHeight = (int) peerVersionMessage.bestHeight;
         // chainHeight should not be zero/negative because we shouldn't have given the user a Peer that is to another
         // client-mode node, nor should it be unconnected. If that happens it means the user overrode us somewhere or
         // there is a bug in the peer management code.
         Preconditions.checkState(chainHeight > 0, "Connected to peer with zero/negative chain height", chainHeight);
         return chainHeight - blockChain.getChainHead().getHeight();
-    }
-
-    /**
-     * Terminates the network connection and stops the message handling loop.
-     * 
-     * <p>This does not wait for the loop to terminate.
-     */
-    public synchronized void disconnect() {
-        log.debug("Disconnecting peer");
-        running = false;
-        try {
-            // This is the correct way to stop an IO bound loop
-            if (conn != null)
-                conn.shutdown();
-        } catch (IOException e) {
-            // Don't care about this.
-        }
     }
 
     /**
@@ -757,25 +731,25 @@ public class Peer {
     public PeerAddress getAddress() {
         return address;
     }
-
+    
     /**
      * @return various version numbers claimed by peer.
      */
+    public VersionMessage getPeerVersionMessage() {
+      return peerVersionMessage;
+    }
+
+    /**
+     * @return various version numbers we claim.
+     */
     public VersionMessage getVersionMessage() {
-      return conn.getVersionMessage();
+      return versionMessage;
     }
 
     /**
      * @return the height of the best chain as claimed by peer.
      */
     public long getBestHeight() {
-      return conn.getVersionMessage().bestHeight;
-    }
-    
-    /**
-     * @return whether the peer is currently connected and the message loop is running. 
-     */
-    public boolean isConnected() {
-      return running;
+      return peerVersionMessage.bestHeight;
     }
 }

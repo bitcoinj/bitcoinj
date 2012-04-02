@@ -21,7 +21,11 @@ import com.google.bitcoin.store.BlockStore;
 import com.google.bitcoin.store.MemoryBlockStore;
 
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
+
+import org.jboss.netty.channel.ChannelFuture;
 
 /**
  * Downloads the block given a block hash from the localhost node and prints it out.
@@ -29,27 +33,32 @@ import java.util.concurrent.Future;
 public class FetchBlock {
     public static void main(String[] args) throws Exception {
         System.out.println("Connecting to node");
-        final NetworkParameters params = NetworkParameters.prodNet();
+        final NetworkParameters params = NetworkParameters.testNet();
 
         BlockStore blockStore = new MemoryBlockStore(params);
         BlockChain chain = new BlockChain(params, blockStore);
-        final Peer peer = new Peer(params, new PeerAddress(InetAddress.getLocalHost()), chain);
-        peer.connect();
-        new Thread(new Runnable() {
-            public void run() {
-                try {
-                    peer.run();
-                } catch (PeerException e) {
-                    throw new RuntimeException(e);
-                }
+        PeerGroup peerGroup = new PeerGroup(params, chain);
+        peerGroup.start();
+
+        final CountDownLatch latch = new CountDownLatch(1);
+        peerGroup.addEventListener(new AbstractPeerEventListener() {
+            @Override
+            public void onPeerConnected(Peer peer, int peerCount) {
+                latch.countDown();
             }
-        }).start();
+        });
+        
+        ChannelFuture channelFuture =
+            peerGroup.connectTo(new InetSocketAddress(InetAddress.getLocalHost(), params.port));
+        latch.await();
+
+        Peer peer = PeerGroup.peerFromChannelFuture(channelFuture);
 
         Sha256Hash blockHash = new Sha256Hash(args[0]);
         Future<Block> future = peer.getBlock(blockHash);
         System.out.println("Waiting for node to send us the requested block: " + blockHash);
         Block block = future.get();
         System.out.println(block);
-        peer.disconnect();
+        peerGroup.stop();
     }
 }

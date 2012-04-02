@@ -162,6 +162,12 @@
             <artifactId>derby</artifactId>
         </dependency>
 
+	<dependency>
+	  <groupId>io.netty</groupId>
+	  <artifactId>netty</artifactId>
+	  <version>3.3.1.Final</version>
+	</dependency>
+
         <dependency>
             <groupId>com.madgag</groupId>
             <artifactId>sc-light-jdk15on</artifactId>

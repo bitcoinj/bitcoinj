@@ -31,35 +31,12 @@ import java.io.IOException;
  * Construction is blocking whilst the protocol version is negotiated.
  */
 public interface NetworkConnection {
-    /**
-     * Connect to the remote peer.
-     * 
-     * @param peerAddress the address of the remote peer
-     * @param connectTimeoutMsec timeout in milliseconds
-     */
-    public void connect(PeerAddress peerAddress, int connectTimeoutMsec)
-            throws IOException, ProtocolException;
-
      /**
      * Sends a "ping" message to the remote node. The protocol doesn't presently use this feature much.
      *
      * @throws IOException
      */
     void ping() throws IOException;
-
-    /**
-     * Shuts down the network socket. Note that there's no way to wait for a socket to be fully flushed out to the
-     * wire, so if you call this immediately after sending a message it might not get sent.
-     */
-    void shutdown() throws IOException;
-
-    /**
-     * Reads a network message from the wire, blocking until the message is fully received.
-     *
-     * @return An instance of a Message subclass
-     * @throws ProtocolException if the message is badly formatted, failed checksum or there was a TCP failure.
-     */
-    Message readMessage() throws IOException, ProtocolException;
 
     /**
      * Writes the given message out over the network using the protocol tag. For a Transaction

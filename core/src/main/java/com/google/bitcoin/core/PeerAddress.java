@@ -249,4 +249,8 @@ public class PeerAddress extends ChildMessage {
     public int hashCode() {
         return addr.hashCode() ^ port ^ (int) time ^ services.hashCode();
     }
+    
+    public InetSocketAddress toSocketAddress() {
+        return new InetSocketAddress(addr, port);
+    }
 }

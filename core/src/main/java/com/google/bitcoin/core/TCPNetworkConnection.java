@@ -16,31 +16,36 @@
 
 package com.google.bitcoin.core;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import static org.jboss.netty.channel.Channels.write;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.Socket;
+import java.net.SocketAddress;
 import java.util.Date;
+
+import org.jboss.netty.buffer.ChannelBuffer;
+import org.jboss.netty.buffer.ChannelBufferInputStream;
+import org.jboss.netty.buffer.ChannelBufferOutputStream;
+import org.jboss.netty.buffer.ChannelBuffers;
+import org.jboss.netty.channel.*;
+import org.jboss.netty.handler.codec.replay.ReplayingDecoder;
+import org.jboss.netty.handler.codec.replay.VoidEnum;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A {@code TCPNetworkConnection} is used for connecting to a Bitcoin node over the standard TCP/IP protocol.<p>
  *
- * Multiple {@code TCPNetworkConnection}s can wait if another NetworkConnection instance is deserializing a
+ * <p>{@link TCPNetworkConnection#getHandler()} is part of a Netty Pipeline, downstream of other pipeline stages. 
+ * <p>Multiple {@code TCPNetworkConnection}s can wait if another NetworkConnection instance is deserializing a
  * message and discard duplicates before reading them. This is intended to avoid memory usage spikes in constrained
  * environments like Android where deserializing a large message (like a block) on multiple threads simultaneously is
  * both wasteful and can cause OOM failures. This feature is controlled at construction time.
  */
-public class TCPNetworkConnection implements NetworkConnection {
+public class TCPNetworkConnection {
 	private static final Logger log = LoggerFactory.getLogger(TCPNetworkConnection.class);
 	
-    private final Socket socket;
-    private OutputStream out;
-    private InputStream in;
     // The IP address to which we are connecting.
     private InetAddress remoteIp;
     private final NetworkParameters params;
@@ -50,71 +55,42 @@ public class TCPNetworkConnection implements NetworkConnection {
 
     private VersionMessage myVersionMessage;
     private static final Date checksummingProtocolChangeDate = new Date(1329696000000L);
+    
+    private long messageCount;
+
+    private Channel channel;
+    
+    private NetworkHandler handler;
 
     /**
-     * Construct a network connection with the given params and version. To actually connect to a remote node, call
-     * {@link TCPNetworkConnection#connect(PeerAddress, int)}.
+     * Construct a network connection with the given params and version.
      *
      * @param params Defines which network to connect to and details of the protocol.
      * @param ver The VersionMessage to announce to the other side of the connection.
-     * @throws IOException if there is a network related failure.
-     * @throws ProtocolException if the version negotiation failed.
      */
-    public TCPNetworkConnection(NetworkParameters params, VersionMessage ver)
-            throws IOException, ProtocolException {
+    public TCPNetworkConnection(NetworkParameters params, VersionMessage ver) {
         this.params = params;
         this.myVersionMessage = ver;
-
-        socket = new Socket();
 
         // So pre-Feb 2012, update checkumming property after version is read.
         this.serializer = new BitcoinSerializer(this.params, false);
         this.serializer.setUseChecksumming(Utils.now().after(checksummingProtocolChangeDate));
+        this.handler = new NetworkHandler();
     }
 
-    /**
-     * Connect to the given IP address using the port specified as part of the network parameters. Once construction
-     * is complete a functioning network channel is set up and running.
-     *
-     * @param params Defines which network to connect to and details of the protocol.
-     * @param bestHeight The height of the best chain we know about, sent to the other side.
-     * @throws IOException if there is a network related failure.
-     * @throws ProtocolException if the version negotiation failed.
-     */
-    public TCPNetworkConnection(NetworkParameters params, int bestHeight)
-            throws IOException, ProtocolException {
-        this(params, new VersionMessage(params, bestHeight));
-    }
-
-    public void connect(PeerAddress peerAddress, int connectTimeoutMsec) throws IOException, ProtocolException {
-        remoteIp = peerAddress.getAddr();
-        int port = (peerAddress.getPort() > 0) ? peerAddress.getPort() : this.params.port;
-
-        InetSocketAddress address = new InetSocketAddress(remoteIp, port);
-
-        socket.connect(address, connectTimeoutMsec);
-
-        out = socket.getOutputStream();
-        in = socket.getInputStream();
-
-        // The version message does not use checksumming, until Feb 2012 when it magically does.
-        // Announce ourselves. This has to come first to connect to clients beyond v0.30.20.2 which wait to hear
-        // from us until they send their version message back.
-        log.info("Announcing ourselves as: {}", myVersionMessage.subVer);
-        writeMessage(myVersionMessage);
-        // When connecting, the remote peer sends us a version message with various bits of
-        // useful data in it. We need to know the peer protocol version before we can talk to it.
-        // There is a bug in Satoshis code such that it can sometimes send us alert messages before version negotiation
-        // has completed. There's no harm in ignoring them (they're meant for Bitcoin-Qt users anyway) so we just cycle
-        // here until we find the right message.
-        Message m;
-        while (!((m = readMessage()) instanceof VersionMessage));
+    private void onFirstMessage(Message m) throws IOException, ProtocolException {
+        if (!(m instanceof VersionMessage)) {
+            // Bad peers might not follow the protocol. This has been seen in the wild (issue 81).
+            log.info("First message received was not a version message but rather " + m);
+            return;
+        }
         versionMessage = (VersionMessage) m;
         // Now it's our turn ...
         // Send an ACK message stating we accept the peers protocol version.
-        writeMessage(new VersionAck());
-        // And get one back ...
-        readMessage();
+        write(channel, new VersionAck());
+    }
+        
+    private void onSecondMessage(Message m) throws IOException, ProtocolException {
         // Switch to the new protocol version.
         int peerVersion = versionMessage.clientVersion;
         log.info("Connected to peer: version={}, subVer='{}', services=0x{}, time={}, blocks={}", new Object[] {
@@ -129,12 +105,7 @@ public class TCPNetworkConnection implements NetworkConnection {
         // implementations claim to have a block chain in their services field but then report a height of zero, filter
         // them out here.
         if (!versionMessage.hasBlockChain() || versionMessage.bestHeight <= 0) {
-            // Shut down the socket
-            try {
-                shutdown();
-            } catch (IOException ex) {
-                // ignore exceptions while aborting
-            }
+            // Shut down the channel
             throw new ProtocolException("Peer does not have a copy of the block chain.");
         }
         // Newer clients use checksumming.
@@ -143,33 +114,70 @@ public class TCPNetworkConnection implements NetworkConnection {
     }
 
     public void ping() throws IOException {
-        writeMessage(new Ping());
-    }
-
-    public void shutdown() throws IOException {
-        socket.close();
+        write(channel, new Ping());
     }
 
     @Override
     public String toString() {
-        return "[" + remoteIp.getHostAddress() + "]:" + params.port + " (" + (socket.isConnected() ? "connected" :
-                "disconnected") + ")";
+        return "[" + remoteIp.getHostAddress() + "]:" + params.port;
     }
 
-    public Message readMessage() throws IOException, ProtocolException {
-        Message message;
-        do {
-            message = serializer.deserialize(in);
-            // If message is null, it means deduping was enabled, we read a duplicated message and skipped parsing to
-            // avoid doing redundant work. So go around and wait for another message.
-        } while (message == null);
-        return message;
-    }
-
-    public void writeMessage(Message message) throws IOException {
-        synchronized (out) {
-            serializer.serialize(message, out);
+    public class NetworkHandler extends ReplayingDecoder<VoidEnum> implements ChannelDownstreamHandler {
+        @Override
+        public void channelConnected(ChannelHandlerContext ctx, ChannelStateEvent e)
+        throws Exception {
+            channel = e.getChannel();
+            // The version message does not use checksumming, until Feb 2012 when it magically does.
+            // Announce ourselves. This has to come first to connect to clients beyond v0.30.20.2 which wait to hear
+            // from us until they send their version message back.
+            log.info("Announcing ourselves as: {}", myVersionMessage.subVer);
+            write(channel, myVersionMessage);
+            // When connecting, the remote peer sends us a version message with various bits of
+            // useful data in it. We need to know the peer protocol version before we can talk to it.
         }
+
+        // Attempt to decode a Bitcoin message passing upstream in the channel.
+        //
+        // By extending ReplayingDecoder, reading past the end of buffer will throw a special Error
+        // causing the channel to read more and retry.
+        //
+        // On VMs/systems where exception handling is slow, this will impact performance.  On the
+        // other hand, implementing a FrameDecoder will increase code complexity due to having
+        // to implement retries ourselves.
+        //
+        // TODO: consider using a decoder state and checkpoint() if performance is an issue.
+        @Override
+        protected Object decode(ChannelHandlerContext ctx, Channel chan,
+                ChannelBuffer buffer, VoidEnum state) throws Exception {
+            Message message = serializer.deserialize(new ChannelBufferInputStream(buffer));
+            messageCount++;
+            if (messageCount == 1) {
+                onFirstMessage(message);
+            } else if (messageCount == 2) {
+                onSecondMessage(message);
+            }
+            return message;
+        }
+
+        /** Serialize outgoing Bitcoin messages passing downstream in the channel. */
+        public void handleDownstream(ChannelHandlerContext ctx, ChannelEvent evt) throws Exception {
+            if (!(evt instanceof MessageEvent)) {
+                ctx.sendDownstream(evt);
+                return;
+            }
+
+            MessageEvent e = (MessageEvent) evt;
+            Message message = (Message)e.getMessage();
+
+            ChannelBuffer buffer = ChannelBuffers.dynamicBuffer();
+            serializer.serialize(message, new ChannelBufferOutputStream(buffer));
+            write(ctx, e.getFuture(), buffer, e.getRemoteAddress());
+        }
+    }
+    
+    /** Returns the Netty Pipeline stage handling Bitcoin serialization for this connection. */
+    public NetworkHandler getHandler() {
+        return handler;
     }
 
     public VersionMessage getVersionMessage() {
@@ -178,5 +186,10 @@ public class TCPNetworkConnection implements NetworkConnection {
 
     public PeerAddress getPeerAddress() {
         return new PeerAddress(remoteIp, params.port);
+    }
+
+    public void setRemoteAddress(SocketAddress address) {
+        if (address instanceof InetSocketAddress)
+            remoteIp = ((InetSocketAddress)address).getAddress();
     }
 }

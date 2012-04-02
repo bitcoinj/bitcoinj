@@ -16,20 +16,25 @@
 
 package com.google.bitcoin.examples;
 
-import com.google.bitcoin.core.NetworkConnection;
-import com.google.bitcoin.core.NetworkParameters;
-import com.google.bitcoin.core.PeerAddress;
-import com.google.bitcoin.core.TCPNetworkConnection;
-import com.google.bitcoin.discovery.DnsDiscovery;
-import com.google.bitcoin.discovery.IrcDiscovery;
-import com.google.bitcoin.discovery.PeerDiscoveryException;
-
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+
+import org.jboss.netty.bootstrap.ClientBootstrap;
+import org.jboss.netty.channel.*;
+import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
+
+import com.google.bitcoin.core.Message;
+import com.google.bitcoin.core.NetworkParameters;
+import com.google.bitcoin.core.TCPNetworkConnection;
+import com.google.bitcoin.core.VersionMessage;
+import com.google.bitcoin.discovery.DnsDiscovery;
+import com.google.bitcoin.discovery.IrcDiscovery;
+import com.google.bitcoin.discovery.PeerDiscoveryException;
 
 /**
  * Prints a list of IP addresses connected to the rendezvous point on the LFnet IRC channel.
@@ -51,7 +56,7 @@ public class PrintPeers {
 
     private static void printIRC() throws PeerDiscoveryException {
         long start = System.currentTimeMillis();
-        IrcDiscovery d = new IrcDiscovery("#bitcoin") {
+        IrcDiscovery d = new IrcDiscovery("#bitcoinTEST") {
             @Override
             protected void onIRCReceive(String message) {
                 System.out.println("<- " + message);
@@ -88,26 +93,50 @@ public class PrintPeers {
         for (InetSocketAddress peer : ircPeers) addrs.add(peer.getAddress());
         System.out.println("Scanning " + addrs.size() + " peers:");
 
+        final NetworkParameters params = NetworkParameters.testNet();
         final Object lock = new Object();
         final long[] bestHeight = new long[1];
-
+        final ClientBootstrap bootstrap = new ClientBootstrap(
+                new NioClientSocketChannelFactory(
+                        Executors.newCachedThreadPool(), 
+                        Executors.newCachedThreadPool()));
+                
         for (final InetAddress addr : addrs) {
             pool.submit(new Runnable() {
                 public void run() {
                     try {
-                        NetworkConnection conn =
-                            new TCPNetworkConnection(NetworkParameters.prodNet(), 0);
-                        conn.connect(new PeerAddress(addr), 1000);
-                        synchronized (lock) {
-                            long nodeHeight = conn.getVersionMessage().bestHeight;
-                            long diff = bestHeight[0] - nodeHeight;
-                            if (diff > 0) {
-                                System.out.println("Node is behind by " + diff + " blocks: " + addr.toString());
-                            } else {
-                                bestHeight[0] = nodeHeight;
-                            }
-                        }
-                        conn.shutdown();
+                        ChannelPipeline pipeline = Channels.pipeline();
+                        final CountDownLatch latch = new CountDownLatch(1);
+
+                        TCPNetworkConnection conn =
+                            new TCPNetworkConnection(params, new VersionMessage(params, 0));
+                        pipeline.addLast("codec", conn);
+                        pipeline.addLast("peer", new SimpleChannelHandler() {
+                            public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) throws Exception {
+                                Message m = (Message)e.getMessage();
+                                if (m instanceof VersionMessage) {
+                                    VersionMessage ver = (VersionMessage)m;
+                                    long nodeHeight = ver.bestHeight;
+                                    synchronized (lock) {
+                                        long diff = bestHeight[0] - nodeHeight;
+                                        if (diff > 0) {
+                                            System.out.println("Node is behind by " + diff + " blocks: " + addr.toString());
+                                        } else {
+                                            bestHeight[0] = nodeHeight;
+                                        }
+                                    }
+                                    e.getChannel().close();
+                                    latch.countDown();
+                                }
+                            };
+                            public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) throws Exception {
+                                System.err.println(addr.toString() + " : " + e.getCause().getMessage());
+                                latch.countDown();
+                            };
+                        });
+                        bootstrap.setPipeline(pipeline);
+                        bootstrap.connect(new InetSocketAddress(addr, params.port));
+                        latch.await();
                     } catch (Exception e) {
                     }
                 }
