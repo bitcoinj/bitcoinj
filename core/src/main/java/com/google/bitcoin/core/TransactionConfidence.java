@@ -17,6 +17,7 @@
 package com.google.bitcoin.core;
 
 import com.google.bitcoin.store.BlockStoreException;
+import com.google.bitcoin.utils.EventListenerInvoker;
 
 import java.io.Serializable;
 import java.math.BigInteger;
@@ -212,14 +213,19 @@ public class TransactionConfidence implements Serializable {
     /**
      * Called by a {@link Peer} when a transaction is pending and announced by a peer. The more peers announce the
      * transaction, the more peers have validated it (assuming your internet connection is not being intercepted).
-     * If confidence is currently unknown, sets it to {@link ConfidenceType#NOT_SEEN_IN_CHAIN}.
+     * If confidence is currently unknown, sets it to {@link ConfidenceType#NOT_SEEN_IN_CHAIN}. Listeners will be
+     * invoked in this case.
      *
      * @param address IP address of the peer, used as a proxy for identity.
      */
     public synchronized void markBroadcastBy(PeerAddress address) {
         broadcastBy.add(address);
-        if (getConfidenceType() == ConfidenceType.UNKNOWN)
+        if (getConfidenceType() == ConfidenceType.UNKNOWN) {
             setConfidenceType(ConfidenceType.NOT_SEEN_IN_CHAIN);
+            // Listeners are already run by setConfidenceType.
+        } else {
+            runListeners();
+        }
     }
 
     /**
@@ -356,16 +362,11 @@ public class TransactionConfidence implements Serializable {
     }
 
     private void runListeners() {
-        if (listeners == null) return;
-        for (int i = 0; i < listeners.size(); i++) {
-            Listener l = listeners.get(i);
-            synchronized (l) {
-                l.onConfidenceChanged(transaction);
+        EventListenerInvoker.invoke(listeners, new EventListenerInvoker<Listener>() {
+            @Override
+            public void invoke(Listener listener) {
+                listener.onConfidenceChanged(transaction);
             }
-            if (listeners.get(i) != l) {
-                // Listener removed itself.
-                i--;
-            }
-        }
+        });
     }
 }

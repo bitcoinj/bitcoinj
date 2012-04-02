@@ -224,20 +224,32 @@ public class PeerGroupTest extends TestWithNetworkConnections {
         InventoryMessage inv = new InventoryMessage(params);
         inv.addTransaction(tx);
         
+        final Transaction[] event = new Transaction[1];
+        tx.getConfidence().addEventListener(new TransactionConfidence.Listener() {
+            public void onConfidenceChanged(Transaction tx) {
+                event[0] = tx;
+            }
+        });
+        
         // Peer 2 advertises the tx but does not download it.
         assertNull(n2.exchange(inv));
         assertEquals(0, tx.getConfidence().numBroadcastPeers());
+        assertEquals(null, event[0]);
         // Peer 1 (the download peer) advertises the tx, we download it.
         n1.exchange(inv);  // returns getdata
         n1.exchange(tx);   // returns nothing after a queue drain.
         // Two peers saw this tx hash.
         assertEquals(2, tx.getConfidence().numBroadcastPeers());
+        assertEquals(tx, event[0]);
+        event[0] = null;
         assertTrue(tx.getConfidence().getBroadcastBy().contains(n1.getPeerAddress()));
         assertTrue(tx.getConfidence().getBroadcastBy().contains(n2.getPeerAddress()));
         // A straggler reports in.
         n3.exchange(inv);
         assertEquals(3, tx.getConfidence().numBroadcastPeers());
         assertTrue(tx.getConfidence().getBroadcastBy().contains(n3.getPeerAddress()));
+        assertEquals(tx, event[0]);
+        event[0] = null;
     }
 
     @Test
