@@ -16,6 +16,7 @@
 
 package com.google.bitcoin.core;
 
+import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -198,7 +199,7 @@ public class Transaction extends ChildMessage implements Serializable {
             return appearsInHashes;
         
         if (appearsIn != null) {
-            assert appearsInHashes == null;
+            Preconditions.checkState(appearsInHashes == null);
             log.info("Migrating a tx to appearsInHashes");
             appearsInHashes = new HashSet<Sha256Hash>(appearsIn.size());
             for (StoredBlock block : appearsIn) {
@@ -592,11 +593,11 @@ public class Transaction extends ChildMessage implements Serializable {
      * @param wallet   A wallet is required to fetch the keys needed for signing.
      */
     public void signInputs(SigHash hashType, Wallet wallet) throws ScriptException {
-        assert inputs.size() > 0;
-        assert outputs.size() > 0;
+        Preconditions.checkState(inputs.size() > 0);
+        Preconditions.checkState(outputs.size() > 0);
 
         // I don't currently have an easy way to test other modes work, as the official client does not use them.
-        assert hashType == SigHash.ALL;
+        Preconditions.checkArgument(hashType == SigHash.ALL, "Only SIGHASH_ALL is currently supported");
 
         // The transaction is signed with the input scripts empty except for the input we are signing. In the case
         // where addInput has been used to set up a new transaction, they are already all empty. The input being signed
@@ -609,14 +610,15 @@ public class Transaction extends ChildMessage implements Serializable {
         ECKey[] signingKeys = new ECKey[inputs.size()];
         for (int i = 0; i < inputs.size(); i++) {
             TransactionInput input = inputs.get(i);
-            assert input.getScriptBytes().length == 0 : "Attempting to sign a non-fresh transaction";
+            Preconditions.checkState(input.getScriptBytes().length == 0, "Attempting to sign a non-fresh transaction");
             // Set the input to the script of its output.
             input.setScriptBytes(input.getOutpoint().getConnectedPubKeyScript());
             // Find the signing key we'll need to use.
             byte[] connectedPubKeyHash = input.getOutpoint().getConnectedPubKeyHash();
             ECKey key = wallet.findKeyFromPubHash(connectedPubKeyHash);
             // This assert should never fire. If it does, it means the wallet is inconsistent.
-            assert key != null : "Transaction exists in wallet that we cannot redeem: " + bytesToHexString(connectedPubKeyHash);
+            Preconditions.checkNotNull(key, "Transaction exists in wallet that we cannot redeem: %s",
+                    bytesToHexString(connectedPubKeyHash));
             // Keep the key around for the script creation step below.
             signingKeys[i] = key;
             // The anyoneCanPay feature isn't used at the moment.
@@ -643,7 +645,7 @@ public class Transaction extends ChildMessage implements Serializable {
         // output.
         for (int i = 0; i < inputs.size(); i++) {
             TransactionInput input = inputs.get(i);
-            assert input.getScriptBytes().length == 0;
+            Preconditions.checkState(input.getScriptBytes().length == 0);
             ECKey key = signingKeys[i];
             input.setScriptBytes(Script.createInputScript(signatures[i], key.getPubKey()));
         }

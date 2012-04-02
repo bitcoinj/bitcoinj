@@ -23,6 +23,8 @@ import java.io.*;
 import java.math.BigInteger;
 import java.util.Arrays;
 
+import static com.google.common.base.Preconditions.checkState;
+
 /**
  * A Message is a data structure that can be serialized/deserialized using both the BitCoin proprietary serialization
  * format and built-in Java object serialization. Specific types of messages that are used both in the block chain,
@@ -114,9 +116,12 @@ public abstract class Message implements Serializable {
             parse();
             parsed = true;
         }
-        
-        assert this.length != UNKNOWN_LENGTH: "Length field has not been set in constructor for " + getClass().getSimpleName() + " after " + (parseLazy ? "lite" : "full") + " parse.  Refer to Message.parseLite() for detail of required Length field contract.";
 
+        checkState(this.length != UNKNOWN_LENGTH,
+                "Length field has not been set in constructor for %s after %s parse. " +
+                        "Refer to Message.parseLite() for detail of required Length field contract.",
+                getClass().getSimpleName(), parseLazy ? "lite" : "full");
+        
         if (SELF_CHECK) {
             selfCheck(msg, offset);
         }
@@ -307,7 +312,7 @@ public abstract class Message implements Serializable {
             return buf;
         }
 
-        assert bytes == null : "cached bytes present but failed to use them for serialization";
+        checkState(bytes == null, "Cached bytes present but failed to use them for serialization");
 
         // No cached array available so serialize parts by stream.
         ByteArrayOutputStream stream = new UnsafeByteArrayOutputStream(length < 32 ? 32 : length + 32);
@@ -386,7 +391,8 @@ public abstract class Message implements Serializable {
         if (length != UNKNOWN_LENGTH)
             return length;
         maybeParse();
-        assert length != UNKNOWN_LENGTH: "Length field has not been set in " + getClass().getSimpleName() + " after full parse.";
+        checkState(length != UNKNOWN_LENGTH,
+                "Length field has not been set in %s after full parse.", getClass().getSimpleName());
         return length;
     }
 

@@ -18,7 +18,6 @@ package com.google.bitcoin.store;
 
 import com.google.bitcoin.core.*;
 import com.google.bitcoin.utils.NamedSemaphores;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,6 +33,8 @@ import java.nio.channels.OverlappingFileLockException;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.Map;
+
+import static com.google.common.base.Preconditions.checkState;
 
 /**
  * Stores the block chain to disk.<p>
@@ -107,7 +108,7 @@ public class BoundedOverheadBlockStore implements BlockStore {
             ByteBuffer buf = ByteBuffer.allocate(Record.SIZE);
             buf.putInt(block.getHeight());
             byte[] chainWorkBytes = block.getChainWork().toByteArray();
-            assert chainWorkBytes.length <= CHAIN_WORK_BYTES : "Ran out of space to store chain work!";
+            checkState(chainWorkBytes.length <= CHAIN_WORK_BYTES, "Ran out of space to store chain work!");
             if (chainWorkBytes.length < CHAIN_WORK_BYTES) {
                 // Pad to the right size.
                 buf.put(EMPTY_BYTES, 0, CHAIN_WORK_BYTES - chainWorkBytes.length);
@@ -330,7 +331,7 @@ public class BoundedOverheadBlockStore implements BlockStore {
             } else {
                 // Move backwards.
                 pos = pos - Record.SIZE;
-                assert pos >= 1 + 32 : pos;
+                checkState(pos >= 1 + 32, pos);
             }
             numMoves++;
         } while (pos != startPos);

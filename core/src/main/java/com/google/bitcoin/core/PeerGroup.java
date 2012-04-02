@@ -31,6 +31,9 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+
 /**
  * Maintain a number of connections to peers.<p>
  * 
@@ -228,13 +231,12 @@ public class PeerGroup {
      * to stop until the listener returns.</p>
      */
     public synchronized void addEventListener(PeerEventListener listener) {
-        assert listener != null;
-        peerEventListeners.add(listener);
+        peerEventListeners.add(checkNotNull(listener));
     }
 
     /** The given event listener will no longer be called with events. */
     public synchronized boolean removeEventListener(PeerEventListener listener) {
-        return peerEventListeners.remove(listener);
+        return peerEventListeners.remove(checkNotNull(listener));
     }
 
     /**
@@ -730,7 +732,7 @@ public class PeerGroup {
             log.info("Peer death while shutting down");
             return;
         }
-        assert !peers.contains(peer);
+        checkArgument(!peers.contains(peer));
         if (peer == downloadPeer) {
             log.info("Download peer died. Picking a new one.");
             setDownloadPeer(null);

@@ -27,6 +27,7 @@ import java.util.*;
 import java.util.concurrent.ExecutionException;
 
 import static com.google.bitcoin.core.Utils.bitcoinValueToFriendlyString;
+import static com.google.common.base.Preconditions.*;
 
 /**
  * A Wallet stores keys and a record of transactions that have not yet been spent. Thus, it is capable of
@@ -442,13 +443,13 @@ public class Wallet implements Serializable {
                     // There were no change transactions so this tx is fully spent.
                     log.info("  ->spent");
                     boolean alreadyPresent = spent.put(tx.getHash(), tx) != null;
-                    assert !alreadyPresent : "TX in both pending and spent pools";
+                    checkState(!alreadyPresent, "TX in both pending and spent pools");
                 } else {
                     // There was change back to us, or this tx was purely a spend back to ourselves (perhaps for
                     // anonymization purposes).
                     log.info("  ->unspent");
                     boolean alreadyPresent = unspent.put(tx.getHash(), tx) != null;
-                    assert !alreadyPresent : "TX in both pending and unspent pools";
+                    checkState(!alreadyPresent, "TX in both pending and unspent pools");
                 }
             } else if (sideChain) {
                 // The transaction was accepted on an inactive side chain, but not yet by the best chain.
@@ -516,7 +517,7 @@ public class Wallet implements Serializable {
             }
         }
         
-        assert isConsistent();
+        checkState(isConsistent());
     }
 
     /**
@@ -531,12 +532,12 @@ public class Wallet implements Serializable {
             // It's sending us coins.
             log.info("  new tx ->unspent");
             boolean alreadyPresent = unspent.put(tx.getHash(), tx) != null;
-            assert !alreadyPresent : "TX was received twice";
+            checkState(!alreadyPresent, "TX was received twice");
         } else if (!tx.getValueSentFromMe(this).equals(BigInteger.ZERO)) {
             // It spent some of our coins and did not send us any.
             log.info("  new tx ->spent");
             boolean alreadyPresent = spent.put(tx.getHash(), tx) != null;
-            assert !alreadyPresent : "TX was received twice";
+            checkState(!alreadyPresent, "TX was received twice");
         } else {
             // It didn't send us coins nor spend any of our coins. If we're processing it, that must be because it
             // spends outpoints that are also spent by some pending transactions - maybe a double spend of somebody
@@ -591,13 +592,13 @@ public class Wallet implements Serializable {
                 //   A  -> spent by B [pending]
                 //     \-> spent by C [chain]
                 Transaction doubleSpent = input.getOutpoint().fromTx;   // == A
-                assert doubleSpent != null;
+                checkNotNull(doubleSpent);
                 int index = (int) input.getOutpoint().getIndex();
                 TransactionOutput output = doubleSpent.getOutputs().get(index);
                 TransactionInput spentBy = output.getSpentBy();
-                assert spentBy != null;
+                checkNotNull(spentBy);
                 Transaction connected = spentBy.getParentTransaction();
-                assert connected != null;
+                checkNotNull(connected);
                 if (fromChain) {
                     // This must have overridden a pending tx, or the block is bad (contains transactions
                     // that illegally double spend: should never occur if we are connected to an honest node).
@@ -677,7 +678,7 @@ public class Wallet implements Serializable {
      * </ol>
      */
     public synchronized void commitTx(Transaction tx) throws VerificationException {
-        assert !pending.containsKey(tx.getHash()) : "commitTx called on the same transaction twice";
+        checkArgument(!pending.containsKey(tx.getHash()), "commitTx called on the same transaction twice");
         log.info("commitTx of {}", tx.getHashAsString());
         BigInteger balance = getBalance();
         tx.updatedAt = Utils.now();
@@ -703,7 +704,7 @@ public class Wallet implements Serializable {
             throw new RuntimeException(e);
         }
 
-        assert isConsistent();
+        checkState(isConsistent());
     }
 
     /**
@@ -798,7 +799,7 @@ public class Wallet implements Serializable {
      * depending on how the wallet is implemented (eg if backed by a database).
      */
     public synchronized List<Transaction> getRecentTransactions(int numTransactions, boolean includeDead) {
-        assert numTransactions >= 0;
+        checkArgument(numTransactions >= 0);
         // Firstly, put all transactions into an array.
         int size = getPoolSize(WalletTransaction.Pool.UNSPENT) +
                 getPoolSize(WalletTransaction.Pool.SPENT) +
@@ -1064,7 +1065,7 @@ public class Wallet implements Serializable {
             // TODO: Should throw an exception here.
             return false;
         }
-        assert gathered.size() > 0;
+        checkState(gathered.size() > 0);
         sendTx.getConfidence().setConfidenceType(TransactionConfidence.ConfidenceType.NOT_SEEN_IN_CHAIN);
         BigInteger change = valueGathered.subtract(nanocoins);
         if (change.compareTo(BigInteger.ZERO) > 0) {
@@ -1103,7 +1104,7 @@ public class Wallet implements Serializable {
     synchronized Address getChangeAddress() {
         // For now let's just pick the first key in our keychain. In future we might want to do something else to
         // give the user better privacy here, eg in incognito mode.
-        assert keychain.size() > 0 : "Can't send value without an address to use for receiving change";
+        checkState(keychain.size() > 0, "Can't send value without an address to use for receiving change");
         ECKey first = keychain.get(0);
         return first.toAddress(params);
     }
@@ -1112,7 +1113,7 @@ public class Wallet implements Serializable {
      * Adds the given ECKey to the wallet. There is currently no way to delete keys (that would result in coin loss).
      */
     public synchronized void addKey(ECKey key) {
-        assert !keychain.contains(key);
+        checkArgument(!keychain.contains(key), "Key already present");
         keychain.add(key);
     }
 
@@ -1204,7 +1205,7 @@ public class Wallet implements Serializable {
         }
         if (balanceType == BalanceType.AVAILABLE)
             return available;
-        assert balanceType == BalanceType.ESTIMATED;
+        checkState(balanceType == BalanceType.ESTIMATED);
         // Now add back all the pending outputs to assume the transaction goes through.
         BigInteger estimated = available;
         for (Transaction tx : pending.values()) {
@@ -1321,7 +1322,7 @@ public class Wallet implements Serializable {
         all.putAll(inactive);
         for (Transaction tx : all.values()) {
             Collection<Sha256Hash> appearsIn = tx.getAppearsInHashes();
-            assert appearsIn != null;
+            checkNotNull(appearsIn);
             // If the set of blocks this transaction appears in is disjoint with one of the chain segments it means
             // the transaction was never incorporated by a miner into that side of the chain.
             boolean inOldSection = !Collections.disjoint(appearsIn, oldBlockHashes);
@@ -1330,19 +1331,19 @@ public class Wallet implements Serializable {
 
             if (inCommonSection) {
                 boolean alreadyPresent = commonChainTransactions.put(tx.getHash(), tx) != null;
-                assert !alreadyPresent : "Transaction appears twice in common chain segment";
+                checkState(!alreadyPresent, "Transaction appears twice in common chain segment");
             } else {
                 if (inOldSection) {
                     boolean alreadyPresent = oldChainTransactions.put(tx.getHash(), tx) != null;
-                    assert !alreadyPresent : "Transaction appears twice in old chain segment";
+                    checkState(!alreadyPresent, "Transaction appears twice in old chain segment");
                     if (!inNewSection) {
                         alreadyPresent = onlyOldChainTransactions.put(tx.getHash(), tx) != null;
-                        assert !alreadyPresent : "Transaction appears twice in only-old map";
+                        checkState(!alreadyPresent, "Transaction appears twice in only-old map");
                     }
                 }
                 if (inNewSection) {
                     boolean alreadyPresent = newChainTransactions.put(tx.getHash(), tx) != null;
-                    assert !alreadyPresent : "Transaction appears twice in new chain segment";
+                    checkState(!alreadyPresent, "Transaction appears twice in new chain segment");
                 }
             }
         }
@@ -1370,7 +1371,8 @@ public class Wallet implements Serializable {
         // Reconnect the transactions in the common part of the chain.
         for (Transaction tx : commonChainTransactions.values()) {
             TransactionInput badInput = tx.connectForReorganize(all);
-            assert badInput == null : "Failed to connect " + tx.getHashAsString() + ", " + badInput.toString();
+            checkState(badInput == null, "Failed to connect %s, %s", tx.getHashAsString(),
+                       badInput == null ? "" : badInput.toString());
         }
         // Recalculate the unspent/spent buckets for the transactions the re-org did not affect.
         log.info("Moving transactions");
@@ -1458,7 +1460,7 @@ public class Wallet implements Serializable {
                 listener.onReorganize(Wallet.this);
             }
         });
-        assert isConsistent();
+        checkState(isConsistent());
     }
 
     private void reprocessTxAfterReorg(Map<Sha256Hash, Transaction> pool, Transaction tx) {

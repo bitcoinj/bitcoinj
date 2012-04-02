@@ -21,6 +21,9 @@ import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.io.Serializable;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
+
 /**
  * This message is a reference or pointer to an output of a different transaction.
  */
@@ -118,9 +121,8 @@ public class TransactionOutPoint extends ChildMessage implements Serializable {
      * Returns the pubkey script from the connected output.
      */
     byte[] getConnectedPubKeyScript() {
-        byte[] result = getConnectedOutput().getScriptBytes();
-        assert result != null;
-        assert result.length > 0;
+        byte[] result = checkNotNull(getConnectedOutput().getScriptBytes());
+        checkState(result.length > 0);
         return result;
     }
 

@@ -26,6 +26,8 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Date;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 /**
  * A collection of various utility methods that are helpful for working with the BitCoin protocol.
  * To enable debug logging from the library, run with -Dbitcoinj.logging=true on your command line.
@@ -55,7 +57,7 @@ public class Utils {
      * Convert an amount expressed in the way humans are used to into nanocoins.
      */
     public static BigInteger toNanoCoins(int coins, int cents) {
-        assert cents < 100;
+        checkArgument(cents < 100);
         BigInteger bi = BigInteger.valueOf(coins).multiply(COIN);
         bi = bi.add(BigInteger.valueOf(cents).multiply(CENT));
         return bi;
@@ -216,8 +218,8 @@ public class Utils {
      * @param trimLength trim output to this length.  If positive, must be divisible by 4.
      */
     public static byte[] reverseDwordBytes(byte[] bytes, int trimLength) {
-        assert bytes.length % 4 == 0;
-        assert trimLength < 0 || trimLength % 4 == 0;
+        checkArgument(bytes.length % 4 == 0);
+        checkArgument(trimLength < 0 || trimLength % 4 == 0);
         
         byte[] rev = new byte[trimLength >= 0 && bytes.length > trimLength ? trimLength : bytes.length];
         

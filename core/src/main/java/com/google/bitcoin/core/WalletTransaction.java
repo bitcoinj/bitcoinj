@@ -17,6 +17,8 @@
 package com.google.bitcoin.core;
 
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 /**
  * A Transaction in a Wallet - includes the pool ID
  * 
@@ -68,9 +70,7 @@ public class WalletTransaction {
     private Pool pool;
     
     public WalletTransaction(Pool pool, Transaction transaction) {
-        assert pool != null;
-        
-        this.pool = pool;
+        this.pool = checkNotNull(pool);
         this.transaction = transaction;
     }
 

@@ -24,6 +24,8 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 /**
  * A Sha256Hash just wraps a byte[] so that equals and hashcode work correctly, allowing it to be used as keys in a
  * map. It also checks that the length is correct and provides a bit more type safety.
@@ -69,13 +71,13 @@ public class Sha256Hash implements Serializable {
      * Creates a Sha256Hash by wrapping the given byte array. It must be 32 bytes long.
      */
     public Sha256Hash(byte[] bytes) {
-        assert bytes.length == 32;
+        checkArgument(bytes.length == 32);
         this.bytes = bytes;
 
     }
 
     private Sha256Hash(byte[] bytes, int hash) {
-        assert bytes.length == 32;
+        checkArgument(bytes.length == 32);
         this.bytes = bytes;
         this.hash = hash;
     }
@@ -84,7 +86,7 @@ public class Sha256Hash implements Serializable {
      * Creates a Sha256Hash by decoding the given hex string. It must be 64 characters long.
      */
     public Sha256Hash(String string) {
-        assert string.length() == 64;
+        checkArgument(string.length() == 64);
         this.bytes = Hex.decode(string);
     }
 

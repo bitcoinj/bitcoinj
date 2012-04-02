@@ -22,6 +22,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.Serializable;
 import java.math.BigInteger;
 
+import static com.google.common.base.Preconditions.checkState;
+
 /**
  * NetworkParameters contains the data needed for working with an instantiation of a BitCoin chain.
  *
@@ -140,7 +142,8 @@ public class NetworkParameters implements Serializable {
         n.genesisBlock.setNonce(384568319);
         n.id = ID_TESTNET;
         String genesisHash = n.genesisBlock.getHashAsString();
-        assert genesisHash.equals("00000007199508e34a9ff81e6ec0c477a4cccff2a4767a8eee39c11db367b008") : genesisHash;
+        checkState(genesisHash.equals("00000007199508e34a9ff81e6ec0c477a4cccff2a4767a8eee39c11db367b008"),
+                genesisHash);
         return n;
     }
 
@@ -167,7 +170,8 @@ public class NetworkParameters implements Serializable {
         n.genesisBlock.setNonce(2083236893);
         n.id = ID_PRODNET;
         String genesisHash = n.genesisBlock.getHashAsString();
-        assert genesisHash.equals("000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f") : genesisHash;
+        checkState(genesisHash.equals("000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f"),
+                genesisHash);
         return n;
     }
 

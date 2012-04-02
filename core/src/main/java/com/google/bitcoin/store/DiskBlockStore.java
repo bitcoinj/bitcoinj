@@ -18,7 +18,6 @@ package com.google.bitcoin.store;
 
 import com.google.bitcoin.core.*;
 import com.google.bitcoin.utils.NamedSemaphores;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,6 +30,8 @@ import java.nio.channels.FileLock;
 import java.nio.channels.OverlappingFileLockException;
 import java.util.HashMap;
 import java.util.Map;
+
+import static com.google.common.base.Preconditions.checkState;
 
 /**
  * Stores the block chain to disk but still holds it in memory. This is intended for desktop apps and tests.
@@ -183,7 +184,7 @@ public class DiskBlockStore implements BlockStore {
         ensureOpen();
         try {
             Sha256Hash hash = block.getHeader().getHash();
-            assert blockMap.get(hash) == null : "Attempt to insert duplicate";
+            checkState(blockMap.get(hash) == null, "Attempt to insert duplicate");
             // Append to the end of the file. The other fields in StoredBlock will be recalculated when it's reloaded.
             byte[] bytes = block.getHeader().bitcoinSerialize();
             file.write(bytes);

@@ -18,6 +18,8 @@ package com.google.bitcoin.core;
 
 import java.util.Arrays;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 /**
  * <p>In Bitcoin the following format is often used to represent some type of key:</p>
  * <p/>
@@ -38,7 +40,7 @@ public class VersionedChecksummedBytes {
     }
 
     protected VersionedChecksummedBytes(int version, byte[] bytes) {
-        assert version < 256 && version >= 0;
+        checkArgument(version < 256 && version >= 0);
         this.version = version;
         this.bytes = bytes;
     }

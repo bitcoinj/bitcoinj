@@ -33,6 +33,8 @@ import java.io.Serializable;
 import java.math.BigInteger;
 import java.security.SecureRandom;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 // TODO: This class is quite a mess by now. Once users are migrated away from Java serialization for the wallets,
 // refactor this to have better internal layout and a more consistent API.
 
@@ -281,8 +283,9 @@ public class ECKey implements Serializable {
         try {
             ASN1InputStream decoder = new ASN1InputStream(asn1privkey);
             DERSequence seq = (DERSequence) decoder.readObject();
-            assert seq.size() == 4 : "Input does not appear to be an ASN.1 OpenSSL EC private key";
-            assert ((DERInteger) seq.getObjectAt(0)).getValue().equals(BigInteger.ONE) : "Input is of wrong version";
+            checkArgument(seq.size() == 4, "Input does not appear to be an ASN.1 OpenSSL EC private key");
+            checkArgument(((DERInteger) seq.getObjectAt(0)).getValue().equals(BigInteger.ONE),
+                    "Input is of wrong version");
             DEROctetString key = (DEROctetString) seq.getObjectAt(1);
             decoder.close();
             return new BigInteger(key.getOctets());

@@ -16,6 +16,8 @@
 
 package com.google.bitcoin.core;
 
+import com.google.common.base.Preconditions;
+
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
@@ -156,8 +158,7 @@ public class TransactionInput extends ChildMessage implements Serializable {
         // parameter is overloaded to be something totally different.
         if (scriptSig == null) {
             maybeParse();
-            assert scriptBytes != null;
-            scriptSig = new Script(params, scriptBytes, 0, scriptBytes.length);
+            scriptSig = new Script(params, Preconditions.checkNotNull(scriptBytes), 0, scriptBytes.length);
         }
         return scriptSig;
     }

@@ -24,6 +24,8 @@ import org.slf4j.LoggerFactory;
 import java.math.BigInteger;
 import java.util.*;
 
+import static com.google.common.base.Preconditions.*;
+
 /**
  * A BlockChain holds a series of {@link Block} objects, links them together, and knows how to verify that the
  * chain follows the rules of the {@link NetworkParameters} for this chain.<p>
@@ -195,7 +197,7 @@ public class BlockChain {
             // We can't find the previous block. Probably we are still in the process of downloading the chain and a
             // block was solved whilst we were doing it. We put it to one side and try to connect it later when we
             // have more blocks.
-            assert tryConnecting : "bug in tryConnectingUnconnected";
+            checkState(tryConnecting, "bug in tryConnectingUnconnected");
             log.warn("Block does not connect: {}", block.getHashAsString());
             unconnectedBlocks.add(block);
             return false;
@@ -293,13 +295,12 @@ public class BlockChain {
      * Returns the set of contiguous blocks between 'higher' and 'lower'. Higher is included, lower is not.
      */
     private List<StoredBlock> getPartialChain(StoredBlock higher, StoredBlock lower) throws BlockStoreException {
-        assert higher.getHeight() > lower.getHeight();
+        checkArgument(higher.getHeight() > lower.getHeight(), "higher and lower are reversed");
         LinkedList<StoredBlock> results = new LinkedList<StoredBlock>();
         StoredBlock cursor = higher;
         while (true) {
             results.add(cursor);
-            cursor = cursor.getPrev(blockStore);
-            assert cursor != null : "Ran off the end of the chain";
+            cursor = checkNotNull(cursor.getPrev(blockStore), "Ran off the end of the chain");
             if (cursor.equals(lower)) break;
         }
         return results;
@@ -322,10 +323,10 @@ public class BlockChain {
         while (!currentChainCursor.equals(newChainCursor)) {
             if (currentChainCursor.getHeight() > newChainCursor.getHeight()) {
                 currentChainCursor = currentChainCursor.getPrev(blockStore);
-                assert currentChainCursor != null : "Attempt to follow an orphan chain";
+                checkNotNull(currentChainCursor, "Attempt to follow an orphan chain");
             } else {
                 newChainCursor = newChainCursor.getPrev(blockStore);
-                assert newChainCursor != null : "Attempt to follow an orphan chain";
+                checkNotNull(newChainCursor, "Attempt to follow an orphan chain");
             }
         }
         return currentChainCursor;

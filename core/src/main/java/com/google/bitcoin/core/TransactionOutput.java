@@ -25,6 +25,9 @@ import java.io.OutputStream;
 import java.io.Serializable;
 import java.math.BigInteger;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
+
 /**
  * A TransactionOutput message contains a scriptPubKey that controls who is able to spend its value. It is a sub-part
  * of the Transaction message.
@@ -132,7 +135,7 @@ public class TransactionOutput extends ChildMessage implements Serializable {
 
     @Override
     protected void bitcoinSerializeToStream(OutputStream stream) throws IOException {
-        assert scriptBytes != null;
+        checkNotNull(scriptBytes);
         Utils.uint64ToByteStreamLE(getValue(), stream);
         // TODO: Move script serialization into the Script class, where it belongs.
         stream.write(new VarInt(scriptBytes.length).encode());
@@ -149,7 +152,7 @@ public class TransactionOutput extends ChildMessage implements Serializable {
     }
 
     int getIndex() {
-        assert parentTransaction != null;
+        checkNotNull(parentTransaction);
         for (int i = 0; i < parentTransaction.getOutputs().size(); i++) {
             if (parentTransaction.getOutputs().get(i) == this)
                 return i;
@@ -163,7 +166,7 @@ public class TransactionOutput extends ChildMessage implements Serializable {
      * If the input is null, it means this output was signed over to somebody else rather than one of our own keys.
      */
     public void markAsSpent(TransactionInput input) {
-        assert availableForSpending;
+        checkState(availableForSpending);
         availableForSpending = false;
         spentBy = input;
     }
