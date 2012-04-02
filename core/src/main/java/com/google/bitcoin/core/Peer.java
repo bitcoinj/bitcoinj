@@ -688,8 +688,9 @@ public class Peer {
         int chainHeight = (int) conn.getVersionMessage().bestHeight;
         if (chainHeight <= 0) {
             // This should not happen because we shouldn't have given the user a Peer that is to another client-mode
-            // node. If that happens it means the user overrode us somewhere.
-            throw new RuntimeException("Connected to peer advertising negative chain height.");
+            // node, nor should it be unconnected. If that happens it means the user overrode us somewhere or there is
+            // a bug in the peer management code.
+            throw new RuntimeException("Connected to peer advertising zero/negative chain height.");
         }
         return chainHeight - blockChain.getChainHead().getHeight();
     }
