@@ -203,7 +203,6 @@ public class BitcoinSerializerTest {
      */
     @Test
     public void testHeaders1() throws Exception {
-
         BitcoinSerializer bs = new BitcoinSerializer(NetworkParameters.prodNet(), true,
                 null);
 

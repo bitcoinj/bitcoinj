@@ -19,6 +19,7 @@ package com.google.bitcoin.core;
 import com.google.bitcoin.store.BlockStore;
 import com.google.bitcoin.store.BlockStoreException;
 import com.google.bitcoin.utils.EventListenerInvoker;
+import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -255,11 +256,12 @@ public class Peer {
     private void processHeaders(HeadersMessage m) throws IOException, ProtocolException {
         // Runs in network loop thread for this peer.
         //
-        // This can happen if a peer just randomly sends us a "headers" message (should never happen), or more likely
-        // when we've requested them as part of chain download using fast catchup. We need to add each block to the
-        // chain if it pre-dates the fast catchup time. If we go past it, we can stop processing the headers and request
-        // the full blocks from that point on instead.
-        assert !downloadBlockBodies;
+        // This method can run if a peer just randomly sends us a "headers" message (should never happen), or more
+        // likely when we've requested them as part of chain download using fast catchup. We need to add each block to
+        // the chain if it pre-dates the fast catchup time. If we go past it, we can stop processing the headers and
+        // request the full blocks from that point on instead.
+        Preconditions.checkState(!downloadBlockBodies);
+
         try {
             for (int i = 0; i < m.getBlockHeaders().size(); i++) {
                 Block header = m.getBlockHeaders().get(i);
@@ -446,7 +448,7 @@ public class Peer {
         synchronized (announcedTransactionHashes) {
             if (announcedTransactionHashes.containsKey(tx.getHash())) {
                 Transaction storedTx = announcedTransactionHashes.get(tx.getHash());
-                assert storedTx == tx || storedTx == null : "single Transaction instance";
+                Preconditions.checkState(storedTx == tx || storedTx == null, "single Transaction instance");
                 log.debug("Provided with a downloaded transaction we have seen before: {}", tx.getHash());
                 tx.getConfidence().markBroadcastBy(address);
             } else {
@@ -553,15 +555,13 @@ public class Peer {
 
         public T get() throws InterruptedException, ExecutionException {
             latch.await();
-            assert result != null;
-            return result;
+            return Preconditions.checkNotNull(result);
         }
 
         public T get(long l, TimeUnit timeUnit) throws InterruptedException, ExecutionException, TimeoutException {
             if (!latch.await(l, timeUnit))
                 throw new TimeoutException();
-            assert result != null;
-            return result;
+            return Preconditions.checkNotNull(result);
         }
 
         InventoryItem getItem() {
@@ -686,12 +686,10 @@ public class Peer {
     public int getPeerBlockHeightDifference() {
         // Chain will overflow signed int blocks in ~41,000 years.
         int chainHeight = (int) conn.getVersionMessage().bestHeight;
-        if (chainHeight <= 0) {
-            // This should not happen because we shouldn't have given the user a Peer that is to another client-mode
-            // node, nor should it be unconnected. If that happens it means the user overrode us somewhere or there is
-            // a bug in the peer management code.
-            throw new RuntimeException("Connected to peer advertising zero/negative chain height.");
-        }
+        // chainHeight should not be zero/negative because we shouldn't have given the user a Peer that is to another
+        // client-mode node, nor should it be unconnected. If that happens it means the user overrode us somewhere or
+        // there is a bug in the peer management code.
+        Preconditions.checkState(chainHeight > 0, "Connected to peer with zero/negative chain height", chainHeight);
         return chainHeight - blockChain.getChainHead().getHeight();
     }
 

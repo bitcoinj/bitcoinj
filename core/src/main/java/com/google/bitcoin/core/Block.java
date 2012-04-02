@@ -16,6 +16,7 @@
 
 package com.google.bitcoin.core;
 
+import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -87,9 +88,9 @@ public class Block extends Message {
         length = 80;
     }
 
-	/** Constructs a block object from the BitCoin wire format. */
+	/** Constructs a block object from the Bitcoin wire format. */
     public Block(NetworkParameters params, byte[] payloadBytes) throws ProtocolException {
-        super(params, payloadBytes, 0);
+        super(params, payloadBytes, 0, false, false, payloadBytes.length);
     }
 
     /**
@@ -170,8 +171,9 @@ public class Block extends Message {
         // Ignore the header since it has fixed length. If length is not provided we will have to
         // invoke a light parse of transactions to calculate the length.
         if (length == UNKNOWN_LENGTH) {
-            assert !parseLazy : "Performing lite parse of block transaction as block was initialised from byte array " +
-                    "without providing length.  This should never need to happen. parseLazy: " + parseLazy;
+            Preconditions.checkState(parseLazy,
+                    "Performing lite parse of block transaction as block was initialised from byte array " +
+                    "without providing length.  This should never need to happen.");
             parseTransactions();
             length = cursor - offset;
         } else {
@@ -334,7 +336,7 @@ public class Block extends Message {
 
         // we have completely cached byte array.
         if (headerBytesValid && transactionBytesValid) {
-            assert bytes != null : "Bytes should never be null if headerBytesValid && transactionBytesValid";
+            Preconditions.checkNotNull(bytes, "Bytes should never be null if headerBytesValid && transactionBytesValid");
             if (length == bytes.length) {
                 return bytes;
             } else {
@@ -674,7 +676,7 @@ public class Block extends Message {
         // an invalid block, but if we didn't validate this then an untrusted man-in-the-middle could obtain the next
         // valid block from the network and simply replace the transactions in it with their own fictional
         // transactions that reference spent or non-existant inputs.
-        assert transactions.size() > 0;
+        Preconditions.checkState(!transactions.isEmpty());
         maybeParseTransactions();
         checkTransactions();
         checkMerkleRoot();
