@@ -22,6 +22,7 @@ import com.google.bitcoin.core.Address;
 import com.google.bitcoin.core.AddressFormatException;
 import com.google.bitcoin.core.NetworkParameters;
 import com.google.bitcoin.core.Utils;
+import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -100,25 +101,25 @@ public class BitcoinURI {
     private final Map<String, Object> parameterMap = new LinkedHashMap<String, Object>();
 
     /**
-     * @param params
-     *            The BitCoinJ network parameters that determine which network
-     *            the URI is from
-     * @param input
-     *            The raw URI data to be parsed (see class comments for accepted
-     *            formats)
-     * @throws BitcoinURIParseException
-     *            If the input fails Bitcoin URI syntax and semantic checks
+     * Constructs a new BitcoinURI from the given string. Can be for any network.
+     *
+     * @param uri The raw URI data to be parsed (see class comments for accepted formats)
+     * @throws BitcoinURIParseException if the URI is not syntactically or semantically valid.
+     */
+    public BitcoinURI(String uri) {
+        this(null, uri);
+    }
+
+    /**
+     * @param params The network parameters that determine which network the URI is from, or null if you don't have
+     *               any expectation about what network the URI is for and wish to check yourself.
+     * @param input The raw URI data to be parsed (see class comments for accepted formats)
+     * @throws BitcoinURIParseException If the input fails Bitcoin URI syntax and semantic checks.
      */
     public BitcoinURI(NetworkParameters params, String input) {
         // Basic validation
-        if (params == null) {
-            throw new IllegalArgumentException("NetworkParameters cannot be null");
-        }
-        if (input == null) {
-            throw new IllegalArgumentException("Input cannot be null");
-        }
-
-        log.debug("Attempting to parse '{}' for {}", input, params.getId());
+        Preconditions.checkNotNull(input);
+        log.debug("Attempting to parse '{}' for {}", input, params == null ? "any" : params.getId());
 
         // URI validation
         if (!input.startsWith(BITCOIN_SCHEME)) {
@@ -161,7 +162,7 @@ public class BitcoinURI {
                 // Split into '<name>=<value>' tokens.
                 nameValuePairTokens = addressSplitTokens[1].split("&");
             } else {
-                throw new BitcoinURIParseException("Too many question marks in URI '" + input + "'");                
+                throw new BitcoinURIParseException("Too many question marks in URI '" + uri + "'");
             }
         }
 
@@ -170,11 +171,9 @@ public class BitcoinURI {
     }
 
     /**
-     * @param params
-     *            The network parameters
-     * @param nameValuePairTokens
-     *            The tokens representing the name value pairs (assumed to be
-     *            separated by '=' e.g. 'amount=0.2')
+     * @param params The network parameters or null
+     * @param nameValuePairTokens The tokens representing the name value pairs (assumed to be
+     *                            separated by '=' e.g. 'amount=0.2')
      */
     private void parseParameters(NetworkParameters params, String addressToken, String[] nameValuePairTokens) {
         // Attempt to parse the addressToken as a Bitcoin address for this network

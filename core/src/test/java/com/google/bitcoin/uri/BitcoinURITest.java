@@ -111,26 +111,6 @@ public class BitcoinURITest {
     }
 
     /**
-     * Test missing constructor parameters
-     */
-    @Test
-    public void testBad_Constructor() {
-        try {
-            testObject = new BitcoinURI(null, "blimpcoin:" + PRODNET_GOOD_ADDRESS);
-            fail("Expecting IllegalArgumentException");
-        } catch (IllegalArgumentException e) {
-            assertTrue(e.getMessage().contains("NetworkParameters"));
-        }
-
-        try {
-            testObject = new BitcoinURI(NetworkParameters.prodNet(), null);
-            fail("Expecting IllegalArgumentException");
-        } catch (IllegalArgumentException e) {
-            assertTrue(e.getMessage().contains("Input"));
-        }
-    }
-
-    /**
      * Test a broken URI (bad scheme)
      */
     @Test
