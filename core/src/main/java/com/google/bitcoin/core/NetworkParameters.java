@@ -73,7 +73,11 @@ public class NetworkParameters implements Serializable {
     public int port;
     /** The header bytes that identify the start of a packet on this network. */
     public long packetMagic;
-    /** First byte of a base58 encoded address. See {@link Address}*/
+    /**
+     * First byte of a base58 encoded address. See {@link Address}. This is the same as acceptableAddressCodes[0] and
+     * is the one used for "normal" addresses. Other types of address may be encountered with version codes found in
+     * the acceptableAddressCodes array.
+     */
     public int addressHeader;
     /** First byte of a base58 encoded dumped private key. See {@link DumpedPrivateKey}. */
     public int dumpedPrivateKeyHeader;
@@ -96,7 +100,14 @@ public class NetworkParameters implements Serializable {
      * by looking at the port number.
      */
     private String id;
-    
+
+    /**
+     * The version codes that prefix addresses which are acceptable on this network. Although Satoshi intended these to
+     * be used for "versioning", in fact they are today used to discriminate what kind of data is contained in the
+     * address and to prevent accidentally sending coins across chains which would destroy them.
+     */
+    public int[] acceptableAddressCodes;
+
     private static Block createGenesis(NetworkParameters n) {
         Block genesisBlock = new Block(n);
         Transaction t = new Transaction(n);
@@ -132,6 +143,7 @@ public class NetworkParameters implements Serializable {
         n.packetMagic = 0xfabfb5daL;
         n.port = 18333;
         n.addressHeader = 111;
+        n.acceptableAddressCodes = new int[] { 111 };
         n.dumpedPrivateKeyHeader = 239;
         n.interval = INTERVAL;
         n.targetTimespan = TARGET_TIMESPAN;
@@ -160,6 +172,7 @@ public class NetworkParameters implements Serializable {
         n.port = 8333;
         n.packetMagic = 0xf9beb4d9L;
         n.addressHeader = 0;
+        n.acceptableAddressCodes = new int[] { 0 };
         n.dumpedPrivateKeyHeader = 128;
         n.interval = INTERVAL;
         n.targetTimespan = TARGET_TIMESPAN;

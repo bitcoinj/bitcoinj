@@ -9,11 +9,9 @@ package com.google.bitcoin.uri;
  * that reported in the exception message). Since this is in English, it may not be worth reporting directly
  * to the user other than as part of a "general failure to parse" response.</p>
  *
- * @since 0.3.0
- *         
+ * @since 0.4.0
  */
 public class BitcoinURIParseException extends RuntimeException {
-
     public BitcoinURIParseException(String s) {
         super(s);
     }

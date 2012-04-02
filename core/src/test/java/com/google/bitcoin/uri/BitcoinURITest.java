@@ -43,7 +43,7 @@ public class BitcoinURITest {
      * @throws AddressFormatException 
      */
     @Test
-    public void testConvertToBitcoinURI() throws BitcoinURIParseException, AddressFormatException {
+    public void testConvertToBitcoinURI() throws Exception {
         Address goodAddress = new Address(NetworkParameters.prodNet(), PRODNET_GOOD_ADDRESS);
         
         // simple example

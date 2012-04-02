@@ -58,6 +58,9 @@ public class Base58 {
     }
 
     public static byte[] decode(String input) throws AddressFormatException {
+        if (input.length() == 0) {
+            throw new AddressFormatException("Attempt to parse an empty address.");
+        }
         byte[] bytes = decodeToBigInteger(input).toByteArray();
         // We may have got one more byte than we wanted, if the high bit of the next-to-last byte was not zero. This
         // is because BigIntegers are represented with twos-compliment notation, thus if the high bit of the last

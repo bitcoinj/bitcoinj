@@ -19,14 +19,16 @@ package com.google.bitcoin.core;
 import org.bouncycastle.util.encoders.Hex;
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
+import java.util.Arrays;
+
+import static org.junit.Assert.*;
 
 public class AddressTest {
     static final NetworkParameters testParams = NetworkParameters.testNet();
     static final NetworkParameters prodParams = NetworkParameters.prodNet();
 
     @Test
-    public void testStringification() throws Exception {
+    public void stringification() throws Exception {
         // Test a testnet address.
         Address a = new Address(testParams, Hex.decode("fda79a24e50ff70ff42f7d89585da5bd19d9e5cc"));
         assertEquals("n4eA2nbYqErp7H6jebchxAN59DmNpksexv", a.toString());
@@ -36,11 +38,54 @@ public class AddressTest {
     }
     
     @Test
-    public void testDecoding() throws Exception {
+    public void decoding() throws Exception {
         Address a = new Address(testParams, "n4eA2nbYqErp7H6jebchxAN59DmNpksexv");
         assertEquals("fda79a24e50ff70ff42f7d89585da5bd19d9e5cc", Utils.bytesToHexString(a.getHash160()));
 
         Address b = new Address(prodParams, "17kzeh4N8g49GFvdDzSf8PjaPfyoD1MndL");
         assertEquals("4a22c3c4cbb31e4d03b15550636762bda0baf85a", Utils.bytesToHexString(b.getHash160()));
+    }
+    
+    @Test
+    public void errorPaths() {
+        // Check what happens if we try and decode garbage.
+        try {
+            new Address(testParams, "this is not a valid address!");
+            fail();
+        } catch (WrongNetworkException e) {
+            fail();
+        } catch (AddressFormatException e) {
+            // Success.
+        }
+
+        // Check the empty case.
+        try {
+            new Address(testParams, "");
+            fail();
+        } catch (WrongNetworkException e) {
+            fail();
+        } catch (AddressFormatException e) {
+            // Success.
+        }
+
+        // Check the case of a mismatched network.
+        try {
+            new Address(testParams, "17kzeh4N8g49GFvdDzSf8PjaPfyoD1MndL");
+            fail();
+        } catch (WrongNetworkException e) {
+            // Success.
+            assertEquals(e.verCode, NetworkParameters.prodNet().addressHeader);
+            assertTrue(Arrays.equals(e.acceptableVersions, NetworkParameters.testNet().acceptableAddressCodes));
+        } catch (AddressFormatException e) {
+            fail();
+        }
+    }
+    
+    @Test
+    public void getNetwork() throws Exception {
+        NetworkParameters params = Address.getParametersFromAddress("17kzeh4N8g49GFvdDzSf8PjaPfyoD1MndL");
+        assertEquals(NetworkParameters.prodNet().getId(), params.getId());
+        params = Address.getParametersFromAddress("n4eA2nbYqErp7H6jebchxAN59DmNpksexv");
+        assertEquals(NetworkParameters.testNet().getId(), params.getId());
     }
 }
