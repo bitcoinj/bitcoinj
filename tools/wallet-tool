@@ -1,2 +1,9 @@
-#!/bin/sh
-mvn -q exec:java -Dexec.mainClass=WalletTool -Dexec.args="$*"
+#!/bin/bash
+
+# Check if the jar has been built.
+if [ ! -e target/bitcoinj-tools-*.jar ]; then
+  echo "Compiling WalletTool to a JAR"
+  mvn -q package -DskipTests
+fi
+
+java -jar target/bitcoinj-tools-*.jar $*

@@ -32,22 +32,62 @@
   <name>BitCoinJ Tools</name>
   <description>A collection of useful tools that use the BitCoinJ library to perform wallet operations</description>
 
-    <dependencies>
-        <dependency>
-          <groupId>com.google</groupId>
-          <artifactId>bitcoinj</artifactId>
-          <version>${project.parent.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>net.sf.jopt-simple</groupId>
-            <artifactId>jopt-simple</artifactId>
-            <version>4.3</version>
-        </dependency>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-jdk14</artifactId>
-            <version>1.6.4</version>
-        </dependency>
-    </dependencies>
+  <build>
+      <plugins>
+          <plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-shade-plugin</artifactId>
+              <version>1.6</version>
+              <configuration>
+                  <excludes>
+                      <!-- bundle all JARs -->
+                  </excludes>
+                  <!-- Remove dead classes -->
+                  <minimizeJar>true</minimizeJar>
+                  <filters>
+                      <filter>
+                          <!-- exclude signatures, the bundling process breaks them for some reason -->
+                          <artifact>*:*</artifact>
+                          <excludes>
+                              <exclude>META-INF/*.SF</exclude>
+                              <exclude>META-INF/*.DSA</exclude>
+                              <exclude>META-INF/*.RSA</exclude>
+                          </excludes>
+                      </filter>
+                  </filters>
+                  <transformers>
+                      <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                          <mainClass>com.google.bitcoin.tools.WalletTool</mainClass>
+                      </transformer>
+                  </transformers>
+              </configuration>
+              <executions>
+                  <execution>
+                      <phase>package</phase>
+                      <goals>
+                          <goal>shade</goal>
+                      </goals>
+                  </execution>
+              </executions>
+          </plugin>
+      </plugins>
+  </build>
 
+  <dependencies>
+    <dependency>
+      <groupId>com.google</groupId>
+      <artifactId>bitcoinj</artifactId>
+      <version>${project.parent.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>net.sf.jopt-simple</groupId>
+      <artifactId>jopt-simple</artifactId>
+      <version>4.3</version>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-jdk14</artifactId>
+      <version>1.6.4</version>
+    </dependency>
+  </dependencies>
 </project>

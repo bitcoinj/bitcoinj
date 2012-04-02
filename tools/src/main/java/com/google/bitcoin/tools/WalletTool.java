@@ -40,7 +40,6 @@ import java.util.logging.LogManager;
 
 /**
  * A command line tool for manipulating wallets and working with Bitcoin.<p>
- * 
  */
 public class WalletTool {
     private static final Logger log = LoggerFactory.getLogger(WalletTool.class);
