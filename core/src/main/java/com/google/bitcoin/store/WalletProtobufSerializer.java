@@ -90,9 +90,7 @@ public class WalletProtobufSerializer {
      */
     public static Protos.Wallet walletToProto(Wallet wallet) {
         Protos.Wallet.Builder walletBuilder = Protos.Wallet.newBuilder();
-        walletBuilder.setNetworkIdentifier(wallet.getNetworkParameters().getId())
-            //.setLastSeenBlockHash(null)  // TODO
-            ;
+        walletBuilder.setNetworkIdentifier(wallet.getNetworkParameters().getId());
         for (WalletTransaction wtx : wallet.getWalletTransactions()) {
             Protos.Transaction txProto = makeTxProto(wtx);
             walletBuilder.addTransaction(txProto);
@@ -110,6 +108,12 @@ public class WalletProtobufSerializer {
             buf.setPublicKey(ByteString.copyFrom(key.getPubKey()));
             walletBuilder.addKey(buf);
         }
+
+        Sha256Hash lastSeenBlockHash = wallet.getLastBlockSeenHash();
+        if (lastSeenBlockHash != null) {
+            walletBuilder.setLastSeenBlockHash(hashToByteString(lastSeenBlockHash));
+        }
+
         return walletBuilder.build();
     }
     
@@ -238,6 +242,13 @@ public class WalletProtobufSerializer {
             wallet.addWalletTransaction(wtx);
         }
         
+        // Update the lastBlockSeenHash.
+        if (!walletProto.hasLastSeenBlockHash()) {
+            wallet.setLastBlockSeenHash(null);
+        } else {
+            wallet.setLastBlockSeenHash(byteStringToHash(walletProto.getLastSeenBlockHash()));
+        }
+
         for (Protos.Extension extProto : walletProto.getExtensionList()) {
             if (extProto.getMandatory()) {
                 throw new IllegalArgumentException("Did not understand a mandatory extension in the wallet");

@@ -2323,7 +2323,7 @@ public final class Protos {
     boolean hasHash();
     com.google.protobuf.ByteString getHash();
     
-    // required .wallet.Transaction.Pool pool = 3;
+    // optional .wallet.Transaction.Pool pool = 3;
     boolean hasPool();
     org.bitcoinj.wallet.Protos.Transaction.Pool getPool();
     
@@ -2495,7 +2495,7 @@ public final class Protos {
       return hash_;
     }
     
-    // required .wallet.Transaction.Pool pool = 3;
+    // optional .wallet.Transaction.Pool pool = 3;
     public static final int POOL_FIELD_NUMBER = 3;
     private org.bitcoinj.wallet.Protos.Transaction.Pool pool_;
     public boolean hasPool() {
@@ -2615,10 +2615,6 @@ public final class Protos {
         return false;
       }
       if (!hasHash()) {
-        memoizedIsInitialized = 0;
-        return false;
-      }
-      if (!hasPool()) {
         memoizedIsInitialized = 0;
         return false;
       }
@@ -3073,10 +3069,6 @@ public final class Protos {
           
           return false;
         }
-        if (!hasPool()) {
-          
-          return false;
-        }
         for (int i = 0; i < getTransactionInputCount(); i++) {
           if (!getTransactionInput(i).isInitialized()) {
             
@@ -3223,7 +3215,7 @@ public final class Protos {
         return this;
       }
       
-      // required .wallet.Transaction.Pool pool = 3;
+      // optional .wallet.Transaction.Pool pool = 3;
       private org.bitcoinj.wallet.Protos.Transaction.Pool pool_ = org.bitcoinj.wallet.Protos.Transaction.Pool.UNSPENT;
       public boolean hasPool() {
         return ((bitField0_ & 0x00000004) == 0x00000004);
@@ -5689,7 +5681,7 @@ public final class Protos {
       "G\020\001\022\025\n\021NOT_SEEN_IN_CHAIN\020\002\022\025\n\021NOT_IN_BES" +
       "T_CHAIN\020\003\022\036\n\032OVERRIDDEN_BY_DOUBLE_SPEND\020" +
       "\004\"\211\003\n\013Transaction\022\017\n\007version\030\001 \002(\005\022\014\n\004ha" +
-      "sh\030\002 \002(\014\022&\n\004pool\030\003 \002(\0162\030.wallet.Transact" +
+      "sh\030\002 \002(\014\022&\n\004pool\030\003 \001(\0162\030.wallet.Transact" +
       "ion.Pool\022\021\n\tlock_time\030\004 \001(\r\022\022\n\nupdated_a",
       "t\030\005 \001(\003\0223\n\021transaction_input\030\006 \003(\0132\030.wal" +
       "let.TransactionInput\0225\n\022transaction_outp" +

@@ -4,6 +4,8 @@ package com.google.bitcoin.store;
 import com.google.bitcoin.core.*;
 import com.google.bitcoin.core.TransactionConfidence.ConfidenceType;
 import com.google.bitcoin.utils.BriefLogFormatter;
+import com.google.protobuf.ByteString;
+
 import org.bitcoinj.wallet.Protos;
 import org.junit.Before;
 import org.junit.Test;
@@ -106,6 +108,32 @@ public class WalletProtobufSerializerTest {
             assertArrayEquals(myKey.getPubKey(), wallet1.findKeyFromPubHash(myKey.getPubKeyHash()).getPubKey());
             assertArrayEquals(myKey.getPrivKeyBytes(), wallet1.findKeyFromPubHash(myKey.getPubKeyHash()).getPrivKeyBytes());
         }
+    }
+
+    @Test
+    public void testLastBlockSeenHash() throws Exception {
+        // Test the lastBlockSeenHash field works.
+
+        // LastBlockSeenHash should be empty if never set.
+        wallet = new Wallet(params);
+        Protos.Wallet walletProto = WalletProtobufSerializer.walletToProto(wallet);
+        ByteString lastSeenBlockHash = walletProto.getLastSeenBlockHash();
+        assertTrue(lastSeenBlockHash.isEmpty());
+
+        // Create a block.
+        Block block = new Block(params, BlockTest.blockBytes);
+        Sha256Hash blockHash = block.getHash();
+        wallet.setLastBlockSeenHash(blockHash);
+
+        // Roundtrip the wallet and check it has stored te blockHash.
+        Wallet wallet1 = roundTrip(wallet);
+        assertEquals(blockHash, wallet1.getLastBlockSeenHash());
+
+        // Test the Satoshi genesis block (hash of all zeroes) is roundtripped ok.
+        Block genesisBlock = NetworkParameters.prodNet().genesisBlock;
+        wallet.setLastBlockSeenHash(genesisBlock.getHash());
+        Wallet wallet2 = roundTrip(wallet);
+        assertEquals(genesisBlock.getHash(), wallet2.getLastBlockSeenHash());
     }
 
     private Wallet roundTrip(Wallet wallet) throws IOException {

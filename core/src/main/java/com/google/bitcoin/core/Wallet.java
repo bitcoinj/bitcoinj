@@ -144,6 +144,11 @@ public class Wallet implements Serializable {
     // this field) then we need to migrate.
     private boolean hasTransactionConfidences;
 
+    /**
+     * The hash of the last block seen on the best chain
+     */
+    private Sha256Hash lastBlockSeenHash;
+
     transient private ArrayList<WalletEventListener> eventListeners;
 
     /**
@@ -532,6 +537,18 @@ public class Wallet implements Serializable {
         }
 
         log.info("Balance is now: " + bitcoinValueToFriendlyString(getBalance()));
+
+        // Store the block hash
+        if (bestChain) {
+            if (block != null && block.getHeader() != null) {
+                // Check to see if this block has been seen before
+                Sha256Hash newBlockHash = block.getHeader().getHash();
+                if (!newBlockHash.equals(getLastBlockSeenHash())) {
+                    // new hash
+                    setLastBlockSeenHash(newBlockHash);
+                }
+            }
+        }
 
         // WARNING: The code beyond this point can trigger event listeners on transaction confidence objects, which are
         // in turn allowed to re-enter the Wallet. This means we cannot assume anything about the state of the wallet
@@ -1639,5 +1656,13 @@ public class Wallet implements Serializable {
             };
         }
         return peerEventListener;
+    }
+
+    public Sha256Hash getLastBlockSeenHash() {
+        return lastBlockSeenHash;
+    }
+
+    public void setLastBlockSeenHash(Sha256Hash lastBlockSeenHash) {
+        this.lastBlockSeenHash = lastBlockSeenHash;
     }
 }

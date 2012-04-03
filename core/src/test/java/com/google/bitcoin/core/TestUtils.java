@@ -19,10 +19,13 @@ package com.google.bitcoin.core;
 import com.google.bitcoin.store.BlockStore;
 import com.google.bitcoin.store.BlockStoreException;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.math.BigInteger;
 
 public class TestUtils {
-    public static Transaction createFakeTx(NetworkParameters params, BigInteger nanocoins, Address to) {
+    public static Transaction createFakeTx(NetworkParameters params, BigInteger nanocoins, Address to) throws IOException, ProtocolException {
         // Create a fake TX of sufficient realism to exercise the unit tests. Two outputs, one to us, one to somewhere
         // else to simulate change.
         Transaction t = new Transaction(params);
@@ -38,7 +41,51 @@ public class TestUtils {
         prevTx.addOutput(prevOut);
         // Connect it.
         t.addInput(prevOut);
-        return t;
+
+        // roundtrip tx
+        return roundTripTransaction(params, t);
+    }
+
+    /**
+     * @return Transaction[] Transaction[0] is a feeder transaction, supplying BTC to Transaction[1]
+     */
+    public static Transaction[] createFakeTx(NetworkParameters params, BigInteger nanocoins, Address to, Address from) throws IOException, ProtocolException {
+        // Create fake TXes of sufficient realism to exercise the unit tests. This transaction send BTC from the from address, to the to address
+        // with to one to somewhere else to simulate change.
+        Transaction t = new Transaction(params);
+        TransactionOutput outputToMe = new TransactionOutput(params, t, nanocoins, to);
+        t.addOutput(outputToMe);
+        TransactionOutput change = new TransactionOutput(params, t, Utils.toNanoCoins(1, 11), new ECKey().toAddress(params));
+        t.addOutput(change);
+        // Make a feeder tx that sends to the from address specified. This feeder tx is not really valid but it doesn't
+        // matter for our purposes.
+        Transaction feederTx = new Transaction(params);
+        TransactionOutput feederOut = new TransactionOutput(params, feederTx, nanocoins, from);
+        feederTx.addOutput(feederOut);
+
+        // make a previous tx that sends from the feeder to the from address
+        Transaction prevTx = new Transaction(params);
+        TransactionOutput prevOut = new TransactionOutput(params, prevTx, nanocoins, to);
+        prevTx.addOutput(prevOut);
+
+        // Connect up the txes
+        prevTx.addInput(feederOut);
+        t.addInput(prevOut);
+
+        // roundtrip the tx so that they are just like they would be from the wire
+        return new Transaction[]{roundTripTransaction(params, prevTx), roundTripTransaction(params,t)};
+    }
+
+    /**
+     * Roundtrip a transaction so that it appears as if it has just come from the wire
+     */
+    private static Transaction roundTripTransaction(NetworkParameters params, Transaction tx) throws IOException, ProtocolException {
+        BitcoinSerializer bs = new BitcoinSerializer(params, true, null);
+
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        bs.serialize(tx, bos);
+
+        return (Transaction)bs.deserialize(new ByteArrayInputStream(bos.toByteArray()));
     }
 
     public static class DoubleSpends {
