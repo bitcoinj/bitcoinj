@@ -25,9 +25,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.*;
 
 /**
@@ -49,8 +47,6 @@ public class Peer {
     // whilst waiting for the response. Synchronized on itself. Is not used for downloads Peer generates itself.
     // TODO: Make this work for transactions as well.
     private final List<GetDataFuture<Block>> pendingGetBlockFutures;
-    // Height of the chain advertised in the peers version message.
-    private int bestHeight;
     private PeerAddress address;
     private List<PeerEventListener> eventListeners;
     // Whether to try and download blocks and transactions from this peer. Set to false by PeerGroup if not the
@@ -60,26 +56,9 @@ public class Peer {
     // The version data to announce to the other side of the connections we make: useful for setting our "user agent"
     // equivalent and other things.
     private VersionMessage versionMessage;
-
-    /**
-     * Size of the pending transactions pool. Override this to reduce memory usage on constrained platforms. The pool
-     * is used to keep track of how many peers announced a transaction. With an untampered-with internet connection,
-     * the more peers announce a transaction, the more confidence you can have that it's valid.
-     */
-    public static int TRANSACTION_MEMORY_POOL_SIZE = 1000;
-
-    // Maps announced transaction hashes to the Transaction objects. If this is not a download peer, the Transaction
-    // objects must be provided from elsewhere (ie, a PeerGroup object). If the Transaction hasn't been downloaded or
-    // provided yet, the map value is null. This is somewhat equivalent to the reference implementations memory pool.
-    private LinkedHashMap<Sha256Hash, Transaction> announcedTransactionHashes = new LinkedHashMap<Sha256Hash, Transaction>() {
-        @Override
-        protected boolean removeEldestEntry(Map.Entry<Sha256Hash, Transaction> sha256HashTransactionEntry) {
-            // An arbitrary choice to stop the memory used by tracked transactions getting too huge. Mobile platforms
-            // may want to reduce this.
-            return size() > TRANSACTION_MEMORY_POOL_SIZE;
-        }
-    };
-
+    // A class that tracks recent transactions that have been broadcast across the network, counts how many
+    // peers announced them and updates the transaction confidence data. It is passed to each Peer.
+    private MemoryPool memoryPool;
     // A time before which we only download block headers, after that point we download block bodies.
     private long fastCatchupTimeSecs;
     // Whether we are currently downloading headers only or block bodies. Defaults to true, if the fast catchup time
@@ -136,6 +115,18 @@ public class Peer {
 
     public synchronized boolean removeEventListener(PeerEventListener listener) {
         return eventListeners.remove(listener);
+    }
+
+    /**
+     * Tells the peer to insert received transactions/transaction announcements into the given {@link MemoryPool}.
+     * This is normally done for you by the {@link PeerGroup} so you don't have to think about it. Transactions stored
+     * in a memory pool will have their confidence levels updated when a peer announces it, to reflect the greater
+     * likelyhood that the transaction is valid.
+     *
+     * @param pool A new pool or null to unlink.
+     */
+    public synchronized void setMemoryPool(MemoryPool pool) {
+        memoryPool = pool;
     }
 
     @Override
@@ -230,8 +221,8 @@ public class Peer {
             disconnect();
             throw new PeerException(e);
         } catch (RuntimeException e) {
+            log.error("Unexpected exception in peer loop: ", e.getMessage());
             disconnect();
-            log.error("unexpected exception in peer loop: ", e.getMessage());
             throw e;
         }
 
@@ -314,6 +305,8 @@ public class Peer {
 
     private void processTransaction(Transaction m) {
         log.info("Received broadcast tx {}", m.getHashAsString());
+        if (memoryPool != null)
+            memoryPool.seen(m, getAddress());
         for (PeerEventListener listener : eventListeners) {
             synchronized (listener) {
                 listener.onTransaction(this, m);
@@ -377,7 +370,8 @@ public class Peer {
     private void processInv(InventoryMessage inv) throws IOException {
         // This should be called in the network loop thread for this peer.
         List<InventoryItem> items = inv.getItems();
-        updateTransactionConfidenceLevels(items);
+        if (memoryPool != null)
+            updateTransactionConfidenceLevels(items);
 
         // If this peer isn't responsible for downloading stuff, don't go further.
         if (!downloadData)
@@ -404,57 +398,11 @@ public class Peer {
         conn.writeMessage(getdata);
     }
 
-    /**
-     * When a peer broadcasts an "inv" containing a transaction hash, it means the peer validated it and won't accept 
-     * double spends of those coins. So by measuring what proportion of our total connected peers have seen a 
-     * transaction we can make a guesstimate of how likely it is to be included in a block, assuming our internet
-     * connection is trustworthy.<p>
-     *     
-     * This method keeps a map of transaction hashes to {@link Transaction} objects. It may not have the associated
-     * transaction objects available, if they weren't downloaded yet. Once a Transaction is downloaded, it's set as
-     * the value in the txSeen map. If this Peer isn't the download peer, the {@link PeerGroup} will manage distributing
-     * the Transaction objects to every peer, at which point the peer is expected to update the
-     * {@link TransactionConfidence} object itself.
-     * 
-     * @param items Inventory items that were just announced.
-     */
     private void updateTransactionConfidenceLevels(List<InventoryItem> items) {
-        // Announced hashes may be updated by other threads in response to messages coming in from other peers.
-        synchronized (announcedTransactionHashes) {
-            for (InventoryItem item : items) {
-                if (item.type != InventoryItem.Type.Transaction) continue;
-                Transaction transaction = announcedTransactionHashes.get(item.hash);
-                if (transaction == null) {
-                    // We didn't see this tx before.
-                    log.debug("Newly announced undownloaded transaction ", item.hash);
-                    announcedTransactionHashes.put(item.hash, null);
-                } else {
-                    // It's been downloaded. Update the confidence levels. This may be called multiple times for
-                    // the same transaction and the same peer, there is no obligation in the protocol to avoid
-                    // redundant advertisements.
-                    log.debug("Marking tx {} as seen by {}", item.hash, toString());
-                    transaction.getConfidence().markBroadcastBy(address);
-                }
-            }
-        }
-    }
-
-    /**
-     * Called by {@link PeerGroup} to tell the Peer about a transaction that was just downloaded. If we have tracked
-     * the announcement, update the transactions confidence level at this time. Otherwise wait for it to appear.
-     */
-    void trackTransaction(Transaction tx) {
-        // May run on arbitrary peer threads.
-        synchronized (announcedTransactionHashes) {
-            if (announcedTransactionHashes.containsKey(tx.getHash())) {
-                Transaction storedTx = announcedTransactionHashes.get(tx.getHash());
-                Preconditions.checkState(storedTx == tx || storedTx == null, "single Transaction instance");
-                log.debug("Provided with a downloaded transaction we have seen before: {}", tx.getHash());
-                tx.getConfidence().markBroadcastBy(address);
-            } else {
-                log.debug("Provided with a downloaded transaction we didn't see broadcast yet: {}", tx.getHash());
-            }
-            announcedTransactionHashes.put(tx.getHash(), tx);
+        Preconditions.checkNotNull(memoryPool);
+        for (InventoryItem item : items) {
+            if (item.type != InventoryItem.Type.Transaction) continue;
+            memoryPool.seen(item.hash, this.getAddress());
         }
     }
 
@@ -743,8 +691,8 @@ public class Peer {
     /**
      * @return the height of the best chain as claimed by peer.
      */
-    public int getBestHeight() {
-      return bestHeight;
+    public long getBestHeight() {
+      return conn.getVersionMessage().bestHeight;
     }
     
     /**

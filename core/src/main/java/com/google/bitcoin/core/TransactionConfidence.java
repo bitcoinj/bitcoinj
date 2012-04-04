@@ -18,6 +18,7 @@ package com.google.bitcoin.core;
 
 import com.google.bitcoin.store.BlockStoreException;
 import com.google.bitcoin.utils.EventListenerInvoker;
+import com.google.common.base.Preconditions;
 
 import java.io.Serializable;
 import java.math.BigInteger;
@@ -66,6 +67,7 @@ public class TransactionConfidence implements Serializable {
     private Set<PeerAddress> broadcastBy;
     /** The Transaction that this confidence object is associated with. */
     private Transaction transaction;
+    // Lazily created listeners array.
     private transient ArrayList<Listener> listeners;
 
     // TODO: The advice below is a mess. There should be block chain listeners, see issue 94.
@@ -80,16 +82,15 @@ public class TransactionConfidence implements Serializable {
      * confidence object to determine the new depth.</p>
      */
     public synchronized void addEventListener(Listener listener) {
-        if (listener == null)
-            throw new IllegalArgumentException("listener is null");
+        Preconditions.checkNotNull(listener);
         if (listeners == null)
             listeners = new ArrayList<Listener>(1);
         listeners.add(listener);
     }
 
     public synchronized void removeEventListener(Listener listener) {
-        if (listener == null)
-            throw new IllegalArgumentException("listener is null");
+        Preconditions.checkNotNull(listener);
+        Preconditions.checkNotNull(listeners);
         listeners.remove(listener);
     }
 

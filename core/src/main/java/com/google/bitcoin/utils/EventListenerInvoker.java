@@ -39,6 +39,7 @@ public abstract class EventListenerInvoker<E> {
     
     public static <E> void invoke(List<E> listeners,
                                   EventListenerInvoker<E> invoker) {
+        if (listeners == null) return;
         synchronized (listeners) {
             for (int i = 0; i < listeners.size(); i++) {
                 E l = listeners.get(i);
