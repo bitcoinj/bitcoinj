@@ -72,7 +72,7 @@ public class TransactionConfidence implements Serializable {
      * <p>Adds an event listener that will be run when this confidence object is updated. The listener will be locked and
      * is likely to be invoked on a peer thread.</p>
      * 
-     * <p>Note that this is NOT called when every block is arrived. Instead it is called when the transaction 
+     * <p>Note that this is NOT called when every block arrives. Instead it is called when the transaction
      * transitions between confidence states, ie, from not being seen in the chain to being seen (not necessarily in 
      * the best chain). If you want to know when the transaction gets buried under another block, listen for new block
      * events using {@link PeerEventListener#onBlocksDownloaded(Peer, Block, int)} and then use the getters on the
@@ -304,7 +304,7 @@ public class TransactionConfidence implements Serializable {
      * @throws IllegalStateException if confidence type is not BUILDING
      * @return estimated number of hashes needed to reverse the transaction.
      */
-    public BigInteger getWorkDone(BlockChain chain) throws BlockStoreException {
+    public synchronized BigInteger getWorkDone(BlockChain chain) throws BlockStoreException {
         int depth;
         synchronized (this) {
             if (getConfidenceType() != ConfidenceType.BUILDING)

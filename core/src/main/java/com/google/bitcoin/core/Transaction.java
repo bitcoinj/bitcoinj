@@ -199,7 +199,6 @@ public class Transaction extends ChildMessage implements Serializable {
             return appearsInHashes;
         
         if (appearsIn != null) {
-            Preconditions.checkState(appearsInHashes == null);
             log.info("Migrating a tx to appearsInHashes");
             appearsInHashes = new HashSet<Sha256Hash>(appearsIn.size());
             for (StoredBlock block : appearsIn) {
@@ -741,7 +740,7 @@ public class Transaction extends ChildMessage implements Serializable {
     }
 
     /** Check if the transaction has a known confidence */
-    public boolean hasConfidence() {
+    public synchronized boolean hasConfidence() {
         return confidence != null && confidence.getConfidenceType() != TransactionConfidence.ConfidenceType.UNKNOWN;
     }
 

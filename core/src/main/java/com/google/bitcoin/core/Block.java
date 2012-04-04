@@ -194,7 +194,7 @@ public class Block extends Message {
      * there are some interdependencies. For example altering a tx requires invalidating the Merkle root and therefore
      * the cached header bytes.
      */
-    private synchronized void maybeParseHeader() {
+    private void maybeParseHeader() {
         if (headerParsed || bytes == null)
             return;
         parseHeader();
@@ -202,7 +202,7 @@ public class Block extends Message {
             bytes = null;
     }
 
-    private synchronized void maybeParseTransactions() {
+    private void maybeParseTransactions() {
         if (transactionsParsed || bytes == null)
             return;
         try {
@@ -223,7 +223,7 @@ public class Block extends Message {
      * Ensure the object is parsed if needed. This should be called in every getter before returning a value. If the
      * lazy parse flag is not set this is a method returns immediately.
      */
-    protected synchronized void maybeParse() {
+    protected void maybeParse() {
         throw new LazyParseException(
                 "checkParse() should never be called on a Block.  Instead use checkParseHeader() and checkParseTransactions()");
     }

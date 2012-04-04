@@ -21,7 +21,10 @@ import java.io.StringWriter;
 import java.io.Writer;
 import java.text.MessageFormat;
 import java.util.Date;
-import java.util.logging.*;
+import java.util.logging.Formatter;
+import java.util.logging.Level;
+import java.util.logging.LogRecord;
+import java.util.logging.Logger;
 
 /**
  * A Java logging formatter that writes more compact output than the default.
@@ -29,15 +32,20 @@ import java.util.logging.*;
 public class BriefLogFormatter extends Formatter {
     private static final MessageFormat messageFormat = new MessageFormat("{3,date,hh:mm:ss} {0} {1}.{2}: {4}\n{5}");
 
+    // OpenJDK made a questionable, backwards incompatible change to the Logger implementation. It internally uses
+    // weak references now which means simply fetching the logger and changing its configuration won't work. We must
+    // keep a reference to our custom logger around.
+    private static Logger logger;
+
     /** Configures JDK logging to use this class for everything. */
     public static void init() {
-        LogManager.getLogManager().getLogger("").getHandlers()[0].setFormatter(new BriefLogFormatter());
+        logger = Logger.getLogger("");
+        logger.getHandlers()[0].setFormatter(new BriefLogFormatter());
     }
 
     public static void initVerbose() {
-        Logger logger = LogManager.getLogManager().getLogger("");
-        logger.getHandlers()[0].setFormatter(new BriefLogFormatter());
-        logger.setLevel(Level.FINEST);
+        init();
+        logger.setLevel(Level.ALL);
         logger.log(Level.FINE, "test");
     }
 

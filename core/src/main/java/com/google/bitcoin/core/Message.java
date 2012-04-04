@@ -312,8 +312,6 @@ public abstract class Message implements Serializable {
             return buf;
         }
 
-        checkState(bytes == null, "Cached bytes present but failed to use them for serialization");
-
         // No cached array available so serialize parts by stream.
         ByteArrayOutputStream stream = new UnsafeByteArrayOutputStream(length < 32 ? 32 : length + 32);
         try {

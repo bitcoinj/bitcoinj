@@ -77,6 +77,7 @@ public class WalletTool {
     private static NetworkParameters params;
     private static File walletFile;
     private static OptionSet options;
+    private static java.util.logging.Logger logger;
 
     public enum ActionEnum {
         DUMP,
@@ -130,7 +131,8 @@ public class WalletTool {
             log.info("Starting up ...");
         } else {
             // Disable logspam unless there is a flag.
-            LogManager.getLogManager().getLogger("").setLevel(Level.SEVERE);
+            logger = LogManager.getLogManager().getLogger("");
+            logger.setLevel(Level.SEVERE);
         }
 
         File chainFileName;
@@ -262,7 +264,9 @@ public class WalletTool {
             tmp = File.createTempFile("wallet", null, walletFile.getParentFile());
             tmp.deleteOnExit();
             wallet.saveToFile(tmp);
-            tmp.renameTo(walletFile);
+            if (!tmp.renameTo(walletFile)) {
+                throw new IOException("Failed to rename wallet");
+            }
         } catch (IOException e) {
             System.err.println("Failed to save wallet! Old wallet should be left untouched.");
             e.printStackTrace();

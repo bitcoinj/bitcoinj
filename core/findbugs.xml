@@ -21,4 +21,8 @@
 
     <!-- BitCoinJ is not designed to run in an environment with malicious code loaded into the VM -->
     <Bug category="MALICIOUS_CODE"/>
+
+    <!-- This is flagging a valid issue but the real bug is in the JDK. See issue 173. -->
+    <Bug pattern="LG_LOST_LOGGER_DUE_TO_WEAK_REFERENCE"/>
+
 </FindBugsFilter>

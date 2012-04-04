@@ -65,9 +65,11 @@ public class BlockChain {
      * potentially invalidating transactions in our wallet.
      */
     protected StoredBlock chainHead;
-    // chainHead is accessed under this lock rather than the BlockChain lock. This is to try and keep accessors
-    // responsive whilst the chain is downloading, without free-threading the entire chain add process (which could
-    // get very confusing in the case of multiple blocks being added simultaneously).
+
+    // The chainHead field is read/written synchronized with this object rather than BlockChain. However writing is
+    // also guaranteed to happen whilst BlockChain is synchronized (see setChainHead). The goal of this is to let
+    // clients quickly access the chain head even whilst the block chain is downloading and thus the BlockChain is
+    // locked most of the time.
     protected final Object chainHeadLock = new Object();
 
     protected final NetworkParameters params;
@@ -160,7 +162,7 @@ public class BlockChain {
             statsBlocksAdded = 0;
         }
         // We check only the chain head for double adds here to avoid potentially expensive block chain misses.
-        if (block.equals(chainHead.getHeader())) {
+        if (block.equals(getChainHead().getHeader())) {
             // Duplicate add of the block at the top of the chain, can be a natural artifact of the download process.
             log.debug("Chain head added more than once: {}", block.getHash());
             return true;
@@ -222,10 +224,11 @@ public class BlockChain {
     private void connectBlock(StoredBlock newStoredBlock, StoredBlock storedPrev,
                               HashMap<Wallet, List<Transaction>> newTransactions)
             throws BlockStoreException, VerificationException {
-        if (storedPrev.equals(chainHead)) {
+        StoredBlock head = getChainHead();
+        if (storedPrev.equals(head)) {
             // This block connects to the best known block, it is a normal continuation of the system.
             setChainHead(newStoredBlock);
-            log.debug("Chain is now {} blocks high", chainHead.getHeight());
+            log.debug("Chain is now {} blocks high", newStoredBlock.getHeight());
             if (newTransactions != null)
                 sendTransactionsToWallet(newStoredBlock, NewBlockType.BEST_CHAIN, newTransactions);
         } else {
@@ -233,11 +236,11 @@ public class BlockChain {
             //
             // Note that we send the transactions to the wallet FIRST, even if we're about to re-organize this block
             // to become the new best chain head. This simplifies handling of the re-org in the Wallet class.
-            boolean haveNewBestChain = newStoredBlock.moreWorkThan(chainHead);
+            boolean haveNewBestChain = newStoredBlock.moreWorkThan(head);
             if (haveNewBestChain) {
                 log.info("Block is causing a re-organize");
             } else {
-                StoredBlock splitPoint = findSplit(newStoredBlock, chainHead);
+                StoredBlock splitPoint = findSplit(newStoredBlock, head);
                 if (splitPoint == newStoredBlock) {
                     // newStoredBlock is a part of the same chain, there's no fork. This happens when we receive a block
                     // that we already saw and linked into the chain previously, which isn't the chain head.
@@ -246,11 +249,14 @@ public class BlockChain {
                             newStoredBlock.getHeight(), newStoredBlock.getHeader().getHash());
                     return;
                 }
-                int splitPointHeight = splitPoint != null ? splitPoint.getHeight() : -1;
-                String splitPointHash =
-                        splitPoint != null ? splitPoint.getHeader().getHashAsString() : "?";
-                log.info("Block forks the chain at height {}/block {}, but it did not cause a reorganize:\n{}",
+                if (splitPoint == null) {
+                    log.error("Block forks the chain but splitPoint is null");
+                } else {
+                    int splitPointHeight = splitPoint.getHeight();
+                    String splitPointHash = splitPoint.getHeader().getHashAsString();
+                    log.info("Block forks the chain at height {}/block {}, but it did not cause a reorganize:\n{}",
                         new Object[]{splitPointHeight, splitPointHash, newStoredBlock});
+                }
             }
 
             // We may not have any transactions if we received only a header, which can happen during fast catchup.
@@ -273,13 +279,14 @@ public class BlockChain {
         //
         // Firstly, calculate the block at which the chain diverged. We only need to examine the
         // chain from beyond this block to find differences.
-        StoredBlock splitPoint = findSplit(newChainHead, chainHead);
+        StoredBlock head = getChainHead();
+        StoredBlock splitPoint = findSplit(newChainHead, head);
         log.info("Re-organize after split at height {}", splitPoint.getHeight());
-        log.info("Old chain head: {}", chainHead.getHeader().getHashAsString());
+        log.info("Old chain head: {}", head.getHeader().getHashAsString());
         log.info("New chain head: {}", newChainHead.getHeader().getHashAsString());
         log.info("Split at block: {}", splitPoint.getHeader().getHashAsString());
         // Then build a list of all blocks in the old part of the chain and the new part.
-        List<StoredBlock> oldBlocks = getPartialChain(chainHead, splitPoint);
+        List<StoredBlock> oldBlocks = getPartialChain(head, splitPoint);
         List<StoredBlock> newBlocks = getPartialChain(newChainHead, splitPoint);
         // Now inform the wallets. This is necessary so the set of currently active transactions (that we can spend)
         // can be updated to take into account the re-organize. We might also have received new coins we didn't have
@@ -311,15 +318,15 @@ public class BlockChain {
      * found (ie they are not part of the same chain). Returns newChainHead or chainHead if they don't actually diverge
      * but are part of the same chain.
      */
-    private StoredBlock findSplit(StoredBlock newChainHead, StoredBlock chainHead) throws BlockStoreException {
-        StoredBlock currentChainCursor = chainHead;
+    private StoredBlock findSplit(StoredBlock newChainHead, StoredBlock oldChainHead) throws BlockStoreException {
+        StoredBlock currentChainCursor = oldChainHead;
         StoredBlock newChainCursor = newChainHead;
         // Loop until we find the block both chains have in common. Example:
         //
         //    A -> B -> C -> D
         //         \--> E -> F -> G
         //
-        // findSplit will return block B. chainHead = D and newChainHead = G.
+        // findSplit will return block B. oldChainHead = D and newChainHead = G.
         while (!currentChainCursor.equals(newChainCursor)) {
             if (currentChainCursor.getHeight() > newChainCursor.getHeight()) {
                 currentChainCursor = currentChainCursor.getPrev(blockStore);
