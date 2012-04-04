@@ -180,7 +180,7 @@ public class PingService {
         peerGroup.downloadBlockChain();
         System.out.println("Send coins to: " + key.toAddress(params).toString());
         System.out.println("Waiting for coins to arrive. Press Ctrl-C to quit.");
-        // The PeerGroup thread keeps us alive until something kills the process.
+        while (true) Thread.sleep(Long.MAX_VALUE);
     }
 
     private void bounceCoins(Transaction tx) {
