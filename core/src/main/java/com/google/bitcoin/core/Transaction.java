@@ -30,7 +30,7 @@ import static com.google.bitcoin.core.Utils.*;
  * A transaction represents the movement of coins from some addresses to some other addresses. It can also represent
  * the minting of new coins. A Transaction object corresponds to the equivalent in the BitCoin C++ implementation.<p>
  *
- * It implements TWO serialization protocols - the BitCoin proprietary format which is identical to the C++
+ * It implements TWO serialization protocols - the Bitcoin proprietary format which is identical to the C++
  * implementation and is used for reading/writing transactions to the wire and for hashing. It also implements Java
  * serialization which is used for the wallet. This allows us to easily add extra fields used for our own accounting
  * or UI purposes.<p>
