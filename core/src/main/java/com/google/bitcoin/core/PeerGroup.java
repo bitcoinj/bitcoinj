@@ -117,7 +117,7 @@ public class PeerGroup {
         // this is.
         this.versionMessage = new VersionMessage(params, chain.getBestChainHeight());
 
-        this.memoryPool = new MemoryPool();
+        memoryPool = new MemoryPool();
 
         inactives = new LinkedBlockingQueue<PeerAddress>();
         // TODO: Remove usage of synchronized sets here in favor of simple coarse-grained locking.
@@ -130,9 +130,6 @@ public class PeerGroup {
                 THREAD_KEEP_ALIVE_SECONDS, TimeUnit.SECONDS,
                 new LinkedBlockingQueue<Runnable>(1),
                 new PeerGroupThreadFactory());
-        // peerEventListeners get a subset of events seen by the group. We add our own internal listener to this so
-        // when we download a transaction, we can distribute it to each Peer in the pool so they can update the
-        // transactions confidence level if they've seen it be announced/when they see it be announced.
         peerEventListeners = new ArrayList<PeerEventListener>();
         // This event listener is added to every peer. It's here so when we announce transactions via an "inv", every
         // peer can fetch them.

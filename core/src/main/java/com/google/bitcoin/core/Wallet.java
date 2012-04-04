@@ -1554,7 +1554,7 @@ public class Wallet implements Serializable {
     private transient PeerEventListener peerEventListener;
 
     /**
-     * Use the returned object can be used to connect the wallet to a {@link Peer} or {@link PeerGroup} in order to
+     * The returned object can be used to connect the wallet to a {@link Peer} or {@link PeerGroup} in order to
      * receive and process blocks and transactions.
      */
     public synchronized PeerEventListener getPeerEventListener() {
