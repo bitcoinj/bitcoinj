@@ -35,6 +35,7 @@ import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Date;
+import java.util.concurrent.CountDownLatch;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
 
@@ -55,6 +56,9 @@ public class WalletTool {
             "  --force              Overrides any safety checks on the requested action.\n" +
             "  --date               Provide a date in form YYYY/MM/DD to any action that requires one.\n" +
             "  --peer=1.2.3.4       Use the given IP address for connections instead of peer discovery.\n" +
+            "  --condition=...      Allows you to specify a numeric condition for other commands. The format is\n" +
+            "                       one of the following operators = < > <= >= immediately followed by a number.\n" +
+            "                       For example --condition=\">5.10\" or --condition=\"<=1\"\n" +
 
             "\n>>> ACTIONS\n" +
             "  --action=DUMP        Prints the given wallet in textual form to stdout.\n" +
@@ -68,24 +72,101 @@ public class WalletTool {
             "  --action=DELETE_KEY  Removes the key specified by --pubkey or --addr from the wallet.\n" +
             "  --action=SYNC        Sync the wallet with the latest block chain (download new transactions).\n" +
             "                       If the chain file does not exist this will RESET the wallet.\n" +
-            "  --action=RESET       Deletes all transactions from the wallet, for if you want to replay the chain.\n";
+            "  --action=RESET       Deletes all transactions from the wallet, for if you want to replay the chain.\n" +
+
+            "\n>>> WAITING\n" +
+            "You can wait for the condition specified by the --waitfor flag to become true. Transactions and new\n" +
+            "blocks will be processed during this time. When the waited for condition is met, the tx/block hash\n" +
+            "will be printed. Waiting occurs after the --action is performed, if any is specified.\n\n" +
+
+            "  --waitfor=EVER       Never quit.\n" +
+            "  --waitfor=WALLET_TX  Any transaction that sends coins to or from the wallet.\n" +
+            "  --waitfor=BLOCK      A new block that builds on the best chain.\n" +
+            "  --waitfor=BALANCE    Waits until the wallets balance meets the --condition.\n";
 
     private static OptionSpec<String> walletFileName;
     private static OptionSpec<ActionEnum> actionFlag;
     private static OptionSpec<NetworkEnum> netFlag;
     private static OptionSpec<Date> dateFlag;
+    private static OptionSpec<WaitForEnum> waitForFlag;
+    private static OptionSpec<String> conditionFlag;
+
     private static NetworkParameters params;
     private static File walletFile;
     private static OptionSet options;
     private static java.util.logging.Logger logger;
+    private static BoundedOverheadBlockStore store;
+    private static BlockChain chain;
+    private static PeerGroup peers;
+    private static Wallet wallet;
+    private static File chainFileName;
+
+    public static class Condition {
+        public enum Type {
+            // Less than, greater than, less than or equal, greater than or equal.
+            EQUAL, LT, GT, LTE, GTE
+        }
+        Type type;
+        String value;
+
+        public Condition(String from) {
+            if (from.length() < 2) throw new RuntimeException("Condition string too short: " + from);
+
+            if (from.startsWith("<")) type = Type.LT;
+            else if (from.startsWith("=")) type = Type.EQUAL;
+            else if (from.startsWith(">")) type = Type.GT;
+            else if (from.startsWith("<=")) type = Type.LTE;
+            else if (from.startsWith(">=")) type = Type.GTE;
+            else throw new RuntimeException("Unknown operator in condition: " + from);
+
+            String s;
+            switch (type) {
+                case LT:
+                case GT:
+                case EQUAL:
+                    s = from.substring(1);
+                    break;
+                case LTE:
+                case GTE:
+                    s = from.substring(2);
+                    break;
+                default:
+                    throw new RuntimeException("Unreachable");
+            }
+            value = s;
+        }
+
+        public boolean matchBitcoins(BigInteger comparison) {
+            BigInteger units = Utils.toNanoCoins(value);
+            switch (type) {
+                case LT: return comparison.compareTo(units) < 0;
+                case GT: return comparison.compareTo(units) > 0;
+                case EQUAL: return comparison.compareTo(units) == 0;
+                case LTE: return comparison.compareTo(units) <= 0;
+                case GTE: return comparison.compareTo(units) >= 0;
+                default:
+                    throw new RuntimeException("Unreachable");
+            }
+        }
+    }
+
+    private static Condition condition;
 
     public enum ActionEnum {
+        NONE,
         DUMP,
         CREATE,
         ADD_KEY,
         DELETE_KEY,
         SYNC,
-        RESET
+        RESET,
+    };
+
+    public enum WaitForEnum {
+        EVER,
+        WALLET_TX,
+        BLOCK,
+        BALANCE
     };
     
     public enum NetworkEnum {
@@ -103,8 +184,7 @@ public class WalletTool {
                 .defaultsTo("wallet");
         actionFlag = parser.accepts("action")
                 .withRequiredArg()
-                .ofType(ActionEnum.class)
-                .defaultsTo(ActionEnum.DUMP);
+                .ofType(ActionEnum.class);
         netFlag = parser.accepts("net")
                 .withOptionalArg()
                 .ofType(NetworkEnum.class)
@@ -113,12 +193,16 @@ public class WalletTool {
                 .withRequiredArg()
                 .ofType(Date.class)
                 .withValuesConvertedBy(DateConverter.datePattern("yyyy/MM/dd"));
+        waitForFlag = parser.accepts("waitfor")
+                .withRequiredArg()
+                .ofType(WaitForEnum.class);
         OptionSpec<String> chainFlag = parser.accepts("chain").withRequiredArg();
         // For addkey/delkey.
         parser.accepts("pubkey").withRequiredArg();
         parser.accepts("privkey").withRequiredArg();
         parser.accepts("addr").withRequiredArg();
         parser.accepts("peer").withRequiredArg();
+        conditionFlag = parser.accepts("condition").withRequiredArg();
         options = parser.parse(args);
         
         if (args.length == 0 || options.hasArgument("help") || options.nonOptionArguments().size() > 0) {
@@ -135,7 +219,6 @@ public class WalletTool {
             logger.setLevel(Level.SEVERE);
         }
 
-        File chainFileName;
         switch (netFlag.value(options)) {
             case PROD: 
                 params = NetworkParameters.prodNet();
@@ -154,7 +237,13 @@ public class WalletTool {
             chainFileName = new File(chainFlag.value(options));
         }
 
-        ActionEnum action = actionFlag.value(options);
+        if (options.has("condition")) {
+            condition = new Condition(conditionFlag.value(options));
+        }
+
+        ActionEnum action = ActionEnum.NONE;
+        if (options.has(actionFlag))
+            action = actionFlag.value(options);
         walletFile = new File(walletFileName.value(options));
         if (action == ActionEnum.CREATE) {
             createWallet(options, params, walletFile);
@@ -164,7 +253,6 @@ public class WalletTool {
             System.err.println("Specified wallet file " + walletFile + " does not exist. Try --action=CREATE");
             return;
         }
-        Wallet wallet;
         try {
             wallet = Wallet.loadFromFile(walletFile);
         } catch (Exception e) {
@@ -175,59 +263,112 @@ public class WalletTool {
 
         // What should we do?
         switch (action) {
-            case DUMP: dumpWallet(wallet); break;
-            case ADD_KEY: addKey(wallet); break;
-            case DELETE_KEY: deleteKey(wallet); break;
-            case SYNC: syncChain(wallet, chainFileName); break;
-            case RESET: reset(wallet); break;
+            case DUMP: dumpWallet(); break;
+            case ADD_KEY: addKey(); break;
+            case DELETE_KEY: deleteKey(); break;
+            case RESET: reset(); break;
+            case SYNC: syncChain(); break;
         }
-        saveWallet(walletFile, wallet);
+        saveWallet(walletFile);
+
+        if (options.has(waitForFlag)) {
+            wait(waitForFlag.value(options));
+            saveWallet(walletFile);
+        }
     }
 
-    private static void reset(Wallet wallet) {
+    private static void wait(WaitForEnum waitFor) throws BlockStoreException {
+        final CountDownLatch latch = new CountDownLatch(1);
+        setup();
+        switch (waitFor) {
+            case EVER:
+                break;
+
+            case WALLET_TX:
+                wallet.addEventListener(new AbstractWalletEventListener() {
+                    private void handleTx(Transaction tx) {
+                        System.out.println(tx.getHashAsString());
+                        latch.countDown();  // Wake up main thread.
+                    }
+
+                    @Override
+                    public void onCoinsReceived(Wallet wallet, Transaction tx, BigInteger prevBalance, BigInteger newBalance) {
+                        // Runs in a peer thread.
+                        super.onCoinsReceived(wallet, tx, prevBalance, newBalance);
+                        handleTx(tx);
+                    }
+
+                    @Override
+                    public void onCoinsSent(Wallet wallet, Transaction tx, BigInteger prevBalance,
+                                            BigInteger newBalance) {
+                        // Runs in a peer thread.
+                        super.onCoinsSent(wallet, tx, prevBalance, newBalance);
+                        handleTx(tx);
+                    }
+                });
+                break;
+
+            case BLOCK:
+                peers.addEventListener(new AbstractPeerEventListener() {
+                    @Override
+                    public void onBlocksDownloaded(Peer peer, Block block, int blocksLeft) {
+                        super.onBlocksDownloaded(peer, block, blocksLeft);
+                        // Check if we already ran. This can happen if a block being received triggers download of more
+                        // blocks, or if we receive another block whilst the peer group is shutting down.
+                        if (latch.getCount() == 0) return;
+                        System.out.println(block.getHashAsString());
+                        latch.countDown();
+                    }
+                });
+                break;
+
+            case BALANCE:
+                // Check if the balance already meets the given condition.
+                if (condition.matchBitcoins(wallet.getBalance(Wallet.BalanceType.ESTIMATED))) {
+                    latch.countDown();
+                    break;
+                }
+                wallet.addEventListener(new AbstractWalletEventListener() {
+                    @Override
+                    public void onChange() {
+                        super.onChange();
+                        saveWallet(walletFile);
+                        BigInteger balance = wallet.getBalance(Wallet.BalanceType.ESTIMATED);
+                        if (condition.matchBitcoins(balance)) {
+                            System.out.println(Utils.bitcoinValueToFriendlyString(balance));
+                            latch.countDown();
+                        }
+                    }
+                });
+                break;
+
+        }
+        peers.start();
+        try {
+            latch.await();
+        } catch (InterruptedException e) {
+        }
+        shutdown();
+    }
+
+    private static void reset() {
         // Delete the transactions and save. In future, reset the chain head pointer.
         wallet.clearTransactions(0);
-        saveWallet(walletFile, wallet);
+        saveWallet(walletFile);
     }
 
-    private static void syncChain(final Wallet wallet, File chainFileName) {
-        try {
-            // Will create a fresh chain if one doesn't exist or there is an issue with this one.
-            System.out.println("Connecting ..." );
-            final BoundedOverheadBlockStore store = new BoundedOverheadBlockStore(params, chainFileName);
-            final BlockChain chain = new BlockChain(params, wallet, store);
-
-            wallet.addEventListener(new AbstractWalletEventListener() {
-                @Override
-                public void onChange() {
-                    saveWallet(walletFile, wallet);
-                }
-            });
-            
-            int startTransactions = wallet.getTransactions(true, true).size();
-
-            PeerGroup peers = connect(wallet, chain);
-            DownloadListener listener = new DownloadListener();
-            peers.startBlockChainDownload(listener);
-            try {
-                listener.await();
-            } catch (InterruptedException e) {
-                System.err.println("Chain download interrupted, quitting ...");
-                System.exit(1);
+    // Sets up all objects needed for network communication but does not bring up the peers.
+    private static void setup() throws BlockStoreException {
+        // Will create a fresh chain if one doesn't exist or there is an issue with this one.
+        store = new BoundedOverheadBlockStore(params, chainFileName);
+        chain = new BlockChain(params, wallet, store);
+        wallet.addEventListener(new AbstractWalletEventListener() {
+            @Override
+            public void onChange() {
+                saveWallet(walletFile);
             }
-            peers.stop();
-            int endTransactions = wallet.getTransactions(true, true).size();
-            if (endTransactions > startTransactions) {
-                System.out.println("Synced " + (endTransactions - startTransactions) + " transactions.");
-            }
-        } catch (BlockStoreException e) {
-            System.err.println("Error reading block chain file " + chainFileName + ": " + e.getMessage());
-            e.printStackTrace();
-        }
-    }
-
-    private static PeerGroup connect(Wallet wallet, BlockChain chain) {
-        PeerGroup peers = new PeerGroup(params, chain);
+        });
+        peers = new PeerGroup(params, chain);
         peers.setUserAgent("WalletTool", "1.0");
         peers.addWallet(wallet);
         peers.setFastCatchupTimeSecs(wallet.getEarliestKeyCreationTime());
@@ -242,8 +383,40 @@ public class WalletTool {
         } else {
             peers.addPeerDiscovery(new DnsDiscovery(params));
         }
-        peers.start();
-        return peers;
+    }
+
+    private static void syncChain() {
+        try {
+            setup();
+            int startTransactions = wallet.getTransactions(true, true).size();
+            DownloadListener listener = new DownloadListener();
+            peers.start();
+            peers.startBlockChainDownload(listener);
+            try {
+                listener.await();
+            } catch (InterruptedException e) {
+                System.err.println("Chain download interrupted, quitting ...");
+                System.exit(1);
+            }
+            shutdown();
+            int endTransactions = wallet.getTransactions(true, true).size();
+            if (endTransactions > startTransactions) {
+                System.out.println("Synced " + (endTransactions - startTransactions) + " transactions.");
+            }
+        } catch (BlockStoreException e) {
+            System.err.println("Error reading block chain file " + chainFileName + ": " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    private static void shutdown() {
+        try {
+            peers.stop();
+            store.close();
+            saveWallet(walletFile);
+        } catch (BlockStoreException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private static void createWallet(OptionSet options, NetworkParameters params, File walletFile) throws IOException {
@@ -256,7 +429,7 @@ public class WalletTool {
         return;
     }
 
-    private static void saveWallet(File walletFile, Wallet wallet) {
+    private static void saveWallet(File walletFile) {
         // Save the new state of the wallet to a temp file then rename, in case anything goes wrong.
         File tmp;
         try {
@@ -274,7 +447,7 @@ public class WalletTool {
         }
     }
 
-    private static void addKey(Wallet wallet) {
+    private static void addKey() {
         ECKey key;
         long creationTimeSeconds = 0;
         if (options.has(dateFlag)) {
@@ -304,7 +477,7 @@ public class WalletTool {
         System.out.println("addr:" + key.toAddress(params) + " " + key);
     }
 
-    private static void deleteKey(Wallet wallet) {
+    private static void deleteKey() {
         String pubkey = (String) options.valueOf("pubkey");
         String addr = (String) options.valueOf("addr");
         if (pubkey == null && addr == null) {
@@ -330,7 +503,7 @@ public class WalletTool {
         wallet.keychain.remove(key);
     }    
     
-    private static void dumpWallet(Wallet wallet) {
+    private static void dumpWallet() {
         System.out.println(wallet.toString());
     }
 }
