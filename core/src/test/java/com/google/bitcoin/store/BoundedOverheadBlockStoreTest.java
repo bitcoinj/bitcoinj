@@ -19,7 +19,9 @@ import com.google.bitcoin.core.Address;
 import com.google.bitcoin.core.ECKey;
 import com.google.bitcoin.core.NetworkParameters;
 import com.google.bitcoin.core.StoredBlock;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
 
@@ -27,11 +29,13 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 public class BoundedOverheadBlockStoreTest {
+    @Rule
+    public TemporaryFolder folder = new TemporaryFolder();
+
     @Test
     public void testStorage() throws Exception {
-        File temp = File.createTempFile("bitcoinj-test", null, null);
+        File temp = folder.newFile("bitcoinj-test");
         System.out.println(temp.getAbsolutePath());
-        temp.deleteOnExit();
 
         NetworkParameters params = NetworkParameters.unitTests();
         Address to = new ECKey().toAddress(params);
@@ -56,9 +60,8 @@ public class BoundedOverheadBlockStoreTest {
     
     @Test
     public void testLocking() throws Exception {
-        File temp = File.createTempFile("bitcoinj-test", null, null);
+        File temp = folder.newFile("bitcoinj-test");
         System.out.println(temp.getAbsolutePath());
-        temp.deleteOnExit();
 
         NetworkParameters params = NetworkParameters.unitTests();
         BoundedOverheadBlockStore store = new BoundedOverheadBlockStore(params, temp);

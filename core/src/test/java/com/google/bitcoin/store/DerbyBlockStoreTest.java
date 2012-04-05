@@ -19,44 +19,32 @@ import com.google.bitcoin.core.Address;
 import com.google.bitcoin.core.ECKey;
 import com.google.bitcoin.core.NetworkParameters;
 import com.google.bitcoin.core.StoredBlock;
-import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
 
 import static org.junit.Assert.assertEquals;
 
 public class DerbyBlockStoreTest {
-    /**
-     * This path will be deleted recursively!
-     */
-    private static final String DB_NAME = "target/bitcoinj.unittest.derby";
+    @Rule
+    public TemporaryFolder folder = new TemporaryFolder();
 
     @Before
     public void shutUp() {
         // Prevent Derby writing a useless error log file.
         System.getProperties().setProperty("derby.stream.error.file", "");
     }
-    
-    @After
-    public void clear() {
-        try {
-            deleteRecursively(new File(DB_NAME));
-        } catch (IOException e) {
-            e.printStackTrace();
-            // Does not really matter.
-        }
-    }
 
     @Test
     public void testStorage() throws Exception {
-        deleteRecursively(new File(DB_NAME));
+        File file = new File(folder.getRoot(), "derby");
+        String path = file.getAbsolutePath();
         NetworkParameters params = NetworkParameters.unitTests();
         Address to = new ECKey().toAddress(params);
-        DerbyBlockStore store = new DerbyBlockStore(params, DB_NAME);
+        DerbyBlockStore store = new DerbyBlockStore(params, path);
         store.resetStore();
         store.dump();
         // Check the first block in a new store is the genesis block.
@@ -69,7 +57,7 @@ public class DerbyBlockStoreTest {
         store.setChainHead(b1);
         store.dump();
         // Check we can get it back out again if we rebuild the store object.
-        store = new DerbyBlockStore(params, DB_NAME);
+        store = new DerbyBlockStore(params, path);
         StoredBlock b2 = store.get(b1.getHeader().getHash());
         assertEquals(b1, b2);
         // Check the chain head was stored correctly also.
@@ -79,15 +67,5 @@ public class DerbyBlockStoreTest {
         assertEquals(params.genesisBlock, g1.getHeader());
         store.dump();
         store.close();
-    }
-    
-    void deleteRecursively(File f) throws IOException {
-        if (f.isDirectory()) {
-            for (File c : f.listFiles())
-                deleteRecursively(c);
-        }
-        
-        if (f.exists() && !f.delete())
-            throw new FileNotFoundException("Failed to delete file: " + f);
     }
 }

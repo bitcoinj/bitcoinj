@@ -21,7 +21,9 @@ import com.google.bitcoin.core.NetworkParameters;
 import com.google.bitcoin.core.StoredBlock;
 
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
 import java.io.IOException;
@@ -33,10 +35,12 @@ public class DiskBlockStoreTest {
     private NetworkParameters params;
     private Address to;
     private File temp;
+    @Rule
+    public TemporaryFolder folder = new TemporaryFolder();
 
     @Before
     public void setUp() throws IOException {
-        temp = File.createTempFile("bitcoinj-test", null, null);
+        temp = folder.newFile("bitcoinj-test");
         System.out.println(temp.getAbsolutePath());
 
         params = NetworkParameters.unitTests();
