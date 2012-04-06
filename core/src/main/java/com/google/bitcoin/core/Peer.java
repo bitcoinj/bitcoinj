@@ -212,7 +212,7 @@ public class Peer {
         } catch (IOException e) {
             if (!running) {
                 // This exception was expected because we are tearing down the socket as part of quitting.
-                log.info("Shutting down peer loop");
+                log.info("{}: Shutting down peer loop", address);
             } else {
                 disconnect();
                 throw new PeerException(e);

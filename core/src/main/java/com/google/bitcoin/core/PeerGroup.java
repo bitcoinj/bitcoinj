@@ -325,6 +325,7 @@ public class PeerGroup {
                 // This is run with the peer group already locked.
                 for (Peer peer : peers) {
                     try {
+                        log.info("{}: Sending transaction {}", peer.getAddress(), tx.getHashAsString());
                         peer.sendMessage(tx);
                     } catch (IOException e) {
                         log.warn("Caught IOException whilst sending transaction: {}", e.getMessage());
@@ -685,6 +686,7 @@ public class PeerGroup {
         boolean success = false;
         for (Peer p : announceToPeers) {
             try {
+                log.info("{}: Announcing {} pending wallet transactions", p.getAddress(), inv.getItems().size());
                 p.sendMessage(inv);
                 success = true;
             } catch (IOException e) {
