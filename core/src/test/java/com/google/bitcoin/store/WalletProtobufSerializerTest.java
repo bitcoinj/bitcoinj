@@ -110,6 +110,6 @@ public class WalletProtobufSerializerTest {
         //System.out.println(WalletProtobufSerializer.walletToText(wallet));
         WalletProtobufSerializer.writeWallet(wallet, output);
         ByteArrayInputStream input = new ByteArrayInputStream(output.toByteArray());
-        return WalletProtobufSerializer.readWallet(input, params);
+        return WalletProtobufSerializer.readWallet(input);
     }
 }

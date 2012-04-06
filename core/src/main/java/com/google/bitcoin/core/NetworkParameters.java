@@ -215,4 +215,15 @@ public class NetworkParameters implements Serializable {
         }
         return id;
     }
+
+    /** Returns the network parameters for the given string ID or NULL if not recognized. */
+    public static NetworkParameters fromID(String id) {
+        if (id.equals(ID_PRODNET)) {
+            return prodNet();
+        } else if (id.equals(ID_TESTNET)) {
+            return testNet();
+        } else {
+            return null;
+        }
+    }
 }

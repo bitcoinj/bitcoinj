@@ -36,7 +36,7 @@ import java.util.Map;
  * Serialize and de-serialize a wallet to a byte stream containing a
  * <a href="http://code.google.com/apis/protocolbuffers/docs/overview.html">protocol buffer</a>. Protocol buffers are
  * a data interchange format developed by Google with an efficient binary representation, a type safe specification
- * languaeg and compilers that generate code to work with those data structures for many languages. Protocol buffers
+ * language and compilers that generate code to work with those data structures for many languages. Protocol buffers
  * can have their format evolved over time: conceptually they represent data using (tag, length, value) tuples. The
  * format is defined by the <tt>bitcoin.proto</tt> file in the BitCoinJ source distribution.<p>
  *
@@ -73,9 +73,10 @@ public class WalletProtobufSerializer {
 
     /**
      * Returns the given wallet formatted as text. The text format is that used by protocol buffers and although it
-     * can also be parsed using {@link TextFormat.merge()}, it is designed more for debugging than storage. It is not 
-     * well specified and wallets are largely binary data structures anyway, consisting as they do of keys (large
-     * random numbers) and {@link Transaction}s which also mostly contain keys and hashes.
+     * can also be parsed using {@link TextFormat#merge(CharSequence, com.google.protobuf.Message.Builder)},
+     * it is designed more for debugging than storage. It is not well specified and wallets are largely binary data
+     * structures anyway, consisting as they do of keys (large random numbers) and {@link Transaction}s which also
+     * mostly contain keys and hashes.
      */
     public static String walletToText(Wallet wallet) {
         Protos.Wallet walletProto = walletToProto(wallet);
@@ -199,26 +200,18 @@ public class WalletProtobufSerializer {
 
     /**
      * Parses a wallet from the given stream. The stream is expected to contain a binary serialization of a 
-     * {@link Protos.Wallet} object. You must also specify the {@link NetworkParameters} the wallet will use,
-     * it will be checked against the stream to ensure the right params have been specified. In future this
-     * parameter will probably go away.<p>
+     * {@link Protos.Wallet} object.<p>
      *     
      * If the stream is invalid or the serialized wallet contains unsupported features, 
      * {@link IllegalArgumentException} is thrown.
      *
-     * @param input
-     * @param params
-     * @return
-     * @throws IOException
      */
-    public static Wallet readWallet(InputStream input, NetworkParameters params) throws IOException {
+    public static Wallet readWallet(InputStream input) throws IOException {
         // TODO: This method should throw more specific exception types than IllegalArgumentException.
         WalletProtobufSerializer serializer = new WalletProtobufSerializer();
         Protos.Wallet walletProto = Protos.Wallet.parseFrom(input);
-        if (!params.getId().equals(walletProto.getNetworkIdentifier()))
-            throw new IllegalArgumentException("Trying to read a wallet with a different network id " +
-                                                walletProto.getNetworkIdentifier());
-        
+
+        NetworkParameters params = NetworkParameters.fromID(walletProto.getNetworkIdentifier());
         Wallet wallet = new Wallet(params);
         
         // Read all keys
