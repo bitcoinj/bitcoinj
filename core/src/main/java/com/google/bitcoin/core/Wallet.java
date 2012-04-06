@@ -17,6 +17,7 @@
 package com.google.bitcoin.core;
 
 import com.google.bitcoin.core.WalletTransaction.Pool;
+import com.google.bitcoin.store.WalletProtobufSerializer;
 import com.google.bitcoin.utils.EventListenerInvoker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -173,7 +174,8 @@ public class Wallet implements Serializable {
     }
 
     /**
-     * Uses Java serialization to save the wallet to the given file.
+     * Uses protobuf serialization to save the wallet to the given file. To learn more about this file format, see
+     * {@link WalletProtobufSerializer}.
      */
     public synchronized void saveToFile(File f) throws IOException {
         FileOutputStream stream = null;
@@ -186,12 +188,11 @@ public class Wallet implements Serializable {
     }
 
     /**
-     * Uses Java serialization to save the wallet to the given file stream.
+     * Uses protobuf serialization to save the wallet to the given file stream. To learn more about this file format, see
+     * {@link WalletProtobufSerializer}.
      */
     public synchronized void saveToFileStream(OutputStream f) throws IOException {
-        ObjectOutputStream oos = new ObjectOutputStream(f);
-        oos.writeObject(this);
-        oos.close();
+        WalletProtobufSerializer.writeWallet(this, f);
     }
 
     /** Returns the parameters this wallet was created with. */
@@ -224,15 +225,25 @@ public class Wallet implements Serializable {
     /**
      * Returns a wallet deserialized from the given input stream.
      */
-    public static Wallet loadFromFileStream(InputStream f) throws IOException {
-        ObjectInputStream ois = null;
-        try {
-            ois = new ObjectInputStream(f);
-            return (Wallet) ois.readObject();
-        } catch (ClassNotFoundException e) {
-            throw new RuntimeException(e);
-        } finally {
-            if (ois != null) ois.close();
+    public static Wallet loadFromFileStream(InputStream stream) throws IOException {
+        // Determine what kind of wallet stream this is: Java Serialization or protobuf format.
+        stream = new BufferedInputStream(stream);
+        stream.mark(100);
+        boolean serialization = stream.read() == 0xac && stream.read() == 0xed;
+        stream.reset();
+
+        if (serialization) {
+            ObjectInputStream ois = null;
+            try {
+                ois = new ObjectInputStream(stream);
+                return (Wallet) ois.readObject();
+            } catch (ClassNotFoundException e) {
+                throw new RuntimeException(e);
+            } finally {
+                if (ois != null) ois.close();
+            }
+        } else {
+            return WalletProtobufSerializer.readWallet(stream);
         }
     }
 

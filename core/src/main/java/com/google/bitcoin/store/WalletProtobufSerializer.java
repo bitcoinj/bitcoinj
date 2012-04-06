@@ -211,6 +211,8 @@ public class WalletProtobufSerializer {
         WalletProtobufSerializer serializer = new WalletProtobufSerializer();
         Protos.Wallet walletProto = Protos.Wallet.parseFrom(input);
 
+        // System.out.println(TextFormat.printToString(walletProto));
+
         NetworkParameters params = NetworkParameters.fromID(walletProto.getNetworkIdentifier());
         Wallet wallet = new Wallet(params);
         
