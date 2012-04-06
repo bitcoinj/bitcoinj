@@ -35,7 +35,9 @@ import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Date;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
 
@@ -73,6 +75,9 @@ public class WalletTool {
             "  --action=SYNC        Sync the wallet with the latest block chain (download new transactions).\n" +
             "                       If the chain file does not exist this will RESET the wallet.\n" +
             "  --action=RESET       Deletes all transactions from the wallet, for if you want to replay the chain.\n" +
+            "  --action=SEND        Creates a transaction with the given --output from this wallet and broadcasts.\n" +
+            "                       You can repeat --output=address:value multiple times, eg:\n" +
+            "                         --output=1GthXFQMktFLWdh5EPNGqbq3H6WdG8zsWj:1.245\n" +
 
             "\n>>> WAITING\n" +
             "You can wait for the condition specified by the --waitfor flag to become true. Transactions and new\n" +
@@ -112,11 +117,11 @@ public class WalletTool {
         public Condition(String from) {
             if (from.length() < 2) throw new RuntimeException("Condition string too short: " + from);
 
-            if (from.startsWith("<")) type = Type.LT;
+            if (from.startsWith("<=")) type = Type.LTE;
+            else if (from.startsWith(">=")) type = Type.GTE;
+            else if (from.startsWith("<")) type = Type.LT;
             else if (from.startsWith("=")) type = Type.EQUAL;
             else if (from.startsWith(">")) type = Type.GT;
-            else if (from.startsWith("<=")) type = Type.LTE;
-            else if (from.startsWith(">=")) type = Type.GTE;
             else throw new RuntimeException("Unknown operator in condition: " + from);
 
             String s;
@@ -137,15 +142,21 @@ public class WalletTool {
         }
 
         public boolean matchBitcoins(BigInteger comparison) {
-            BigInteger units = Utils.toNanoCoins(value);
-            switch (type) {
-                case LT: return comparison.compareTo(units) < 0;
-                case GT: return comparison.compareTo(units) > 0;
-                case EQUAL: return comparison.compareTo(units) == 0;
-                case LTE: return comparison.compareTo(units) <= 0;
-                case GTE: return comparison.compareTo(units) >= 0;
-                default:
-                    throw new RuntimeException("Unreachable");
+            try {
+                BigInteger units = Utils.toNanoCoins(value);
+                switch (type) {
+                    case LT: return comparison.compareTo(units) < 0;
+                    case GT: return comparison.compareTo(units) > 0;
+                    case EQUAL: return comparison.compareTo(units) == 0;
+                    case LTE: return comparison.compareTo(units) <= 0;
+                    case GTE: return comparison.compareTo(units) >= 0;
+                    default:
+                        throw new RuntimeException("Unreachable");
+                }
+            } catch (NumberFormatException e) {
+                System.err.println("Could not parse value from condition string: " + value);
+                System.exit(1);
+                return false;
             }
         }
     }
@@ -160,6 +171,7 @@ public class WalletTool {
         DELETE_KEY,
         SYNC,
         RESET,
+        SEND
     };
 
     public enum WaitForEnum {
@@ -202,6 +214,8 @@ public class WalletTool {
         parser.accepts("privkey").withRequiredArg();
         parser.accepts("addr").withRequiredArg();
         parser.accepts("peer").withRequiredArg();
+        OptionSpec<String> outputFlag = parser.accepts("output").withRequiredArg();
+        parser.accepts("value").withRequiredArg();
         conditionFlag = parser.accepts("condition").withRequiredArg();
         options = parser.parse(args);
         
@@ -268,12 +282,66 @@ public class WalletTool {
             case DELETE_KEY: deleteKey(); break;
             case RESET: reset(); break;
             case SYNC: syncChain(); break;
+            case SEND:
+                if (!options.has(outputFlag)) {
+                    System.err.println("You must specify at least one --output=addr:value.");
+                    return;
+                }
+                send(outputFlag.values(options));
+                break;
         }
         saveWallet(walletFile);
 
         if (options.has(waitForFlag)) {
             wait(waitForFlag.value(options));
             saveWallet(walletFile);
+        }
+    }
+
+    private static void send(List<String> outputs) {
+        try {
+            // Convert the input strings to outputs.
+            Transaction t = new Transaction(params);
+            for (String spec : outputs) {
+                String[] parts = spec.split(":");
+                if (parts.length != 2) {
+                    System.err.println("Malformed output specification, must have two parts separated by :");
+                    return;
+                }
+                try {
+                    Address addr = new Address(params, parts[0]);
+                    BigInteger value = Utils.toNanoCoins(parts[1]);
+                    t.addOutput(value, addr);
+                } catch (WrongNetworkException e) {
+                    System.err.println("Malformed output specification, address is for a different network: " + parts[0]);
+                    return;
+                } catch (AddressFormatException e) {
+                    System.err.println("Malformed output specification, could not parse as address: " + parts[0]);
+                    return;
+                } catch (NumberFormatException e) {
+                    System.err.println("Malformed output specification, could not parse as value: " + parts[1]);
+                }
+            }
+            if (!wallet.completeTx(t)) {
+                System.err.println("Insufficient funds: have " + wallet.getBalance());
+                return;
+            }
+            setup();
+            peers.start();
+            peers.broadcastTransaction(t).get();  // The .get() is so we wait until the broadcast has completed.
+            wallet.commitTx(t);
+            System.out.println(t.getHashAsString());
+        } catch (BlockStoreException e) {
+            throw new RuntimeException(e);
+        } catch (VerificationException e) {
+            // Cannot happen, created transaction ourselves.
+            throw new RuntimeException(e);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        } catch (ExecutionException e) {
+            throw new RuntimeException(e);
+        } finally {
+            shutdown();
         }
     }
 
@@ -360,6 +428,11 @@ public class WalletTool {
     // Sets up all objects needed for network communication but does not bring up the peers.
     private static void setup() throws BlockStoreException {
         // Will create a fresh chain if one doesn't exist or there is an issue with this one.
+        if (!chainFileName.exists()) {
+            // No chain, so reset the wallet as we will be downloading from scratch.
+            System.out.println("Chain file is missing so clearing transactions from the wallet.");
+            reset();
+        }
         store = new BoundedOverheadBlockStore(params, chainFileName);
         chain = new BlockChain(params, wallet, store);
         wallet.addEventListener(new AbstractWalletEventListener() {
@@ -411,6 +484,7 @@ public class WalletTool {
 
     private static void shutdown() {
         try {
+            if (peers == null) return;  // setup() never called so nothing to do.
             peers.stop();
             store.close();
             saveWallet(walletFile);
