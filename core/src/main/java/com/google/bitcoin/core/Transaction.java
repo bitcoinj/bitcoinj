@@ -491,6 +491,10 @@ public class Transaction extends ChildMessage implements Serializable {
         s.append("  ");
         s.append(getHashAsString());
         s.append("\n");
+        if (inputs.size() == 0) {
+            s.append("  INCOMPLETE: No inputs!\n");
+            return s.toString();
+        }
         if (isCoinBase()) {
             String script;
             String script2;
