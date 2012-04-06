@@ -172,10 +172,8 @@ public class BlockChain {
         // blocks validity so we can skip the merkle root verification if the contents aren't interesting. This saves
         // a lot of time for big blocks.
         boolean contentsImportant = false;
-        HashMap<Wallet, List<Transaction>> walletToTxMap = new HashMap<Wallet, List<Transaction>>();
         if (block.transactions != null) {
-            scanTransactions(block, walletToTxMap);
-            contentsImportant = walletToTxMap.size() > 0;
+            contentsImportant = containsRelevantTransactions(block);
         }
 
         // Prove the block is internally valid: hash is lower than target, etc. This only checks the block contents
@@ -211,7 +209,7 @@ public class BlockChain {
             StoredBlock newStoredBlock = storedPrev.build(block);
             checkDifficultyTransitions(storedPrev, newStoredBlock);
             blockStore.put(newStoredBlock);
-            connectBlock(newStoredBlock, storedPrev, walletToTxMap);
+            connectBlock(newStoredBlock, storedPrev, block.transactions);
         }
 
         if (tryConnecting)
@@ -222,15 +220,15 @@ public class BlockChain {
     }
 
     private void connectBlock(StoredBlock newStoredBlock, StoredBlock storedPrev,
-                              HashMap<Wallet, List<Transaction>> newTransactions)
+                              List<Transaction> transactions)
             throws BlockStoreException, VerificationException {
         StoredBlock head = getChainHead();
         if (storedPrev.equals(head)) {
             // This block connects to the best known block, it is a normal continuation of the system.
             setChainHead(newStoredBlock);
             log.debug("Chain is now {} blocks high", newStoredBlock.getHeight());
-            if (newTransactions != null)
-                sendTransactionsToWallet(newStoredBlock, NewBlockType.BEST_CHAIN, newTransactions);
+            if (transactions != null)
+                sendTransactionsToWallet(newStoredBlock, NewBlockType.BEST_CHAIN, transactions);
         } else {
             // This block connects to somewhere other than the top of the best known chain. We treat these differently.
             //
@@ -245,7 +243,7 @@ public class BlockChain {
                     // newStoredBlock is a part of the same chain, there's no fork. This happens when we receive a block
                     // that we already saw and linked into the chain previously, which isn't the chain head.
                     // Re-processing it is confusing for the wallet so just skip.
-                    log.debug("Saw duplicated block in main chain at height {}: {}",
+                    log.warn("Saw duplicated block in main chain at height {}: {}",
                             newStoredBlock.getHeight(), newStoredBlock.getHeader().getHash());
                     return;
                 }
@@ -262,8 +260,8 @@ public class BlockChain {
             // We may not have any transactions if we received only a header, which can happen during fast catchup.
             // If we do, send them to the wallet but state that they are on a side chain so it knows not to try and
             // spend them until they become activated.
-            if (newTransactions != null) {
-                sendTransactionsToWallet(newStoredBlock, NewBlockType.SIDE_CHAIN, newTransactions);
+            if (transactions != null) {
+                sendTransactionsToWallet(newStoredBlock, NewBlockType.SIDE_CHAIN, transactions);
             }
 
             if (haveNewBestChain)
@@ -352,17 +350,17 @@ public class BlockChain {
     }
 
     private void sendTransactionsToWallet(StoredBlock block, NewBlockType blockType,
-                                          HashMap<Wallet, List<Transaction>> newTransactions) throws VerificationException {
-        for (Map.Entry<Wallet, List<Transaction>> entry : newTransactions.entrySet()) {
-            try {
-                List<Transaction> txns = entry.getValue();
-                for (Transaction tx : txns) {
-                    entry.getKey().receiveFromBlock(tx, block, blockType);
+                                          List<Transaction> transactions) throws VerificationException {
+        for (Transaction tx : transactions) {
+            for (Wallet wallet : wallets) {
+                try {
+                    if (wallet.isTransactionRelevant(tx, true))
+                        wallet.receiveFromBlock(tx, block, blockType);
+                } catch (ScriptException e) {
+                    // We don't want scripts we don't understand to break the block chain so just note that this tx was
+                    // not scanned here and continue.
+                    log.warn("Failed to parse a script: " + e.toString());
                 }
-            } catch (ScriptException e) {
-                // We don't want scripts we don't understand to break the block chain so just note that this tx was
-                // not scanned here and continue.
-                log.warn("Failed to parse a script: " + e.toString());
             }
         }
     }
@@ -493,6 +491,24 @@ public class BlockChain {
                 log.warn("Failed to parse a script: " + e.toString());
             }
         }
+    }
+
+    /**
+     * Returns true if any connected wallet considers any transaction in the block to be relevant.
+     */
+    private boolean containsRelevantTransactions(Block block) {
+        for (Transaction tx : block.transactions) {
+            try {
+                for (Wallet wallet : wallets) {
+                    if (wallet.isTransactionRelevant(tx, true)) return true;
+                }
+            } catch (ScriptException e) {
+                // We don't want scripts we don't understand to break the block chain so just note that this tx was
+                // not scanned here and continue.
+                log.warn("Failed to parse a script: " + e.toString());
+            }
+        }
+        return false;
     }
 
     /**

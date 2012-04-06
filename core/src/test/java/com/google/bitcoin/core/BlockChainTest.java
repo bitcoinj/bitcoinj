@@ -230,6 +230,27 @@ public class BlockChainTest {
         assertEquals(b3, block[0].getHeader());
     }
 
+    @Test
+    public void intraBlockDependencies() throws Exception {
+        // Covers issue 166 in which transactions that depend on each other inside a block were not always being
+        // considered relevant.
+        Address somebodyElse = new ECKey().toAddress(unitTestParams);
+        Block b1 = unitTestParams.genesisBlock.createNextBlock(somebodyElse);
+        ECKey key = new ECKey();
+        wallet.addKey(key);
+        Address addr = key.toAddress(unitTestParams);
+        // Create a tx that gives us some coins, and another that spends it to someone else in the same block.
+        Transaction t1 = TestUtils.createFakeTx(unitTestParams, Utils.toNanoCoins(1, 0), addr);
+        Transaction t2 = new Transaction(unitTestParams);
+        t2.addInput(t1.getOutputs().get(0));
+        t2.addOutput(Utils.toNanoCoins(2, 0), somebodyElse);
+        b1.addTransaction(t1);
+        b1.addTransaction(t2);
+        b1.solve();
+        chain.add(b1);
+        assertEquals(BigInteger.ZERO, wallet.getBalance());
+    }
+
     // Some blocks from the test net.
     private Block getBlock2() throws Exception {
         Block b2 = new Block(testNet);
