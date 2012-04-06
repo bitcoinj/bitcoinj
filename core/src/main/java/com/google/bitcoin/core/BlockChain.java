@@ -207,7 +207,8 @@ public class BlockChain {
             // Create a new StoredBlock from this block. It will throw away the transaction data so when block goes
             // out of scope we will reclaim the used memory.
             StoredBlock newStoredBlock = storedPrev.build(block);
-            checkDifficultyTransitions(storedPrev, newStoredBlock);
+            if (params.checkBlockDifficulty)
+                checkDifficultyTransitions(storedPrev, newStoredBlock);
             blockStore.put(newStoredBlock);
             connectBlock(newStoredBlock, storedPrev, block.transactions);
         }
