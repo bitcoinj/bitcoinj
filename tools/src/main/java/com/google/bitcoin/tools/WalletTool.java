@@ -18,6 +18,8 @@ package com.google.bitcoin.tools;
 
 import com.google.bitcoin.core.*;
 import com.google.bitcoin.discovery.DnsDiscovery;
+import com.google.bitcoin.discovery.IrcDiscovery;
+import com.google.bitcoin.discovery.PeerDiscovery;
 import com.google.bitcoin.store.BlockStoreException;
 import com.google.bitcoin.store.BoundedOverheadBlockStore;
 import com.google.bitcoin.utils.BriefLogFormatter;
@@ -53,6 +55,7 @@ public class WalletTool {
             "Usage:\n" +
             ">>> GENERAL OPTIONS\n" +
             "  --debuglog           Enables logging from the core library.\n" +
+            "  --net=PROD/TEST      Which network to connect to, defaults to PROD.\n" +
             "  --wallet=<file>      Specifies what wallet file to load and save.\n" +
             "  --chain=<file>       Specifies the name of the file that stores the block chain.\n" +
             "  --force              Overrides any safety checks on the requested action.\n" +
@@ -105,6 +108,7 @@ public class WalletTool {
     private static PeerGroup peers;
     private static Wallet wallet;
     private static File chainFileName;
+    private static PeerDiscovery discovery;
 
     public static class Condition {
         public enum Type {
@@ -237,10 +241,12 @@ public class WalletTool {
             case PROD: 
                 params = NetworkParameters.prodNet();
                 chainFileName = new File("prodnet.chain");
+                discovery = new DnsDiscovery(params);
                 break;
             case TEST: 
                 params = NetworkParameters.testNet();
                 chainFileName = new File("testnet.chain");
+                discovery = new IrcDiscovery("#bitcoinTEST");
                 break;
             default:
                 throw new RuntimeException("Unreachable.");
@@ -269,6 +275,11 @@ public class WalletTool {
         }
         try {
             wallet = Wallet.loadFromFile(walletFile);
+            if (!wallet.getParams().equals(params)) {
+                System.err.println("Wallet does not match requested network parameters: " +
+                        wallet.getParams().getId() + " vs " + params.getId());
+                return;
+            }
         } catch (Exception e) {
             System.err.println("Failed to load wallet '" + walletFile + "': " + e.getMessage());
             e.printStackTrace();
@@ -295,6 +306,8 @@ public class WalletTool {
         if (options.has(waitForFlag)) {
             wait(waitForFlag.value(options));
             saveWallet(walletFile);
+        } else {
+            shutdown();
         }
     }
 
@@ -340,8 +353,6 @@ public class WalletTool {
             throw new RuntimeException(e);
         } catch (ExecutionException e) {
             throw new RuntimeException(e);
-        } finally {
-            shutdown();
         }
     }
 
@@ -416,7 +427,6 @@ public class WalletTool {
             latch.await();
         } catch (InterruptedException e) {
         }
-        shutdown();
     }
 
     private static void reset() {
@@ -427,8 +437,9 @@ public class WalletTool {
 
     // Sets up all objects needed for network communication but does not bring up the peers.
     private static void setup() throws BlockStoreException {
+        if (store != null) return;  // Already done.
         // Will create a fresh chain if one doesn't exist or there is an issue with this one.
-        if (!chainFileName.exists()) {
+        if (!chainFileName.exists() && wallet.getTransactions(true, true).size() > 0) {
             // No chain, so reset the wallet as we will be downloading from scratch.
             System.out.println("Chain file is missing so clearing transactions from the wallet.");
             reset();
@@ -454,7 +465,7 @@ public class WalletTool {
                 System.exit(1);
             }
         } else {
-            peers.addPeerDiscovery(new DnsDiscovery(params));
+            peers.addPeerDiscovery(discovery);
         }
     }
 
@@ -471,7 +482,6 @@ public class WalletTool {
                 System.err.println("Chain download interrupted, quitting ...");
                 System.exit(1);
             }
-            shutdown();
             int endTransactions = wallet.getTransactions(true, true).size();
             if (endTransactions > startTransactions) {
                 System.out.println("Synced " + (endTransactions - startTransactions) + " transactions.");
@@ -486,8 +496,8 @@ public class WalletTool {
         try {
             if (peers == null) return;  // setup() never called so nothing to do.
             peers.stop();
-            store.close();
             saveWallet(walletFile);
+            store.close();
         } catch (BlockStoreException e) {
             throw new RuntimeException(e);
         }
