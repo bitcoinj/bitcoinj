@@ -213,8 +213,12 @@ public class Wallet implements Serializable {
         pendingInactive.addAll(pending.values());
         pendingInactive.addAll(inactive.values());
         
-        return getTransactions(true, true).size() ==
-               unspent.size() + spent.size() + pendingInactive.size() + dead.size();
+        int size1 = getTransactions(true, true).size();
+        int size2 = unspent.size() + spent.size() + pendingInactive.size() + dead.size();
+        if (size1 != size2) {
+            log.error("Inconsistent wallet sizes: {} {}", size1, size2);
+        }
+        return size1 == size2;
     }
 
     /**
