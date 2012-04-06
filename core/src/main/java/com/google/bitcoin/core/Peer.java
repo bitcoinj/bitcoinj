@@ -221,7 +221,7 @@ public class Peer {
             disconnect();
             throw new PeerException(e);
         } catch (RuntimeException e) {
-            log.error("Unexpected exception in peer loop: ", e.getMessage());
+            log.error("Unexpected exception in peer loop", e);
             disconnect();
             throw e;
         }
