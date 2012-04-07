@@ -63,6 +63,8 @@ public class BlockChainTest {
         chain = new BlockChain(unitTestParams, wallet, blockStore);
 
         coinbaseTo = wallet.keychain.get(0).toAddress(unitTestParams);
+
+        testNet.checkBlockDifficulty = true;
     }
 
     @Test
