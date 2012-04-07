@@ -198,7 +198,7 @@ public class BlockChain {
             // block was solved whilst we were doing it. We put it to one side and try to connect it later when we
             // have more blocks.
             checkState(tryConnecting, "bug in tryConnectingUnconnected");
-            log.warn("Block does not connect: {}", block.getHashAsString());
+            log.warn("Block does not connect: {} prev {}", block.getHashAsString(), block.getPrevBlockHash());
             unconnectedBlocks.add(block);
             return false;
         } else {
@@ -207,8 +207,7 @@ public class BlockChain {
             // Create a new StoredBlock from this block. It will throw away the transaction data so when block goes
             // out of scope we will reclaim the used memory.
             StoredBlock newStoredBlock = storedPrev.build(block);
-            if (params.checkBlockDifficulty)
-                checkDifficultyTransitions(storedPrev, newStoredBlock);
+            checkDifficultyTransitions(storedPrev, newStoredBlock);
             blockStore.put(newStoredBlock);
             connectBlock(newStoredBlock, storedPrev, block.transactions);
         }
@@ -406,6 +405,9 @@ public class BlockChain {
         } while (blocksConnectedThisRound > 0);
     }
 
+    // February 16th 2012
+    private static Date testnetDiffDate = new Date(1329264000000L);
+
     /**
      * Throws an exception if the blocks difficulty is not correct.
      */
@@ -413,8 +415,18 @@ public class BlockChain {
             throws BlockStoreException, VerificationException {
         Block prev = storedPrev.getHeader();
         Block next = storedNext.getHeader();
+
         // Is this supposed to be a difficulty transition point?
         if ((storedPrev.getHeight() + 1) % params.interval != 0) {
+
+            // TODO: Refactor this hack after 0.5 is released and we stop supporting deserialization compatibility.
+            // This should be a method of the NetworkParameters, which should in turn be using singletons and a subclass
+            // for each network type. Then each network can define its own difficulty transition rules.
+            if (params.getId().equals(NetworkParameters.ID_TESTNET) && next.getTime().after(testnetDiffDate)) {
+                checkTestnetDifficulty(storedPrev, prev, next);
+                return;
+            }
+
             // No ... so check the difficulty didn't actually change.
             if (next.getDifficultyTarget() != prev.getDifficultyTarget())
                 throw new VerificationException("Unexpected change in difficulty at height " + storedPrev.getHeight() +
@@ -435,7 +447,7 @@ public class BlockChain {
             }
             cursor = blockStore.get(cursor.getHeader().getPrevBlockHash());
         }
-        log.debug("Difficulty transition traversal took {}msec", System.currentTimeMillis() - now);
+        log.info("Difficulty transition traversal took {}msec", System.currentTimeMillis() - now);
 
         Block blockIntervalAgo = cursor.getHeader();
         int timespan = (int) (prev.getTimeSeconds() - blockIntervalAgo.getTimeSeconds());
@@ -450,7 +462,7 @@ public class BlockChain {
         newDifficulty = newDifficulty.divide(BigInteger.valueOf(params.targetTimespan));
 
         if (newDifficulty.compareTo(params.proofOfWorkLimit) > 0) {
-            log.debug("Difficulty hit proof of work limit: {}", newDifficulty.toString(16));
+            log.info("Difficulty hit proof of work limit: {}", newDifficulty.toString(16));
             newDifficulty = params.proofOfWorkLimit;
         }
 
@@ -464,6 +476,30 @@ public class BlockChain {
         if (newDifficulty.compareTo(receivedDifficulty) != 0)
             throw new VerificationException("Network provided difficulty bits do not match what was calculated: " +
                     receivedDifficulty.toString(16) + " vs " + newDifficulty.toString(16));
+    }
+
+    private void checkTestnetDifficulty(StoredBlock storedPrev, Block prev, Block next) throws VerificationException, BlockStoreException {
+        // After 15th February 2012 the rules on the testnet change to avoid people running up the difficulty
+        // and then leaving, making it too hard to mine a block. On non-difficulty transition points, easy
+        // blocks are allowed if there has been a span of 20 minutes without one.
+        final long timeDelta = next.getTimeSeconds() - prev.getTimeSeconds();
+        // There is an integer underflow bug in bitcoin-qt that means mindiff blocks are accepted when time
+        // goes backwards.
+        if (timeDelta >= 0 && timeDelta <= NetworkParameters.TARGET_SPACING * 2) {
+            // Walk backwards until we find a block that doesn't have the easiest proof of work, then check
+            // that difficulty is equal to that one.
+            StoredBlock cursor = storedPrev;
+            while (!cursor.getHeader().equals(params.genesisBlock) &&
+                   cursor.getHeight() % params.interval != 0 &&
+                   cursor.getHeader().getDifficultyTargetAsInteger().equals(params.proofOfWorkLimit))
+                cursor = cursor.getPrev(blockStore);
+            BigInteger cursorDifficulty = cursor.getHeader().getDifficultyTargetAsInteger();
+            BigInteger newDifficulty = next.getDifficultyTargetAsInteger();
+            if (!cursorDifficulty.equals(newDifficulty))
+                throw new VerificationException("Testnet block transition that is not allowed: " +
+                    Long.toHexString(cursor.getHeader().getDifficultyTarget()) + " vs " +
+                    Long.toHexString(next.getDifficultyTarget()));
+        }
     }
 
     /**

@@ -24,10 +24,12 @@ import java.math.BigInteger;
 
 import static com.google.common.base.Preconditions.checkState;
 
+// TODO: Refactor this after we stop supporting serialization compatibility to use subclasses and singletons.
+
 /**
- * NetworkParameters contains the data needed for working with an instantiation of a BitCoin chain.
+ * NetworkParameters contains the data needed for working with an instantiation of a Bitcoin chain.<p>
  *
- * Currently there are only two, the production chain and the test chain. But in future as BitCoin
+ * Currently there are only two, the production chain and the test chain. But in future as Bitcoin
  * evolves there may be more. You can create your own as long as they don't conflict.
  */
 public class NetworkParameters implements Serializable {
@@ -86,7 +88,7 @@ public class NetworkParameters implements Serializable {
     /**
      * How much time in seconds is supposed to pass between "interval" blocks. If the actual elapsed time is
      * significantly different from this value, the network difficulty formula will produce a different value. Both
-     * test and production BitCoin networks use 2 weeks (1209600 seconds).
+     * test and production Bitcoin networks use 2 weeks (1209600 seconds).
      */
     public int targetTimespan;
     /**
@@ -94,11 +96,6 @@ public class NetworkParameters implements Serializable {
      * signatures using it.
      */
     public byte[] alertSigningKey;
-    /**
-     * Whether to check block difficulty on this network. The rules for testnet have changed and become
-     * quite complicated, so don't bother verifying them. It's only a useful security check on the main network.
-     */
-    public boolean checkBlockDifficulty;
 
     /**
      * See getId(). This may be null for old deserialized wallets. In that case we derive it heuristically
@@ -136,15 +133,14 @@ public class NetworkParameters implements Serializable {
         return genesisBlock;
     }
 
-    static private final int TARGET_TIMESPAN = 14 * 24 * 60 * 60;  // 2 weeks per difficulty cycle, on average.
-    static private final int TARGET_SPACING = 10 * 60;  // 10 minutes per block.
-    static private final int INTERVAL = TARGET_TIMESPAN / TARGET_SPACING;
+    public static final int TARGET_TIMESPAN = 14 * 24 * 60 * 60;  // 2 weeks per difficulty cycle, on average.
+    public static final int TARGET_SPACING = 10 * 60;  // 10 minutes per block.
+    public static final int INTERVAL = TARGET_TIMESPAN / TARGET_SPACING;
 
     /** Sets up the given NetworkParameters with testnet values. */
     private static NetworkParameters createTestNet(NetworkParameters n) {
         // Genesis hash is 0000000224b1593e3ff16a0e3b61285bbc393a39f78c8aa48c456142671f7110
-        // The proof of work limit has to start with 00, as otherwise the value will be interpreted as negative.
-        n.proofOfWorkLimit = new BigInteger("0000000fffffffffffffffffffffffffffffffffffffffffffffffffffffffff", 16);
+        n.proofOfWorkLimit = Utils.decodeCompactBits(0x1d0fffffL);
         n.packetMagic = 0xfabfb5daL;
         n.port = 18333;
         n.addressHeader = 111;
@@ -158,7 +154,6 @@ public class NetworkParameters implements Serializable {
         n.genesisBlock.setDifficultyTarget(0x1d07fff8L);
         n.genesisBlock.setNonce(384568319);
         n.id = ID_TESTNET;
-        n.checkBlockDifficulty = false;
         String genesisHash = n.genesisBlock.getHashAsString();
         checkState(genesisHash.equals("00000007199508e34a9ff81e6ec0c477a4cccff2a4767a8eee39c11db367b008"),
                 genesisHash);
@@ -174,7 +169,7 @@ public class NetworkParameters implements Serializable {
     /** The primary BitCoin chain created by Satoshi. */
     public static NetworkParameters prodNet() {
         NetworkParameters n = new NetworkParameters();
-        n.proofOfWorkLimit = new BigInteger("00000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffff", 16);
+        n.proofOfWorkLimit = Utils.decodeCompactBits(0x1d00ffffL);
         n.port = 8333;
         n.packetMagic = 0xf9beb4d9L;
         n.addressHeader = 0;
@@ -188,7 +183,6 @@ public class NetworkParameters implements Serializable {
         n.genesisBlock.setTime(1231006505L);
         n.genesisBlock.setNonce(2083236893);
         n.id = ID_PRODNET;
-        n.checkBlockDifficulty = true;
         String genesisHash = n.genesisBlock.getHashAsString();
         checkState(genesisHash.equals("000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f"),
                 genesisHash);
@@ -204,7 +198,6 @@ public class NetworkParameters implements Serializable {
         n.genesisBlock.setDifficultyTarget(Block.EASIEST_DIFFICULTY_TARGET);
         n.interval = 10;
         n.targetTimespan = 200000000;  // 6 years. Just a very big number.
-        n.checkBlockDifficulty = true;
         n.id = "com.google.bitcoin.unittest";
         return n;
     }

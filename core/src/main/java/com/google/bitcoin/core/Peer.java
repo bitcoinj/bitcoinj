@@ -315,7 +315,7 @@ public class Peer {
     }
 
     private void processBlock(Block m) throws IOException {
-        log.info("Received broadcast block {}", m.getHashAsString());
+        log.debug("Received broadcast block {}", m.getHashAsString());
         try {
             // Was this block requested by getBlock()?
             synchronized (pendingGetBlockFutures) {
