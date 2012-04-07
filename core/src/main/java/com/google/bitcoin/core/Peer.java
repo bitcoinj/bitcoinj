@@ -274,8 +274,10 @@ public class Peer {
                     return;
                 }
             }
-            // We added all headers in the message to the chain. Now request some more!
-            blockChainDownload(Sha256Hash.ZERO_HASH);
+            // We added all headers in the message to the chain. Request some more if we got up to the limit, otherwise
+            // we are at the end of the chain.
+            if (m.getBlockHeaders().size() >= HeadersMessage.MAX_HEADERS)
+                blockChainDownload(Sha256Hash.ZERO_HASH);
         } catch (VerificationException e) {
             log.warn("Block header verification failed", e);
         } catch (ScriptException e) {

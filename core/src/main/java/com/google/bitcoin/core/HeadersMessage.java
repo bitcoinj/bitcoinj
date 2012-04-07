@@ -32,7 +32,7 @@ public class HeadersMessage extends Message {
     private static final Logger log = LoggerFactory.getLogger(HeadersMessage.class);
 
     // The main client will never send us more than this number of headers.
-    final static int MAX_HEADERS = 2000;
+    public static final int MAX_HEADERS = 2000;
 
     private List<Block> blockHeaders;
 
