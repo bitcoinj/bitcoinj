@@ -99,14 +99,14 @@ public class WalletProtobufSerializer {
         }
         
         for (ECKey key : wallet.getKeys()) {
-            walletBuilder.addKey(
-                    Protos.Key.newBuilder()
-                        .setCreationTimestamp(key.getCreationTimeSeconds() * 1000)
-                        // .setLabel() TODO
-                        .setType(Protos.Key.Type.ORIGINAL)
-                        .setPrivateKey(ByteString.copyFrom(key.getPrivKeyBytes()))
-                        .setPublicKey(ByteString.copyFrom(key.getPubKey()))
-                        );
+            Protos.Key.Builder buf = Protos.Key.newBuilder()
+                    .setCreationTimestamp(key.getCreationTimeSeconds() * 1000)
+                    // .setLabel() TODO
+                    .setType(Protos.Key.Type.ORIGINAL);
+            if (key.getPrivKeyBytes() != null)
+                buf.setPrivateKey(ByteString.copyFrom(key.getPrivKeyBytes()));
+            buf.setPublicKey(ByteString.copyFrom(key.getPubKey()));
+            walletBuilder.addKey(buf);
         }
         return walletBuilder.build();
     }
@@ -221,12 +221,12 @@ public class WalletProtobufSerializer {
             if (keyProto.getType() != Protos.Key.Type.ORIGINAL) {
                 throw new IllegalArgumentException("Unknown key type in wallet");
             }
-            if (!keyProto.hasPrivateKey()) {
-                throw new IllegalArgumentException("Don't know how to handle pubkey-only keys");
+            byte[] privKey = null;
+            if (keyProto.hasPrivateKey()) {
+                privKey = keyProto.getPrivateKey().toByteArray();
             }
-            
             byte[] pubKey = keyProto.hasPublicKey() ? keyProto.getPublicKey().toByteArray() : null;
-            ECKey ecKey = new ECKey(keyProto.getPrivateKey().toByteArray(), pubKey);
+            ECKey ecKey = new ECKey(privKey, pubKey);
             ecKey.setCreationTimeSeconds((keyProto.getCreationTimestamp() + 500) / 1000);
             wallet.addKey(ecKey);
         }
