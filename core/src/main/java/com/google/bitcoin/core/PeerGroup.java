@@ -82,7 +82,7 @@ public class PeerGroup {
     private VersionMessage versionMessage;
     // A class that tracks recent transactions that have been broadcast across the network, counts how many
     // peers announced them and updates the transaction confidence data. It is passed to each Peer.
-    private MemoryPool memoryPool;
+    private final MemoryPool memoryPool;
 
     private NetworkParameters params;
     private BlockChain chain;
@@ -142,7 +142,8 @@ public class PeerGroup {
     }
 
     private synchronized List<Message> handleGetData(GetDataMessage m) {
-        // Scans the wallets for transactions in the getdata message and returns them. Invoked in parallel on peer threads.
+        // Scans the wallets for transactions in the getdata message and returns them. Invoked in parallel
+        // on peer threads.
         HashMap<Sha256Hash, Message> transactions = new HashMap<Sha256Hash, Message>();
         for (Wallet w : wallets) {
             synchronized (w) {
@@ -713,6 +714,17 @@ public class PeerGroup {
                 downloadPeer.addEventListener(listener);
             }
         }
+    }
+
+    /**
+     * Returns the {@link MemoryPool} created by this peer group to synchronize its peers. The pool tracks advertised
+     * and downloaded transactions so their confidence can be measured as a proportion of how many peers announced it.
+     * With an un-tampered with internet connection, the more peers announce a transaction the more confidence you can
+     * have that it's really valid.
+     */
+    public MemoryPool getMemoryPool() {
+        // Locking unneeded as memoryPool is final.
+        return memoryPool;
     }
 
     /**

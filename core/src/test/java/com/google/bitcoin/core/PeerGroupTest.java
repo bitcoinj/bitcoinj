@@ -209,7 +209,7 @@ public class PeerGroupTest extends TestWithNetworkConnections {
     @Test
     public void transactionConfidence() throws Exception {
         // Checks that we correctly count how many peers broadcast a transaction, so we can establish some measure of
-        // its trustworthyness assuming an untampered with internet connection.
+        // its trustworthyness assuming an untampered with internet connection. This is done via the MemoryPool class.
         MockNetworkConnection n1 = createMockNetworkConnection();
         Peer p1 = new Peer(params, blockChain, n1);
         MockNetworkConnection n2 = createMockNetworkConnection();
@@ -231,13 +231,13 @@ public class PeerGroupTest extends TestWithNetworkConnections {
             }
         });
         
-        // Peer 2 advertises the tx but does not download it.
-        assertNull(n2.exchange(inv));
-        assertEquals(0, tx.getConfidence().numBroadcastPeers());
+        // Peer 2 advertises the tx and requests a download of it, because it came first.
+        assertTrue(n2.exchange(inv) instanceof GetDataMessage);
+        assertTrue(peerGroup.getMemoryPool().maybeWasSeen(tx.getHash()));
         assertEquals(null, event[0]);
-        // Peer 1 (the download peer) advertises the tx, we download it.
-        n1.exchange(inv);  // returns getdata
-        n1.exchange(tx);   // returns nothing after a queue drain.
+        // Peer 1 advertises the tx, we don't do anything as it's already been requested.
+        assertNull(n1.exchange(inv));
+        assertNull(n2.exchange(tx));
         // Two peers saw this tx hash.
         assertEquals(2, tx.getConfidence().numBroadcastPeers());
         assertEquals(tx, event[0]);

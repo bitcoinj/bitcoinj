@@ -234,4 +234,29 @@ public class MemoryPool {
             log.info("{}: Announced new transaction [1] {}", byPeer, hash);
         }
     }
+
+    /**
+     * Returns the {@link Transaction} for the given hash if we have downloaded it, or null if that hash is unknown or
+     * we only saw advertisements for it yet or it has been downloaded but garbage collected due to nowhere else
+     * holding a reference to it.
+     */
+    public synchronized Transaction get(Sha256Hash hash) {
+        Entry entry = memoryPool.get(hash);
+        if (entry == null) return null;  // Unknown.
+        if (entry.tx == null) return null;  // Seen but only in advertisements.
+        if (entry.tx.get() == null) return null;  // Was downloaded but garbage collected.
+        Transaction tx = entry.tx.get();
+        Preconditions.checkNotNull(tx);
+        return tx;
+    }
+
+    /**
+     * Returns true if the TX identified by hash has been seen before (ie, in an inv). Note that a transaction that
+     * was broadcast, downloaded and nothing kept a reference to it will eventually be cleared out by the garbage
+     * collector and wasSeen() will return false - it does not keep a permanent record of every hash ever broadcast.
+     */
+    public synchronized boolean maybeWasSeen(Sha256Hash hash) {
+        Entry entry = memoryPool.get(hash);
+        return entry != null;
+    }
 }

@@ -25,6 +25,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.*;
 
@@ -372,39 +374,61 @@ public class Peer {
     private void processInv(InventoryMessage inv) throws IOException {
         // This should be called in the network loop thread for this peer.
         List<InventoryItem> items = inv.getItems();
-        if (memoryPool != null)
-            updateTransactionConfidenceLevels(items);
 
-        // If this peer isn't responsible for downloading stuff, don't go further.
-        if (!downloadData)
-            return;
+        // Separate out the blocks and transactions, we'll handle them differently
+        List<InventoryItem> transactions = new LinkedList<InventoryItem>();
+        List<InventoryItem> blocks = new LinkedList<InventoryItem>();
 
-        // The peer told us about some blocks or transactions they have.
-        Block topBlock = blockChain.getUnconnectedBlock();
-        Sha256Hash topHash = (topBlock != null ? topBlock.getHash() : null);
-        if (isNewBlockTickle(topHash, items)) {
-            // An inv with a single hash containing our most recent unconnected block is a special inv,
-            // it's kind of like a tickle from the peer telling us that it's time to download more blocks to catch up to
-            // the block chain. We could just ignore this and treat it as a regular inv but then we'd download the head
-            // block over and over again after each batch of 500 blocks, which is wasteful.
-            blockChainDownload(topHash);
-            return;
+        for (InventoryItem item : items) {
+            switch (item.type) {
+                case Transaction: transactions.add(item); break;
+                case Block: blocks.add(item); break;
+            }
         }
-        // Just copy the message contents across - request whatever we're told about.
-        // TODO: Don't re-request items that were already fetched.
+
         GetDataMessage getdata = new GetDataMessage(params);
-        for (InventoryItem item : items) {
-            getdata.addItem(item);
-        }
-        // This will cause us to receive a bunch of block or tx messages.
-        conn.writeMessage(getdata);
-    }
 
-    private void updateTransactionConfidenceLevels(List<InventoryItem> items) {
-        Preconditions.checkNotNull(memoryPool);
-        for (InventoryItem item : items) {
-            if (item.type != InventoryItem.Type.Transaction) continue;
-            memoryPool.seen(item.hash, this.getAddress());
+        Iterator<InventoryItem> it = transactions.iterator();
+        while (it.hasNext()) {
+            InventoryItem item = it.next();
+            if (memoryPool == null && downloadData) {
+                // If there's no memory pool only download transactions if we're configured to.
+                getdata.addItem(item);
+            } else {
+                // Only download the transaction if we are the first peer that saw it be advertised. Other peers will also
+                // see it be advertised in inv packets asynchronously, they co-ordinate via the memory pool. We could
+                // potentially download transactions faster by always asking every peer for a tx when advertised, as remote
+                // peers run at different speeds. However to conserve bandwidth on mobile devices we try to only download a
+                // transaction once. This means we can miss broadcasts if the peer disconnects between sending us an inv and
+                // sending us the transaction: currently we'll never try to re-fetch after a timeout.
+                if (memoryPool.maybeWasSeen(item.hash)) {
+                    // Some other peer already announced this so don't download.
+                    it.remove();
+                } else {
+                    getdata.addItem(item);
+                }
+                memoryPool.seen(item.hash, this.getAddress());
+            }
+        }
+
+        if (blocks.size() > 0 && downloadData) {
+            Block topBlock = blockChain.getUnconnectedBlock();
+            Sha256Hash topHash = (topBlock != null ? topBlock.getHash() : null);
+            if (isNewBlockTickle(topHash, blocks)) {
+                // An inv with a single hash containing our most recent unconnected block is a special inv,
+                // it's kind of like a tickle from the peer telling us that it's time to download more blocks to catch up to
+                // the block chain. We could just ignore this and treat it as a regular inv but then we'd download the head
+                // block over and over again after each batch of 500 blocks, which is wasteful.
+                blockChainDownload(topHash);
+                return;
+            }
+            // Request the advertised blocks only if we're the download peer.
+            for (InventoryItem item : blocks) getdata.addItem(item);
+        }
+
+        if (!getdata.getItems().isEmpty()) {
+            // This will cause us to receive a bunch of block or tx messages.
+            conn.writeMessage(getdata);
         }
     }
 

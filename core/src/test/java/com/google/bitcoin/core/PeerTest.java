@@ -150,7 +150,7 @@ public class PeerTest extends TestWithNetworkConnections {
     @Test
     public void invDownloadTx() throws Exception {
         peer.setDownloadData(true);
-        // Make a transaction and tell the peer we have it.;
+        // Make a transaction and tell the peer we have it.
         BigInteger value = Utils.toNanoCoins(1, 0);
         Transaction tx = TestUtils.createFakeTx(unitTestParams, value, address);
         InventoryMessage inv = new InventoryMessage(unitTestParams);
@@ -167,6 +167,40 @@ public class PeerTest extends TestWithNetworkConnections {
         conn.inbound(tx);
         runPeer(peer, conn);
         assertEquals(value, wallet.getBalance(Wallet.BalanceType.ESTIMATED));
+    }
+
+    @Test
+    public void invDownloadTxMultiPeer() throws Exception {
+        // Check co-ordination of which peer to download via the memory pool.
+        MemoryPool pool = new MemoryPool();
+        peer.setMemoryPool(pool);
+
+        MockNetworkConnection conn2 = createMockNetworkConnection();
+        Peer peer2 = new Peer(unitTestParams, blockChain, conn2);
+        peer2.addWallet(wallet);
+        peer2.setMemoryPool(pool);
+
+        // Make a tx and advertise it to one of the peers.
+        BigInteger value = Utils.toNanoCoins(1, 0);
+        Transaction tx = TestUtils.createFakeTx(unitTestParams, value, address);
+        InventoryMessage inv = new InventoryMessage(unitTestParams);
+        InventoryItem item = new InventoryItem(InventoryItem.Type.Transaction, tx.getHash());
+        inv.addItem(item);
+
+        conn.inbound(inv);
+        runPeer(peer, conn);
+        conn.popInbound();  // Remove the disconnect marker.
+
+        // We got a getdata message.
+        GetDataMessage message = (GetDataMessage) conn.popOutbound();
+        assertEquals(1, message.getItems().size());
+        assertEquals(tx.getHash(), message.getItems().get(0).hash);
+        assertTrue(pool.maybeWasSeen(tx.getHash()));
+
+        // Advertising to peer2 results in no getdata message.
+        conn2.inbound(inv);
+        runPeer(peer2, conn2);
+        assertNull(conn.popOutbound());
     }
 
     // Check that inventory message containing blocks we want is processed correctly.

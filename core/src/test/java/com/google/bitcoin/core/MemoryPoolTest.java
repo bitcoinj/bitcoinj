@@ -23,6 +23,7 @@ import org.junit.Test;
 import java.net.InetAddress;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class MemoryPoolTest {
     private NetworkParameters params = NetworkParameters.unitTests();
@@ -52,6 +53,7 @@ public class MemoryPoolTest {
         assertEquals(tx1, pool.seen(tx2, address2));
         assertEquals(2, tx1.getConfidence().numBroadcastPeers());
         assertEquals(2, pool.numBroadcastPeers(tx1.getHash()));
+        assertEquals(tx1, pool.get(tx1.getHash()));
     }
     
     @Test
@@ -61,6 +63,7 @@ public class MemoryPoolTest {
         assertEquals(0, pool.numBroadcastPeers(tx1.getHash()));
         pool.seen(tx1.getHash(), address1);
         assertEquals(1, pool.numBroadcastPeers(tx1.getHash()));
+        assertTrue(pool.maybeWasSeen(tx1.getHash()));
         pool.seen(tx1.getHash(), address2);
         assertEquals(2, pool.numBroadcastPeers(tx1.getHash()));
         Transaction t = pool.seen(tx1,  address1);
