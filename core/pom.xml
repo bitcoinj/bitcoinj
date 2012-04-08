@@ -84,7 +84,7 @@
                                         </path>
                                         <pathconvert pathsep=" " property="proto.files" refid="proto.path"/>
                                         <exec executable="protoc" failonerror="true">
-                                            <arg value="--java_out=${project.basedir}/src"/>
+                                            <arg value="--java_out=${project.basedir}/src/main/java"/>
                                             <arg value="-I${project.basedir}/src"/>
                                             <arg line="${proto.files}"/>
                                         </exec>
