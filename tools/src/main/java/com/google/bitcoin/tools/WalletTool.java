@@ -301,10 +301,20 @@ public class WalletTool {
                 send(outputFlag.values(options));
                 break;
         }
+
+        if (!wallet.isConsistent()) {
+            System.err.println("************** WALLET IS INCONSISTENT *****************");
+            return;
+        }
+        
         saveWallet(walletFile);
 
         if (options.has(waitForFlag)) {
             wait(waitForFlag.value(options));
+            if (!wallet.isConsistent()) {
+                System.err.println("************** WALLET IS INCONSISTENT *****************");
+                return;
+            }
             saveWallet(walletFile);
         } else {
             shutdown();

@@ -208,18 +208,48 @@ public class Wallet implements Serializable {
         return loadFromFileStream(new FileInputStream(f));
     }
     
-    private boolean isConsistent() {
+    public boolean isConsistent() {
+        boolean success = true;
         // Pending and inactive can overlap, so merge them before counting
         HashSet<Transaction> pendingInactive = new HashSet<Transaction>();
         pendingInactive.addAll(pending.values());
         pendingInactive.addAll(inactive.values());
         
-        int size1 = getTransactions(true, true).size();
+        Set<Transaction> transactions = getTransactions(true, true);
+        
+        Set<Sha256Hash> hashes = new HashSet<Sha256Hash>();
+        for (Transaction tx : transactions) {
+            hashes.add(tx.getHash());
+        }
+        
+        int size1 = transactions.size();
+        
+        if (size1 != hashes.size()) {
+            log.error("Two transactions with same hash");
+            success = false;
+        }
+        
         int size2 = unspent.size() + spent.size() + pendingInactive.size() + dead.size();
         if (size1 != size2) {
             log.error("Inconsistent wallet sizes: {} {}", size1, size2);
+            success = true;
         }
-        return size1 == size2;
+        
+        for (Transaction tx : unspent.values()) {
+            if (!tx.isConsistent(this, false)) {
+                success = false;
+                log.error("Inconsistent unspent tx {}", tx.getHashAsString());
+            }
+        }
+        
+        for (Transaction tx : spent.values()) {
+            if (!tx.isConsistent(this, true)) {
+                success = false;
+                log.error("Inconsistent spent tx {}", tx.getHashAsString());
+            }
+        }
+        
+        return success;
     }
 
     /**
@@ -232,19 +262,26 @@ public class Wallet implements Serializable {
         boolean serialization = stream.read() == 0xac && stream.read() == 0xed;
         stream.reset();
 
+        Wallet wallet;
+        
         if (serialization) {
             ObjectInputStream ois = null;
             try {
                 ois = new ObjectInputStream(stream);
-                return (Wallet) ois.readObject();
+                wallet = (Wallet) ois.readObject();
             } catch (ClassNotFoundException e) {
                 throw new RuntimeException(e);
             } finally {
                 if (ois != null) ois.close();
             }
         } else {
-            return WalletProtobufSerializer.readWallet(stream);
+            wallet = WalletProtobufSerializer.readWallet(stream);
         }
+        
+        if (!wallet.isConsistent()) {
+            log.error("Loaded an inconsistent wallet");
+        }
+        return wallet;
     }
 
     private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
