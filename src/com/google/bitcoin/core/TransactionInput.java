@@ -282,9 +282,14 @@ public class TransactionInput extends ChildMessage implements Serializable {
             else
                 return TransactionInput.ConnectionResult.ALREADY_SPENT;
         }
+        connect(tx, out);
+        return TransactionInput.ConnectionResult.SUCCESS;
+    }
+
+    /** For use during de-serialization */
+    public void connect(Transaction tx, TransactionOutput out) {
         outpoint.fromTx = tx;
         out.markAsSpent(this);
-        return TransactionInput.ConnectionResult.SUCCESS;
     }
 
     /**

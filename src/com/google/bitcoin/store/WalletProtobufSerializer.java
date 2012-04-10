@@ -323,7 +323,8 @@ public class WalletProtobufSerializer {
                 Transaction spendingTx =
                     txMap.get(transactionOutput.getSpentByTransactionHash());
                 final int spendingIndex = transactionOutput.getSpentByTransactionIndex();
-                output.markAsSpent(spendingTx.getInputs().get(spendingIndex));
+                TransactionInput input = spendingTx.getInputs().get(spendingIndex);
+                input.connect(tx, output);
             }
         }
         
