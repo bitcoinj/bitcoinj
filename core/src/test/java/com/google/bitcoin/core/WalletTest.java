@@ -16,6 +16,7 @@
 
 package com.google.bitcoin.core;
 
+import com.google.bitcoin.core.WalletTransaction.Pool;
 import com.google.bitcoin.store.BlockStore;
 import com.google.bitcoin.store.MemoryBlockStore;
 import com.google.bitcoin.store.WalletProtobufSerializer;
@@ -261,6 +262,55 @@ public class WalletTest {
         Transaction send2 = new Transaction(params, send1.bitcoinSerialize());
         assertEquals(nanos, send2.getValueSentFromMe(wallet));
         assertEquals(BigInteger.ZERO.subtract(toNanoCoins(0, 10)), send2.getValue(wallet));
+    }
+
+    @Test
+    public void isConsistent_duplicates() throws Exception {
+        // This test ensures that isConsistent catches duplicate transactions.
+        Transaction tx = createFakeTx(params, Utils.toNanoCoins(1, 0), myAddress);
+        Address someOtherGuy = new ECKey().toAddress(params);
+        TransactionOutput output = new TransactionOutput(params, tx, Utils.toNanoCoins(0, 5), someOtherGuy);
+        tx.addOutput(output);
+        wallet.receiveFromBlock(tx, null, BlockChain.NewBlockType.BEST_CHAIN);
+        
+        assertTrue(wallet.isConsistent());
+        
+        Transaction txClone = new Transaction(params, tx.bitcoinSerialize());
+        try {
+            wallet.receiveFromBlock(txClone, null, BlockChain.NewBlockType.SIDE_CHAIN);
+            fail();
+        } catch (IllegalStateException ex) {
+            // expected
+        }
+    }
+
+    @Test
+    public void isConsistent_pools() throws Exception {
+        // This test ensures that isConsistent catches transactions that are in incompatible pools.
+        Transaction tx = createFakeTx(params, Utils.toNanoCoins(1, 0), myAddress);
+        Address someOtherGuy = new ECKey().toAddress(params);
+        TransactionOutput output = new TransactionOutput(params, tx, Utils.toNanoCoins(0, 5), someOtherGuy);
+        tx.addOutput(output);
+        wallet.receiveFromBlock(tx, null, BlockChain.NewBlockType.BEST_CHAIN);
+        
+        assertTrue(wallet.isConsistent());
+        
+        wallet.addWalletTransaction(new WalletTransaction(Pool.PENDING, tx));
+        assertFalse(wallet.isConsistent());
+    }
+
+    @Test
+    public void isConsistent_spent() throws Exception {
+        // This test ensures that isConsistent catches transactions that are marked spent when
+        // they aren't.
+        Transaction tx = createFakeTx(params, Utils.toNanoCoins(1, 0), myAddress);
+        Address someOtherGuy = new ECKey().toAddress(params);
+        TransactionOutput output = new TransactionOutput(params, tx, Utils.toNanoCoins(0, 5), someOtherGuy);
+        tx.addOutput(output);
+        assertTrue(wallet.isConsistent());
+        
+        wallet.addWalletTransaction(new WalletTransaction(Pool.SPENT, tx));
+        assertFalse(wallet.isConsistent());
     }
 
     @Test

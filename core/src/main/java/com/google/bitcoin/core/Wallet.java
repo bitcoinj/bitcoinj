@@ -232,7 +232,7 @@ public class Wallet implements Serializable {
         int size2 = unspent.size() + spent.size() + pendingInactive.size() + dead.size();
         if (size1 != size2) {
             log.error("Inconsistent wallet sizes: {} {}", size1, size2);
-            success = true;
+            success = false;
         }
         
         for (Transaction tx : unspent.values()) {
