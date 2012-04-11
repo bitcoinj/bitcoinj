@@ -104,6 +104,9 @@ public class WalletProtobufSerializer {
                                                             .setType(Protos.Key.Type.ORIGINAL);
             if (key.getPrivKeyBytes() != null)
                 buf.setPrivateKey(ByteString.copyFrom(key.getPrivKeyBytes()));
+            // We serialize the public key even if the private key is present for speed reasons: we don't want to do
+            // lots of slow EC math to load the wallet, we prefer to store the redundant data instead. It matters more
+            // on mobile platforms.
             buf.setPublicKey(ByteString.copyFrom(key.getPubKey()));
             walletBuilder.addKey(buf);
         }
@@ -115,7 +118,7 @@ public class WalletProtobufSerializer {
         Protos.Transaction.Builder txBuilder = Protos.Transaction.newBuilder();
         
         txBuilder.setPool(Protos.Transaction.Pool.valueOf(wtx.getPool().getValue()))
-                 .setHash(ByteString.copyFrom(tx.getHash().getBytes()))
+                 .setHash(hashToByteString(tx.getHash()))
                  .setVersion((int) tx.getVersion());
 
         if (tx.getUpdateTime() != null) {
@@ -130,8 +133,8 @@ public class WalletProtobufSerializer {
         for (TransactionInput input : tx.getInputs()) {
             Protos.TransactionInput.Builder inputBuilder = Protos.TransactionInput.newBuilder()
                 .setScriptBytes(ByteString.copyFrom(input.getScriptBytes()))
-                .setTransactionOutPointHash(ByteString.copyFrom(input.getOutpoint().getHash().getBytes()))
-                .setTransactionOutPointIndex((int)input.getOutpoint().getIndex()); // FIXME
+                .setTransactionOutPointHash(hashToByteString(input.getOutpoint().getHash()))
+                .setTransactionOutPointIndex((int) input.getOutpoint().getIndex());
             if (input.hasSequence()) {
                 inputBuilder.setSequence((int)input.getSequence());
             }
@@ -146,9 +149,9 @@ public class WalletProtobufSerializer {
             final TransactionInput spentBy = output.getSpentBy();
             if (spentBy != null) {
                 Sha256Hash spendingHash = spentBy.getParentTransaction().getHash();
+                int spentByTransactionIndex = spentBy.getParentTransaction().getInputs().indexOf(spentBy);
                 outputBuilder.setSpentByTransactionHash(hashToByteString(spendingHash))
-                             .setSpentByTransactionIndex(
-                                     spentBy.getParentTransaction().getInputs().indexOf(spentBy));
+                             .setSpentByTransactionIndex(spentByTransactionIndex);
             }
             txBuilder.addTransactionOutput(outputBuilder);
         }
