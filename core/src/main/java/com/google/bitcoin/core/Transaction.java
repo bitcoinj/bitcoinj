@@ -596,7 +596,7 @@ public class Transaction extends ChildMessage implements Serializable {
      * @param hashType This should always be set to SigHash.ALL currently. Other types are unused.
      * @param wallet   A wallet is required to fetch the keys needed for signing.
      */
-    public void signInputs(SigHash hashType, Wallet wallet) throws ScriptException {
+    public synchronized void signInputs(SigHash hashType, Wallet wallet) throws ScriptException {
         Preconditions.checkState(inputs.size() > 0);
         Preconditions.checkState(outputs.size() > 0);
 
@@ -615,28 +615,25 @@ public class Transaction extends ChildMessage implements Serializable {
         for (int i = 0; i < inputs.size(); i++) {
             TransactionInput input = inputs.get(i);
             Preconditions.checkState(input.getScriptBytes().length == 0, "Attempting to sign a non-fresh transaction");
-            // Set the input to the script of its output.
-            input.setScriptBytes(input.getOutpoint().getConnectedPubKeyScript());
             // Find the signing key we'll need to use.
             byte[] connectedPubKeyHash = input.getOutpoint().getConnectedPubKeyHash();
             ECKey key = wallet.findKeyFromPubHash(connectedPubKeyHash);
             // This assert should never fire. If it does, it means the wallet is inconsistent.
             Preconditions.checkNotNull(key, "Transaction exists in wallet that we cannot redeem: %s",
-                    bytesToHexString(connectedPubKeyHash));
+                                       bytesToHexString(connectedPubKeyHash));
             // Keep the key around for the script creation step below.
             signingKeys[i] = key;
             // The anyoneCanPay feature isn't used at the moment.
             boolean anyoneCanPay = false;
-            byte[] hash = hashTransactionForSignature(hashType, anyoneCanPay);
-            // Set the script to empty again for the next input.
-            input.setScriptBytes(TransactionInput.EMPTY_ARRAY);
+            byte[] connectedPubKeyScript = input.getOutpoint().getConnectedPubKeyScript();
+            Sha256Hash hash = hashTransactionForSignature(i, connectedPubKeyScript, hashType, anyoneCanPay);
 
             // Now sign for the output so we can redeem it. We use the keypair to sign the hash,
             // and then put the resulting signature in the script along with the public key (below).
             try {
-                //usually 71-73 bytes
+                // Usually 71-73 bytes.
                 ByteArrayOutputStream bos = new UnsafeByteArrayOutputStream(73);
-                bos.write(key.sign(hash));
+                bos.write(key.sign(hash.getBytes()));
                 bos.write((hashType.ordinal() + 1) | (anyoneCanPay ? 0x80 : 0));
                 signatures[i] = bos.toByteArray();
             } catch (IOException e) {
@@ -664,11 +661,27 @@ public class Transaction extends ChildMessage implements Serializable {
      * You don't normally ever need to call this yourself. It will become more useful in future as the contracts
      * features of Bitcoin are developed.
      *
+     * @param inputIndex input the signature is being calculated for. Tx signatures are always relative to an input.
+     * @param connectedScript the bytes that should be in the given input during signing.
      * @param type Should be SigHash.ALL
      * @param anyoneCanPay should be false.
      */
-    public byte[] hashTransactionForSignature(SigHash type, boolean anyoneCanPay) {
+    public synchronized Sha256Hash hashTransactionForSignature(int inputIndex, byte[] connectedScript,
+                                                               SigHash type, boolean anyoneCanPay) {
         try {
+            // Store all the input scripts and clear them in preparation for signing. If we're signing a fresh
+            // transaction that step isn't very helpful, but it doesn't add much cost relative to the actual
+            // EC math so we'll do it anyway.
+            byte[][] scripts = new byte[inputs.size()][];
+            for (int i = 0; i < inputs.size(); i++) {
+                scripts[i] = inputs.get(i).getScriptBytes();
+                inputs.get(i).setScriptBytes(TransactionInput.EMPTY_ARRAY);
+            }
+
+            // Set the input to the script of its output.
+            TransactionInput input = inputs.get(inputIndex);
+            input.setScriptBytes(connectedScript);
+
             ByteArrayOutputStream bos = new UnsafeByteArrayOutputStream(length == UNKNOWN_LENGTH ? 256 : length + 4);
             bitcoinSerialize(bos);
             // We also have to write a hash type.
@@ -678,7 +691,13 @@ public class Transaction extends ChildMessage implements Serializable {
             uint32ToByteStreamLE(hashType, bos);
             // Note that this is NOT reversed to ensure it will be signed correctly. If it were to be printed out
             // however then we would expect that it is IS reversed.
-            return doubleDigest(bos.toByteArray());
+            Sha256Hash hash = new Sha256Hash(doubleDigest(bos.toByteArray()));
+
+            // Put the transaction back to how we found it.
+            for (int i = 0; i < inputs.size(); i++) {
+                inputs.get(i).setScriptBytes(scripts[i]);
+            }
+            return hash;
         } catch (IOException e) {
             throw new RuntimeException(e);  // Cannot happen.
         }

@@ -40,27 +40,38 @@ message Key {
     ORIGINAL = 1; // Original bitcoin secp256k1 curve
   }
   required Type type = 1;
-  optional bytes private_key = 2; // integer representation of the EC private key
-  optional bytes public_key = 3; // integer representation of the EC public key
-  optional string label = 4; // for presentation purposes
-  optional int64 creation_timestamp = 5;  // datetime stored as millis since epoch.
+
+  // The private EC key bytes without any ASN.1 wrapping.
+  optional bytes private_key = 2;
+  // The public EC key derived from the private key. We allow both to be stored to avoid mobile clients having to
+  // do lots of slow EC math on startup.
+  optional bytes public_key = 3;
+
+  // User-provided label associated with the key.
+  optional string label = 4;
+
+  // Timestamp stored as millis since epoch. Useful for skipping block bodies before this point.
+  optional int64 creation_timestamp = 5;
 }
 
 message TransactionInput {
-  // Sha256Hash of transaction output this input is using
+  // Hash of the transaction this input is using.
   required bytes transaction_out_point_hash = 1;
-  // index of transaction output used by this input if in this wallet
+  // Index of transaction output used by this input.
   required int32 transaction_out_point_index = 2;
-  required bytes script_bytes = 3; // script of transaction input
-  optional uint32 sequence = 4; // currently unused field in bitcoin, was originally planned for contracts
+  // Script that contains the signatures/pubkeys.
+  required bytes script_bytes = 3;
+  // Sequence number. Currently unused, but intended for contracts in future.
+  optional uint32 sequence = 4;
 }
 
 message TransactionOutput {
   required int64 value = 1;
   required bytes script_bytes = 2;    // script of transaction output
-  optional bytes spent_by_transaction_hash = 3; // if spent, the Sha256Hash of the transaction doing the spend
+  // If spent, the hash of the transaction doing the spend.
+  optional bytes spent_by_transaction_hash = 3;
+  // If spent, the index of the transaction input of the transaction doing the spend.
   optional int32 spent_by_transaction_index = 4;
-  // if spent, the index of the transaction output of the transaction doing the spend
 }
 
 /**
@@ -81,8 +92,14 @@ message TransactionConfidence {
 
   // This is optional in case we add confidence types to prevent parse errors - backwards compatible.
   optional Type type = 1;
+
+  // If type == BUILDING then this is the chain height at which the transaction was included.
   optional int32 appeared_at_height = 2;
-  optional bytes overriding_transaction = 3; // Hash of tx. Should be in this wallet.
+
+  // If set, hash of the transaction that double spent this one into oblivion. A transaction can be double spent by
+  // multiple transactions in the case of several inputs being re-spent by several transactions but we don't
+  // bother to track them all, just the first. This only makes sense if type = OVERRIDDEN_BY_DOUBLE_SPEND.
+  optional bytes overriding_transaction = 3;
 }
 
 /** A bitcoin transaction */
@@ -111,20 +128,24 @@ message Transaction {
   // See Wallet.java for detailed description of pool semantics
   required int32 version = 1;
   required bytes hash = 2;
-  required Pool pool = 3;
 
-  optional uint32 lock_time = 4; // currently unused field in bitcoin, was originally planned for contracts
+  // If pool is not present, that means either:
+  //  - This Transaction is either not in a wallet at all (the proto is re-used elsewhere)
+  //  - Or it is stored but for other purposes, for example, because it is the overriding transaction of a double spend.
+  //  - Or the Pool enum got a new value which your software is too old to parse.
+  optional Pool pool = 3;
+
+  optional uint32 lock_time = 4; // The nLockTime field is useful for contracts.
   optional int64 updated_at = 5; // millis since epoch the transaction was last updated
 
   repeated TransactionInput transaction_input = 6;
-
   repeated TransactionOutput transaction_output = 7;
 
-
+  // A list of blocks in which the transaction has been observed (on any chain).
   repeated bytes block_hash = 8;
 
+  // Data describing where the transaction is in the chain.
   optional TransactionConfidence confidence = 9;
-  // Sha256Hash of block in block chain in which this transaction appears
 }
 
 /** An extension to the wallet */
@@ -143,11 +164,10 @@ message Wallet {
   // org.bitcoin.production = production network (Satoshi genesis block)
   // org.bitcoin.test = test network (Andresen genesis block)
 
-  optional bytes last_seen_block_hash = 2; // the Sha256 hash of the block last seen by this wallet
+  // The Sha256 hash of the head of the best chain seen by this wallet.
+  optional bytes last_seen_block_hash = 2;
 
   repeated Key key = 3;
-
   repeated Transaction transaction = 4;
-  
   repeated Extension extension = 10; 
 } // end of Wallet
