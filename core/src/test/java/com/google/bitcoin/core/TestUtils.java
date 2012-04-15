@@ -41,6 +41,42 @@ public class TestUtils {
         return t;
     }
 
+    public static class DoubleSpends {
+        public Transaction t1, t2, prevTx;
+    }
+
+    /**
+     * Creates two transactions that spend the same (fake) output. t1 spends to "to". t2 spends somewhere else.
+     * The fake output goes to the same address as t2.
+     */
+    public static DoubleSpends createFakeDoubleSpendTxns(NetworkParameters params, Address to) {
+        DoubleSpends doubleSpends = new DoubleSpends();
+        BigInteger value = Utils.toNanoCoins(1, 0);
+        Address someBadGuy = new ECKey().toAddress(params);
+
+        doubleSpends.t1 = new Transaction(params);
+        TransactionOutput o1 = new TransactionOutput(params, doubleSpends.t1, value, to);
+        doubleSpends.t1.addOutput(o1);
+
+        doubleSpends.prevTx = new Transaction(params);
+        TransactionOutput prevOut = new TransactionOutput(params, doubleSpends.prevTx, value, someBadGuy);
+        doubleSpends.prevTx.addOutput(prevOut);
+        doubleSpends.t1.addInput(prevOut);
+
+        doubleSpends.t2 = new Transaction(params);
+        doubleSpends.t2.addInput(prevOut);
+        TransactionOutput o2 = new TransactionOutput(params, doubleSpends.t2, value, someBadGuy);
+        doubleSpends.t2.addOutput(o2);
+
+        try {
+            doubleSpends.t1 = new Transaction(params, doubleSpends.t1.bitcoinSerialize());
+            doubleSpends.t2 = new Transaction(params, doubleSpends.t2.bitcoinSerialize());
+        } catch (ProtocolException e) {
+            throw new RuntimeException(e);
+        }
+        return doubleSpends;
+    }
+
     public static class BlockPair {
         StoredBlock storedBlock;
         Block block;

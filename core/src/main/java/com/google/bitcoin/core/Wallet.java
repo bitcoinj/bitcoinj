@@ -610,10 +610,8 @@ public class Wallet implements Serializable {
                 checkNotNull(doubleSpent);
                 int index = (int) input.getOutpoint().getIndex();
                 TransactionOutput output = doubleSpent.getOutputs().get(index);
-                TransactionInput spentBy = output.getSpentBy();
-                checkNotNull(spentBy);
-                Transaction connected = spentBy.getParentTransaction();
-                checkNotNull(connected);
+                TransactionInput spentBy = checkNotNull(output.getSpentBy());
+                Transaction connected = checkNotNull(spentBy.getParentTransaction());
                 if (fromChain) {
                     // This must have overridden a pending tx, or the block is bad (contains transactions
                     // that illegally double spend: should never occur if we are connected to an honest node).
@@ -641,7 +639,7 @@ public class Wallet implements Serializable {
                 // Otherwise we saw a transaction spend our coins, but we didn't try and spend them ourselves yet.
                 // The outputs are already marked as spent by the connect call above, so check if there are any more for
                 // us to use. Move if not.
-                Transaction connected = input.getOutpoint().fromTx;
+                Transaction connected = checkNotNull(input.getOutpoint().fromTx);
                 maybeMoveTxToSpent(connected, "prevtx");
             }
         }

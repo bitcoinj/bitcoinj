@@ -24,6 +24,8 @@ import java.io.OutputStream;
 import java.io.Serializable;
 import java.util.Map;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 /**
  * A transfer of coins from one address to another creates a transaction in which the outputs
  * can be claimed by the recipient in the input of another transaction. You can imagine a
@@ -104,16 +106,15 @@ public class TransactionInput extends ChildMessage implements Serializable {
      * @param params NetworkParameters object.
      * @param msg Bitcoin protocol formatted byte array containing message content.
      * @param offset The location of the first msg byte within the array.
-     * @param protocolVersion Bitcoin protocol version.
      * @param parseLazy Whether to perform a full parse immediately or delay until a read is requested.
      * @param parseRetain Whether to retain the backing byte array for quick reserialization.  
      * If true and the backing byte array is invalidated due to modification of a field then 
      * the cached bytes may be repopulated and retained if the message is serialized again in the future.
-     * @param length The length of message if known.  Usually this is provided when deserializing of the wire
      * as the length will be provided as part of the header.  If unknown then set to Message.UNKNOWN_LENGTH
      * @throws ProtocolException
      */
-    public TransactionInput(NetworkParameters params, Transaction parentTransaction, byte[] msg, int offset, boolean parseLazy, boolean parseRetain)
+    public TransactionInput(NetworkParameters params, Transaction parentTransaction, byte[] msg, int offset,
+                            boolean parseLazy, boolean parseRetain)
             throws ProtocolException {
         super(params, msg, offset, parentTransaction, parseLazy, parseRetain, UNKNOWN_LENGTH);
         this.parentTransaction = parentTransaction;
@@ -274,29 +275,35 @@ public class TransactionInput extends ChildMessage implements Serializable {
 
     /**
      * Connects this input to the relevant output of the referenced transaction if it's in the given map.
-     * Connecting means updating the internal pointers and spent flags.
-     *
+     * Connecting means updating the internal pointers and spent flags. If the mode is to ABORT_ON_CONFLICT then
+     * the spent output won't be changed, but the outpoint.fromTx pointer will still be updated.
      *
      * @param transactions Map of txhash->transaction.
-     * @param disconnect   Whether to abort if there's a pre-existing connection or not.
+     * @param mode   Whether to abort if there's a pre-existing connection or not.
      * @return true if connection took place, false if the referenced transaction was not in the list.
      */
-    ConnectionResult connect(Map<Sha256Hash, Transaction> transactions, ConnectMode disconnect) {
+    ConnectionResult connect(Map<Sha256Hash, Transaction> transactions, ConnectMode mode) {
         Transaction tx = transactions.get(outpoint.getHash());
-        if (tx == null)
+        if (tx == null) {
             return TransactionInput.ConnectionResult.NO_SUCH_TX;
+        }
         TransactionOutput out = tx.getOutputs().get((int) outpoint.getIndex());
         if (!out.isAvailableForSpending()) {
-            if (disconnect == ConnectMode.DISCONNECT_ON_CONFLICT)
+            if (mode == ConnectMode.DISCONNECT_ON_CONFLICT) {
                 out.markAsUnspent();
-            else if (disconnect == ConnectMode.ABORT_ON_CONFLICT)
+            } else if (mode == ConnectMode.ABORT_ON_CONFLICT) {
+                outpoint.fromTx = checkNotNull(out.parentTransaction);
                 return TransactionInput.ConnectionResult.ALREADY_SPENT;
-            else
-                throw new UnsupportedOperationException();  // Unreachable.
+            }
         }
-        outpoint.fromTx = tx;
-        out.markAsSpent(this);
+        connect(out);
         return TransactionInput.ConnectionResult.SUCCESS;
+    }
+
+    /** Internal use only: connects this TransactionInput to the given output (updates pointers and spent flags) */
+    public void connect(TransactionOutput out) {
+        outpoint.fromTx = checkNotNull(out.parentTransaction);
+        out.markAsSpent(this);
     }
 
     /**

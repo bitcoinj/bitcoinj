@@ -3,6 +3,7 @@ package com.google.bitcoin.store;
 
 import com.google.bitcoin.core.*;
 import com.google.bitcoin.core.TransactionConfidence.ConfidenceType;
+import com.google.bitcoin.utils.BriefLogFormatter;
 import org.bitcoinj.wallet.Protos;
 import org.junit.Before;
 import org.junit.Test;
@@ -13,7 +14,6 @@ import java.io.IOException;
 import java.math.BigInteger;
 
 import static com.google.bitcoin.core.TestUtils.createFakeTx;
-import static com.google.bitcoin.core.Utils.toNanoCoins;
 import static org.junit.Assert.*;
 
 public class WalletProtobufSerializerTest {
@@ -24,6 +24,7 @@ public class WalletProtobufSerializerTest {
 
     @Before
     public void setUp() throws Exception {
+        BriefLogFormatter.initVerbose();
         myKey = new ECKey();
         myKey.setCreationTimeSeconds(123456789L);
         myAddress = myKey.toAddress(params);
@@ -32,23 +33,27 @@ public class WalletProtobufSerializerTest {
     }
 
     @Test
-    public void testSimple() throws Exception {
+    public void empty() throws Exception {
+        // Check the base case of a wallet with one key and no transactions.
         Wallet wallet1 = roundTrip(wallet);
         assertEquals(0, wallet1.getTransactions(true, true).size());
         assertEquals(BigInteger.ZERO, wallet1.getBalance());
-        
-        BigInteger v1 = Utils.toNanoCoins(1, 0);
-        Transaction t1 = createFakeTx(params, v1, myAddress);
-
-        wallet.receiveFromBlock(t1, null, BlockChain.NewBlockType.BEST_CHAIN);
-        
-        wallet1 = roundTrip(wallet);
         assertArrayEquals(myKey.getPubKey(),
                 wallet1.findKeyFromPubHash(myKey.getPubKeyHash()).getPubKey());
         assertArrayEquals(myKey.getPrivKeyBytes(),
                 wallet1.findKeyFromPubHash(myKey.getPubKeyHash()).getPrivKeyBytes());
         assertEquals(myKey.getCreationTimeSeconds(),
                 wallet1.findKeyFromPubHash(myKey.getPubKeyHash()).getCreationTimeSeconds());
+    }
+
+    @Test
+    public void oneTx() throws Exception {
+        // Check basic tx serialization.
+        BigInteger v1 = Utils.toNanoCoins(1, 0);
+        Transaction t1 = createFakeTx(params, v1, myAddress);
+
+        wallet.receiveFromBlock(t1, null, BlockChain.NewBlockType.BEST_CHAIN);
+        Wallet wallet1 = roundTrip(wallet);
         assertEquals(1, wallet1.getTransactions(true, true).size());
         assertEquals(v1, wallet1.getBalance());
         assertArrayEquals(t1.bitcoinSerialize(),
@@ -66,30 +71,28 @@ public class WalletProtobufSerializerTest {
         assertEquals(Protos.Transaction.Pool.UNSPENT, t1p.getPool());
         assertFalse(t1p.hasLockTime());
         assertFalse(t1p.getTransactionInput(0).hasSequence());
-        assertArrayEquals(t1.getInputs().get(0).getOutpoint().getHash().getBytes(), t1p.getTransactionInput(0).getTransactionOutPointHash().toByteArray());
+        assertArrayEquals(t1.getInputs().get(0).getOutpoint().getHash().getBytes(),
+                t1p.getTransactionInput(0).getTransactionOutPointHash().toByteArray());
         assertEquals(0, t1p.getTransactionInput(0).getTransactionOutPointIndex());
         assertEquals(t1p.getTransactionOutput(0).getValue(), v1.longValue());
-        
-        ECKey k2 = new ECKey();
-        BigInteger v2 = toNanoCoins(0, 50);
-        Transaction t2 = wallet.sendCoinsOffline(k2.toAddress(params), v2);
-        t2.getConfidence().setConfidenceType(ConfidenceType.OVERRIDDEN_BY_DOUBLE_SPEND);
-        t2.getConfidence().setOverridingTransaction(t1);
-        t1.getConfidence().setConfidenceType(ConfidenceType.BUILDING);
-        t1.getConfidence().setAppearedAtChainHeight(123);
-        wallet1 = roundTrip(wallet);
-        Transaction t1r = wallet1.getTransaction(t1.getHash());
-        Transaction t2r = wallet1.getTransaction(t2.getHash());
-        assertArrayEquals(t2.bitcoinSerialize(), t2r.bitcoinSerialize());
-        assertArrayEquals(t1.bitcoinSerialize(), t1r.bitcoinSerialize());
-        assertEquals(t1r.getOutputs().get(0).getSpentBy(), t2r.getInputs().get(0));
-        assertEquals(ConfidenceType.OVERRIDDEN_BY_DOUBLE_SPEND, t2r.getConfidence().getConfidenceType());
-        assertEquals(t1r, t2r.getConfidence().getOverridingTransaction());
-        assertEquals(ConfidenceType.BUILDING, t1r.getConfidence().getConfidenceType());
-        assertEquals(123, t1r.getConfidence().getAppearedAtChainHeight());
+    }
 
-        assertEquals(1, wallet1.getPendingTransactions().size());
-        assertEquals(2, wallet1.getTransactions(true, true).size());
+    @Test
+    public void doubleSpend() throws Exception {
+        // Check that we can serialize double spends correctly, as this is a slightly tricky case.
+        TestUtils.DoubleSpends doubleSpends = TestUtils.createFakeDoubleSpendTxns(params, myAddress);
+        // t1 spends to our wallet.
+        wallet.receivePending(doubleSpends.t1);
+        // t2 rolls back t1 and spends somewhere else.
+        wallet.receiveFromBlock(doubleSpends.t2, null, BlockChain.NewBlockType.BEST_CHAIN);
+        Wallet wallet1 = roundTrip(wallet);
+        assertEquals(1, wallet1.getTransactions(true, true).size());
+        Transaction t1 = wallet1.getTransaction(doubleSpends.t1.getHash());
+        assertEquals(ConfidenceType.OVERRIDDEN_BY_DOUBLE_SPEND, t1.getConfidence().getConfidenceType());
+        assertEquals(BigInteger.ZERO, wallet1.getBalance());
+
+        // TODO: Wallet should store overriding transactions even if they are not wallet-relevant.
+        // assertEquals(doubleSpends.t2, t1.getConfidence().getOverridingTransaction());
     }
     
     @Test

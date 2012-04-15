@@ -309,7 +309,7 @@ public class WalletTest {
     }
 
     @Test
-    public void finneyAttack() throws Exception {
+    public void doubleSpendFinneyAttack() throws Exception {
         // A Finney attack is where a miner includes a transaction spending coins to themselves but does not
         // broadcast it. When they find a solved block, they hold it back temporarily whilst they buy something with
         // those same coins. After purchasing, they broadcast the block thus reversing the transaction. It can be
@@ -340,6 +340,7 @@ public class WalletTest {
         Transaction send1 = wallet.createSend(new ECKey().toAddress(params), toNanoCoins(0, 50));
         // Create a double spend.
         Transaction send2 = wallet.createSend(new ECKey().toAddress(params), toNanoCoins(0, 50));
+        send2 = new Transaction(params, send2.bitcoinSerialize());
         // Broadcast send1.
         wallet.commitTx(send1);
         // Receive a block that overrides it.
@@ -352,27 +353,15 @@ public class WalletTest {
         // Receive 10 BTC.
         nanos = Utils.toNanoCoins(10, 0);
 
-        // Create a double spending tx.
-        Transaction t2 = new Transaction(params);
-        TransactionOutput o1 = new TransactionOutput(params, t2, nanos, myAddress);
-        t2.addOutput(o1);
-        Transaction prevTx = new Transaction(params);
-        Address someBadGuy = new ECKey().toAddress(params);
-        TransactionOutput prevOut = new TransactionOutput(params, prevTx, nanos, someBadGuy);
-        prevTx.addOutput(prevOut);
-        // Connect it.
-        t2.addInput(prevOut);
-        wallet.receivePending(t2);
-        assertEquals(TransactionConfidence.ConfidenceType.NOT_SEEN_IN_CHAIN, t2.getConfidence().getConfidenceType());
-        // Receive a tx from a block that overrides it.
-        Transaction t3 = new Transaction(params);
-        TransactionOutput o3 = new TransactionOutput(params, t3, nanos, someBadGuy);
-        t3.addOutput(o3);
-        t3.addInput(prevOut);
-        wallet.receiveFromBlock(t3, null, BlockChain.NewBlockType.BEST_CHAIN);
+        TestUtils.DoubleSpends doubleSpends = TestUtils.createFakeDoubleSpendTxns(params, myAddress);
+        // t1 spends to our wallet. t2 double spends somewhere else.
+        wallet.receivePending(doubleSpends.t1);
+        assertEquals(TransactionConfidence.ConfidenceType.NOT_SEEN_IN_CHAIN,
+                     doubleSpends.t1.getConfidence().getConfidenceType());
+        wallet.receiveFromBlock(doubleSpends.t2, null, BlockChain.NewBlockType.BEST_CHAIN);
         assertEquals(TransactionConfidence.ConfidenceType.OVERRIDDEN_BY_DOUBLE_SPEND, 
-                     t2.getConfidence().getConfidenceType());
-        assertEquals(t3, t2.getConfidence().getOverridingTransaction());
+                     doubleSpends.t1.getConfidence().getConfidenceType());
+        assertEquals(doubleSpends.t2, doubleSpends.t1.getConfidence().getOverridingTransaction());
     }
 
     @Test
