@@ -313,7 +313,8 @@ public class Transaction extends ChildMessage implements Serializable {
         for (TransactionInput input : inputs) {
             // Coinbase transactions, by definition, do not have connectable inputs.
             if (input.isCoinBase()) continue;
-            TransactionInput.ConnectionResult result = input.connect(transactions, false);
+            TransactionInput.ConnectionResult result =
+                    input.connect(transactions, TransactionInput.ConnectMode.ABORT_ON_CONFLICT);
             // Connected to another tx in the wallet?
             if (result == TransactionInput.ConnectionResult.SUCCESS)
                 continue;

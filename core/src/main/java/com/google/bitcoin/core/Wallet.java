@@ -591,10 +591,10 @@ public class Wallet implements Serializable {
         List<TransactionInput> inputs = tx.getInputs();
         for (int i = 0; i < inputs.size(); i++) {
             TransactionInput input = inputs.get(i);
-            TransactionInput.ConnectionResult result = input.connect(unspent, false);
+            TransactionInput.ConnectionResult result = input.connect(unspent, TransactionInput.ConnectMode.ABORT_ON_CONFLICT);
             if (result == TransactionInput.ConnectionResult.NO_SUCH_TX) {
                 // Not found in the unspent map. Try again with the spent map.
-                result = input.connect(spent, false);
+                result = input.connect(spent, TransactionInput.ConnectMode.ABORT_ON_CONFLICT);
                 if (result == TransactionInput.ConnectionResult.NO_SUCH_TX) {
                     // Doesn't spend any of our outputs or is coinbase.
                     continue;
@@ -623,7 +623,7 @@ public class Wallet implements Serializable {
                         pending.remove(connected.getHash());
                         dead.put(connected.getHash(), connected);
                         // Now forcibly change the connection.
-                        input.connect(unspent, true);
+                        input.connect(unspent, TransactionInput.ConnectMode.DISCONNECT_ON_CONFLICT);
                         // Inform the [tx] event listeners of the newly dead tx. This sets confidence type also.
                         connected.getConfidence().setOverridingTransaction(tx);
                         invokeOnTransactionConfidenceChanged(connected);
@@ -1490,7 +1490,7 @@ public class Wallet implements Serializable {
                 noSuchTx++;
                 continue;
             }
-            TransactionInput.ConnectionResult result = input.connect(pool, false);
+            TransactionInput.ConnectionResult result = input.connect(pool, TransactionInput.ConnectMode.ABORT_ON_CONFLICT);
             if (result == TransactionInput.ConnectionResult.SUCCESS) {
                 success++;
             } else if (result == TransactionInput.ConnectionResult.NO_SUCH_TX) {

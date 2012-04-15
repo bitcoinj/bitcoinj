@@ -267,24 +267,32 @@ public class TransactionInput extends ChildMessage implements Serializable {
         return out;
     }
 
+    enum ConnectMode {
+        DISCONNECT_ON_CONFLICT,
+        ABORT_ON_CONFLICT
+    }
+
     /**
      * Connects this input to the relevant output of the referenced transaction if it's in the given map.
      * Connecting means updating the internal pointers and spent flags.
+     *
      *
      * @param transactions Map of txhash->transaction.
      * @param disconnect   Whether to abort if there's a pre-existing connection or not.
      * @return true if connection took place, false if the referenced transaction was not in the list.
      */
-    ConnectionResult connect(Map<Sha256Hash, Transaction> transactions, boolean disconnect) {
+    ConnectionResult connect(Map<Sha256Hash, Transaction> transactions, ConnectMode disconnect) {
         Transaction tx = transactions.get(outpoint.getHash());
         if (tx == null)
             return TransactionInput.ConnectionResult.NO_SUCH_TX;
         TransactionOutput out = tx.getOutputs().get((int) outpoint.getIndex());
         if (!out.isAvailableForSpending()) {
-            if (disconnect)
+            if (disconnect == ConnectMode.DISCONNECT_ON_CONFLICT)
                 out.markAsUnspent();
-            else
+            else if (disconnect == ConnectMode.ABORT_ON_CONFLICT)
                 return TransactionInput.ConnectionResult.ALREADY_SPENT;
+            else
+                throw new UnsupportedOperationException();  // Unreachable.
         }
         outpoint.fromTx = tx;
         out.markAsSpent(this);
