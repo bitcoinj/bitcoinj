@@ -275,7 +275,7 @@ public class WalletProtobufSerializer {
         }
 
         for (ByteString blockHash : txProto.getBlockHashList()) {
-            tx.addBlockAppearance(new Sha256Hash(blockHash.toByteArray()));
+            tx.addBlockAppearance(byteStringToHash(blockHash));
         }
 
         if (txProto.hasLockTime()) {
