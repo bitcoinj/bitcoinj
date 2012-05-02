@@ -49,6 +49,9 @@ public class ECKey implements Serializable {
     private static final SecureRandom secureRandom;
     private static final long serialVersionUID = -728224901792295832L;
 
+    /** How many bytes a Bitcoin public key is: 65, that is, two 32 byte co-ordinates plus a one byte header. */
+    public static final int PUBLIC_KEY_LENGTH = 65;
+
     static {
         // All clients must agree on the curve to use by agreement. Bitcoin uses secp256k1.
         X9ECParameters params = SECNamedCurves.getByName("secp256k1");

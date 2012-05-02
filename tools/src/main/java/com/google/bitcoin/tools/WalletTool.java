@@ -71,9 +71,9 @@ public class WalletTool {
             "                       Will complain and require --force if the wallet already exists.\n" +
             "  --action=ADD_KEY     Adds a new key to the wallet, either specified or freshly generated.\n" +
             "                       If --date is specified, that's the creation date.\n" +
-            "                       If --privkey is specified, use as a hex encoded private key.\n" +
+            "                       If --privkey is specified, use as a hex/base58 encoded private key.\n" +
             "                       Don't specify --pubkey in that case, it will be derived automatically.\n" +
-            "                       If --pubkey is specified, use as a hex encoded non-compressed public key.\n" +
+            "                       If --pubkey is specified, use as a hex/base58 encoded non-compressed public key.\n" +
             "  --action=DELETE_KEY  Removes the key specified by --pubkey or --addr from the wallet.\n" +
             "  --action=SYNC        Sync the wallet with the latest block chain (download new transactions).\n" +
             "                       If the chain file does not exist this will RESET the wallet.\n" +
@@ -223,7 +223,7 @@ public class WalletTool {
         conditionFlag = parser.accepts("condition").withRequiredArg();
         options = parser.parse(args);
         
-        if (args.length == 0 || options.hasArgument("help") || options.nonOptionArguments().size() > 0) {
+        if (args.length == 0 || options.has("help") || options.nonOptionArguments().size() > 0) {
             System.out.println(HELP_TEXT);
             return;
         }
@@ -549,14 +549,20 @@ public class WalletTool {
         }
         if (options.has("privkey")) {
             String data = (String) options.valueOf("privkey");
-            key = new ECKey(new BigInteger(1, Hex.decode(data)));
+            BigInteger decode = Utils.parseAsHexOrBase58(data);
+            if (decode == null) {
+                System.err.println("Could not understand --privkey as either hex or base58: " + data);
+                return;
+            }
+            key = new ECKey(decode);
             if (options.has("pubkey")) {
                 // Give the user a hint.
                 System.out.println("You don't have to specify --pubkey when a private key is supplied.");
             }
             key.setCreationTimeSeconds(creationTimeSeconds);
         } else if (options.has("pubkey")) {
-            byte[] pubkey = Hex.decode((String)options.valueOf("pubkey"));
+            BigInteger decode = Utils.parseAsHexOrBase58((String) options.valueOf("pubkey"));
+            byte[] pubkey = Utils.bigIntegerToBytes(decode, ECKey.PUBLIC_KEY_LENGTH);
             key = new ECKey(null, pubkey);
             key.setCreationTimeSeconds(creationTimeSeconds);
         } else {

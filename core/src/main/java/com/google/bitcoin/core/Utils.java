@@ -69,7 +69,7 @@ public class Utils {
      *
      * @param b the integer to format into a byte array
      * @param numBytes the desired size of the resulting byte array
-     * @return 32 byte long array.
+     * @return numBytes byte long array.
      */
     public static byte[] bigIntegerToBytes(BigInteger b, int numBytes) {
         if (b == null) {
@@ -351,5 +351,24 @@ public class Utils {
         byte[] out = new byte[length];
         System.arraycopy(in, 0, out, 0, Math.min(length, in.length));
         return out;
+    }
+
+    /**
+     * Attempts to parse the given string as arbitrary-length hex or base58 and then return the results, or null if
+     * neither parse was successful.
+     */
+    public static BigInteger parseAsHexOrBase58(String data) {
+        BigInteger decode;
+        try {
+            decode = new BigInteger(data, 16);
+        } catch (Exception e) {
+            // Didn't decode as hex, try base58.
+            try {
+                decode = new BigInteger(1, Base58.decodeChecked(data));
+            } catch (AddressFormatException e1) {
+                return null;
+            }
+        }
+        return decode;
     }
 }
