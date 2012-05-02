@@ -228,6 +228,8 @@ public class WalletTest {
         assertEquals(txn[0].getHash(), tx1.getHash());
         assertEquals(BigInteger.ZERO, bigints[0]);
         assertEquals(oneCoin, bigints[1]);
+        assertEquals(TransactionConfidence.ConfidenceType.BUILDING, tx1.getConfidence().getConfidenceType());
+        assertEquals(1, tx1.getConfidence().getAppearedAtChainHeight());
         // Send 0.10 to somebody else.
         Transaction send1 = wallet.createSend(new ECKey().toAddress(params), toNanoCoins(0, 10), myAddress);
         // Pretend it makes it into the block chain, our wallet state is cleared but we still have the keys, and we
