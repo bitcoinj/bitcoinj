@@ -350,7 +350,7 @@ public class PeerGroup {
      * than the current chain head, the relevant parts of the chain won't be redownloaded for you.</p>
      */
     public synchronized void addWallet(Wallet wallet) {
-        Preconditions.checkNotNull(wallet);
+	Preconditions.checkNotNull(wallet);
         wallets.add(wallet);
         addEventListener(wallet.getPeerEventListener());
         announcePendingWalletTransactions(Collections.singletonList(wallet), peers);

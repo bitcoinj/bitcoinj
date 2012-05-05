@@ -210,7 +210,7 @@ public class Wallet implements Serializable {
      * {@link WalletProtobufSerializer}.
      */
     public synchronized void saveToFileStream(OutputStream f) throws IOException {
-        WalletProtobufSerializer.writeWallet(this, f);
+        new WalletProtobufSerializer().writeWallet(this, f);
     }
 
     /** Returns the parameters this wallet was created with. */
@@ -293,7 +293,7 @@ public class Wallet implements Serializable {
                 if (ois != null) ois.close();
             }
         } else {
-            wallet = WalletProtobufSerializer.readWallet(stream);
+            wallet = new WalletProtobufSerializer().readWallet(stream);
         }
         
         if (!wallet.isConsistent()) {

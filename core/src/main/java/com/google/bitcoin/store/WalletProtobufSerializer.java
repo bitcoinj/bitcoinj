@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.math.BigInteger;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -57,17 +58,28 @@ public class WalletProtobufSerializer {
 
     // Used for de-serialization
     private Map<ByteString, Transaction> txMap;
+    private WalletExtensionSerializer helper;
     
-    private WalletProtobufSerializer() {
+    public WalletProtobufSerializer() {
         txMap = new HashMap<ByteString, Transaction>();
+        helper = new WalletExtensionSerializer();
     }
+
+    /** 
+     * Set the WalletExtensionSerializer used to create new wallet objects
+     * and handle extensions
+     */
+    public void setWalletExtensionSerializer(WalletExtensionSerializer h) {
+        this.helper = h;
+    }
+
 
     /**
      * Formats the given wallet (transactions and keys) to the given output stream in protocol buffer format.<p>
      *     
      * Equivalent to <tt>walletToProto(wallet).writeTo(output);</tt>
      */
-    public static void writeWallet(Wallet wallet, OutputStream output) throws IOException {
+    public void writeWallet(Wallet wallet, OutputStream output) throws IOException {
         Protos.Wallet walletProto = walletToProto(wallet);
         walletProto.writeTo(output);
     }
@@ -79,7 +91,7 @@ public class WalletProtobufSerializer {
      * structures anyway, consisting as they do of keys (large random numbers) and {@link Transaction}s which also
      * mostly contain keys and hashes.
      */
-    public static String walletToText(Wallet wallet) {
+    public String walletToText(Wallet wallet) {
         Protos.Wallet walletProto = walletToProto(wallet);
         return TextFormat.printToString(walletProto);
     }
@@ -88,7 +100,7 @@ public class WalletProtobufSerializer {
      * Converts the given wallet to the object representation of the protocol buffers. This can be modified, or
      * additional data fields set, before serialization takes place.
      */
-    public static Protos.Wallet walletToProto(Wallet wallet) {
+    public Protos.Wallet walletToProto(Wallet wallet) {
         Protos.Wallet.Builder walletBuilder = Protos.Wallet.newBuilder();
         walletBuilder.setNetworkIdentifier(wallet.getNetworkParameters().getId());
         for (WalletTransaction wtx : wallet.getWalletTransactions()) {
@@ -114,8 +126,15 @@ public class WalletProtobufSerializer {
             walletBuilder.setLastSeenBlockHash(hashToByteString(lastSeenBlockHash));
         }
 
+        Collection<Protos.Extension> extensions = helper.getExtensionsToWrite(wallet);
+        for(Protos.Extension ext : extensions) {
+            walletBuilder.addExtension(ext);
+        }
+        
         return walletBuilder.build();
     }
+
+
     
     private static Protos.Transaction makeTxProto(WalletTransaction wtx) {
         Transaction tx = wtx.getTransaction();
@@ -198,6 +217,7 @@ public class WalletProtobufSerializer {
         return new Sha256Hash(bs.toByteArray());
     }
 
+
     /**
      * Parses a wallet from the given stream. The stream is expected to contain a binary serialization of a 
      * {@link Protos.Wallet} object.<p>
@@ -206,7 +226,7 @@ public class WalletProtobufSerializer {
      * {@link IllegalArgumentException} is thrown.
      *
      */
-    public static Wallet readWallet(InputStream input) throws IOException {
+    public Wallet readWallet(InputStream input) throws IOException {
         // TODO: This method should throw more specific exception types than IllegalArgumentException.
         WalletProtobufSerializer serializer = new WalletProtobufSerializer();
         Protos.Wallet walletProto = Protos.Wallet.parseFrom(input);
@@ -214,7 +234,7 @@ public class WalletProtobufSerializer {
         // System.out.println(TextFormat.printToString(walletProto));
 
         NetworkParameters params = NetworkParameters.fromID(walletProto.getNetworkIdentifier());
-        Wallet wallet = new Wallet(params);
+        Wallet wallet = helper.newWallet(params);
         
         // Read all keys
         for (Protos.Key keyProto : walletProto.getKeyList()) {
@@ -250,9 +270,7 @@ public class WalletProtobufSerializer {
         }
 
         for (Protos.Extension extProto : walletProto.getExtensionList()) {
-            if (extProto.getMandatory()) {
-                throw new IllegalArgumentException("Did not understand a mandatory extension in the wallet");
-            }
+            helper.readExtension(wallet, extProto);
         }
         
         return wallet;
