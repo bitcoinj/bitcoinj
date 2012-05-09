@@ -28,13 +28,22 @@ public class Base58Test extends TestCase {
         
         BigInteger bi = BigInteger.valueOf(3471844090L);
         assertEquals("16Ho7Hs", Base58.encode(bi.toByteArray()));
+        
+        byte[] zeroBytes1 = new byte[1];
+        assertEquals("1", Base58.encode(zeroBytes1));
+        
+        byte[] zeroBytes7 = new byte[7];
+        assertEquals("1111111", Base58.encode(zeroBytes7));
     }
     
     public void testDecode() throws Exception {
         byte[] testbytes = "Hello World".getBytes();
         byte[] actualbytes = Base58.decode("JxF12TrwUP45BMd");
         assertTrue(new String(actualbytes), Arrays.equals(testbytes, actualbytes));
-
+        
+        assertTrue("1", Arrays.equals(Base58.decode("1"), new byte[1]));
+        assertTrue("1111", Arrays.equals(Base58.decode("1111"), new byte[4]));
+        
         try {
             Base58.decode("This isn't valid base58");
             fail();
