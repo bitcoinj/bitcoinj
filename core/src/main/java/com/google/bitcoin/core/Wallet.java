@@ -690,8 +690,8 @@ public class Wallet implements Serializable {
             // There's nothing left I can spend in this transaction.
             if (unspent.remove(tx.getHash()) != null) {
                 if (log.isInfoEnabled()) {
-                    log.info("  " + context + " <-unspent");
-                    log.info("  " + context + " ->spent");
+                    log.info("  {} {} <-unspent", tx.getHashAsString(), context);
+                    log.info("  {} {} ->spent", tx.getHashAsString(), context);
                 }
                 spent.put(tx.getHash(), tx);
             }
@@ -1432,13 +1432,13 @@ public class Wallet implements Serializable {
         for (Transaction tx : commonChainTransactions.values()) {
             int unspentOutputs = 0;
             for (TransactionOutput output : tx.getOutputs()) {
-                if (output.isAvailableForSpending()) unspentOutputs++;
+                if (output.isAvailableForSpending() && output.isMine(this)) unspentOutputs++;
             }
             if (unspentOutputs > 0) {
-                log.info("  TX {}: ->unspent", tx.getHashAsString());
+                log.info("  TX {} ->unspent", tx.getHashAsString());
                 unspent.put(tx.getHash(), tx);
             } else {
-                log.info("  TX {}: ->spent", tx.getHashAsString());
+                log.info("  TX {} ->spent", tx.getHashAsString());
                 spent.put(tx.getHash(), tx);
             }
         }
@@ -1487,7 +1487,8 @@ public class Wallet implements Serializable {
         // Note, we must reprocess dead transactions first. The reason is that if there is a double spend across
         // chains from our own coins we get a complicated situation:
         //
-        // 1) We switch to a new chain (B) that contains a double spend overriding a pending transaction. It goes dead.
+        // 1) We switch to a new chain (B) that contains a double spend overriding a pending transaction. The
+        //    pending transaction goes dead.
         // 2) We switch BACK to the first chain (A). The dead transaction must go pending again.
         // 3) We resurrect the transactions that were in chain (B) and assume the miners will start work on putting them
         //    in to the chain, but it's not possible because it's a double spend. So now that transaction must become
@@ -1495,10 +1496,10 @@ public class Wallet implements Serializable {
         //
         // This only occurs when we are double spending our own coins.
         for (Transaction tx : dead.values()) {
-            reprocessTxAfterReorg(pool, tx);
+            reprocessUnincludedTxAfterReorg(pool, tx);
         }
         for (Transaction tx : toReprocess.values()) {
-            reprocessTxAfterReorg(pool, tx);
+            reprocessUnincludedTxAfterReorg(pool, tx);
         }
 
         log.info("post-reorg balance is {}", Utils.bitcoinValueToFriendlyString(getBalance()));
@@ -1513,12 +1514,15 @@ public class Wallet implements Serializable {
         checkState(isConsistent());
     }
 
-    private void reprocessTxAfterReorg(Map<Sha256Hash, Transaction> pool, Transaction tx) {
+    private void reprocessUnincludedTxAfterReorg(Map<Sha256Hash, Transaction> pool, Transaction tx) {
         log.info("TX {}", tx.getHashAsString());
         int numInputs = tx.getInputs().size();
         int noSuchTx = 0;
         int success = 0;
         boolean isDead = false;
+        // The transactions that we connected inputs to, so we can go back later and move them into the right
+        // bucket if all their outputs got spent.
+        Set<Transaction> connectedTransactions = new TreeSet<Transaction>();
         for (TransactionInput input : tx.getInputs()) {
             if (input.isCoinBase()) {
                 // Input is not in our wallet so there is "no such input tx", bit of an abuse.
@@ -1528,6 +1532,8 @@ public class Wallet implements Serializable {
             TransactionInput.ConnectionResult result = input.connect(pool, TransactionInput.ConnectMode.ABORT_ON_CONFLICT);
             if (result == TransactionInput.ConnectionResult.SUCCESS) {
                 success++;
+                TransactionOutput connectedOutput = checkNotNull(input.getConnectedOutput(pool));
+                connectedTransactions.add(checkNotNull(connectedOutput.parentTransaction));
             } else if (result == TransactionInput.ConnectionResult.NO_SUCH_TX) {
                 noSuchTx++;
             } else if (result == TransactionInput.ConnectionResult.ALREADY_SPENT) {
@@ -1555,6 +1561,12 @@ public class Wallet implements Serializable {
             log.info("   ->pending", tx.getHashAsString());
             pending.put(tx.getHash(), tx);
             dead.remove(tx.getHash());
+        }
+
+        // The act of re-connecting this un-included transaction may have caused other transactions to become fully
+        // spent so move them into the right bucket here to keep performance good.
+        for (Transaction maybeSpent : connectedTransactions) {
+            maybeMoveTxToSpent(maybeSpent, "reorg");
         }
     }
 
