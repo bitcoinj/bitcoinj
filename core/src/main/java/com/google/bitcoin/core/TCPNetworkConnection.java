@@ -25,7 +25,6 @@ import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
-import java.net.SocketException;
 import java.util.Date;
 import java.util.LinkedHashMap;
 
@@ -120,8 +119,10 @@ public class TCPNetworkConnection implements NetworkConnection {
                 versionMessage.bestHeight
         });
         // BitCoinJ is a client mode implementation. That means there's not much point in us talking to other client
-        // mode nodes because we can't download the data from them we need to find/verify transactions.
-        if (!versionMessage.hasBlockChain()) {
+        // mode nodes because we can't download the data from them we need to find/verify transactions. Some bogus
+        // implementations claim to have a block chain in their services field but then report a height of zero, filter
+        // them out here.
+        if (!versionMessage.hasBlockChain() || versionMessage.bestHeight <= 0) {
             // Shut down the socket
             try {
                 shutdown();
