@@ -334,6 +334,10 @@ public class Peer {
                     }
                 }
             }
+            if (!downloadData) {
+                log.warn("Received block we did not ask for: {}", m.getHashAsString());
+                return;
+            }
             // Otherwise it's a block sent to us because the peer thought we needed it, so add it to the block chain.
             // This call will synchronize on blockChain.
             if (blockChain.add(m)) {
