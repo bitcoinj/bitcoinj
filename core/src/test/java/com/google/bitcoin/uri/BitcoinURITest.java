@@ -51,14 +51,6 @@ public class BitcoinURITest {
         
         // example with spaces, ampersand and plus
         assertEquals("bitcoin:" + PRODNET_GOOD_ADDRESS + "?amount=12.34&label=Hello%20World&message=Mess%20%26%20age%20%2B%20hope", BitcoinURI.convertToBitcoinURI(goodAddress, Utils.toNanoCoins("12.34"), "Hello World", "Mess & age + hope"));
-               
-        // address null
-        try {
-            BitcoinURI.convertToBitcoinURI(null, Utils.toNanoCoins("0.1"), "hope", "glory");
-            fail("Expecting IllegalArgumentException");
-        } catch (IllegalArgumentException e) {
-            assertTrue(e.getMessage().contains("address"));
-        }
 
         // amount negative
         try {

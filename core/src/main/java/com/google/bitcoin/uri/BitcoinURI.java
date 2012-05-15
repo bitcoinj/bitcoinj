@@ -291,6 +291,10 @@ public class BitcoinURI {
         return builder.toString();
     }
 
+    public static String convertToBitcoinURI(Address address, BigInteger amount, String label, String message) {
+        return convertToBitcoinURI(address.toString(), amount, label, message);
+    }
+
     /**
      * Simple Bitcoin URI builder using known good fields.
      * 
@@ -300,17 +304,14 @@ public class BitcoinURI {
      * @param message A message
      * @return A String containing the Bitcoin URI
      */
-    public static String convertToBitcoinURI(Address address, BigInteger amount, String label, String message) {
-        if (address == null) {
-            throw new IllegalArgumentException("Missing address");
-        }
-        
+    public static String convertToBitcoinURI(String address, BigInteger amount, String label, String message) {
+        Preconditions.checkNotNull(address);
         if (amount != null && amount.compareTo(BigInteger.ZERO) < 0) {
             throw new IllegalArgumentException("Amount must be positive");
         }
         
         StringBuilder builder = new StringBuilder();
-        builder.append(BITCOIN_SCHEME).append(COLON_SEPARATOR).append(address.toString());
+        builder.append(BITCOIN_SCHEME).append(COLON_SEPARATOR).append(address);
         
         boolean questionMarkHasBeenOutput = false;
         
