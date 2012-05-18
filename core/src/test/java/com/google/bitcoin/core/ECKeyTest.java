@@ -16,14 +16,13 @@
 
 package com.google.bitcoin.core;
 
-import org.bouncycastle.util.encoders.Hex;
 import org.junit.Test;
+import org.spongycastle.util.encoders.Hex;
 
 import java.math.BigInteger;
 
 import static com.google.bitcoin.core.Utils.reverseBytes;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 public class ECKeyTest {
     @Test
@@ -51,6 +50,8 @@ public class ECKeyTest {
         // Now re-encode and decode the ASN.1 to see if it is equivalent (it does not produce the exact same byte
         // sequence, some integers are padded now).
         ECKey roundtripKey = ECKey.fromASN1(decodedKey.toASN1());
+
+        assertArrayEquals(decodedKey.getPrivKeyBytes(), roundtripKey.getPrivKeyBytes());
 
         for (ECKey key : new ECKey[] {decodedKey, roundtripKey}) {
             byte[] message = reverseBytes(Hex.decode(

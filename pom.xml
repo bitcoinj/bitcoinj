@@ -195,12 +195,10 @@
         <optional>true</optional>
       </dependency>
 
-      <!-- In Android these libraries are incomplete,
-           so use the dedicated artifact (bitcoinj-<version>-android.jar) -->
       <dependency>
-        <groupId>org.bouncycastle</groupId>
-        <artifactId>bcprov-jdk15</artifactId>
-        <version>${bcprov-jdk15.version}</version>
+        <groupId>com.madgag</groupId>
+        <artifactId>sc-light-jdk15on</artifactId>
+        <version>${sc-light-jdk15on.version}</version>
       </dependency>
 
       <dependency>
@@ -216,7 +214,7 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <!-- Third-party dependencies -->
-    <bcprov-jdk15.version>1.46</bcprov-jdk15.version>
+    <sc-light-jdk15on.version>1.47.0.2</sc-light-jdk15on.version>
     <easymock.version>3.0</easymock.version>
     <junit.version>4.8.2</junit.version>
     <slf4j.version>1.6.2</slf4j.version>

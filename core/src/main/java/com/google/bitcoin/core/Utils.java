@@ -16,7 +16,7 @@
 
 package com.google.bitcoin.core;
 
-import org.bouncycastle.crypto.digests.RIPEMD160Digest;
+import org.spongycastle.crypto.digests.RIPEMD160Digest;
 
 import java.io.IOException;
 import java.io.OutputStream;

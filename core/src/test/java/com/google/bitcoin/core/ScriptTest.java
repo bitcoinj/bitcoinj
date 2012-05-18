@@ -16,8 +16,8 @@
 
 package com.google.bitcoin.core;
 
-import org.bouncycastle.util.encoders.Hex;
 import org.junit.Test;
+import org.spongycastle.util.encoders.Hex;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;

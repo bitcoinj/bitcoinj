@@ -16,7 +16,7 @@
 
 package com.google.bitcoin.core;
 
-import org.bouncycastle.util.encoders.Hex;
+import org.spongycastle.util.encoders.Hex;
 
 import java.io.ByteArrayOutputStream;
 import java.io.Serializable;

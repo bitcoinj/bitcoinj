@@ -16,16 +16,16 @@
 
 package com.google.bitcoin.core;
 
-import org.bouncycastle.asn1.*;
-import org.bouncycastle.asn1.sec.SECNamedCurves;
-import org.bouncycastle.asn1.x9.X9ECParameters;
-import org.bouncycastle.crypto.AsymmetricCipherKeyPair;
-import org.bouncycastle.crypto.generators.ECKeyPairGenerator;
-import org.bouncycastle.crypto.params.ECDomainParameters;
-import org.bouncycastle.crypto.params.ECKeyGenerationParameters;
-import org.bouncycastle.crypto.params.ECPrivateKeyParameters;
-import org.bouncycastle.crypto.params.ECPublicKeyParameters;
-import org.bouncycastle.crypto.signers.ECDSASigner;
+import org.spongycastle.asn1.*;
+import org.spongycastle.asn1.sec.SECNamedCurves;
+import org.spongycastle.asn1.x9.X9ECParameters;
+import org.spongycastle.crypto.AsymmetricCipherKeyPair;
+import org.spongycastle.crypto.generators.ECKeyPairGenerator;
+import org.spongycastle.crypto.params.ECDomainParameters;
+import org.spongycastle.crypto.params.ECKeyGenerationParameters;
+import org.spongycastle.crypto.params.ECPrivateKeyParameters;
+import org.spongycastle.crypto.params.ECPublicKeyParameters;
+import org.spongycastle.crypto.signers.ECDSASigner;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -100,7 +100,6 @@ public class ECKey implements Serializable {
     public byte[] toASN1() {
         try {
             ByteArrayOutputStream baos = new ByteArrayOutputStream(400);
-            ASN1OutputStream encoder = new ASN1OutputStream(baos);
 
             // ASN1_SEQUENCE(EC_PRIVATEKEY) = {
             //   ASN1_SIMPLE(EC_PRIVATEKEY, version, LONG),
@@ -108,13 +107,12 @@ public class ECKey implements Serializable {
             //   ASN1_EXP_OPT(EC_PRIVATEKEY, parameters, ECPKPARAMETERS, 0),
             //   ASN1_EXP_OPT(EC_PRIVATEKEY, publicKey, ASN1_BIT_STRING, 1)
             // } ASN1_SEQUENCE_END(EC_PRIVATEKEY)
-            DERSequenceGenerator seq = new DERSequenceGenerator(encoder);
-            seq.addObject(new DERInteger(1)); // version
+            DERSequenceGenerator seq = new DERSequenceGenerator(baos);
+            seq.addObject(new ASN1Integer(1)); // version
             seq.addObject(new DEROctetString(priv.toByteArray()));
-            seq.addObject(new DERTaggedObject(0, SECNamedCurves.getByName("secp256k1").getDERObject()));
+            seq.addObject(new DERTaggedObject(0, SECNamedCurves.getByName("secp256k1").toASN1Primitive()));
             seq.addObject(new DERTaggedObject(1, new DERBitString(getPubKey())));
             seq.close();
-            encoder.close();
             return baos.toByteArray();
         } catch (IOException e) {
             throw new RuntimeException(e);  // Cannot happen, writing to memory stream.
@@ -154,7 +152,7 @@ public class ECKey implements Serializable {
     /**
      * Creates an ECKey given only the private key bytes. This is the same as using the BigInteger constructor, but
      * is more convenient if you are importing a key from elsewhere. The public key will be automatically derived
-     * from the private key. Same as calling {@link ECKey#fromPrivKeyBytes(byte[])}.
+     * from the private key.
      */
     public ECKey(byte[] privKeyBytes, byte[] pubKey) {
         this(privKeyBytes == null ? null : new BigInteger(1, privKeyBytes), pubKey);
@@ -251,7 +249,7 @@ public class ECKey implements Serializable {
         signer.init(false, params);
         try {
             ASN1InputStream decoder = new ASN1InputStream(signature);
-            DERSequence seq = (DERSequence) decoder.readObject();
+            DLSequence seq = (DLSequence) decoder.readObject();
             DERInteger r = (DERInteger) seq.getObjectAt(0);
             DERInteger s = (DERInteger) seq.getObjectAt(1);
             decoder.close();
@@ -285,13 +283,14 @@ public class ECKey implements Serializable {
         //
         try {
             ASN1InputStream decoder = new ASN1InputStream(asn1privkey);
-            DERSequence seq = (DERSequence) decoder.readObject();
+            DLSequence seq = (DLSequence) decoder.readObject();
             checkArgument(seq.size() == 4, "Input does not appear to be an ASN.1 OpenSSL EC private key");
             checkArgument(((DERInteger) seq.getObjectAt(0)).getValue().equals(BigInteger.ONE),
                     "Input is of wrong version");
-            DEROctetString key = (DEROctetString) seq.getObjectAt(1);
+            Object obj = seq.getObjectAt(1);
+            byte[] bits = ((ASN1OctetString) obj).getOctets();
             decoder.close();
-            return new BigInteger(key.getOctets());
+            return new BigInteger(1, bits);
         } catch (IOException e) {
             throw new RuntimeException(e);  // Cannot happen, reading from memory stream.
         }

@@ -118,51 +118,6 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>2.9</version>
             </plugin>
-            <!-- The Shade plugin permits the Bouncy Castle libraries to be available for Android
-                 in their full form, rather than the limited versions that are currently available
-                 The standard bitcoinj library does not have this limitation and can use the referenced library
-                 As a result, Android developers should use the bitcoinj-<version>-android.jar artifact -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-shade-plugin</artifactId>
-                <version>1.4</version>
-                <executions>
-                    <execution>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>shade</goal>
-                        </goals>
-                        <configuration>
-                            <filters>
-                                <filter>
-                                    <!-- Remove the original signature meta information from all sources -->
-                                    <artifact>*:*</artifact>
-                                    <excludes>
-                                        <exclude>META-INF/*.SF</exclude>
-                                        <exclude>META-INF/*.DSA</exclude>
-                                        <exclude>META-INF/*.RSA</exclude>
-                                    </excludes>
-                                </filter>
-                            </filters>
-                            <relocations>
-                                <relocation>
-                                    <pattern>org.bouncycastle</pattern>
-                                    <shadedPattern>com.google.bitcoin.bouncycastle</shadedPattern>
-                                </relocation>
-                            </relocations>
-                            <artifactSet>
-                                <includes>
-                                    <include>org.bouncycastle</include>
-                                </includes>
-                            </artifactSet>
-                            <minimizeJar>true</minimizeJar>
-                            <!-- bitcoinj-<version>-android.jar contains the shaded Bouncy Castle libraries -->
-                            <shadedArtifactAttached>true</shadedArtifactAttached>
-                            <shadedClassifierName>android</shadedClassifierName>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
 
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -207,11 +162,9 @@
             <artifactId>derby</artifactId>
         </dependency>
 
-        <!-- In Android these libraries are incomplete,
-             so use the dedicated artifact (bitcoinj-<version>-android.jar) -->
         <dependency>
-            <groupId>org.bouncycastle</groupId>
-            <artifactId>bcprov-jdk15</artifactId>
+            <groupId>com.madgag</groupId>
+            <artifactId>sc-light-jdk15on</artifactId>
         </dependency>
 
         <dependency>
