@@ -21,13 +21,13 @@
     <parent>
         <groupId>com.google</groupId>
         <artifactId>bitcoinj-parent</artifactId>
-        <version>0.5-SNAPSHOT</version>
+        <version>0.6-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.google</groupId>
     <artifactId>bitcoinj-examples</artifactId>
-    <version>0.5-SNAPSHOT</version>
+    <version>0.6-SNAPSHOT</version>
 
     <name>BitCoinJ Examples</name>
     <description>A collection of examples using the BitCoinJ library</description>
