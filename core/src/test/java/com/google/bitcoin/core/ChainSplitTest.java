@@ -26,11 +26,12 @@ import java.util.ArrayList;
 
 import static org.junit.Assert.*;
 
-public class ChainSplitTests {
+public class ChainSplitTest {
     private NetworkParameters unitTestParams;
     private Wallet wallet;
     private BlockChain chain;
     private Address coinsTo;
+    private Address coinsTo2;
     private Address someOtherGuy;
 
     @Before
@@ -39,8 +40,10 @@ public class ChainSplitTests {
         unitTestParams = NetworkParameters.unitTests();
         wallet = new Wallet(unitTestParams);
         wallet.addKey(new ECKey());
+        wallet.addKey(new ECKey());
         chain = new BlockChain(unitTestParams, wallet, new MemoryBlockStore(unitTestParams));
         coinsTo = wallet.keychain.get(0).toAddress(unitTestParams);
+        coinsTo2 = wallet.keychain.get(1).toAddress(unitTestParams);
         someOtherGuy = new ECKey().toAddress(unitTestParams);
     }
 
@@ -283,7 +286,7 @@ public class ChainSplitTests {
     public void txConfidenceLevels() throws Exception {
         // Check that as the chain forks and re-orgs, the confidence data associated with each transaction is
         // maintained correctly.
-        final ArrayList<Transaction> txns = new ArrayList<Transaction>(2);
+        final ArrayList<Transaction> txns = new ArrayList<Transaction>(3);
         wallet.addEventListener(new AbstractWalletEventListener() {
             @Override
             public void onCoinsReceived(Wallet wallet, Transaction tx, BigInteger prevBalance, BigInteger newBalance) {
@@ -291,62 +294,125 @@ public class ChainSplitTests {
             }
         });
 
-        // Start by building a couple of blocks on top of the genesis block.
+        // Start by building three blocks on top of the genesis block.
         Block b1 = unitTestParams.genesisBlock.createNextBlock(coinsTo);
-        Block b2 = b1.createNextBlock(coinsTo);
+        BigInteger work1 = b1.getWork();
+
+        Block b2 = b1.createNextBlock(coinsTo2);
+        BigInteger work2 = b2.getWork();
+
+        Block b3 = b2.createNextBlock(coinsTo2);
+        BigInteger work3 = b3.getWork();
+
         assertTrue(chain.add(b1));
         assertTrue(chain.add(b2));
+        assertTrue(chain.add(b3));
+
         // Check the transaction confidence levels are correct.
-        assertEquals(2, txns.size());
+        assertEquals(3, txns.size());
+
         assertEquals(1, txns.get(0).getConfidence().getAppearedAtChainHeight());
         assertEquals(2, txns.get(1).getConfidence().getAppearedAtChainHeight());
-        assertEquals(1, txns.get(1).getConfidence().getDepthInBlocks(chain));
-        assertEquals(2, txns.get(0).getConfidence().getDepthInBlocks(chain));
-        assertEquals(10, txns.get(0).getConfidence().getWorkDone(chain).intValue());
-        assertEquals(6,  txns.get(1).getConfidence().getWorkDone(chain).intValue());
+        assertEquals(3, txns.get(2).getConfidence().getAppearedAtChainHeight());
+
+        assertEquals(3, txns.get(0).getConfidence().getDepthInBlocks());
+        assertEquals(2, txns.get(1).getConfidence().getDepthInBlocks());
+        assertEquals(1, txns.get(2).getConfidence().getDepthInBlocks());
+
+        assertEquals(work1.add(work2).add(work3), txns.get(0).getConfidence().getWorkDone());
+        assertEquals(work2.add(work3),  txns.get(1).getConfidence().getWorkDone());
+        assertEquals(work3,  txns.get(2).getConfidence().getWorkDone());
+
         // We now have the following chain:
-        //     genesis -> b1 -> b2
+        //     genesis -> b1 -> b2 -> b3
         //
         // so fork like this:
         //
-        //     genesis -> b1 -> b2
-        //                  \-> b3
+        //     genesis -> b1 -> b2 -> b3
+        //                  \-> b4 -> b5
         //
-        // Nothing should happen at this point. We saw b2 first so it takes priority.
-        Block b3 = b1.createNextBlock(someOtherGuy);
-        assertTrue(chain.add(b3));
-        assertEquals(2, txns.size());
+        // Nothing should happen at this point. We saw b2 and b3 first so it takes priority.
+        Block b4 = b1.createNextBlock(someOtherGuy);
+        BigInteger work4 = b4.getWork();
+
+        Block b5 = b4.createNextBlock(someOtherGuy);
+        BigInteger work5 = b5.getWork();
+
+        assertTrue(chain.add(b4));
+        assertTrue(chain.add(b5));
+        assertEquals(3, txns.size());
+
         assertEquals(1, txns.get(0).getConfidence().getAppearedAtChainHeight());
         assertEquals(2, txns.get(1).getConfidence().getAppearedAtChainHeight());
+        assertEquals(3, txns.get(2).getConfidence().getAppearedAtChainHeight());
+
+        assertEquals(3, txns.get(0).getConfidence().getDepthInBlocks());
+        assertEquals(2, txns.get(1).getConfidence().getDepthInBlocks());
+        assertEquals(1, txns.get(2).getConfidence().getDepthInBlocks());
+
+        assertEquals(work1.add(work2).add(work3), txns.get(0).getConfidence().getWorkDone());
+        assertEquals(work2.add(work3),  txns.get(1).getConfidence().getWorkDone());
+        assertEquals(work3,  txns.get(2).getConfidence().getWorkDone());
+
         // Now we add another block to make the alternative chain longer.
-        assertTrue(chain.add(b3.createNextBlock(someOtherGuy)));
+        Block b6 = b5.createNextBlock(someOtherGuy);
+        BigInteger work6 = b6.getWork();
+        assertTrue(chain.add(b6));
         //
-        //     genesis -> b1 -> b2
-        //                  \-> b3 -> b4
+        //     genesis -> b1 -> b2 -> b3
+        //                  \-> b4 -> b5 -> b6
         //
-        assertEquals(2, txns.size());
+
+        assertEquals(3, txns.size());
         assertEquals(1, txns.get(0).getConfidence().getAppearedAtChainHeight());
+        assertEquals(4, txns.get(0).getConfidence().getDepthInBlocks());
+        assertEquals(work1.add(work4).add(work5).add(work6), txns.get(0).getConfidence().getWorkDone());
+
+        // Transaction 1 (in block b2) is now on a side chain.
         assertEquals(TransactionConfidence.ConfidenceType.NOT_IN_BEST_CHAIN, txns.get(1).getConfidence().getConfidenceType());
         try {
             txns.get(1).getConfidence().getAppearedAtChainHeight();
             fail();
         } catch (IllegalStateException e) {}
+        try {
+            txns.get(1).getConfidence().getDepthInBlocks();
+            fail();
+        } catch (IllegalStateException e) {}
+        try {
+            txns.get(1).getConfidence().getWorkDone();
+            fail();
+        } catch (IllegalStateException e) {}
         // ... and back to the first chain.
-        Block b5 = b2.createNextBlock(coinsTo);
-        Block b6 = b5.createNextBlock(coinsTo);
-        assertTrue(chain.add(b5));
-        assertTrue(chain.add(b6));
+        Block b7 = b3.createNextBlock(coinsTo);
+        BigInteger work7 = b7.getWork();
+
+        Block b8 = b7.createNextBlock(coinsTo);
+        BigInteger work8 = b7.getWork();
+
+        assertTrue(chain.add(b7));
+
+        assertTrue(chain.add(b8));
         //
-        //     genesis -> b1 -> b2 -> b5 -> b6
-        //                  \-> b3 -> b4
+        //     genesis -> b1 -> b2 -> b3 -> b7 -> b8
+        //                  \-> b4 -> b5 -> b6
         //
 
         // This should be enabled, once we figure out the best way to inform the user of how the wallet is changing
         // during the re-org.
-        // assertEquals(4, txns.size());
+        //assertEquals(5, txns.size());
 
         assertEquals(1, txns.get(0).getConfidence().getAppearedAtChainHeight());
         assertEquals(2, txns.get(1).getConfidence().getAppearedAtChainHeight());
-        assertEquals("200.00", Utils.bitcoinValueToFriendlyString(wallet.getBalance()));
+        assertEquals(3, txns.get(2).getConfidence().getAppearedAtChainHeight());
+
+        assertEquals(5, txns.get(0).getConfidence().getDepthInBlocks());
+        assertEquals(4, txns.get(1).getConfidence().getDepthInBlocks());
+        assertEquals(3, txns.get(2).getConfidence().getDepthInBlocks());
+
+        assertEquals(work1.add(work2).add(work3).add(work7).add(work8), txns.get(0).getConfidence().getWorkDone());
+        assertEquals(work2.add(work3).add(work7).add(work8), txns.get(1).getConfidence().getWorkDone());
+        assertEquals(work3.add(work7).add(work8), txns.get(2).getConfidence().getWorkDone());
+
+        assertEquals("250.00", Utils.bitcoinValueToFriendlyString(wallet.getBalance()));
     }
 }

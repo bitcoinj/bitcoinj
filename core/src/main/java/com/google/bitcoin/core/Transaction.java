@@ -16,6 +16,7 @@
 
 package com.google.bitcoin.core;
 
+import com.google.bitcoin.core.TransactionConfidence.ConfidenceType;
 import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -259,13 +260,23 @@ public class Transaction extends ChildMessage implements Serializable {
         if (bestChain && (updatedAt == null || updatedAt.getTime() == 0 || updatedAt.getTime() > blockTime)) {
             updatedAt = new Date(blockTime);
         }
-        
+
         addBlockAppearance(block.getHeader().getHash());
 
         if (bestChain) {
-            // This can cause event listeners on TransactionConfidence to run. After this line completes, the wallets
+            // This can cause event listeners on TransactionConfidence to run. After these lines complete, the wallets
             // state may have changed!
-            getConfidence().setAppearedAtChainHeight(block.getHeight());
+            TransactionConfidence transactionConfidence = getConfidence();
+            transactionConfidence.setAppearedAtChainHeight(block.getHeight());
+
+            // Reset the confidence block depth.
+            transactionConfidence.setDepthInBlocks(0);
+
+            // Reset the work done.
+            transactionConfidence.setWorkDone(BigInteger.ZERO);
+
+            // The transaction is now on the best chain.
+            transactionConfidence.setConfidenceType(ConfidenceType.BUILDING);
         }
     }
 
@@ -278,7 +289,10 @@ public class Transaction extends ChildMessage implements Serializable {
 
     /** Called by the wallet once a re-org means we don't appear in the best chain anymore. */
     void notifyNotOnBestChain() {
-        getConfidence().setConfidenceType(TransactionConfidence.ConfidenceType.NOT_IN_BEST_CHAIN);
+        TransactionConfidence transactionConfidence = getConfidence();
+        transactionConfidence.setConfidenceType(TransactionConfidence.ConfidenceType.NOT_IN_BEST_CHAIN);
+        transactionConfidence.setDepthInBlocks(0);
+        transactionConfidence.setWorkDone(BigInteger.ZERO);
     }
 
     /**

@@ -1784,6 +1784,14 @@ public final class Protos {
     // optional bytes overriding_transaction = 3;
     boolean hasOverridingTransaction();
     com.google.protobuf.ByteString getOverridingTransaction();
+    
+    // optional int32 depth = 4;
+    boolean hasDepth();
+    int getDepth();
+    
+    // optional int64 work_done = 5;
+    boolean hasWorkDone();
+    long getWorkDone();
   }
   public static final class TransactionConfidence extends
       com.google.protobuf.GeneratedMessage
@@ -1922,10 +1930,32 @@ public final class Protos {
       return overridingTransaction_;
     }
     
+    // optional int32 depth = 4;
+    public static final int DEPTH_FIELD_NUMBER = 4;
+    private int depth_;
+    public boolean hasDepth() {
+      return ((bitField0_ & 0x00000008) == 0x00000008);
+    }
+    public int getDepth() {
+      return depth_;
+    }
+    
+    // optional int64 work_done = 5;
+    public static final int WORK_DONE_FIELD_NUMBER = 5;
+    private long workDone_;
+    public boolean hasWorkDone() {
+      return ((bitField0_ & 0x00000010) == 0x00000010);
+    }
+    public long getWorkDone() {
+      return workDone_;
+    }
+    
     private void initFields() {
       type_ = org.bitcoinj.wallet.Protos.TransactionConfidence.Type.UNKNOWN;
       appearedAtHeight_ = 0;
       overridingTransaction_ = com.google.protobuf.ByteString.EMPTY;
+      depth_ = 0;
+      workDone_ = 0L;
     }
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
@@ -1948,6 +1978,12 @@ public final class Protos {
       if (((bitField0_ & 0x00000004) == 0x00000004)) {
         output.writeBytes(3, overridingTransaction_);
       }
+      if (((bitField0_ & 0x00000008) == 0x00000008)) {
+        output.writeInt32(4, depth_);
+      }
+      if (((bitField0_ & 0x00000010) == 0x00000010)) {
+        output.writeInt64(5, workDone_);
+      }
       getUnknownFields().writeTo(output);
     }
     
@@ -1968,6 +2004,14 @@ public final class Protos {
       if (((bitField0_ & 0x00000004) == 0x00000004)) {
         size += com.google.protobuf.CodedOutputStream
           .computeBytesSize(3, overridingTransaction_);
+      }
+      if (((bitField0_ & 0x00000008) == 0x00000008)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeInt32Size(4, depth_);
+      }
+      if (((bitField0_ & 0x00000010) == 0x00000010)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeInt64Size(5, workDone_);
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSerializedSize = size;
@@ -2099,6 +2143,10 @@ public final class Protos {
         bitField0_ = (bitField0_ & ~0x00000002);
         overridingTransaction_ = com.google.protobuf.ByteString.EMPTY;
         bitField0_ = (bitField0_ & ~0x00000004);
+        depth_ = 0;
+        bitField0_ = (bitField0_ & ~0x00000008);
+        workDone_ = 0L;
+        bitField0_ = (bitField0_ & ~0x00000010);
         return this;
       }
       
@@ -2149,6 +2197,14 @@ public final class Protos {
           to_bitField0_ |= 0x00000004;
         }
         result.overridingTransaction_ = overridingTransaction_;
+        if (((from_bitField0_ & 0x00000008) == 0x00000008)) {
+          to_bitField0_ |= 0x00000008;
+        }
+        result.depth_ = depth_;
+        if (((from_bitField0_ & 0x00000010) == 0x00000010)) {
+          to_bitField0_ |= 0x00000010;
+        }
+        result.workDone_ = workDone_;
         result.bitField0_ = to_bitField0_;
         onBuilt();
         return result;
@@ -2173,6 +2229,12 @@ public final class Protos {
         }
         if (other.hasOverridingTransaction()) {
           setOverridingTransaction(other.getOverridingTransaction());
+        }
+        if (other.hasDepth()) {
+          setDepth(other.getDepth());
+        }
+        if (other.hasWorkDone()) {
+          setWorkDone(other.getWorkDone());
         }
         this.mergeUnknownFields(other.getUnknownFields());
         return this;
@@ -2224,6 +2286,16 @@ public final class Protos {
             case 26: {
               bitField0_ |= 0x00000004;
               overridingTransaction_ = input.readBytes();
+              break;
+            }
+            case 32: {
+              bitField0_ |= 0x00000008;
+              depth_ = input.readInt32();
+              break;
+            }
+            case 40: {
+              bitField0_ |= 0x00000010;
+              workDone_ = input.readInt64();
               break;
             }
           }
@@ -2297,6 +2369,48 @@ public final class Protos {
       public Builder clearOverridingTransaction() {
         bitField0_ = (bitField0_ & ~0x00000004);
         overridingTransaction_ = getDefaultInstance().getOverridingTransaction();
+        onChanged();
+        return this;
+      }
+      
+      // optional int32 depth = 4;
+      private int depth_ ;
+      public boolean hasDepth() {
+        return ((bitField0_ & 0x00000008) == 0x00000008);
+      }
+      public int getDepth() {
+        return depth_;
+      }
+      public Builder setDepth(int value) {
+        bitField0_ |= 0x00000008;
+        depth_ = value;
+        onChanged();
+        return this;
+      }
+      public Builder clearDepth() {
+        bitField0_ = (bitField0_ & ~0x00000008);
+        depth_ = 0;
+        onChanged();
+        return this;
+      }
+      
+      // optional int64 work_done = 5;
+      private long workDone_ ;
+      public boolean hasWorkDone() {
+        return ((bitField0_ & 0x00000010) == 0x00000010);
+      }
+      public long getWorkDone() {
+        return workDone_;
+      }
+      public Builder setWorkDone(long value) {
+        bitField0_ |= 0x00000010;
+        workDone_ = value;
+        onChanged();
+        return this;
+      }
+      public Builder clearWorkDone() {
+        bitField0_ = (bitField0_ & ~0x00000010);
+        workDone_ = 0L;
         onChanged();
         return this;
       }
@@ -5673,30 +5787,31 @@ public final class Protos {
       "\003 \002(\014\022\020\n\010sequence\030\004 \001(\r\"\177\n\021TransactionOu" +
       "tput\022\r\n\005value\030\001 \002(\003\022\024\n\014script_bytes\030\002 \002(" +
       "\014\022!\n\031spent_by_transaction_hash\030\003 \001(\014\022\"\n\032",
-      "spent_by_transaction_index\030\004 \001(\005\"\366\001\n\025Tra" +
+      "spent_by_transaction_index\030\004 \001(\005\"\230\002\n\025Tra" +
       "nsactionConfidence\0220\n\004type\030\001 \001(\0162\".walle" +
       "t.TransactionConfidence.Type\022\032\n\022appeared" +
       "_at_height\030\002 \001(\005\022\036\n\026overriding_transacti" +
-      "on\030\003 \001(\014\"o\n\004Type\022\013\n\007UNKNOWN\020\000\022\014\n\010BUILDIN" +
-      "G\020\001\022\025\n\021NOT_SEEN_IN_CHAIN\020\002\022\025\n\021NOT_IN_BES" +
-      "T_CHAIN\020\003\022\036\n\032OVERRIDDEN_BY_DOUBLE_SPEND\020" +
-      "\004\"\211\003\n\013Transaction\022\017\n\007version\030\001 \002(\005\022\014\n\004ha" +
-      "sh\030\002 \002(\014\022&\n\004pool\030\003 \001(\0162\030.wallet.Transact" +
-      "ion.Pool\022\021\n\tlock_time\030\004 \001(\r\022\022\n\nupdated_a",
-      "t\030\005 \001(\003\0223\n\021transaction_input\030\006 \003(\0132\030.wal" +
-      "let.TransactionInput\0225\n\022transaction_outp" +
-      "ut\030\007 \003(\0132\031.wallet.TransactionOutput\022\022\n\nb" +
-      "lock_hash\030\010 \003(\014\0221\n\nconfidence\030\t \001(\0132\035.wa" +
-      "llet.TransactionConfidence\"Y\n\004Pool\022\013\n\007UN" +
-      "SPENT\020\004\022\t\n\005SPENT\020\005\022\014\n\010INACTIVE\020\002\022\010\n\004DEAD" +
-      "\020\n\022\013\n\007PENDING\020\020\022\024\n\020PENDING_INACTIVE\020\022\"8\n" +
-      "\tExtension\022\n\n\002id\030\001 \002(\t\022\014\n\004data\030\002 \002(\014\022\021\n\t" +
-      "mandatory\030\003 \002(\010\"\254\001\n\006Wallet\022\032\n\022network_id" +
-      "entifier\030\001 \002(\t\022\034\n\024last_seen_block_hash\030\002",
-      " \001(\014\022\030\n\003key\030\003 \003(\0132\013.wallet.Key\022(\n\013transa" +
-      "ction\030\004 \003(\0132\023.wallet.Transaction\022$\n\texte" +
-      "nsion\030\n \003(\0132\021.wallet.ExtensionB\035\n\023org.bi" +
-      "tcoinj.walletB\006Protos"
+      "on\030\003 \001(\014\022\r\n\005depth\030\004 \001(\005\022\021\n\twork_done\030\005 \001" +
+      "(\003\"o\n\004Type\022\013\n\007UNKNOWN\020\000\022\014\n\010BUILDING\020\001\022\025\n" +
+      "\021NOT_SEEN_IN_CHAIN\020\002\022\025\n\021NOT_IN_BEST_CHAI" +
+      "N\020\003\022\036\n\032OVERRIDDEN_BY_DOUBLE_SPEND\020\004\"\211\003\n\013" +
+      "Transaction\022\017\n\007version\030\001 \002(\005\022\014\n\004hash\030\002 \002" +
+      "(\014\022&\n\004pool\030\003 \001(\0162\030.wallet.Transaction.Po",
+      "ol\022\021\n\tlock_time\030\004 \001(\r\022\022\n\nupdated_at\030\005 \001(" +
+      "\003\0223\n\021transaction_input\030\006 \003(\0132\030.wallet.Tr" +
+      "ansactionInput\0225\n\022transaction_output\030\007 \003" +
+      "(\0132\031.wallet.TransactionOutput\022\022\n\nblock_h" +
+      "ash\030\010 \003(\014\0221\n\nconfidence\030\t \001(\0132\035.wallet.T" +
+      "ransactionConfidence\"Y\n\004Pool\022\013\n\007UNSPENT\020" +
+      "\004\022\t\n\005SPENT\020\005\022\014\n\010INACTIVE\020\002\022\010\n\004DEAD\020\n\022\013\n\007" +
+      "PENDING\020\020\022\024\n\020PENDING_INACTIVE\020\022\"8\n\tExten" +
+      "sion\022\n\n\002id\030\001 \002(\t\022\014\n\004data\030\002 \002(\014\022\021\n\tmandat" +
+      "ory\030\003 \002(\010\"\254\001\n\006Wallet\022\032\n\022network_identifi",
+      "er\030\001 \002(\t\022\034\n\024last_seen_block_hash\030\002 \001(\014\022\030" +
+      "\n\003key\030\003 \003(\0132\013.wallet.Key\022(\n\013transaction\030" +
+      "\004 \003(\0132\023.wallet.Transaction\022$\n\textension\030" +
+      "\n \003(\0132\021.wallet.ExtensionB\035\n\023org.bitcoinj" +
+      ".walletB\006Protos"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
       new com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner() {
@@ -5732,7 +5847,7 @@ public final class Protos {
           internal_static_wallet_TransactionConfidence_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_wallet_TransactionConfidence_descriptor,
-              new java.lang.String[] { "Type", "AppearedAtHeight", "OverridingTransaction", },
+              new java.lang.String[] { "Type", "AppearedAtHeight", "OverridingTransaction", "Depth", "WorkDone", },
               org.bitcoinj.wallet.Protos.TransactionConfidence.class,
               org.bitcoinj.wallet.Protos.TransactionConfidence.Builder.class);
           internal_static_wallet_Transaction_descriptor =

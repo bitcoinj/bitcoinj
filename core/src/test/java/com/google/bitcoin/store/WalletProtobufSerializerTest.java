@@ -17,6 +17,9 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.Set;
 
 import static com.google.bitcoin.core.TestUtils.createFakeTx;
 import static org.junit.Assert.*;
@@ -128,7 +131,7 @@ public class WalletProtobufSerializerTest {
         Sha256Hash blockHash = block.getHash();
         wallet.setLastBlockSeenHash(blockHash);
 
-        // Roundtrip the wallet and check it has stored te blockHash.
+        // Roundtrip the wallet and check it has stored the blockHash.
         Wallet wallet1 = roundTrip(wallet);
         assertEquals(blockHash, wallet1.getLastBlockSeenHash());
 
@@ -137,6 +140,83 @@ public class WalletProtobufSerializerTest {
         wallet.setLastBlockSeenHash(genesisBlock.getHash());
         Wallet wallet2 = roundTrip(wallet);
         assertEquals(genesisBlock.getHash(), wallet2.getLastBlockSeenHash());
+    }
+
+    @Test
+    public void testAppearedAtChainHeightDepthAndWorkDone() throws Exception {
+        // Test the TransactionConfidence appearedAtChainHeight, depth and workDone field are stored.
+
+        BlockChain chain = new BlockChain(params, myWallet, new MemoryBlockStore(params));
+
+        final ArrayList<Transaction> txns = new ArrayList<Transaction>(2);
+        myWallet.addEventListener(new AbstractWalletEventListener() {
+            @Override
+            public void onCoinsReceived(Wallet wallet, Transaction tx, BigInteger prevBalance, BigInteger newBalance) {
+                txns.add(tx);
+            }
+        });
+
+        // Start by building two blocks on top of the genesis block.
+        Block b1 = params.genesisBlock.createNextBlock(myAddress);
+        BigInteger work1 = b1.getWork();
+        assertTrue(work1.compareTo(BigInteger.ZERO) > 0);
+
+        Block b2 = b1.createNextBlock(myAddress);
+        BigInteger work2 = b2.getWork();
+        assertTrue(work2.compareTo(BigInteger.ZERO) > 0);
+
+        assertTrue(chain.add(b1));
+        assertTrue(chain.add(b2));
+
+        // We now have the following chain:
+        //     genesis -> b1 -> b2
+
+        // Check the transaction confidence levels are correct before wallet roundtrip.
+        assertEquals(2, txns.size());
+
+        TransactionConfidence confidence0 = txns.get(0).getConfidence();
+        TransactionConfidence confidence1 = txns.get(1).getConfidence();
+
+        assertEquals(1, confidence0.getAppearedAtChainHeight());
+        assertEquals(2, confidence1.getAppearedAtChainHeight());
+
+        assertEquals(2, confidence0.getDepthInBlocks());
+        assertEquals(1, confidence1.getDepthInBlocks());
+
+        assertEquals(work1.add(work2), confidence0.getWorkDone());
+        assertEquals(work2, confidence1.getWorkDone());
+
+        // Roundtrip the wallet and check it has stored the depth and workDone.
+        Wallet rebornWallet = roundTrip(myWallet);
+
+        Set<Transaction> rebornTxns = rebornWallet.getTransactions(false, false);
+        assertEquals(2, rebornTxns.size());
+
+        // The transactions are not guaranteed to be in the same order so sort them to be in chain height order if required.
+        Iterator<Transaction> it = rebornTxns.iterator();
+        Transaction txA = it.next();
+        Transaction txB = it.next();
+
+        Transaction rebornTx0, rebornTx1;
+         if (txA.getConfidence().getAppearedAtChainHeight() == 1) {
+            rebornTx0 = txA;
+            rebornTx1 = txB;
+        } else {
+            rebornTx0 = txB;
+            rebornTx1 = txA;
+        }
+
+        TransactionConfidence rebornConfidence0 = rebornTx0.getConfidence();
+        TransactionConfidence rebornConfidence1 = rebornTx1.getConfidence();
+
+        assertEquals(1, rebornConfidence0.getAppearedAtChainHeight());
+        assertEquals(2, rebornConfidence1.getAppearedAtChainHeight());
+
+        assertEquals(2, rebornConfidence0.getDepthInBlocks());
+        assertEquals(1, rebornConfidence1.getDepthInBlocks());
+
+        assertEquals(work1.add(work2), rebornConfidence0.getWorkDone());
+        assertEquals(work2, rebornConfidence1.getWorkDone());
     }
 
     private Wallet roundTrip(Wallet wallet) throws IOException {

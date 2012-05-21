@@ -16,6 +16,7 @@
 
 package com.google.bitcoin.core;
 
+import com.google.bitcoin.core.TransactionConfidence.ConfidenceType;
 import com.google.bitcoin.core.WalletTransaction.Pool;
 import com.google.bitcoin.store.WalletProtobufSerializer;
 import com.google.bitcoin.utils.EventListenerInvoker;
@@ -551,28 +552,38 @@ public class Wallet implements Serializable {
 
         log.info("Balance is now: " + bitcoinValueToFriendlyString(getBalance()));
 
-        // Store the block hash
-        if (bestChain) {
-            if (block != null && block.getHeader() != null) {
-                // Check to see if this block has been seen before
-                Sha256Hash newBlockHash = block.getHeader().getHash();
-                if (!newBlockHash.equals(getLastBlockSeenHash())) {
-                    // new hash
-                    setLastBlockSeenHash(newBlockHash);
-                }
-            }
-        }
-
         // WARNING: The code beyond this point can trigger event listeners on transaction confidence objects, which are
         // in turn allowed to re-enter the Wallet. This means we cannot assume anything about the state of the wallet
         // from now on. The balance just received may already be spent.
 
-        // Mark the tx as appearing in this block so we can find it later after a re-org. This also lets the
-        // transaction update its confidence and timestamp bookkeeping data.
+        // Mark the tx as appearing in this block so we can find it later after a re-org.
         if (block != null) {
             tx.setBlockAppearance(block, bestChain);
-            invokeOnTransactionConfidenceChanged(tx);
         }
+
+        // If this is the first time the the block hash has been seen, store it and notify transactions of the block.
+        if (bestChain) {
+            if (block != null && block.getHeader() != null) {
+                // Check to see if this block has been seen before.
+                Sha256Hash newBlockHash = block.getHeader().getHash();
+
+                if (!newBlockHash.equals(getLastBlockSeenHash())) {
+                    // Store the new block hash.
+                    setLastBlockSeenHash(newBlockHash);
+
+                    // Notify all the BUILDING transactions of the new block.
+                    // This is so that they can update their work done and depth.
+                    Set<Transaction> transactions = getTransactions(true, false);
+
+                    for (Transaction t : transactions) {
+                        t.getConfidence().notifyWorkDone(block.getHeader());
+                    }
+                }
+            }
+        }
+
+        // Update the transaction confidence and timestamp bookkeeping data.
+        invokeOnTransactionConfidenceChanged(tx);
 
         // Inform anyone interested that we have received or sent coins but only if:
         //  - This is not due to a re-org.
@@ -598,7 +609,7 @@ public class Wallet implements Serializable {
                 invokeOnCoinsSent(tx, prevBalance, newBalance);
             }
         }
-        
+
         checkState(isConsistent());
     }
 
@@ -789,7 +800,6 @@ public class Wallet implements Serializable {
 
     /**
      * Returns a set of all transactions in the wallet.
-     *
      * @param includeDead     If true, transactions that were overridden by a double spend are included.
      * @param includeInactive If true, transactions that are on side chains (are unspendable) are included.
      */
@@ -1370,7 +1380,7 @@ public class Wallet implements Serializable {
      *
      * The oldBlocks/newBlocks lists are ordered height-wise from top first to bottom last.
      */
-    synchronized void reorganize(List<StoredBlock> oldBlocks, List<StoredBlock> newBlocks) throws VerificationException {
+    synchronized void reorganize(StoredBlock splitPoint, List<StoredBlock> oldBlocks, List<StoredBlock> newBlocks) throws VerificationException {
         // This runs on any peer thread with the block chain synchronized.
         //
         // The reorganize functionality of the wallet is tested in ChainSplitTests.
@@ -1486,9 +1496,32 @@ public class Wallet implements Serializable {
         // Now replay the act of receiving the blocks that were previously in a side chain. This will:
         //   - Move any transactions that were pending and are now accepted into the right bucket.
         //   - Connect the newly active transactions.
+
         Collections.reverse(newBlocks);  // Need bottom-to-top but we get top-to-bottom.
+
+        // The old blocks have contributed to the depth and work done for all the transactions in the
+        // wallet that are in blocks up to and including the chain split block.
+        // The total depth and work done is calculated here and then subtracted from the appropriate transactions.
+        int depthToSubtract = oldBlocks == null ? 0 : oldBlocks.size();
+
+        BigInteger workDoneToSubtract = BigInteger.ZERO;
+        for (StoredBlock b : oldBlocks) {
+            workDoneToSubtract = workDoneToSubtract.add(b.getHeader().getWork());
+        }
+        log.info("DepthToSubtract = " + depthToSubtract + ", workDoneToSubtract = " + workDoneToSubtract);
+
+        // Remove depthToSubtract and workDoneToSubtract from all transactions in the wallet except for pending and inactive
+        // (i.e. the transactions in the two chains of blocks we are reorganising).
+        subtractDepthAndWorkDone(depthToSubtract, workDoneToSubtract, spent.values());
+        subtractDepthAndWorkDone(depthToSubtract, workDoneToSubtract, unspent.values());
+        subtractDepthAndWorkDone(depthToSubtract, workDoneToSubtract, dead.values());
+
+        // The effective last seen block is now the split point so set the lastSeenBlockHash.
+        setLastBlockSeenHash(splitPoint.getHeader().getHash());
+
         for (StoredBlock b : newBlocks) {
             log.info("Replaying block {}", b.getHeader().getHashAsString());
+
             Set<Transaction> txns = new HashSet<Transaction>();
             Sha256Hash blockHash = b.getHeader().getHash();
             for (Transaction tx : newChainTransactions.values()) {
@@ -1497,11 +1530,26 @@ public class Wallet implements Serializable {
                     log.info("  containing tx {}", tx.getHashAsString());
                 }
             }
-            for (Transaction t : txns) {
-                try {
-                    receive(t, b, BlockChain.NewBlockType.BEST_CHAIN, true);
-                } catch (ScriptException e) {
-                    throw new RuntimeException(e);  // Cannot happen as these blocks were already verified.
+
+            if (txns.isEmpty()) {
+                // If there are no new transactions in this block we still need to bury existing transactions one block deeper.
+                for (Transaction t : spent.values()) {
+                    t.getConfidence().notifyWorkDone(b.getHeader());
+                }
+                for (Transaction t : unspent.values()) {
+                    t.getConfidence().notifyWorkDone(b.getHeader());
+                }
+                for (Transaction t : dead.values()) {
+                    t.getConfidence().notifyWorkDone(b.getHeader());
+                }
+            } else {
+                // Add the transactions to the new blocks.
+                for (Transaction t : txns) {
+                    try {
+                        receive(t, b, BlockChain.NewBlockType.BEST_CHAIN, true);
+                    } catch (ScriptException e) {
+                        throw new RuntimeException(e);  // Cannot happen as these blocks were already verified.
+                    }
                 }
             }
         }
@@ -1548,6 +1596,18 @@ public class Wallet implements Serializable {
             }
         });
         checkState(isConsistent());
+    }
+
+    /**
+     * Subtract the supplied depth and work done from the given transactions.
+     */
+    synchronized private void subtractDepthAndWorkDone(int depthToSubtract, BigInteger workDoneToSubtract, Collection<Transaction> transactions) {
+        for (Transaction tx : transactions) {
+            if (tx.getConfidence().getConfidenceType() == ConfidenceType.BUILDING) {
+                tx.getConfidence().setDepthInBlocks(tx.getConfidence().getDepthInBlocks() - depthToSubtract);
+                tx.getConfidence().setWorkDone(tx.getConfidence().getWorkDone().subtract(workDoneToSubtract));
+            }
+        }
     }
 
     private void reprocessUnincludedTxAfterReorg(Map<Sha256Hash, Transaction> pool, Transaction tx) {

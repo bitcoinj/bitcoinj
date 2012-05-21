@@ -16,7 +16,6 @@
 
 package com.google.bitcoin.core;
 
-import com.google.bitcoin.store.BlockStoreException;
 import com.google.bitcoin.utils.EventListenerInvoker;
 import com.google.common.base.Preconditions;
 
@@ -50,11 +49,9 @@ import java.util.Set;
  * <p>Alternatively, you may know that the transaction is "dead", that is, one or more of its inputs have
  * been double spent and will never confirm unless there is another re-org.</p>
  *
- * <p>TransactionConfidence is purely a data structure, it doesn't try and keep itself up to date. To have fresh
- * confidence data, you need to ensure the owning {@link Transaction} is being updated by something, like
- * a {@link Wallet}.</p>Confidence objects <b>are live</b> and can be updated by other threads running in parallel
- * to your own. To make a copy that won't be changed, use
- * {@link com.google.bitcoin.core.TransactionConfidence#duplicate()}.
+ * <p>TransactionConfidence is updated via the {@link com.google.bitcoin.core.TransactionConfidence#notifyWorkDone()}
+ * method to ensure the block depth and work done are up to date.</p>
+ * To make a copy that won't be changed, use {@link com.google.bitcoin.core.TransactionConfidence#duplicate()}.
  */
 public class TransactionConfidence implements Serializable {
     private static final long serialVersionUID = 4577920141400556444L;
@@ -69,6 +66,18 @@ public class TransactionConfidence implements Serializable {
     private Transaction transaction;
     // Lazily created listeners array.
     private transient ArrayList<Listener> listeners;
+
+    /**
+     * The depth of the transaction on the best chain in blocks. An unconfirmed block has depth 0, after one confirmation
+     * its depth is 1.
+     */
+    private int depth;
+
+    /**
+     * The cumulative work done for the blocks that bury this transaction. BigInteger.ZERO if the transaction is not
+     * on the best chain.
+     */
+    private BigInteger workDone = BigInteger.ZERO;
 
     // TODO: The advice below is a mess. There should be block chain listeners, see issue 94.
     /**
@@ -279,6 +288,18 @@ public class TransactionConfidence implements Serializable {
     }
 
     /**
+     * Called by the wallet when the tx appears on the best chain and a new block is added to the top.
+     * Updates the internal counter that tracks how deeply buried the block is.
+     * Work is the value of block.getWork().
+     */
+    public synchronized void notifyWorkDone(Block block) throws VerificationException {
+        if (getConfidenceType() == ConfidenceType.BUILDING) {
+            this.depth++;
+            this.workDone = this.workDone.add(block.getWork());
+        }
+    }
+
+    /**
      * Depth in the chain is an approximation of how much time has elapsed since the transaction has been confirmed. On
      * average there is supposed to be a new block every 10 minutes, but the actual rate may vary. The reference
      * (Satoshi) implementation considers a transaction impractical to reverse after 6 blocks, but as of EOY 2011 network
@@ -289,16 +310,21 @@ public class TransactionConfidence implements Serializable {
      * chain yet, throws IllegalStateException, so use {@link com.google.bitcoin.core.TransactionConfidence#getConfidenceType()}
      * to check first.
      *
-     * @param chain a {@link BlockChain} instance.
      * @throws IllegalStateException if confidence type != BUILDING.
      * @return depth
      */
-    public synchronized int getDepthInBlocks(BlockChain chain) {
+    public synchronized int getDepthInBlocks() {
         if (getConfidenceType() != ConfidenceType.BUILDING) {
             throw new IllegalStateException("Confidence type is not BUILDING");
         }
-        int height = getAppearedAtChainHeight();
-        return chain.getBestChainHeight() - height + 1;
+        return depth;
+    }
+
+    /*
+     * Set the depth in blocks. Having one block confirmation is a depth of one.
+     */
+    public synchronized void setDepthInBlocks(int depth) {
+        this.depth = depth;
     }
 
     /**
@@ -307,24 +333,18 @@ public class TransactionConfidence implements Serializable {
      * blocks per hour by adjusting the difficulty target. So to know how much real computation effort is needed to
      * reverse a transaction, counting blocks is not enough.
      *
-     * @param chain
      * @throws IllegalStateException if confidence type is not BUILDING
      * @return estimated number of hashes needed to reverse the transaction.
      */
-    public synchronized BigInteger getWorkDone(BlockChain chain) throws BlockStoreException {
-        int depth;
-        synchronized (this) {
-            if (getConfidenceType() != ConfidenceType.BUILDING)
-                throw new IllegalStateException("Confidence type is " + getConfidenceType() + ", not BUILDING");
-            depth = getDepthInBlocks(chain);
+    public synchronized BigInteger getWorkDone() {
+        if (getConfidenceType() != ConfidenceType.BUILDING) {
+            throw new IllegalStateException("Confidence type is not BUILDING");
         }
-        BigInteger work = BigInteger.ZERO;
-        StoredBlock block = chain.getChainHead();
-        for (; depth > 0; depth--) {
-            work = work.add(block.getChainWork());
-            block = block.getPrev(chain.blockStore);
-        }
-        return work;
+        return workDone;
+    }
+
+    public synchronized void setWorkDone(BigInteger workDone) {
+        this.workDone = workDone;
     }
 
     /**

@@ -653,7 +653,6 @@ public class WalletTest {
         // Now check we can serialize old wallets to protocol buffers. Covers bug 134.
         bios.reset();
         new WalletProtobufSerializer().writeWallet(wallet, bios);
-
     }
 
     @Test

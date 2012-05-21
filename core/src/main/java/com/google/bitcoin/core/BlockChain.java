@@ -290,7 +290,7 @@ public class BlockChain {
         // can be updated to take into account the re-organize. We might also have received new coins we didn't have
         // before and our previous spends might have been undone.
         for (Wallet wallet : wallets) {
-            wallet.reorganize(oldBlocks, newBlocks);
+            wallet.reorganize(splitPoint, oldBlocks, newBlocks);
         }
         // Update the pointer to the best known block.
         setChainHead(newChainHead);

@@ -125,13 +125,9 @@ public class PingService {
                 System.out.println("Confidences of wallet transactions:");
                 for (Transaction tx : transactions) {
                     System.out.println(tx);
-                    try {
-                        System.out.println(tx.getConfidence());
-                        if (tx.getConfidence().getConfidenceType() == TransactionConfidence.ConfidenceType.BUILDING)
-                            System.out.println("Work done: " + tx.getConfidence().getWorkDone(chain).toString());
-                    } catch (BlockStoreException e) {
-                        throw new RuntimeException(e);
-                    }
+                    System.out.println(tx.getConfidence());
+                    if (tx.getConfidence().getConfidenceType() == TransactionConfidence.ConfidenceType.BUILDING)
+                        System.out.println("Work done: " + tx.getConfidence().getWorkDone().toString());
                     System.out.println();
                 }
             }
