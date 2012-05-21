@@ -524,16 +524,9 @@ public class WalletTool {
     }
 
     private static void saveWallet(File walletFile) {
-        // Save the new state of the wallet to a temp file then rename, in case anything goes wrong.
-        File tmp;
         try {
-            // Create tmp in same directory as wallet to ensure we create on the same drive/volume.
-            tmp = File.createTempFile("wallet", null, walletFile.getParentFile());
-            tmp.deleteOnExit();
-            wallet.saveToFile(tmp);
-            if (!tmp.renameTo(walletFile)) {
-                throw new IOException("Failed to rename wallet");
-            }
+            // This will save the new state of the wallet to a temp file then rename, in case anything goes wrong.
+            wallet.saveToFile(walletFile);
         } catch (IOException e) {
             System.err.println("Failed to save wallet! Old wallet should be left untouched.");
             e.printStackTrace();

@@ -19,6 +19,7 @@ package com.google.bitcoin.core;
 import com.google.bitcoin.core.WalletTransaction.Pool;
 import com.google.bitcoin.store.WalletProtobufSerializer;
 import com.google.bitcoin.utils.EventListenerInvoker;
+import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -180,15 +181,29 @@ public class Wallet implements Serializable {
 
     /**
      * Uses protobuf serialization to save the wallet to the given file. To learn more about this file format, see
-     * {@link WalletProtobufSerializer}.
+     * {@link WalletProtobufSerializer}. Writes out first to a temporary file in the same directory and then renames
+     * once written.
      */
     public synchronized void saveToFile(File f) throws IOException {
+        Preconditions.checkArgument(f.isFile());
         FileOutputStream stream = null;
+        File temp = null;
         try {
-            stream = new FileOutputStream(f);
+            File directory = f.getParentFile();
+            temp = File.createTempFile("wallet", null, directory);
+            stream = new FileOutputStream(temp);
             saveToFileStream(stream);
         } finally {
-            if (stream != null) stream.close();
+            if (stream != null) {
+                // Attempt to force the bits to hit the disk. In reality the OS or hard disk itself may still decide
+                // to not write through to physical media for at least a few seconds, but this is the best we can do.
+                stream.flush();
+                stream.getFD().sync();
+                stream.close();
+                if (!temp.renameTo(f)) {
+                    throw new IOException("Failed to rename " + temp + " to " + f);
+                }
+            }
         }
     }
 
