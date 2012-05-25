@@ -91,9 +91,14 @@ public abstract class AbstractWalletEventListener implements WalletEventListener
         onChange();
     }
 
+    public void onKeyAdded(ECKey key) {
+        onChange();
+    }
+
     /**
      * Called by the other default method implementations when something (anything) changes in the wallet.
      */
     public void onChange() {
     }
+
 }

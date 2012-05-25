@@ -1194,9 +1194,15 @@ public class Wallet implements Serializable {
     /**
      * Adds the given ECKey to the wallet. There is currently no way to delete keys (that would result in coin loss).
      */
-    public synchronized void addKey(ECKey key) {
+    public synchronized void addKey(final ECKey key) {
         checkArgument(!keychain.contains(key), "Key already present");
         keychain.add(key);
+        EventListenerInvoker.invoke(eventListeners, new EventListenerInvoker<WalletEventListener>() {
+            @Override
+            public void invoke(WalletEventListener listener) {
+                listener.onKeyAdded(key);
+            }
+        });
     }
 
     /**

@@ -339,18 +339,41 @@ public class PeerGroup {
     }
 
     /**
-     * Link the given wallet to this PeerGroup. This is used for two purposes:
+     * <p>Link the given wallet to this PeerGroup. This is used for three purposes:</p>
      * <ol>
      *   <li>So the wallet receives broadcast transactions.</li>
      *   <li>Announcing pending transactions that didn't get into the chain yet to our peers.</li>
+     *   <li>Set the fast catchup time using {@link PeerGroup#setFastCatchupTimeSecs(long)}, to optimize chain
+     *       download.</li>
      * </ol>
+     * <p>Note that this should be done before chain download commences because if you add a wallet with keys earlier
+     * than the current chain head, the relevant parts of the chain won't be redownloaded for you.</p>
      */
     public synchronized void addWallet(Wallet wallet) {
-        if (wallet == null)
-            throw new IllegalArgumentException("wallet is null");
+        Preconditions.checkNotNull(wallet);
         wallets.add(wallet);
         addEventListener(wallet.getPeerEventListener());
         announcePendingWalletTransactions(Collections.singletonList(wallet), peers);
+
+        // Don't bother downloading block bodies before the oldest keys in all our wallets. Make sure we recalculate
+        // if a key is added. Of course, by then we may have downloaded the chain already. Ideally adding keys would
+        // automatically rewind the block chain and redownload the blocks to find transactions relevant to those keys,
+        // all transparently and in the background. But we are a long way from that yet.
+        wallet.addEventListener(new AbstractWalletEventListener() {
+            @Override
+            public void onKeyAdded(ECKey key) {
+                recalculateFastCatchupTime();
+            }
+        });
+        recalculateFastCatchupTime();
+    }
+
+    private synchronized void recalculateFastCatchupTime() {
+        long earliestKeyTime = Long.MAX_VALUE;
+        for (Wallet w : wallets) {
+            earliestKeyTime = Math.min(earliestKeyTime, w.getEarliestKeyCreationTime());
+        }
+        setFastCatchupTimeSecs(earliestKeyTime);
     }
 
     /**
@@ -736,6 +759,16 @@ public class PeerGroup {
         if (downloadPeer != null) {
             downloadPeer.setFastCatchupTime(secondsSinceEpoch);
         }
+    }
+
+    /**
+     * Returns the current fast catchup time. The contents of blocks before this time won't be downloaded as they
+     * cannot contain any interesting transactions. If you use {@link PeerGroup#addWallet(Wallet)} this just returns
+     * the min of the wallets earliest key times.
+     * @return a time in seconds since the epoch
+     */
+    public synchronized long getFastCatchupTimeSecs() {
+        return fastCatchupTimeSecs;
     }
 
     protected synchronized void handlePeerDeath(final Peer peer) {

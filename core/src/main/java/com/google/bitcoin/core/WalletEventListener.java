@@ -99,4 +99,10 @@ public interface WalletEventListener {
      * @param tx
      */
     void onTransactionConfidenceChanged(Wallet wallet, Transaction tx);
+
+    /**
+     * Called by the {@link Wallet#addKey(ECKey)} method on whatever the calling thread was.
+     * @param key
+     */
+    void onKeyAdded(ECKey key);
 }

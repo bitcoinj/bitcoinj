@@ -24,6 +24,7 @@ import org.junit.Test;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.net.InetSocketAddress;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
@@ -305,6 +306,25 @@ public class PeerGroupTest extends TestWithNetworkConnections {
         peerGroup.addPeer(p3);
         assertTrue(n3.outbound() instanceof InventoryMessage);
         peerGroup.stop();
+    }
+
+    @Test
+    public void testWalletCatchupTime() throws Exception {
+        // Check the fast catchup time was initialized to something around the current runtime. The wallet was
+        // already added to the peer in setup.
+        long time = new Date().getTime() / 1000;
+        assertTrue(peerGroup.getFastCatchupTimeSecs() > time - 10000);
+        Wallet w2 = new Wallet(params);
+        ECKey key1 = new ECKey();
+        key1.setCreationTimeSeconds(time - 86400);  // One day ago.
+        w2.addKey(key1);
+        peerGroup.addWallet(w2);
+        assertEquals(peerGroup.getFastCatchupTimeSecs(), time - 86400);
+        // Adding a key to the wallet should update the fast catchup time.
+        ECKey key2 = new ECKey();
+        key2.setCreationTimeSeconds(time - 100000);
+        w2.addKey(key2);
+        assertEquals(peerGroup.getFastCatchupTimeSecs(), time - 100000);
     }
     
     private void disconnectAndWait(MockNetworkConnection conn) throws IOException, InterruptedException {
