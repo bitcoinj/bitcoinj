@@ -44,7 +44,10 @@ public interface BlockStore {
     StoredBlock get(Sha256Hash hash) throws BlockStoreException;
 
     /**
-     * Returns the {@link StoredBlock} that represents the top of the chain of greatest total work.
+     * Returns the {@link StoredBlock} that represents the top of the chain of greatest total work. Note that this
+     * can be arbitrarily expensive, you probably should use {@link com.google.bitcoin.core.BlockChain#getChainHead()}
+     * or perhaps {@link com.google.bitcoin.core.BlockChain#getBestChainHeight()} which will run in constant time and
+     * not take any heavyweight locks.
      */
     StoredBlock getChainHead() throws BlockStoreException;
 
