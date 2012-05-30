@@ -844,22 +844,32 @@ public class Block extends Message {
      * Returns a solved block that builds on top of this one. This exists for unit tests.
      */
     Block createNextBlock(Address to, long time) {
+        return createNextBlock(to, time, EMPTY_BYTES);
+    }
+
+    /**
+     * Returns a solved block that builds on top of this one. This exists for unit tests.
+     * In this variant you can specify a public key (pubkey) for use in generating coinbase blocks.
+     */
+    Block createNextBlock(Address to, long time, byte[] pubKey) {
         Block b = new Block(params);
         b.setDifficultyTarget(difficultyTarget);
-        b.addCoinbaseTransaction(EMPTY_BYTES);
+        b.addCoinbaseTransaction(pubKey);
 
-        // Add a transaction paying 50 coins to the "to" address.
-        Transaction t = new Transaction(params);
-        t.addOutput(new TransactionOutput(params, t, Utils.toNanoCoins(50, 0), to));
-        // The input does not really need to be a valid signature, as long as it has the right general form.
-        TransactionInput input = new TransactionInput(params, t, Script.createInputScript(EMPTY_BYTES, EMPTY_BYTES));
-        // Importantly the outpoint hash cannot be zero as that's how we detect a coinbase transaction in isolation
-        // but it must be unique to avoid 'different' transactions looking the same.
-        byte[] counter = new byte[32];
-        counter[0] = (byte) txCounter++;
-        input.getOutpoint().setHash(new Sha256Hash(counter));
-        t.addInput(input);
-        b.addTransaction(t);
+        if (to != null) {
+            // Add a transaction paying 50 coins to the "to" address.
+            Transaction t = new Transaction(params);
+            t.addOutput(new TransactionOutput(params, t, Utils.toNanoCoins(50, 0), to));
+            // The input does not really need to be a valid signature, as long as it has the right general form.
+            TransactionInput input = new TransactionInput(params, t, Script.createInputScript(EMPTY_BYTES, EMPTY_BYTES));
+            // Importantly the outpoint hash cannot be zero as that's how we detect a coinbase transaction in isolation
+            // but it must be unique to avoid 'different' transactions looking the same.
+            byte[] counter = new byte[32];
+            counter[0] = (byte) txCounter++;
+            input.getOutpoint().setHash(new Sha256Hash(counter));
+            t.addInput(input);
+            b.addTransaction(t);
+        }
 
         b.setPrevBlockHash(getHash());
         b.setTime(time);
@@ -875,6 +885,14 @@ public class Block extends Message {
     // Visible for testing.
     public Block createNextBlock(Address to) {
         return createNextBlock(to, Utils.now().getTime() / 1000);
+    }
+
+    /**
+     * Create a block sending 50BTC as a coinbase transaction to the public key specified.
+     * This method is intended for test use only.
+     */
+    Block createNextBlockWithCoinbase(byte[] pubKey) {
+        return createNextBlock(null, Utils.now().getTime() / 1000, pubKey);
     }
 
     /**

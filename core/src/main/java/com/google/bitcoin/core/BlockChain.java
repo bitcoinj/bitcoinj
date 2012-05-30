@@ -511,34 +511,6 @@ public class BlockChain {
     }
 
     /**
-     * For the transactions in the given block, update the txToWalletMap such that each wallet maps to a list of
-     * transactions for which it is relevant.
-     */
-    private void scanTransactions(Block block, HashMap<Wallet, List<Transaction>> walletToTxMap)
-            throws VerificationException {
-        for (Transaction tx : block.transactions) {
-            try {
-                for (Wallet wallet : wallets) {
-                    if (tx.isCoinBase())
-                        continue;
-                    boolean shouldReceive = wallet.isTransactionRelevant(tx, true);
-                    if (!shouldReceive) continue;
-                    List<Transaction> txList = walletToTxMap.get(wallet);
-                    if (txList == null) {
-                        txList = new LinkedList<Transaction>();
-                        walletToTxMap.put(wallet, txList);
-                    }
-                    txList.add(tx);
-                }
-            } catch (ScriptException e) {
-                // We don't want scripts we don't understand to break the block chain so just note that this tx was
-                // not scanned here and continue.
-                log.warn("Failed to parse a script: " + e.toString());
-            }
-        }
-    }
-
-    /**
      * Returns true if any connected wallet considers any transaction in the block to be relevant.
      */
     private boolean containsRelevantTransactions(Block block) {

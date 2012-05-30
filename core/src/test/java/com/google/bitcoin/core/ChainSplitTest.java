@@ -16,10 +16,13 @@
 
 package com.google.bitcoin.core;
 
+import com.google.bitcoin.core.TransactionConfidence.ConfidenceType;
 import com.google.bitcoin.store.MemoryBlockStore;
 import com.google.bitcoin.utils.BriefLogFormatter;
 import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -27,6 +30,8 @@ import java.util.ArrayList;
 import static org.junit.Assert.*;
 
 public class ChainSplitTest {
+    private static final Logger log = LoggerFactory.getLogger(ChainSplitTest.class);
+
     private NetworkParameters unitTestParams;
     private Wallet wallet;
     private BlockChain chain;
@@ -427,5 +432,116 @@ public class ChainSplitTest {
         assertEquals(newWork1.add(extraWork), txns.get(0).getConfidence().getWorkDone());
         assertEquals(newWork2.add(extraWork), txns.get(1).getConfidence().getWorkDone());
         assertEquals(newWork3.add(extraWork), txns.get(2).getConfidence().getWorkDone());
+    }
+
+    @Test
+    public void coinbaseDeath() throws Exception {
+        // Check that a coinbase tx is marked as dead after a reorg rather than inactive as normal non-double-spent transactions would be.
+        // Also check that a dead coinbase on a sidechain is resurrected if the sidechain becomes the best chain once more.
+        final ArrayList<Transaction> txns = new ArrayList<Transaction>(3);
+        wallet.addEventListener(new AbstractWalletEventListener() {
+            @Override
+            public void onCoinsReceived(Wallet wallet, Transaction tx, BigInteger prevBalance, BigInteger newBalance) {
+                txns.add(tx);
+            }
+        });
+
+        // Start by building three blocks on top of the genesis block.
+        // The first block contains a normal transaction that spends to coinTo.
+        // The second block contains a coinbase transaction that spends to coinTo2.
+        // The third block contains a normal transaction that spends to coinTo.
+        Block b1 = unitTestParams.genesisBlock.createNextBlock(coinsTo);
+        Block b2 = b1.createNextBlockWithCoinbase(wallet.keychain.get(1).getPubKey());
+        Block b3 = b2.createNextBlock(coinsTo);
+
+        log.debug("Adding block b1");
+        assertTrue(chain.add(b1));
+        log.debug("Adding block b2");
+        assertTrue(chain.add(b2));
+        log.debug("Adding block b3");
+        assertTrue(chain.add(b3));
+
+        // We now have the following chain:
+        //     genesis -> b1 -> b2 -> b3
+        //
+
+        // Check we have seen the three transactions.
+        assertEquals(3, txns.size());
+
+        // Check the coinbase transaction is building and in the unspent pool only.
+        assertEquals(ConfidenceType.BUILDING, txns.get(1).getConfidence().getConfidenceType());
+        assertTrue(!wallet.pending.containsKey(txns.get(1).getHash()));
+        assertTrue(wallet.unspent.containsKey(txns.get(1).getHash()));
+        assertTrue(!wallet.spent.containsKey(txns.get(1).getHash()));
+        assertTrue(!wallet.inactive.containsKey(txns.get(1).getHash()));
+        assertTrue(!wallet.dead.containsKey(txns.get(1).getHash()));
+
+        // Fork like this:
+        //
+        //     genesis -> b1 -> b2 -> b3
+        //                  \-> b4 -> b5 -> b6
+        //
+        // The b4/ b5/ b6 is now the best chain
+        Block b4 = b1.createNextBlock(someOtherGuy);
+        Block b5 = b4.createNextBlock(someOtherGuy);
+        Block b6 = b5.createNextBlock(someOtherGuy);
+
+        log.debug("Adding block b4");
+        assertTrue(chain.add(b4));
+        log.debug("Adding block b5");
+        assertTrue(chain.add(b5));
+        log.debug("Adding block b6");
+        assertTrue(chain.add(b6));
+
+        // Transaction 1 (in block b2) is now on a side chain and should have confidence type of dead and be in the dead pool only
+        assertEquals(TransactionConfidence.ConfidenceType.DEAD, txns.get(1).getConfidence().getConfidenceType());
+        assertTrue(!wallet.pending.containsKey(txns.get(1).getHash()));
+        assertTrue(!wallet.unspent.containsKey(txns.get(1).getHash()));
+        assertTrue(!wallet.spent.containsKey(txns.get(1).getHash()));
+        assertTrue(!wallet.inactive.containsKey(txns.get(1).getHash()));
+        assertTrue(wallet.dead.containsKey(txns.get(1).getHash()));
+
+        // ... and back to the first chain.
+        Block b7 = b3.createNextBlock(coinsTo);
+        Block b8 = b7.createNextBlock(coinsTo);
+
+        log.debug("Adding block b7");
+        assertTrue(chain.add(b7));
+        log.debug("Adding block b8");
+        assertTrue(chain.add(b8));
+
+        //
+        //     genesis -> b1 -> b2 -> b3 -> b7 -> b8
+        //                  \-> b4 -> b5 -> b6
+        //
+
+        // The coinbase transaction should now have confidence type of building once more and in the unspent pool only.
+        assertEquals(TransactionConfidence.ConfidenceType.BUILDING, txns.get(1).getConfidence().getConfidenceType());
+        assertTrue(!wallet.pending.containsKey(txns.get(1).getHash()));
+        assertTrue(wallet.unspent.containsKey(txns.get(1).getHash()));
+        assertTrue(!wallet.spent.containsKey(txns.get(1).getHash()));
+        assertTrue(!wallet.inactive.containsKey(txns.get(1).getHash()));
+        assertTrue(!wallet.dead.containsKey(txns.get(1).getHash()));
+
+        // ... make the side chain dominant again.
+        Block b9 = b6.createNextBlock(coinsTo);
+        Block b10 = b9.createNextBlock(coinsTo);
+
+        log.debug("Adding block b9");
+        assertTrue(chain.add(b9));
+        log.debug("Adding block b10");
+        assertTrue(chain.add(b10));
+        //
+        //     genesis -> b1 -> b2 -> b3 -> b7 -> b8
+        //                  \-> b4 -> b5 -> b6 -> b9 -> b10
+        //
+
+        // The coinbase transaction should now have the confidence type of dead and be in the dead pool only.
+        assertEquals(TransactionConfidence.ConfidenceType.DEAD, txns.get(1).getConfidence().getConfidenceType());
+        assertTrue(!wallet.pending.containsKey(txns.get(1).getHash()));
+        assertTrue(!wallet.unspent.containsKey(txns.get(1).getHash()));
+        assertTrue(!wallet.spent.containsKey(txns.get(1).getHash()));
+        assertTrue(!wallet.inactive.containsKey(txns.get(1).getHash()));
+        assertTrue(wallet.dead.containsKey(txns.get(1).getHash()));
     }
 }

@@ -123,7 +123,7 @@ public class Wallet implements Serializable {
      * Note that in the case where a transaction appears in both the best chain and a side chain as well, it is not
      * placed in this map. It's an error for a transaction to be in both the inactive pool and unspent/spent.
      */
-    private Map<Sha256Hash, Transaction> inactive;
+    Map<Sha256Hash, Transaction> inactive;
 
     /**
      * A dead transaction is one that's been overridden by a double spend. Such a transaction is pending except it
@@ -131,7 +131,7 @@ public class Wallet implements Serializable {
      * should nearly never happen in normal usage. Dead transactions can be "resurrected" by re-orgs just like any
      * other. Dead transactions are not in the pending pool.
      */
-    private Map<Sha256Hash, Transaction> dead;
+    Map<Sha256Hash, Transaction> dead;
 
     /**
      * A list of public/private EC keys owned by this user.
@@ -461,10 +461,7 @@ public class Wallet implements Serializable {
      */
     public synchronized boolean isTransactionRelevant(Transaction tx,
                                                       boolean includeDoubleSpending) throws ScriptException {
-        // For now we never consider coinbase transactions relevant, because we have not implemented the rules for
-        // tracking when to spend them, so we must avoid them entering the wallet.
-        return !tx.isCoinBase() &&
-               tx.getValueSentFromMe(this).compareTo(BigInteger.ZERO) > 0 ||
+        return tx.getValueSentFromMe(this).compareTo(BigInteger.ZERO) > 0 ||
                tx.getValueSentToMe(this).compareTo(BigInteger.ZERO) > 0 ||
                (includeDoubleSpending && (findDoubleSpendAgainstPending(tx) != null));
     }
@@ -507,7 +504,7 @@ public class Wallet implements Serializable {
         BigInteger valueDifference = valueSentToMe.subtract(valueSentFromMe);
 
         if (!reorg) {
-            log.info("Received tx{} for {} BTC: {}", new Object[]{sideChain ? " on a side chain" : "",
+            log.info("Received tx {} for {} BTC: {}", new Object[]{sideChain ? " on a side chain" : "",
                     bitcoinValueToFriendlyString(valueDifference), tx.getHashAsString()});
         }
 
@@ -632,16 +629,30 @@ public class Wallet implements Serializable {
      */
     private void processTxFromBestChain(Transaction tx) throws VerificationException, ScriptException {
         // This TX may spend our existing outputs even though it was not pending. This can happen in unit
-        // tests, if keys are moved between wallets, and if we're catching up to the chain given only a set of keys.
+        // tests, if keys are moved between wallets, if we're catching up to the chain given only a set of keys,
+        // or if a dead coinbase transaction has moved back onto the main chain.
+        boolean isDeadCoinbase = tx.isCoinBase() && dead.containsKey(tx.getHash());
+        if (isDeadCoinbase) {
+            // There is a dead coinbase tx being received on the best chain.
+            // A coinbase tx is made dead when it moves to a side chain but it can be switched back on a reorg and
+            // 'resurrected' back to spent or unspent.
+            // Take it out of the dead pool.
+            // The receive method will then treat it as a new transaction and put it in spent or unspent as appropriate.
+            // TODO - Theorectically it could also be in the dead pool if it was double spent - this needs testing.
+            log.info("  coinbase tx {} <-dead", tx.getHashAsString() + ", confidence = " + tx.getConfidence().getConfidenceType().name());
+            dead.remove(tx.getHash());
+        }
+
         updateForSpends(tx, true);
+
         if (!tx.getValueSentToMe(this).equals(BigInteger.ZERO)) {
             // It's sending us coins.
-            log.info("  new tx ->unspent");
+            log.info("  new tx {} ->unspent");
             boolean alreadyPresent = unspent.put(tx.getHash(), tx) != null;
             checkState(!alreadyPresent, "TX was received twice");
         } else if (!tx.getValueSentFromMe(this).equals(BigInteger.ZERO)) {
             // It spent some of our coins and did not send us any.
-            log.info("  new tx ->spent");
+            log.info("  new tx {} ->spent");
             boolean alreadyPresent = spent.put(tx.getHash(), tx) != null;
             checkState(!alreadyPresent, "TX was received twice");
         } else {
@@ -1153,6 +1164,10 @@ public class Wallet implements Serializable {
         BigInteger valueGathered = BigInteger.ZERO;
         List<TransactionOutput> gathered = new LinkedList<TransactionOutput>();
         for (Transaction tx : unspent.values()) {
+            // Do not try and spend coinbases that were mined too recently, the protocol forbids it.
+            if (!tx.isMature()) {
+                continue;
+            }
             for (TransactionOutput output : tx.getOutputs()) {
                 if (!output.isAvailableForSpending()) continue;
                 if (!output.isMine(this)) continue;
@@ -1306,6 +1321,11 @@ public class Wallet implements Serializable {
     public synchronized BigInteger getBalance(BalanceType balanceType) {
         BigInteger available = BigInteger.ZERO;
         for (Transaction tx : unspent.values()) {
+            // For an 'available to spend' balance exclude coinbase transactions that have not yet matured.
+            if (balanceType == BalanceType.AVAILABLE && !tx.isMature()) {
+                continue;
+            }
+
             for (TransactionOutput output : tx.getOutputs()) {
                 if (!output.isMine(this)) continue;
                 if (!output.isAvailableForSpending()) continue;
@@ -1430,6 +1450,14 @@ public class Wallet implements Serializable {
         all.putAll(unspent);
         all.putAll(spent);
         all.putAll(inactive);
+
+        // Dead coinbase transactions are potentially resurrected so added to the list of tx to process.
+        for (Transaction tx : dead.values()) {
+            if (tx.isCoinBase()) {
+                all.put(tx.getHash(), tx);
+            }
+        }
+
         for (Transaction tx : all.values()) {
             Collection<Sha256Hash> appearsIn = tx.getAppearsInHashes();
             checkNotNull(appearsIn);
@@ -1502,11 +1530,32 @@ public class Wallet implements Serializable {
                 spent.put(tx.getHash(), tx);
             }
         }
+
         // Inform all transactions that exist only in the old chain that they have moved, so they can update confidence
         // and timestamps. Transactions will be told they're on the new best chain when the blocks are replayed.
         for (Transaction tx : onlyOldChainTransactions.values()) {
             tx.notifyNotOnBestChain();
+
+            // Kill any coinbase transactions that are only in the old chain.
+            // These transactions are no longer valid.
+            if (tx.isCoinBase()) {
+                // Move the transaction to the dead pool.
+                if (unspent.containsKey(tx.getHash())) {
+                    log.info("  coinbase tx {} unspent->dead", tx.getHashAsString());
+                    unspent.remove(tx.getHash());
+                } else if (spent.containsKey(tx.getHash())) {
+                    log.info("  coinbase tx {} spent->dead", tx.getHashAsString());
+                    // TODO Remove any dependent child transactions of the just removed coinbase transaction.
+                    spent.remove(tx.getHash());
+                }
+                dead.put(tx.getHash(), tx);
+
+                // Set transaction confidence to dead and notify listeners.
+                tx.getConfidence().setConfidenceType(ConfidenceType.DEAD);
+                invokeOnTransactionConfidenceChanged(tx);
+            }
         }
+
         // Now replay the act of receiving the blocks that were previously in a side chain. This will:
         //   - Move any transactions that were pending and are now accepted into the right bucket.
         //   - Connect the newly active transactions.
@@ -1545,6 +1594,7 @@ public class Wallet implements Serializable {
                     log.info("  containing tx {}", tx.getHashAsString());
                 }
             }
+
             if (!txns.isEmpty()) {
                 // Add the transactions to the new blocks.
                 for (Transaction t : txns) {
@@ -1615,7 +1665,15 @@ public class Wallet implements Serializable {
     }
 
     private void reprocessUnincludedTxAfterReorg(Map<Sha256Hash, Transaction> pool, Transaction tx) {
-        log.info("TX {}", tx.getHashAsString());
+        log.info("TX {}", tx.getHashAsString() + ", confidence = " + tx.getConfidence().getConfidenceType().name());
+
+        boolean isDeadCoinbase = tx.isCoinBase() && ConfidenceType.DEAD == tx.getConfidence().getConfidenceType();
+
+        // Dead coinbase transactions on a side chain stay dead.
+        if (isDeadCoinbase) {
+            return;
+        }
+
         int numInputs = tx.getInputs().size();
         int noSuchTx = 0;
         int success = 0;
@@ -1624,11 +1682,6 @@ public class Wallet implements Serializable {
         // bucket if all their outputs got spent.
         Set<Transaction> connectedTransactions = new TreeSet<Transaction>();
         for (TransactionInput input : tx.getInputs()) {
-            if (input.isCoinBase()) {
-                // Input is not in our wallet so there is "no such input tx", bit of an abuse.
-                noSuchTx++;
-                continue;
-            }
             TransactionInput.ConnectionResult result = input.connect(pool, TransactionInput.ConnectMode.ABORT_ON_CONFLICT);
             if (result == TransactionInput.ConnectionResult.SUCCESS) {
                 success++;
@@ -1653,12 +1706,14 @@ public class Wallet implements Serializable {
         }
         if (isDead) return;
 
+        // If all inputs do not appear in this wallet move to inactive.
         if (noSuchTx == numInputs) {
-            log.info("   ->inactive", tx.getHashAsString());
+            log.info("   ->inactive", tx.getHashAsString() + ", confidence = " + tx.getConfidence().getConfidenceType().name());
             inactive.put(tx.getHash(), tx);
+            dead.remove(tx.getHash());
         } else if (success == numInputs - noSuchTx) {
             // All inputs are either valid for spending or don't come from us. Miners are trying to reinclude it.
-            log.info("   ->pending", tx.getHashAsString());
+            log.info("   ->pending", tx.getHashAsString() + ", confidence = " + tx.getConfidence().getConfidenceType().name());
             pending.put(tx.getHash(), tx);
             dead.remove(tx.getHash());
         }
@@ -1678,7 +1733,6 @@ public class Wallet implements Serializable {
             }
         });
     }
-
 
     /**
      * Returns an immutable view of the transactions currently waiting for network confirmations.

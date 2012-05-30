@@ -54,7 +54,6 @@ public class NetworkParameters implements Serializable {
      */
     public static final String ID_TESTNET = "org.bitcoin.test";
 
-
     // TODO: Seed nodes and checkpoint values should be here as well.
 
     /**
@@ -102,6 +101,11 @@ public class NetworkParameters implements Serializable {
      * by looking at the port number.
      */
     private String id;
+
+    /**
+     * The depth of blocks required for a coinbase transaction to be spendable.
+     */
+    private int spendableCoinbaseDepth;
 
     /**
      * The version codes that prefix addresses which are acceptable on this network. Although Satoshi intended these to
@@ -153,6 +157,7 @@ public class NetworkParameters implements Serializable {
         n.genesisBlock.setTime(1296688602L);
         n.genesisBlock.setDifficultyTarget(0x1d07fff8L);
         n.genesisBlock.setNonce(384568319);
+        n.setSpendableCoinbaseDepth(5);
         n.id = ID_TESTNET;
         String genesisHash = n.genesisBlock.getHashAsString();
         checkState(genesisHash.equals("00000007199508e34a9ff81e6ec0c477a4cccff2a4767a8eee39c11db367b008"),
@@ -182,6 +187,7 @@ public class NetworkParameters implements Serializable {
         n.genesisBlock.setDifficultyTarget(0x1d00ffffL);
         n.genesisBlock.setTime(1231006505L);
         n.genesisBlock.setNonce(2083236893);
+        n.setSpendableCoinbaseDepth(120);
         n.id = ID_PRODNET;
         String genesisHash = n.genesisBlock.getHashAsString();
         checkState(genesisHash.equals("000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f"),
@@ -232,5 +238,13 @@ public class NetworkParameters implements Serializable {
         } else {
             return null;
         }
+    }
+
+    public int getSpendableCoinbaseDepth() {
+        return spendableCoinbaseDepth;
+    }
+
+    public void setSpendableCoinbaseDepth(int coinbaseDepth) {
+        this.spendableCoinbaseDepth = coinbaseDepth;
     }
 }
