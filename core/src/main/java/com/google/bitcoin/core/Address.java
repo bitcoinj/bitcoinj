@@ -37,6 +37,11 @@ package com.google.bitcoin.core;
  */
 public class Address extends VersionedChecksummedBytes {
     /**
+     * An address is a RIPEMD160 hash of a public key, therefore is always 160 bits or 20 bytes.
+     */
+    public static final int LENGTH = 20;
+
+    /**
      * Construct an address from parameters and the hash160 form. Example:<p>
      *
      * <pre>new Address(NetworkParameters.prodNet(), Hex.decode("4a22c3c4cbb31e4d03b15550636762bda0baf85a"));</pre>

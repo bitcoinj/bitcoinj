@@ -55,9 +55,9 @@ public abstract class ChildMessage extends Message {
 
     public void setParent(Message parent) {
         if (this.parent != null && this.parent != parent && parent != null) {
-            //after old parent is unlinked it won't be able to receive notice if this ChildMessage
-            //changes internally.  To be safe we invalidate the parent cache to ensure it rebuilds
-            //manually on serialization.
+            // After old parent is unlinked it won't be able to receive notice if this ChildMessage
+            // changes internally.  To be safe we invalidate the parent cache to ensure it rebuilds
+            // manually on serialization.
             this.parent.unCache();
         }
         this.parent = parent;

@@ -55,6 +55,6 @@ public class ScriptTest {
     public void testIp() throws Exception {
         byte[] bytes = Hex.decode("41043e96222332ea7848323c08116dddafbfa917b8e37f0bdf63841628267148588a09a43540942d58d49717ad3fabfe14978cf4f0a8b84d2435dad16e9aa4d7f935ac");
         Script s = new Script(params, bytes, 0, bytes.length);
-        assertTrue(s.isSentToIP());
+        assertTrue(s.isSentToRawPubKey());
     }
 }

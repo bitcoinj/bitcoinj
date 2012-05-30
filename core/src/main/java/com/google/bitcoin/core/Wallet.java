@@ -219,7 +219,6 @@ public class Wallet implements Serializable {
         return params;
     }
 
-
     /**
      * Returns a wallet deserialized from the given file.
      */
@@ -456,7 +455,10 @@ public class Wallet implements Serializable {
      */
     public synchronized boolean isTransactionRelevant(Transaction tx,
                                                       boolean includeDoubleSpending) throws ScriptException {
-        return tx.getValueSentFromMe(this).compareTo(BigInteger.ZERO) > 0 ||
+        // For now we never consider coinbase transactions relevant, because we have not implemented the rules for
+        // tracking when to spend them, so we must avoid them entering the wallet.
+        return !tx.isCoinBase() &&
+               tx.getValueSentFromMe(this).compareTo(BigInteger.ZERO) > 0 ||
                tx.getValueSentToMe(this).compareTo(BigInteger.ZERO) > 0 ||
                (includeDoubleSpending && (findDoubleSpendAgainstPending(tx) != null));
     }

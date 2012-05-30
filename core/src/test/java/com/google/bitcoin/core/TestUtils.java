@@ -41,17 +41,36 @@ public class TestUtils {
         prevTx.addOutput(prevOut);
         // Connect it.
         t.addInput(prevOut);
+        // Serialize/deserialize to ensure internal state is stripped, as if it had been read from the wire.
+        return roundTripTransaction(params, t);
+    }
 
-        // roundtrip tx
+    public static Transaction createFakeTx(NetworkParameters params, BigInteger nanocoins, ECKey to) throws IOException, ProtocolException {
+        // Create a fake TX of sufficient realism to exercise the unit tests. Two outputs, one to us, one to somewhere
+        // else to simulate change.
+        Transaction t = new Transaction(params);
+        TransactionOutput outputToMe = new TransactionOutput(params, t, nanocoins, to);
+        t.addOutput(outputToMe);
+        TransactionOutput change = new TransactionOutput(params, t, Utils.toNanoCoins(1, 11), new ECKey());
+        t.addOutput(change);
+        // Make a previous tx simply to send us sufficient coins. This prev tx is not really valid but it doesn't
+        // matter for our purposes.
+        Transaction prevTx = new Transaction(params);
+        TransactionOutput prevOut = new TransactionOutput(params, prevTx, nanocoins, to);
+        prevTx.addOutput(prevOut);
+        // Connect it.
+        t.addInput(prevOut);
+        // Serialize/deserialize to ensure internal state is stripped, as if it had been read from the wire.
         return roundTripTransaction(params, t);
     }
 
     /**
      * @return Transaction[] Transaction[0] is a feeder transaction, supplying BTC to Transaction[1]
      */
-    public static Transaction[] createFakeTx(NetworkParameters params, BigInteger nanocoins, Address to, Address from) throws IOException, ProtocolException {
-        // Create fake TXes of sufficient realism to exercise the unit tests. This transaction send BTC from the from address, to the to address
-        // with to one to somewhere else to simulate change.
+    public static Transaction[] createFakeTx(NetworkParameters params, BigInteger nanocoins,
+                                             Address to, Address from) throws IOException, ProtocolException {
+        // Create fake TXes of sufficient realism to exercise the unit tests. This transaction send BTC from the
+        // from address, to the to address with to one to somewhere else to simulate change.
         Transaction t = new Transaction(params);
         TransactionOutput outputToMe = new TransactionOutput(params, t, nanocoins, to);
         t.addOutput(outputToMe);
@@ -81,11 +100,9 @@ public class TestUtils {
      */
     private static Transaction roundTripTransaction(NetworkParameters params, Transaction tx) throws IOException, ProtocolException {
         BitcoinSerializer bs = new BitcoinSerializer(params, true);
-
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         bs.serialize(tx, bos);
-
-        return (Transaction)bs.deserialize(new ByteArrayInputStream(bos.toByteArray()));
+        return (Transaction) bs.deserialize(new ByteArrayInputStream(bos.toByteArray()));
     }
 
     public static class DoubleSpends {

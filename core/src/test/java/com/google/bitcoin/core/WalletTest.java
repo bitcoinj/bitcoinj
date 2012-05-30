@@ -409,7 +409,7 @@ public class WalletTest {
         // t1 spends to our wallet. t2 double spends somewhere else.
         wallet.receivePending(doubleSpends.t1);
         assertEquals(TransactionConfidence.ConfidenceType.NOT_SEEN_IN_CHAIN,
-                     doubleSpends.t1.getConfidence().getConfidenceType());
+                doubleSpends.t1.getConfidence().getConfidenceType());
         wallet.receiveFromBlock(doubleSpends.t2, null, BlockChain.NewBlockType.BEST_CHAIN);
         assertEquals(TransactionConfidence.ConfidenceType.OVERRIDDEN_BY_DOUBLE_SPEND, 
                      doubleSpends.t1.getConfidence().getConfidenceType());
@@ -713,6 +713,29 @@ public class WalletTest {
         assertEquals(b3.getHash(), wallet.getLastBlockSeenHash());
     }
 
+    @Test
+    public void pubkeyOnlyScripts() throws Exception {
+        // Verify that we support outputs like OP_PUBKEY and the corresponding inputs.
+        ECKey key1 = new ECKey();
+        wallet.addKey(key1);
+        BigInteger value = toNanoCoins(5, 0);
+        Transaction t1 = createFakeTx(params, value, key1);
+        wallet.receivePending(t1);
+        // TX should have been seen as relevant.
+        assertEquals(value, wallet.getBalance(Wallet.BalanceType.ESTIMATED));
+        assertEquals(BigInteger.ZERO, wallet.getBalance(Wallet.BalanceType.AVAILABLE));
+        Block b1 = createFakeBlock(params, blockStore, t1).block;
+        chain.add(b1);
+        // TX should have been seen as relevant, extracted and processed.
+        assertEquals(value, wallet.getBalance(Wallet.BalanceType.AVAILABLE));
+        // Spend it and ensure we can spend the <key> OP_CHECKSIG output correctly.
+        Transaction t2 = wallet.createSend(new ECKey().toAddress(params), value);
+        assertNotNull(t2);
+        // TODO: This code is messy, improve the Script class and fixinate!
+        assertEquals(t2.toString(), 1, t2.getInputs().get(0).getScriptSig().chunks.size());
+        assertTrue(t2.getInputs().get(0).getScriptSig().chunks.get(0).length > 50);
+        System.out.println(t2);
+    }
 
     // Support for offline spending is tested in PeerGroupTest
 }

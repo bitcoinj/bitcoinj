@@ -81,6 +81,9 @@ public class WalletTool {
             "  --action=SEND        Creates a transaction with the given --output from this wallet and broadcasts.\n" +
             "                       You can repeat --output=address:value multiple times, eg:\n" +
             "                         --output=1GthXFQMktFLWdh5EPNGqbq3H6WdG8zsWj:1.245\n" +
+            "                       If the output destination starts with 04 and is 65 bytes (130 chars) it will be\n" +
+            "                       treated as a public key instead of an address and the send will use \n" +
+            "                       <key> CHECKSIG as the script.\n" +
 
             "\n>>> WAITING\n" +
             "You can wait for the condition specified by the --waitfor flag to become true. Transactions and new\n" +
@@ -331,10 +334,19 @@ public class WalletTool {
                     System.err.println("Malformed output specification, must have two parts separated by :");
                     return;
                 }
+                String destination = parts[0];
                 try {
-                    Address addr = new Address(params, parts[0]);
                     BigInteger value = Utils.toNanoCoins(parts[1]);
-                    t.addOutput(value, addr);
+                    if (destination.startsWith("04") && destination.length() == 130) {
+                        // Treat as a raw public key.
+                        BigInteger pubKey = new BigInteger(destination, 16);
+                        ECKey key = new ECKey(null, pubKey);
+                        t.addOutput(value, key);
+                    } else {
+                        // Treat as an address.
+                        Address addr = new Address(params, destination);
+                        t.addOutput(value, addr);
+                    }
                 } catch (WrongNetworkException e) {
                     System.err.println("Malformed output specification, address is for a different network: " + parts[0]);
                     return;

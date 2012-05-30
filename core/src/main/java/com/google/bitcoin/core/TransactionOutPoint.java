@@ -133,6 +133,24 @@ public class TransactionOutPoint extends ChildMessage implements Serializable {
         return getConnectedOutput().getScriptPubKey().getPubKeyHash();
     }
 
+    /**
+     * Returns the ECKey identified in the connected output, for either pay-to-address scripts or pay-to-key scripts.
+     * If the script forms cannot be understood, throws ScriptException.
+     * @return an ECKey or null if the connected key cannot be found in the wallet.
+     */
+    public ECKey getConnectedKey(Wallet wallet) throws ScriptException {
+        Script connectedScript = getConnectedOutput().getScriptPubKey();
+        if (connectedScript.isSentToAddress()) {
+            byte[] addressBytes = connectedScript.getPubKeyHash();
+            return wallet.findKeyFromPubHash(addressBytes);
+        } else if (connectedScript.isSentToRawPubKey()) {
+            byte[] pubkeyBytes = connectedScript.getPubKey();
+            return wallet.findKeyFromPubKey(pubkeyBytes);
+        } else {
+            throw new ScriptException("Could not understand form of connected output script: " + connectedScript);
+        }
+    }
+
     @Override
     public String toString() {
         return "outpoint " + hash.toString() + ":" + index;
@@ -140,7 +158,7 @@ public class TransactionOutPoint extends ChildMessage implements Serializable {
 
 
     /**
-     * @return the hash
+     * Returns the hash of the transaction this outpoint references/spends/is connected to.
      */
     public Sha256Hash getHash() {
         maybeParse();

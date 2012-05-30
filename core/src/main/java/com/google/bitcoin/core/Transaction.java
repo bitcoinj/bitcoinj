@@ -307,7 +307,7 @@ public class Transaction extends ChildMessage implements Serializable {
         // This is tested in WalletTest.
         BigInteger v = BigInteger.ZERO;
         for (TransactionInput input : inputs) {
-            // This input is taking value from an transaction in our wallet. To discover the value,
+            // This input is taking value from a transaction in our wallet. To discover the value,
             // we must find the connected transaction.
             TransactionOutput connected = input.getConnectedOutput(wallet.unspent);
             if (connected == null)
@@ -549,7 +549,13 @@ public class Transaction extends ChildMessage implements Serializable {
             s.append("from ");
 
             try {
-                s.append(in.getScriptSig().getFromAddress().toString());
+                Script scriptSig = in.getScriptSig();
+                if (scriptSig.chunks.size() == 2)
+                    s.append(scriptSig.getFromAddress().toString());
+                else if (scriptSig.chunks.size() == 1)
+                    s.append("[sig:" + bytesToHexString(scriptSig.getPubKey()) + "]");
+                else
+                    s.append("???");
                 s.append(" / ");
                 s.append(in.getOutpoint().toString());
             } catch (Exception e) {
@@ -561,8 +567,14 @@ public class Transaction extends ChildMessage implements Serializable {
             s.append("       ");
             s.append("to ");
             try {
-                Address toAddr = new Address(params, out.getScriptPubKey().getPubKeyHash());
-                s.append(toAddr.toString());
+                Script scriptPubKey = out.getScriptPubKey();
+                if (scriptPubKey.isSentToAddress()) {
+                    s.append(scriptPubKey.getToAddress().toString());
+                } else if (scriptPubKey.isSentToRawPubKey()) {
+                    s.append("[pubkey:");
+                    s.append(bytesToHexString(scriptPubKey.getPubKey()));
+                    s.append("]");
+                }
                 s.append(" ");
                 s.append(bitcoinValueToFriendlyString(out.getValue()));
                 s.append(" BTC");
@@ -606,11 +618,7 @@ public class Transaction extends ChildMessage implements Serializable {
      */
     public void addOutput(TransactionOutput to) {
         unCache();
-
-        //these could be merged into one but would need parentTransaction to be cast whenever it was accessed.
         to.setParent(this);
-        to.parentTransaction = this;
-
         outputs.add(to);
         adjustLength(to.length);
     }
@@ -620,6 +628,14 @@ public class Transaction extends ChildMessage implements Serializable {
      */
     public void addOutput(BigInteger value, Address address) {
         addOutput(new TransactionOutput(params, this, value, address));
+    }
+
+    /**
+     * Creates an output that pays to the given pubkey directly (no address) with the given value, and adds it to this
+     * transaction.
+     */
+    public void addOutput(BigInteger value, ECKey pubkey) {
+        addOutput(new TransactionOutput(params, this, value, pubkey));
     }
 
     /**
@@ -652,11 +668,10 @@ public class Transaction extends ChildMessage implements Serializable {
             TransactionInput input = inputs.get(i);
             Preconditions.checkState(input.getScriptBytes().length == 0, "Attempting to sign a non-fresh transaction");
             // Find the signing key we'll need to use.
-            byte[] connectedPubKeyHash = input.getOutpoint().getConnectedPubKeyHash();
-            ECKey key = wallet.findKeyFromPubHash(connectedPubKeyHash);
+            ECKey key = input.getOutpoint().getConnectedKey(wallet);
             // This assert should never fire. If it does, it means the wallet is inconsistent.
             Preconditions.checkNotNull(key, "Transaction exists in wallet that we cannot redeem: %s",
-                                       bytesToHexString(connectedPubKeyHash));
+                                       input.getOutpoint().getHash());
             // Keep the key around for the script creation step below.
             signingKeys[i] = key;
             // The anyoneCanPay feature isn't used at the moment.
@@ -677,14 +692,25 @@ public class Transaction extends ChildMessage implements Serializable {
             }
         }
 
-        // Now we have calculated each signature, go through and create the scripts. Reminder: the script consists of
-        // a signature (over a hash of the transaction) and the complete public key needed to sign for the connected
-        // output.
+        // Now we have calculated each signature, go through and create the scripts. Reminder: the script consists:
+        // 1) For pay-to-address outputs: a signature (over a hash of the simplified transaction) and the complete
+        //    public key needed to sign for the connected output. The output script checks the provided pubkey hashes
+        //    to the address and then checks the signature.
+        // 2) For pay-to-key outputs: just a signature.
         for (int i = 0; i < inputs.size(); i++) {
             TransactionInput input = inputs.get(i);
             Preconditions.checkState(input.getScriptBytes().length == 0);
             ECKey key = signingKeys[i];
-            input.setScriptBytes(Script.createInputScript(signatures[i], key.getPubKey()));
+            Script scriptPubKey = input.getOutpoint().getConnectedOutput().getScriptPubKey();
+            if (scriptPubKey.isSentToAddress()) {
+                input.setScriptBytes(Script.createInputScript(signatures[i], key.getPubKey()));
+            } else if (scriptPubKey.isSentToRawPubKey()) {
+                input.setScriptBytes(Script.createInputScript(signatures[i]));
+            } else {
+                // Should be unreachable - if we don't recognize the type of script we're trying to sign for, we should
+                // have failed above when fetching the key to sign with.
+                throw new RuntimeException("Do not understand script type: " + scriptPubKey);
+            }
         }
 
         // Every input is now complete.
