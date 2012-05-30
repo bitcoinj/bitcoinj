@@ -19,7 +19,6 @@ package com.google.bitcoin.core;
 import com.google.bitcoin.core.WalletTransaction.Pool;
 import com.google.bitcoin.store.WalletProtobufSerializer;
 import com.google.bitcoin.utils.EventListenerInvoker;
-import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -185,7 +184,6 @@ public class Wallet implements Serializable {
      * once written.
      */
     public synchronized void saveToFile(File f) throws IOException {
-        Preconditions.checkArgument(f.isFile());
         FileOutputStream stream = null;
         File temp = null;
         try {
