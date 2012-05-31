@@ -187,7 +187,7 @@ public class Wallet implements Serializable {
         FileOutputStream stream = null;
         File temp = null;
         try {
-            File directory = f.getParentFile();
+            File directory = f.getAbsoluteFile().getParentFile();
             temp = File.createTempFile("wallet", null, directory);
             stream = new FileOutputStream(temp);
             saveToFileStream(stream);
