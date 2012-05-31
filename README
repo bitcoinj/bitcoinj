@@ -5,9 +5,10 @@ To get started, ensure you have the latest JDK installed, and download Maven fro
 Then run "mvn clean package" to compile the software. You can also run "mvn site:site" to generate a website with
 useful information like JavaDocs. The outputs are under the target/ directory.
 
-Now ensure you're running a Bitcoin node locally and run the example app:
+Now try running one of the example apps:
 
-  mvn exec:java -Dexec.mainClass=PingService
+  cd examples
+  mvn exec:java -Dexec.mainClass=com.google.bitcoin.examples.PingService
 
 It will download the block chain and eventually print a Bitcoin address. If you send coins to it,
 you should get them back a few minutes later when a block is solved.
