@@ -253,7 +253,7 @@ public class Peer {
         // likely when we've requested them as part of chain download using fast catchup. We need to add each block to
         // the chain if it pre-dates the fast catchup time. If we go past it, we can stop processing the headers and
         // request the full blocks from that point on instead.
-        Preconditions.checkState(!downloadBlockBodies);
+        Preconditions.checkState(!downloadBlockBodies, toString());
 
         try {
             for (int i = 0; i < m.getBlockHeaders().size(); i++) {
@@ -598,7 +598,6 @@ public class Peer {
         // use the "getheaders" command. Once we find we've gone past the target date, we throw away the downloaded
         // headers and then request the blocks from that point onwards. "getheaders" does not send us an inv, it just
         // sends us the data we requested in a "headers" message.
-        log.info("blockChainDownload({})", toHash.toString());
 
         // TODO: Block locators should be abstracted out rather than special cased here.
         List<Sha256Hash> blockLocator = new ArrayList<Sha256Hash>(51);
@@ -611,6 +610,7 @@ public class Peer {
         // must always put the genesis block as the first entry.
         BlockStore store = blockChain.getBlockStore();
         StoredBlock cursor = blockChain.getChainHead();
+        log.info("blockChainDownload({}) current head = ", toHash.toString(), cursor);
         for (int i = 50; cursor != null && i > 0; i--) {
             blockLocator.add(cursor.getHeader().getHash());
             try {
