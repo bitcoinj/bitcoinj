@@ -522,13 +522,12 @@ public class Transaction extends ChildMessage implements Serializable {
     }
 
     /**
-     * @return A human readable version of the transaction useful for debugging.
+     * A human readable version of the transaction useful for debugging. The format is not guaranteed to be stable.
      */
     public String toString() {
+        // Basic info about the tx.
         StringBuffer s = new StringBuffer();
-        s.append("  ");
-        s.append(getHashAsString());
-        s.append("\n");
+        s.append(String.format("  %s: %s\n", getHashAsString(), getConfidence()));
         if (inputs.size() == 0) {
             s.append("  INCOMPLETE: No inputs!\n");
             return s.toString();

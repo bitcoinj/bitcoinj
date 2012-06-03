@@ -1327,6 +1327,7 @@ public class Wallet implements Serializable {
         builder.append(String.format("  %d pending transactions\n", pending.size()));
         builder.append(String.format("  %d inactive transactions\n", inactive.size()));
         builder.append(String.format("  %d dead transactions\n", dead.size()));
+        builder.append(String.format("Last seen best block: %s\n", getLastBlockSeenHash()));
         // Do the keys.
         builder.append("\nKeys:\n");
         for (ECKey key : keychain) {

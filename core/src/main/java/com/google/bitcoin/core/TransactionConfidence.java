@@ -277,13 +277,11 @@ public class TransactionConfidence implements Serializable {
             case NOT_SEEN_IN_CHAIN:
                 builder.append("Not seen in chain.");
                 break;
-            case BUILDING: 
-                builder.append("Appeared in best chain at height "); 
-                builder.append(getAppearedAtChainHeight());
-                builder.append(".");
+            case BUILDING:
+                builder.append(String.format("Appeared in best chain at height %d, depth %d, work done %s.",
+                        getAppearedAtChainHeight(), getDepthInBlocks(), getWorkDone()));
                 break;
         }
-        
         return builder.toString();
     }
 
