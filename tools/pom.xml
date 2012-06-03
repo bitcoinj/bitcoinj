@@ -39,9 +39,6 @@
               <artifactId>maven-shade-plugin</artifactId>
               <version>1.6</version>
               <configuration>
-                  <excludes>
-                      <!-- bundle all JARs -->
-                  </excludes>
                   <!-- Remove dead classes -->
                   <minimizeJar>true</minimizeJar>
                   <filters>
