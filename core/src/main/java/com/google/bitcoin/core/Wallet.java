@@ -224,7 +224,12 @@ public class Wallet implements Serializable {
      * Returns a wallet deserialized from the given file.
      */
     public static Wallet loadFromFile(File f) throws IOException {
-        return loadFromFileStream(new FileInputStream(f));
+        FileInputStream stream = new FileInputStream(f);
+        try {
+            return loadFromFileStream(stream);
+        } finally {
+            stream.close();
+        }
     }
     
     public boolean isConsistent() {
