@@ -1,9 +1,15 @@
 #!/bin/bash
 
+set -e
+
 # Check if the jar has been built.
-if [ ! -e target/bitcoinj-tools-*.jar ]; then
+if [ ! -e target/bitcoinj-tools-*.jar ] || [[ "$ALWAYS_BUILD_WALLETTOOL" != "" ]]; then
   echo "Compiling WalletTool to a JAR"
-  mvn -q package -DskipTests
+  cd ../core
+  mvn install -DskipTests
+  cd ../tools
+  rm target/bitcoinj-tools-*.jar
+  mvn package -DskipTests
 fi
 
 java -jar target/bitcoinj-tools-*.jar $*
