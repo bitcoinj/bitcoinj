@@ -170,8 +170,13 @@ public class TestUtils {
     }
 
     public static Block makeSolvedTestBlock(NetworkParameters params,
-                                            Block prev) throws BlockStoreException {
+                                            Block prev,
+                                            Transaction... transactions) throws BlockStoreException {
         Block b = prev.createNextBlock(new ECKey().toAddress(params));
+        // Coinbase tx already exists.
+        for (Transaction tx : transactions) {
+            b.addTransaction(tx);
+        }
         b.solve();
         return b;
     }

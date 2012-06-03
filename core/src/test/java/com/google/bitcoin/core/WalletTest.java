@@ -32,8 +32,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import static com.google.bitcoin.core.TestUtils.createFakeBlock;
-import static com.google.bitcoin.core.TestUtils.createFakeTx;
+import static com.google.bitcoin.core.TestUtils.*;
 import static com.google.bitcoin.core.Utils.bitcoinValueToFriendlyString;
 import static com.google.bitcoin.core.Utils.toNanoCoins;
 import static org.junit.Assert.*;
@@ -43,6 +42,7 @@ public class WalletTest {
 
     private Address myAddress;
     private Wallet wallet;
+    private BlockChain chain;
     private BlockStore blockStore;
     private ECKey myKey;
 
@@ -53,7 +53,7 @@ public class WalletTest {
         wallet = new Wallet(params);
         wallet.addKey(myKey);
         blockStore = new MemoryBlockStore(params);
-
+        chain = new BlockChain(params, wallet, blockStore);
         BriefLogFormatter.init();
     }
 
@@ -692,22 +692,23 @@ public class WalletTest {
         Transaction t1 = createFakeTx(params, v1, myAddress);
         Transaction t2 = createFakeTx(params, v2, myAddress);
         Transaction t3 = createFakeTx(params, v3, myAddress);
-        StoredBlock b1 = createFakeBlock(params, blockStore, t1).storedBlock;
-        // TODO for Mike - b2 gets sent to side chain but b1, b2, b3 are all chained together - unrealistic.
-        StoredBlock b2 = createFakeBlock(params, blockStore, t2).storedBlock;
-        StoredBlock b3 = createFakeBlock(params, blockStore, t3).storedBlock;
+
+        Block genesis = blockStore.getChainHead().getHeader();
+        Block b10 = makeSolvedTestBlock(params, genesis, t1);
+        Block b11 = makeSolvedTestBlock(params, genesis, t2);
+        Block b2 = makeSolvedTestBlock(params, b10, t3);
 
         // Receive a block on the best chain - this should set the last block seen hash.
-        wallet.receiveFromBlock(t1, b1, BlockChain.NewBlockType.BEST_CHAIN);
-        assertEquals(b1.getHeader().getHash(), wallet.getLastBlockSeenHash());
+        chain.add(b10);
+        assertEquals(b10.getHash(), wallet.getLastBlockSeenHash());
 
         // Receive a block on the side chain - this should not change the last block seen hash.
-        wallet.receiveFromBlock(t2, b2, BlockChain.NewBlockType.SIDE_CHAIN);
-        assertEquals(b1.getHeader().getHash(), wallet.getLastBlockSeenHash());
+        chain.add(b11);
+        assertEquals(b10.getHash(), wallet.getLastBlockSeenHash());
 
-        // Receive block 3 on the best chain - this should change the last block seen hash.
-        wallet.receiveFromBlock(t3, b3, BlockChain.NewBlockType.BEST_CHAIN);
-        assertEquals(b3.getHeader().getHash(), wallet.getLastBlockSeenHash());
+        // Receive block 2 on the best chain - this should change the last block seen hash.
+        chain.add(b2);
+        assertEquals(b2.getHash(), wallet.getLastBlockSeenHash());
     }
 
 
