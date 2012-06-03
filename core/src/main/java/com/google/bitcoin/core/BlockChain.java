@@ -227,8 +227,14 @@ public class BlockChain {
             // This block connects to the best known block, it is a normal continuation of the system.
             setChainHead(newStoredBlock);
             log.debug("Chain is now {} blocks high", newStoredBlock.getHeight());
-            if (transactions != null)
-                sendTransactionsToWallet(newStoredBlock, NewBlockType.BEST_CHAIN, transactions);
+            // Notify the wallets of the new block, so the depth and workDone of stored transactions can be updated.
+            // The wallets need to know how deep each transaction is so coinbases aren't used before maturity.
+            for (Wallet wallet : wallets) {
+                if (transactions != null) {
+                    sendTransactionsToWallet(newStoredBlock, NewBlockType.BEST_CHAIN, wallet, transactions);
+                }
+                wallet.notifyNewBestBlock(newStoredBlock.getHeader());
+            }
         } else {
             // This block connects to somewhere other than the top of the best known chain. We treat these differently.
             //
@@ -261,7 +267,9 @@ public class BlockChain {
             // If we do, send them to the wallet but state that they are on a side chain so it knows not to try and
             // spend them until they become activated.
             if (transactions != null) {
-                sendTransactionsToWallet(newStoredBlock, NewBlockType.SIDE_CHAIN, transactions);
+                for (Wallet wallet : wallets) {
+                    sendTransactionsToWallet(newStoredBlock, NewBlockType.SIDE_CHAIN, wallet, transactions);
+                }
             }
 
             if (haveNewBestChain)
@@ -349,18 +357,16 @@ public class BlockChain {
         SIDE_CHAIN
     }
 
-    private void sendTransactionsToWallet(StoredBlock block, NewBlockType blockType,
+    private void sendTransactionsToWallet(StoredBlock block, NewBlockType blockType, Wallet wallet,
                                           List<Transaction> transactions) throws VerificationException {
         for (Transaction tx : transactions) {
-            for (Wallet wallet : wallets) {
-                try {
-                    if (wallet.isTransactionRelevant(tx, true))
-                        wallet.receiveFromBlock(tx, block, blockType);
-                } catch (ScriptException e) {
-                    // We don't want scripts we don't understand to break the block chain so just note that this tx was
-                    // not scanned here and continue.
-                    log.warn("Failed to parse a script: " + e.toString());
-                }
+            try {
+                if (wallet.isTransactionRelevant(tx, true))
+                    wallet.receiveFromBlock(tx, block, blockType);
+            } catch (ScriptException e) {
+                // We don't want scripts we don't understand to break the block chain so just note that this tx was
+                // not scanned here and continue.
+                log.warn("Failed to parse a script: " + e.toString());
             }
         }
     }

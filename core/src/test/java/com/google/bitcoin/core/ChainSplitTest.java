@@ -1,5 +1,5 @@
-/**
- * Copyright 2011 Google Inc.
+/*
+ * Copyright 2012 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -294,13 +294,11 @@ public class ChainSplitTest {
             }
         });
 
-        // Start by building three blocks on top of the genesis block.
+        // Start by building three blocks on top of the genesis block. All send to us.
         Block b1 = unitTestParams.genesisBlock.createNextBlock(coinsTo);
         BigInteger work1 = b1.getWork();
-
         Block b2 = b1.createNextBlock(coinsTo2);
         BigInteger work2 = b2.getWork();
-
         Block b3 = b2.createNextBlock(coinsTo2);
         BigInteger work3 = b3.getWork();
 
@@ -382,15 +380,14 @@ public class ChainSplitTest {
             txns.get(1).getConfidence().getWorkDone();
             fail();
         } catch (IllegalStateException e) {}
+
         // ... and back to the first chain.
         Block b7 = b3.createNextBlock(coinsTo);
         BigInteger work7 = b7.getWork();
-
         Block b8 = b7.createNextBlock(coinsTo);
         BigInteger work8 = b7.getWork();
 
         assertTrue(chain.add(b7));
-
         assertTrue(chain.add(b8));
         //
         //     genesis -> b1 -> b2 -> b3 -> b7 -> b8
@@ -409,10 +406,26 @@ public class ChainSplitTest {
         assertEquals(4, txns.get(1).getConfidence().getDepthInBlocks());
         assertEquals(3, txns.get(2).getConfidence().getDepthInBlocks());
 
-        assertEquals(work1.add(work2).add(work3).add(work7).add(work8), txns.get(0).getConfidence().getWorkDone());
-        assertEquals(work2.add(work3).add(work7).add(work8), txns.get(1).getConfidence().getWorkDone());
-        assertEquals(work3.add(work7).add(work8), txns.get(2).getConfidence().getWorkDone());
+        BigInteger newWork1 = work1.add(work2).add(work3).add(work7).add(work8);
+        assertEquals(newWork1, txns.get(0).getConfidence().getWorkDone());
+        BigInteger newWork2 = work2.add(work3).add(work7).add(work8);
+        assertEquals(newWork2, txns.get(1).getConfidence().getWorkDone());
+        BigInteger newWork3 = work3.add(work7).add(work8);
+        assertEquals(newWork3, txns.get(2).getConfidence().getWorkDone());
 
         assertEquals("250.00", Utils.bitcoinValueToFriendlyString(wallet.getBalance()));
+
+        // Now add two more blocks that don't send coins to us. Despite being irrelevant the wallet should still update.
+        Block b9 = b8.createNextBlock(someOtherGuy);
+        Block b10 = b9.createNextBlock(someOtherGuy);
+        chain.add(b9);
+        chain.add(b10);
+        BigInteger extraWork = b9.getWork().add(b10.getWork());
+        assertEquals(7, txns.get(0).getConfidence().getDepthInBlocks());
+        assertEquals(6, txns.get(1).getConfidence().getDepthInBlocks());
+        assertEquals(5, txns.get(2).getConfidence().getDepthInBlocks());
+        assertEquals(newWork1.add(extraWork), txns.get(0).getConfidence().getWorkDone());
+        assertEquals(newWork2.add(extraWork), txns.get(1).getConfidence().getWorkDone());
+        assertEquals(newWork3.add(extraWork), txns.get(2).getConfidence().getWorkDone());
     }
 }

@@ -566,30 +566,6 @@ public class Wallet implements Serializable {
             tx.setBlockAppearance(block, bestChain);
         }
 
-        // If this is the first time the the block hash has been seen, store it and notify transactions of the block.
-        if (bestChain) {
-            if (block != null && block.getHeader() != null) {
-                // Check to see if this block has been seen before.
-                Sha256Hash newBlockHash = block.getHeader().getHash();
-
-                if (!newBlockHash.equals(getLastBlockSeenHash())) {
-                    // Store the new block hash.
-                    setLastBlockSeenHash(newBlockHash);
-
-                    // Notify all the BUILDING transactions of the new block.
-                    // This is so that they can update their work done and depth.
-                    Set<Transaction> transactions = getTransactions(true, false);
-
-                    for (Transaction t : transactions) {
-                        t.getConfidence().notifyWorkDone(block.getHeader());
-                    }
-                }
-            }
-        }
-
-        // Update the transaction confidence and timestamp bookkeeping data.
-        invokeOnTransactionConfidenceChanged(tx);
-
         // Inform anyone interested that we have received or sent coins but only if:
         //  - This is not due to a re-org.
         //  - The coins appeared on the best chain.
@@ -616,6 +592,30 @@ public class Wallet implements Serializable {
         }
 
         checkState(isConsistent());
+    }
+
+    /**
+     * <p>Called by the {@link BlockChain} when a new block on the best chain is seen, AFTER relevant wallet
+     * transactions are extracted and sent to us UNLESS the new block caused a re-org, in which case this will
+     * not be called (the {@link Wallet#reorganize(StoredBlock, java.util.List, java.util.List)} method will
+     * call this one in that case).</p>
+     *
+     * <p>Used to update confidence data in each transaction and last seen block hash.</p>
+     */
+    public synchronized void notifyNewBestBlock(Block block) throws VerificationException {
+        // Check to see if this block has been seen before.
+        Sha256Hash newBlockHash = block.getHash();
+        if (!newBlockHash.equals(getLastBlockSeenHash())) {
+            // Store the new block hash.
+            setLastBlockSeenHash(newBlockHash);
+            // Notify all the BUILDING transactions of the new block.
+            // This is so that they can update their work done and depth.
+            Set<Transaction> transactions = getTransactions(true, false);
+            for (Transaction tx : transactions) {
+                tx.getConfidence().notifyWorkDone(block);
+                invokeOnTransactionConfidenceChanged(tx);
+            }
+        }
     }
 
     /**
@@ -1527,7 +1527,8 @@ public class Wallet implements Serializable {
 
         for (StoredBlock b : newBlocks) {
             log.info("Replaying block {}", b.getHeader().getHashAsString());
-
+            // Replay means: find the transactions that should be in that block, send them to the wallet, inform of
+            // new best block, repeat.
             Set<Transaction> txns = new HashSet<Transaction>();
             Sha256Hash blockHash = b.getHeader().getHash();
             for (Transaction tx : newChainTransactions.values()) {
@@ -1536,19 +1537,7 @@ public class Wallet implements Serializable {
                     log.info("  containing tx {}", tx.getHashAsString());
                 }
             }
-
-            if (txns.isEmpty()) {
-                // If there are no new transactions in this block we still need to bury existing transactions one block deeper.
-                for (Transaction t : spent.values()) {
-                    t.getConfidence().notifyWorkDone(b.getHeader());
-                }
-                for (Transaction t : unspent.values()) {
-                    t.getConfidence().notifyWorkDone(b.getHeader());
-                }
-                for (Transaction t : dead.values()) {
-                    t.getConfidence().notifyWorkDone(b.getHeader());
-                }
-            } else {
+            if (!txns.isEmpty()) {
                 // Add the transactions to the new blocks.
                 for (Transaction t : txns) {
                     try {
@@ -1558,6 +1547,7 @@ public class Wallet implements Serializable {
                     }
                 }
             }
+            notifyNewBestBlock(b.getHeader());
         }
 
         // Find the transactions that didn't make it into the new chain yet. For each input, try to connect it to the
