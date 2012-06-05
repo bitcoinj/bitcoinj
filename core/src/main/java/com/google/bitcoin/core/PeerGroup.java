@@ -350,7 +350,7 @@ public class PeerGroup {
      * than the current chain head, the relevant parts of the chain won't be redownloaded for you.</p>
      */
     public synchronized void addWallet(Wallet wallet) {
-	Preconditions.checkNotNull(wallet);
+	    Preconditions.checkNotNull(wallet);
         wallets.add(wallet);
         addEventListener(wallet.getPeerEventListener());
         announcePendingWalletTransactions(Collections.singletonList(wallet), peers);
@@ -685,6 +685,10 @@ public class PeerGroup {
         //
         // TODO: Find a way to balance the desire to propagate useful transactions against obscure DoS attacks.
         announcePendingWalletTransactions(wallets, Collections.singleton(peer));
+        // And set up event listeners for clients. This will allow them to find out about new transactions and blocks.
+        for (PeerEventListener listener : peerEventListeners) {
+            peer.addEventListener(listener);
+        }
         EventListenerInvoker.invoke(peerEventListeners, new EventListenerInvoker<PeerEventListener>() {
             @Override
             public void invoke(PeerEventListener listener) {
@@ -724,18 +728,12 @@ public class PeerGroup {
         if (downloadPeer != null) {
             log.info("Unsetting download peer: {}", downloadPeer);
             downloadPeer.setDownloadData(false);
-            for (PeerEventListener listener : peerEventListeners) {
-                downloadPeer.removeEventListener(listener);
-            }
         }
         downloadPeer = peer;
         if (downloadPeer != null) {
             log.info("Setting download peer: {}", downloadPeer);
             downloadPeer.setDownloadData(true);
             downloadPeer.setFastCatchupTime(fastCatchupTimeSecs);
-            for (PeerEventListener listener : peerEventListeners) {
-                downloadPeer.addEventListener(listener);
-            }
         }
     }
 

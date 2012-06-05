@@ -312,13 +312,15 @@ public class Peer {
         }
     }
 
-    private void processTransaction(Transaction m) {
-        log.info("Received broadcast tx {}", m.getHashAsString());
-        if (memoryPool != null)
-            memoryPool.seen(m, getAddress());
+    private void processTransaction(Transaction tx) {
+        log.info("Received broadcast tx {}", tx.getHashAsString());
+        if (memoryPool != null) {
+            // We may get back a different transaction object.
+            tx = memoryPool.seen(tx, getAddress());
+        }
         for (PeerEventListener listener : eventListeners) {
             synchronized (listener) {
-                listener.onTransaction(this, m);
+                listener.onTransaction(this, tx);
             }
         }
     }
@@ -645,7 +647,8 @@ public class Peer {
             log.info("blockChainDownload({}): ignoring duplicated request", toHash.toString());
             return;
         }
-        log.info("blockChainDownload({}) current head = {}", toHash.toString(), chainHead.getHeader().getHashAsString());
+        log.info("{}: blockChainDownload({}) current head = {}", new Object[] { toString(),
+                toHash.toString(), chainHead.getHeader().getHashAsString() });
         StoredBlock cursor = chainHead;
         for (int i = 50; cursor != null && i > 0; i--) {
             blockLocator.add(cursor.getHeader().getHash());

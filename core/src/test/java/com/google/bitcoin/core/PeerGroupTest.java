@@ -106,7 +106,6 @@ public class PeerGroupTest extends TestWithNetworkConnections {
         // Check that when we receive transactions on all our peers, we do the right thing.
 
         // Create a couple of peers.
-        peerGroup.addWallet(wallet);
         MockNetworkConnection n1 = createMockNetworkConnection();
         Peer p1 = new Peer(params, blockChain, n1);
         MockNetworkConnection n2 = createMockNetworkConnection();
@@ -217,20 +216,23 @@ public class PeerGroupTest extends TestWithNetworkConnections {
         Peer p2 = new Peer(params, blockChain, n2);
         MockNetworkConnection n3 = createMockNetworkConnection();
         Peer p3 = new Peer(params, blockChain, n3);
+
+        final Transaction[] event = new Transaction[2];
+        peerGroup.addEventListener(new AbstractPeerEventListener() {
+            @Override
+            public void onTransaction(Peer peer, Transaction t) {
+                event[0] = t;
+            }
+        });
+
         peerGroup.start();
         peerGroup.addPeer(p1);
         peerGroup.addPeer(p2);
         peerGroup.addPeer(p3);
+
         Transaction tx = TestUtils.createFakeTx(params, Utils.toNanoCoins(20, 0), address);
         InventoryMessage inv = new InventoryMessage(params);
         inv.addTransaction(tx);
-        
-        final Transaction[] event = new Transaction[1];
-        tx.getConfidence().addEventListener(new TransactionConfidence.Listener() {
-            public void onConfidenceChanged(Transaction tx) {
-                event[0] = tx;
-            }
-        });
         
         // Peer 2 advertises the tx and requests a download of it, because it came first.
         assertTrue(n2.exchange(inv) instanceof GetDataMessage);
@@ -239,18 +241,22 @@ public class PeerGroupTest extends TestWithNetworkConnections {
         // Peer 1 advertises the tx, we don't do anything as it's already been requested.
         assertNull(n1.exchange(inv));
         assertNull(n2.exchange(tx));
+        tx = event[0];  // We want to use the canonical copy delivered by the PeerGroup from now on.
+        event[0] = null;
         // Two peers saw this tx hash.
         assertEquals(2, tx.getConfidence().numBroadcastPeers());
-        assertEquals(tx, event[0]);
-        event[0] = null;
         assertTrue(tx.getConfidence().getBroadcastBy().contains(n1.getPeerAddress()));
         assertTrue(tx.getConfidence().getBroadcastBy().contains(n2.getPeerAddress()));
+        tx.getConfidence().addEventListener(new TransactionConfidence.Listener() {
+            public void onConfidenceChanged(Transaction tx) {
+                event[1] = tx;
+            }
+        });
         // A straggler reports in.
         n3.exchange(inv);
+        assertEquals(tx, event[1]);
         assertEquals(3, tx.getConfidence().numBroadcastPeers());
         assertTrue(tx.getConfidence().getBroadcastBy().contains(n3.getPeerAddress()));
-        assertEquals(tx, event[0]);
-        event[0] = null;
     }
 
     @Test
