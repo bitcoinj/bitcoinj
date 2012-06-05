@@ -19,15 +19,13 @@ package com.google.bitcoin.core;
 import com.google.bitcoin.store.BlockStore;
 import com.google.bitcoin.store.BlockStoreException;
 import com.google.bitcoin.utils.EventListenerInvoker;
+import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.*;
 
 /**
@@ -67,6 +65,13 @@ public class Peer {
     // is set AND our best block is before that date, switch to false until block headers beyond that point have been
     // received at which point it gets set to true again. This isn't relevant unless downloadData is true.
     private boolean downloadBlockBodies = true;
+    // Keeps track of things we requested internally with getdata but didn't receive yet, so we can avoid re-requests.
+    // It's not quite the same as pendingGetBlockFutures, as this is used only for getdatas done as part of downloading
+    // the chain and so is lighter weight (we just keep a bunch of hashes not futures).
+    //
+    // It is important to avoid a nasty edge case where we can end up with parallel chain downloads proceeding
+    // simultaneously if we were to receive a newly solved block whilst parts of the chain are streaming to us.
+    private HashSet<Sha256Hash> pendingBlockDownloads = new HashSet<Sha256Hash>();
 
     /**
      * Construct a peer that reads/writes from the given block chain. Note that communication won't occur until
@@ -338,20 +343,29 @@ public class Peer {
                 log.warn("Received block we did not ask for: {}", m.getHashAsString());
                 return;
             }
+            pendingBlockDownloads.remove(m.getHash());
             // Otherwise it's a block sent to us because the peer thought we needed it, so add it to the block chain.
             // This call will synchronize on blockChain.
             if (blockChain.add(m)) {
                 // The block was successfully linked into the chain. Notify the user of our progress.
                 invokeOnBlocksDownloaded(m);
             } else {
-                // This block is unconnected - we don't know how to get from it back to the genesis block yet. That
+                // This block is an orphan - we don't know how to get from it back to the genesis block yet. That
                 // must mean that there are blocks we are missing, so do another getblocks with a new block locator
                 // to ask the peer to send them to us. This can happen during the initial block chain download where
                 // the peer will only send us 500 at a time and then sends us the head block expecting us to request
                 // the others.
-
-                // TODO: Should actually request root of orphan chain here.
-                blockChainDownload(m.getHash());
+                //
+                // We must do two things here:
+                // (1) Request from current top of chain to the root of the current set of orphan blocks and
+                // (2) Filter out duplicate getblock requests (done in blockChainDownload).
+                //
+                // The reason for (1) is that otherwise if new blocks were solved during the middle of chain download
+                // we'd do a blockChainDownload() on the new best chain head, which would cause us to try and grab the
+                // chain twice (or more!) on the same connection! The block chain would filter out the duplicates but
+                // only at a huge speed penalty. By finding the orphan root we ensure every getblocks looks the same
+                // no matter how many blocks are solved, and therefore that the (2) duplicate filtering can work.
+                blockChainDownload(blockChain.getOrphanRoot(m.getHash()).getHash());
             }
         } catch (VerificationException e) {
             // We don't want verification failures to kill the thread.
@@ -416,32 +430,43 @@ public class Peer {
         }
 
         if (blocks.size() > 0 && downloadData) {
-            Block topBlock = blockChain.getUnconnectedBlock();
-            Sha256Hash topHash = (topBlock != null ? topBlock.getHash() : null);
-            if (isNewBlockTickle(topHash, blocks)) {
-                // An inv with a single hash containing our most recent unconnected block is a special inv,
-                // it's kind of like a tickle from the peer telling us that it's time to download more blocks to catch up to
-                // the block chain. We could just ignore this and treat it as a regular inv but then we'd download the head
-                // block over and over again after each batch of 500 blocks, which is wasteful.
-                blockChainDownload(topHash);
-                return;
+            // Ideally, we'd only ask for the data here if we actually needed it. However that can imply a lot of
+            // disk IO to figure out what we've got. Normally peers will not send us inv for things we already have
+            // so we just re-request it here, and if we get duplicates the block chain / wallet will filter them out.
+            for (InventoryItem item : blocks) {
+                if (blockChain.isOrphan(item.hash)) {
+                    // If an orphan was re-advertised, ask for more blocks.
+                    blockChainDownload(blockChain.getOrphanRoot(item.hash).getHash());
+                } else {
+                    // Don't re-request blocks we already requested. Normally this should not happen. However there is
+                    // an edge case: if a block is solved and we complete the inv<->getdata<->block<->getblocks cycle
+                    // whilst other parts of the chain are streaming in, then the new getblocks request won't match the
+                    // previous one: whilst the stopHash is the same (because we use the orphan root), the start hash
+                    // will be different and so the getblocks req won't be dropped as a duplicate. We'll end up
+                    // requesting a subset of what we already requested, which can lead to parallel chain downloads
+                    // and other nastyness. So we just do a quick removal of redundant getdatas here too.
+                    //
+                    // Note that as of June 2012 the Satoshi client won't actually ever interleave blocks pushed as
+                    // part of chain download with newly announced blocks, so it should always be taken care of by
+                    // the duplicate check in blockChainDownload(). But the satoshi client may change in future so
+                    // it's better to be safe here.
+                    if (!pendingBlockDownloads.contains(item.hash)) {
+                        getdata.addItem(item);
+                        pendingBlockDownloads.add(item.hash);
+                    }
+                }
             }
-            // Request the advertised blocks only if we're the download peer.
-            for (InventoryItem item : blocks) getdata.addItem(item);
+            // If we're downloading the chain, doing a getdata on the last block we were told about will cause the
+            // peer to advertize the head block to us in a single-item inv. When we download THAT, it will be an
+            // orphan block, meaning we'll re-enter blockChainDownload() to trigger another getblocks between the
+            // current best block we have and the orphan block. If more blocks arrive in the meantime they'll also
+            // become orphan.
         }
 
         if (!getdata.getItems().isEmpty()) {
             // This will cause us to receive a bunch of block or tx messages.
             conn.writeMessage(getdata);
         }
-    }
-
-    /** A new block tickle is an inv with a hash containing the topmost block. */
-    private boolean isNewBlockTickle(Sha256Hash topHash, List<InventoryItem> items) {
-        return items.size() == 1 &&
-               items.get(0).type == InventoryItem.Type.Block &&
-               topHash != null &&
-               items.get(0).hash.equals(topHash);
     }
 
     /**
@@ -563,6 +588,10 @@ public class Peer {
         conn.writeMessage(m);
     }
 
+    // Keep track of the last request we made to the peer in blockChainDownload so we can avoid redundant and harmful
+    // getblocks requests.
+    private Sha256Hash lastGetBlocksBegin, lastGetBlocksEnd;
+
     private void blockChainDownload(Sha256Hash toHash) throws IOException {
         // This may run in ANY thread.
 
@@ -609,8 +638,15 @@ public class Peer {
         // 50 block headers. If there is a re-org deeper than that, we'll end up downloading the entire chain. We
         // must always put the genesis block as the first entry.
         BlockStore store = blockChain.getBlockStore();
-        StoredBlock cursor = blockChain.getChainHead();
-        log.info("blockChainDownload({}) current head = ", toHash.toString(), cursor);
+        StoredBlock chainHead = blockChain.getChainHead();
+        Sha256Hash chainHeadHash = chainHead.getHeader().getHash();
+        // Did we already make this request? If so, don't do it again.
+        if (Objects.equal(lastGetBlocksBegin, chainHeadHash) && Objects.equal(lastGetBlocksEnd, toHash)) {
+            log.info("blockChainDownload({}): ignoring duplicated request", toHash.toString());
+            return;
+        }
+        log.info("blockChainDownload({}) current head = {}", toHash.toString(), chainHead.getHeader().getHashAsString());
+        StoredBlock cursor = chainHead;
         for (int i = 50; cursor != null && i > 0; i--) {
             blockLocator.add(cursor.getHeader().getHash());
             try {
@@ -625,8 +661,11 @@ public class Peer {
             blockLocator.add(params.genesisBlock.getHash());
         }
 
-        // The toHash field is set to zero already by the constructor. This is how we indicate "never stop".
-        
+        // Record that we requested this range of blocks so we can filter out duplicate requests in the event of a
+        // block being solved during chain download.
+        lastGetBlocksBegin = chainHeadHash;
+        lastGetBlocksEnd = toHash;
+
         if (downloadBlockBodies) {
             GetBlocksMessage message = new GetBlocksMessage(params, blockLocator, toHash);
             conn.writeMessage(message);

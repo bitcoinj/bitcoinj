@@ -77,7 +77,7 @@ public class BlockChain {
 
     // Holds blocks that we have received but can't plug into the chain yet, eg because they were created whilst we
     // were downloading the block chain.
-    private final ArrayList<Block> unconnectedBlocks = new ArrayList<Block>();
+    private final LinkedHashMap<Sha256Hash, Block> orphanBlocks = new LinkedHashMap<Sha256Hash, Block>();
 
     /**
      * Constructs a BlockChain connected to the given wallet and store. To obtain a {@link Wallet} you can construct
@@ -161,10 +161,9 @@ public class BlockChain {
             statsLastTime = System.currentTimeMillis();
             statsBlocksAdded = 0;
         }
-        // We check only the chain head for double adds here to avoid potentially expensive block chain misses.
-        if (block.equals(getChainHead().getHeader())) {
-            // Duplicate add of the block at the top of the chain, can be a natural artifact of the download process.
-            log.debug("Chain head added more than once: {}", block.getHash());
+        // Quick check for duplicates to avoid an expensive check further down (in findSplit). This can happen a lot
+        // when connecting orphan transactions due to the dumb brute force algorithm we use.
+        if (block.equals(getChainHead().getHeader()) || (tryConnecting && orphanBlocks.containsKey(block.getHash()))) {
             return true;
         }
 
@@ -197,9 +196,9 @@ public class BlockChain {
             // We can't find the previous block. Probably we are still in the process of downloading the chain and a
             // block was solved whilst we were doing it. We put it to one side and try to connect it later when we
             // have more blocks.
-            checkState(tryConnecting, "bug in tryConnectingUnconnected");
+            checkState(tryConnecting, "bug in tryConnectingOrphans");
             log.warn("Block does not connect: {} prev {}", block.getHashAsString(), block.getPrevBlockHash());
-            unconnectedBlocks.add(block);
+            orphanBlocks.put(block.getHash(), block);
             return false;
         } else {
             // It connects to somewhere on the chain. Not necessarily the top of the best known chain.
@@ -213,7 +212,7 @@ public class BlockChain {
         }
 
         if (tryConnecting)
-            tryConnectingUnconnected();
+            tryConnectingOrphans();
 
         statsBlocksAdded++;
         return true;
@@ -379,16 +378,19 @@ public class BlockChain {
     }
 
     /**
-     * For each block in unconnectedBlocks, see if we can now fit it on top of the chain and if so, do so.
+     * For each block in orphanBlocks, see if we can now fit it on top of the chain and if so, do so.
      */
-    private void tryConnectingUnconnected() throws VerificationException, ScriptException, BlockStoreException {
-        // For each block in our unconnected list, try and fit it onto the head of the chain. If we succeed remove it
+    private void tryConnectingOrphans() throws VerificationException, ScriptException, BlockStoreException {
+        // For each block in our orphan list, try and fit it onto the head of the chain. If we succeed remove it
         // from the list and keep going. If we changed the head of the list at the end of the round try again until
         // we can't fit anything else on the top.
+        //
+        // This algorithm is kind of crappy, we should do a topo-sort then just connect them in order, but for small
+        // numbers of orphan blocks it does OK.
         int blocksConnectedThisRound;
         do {
             blocksConnectedThisRound = 0;
-            Iterator<Block> iter = unconnectedBlocks.iterator();
+            Iterator<Block> iter = orphanBlocks.values().iterator();
             while (iter.hasNext()) {
                 Block block = iter.next();
                 log.debug("Trying to connect {}", block.getHash());
@@ -406,7 +408,7 @@ public class BlockChain {
                 blocksConnectedThisRound++;
             }
             if (blocksConnectedThisRound > 0) {
-                log.info("Connected {} floating blocks.", blocksConnectedThisRound);
+                log.info("Connected {} orphan blocks.", blocksConnectedThisRound);
             }
         } while (blocksConnectedThisRound > 0);
     }
@@ -565,12 +567,26 @@ public class BlockChain {
     }
 
     /**
-     * Returns the most recent unconnected block or null if there are none. This will all have to change. It's used
-     * only in processing of inv messages.
+     * An orphan block is one that does not connect to the chain anywhere (ie we can't find its parent, therefore
+     * it's an orphan). Typically this occurs when we are downloading the chain and didn't reach the head yet, and/or
+     * if a block is solved whilst we are downloading. It's possible that we see a small amount of orphan blocks which
+     * chain together, this method tries walking backwards through the known orphan blocks to find the bottom-most.
+     *
+     * @return from or one of froms parents, or null if "from" does not identify an orphan block
      */
-    synchronized Block getUnconnectedBlock() {
-        if (unconnectedBlocks.size() == 0)
+    public synchronized Block getOrphanRoot(Sha256Hash from) {
+        Block cursor = orphanBlocks.get(from);
+        if (cursor == null)
             return null;
-        return unconnectedBlocks.get(unconnectedBlocks.size() - 1);
+        Block tmp;
+        while ((tmp = orphanBlocks.get(cursor.getPrevBlockHash())) != null) {
+            cursor = tmp;
+        }
+        return cursor;
+    }
+
+    /** Returns true if the given block is currently in the orphan blocks list. */
+    public synchronized boolean isOrphan(Sha256Hash block) {
+        return orphanBlocks.containsKey(block);
     }
 }
