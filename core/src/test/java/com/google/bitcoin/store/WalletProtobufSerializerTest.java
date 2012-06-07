@@ -96,7 +96,7 @@ public class WalletProtobufSerializerTest {
         Wallet wallet1 = roundTrip(myWallet);
         assertEquals(1, wallet1.getTransactions(true, true).size());
         Transaction t1 = wallet1.getTransaction(doubleSpends.t1.getHash());
-        assertEquals(ConfidenceType.OVERRIDDEN_BY_DOUBLE_SPEND, t1.getConfidence().getConfidenceType());
+        assertEquals(ConfidenceType.DEAD, t1.getConfidence().getConfidenceType());
         assertEquals(BigInteger.ZERO, wallet1.getBalance());
 
         // TODO: Wallet should store overriding transactions even if they are not wallet-relevant.

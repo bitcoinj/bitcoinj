@@ -206,7 +206,7 @@ public class WalletProtobufSerializer {
                 confidenceBuilder.setWorkDone(confidence.getWorkDone().longValue());
             }
         }
-        if (confidence.getConfidenceType() == ConfidenceType.OVERRIDDEN_BY_DOUBLE_SPEND) {
+        if (confidence.getConfidenceType() == ConfidenceType.DEAD) {
             Sha256Hash overridingHash = confidence.getOverridingTransaction().getHash();
             confidenceBuilder.setOverridingTransaction(hashToByteString(overridingHash));
         }
@@ -388,7 +388,7 @@ public class WalletProtobufSerializer {
             confidence.setWorkDone(BigInteger.valueOf(confidenceProto.getWorkDone()));
         }
         if (confidenceProto.hasOverridingTransaction()) {
-            if (confidence.getConfidenceType() != ConfidenceType.OVERRIDDEN_BY_DOUBLE_SPEND) {
+            if (confidence.getConfidenceType() != ConfidenceType.DEAD) {
                 log.warn("Have overridingTransaction but not OVERRIDDEN for tx {}", tx.getHashAsString());
                 return;
             }

@@ -126,11 +126,12 @@ public class TransactionConfidence implements Serializable {
         NOT_IN_BEST_CHAIN(3),
 
         /**
-         * If OVERRIDDEN_BY_DOUBLE_SPEND, then it means the transaction won't confirm unless there is another re-org,
+         * If DEAD, then it means the transaction won't confirm unless there is another re-org,
          * because some other transaction is spending one of its inputs. Such transactions should be alerted to the user
          * so they can take action, eg, suspending shipment of goods if they are a merchant.
+         * It can also mean that a coinbase transaction has been made dead from it being moved onto a side chain.
          */
-        OVERRIDDEN_BY_DOUBLE_SPEND(4),
+        DEAD(4),
 
         /**
          * If a transaction hasn't been broadcast yet, or there's no record of it, its confidence is UNKNOWN.
@@ -152,7 +153,7 @@ public class TransactionConfidence implements Serializable {
             case 1: return BUILDING;
             case 2: return NOT_SEEN_IN_CHAIN;
             case 3: return NOT_IN_BEST_CHAIN;
-            case 4: return OVERRIDDEN_BY_DOUBLE_SPEND;
+            case 4: return DEAD;
             default: return null;
             }
         }
@@ -268,7 +269,7 @@ public class TransactionConfidence implements Serializable {
             case UNKNOWN:
                 builder.append("Unknown confidence level.");
                 break;
-            case OVERRIDDEN_BY_DOUBLE_SPEND:
+            case DEAD:
                 builder.append("Dead: overridden by double spend and will not confirm.");
                 break;
             case NOT_IN_BEST_CHAIN: 
@@ -354,7 +355,7 @@ public class TransactionConfidence implements Serializable {
      * @throws IllegalStateException if confidence type is not OVERRIDDEN_BY_DOUBLE_SPEND.
      */
     public synchronized Transaction getOverridingTransaction() {
-        if (getConfidenceType() != ConfidenceType.OVERRIDDEN_BY_DOUBLE_SPEND)
+        if (getConfidenceType() != ConfidenceType.DEAD)
             throw new IllegalStateException("Confidence type is " + getConfidenceType() +
                                             ", not OVERRIDDEN_BY_DOUBLE_SPEND");
         return overridingTransaction;
@@ -367,7 +368,7 @@ public class TransactionConfidence implements Serializable {
      */
     public synchronized void setOverridingTransaction(Transaction overridingTransaction) {
         this.overridingTransaction = overridingTransaction;
-        setConfidenceType(ConfidenceType.OVERRIDDEN_BY_DOUBLE_SPEND);
+        setConfidenceType(ConfidenceType.DEAD);
     }
 
     /** Returns a copy of this object. Event listeners are not duplicated. */

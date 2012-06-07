@@ -377,7 +377,7 @@ public class WalletTest {
             public void onTransactionConfidenceChanged(Wallet wallet, Transaction tx) {
                 super.onTransactionConfidenceChanged(wallet, tx);
                 if (tx.getConfidence().getConfidenceType() ==
-                        TransactionConfidence.ConfidenceType.OVERRIDDEN_BY_DOUBLE_SPEND) {
+                        TransactionConfidence.ConfidenceType.DEAD) {
                     eventDead[0] = tx;
                     eventReplacement[0] = tx.getConfidence().getOverridingTransaction();
                 }
@@ -399,7 +399,7 @@ public class WalletTest {
         wallet.receiveFromBlock(send2, null, BlockChain.NewBlockType.BEST_CHAIN);
         assertEquals(send1, eventDead[0]);
         assertEquals(send2, eventReplacement[0]);
-        assertEquals(TransactionConfidence.ConfidenceType.OVERRIDDEN_BY_DOUBLE_SPEND,
+        assertEquals(TransactionConfidence.ConfidenceType.DEAD,
                      send1.getConfidence().getConfidenceType());
         
         TestUtils.DoubleSpends doubleSpends = TestUtils.createFakeDoubleSpendTxns(params, myAddress);
@@ -408,7 +408,7 @@ public class WalletTest {
         assertEquals(TransactionConfidence.ConfidenceType.NOT_SEEN_IN_CHAIN,
                 doubleSpends.t1.getConfidence().getConfidenceType());
         wallet.receiveFromBlock(doubleSpends.t2, null, BlockChain.NewBlockType.BEST_CHAIN);
-        assertEquals(TransactionConfidence.ConfidenceType.OVERRIDDEN_BY_DOUBLE_SPEND, 
+        assertEquals(TransactionConfidence.ConfidenceType.DEAD,
                      doubleSpends.t1.getConfidence().getConfidenceType());
         assertEquals(doubleSpends.t2, doubleSpends.t1.getConfidence().getOverridingTransaction());
     }
@@ -532,7 +532,7 @@ public class WalletTest {
             public void onTransactionConfidenceChanged(Wallet wallet, Transaction tx) {
                 super.onTransactionConfidenceChanged(wallet, tx);
                 if (tx.getConfidence().getConfidenceType() == 
-                        TransactionConfidence.ConfidenceType.OVERRIDDEN_BY_DOUBLE_SPEND) {
+                        TransactionConfidence.ConfidenceType.DEAD) {
                     called[0] = tx;
                     called[1] = tx.getConfidence().getOverridingTransaction();
                 }

@@ -87,7 +87,7 @@ message TransactionConfidence {
     BUILDING = 1; // In best chain.  If and only if appeared_at_height is present.
     NOT_SEEN_IN_CHAIN = 2; // Pending inclusion in best chain.
     NOT_IN_BEST_CHAIN = 3; // In non-best chain, pending inclusion in best chain.
-    OVERRIDDEN_BY_DOUBLE_SPEND = 4; // If and only if overriding_transaction is present.
+    DEAD = 4; // Either if overriding_transaction is present or transaction is dead coinbase
   }
 
   // This is optional in case we add confidence types to prevent parse errors - backwards compatible.

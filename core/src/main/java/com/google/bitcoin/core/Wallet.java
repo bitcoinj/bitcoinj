@@ -346,7 +346,7 @@ public class Wallet implements Serializable {
             tx.getConfidence().setConfidenceType(TransactionConfidence.ConfidenceType.NOT_IN_BEST_CHAIN);
         }
         for (Transaction tx : dead.values()) {
-            tx.getConfidence().setConfidenceType(TransactionConfidence.ConfidenceType.OVERRIDDEN_BY_DOUBLE_SPEND);
+            tx.getConfidence().setConfidenceType(TransactionConfidence.ConfidenceType.DEAD);
             // We'd ideally like to set overridingTransaction here, but old wallets don't have that data.
             // Dead transactions in the wallet should be rare, so API users will just have to handle this
             // edge case until old wallets have gone away.
