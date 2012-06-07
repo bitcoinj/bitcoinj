@@ -351,7 +351,10 @@ public class WalletTool {
             }
             setup();
             peers.start();
-            peers.broadcastTransaction(t).get();  // The .get() is so we wait until the broadcast has completed.
+            peers.broadcastTransaction(t).get();
+            // Horrible hack to ensure we have time to fully broadcast to every peer. Will go away when we resolve
+            // issue 167.
+            Thread.sleep(2000);
             wallet.commitTx(t);
             System.out.println(t.getHashAsString());
         } catch (BlockStoreException e) {
