@@ -1327,13 +1327,13 @@ public class Wallet implements Serializable {
     @Override
     public synchronized String toString() {
         StringBuilder builder = new StringBuilder();
-        builder.append(String.format("Wallet containing %s BTC in:\n", bitcoinValueToFriendlyString(getBalance())));
-        builder.append(String.format("  %d unspent transactions\n", unspent.size()));
-        builder.append(String.format("  %d spent transactions\n", spent.size()));
-        builder.append(String.format("  %d pending transactions\n", pending.size()));
-        builder.append(String.format("  %d inactive transactions\n", inactive.size()));
-        builder.append(String.format("  %d dead transactions\n", dead.size()));
-        builder.append(String.format("Last seen best block: %s\n", getLastBlockSeenHash()));
+        builder.append(String.format("Wallet containing %s BTC in:%n", bitcoinValueToFriendlyString(getBalance())));
+        builder.append(String.format("  %d unspent transactions%n", unspent.size()));
+        builder.append(String.format("  %d spent transactions%n", spent.size()));
+        builder.append(String.format("  %d pending transactions%n", pending.size()));
+        builder.append(String.format("  %d inactive transactions%n", inactive.size()));
+        builder.append(String.format("  %d dead transactions%n", dead.size()));
+        builder.append(String.format("Last seen best block: %s%n", getLastBlockSeenHash()));
         // Do the keys.
         builder.append("\nKeys:\n");
         for (ECKey key : keychain) {
@@ -1514,7 +1514,7 @@ public class Wallet implements Serializable {
         // The old blocks have contributed to the depth and work done for all the transactions in the
         // wallet that are in blocks up to and including the chain split block.
         // The total depth and work done is calculated here and then subtracted from the appropriate transactions.
-        int depthToSubtract = oldBlocks == null ? 0 : oldBlocks.size();
+        int depthToSubtract = oldBlocks.size();
 
         BigInteger workDoneToSubtract = BigInteger.ZERO;
         for (StoredBlock b : oldBlocks) {

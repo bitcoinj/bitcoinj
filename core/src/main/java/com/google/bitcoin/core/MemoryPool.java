@@ -49,14 +49,14 @@ public class MemoryPool {
     // Before we see the full transaction, we need to track how many peers advertised it, so we can estimate its
     // confidence pre-chain inclusion assuming an un-tampered with network connection. After we see the full transaction
     // we need to switch from tracking that data in the Entry to tracking it in the TransactionConfidence object itself.
-    private class WeakTransactionReference extends WeakReference<Transaction> {
+    private static class WeakTransactionReference extends WeakReference<Transaction> {
         public Sha256Hash hash;
         public WeakTransactionReference(Transaction tx, ReferenceQueue<Transaction> queue) {
             super(tx, queue);
             hash = tx.getHash();
         }
     };
-    private class Entry {
+    private static class Entry {
         // Invariants: one of the two fields must be null, to indicate which is used.
         Set<PeerAddress> addresses;
         // We keep a weak reference to the transaction. This means that if no other bit of code finds the transaction
@@ -160,14 +160,15 @@ public class MemoryPool {
                 Preconditions.checkState(entry.addresses == null);
                 // We only want one canonical object instance for a transaction no matter how many times it is
                 // deserialized.
-                if (entry.tx.get() == null) {
+                Transaction transaction = entry.tx.get();
+                if (transaction == null) {
                     // We previously downloaded this transaction, but the garbage collector threw it away because
                     // no other part of the system cared enough to keep it around (it's not relevant to us).
                     // Given the lack of interest last time we probably don't need to track it this time either.
                     log.info("{}: Provided with a transaction that we previously threw away: {}", byPeer, tx.getHash());
                 } else {
                     // We saw it before and kept it around. Hand back the canonical copy.
-                    tx = entry.tx.get();
+                    tx = transaction;
                     log.info("{}: Provided with a transaction downloaded before: [{}] {}",
                             new Object[] { byPeer, tx.getConfidence().numBroadcastPeers(), tx.getHash() });
                 }
@@ -209,8 +210,8 @@ public class MemoryPool {
             // This TX or its hash have been previously announced.
             if (entry.tx != null) {
                 Preconditions.checkState(entry.addresses == null);
-                if (entry.tx.get() != null) {
-                    Transaction tx = entry.tx.get();
+                Transaction tx = entry.tx.get();
+                if (tx != null) {
                     tx.getConfidence().markBroadcastBy(byPeer);
                     log.info("{}: Announced transaction we have seen before [{}] {}",
                             new Object[] { byPeer, tx.getConfidence().numBroadcastPeers(), tx.getHashAsString() });

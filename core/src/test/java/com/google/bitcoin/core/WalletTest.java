@@ -402,9 +402,6 @@ public class WalletTest {
         assertEquals(TransactionConfidence.ConfidenceType.OVERRIDDEN_BY_DOUBLE_SPEND,
                      send1.getConfidence().getConfidenceType());
         
-        // Receive 10 BTC.
-        nanos = Utils.toNanoCoins(10, 0);
-
         TestUtils.DoubleSpends doubleSpends = TestUtils.createFakeDoubleSpendTxns(params, myAddress);
         // t1 spends to our wallet. t2 double spends somewhere else.
         wallet.receivePending(doubleSpends.t1);

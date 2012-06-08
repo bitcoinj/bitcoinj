@@ -373,11 +373,14 @@ public class TransactionConfidence implements Serializable {
     /** Returns a copy of this object. Event listeners are not duplicated. */
     public synchronized TransactionConfidence duplicate() {
         TransactionConfidence c = new TransactionConfidence(transaction);
-        c.broadcastBy.addAll(broadcastBy);
-        c.confidenceType = confidenceType;
-        c.overridingTransaction = overridingTransaction;
-        c.appearedAtChainHeight = appearedAtChainHeight;
-        return c;
+        // There is no point in this sync block, it's just to help FindBugs.
+        synchronized (c) {
+            c.broadcastBy.addAll(broadcastBy);
+            c.confidenceType = confidenceType;
+            c.overridingTransaction = overridingTransaction;
+            c.appearedAtChainHeight = appearedAtChainHeight;
+            return c;
+        }
     }
 
     private void runListeners() {

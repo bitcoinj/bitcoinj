@@ -94,8 +94,8 @@ public class IrcDiscovery implements PeerDiscovery {
             InetAddress ip = InetAddress.getByName("irc.lfnet.org");
             log.info("Connecting to IRC with " + ip);
             connection = new Socket(server, port);
-            writer = new BufferedWriter(new OutputStreamWriter(connection.getOutputStream()));
-            BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+            writer = new BufferedWriter(new OutputStreamWriter(connection.getOutputStream(), "UTF-8"));
+            BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream(), "UTF-8"));
 
             // Generate a random nick for the connection. This is chosen to be clearly identifiable as coming from
             // BitCoinJ but not match the standard nick format, so full peers don't try and connect to us.

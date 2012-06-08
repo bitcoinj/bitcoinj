@@ -527,9 +527,9 @@ public class Transaction extends ChildMessage implements Serializable {
     public String toString() {
         // Basic info about the tx.
         StringBuffer s = new StringBuffer();
-        s.append(String.format("  %s: %s\n", getHashAsString(), getConfidence()));
+        s.append(String.format("  %s: %s%n", getHashAsString(), getConfidence()));
         if (inputs.size() == 0) {
-            s.append("  INCOMPLETE: No inputs!\n");
+            s.append(String.format("  INCOMPLETE: No inputs!%n"));
             return s.toString();
         }
         if (isCoinBase()) {
@@ -561,7 +561,7 @@ public class Transaction extends ChildMessage implements Serializable {
             } catch (Exception e) {
                 s.append("[exception: ").append(e.getMessage()).append("]");
             }
-            s.append("\n");
+            s.append(String.format("%n"));
         }
         for (TransactionOutput out : outputs) {
             s.append("       ");
@@ -588,7 +588,7 @@ public class Transaction extends ChildMessage implements Serializable {
             } catch (Exception e) {
                 s.append("[exception: ").append(e.getMessage()).append("]");
             }
-            s.append("\n");
+            s.append(String.format("%n"));
         }
         return s.toString();
     }

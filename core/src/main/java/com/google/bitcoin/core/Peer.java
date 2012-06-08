@@ -403,6 +403,7 @@ public class Peer {
             switch (item.type) {
                 case Transaction: transactions.add(item); break;
                 case Block: blocks.add(item); break;
+                default: throw new IllegalStateException("Not implemented: " + item.type);
             }
         }
 
@@ -411,9 +412,11 @@ public class Peer {
         Iterator<InventoryItem> it = transactions.iterator();
         while (it.hasNext()) {
             InventoryItem item = it.next();
-            if (memoryPool == null && downloadData) {
-                // If there's no memory pool only download transactions if we're configured to.
-                getdata.addItem(item);
+            if (memoryPool == null) {
+                if (downloadData) {
+                    // If there's no memory pool only download transactions if we're configured to.
+                    getdata.addItem(item);
+                }
             } else {
                 // Only download the transaction if we are the first peer that saw it be advertised. Other peers will also
                 // see it be advertised in inv packets asynchronously, they co-ordinate via the memory pool. We could

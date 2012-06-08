@@ -16,6 +16,7 @@
 
 package com.google.bitcoin.core;
 
+import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.util.Arrays;
 
@@ -54,18 +55,12 @@ public class Base58 {
 			return "";
 		}		
 		input = copyOfRange(input, 0, input.length);
-
-		//
-		// Count leading zeroes
-		//
+		// Count leading zeroes.
 		int zeroCount = 0;
 		while (zeroCount < input.length && input[zeroCount] == 0) {
 			++zeroCount;
 		}
-
-		//
-		// The actual encoding
-		//
+		// The actual encoding.
 		byte[] temp = new byte[input.length * 2];
 		int j = temp.length;
 
@@ -75,27 +70,25 @@ public class Base58 {
 			if (input[startAt] == 0) {
 				++startAt;
 			}
-
 			temp[--j] = (byte) ALPHABET[mod];
 		}
 
-		//
-		// Strip extra '1' if there are some after decoding
-		//
+		// Strip extra '1' if there are some after decoding.
 		while (j < temp.length && temp[j] == ALPHABET[0]) {
 			++j;
 		}
-
-		//
 		// Add as many leading '1' as there were leading zeros.
-		//
 		while (--zeroCount >= 0) {
 			temp[--j] = (byte) ALPHABET[0];
 		}
 
 		byte[] output = copyOfRange(temp, j, temp.length);
-		return new String(output);
-	}
+        try {
+            return new String(output, "US-ASCII");
+        } catch (UnsupportedEncodingException e) {
+            throw new RuntimeException(e);  // Cannot happen.
+        }
+    }
 
 	public static byte[] decode(String input) throws AddressFormatException {
 		if (input.length() == 0) {
