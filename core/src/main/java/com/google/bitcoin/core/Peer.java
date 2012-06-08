@@ -19,6 +19,7 @@ package com.google.bitcoin.core;
 import com.google.bitcoin.store.BlockStore;
 import com.google.bitcoin.store.BlockStoreException;
 import com.google.bitcoin.utils.EventListenerInvoker;
+import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -307,13 +308,15 @@ public class Peer {
         }
     }
 
-    private void processTransaction(Transaction m) {
-        log.info("Received broadcast tx {}", m.getHashAsString());
-        if (memoryPool != null)
-            memoryPool.seen(m, getAddress());
+    private void processTransaction(Transaction tx) {
+        log.info("Received broadcast tx {}", tx.getHashAsString());
+        if (memoryPool != null) {
+            // We may get back a different transaction object.
+            tx = memoryPool.seen(tx, getAddress());
+        }
         for (PeerEventListener listener : eventListeners) {
             synchronized (listener) {
-                listener.onTransaction(this, m);
+                listener.onTransaction(this, tx);
             }
         }
     }

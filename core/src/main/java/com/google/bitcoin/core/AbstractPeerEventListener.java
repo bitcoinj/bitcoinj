@@ -25,7 +25,7 @@ import java.util.List;
  *
  * @author miron@google.com (Miron Cuperman)
  */
-public class AbstractPeerEventListener extends Object implements PeerEventListener {
+public class AbstractPeerEventListener implements PeerEventListener {
     public void onBlocksDownloaded(Peer peer, Block block, int blocksLeft) {
     }
 
