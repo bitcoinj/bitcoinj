@@ -186,22 +186,26 @@ public class Wallet implements Serializable {
      */
     public synchronized void saveToFile(File f) throws IOException {
         FileOutputStream stream = null;
-        File temp = null;
+        File temp;
         try {
             File directory = f.getAbsoluteFile().getParentFile();
             temp = File.createTempFile("wallet", null, directory);
             stream = new FileOutputStream(temp);
             saveToFileStream(stream);
+            // Attempt to force the bits to hit the disk. In reality the OS or hard disk itself may still decide
+            // to not write through to physical media for at least a few seconds, but this is the best we can do.
+            stream.flush();
+            stream.getFD().sync();
+            if (!temp.renameTo(f)) {
+                // Work around an issue on Windows whereby you can't rename over existing files.
+                if (System.getProperty("os.name").toLowerCase().indexOf("win") >= 0) {
+                    if (f.delete() && temp.renameTo(f)) return;  // else fall through.
+                }
+                throw new IOException("Failed to rename " + temp + " to " + f);
+            }
         } finally {
             if (stream != null) {
-                // Attempt to force the bits to hit the disk. In reality the OS or hard disk itself may still decide
-                // to not write through to physical media for at least a few seconds, but this is the best we can do.
-                stream.flush();
-                stream.getFD().sync();
                 stream.close();
-                if (!temp.renameTo(f)) {
-                    throw new IOException("Failed to rename " + temp + " to " + f);
-                }
             }
         }
     }
