@@ -22,16 +22,19 @@ import com.google.bitcoin.discovery.IrcDiscovery;
 import com.google.bitcoin.discovery.PeerDiscovery;
 import com.google.bitcoin.store.BlockStoreException;
 import com.google.bitcoin.store.BoundedOverheadBlockStore;
+import com.google.bitcoin.store.WalletProtobufSerializer;
 import com.google.bitcoin.utils.BriefLogFormatter;
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
 import joptsimple.OptionSpec;
 import joptsimple.util.DateConverter;
+import org.bitcoinj.wallet.Protos;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.util.encoders.Hex;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.net.InetAddress;
@@ -66,7 +69,8 @@ public class WalletTool {
             "                       For example --condition=\">5.10\" or --condition=\"<=1\"\n" +
 
             "\n>>> ACTIONS\n" +
-            "  --action=DUMP        Prints the given wallet in textual form to stdout.\n" +
+            "  --action=DUMP        Loads and prints the given wallet in textual form to stdout.\n" +
+            "  --action=RAW_DUMP    Prints the wallet as a raw protobuf with no parsing or sanity checking applied.\n" +
             "  --action=CREATE      Makes a new wallet in the file specified by --wallet.\n" +
             "                       Will complain and require --force if the wallet already exists.\n" +
             "  --action=ADD_KEY     Adds a new key to the wallet, either specified or freshly generated.\n" +
@@ -173,6 +177,7 @@ public class WalletTool {
     public enum ActionEnum {
         NONE,
         DUMP,
+        RAW_DUMP,
         CREATE,
         ADD_KEY,
         DELETE_KEY,
@@ -276,6 +281,20 @@ public class WalletTool {
             System.err.println("Specified wallet file " + walletFile + " does not exist. Try --action=CREATE");
             return;
         }
+
+        if (action == ActionEnum.RAW_DUMP) {
+            // Just parse the protobuf and print, then bail out. Don't try and do a real deserialization. This is
+            // useful mostly for investigating corrupted wallets.
+            FileInputStream stream = new FileInputStream(walletFile);
+            try {
+                Protos.Wallet proto = WalletProtobufSerializer.parseToProto(stream);
+                System.out.println(proto.toString());
+                return;
+            } finally {
+                stream.close();
+            }
+        }
+
         try {
             wallet = Wallet.loadFromFile(walletFile);
             if (!wallet.getParams().equals(params)) {

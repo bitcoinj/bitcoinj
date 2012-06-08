@@ -233,7 +233,7 @@ public class WalletProtobufSerializer {
     public Wallet readWallet(InputStream input) throws IOException {
         // TODO: This method should throw more specific exception types than IllegalArgumentException.
         WalletProtobufSerializer serializer = new WalletProtobufSerializer();
-        Protos.Wallet walletProto = Protos.Wallet.parseFrom(input);
+        Protos.Wallet walletProto = parseToProto(input);
 
         // System.out.println(TextFormat.printToString(walletProto));
 
@@ -280,6 +280,14 @@ public class WalletProtobufSerializer {
         return wallet;
     }
 
+    /**
+     * Returns the loaded protocol buffer from the given byte stream. You normally want
+     * {@link Wallet#loadFromFile(java.io.File)} instead - this method is designed for low level work involving the
+     * wallet file format itself.
+     */
+    public static Protos.Wallet parseToProto(InputStream input) throws IOException {
+        return Protos.Wallet.parseFrom(input);
+    }
 
     private void readTransaction(Protos.Transaction txProto, NetworkParameters params) {
         Transaction tx = new Transaction(params);
