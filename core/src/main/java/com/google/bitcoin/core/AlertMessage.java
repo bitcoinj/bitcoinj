@@ -58,6 +58,11 @@ public class AlertMessage extends Message {
     }
 
     @Override
+    public String toString() {
+        return "ALERT: " + getStatusBar();
+    }
+
+    @Override
     void parse() throws ProtocolException {
         // Alerts are formatted in two levels. The top level contains two byte arrays: a signature, and a serialized
         // data structure containing the actual alert data.
