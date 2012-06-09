@@ -52,11 +52,9 @@ public class TCPNetworkConnection implements NetworkConnection {
     private static final Date checksummingProtocolChangeDate = new Date(1329696000000L);
 
     /**
-     * Connect to the given IP address using the port specified as part of the network parameters. Once construction
-     * is complete a functioning network channel is set up and running.
+     * Construct a network connection with the given params and version. To actually connect to a remote node, call
+     * {@link TCPNetworkConnection#connect(PeerAddress, int)}.
      *
-     * @param peerAddress address to connect to. IPv6 is not currently supported by BitCoin.  If
-     * port is not positive the default port from params is used.
      * @param params Defines which network to connect to and details of the protocol.
      * @param ver The VersionMessage to announce to the other side of the connection.
      * @throws IOException if there is a network related failure.
@@ -106,11 +104,11 @@ public class TCPNetworkConnection implements NetworkConnection {
         writeMessage(myVersionMessage);
         // When connecting, the remote peer sends us a version message with various bits of
         // useful data in it. We need to know the peer protocol version before we can talk to it.
-        Message m = readMessage();
-        if (!(m instanceof VersionMessage)) {
-            // Bad peers might not follow the protocol. This has been seen in the wild (issue 81).
-            throw new ProtocolException("First message received was not a version message but rather " + m);
-        }
+        // There is a bug in Satoshis code such that it can sometimes send us alert messages before version negotiation
+        // has completed. There's no harm in ignoring them (they're meant for Bitcoin-Qt users anyway) so we just cycle
+        // here until we find the right message.
+        Message m;
+        while (!((m = readMessage()) instanceof VersionMessage));
         versionMessage = (VersionMessage) m;
         // Now it's our turn ...
         // Send an ACK message stating we accept the peers protocol version.
