@@ -196,6 +196,8 @@ public class Wallet implements Serializable {
             // to not write through to physical media for at least a few seconds, but this is the best we can do.
             stream.flush();
             stream.getFD().sync();
+            stream.close();
+            stream = null;
             if (!temp.renameTo(f)) {
                 // Work around an issue on Windows whereby you can't rename over existing files.
                 if (System.getProperty("os.name").toLowerCase().indexOf("win") >= 0) {
