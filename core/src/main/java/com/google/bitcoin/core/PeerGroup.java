@@ -561,9 +561,12 @@ public class PeerGroup {
      */
     public ChannelFuture connectTo(SocketAddress address) {
         ChannelFuture future = bootstrap.connect(address);
-        TCPNetworkConnection connection = (TCPNetworkConnection)future.getChannel().getPipeline().get("codec");
-        if (connection != null)
-            connection.setRemoteAddress(address);
+        TCPNetworkConnection.NetworkHandler networkHandler =
+                (TCPNetworkConnection.NetworkHandler) future.getChannel().getPipeline().get("codec");
+        if (networkHandler != null) {
+            // This can be null in unit tests or apps that don't use TCP connections.
+            networkHandler.getOwnerObject().setRemoteAddress(address);
+        }
         Peer peer = peerFromChannelFuture(future);
         channelFutures.put(peer, future);
         return future;

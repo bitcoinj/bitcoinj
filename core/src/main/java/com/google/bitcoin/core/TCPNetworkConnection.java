@@ -16,14 +16,6 @@
 
 package com.google.bitcoin.core;
 
-import static org.jboss.netty.channel.Channels.write;
-
-import java.io.IOException;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.SocketAddress;
-import java.util.Date;
-
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBufferInputStream;
 import org.jboss.netty.buffer.ChannelBufferOutputStream;
@@ -33,6 +25,14 @@ import org.jboss.netty.handler.codec.replay.ReplayingDecoder;
 import org.jboss.netty.handler.codec.replay.VoidEnum;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.SocketAddress;
+import java.util.Date;
+
+import static org.jboss.netty.channel.Channels.write;
 
 /**
  * A {@code TCPNetworkConnection} is used for connecting to a Bitcoin node over the standard TCP/IP protocol.<p>
@@ -172,6 +172,10 @@ public class TCPNetworkConnection {
             ChannelBuffer buffer = ChannelBuffers.dynamicBuffer();
             serializer.serialize(message, new ChannelBufferOutputStream(buffer));
             write(ctx, e.getFuture(), buffer, e.getRemoteAddress());
+        }
+
+        public TCPNetworkConnection getOwnerObject() {
+            return TCPNetworkConnection.this;
         }
     }
     
