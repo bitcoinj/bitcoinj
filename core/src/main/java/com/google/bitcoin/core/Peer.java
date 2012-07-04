@@ -32,7 +32,7 @@ import java.util.*;
 import java.util.concurrent.*;
 
 /**
- * A Peer handles the high level communication with a BitCoin node.
+ * A Peer handles the high level communication with a Bitcoin node.
  *
  * <p>{@link Peer#getHandler()} is part of a Netty Pipeline with a Bitcoin serializer downstream of it.
  */
@@ -89,6 +89,16 @@ public class Peer {
         this.fastCatchupTimeSecs = params.genesisBlock.getTimeSeconds();
         this.isAcked = false;
         this.handler = new PeerHandler();
+    }
+
+    /**
+     * Construct a peer that reads/writes from the given chain. Automatically creates a VersionMessage for you from the
+     * given software name/version strings, which should be something like "MySimpleTool", "1.0"
+     */
+    public Peer(NetworkParameters params, BlockChain blockChain, String thisSoftwareName, String thisSoftwareVersion) {
+        this(params, blockChain, null);
+        this.versionMessage = new VersionMessage(params, blockChain.getBestChainHeight());
+        this.versionMessage.appendToSubVer(thisSoftwareName, thisSoftwareVersion, null);
     }
 
     public synchronized void addEventListener(PeerEventListener listener) {
