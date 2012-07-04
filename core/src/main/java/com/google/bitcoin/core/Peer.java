@@ -16,22 +16,20 @@
 
 package com.google.bitcoin.core;
 
-import java.io.IOException;
-import java.net.ConnectException;
-import java.net.InetSocketAddress;
-import java.net.SocketAddress;
-import java.util.*;
-import java.util.concurrent.*;
-
-import org.jboss.netty.channel.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.google.bitcoin.store.BlockStore;
 import com.google.bitcoin.store.BlockStoreException;
 import com.google.bitcoin.utils.EventListenerInvoker;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
+import org.jboss.netty.channel.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.net.ConnectException;
+import java.net.InetSocketAddress;
+import java.util.*;
+import java.util.concurrent.*;
 
 /**
  * A Peer handles the high level communication with a BitCoin node.
@@ -167,7 +165,7 @@ public class Peer {
         throws Exception {
             Message m = (Message)e.getMessage();
             
-            // Allow event listeners to filter the message stream. Listeners are allowed to drop messages by    178             synchronized (listener) {
+            // Allow event listeners to filter the message stream. Listeners are allowed to drop messages by
             // returning null.
             for (PeerEventListener listener : eventListeners) {
                 synchronized (listener) {

@@ -16,18 +16,6 @@
 
 package com.google.bitcoin.examples;
 
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.util.ArrayList;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-
-import org.jboss.netty.bootstrap.ClientBootstrap;
-import org.jboss.netty.channel.*;
-import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
-
 import com.google.bitcoin.core.Message;
 import com.google.bitcoin.core.NetworkParameters;
 import com.google.bitcoin.core.TCPNetworkConnection;
@@ -35,6 +23,17 @@ import com.google.bitcoin.core.VersionMessage;
 import com.google.bitcoin.discovery.DnsDiscovery;
 import com.google.bitcoin.discovery.IrcDiscovery;
 import com.google.bitcoin.discovery.PeerDiscoveryException;
+import org.jboss.netty.bootstrap.ClientBootstrap;
+import org.jboss.netty.channel.*;
+import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
+
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.util.ArrayList;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Prints a list of IP addresses connected to the rendezvous point on the LFnet IRC channel.
@@ -110,7 +109,7 @@ public class PrintPeers {
 
                         TCPNetworkConnection conn =
                             new TCPNetworkConnection(params, new VersionMessage(params, 0));
-                        pipeline.addLast("codec", conn);
+                        pipeline.addLast("codec", conn.getHandler());
                         pipeline.addLast("peer", new SimpleChannelHandler() {
                             public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) throws Exception {
                                 Message m = (Message)e.getMessage();

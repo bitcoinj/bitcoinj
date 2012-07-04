@@ -22,7 +22,6 @@ import com.google.bitcoin.discovery.PeerDiscovery;
 import com.google.bitcoin.discovery.PeerDiscoveryException;
 import com.google.bitcoin.utils.EventListenerInvoker;
 import com.google.common.base.Preconditions;
-
 import org.jboss.netty.bootstrap.ClientBootstrap;
 import org.jboss.netty.channel.*;
 import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
@@ -332,8 +331,9 @@ public class PeerGroup {
         running = true;
         this.peerGroupThread.start();
     }
-    
-    void mockStart(PeerGroupThread peerGroupThread) {
+
+    // Visible for testing.
+    synchronized void mockStart(PeerGroupThread peerGroupThread) {
         this.peerGroupThread = peerGroupThread;
         running = true;
     }
@@ -362,7 +362,7 @@ public class PeerGroup {
      *
      * @return a Future that can be used to wait for the async broadcast to complete.
      */
-    public Future<Transaction> broadcastTransaction(final Transaction tx) {
+    public synchronized Future<Transaction> broadcastTransaction(final Transaction tx) {
         FutureTask<Transaction> future = new FutureTask<Transaction>(new Runnable() {
             public void run() {
                 // This is run with the peer group already locked.
