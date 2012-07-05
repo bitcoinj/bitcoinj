@@ -8,7 +8,7 @@ if [ ! -e target/bitcoinj-tools-*.jar ] || [[ "$ALWAYS_BUILD_WALLETTOOL" != "" ]
   cd ../core
   mvn install -DskipTests
   cd ../tools
-  rm target/bitcoinj-tools-*.jar
+  [ -e target/bitcoinj-tools-*.jar ] && rm target/bitcoinj-tools-*.jar
   mvn package -DskipTests
 fi
 
