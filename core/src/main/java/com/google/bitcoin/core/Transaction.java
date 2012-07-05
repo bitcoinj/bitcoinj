@@ -555,7 +555,7 @@ public class Transaction extends ChildMessage implements Serializable {
                 script = "???";
                 script2 = "???";
             }
-            return "     == COINBASE TXN (scriptSig " + script + ")  (scriptPubKey " + script2 + ")";
+            return "     == COINBASE TXN (scriptSig " + script + ")  (scriptPubKey " + script2 + ")\n";
         }
         for (TransactionInput in : inputs) {
             s.append("     ");
