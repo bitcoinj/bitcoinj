@@ -633,13 +633,11 @@ public class Wallet implements Serializable {
         // or if a dead coinbase transaction has moved back onto the main chain.
         boolean isDeadCoinbase = tx.isCoinBase() && dead.containsKey(tx.getHash());
         if (isDeadCoinbase) {
-            // There is a dead coinbase tx being received on the best chain.
-            // A coinbase tx is made dead when it moves to a side chain but it can be switched back on a reorg and
-            // 'resurrected' back to spent or unspent.
-            // Take it out of the dead pool.
-            // The receive method will then treat it as a new transaction and put it in spent or unspent as appropriate.
-            // TODO - Theorectically it could also be in the dead pool if it was double spent - this needs testing.
-            log.info("  coinbase tx {} <-dead", tx.getHashAsString() + ", confidence = " + tx.getConfidence().getConfidenceType().name());
+            // There is a dead coinbase tx being received on the best chain. A coinbase tx is made dead when it moves
+            // to a side chain but it can be switched back on a reorg and 'resurrected' back to spent or unspent.
+            // So take it out of the dead pool.
+            log.info("  coinbase tx {} <-dead: confidence {}", tx.getHashAsString(),
+                    tx.getConfidence().getConfidenceType().name());
             dead.remove(tx.getHash());
         }
 
@@ -647,12 +645,12 @@ public class Wallet implements Serializable {
 
         if (!tx.getValueSentToMe(this).equals(BigInteger.ZERO)) {
             // It's sending us coins.
-            log.info("  new tx {} ->unspent");
+            log.info("  new tx {} ->unspent", tx.getHashAsString());
             boolean alreadyPresent = unspent.put(tx.getHash(), tx) != null;
             checkState(!alreadyPresent, "TX was received twice");
         } else if (!tx.getValueSentFromMe(this).equals(BigInteger.ZERO)) {
             // It spent some of our coins and did not send us any.
-            log.info("  new tx {} ->spent");
+            log.info("  new tx {} ->spent", tx.getHashAsString());
             boolean alreadyPresent = spent.put(tx.getHash(), tx) != null;
             checkState(!alreadyPresent, "TX was received twice");
         } else {
