@@ -854,14 +854,14 @@ public class Block extends Message {
      * Returns a solved block that builds on top of this one. This exists for unit tests.
      */
     Block createNextBlock(Address to, long time) {
-        return createNextBlock(to, time, EMPTY_BYTES);
+        return createNextBlock(to, null, time, EMPTY_BYTES);
     }
 
     /**
      * Returns a solved block that builds on top of this one. This exists for unit tests.
      * In this variant you can specify a public key (pubkey) for use in generating coinbase blocks.
      */
-    Block createNextBlock(Address to, long time, byte[] pubKey) {
+    Block createNextBlock(Address to, TransactionOutPoint prevOut, long time, byte[] pubKey) {
         Block b = new Block(params);
         b.setDifficultyTarget(difficultyTarget);
         b.addCoinbaseTransaction(pubKey);
@@ -871,13 +871,17 @@ public class Block extends Message {
             Transaction t = new Transaction(params);
             t.addOutput(new TransactionOutput(params, t, Utils.toNanoCoins(50, 0), to));
             // The input does not really need to be a valid signature, as long as it has the right general form.
-            TransactionInput input = new TransactionInput(params, t, Script.createInputScript(EMPTY_BYTES, EMPTY_BYTES));
-            // Importantly the outpoint hash cannot be zero as that's how we detect a coinbase transaction in isolation
-            // but it must be unique to avoid 'different' transactions looking the same.
-            byte[] counter = new byte[32];
-            counter[0] = (byte) txCounter++;
-            counter[1] = 1;
-            input.getOutpoint().setHash(new Sha256Hash(counter));
+            TransactionInput input;
+            if (prevOut == null) {
+                input = new TransactionInput(params, t, Script.createInputScript(EMPTY_BYTES, EMPTY_BYTES));
+                // Importantly the outpoint hash cannot be zero as that's how we detect a coinbase transaction in isolation
+                // but it must be unique to avoid 'different' transactions looking the same.
+                byte[] counter = new byte[32];
+                counter[0] = (byte) txCounter++;
+                counter[1] = 1;
+                input.getOutpoint().setHash(new Sha256Hash(counter));
+            }else
+                input = new TransactionInput(params, t, Script.createInputScript(EMPTY_BYTES, EMPTY_BYTES), prevOut);
             t.addInput(input);
             b.addTransaction(t);
         }
@@ -894,8 +898,13 @@ public class Block extends Message {
     }
 
     // Visible for testing.
+    public Block createNextBlock(Address to, TransactionOutPoint prevOut) {
+        return createNextBlock(to, prevOut, Utils.now().getTime() / 1000, EMPTY_BYTES);
+    }
+    
+    // Visible for testing.
     public Block createNextBlock(Address to) {
-        return createNextBlock(to, Utils.now().getTime() / 1000);
+        return createNextBlock(to, null, Utils.now().getTime() / 1000, EMPTY_BYTES);
     }
 
     /**
@@ -903,7 +912,7 @@ public class Block extends Message {
      * This method is intended for test use only.
      */
     Block createNextBlockWithCoinbase(byte[] pubKey) {
-        return createNextBlock(null, Utils.now().getTime() / 1000, pubKey);
+        return createNextBlock(null, null, Utils.now().getTime() / 1000, pubKey);
     }
 
     /**
