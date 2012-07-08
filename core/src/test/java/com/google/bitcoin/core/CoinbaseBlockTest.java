@@ -27,7 +27,7 @@ import java.util.List;
 
 import org.junit.Test;
 
-import com.google.bitcoin.core.BlockChain.NewBlockType;
+import com.google.bitcoin.core.AbstractBlockChain.NewBlockType;
 import com.google.bitcoin.core.Wallet.BalanceType;
 
 /**
