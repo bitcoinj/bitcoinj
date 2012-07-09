@@ -56,7 +56,6 @@ public class ChainSplitTest {
     public void testForking1() throws Exception {
         // Check that if the block chain forks, we end up using the right chain. Only tests inbound transactions
         // (receiving coins). Checking that we understand reversed spends is in testForking2.
-
         final boolean[] reorgHappened = new boolean[1];
         reorgHappened[0] = false;
         wallet.addEventListener(new AbstractWalletEventListener() {
@@ -188,6 +187,25 @@ public class ChainSplitTest {
     }
 
     @Test
+    public void testForking5() throws Exception {
+        // Test the standard case in which a block containing identical transactions appears on a side chain.
+        Block b1 = unitTestParams.genesisBlock.createNextBlock(coinsTo);
+        chain.add(b1);
+        assertEquals("50.00", Utils.bitcoinValueToFriendlyString(wallet.getBalance()));
+        // genesis -> b1
+        //         -> b2
+        Block b2 = unitTestParams.genesisBlock.createNextBlock(coinsTo);
+        Transaction b2coinbase = b2.transactions.get(0);
+        b2.transactions.clear();
+        b2.addTransaction(b2coinbase);
+        b2.addTransaction(b1.transactions.get(1));
+        b2.solve();
+        chain.add(b2);
+        assertEquals("50.00", Utils.bitcoinValueToFriendlyString(wallet.getBalance()));
+        assertTrue(wallet.isConsistent());
+    }
+
+    @Test
     public void testDoubleSpendOnFork() throws Exception {
         // Check what happens when a re-org happens and one of our confirmed transactions becomes invalidated by a
         // double spend on the new best chain.
@@ -232,7 +250,6 @@ public class ChainSplitTest {
     public void testDoubleSpendOnForkPending() throws Exception {
         // Check what happens when a re-org happens and one of our UNconfirmed transactions becomes invalidated by a
         // double spend on the new best chain.
-
         final Transaction[] eventDead = new Transaction[1];
         final Transaction[] eventReplacement = new Transaction[1];
         wallet.addEventListener(new AbstractWalletEventListener() {

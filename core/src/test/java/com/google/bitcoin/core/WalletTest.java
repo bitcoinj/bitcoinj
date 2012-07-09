@@ -16,7 +16,6 @@
 
 package com.google.bitcoin.core;
 
-import com.google.bitcoin.core.Wallet.BalanceType;
 import com.google.bitcoin.core.WalletTransaction.Pool;
 import com.google.bitcoin.store.BlockStore;
 import com.google.bitcoin.store.MemoryBlockStore;
@@ -269,7 +268,8 @@ public class WalletTest {
 
     @Test
     public void isConsistent_duplicates() throws Exception {
-        // This test ensures that isConsistent catches duplicate transactions.
+        // This test ensures that isConsistent catches duplicate transactions, eg, because we submitted the same block
+        // twice (this is not allowed).
         Transaction tx = createFakeTx(params, Utils.toNanoCoins(1, 0), myAddress);
         Address someOtherGuy = new ECKey().toAddress(params);
         TransactionOutput output = new TransactionOutput(params, tx, Utils.toNanoCoins(0, 5), someOtherGuy);
@@ -280,7 +280,7 @@ public class WalletTest {
         
         Transaction txClone = new Transaction(params, tx.bitcoinSerialize());
         try {
-            wallet.receiveFromBlock(txClone, null, BlockChain.NewBlockType.SIDE_CHAIN);
+            wallet.receiveFromBlock(txClone, null, BlockChain.NewBlockType.BEST_CHAIN);
             fail();
         } catch (IllegalStateException ex) {
             // expected
