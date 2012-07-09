@@ -364,7 +364,7 @@ public class TransactionConfidence implements Serializable {
     /**
      * Called when the transaction becomes newly dead, that is, we learn that one of its inputs has already been spent
      * in such a way that the double-spending transaction takes precedence over this one. It will not become valid now
-     * unless there is a re-org. Automatically sets the confidence type to OVERRIDDEN_BY_DOUBLE_SPEND.
+     * unless there is a re-org. Automatically sets the confidence type to DEAD.
      */
     public synchronized void setOverridingTransaction(Transaction overridingTransaction) {
         this.overridingTransaction = overridingTransaction;
