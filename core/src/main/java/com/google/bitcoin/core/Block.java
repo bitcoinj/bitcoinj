@@ -870,6 +870,7 @@ public class Block extends Message {
             // but it must be unique to avoid 'different' transactions looking the same.
             byte[] counter = new byte[32];
             counter[0] = (byte) txCounter++;
+            counter[1] = 1;
             input.getOutpoint().setHash(new Sha256Hash(counter));
             t.addInput(input);
             b.addTransaction(t);

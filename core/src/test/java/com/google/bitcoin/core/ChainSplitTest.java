@@ -219,6 +219,7 @@ public class ChainSplitTest {
         //         -> b2
         Block b3 = b1.createNextBlock(someOtherGuy);
         b3.addTransaction(b2.transactions.get(1));
+        b3.solve();
         chain.add(b3);
         assertEquals("50.00", Utils.bitcoinValueToFriendlyString(wallet.getBalance()));
     }
