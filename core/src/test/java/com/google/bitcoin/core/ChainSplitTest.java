@@ -206,6 +206,24 @@ public class ChainSplitTest {
     }
 
     @Test
+    public void testForking6() throws Exception {
+        // Test the case in which a side chain block contains a tx, and then it appears in the main chain too.
+        Block b1 = unitTestParams.genesisBlock.createNextBlock(someOtherGuy);
+        chain.add(b1);
+        // genesis -> b1
+        //         -> b2
+        Block b2 = unitTestParams.genesisBlock.createNextBlock(coinsTo);
+        chain.add(b2);
+        assertEquals(BigInteger.ZERO, wallet.getBalance());
+        // genesis -> b1 -> b3
+        //         -> b2
+        Block b3 = b1.createNextBlock(someOtherGuy);
+        b3.addTransaction(b2.transactions.get(1));
+        chain.add(b3);
+        assertEquals("50.00", Utils.bitcoinValueToFriendlyString(wallet.getBalance()));
+    }
+
+    @Test
     public void testDoubleSpendOnFork() throws Exception {
         // Check what happens when a re-org happens and one of our confirmed transactions becomes invalidated by a
         // double spend on the new best chain.

@@ -645,6 +645,13 @@ public class Wallet implements Serializable {
             dead.remove(tx.getHash());
         }
 
+        if (inactive.containsKey(tx.getHash())) {
+            // This transaction was seen first on a side chain, but now it's also been seen in the best chain.
+            // So we don't need to track it as inactive anymore.
+            log.info("  new tx {} <-inactive", tx.getHashAsString());
+            inactive.remove(tx.getHash());
+        }
+
         updateForSpends(tx, true);
 
         if (!tx.getValueSentToMe(this).equals(BigInteger.ZERO)) {
