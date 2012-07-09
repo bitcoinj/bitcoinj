@@ -47,7 +47,7 @@ public class Peer {
     private static final Logger log = LoggerFactory.getLogger(Peer.class);
 
     private final NetworkParameters params;
-    private final BlockChain blockChain;
+    private final AbstractBlockChain blockChain;
     // When an API user explicitly requests a block or transaction from a peer, the InventoryItem is put here
     // whilst waiting for the response. Synchronized on itself. Is not used for downloads Peer generates itself.
     // TODO: Make this work for transactions as well.
@@ -87,9 +87,9 @@ public class Peer {
     /**
      * Construct a peer that reads/writes from the given block chain.
      */
-    public Peer(NetworkParameters params, BlockChain blockChain, VersionMessage ver) {
+    public Peer(NetworkParameters params, AbstractBlockChain chain2, VersionMessage ver) {
         this.params = params;
-        this.blockChain = blockChain;
+        this.blockChain = chain2;
         this.versionMessage = ver;
         this.pendingGetBlockFutures = new ArrayList<GetDataFuture<Block>>();
         this.eventListeners = new CopyOnWriteArrayList<PeerEventListener>();
@@ -103,7 +103,7 @@ public class Peer {
      * Construct a peer that reads/writes from the given chain. Automatically creates a VersionMessage for you from the
      * given software name/version strings, which should be something like "MySimpleTool", "1.0"
      */
-    public Peer(NetworkParameters params, BlockChain blockChain, String thisSoftwareName, String thisSoftwareVersion) {
+    public Peer(NetworkParameters params, AbstractBlockChain blockChain, String thisSoftwareName, String thisSoftwareVersion) {
         this(params, blockChain, null);
         this.versionMessage = new VersionMessage(params, blockChain.getBestChainHeight());
         this.versionMessage.appendToSubVer(thisSoftwareName, thisSoftwareVersion, null);

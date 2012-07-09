@@ -94,6 +94,7 @@ public class PeerGroup {
     private int maxConnections;
 
     private final NetworkParameters params;
+    private final AbstractBlockChain chain;
     private int connectionDelayMillis;
     private long fastCatchupTimeSecs;
     private ArrayList<Wallet> wallets;
@@ -125,10 +126,10 @@ public class PeerGroup {
      * about blocks or pending transactions, you can just provide a MemoryBlockStore and a newly created Wallet.
      *
      * @param params Network parameters
-     * @param chain a BlockChain object that will receive and handle block messages.
+     * @param chain2 a BlockChain object that will receive and handle block messages.
      */
-    public PeerGroup(NetworkParameters params, BlockChain chain) {
-        this(params, chain, DEFAULT_CONNECTION_DELAY_MILLIS);
+    public PeerGroup(NetworkParameters params, AbstractBlockChain chain2) {
+        this(params, chain2, DEFAULT_CONNECTION_DELAY_MILLIS);
     }
 
     /**
@@ -139,7 +140,7 @@ public class PeerGroup {
      * @param connectionDelayMillis how long to wait between attempts to connect to nodes or read
      *                              from any added peer discovery sources
      */
-    public PeerGroup(final NetworkParameters params, final BlockChain chain,
+    public PeerGroup(final NetworkParameters params, final AbstractBlockChain chain,
             int connectionDelayMillis) {
         this(params, chain, connectionDelayMillis, new ClientBootstrap(
                 new NioClientSocketChannelFactory(
@@ -148,9 +149,10 @@ public class PeerGroup {
         bootstrap.setPipelineFactory(makePipelineFactory(params, chain));
     }
 
-    PeerGroup(final NetworkParameters params, final BlockChain chain,
+    PeerGroup(final NetworkParameters params, final AbstractBlockChain chain,
               int connectionDelayMillis, ClientBootstrap bootstrap) {
         this.params = params;
+        this.chain = chain;
         this.connectionDelayMillis = connectionDelayMillis;
         this.fastCatchupTimeSecs = params.genesisBlock.getTimeSeconds();
         this.wallets = new ArrayList<Wallet>(1);
@@ -188,7 +190,7 @@ public class PeerGroup {
     // of the higher level {@code Peer}.  Received packets will first be decoded, then passed
     // {@code Peer}.  Sent packets will be created by the {@code Peer}, then encoded and sent.
     private ChannelPipelineFactory makePipelineFactory(
-            final NetworkParameters params, final BlockChain chain) {
+            final NetworkParameters params, final AbstractBlockChain chain) {
         return new ChannelPipelineFactory() {
             public ChannelPipeline getPipeline() throws Exception {
                 VersionMessage ver = getVersionMessage().duplicate();
@@ -726,6 +728,7 @@ public class PeerGroup {
      * {@link Peer#setFastCatchupTime(long)} for further explanation. Call this before starting block chain download.
      */
     public synchronized void setFastCatchupTimeSecs(long secondsSinceEpoch) {
+        Preconditions.checkState(!chain.shouldVerifyTransactions(), "Fast catchup is incompatible with fully verifying");
         fastCatchupTimeSecs = secondsSinceEpoch;
         if (downloadPeer != null) {
             downloadPeer.setFastCatchupTime(secondsSinceEpoch);
