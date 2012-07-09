@@ -31,41 +31,8 @@ import static com.google.common.base.Preconditions.checkArgument;
  * map. It also checks that the length is correct and provides a bit more type safety.
  */
 public class Sha256Hash implements Serializable {
-    private static final long serialVersionUID = 3778897922647016546L;
-
     private byte[] bytes;
-    private int hash = -1;
-
-    /**
-     * @see setHashcodeByteLength(int hashcodeByteLength)
-     */
-    private static int HASHCODE_BYTES_TO_CHECK = 5;
-    private static boolean HASHCODE_BYTES_TO_CHECK_CHANGED = false;
-
-
     public static final Sha256Hash ZERO_HASH = new Sha256Hash(new byte[32]);
-
-    /**
-     * Alters the number of bytes from the backing array to use when generating java hashCodes.
-     * <br/><br/>
-     * The default value of 5 gives approximately 1 trillion possible unique combinations.
-     * Given that an int hashcode only has 4 billion possible values it should be more than enough.
-     * <br/><br/>
-     * Changing this value after Sha256Hashes have been stored in hashed collections breaks the
-     * hashCode contract and will result in unpredictable behaviour.  If this
-     * needs to be set to a different value it should be done once and only once
-     * and before any calls to hashCode() are made on any instance of Sha256Hash instances.
-     * <br/>
-     *
-     * @param hashcodeByteLength the number of bytes in the hash to use for generating the hashcode.
-     * @throws IllegalStateException if called more than once.
-     */
-    public static void setHashcodeByteLength(int hashcodeByteLength) {
-        if (HASHCODE_BYTES_TO_CHECK_CHANGED)
-            throw new IllegalStateException("setHashcodeByteLength can only be called once and should be called before any instances of Sha256Hash are constructed");
-        HASHCODE_BYTES_TO_CHECK = hashcodeByteLength;
-        HASHCODE_BYTES_TO_CHECK_CHANGED = true;
-    }
 
     /**
      * Creates a Sha256Hash by wrapping the given byte array. It must be 32 bytes long.
@@ -74,12 +41,6 @@ public class Sha256Hash implements Serializable {
         checkArgument(bytes.length == 32);
         this.bytes = bytes;
 
-    }
-
-    private Sha256Hash(byte[] bytes, int hash) {
-        checkArgument(bytes.length == 32);
-        this.bytes = bytes;
-        this.hash = hash;
     }
 
     /**
@@ -118,12 +79,8 @@ public class Sha256Hash implements Serializable {
      */
     @Override
     public int hashCode() {
-        if (hash == -1) {
-            hash = 1;
-            for (int i = 0; i < HASHCODE_BYTES_TO_CHECK; i++)
-                hash = 31 * hash + bytes[i];
-        }
-        return hash;
+        // Use the last 4 bytes, not the first 4 which are often zeros in Bitcoin.
+        return (bytes[31] & 0xFF) | ((bytes[30] & 0xFF) << 8) | ((bytes[29] & 0xFF) << 16) | ((bytes[28] & 0xFF) << 24);
     }
 
     @Override
@@ -143,6 +100,6 @@ public class Sha256Hash implements Serializable {
     }
 
     public Sha256Hash duplicate() {
-        return new Sha256Hash(bytes, hash);
+        return new Sha256Hash(bytes);
     }
 }

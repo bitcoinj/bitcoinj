@@ -19,18 +19,13 @@ package com.google.bitcoin.core;
 import com.google.bitcoin.core.WalletTransaction.Pool;
 import com.google.bitcoin.store.BlockStore;
 import com.google.bitcoin.store.MemoryBlockStore;
-import com.google.bitcoin.store.WalletProtobufSerializer;
 import com.google.bitcoin.utils.BriefLogFormatter;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.InputStream;
 import java.math.BigInteger;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import static com.google.bitcoin.core.TestUtils.*;
 import static com.google.bitcoin.core.Utils.bitcoinValueToFriendlyString;
@@ -620,37 +615,6 @@ public class WalletTest {
         assertEquals(1, tx1.getAppearsInHashes().size());
         assertTrue(tx1.getAppearsInHashes().contains(b1.getHeader().getHash()));
         assertNull(tx1.appearsIn);
-    }
-
-    @Test
-    public void oldWalletsDeserialize() throws Exception {
-        // Check that the Wallet class fills out tx confidences as best it can when loading old wallets. The new
-        // API provides a superset of the info that used to be available so it's impossible to do a complete
-        // migration but we can do some.
-        //
-        // TODO: This test does not check migration of dead or pending transactions.
-        InputStream stream = getClass().getResourceAsStream("old1.wallet");
-        wallet = Wallet.loadFromFileStream(stream);
-        Set<Transaction> transactions = wallet.getTransactions(true, true);
-        assertEquals(91, transactions.size());
-        Transaction tx = wallet.unspent.get(new Sha256Hash("5649c63ad55002ce2f39d1d4744996ebaccc1d15e0491c9e8d60eb3720dabebd"));
-        assertEquals(tx.getAppearsInHashes().iterator().next(), new Sha256Hash("00000000019380f5aef28393827737f55a1cf8abb51a36d46ab6f2db0a5b9cb8"));
-        assertEquals(TransactionConfidence.ConfidenceType.BUILDING, tx.getConfidence().getConfidenceType());
-        assertEquals(42814, tx.getConfidence().getAppearedAtChainHeight());
-
-        // Re-serialize the wallet. Make sure it's all still there.
-        ByteArrayOutputStream bios = new ByteArrayOutputStream();
-        wallet.saveToFileStream(bios);
-        wallet = Wallet.loadFromFileStream(new ByteArrayInputStream(bios.toByteArray()));
-        assertEquals(91, transactions.size());
-        tx = wallet.unspent.get(new Sha256Hash("5649c63ad55002ce2f39d1d4744996ebaccc1d15e0491c9e8d60eb3720dabebd"));
-        assertEquals(tx.getAppearsInHashes().iterator().next(), new Sha256Hash("00000000019380f5aef28393827737f55a1cf8abb51a36d46ab6f2db0a5b9cb8"));
-        assertEquals(TransactionConfidence.ConfidenceType.BUILDING, tx.getConfidence().getConfidenceType());
-        assertEquals(42814, tx.getConfidence().getAppearedAtChainHeight());
-
-        // Now check we can serialize old wallets to protocol buffers. Covers bug 134.
-        bios.reset();
-        new WalletProtobufSerializer().writeWallet(wallet, bios);
     }
 
     @Test
