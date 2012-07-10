@@ -52,6 +52,19 @@ public class Block extends Message {
 
     static final long ALLOWED_TIME_DRIFT = 2 * 60 * 60; // Same value as official client.
 
+    /**
+     * A constant shared by the entire network: how large in bytes a block is allowed to be. One day we may have to
+     * upgrade everyone to change this, so Bitcoin can continue to grow. For now it exists as an anti-DoS measure to
+     * avoid somebody creating a titanically huge but valid block and forcing everyone to download/store it forever.
+     */
+    public static final int MAX_BLOCK_SIZE = 1 * 1000 * 1000;
+    /**
+     * A "sigop" is a signature verification operation. Because they're expensive we also impose a separate limit on
+     * the number in a block to prevent somebody mining a huge block that has way more sigops than normal, so is very
+     * expensive/slow to verify.
+     */
+    public static final int MAX_BLOCK_SIGOPS = MAX_BLOCK_SIZE / 50;
+
     /** A value for difficultyTarget (nBits) that allows half of all possible hash solutions. Used in unit testing. */
     static final long EASIEST_DIFFICULTY_TARGET = 0x207fFFFFL;
 
@@ -569,6 +582,21 @@ public class Block extends Message {
         if (time > currentTime + ALLOWED_TIME_DRIFT)
             throw new VerificationException("Block too far in future");
     }
+    
+    private void checkSigOps() throws VerificationException {
+        // Check there aren't too many signature verifications in the block. This is an anti-DoS measure, see the
+        // comments for MAX_BLOCK_SIGOPS.
+        int sigOps = 0;
+        for (Transaction tx : transactions) {
+            try {
+                sigOps += tx.getSigOpCount();
+            } catch (ScriptException e) {
+                throw new VerificationException("Unreadable script in transaction");
+            }
+        }
+        if (sigOps > MAX_BLOCK_SIGOPS)
+            throw new VerificationException("Block had too many Signature Operations");
+    }
 
     private void checkMerkleRoot() throws VerificationException {
         Sha256Hash calculatedRoot = calculateMerkleRoot();
@@ -683,6 +711,7 @@ public class Block extends Message {
         maybeParseTransactions();
         checkTransactions();
         checkMerkleRoot();
+        checkSigOps();
     }
 
     /**

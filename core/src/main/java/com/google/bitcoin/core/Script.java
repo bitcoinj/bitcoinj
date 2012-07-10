@@ -195,6 +195,11 @@ public class Script {
     // The program is a set of byte[]s where each element is either [opcode] or [data, data, data ...]
     List<ScriptChunk> chunks;
     private final NetworkParameters params;
+    
+    // Only for internal use
+    private Script() {
+        params = null;
+    }
 
     /**
      * Construct a Script using the given network parameters and a range of the programBytes array.
@@ -693,5 +698,57 @@ public class Script {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+    
+    ////////////////////// Interface used during verification of transactions/blocks ////////////////////////////////
+    
+    private static int getSigOpCount(List<ScriptChunk> chunks, boolean accurate) throws ScriptException {
+        int sigOps = 0;
+        int lastOpCode = OP_INVALIDOPCODE;
+        for (ScriptChunk chunk : chunks) {
+            if (chunk.isOpCode) {
+                int opcode = 0xFF & chunk.data[0];
+                switch (opcode) {
+                case OP_CHECKSIG:
+                case OP_CHECKSIGVERIFY:
+                    sigOps++;
+                    break;
+                case OP_CHECKMULTISIG:
+                case OP_CHECKMULTISIGVERIFY:
+                    if (accurate && lastOpCode >= OP_1 && lastOpCode <= OP_16)
+                        sigOps += getOpNValue(lastOpCode);
+                    else
+                        sigOps += 20;
+                default:
+                    break;
+                }
+                lastOpCode = opcode;
+            }
+        }
+        return sigOps;
+    }
+    
+    /**
+     * Convince method to get the int value of OP_N
+     */
+    private static int getOpNValue(int opcode) throws ScriptException {
+        if (opcode == OP_0)
+            return 0;
+        if (opcode < OP_1 || opcode > OP_16) // This should absolutely never happen
+            throw new ScriptException("getOpNValue called on non OP_N opcode");
+        return opcode + 1 - OP_1;
+    }
+
+    /**
+     * Gets the count of regular SigOps in the script program (counting multisig ops as 20)
+     */
+    public static int getSigOpCount(byte[] program) throws ScriptException {
+        Script script = new Script();
+        try {
+            script.parse(program, 0, program.length);
+        } catch (ScriptException e) {
+            // Ignore errors and count up to the parse-able length
+        }
+        return getSigOpCount(script.chunks, false);
     }
 }

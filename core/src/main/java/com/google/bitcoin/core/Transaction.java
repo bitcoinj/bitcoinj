@@ -869,4 +869,17 @@ public class Transaction extends ChildMessage implements Serializable {
         maybeParse();
         out.defaultWriteObject();
     }
+    
+    /**
+     * Gets the count of regular SigOps in this transactions
+     */
+    public int getSigOpCount() throws ScriptException {
+        maybeParse();
+        int sigOps = 0;
+        for (TransactionInput input : inputs)
+            sigOps += Script.getSigOpCount(input.getScriptBytes());
+        for (TransactionOutput output : outputs)
+            sigOps += Script.getSigOpCount(output.getScriptBytes());
+        return sigOps;
+    }
 }
