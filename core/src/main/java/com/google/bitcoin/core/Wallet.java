@@ -624,6 +624,14 @@ public class Wallet implements Serializable {
     private void processTxFromBestChain(Transaction tx) throws VerificationException, ScriptException {
         // This TX may spend our existing outputs even though it was not pending. This can happen in unit
         // tests, if keys are moved between wallets, and if we're catching up to the chain given only a set of keys.
+
+        if (inactive.containsKey(tx.getHash())) {
+            // This transaction was seen first on a side chain, but now it's also been seen in the best chain.
+            // So we don't need to track it as inactive anymore.
+            log.info("  new tx {} <-inactive", tx.getHashAsString());
+            inactive.remove(tx.getHash());
+        }
+
         updateForSpends(tx, true);
         if (!tx.getValueSentToMe(this).equals(BigInteger.ZERO)) {
             // It's sending us coins.
