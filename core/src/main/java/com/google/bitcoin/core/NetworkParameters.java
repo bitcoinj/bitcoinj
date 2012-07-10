@@ -21,6 +21,8 @@ import org.spongycastle.util.encoders.Hex;
 import java.io.ByteArrayOutputStream;
 import java.io.Serializable;
 import java.math.BigInteger;
+import java.util.HashMap;
+import java.util.Map;
 
 import static com.google.common.base.Preconditions.checkState;
 
@@ -54,7 +56,7 @@ public class NetworkParameters implements Serializable {
      */
     public static final String ID_TESTNET = "org.bitcoin.test";
 
-    // TODO: Seed nodes and checkpoint values should be here as well.
+    // TODO: Seed nodes should be here as well.
 
     /**
      * Genesis block for this chain.<p>
@@ -113,6 +115,15 @@ public class NetworkParameters implements Serializable {
      * address and to prevent accidentally sending coins across chains which would destroy them.
      */
     public int[] acceptableAddressCodes;
+
+
+    /**
+     * Block checkpoints are a safety mechanism that hard-codes the hashes of blocks at particular heights. Re-orgs
+     * beyond this point will never be accepted. This field should be accessed using
+     * {@link NetworkParameters#passesCheckpoint(int, Sha256Hash)} and {@link NetworkParameters#isCheckpoint(int)}.
+     */
+    public Map<Integer, Sha256Hash> checkpoints = new HashMap<Integer, Sha256Hash>();
+
 
     private static Block createGenesis(NetworkParameters n) {
         Block genesisBlock = new Block(n);
@@ -222,6 +233,16 @@ public class NetworkParameters implements Serializable {
         String genesisHash = n.genesisBlock.getHashAsString();
         checkState(genesisHash.equals("000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f"),
                 genesisHash);
+
+        // This contains (at a minimum) the blocks which are not BIP30 compliant. BIP30 changed how duplicate
+        // transactions are handled. Duplicated transactions could occur in the case where a coinbase had the same
+        // extraNonce and the same outputs but appeared at different heights, and greatly complicated re-org handling.
+        // Having these here simplifies block connection logic considerably.
+        n.checkpoints.put(new Integer(91722), new Sha256Hash("00000000000271a2dc26e7667f8419f2e15416dc6955e5a6c6cdf3f2574dd08e"));
+        n.checkpoints.put(new Integer(91812), new Sha256Hash("00000000000af0aed4792b1acee3d966af36cf5def14935db8de83d6f9306f2f"));
+        n.checkpoints.put(new Integer(91842), new Sha256Hash("00000000000a4d0a398161ffc163c503763b1f4360639393e0e4c8e300e0caec"));
+        n.checkpoints.put(new Integer(91880), new Sha256Hash("00000000000743f190a18c5577a3c2d2a1f610ae9601ac046a38084ccb7cd721"));
+
         return n;
     }
 
@@ -278,5 +299,27 @@ public class NetworkParameters implements Serializable {
 
     public void setSpendableCoinbaseDepth(int coinbaseDepth) {
         this.spendableCoinbaseDepth = coinbaseDepth;
+    }
+
+    /**
+     * Returns true if the block height is either not a checkpoint, or is a checkpoint and the hash matches.
+     */
+    public boolean passesCheckpoint(int height, Sha256Hash hash) {
+        Sha256Hash checkpointHash = checkpoints.get(new Integer(height));
+        if (checkpointHash != null)
+            return checkpointHash.equals(hash);
+        return true;
+    }
+
+    /**
+     * Returns true if the given height has a recorded checkpoint.
+     * @param height
+     * @return
+     */
+    public boolean isCheckpoint(int height) {
+        Sha256Hash checkpointHash = checkpoints.get(new Integer(height));
+        if (checkpointHash != null)
+            return true;
+        return false;
     }
 }

@@ -283,7 +283,11 @@ public abstract class AbstractBlockChain {
     }
 
     private void connectBlock(Block block, StoredBlock storedPrev)
-            throws BlockStoreException, VerificationException, PrunedException {        
+            throws BlockStoreException, VerificationException, PrunedException {
+        // Check that we aren't connecting a block that fails a checkpoint check
+        if (!params.passesCheckpoint(storedPrev.getHeight() + 1, block.getHash()))
+            throw new VerificationException("Block failed checkpoint lockin at " + (storedPrev.getHeight() + 1));
+        
         StoredBlock head = getChainHead();
         if (storedPrev.equals(head)) {
             // This block connects to the best known block, it is a normal continuation of the system.
