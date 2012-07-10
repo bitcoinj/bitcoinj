@@ -880,8 +880,9 @@ public class Block extends Message {
                 counter[0] = (byte) txCounter++;
                 counter[1] = 1;
                 input.getOutpoint().setHash(new Sha256Hash(counter));
-            }else
+            } else {
                 input = new TransactionInput(params, t, Script.createInputScript(EMPTY_BYTES, EMPTY_BYTES), prevOut);
+            }
             t.addInput(input);
             b.addTransaction(t);
         }
