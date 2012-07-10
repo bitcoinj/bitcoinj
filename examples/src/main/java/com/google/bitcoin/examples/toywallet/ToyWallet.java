@@ -20,6 +20,7 @@ import com.google.bitcoin.core.*;
 import com.google.bitcoin.discovery.DnsDiscovery;
 import com.google.bitcoin.discovery.IrcDiscovery;
 import com.google.bitcoin.store.BoundedOverheadBlockStore;
+import com.google.bitcoin.store.H2FullPrunedBlockStore;
 import com.google.bitcoin.utils.BriefLogFormatter;
 import com.google.common.collect.Lists;
 import org.spongycastle.util.encoders.Hex;
@@ -46,7 +47,7 @@ public class ToyWallet {
     private NetworkParameters params;
     private Wallet wallet;
     private PeerGroup peerGroup;
-    private BlockChain chain;
+    private AbstractBlockChain chain;
     private JLabel networkStats;
     private File walletFile;
     private JScrollPane txScrollPane;
@@ -55,7 +56,7 @@ public class ToyWallet {
 
     public static void main(String[] args) throws Exception {
         BriefLogFormatter.init();
-        new ToyWallet(true, args);
+        new ToyWallet(true, true, args);
     }
 
     // Converts the contents of the wallet to a table for the GUI.
@@ -110,7 +111,7 @@ public class ToyWallet {
         }
     }
     
-    public ToyWallet(boolean testnet, String[] args) throws Exception {
+    public ToyWallet(boolean testnet, boolean fullChain, String[] args) throws Exception {
         // Set up a Bitcoin connection + empty wallet. TODO: Simplify the setup for this use case.
         if (testnet) {
             params = NetworkParameters.testNet3();
@@ -162,7 +163,13 @@ public class ToyWallet {
             // the blocks there are no problems (wallets don't support replays without being emptied).
             wallet.clearTransactions(0);
         }
-        chain = new BlockChain(params, wallet, new BoundedOverheadBlockStore(params, blockChainFile));
+
+        if (fullChain) {
+            H2FullPrunedBlockStore store = new H2FullPrunedBlockStore(params, blockChainFile.getName(), 100);
+            chain = new FullPrunedBlockChain(params, wallet, store);
+        } else {
+            chain = new BlockChain(params, wallet, new BoundedOverheadBlockStore(params, blockChainFile));
+        }
 
         peerGroup = new PeerGroup(params, chain);
         peerGroup.setUserAgent("ToyWallet", "1.0");
