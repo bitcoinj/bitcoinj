@@ -712,7 +712,9 @@ public class Block extends Message {
         checkTransactions();
         checkMerkleRoot();
         checkSigOps();
-    }
+        for (Transaction transaction : transactions)
+            transaction.verify();
+        }
 
     /**
      * Verifies both the header and that the transactions hash to the merkle root.
@@ -869,7 +871,7 @@ public class Block extends Message {
         //
         // Here we will do things a bit differently so a new address isn't needed every time. We'll put a simple
         // counter in the scriptSig so every transaction has a different hash.
-        coinbase.addInput(new TransactionInput(params, coinbase, new byte[]{(byte) txCounter++}));
+        coinbase.addInput(new TransactionInput(params, coinbase, new byte[]{(byte) txCounter++, (byte) 1}));
         coinbase.addOutput(new TransactionOutput(params, coinbase, Script.createOutputScript(pubKeyTo),
                 Utils.toNanoCoins(50, 0)));
         transactions.add(coinbase);

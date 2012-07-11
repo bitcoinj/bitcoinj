@@ -882,4 +882,36 @@ public class Transaction extends ChildMessage implements Serializable {
             sigOps += Script.getSigOpCount(output.getScriptBytes());
         return sigOps;
     }
+
+    /**
+     * Checks the transaction contents for sanity, in ways that can be done in a standalone manner.
+     * Does <b>not</b> perform all checks on a transaction such as whether the inputs are already spent.
+     *
+     * @throws VerificationException
+     */
+    public void verify() throws VerificationException {
+        maybeParse();
+        if (inputs.size() == 0 || outputs.size() == 0)
+            throw new VerificationException("Transaction had no inputs or no outputs.");
+        if (this.getMessageSize() > Block.MAX_BLOCK_SIZE)
+            throw new VerificationException("Transaction larger than MAX_BLOCK_SIZE");
+        
+        BigInteger valueOut = BigInteger.ZERO;
+        for (TransactionOutput output : outputs) {
+            if (output.getValue().compareTo(BigInteger.ZERO) < 0)
+                throw new VerificationException("Transaction output negative");
+            valueOut = valueOut.add(output.getValue());
+        }
+        if (valueOut.compareTo(params.MAX_MONEY) > 0)
+            throw new VerificationException("Total transaction output value greater than possible");
+        
+        if (isCoinBase()) {
+            if (inputs.get(0).getScriptBytes().length < 2 || inputs.get(0).getScriptBytes().length > 100)
+                throw new VerificationException("Coinbase script size out of range");
+        } else {
+            for (TransactionInput input : inputs)
+                if (input.isCoinBase())
+                    throw new VerificationException("Coinbase input as input in non-coinbase transaction");
+        }
+    }
 }

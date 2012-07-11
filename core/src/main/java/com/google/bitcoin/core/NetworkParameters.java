@@ -24,6 +24,7 @@ import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.google.bitcoin.core.Utils.COIN;
 import static com.google.common.base.Preconditions.checkState;
 
 // TODO: Refactor this after we stop supporting serialization compatibility to use subclasses and singletons.
@@ -151,6 +152,11 @@ public class NetworkParameters implements Serializable {
     public static final int TARGET_TIMESPAN = 14 * 24 * 60 * 60;  // 2 weeks per difficulty cycle, on average.
     public static final int TARGET_SPACING = 10 * 60;  // 10 minutes per block.
     public static final int INTERVAL = TARGET_TIMESPAN / TARGET_SPACING;
+    
+    /**
+     * The maximum money to be generated
+     */
+    public final BigInteger MAX_MONEY = new BigInteger("21000000", 10).multiply(COIN);
 
     /** Sets up the given Networkparemets with testnet3 values. */
     private static NetworkParameters createTestNet3(NetworkParameters n) {
