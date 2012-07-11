@@ -722,6 +722,8 @@ public class Block extends Message {
         if (transactions.isEmpty())
             throw new VerificationException("Block had no transactions");
         maybeParseTransactions();
+        if (this.getMessageSize() > MAX_BLOCK_SIZE)
+            throw new VerificationException("Block larger than MAX_BLOCK_SIZE");
         checkTransactions();
         checkMerkleRoot();
         checkSigOps();
