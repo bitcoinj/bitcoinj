@@ -59,7 +59,7 @@ public class TransactionInput extends ChildMessage implements Serializable {
     TransactionInput(NetworkParameters params, Transaction parentTransaction, byte[] scriptBytes) {
         super(params);
         this.scriptBytes = scriptBytes;
-        this.outpoint = new TransactionOutPoint(params, -1, (Transaction)null);
+        this.outpoint = new TransactionOutPoint(params, NO_SEQUENCE, (Transaction)null);
         this.sequence = NO_SEQUENCE;
         this.parentTransaction = parentTransaction;
 
@@ -148,7 +148,8 @@ public class TransactionInput extends ChildMessage implements Serializable {
      */
     public boolean isCoinBase() {
         maybeParse();
-        return outpoint.getHash().equals(Sha256Hash.ZERO_HASH);
+        return outpoint.getHash().equals(Sha256Hash.ZERO_HASH) &&
+                outpoint.getIndex() == NO_SEQUENCE;
     }
 
     /**

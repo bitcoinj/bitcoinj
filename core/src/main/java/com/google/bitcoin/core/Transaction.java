@@ -518,7 +518,7 @@ public class Transaction extends ChildMessage implements Serializable {
      */
     public boolean isCoinBase() {
         maybeParse();
-        return inputs.get(0).isCoinBase();
+        return inputs.size() == 1 && inputs.get(0).isCoinBase();
     }
 
     /**
