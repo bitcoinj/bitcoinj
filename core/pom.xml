@@ -162,6 +162,12 @@
             <groupId>org.apache.derby</groupId>
             <artifactId>derby</artifactId>
         </dependency>
+        
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <version>1.3.167</version>
+        </dependency>
 
 	    <dependency>
 	        <groupId>io.netty</groupId>
