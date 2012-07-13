@@ -19,6 +19,7 @@ package com.google.bitcoin.core;
 import com.google.bitcoin.store.BlockStoreException;
 import com.google.bitcoin.store.FullPrunedBlockStore;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -121,8 +122,12 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
                     }
                 }
             }
+            BigInteger totalFees = BigInteger.ZERO;
+            BigInteger coinbaseValue = null;
             for (Transaction tx : block.transactions) {
                 boolean isCoinBase = tx.isCoinBase();
+                BigInteger valueIn = BigInteger.ZERO;
+                BigInteger valueOut = BigInteger.ZERO;
                 if (!isCoinBase) {
                     // For each input of the transaction remove the corresponding output from the set of unspent
                     // outputs.
@@ -137,6 +142,7 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
                         if (height - prevOut.getHeight() < params.getSpendableCoinbaseDepth())
                             throw new VerificationException("Tried to spend coinbase at depth " + (height - prevOut.getHeight()));
                         // TODO: Check we're not spending the genesis transaction here. Satoshis code won't allow it.
+                        valueIn = valueIn.add(prevOut.getValue());
                         if (enforceBIP16) {
                             try {
                                 if (new Script(params, prevOut.getScriptBytes(), 0, prevOut.getScriptBytes().length).isPayToScriptHash())
@@ -154,13 +160,27 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
                 }
                 Sha256Hash hash = tx.getHash();
                 for (TransactionOutput out : tx.getOutputs()) {
+                    valueOut = valueOut.add(out.getValue());
                     // For each output, add it to the set of unspent outputs so it can be consumed in future.
                     StoredTransactionOutput newOut = new StoredTransactionOutput(hash, out.getIndex(), out.getValue(),
                             height, isCoinBase, out.getScriptBytes());
                     blockStore.addUnspentTransactionOutput(newOut);
                     txOutsCreated.add(newOut);
                 }
+                // All values were already checked for being non-negative (as it is verified in Transaction.verify())
+                // but we check again here just for defence in depth. Transactions with zero output value are OK.
+                if (valueOut.compareTo(BigInteger.ZERO) < 0 || valueOut.compareTo(params.MAX_MONEY) > 0)
+                    throw new VerificationException("Transaction output value out of rage");
+                if (isCoinBase) {
+                    coinbaseValue = valueOut;
+                } else {
+                    if (valueIn.compareTo(valueOut) < 0 || valueIn.compareTo(params.MAX_MONEY) > 0)
+                        throw new VerificationException("Transaction input value out of range");
+                    totalFees = totalFees.add(valueIn.subtract(valueOut));
+                }
             }
+            if (totalFees.compareTo(params.MAX_MONEY) > 0 || getBlockInflation(height).add(totalFees).compareTo(coinbaseValue) < 0)
+                throw new VerificationException("Transaction fees out of range");
         } catch (VerificationException e) {
             blockStore.abortDatabaseBatchWrite();
             throw e;
@@ -171,6 +191,10 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
         return new TransactionOutputChanges(txOutsCreated, txOutsSpent);
     }
     
+    private BigInteger getBlockInflation(int height) {
+        return Utils.toNanoCoins(50, 0).shiftRight(height / 210000);
+    }
+
     @Override
     /**
      * Used during reorgs to connect a block previously on a fork
@@ -202,8 +226,12 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
                             throw new VerificationException("Block failed BIP30 test!");
                     }
                 }
-                for (StoredTransaction tx : transactions) {
+                BigInteger totalFees = BigInteger.ZERO;
+                BigInteger coinbaseValue = null;
+                for(StoredTransaction tx : transactions) {
                     boolean isCoinBase = tx.isCoinBase();
+                    BigInteger valueIn = BigInteger.ZERO;
+                    BigInteger valueOut = BigInteger.ZERO;
                     if (!isCoinBase)
                         for(TransactionInput in : tx.getInputs()) {
                             StoredTransactionOutput prevOut = blockStore.getTransactionOutput(in.getOutpoint().getHash(),
@@ -212,6 +240,7 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
                                 throw new VerificationException("Attempted spend of a non-existent or already spent output!");
                             if (newBlock.getHeight() - prevOut.getHeight() < params.getSpendableCoinbaseDepth())
                                 throw new VerificationException("Tried to spend coinbase at depth " + (newBlock.getHeight() - prevOut.getHeight()));
+                            valueIn = valueIn.add(prevOut.getValue());
                             if (enforcePayToScriptHash) {
                                 try {
                                     Script script = new Script(params, prevOut.getScriptBytes(), 0, prevOut.getScriptBytes().length);
@@ -229,13 +258,28 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
                         }
                     Sha256Hash hash = tx.getHash();
                     for (StoredTransactionOutput out : tx.getOutputs()) {
+                        valueOut = valueOut.add(out.getValue());
                         StoredTransactionOutput newOut = new StoredTransactionOutput(hash, out.getIndex(), out.getValue(),
                                                                                      newBlock.getHeight(), isCoinBase,
                                                                                      out.getScriptBytes());
                         blockStore.addUnspentTransactionOutput(newOut);
                         txOutsCreated.add(newOut);
                     }
+                    // All values were already checked for being non-negative (as it is verified in Transaction.verify())
+                    // but we check again here just for defence in depth. Transactions with zero output value are OK.
+                    if (valueOut.compareTo(BigInteger.ZERO) < 0 || valueOut.compareTo(params.MAX_MONEY) > 0)
+                        throw new VerificationException("Transaction output value out of rage");
+                    if (isCoinBase) {
+                        coinbaseValue = valueOut;
+                    } else {
+                        if (valueIn.compareTo(valueOut) < 0 || valueIn.compareTo(params.MAX_MONEY) > 0)
+                            throw new VerificationException("Transaction input value out of range");
+                        totalFees = totalFees.add(valueIn.subtract(valueOut));
+                    }
                 }
+                if (totalFees.compareTo(params.MAX_MONEY) > 0 ||
+                        getBlockInflation(newBlock.getHeight()).add(totalFees).compareTo(coinbaseValue) < 0)
+                    throw new VerificationException("Transaction fees out of range");
                 txOutChanges = new TransactionOutputChanges(txOutsCreated, txOutsSpent);
             } else {
                 // Use the undo data.
