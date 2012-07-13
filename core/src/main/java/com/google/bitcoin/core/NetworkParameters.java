@@ -154,6 +154,13 @@ public class NetworkParameters implements Serializable {
     public static final int INTERVAL = TARGET_TIMESPAN / TARGET_SPACING;
     
     /**
+     * Blocks with a timestamp after this should enforce BIP 16, aka "Pay to script hash". This BIP changed the
+     * network rules in a soft-forking manner, that is, blocks that don't follow the rules are accepted but not
+     * mined upon and thus will be quickly re-orged out as long as the majority are enforcing the rule.
+     */
+    public final int BIP16_ENFORCE_TIME = 1333238400;
+    
+    /**
      * The maximum money to be generated
      */
     public final BigInteger MAX_MONEY = new BigInteger("21000000", 10).multiply(COIN);

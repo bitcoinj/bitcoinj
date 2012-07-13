@@ -919,7 +919,13 @@ public class Transaction extends ChildMessage implements Serializable {
     }
 
     /**
-     * Returns true if this transaction is considered finalized and can be placed in a block
+     * <p>Returns true if this transaction is considered finalized and can be placed in a block. Non-finalized
+     * transactions won't be included by miners and can be replaced with newer versions using sequence numbers.
+     * This is useful in certain types of <a href="http://en.bitcoin.it/wiki/Contracts">contracts</a>, such as
+     * micropayment channels.</p>
+     *
+     * <p>Note that currently the replacement feature is disabled in the Satoshi client and will need to be
+     * re-activated before this functionality is useful.</p>
      */
     public boolean isFinal(int height, long blockTimeSeconds) {
         // Time based nLockTime implemented in 0.1.6

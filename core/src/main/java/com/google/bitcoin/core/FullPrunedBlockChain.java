@@ -99,7 +99,9 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
         blockStore.beginDatabaseBatchWrite();
 
         LinkedList<StoredTransactionOutput> txOutsSpent = new LinkedList<StoredTransactionOutput>();
-        LinkedList<StoredTransactionOutput> txOutsCreated = new LinkedList<StoredTransactionOutput>();        
+        LinkedList<StoredTransactionOutput> txOutsCreated = new LinkedList<StoredTransactionOutput>();  
+        long sigOps = 0;
+        boolean enforceBIP16 = block.getTimeSeconds() >= params.BIP16_ENFORCE_TIME;
         try {
             if (!params.isCheckpoint(height)) {
                 // BIP30 violator blocks are ones that contain a duplicated transaction. They are all in the
@@ -111,6 +113,13 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
                     // being added twice (bug) or the block is a BIP30 violator.
                     if (blockStore.hasUnspentOutputs(hash, tx.getOutputs().size()))
                         throw new VerificationException("Block failed BIP30 test!");
+                    if (enforceBIP16) { // We already check non-BIP16 sigops in Block.verifyTransactions(true)
+                        try {
+                            sigOps += tx.getSigOpCount();
+                        } catch (ScriptException e) {
+                            throw new VerificationException("Invalid script in transaction");
+                        }
+                    }
                 }
             }
             for (Transaction tx : block.transactions) {
@@ -124,6 +133,16 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
                         if (prevOut == null)
                             throw new VerificationException("Attempted to spend a non-existent or already spent output!");
                         // TODO: Check we're not spending the genesis transaction here. Satoshis code won't allow it.
+                        if (enforceBIP16) {
+                            try {
+                                if (new Script(params, prevOut.getScriptBytes(), 0, prevOut.getScriptBytes().length).isPayToScriptHash())
+                                    sigOps += Script.getP2SHSigOpCount(in.getScriptBytes());
+                            } catch (ScriptException e) {
+                                throw new VerificationException("Error reading script in transaction");
+                            }
+                            if (sigOps > Block.MAX_BLOCK_SIGOPS)
+                                throw new VerificationException("Too many P2SH SigOps in block");
+                        }
                         //TODO: check script here
                         blockStore.removeUnspentTransactionOutput(prevOut);
                         txOutsSpent.add(prevOut);
@@ -170,8 +189,9 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
             if (transactions != null) {
                 LinkedList<StoredTransactionOutput> txOutsSpent = new LinkedList<StoredTransactionOutput>();
                 LinkedList<StoredTransactionOutput> txOutsCreated = new LinkedList<StoredTransactionOutput>();
+                long sigOps = 0;
+                boolean enforcePayToScriptHash = newBlock.getHeader().getTimeSeconds() >= params.BIP16_ENFORCE_TIME;
                 if (!params.isCheckpoint(newBlock.getHeight())) {
-                    // See explanation above.
                     for(StoredTransaction tx : transactions) {
                         Sha256Hash hash = tx.getHash();
                         if (blockStore.hasUnspentOutputs(hash, tx.getOutputs().size()))
@@ -186,6 +206,17 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
                                                                                               in.getOutpoint().getIndex());
                             if (prevOut == null)
                                 throw new VerificationException("Attempted spend of a non-existent or already spent output!");
+                            if (enforcePayToScriptHash) {
+                                try {
+                                    Script script = new Script(params, prevOut.getScriptBytes(), 0, prevOut.getScriptBytes().length);
+                                    if (script.isPayToScriptHash())
+                                        sigOps += Script.getP2SHSigOpCount(in.getScriptBytes());
+                                } catch (ScriptException e) {
+                                    throw new VerificationException("Error reading script in transaction");
+                                }
+                                if (sigOps > Block.MAX_BLOCK_SIGOPS)
+                                    throw new VerificationException("Too many P2SH SigOps in block");
+                            }
                             //TODO: check script here
                             blockStore.removeUnspentTransactionOutput(prevOut);
                             txOutsSpent.add(prevOut);

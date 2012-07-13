@@ -751,4 +751,43 @@ public class Script {
         }
         return getSigOpCount(script.chunks, false);
     }
+    
+    /**
+     * Gets the count of P2SH Sig Ops in the Script scriptSig
+     */
+    public static long getP2SHSigOpCount(byte[] scriptSig) throws ScriptException {
+        Script script = new Script();
+        try {
+            script.parse(scriptSig, 0, scriptSig.length);
+        } catch (ScriptException e) {
+            // Ignore errors and count up to the parse-able length
+        }
+        for (int i = script.chunks.size() - 1; i >= 0; i--)
+            if (!script.chunks.get(i).isOpCode) {
+                Script subScript =  new Script();
+                subScript.parse(script.chunks.get(i).data, 0, script.chunks.get(i).data.length);
+                return getSigOpCount(subScript.chunks, true);
+            }
+        return 0;
+    }
+
+    /**
+     * <p>Whether or not this is a scriptPubKey representing a pay-to-script-hash output. In such outputs, the logic that
+     * controls reclamation is not actually in the output at all. Instead there's just a hash, and it's up to the
+     * spending input to provide a program matching that hash. This rule is "soft enforced" by the network as it does
+     * not exist in Satoshis original implementation. It means blocks containing P2SH transactions that don't match
+     * correctly are considered valid, but won't be mined upon, so they'll be rapidly re-orgd out of the chain. This
+     * logic is defined by <a href="https://en.bitcoin.it/wiki/BIP_0016">BIP 16</a>.</p>
+     *
+     * <p>bitcoinj does not support creation of P2SH transactions today. The goal of P2SH is to allow short addresses
+     * even for complex scripts (eg, multi-sig outputs) so they are convenient to work with in things like QRcodes or
+     * with copy/paste, and also to minimize the size of the unspent output set (which improves performance of the
+     * Bitcoin system).</p>
+     */
+    public boolean isPayToScriptHash() {
+        return program.length == 23 &&
+               (program[0] & 0xff) == OP_HASH160 &&
+               (program[1] & 0xff) == 0x14 &&
+               (program[22] & 0xff) == OP_EQUAL;
+    }
 }
