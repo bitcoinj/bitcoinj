@@ -157,7 +157,7 @@ public class NetworkParameters implements Serializable {
         n.genesisBlock.setTime(1296688602L);
         n.genesisBlock.setDifficultyTarget(0x1d07fff8L);
         n.genesisBlock.setNonce(384568319);
-        n.setSpendableCoinbaseDepth(5);
+        n.setSpendableCoinbaseDepth(100);
         n.id = ID_TESTNET;
         String genesisHash = n.genesisBlock.getHashAsString();
         checkState(genesisHash.equals("00000007199508e34a9ff81e6ec0c477a4cccff2a4767a8eee39c11db367b008"),
@@ -187,7 +187,7 @@ public class NetworkParameters implements Serializable {
         n.genesisBlock.setDifficultyTarget(0x1d00ffffL);
         n.genesisBlock.setTime(1231006505L);
         n.genesisBlock.setNonce(2083236893);
-        n.setSpendableCoinbaseDepth(120);
+        n.setSpendableCoinbaseDepth(100);
         n.id = ID_PRODNET;
         String genesisHash = n.genesisBlock.getHashAsString();
         checkState(genesisHash.equals("000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f"),
@@ -204,6 +204,7 @@ public class NetworkParameters implements Serializable {
         n.genesisBlock.setDifficultyTarget(Block.EASIEST_DIFFICULTY_TARGET);
         n.interval = 10;
         n.targetTimespan = 200000000;  // 6 years. Just a very big number.
+        n.setSpendableCoinbaseDepth(5);
         n.id = "com.google.bitcoin.unittest";
         return n;
     }
