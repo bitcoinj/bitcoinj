@@ -28,6 +28,23 @@ import java.util.List;
 import static com.google.bitcoin.core.Utils.bytesToHexString;
 
 /**
+ * A chunk in a script
+ */
+class ScriptChunk {
+    public boolean isOpCode;
+    public byte[] data;
+    public ScriptChunk(boolean isOpCode, byte[] data) {
+        this.isOpCode = isOpCode;
+        this.data = data;
+    }
+    public boolean equalsOpCode(int opCode) {
+        return isOpCode &&
+                data.length == 1 &&
+                (0xFF & data[0]) == opCode;
+    }
+}
+
+/**
  * Bitcoin transactions don't specify what they do directly. Instead <a href="https://en.bitcoin.it/wiki/Script">a
  * small binary stack language</a> is used to define programs that when evaluated return whether the transaction
  * "accepts" or rejects the other transactions connected to it.<p>
@@ -53,8 +70,7 @@ public class Script {
     private int cursor;
 
     // The program is a set of byte[]s where each element is either [opcode] or [data, data, data ...]
-    // TODO: Differentiate between 1 byte data chunks and opcodes here.
-    List<byte[]> chunks;
+    List<ScriptChunk> chunks;
     byte[] programCopy;      // TODO: remove this
     private final NetworkParameters params;
 
@@ -77,10 +93,10 @@ public class Script {
      */
     public String toString() {
         StringBuffer buf = new StringBuffer();
-        for (byte[] chunk : chunks) {
-            if (chunk.length == 1) {
+        for (ScriptChunk chunk : chunks) {
+            if (chunk.isOpCode) {
                 String opName;
-                int opcode = 0xFF & chunk[0];
+                int opcode = 0xFF & chunk.data[0];
                 switch (opcode) {
                     case OP_DUP:
                         opName = "DUP";
@@ -103,9 +119,9 @@ public class Script {
             } else {
                 // Data chunk
                 buf.append("[");
-                buf.append(chunk.length);
+                buf.append(chunk.data.length);
                 buf.append("]");
-                buf.append(bytesToHexString(chunk));
+                buf.append(bytesToHexString(chunk.data));
                 buf.append(" ");
             }
         }
@@ -156,7 +172,7 @@ public class Script {
 
         program = programCopy;
         offset = 0;
-        chunks = new ArrayList<byte[]>(10);  // Arbitrary choice of initial size.
+        chunks = new ArrayList<ScriptChunk>(10);  // Arbitrary choice of initial size.
         cursor = offset;
         while (cursor < offset + length) {
             int opcode = readByte();
@@ -167,19 +183,19 @@ public class Script {
 
             if (opcode > 0 && opcode < OP_PUSHDATA1) {
                 // Read some bytes of data, where how many is the opcode value itself.
-                chunks.add(getData(opcode));  // opcode == len here.
+                chunks.add(new ScriptChunk(false, getData(opcode)));  // opcode == len here.
             } else if (opcode == OP_PUSHDATA1) {
                 int len = readByte();
-                chunks.add(getData(len));
+                chunks.add(new ScriptChunk(false, getData(len)));
             } else if (opcode == OP_PUSHDATA2) {
                 // Read a short, then read that many bytes of data.
                 int len = readByte() | (readByte() << 8);
-                chunks.add(getData(len));
+                chunks.add(new ScriptChunk(false, getData(len)));
             } else if (opcode == OP_PUSHDATA4) {
                 // Read a uint32, then read that many bytes of data.
                 log.error("PUSHDATA4: Unimplemented");
             } else {
-                chunks.add(new byte[]{(byte) opcode});
+                chunks.add(new ScriptChunk(true, new byte[]{(byte) opcode}));
             }
         }
     }
@@ -193,7 +209,8 @@ public class Script {
     public boolean isSentToRawPubKey() {
         if (chunks.size() != 2)
             return false;
-        return (0xFF & chunks.get(1)[0]) == OP_CHECKSIG && chunks.get(0).length > 1;
+        return chunks.get(1).equalsOpCode(OP_CHECKSIG) &&
+                !chunks.get(0).isOpCode && chunks.get(0).data.length > 1;
     }
 
     /**
@@ -204,11 +221,11 @@ public class Script {
      */
     public boolean isSentToAddress() {
         if (chunks.size() != 5) return false;
-        return (0xFF & chunks.get(0)[0]) == OP_DUP &&
-               (0xFF & chunks.get(1)[0]) == OP_HASH160 &&
-               chunks.get(2).length == Address.LENGTH &&
-               (0xFF & chunks.get(3)[0]) == OP_EQUALVERIFY &&
-               (0xFF & chunks.get(4)[0]) == OP_CHECKSIG;
+        return chunks.get(0).equalsOpCode(OP_DUP) &&
+               chunks.get(1).equalsOpCode(OP_HASH160) &&
+               chunks.get(2).data.length == Address.LENGTH &&
+               chunks.get(3).equalsOpCode(OP_EQUALVERIFY) &&
+               chunks.get(4).equalsOpCode(OP_CHECKSIG);
     }
 
     /**
@@ -221,7 +238,7 @@ public class Script {
         if (!isSentToAddress())
             throw new ScriptException("Script not in the standard scriptPubKey form");
         // Otherwise, the third element is the hash of the public key, ie the bitcoin address.
-        return chunks.get(2);
+        return chunks.get(2).data;
     }
 
     /**
@@ -236,12 +253,12 @@ public class Script {
         if (chunks.size() != 2) {
             throw new ScriptException("Script not of right size, expecting 2 but got " + chunks.size());
         }
-        if (chunks.get(0).length > 2 && chunks.get(1).length > 2) {
+        if (chunks.get(0).data.length > 2 && chunks.get(1).data.length > 2) {
             // If we have two large constants assume the input to a pay-to-address output.
-            return chunks.get(1);
-        } else if (chunks.get(1).length == 1 && (0xFF & chunks.get(1)[0]) == OP_CHECKSIG && chunks.get(0).length > 2) {
+            return chunks.get(1).data;
+        } else if (chunks.get(1).data.length == 1 && chunks.get(1).equalsOpCode(OP_CHECKSIG) && chunks.get(0).data.length > 2) {
             // A large constant followed by an OP_CHECKSIG is the key.
-            return chunks.get(0);
+            return chunks.get(0).data;
         } else {
             throw new ScriptException("Script did not match expected form: " + toString());
         }
