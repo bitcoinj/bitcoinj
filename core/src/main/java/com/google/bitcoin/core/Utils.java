@@ -238,6 +238,17 @@ public class Utils {
                 ((bytes[offset++] & 0xFFL) << 16) |
                 ((bytes[offset] & 0xFFL) << 24);
     }
+    
+    public static long readInt64(byte[] bytes, int offset) {
+        return ((bytes[offset++] & 0xFFL) << 0) |
+               ((bytes[offset++] & 0xFFL) << 8) |
+               ((bytes[offset++] & 0xFFL) << 16) |
+               ((bytes[offset++] & 0xFFL) << 24) |
+               ((bytes[offset++] & 0xFFL) << 32) |
+               ((bytes[offset++] & 0xFFL) << 40) |
+               ((bytes[offset++] & 0xFFL) << 48) |
+               ((bytes[offset] & 0xFFL) << 56);
+    }
 
     public static long readUint32BE(byte[] bytes, int offset) {
         return ((bytes[offset + 0] & 0xFFL) << 24) |

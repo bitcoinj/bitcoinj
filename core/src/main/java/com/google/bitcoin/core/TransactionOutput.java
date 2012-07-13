@@ -131,7 +131,11 @@ public class TransactionOutput extends ChildMessage implements Serializable {
     }
 
     protected void parseLite() {
-        value = readUint64();
+        // TODO: There is no reason to use BigInteger for values, they are always smaller than 21 million * COIN
+        // The only reason to use BigInteger would be to properly read values from the reference implementation, however
+        // the reference implementation uses signed 64-bit integers for its values as well (though it probably shouldn't)
+        long outputValue = readInt64();
+        value = BigInteger.valueOf(outputValue);
         scriptLen = (int) readVarInt();
         length = cursor - offset + scriptLen;
     }

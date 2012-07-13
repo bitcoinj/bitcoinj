@@ -410,6 +410,11 @@ public abstract class Message implements Serializable {
         return new Sha256Hash(hash);
     }
 
+    long readInt64() {
+        long u = Utils.readInt64(bytes, cursor);
+        cursor += 8;
+        return u;
+    }
 
     BigInteger readUint64() {
         // Java does not have an unsigned 64 bit type. So scrape it off the wire then flip.
