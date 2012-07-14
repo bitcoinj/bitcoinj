@@ -111,7 +111,6 @@ public class BitcoinURITest {
             testObject = new BitcoinURI(NetworkParameters.prodNet(), "blimpcoin:" + PRODNET_GOOD_ADDRESS);
             fail("Expecting BitcoinURIParseException");
         } catch (BitcoinURIParseException e) {
-            assertTrue(e.getMessage().contains("Bad scheme"));
         }
     }
 
@@ -153,7 +152,6 @@ public class BitcoinURITest {
             testObject = new BitcoinURI(NetworkParameters.prodNet(), BitcoinURI.BITCOIN_SCHEME);
             fail("Expecting BitcoinURIParseException");
         } catch (BitcoinURIParseException e) {
-            assertTrue(e.getMessage().contains("Missing address"));
         }
     }
 
@@ -412,5 +410,14 @@ public class BitcoinURITest {
         } catch (BitcoinURIParseException e) {
             assertTrue(e.getMessage().contains("req-aardvark"));
         }
+    }
+
+    @Test
+    public void brokenURIs() throws BitcoinURIParseException {
+        // Check we can parse the incorrectly formatted URIs produced by blockchain.info and its iPhone app.
+        String str = "bitcoin://1KzTSfqjF2iKCduwz59nv2uqh1W2JsTxZH?amount=0.01000000";
+        BitcoinURI uri = new BitcoinURI(str);
+        assertEquals("1KzTSfqjF2iKCduwz59nv2uqh1W2JsTxZH", uri.getAddress().toString());
+        assertEquals(Utils.toNanoCoins(0, 1), uri.getAmount());
     }
 }

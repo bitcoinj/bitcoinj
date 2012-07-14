@@ -93,7 +93,6 @@ public class BitcoinURI {
     private static final String ENCODED_SPACE_CHARACTER = "%20";
     private static final String AMPERSAND_SEPARATOR = "&";
     private static final String QUESTION_MARK_SEPARATOR = "?";
-    private static final String COLON_SEPARATOR = ":";
 
     /**
      * Contains all the parameters in the order in which they were processed
@@ -121,12 +120,7 @@ public class BitcoinURI {
         Preconditions.checkNotNull(input);
         log.debug("Attempting to parse '{}' for {}", input, params == null ? "any" : params.getId());
 
-        // URI validation
-        if (!input.startsWith(BITCOIN_SCHEME)) {
-            throw new BitcoinURIParseException("Bad scheme - expecting '" + BITCOIN_SCHEME + "'");
-        }
-
-        // Attempt to form the URI (fail fast syntax checking to official standards)
+        // Attempt to form the URI (fail fast syntax checking to official standards).
         URI uri;
         try {
             uri = new URI(input);
@@ -135,15 +129,21 @@ public class BitcoinURI {
         }
 
         // URI is formed as  bitcoin:<address>?<query parameters>
+        // blockchain.info generates URIs of non-BIP compliant form bitcoin://address?....
+        // We support both until Ben fixes his code.
         
         // Remove the bitcoin scheme.
         // (Note: getSchemeSpecificPart() is not used as it unescapes the label and parse then fails.
         // For instance with : bitcoin:129mVqKUmJ9uwPxKJBnNdABbuaaNfho4Ha?amount=0.06&label=Tom%20%26%20Jerry
         // the & (%26) in Tom and Jerry gets interpreted as a separator and the label then gets parsed
         // as 'Tom ' instead of 'Tom & Jerry')
-        String schemeSpecificPart = "";
-        if (uri.toString().startsWith(BITCOIN_SCHEME + COLON_SEPARATOR)) {
-            schemeSpecificPart = uri.toString().substring(BITCOIN_SCHEME.length() + 1);
+        String schemeSpecificPart;
+        if (input.startsWith("bitcoin://")) {
+            schemeSpecificPart = input.substring("bitcoin://".length());
+        } else if (input.startsWith("bitcoin:")) {
+            schemeSpecificPart = input.substring("bitcoin:".length());
+        } else {
+            throw new BitcoinURIParseException("Unsupported URI scheme: " + uri.getScheme());
         }
 
         // Split off the address from the rest of the query parameters.
@@ -311,7 +311,7 @@ public class BitcoinURI {
         }
         
         StringBuilder builder = new StringBuilder();
-        builder.append(BITCOIN_SCHEME).append(COLON_SEPARATOR).append(address);
+        builder.append(BITCOIN_SCHEME).append(":").append(address);
         
         boolean questionMarkHasBeenOutput = false;
         
