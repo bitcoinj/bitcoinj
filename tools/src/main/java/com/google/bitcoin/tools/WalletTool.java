@@ -43,6 +43,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
 
@@ -490,12 +491,8 @@ public class WalletTool {
         }
         store = new BoundedOverheadBlockStore(params, chainFileName);
         chain = new BlockChain(params, wallet, store);
-        wallet.addEventListener(new AbstractWalletEventListener() {
-            @Override
-            public void onChange() {
-                saveWallet(walletFile);
-            }
-        });
+        // This will ensure the wallet is saved when it changes.
+        wallet.autosaveToFile(walletFile, 200, TimeUnit.MILLISECONDS, null);
         peers = new PeerGroup(params, chain);
         peers.setUserAgent("WalletTool", "1.0");
         peers.addWallet(wallet);

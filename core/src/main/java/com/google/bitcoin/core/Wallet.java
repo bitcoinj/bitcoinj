@@ -20,13 +20,16 @@ import com.google.bitcoin.core.TransactionConfidence.ConfidenceType;
 import com.google.bitcoin.core.WalletTransaction.Pool;
 import com.google.bitcoin.store.WalletProtobufSerializer;
 import com.google.bitcoin.utils.EventListenerInvoker;
+import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
+import java.lang.ref.WeakReference;
 import java.math.BigInteger;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 
 import static com.google.bitcoin.core.Utils.bitcoinValueToFriendlyString;
 import static com.google.common.base.Preconditions.*;
@@ -152,6 +155,16 @@ public class Wallet implements Serializable {
 
     transient private ArrayList<WalletEventListener> eventListeners;
 
+    // Auto-save code. This all should be generalized in future to not be file specific so you can easily store the
+    // wallet into a database using the same mechanism. However we need to inform stores of each specific change with
+    // some objects representing those changes, which is more complex. To avoid poor performance in 0.6 on phones that
+    // have a lot of transactions in their wallet, we use the simpler approach. It's needed because the wallet stores
+    // the number of confirmations and accumulated work done for each transaction, so each block changes each tx.
+    private transient File autosaveToFile;
+    private transient AutosaveThread autosaveThread;
+    private transient boolean dirty;  // Is a write of the wallet necessary?
+    private transient AutosaveEventListener autosaveEventListener;
+
     /**
      * Creates a new, empty wallet with no keys and no transactions. If you want to restore a wallet from disk instead,
      * see loadFromFile.
@@ -179,17 +192,12 @@ public class Wallet implements Serializable {
         return new ArrayList<ECKey>(keychain);
     }
 
-    /**
-     * Uses protobuf serialization to save the wallet to the given file. To learn more about this file format, see
-     * {@link WalletProtobufSerializer}. Writes out first to a temporary file in the same directory and then renames
-     * once written.
-     */
-    public synchronized void saveToFile(File f) throws IOException {
+    private synchronized void saveToFile(File temp, File destFile) throws IOException {
+        // This odd construction exists to allow Android apps to control file permissions on the newly saved files
+        // created by the auto save thread. Android does not respect the standard Java file permission APIs in all
+        // cases and provides its own. So we have to be able to call back into the app to adjust them.
         FileOutputStream stream = null;
-        File temp;
         try {
-            File directory = f.getAbsoluteFile().getParentFile();
-            temp = File.createTempFile("wallet", null, directory);
             stream = new FileOutputStream(temp);
             saveToFileStream(stream);
             // Attempt to force the bits to hit the disk. In reality the OS or hard disk itself may still decide
@@ -198,17 +206,166 @@ public class Wallet implements Serializable {
             stream.getFD().sync();
             stream.close();
             stream = null;
-            if (!temp.renameTo(f)) {
+            if (!temp.renameTo(destFile)) {
                 // Work around an issue on Windows whereby you can't rename over existing files.
                 if (System.getProperty("os.name").toLowerCase().indexOf("win") >= 0) {
-                    if (f.delete() && temp.renameTo(f)) return;  // else fall through.
+                    if (destFile.delete() && temp.renameTo(destFile)) return;  // else fall through.
                 }
-                throw new IOException("Failed to rename " + temp + " to " + f);
+                throw new IOException("Failed to rename " + temp + " to " + destFile);
+            }
+            if (destFile.equals(autosaveToFile)) {
+                dirty = false;
             }
         } finally {
             if (stream != null) {
                 stream.close();
             }
+        }
+    }
+
+    /**
+     * Uses protobuf serialization to save the wallet to the given file. To learn more about this file format, see
+     * {@link WalletProtobufSerializer}. Writes out first to a temporary file in the same directory and then renames
+     * once written.
+     */
+    public synchronized void saveToFile(File f) throws IOException {
+        File directory = f.getAbsoluteFile().getParentFile();
+        File temp = File.createTempFile("wallet", null, directory);
+        saveToFile(temp, f);
+    }
+
+    // This must be a static class to avoid creating a strong reference from this thread to the wallet. If we did that
+    // it would never become garbage collectable because the autosave thread would never die. To avoid this from
+    // happening we use our own weak reference to the wallet and just exit the thread if it goes away.
+    private static class AutosaveThread extends Thread {
+        private WeakReference<Wallet> walletRef;
+        private long delayMs;
+
+        public AutosaveThread(Wallet wallet, long delayMs) {
+            this.walletRef = new WeakReference<Wallet>(wallet);
+            this.delayMs = delayMs;
+            setDaemon(true);  // Allow the JVM to exit even if this thread is still running.
+            start();
+        }
+
+        public void run() {
+            log.info("Starting auto-save thread");
+            while (true) {
+                // Poll every so often to see if the wallet needs a write. This method is ugly because it involves
+                // waking up the CPU even when there's no work to do. Unfortunately, if we try and wait for the wallet
+                // to become dirty, we'll hold a strong ref on it and the wallet would never become reclaimable if
+                // the app released it. To fix that we'd have to introduce a concept of "closing" the wallet, which
+                // is potentially error prone on platforms like Android that don't have a strong concept of app
+                // termination. Fortunately, this polling is just taking a lock and taking a single boolean, and the
+                // wait time can be quite large, so the efficiency hit should be minimal in practice.
+                try {
+                    Thread.sleep(delayMs);
+                } catch (InterruptedException e) {
+                }
+                Wallet wallet = walletRef.get();
+                // The wallet went away because it was no longer interesting to the program, so just quit this thread.
+                if (wallet == null) break;
+                synchronized (wallet) {
+                    if (wallet.dirty) {
+                        if (wallet.autoSave()) break;
+                    }
+                }
+            }
+        }
+    }
+
+    /** Returns true if the auto-save thread should abort */
+    private synchronized boolean autoSave() {
+        try {
+            log.info("Auto-saving wallet, last seen block is {}", lastBlockSeenHash);
+            File directory = autosaveToFile.getAbsoluteFile().getParentFile();
+            File temp = File.createTempFile("wallet", null, directory);
+            if (autosaveEventListener != null)
+                autosaveEventListener.onBeforeAutoSave(temp);
+            // This will clear the dirty flag.
+            saveToFile(temp, autosaveToFile);
+            if (autosaveEventListener != null)
+                autosaveEventListener.onAfterAutoSave(autosaveToFile);
+        } catch (Exception e) {
+            if (autosaveEventListener != null && autosaveEventListener.caughtException(e))
+                return true;
+            else
+                throw new RuntimeException(e);
+        }
+        return false;
+    }
+
+    public interface AutosaveEventListener {
+        /**
+         * Called on the auto-save thread if an exception is caught whilst saving the wallet.
+         * @return if true, terminates the auto-save thread. Otherwise sleeps and then tries again.
+         */
+        public boolean caughtException(Throwable t);
+
+        /**
+         * Called on the auto-save thread when a new temporary file is created but before the wallet data is saved
+         * to it. If you want to do something here like adjust permissions, go ahead and do so. The wallet is locked
+         * whilst this method is run.
+         */
+        public void onBeforeAutoSave(File tempFile);
+
+        /**
+         * Called on the auto-save thread after the newly created temporary file has been filled with data and renamed.
+         * The wallet is locked whilst this method is run.
+         */
+        public void onAfterAutoSave(File newlySavedFile);
+    }
+
+    /**
+     * <p>Sets up the wallet to auto-save itself to the given file, using temp files with atomic renames to ensure
+     * consistency. After connecting to a file, you no longer need to save the wallet manually, it will do it
+     * whenever necessary. Protocol buffer serialization will be used.</p>
+     *
+     * <p>If delayTime is set, a background thread will be created and the wallet will only be saved to
+     * disk every so many time units. If no changes have occurred for the given time period, nothing will be written.
+     * In this way disk IO can be rate limited. It's a good idea to set this as otherwise the wallet can change very
+     * frequently, eg if there are a lot of transactions in it or a busy key, and there will be a lot of redundant
+     * writes. Note that when a new key is added, that always results in an immediate save regardless of
+     * delayTime.</p>
+     *
+     * <p>An event listener can be provided. If a delay >0 was specified, it will be called on a background thread
+     * with the wallet locked when an auto-save occurs. If delay is zero or you do something that always triggers
+     * an immediate save, like adding a key, the event listener will be invoked on the calling threads. There is
+     * an important detail to get right here. The background thread that performs auto-saving keeps a weak reference
+     * to the wallet and shuts itself down if the wallet is garbage collected, so you don't have to think about it.
+     * If you provide an event listener however, it'd be very easy to accidentally hold a strong reference from your
+     * event listener to the wallet, meaning that the background thread will transitively keep your wallet object
+     * alive and un-collectable. So be careful to use a static inner class for this to avoid that problem, unless
+     * you don't care about keeping wallets alive indefinitely.</p>
+     *
+     * @param f The destination file to save to.
+     * @param delayTime How many time units to wait until saving the wallet on a background thread.
+     * @param timeUnit the unit of measurement for delayTime.
+     * @param eventListener callback to be informed when the auto-save thread does things, or null
+     * @throws IOException
+     */
+    public synchronized void autosaveToFile(File f, long delayTime, TimeUnit timeUnit,
+                                            AutosaveEventListener eventListener) {
+        Preconditions.checkArgument(delayTime >= 0);
+        autosaveToFile = Preconditions.checkNotNull(f);
+        if (delayTime > 0) {
+            autosaveEventListener = eventListener;
+            autosaveThread = new AutosaveThread(this, TimeUnit.MILLISECONDS.convert(delayTime, timeUnit));
+        }
+    }
+
+    private synchronized void queueAutoSave() {
+        if (this.autosaveToFile == null) return;
+        if (autosaveThread == null) {
+            // No delay time was specified, so save now.
+            try {
+                saveToFile(autosaveToFile);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        } else {
+            // Tell the autosave thread to save next time it wakes up.
+            dirty = true;
         }
     }
 
@@ -601,6 +758,7 @@ public class Wallet implements Serializable {
         }
 
         checkState(isConsistent());
+        queueAutoSave();
     }
 
     /**
@@ -609,7 +767,7 @@ public class Wallet implements Serializable {
      * not be called (the {@link Wallet#reorganize(StoredBlock, java.util.List, java.util.List)} method will
      * call this one in that case).</p>
      *
-     * <p>Used to update confidence data in each transaction and last seen block hash.</p>
+     * <p>Used to update confidence data in each transaction and last seen block hash. Triggers auto saving.</p>
      */
     public synchronized void notifyNewBestBlock(Block block) throws VerificationException {
         // Check to see if this block has been seen before.
@@ -625,6 +783,7 @@ public class Wallet implements Serializable {
                 invokeOnTransactionConfidenceChanged(tx);
             }
         }
+        queueAutoSave();
     }
 
     /**
@@ -793,13 +952,15 @@ public class Wallet implements Serializable {
     }
 
     /**
-     * Updates the wallet with the given transaction: puts it into the pending pool, sets the spent flags and runs
-     * the onCoinsSent/onCoinsReceived event listener. Used in two situations:<p>
+     * <p>Updates the wallet with the given transaction: puts it into the pending pool, sets the spent flags and runs
+     * the onCoinsSent/onCoinsReceived event listener. Used in two situations:</p>
      *
      * <ol>
      *     <li>When we have just successfully transmitted the tx we created to the network.</li>
      *     <li>When we receive a pending transaction that didn't appear in the chain yet, and we did not create it.</li>
      * </ol>
+     *
+     * <p>Triggers an auto save.</p>
      */
     public synchronized void commitTx(Transaction tx) throws VerificationException {
         checkArgument(!pending.containsKey(tx.getHash()), "commitTx called on the same transaction twice");
@@ -829,6 +990,7 @@ public class Wallet implements Serializable {
         }
 
         checkState(isConsistent());
+        queueAutoSave();
     }
 
     /**
@@ -879,7 +1041,12 @@ public class Wallet implements Serializable {
             txs.add(new WalletTransaction(poolType, tx));
         }
     }
-    
+
+    /**
+     * Adds a transaction that has been associated with a particular wallet pool. This is intended for usage by
+     * deserialization code, such as the {@link WalletProtobufSerializer} class. It isn't normally useful for
+     * applications. It does not trigger auto saving.
+     */
     public synchronized void addWalletTransaction(WalletTransaction wtx) {
         switch (wtx.getPool()) {
         case UNSPENT:
@@ -966,6 +1133,7 @@ public class Wallet implements Serializable {
     /**
      * Deletes transactions which appeared above the given block height from the wallet, but does not touch the keys.
      * This is useful if you have some keys and wish to replay the block chain into the wallet in order to pick them up.
+     * Triggers auto saving.
      */
     public synchronized void clearTransactions(int fromHeight) {
         if (fromHeight == 0) {
@@ -974,6 +1142,7 @@ public class Wallet implements Serializable {
             pending.clear();
             inactive.clear();
             dead.clear();
+            queueAutoSave();
         } else {
             throw new UnsupportedOperationException();
         }
@@ -1238,6 +1407,8 @@ public class Wallet implements Serializable {
 
     /**
      * Adds the given ECKey to the wallet. There is currently no way to delete keys (that would result in coin loss).
+     * If {@link Wallet#autosaveToFile(java.io.File, long, java.util.concurrent.TimeUnit, com.google.bitcoin.core.Wallet.AutosaveEventListener)}
+     * has been called, triggers an auto save bypassing the normal coalescing delay and event handlers.
      */
     public synchronized void addKey(final ECKey key) {
         checkArgument(!keychain.contains(key), "Key already present");
@@ -1248,6 +1419,9 @@ public class Wallet implements Serializable {
                 listener.onKeyAdded(key);
             }
         });
+        if (autosaveToFile != null) {
+            autoSave();
+        }
     }
 
     /**

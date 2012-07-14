@@ -23,9 +23,12 @@ import com.google.bitcoin.utils.BriefLogFormatter;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.File;
 import java.math.BigInteger;
 import java.util.HashSet;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import static com.google.bitcoin.core.TestUtils.*;
 import static com.google.bitcoin.core.Utils.bitcoinValueToFriendlyString;
@@ -697,6 +700,94 @@ public class WalletTest {
         assertEquals(t2.toString(), 1, t2.getInputs().get(0).getScriptSig().chunks.size());
         assertTrue(t2.getInputs().get(0).getScriptSig().chunks.get(0).length > 50);
         System.out.println(t2);
+    }
+
+    @Test
+    public void autosaveImmediate() throws Exception {
+        // Test that the wallet will save itself automatically when it changes.
+        File f = File.createTempFile("bitcoinj-unit-test", null);
+        Sha256Hash hash1 = Sha256Hash.hashFileContents(f);
+        // Start with zero delay and ensure the wallet file changes after adding a key.
+        wallet.autosaveToFile(f, 0, TimeUnit.SECONDS, null);
+        ECKey key = new ECKey();
+        wallet.addKey(key);
+        Sha256Hash hash2 = Sha256Hash.hashFileContents(f);
+        assertFalse(hash1.equals(hash2));  // File has changed.
+
+        Transaction t1 = createFakeTx(params, toNanoCoins(5, 0), key);
+        wallet.receivePending(t1);
+        Sha256Hash hash3 = Sha256Hash.hashFileContents(f);
+        assertFalse(hash2.equals(hash3));  // File has changed again.
+
+        Block b1 = createFakeBlock(params, blockStore, t1).block;
+        chain.add(b1);
+        Sha256Hash hash4 = Sha256Hash.hashFileContents(f);
+        assertFalse(hash3.equals(hash4));  // File has changed again.
+
+        // Check that receiving some block without any relevant transactions still triggers a save.
+        Block b2 = b1.createNextBlock(new ECKey().toAddress(params));
+        chain.add(b2);
+        assertFalse(hash4.equals(Sha256Hash.hashFileContents(f)));  // File has changed again.
+    }
+
+    @Test
+    public void autosaveDelayed() throws Exception {
+        // Test that the wallet will save itself automatically when it changes, but not immediately and near-by
+        // updates are coalesced together. This test is a bit racy, it assumes we can complete the unit test within
+        // an auto-save cycle of 1 second.
+        final File[] results = new File[2];
+        final CountDownLatch latch = new CountDownLatch(2);
+        File f = File.createTempFile("bitcoinj-unit-test", null);
+        Sha256Hash hash1 = Sha256Hash.hashFileContents(f);
+        wallet.autosaveToFile(f, 1, TimeUnit.SECONDS,
+                new Wallet.AutosaveEventListener() {
+                    public boolean caughtException(Throwable t) {
+                        return false;
+                    }
+
+                    public void onBeforeAutoSave(File tempFile) {
+                        results[0] = tempFile;
+                    }
+
+                    public void onAfterAutoSave(File newlySavedFile) {
+                        results[1] = newlySavedFile;
+                        latch.countDown();
+                    }
+                }
+        );
+        ECKey key = new ECKey();
+        wallet.addKey(key);
+        Sha256Hash hash2 = Sha256Hash.hashFileContents(f);
+        assertFalse(hash1.equals(hash2));  // File has changed immediately despite the delay, as keys are important.
+        assertNotNull(results[0]);
+        assertEquals(f, results[1]);
+        results[0] = results[1] = null;
+
+        Transaction t1 = createFakeTx(params, toNanoCoins(5, 0), key);
+        wallet.receivePending(t1);
+        Sha256Hash hash3 = Sha256Hash.hashFileContents(f);
+        assertTrue(hash2.equals(hash3));  // File has NOT changed.
+        assertNull(results[0]);
+        assertNull(results[1]);
+
+        Block b1 = createFakeBlock(params, blockStore, t1).block;
+        chain.add(b1);
+        Sha256Hash hash4 = Sha256Hash.hashFileContents(f);
+        assertTrue(hash3.equals(hash4));  // File has NOT changed.
+        assertNull(results[0]);
+        assertNull(results[1]);
+
+        Block b2 = b1.createNextBlock(new ECKey().toAddress(params));
+        chain.add(b2);
+        assertTrue(hash4.equals(Sha256Hash.hashFileContents(f)));  // File has NOT changed.
+        assertNull(results[0]);
+        assertNull(results[1]);
+
+        // Wait for an auto-save to occur.
+        latch.await();
+        assertFalse(hash4.equals(Sha256Hash.hashFileContents(f)));  // File has now changed.
+        assertNotNull(results[0]);
+        assertEquals(f, results[1]);
     }
 
     // There is a test for spending a coinbase transaction as it matures in BlockChainTest#coinbaseTransactionAvailability

@@ -16,8 +16,12 @@
 
 package com.google.bitcoin.core;
 
+import com.google.common.io.ByteStreams;
 import org.spongycastle.util.encoders.Hex;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.Serializable;
 import java.math.BigInteger;
 import java.security.MessageDigest;
@@ -61,6 +65,16 @@ public class Sha256Hash implements Serializable {
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException(e);  // Cannot happen.
         }
+    }
+
+    /**
+     * Returns a hash of the given files contents. Reads the file fully into memory before hashing so only use with
+     * small files.
+     * @throws IOException
+     */
+    public static Sha256Hash hashFileContents(File f) throws IOException {
+        // Lame implementation that just reads the entire file into RAM. Can be made more efficient later.
+        return create(ByteStreams.toByteArray(new FileInputStream(f)));
     }
 
     /**
