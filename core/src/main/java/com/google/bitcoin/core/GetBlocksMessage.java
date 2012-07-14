@@ -81,7 +81,7 @@ public class GetBlocksMessage extends Message {
             stream.write(Utils.reverseBytes(hash.getBytes()));
         }
         // Next, a block ID to stop at.
-        stream.write(stopHash.getBytes());
+        stream.write(Utils.reverseBytes(stopHash.getBytes()));
     }
 
     @Override
