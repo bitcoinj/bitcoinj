@@ -64,6 +64,7 @@ public class BitcoinSerializer {
         names.put(Transaction.class, "tx");
         names.put(AddressMessage.class, "addr");
         names.put(Ping.class, "ping");
+        names.put(Pong.class, "pong");
         names.put(VersionAck.class, "verack");
         names.put(GetBlocksMessage.class, "getblocks");
         names.put(GetHeadersMessage.class, "getheaders");
@@ -264,7 +265,9 @@ public class BitcoinSerializer {
         } else if (command.equals("addr")) {
             message = new AddressMessage(params, payloadBytes, parseLazy, parseRetain, length);
         } else if (command.equals("ping")) {
-            return new Ping();
+            message = new Ping(params, payloadBytes);
+        } else if (command.equals("pong")) {
+            message = new Pong(params, payloadBytes);
         } else if (command.equals("verack")) {
             return new VersionAck(params, payloadBytes);
         } else if (command.equals("headers")) {

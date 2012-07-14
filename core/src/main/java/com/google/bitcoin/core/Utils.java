@@ -115,6 +115,17 @@ public class Utils {
         stream.write((int) (0xFF & (val >> 16)));
         stream.write((int) (0xFF & (val >> 24)));
     }
+    
+    public static void int64ToByteStreamLE(long val, OutputStream stream) throws IOException {
+        stream.write((int) (0xFF & (val >> 0)));
+        stream.write((int) (0xFF & (val >> 8)));
+        stream.write((int) (0xFF & (val >> 16)));
+        stream.write((int) (0xFF & (val >> 24)));
+        stream.write((int) (0xFF & (val >> 32)));
+        stream.write((int) (0xFF & (val >> 40)));
+        stream.write((int) (0xFF & (val >> 48)));
+        stream.write((int) (0xFF & (val >> 56)));
+    }
 
     public static void uint64ToByteStreamLE(BigInteger val, OutputStream stream) throws IOException {
         byte[] bytes = val.toByteArray();

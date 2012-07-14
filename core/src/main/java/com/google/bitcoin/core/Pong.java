@@ -1,5 +1,5 @@
 /**
- * Copyright 2011 Noa Resare
+ * Copyright 2012 Matt Corallo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,54 +19,34 @@ package com.google.bitcoin.core;
 import java.io.IOException;
 import java.io.OutputStream;
 
-public class Ping extends Message {
+public class Pong extends Message {
     private long nonce;
-    private boolean hasNonce;
     
-    public Ping(NetworkParameters params, byte[] payloadBytes) throws ProtocolException {
+    public Pong(NetworkParameters params, byte[] payloadBytes) throws ProtocolException {
         super(params, payloadBytes, 0);
     }
     
     /**
-     * Create a Ping with a nonce value.
+     * Create a Pong with a nonce value.
      * Only use this if the remote node has a protocol version > 60000
      */
-    public Ping(long nonce) {
+    public Pong(long nonce) {
         this.nonce = nonce;
-        this.hasNonce = true;
     }
     
-    /**
-     * Create a Ping without a nonce value.
-     * Only use this if the remote node has a protocol version <= 60000
-     */
-    public Ping() {
-        this.hasNonce = false;
+    @Override
+    void parse() throws ProtocolException {
+        nonce = readInt64();
+        length = 8;
     }
     
     public void bitcoinSerializeToStream(OutputStream stream) throws IOException {
-        if (hasNonce)
-            Utils.int64ToByteStreamLE(nonce, stream);
-    }
-
-    @Override
-    void parse() throws ProtocolException {
-        try {
-            nonce = readInt64();
-            hasNonce = true;
-        } catch(ArrayIndexOutOfBoundsException e) {
-            hasNonce = false;
-        }
-        length = hasNonce ? 8 : 0;
+        Utils.int64ToByteStreamLE(nonce, stream);
     }
     
     @Override
     protected void parseLite() {
         
-    }
-    
-    boolean hasNonce() {
-        return hasNonce;
     }
     
     long getNonce() {

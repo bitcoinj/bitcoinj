@@ -31,6 +31,7 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.Date;
+import java.util.Random;
 
 import static org.jboss.netty.channel.Channels.write;
 
@@ -114,7 +115,11 @@ public class TCPNetworkConnection {
     }
 
     public void ping() throws IOException {
-        write(channel, new Ping());
+        // pong/nonce messages were added to any protocol version greater than 60000
+        if (versionMessage.clientVersion > 60000)
+            write(channel, new Ping(new Random().nextLong()));
+        else
+            write(channel, new Ping());
     }
 
     @Override

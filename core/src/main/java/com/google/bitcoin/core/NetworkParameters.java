@@ -36,9 +36,9 @@ public class NetworkParameters implements Serializable {
     private static final long serialVersionUID = 3L;
 
     /**
-     * The protocol version this library implements. A value of 31800 means 0.3.18.00.
+     * The protocol version this library implements.
      */
-    public static final int PROTOCOL_VERSION = 31800;
+    public static final int PROTOCOL_VERSION = 60001;
 
     /**
      * The alert signing key originally owned by Satoshi, and now passed on to Gavin along with a few others.

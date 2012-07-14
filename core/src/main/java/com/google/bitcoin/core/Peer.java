@@ -237,6 +237,11 @@ public class Peer {
                     throw new ProtocolException("got more than one version ack");
                 }
                 isAcked = true;
+            } else if (m instanceof Ping) {
+                if (((Ping) m).hasNonce())
+                    sendMessage(new Pong(((Ping) m).getNonce()));
+            } else if (m instanceof Pong) {
+                // We don't do anything with pongs right now, leave that to eventListeners
             } else {
                 // TODO: Handle the other messages we can receive.
                 log.warn("Received unhandled message: {}", m);
