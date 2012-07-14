@@ -98,7 +98,7 @@ message TransactionConfidence {
 
   // If set, hash of the transaction that double spent this one into oblivion. A transaction can be double spent by
   // multiple transactions in the case of several inputs being re-spent by several transactions but we don't
-  // bother to track them all, just the first. This only makes sense if type = OVERRIDDEN_BY_DOUBLE_SPEND.
+  // bother to track them all, just the first. This only makes sense if type = DEAD.
   optional bytes overriding_transaction = 3;
 
   // If type == BUILDING then this is the depth of the transaction in the blockchain.
