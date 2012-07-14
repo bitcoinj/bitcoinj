@@ -746,7 +746,7 @@ public class Peer {
         // chainHeight should not be zero/negative because we shouldn't have given the user a Peer that is to another
         // client-mode node, nor should it be unconnected. If that happens it means the user overrode us somewhere or
         // there is a bug in the peer management code.
-        Preconditions.checkState(chainHeight > 0, "Connected to peer with zero/negative chain height", chainHeight);
+        Preconditions.checkState(params.allowEmptyPeerChains || chainHeight > 0, "Connected to peer with zero/negative chain height", chainHeight);
         return chainHeight - blockChain.getChainHead().getHeight();
     }
 

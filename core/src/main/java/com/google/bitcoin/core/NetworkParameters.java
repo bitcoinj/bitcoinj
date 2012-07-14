@@ -114,6 +114,11 @@ public class NetworkParameters implements Serializable {
      * Returns the number of blocks between subsidy decreases
      */
     private int subsidyDecreaseBlockCount;
+    
+    /**
+     * If we are running in testnet-in-a-box mode, we allow connections to nodes with 0 non-genesis blocks
+     */
+    boolean allowEmptyPeerChains;
 
     /**
      * The version codes that prefix addresses which are acceptable on this network. Although Satoshi intended these to
@@ -213,6 +218,7 @@ public class NetworkParameters implements Serializable {
         n.setSpendableCoinbaseDepth(100);
         n.setSubsidyDecreaseBlockCount(210000);
         n.id = ID_TESTNET;
+        n.allowEmptyPeerChains = false;
         String genesisHash = n.genesisBlock.getHashAsString();
         checkState(genesisHash.equals("00000007199508e34a9ff81e6ec0c477a4cccff2a4767a8eee39c11db367b008"),
                 genesisHash);
@@ -250,6 +256,7 @@ public class NetworkParameters implements Serializable {
         n.setSpendableCoinbaseDepth(100);
         n.setSubsidyDecreaseBlockCount(210000);
         n.id = ID_PRODNET;
+        n.allowEmptyPeerChains = false;
         String genesisHash = n.genesisBlock.getHashAsString();
         checkState(genesisHash.equals("000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f"),
                 genesisHash);

@@ -161,7 +161,8 @@ public class TCPNetworkConnection implements NetworkConnection {
         // mode nodes because we can't download the data from them we need to find/verify transactions. Some bogus
         // implementations claim to have a block chain in their services field but then report a height of zero, filter
         // them out here.
-        if (!versionMessage.hasBlockChain() || versionMessage.bestHeight <= 0) {
+        if (!versionMessage.hasBlockChain() ||
+                (!params.allowEmptyPeerChains && versionMessage.bestHeight <= 0)) {
             // Shut down the channel
             throw new ProtocolException("Peer does not have a copy of the block chain.");
         }
