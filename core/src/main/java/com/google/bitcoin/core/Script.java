@@ -114,6 +114,8 @@ public class Script {
 
 
     private byte[] getData(int len) throws ScriptException {
+        if (len > program.length - cursor)
+            throw new ScriptException("Failed read of " + len + " bytes");
         try {
             byte[] buf = new byte[len];
             System.arraycopy(program, cursor, buf, 0, len);
@@ -123,11 +125,19 @@ public class Script {
             // We want running out of data in the array to be treated as a handleable script parsing exception,
             // not something that abnormally terminates the app.
             throw new ScriptException("Failed read of " + len + " bytes", e);
+        } catch (NegativeArraySizeException e) {
+            // We want running out of data in the array to be treated as a handleable script parsing exception,
+            // not something that abnormally terminates the app.
+            throw new ScriptException("Failed read of " + len + " bytes", e);
         }
     }
 
-    private int readByte() {
-        return 0xFF & program[cursor++];
+    private int readByte() throws ScriptException {
+        try {
+            return 0xFF & program[cursor++];
+        } catch (ArrayIndexOutOfBoundsException e) {
+            throw new ScriptException("Attempted to read outside of script boundaries");
+        }
     }
 
     /**
