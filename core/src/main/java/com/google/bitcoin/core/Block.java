@@ -877,7 +877,7 @@ public class Block extends Message {
     static private int txCounter;
 
 	/** Adds a coinbase transaction to the block. This exists for unit tests. */
-    void addCoinbaseTransaction(byte[] pubKeyTo) {
+    void addCoinbaseTransaction(byte[] pubKeyTo, BigInteger value) {
         unCacheTransactions();
         transactions = new ArrayList<Transaction>();
         Transaction coinbase = new Transaction(params);
@@ -887,8 +887,7 @@ public class Block extends Message {
         // Here we will do things a bit differently so a new address isn't needed every time. We'll put a simple
         // counter in the scriptSig so every transaction has a different hash.
         coinbase.addInput(new TransactionInput(params, coinbase, new byte[]{(byte) txCounter++, (byte) 1}));
-        coinbase.addOutput(new TransactionOutput(params, coinbase, Script.createOutputScript(pubKeyTo),
-                Utils.toNanoCoins(50, 0)));
+        coinbase.addOutput(new TransactionOutput(params, coinbase, Script.createOutputScript(pubKeyTo), value));
         transactions.add(coinbase);
         coinbase.setParent(this);
         coinbase.length = coinbase.bitcoinSerialize().length;
@@ -901,17 +900,17 @@ public class Block extends Message {
      * Returns a solved block that builds on top of this one. This exists for unit tests.
      */
     Block createNextBlock(Address to, long time) {
-        return createNextBlock(to, null, time, EMPTY_BYTES);
+        return createNextBlock(to, null, time, EMPTY_BYTES, Utils.toNanoCoins(50, 0));
     }
 
     /**
      * Returns a solved block that builds on top of this one. This exists for unit tests.
      * In this variant you can specify a public key (pubkey) for use in generating coinbase blocks.
      */
-    Block createNextBlock(Address to, TransactionOutPoint prevOut, long time, byte[] pubKey) {
+    Block createNextBlock(Address to, TransactionOutPoint prevOut, long time, byte[] pubKey, BigInteger coinbaseValue) {
         Block b = new Block(params);
         b.setDifficultyTarget(difficultyTarget);
-        b.addCoinbaseTransaction(pubKey);
+        b.addCoinbaseTransaction(pubKey, coinbaseValue);
 
         if (to != null) {
             // Add a transaction paying 50 coins to the "to" address.
@@ -951,12 +950,17 @@ public class Block extends Message {
 
     // Visible for testing.
     public Block createNextBlock(Address to, TransactionOutPoint prevOut) {
-        return createNextBlock(to, prevOut, Utils.now().getTime() / 1000, EMPTY_BYTES);
+        return createNextBlock(to, prevOut, Utils.now().getTime() / 1000, EMPTY_BYTES, Utils.toNanoCoins(50, 0));
     }
     
     // Visible for testing.
     public Block createNextBlock(Address to) {
-        return createNextBlock(to, null, Utils.now().getTime() / 1000, EMPTY_BYTES);
+        return createNextBlock(to, null, Utils.now().getTime() / 1000, EMPTY_BYTES, Utils.toNanoCoins(50, 0));
+    }
+    
+    // Visible for testing.
+    public Block createNextBlockWithCoinbase(byte[] pubKey, BigInteger coinbaseValue) {
+        return createNextBlock(null, null, Utils.now().getTime() / 1000, pubKey, coinbaseValue);
     }
 
     /**
@@ -964,7 +968,7 @@ public class Block extends Message {
      * This method is intended for test use only.
      */
     Block createNextBlockWithCoinbase(byte[] pubKey) {
-        return createNextBlock(null, null, Utils.now().getTime() / 1000, pubKey);
+        return createNextBlock(null, null, Utils.now().getTime() / 1000, pubKey, Utils.toNanoCoins(50, 0));
     }
 
     /**
