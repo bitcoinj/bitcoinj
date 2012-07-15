@@ -33,7 +33,6 @@ import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -768,32 +767,6 @@ public class PeerGroup {
         } catch (IOException e) {
             log.error("failed to start block chain download from " + peer, e);
             return;
-        }
-    }
-
-    static class PeerGroupThreadFactory implements ThreadFactory {
-        static final AtomicInteger poolNumber = new AtomicInteger(1);
-        final ThreadGroup group;
-        final AtomicInteger threadNumber = new AtomicInteger(1);
-        final String namePrefix;
-
-        PeerGroupThreadFactory() {
-            group = Thread.currentThread().getThreadGroup();
-            namePrefix = "PeerGroup-" +
-                    poolNumber.getAndIncrement() +
-                    "-thread-";
-        }
-
-        public Thread newThread(Runnable r) {
-            Thread t = new Thread(group, r,
-                    namePrefix + threadNumber.getAndIncrement(),
-                    0);
-            // Lower the priority of the peer threads. This is to avoid competing with UI threads created by the API
-            // user when doing lots of work, like downloading the block chain. We select a priority level one lower
-            // than the parent thread, or the minimum.
-            t.setPriority(Math.max(Thread.MIN_PRIORITY, Thread.currentThread().getPriority() - 1));
-            t.setDaemon(true);
-            return t;
         }
     }
 }
