@@ -1233,6 +1233,27 @@ public class FullBlockTestGenerator {
         b70.solve();
         blocks.add(new BlockAndValidity(b70, false, true, b69.getHash(), "b70"));
         
+        // Test accepting an invalid block which has the same hash as a valid one (via merkle tree tricks)
+        // -> b53 (14) -> b55 (15) -> b57 (16) -> b60 (17) -> b64 (18) -> b65 (19) -> b69 (20) -> b71 (21)
+        //                                                                                    \-> b71 (21)
+        //
+        Block b72 = createNextBlock(b69, chainHeadHeight + 20, out21, null);
+        {
+            Transaction tx = new Transaction(params);
+            tx.addOutput(new TransactionOutput(params, tx, BigInteger.ZERO, new byte[]{ Script.OP_TRUE }));
+            addOnlyInputToTransaction(tx, new TransactionOutPointWithValue(
+                    new TransactionOutPoint(params, 1, b72.getTransactions().get(1).getHash()),
+                    BigInteger.valueOf(1), b72.getTransactions().get(1).getOutputs().get(1).getScriptPubKey()));
+            b72.addTransaction(tx);
+        }
+        b72.solve();
+        
+        Block b71 = new Block(params, b72.bitcoinSerialize());
+        b71.addTransaction(b72.getTransactions().get(2));
+        Preconditions.checkState(b71.getHash().equals(b72.getHash()));
+        blocks.add(new BlockAndValidity(b71, false, true, b69.getHash(), "b71"));
+        blocks.add(new BlockAndValidity(b72, true, false, b72.getHash(), "b72"));
+        
         //TODO: Explicitly address MoneyRange() checks
         
         // (finally) return the created chain
