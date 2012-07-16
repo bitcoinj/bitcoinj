@@ -86,7 +86,6 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
     }
     
     //TODO: Remove lots of duplicated code in the two connectTransactions
-    //TODO: More checking can be done here (eg spent-coinbase depth check)
     
     @Override
     protected TransactionOutputChanges connectTransactions(int height, Block block)
@@ -132,6 +131,11 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
                                                                                           in.getOutpoint().getIndex());
                         if (prevOut == null)
                             throw new VerificationException("Attempted to spend a non-existent or already spent output!");
+                        // Coinbases can't be spent until they mature, to avoid re-orgs destroying entire transaction
+                        // chains. The assumption is there will ~never be re-orgs deeper than the spendable coinbase
+                        // chain depth.
+                        if (height - prevOut.getHeight() < params.getSpendableCoinbaseDepth())
+                            throw new VerificationException("Tried to spend coinbase at depth " + (height - prevOut.getHeight()));
                         // TODO: Check we're not spending the genesis transaction here. Satoshis code won't allow it.
                         if (enforceBIP16) {
                             try {
@@ -206,6 +210,8 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
                                                                                               in.getOutpoint().getIndex());
                             if (prevOut == null)
                                 throw new VerificationException("Attempted spend of a non-existent or already spent output!");
+                            if (newBlock.getHeight() - prevOut.getHeight() < params.getSpendableCoinbaseDepth())
+                                throw new VerificationException("Tried to spend coinbase at depth " + (newBlock.getHeight() - prevOut.getHeight()));
                             if (enforcePayToScriptHash) {
                                 try {
                                     Script script = new Script(params, prevOut.getScriptBytes(), 0, prevOut.getScriptBytes().length);
