@@ -1,5 +1,6 @@
 /*
  * Copyright 2012 Google Inc.
+ * Copyright 2012 Matt Corallo.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +17,20 @@
 
 package com.google.bitcoin.core;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.lang.ref.WeakReference;
+import java.util.List;
+
+import com.google.bitcoin.core.Transaction.SigHash;
 import com.google.bitcoin.store.FullPrunedBlockStore;
 import com.google.bitcoin.store.MemoryFullPrunedBlockStore;
 import com.google.bitcoin.utils.BriefLogFormatter;
+
 import org.junit.Before;
 import org.junit.Test;
-
-import java.lang.ref.WeakReference;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static org.junit.Assert.*;
 
@@ -31,17 +39,14 @@ import static org.junit.Assert.*;
  */
 
 public class FullPrunedBlockChainTest {
-    // The size of spendableOutputs
-    private static final int MAX_BLOCK_HEIGHT = 5;
+    private static final Logger log = LoggerFactory.getLogger(FullPrunedBlockChainTest.class);
+
+    // The number of undoable blocks to keep around
+    private static final int UNDOABLE_BLOCKS_STORED = 10;
     
     private NetworkParameters unitTestParams;
-    private Wallet wallet;
-    private Address walletAddress;
     private FullPrunedBlockChain chain;
     private FullPrunedBlockStore store;
-    private ECKey someOtherGuyKey;
-    private Block testBase;
-    private TransactionOutPoint[] spendableOutputs;
 
     @Before
     public void setUp() throws Exception {
@@ -49,100 +54,42 @@ public class FullPrunedBlockChainTest {
         unitTestParams = NetworkParameters.unitTests();
         unitTestParams.interval = 10000;
         
-        wallet = new Wallet(unitTestParams);
-        wallet.addKey(new ECKey());
-        walletAddress = wallet.keychain.get(0).toAddress(unitTestParams);
-        
-        store = new MemoryFullPrunedBlockStore(unitTestParams, MAX_BLOCK_HEIGHT);
-        chain = new FullPrunedBlockChain(unitTestParams, wallet, store);
-        
-        someOtherGuyKey = new ECKey();
-        byte[] someOtherGuyPubKey = someOtherGuyKey.getPubKey();
-        
-        spendableOutputs = new TransactionOutPoint[unitTestParams.getSpendableCoinbaseDepth() + MAX_BLOCK_HEIGHT];
-        // Build some blocks on genesis block for later spending
-        // Be lazy to give a simple list of inputs for use, though we could use inputs generated during tests
-        testBase = unitTestParams.genesisBlock.createNextBlockWithCoinbase(someOtherGuyPubKey);
-        chain.add(testBase);
-        spendableOutputs[0] = new TransactionOutPoint(unitTestParams, 0, testBase.getTransactions().get(0).getHash());
-        for (int i = 1; i < unitTestParams.getSpendableCoinbaseDepth() + MAX_BLOCK_HEIGHT; i++) {
-            testBase = testBase.createNextBlockWithCoinbase(someOtherGuyPubKey);
-            chain.add(testBase);
-            spendableOutputs[i] = new TransactionOutPoint(unitTestParams, 0, testBase.getTransactions().get(0).getHash().duplicate());
-        }
+        store = new MemoryFullPrunedBlockStore(unitTestParams, UNDOABLE_BLOCKS_STORED);
+        chain = new FullPrunedBlockChain(unitTestParams, store);
     }
     
     @Test
-    public void testForkSpends() throws Exception {
-        // Check that if the block chain forks, we end up using the right chain.
-        // And check that transactions that get spent on one fork or another
-
-        // In order for this to be triggered, the reorg has to effect us,
-        // so use walletAddress when creating new blocks as much as possible
-        final boolean[] reorgHappened = new boolean[1];
-        reorgHappened[0] = false;
-        wallet.addEventListener(new AbstractWalletEventListener() {
-            @Override
-            public void onReorganize(Wallet wallet) {
-                reorgHappened[0] = true;
+    public void testGeneratedChain() throws Exception {
+        // Tests various test cases from FullBlockTestGenerator
+        FullBlockTestGenerator generator = new FullBlockTestGenerator(unitTestParams);
+        List<BlockAndValidity> blockList = generator.getBlocksToTest(false);
+        for (BlockAndValidity block : blockList) {
+            boolean threw = false;
+            try {
+                if (chain.add(block.block) != block.connects) {
+                    log.error("Block didn't match connects flag on block " + block.blockName);
+                    fail();
+                }
+            } catch (VerificationException e) {
+                threw = true;
+                if (!block.throwsException) {
+                    log.error("Block didn't match throws flag on block " + block.blockName);
+                    fail();
+                }
+                if (block.connects) {
+                    log.error("Block didn't match connects flag on block " + block.blockName);
+                    fail();
+                }
             }
-        });
-        
-        // Start by building a couple of blocks on top of the testBase block.
-        Block b1 = testBase.createNextBlock(walletAddress, spendableOutputs[0]);
-        Block b2 = b1.createNextBlock(walletAddress, spendableOutputs[1]);
-        assertTrue(chain.add(b1));
-        assertTrue(chain.add(b2));
-        assertFalse(reorgHappened[0]);
-        // We now have the following chain (which output is spent is in parentheses):
-        //     testBase -> b1 (0) -> b2 (1)
-        //
-        // so fork like this:
-        //
-        //     testBase -> b1 (0) -> b2 (1)
-        //                       \-> b3 (1)
-        //
-        // Nothing should happen at this point. We saw b2 first so it takes priority.
-        Block b3 = b1.createNextBlock(walletAddress, spendableOutputs[1]);
-        assertTrue(chain.add(b3));
-        assertFalse(reorgHappened[0]);  // No re-org took place.
-        // Now we add another block to make the alternative chain longer.
-        Block b4 = b3.createNextBlock(walletAddress, spendableOutputs[2]);
-        assertTrue(chain.add(b4));
-        assertTrue(reorgHappened[0]);  // Re-org took place.
-        reorgHappened[0] = false;
-        //
-        //     testBase -> b1 (0) -> b2 (1)
-        //                       \-> b3 (1) -> b4 (2)
-        //
-        // ... and back to the first chain.
-        Block b5 = b2.createNextBlock(walletAddress, spendableOutputs[2]);
-        Block b6 = b5.createNextBlock(walletAddress, spendableOutputs[3]);
-        assertTrue(chain.add(b5));
-        assertTrue(chain.add(b6));
-        //
-        //     testBase -> b1 (0) -> b2 (1) -> b5 (2) -> b6 (3)
-        //                       \-> b3 (1) -> b4 (2)
-        //
-        assertTrue(reorgHappened[0]);
-        reorgHappened[0] = false;
-        // Try to create a fork that double-spends
-        //     testBase -> b1 (0) -> b2 (1) -> b5 (2) -> b6 (3)
-        //                       \-> b3 (1) -> b4 (2)
-        //                                           \-> b7 (2) -> b8 (4)
-        //
-        Block b7 = b4.createNextBlock(new ECKey().toAddress(unitTestParams), spendableOutputs[2]);
-        Block b8 = b7.createNextBlock(walletAddress, spendableOutputs[4]);
-        try{
-            chain.add(b7); // This is allowed to fail as there is no guarantee that a fork's inputs will be verified
-            chain.add(b8);
-            fail();
-        } catch(VerificationException e) {
-            // b7 should fail verification because it double-spends output 2.
-        } catch (Exception e) {
-            throw new RuntimeException(e);  // Should not happen.
+            if (!threw && block.throwsException) {
+                log.error("Block didn't match throws flag on block " + block.blockName);
+                fail();
+            }
+            if (!chain.getChainHead().getHeader().getHash().equals(block.hashChainTipAfterBlock)) {
+                log.error("New block head didn't match the correct value after block " + block.blockName);
+                fail();
+            }
         }
-        assertFalse(reorgHappened[0]);
     }
     
     @Test
@@ -150,18 +97,38 @@ public class FullPrunedBlockChainTest {
         // Check that we aren't accidentally leaving any references
         // to the full StoredUndoableBlock's lying around (ie memory leaks)
         
-        WeakReference<StoredTransactionOutput> out =
-                new WeakReference<StoredTransactionOutput>(store.getTransactionOutput(spendableOutputs[0].getHash(), spendableOutputs[1].getIndex()));
-        // Create a chain longer than MAX_BLOCK_HEIGHT
-        Block block1 = testBase.createNextBlock(walletAddress, spendableOutputs[0]);
-        chain.add(block1);
-        WeakReference<StoredUndoableBlock> undoBlock = new WeakReference<StoredUndoableBlock>(store.getUndoBlock(block1.getHash()));
+        ECKey outKey = new ECKey();
+        
+        // Build some blocks on genesis block to create a spendable output
+        Block rollingBlock = unitTestParams.genesisBlock.createNextBlockWithCoinbase(outKey.getPubKey());
+        chain.add(rollingBlock);
+        TransactionOutPoint spendableOutput = new TransactionOutPoint(unitTestParams, 0, rollingBlock.getTransactions().get(0).getHash());
+        byte[] spendableOutputScriptPubKey = rollingBlock.getTransactions().get(0).getOutputs().get(0).getScriptBytes();
+        for (int i = 1; i < unitTestParams.getSpendableCoinbaseDepth(); i++) {
+            rollingBlock = rollingBlock.createNextBlockWithCoinbase(outKey.getPubKey());
+            chain.add(rollingBlock);
+        }
+        
+        WeakReference<StoredTransactionOutput> out = new WeakReference<StoredTransactionOutput>
+                                       (store.getTransactionOutput(spendableOutput.getHash(), spendableOutput.getIndex()));
+        rollingBlock = rollingBlock.createNextBlock(null);
+        
+        Transaction t = new Transaction(unitTestParams);
+        // Entirely invalid scriptPubKey
+        t.addOutput(new TransactionOutput(unitTestParams, t, Utils.toNanoCoins(50, 0), new byte[] {}));
+        addInputToTransaction(t, spendableOutput, spendableOutputScriptPubKey, outKey);
+        rollingBlock.addTransaction(t);
+        rollingBlock.solve();
+        
+        chain.add(rollingBlock);
+        WeakReference<StoredUndoableBlock> undoBlock = new WeakReference<StoredUndoableBlock>(store.getUndoBlock(rollingBlock.getHash()));
         assertTrue(undoBlock.get() != null);
         assertTrue(undoBlock.get().getTransactions() == null);
         WeakReference<TransactionOutputChanges> changes = new WeakReference<TransactionOutputChanges>(undoBlock.get().getTxOutChanges());
         assertTrue(changes.get() != null);
-        Block rollingBlock = block1;
-        for (int i = 0; i < MAX_BLOCK_HEIGHT; i++) {
+        
+        // Create a chain longer than UNDOABLE_BLOCKS_STORED
+        for (int i = 0; i < UNDOABLE_BLOCKS_STORED; i++) {
             rollingBlock = rollingBlock.createNextBlock(null);
             chain.add(rollingBlock);
         }
@@ -170,5 +137,24 @@ public class FullPrunedBlockChainTest {
         assertTrue(undoBlock.get() == null);
         assertTrue(changes.get() == null);
         assertTrue(out.get() == null);
+    }
+    
+    private void addInputToTransaction(Transaction t, TransactionOutPoint prevOut, byte[] prevOutScriptPubKey, ECKey sigKey) {
+        TransactionInput input = new TransactionInput(unitTestParams, t, new byte[]{}, prevOut);
+        t.addInput(input);
+
+        Sha256Hash hash = t.hashTransactionForSignature(0, prevOutScriptPubKey, SigHash.ALL, false);
+
+        // Sign input
+        try {
+            ByteArrayOutputStream bos = new UnsafeByteArrayOutputStream(73);
+            bos.write(sigKey.sign(hash.getBytes()));
+            bos.write(SigHash.ALL.ordinal() + 1);
+            byte[] signature = bos.toByteArray();
+            
+            input.setScriptBytes(Script.createInputScript(signature));
+        } catch (IOException e) {
+            throw new RuntimeException(e);  // Cannot happen.
+        }
     }
 }
