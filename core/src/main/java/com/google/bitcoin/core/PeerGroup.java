@@ -502,7 +502,7 @@ public class PeerGroup {
             synchronized (PeerGroup.this) {
                 running = false;
                 shutdownPeerDiscovery();
-                synchronized (channelFutures.values()) {
+                synchronized (channelFutures) {
                     for (ChannelFuture future : channelFutures.values()) {
                         future.getChannel().close();
                     }
