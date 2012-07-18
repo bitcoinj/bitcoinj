@@ -37,6 +37,13 @@ import java.util.concurrent.*;
  * <p>{@link Peer#getHandler()} is part of a Netty Pipeline with a Bitcoin serializer downstream of it.
  */
 public class Peer {
+    public interface PeerLifecycleListener {
+        /** Called when the peer is connected */
+        public void onPeerConnected(Peer peer);
+        /** Called when the peer is disconnected */
+        public void onPeerDisconnected(Peer peer);
+    }
+
     private static final Logger log = LoggerFactory.getLogger(Peer.class);
     public static final int CONNECT_TIMEOUT_MSEC = 60000;
 
@@ -48,6 +55,7 @@ public class Peer {
     private final List<GetDataFuture<Block>> pendingGetBlockFutures;
     private PeerAddress address;
     private List<PeerEventListener> eventListeners;
+    private List<PeerLifecycleListener> lifecycleListeners;
     // Whether to try and download blocks and transactions from this peer. Set to false by PeerGroup if not the
     // primary peer. This is to avoid redundant work and concurrency problems with downloading the same chain
     // in parallel.
@@ -86,6 +94,7 @@ public class Peer {
         this.versionMessage = ver;
         this.pendingGetBlockFutures = new ArrayList<GetDataFuture<Block>>();
         this.eventListeners = new CopyOnWriteArrayList<PeerEventListener>();
+        this.lifecycleListeners = new CopyOnWriteArrayList<PeerLifecycleListener>();
         this.fastCatchupTimeSecs = params.genesisBlock.getTimeSeconds();
         this.isAcked = false;
         this.handler = new PeerHandler();
@@ -107,6 +116,14 @@ public class Peer {
 
     public synchronized boolean removeEventListener(PeerEventListener listener) {
         return eventListeners.remove(listener);
+    }
+
+    public synchronized void addLifecycleListener(PeerLifecycleListener listener) {
+        lifecycleListeners.add(listener);
+    }
+
+    public synchronized boolean removeLifecycleListener(PeerLifecycleListener listener) {
+        return lifecycleListeners.remove(listener);
     }
 
     /**
@@ -132,9 +149,9 @@ public class Peer {
     }
 
     private void notifyDisconnect() {
-        for (PeerEventListener listener : eventListeners) {
+        for (PeerLifecycleListener listener : lifecycleListeners) {
             synchronized (listener) {
-                listener.onPeerDisconnected(Peer.this, 0);
+                listener.onPeerDisconnected(Peer.this);
             }
         }
     }
@@ -204,10 +221,11 @@ public class Peer {
                 processAlert((AlertMessage)m);
             } else if (m instanceof VersionMessage) {
                 peerVersionMessage = (VersionMessage)m;
-                EventListenerInvoker.invoke(eventListeners, new EventListenerInvoker<PeerEventListener>() {
+                EventListenerInvoker.invoke(lifecycleListeners,
+                        new EventListenerInvoker<PeerLifecycleListener>() {
                     @Override
-                    public void invoke(PeerEventListener listener) {
-                        listener.onPeerConnected(Peer.this, 1);
+                    public void invoke(PeerLifecycleListener listener) {
+                        listener.onPeerConnected(Peer.this);
                     }
                 });
             } else if (m instanceof VersionAck) {

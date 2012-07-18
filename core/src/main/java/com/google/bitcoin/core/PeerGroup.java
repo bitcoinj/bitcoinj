@@ -95,14 +95,14 @@ public class PeerGroup {
 
     private ClientBootstrap bootstrap;
 
-    private class PeerStartupListener extends AbstractPeerEventListener {
-        public void onPeerConnected(Peer peer, int peerCount) {
+    private class PeerStartupListener implements Peer.PeerLifecycleListener {
+        public void onPeerConnected(Peer peer) {
             pendingPeers.remove(peer);
             peers.add(peer);
             handleNewPeer(peer);
         }
 
-        public void onPeerDisconnected(Peer peer, int peerCount) {
+        public void onPeerDisconnected(Peer peer) {
             pendingPeers.remove(peer);
             peers.remove(peer);
             channelFutures.remove(peer);
@@ -111,7 +111,7 @@ public class PeerGroup {
     }
 
     // Visible for testing
-    PeerEventListener startupListener = new PeerStartupListener();
+    Peer.PeerLifecycleListener startupListener = new PeerStartupListener();
 
     /**
      * Creates a PeerGroup with the given parameters and a default 5 second connection timeout. If you don't care
@@ -189,7 +189,7 @@ public class PeerGroup {
                 ChannelPipeline p = Channels.pipeline();
                 
                 Peer peer = new Peer(params, chain, ver);
-                peer.addEventListener(startupListener);
+                peer.addLifecycleListener(startupListener);
                 pendingPeers.add(peer);
                 TCPNetworkConnection codec =
                     new TCPNetworkConnection(params,
