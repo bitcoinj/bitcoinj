@@ -304,7 +304,9 @@ public class PeerGroup {
      */
     public synchronized List<Peer> getConnectedPeers() {
         ArrayList<Peer> result = new ArrayList<Peer>(peers.size());
-        result.addAll(peers);
+        synchronized (peers) {
+            result.addAll(peers);
+        }
         return result;
     }
 
@@ -366,12 +368,14 @@ public class PeerGroup {
         FutureTask<Transaction> future = new FutureTask<Transaction>(new Runnable() {
             public void run() {
                 // This is run with the peer group already locked.
-                for (Peer peer : peers) {
-                    try {
-                        log.info("{}: Sending transaction {}", peer.getAddress(), tx.getHashAsString());
-                        peer.sendMessage(tx);
-                    } catch (IOException e) {
-                        log.warn("Caught IOException whilst sending transaction: {}", e.getMessage());
+                synchronized (peers) {
+                    for (Peer peer : peers) {
+                        try {
+                            log.info("{}: Sending transaction {}", peer.getAddress(), tx.getHashAsString());
+                            peer.sendMessage(tx);
+                        } catch (IOException e) {
+                            log.warn("Caught IOException whilst sending transaction: {}", e.getMessage());
+                        }
                     }
                 }
             }
@@ -433,9 +437,7 @@ public class PeerGroup {
      * {@link PeerEventListener} and use the onPeerConnected/onPeerDisconnected methods.
      */
     public synchronized int numConnectedPeers() {
-        synchronized (peers) {
-            return peers.size();
-        }
+        return peers.size();
     }
 
     public synchronized boolean isRunning() {
@@ -500,8 +502,10 @@ public class PeerGroup {
             synchronized (PeerGroup.this) {
                 running = false;
                 shutdownPeerDiscovery();
-                for (ChannelFuture future : channelFutures.values()) {
-                    future.getChannel().close();
+                synchronized (channelFutures.values()) {
+                    for (ChannelFuture future : channelFutures.values()) {
+                        future.getChannel().close();
+                    }
                 }
                 bootstrap.releaseExternalResources();
             }
