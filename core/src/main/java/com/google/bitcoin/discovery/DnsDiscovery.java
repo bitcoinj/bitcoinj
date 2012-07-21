@@ -41,10 +41,10 @@ public class DnsDiscovery implements PeerDiscovery {
     private NetworkParameters netParams;
 
     public static final String[] defaultHosts = new String[]{
-            "dnsseed.bluematt.me",         // Matt Corallo
-            "bitseed.xf2.org",             // Jeff Garzik
             "seed.bitcoin.sipa.be",        // Pieter Wuille
+            "dnsseed.bluematt.me",         // Matt Corallo
             "dnsseed.bitcoin.dashjr.org",  // Luke Dashjr
+            "bitseed.xf2.org",             // Jeff Garzik
     };
 
     /**
