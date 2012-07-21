@@ -238,6 +238,13 @@ public class Wallet implements Serializable, BlockChainListener {
     public synchronized Iterable<ECKey> getKeys() {
         return new ArrayList<ECKey>(keychain);
     }
+    
+    /**
+     * Returns the number of keys in the keychain.
+     */
+    public synchronized int getKeychainSize() {
+        return keychain.size();
+    }
 
     private synchronized void saveToFile(File temp, File destFile) throws IOException {
         // This odd construction exists to allow Android apps to control file permissions on the newly saved files
@@ -2203,5 +2210,65 @@ public class Wallet implements Serializable, BlockChainListener {
 
     public void setLastBlockSeenHash(Sha256Hash lastBlockSeenHash) {
         this.lastBlockSeenHash = lastBlockSeenHash;
+    }
+    
+    /**
+     * Gets the number of elements that will be added to a bloom filter returned by getBloomFilter
+     */
+    public int getBloomFilterElementCount() {
+        int size = getKeychainSize() * 2;
+        for (Transaction tx : getTransactions(false, true)) {
+            for (TransactionOutput out : tx.getOutputs()) {
+                try {
+                    if (out.isMine(this) && out.getScriptPubKey().isSentToRawPubKey())
+                        size++;
+                } catch (ScriptException e) {
+                    throw new RuntimeException(e); // If it is ours, we parsed the script corectly, so this shouldn't happen
+                }
+            }
+        }
+        return size;
+    }
+    
+    /**
+     * Gets a bloom filter that contains all of the public keys from this wallet,
+     * and which will provide the given false-positive rate.
+     * 
+     * See the docs for {@link BloomFilter#BloomFilter(int, double)} for a brief explanation of anonymity when using bloom filters.
+     */
+    public BloomFilter getBloomFilter(double falsePositiveRate) {
+        return getBloomFilter(getBloomFilterElementCount(), falsePositiveRate, new Random().nextLong());
+    }
+    
+    /**
+     * Gets a bloom filter that contains all of the public keys from this wallet,
+     * and which will provide the given false-positive rate if it has size elements.
+     * Keep in mind that you will get 2 elements in the bloom filter for each key in the wallet.
+     * 
+     * This is used to generate a BloomFilter which can be #{link BloomFilter.merge}d with another.
+     * It could also be used if you have a specific target for the filter's size.
+     * 
+     * See the docs for {@link BloomFilter#BloomFilter(int, double)} for a brief explanation of anonymity when using bloom filters.
+     */
+    public synchronized BloomFilter getBloomFilter(int size, double falsePositiveRate, long nTweak) {
+        BloomFilter filter = new BloomFilter(size, falsePositiveRate, nTweak);
+        for (ECKey key : keychain) {
+            filter.insert(key.getPubKey());
+            filter.insert(key.getPubKeyHash());
+        }
+        for (Transaction tx : getTransactions(false, true)) {
+            for (int i = 0; i < tx.getOutputs().size(); i++) {
+                TransactionOutput out = tx.getOutputs().get(i);
+                try {
+                    if (out.isMine(this) && out.getScriptPubKey().isSentToRawPubKey()) {
+                        TransactionOutPoint outPoint = new TransactionOutPoint(params, i, tx);
+                        filter.insert(outPoint.bitcoinSerialize());
+                    }
+                } catch (ScriptException e) {
+                    throw new RuntimeException(e); // If it is ours, we parsed the script corectly, so this shouldn't happen
+                }
+            }
+        }
+        return filter;
     }
 }
