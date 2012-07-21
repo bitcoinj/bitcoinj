@@ -211,12 +211,12 @@ public class PeerGroup {
     }
 
     /** The maximum number of connections that we will create to peers. */
-    public void setMaxConnections(int maxConnections) {
+    public synchronized void setMaxConnections(int maxConnections) {
         this.maxConnections = maxConnections;
     }
 
     /** The maximum number of connections that we will create to peers. */
-    public int getMaxConnections() {
+    public synchronized int getMaxConnections() {
         return maxConnections;
     }
 
