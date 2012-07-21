@@ -64,7 +64,7 @@ public class WalletTool {
             "  --chain=<file>       Specifies the name of the file that stores the block chain.\n" +
             "  --force              Overrides any safety checks on the requested action.\n" +
             "  --date               Provide a date in form YYYY/MM/DD to any action that requires one.\n" +
-            "  --peer=1.2.3.4       Use the given IP address for connections instead of peer discovery.\n" +
+            "  --peers=1.2.3.4      Comma separaterd IP addresses/domain names for connections instead of peer discovery.\n" +
             "  --condition=...      Allows you to specify a numeric condition for other commands. The format is\n" +
             "                       one of the following operators = < > <= >= immediately followed by a number.\n" +
             "                       For example --condition=\">5.10\" or --condition=\"<=1\"\n" +
@@ -226,7 +226,7 @@ public class WalletTool {
         parser.accepts("pubkey").withRequiredArg();
         parser.accepts("privkey").withRequiredArg();
         parser.accepts("addr").withRequiredArg();
-        parser.accepts("peer").withRequiredArg();
+        parser.accepts("peers").withRequiredArg();
         OptionSpec<String> outputFlag = parser.accepts("output").withRequiredArg();
         parser.accepts("value").withRequiredArg();
         conditionFlag = parser.accepts("condition").withRequiredArg();
@@ -383,16 +383,12 @@ public class WalletTool {
             }
             setup();
             peers.start();
+            // Wait for peers to connect, the tx to be sent to one of them and for it to be propagated across the
+            // network. Once propagation is complete and we heard the transaction back from all our peers, it will
+            // be committed to the wallet.
             peers.broadcastTransaction(t).get();
-            // Horrible hack to ensure we have time to fully broadcast to every peer. Will go away when we resolve
-            // issue 167.
-            Thread.sleep(2000);
-            wallet.commitTx(t);
             System.out.println(t.getHashAsString());
         } catch (BlockStoreException e) {
-            throw new RuntimeException(e);
-        } catch (VerificationException e) {
-            // Cannot happen, created transaction ourselves.
             throw new RuntimeException(e);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
@@ -497,13 +493,16 @@ public class WalletTool {
         peers.setUserAgent("WalletTool", "1.0");
         peers.addWallet(wallet);
         peers.setFastCatchupTimeSecs(wallet.getEarliestKeyCreationTime());
-        if (options.has("peer")) {
-            String peer = (String) options.valueOf("peer");
-            try {
-                peers.addAddress(new PeerAddress(InetAddress.getByName(peer), params.port));
-            } catch (UnknownHostException e) {
-                System.err.println("Could not understand peer domain name/IP address: " + peer + ": " + e.getMessage());
-                System.exit(1);
+        if (options.has("peers")) {
+            String peersFlag = (String) options.valueOf("peers");
+            String[] peerAddrs = peersFlag.split(",");
+            for (String peer : peerAddrs) {
+                try {
+                    peers.addAddress(new PeerAddress(InetAddress.getByName(peer), params.port));
+                } catch (UnknownHostException e) {
+                    System.err.println("Could not understand peer domain name/IP address: " + peer + ": " + e.getMessage());
+                    System.exit(1);
+                }
             }
         } else {
             peers.addPeerDiscovery(discovery);

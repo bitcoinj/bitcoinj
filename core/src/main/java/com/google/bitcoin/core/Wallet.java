@@ -21,6 +21,7 @@ import com.google.bitcoin.core.WalletTransaction.Pool;
 import com.google.bitcoin.store.WalletProtobufSerializer;
 import com.google.bitcoin.utils.EventListenerInvoker;
 import com.google.common.base.Preconditions;
+import com.google.common.util.concurrent.ListenableFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,7 +29,6 @@ import java.io.*;
 import java.lang.ref.WeakReference;
 import java.math.BigInteger;
 import java.util.*;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 import static com.google.bitcoin.core.Utils.bitcoinValueToFriendlyString;
@@ -554,7 +554,7 @@ public class Wallet implements Serializable {
         // between pools.
         EnumSet<Pool> containingPools = getContainingPools(tx);
         if (!containingPools.equals(EnumSet.noneOf(Pool.class))) {
-            log.info("Received tx we already saw in a block or created ourselves: " + tx.getHashAsString());
+            log.debug("Received tx we already saw in a block or created ourselves: " + tx.getHashAsString());
             return;
         }
 
@@ -1220,49 +1220,31 @@ public class Wallet implements Serializable {
         return tx;
     }
 
-    /**
-     * Sends coins to the given address, via the given {@link PeerGroup}. Change is returned to {@link Wallet#getChangeAddress()}.
-     * The transaction will be announced to any connected nodes asynchronously. If you would like to know when
-     * the transaction was successfully sent to at least one node, use 
-     * {@link Wallet#sendCoinsOffline(Address, java.math.BigInteger)} and then {@link PeerGroup#broadcastTransaction(Transaction)}
-     * on the result to obtain a {@link java.util.concurrent.Future<Transaction>}.
-     *
-     * @param peerGroup a PeerGroup to use for broadcast.
-     * @param to        Which address to send coins to.
-     * @param nanocoins How many nanocoins to send. You can use Utils.toNanoCoins() to calculate this.
-     * @return the Transaction
-     * @throws IOException if there was a problem broadcasting the transaction
-     */
-    public synchronized Transaction sendCoinsAsync(PeerGroup peerGroup, Address to, BigInteger nanocoins) throws IOException {
-        Transaction tx = sendCoinsOffline(to, nanocoins);
-        if (tx == null)
-            return null;  // Not enough money.
-        // Just throw away the Future here. If the user wants it, they can call sendCoinsOffline/broadcastTransaction
-        // themselves.
-        peerGroup.broadcastTransaction(tx);
-        return tx;
+    public static class SendResult {
+        public Transaction tx;
+        public ListenableFuture<Transaction> broadcastComplete;
     }
 
     /**
-     * Sends coins to the given address, via the given {@link PeerGroup}. Change is returned to {@link Wallet#getChangeAddress()}.
-     * The method will block until the transaction has been announced to at least one node.
+     * Sends coins to the given address, via the given {@link PeerGroup}. Change is returned to
+     * {@link Wallet#getChangeAddress()}. The returned object provides both the transaction, and a future that can
+     * be used to learn when the broadcast is complete. Complete means, if the PeerGroup is limited to only one
+     * connection, when it was written out to the socket. Otherwise when the transaction is written out and we heard
+     * it back from a different peer.
      *
      * @param peerGroup a PeerGroup to use for broadcast or null.
      * @param to        Which address to send coins to.
-     * @param nanocoins How many nanocoins to send. You can use Utils.toNanoCoins() to calculate this.
-     * @return The {@link Transaction} that was created or null if there was insufficient balance to send the coins.
+     * @param value     How much value to send. You can use Utils.toNanoCoins() to calculate this.
+     * @return An object containing the transaction that was created, and a future for the broadcast of it.
      */
-    public synchronized Transaction sendCoins(PeerGroup peerGroup, Address to, BigInteger nanocoins) {
-        Transaction tx = sendCoinsOffline(to, nanocoins);
+    public SendResult sendCoins(PeerGroup peerGroup, Address to, BigInteger value) {
+        Transaction tx = sendCoinsOffline(to, value);
         if (tx == null)
             return null;  // Not enough money.
-        try {
-            return peerGroup.broadcastTransaction(tx).get();
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        } catch (ExecutionException e) {
-            throw new RuntimeException(e);
-        }
+        SendResult result = new SendResult();
+        result.tx = tx;
+        result.broadcastComplete = peerGroup.broadcastTransaction(tx);
+        return result;
     }
 
     /**

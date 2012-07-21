@@ -24,6 +24,7 @@ import java.io.File;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.net.InetAddress;
+import java.util.concurrent.ExecutionException;
 
 /**
  * PingService demonstrates basic usage of the library. It sits on the network and when it receives coins, simply
@@ -82,9 +83,10 @@ public class DerbyPingService {
                     BigInteger value = tx.getValueSentToMe(w);
                     System.out.println("Received " + Utils.bitcoinValueToFriendlyString(value) + " from " + from.toString());
                     // Now send the coins back!
-                    Transaction sendTx = w.sendCoins(peerGroup, from, value);
-                    assert sendTx != null;  // We should never try to send more coins than we have!
-                    System.out.println("Sent coins back! Transaction hash is " + sendTx.getHashAsString());
+                    Wallet.SendResult sendTx = w.sendCoins(peerGroup, from, value);
+                    assert sendTx.tx != null;  // We should never try to send more coins than we have!
+                    System.out.println("Sent coins back! Transaction hash is " + sendTx.tx.getHashAsString());
+                    sendTx.broadcastComplete.get();
                     w.saveToFile(walletFile);
                 } catch (ScriptException e) {
                     // If we didn't understand the scriptSig, just crash.
@@ -92,6 +94,10 @@ public class DerbyPingService {
                     throw new RuntimeException(e);
                 } catch (IOException e) {
                     e.printStackTrace();
+                    throw new RuntimeException(e);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                } catch (ExecutionException e) {
                     throw new RuntimeException(e);
                 }
             }

@@ -299,14 +299,6 @@ public class PeerGroupTest extends TestWithNetworkConnections {
         
         PeerGroupThread peerGroupThread = control.createMock(PeerGroupThread.class);
         peerGroup.mockStart(peerGroupThread);
-        peerGroupThread.addTask((FutureTask<Transaction>) anyObject());
-        EasyMock.expectLastCall().andAnswer(new IAnswer<Void>() {
-            @SuppressWarnings("unchecked")
-            public Void answer() throws Throwable {
-                ((FutureTask<Transaction>)EasyMock.getCurrentArguments()[0]).run();
-                return null;
-            }
-        });
         peerGroupThread.interrupt();
         EasyMock.expectLastCall();
         
@@ -319,15 +311,21 @@ public class PeerGroupTest extends TestWithNetworkConnections {
 
         assertEquals(Utils.toNanoCoins(50, 0), wallet.getBalance());
 
-        // Now create a spend, and expect the announcement.
+        // Now create a spend, and expect the announcement on p1.
         Address dest = new ECKey().toAddress(params);
-        assertNotNull(wallet.sendCoins(peerGroup, dest, Utils.toNanoCoins(1, 0)));
+        Wallet.SendResult sendResult = wallet.sendCoins(peerGroup, dest, Utils.toNanoCoins(1, 0));
+        assertNotNull(sendResult.tx);
+        assertFalse(sendResult.broadcastComplete.isDone());
         Transaction t1 = (Transaction) outbound(p1);
         assertNotNull(t1);
         // 49 BTC in change.
         assertEquals(Utils.toNanoCoins(49, 0), t1.getValueSentToMe(wallet));
-        Transaction t2 = (Transaction) outbound(p2);
-        assertEquals(t1, t2);
+        // The future won't complete until it's heard back from the network on p2.
+        InventoryMessage inv = new InventoryMessage(params);
+        inv.addTransaction(t1);
+        inbound(p2, inv);
+        assertTrue(sendResult.broadcastComplete.isDone());
+        // Confirm it.
         Block b2 = TestUtils.createFakeBlock(params, blockStore, t1).block;
         inbound(p1, b2);
         assertNull(outbound(p1));
@@ -338,19 +336,15 @@ public class PeerGroupTest extends TestWithNetworkConnections {
         assertNull(outbound(p1));  // Nothing sent.
         // Add the wallet to the peer group (simulate initialization). Transactions should be announced.
         peerGroup.addWallet(wallet);
-        // Transaction announced on the peers.
+        // Transaction announced to the first peer.
         InventoryMessage inv1 = (InventoryMessage) outbound(p1);
-        InventoryMessage inv2 = (InventoryMessage) outbound(p2);
         assertEquals(t3.getHash(), inv1.getItems().get(0).hash);
-        assertEquals(t3.getHash(), inv2.getItems().get(0).hash);
-        // Peers ask for the transaction, and get it.
+        // Peer asks for the transaction, and get it.
         GetDataMessage getdata = new GetDataMessage(params);
         getdata.addItem(inv1.getItems().get(0));
         inbound(p1, getdata);
         Transaction t4 = (Transaction) outbound(p1);
         assertEquals(t3, t4);
-        inbound(p2, getdata);
-        assertEquals(t3, outbound(p2));
 
         FakeChannel p3 = connectPeer(3);
         assertTrue(outbound(p3) instanceof InventoryMessage);

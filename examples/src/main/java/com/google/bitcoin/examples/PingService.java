@@ -180,7 +180,7 @@ public class PingService {
     }
 
     private void bounceCoins(Transaction tx) {
-        // It's impossible to pick one specific identity that you receive coins from in BitCoin as there
+        // It's impossible to pick one specific identity that you receive coins from in Bitcoin as there
         // could be inputs from many addresses. So instead we just pick the first and assume they were all
         // owned by the same person.
         try {
@@ -189,7 +189,7 @@ public class PingService {
             Address from = input.getFromAddress();
             System.out.println("Received " + Utils.bitcoinValueToFriendlyString(value) + " from " + from.toString());
             // Now send the coins back!
-            Transaction sendTx = w.sendCoins(peerGroup, from, value);
+            Transaction sendTx = w.sendCoins(peerGroup, from, value).tx;
             assert sendTx != null;  // We should never try to send more coins than we have!
             System.out.println("Sent coins back! Transaction hash is " + sendTx.getHashAsString());
             w.saveToFile(walletFile);

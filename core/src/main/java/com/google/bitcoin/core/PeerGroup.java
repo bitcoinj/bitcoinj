@@ -22,6 +22,10 @@ import com.google.bitcoin.discovery.PeerDiscovery;
 import com.google.bitcoin.discovery.PeerDiscoveryException;
 import com.google.bitcoin.utils.EventListenerInvoker;
 import com.google.common.base.Preconditions;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
+import com.google.common.util.concurrent.SettableFuture;
 import org.jboss.netty.bootstrap.ClientBootstrap;
 import org.jboss.netty.channel.*;
 import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
@@ -65,11 +69,14 @@ public class PeerGroup {
     private PeerGroupThread peerGroupThread;
     // True if the connection initiation thread should be running
     private boolean running;
-    // Currently active peers
-    private Set<Peer> peers;
+
+    // TODO: Rationalize the data structures used here.
+    // Currently active peers. This is a linked list rather than a set to make unit tests predictable.
+    private LinkedList<Peer> peers;
     // Currently connecting peers
     private Set<Peer> pendingPeers;
     private Map<Peer, ChannelFuture> channelFutures;
+
     // The peer we are currently downloading the chain from
     private Peer downloadPeer;
     // Callback for events related to chain download
@@ -147,7 +154,11 @@ public class PeerGroup {
         this.connectionDelayMillis = connectionDelayMillis;
         this.fastCatchupTimeSecs = params.genesisBlock.getTimeSeconds();
         this.wallets = new ArrayList<Wallet>(1);
-        this.maxConnections = DEFAULT_CONNECTIONS;
+
+        // This default sentinel value will be overridden by one of two actions:
+        //   - adding a peer discovery source sets it to the default
+        //   - using connectTo() will increment it by one
+        this.maxConnections = 0;
 
         // Set up a default template version message that doesn't tell the other side what kind of BitCoinJ user
         // this is.
@@ -157,10 +168,9 @@ public class PeerGroup {
         this.bootstrap = bootstrap;
 
         inactives = new LinkedBlockingQueue<PeerAddress>();
-        // TODO: Remove usage of synchronized sets here in favor of simple coarse-grained locking.
-        peers = Collections.synchronizedSet(new HashSet<Peer>());
-        pendingPeers = Collections.synchronizedSet(new HashSet<Peer>());
-        channelFutures = Collections.synchronizedMap(new HashMap<Peer, ChannelFuture>());
+        peers = new LinkedList<Peer>();
+        pendingPeers = new HashSet<Peer>();
+        channelFutures = new HashMap<Peer, ChannelFuture>();
         peerDiscoverers = new CopyOnWriteArraySet<PeerDiscovery>(); 
         peerEventListeners = new ArrayList<PeerEventListener>();
         // This event listener is added to every peer. It's here so when we announce transactions via an "inv", every
@@ -211,19 +221,32 @@ public class PeerGroup {
     }
 
     private synchronized List<Message> handleGetData(GetDataMessage m) {
-        // Scans the wallets for transactions in the getdata message and returns them. Invoked in parallel
-        // on peer threads.
-        HashMap<Sha256Hash, Message> transactions = new HashMap<Sha256Hash, Message>();
-        for (Wallet w : wallets) {
-            synchronized (w) {
-                for (InventoryItem item : m.getItems()) {
-                    Transaction tx = w.getTransaction(item.hash);
-                    if (tx == null) continue;
-                    transactions.put(tx.getHash(), tx);
+        // Scans the wallets and memory pool for transactions in the getdata message and returns them.
+        // Runs on peer threads.
+        LinkedList<Message> transactions = new LinkedList<Message>();
+        LinkedList<InventoryItem> items = new LinkedList<InventoryItem>(m.getItems());
+        Iterator<InventoryItem> it = items.iterator();
+        while (it.hasNext()) {
+            InventoryItem item = it.next();
+            // Check the mempool first.
+            Transaction tx = memoryPool.get(item.hash);
+            if (tx != null) {
+                transactions.add(tx);
+                it.remove();
+            } else {
+                // Check the wallets.
+                for (Wallet w : wallets) {
+                    synchronized (w) {
+                        tx = w.getTransaction(item.hash);
+                        if (tx == null) continue;
+                        transactions.add(tx);
+                        it.remove();
+                        break;
+                    }
                 }
             }
         }
-        return new LinkedList<Message>(transactions.values());
+        return transactions;
     }
 
     /**
@@ -310,17 +333,25 @@ public class PeerGroup {
     }
 
     /**
-     * Add an address to the list of potential peers to connect to
+     * Add an address to the list of potential peers to connect to. This will increment the total number of max
+     * connections by one, so if all you use is addAddress, it is guaranteed to be attempted. If you're using a
+     * mix of peer discovery and addAddress, there's no guarantee this address will be picked in preference to
+     * those found via discovery.
+     *
+     * @param peerAddress IP/port to use.
      */
-    public void addAddress(PeerAddress peerAddress) {
+    public synchronized void addAddress(PeerAddress peerAddress) {
         // TODO(miron) consider deduplication
         inactives.add(peerAddress);
+        maxConnections++;
     }
 
     /**
      * Add addresses from a discovery source to the list of potential peers to connect to
      */
-    public void addPeerDiscovery(PeerDiscovery peerDiscovery) {
+    public synchronized void addPeerDiscovery(PeerDiscovery peerDiscovery) {
+        if (getMaxConnections() == 0)
+            setMaxConnections(DEFAULT_CONNECTIONS);
         peerDiscoverers.add(peerDiscovery);
     }
 
@@ -352,35 +383,6 @@ public class PeerGroup {
             running = false;
             peerGroupThread.interrupt();
         }
-    }
-
-    /**
-     * Queues a transaction for asynchronous broadcast. The transaction will be considered broadcast and forgotten 
-     * about (by the PeerGroup) once it's been written out to at least one node, but that does not guarantee inclusion
-     * in the chain - incorrect fees or a flaky remote node can cause this as well. Wallets attached with 
-     * {@link PeerGroup#addWallet(Wallet)} will have their pending transactions announced to every newly connected
-     * node.
-     *
-     * @return a Future that can be used to wait for the async broadcast to complete.
-     */
-    public synchronized Future<Transaction> broadcastTransaction(final Transaction tx) {
-        FutureTask<Transaction> future = new FutureTask<Transaction>(new Runnable() {
-            public void run() {
-                // This is run with the peer group already locked.
-                synchronized (peers) {
-                    for (Peer peer : peers) {
-                        try {
-                            log.info("{}: Sending transaction {}", peer.getAddress(), tx.getHashAsString());
-                            peer.sendMessage(tx);
-                        } catch (IOException e) {
-                            log.warn("Caught IOException whilst sending transaction: {}", e.getMessage());
-                        }
-                    }
-                }
-            }
-        }, tx);
-        peerGroupThread.addTask(future);
-        return future;
     }
 
     /**
@@ -560,8 +562,7 @@ public class PeerGroup {
     /**
      * Connect to a peer by creating a Netty channel to the destination address.
      * 
-     * @param address destination IP and port
-     * 
+     * @param address destination IP and port.
      * @return a ChannelFuture that can be used to wait for the socket to connect.  A socket
      *           connection does not mean that protocol handshake has occured.
      */
@@ -573,8 +574,11 @@ public class PeerGroup {
             // This can be null in unit tests or apps that don't use TCP connections.
             networkHandler.getOwnerObject().setRemoteAddress(address);
         }
-        Peer peer = peerFromChannelFuture(future);
-        channelFutures.put(peer, future);
+        synchronized (this) {
+            Peer peer = peerFromChannelFuture(future);
+            channelFutures.put(peer, future);
+            setMaxConnections(getMaxConnections() + 1);
+        }
         return future;
     }
 
@@ -647,7 +651,7 @@ public class PeerGroup {
         // in the Satoshi client will increase and we'll get disconnected.
         //
         // TODO: Find a way to balance the desire to propagate useful transactions against obscure DoS attacks.
-        announcePendingWalletTransactions(wallets, Collections.singleton(peer));
+        announcePendingWalletTransactions(wallets, Collections.singletonList(peer));
         // And set up event listeners for clients. This will allow them to find out about new transactions and blocks.
         for (PeerEventListener listener : peerEventListeners) {
             peer.addEventListener(listener);
@@ -662,7 +666,7 @@ public class PeerGroup {
 
     /** Returns true if at least one peer received an inv. */
     private synchronized boolean announcePendingWalletTransactions(List<Wallet> announceWallets,
-                                                                   Set<Peer> announceToPeers) {
+                                                                   List<Peer> announceToPeers) {
         // Build up an inv announcing the hashes of all pending transactions in all our wallets.
         InventoryMessage inv = new InventoryMessage(params);
         for (Wallet w : announceWallets) {
@@ -744,7 +748,7 @@ public class PeerGroup {
             // Pick a new one and possibly tell it to download the chain.
             synchronized (peers) {
                 if (!peers.isEmpty()) {
-                    Peer next = peers.iterator().next();
+                    Peer next = peers.peekFirst();
                     setDownloadPeer(next);
                     if (downloadListener != null) {
                         startBlockChainDownloadFromPeer(next);
@@ -771,5 +775,121 @@ public class PeerGroup {
             log.error("failed to start block chain download from " + peer, e);
             return;
         }
+    }
+
+    /**
+     * Returns a future that is triggered when the number of connected peers is equal to the given number of connected
+     * peers. By using this with {@link com.google.bitcoin.core.PeerGroup#getMaxConnections()} you can wait until the
+     * network is fully online. To block immediately, just call get() on the result.
+     *
+     * @param numPeers How many peers to wait for.
+     * @return a future that will be triggered when the number of connected peers >= numPeers
+     */
+    public synchronized ListenableFuture<PeerGroup> waitForPeers(final int numPeers) {
+        if (peers.size() >= numPeers) {
+            return Futures.immediateFuture(this);
+        }
+        final SettableFuture<PeerGroup> future = SettableFuture.create();
+        addEventListener(new AbstractPeerEventListener() {
+            @Override public void onPeerConnected(Peer peer, int peerCount) {
+                if (peerCount >= numPeers) {
+                    future.set(PeerGroup.this);
+                    removeEventListener(this);
+                }
+            }
+        });
+        return future;
+    }
+
+    /**
+     * <p>Given a transaction, sends it un-announced to one peer and then waits for it to be received back from other
+     * peers. Once all connected peers have announced the transaction, the future will be completed. If anything goes
+     * wrong the exception will be thrown when get() is called, or you can receive it via a callback on the
+     * {@link ListenableFuture}. This method returns immediately, so if you want it to block just call get() on the
+     * result.</p>
+     *
+     * <p>Note that if the PeerGroup is limited to only one connection (discovery is not activated) then the future
+     * will complete as soon as the transaction was successfully written to that peer.</p>
+     *
+     * <p>Other than for sending your own transactions, this method is useful if you have received a transaction from
+     * someone and want to know that it's valid. It's a bit of a weird hack because the current version of the Bitcoin
+     * protocol does not inform you if you send an invalid transaction. Because sending bad transactions counts towards
+     * your DoS limit, be careful with relaying lots of unknown transactions. Otherwise you might get kicked off the
+     * network.</p>
+     *
+     * <p>The transaction won't be sent until there are at least {@link com.google.bitcoin.core.PeerGroup#getMaxConnections()}
+     * active connections available.</p>
+     */
+    public synchronized ListenableFuture<Transaction> broadcastTransaction(final Transaction tx) {
+        final SettableFuture<Transaction> future = SettableFuture.create();
+        final int maxConnections = getMaxConnections();
+        log.info("Waiting for {} peers ...", maxConnections);
+        ListenableFuture<PeerGroup> peerAvailabilityFuture = waitForPeers(maxConnections);
+        peerAvailabilityFuture.addListener(new Runnable() {
+            public void run() {
+                // This can be called immediately if we already have enough peers. Otherwise it'll be called from a
+                // peer thread.
+                final Peer somePeer = peers.getFirst();
+                log.info("broadcastTransaction: Enough peers, adding {} to the memory pool and sending to {}",
+                        tx.getHashAsString(), somePeer);
+                final Transaction pinnedTx = memoryPool.seen(tx, somePeer.getAddress());
+                try {
+                    // Satoshis code sends an inv in this case and then lets the peer request the tx data. We just
+                    // blast out the TX here for a couple of reasons. Firstly it's simpler: in the case where we have
+                    // just a single connection we don't have to wait for getdata to be received and handled before
+                    // completing the future in the code immediately below. Secondly, it's faster. The reason the
+                    // Satoshi client sends an inv is privacy - it means you can't tell if the peer originated the
+                    // transaction or not. However, we are not a fully validating node and this is advertised in
+                    // our version message, as SPV nodes cannot relay it doesn't give away any additional information
+                    // to skip the inv here - we wouldn't send invs anyway.
+                    somePeer.sendMessage(pinnedTx);
+                } catch (IOException e) {
+                    future.setException(e);
+                    return;
+                }
+
+                // If we've been limited to talk to only one peer, we can't wait to hear back because the remote peer
+                // won't tell us about transactions we just announced to it for obvious reasons. So we just have to
+                // assume we're done, at that point. This happens when we're not given any peer discovery source and
+                // the user just calls connectTo() once.
+                if (maxConnections == 1) {
+                    future.set(pinnedTx);
+                    return;
+                }
+
+                tx.getConfidence().addEventListener(new TransactionConfidence.Listener() {
+                    public void onConfidenceChanged(Transaction tx) {
+                        // This will run in a peer thread.
+                        final int numSeenPeers = tx.getConfidence().getBroadcastBy().size();
+                        boolean done = false;
+                        log.info("broadcastTransaction: TX {} seen by {} peers", pinnedTx.getHashAsString(), numSeenPeers);
+                        synchronized (PeerGroup.this) {
+                            if (numSeenPeers >= PeerGroup.this.peers.size()) {
+                                // We've seen at least the number of connected peers announce the tx. So now we have
+                                // some confidence that the network accepted it, assuming an un-hijacked internet
+                                // connection. As the wallets were never informed about the transaction (because it was
+                                // never downloaded) do that now.
+                                for (Wallet wallet : wallets) {
+                                    try {
+                                        wallet.receivePending(pinnedTx);
+                                    } catch (Throwable t) {
+                                        future.setException(t);
+                                        return;
+                                    }
+                                }
+                                done = true;
+                            }
+                        }
+                        if (done) {
+                            // We're done! Run this outside of the peer group lock as setting the future may immediately
+                            // invoke any listeners associated with it and it's simpler if the PeerGroup isn't locked.
+                            log.info("broadcastTransaction: {} complete", pinnedTx.getHashAsString());
+                            future.set(pinnedTx);
+                        }
+                    }
+                });
+            }
+        }, MoreExecutors.sameThreadExecutor());
+        return future;
     }
 }

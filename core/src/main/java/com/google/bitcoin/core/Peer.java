@@ -309,7 +309,7 @@ public class Peer {
         }
     }
     
-    private void processGetData(GetDataMessage getdata) throws IOException {
+    private synchronized void processGetData(GetDataMessage getdata) throws IOException {
         log.info("Received getdata message: {}", getdata.toString());
         ArrayList<Message> items = new ArrayList<Message>();
         for (PeerEventListener listener : eventListeners) {
@@ -322,7 +322,7 @@ public class Peer {
         if (items.size() == 0) {
             return;
         }
-        log.info("Sending {} items gathered from listeners to peer", items.size());
+        log.info("{}: Sending {} items gathered from listeners to peer", this, items.size());
         for (Message item : items) {
             sendMessage(item);
         }
