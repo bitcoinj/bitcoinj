@@ -129,6 +129,9 @@ public class PeerGroup extends AbstractIdleService {
     // Visible for testing
     Peer.PeerLifecycleListener startupListener = new PeerStartupListener();
 
+    // A bloom filter generated from all connected wallets that is given to new peers
+    private BloomFilter bloomFilter;
+
     /**
      * Creates a PeerGroup with the given parameters. No chain is provided so this node will report its chain height
      * as zero to other peers. This constructor is useful if you just want to explore the network but aren't interested
@@ -523,20 +526,36 @@ public class PeerGroup extends AbstractIdleService {
         wallet.addEventListener(new AbstractWalletEventListener() {
             @Override
             public void onKeyAdded(ECKey key) {
-                recalculateFastCatchupTime();
+                recalculateFastCatchupAndFilter();
             }
         });
-        recalculateFastCatchupTime();
+        recalculateFastCatchupAndFilter();
     }
 
-    private synchronized void recalculateFastCatchupTime() {
+    private synchronized void recalculateFastCatchupAndFilter() {
         // Fully verifying mode doesn't use this optimization (it can't as it needs to see all transactions).
         if (chain != null && chain.shouldVerifyTransactions()) return;
         long earliestKeyTime = Long.MAX_VALUE;
+        int elements = 0;
         for (Wallet w : wallets) {
             earliestKeyTime = Math.min(earliestKeyTime, w.getEarliestKeyCreationTime());
+            elements += w.getBloomFilterElementCount();
         }
         setFastCatchupTimeSecs(earliestKeyTime);
+
+        if (chain == null || !chain.shouldVerifyTransactions()) {
+            long nTweak = new Random().nextLong();
+            BloomFilter filter = new BloomFilter(elements, 0.001, nTweak);
+            for (Wallet w : wallets)
+                filter.merge(w.getBloomFilter(elements, 0.001, nTweak));
+            bloomFilter = filter;
+            log.info("Sending all peers an updated Bloom Filter.");
+            for (Peer peer : peers)
+                try {
+                    // peers of a low version will simply ignore filterload messages
+                    peer.sendMessage(filter);
+                } catch (IOException e) { }
+        }
     }
 
     /**
@@ -647,6 +666,13 @@ public class PeerGroup extends AbstractIdleService {
     protected synchronized void handleNewPeer(final Peer peer) {
         // Runs on a netty worker thread for every peer that is newly connected. Peer is not locked at this point.
         log.info("{}: New peer", peer);
+        // Give the peer a filter that can be used to probabilistically drop transactions that 
+        // aren't relevant to our wallet. We may still receive some false positives, which is
+        // OK because it helps improve wallet privacy.
+        try {
+            if (bloomFilter != null)
+                peer.sendMessage(bloomFilter);
+        } catch (IOException e) { } // That was quick...already disconnected
         // Link the peer to the memory pool so broadcast transactions have their confidence levels updated.
         peer.setMemoryPool(memoryPool);
         peer.setDownloadData(false);
