@@ -501,10 +501,13 @@ public class PeerGroup {
             synchronized (PeerGroup.this) {
                 running = false;
                 shutdownPeerDiscovery();
+                LinkedList<ChannelFuture> futures;
                 synchronized (channelFutures) {
-                    for (ChannelFuture future : channelFutures.values()) {
-                        future.getChannel().close();
-                    }
+                    // Copy the list here because the act of closing the channel modifies the channelFutures map.
+                    futures = new LinkedList<ChannelFuture>(channelFutures.values());
+                }
+                for (ChannelFuture future : futures) {
+                    future.getChannel().close();
                 }
                 bootstrap.releaseExternalResources();
             }
