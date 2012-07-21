@@ -46,8 +46,10 @@ public abstract class EventListenerInvoker<E> {
                 synchronized (l) {
                     invoker.invoke(l);
                 }
-                if (listeners.get(i) != l) {
-                    i--;  // Listener removed itself.
+                if (i == listeners.size()) {
+                    break;  // Listener removed itself and it was the last one.
+                } else if (listeners.get(i) != l) {
+                    i--;  // Listener removed itself and it was not the last one.
                 }
             }
         }
