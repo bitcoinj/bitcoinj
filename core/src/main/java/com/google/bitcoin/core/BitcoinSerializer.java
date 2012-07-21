@@ -70,6 +70,7 @@ public class BitcoinSerializer {
         names.put(GetHeadersMessage.class, "getheaders");
         names.put(GetAddrMessage.class, "getaddr");
         names.put(HeadersMessage.class, "headers");
+        names.put(BloomFilter.class, "filterload");
     }
 
     /**
@@ -274,6 +275,8 @@ public class BitcoinSerializer {
             return new HeadersMessage(params, payloadBytes);
         } else if (command.equals("alert")) {
             return new AlertMessage(params, payloadBytes);
+        } else if (command.equals("filterload")) {
+            return new BloomFilter(params, payloadBytes);
         } else {
             log.warn("No support for deserializing message with name {}", command);
             return new UnknownMessage(params, command, payloadBytes);
