@@ -853,6 +853,16 @@ public class PeerGroup {
                 // assume we're done, at that point. This happens when we're not given any peer discovery source and
                 // the user just calls connectTo() once.
                 if (maxConnections == 1) {
+                    synchronized (PeerGroup.this) {
+                        for (Wallet wallet : wallets) {
+                            try {
+                                wallet.receivePending(pinnedTx);
+                            } catch (Throwable t) {
+                                future.setException(t);
+                                return;
+                            }
+                        }
+                    }
                     future.set(pinnedTx);
                     return;
                 }
