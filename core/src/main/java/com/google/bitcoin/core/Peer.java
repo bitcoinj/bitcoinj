@@ -188,16 +188,17 @@ public class Peer {
 
         /** Handle incoming Bitcoin messages */
         @Override
-        public void messageReceived(ChannelHandlerContext ctx, MessageEvent e)
-        throws Exception {
+        public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) throws Exception {
             Message m = (Message)e.getMessage();
             
             // Allow event listeners to filter the message stream. Listeners are allowed to drop messages by
             // returning null.
-            for (PeerEventListener listener : eventListeners) {
-                synchronized (listener) {
-                    m = listener.onPreMessageReceived(Peer.this, m);
-                    if (m == null) break;
+            synchronized (Peer.this) {
+                for (PeerEventListener listener : eventListeners) {
+                    synchronized (listener) {
+                        m = listener.onPreMessageReceived(Peer.this, m);
+                        if (m == null) break;
+                    }
                 }
             }
 
@@ -328,17 +329,19 @@ public class Peer {
         }
     }
 
-    private void processTransaction(Transaction tx) {
+    private synchronized void processTransaction(Transaction tx) {
         log.info("Received broadcast tx {}", tx.getHashAsString());
         if (memoryPool != null) {
             // We may get back a different transaction object.
             tx = memoryPool.seen(tx, getAddress());
         }
-        for (PeerEventListener listener : eventListeners) {
-            synchronized (listener) {
-                listener.onTransaction(this, tx);
+        final Transaction ftx = tx;
+        EventListenerInvoker.invoke(eventListeners, new EventListenerInvoker<PeerEventListener>() {
+            @Override
+            public void invoke(PeerEventListener listener) {
+                listener.onTransaction(Peer.this, ftx);
             }
-        }
+        });
     }
 
     private void processBlock(Block m) throws IOException {
@@ -394,7 +397,7 @@ public class Peer {
         }
     }
 
-    private void invokeOnBlocksDownloaded(final Block m) {
+    private synchronized void invokeOnBlocksDownloaded(final Block m) {
         // It is possible for the peer block height difference to be negative when blocks have been solved and broadcast
         // since the time we first connected to the peer. However, it's weird and unexpected to receive a callback
         // with negative "blocks left" in this case, so we clamp to zero so the API user doesn't have to think about it.
@@ -705,16 +708,17 @@ public class Peer {
      * Starts an asynchronous download of the block chain. The chain download is deemed to be complete once we've
      * downloaded the same number of blocks that the peer advertised having in its version handshake message.
      */
-    public void startBlockChainDownload() throws IOException {
+    public synchronized void startBlockChainDownload() throws IOException {
         setDownloadData(true);
         // TODO: peer might still have blocks that we don't have, and even have a heavier
         // chain even if the chain block count is lower.
         if (getPeerBlockHeightDifference() >= 0) {
-            for (PeerEventListener listener : eventListeners) {
-                synchronized (listener) {
-                    listener.onChainDownloadStarted(this, getPeerBlockHeightDifference());
+            EventListenerInvoker.invoke(eventListeners, new EventListenerInvoker<PeerEventListener>() {
+                @Override
+                public void invoke(PeerEventListener listener) {
+                    listener.onChainDownloadStarted(Peer.this, getPeerBlockHeightDifference());
                 }
-            }
+            });
 
             // When we just want as many blocks as possible, we can set the target hash to zero.
             blockChainDownload(Sha256Hash.ZERO_HASH);
