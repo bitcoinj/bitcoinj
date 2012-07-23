@@ -311,7 +311,7 @@ public class Peer {
     }
     
     private synchronized void processGetData(GetDataMessage getdata) throws IOException {
-        log.info("Received getdata message: {}", getdata.toString());
+        log.info("{}: Received getdata message: {}", this, getdata.toString());
         ArrayList<Message> items = new ArrayList<Message>();
         for (PeerEventListener listener : eventListeners) {
             synchronized (listener) {
@@ -330,7 +330,7 @@ public class Peer {
     }
 
     private synchronized void processTransaction(Transaction tx) {
-        log.info("Received broadcast tx {}", tx.getHashAsString());
+        log.info("{}: Received broadcast tx {}", this, tx.getHashAsString());
         if (memoryPool != null) {
             // We may get back a different transaction object.
             tx = memoryPool.seen(tx, getAddress());
@@ -345,7 +345,7 @@ public class Peer {
     }
 
     private void processBlock(Block m) throws IOException {
-        log.debug("Received broadcast block {}", m.getHashAsString());
+        log.debug("{}: Received broadcast block {}", this, m.getHashAsString());
         try {
             // Was this block requested by getBlock()?
             synchronized (pendingGetBlockFutures) {
@@ -447,6 +447,7 @@ public class Peer {
                     // Some other peer already announced this so don't download.
                     it.remove();
                 } else {
+                    log.info("{}: getdata on tx {}", this, item.hash);
                     getdata.addItem(item);
                 }
                 memoryPool.seen(item.hash, this.getAddress());
