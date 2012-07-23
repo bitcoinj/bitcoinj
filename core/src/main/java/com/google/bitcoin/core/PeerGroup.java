@@ -547,7 +547,7 @@ public class PeerGroup {
          */
         private void tryNextPeer() throws InterruptedException {
             PeerAddress address = inactives.take();
-            connectTo(address.toSocketAddress());
+            connectTo(address.toSocketAddress(), false);
         }
 
         /**
@@ -567,6 +567,11 @@ public class PeerGroup {
      *           connection does not mean that protocol handshake has occured.
      */
     public ChannelFuture connectTo(SocketAddress address) {
+        return connectTo(address, true);
+    }
+
+    // Internal version.
+    protected ChannelFuture connectTo(SocketAddress address, boolean incrementMaxConnections) {
         ChannelFuture future = bootstrap.connect(address);
         TCPNetworkConnection.NetworkHandler networkHandler =
                 (TCPNetworkConnection.NetworkHandler) future.getChannel().getPipeline().get("codec");
@@ -577,7 +582,8 @@ public class PeerGroup {
         synchronized (this) {
             Peer peer = peerFromChannelFuture(future);
             channelFutures.put(peer, future);
-            setMaxConnections(getMaxConnections() + 1);
+            if (incrementMaxConnections)
+                setMaxConnections(getMaxConnections() + 1);
         }
         return future;
     }
@@ -820,7 +826,7 @@ public class PeerGroup {
      * <p>The transaction won't be sent until there are at least {@link com.google.bitcoin.core.PeerGroup#getMaxConnections()}
      * active connections available.</p>
      */
-    public synchronized ListenableFuture<Transaction> broadcastTransaction(final Transaction tx) {
+    public ListenableFuture<Transaction> broadcastTransaction(final Transaction tx) {
         final SettableFuture<Transaction> future = SettableFuture.create();
         final int maxConnections = getMaxConnections();
         log.info("Waiting for {} peers ...", maxConnections);
