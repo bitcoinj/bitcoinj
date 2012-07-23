@@ -311,7 +311,7 @@ public class Peer {
     }
     
     private synchronized void processGetData(GetDataMessage getdata) throws IOException {
-        log.info("{}: Received getdata message: {}", this, getdata.toString());
+        log.info("{}: Received getdata message: {}", address, getdata.toString());
         ArrayList<Message> items = new ArrayList<Message>();
         for (PeerEventListener listener : eventListeners) {
             synchronized (listener) {
@@ -323,14 +323,14 @@ public class Peer {
         if (items.size() == 0) {
             return;
         }
-        log.info("{}: Sending {} items gathered from listeners to peer", this, items.size());
+        log.info("{}: Sending {} items gathered from listeners to peer", address, items.size());
         for (Message item : items) {
             sendMessage(item);
         }
     }
 
     private synchronized void processTransaction(Transaction tx) {
-        log.info("{}: Received broadcast tx {}", this, tx.getHashAsString());
+        log.info("{}: Received broadcast tx {}", address, tx.getHashAsString());
         if (memoryPool != null) {
             // We may get back a different transaction object.
             tx = memoryPool.seen(tx, getAddress());
@@ -345,7 +345,7 @@ public class Peer {
     }
 
     private void processBlock(Block m) throws IOException {
-        log.debug("{}: Received broadcast block {}", this, m.getHashAsString());
+        log.debug("{}: Received broadcast block {}", address, m.getHashAsString());
         try {
             // Was this block requested by getBlock()?
             synchronized (pendingGetBlockFutures) {
@@ -447,7 +447,7 @@ public class Peer {
                     // Some other peer already announced this so don't download.
                     it.remove();
                 } else {
-                    log.info("{}: getdata on tx {}", this, item.hash);
+                    log.info("{}: getdata on tx {}", address, item.hash);
                     getdata.addItem(item);
                 }
                 memoryPool.seen(item.hash, this.getAddress());
