@@ -272,7 +272,7 @@ public abstract class AbstractBlockChain {
             // Create a new StoredBlock from this block. It will throw away the transaction data so when block goes
             // out of scope we will reclaim the used memory.
             checkDifficultyTransitions(storedPrev, block);
-            connectBlock(block, storedPrev);
+            connectBlock(block, storedPrev, shouldVerifyTransactions());
         }
 
         if (tryConnecting)
@@ -282,14 +282,24 @@ public abstract class AbstractBlockChain {
         return true;
     }
 
-    private void connectBlock(Block block, StoredBlock storedPrev)
+    // expensiveChecks enables checks that require looking at blocks further back in the chain
+    // than the previous one when connecting (eg median timestamp check)
+    // It could be exposed, but for now we just set it to shouldVerifyTransactions()
+    private void connectBlock(Block block, StoredBlock storedPrev, boolean expensiveChecks)
             throws BlockStoreException, VerificationException, PrunedException {
         // Check that we aren't connecting a block that fails a checkpoint check
         if (!params.passesCheckpoint(storedPrev.getHeight() + 1, block.getHash()))
             throw new VerificationException("Block failed checkpoint lockin at " + (storedPrev.getHeight() + 1));
+        if (shouldVerifyTransactions())
+            for (Transaction tx : block.transactions)
+                if (!tx.isFinal(storedPrev.getHeight() + 1, block.getTimeSeconds()))
+                   throw new VerificationException("Block contains non-final transaction");
         
         StoredBlock head = getChainHead();
         if (storedPrev.equals(head)) {
+            if (expensiveChecks && block.getTimeSeconds() <= getMedianTimestampOfRecentBlocks(head))
+                throw new VerificationException("Block's timestamp is too early");
+            
             // This block connects to the best known block, it is a normal continuation of the system.
             TransactionOutputChanges txOutChanges = null;
             if (shouldVerifyTransactions())
@@ -347,10 +357,24 @@ public abstract class AbstractBlockChain {
                     sendTransactionsToWallet(newBlock, NewBlockType.SIDE_CHAIN, wallet, block.transactions);
                 }
             }
-
+            
             if (haveNewBestChain)
-                handleNewBestChain(storedPrev, newBlock, block);
+                handleNewBestChain(storedPrev, newBlock, block, expensiveChecks);
         }
+    }
+    
+    /**
+     * Gets the median timestamp of the last 11 blocks
+     */
+    private long getMedianTimestampOfRecentBlocks(StoredBlock storedBlock) throws BlockStoreException {
+        long[] timestamps = new long[11];
+        int unused = 9;
+        timestamps[10] = storedBlock.getHeader().getTimeSeconds();
+        while (unused >= 0 && (storedBlock = storedBlock.getPrev(blockStore)) != null)
+            timestamps[unused--] = storedBlock.getHeader().getTimeSeconds();
+        
+        Arrays.sort(timestamps, unused+1, 10);
+        return timestamps[unused + (11-unused)/2];
     }
     
     /**
@@ -367,7 +391,7 @@ public abstract class AbstractBlockChain {
      * if (shouldVerifyTransactions)
      *     Either newChainHead needs to be in the block store as a FullStoredBlock, or (block != null && block.transactions != null)
      */
-    private void handleNewBestChain(StoredBlock storedPrev, StoredBlock newChainHead, Block block)
+    private void handleNewBestChain(StoredBlock storedPrev, StoredBlock newChainHead, Block block, boolean expensiveChecks)
             throws BlockStoreException, VerificationException, PrunedException {
         // This chain has overtaken the one we currently believe is best. Reorganize is required.
         //
@@ -400,6 +424,8 @@ public abstract class AbstractBlockChain {
             // Walk in ascending chronological order.
             for (Iterator<StoredBlock> it = newBlocks.descendingIterator(); it.hasNext();) {
                 cursor = it.next();
+                if (expensiveChecks && cursor.getHeader().getTimeSeconds() <= getMedianTimestampOfRecentBlocks(cursor.getPrev(blockStore)))
+                    throw new VerificationException("Block's timestamp is too early during reorg");
                 TransactionOutputChanges txOutChanges;
                 if (cursor != newChainHead || block == null)
                     txOutChanges = connectTransactions(cursor);

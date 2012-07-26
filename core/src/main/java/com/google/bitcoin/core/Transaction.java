@@ -44,6 +44,9 @@ import static com.google.bitcoin.core.Utils.*;
 public class Transaction extends ChildMessage implements Serializable {
     private static final Logger log = LoggerFactory.getLogger(Transaction.class);
     private static final long serialVersionUID = -8567546957352643140L;
+    
+    // Threshold for lockTime: below this value it is interpreted as block number, otherwise as timestamp.
+    static final int LOCKTIME_THRESHOLD = 500000000; // Tue Nov  5 00:53:20 1985 UTC
 
     // These are serialized in both bitcoin and java serialization.
     private long version;
@@ -913,5 +916,20 @@ public class Transaction extends ChildMessage implements Serializable {
                 if (input.isCoinBase())
                     throw new VerificationException("Coinbase input as input in non-coinbase transaction");
         }
+    }
+
+    /**
+     * Returns true if this transaction is considered finalized and can be placed in a block
+     */
+    public boolean isFinal(int height, long blockTimeSeconds) {
+        // Time based nLockTime implemented in 0.1.6
+        if (lockTime == 0)
+            return true;
+        if (lockTime < (lockTime < LOCKTIME_THRESHOLD ? height : blockTimeSeconds))
+            return true;
+        for (TransactionInput in : inputs)
+            if (in.hasSequence())
+                return false;
+        return true;
     }
 }

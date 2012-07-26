@@ -920,7 +920,11 @@ public class Block extends Message {
         }
 
         b.setPrevBlockHash(getHash());
-        b.setTime(time);
+        // Don't let timestamp go backwards
+        if (getTimeSeconds() >= time)
+            b.setTime(getTimeSeconds() + 1);
+        else
+            b.setTime(time);
         b.solve();
         try {
             b.verifyHeader();
