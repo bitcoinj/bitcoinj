@@ -71,7 +71,6 @@ public class Script {
 
     // The program is a set of byte[]s where each element is either [opcode] or [data, data, data ...]
     List<ScriptChunk> chunks;
-    byte[] programCopy;      // TODO: remove this
     private final NetworkParameters params;
 
     /**
@@ -167,10 +166,9 @@ public class Script {
      */
     private void parse(byte[] programBytes, int offset, int length) throws ScriptException {
         // TODO: this is inefficient
-        programCopy = new byte[length];
-        System.arraycopy(programBytes, offset, programCopy, 0, length);
+        program = new byte[length];
+        System.arraycopy(programBytes, offset, program, 0, length);
 
-        program = programCopy;
         offset = 0;
         chunks = new ArrayList<ScriptChunk>(10);  // Arbitrary choice of initial size.
         cursor = offset;
