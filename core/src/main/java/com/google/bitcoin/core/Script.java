@@ -220,37 +220,249 @@ public class Script {
         StringBuffer buf = new StringBuffer();
         for (ScriptChunk chunk : chunks) {
             if (chunk.isOpCode) {
-                String opName;
-                int opcode = 0xFF & chunk.data[0];
-                switch (opcode) {
-                    case OP_DUP:
-                        opName = "DUP";
-                        break;
-                    case OP_HASH160:
-                        opName = "HASH160";
-                        break;
-                    case OP_CHECKSIG:
-                        opName = "CHECKSIG";
-                        break;
-                    case OP_EQUALVERIFY:
-                        opName = "EQUALVERIFY";
-                        break;
-                    default:
-                        opName = "?(" + opcode + ")";
-                        break;
-                }
-                buf.append(opName);
+                buf.append(getOpCodeName(chunk.data[0]));
                 buf.append(" ");
             } else {
                 // Data chunk
                 buf.append("[");
-                buf.append(chunk.data.length);
-                buf.append("]");
                 buf.append(bytesToHexString(chunk.data));
-                buf.append(" ");
+                buf.append("] ");
             }
         }
         return buf.toString();
+    }
+    
+    /**
+     * Converts the given OpCode into a string (eg "0", "PUSHDATA", or "NON_OP(10)")
+     */
+    public static String getOpCodeName(byte opCode) {
+        int opcode = opCode & 0xff;
+        switch (opcode) {
+        case OP_0:
+            return "0";
+        case OP_PUSHDATA1:
+            return "PUSHDATA1";
+        case OP_PUSHDATA2:
+            return "PUSHDATA1";
+        case OP_PUSHDATA4:
+            return "PUSHDATA4";
+        case OP_1NEGATE:
+            return "1NEGATE";
+        case OP_RESERVED:
+            return "RESERVED";
+        case OP_1:
+            return "1";
+        case OP_2:
+            return "2";
+        case OP_3:
+            return "3";
+        case OP_4:
+            return "4";
+        case OP_5:
+            return "5";
+        case OP_6:
+            return "6";
+        case OP_7:
+            return "7";
+        case OP_8:
+            return "8";
+        case OP_9:
+            return "9";
+        case OP_10:
+            return "10";
+        case OP_11:
+            return "11";
+        case OP_12:
+            return "12";
+        case OP_13:
+            return "13";
+        case OP_14:
+            return "14";
+        case OP_15:
+            return "15";
+        case OP_16:
+            return "16";
+        case OP_NOP:
+            return "NOP";
+        case OP_VER:
+            return "VER";
+        case OP_IF:
+            return "IF";
+        case OP_NOTIF:
+            return "NOTIF";
+        case OP_VERIF:
+            return "VERIF";
+        case OP_VERNOTIF:
+            return "VERNOTIF";
+        case OP_ELSE:
+            return "ELSE";
+        case OP_ENDIF:
+            return "ENDIF";
+        case OP_VERIFY:
+            return "VERIFY";
+        case OP_RETURN:
+            return "RETURN";
+        case OP_TOALTSTACK:
+            return "TOALTSTACK";
+        case OP_FROMALTSTACK:
+            return "FROMALTSTACK";
+        case OP_2DROP:
+            return "2DROP";
+        case OP_2DUP:
+            return "2DUP";
+        case OP_3DUP:
+            return "3DUP";
+        case OP_2OVER:
+            return "2OVER";
+        case OP_2ROT:
+            return "2ROT";
+        case OP_2SWAP:
+            return "2SWAP";
+        case OP_IFDUP:
+            return "IFDUP";
+        case OP_DEPTH:
+            return "DEPTH";
+        case OP_DROP:
+            return "DROP";
+        case OP_DUP:
+            return "DUP";
+        case OP_NIP:
+            return "NIP";
+        case OP_OVER:
+            return "OVER";
+        case OP_PICK:
+            return "PICK";
+        case OP_ROLL:
+            return "ROLL";
+        case OP_ROT:
+            return "ROT";
+        case OP_SWAP:
+            return "SWAP";
+        case OP_TUCK:
+            return "TUCK";
+        case OP_CAT:
+            return "CAT";
+        case OP_SUBSTR:
+            return "SUBSTR";
+        case OP_LEFT:
+            return "LEFT";
+        case OP_RIGHT:
+            return "RIGHT";
+        case OP_SIZE:
+            return "SIZE";
+        case OP_INVERT:
+            return "INVERT";
+        case OP_AND:
+            return "AND";
+        case OP_OR:
+            return "OR";
+        case OP_XOR:
+            return "XOR";
+        case OP_EQUAL:
+            return "EQUAL";
+        case OP_EQUALVERIFY:
+            return "EQUALVERIFY";
+        case OP_RESERVED1:
+            return "RESERVED1";
+        case OP_RESERVED2:
+            return "RESERVED2";
+        case OP_1ADD:
+            return "1ADD";
+        case OP_1SUB:
+            return "1SUB";
+        case OP_2MUL:
+            return "2MUL";
+        case OP_2DIV:
+            return "2DIV";
+        case OP_NEGATE:
+            return "NEGATE";
+        case OP_ABS:
+            return "ABS";
+        case OP_NOT:
+            return "NOT";
+        case OP_0NOTEQUAL:
+            return "0NOTEQUAL";
+        case OP_ADD:
+            return "ADD";
+        case OP_SUB:
+            return "SUB";
+        case OP_MUL:
+            return "MUL";
+        case OP_DIV:
+            return "DIV";
+        case OP_MOD:
+            return "MOD";
+        case OP_LSHIFT:
+            return "LSHIFT";
+        case OP_RSHIFT:
+            return "RSHIFT";
+        case OP_BOOLAND:
+            return "BOOLAND";
+        case OP_BOOLOR:
+            return "BOOLOR";
+        case OP_NUMEQUAL:
+            return "NUMEQUAL";
+        case OP_NUMEQUALVERIFY:
+            return "NUMEQUALVERIFY";
+        case OP_NUMNOTEQUAL:
+            return "NUMNOTEQUAL";
+        case OP_LESSTHAN:
+            return "LESSTHAN";
+        case OP_GREATERTHAN:
+            return "GREATERTHAN";
+        case OP_LESSTHANOREQUAL:
+            return "LESSTHANOREQUAL";
+        case OP_GREATERTHANOREQUAL:
+            return "GREATERTHANOREQUAL";
+        case OP_MIN:
+            return "MIN";
+        case OP_MAX:
+            return "MAX";
+        case OP_WITHIN:
+            return "WITHIN";
+        case OP_RIPEMD160:
+            return "RIPEMD160";
+        case OP_SHA1:
+            return "SHA1";
+        case OP_SHA256:
+            return "SHA256";
+        case OP_HASH160:
+            return "HASH160";
+        case OP_HASH256:
+            return "HASH256";
+        case OP_CODESEPARATOR:
+            return "CODESEPARATOR";
+        case OP_CHECKSIG:
+            return "CHECKSIG";
+        case OP_CHECKSIGVERIFY:
+            return "CHECKSIGVERIFY";
+        case OP_CHECKMULTISIG:
+            return "CHECKMULTISIG";
+        case OP_CHECKMULTISIGVERIFY:
+            return "CHECKMULTISIGVERIFY";
+        case OP_NOP1:
+            return "NOP1";
+        case OP_NOP2:
+            return "NOP2";
+        case OP_NOP3:
+            return "NOP3";
+        case OP_NOP4:
+            return "NOP4";
+        case OP_NOP5:
+            return "NOP5";
+        case OP_NOP6:
+            return "NOP6";
+        case OP_NOP7:
+            return "NOP7";
+        case OP_NOP8:
+            return "NOP8";
+        case OP_NOP9:
+            return "NOP9";
+        case OP_NOP10:
+            return "NOP10";
+        default:
+            return "NON_OP(" + opcode + ")";
+        }
     }
 
 
