@@ -131,7 +131,8 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
                 if (!isCoinBase) {
                     // For each input of the transaction remove the corresponding output from the set of unspent
                     // outputs.
-                    for (TransactionInput in : tx.getInputs()) {
+                    for (int index = 0; index < tx.getInputs().size(); index++) {
+                        TransactionInput in = tx.getInputs().get(index);
                         StoredTransactionOutput prevOut = blockStore.getTransactionOutput(in.getOutpoint().getHash(),
                                                                                           in.getOutpoint().getIndex());
                         if (prevOut == null)
@@ -153,7 +154,11 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
                             if (sigOps > Block.MAX_BLOCK_SIGOPS)
                                 throw new VerificationException("Too many P2SH SigOps in block");
                         }
-                        //TODO: check script here
+                        try {
+                            in.getScriptSig().correctlySpends(tx, index, new Script(params, prevOut.getScriptBytes(), 0, prevOut.getScriptBytes().length));
+                        } catch (ScriptException e) {
+                            throw new VerificationException("Error verifying script: " + e.getMessage());
+                        }
                         blockStore.removeUnspentTransactionOutput(prevOut);
                         txOutsSpent.add(prevOut);
                     }
@@ -229,7 +234,8 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
                     BigInteger valueIn = BigInteger.ZERO;
                     BigInteger valueOut = BigInteger.ZERO;
                     if (!isCoinBase) {
-                        for(TransactionInput in : tx.getInputs()) {
+                        for (int index = 0; index < tx.getInputs().size(); index++) {
+                            TransactionInput in = tx.getInputs().get(index);
                             StoredTransactionOutput prevOut = blockStore.getTransactionOutput(in.getOutpoint().getHash(),
                                                                                               in.getOutpoint().getIndex());
                             if (prevOut == null)
@@ -248,7 +254,11 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
                                 if (sigOps > Block.MAX_BLOCK_SIGOPS)
                                     throw new VerificationException("Too many P2SH SigOps in block");
                             }
-                            //TODO: check script here
+                            try {
+                                in.getScriptSig().correctlySpends(new Transaction(params, tx), index, new Script(params, prevOut.getScriptBytes(), 0, prevOut.getScriptBytes().length));
+                            } catch (ScriptException e) {
+                                throw new VerificationException("Error verifying script: " + e.getMessage());
+                            }
                             blockStore.removeUnspentTransactionOutput(prevOut);
                             txOutsSpent.add(prevOut);
                         }
