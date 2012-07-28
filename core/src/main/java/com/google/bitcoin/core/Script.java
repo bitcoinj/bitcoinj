@@ -16,9 +16,6 @@
 
 package com.google.bitcoin.core;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -55,8 +52,6 @@ class ScriptChunk {
  * you manipulate and parse them.
  */
 public class Script {
-    private static Logger log = LoggerFactory.getLogger(Script.class);
-
     // Some constants used for decoding the scripts, copied from the reference client
     // push value
     public static final int OP_0 = 0x00;
@@ -524,7 +519,9 @@ public class Script {
                 chunks.add(new ScriptChunk(false, getData(len)));
             } else if (opcode == OP_PUSHDATA4) {
                 // Read a uint32, then read that many bytes of data.
-                log.error("PUSHDATA4: Unimplemented");
+                // Though this is allowed, because its value cannot be > 520, it should never actually be used
+                long len = readByte() | (readByte() << 8) | (readByte() << 16) | (readByte() << 24);
+                chunks.add(new ScriptChunk(false, getData((int)len)));
             } else {
                 chunks.add(new ScriptChunk(true, new byte[]{(byte) opcode}));
             }
