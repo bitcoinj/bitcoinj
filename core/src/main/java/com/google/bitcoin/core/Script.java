@@ -512,7 +512,7 @@ public class Script {
         cursor = offset;
         while (cursor < offset + length) {
             int opcode = readByte();
-            if (opcode > 0 && opcode < OP_PUSHDATA1) {
+            if (opcode >= 0 && opcode < OP_PUSHDATA1) {
                 // Read some bytes of data, where how many is the opcode value itself.
                 chunks.add(new ScriptChunk(false, getData(opcode)));  // opcode == len here.
             } else if (opcode == OP_PUSHDATA1) {
