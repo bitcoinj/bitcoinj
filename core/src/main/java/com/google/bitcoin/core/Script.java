@@ -19,9 +19,16 @@ package com.google.bitcoin.core;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.math.BigInteger;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
+
+import org.spongycastle.crypto.digests.RIPEMD160Digest;
 
 import static com.google.bitcoin.core.Utils.bytesToHexString;
 
@@ -845,5 +852,649 @@ public class Script {
      */
     public static byte[] removeAllInstancesOfOp(byte[] inputScript, int opCode) {
         return removeAllInstancesOf(inputScript, new byte[] {(byte)opCode});
+    }
+    
+    ////////////////////// Script verification and helpers ////////////////////////////////
+    
+    private static boolean castToBool(byte[] data) {
+        for (int i = 0; i < data.length; i++)
+        {
+            if (data[i] != 0)
+            {
+                // "Can be negative zero" -reference client (see OpenSSL's BN_bn2mpi)
+                if (i == data.length - 1 && data[i] == 0x80)
+                    return false;
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    private static BigInteger castToBigInteger(byte[] chunk) throws VerificationException {
+        if (chunk.length > 4)
+            throw new VerificationException("Script attempted to use an integer larger than 4 bytes");
+        return Utils.decodeMPI(Utils.reverseBytes(chunk), false);
+    }
+    
+    private static void executeScript(Transaction txContainingThis, long index, Script script, LinkedList<byte[]> stack) throws ScriptException, VerificationException {
+        int opCount = 0;
+        int lastCodeSepLocation = 0;
+        
+        LinkedList<byte[]> altstack = new LinkedList<byte[]>();
+        LinkedList<Boolean> ifStack = new LinkedList<Boolean>();
+        
+        for (ScriptChunk chunk : script.chunks) {
+            boolean shouldExecute = !ifStack.contains(false);
+            
+            if (!chunk.isOpCode) {
+                if (chunk.data.length > 520)
+                    throw new VerificationException("Attempted to push a data string larger than 520 bytes");
+                
+                if (!shouldExecute)
+                    continue;
+                
+                stack.add(chunk.data);
+            } else {
+                int opcode = 0xFF & chunk.data[0];
+                if (opcode > OP_16) {
+                    opCount++;
+                    if (opCount > 201)
+                        throw new VerificationException("More script operations than is allowed");
+                }
+                
+                if (opcode == OP_VERIF || opcode == OP_VERNOTIF)
+                    throw new VerificationException("Script included OP_VERIF or OP_VERNOTIF");
+                
+                if (opcode == OP_CAT || opcode == OP_SUBSTR || opcode == OP_LEFT || opcode == OP_RIGHT ||
+                    opcode == OP_INVERT || opcode == OP_AND || opcode == OP_OR || opcode == OP_XOR ||
+                    opcode == OP_2MUL || opcode == OP_2DIV || opcode == OP_MUL || opcode == OP_DIV ||
+                    opcode == OP_MOD || opcode == OP_LSHIFT || opcode == OP_RSHIFT)
+                    throw new VerificationException("Script included a disabled Script Op.");
+                
+                switch (opcode) {
+                case OP_IF:
+                    if (!shouldExecute) {
+                        ifStack.add(false);
+                        continue;
+                    }
+                    if (stack.size() < 1)
+                        throw new VerificationException("Attempted OP_IF on an empty stack");
+                    ifStack.add(castToBool(stack.pollLast()));
+                    continue;
+                case OP_NOTIF:
+                    if (!shouldExecute) {
+                        ifStack.add(false);
+                        continue;
+                    }
+                    if (stack.size() < 1)
+                        throw new VerificationException("Attempted OP_NOTIF on an empty stack");
+                    ifStack.add(!castToBool(stack.pollLast()));
+                    continue;
+                case OP_ELSE:
+                    if (ifStack.isEmpty())
+                        throw new VerificationException("Attempted OP_ELSE without OP_IF/NOTIF");
+                    ifStack.add(!ifStack.pollLast());
+                    continue;
+                case OP_ENDIF:
+                    if (ifStack.isEmpty())
+                        throw new VerificationException("Attempted OP_ENDIF without OP_IF/NOTIF");
+                    ifStack.pollLast();
+                    continue;
+                }
+                
+                if (!shouldExecute)
+                    continue;
+                
+                switch(opcode) {
+                //case OP_0: dont know why this isnt also here in the reference client
+                case OP_1NEGATE:
+                    stack.add(Utils.reverseBytes(Utils.encodeMPI(BigInteger.ONE.negate(), false)));
+                    break;
+                case OP_1:
+                case OP_2:
+                case OP_3:
+                case OP_4:
+                case OP_5:
+                case OP_6:
+                case OP_7:
+                case OP_8:
+                case OP_9:
+                case OP_10:
+                case OP_11:
+                case OP_12:
+                case OP_13:
+                case OP_14:
+                case OP_15:
+                case OP_16:
+                    stack.add(Utils.reverseBytes(Utils.encodeMPI(BigInteger.valueOf(getOpNValue(opcode)), false)));
+                    break;
+                case OP_NOP:
+                    break;
+                case OP_VERIFY:
+                    if (stack.size() < 1)
+                        throw new VerificationException("Attempted OP_VERIFY on an empty stack");
+                    if (!castToBool(stack.pollLast()))
+                        throw new VerificationException("OP_VERIFY failed");
+                    break;
+                case OP_RETURN:
+                    throw new VerificationException("Script called OP_RETURN");
+                case OP_TOALTSTACK:
+                    if (stack.size() < 1)
+                        throw new VerificationException("Attempted OP_TOALTSTACK on an empty stack");
+                    altstack.add(stack.pollLast());
+                    break;
+                case OP_FROMALTSTACK:
+                    if (altstack.size() < 1)
+                        throw new VerificationException("Attempted OP_TOALTSTACK on an empty altstack");
+                    stack.add(altstack.pollLast());
+                    break;
+                case OP_2DROP:
+                    if (stack.size() < 2)
+                        throw new VerificationException("Attempted OP_2DROP on a stack with size < 2");
+                    stack.pollLast();
+                    stack.pollLast();
+                    break;
+                case OP_2DUP:
+                    if (stack.size() < 2)
+                        throw new VerificationException("Attempted OP_2DUP on a stack with size < 2");
+                    Iterator<byte[]> it2DUP = stack.descendingIterator();
+                    byte[] OP2DUPtmpChunk2 = it2DUP.next();
+                    stack.add(it2DUP.next());
+                    stack.add(OP2DUPtmpChunk2);
+                    break;
+                case OP_3DUP:
+                    if (stack.size() < 3)
+                        throw new VerificationException("Attempted OP_3DUP on a stack with size < 3");
+                    Iterator<byte[]> it3DUP = stack.descendingIterator();
+                    byte[] OP3DUPtmpChunk3 = it3DUP.next();
+                    byte[] OP3DUPtmpChunk2 = it3DUP.next();
+                    stack.add(it3DUP.next());
+                    stack.add(OP3DUPtmpChunk2);
+                    stack.add(OP3DUPtmpChunk3);
+                    break;
+                case OP_2OVER:
+                    if (stack.size() < 4)
+                        throw new VerificationException("Attempted OP_2OVER on a stack with size < 4");
+                    Iterator<byte[]> it2OVER = stack.descendingIterator();
+                    it2OVER.next();
+                    it2OVER.next();
+                    byte[] OP2OVERtmpChunk2 = it2OVER.next();
+                    stack.add(it2OVER.next());
+                    stack.add(OP2OVERtmpChunk2);
+                    break;
+                case OP_2ROT:
+                    if (stack.size() < 6)
+                        throw new VerificationException("Attempted OP_2ROT on a stack with size < 6");
+                    byte[] OP2ROTtmpChunk6 = stack.pollLast();
+                    byte[] OP2ROTtmpChunk5 = stack.pollLast();
+                    byte[] OP2ROTtmpChunk4 = stack.pollLast();
+                    byte[] OP2ROTtmpChunk3 = stack.pollLast();
+                    byte[] OP2ROTtmpChunk2 = stack.pollLast();
+                    byte[] OP2ROTtmpChunk1 = stack.pollLast();
+                    stack.add(OP2ROTtmpChunk3);
+                    stack.add(OP2ROTtmpChunk4);
+                    stack.add(OP2ROTtmpChunk5);
+                    stack.add(OP2ROTtmpChunk6);
+                    stack.add(OP2ROTtmpChunk1);
+                    stack.add(OP2ROTtmpChunk2);
+                    break;
+                case OP_2SWAP:
+                    if (stack.size() < 4)
+                        throw new VerificationException("Attempted OP_2SWAP on a stack with size < 4");
+                    byte[] OP2SWAPtmpChunk4 = stack.pollLast();
+                    byte[] OP2SWAPtmpChunk3 = stack.pollLast();
+                    byte[] OP2SWAPtmpChunk2 = stack.pollLast();
+                    byte[] OP2SWAPtmpChunk1 = stack.pollLast();
+                    stack.add(OP2SWAPtmpChunk3);
+                    stack.add(OP2SWAPtmpChunk4);
+                    stack.add(OP2SWAPtmpChunk1);
+                    stack.add(OP2SWAPtmpChunk2);
+                    break;
+                case OP_IFDUP:
+                    if (stack.size() < 1)
+                        throw new VerificationException("Attempted OP_IFDUP on an empty stack");
+                    if (castToBool(stack.getLast()))
+                        stack.add(stack.getLast());
+                    break;
+                case OP_DEPTH:
+                    stack.add(Utils.reverseBytes(Utils.encodeMPI(BigInteger.valueOf(stack.size()), false)));
+                    break;
+                case OP_DROP:
+                    if (stack.size() < 1)
+                        throw new VerificationException("Attempted OP_DROP on an empty stack");
+                    stack.pollLast();
+                    break;
+                case OP_DUP:
+                    if (stack.size() < 1)
+                        throw new VerificationException("Attempted OP_DUP on an empty stack");
+                    stack.add(stack.getLast());
+                    break;
+                case OP_NIP:
+                    if (stack.size() < 2)
+                        throw new VerificationException("Attempted OP_NIP on a stack with size < 2");
+                    byte[] OPNIPtmpChunk = stack.pollLast();
+                    stack.pollLast();
+                    stack.add(OPNIPtmpChunk);
+                    break;
+                case OP_OVER:
+                    if (stack.size() < 2)
+                        throw new VerificationException("Attempted OP_OVER on a stack with size < 2");
+                    Iterator<byte[]> itOVER = stack.descendingIterator();
+                    itOVER.next();
+                    stack.add(itOVER.next());
+                    break;
+                case OP_PICK:
+                case OP_ROLL:
+                    if (stack.size() < 1)
+                        throw new VerificationException("Attempted OP_PICK/OP_ROLL on an empty stack");
+                    long val = castToBigInteger(stack.pollLast()).longValue();
+                    if (val < 0 || val >= stack.size())
+                        throw new VerificationException("OP_PICK/OP_ROLL attempted to get data deeper than stack size");
+                    Iterator<byte[]> itPICK = stack.descendingIterator();
+                    for (long i = 0; i < val; i++)
+                        itPICK.next();
+                    byte[] OPROLLtmpChunk = itPICK.next();
+                    if (opcode == OP_ROLL)
+                        itPICK.remove();
+                    stack.add(OPROLLtmpChunk);
+                    break;
+                case OP_ROT:
+                    if (stack.size() < 3)
+                        throw new VerificationException("Attempted OP_ROT on a stack with size < 3");
+                    byte[] OPROTtmpChunk3 = stack.pollLast();
+                    byte[] OPROTtmpChunk2 = stack.pollLast();
+                    byte[] OPROTtmpChunk1 = stack.pollLast();
+                    stack.add(OPROTtmpChunk2);
+                    stack.add(OPROTtmpChunk3);
+                    stack.add(OPROTtmpChunk1);
+                    break;
+                case OP_SWAP:
+                case OP_TUCK:
+                    if (stack.size() < 2)
+                        throw new VerificationException("Attempted OP_SWAP on a stack with size < 2");
+                    byte[] OPSWAPtmpChunk2 = stack.pollLast();
+                    byte[] OPSWAPtmpChunk1 = stack.pollLast();
+                    stack.add(OPSWAPtmpChunk2);
+                    stack.add(OPSWAPtmpChunk1);
+                    if (opcode == OP_TUCK)
+                        stack.add(OPSWAPtmpChunk2);
+                    break;
+                case OP_CAT:
+                case OP_SUBSTR:
+                case OP_LEFT:
+                case OP_RIGHT:
+                    throw new VerificationException("Attempted to use disabled Script Op.");
+                case OP_SIZE:
+                    if (stack.size() < 1)
+                        throw new VerificationException("Attempted OP_SIZE on an empty stack");
+                    stack.add(Utils.reverseBytes(Utils.encodeMPI(BigInteger.valueOf(stack.getLast().length), false)));
+                    break;
+                case OP_INVERT:
+                case OP_AND:
+                case OP_OR:
+                case OP_XOR:
+                    throw new VerificationException("Attempted to use disabled Script Op.");
+                case OP_EQUAL:
+                    if (stack.size() < 2)
+                        throw new VerificationException("Attempted OP_EQUALVERIFY on a stack with size < 2");
+                    stack.add(Arrays.equals(stack.pollLast(), stack.pollLast()) ? new byte[] {1} : new byte[] {0});
+                    break;
+                case OP_EQUALVERIFY:
+                    if (stack.size() < 2)
+                        throw new VerificationException("Attempted OP_EQUALVERIFY on a stack with size < 2");
+                    if (!Arrays.equals(stack.pollLast(), stack.pollLast()))
+                        throw new VerificationException("OP_EQUALVERIFY: non-equal data");
+                    break;
+                case OP_1ADD:
+                case OP_1SUB:
+                case OP_NEGATE:
+                case OP_ABS:
+                case OP_NOT:
+                case OP_0NOTEQUAL:
+                    if (stack.size() < 1)
+                        throw new VerificationException("Attempted a numeric op on an empty stack");
+                    BigInteger numericOPnum = castToBigInteger(stack.pollLast());
+                                        
+                    switch (opcode) {
+                    case OP_1ADD:
+                        numericOPnum = numericOPnum.add(BigInteger.ONE);
+                        break;
+                    case OP_1SUB:
+                        numericOPnum = numericOPnum.subtract(BigInteger.ONE);
+                        break;
+                    case OP_NEGATE:
+                        numericOPnum = numericOPnum.negate();
+                        break;
+                    case OP_ABS:
+                        if (numericOPnum.compareTo(BigInteger.ZERO) < 0)
+                            numericOPnum = numericOPnum.negate();
+                        break;
+                    case OP_NOT:
+                        if (numericOPnum.equals(BigInteger.ZERO))
+                            numericOPnum = BigInteger.ONE;
+                        else
+                            numericOPnum = BigInteger.ZERO;
+                        break;
+                    case OP_0NOTEQUAL:
+                        if (numericOPnum.equals(BigInteger.ZERO))
+                            numericOPnum = BigInteger.ZERO;
+                        else
+                            numericOPnum = BigInteger.ONE;
+                        break;
+                    }
+                    
+                    stack.add(Utils.reverseBytes(Utils.encodeMPI(numericOPnum, false)));
+                    break;
+                case OP_2MUL:
+                case OP_2DIV:
+                    throw new VerificationException("Attempted to use disabled Script Op.");
+                case OP_ADD:
+                case OP_SUB:
+                case OP_BOOLAND:
+                case OP_BOOLOR:
+                case OP_NUMEQUAL:
+                case OP_NUMNOTEQUAL:
+                case OP_LESSTHAN:
+                case OP_GREATERTHAN:
+                case OP_LESSTHANOREQUAL:
+                case OP_GREATERTHANOREQUAL:
+                case OP_MIN:
+                case OP_MAX:
+                    if (stack.size() < 2)
+                        throw new VerificationException("Attempted a numeric op on a stack with size < 2");
+                    BigInteger numericOPnum2 = castToBigInteger(stack.pollLast());
+                    BigInteger numericOPnum1 = castToBigInteger(stack.pollLast());
+
+                    BigInteger numericOPresult;
+                    switch (opcode) {
+                    case OP_ADD:
+                        numericOPresult = numericOPnum1.add(numericOPnum2);
+                        break;
+                    case OP_SUB:
+                        numericOPresult = numericOPnum1.subtract(numericOPnum2);
+                        break;
+                    case OP_BOOLAND:
+                        if (!numericOPnum1.equals(BigInteger.ZERO) && !numericOPnum2.equals(BigInteger.ZERO))
+                            numericOPresult = BigInteger.ONE;
+                        else
+                            numericOPresult = BigInteger.ZERO;
+                        break;
+                    case OP_BOOLOR:
+                        if (!numericOPnum1.equals(BigInteger.ZERO) || !numericOPnum2.equals(BigInteger.ZERO))
+                            numericOPresult = BigInteger.ONE;
+                        else
+                            numericOPresult = BigInteger.ZERO;
+                        break;
+                    case OP_NUMEQUAL:
+                        if (numericOPnum1.equals(numericOPnum2))
+                            numericOPresult = BigInteger.ONE;
+                        else
+                            numericOPresult = BigInteger.ZERO;
+                        break;
+                    case OP_NUMNOTEQUAL:
+                        if (!numericOPnum1.equals(numericOPnum2))
+                            numericOPresult = BigInteger.ONE;
+                        else
+                            numericOPresult = BigInteger.ZERO;
+                        break;
+                    case OP_LESSTHAN:
+                        if (numericOPnum1.compareTo(numericOPnum2) < 0)
+                            numericOPresult = BigInteger.ONE;
+                        else
+                            numericOPresult = BigInteger.ZERO;
+                        break;
+                    case OP_GREATERTHAN:
+                        if (numericOPnum1.compareTo(numericOPnum2) > 0)
+                            numericOPresult = BigInteger.ONE;
+                        else
+                            numericOPresult = BigInteger.ZERO;
+                        break;
+                    case OP_LESSTHANOREQUAL:
+                        if (numericOPnum1.compareTo(numericOPnum2) <= 0)
+                            numericOPresult = BigInteger.ONE;
+                        else
+                            numericOPresult = BigInteger.ZERO;
+                        break;
+                    case OP_GREATERTHANOREQUAL:
+                        if (numericOPnum1.compareTo(numericOPnum2) >= 0)
+                            numericOPresult = BigInteger.ONE;
+                        else
+                            numericOPresult = BigInteger.ZERO;
+                        break;
+                    case OP_MIN:
+                        if (numericOPnum1.compareTo(numericOPnum2) < 0)
+                            numericOPresult = numericOPnum1;
+                        else
+                            numericOPresult = numericOPnum2;
+                        break;
+                    case OP_MAX:
+                        if (numericOPnum1.compareTo(numericOPnum2) > 0)
+                            numericOPresult = numericOPnum1;
+                        else
+                            numericOPresult = numericOPnum2;
+                        break;
+                    default:
+                        throw new RuntimeException("Opcode switched at runtime?");
+                    }
+                    
+                    stack.add(Utils.reverseBytes(Utils.encodeMPI(numericOPresult, false)));
+                    break;
+                case OP_MUL:
+                case OP_DIV:
+                case OP_MOD:
+                case OP_LSHIFT:
+                case OP_RSHIFT:
+                    throw new VerificationException("Attempted to use disabled Script Op.");
+                case OP_NUMEQUALVERIFY:
+                    if (stack.size() < 2)
+                        throw new VerificationException("Attempted OP_NUMEQUALVERIFY on a stack with size < 2");
+                    BigInteger OPNUMEQUALVERIFYnum2 = castToBigInteger(stack.pollLast());
+                    BigInteger OPNUMEQUALVERIFYnum1 = castToBigInteger(stack.pollLast());
+                    
+                    if (!OPNUMEQUALVERIFYnum1.equals(OPNUMEQUALVERIFYnum2))
+                        throw new VerificationException("OP_NUMEQUALVERIFY failed");
+                    break;
+                case OP_WITHIN:
+                    if (stack.size() < 3)
+                        throw new VerificationException("Attempted OP_WITHIN on a stack with size < 3");
+                    BigInteger OPWITHINnum3 = castToBigInteger(stack.pollLast());
+                    BigInteger OPWITHINnum2 = castToBigInteger(stack.pollLast());
+                    BigInteger OPWITHINnum1 = castToBigInteger(stack.pollLast());
+                    if (OPWITHINnum2.compareTo(OPWITHINnum1) <= 0 && OPWITHINnum1.compareTo(OPWITHINnum3) < 0)
+                        stack.add(Utils.reverseBytes(Utils.encodeMPI(BigInteger.ONE, false)));
+                    else
+                        stack.add(Utils.reverseBytes(Utils.encodeMPI(BigInteger.ZERO, false)));
+                    break;
+                case OP_RIPEMD160:
+                    if (stack.size() < 1)
+                        throw new VerificationException("Attempted OP_RIPEMD160 on an empty stack");
+                    RIPEMD160Digest digest = new RIPEMD160Digest();
+                    byte[] dataToHash = stack.pollLast();
+                    digest.update(dataToHash, 0, dataToHash.length);
+                    byte[] ripmemdHash = new byte[20];
+                    digest.doFinal(ripmemdHash, 0);
+                    stack.add(ripmemdHash);
+                    break;
+                case OP_SHA1:
+                    if (stack.size() < 1)
+                        throw new VerificationException("Attempted OP_SHA1 on an empty stack");
+                    try {
+                        stack.add(MessageDigest.getInstance("SHA-1").digest(stack.pollLast()));
+                    } catch (NoSuchAlgorithmException e) {
+                        throw new RuntimeException(e);  // Cannot happen.
+                    }
+                    break;
+                case OP_SHA256:
+                    if (stack.size() < 1)
+                        throw new VerificationException("Attempted OP_SHA256 on an empty stack");
+                    try {
+                        stack.add(MessageDigest.getInstance("SHA-256").digest(stack.pollLast()));
+                    } catch (NoSuchAlgorithmException e) {
+                        throw new RuntimeException(e);  // Cannot happen.
+                    }
+                    break;
+                case OP_HASH160:
+                    if (stack.size() < 1)
+                        throw new VerificationException("Attempted OP_HASH160 on an empty stack");
+                    stack.add(Utils.sha256hash160(stack.pollLast()));
+                    break;
+                case OP_HASH256:
+                    if (stack.size() < 1)
+                        throw new VerificationException("Attempted OP_SHA256 on an empty stack");
+                    stack.add(Utils.doubleDigest(stack.pollLast()));
+                    break;
+                case OP_CODESEPARATOR:
+                    lastCodeSepLocation = chunk.startLocationInProgram + 1;
+                    break;
+                case OP_CHECKSIG:
+                case OP_CHECKSIGVERIFY:
+                    if (stack.size() < 2)
+                        throw new VerificationException("Attempted OP_CHECKSIG(VERIFY) on a stack with size < 2");
+                    byte[] CHECKSIGpubKey = stack.pollLast();
+                    byte[] CHECKSIGsig = stack.pollLast();
+                    
+                    byte[] CHECKSIGconnectedScript = Arrays.copyOfRange(script.program, lastCodeSepLocation, script.program.length);
+                    
+                    UnsafeByteArrayOutputStream OPCHECKSIGOutStream = new UnsafeByteArrayOutputStream(CHECKSIGsig.length + 1);
+                    try {
+                        writeBytes(OPCHECKSIGOutStream, CHECKSIGsig);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e); // Cannot happen
+                    }
+                    CHECKSIGconnectedScript = removeAllInstancesOf(CHECKSIGconnectedScript, OPCHECKSIGOutStream.toByteArray());
+                    
+                    // TODO: Use int for indexes everywhere, we can't have that many inputs/outputs
+                    Sha256Hash CHECKSIGhash = txContainingThis.hashTransactionForSignature((int)index, CHECKSIGconnectedScript,
+                            CHECKSIGsig[CHECKSIGsig.length - 1]);
+                                        
+                    boolean CHECKSIGsigValid;
+                    try {
+                        CHECKSIGsigValid = ECKey.verify(CHECKSIGhash.getBytes(), Arrays.copyOf(CHECKSIGsig, CHECKSIGsig.length - 1), CHECKSIGpubKey);
+                    } catch (Exception e1) {
+                        // There is (at least) one exception that could be hit here (EOFException, if the sig is too short)
+                        // Because I can't verify there aren't more, we use a very generic Exception catch
+                        CHECKSIGsigValid = false;
+                    }
+                    
+                    if (opcode == OP_CHECKSIG)
+                        stack.add(CHECKSIGsigValid ? new byte[] {1} : new byte[] {0});
+                    else if (opcode == OP_CHECKSIGVERIFY)
+                        if (!CHECKSIGsigValid)
+                            throw new VerificationException("Script failed OP_CHECKSIGVERIFY");
+                    break;
+                case OP_CHECKMULTISIG:
+                case OP_CHECKMULTISIGVERIFY:
+                    if (stack.size() < 2)
+                        throw new VerificationException("Attempted OP_CHECKMULTISIG(VERIFY) on a stack with size < 2");
+                    int CHECKMULTISIGpubKeyCount = castToBigInteger(stack.pollLast()).intValue();
+                    if (CHECKMULTISIGpubKeyCount < 0 || CHECKMULTISIGpubKeyCount > 20)
+                        throw new VerificationException("OP_CHECKMULTISIG(VERIFY) with pubkey count out of range");
+                    opCount += CHECKMULTISIGpubKeyCount;
+                    if (opCount > 201)
+                        throw new VerificationException("Total op count > 201 during OP_CHECKMULTISIG(VERIFY)");
+                    if (stack.size() < CHECKMULTISIGpubKeyCount + 1)
+                        throw new VerificationException("Attempted OP_CHECKMULTISIG(VERIFY) on a stack with size < num_of_pubkeys + 2");
+                    
+                    LinkedList<byte[]> CHECKMULTISIGpubkeys = new LinkedList<byte[]>();
+                    for (int i = 0; i < CHECKMULTISIGpubKeyCount; i++)
+                        CHECKMULTISIGpubkeys.add(stack.pollLast());
+                    
+                    int CHECKMULTISIGsigCount = castToBigInteger(stack.pollLast()).intValue();
+                    if (CHECKMULTISIGsigCount < 0 || CHECKMULTISIGsigCount > CHECKMULTISIGpubKeyCount)
+                        throw new VerificationException("OP_CHECKMULTISIG(VERIFY) with sig count out of range");
+                    if (stack.size() < CHECKMULTISIGsigCount + 1)
+                        throw new VerificationException("Attempted OP_CHECKMULTISIG(VERIFY) on a stack with size < num_of_pubkeys + num_of_signatures + 3");
+                    
+                    LinkedList<byte[]> CHECKMULTISIGsigs = new LinkedList<byte[]>();
+                    for (int i = 0; i < CHECKMULTISIGsigCount; i++)
+                        CHECKMULTISIGsigs.add(stack.pollLast());
+                    
+                    byte[] CHECKMULTISIGconnectedScript = Arrays.copyOfRange(script.program, lastCodeSepLocation, script.program.length);
+                    
+                    for (byte[] CHECKMULTISIGsig : CHECKMULTISIGsigs) {
+                        UnsafeByteArrayOutputStream OPCHECKMULTISIGOutStream = new UnsafeByteArrayOutputStream(CHECKMULTISIGsig.length + 1);
+                        try {
+                            writeBytes(OPCHECKMULTISIGOutStream, CHECKMULTISIGsig);
+                        } catch (IOException e) {
+                            throw new RuntimeException(e); // Cannot happen
+                        }
+                        CHECKMULTISIGconnectedScript = removeAllInstancesOf(CHECKMULTISIGconnectedScript, OPCHECKMULTISIGOutStream.toByteArray());
+                    }
+                    
+                    boolean CHECKMULTISIGValid = true;
+                    while (CHECKMULTISIGsigs.size() > 0) {
+                        byte[] CHECKMULTISIGsig = CHECKMULTISIGsigs.getFirst();
+                        byte[] CHECKMULTISIGpubKey = CHECKMULTISIGpubkeys.pollFirst();
+                        
+                        // We could reasonably move this out of the loop,
+                        // but because signature verification is significantly more expensive than hashing, its not a big deal
+                        Sha256Hash CHECKMULTISIGhash = txContainingThis.hashTransactionForSignature((int)index, CHECKMULTISIGconnectedScript,
+                                CHECKMULTISIGsig[CHECKMULTISIGsig.length - 1]);
+                        try {
+                            if (ECKey.verify(CHECKMULTISIGhash.getBytes(), Arrays.copyOf(CHECKMULTISIGsig, CHECKMULTISIGsig.length - 1), CHECKMULTISIGpubKey))
+                                CHECKMULTISIGsigs.pollFirst();
+                        } catch (Exception e) {
+                            // There is (at least) one exception that could be hit here (EOFException, if the sig is too short)
+                            // Because I can't verify there aren't more, we use a very generic Exception catch
+                        }
+                        
+                        if (CHECKMULTISIGsigs.size() > CHECKMULTISIGpubkeys.size()) {
+                            CHECKMULTISIGValid = false;
+                            break;
+                        }
+                    }
+                    
+                    // We uselessly remove a stack object to emulate a reference client bug
+                    stack.pollLast();
+                    
+                    if (opcode == OP_CHECKMULTISIG)
+                        stack.add(CHECKMULTISIGValid ? new byte[] {1} : new byte[] {0});
+                    else if (opcode == OP_CHECKMULTISIGVERIFY)
+                        if (!CHECKMULTISIGValid)
+                            throw new VerificationException("Script failed OP_CHECKMULTISIGVERIFY");
+                    break;
+                case OP_NOP1:
+                case OP_NOP2:
+                case OP_NOP3:
+                case OP_NOP4:
+                case OP_NOP5:
+                case OP_NOP6:
+                case OP_NOP7:
+                case OP_NOP8:
+                case OP_NOP9:
+                case OP_NOP10:
+                    break;
+                    
+                default:
+                    throw new VerificationException("Script used a reserved Op Code");
+                }
+            }
+            
+            if (stack.size() + altstack.size() > 1000 || stack.size() + altstack.size() < 0)
+                throw new VerificationException("Stack size exceeded range");
+        }
+        
+        if (!ifStack.isEmpty())
+            throw new VerificationException("OP_IF/OP_NOTIF without OP_ENDIF");
+    }
+
+    /**
+     * Verifies that this script (interpreted as a scriptSig) correctly spends the given scriptPubKey
+     * @throws VerificationException if this script does not correctly spend the scriptPubKey
+     */
+    public void correctlySpends(Transaction txContainingThis, long index, Script scriptPubKey) throws VerificationException, ScriptException {
+        if (program.length > 10000 || scriptPubKey.program.length > 10000)
+            throw new ScriptException("Script larger than 10,000 bytes");
+        
+        LinkedList<byte[]> stack = new LinkedList<byte[]>();
+        
+        executeScript(txContainingThis, index, this, stack);
+        executeScript(txContainingThis, index, scriptPubKey, stack);
+        
+        if (stack.size() == 0)
+            throw new VerificationException("Stack empty at end of script execution.");
+        
+        if (!castToBool(stack.pollLast()))
+            throw new VerificationException("Script resulted in a non-true stack");
     }
 }
