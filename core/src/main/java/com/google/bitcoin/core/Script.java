@@ -30,9 +30,11 @@ import static com.google.bitcoin.core.Utils.bytesToHexString;
 class ScriptChunk {
     public boolean isOpCode;
     public byte[] data;
-    public ScriptChunk(boolean isOpCode, byte[] data) {
+    public int startLocationInProgram;
+    public ScriptChunk(boolean isOpCode, byte[] data, int startLocationInProgram) {
         this.isOpCode = isOpCode;
         this.data = data;
+        this.startLocationInProgram = startLocationInProgram;
     }
     public boolean equalsOpCode(int opCode) {
         return isOpCode &&
@@ -513,24 +515,25 @@ public class Script {
         chunks = new ArrayList<ScriptChunk>(10);  // Arbitrary choice of initial size.
         cursor = offset;
         while (cursor < offset + length) {
+            int startLocationInProgram = cursor - offset;
             int opcode = readByte();
             if (opcode >= 0 && opcode < OP_PUSHDATA1) {
                 // Read some bytes of data, where how many is the opcode value itself.
-                chunks.add(new ScriptChunk(false, getData(opcode)));  // opcode == len here.
+                chunks.add(new ScriptChunk(false, getData(opcode), startLocationInProgram));  // opcode == len here.
             } else if (opcode == OP_PUSHDATA1) {
                 int len = readByte();
-                chunks.add(new ScriptChunk(false, getData(len)));
+                chunks.add(new ScriptChunk(false, getData(len), startLocationInProgram));
             } else if (opcode == OP_PUSHDATA2) {
                 // Read a short, then read that many bytes of data.
                 int len = readByte() | (readByte() << 8);
-                chunks.add(new ScriptChunk(false, getData(len)));
+                chunks.add(new ScriptChunk(false, getData(len), startLocationInProgram));
             } else if (opcode == OP_PUSHDATA4) {
                 // Read a uint32, then read that many bytes of data.
                 // Though this is allowed, because its value cannot be > 520, it should never actually be used
                 long len = readByte() | (readByte() << 8) | (readByte() << 16) | (readByte() << 24);
-                chunks.add(new ScriptChunk(false, getData((int)len)));
+                chunks.add(new ScriptChunk(false, getData((int)len), startLocationInProgram));
             } else {
-                chunks.add(new ScriptChunk(true, new byte[]{(byte) opcode}));
+                chunks.add(new ScriptChunk(true, new byte[]{(byte) opcode}, startLocationInProgram));
             }
         }
     }
