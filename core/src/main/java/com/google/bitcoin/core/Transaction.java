@@ -746,39 +746,94 @@ public class Transaction extends ChildMessage implements Serializable {
      * @param connectedScript the bytes that should be in the given input during signing.
      * @param type Should be SigHash.ALL
      * @param anyoneCanPay should be false.
+     * @throws ScriptException if connectedScript is invalid
      */
     public synchronized Sha256Hash hashTransactionForSignature(int inputIndex, byte[] connectedScript,
-                                                               SigHash type, boolean anyoneCanPay) {
+                                                               SigHash type, boolean anyoneCanPay) throws ScriptException {
+        return hashTransactionForSignature(inputIndex, connectedScript, (byte)((type.ordinal() + 1) | (anyoneCanPay ? 0x80 : 0x00)));
+    }
+    
+    /**
+     * This is required for signatures which use a sigHashType which cannot be represented using SigHash and anyoneCanPay
+     * See transaction c99c49da4c38af669dea436d3e73780dfdb6c1ecf9958baa52960e8baee30e73, which has sigHashType 0
+     */
+    synchronized Sha256Hash hashTransactionForSignature(int inputIndex, byte[] connectedScript,
+            byte sigHashType) throws ScriptException {
         try {
             // Store all the input scripts and clear them in preparation for signing. If we're signing a fresh
             // transaction that step isn't very helpful, but it doesn't add much cost relative to the actual
             // EC math so we'll do it anyway.
-            byte[][] scripts = new byte[inputs.size()][];
+            // Also store the input sequences in case we are clearing them with SigHash.NONE/SINGLE
+            byte[][] inputScripts = new byte[inputs.size()][];
+            long[] inputSequences = new long[inputs.size()];
             for (int i = 0; i < inputs.size(); i++) {
-                scripts[i] = inputs.get(i).getScriptBytes();
+                inputScripts[i] = inputs.get(i).getScriptBytes();
+                inputSequences[i] = inputs.get(i).getSequence();
                 inputs.get(i).setScriptBytes(TransactionInput.EMPTY_ARRAY);
             }
 
+            // "In case concatenating two scripts ends up with two codeseparators, or an extra
+            // one at the end, this prevents all those possible incompatibilities." - reference client
+            connectedScript = Script.removeAllInstancesOfOp(connectedScript, Script.OP_CODESEPARATOR);
+            
             // Set the input to the script of its output.
             TransactionInput input = inputs.get(inputIndex);
             input.setScriptBytes(connectedScript);
+            
+            ArrayList<TransactionOutput> outputs = this.outputs;
+            if ((sigHashType & 0x1f) == (SigHash.NONE.ordinal() + 1)) {
+                this.outputs = new ArrayList<TransactionOutput>(0);
+                
+                for (int i = 0; i < inputs.size(); i++)
+                    if (i != inputIndex)
+                        inputs.get(i).setSequence(0);
+            }
+            else if ((sigHashType & 0x1f) == (SigHash.SINGLE.ordinal() + 1)) {
+                if (inputIndex >= this.outputs.size()) {
+                    // TODO: Only allow this to happen if we are checking a signature, not signing a transactions
+                    // Any transaction ouptut that is signed in this case will result in both the signed output
+                    // and any future outputs to this public key being steal-able by anyone who has
+                    // the resulting signature and the public key (both of which are part of the signed tx input)
+                    // Put the transaction back to how we found it.
+                    for (int i = 0; i < inputs.size(); i++) {
+                        inputs.get(i).setScriptBytes(inputScripts[i]);
+                        inputs.get(i).setSequence(inputSequences[i]);
+                    }
+                    this.outputs = outputs;
+                    return new Sha256Hash("0100000000000000000000000000000000000000000000000000000000000000");
+                }
+                
+                this.outputs = new ArrayList<TransactionOutput>(this.outputs.subList(0, inputIndex));
+                for (int i = 0; i < inputIndex; i++)
+                    this.outputs.set(i, new TransactionOutput(params, this, BigInteger.valueOf(-1), new byte[] {}));
+                
+                for (int i = 0; i < inputs.size(); i++)
+                    if (i != inputIndex)
+                        inputs.get(i).setSequence(0);
+            }
+            
+            ArrayList<TransactionInput> inputs = this.inputs;
+            if ((sigHashType & 0x80) == 0x80) {
+                this.inputs = new ArrayList<TransactionInput>();
+                this.inputs.add(input);
+            }
 
             ByteArrayOutputStream bos = new UnsafeByteArrayOutputStream(length == UNKNOWN_LENGTH ? 256 : length + 4);
             bitcoinSerialize(bos);
             // We also have to write a hash type.
-            int hashType = type.ordinal() + 1;
-            if (anyoneCanPay)
-                hashType |= 0x80;
-            uint32ToByteStreamLE(hashType, bos);
+            uint32ToByteStreamLE(sigHashType, bos);
             // Note that this is NOT reversed to ensure it will be signed correctly. If it were to be printed out
             // however then we would expect that it is IS reversed.
             Sha256Hash hash = new Sha256Hash(doubleDigest(bos.toByteArray()));
             bos.close();
 
             // Put the transaction back to how we found it.
+            this.inputs = inputs;
             for (int i = 0; i < inputs.size(); i++) {
-                inputs.get(i).setScriptBytes(scripts[i]);
+                inputs.get(i).setScriptBytes(inputScripts[i]);
+                inputs.get(i).setSequence(inputSequences[i]);
             }
+            this.outputs = outputs;
             return hash;
         } catch (IOException e) {
             throw new RuntimeException(e);  // Cannot happen.

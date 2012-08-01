@@ -139,7 +139,7 @@ public class FullPrunedBlockChainTest {
         assertTrue(out.get() == null);
     }
     
-    private void addInputToTransaction(Transaction t, TransactionOutPoint prevOut, byte[] prevOutScriptPubKey, ECKey sigKey) {
+    private void addInputToTransaction(Transaction t, TransactionOutPoint prevOut, byte[] prevOutScriptPubKey, ECKey sigKey) throws ScriptException {
         TransactionInput input = new TransactionInput(unitTestParams, t, new byte[]{}, prevOut);
         t.addInput(input);
 

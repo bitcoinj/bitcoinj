@@ -1077,7 +1077,7 @@ public class FullBlockTestGenerator {
     }
     
     private Block createNextBlock(Block baseBlock, int nextBlockHeight, TransactionOutPointWithValue prevOut,
-            BigInteger additionalCoinbaseValue) {
+            BigInteger additionalCoinbaseValue) throws ScriptException {
         BigInteger coinbaseValue = Utils.toNanoCoins(50, 0).shiftRight(nextBlockHeight / params.getSubsidyDecreaseBlockCount())
                 .add((prevOut != null ? prevOut.value : BigInteger.valueOf(0))).subtract(BigInteger.valueOf(1))
                 .add(additionalCoinbaseValue == null ? BigInteger.valueOf(0) : additionalCoinbaseValue);
@@ -1096,11 +1096,11 @@ public class FullBlockTestGenerator {
         return block;
     }
     
-    private void addOnlyInputToTransaction(Transaction t, TransactionOutPointWithValue prevOut) {
+    private void addOnlyInputToTransaction(Transaction t, TransactionOutPointWithValue prevOut) throws ScriptException {
         addOnlyInputToTransaction(t, prevOut, TransactionInput.NO_SEQUENCE);
     }
     
-    private void addOnlyInputToTransaction(Transaction t, TransactionOutPointWithValue prevOut, long sequence) {
+    private void addOnlyInputToTransaction(Transaction t, TransactionOutPointWithValue prevOut, long sequence) throws ScriptException {
         TransactionInput input = new TransactionInput(params, t, new byte[]{}, prevOut.outpoint);
         input.setSequence(sequence);
         t.addInput(input);
