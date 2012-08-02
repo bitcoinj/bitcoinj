@@ -323,13 +323,64 @@ public class Utils {
     /**
      * MPI encoded numbers are produced by the OpenSSL BN_bn2mpi function. They consist of
      * a 4 byte big endian length field, followed by the stated number of bytes representing
-     * the number in big endian format.
+     * the number in big endian format (with a sign bit).
+     * @param hasLength can be set to false if the given array is missing the 4 byte length field
      */
-    static BigInteger decodeMPI(byte[] mpi) {
-        int length = (int) readUint32BE(mpi, 0);
-        byte[] buf = new byte[length];
-        System.arraycopy(mpi, 4, buf, 0, length);
-        return new BigInteger(buf);
+    static BigInteger decodeMPI(byte[] mpi, boolean hasLength) {
+        byte[] buf;
+        if (hasLength) {
+            int length = (int) readUint32BE(mpi, 0);
+            buf = new byte[length];
+            System.arraycopy(mpi, 4, buf, 0, length);
+        } else
+            buf = mpi;
+        if (buf.length == 0)
+            return BigInteger.ZERO;
+        boolean isNegative = (buf[0] & 0x80) == 0x80;
+        if (isNegative)
+            buf[0] &= 0x7f;
+        BigInteger result = new BigInteger(buf);
+        return isNegative ? result.negate() : result;
+    }
+    
+    /**
+     * MPI encoded numbers are produced by the OpenSSL BN_bn2mpi function. They consist of
+     * a 4 byte big endian length field, followed by the stated number of bytes representing
+     * the number in big endian format (with a sign bit).
+     * @param hasLength indicates whether the 4 byte length field should be included
+     */
+    static byte[] encodeMPI(BigInteger value, boolean includeLength) {
+        if (value.equals(BigInteger.ZERO)) {
+            if (!includeLength)
+                return new byte[] {};
+            else
+                return new byte[] {0x00, 0x00, 0x00, 0x00};
+        }
+        boolean isNegative = value.compareTo(BigInteger.ZERO) < 0;
+        if (isNegative)
+            value = value.negate();
+        byte[] array = value.toByteArray();
+        int length = array.length;
+        if ((array[0] & 0x80) == 0x80)
+            length++;
+        if (includeLength) {
+            byte[] result = new byte[length + 4];
+            System.arraycopy(array, 0, result, length - array.length + 3, array.length);
+            uint32ToByteArrayBE(length, result, 0);
+            if (isNegative)
+                result[4] |= 0x80;
+            return result;
+        } else {
+            byte[] result;
+            if (length != array.length) {
+                result = new byte[length];
+                System.arraycopy(array, 0, result, 1, array.length);
+            }else
+                result = array;
+            if (isNegative)
+                result[0] |= 0x80;
+            return result;
+        }
     }
 
     // The representation of nBits uses another home-brew encoding, as a way to represent a large
@@ -341,7 +392,7 @@ public class Utils {
         if (size >= 1) bytes[4] = (byte) ((compact >> 16) & 0xFF);
         if (size >= 2) bytes[5] = (byte) ((compact >> 8) & 0xFF);
         if (size >= 3) bytes[6] = (byte) ((compact >> 0) & 0xFF);
-        return decodeMPI(bytes);
+        return decodeMPI(bytes, true);
     }
 
     /**

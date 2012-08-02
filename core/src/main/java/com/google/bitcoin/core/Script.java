@@ -612,6 +612,7 @@ public class Script {
 
     /**
      * Writes out the given byte buffer to the output stream with the correct opcode prefix
+     * To write an integer call writeBytes(out, Utils.reverseBytes(Utils.encodeMPI(val, false)));
      */
     static void writeBytes(OutputStream os, byte[] buf) throws IOException {
         if (buf.length < OP_PUSHDATA1) {
