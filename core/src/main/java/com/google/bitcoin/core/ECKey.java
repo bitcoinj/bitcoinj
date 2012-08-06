@@ -253,7 +253,10 @@ public class ECKey implements Serializable {
             DERInteger r = (DERInteger) seq.getObjectAt(0);
             DERInteger s = (DERInteger) seq.getObjectAt(1);
             decoder.close();
-            return signer.verifySignature(data, r.getValue(), s.getValue());
+            // OpenSSL deviates from the DER spec by interpreting these values as unsigned, though they should not be
+            // Thus, we always use the positive versions.
+            // See: http://r6.ca/blog/20111119T211504Z.html
+            return signer.verifySignature(data, r.getPositiveValue(), s.getPositiveValue());
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
