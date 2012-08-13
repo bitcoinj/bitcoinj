@@ -36,7 +36,7 @@ public abstract class Message implements Serializable {
 
     public static final int MAX_SIZE = 0x02000000;
 
-    public static final int UNKNOWN_LENGTH = -1;
+    public static final int UNKNOWN_LENGTH = Integer.MIN_VALUE;
 
     // Useful to ensure serialize/deserialize are consistent with each other.
     private static final boolean SELF_CHECK = false;
@@ -221,10 +221,20 @@ public abstract class Message implements Serializable {
         recached = false;
     }
 
-    protected void adjustLength(int adjustment) {
-        if (length != UNKNOWN_LENGTH)
-            // Our own length is now unknown if we have an unknown length adjustment.
-            length = adjustment == UNKNOWN_LENGTH ? UNKNOWN_LENGTH : length + adjustment;
+    protected void adjustLength(int newArraySize, int adjustment) {
+        if (length == UNKNOWN_LENGTH)
+            return;
+        // Our own length is now unknown if we have an unknown length adjustment.
+        if (adjustment == UNKNOWN_LENGTH) {
+            length = UNKNOWN_LENGTH;
+            return;
+        }
+        length += adjustment;
+        // Check if we will need more bytes to encode the length prefix.
+        if (newArraySize == 1)
+            length++;  // The assumption here is we never call adjustLength with the same arraySize as before.
+        else if (newArraySize != 0)
+            length += VarInt.sizeOf(newArraySize) - VarInt.sizeOf(newArraySize - 1);
     }
 
     /**
