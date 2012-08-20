@@ -1569,6 +1569,10 @@ public class Wallet implements Serializable {
 
     @Override
     public synchronized String toString() {
+        return toString(false);
+    }
+
+    public synchronized String toString(boolean includePrivateKeys) {
         StringBuilder builder = new StringBuilder();
         builder.append(String.format("Wallet containing %s BTC in:%n", bitcoinValueToFriendlyString(getBalance())));
         builder.append(String.format("  %d unspent transactions%n", unspent.size()));
@@ -1583,7 +1587,7 @@ public class Wallet implements Serializable {
             builder.append("  addr:");
             builder.append(key.toAddress(params));
             builder.append(" ");
-            builder.append(key.toString());
+            builder.append(includePrivateKeys ? key.toStringWithPrivate() : key.toString());
             builder.append("\n");
         }
         // Print the transactions themselves

@@ -627,6 +627,6 @@ public class WalletTool {
     }    
     
     private static void dumpWallet() {
-        System.out.println(wallet.toString());
+        System.out.println(wallet.toString(true));
     }
 }
