@@ -139,7 +139,7 @@ public class Wallet implements Serializable {
      * Note that in the case where a transaction appears in both the best chain and a side chain as well, it is not
      * placed in this map. It's an error for a transaction to be in both the inactive pool and unspent/spent.
      */
-    Map<Sha256Hash, Transaction> inactive;
+    final Map<Sha256Hash, Transaction> inactive;
 
     /**
      * A dead transaction is one that's been overridden by a double spend. Such a transaction is pending except it
@@ -147,7 +147,7 @@ public class Wallet implements Serializable {
      * should nearly never happen in normal usage. Dead transactions can be "resurrected" by re-orgs just like any
      * other. Dead transactions are not in the pending pool.
      */
-    Map<Sha256Hash, Transaction> dead;
+    final Map<Sha256Hash, Transaction> dead;
 
     /**
      * A list of public/private EC keys owned by this user.
@@ -155,11 +155,6 @@ public class Wallet implements Serializable {
     public final ArrayList<ECKey> keychain;
 
     private final NetworkParameters params;
-
-    // Primitive kind of versioning protocol that does not break serializability. If this is true it means the
-    // Transaction objects in this wallet have confidence objects. If false (the default for old wallets missing
-    // this field) then we need to migrate.
-    private boolean hasTransactionConfidences;
 
     /**
      * The hash of the last block seen on the best chain
@@ -191,7 +186,6 @@ public class Wallet implements Serializable {
         pending = new HashMap<Sha256Hash, Transaction>();
         dead = new HashMap<Sha256Hash, Transaction>();
         eventListeners = new ArrayList<WalletEventListener>();
-        hasTransactionConfidences = true;
     }
     
     public NetworkParameters getNetworkParameters() {
@@ -310,8 +304,8 @@ public class Wallet implements Serializable {
         }
 
         private static class WalletSaveRequest implements Delayed {
-            public Wallet wallet;
-            public long startTimeMs, requestedDelayMs;
+            public final Wallet wallet;
+            public final long startTimeMs, requestedDelayMs;
 
             public WalletSaveRequest(Wallet wallet, long requestedDelayMs) {
                 this.startTimeMs = System.currentTimeMillis();
@@ -536,44 +530,6 @@ public class Wallet implements Serializable {
     private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
         in.defaultReadObject();
         eventListeners = new ArrayList<WalletEventListener>();
-        maybeMigrateToTransactionConfidences();
-    }
-
-    /** Migrate old wallets that don't have any tx confidences, filling out whatever information we can. */
-    private void maybeMigrateToTransactionConfidences() {
-        if (hasTransactionConfidences) return;
-        // We can't fill out tx confidence objects exactly, we don't have enough data to do that. But we do the
-        // best we can.
-        List<Transaction> transactions = new LinkedList<Transaction>();
-        transactions.addAll(unspent.values());
-        transactions.addAll(spent.values());
-        for (Transaction tx : transactions) {
-            TransactionConfidence confidence = tx.getConfidence();
-            confidence.setConfidenceType(TransactionConfidence.ConfidenceType.BUILDING);
-            Set<StoredBlock> appearsIn = tx.appearsIn;
-            // appearsIn is being migrated away from, in favor of just storing the hashes instead of full blocks.
-            // TODO: Clear this code out once old wallets fade away.
-            if (appearsIn != null) {
-                int minHeight = Integer.MAX_VALUE;
-                for (StoredBlock block : appearsIn) {
-                    minHeight = Math.min(minHeight, block.getHeight());
-                }
-                confidence.setAppearedAtChainHeight(minHeight);
-            }
-        }
-        for (Transaction tx : pending.values()) {
-            tx.getConfidence().setConfidenceType(TransactionConfidence.ConfidenceType.NOT_SEEN_IN_CHAIN);
-        }
-        for (Transaction tx : inactive.values()) {
-            tx.getConfidence().setConfidenceType(TransactionConfidence.ConfidenceType.NOT_IN_BEST_CHAIN);
-        }
-        for (Transaction tx : dead.values()) {
-            tx.getConfidence().setConfidenceType(TransactionConfidence.ConfidenceType.DEAD);
-            // We'd ideally like to set overridingTransaction here, but old wallets don't have that data.
-            // Dead transactions in the wallet should be rare, so API users will just have to handle this
-            // edge case until old wallets have gone away.
-        }
-        hasTransactionConfidences = true;
     }
 
     /**
