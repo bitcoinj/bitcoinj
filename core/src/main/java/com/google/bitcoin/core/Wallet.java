@@ -36,12 +36,24 @@ import static com.google.bitcoin.core.Utils.bitcoinValueToFriendlyString;
 import static com.google.common.base.Preconditions.*;
 
 /**
- * A Wallet stores keys and a record of transactions that have not yet been spent. Thus, it is capable of
- * providing transactions on demand that meet a given combined value.<p>
- * <p/>
- * The Wallet is read and written from disk, so be sure to follow the Java serialization versioning rules here. We
- * use the built in Java serialization to avoid the need to pull in a potentially large (code-size) third party
- * serialization library.<p>
+ * <p>A Wallet stores keys and a record of transactions that send and receive value from those keys. Using these,
+ * it is able to create new transactions that spend the recorded transactions, and this is the fundamental operation
+ * of the Bitcoin protocol.</p>
+ *
+ * <p>To fill up a Wallet with transactions, you need to use it in combination with a {@link BlockChain} and various
+ * other objects, see the <a href="http://code.google.com/p/bitcoinj/wiki/GettingStarted">Getting started</a> tutorial
+ * on the website to learn more about how to set everything up.</p>
+ *
+ * <p>Wallets can be serialized using either Java serialization - this is not compatible across versions of bitcoinj,
+ * or protocol buffer serialization. You need to save the wallet whenever it changes, there is an auto-save feature
+ * that simplifies this for you although you're still responsible for manually triggering a save when your app is about
+ * to quit because the auto-save feature waits a moment before actually committing to disk to avoid IO thrashing when
+ * the wallet is changing very fast (eg due to a block chain sync). See
+ * {@link Wallet#autosaveToFile(java.io.File, long, java.util.concurrent.TimeUnit, com.google.bitcoin.core.Wallet.AutosaveEventListener)}
+ * for more information about this.</p>
+ *
+ * <p><a href="http://code.google.com/p/bitcoinj/wiki/WorkingWithTheWallet">Learn more about working with the wallet.
+ * </a></p>
  */
 public class Wallet implements Serializable {
     private static final Logger log = LoggerFactory.getLogger(Wallet.class);
@@ -162,7 +174,6 @@ public class Wallet implements Serializable {
     // have a lot of transactions in their wallet, we use the simpler approach. It's needed because the wallet stores
     // the number of confirmations and accumulated work done for each transaction, so each block changes each tx.
     private transient File autosaveToFile;
-    private transient AutosaveThread autosaveThread;
     private transient boolean dirty;  // Is a write of the wallet necessary?
     private transient AutosaveEventListener autosaveEventListener;
     private transient long autosaveDelayMs;
