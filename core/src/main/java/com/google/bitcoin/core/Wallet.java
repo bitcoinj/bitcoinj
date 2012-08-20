@@ -26,9 +26,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
-import java.lang.ref.WeakReference;
 import java.math.BigInteger;
 import java.util.*;
+import java.util.concurrent.DelayQueue;
+import java.util.concurrent.Delayed;
 import java.util.concurrent.TimeUnit;
 
 import static com.google.bitcoin.core.Utils.bitcoinValueToFriendlyString;
@@ -164,6 +165,7 @@ public class Wallet implements Serializable {
     private transient AutosaveThread autosaveThread;
     private transient boolean dirty;  // Is a write of the wallet necessary?
     private transient AutosaveEventListener autosaveEventListener;
+    private transient long autosaveDelayMs;
 
     /**
      * Creates a new, empty wallet with no keys and no transactions. If you want to restore a wallet from disk instead,
@@ -236,40 +238,85 @@ public class Wallet implements Serializable {
 
     // This must be a static class to avoid creating a strong reference from this thread to the wallet. If we did that
     // it would never become garbage collectable because the autosave thread would never die. To avoid this from
-    // happening we use our own weak reference to the wallet and just exit the thread if it goes away.
+    // happening the wallet posts a this pointer to us when it wants to get saved and we pick it up a short time
+    // later. The delay allows coalescion of many rapid updates into occasional saves, and it means disk IO can be
+    // done on a different thread which helps make UIs more responsive.
     private static class AutosaveThread extends Thread {
-        private WeakReference<Wallet> walletRef;
-        private long delayMs;
+        private DelayQueue<AutosaveThread.WalletSaveRequest> walletRefs;
+        private static AutosaveThread globalThread;
 
-        public AutosaveThread(Wallet wallet, long delayMs) {
-            this.walletRef = new WeakReference<Wallet>(wallet);
-            this.delayMs = delayMs;
+        private AutosaveThread() {
+            this.walletRefs = new DelayQueue<WalletSaveRequest>();
             setDaemon(true);  // Allow the JVM to exit even if this thread is still running.
-            start();
+            setName("Wallet auto save thread");
+            setPriority(Thread.MIN_PRIORITY);   // Avoid competing with the UI.
+        }
+
+        /** Returns the global instance that services all wallets. It never shuts down. */
+        public static AutosaveThread get() {
+            synchronized (AutosaveThread.class) {
+                if (globalThread != null)
+                    return globalThread;
+                globalThread = new AutosaveThread();
+                globalThread.start();
+                return globalThread;
+            }
+        }
+
+        /** Called by a wallet when it's become dirty (changed). Will start the background thread if needed. */
+        public static void registerForSave(Wallet wallet, long delayMsec) {
+            AutosaveThread ats = get();
+            ats.walletRefs.put(new WalletSaveRequest(wallet, delayMsec));
         }
 
         public void run() {
-            log.info("Starting auto-save thread");
+            log.info("Auto-save thread starting up");
             while (true) {
-                // Poll every so often to see if the wallet needs a write. This method is ugly because it involves
-                // waking up the CPU even when there's no work to do. Unfortunately, if we try and wait for the wallet
-                // to become dirty, we'll hold a strong ref on it and the wallet would never become reclaimable if
-                // the app released it. To fix that we'd have to introduce a concept of "closing" the wallet, which
-                // is potentially error prone on platforms like Android that don't have a strong concept of app
-                // termination. Fortunately, this polling is just taking a lock and taking a single boolean, and the
-                // wait time can be quite large, so the efficiency hit should be minimal in practice.
                 try {
-                    Thread.sleep(delayMs);
-                } catch (InterruptedException e) {
-                }
-                Wallet wallet = walletRef.get();
-                // The wallet went away because it was no longer interesting to the program, so just quit this thread.
-                if (wallet == null) break;
-                synchronized (wallet) {
-                    if (wallet.dirty) {
-                        if (wallet.autoSave()) break;
+                    WalletSaveRequest req = walletRefs.poll(5, TimeUnit.SECONDS);
+                    if (req == null && walletRefs.size() == 0) {
+                        // No work to do for the given delay period, so let's shut down and free up memory. We'll get
+                        // started up again if a wallet changes again.
+                        break;
                     }
+                    synchronized (req.wallet) {
+                        if (req.wallet.dirty) {
+                            if (req.wallet.autoSave()) {
+                                // Something went wrong, abort!
+                                break;
+                            }
+                        }
+                    }
+                } catch (InterruptedException e) {
+                    break;
                 }
+            }
+            log.info("Auto-save thread shutting down");
+            synchronized (AutosaveThread.class) {
+                Preconditions.checkState(globalThread == this);   // There should only be one global thread.
+                globalThread = null;
+            }
+        }
+
+        private static class WalletSaveRequest implements Delayed {
+            public Wallet wallet;
+            public long startTimeMs, requestedDelayMs;
+
+            public WalletSaveRequest(Wallet wallet, long requestedDelayMs) {
+                this.startTimeMs = System.currentTimeMillis();
+                this.requestedDelayMs = requestedDelayMs;
+                this.wallet = wallet;
+            }
+
+            public long getDelay(TimeUnit timeUnit) {
+                long delayRemainingMs = requestedDelayMs - (System.currentTimeMillis() - startTimeMs);
+                return timeUnit.convert(delayRemainingMs, TimeUnit.MILLISECONDS);
+            }
+
+            public int compareTo(Delayed delayed) {
+                if (delayed == this) return 0;
+                long delta = getDelay(TimeUnit.MILLISECONDS) - delayed.getDelay(TimeUnit.MILLISECONDS);
+                return (delta > 0 ? 1 : (delta < 0 ? -1 : 0));
             }
         }
     }
@@ -350,13 +397,13 @@ public class Wallet implements Serializable {
         autosaveToFile = Preconditions.checkNotNull(f);
         if (delayTime > 0) {
             autosaveEventListener = eventListener;
-            autosaveThread = new AutosaveThread(this, TimeUnit.MILLISECONDS.convert(delayTime, timeUnit));
+            autosaveDelayMs = TimeUnit.MILLISECONDS.convert(delayTime, timeUnit);
         }
     }
 
     private synchronized void queueAutoSave() {
         if (this.autosaveToFile == null) return;
-        if (autosaveThread == null) {
+        if (autosaveDelayMs == 0) {
             // No delay time was specified, so save now.
             try {
                 saveToFile(autosaveToFile);
@@ -364,8 +411,13 @@ public class Wallet implements Serializable {
                 throw new RuntimeException(e);
             }
         } else {
-            // Tell the autosave thread to save next time it wakes up.
-            dirty = true;
+            // If we need to, tell the auto save thread to wake us up. This will start the background thread if one
+            // doesn't already exist. It will wake up once the delay expires and call autoSave(). The background thread
+            // is shared between all wallets.
+            if (!dirty) {
+                dirty = true;
+                AutosaveThread.registerForSave(this, autosaveDelayMs);
+            }
         }
     }
 
