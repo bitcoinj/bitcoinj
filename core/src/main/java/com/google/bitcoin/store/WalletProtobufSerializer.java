@@ -29,6 +29,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.math.BigInteger;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
@@ -59,7 +61,7 @@ public class WalletProtobufSerializer {
     // Used for de-serialization
     private Map<ByteString, Transaction> txMap;
     private WalletExtensionSerializer helper;
-    
+
     public WalletProtobufSerializer() {
         txMap = new HashMap<ByteString, Transaction>();
         helper = new WalletExtensionSerializer();
@@ -209,6 +211,14 @@ public class WalletProtobufSerializer {
         if (confidence.getConfidenceType() == ConfidenceType.DEAD) {
             Sha256Hash overridingHash = confidence.getOverridingTransaction().getHash();
             confidenceBuilder.setOverridingTransaction(hashToByteString(overridingHash));
+        }
+        for (PeerAddress address : confidence.getBroadcastBy()) {
+            Protos.PeerAddress proto = Protos.PeerAddress.newBuilder()
+                    .setIpAddress(ByteString.copyFrom(address.getAddr().getAddress()))
+                    .setPort(address.getPort())
+                    .setServices(address.getServices().longValue())
+                    .build();
+            confidenceBuilder.addBroadcastBy(proto);
         }
         txBuilder.setConfidence(confidenceBuilder);
     }
@@ -399,6 +409,18 @@ public class WalletProtobufSerializer {
                 return;
             }
             confidence.setOverridingTransaction(overridingTransaction);
+        }
+        for (Protos.PeerAddress proto : confidenceProto.getBroadcastByList()) {
+            InetAddress ip = null;
+            try {
+                ip = InetAddress.getByAddress(proto.getIpAddress().toByteArray());
+            } catch (UnknownHostException e) {
+                throw new RuntimeException(e);   // IP address is of invalid length.
+            }
+            int port = proto.getPort();
+            PeerAddress address = new PeerAddress(ip, port);
+            address.setServices(BigInteger.valueOf(proto.getServices()));
+            confidence.markBroadcastBy(address);
         }
     }
 }

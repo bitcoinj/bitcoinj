@@ -13,13 +13,8 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.math.BigInteger;
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Random;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.Set;
+import java.net.InetAddress;
+import java.util.*;
 
 import static com.google.bitcoin.core.TestUtils.createFakeTx;
 import static org.junit.Assert.*;
@@ -59,13 +54,15 @@ public class WalletProtobufSerializerTest {
         // Check basic tx serialization.
         BigInteger v1 = Utils.toNanoCoins(1, 0);
         Transaction t1 = createFakeTx(params, v1, myAddress);
-
+        t1.getConfidence().markBroadcastBy(new PeerAddress(InetAddress.getByName("1.2.3.4")));
+        t1.getConfidence().markBroadcastBy(new PeerAddress(InetAddress.getByName("5.6.7.8")));
         myWallet.receiveFromBlock(t1, null, BlockChain.NewBlockType.BEST_CHAIN);
         Wallet wallet1 = roundTrip(myWallet);
         assertEquals(1, wallet1.getTransactions(true, true).size());
         assertEquals(v1, wallet1.getBalance());
         assertArrayEquals(t1.bitcoinSerialize(),
                 wallet1.getTransaction(t1.getHash()).bitcoinSerialize());
+        assertEquals(2, wallet1.getTransaction(t1.getHash()).getConfidence().numBroadcastPeers());
         
         Protos.Wallet walletProto = new WalletProtobufSerializer().walletToProto(myWallet);
         assertEquals(Protos.Key.Type.ORIGINAL, walletProto.getKey(0).getType());

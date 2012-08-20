@@ -26,6 +26,12 @@ package wallet;
 option java_package = "org.bitcoinj.wallet";
 option java_outer_classname = "Protos";
 
+message PeerAddress {
+  required bytes ip_address = 1;
+  required uint32 port = 2;
+  required uint64 services = 3;
+}
+
 /**
  * A key use to control Bitcoin spending
  *
@@ -80,7 +86,6 @@ message TransactionOutput {
  * Parsing should be lenient, since this could change for different applications yet we should
  * maintain backward compatibility.
  */
-   
 message TransactionConfidence {
   enum Type {
     UNKNOWN = 0;
@@ -108,6 +113,8 @@ message TransactionConfidence {
   // If type == BUILDING then this is the cumulative workDone for the block the transaction appears in, together with
   // all blocks that bury it.
   optional int64 work_done = 5;
+
+  repeated PeerAddress broadcast_by = 6;
 }
 
 /** A bitcoin transaction */
