@@ -101,6 +101,7 @@ public class PeerGroup {
     private AbstractPeerEventListener getDataListener;
 
     private ClientBootstrap bootstrap;
+    private int minBroadcastConnections = 0;
 
     private class PeerStartupListener implements Peer.PeerLifecycleListener {
         public void onPeerConnected(Peer peer) {
@@ -809,6 +810,40 @@ public class PeerGroup {
     }
 
     /**
+     * Returns the number of connections that are required before transactions will be broadcast. If there aren't
+     * enough, {@link PeerGroup#broadcastTransaction(Transaction)} will wait until the minimum number is reached so
+     * propagation across the network can be observed. If no value has been set using
+     * {@link PeerGroup#setMinBroadcastConnections(int)} a default of half of whatever
+     * {@link com.google.bitcoin.core.PeerGroup#getMaxConnections()} returns is used.
+     * @return
+     */
+    public int getMinBroadcastConnections() {
+        if (minBroadcastConnections == 0) {
+            int max = getMaxConnections();
+            if (max <= 1)
+                return max;
+            else
+                return (int)Math.round(getMaxConnections() / 2.0);
+        }
+        return minBroadcastConnections;
+    }
+
+    /**
+     * See {@link com.google.bitcoin.core.PeerGroup#getMinBroadcastConnections()}.
+     */
+    public void setMinBroadcastConnections(int value) {
+        minBroadcastConnections = value;
+    }
+
+    /**
+     * Calls {@link PeerGroup#broadcastTransaction(Transaction,int)} with getMinBroadcastConnections() as the number
+     * of connections to wait for before commencing broadcast.
+     */
+    public ListenableFuture<Transaction> broadcastTransaction(final Transaction tx) {
+        return broadcastTransaction(tx, getMinBroadcastConnections());
+    }
+
+    /**
      * <p>Given a transaction, sends it un-announced to one peer and then waits for it to be received back from other
      * peers. Once all connected peers have announced the transaction, the future will be completed. If anything goes
      * wrong the exception will be thrown when get() is called, or you can receive it via a callback on the
@@ -824,14 +859,14 @@ public class PeerGroup {
      * your DoS limit, be careful with relaying lots of unknown transactions. Otherwise you might get kicked off the
      * network.</p>
      *
-     * <p>The transaction won't be sent until there are at least {@link com.google.bitcoin.core.PeerGroup#getMaxConnections()}
-     * active connections available.</p>
+     * <p>The transaction won't be sent until there are at least minConnections active connections available.
+     * A good choice for proportion would be between 0.5 and 0.8 but if you want faster transmission during initial
+     * bringup of the peer group you can lower it.</p>
      */
-    public ListenableFuture<Transaction> broadcastTransaction(final Transaction tx) {
+    public ListenableFuture<Transaction> broadcastTransaction(final Transaction tx, final int minConnections) {
         final SettableFuture<Transaction> future = SettableFuture.create();
-        final int maxConnections = getMaxConnections();
-        log.info("Waiting for {} peers ...", maxConnections);
-        ListenableFuture<PeerGroup> peerAvailabilityFuture = waitForPeers(maxConnections);
+        log.info("Waiting for {} peers required for broadcast ...", minConnections);
+        ListenableFuture<PeerGroup> peerAvailabilityFuture = waitForPeers(minConnections);
         peerAvailabilityFuture.addListener(new Runnable() {
             public void run() {
                 // This can be called immediately if we already have enough peers. Otherwise it'll be called from a
@@ -859,7 +894,7 @@ public class PeerGroup {
                 // won't tell us about transactions we just announced to it for obvious reasons. So we just have to
                 // assume we're done, at that point. This happens when we're not given any peer discovery source and
                 // the user just calls connectTo() once.
-                if (maxConnections == 1) {
+                if (minConnections == 1) {
                     synchronized (PeerGroup.this) {
                         for (Wallet wallet : wallets) {
                             try {
@@ -881,11 +916,14 @@ public class PeerGroup {
                         boolean done = false;
                         log.info("broadcastTransaction: TX {} seen by {} peers", pinnedTx.getHashAsString(), numSeenPeers);
                         synchronized (PeerGroup.this) {
-                            if (numSeenPeers >= PeerGroup.this.peers.size()) {
-                                // We've seen at least the number of connected peers announce the tx. So now we have
-                                // some confidence that the network accepted it, assuming an un-hijacked internet
-                                // connection. As the wallets were never informed about the transaction (because it was
-                                // never downloaded) do that now.
+                            if (numSeenPeers >= minConnections) {
+                                // We've seen the min required number of peers announce the transaction. Note that we
+                                // can't wait for the current number of connected peers right now because we could have
+                                // added more peers after the broadcast took place, which means they won't have seen
+                                // the transaction. In future when peers sync up their memory pools after they connect
+                                // we could come back and change this.
+                                //
+                                // Now tell the wallet about the transaction as it didn't get informed before.
                                 for (Wallet wallet : wallets) {
                                     try {
                                         wallet.receivePending(pinnedTx);

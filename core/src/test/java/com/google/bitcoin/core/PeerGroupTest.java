@@ -16,33 +16,23 @@
 
 package com.google.bitcoin.core;
 
-import static org.easymock.EasyMock.anyObject;
-import static org.junit.Assert.*;
+import com.google.bitcoin.core.PeerGroup.PeerGroupThread;
+import com.google.bitcoin.discovery.PeerDiscovery;
+import com.google.bitcoin.discovery.PeerDiscoveryException;
+import org.easymock.EasyMock;
+import org.jboss.netty.bootstrap.ClientBootstrap;
+import org.jboss.netty.channel.*;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.math.BigInteger;
 import java.net.InetSocketAddress;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.FutureTask;
 import java.util.concurrent.Semaphore;
 
-import org.easymock.EasyMock;
-import org.easymock.IAnswer;
-import org.jboss.netty.bootstrap.ClientBootstrap;
-import org.jboss.netty.channel.Channel;
-import org.jboss.netty.channel.ChannelFactory;
-import org.jboss.netty.channel.ChannelPipeline;
-import org.jboss.netty.channel.ChannelPipelineFactory;
-import org.jboss.netty.channel.ChannelSink;
-import org.jboss.netty.channel.ChannelStateEvent;
-import org.jboss.netty.channel.Channels;
-import org.junit.Before;
-import org.junit.Test;
-
-import com.google.bitcoin.core.PeerGroup.PeerGroupThread;
-import com.google.bitcoin.discovery.PeerDiscovery;
-import com.google.bitcoin.discovery.PeerDiscoveryException;
+import static org.junit.Assert.*;
 
 public class PeerGroupTest extends TestWithNetworkConnections {
     static final NetworkParameters params = NetworkParameters.unitTests();
@@ -303,6 +293,8 @@ public class PeerGroupTest extends TestWithNetworkConnections {
         EasyMock.expectLastCall();
         
         control.replay();
+
+        peerGroup.setMinBroadcastConnections(2);
 
         // Send ourselves a bit of money.
         Block b1 = TestUtils.makeSolvedTestBlock(params, blockStore, address);
