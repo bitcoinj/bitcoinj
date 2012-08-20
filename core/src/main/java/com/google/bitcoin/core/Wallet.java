@@ -161,7 +161,7 @@ public class Wallet implements Serializable {
      */
     private Sha256Hash lastBlockSeenHash;
 
-    transient private ArrayList<WalletEventListener> eventListeners;
+    private transient ArrayList<WalletEventListener> eventListeners;
 
     // Auto-save code. This all should be generalized in future to not be file specific so you can easily store the
     // wallet into a database using the same mechanism. However we need to inform stores of each specific change with
@@ -172,6 +172,10 @@ public class Wallet implements Serializable {
     private transient boolean dirty;  // Is a write of the wallet necessary?
     private transient AutosaveEventListener autosaveEventListener;
     private transient long autosaveDelayMs;
+
+    // A listener that relays confidence changes from the transaction confidence object to the wallet event listener,
+    // as a convenience to API users so they don't have to register on every transaction themselves.
+    private transient TransactionConfidence.Listener txConfidenceListener;
 
     /**
      * Creates a new, empty wallet with no keys and no transactions. If you want to restore a wallet from disk instead,
@@ -185,9 +189,18 @@ public class Wallet implements Serializable {
         inactive = new HashMap<Sha256Hash, Transaction>();
         pending = new HashMap<Sha256Hash, Transaction>();
         dead = new HashMap<Sha256Hash, Transaction>();
-        eventListeners = new ArrayList<WalletEventListener>();
+        createTransientState();
     }
-    
+
+    private void createTransientState() {
+        eventListeners = new ArrayList<WalletEventListener>();
+        txConfidenceListener = new TransactionConfidence.Listener() {
+            public void onConfidenceChanged(Transaction tx) {
+                invokeOnTransactionConfidenceChanged(tx);
+            }
+        };
+    }
+
     public NetworkParameters getNetworkParameters() {
         return params;
     }
@@ -529,7 +542,7 @@ public class Wallet implements Serializable {
 
     private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
         in.defaultReadObject();
-        eventListeners = new ArrayList<WalletEventListener>();
+        createTransientState();
     }
 
     /**
@@ -599,12 +612,14 @@ public class Wallet implements Serializable {
         TransactionConfidence.ConfidenceType currentConfidence = tx.getConfidence().getConfidenceType();
         if (currentConfidence == TransactionConfidence.ConfidenceType.UNKNOWN) {
             tx.getConfidence().setConfidenceType(TransactionConfidence.ConfidenceType.NOT_SEEN_IN_CHAIN);
+            // Manually invoke the wallet tx confidence listener here as we didn't yet commit therefore the
+            // txConfidenceListener wasn't added.
             invokeOnTransactionConfidenceChanged(tx);
         }
 
         // If this tx spends any of our unspent outputs, mark them as spent now, then add to the pending pool. This
         // ensures that if some other client that has our keys broadcasts a spend we stay in sync. Also updates the
-        // timestamp on the transaction and runs event listeners.
+        // timestamp on the transaction and registers/runs event listeners.
         //
         // Note that after we return from this function, the wallet may have been modified.
         commitTx(tx);
@@ -799,7 +814,6 @@ public class Wallet implements Serializable {
             Set<Transaction> transactions = getTransactions(true, false);
             for (Transaction tx : transactions) {
                 tx.getConfidence().notifyWorkDone(block);
-                invokeOnTransactionConfidenceChanged(tx);
             }
         }
         queueAutoSave();
@@ -859,7 +873,6 @@ public class Wallet implements Serializable {
             dead.put(doubleSpend.getHash(), doubleSpend);
             // Inform the event listeners of the newly dead tx.
             doubleSpend.getConfidence().setOverridingTransaction(tx);
-            invokeOnTransactionConfidenceChanged(doubleSpend);
         }
     }
 
@@ -917,7 +930,6 @@ public class Wallet implements Serializable {
                         input.connect(unspent, TransactionInput.ConnectMode.DISCONNECT_ON_CONFLICT);
                         // Inform the [tx] event listeners of the newly dead tx. This sets confidence type also.
                         connected.getConfidence().setOverridingTransaction(tx);
-                        invokeOnTransactionConfidenceChanged(connected);
                     }
                 } else {
                     // A pending transaction that tried to double spend our coins - we log and ignore it, because either
@@ -996,7 +1008,7 @@ public class Wallet implements Serializable {
         updateForSpends(tx, false);
         // Add to the pending pool. It'll be moved out once we receive this transaction on the best chain.
         log.info("->pending: {}", tx.getHashAsString());
-        pending.put(tx.getHash(), tx);
+        addWalletTransaction(Pool.PENDING, tx);
 
         // Event listeners may re-enter so we cannot make assumptions about wallet state after this loop completes.
         try {
@@ -1070,30 +1082,39 @@ public class Wallet implements Serializable {
      * deserialization code, such as the {@link WalletProtobufSerializer} class. It isn't normally useful for
      * applications. It does not trigger auto saving.
      */
-    public synchronized void addWalletTransaction(WalletTransaction wtx) {
-        switch (wtx.getPool()) {
+    public void addWalletTransaction(WalletTransaction wtx) {
+        addWalletTransaction(wtx.getPool(), wtx.getTransaction());
+    }
+
+    /**
+     * Adds the given transaction to the given pools and registers a confidence change listener on it. Not to be used
+     * when moving txns between pools.
+     */
+    private synchronized void addWalletTransaction(Pool pool, Transaction tx) {
+        switch (pool) {
         case UNSPENT:
-            unspent.put(wtx.getTransaction().getHash(), wtx.getTransaction());
+            unspent.put(tx.getHash(), tx);
             break;
         case SPENT:
-            spent.put(wtx.getTransaction().getHash(), wtx.getTransaction());
+            spent.put(tx.getHash(), tx);
             break;
         case PENDING:
-            pending.put(wtx.getTransaction().getHash(), wtx.getTransaction());
+            pending.put(tx.getHash(), tx);
             break;
         case DEAD:
-            dead.put(wtx.getTransaction().getHash(), wtx.getTransaction());
+            dead.put(tx.getHash(), tx);
             break;
         case INACTIVE:
-            inactive.put(wtx.getTransaction().getHash(), wtx.getTransaction());
+            inactive.put(tx.getHash(), tx);
             break;
         case PENDING_INACTIVE:
-            pending.put(wtx.getTransaction().getHash(), wtx.getTransaction());
-            inactive.put(wtx.getTransaction().getHash(), wtx.getTransaction());
+            pending.put(tx.getHash(), tx);
+            inactive.put(tx.getHash(), tx);
             break;
         default:
-            throw new RuntimeException("Unknown wallet transaction type " + wtx.getPool());
+            throw new RuntimeException("Unknown wallet transaction type " + pool);
         }
+        tx.getConfidence().addEventListener(txConfidenceListener);
     }
 
     /**
@@ -1266,6 +1287,11 @@ public class Wallet implements Serializable {
             return null;  // Not enough money.
         SendResult result = new SendResult();
         result.tx = tx;
+        // The tx has been committed to the pending pool by this point (via sendCoinsOffline -> commitTx), so it has
+        // a txConfidenceListener registered. Once the tx is broadcast the peers will update the memory pool with the
+        // count of seen peers, the memory pool will update the transaction confidence object, that will invoke the
+        // txConfidenceListener which will in turn invoke the wallets event listener onTransactionConfidenceChanged
+        // method.
         result.broadcastComplete = peerGroup.broadcastTransaction(tx);
         return result;
     }
@@ -1744,7 +1770,6 @@ public class Wallet implements Serializable {
 
                 // Set transaction confidence to dead and notify listeners.
                 tx.getConfidence().setConfidenceType(ConfidenceType.DEAD);
-                invokeOnTransactionConfidenceChanged(tx);
             }
         }
 
@@ -1892,7 +1917,6 @@ public class Wallet implements Serializable {
                 pending.remove(tx.getHash());
                 // This updates the tx confidence type automatically.
                 tx.getConfidence().setOverridingTransaction(replacement);
-                invokeOnTransactionConfidenceChanged(tx);
                 break;
             }
         }

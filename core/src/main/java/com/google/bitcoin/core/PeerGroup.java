@@ -923,7 +923,10 @@ public class PeerGroup {
                                 // the transaction. In future when peers sync up their memory pools after they connect
                                 // we could come back and change this.
                                 //
-                                // Now tell the wallet about the transaction as it didn't get informed before.
+                                // Now tell the wallet about the transaction. If the wallet created the transaction then
+                                // it already knows and will ignore this. If it's a transaction we received from
+                                // somebody else via a side channel and are now broadcasting, this will put it into the
+                                // wallet now we know it's valid.
                                 for (Wallet wallet : wallets) {
                                     try {
                                         wallet.receivePending(pinnedTx);

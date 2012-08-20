@@ -303,11 +303,23 @@ public class PeerGroupTest extends TestWithNetworkConnections {
 
         assertEquals(Utils.toNanoCoins(50, 0), wallet.getBalance());
 
+        // Check that the wallet informs us of changes in confidence as the transaction ripples across the network.
+        final Transaction[] transactions = new Transaction[1];
+        wallet.addEventListener(new AbstractWalletEventListener() {
+            @Override
+            public void onTransactionConfidenceChanged(Wallet wallet, Transaction tx) {
+                transactions[0] = tx;
+            }
+        });
+
         // Now create a spend, and expect the announcement on p1.
         Address dest = new ECKey().toAddress(params);
         Wallet.SendResult sendResult = wallet.sendCoins(peerGroup, dest, Utils.toNanoCoins(1, 0));
         assertNotNull(sendResult.tx);
         assertFalse(sendResult.broadcastComplete.isDone());
+        assertEquals(transactions[0], sendResult.tx);
+        assertEquals(transactions[0].getConfidence().numBroadcastPeers(), 1);
+        transactions[0] = null;
         Transaction t1 = (Transaction) outbound(p1);
         assertNotNull(t1);
         // 49 BTC in change.
@@ -317,6 +329,8 @@ public class PeerGroupTest extends TestWithNetworkConnections {
         inv.addTransaction(t1);
         inbound(p2, inv);
         assertTrue(sendResult.broadcastComplete.isDone());
+        assertEquals(transactions[0], sendResult.tx);
+        assertEquals(transactions[0].getConfidence().numBroadcastPeers(), 2);
         // Confirm it.
         Block b2 = TestUtils.createFakeBlock(params, blockStore, t1).block;
         inbound(p1, b2);
