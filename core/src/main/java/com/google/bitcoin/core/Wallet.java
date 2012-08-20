@@ -866,8 +866,12 @@ public class Wallet implements Serializable {
                 // Not found in the unspent map. Try again with the spent map.
                 result = input.connect(spent, TransactionInput.ConnectMode.ABORT_ON_CONFLICT);
                 if (result == TransactionInput.ConnectionResult.NO_SUCH_TX) {
-                    // Doesn't spend any of our outputs or is coinbase.
-                    continue;
+                    // Not found in the unspent and spent maps. Try again with the pending map.
+                    result = input.connect(pending, TransactionInput.ConnectMode.ABORT_ON_CONFLICT);
+                    if (result == TransactionInput.ConnectionResult.NO_SUCH_TX) {
+                        // Doesn't spend any of our outputs or is coinbase.
+                        continue;
+                    }
                 }
             }
 

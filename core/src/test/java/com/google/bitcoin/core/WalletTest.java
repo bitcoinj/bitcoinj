@@ -16,6 +16,7 @@
 
 package com.google.bitcoin.core;
 
+import com.google.bitcoin.core.Transaction.SigHash;
 import com.google.bitcoin.core.WalletTransaction.Pool;
 import com.google.bitcoin.store.BlockStore;
 import com.google.bitcoin.store.MemoryBlockStore;
@@ -788,6 +789,51 @@ public class WalletTest {
         assertFalse(hash4.equals(Sha256Hash.hashFileContents(f)));  // File has now changed.
         assertNotNull(results[0]);
         assertEquals(f, results[1]);
+    }
+    
+    @Test
+    public void spendOutputFromPendingTransaction() throws Exception {
+    	// We'll set up a wallet that receives a coin, then sends a coin of lesser value and keeps the change.
+        BigInteger v1 = Utils.toNanoCoins(1, 0);
+        Transaction t1 = createFakeTx(params, v1, myAddress);
+
+        wallet.receiveFromBlock(t1, null, BlockChain.NewBlockType.BEST_CHAIN);
+        assertEquals(v1, wallet.getBalance());
+        assertEquals(1, wallet.getPoolSize(WalletTransaction.Pool.UNSPENT));
+        assertEquals(1, wallet.getPoolSize(WalletTransaction.Pool.ALL));
+
+        // First create our current transaction
+        ECKey k2 = new ECKey();
+        wallet.addKey(k2);
+        BigInteger v2 = toNanoCoins(0, 50);
+        Transaction t2 = new Transaction(params);
+        TransactionOutput o2 = new TransactionOutput(params, t2, v2, k2.toAddress(params));
+        t2.addOutput(o2);
+        boolean complete = wallet.completeTx(t2);
+        assertTrue(complete);
+        
+        // Commit t2, so it is placed in the pending pool
+        wallet.commitTx(t2);
+        assertEquals(0, wallet.getPoolSize(WalletTransaction.Pool.UNSPENT));
+        assertEquals(1, wallet.getPoolSize(WalletTransaction.Pool.PENDING));
+        assertEquals(2, wallet.getPoolSize(WalletTransaction.Pool.ALL));
+        
+        // Now try the spend the output
+        ECKey k3 = new ECKey();
+        BigInteger v3 = toNanoCoins(0, 25);
+        Transaction t3 = new Transaction(params);
+        t3.addOutput(v3, k3.toAddress(params));
+        t3.addInput(o2);
+        t3.signInputs(SigHash.ALL, wallet);
+        
+        // Commit t3, so the coins from the pending t2 are spent
+        wallet.commitTx(t3);
+        assertEquals(0, wallet.getPoolSize(WalletTransaction.Pool.UNSPENT));
+        assertEquals(2, wallet.getPoolSize(WalletTransaction.Pool.PENDING));
+        assertEquals(3, wallet.getPoolSize(WalletTransaction.Pool.ALL));
+        
+        // Now the output of t2 must not be available for spending
+        assertFalse(o2.isAvailableForSpending());
     }
 
     // There is a test for spending a coinbase transaction as it matures in BlockChainTest#coinbaseTransactionAvailability
