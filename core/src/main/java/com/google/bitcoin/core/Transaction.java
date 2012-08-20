@@ -700,6 +700,7 @@ public class Transaction extends ChildMessage implements Serializable {
                 bos.write(key.sign(hash.getBytes()));
                 bos.write((hashType.ordinal() + 1) | (anyoneCanPay ? 0x80 : 0));
                 signatures[i] = bos.toByteArray();
+                bos.close();
             } catch (IOException e) {
                 throw new RuntimeException(e);  // Cannot happen.
             }
@@ -767,6 +768,7 @@ public class Transaction extends ChildMessage implements Serializable {
             // Note that this is NOT reversed to ensure it will be signed correctly. If it were to be printed out
             // however then we would expect that it is IS reversed.
             Sha256Hash hash = new Sha256Hash(doubleDigest(bos.toByteArray()));
+            bos.close();
 
             // Put the transaction back to how we found it.
             for (int i = 0; i < inputs.size(); i++) {
