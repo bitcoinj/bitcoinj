@@ -608,10 +608,10 @@ public class Block extends Message {
         // tx3 above). A tree with 5 transactions would look like this:
         //
         //         root
-        //        /    \
-        //       1      \
-        //     /   \     \
-        //    2     3    4
+        //        /     \
+        //       1        5
+        //     /   \     / \
+        //    2     3    4  4
         //  / \   / \   / \
         // t1 t2 t3 t4 t5 t5
         maybeParseTransactions();
