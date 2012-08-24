@@ -776,14 +776,19 @@ public class Block extends Message {
 
 	/** Adds a transaction to this block. The nonce and merkle root are invalid after this. */
     public void addTransaction(Transaction t) {
+        addTransaction(t, true);
+    }
+    
+    /** Adds a transaction to this block, with or without checking the sanity of doing so */
+    void addTransaction(Transaction t, boolean runSanityChecks) {
         unCacheTransactions();
         if (transactions == null) {
             transactions = new ArrayList<Transaction>();
         }
         t.setParent(this);
-        if (transactions.size() == 0 && !t.isCoinBase())
+        if (runSanityChecks && transactions.size() == 0 && !t.isCoinBase())
             throw new RuntimeException("Attempted to add a non-coinbase transaction as the first transaction: " + t);
-        else if (transactions.size() > 0 && t.isCoinBase())
+        else if (runSanityChecks && transactions.size() > 0 && t.isCoinBase())
             throw new RuntimeException("Attempted to add a coinbase transaction when there already is one: " + t);
         transactions.add(t);
         adjustLength(transactions.size(), t.length);
