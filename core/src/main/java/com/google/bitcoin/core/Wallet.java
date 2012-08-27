@@ -254,37 +254,40 @@ public class Wallet implements Serializable {
         saveToFile(temp, f);
     }
 
-    // This must be a static class to avoid creating a strong reference from this thread to the wallet. If we did that
-    // it would never become garbage collectable because the autosave thread would never die. To avoid this from
-    // happening the wallet posts a this pointer to us when it wants to get saved and we pick it up a short time
-    // later. The delay allows coalescion of many rapid updates into occasional saves, and it means disk IO can be
-    // done on a different thread which helps make UIs more responsive.
+    // Auto-saving can be done on a background thread if the user wishes it, this is to avoid stalling threads calling
+    // into the wallet on serialization/disk access all the time which is important in GUI apps where you don't want
+    // the main thread to ever wait on disk (otherwise you lose a lot of responsiveness). The primary case where it
+    // can be a problem is during block chain syncup - the wallet has to be saved after every block to record where
+    // it got up to and for updating the transaction confidence data, which can slow down block chain download a lot.
+    // So this thread not only puts the work of saving onto a background thread but also coalesces requests together.
     private static class AutosaveThread extends Thread {
-        private DelayQueue<AutosaveThread.WalletSaveRequest> walletRefs;
+        private static DelayQueue<AutosaveThread.WalletSaveRequest> walletRefs = new DelayQueue<WalletSaveRequest>();
         private static AutosaveThread globalThread;
 
         private AutosaveThread() {
-            this.walletRefs = new DelayQueue<WalletSaveRequest>();
-            setDaemon(true);  // Allow the JVM to exit even if this thread is still running.
+            // Allow the JVM to shut down without waiting for this thread. Note this means users could lose auto-saves
+            // if they don't explicitly save the wallet before terminating!
+            setDaemon(true);
             setName("Wallet auto save thread");
             setPriority(Thread.MIN_PRIORITY);   // Avoid competing with the UI.
         }
 
         /** Returns the global instance that services all wallets. It never shuts down. */
-        public static AutosaveThread get() {
+        public static void maybeStart() {
+            if (walletRefs.size() == 0) return;
+
             synchronized (AutosaveThread.class) {
-                if (globalThread != null)
-                    return globalThread;
-                globalThread = new AutosaveThread();
-                globalThread.start();
-                return globalThread;
+                if (globalThread == null) {
+                    globalThread = new AutosaveThread();
+                    globalThread.start();
+                }
             }
         }
 
         /** Called by a wallet when it's become dirty (changed). Will start the background thread if needed. */
         public static void registerForSave(Wallet wallet, long delayMsec) {
-            AutosaveThread ats = get();
-            ats.walletRefs.put(new WalletSaveRequest(wallet, delayMsec));
+            walletRefs.add(new WalletSaveRequest(wallet, delayMsec));
+            maybeStart();
         }
 
         public void run() {
@@ -292,10 +295,15 @@ public class Wallet implements Serializable {
             while (true) {
                 try {
                     WalletSaveRequest req = walletRefs.poll(5, TimeUnit.SECONDS);
-                    if (req == null && walletRefs.size() == 0) {
-                        // No work to do for the given delay period, so let's shut down and free up memory. We'll get
-                        // started up again if a wallet changes again.
-                        break;
+                    if (req == null) {
+                        if (walletRefs.size() == 0) {
+                            // No work to do for the given delay period, so let's shut down and free up memory.
+                            // We'll get started up again if a wallet changes once more.
+                            break;
+                        } else {
+                            // There's work but nothing to do just yet. Go back to sleep and try again.
+                            continue;
+                        }
                     }
                     synchronized (req.wallet) {
                         if (req.wallet.dirty) {
@@ -306,6 +314,7 @@ public class Wallet implements Serializable {
                         }
                     }
                 } catch (InterruptedException e) {
+                    log.error("Auto-save thread interrupted during wait", e);
                     break;
                 }
             }
@@ -314,6 +323,9 @@ public class Wallet implements Serializable {
                 Preconditions.checkState(globalThread == this);   // There should only be one global thread.
                 globalThread = null;
             }
+            // There's a possible shutdown race where work is added after we decided to shutdown but before
+            // we cleared globalThread.
+            maybeStart();
         }
 
         private static class WalletSaveRequest implements Delayed {
@@ -341,6 +353,9 @@ public class Wallet implements Serializable {
 
     /** Returns true if the auto-save thread should abort */
     private synchronized boolean autoSave() {
+        // TODO: This code holds the wallet lock for much longer than actually necessary.
+        // It only actually needs to be held whilst converting the wallet to in-memory protobuf objects. The act
+        // of writing out to disk, renaming, etc, only needs the lock when accessing data members.
         try {
             log.info("Auto-saving wallet, last seen block is {}", lastBlockSeenHash);
             File directory = autosaveToFile.getAbsoluteFile().getParentFile();
@@ -389,19 +404,14 @@ public class Wallet implements Serializable {
      * <p>If delayTime is set, a background thread will be created and the wallet will only be saved to
      * disk every so many time units. If no changes have occurred for the given time period, nothing will be written.
      * In this way disk IO can be rate limited. It's a good idea to set this as otherwise the wallet can change very
-     * frequently, eg if there are a lot of transactions in it or a busy key, and there will be a lot of redundant
+     * frequently, eg if there are a lot of transactions in it or during block sync, and there will be a lot of redundant
      * writes. Note that when a new key is added, that always results in an immediate save regardless of
-     * delayTime.</p>
+     * delayTime. <b>You should still save the wallet manually when your program is about to shut down as the JVM
+     * will not wait for the background thread.</b></p>
      *
      * <p>An event listener can be provided. If a delay >0 was specified, it will be called on a background thread
      * with the wallet locked when an auto-save occurs. If delay is zero or you do something that always triggers
-     * an immediate save, like adding a key, the event listener will be invoked on the calling threads. There is
-     * an important detail to get right here. The background thread that performs auto-saving keeps a weak reference
-     * to the wallet and shuts itself down if the wallet is garbage collected, so you don't have to think about it.
-     * If you provide an event listener however, it'd be very easy to accidentally hold a strong reference from your
-     * event listener to the wallet, meaning that the background thread will transitively keep your wallet object
-     * alive and un-collectable. So be careful to use a static inner class for this to avoid that problem, unless
-     * you don't care about keeping wallets alive indefinitely.</p>
+     * an immediate save, like adding a key, the event listener will be invoked on the calling threads.</p>
      *
      * @param f The destination file to save to.
      * @param delayTime How many time units to wait until saving the wallet on a background thread.

@@ -339,9 +339,8 @@ public class WalletTool {
                 return;
             }
             saveWallet(walletFile);
-        } else {
-            shutdown();
         }
+        shutdown();
     }
 
     private static void send(List<String> outputs) {
@@ -538,6 +537,7 @@ public class WalletTool {
             peers.stop();
             saveWallet(walletFile);
             store.close();
+            wallet = null;
         } catch (BlockStoreException e) {
             throw new RuntimeException(e);
         }
