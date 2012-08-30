@@ -28,14 +28,19 @@
     <groupId>com.google</groupId>
     <artifactId>bitcoinj-examples</artifactId>
 
-    <name>BitCoinJ Examples</name>
-    <description>A collection of examples using the BitCoinJ library</description>
+    <name>bitcoinj Examples</name>
+    <description>A collection of examples using the bitcoinj library</description>
 
     <dependencies>
         <dependency>
             <groupId>com.google</groupId>
             <artifactId>bitcoinj</artifactId>
             <version>${project.parent.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-jdk14</artifactId>
+            <version>1.6.4</version>
         </dependency>
     </dependencies>
 </project>
