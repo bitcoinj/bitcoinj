@@ -161,10 +161,13 @@ public class TransactionConfidence implements Serializable {
     };
 
     /**
-     * A confidence listener is informed when the level of confidence in a transaction is updated by something, like
+     * <p>A confidence listener is informed when the level of {@link TransactionConfidence} is updated by something, like
      * for example a {@link Wallet}. You can add listeners to update your user interface or manage your order tracking
-     * system when confidence levels pass a certain threshold. <b>Note that confidence can go down as well as up.</b>.
-     * During listener execution, it's safe to remove the current listener but not others.
+     * system when confidence levels pass a certain threshold. <b>Note that confidence can go down as well as up.</b>
+     * For example, this can happen if somebody is doing a double-spend attack against you. Whilst it's unlikely, your
+     * code should be able to handle that in order to be correct.</p>
+     *
+     * <p>During listener execution, it's safe to remove the current listener but not others.</p>
      */
     public interface Listener {
         public void onConfidenceChanged(Transaction tx);

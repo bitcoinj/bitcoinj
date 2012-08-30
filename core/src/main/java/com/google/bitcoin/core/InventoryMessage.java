@@ -16,6 +16,12 @@
 
 package com.google.bitcoin.core;
 
+/**
+ * <p>Represents the "inv" P2P network message. An inv contains a list of hashes of either blocks or transactions. It's
+ * a bandwidth optimization - on receiving some data, a (fully validating) peer sends every connected peer an inv
+ * containing the hash of what it saw. It'll only transmit the full thing if a peer asks for it with a
+ * {@link GetDataMessage}.</p>
+ */
 public class InventoryMessage extends ListMessage {
     private static final long serialVersionUID = -7050246551646107066L;
 

@@ -21,14 +21,14 @@ import java.math.BigInteger;
 import java.util.Arrays;
 
 /**
- * A custom form of base58 is used to encode BitCoin addresses. Note that this is not the same base58 as used by
- * Flickr, which you may see reference to around the internet.<p>
+ * <p>Base58 is a way to encode Bitcoin addresses as numbers and letters. Note that this is not the same base58 as used by
+ * Flickr, which you may see reference to around the internet.</p>
  *
- * Satoshi says: why base-58 instead of standard base-64 encoding?<p>
+ * <p>Satoshi says: why base-58 instead of standard base-64 encoding?<p>
  *
  * <ul>
  * <li>Don't want 0OIl characters that look the same in some fonts and
- *    could be used to create visually identical looking account numbers.</li>
+ *     could be used to create visually identical looking account numbers.</li>
  * <li>A string with non-alphanumeric characters is not as easily accepted as an account number.</li>
  * <li>E-mail usually won't line-break if there's no punctuation to break at.</li>
  * <li>Doubleclicking selects the whole number as one word if it's all alphanumeric.</li>

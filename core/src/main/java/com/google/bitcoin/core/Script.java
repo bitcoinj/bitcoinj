@@ -42,14 +42,16 @@ class ScriptChunk {
 }
 
 /**
- * Bitcoin transactions don't specify what they do directly. Instead <a href="https://en.bitcoin.it/wiki/Script">a
- * small binary stack language</a> is used to define programs that when evaluated return whether the transaction
- * "accepts" or rejects the other transactions connected to it.<p>
+ * Instructions for redeeming a payment.
  *
- * BitcoinJ does not evaluate/run scripts. The reason is that doing so requires the connected transactions, ie, all
+ * <p>Bitcoin transactions don't specify what they do directly. Instead <a href="https://en.bitcoin.it/wiki/Script">a
+ * small binary stack language</a> is used to define programs that when evaluated return whether the transaction
+ * "accepts" or rejects the other transactions connected to it.</p>
+ *
+ * <p>bitcoinj does not evaluate/run scripts. The reason is that doing so requires the connected transactions, ie, all
  * transactions, and as a lightweight/SPV client we don't store them all. Instead tx validity is decided by miners
  * and we rely purely on the majority consensus to determine if the scripts are valid. This class therefore just lets
- * you manipulate and parse them.
+ * you manipulate and parse them.</p>
  */
 public class Script {
     // Some constants used for decoding the scripts, copied from the reference client

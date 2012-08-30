@@ -28,7 +28,7 @@ import static com.google.bitcoin.core.Utils.uint64ToByteStreamLE;
 
 /**
  * A PeerAddress holds an IP address and port number representing the network location of
- * a peer in the BitCoin P2P network. It exists primarily for serialization purposes.
+ * a peer in the Bitcoin P2P network. It exists primarily for serialization purposes.
  */
 public class PeerAddress extends ChildMessage {
     private static final long serialVersionUID = 7501293709324197411L;

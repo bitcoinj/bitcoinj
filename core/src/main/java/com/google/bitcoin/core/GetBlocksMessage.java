@@ -21,6 +21,10 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Represents the "getblocks" P2P network message, which requests the hashes of the parts of the block chain we're
+ * missing. Those blocks can then be downloaded with a {@link GetDataMessage}.
+ */
 public class GetBlocksMessage extends Message {
     private static final long serialVersionUID = 3479412877853645644L;
     protected long version;

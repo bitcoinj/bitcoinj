@@ -37,7 +37,7 @@ import java.util.concurrent.*;
  * <p>{@link Peer#getHandler()} is part of a Netty Pipeline with a Bitcoin serializer downstream of it.
  */
 public class Peer {
-    public interface PeerLifecycleListener {
+    interface PeerLifecycleListener {
         /** Called when the peer is connected */
         public void onPeerConnected(Peer peer);
         /** Called when the peer is disconnected */
@@ -45,7 +45,6 @@ public class Peer {
     }
 
     private static final Logger log = LoggerFactory.getLogger(Peer.class);
-    public static final int CONNECT_TIMEOUT_MSEC = 60000;
 
     private final NetworkParameters params;
     private final BlockChain blockChain;
@@ -118,11 +117,11 @@ public class Peer {
         return eventListeners.remove(listener);
     }
 
-    public synchronized void addLifecycleListener(PeerLifecycleListener listener) {
+    synchronized void addLifecycleListener(PeerLifecycleListener listener) {
         lifecycleListeners.add(listener);
     }
 
-    public synchronized boolean removeLifecycleListener(PeerLifecycleListener listener) {
+    synchronized boolean removeLifecycleListener(PeerLifecycleListener listener) {
         return lifecycleListeners.remove(listener);
     }
 

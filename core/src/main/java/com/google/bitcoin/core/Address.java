@@ -17,8 +17,9 @@
 package com.google.bitcoin.core;
 
 /**
- * A Bitcoin address is derived from an elliptic curve public key and a set of network parameters.
- * It has several possible representations:<p>
+ * <p>A Bitcoin address is derived from an elliptic curve public key and a set of network parameters. Not to be confused
+ * with a {@link PeerAddress} or {@link AddressMessage} which are about network (TCP) addresses.
+ * It has several possible representations:</p>
  *
  * <ol>
  * <li>The raw public key bytes themselves.

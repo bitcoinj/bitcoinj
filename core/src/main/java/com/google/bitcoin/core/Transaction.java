@@ -28,19 +28,18 @@ import java.util.*;
 import static com.google.bitcoin.core.Utils.*;
 
 /**
- * A transaction represents the movement of coins from some addresses to some other addresses. It can also represent
- * the minting of new coins. A Transaction object corresponds to the equivalent in the BitCoin C++ implementation.<p>
+ * <p>A transaction represents the movement of coins from some addresses to some other addresses. It can also represent
+ * the minting of new coins. A Transaction object corresponds to the equivalent in the Bitcoin C++ implementation.</p>
  *
- * It implements TWO serialization protocols - the Bitcoin proprietary format which is identical to the C++
- * implementation and is used for reading/writing transactions to the wire and for hashing. It also implements Java
- * serialization which is used for the wallet. This allows us to easily add extra fields used for our own accounting
- * or UI purposes.<p>
- *     
- * All Bitcoin transactions are at risk of being reversed, though the risk is much less than with traditional payment 
+ * <p>Transactions are the fundamental atoms of Bitcoin and have many powerful features. Read
+ * <a href="http://code.google.com/p/bitcoinj/wiki/WorkingWithTransactions">"Working with transactions"</a> in the
+ * documentation to learn more about how to use this class.</p>
+ *
+ * <p>All Bitcoin transactions are at risk of being reversed, though the risk is much less than with traditional payment
  * systems. Transactions have <i>confidence levels</i>, which help you decide whether to trust a transaction or not.
  * Whether to trust a transaction is something that needs to be decided on a case by case basis - a rule that makes 
  * sense for selling MP3s might not make sense for selling cars, or accepting payments from a family member. If you
- * are building a wallet, how to present confidence to your users is something to consider carefully.
+ * are building a wallet, how to present confidence to your users is something to consider carefully.</p>
  */
 public class Transaction extends ChildMessage implements Serializable {
     private static final Logger log = LoggerFactory.getLogger(Transaction.class);

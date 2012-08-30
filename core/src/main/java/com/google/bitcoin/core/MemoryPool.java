@@ -29,15 +29,15 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Tracks transactions that are being announced across the network. Typically one is created for you by a PeerGroup
- * and then given to each Peer to update. The current purpose is to let Peers update the confidence (number of peers
- * broadcasting). It helps address an attack scenario in which a malicious remote peer (or several) feeds you
- * invalid transactions, eg, ones that spend coins which don't exist. If you don't see most of the peers announce the
- * transaction within a reasonable time, it may be that the TX is not valid. Alternatively, an attacker may control
- * your entire internet connection: in this scenario counting broadcasting peers does not help you.<p>
+ * <p>Tracks transactions that are being announced across the network. Typically one is created for you by a
+ * {@link PeerGroup} and then given to each Peer to update. The current purpose is to let Peers update the confidence
+ * (number of peers broadcasting). It helps address an attack scenario in which a malicious remote peer (or several)
+ * feeds you invalid transactions, eg, ones that spend coins which don't exist. If you don't see most of the peers
+ * announce the transaction within a reasonable time, it may be that the TX is not valid. Alternatively, an attacker
+ * may control your entire internet connection: in this scenario counting broadcasting peers does not help you.</p>
  *
- * It is <b>not</b> at this time directly equivalent to the Satoshi clients memory pool, which tracks
- * all transactions not currently included in the best chain - it's simply a cache.
+ * <p>It is <b>not</b> at this time directly equivalent to the Satoshi clients memory pool, which tracks
+ * all transactions not currently included in the best chain - it's simply a cache.</p>
  */
 public class MemoryPool {
     private static final Logger log = LoggerFactory.getLogger(MemoryPool.class);

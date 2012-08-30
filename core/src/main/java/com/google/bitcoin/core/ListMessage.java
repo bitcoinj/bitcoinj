@@ -23,7 +23,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Abstract superclass of classes with list based payload, i.e. InventoryMessage and GetDataMessage.
+ * Abstract superclass of classes with list based payload, ie InventoryMessage and GetDataMessage.
  */
 public abstract class ListMessage extends Message {
     private static final long serialVersionUID = -4275896329391143643L;

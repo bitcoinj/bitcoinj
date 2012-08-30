@@ -26,11 +26,9 @@ import java.util.Arrays;
 import static com.google.common.base.Preconditions.checkState;
 
 /**
- * A Message is a data structure that can be serialized/deserialized using both the BitCoin proprietary serialization
+ * <p>A Message is a data structure that can be serialized/deserialized using both the Bitcoin proprietary serialization
  * format and built-in Java object serialization. Specific types of messages that are used both in the block chain,
- * and on the wire, are derived from this class.
- * <p/>
- * This class is not useful for library users. If you want to talk to the network see the {@link Peer} class.
+ * and on the wire, are derived from this class.</p>
  */
 public abstract class Message implements Serializable {
     private static final Logger log = LoggerFactory.getLogger(Message.class);

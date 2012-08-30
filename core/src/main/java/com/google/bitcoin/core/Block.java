@@ -34,9 +34,11 @@ import static com.google.bitcoin.core.Utils.doubleDigest;
 import static com.google.bitcoin.core.Utils.doubleDigestTwoBuffers;
 
 /**
- * A block is the foundation of the BitCoin system. It records a set of {@link Transaction}s together with some data
- * that links it into a place in the global block chain, and proves that a difficult calculation was done over its
- * contents. See the BitCoin technical paper for more detail on blocks. <p/>
+ * <p>A block is a group of transactions, and is one of the fundamental data structures of the Bitcoin system.
+ * It records a set of {@link Transaction}s together with some data that links it into a place in the global block
+ * chain, and proves that a difficult calculation was done over its contents. See
+ * <a href="http://www.bitcoin.org/bitcoin.pdf">the Bitcoin technical paper</a> for
+ * more detail on blocks. <p/>
  *
  * To get a block, you can either build one from the raw bytes you can get from another implementation, or request one
  * specifically using {@link Peer#getBlock(Sha256Hash)}, or grab one from a downloaded {@link BlockChain}.

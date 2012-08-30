@@ -92,17 +92,13 @@ public interface WalletEventListener {
      * </ol><p>
      *
      * To find if the transaction is dead, you can use <tt>tx.getConfidence().getConfidenceType() ==
-     * TransactionConfidence.ConfidenceType.OVERRIDDEN_BY_DOUBLE_SPEND</tt>. If it is, you should notify the user
+     * TransactionConfidence.ConfidenceType.DEAD</tt>. If it is, you should notify the user
      * in some way so they know the thing they bought may not arrive/the thing they sold should not be dispatched.
-     *
-     * @param wallet
-     * @param tx
      */
     void onTransactionConfidenceChanged(Wallet wallet, Transaction tx);
 
     /**
      * Called by the {@link Wallet#addKey(ECKey)} method on whatever the calling thread was.
-     * @param key
      */
     void onKeyAdded(ECKey key);
 }

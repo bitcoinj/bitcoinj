@@ -6,6 +6,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * Represents an "addr" message on the P2P network, which contains broadcast advertisements of other peers. This is
+ * one of the ways peers can find each other without using the DNS or IRC discovery mechansisms. However storing and
+ * using addr messages is not presently implemented.
+ */
 public class AddressMessage extends Message {
     private static final long serialVersionUID = 8058283864924679460L;
     private static final long MAX_ADDRESSES = 1024;

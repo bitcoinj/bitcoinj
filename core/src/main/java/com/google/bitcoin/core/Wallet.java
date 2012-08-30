@@ -40,6 +40,9 @@ import static com.google.common.base.Preconditions.*;
  * it is able to create new transactions that spend the recorded transactions, and this is the fundamental operation
  * of the Bitcoin protocol.</p>
  *
+ * <p>To learn more about this class, read <b><a href="http://code.google.com/p/bitcoinj/wiki/WorkingWithTheWallet">
+ *     working with the wallet.</a></b></p>
+ *
  * <p>To fill up a Wallet with transactions, you need to use it in combination with a {@link BlockChain} and various
  * other objects, see the <a href="http://code.google.com/p/bitcoinj/wiki/GettingStarted">Getting started</a> tutorial
  * on the website to learn more about how to set everything up.</p>
@@ -51,9 +54,6 @@ import static com.google.common.base.Preconditions.*;
  * the wallet is changing very fast (eg due to a block chain sync). See
  * {@link Wallet#autosaveToFile(java.io.File, long, java.util.concurrent.TimeUnit, com.google.bitcoin.core.Wallet.AutosaveEventListener)}
  * for more information about this.</p>
- *
- * <p><a href="http://code.google.com/p/bitcoinj/wiki/WorkingWithTheWallet">Learn more about working with the wallet.
- * </a></p>
  */
 public class Wallet implements Serializable {
     private static final Logger log = LoggerFactory.getLogger(Wallet.class);
