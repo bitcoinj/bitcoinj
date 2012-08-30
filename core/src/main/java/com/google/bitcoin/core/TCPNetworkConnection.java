@@ -16,11 +16,15 @@
 
 package com.google.bitcoin.core;
 
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.SettableFuture;
+import org.jboss.netty.bootstrap.ClientBootstrap;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBufferInputStream;
 import org.jboss.netty.buffer.ChannelBufferOutputStream;
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.channel.*;
+import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
 import org.jboss.netty.handler.codec.replay.ReplayingDecoder;
 import org.jboss.netty.handler.codec.replay.VoidEnum;
 import org.slf4j.Logger;
@@ -32,19 +36,18 @@ import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.Date;
 import java.util.Random;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import static org.jboss.netty.channel.Channels.write;
 
 /**
- * A {@code TCPNetworkConnection} is used for connecting to a Bitcoin node over the standard TCP/IP protocol.<p>
+ * <p>A {@code TCPNetworkConnection} is used for connecting to a Bitcoin node over the standard TCP/IP protocol.<p>
  *
- * <p>{@link TCPNetworkConnection#getHandler()} is part of a Netty Pipeline, downstream of other pipeline stages. 
- * <p>Multiple {@code TCPNetworkConnection}s can wait if another NetworkConnection instance is deserializing a
- * message and discard duplicates before reading them. This is intended to avoid memory usage spikes in constrained
- * environments like Android where deserializing a large message (like a block) on multiple threads simultaneously is
- * both wasteful and can cause OOM failures. This feature is controlled at construction time.
+ * <p>{@link TCPNetworkConnection#getHandler()} is part of a Netty Pipeline, downstream of other pipeline stages.</p>
+ *
  */
-public class TCPNetworkConnection {
+public class TCPNetworkConnection implements NetworkConnection {
 	private static final Logger log = LoggerFactory.getLogger(TCPNetworkConnection.class);
 	
     // The IP address to which we are connecting.
@@ -64,7 +67,9 @@ public class TCPNetworkConnection {
     private NetworkHandler handler;
 
     /**
-     * Construct a network connection with the given params and version.
+     * Construct a network connection with the given params and version. If you use this constructor you need to set
+     * up the Netty pipelines and infrastructure yourself. If all you have is an IP address and port, use the static
+     * connectTo method.
      *
      * @param params Defines which network to connect to and details of the protocol.
      * @param ver The VersionMessage to announce to the other side of the connection.
@@ -79,6 +84,57 @@ public class TCPNetworkConnection {
         this.handler = new NetworkHandler();
     }
 
+    // Some members that are used for convenience APIs. If the app only uses PeerGroup then these won't be used.
+    private static NioClientSocketChannelFactory channelFactory;
+    private SettableFuture<TCPNetworkConnection> handshakeFuture;
+
+    /**
+     * Returns a future for a TCPNetworkConnection that is connected and version negotiated to the given remote address.
+     * Behind the scenes this method sets up a thread pool and a Netty pipeline that uses it. The equivalent Netty code
+     * is quite complex so use this method if you aren't writing a complex app. The future completes once version
+     * handshaking is done, use .get() on the response to wait for it.
+     *
+     * @param params The network parameters to use (production or testnet)
+     * @param address IP address and port to use
+     * @param connectTimeoutMsec How long to wait before giving up and setting the future to failure.
+     * @return
+     */
+    public static ListenableFuture<TCPNetworkConnection> connectTo(NetworkParameters params, InetSocketAddress address,
+                                                                   int connectTimeoutMsec) {
+        synchronized (TCPNetworkConnection.class) {
+            if (channelFactory == null) {
+                ExecutorService bossExecutor = Executors.newCachedThreadPool();
+                ExecutorService workerExecutor = Executors.newCachedThreadPool();
+                channelFactory = new NioClientSocketChannelFactory(bossExecutor, workerExecutor);
+            }
+        }
+        // Run the connection in the thread pool and wait for it to complete.
+        ClientBootstrap clientBootstrap = new ClientBootstrap(channelFactory);
+        ChannelPipeline pipeline = Channels.pipeline();
+        final TCPNetworkConnection conn = new TCPNetworkConnection(params, new VersionMessage(params, 0));
+        conn.handshakeFuture = SettableFuture.create();
+        pipeline.addLast("codec", conn.getHandler());
+        clientBootstrap.setPipeline(pipeline);
+        clientBootstrap.setOption("connectTimeoutMillis", Integer.valueOf(connectTimeoutMsec));
+        ChannelFuture socketFuture = clientBootstrap.connect(address);
+        // Once the socket is either connected on the TCP level, or failed ...
+        socketFuture.addListener(new ChannelFutureListener() {
+            public void operationComplete(ChannelFuture channelFuture) throws Exception {
+                // Check if it failed ...
+                if (channelFuture.isDone() && !channelFuture.isSuccess()) {
+                    // And complete the returned future with an exception.
+                    conn.handshakeFuture.setException(channelFuture.getCause());
+                }
+                // Otherwise the handshakeFuture will be marked as completed once we did ver/verack exchange.
+            }
+        });
+        return conn.handshakeFuture;
+    }
+
+    public void writeMessage(Message message) throws IOException {
+        write(channel, message);
+    }
+
     private void onFirstMessage(Message m) throws IOException, ProtocolException {
         if (!(m instanceof VersionMessage)) {
             // Bad peers might not follow the protocol. This has been seen in the wild (issue 81).
@@ -91,7 +147,7 @@ public class TCPNetworkConnection {
         write(channel, new VersionAck());
     }
         
-    private void onSecondMessage(Message m) throws IOException, ProtocolException {
+    private void onSecondMessage() throws IOException, ProtocolException {
         // Switch to the new protocol version.
         int peerVersion = versionMessage.clientVersion;
         log.info("Connected to peer: version={}, subVer='{}', services=0x{}, time={}, blocks={}", new Object[] {
@@ -101,7 +157,7 @@ public class TCPNetworkConnection {
                 new Date(versionMessage.time * 1000),
                 versionMessage.bestHeight
         });
-        // BitCoinJ is a client mode implementation. That means there's not much point in us talking to other client
+        // bitcoinj is a client mode implementation. That means there's not much point in us talking to other client
         // mode nodes because we can't download the data from them we need to find/verify transactions. Some bogus
         // implementations claim to have a block chain in their services field but then report a height of zero, filter
         // them out here.
@@ -112,6 +168,7 @@ public class TCPNetworkConnection {
         // Newer clients use checksumming.
         serializer.setUseChecksumming(peerVersion >= 209);
         // Handshake is done!
+        handshakeFuture.set(this);
     }
 
     public void ping() throws IOException {
@@ -129,13 +186,12 @@ public class TCPNetworkConnection {
 
     public class NetworkHandler extends ReplayingDecoder<VoidEnum> implements ChannelDownstreamHandler {
         @Override
-        public void channelConnected(ChannelHandlerContext ctx, ChannelStateEvent e)
-        throws Exception {
+        public void channelConnected(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
             channel = e.getChannel();
             // The version message does not use checksumming, until Feb 2012 when it magically does.
             // Announce ourselves. This has to come first to connect to clients beyond v0.30.20.2 which wait to hear
             // from us until they send their version message back.
-            log.info("Announcing ourselves as: {}", myVersionMessage.subVer);
+            log.info("Announcing to {} as: {}", channel.getRemoteAddress(), myVersionMessage.subVer);
             write(channel, myVersionMessage);
             // When connecting, the remote peer sends us a version message with various bits of
             // useful data in it. We need to know the peer protocol version before we can talk to it.
@@ -153,13 +209,13 @@ public class TCPNetworkConnection {
         // TODO: consider using a decoder state and checkpoint() if performance is an issue.
         @Override
         protected Object decode(ChannelHandlerContext ctx, Channel chan,
-                ChannelBuffer buffer, VoidEnum state) throws Exception {
+                                ChannelBuffer buffer, VoidEnum state) throws Exception {
             Message message = serializer.deserialize(new ChannelBufferInputStream(buffer));
             messageCount++;
             if (messageCount == 1) {
                 onFirstMessage(message);
             } else if (messageCount == 2) {
-                onSecondMessage(message);
+                onSecondMessage();
             }
             return message;
         }
@@ -195,6 +251,10 @@ public class TCPNetworkConnection {
 
     public PeerAddress getPeerAddress() {
         return new PeerAddress(remoteIp, params.port);
+    }
+
+    public void close() {
+        channel.close();
     }
 
     public void setRemoteAddress(SocketAddress address) {

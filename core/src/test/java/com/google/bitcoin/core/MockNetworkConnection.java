@@ -17,8 +17,6 @@
 package com.google.bitcoin.core;
 
 import java.io.IOException;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
@@ -116,6 +114,9 @@ public class MockNetworkConnection implements NetworkConnection {
 
     public PeerAddress getPeerAddress() {
         return peerAddress;
+    }
+
+    public void close() {
     }
 
     /** Call this to add a message which will be received by the NetworkConnection user. Wakes up the network thread. */

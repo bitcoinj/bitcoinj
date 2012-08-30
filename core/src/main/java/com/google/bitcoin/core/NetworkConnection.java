@@ -19,16 +19,18 @@ package com.google.bitcoin.core;
 import java.io.IOException;
 
 /**
- * A NetworkConnection handles talking to a remote BitCoin peer at a low level. It understands how to read and write
+ * <p>A NetworkConnection handles talking to a remote Bitcoin peer at a low level. It understands how to read and write
  * messages, but doesn't asynchronously communicate with the peer or handle the higher level details
- * of the protocol. After constructing a NetworkConnection, use a {@link Peer} to hand off communication to a
- * background thread.<p>
+ * of the protocol. A NetworkConnection is typically stateless, so after constructing a NetworkConnection, give it to a
+ * newly created {@link Peer} to handle messages to and from that specific peer.</p>
  *
- * NetworkConnection is an interface in order to support multiple low level protocols. You likely want a
+ * <p>If you just want to "get on the network" and don't care about the details, you want to use a {@link PeerGroup}
+ * instead. A {@link PeerGroup} handles the process of setting up connections to multiple peers, running background threads
+ * for them, and many other things.</p>
+ *
+ * <p>NetworkConnection is an interface in order to support multiple low level protocols. You likely want a
  * {@link TCPNetworkConnection} as it's currently the only NetworkConnection implementation. In future there may be
- * others that support connections over Bluetooth, NFC, UNIX domain sockets and so on.<p>
- *
- * Construction is blocking whilst the protocol version is negotiated.
+ * others that support connections over Bluetooth, NFC, UNIX domain sockets and so on.</p>
  */
 public interface NetworkConnection {
      /**
@@ -36,7 +38,7 @@ public interface NetworkConnection {
      *
      * @throws IOException
      */
-    void ping() throws IOException;
+    public void ping() throws IOException;
 
     /**
      * Writes the given message out over the network using the protocol tag. For a Transaction
@@ -45,15 +47,20 @@ public interface NetworkConnection {
      *
      * @throws IOException
      */
-    void writeMessage(Message message) throws IOException;
+    public void writeMessage(Message message) throws IOException;
 
     /**
      * Returns the version message received from the other end of the connection during the handshake.
      */
-    VersionMessage getVersionMessage();
+    public VersionMessage getVersionMessage();
 
     /**
      * @return The address of the other side of the network connection.
      */
     public PeerAddress getPeerAddress();
+
+    /**
+     * Does whatever needed to clean up the given connection, if necessary.
+     */
+    public void close();
 }
