@@ -152,7 +152,7 @@ public class Transaction extends ChildMessage implements Serializable {
         this.inputs = new ArrayList<TransactionInput>(tx.getInputs());
         this.outputs = new ArrayList<TransactionOutput>(tx.getOutputs().size());
         for (StoredTransactionOutput output : tx.getOutputs()) {
-            this.outputs.add(new TransactionOutput(params, this, output.getScriptBytes(), output.getValue()));
+            this.outputs.add(new TransactionOutput(params, this, output.getValue(), output.getScriptBytes()));
         }
     }
 
