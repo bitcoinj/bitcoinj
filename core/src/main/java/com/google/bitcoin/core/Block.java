@@ -678,7 +678,8 @@ public class Block extends Message {
         // an invalid block, but if we didn't validate this then an untrusted man-in-the-middle could obtain the next
         // valid block from the network and simply replace the transactions in it with their own fictional
         // transactions that reference spent or non-existant inputs.
-        Preconditions.checkState(!transactions.isEmpty());
+        if (transactions.isEmpty())
+            throw new VerificationException("Block had no transactions");
         maybeParseTransactions();
         checkTransactions();
         checkMerkleRoot();
