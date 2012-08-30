@@ -94,7 +94,6 @@ public class PeerGroup {
     private int maxConnections;
 
     private final NetworkParameters params;
-    private final BlockChain chain;
     private int connectionDelayMillis;
     private long fastCatchupTimeSecs;
     private ArrayList<Wallet> wallets;
@@ -150,9 +149,8 @@ public class PeerGroup {
     }
 
     PeerGroup(final NetworkParameters params, final BlockChain chain,
-            int connectionDelayMillis, ClientBootstrap bootstrap) {
+              int connectionDelayMillis, ClientBootstrap bootstrap) {
         this.params = params;
-        this.chain = chain;
         this.connectionDelayMillis = connectionDelayMillis;
         this.fastCatchupTimeSecs = params.genesisBlock.getTimeSeconds();
         this.wallets = new ArrayList<Wallet>(1);
