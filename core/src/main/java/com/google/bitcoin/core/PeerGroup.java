@@ -762,6 +762,7 @@ public class PeerGroup {
                 }
             }
         }
+        // TODO: Remove peerEventListeners from the Peer here.
         peer.removeEventListener(getDataListener);
         EventListenerInvoker.invoke(peerEventListeners, new EventListenerInvoker<PeerEventListener>() {
             @Override
