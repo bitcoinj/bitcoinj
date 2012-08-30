@@ -225,8 +225,11 @@ public abstract class AbstractBlockChain {
         }
         // Quick check for duplicates to avoid an expensive check further down (in findSplit). This can happen a lot
         // when connecting orphan transactions due to the dumb brute force algorithm we use.
-        if (block.equals(getChainHead().getHeader()) || (tryConnecting && orphanBlocks.containsKey(block.getHash()))) {
+        if (block.equals(getChainHead().getHeader())) {
             return true;
+        }
+        if (tryConnecting && orphanBlocks.containsKey(block.getHash())) {
+            return false;
         }
         
         // If we want to verify transactions (ie we are running with full blocks), verify that block has transactions
