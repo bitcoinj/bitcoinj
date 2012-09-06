@@ -179,6 +179,13 @@ public class TransactionOutPoint extends ChildMessage implements Serializable {
         maybeParse();
         return index;
     }
+    
+    /**
+     * @param index the index to set
+     */
+    void setIndex(long index) {
+        this.index = index;
+    }
 
     /**
      * Ensure object is fully parsed before invoking java serialization.  The backing byte array
