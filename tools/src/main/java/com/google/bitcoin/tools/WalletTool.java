@@ -33,6 +33,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.util.encoders.Hex;
 
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -298,7 +299,16 @@ public class WalletTool {
         }
 
         try {
-            wallet = Wallet.loadFromFile(walletFile);
+            WalletProtobufSerializer loader = new WalletProtobufSerializer();
+            if (chainFileName.exists()) {
+                // TEMPORARY MIGRATION CODE FOR 0.5 -> 0.6 TRANSITION. This will ensure the depth (but NOT workDone)
+                // fields gets set correctly for older wallets.
+                store = new BoundedOverheadBlockStore(params, chainFileName);
+                loader.setChainHeight(store.getChainHead().getHeight());
+                System.out.println("Setting chain height for import to " + store.getChainHead().getHeight());
+                store = null;
+            }
+            wallet = loader.readWallet(new BufferedInputStream(new FileInputStream(walletFile)));
             if (!wallet.getParams().equals(params)) {
                 System.err.println("Wallet does not match requested network parameters: " +
                         wallet.getParams().getId() + " vs " + params.getId());

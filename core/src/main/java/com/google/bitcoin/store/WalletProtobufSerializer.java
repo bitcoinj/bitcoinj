@@ -62,6 +62,11 @@ public class WalletProtobufSerializer {
     private Map<ByteString, Transaction> txMap;
     private WalletExtensionSerializer helper;
 
+    // Temporary hack for migrating 0.5 wallets to 0.6 wallets. In 0.5 transactions stored the height at which they
+    // appeared in the block chain (for the current best chain) but not the depth. In 0.6 we store both and update
+    // every transaction every time we receive a block, so we need to fill out depth from best chain height.
+    private int chainHeight;
+
     public WalletProtobufSerializer() {
         txMap = new HashMap<ByteString, Transaction>();
         helper = new WalletExtensionSerializer();
@@ -136,8 +141,6 @@ public class WalletProtobufSerializer {
         return walletBuilder.build();
     }
 
-
-    
     private static Protos.Transaction makeTxProto(WalletTransaction wtx) {
         Transaction tx = wtx.getTransaction();
         Protos.Transaction.Builder txBuilder = Protos.Transaction.newBuilder();
@@ -231,6 +234,16 @@ public class WalletProtobufSerializer {
         return new Sha256Hash(bs.toByteArray());
     }
 
+    /**
+     * TEMPORARY API: Used for migrating 0.5 wallets to 0.6 - during deserialization we need to know the chain height
+     * so the depth field of transaction confidence objects can be filled out correctly. Set this before loading a
+     * wallet. It's only used for older wallets that lack the data already.
+     *
+     * @param chainHeight
+     */
+    public void setChainHeight(int chainHeight) {
+        this.chainHeight = chainHeight;
+    }
 
     /**
      * Parses a wallet from the given stream. The stream is expected to contain a binary serialization of a 
@@ -242,7 +255,6 @@ public class WalletProtobufSerializer {
      */
     public Wallet readWallet(InputStream input) throws IOException {
         // TODO: This method should throw more specific exception types than IllegalArgumentException.
-        WalletProtobufSerializer serializer = new WalletProtobufSerializer();
         Protos.Wallet walletProto = parseToProto(input);
 
         // System.out.println(TextFormat.printToString(walletProto));
@@ -267,12 +279,12 @@ public class WalletProtobufSerializer {
         
         // Read all transactions and insert into the txMap.
         for (Protos.Transaction txProto : walletProto.getTransactionList()) {
-            serializer.readTransaction(txProto, params);
+            readTransaction(txProto, params);
         }
 
         // Update transaction outputs to point to inputs that spend them
         for (Protos.Transaction txProto : walletProto.getTransactionList()) {
-            WalletTransaction wtx = serializer.connectTransactionOutputs(txProto);
+            WalletTransaction wtx = connectTransactionOutputs(txProto);
             wallet.addWalletTransaction(wtx);
         }
         
@@ -389,6 +401,11 @@ public class WalletProtobufSerializer {
                 return;
             }
             confidence.setDepthInBlocks(confidenceProto.getDepth());
+        } else {
+            // TEMPORARY CODE FOR MIGRATING 0.5 WALLETS TO 0.6
+            if (chainHeight != 0) {
+                confidence.setDepthInBlocks(chainHeight - confidence.getAppearedAtChainHeight());
+            }
         }
         if (confidenceProto.hasWorkDone()) {
             if (confidence.getConfidenceType() != ConfidenceType.BUILDING) {
@@ -411,7 +428,7 @@ public class WalletProtobufSerializer {
             confidence.setOverridingTransaction(overridingTransaction);
         }
         for (Protos.PeerAddress proto : confidenceProto.getBroadcastByList()) {
-            InetAddress ip = null;
+            InetAddress ip;
             try {
                 ip = InetAddress.getByAddress(proto.getIpAddress().toByteArray());
             } catch (UnknownHostException e) {
