@@ -113,7 +113,7 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
         LinkedList<StoredTransactionOutput> txOutsSpent = new LinkedList<StoredTransactionOutput>();
         LinkedList<StoredTransactionOutput> txOutsCreated = new LinkedList<StoredTransactionOutput>();  
         long sigOps = 0;
-        boolean enforceBIP16 = block.getTimeSeconds() >= params.BIP16_ENFORCE_TIME;
+        final boolean enforceBIP16 = block.getTimeSeconds() >= params.BIP16_ENFORCE_TIME;
         
         if (scriptVerificationExecutor.isShutdown())
             scriptVerificationExecutor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
@@ -200,7 +200,7 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
                         FutureTask<VerificationException> future = new FutureTask<VerificationException>(new Callable<VerificationException>() {
                             public VerificationException call() {
                                 try{
-                                    scriptSig.correctlySpends(txCache, currentIndex, scriptPubKey);
+                                    scriptSig.correctlySpends(txCache, currentIndex, scriptPubKey, enforceBIP16);
                                 } catch (ScriptException e) {
                                     return new VerificationException("Error verifying script: " + e.getMessage());
                                 } catch (VerificationException e) {
@@ -292,7 +292,7 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
                 LinkedList<StoredTransactionOutput> txOutsSpent = new LinkedList<StoredTransactionOutput>();
                 LinkedList<StoredTransactionOutput> txOutsCreated = new LinkedList<StoredTransactionOutput>();
                 long sigOps = 0;
-                boolean enforcePayToScriptHash = newBlock.getHeader().getTimeSeconds() >= params.BIP16_ENFORCE_TIME;
+                final boolean enforcePayToScriptHash = newBlock.getHeader().getTimeSeconds() >= params.BIP16_ENFORCE_TIME;
                 if (!params.isCheckpoint(newBlock.getHeight())) {
                     for(StoredTransaction tx : transactions) {
                         Sha256Hash hash = tx.getHash();
@@ -356,7 +356,7 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
                             FutureTask<VerificationException> future = new FutureTask<VerificationException>(new Callable<VerificationException>() {
                                 public VerificationException call() {
                                     try{
-                                        scriptSig.correctlySpends(txCache, currentIndex, scriptPubKey);
+                                        scriptSig.correctlySpends(txCache, currentIndex, scriptPubKey, enforcePayToScriptHash);
                                     } catch (ScriptException e) {
                                         return new VerificationException("Error verifying script: " + e.getMessage());
                                     } catch (VerificationException e) {

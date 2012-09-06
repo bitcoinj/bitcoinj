@@ -1479,13 +1479,16 @@ public class Script {
      * Verifies that this script (interpreted as a scriptSig) correctly spends the given scriptPubKey
      * @throws VerificationException if this script does not correctly spend the scriptPubKey
      */
-    public void correctlySpends(Transaction txContainingThis, long index, Script scriptPubKey) throws VerificationException, ScriptException {
+    public void correctlySpends(Transaction txContainingThis, long index, Script scriptPubKey, boolean enforceP2SH) throws VerificationException, ScriptException {
         if (program.length > 10000 || scriptPubKey.program.length > 10000)
             throw new ScriptException("Script larger than 10,000 bytes");
         
         LinkedList<byte[]> stack = new LinkedList<byte[]>();
+        LinkedList<byte[]> p2shStack = null;
         
         executeScript(txContainingThis, index, this, stack);
+        if (enforceP2SH)
+            p2shStack = new LinkedList<byte[]>(stack);
         executeScript(txContainingThis, index, scriptPubKey, stack);
         
         if (stack.size() == 0)
@@ -1493,5 +1496,22 @@ public class Script {
         
         if (!castToBool(stack.pollLast()))
             throw new VerificationException("Script resulted in a non-true stack");
+        
+        if(enforceP2SH && scriptPubKey.isPayToScriptHash()) {
+            for (ScriptChunk chunk : chunks)
+                if (chunk.isOpCode && (chunk.data[0] & 0xff) > OP_16)
+                    throw new VerificationException("Attempted to spend a P2SH scriptPubKey with a script that contained script ops");
+            
+            byte[] scriptPubKeyBytes = p2shStack.pollLast();
+            Script scriptPubKeyP2SH = new Script(params, scriptPubKeyBytes, 0, scriptPubKeyBytes.length);
+            
+            executeScript(txContainingThis, index, scriptPubKeyP2SH, p2shStack);
+            
+            if (p2shStack.size() == 0)
+                throw new VerificationException("P2SH stack empty at end of script execution.");
+            
+            if (!castToBool(p2shStack.pollLast()))
+                throw new VerificationException("P2SH script execution resulted in a non-true stack");
+        }
     }
 }
