@@ -88,7 +88,7 @@ public class WalletTool {
             "                         --output=1GthXFQMktFLWdh5EPNGqbq3H6WdG8zsWj:1.245\n" +
             "                       If the output destination starts with 04 and is 65 bytes (130 chars) it will be\n" +
             "                       treated as a public key instead of an address and the send will use \n" +
-            "                       <key> CHECKSIG as the script.\n" +
+            "                       <key> CHECKSIG as the script. You can also specify a --fee=0.01\n" +
 
             "\n>>> WAITING\n" +
             "You can wait for the condition specified by the --waitfor flag to become true. Transactions and new\n" +
@@ -229,6 +229,7 @@ public class WalletTool {
         parser.accepts("peers").withRequiredArg();
         OptionSpec<String> outputFlag = parser.accepts("output").withRequiredArg();
         parser.accepts("value").withRequiredArg();
+        parser.accepts("fee").withRequiredArg();
         conditionFlag = parser.accepts("condition").withRequiredArg();
         options = parser.parse(args);
         
@@ -321,7 +322,11 @@ public class WalletTool {
                     System.err.println("You must specify at least one --output=addr:value.");
                     return;
                 }
-                send(outputFlag.values(options));
+                BigInteger fee = BigInteger.ZERO;
+                if (options.has("fee")) {
+                    fee = Utils.toNanoCoins((String)options.valueOf("fee"));
+                }
+                send(outputFlag.values(options), fee);
                 break;
         }
 
@@ -343,7 +348,7 @@ public class WalletTool {
         shutdown();
     }
 
-    private static void send(List<String> outputs) {
+    private static void send(List<String> outputs, BigInteger fee) {
         try {
             // Convert the input strings to outputs.
             Transaction t = new Transaction(params);
@@ -377,6 +382,7 @@ public class WalletTool {
                 }
             }
             Wallet.SendRequest req = Wallet.SendRequest.forTx(t);
+            req.fee = fee;
             if (!wallet.completeTx(req)) {
                 System.err.println("Insufficient funds: have " + wallet.getBalance());
                 return;

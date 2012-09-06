@@ -58,18 +58,25 @@ public class WalletTest {
 
     @Test
     public void basicSpending() throws Exception {
-        // We'll set up a wallet that receives a coin, then sends a coin of lesser value and keeps the change.
+        // We'll set up a wallet that receives a coin, then sends a coin of lesser value and keeps the change. We
+        // will attach a small fee. Because the Bitcoin protocol makes it difficult to determine the fee of an
+        // arbitrary transaction in isolation, we'll check that the fee was set by examining the size of the change.
+
+        // Receive some money.
         BigInteger v1 = Utils.toNanoCoins(1, 0);
         Transaction t1 = createFakeTx(params, v1, myAddress);
-
         wallet.receiveFromBlock(t1, null, BlockChain.NewBlockType.BEST_CHAIN);
         assertEquals(v1, wallet.getBalance());
         assertEquals(1, wallet.getPoolSize(WalletTransaction.Pool.UNSPENT));
         assertEquals(1, wallet.getPoolSize(WalletTransaction.Pool.ALL));
 
-        ECKey k2 = new ECKey();
+        // Create a send with a fee.
+        Address destination = new ECKey().toAddress(params);
         BigInteger v2 = toNanoCoins(0, 50);
-        Transaction t2 = wallet.createSend(k2.toAddress(params), v2);
+        Wallet.SendRequest req = Wallet.SendRequest.to(destination, v2);
+        req.fee = toNanoCoins(0, 1);
+        wallet.completeTx(req);
+        Transaction t2 = req.tx;
         assertEquals(1, wallet.getPoolSize(WalletTransaction.Pool.UNSPENT));
         assertEquals(1, wallet.getPoolSize(WalletTransaction.Pool.ALL));
 
@@ -77,6 +84,10 @@ public class WalletTest {
         assertEquals(1, t2.getInputs().size());
         assertEquals(myAddress, t2.getInputs().get(0).getScriptSig().getFromAddress());
         assertEquals(t2.getConfidence().getConfidenceType(), TransactionConfidence.ConfidenceType.NOT_SEEN_IN_CHAIN);
+        assertEquals(2, t2.getOutputs().size());
+        assertEquals(destination, t2.getOutputs().get(0).getScriptPubKey().getToAddress());
+        assertEquals(wallet.getChangeAddress(), t2.getOutputs().get(1).getScriptPubKey().getToAddress());
+        assertEquals(toNanoCoins(0, 49), t2.getOutputs().get(1).getValue());
 
         // We have NOT proven that the signature is correct!
 

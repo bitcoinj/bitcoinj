@@ -1276,6 +1276,16 @@ public class Wallet implements Serializable {
          */
         public Address changeAddress;
 
+        /**
+         * A transaction can have a fee attached, which is defined as the difference between the input values
+         * and output values. Any value taken in that is not provided to an output can be claimed by a miner. This
+         * is how mining is incentivized in later years of the Bitcoin system when inflation drops. It also provides
+         * a way for people to prioritize their transactions over others and is used as a way to make denial of service
+         * attacks expensive. Some transactions require a fee due to their structure - currently bitcoinj does not
+         * correctly calculate this! As of late 2012 most transactions require no fee.
+         */
+        public BigInteger fee = BigInteger.ZERO;
+
         // Tracks if this has been passed to wallet.completeTx already: just a safety check.
         private boolean completed;
 
@@ -1436,14 +1446,15 @@ public class Wallet implements Serializable {
      */
     public synchronized boolean completeTx(SendRequest req) {
         Preconditions.checkArgument(!req.completed, "Given SendRequest has already been completed.");
-        // Calculate the transaction total
-        BigInteger nanocoins = BigInteger.ZERO;
+        // Calculate the amount of value we need to import.
+        BigInteger value = BigInteger.ZERO;
         for (TransactionOutput output : req.tx.getOutputs()) {
-            nanocoins = nanocoins.add(output.getValue());
+            value = value.add(output.getValue());
         }
+        value = value.add(req.fee);
 
         log.info("Completing send tx with {} outputs totalling {}",
-                req.tx.getOutputs().size(), bitcoinValueToFriendlyString(nanocoins));
+                req.tx.getOutputs().size(), bitcoinValueToFriendlyString(value));
 
         // To send money to somebody else, we need to do gather up transactions with unspent outputs until we have
         // sufficient value. Many coin selection algorithms are possible, we use a simple but suboptimal one.
@@ -1461,18 +1472,18 @@ public class Wallet implements Serializable {
                 gathered.add(output);
                 valueGathered = valueGathered.add(output.getValue());
             }
-            if (valueGathered.compareTo(nanocoins) >= 0) break;
+            if (valueGathered.compareTo(value) >= 0) break;
         }
         // Can we afford this?
-        if (valueGathered.compareTo(nanocoins) < 0) {
+        if (valueGathered.compareTo(value) < 0) {
             log.info("Insufficient value in wallet for send, missing " +
-                    bitcoinValueToFriendlyString(nanocoins.subtract(valueGathered)));
+                    bitcoinValueToFriendlyString(value.subtract(valueGathered)));
             // TODO: Should throw an exception here.
             return false;
         }
         checkState(gathered.size() > 0);
         req.tx.getConfidence().setConfidenceType(TransactionConfidence.ConfidenceType.NOT_SEEN_IN_CHAIN);
-        BigInteger change = valueGathered.subtract(nanocoins);
+        BigInteger change = valueGathered.subtract(value);
         if (change.compareTo(BigInteger.ZERO) > 0) {
             // The value of the inputs is greater than what we want to send. Just like in real life then,
             // we need to take back some coins ... this is called "change". Add another output that sends the change
