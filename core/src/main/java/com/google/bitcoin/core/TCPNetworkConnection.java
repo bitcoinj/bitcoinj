@@ -168,7 +168,8 @@ public class TCPNetworkConnection implements NetworkConnection {
         // Newer clients use checksumming.
         serializer.setUseChecksumming(peerVersion >= 209);
         // Handshake is done!
-        handshakeFuture.set(this);
+        if (handshakeFuture != null)
+            handshakeFuture.set(this);
     }
 
     public void ping() throws IOException {
