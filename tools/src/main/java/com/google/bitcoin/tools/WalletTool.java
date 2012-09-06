@@ -376,10 +376,12 @@ public class WalletTool {
                     System.err.println("Malformed output specification, could not parse as value: " + parts[1]);
                 }
             }
-            if (!wallet.completeTx(t)) {
+            Wallet.SendRequest req = Wallet.SendRequest.forTx(t);
+            if (!wallet.completeTx(req)) {
                 System.err.println("Insufficient funds: have " + wallet.getBalance());
                 return;
             }
+            t = req.tx;   // Not strictly required today.
             setup();
             peers.start();
             // Wait for peers to connect, the tx to be sent to one of them and for it to be propagated across the
@@ -550,7 +552,6 @@ public class WalletTool {
         }
         new Wallet(params).saveToFile(walletFile);
         // Don't add any keys by default.
-        return;
     }
 
     private static void saveWallet(File walletFile) {
