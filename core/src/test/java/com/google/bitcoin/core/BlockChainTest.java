@@ -164,7 +164,7 @@ public class BlockChainTest {
         }
         // Now add another block that has no difficulty adjustment, it should be rejected.
         try {
-            chain.add(prev.createNextBlock(coinbaseTo));
+            chain.add(prev.createNextBlock(coinbaseTo, Block.fakeClock));
             fail();
         } catch (VerificationException e) {
         }
