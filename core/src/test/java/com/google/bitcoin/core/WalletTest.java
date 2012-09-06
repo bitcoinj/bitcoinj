@@ -116,7 +116,7 @@ public class WalletTest {
         t2.addOutput(v2, a2);
         t2.addOutput(v3, a2);
         t2.addOutput(v4, a2);
-        boolean complete = wallet.completeTx(t2);
+        boolean complete = wallet.completeTx(Wallet.SendRequest.forTx(t2));
 
         // Do some basic sanity checks.
         assertTrue(complete);
@@ -230,7 +230,7 @@ public class WalletTest {
         assertEquals(TransactionConfidence.ConfidenceType.BUILDING, tx1.getConfidence().getConfidenceType());
         assertEquals(1, tx1.getConfidence().getAppearedAtChainHeight());
         // Send 0.10 to somebody else.
-        Transaction send1 = wallet.createSend(new ECKey().toAddress(params), toNanoCoins(0, 10), myAddress);
+        Transaction send1 = wallet.createSend(new ECKey().toAddress(params), toNanoCoins(0, 10));
         // Pretend it makes it into the block chain, our wallet state is cleared but we still have the keys, and we
         // want to get back to our previous state. We can do this by just not confirming the transaction as
         // createSend is stateless.
@@ -243,7 +243,7 @@ public class WalletTest {
         assertEquals(bitcoinValueToFriendlyString(bigints[2]), "1.00");
         assertEquals(bitcoinValueToFriendlyString(bigints[3]), "0.90");
         // And we do it again after the catchup.
-        Transaction send2 = wallet.createSend(new ECKey().toAddress(params), toNanoCoins(0, 10), myAddress);
+        Transaction send2 = wallet.createSend(new ECKey().toAddress(params), toNanoCoins(0, 10));
         // What we'd really like to do is prove the official client would accept it .... no such luck unfortunately.
         wallet.commitTx(send2);
         StoredBlock b3 = createFakeBlock(params, blockStore, send2).storedBlock;
@@ -258,7 +258,7 @@ public class WalletTest {
         wallet.receiveFromBlock(tx1, null, BlockChain.NewBlockType.BEST_CHAIN);
         assertEquals(nanos, tx1.getValueSentToMe(wallet, true));
         // Send 0.10 to somebody else.
-        Transaction send1 = wallet.createSend(new ECKey().toAddress(params), toNanoCoins(0, 10), myAddress);
+        Transaction send1 = wallet.createSend(new ECKey().toAddress(params), toNanoCoins(0, 10));
         // Reserialize.
         Transaction send2 = new Transaction(params, send1.bitcoinSerialize());
         assertEquals(nanos, send2.getValueSentFromMe(wallet));
@@ -809,7 +809,7 @@ public class WalletTest {
         Transaction t2 = new Transaction(params);
         TransactionOutput o2 = new TransactionOutput(params, t2, v2, k2.toAddress(params));
         t2.addOutput(o2);
-        boolean complete = wallet.completeTx(t2);
+        boolean complete = wallet.completeTx(Wallet.SendRequest.forTx(t2));
         assertTrue(complete);
         
         // Commit t2, so it is placed in the pending pool

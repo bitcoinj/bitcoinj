@@ -1241,50 +1241,130 @@ public class Wallet implements Serializable {
         throw new RuntimeException("Unreachable");
     }
 
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //
+    //  SEND APIS
+    //
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    /** A SendResult is returned to you as part of sending coins to a recipient. */
+    public static class SendResult {
+        /** The Bitcoin transaction message that moves the money. */
+        public Transaction tx;
+        /** A future that will complete once the tx message has been successfully broadcast to the network. */
+        public ListenableFuture<Transaction> broadcastComplete;
+    }
+
     /**
-     * Statelessly creates a transaction that sends the given number of nanocoins to address. The change is sent to
-     * {@link Wallet#getChangeAddress()}, so you must have added at least one key.<p>
-     * <p/>
-     * This method is stateless in the sense that calling it twice with the same inputs will result in two
-     * Transaction objects which are equal. The wallet is not updated to track its pending status or to mark the
+     * A SendRequest gives the wallet information about precisely how to send money to a recipient or set of recipients.
+     * Static methods are provided to help you create SendRequests and there are a few helper methods on the wallet that
+     * just simplify the most common use cases. You may wish to customize a SendRequest if you want to attach a fee or
+     * modify the change address.
+     */
+    public static class SendRequest {
+        /**
+         * A transaction, probably incomplete, that describes the outline of what you want to do. This typically will
+         * mean it has some outputs to the intended destinations, but no inputs or change address (and therefore no
+         * fees) - the wallet will calculate all that for you and update tx later.
+         */
+        public Transaction tx;
+
+        /**
+         * "Change" means the difference between the value gathered by a transactions inputs (the size of which you
+         * don't really control as it depends on who sent you money), and the value being sent somewhere else. The
+         * change address should be selected from this wallet, normally. <b>If null this will be chosen for you.</b>
+         */
+        public Address changeAddress;
+
+        // Tracks if this has been passed to wallet.completeTx already: just a safety check.
+        private boolean completed;
+
+        private SendRequest() {}
+
+        public static SendRequest to(Address destination, BigInteger value) {
+            SendRequest req = new Wallet.SendRequest();
+            req.tx = new Transaction(destination.getParameters());
+            req.tx.addOutput(value, destination);
+            return req;
+        }
+
+        public static SendRequest to(NetworkParameters params, ECKey destination, BigInteger value) {
+            SendRequest req = new SendRequest();
+            req.tx = new Transaction(params);
+            req.tx.addOutput(value, destination);
+            return req;
+        }
+
+        /** Simply wraps a pre-built incomplete transaction provided by you. */
+        public static SendRequest forTx(Transaction tx) {
+            SendRequest req = new SendRequest();
+            req.tx = tx;
+            return req;
+        }
+    }
+
+    /*
+     * <p>Statelessly creates a transaction that sends the given value to address. The change is sent to
+     * {@link Wallet#getChangeAddress()}, so you must have added at least one key.</p>
+     *
+     * <p>If you just want to send money quickly, you probably want
+     * {@link Wallet#sendCoins(PeerGroup, Address, java.math.BigInteger)} instead. That will create the sending
+     * transaction, commit to the wallet and broadcast it to the network all in one go. This method is lower level
+     * and lets you see the proposed transaction before anything is done with it.</p>
+     *
+     * <p>This is a helper method that is equivalent to using {@link Wallet.SendRequest#to(Address, java.math.BigInteger)}
+     * followed by {@link Wallet#completeTx(com.google.bitcoin.core.Wallet.SendRequest)} and returning the requests
+     * transaction object. If you want more control over the process, just do those two steps yourself.</p>
+     *
+     * <p>IMPORTANT: This method does NOT update the wallet. If you call createSend again you may get two transactions
+     * that spend the same coins. You have to call {@link Wallet#commitTx(Transaction)} on the created transaction to
+     * prevent this, but that should only occur once the transaction has been accepted by the network. This implies
+     * you cannot have more than one outstanding sending tx at once.</p>
+     *
+     * @param address       The BitCoin address to send the money to.
+     * @param nanocoins     How much currency to send, in nanocoins.
+     * @return either the created Transaction or null if there are insufficient coins.
      * coins as spent until commitTx is called on the result.
      */
     public synchronized Transaction createSend(Address address, BigInteger nanocoins) {
-        return createSend(address, nanocoins, getChangeAddress());
+        SendRequest req = SendRequest.to(address, nanocoins);
+        if (completeTx(req)) {
+            return req.tx;
+        } else {
+            return null;  // No money.
+        }
     }
 
     /**
      * Sends coins to the given address but does not broadcast the resulting pending transaction. It is still stored
      * in the wallet, so when the wallet is added to a {@link PeerGroup} or {@link Peer} the transaction will be
-     * announced to the network.
+     * announced to the network. The given {@link SendRequest} is completed first using
+     * {@link Wallet#completeTx(com.google.bitcoin.core.Wallet.SendRequest)} to make it valid.
      *
-     * @param to Address to send the coins to.
-     * @param nanocoins How many coins to send.
-     * @return the Transaction that was created, or null if there are insufficient coins in thew allet.
+     * @return the Transaction that was created, or null if there are insufficient coins in the wallet.
      */
-    public synchronized Transaction sendCoinsOffline(Address to, BigInteger nanocoins) {
-        Transaction tx = createSend(to, nanocoins);
-        if (tx == null)   // Not enough money! :-(
-            return null;
+    public synchronized Transaction sendCoinsOffline(SendRequest request) {
         try {
-            commitTx(tx);
+            if (!completeTx(request))
+                return null;  // Not enough money! :-(
+            commitTx(request.tx);
+            return request.tx;
         } catch (VerificationException e) {
             throw new RuntimeException(e);  // Cannot happen unless there's a bug, as we just created this ourselves.
         }
-        return tx;
-    }
-
-    public static class SendResult {
-        public Transaction tx;
-        public ListenableFuture<Transaction> broadcastComplete;
     }
 
     /**
-     * Sends coins to the given address, via the given {@link PeerGroup}. Change is returned to
-     * {@link Wallet#getChangeAddress()}. The returned object provides both the transaction, and a future that can
-     * be used to learn when the broadcast is complete. Complete means, if the PeerGroup is limited to only one
-     * connection, when it was written out to the socket. Otherwise when the transaction is written out and we heard
-     * it back from a different peer.
+     * <p>Sends coins to the given address, via the given {@link PeerGroup}. Change is returned to
+     * {@link Wallet#getChangeAddress()}. No fee is attached <b>even if one would be required</b>.</p>
+     *
+     * <p>The returned object provides both the transaction, and a future that can be used to learn when the broadcast
+     * is complete. Complete means, if the PeerGroup is limited to only one connection, when it was written out to
+     * the socket. Otherwise when the transaction is written out and we heard it back from a different peer.</p>
+     *
+     * <p>Note that the sending transaction is committed to the wallet immediately, not when the transaction is
+     * successfully broadcast. This means that even if the network hasn't heard about your transaction you won't be
+     * able to spend those same coins again.</p>
      *
      * @param peerGroup a PeerGroup to use for broadcast or null.
      * @param to        Which address to send coins to.
@@ -1292,7 +1372,31 @@ public class Wallet implements Serializable {
      * @return An object containing the transaction that was created, and a future for the broadcast of it.
      */
     public SendResult sendCoins(PeerGroup peerGroup, Address to, BigInteger value) {
-        Transaction tx = sendCoinsOffline(to, value);
+        SendRequest request = SendRequest.to(to, value);
+        return sendCoins(peerGroup, request);
+    }
+
+    /**
+     * <p>Sends coins according to the given request, via the given {@link PeerGroup}.</p>
+     *
+     * <p>The returned object provides both the transaction, and a future that can be used to learn when the broadcast
+     * is complete. Complete means, if the PeerGroup is limited to only one connection, when it was written out to
+     * the socket. Otherwise when the transaction is written out and we heard it back from a different peer.</p>
+     *
+     * <p>Note that the sending transaction is committed to the wallet immediately, not when the transaction is
+     * successfully broadcast. This means that even if the network hasn't heard about your transaction you won't be
+     * able to spend those same coins again.</p>
+     *
+     * @param peerGroup a PeerGroup to use for broadcast or null.
+     * @param request the SendRequest that describes what to do, get one using static methods on SendRequest itself.
+     * @return An object containing the transaction that was created, and a future for the broadcast of it.
+     */
+    public SendResult sendCoins(PeerGroup peerGroup, SendRequest request) {
+        // Does not need to be synchronized as sendCoinsOffline is and the rest is all thread-local.
+
+        // Commit the TX to the wallet immediately so the spent coins won't be reused.
+        // TODO: We should probably allow the request to specify tx commit only after the network has accepted it.
+        Transaction tx = sendCoinsOffline(request);
         if (tx == null)
             return null;  // Not enough money.
         SendResult result = new SendResult();
@@ -1311,71 +1415,35 @@ public class Wallet implements Serializable {
      * If an exception is thrown by {@link Peer#sendMessage(Message)} the transaction is still committed, so the
      * pending transaction must be broadcast <b>by you</b> at some other time.
      *
-     * @param to        Which address to send coins to.
-     * @param nanocoins How many nanocoins to send. You can use Utils.toNanoCoins() to calculate this.
      * @return The {@link Transaction} that was created or null if there was insufficient balance to send the coins.
      * @throws IOException if there was a problem broadcasting the transaction
      */
-    public synchronized Transaction sendCoins(Peer peer, Address to, BigInteger nanocoins) throws IOException {
-        // TODO: This API is fairly questionable and the function isn't tested. If anything goes wrong during sending
-        // on the peer you don't get access to the created Transaction object and must fish it out of the wallet then
-        // do your own retry later.
-
-        Transaction tx = createSend(to, nanocoins);
-        if (tx == null)   // Not enough money! :-(
-            return null;
-        try {
-            commitTx(tx);
-        } catch (VerificationException e) {
-            throw new RuntimeException(e);  // Cannot happen unless there's a bug, as we just created this ourselves.
-        }
+    public synchronized Transaction sendCoins(Peer peer, SendRequest request) throws IOException {
+        Transaction tx = sendCoinsOffline(request);
+        if (tx == null)
+            return null;  // Not enough money.
         peer.sendMessage(tx);
         return tx;
     }
 
     /**
-     * Creates a transaction that sends $coins.$cents BTC to the given address.<p>
-     * <p/>
-     * IMPORTANT: This method does NOT update the wallet. If you call createSend again you may get two transactions
-     * that spend the same coins. You have to call commitTx on the created transaction to prevent this,
-     * but that should only occur once the transaction has been accepted by the network. This implies you cannot have
-     * more than one outstanding sending tx at once.
+     * Given a spend request containing an incomplete transaction, makes it valid by adding inputs and outputs according
+     * to the instructions in the request. The transaction in the request is modified by this method.
      *
-     * @param address       The BitCoin address to send the money to.
-     * @param nanocoins     How much currency to send, in nanocoins.
-     * @param changeAddress Which address to send the change to, in case we can't make exactly the right value from
-     *                      our coins. This should be an address we own (is in the keychain).
-     * @return a new {@link Transaction} or null if we cannot afford this send.
+     * @param req a SendRequest that contains the incomplete transaction and details for how to make it valid.
+     * @throws IllegalArgumentException if you try and complete the same SendRequest twice.
+     * @return False if we cannot afford this send, true otherwise.
      */
-    public synchronized Transaction createSend(Address address, BigInteger nanocoins, Address changeAddress) {
-        log.info("Creating send tx to " + address.toString() + " for " +
-                bitcoinValueToFriendlyString(nanocoins));
-
-        Transaction sendTx = new Transaction(params);
-        sendTx.addOutput(nanocoins, address);
-
-        if (completeTx(sendTx, changeAddress)) {
-            return sendTx;
-        } else {
-            return null;
-        }
-    }
-
-    /**
-     * Takes a transaction with arbitrary outputs, gathers the necessary inputs for spending, and signs it
-     * @param sendTx           The transaction to complete
-     * @param changeAddress    Which address to send the change to, in case we can't make exactly the right value from
-     *                         our coins. This should be an address we own (is in the keychain).
-     * @return False if we cannot afford this send, true otherwise
-     */
-    public synchronized boolean completeTx(Transaction sendTx, Address changeAddress) {
+    public synchronized boolean completeTx(SendRequest req) {
+        Preconditions.checkArgument(!req.completed, "Given SendRequest has already been completed.");
         // Calculate the transaction total
         BigInteger nanocoins = BigInteger.ZERO;
-        for(TransactionOutput output : sendTx.getOutputs()) {
+        for (TransactionOutput output : req.tx.getOutputs()) {
             nanocoins = nanocoins.add(output.getValue());
         }
 
-        log.info("Completing send tx with {} outputs totalling {}", sendTx.getOutputs().size(), bitcoinValueToFriendlyString(nanocoins));
+        log.info("Completing send tx with {} outputs totalling {}",
+                req.tx.getOutputs().size(), bitcoinValueToFriendlyString(nanocoins));
 
         // To send money to somebody else, we need to do gather up transactions with unspent outputs until we have
         // sufficient value. Many coin selection algorithms are possible, we use a simple but suboptimal one.
@@ -1403,39 +1471,31 @@ public class Wallet implements Serializable {
             return false;
         }
         checkState(gathered.size() > 0);
-        sendTx.getConfidence().setConfidenceType(TransactionConfidence.ConfidenceType.NOT_SEEN_IN_CHAIN);
+        req.tx.getConfidence().setConfidenceType(TransactionConfidence.ConfidenceType.NOT_SEEN_IN_CHAIN);
         BigInteger change = valueGathered.subtract(nanocoins);
         if (change.compareTo(BigInteger.ZERO) > 0) {
             // The value of the inputs is greater than what we want to send. Just like in real life then,
             // we need to take back some coins ... this is called "change". Add another output that sends the change
-            // back to us.
-            log.info("  with " + bitcoinValueToFriendlyString(change) + " coins change");
-            sendTx.addOutput(new TransactionOutput(params, sendTx, change, changeAddress));
+            // back to us. The address comes either from the request or getChangeAddress() as a default.
+            Address changeAddress = req.changeAddress != null ? req.changeAddress : getChangeAddress();
+            log.info("  with {} coins change", bitcoinValueToFriendlyString(change));
+            req.tx.addOutput(new TransactionOutput(params, req.tx, change, changeAddress));
         }
         for (TransactionOutput output : gathered) {
-            sendTx.addInput(output);
+            req.tx.addInput(output);
         }
 
         // Now sign the inputs, thus proving that we are entitled to redeem the connected outputs.
         try {
-            sendTx.signInputs(Transaction.SigHash.ALL, this);
+            req.tx.signInputs(Transaction.SigHash.ALL, this);
         } catch (ScriptException e) {
             // If this happens it means an output script in a wallet tx could not be understood. That should never
             // happen, if it does it means the wallet has got into an inconsistent state.
             throw new RuntimeException(e);
         }
-        log.info("  completed {}", sendTx.getHashAsString());
+        req.completed = true;
+        log.info("  completed {}", req.tx.getHashAsString());
         return true;
-    }
-
-    /**
-     * Takes a transaction with arbitrary outputs, gathers the necessary inputs for spending, and signs it.
-     * Change goes to {@link Wallet#getChangeAddress()}
-     * @param sendTx           The transaction to complete
-     * @return False if we cannot afford this send, true otherwise
-     */
-    public synchronized boolean completeTx(Transaction sendTx) {
-        return completeTx(sendTx, getChangeAddress());
     }
 
     synchronized Address getChangeAddress() {
