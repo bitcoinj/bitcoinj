@@ -305,7 +305,7 @@ public class WalletTool {
                 // fields gets set correctly for older wallets.
                 store = new BoundedOverheadBlockStore(params, chainFileName);
                 loader.setChainHeight(store.getChainHead().getHeight());
-                System.out.println("Setting chain height for import to " + store.getChainHead().getHeight());
+                store.close();
                 store = null;
             }
             wallet = loader.readWallet(new BufferedInputStream(new FileInputStream(walletFile)));
