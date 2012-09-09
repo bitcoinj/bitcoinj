@@ -403,7 +403,7 @@ public class WalletProtobufSerializer {
             confidence.setDepthInBlocks(confidenceProto.getDepth());
         } else {
             // TEMPORARY CODE FOR MIGRATING 0.5 WALLETS TO 0.6
-            if (chainHeight != 0) {
+            if (chainHeight != 0 && confidenceProto.hasAppearedAtHeight()) {
                 confidence.setDepthInBlocks(chainHeight - confidence.getAppearedAtChainHeight() + 1);
             }
         }
