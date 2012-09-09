@@ -114,7 +114,6 @@ public class MemoryPool {
             // Find which transaction got deleted by the GC.
             WeakTransactionReference txRef = (WeakTransactionReference) ref;
             // And remove the associated map entry so the other bits of memory can also be reclaimed.
-            log.info("Cleaned up tx {}", txRef.hash);
             memoryPool.remove(txRef.hash);
         }
     }
@@ -184,7 +183,7 @@ public class MemoryPool {
                     confidence.markBroadcastBy(a);
                 }
                 entry.addresses = null;
-                log.info("{}: Adding tx [{}] {} to the memory pool", 
+                log.debug("{}: Adding tx [{}] {} to the memory pool",
                         new Object[] { byPeer, confidence.numBroadcastPeers(), tx.getHashAsString() });
                 return tx;
             }
@@ -213,7 +212,7 @@ public class MemoryPool {
                 Transaction tx = entry.tx.get();
                 if (tx != null) {
                     tx.getConfidence().markBroadcastBy(byPeer);
-                    log.info("{}: Announced transaction we have seen before [{}] {}",
+                    log.debug("{}: Announced transaction we have seen before [{}] {}",
                             new Object[] { byPeer, tx.getConfidence().numBroadcastPeers(), tx.getHashAsString() });
                 } else {
                     // The inv is telling us about a transaction that we previously downloaded, and threw away because
@@ -222,7 +221,7 @@ public class MemoryPool {
             } else {
                 Preconditions.checkNotNull(entry.addresses);
                 entry.addresses.add(byPeer);
-                log.info("{}: Announced transaction we have seen announced before [{}] {}",
+                log.debug("{}: Announced transaction we have seen announced before [{}] {}",
                         new Object[] { byPeer, entry.addresses.size(), hash });
             }
         } else {

@@ -334,7 +334,7 @@ public class Peer {
     }
 
     private synchronized void processTransaction(Transaction tx) {
-        log.info("{}: Received broadcast tx {}", address, tx.getHashAsString());
+        log.debug("{}: Received broadcast tx {}", address, tx.getHashAsString());
         if (memoryPool != null) {
             // We may get back a different transaction object.
             tx = memoryPool.seen(tx, getAddress());
@@ -451,7 +451,7 @@ public class Peer {
                     // Some other peer already announced this so don't download.
                     it.remove();
                 } else {
-                    log.info("{}: getdata on tx {}", address, item.hash);
+                    log.debug("{}: getdata on tx {}", address, item.hash);
                     getdata.addItem(item);
                 }
                 memoryPool.seen(item.hash, this.getAddress());
