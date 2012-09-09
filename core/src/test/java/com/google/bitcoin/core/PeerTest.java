@@ -16,8 +16,11 @@
 
 package com.google.bitcoin.core;
 
-import static org.easymock.EasyMock.*;
-import static org.junit.Assert.*;
+import com.google.bitcoin.core.Peer.PeerHandler;
+import org.easymock.Capture;
+import org.jboss.netty.channel.*;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.io.IOException;
 import java.math.BigInteger;
@@ -26,12 +29,8 @@ import java.util.List;
 import java.util.concurrent.Future;
 
 import static com.google.bitcoin.core.TestUtils.*;
-import org.easymock.Capture;
-import org.jboss.netty.channel.*;
-import org.junit.Before;
-import org.junit.Test;
-
-import com.google.bitcoin.core.Peer.PeerHandler;
+import static org.easymock.EasyMock.*;
+import static org.junit.Assert.*;
 
 public class PeerTest extends TestWithNetworkConnections {
     private Peer peer;
@@ -422,7 +421,7 @@ public class PeerTest extends TestWithNetworkConnections {
         inbound(peer, headers);
         GetBlocksMessage getblocks = (GetBlocksMessage) event.getValue().getMessage();
         assertEquals(expectedLocator, getblocks.getLocator());
-        assertEquals(b3.getHash(), getblocks.getStopHash());
+        assertEquals(Sha256Hash.ZERO_HASH, getblocks.getStopHash());
         // We're supposed to get an inv here.
         InventoryMessage inv = new InventoryMessage(unitTestParams);
         inv.addItem(new InventoryItem(InventoryItem.Type.Block, b3.getHash()));

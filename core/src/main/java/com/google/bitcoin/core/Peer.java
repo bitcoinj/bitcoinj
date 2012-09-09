@@ -298,7 +298,8 @@ public class Peer {
                     log.info("Passed the fast catchup time, discarding {} headers and requesting full blocks",
                             m.getBlockHeaders().size() - i);
                     downloadBlockBodies = true;
-                    blockChainDownload(header.getHash());
+                    lastGetBlocksBegin = Sha256Hash.ZERO_HASH;  // Prevent this request being seen as a duplicate.
+                    blockChainDownload(Sha256Hash.ZERO_HASH);
                     return;
                 }
             }
