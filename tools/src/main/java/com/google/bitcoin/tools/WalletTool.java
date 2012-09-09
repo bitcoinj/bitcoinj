@@ -608,6 +608,8 @@ public class WalletTool {
         } else {
             // Freshly generated key.
             key = new ECKey();
+            if (creationTimeSeconds > 0)
+                key.setCreationTimeSeconds(creationTimeSeconds);
         }
         if (wallet.findKeyFromPubKey(key.getPubKey()) != null) {
             System.err.println("That key already exists in this wallet.");
