@@ -141,6 +141,30 @@ public class NetworkParameters implements Serializable {
     public static final int TARGET_SPACING = 10 * 60;  // 10 minutes per block.
     public static final int INTERVAL = TARGET_TIMESPAN / TARGET_SPACING;
 
+    /** Sets up the given Networkparemets with testnet3 values. */
+    private static NetworkParameters createTestNet3(NetworkParameters n) {
+        // Genesis hash is 000000000933ea01ad0ee984209779baaec3ced90fa3f408719526f8d77f4943
+        n.proofOfWorkLimit = Utils.decodeCompactBits(0x1d00ffffL);
+        n.packetMagic = 0x0b110907;
+        n.port = 18333;
+        n.addressHeader = 111;
+        n.acceptableAddressCodes = new int[] { 111 };
+        n.dumpedPrivateKeyHeader = 239;
+        n.interval = INTERVAL;
+        n.targetTimespan = TARGET_TIMESPAN;
+        n.alertSigningKey = SATOSHI_KEY;
+        n.genesisBlock = createGenesis(n);
+        n.genesisBlock.setTime(1296688602L);
+        n.genesisBlock.setDifficultyTarget(0x1d00ffffL);
+        n.genesisBlock.setNonce(414098458);
+        n.setSpendableCoinbaseDepth(100);
+        n.id = ID_TESTNET;
+        String genesisHash = n.genesisBlock.getHashAsString();
+        checkState(genesisHash.equals("000000000933ea01ad0ee984209779baaec3ced90fa3f408719526f8d77f4943"),
+                genesisHash);
+        return n;
+    }
+
     /** Sets up the given NetworkParameters with testnet values. */
     private static NetworkParameters createTestNet(NetworkParameters n) {
         // Genesis hash is 0000000224b1593e3ff16a0e3b61285bbc393a39f78c8aa48c456142671f7110
@@ -169,6 +193,12 @@ public class NetworkParameters implements Serializable {
     public static NetworkParameters testNet() {
         NetworkParameters n = new NetworkParameters();
         return createTestNet(n);
+    }
+
+    /** The testnet3 chain created by Gavin, included in Bitcoin 0.7. */
+    public static NetworkParameters testNet3() {
+        NetworkParameters n = new NetworkParameters();
+        return createTestNet3(n);
     }
 
     /** The primary BitCoin chain created by Satoshi. */
