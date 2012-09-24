@@ -4,7 +4,7 @@
 
   <groupId>com.google</groupId>
   <artifactId>bitcoinj-parent</artifactId>
-  <version>0.6-SNAPSHOT</version>
+  <version>0.7-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <modules>
@@ -13,7 +13,7 @@
     <module>tools</module>
   </modules>
 
-  <name>BitCoinJ Parent</name>
+  <name>bitcoinj Parent</name>
   <description>Provides the common configuration for the BitCoinJ modules</description>
   <url>http://code.google.com/p/bitcoinj</url>
 

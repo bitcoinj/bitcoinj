@@ -21,14 +21,14 @@
   <parent>
     <groupId>com.google</groupId>
     <artifactId>bitcoinj-parent</artifactId>
-    <version>0.6-SNAPSHOT</version>
+    <version>0.7-SNAPSHOT</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>com.google</groupId>
   <artifactId>bitcoinj-tools</artifactId>
 
-  <name>BitCoinJ Tools</name>
+  <name>bitcoinj Tools</name>
   <description>A collection of useful tools that use the BitCoinJ library to perform wallet operations</description>
 
   <build>
