@@ -49,7 +49,7 @@ import java.util.Set;
  * <p>Alternatively, you may know that the transaction is "dead", that is, one or more of its inputs have
  * been double spent and will never confirm unless there is another re-org.</p>
  *
- * <p>TransactionConfidence is updated via the {@link com.google.bitcoin.core.TransactionConfidence#notifyWorkDone()}
+ * <p>TransactionConfidence is updated via the {@link com.google.bitcoin.core.TransactionConfidence#notifyWorkDone(Block)}
  * method to ensure the block depth and work done are up to date.</p>
  * To make a copy that won't be changed, use {@link com.google.bitcoin.core.TransactionConfidence#duplicate()}.
  */
@@ -93,8 +93,10 @@ public class TransactionConfidence implements Serializable {
     public synchronized void addEventListener(Listener listener) {
         Preconditions.checkNotNull(listener);
         if (listeners == null)
-            listeners = new ArrayList<Listener>(1);
-        listeners.add(listener);
+            listeners = new ArrayList<Listener>(2);
+        // Dedupe registrations. This makes the wallet code simpler.
+        if (!listeners.contains(listener))
+            listeners.add(listener);
     }
 
     public synchronized void removeEventListener(Listener listener) {
@@ -298,6 +300,7 @@ public class TransactionConfidence implements Serializable {
         if (getConfidenceType() == ConfidenceType.BUILDING) {
             this.depth++;
             this.workDone = this.workDone.add(block.getWork());
+            runListeners();
         }
     }
 
