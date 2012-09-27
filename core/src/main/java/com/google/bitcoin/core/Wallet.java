@@ -176,6 +176,10 @@ public class Wallet implements Serializable {
     // A listener that relays confidence changes from the transaction confidence object to the wallet event listener,
     // as a convenience to API users so they don't have to register on every transaction themselves.
     private transient TransactionConfidence.Listener txConfidenceListener;
+    // If a TX hash appears in this set then notifyNewBestBlock will ignore it, as its confidence was already set up
+    // in receive() via Transaction.setBlockAppearance(). As the BlockChain always calls notifyNewBestBlock even if
+    // it sent transactions to the wallet, without this we'd double count.
+    private transient HashSet<Sha256Hash> ignoreNextNewBlock;
 
     /**
      * Creates a new, empty wallet with no keys and no transactions. If you want to restore a wallet from disk instead,
@@ -194,6 +198,7 @@ public class Wallet implements Serializable {
 
     private void createTransientState() {
         eventListeners = new ArrayList<WalletEventListener>();
+        ignoreNextNewBlock = new HashSet<Sha256Hash>();
         txConfidenceListener = new TransactionConfidence.Listener() {
             public void onConfidenceChanged(Transaction tx) {
                 invokeOnTransactionConfidenceChanged(tx);
@@ -723,14 +728,12 @@ public class Wallet implements Serializable {
                 if (valueSentToMe.equals(BigInteger.ZERO)) {
                     // There were no change transactions so this tx is fully spent.
                     log.info("  ->spent");
-                    boolean alreadyPresent = spent.put(tx.getHash(), tx) != null;
-                    checkState(!alreadyPresent, "TX in both pending and spent pools");
+                    addWalletTransaction(Pool.SPENT, tx);
                 } else {
                     // There was change back to us, or this tx was purely a spend back to ourselves (perhaps for
                     // anonymization purposes).
                     log.info("  ->unspent");
-                    boolean alreadyPresent = unspent.put(tx.getHash(), tx) != null;
-                    checkState(!alreadyPresent, "TX in both pending and unspent pools");
+                    addWalletTransaction(Pool.UNSPENT, tx);
                 }
             } else if (sideChain) {
                 // The transaction was accepted on an inactive side chain, but not yet by the best chain.
@@ -756,9 +759,12 @@ public class Wallet implements Serializable {
                     // we don't need to consider this transaction inactive, we can just ignore it.
                 } else {
                     log.info("  ->inactive");
-                    inactive.put(tx.getHash(), tx);
+                    addWalletTransaction(Pool.INACTIVE, tx);
                 }
             } else if (bestChain) {
+                // Saw a non-pending transaction appear on the best chain, ie, we are replaying the chain or a spend
+                // that we never saw broadcast (and did not originate) got included.
+                //
                 // This can trigger tx confidence listeners to be run in the case of double spends. We may need to
                 // delay the execution of the listeners until the bottom to avoid the wallet mutating during updates.
                 processTxFromBestChain(tx);
@@ -771,9 +777,16 @@ public class Wallet implements Serializable {
         // in turn allowed to re-enter the Wallet. This means we cannot assume anything about the state of the wallet
         // from now on. The balance just received may already be spent.
 
-        // Mark the tx as appearing in this block so we can find it later after a re-org.
         if (block != null) {
+            // Mark the tx as appearing in this block so we can find it later after a re-org. This also tells the tx
+            // confidence object about the block and sets its work done/depth appropriately.
             tx.setBlockAppearance(block, bestChain);
+            if (bestChain) {
+                // Don't notify this tx of work done in notifyNewBestBlock which will be called immediately after
+                // this method has been called by BlockChain for all relevant transactions. Otherwise we'd double
+                // count.
+                ignoreNextNewBlock.add(txHash);
+            }
         }
 
         // Inform anyone interested that we have received or sent coins but only if:
@@ -823,10 +836,16 @@ public class Wallet implements Serializable {
             // This is so that they can update their work done and depth.
             Set<Transaction> transactions = getTransactions(true, false);
             for (Transaction tx : transactions) {
-                tx.getConfidence().notifyWorkDone(block);
+                if (ignoreNextNewBlock.contains(tx.getHash())) {
+                    // tx was already processed in receive() due to it appearing in this block, so we don't want to
+                    // notify the tx confidence of work done twice, it'd result in miscounting.
+                    ignoreNextNewBlock.remove(tx.getHash());
+                } else {
+                    tx.getConfidence().notifyWorkDone(block);
+                }
             }
+            queueAutoSave();
         }
-        queueAutoSave();
     }
 
     /**
@@ -859,13 +878,11 @@ public class Wallet implements Serializable {
         if (!tx.getValueSentToMe(this).equals(BigInteger.ZERO)) {
             // It's sending us coins.
             log.info("  new tx {} ->unspent", tx.getHashAsString());
-            boolean alreadyPresent = unspent.put(tx.getHash(), tx) != null;
-            checkState(!alreadyPresent, "TX was received twice");
+            addWalletTransaction(Pool.UNSPENT, tx);
         } else if (!tx.getValueSentFromMe(this).equals(BigInteger.ZERO)) {
             // It spent some of our coins and did not send us any.
             log.info("  new tx {} ->spent", tx.getHashAsString());
-            boolean alreadyPresent = spent.put(tx.getHash(), tx) != null;
-            checkState(!alreadyPresent, "TX was received twice");
+            addWalletTransaction(Pool.SPENT, tx);
         } else {
             // It didn't send us coins nor spend any of our coins. If we're processing it, that must be because it
             // spends outpoints that are also spent by some pending transactions - maybe a double spend of somebody
@@ -880,7 +897,7 @@ public class Wallet implements Serializable {
             log.warn("Saw double spend from chain override pending tx {}", doubleSpend.getHashAsString());
             log.warn("  <-pending ->dead");
             pending.remove(doubleSpend.getHash());
-            dead.put(doubleSpend.getHash(), doubleSpend);
+            addWalletTransaction(Pool.DEAD, doubleSpend);
             // Inform the event listeners of the newly dead tx.
             doubleSpend.getConfidence().setOverridingTransaction(tx);
         }
@@ -1017,6 +1034,7 @@ public class Wallet implements Serializable {
         // spends.
         updateForSpends(tx, false);
         // Add to the pending pool. It'll be moved out once we receive this transaction on the best chain.
+        // This also registers txConfidenceListener so wallet listeners get informed.
         log.info("->pending: {}", tx.getHashAsString());
         addWalletTransaction(Pool.PENDING, tx);
 
@@ -1097,33 +1115,34 @@ public class Wallet implements Serializable {
     }
 
     /**
-     * Adds the given transaction to the given pools and registers a confidence change listener on it. Not to be used
-     * when moving txns between pools.
+     * Adds the given transaction to the given pools and registers a confidence change listener on it.
      */
     private synchronized void addWalletTransaction(Pool pool, Transaction tx) {
         switch (pool) {
         case UNSPENT:
-            unspent.put(tx.getHash(), tx);
+            Preconditions.checkState(unspent.put(tx.getHash(), tx) == null);
             break;
         case SPENT:
-            spent.put(tx.getHash(), tx);
+            Preconditions.checkState(spent.put(tx.getHash(), tx) == null);
             break;
         case PENDING:
-            pending.put(tx.getHash(), tx);
+            Preconditions.checkState(pending.put(tx.getHash(), tx) == null);
             break;
         case DEAD:
-            dead.put(tx.getHash(), tx);
+            Preconditions.checkState(dead.put(tx.getHash(), tx) == null);
             break;
         case INACTIVE:
-            inactive.put(tx.getHash(), tx);
+            Preconditions.checkState(inactive.put(tx.getHash(), tx) == null);
             break;
         case PENDING_INACTIVE:
-            pending.put(tx.getHash(), tx);
-            inactive.put(tx.getHash(), tx);
+            Preconditions.checkState(pending.put(tx.getHash(), tx) == null);
+            Preconditions.checkState(inactive.put(tx.getHash(), tx) == null);
             break;
         default:
             throw new RuntimeException("Unknown wallet transaction type " + pool);
         }
+        // This is safe even if the listener has been added before, as TransactionConfidence ignores duplicate
+        // registration requests. That makes the code in the wallet simpler.
         tx.getConfidence().addEventListener(txConfidenceListener);
     }
 

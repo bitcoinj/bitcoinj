@@ -242,14 +242,14 @@ public class Transaction extends ChildMessage implements Serializable {
     }
 
     /**
-     * Puts the given block in the internal serializable set of blocks in which this transaction appears. This is
+     * <p>Puts the given block in the internal serializable set of blocks in which this transaction appears. This is
      * used by the wallet to ensure transactions that appear on side chains are recorded properly even though the
-     * block stores do not save the transaction data at all.<p>
+     * block stores do not save the transaction data at all.</p>
      *
      * <p>If there is a re-org this will be called once for each block that was previously seen, to update which block
-     * is the best chain. The best chain block is guaranteed to be called last. So this must be idempotent.
+     * is the best chain. The best chain block is guaranteed to be called last. So this must be idempotent.</p>
      *
-     * <p>Sets updatedAt to be the earliest valid block time where this tx was seen
+     * <p>Sets updatedAt to be the earliest valid block time where this tx was seen.</p>
      * 
      * @param block     The {@link StoredBlock} in which the transaction has appeared.
      * @param bestChain whether to set the updatedAt timestamp from the block header (only if not already set)
@@ -269,10 +269,14 @@ public class Transaction extends ChildMessage implements Serializable {
             transactionConfidence.setAppearedAtChainHeight(block.getHeight());
 
             // Reset the confidence block depth.
-            transactionConfidence.setDepthInBlocks(0);
+            transactionConfidence.setDepthInBlocks(1);
 
             // Reset the work done.
-            transactionConfidence.setWorkDone(BigInteger.ZERO);
+            try {
+                transactionConfidence.setWorkDone(block.getHeader().getWork());
+            } catch (VerificationException e) {
+                throw new RuntimeException(e);  // Cannot happen.
+            }
 
             // The transaction is now on the best chain.
             transactionConfidence.setConfidenceType(ConfidenceType.BUILDING);

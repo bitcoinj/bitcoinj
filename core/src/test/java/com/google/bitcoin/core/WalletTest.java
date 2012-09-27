@@ -27,6 +27,7 @@ import org.junit.Test;
 import java.io.File;
 import java.math.BigInteger;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -211,6 +212,7 @@ public class WalletTest {
         // Test that we correctly process transactions arriving from the chain, with callbacks for inbound and outbound.
         final BigInteger bigints[] = new BigInteger[4];
         final Transaction txn[] = new Transaction[2];
+        final LinkedList<Transaction> confTxns = new LinkedList<Transaction>();
         wallet.addEventListener(new AbstractWalletEventListener() {
             @Override
             public void onCoinsReceived(Wallet wallet, Transaction tx, BigInteger prevBalance, BigInteger newBalance) {
@@ -227,14 +229,22 @@ public class WalletTest {
                 bigints[3] = newBalance;
                 txn[1] = tx;
             }
+
+            @Override
+            public void onTransactionConfidenceChanged(Wallet wallet, Transaction tx) {
+                super.onTransactionConfidenceChanged(wallet, tx);
+                confTxns.add(tx);
+            }
         });
         
         // Receive some money.
         BigInteger oneCoin = Utils.toNanoCoins(1, 0);
         Transaction tx1 = createFakeTx(params, oneCoin, myAddress);
-        StoredBlock b1 = createFakeBlock(params, blockStore, tx1).storedBlock;
-        wallet.receiveFromBlock(tx1, b1, BlockChain.NewBlockType.BEST_CHAIN);
+        BlockPair b1 = createFakeBlock(params, blockStore, tx1);
+        wallet.receiveFromBlock(tx1, b1.storedBlock, BlockChain.NewBlockType.BEST_CHAIN);
+        wallet.notifyNewBestBlock(b1.block);
         assertEquals(null, txn[1]);  // onCoinsSent not called.
+        assertEquals(tx1, confTxns.getFirst());   // onTransactionConfidenceChanged called
         assertEquals(txn[0].getHash(), tx1.getHash());
         assertEquals(BigInteger.ZERO, bigints[0]);
         assertEquals(oneCoin, bigints[1]);
@@ -246,10 +256,13 @@ public class WalletTest {
         // want to get back to our previous state. We can do this by just not confirming the transaction as
         // createSend is stateless.
         txn[0] = txn[1] = null;
-        StoredBlock b2 = createFakeBlock(params, blockStore, send1).storedBlock;
-        wallet.receiveFromBlock(send1, b2, BlockChain.NewBlockType.BEST_CHAIN);
+        confTxns.clear();
+        BlockPair b2 = createFakeBlock(params, blockStore, send1);
+        wallet.receiveFromBlock(send1, b2.storedBlock, BlockChain.NewBlockType.BEST_CHAIN);
+        wallet.notifyNewBestBlock(b2.block);
         assertEquals(bitcoinValueToFriendlyString(wallet.getBalance()), "0.90");
         assertEquals(null, txn[0]);
+        assertEquals(2, confTxns.size());
         assertEquals(txn[1].getHash(), send1.getHash());
         assertEquals(bitcoinValueToFriendlyString(bigints[2]), "1.00");
         assertEquals(bitcoinValueToFriendlyString(bigints[3]), "0.90");
@@ -257,9 +270,14 @@ public class WalletTest {
         Transaction send2 = wallet.createSend(new ECKey().toAddress(params), toNanoCoins(0, 10));
         // What we'd really like to do is prove the official client would accept it .... no such luck unfortunately.
         wallet.commitTx(send2);
-        StoredBlock b3 = createFakeBlock(params, blockStore, send2).storedBlock;
-        wallet.receiveFromBlock(send2, b3, BlockChain.NewBlockType.BEST_CHAIN);
+        BlockPair b3 = createFakeBlock(params, blockStore, send2);
+        wallet.receiveFromBlock(send2, b3.storedBlock, BlockChain.NewBlockType.BEST_CHAIN);
+        wallet.notifyNewBestBlock(b3.block);
         assertEquals(bitcoinValueToFriendlyString(wallet.getBalance()), "0.80");
+        Block b4 = createFakeBlock(params, blockStore).block;
+        confTxns.clear();
+        wallet.notifyNewBestBlock(b4);
+        assertEquals(3, confTxns.size());
     }
 
     @Test
