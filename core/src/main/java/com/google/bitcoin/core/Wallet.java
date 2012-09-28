@@ -1997,7 +1997,7 @@ public class Wallet implements Serializable {
         boolean isDead = false;
         // The transactions that we connected inputs to, so we can go back later and move them into the right
         // bucket if all their outputs got spent.
-        Set<Transaction> connectedTransactions = new TreeSet<Transaction>();
+        Set<Transaction> connectedTransactions = new HashSet<Transaction>();
         for (TransactionInput input : tx.getInputs()) {
             TransactionInput.ConnectionResult result = input.connect(pool, TransactionInput.ConnectMode.ABORT_ON_CONFLICT);
             if (result == TransactionInput.ConnectionResult.SUCCESS) {
