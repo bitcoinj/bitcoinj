@@ -21,6 +21,7 @@ import com.google.bitcoin.core.WalletTransaction.Pool;
 import com.google.bitcoin.store.BlockStore;
 import com.google.bitcoin.store.MemoryBlockStore;
 import com.google.bitcoin.utils.BriefLogFormatter;
+import com.google.common.collect.Lists;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -91,19 +92,19 @@ public class WalletTest {
 
         // We have NOT proven that the signature is correct!
 
-        final Transaction[] txns = new Transaction[1];
+        final LinkedList<Transaction> txns = Lists.newLinkedList();
         wallet.addEventListener(new AbstractWalletEventListener() {
             @Override
             public void onCoinsSent(Wallet wallet, Transaction tx, BigInteger prevBalance, BigInteger newBalance) {
-                assertNull(txns[0]);
-                txns[0] = tx;
+                txns.add(tx);
             }
         });
         wallet.commitTx(t2);
         assertEquals(1, wallet.getPoolSize(WalletTransaction.Pool.PENDING));
         assertEquals(1, wallet.getPoolSize(WalletTransaction.Pool.SPENT));
         assertEquals(2, wallet.getPoolSize(WalletTransaction.Pool.ALL));
-        assertEquals(t2, txns[0]);
+        assertEquals(t2, txns.getFirst());
+        assertEquals(1, txns.size());
     }
 
     @Test
@@ -400,6 +401,7 @@ public class WalletTest {
         // This needs to work both for transactions we create, and that we receive from others.
         final Transaction[] eventDead = new Transaction[1];
         final Transaction[] eventReplacement = new Transaction[1];
+        final int[] eventWalletChanged = new int[1];
         wallet.addEventListener(new AbstractWalletEventListener() {
             @Override
             public void onTransactionConfidenceChanged(Wallet wallet, Transaction tx) {
@@ -410,12 +412,19 @@ public class WalletTest {
                     eventReplacement[0] = tx.getConfidence().getOverridingTransaction();
                 }
             }
+
+            @Override
+            public void onWalletChanged(Wallet wallet) {
+                eventWalletChanged[0]++;
+            }
         });
 
         // Receive 1 BTC.
         BigInteger nanos = Utils.toNanoCoins(1, 0);
         Transaction t1 = createFakeTx(params, nanos, myAddress);
-        wallet.receiveFromBlock(t1, null, BlockChain.NewBlockType.BEST_CHAIN);
+        BlockPair bp1 = createFakeBlock(params, blockStore, t1);
+        wallet.receiveFromBlock(t1, bp1.storedBlock, BlockChain.NewBlockType.BEST_CHAIN);
+        wallet.notifyNewBestBlock(bp1.block);
         // Create a send to a merchant.
         Transaction send1 = wallet.createSend(new ECKey().toAddress(params), toNanoCoins(0, 50));
         // Create a double spend.
@@ -424,7 +433,9 @@ public class WalletTest {
         // Broadcast send1.
         wallet.commitTx(send1);
         // Receive a block that overrides it.
-        wallet.receiveFromBlock(send2, null, BlockChain.NewBlockType.BEST_CHAIN);
+        BlockPair bp2 = createFakeBlock(params, blockStore, send2);
+        wallet.receiveFromBlock(send2, bp2.storedBlock, BlockChain.NewBlockType.BEST_CHAIN);
+        wallet.notifyNewBestBlock(bp2.block);
         assertEquals(send1, eventDead[0]);
         assertEquals(send2, eventReplacement[0]);
         assertEquals(TransactionConfidence.ConfidenceType.DEAD,
@@ -435,10 +446,13 @@ public class WalletTest {
         wallet.receivePending(doubleSpends.t1);
         assertEquals(TransactionConfidence.ConfidenceType.NOT_SEEN_IN_CHAIN,
                 doubleSpends.t1.getConfidence().getConfidenceType());
-        wallet.receiveFromBlock(doubleSpends.t2, null, BlockChain.NewBlockType.BEST_CHAIN);
+        BlockPair bp3 = createFakeBlock(params, blockStore,  doubleSpends.t2);
+        wallet.receiveFromBlock(doubleSpends.t2, bp3.storedBlock, BlockChain.NewBlockType.BEST_CHAIN);
+        wallet.notifyNewBestBlock(bp3.block);
         assertEquals(TransactionConfidence.ConfidenceType.DEAD,
                      doubleSpends.t1.getConfidence().getConfidenceType());
         assertEquals(doubleSpends.t2, doubleSpends.t1.getConfidence().getOverridingTransaction());
+        assertEquals(5, eventWalletChanged[0]);
     }
 
     @Test
@@ -450,6 +464,7 @@ public class WalletTest {
         // First one is "called" second is "pending".
         final boolean[] flags = new boolean[2];
         final Transaction[] notifiedTx = new Transaction[1];
+        final int[] walletChanged = new int[1];
         wallet.addEventListener(new AbstractWalletEventListener() {
             @Override
             public void onCoinsReceived(Wallet wallet, Transaction tx, BigInteger prevBalance, BigInteger newBalance) {
@@ -461,6 +476,11 @@ public class WalletTest {
                 flags[0] = true;
                 flags[1] = tx.isPending();
                 notifiedTx[0] = tx;
+            }
+
+            @Override
+            public void onWalletChanged(Wallet wallet) {
+                walletChanged[0]++;
             }
         });
 
@@ -483,8 +503,9 @@ public class WalletTest {
         assertEquals(TransactionConfidence.ConfidenceType.NOT_SEEN_IN_CHAIN,
                 notifiedTx[0].getConfidence().getConfidenceType());
         final Transaction t1Copy = new Transaction(params, t1.bitcoinSerialize());
-        wallet.receiveFromBlock(t1Copy, createFakeBlock(params, blockStore, t1Copy).storedBlock,
-                BlockChain.NewBlockType.BEST_CHAIN);
+        BlockPair fakeBlock = createFakeBlock(params, blockStore, t1Copy);
+        wallet.receiveFromBlock(t1Copy, fakeBlock.storedBlock, BlockChain.NewBlockType.BEST_CHAIN);
+        wallet.notifyNewBestBlock(fakeBlock.block);
         assertFalse(flags[0]);
         assertTrue(flags[1]);
         assertEquals(TransactionConfidence.ConfidenceType.BUILDING, notifiedTx[0].getConfidence().getConfidenceType());
@@ -494,6 +515,7 @@ public class WalletTest {
         Transaction irrelevant = createFakeTx(params, nanos, new ECKey().toAddress(params));
         wallet.receivePending(irrelevant);
         assertFalse(flags[0]);
+        assertEquals(2, walletChanged[0]);
     }
 
     @Test

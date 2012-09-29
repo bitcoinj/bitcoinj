@@ -57,11 +57,16 @@ public class ChainSplitTest {
         // Check that if the block chain forks, we end up using the right chain. Only tests inbound transactions
         // (receiving coins). Checking that we understand reversed spends is in testForking2.
         final boolean[] reorgHappened = new boolean[1];
-        reorgHappened[0] = false;
+        final int[] walletChanged = new int[1];
         wallet.addEventListener(new AbstractWalletEventListener() {
             @Override
             public void onReorganize(Wallet wallet) {
                 reorgHappened[0] = true;
+            }
+
+            @Override
+            public void onWalletChanged(Wallet wallet) {
+                walletChanged[0]++;
             }
         });
 
@@ -71,6 +76,7 @@ public class ChainSplitTest {
         assertTrue(chain.add(b1));
         assertTrue(chain.add(b2));
         assertFalse(reorgHappened[0]);
+        assertEquals(2, walletChanged[0]);
         // We got two blocks which generated 50 coins each, to us.
         assertEquals("100.00", Utils.bitcoinValueToFriendlyString(wallet.getBalance()));
         // We now have the following chain:
@@ -85,10 +91,12 @@ public class ChainSplitTest {
         Block b3 = b1.createNextBlock(someOtherGuy);
         assertTrue(chain.add(b3));
         assertFalse(reorgHappened[0]);  // No re-org took place.
+        assertEquals(2, walletChanged[0]);
         assertEquals("100.00", Utils.bitcoinValueToFriendlyString(wallet.getBalance()));
         // Now we add another block to make the alternative chain longer.
         assertTrue(chain.add(b3.createNextBlock(someOtherGuy)));
         assertTrue(reorgHappened[0]);  // Re-org took place.
+        assertEquals(3, walletChanged[0]);
         reorgHappened[0] = false;
         //
         //     genesis -> b1 -> b2
@@ -106,6 +114,7 @@ public class ChainSplitTest {
         //                  \-> b3 -> b4
         //
         assertTrue(reorgHappened[0]);
+        assertEquals(4, walletChanged[0]);
         assertEquals("200.00", Utils.bitcoinValueToFriendlyString(wallet.getBalance()));
     }
 

@@ -61,28 +61,27 @@ public interface WalletEventListener {
      */
     void onCoinsSent(Wallet wallet, Transaction tx, BigInteger prevBalance, BigInteger newBalance);
 
+    // TODO: Finish onReorganize to be more useful.
     /**
-     * This is called on a Peer thread when a block is received that triggers a block chain re-organization.<p>
-     * <p/>
-     * A re-organize means that the consensus (chain) of the network has diverged and now changed from what we
+     * <p>This is called on a Peer thread when a block is received that triggers a block chain re-organization.
+     * </p>
+     * <p>A re-organize means that the consensus (chain) of the network has diverged and now changed from what we
      * believed it was previously. Usually this won't matter because the new consensus will include all our old
      * transactions assuming we are playing by the rules. However it's theoretically possible for our balance to
-     * change in arbitrary ways, most likely, we could lose some money we thought we had.<p>
-     * <p/>
-     * It is safe to use methods of wallet whilst inside this callback.
-     * <p/>
-     * TODO: Finish this interface.
+     * change in arbitrary ways, most likely, we could lose some money we thought we had.</p>
+     *
+     * <p>It is safe to use methods of wallet whilst inside this callback.</p>
      */
     void onReorganize(Wallet wallet);
 
     // TODO: Flesh out the docs below some more to clarify what happens during re-orgs and other edge cases.
     /**
-     * Called on a Peer thread when a transaction changes its confidence level. You can also attach event listeners to
+     * <p>Called on a Peer thread when a transaction changes its confidence level. You can also attach event listeners to
      * the individual transactions, if you don't care about all of them. Usually you would save the wallet to disk after
-     * receiving this callback.<p>
+     * receiving this callback unless you already set up autosaving.</p>
      *
-     * You should pay attention to this callback in case a transaction becomes <i>dead</i>, that is, a transaction you
-     * believed to be active (send or receive) becomes overridden by the network. This can happen if<p>
+     * <p>You should pay attention to this callback in case a transaction becomes <i>dead</i>, that is, a transaction
+     * you believed to be active (send or receive) becomes overridden by the network. This can happen if</p>
      *
      * <ol>
      *     <li>You are sharing keys between wallets and accidentally create/broadcast a double spend.</li>
@@ -91,11 +90,36 @@ public interface WalletEventListener {
      *     will then re-use the same outputs when creating the next spend.</li>
      * </ol><p>
      *
-     * To find if the transaction is dead, you can use <tt>tx.getConfidence().getConfidenceType() ==
+     * <p>To find if the transaction is dead, you can use <tt>tx.getConfidence().getConfidenceType() ==
      * TransactionConfidence.ConfidenceType.DEAD</tt>. If it is, you should notify the user
-     * in some way so they know the thing they bought may not arrive/the thing they sold should not be dispatched.
+     * in some way so they know the thing they bought may not arrive/the thing they sold should not be dispatched.</p>
+     *
+     * <p>Note that this callback will be invoked for every transaction in the wallet, for every new block that is
+     * received (because the depth has changed). <b>If you want to update a UI view from the contents of the wallet
+     * it is more efficient to use onWalletChanged instead.</b></p>
      */
     void onTransactionConfidenceChanged(Wallet wallet, Transaction tx);
+
+    /**
+     * <p>Designed for GUI applications to refresh their transaction lists. This callback is invoked in the following
+     * situations:</p>
+     *
+     * <ol>
+     *     <li>A new block is received (and thus building transactions got more confidence)</li>
+     *     <li>A pending transaction is received</li>
+     *     <li>A pending transaction changes confidence due to some non-new-block related event, such as being
+     *     announced by more peers or by  a double-spend conflict being observed.</li>
+     *     <li>A re-organize occurs. Call occurs only if the re-org modified any of our transactions.</li>
+     *     <li>A new spend is committed to the wallet</li>
+     * </ol>
+     *
+     * <p>When this is called you can refresh the UI contents from the wallet contents. It's more efficient to use
+     * this rather than onTransactionConfidenceChanged() + onReorganize() because you only get one callback per block
+     * rather than one per transaction per block. Note that this is <b>not</b> called when a key is added. The wallet
+     * <b>is locked</b> whilst this handler is invoked, but if you relay the callback into another thread (eg the
+     * main UI thread) you should ensure to lock the wallet in the new thread as well.</p>
+     */
+    void onWalletChanged(Wallet wallet);
 
     /**
      * Called by the {@link Wallet#addKey(ECKey)} method on whatever the calling thread was.

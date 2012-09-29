@@ -202,6 +202,16 @@ public class Wallet implements Serializable {
         txConfidenceListener = new TransactionConfidence.Listener() {
             public void onConfidenceChanged(Transaction tx) {
                 invokeOnTransactionConfidenceChanged(tx);
+                // Many onWalletChanged events will not occur because they are suppressed, eg, because:
+                //   - we are inside a re-org
+                //   - we are in the middle of processing a block
+                //   - the confidence is changing because a new best block was accepted
+                // It will run in cases like:
+                //   - the tx is pending and another peer announced it
+                //   - the tx is pending and was killed by a detected double spend that was not in a block
+                // The latter case cannot happen today because we won't hear about it, but in future this may
+                // become more common if conflict notices are implemented.
+                invokeOnWalletChanged();
             }
         };
     }
@@ -714,6 +724,8 @@ public class Wallet implements Serializable {
                     bitcoinValueToFriendlyString(valueDifference), tx.getHashAsString()});
         }
 
+        onWalletChangedSuppressions++;
+
         // If this transaction is already in the wallet we may need to move it into a different pool. At the very
         // least we need to ensure we're manipulating the canonical object rather than a duplicate.
         Transaction wtx;
@@ -814,6 +826,9 @@ public class Wallet implements Serializable {
             }
         }
 
+        // Wallet change notification will be sent shortly after the block is finished processing, in notifyNewBestBlock
+        onWalletChangedSuppressions--;
+
         checkState(isConsistent());
         queueAutoSave();
     }
@@ -824,28 +839,33 @@ public class Wallet implements Serializable {
      * not be called (the {@link Wallet#reorganize(StoredBlock, java.util.List, java.util.List)} method will
      * call this one in that case).</p>
      *
-     * <p>Used to update confidence data in each transaction and last seen block hash. Triggers auto saving.</p>
+     * <p>Used to update confidence data in each transaction and last seen block hash. Triggers auto saving.
+     * Invokes the onWalletChanged event listener if there were any affected transactions.</p>
      */
     public synchronized void notifyNewBestBlock(Block block) throws VerificationException {
         // Check to see if this block has been seen before.
         Sha256Hash newBlockHash = block.getHash();
-        if (!newBlockHash.equals(getLastBlockSeenHash())) {
-            // Store the new block hash.
-            setLastBlockSeenHash(newBlockHash);
-            // Notify all the BUILDING transactions of the new block.
-            // This is so that they can update their work done and depth.
-            Set<Transaction> transactions = getTransactions(true, false);
-            for (Transaction tx : transactions) {
-                if (ignoreNextNewBlock.contains(tx.getHash())) {
-                    // tx was already processed in receive() due to it appearing in this block, so we don't want to
-                    // notify the tx confidence of work done twice, it'd result in miscounting.
-                    ignoreNextNewBlock.remove(tx.getHash());
-                } else {
-                    tx.getConfidence().notifyWorkDone(block);
-                }
+        if (newBlockHash.equals(getLastBlockSeenHash()))
+            return;
+        // Store the new block hash.
+        setLastBlockSeenHash(newBlockHash);
+        // TODO: Clarify the code below.
+        // Notify all the BUILDING transactions of the new block.
+        // This is so that they can update their work done and depth.
+        onWalletChangedSuppressions++;
+        Set<Transaction> transactions = getTransactions(true, false);
+        for (Transaction tx : transactions) {
+            if (ignoreNextNewBlock.contains(tx.getHash())) {
+                // tx was already processed in receive() due to it appearing in this block, so we don't want to
+                // notify the tx confidence of work done twice, it'd result in miscounting.
+                ignoreNextNewBlock.remove(tx.getHash());
+            } else {
+                tx.getConfidence().notifyWorkDone(block);
             }
-            queueAutoSave();
         }
+        queueAutoSave();
+        onWalletChangedSuppressions--;
+        invokeOnWalletChanged();
     }
 
     /**
@@ -1047,6 +1067,8 @@ public class Wallet implements Serializable {
                 invokeOnCoinsReceived(tx, balance, newBalance);
             if (valueSentFromMe.compareTo(BigInteger.ZERO) > 0)
                 invokeOnCoinsSent(tx, balance, newBalance);
+
+            invokeOnWalletChanged();
         } catch (ScriptException e) {
             // Cannot happen as we just created this transaction ourselves.
             throw new RuntimeException(e);
@@ -1809,6 +1831,10 @@ public class Wallet implements Serializable {
         log.info(affectedUs ? "Re-org affected our transactions" : "Re-org had no effect on our transactions");
         if (!affectedUs) return;
 
+        // Avoid spuriously informing the user of wallet changes whilst we're re-organizing. This also prevents the
+        // user from modifying wallet contents (eg, trying to spend) whilst we're in the middle of the process.
+        onWalletChangedSuppressions++;
+
         // For simplicity we will reprocess every transaction to ensure it's in the right bucket and has the right
         // connections. Attempting to update each one with minimal work is possible but complex and was leading to
         // edge cases that were hard to fix. As re-orgs are rare the amount of work this implies should be manageable
@@ -1966,6 +1992,8 @@ public class Wallet implements Serializable {
                 listener.onReorganize(Wallet.this);
             }
         });
+        onWalletChangedSuppressions--;
+        invokeOnWalletChanged();
         checkState(isConsistent());
     }
 
@@ -2046,6 +2074,21 @@ public class Wallet implements Serializable {
             @Override
             public void invoke(WalletEventListener listener) {
                 listener.onTransactionConfidenceChanged(Wallet.this, tx);
+            }
+        });
+    }
+
+    private int onWalletChangedSuppressions;
+    private synchronized void invokeOnWalletChanged() {
+        // Don't invoke the callback in some circumstances, eg, whilst we are re-organizing or fiddling with
+        // transactions due to a new block arriving. It will be called later instead.
+        Preconditions.checkState(onWalletChangedSuppressions >= 0);
+        if (onWalletChangedSuppressions > 0) return;
+        // Call with the wallet locked.
+        EventListenerInvoker.invoke(eventListeners, new EventListenerInvoker<WalletEventListener>() {
+            @Override
+            public void invoke(WalletEventListener listener) {
+                listener.onWalletChanged(Wallet.this);
             }
         });
     }
