@@ -57,30 +57,25 @@ public class Transaction extends ChildMessage implements Serializable {
 
     private long lockTime;
 
-    // This is being migrated to appearsInHashes. It's set to null after migration.
-    Set<StoredBlock> appearsIn;
-    
-    // Stored only in Java serialization. This is either the time the transaction was broadcast as measured from the
-    // local clock, or the time from the block in which it was included. Note that this can be changed by re-orgs so
-    // the wallet may update this field. Old serialized transactions don't have this field, thus null is valid.
-    // It is used for returning an ordered list of transactions from a wallet, which is helpful for presenting to
-    // users.
-    Date updatedAt;
+    // This is either the time the transaction was broadcast as measured from the local clock, or the time from the
+    // block in which it was included. Note that this can be changed by re-orgs so the wallet may update this field.
+    // Old serialized transactions don't have this field, thus null is valid. It is used for returning an ordered
+    // list of transactions from a wallet, which is helpful for presenting to users.
+    private Date updatedAt;
 
     // This is an in memory helper only.
-    transient Sha256Hash hash;
+    private transient Sha256Hash hash;
     
     // Data about how confirmed this tx is. Serialized, may be null. 
     private TransactionConfidence confidence;
 
-    // This records which blocks the transaction
-    // has been included in. For most transactions this set will have a single member. In the case of a chain split a
-    // transaction may appear in multiple blocks but only one of them is part of the best chain. It's not valid to
-    // have an identical transaction appear in two blocks in the same chain but this invariant is expensive to check,
-    // so it's not directly enforced anywhere.
+    // This records which blocks the transaction has been included in. For most transactions this set will have a
+    // single member. In the case of a chain split a transaction may appear in multiple blocks but only one of them
+    // is part of the best chain. It's not valid to have an identical transaction appear in two blocks in the same chain
+    // but this invariant is expensive to check, so it's not directly enforced anywhere.
     //
     // If this transaction is not stored in the wallet, appearsInHashes is null.
-    Set<Sha256Hash> appearsInHashes;
+    private Set<Sha256Hash> appearsInHashes;
 
     public Transaction(NetworkParameters params) {
         super(params);
@@ -218,18 +213,6 @@ public class Transaction extends ChildMessage implements Serializable {
      * because it's not stored in the wallet or because it has never appeared in a block.
      */
     public Collection<Sha256Hash> getAppearsInHashes() {
-        if (appearsInHashes != null)
-            return appearsInHashes;
-        
-        if (appearsIn != null) {
-            log.info("Migrating a tx to appearsInHashes");
-            appearsInHashes = new HashSet<Sha256Hash>(appearsIn.size());
-            for (StoredBlock block : appearsIn) {
-                appearsInHashes.add(block.getHeader().getHash());
-            }
-            appearsIn = null;
-        }
-        
         return appearsInHashes;
     }
 

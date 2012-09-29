@@ -26,7 +26,6 @@ import org.junit.Test;
 
 import java.io.File;
 import java.math.BigInteger;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -616,8 +615,8 @@ public class WalletTest {
 
         // Verify we can handle the case of older wallets in which the timestamp is null (guessed from the
         // block appearances list).
-        tx1.updatedAt = null;
-        tx3.updatedAt = null;
+        tx1.setUpdateTime(null);
+        tx3.setUpdateTime(null);
         // Check we got them back in order.
         transactions = wallet.getTransactionsByTime();
         assertEquals(tx2,  transactions.get(0));
@@ -636,18 +635,6 @@ public class WalletTest {
         Utils.rollMockClock(60);
         wallet.addKey(new ECKey());
         assertEquals(now + 60, wallet.getEarliestKeyCreationTime());
-    }
-    
-    @Test
-    public void transactionAppearsInMigration() throws Exception {
-        // Test migration from appearsIn to appearsInHashes
-        Transaction tx1 = createFakeTx(params, Utils.toNanoCoins(1, 0), myAddress);
-        StoredBlock b1 = createFakeBlock(params, blockStore, tx1).storedBlock;
-        tx1.appearsIn = new HashSet<StoredBlock>();
-        tx1.appearsIn.add(b1);
-        assertEquals(1, tx1.getAppearsInHashes().size());
-        assertTrue(tx1.getAppearsInHashes().contains(b1.getHeader().getHash()));
-        assertNull(tx1.appearsIn);
     }
 
     @Test
