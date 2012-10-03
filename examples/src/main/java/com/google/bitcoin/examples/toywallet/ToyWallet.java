@@ -18,27 +18,31 @@ package com.google.bitcoin.examples.toywallet;
 
 import com.google.bitcoin.core.*;
 import com.google.bitcoin.discovery.DnsDiscovery;
+import com.google.bitcoin.discovery.IrcDiscovery;
 import com.google.bitcoin.store.BoundedOverheadBlockStore;
 import com.google.bitcoin.utils.BriefLogFormatter;
+import com.google.common.collect.Lists;
 import org.spongycastle.util.encoders.Hex;
 
 import javax.swing.*;
+import javax.swing.table.AbstractTableModel;
 import java.awt.*;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.StringSelection;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.IOException;
 import java.math.BigInteger;
-import java.net.InetAddress;
-import java.util.ArrayList;
 import java.util.Date;
+import java.util.LinkedList;
 import java.util.List;
-import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 /**
  * A GUI demo that lets you watch received transactions as they accumulate confidence.
  */
 public class ToyWallet {
-    private final TxListModel txListModel = new TxListModel();
-    private JList txList;
     private NetworkParameters params;
     private Wallet wallet;
     private PeerGroup peerGroup;
@@ -46,16 +50,70 @@ public class ToyWallet {
     private JLabel networkStats;
     private File walletFile;
     private JScrollPane txScrollPane;
+    private JTable txTable;
+    private TransactionTableModel txTableModel;
 
     public static void main(String[] args) throws Exception {
         BriefLogFormatter.init();
-        new ToyWallet(false, args);
+        new ToyWallet(true, args);
+    }
+
+    // Converts the contents of the wallet to a table for the GUI.
+    public class TransactionTableModel extends AbstractTableModel {
+        private List<Transaction> transactions = Lists.newLinkedList();
+
+        public int getRowCount() {
+            return transactions.size();
+        }
+
+        @Override
+        public String getColumnName(int i) {
+            switch (i) {
+                case 0: return "Confidence";
+                case 1: return "Description";
+                case 2: return "Value";
+                default: throw new RuntimeException("Unreachable");
+            }
+        }
+
+        public int getColumnCount() {
+            // Column 1: confidence
+            // Column 2: description
+            // Column 3: balance adjustment (+ve or -ve)
+            return 3;
+        }
+
+        public Object getValueAt(int row, int col) {
+            Transaction tx = transactions.get(row);
+            switch (col) {
+                case 0:
+                    TransactionConfidence conf = tx.getConfidence();
+                    return conf.toString();
+                case 1:
+                    return String.format("TX with %d inputs and %d outputs",
+                            tx.getInputs().size(), tx.getOutputs().size());
+                case 2:
+                    try {
+                        BigInteger val = tx.getValue(wallet);
+                        return Utils.bitcoinValueToFriendlyString(val);
+                    } catch (ScriptException e) {
+                        throw new RuntimeException(e);
+                    }
+                default:
+                    throw new RuntimeException("Unreachable");
+            }
+        }
+
+        public void setTransactions(List<Transaction> txns) {
+            transactions = txns;
+            fireTableDataChanged();
+        }
     }
     
     public ToyWallet(boolean testnet, String[] args) throws Exception {
         // Set up a Bitcoin connection + empty wallet. TODO: Simplify the setup for this use case.
         if (testnet) {
-            params = NetworkParameters.testNet();
+            params = NetworkParameters.testNet3();
         } else {
             params = NetworkParameters.prodNet();
         }
@@ -88,13 +146,15 @@ public class ToyWallet {
             } else {
                 key = new ECKey();  // Generate a fresh key.
             }
-            wallet.keychain.add(key);
+            wallet.addKey(key);
             
             wallet.saveToFile(walletFile);
             freshWallet = true;
         }
         System.out.println("Send to: " + wallet.keychain.get(0).toAddress(params));
         System.out.println(wallet);
+
+        wallet.autosaveToFile(walletFile, 500, TimeUnit.MILLISECONDS, null);
 
         File blockChainFile = new File("toy.blockchain");
         if (!blockChainFile.exists() && !freshWallet) {
@@ -107,13 +167,11 @@ public class ToyWallet {
         peerGroup = new PeerGroup(params, chain);
         peerGroup.setUserAgent("ToyWallet", "1.0");
         if (testnet) {
-            peerGroup.addAddress(new PeerAddress(InetAddress.getByName("plan99.net"), 18333));
-            peerGroup.addAddress(new PeerAddress(InetAddress.getByName("localhost"), 18333));
+            peerGroup.addPeerDiscovery(new IrcDiscovery("#bitcoinTEST3"));
         } else {
             peerGroup.addPeerDiscovery(new DnsDiscovery(params));
         }
         peerGroup.addWallet(wallet);
-        peerGroup.setFastCatchupTimeSecs(wallet.getEarliestKeyCreationTime());
 
         // Watch for peers coming and going so we can update the UI.
         peerGroup.addEventListener(new AbstractPeerEventListener() {
@@ -133,31 +191,19 @@ public class ToyWallet {
             public void onBlocksDownloaded(Peer peer, Block block, int blocksLeft) {
                 super.onBlocksDownloaded(peer, block, blocksLeft);
                 triggerNetworkStatsUpdate();
-                handleNewBlock();
             }
         });
 
         wallet.addEventListener(new AbstractWalletEventListener() {
             @Override
-            public void onCoinsReceived(Wallet wallet, Transaction tx, BigInteger prevBalance, BigInteger newBalance) {
-                super.onCoinsReceived(wallet, tx, prevBalance, newBalance);
-                handleNewTransaction(tx);
-            }
-
-            @Override
-            public void onCoinsSent(Wallet wallet, Transaction tx, BigInteger prevBalance, BigInteger newBalance) {
-                super.onCoinsSent(wallet, tx, prevBalance, newBalance);
-                handleNewTransaction(tx);
-            }
-
-            @Override
-            public void onChange() {
-                try {
-                    System.out.println("Wallet changed");
-                    wallet.saveToFile(walletFile);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
+            public void onWalletChanged(Wallet wallet) {
+                // This is running in some arbitrary bitcoinj provided thread with the wallet locked.
+                final List<Transaction> txns = wallet.getTransactionsByTime();
+                SwingUtilities.invokeLater(new Runnable() {
+                    public void run() {
+                        txTableModel.setTransactions(txns);
+                    }
+                });
             }
         });
         
@@ -168,38 +214,12 @@ public class ToyWallet {
         window.pack();
         window.setSize(640, 480);
 
-        // Put the transactions stored in the wallet, into the GUI.
-        final Set<Transaction> walletTransactions = wallet.getTransactions(true, true);
-        SwingUtilities.invokeAndWait(new Runnable() {
-            public void run() {
-                for (final Transaction tx : walletTransactions) {
-                    txListModel.monitorTx(tx);
-                }
-            }
-        });
-
+        txTableModel.setTransactions(wallet.getTransactionsByTime());
 
         // Go!
         window.setVisible(true);
         peerGroup.start();
         peerGroup.downloadBlockChain();
-    }
-
-    private void handleNewBlock() {
-        SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-                txListModel.newBlock();
-            }
-        });
-    }
-
-    private void handleNewTransaction(final Transaction t) {
-        // Running on a peer thread, switch to Swing thread before adding and updating the UI.
-        SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-                txListModel.monitorTx(t);
-            }
-        });
     }
 
     private void triggerNetworkStatsUpdate() {
@@ -208,77 +228,36 @@ public class ToyWallet {
                 int numPeers = peerGroup.numConnectedPeers();
                 StoredBlock chainHead = chain.getChainHead();
                 String date = chainHead.getHeader().getTime().toString();
-                String plural =  numPeers > 1 ? "peers" : "peer";
-                String status = String.format("%d %s connected. %d blocks: %s",
-                        numPeers, plural, chainHead.getHeight(), date);
+                String status = String.format("%d peer(s) connected. %d blocks: %s",
+                        numPeers, chainHead.getHeight(), date);
                 networkStats.setText(status);
             }
         });
     }
 
     private void setupWindow(JFrame window) {
+        final Address address = wallet.keychain.get(0).toAddress(params);
         JLabel instructions = new JLabel(
                 "<html>Broadcast transactions appear below. Watch them gain confidence.<br>" +
-                "Send coins to: <b>" + wallet.keychain.get(0).toAddress(params) + "</b>");
+                "Send coins to: <b>" + address + "</b> <i>(click to place on clipboard)</i>");
+        // Just make the label clickable so it puts the address in the clipboard.
+        instructions.addMouseListener(new MouseAdapter() {
+            public void mouseClicked(MouseEvent mouseEvent) {
+                Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+                StringSelection sel = new StringSelection(address.toString());
+                clipboard.setContents(sel, sel);
+            }
+        });
         window.getContentPane().add(instructions, BorderLayout.NORTH);
-        
+
+        txTableModel = new TransactionTableModel();
+        txTableModel.transactions = new LinkedList<Transaction>();
+        txTable = new JTable(txTableModel);
         // The list of transactions.
-        txList = new JList(txListModel);
-        txList.setCellRenderer(new TxListLabel());
-        txList.setSelectionMode(ListSelectionModel.SINGLE_INTERVAL_SELECTION);
-        txList.setLayoutOrientation(JList.VERTICAL);
-        txScrollPane = new JScrollPane(txList);
+        txScrollPane = new JScrollPane(txTable);
         window.getContentPane().add(txScrollPane, BorderLayout.CENTER);
         
         networkStats = new JLabel("Connecting to the Bitcoin network ...");
         window.getContentPane().add(networkStats, BorderLayout.SOUTH);
-    }
-
-    // Object that manages the contents of the list view.
-    private class TxListModel extends AbstractListModel {
-        private List<Transaction> transactions = new ArrayList<Transaction>();
-
-        public void monitorTx(Transaction tx) {
-            assert SwingUtilities.isEventDispatchThread();
-            transactions.add(tx);
-            // Set up a tx confidence change event listener, so we know when to update the list.
-            tx.getConfidence().addEventListener(new TransactionConfidence.Listener() {
-                public void onConfidenceChanged(Transaction tx) {
-                    // Note that this does NOT get called for every block that is received, just when we transition
-                    // between confidence states.
-                    int txIndex = transactions.indexOf(tx);
-                    fireContentsChanged(this, txIndex, txIndex);
-                }
-            });
-            fireIntervalAdded(this, transactions.size() - 1, transactions.size() - 1);
-        }
-
-        public int getSize() {
-            return transactions.size();
-        }
-
-        public Object getElementAt(int i) {
-            Transaction tx = transactions.get(i);
-            return tx.toString() + "\n" + tx.getConfidence().toString();
-        }
-
-        public void newBlock() {
-            fireContentsChanged(this, 0, getSize() - 1);
-        }
-    }
-
-    private class TxListLabel extends JLabel implements ListCellRenderer {
-        public Component getListCellRendererComponent(JList list, Object contents,
-                                                      int index, boolean isSelected,
-                                                      boolean cellHasFocus) {
-            String value = (String) contents;
-            final String key = wallet.keychain.get(0).toAddress(params).toString();
-            value = "<html>" + value.replaceAll("\n", "<br>").replaceAll("<br> ", "<br>&nbsp;&nbsp;")
-              .replaceAll(key, "<i>" + key + "</i>");
-            setText(value);
-            setOpaque(true);
-            setBackground(index % 2 == 1 ? new Color(230, 230, 230) : Color.WHITE);
-            return this;
-        }
     }
 }
