@@ -946,6 +946,7 @@ public class PeerGroup {
                             // We're done! Run this outside of the peer group lock as setting the future may immediately
                             // invoke any listeners associated with it and it's simpler if the PeerGroup isn't locked.
                             log.info("broadcastTransaction: {} complete", pinnedTx.getHashAsString());
+                            tx.getConfidence().removeEventListener(this);
                             future.set(pinnedTx);
                         }
                     }
