@@ -19,7 +19,6 @@ package com.google.bitcoin.examples;
 import com.google.bitcoin.core.*;
 import com.google.bitcoin.discovery.DnsDiscovery;
 import com.google.bitcoin.store.BlockStore;
-import com.google.bitcoin.store.BlockStoreException;
 import com.google.bitcoin.store.BoundedOverheadBlockStore;
 import com.google.bitcoin.utils.BriefLogFormatter;
 
@@ -189,9 +188,9 @@ public class PingService {
             Address from = input.getFromAddress();
             System.out.println("Received " + Utils.bitcoinValueToFriendlyString(value) + " from " + from.toString());
             // Now send the coins back!
-            Transaction sendTx = w.sendCoins(peerGroup, from, value).tx;
-            assert sendTx != null;  // We should never try to send more coins than we have!
-            System.out.println("Sent coins back! Transaction hash is " + sendTx.getHashAsString());
+            Wallet.SendResult sendResult = w.sendCoins(peerGroup, from, value);
+            assert sendResult != null;  // We should never try to send more coins than we have!
+            System.out.println("Sent coins back! Transaction hash is " + sendResult.tx.getHashAsString());
             w.saveToFile(walletFile);
         } catch (ScriptException e) {
             // If we didn't understand the scriptSig, just crash.
