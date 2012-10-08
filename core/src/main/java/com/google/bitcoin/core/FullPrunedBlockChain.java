@@ -123,6 +123,7 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
                                                                                           in.getOutpoint().getIndex());
                         if (prevOut == null)
                             throw new VerificationException("Attempted to spend a non-existent or already spent output!");
+                        // TODO: Check we're not spending the genesis transaction here. Satoshis code won't allow it.
                         //TODO: check script here
                         blockStore.removeUnspentTransactionOutput(prevOut);
                         txOutsSpent.add(prevOut);
