@@ -242,7 +242,7 @@ public class NetworkParameters implements Serializable {
         n.checkpoints.put(new Integer(91812), new Sha256Hash("00000000000af0aed4792b1acee3d966af36cf5def14935db8de83d6f9306f2f"));
         n.checkpoints.put(new Integer(91842), new Sha256Hash("00000000000a4d0a398161ffc163c503763b1f4360639393e0e4c8e300e0caec"));
         n.checkpoints.put(new Integer(91880), new Sha256Hash("00000000000743f190a18c5577a3c2d2a1f610ae9601ac046a38084ccb7cd721"));
-
+        n.checkpoints.put(new Integer(200000), new Sha256Hash("000000000000034a7dedef4a161fa058a2d67a173a90155f3a2fe6fc132e0ebf"));
         return n;
     }
 
