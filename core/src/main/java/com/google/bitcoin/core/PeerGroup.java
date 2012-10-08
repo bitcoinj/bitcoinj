@@ -418,6 +418,8 @@ public class PeerGroup {
     }
 
     private synchronized void recalculateFastCatchupTime() {
+        // Fully verifying mode doesn't use this optimization (it can't as it needs to see all transactions).
+        if (chain.shouldVerifyTransactions()) return;
         long earliestKeyTime = Long.MAX_VALUE;
         for (Wallet w : wallets) {
             earliestKeyTime = Math.min(earliestKeyTime, w.getEarliestKeyCreationTime());
