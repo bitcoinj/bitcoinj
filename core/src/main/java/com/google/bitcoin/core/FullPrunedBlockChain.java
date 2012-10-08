@@ -179,7 +179,7 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
                     totalFees = totalFees.add(valueIn.subtract(valueOut));
                 }
             }
-            if (totalFees.compareTo(params.MAX_MONEY) > 0 || getBlockInflation(height).add(totalFees).compareTo(coinbaseValue) < 0)
+            if (totalFees.compareTo(params.MAX_MONEY) > 0 || Block.getBlockInflation(height).add(totalFees).compareTo(coinbaseValue) < 0)
                 throw new VerificationException("Transaction fees out of range");
         } catch (VerificationException e) {
             blockStore.abortDatabaseBatchWrite();
@@ -189,10 +189,6 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
             throw e;
         }
         return new TransactionOutputChanges(txOutsCreated, txOutsSpent);
-    }
-    
-    private BigInteger getBlockInflation(int height) {
-        return Utils.toNanoCoins(50, 0).shiftRight(height / 210000);
     }
 
     @Override
@@ -278,7 +274,7 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
                     }
                 }
                 if (totalFees.compareTo(params.MAX_MONEY) > 0 ||
-                        getBlockInflation(newBlock.getHeight()).add(totalFees).compareTo(coinbaseValue) < 0)
+                        Block.getBlockInflation(newBlock.getHeight()).add(totalFees).compareTo(coinbaseValue) < 0)
                     throw new VerificationException("Transaction fees out of range");
                 txOutChanges = new TransactionOutputChanges(txOutsCreated, txOutsSpent);
             } else {

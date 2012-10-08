@@ -124,6 +124,16 @@ public class Block extends Message {
         super(params, payloadBytes, 0, parseLazy, parseRetain, length);
     }
 
+    /**
+     * A utility method that calculates how much new Bitcoin would be created by the block at the given height.
+     * The inflation of Bitcoin is predictable and drops roughly every 4 years (210,000 blocks). At the dawn of
+     * the system it was 50 coins per block, in late 2012 it went to 25 coins per block, and so on. The size of
+     * a coinbase transaction is inflation plus fees.
+     */
+    public static BigInteger getBlockInflation(int height) {
+        return Utils.toNanoCoins(50, 0).shiftRight(height / 210000);
+    }
+
     private void readObject(ObjectInputStream ois) throws ClassNotFoundException, IOException {
         ois.defaultReadObject();
         // This code is not actually necessary, as transient fields are initialized to the default value which is in
