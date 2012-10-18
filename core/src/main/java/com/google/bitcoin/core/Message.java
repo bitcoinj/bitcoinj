@@ -393,7 +393,7 @@ public abstract class Message implements Serializable {
      *
      * @return
      */
-    int getMessageSize() {
+    public int getMessageSize() {
         if (length != UNKNOWN_LENGTH)
             return length;
         maybeParse();

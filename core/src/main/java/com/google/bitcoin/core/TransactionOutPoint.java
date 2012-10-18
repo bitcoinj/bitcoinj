@@ -97,7 +97,7 @@ public class TransactionOutPoint extends ChildMessage implements Serializable {
       * @see Message#getMessageSize()
       */
     @Override
-    int getMessageSize() {
+    public int getMessageSize() {
         return MESSAGE_LENGTH;
     }
 

@@ -96,7 +96,7 @@ public class AddressMessage extends Message {
         }
     }
 
-    int getMessageSize() {
+    public int getMessageSize() {
         if (length != UNKNOWN_LENGTH)
             return length;
         if (addresses != null) {
