@@ -17,6 +17,7 @@
 package com.google.bitcoin.store;
 
 import com.google.bitcoin.core.*;
+import com.google.common.collect.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -196,12 +197,10 @@ public class H2FullPrunedBlockStore implements FullPrunedBlockStore {
             // Set up the genesis block. When we start out fresh, it is by
             // definition the top of the chain.
             StoredBlock storedGenesisHeader = new StoredBlock(params.genesisBlock.cloneAsHeader(), params.genesisBlock.getWork(), 0);
-
-            LinkedList<StoredTransaction> genesisTransactions = new LinkedList<StoredTransaction>();
-            for (Transaction tx : params.genesisBlock.getTransactions())
-                genesisTransactions.add(new StoredTransaction(tx, 0));
+            // The coinbase in the genesis block is not spendable. This is because of how the reference client inits
+            // its database - the genesis transaction isn't actually in the db so its spent flags can never be updated.
+            List<StoredTransaction> genesisTransactions = Lists.newLinkedList();
             StoredUndoableBlock storedGenesis = new StoredUndoableBlock(params.genesisBlock.getHash(), genesisTransactions);
-            
             put(storedGenesisHeader, storedGenesis);
             setChainHead(storedGenesisHeader);
         } catch (VerificationException e) {

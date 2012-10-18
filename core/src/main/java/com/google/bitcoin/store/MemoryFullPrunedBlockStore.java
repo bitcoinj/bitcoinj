@@ -19,6 +19,7 @@ package com.google.bitcoin.store;
 import com.google.bitcoin.core.*;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Lists;
 
 import java.io.Serializable;
 import java.util.*;
@@ -238,12 +239,9 @@ public class MemoryFullPrunedBlockStore implements FullPrunedBlockStore {
         // Insert the genesis block.
         try {
             StoredBlock storedGenesisHeader = new StoredBlock(params.genesisBlock.cloneAsHeader(), params.genesisBlock.getWork(), 0);
-
-            LinkedList<StoredTransaction> genesisTransactions = new LinkedList<StoredTransaction>();
-            for (Transaction tx : params.genesisBlock.getTransactions())
-                genesisTransactions.add(new StoredTransaction(tx, 0));
+            // The coinbase in the genesis block is not spendable
+            List<StoredTransaction> genesisTransactions = Lists.newLinkedList();
             StoredUndoableBlock storedGenesis = new StoredUndoableBlock(params.genesisBlock.getHash(), genesisTransactions);
-            
             put(storedGenesisHeader, storedGenesis);
             setChainHead(storedGenesisHeader);
         } catch (BlockStoreException e) {

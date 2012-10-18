@@ -67,6 +67,7 @@ public interface FullPrunedBlockStore extends BlockStore {
     
     /**
      * Removes a {@link StoredTransactionOutput} from the list of unspent TransactionOutputs
+     * Note that the coinbase of the genesis block should NEVER be spendable and thus never in the list.
      * @throws BlockStoreException if there is an underlying storage issue, or out was not in the list.
      */
     void removeUnspentTransactionOutput(StoredTransactionOutput out) throws BlockStoreException;
