@@ -16,6 +16,10 @@
 
 package com.google.bitcoin.core;
 
+import java.io.EOFException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.Serializable;
 import java.math.BigInteger;
 
@@ -69,6 +73,35 @@ public class StoredTransactionOutput implements Serializable {
         this.scriptBytes = out.getScriptBytes();
     }
 
+    public StoredTransactionOutput(InputStream in) throws IOException {
+        byte[] valueBytes = new byte[8];
+        in.read(valueBytes, 0, 8);
+        value = BigInteger.valueOf(Utils.readInt64(valueBytes, 0));
+        
+        int scriptBytesLength = ((in.read() & 0xFF) << 0) |
+                                ((in.read() & 0xFF) << 8) |
+                                ((in.read() & 0xFF) << 16) |
+                                ((in.read() & 0xFF) << 24);
+        scriptBytes = new byte[scriptBytesLength];
+        if (in.read(scriptBytes) != scriptBytesLength)
+            throw new EOFException();
+        
+        byte[] hashBytes = new byte[32];
+        if (in.read(hashBytes) != 32)
+            throw new EOFException();
+        hash = new Sha256Hash(hashBytes);
+        
+        byte[] indexBytes = new byte[4];
+        if (in.read(indexBytes) != 4)
+            throw new EOFException();
+        index = Utils.readUint32(indexBytes, 0);
+
+        height = ((in.read() & 0xFF) << 0) |
+                 ((in.read() & 0xFF) << 8) |
+                 ((in.read() & 0xFF) << 16) |
+                 ((in.read() & 0xFF) << 24);
+    }
+
     /**
      * The value which this Transaction output holds
      * @return the value
@@ -120,5 +153,23 @@ public class StoredTransactionOutput implements Serializable {
         if (!(o instanceof StoredTransactionOutput)) return false;
         return ((StoredTransactionOutput) o).getIndex() == this.getIndex() &&
                 ((StoredTransactionOutput) o).getHash().equals(this.getHash());
+    }
+
+    public void serializeToStream(OutputStream bos) throws IOException {
+        Utils.uint64ToByteStreamLE(value, bos);
+        
+        bos.write((int) (0xFF & (scriptBytes.length >> 0)));
+        bos.write((int) (0xFF & (scriptBytes.length >> 8)));
+        bos.write((int) (0xFF & (scriptBytes.length >> 16)));
+        bos.write((int) (0xFF & (scriptBytes.length >> 24)));
+        bos.write(scriptBytes);
+        
+        bos.write(hash.getBytes());
+        Utils.uint32ToByteStreamLE(index, bos);
+        
+        bos.write((int) (0xFF & (height >> 0)));
+        bos.write((int) (0xFF & (height >> 8)));
+        bos.write((int) (0xFF & (height >> 16)));
+        bos.write((int) (0xFF & (height >> 24)));
     }
 }

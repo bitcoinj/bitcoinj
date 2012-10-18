@@ -34,7 +34,7 @@ public class StoredUndoableBlock implements Serializable {
 	
 	// Only one of either txOutChanges or transactions will be set
 	private TransactionOutputChanges txOutChanges;
-	private List<StoredTransaction> transactions;
+	private List<Transaction> transactions;
 	
     public StoredUndoableBlock(Sha256Hash hash, TransactionOutputChanges txOutChanges) {
         this.blockHash = hash;
@@ -42,7 +42,7 @@ public class StoredUndoableBlock implements Serializable {
         this.txOutChanges = txOutChanges;
     }
     
-    public StoredUndoableBlock(Sha256Hash hash, List<StoredTransaction> transactions) {
+    public StoredUndoableBlock(Sha256Hash hash, List<Transaction> transactions) {
         this.blockHash = hash;
         this.txOutChanges = null;
         this.transactions = transactions;
@@ -60,7 +60,7 @@ public class StoredUndoableBlock implements Serializable {
      * Get the full list of transactions if it is stored, otherwise null.
      * Only one of this and getTxOutChanges() will return a non-null value.
      */
-    public List<StoredTransaction> getTransactions() {
+    public List<Transaction> getTransactions() {
         return transactions;
     }
     

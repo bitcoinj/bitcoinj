@@ -18,10 +18,13 @@ package com.google.bitcoin.store;
 
 import com.google.bitcoin.core.*;
 import com.google.common.collect.Lists;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.math.BigInteger;
 import java.sql.*;
 import java.util.LinkedList;
@@ -199,7 +202,7 @@ public class H2FullPrunedBlockStore implements FullPrunedBlockStore {
             StoredBlock storedGenesisHeader = new StoredBlock(params.genesisBlock.cloneAsHeader(), params.genesisBlock.getWork(), 0);
             // The coinbase in the genesis block is not spendable. This is because of how the reference client inits
             // its database - the genesis transaction isn't actually in the db so its spent flags can never be updated.
-            List<StoredTransaction> genesisTransactions = Lists.newLinkedList();
+            List<Transaction> genesisTransactions = Lists.newLinkedList();
             StoredUndoableBlock storedGenesis = new StoredUndoableBlock(params.genesisBlock.getHash(), genesisTransactions);
             put(storedGenesisHeader, storedGenesis);
             setChainHead(storedGenesisHeader);
@@ -339,15 +342,19 @@ public class H2FullPrunedBlockStore implements FullPrunedBlockStore {
         byte[] txOutChanges = null;
         try {
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
-            ObjectOutput out = new ObjectOutputStream(bos);  
             if (undoableBlock.getTxOutChanges() != null) {
-                out.writeObject(undoableBlock.getTxOutChanges());
+                undoableBlock.getTxOutChanges().serializeToStream(bos);
                 txOutChanges = bos.toByteArray();
             } else {
-                out.writeObject(undoableBlock.getTransactions());
+                int numTxn = undoableBlock.getTransactions().size();
+                bos.write((int) (0xFF & (numTxn >> 0)));
+                bos.write((int) (0xFF & (numTxn >> 8)));
+                bos.write((int) (0xFF & (numTxn >> 16)));
+                bos.write((int) (0xFF & (numTxn >> 24)));
+                for (Transaction tx : undoableBlock.getTransactions())
+                    tx.bitcoinSerialize(bos);
                 transactions = bos.toByteArray();
             }
-            out.close();
             bos.close();
         } catch (IOException e) {
             throw new BlockStoreException(e);
@@ -436,7 +443,6 @@ public class H2FullPrunedBlockStore implements FullPrunedBlockStore {
         }
     }
     
-    @SuppressWarnings("unchecked")
     public StoredUndoableBlock getUndoBlock(Sha256Hash hash) throws BlockStoreException {
         maybeConnect();
         PreparedStatement s = null;
@@ -456,14 +462,22 @@ public class H2FullPrunedBlockStore implements FullPrunedBlockStore {
             byte[] transactions = results.getBytes(2);
             StoredUndoableBlock block;
             if (txOutChanges == null) {
-                Object transactionsObject = new ObjectInputStream(new ByteArrayInputStream(transactions)).readObject();
-                if (!(((List<?>) transactionsObject).get(0) instanceof StoredTransaction))
-                    throw new BlockStoreException("Corrupted StoredUndoableBlock");
-                block = new StoredUndoableBlock(hash, (List<StoredTransaction>) transactionsObject);
+                int offset = 0;
+                int numTxn = ((transactions[offset++] & 0xFF) << 0) |
+                             ((transactions[offset++] & 0xFF) << 8) |
+                             ((transactions[offset++] & 0xFF) << 16) |
+                             ((transactions[offset++] & 0xFF) << 24);
+                List<Transaction> transactionList = new LinkedList<Transaction>();
+                for (int i = 0; i < numTxn; i++) {
+                    Transaction tx = new Transaction(params, transactions, offset);
+                    transactionList.add(tx);
+                    offset += tx.getMessageSize();
+                }
+                block = new StoredUndoableBlock(hash, transactionList);
             } else {
-                ObjectInputStream obj = new ObjectInputStream(new ByteArrayInputStream(txOutChanges));
-                Object transactionsObject = obj.readObject();
-                block = new StoredUndoableBlock(hash, (TransactionOutputChanges) transactionsObject);
+                TransactionOutputChanges outChangesObject =
+                        new TransactionOutputChanges(new ByteArrayInputStream(txOutChanges));
+                block = new StoredUndoableBlock(hash, outChangesObject);
             }
             return block;
         } catch (SQLException ex) {
@@ -474,7 +488,7 @@ public class H2FullPrunedBlockStore implements FullPrunedBlockStore {
         } catch (ClassCastException e) {
             // Corrupted database.
             throw new BlockStoreException(e);
-        } catch (ClassNotFoundException e) {
+        } catch (ProtocolException e) {
             // Corrupted database.
             throw new BlockStoreException(e);
         } catch (IOException e) {

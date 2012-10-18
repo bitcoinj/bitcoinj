@@ -139,22 +139,6 @@ public class Transaction extends ChildMessage implements Serializable {
             throws ProtocolException {
         super(params, msg, 0, parent, parseLazy, parseRetain, length);
     }
-    
-    /**
-     * Creates a transaction from the given StoredTransaction
-     * This is unsafe in that editing some aspects of this transaction may edit the stored transaction.
-     * Thus, this should only be used if the resulting transaction will only be used in a read-only manner.
-     */
-    Transaction(NetworkParameters params, StoredTransaction tx) {
-        super(params);
-        this.version = tx.getVersion();
-        this.lockTime = tx.getLockTime();
-        this.inputs = new ArrayList<TransactionInput>(tx.getInputs());
-        this.outputs = new ArrayList<TransactionOutput>(tx.getOutputs().size());
-        for (StoredTransactionOutput output : tx.getOutputs()) {
-            this.outputs.add(new TransactionOutput(params, this, output.getValue(), output.getScriptBytes()));
-        }
-    }
 
     /**
      * Returns the transaction hash as you see them in the block explorer.

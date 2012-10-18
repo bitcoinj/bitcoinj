@@ -84,10 +84,7 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
     protected StoredBlock addToBlockStore(StoredBlock storedPrev, Block block)
             throws BlockStoreException, VerificationException {
         StoredBlock newBlock = storedPrev.build(block);
-        LinkedList<StoredTransaction> transactions = new LinkedList<StoredTransaction>();
-        for (Transaction tx : block.transactions)
-            transactions.add(new StoredTransaction(tx, newBlock.getHeight()));
-        blockStore.put(newBlock, new StoredUndoableBlock(newBlock.getHeader().getHash(), transactions));
+        blockStore.put(newBlock, new StoredUndoableBlock(newBlock.getHeader().getHash(), block.transactions));
         return newBlock;
     }
 
@@ -287,14 +284,14 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
         }
         TransactionOutputChanges txOutChanges;
         try {
-            List<StoredTransaction> transactions = block.getTransactions();
+            List<Transaction> transactions = block.getTransactions();
             if (transactions != null) {
                 LinkedList<StoredTransactionOutput> txOutsSpent = new LinkedList<StoredTransactionOutput>();
                 LinkedList<StoredTransactionOutput> txOutsCreated = new LinkedList<StoredTransactionOutput>();
                 long sigOps = 0;
                 final boolean enforcePayToScriptHash = newBlock.getHeader().getTimeSeconds() >= params.BIP16_ENFORCE_TIME;
                 if (!params.isCheckpoint(newBlock.getHeight())) {
-                    for(StoredTransaction tx : transactions) {
+                    for(Transaction tx : transactions) {
                         Sha256Hash hash = tx.getHash();
                         if (blockStore.hasUnspentOutputs(hash, tx.getOutputs().size()))
                             throw new VerificationException("Block failed BIP30 test!");
@@ -306,7 +303,7 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
                 if (scriptVerificationExecutor.isShutdown())
                     scriptVerificationExecutor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
                 List<Future<VerificationException>> listScriptVerificationResults = new ArrayList<Future<VerificationException>>(transactions.size());
-                for(final StoredTransaction tx : transactions) {
+                for(final Transaction tx : transactions) {
                     boolean isCoinBase = tx.isCoinBase();
                     BigInteger valueIn = BigInteger.ZERO;
                     BigInteger valueOut = BigInteger.ZERO;
@@ -340,7 +337,6 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
                             // TODO: Find out the underlying issue and create a better work-around
                             // TODO: Thoroughly test that this fixes the issue like the non-StoredBlock version does
                             final int currentIndex = index;
-                            final Transaction txCache = new Transaction(params, tx);
                             final Script scriptSig;
                             try {
                                 scriptSig = in.getScriptSig();
@@ -356,7 +352,7 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
                             FutureTask<VerificationException> future = new FutureTask<VerificationException>(new Callable<VerificationException>() {
                                 public VerificationException call() {
                                     try{
-                                        scriptSig.correctlySpends(txCache, currentIndex, scriptPubKey, enforcePayToScriptHash);
+                                        scriptSig.correctlySpends(tx, currentIndex, scriptPubKey, enforcePayToScriptHash);
                                     } catch (ScriptException e) {
                                         return new VerificationException("Error verifying script: " + e.getMessage());
                                     } catch (VerificationException e) {
@@ -372,7 +368,7 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
                         }
                     }
                     Sha256Hash hash = tx.getHash();
-                    for (StoredTransactionOutput out : tx.getOutputs()) {
+                    for (TransactionOutput out : tx.getOutputs()) {
                         valueOut = valueOut.add(out.getValue());
                         StoredTransactionOutput newOut = new StoredTransactionOutput(hash, out.getIndex(), out.getValue(),
                                                                                      newBlock.getHeight(), isCoinBase,
