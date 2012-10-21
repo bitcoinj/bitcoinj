@@ -86,6 +86,13 @@ public class H2FullPrunedBlockStore implements FullPrunedBlockStore {
         + "CONSTRAINT openOutputs_fk FOREIGN KEY (id) REFERENCES openOutputsIndex(id)"
         + ")";
 
+    /**
+     * Creates a new H2FullPrunedBlockStore
+     * @param params A copy of the NetworkParameters used
+     * @param dbName The path to the database on disk
+     * @param fullStoreDepth The number of blocks of history stored in full (something like 1000 is pretty safe)
+     * @throws BlockStoreException if the database fails to open for any reason
+     */
     public H2FullPrunedBlockStore(NetworkParameters params, String dbName, int fullStoreDepth) throws BlockStoreException {
         this.params = params;
         this.fullStoreDepth = fullStoreDepth;
@@ -108,6 +115,28 @@ public class H2FullPrunedBlockStore implements FullPrunedBlockStore {
             if (!tableExists("settings"))
                 createTables();
             initFromDatabase();
+        } catch (SQLException e) {
+            throw new BlockStoreException(e);
+        }
+    }
+    
+    /**
+     * Creates a new H2FullPrunedBlockStore with the given cache size
+     * @param params A copy of the NetworkParameters used
+     * @param dbName The path to the database on disk
+     * @param fullStoreDepth The number of blocks of history stored in full (something like 1000 is pretty safe)
+     * @param cacheSize The number of kilobytes to dedicate to H2 Cache (the default value of 16MB (16384) is a safe bet
+     *                  to achieve good performance/cost when importing blocks from disk, past 32MB makes little sense,
+     *                  and below 4MB sees a sharp drop in performance)
+     * @throws BlockStoreException if the database fails to open for any reason
+     */
+    public H2FullPrunedBlockStore(NetworkParameters params, String dbName, int fullStoreDepth, int cacheSize) throws BlockStoreException {
+        this(params, dbName, fullStoreDepth);
+        
+        try {
+            Statement s = conn.get().createStatement();
+            s.executeUpdate("SET CACHE_SIZE " + cacheSize);
+            s.close();
         } catch (SQLException e) {
             throw new BlockStoreException(e);
         }
