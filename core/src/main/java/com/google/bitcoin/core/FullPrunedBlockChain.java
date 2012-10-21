@@ -127,13 +127,8 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
                     // being added twice (bug) or the block is a BIP30 violator.
                     if (blockStore.hasUnspentOutputs(hash, tx.getOutputs().size()))
                         throw new VerificationException("Block failed BIP30 test!");
-                    if (enforceBIP16) { // We already check non-BIP16 sigops in Block.verifyTransactions(true)
-                        try {
-                            sigOps += tx.getSigOpCount();
-                        } catch (ScriptException e) {
-                            throw new VerificationException("Invalid script in transaction");
-                        }
-                    }
+                    if (enforceBIP16) // We already check non-BIP16 sigops in Block.verifyTransactions(true)
+                        sigOps += tx.getSigOpCount();
                 }
             }
             BigInteger totalFees = BigInteger.ZERO;
@@ -159,12 +154,8 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
                         // TODO: Check we're not spending the genesis transaction here. Satoshis code won't allow it.
                         valueIn = valueIn.add(prevOut.getValue());
                         if (enforceBIP16) {
-                            try {
-                                if (new Script(params, prevOut.getScriptBytes(), 0, prevOut.getScriptBytes().length).isPayToScriptHash())
-                                    sigOps += Script.getP2SHSigOpCount(in.getScriptBytes());
-                            } catch (ScriptException e) {
-                                throw new VerificationException("Error reading script in transaction");
-                            }
+                            if (new Script(params, prevOut.getScriptBytes(), 0, prevOut.getScriptBytes().length).isPayToScriptHash())
+                                sigOps += Script.getP2SHSigOpCount(in.getScriptBytes());
                             if (sigOps > Block.MAX_BLOCK_SIGOPS)
                                 throw new VerificationException("Too many P2SH SigOps in block");
                         }
@@ -182,24 +173,12 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
                         } catch (ProtocolException e1) {
                             throw new RuntimeException(e1);
                         }
-                        final Script scriptSig;
-                        try {
-                            scriptSig = in.getScriptSig();
-                        } catch (ScriptException e2) {
-                            throw new VerificationException("Error verifying script", e2);
-                        }
-                        final Script scriptPubKey;
-                        try {
-                            scriptPubKey = new Script(params, prevOut.getScriptBytes(), 0, prevOut.getScriptBytes().length);
-                        } catch (ScriptException e1) {
-                            throw new VerificationException("Error verifying script", e1);
-                        }
+                        final Script scriptSig = in.getScriptSig();
+                        final Script scriptPubKey = new Script(params, prevOut.getScriptBytes(), 0, prevOut.getScriptBytes().length);
                         FutureTask<VerificationException> future = new FutureTask<VerificationException>(new Callable<VerificationException>() {
                             public VerificationException call() {
                                 try{
                                     scriptSig.correctlySpends(txCache, currentIndex, scriptPubKey, enforceBIP16);
-                                } catch (ScriptException e) {
-                                    return new VerificationException("Error verifying script: " + e.getMessage());
                                 } catch (VerificationException e) {
                                     return e;
                                 }
@@ -208,11 +187,7 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
                         scriptVerificationExecutor.execute(future);
                         listScriptVerificationResults.add(future);
                         
-                        /*try{
-                            in.getScriptSig().correctlySpends(tx, index, new Script(params, prevOut.getScriptBytes(), 0, prevOut.getScriptBytes().length));
-                        } catch (ScriptException e) {
-                            throw new VerificationException("Error verifying script: " + e.getMessage());
-                        }*/
+                        //in.getScriptSig().correctlySpends(tx, index, new Script(params, prevOut.getScriptBytes(), 0, prevOut.getScriptBytes().length));
                         
                         blockStore.removeUnspentTransactionOutput(prevOut);
                         txOutsSpent.add(prevOut);
@@ -318,13 +293,9 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
                                 throw new VerificationException("Tried to spend coinbase at depth " + (newBlock.getHeight() - prevOut.getHeight()));
                             valueIn = valueIn.add(prevOut.getValue());
                             if (enforcePayToScriptHash) {
-                                try {
-                                    Script script = new Script(params, prevOut.getScriptBytes(), 0, prevOut.getScriptBytes().length);
-                                    if (script.isPayToScriptHash())
-                                        sigOps += Script.getP2SHSigOpCount(in.getScriptBytes());
-                                } catch (ScriptException e) {
-                                    throw new VerificationException("Error reading script in transaction");
-                                }
+                                Script script = new Script(params, prevOut.getScriptBytes(), 0, prevOut.getScriptBytes().length);
+                                if (script.isPayToScriptHash())
+                                    sigOps += Script.getP2SHSigOpCount(in.getScriptBytes());
                                 if (sigOps > Block.MAX_BLOCK_SIGOPS)
                                     throw new VerificationException("Too many P2SH SigOps in block");
                             }
@@ -337,29 +308,18 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
                             // TODO: Find out the underlying issue and create a better work-around
                             // TODO: Thoroughly test that this fixes the issue like the non-StoredBlock version does
                             final int currentIndex = index;
-                            final Script scriptSig;
-                            try {
-                                scriptSig = in.getScriptSig();
-                            } catch (ScriptException e2) {
-                                throw new VerificationException("Error verifying script", e2);
-                            }
-                            final Script scriptPubKey;
-                            try {
-                                scriptPubKey = new Script(params, prevOut.getScriptBytes(), 0, prevOut.getScriptBytes().length);
-                            } catch (ScriptException e1) {
-                                throw new VerificationException("Error verifying script", e1);
-                            }
+                            final Script scriptSig  = in.getScriptSig();
+                            final Script scriptPubKey = new Script(params, prevOut.getScriptBytes(), 0, prevOut.getScriptBytes().length);
                             FutureTask<VerificationException> future = new FutureTask<VerificationException>(new Callable<VerificationException>() {
                                 public VerificationException call() {
                                     try{
                                         scriptSig.correctlySpends(tx, currentIndex, scriptPubKey, enforcePayToScriptHash);
-                                    } catch (ScriptException e) {
-                                        return new VerificationException("Error verifying script: " + e.getMessage());
                                     } catch (VerificationException e) {
                                         return e;
                                     }
                                     return null;
-                                }});
+                                }
+                            });
                             scriptVerificationExecutor.execute(future);
                             listScriptVerificationResults.add(future);
                             

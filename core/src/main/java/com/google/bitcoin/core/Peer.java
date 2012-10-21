@@ -306,9 +306,6 @@ public class Peer {
                 blockChainDownload(Sha256Hash.ZERO_HASH);
         } catch (VerificationException e) {
             log.warn("Block header verification failed", e);
-        } catch (ScriptException e) {
-            // There are no transactions and thus no scripts in these blocks, so this should never happen.
-            throw new RuntimeException(e);
         } catch (PrunedException e) {
             // Unreachable when in SPV mode.
             throw new RuntimeException(e);
@@ -396,9 +393,6 @@ public class Peer {
         } catch (VerificationException e) {
             // We don't want verification failures to kill the thread.
             log.warn("Block verification failed", e);
-        } catch (ScriptException e) {
-            // We don't want script failures to kill the thread.
-            log.warn("Script exception", e);
         } catch (PrunedException e) {
             // We pruned away some of the data we need to properly handle this block. We need to request the needed
             // data from the remote peer and fix things. Or just give up.

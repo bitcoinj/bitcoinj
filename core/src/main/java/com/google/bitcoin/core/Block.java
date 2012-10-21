@@ -601,11 +601,7 @@ public class Block extends Message {
         // comments for MAX_BLOCK_SIGOPS.
         int sigOps = 0;
         for (Transaction tx : transactions) {
-            try {
-                sigOps += tx.getSigOpCount();
-            } catch (ScriptException e) {
-                throw new VerificationException("Unreadable script in transaction");
-            }
+            sigOps += tx.getSigOpCount();
         }
         if (sigOps > MAX_BLOCK_SIGOPS)
             throw new VerificationException("Block had too many Signature Operations");

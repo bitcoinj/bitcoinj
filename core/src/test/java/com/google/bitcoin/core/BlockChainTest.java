@@ -54,7 +54,7 @@ public class BlockChainTest {
         unitTestParams = NetworkParameters.unitTests();
         wallet = new Wallet(unitTestParams) {
             @Override
-            public void receiveFromBlock(Transaction tx, StoredBlock block, BlockChain.NewBlockType blockType) throws VerificationException, ScriptException {
+            public void receiveFromBlock(Transaction tx, StoredBlock block, BlockChain.NewBlockType blockType) throws VerificationException {
                 super.receiveFromBlock(tx, block, blockType);
                 BlockChainTest.this.block[0] = block;
                 if (tx.isCoinBase()) {

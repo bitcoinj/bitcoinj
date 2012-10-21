@@ -163,7 +163,6 @@ public class ScriptTest {
                     scriptSig.correctlySpends(new Transaction(params), 0, scriptPubKey, true);
                     fail();
                 } catch (VerificationException e) {}
-                catch (ScriptException e) {}
                 script = "";
             }
         }
@@ -362,9 +361,6 @@ public class ScriptTest {
                     try {
                         input.getScriptSig().correctlySpends(transaction, i, scriptPubKeys.get(input.getOutpoint()), enforceP2SH);
                     } catch (VerificationException e) {
-                        valid = false;
-                    }
-                    catch (ScriptException e) {
                         valid = false;
                     }
                 }

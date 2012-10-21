@@ -153,20 +153,12 @@ public abstract class AbstractBlockChain {
      * exception is thrown. If the block is OK but cannot be connected to the chain at this time, returns false.
      * If the block can be connected to the chain, returns true.
      */
-    public synchronized boolean add(Block block) throws VerificationException, ScriptException, PrunedException {
+    public synchronized boolean add(Block block) throws VerificationException, PrunedException {
         try {
             return add(block, true);
         } catch (BlockStoreException e) {
             // TODO: Figure out a better way to propagate this exception to the user.
             throw new RuntimeException(e);
-        } catch (ScriptException e) {
-            // TODO: ScriptException should extend VerificationException.
-            try {
-                notSettingChainHead();
-            } catch (BlockStoreException e1) {
-                throw new RuntimeException(e1);
-            }
-            throw e;
         } catch (VerificationException e) {
             try {
                 notSettingChainHead();
@@ -210,7 +202,7 @@ public abstract class AbstractBlockChain {
     private long statsBlocksAdded;
 
     private synchronized boolean add(Block block, boolean tryConnecting)
-            throws BlockStoreException, VerificationException, ScriptException, PrunedException {
+            throws BlockStoreException, VerificationException, PrunedException {
         // Note on locking: this method runs with the block chain locked. All mutations to the chain are serialized.
         // This has the undesirable consequence that during block chain download, it's slow to read the current chain
         // head and other chain info because the accessors are constantly waiting for the chain to become free. To
@@ -528,7 +520,7 @@ public abstract class AbstractBlockChain {
     /**
      * For each block in orphanBlocks, see if we can now fit it on top of the chain and if so, do so.
      */
-    private void tryConnectingOrphans() throws VerificationException, ScriptException, BlockStoreException, PrunedException {
+    private void tryConnectingOrphans() throws VerificationException, BlockStoreException, PrunedException {
         // For each block in our orphan list, try and fit it onto the head of the chain. If we succeed remove it
         // from the list and keep going. If we changed the head of the list at the end of the round try again until
         // we can't fit anything else on the top.

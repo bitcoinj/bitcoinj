@@ -601,7 +601,7 @@ public class Wallet implements Serializable {
      * block might change which chain is best causing a reorganize. A re-org can totally change our balance!
      */
     public synchronized void receiveFromBlock(Transaction tx, StoredBlock block,
-                                       BlockChain.NewBlockType blockType) throws VerificationException, ScriptException {
+                                       BlockChain.NewBlockType blockType) throws VerificationException {
         receive(tx, block, blockType, false);
     }
 
@@ -614,9 +614,8 @@ public class Wallet implements Serializable {
      *
      * @param tx
      * @throws VerificationException
-     * @throws ScriptException
      */
-    public synchronized void receivePending(Transaction tx) throws VerificationException, ScriptException {
+    public synchronized void receivePending(Transaction tx) throws VerificationException {
         // Can run in a peer thread.
 
         // Ignore it if we already know about this transaction. Receiving a pending transaction never moves it
@@ -718,7 +717,7 @@ public class Wallet implements Serializable {
 
     private synchronized void receive(Transaction tx, StoredBlock block,
                                       BlockChain.NewBlockType blockType,
-                                      boolean reorg) throws VerificationException, ScriptException {
+                                      boolean reorg) throws VerificationException {
         // Runs in a peer thread.
         BigInteger prevBalance = getBalance();
 
@@ -884,7 +883,7 @@ public class Wallet implements Serializable {
      * Handle when a transaction becomes newly active on the best chain, either due to receiving a new block or a
      * re-org making inactive transactions active.
      */
-    private void processTxFromBestChain(Transaction tx) throws VerificationException, ScriptException {
+    private void processTxFromBestChain(Transaction tx) throws VerificationException {
         // This TX may spend our existing outputs even though it was not pending. This can happen in unit
         // tests, if keys are moved between wallets, if we're catching up to the chain given only a set of keys,
         // or if a dead coinbase transaction has moved back onto the main chain.
@@ -2179,9 +2178,6 @@ public class Wallet implements Serializable {
                     } catch (VerificationException e) {
                         log.warn("Received broadcast transaction that does not validate: {}", t);
                         log.warn("VerificationException caught", e);
-                    } catch (ScriptException e) {
-                        log.warn("Received broadcast transaction with not understood scripts: {}", t);
-                        log.warn("ScriptException caught", e);
                     }
                 }
             };
