@@ -42,8 +42,10 @@ import java.util.List;
 public class H2FullPrunedBlockStore implements FullPrunedBlockStore {
     private static final Logger log = LoggerFactory.getLogger(H2FullPrunedBlockStore.class);
 
-    private StoredBlock chainHeadBlock;
     private Sha256Hash chainHeadHash;
+    private StoredBlock chainHeadBlock;
+    private Sha256Hash verifiedChainHeadHash;
+    private StoredBlock verifiedChainHeadBlock;
     private NetworkParameters params;
     private ThreadLocal<Connection> conn;
     private List<Connection> allConnections;
@@ -56,12 +58,14 @@ public class H2FullPrunedBlockStore implements FullPrunedBlockStore {
         + "value BLOB"
         + ")";
     static final String CHAIN_HEAD_SETTING = "chainhead";
+    static final String VERIFIED_CHAIN_HEAD_SETTING = "verifiedchainhead";
 
     static final String CREATE_HEADERS_TABLE = "CREATE TABLE headers ( "
         + "hash BINARY(28) NOT NULL CONSTRAINT headers_pk PRIMARY KEY,"
         + "chainWork BLOB NOT NULL,"
         + "height INT NOT NULL,"
-        + "header BLOB NOT NULL"
+        + "header BLOB NOT NULL,"
+        + "wasUndoable BOOL NOT NULL"
         + ")";
     
     static final String CREATE_UNDOABLE_TABLE = "CREATE TABLE undoableBlocks ( "
@@ -203,25 +207,40 @@ public class H2FullPrunedBlockStore implements FullPrunedBlockStore {
         log.debug("H2FullPrunedBlockStore : CREATE open output table");
         s.executeUpdate(CREATE_OPEN_OUTPUT_TABLE);
 
-        s.executeUpdate("INSERT INTO settings(name, value) VALUES('chainhead', NULL)");
+        s.executeUpdate("INSERT INTO settings(name, value) VALUES('" + CHAIN_HEAD_SETTING + "', NULL)");
+        s.executeUpdate("INSERT INTO settings(name, value) VALUES('" + VERIFIED_CHAIN_HEAD_SETTING + "', NULL)");
         s.close();
         createNewStore(params);
     }
 
     private void initFromDatabase() throws SQLException, BlockStoreException {
         Statement s = conn.get().createStatement();
-        ResultSet rs = s.executeQuery("SELECT value FROM settings WHERE name = 'chainhead'");
+        ResultSet rs = s.executeQuery("SELECT value FROM settings WHERE name = '" + CHAIN_HEAD_SETTING + "'");
         if (!rs.next()) {
             throw new BlockStoreException("corrupt H2 block store - no chain head pointer");
         }
         Sha256Hash hash = new Sha256Hash(rs.getBytes(1));
-        s.close();
+        rs.close();
         this.chainHeadBlock = get(hash);
+        this.chainHeadHash = hash;
         if (this.chainHeadBlock == null)
         {
             throw new BlockStoreException("corrupt H2 block store - head block not found");
         }
-        this.chainHeadHash = hash;
+        
+        rs = s.executeQuery("SELECT value FROM settings WHERE name = '" + VERIFIED_CHAIN_HEAD_SETTING + "'");
+        if (!rs.next()) {
+            throw new BlockStoreException("corrupt H2 block store - no verified chain head pointer");
+        }
+        hash = new Sha256Hash(rs.getBytes(1));
+        rs.close();
+        s.close();
+        this.verifiedChainHeadBlock = get(hash);
+        this.verifiedChainHeadHash = hash;
+        if (this.verifiedChainHeadBlock == null)
+        {
+            throw new BlockStoreException("corrupt H2 block store - verified head block not found");
+        }
     }
 
     private void createNewStore(NetworkParameters params) throws BlockStoreException {
@@ -235,6 +254,7 @@ public class H2FullPrunedBlockStore implements FullPrunedBlockStore {
             StoredUndoableBlock storedGenesis = new StoredUndoableBlock(params.genesisBlock.getHash(), genesisTransactions);
             put(storedGenesisHeader, storedGenesis);
             setChainHead(storedGenesisHeader);
+            setVerifiedChainHead(storedGenesisHeader);
         } catch (VerificationException e) {
             throw new RuntimeException(e); // Cannot happen.
         }
@@ -335,11 +355,11 @@ public class H2FullPrunedBlockStore implements FullPrunedBlockStore {
     }
     
     
-    private void putStoredBlock(StoredBlock storedBlock) throws BlockStoreException {
+    private void putUpdateStoredBlock(StoredBlock storedBlock, boolean wasUndoable) throws SQLException {
         try {
             PreparedStatement s =
-                conn.get().prepareStatement("INSERT INTO headers(hash, chainWork, height, header)"
-                        + " VALUES(?, ?, ?, ?)");
+                    conn.get().prepareStatement("INSERT INTO headers(hash, chainWork, height, header, wasUndoable)"
+                            + " VALUES(?, ?, ?, ?, ?)");
             // We skip the first 4 bytes because (on prodnet) the minimum target has 4 0-bytes
             byte[] hashBytes = new byte[28];
             System.arraycopy(storedBlock.getHeader().getHash().getBytes(), 3, hashBytes, 0, 28);
@@ -347,18 +367,33 @@ public class H2FullPrunedBlockStore implements FullPrunedBlockStore {
             s.setBytes(2, storedBlock.getChainWork().toByteArray());
             s.setInt(3, storedBlock.getHeight());
             s.setBytes(4, storedBlock.getHeader().unsafeBitcoinSerialize());
+            s.setBoolean(5, wasUndoable);
             s.executeUpdate();
             s.close();
-        } catch (SQLException ex) {
-            throw new BlockStoreException(ex);
+        } catch (SQLException e) {
+            // It is possible we try to add a duplicate StoredBlock if we upgraded
+            // In that case, we just update the entry to mark it wasUndoable
+            if (e.getErrorCode() != 23505 || !wasUndoable)
+                throw e;
+            
+            PreparedStatement s = conn.get().prepareStatement("UPDATE headers SET wasUndoable=? WHERE hash=?");
+            s.setBoolean(1, true);
+            // We skip the first 4 bytes because (on prodnet) the minimum target has 4 0-bytes
+            byte[] hashBytes = new byte[28];
+            System.arraycopy(storedBlock.getHeader().getHash().getBytes(), 3, hashBytes, 0, 28);
+            s.setBytes(2, hashBytes);
+            s.executeUpdate();
+            s.close();
         }
     }
 
     public void put(StoredBlock storedBlock) throws BlockStoreException {
         maybeConnect();
-        if (storedBlock.getHeight() > chainHeadBlock.getHeight() - fullStoreDepth)
-            throw new BlockStoreException("Putting a StoredBlock in H2FullPrunedBlockStore at height higher than head - fullStoredDepth");
-        putStoredBlock(storedBlock);
+        try {
+            putUpdateStoredBlock(storedBlock, false);
+        } catch (SQLException e) {
+            throw new BlockStoreException(e);
+        }
     }
     
     public void put(StoredBlock storedBlock, StoredUndoableBlock undoableBlock) throws BlockStoreException {
@@ -405,7 +440,11 @@ public class H2FullPrunedBlockStore implements FullPrunedBlockStore {
                 }
                 s.executeUpdate();
                 s.close();
-                putStoredBlock(storedBlock);
+                try {
+                    putUpdateStoredBlock(storedBlock, true);
+                } catch (SQLException e) {
+                    throw new BlockStoreException(e);
+                }
             } catch (SQLException e) {
                 if (e.getErrorCode() != 23505)
                     throw new BlockStoreException(e);
@@ -430,15 +469,17 @@ public class H2FullPrunedBlockStore implements FullPrunedBlockStore {
         }
     }
 
-    public StoredBlock get(Sha256Hash hash) throws BlockStoreException {
+    public StoredBlock get(Sha256Hash hash, boolean wasUndoableOnly) throws BlockStoreException {
         // Optimize for chain head
         if (chainHeadHash != null && chainHeadHash.equals(hash))
             return chainHeadBlock;
+        if (verifiedChainHeadHash != null && verifiedChainHeadHash.equals(hash))
+            return verifiedChainHeadBlock;
         maybeConnect();
         PreparedStatement s = null;
         try {
             s = conn.get()
-                .prepareStatement("SELECT chainWork, height, header FROM headers WHERE hash = ?");
+                .prepareStatement("SELECT chainWork, height, header, wasUndoable FROM headers WHERE hash = ?");
             // We skip the first 4 bytes because (on prodnet) the minimum target has 4 0-bytes
             byte[] hashBytes = new byte[28];
             System.arraycopy(hash.getBytes(), 3, hashBytes, 0, 28);
@@ -448,7 +489,10 @@ public class H2FullPrunedBlockStore implements FullPrunedBlockStore {
                 return null;
             }
             // Parse it.
-
+            
+            if (wasUndoableOnly && !results.getBoolean(4))
+                return null;
+            
             BigInteger chainWork = new BigInteger(results.getBytes(1));
             int height = results.getInt(2);
             Block b = new Block(params, results.getBytes(3));
@@ -470,6 +514,14 @@ public class H2FullPrunedBlockStore implements FullPrunedBlockStore {
                     s.close();
                 } catch (SQLException e) { throw new BlockStoreException("Failed to close PreparedStatement"); }
         }
+    }
+    
+    public StoredBlock get(Sha256Hash hash) throws BlockStoreException {
+        return get(hash, false);
+    }
+    
+    public StoredBlock getOnceUndoableStoredBlock(Sha256Hash hash) throws BlockStoreException {
+        return get(hash, true);
     }
     
     public StoredUndoableBlock getUndoBlock(Sha256Hash hash) throws BlockStoreException {
@@ -550,6 +602,29 @@ public class H2FullPrunedBlockStore implements FullPrunedBlockStore {
         } catch (SQLException ex) {
             throw new BlockStoreException(ex);
         }
+    }
+    
+    public StoredBlock getVerifiedChainHead() throws BlockStoreException {
+        return verifiedChainHeadBlock;
+    }
+
+    public void setVerifiedChainHead(StoredBlock chainHead) throws BlockStoreException {
+        Sha256Hash hash = chainHead.getHeader().getHash();
+        this.verifiedChainHeadHash = hash;
+        this.verifiedChainHeadBlock = chainHead;
+        maybeConnect();
+        try {
+            PreparedStatement s = conn.get()
+                .prepareStatement("UPDATE settings SET value = ? WHERE name = ?");
+            s.setString(2, VERIFIED_CHAIN_HEAD_SETTING);
+            s.setBytes(1, hash.getBytes());
+            s.executeUpdate();
+            s.close();
+        } catch (SQLException ex) {
+            throw new BlockStoreException(ex);
+        }
+        if (this.chainHeadBlock.getHeight() < chainHead.getHeight())
+            setChainHead(chainHead);
         removeUndoableBlocksWhereHeightIsLessThan(chainHead.getHeight() - fullStoreDepth);
     }
 

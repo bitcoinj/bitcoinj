@@ -24,8 +24,17 @@ import com.google.bitcoin.core.StoredUndoableBlock;
 /**
  * <p>An implementor of FullPrunedBlockStore saves StoredBlock objects to some storage mechanism.</p>
  * 
- * <p>It should store the {@link StoredUndoableBlock}s of a number of recent blocks.
- * It is advisable to store any {@link StoredUndoableBlock} which has a height > head.height - N.
+ * <p>In addition to keeping tack of a chain using {@link StoredBlock}s, it should also keep track of a second
+ * copy of the chain which holds {@link StoredUndoableBlock}s. In this way, an application can perform a
+ * headers-only initial sync and then use that information to more efficiently download a locally verified
+ * full copy of the block chain.</p>
+ * 
+ * <p>A FullPrunedBlockStore should function well as a standard {@link BlockStore} and then be able to
+ * trivially switch to being used as a FullPrunedBlockStore.</p>
+ * 
+ * <p>It should store the {@link StoredUndoableBlock}s of a number of recent blocks before verifiedHead.height and
+ * all those after verifiedHead.height.
+ * It is advisable to store any {@link StoredUndoableBlock} which has a height > verifiedHead.height - N.
  * Because N determines the memory usage, it is recommended that N be customizable. N should be chosen such that
  * re-orgs beyond that point are vanishingly unlikely, for example, a few thousand blocks is a reasonable choice.</p>
  * 
@@ -41,11 +50,21 @@ import com.google.bitcoin.core.StoredUndoableBlock;
  */
 public interface FullPrunedBlockStore extends BlockStore {
     /**
-     * Saves the given {@link StoredUndoableBlock} and {@link StoredBlock}. Calculates keys from the {@link StoredBlock}
-     * Note that a call to put(StoredBlock) will throw a BlockStoreException if its height is > head.height - N
+     * <p>Saves the given {@link StoredUndoableBlock} and {@link StoredBlock}. Calculates keys from the {@link StoredBlock}</p>
+     * 
+     * <p>Though not required for proper function of a FullPrunedBlockStore, any user of a FullPrunedBlockStore should ensure
+     * that a StoredUndoableBlock for each block up to the fully verified chain head has been added to this block store using
+     * this function (not put(StoredBlock)), so that the ability to perform reorgs is maintained.</p>
+     * 
      * @throws BlockStoreException if there is a problem with the underlying storage layer, such as running out of disk space.
      */
     void put(StoredBlock storedBlock, StoredUndoableBlock undoableBlock) throws BlockStoreException;
+    
+    /**
+     * Returns the StoredBlock that was added as a StoredUndoableBlock given a hash. The returned values block.getHash() method will be equal to the
+     * parameter. If no such block is found, returns null.
+     */
+    StoredBlock getOnceUndoableStoredBlock(Sha256Hash hash) throws BlockStoreException;
 
     /**
      * Returns a {@link StoredUndoableBlock} who's block.getHash() method will be equal to the
@@ -77,6 +96,25 @@ public interface FullPrunedBlockStore extends BlockStore {
      * @param numOutputs the number of outputs the given transaction has
      */
     boolean hasUnspentOutputs(Sha256Hash hash, int numOutputs) throws BlockStoreException;
+    
+    /**
+     * Returns the {@link StoredBlock} that represents the top of the chain of greatest total work that has
+     * been fully verified and the point in the chain at which the unspent transaction output set in this
+     * store represents.
+     */
+    StoredBlock getVerifiedChainHead() throws BlockStoreException;
+
+    /**
+     * Sets the {@link StoredBlock} that represents the top of the chain of greatest total work that has been
+     * fully verified. It should generally be set after a batch of updates to the transaction unspent output set,
+     * before a call to commitDatabaseBatchWrite.
+     * 
+     * If chainHead has a greater height than the non-verified chain head (ie that set with
+     * {@link BlockStore.setChainHead}) the non-verified chain head should be set to the one set here.
+     * In this way a class using a FullPrunedBlockStore only in full-verification mode can ignore the regular
+     * {@link BlockStore} functions implemented as a part of a FullPrunedBlockStore.
+     */
+    void setVerifiedChainHead(StoredBlock chainHead) throws BlockStoreException;
     
     /**
      * <p>Begins/Commits/Aborts a database transaction.</p>

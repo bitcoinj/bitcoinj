@@ -99,12 +99,17 @@ public class BlockChain extends AbstractBlockChain {
     }
 
     @Override
-    protected void preSetChainHead() {
-        // We don't use DB transactions here, so we don't need to do anything
+    protected void doSetChainHead(StoredBlock chainHead) throws BlockStoreException {
+        blockStore.setChainHead(chainHead);
     }
 
     @Override
     protected void notSettingChainHead() throws BlockStoreException {
         // We don't use DB transactions here, so we don't need to do anything
+    }
+
+    @Override
+    protected StoredBlock getStoredBlockInCurrentScope(Sha256Hash hash) throws BlockStoreException {
+        return blockStore.get(hash);
     }
 }

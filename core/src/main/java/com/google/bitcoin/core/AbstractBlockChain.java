@@ -76,7 +76,7 @@ public abstract class AbstractBlockChain {
      * greater work than the one obtained by following this one down. In that case a reorganize is triggered,
      * potentially invalidating transactions in our wallet.
      */
-    private StoredBlock chainHead;
+    protected StoredBlock chainHead;
 
     // The chainHead field is read/written synchronized with this object rather than BlockChain. However writing is
     // also guaranteed to happen whilst BlockChain is synchronized (see setChainHead). The goal of this is to let
@@ -157,11 +157,11 @@ public abstract class AbstractBlockChain {
             throws BlockStoreException, VerificationException;
     
     /**
-     * Called before setting chain head in memory, but after writing the blockstore to disk.
-     * Can be used to commit database transactions that were started by
-     * disconnectTransactions/connectTransactions.
+     * Called before setting chain head in memory.
+     * Should write the new head to block store and then commit any database transactions
+     * that were started by disconnectTransactions/connectTransactions.
      */
-    protected abstract void preSetChainHead() throws BlockStoreException;
+    protected abstract void doSetChainHead(StoredBlock chainHead) throws BlockStoreException;
     
     /**
      * Called if we (possibly) previously called disconnectTransaction/connectTransactions,
@@ -170,6 +170,12 @@ public abstract class AbstractBlockChain {
      * disconnectTransactions/connectTransactions.
      */
     protected abstract void notSettingChainHead() throws BlockStoreException;
+    
+    /**
+     * For a standard BlockChain, this should return blockStore.get(hash),
+     * for a FullPrunedBlockChain blockStore.getOnceUndoableStoredBlock(hash)
+     */
+    protected abstract StoredBlock getStoredBlockInCurrentScope(Sha256Hash hash) throws BlockStoreException;
 
     /**
      * Processes a received block and tries to add it to the chain. If there's something wrong with the block an
@@ -275,7 +281,7 @@ public abstract class AbstractBlockChain {
         }
 
         // Try linking it to a place in the currently known blocks.
-        StoredBlock storedPrev = blockStore.get(block.getPrevBlockHash());
+        StoredBlock storedPrev = getStoredBlockInCurrentScope(block.getPrevBlockHash());
 
         if (storedPrev == null) {
             // We can't find the previous block. Probably we are still in the process of downloading the chain and a
@@ -579,8 +585,7 @@ public abstract class AbstractBlockChain {
     }
     
     private void setChainHead(StoredBlock chainHead) throws BlockStoreException {
-        blockStore.setChainHead(chainHead);
-        preSetChainHead();
+        doSetChainHead(chainHead);
         synchronized (chainHeadLock) {
             this.chainHead = chainHead;
         }
@@ -604,8 +609,8 @@ public abstract class AbstractBlockChain {
                 Block block = iter.next();
                 log.debug("Trying to connect {}", block.getHash());
                 // Look up the blocks previous.
-                StoredBlock prev = blockStore.get(block.getPrevBlockHash());
-                if (prev == null) {
+                StoredBlock prev = getStoredBlockInCurrentScope(block.getPrevBlockHash());
+                if (prev == null || prev.getHeight() > getChainHead().getHeight()) {
                     // This is still an unconnected/orphan block.
                     log.debug("  but it is not connectable right now");
                     continue;

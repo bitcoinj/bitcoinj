@@ -64,6 +64,8 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
                                 FullPrunedBlockStore blockStore) throws BlockStoreException {
         super(params, listeners, blockStore);
         this.blockStore = blockStore;
+        // Ignore upgrading for now
+        this.chainHead = blockStore.getVerifiedChainHead();
     }
 
     @Override
@@ -409,12 +411,18 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
     }
 
     @Override
-    protected void preSetChainHead() throws BlockStoreException {
+    protected void doSetChainHead(StoredBlock chainHead) throws BlockStoreException {
+        blockStore.setVerifiedChainHead(chainHead);
         blockStore.commitDatabaseBatchWrite();
     }
 
     @Override
     protected void notSettingChainHead() throws BlockStoreException {
         blockStore.abortDatabaseBatchWrite();
+    }
+
+    @Override
+    protected StoredBlock getStoredBlockInCurrentScope(Sha256Hash hash) throws BlockStoreException {
+        return blockStore.getOnceUndoableStoredBlock(hash);
     }
 }

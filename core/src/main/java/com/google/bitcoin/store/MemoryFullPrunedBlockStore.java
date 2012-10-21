@@ -308,11 +308,17 @@ class TransactionalMultiKeyHashMap<UniqueKeyType, MultiKeyType, ValueType> {
  * Used primarily for unit testing.
  */
 public class MemoryFullPrunedBlockStore implements FullPrunedBlockStore {
-    private TransactionalHashMap<Sha256Hash, StoredBlock> blockMap;
+    class StoredBlockAndWasUndoableFlag {
+        public StoredBlock block;
+        public boolean wasUndoable;
+        public StoredBlockAndWasUndoableFlag(StoredBlock block, boolean wasUndoable) { this.block = block; this.wasUndoable = wasUndoable; }
+    }
+    private TransactionalHashMap<Sha256Hash, StoredBlockAndWasUndoableFlag> blockMap;
     private TransactionalMultiKeyHashMap<Sha256Hash, Integer, StoredUndoableBlock> fullBlockMap;
     //TODO: Use something more suited to remove-heavy use?
     private TransactionalHashMap<StoredTransactionOutPoint, StoredTransactionOutput> transactionOutputMap;
     private StoredBlock chainHead;
+    private StoredBlock verifiedChainHead;
     private int fullStoreDepth;
     
     /**
@@ -321,7 +327,7 @@ public class MemoryFullPrunedBlockStore implements FullPrunedBlockStore {
      * @param fullStoreDepth The depth of blocks to keep FullStoredBlocks instead of StoredBlocks
      */
     public MemoryFullPrunedBlockStore(NetworkParameters params, int fullStoreDepth) {
-        blockMap = new TransactionalHashMap<Sha256Hash, StoredBlock>();
+        blockMap = new TransactionalHashMap<Sha256Hash, StoredBlockAndWasUndoableFlag>();
         fullBlockMap = new TransactionalMultiKeyHashMap<Sha256Hash, Integer, StoredUndoableBlock>();
         transactionOutputMap = new TransactionalHashMap<StoredTransactionOutPoint, StoredTransactionOutput>();
         this.fullStoreDepth = fullStoreDepth > 0 ? fullStoreDepth : 1;
@@ -333,6 +339,7 @@ public class MemoryFullPrunedBlockStore implements FullPrunedBlockStore {
             StoredUndoableBlock storedGenesis = new StoredUndoableBlock(params.genesisBlock.getHash(), genesisTransactions);
             put(storedGenesisHeader, storedGenesis);
             setChainHead(storedGenesisHeader);
+            setVerifiedChainHead(storedGenesisHeader);
         } catch (BlockStoreException e) {
             throw new RuntimeException(e);  // Cannot happen.
         } catch (VerificationException e) {
@@ -342,21 +349,27 @@ public class MemoryFullPrunedBlockStore implements FullPrunedBlockStore {
 
     public synchronized void put(StoredBlock block) throws BlockStoreException {
         Preconditions.checkNotNull(blockMap, "MemoryFullPrunedBlockStore is closed");
-        if (block.getHeight() > chainHead.getHeight() - fullStoreDepth)
-            throw new BlockStoreException("Putting a StoredBlock in MemoryFullPrunedBlockStore at height higher than head - fullStoredDepth");
         Sha256Hash hash = block.getHeader().getHash();
-        blockMap.put(hash, block);
+        blockMap.put(hash, new StoredBlockAndWasUndoableFlag(block, false));
     }
     
     public synchronized void put(StoredBlock storedBlock, StoredUndoableBlock undoableBlock) throws BlockStoreException {
         Preconditions.checkNotNull(blockMap, "MemoryFullPrunedBlockStore is closed");
-        fullBlockMap.put(storedBlock.getHeader().getHash(), storedBlock.getHeight(), undoableBlock);
-        blockMap.put(storedBlock.getHeader().getHash(), storedBlock);
+        Sha256Hash hash = storedBlock.getHeader().getHash();
+        fullBlockMap.put(hash, storedBlock.getHeight(), undoableBlock);
+        blockMap.put(hash, new StoredBlockAndWasUndoableFlag(storedBlock, true));
     }
 
     public synchronized StoredBlock get(Sha256Hash hash) throws BlockStoreException {
         Preconditions.checkNotNull(blockMap, "MemoryFullPrunedBlockStore is closed");
-        return blockMap.get(hash);
+        StoredBlockAndWasUndoableFlag storedBlock = blockMap.get(hash);
+        return storedBlock == null ? null : storedBlock.block;
+    }
+    
+    public StoredBlock getOnceUndoableStoredBlock(Sha256Hash hash) throws BlockStoreException {
+        Preconditions.checkNotNull(blockMap, "MemoryFullPrunedBlockStore is closed");
+        StoredBlockAndWasUndoableFlag storedBlock = blockMap.get(hash);
+        return (storedBlock != null && storedBlock.wasUndoable) ? storedBlock.block : null;
     }
     
     public synchronized StoredUndoableBlock getUndoBlock(Sha256Hash hash) throws BlockStoreException {
@@ -372,6 +385,18 @@ public class MemoryFullPrunedBlockStore implements FullPrunedBlockStore {
     public synchronized void setChainHead(StoredBlock chainHead) throws BlockStoreException {
         Preconditions.checkNotNull(blockMap, "MemoryFullPrunedBlockStore is closed");
         this.chainHead = chainHead;
+    }
+    
+    public StoredBlock getVerifiedChainHead() throws BlockStoreException {
+        Preconditions.checkNotNull(blockMap, "MemoryFullPrunedBlockStore is closed");
+        return verifiedChainHead;
+    }
+
+    public void setVerifiedChainHead(StoredBlock chainHead) throws BlockStoreException {
+        Preconditions.checkNotNull(blockMap, "MemoryFullPrunedBlockStore is closed");
+        this.verifiedChainHead = chainHead;
+        if (this.chainHead.getHeight() < chainHead.getHeight())
+            setChainHead(chainHead);
         // Potential leak here if not all blocks get setChainHead'd
         // Though the FullPrunedBlockStore allows for this, the current AbstractBlockChain will not do it.
         fullBlockMap.removeByMultiKey(chainHead.getHeight() - fullStoreDepth);
