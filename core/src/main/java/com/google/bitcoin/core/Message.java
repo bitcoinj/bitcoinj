@@ -115,10 +115,10 @@ public abstract class Message implements Serializable {
             parsed = true;
         }
 
-        checkState(this.length != UNKNOWN_LENGTH,
-                "Length field has not been set in constructor for %s after %s parse. " +
-                        "Refer to Message.parseLite() for detail of required Length field contract.",
-                getClass().getSimpleName(), parseLazy ? "lite" : "full");
+        if (this.length == UNKNOWN_LENGTH)
+            checkState(false, "Length field has not been set in constructor for %s after %s parse. " +
+                              "Refer to Message.parseLite() for detail of required Length field contract.",
+                       getClass().getSimpleName(), parseLazy ? "lite" : "full");
         
         if (SELF_CHECK) {
             selfCheck(msg, offset);
@@ -397,8 +397,8 @@ public abstract class Message implements Serializable {
         if (length != UNKNOWN_LENGTH)
             return length;
         maybeParse();
-        checkState(length != UNKNOWN_LENGTH,
-                "Length field has not been set in %s after full parse.", getClass().getSimpleName());
+        if (length == UNKNOWN_LENGTH)
+            checkState(false, "Length field has not been set in %s after full parse.", getClass().getSimpleName());
         return length;
     }
 
