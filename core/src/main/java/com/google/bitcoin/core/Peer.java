@@ -157,15 +157,13 @@ public class Peer {
 
     class PeerHandler extends SimpleChannelHandler {
         @Override
-        public void channelClosed(ChannelHandlerContext ctx, ChannelStateEvent e)
-        throws Exception {
+        public void channelClosed(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
             super.channelClosed(ctx, e);
             notifyDisconnect();
         }
 
         @Override
-        public void connectRequested(ChannelHandlerContext ctx, ChannelStateEvent e)
-        throws Exception {
+        public void connectRequested(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
             super.connectRequested(ctx, e);
             channel = e.getChannel();
             address = new PeerAddress((InetSocketAddress)e.getValue());
@@ -173,8 +171,7 @@ public class Peer {
 
         /** Catch any exceptions, logging them and then closing the channel. */ 
         @Override
-        public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e)
-        throws Exception {
+        public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) throws Exception {
             if (e.getCause() instanceof ConnectException || e.getCause() instanceof IOException) {
                 // Short message for network errors
                 log.info(toString() + " - " + e.getCause().getMessage());

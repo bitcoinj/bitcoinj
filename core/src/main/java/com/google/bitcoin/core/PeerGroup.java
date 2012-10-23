@@ -202,9 +202,7 @@ public class PeerGroup {
                 Peer peer = new Peer(params, chain, ver);
                 peer.addLifecycleListener(startupListener);
                 pendingPeers.add(peer);
-                TCPNetworkConnection codec =
-                    new TCPNetworkConnection(params,
-                            peer.getVersionMessage());
+                TCPNetworkConnection codec = new TCPNetworkConnection(params, peer.getVersionMessage());
                 p.addLast("codec", codec.getHandler());
                 p.addLast("peer", peer.getHandler());
                 return p;
