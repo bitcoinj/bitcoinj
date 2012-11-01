@@ -1476,7 +1476,7 @@ public class Script {
     }
 
     /**
-     * Verifies that this script (interpreted as a scriptSig) correctly spends the given scriptPubKey
+     * Verifies that this script (interpreted as a scriptSig) correctly spends the given scriptPubKey.
      * @throws VerificationException if this script does not correctly spend the scriptPubKey
      */
     public void correctlySpends(Transaction txContainingThis, long index, Script scriptPubKey, boolean enforceP2SH) throws VerificationException, ScriptException {
@@ -1496,8 +1496,21 @@ public class Script {
         
         if (!castToBool(stack.pollLast()))
             throw new VerificationException("Script resulted in a non-true stack");
-        
-        if(enforceP2SH && scriptPubKey.isPayToScriptHash()) {
+
+        // P2SH is pay to script hash. It means that the scriptPubKey has a special form which is a valid
+        // program but it has "useless" form that if evaluated as a normal program always returns true.
+        // Instead, miners recognize it as special based on its template - it provides a hash of the real scriptPubKey
+        // and that must be provided by the input. The goal of this bizarre arrangement is twofold:
+        //
+        // (1) You can sum up a large, complex script (like a CHECKMULTISIG script) with an address that's the same
+        //     size as a regular address. This means it doesn't overload scannable QR codes/NFC tags or become
+        //     un-wieldy to copy/paste.
+        // (2) It allows the working set to be smaller: nodes perform best when they can store as many unspent outputs
+        //     in RAM as possible, so if the outputs are made smaller and the inputs get bigger, then it's better for
+        //     overall scalability and performance.
+
+        // TODO: Check if we can take out enforceP2SH if there's a checkpoint at the enforcement block.
+        if (enforceP2SH && scriptPubKey.isPayToScriptHash()) {
             for (ScriptChunk chunk : chunks)
                 if (chunk.isOpCode && (chunk.data[0] & 0xff) > OP_16)
                     throw new VerificationException("Attempted to spend a P2SH scriptPubKey with a script that contained script ops");
