@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.google.bitcoin.examples;
+package com.google.bitcoin.tools;
 
 import com.google.bitcoin.core.Block;
 import com.google.bitcoin.core.FullPrunedBlockChain;
