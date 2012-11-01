@@ -29,7 +29,7 @@
   <artifactId>bitcoinj-tools</artifactId>
 
   <name>bitcoinj Tools</name>
-  <description>A collection of useful tools that use the BitCoinJ library to perform wallet operations</description>
+  <description>A collection of useful tools that use the bitcoinj library to perform wallet operations</description>
 
   <build>
       <plugins>

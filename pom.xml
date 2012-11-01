@@ -103,7 +103,7 @@
 
   <mailingLists>
     <mailingList>
-      <name>BitCoinJ Google Group</name>
+      <name>bitcoinj Google Group</name>
       <post>https://groups.google.com/forum/#!forum/bitcoinj</post>
     </mailingList>
   </mailingLists>
@@ -176,7 +176,7 @@
         <artifactId>slf4j-api</artifactId>
         <version>${slf4j.version}</version>
       </dependency>
-      <!-- BitCoinJ consumers are expected to provide their own SLF4J adapters
+      <!-- bitcoinj consumers are expected to provide their own SLF4J adapters
     such as logback, slf4j-log4j12, slf4j-jcl and so on
     see http://www.slf4j.org/faq.html -->
       <dependency>

@@ -162,7 +162,7 @@ public class PeerGroup {
         //   - using connectTo() will increment it by one
         this.maxConnections = 0;
 
-        // Set up a default template version message that doesn't tell the other side what kind of BitCoinJ user
+        // Set up a default template version message that doesn't tell the other side what kind of bitcoinj user
         // this is.
         this.versionMessage = new VersionMessage(params, chain.getBestChainHeight());
 
