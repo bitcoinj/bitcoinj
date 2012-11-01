@@ -71,6 +71,7 @@ public class BlockImporter {
                 System.out.println(i);
             i++;
         }
+        stream.close();
         System.out.println("Imported " + chain.getChainHead().getHeight() + " blocks.");
     }
 }
