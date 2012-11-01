@@ -1,5 +1,6 @@
 /**
  * Copyright 2011 Google Inc.
+ * Copyright 2012 Matt Corallo.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,19 +17,15 @@
 
 package com.google.bitcoin.core;
 
+import org.spongycastle.crypto.digests.RIPEMD160Digest;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-
-import org.spongycastle.crypto.digests.RIPEMD160Digest;
+import java.util.*;
 
 import static com.google.bitcoin.core.Utils.bytesToHexString;
 
