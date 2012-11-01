@@ -21,6 +21,7 @@ import com.google.bitcoin.core.WalletTransaction.Pool;
 import com.google.bitcoin.store.WalletProtobufSerializer;
 import com.google.bitcoin.utils.EventListenerInvoker;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,6 +35,17 @@ import java.util.concurrent.TimeUnit;
 
 import static com.google.bitcoin.core.Utils.bitcoinValueToFriendlyString;
 import static com.google.common.base.Preconditions.*;
+
+// To do list:
+//
+// - Make the keychain member protected and switch it to be a hashmap of some kind so key lookup ops are faster.
+// - Refactor how keys are managed to better handle things like deterministic wallets in future.
+// - Decompose the class where possible: break logic out into classes that can be customized/replaced by the user.
+//     - Coin selection
+//     - [Auto]saving to a backing store
+//     - Key management
+//     - just generally make Wallet smaller and easier to work with
+// - Make clearing of transactions able to only rewind the wallet a certain distance instead of all blocks.
 
 /**
  * <p>A Wallet stores keys and a record of transactions that send and receive value from those keys. Using these,
@@ -150,7 +162,7 @@ public class Wallet implements Serializable {
     final Map<Sha256Hash, Transaction> dead;
 
     /**
-     * A list of public/private EC keys owned by this user.
+     * A list of public/private EC keys owned by this user. Access it using addKey[s], hasKey[s] and findPubKeyFromHash.
      */
     public final ArrayList<ECKey> keychain;
 
@@ -1562,19 +1574,37 @@ public class Wallet implements Serializable {
      * Adds the given ECKey to the wallet. There is currently no way to delete keys (that would result in coin loss).
      * If {@link Wallet#autosaveToFile(java.io.File, long, java.util.concurrent.TimeUnit, com.google.bitcoin.core.Wallet.AutosaveEventListener)}
      * has been called, triggers an auto save bypassing the normal coalescing delay and event handlers.
+     * If the key already exists in the wallet, does nothing and returns false.
      */
-    public synchronized void addKey(final ECKey key) {
-        checkArgument(!keychain.contains(key), "Key already present");
-        keychain.add(key);
-        EventListenerInvoker.invoke(eventListeners, new EventListenerInvoker<WalletEventListener>() {
-            @Override
-            public void invoke(WalletEventListener listener) {
-                listener.onKeyAdded(key);
-            }
-        });
+    public synchronized boolean addKey(final ECKey key) {
+        return addKeys(Lists.newArrayList(key)) == 1;
+    }
+
+    /**
+     * Adds the given keys to the wallet. There is currently no way to delete keys (that would result in coin loss).
+     * If {@link Wallet#autosaveToFile(java.io.File, long, java.util.concurrent.TimeUnit, com.google.bitcoin.core.Wallet.AutosaveEventListener)}
+     * has been called, triggers an auto save bypassing the normal coalescing delay and event handlers.
+     * Returns the number of keys added, after duplicates are ignored. The onKeyAdded event will be called for each key
+     * in the list that was not already present.
+     */
+    public synchronized int addKeys(final List<ECKey> keys) {
+        // TODO: Consider making keys a sorted list or hashset so membership testing is faster.
+        int added = 0;
+        for (final ECKey key : keys) {
+            if (keychain.contains(key)) continue;
+            keychain.add(key);
+            EventListenerInvoker.invoke(eventListeners, new EventListenerInvoker<WalletEventListener>() {
+                @Override
+                public void invoke(WalletEventListener listener) {
+                    listener.onKeyAdded(key);
+                }
+            });
+            added++;
+        }
         if (autosaveToFile != null) {
             autoSave();
         }
+        return added;
     }
 
     /**
@@ -1588,6 +1618,11 @@ public class Wallet implements Serializable {
             if (Arrays.equals(key.getPubKeyHash(), pubkeyHash)) return key;
         }
         return null;
+    }
+
+    /** Returns true if the given key is in the wallet, false otherwise. Currently an O(N) operation. */
+    public boolean hasKey(ECKey key) {
+        return keychain.contains(key);
     }
 
     /**
