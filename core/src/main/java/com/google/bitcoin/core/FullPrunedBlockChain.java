@@ -255,9 +255,10 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
                                     throw new VerificationException("Too many P2SH SigOps in block");
                             }
                             try {
-                                in.getScriptSig().correctlySpends(new Transaction(params, tx), index, new Script(params, prevOut.getScriptBytes(), 0, prevOut.getScriptBytes().length));
+                                in.getScriptSig().correctlySpends(new Transaction(params, tx), index,
+                                        new Script(params, prevOut.getScriptBytes(), 0, prevOut.getScriptBytes().length));
                             } catch (ScriptException e) {
-                                throw new VerificationException("Error verifying script: " + e.getMessage());
+                                throw new VerificationException("Error verifying script", e);
                             }
                             blockStore.removeUnspentTransactionOutput(prevOut);
                             txOutsSpent.add(prevOut);
