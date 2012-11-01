@@ -759,61 +759,85 @@ public class Transaction extends ChildMessage implements Serializable {
      */
     synchronized Sha256Hash hashTransactionForSignature(int inputIndex, byte[] connectedScript,
             byte sigHashType) throws ScriptException {
+        // TODO: This whole separate method should be un-necessary if we fix how we deserialize sighash flags.
+
+        // The SIGHASH flags are used in the design of contracts, please see this page for a further understanding of
+        // the purposes of the code in this method:
+        //
+        //   https://en.bitcoin.it/wiki/Contracts
+
         try {
             // Store all the input scripts and clear them in preparation for signing. If we're signing a fresh
             // transaction that step isn't very helpful, but it doesn't add much cost relative to the actual
             // EC math so we'll do it anyway.
-            // Also store the input sequences in case we are clearing them with SigHash.NONE/SINGLE
+            //
+            // Also store the input sequence numbers in case we are clearing them with SigHash.NONE/SINGLE
             byte[][] inputScripts = new byte[inputs.size()][];
-            long[] inputSequences = new long[inputs.size()];
+            long[] inputSequenceNumbers = new long[inputs.size()];
             for (int i = 0; i < inputs.size(); i++) {
                 inputScripts[i] = inputs.get(i).getScriptBytes();
-                inputSequences[i] = inputs.get(i).getSequence();
+                inputSequenceNumbers[i] = inputs.get(i).getSequenceNumber();
                 inputs.get(i).setScriptBytes(TransactionInput.EMPTY_ARRAY);
             }
 
-            // "In case concatenating two scripts ends up with two codeseparators, or an extra
-            // one at the end, this prevents all those possible incompatibilities." - reference client
+            // This step has no purpose beyond being synchronized with the reference clients bugs. OP_CODESEPARATOR
+            // is a legacy holdover from a previous, broken design of executing scripts that shipped in Bitcoin 0.1.
+            // It was seriously flawed and would have let anyone take anyone elses money. Later versions switched to
+            // the design we use today where scripts are executed independently but share a stack. This left the
+            // OP_CODESEPARATOR instruction having no purpose as it was only meant to be used internally, not actually
+            // ever put into scripts. Deleting OP_CODESEPARATOR is a step that should never be required but if we don't
+            // do it, we could split off the main chain.
             connectedScript = Script.removeAllInstancesOfOp(connectedScript, Script.OP_CODESEPARATOR);
             
-            // Set the input to the script of its output.
+            // Set the input to the script of its output. Satoshi does this but the step has no obvious purpose as
+            // the signature covers the hash of the prevout transaction which obviously includes the output script
+            // already. Perhaps it felt safer to him in some way, or is another leftover from how the code was written.
             TransactionInput input = inputs.get(inputIndex);
             input.setScriptBytes(connectedScript);
             
             ArrayList<TransactionOutput> outputs = this.outputs;
             if ((sigHashType & 0x1f) == (SigHash.NONE.ordinal() + 1)) {
+                // SIGHASH_NONE means no outputs are signed at all - the signature is effectively for a "blank cheque".
                 this.outputs = new ArrayList<TransactionOutput>(0);
-                
+                // The signature isn't broken by new versions of the transaction issued by other parties.
                 for (int i = 0; i < inputs.size(); i++)
                     if (i != inputIndex)
-                        inputs.get(i).setSequence(0);
-            }
-            else if ((sigHashType & 0x1f) == (SigHash.SINGLE.ordinal() + 1)) {
+                        inputs.get(i).setSequenceNumber(0);
+            } else if ((sigHashType & 0x1f) == (SigHash.SINGLE.ordinal() + 1)) {
+                // SIGHASH_SINGLE means only sign the output at the same index as the input (ie, my output).
                 if (inputIndex >= this.outputs.size()) {
-                    // TODO: Only allow this to happen if we are checking a signature, not signing a transactions
-                    // Any transaction ouptut that is signed in this case will result in both the signed output
+                    // The input index is beyond the number of outputs, it's a buggy signature made by a broken
+                    // Bitcoin implementation. The reference client also contains a bug in handling this case:
+                    // any transaction output that is signed in this case will result in both the signed output
                     // and any future outputs to this public key being steal-able by anyone who has
-                    // the resulting signature and the public key (both of which are part of the signed tx input)
+                    // the resulting signature and the public key (both of which are part of the signed tx input).
                     // Put the transaction back to how we found it.
+                    //
+                    // TODO: Only allow this to happen if we are checking a signature, not signing a transactions
                     for (int i = 0; i < inputs.size(); i++) {
                         inputs.get(i).setScriptBytes(inputScripts[i]);
-                        inputs.get(i).setSequence(inputSequences[i]);
+                        inputs.get(i).setSequenceNumber(inputSequenceNumbers[i]);
                     }
                     this.outputs = outputs;
+                    // Satoshis bug is that SignatureHash was supposed to return a hash and on this codepath it
+                    // actually returns the constant "1" to indicate an error, which is never checked for. Oops.
                     return new Sha256Hash("0100000000000000000000000000000000000000000000000000000000000000");
                 }
-                
+                // In SIGHASH_SINGLE the outputs after the matching input index are deleted, and the outputs before
+                // that position are "nulled out". Unintuitively, the value in a "null" transaction is set to -1.
                 this.outputs = new ArrayList<TransactionOutput>(this.outputs.subList(0, inputIndex));
                 for (int i = 0; i < inputIndex; i++)
                     this.outputs.set(i, new TransactionOutput(params, this, BigInteger.valueOf(-1), new byte[] {}));
-                
+                // The signature isn't broken by new versions of the transaction issued by other parties.
                 for (int i = 0; i < inputs.size(); i++)
                     if (i != inputIndex)
-                        inputs.get(i).setSequence(0);
+                        inputs.get(i).setSequenceNumber(0);
             }
             
             ArrayList<TransactionInput> inputs = this.inputs;
             if ((sigHashType & 0x80) == 0x80) {
+                // SIGHASH_ANYONECANPAY means the signature in the input is not broken by changes/additions/removals
+                // of other inputs. For example, this is useful for building assurance contracts.
                 this.inputs = new ArrayList<TransactionInput>();
                 this.inputs.add(input);
             }
@@ -831,7 +855,7 @@ public class Transaction extends ChildMessage implements Serializable {
             this.inputs = inputs;
             for (int i = 0; i < inputs.size(); i++) {
                 inputs.get(i).setScriptBytes(inputScripts[i]);
-                inputs.get(i).setSequence(inputSequences[i]);
+                inputs.get(i).setSequenceNumber(inputSequenceNumbers[i]);
             }
             this.outputs = outputs;
             return hash;

@@ -1,16 +1,12 @@
 package com.google.bitcoin.core;
 
+import com.google.bitcoin.core.Transaction.SigHash;
+import com.google.common.base.Preconditions;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Queue;
-
-import com.google.bitcoin.core.Transaction.SigHash;
-import com.google.common.base.Preconditions;
+import java.util.*;
 
 class BlockAndValidity {
     Block block;
@@ -1102,7 +1098,7 @@ public class FullBlockTestGenerator {
     
     private void addOnlyInputToTransaction(Transaction t, TransactionOutPointWithValue prevOut, long sequence) throws ScriptException {
         TransactionInput input = new TransactionInput(params, t, new byte[]{}, prevOut.outpoint);
-        input.setSequence(sequence);
+        input.setSequenceNumber(sequence);
         t.addInput(input);
 
         byte[] connectedPubKeyScript = prevOut.scriptPubKey.program;

@@ -179,17 +179,25 @@ public class TransactionInput extends ChildMessage implements Serializable {
     }
 
     /**
-     * @return Transaction version as defined by the sender. Intended for "replacement" of transactions when information is updated before inclusion into a block. 
+     * Sequence numbers allow participants in a multi-party transaction signing protocol to create new versions of the
+     * transaction independently of each other. Newer versions of a transaction can replace an existing version that's
+     * in nodes memory pools if the existing version is time locked. See the Contracts page on the Bitcoin wiki for
+     * examples of how you can use this feature to build contract protocols. Note that as of 2012 the tx replacement
+     * feature is disabled so sequence numbers are unusable.
      */
-    public long getSequence() {
+    public long getSequenceNumber() {
         maybeParse();
         return sequence;
     }
 
     /**
-     * @param sequence Transaction version as defined by the sender. Intended for "replacement" of transactions when information is updated before inclusion into a block. 
+     * Sequence numbers allow participants in a multi-party transaction signing protocol to create new versions of the
+     * transaction independently of each other. Newer versions of a transaction can replace an existing version that's
+     * in nodes memory pools if the existing version is time locked. See the Contracts page on the Bitcoin wiki for
+     * examples of how you can use this feature to build contract protocols. Note that as of 2012 the tx replacement
+     * feature is disabled so sequence numbers are unusable.
      */
-    public void setSequence(long sequence) {
+    public void setSequenceNumber(long sequence) {
         unCache();
         this.sequence = sequence;
     }

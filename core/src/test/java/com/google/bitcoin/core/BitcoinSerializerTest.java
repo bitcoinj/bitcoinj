@@ -150,7 +150,7 @@ public class BitcoinSerializerTest {
         assertEquals(!lazy, tx.isParsed());
         assertEquals(true, tx.isCached());
         
-        tx.getInputs().get(0).setSequence(1);
+        tx.getInputs().get(0).setSequenceNumber(1);
         //parent should have been uncached
         assertEquals(false, tx.isCached());
         //so should child
@@ -177,7 +177,7 @@ public class BitcoinSerializerTest {
         assertEquals(!lazy, tx.isParsed());
         assertEquals(true, tx.isCached());
        
-        tx.getInputs().get(0).setSequence(tx.getInputs().get(0).getSequence());
+        tx.getInputs().get(0).setSequenceNumber(tx.getInputs().get(0).getSequenceNumber());
         
         bos = new ByteArrayOutputStream();
         bs.serialize(tx, bos);

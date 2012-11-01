@@ -164,7 +164,7 @@ public class WalletProtobufSerializer {
                 .setTransactionOutPointHash(hashToByteString(input.getOutpoint().getHash()))
                 .setTransactionOutPointIndex((int) input.getOutpoint().getIndex());
             if (input.hasSequence()) {
-                inputBuilder.setSequence((int)input.getSequence());
+                inputBuilder.setSequence((int)input.getSequenceNumber());
             }
             txBuilder.addTransactionInput(inputBuilder);
         }
@@ -332,7 +332,7 @@ public class WalletProtobufSerializer {
             );
             TransactionInput input = new TransactionInput(params, tx, scriptBytes, outpoint);
             if (transactionInput.hasSequence()) {
-                input.setSequence(transactionInput.getSequence());
+                input.setSequenceNumber(transactionInput.getSequence());
             }
             tx.addInput(input);
         }
