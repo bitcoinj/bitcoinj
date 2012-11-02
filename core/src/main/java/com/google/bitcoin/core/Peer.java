@@ -81,7 +81,7 @@ public class Peer {
 
     private Channel channel;
     private VersionMessage peerVersionMessage;
-    boolean isAcked;
+    private boolean isAcked;
     private PeerHandler handler;
 
     /**
@@ -218,8 +218,7 @@ public class Peer {
                 processAlert((AlertMessage)m);
             } else if (m instanceof VersionMessage) {
                 peerVersionMessage = (VersionMessage)m;
-                EventListenerInvoker.invoke(lifecycleListeners,
-                        new EventListenerInvoker<PeerLifecycleListener>() {
+                EventListenerInvoker.invoke(lifecycleListeners, new EventListenerInvoker<PeerLifecycleListener>() {
                     @Override
                     public void invoke(PeerLifecycleListener listener) {
                         listener.onPeerConnected(Peer.this);
