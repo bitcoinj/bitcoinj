@@ -453,11 +453,8 @@ public class PeerGroup {
      * broadcastTransaction().
      */
     class PeerGroupThread extends Thread {
-        private LinkedBlockingQueue<FutureTask> tasks;
-
         public PeerGroupThread() {
             super("Peer group thread");
-            tasks = new LinkedBlockingQueue<FutureTask>();
             // Ensure we don't fight with UI threads.
             setPriority(Math.max(Thread.MIN_PRIORITY, Thread.currentThread().getPriority() - 1));
             setDaemon(true);
@@ -479,21 +476,8 @@ public class PeerGroup {
                         tryNextPeer();
                     }
 
-                    // Wait for a task or the connection polling timeout to elapse. Tasks are only eligible to run
-                    // when there is at least one active peer.
-                    // TODO: Remove the need for this polling, only wake up the peer group thread when there's actually
-                    // something useful to do.
-                    if (numPeers > 0) {
-                        FutureTask task = tasks.poll(connectionDelayMillis, TimeUnit.MILLISECONDS);
-                        if (task != null) {
-                            synchronized (PeerGroup.this) {
-                                task.run();
-                            }
-                        }
-                    } else {
-                        // TODO: This should actually be waiting for a peer to become active OR the timeout to elapse.
-                        Thread.sleep(connectionDelayMillis);
-                    }
+                    // TODO: Remove this and replace it with a real observation of when work needs to be done.
+                    Thread.sleep(connectionDelayMillis);
                 }
             } catch (InterruptedException ex) {
             }
@@ -551,14 +535,6 @@ public class PeerGroup {
             PeerAddress address = inactives.take();
             connectTo(address.toSocketAddress(), false);
         }
-
-        /**
-         * Add a task to be executed on the peer thread. Tasks are run with the peer group locked and when there is
-         * at least one peer.
-         */
-        public synchronized <T> void addTask(FutureTask<T> task) {
-            tasks.add(task);
-        }
     }
 
     /**
@@ -582,6 +558,7 @@ public class PeerGroup {
             networkHandler.getOwnerObject().setRemoteAddress(address);
         }
         synchronized (this) {
+            // TODO: This probably forces a wait for the channel to connect, should re-organize all this code.
             Peer peer = peerFromChannelFuture(future);
             channelFutures.put(peer, future);
             if (incrementMaxConnections)
