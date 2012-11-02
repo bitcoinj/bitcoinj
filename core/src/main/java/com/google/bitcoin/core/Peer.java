@@ -21,6 +21,9 @@ import com.google.bitcoin.store.BlockStoreException;
 import com.google.bitcoin.utils.EventListenerInvoker;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Lists;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.SettableFuture;
 import org.jboss.netty.channel.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -79,6 +82,10 @@ public class Peer {
     // simultaneously if we were to receive a newly solved block whilst parts of the chain are streaming to us.
     private HashSet<Sha256Hash> pendingBlockDownloads = new HashSet<Sha256Hash>();
 
+    // Outstanding pings against this peer and how long the last one took to complete. Locked under the Peer lock.
+    private List<PendingPing> pendingPings;
+    private long lastPingTime;
+
     private Channel channel;
     private VersionMessage peerVersionMessage;
     private boolean isAcked;
@@ -97,6 +104,8 @@ public class Peer {
         this.fastCatchupTimeSecs = params.genesisBlock.getTimeSeconds();
         this.isAcked = false;
         this.handler = new PeerHandler();
+        this.pendingPings = Lists.newLinkedList();
+        this.lastPingTime = Long.MAX_VALUE;
     }
 
     /**
@@ -235,7 +244,7 @@ public class Peer {
                 if (((Ping) m).hasNonce())
                     sendMessage(new Pong(((Ping) m).getNonce()));
             } else if (m instanceof Pong) {
-                // We don't do anything with pongs right now, leave that to eventListeners
+                processPong((Pong)m);
             } else {
                 // TODO: Handle the other messages we can receive.
                 log.warn("Received unhandled message: {}", m);
@@ -727,6 +736,70 @@ public class Peer {
             // When we just want as many blocks as possible, we can set the target hash to zero.
             blockChainDownload(Sha256Hash.ZERO_HASH);
         }
+    }
+
+    private class PendingPing {
+        // The future that will be invoked when the pong is heard back.
+        public SettableFuture<Long> future;
+        // The random nonce that lets us tell apart overlapping pings/pongs.
+        public long nonce;
+        // Measurement of the time elapsed.
+        public long startTimeMsec;
+
+        public PendingPing() {
+            future = SettableFuture.create();
+            nonce = (long) Math.random() * Long.MAX_VALUE;
+            startTimeMsec = Utils.now().getTime();
+        }
+
+        public void complete() {
+            Preconditions.checkNotNull(future, "Already completed");
+            Long elapsed = Long.valueOf(Utils.now().getTime() - startTimeMsec);
+            synchronized (Peer.this) {
+                Peer.this.lastPingTime = elapsed.longValue();
+            }
+            log.debug("{}: ping time is {} msec", Peer.this.toString(), elapsed);
+            future.set(elapsed);
+            future = null;
+        }
+    }
+
+    /**
+     * Sends the peer a ping message and returns a future that will be invoked when the pong is received back.
+     * The future provides a number which is the number of milliseconds elapsed between the ping and the pong.
+     * @throws ProtocolException if the peer version is too low to support measurable pings.
+     */
+    public ListenableFuture<Long> ping() throws IOException, ProtocolException {
+        int peerVersion = getPeerVersionMessage().clientVersion;
+        if (peerVersion < 60000)
+            throw new ProtocolException("Peer version is too low for measurable pings: " + peerVersion);
+        PendingPing pendingPing = new PendingPing();
+        pendingPings.add(pendingPing);
+        sendMessage(new Ping(pendingPing.nonce));
+        return pendingPing.future;
+    }
+
+    /**
+     * Returns the elapsed time of the last ping/pong cycle. If {@link com.google.bitcoin.core.Peer#ping()} has never
+     * been called or we did not hear back the "pong" message yet, returns {@link Long#MAX_VALUE}.
+     */
+    public long getLastPingTime() {
+        return lastPingTime;
+    }
+
+    private void processPong(Pong m) {
+        ListIterator<PendingPing> it = pendingPings.listIterator();
+        PendingPing ping = null;
+        while (it.hasNext()) {
+            ping = it.next();
+            if (m.getNonce() == ping.nonce) {
+                it.remove();
+                break;
+            }
+        }
+        // This line may trigger an event listener being run on the same thread, if one is attached to the
+        // pending ping future. That event listener may in turn re-run ping, so we need to do it last.
+        if (ping != null) ping.complete();
     }
 
     /**

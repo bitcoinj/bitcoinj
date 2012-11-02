@@ -17,6 +17,7 @@
 package com.google.bitcoin.core;
 
 import com.google.bitcoin.core.Peer.PeerHandler;
+import com.google.common.util.concurrent.ListenableFuture;
 import org.easymock.Capture;
 import org.jboss.netty.channel.*;
 import org.junit.Before;
@@ -430,6 +431,25 @@ public class PeerTest extends TestWithNetworkConnections {
         assertEquals(b3.getHash(), getdata.getItems().get(0).hash);
         // All done.
         inbound(peer, b3);
+    }
+
+    @Test
+    public void pingPong() throws Exception {
+        control.replay();
+        connect();
+        Utils.rollMockClock(0);
+        // No ping pong happened yet.
+        assertEquals(Long.MAX_VALUE, peer.getLastPingTime());
+        ListenableFuture<Long> future = peer.ping();
+        Ping pingMsg = (Ping) outbound();
+        assertEquals(Long.MAX_VALUE, peer.getLastPingTime());
+        assertFalse(future.isDone());
+        Utils.rollMockClock(5);
+        inbound(peer, new Pong(pingMsg.getNonce()));
+        assertTrue(future.isDone());
+        long elapsed = future.get();
+        assertTrue("" + elapsed, elapsed > 1000);
+        assertEquals(elapsed, peer.getLastPingTime());
     }
     
     private Message outbound() {
