@@ -67,8 +67,8 @@ public class Peer {
     private MemoryPool memoryPool;
     // A time before which we only download block headers, after that point we download block bodies.
     private long fastCatchupTimeSecs;
-    // Whether we are currently downloading headers only or block bodies. Defaults to true, if the fast catchup time
-    // is set AND our best block is before that date, switch to false until block headers beyond that point have been
+    // Whether we are currently downloading headers only or block bodies. Starts at true. If the fast catchup time is
+    // set AND our best block is before that date, switch to false until block headers beyond that point have been
     // received at which point it gets set to true again. This isn't relevant unless downloadData is true.
     private boolean downloadBlockBodies = true;
     // Keeps track of things we requested internally with getdata but didn't receive yet, so we can avoid re-requests.
@@ -87,10 +87,10 @@ public class Peer {
     /**
      * Construct a peer that reads/writes from the given block chain.
      */
-    public Peer(NetworkParameters params, AbstractBlockChain chain2, VersionMessage ver) {
-        this.params = params;
-        this.blockChain = chain2;
-        this.versionMessage = ver;
+    public Peer(NetworkParameters params, AbstractBlockChain chain, VersionMessage ver) {
+        this.params = Preconditions.checkNotNull(params);
+        this.versionMessage = Preconditions.checkNotNull(ver);
+        this.blockChain = chain;  // Allowed to be null.
         this.pendingGetBlockFutures = new ArrayList<GetDataFuture<Block>>();
         this.eventListeners = new CopyOnWriteArrayList<PeerEventListener>();
         this.lifecycleListeners = new CopyOnWriteArrayList<PeerLifecycleListener>();
@@ -104,8 +104,7 @@ public class Peer {
      * given software name/version strings, which should be something like "MySimpleTool", "1.0"
      */
     public Peer(NetworkParameters params, AbstractBlockChain blockChain, String thisSoftwareName, String thisSoftwareVersion) {
-        this(params, blockChain, null);
-        this.versionMessage = new VersionMessage(params, blockChain.getBestChainHeight());
+        this(params, blockChain, new VersionMessage(params, blockChain.getBestChainHeight()));
         this.versionMessage.appendToSubVer(thisSoftwareName, thisSoftwareVersion, null);
     }
 
@@ -457,7 +456,7 @@ public class Peer {
             }
         }
 
-        if (blocks.size() > 0 && downloadData) {
+        if (blocks.size() > 0 && downloadData && blockChain != null) {
             // Ideally, we'd only ask for the data here if we actually needed it. However that can imply a lot of
             // disk IO to figure out what we've got. Normally peers will not send us inv for things we already have
             // so we just re-request it here, and if we get duplicates the block chain / wallet will filter them out.
@@ -532,6 +531,7 @@ public class Peer {
      * @param secondsSinceEpoch Time in seconds since the epoch or 0 to reset to always downloading block bodies.
      */
     public void setFastCatchupTime(long secondsSinceEpoch) {
+        Preconditions.checkNotNull(blockChain);
         if (secondsSinceEpoch == 0) {
             fastCatchupTimeSecs = params.genesisBlock.getTimeSeconds();
             downloadBlockBodies = true;

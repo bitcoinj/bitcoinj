@@ -122,14 +122,23 @@ public class PeerGroup {
     Peer.PeerLifecycleListener startupListener = new PeerStartupListener();
 
     /**
-     * Creates a PeerGroup with the given parameters and a default 5 second connection timeout. If you don't care
-     * about blocks or pending transactions, you can just provide a MemoryBlockStore and a newly created Wallet.
+     * Creates a PeerGroup with the given parameters and a default 5 second connection timeout.
      *
      * @param params Network parameters
-     * @param chain2 a BlockChain object that will receive and handle block messages.
+     * @param chain a BlockChain object that will receive and handle block messages.
      */
-    public PeerGroup(NetworkParameters params, AbstractBlockChain chain2) {
-        this(params, chain2, DEFAULT_CONNECTION_DELAY_MILLIS);
+    public PeerGroup(NetworkParameters params, AbstractBlockChain chain) {
+        this(params, chain, DEFAULT_CONNECTION_DELAY_MILLIS);
+    }
+
+    /**
+     * Creates a PeerGroup with the given parameters and a default 5 second connection timeout. No chain is
+     * provided so this node will report its chain height as zero to other peers.
+     *
+     * @param params Network parameters
+     */
+    public PeerGroup(NetworkParameters params) {
+        this(params, null, DEFAULT_CONNECTION_DELAY_MILLIS);
     }
 
     /**
@@ -152,7 +161,7 @@ public class PeerGroup {
     PeerGroup(final NetworkParameters params, final AbstractBlockChain chain,
               int connectionDelayMillis, ClientBootstrap bootstrap) {
         this.params = params;
-        this.chain = chain;
+        this.chain = chain;  // Can be null.
         this.connectionDelayMillis = connectionDelayMillis;
         this.fastCatchupTimeSecs = params.genesisBlock.getTimeSeconds();
         this.wallets = new ArrayList<Wallet>(1);
@@ -162,9 +171,8 @@ public class PeerGroup {
         //   - using connectTo() will increment it by one
         this.maxConnections = 0;
 
-        // Set up a default template version message that doesn't tell the other side what kind of bitcoinj user
-        // this is.
-        this.versionMessage = new VersionMessage(params, chain.getBestChainHeight());
+        int height = chain == null ? 0 : chain.getBestChainHeight();
+        this.versionMessage = new VersionMessage(params, height);
 
         memoryPool = new MemoryPool();
         this.bootstrap = bootstrap;
@@ -194,7 +202,7 @@ public class PeerGroup {
         return new ChannelPipelineFactory() {
             public ChannelPipeline getPipeline() throws Exception {
                 VersionMessage ver = getVersionMessage().duplicate();
-                ver.bestHeight = chain.getBestChainHeight();
+                ver.bestHeight = chain == null ? 0 : chain.getBestChainHeight();
                 ver.time = Utils.now().getTime() / 1000;
 
                 ChannelPipeline p = Channels.pipeline();
@@ -685,7 +693,8 @@ public class PeerGroup {
         if (downloadPeer != null) {
             log.info("Setting download peer: {}", downloadPeer);
             downloadPeer.setDownloadData(true);
-            downloadPeer.setFastCatchupTime(fastCatchupTimeSecs);
+            if (chain != null)
+                downloadPeer.setFastCatchupTime(fastCatchupTimeSecs);
         }
     }
 
