@@ -192,6 +192,7 @@ public class NetworkParameters implements Serializable {
         n.genesisBlock.setDifficultyTarget(0x1d00ffffL);
         n.genesisBlock.setNonce(414098458);
         n.setSpendableCoinbaseDepth(100);
+        n.setSubsidyDecreaseBlockCount(210000);
         n.id = ID_TESTNET;
         String genesisHash = n.genesisBlock.getHashAsString();
         checkState(genesisHash.equals("000000000933ea01ad0ee984209779baaec3ced90fa3f408719526f8d77f4943"),
