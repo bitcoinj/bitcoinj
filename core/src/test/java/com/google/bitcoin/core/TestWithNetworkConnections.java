@@ -16,6 +16,7 @@
 
 package com.google.bitcoin.core;
 
+import com.google.bitcoin.store.BlockStore;
 import com.google.bitcoin.store.MemoryBlockStore;
 import com.google.bitcoin.utils.BriefLogFormatter;
 import org.easymock.EasyMock;
@@ -36,7 +37,7 @@ import static org.easymock.EasyMock.expect;
 public class TestWithNetworkConnections {
     protected IMocksControl control;
     protected NetworkParameters unitTestParams;
-    protected MemoryBlockStore blockStore;
+    protected BlockStore blockStore;
     protected BlockChain blockChain;
     protected Wallet wallet;
     protected ECKey key;
@@ -48,13 +49,17 @@ public class TestWithNetworkConnections {
     protected ChannelPipeline pipeline;
     
     public void setUp() throws Exception {
+        setUp(new MemoryBlockStore(NetworkParameters.unitTests()));
+    }
+    
+    public void setUp(BlockStore blockStore) throws Exception {
         BriefLogFormatter.init();
 
         control = createStrictControl();
         control.checkOrder(false);
 
         unitTestParams = NetworkParameters.unitTests();
-        blockStore = new MemoryBlockStore(unitTestParams);
+        this.blockStore = blockStore;
         wallet = new Wallet(unitTestParams);
         key = new ECKey();
         address = key.toAddress(unitTestParams);

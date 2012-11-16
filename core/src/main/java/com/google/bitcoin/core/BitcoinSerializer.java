@@ -71,6 +71,7 @@ public class BitcoinSerializer {
         names.put(GetAddrMessage.class, "getaddr");
         names.put(HeadersMessage.class, "headers");
         names.put(BloomFilter.class, "filterload");
+        names.put(FilteredBlock.class, "merkleblock");
     }
 
     /**
@@ -256,6 +257,8 @@ public class BitcoinSerializer {
             message = new InventoryMessage(params, payloadBytes, parseLazy, parseRetain, length);
         } else if (command.equals("block")) {
             message = new Block(params, payloadBytes, parseLazy, parseRetain, length);
+        } else if (command.equals("merkleblock")) {
+            message = new FilteredBlock(params, payloadBytes);
         } else if (command.equals("getdata")) {
             message = new GetDataMessage(params, payloadBytes, parseLazy, parseRetain, length);
         } else if (command.equals("tx")) {

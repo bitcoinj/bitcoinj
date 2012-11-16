@@ -18,6 +18,8 @@ package com.google.bitcoin.core;
 
 import com.google.bitcoin.discovery.PeerDiscovery;
 import com.google.bitcoin.discovery.PeerDiscoveryException;
+import com.google.bitcoin.store.MemoryBlockStore;
+
 import org.jboss.netty.bootstrap.ClientBootstrap;
 import org.jboss.netty.channel.*;
 import org.junit.After;
@@ -34,42 +36,15 @@ import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.*;
 
-public class PeerGroupTest extends TestWithNetworkConnections {
+public class PeerGroupTest extends TestWithPeerGroup {
     static final NetworkParameters params = NetworkParameters.unitTests();
-
-    private PeerGroup peerGroup;
-
-    private VersionMessage remoteVersionMessage;
-
+    
     @Override
     @Before
     public void setUp() throws Exception {
-        super.setUp();
-
-        remoteVersionMessage = new VersionMessage(params, 1);
+        super.setUp(new MemoryBlockStore(NetworkParameters.unitTests()));
         
-        ClientBootstrap bootstrap = new ClientBootstrap(new ChannelFactory() {
-            public void releaseExternalResources() {}
-            public Channel newChannel(ChannelPipeline pipeline) {
-                ChannelSink sink = new FakeChannelSink();
-                return new FakeChannel(this, pipeline, sink);
-            }
-        });
-        bootstrap.setPipelineFactory(new ChannelPipelineFactory() {
-            public ChannelPipeline getPipeline() throws Exception {
-                VersionMessage ver = new VersionMessage(params, 1);
-                ChannelPipeline p = Channels.pipeline();
-                
-                Peer peer = new Peer(params, blockChain, ver);
-                peer.addLifecycleListener(peerGroup.startupListener);
-                p.addLast("peer", peer.getHandler());
-                return p;
-            }
-
-        });
-        peerGroup = new PeerGroup(params, blockChain, bootstrap);
         peerGroup.addWallet(wallet);
-        peerGroup.setPingIntervalMsec(0);  // Disable the pings as they just get in the way of most tests.
     }
 
     @After
@@ -146,18 +121,6 @@ public class PeerGroupTest extends TestWithNetworkConnections {
         assertNull(outbound(p2));
         assertEquals(value, wallet.getBalance(Wallet.BalanceType.ESTIMATED));
         peerGroup.stop();
-    }
-
-    private FakeChannel connectPeer(int id) {
-        return connectPeer(id, remoteVersionMessage);
-    }
-
-    private FakeChannel connectPeer(int id, VersionMessage versionMessage) {
-        InetSocketAddress remoteAddress = new InetSocketAddress("127.0.0.1", 2000 + id);
-        FakeChannel p = (FakeChannel) peerGroup.connectTo(remoteAddress).getChannel();
-        assertTrue(p.nextEvent() instanceof ChannelStateEvent);
-        inbound(p, versionMessage);
-        return p;
     }
 
     @Test

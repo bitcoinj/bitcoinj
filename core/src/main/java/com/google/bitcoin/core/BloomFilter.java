@@ -75,6 +75,11 @@ public class BloomFilter extends Message {
      * <p>Keep in mind that a remote node can do a pretty good job estimating the order of magnitude of the false positive
      * rate of a given filter you provide it when considering the anonymity of a given filter.</p>
      * 
+     * <p>In order for filtered block download to function efficiently, the number of matched transactions in any given
+     * block should be less than (with some headroom) the maximum size of the MemoryPool used by the Peer
+     * doing the downloading (default is {@link MemoryPool#MAX_SIZE}). See the comment in processBlock(FilteredBlock)
+     * for more information on this restriction.</p>
+     * 
      * <p>randomNonce is a tweak for the hash function used to prevent some theoretical DoS attacks.
      * It should be a random value, however secureness of the random value is of no great consequence.</p>
      */

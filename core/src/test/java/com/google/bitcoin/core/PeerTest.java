@@ -407,7 +407,7 @@ public class PeerTest extends TestWithNetworkConnections {
         Block b4 = makeSolvedTestBlock(unitTestParams, b3);
 
         // Request headers until the last 2 blocks.
-        peer.setFastCatchupTime((Utils.now().getTime() / 1000) - (600*2) + 1);
+        peer.setDownloadParameters((Utils.now().getTime() / 1000) - (600*2) + 1, false);
         peer.startBlockChainDownload();
         GetHeadersMessage getheaders = (GetHeadersMessage) event.getValue().getMessage();
         List<Sha256Hash> expectedLocator = new ArrayList<Sha256Hash>();

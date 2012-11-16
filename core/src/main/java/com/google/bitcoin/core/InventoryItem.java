@@ -26,7 +26,8 @@ public class InventoryItem {
     public enum Type {
         Error,
         Transaction,
-        Block
+        Block,
+        FilteredBlock
     }
 
     public final Type type;

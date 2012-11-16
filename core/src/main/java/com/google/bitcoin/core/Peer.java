@@ -16,6 +16,7 @@
 
 package com.google.bitcoin.core;
 
+import com.google.bitcoin.core.InventoryItem.Type;
 import com.google.bitcoin.store.BlockStore;
 import com.google.bitcoin.store.BlockStoreException;
 import com.google.bitcoin.utils.EventListenerInvoker;
@@ -73,6 +74,8 @@ public class Peer {
     // set AND our best block is before that date, switch to false until block headers beyond that point have been
     // received at which point it gets set to true again. This isn't relevant unless downloadData is true.
     private boolean downloadBlockBodies = true;
+    // Whether to request filtered blocks instead of full blocks if the protocol version allows for them.
+    private boolean useFilteredBlocks = false;
     // Keeps track of things we requested internally with getdata but didn't receive yet, so we can avoid re-requests.
     // It's not quite the same as getDataFutures, as this is used only for getdatas done as part of downloading
     // the chain and so is lighter weight (we just keep a bunch of hashes not futures).
@@ -206,6 +209,8 @@ public class Peer {
             e.getChannel().close();
         }
 
+        private FilteredBlock currentFilteredBlock = null;
+        
         /** Handle incoming Bitcoin messages */
         @Override
         public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) throws Exception {
@@ -223,13 +228,27 @@ public class Peer {
             }
 
             if (m == null) return;
+            
+            if (currentFilteredBlock != null && !(m instanceof Transaction)) {
+                processBlock(currentFilteredBlock);
+                currentFilteredBlock = null;
+            }
 
             if (m instanceof InventoryMessage) {
                 processInv((InventoryMessage) m);
             } else if (m instanceof Block) {
                 processBlock((Block) m);
+            } else if (m instanceof FilteredBlock) {
+                currentFilteredBlock = (FilteredBlock)m;
             } else if (m instanceof Transaction) {
-                processTransaction((Transaction) m);
+                if (currentFilteredBlock != null) {
+                    if (!currentFilteredBlock.provideTransaction((Transaction)m)) {
+                        processBlock(currentFilteredBlock);
+                        currentFilteredBlock = null;
+                        processTransaction((Transaction) m);
+                    }
+                } else
+                    processTransaction((Transaction) m);
             } else if (m instanceof GetDataMessage) {
                 processGetData((GetDataMessage) m);
             } else if (m instanceof AddressMessage) {
@@ -409,6 +428,50 @@ public class Peer {
             }
         } catch (VerificationException e) {
             // We don't want verification failures to kill the thread.
+            log.warn("FilteredBlock verification failed", e);
+        } catch (PrunedException e) {
+            // Unreachable when in SPV mode.
+            throw new RuntimeException(e);
+        }
+    }
+    
+    private synchronized void processBlock(FilteredBlock m) throws IOException {
+        log.debug("{}: Received broadcast filtered block {}", address, m.getHash().toString());
+        try {
+            if (!downloadData) {
+                log.warn("Received block we did not ask for: {}", m.getHash().toString());
+                return;
+            }
+            
+            // Note that we currently do nothing about peers which do not include transactions which
+            // actually match our filter or which do not send us all the transactions (TODO: Do something about that).
+            
+            pendingBlockDownloads.remove(m.getBlockHeader().getHash());
+            // Otherwise it's a block sent to us because the peer thought we needed it, so add it to the block chain.
+            // This call will synchronize on blockChain.
+            if (blockChain.add(m)) {
+                // The block was successfully linked into the chain. Notify the user of our progress.
+                invokeOnBlocksDownloaded(m.getBlockHeader());
+            } else {
+                // This block is an orphan - we don't know how to get from it back to the genesis block yet. That
+                // must mean that there are blocks we are missing, so do another getblocks with a new block locator
+                // to ask the peer to send them to us. This can happen during the initial block chain download where
+                // the peer will only send us 500 at a time and then sends us the head block expecting us to request
+                // the others.
+                //
+                // We must do two things here:
+                // (1) Request from current top of chain to the oldest ancestor of the received block in the orphan set
+                // (2) Filter out duplicate getblock requests (done in blockChainDownload).
+                //
+                // The reason for (1) is that otherwise if new blocks were solved during the middle of chain download
+                // we'd do a blockChainDownload() on the new best chain head, which would cause us to try and grab the
+                // chain twice (or more!) on the same connection! The block chain would filter out the duplicates but
+                // only at a huge speed penalty. By finding the orphan root we ensure every getblocks looks the same
+                // no matter how many blocks are solved, and therefore that the (2) duplicate filtering can work.
+                blockChainDownload(blockChain.getOrphanRoot(m.getHash()).getHash());
+            }
+        } catch (VerificationException e) {
+            // We don't want verification failures to kill the thread.
             log.warn("Block verification failed", e);
         } catch (PrunedException e) {
             // We pruned away some of the data we need to properly handle this block. We need to request the needed
@@ -503,6 +566,10 @@ public class Peer {
                 memoryPool.seen(item.hash, this.getAddress());
             }
         }
+        
+        // If we are requesting filteredblocks we have to send a ping after the getdata so that we have a clear
+        // end to the final FilteredBlock's transactions (in the form of a pong) sent to us
+        boolean pingAfterGetData = false;
 
         if (blocks.size() > 0 && downloadData && blockChain != null) {
             // Ideally, we'd only ask for the data here if we actually needed it. However that can imply a lot of
@@ -526,7 +593,11 @@ public class Peer {
                     // the duplicate check in blockChainDownload(). But the satoshi client may change in future so
                     // it's better to be safe here.
                     if (!pendingBlockDownloads.contains(item.hash)) {
-                        getdata.addItem(item);
+                        if (getPeerVersionMessage().clientVersion > 70000 && useFilteredBlocks) {
+                            getdata.addItem(new InventoryItem(InventoryItem.Type.FilteredBlock, item.hash));
+                            pingAfterGetData = true;
+                        } else
+                            getdata.addItem(item);
                         pendingBlockDownloads.add(item.hash);
                     }
                 }
@@ -542,6 +613,9 @@ public class Peer {
             // This will cause us to receive a bunch of block or tx messages.
             sendMessage(getdata);
         }
+        
+        if (pingAfterGetData)
+            sendMessage(new Ping((long) Math.random() * Long.MAX_VALUE));
     }
 
     /**
@@ -574,7 +648,7 @@ public class Peer {
      *
      * @param secondsSinceEpoch Time in seconds since the epoch or 0 to reset to always downloading block bodies.
      */
-    public synchronized void setFastCatchupTime(long secondsSinceEpoch) {
+    public synchronized void setDownloadParameters(long secondsSinceEpoch, boolean useFilteredBlocks) {
         Preconditions.checkNotNull(blockChain);
         if (secondsSinceEpoch == 0) {
             fastCatchupTimeSecs = params.genesisBlock.getTimeSeconds();
@@ -587,6 +661,7 @@ public class Peer {
                 downloadBlockBodies = false;
             }
         }
+        this.useFilteredBlocks = useFilteredBlocks;
     }
 
     /**

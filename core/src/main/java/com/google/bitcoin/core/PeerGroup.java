@@ -559,7 +559,6 @@ public class PeerGroup extends AbstractIdleService {
             earliestKeyTime = Math.min(earliestKeyTime, w.getEarliestKeyCreationTime());
             elements += w.getBloomFilterElementCount();
         }
-        setFastCatchupTimeSecs(earliestKeyTime);
 
         if (chain == null || !chain.shouldVerifyTransactions()) {
             long nTweak = new Random().nextLong();
@@ -574,6 +573,8 @@ public class PeerGroup extends AbstractIdleService {
                     peer.sendMessage(filter);
                 } catch (IOException e) { }
         }
+        //Do this last so that bloomFilter is already set when it gets called
+        setFastCatchupTimeSecs(earliestKeyTime);
     }
     
     /**
@@ -826,7 +827,7 @@ public class PeerGroup extends AbstractIdleService {
             log.info("Setting download peer: {}", downloadPeer);
             downloadPeer.setDownloadData(true);
             if (chain != null)
-                downloadPeer.setFastCatchupTime(fastCatchupTimeSecs);
+                downloadPeer.setDownloadParameters(fastCatchupTimeSecs, bloomFilter != null);
         }
     }
 
@@ -849,7 +850,7 @@ public class PeerGroup extends AbstractIdleService {
         Preconditions.checkState(chain == null || !chain.shouldVerifyTransactions(), "Fast catchup is incompatible with fully verifying");
         fastCatchupTimeSecs = secondsSinceEpoch;
         if (downloadPeer != null) {
-            downloadPeer.setFastCatchupTime(secondsSinceEpoch);
+            downloadPeer.setDownloadParameters(secondsSinceEpoch, bloomFilter != null);
         }
     }
 
