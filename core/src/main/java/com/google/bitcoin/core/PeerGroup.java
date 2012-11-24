@@ -533,7 +533,7 @@ public class PeerGroup extends AbstractIdleService {
 
     private synchronized void recalculateFastCatchupTime() {
         // Fully verifying mode doesn't use this optimization (it can't as it needs to see all transactions).
-        if (chain.shouldVerifyTransactions()) return;
+        if (chain != null && chain.shouldVerifyTransactions()) return;
         long earliestKeyTime = Long.MAX_VALUE;
         for (Wallet w : wallets) {
             earliestKeyTime = Math.min(earliestKeyTime, w.getEarliestKeyCreationTime());
@@ -786,7 +786,7 @@ public class PeerGroup extends AbstractIdleService {
      * {@link Peer#setFastCatchupTime(long)} for further explanation. Call this before starting block chain download.
      */
     public synchronized void setFastCatchupTimeSecs(long secondsSinceEpoch) {
-        Preconditions.checkState(!chain.shouldVerifyTransactions(), "Fast catchup is incompatible with fully verifying");
+        Preconditions.checkState(chain == null || !chain.shouldVerifyTransactions(), "Fast catchup is incompatible with fully verifying");
         fastCatchupTimeSecs = secondsSinceEpoch;
         if (downloadPeer != null) {
             downloadPeer.setFastCatchupTime(secondsSinceEpoch);
