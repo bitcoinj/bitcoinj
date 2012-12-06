@@ -22,6 +22,8 @@ import com.google.bitcoin.utils.BriefLogFormatter;
 import com.google.common.util.concurrent.MoreExecutors;
 
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.table.AbstractTableModel;
 import java.awt.*;
 import java.io.IOException;
@@ -46,12 +48,14 @@ public class PeerMonitor {
     public PeerMonitor() {
         setupNetwork();
         setupGUI();
+        peerGroup.start();
     }
 
     private void setupNetwork() {
         params = NetworkParameters.prodNet();
         peerGroup = new PeerGroup(params, null /* no chain */);
         peerGroup.setUserAgent("PeerMonitor", "1.0");
+        peerGroup.setMaxConnections(4);
         peerGroup.addPeerDiscovery(new DnsDiscovery(params));
         pingService = new ScheduledThreadPoolExecutor(1);
         peerGroup.addEventListener(new AbstractPeerEventListener() {
@@ -71,7 +75,6 @@ public class PeerMonitor {
                 refreshUI();
             }
         });
-        peerGroup.start();
     }
 
     private void pingPeer(final Peer peer) {
@@ -103,8 +106,20 @@ public class PeerMonitor {
     private void setupGUI() {
         JFrame window = new JFrame("Network monitor");
         window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        JLabel instructions = new JLabel("Peers shown below. Download peer is in bold.");
-        window.getContentPane().add(instructions, BorderLayout.NORTH);
+
+        JPanel panel = new JPanel();
+        JLabel instructions = new JLabel("Number of peers to connect to: ");
+        final SpinnerNumberModel spinnerModel = new SpinnerNumberModel(4, 0, 100, 1);
+        spinnerModel.addChangeListener(new ChangeListener() {
+            public void stateChanged(ChangeEvent changeEvent) {
+                peerGroup.setMaxConnections(spinnerModel.getNumber().intValue());
+            }
+        });
+        JSpinner numPeersSpinner = new JSpinner(spinnerModel);
+        panel.add(instructions);
+        panel.add(numPeersSpinner);
+        window.getContentPane().add(panel, BorderLayout.NORTH);
+
         peerTableModel = new PeerTableModel();
         JTable peerTable = new JTable(peerTableModel);
         JScrollPane scrollPane = new JScrollPane(peerTable);

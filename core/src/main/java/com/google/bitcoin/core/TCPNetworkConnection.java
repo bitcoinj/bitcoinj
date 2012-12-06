@@ -189,6 +189,7 @@ public class TCPNetworkConnection implements NetworkConnection {
     public class NetworkHandler extends ReplayingDecoder<VoidEnum> implements ChannelDownstreamHandler {
         @Override
         public void channelConnected(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
+            super.channelConnected(ctx, e);
             channel = e.getChannel();
             // The version message does not use checksumming, until Feb 2012 when it magically does.
             // Announce ourselves. This has to come first to connect to clients beyond v0.30.20.2 which wait to hear

@@ -172,19 +172,20 @@ public class Peer {
 
         @Override
         public void connectRequested(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
-            super.connectRequested(ctx, e);
-            channel = e.getChannel();
             address = new PeerAddress((InetSocketAddress)e.getValue());
+            channel = e.getChannel();
+            super.connectRequested(ctx, e);
         }
 
         /** Catch any exceptions, logging them and then closing the channel. */ 
         @Override
         public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) throws Exception {
+            String s = address == null ? "?" : address.toString();
             if (e.getCause() instanceof ConnectException || e.getCause() instanceof IOException) {
                 // Short message for network errors
-                log.info(toString() + " - " + e.getCause().getMessage());
+                log.info(s + " - " + e.getCause().getMessage());
             } else {
-                log.warn(toString() + " - ", e.getCause());
+                log.warn(s + " - ", e.getCause());
             }
 
             e.getChannel().close();

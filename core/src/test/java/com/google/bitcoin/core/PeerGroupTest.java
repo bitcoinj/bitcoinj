@@ -16,10 +16,8 @@
 
 package com.google.bitcoin.core;
 
-import com.google.bitcoin.core.PeerGroup.PeerGroupThread;
 import com.google.bitcoin.discovery.PeerDiscovery;
 import com.google.bitcoin.discovery.PeerDiscoveryException;
-import org.easymock.EasyMock;
 import org.jboss.netty.bootstrap.ClientBootstrap;
 import org.jboss.netty.channel.*;
 import org.junit.Before;
@@ -67,7 +65,7 @@ public class PeerGroupTest extends TestWithNetworkConnections {
             }
 
         });
-        peerGroup = new PeerGroup(params, blockChain, 1, bootstrap);
+        peerGroup = new PeerGroup(params, blockChain, bootstrap);
         peerGroup.addWallet(wallet);
     }
 
@@ -147,8 +145,7 @@ public class PeerGroupTest extends TestWithNetworkConnections {
 
     private FakeChannel connectPeer(int id, VersionMessage versionMessage) {
         InetSocketAddress remoteAddress = new InetSocketAddress("127.0.0.1", 2000 + id);
-        FakeChannel p =
-            (FakeChannel) peerGroup.connectTo(remoteAddress).getChannel();
+        FakeChannel p = (FakeChannel) peerGroup.connectTo(remoteAddress).getChannel();
         assertTrue(p.nextEvent() instanceof ChannelStateEvent);
         inbound(p, versionMessage);
         return p;
@@ -286,12 +283,7 @@ public class PeerGroupTest extends TestWithNetworkConnections {
         // Set up connections and block chain.
         FakeChannel p1 = connectPeer(1, new VersionMessage(params, 2));
         FakeChannel p2 = connectPeer(2);
-        
-        PeerGroupThread peerGroupThread = control.createMock(PeerGroupThread.class);
-        peerGroup.mockStart(peerGroupThread);
-        peerGroupThread.interrupt();
-        EasyMock.expectLastCall();
-        
+
         control.replay();
 
         peerGroup.setMinBroadcastConnections(2);
