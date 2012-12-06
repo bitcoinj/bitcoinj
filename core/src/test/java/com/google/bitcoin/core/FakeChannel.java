@@ -1,11 +1,11 @@
 package com.google.bitcoin.core;
 
+import org.jboss.netty.channel.*;
+import org.jboss.netty.util.internal.QueueFactory;
+
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.concurrent.BlockingQueue;
-
-import org.jboss.netty.channel.*;
-import org.jboss.netty.util.internal.QueueFactory;
 
 public class FakeChannel extends AbstractChannel {
     final BlockingQueue<ChannelEvent> events = QueueFactory.createQueue(ChannelEvent.class);
@@ -14,8 +14,7 @@ public class FakeChannel extends AbstractChannel {
     private SocketAddress localAddress;
     private SocketAddress remoteAddress;
 
-    protected FakeChannel(ChannelFactory factory,
-            ChannelPipeline pipeline, ChannelSink sink) {
+    protected FakeChannel(ChannelFactory factory, ChannelPipeline pipeline, ChannelSink sink) {
         super(null, factory, pipeline, sink);
         config = new DefaultChannelConfig();
         localAddress = new InetSocketAddress("127.0.0.1", 2000);
@@ -46,7 +45,6 @@ public class FakeChannel extends AbstractChannel {
     public boolean isConnected() {
         return true;
     }
-
 
     public ChannelEvent nextEvent() {
         return events.poll();
