@@ -446,16 +446,28 @@ public class PeerTest extends TestWithNetworkConnections {
         Utils.rollMockClock(0);
         // No ping pong happened yet.
         assertEquals(Long.MAX_VALUE, peer.getLastPingTime());
+        assertEquals(Long.MAX_VALUE, peer.getPingTime());
         ListenableFuture<Long> future = peer.ping();
         Ping pingMsg = (Ping) outbound();
         assertEquals(Long.MAX_VALUE, peer.getLastPingTime());
+        assertEquals(Long.MAX_VALUE, peer.getPingTime());
         assertFalse(future.isDone());
         Utils.rollMockClock(5);
+        // The pong is returned.
         inbound(peer, new Pong(pingMsg.getNonce()));
         assertTrue(future.isDone());
         long elapsed = future.get();
         assertTrue("" + elapsed, elapsed > 1000);
         assertEquals(elapsed, peer.getLastPingTime());
+        assertEquals(elapsed, peer.getPingTime());
+        // Do it again and make sure it affects the average.
+        future = peer.ping();
+        outbound();
+        Utils.rollMockClock(50);
+        inbound(peer, new Pong(pingMsg.getNonce()));
+        elapsed = future.get();
+        assertEquals(elapsed, peer.getLastPingTime());
+        assertEquals(14000, peer.getPingTime());
     }
     
     private Message outbound() {

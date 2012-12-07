@@ -88,7 +88,8 @@ public class Peer {
 
     // Outstanding pings against this peer and how long the last one took to complete. Locked under the Peer lock.
     private List<PendingPing> pendingPings;
-    private long lastPingTime;
+    private long[] lastPingTimes;
+    private static final int PING_MOVING_AVERAGE_WINDOW = 20;
 
     private Channel channel;
     private VersionMessage peerVersionMessage;
@@ -110,7 +111,7 @@ public class Peer {
         this.isAcked = false;
         this.handler = new PeerHandler();
         this.pendingPings = Lists.newLinkedList();
-        this.lastPingTime = Long.MAX_VALUE;
+        this.lastPingTimes = null;
     }
 
     /**
@@ -775,12 +776,24 @@ public class Peer {
         public void complete() {
             Preconditions.checkNotNull(future, "Already completed");
             Long elapsed = Long.valueOf(Utils.now().getTime() - startTimeMsec);
-            synchronized (Peer.this) {
-                Peer.this.lastPingTime = elapsed.longValue();
-            }
+            Peer.this.addPingTimeData(elapsed.longValue());
             log.debug("{}: ping time is {} msec", Peer.this.toString(), elapsed);
             future.set(elapsed);
             future = null;
+        }
+    }
+
+    /** Adds a ping time sample to the averaging window. */
+    private synchronized void addPingTimeData(long sample) {
+        if (lastPingTimes == null) {
+            lastPingTimes = new long[PING_MOVING_AVERAGE_WINDOW];
+            // Initialize the averaging window to the first sample.
+            Arrays.fill(lastPingTimes, sample);
+        } else {
+            // Shift all elements backwards by one.
+            System.arraycopy(lastPingTimes, 1, lastPingTimes, 0, lastPingTimes.length - 1);
+            // And append the new sample to the end.
+            lastPingTimes[lastPingTimes.length - 1] = sample;
         }
     }
 
@@ -806,7 +819,22 @@ public class Peer {
      * been called or we did not hear back the "pong" message yet, returns {@link Long#MAX_VALUE}.
      */
     public long getLastPingTime() {
-        return lastPingTime;
+        if (lastPingTimes == null)
+            return Long.MAX_VALUE;
+        return lastPingTimes[lastPingTimes.length - 1];
+    }
+
+    /**
+     * Returns a moving average of the last N ping/pong cycles. If {@link com.google.bitcoin.core.Peer#ping()} has never
+     * been called or we did not hear back the "pong" message yet, returns {@link Long#MAX_VALUE}. The moving average
+     * window is 5 buckets.
+     */
+    public long getPingTime() {
+        if (lastPingTimes == null)
+            return Long.MAX_VALUE;
+        long sum = 0;
+        for (long i : lastPingTimes) sum += i;
+        return (long)((double) sum / lastPingTimes.length);
     }
 
     private void processPong(Pong m) {

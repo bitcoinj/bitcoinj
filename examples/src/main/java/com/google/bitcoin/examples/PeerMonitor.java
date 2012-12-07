@@ -100,6 +100,7 @@ public class PeerMonitor {
 
         peerTableModel = new PeerTableModel();
         JTable peerTable = new JTable(peerTableModel);
+        peerTable.setAutoCreateRowSorter(true);
         JScrollPane scrollPane = new JScrollPane(peerTable);
         window.getContentPane().add(scrollPane, BorderLayout.CENTER);
         window.pack();
@@ -120,6 +121,7 @@ public class PeerMonitor {
         private final int USER_AGENT = 2;
         private final int CHAIN_HEIGHT = 3;
         private final int PING_TIME = 4;
+        private final int LAST_PING_TIME = 5;
 
         public int getRowCount() {
             return peerGroup.numConnectedPeers();
@@ -132,13 +134,27 @@ public class PeerMonitor {
                 case PROTOCOL_VERSION: return "Protocol version";
                 case USER_AGENT: return "User Agent";
                 case CHAIN_HEIGHT: return "Chain height";
-                case PING_TIME: return "Ping time";
+                case PING_TIME: return "Average ping";
+                case LAST_PING_TIME: return "Last ping";
                 default: throw new RuntimeException();
             }
         }
 
         public int getColumnCount() {
-            return 5;
+            return 6;
+        }
+
+        public Class<?> getColumnClass(int column) {
+            switch (column) {
+                case PROTOCOL_VERSION:
+                    return Integer.class;
+                case CHAIN_HEIGHT:
+                case PING_TIME:
+                case LAST_PING_TIME:
+                    return Long.class;
+                default:
+                    return String.class;
+            }
         }
 
         public Object getValueAt(int row, int col) {
@@ -154,11 +170,12 @@ public class PeerMonitor {
                 case CHAIN_HEIGHT:
                     return peer.getBestHeight();
                 case PING_TIME:
-                    long time = peer.getLastPingTime();
+                case LAST_PING_TIME:
+                    long time = col == PING_TIME ? peer.getPingTime() : peer.getLastPingTime();
                     if (time == Long.MAX_VALUE)
-                        return "";
+                        return 0L;
                     else
-                        return String.format("%d ms", time);
+                        return time;
 
                 default: throw new RuntimeException();
             }
