@@ -90,14 +90,23 @@ public class PeerGroup {
     // A class that tracks recent transactions that have been broadcast across the network, counts how many
     // peers announced them and updates the transaction confidence data. It is passed to each Peer.
     private final MemoryPool memoryPool;
+    // How many connections we want to have open at the current time. If we lose connections, we'll try opening more
+    // until we reach this count.
     private int maxConnections;
+
+    // Runs a background thread that we use for scheduling pings to our peers, so we can measure their performance
+    // and network latency. We ping peers every pingIntervalMsec milliseconds.
+    private Timer pingTimer;
+    /** How many milliseconds to wait after receiving a pong before sending another ping. */
+    public static final long DEFAULT_PING_INTERVAL_MSEC = 5000;
+    private long pingIntervalMsec = DEFAULT_PING_INTERVAL_MSEC;
 
     private final NetworkParameters params;
     private final AbstractBlockChain chain;
     private long fastCatchupTimeSecs;
     private ArrayList<Wallet> wallets;
-    private AbstractPeerEventListener getDataListener;
 
+    private AbstractPeerEventListener getDataListener;
     private ClientBootstrap bootstrap;
     private int minBroadcastConnections = 0;
 
@@ -146,7 +155,7 @@ public class PeerGroup {
      * <p>A ClientBootstrap creates raw (TCP) connections to other nodes on the network. Normally you won't need to
      * provide one - use the other constructors. Providing your own bootstrap is useful if you want to control
      * details like how many network threads are used, the connection timeout value and so on. To do this, you can
-     * use {@link PeerGroup.createClientBootstrap()} method and then customize the resulting object. Example:</p>
+     * use {@link PeerGroup#createClientBootstrap()} method and then customize the resulting object. Example:</p>
      *
      * <pre>
      *   ClientBootstrap bootstrap = PeerGroup.createClientBootstrap();
@@ -175,9 +184,12 @@ public class PeerGroup {
 
         // Configure Netty. The "ClientBootstrap" creates connections to other nodes. It can be configured in various
         // ways to control the network.
-        this.bootstrap = bootstrap != null ? bootstrap : createClientBootstrap();
-        if (this.bootstrap.getPipelineFactory() == null)
+        if (bootstrap == null) {
+            this.bootstrap = createClientBootstrap();
             this.bootstrap.setPipelineFactory(makePipelineFactory(params, chain));
+        } else {
+            this.bootstrap = bootstrap;
+        }
 
         inactives = Collections.synchronizedList(new ArrayList<PeerAddress>());
         peers = Collections.synchronizedList(new ArrayList<Peer>());
@@ -442,9 +454,13 @@ public class PeerGroup {
 
     /**
      * Starts the PeerGroup. This may block whilst peer discovery takes place.
+     * @throws IllegalStateException if the PeerGroup is already running.
      */
     public void start() {
         synchronized (this) {
+            if (running)
+                throw new IllegalStateException("PeerGroup is already running.");
+            pingTimer = new Timer("Peer pinging thread", true);
             running = true;
         }
         // Bring up the requested number of connections. If a connect attempt fails, new peers will be tried until
@@ -459,29 +475,32 @@ public class PeerGroup {
     }
 
     /**
-     * Stop this PeerGroup.
+     * <p>Stop this PeerGroup.</p>
      *
-     * <p>The peer group will be asynchronously shut down.  Some time after it is shut down all peers
-     * will be disconnected and no threads will be running.
-     * 
-     * <p>It is an error to call any other method on PeerGroup after calling this one.
+     * <p>The peer group will be shut down and all background threads and resources terminated. After a PeerGroup is
+     * stopped it can't be restarted again, create a new one instead.</p>
+     *
+     * @throws IllegalStateException if the PeerGroup wasn't started.
      */
     public synchronized void stop() {
-        if (running) {
-            running = false;
-            for (PeerDiscovery peerDiscovery : peerDiscoverers) {
-                peerDiscovery.shutdown();
-            }
-            LinkedList<ChannelFuture> futures;
-            synchronized (channelFutures) {
-                // Copy the list here because the act of closing the channel modifies the channelFutures map.
-                futures = new LinkedList<ChannelFuture>(channelFutures.values());
-            }
-            for (ChannelFuture future : futures) {
-                future.getChannel().close();
-            }
-            bootstrap.releaseExternalResources();
+        if (!running)
+            throw new IllegalStateException("PeerGroup not started");
+
+        running = false;
+        pingTimer.cancel();
+        for (PeerDiscovery peerDiscovery : peerDiscoverers) {
+            peerDiscovery.shutdown();
         }
+        // TODO: Make this shutdown process use a ChannelGroup.
+        LinkedList<ChannelFuture> futures;
+        synchronized (channelFutures) {
+            // Copy the list here because the act of closing the channel modifies the channelFutures map.
+            futures = new LinkedList<ChannelFuture>(channelFutures.values());
+        }
+        for (ChannelFuture future : futures) {
+            future.getChannel().close();
+        }
+        bootstrap.releaseExternalResources();
     }
 
     /**
@@ -560,6 +579,11 @@ public class PeerGroup {
     // Internal version. Do not call whilst holding the PeerGroup lock.
     protected ChannelFuture connectTo(SocketAddress address, boolean incrementMaxConnections) {
         ChannelFuture future = bootstrap.connect(address);
+        // When the channel has connected and version negotiated successfully, handleNewPeer will end up being called on
+        // a worker thread.
+
+        // Set up the address on the TCPNetworkConnection handler object.
+        // TODO: This is stupid and racy, get rid of it.
         TCPNetworkConnection.NetworkHandler networkHandler =
                 (TCPNetworkConnection.NetworkHandler) future.getChannel().getPipeline().get("codec");
         if (networkHandler != null) {
@@ -623,11 +647,12 @@ public class PeerGroup {
     }
 
     protected synchronized void handleNewPeer(final Peer peer) {
-        // Runs on a peer thread for every peer that is newly connected.
+        // Runs on a netty worker thread for every peer that is newly connected.
         log.info("{}: New peer", peer);
         // Link the peer to the memory pool so broadcast transactions have their confidence levels updated.
         peer.setMemoryPool(memoryPool);
         // If we want to download the chain, and we aren't currently doing so, do so now.
+        // TODO: Change this so we automatically switch the download peer based on ping times.
         if (downloadListener != null && downloadPeer == null) {
             log.info("  starting block chain download");
             startBlockChainDownloadFromPeer(peer);
@@ -652,12 +677,54 @@ public class PeerGroup {
         for (PeerEventListener listener : peerEventListeners) {
             peer.addEventListener(listener);
         }
+        setupPingingForNewPeer(peer);
         EventListenerInvoker.invoke(peerEventListeners, new EventListenerInvoker<PeerEventListener>() {
             @Override
             public void invoke(PeerEventListener listener) {
                 listener.onPeerConnected(peer, peers.size());
             }
         });
+    }
+
+    private void setupPingingForNewPeer(final Peer peer) {
+        if (peer.getPeerVersionMessage().clientVersion < Pong.MIN_PROTOCOL_VERSION)
+            return;
+        if (getPingIntervalMsec() <= 0)
+            return;  // Disabled.
+        // Start the process of pinging the peer. Do a ping right now and then ensure there's a fixed delay between
+        // each ping. If the peer is taken out of the peers list then the cycle will stop.
+        new Runnable() {
+            private boolean firstRun = true;
+            public void run() {
+                // Ensure that the first ping happens immediately and later pings after the requested delay.
+                if (firstRun) {
+                    firstRun = false;
+                    try {
+                        peer.ping().addListener(this, MoreExecutors.sameThreadExecutor());
+                    } catch (Exception e) {
+                        log.warn("{}: Exception whilst trying to ping peer: {}", peer, e.toString());
+                        return;
+                    }
+                    return;
+                }
+
+                final long interval = getPingIntervalMsec();
+                if (interval <= 0)
+                    return;  // Disabled.
+                pingTimer.schedule(new TimerTask() {
+                    @Override
+                    public void run() {
+                        try {
+                            if (!peers.contains(peer))
+                                return;  // Peer was removed/shut down.
+                            peer.ping().addListener(this, MoreExecutors.sameThreadExecutor());
+                        } catch (Exception e) {
+                            log.warn("{}: Exception whilst trying to ping peer: {}", peer, e.toString());
+                        }
+                    }
+                }, interval);
+            }
+        }.run();
     }
 
     /** Returns true if at least one peer received an inv. */
@@ -960,6 +1027,26 @@ public class PeerGroup {
             }
         }, MoreExecutors.sameThreadExecutor());
         return future;
+    }
+
+    /**
+     * Returns the period between pings for an individual peer. Setting this lower means more accurate and timely ping
+     * times are available via {@link com.google.bitcoin.core.Peer#getLastPingTime()} but it increases load on the
+     * remote node. It defaults to 5000.
+     */
+    public synchronized long getPingIntervalMsec() {
+        return pingIntervalMsec;
+    }
+
+    /**
+     * Sets the period between pings for an individual peer. Setting this lower means more accurate and timely ping
+     * times are available via {@link com.google.bitcoin.core.Peer#getLastPingTime()} but it increases load on the
+     * remote node. It defaults to {@link PeerGroup#DEFAULT_PING_INTERVAL_MSEC}.
+     * Setting the value to be <= 0 disables pinging entirely, although you can still request one yourself
+     * using {@link com.google.bitcoin.core.Peer#ping()}.
+     */
+    public synchronized void setPingIntervalMsec(long pingIntervalMsec) {
+        this.pingIntervalMsec = pingIntervalMsec;
     }
 
     private static class PeerGroupThreadFactory implements ThreadFactory {

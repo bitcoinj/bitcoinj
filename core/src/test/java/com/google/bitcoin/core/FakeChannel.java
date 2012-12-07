@@ -49,4 +49,8 @@ public class FakeChannel extends AbstractChannel {
     public ChannelEvent nextEvent() {
         return events.poll();
     }
+
+    public ChannelEvent nextEventBlocking() throws InterruptedException {
+        return events.take();
+    }
 }

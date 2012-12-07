@@ -67,6 +67,7 @@ public class PeerGroupTest extends TestWithNetworkConnections {
         });
         peerGroup = new PeerGroup(params, blockChain, bootstrap);
         peerGroup.addWallet(wallet);
+        peerGroup.setPingIntervalMsec(0);  // Disable the pings as they just get in the way of most tests.
     }
 
     @Test
@@ -346,7 +347,6 @@ public class PeerGroupTest extends TestWithNetworkConnections {
 
         FakeChannel p3 = connectPeer(3);
         assertTrue(outbound(p3) instanceof InventoryMessage);
-        peerGroup.stop();
         control.verify();
     }
 
@@ -368,12 +368,30 @@ public class PeerGroupTest extends TestWithNetworkConnections {
         w2.addKey(key2);
         assertEquals(peerGroup.getFastCatchupTimeSecs(), time - 100000);
     }
-    
+
     @Test
-    public void testSetMaximumConnections() {
-        peerGroup.setMaxConnections(1);
-        peerGroup.setMaxConnections(4);
-        peerGroup.setMaxConnections(10);
-        peerGroup.setMaxConnections(1);
+    public void noPings() throws Exception {
+        peerGroup.start();
+        peerGroup.setPingIntervalMsec(0);
+        VersionMessage versionMessage = new VersionMessage(params, 2);
+        versionMessage.clientVersion = Pong.MIN_PROTOCOL_VERSION;
+        connectPeer(1, versionMessage);
+        assertFalse(peerGroup.getConnectedPeers().get(0).getLastPingTime() < Long.MAX_VALUE);
+    }
+
+    @Test
+    public void pings() throws Exception {
+        peerGroup.start();
+        peerGroup.setPingIntervalMsec(100);
+        VersionMessage versionMessage = new VersionMessage(params, 2);
+        versionMessage.clientVersion = Pong.MIN_PROTOCOL_VERSION;
+        FakeChannel p1 = connectPeer(1, versionMessage);
+        Ping ping = (Ping) outbound(p1);
+        inbound(p1, new Pong(ping.getNonce()));
+        assertTrue(peerGroup.getConnectedPeers().get(0).getLastPingTime() < Long.MAX_VALUE);
+        // The call to outbound should block until a ping arrives.
+        ping = (Ping) waitForOutbound(p1);
+        inbound(p1, new Pong(ping.getNonce()));
+        assertTrue(peerGroup.getConnectedPeers().get(0).getLastPingTime() < Long.MAX_VALUE);
     }
 }

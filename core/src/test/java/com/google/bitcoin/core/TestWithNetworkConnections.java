@@ -16,19 +16,19 @@
 
 package com.google.bitcoin.core;
 
-import static org.easymock.EasyMock.*;
+import com.google.bitcoin.store.MemoryBlockStore;
+import com.google.bitcoin.utils.BriefLogFormatter;
+import org.easymock.EasyMock;
+import org.easymock.IMocksControl;
+import org.jboss.netty.channel.*;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.net.UnknownHostException;
 
-import org.easymock.EasyMock;
-import org.easymock.IMocksControl;
-import org.jboss.netty.channel.*;
-
-import com.google.bitcoin.store.MemoryBlockStore;
-import com.google.bitcoin.utils.BriefLogFormatter;
+import static org.easymock.EasyMock.createStrictControl;
+import static org.easymock.EasyMock.expect;
 
 /**
  * Utility class that makes it easy to work with mock NetworkConnections.
@@ -118,6 +118,10 @@ public class TestWithNetworkConnections {
         if (nextEvent == null)
             return null;
         return nextEvent.getMessage();
+    }
+
+    protected Object waitForOutbound(FakeChannel ch) throws InterruptedException {
+        return ((MessageEvent)ch.nextEventBlocking()).getMessage();
     }
 
     protected Peer peerOf(Channel ch) {

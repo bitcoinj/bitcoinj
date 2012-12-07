@@ -768,11 +768,13 @@ public class Peer {
     /**
      * Sends the peer a ping message and returns a future that will be invoked when the pong is received back.
      * The future provides a number which is the number of milliseconds elapsed between the ping and the pong.
+     * Once the pong is received the value returned by {@link com.google.bitcoin.core.Peer#getLastPingTime()} is
+     * updated.
      * @throws ProtocolException if the peer version is too low to support measurable pings.
      */
     public ListenableFuture<Long> ping() throws IOException, ProtocolException {
         int peerVersion = getPeerVersionMessage().clientVersion;
-        if (peerVersion < 60000)
+        if (peerVersion < Pong.MIN_PROTOCOL_VERSION)
             throw new ProtocolException("Peer version is too low for measurable pings: " + peerVersion);
         PendingPing pendingPing = new PendingPing();
         pendingPings.add(pendingPing);

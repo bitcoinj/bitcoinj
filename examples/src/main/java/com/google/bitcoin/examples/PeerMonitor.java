@@ -16,20 +16,22 @@
 
 package com.google.bitcoin.examples;
 
-import com.google.bitcoin.core.*;
+import com.google.bitcoin.core.AbstractPeerEventListener;
+import com.google.bitcoin.core.NetworkParameters;
+import com.google.bitcoin.core.Peer;
+import com.google.bitcoin.core.PeerGroup;
 import com.google.bitcoin.discovery.DnsDiscovery;
 import com.google.bitcoin.utils.BriefLogFormatter;
-import com.google.common.util.concurrent.MoreExecutors;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.table.AbstractTableModel;
 import java.awt.*;
-import java.io.IOException;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.List;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Shows connected peers in a table view, so you can watch as they come and go.
@@ -57,17 +59,10 @@ public class PeerMonitor {
         peerGroup.setUserAgent("PeerMonitor", "1.0");
         peerGroup.setMaxConnections(4);
         peerGroup.addPeerDiscovery(new DnsDiscovery(params));
-        pingService = new ScheduledThreadPoolExecutor(1);
         peerGroup.addEventListener(new AbstractPeerEventListener() {
             @Override
             public void onPeerConnected(final Peer peer, int peerCount) {
                 refreshUI();
-                // Ping the peer with a 1 second delay between pings.
-                pingService.scheduleWithFixedDelay(new Runnable() {
-                    public void run() {
-                        pingPeer(peer);
-                    }
-                }, 0, 1, TimeUnit.SECONDS);
             }
 
             @Override
@@ -75,23 +70,6 @@ public class PeerMonitor {
                 refreshUI();
             }
         });
-    }
-
-    private void pingPeer(final Peer peer) {
-        try {
-            // Annoyingly, java.awt.EventQueue is not an executor, so we can't
-            // dispatch the listener directly to the right thread.
-            peer.ping().addListener(new Runnable() {
-                public void run() {
-                    // When we get the pong message back, refresh the table.
-                    refreshUI();
-                }
-            }, MoreExecutors.sameThreadExecutor());
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (ProtocolException e) {
-            // Peer is too old to support pinging, so just ignore this here.
-        }
     }
 
     private void refreshUI() {
@@ -127,6 +105,13 @@ public class PeerMonitor {
         window.pack();
         window.setSize(640, 480);
         window.setVisible(true);
+
+        // Refresh the UI every half second to get the latest ping times. The event handler runs in the UI thread.
+        new Timer(1000, new ActionListener() {
+            public void actionPerformed(ActionEvent actionEvent) {
+                peerTableModel.fireTableDataChanged();
+            }
+        }).start();
     }
 
     private class PeerTableModel extends AbstractTableModel {
