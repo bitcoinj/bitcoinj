@@ -57,8 +57,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * 
  * The PeerGroup can broadcast a transaction to the currently connected set of peers.  It can
  * also handle download of the blockchain from peers, restarting the process when peers die.
- *
- * @author miron@google.com (Miron Cuperman a.k.a devrandom)
  */
 public class PeerGroup {
     private static final int DEFAULT_CONNECTIONS = 4;
