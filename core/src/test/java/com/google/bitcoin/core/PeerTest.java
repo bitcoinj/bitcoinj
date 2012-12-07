@@ -467,7 +467,7 @@ public class PeerTest extends TestWithNetworkConnections {
         inbound(peer, new Pong(pingMsg.getNonce()));
         elapsed = future.get();
         assertEquals(elapsed, peer.getLastPingTime());
-        assertEquals(14000, peer.getPingTime());
+        assertEquals(7250, peer.getPingTime());
     }
     
     private Message outbound() {
