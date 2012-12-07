@@ -29,6 +29,7 @@ import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Random;
+import java.util.concurrent.TimeUnit;
 
 /**
  * IrcDiscovery provides a way to find network peers by joining a pre-agreed rendevouz point on the LFnet IRC network.
@@ -85,9 +86,10 @@ public class IrcDiscovery implements PeerDiscovery {
     }
     /**
      * Returns a list of peers that were found in the IRC channel. Note that just because a peer appears in the list
-     * does not mean it is accepting connections.
+     * does not mean it is accepting connections. BUG: the given timeout values are ignored.
      */
-    public InetSocketAddress[] getPeers() throws PeerDiscoveryException {
+    public InetSocketAddress[] getPeers(long timeoutValue, TimeUnit timeoutUnit) throws PeerDiscoveryException {
+        // TODO: Make the timeout value be respected.
         ArrayList<InetSocketAddress> addresses = new ArrayList<InetSocketAddress>();
         connection = null;
         try {

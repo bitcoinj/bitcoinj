@@ -36,10 +36,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.*;
-import java.util.concurrent.CopyOnWriteArraySet;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -413,10 +410,10 @@ public class PeerGroup {
     }
 
     protected void discoverPeers() throws PeerDiscoveryException {
+        long start = System.currentTimeMillis();
         for (PeerDiscovery peerDiscovery : peerDiscoverers) {
-            // TODO: Run all peer discovery sources in parallel.
             InetSocketAddress[] addresses;
-            addresses = peerDiscovery.getPeers();
+            addresses = peerDiscovery.getPeers(10, TimeUnit.SECONDS);
             synchronized (inactives) {
                 for (int i = 0; i < addresses.length; i++) {
                     inactives.add(new PeerAddress(addresses[i]));
@@ -424,6 +421,7 @@ public class PeerGroup {
                 if (inactives.size() > 0) break;
             }
         }
+        log.info("Peer discovery took {}msec", System.currentTimeMillis() - start);
     }
 
     /** Picks a peer from discovery and connects to it. If connection fails, picks another and tries again. */

@@ -20,6 +20,7 @@ import com.google.bitcoin.core.NetworkParameters;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
+import java.util.concurrent.TimeUnit;
 
 /**
  * SeedPeers stores a pre-determined list of Bitcoin node addresses. These nodes are selected based on being
@@ -58,7 +59,7 @@ public class SeedPeers implements PeerDiscovery {
     /**
      * Returns an array containing all the Bitcoin nodes within the list.
      */
-    public InetSocketAddress[] getPeers() throws PeerDiscoveryException {
+    public InetSocketAddress[] getPeers(long timeoutValue, TimeUnit timeoutUnit) throws PeerDiscoveryException {
         try {
             return allPeers();
         } catch (UnknownHostException e) {

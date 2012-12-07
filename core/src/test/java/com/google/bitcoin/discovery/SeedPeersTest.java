@@ -19,6 +19,7 @@ import com.google.bitcoin.core.NetworkParameters;
 import org.junit.Test;
 
 import java.net.InetSocketAddress;
+import java.util.concurrent.TimeUnit;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.notNullValue;
@@ -43,7 +44,7 @@ public class SeedPeersTest {
 	@Test
 	public void getPeers_length() throws Exception{
 		SeedPeers seedPeers = new SeedPeers(NetworkParameters.prodNet());
-		InetSocketAddress[] addresses = seedPeers.getPeers();
+		InetSocketAddress[] addresses = seedPeers.getPeers(0, TimeUnit.SECONDS);
 		assertThat(addresses.length, equalTo(SeedPeers.seedAddrs.length));
 	}
 }

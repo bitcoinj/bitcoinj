@@ -29,6 +29,7 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.*;
 
@@ -85,7 +86,7 @@ public class PeerGroupTest extends TestWithNetworkConnections {
         final boolean[] result = new boolean[1];
         result[0] = false;
         peerGroup.addPeerDiscovery(new PeerDiscovery() {
-            public InetSocketAddress[] getPeers() throws PeerDiscoveryException {
+            public InetSocketAddress[] getPeers(long unused, TimeUnit unused2) throws PeerDiscoveryException {
                 if (result[0] == false) {
                     // Pretend we are not connected to the internet.
                     result[0] = true;

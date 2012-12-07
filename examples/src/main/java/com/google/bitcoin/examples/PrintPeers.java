@@ -32,6 +32,7 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Prints a list of IP addresses connected to the rendezvous point on the LFnet IRC channel.
@@ -64,7 +65,7 @@ public class PrintPeers {
                 System.out.println("-> " + message);
             }
         };
-        ircPeers = d.getPeers();
+        ircPeers = d.getPeers(10, TimeUnit.SECONDS);
         printPeers(ircPeers);
         printElapsed(start);
     }
@@ -72,7 +73,7 @@ public class PrintPeers {
     private static void printDNS() throws PeerDiscoveryException {
         long start = System.currentTimeMillis();
         DnsDiscovery dns = new DnsDiscovery(NetworkParameters.prodNet());
-        dnsPeers = dns.getPeers();
+        dnsPeers = dns.getPeers(10, TimeUnit.SECONDS);
         printPeers(dnsPeers);
         printElapsed(start);
     }
