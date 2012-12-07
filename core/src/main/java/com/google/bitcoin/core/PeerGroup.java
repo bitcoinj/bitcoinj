@@ -218,6 +218,7 @@ public class PeerGroup {
         ExecutorService workerExecutor = Executors.newCachedThreadPool(new PeerGroupThreadFactory());
         NioClientSocketChannelFactory channelFactory = new NioClientSocketChannelFactory(bossExecutor, workerExecutor);
         ClientBootstrap bs = new ClientBootstrap(channelFactory);
+        bs.setOption("connectionTimeoutMillis", 2000);
         return bs;
     }
 
@@ -755,6 +756,8 @@ public class PeerGroup {
     }
 
     private synchronized void setDownloadPeer(Peer peer) {
+        if (chain == null)
+            return;
         if (downloadPeer != null) {
             log.info("Unsetting download peer: {}", downloadPeer);
             downloadPeer.setDownloadData(false);

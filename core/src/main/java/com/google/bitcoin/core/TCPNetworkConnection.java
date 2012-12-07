@@ -41,6 +41,8 @@ import java.util.concurrent.Executors;
 
 import static org.jboss.netty.channel.Channels.write;
 
+// TODO: Remove this class and refactor the way we build Netty pipelines.
+
 /**
  * <p>A {@code TCPNetworkConnection} is used for connecting to a Bitcoin node over the standard TCP/IP protocol.<p>
  *

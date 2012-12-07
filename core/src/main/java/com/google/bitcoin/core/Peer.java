@@ -61,10 +61,14 @@ public class Peer {
     // Whether to try and download blocks and transactions from this peer. Set to false by PeerGroup if not the
     // primary peer. This is to avoid redundant work and concurrency problems with downloading the same chain
     // in parallel.
-    private boolean downloadData = true;
+    private boolean downloadData = false;
     // The version data to announce to the other side of the connections we make: useful for setting our "user agent"
     // equivalent and other things.
     private VersionMessage versionMessage;
+    // How many block messages the peer has announced to us. Peers only announce blocks that attach to their best chain
+    // so we can use this to calculate the height of the peers chain, by adding it to the initial height in the version
+    // message. This method can go wrong if the peer re-orgs onto a shorter (but harder) chain, however, this is rare.
+    private int blocksAnnounced;
     // A class that tracks recent transactions that have been broadcast across the network, counts how many
     // peers announced them and updates the transaction confidence data. It is passed to each Peer.
     private MemoryPool memoryPool;
@@ -98,6 +102,7 @@ public class Peer {
         this.params = Preconditions.checkNotNull(params);
         this.versionMessage = Preconditions.checkNotNull(ver);
         this.blockChain = chain;  // Allowed to be null.
+        this.downloadData = chain != null;
         this.pendingGetBlockFutures = new ArrayList<GetDataFuture<Block>>();
         this.eventListeners = new CopyOnWriteArrayList<PeerEventListener>();
         this.lifecycleListeners = new CopyOnWriteArrayList<PeerLifecycleListener>();
@@ -435,6 +440,20 @@ public class Peer {
                 case Transaction: transactions.add(item); break;
                 case Block: blocks.add(item); break;
                 default: throw new IllegalStateException("Not implemented: " + item.type);
+            }
+        }
+
+        if (transactions.size() == 0 && blocks.size() == 1) {
+            // Single block announcement. If we're downloading the chain this is just a tickle to make us continue
+            // (the block chain download protocol is very implicit and not well thought out). If we're not downloading
+            // the chain then this probably means a new block was solved and the peer believes it connects to the best
+            // chain, so count it. This way getBestChainHeight() can be accurate.
+            if (downloadData) {
+                if (!blockChain.isOrphan(blocks.get(0).hash)) {
+                    blocksAnnounced++;
+                }
+            } else {
+                blocksAnnounced++;
             }
         }
 
@@ -811,7 +830,7 @@ public class Peer {
      */
     public int getPeerBlockHeightDifference() {
         // Chain will overflow signed int blocks in ~41,000 years.
-        int chainHeight = (int) peerVersionMessage.bestHeight;
+        int chainHeight = (int) getBestHeight();
         // chainHeight should not be zero/negative because we shouldn't have given the user a Peer that is to another
         // client-mode node, nor should it be unconnected. If that happens it means the user overrode us somewhere or
         // there is a bug in the peer management code.
@@ -857,9 +876,9 @@ public class Peer {
     }
 
     /**
-     * @return the height of the best chain as claimed by peer.
+     * @return the height of the best chain as claimed by peer: sum of its ver announcement and blocks announced since.
      */
     public long getBestHeight() {
-      return peerVersionMessage.bestHeight;
+      return peerVersionMessage.bestHeight + blocksAnnounced;
     }
 }

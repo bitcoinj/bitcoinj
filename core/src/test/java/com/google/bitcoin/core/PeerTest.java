@@ -37,6 +37,7 @@ public class PeerTest extends TestWithNetworkConnections {
     private Peer peer;
     private Capture<DownstreamMessageEvent> event;
     private PeerHandler handler;
+    private static final int OTHER_PEER_CHAIN_HEIGHT = 110;
 
     @Override
     @Before
@@ -58,7 +59,7 @@ public class PeerTest extends TestWithNetworkConnections {
     
     private void connect(PeerHandler handler, Channel channel, ChannelHandlerContext ctx) throws Exception {
         handler.connectRequested(ctx, new UpstreamChannelStateEvent(channel, ChannelState.CONNECTED, socketAddress));
-        VersionMessage peerVersion = new VersionMessage(unitTestParams, 110);
+        VersionMessage peerVersion = new VersionMessage(unitTestParams, OTHER_PEER_CHAIN_HEIGHT);
         DownstreamMessageEvent versionEvent = 
             new DownstreamMessageEvent(channel, Channels.future(channel), peerVersion, null);
         handler.messageReceived(ctx, versionEvent);
@@ -309,15 +310,20 @@ public class PeerTest extends TestWithNetworkConnections {
         inv.addItem(item);
         expect(listener.onPreMessageReceived(eq(peer), eq(inv))).andReturn(inv);
         expect(listener.onPreMessageReceived(eq(peer), eq(b2))).andReturn(b2);
-        listener.onBlocksDownloaded(eq(peer), anyObject(Block.class), eq(108));
+        // We have two blocks in our chain (genesis and b1), so our height is 2. The other peer starts at
+        // OTHER_PEER_CHAIN_HEIGHT and then when it announces an inv, its height is + 1, so the difference
+        // between our height and theirs is OTHER_PEER_CHAIN_HEIGHT + 1 - 2.
+        listener.onBlocksDownloaded(eq(peer), anyObject(Block.class), eq(OTHER_PEER_CHAIN_HEIGHT + 1 - 2));
         expectLastCall();
 
         control.replay();
 
         connect();
         peer.addEventListener(listener);
+        long height = peer.getBestHeight();
         
         inbound(peer, inv);
+        assertEquals(height + 1, peer.getBestHeight());
         // Response to the getdata message.
         inbound(peer, b2);
 
