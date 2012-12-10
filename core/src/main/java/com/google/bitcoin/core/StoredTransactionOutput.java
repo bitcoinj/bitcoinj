@@ -16,11 +16,7 @@
 
 package com.google.bitcoin.core;
 
-import java.io.EOFException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.Serializable;
+import java.io.*;
 import java.math.BigInteger;
 
 /**
@@ -142,7 +138,7 @@ public class StoredTransactionOutput implements Serializable {
     }
 
     public String toString() {
-        return String.format("Stored TxOut of %s (%s:%l)", Utils.bitcoinValueToFriendlyString(value), hash.toString(), index);
+        return String.format("Stored TxOut of %s (%s:%d)", Utils.bitcoinValueToFriendlyString(value), hash.toString(), index);
     }
 
     public int hashCode() {
