@@ -50,8 +50,8 @@ import static org.jboss.netty.channel.Channels.write;
  *
  */
 public class TCPNetworkConnection implements NetworkConnection {
-	private static final Logger log = LoggerFactory.getLogger(TCPNetworkConnection.class);
-	
+    private static final Logger log = LoggerFactory.getLogger(TCPNetworkConnection.class);
+    
     // The IP address to which we are connecting.
     private InetAddress remoteIp;
     private final NetworkParameters params;

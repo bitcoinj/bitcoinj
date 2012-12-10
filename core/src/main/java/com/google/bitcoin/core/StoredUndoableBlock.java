@@ -28,14 +28,14 @@ import java.util.List;
  * connected.
  */
 public class StoredUndoableBlock implements Serializable {
-	private static final long serialVersionUID = 5127353027086786117L;
-	
-	Sha256Hash blockHash;
-	
-	// Only one of either txOutChanges or transactions will be set
-	private TransactionOutputChanges txOutChanges;
-	private List<Transaction> transactions;
-	
+    private static final long serialVersionUID = 5127353027086786117L;
+    
+    Sha256Hash blockHash;
+    
+    // Only one of either txOutChanges or transactions will be set
+    private TransactionOutputChanges txOutChanges;
+    private List<Transaction> transactions;
+    
     public StoredUndoableBlock(Sha256Hash hash, TransactionOutputChanges txOutChanges) {
         this.blockHash = hash;
         this.transactions = null;

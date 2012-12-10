@@ -201,7 +201,7 @@ public class Peer {
         @Override
         public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) throws Exception {
             Message m = (Message)e.getMessage();
-            
+
             // Allow event listeners to filter the message stream. Listeners are allowed to drop messages by
             // returning null.
             synchronized (Peer.this) {
@@ -277,7 +277,7 @@ public class Peer {
             log.error("Failed to check signature: bug in platform libraries?", t);
         }
     }
-    
+
     /** Returns the Netty Pipeline stage handling the high level Bitcoin protocol. */
     public PeerHandler getHandler() {
         return handler;
@@ -325,7 +325,7 @@ public class Peer {
             throw new RuntimeException(e);
         }
     }
-    
+
     private synchronized void processGetData(GetDataMessage getdata) throws IOException {
         log.info("{}: Received getdata message: {}", address, getdata.toString());
         ArrayList<Message> items = new ArrayList<Message>();
@@ -546,7 +546,7 @@ public class Peer {
         synchronized (pendingGetBlockFutures) {
             pendingGetBlockFutures.add(future);
         }
-        
+
         sendMessage(getdata);
         return future;
     }
@@ -574,7 +574,7 @@ public class Peer {
             }
         }
     }
-    
+
     /**
      * Links the given wallet to this peer. If you have multiple peers, you should use a {@link PeerGroup} to manage
      * them and use the {@link PeerGroup#addWallet(Wallet)} method instead of registering the wallet with each peer
@@ -881,14 +881,14 @@ public class Peer {
     public void setDownloadData(boolean downloadData) {
         this.downloadData = downloadData;
     }
-    
+
     /**
      * @return the IP address and port of peer.
      */
     public PeerAddress getAddress() {
         return address;
     }
-    
+
     /**
      * @return various version numbers claimed by peer.
      */

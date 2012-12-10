@@ -18,12 +18,12 @@ package com.google.bitcoin.core;
 
 public class InventoryItem {
     
-	/**
-	 * 4 byte uint32 type field + 32 byte hash
-	 */
-	static final int MESSAGE_LENGTH = 36;
-	
-	public enum Type {
+    /**
+     * 4 byte uint32 type field + 32 byte hash
+     */
+    static final int MESSAGE_LENGTH = 36;
+    
+    public enum Type {
         Error,
         Transaction,
         Block

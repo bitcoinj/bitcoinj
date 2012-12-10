@@ -229,7 +229,7 @@ public class PeerGroup {
                 ver.time = Utils.now().getTime() / 1000;
 
                 ChannelPipeline p = Channels.pipeline();
-                
+
                 Peer peer = new Peer(params, chain, ver);
                 peer.addLifecycleListener(startupListener);
                 pendingPeers.add(peer);
@@ -376,7 +376,7 @@ public class PeerGroup {
     public synchronized boolean removeEventListener(PeerEventListener listener) {
         return peerEventListeners.remove(checkNotNull(listener));
     }
-    
+
     /**
      * Returns a newly allocated list containing the currently connected peers. If all you care about is the count,
      * use numConnectedPeers().
@@ -512,7 +512,7 @@ public class PeerGroup {
      * than the current chain head, the relevant parts of the chain won't be redownloaded for you.</p>
      */
     public synchronized void addWallet(Wallet wallet) {
-	    Preconditions.checkNotNull(wallet);
+        Preconditions.checkNotNull(wallet);
         wallets.add(wallet);
         addEventListener(wallet.getPeerEventListener());
         announcePendingWalletTransactions(Collections.singletonList(wallet), peers);
@@ -602,11 +602,11 @@ public class PeerGroup {
     static public Peer peerFromChannelFuture(ChannelFuture future) {
         return peerFromChannel(future.getChannel());
     }
-    
+
     static public Peer peerFromChannel(Channel channel) {
         return ((PeerHandler)channel.getPipeline().get("peer")).getPeer();
     }
-    
+
     /**
      * Start downloading the blockchain from the first available peer.
      * <p/>

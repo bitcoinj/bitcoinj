@@ -154,7 +154,7 @@ public class Transaction extends ChildMessage implements Serializable {
     /**
      * Used by BitcoinSerializer.  The serializer has to calculate a hash for checksumming so to
      * avoid wasting the considerable effort a set method is provided so the serializer can set it.
-	 *
+     *
      * No verification is performed on this hash.
      */
     void setHash(Sha256Hash hash) {
@@ -447,7 +447,7 @@ public class Transaction extends ChildMessage implements Serializable {
         cursor += varint.getSizeInBytes();
 
         for (i = 0; i < txInCount; i++) {
-        	// 36 = length of previous_outpoint
+            // 36 = length of previous_outpoint
             cursor += 36;
             varint = new VarInt(buf, cursor);
             scriptLen = varint.value;
@@ -461,7 +461,7 @@ public class Transaction extends ChildMessage implements Serializable {
 
         for (i = 0; i < txOutCount; i++) {
             // 8 = length of tx value field (uint64)
-        	cursor += 8;
+            cursor += 8;
             varint = new VarInt(buf, cursor);
             scriptLen = varint.value;
             cursor += scriptLen + varint.getSizeInBytes();

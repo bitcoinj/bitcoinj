@@ -47,7 +47,7 @@ public class Block extends Message {
     private static final Logger log = LoggerFactory.getLogger(Block.class);
     private static final long serialVersionUID = 2738848929966035281L;
 
-	/** How many bytes are required to represent a block header. */
+    /** How many bytes are required to represent a block header. */
     public static final int HEADER_SIZE = 80;
 
     static final long ALLOWED_TIME_DRIFT = 2 * 60 * 60; // Same value as official client.
@@ -79,7 +79,7 @@ public class Block extends Message {
     private long difficultyTarget; // "nBits"
     private long nonce;
 
-	/** If null, it means this object holds only the headers. */
+    /** If null, it means this object holds only the headers. */
     List<Transaction> transactions;
 
     /** Stores the hash of the block. If null, getHash() will recalculate it. */
@@ -103,7 +103,7 @@ public class Block extends Message {
         length = 80;
     }
 
-	/** Constructs a block object from the Bitcoin wire format. */
+    /** Constructs a block object from the Bitcoin wire format. */
     public Block(NetworkParameters params, byte[] payloadBytes) throws ProtocolException {
         super(params, payloadBytes, 0, false, false, payloadBytes.length);
     }
@@ -145,7 +145,6 @@ public class Block extends Message {
     }
 
     private void parseHeader() {
-
         if (headerParsed)
             return;
 
@@ -164,7 +163,6 @@ public class Block extends Message {
     }
 
     private void parseTransactions() throws ProtocolException {
-
         if (transactionsParsed)
             return;
 
@@ -409,7 +407,7 @@ public class Block extends Message {
             return 0;
         int len = VarInt.sizeOf(transactions.size());
         for (Transaction tx : transactions) {
-        	// 255 is just a guess at an average tx length
+            // 255 is just a guess at an average tx length
             len += tx.length == UNKNOWN_LENGTH ? 255 : tx.length;
         }
         return len;
@@ -495,7 +493,7 @@ public class Block extends Message {
         return LARGEST_HASH.divide(target.add(BigInteger.ONE));
     }
 
-	/** Returns a copy of the block, but without any transactions. */
+    /** Returns a copy of the block, but without any transactions. */
     public Block cloneAsHeader() {
         maybeParseHeader();
         Block block = new Block(params);
@@ -533,7 +531,7 @@ public class Block extends Message {
      * Finds a value of nonce that makes the blocks hash lower than the difficulty target. This is called mining, but
      * solve() is far too slow to do real mining with. It exists only for unit testing purposes and is not a part of
      * the public API.
-	 *
+     *
      * This can loop forever if a solution cannot be found solely by incrementing nonce. It doesn't change extraNonce.
      */
     void solve() {
@@ -595,7 +593,7 @@ public class Block extends Message {
         if (time > currentTime + ALLOWED_TIME_DRIFT)
             throw new VerificationException("Block too far in future");
     }
-    
+
     private void checkSigOps() throws VerificationException {
         // Check there aren't too many signature verifications in the block. This is an anti-DoS measure, see the
         // comments for MAX_BLOCK_SIGOPS.
@@ -763,18 +761,18 @@ public class Block extends Message {
         return merkleRoot;
     }
 
-	/** Exists only for unit testing. */
+    /** Exists only for unit testing. */
     void setMerkleRoot(Sha256Hash value) {
         unCacheHeader();
         merkleRoot = value;
         hash = null;
     }
 
-	/** Adds a transaction to this block. The nonce and merkle root are invalid after this. */
+    /** Adds a transaction to this block. The nonce and merkle root are invalid after this. */
     public void addTransaction(Transaction t) {
         addTransaction(t, true);
     }
-    
+
     /** Adds a transaction to this block, with or without checking the sanity of doing so */
     void addTransaction(Transaction t, boolean runSanityChecks) {
         unCacheTransactions();
@@ -877,7 +875,7 @@ public class Block extends Message {
     // Used to make transactions unique.
     static private int txCounter;
 
-	/** Adds a coinbase transaction to the block. This exists for unit tests. */
+    /** Adds a coinbase transaction to the block. This exists for unit tests. */
     void addCoinbaseTransaction(byte[] pubKeyTo, BigInteger value) {
         unCacheTransactions();
         transactions = new ArrayList<Transaction>();
@@ -953,12 +951,12 @@ public class Block extends Message {
     public Block createNextBlock(Address to, TransactionOutPoint prevOut) {
         return createNextBlock(to, prevOut, Utils.now().getTime() / 1000, EMPTY_BYTES, Utils.toNanoCoins(50, 0));
     }
-    
+
     // Visible for testing.
     public Block createNextBlock(Address to) {
         return createNextBlock(to, null, Utils.now().getTime() / 1000, EMPTY_BYTES, Utils.toNanoCoins(50, 0));
     }
-    
+
     // Visible for testing.
     public Block createNextBlockWithCoinbase(byte[] pubKey, BigInteger coinbaseValue) {
         return createNextBlock(null, null, Utils.now().getTime() / 1000, pubKey, coinbaseValue);
