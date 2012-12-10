@@ -826,10 +826,13 @@ public class Script {
             } else if (opcode == OP_PUSHDATA1) {
                 additionalBytes = inputScript[cursor] + 1;
             } else if (opcode == OP_PUSHDATA2) {
-                additionalBytes = (inputScript[cursor] | (inputScript[cursor+1] << 8)) + 2;
+                additionalBytes = ((0xFF & inputScript[cursor]) |
+                                  ((0xFF & inputScript[cursor+1]) << 8)) + 2;
             } else if (opcode == OP_PUSHDATA4) {
-                additionalBytes = (inputScript[cursor] | (inputScript[cursor+1] << 8) |
-                        (inputScript[cursor+1] << 16) | (inputScript[cursor+1] << 24)) + 4;
+                additionalBytes = ((0xFF & inputScript[cursor]) |
+                                  ((0xFF & inputScript[cursor+1]) << 8) |
+                                  ((0xFF & inputScript[cursor+1]) << 16) |
+                                  ((0xFF & inputScript[cursor+1]) << 24)) + 4;
             }
             if (!skip) {
                 try {
@@ -859,7 +862,7 @@ public class Script {
             if (data[i] != 0)
             {
                 // "Can be negative zero" -reference client (see OpenSSL's BN_bn2mpi)
-                if (i == data.length - 1 && data[i] == 0x80)
+                if (i == data.length - 1 && (data[i] & 0xFF) == 0x80)
                     return false;
                 return true;
             }
