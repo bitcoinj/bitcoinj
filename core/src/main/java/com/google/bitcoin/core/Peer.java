@@ -818,7 +818,7 @@ public class Peer {
      * Returns the elapsed time of the last ping/pong cycle. If {@link com.google.bitcoin.core.Peer#ping()} has never
      * been called or we did not hear back the "pong" message yet, returns {@link Long#MAX_VALUE}.
      */
-    public long getLastPingTime() {
+    public synchronized long getLastPingTime() {
         if (lastPingTimes == null)
             return Long.MAX_VALUE;
         return lastPingTimes[lastPingTimes.length - 1];
@@ -829,7 +829,7 @@ public class Peer {
      * been called or we did not hear back the "pong" message yet, returns {@link Long#MAX_VALUE}. The moving average
      * window is 5 buckets.
      */
-    public long getPingTime() {
+    public synchronized long getPingTime() {
         if (lastPingTimes == null)
             return Long.MAX_VALUE;
         long sum = 0;
