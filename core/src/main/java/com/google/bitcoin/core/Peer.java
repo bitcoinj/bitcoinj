@@ -237,7 +237,9 @@ public class Peer {
             } else if (m instanceof AlertMessage) {
                 processAlert((AlertMessage)m);
             } else if (m instanceof VersionMessage) {
-                peerVersionMessage = (VersionMessage)m;
+                synchronized (Peer.this) {
+                    peerVersionMessage = (VersionMessage)m;
+                }
                 EventListenerInvoker.invoke(lifecycleListeners, new EventListenerInvoker<PeerLifecycleListener>() {
                     @Override
                     public void invoke(PeerLifecycleListener listener) {
@@ -245,13 +247,15 @@ public class Peer {
                     }
                 });
             } else if (m instanceof VersionAck) {
-                if (peerVersionMessage == null) {
-                    throw new ProtocolException("got a version ack before version");
+                synchronized (Peer.this) {
+                    if (peerVersionMessage == null) {
+                        throw new ProtocolException("got a version ack before version");
+                    }
+                    if (isAcked) {
+                        throw new ProtocolException("got more than one version ack");
+                    }
+                    isAcked = true;
                 }
-                if (isAcked) {
-                    throw new ProtocolException("got more than one version ack");
-                }
-                isAcked = true;
             } else if (m instanceof Ping) {
                 if (((Ping) m).hasNonce())
                     sendMessage(new Pong(((Ping) m).getNonce()));
@@ -424,7 +428,7 @@ public class Peer {
         // It is possible for the peer block height difference to be negative when blocks have been solved and broadcast
         // since the time we first connected to the peer. However, it's weird and unexpected to receive a callback
         // with negative "blocks left" in this case, so we clamp to zero so the API user doesn't have to think about it.
-        final int blocksLeft = Math.max(0, getPeerBlockHeightDifference());
+        final int blocksLeft = Math.max(0, (int)peerVersionMessage.bestHeight - blockChain.getBestChainHeight());
         EventListenerInvoker.invoke(eventListeners, new EventListenerInvoker<PeerEventListener>() {
             @Override
             public void invoke(PeerEventListener listener) {
@@ -868,7 +872,7 @@ public class Peer {
         // client-mode node, nor should it be unconnected. If that happens it means the user overrode us somewhere or
         // there is a bug in the peer management code.
         Preconditions.checkState(params.allowEmptyPeerChains || chainHeight > 0, "Connected to peer with zero/negative chain height", chainHeight);
-        return chainHeight - blockChain.getChainHead().getHeight();
+        return chainHeight - blockChain.getBestChainHeight();
     }
 
     /**

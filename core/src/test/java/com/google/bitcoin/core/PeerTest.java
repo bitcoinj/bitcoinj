@@ -310,10 +310,8 @@ public class PeerTest extends TestWithNetworkConnections {
         inv.addItem(item);
         expect(listener.onPreMessageReceived(eq(peer), eq(inv))).andReturn(inv);
         expect(listener.onPreMessageReceived(eq(peer), eq(b2))).andReturn(b2);
-        // We have two blocks in our chain (genesis and b1), so our height is 2. The other peer starts at
-        // OTHER_PEER_CHAIN_HEIGHT and then when it announces an inv, its height is + 1, so the difference
-        // between our height and theirs is OTHER_PEER_CHAIN_HEIGHT + 1 - 2.
-        listener.onBlocksDownloaded(eq(peer), anyObject(Block.class), eq(OTHER_PEER_CHAIN_HEIGHT + 1 - 2));
+        // The listener gets the delta between the first announced height and our height.
+        listener.onBlocksDownloaded(eq(peer), anyObject(Block.class), eq(OTHER_PEER_CHAIN_HEIGHT - 2));
         expectLastCall();
 
         control.replay();
