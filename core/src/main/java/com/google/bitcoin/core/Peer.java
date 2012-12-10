@@ -152,7 +152,7 @@ public class Peer {
     }
 
     @Override
-    public String toString() {
+    public synchronized String toString() {
         if (address == null) {
             // User-provided NetworkConnection object.
             return "Peer()";
@@ -178,7 +178,9 @@ public class Peer {
 
         @Override
         public void connectRequested(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
-            address = new PeerAddress((InetSocketAddress)e.getValue());
+            synchronized (Peer.this) {
+                address = new PeerAddress((InetSocketAddress)e.getValue());
+            }
             channel = e.getChannel();
             super.connectRequested(ctx, e);
         }
@@ -186,7 +188,10 @@ public class Peer {
         /** Catch any exceptions, logging them and then closing the channel. */ 
         @Override
         public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) throws Exception {
-            String s = address == null ? "?" : address.toString();
+            String s;
+            synchronized (Peer.this) {
+                s = address == null ? "?" : address.toString();
+            }
             if (e.getCause() instanceof ConnectException || e.getCause() instanceof IOException) {
                 // Short message for network errors
                 log.info(s + " - " + e.getCause().getMessage());
@@ -263,7 +268,7 @@ public class Peer {
         }
     }
 
-    private void processAlert(AlertMessage m) {
+    private synchronized void processAlert(AlertMessage m) {
         try {
             if (m.isSignatureValid()) {
                 log.info("Received alert from peer {}: {}", toString(), m.getStatusBar());
@@ -283,7 +288,7 @@ public class Peer {
         return handler;
     }
 
-    private void processHeaders(HeadersMessage m) throws IOException, ProtocolException {
+    private synchronized void processHeaders(HeadersMessage m) throws IOException, ProtocolException {
         // Runs in network loop thread for this peer.
         //
         // This method can run if a peer just randomly sends us a "headers" message (should never happen), or more
@@ -360,7 +365,7 @@ public class Peer {
         });
     }
 
-    private void processBlock(Block m) throws IOException {
+    private synchronized void processBlock(Block m) throws IOException {
         log.debug("{}: Received broadcast block {}", address, m.getHashAsString());
         try {
             // Was this block requested by getBlock()?
@@ -428,7 +433,7 @@ public class Peer {
         });
     }
 
-    private void processInv(InventoryMessage inv) throws IOException {
+    private synchronized void processInv(InventoryMessage inv) throws IOException {
         // This should be called in the network loop thread for this peer.
         List<InventoryItem> items = inv.getItems();
 
@@ -560,7 +565,7 @@ public class Peer {
      *
      * @param secondsSinceEpoch Time in seconds since the epoch or 0 to reset to always downloading block bodies.
      */
-    public void setFastCatchupTime(long secondsSinceEpoch) {
+    public synchronized void setFastCatchupTime(long secondsSinceEpoch) {
         Preconditions.checkNotNull(blockChain);
         if (secondsSinceEpoch == 0) {
             fastCatchupTimeSecs = params.genesisBlock.getTimeSeconds();
@@ -653,7 +658,7 @@ public class Peer {
     // multiple threads simultaneously.
     private Sha256Hash lastGetBlocksBegin, lastGetBlocksEnd;
 
-    private void blockChainDownload(Sha256Hash toHash) throws IOException {
+    private synchronized void blockChainDownload(Sha256Hash toHash) throws IOException {
         // This may run in ANY thread.
 
         // The block chain download process is a bit complicated. Basically, we start with one or more blocks in a
@@ -804,7 +809,7 @@ public class Peer {
      * updated.
      * @throws ProtocolException if the peer version is too low to support measurable pings.
      */
-    public ListenableFuture<Long> ping() throws IOException, ProtocolException {
+    public synchronized ListenableFuture<Long> ping() throws IOException, ProtocolException {
         int peerVersion = getPeerVersionMessage().clientVersion;
         if (peerVersion < Pong.MIN_PROTOCOL_VERSION)
             throw new ProtocolException("Peer version is too low for measurable pings: " + peerVersion);
@@ -837,7 +842,7 @@ public class Peer {
         return (long)((double) sum / lastPingTimes.length);
     }
 
-    private void processPong(Pong m) {
+    private synchronized void processPong(Pong m) {
         ListIterator<PendingPing> it = pendingPings.listIterator();
         PendingPing ping = null;
         while (it.hasNext()) {
@@ -856,7 +861,7 @@ public class Peer {
      * Returns the difference between our best chain height and the peers, which can either be positive if we are
      * behind the peer, or negative if the peer is ahead of us.
      */
-    public int getPeerBlockHeightDifference() {
+    public synchronized int getPeerBlockHeightDifference() {
         // Chain will overflow signed int blocks in ~41,000 years.
         int chainHeight = (int) getBestHeight();
         // chainHeight should not be zero/negative because we shouldn't have given the user a Peer that is to another
@@ -870,7 +875,7 @@ public class Peer {
      * Returns true if this peer will try and download things it is sent in "inv" messages. Normally you only need
      * one peer to be downloading data. Defaults to true.
      */
-    public boolean getDownloadData() {
+    public synchronized boolean getDownloadData() {
         return downloadData;
     }
 
@@ -878,35 +883,35 @@ public class Peer {
      * If set to false, the peer won't try and fetch blocks and transactions it hears about. Normally, only one
      * peer should download missing blocks. Defaults to true.
      */
-    public void setDownloadData(boolean downloadData) {
+    public synchronized void setDownloadData(boolean downloadData) {
         this.downloadData = downloadData;
     }
 
     /**
      * @return the IP address and port of peer.
      */
-    public PeerAddress getAddress() {
+    public synchronized PeerAddress getAddress() {
         return address;
     }
 
     /**
      * @return various version numbers claimed by peer.
      */
-    public VersionMessage getPeerVersionMessage() {
+    public synchronized VersionMessage getPeerVersionMessage() {
       return peerVersionMessage;
     }
 
     /**
      * @return various version numbers we claim.
      */
-    public VersionMessage getVersionMessage() {
+    public synchronized VersionMessage getVersionMessage() {
       return versionMessage;
     }
 
     /**
      * @return the height of the best chain as claimed by peer: sum of its ver announcement and blocks announced since.
      */
-    public long getBestHeight() {
+    public synchronized long getBestHeight() {
       return peerVersionMessage.bestHeight + blocksAnnounced;
     }
 }
