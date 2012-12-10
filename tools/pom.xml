@@ -39,7 +39,7 @@
               <version>1.6</version>
               <configuration>
                   <!-- Remove dead classes -->
-                  <minimizeJar>true</minimizeJar>
+                  <minimizeJar>false</minimizeJar>
                   <filters>
                       <filter>
                           <!-- exclude signatures, the bundling process breaks them for some reason -->
@@ -84,6 +84,11 @@
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-jdk14</artifactId>
       <version>1.6.4</version>
+    </dependency>
+    <dependency>
+      <groupId>com.h2database</groupId>
+      <artifactId>h2</artifactId>
+      <version>1.3.167</version>
     </dependency>
   </dependencies>
 </project>

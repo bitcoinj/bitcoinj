@@ -20,9 +20,7 @@ import com.google.bitcoin.core.*;
 import com.google.bitcoin.discovery.DnsDiscovery;
 import com.google.bitcoin.discovery.IrcDiscovery;
 import com.google.bitcoin.discovery.PeerDiscovery;
-import com.google.bitcoin.store.BlockStoreException;
-import com.google.bitcoin.store.BoundedOverheadBlockStore;
-import com.google.bitcoin.store.WalletProtobufSerializer;
+import com.google.bitcoin.store.*;
 import com.google.bitcoin.utils.BriefLogFormatter;
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
@@ -61,6 +59,7 @@ public class WalletTool {
             ">>> GENERAL OPTIONS\n" +
             "  --debuglog           Enables logging from the core library.\n" +
             "  --net=PROD/TEST      Which network to connect to, defaults to PROD.\n" +
+            "  --mode=FULL/SPV      Whether to do full verification of the chain or just light mode.\n" +
             "  --wallet=<file>      Specifies what wallet file to load and save.\n" +
             "  --chain=<file>       Specifies the name of the file that stores the block chain.\n" +
             "  --force              Overrides any safety checks on the requested action.\n" +
@@ -106,18 +105,20 @@ public class WalletTool {
     private static OptionSpec<NetworkEnum> netFlag;
     private static OptionSpec<Date> dateFlag;
     private static OptionSpec<WaitForEnum> waitForFlag;
+    private static OptionSpec<ValidationMode> modeFlag;
     private static OptionSpec<String> conditionFlag;
 
     private static NetworkParameters params;
     private static File walletFile;
     private static OptionSet options;
     private static java.util.logging.Logger logger;
-    private static BoundedOverheadBlockStore store;
-    private static BlockChain chain;
+    private static BlockStore store;
+    private static AbstractBlockChain chain;
     private static PeerGroup peers;
     private static Wallet wallet;
     private static File chainFileName;
     private static PeerDiscovery discovery;
+    private static ValidationMode mode;
 
     public static class Condition {
         public enum Type {
@@ -200,6 +201,11 @@ public class WalletTool {
         TEST
     }
 
+    public enum ValidationMode {
+        FULL,
+        SPV
+    }
+
     public static void main(String[] args) throws Exception {
         OptionParser parser = new OptionParser();
         parser.accepts("help");
@@ -222,6 +228,10 @@ public class WalletTool {
         waitForFlag = parser.accepts("waitfor")
                 .withRequiredArg()
                 .ofType(WaitForEnum.class);
+        modeFlag = parser.accepts("mode")
+                .withRequiredArg()
+                .ofType(ValidationMode.class)
+                .defaultsTo(ValidationMode.SPV);
         OptionSpec<String> chainFlag = parser.accepts("chain").withRequiredArg();
         // For addkey/delkey.
         parser.accepts("pubkey").withRequiredArg();
@@ -255,13 +265,15 @@ public class WalletTool {
                 discovery = new DnsDiscovery(params);
                 break;
             case TEST: 
-                params = NetworkParameters.testNet();
+                params = NetworkParameters.testNet3();
                 chainFileName = new File("testnet.chain");
-                discovery = new IrcDiscovery("#bitcoinTEST");
+                discovery = new IrcDiscovery("#bitcoinTEST3");
                 break;
             default:
                 throw new RuntimeException("Unreachable.");
         }
+
+        mode = modeFlag.value(options);
 
         // Allow the user to override the name of the chain used.
         if (options.has(chainFlag)) {
@@ -300,7 +312,7 @@ public class WalletTool {
 
         try {
             WalletProtobufSerializer loader = new WalletProtobufSerializer();
-            if (chainFileName.exists()) {
+            if (chainFileName.exists() && modeFlag.value(options).equals(ValidationMode.SPV)) {
                 // TEMPORARY MIGRATION CODE FOR 0.5 -> 0.6 TRANSITION. This will ensure the depth (but NOT workDone)
                 // fields gets set correctly for older wallets.
                 store = new BoundedOverheadBlockStore(params, chainFileName);
@@ -502,14 +514,19 @@ public class WalletTool {
             System.out.println("Chain file is missing so clearing transactions from the wallet.");
             reset();
         }
-        store = new BoundedOverheadBlockStore(params, chainFileName);
-        chain = new BlockChain(params, wallet, store);
+        if (mode == ValidationMode.SPV) {
+            store = new BoundedOverheadBlockStore(params, chainFileName);
+            chain = new BlockChain(params, wallet, store);
+        } else if (mode == ValidationMode.FULL) {
+            FullPrunedBlockStore s = new H2FullPrunedBlockStore(params, chainFileName.getAbsolutePath(), 5000);
+            store = s;
+            chain = new FullPrunedBlockChain(params, wallet, s);
+        }
         // This will ensure the wallet is saved when it changes.
         wallet.autosaveToFile(walletFile, 200, TimeUnit.MILLISECONDS, null);
         peers = new PeerGroup(params, chain);
         peers.setUserAgent("WalletTool", "1.0");
         peers.addWallet(wallet);
-        peers.setFastCatchupTimeSecs(wallet.getEarliestKeyCreationTime());
         if (options.has("peers")) {
             String peersFlag = (String) options.valueOf("peers");
             String[] peerAddrs = peersFlag.split(",");
