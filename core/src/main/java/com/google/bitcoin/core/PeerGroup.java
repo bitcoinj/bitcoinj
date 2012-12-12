@@ -154,7 +154,7 @@ public class PeerGroup {
      *
      * <pre>
      *   ClientBootstrap bootstrap = PeerGroup.createClientBootstrap();
-     *   bootstrap.setOption("oonnectionTimeoutMillis", 3000);
+     *   bootstrap.setOption("connectionTimeoutMillis", 3000);
      *   PeerGroup peerGroup = new PeerGroup(params, chain, bootstrap);
      * </pre>
      *
