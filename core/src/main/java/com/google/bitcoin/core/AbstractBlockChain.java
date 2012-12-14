@@ -27,32 +27,40 @@ import java.util.*;
 import static com.google.common.base.Preconditions.*;
 
 /**
- * A BlockChain holds a series of {@link Block} objects, links them together, and knows how to verify that the
- * chain follows the rules of the {@link NetworkParameters} for this chain.<p>
+ * <p>An AbstractBlockChain holds a series of {@link Block} objects, links them together, and knows how to verify that
+ * the chain follows the rules of the {@link NetworkParameters} for this chain.</p>
  *
- * A BlockChain requires a {@link Wallet} to receive transactions that it finds during the initial download. However,
- * if you don't care about this, you can just pass in an empty wallet and nothing bad will happen.<p>
+ * <p>It can be provided with one or more {@link BlockChainListener}s that can receive transactions and
+ * notifications of re-organizations. The listener that is most interesting to you is probably a {@link Wallet}.</p>
  *
- * A newly constructed BlockChain is empty. To fill it up, use a {@link Peer} object to download the chain from the
- * network.<p>
+ * <p>An AbstractBlockChain implementation must be connected to a {@link BlockStore} implementation. The chain object
+ * by itself doesn't store any data, that's delegated to the store. Which store you use is a decision best made by
+ * reading the getting started guide, but briefly, fully validating block chains need fully validating stores.</p>
  *
- * <b>Notes</b><p>
- *
- * The 'chain' can actually be a tree although in normal operation it can be thought of as a simple list. In such a
- * situation there are multiple stories of the economy competing to become the one true consensus. This can happen
- * naturally when two miners solve a block within a few seconds of each other, or it can happen when the chain is
- * under attack.<p>
- *
- * A reference to the head block of every chain is stored. If you can reach the genesis block by repeatedly walking
- * through the prevBlock pointers, then we say this is a full chain. If you cannot reach the genesis block we say it is
- * an orphan chain.<p>
- *
- * Orphan chains can occur when blocks are solved and received during the initial block chain download,
- * or if we connect to a peer that doesn't send us blocks in order.
- * 
- * This class implements an abstract class which makes it simple to create a BlockChain that does/doesn't do full
+ * <p>This class implements an abstract class which makes it simple to create a BlockChain that does/doesn't do full
  * verification.  It verifies headers and is implements most of what is required to implement a SPV BlockChain, but
- * also provides callback hooks which can be used to do full verification.
+ * also provides callback hooks which can be used to do full verification.</p>
+ *
+ * <p>There are two subclasses of AbstractBlockChain that are useful: {@link BlockChain}, which is the simplest
+ * class and implements <i>simplified payment verification</i>. This is a lightweight and efficient mode that does
+ * not verify the contents of blocks, just their headers. A {@link FullPrunedBlockChain} paired with a
+ * {@link com.google.bitcoin.store.H2FullPrunedBlockStore} implements full verification, which is equivalent to the
+ * original Satoshi client. To learn more about the alternative security models, please consult the articles on the
+ * website.</p>
+ *
+ * <b>Theory</b>
+ *
+ * <p>The 'chain' is actually a tree although in normal operation it can be thought of as a simple list. When multiple
+ * new head blocks are found simultaneously, there are multiple stories of the economy competing to become the one
+ * true consensus. This can happen naturally when two miners solve a block within a few seconds of each other, or it
+ * can happen when the chain is under attack.</p>
+ *
+ * <p>A reference to the head block of every chain is stored. If you can reach the genesis block by repeatedly walking
+ * through the prevBlock pointers, then we say this is a full chain. If you cannot reach the genesis block we say it is
+ * an orphan chain.</p>
+ *
+ * <p>Orphan chains can occur when blocks are solved and received during the initial block chain download,
+ * or if we connect to a peer that doesn't send us blocks in order.</p>
  */
 public abstract class AbstractBlockChain {
     private static final Logger log = LoggerFactory.getLogger(AbstractBlockChain.class);
