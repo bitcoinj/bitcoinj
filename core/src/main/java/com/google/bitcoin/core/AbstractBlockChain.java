@@ -85,22 +85,22 @@ public abstract class AbstractBlockChain {
     private final Object chainHeadLock = new Object();
 
     protected final NetworkParameters params;
-    private final List<Wallet> wallets;
+    private final List<BlockChainListener> listeners;
 
     // Holds blocks that we have received but can't plug into the chain yet, eg because they were created whilst we
     // were downloading the block chain.
     private final LinkedHashMap<Sha256Hash, Block> orphanBlocks = new LinkedHashMap<Sha256Hash, Block>();
 
     /**
-     * Constructs a BlockChain connected to the given list of wallets and a store.
+     * Constructs a BlockChain connected to the given list of listeners (eg, wallets) and a store.
      */
-    public AbstractBlockChain(NetworkParameters params, List<Wallet> wallets,
+    public AbstractBlockChain(NetworkParameters params, List<BlockChainListener> listeners,
                           BlockStore blockStore) throws BlockStoreException {
         this.blockStore = blockStore;
         chainHead = blockStore.getChainHead();
         log.info("chain head is at height {}:\n{}", chainHead.getHeight(), chainHead.getHeader());
         this.params = params;
-        this.wallets = new ArrayList<Wallet>(wallets);
+        this.listeners = new ArrayList<BlockChainListener>(listeners);
     }
 
     /**
@@ -110,7 +110,21 @@ public abstract class AbstractBlockChain {
      * wallets is not well tested!
      */
     public synchronized void addWallet(Wallet wallet) {
-        wallets.add(wallet);
+        listeners.add(wallet);
+    }
+
+    /**
+     * Adds a generic {@link BlockChainListener} listener to the chain.
+     */
+    public synchronized void addListener(BlockChainListener listener) {
+        listeners.add(listener);
+    }
+
+    /**
+     * Removes the given {@link BlockChainListener} from the chain.
+     */
+    public synchronized void removeListener(BlockChainListener listener) {
+        listeners.remove(listener);
     }
     
     /**
@@ -311,19 +325,35 @@ public abstract class AbstractBlockChain {
             StoredBlock newStoredBlock = addToBlockStore(storedPrev, block.cloneAsHeader(), txOutChanges);
             setChainHead(newStoredBlock);
             log.debug("Chain is now {} blocks high", newStoredBlock.getHeight());
-            // Notify the wallets of the new block, so the depth and workDone of stored transactions can be updated.
-            // The wallets need to know how deep each transaction is so coinbases aren't used before maturity.
-            for (int i = 0; i < wallets.size(); i++) {
-                Wallet wallet = wallets.get(i);
+            // Notify the listeners of the new block, so the depth and workDone of stored transactions can be updated
+            // (in the case of the listener being a wallet). Wallets need to know how deep each transaction is so
+            // coinbases aren't used before maturity.
+            final BlockChainListener first = listeners.size() > 0 ? listeners.get(0) : null;
+            for (int i = 0; i < listeners.size(); i++) {
+                BlockChainListener listener = listeners.get(i);
                 if (block.transactions != null) {
                     // If this is not the first wallet, ask for the transactions to be duplicated before being given
                     // to the wallet when relevant. This ensures that if we have two connected wallets and a tx that
                     // is relevant to both of them, they don't end up accidentally sharing the same object (which can
                     // result in temporary in-memory corruption during re-orgs). See bug 257. We only duplicate in
                     // the case of multiple wallets to avoid an unnecessary efficiency hit in the common case.
-                    sendTransactionsToWallet(newStoredBlock, NewBlockType.BEST_CHAIN, wallet, block.transactions, i > 0);
+                    sendTransactionsToListener(newStoredBlock, NewBlockType.BEST_CHAIN, listener, block.transactions,
+                            i > 0);
                 }
-                wallet.notifyNewBestBlock(newStoredBlock.getHeader());
+                // Allow the listener to have removed itself.
+                if (i == listeners.size()) {
+                    break;  // Listener removed itself and it was the last one.
+                } else if (listeners.get(i) != listener) {
+                    i--;  // Listener removed itself and it was not the last one.
+                    break;
+                }
+                listener.notifyNewBestBlock(newStoredBlock.getHeader());
+                if (i == listeners.size()) {
+                    break;  // Listener removed itself and it was the last one.
+                } else if (listeners.get(i) != listener) {
+                    i--;  // Listener removed itself and it was not the last one.
+                    break;
+                }
             }
         } else {
             // This block connects to somewhere other than the top of the best known chain. We treat these differently.
@@ -363,14 +393,19 @@ public abstract class AbstractBlockChain {
             // If we do, send them to the wallet but state that they are on a side chain so it knows not to try and
             // spend them until they become activated.
             if (block.transactions != null) {
-                for (int i = 0; i < wallets.size(); i++) {
-                    Wallet wallet = wallets.get(i);
+                for (int i = 0; i < listeners.size(); i++) {
+                    BlockChainListener listener = listeners.get(i);
                     // If this is not the first wallet, ask for the transactions to be duplicated before being given
                     // to the wallet when relevant. This ensures that if we have two connected wallets and a tx that
                     // is relevant to both of them, they don't end up accidentally sharing the same object (which can
                     // result in temporary in-memory corruption during re-orgs). See bug 257. We only duplicate in
                     // the case of multiple wallets to avoid an unnecessary efficiency hit in the common case.
-                    sendTransactionsToWallet(newBlock, NewBlockType.SIDE_CHAIN, wallet, block.transactions, i > 0);
+                    sendTransactionsToListener(newBlock, NewBlockType.SIDE_CHAIN, listener, block.transactions, i > 0);
+                    if (i == listeners.size()) {
+                        break;  // Listener removed itself and it was the last one.
+                    } else if (listeners.get(i) != listener) {
+                        i--;  // Listener removed itself and it was not the last one.
+                    }
                 }
             }
             
@@ -453,11 +488,17 @@ public abstract class AbstractBlockChain {
             // (Finally) write block to block store
             storedNewHead = addToBlockStore(storedPrev, newChainHead.getHeader());
         }
-        // Now inform the wallets. This is necessary so the set of currently active transactions (that we can spend)
+        // Now inform the listeners. This is necessary so the set of currently active transactions (that we can spend)
         // can be updated to take into account the re-organize. We might also have received new coins we didn't have
         // before and our previous spends might have been undone.
-        for (Wallet wallet : wallets) {
-            wallet.reorganize(splitPoint, oldBlocks, newBlocks);
+        for (int i = 0; i < listeners.size(); i++) {
+            BlockChainListener listener = listeners.get(i);
+            listener.reorganize(splitPoint, oldBlocks, newBlocks);
+            if (i == listeners.size()) {
+                break;  // Listener removed itself and it was the last one.
+            } else if (listeners.get(i) != listener) {
+                i--;  // Listener removed itself and it was not the last one.
+            }
         }
         // Update the pointer to the best known block.
         setChainHead(storedNewHead);
@@ -516,14 +557,14 @@ public abstract class AbstractBlockChain {
         SIDE_CHAIN
     }
 
-    private void sendTransactionsToWallet(StoredBlock block, NewBlockType blockType, Wallet wallet,
-                                          List<Transaction> transactions, boolean clone) throws VerificationException {
+    private void sendTransactionsToListener(StoredBlock block, NewBlockType blockType, BlockChainListener listener,
+                                            List<Transaction> transactions, boolean clone) throws VerificationException {
         for (Transaction tx : transactions) {
             try {
-                if (wallet.isTransactionRelevant(tx)) {
+                if (listener.isTransactionRelevant(tx)) {
                     if (clone)
                         tx = new Transaction(tx.params, tx.bitcoinSerialize());
-                    wallet.receiveFromBlock(tx, block, blockType);
+                    listener.receiveFromBlock(tx, block, blockType);
                 }
             } catch (ScriptException e) {
                 // We don't want scripts we don't understand to break the block chain so just note that this tx was
@@ -682,8 +723,8 @@ public abstract class AbstractBlockChain {
     private boolean containsRelevantTransactions(Block block) {
         for (Transaction tx : block.transactions) {
             try {
-                for (Wallet wallet : wallets) {
-                    if (wallet.isTransactionRelevant(tx)) return true;
+                for (BlockChainListener listener : listeners) {
+                    if (listener.isTransactionRelevant(tx)) return true;
                 }
             } catch (ScriptException e) {
                 // We don't want scripts we don't understand to break the block chain so just note that this tx was

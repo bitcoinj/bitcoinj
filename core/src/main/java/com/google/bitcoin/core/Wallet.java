@@ -67,7 +67,7 @@ import static com.google.common.base.Preconditions.*;
  * {@link Wallet#autosaveToFile(java.io.File, long, java.util.concurrent.TimeUnit, com.google.bitcoin.core.Wallet.AutosaveEventListener)}
  * for more information about this.</p>
  */
-public class Wallet implements Serializable {
+public class Wallet implements Serializable, BlockChainListener {
     private static final Logger log = LoggerFactory.getLogger(Wallet.class);
     private static final long serialVersionUID = 2L;
 
@@ -1780,14 +1780,17 @@ public class Wallet implements Serializable {
     }
 
     /**
-     * Called by the {@link BlockChain} when the best chain (representing total work done) has changed. In this case,
+     * <p>Don't call this directly. It's not intended for API users.</p>
+     *
+     * <p>Called by the {@link BlockChain} when the best chain (representing total work done) has changed. In this case,
      * we need to go through our transactions and find out if any have become invalid. It's possible for our balance
      * to go down in this case: money we thought we had can suddenly vanish if the rest of the network agrees it
-     * should be so.<p>
+     * should be so.</p>
      *
-     * The oldBlocks/newBlocks lists are ordered height-wise from top first to bottom last.
+     * <p>The oldBlocks/newBlocks lists are ordered height-wise from top first to bottom last.</p>
      */
-    synchronized void reorganize(StoredBlock splitPoint, List<StoredBlock> oldBlocks, List<StoredBlock> newBlocks) throws VerificationException {
+    public synchronized void reorganize(StoredBlock splitPoint, List<StoredBlock> oldBlocks,
+                                        List<StoredBlock> newBlocks) throws VerificationException {
         // This runs on any peer thread with the block chain synchronized.
         //
         // The reorganize functionality of the wallet is tested in ChainSplitTests.

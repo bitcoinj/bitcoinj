@@ -38,7 +38,7 @@ public class BlockChain extends AbstractBlockChain {
      * {@link com.google.bitcoin.store.BoundedOverheadBlockStore} if you'd like to ensure fast startup the next time you run the program.
      */
     public BlockChain(NetworkParameters params, Wallet wallet, BlockStore blockStore) throws BlockStoreException {
-        this(params, new ArrayList<Wallet>(), blockStore);
+        this(params, new ArrayList<BlockChainListener>(), blockStore);
         if (wallet != null)
             addWallet(wallet);
     }
@@ -48,13 +48,13 @@ public class BlockChain extends AbstractBlockChain {
      * and receiving coins but rather, just want to explore the network data structures.
      */
     public BlockChain(NetworkParameters params, BlockStore blockStore) throws BlockStoreException {
-        this(params, new ArrayList<Wallet>(), blockStore);
+        this(params, new ArrayList<BlockChainListener>(), blockStore);
     }
 
     /**
-     * Constructs a BlockChain connected to the given list of wallets and a store.
+     * Constructs a BlockChain connected to the given list of listeners and a store.
      */
-    public BlockChain(NetworkParameters params, List<Wallet> wallets,
+    public BlockChain(NetworkParameters params, List<BlockChainListener> wallets,
                       BlockStore blockStore) throws BlockStoreException {
         super(params, wallets, blockStore);
         this.blockStore = blockStore;

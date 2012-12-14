@@ -18,20 +18,14 @@ package com.google.bitcoin.core;
 
 import com.google.bitcoin.store.BlockStoreException;
 import com.google.bitcoin.store.FullPrunedBlockStore;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.FutureTask;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.util.concurrent.*;
 /**
  * <p>A FullPrunedBlockChain works in conjunction with a {@link FullPrunedBlockStore} to provide a fully verifying
  * block chain. Fully verifying means all unspent transaction outputs are stored. Once a transaction output is spent
@@ -50,7 +44,7 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
      * one from scratch, or you can deserialize a saved wallet from disk using {@link Wallet#loadFromFile(java.io.File)}
      */
     public FullPrunedBlockChain(NetworkParameters params, Wallet wallet, FullPrunedBlockStore blockStore) throws BlockStoreException {
-        this(params, new ArrayList<Wallet>(), blockStore);
+        this(params, new ArrayList<BlockChainListener>(), blockStore);
         if (wallet != null)
             addWallet(wallet);
     }
@@ -60,15 +54,15 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
      * and receiving coins but rather, just want to explore the network data structures.
      */
     public FullPrunedBlockChain(NetworkParameters params, FullPrunedBlockStore blockStore) throws BlockStoreException {
-        this(params, new ArrayList<Wallet>(), blockStore);
+        this(params, new ArrayList<BlockChainListener>(), blockStore);
     }
 
     /**
      * Constructs a BlockChain connected to the given list of wallets and a store.
      */
-    public FullPrunedBlockChain(NetworkParameters params, List<Wallet> wallets,
+    public FullPrunedBlockChain(NetworkParameters params, List<BlockChainListener> listeners,
                                 FullPrunedBlockStore blockStore) throws BlockStoreException {
-        super(params, wallets, blockStore);
+        super(params, listeners, blockStore);
         this.blockStore = blockStore;
     }
 
