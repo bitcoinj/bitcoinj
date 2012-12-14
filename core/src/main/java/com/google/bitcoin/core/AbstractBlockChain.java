@@ -98,7 +98,8 @@ public abstract class AbstractBlockChain {
     /**
      * Add a wallet to the BlockChain. Note that the wallet will be unaffected by any blocks received while it
      * was not part of this BlockChain. This method is useful if the wallet has just been created, and its keys
-     * have never been in use, or if the wallet has been loaded along with the BlockChain
+     * have never been in use, or if the wallet has been loaded along with the BlockChain. Note that adding multiple
+     * wallets is not well tested!
      */
     public synchronized void addWallet(Wallet wallet) {
         wallets.add(wallet);
@@ -304,9 +305,15 @@ public abstract class AbstractBlockChain {
             log.debug("Chain is now {} blocks high", newStoredBlock.getHeight());
             // Notify the wallets of the new block, so the depth and workDone of stored transactions can be updated.
             // The wallets need to know how deep each transaction is so coinbases aren't used before maturity.
-            for (Wallet wallet : wallets) {
+            for (int i = 0; i < wallets.size(); i++) {
+                Wallet wallet = wallets.get(i);
                 if (block.transactions != null) {
-                    sendTransactionsToWallet(newStoredBlock, NewBlockType.BEST_CHAIN, wallet, block.transactions);
+                    // If this is not the first wallet, ask for the transactions to be duplicated before being given
+                    // to the wallet when relevant. This ensures that if we have two connected wallets and a tx that
+                    // is relevant to both of them, they don't end up accidentally sharing the same object (which can
+                    // result in temporary in-memory corruption during re-orgs). See bug 257. We only duplicate in
+                    // the case of multiple wallets to avoid an unnecessary efficiency hit in the common case.
+                    sendTransactionsToWallet(newStoredBlock, NewBlockType.BEST_CHAIN, wallet, block.transactions, i > 0);
                 }
                 wallet.notifyNewBestBlock(newStoredBlock.getHeader());
             }
@@ -348,8 +355,14 @@ public abstract class AbstractBlockChain {
             // If we do, send them to the wallet but state that they are on a side chain so it knows not to try and
             // spend them until they become activated.
             if (block.transactions != null) {
-                for (Wallet wallet : wallets) {
-                    sendTransactionsToWallet(newBlock, NewBlockType.SIDE_CHAIN, wallet, block.transactions);
+                for (int i = 0; i < wallets.size(); i++) {
+                    Wallet wallet = wallets.get(i);
+                    // If this is not the first wallet, ask for the transactions to be duplicated before being given
+                    // to the wallet when relevant. This ensures that if we have two connected wallets and a tx that
+                    // is relevant to both of them, they don't end up accidentally sharing the same object (which can
+                    // result in temporary in-memory corruption during re-orgs). See bug 257. We only duplicate in
+                    // the case of multiple wallets to avoid an unnecessary efficiency hit in the common case.
+                    sendTransactionsToWallet(newBlock, NewBlockType.SIDE_CHAIN, wallet, block.transactions, i > 0);
                 }
             }
             
@@ -495,16 +508,22 @@ public abstract class AbstractBlockChain {
         SIDE_CHAIN
     }
 
-    private void sendTransactionsToWallet(StoredBlock block, BlockChain.NewBlockType blockType, Wallet wallet,
-                                          List<Transaction> transactions) throws VerificationException {
+    private void sendTransactionsToWallet(StoredBlock block, NewBlockType blockType, Wallet wallet,
+                                          List<Transaction> transactions, boolean clone) throws VerificationException {
         for (Transaction tx : transactions) {
             try {
-                if (wallet.isTransactionRelevant(tx, true))
+                if (wallet.isTransactionRelevant(tx, true)) {
+                    if (clone)
+                        tx = new Transaction(tx.params, tx.bitcoinSerialize());
                     wallet.receiveFromBlock(tx, block, blockType);
+                }
             } catch (ScriptException e) {
                 // We don't want scripts we don't understand to break the block chain so just note that this tx was
                 // not scanned here and continue.
                 log.warn("Failed to parse a script: " + e.toString());
+            } catch (ProtocolException e) {
+                // Failed to duplicate tx, should never happen.
+                throw new RuntimeException(e);
             }
         }
     }
