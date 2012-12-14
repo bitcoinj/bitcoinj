@@ -512,7 +512,7 @@ public abstract class AbstractBlockChain {
                                           List<Transaction> transactions, boolean clone) throws VerificationException {
         for (Transaction tx : transactions) {
             try {
-                if (wallet.isTransactionRelevant(tx, true)) {
+                if (wallet.isTransactionRelevant(tx)) {
                     if (clone)
                         tx = new Transaction(tx.params, tx.bitcoinSerialize());
                     wallet.receiveFromBlock(tx, block, blockType);
@@ -675,7 +675,7 @@ public abstract class AbstractBlockChain {
         for (Transaction tx : block.transactions) {
             try {
                 for (Wallet wallet : wallets) {
-                    if (wallet.isTransactionRelevant(tx, true)) return true;
+                    if (wallet.isTransactionRelevant(tx)) return true;
                 }
             } catch (ScriptException e) {
                 // We don't want scripts we don't understand to break the block chain so just note that this tx was

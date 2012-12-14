@@ -629,7 +629,7 @@ public class Wallet implements Serializable {
         // We only care about transactions that:
         //   - Send us coins
         //   - Spend our coins
-        if (!isTransactionRelevant(tx, true)) {
+        if (!isTransactionRelevant(tx)) {
             log.debug("Received tx that isn't relevant to this wallet, discarding.");
             return;
         }
@@ -679,18 +679,17 @@ public class Wallet implements Serializable {
     }
 
     /**
-     * Returns true if the given transaction sends coins to any of our keys, or has inputs spending any of our outputs,
+     * <p>Returns true if the given transaction sends coins to any of our keys, or has inputs spending any of our outputs,
      * and if includeDoubleSpending is true, also returns true if tx has inputs that are spending outputs which are
-     * not ours but which are spent by pending transactions.<p>
+     * not ours but which are spent by pending transactions.</p>
      *
-     * Note that if the tx has inputs containing one of our keys, but the connected transaction is not in the wallet,
-     * it will not be considered relevant.
+     * <p>Note that if the tx has inputs containing one of our keys, but the connected transaction is not in the wallet,
+     * it will not be considered relevant.</p>
      */
-    public synchronized boolean isTransactionRelevant(Transaction tx,
-                                                      boolean includeDoubleSpending) throws ScriptException {
+    public synchronized boolean isTransactionRelevant(Transaction tx) throws ScriptException {
         return tx.getValueSentFromMe(this).compareTo(BigInteger.ZERO) > 0 ||
                tx.getValueSentToMe(this).compareTo(BigInteger.ZERO) > 0 ||
-               (includeDoubleSpending && (findDoubleSpendAgainstPending(tx) != null));
+               findDoubleSpendAgainstPending(tx) != null;
     }
 
     /**
