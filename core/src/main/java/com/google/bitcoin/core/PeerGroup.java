@@ -187,7 +187,8 @@ public class PeerGroup extends AbstractIdleService {
         this.maxConnections = 0;
 
         int height = chain == null ? 0 : chain.getBestChainHeight();
-        this.versionMessage = new VersionMessage(params, height);
+        // We never request that the remote node wait for a bloom filter yet, as we have no wallets
+        this.versionMessage = new VersionMessage(params, height, true);
 
         memoryPool = new MemoryPool();
 
@@ -346,9 +347,20 @@ public class PeerGroup extends AbstractIdleService {
      * @param version
      */
     public void setUserAgent(String name, String version, String comments) {
-        VersionMessage ver = new VersionMessage(params, 0);
+        //TODO Check that height is needed here (it wasnt, but it should be, no?)
+        int height = chain == null ? 0 : chain.getBestChainHeight();
+        VersionMessage ver = new VersionMessage(params, height, false);
+        updateVersionMessageRelayTxesBeforeFilter(ver);
         ver.appendToSubVer(name, version, comments);
         setVersionMessage(ver);
+    }
+    
+    // Updates the relayTxesBeforeFilter flag of ver
+    private synchronized void updateVersionMessageRelayTxesBeforeFilter(VersionMessage ver) {
+        // We will provide the remote node with a bloom filter (ie they shouldn't relay yet)
+        // iff chain == null || !chain.shouldVerifyTransactions() and a wallet is added
+        // Note that the default here means that no tx invs will be received if no wallet is ever added
+        ver.relayTxesBeforeFilter = chain != null && chain.shouldVerifyTransactions() && wallets.size() > 0;
     }
 
     /**
@@ -535,6 +547,7 @@ public class PeerGroup extends AbstractIdleService {
             }
         });
         recalculateFastCatchupAndFilter();
+        updateVersionMessageRelayTxesBeforeFilter(getVersionMessage());
     }
 
     private synchronized void recalculateFastCatchupAndFilter() {

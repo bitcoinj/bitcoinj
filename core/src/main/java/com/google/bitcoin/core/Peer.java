@@ -119,10 +119,11 @@ public class Peer {
 
     /**
      * Construct a peer that reads/writes from the given chain. Automatically creates a VersionMessage for you from the
-     * given software name/version strings, which should be something like "MySimpleTool", "1.0"
+     * given software name/version strings, which should be something like "MySimpleTool", "1.0" and which will tell the
+     * remote node to relay transaction inv messages before it has received a filter.
      */
     public Peer(NetworkParameters params, AbstractBlockChain blockChain, String thisSoftwareName, String thisSoftwareVersion) {
-        this(params, blockChain, new VersionMessage(params, blockChain.getBestChainHeight()));
+        this(params, blockChain, new VersionMessage(params, blockChain.getBestChainHeight(), true));
         this.versionMessage.appendToSubVer(thisSoftwareName, thisSoftwareVersion, null);
     }
 

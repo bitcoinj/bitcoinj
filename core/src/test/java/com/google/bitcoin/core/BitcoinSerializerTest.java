@@ -55,9 +55,9 @@ public class BitcoinSerializerTest {
     public void testVersion() throws Exception {
     	BitcoinSerializer bs = new BitcoinSerializer(NetworkParameters.prodNet(), false);
         // the actual data from https://en.bitcoin.it/wiki/Protocol_specification#version
-        ByteArrayInputStream bais = new ByteArrayInputStream(Hex.decode("f9beb4d976657273696f6e0000000000550000009" +
+        ByteArrayInputStream bais = new ByteArrayInputStream(Hex.decode("f9beb4d976657273696f6e0000000000560000009" +
                 "c7c00000100000000000000e615104d00000000010000000000000000000000000000000000ffff0a000001daf6010000" +
-                "000000000000000000000000000000ffff0a000002208ddd9d202c3ab457130055810100"));
+                "000000000000000000000000000000ffff0a000002208ddd9d202c3ab45713005581010000"));
         VersionMessage vm = (VersionMessage)bs.deserialize(bais);
         assertEquals(31900, vm.clientVersion);
         assertEquals(1292899814L, vm.time);

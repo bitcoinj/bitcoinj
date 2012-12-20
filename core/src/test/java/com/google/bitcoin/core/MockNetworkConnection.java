@@ -102,10 +102,6 @@ public class MockNetworkConnection implements NetworkConnection {
         this.versionMessage = msg;
     }
 
-    public void setVersionMessageForHeight(NetworkParameters params, int chainHeight) {
-        versionMessage = new VersionMessage(params, chainHeight);
-    }
-
     public VersionMessage getVersionMessage() {
         if (versionMessage == null) throw new RuntimeException("Need to call setVersionMessage first");
         return versionMessage;

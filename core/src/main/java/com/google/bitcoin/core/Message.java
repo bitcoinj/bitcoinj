@@ -472,6 +472,10 @@ public abstract class Message implements Serializable {
             throw new RuntimeException(e);  // Cannot happen, UTF-8 is always supported.
         }
     }
+    
+    boolean hasMoreBytes() {
+        return cursor < bytes.length;
+    }
 
     public static class LazyParseException extends RuntimeException {
         private static final long serialVersionUID = 6971943053112975594L;
