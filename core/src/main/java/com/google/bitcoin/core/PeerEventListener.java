@@ -56,7 +56,8 @@ public interface PeerEventListener {
     public void onPeerConnected(Peer peer, int peerCount);
 
     /**
-     * Called when a peer is disconnected
+     * Called when a peer is disconnected. Note that this won't be called if the listener is registered on a
+     * {@link PeerGroup} and the group is in the process of shutting down.
      *
      * @param peer
      * @param peerCount the total number of connected peers

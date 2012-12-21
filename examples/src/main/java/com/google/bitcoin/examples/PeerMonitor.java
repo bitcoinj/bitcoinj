@@ -30,8 +30,9 @@ import javax.swing.table.AbstractTableModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.util.List;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
 
 /**
  * Shows connected peers in a table view, so you can watch as they come and go.
@@ -40,7 +41,6 @@ public class PeerMonitor {
     private NetworkParameters params;
     private PeerGroup peerGroup;
     private PeerTableModel peerTableModel;
-    private ScheduledThreadPoolExecutor pingService;
 
     public static void main(String[] args) throws Exception {
         BriefLogFormatter.init();
@@ -83,7 +83,16 @@ public class PeerMonitor {
 
     private void setupGUI() {
         JFrame window = new JFrame("Network monitor");
-        window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        window.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+        window.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent windowEvent) {
+                System.out.println("Shutting down ...");
+                peerGroup.stopAndWait();
+                System.out.println("Shutdown complete.");
+                System.exit(0);
+            }
+        });
 
         JPanel panel = new JPanel();
         JLabel instructions = new JLabel("Number of peers to connect to: ");
