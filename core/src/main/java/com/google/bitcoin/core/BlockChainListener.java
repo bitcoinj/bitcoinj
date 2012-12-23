@@ -61,4 +61,15 @@ public interface BlockChainListener {
      */
     void receiveFromBlock(Transaction tx, StoredBlock block,
                           BlockChain.NewBlockType blockType) throws VerificationException;
+    
+    /**
+     * <p>Called by the {@link BlockChain} when we receive a new filtered block that contains the given transaction
+     * hash in its merkle tree.</p>
+     *
+     * <p>A transaction may be received multiple times if is included into blocks in parallel chains. The blockType
+     * parameter describes whether the containing block is on the main/best chain or whether it's on a presently
+     * inactive side chain.</p>
+     */
+    void notifyTransactionIsInBlock(Sha256Hash txHash, StoredBlock block,
+                                    BlockChain.NewBlockType blockType) throws VerificationException;
 }

@@ -613,6 +613,32 @@ public class Wallet implements Serializable, BlockChainListener {
                                        BlockChain.NewBlockType blockType) throws VerificationException {
         receive(tx, block, blockType, false);
     }
+    
+    /**
+     * Called by the {@link BlockChain} when we receive a new filtered block that contains a transactions previously
+     * received by a call to @{link receivePending}.<p>
+     *
+     * This is necessary for the internal book-keeping Wallet does. When a transaction is received that sends us
+     * coins it is added to a pool so we can use it later to create spends. When a transaction is received that
+     * consumes outputs they are marked as spent so they won't be used in future.<p>
+     *
+     * A transaction that spends our own coins can be received either because a spend we created was accepted by the
+     * network and thus made it into a block, or because our keys are being shared between multiple instances and
+     * some other node spent the coins instead. We still have to know about that to avoid accidentally trying to
+     * double spend.<p>
+     *
+     * A transaction may be received multiple times if is included into blocks in parallel chains. The blockType
+     * parameter describes whether the containing block is on the main/best chain or whether it's on a presently
+     * inactive side chain. We must still record these transactions and the blocks they appear in because a future
+     * block might change which chain is best causing a reorganize. A re-org can totally change our balance!
+     */
+    public synchronized void notifyTransactionIsInBlock(Sha256Hash txHash, StoredBlock block,
+                                       BlockChain.NewBlockType blockType) throws VerificationException {
+        Transaction tx = pending.get(txHash);
+        if (tx == null)
+            return;
+        receive(tx, block, blockType, false);
+    }
 
     /**
      * Called when we have found a transaction (via network broadcast or otherwise) that is relevant to this wallet
