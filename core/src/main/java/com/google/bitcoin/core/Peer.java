@@ -21,7 +21,6 @@ import com.google.bitcoin.store.BlockStoreException;
 import com.google.bitcoin.utils.EventListenerInvoker;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import org.jboss.netty.channel.*;
@@ -86,8 +85,8 @@ public class Peer {
     // simultaneously if we were to receive a newly solved block whilst parts of the chain are streaming to us.
     private HashSet<Sha256Hash> pendingBlockDownloads = new HashSet<Sha256Hash>();
 
-    // Outstanding pings against this peer and how long the last one took to complete. Locked under the Peer lock.
-    private List<PendingPing> pendingPings;
+    // Outstanding pings against this peer and how long the last one took to complete.
+    private CopyOnWriteArrayList<PendingPing> pendingPings;
     private long[] lastPingTimes;
     private static final int PING_MOVING_AVERAGE_WINDOW = 20;
 
@@ -110,7 +109,7 @@ public class Peer {
         this.fastCatchupTimeSecs = params.genesisBlock.getTimeSeconds();
         this.isAcked = false;
         this.handler = new PeerHandler();
-        this.pendingPings = Lists.newLinkedList();
+        this.pendingPings = new CopyOnWriteArrayList<PendingPing>();
         this.lastPingTimes = null;
     }
 
@@ -848,14 +847,13 @@ public class Peer {
 
     private void processPong(Pong m) {
         PendingPing ping = null;
-        synchronized (this) {
-            ListIterator<PendingPing> it = pendingPings.listIterator();
-            while (it.hasNext()) {
-                ping = it.next();
-                if (m.getNonce() == ping.nonce) {
-                    it.remove();
-                    break;
-                }
+        // Iterates over a snapshot of the list, so we can run unlocked here.
+        ListIterator<PendingPing> it = pendingPings.listIterator();
+        while (it.hasNext()) {
+            ping = it.next();
+            if (m.getNonce() == ping.nonce) {
+                pendingPings.remove(ping);
+                break;
             }
         }
         // This line may trigger an event listener being run on the same thread, if one is attached to the
