@@ -22,6 +22,7 @@ import com.google.bitcoin.discovery.PeerDiscovery;
 import com.google.bitcoin.discovery.PeerDiscoveryException;
 import com.google.bitcoin.utils.EventListenerInvoker;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.*;
 import org.jboss.netty.bootstrap.ClientBootstrap;
 import org.jboss.netty.channel.*;
@@ -413,15 +414,16 @@ public class PeerGroup extends AbstractIdleService {
 
     protected void discoverPeers() throws PeerDiscoveryException {
         long start = System.currentTimeMillis();
+        Set<PeerAddress> addressSet = Sets.newHashSet();
         for (PeerDiscovery peerDiscovery : peerDiscoverers) {
             InetSocketAddress[] addresses;
             addresses = peerDiscovery.getPeers(10, TimeUnit.SECONDS);
-            synchronized (inactives) {
-                for (int i = 0; i < addresses.length; i++) {
-                    inactives.add(new PeerAddress(addresses[i]));
-                }
-                if (inactives.size() > 0) break;
-            }
+            for (int i = 0; i < addresses.length; i++)
+                addressSet.add(new PeerAddress(addresses[i]));
+            if (addressSet.size() > 0) break;
+        }
+        synchronized (inactives) {
+            inactives.addAll(addressSet);
         }
         log.info("Peer discovery took {}msec", System.currentTimeMillis() - start);
     }
