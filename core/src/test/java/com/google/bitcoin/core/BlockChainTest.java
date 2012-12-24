@@ -68,7 +68,6 @@ public class BlockChainTest {
         chain = new BlockChain(unitTestParams, wallet, blockStore);
 
         coinbaseTo = wallet.keychain.get(0).toAddress(unitTestParams);
-
     }
 
     @Test
@@ -200,7 +199,7 @@ public class BlockChainTest {
             // allowable difficulty.
             fail();
         } catch (VerificationException e) {
-            assertTrue(e.getMessage(), e.getMessage().indexOf("Difficulty target is bad") >= 0);
+            assertTrue(e.getMessage(), e.getCause().getMessage().indexOf("Difficulty target is bad") >= 0);
         }
 
         // Accept any level of difficulty now.
@@ -211,7 +210,7 @@ public class BlockChainTest {
             // We should not get here as the difficulty target should not be changing at this point.
             fail();
         } catch (VerificationException e) {
-            assertTrue(e.getMessage(), e.getMessage().indexOf("Unexpected change in difficulty") >= 0);
+            assertTrue(e.getMessage(), e.getCause().getMessage().indexOf("Unexpected change in difficulty") >= 0);
         }
 
         // TODO: Test difficulty change is not out of range when a transition period becomes valid.
