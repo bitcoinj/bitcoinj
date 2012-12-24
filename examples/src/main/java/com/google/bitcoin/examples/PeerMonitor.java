@@ -238,8 +238,12 @@ public class PeerMonitor {
 
         public Component getTableCellRendererComponent(JTable table, Object contents,
                                                        boolean selected, boolean hasFocus, int row, int column) {
-            setText(contents.toString());
+            row = table.convertRowIndexToModel(row);
+            column = table.convertColumnIndexToModel(column);
+
+            String str = contents.toString();
             if (model.connectedPeers == null || model.pendingPeers == null) {
+                setText(str);
                 return this;
             }
 
@@ -253,14 +257,21 @@ public class PeerMonitor {
                     setFont(normal);
                 setForeground(Color.BLACK);
 
-                // Mark chain heights that aren't normal.
+                // Mark chain heights that aren't normal but not for pending peers, as we don't know their heights yet.
                 if (column == PeerTableModel.CHAIN_HEIGHT) {
                     long height = (Long) contents;
                     if (height != peerGroup.getMostCommonChainHeight()) {
-                        setText(height + " • ");
+                        str = height + " • ";
                     }
                 }
             }
+
+            boolean isPingColumn = column == PeerTableModel.PING_TIME || column == PeerTableModel.LAST_PING_TIME;
+            if (isPingColumn && contents == (Long)0L) {
+                // We don't know the answer yet
+                str = "";
+            }
+            setText(str);
             return this;
         }
     }
