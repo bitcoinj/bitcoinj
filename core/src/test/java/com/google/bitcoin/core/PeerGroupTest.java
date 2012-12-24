@@ -100,7 +100,7 @@ public class PeerGroupTest extends TestWithNetworkConnections {
             public void shutdown() {
             }
         });
-        peerGroup.start();
+        peerGroup.startAndWait();
         sem.acquire();
         // Check that we did indeed throw an exception. If we got here it means we threw and then PeerGroup tried
         // again a bit later.
@@ -111,7 +111,7 @@ public class PeerGroupTest extends TestWithNetworkConnections {
     @Test
     public void receiveTxBroadcast() throws Exception {
         // Check that when we receive transactions on all our peers, we do the right thing.
-        peerGroup.start();
+        peerGroup.startAndWait();
 
         // Create a couple of peers.
         peerGroup.addWallet(wallet);
@@ -156,7 +156,7 @@ public class PeerGroupTest extends TestWithNetworkConnections {
     @Test
     public void singleDownloadPeer1() throws Exception {
         // Check that we don't attempt to retrieve blocks on multiple peers.
-        peerGroup.start();
+        peerGroup.startAndWait();
 
         // Create a couple of peers.
         FakeChannel p1 = connectPeer(1);
@@ -191,7 +191,7 @@ public class PeerGroupTest extends TestWithNetworkConnections {
         // Check that we don't attempt multiple simultaneous block chain downloads, when adding a new peer in the
         // middle of an existing chain download.
         // Create a couple of peers.
-        peerGroup.start();
+        peerGroup.startAndWait();
 
         // Create a couple of peers.
         FakeChannel p1 = connectPeer(1);
@@ -372,7 +372,7 @@ public class PeerGroupTest extends TestWithNetworkConnections {
 
     @Test
     public void noPings() throws Exception {
-        peerGroup.start();
+        peerGroup.startAndWait();
         peerGroup.setPingIntervalMsec(0);
         VersionMessage versionMessage = new VersionMessage(params, 2);
         versionMessage.clientVersion = Pong.MIN_PROTOCOL_VERSION;
@@ -382,7 +382,7 @@ public class PeerGroupTest extends TestWithNetworkConnections {
 
     @Test
     public void pings() throws Exception {
-        peerGroup.start();
+        peerGroup.startAndWait();
         peerGroup.setPingIntervalMsec(100);
         VersionMessage versionMessage = new VersionMessage(params, 2);
         versionMessage.clientVersion = Pong.MIN_PROTOCOL_VERSION;
