@@ -846,14 +846,16 @@ public class Peer {
         return (long)((double) sum / lastPingTimes.length);
     }
 
-    private synchronized void processPong(Pong m) {
-        ListIterator<PendingPing> it = pendingPings.listIterator();
+    private void processPong(Pong m) {
         PendingPing ping = null;
-        while (it.hasNext()) {
-            ping = it.next();
-            if (m.getNonce() == ping.nonce) {
-                it.remove();
-                break;
+        synchronized (this) {
+            ListIterator<PendingPing> it = pendingPings.listIterator();
+            while (it.hasNext()) {
+                ping = it.next();
+                if (m.getNonce() == ping.nonce) {
+                    it.remove();
+                    break;
+                }
             }
         }
         // This line may trigger an event listener being run on the same thread, if one is attached to the
