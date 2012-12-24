@@ -1098,17 +1098,19 @@ public class PeerGroup extends AbstractIdleService {
     }
 
     /** Given a list of Peers, return a Peer to be used as the download peer. */
-    protected Peer selectDownloadPeer(List<Peer> peers) {
-        synchronized (peers) {
-            if (peers.isEmpty())
-                return null;
-            // Make sure we don't select a peer that is behind/synchronizing itself.
-            int mostCommonChainHeight = getMostCommonChainHeight();
-            for (Peer peer : peers) {
-                if (peer.getBestHeight() == mostCommonChainHeight) return peer;
-            }
-            throw new IllegalStateException("Unreachable");
+    protected Peer selectDownloadPeer(List<Peer> origPeers) {
+        List<Peer> peers;
+        synchronized (origPeers) {
+            peers = new ArrayList<Peer>(origPeers);
         }
+        if (peers.isEmpty())
+            return null;
+        // Make sure we don't select a peer that is behind/synchronizing itself.
+        int mostCommonChainHeight = getMostCommonChainHeight();
+        for (Peer peer : peers) {
+            if (peer.getBestHeight() == mostCommonChainHeight) return peer;
+        }
+        throw new IllegalStateException("Unreachable");
     }
 
     private static class PeerGroupThreadFactory implements ThreadFactory {
