@@ -69,9 +69,10 @@ public class PeerGroup extends AbstractIdleService {
     // These lists are all thread-safe so do not have to be accessed under the PeerGroup lock.
     // Addresses to try to connect to, excluding active peers.
     private List<PeerAddress> inactives;
-    // Currently active peers. This is an ordered list rather than a set to make unit tests predictable.
+    // Currently active peers. This is an ordered list rather than a set to make unit tests predictable. This is a
+    // synchronized list. Locking order is: PeerGroup < Peer < peers. Same for pendingPeers.
     private List<Peer> peers;
-    // Currently connecting peers
+    // Currently connecting peers.
     private List<Peer> pendingPeers;
     private Map<Peer, ChannelFuture> channelFutures;
 
@@ -386,9 +387,16 @@ public class PeerGroup extends AbstractIdleService {
      */
     public List<Peer> getConnectedPeers() {
         synchronized (peers) {
-            ArrayList<Peer> result = new ArrayList<Peer>(peers.size());
-            result.addAll(peers);
-            return result;
+            return new ArrayList<Peer>(peers);
+        }
+    }
+
+    /**
+     * Returns a list containing Peers that did not complete connection yet.
+     */
+    public List<Peer> getPendingPeers() {
+        synchronized (pendingPeers) {
+            return new ArrayList<Peer>(pendingPeers);
         }
     }
 
@@ -638,12 +646,11 @@ public class PeerGroup extends AbstractIdleService {
         // Link the peer to the memory pool so broadcast transactions have their confidence levels updated.
         peer.setMemoryPool(memoryPool);
         // If we want to download the chain, and we aren't currently doing so, do so now.
-        // TODO: Change this so we automatically switch the download peer based on ping times.
-        if (downloadListener != null && downloadPeer == null) {
+        if (downloadListener != null && downloadPeer == null && chain != null) {
             log.info("  starting block chain download");
             startBlockChainDownloadFromPeer(peer);
         } else if (downloadPeer == null) {
-            setDownloadPeer(peer);
+            setDownloadPeer(selectDownloadPeer(peers));
         } else {
             peer.setDownloadData(false);
         }
@@ -741,8 +748,12 @@ public class PeerGroup extends AbstractIdleService {
     }
 
     private synchronized void setDownloadPeer(Peer peer) {
-        if (chain == null)
+        if (chain == null) {
+            // PeerGroup creator did not want us to download any data. We still track the download peer for
+            // informational purposes.
+            downloadPeer = peer;
             return;
+        }
         if (downloadPeer != null) {
             log.info("Unsetting download peer: {}", downloadPeer);
             downloadPeer.setDownloadData(false);
@@ -805,12 +816,13 @@ public class PeerGroup extends AbstractIdleService {
             log.info("Download peer died. Picking a new one.");
             setDownloadPeer(null);
             // Pick a new one and possibly tell it to download the chain.
+            // TODO: Fix lock inversion here.
             synchronized (peers) {
-                if (!peers.isEmpty()) {
-                    Peer next = peers.get(0);
-                    setDownloadPeer(next);
+                Peer newDownloadPeer = selectDownloadPeer(peers);
+                if (newDownloadPeer != null) {
+                    setDownloadPeer(newDownloadPeer);
                     if (downloadListener != null) {
-                        startBlockChainDownloadFromPeer(next);
+                        startBlockChainDownloadFromPeer(newDownloadPeer);
                     }
                 }
             }
@@ -932,6 +944,7 @@ public class PeerGroup extends AbstractIdleService {
             public void run() {
                 // This can be called immediately if we already have enough peers. Otherwise it'll be called from a
                 // peer thread.
+                // TODO: Fix the race that exists here.
                 final Peer somePeer = peers.get(0);
                 log.info("broadcastTransaction: Enough peers, adding {} to the memory pool and sending to {}",
                         tx.getHashAsString(), somePeer);
@@ -1032,6 +1045,67 @@ public class PeerGroup extends AbstractIdleService {
      */
     public synchronized void setPingIntervalMsec(long pingIntervalMsec) {
         this.pingIntervalMsec = pingIntervalMsec;
+    }
+
+    /**
+     * Returns our peers most commonly reported chain height. If multiple heights are tied, the highest is returned.
+     * If no peers are connected, returns zero.
+     */
+    public int getMostCommonChainHeight() {
+        // Copy the peers list so we can calculate on it without violating lock ordering: Peer < peers
+        ArrayList<Peer> peers;
+        synchronized (this.peers) {
+            peers = new ArrayList<Peer>(this.peers);
+        }
+        if (peers.isEmpty())
+            return 0;
+        int s = peers.size();
+        int[] heights = new int[s];
+        int[] counts = new int[s];
+        int maxCount = 0;
+        // Calculate the frequencies of each reported height.
+        for (Peer peer : peers) {
+            int h = (int) peer.getBestHeight();
+            // Find the index of the peers height in the heights array.
+            for (int cursor = 0; cursor < s; cursor++) {
+                if (heights[cursor] == h) {
+                    maxCount = Math.max(++counts[cursor], maxCount);
+                    break;
+                } else if (heights[cursor] == 0) {
+                    // A new height we didn't see before.
+                    Preconditions.checkState(counts[cursor] == 0);
+                    heights[cursor] = h;
+                    counts[cursor] = 1;
+                    maxCount = Math.max(maxCount, 1);
+                    break;
+                }
+            }
+        }
+        // Find the heights that have the highest frequencies.
+        int[] freqHeights = new int[s];
+        int cursor = 0;
+        for (int i = 0; i < s; i++) {
+            if (counts[i] == maxCount) {
+                freqHeights[cursor++] = heights[i];
+            }
+        }
+        // Return the highest of the most common heights.
+        Arrays.sort(freqHeights);
+        return freqHeights[s - 1];
+    }
+
+    /** Given a list of Peers, return a Peer to be used as the download peer. */
+    protected Peer selectDownloadPeer(List<Peer> peers) {
+        synchronized (peers) {
+            if (peers.isEmpty())
+                return null;
+            // Make sure we don't select a peer that is behind/synchronizing itself.
+            int mostCommonChainHeight = getMostCommonChainHeight();
+            for (Peer peer : peers) {
+                if (peer.getBestHeight() == mostCommonChainHeight) return peer;
+            }
+            throw new IllegalStateException("Unreachable");
+        }
     }
 
     private static class PeerGroupThreadFactory implements ThreadFactory {

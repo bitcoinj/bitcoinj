@@ -20,6 +20,7 @@ import com.google.bitcoin.discovery.PeerDiscovery;
 import com.google.bitcoin.discovery.PeerDiscoveryException;
 import org.jboss.netty.bootstrap.ClientBootstrap;
 import org.jboss.netty.channel.*;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -69,6 +70,11 @@ public class PeerGroupTest extends TestWithNetworkConnections {
         peerGroup = new PeerGroup(params, blockChain, bootstrap);
         peerGroup.addWallet(wallet);
         peerGroup.setPingIntervalMsec(0);  // Disable the pings as they just get in the way of most tests.
+    }
+
+    @After
+    public void shutDown() throws Exception {
+        peerGroup.stopAndWait();
     }
 
     @Test
@@ -394,5 +400,20 @@ public class PeerGroupTest extends TestWithNetworkConnections {
         ping = (Ping) waitForOutbound(p1);
         inbound(p1, new Pong(ping.getNonce()));
         assertTrue(peerGroup.getConnectedPeers().get(0).getLastPingTime() < Long.MAX_VALUE);
+    }
+
+    @Test
+    public void commonChainHeights() throws Exception {
+        peerGroup.startAndWait();
+        VersionMessage versionMessage2 = new VersionMessage(params, 2);
+        VersionMessage versionMessage3 = new VersionMessage(params, 3);
+        connectPeer(1, versionMessage2);
+        assertEquals(2, peerGroup.getMostCommonChainHeight());
+        connectPeer(2, versionMessage2);
+        assertEquals(2, peerGroup.getMostCommonChainHeight());
+        connectPeer(3, versionMessage3);
+        assertEquals(2, peerGroup.getMostCommonChainHeight());
+        connectPeer(4, versionMessage3);
+        assertEquals(3, peerGroup.getMostCommonChainHeight());
     }
 }
