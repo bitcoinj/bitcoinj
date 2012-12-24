@@ -804,7 +804,10 @@ public class PeerGroup extends AbstractIdleService {
         // This can run on any Netty worker thread. Because connectToAnyPeer() must run unlocked to avoid circular
         // deadlock, this method must run largely unlocked too. Some members are thread-safe and others aren't, so
         // we synchronize only the parts that need it.
-        if (!isRunning()) return;
+
+        // Peer deaths can occur during startup if a connect attempt after peer discovery aborts immediately.
+        if (state() != State.RUNNING && state() != State.STARTING) return;
+
         checkArgument(!peers.contains(peer));
         final Peer downloadPeer;
         final PeerEventListener downloadListener;
