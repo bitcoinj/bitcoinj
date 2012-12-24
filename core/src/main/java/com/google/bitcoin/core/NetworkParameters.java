@@ -85,7 +85,7 @@ public class NetworkParameters implements Serializable {
     public int addressHeader;
     /** First byte of a base58 encoded dumped private key. See {@link DumpedPrivateKey}. */
     public int dumpedPrivateKeyHeader;
-    /** How many blocks pass between difficulty adjustment periods. BitCoin standardises this to be 2015. */
+    /** How many blocks pass between difficulty adjustment periods. Bitcoin standardises this to be 2015. */
     public int interval;
     /**
      * How much time in seconds is supposed to pass between "interval" blocks. If the actual elapsed time is
