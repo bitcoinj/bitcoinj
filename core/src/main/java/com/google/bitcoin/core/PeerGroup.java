@@ -76,7 +76,7 @@ public class PeerGroup extends AbstractIdleService {
     private List<Peer> pendingPeers;
     private Map<Peer, ChannelFuture> channelFutures;
 
-    // The peer we are currently downloading the chain from
+    // The peer that has been selected for the purposes of downloading announced data.
     private Peer downloadPeer;
     // Callback for events related to chain download
     private PeerEventListener downloadListener;
@@ -641,18 +641,21 @@ public class PeerGroup extends AbstractIdleService {
     }
 
     protected synchronized void handleNewPeer(final Peer peer) {
-        // Runs on a netty worker thread for every peer that is newly connected.
+        // Runs on a netty worker thread for every peer that is newly connected. Peer is not locked at this point.
         log.info("{}: New peer", peer);
         // Link the peer to the memory pool so broadcast transactions have their confidence levels updated.
         peer.setMemoryPool(memoryPool);
+        peer.setDownloadData(false);
         // If we want to download the chain, and we aren't currently doing so, do so now.
         if (downloadListener != null && downloadPeer == null && chain != null) {
             log.info("  starting block chain download");
             startBlockChainDownloadFromPeer(peer);
-        } else if (downloadPeer == null) {
-            setDownloadPeer(selectDownloadPeer(peers));
         } else {
-            peer.setDownloadData(false);
+            // Re-evaluate download peers.
+            Peer newDownloadPeer = selectDownloadPeer(peers);
+            if (downloadPeer != newDownloadPeer) {
+                setDownloadPeer(newDownloadPeer);
+            }
         }
         // Make sure the peer knows how to upload transactions that are requested from us.
         peer.addEventListener(getDataListener);
@@ -1133,5 +1136,13 @@ public class PeerGroup extends AbstractIdleService {
             t.setDaemon(true);
             return t;
         }
+    }
+
+    /**
+     * Returns the currently selected download peer. Bear in mind that it may have changed as soon as this method
+     * returns. Can return null if no peer was selected.
+     */
+    public Peer getDownloadPeer() {
+        return downloadPeer;
     }
 }

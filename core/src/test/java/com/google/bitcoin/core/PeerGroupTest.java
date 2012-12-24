@@ -292,6 +292,8 @@ public class PeerGroupTest extends TestWithNetworkConnections {
         FakeChannel p1 = connectPeer(1, new VersionMessage(params, 2));
         FakeChannel p2 = connectPeer(2);
 
+        assertNotNull(peerGroup.getDownloadPeer());
+
         control.replay();
 
         peerGroup.setMinBroadcastConnections(2);
@@ -407,13 +409,18 @@ public class PeerGroupTest extends TestWithNetworkConnections {
         peerGroup.startAndWait();
         VersionMessage versionMessage2 = new VersionMessage(params, 2);
         VersionMessage versionMessage3 = new VersionMessage(params, 3);
-        connectPeer(1, versionMessage2);
+        assertNull(peerGroup.getDownloadPeer());
+        Peer a = PeerGroup.peerFromChannel(connectPeer(1, versionMessage2));
         assertEquals(2, peerGroup.getMostCommonChainHeight());
-        connectPeer(2, versionMessage2);
+        assertEquals(a, peerGroup.getDownloadPeer());
+        Peer b = PeerGroup.peerFromChannel(connectPeer(2, versionMessage2));
         assertEquals(2, peerGroup.getMostCommonChainHeight());
-        connectPeer(3, versionMessage3);
+        assertEquals(a, peerGroup.getDownloadPeer());  // No change.
+        Peer c = PeerGroup.peerFromChannel(connectPeer(3, versionMessage3));
         assertEquals(2, peerGroup.getMostCommonChainHeight());
-        connectPeer(4, versionMessage3);
+        assertEquals(a, peerGroup.getDownloadPeer());  // No change yet.
+        Peer d = PeerGroup.peerFromChannel(connectPeer(4, versionMessage3));
         assertEquals(3, peerGroup.getMostCommonChainHeight());
+        assertEquals(c, peerGroup.getDownloadPeer());  // Switch to first peer advertising new height.
     }
 }

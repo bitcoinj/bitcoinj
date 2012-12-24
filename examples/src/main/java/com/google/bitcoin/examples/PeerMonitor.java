@@ -251,7 +251,7 @@ public class PeerMonitor {
                 setFont(normal);
                 setForeground(Color.LIGHT_GRAY);
             } else {
-                if (model.connectedPeers.get(row).getDownloadData())
+                if (model.connectedPeers.get(row) == peerGroup.getDownloadPeer())
                     setFont(bold);
                 else
                     setFont(normal);
