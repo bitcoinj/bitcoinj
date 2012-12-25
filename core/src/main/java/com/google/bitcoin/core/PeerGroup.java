@@ -1100,8 +1100,26 @@ public class PeerGroup extends AbstractIdleService {
         return freqHeights[s - 1];
     }
 
+    private static class PeerAndPing implements Comparable<PeerAndPing> {
+        Peer peer;
+        long pingTime;
+
+        public int compareTo(PeerAndPing peerAndPing) {
+            if (pingTime < peerAndPing.pingTime)
+                return -1;
+            else if (pingTime == peerAndPing.pingTime)
+                return 0;
+            else
+                return 1;
+        }
+    }
+
     /** Given a list of Peers, return a Peer to be used as the download peer. */
     protected Peer selectDownloadPeer(List<Peer> origPeers) {
+        // Characteristics to select for in order of importance:
+        //  - Chain height is reasonable (majority of nodes)
+        //  - Highest protocol version (more likely to be maintained, have the features we want)
+        //  - Ping time.
         List<Peer> peers;
         synchronized (origPeers) {
             peers = new ArrayList<Peer>(origPeers);
@@ -1114,17 +1132,23 @@ public class PeerGroup extends AbstractIdleService {
         for (Peer peer : peers) {
             if (peer.getBestHeight() == mostCommonChainHeight) candidates.add(peer);
         }
-        // Of the candidates, find the highest protocol version.
+        // Of the candidates, find the highest protocol version. Snapshot their ping times (so they don't change
+        // whilst sorting) and then sort to find the lowest.
         int highestVersion = 0;
-        Peer leadingCandidate = null;
         for (Peer peer : candidates) {
-            int v = peer.getPeerVersionMessage().clientVersion;
-            if (v > highestVersion) {
-                highestVersion = v;
-                leadingCandidate = peer;
+            highestVersion = Math.max(peer.getPeerVersionMessage().clientVersion, highestVersion);
+        }
+        List<PeerAndPing> candidates2 = new ArrayList<PeerAndPing>();
+        for (Peer peer : candidates) {
+            if (peer.getPeerVersionMessage().clientVersion == highestVersion) {
+                PeerAndPing pap = new PeerAndPing();
+                pap.peer = peer;
+                pap.pingTime = peer.getPingTime();
+                candidates2.add(pap);
             }
         }
-        return leadingCandidate;
+        Collections.sort(candidates2);
+        return candidates2.get(0).peer;
     }
 
     private static class PeerGroupThreadFactory implements ThreadFactory {
