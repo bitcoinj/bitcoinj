@@ -405,7 +405,7 @@ public class PeerGroupTest extends TestWithNetworkConnections {
     }
 
     @Test
-    public void commonChainHeights() throws Exception {
+    public void downloadPeerSelection() throws Exception {
         peerGroup.startAndWait();
         VersionMessage versionMessage2 = new VersionMessage(params, 2);
         VersionMessage versionMessage3 = new VersionMessage(params, 3);
@@ -413,7 +413,7 @@ public class PeerGroupTest extends TestWithNetworkConnections {
         Peer a = PeerGroup.peerFromChannel(connectPeer(1, versionMessage2));
         assertEquals(2, peerGroup.getMostCommonChainHeight());
         assertEquals(a, peerGroup.getDownloadPeer());
-        Peer b = PeerGroup.peerFromChannel(connectPeer(2, versionMessage2));
+        PeerGroup.peerFromChannel(connectPeer(2, versionMessage2));
         assertEquals(2, peerGroup.getMostCommonChainHeight());
         assertEquals(a, peerGroup.getDownloadPeer());  // No change.
         Peer c = PeerGroup.peerFromChannel(connectPeer(3, versionMessage3));
@@ -422,7 +422,6 @@ public class PeerGroupTest extends TestWithNetworkConnections {
         PeerGroup.peerFromChannel(connectPeer(4, versionMessage3));
         assertEquals(3, peerGroup.getMostCommonChainHeight());
         assertEquals(c, peerGroup.getDownloadPeer());  // Switch to first peer advertising new height.
-
         // New peer with a higher protocol version but same chain height.
         VersionMessage versionMessage4 = new VersionMessage(params, 3);
         versionMessage4.clientVersion = 100000;

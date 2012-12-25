@@ -214,11 +214,7 @@ public class PeerMonitor {
                     return peer.getBestHeight();
                 case PING_TIME:
                 case LAST_PING_TIME:
-                    long time = col == PING_TIME ? peer.getPingTime() : peer.getLastPingTime();
-                    if (time == Long.MAX_VALUE)
-                        return 0L;
-                    else
-                        return time;
+                    return col == PING_TIME ? peer.getPingTime() : peer.getLastPingTime();
 
                 default: throw new RuntimeException();
             }
@@ -267,7 +263,7 @@ public class PeerMonitor {
             }
 
             boolean isPingColumn = column == PeerTableModel.PING_TIME || column == PeerTableModel.LAST_PING_TIME;
-            if (isPingColumn && contents == (Long)0L) {
+            if (isPingColumn && contents.equals(Long.MAX_VALUE)) {
                 // We don't know the answer yet
                 str = "";
             }
