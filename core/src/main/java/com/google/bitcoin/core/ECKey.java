@@ -32,6 +32,7 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.math.BigInteger;
 import java.security.SecureRandom;
+import java.util.Arrays;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
@@ -334,5 +335,24 @@ public class ECKey implements Serializable {
         if (newCreationTimeSeconds < 0)
             throw new IllegalArgumentException("Cannot set creation time to negative value: " + newCreationTimeSeconds);
         creationTimeSeconds = newCreationTimeSeconds;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        ECKey ecKey = (ECKey) o;
+
+        if (!Arrays.equals(pub, ecKey.pub)) return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        // Public keys are random already so we can just use a part of them as the hashcode. Read from the start to
+        // avoid picking up the type code (compressed vs uncompressed) which is tacked on the end.
+        return (pub[0] & 0xFF) | ((pub[1] & 0xFF) << 8) | ((pub[2] & 0xFF) << 16) | ((pub[3] & 0xFF) << 24);
     }
 }
