@@ -739,7 +739,7 @@ public class Block extends Message {
         else if (transactions.size() > 0 && t.isCoinBase())
             throw new RuntimeException("Attempted to add a coinbase transaction when there already is one: " + t);
         transactions.add(t);
-        adjustLength(t.length);
+        adjustLength(transactions.size(), t.length);
         // Force a recalculation next time the values are needed.
         merkleRoot = null;
         hash = null;
@@ -842,6 +842,9 @@ public class Block extends Message {
         coinbase.addInput(new TransactionInput(params, coinbase, new byte[]{(byte) txCounter++}));
         coinbase.addOutput(new TransactionOutput(params, coinbase, Script.createOutputScript(pubKeyTo)));
         transactions.add(coinbase);
+        coinbase.setParent(this);
+        coinbase.length = coinbase.bitcoinSerialize().length;
+        adjustLength(transactions.size(), coinbase.length);
     }
 
     static final byte[] EMPTY_BYTES = new byte[32];

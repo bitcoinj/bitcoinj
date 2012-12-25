@@ -88,7 +88,7 @@ public class Transaction extends ChildMessage implements Serializable {
         inputs = new ArrayList<TransactionInput>();
         outputs = new ArrayList<TransactionOutput>();
         // We don't initialize appearsIn deliberately as it's only useful for transactions stored in the wallet.
-        length = 10; // 8 for std fields + 1 for each 0 varint
+        length = 8; // 8 for std fields
     }
 
     public Transaction(NetworkParameters params, int version, Sha256Hash hash) {
@@ -98,7 +98,7 @@ public class Transaction extends ChildMessage implements Serializable {
         outputs = new ArrayList<TransactionOutput>();
         this.hash = hash;
         // We don't initialize appearsIn deliberately as it's only useful for transactions stored in the wallet.
-        length = 10; //8 for std fields + 1 for each 0 varint
+        length = 8; //8 for std fields
     }
 
     /**
@@ -626,7 +626,7 @@ public class Transaction extends ChildMessage implements Serializable {
         unCache();
         input.setParent(this);
         inputs.add(input);
-        adjustLength(input.length);
+        adjustLength(inputs.size(), input.length);
     }
 
     /**
@@ -636,7 +636,7 @@ public class Transaction extends ChildMessage implements Serializable {
         unCache();
         to.setParent(this);
         outputs.add(to);
-        adjustLength(to.length);
+        adjustLength(outputs.size(), to.length);
     }
 
     /**
