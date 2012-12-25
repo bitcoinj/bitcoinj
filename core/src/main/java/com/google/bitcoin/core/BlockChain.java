@@ -465,7 +465,7 @@ public class BlockChain {
         if (timespan > params.targetTimespan * 4)
             timespan = params.targetTimespan * 4;
 
-        BigInteger newDifficulty = Utils.decodeCompactBits(blockIntervalAgo.getDifficultyTarget());
+        BigInteger newDifficulty = Utils.decodeCompactBits(prev.getDifficultyTarget());
         newDifficulty = newDifficulty.multiply(BigInteger.valueOf(timespan));
         newDifficulty = newDifficulty.divide(BigInteger.valueOf(params.targetTimespan));
 
