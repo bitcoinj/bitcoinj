@@ -419,8 +419,14 @@ public class PeerGroupTest extends TestWithNetworkConnections {
         Peer c = PeerGroup.peerFromChannel(connectPeer(3, versionMessage3));
         assertEquals(2, peerGroup.getMostCommonChainHeight());
         assertEquals(a, peerGroup.getDownloadPeer());  // No change yet.
-        Peer d = PeerGroup.peerFromChannel(connectPeer(4, versionMessage3));
+        PeerGroup.peerFromChannel(connectPeer(4, versionMessage3));
         assertEquals(3, peerGroup.getMostCommonChainHeight());
         assertEquals(c, peerGroup.getDownloadPeer());  // Switch to first peer advertising new height.
+
+        // New peer with a higher protocol version but same chain height.
+        VersionMessage versionMessage4 = new VersionMessage(params, 3);
+        versionMessage4.clientVersion = 100000;
+        Peer d = PeerGroup.peerFromChannel(connectPeer(5, versionMessage4));
+        assertEquals(d, peerGroup.getDownloadPeer());
     }
 }

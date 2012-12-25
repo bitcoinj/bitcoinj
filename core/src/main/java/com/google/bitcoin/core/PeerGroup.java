@@ -1110,10 +1110,21 @@ public class PeerGroup extends AbstractIdleService {
             return null;
         // Make sure we don't select a peer that is behind/synchronizing itself.
         int mostCommonChainHeight = getMostCommonChainHeight();
+        List<Peer> candidates = new ArrayList<Peer>();
         for (Peer peer : peers) {
-            if (peer.getBestHeight() == mostCommonChainHeight) return peer;
+            if (peer.getBestHeight() == mostCommonChainHeight) candidates.add(peer);
         }
-        throw new IllegalStateException("Unreachable");
+        // Of the candidates, find the highest protocol version.
+        int highestVersion = 0;
+        Peer leadingCandidate = null;
+        for (Peer peer : candidates) {
+            int v = peer.getPeerVersionMessage().clientVersion;
+            if (v > highestVersion) {
+                highestVersion = v;
+                leadingCandidate = peer;
+            }
+        }
+        return leadingCandidate;
     }
 
     private static class PeerGroupThreadFactory implements ThreadFactory {
