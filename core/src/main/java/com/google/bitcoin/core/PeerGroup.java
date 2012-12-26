@@ -1100,18 +1100,9 @@ public class PeerGroup extends AbstractIdleService {
         return freqHeights[s - 1];
     }
 
-    private static class PeerAndPing implements Comparable<PeerAndPing> {
+    private static class PeerAndPing {
         Peer peer;
         long pingTime;
-
-        public int compareTo(PeerAndPing peerAndPing) {
-            if (pingTime < peerAndPing.pingTime)
-                return -1;
-            else if (pingTime == peerAndPing.pingTime)
-                return 0;
-            else
-                return 1;
-        }
     }
 
     /** Given a list of Peers, return a Peer to be used as the download peer. */
@@ -1147,7 +1138,18 @@ public class PeerGroup extends AbstractIdleService {
                 candidates2.add(pap);
             }
         }
-        Collections.sort(candidates2);
+        // Sort by ping time.
+        Collections.sort(candidates2, new Comparator<PeerAndPing>() {
+            public int compare(PeerAndPing peerAndPing, PeerAndPing peerAndPing2) {
+                if (peerAndPing.pingTime < peerAndPing2.pingTime)
+                    return -1;
+                else if (peerAndPing.pingTime == peerAndPing2.pingTime)
+                    return 0;
+                else
+                    return 1;
+
+            }
+        });
         return candidates2.get(0).peer;
     }
 
