@@ -875,7 +875,8 @@ public class Script {
         return Utils.decodeMPI(Utils.reverseBytes(chunk), false);
     }
     
-    private static void executeScript(Transaction txContainingThis, long index, Script script, LinkedList<byte[]> stack) throws ScriptException {
+    private static void executeScript(Transaction txContainingThis, long index,
+                                      Script script, LinkedList<byte[]> stack) throws ScriptException {
         int opCount = 0;
         int lastCodeSepLocation = 0;
         
@@ -1479,19 +1480,24 @@ public class Script {
 
     /**
      * Verifies that this script (interpreted as a scriptSig) correctly spends the given scriptPubKey.
+     * @param txContainingThis The transaction in which this input scriptSig resides.
+     * @param scriptSigIndex The index in txContainingThis of the scriptSig (note: NOT the index of the scriptPubKey).
+     * @param scriptPubKey The connected scriptPubKey containing the conditions needed to claim the value.
+     * @param enforceP2SH Whether "pay to script hash" rules should be enforced. If in doubt, set to true.
      * @throws VerificationException if this script does not correctly spend the scriptPubKey
      */
-    public void correctlySpends(Transaction txContainingThis, long index, Script scriptPubKey, boolean enforceP2SH) throws ScriptException {
+    public void correctlySpends(Transaction txContainingThis, long scriptSigIndex, Script scriptPubKey,
+                                boolean enforceP2SH) throws ScriptException {
         if (program.length > 10000 || scriptPubKey.program.length > 10000)
             throw new ScriptException("Script larger than 10,000 bytes");
         
         LinkedList<byte[]> stack = new LinkedList<byte[]>();
         LinkedList<byte[]> p2shStack = null;
         
-        executeScript(txContainingThis, index, this, stack);
+        executeScript(txContainingThis, scriptSigIndex, this, stack);
         if (enforceP2SH)
             p2shStack = new LinkedList<byte[]>(stack);
-        executeScript(txContainingThis, index, scriptPubKey, stack);
+        executeScript(txContainingThis, scriptSigIndex, scriptPubKey, stack);
         
         if (stack.size() == 0)
             throw new ScriptException("Stack empty at end of script execution.");
@@ -1520,7 +1526,7 @@ public class Script {
             byte[] scriptPubKeyBytes = p2shStack.pollLast();
             Script scriptPubKeyP2SH = new Script(params, scriptPubKeyBytes, 0, scriptPubKeyBytes.length);
             
-            executeScript(txContainingThis, index, scriptPubKeyP2SH, p2shStack);
+            executeScript(txContainingThis, scriptSigIndex, scriptPubKeyP2SH, p2shStack);
             
             if (p2shStack.size() == 0)
                 throw new ScriptException("P2SH stack empty at end of script execution.");

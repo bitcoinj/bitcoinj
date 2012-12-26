@@ -340,4 +340,17 @@ public class TransactionInput extends ChildMessage implements Serializable {
     public boolean hasSequence() {
         return sequence != NO_SEQUENCE;
     }
+
+    /**
+     * For a connected transaction, runs the script against the connected pubkey and verifies they are correct.
+     * @throws ScriptException if the script did not verify.
+     */
+    public void verify() throws ScriptException {
+        Preconditions.checkNotNull(getOutpoint().fromTx, "Not connected");
+        long spendingIndex = getOutpoint().getIndex();
+        Script pubKey = getOutpoint().fromTx.getOutputs().get((int) spendingIndex).getScriptPubKey();
+        Script sig = getScriptSig();
+        int myIndex = parentTransaction.getInputs().indexOf(this);
+        sig.correctlySpends(parentTransaction, myIndex, pubKey, true);
+    }
 }

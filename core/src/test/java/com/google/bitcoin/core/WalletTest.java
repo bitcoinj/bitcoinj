@@ -89,8 +89,8 @@ public class WalletTest {
         assertEquals(destination, t2.getOutputs().get(0).getScriptPubKey().getToAddress());
         assertEquals(wallet.getChangeAddress(), t2.getOutputs().get(1).getScriptPubKey().getToAddress());
         assertEquals(toNanoCoins(0, 49), t2.getOutputs().get(1).getValue());
-
-        // We have NOT proven that the signature is correct!
+        // Check the script runs and signatures verify.
+        t2.getInputs().get(0).verify();
 
         final LinkedList<Transaction> txns = Lists.newLinkedList();
         wallet.addEventListener(new AbstractWalletEventListener() {
