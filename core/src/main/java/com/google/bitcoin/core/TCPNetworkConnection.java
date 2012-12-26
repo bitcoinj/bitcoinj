@@ -67,6 +67,8 @@ public class TCPNetworkConnection implements NetworkConnection {
     private Channel channel;
     
     private NetworkHandler handler;
+    // For ping nonces.
+    private Random random = new Random();
 
     /**
      * Construct a network connection with the given params and version. If you use this constructor you need to set
@@ -177,8 +179,9 @@ public class TCPNetworkConnection implements NetworkConnection {
 
     public void ping() throws IOException {
         // pong/nonce messages were added to any protocol version greater than 60000
-        if (versionMessage.clientVersion > 60000)
-            write(channel, new Ping(new Random().nextLong()));
+        if (versionMessage.clientVersion > 60000) {
+            write(channel, new Ping(random.nextLong()));
+        }
         else
             write(channel, new Ping());
     }
