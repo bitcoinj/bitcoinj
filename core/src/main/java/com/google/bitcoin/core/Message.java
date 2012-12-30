@@ -439,7 +439,7 @@ public abstract class Message implements Serializable {
 
     long readVarInt(int offset) {
         VarInt varint = new VarInt(bytes, cursor + offset);
-        cursor += offset + varint.getSizeInBytes();
+        cursor += offset + varint.getOriginalSizeInBytes();
         return varint.value;
     }
 
@@ -462,7 +462,7 @@ public abstract class Message implements Serializable {
             cursor += 1;
             return "";
         }
-        cursor += varInt.getSizeInBytes();
+        cursor += varInt.getOriginalSizeInBytes();
         byte[] characters = new byte[(int) varInt.value];
         System.arraycopy(bytes, cursor, characters, 0, characters.length);
         cursor += characters.length;

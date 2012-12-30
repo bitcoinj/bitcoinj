@@ -20,9 +20,11 @@ import static com.google.bitcoin.core.Utils.isLessThanUnsigned;
 
 public class VarInt {
     public final long value;
+    private final int originallyEncodedSize;
 
     public VarInt(long value) {
         this.value = value;
+        originallyEncodedSize = getSizeInBytes();
     }
 
     // BitCoin has its own varint format, known in the C++ source as "compact size".
@@ -32,23 +34,41 @@ public class VarInt {
         if (first < 253) {
             // 8 bits.
             val = first;
+            originallyEncodedSize = 1;
         } else if (first == 253) {
             // 16 bits.
             val = (0xFF & buf[offset + 1]) | ((0xFF & buf[offset + 2]) << 8);
+            originallyEncodedSize = 3;
         } else if (first == 254) {
             // 32 bits.
             val = Utils.readUint32(buf, offset + 1);
+            originallyEncodedSize = 5;
         } else {
             // 64 bits.
             val = Utils.readUint32(buf, offset + 1) | (Utils.readUint32(buf, offset + 5) << 32);
+            originallyEncodedSize = 9;
         }
         this.value = val;
     }
+    
+    /**
+     * Gets the number of bytes used to encode this originally if deserialized from a byte array.
+     * Otherwise returns the minimum encoded size
+     */
+    public int getOriginalSizeInBytes() {
+        return originallyEncodedSize;
+    }
 
+    /**
+     * Gets the minimum encoded size of the value stored in this VarInt
+     */
     public int getSizeInBytes() {
         return sizeOf(value);
     }
 
+    /**
+     * Gets the minimum encoded size of the given value.
+     */
     public static int sizeOf(int value) {
         // Java doesn't have the actual value of MAX_INT, as all types in Java are signed.
         if (value < 253)
@@ -58,6 +78,9 @@ public class VarInt {
         return 5;  // 1 marker + 4 data bytes
     }
 
+    /**
+     * Gets the minimum encoded size of the given value.
+     */
     public static int sizeOf(long value) {
         // Java doesn't have the actual value of MAX_INT, as all types in Java are signed.
         if (isLessThanUnsigned(value, 253))

@@ -444,7 +444,7 @@ public class Transaction extends ChildMessage implements Serializable {
 
         varint = new VarInt(buf, cursor);
         long txInCount = varint.value;
-        cursor += varint.getSizeInBytes();
+        cursor += varint.getOriginalSizeInBytes();
 
         for (i = 0; i < txInCount; i++) {
             // 36 = length of previous_outpoint
@@ -452,19 +452,19 @@ public class Transaction extends ChildMessage implements Serializable {
             varint = new VarInt(buf, cursor);
             scriptLen = varint.value;
             // 4 = length of sequence field (unint32)
-            cursor += scriptLen + 4 + varint.getSizeInBytes();
+            cursor += scriptLen + 4 + varint.getOriginalSizeInBytes();
         }
 
         varint = new VarInt(buf, cursor);
         long txOutCount = varint.value;
-        cursor += varint.getSizeInBytes();
+        cursor += varint.getOriginalSizeInBytes();
 
         for (i = 0; i < txOutCount; i++) {
             // 8 = length of tx value field (uint64)
             cursor += 8;
             varint = new VarInt(buf, cursor);
             scriptLen = varint.value;
-            cursor += scriptLen + varint.getSizeInBytes();
+            cursor += scriptLen + varint.getOriginalSizeInBytes();
         }
         // 4 = length of lock_time field (uint32)
         return cursor - offset + 4;
