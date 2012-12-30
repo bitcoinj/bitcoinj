@@ -90,6 +90,11 @@ public class Block extends Message {
 
     private transient boolean headerBytesValid;
     private transient boolean transactionBytesValid;
+    
+    // Blocks can be encoded in a way that will use more bytes than is optimal (due to VarInts having multiple encodings)
+    // MAX_BLOCK_SIZE must be compared to the optimal encoding, not the actual encoding, so when parsing, we keep track
+    // of the size of the ideal encoding in addition to the actual message size (which Message needs)
+    private transient int optimalEncodingMessageSize;
 
     /** Special case constructor, used for the genesis node, cloneAsHeader and unit tests. */
     Block(NetworkParameters params) {
@@ -167,6 +172,7 @@ public class Block extends Message {
             return;
 
         cursor = offset + HEADER_SIZE;
+        optimalEncodingMessageSize = HEADER_SIZE;
         if (bytes.length == cursor) {
             // This message is just a header, it has no transactions.
             transactionsParsed = true;
@@ -175,11 +181,13 @@ public class Block extends Message {
         }
 
         int numTransactions = (int) readVarInt();
+        optimalEncodingMessageSize += VarInt.sizeOf(numTransactions);
         transactions = new ArrayList<Transaction>(numTransactions);
         for (int i = 0; i < numTransactions; i++) {
             Transaction tx = new Transaction(params, bytes, cursor, this, parseLazy, parseRetain, UNKNOWN_LENGTH);
             transactions.add(tx);
             cursor += tx.getMessageSize();
+            optimalEncodingMessageSize += tx.getOptimalEncodingMessageSize();
         }
         // No need to set length here. If length was not provided then it should be set at the end of parseLight().
         // If this is a genuine lazy parse then length must have been provided to the constructor.
@@ -191,6 +199,16 @@ public class Block extends Message {
         parseHeader();
         parseTransactions();
         length = cursor - offset;
+    }
+    
+    public int getOptimalEncodingMessageSize() {
+        if (optimalEncodingMessageSize != 0)
+            return optimalEncodingMessageSize;
+        maybeParseTransactions();
+        if (optimalEncodingMessageSize != 0)
+            return optimalEncodingMessageSize;
+        optimalEncodingMessageSize = getMessageSize();
+        return optimalEncodingMessageSize;
     }
 
     protected void parseLite() throws ProtocolException {
@@ -716,7 +734,7 @@ public class Block extends Message {
         if (transactions.isEmpty())
             throw new VerificationException("Block had no transactions");
         maybeParseTransactions();
-        if (this.getMessageSize() > MAX_BLOCK_SIZE)
+        if (this.getOptimalEncodingMessageSize() > MAX_BLOCK_SIZE)
             throw new VerificationException("Block larger than MAX_BLOCK_SIZE");
         checkTransactions();
         checkMerkleRoot();

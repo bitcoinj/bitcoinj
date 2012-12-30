@@ -79,6 +79,13 @@ public class Transaction extends ChildMessage implements Serializable {
     //
     // If this transaction is not stored in the wallet, appearsInHashes is null.
     private Set<Sha256Hash> appearsInHashes;
+    
+    // Transactions can be encoded in a way that will use more bytes than is optimal
+    // (due to VarInts having multiple encodings)
+    // MAX_BLOCK_SIZE must be compared to the optimal encoding, not the actual encoding, so when parsing, we keep track
+    // of the size of the ideal encoding in addition to the actual message size (which Message needs) so that Blocks
+    // can properly keep track of optimal encoded size
+    private transient int optimalEncodingMessageSize;
 
     public Transaction(NetworkParameters params) {
         super(params);
@@ -478,25 +485,43 @@ public class Transaction extends ChildMessage implements Serializable {
         cursor = offset;
 
         version = readUint32();
+        optimalEncodingMessageSize = 4;
 
         // First come the inputs.
         long numInputs = readVarInt();
+        optimalEncodingMessageSize += VarInt.sizeOf(numInputs);
         inputs = new ArrayList<TransactionInput>((int) numInputs);
         for (long i = 0; i < numInputs; i++) {
             TransactionInput input = new TransactionInput(params, this, bytes, cursor, parseLazy, parseRetain);
             inputs.add(input);
-            cursor += input.getMessageSize();
+            long scriptLen = readVarInt(TransactionOutPoint.MESSAGE_LENGTH);
+            optimalEncodingMessageSize += TransactionOutPoint.MESSAGE_LENGTH + VarInt.sizeOf(scriptLen) + scriptLen + 4;
+            cursor += scriptLen + 4;
         }
         // Now the outputs
         long numOutputs = readVarInt();
+        optimalEncodingMessageSize += VarInt.sizeOf(numOutputs);
         outputs = new ArrayList<TransactionOutput>((int) numOutputs);
         for (long i = 0; i < numOutputs; i++) {
             TransactionOutput output = new TransactionOutput(params, this, bytes, cursor, parseLazy, parseRetain);
             outputs.add(output);
-            cursor += output.getMessageSize();
+            long scriptLen = readVarInt(8);
+            optimalEncodingMessageSize += 8 + VarInt.sizeOf(scriptLen) + scriptLen;
+            cursor += scriptLen;
         }
         lockTime = readUint32();
+        optimalEncodingMessageSize += 4;
         length = cursor - offset;
+    }
+    
+    public int getOptimalEncodingMessageSize() {
+        if (optimalEncodingMessageSize != 0)
+            return optimalEncodingMessageSize;
+        maybeParse();
+        if (optimalEncodingMessageSize != 0)
+            return optimalEncodingMessageSize;
+        optimalEncodingMessageSize = getMessageSize();
+        return optimalEncodingMessageSize;
     }
 
     /**
