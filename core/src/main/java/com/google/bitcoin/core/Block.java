@@ -333,7 +333,8 @@ public class Block extends Message {
         }
     }
 
-    private void writeHeader(OutputStream stream) throws IOException {
+    // default for testing
+    void writeHeader(OutputStream stream) throws IOException {
         // try for cached write first
         if (headerBytesValid && bytes != null && bytes.length >= offset + HEADER_SIZE) {
             stream.write(bytes, offset, HEADER_SIZE);

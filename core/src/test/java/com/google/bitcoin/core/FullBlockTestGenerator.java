@@ -49,7 +49,7 @@ public class FullBlockTestGenerator {
         Utils.rollMockClock(0); // Set a mock clock for timestamp tests
     }
     
-    public List<BlockAndValidity> getBlocksToTest(boolean addExpensiveBlocks) throws ScriptException {
+    public List<BlockAndValidity> getBlocksToTest(boolean addExpensiveBlocks) throws ScriptException, ProtocolException, IOException {
         List<BlockAndValidity> blocks = new LinkedList<BlockAndValidity>();
         
         Queue<TransactionOutPointWithValue> spendableOutputs = new LinkedList<TransactionOutPointWithValue>();
@@ -701,7 +701,6 @@ public class FullBlockTestGenerator {
         }
         b40.solve();
         blocks.add(new BlockAndValidity(b40, false, true, b39.getHash(), "b40"));
-
         
         Block b41 = null;
         if (addExpensiveBlocks) {
@@ -1054,7 +1053,7 @@ public class FullBlockTestGenerator {
         // Test tx.isFinal is properly rejected (not an exhaustive tx.isFinal test, that should be in data-driven transaction tests)
         // -> b39 (11) -> b42 (12) -> b43 (13) -> b53 (14) -> b55 (15) -> b57 (16) -> b60 (17)
         //                                                                                    \-> b62 (18)
-        //        
+        //
         Block b62 = createNextBlock(b60, chainHeadHeight + 17, null, null);
         {
             Transaction tx = new Transaction(params);
@@ -1062,9 +1061,177 @@ public class FullBlockTestGenerator {
             tx.addOutput(new TransactionOutput(params, tx, BigInteger.ZERO, new byte[] { Script.OP_TRUE }));
             addOnlyInputToTransaction(tx, out18, 0);
             b62.addTransaction(tx);
+            Preconditions.checkState(!tx.isFinal(chainHeadHeight + 17, b62.getTimeSeconds()));
         }
         b62.solve();
         blocks.add(new BlockAndValidity(b62, false, true, b60.getHash(), "b62"));
+        
+        // Test a non-final coinbase is also rejected
+        // -> b39 (11) -> b42 (12) -> b43 (13) -> b53 (14) -> b55 (15) -> b57 (16) -> b60 (17)
+        //                                                                                    \-> b63 (-)
+        //
+        Block b63 = createNextBlock(b60, chainHeadHeight + 17, null, null);
+        {
+            b63.getTransactions().get(0).setLockTime(0xffffffffL);
+            b63.getTransactions().get(0).getInputs().get(0).setSequenceNumber(0xDEADBEEF);
+            Preconditions.checkState(!b63.getTransactions().get(0).isFinal(chainHeadHeight + 17, b63.getTimeSeconds()));
+        }
+        b63.solve();
+        blocks.add(new BlockAndValidity(b63, false, true, b60.getHash(), "b63"));
+        
+        // Check that a block which is (when properly encoded) <= MAX_BLOCK_SIZE is accepted
+        // Even when it is encoded with varints that make its encoded size actually > MAX_BLOCK_SIZE
+        // -> b39 (11) -> b42 (12) -> b43 (13) -> b53 (14) -> b55 (15) -> b57 (16) -> b60 (17) -> b64 (18)
+        //
+        Block b64;
+        {
+            Block b64Created = createNextBlock(b60, chainHeadHeight + 17, out18, null);
+            Transaction tx = new Transaction(params);
+            // Signature size is non-deterministic, so it may take several runs before finding any off-by-one errors
+            byte[] outputScript = new byte[Block.MAX_BLOCK_SIZE - b64Created.getMessageSize() - 138];
+            Arrays.fill(outputScript, (byte)Script.OP_FALSE);
+            tx.addOutput(new TransactionOutput(params, tx, BigInteger.valueOf(1), outputScript));
+            addOnlyInputToTransaction(tx, new TransactionOutPointWithValue(
+                    new TransactionOutPoint(params, 1, b64Created.getTransactions().get(1).getHash()),
+                    BigInteger.valueOf(1), b64Created.getTransactions().get(1).getOutputs().get(1).getScriptPubKey()));
+            b64Created.addTransaction(tx);
+            b64Created.solve();
+            
+            UnsafeByteArrayOutputStream stream = new UnsafeByteArrayOutputStream(b64Created.getMessageSize() + 8);
+            b64Created.writeHeader(stream);
+            
+            byte[] varIntBytes = new byte[9];
+            varIntBytes[0] = (byte) 255;
+            Utils.uint32ToByteArrayLE((long)b64Created.getTransactions().size(), varIntBytes, 1);
+            Utils.uint32ToByteArrayLE(((long)b64Created.getTransactions().size()) >>> 32, varIntBytes, 5);
+            stream.write(varIntBytes);
+            Preconditions.checkState(new VarInt(varIntBytes, 0).value == b64Created.getTransactions().size());
+            
+            for (Transaction transaction : b64Created.getTransactions())
+                transaction.bitcoinSerialize(stream);
+            b64 = new Block(params, stream.toByteArray(), false, true, stream.size());
+            
+            // The following checks are checking to ensure block serialization functions in the way needed for this test
+            // If they fail, it is likely not an indication of error, but an indication that this test needs rewritten
+            Preconditions.checkState(stream.size() == b64Created.getMessageSize() + 8);
+            Preconditions.checkState(stream.size() == b64.getMessageSize());
+            Preconditions.checkState(Arrays.equals(stream.toByteArray(), b64.bitcoinSerialize()));
+            Preconditions.checkState(b64.getOptimalEncodingMessageSize() == b64Created.getMessageSize());
+        }
+        blocks.add(new BlockAndValidity(b64, true, false, b64.getHash(), "b64"));
+        spendableOutputs.offer(new TransactionOutPointWithValue(
+                new TransactionOutPoint(params, 0, b64.getTransactions().get(0).getHash()),
+                b64.getTransactions().get(0).getOutputs().get(0).getValue(),
+                b64.getTransactions().get(0).getOutputs().get(0).getScriptPubKey()));
+        
+        // Spend an output created in the block itself
+        // -> b42 (12) -> b43 (13) -> b53 (14) -> b55 (15) -> b57 (16) -> b60 (17) -> b64 (18) -> b65 (19)
+        //
+        TransactionOutPointWithValue out19 = spendableOutputs.poll();
+        
+        Block b65 = createNextBlock(b64, chainHeadHeight + 18, null, null);
+        {
+            Transaction tx1 = new Transaction(params);
+            tx1.addOutput(new TransactionOutput(params, tx1, out19.value, new byte[]{ Script.OP_TRUE }));
+            addOnlyInputToTransaction(tx1, out19, 0);
+            b65.addTransaction(tx1);
+            Transaction tx2 = new Transaction(params);
+            tx2.addOutput(new TransactionOutput(params, tx2, BigInteger.ZERO, new byte[]{ Script.OP_TRUE }));
+            tx2.addInput(new TransactionInput(params, tx2, new byte[]{ Script.OP_TRUE },
+                    new TransactionOutPoint(params, 0, tx1.getHash())));
+            b65.addTransaction(tx2);
+        }
+        b65.solve();
+        blocks.add(new BlockAndValidity(b65, true, false, b65.getHash(), "b65"));
+        spendableOutputs.offer(new TransactionOutPointWithValue(
+                new TransactionOutPoint(params, 0, b65.getTransactions().get(0).getHash()),
+                b65.getTransactions().get(0).getOutputs().get(0).getValue(),
+                b65.getTransactions().get(0).getOutputs().get(0).getScriptPubKey()));
+        
+        // Attempt to spend an output created later in the same block
+        // -> b43 (13) -> b53 (14) -> b55 (15) -> b57 (16) -> b60 (17) -> b64 (18) -> b65 (19)
+        //                                                                                    \-> b66 (20)
+        //
+        TransactionOutPointWithValue out20 = spendableOutputs.poll();
+        
+        Block b66 = createNextBlock(b65, chainHeadHeight + 19, null, null);
+        {
+            Transaction tx1 = new Transaction(params);
+            tx1.addOutput(new TransactionOutput(params, tx1, out20.value, new byte[]{ Script.OP_TRUE }));
+            addOnlyInputToTransaction(tx1, out20, 0);
+            Transaction tx2 = new Transaction(params);
+            tx2.addOutput(new TransactionOutput(params, tx2, BigInteger.ZERO, new byte[]{ Script.OP_TRUE }));
+            tx2.addInput(new TransactionInput(params, tx2, new byte[]{ Script.OP_TRUE },
+                    new TransactionOutPoint(params, 0, tx1.getHash())));
+            b66.addTransaction(tx2);
+            b66.addTransaction(tx1);
+        }
+        b66.solve();
+        blocks.add(new BlockAndValidity(b66, false, true, b65.getHash(), "b66"));
+        
+        // Attempt to double-spend a transaction created in a block
+        // -> b43 (13) -> b53 (14) -> b55 (15) -> b57 (16) -> b60 (17) -> b64 (18) -> b65 (19)
+        //                                                                                    \-> b67 (20)
+        //
+        Block b67 = createNextBlock(b65, chainHeadHeight + 19, null, null);
+        {
+            Transaction tx1 = new Transaction(params);
+            tx1.addOutput(new TransactionOutput(params, tx1, out20.value, new byte[]{ Script.OP_TRUE }));
+            addOnlyInputToTransaction(tx1, out20, 0);
+            b67.addTransaction(tx1);
+            Transaction tx2 = new Transaction(params);
+            tx2.addOutput(new TransactionOutput(params, tx2, BigInteger.ZERO, new byte[]{ Script.OP_TRUE }));
+            tx2.addInput(new TransactionInput(params, tx2, new byte[]{ Script.OP_TRUE },
+                    new TransactionOutPoint(params, 0, tx1.getHash())));
+            b67.addTransaction(tx2);
+            Transaction tx3 = new Transaction(params);
+            tx3.addOutput(new TransactionOutput(params, tx3, out20.value, new byte[]{ Script.OP_TRUE }));
+            tx3.addInput(new TransactionInput(params, tx3, new byte[]{ Script.OP_TRUE },
+                    new TransactionOutPoint(params, 0, tx1.getHash())));
+            b67.addTransaction(tx3);
+        }
+        b67.solve();
+        blocks.add(new BlockAndValidity(b67, false, true, b65.getHash(), "b67"));
+        
+        // A few more tests of block subsidy
+        // -> b43 (13) -> b53 (14) -> b55 (15) -> b57 (16) -> b60 (17) -> b64 (18) -> b65 (19) -> b69 (20)
+        //                                                                                    \-> b68 (20)
+        //
+        Block b68 = createNextBlock(b65, chainHeadHeight + 19, null, BigInteger.TEN);
+        {
+            Transaction tx = new Transaction(params);
+            tx.addOutput(new TransactionOutput(params, tx, out20.value.subtract(BigInteger.valueOf(9)), new byte[]{ Script.OP_TRUE }));
+            addOnlyInputToTransaction(tx, out20, 0);
+            b68.addTransaction(tx);
+        }
+        b68.solve();
+        blocks.add(new BlockAndValidity(b68, false, true, b65.getHash(), "b68"));
+        
+        Block b69 = createNextBlock(b65, chainHeadHeight + 19, null, BigInteger.TEN);
+        {
+            Transaction tx = new Transaction(params);
+            tx.addOutput(new TransactionOutput(params, tx, out20.value.subtract(BigInteger.TEN), new byte[]{ Script.OP_TRUE }));
+            addOnlyInputToTransaction(tx, out20, 0);
+            b69.addTransaction(tx);
+        }
+        b69.solve();
+        blocks.add(new BlockAndValidity(b69, true, false, b69.getHash(), "b69"));
+        
+        // Test spending the outpoint of a non-existent transaction
+        // -> b53 (14) -> b55 (15) -> b57 (16) -> b60 (17) -> b64 (18) -> b65 (19) -> b69 (20)
+        //                                                                                    \-> b70 (21)
+        //
+        TransactionOutPointWithValue out21 = spendableOutputs.poll();
+        Block b70 = createNextBlock(b69, chainHeadHeight + 20, out21, null);
+        {
+            Transaction tx = new Transaction(params);
+            tx.addOutput(new TransactionOutput(params, tx, BigInteger.ZERO, new byte[]{ Script.OP_TRUE }));
+            tx.addInput(new TransactionInput(params, tx, new byte[]{ Script.OP_TRUE },
+                    new TransactionOutPoint(params, 0, new Sha256Hash("23c70ed7c0506e9178fc1a987f40a33946d4ad4c962b5ae3a52546da53af0c5c"))));
+            b70.addTransaction(tx);
+        }
+        b70.solve();
+        blocks.add(new BlockAndValidity(b70, false, true, b69.getHash(), "b70"));
         
         //TODO: Explicitly address MoneyRange() checks
         
@@ -1075,7 +1242,7 @@ public class FullBlockTestGenerator {
     private Block createNextBlock(Block baseBlock, int nextBlockHeight, TransactionOutPointWithValue prevOut,
             BigInteger additionalCoinbaseValue) throws ScriptException {
         BigInteger coinbaseValue = Utils.toNanoCoins(50, 0).shiftRight(nextBlockHeight / params.getSubsidyDecreaseBlockCount())
-                .add((prevOut != null ? prevOut.value : BigInteger.valueOf(0))).subtract(BigInteger.valueOf(1))
+                .add((prevOut != null ? prevOut.value.subtract(BigInteger.ONE) : BigInteger.valueOf(0)))
                 .add(additionalCoinbaseValue == null ? BigInteger.valueOf(0) : additionalCoinbaseValue);
         Block block = baseBlock.createNextBlockWithCoinbase(coinbaseOutKeyPubKey, coinbaseValue);
         if (prevOut != null) {
