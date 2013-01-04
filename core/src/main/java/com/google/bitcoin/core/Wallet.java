@@ -253,11 +253,13 @@ public class Wallet implements Serializable, BlockChainListener {
             stream.getFD().sync();
             stream.close();
             stream = null;
-            if (!temp.renameTo(destFile)) {
+            if (Utils.isWindows()) {
                 // Work around an issue on Windows whereby you can't rename over existing files.
-                if (System.getProperty("os.name").toLowerCase().indexOf("win") >= 0) {
-                    if (destFile.delete() && temp.renameTo(destFile)) return;  // else fall through.
-                }
+                File canonical = destFile.getCanonicalFile();
+                if (canonical.delete() && temp.renameTo(canonical))
+                    return;  // else fall through.
+                throw new IOException("Failed to rename " + temp + " to " + canonical);
+            } else if (!temp.renameTo(destFile)) {
                 throw new IOException("Failed to rename " + temp + " to " + destFile);
             }
             if (destFile.equals(autosaveToFile)) {
