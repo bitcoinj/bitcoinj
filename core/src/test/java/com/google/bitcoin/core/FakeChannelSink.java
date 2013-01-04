@@ -20,7 +20,7 @@ public class FakeChannelSink extends AbstractChannelSink {
             switch (state) {
             case OPEN:
                 if (Boolean.FALSE.equals(value)) {
-                    // Close
+                    channel.setClosed();
                 }
                 break;
             case BOUND:

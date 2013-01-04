@@ -111,7 +111,6 @@ public class PeerGroupTest extends TestWithNetworkConnections {
         // Check that we did indeed throw an exception. If we got here it means we threw and then PeerGroup tried
         // again a bit later.
         assertTrue(result[0]);
-        peerGroup.stop();
     }
 
     @Test

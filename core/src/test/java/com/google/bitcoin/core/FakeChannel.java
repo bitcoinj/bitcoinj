@@ -53,4 +53,9 @@ public class FakeChannel extends AbstractChannel {
     public ChannelEvent nextEventBlocking() throws InterruptedException {
         return events.take();
     }
+
+    @Override
+    public boolean setClosed() {
+        return super.setClosed();
+    }
 }
