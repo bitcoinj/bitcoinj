@@ -18,6 +18,8 @@ package com.google.bitcoin.core;
 
 import com.google.bitcoin.store.BlockStore;
 import com.google.bitcoin.store.BlockStoreException;
+import com.google.common.base.Preconditions;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -87,9 +89,22 @@ public abstract class AbstractBlockChain {
     protected final NetworkParameters params;
     private final List<BlockChainListener> listeners;
 
+    // Holds a block header and, optionally, a list of tx hashes or block's transactions
+    class OrphanBlock {
+        Block block;
+        Set<Sha256Hash> filteredTxHashes;
+        List<Transaction> filteredTxn;
+        OrphanBlock(Block block, Set<Sha256Hash> filteredTxHashes, List<Transaction> filteredTxn) {
+            Preconditions.checkArgument((block.transactions == null && filteredTxHashes != null && filteredTxn != null)
+                    || (block.transactions != null && filteredTxHashes == null && filteredTxn == null));
+            this.block = block;
+            this.filteredTxHashes = filteredTxHashes;
+            this.filteredTxn = filteredTxn;
+        }
+    }
     // Holds blocks that we have received but can't plug into the chain yet, eg because they were created whilst we
     // were downloading the block chain.
-    private final LinkedHashMap<Sha256Hash, Block> orphanBlocks = new LinkedHashMap<Sha256Hash, Block>();
+    private final LinkedHashMap<Sha256Hash, OrphanBlock> orphanBlocks = new LinkedHashMap<Sha256Hash, OrphanBlock>();
 
     /**
      * Constructs a BlockChain connected to the given list of listeners (eg, wallets) and a store.
@@ -184,7 +199,7 @@ public abstract class AbstractBlockChain {
      */
     public synchronized boolean add(Block block) throws VerificationException, PrunedException {
         try {
-            return add(block, true);
+            return add(block, null, null, true);
         } catch (BlockStoreException e) {
             // TODO: Figure out a better way to propagate this exception to the user.
             throw new RuntimeException(e);
@@ -195,6 +210,33 @@ public abstract class AbstractBlockChain {
                 throw new RuntimeException(e1);
             }
             throw new VerificationException("Could not verify block " + block.getHashAsString() + "\n" +
+                    block.toString(), e);
+        }
+    }
+    
+    /**
+     * Processes a received block and tries to add it to the chain. If there's something wrong with the block an
+     * exception is thrown. If the block is OK but cannot be connected to the chain at this time, returns false.
+     * If the block can be connected to the chain, returns true.
+     */
+    public synchronized boolean add(FilteredBlock block) throws VerificationException, PrunedException {
+        try {
+            Set<Sha256Hash> filteredTxnHashSet = new HashSet<Sha256Hash>(block.getTransactionHashes());
+            List<Transaction> filteredTxn = block.getAssociatedTransactions();
+            for (Transaction tx : filteredTxn) {
+                Preconditions.checkState(filteredTxnHashSet.remove(tx.getHash()));
+            }
+            return add(block.getBlockHeader(), filteredTxnHashSet, filteredTxn, true);
+        } catch (BlockStoreException e) {
+            // TODO: Figure out a better way to propagate this exception to the user.
+            throw new RuntimeException(e);
+        } catch (VerificationException e) {
+            try {
+                notSettingChainHead();
+            } catch (BlockStoreException e1) {
+                throw new RuntimeException(e1);
+            }
+            throw new VerificationException("Could not verify block " + block.getHash().toString() + "\n" +
                     block.toString(), e);
         }
     }
@@ -231,7 +273,8 @@ public abstract class AbstractBlockChain {
     private long statsLastTime = System.currentTimeMillis();
     private long statsBlocksAdded;
 
-    private synchronized boolean add(Block block, boolean tryConnecting)
+    // filteredTxHashList and filteredTxn[i].GetHash() should be mutually exclusive
+    private synchronized boolean add(Block block, Set<Sha256Hash> filteredTxHashList, List<Transaction> filteredTxn, boolean tryConnecting)
             throws BlockStoreException, VerificationException, PrunedException {
         // Note on locking: this method runs with the block chain locked. All mutations to the chain are serialized.
         // This has the undesirable consequence that during block chain download, it's slow to read the current chain
@@ -289,7 +332,7 @@ public abstract class AbstractBlockChain {
             // have more blocks.
             checkState(tryConnecting, "bug in tryConnectingOrphans");
             log.warn("Block does not connect: {} prev {}", block.getHashAsString(), block.getPrevBlockHash());
-            orphanBlocks.put(block.getHash(), block);
+            orphanBlocks.put(block.getHash(), new OrphanBlock(block, filteredTxHashList, filteredTxn));
             return false;
         } else {
             // It connects to somewhere on the chain. Not necessarily the top of the best known chain.
@@ -297,7 +340,7 @@ public abstract class AbstractBlockChain {
             // Create a new StoredBlock from this block. It will throw away the transaction data so when block goes
             // out of scope we will reclaim the used memory.
             checkDifficultyTransitions(storedPrev, block);
-            connectBlock(block, storedPrev, shouldVerifyTransactions());
+            connectBlock(block, storedPrev, shouldVerifyTransactions(), filteredTxHashList, filteredTxn);
         }
 
         if (tryConnecting)
@@ -310,7 +353,8 @@ public abstract class AbstractBlockChain {
     // expensiveChecks enables checks that require looking at blocks further back in the chain
     // than the previous one when connecting (eg median timestamp check)
     // It could be exposed, but for now we just set it to shouldVerifyTransactions()
-    private void connectBlock(Block block, StoredBlock storedPrev, boolean expensiveChecks)
+    private void connectBlock(Block block, StoredBlock storedPrev, boolean expensiveChecks,
+            Set<Sha256Hash> filteredTxHashList, List<Transaction> filteredTxn)
             throws BlockStoreException, VerificationException, PrunedException {
         // Check that we aren't connecting a block that fails a checkpoint check
         if (!params.passesCheckpoint(storedPrev.getHeight() + 1, block.getHash()))
@@ -338,14 +382,19 @@ public abstract class AbstractBlockChain {
             final BlockChainListener first = listeners.size() > 0 ? listeners.get(0) : null;
             for (int i = 0; i < listeners.size(); i++) {
                 BlockChainListener listener = listeners.get(i);
-                if (block.transactions != null) {
+                if (block.transactions != null || filteredTxn != null) {
                     // If this is not the first wallet, ask for the transactions to be duplicated before being given
                     // to the wallet when relevant. This ensures that if we have two connected wallets and a tx that
                     // is relevant to both of them, they don't end up accidentally sharing the same object (which can
                     // result in temporary in-memory corruption during re-orgs). See bug 257. We only duplicate in
                     // the case of multiple wallets to avoid an unnecessary efficiency hit in the common case.
-                    sendTransactionsToListener(newStoredBlock, NewBlockType.BEST_CHAIN, listener, block.transactions,
-                            i > 0);
+                    sendTransactionsToListener(newStoredBlock, NewBlockType.BEST_CHAIN, listener,
+                            block.transactions != null ? block.transactions : filteredTxn, i > 0);
+                }
+                if (filteredTxHashList != null) {
+                    for (Sha256Hash hash : filteredTxHashList) {
+                        listener.notifyTransactionIsInBlock(hash, newStoredBlock, NewBlockType.BEST_CHAIN);
+                    }
                 }
                 // Allow the listener to have removed itself.
                 if (i == listeners.size()) {
@@ -399,15 +448,25 @@ public abstract class AbstractBlockChain {
             // We may not have any transactions if we received only a header, which can happen during fast catchup.
             // If we do, send them to the wallet but state that they are on a side chain so it knows not to try and
             // spend them until they become activated.
-            if (block.transactions != null) {
+            if (block.transactions != null || filteredTxn != null) {
                 for (int i = 0; i < listeners.size(); i++) {
                     BlockChainListener listener = listeners.get(i);
+                    List<Transaction> txnToNotify;
+                    if (block.transactions != null)
+                        txnToNotify = block.transactions;
+                    else
+                        txnToNotify = filteredTxn;
                     // If this is not the first wallet, ask for the transactions to be duplicated before being given
                     // to the wallet when relevant. This ensures that if we have two connected wallets and a tx that
                     // is relevant to both of them, they don't end up accidentally sharing the same object (which can
                     // result in temporary in-memory corruption during re-orgs). See bug 257. We only duplicate in
                     // the case of multiple wallets to avoid an unnecessary efficiency hit in the common case.
-                    sendTransactionsToListener(newBlock, NewBlockType.SIDE_CHAIN, listener, block.transactions, i > 0);
+                    sendTransactionsToListener(newBlock, NewBlockType.SIDE_CHAIN, listener, txnToNotify, i > 0);
+                    if (filteredTxHashList != null) {
+                        for (Sha256Hash hash : filteredTxHashList) {
+                            listener.notifyTransactionIsInBlock(hash, newBlock, NewBlockType.SIDE_CHAIN);
+                        }
+                    }
                     if (i == listeners.size()) {
                         break;  // Listener removed itself and it was the last one.
                     } else if (listeners.get(i) != listener) {
@@ -604,12 +663,12 @@ public abstract class AbstractBlockChain {
         int blocksConnectedThisRound;
         do {
             blocksConnectedThisRound = 0;
-            Iterator<Block> iter = orphanBlocks.values().iterator();
+            Iterator<OrphanBlock> iter = orphanBlocks.values().iterator();
             while (iter.hasNext()) {
-                Block block = iter.next();
-                log.debug("Trying to connect {}", block.getHash());
+                OrphanBlock orphanBlock = iter.next();
+                log.debug("Trying to connect {}", orphanBlock.block.getHash());
                 // Look up the blocks previous.
-                StoredBlock prev = getStoredBlockInCurrentScope(block.getPrevBlockHash());
+                StoredBlock prev = getStoredBlockInCurrentScope(orphanBlock.block.getPrevBlockHash());
                 if (prev == null) {
                     // This is still an unconnected/orphan block.
                     log.debug("  but it is not connectable right now");
@@ -617,7 +676,7 @@ public abstract class AbstractBlockChain {
                 }
                 // Otherwise we can connect it now.
                 // False here ensures we don't recurse infinitely downwards when connecting huge chains.
-                add(block, false);
+                add(orphanBlock.block, orphanBlock.filteredTxHashes, orphanBlock.filteredTxn, false);
                 iter.remove();
                 blocksConnectedThisRound++;
             }
@@ -760,14 +819,14 @@ public abstract class AbstractBlockChain {
      * @return from or one of froms parents, or null if "from" does not identify an orphan block
      */
     public synchronized Block getOrphanRoot(Sha256Hash from) {
-        Block cursor = orphanBlocks.get(from);
+        OrphanBlock cursor = orphanBlocks.get(from);
         if (cursor == null)
             return null;
-        Block tmp;
-        while ((tmp = orphanBlocks.get(cursor.getPrevBlockHash())) != null) {
+        OrphanBlock tmp;
+        while ((tmp = orphanBlocks.get(cursor.block.getPrevBlockHash())) != null) {
             cursor = tmp;
         }
-        return cursor;
+        return cursor.block;
     }
 
     /** Returns true if the given block is currently in the orphan blocks list. */
