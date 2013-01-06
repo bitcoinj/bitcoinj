@@ -41,18 +41,18 @@ public class Sha256Hash implements Serializable {
     /**
      * Creates a Sha256Hash by wrapping the given byte array. It must be 32 bytes long.
      */
-    public Sha256Hash(byte[] bytes) {
-        checkArgument(bytes.length == 32);
-        this.bytes = bytes;
+    public Sha256Hash(byte[] rawHashBytes) {
+        checkArgument(rawHashBytes.length == 32);
+        this.bytes = rawHashBytes;
 
     }
 
     /**
      * Creates a Sha256Hash by decoding the given hex string. It must be 64 characters long.
      */
-    public Sha256Hash(String string) {
-        checkArgument(string.length() == 64);
-        this.bytes = Hex.decode(string);
+    public Sha256Hash(String hexString) {
+        checkArgument(hexString.length() == 64);
+        this.bytes = Hex.decode(hexString);
     }
 
     /**
@@ -65,6 +65,13 @@ public class Sha256Hash implements Serializable {
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException(e);  // Cannot happen.
         }
+    }
+
+    /**
+     * Calculates the hash of the hash of the contents. This is a standard operation in Bitcoin.
+     */
+    public static Sha256Hash createDouble(byte[] contents) {
+        return new Sha256Hash(Utils.doubleDigest(contents));
     }
 
     /**
