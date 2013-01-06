@@ -484,4 +484,17 @@ public class Utils {
         System.arraycopy(bytes, 0, result, cursor, bytes.length);
         return result;
     }
+    
+    // 00000001, 00000010, 00000100, 00001000, ...
+    private static final int bitMask[] = {0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80};
+    
+    // Checks if the given bit is set in data
+    public static boolean checkBitLE(byte[] data, int index) {
+        return (data[index >>> 3] & bitMask[7 & index]) != 0;
+    }
+    
+    // Sets the given bit in data to one
+    public static void setBitLE(byte[] data, int index) {
+        data[index >>> 3] |= bitMask[7 & index];
+    }
 }
