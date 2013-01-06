@@ -610,7 +610,7 @@ public abstract class AbstractBlockChain {
                 log.debug("Trying to connect {}", block.getHash());
                 // Look up the blocks previous.
                 StoredBlock prev = getStoredBlockInCurrentScope(block.getPrevBlockHash());
-                if (prev == null || prev.getHeight() > getChainHead().getHeight()) {
+                if (prev == null) {
                     // This is still an unconnected/orphan block.
                     log.debug("  but it is not connectable right now");
                     continue;
