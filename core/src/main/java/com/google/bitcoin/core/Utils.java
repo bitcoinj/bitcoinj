@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.nio.charset.Charset;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Date;
@@ -33,6 +34,9 @@ import static com.google.common.base.Preconditions.checkArgument;
  * To enable debug logging from the library, run with -Dbitcoinj.logging=true on your command line.
  */
 public class Utils {
+    /** The string that prefixes all text messages signed using Bitcoin keys. */
+    public static final String BITCOIN_SIGNED_MESSAGE_HEADER = "Bitcoin Signed Message:\n";
+
     // TODO: Replace this nanocoins business with something better.
 
     /**
@@ -149,7 +153,7 @@ public class Utils {
 
     /**
      * Calculates the SHA-256 hash of the given byte range, and then hashes the resulting hash again. This is
-     * standard procedure in BitCoin. The resulting hash is in big endian form.
+     * standard procedure in Bitcoin. The resulting hash is in big endian form.
      */
     public static byte[] doubleDigest(byte[] input, int offset, int length) {
         try {
@@ -447,5 +451,27 @@ public class Utils {
 
     public static boolean isWindows() {
         return System.getProperty("os.name").toLowerCase().indexOf("win") >= 0;
+    }
+
+    /**
+     * <p>Given a textual message, returns a byte buffer formatted as follows:</p>
+     *
+     * <tt><p>[24] "Bitcoin Signed Message:\n" [message.length as a varint] message</p></tt>
+     */
+    public static byte[] formatMessageForSigning(String message) {
+        VarInt size = new VarInt(message.length());
+        int totalSize = 1 + BITCOIN_SIGNED_MESSAGE_HEADER.length() + size.getSizeInBytes() + message.length();
+        byte[] result = new byte[totalSize];
+        int cursor = 0;
+        result[cursor++] = (byte) BITCOIN_SIGNED_MESSAGE_HEADER.length();
+        byte[] bytes = BITCOIN_SIGNED_MESSAGE_HEADER.getBytes(Charset.forName("UTF-8"));
+        System.arraycopy(bytes, 0, result, cursor, bytes.length);
+        cursor += bytes.length;
+        bytes = size.encode();
+        System.arraycopy(bytes, 0, result, cursor, bytes.length);
+        cursor += bytes.length;
+        bytes = message.getBytes(Charset.forName("UTF-8"));
+        System.arraycopy(bytes, 0, result, cursor, bytes.length);
+        return result;
     }
 }

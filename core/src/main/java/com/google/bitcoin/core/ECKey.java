@@ -16,6 +16,7 @@
 
 package com.google.bitcoin.core;
 
+import com.google.common.base.Preconditions;
 import org.spongycastle.asn1.*;
 import org.spongycastle.asn1.sec.SECNamedCurves;
 import org.spongycastle.asn1.x9.X9ECParameters;
@@ -26,23 +27,30 @@ import org.spongycastle.crypto.params.ECKeyGenerationParameters;
 import org.spongycastle.crypto.params.ECPrivateKeyParameters;
 import org.spongycastle.crypto.params.ECPublicKeyParameters;
 import org.spongycastle.crypto.signers.ECDSASigner;
+import org.spongycastle.math.ec.ECCurve;
+import org.spongycastle.math.ec.ECFieldElement;
+import org.spongycastle.math.ec.ECPoint;
+import org.spongycastle.util.encoders.Base64;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.Serializable;
 import java.math.BigInteger;
+import java.nio.charset.Charset;
 import java.security.SecureRandom;
+import java.security.SignatureException;
 import java.util.Arrays;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
 // TODO: This class is quite a mess by now. Once users are migrated away from Java serialization for the wallets,
 // refactor this to have better internal layout and a more consistent API.
+// TODO: Properly/completely support compressed pubkeys and use them by default.
 
 /**
  * Represents an elliptic curve keypair that we own and can use for signing transactions. Currently,
  * Bouncy Castle is used. In future this may become an interface with multiple implementations using different crypto
- * libraries. The class also provides a static method that can verify a signature with just the public key.<p>
+ * libraries. The class also provides various methods that can be used to sign and verify different kinds of messages.
  */
 public class ECKey implements Serializable {
     private static final ECDomainParameters ecParams;
@@ -182,6 +190,13 @@ public class ECKey implements Serializable {
         return pub;
     }
 
+    /**
+     * Returns whether this key is using the compressed form or not. Compressed pubkeys are only 35 bytes, not 64.
+     */
+    public boolean isCompressed() {
+        return pub.length == 35;
+    }
+
     public String toString() {
         StringBuffer b = new StringBuffer();
         b.append("pub:").append(Utils.bytesToHexString(pub));
@@ -210,31 +225,52 @@ public class ECKey implements Serializable {
     }
 
     /**
-     * Calcuates an ECDSA signature in DER format for the given input hash. Note that the input is expected to be
-     * 32 bytes long.
-     * @throws IllegalStateException if this ECKey has only a public key.
+     * Just groups the two components that make up a signature, and provides a way to encode to DER form, which is
+     * how ECDSA signatures are represented when embedded in other data structures in the Bitcoin protocol. The raw
+     * components can be useful for doing further EC maths on them.
      */
-    public byte[] sign(byte[] input) {
+    public static class ECDSASignature {
+        public BigInteger r, s;
+
+        public ECDSASignature(BigInteger r, BigInteger s) {
+            this.r = r;
+            this.s = s;
+        }
+
+        /**
+         * What we get back from the signer are the two components of a signature, r and s. To get a flat byte stream
+         * of the type used by Bitcoin we have to encode them using DER encoding, which is just a way to pack the two
+         * components into a structure.
+         */
+        public byte[] encodeToDER() {
+            try {
+                // Usually 70-72 bytes.
+                ByteArrayOutputStream bos = new UnsafeByteArrayOutputStream(72);
+                DERSequenceGenerator seq = new DERSequenceGenerator(bos);
+                seq.addObject(new DERInteger(r));
+                seq.addObject(new DERInteger(s));
+                seq.close();
+                return bos.toByteArray();
+            } catch (IOException e) {
+                throw new RuntimeException(e);  // Cannot happen.
+            }
+        }
+    }
+
+    /**
+     * Signs the given hash and returns the R and S components as BigIntegers. In the Bitcoin protocol, they are
+     * usually encoded using DER format, so you want {@link ECKey#signToDER(Sha256Hash)} instead. However sometimes
+     * the independent components can be useful, for instance, if you're doing to do further EC maths on them.
+     * @throws IllegalStateException if this ECKey doesn't have a private part.
+     */
+    public ECDSASignature sign(Sha256Hash input) {
         if (priv == null)
             throw new IllegalStateException("This ECKey does not have the private key necessary for signing.");
         ECDSASigner signer = new ECDSASigner();
         ECPrivateKeyParameters privKey = new ECPrivateKeyParameters(priv, ecParams);
         signer.init(true, privKey);
-        BigInteger[] sigs = signer.generateSignature(input);
-        // What we get back from the signer are the two components of a signature, r and s. To get a flat byte stream
-        // of the type used by Bitcoin we have to encode them using DER encoding, which is just a way to pack the two
-        // components into a structure.
-        try {
-            // Usually 70-72 bytes.
-            ByteArrayOutputStream bos = new UnsafeByteArrayOutputStream(72);
-            DERSequenceGenerator seq = new DERSequenceGenerator(bos);
-            seq.addObject(new DERInteger(sigs[0]));
-            seq.addObject(new DERInteger(sigs[1]));
-            seq.close();
-            return bos.toByteArray();
-        } catch (IOException e) {
-            throw new RuntimeException(e);  // Cannot happen.
-        }
+        BigInteger[] sigs = signer.generateSignature(input.getBytes());
+        return new ECDSASignature(sigs[0], sigs[1]);
     }
 
     /**
@@ -297,6 +333,188 @@ public class ECKey implements Serializable {
             return new BigInteger(1, bits);
         } catch (IOException e) {
             throw new RuntimeException(e);  // Cannot happen, reading from memory stream.
+        }
+    }
+
+    /**
+     * Signs a text message using the standard Bitcoin messaging signing format and returns the signature as a base64
+     * encoded string.
+     *
+     * @throws IllegalStateException if this ECKey does not have the private part.
+     */
+    public String signMessage(String message) {
+        if (priv == null)
+            throw new IllegalStateException("This ECKey does not have the private key necessary for signing.");
+        byte[] data = Utils.formatMessageForSigning(message);
+        Sha256Hash hash = Sha256Hash.createDouble(data);
+        ECDSASignature sig = sign(hash);
+        // Now we have to work backwards to figure out the recId needed to recover the signature.
+        int recId = -1;
+        for (int i = 0; i < 4; i++) {
+            ECKey k = ECKey.recoverFromSignature(i, sig, hash, isCompressed());
+            if (k != null && Arrays.equals(k.pub, pub)) {
+                recId = i;
+                break;
+            }
+        }
+        if (recId == -1)
+            throw new RuntimeException("Could not construct a recoverable key. This should never happen.");
+        int headerByte = recId + 27 + (isCompressed() ? 4 : 0);
+        byte[] sigData = new byte[65];  // 1 header + 32 bytes for R + 32 bytes for S
+        sigData[0] = (byte)headerByte;
+        System.arraycopy(Utils.bigIntegerToBytes(sig.r, 32), 0, sigData, 1, 32);
+        System.arraycopy(Utils.bigIntegerToBytes(sig.s, 32), 0, sigData, 33, 32);
+        return new String(Base64.encode(sigData), Charset.forName("UTF-8"));
+    }
+
+    /**
+     * Given an arbitrary piece of text and a Bitcoin-format message signature encoded in base64, returns an ECKey
+     * containing the public key that was used to sign it. This can then be compared to the expected public key to
+     * determine if the signature was correct. These sorts of signatures are compatible with the Bitcoin-Qt/bitcoind
+     * format generated by signmessage/verifymessage RPCs and GUI menu options. They are intended for humans to verify
+     * their communications with each other, hence the base64 format and the fact that the input is text.
+     *
+     * @param message Some piece of human readable text.
+     * @param signatureBase64 The Bitcoin-format message signature in base64
+     * @throws SignatureException If the public key could not be recovered or if there was a signature format error.
+     */
+    public static ECKey signedMessageToKey(String message, String signatureBase64) throws SignatureException {
+        byte[] signatureEncoded;
+        try {
+            signatureEncoded = Base64.decode(signatureBase64);
+        } catch (RuntimeException e) {
+            // This is what you get back from Bouncy Castle if base64 doesn't decode :(
+            throw new SignatureException("Could not decode base64", e);
+        }
+        // Parse the signature bytes into r/s and the selector value.
+        if (signatureEncoded.length < 65)
+            throw new SignatureException("Signature truncated, expected 65 bytes and got " + signatureEncoded.length);
+        int header = signatureEncoded[0] & 0xFF;
+        // The header byte: 0x1B = first key with even y, 0x1C = first key with odd y,
+        //                  0x1D = second key with even y, 0x1E = second key with odd y
+        if (header < 27 || header > 34)
+            throw new SignatureException("Header byte out of range: " + header);
+        BigInteger r = new BigInteger(1, Arrays.copyOfRange(signatureEncoded, 1, 33));
+        BigInteger s = new BigInteger(1, Arrays.copyOfRange(signatureEncoded, 33, 65));
+        ECDSASignature sig = new ECDSASignature(r, s);
+        byte[] messageBytes = Utils.formatMessageForSigning(message);
+        // Note that the C++ code doesn't actually seem to specify any character encoding. Presumably it's whatever
+        // JSON-SPIRIT hands back. Assume UTF-8 for now.
+        Sha256Hash messageHash = Sha256Hash.createDouble(messageBytes);
+        boolean compressed = false;
+        if (header >= 31) {
+            compressed = true;
+            header -= 4;
+        }
+        int recId = header - 27;
+        ECKey key = ECKey.recoverFromSignature(recId, sig, messageHash, compressed);
+        if (key == null)
+            throw new SignatureException("Could not recover public key from signature");
+        return key;
+    }
+
+    /**
+     * Convenience wrapper around {@link ECKey#signedMessageToKey(String, String)}. If the key derived from the
+     * signature is not the same as this one, throws a SignatureException.
+     */
+    public void verifyMessage(String message, String signatureBase64) throws SignatureException {
+        ECKey key = ECKey.signedMessageToKey(message, signatureBase64);
+        if (!Arrays.equals(key.getPubKey(), pub))
+            throw new SignatureException("Signature did not match for message");
+    }
+
+    /**
+     * <p>Given the components of a signature and a selector value, recover and return the public key
+     * that generated the signature according to the algorithm in SEC1v2 section 4.1.6.</p>
+     *
+     * <p>The recId is an index from 0 to 3 which indicates which of the 4 possible keys is the correct one. Because
+     * the key recovery operation yields multiple potential keys, the correct key must either be stored alongside the
+     * signature, or you must be willing to try each recId in turn until you find one that outputs the key you are
+     * expecting.</p>
+     *
+     * <p>If this method returns null it means recovery was not possible and recId should be iterated.</p>
+     *
+     * <p>Given the above two points, a correct usage of this method is inside a for loop from 0 to 3, and if the
+     * output is null OR a key that is not the one you expect, you try again with the next recId.</p>
+     *
+     * @param recId Which possible key to recover.
+     * @param r The R component of the signature.
+     * @param s The S component of the signature.
+     * @param message Hash of the data that was signed.
+     * @param compressed Whether or not the original pubkey was compressed.
+     * @return An ECKey containing only the public part, or null if recovery wasn't possible.
+     */
+    public static ECKey recoverFromSignature(int recId, ECDSASignature sig, Sha256Hash message, boolean compressed) {
+        Preconditions.checkArgument(recId >= 0, "recId must be positive");
+        Preconditions.checkArgument(sig.r.compareTo(BigInteger.ZERO) >= 0, "r must be positive");
+        Preconditions.checkArgument(sig.s.compareTo(BigInteger.ZERO) >= 0, "s must be positive");
+        Preconditions.checkNotNull(message);
+        // 1.0 For j from 0 to h   (h == recId here and the loop is outside this function)
+        //   1.1 Let x = r + jn
+        BigInteger n = ecParams.getN();  // Curve order.
+        BigInteger i = BigInteger.valueOf((long) recId / 2);
+        BigInteger x = sig.r.add(i.multiply(n));
+        //   1.2. Convert the integer x to an octet string X of length mlen using the conversion routine
+        //        specified in Section 2.3.7, where mlen = ⌈(log2 p)/8⌉ or mlen = ⌈m/8⌉.
+        //   1.3. Convert the octet string (16 set binary digits)||X to an elliptic curve point R using the
+        //        conversion routine specified in Section 2.3.4. If this conversion routine outputs “invalid”, then
+        //        do another iteration of Step 1.
+        //
+        // More concisely, what these points mean is to use X as a compressed public key.
+        ECCurve.Fp curve = (ECCurve.Fp) ecParams.getCurve();
+        BigInteger prime = curve.getQ();  // Bouncy Castle is not consistent about the letter it uses for the prime.
+        if (x.compareTo(prime) >= 0) {
+            // Cannot have point co-ordinates larger than this as everything takes place modulo Q.
+            return null;
+        }
+        // Compressed keys require you to know an extra bit of data about the y-coord as there are two possibilities.
+        // So it's encoded in the recId.
+        ECPoint R = decompressKey(x, recId % 2 == 1);
+        //   1.4. If nR != point at infinity, then do another iteration of Step 1 (callers responsibility).
+        if (!R.multiply(n).isInfinity())
+            return null;
+        //   1.5. Compute e from M using Steps 2 and 3 of ECDSA signature verification.
+        BigInteger e = message.toBigInteger();
+        //   1.6. For k from 1 to 2 do the following.   (loop is outside this function via iterating recId)
+        //   1.6.1. Compute a candidate public key as:
+        //               Q = mi(r) * (sR - eG)
+        //
+        // Where mi(x) is the modular multiplicative inverse. We transform this into the following:
+        //               Q = (mi(r) * s * R) + (mi(r) * -e * G)
+        // Where -e is the modular additive inverse of e, that is z such that z + e = 0 (mod n), and + is the EC
+        // group operator.
+        //
+        // We can find the additive inverse by subtracting e from zero then taking the mod. For example the additive
+        // inverse of 3 modulo 11 is 8 because 3 + 8 mod 11 = 0, and -3 mod 11 = 8.
+        BigInteger eInv = BigInteger.ZERO.subtract(e).mod(n);
+        BigInteger rInv = sig.r.modInverse(n);
+        BigInteger srInv = rInv.multiply(sig.s).mod(n);
+        BigInteger eInvrInv = rInv.multiply(eInv).mod(n);
+        ECPoint p1 = ecParams.getG().multiply(eInvrInv);
+        ECPoint p2 = R.multiply(srInv);
+        ECPoint.Fp q = (ECPoint.Fp) p2.add(p1);
+        if (compressed) {
+            // We have to manually recompress the point as the compressed-ness gets lost when multiply() is used.
+            q = new ECPoint.Fp(curve, q.getX(), q.getY(), true);
+        }
+        return new ECKey((byte[])null, q.getEncoded());
+    }
+
+    /** Decompress a compressed public key (x co-ord and low-bit of y-coord). */
+    private static ECPoint decompressKey(BigInteger xBN, boolean yBit) {
+        // This code is adapted from Bouncy Castle ECCurve.Fp.decodePoint(), but it wasn't easily re-used.
+        ECCurve.Fp curve = (ECCurve.Fp) ecParams.getCurve();
+        ECFieldElement x = new ECFieldElement.Fp(curve.getQ(), xBN);
+        ECFieldElement alpha = x.multiply(x.square().add(curve.getA())).add(curve.getB());
+        ECFieldElement beta = alpha.sqrt();
+        // If we can't find a sqrt we haven't got a point on the curve - invalid inputs.
+        if (beta == null)
+            throw new IllegalArgumentException("Invalid point compression");
+        if (beta.toBigInteger().testBit(0) == yBit) {
+            return new ECPoint.Fp(curve, x, beta, true);
+        } else {
+            ECFieldElement.Fp y = new ECFieldElement.Fp(curve.getQ(), curve.getQ().subtract(beta.toBigInteger()));
+            return new ECPoint.Fp(curve, x, y, true);
         }
     }
 

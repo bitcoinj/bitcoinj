@@ -17,22 +17,22 @@
 
 package com.google.bitcoin.core;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.lang.ref.WeakReference;
-import java.util.List;
-
 import com.google.bitcoin.core.Transaction.SigHash;
 import com.google.bitcoin.store.FullPrunedBlockStore;
 import com.google.bitcoin.store.MemoryFullPrunedBlockStore;
 import com.google.bitcoin.utils.BriefLogFormatter;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static org.junit.Assert.*;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.lang.ref.WeakReference;
+import java.util.List;
+
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 /**
  * We don't do any wallet tests here, we leave that to {@link ChainSplitTest}
@@ -148,7 +148,7 @@ public class FullPrunedBlockChainTest {
         // Sign input
         try {
             ByteArrayOutputStream bos = new UnsafeByteArrayOutputStream(73);
-            bos.write(sigKey.sign(hash.getBytes()));
+            bos.write(sigKey.sign(hash).encodeToDER());
             bos.write(SigHash.ALL.ordinal() + 1);
             byte[] signature = bos.toByteArray();
             

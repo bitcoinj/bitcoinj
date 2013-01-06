@@ -669,7 +669,7 @@ public class FullBlockTestGenerator {
                     // Sign input
                     try {
                         ByteArrayOutputStream bos = new UnsafeByteArrayOutputStream(73);
-                        bos.write(coinbaseOutKey.sign(hash.getBytes()));
+                        bos.write(coinbaseOutKey.sign(hash).encodeToDER());
                         bos.write(SigHash.SINGLE.ordinal() + 1);
                         byte[] signature = bos.toByteArray();
 
@@ -740,7 +740,7 @@ public class FullBlockTestGenerator {
                         try {
                             ByteArrayOutputStream bos = new UnsafeByteArrayOutputStream(
                                     73);
-                            bos.write(coinbaseOutKey.sign(hash.getBytes()));
+                            bos.write(coinbaseOutKey.sign(hash).encodeToDER());
                             bos.write(SigHash.SINGLE.ordinal() + 1);
                             byte[] signature = bos.toByteArray();
 
@@ -1274,7 +1274,7 @@ public class FullBlockTestGenerator {
         // Sign input
         try {
             ByteArrayOutputStream bos = new UnsafeByteArrayOutputStream(73);
-            bos.write(coinbaseOutKey.sign(hash.getBytes()));
+            bos.write(coinbaseOutKey.sign(hash).encodeToDER());
             bos.write(SigHash.ALL.ordinal() + 1);
             byte[] signature = bos.toByteArray();
             

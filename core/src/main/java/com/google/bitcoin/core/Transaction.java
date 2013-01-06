@@ -711,7 +711,7 @@ public class Transaction extends ChildMessage implements Serializable {
             try {
                 // Usually 71-73 bytes.
                 ByteArrayOutputStream bos = new UnsafeByteArrayOutputStream(73);
-                bos.write(key.sign(hash.getBytes()));
+                bos.write(key.sign(hash).encodeToDER());
                 bos.write((hashType.ordinal() + 1) | (anyoneCanPay ? 0x80 : 0));
                 signatures[i] = bos.toByteArray();
                 bos.close();
