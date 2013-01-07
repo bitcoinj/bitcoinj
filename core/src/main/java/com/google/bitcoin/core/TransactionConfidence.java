@@ -79,15 +79,14 @@ public class TransactionConfidence implements Serializable {
      */
     private BigInteger workDone = BigInteger.ZERO;
 
-    // TODO: The advice below is a mess. There should be block chain listeners, see issue 94.
     /**
      * <p>Adds an event listener that will be run when this confidence object is updated. The listener will be locked and
      * is likely to be invoked on a peer thread.</p>
      * 
      * <p>Note that this is NOT called when every block arrives. Instead it is called when the transaction
      * transitions between confidence states, ie, from not being seen in the chain to being seen (not necessarily in 
-     * the best chain). If you want to know when the transaction gets buried under another block, listen for new block
-     * events using {@link PeerEventListener#onBlocksDownloaded(Peer, Block, int)} and then use the getters on the
+     * the best chain). If you want to know when the transaction gets buried under another block, implement a
+     * {@link BlockChainListener}, attach it to a {@link BlockChain} and then use the getters on the
      * confidence object to determine the new depth.</p>
      */
     public synchronized void addEventListener(Listener listener) {
@@ -234,14 +233,14 @@ public class TransactionConfidence implements Serializable {
      *
      * @param address IP address of the peer, used as a proxy for identity.
      */
-    public synchronized void markBroadcastBy(PeerAddress address) {
-        broadcastBy.add(address);
-        if (getConfidenceType() == ConfidenceType.UNKNOWN) {
-            setConfidenceType(ConfidenceType.NOT_SEEN_IN_CHAIN);
-            // Listeners are already run by setConfidenceType.
-        } else {
-            runListeners();
+    public void markBroadcastBy(PeerAddress address) {
+        synchronized (this) {
+            broadcastBy.add(address);
+            if (getConfidenceType() == ConfidenceType.UNKNOWN) {
+                this.confidenceType = ConfidenceType.NOT_SEEN_IN_CHAIN;
+            }
         }
+        runListeners();
     }
 
     /**
