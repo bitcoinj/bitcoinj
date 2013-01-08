@@ -606,20 +606,19 @@ public class WalletTool {
         }
         if (options.has("privkey")) {
             String data = (String) options.valueOf("privkey");
-            BigInteger decode = Utils.parseAsHexOrBase58(data);
+            byte[] decode = Utils.parseAsHexOrBase58(data);
             if (decode == null) {
                 System.err.println("Could not understand --privkey as either hex or base58: " + data);
                 return;
             }
-            key = new ECKey(decode);
+            key = new ECKey(new BigInteger(1, decode));
             if (options.has("pubkey")) {
                 // Give the user a hint.
                 System.out.println("You don't have to specify --pubkey when a private key is supplied.");
             }
             key.setCreationTimeSeconds(creationTimeSeconds);
         } else if (options.has("pubkey")) {
-            BigInteger decode = Utils.parseAsHexOrBase58((String) options.valueOf("pubkey"));
-            byte[] pubkey = Utils.bigIntegerToBytes(decode, ECKey.PUBLIC_KEY_LENGTH);
+            byte[] pubkey = Utils.parseAsHexOrBase58((String) options.valueOf("pubkey"));
             key = new ECKey(null, pubkey);
             key.setCreationTimeSeconds(creationTimeSeconds);
         } else {

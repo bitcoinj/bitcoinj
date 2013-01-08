@@ -17,6 +17,7 @@
 package com.google.bitcoin.core;
 
 import org.spongycastle.crypto.digests.RIPEMD160Digest;
+import org.spongycastle.util.encoders.Hex;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -434,19 +435,17 @@ public class Utils {
      * Attempts to parse the given string as arbitrary-length hex or base58 and then return the results, or null if
      * neither parse was successful.
      */
-    public static BigInteger parseAsHexOrBase58(String data) {
-        BigInteger decode;
+    public static byte[] parseAsHexOrBase58(String data) {
         try {
-            decode = new BigInteger(data, 16);
+            return Hex.decode(data);
         } catch (Exception e) {
             // Didn't decode as hex, try base58.
             try {
-                decode = new BigInteger(1, Base58.decodeChecked(data));
+                return Base58.decodeChecked(data);
             } catch (AddressFormatException e1) {
                 return null;
             }
         }
-        return decode;
     }
 
     public static boolean isWindows() {
