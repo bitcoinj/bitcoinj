@@ -294,15 +294,25 @@ public class Utils {
     }
 
     /**
-     * Returns the given value in nanocoins as a 0.12 type string.
+     * Returns the given value in nanocoins as a 0.12 type string. More digits after the decimal place will be used
+     * if necessary, but two will always be present.
      */
     public static String bitcoinValueToFriendlyString(BigInteger value) {
+        // TODO: This API is crap. This method should go away when we encapsulate money values.
         boolean negative = value.compareTo(BigInteger.ZERO) < 0;
         if (negative)
             value = value.negate();
-        BigInteger coins = value.divide(COIN);
-        BigInteger cents = value.remainder(COIN);
-        return String.format("%s%d.%02d", negative ? "-" : "", coins.intValue(), cents.intValue() / 1000000);
+        BigDecimal bd = new BigDecimal(value, 8);
+        String formatted = bd.toPlainString();   // Don't use scientific notation.
+        // Drop unnecessary zeros from the end.
+        int toDelete = 0;
+        for (int i = formatted.length() - 1; i > 1; i--) {
+            if (formatted.charAt(i) == '0')
+                toDelete++;
+            else
+                break;
+        }
+        return (negative ? "-" : "") + formatted.substring(0, formatted.length() - toDelete);
     }
     
     /**
