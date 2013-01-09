@@ -165,8 +165,7 @@ public class ECKeyTest {
         key = new ECKey(null, key.getPubKey());
         boolean found = false;
         for (int i = 0; i < 4; i++) {
-            ECKey key2 = ECKey.recoverFromSignature(i, sig, hash, false);
-            assertNotNull("Key recovery did not work", key2);
+            ECKey key2 = ECKey.recoverFromSignature(i, sig, hash, true);
             if (key.equals(key2)) {
                 found = true;
                 break;

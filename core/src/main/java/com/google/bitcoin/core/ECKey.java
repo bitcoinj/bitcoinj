@@ -45,7 +45,6 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 // TODO: This class is quite a mess by now. Once users are migrated away from Java serialization for the wallets,
 // refactor this to have better internal layout and a more consistent API.
-// TODO: Properly/completely support compressed pubkeys and use them by default.
 
 /**
  * Represents an elliptic curve keypair that we own and can use for signing transactions. Currently,
@@ -57,9 +56,6 @@ public class ECKey implements Serializable {
 
     private static final SecureRandom secureRandom;
     private static final long serialVersionUID = -728224901792295832L;
-
-    /** How many bytes a Bitcoin public key is: 65, that is, two 32 byte co-ordinates plus a one byte header. */
-    public static final int PUBLIC_KEY_LENGTH = 65;
 
     static {
         // All clients must agree on the curve to use by agreement. Bitcoin uses secp256k1.
@@ -80,7 +76,10 @@ public class ECKey implements Serializable {
     // Transient because it's calculated on demand.
     transient private byte[] pubKeyHash;
 
-    /** Generates an entirely new keypair. */
+    /**
+     * Generates an entirely new keypair. Point compression is used so the resulting public key will be 33 bytes
+     * (32 for the co-ordinate and 1 byte to represent the y bit).
+     */
     public ECKey() {
         ECKeyPairGenerator generator = new ECKeyPairGenerator();
         ECKeyGenerationParameters keygenParams = new ECKeyGenerationParameters(ecParams, secureRandom);
@@ -89,8 +88,12 @@ public class ECKey implements Serializable {
         ECPrivateKeyParameters privParams = (ECPrivateKeyParameters) keypair.getPrivate();
         ECPublicKeyParameters pubParams = (ECPublicKeyParameters) keypair.getPublic();
         priv = privParams.getD();
-        // The public key is an encoded point on the elliptic curve. It has no meaning independent of the curve.
-        pub = pubParams.getQ().getEncoded();
+        // Unfortunately Bouncy Castle does not let us explicitly change a point to be compressed, even though it
+        // could easily do so. We must re-build it here so the ECPoints withCompression flag can be set to true.
+        ECPoint uncompressed = pubParams.getQ();
+        ECPoint compressed = new ECPoint.Fp(ecParams.getCurve(), uncompressed.getX(), uncompressed.getY(), true);
+        pub = compressed.getEncoded();
+
         creationTimeSeconds = Utils.now().getTime() / 1000;
     }
 
@@ -103,7 +106,7 @@ public class ECKey implements Serializable {
     }
 
     /**
-     * Output this ECKey as an ASN.1 encoded private key, as understood by OpenSSL or used by the BitCoin reference
+     * Output this ECKey as an ASN.1 encoded private key, as understood by OpenSSL or used by the Bitcoin reference
      * implementation in its wallet storage format.
      */
     public byte[] toASN1() {
@@ -160,8 +163,8 @@ public class ECKey implements Serializable {
 
     /**
      * Creates an ECKey given only the private key bytes. This is the same as using the BigInteger constructor, but
-     * is more convenient if you are importing a key from elsewhere. The public key will be automatically derived
-     * from the private key.
+     * is more convenient if you are importing a key from elsewhere. If not provided the public key will be
+     * automatically derived from the private key.
      */
     public ECKey(byte[] privKeyBytes, byte[] pubKey) {
         this(privKeyBytes == null ? null : new BigInteger(1, privKeyBytes), pubKey);
@@ -191,10 +194,10 @@ public class ECKey implements Serializable {
     }
 
     /**
-     * Returns whether this key is using the compressed form or not. Compressed pubkeys are only 35 bytes, not 64.
+     * Returns whether this key is using the compressed form or not. Compressed pubkeys are only 33 bytes, not 64.
      */
     public boolean isCompressed() {
-        return pub.length == 35;
+        return pub.length == 33;
     }
 
     public String toString() {
@@ -480,9 +483,9 @@ public class ECKey implements Serializable {
         //               Q = mi(r) * (sR - eG)
         //
         // Where mi(x) is the modular multiplicative inverse. We transform this into the following:
-        //               Q = (mi(r) * s * R) + (mi(r) * -e * G)
-        // Where -e is the modular additive inverse of e, that is z such that z + e = 0 (mod n), and + is the EC
-        // group operator.
+        //               Q = (mi(r) * s ** R) + (mi(r) * -e ** G)
+        // Where -e is the modular additive inverse of e, that is z such that z + e = 0 (mod n). In the above equation
+        // ** is point multiplication and + is point addition (the EC group operator).
         //
         // We can find the additive inverse by subtracting e from zero then taking the mod. For example the additive
         // inverse of 3 modulo 11 is 8 because 3 + 8 mod 11 = 0, and -3 mod 11 = 8.
