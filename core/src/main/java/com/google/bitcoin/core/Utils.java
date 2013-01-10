@@ -304,9 +304,10 @@ public class Utils {
             value = value.negate();
         BigDecimal bd = new BigDecimal(value, 8);
         String formatted = bd.toPlainString();   // Don't use scientific notation.
+        int decimalPoint = formatted.indexOf(".");
         // Drop unnecessary zeros from the end.
         int toDelete = 0;
-        for (int i = formatted.length() - 1; i > 1; i--) {
+        for (int i = formatted.length() - 1; i > decimalPoint + 2; i--) {
             if (formatted.charAt(i) == '0')
                 toDelete++;
             else

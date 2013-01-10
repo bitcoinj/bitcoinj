@@ -50,6 +50,7 @@ public class UtilsTest {
 
     @Test
     public void testFormatting() {
+        assertEquals("1.00", bitcoinValueToFriendlyString(toNanoCoins(1, 0)));
         assertEquals("1.23", bitcoinValueToFriendlyString(toNanoCoins(1, 23)));
         assertEquals("0.001", bitcoinValueToFriendlyString(BigInteger.valueOf(COIN.longValue() / 1000)));
         assertEquals("-1.23", bitcoinValueToFriendlyString(toNanoCoins(1, 23).negate()));
