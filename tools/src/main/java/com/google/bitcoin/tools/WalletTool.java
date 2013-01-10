@@ -411,7 +411,7 @@ public class WalletTool {
             }
             t = req.tx;   // Not strictly required today.
             setup();
-            peers.start();
+            peers.startAndWait();
             // Wait for peers to connect, the tx to be sent to one of them and for it to be propagated across the
             // network. Once propagation is complete and we heard the transaction back from all our peers, it will
             // be committed to the wallet.
@@ -548,7 +548,7 @@ public class WalletTool {
             setup();
             int startTransactions = wallet.getTransactions(true, true).size();
             DownloadListener listener = new DownloadListener();
-            peers.start();
+            peers.startAndWait();
             peers.startBlockChainDownload(listener);
             try {
                 listener.await();
