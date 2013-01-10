@@ -405,7 +405,12 @@ public class PeerGroup extends AbstractIdleService {
      * @param peerAddress IP/port to use.
      */
     public void addAddress(PeerAddress peerAddress) {
-        inactives.add(peerAddress);
+        int newMax;
+        synchronized (this) {
+            inactives.add(peerAddress);
+            newMax = getMaxConnections() + 1;
+        }
+        setMaxConnections(newMax);
     }
 
     /**
