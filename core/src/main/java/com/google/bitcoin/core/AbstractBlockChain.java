@@ -774,4 +774,19 @@ public abstract class AbstractBlockChain {
     public synchronized boolean isOrphan(Sha256Hash block) {
         return orphanBlocks.containsKey(block);
     }
+
+    /**
+     * Returns an estimate of when the given block will be reached, assuming a perfect 10 minute average for each
+     * block. This is useful for turning transaction lock times into human readable times. Note that a height in
+     * the past will still be estimated, even though the time of solving is actually known (we won't scan backwards
+     * through the chain to obtain the right answer).
+     */
+    public Date estimateBlockTime(int height) {
+        synchronized (chainHeadLock) {
+            long offset = height - chainHead.getHeight();
+            long headTime = chainHead.getHeader().getTimeSeconds();
+            long estimated = (headTime * 1000) + (1000L * 60L * 10L * offset);
+            return new Date(estimated);
+        }
+    }
 }

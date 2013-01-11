@@ -38,6 +38,7 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.text.ParseException;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -86,9 +87,13 @@ public class WalletTool {
             "  --action=SEND        Creates a transaction with the given --output from this wallet and broadcasts, eg:\n" +
             "                         --output=1GthXFQMktFLWdh5EPNGqbq3H6WdG8zsWj:1.245\n" +
             "                       You can repeat --output=address:value multiple times.\n" +
-            "                       If the output destination starts with 04 and is 65 bytes (130 chars) it will be\n" +
+            "                       If the output destination starts with 04 and is 65 or 33 bytes long it will be\n" +
             "                       treated as a public key instead of an address and the send will use \n" +
-            "                       <key> CHECKSIG as the script. You can also specify a --fee=0.01\n" +
+            "                       <key> CHECKSIG as the script.\n" +
+            "                       Other options include:\n" +
+            "                          --fee=0.01  sets the tx fee\n" +
+            "                          --locktime=1234  sets the lock time to block 1234\n" +
+            "                          --locktime=2013/01/01  sets the lock time to 1st Jan 2013\n" +
 
             "\n>>> WAITING\n" +
             "You can wait for the condition specified by the --waitfor flag to become true. Transactions and new\n" +
@@ -242,6 +247,7 @@ public class WalletTool {
         parser.accepts("value").withRequiredArg();
         parser.accepts("fee").withRequiredArg();
         conditionFlag = parser.accepts("condition").withRequiredArg();
+        parser.accepts("locktime").withRequiredArg();
         options = parser.parse(args);
         
         if (args.length == 0 || options.has("help") || options.nonOptionArguments().size() > 0) {
@@ -348,7 +354,11 @@ public class WalletTool {
                 if (options.has("fee")) {
                     fee = Utils.toNanoCoins((String)options.valueOf("fee"));
                 }
-                send(outputFlag.values(options), fee);
+                String lockTime = null;
+                if (options.has("locktime")) {
+                    lockTime = (String) options.valueOf("locktime");
+                }
+                send(outputFlag.values(options), fee, lockTime);
                 break;
         }
 
@@ -360,7 +370,15 @@ public class WalletTool {
         saveWallet(walletFile);
 
         if (options.has(waitForFlag)) {
-            wait(waitForFlag.value(options));
+            WaitForEnum value;
+            try {
+                value = waitForFlag.value(options);
+            } catch (Exception e) {
+                System.err.println("Could not understand the --waitfor flag: Valid options are WALLET_TX, BLOCK, " +
+                                   "BALANCE and EVER");
+                return;
+            }
+            wait(value);
             if (!wallet.isConsistent()) {
                 System.err.println("************** WALLET IS INCONSISTENT *****************");
                 return;
@@ -370,7 +388,7 @@ public class WalletTool {
         shutdown();
     }
 
-    private static void send(List<String> outputs, BigInteger fee) {
+    private static void send(List<String> outputs, BigInteger fee, String lockTimeStr) {
         try {
             // Convert the input strings to outputs.
             Transaction t = new Transaction(params);
@@ -383,7 +401,7 @@ public class WalletTool {
                 String destination = parts[0];
                 try {
                     BigInteger value = Utils.toNanoCoins(parts[1]);
-                    if (destination.startsWith("04") && destination.length() == 130) {
+                    if (destination.startsWith("04") && (destination.length() == 130 || destination.length() == 66)) {
                         // Treat as a raw public key.
                         BigInteger pubKey = new BigInteger(destination, 16);
                         ECKey key = new ECKey(null, pubKey);
@@ -407,6 +425,16 @@ public class WalletTool {
             req.fee = fee;
             if (!wallet.completeTx(req)) {
                 System.err.println("Insufficient funds: have " + wallet.getBalance());
+                return;
+            }
+            try {
+                if (lockTimeStr != null) {
+                    t.setLockTime(Transaction.parseLockTimeStr(lockTimeStr));
+                    // For lock times to take effect, at least one output must have a non-final sequence number.
+                    t.getInputs().get(0).setSequenceNumber(0);
+                }
+            } catch (ParseException e) {
+                System.err.println("Could not understand --locktime of " + lockTimeStr);
                 return;
             }
             t = req.tx;   // Not strictly required today.
@@ -661,7 +689,8 @@ public class WalletTool {
         wallet.keychain.remove(key);
     }    
     
-    private static void dumpWallet() {
-        System.out.println(wallet.toString(true));
+    private static void dumpWallet() throws BlockStoreException {
+        setup();  // To get the chain height so we can estimate lock times.
+        System.out.println(wallet.toString(true, chain));
     }
 }

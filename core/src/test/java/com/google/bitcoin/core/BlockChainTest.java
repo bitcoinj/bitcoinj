@@ -24,6 +24,8 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.math.BigInteger;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 import static com.google.bitcoin.core.TestUtils.createFakeBlock;
 import static com.google.bitcoin.core.TestUtils.createFakeTx;
@@ -359,5 +361,14 @@ public class BlockChainTest {
         assertEquals("000000033cc282bc1fa9dcae7a533263fd7fe66490f550d80076433340831604", b1.getHashAsString());
         b1.verifyHeader();
         return b1;
+    }
+
+    @Test
+    public void estimatedBlockTime() throws Exception {
+        NetworkParameters params = NetworkParameters.prodNet();
+        BlockChain prod = new BlockChain(params, new MemoryBlockStore(params));
+        Date d = prod.estimateBlockTime(200000);
+        // The actual date of block 200,000 was 2012-09-22 10:47:00
+        assertEquals(new SimpleDateFormat("yyyy/MM/dd HH:mm:ss").parse("2012/10/23 17:35:05"), d);
     }
 }

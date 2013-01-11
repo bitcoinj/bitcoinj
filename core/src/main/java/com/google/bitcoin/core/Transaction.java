@@ -23,6 +23,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.math.BigInteger;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 import static com.google.bitcoin.core.Utils.*;
@@ -51,12 +53,8 @@ public class Transaction extends ChildMessage implements Serializable {
     // These are serialized in both bitcoin and java serialization.
     private long version;
     private ArrayList<TransactionInput> inputs;
-    //a cached copy to prevent constantly rewrapping
-    //private transient List<TransactionInput> immutableInputs;
 
     private ArrayList<TransactionOutput> outputs;
-    //a cached copy to prevent constantly rewrapping
-    //private transient List<TransactionOutput> immutableOutputs;
 
     private long lockTime;
 
@@ -548,13 +546,31 @@ public class Transaction extends ChildMessage implements Serializable {
         return getConfidence().getDepthInBlocks() >= params.getSpendableCoinbaseDepth();
     }
 
+    public String toString() {
+        return toString(null);
+    }
+
     /**
      * A human readable version of the transaction useful for debugging. The format is not guaranteed to be stable.
+     * @param chain If provided, will be used to estimate lock times (if set). Can be null.
      */
-    public String toString() {
+    public String toString(AbstractBlockChain chain) {
         // Basic info about the tx.
         StringBuffer s = new StringBuffer();
         s.append(String.format("  %s: %s%n", getHashAsString(), getConfidence()));
+        if (lockTime > 0) {
+            String time;
+            if (lockTime < LOCKTIME_THRESHOLD) {
+                time = "block " + lockTime;
+                if (chain != null) {
+                    time = time + " (estimated to be reached at " +
+                            chain.estimateBlockTime((int)lockTime).toString() + ")";
+                }
+            } else {
+                time = new Date(lockTime).toString();
+            }
+            s.append(String.format("  time locked until %s%n", time));
+        }
         if (inputs.size() == 0) {
             s.append(String.format("  INCOMPLETE: No inputs!%n"));
             return s.toString();
@@ -1025,5 +1041,29 @@ public class Transaction extends ChildMessage implements Serializable {
             if (in.hasSequence())
                 return false;
         return true;
+    }
+
+    /**
+     * Parses the string either as a whole number of blocks, or if it contains slashes as a YYYY/MM/DD format date
+     * and returns the lock time in wire format.
+     */
+    public static long parseLockTimeStr(String lockTimeStr) throws ParseException {
+        if (lockTimeStr.indexOf("/") != -1) {
+            SimpleDateFormat format = new SimpleDateFormat("yyyy/MM/dd");
+            Date date = format.parse(lockTimeStr);
+            return date.getTime() / 1000;
+        }
+        return Long.parseLong(lockTimeStr);
+    }
+
+    /**
+     * Returns either the lock time as a date, if it was specified in seconds, or an estimate based on the time in
+     * the current head block if it was specified as a block time.
+     */
+    public Date estimateLockTime(AbstractBlockChain chain) {
+        if (lockTime < LOCKTIME_THRESHOLD)
+            return chain.estimateBlockTime((int)getLockTime());
+        else
+            return new Date(getLockTime()*1000);
     }
 }

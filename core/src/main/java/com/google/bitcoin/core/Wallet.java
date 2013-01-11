@@ -1719,10 +1719,17 @@ public class Wallet implements Serializable, BlockChainListener {
 
     @Override
     public synchronized String toString() {
-        return toString(false);
+        return toString(false, null);
     }
 
-    public synchronized String toString(boolean includePrivateKeys) {
+    /**
+     * Formats the wallet as a human readable piece of text. Intended for debugging, the format is not meant to be
+     * stable or human readable.
+     * @param includePrivateKeys Whether raw private key data should be included.
+     * @param chain If set, will be used to estimate lock times for block timelocked transactions.
+     * @return
+     */
+    public synchronized String toString(boolean includePrivateKeys, AbstractBlockChain chain) {
         StringBuilder builder = new StringBuilder();
         builder.append(String.format("Wallet containing %s BTC in:%n", bitcoinValueToFriendlyString(getBalance())));
         builder.append(String.format("  %d unspent transactions%n", unspent.size()));
@@ -1743,28 +1750,29 @@ public class Wallet implements Serializable, BlockChainListener {
         // Print the transactions themselves
         if (unspent.size() > 0) {
             builder.append("\nUNSPENT:\n");
-            toStringHelper(builder, unspent);
+            toStringHelper(builder, unspent, chain);
         }
         if (spent.size() > 0) {
             builder.append("\nSPENT:\n");
-            toStringHelper(builder, spent);
+            toStringHelper(builder, spent, chain);
         }
         if (pending.size() > 0) {
             builder.append("\nPENDING:\n");
-            toStringHelper(builder, pending);
+            toStringHelper(builder, pending, chain);
         }
         if (inactive.size() > 0) {
             builder.append("\nINACTIVE:\n");
-            toStringHelper(builder, inactive);
+            toStringHelper(builder, inactive, chain);
         }
         if (dead.size() > 0) {
             builder.append("\nDEAD:\n");
-            toStringHelper(builder, dead);
+            toStringHelper(builder, dead, chain);
         }
         return builder.toString();
     }
 
-    private void toStringHelper(StringBuilder builder, Map<Sha256Hash, Transaction> transactionMap) {
+    private void toStringHelper(StringBuilder builder, Map<Sha256Hash, Transaction> transactionMap,
+                                AbstractBlockChain chain) {
         for (Transaction tx : transactionMap.values()) {
             try {
                 builder.append("Sends ");
@@ -1777,7 +1785,7 @@ public class Wallet implements Serializable, BlockChainListener {
             } catch (ScriptException e) {
                 // Ignore and don't print this line.
             }
-            builder.append(tx);
+            builder.append(tx.toString(chain));
         }
     }
 
