@@ -1033,9 +1033,10 @@ public class Transaction extends ChildMessage implements Serializable {
      */
     public boolean isFinal(int height, long blockTimeSeconds) {
         // Time based nLockTime implemented in 0.1.6
-        if (lockTime == 0)
+        long time = getLockTime();
+        if (time == 0)
             return true;
-        if (lockTime < (lockTime < LOCKTIME_THRESHOLD ? height : blockTimeSeconds))
+        if (time < (time < LOCKTIME_THRESHOLD ? height : blockTimeSeconds))
             return true;
         for (TransactionInput in : inputs)
             if (in.hasSequence())
