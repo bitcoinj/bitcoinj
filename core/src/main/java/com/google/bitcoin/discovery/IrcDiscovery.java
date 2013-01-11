@@ -93,7 +93,7 @@ public class IrcDiscovery implements PeerDiscovery {
         ArrayList<InetSocketAddress> addresses = new ArrayList<InetSocketAddress>();
         connection = null;
         try {
-            InetAddress ip = InetAddress.getByName("irc.lfnet.org");
+            InetAddress ip = InetAddress.getByName(server);
             log.info("Connecting to IRC with " + ip);
             connection = new Socket(server, port);
             writer = new BufferedWriter(new OutputStreamWriter(connection.getOutputStream(), "UTF-8"));
