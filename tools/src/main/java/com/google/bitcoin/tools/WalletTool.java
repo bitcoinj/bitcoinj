@@ -83,9 +83,9 @@ public class WalletTool {
             "  --action=SYNC        Sync the wallet with the latest block chain (download new transactions).\n" +
             "                       If the chain file does not exist this will RESET the wallet.\n" +
             "  --action=RESET       Deletes all transactions from the wallet, for if you want to replay the chain.\n" +
-            "  --action=SEND        Creates a transaction with the given --output from this wallet and broadcasts.\n" +
-            "                       You can repeat --output=address:value multiple times, eg:\n" +
+            "  --action=SEND        Creates a transaction with the given --output from this wallet and broadcasts, eg:\n" +
             "                         --output=1GthXFQMktFLWdh5EPNGqbq3H6WdG8zsWj:1.245\n" +
+            "                       You can repeat --output=address:value multiple times.\n" +
             "                       If the output destination starts with 04 and is 65 bytes (130 chars) it will be\n" +
             "                       treated as a public key instead of an address and the send will use \n" +
             "                       <key> CHECKSIG as the script. You can also specify a --fee=0.01\n" +
