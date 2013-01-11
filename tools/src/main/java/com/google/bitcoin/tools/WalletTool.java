@@ -318,14 +318,6 @@ public class WalletTool {
 
         try {
             WalletProtobufSerializer loader = new WalletProtobufSerializer();
-            if (chainFileName.exists() && modeFlag.value(options).equals(ValidationMode.SPV)) {
-                // TEMPORARY MIGRATION CODE FOR 0.5 -> 0.6 TRANSITION. This will ensure the depth (but NOT workDone)
-                // fields gets set correctly for older wallets.
-                store = new BoundedOverheadBlockStore(params, chainFileName);
-                loader.setChainHeight(store.getChainHead().getHeight());
-                store.close();
-                store = null;
-            }
             wallet = loader.readWallet(new BufferedInputStream(new FileInputStream(walletFile)));
             if (!wallet.getParams().equals(params)) {
                 System.err.println("Wallet does not match requested network parameters: " +
