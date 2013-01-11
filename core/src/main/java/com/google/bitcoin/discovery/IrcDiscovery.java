@@ -23,10 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.Socket;
-import java.net.UnknownHostException;
+import java.net.*;
 import java.util.ArrayList;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
@@ -86,18 +83,38 @@ public class IrcDiscovery implements PeerDiscovery {
     }
     /**
      * Returns a list of peers that were found in the IRC channel. Note that just because a peer appears in the list
-     * does not mean it is accepting connections. BUG: the given timeout values are ignored.
+     * does not mean it is accepting connections. The given time out value is applied for every IP returned by DNS
+     * for the given server, so a timeout value of 1 second may result in 5 seconds delay if 5 servers are advertised.
      */
     public InetSocketAddress[] getPeers(long timeoutValue, TimeUnit timeoutUnit) throws PeerDiscoveryException {
-        // TODO: Make the timeout value be respected.
         ArrayList<InetSocketAddress> addresses = new ArrayList<InetSocketAddress>();
         connection = null;
+        BufferedReader reader = null;
         try {
-            InetAddress ip = InetAddress.getByName(server);
-            log.info("Connecting to IRC with " + ip);
-            connection = new Socket(server, port);
+            InetAddress[] ips = InetAddress.getAllByName(server);
+            // Pick a random server for load balancing reasons. Try the rest if
+            int ipCursorStart = (int)(Math.random()*ips.length);
+            int ipCursor = ipCursorStart;
+            do {
+                connection = new Socket();
+                try {
+                    InetAddress ip = ips[ipCursor];
+                    long timeoutMsec = TimeUnit.MILLISECONDS.convert(timeoutValue, timeoutUnit);
+                    log.info("Connecting to IRC with " + ip);
+                    connection.connect(new InetSocketAddress(ip, port), (int)timeoutMsec);
+                } catch (SocketTimeoutException e) {
+                    connection = null;
+                } catch (IOException e) {
+                    connection = null;
+                }
+                ipCursor = (ipCursor + 1) % ips.length;
+                if (ipCursor == ipCursorStart) {
+                    throw new PeerDiscoveryException("Could not connect to " + server);
+                }
+            } while (connection == null);
+
             writer = new BufferedWriter(new OutputStreamWriter(connection.getOutputStream(), "UTF-8"));
-            BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream(), "UTF-8"));
+            reader = new BufferedReader(new InputStreamReader(connection.getInputStream(), "UTF-8"));
 
             // Generate a random nick for the connection. This is chosen to be clearly identifiable as coming from
             // bitcoinj but not match the standard nick format, so full peers don't try and connect to us.
@@ -110,7 +127,7 @@ public class IrcDiscovery implements PeerDiscovery {
             writer.flush();
 
             // Wait to be logged in. Worst case we end up blocked until the server PING/PONGs us out.
-            String currLine = null;
+            String currLine;
             while ((currLine = reader.readLine()) != null) {
                 onIRCReceive(currLine);
                 // 004 tells us we are connected
@@ -154,9 +171,12 @@ public class IrcDiscovery implements PeerDiscovery {
             throw new PeerDiscoveryException(e.getMessage(), e);
         } finally {
             try {
+                if (reader != null) reader.close();
+                if (writer != null) writer.close();
                 // No matter what try to close the connection.
-                connection.close();
-            } catch (Exception e2) {
+                if (connection != null) connection.close();
+            } catch (IOException e) {
+                log.warn("Exception whilst closing IRC discovery: " + e.toString());
             }
         }
         return addresses.toArray(new InetSocketAddress[]{});
