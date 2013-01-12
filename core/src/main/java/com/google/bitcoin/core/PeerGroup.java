@@ -486,9 +486,6 @@ public class PeerGroup extends AbstractIdleService {
     @Override
     protected void shutDown() throws Exception {
         // This is run on a separate thread by the AbstractIdleService implementation.
-        synchronized (this) {
-            pingTimer.cancel();
-        }
         // Blocking close of all sockets. TODO: there is a race condition here, for the solution see:
         // http://biasedbit.com/netty-releaseexternalresources-hangs/
         channels.close().await();
@@ -496,6 +493,9 @@ public class PeerGroup extends AbstractIdleService {
         bootstrap.releaseExternalResources();
         for (PeerDiscovery peerDiscovery : peerDiscoverers) {
             peerDiscovery.shutdown();
+        }
+        synchronized (this) {
+            pingTimer.cancel();
         }
     }
 
@@ -715,7 +715,7 @@ public class PeerGroup extends AbstractIdleService {
                     @Override
                     public void run() {
                         try {
-                            if (!peers.contains(peer))
+                            if (!peers.contains(peer) || !PeerGroup.this.isRunning())
                                 return;  // Peer was removed/shut down.
                             peer.ping().addListener(this, MoreExecutors.sameThreadExecutor());
                         } catch (Exception e) {
