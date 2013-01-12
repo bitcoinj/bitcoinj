@@ -709,7 +709,8 @@ public class Transaction extends ChildMessage implements Serializable {
         ECKey[] signingKeys = new ECKey[inputs.size()];
         for (int i = 0; i < inputs.size(); i++) {
             TransactionInput input = inputs.get(i);
-            Preconditions.checkState(input.getScriptBytes().length == 0, "Attempting to sign a non-fresh transaction");
+            if (input.getScriptBytes().length != 0)
+                log.warn("Re-signing an already signed transaction! Be sure this is what you want.");
             // Find the signing key we'll need to use.
             ECKey key = input.getOutpoint().getConnectedKey(wallet);
             // This assert should never fire. If it does, it means the wallet is inconsistent.
@@ -743,7 +744,6 @@ public class Transaction extends ChildMessage implements Serializable {
         // 2) For pay-to-key outputs: just a signature.
         for (int i = 0; i < inputs.size(); i++) {
             TransactionInput input = inputs.get(i);
-            Preconditions.checkState(input.getScriptBytes().length == 0);
             ECKey key = signingKeys[i];
             Script scriptPubKey = input.getOutpoint().getConnectedOutput().getScriptPubKey();
             if (scriptPubKey.isSentToAddress()) {

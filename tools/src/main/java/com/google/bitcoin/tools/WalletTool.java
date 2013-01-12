@@ -424,10 +424,14 @@ public class WalletTool {
                     t.setLockTime(Transaction.parseLockTimeStr(lockTimeStr));
                     // For lock times to take effect, at least one output must have a non-final sequence number.
                     t.getInputs().get(0).setSequenceNumber(0);
+                    // And because we modified the transaction after it was completed, we must re-sign the inputs.
+                    t.signInputs(Transaction.SigHash.ALL, wallet);
                 }
             } catch (ParseException e) {
                 System.err.println("Could not understand --locktime of " + lockTimeStr);
                 return;
+            } catch (ScriptException e) {
+                throw new RuntimeException(e);
             }
             t = req.tx;   // Not strictly required today.
             setup();
