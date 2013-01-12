@@ -996,7 +996,7 @@ public class PeerGroup extends AbstractIdleService {
                 tx.getConfidence().addEventListener(new TransactionConfidence.Listener() {
                     public void onConfidenceChanged(Transaction tx) {
                         // This will run in a peer thread.
-                        final int numSeenPeers = tx.getConfidence().getBroadcastBy().size();
+                        final int numSeenPeers = tx.getConfidence().numBroadcastPeers();
                         boolean done = false;
                         log.info("broadcastTransaction: TX {} seen by {} peers", pinnedTx.getHashAsString(),
                                 numSeenPeers);

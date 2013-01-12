@@ -31,10 +31,7 @@ import java.io.OutputStream;
 import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Serialize and de-serialize a wallet to a byte stream containing a
@@ -203,19 +200,22 @@ public class WalletProtobufSerializer {
     private static void writeConfidence(Protos.Transaction.Builder txBuilder,
                                         TransactionConfidence confidence,
                                         Protos.TransactionConfidence.Builder confidenceBuilder) {
-        confidenceBuilder.setType(Protos.TransactionConfidence.Type.valueOf(confidence.getConfidenceType().getValue()));
-        if (confidence.getConfidenceType() == ConfidenceType.BUILDING) {
-            confidenceBuilder.setAppearedAtHeight(confidence.getAppearedAtChainHeight());
-            confidenceBuilder.setDepth(confidence.getDepthInBlocks());
-            if (confidence.getWorkDone() != null) {
-                confidenceBuilder.setWorkDone(confidence.getWorkDone().longValue());
+        synchronized (confidence) {
+            confidenceBuilder.setType(Protos.TransactionConfidence.Type.valueOf(confidence.getConfidenceType().getValue()));
+            if (confidence.getConfidenceType() == ConfidenceType.BUILDING) {
+                confidenceBuilder.setAppearedAtHeight(confidence.getAppearedAtChainHeight());
+                confidenceBuilder.setDepth(confidence.getDepthInBlocks());
+                if (confidence.getWorkDone() != null) {
+                    confidenceBuilder.setWorkDone(confidence.getWorkDone().longValue());
+                }
+            }
+            if (confidence.getConfidenceType() == ConfidenceType.DEAD) {
+                Sha256Hash overridingHash = confidence.getOverridingTransaction().getHash();
+                confidenceBuilder.setOverridingTransaction(hashToByteString(overridingHash));
             }
         }
-        if (confidence.getConfidenceType() == ConfidenceType.DEAD) {
-            Sha256Hash overridingHash = confidence.getOverridingTransaction().getHash();
-            confidenceBuilder.setOverridingTransaction(hashToByteString(overridingHash));
-        }
-        for (PeerAddress address : confidence.getBroadcastBy()) {
+        for (ListIterator<PeerAddress> it = confidence.getBroadcastBy(); it.hasNext();) {
+            PeerAddress address = it.next();
             Protos.PeerAddress proto = Protos.PeerAddress.newBuilder()
                     .setIpAddress(ByteString.copyFrom(address.getAddr().getAddress()))
                     .setPort(address.getPort())

@@ -22,8 +22,8 @@ import com.google.common.base.Preconditions;
 import java.io.Serializable;
 import java.math.BigInteger;
 import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ListIterator;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * <p>A TransactionConfidence object tracks data you can use to make a confidence decision about a transaction.
@@ -61,7 +61,7 @@ public class TransactionConfidence implements Serializable {
      * IP address as an approximation. It's obviously vulnerable to being gamed if we allow arbitrary people to connect
      * to us, so only peers we explicitly connected to should go here.
      */
-    private Set<PeerAddress> broadcastBy;
+    private CopyOnWriteArrayList<PeerAddress> broadcastBy;
     /** The Transaction that this confidence object is associated with. */
     private Transaction transaction;
     // Lazily created listeners array.
@@ -180,7 +180,7 @@ public class TransactionConfidence implements Serializable {
 
     public TransactionConfidence(Transaction tx) {
         // Assume a default number of peers for our set.
-        broadcastBy = new HashSet<PeerAddress>(10);
+        broadcastBy = new CopyOnWriteArrayList<PeerAddress>();
         transaction = tx;
     }
 
@@ -234,8 +234,9 @@ public class TransactionConfidence implements Serializable {
      * @param address IP address of the peer, used as a proxy for identity.
      */
     public void markBroadcastBy(PeerAddress address) {
+        if (!broadcastBy.addIfAbsent(address))
+            return;  // Duplicate.
         synchronized (this) {
-            broadcastBy.add(address);
             if (getConfidenceType() == ConfidenceType.UNKNOWN) {
                 this.confidenceType = ConfidenceType.NOT_SEEN_IN_CHAIN;
             }
@@ -246,15 +247,20 @@ public class TransactionConfidence implements Serializable {
     /**
      * Returns how many peers have been passed to {@link TransactionConfidence#markBroadcastBy}.
      */
-    public synchronized int numBroadcastPeers() {
+    public int numBroadcastPeers() {
         return broadcastBy.size();
     }
 
     /**
      * Returns a synchronized set of {@link PeerAddress}es that announced the transaction.
      */
-    public synchronized Set<PeerAddress> getBroadcastBy() {
-        return broadcastBy;
+    public ListIterator<PeerAddress> getBroadcastBy() {
+        return broadcastBy.listIterator();
+    }
+
+    /** Returns true if the given address has been seen via markBroadcastBy() */
+    public boolean wasBroadcastBy(PeerAddress address) {
+        return broadcastBy.contains(address);
     }
 
     @Override

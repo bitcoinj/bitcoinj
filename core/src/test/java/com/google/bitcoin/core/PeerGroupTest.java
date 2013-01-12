@@ -268,8 +268,8 @@ public class PeerGroupTest extends TestWithNetworkConnections {
         inbound(p1, tx);   // returns nothing after a queue drain.
         // Two peers saw this tx hash.
         assertEquals(2, tx.getConfidence().numBroadcastPeers());
-        assertTrue(tx.getConfidence().getBroadcastBy().contains(peerOf(p1).getAddress()));
-        assertTrue(tx.getConfidence().getBroadcastBy().contains(peerOf(p2).getAddress()));
+        assertTrue(tx.getConfidence().wasBroadcastBy(peerOf(p1).getAddress()));
+        assertTrue(tx.getConfidence().wasBroadcastBy(peerOf(p2).getAddress()));
 
         tx.getConfidence().addEventListener(new TransactionConfidence.Listener() {
             public void onConfidenceChanged(Transaction tx) {
@@ -280,7 +280,7 @@ public class PeerGroupTest extends TestWithNetworkConnections {
         inbound(p3, inv);
         assertEquals(tx, event[1]);
         assertEquals(3, tx.getConfidence().numBroadcastPeers());
-        assertTrue(tx.getConfidence().getBroadcastBy().contains(peerOf(p3).getAddress()));
+        assertTrue(tx.getConfidence().wasBroadcastBy(peerOf(p3).getAddress()));
     }
 
     @Test
