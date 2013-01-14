@@ -37,9 +37,19 @@ import com.google.common.base.Preconditions;
  * which match the filter but are not actually ours.</p>
  */
 public class BloomFilter extends Message {
+    /** The BLOOM_UPDATE_* constants control when the bloom filter is auto-updated by the peer using
+        it as a filter, either never, for all outputs or only for pay-2-pubkey outputs (default) */
+    public enum bloomUpdate {
+        UPDATE_NONE, // 0
+        UPDATE_ALL, // 1
+        /** Only adds outpoints to the filter if the output is a pay-to-pubkey/pay-to-multisig script */
+        UPDATE_P2PUBKEY_ONLY //2
+    }
+    
     private byte[] data;
     private long hashFuncs;
     private long nTweak;
+    private byte nFlags;
 
     // Same value as the reference client
     // A filter of 20,000 items and a false positive rate of 0.1% or one of 10,000 items and 0.0001% is just under 36,000 bytes
@@ -52,6 +62,13 @@ public class BloomFilter extends Message {
      */
     public BloomFilter(NetworkParameters params, byte[] payloadBytes) throws ProtocolException {
         super(params, payloadBytes, 0);
+    }
+    
+    /**
+     * Constructs a filter with the given parameters which is updated on pay2pubkey outputs only.
+     */
+    public BloomFilter(int elements, double falsePositiveRate, long randomNonce) {
+        this(elements, falsePositiveRate, randomNonce, bloomUpdate.UPDATE_P2PUBKEY_ONLY);
     }
     
     /**
@@ -82,8 +99,10 @@ public class BloomFilter extends Message {
      * 
      * <p>randomNonce is a tweak for the hash function used to prevent some theoretical DoS attacks.
      * It should be a random value, however secureness of the random value is of no great consequence.</p>
+     * 
+     * <p>updateFlag is used to control filter behavior</p>
      */
-    public BloomFilter(int elements, double falsePositiveRate, long randomNonce) {
+    public BloomFilter(int elements, double falsePositiveRate, long randomNonce, bloomUpdate updateFlag) {
         // The following formulas were stolen from Wikipedia's page on Bloom Filters (with the addition of min(..., MAX_...))
         //                        Size required for a given number of elements and false-positive rate
         int size = Math.min((int)(-1  / (Math.pow(Math.log(2), 2)) * elements * Math.log(falsePositiveRate)),
@@ -92,6 +111,7 @@ public class BloomFilter extends Message {
         // Optimal number of hash functions for a given filter size and element count.
         hashFuncs = Math.min((int)(data.length * 8 / elements * Math.log(2)), MAX_HASH_FUNCS);
         this.nTweak = randomNonce;
+        this.nFlags = (byte)(0xff & updateFlag.ordinal());
     }
     
     /**
@@ -117,6 +137,8 @@ public class BloomFilter extends Message {
             throw new ProtocolException("Bloom filter hash function count out of range");
         
         nTweak = readUint32();
+        
+        nFlags = readBytes(1)[0];
 
         length = cursor - offset;
     }
@@ -129,6 +151,7 @@ public class BloomFilter extends Message {
         stream.write(data);
         Utils.uint32ToByteStreamLE(hashFuncs, stream);
         Utils.uint32ToByteStreamLE(nTweak, stream);
+        stream.write(nFlags);
     }
 
     @Override

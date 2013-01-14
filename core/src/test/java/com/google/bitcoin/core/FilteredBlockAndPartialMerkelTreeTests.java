@@ -87,7 +87,7 @@ public class FilteredBlockAndPartialMerkelTreeTests extends TestWithPeerGroup {
         
         BloomFilter filter = wallet.getBloomFilter(wallet.getKeychainSize()*2, 0.001, 0xDEADBEEF);
         // Compare the serialized bloom filter to a known-good value
-        assertTrue(Arrays.equals(filter.bitcoinSerialize(), Hex.decode("0e1b091ca195e45a9164889b6bc46a09000000efbeadde")));
+        assertTrue(Arrays.equals(filter.bitcoinSerialize(), Hex.decode("0e1b091ca195e45a9164889b6bc46a09000000efbeadde02")));
 
         // Cheat and place the previous block (block 100000) at the head of the block store without supporting blocks
         blockStore = new MemoryBlockStore(NetworkParameters.unitTests());
