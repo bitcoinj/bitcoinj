@@ -219,7 +219,7 @@ public class PeerGroup extends AbstractIdleService {
         ExecutorService workerExecutor = Executors.newCachedThreadPool(new PeerGroupThreadFactory());
         NioClientSocketChannelFactory channelFactory = new NioClientSocketChannelFactory(bossExecutor, workerExecutor);
         ClientBootstrap bs = new ClientBootstrap(channelFactory);
-        bs.setOption("connectionTimeoutMillis", 2000);
+        bs.setOption("connectTimeoutMillis", 2000);
         return bs;
     }
 
