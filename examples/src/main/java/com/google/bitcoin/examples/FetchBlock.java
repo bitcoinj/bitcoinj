@@ -19,40 +19,28 @@ package com.google.bitcoin.examples;
 import com.google.bitcoin.core.*;
 import com.google.bitcoin.store.BlockStore;
 import com.google.bitcoin.store.MemoryBlockStore;
+import com.google.bitcoin.utils.BriefLogFormatter;
 
 import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
-
-import org.jboss.netty.channel.ChannelFuture;
 
 /**
  * Downloads the block given a block hash from the localhost node and prints it out.
  */
 public class FetchBlock {
     public static void main(String[] args) throws Exception {
+        BriefLogFormatter.init();
         System.out.println("Connecting to node");
         final NetworkParameters params = NetworkParameters.testNet();
 
         BlockStore blockStore = new MemoryBlockStore(params);
         BlockChain chain = new BlockChain(params, blockStore);
         PeerGroup peerGroup = new PeerGroup(params, chain);
-        peerGroup.start();
-
-        final CountDownLatch latch = new CountDownLatch(1);
-        peerGroup.addEventListener(new AbstractPeerEventListener() {
-            @Override
-            public void onPeerConnected(Peer peer, int peerCount) {
-                latch.countDown();
-            }
-        });
-        
-        ChannelFuture channelFuture =
-            peerGroup.connectTo(new InetSocketAddress(InetAddress.getLocalHost(), params.port));
-        latch.await();
-
-        Peer peer = PeerGroup.peerFromChannelFuture(channelFuture);
+        peerGroup.startAndWait();
+        PeerAddress addr = new PeerAddress(InetAddress.getLocalHost(), params.port, 31000);
+        peerGroup.addAddress(addr);
+        peerGroup.waitForPeers(1).get();
+        Peer peer = peerGroup.getConnectedPeers().get(0);
 
         Sha256Hash blockHash = new Sha256Hash(args[0]);
         Future<Block> future = peer.getBlock(blockHash);
