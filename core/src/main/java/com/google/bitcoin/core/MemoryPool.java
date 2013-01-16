@@ -188,7 +188,9 @@ public class MemoryPool {
                 return tx;
             }
         } else {
-            log.info("{}: Provided with a downloaded transaction we didn't see announced yet: {}", 
+            // This often happens when we are downloading a Bloom filtered chain, or recursively downloading
+            // dependencies of a relevant transaction (see Peer.downloadDependencies).
+            log.debug("{}: Provided with a downloaded transaction we didn't see announced yet: {}",
                     byPeer, tx.getHashAsString());
             entry = new Entry();
             entry.tx = new WeakTransactionReference(tx, referenceQueue);
