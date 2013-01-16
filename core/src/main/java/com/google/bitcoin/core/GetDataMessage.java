@@ -47,4 +47,12 @@ public class GetDataMessage extends ListMessage {
     public GetDataMessage(NetworkParameters params) {
         super(params);
     }
+
+    public void addTransaction(Sha256Hash hash) {
+        addItem(new InventoryItem(InventoryItem.Type.Transaction, hash));
+    }
+
+    public void addBlock(Sha256Hash hash) {
+        addItem(new InventoryItem(InventoryItem.Type.Block, hash));
+    }
 }

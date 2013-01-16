@@ -941,6 +941,17 @@ public class Transaction extends ChildMessage implements Serializable {
         maybeParse();
         return Collections.unmodifiableList(outputs);
     }
+
+    /** @return the given transaction: same as getInputs().get(index). */
+    public TransactionInput getInput(int index) {
+        maybeParse();
+        return inputs.get(index);
+    }
+
+    public TransactionOutput getOutput(int index) {
+        maybeParse();
+        return outputs.get(index);
+    }
     
     public synchronized TransactionConfidence getConfidence() {
         if (confidence == null) {
