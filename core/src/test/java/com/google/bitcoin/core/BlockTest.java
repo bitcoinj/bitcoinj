@@ -29,7 +29,7 @@ import java.util.Arrays;
 import static org.junit.Assert.*;
 
 public class BlockTest {
-    static final NetworkParameters params = NetworkParameters.testNet();
+    static final NetworkParameters params = NetworkParameters.oldTestNet();
 
     public static final byte[] blockBytes;
 

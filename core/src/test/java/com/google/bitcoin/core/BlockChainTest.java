@@ -34,7 +34,7 @@ import static org.junit.Assert.*;
 // Handling of chain splits/reorgs are in ChainSplitTests.
 
 public class BlockChainTest {
-    private static final NetworkParameters testNet = NetworkParameters.testNet();
+    private static final NetworkParameters testNet = NetworkParameters.oldTestNet();
     private BlockChain testNetChain;
 
     private Wallet wallet;

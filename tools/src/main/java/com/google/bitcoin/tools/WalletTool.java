@@ -271,7 +271,7 @@ public class WalletTool {
                 discovery = new DnsDiscovery(params);
                 break;
             case TEST: 
-                params = NetworkParameters.testNet3();
+                params = NetworkParameters.testNet();
                 chainFileName = new File("testnet.chain");
                 discovery = new IrcDiscovery("#bitcoinTEST3");
                 break;

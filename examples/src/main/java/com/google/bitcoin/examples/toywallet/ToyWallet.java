@@ -114,7 +114,7 @@ public class ToyWallet {
     public ToyWallet(boolean testnet, boolean fullChain, String[] args) throws Exception {
         // Set up a Bitcoin connection + empty wallet. TODO: Simplify the setup for this use case.
         if (testnet) {
-            params = NetworkParameters.testNet3();
+            params = NetworkParameters.testNet();
         } else {
             params = NetworkParameters.prodNet();
         }
