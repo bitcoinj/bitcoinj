@@ -19,13 +19,7 @@ package com.google.bitcoin.core;
 import java.util.List;
 
 /**
- * Implementing a PeerEventListener allows you to learn when significant Peer communication
- * has occurred.
- *
- * <p>Methods are called with the event listener object locked so your
- * implementation does not have to be thread safe.
- *
- * @author miron@google.com (Miron Cuperman a.k.a devrandom)
+ * <p>Implementing a PeerEventListener allows you to learn when significant Peer communication has occurred.</p>
  */
 public interface PeerEventListener {
     /**
