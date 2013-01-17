@@ -137,6 +137,9 @@ public class PeerGroup extends AbstractIdleService {
     public static final double DEFAULT_BLOOM_FILTER_FP_RATE = 0.0005;
     // The false positive rate for bloomFilter
     private double bloomFilterFPRate = DEFAULT_BLOOM_FILTER_FP_RATE;
+    // We use a constant tweak to avoid giving up privacy when we regenerate our filter with new keys
+    private final long bloomFilterTweak = new Random().nextLong();
+    private int lastBloomFilterElementCount;
 
     /**
      * Creates a PeerGroup with the given parameters. No chain is provided so this node will report its chain height
@@ -561,10 +564,14 @@ public class PeerGroup extends AbstractIdleService {
         }
 
         if (chain == null || !chain.shouldVerifyTransactions()) {
-            long nTweak = new Random().nextLong();
-            BloomFilter filter = new BloomFilter(elements, bloomFilterFPRate, nTweak);
+            // We stair-step our element count so that we avoid creating a filter with different parameters
+            // as much as possible as that results in a loss of privacy.
+            // The constant 100 here is somewhat arbitrary, but makes sense for small to medium wallets -
+            // it will likely mean we never need to create a filter with different parameters.
+            lastBloomFilterElementCount = elements > lastBloomFilterElementCount ? elements + 100 : lastBloomFilterElementCount;
+            BloomFilter filter = new BloomFilter(lastBloomFilterElementCount, bloomFilterFPRate, bloomFilterTweak);
             for (Wallet w : wallets)
-                filter.merge(w.getBloomFilter(elements, bloomFilterFPRate, nTweak));
+                filter.merge(w.getBloomFilter(elements, bloomFilterFPRate, bloomFilterTweak));
             bloomFilter = filter;
             log.info("Sending all peers an updated Bloom Filter.");
             for (Peer peer : peers)
