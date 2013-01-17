@@ -131,6 +131,12 @@ public class PeerGroup extends AbstractIdleService {
 
     // A bloom filter generated from all connected wallets that is given to new peers
     private BloomFilter bloomFilter;
+    /** A reasonable default for the bloom filter false positive rate on mainnet.
+     * Users for which low data usage is of utmost concern, 0.0001 may be better, for users
+     * to whom anonymity is of utmost concern, 0.001 should provide very good privacy */
+    public static final double DEFAULT_BLOOM_FILTER_FP_RATE = 0.0005;
+    // The false positive rate for bloomFilter
+    private double bloomFilterFPRate = DEFAULT_BLOOM_FILTER_FP_RATE;
 
     /**
      * Creates a PeerGroup with the given parameters. No chain is provided so this node will report its chain height
@@ -150,8 +156,7 @@ public class PeerGroup extends AbstractIdleService {
     public PeerGroup(NetworkParameters params, AbstractBlockChain chain) {
         this(params, chain, null);
     }
-
-
+    
     /**
      * <p>Creates a PeerGroup for the given network and chain, using the provided Netty {@link ClientBootstrap} object.
      * </p>
@@ -545,9 +550,9 @@ public class PeerGroup extends AbstractIdleService {
 
         if (chain == null || !chain.shouldVerifyTransactions()) {
             long nTweak = new Random().nextLong();
-            BloomFilter filter = new BloomFilter(elements, 0.001, nTweak);
+            BloomFilter filter = new BloomFilter(elements, bloomFilterFPRate, nTweak);
             for (Wallet w : wallets)
-                filter.merge(w.getBloomFilter(elements, 0.001, nTweak));
+                filter.merge(w.getBloomFilter(elements, bloomFilterFPRate, nTweak));
             bloomFilter = filter;
             log.info("Sending all peers an updated Bloom Filter.");
             for (Peer peer : peers)
@@ -556,6 +561,18 @@ public class PeerGroup extends AbstractIdleService {
                     peer.sendMessage(filter);
                 } catch (IOException e) { }
         }
+    }
+    
+    /**
+     * Sets the false positive rate of bloom filters given to peers.
+     * Be careful regenerating the bloom filter too often, as it decreases anonymity because remote nodes can
+     * compare transactions against both the new and old filters to significantly decrease the false positive rate.
+     * 
+     * See the docs for {@link BloomFilter#BloomFilter(int, double)} for a brief explanation of anonymity when using bloom filters.
+     */
+    public void setBloomFilterFalsePositiveRate(double bloomFilterFPRate) {
+        this.bloomFilterFPRate = bloomFilterFPRate;
+        recalculateFastCatchupAndFilter();
     }
 
     /**
