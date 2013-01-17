@@ -140,6 +140,12 @@ public class PeerGroup extends AbstractIdleService {
     // We use a constant tweak to avoid giving up privacy when we regenerate our filter with new keys
     private final long bloomFilterTweak = new Random().nextLong();
     private int lastBloomFilterElementCount;
+    
+    /**
+     * Every RESEND_BLOOM_FILTER_BLOCK_COUNT FilteredBlocks received, the bloom filter is refreshed.
+     * This prevents the actual false positive rate from ballooning as the filter gets elements added to it automatically.
+     */
+    public static final int RESEND_BLOOM_FILTER_BLOCK_COUNT = 25000;
 
     /**
      * Creates a PeerGroup with the given parameters. No chain is provided so this node will report its chain height
@@ -571,7 +577,7 @@ public class PeerGroup extends AbstractIdleService {
             lastBloomFilterElementCount = elements > lastBloomFilterElementCount ? elements + 100 : lastBloomFilterElementCount;
             BloomFilter filter = new BloomFilter(lastBloomFilterElementCount, bloomFilterFPRate, bloomFilterTweak);
             for (Wallet w : wallets)
-                filter.merge(w.getBloomFilter(elements, bloomFilterFPRate, bloomFilterTweak));
+                filter.merge(w.getBloomFilter(lastBloomFilterElementCount, bloomFilterFPRate, bloomFilterTweak));
             bloomFilter = filter;
             log.info("Sending all peers an updated Bloom Filter.");
             for (Peer peer : peers)
@@ -746,6 +752,26 @@ public class PeerGroup extends AbstractIdleService {
             @Override
             public void invoke(PeerEventListener listener) {
                 listener.onPeerConnected(peer, peers.size());
+            }
+        });
+        final PeerGroup thisGroup = this;
+        peer.addEventListener(new AbstractPeerEventListener() {
+            int filteredBlocksReceivedFromPeer = 0;
+            @Override
+            public Message onPreMessageReceived(Peer peer, Message m) {
+                if (m instanceof FilteredBlock) {
+                    filteredBlocksReceivedFromPeer++;
+                    if (filteredBlocksReceivedFromPeer % RESEND_BLOOM_FILTER_BLOCK_COUNT == RESEND_BLOOM_FILTER_BLOCK_COUNT-1) {
+                        try {
+                            synchronized(thisGroup) {
+                                peer.sendMessage(bloomFilter);
+                            }
+                        } catch (IOException e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
+                }
+                return m;
             }
         });
     }
