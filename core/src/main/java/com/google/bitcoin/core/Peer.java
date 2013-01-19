@@ -22,6 +22,9 @@ import com.google.bitcoin.store.BlockStoreException;
 import com.google.bitcoin.utils.EventListenerInvoker;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Lists;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import org.jboss.netty.channel.*;
@@ -33,6 +36,7 @@ import java.net.ConnectException;
 import java.net.InetSocketAddress;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CopyOnWriteArraySet;
 
 /**
  * A Peer handles the high level communication with a Bitcoin node.
@@ -234,7 +238,11 @@ public class Peer {
                 currentFilteredBlock = null;
             }
 
-            if (m instanceof InventoryMessage) {
+            if (m instanceof NotFoundMessage) {
+                // This is sent to us when we did a getdata on some transactions that aren't in the peers memory pool.
+                // Because NotFoundMessage is a subclass of InventoryMessage, the test for it must come before the next.
+                processNotFoundMessage((NotFoundMessage) m);
+            } else if (m instanceof InventoryMessage) {
                 processInv((InventoryMessage) m);
             } else if (m instanceof Block) {
                 processBlock((Block) m);
@@ -258,7 +266,7 @@ public class Peer {
             } else if (m instanceof HeadersMessage) {
                 processHeaders((HeadersMessage) m);
             } else if (m instanceof AlertMessage) {
-                processAlert((AlertMessage)m);
+                processAlert((AlertMessage) m);
             } else if (m instanceof VersionMessage) {
                 synchronized (Peer.this) {
                     peerVersionMessage = (VersionMessage)m;
@@ -292,6 +300,24 @@ public class Peer {
 
         public Peer getPeer() {
             return Peer.this;
+        }
+    }
+
+    private void processNotFoundMessage(NotFoundMessage m) {
+        // This is received when we previously did a getdata but the peer couldn't find what we requested in it's
+        // memory pool. Typically, because we are downloading dependencies of a relevant transaction and reached
+        // the bottom of the dependency tree (where the unconfirmed transactions connect to transactions that are
+        // in the chain).
+        //
+        // We go through and cancel the pending getdata futures for the items we were told weren't found.
+        for (ListIterator<GetDataRequest> it = getDataFutures.listIterator(); it.hasNext();) {
+            GetDataRequest req = it.next();
+            for (InventoryItem item : m.getItems()) {
+                if (item.hash.equals(req.hash)) {
+                    req.future.cancel(true);
+                    getDataFutures.remove(req);
+                }
+            }
         }
     }
 
@@ -383,6 +409,11 @@ public class Peer {
             // We may get back a different transaction object.
             tx = memoryPool.seen(tx, getAddress());
         }
+        if (maybeHandleRequestedData(tx))
+            return;
+        // Tell all listeners (like wallets) about this tx so they can decide whether to keep it or not. If no
+        // listener keeps a reference around then the memory pool will forget about it after a while too because
+        // it uses weak references.
         final Transaction ftx = tx;
         EventListenerInvoker.invoke(eventListeners, new EventListenerInvoker<PeerEventListener>() {
             @Override
@@ -390,6 +421,129 @@ public class Peer {
                 listener.onTransaction(Peer.this, ftx);
             }
         });
+    }
+
+    /**
+     * <p>Returns a future that wraps a list of all transactions that the given transaction depends on, recursively.
+     * Only transactions in peers memory pools are included; the recursion stops at transactions that are in the
+     * current best chain. So it doesn't make much sense to provide a tx that was already in the best chain and
+     * a precondition checks this.</p>
+     *
+     * <p>For example, if tx has 2 inputs that connect to transactions A and B, and transaction B is unconfirmed and
+     * has one input connecting to transaction C that is unconfirmed, and transaction C connects to transaction D
+     * that is in the chain, then this method will return either {B, C} or {C, B}.</p>
+     *
+     * <p>This method is useful for apps that want to learn about how long an unconfirmed transaction might take
+     * to confirm, by checking for unexpectedly time locked transactions, unusually deep dependency trees or fee-paying
+     * transactions that depend on unconfirmed free transactions.</p>
+     *
+     * <p>Note that dependencies downloaded this way will not trigger the onTransaction method of event listeners.</p>
+     */
+    public ListenableFuture<List<Transaction>> downloadDependencies(Transaction tx) {
+        TransactionConfidence.ConfidenceType txConfidence = tx.getConfidence().getConfidenceType();
+        Preconditions.checkArgument(txConfidence != TransactionConfidence.ConfidenceType.BUILDING);
+        log.info("Downloading dependencies of {}", tx.getHashAsString());
+        final LinkedList<Transaction> results = new LinkedList<Transaction>();
+        // future will be invoked when the entire dependency tree has been walked and the results compiled.
+        final ListenableFuture future = downloadDependenciesInternal(tx, new Object(), results);
+        final SettableFuture<List<Transaction>> resultFuture = SettableFuture.create();
+        Futures.addCallback(future, new FutureCallback() {
+            public void onSuccess(Object _) {
+                resultFuture.set(results);
+            }
+
+            public void onFailure(Throwable throwable) {
+                resultFuture.setException(throwable);
+            }
+        });
+        return resultFuture;
+    }
+
+    // The marker object in the future returned is the same as the parameter. It is arbitrary and can be anything.
+    private ListenableFuture<Object> downloadDependenciesInternal(final Transaction tx,
+                                                                  final Object marker,
+                                                                  final List<Transaction> results) {
+        final SettableFuture<Object> resultFuture = SettableFuture.create();
+        final Sha256Hash rootTxHash = tx.getHash();
+        // We want to recursively grab its dependencies. This is so listeners can learn important information like
+        // whether a transaction is dependent on a timelocked transaction or has an unexpectedly deep dependency tree
+        // or depends on a no-fee transaction.
+        //
+        // Firstly find any that are already in the memory pool so if they weren't garbage collected yet, they won't
+        // be deleted. Use COW sets to make unit tests deterministic and because they are small. It's slower for
+        // the case of transactions with tons of inputs.
+        Set<Transaction> dependencies = new CopyOnWriteArraySet<Transaction>();
+        Set<Sha256Hash> needToRequest = new CopyOnWriteArraySet<Sha256Hash>();
+        for (TransactionInput input : tx.getInputs()) {
+            // There may be multiple inputs that connect to the same transaction.
+            Sha256Hash hash = input.getOutpoint().getHash();
+            Transaction dep = memoryPool.get(hash);
+            if (dep == null) {
+                needToRequest.add(hash);
+            } else {
+                dependencies.add(dep);
+            }
+        }
+        results.addAll(dependencies);
+        try {
+            // Build the request for the missing dependencies.
+            List<ListenableFuture<Transaction>> futures = Lists.newArrayList();
+            GetDataMessage getdata = new GetDataMessage(params);
+            for (Sha256Hash hash : needToRequest) {
+                getdata.addTransaction(hash);
+                GetDataRequest req = new GetDataRequest();
+                req.hash = hash;
+                req.future = SettableFuture.create();
+                futures.add(req.future);
+                getDataFutures.add(req);
+            }
+            // The transactions we already grabbed out of the mempool must still be considered by the code below.
+            for (Transaction dep : dependencies) {
+                futures.add(Futures.immediateFuture(dep));
+            }
+            ListenableFuture<List<Transaction>> successful = Futures.successfulAsList(futures);
+            Futures.addCallback(successful, new FutureCallback<List<Transaction>>() {
+                public void onSuccess(List<Transaction> transactions) {
+                    // Once all transactions either were received, or we know there are no more to come ...
+                    // Note that transactions will contain "null" for any positions that weren't successful.
+                    List<ListenableFuture<Object>> childFutures = Lists.newLinkedList();
+                    for (Transaction tx : transactions) {
+                        if (tx == null) continue;
+                        log.info("Downloaded dependency of {}: {}", rootTxHash, tx.getHashAsString());
+                        results.add(tx);
+                        // Now recurse into the dependencies of this transaction too.
+                        childFutures.add(downloadDependenciesInternal(tx, marker, results));
+                    }
+                    if (childFutures.size() == 0) {
+                        // Short-circuit: we're at the bottom of this part of the tree.
+                        resultFuture.set(marker);
+                    } else {
+                        // There are some children to download. Wait until it's done (and their children and their
+                        // children...) to inform the caller that we're finished.
+                        Futures.addCallback(Futures.successfulAsList(childFutures), new FutureCallback<List<Object>>() {
+                            public void onSuccess(List<Object> objects) {
+                                resultFuture.set(marker);
+                            }
+
+                            public void onFailure(Throwable throwable) {
+                                resultFuture.setException(throwable);
+                            }
+                        });
+                    }
+                }
+
+                public void onFailure(Throwable throwable) {
+                    resultFuture.setException(throwable);
+                }
+            });
+            // Start the operation.
+            sendMessage(getdata);
+        } catch (IOException e) {
+            log.error("Couldn't send getdata in downloadDependencies({})", tx.getHash());
+            resultFuture.setException(e);
+            return resultFuture;
+        }
+        return resultFuture;
     }
 
     private synchronized void processBlock(Block m) throws IOException {
@@ -481,7 +635,7 @@ public class Peer {
         }
     }
 
-    private boolean maybeHandleRequestedData(Block m) {
+    private boolean maybeHandleRequestedData(Message m) {
         boolean found = false;
         Sha256Hash hash = m.getHash();
         for (ListIterator<GetDataRequest> it = getDataFutures.listIterator(); it.hasNext();) {
@@ -622,18 +776,33 @@ public class Peer {
      * Asks the connected peer for the block of the given hash, and returns a future representing the answer.
      * If you want the block right away and don't mind waiting for it, just call .get() on the result. Your thread
      * will block until the peer answers.
-     *
-     * @param blockHash Hash of the block you wareare requesting.
-     * @throws IOException
      */
     public ListenableFuture<Block> getBlock(Sha256Hash blockHash) throws IOException {
         log.info("Request to fetch block {}", blockHash);
         GetDataMessage getdata = new GetDataMessage(params);
-        InventoryItem inventoryItem = new InventoryItem(InventoryItem.Type.Block, blockHash);
-        getdata.addItem(inventoryItem);
+        getdata.addBlock(blockHash);
+        return sendSingleGetData(getdata);
+    }
+
+    /**
+     * Asks the connected peer for the given transaction from its memory pool. Transactions in the chain cannot be
+     * retrieved this way because peers don't have a transaction ID to transaction-pos-on-disk index, and besides,
+     * in future many peers will delete old transaction data they don't need.
+     */
+    public ListenableFuture<Transaction> getPeerMempoolTransaction(Sha256Hash hash) throws IOException {
+        // TODO: Unit test this method.
+        log.info("Request to fetch peer mempool tx  {}", hash);
+        GetDataMessage getdata = new GetDataMessage(params);
+        getdata.addTransaction(hash);
+        return sendSingleGetData(getdata);
+    }
+
+    /** Sends a getdata with a single item in it. */
+    private ListenableFuture sendSingleGetData(GetDataMessage getdata) throws IOException {
+        Preconditions.checkArgument(getdata.getItems().size() == 1);
         GetDataRequest req = new GetDataRequest();
         req.future = SettableFuture.create();
-        req.hash = blockHash;
+        req.hash = getdata.getItems().get(0).hash;
         getDataFutures.add(req);
         sendMessage(getdata);
         return req.future;

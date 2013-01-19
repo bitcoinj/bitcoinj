@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 Google Inc.
+ * Copyright 2012 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,14 +20,15 @@ import com.google.bitcoin.core.*;
 import com.google.bitcoin.store.BlockStore;
 import com.google.bitcoin.store.MemoryBlockStore;
 import com.google.bitcoin.utils.BriefLogFormatter;
+import com.google.common.util.concurrent.ListenableFuture;
 
 import java.net.InetAddress;
-import java.util.concurrent.Future;
+import java.util.List;
 
 /**
- * Downloads the block given a block hash from the localhost node and prints it out.
+ * Downloads the given transaction and its dependencies from a peers memory pool then prints them out.
  */
-public class FetchBlock {
+public class FetchTransactions {
     public static void main(String[] args) throws Exception {
         BriefLogFormatter.init();
         System.out.println("Connecting to node");
@@ -37,16 +38,23 @@ public class FetchBlock {
         BlockChain chain = new BlockChain(params, blockStore);
         PeerGroup peerGroup = new PeerGroup(params, chain);
         peerGroup.startAndWait();
-        PeerAddress addr = new PeerAddress(InetAddress.getLocalHost(), params.port);
-        peerGroup.addAddress(addr);
+        peerGroup.addAddress(new PeerAddress(InetAddress.getLocalHost(), params.port));
         peerGroup.waitForPeers(1).get();
         Peer peer = peerGroup.getConnectedPeers().get(0);
 
-        Sha256Hash blockHash = new Sha256Hash(args[0]);
-        Future<Block> future = peer.getBlock(blockHash);
-        System.out.println("Waiting for node to send us the requested block: " + blockHash);
-        Block block = future.get();
-        System.out.println(block);
-        peerGroup.stop();
+        Sha256Hash txHash = new Sha256Hash(args[0]);
+        ListenableFuture<Transaction> future = peer.getPeerMempoolTransaction(txHash);
+        System.out.println("Waiting for node to send us the requested transaction: " + txHash);
+        Transaction tx = future.get();
+        System.out.println(tx);
+
+        System.out.println("Waiting for node to send us the dependencies ...");
+        List<Transaction> deps = peer.downloadDependencies(tx).get();
+        for (Transaction dep : deps) {
+            System.out.println("Got dependency " + dep.getHashAsString());
+        }
+
+        System.out.println("Done.");
+        peerGroup.stopAndWait();
     }
 }

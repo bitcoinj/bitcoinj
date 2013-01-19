@@ -2211,7 +2211,7 @@ public class Wallet implements Serializable, BlockChainListener {
      * The returned object can be used to connect the wallet to a {@link Peer} or {@link PeerGroup} in order to
      * receive and process blocks and transactions.
      */
-    public synchronized PeerEventListener getPeerEventListener() {
+    synchronized PeerEventListener getPeerEventListener() {
         if (peerEventListener == null) {
             // Instantiate here to avoid issues with wallets resurrected from serialized copies.
             peerEventListener = new AbstractPeerEventListener() {

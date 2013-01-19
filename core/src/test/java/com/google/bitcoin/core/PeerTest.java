@@ -19,6 +19,7 @@ package com.google.bitcoin.core;
 import com.google.bitcoin.core.Peer.PeerHandler;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.easymock.Capture;
+import org.easymock.CaptureType;
 import org.jboss.netty.channel.*;
 import org.junit.Before;
 import org.junit.Test;
@@ -38,6 +39,7 @@ public class PeerTest extends TestWithNetworkConnections {
     private Capture<DownstreamMessageEvent> event;
     private PeerHandler handler;
     private static final int OTHER_PEER_CHAIN_HEIGHT = 110;
+    private MemoryPool memoryPool;
 
     @Override
     @Before
@@ -47,8 +49,10 @@ public class PeerTest extends TestWithNetworkConnections {
         VersionMessage ver = new VersionMessage(unitTestParams, 100);
         peer = new Peer(unitTestParams, blockChain, ver);
         peer.addWallet(wallet);
+        memoryPool = new MemoryPool();
+        peer.setMemoryPool(memoryPool);
         handler = peer.getHandler();
-        event = new Capture<DownstreamMessageEvent>(); 
+        event = new Capture<DownstreamMessageEvent>(CaptureType.ALL);
         pipeline.sendDownstream(capture(event));
         expectLastCall().anyTimes();
     }
@@ -409,7 +413,7 @@ public class PeerTest extends TestWithNetworkConnections {
         // Request headers until the last 2 blocks.
         peer.setDownloadParameters((Utils.now().getTime() / 1000) - (600*2) + 1, false);
         peer.startBlockChainDownload();
-        GetHeadersMessage getheaders = (GetHeadersMessage) event.getValue().getMessage();
+        GetHeadersMessage getheaders = (GetHeadersMessage) outbound();
         List<Sha256Hash> expectedLocator = new ArrayList<Sha256Hash>();
         expectedLocator.add(b1.getHash());
         expectedLocator.add(unitTestParams.genesisBlock.getHash());
@@ -424,7 +428,7 @@ public class PeerTest extends TestWithNetworkConnections {
         expectedLocator.add(b1.getHash());
         expectedLocator.add(unitTestParams.genesisBlock.getHash());
         inbound(peer, headers);
-        GetBlocksMessage getblocks = (GetBlocksMessage) event.getValue().getMessage();
+        GetBlocksMessage getblocks = (GetBlocksMessage) outbound();
         assertEquals(expectedLocator, getblocks.getLocator());
         assertEquals(Sha256Hash.ZERO_HASH, getblocks.getStopHash());
         // We're supposed to get an inv here.
@@ -467,10 +471,100 @@ public class PeerTest extends TestWithNetworkConnections {
         assertEquals(elapsed, peer.getLastPingTime());
         assertEquals(7250, peer.getPingTime());
     }
-    
+
+    @Test
+    public void recursiveDownload() throws Exception {
+        // Our peer announces a normal transaction that depends on a different transaction that is time locked such
+        // that it will never confirm. There's not currently any use case for doing that to us, so it's an attack.
+        //
+        // Peer should notice this by downloading all transaction dependencies and searching for timelocked ones.
+        // Also, if a dependency chain is absurdly deep, the wallet shouldn't hear about it because it may just be
+        // a different way to achieve the same thing (a payment that will not confirm for a very long time).
+        control.replay();
+        connect();
+
+        final Transaction[] onTx = new Transaction[1];
+        peer.addEventListener(new AbstractPeerEventListener() {
+            @Override
+            public void onTransaction(Peer peer, Transaction t) {
+                onTx[0] = t;
+            }
+        });
+
+        // Make the some fake transactions in the following graph:
+        //   t1 -> t2 -> [t5]
+        //      -> t3 -> t4 -> [t6]
+        // The ones in brackets are assumed to be in the chain and are represented only by hashes.
+        ECKey to = new ECKey();
+        Transaction t2 = TestUtils.createFakeTx(unitTestParams, Utils.toNanoCoins(1, 0), to);
+        Sha256Hash t5 = t2.getInput(0).getOutpoint().getHash();
+        Transaction t4 = TestUtils.createFakeTx(unitTestParams, Utils.toNanoCoins(1, 0), new ECKey());
+        Sha256Hash t6 = t4.getInput(0).getOutpoint().getHash();
+        t4.addOutput(Utils.toNanoCoins(1, 0), new ECKey());
+        Transaction t3 = new Transaction(unitTestParams);
+        t3.addInput(t4.getOutput(0));
+        t3.addOutput(Utils.toNanoCoins(1, 0), new ECKey());
+        Transaction t1 = new Transaction(unitTestParams);
+        t1.addInput(t2.getOutput(0));
+        t1.addInput(t3.getOutput(0));
+        t1.addOutput(Utils.toNanoCoins(1, 0), to);
+        t1 = TestUtils.roundTripTransaction(unitTestParams, t1);
+        t2 = TestUtils.roundTripTransaction(unitTestParams, t2);
+        t3 = TestUtils.roundTripTransaction(unitTestParams, t3);
+        t4 = TestUtils.roundTripTransaction(unitTestParams, t4);
+
+        // Announce the first one. Wait for it to be downloaded.
+        InventoryMessage inv = new InventoryMessage(unitTestParams);
+        inv.addTransaction(t1);
+        inbound(peer, inv);
+        GetDataMessage getdata = (GetDataMessage) outbound();
+        assertEquals(t1.getHash(), getdata.getItems().get(0).hash);
+        inbound(peer, t1);
+        assertEquals(t1, onTx[0]);
+        // We want its dependencies so ask for them.
+        ListenableFuture<List<Transaction>> futures = peer.downloadDependencies(t1);
+        assertFalse(futures.isDone());
+        // It will recursively ask for the dependencies of t1: t2 and t3.
+        getdata = (GetDataMessage) outbound();
+        assertEquals(t2.getHash(), getdata.getItems().get(0).hash);
+        assertEquals(t3.getHash(), getdata.getItems().get(1).hash);
+        // For some random reason, t4 is delivered at this point before it's needed - perhaps it was a Bloom filter
+        // false positive. We do this to check that the mempool is being checked for seen transactions before
+        // requesting them.
+        inbound(peer, t4);
+        // Deliver the requested transactions.
+        inbound(peer, t2);
+        inbound(peer, t3);
+        assertFalse(futures.isDone());
+        // It will recursively ask for the dependencies of t2: t5 and t4, but not t3 because it already found t4.
+        getdata = (GetDataMessage) outbound();
+        assertEquals(getdata.getItems().get(0).hash, t2.getInput(0).getOutpoint().getHash());
+        // t5 isn't found and t4 is.
+        NotFoundMessage notFound = new NotFoundMessage(unitTestParams);
+        notFound.addItem(new InventoryItem(InventoryItem.Type.Transaction, t5));
+        inbound(peer, notFound);
+        assertFalse(futures.isDone());
+        // Continue to explore the t4 branch and ask for t6, which is in the chain.
+        getdata = (GetDataMessage) outbound();
+        assertEquals(t6, getdata.getItems().get(0).hash);
+        notFound = new NotFoundMessage(unitTestParams);
+        notFound.addItem(new InventoryItem(InventoryItem.Type.Transaction, t6));
+        inbound(peer, notFound);
+        // That's it, we explored the entire tree.
+        assertTrue(futures.isDone());
+        List<Transaction> results = futures.get();
+        assertTrue(results.contains(t2));
+        assertTrue(results.contains(t3));
+        assertTrue(results.contains(t4));
+    }
+
+    // TODO: Use generics here to avoid unnecessary casting.
     private Message outbound() {
-        Message message = (Message)event.getValue().getMessage();
-        event.reset();
+        List<DownstreamMessageEvent> messages = event.getValues();
+        if (messages.isEmpty())
+            throw new AssertionError("No messages sent when one was expected");
+        Message message = (Message)messages.get(0).getMessage();
+        messages.remove(0);
         return message;
     }
 }
