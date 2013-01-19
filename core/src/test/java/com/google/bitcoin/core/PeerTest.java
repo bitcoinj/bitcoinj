@@ -64,6 +64,7 @@ public class PeerTest extends TestWithNetworkConnections {
     private void connect(PeerHandler handler, Channel channel, ChannelHandlerContext ctx) throws Exception {
         handler.connectRequested(ctx, new UpstreamChannelStateEvent(channel, ChannelState.CONNECTED, socketAddress));
         VersionMessage peerVersion = new VersionMessage(unitTestParams, OTHER_PEER_CHAIN_HEIGHT);
+        peerVersion.clientVersion = 70001;
         DownstreamMessageEvent versionEvent = 
             new DownstreamMessageEvent(channel, Channels.future(channel), peerVersion, null);
         handler.messageReceived(ctx, versionEvent);
