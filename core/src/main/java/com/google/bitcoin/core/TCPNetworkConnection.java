@@ -60,10 +60,6 @@ public class TCPNetworkConnection implements NetworkConnection {
     private BitcoinSerializer serializer = null;
 
     private VersionMessage myVersionMessage;
-    private static final Date checksummingProtocolChangeDate = new Date(1329696000000L);
-    
-    private long messageCount;
-
     private Channel channel;
     
     private NetworkHandler handler;
@@ -81,10 +77,7 @@ public class TCPNetworkConnection implements NetworkConnection {
     public TCPNetworkConnection(NetworkParameters params, VersionMessage ver) {
         this.params = params;
         this.myVersionMessage = ver;
-
-        // So pre-Feb 2012, update checkumming property after version is read.
-        this.serializer = new BitcoinSerializer(this.params, false);
-        this.serializer.setUseChecksumming(Utils.now().after(checksummingProtocolChangeDate));
+        this.serializer = new BitcoinSerializer(this.params, true);
         this.handler = new NetworkHandler();
     }
 
@@ -139,19 +132,13 @@ public class TCPNetworkConnection implements NetworkConnection {
         write(channel, message);
     }
 
-    private void onFirstMessage(Message m) throws IOException, ProtocolException {
+    private void onVersionMessage(Message m) throws IOException, ProtocolException {
         if (!(m instanceof VersionMessage)) {
             // Bad peers might not follow the protocol. This has been seen in the wild (issue 81).
             log.info("First message received was not a version message but rather " + m);
             return;
         }
         versionMessage = (VersionMessage) m;
-        // Now it's our turn ...
-        // Send an ACK message stating we accept the peers protocol version.
-        write(channel, new VersionAck());
-    }
-        
-    private void onSecondMessage() throws IOException, ProtocolException {
         // Switch to the new protocol version.
         int peerVersion = versionMessage.clientVersion;
         log.info("Connected to peer: version={}, subVer='{}', services=0x{}, time={}, blocks={}", new Object[] {
@@ -161,6 +148,9 @@ public class TCPNetworkConnection implements NetworkConnection {
                 new Date(versionMessage.time * 1000),
                 versionMessage.bestHeight
         });
+        // Now it's our turn ...
+        // Send an ACK message stating we accept the peers protocol version.
+        write(channel, new VersionAck());
         // bitcoinj is a client mode implementation. That means there's not much point in us talking to other client
         // mode nodes because we can't download the data from them we need to find/verify transactions. Some bogus
         // implementations claim to have a block chain in their services field but then report a height of zero, filter
@@ -170,8 +160,6 @@ public class TCPNetworkConnection implements NetworkConnection {
             // Shut down the channel
             throw new ProtocolException("Peer does not have a copy of the block chain.");
         }
-        // Newer clients use checksumming.
-        serializer.setUseChecksumming(peerVersion >= 209);
         // Handshake is done!
         if (handshakeFuture != null)
             handshakeFuture.set(this);
@@ -219,12 +207,8 @@ public class TCPNetworkConnection implements NetworkConnection {
         protected Object decode(ChannelHandlerContext ctx, Channel chan,
                                 ChannelBuffer buffer, VoidEnum state) throws Exception {
             Message message = serializer.deserialize(new ChannelBufferInputStream(buffer));
-            messageCount++;
-            if (messageCount == 1) {
-                onFirstMessage(message);
-            } else if (messageCount == 2) {
-                onSecondMessage();
-            }
+            if (message instanceof VersionMessage)
+                onVersionMessage(message);
             return message;
         }
 
