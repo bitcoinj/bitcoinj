@@ -192,6 +192,8 @@ public class Wallet implements Serializable, BlockChainListener {
     // in receive() via Transaction.setBlockAppearance(). As the BlockChain always calls notifyNewBestBlock even if
     // it sent transactions to the wallet, without this we'd double count.
     private transient HashSet<Sha256Hash> ignoreNextNewBlock;
+    // Whether or not to ignore nLockTime > 0 transactions that are received to the mempool.
+    private boolean acceptTimeLockedTransactions;
 
     /**
      * Creates a new, empty wallet with no keys and no transactions. If you want to restore a wallet from disk instead,
@@ -226,6 +228,7 @@ public class Wallet implements Serializable, BlockChainListener {
                 invokeOnWalletChanged();
             }
         };
+        acceptTimeLockedTransactions = false;
     }
 
     public NetworkParameters getNetworkParameters() {
@@ -288,6 +291,28 @@ public class Wallet implements Serializable, BlockChainListener {
         File directory = f.getAbsoluteFile().getParentFile();
         File temp = File.createTempFile("wallet", null, directory);
         saveToFile(temp, f);
+    }
+
+    /**
+     * <p>Whether or not the wallet will ignore transactions that have a lockTime parameter > 0. By default, all such
+     * transactions are ignored, because they are useful only in special protocols and such a transaction may not
+     * confirm as fast as an app typically expects. By setting this property to true, you are acknowledging that
+     * you understand what time-locked transactions are, and that your code is capable of handling them without risk.
+     * For instance you are not providing anything valuable in return for an unconfirmed transaction that has a lock
+     * time far in the future (which opens you up to Finney attacks).</p>
+     *
+     * <p>Note that this property is not serialized. So you have to set it to true each time you load or create a
+     * wallet.</p>
+     */
+    public void setAcceptTimeLockedTransactions(boolean acceptTimeLockedTransactions) {
+        this.acceptTimeLockedTransactions = acceptTimeLockedTransactions;
+    }
+
+    /**
+     * See {@link Wallet#setAcceptTimeLockedTransactions(boolean)} for an explanation of this property.
+     */
+    public boolean doesAcceptTimeLockedTransactions() {
+        return acceptTimeLockedTransactions;
     }
 
     // Auto-saving can be done on a background thread if the user wishes it, this is to avoid stalling threads calling
@@ -640,35 +665,35 @@ public class Wallet implements Serializable, BlockChainListener {
         receive(tx, block, blockType, false);
     }
 
+    protected static class AnalysisResult {
+        // Which tx, if any, had a non-zero lock time.
+        Transaction timeLocked;
+        // In future, depth, fees, if any are non-standard, anything else that's interesting ...
+    }
+
     /**
-     * Called when we have found a transaction (via network broadcast or otherwise) that is relevant to this wallet
+     * <p>Called when we have found a transaction (via network broadcast or otherwise) that is relevant to this wallet
      * and want to record it. Note that we <b>cannot verify these transactions at all</b>, they may spend fictional
      * coins or be otherwise invalid. They are useful to inform the user about coins they can expect to receive soon,
      * and if you trust the sender of the transaction you can choose to assume they are in fact valid and will not
-     * be double spent as an optimization.
+     * be double spent as an optimization.</p>
      *
-     * @param tx
-     * @throws VerificationException
+     * <p>Before this method is called, {@link Wallet#isPendingTransactionRelevant(Transaction)} should have been
+     * called to decide whether the wallet cares about the transaction - if it does, then this method expects the
+     * transaction and any dependencies it has which are still in the memory pool.</p>
      */
-    public synchronized void receivePending(Transaction tx) throws VerificationException {
-        // Can run in a peer thread.
-
-        // Ignore it if we already know about this transaction. Receiving a pending transaction never moves it
-        // between pools.
-        EnumSet<Pool> containingPools = getContainingPools(tx);
-        if (!containingPools.equals(EnumSet.noneOf(Pool.class))) {
-            log.debug("Received tx we already saw in a block or created ourselves: " + tx.getHashAsString());
+    public synchronized void receivePending(Transaction tx, List<Transaction> dependencies) throws VerificationException {
+        // Can run in a peer thread. This method will only be called if a prior call to isPendingTransactionRelevant
+        // returned true, so we already know by this point that it sends coins to or from our wallet, or is a double
+        // spend against one of our other pending transactions.
+        //
+        // Do a brief risk analysis of the transaction and its dependencies to check for any possible attacks.
+        AnalysisResult analysis = analyzeTransactionAndDependencies(tx, dependencies);
+        if (analysis.timeLocked != null && !doesAcceptTimeLockedTransactions()) {
+            log.warn("Transaction {}, dependency of {} has a time lock value of {}", new Object[] {
+                    analysis.timeLocked.getHashAsString(), tx.getHashAsString(), analysis.timeLocked.getLockTime()});
             return;
         }
-
-        // We only care about transactions that:
-        //   - Send us coins
-        //   - Spend our coins
-        if (!isTransactionRelevant(tx)) {
-            log.debug("Received tx that isn't relevant to this wallet, discarding.");
-            return;
-        }
-
         BigInteger valueSentToMe = tx.getValueSentToMe(this);
         BigInteger valueSentFromMe = tx.getValueSentFromMe(this);
         if (log.isInfoEnabled()) {
@@ -676,7 +701,6 @@ public class Wallet implements Serializable, BlockChainListener {
                     " and sends us %s BTC", tx.getHashAsString(), Utils.bitcoinValueToFriendlyString(valueSentFromMe),
                     Utils.bitcoinValueToFriendlyString(valueSentToMe)));
         }
-
         // Mark the tx as having been seen but is not yet in the chain. This will normally have been done already by
         // the Peer before we got to this point, but in some cases (unit tests, other sources of transactions) it may
         // have been missed out.
@@ -687,13 +711,57 @@ public class Wallet implements Serializable, BlockChainListener {
             // txConfidenceListener wasn't added.
             invokeOnTransactionConfidenceChanged(tx);
         }
-
         // If this tx spends any of our unspent outputs, mark them as spent now, then add to the pending pool. This
         // ensures that if some other client that has our keys broadcasts a spend we stay in sync. Also updates the
         // timestamp on the transaction and registers/runs event listeners.
         //
         // Note that after we return from this function, the wallet may have been modified.
         commitTx(tx);
+    }
+
+    private AnalysisResult analyzeTransactionAndDependencies(Transaction tx, List<Transaction> dependencies) {
+        AnalysisResult result = new AnalysisResult();
+        if (tx.getLockTime() > 0)
+            result.timeLocked = tx;
+        if (dependencies != null) {
+            for (Transaction dep : dependencies) {
+                if (dep.getLockTime() > 0) {
+                    result.timeLocked = dep;
+                }
+            }
+        }
+        return result;
+    }
+
+    /**
+     * This method is used by a {@link Peer} to find out if a transaction that has been announced is interesting,
+     * that is, whether we should bother downloading its dependencies and exploring the transaction to decide how
+     * risky it is. If this method returns true then {@link Wallet#receivePending(Transaction, java.util.List)}
+     * will soon be called with the transactions dependencies as well.
+     */
+    boolean isPendingTransactionRelevant(Transaction tx) throws ScriptException {
+        // Ignore it if we already know about this transaction. Receiving a pending transaction never moves it
+        // between pools.
+        EnumSet<Pool> containingPools = getContainingPools(tx);
+        if (!containingPools.equals(EnumSet.noneOf(Pool.class))) {
+            log.debug("Received tx we already saw in a block or created ourselves: " + tx.getHashAsString());
+            return false;
+        }
+
+        // We only care about transactions that:
+        //   - Send us coins
+        //   - Spend our coins
+        if (!isTransactionRelevant(tx)) {
+            log.debug("Received tx that isn't relevant to this wallet, discarding.");
+            return false;
+        }
+
+        if (tx.getLockTime() > 0 && !acceptTimeLockedTransactions) {
+            log.warn("Received transaction {} with a lock time of {}, but not configured to accept these, discarding",
+                    tx.getHashAsString(), tx.getLockTime());
+            return false;
+        }
+        return true;
     }
 
     // Boilerplate that allows event listeners to delete themselves during execution, and auto locks the listener.

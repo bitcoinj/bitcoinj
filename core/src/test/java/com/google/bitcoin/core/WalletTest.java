@@ -443,7 +443,7 @@ public class WalletTest {
         
         TestUtils.DoubleSpends doubleSpends = TestUtils.createFakeDoubleSpendTxns(params, myAddress);
         // t1 spends to our wallet. t2 double spends somewhere else.
-        wallet.receivePending(doubleSpends.t1);
+        wallet.receivePending(doubleSpends.t1, null);
         assertEquals(TransactionConfidence.ConfidenceType.NOT_SEEN_IN_CHAIN,
                 doubleSpends.t1.getConfidence().getConfidenceType());
         BlockPair bp3 = createFakeBlock(params, blockStore,  doubleSpends.t2);
@@ -484,12 +484,13 @@ public class WalletTest {
             }
         });
 
-        wallet.receivePending(t1);
+        if (wallet.isPendingTransactionRelevant(t1))
+            wallet.receivePending(t1, null);
         assertTrue(flags[0]);
         assertTrue(flags[1]);   // is pending
         flags[0] = false;
         // Check we don't get notified if we receive it again.
-        wallet.receivePending(t1);
+        assertFalse(wallet.isPendingTransactionRelevant(t1));
         assertFalse(flags[0]);
         // Now check again, that we should NOT be notified when we receive it via a block (we were already notified).
         // However the confidence should be updated.
@@ -513,7 +514,8 @@ public class WalletTest {
         flags[0] = false;
         flags[1] = false;
         Transaction irrelevant = createFakeTx(params, nanos, new ECKey().toAddress(params));
-        wallet.receivePending(irrelevant);
+        if (wallet.isPendingTransactionRelevant(irrelevant))
+            wallet.receivePending(irrelevant, null);
         assertFalse(flags[0]);
         assertEquals(2, walletChanged[0]);
     }
@@ -542,7 +544,8 @@ public class WalletTest {
         BigInteger halfNanos = Utils.toNanoCoins(0, 50);
         Transaction t2 = wallet.createSend(new ECKey().toAddress(params), halfNanos);
         // Now receive it as pending.
-        wallet.receivePending(t2);
+        if (wallet.isPendingTransactionRelevant(t2))
+            wallet.receivePending(t2, null);
         // We received an onCoinsSent() callback.
         assertEquals(t2, txn[0]);
         assertEquals(nanos, bigints[0]);
@@ -590,7 +593,8 @@ public class WalletTest {
         });
 
         assertEquals(BigInteger.ZERO, wallet.getBalance());
-        wallet.receivePending(t1);
+        if (wallet.isPendingTransactionRelevant(t1))
+            wallet.receivePending(t1, null);
         assertEquals(t1, called[0]);
         assertEquals(nanos, wallet.getBalance(Wallet.BalanceType.ESTIMATED));
         // Now receive a double spend on the main chain.
@@ -724,7 +728,8 @@ public class WalletTest {
         wallet.addKey(key1);
         BigInteger value = toNanoCoins(5, 0);
         Transaction t1 = createFakeTx(params, value, key1);
-        wallet.receivePending(t1);
+        if (wallet.isPendingTransactionRelevant(t1))
+            wallet.receivePending(t1, null);
         // TX should have been seen as relevant.
         assertEquals(value, wallet.getBalance(Wallet.BalanceType.ESTIMATED));
         assertEquals(BigInteger.ZERO, wallet.getBalance(Wallet.BalanceType.AVAILABLE));
@@ -754,7 +759,8 @@ public class WalletTest {
         assertFalse(hash1.equals(hash2));  // File has changed.
 
         Transaction t1 = createFakeTx(params, toNanoCoins(5, 0), key);
-        wallet.receivePending(t1);
+        if (wallet.isPendingTransactionRelevant(t1))
+            wallet.receivePending(t1, null);
         Sha256Hash hash3 = Sha256Hash.hashFileContents(f);
         assertFalse(hash2.equals(hash3));  // File has changed again.
 
@@ -803,7 +809,8 @@ public class WalletTest {
         results[0] = results[1] = null;
 
         Transaction t1 = createFakeTx(params, toNanoCoins(5, 0), key);
-        wallet.receivePending(t1);
+        if (wallet.isPendingTransactionRelevant(t1))
+            wallet.receivePending(t1, null);
         Sha256Hash hash3 = Sha256Hash.hashFileContents(f);
         assertTrue(hash2.equals(hash3));  // File has NOT changed.
         assertNull(results[0]);

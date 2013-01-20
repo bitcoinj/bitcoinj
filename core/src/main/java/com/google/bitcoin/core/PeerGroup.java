@@ -1074,7 +1074,10 @@ public class PeerGroup extends AbstractIdleService {
                     synchronized (PeerGroup.this) {
                         for (Wallet wallet : wallets) {
                             try {
-                                wallet.receivePending(pinnedTx);
+                                if (wallet.isPendingTransactionRelevant(pinnedTx)) {
+                                    // Assumption here is there are no dependencies of the created transaction.
+                                    wallet.receivePending(pinnedTx, null);
+                                }
                             } catch (Throwable t) {
                                 future.setException(t);
                                 return;
@@ -1106,7 +1109,10 @@ public class PeerGroup extends AbstractIdleService {
                                 // wallet now we know it's valid.
                                 for (Wallet wallet : wallets) {
                                     try {
-                                        wallet.receivePending(pinnedTx);
+                                        if (wallet.isPendingTransactionRelevant(pinnedTx)) {
+                                            // Assumption here is there are no dependencies of the created transaction.
+                                            wallet.receivePending(pinnedTx, null);
+                                        }
                                     } catch (Throwable t) {
                                         future.setException(t);
                                         return;

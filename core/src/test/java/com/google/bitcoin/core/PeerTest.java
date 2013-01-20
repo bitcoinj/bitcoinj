@@ -26,6 +26,7 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.math.BigInteger;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Future;
@@ -252,11 +253,13 @@ public class PeerTest extends TestWithNetworkConnections {
         inv.addItem(item);
         inbound(peer, inv);
         // Peer hasn't seen it before, so will ask for it.
-        
-        GetDataMessage message = (GetDataMessage) event.getValue().getMessage();
-        assertEquals(1, message.getItems().size());
-        assertEquals(tx.getHash(), message.getItems().get(0).hash);
+        GetDataMessage getdata = (GetDataMessage) outbound();
+        assertEquals(1, getdata.getItems().size());
+        assertEquals(tx.getHash(), getdata.getItems().get(0).hash);
         inbound(peer, tx);
+        // Ask for the dependency, it's not in the mempool (in chain).
+        getdata = (GetDataMessage) outbound();
+        inbound(peer, new NotFoundMessage(unitTestParams, getdata.getItems()));
         assertEquals(value, wallet.getBalance(Wallet.BalanceType.ESTIMATED));
     }
 
@@ -475,19 +478,15 @@ public class PeerTest extends TestWithNetworkConnections {
 
     @Test
     public void recursiveDownload() throws Exception {
-        // Our peer announces a normal transaction that depends on a different transaction that is time locked such
-        // that it will never confirm. There's not currently any use case for doing that to us, so it's an attack.
-        //
-        // Peer should notice this by downloading all transaction dependencies and searching for timelocked ones.
-        // Also, if a dependency chain is absurdly deep, the wallet shouldn't hear about it because it may just be
-        // a different way to achieve the same thing (a payment that will not confirm for a very long time).
+        // Check that we can download all dependencies of an unconfirmed relevant transaction from the mempool.
+        ECKey to = new ECKey();
         control.replay();
         connect();
 
         final Transaction[] onTx = new Transaction[1];
         peer.addEventListener(new AbstractPeerEventListener() {
             @Override
-            public void onTransaction(Peer peer, Transaction t) {
+            public void onTransaction(Peer peer1, Transaction t) {
                 onTx[0] = t;
             }
         });
@@ -496,7 +495,6 @@ public class PeerTest extends TestWithNetworkConnections {
         //   t1 -> t2 -> [t5]
         //      -> t3 -> t4 -> [t6]
         // The ones in brackets are assumed to be in the chain and are represented only by hashes.
-        ECKey to = new ECKey();
         Transaction t2 = TestUtils.createFakeTx(unitTestParams, Utils.toNanoCoins(1, 0), to);
         Sha256Hash t5 = t2.getInput(0).getOutpoint().getHash();
         Transaction t4 = TestUtils.createFakeTx(unitTestParams, Utils.toNanoCoins(1, 0), new ECKey());
@@ -557,6 +555,113 @@ public class PeerTest extends TestWithNetworkConnections {
         assertTrue(results.contains(t2));
         assertTrue(results.contains(t3));
         assertTrue(results.contains(t4));
+    }
+
+    @Test
+    public void timeLockedTransaction() throws Exception {
+        // Test that if we receive a relevant transaction that has a lock time, it doesn't result in a notification
+        // until we explicitly opt in to seeing those.
+        control.replay();
+        connect();
+
+        // Initial setup.
+        ECKey key = new ECKey();
+        Wallet wallet = new Wallet(unitTestParams);
+        wallet.addKey(key);
+        peer.addWallet(wallet);
+        final Transaction[] vtx = new Transaction[1];
+        wallet.addEventListener(new AbstractWalletEventListener() {
+            @Override
+            public void onCoinsReceived(Wallet wallet, Transaction tx, BigInteger prevBalance, BigInteger newBalance) {
+                vtx[0] = tx;
+            }
+        });
+        // Send a normal relevant transaction, it's received correctly.
+        Transaction t1 = TestUtils.createFakeTx(unitTestParams, Utils.toNanoCoins(1, 0), key);
+        inbound(peer, t1);
+        GetDataMessage getdata = (GetDataMessage) outbound();
+        inbound(peer, new NotFoundMessage(unitTestParams, getdata.getItems()));
+        assertNotNull(vtx[0]);
+        vtx[0] = null;
+        // Send a timelocked transaction, nothing happens.
+        Transaction t2 = TestUtils.createFakeTx(unitTestParams, Utils.toNanoCoins(2, 0), key);
+        t2.setLockTime(999999);
+        inbound(peer, t2);
+        assertNull(vtx[0]);
+        // Now we want to hear about them. Send another, we are told about it.
+        wallet.setAcceptTimeLockedTransactions(true);
+        inbound(peer, t2);
+        getdata = (GetDataMessage) outbound();
+        inbound(peer, new NotFoundMessage(unitTestParams, getdata.getItems()));
+        assertEquals(t2, vtx[0]);
+    }
+
+    @Test
+    public void rejectTimeLockedDependency() throws Exception {
+        // Check that we also verify the lock times of dependencies. Otherwise an attacker could still build a tx that
+        // looks legitimate and useful but won't actually ever confirm, by sending us a normal tx that spends a
+        // timelocked tx.
+        checkTimeLockedDependency(false);
+    }
+
+    @Test
+    public void acceptTimeLockedDependency() throws Exception {
+        checkTimeLockedDependency(true);
+    }
+
+    private void checkTimeLockedDependency(boolean shouldAccept) throws Exception {
+        // Initial setup.
+        control.replay();
+        connect();
+        ECKey key = new ECKey();
+        Wallet wallet = new Wallet(unitTestParams);
+        wallet.addKey(key);
+        wallet.setAcceptTimeLockedTransactions(shouldAccept);
+        peer.addWallet(wallet);
+        final Transaction[] vtx = new Transaction[1];
+        wallet.addEventListener(new AbstractWalletEventListener() {
+            @Override
+            public void onCoinsReceived(Wallet wallet, Transaction tx, BigInteger prevBalance, BigInteger newBalance) {
+                vtx[0] = tx;
+            }
+        });
+        // t1 -> t2 [locked] -> t3 (not available)
+        Transaction t2 = new Transaction(unitTestParams);
+        t2.setLockTime(999999);
+        // Add a fake input to t3 that goes nowhere.
+        Sha256Hash t3 = Sha256Hash.create("abc".getBytes(Charset.forName("UTF-8")));
+        t2.addInput(new TransactionInput(unitTestParams, t2, new byte[]{}, new TransactionOutPoint(unitTestParams, 0,
+                t3)));
+        t2.addOutput(Utils.toNanoCoins(1, 0), new ECKey());
+        Transaction t1 = new Transaction(unitTestParams);
+        t1.addInput(t2.getOutput(0));
+        t1.addOutput(Utils.toNanoCoins(1, 0), key);  // Make it relevant.
+        // Announce t1.
+        InventoryMessage inv = new InventoryMessage(unitTestParams);
+        inv.addTransaction(t1);
+        inbound(peer, inv);
+        // Send it.
+        GetDataMessage getdata = (GetDataMessage) outbound();
+        assertEquals(t1.getHash(), getdata.getItems().get(0).hash);
+        inbound(peer, t1);
+        // Nothing arrived at our event listener yet.
+        assertNull(vtx[0]);
+        // We request t2.
+        getdata = (GetDataMessage) outbound();
+        assertEquals(t2.getHash(), getdata.getItems().get(0).hash);
+        inbound(peer, t2);
+        // We request t3.
+        getdata = (GetDataMessage) outbound();
+        assertEquals(t3, getdata.getItems().get(0).hash);
+        // Can't find it: bottom of tree.
+        NotFoundMessage notFound = new NotFoundMessage(unitTestParams);
+        notFound.addItem(new InventoryItem(InventoryItem.Type.Transaction, t3));
+        inbound(peer, notFound);
+        // We're done but still not notified because it was timelocked.
+        if (shouldAccept)
+            assertNotNull(vtx[0]);
+        else
+            assertNull(vtx[0]);
     }
 
     // TODO: Use generics here to avoid unnecessary casting.

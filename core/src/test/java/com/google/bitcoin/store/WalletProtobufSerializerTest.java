@@ -87,7 +87,7 @@ public class WalletProtobufSerializerTest {
         // Check that we can serialize double spends correctly, as this is a slightly tricky case.
         TestUtils.DoubleSpends doubleSpends = TestUtils.createFakeDoubleSpendTxns(params, myAddress);
         // t1 spends to our wallet.
-        myWallet.receivePending(doubleSpends.t1);
+        myWallet.receivePending(doubleSpends.t1, null);
         // t2 rolls back t1 and spends somewhere else.
         myWallet.receiveFromBlock(doubleSpends.t2, null, BlockChain.NewBlockType.BEST_CHAIN);
         Wallet wallet1 = roundTrip(myWallet);

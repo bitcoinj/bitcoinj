@@ -69,6 +69,7 @@ public class Peer {
     private int blocksAnnounced;
     // A class that tracks recent transactions that have been broadcast across the network, counts how many
     // peers announced them and updates the transaction confidence data. It is passed to each Peer.
+    // TODO: Make this final and unsynchronized.
     private MemoryPool memoryPool;
     // Each wallet added to the peer will be notified of downloaded transaction data.
     private CopyOnWriteArrayList<Wallet> wallets;
@@ -415,13 +416,43 @@ public class Peer {
             // We may get back a different transaction object.
             tx = memoryPool.seen(tx, getAddress());
         }
-        if (maybeHandleRequestedData(tx))
+        final Transaction fTx = tx;
+        if (maybeHandleRequestedData(fTx))
             return;
         // Tell all wallets about this tx so they can check if it's relevant or not.
         for (ListIterator<Wallet> it = wallets.listIterator(); it.hasNext();) {
-            Wallet wallet = it.next();
+            final Wallet wallet = it.next();
             try {
-                wallet.receivePending(tx);
+                if (wallet.isPendingTransactionRelevant(fTx)) {
+                    // This transaction seems interesting to us, so let's download its dependencies. This has several
+                    // purposes: we can check that the sender isn't attacking us by engaging in protocol abuse games,
+                    // like depending on a time-locked transaction that will never confirm, or building huge chains
+                    // of unconfirmed transactions (again - so they don't confirm and the money can be taken
+                    // back with a Finney attack). Knowing the dependencies also lets us store them in a serialized
+                    // wallet so we always have enough data to re-announce to the network and get the payment into
+                    // the chain, in case the sender goes away and the network starts to forget.
+                    // TODO: Not all the above things are implemented.
+
+                    Futures.addCallback(downloadDependencies(fTx), new FutureCallback<List<Transaction>>() {
+                        public void onSuccess(List<Transaction> dependencies) {
+                            try {
+                                log.info("Dependency download complete!");
+                                wallet.receivePending(fTx, dependencies);
+                            } catch (VerificationException e) {
+                                log.error("Wallet failed to process pending transaction {}", fTx.getHashAsString());
+                                log.error("Error was: ", e);
+                                // Not much more we can do at this point.
+                            }
+                        }
+
+                        public void onFailure(Throwable throwable) {
+                            log.error("Could not download dependencies of tx {}", fTx.getHashAsString());
+                            log.error("Error was: ", throwable);
+                            // Not much more we can do at this point.
+                        }
+                    });
+
+                }
             } catch (VerificationException e) {
                 log.error("Wallet failed to verify tx", e);
                 // Carry on, listeners may still want to know.
@@ -446,7 +477,7 @@ public class Peer {
      *
      * <p>For example, if tx has 2 inputs that connect to transactions A and B, and transaction B is unconfirmed and
      * has one input connecting to transaction C that is unconfirmed, and transaction C connects to transaction D
-     * that is in the chain, then this method will return either {B, C} or {C, B}.</p>
+     * that is in the chain, then this method will return either {B, C} or {C, B}. No ordering is guaranteed.</p>
      *
      * <p>This method is useful for apps that want to learn about how long an unconfirmed transaction might take
      * to confirm, by checking for unexpectedly time locked transactions, unusually deep dependency trees or fee-paying
@@ -492,11 +523,13 @@ public class Peer {
         for (TransactionInput input : tx.getInputs()) {
             // There may be multiple inputs that connect to the same transaction.
             Sha256Hash hash = input.getOutpoint().getHash();
-            Transaction dep = memoryPool.get(hash);
-            if (dep == null) {
-                needToRequest.add(hash);
-            } else {
-                dependencies.add(dep);
+            synchronized (this) {
+                Transaction dep = memoryPool.get(hash);
+                if (dep == null) {
+                    needToRequest.add(hash);
+                } else {
+                    dependencies.add(dep);
+                }
             }
         }
         results.addAll(dependencies);

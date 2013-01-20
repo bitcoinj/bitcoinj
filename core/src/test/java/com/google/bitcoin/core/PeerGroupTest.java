@@ -119,6 +119,9 @@ public class PeerGroupTest extends TestWithPeerGroup {
         assertNull(outbound(p2));  // Only one peer is used to download.
         inbound(p1, t1);
         assertNull(outbound(p2));
+        // Asks for dependency.
+        GetDataMessage getdata = (GetDataMessage) outbound(p1);
+        inbound(p1, new NotFoundMessage(unitTestParams, getdata.getItems()));
         assertEquals(value, wallet.getBalance(Wallet.BalanceType.ESTIMATED));
         peerGroup.stop();
     }
