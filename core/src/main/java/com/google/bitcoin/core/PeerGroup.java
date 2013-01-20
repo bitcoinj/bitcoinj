@@ -968,7 +968,7 @@ public class PeerGroup extends AbstractIdleService {
                     // transaction or not. However, we are not a fully validating node and this is advertised in
                     // our version message, as SPV nodes cannot relay it doesn't give away any additional information
                     // to skip the inv here - we wouldn't send invs anyway.
-                    somePeer.sendMessage(pinnedTx);
+                    somePeer.sendMessage(pinnedTx).awaitUninterruptibly();
                 } catch (IOException e) {
                     future.setException(e);
                     return;

@@ -605,8 +605,8 @@ public class Peer {
     /**
      * Sends the given message on the peers Channel.
      */
-    public void sendMessage(Message m) throws IOException {
-        Channels.write(channel, m);
+    public ChannelFuture sendMessage(Message m) throws IOException {
+        return Channels.write(channel, m);
     }
 
     // Keep track of the last request we made to the peer in blockChainDownload so we can avoid redundant and harmful
