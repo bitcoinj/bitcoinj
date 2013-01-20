@@ -542,7 +542,6 @@ public class PeerGroup extends AbstractIdleService {
     public synchronized void addWallet(Wallet wallet) {
         Preconditions.checkNotNull(wallet);
         wallets.add(wallet);
-        addEventListener(wallet.getPeerEventListener());
         announcePendingWalletTransactions(Collections.singletonList(wallet), peers);
 
         // Don't bother downloading block bodies before the oldest keys in all our wallets. Make sure we recalculate
@@ -609,7 +608,6 @@ public class PeerGroup extends AbstractIdleService {
         if (wallet == null)
             throw new IllegalArgumentException("wallet is null");
         wallets.remove(wallet);
-        removeEventListener(wallet.getPeerEventListener());
     }
 
     /**
@@ -854,13 +852,17 @@ public class PeerGroup extends AbstractIdleService {
         if (downloadPeer != null) {
             log.info("Unsetting download peer: {}", downloadPeer);
             downloadPeer.setDownloadData(false);
+            for (Wallet wallet : wallets)
+                downloadPeer.removeWallet(wallet);
         }
         downloadPeer = peer;
         if (downloadPeer != null) {
             log.info("Setting download peer: {}", downloadPeer);
             downloadPeer.setDownloadData(true);
-            if (chain != null)
-                downloadPeer.setDownloadParameters(fastCatchupTimeSecs, bloomFilter != null);
+            downloadPeer.setDownloadParameters(fastCatchupTimeSecs, bloomFilter != null);
+            // TODO: The peer should calculate the fast catchup time from the added wallets here.
+            for (Wallet wallet : wallets)
+                downloadPeer.addWallet(wallet);
         }
     }
 

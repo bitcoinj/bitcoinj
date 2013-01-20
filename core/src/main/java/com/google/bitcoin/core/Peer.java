@@ -53,6 +53,7 @@ public class Peer {
     private final NetworkParameters params;
     private final AbstractBlockChain blockChain;
     private PeerAddress address;
+    // TODO: Make the types here explicit and remove synchronization on adders/removers.
     private List<PeerEventListener> eventListeners;
     private List<PeerLifecycleListener> lifecycleListeners;
     // Whether to try and download blocks and transactions from this peer. Set to false by PeerGroup if not the
@@ -69,6 +70,8 @@ public class Peer {
     // A class that tracks recent transactions that have been broadcast across the network, counts how many
     // peers announced them and updates the transaction confidence data. It is passed to each Peer.
     private MemoryPool memoryPool;
+    // Each wallet added to the peer will be notified of downloaded transaction data.
+    private CopyOnWriteArrayList<Wallet> wallets;
     // A time before which we only download block headers, after that point we download block bodies.
     private long fastCatchupTimeSecs;
     // Whether we are currently downloading headers only or block bodies. Starts at true. If the fast catchup time is
@@ -123,6 +126,7 @@ public class Peer {
         this.handler = new PeerHandler();
         this.pendingPings = new CopyOnWriteArrayList<PendingPing>();
         this.lastPingTimes = null;
+        this.wallets = new CopyOnWriteArrayList<Wallet>();
     }
 
     /**
@@ -413,9 +417,18 @@ public class Peer {
         }
         if (maybeHandleRequestedData(tx))
             return;
-        // Tell all listeners (like wallets) about this tx so they can decide whether to keep it or not. If no
-        // listener keeps a reference around then the memory pool will forget about it after a while too because
-        // it uses weak references.
+        // Tell all wallets about this tx so they can check if it's relevant or not.
+        for (ListIterator<Wallet> it = wallets.listIterator(); it.hasNext();) {
+            Wallet wallet = it.next();
+            try {
+                wallet.receivePending(tx);
+            } catch (VerificationException e) {
+                log.error("Wallet failed to verify tx", e);
+                // Carry on, listeners may still want to know.
+            }
+        }
+        // Tell all listeners about this tx so they can decide whether to keep it or not. If no listener keeps a
+        // reference around then the memory pool will forget about it after a while too because it uses weak references.
         final Transaction ftx = tx;
         EventListenerInvoker.invoke(eventListeners, new EventListenerInvoker<PeerEventListener>() {
             @Override
@@ -863,12 +876,12 @@ public class Peer {
      * independently, otherwise the wallet will receive duplicate notifications.
      */
     public void addWallet(Wallet wallet) {
-        addEventListener(wallet.getPeerEventListener());
+        wallets.add(wallet);
     }
 
     /** Unlinks the given wallet from peer. See {@link Peer#addWallet(Wallet)}. */
     public void removeWallet(Wallet wallet) {
-        removeEventListener(wallet.getPeerEventListener());
+        wallets.remove(wallet);
     }
 
     /**
