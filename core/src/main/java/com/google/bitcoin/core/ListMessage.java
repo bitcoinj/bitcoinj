@@ -30,9 +30,9 @@ public abstract class ListMessage extends Message {
 
     private long arrayLen;
     // For some reason the compiler complains if this is inside InventoryItem
-    private List<InventoryItem> items;
+    protected List<InventoryItem> items;
 
-    private static final long MAX_INVENTORY_ITEMS = 50000;
+    public static final long MAX_INVENTORY_ITEMS = 50000;
 
 
     public ListMessage(NetworkParameters params, byte[] bytes) throws ProtocolException {
