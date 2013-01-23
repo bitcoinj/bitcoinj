@@ -648,8 +648,8 @@ public abstract class AbstractBlockChain {
             }
         }
     }
-    
-    private void setChainHead(StoredBlock chainHead) throws BlockStoreException {
+
+    protected void setChainHead(StoredBlock chainHead) throws BlockStoreException {
         doSetChainHead(chainHead);
         synchronized (chainHeadLock) {
             this.chainHead = chainHead;

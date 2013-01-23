@@ -20,6 +20,7 @@ import com.google.bitcoin.core.TransactionConfidence.ConfidenceType;
 import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.spongycastle.crypto.params.KeyParameter;
 
 import java.io.*;
 import java.math.BigInteger;
@@ -697,6 +698,21 @@ public class Transaction extends ChildMessage implements Serializable {
      * @param wallet   A wallet is required to fetch the keys needed for signing.
      */
     public synchronized void signInputs(SigHash hashType, Wallet wallet) throws ScriptException {
+        signInputs(hashType, wallet, null);
+    }
+
+    /**
+     * Once a transaction has some inputs and outputs added, the signatures in the inputs can be calculated. The
+     * signature is over the transaction itself, to prove the redeemer actually created that transaction,
+     * so we have to do this step last.<p>
+     * <p/>
+     * This method is similar to SignatureHash in script.cpp
+     *
+     * @param hashType This should always be set to SigHash.ALL currently. Other types are unused.
+     * @param wallet   A wallet is required to fetch the keys needed for signing.
+     * @param aesKey The AES key to use to decrypt the key before signing. Null if no decryption is required.
+     */
+    public synchronized void signInputs(SigHash hashType, Wallet wallet, KeyParameter aesKey) throws ScriptException {
         Preconditions.checkState(inputs.size() > 0);
         Preconditions.checkState(outputs.size() > 0);
 
@@ -733,7 +749,7 @@ public class Transaction extends ChildMessage implements Serializable {
             try {
                 // Usually 71-73 bytes.
                 ByteArrayOutputStream bos = new UnsafeByteArrayOutputStream(73);
-                bos.write(key.sign(hash).encodeToDER());
+                bos.write(key.sign(hash, aesKey).encodeToDER());
                 bos.write((hashType.ordinal() + 1) | (anyoneCanPay ? 0x80 : 0));
                 signatures[i] = bos.toByteArray();
                 bos.close();
@@ -992,7 +1008,7 @@ public class Transaction extends ChildMessage implements Serializable {
         maybeParse();
         out.defaultWriteObject();
     }
-    
+
     /**
      * Gets the count of regular SigOps in this transactions
      */

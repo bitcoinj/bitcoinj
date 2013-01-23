@@ -18,20 +18,33 @@ package com.google.bitcoin.core;
 
 import com.google.bitcoin.core.Transaction.SigHash;
 import com.google.bitcoin.core.WalletTransaction.Pool;
+import com.google.bitcoin.crypto.KeyCrypter;
+import com.google.bitcoin.crypto.KeyCrypterException;
+import com.google.bitcoin.crypto.KeyCrypterScrypt;
 import com.google.bitcoin.store.BlockStore;
 import com.google.bitcoin.store.MemoryBlockStore;
 import com.google.bitcoin.utils.BriefLogFormatter;
 import com.google.bitcoin.utils.Locks;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.CycleDetectingLockFactory;
+import com.google.protobuf.ByteString;
+
+import org.bitcoinj.wallet.Protos;
+import org.bitcoinj.wallet.Protos.ScryptParameters;
+import org.bitcoinj.wallet.Protos.Wallet.EncryptionType;
 import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.spongycastle.crypto.params.KeyParameter;
 
 import java.io.File;
 import java.io.IOException;
 import java.math.BigInteger;
+import java.security.SecureRandom;
 import java.net.InetAddress;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
@@ -45,26 +58,74 @@ import static com.google.bitcoin.core.Utils.toNanoCoins;
 import static org.junit.Assert.*;
 
 public class WalletTest {
+    public Logger log = LoggerFactory.getLogger(WalletTest.class.getName());
+
     static final NetworkParameters params = NetworkParameters.unitTests();
 
     private Address myAddress;
+    private Address myEncryptedAddress;
+    private Address myEncryptedAddress2;
+
     private Wallet wallet;
+    private Wallet encryptedWallet;
+    // A wallet with an initial unencrypted private key and an encrypted private key.
+    private Wallet encryptedHetergeneousWallet;
+
     private BlockChain chain;
     private BlockStore blockStore;
     private ECKey myKey;
+    private ECKey myEncryptedKey;
+
+    private ECKey myKey2;
+    private ECKey myEncryptedKey2;
+
+    private static CharSequence PASSWORD1 = "my helicopter contains eels";
+    private static CharSequence WRONG_PASSWORD = "nothing noone nobody nowhere";
+
+    private KeyParameter aesKey;
+    private KeyParameter wrongAesKey;
+
+    private KeyCrypter keyCrypter;
+
+    private SecureRandom secureRandom = new SecureRandom();
 
     @Before
     public void setUp() throws Exception {
         myKey = new ECKey();
+        myKey2 = new ECKey();
         myAddress = myKey.toAddress(params);
         wallet = new Wallet(params);
         wallet.addKey(myKey);
+
+        byte[] salt = new byte[KeyCrypterScrypt.SALT_LENGTH];
+        secureRandom.nextBytes(salt);
+        Protos.ScryptParameters.Builder scryptParametersBuilder = Protos.ScryptParameters.newBuilder().setSalt(ByteString.copyFrom(salt));
+        ScryptParameters scryptParameters = scryptParametersBuilder.build();
+
+        keyCrypter = new KeyCrypterScrypt(scryptParameters);
+
+        wallet = new Wallet(params);
+        encryptedWallet = new Wallet(params, keyCrypter);
+        encryptedHetergeneousWallet = new Wallet(params, keyCrypter);
+
+        aesKey = keyCrypter.deriveKey(PASSWORD1);
+        wrongAesKey = keyCrypter.deriveKey(WRONG_PASSWORD);
+
+        wallet.addKey(myKey);
+
+        myEncryptedKey = encryptedWallet.addNewEncryptedKey(keyCrypter, aesKey);
+        myEncryptedAddress = myEncryptedKey.toAddress(params);
+
+        encryptedHetergeneousWallet.addKey(myKey2);
+        myEncryptedKey2 = encryptedHetergeneousWallet.addNewEncryptedKey(keyCrypter, aesKey);
+        myEncryptedAddress2 = myEncryptedKey2.toAddress(params);
+
         blockStore = new MemoryBlockStore(params);
         chain = new BlockChain(params, wallet, blockStore);
         BriefLogFormatter.init();
     }
 
-    private Transaction sendMoneyToWallet(Transaction tx, AbstractBlockChain.NewBlockType type)
+    private Transaction sendMoneyToWallet(Wallet wallet, Transaction tx, AbstractBlockChain.NewBlockType type)
             throws IOException, ProtocolException, VerificationException {
         if (type == null) {
             // Pending/broadcast tx.
@@ -79,53 +140,133 @@ public class WalletTest {
         return tx;
     }
 
-    private Transaction sendMoneyToWallet(BigInteger value, AbstractBlockChain.NewBlockType type)
+    private Transaction sendMoneyToWallet(Transaction tx, AbstractBlockChain.NewBlockType type) throws IOException,
+            ProtocolException, VerificationException {
+        return sendMoneyToWallet(this.wallet, tx, type);
+    }
+
+    private Transaction sendMoneyToWallet(Wallet wallet, BigInteger value, Address toAddress, AbstractBlockChain.NewBlockType type)
             throws IOException, ProtocolException, VerificationException {
-        return sendMoneyToWallet(createFakeTx(params, value, myAddress), type);
+        return sendMoneyToWallet(wallet, createFakeTx(params, value, toAddress), type);
+    }
+
+    private Transaction sendMoneyToWallet(BigInteger value, AbstractBlockChain.NewBlockType type) throws IOException,
+            ProtocolException, VerificationException {
+        return sendMoneyToWallet(this.wallet, createFakeTx(params, value, myAddress), type);
     }
 
     @Test
     public void basicSpending() throws Exception {
-        // We'll set up a wallet that receives a coin, then sends a coin of lesser value and keeps the change. We
-        // will attach a small fee. Because the Bitcoin protocol makes it difficult to determine the fee of an
-        // arbitrary transaction in isolation, we'll check that the fee was set by examining the size of the change.
+        basicSpendingCommon(wallet, myAddress, false);
+    }
+
+    @Test
+    public void basicSpendingWithEncryptedWallet() throws Exception {
+        basicSpendingCommon(encryptedWallet, myEncryptedAddress, true);
+    }
+
+    @Test
+    public void basicSpendingWithEncryptedHetergeneousWallet() throws Exception {
+        basicSpendingCommon(encryptedHetergeneousWallet, myEncryptedAddress2, true);
+    }
+
+    private void basicSpendingCommon(Wallet wallet, Address toAddress, boolean testEncryption) throws Exception {
+        // We'll set up a wallet that receives a coin, then sends a coin of
+        // lesser value and keeps the change. We
+        // will attach a small fee. Because the Bitcoin protocol makes it
+        // difficult to determine the fee of an
+        // arbitrary transaction in isolation, we'll check that the fee was set
+        // by examining the size of the change.
 
         // Receive some money as a pending transaction.
-        BigInteger v1 = Utils.toNanoCoins(1, 0);
-        Transaction t1 = sendMoneyToWallet(v1, null);
-        assertEquals(BigInteger.ZERO, wallet.getBalance());
-        assertEquals(v1, wallet.getBalance(Wallet.BalanceType.ESTIMATED));
-        assertEquals(1, wallet.getPoolSize(Pool.PENDING));
-        assertEquals(0, wallet.getPoolSize(WalletTransaction.Pool.UNSPENT));
-        sendMoneyToWallet(t1, AbstractBlockChain.NewBlockType.BEST_CHAIN);
-        assertEquals(v1, wallet.getBalance());
-        assertEquals(1, wallet.getPoolSize(WalletTransaction.Pool.UNSPENT));
-        assertEquals(1, wallet.getPoolSize(WalletTransaction.Pool.ALL));
+        receiveAPendingTransaction(wallet, toAddress);
 
-        // Create a send with a fee.
+        // Prepare to send.
         Address destination = new ECKey().toAddress(params);
         BigInteger v2 = toNanoCoins(0, 50);
         Wallet.SendRequest req = Wallet.SendRequest.to(destination, v2);
         req.fee = toNanoCoins(0, 1);
+
+        if (testEncryption) {
+            // Try to create a send with a fee but no password (this should fail).
+            try {
+                wallet.completeTx(req);
+                fail("No exception was thrown trying to sign an encrypted key with no password supplied.");
+            } catch (KeyCrypterException kce) {
+                assertEquals("This ECKey is encrypted but no decryption key has been supplied.", kce.getMessage());
+            }
+            assertEquals("Wrong number of UNSPENT.1", 1, wallet.getPoolSize(WalletTransaction.Pool.UNSPENT));
+            assertEquals("Wrong number of ALL.1", 1, wallet.getPoolSize(WalletTransaction.Pool.ALL));
+
+            // Try to create a send with a fee but the wrong password (this should fail).
+            req = Wallet.SendRequest.to(destination, v2);
+            req.aesKey = wrongAesKey;
+            req.fee = toNanoCoins(0, 1);
+
+            try {
+                wallet.completeTx(req);
+                fail("No exception was thrown trying to sign an encrypted key with the wrong password supplied.");
+            } catch (KeyCrypterException kce) {
+                assertEquals("Could not decrypt bytes", kce.getMessage());
+            }
+
+            assertEquals("Wrong number of UNSPENT.2", 1, wallet.getPoolSize(WalletTransaction.Pool.UNSPENT));
+            assertEquals("Wrong number of ALL.2", 1, wallet.getPoolSize(WalletTransaction.Pool.ALL));
+
+            // Create a send with a fee with the correct password (this should succeed).
+            req = Wallet.SendRequest.to(destination, v2);
+            req.aesKey = aesKey;
+            req.fee = toNanoCoins(0, 1);
+        }
+
+        // Complete the transaction successfully.
         wallet.completeTx(req);
+
         Transaction t2 = req.tx;
-        assertEquals(1, wallet.getPoolSize(WalletTransaction.Pool.UNSPENT));
-        assertEquals(1, wallet.getPoolSize(WalletTransaction.Pool.ALL));
+        assertEquals("Wrong number of UNSPENT.3", 1, wallet.getPoolSize(WalletTransaction.Pool.UNSPENT));
+        assertEquals("Wrong number of ALL.3", 1, wallet.getPoolSize(WalletTransaction.Pool.ALL));
         assertEquals(TransactionConfidence.Source.SELF, t2.getConfidence().getSource());
         assertEquals(wallet.getChangeAddress(), t2.getOutput(1).getScriptPubKey().getToAddress());
 
         // Do some basic sanity checks.
-        assertEquals(1, t2.getInputs().size());
-        assertEquals(myAddress, t2.getInputs().get(0).getScriptSig().getFromAddress());
-        assertEquals(t2.getConfidence().getConfidenceType(), TransactionConfidence.ConfidenceType.NOT_SEEN_IN_CHAIN);
-        assertEquals(2, t2.getOutputs().size());
-        assertEquals(destination, t2.getOutputs().get(0).getScriptPubKey().getToAddress());
-        assertEquals(wallet.getChangeAddress(), t2.getOutputs().get(1).getScriptPubKey().getToAddress());
-        BigInteger v3 = toNanoCoins(0, 49);
-        assertEquals(v3, t2.getOutputs().get(1).getValue());
-        // Check the script runs and signatures verify.
-        t2.getInputs().get(0).verify();
+        basicSanityChecks(wallet, t2, toAddress, destination);
 
+        // Broadcast the transaction and commit.
+        broadcastAndCommit(wallet, t2);
+
+        // Now check that we can spend the unconfirmed change, with a new change
+        // address of our own selection.
+        // (req.aesKey is null for unencrypted / the correct aesKey for encrypted.)
+        spendUnconfirmedChange(wallet, t2, req.aesKey);
+    }
+
+    private void receiveAPendingTransaction(Wallet wallet, Address toAddress) throws Exception {
+        BigInteger v1 = Utils.toNanoCoins(1, 0);
+        Transaction t1 = sendMoneyToWallet(wallet, v1, toAddress, null);
+        assertEquals(BigInteger.ZERO, wallet.getBalance());
+        assertEquals(v1, wallet.getBalance(Wallet.BalanceType.ESTIMATED));
+        assertEquals(1, wallet.getPoolSize(Pool.PENDING));
+        assertEquals(0, wallet.getPoolSize(WalletTransaction.Pool.UNSPENT));
+        sendMoneyToWallet(wallet, t1, AbstractBlockChain.NewBlockType.BEST_CHAIN);
+        assertEquals("Incorrect confirmed tx balance", v1, wallet.getBalance());
+        assertEquals("Incorrect confirmed tx PENDING pool size", 0, wallet.getPoolSize(WalletTransaction.Pool.PENDING));
+        assertEquals("Incorrect confirmed tx UNSPENT pool size", 1, wallet.getPoolSize(WalletTransaction.Pool.UNSPENT));
+        assertEquals("Incorrect confirmed tx ALL pool size", 1, wallet.getPoolSize(WalletTransaction.Pool.ALL));
+    }
+
+    private void basicSanityChecks(Wallet wallet, Transaction t, Address fromAddress, Address destination) throws ScriptException {
+        assertEquals("Wrong number of tx inputs", 1, t.getInputs().size());
+        assertEquals(fromAddress, t.getInputs().get(0).getScriptSig().getFromAddress());
+        assertEquals(t.getConfidence().getConfidenceType(), TransactionConfidence.ConfidenceType.NOT_SEEN_IN_CHAIN);
+        assertEquals("Wrong number of tx outputs",2, t.getOutputs().size());
+        assertEquals(destination, t.getOutputs().get(0).getScriptPubKey().getToAddress());
+        assertEquals(wallet.getChangeAddress(), t.getOutputs().get(1).getScriptPubKey().getToAddress());
+        assertEquals(toNanoCoins(0, 49), t.getOutputs().get(1).getValue());
+        // Check the script runs and signatures verify.
+        t.getInputs().get(0).verify();
+    }
+
+    private void broadcastAndCommit(Wallet wallet, Transaction t) throws Exception {
         final LinkedList<Transaction> txns = Lists.newLinkedList();
         wallet.addEventListener(new AbstractWalletEventListener() {
             @Override
@@ -133,19 +274,22 @@ public class WalletTest {
                 txns.add(tx);
             }
         });
-        // We broadcast the TX over the network, and then commit to it.
-        t2.getConfidence().markBroadcastBy(new PeerAddress(InetAddress.getByAddress(new byte[]{1,2,3,4})));
-        t2.getConfidence().markBroadcastBy(new PeerAddress(InetAddress.getByAddress(new byte[]{10,2,3,4})));
-        wallet.commitTx(t2);
+
+        t.getConfidence().markBroadcastBy(new PeerAddress(InetAddress.getByAddress(new byte[]{1,2,3,4})));
+        t.getConfidence().markBroadcastBy(new PeerAddress(InetAddress.getByAddress(new byte[]{10,2,3,4})));
+        wallet.commitTx(t);
         assertEquals(1, wallet.getPoolSize(WalletTransaction.Pool.PENDING));
         assertEquals(1, wallet.getPoolSize(WalletTransaction.Pool.SPENT));
         assertEquals(2, wallet.getPoolSize(WalletTransaction.Pool.ALL));
-        assertEquals(t2, txns.getFirst());
+        assertEquals(t, txns.getFirst());
         assertEquals(1, txns.size());
+    }
 
-        // Now check that we can spend the unconfirmed change, with a new change address of our own selection.
+    private void spendUnconfirmedChange(Wallet wallet, Transaction t2, KeyParameter aesKey) throws Exception {
+        BigInteger v3 = toNanoCoins(0, 49);
         assertEquals(v3, wallet.getBalance());
-        req = Wallet.SendRequest.to(new ECKey().toAddress(params), toNanoCoins(0, 48));
+        Wallet.SendRequest req = Wallet.SendRequest.to(new ECKey().toAddress(params), toNanoCoins(0, 48));
+        req.aesKey = aesKey;
         Address a = req.changeAddress = new ECKey().toAddress(params);
         wallet.completeTx(req);
         Transaction t3 = req.tx;
@@ -153,7 +297,7 @@ public class WalletTest {
         assertNotNull(t3);
         wallet.commitTx(t3);
         assertTrue(wallet.isConsistent());
-        // t2 and  t3 gets confirmed in the same block.
+        // t2 and t3 gets confirmed in the same block.
         BlockPair bp = createFakeBlock(blockStore, t2, t3);
         wallet.receiveFromBlock(t2, bp.storedBlock, AbstractBlockChain.NewBlockType.BEST_CHAIN);
         wallet.receiveFromBlock(t3, bp.storedBlock, AbstractBlockChain.NewBlockType.BEST_CHAIN);
@@ -340,12 +484,12 @@ public class WalletTest {
         tx.addOutput(output);
         wallet.receiveFromBlock(tx, null, BlockChain.NewBlockType.BEST_CHAIN);
         
-        assertTrue(wallet.isConsistent());
+        assertTrue("Wallet is not consistent", wallet.isConsistent());
         
         Transaction txClone = new Transaction(params, tx.bitcoinSerialize());
         try {
             wallet.receiveFromBlock(txClone, null, BlockChain.NewBlockType.BEST_CHAIN);
-            fail();
+            fail("Illegal argument not thrown when it should have been.");
         } catch (IllegalStateException ex) {
             // expected
         }
@@ -751,7 +895,7 @@ public class WalletTest {
         // TODO: This code is messy, improve the Script class and fixinate!
         assertEquals(t2.toString(), 1, t2.getInputs().get(0).getScriptSig().chunks.size());
         assertTrue(t2.getInputs().get(0).getScriptSig().chunks.get(0).data.length > 50);
-        System.out.println(t2);
+        log.info(t2.toString(chain));
     }
 
     @Test
@@ -764,23 +908,23 @@ public class WalletTest {
         ECKey key = new ECKey();
         wallet.addKey(key);
         Sha256Hash hash2 = Sha256Hash.hashFileContents(f);
-        assertFalse(hash1.equals(hash2));  // File has changed.
+        assertFalse("Wallet not saved after addKey", hash1.equals(hash2));  // File has changed.
 
         Transaction t1 = createFakeTx(params, toNanoCoins(5, 0), key);
         if (wallet.isPendingTransactionRelevant(t1))
             wallet.receivePending(t1, null);
         Sha256Hash hash3 = Sha256Hash.hashFileContents(f);
-        assertFalse(hash2.equals(hash3));  // File has changed again.
+        assertFalse("Wallet not saved after receivePending", hash2.equals(hash3));  // File has changed again.
 
         Block b1 = createFakeBlock(blockStore, t1).block;
         chain.add(b1);
         Sha256Hash hash4 = Sha256Hash.hashFileContents(f);
-        assertFalse(hash3.equals(hash4));  // File has changed again.
+        assertFalse("Wallet not saved after chain add.1", hash3.equals(hash4));  // File has changed again.
 
         // Check that receiving some block without any relevant transactions still triggers a save.
         Block b2 = b1.createNextBlock(new ECKey().toAddress(params));
         chain.add(b2);
-        assertFalse(hash4.equals(Sha256Hash.hashFileContents(f)));  // File has changed again.
+        assertFalse("Wallet not saved after chain add.2", hash4.equals(Sha256Hash.hashFileContents(f)));  // File has changed again.
     }
 
     @Test
@@ -846,7 +990,7 @@ public class WalletTest {
     
     @Test
     public void spendOutputFromPendingTransaction() throws Exception {
-    	// We'll set up a wallet that receives a coin, then sends a coin of lesser value and keeps the change.
+        // We'll set up a wallet that receives a coin, then sends a coin of lesser value and keeps the change.
         BigInteger v1 = Utils.toNanoCoins(1, 0);
         sendMoneyToWallet(v1, AbstractBlockChain.NewBlockType.BEST_CHAIN);
         // First create our current transaction
@@ -884,6 +1028,127 @@ public class WalletTest {
     }
 
     @Test
+    public void encryptionDecryptionBasic() throws Exception {
+        encryptionDecryptionBasicCommon(encryptedWallet);
+        encryptionDecryptionBasicCommon(encryptedHetergeneousWallet);
+    }
+
+    private void encryptionDecryptionBasicCommon(Wallet wallet) {
+        // Check the wallet is initially of WalletType ENCRYPTED.
+        assertTrue("Wallet is not an encrypted wallet", wallet.getEncryptionType() == EncryptionType.ENCRYPTED_SCRYPT_AES);
+
+        // Correct password should decrypt first encrypted private key.
+        assertTrue("checkPasswordCanDecryptFirstPrivateKey result is wrong with correct password.2", wallet.checkPassword(PASSWORD1));
+
+        // Incorrect password should not decrypt first encrypted private key.
+        assertTrue("checkPasswordCanDecryptFirstPrivateKey result is wrong with incorrect password.3", !wallet.checkPassword(WRONG_PASSWORD));
+
+        // Decrypt wallet.
+        assertTrue("The keyCrypter is missing but should not be", keyCrypter != null);
+        wallet.decrypt(aesKey);
+
+        // Wallet should now be unencrypted.
+        assertTrue("Wallet is not an unencrypted wallet", wallet.getKeyCrypter() == null);
+
+        // Correct password should not decrypt first encrypted private key as wallet is unencrypted.
+         assertTrue("checkPasswordCanDecryptFirstPrivateKey result is wrong with correct password", !wallet.checkPassword(PASSWORD1));
+
+        // Incorrect password should not decrypt first encrypted private key as wallet is unencrypted.
+        assertTrue("checkPasswordCanDecryptFirstPrivateKey result is wrong with incorrect password", !wallet.checkPassword(WRONG_PASSWORD));
+
+        // Encrypt wallet.
+        wallet.encrypt(keyCrypter, aesKey);
+
+        // Wallet should now be of type WalletType.ENCRYPTED_SCRYPT_AES.
+        assertTrue("Wallet is not an encrypted wallet", wallet.getEncryptionType() == EncryptionType.ENCRYPTED_SCRYPT_AES);
+    }
+
+    @Test
+    public void encryptionDecryptionBadPassword() throws Exception {
+        // Check the wallet is currently encrypted
+        assertTrue("Wallet is not an encrypted wallet", encryptedWallet.getEncryptionType() == EncryptionType.ENCRYPTED_SCRYPT_AES);
+
+        // Chek that the wrong password does not decrypt the wallet.
+        try {
+            encryptedWallet.decrypt(wrongAesKey);
+            fail("Incorrectly decoded wallet with wrong password");
+        } catch (KeyCrypterException ede) {
+            assertTrue("Wrong message in EncrypterDecrypterException", ede.getMessage().indexOf("Could not decrypt bytes") > -1);
+        }
+    }
+
+    @Test
+    public void encryptionDecryptionCheckExceptions() throws Exception {
+        // Check the wallet is currently encrypted
+        assertTrue("Wallet is not an encrypted wallet", encryptedWallet.getEncryptionType() == EncryptionType.ENCRYPTED_SCRYPT_AES);
+
+        // Decrypt wallet.
+        assertTrue("The keyCrypter is missing but should not be.1", keyCrypter != null);
+        encryptedWallet.decrypt(aesKey);
+
+        // Try decrypting it again
+        try {
+            assertTrue("The keyCrypter is missing but should not be.2", keyCrypter != null);
+            encryptedWallet.decrypt(aesKey);
+            fail("Should not be able to decrypt a decrypted wallet");
+        } catch (IllegalStateException e) {
+            assertTrue("Expected behaviour", true);
+        }
+        assertTrue("Wallet is not an unencrypted wallet.2", encryptedWallet.getKeyCrypter() == null);
+
+        // Encrypt wallet.
+        encryptedWallet.encrypt(keyCrypter, aesKey);
+
+        assertTrue("Wallet is not an encrypted wallet.2", encryptedWallet.getEncryptionType() == EncryptionType.ENCRYPTED_SCRYPT_AES);
+
+        // Try encrypting it again
+        try {
+            encryptedWallet.encrypt(keyCrypter, aesKey);
+            fail("Should not be able to encrypt an encrypted wallet");
+        } catch (IllegalStateException e) {
+            assertTrue("Expected behaviour", true);
+        }
+        assertTrue("Wallet is not an encrypted wallet.3", encryptedWallet.getEncryptionType() == EncryptionType.ENCRYPTED_SCRYPT_AES);
+    }
+
+    @Test
+    public void encryptionDecryptionHomogenousKeys() throws Exception {
+        // Check the wallet is currently encrypted
+        assertTrue("Wallet is not an encrypted wallet", encryptedWallet.getEncryptionType() == EncryptionType.ENCRYPTED_SCRYPT_AES);
+
+        // Try added an ECKey that was encrypted with a differenct ScryptParameters (i.e. a non-homogenous key).
+        // This is not allowed as the ScryptParameters is stored at the Wallet level.
+        byte[] salt = new byte[KeyCrypterScrypt.SALT_LENGTH];
+        secureRandom.nextBytes(salt);
+        Protos.ScryptParameters.Builder scryptParametersBuilder = Protos.ScryptParameters.newBuilder().setSalt(ByteString.copyFrom(salt));
+        ScryptParameters scryptParameters = scryptParametersBuilder.build();
+
+        KeyCrypter keyCrypterDifferent = new KeyCrypterScrypt(scryptParameters);
+
+        ECKey ecKeyDifferent = new ECKey();
+        ecKeyDifferent = ecKeyDifferent.encrypt(keyCrypterDifferent, aesKey);
+
+        Iterable<ECKey> keys = encryptedWallet.getKeys();
+        Iterator iterator = keys.iterator();
+        boolean oneKey = iterator.hasNext();
+        iterator.next();
+        assertTrue("Wrong number of keys in wallet before key addition", oneKey && !iterator.hasNext());
+
+        try {
+            encryptedWallet.addKey(ecKeyDifferent);
+            fail("AddKey should have thrown an EncrypterDecrypterException but did not.");
+        } catch (KeyCrypterException ede) {
+            // Expected behaviour.
+        }
+
+        keys = encryptedWallet.getKeys();
+        iterator = keys.iterator();
+        oneKey = iterator.hasNext();
+
+        iterator.next();
+        assertTrue("Wrong number of keys in wallet after key addition", oneKey && !iterator.hasNext());
+    }
+
     public void ageMattersDuringSelection() throws Exception {
         // Test that we prefer older coins to newer coins when building spends. This reduces required fees and improves
         // time to confirmation as the transaction will appear less spammy.

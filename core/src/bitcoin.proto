@@ -1,4 +1,4 @@
-/** Copyright 2012 Google Inc.
+/** Copyright 2013 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,16 @@ message PeerAddress {
 }
 
 /**
- * A key use to control Bitcoin spending
+ * The data to store a private key encrypted with Scrypt and AES
+ *
+ */
+message EncryptedPrivateKey {
+  required bytes initialisation_vector = 1;       // The initialisation vector for the AES encryption (16 bytes)
+  required bytes encrypted_private_key = 2;       // The encrypted private key
+}
+
+/**
+ * A key used to control Bitcoin spending.
  *
  * Either the private key, the public key or both may be present.  It is recommended that
  * if the private key is provided that the public key is provided too because deriving it is slow.
@@ -44,12 +53,19 @@ message PeerAddress {
  */
 message Key {
   enum Type {
-    ORIGINAL = 1; // Original bitcoin secp256k1 curve
+    ORIGINAL = 1;              // Unencrypted - Original bitcoin secp256k1 curve
+    ENCRYPTED_SCRYPT_AES = 2;  // Encrypted with Scrypt and AES - - Original bitcoin secp256k1 curve
   }
   required Type type = 1;
 
   // The private EC key bytes without any ASN.1 wrapping.
   optional bytes private_key = 2;
+
+  // The message containing the encrypted private EC key information.
+  // When an EncryptedPrivateKey is present then the (unencrypted) private_key will be a zero length byte array or contain all zeroes.
+  // This is for security of the private key information.
+  optional EncryptedPrivateKey encrypted_private_key = 6;
+
   // The public EC key derived from the private key. We allow both to be stored to avoid mobile clients having to
   // do lots of slow EC math on startup.
   optional bytes public_key = 3;
@@ -176,6 +192,19 @@ message Transaction {
   optional TransactionConfidence confidence = 9;
 }
 
+/** The parameters used in the scrypt key derivation function.
+ *  The default values are taken from http://www.tarsnap.com/scrypt/scrypt-slides.pdf.
+ *  They can be increased - n is the number of iterations performed and
+ *  r and p can be used to tweak the algorithm - see:
+ *  http://stackoverflow.com/questions/11126315/what-are-optimal-scrypt-work-factors
+ */
+message ScryptParameters {
+  required bytes salt = 1;                        // Salt to use in generation of the wallet password (8 bytes)
+  optional int64 n = 2 [default = 16384];         // CPU/ memory cost parameter
+  optional int32 r = 3 [default = 8];             // Block size parameter
+  optional int32 p = 4 [default = 1];             // Parallelisation parameter
+}
+
 /** An extension to the wallet */
 message Extension {
   required string id = 1;   // like org.whatever.foo.bar
@@ -188,6 +217,18 @@ message Extension {
 
 /** A bitcoin wallet */
 message Wallet {
+  /**
+   * The encryption type of the wallet.
+   *
+   * The encryption type is UNENCRYPTED for wallets where the wallet does not support encryption - wallets prior to
+   * encryption support are grandfathered in as this wallet type.
+   * When a wallet is ENCRYPTED_SCRYPT_AES the keys are either encrypted with the wallet password or are unencrypted.
+   */
+  enum EncryptionType {
+    UNENCRYPTED = 1;                 // All keys in the wallet are unencrypted
+    ENCRYPTED_SCRYPT_AES = 2;        // All keys are encrypted with a passphrase based KDF of scrypt and AES encryption
+  }
+
   required string network_identifier = 1; // the network used by this wallet
   // org.bitcoin.production = production network (Satoshi genesis block)
   // org.bitcoin.test = test network (Andresen genesis block)
@@ -195,9 +236,25 @@ message Wallet {
   // The SHA256 hash of the head of the best chain seen by this wallet.
   optional bytes last_seen_block_hash = 2;
   // The height in the chain of the last seen block.
-  optional uint32 last_seen_block_height = 5;
+  optional uint32 last_seen_block_height = 12;
 
   repeated Key key = 3;
   repeated Transaction transaction = 4;
+
+  optional EncryptionType encryption_type = 5 [default=UNENCRYPTED];
+  optional ScryptParameters encryption_parameters = 6;
+
+  // The version number of the wallet - used to detect wallets that were produced in the future
+  // (i.e the wallet may contain some future format this protobuf/ code does not know about)
+  optional int32 version = 7;
+
+  // deprecated - do not recycle this numeric identifier
+  // optional int32 minor_version = 8;
+
   repeated Extension extension = 10;
+
+  // A UTF8 encoded text description of the wallet that is intended for end user provided text.
+  optional string description = 11;
+
+  // (The field number 12 is used by last_seen_block_height)
 } // end of Wallet

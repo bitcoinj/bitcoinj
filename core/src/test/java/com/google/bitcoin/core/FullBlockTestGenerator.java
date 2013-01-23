@@ -48,7 +48,7 @@ public class FullBlockTestGenerator {
         coinbaseOutKeyPubKey = coinbaseOutKey.getPubKey();
         Utils.rollMockClock(0); // Set a mock clock for timestamp tests
     }
-    
+
     public List<BlockAndValidity> getBlocksToTest(boolean addExpensiveBlocks) throws ScriptException, ProtocolException, IOException {
         List<BlockAndValidity> blocks = new LinkedList<BlockAndValidity>();
         
