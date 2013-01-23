@@ -48,6 +48,7 @@ public class FakeChannelSink extends AbstractChannelSink {
             FakeChannel channel = (FakeChannel) event.getChannel();
             boolean offered = channel.events.offer(event);
             assert offered;
+            event.getFuture().setSuccess();
         }
     }
 }
