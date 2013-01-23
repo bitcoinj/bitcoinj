@@ -288,7 +288,7 @@ public class PeerMonitor {
                 if (column == PeerTableModel.CHAIN_HEIGHT) {
                     long height = (Long) contents;
                     if (height != peerGroup.getMostCommonChainHeight()) {
-                        str = height + " • ";
+                        str = height + " \u2022 ";
                     }
                 }
             }

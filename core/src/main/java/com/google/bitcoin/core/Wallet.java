@@ -16,8 +16,14 @@
 
 package com.google.bitcoin.core;
 
+import org.bitcoinj.wallet.Protos.Wallet.EncryptionType;
+import org.spongycastle.crypto.params.KeyParameter;
+
 import com.google.bitcoin.core.TransactionConfidence.ConfidenceType;
 import com.google.bitcoin.core.WalletTransaction.Pool;
+import com.google.bitcoin.crypto.EncryptedPrivateKey;
+import com.google.bitcoin.crypto.KeyCrypter;
+import com.google.bitcoin.crypto.KeyCrypterException;
 import com.google.bitcoin.store.WalletProtobufSerializer;
 import com.google.bitcoin.utils.Locks;
 import com.google.common.base.Objects;
@@ -25,6 +31,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ListenableFuture;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -169,7 +176,7 @@ public class Wallet implements Serializable, BlockChainListener {
     /**
      * A list of public/private EC keys owned by this user. Access it using addKey[s], hasKey[s] and findPubKeyFromHash.
      */
-    public final ArrayList<ECKey> keychain;
+    public ArrayList<ECKey> keychain;
 
     private final NetworkParameters params;
 
@@ -191,6 +198,7 @@ public class Wallet implements Serializable, BlockChainListener {
     // A listener that relays confidence changes from the transaction confidence object to the wallet event listener,
     // as a convenience to API users so they don't have to register on every transaction themselves.
     private transient TransactionConfidence.Listener txConfidenceListener;
+
     // If a TX hash appears in this set then notifyNewBestBlock will ignore it, as its confidence was already set up
     // in receive() via Transaction.setBlockAppearance(). As the BlockChain always calls notifyNewBestBlock even if
     // it sent transactions to the wallet, without this we'd double count.
@@ -281,10 +289,35 @@ public class Wallet implements Serializable, BlockChainListener {
     private transient CoinSelector coinSelector = new DefaultCoinSelector();
 
     /**
+     * The keyCrypter for the wallet. This specifies the algorithm used for encrypting and decrypting the private keys.
+     */
+    private KeyCrypter keyCrypter;
+
+    /**
+     * The wallet version. This is an int that can be used to track breaking changes in the wallet format.
+     * You can also use it to detect wallets that come from the future (ie they contain features you
+     * do not know how to deal with).
+     */
+    private int version;
+
+    /**
+     * A description for the wallet.
+     */
+    String description;
+
+    /**
      * Creates a new, empty wallet with no keys and no transactions. If you want to restore a wallet from disk instead,
      * see loadFromFile.
      */
     public Wallet(NetworkParameters params) {
+        this(params, null);
+    }
+
+    /**
+     * Create a wallet with a keyCrypter to use in encrypting and decrypting keys.
+     */
+    public Wallet(NetworkParameters params, KeyCrypter keyCrypter) {
+        this.keyCrypter = keyCrypter;
         this.params = checkNotNull(params);
         keychain = new ArrayList<ECKey>();
         unspent = new HashMap<Sha256Hash, Transaction>();
@@ -299,6 +332,7 @@ public class Wallet implements Serializable, BlockChainListener {
     private void createTransientState() {
         ignoreNextNewBlock = new HashSet<Sha256Hash>();
         txConfidenceListener = new TransactionConfidence.Listener() {
+            @Override
             public void onConfidenceChanged(Transaction tx) {
                 lock.lock();
                 // The invokers unlock us immediately so if an exception is thrown, the lock will be already open.
@@ -1206,7 +1240,7 @@ public class Wallet implements Serializable, BlockChainListener {
             addWalletTransaction(Pool.DEAD, doubleSpend);
             // Inform the event listeners of the newly dead tx.
             doubleSpend.getConfidence().setOverridingTransaction(tx);
-        }
+         }
     }
 
     /**
@@ -1657,6 +1691,12 @@ public class Wallet implements Serializable, BlockChainListener {
          */
         public BigInteger fee = BigInteger.ZERO;
 
+        /**
+         * The AES key to use to decrypt the private keys before signing.
+         * If null then no decryption will be performed and if decryption is required an exception will be thrown.
+         */
+        public KeyParameter aesKey = null;
+
         // Tracks if this has been passed to wallet.completeTx already: just a safety check.
         private boolean completed;
 
@@ -1867,7 +1907,7 @@ public class Wallet implements Serializable, BlockChainListener {
 
             // Now sign the inputs, thus proving that we are entitled to redeem the connected outputs.
             try {
-                req.tx.signInputs(Transaction.SigHash.ALL, this);
+                req.tx.signInputs(Transaction.SigHash.ALL, this, req.aesKey);
             } catch (ScriptException e) {
                 // If this happens it means an output script in a wallet tx could not be understood. That should never
                 // happen, if it does it means the wallet has got into an inconsistent state.
@@ -1947,6 +1987,14 @@ public class Wallet implements Serializable, BlockChainListener {
             // TODO: Consider making keys a sorted list or hashset so membership testing is faster.
             for (final ECKey key : keys) {
                 if (keychain.contains(key)) continue;
+
+                // If the key has a keyCrypter that does not match the Wallet's then a KeyCrypterException is thrown.
+                // This is done because only one keyCrypter is persisted per Wallet and hence all the keys must be homogenous.
+                if (keyCrypter != null && keyCrypter.getUnderstoodEncryptionType() != EncryptionType.UNENCRYPTED) {
+                    if ( key.isEncrypted() && !keyCrypter.equals(key.getKeyCrypter())) {
+                        throw new KeyCrypterException("Cannot add key " + key.toString() + " because the keyCrypter does not match the wallets. Keys must be homogenous.");
+                    }
+                }
                 keychain.add(key);
                 added++;
             }
@@ -1956,6 +2004,7 @@ public class Wallet implements Serializable, BlockChainListener {
         } finally {
             lock.unlock();
         }
+
         for (ECKey key : keys) {
             // TODO: Change this interface to be batch-oriented.
             for (WalletEventListener listener : eventListeners) {
@@ -2145,6 +2194,10 @@ public class Wallet implements Serializable, BlockChainListener {
             if (dead.size() > 0) {
                 builder.append("\nDEAD:\n");
                 toStringHelper(builder, dead, chain);
+            }
+            // Add the keyCrypter so that any setup parameters are in the wallet toString.
+            if (this.keyCrypter != null) {
+                builder.append("\n keyCrypter: " + keyCrypter.toString());
             }
             return builder.toString();
         } finally {
@@ -2574,7 +2627,265 @@ public class Wallet implements Serializable, BlockChainListener {
             lock.unlock();
         }
     }
-    
+
+    /**
+     * Encrypt the wallet using the KeyCrypter and the AES key.
+     *
+     * @param keyCrypter The KeyCrypter that specifies how to encrypt/ decrypt a key
+     * @param aesKey AES key to use (normally created using KeyCrypter#deriveKey and cached as it is time consuming to create from a password)
+     * @throws KeyCrypterException Thrown if the wallet encryption fails. If so, the wallet state is unchanged.
+     */
+    public void encrypt(KeyCrypter keyCrypter, KeyParameter aesKey) {
+        lock.lock();
+        try {
+            Preconditions.checkNotNull(keyCrypter);
+
+            // If the wallet is already encrypted then you cannot encrypt it again.
+            if (getEncryptionType() != EncryptionType.UNENCRYPTED) {
+                throw new IllegalStateException("Wallet is already encrypted");
+            }
+
+            // Create a new arraylist that will contain the encrypted keys
+            ArrayList<ECKey> encryptedKeyChain = new ArrayList<ECKey>();
+
+            for (ECKey key : keychain) {
+                if (key.isEncrypted()) {
+                    // Key is already encrypted - add as is.
+                    encryptedKeyChain.add(key);
+                } else {
+                    // Encrypt the key.
+                    ECKey encryptedKey = key.encrypt(keyCrypter, aesKey);
+
+                    // Check that the encrypted key can be successfully decrypted.
+                    // This is done as it is a critical failure if the private key cannot be decrypted successfully
+                    // (all bitcoin controlled by that private key is lost forever).
+                    // For a correctly constructed keyCrypter the encryption should always be reversible so it is just being as cautious as possible.
+                    if (!ECKey.encryptionIsReversible(key, encryptedKey, keyCrypter, aesKey)) {
+                        // Abort encryption
+                        throw new KeyCrypterException("The key " + key.toString() + " cannot be successfully decrypted after encryption so aborting wallet encryption.");
+                    }
+
+                    encryptedKeyChain.add(encryptedKey);
+                }
+            }
+
+            // Now ready to use the encrypted keychain so go through the old keychain clearing all the unencrypted private keys.
+            // (This is to avoid the possibility of key recovery from memory).
+            for (ECKey key : keychain) {
+                if (!key.isEncrypted()) {
+                    key.clearPrivateKey();
+                }
+            }
+
+            // Replace the old keychain with the encrypted one.
+            keychain = encryptedKeyChain;
+
+            // The wallet is now encrypted.
+            this.keyCrypter = keyCrypter;
+
+            if (autosaveToFile != null) {
+                autoSave();
+            }
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
+     * Decrypt the wallet with the wallets keyCrypter and AES key.
+     *
+     * @param aesKey AES key to use (normally created using KeyCrypter#deriveKey and cached as it is time consuming to create from a password)
+     * @throws KeyCrypterException Thrown if the wallet decryption fails. If so, the wallet state is unchanged.
+     */
+    public void decrypt(KeyParameter aesKey) {
+        lock.lock();
+        try {
+            // Check the wallet is already encrypted - you cannot decrypt an unencrypted wallet.
+            if (getEncryptionType() == EncryptionType.UNENCRYPTED) {
+                throw new IllegalStateException("Wallet is already decrypted");
+            }
+
+            // Check that the wallet keyCrypter is non-null.
+            // This is set either at construction (if an encrypted wallet is created) or by wallet encryption.
+            Preconditions.checkNotNull(keyCrypter);
+
+            // Create a new arraylist that will contain the decrypted keys
+            ArrayList<ECKey> decryptedKeyChain = new ArrayList<ECKey>();
+
+            for (ECKey key : keychain) {
+                // Decrypt the key.
+                if (!key.isEncrypted()) {
+                    // Not encrypted - add to chain as is.
+                    decryptedKeyChain.add(key);
+                } else {
+                    ECKey decryptedECKey = key.decrypt(keyCrypter, aesKey);
+                    decryptedKeyChain.add(decryptedECKey);
+                }
+            }
+
+            // Replace the old keychain with the unencrypted one.
+            keychain = decryptedKeyChain;
+
+            // The wallet is now unencrypted.
+            keyCrypter = null;
+
+            if (autosaveToFile != null) {
+                autoSave();
+            }
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
+     * Create a new encrypted ECKey and add it to the wallet.
+     *
+     * @param keyCrypter The keyCrypter to use in encrypting the new key
+     * @param aesKey The AES key to use to encrypt the new key
+     * @return ECKey the new, encrypted ECKey
+     */
+    public ECKey addNewEncryptedKey(KeyCrypter keyCrypter, KeyParameter aesKey) {
+        lock.lock();
+        try {
+            ECKey newKey = (new ECKey()).encrypt(keyCrypter, aesKey);
+            addKey(newKey);
+            return newKey;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
+     *  Check whether the password can decrypt the first key in the wallet.
+     *  This can be used to check the validity of an entered password.
+     *
+     *  @returns boolean true if password supplied can decrypt the first private key in the wallet, false otherwise.
+     */
+    public boolean checkPassword(CharSequence password) {
+        lock.lock();
+        try {
+            if (keyCrypter == null) {
+                // The password cannot decrypt anything as the keyCrypter is null.
+                return false;
+            }
+            return checkAESKey(keyCrypter.deriveKey(password));
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
+     *  Check whether the AES key can decrypt the first encrypted key in the wallet.
+     *
+     *  @returns boolean true if AES key supplied can decrypt the first encrypted private key in the wallet, false otherwise.
+     */
+    public boolean checkAESKey(KeyParameter aesKey) {
+        lock.lock();
+        try {
+            // If no keys then cannot decrypt.
+            if (!getKeys().iterator().hasNext()) {
+                return false;
+            }
+
+            // Find the first encrypted key in the wallet.
+            ECKey firstEncryptedECKey = null;
+            Iterator<ECKey> iterator = getKeys().iterator();
+            while (iterator.hasNext() && firstEncryptedECKey == null) {
+                ECKey loopECKey = iterator.next();
+                if (loopECKey.isEncrypted()) {
+                    firstEncryptedECKey = loopECKey;
+                }
+            }
+
+            // There are no encrypted keys in the wallet.
+            if (firstEncryptedECKey == null) {
+                return false;
+            }
+
+            String originalAddress = firstEncryptedECKey.toAddress(getNetworkParameters()).toString();
+
+            if (firstEncryptedECKey != null && firstEncryptedECKey.isEncrypted() && firstEncryptedECKey.getEncryptedPrivateKey() != null) {
+                try {
+                    ECKey rebornKey = firstEncryptedECKey.decrypt(keyCrypter, aesKey);
+
+                    // Check that the decrypted private key's address is correct ie it decrypted accurately.
+                    String rebornAddress = rebornKey.toAddress(getNetworkParameters()).toString();
+                    return originalAddress.equals(rebornAddress);
+                } catch (KeyCrypterException ede) {
+                    // The AES key supplied is incorrect.
+                    return false;
+                }
+            }
+            return false;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
+     * Get the wallet's KeyCrypter.
+     * (Used in encrypting/ decrypting an ECKey).
+     */
+    public KeyCrypter getKeyCrypter() {
+        lock.lock();
+        try {
+            return keyCrypter;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
+     * Get the type of encryption used for this wallet.
+     *
+     * (This is a convenience method - the encryption type is actually stored in the keyCrypter).
+     */
+    public EncryptionType getEncryptionType() {
+        lock.lock();
+        try {
+            if (keyCrypter == null) {
+                // Unencrypted wallet.
+                return EncryptionType.UNENCRYPTED;
+            } else {
+                return keyCrypter.getUnderstoodEncryptionType();
+            }
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
+     * Get the version of the Wallet.
+     * This is an int you can use to indicate which versions of wallets your code understands,
+     * and which come from the future (and hence cannot be safely loaded).
+     */
+    public int getVersion() {
+        return version;
+    }
+
+    /**
+     * Set the version number of the wallet. See {@link Wallet#getVersion()}.
+     */
+    public void setVersion(int version) {
+        this.version = version;
+    }
+
+    /**
+     * Set the description of the wallet.
+     * This is a Unicode encoding string typically entered by the user as descriptive text for the wallet.
+     */
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    /**
+     * Get the description of the wallet. See {@link Wallet#setDescription(String))}
+     * @return
+     */
+    public String getDescription() {
+        return description;
+    }
+
     /**
      * Gets the number of elements that will be added to a bloom filter returned by getBloomFilter
      */

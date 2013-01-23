@@ -17,6 +17,7 @@
 package com.google.bitcoin.tools;
 
 import com.google.bitcoin.core.*;
+import com.google.bitcoin.crypto.KeyCrypterException;
 import com.google.bitcoin.discovery.DnsDiscovery;
 import com.google.bitcoin.discovery.IrcDiscovery;
 import com.google.bitcoin.discovery.PeerDiscovery;
@@ -432,6 +433,8 @@ public class WalletTool {
                 return;
             } catch (ScriptException e) {
                 throw new RuntimeException(e);
+            } catch (KeyCrypterException e) {
+                throw new RuntimeException(e);
             }
             t = req.tx;   // Not strictly required today.
             setup();
@@ -442,6 +445,8 @@ public class WalletTool {
             peers.broadcastTransaction(t).get();
             System.out.println(t.getHashAsString());
         } catch (BlockStoreException e) {
+            throw new RuntimeException(e);
+        } catch (KeyCrypterException e) {
             throw new RuntimeException(e);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
@@ -666,7 +671,11 @@ public class WalletTool {
             System.err.println("That key already exists in this wallet.");
             return;
         }
-        wallet.addKey(key);
+        try {
+            wallet.addKey(key);
+        } catch (KeyCrypterException kce) {
+            System.err.println("There was an encryption related error when adding the key. The error was '" + kce.getMessage() + "'.");
+        }
         System.out.println("addr:" + key.toAddress(params) + " " + key);
     }
 

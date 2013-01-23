@@ -6,6 +6,7 @@ import com.google.bitcoin.core.TransactionConfidence.ConfidenceType;
 import com.google.bitcoin.utils.BriefLogFormatter;
 import com.google.protobuf.ByteString;
 import org.bitcoinj.wallet.Protos;
+import org.bitcoinj.wallet.Protos.Wallet.EncryptionType;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -19,11 +20,15 @@ import java.util.*;
 import static com.google.bitcoin.core.TestUtils.createFakeTx;
 import static org.junit.Assert.*;
 
+import com.google.bitcoin.crypto.KeyCrypter;
+
 public class WalletProtobufSerializerTest {
     static final NetworkParameters params = NetworkParameters.unitTests();
     private ECKey myKey;
     private Address myAddress;
     private Wallet myWallet;
+
+    public static String WALLET_DESCRIPTION  = "The quick brown fox lives in \u4f26\u6566"; // Beijing in Chinese
 
     @Before
     public void setUp() throws Exception {
@@ -33,6 +38,7 @@ public class WalletProtobufSerializerTest {
         myAddress = myKey.toAddress(params);
         myWallet = new Wallet(params);
         myWallet.addKey(myKey);
+        myWallet.setDescription(WALLET_DESCRIPTION);
     }
 
     @Test
@@ -47,6 +53,7 @@ public class WalletProtobufSerializerTest {
                 wallet1.findKeyFromPubHash(myKey.getPubKeyHash()).getPrivKeyBytes());
         assertEquals(myKey.getCreationTimeSeconds(),
                 wallet1.findKeyFromPubHash(myKey.getPubKeyHash()).getCreationTimeSeconds());
+        assertEquals(WALLET_DESCRIPTION, wallet1.getDescription());
     }
 
     @Test
@@ -220,7 +227,7 @@ public class WalletProtobufSerializerTest {
         assertEquals(work2, rebornConfidence1.getWorkDone());
     }
 
-    private Wallet roundTrip(Wallet wallet) throws IOException {
+    private Wallet roundTrip(Wallet wallet) throws Exception {
         ByteArrayOutputStream output = new ByteArrayOutputStream();
         //System.out.println(WalletProtobufSerializer.walletToText(wallet));
         new WalletProtobufSerializer().writeWallet(wallet, output);
@@ -252,14 +259,14 @@ public class WalletProtobufSerializerTest {
         rnd.nextBytes(wallet1.random_bytes);
 
         Wallet wallet2 = roundTripExtension(wallet1);
-        assertTrue(wallet2 instanceof WalletExtension);
+        assertTrue("Wallet2 is not an instance of WalletExtension. It is a " + wallet2.getClass().getCanonicalName(), wallet2 instanceof WalletExtension);
 
         WalletExtension wallet2ext = (WalletExtension)wallet2;
 
-        assertNotNull(wallet2ext.random_bytes);
+        assertNotNull("Wallet2s random bytes were null", wallet2ext.random_bytes);
 
         for (int i = 0; i < 100; i++) {
-            assertEquals(wallet1.random_bytes[i], wallet2ext.random_bytes[i]);
+            assertEquals("Wallet extension byte different at byte " + i, wallet1.random_bytes[i], wallet2ext.random_bytes[i]);
         }
     }
 
@@ -277,7 +284,7 @@ public class WalletProtobufSerializerTest {
     }
 
 
-    private Wallet roundTripExtension(Wallet wallet) throws IOException {
+    private Wallet roundTripExtension(Wallet wallet) throws Exception {
 
         ByteArrayOutputStream output = new ByteArrayOutputStream();
         WalletProtobufSerializer serializer = new WalletProtobufSerializer();
@@ -320,7 +327,13 @@ public class WalletProtobufSerializerTest {
         public Wallet newWallet(NetworkParameters params) {
             return new WalletExtension(params);
         }
-        
+
+        @Override
+        public Wallet newWallet(NetworkParameters params, KeyCrypter keyCrypter) {
+            // Ignore encryption.
+            return new WalletExtension(params);
+        }
+
         @Override
         public void readExtension(Wallet wallet, Protos.Extension extProto) {
             if (wallet instanceof WalletExtension) {

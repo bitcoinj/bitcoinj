@@ -16,6 +16,8 @@
 
 package com.google.bitcoin.core;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import com.google.common.base.Preconditions;
 import org.spongycastle.asn1.*;
 import org.spongycastle.asn1.sec.SECNamedCurves;
@@ -26,11 +28,16 @@ import org.spongycastle.crypto.params.ECDomainParameters;
 import org.spongycastle.crypto.params.ECKeyGenerationParameters;
 import org.spongycastle.crypto.params.ECPrivateKeyParameters;
 import org.spongycastle.crypto.params.ECPublicKeyParameters;
+import org.spongycastle.crypto.params.KeyParameter;
 import org.spongycastle.crypto.signers.ECDSASigner;
 import org.spongycastle.math.ec.ECCurve;
 import org.spongycastle.math.ec.ECFieldElement;
 import org.spongycastle.math.ec.ECPoint;
 import org.spongycastle.util.encoders.Base64;
+
+import com.google.bitcoin.crypto.EncryptedPrivateKey;
+import com.google.bitcoin.crypto.KeyCrypter;
+import com.google.bitcoin.crypto.KeyCrypterException;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -61,6 +68,8 @@ import static com.google.common.base.Preconditions.checkArgument;
  * signature and want to find out who signed it, rather than requiring the user to provide the expected identity.</p>
  */
 public class ECKey implements Serializable {
+    private static final Logger log = LoggerFactory.getLogger(ECKey.class);
+
     private static final ECDomainParameters ecParams;
 
     private static final SecureRandom secureRandom;
@@ -81,6 +90,16 @@ public class ECKey implements Serializable {
     // Creation time of the key in seconds since the epoch, or zero if the key was deserialized from a version that did
     // not have this field.
     private long creationTimeSeconds;
+
+    /**
+     * Instance of the KeyCrypter interface to use for encrypting and decrypting the key.
+     */
+    transient private KeyCrypter keyCrypter;
+
+    /**
+     * The encrypted private key information.
+     */
+    private EncryptedPrivateKey encryptedPrivateKey;
 
     // Transient because it's calculated on demand.
     transient private byte[] pubKeyHash;
@@ -118,30 +137,37 @@ public class ECKey implements Serializable {
         return new ECKey(extractPrivateKeyFromASN1(asn1privkey));
     }
 
-    /**
-     * Output this ECKey as an ASN.1 encoded private key, as understood by OpenSSL or used by the Bitcoin reference
-     * implementation in its wallet storage format.
-     */
-    public byte[] toASN1() {
-        try {
-            ByteArrayOutputStream baos = new ByteArrayOutputStream(400);
+    /** Creates an ECKey given the private key only.  The public key is calculated from it (this is slow) */
+    public ECKey(BigInteger privKey) {
+        this(privKey, (byte[])null);
+    }
 
-            // ASN1_SEQUENCE(EC_PRIVATEKEY) = {
-            //   ASN1_SIMPLE(EC_PRIVATEKEY, version, LONG),
-            //   ASN1_SIMPLE(EC_PRIVATEKEY, privateKey, ASN1_OCTET_STRING),
-            //   ASN1_EXP_OPT(EC_PRIVATEKEY, parameters, ECPKPARAMETERS, 0),
-            //   ASN1_EXP_OPT(EC_PRIVATEKEY, publicKey, ASN1_BIT_STRING, 1)
-            // } ASN1_SEQUENCE_END(EC_PRIVATEKEY)
-            DERSequenceGenerator seq = new DERSequenceGenerator(baos);
-            seq.addObject(new ASN1Integer(1)); // version
-            seq.addObject(new DEROctetString(priv.toByteArray()));
-            seq.addObject(new DERTaggedObject(0, SECNamedCurves.getByName("secp256k1").toASN1Primitive()));
-            seq.addObject(new DERTaggedObject(1, new DERBitString(getPubKey())));
-            seq.close();
-            return baos.toByteArray();
-        } catch (IOException e) {
-            throw new RuntimeException(e);  // Cannot happen, writing to memory stream.
-        }
+    /** A constructor variant with BigInteger pubkey. See {@link ECKey#ECKey(BigInteger, byte[])}. */
+    public ECKey(BigInteger privKey, BigInteger pubKey) {
+        this(privKey, Utils.bigIntegerToBytes(pubKey, 65));
+    }
+
+    /**
+     * Creates an ECKey given only the private key bytes. This is the same as using the BigInteger constructor, but
+     * is more convenient if you are importing a key from elsewhere. The public key will be automatically derived
+     * from the private key.
+     */
+    public ECKey(byte[] privKeyBytes, byte[] pubKey) {
+        this(privKeyBytes == null ? null : new BigInteger(1, privKeyBytes), pubKey);
+    }
+
+    /**
+     * Create a new ECKey with an encrypted private key, a public key and a KeyCrypter.
+     *
+     * @param encryptedPrivateKey The private key, encrypted,
+     * @param pubKey The keys public key
+     * @param keyCrypter The KeyCrypter that will be used, with an AES key, to encrypt and decrypt the private key
+     */
+    public ECKey(EncryptedPrivateKey encryptedPrivateKey, byte[] pubKey, KeyCrypter keyCrypter) {
+        this((byte[])null, pubKey);
+
+        this.keyCrypter = Preconditions.checkNotNull(keyCrypter);
+        this.encryptedPrivateKey = encryptedPrivateKey;
     }
 
     /**
@@ -174,24 +200,31 @@ public class ECKey implements Serializable {
     private ECKey(BigInteger privKey, byte[] pubKey) {
         this(privKey, pubKey, false);
     }
-    
-    /** Creates an ECKey given the private key only.  The public key is calculated from it (this is slow) */
-    public ECKey(BigInteger privKey) {
-        this(privKey, (byte[])null);
-    }
-    
-    /** A constructor variant with BigInteger pubkey. See {@link ECKey#ECKey(BigInteger, byte[])}. */
-    public ECKey(BigInteger privKey, BigInteger pubKey) {
-        this(privKey, Utils.bigIntegerToBytes(pubKey, 65));
-    }
 
     /**
-     * Creates an ECKey given only the private key bytes. This is the same as using the BigInteger constructor, but
-     * is more convenient if you are importing a key from elsewhere. If not provided the public key will be
-     * automatically derived from the private key.
+     * Output this ECKey as an ASN.1 encoded private key, as understood by OpenSSL or used by the BitCoin reference
+     * implementation in its wallet storage format.
      */
-    public ECKey(byte[] privKeyBytes, byte[] pubKey) {
-        this(privKeyBytes == null ? null : new BigInteger(1, privKeyBytes), pubKey);
+    public byte[] toASN1() {
+        try {
+            ByteArrayOutputStream baos = new ByteArrayOutputStream(400);
+
+            // ASN1_SEQUENCE(EC_PRIVATEKEY) = {
+            //   ASN1_SIMPLE(EC_PRIVATEKEY, version, LONG),
+            //   ASN1_SIMPLE(EC_PRIVATEKEY, privateKey, ASN1_OCTET_STRING),
+            //   ASN1_EXP_OPT(EC_PRIVATEKEY, parameters, ECPKPARAMETERS, 0),
+            //   ASN1_EXP_OPT(EC_PRIVATEKEY, publicKey, ASN1_BIT_STRING, 1)
+            // } ASN1_SEQUENCE_END(EC_PRIVATEKEY)
+            DERSequenceGenerator seq = new DERSequenceGenerator(baos);
+            seq.addObject(new ASN1Integer(1)); // version
+            seq.addObject(new DEROctetString(priv.toByteArray()));
+            seq.addObject(new DERTaggedObject(0, SECNamedCurves.getByName("secp256k1").toASN1Primitive()));
+            seq.addObject(new DERTaggedObject(1, new DERBitString(getPubKey())));
+            seq.close();
+            return baos.toByteArray();
+        } catch (IOException e) {
+            throw new RuntimeException(e);  // Cannot happen, writing to memory stream.
+        }
     }
 
     /**
@@ -236,6 +269,10 @@ public class ECKey implements Serializable {
         return b.toString();
     }
 
+    /**
+     * Produce a string rendering of the ECKey INCLUDING the private key.
+     * Unless you absolutely need the private key it is better for security reasons to just use toString().
+     */
     public String toStringWithPrivate() {
         StringBuffer b = new StringBuffer();
         b.append(toString());
@@ -252,6 +289,19 @@ public class ECKey implements Serializable {
     public Address toAddress(NetworkParameters params) {
         byte[] hash160 = Utils.sha256hash160(pub);
         return new Address(params, hash160);
+    }
+
+    /**
+     * Clears all the ECKey private key contents from memory.
+     * WARNING - this method irreversibly deletes the private key information.
+     * It turns the ECKEy into a watch only key.
+     */
+    public void clearPrivateKey() {
+       priv = BigInteger.ZERO;
+
+       if (encryptedPrivateKey != null) {
+           encryptedPrivateKey.clear();
+       }
     }
 
     /**
@@ -291,13 +341,45 @@ public class ECKey implements Serializable {
      * Signs the given hash and returns the R and S components as BigIntegers. In the Bitcoin protocol, they are
      * usually encoded using DER format, so you want {@link ECKey#signToDER(Sha256Hash)} instead. However sometimes
      * the independent components can be useful, for instance, if you're doing to do further EC maths on them.
-     * @throws IllegalStateException if this ECKey doesn't have a private part.
+     * @throws KeyCrypterException if this ECKey doesn't have a private part.
      */
-    public ECDSASignature sign(Sha256Hash input) {
-        if (priv == null)
-            throw new IllegalStateException("This ECKey does not have the private key necessary for signing.");
+    public ECDSASignature sign(Sha256Hash input) throws KeyCrypterException {
+        return sign(input, null);
+    }
+
+    /**
+     * Signs the given hash and returns the R and S components as BigIntegers. In the Bitcoin protocol, they are
+     * usually encoded using DER format, so you want {@link ECKey#signToDER(Sha256Hash)} instead. However sometimes
+     * the independent components can be useful, for instance, if you're doing to do further EC maths on them.
+     * @param aesKey The AES key to use for decryption of the private key. If null then no decryption is required.
+     * @throws KeyCrypterException if this ECKey doesn't have a private part.
+     */
+    public ECDSASignature sign(Sha256Hash input, KeyParameter aesKey) throws KeyCrypterException {
+        // The private key bytes to use for signing.
+        BigInteger privateKeyForSigning;
+
+        if (isEncrypted()) {
+            // The private key needs decrypting before use.
+            if (aesKey == null) {
+                throw new KeyCrypterException("This ECKey is encrypted but no decryption key has been supplied.");
+            }
+
+            if (keyCrypter == null) {
+                throw new KeyCrypterException("There is no KeyCrypter to decrypt the private key for signing.");
+            }
+
+            privateKeyForSigning = new BigInteger(1, keyCrypter.decrypt(encryptedPrivateKey, aesKey));
+        } else {
+            // No decryption of private key required.
+            if (priv == null) {
+                throw new KeyCrypterException("This ECKey does not have the private key necessary for signing.");
+            } else {
+                privateKeyForSigning = priv;
+            }
+        }
+
         ECDSASigner signer = new ECDSASigner();
-        ECPrivateKeyParameters privKey = new ECPrivateKeyParameters(priv, ecParams);
+        ECPrivateKeyParameters privKey = new ECPrivateKeyParameters(privateKeyForSigning, ecParams);
         signer.init(true, privKey);
         BigInteger[] sigs = signer.generateSignature(input.getBytes());
         return new ECDSASignature(sigs[0], sigs[1]);
@@ -328,7 +410,7 @@ public class ECKey implements Serializable {
             } catch (NullPointerException e) {
                 // Bouncy Castle contains a bug that can cause NPEs given specially crafted signatures. Those signatures
                 // are inherently invalid/attack sigs so we just fail them here rather than crash the thread.
-                System.err.println("Caught NPE inside bouncy castle: " + e);
+                log.error("Caught NPE inside bouncy castle");
                 e.printStackTrace();
                 return false;
             }
@@ -346,7 +428,6 @@ public class ECKey implements Serializable {
     public boolean verify(byte[] data, byte[] signature) {
         return ECKey.verify(data, signature, pub);
     }
-
 
     private static BigInteger extractPrivateKeyFromASN1(byte[] asn1privkey) {
         // To understand this code, see the definition of the ASN.1 format for EC private keys in the OpenSSL source
@@ -379,13 +460,25 @@ public class ECKey implements Serializable {
      * encoded string.
      *
      * @throws IllegalStateException if this ECKey does not have the private part.
+     * @throws KeyCryptException if this ECKey is encrypted and no AESKey is provided or it does not decrypt the ECKey.
      */
-    public String signMessage(String message) {
+    public String signMessage(String message) throws KeyCrypterException {
+        return signMessage(message, null);
+    }
+
+    /**
+     * Signs a text message using the standard Bitcoin messaging signing format and returns the signature as a base64
+     * encoded string.
+     *
+     * @throws IllegalStateException if this ECKey does not have the private part.
+     * @throws KeyCryptException if this ECKey is encrypted and no AESKey is provided or it does not decrypt the ECKey.
+     */
+    public String signMessage(String message, KeyParameter aesKey) throws KeyCrypterException {
         if (priv == null)
             throw new IllegalStateException("This ECKey does not have the private key necessary for signing.");
         byte[] data = Utils.formatMessageForSigning(message);
         Sha256Hash hash = Sha256Hash.createDouble(data);
-        ECDSASignature sig = sign(hash);
+        ECDSASignature sig = sign(hash, aesKey);
         // Now we have to work backwards to figure out the recId needed to recover the signature.
         int recId = -1;
         for (int i = 0; i < 4; i++) {
@@ -610,5 +703,114 @@ public class ECKey implements Serializable {
         // Public keys are random already so we can just use a part of them as the hashcode. Read from the start to
         // avoid picking up the type code (compressed vs uncompressed) which is tacked on the end.
         return (pub[0] & 0xFF) | ((pub[1] & 0xFF) << 8) | ((pub[2] & 0xFF) << 16) | ((pub[3] & 0xFF) << 24);
+    }
+
+    /**
+     * Create an encrypted private key with the keyCrypter and the AES key supplied.
+     * This method returns a new encrypted key and leaves the original unchanged.
+     * To be secure you need to clear the original, unencrypted private key bytes.
+     *
+     * @param keyCrypter The keyCrypter that specifies exactly how the encrypted bytes are created.
+     * @param aesKey The KeyParameter with the AES encryption key (usually constructed with keyCrypter#deriveKey and cached as it is slow to create).
+     * @return encryptedKey
+     */
+    public ECKey encrypt(KeyCrypter keyCrypter, KeyParameter aesKey) throws KeyCrypterException {
+        Preconditions.checkNotNull(keyCrypter);
+        EncryptedPrivateKey encryptedPrivateKey = keyCrypter.encrypt(getPrivKeyBytes(), aesKey);
+        return new ECKey(encryptedPrivateKey, getPubKey(), keyCrypter);
+    }
+
+    /**
+     * Create a decrypted private key with the keyCrypter and AES key supplied.
+     *
+     * @param keyCrypter The keyCrypter that specifies exactly how the decrypted bytes are created.
+     * @param aesKey The KeyParameter with the AES encryption key (usually constructed with keyCrypter#deriveKey and cached).
+     * @return unencryptedKey
+     */
+    public ECKey decrypt(KeyCrypter keyCrypter, KeyParameter aesKey) throws KeyCrypterException {
+        Preconditions.checkNotNull(keyCrypter);
+
+        // Check that the keyCrypter matches the one used to encrypt the keys, if set.
+        if (this.keyCrypter != null && !this.keyCrypter.equals(keyCrypter)) {
+            throw new KeyCrypterException("The keyCrypter being used to decrypt the key is different to the one that was used to encrypt it");
+        }
+
+        // Decrypt the private key.
+        byte[] unencryptedPrivateKey = keyCrypter.decrypt(encryptedPrivateKey, aesKey);
+
+        return new ECKey(unencryptedPrivateKey, getPubKey());
+    }
+
+    /**
+     * Check that it is possible to decrypt the key with the keyCrypter and that the original key is returned.
+     *
+     * Because it is a critical failure if the private keys cannot be decrypted successfully (resulting of loss of all bitcoins controlled
+     * by the private key) you can use this method to check when you *encrypt* a wallet that it can definitely be decrypted successfully.
+     * See {@link Wallet#encrypt(KeyCrypter keyCrypter, KeyParameter aesKey)} for example usage.
+     *
+     * @returns true if the encrypted key can be decrypted back to the original key successfully.
+     */
+    public static boolean encryptionIsReversible(ECKey originalKey, ECKey encryptedKey, KeyCrypter keyCrypter, KeyParameter aesKey) {
+        String genericErrorText = "The check that encryption could be reversed failed for key " + originalKey.toString() + ". ";
+        try {
+            ECKey rebornUnencryptedKey = encryptedKey.decrypt(keyCrypter, aesKey);
+            if (rebornUnencryptedKey == null) {
+                log.error(genericErrorText + "The test decrypted key was missing.");
+                return false;
+            }
+
+            byte[] originalPrivateKeyBytes = originalKey.getPrivKeyBytes();
+            if (originalPrivateKeyBytes != null) {
+                if (rebornUnencryptedKey.getPrivKeyBytes() == null) {
+                    log.error(genericErrorText + "The test decrypted key was missing.");
+                    return false;
+                } else {
+                    if (originalPrivateKeyBytes.length != rebornUnencryptedKey.getPrivKeyBytes().length) {
+                        log.error(genericErrorText + "The test decrypted private key was a different length to the original.");
+                        return false;
+                    } else {
+                        for (int i = 0; i < originalPrivateKeyBytes.length; i++) {
+                            if (originalPrivateKeyBytes[i] != rebornUnencryptedKey.getPrivKeyBytes()[i]) {
+                                log.error(genericErrorText + "Byte " + i + " of the private key did not match the original.");
+                                return false;
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (KeyCrypterException kce) {
+            log.error(kce.getMessage());
+            return false;
+        }
+
+        // Key can successfully be decrypted.
+        return true;
+    }
+
+    /**
+     * Indicates whether the private key is encrypted (true) or not (false).
+     * A private key is deemed to be encrypted when there is both a KeyCrypter and the encryptedPrivateKey is non-zero.
+     */
+    public boolean isEncrypted() {
+         return keyCrypter != null && encryptedPrivateKey != null && encryptedPrivateKey.getEncryptedBytes() != null &&  encryptedPrivateKey.getEncryptedBytes().length > 0;
+    }
+
+    /**
+     * @return The encryptedPrivateKey (containing the encrypted private key bytes and initialisation vector) for this ECKey,
+     *         or null if the ECKey is not encrypted.
+     */
+    public EncryptedPrivateKey getEncryptedPrivateKey() {
+        if (encryptedPrivateKey == null) {
+            return null;
+        } else {
+            return encryptedPrivateKey.clone();
+        }
+    }
+
+    /**
+     * @return The KeyCrypter that was used to encrypt to encrypt this ECKey. You need this to decrypt the ECKey.
+     */
+    public KeyCrypter getKeyCrypter() {
+        return keyCrypter;
     }
 }

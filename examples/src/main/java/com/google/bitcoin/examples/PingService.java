@@ -17,6 +17,7 @@
 package com.google.bitcoin.examples;
 
 import com.google.bitcoin.core.*;
+import com.google.bitcoin.crypto.KeyCrypterException;
 import com.google.bitcoin.discovery.DnsDiscovery;
 import com.google.bitcoin.discovery.IrcDiscovery;
 import com.google.bitcoin.store.BlockStore;
@@ -187,6 +188,9 @@ public class PingService {
             });
         } catch (ScriptException e) {
             // If we didn't understand the scriptSig, just crash.
+            throw new RuntimeException(e);
+        } catch (KeyCrypterException e) {
+            e.printStackTrace();
             throw new RuntimeException(e);
         }
     }
