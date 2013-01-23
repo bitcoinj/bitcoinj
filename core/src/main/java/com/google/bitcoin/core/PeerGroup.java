@@ -160,7 +160,7 @@ public class PeerGroup extends AbstractIdleService {
      *
      * <pre>
      *   ClientBootstrap bootstrap = PeerGroup.createClientBootstrap();
-     *   bootstrap.setOption("connectionTimeoutMillis", 3000);
+     *   bootstrap.setOption("connectTimeoutMillis", 3000);
      *   PeerGroup peerGroup = new PeerGroup(params, chain, bootstrap);
      * </pre>
      *
