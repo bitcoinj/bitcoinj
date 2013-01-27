@@ -21,6 +21,7 @@ import com.google.bitcoin.core.WalletTransaction.Pool;
 import com.google.bitcoin.store.WalletProtobufSerializer;
 import com.google.bitcoin.utils.EventListenerInvoker;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.slf4j.Logger;
@@ -194,6 +195,49 @@ public class Wallet implements Serializable, BlockChainListener {
     private transient HashSet<Sha256Hash> ignoreNextNewBlock;
     // Whether or not to ignore nLockTime > 0 transactions that are received to the mempool.
     private boolean acceptTimeLockedTransactions;
+
+    /** Represents the results of a {@link CoinSelector#select(java.math.BigInteger, java.util.LinkedList)}  operation */
+    public static class CoinSelection {
+        public BigInteger valueGathered;
+        public List<TransactionOutput> gathered;
+        public CoinSelection(BigInteger valueGathered, List<TransactionOutput> gathered) {
+            this.valueGathered = valueGathered;
+            this.gathered = gathered;
+        }
+    }
+
+    /**
+     * A CoinSelector is responsible for picking some outputs to spend, from the list of all spendable outputs. It
+     * allows you to customize the policies for creation of transactions to suit your needs. The select operation
+     * may return a {@link CoinSelection} that has a valueGathered lower than the requested target, if there's not
+     * enough money in the wallet.
+     */
+    public interface CoinSelector {
+        public CoinSelection select(BigInteger target, LinkedList<TransactionOutput> candidates);
+    }
+
+    public static class DefaultCoinSelector implements CoinSelector {
+        public CoinSelection select(BigInteger biTarget, LinkedList<TransactionOutput> candidates) {
+            long target = biTarget.longValue();
+            long total = 0;
+            LinkedList<TransactionOutput> selected = Lists.newLinkedList();
+            // Super dumb algorithm: just iterate through candidates and keep adding them in whatever order until we
+            // have enough.
+            for (TransactionOutput output : candidates) {
+                if (total >= target) break;
+                // Only pick chain-included transactions.
+                if (output.parentTransaction.getConfidence().getConfidenceType().equals(ConfidenceType.BUILDING)) {
+                    selected.add(output);
+                    total += output.getValue().longValue();
+                }
+            }
+            // Total may be lower than target here, if the given candidates were insufficient to create to requested
+            // transaction.
+            return new CoinSelection(BigInteger.valueOf(total), selected);
+        }
+    }
+
+    private transient CoinSelector coinSelector = new DefaultCoinSelector();
 
     /**
      * Creates a new, empty wallet with no keys and no transactions. If you want to restore a wallet from disk instead,
@@ -1044,16 +1088,16 @@ public class Wallet implements Serializable, BlockChainListener {
     }
 
     /**
-     * Updates the wallet by checking if this TX spends any of our outputs, and marking them as spent if so. It can
+     * <p>Updates the wallet by checking if this TX spends any of our outputs, and marking them as spent if so. It can
      * be called in two contexts. One is when we receive a transaction on the best chain but it wasn't pending, this
      * most commonly happens when we have a set of keys but the wallet transactions were wiped and we are catching up
      * with the block chain. It can also happen if a block includes a transaction we never saw at broadcast time.
-     * If this tx double spends, it takes precedence over our pending transactions and the pending tx goes dead.
+     * If this tx double spends, it takes precedence over our pending transactions and the pending tx goes dead.</p>
      *
-     * The other context it can be called is from {@link Wallet#receivePending(Transaction)} ie we saw a tx be
-     * broadcast or one was submitted directly that spends our own coins. If this tx double spends it does NOT take
-     * precedence because the winner will be resolved by the miners - we assume that our version will win,
-     * if we are wrong then when a block appears the tx will go dead.
+     * <p>The other context it can be called is from {@link Wallet#receivePending(Transaction, java.util.List)},
+     * ie we saw a tx be broadcast or one was submitted directly that spends our own coins. If this tx double spends
+     * it does NOT take precedence because the winner will be resolved by the miners - we assume that our version will
+     * win, if we are wrong then when a block appears the tx will go dead.</p>
      */
     private void updateForSpends(Transaction tx, boolean fromChain) throws VerificationException {
         // tx is on the best chain by this point.
@@ -1617,34 +1661,36 @@ public class Wallet implements Serializable, BlockChainListener {
         log.info("Completing send tx with {} outputs totalling {}",
                 req.tx.getOutputs().size(), bitcoinValueToFriendlyString(value));
 
-        // To send money to somebody else, we need to do gather up transactions with unspent outputs until we have
-        // sufficient value. Many coin selection algorithms are possible, we use a simple but suboptimal one.
-        // TODO: Sort coins so we use the smallest first, to combat wallet fragmentation and reduce fees.
-        BigInteger valueGathered = BigInteger.ZERO;
-        List<TransactionOutput> gathered = new LinkedList<TransactionOutput>();
-        for (Transaction tx : unspent.values()) {
+        // Calculate a list of ALL potential candidates for spending and then ask a coin selector to provide us
+        // with the actual outputs that'll be used to gather the required amount of value. In this way, users
+        // can customize coin selection policies.
+        //
+        // Note that this code is poorly optimized: the spend candidates only alter when transactions in the wallet
+        // change - it could be pre-calculated and held in RAM, and this is probably an optimization worth doing.
+        // Note that output.isMine(this) needs to test the keychain which is currently an array, so it's
+        // O(candidate outputs ^ keychain.size())! There's lots of low hanging fruit here.
+        LinkedList<TransactionOutput> candidates = Lists.newLinkedList();
+        for (Transaction tx : Iterables.concat(unspent.values(), pending.values())) {
             // Do not try and spend coinbases that were mined too recently, the protocol forbids it.
-            if (!tx.isMature()) {
-                continue;
-            }
+            if (!tx.isMature()) continue;
             for (TransactionOutput output : tx.getOutputs()) {
                 if (!output.isAvailableForSpending()) continue;
                 if (!output.isMine(this)) continue;
-                gathered.add(output);
-                valueGathered = valueGathered.add(output.getValue());
+                candidates.add(output);
             }
-            if (valueGathered.compareTo(value) >= 0) break;
         }
+        // Of the coins we could spend, pick some that we actually will spend.
+        CoinSelection selection = coinSelector.select(value, candidates);
         // Can we afford this?
-        if (valueGathered.compareTo(value) < 0) {
-            log.info("Insufficient value in wallet for send, missing " +
-                    bitcoinValueToFriendlyString(value.subtract(valueGathered)));
+        if (selection.valueGathered.compareTo(value) < 0) {
+            log.warn("Insufficient value in wallet for send, missing " +
+                    bitcoinValueToFriendlyString(value.subtract(selection.valueGathered)));
             // TODO: Should throw an exception here.
             return false;
         }
-        checkState(gathered.size() > 0);
+        checkState(selection.gathered.size() > 0);
         req.tx.getConfidence().setConfidenceType(TransactionConfidence.ConfidenceType.NOT_SEEN_IN_CHAIN);
-        BigInteger change = valueGathered.subtract(value);
+        BigInteger change = selection.valueGathered.subtract(value);
         if (change.compareTo(BigInteger.ZERO) > 0) {
             // The value of the inputs is greater than what we want to send. Just like in real life then,
             // we need to take back some coins ... this is called "change". Add another output that sends the change
@@ -1653,7 +1699,7 @@ public class Wallet implements Serializable, BlockChainListener {
             log.info("  with {} coins change", bitcoinValueToFriendlyString(change));
             req.tx.addOutput(new TransactionOutput(params, req.tx, change, changeAddress));
         }
-        for (TransactionOutput output : gathered) {
+        for (TransactionOutput output : selection.gathered) {
             req.tx.addInput(output);
         }
 
