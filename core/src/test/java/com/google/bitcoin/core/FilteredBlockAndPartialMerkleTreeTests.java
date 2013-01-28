@@ -1,32 +1,18 @@
 package com.google.bitcoin.core;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-
-import java.math.BigInteger;
-import java.net.InetSocketAddress;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
-
-import org.jboss.netty.bootstrap.ClientBootstrap;
-import org.jboss.netty.channel.Channel;
-import org.jboss.netty.channel.ChannelFactory;
-import org.jboss.netty.channel.ChannelPipeline;
-import org.jboss.netty.channel.ChannelPipelineFactory;
-import org.jboss.netty.channel.ChannelSink;
-import org.jboss.netty.channel.ChannelStateEvent;
-import org.jboss.netty.channel.Channels;
-import org.junit.Before;
+import com.google.bitcoin.core.TransactionConfidence.ConfidenceType;
+import com.google.bitcoin.store.MemoryBlockStore;
 import org.junit.Test;
 import org.spongycastle.util.encoders.Hex;
 
-import com.google.bitcoin.core.InventoryItem.Type;
-import com.google.bitcoin.core.TransactionConfidence.ConfidenceType;
-import com.google.bitcoin.store.MemoryBlockStore;
+import java.math.BigInteger;
+import java.util.Arrays;
+import java.util.Set;
 
-public class FilteredBlockAndPartialMerkelTreeTests extends TestWithPeerGroup {
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
+public class FilteredBlockAndPartialMerkleTreeTests extends TestWithPeerGroup {
     @Test
     // Simple deserialization sanity check
     public void deserializeFilteredBlock() throws Exception {
