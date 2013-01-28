@@ -850,7 +850,7 @@ public class Transaction extends ChildMessage implements Serializable {
                 }
                 // In SIGHASH_SINGLE the outputs after the matching input index are deleted, and the outputs before
                 // that position are "nulled out". Unintuitively, the value in a "null" transaction is set to -1.
-                this.outputs = new ArrayList<TransactionOutput>(this.outputs.subList(0, inputIndex));
+                this.outputs = new ArrayList<TransactionOutput>(this.outputs.subList(0, inputIndex + 1));
                 for (int i = 0; i < inputIndex; i++)
                     this.outputs.set(i, new TransactionOutput(params, this, BigInteger.valueOf(-1), new byte[] {}));
                 // The signature isn't broken by new versions of the transaction issued by other parties.
