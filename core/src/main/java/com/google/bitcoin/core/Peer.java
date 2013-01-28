@@ -16,7 +16,6 @@
 
 package com.google.bitcoin.core;
 
-import com.google.bitcoin.core.InventoryItem.Type;
 import com.google.bitcoin.store.BlockStore;
 import com.google.bitcoin.store.BlockStoreException;
 import com.google.bitcoin.utils.EventListenerInvoker;
@@ -81,6 +80,8 @@ public class Peer {
     private boolean downloadBlockBodies = true;
     // Whether to request filtered blocks instead of full blocks if the protocol version allows for them.
     private boolean useFilteredBlocks = false;
+    // The last filtered block we received, we're waiting to fill it out with transactions.
+    private FilteredBlock currentFilteredBlock = null;
     // Keeps track of things we requested internally with getdata but didn't receive yet, so we can avoid re-requests.
     // It's not quite the same as getDataFutures, as this is used only for getdatas done as part of downloading
     // the chain and so is lighter weight (we just keep a bunch of hashes not futures).
@@ -219,8 +220,6 @@ public class Peer {
             e.getChannel().close();
         }
 
-        private FilteredBlock currentFilteredBlock = null;
-        
         /** Handle incoming Bitcoin messages */
         @Override
         public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) throws Exception {
@@ -240,7 +239,7 @@ public class Peer {
             if (m == null) return;
             
             if (currentFilteredBlock != null && !(m instanceof Transaction)) {
-                processBlock(currentFilteredBlock);
+                processFilteredBlock(currentFilteredBlock);
                 currentFilteredBlock = null;
             }
 
@@ -253,16 +252,13 @@ public class Peer {
             } else if (m instanceof Block) {
                 processBlock((Block) m);
             } else if (m instanceof FilteredBlock) {
+                // Filtered blocks come before the data that they refer to, so stash it here and then fill it out as
+                // messages stream in. We'll call processFilteredBlock when a non-tx message arrives (eg, another
+                // FilteredBlock) or when a tx that isn't needed by that block is found. A ping message is sent after
+                // a getblocks, to force the non-tx message path.
                 currentFilteredBlock = (FilteredBlock)m;
             } else if (m instanceof Transaction) {
-                if (currentFilteredBlock != null) {
-                    if (!currentFilteredBlock.provideTransaction((Transaction)m)) {
-                        processBlock(currentFilteredBlock);
-                        currentFilteredBlock = null;
-                        processTransaction((Transaction) m);
-                    }
-                } else
-                    processTransaction((Transaction) m);
+                processTransaction((Transaction) m);
             } else if (m instanceof GetDataMessage) {
                 processGetData((GetDataMessage) m);
             } else if (m instanceof AddressMessage) {
@@ -410,16 +406,27 @@ public class Peer {
         }
     }
 
-    private synchronized void processTransaction(Transaction tx) {
-        log.debug("{}: Received broadcast tx {}", address, tx.getHashAsString());
+    private synchronized void processTransaction(Transaction tx) throws VerificationException, IOException {
+        log.debug("{}: Received tx {}", address, tx.getHashAsString());
         if (memoryPool != null) {
             // We may get back a different transaction object.
             tx = memoryPool.seen(tx, getAddress());
         }
         final Transaction fTx = tx;
-        if (maybeHandleRequestedData(fTx))
+        if (maybeHandleRequestedData(fTx)) {
             return;
-        // Tell all wallets about this tx so they can check if it's relevant or not.
+        }
+        if (currentFilteredBlock != null) {
+            if (!currentFilteredBlock.provideTransaction(tx)) {
+                // Got a tx that didn't fit into the filtered block, so we must have received everything.
+                processFilteredBlock(currentFilteredBlock);
+                currentFilteredBlock = null;
+            }
+            // Don't tell wallets or listeners about this tx as they'll learn about it when the filtered block is
+            // fully downloaded instead.
+            return;
+        }
+        // It's a broadcast transaction. Tell all wallets about this tx so they can check if it's relevant or not.
         for (ListIterator<Wallet> it = wallets.listIterator(); it.hasNext();) {
             final Wallet wallet = it.next();
             try {
@@ -658,8 +665,9 @@ public class Peer {
             throw new RuntimeException(e);
         }
     }
-    
-    private synchronized void processBlock(FilteredBlock m) throws IOException {
+
+    // TODO: Fix this duplication.
+    private synchronized void processFilteredBlock(FilteredBlock m) throws IOException {
         log.debug("{}: Received broadcast filtered block {}", address, m.getHash().toString());
         try {
             if (!downloadData) {
