@@ -630,7 +630,8 @@ public class Peer {
             if (maybeHandleRequestedData(m)) return;
 
             if (!downloadData) {
-                log.warn("Received block we did not ask for: {}", m.getHashAsString());
+                // This can happen if we lose download peer status after requesting block data.
+                log.debug("{}: Received block we did not ask for: {}", address, m.getHashAsString());
                 return;
             }
             pendingBlockDownloads.remove(m.getHash());
@@ -659,7 +660,7 @@ public class Peer {
             }
         } catch (VerificationException e) {
             // We don't want verification failures to kill the thread.
-            log.warn("FilteredBlock verification failed", e);
+            log.warn("{}: Block verification failed", address, e);
         } catch (PrunedException e) {
             // Unreachable when in SPV mode.
             throw new RuntimeException(e);
@@ -671,7 +672,7 @@ public class Peer {
         log.debug("{}: Received broadcast filtered block {}", address, m.getHash().toString());
         try {
             if (!downloadData) {
-                log.warn("Received block we did not ask for: {}", m.getHash().toString());
+                log.debug("{}: Received block we did not ask for: {}", address, m.getHash().toString());
                 return;
             }
             
@@ -704,7 +705,7 @@ public class Peer {
             }
         } catch (VerificationException e) {
             // We don't want verification failures to kill the thread.
-            log.warn("Block verification failed", e);
+            log.warn("{}: FilteredBlock verification failed", address, e);
         } catch (PrunedException e) {
             // We pruned away some of the data we need to properly handle this block. We need to request the needed
             // data from the remote peer and fix things. Or just give up.
