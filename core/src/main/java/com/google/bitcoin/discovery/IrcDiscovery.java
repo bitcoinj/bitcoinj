@@ -97,11 +97,12 @@ public class IrcDiscovery implements PeerDiscovery {
             int ipCursor = ipCursorStart;
             do {
                 connection = new Socket();
+                int timeoutMsec = (int) TimeUnit.MILLISECONDS.convert(timeoutValue, timeoutUnit);
+                connection.setSoTimeout(timeoutMsec);
                 try {
                     InetAddress ip = ips[ipCursor];
-                    long timeoutMsec = TimeUnit.MILLISECONDS.convert(timeoutValue, timeoutUnit);
                     log.info("Connecting to IRC with " + ip);
-                    connection.connect(new InetSocketAddress(ip, port), (int)timeoutMsec);
+                    connection.connect(new InetSocketAddress(ip, port), timeoutMsec);
                 } catch (SocketTimeoutException e) {
                     connection = null;
                 } catch (IOException e) {
