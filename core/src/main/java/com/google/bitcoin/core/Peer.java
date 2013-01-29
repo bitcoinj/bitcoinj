@@ -443,10 +443,11 @@ public class Peer {
                     Futures.addCallback(downloadDependencies(fTx), new FutureCallback<List<Transaction>>() {
                         public void onSuccess(List<Transaction> dependencies) {
                             try {
-                                log.info("Dependency download complete!");
+                                log.info("{}: Dependency download complete!", address);
                                 wallet.receivePending(fTx, dependencies);
                             } catch (VerificationException e) {
-                                log.error("Wallet failed to process pending transaction {}", fTx.getHashAsString());
+                                log.error("{}: Wallet failed to process pending transaction {}",
+                                        address, fTx.getHashAsString());
                                 log.error("Error was: ", e);
                                 // Not much more we can do at this point.
                             }
@@ -467,11 +468,10 @@ public class Peer {
         }
         // Tell all listeners about this tx so they can decide whether to keep it or not. If no listener keeps a
         // reference around then the memory pool will forget about it after a while too because it uses weak references.
-        final Transaction ftx = tx;
         EventListenerInvoker.invoke(eventListeners, new EventListenerInvoker<PeerEventListener>() {
             @Override
             public void invoke(PeerEventListener listener) {
-                listener.onTransaction(Peer.this, ftx);
+                listener.onTransaction(Peer.this, fTx);
             }
         });
     }
@@ -495,7 +495,7 @@ public class Peer {
     public ListenableFuture<List<Transaction>> downloadDependencies(Transaction tx) {
         TransactionConfidence.ConfidenceType txConfidence = tx.getConfidence().getConfidenceType();
         Preconditions.checkArgument(txConfidence != TransactionConfidence.ConfidenceType.BUILDING);
-        log.info("Downloading dependencies of {}", tx.getHashAsString());
+        log.info("{}: Downloading dependencies of {}", address, tx.getHashAsString());
         final LinkedList<Transaction> results = new LinkedList<Transaction>();
         // future will be invoked when the entire dependency tree has been walked and the results compiled.
         final ListenableFuture future = downloadDependenciesInternal(tx, new Object(), results);
@@ -568,7 +568,7 @@ public class Peer {
                     List<ListenableFuture<Object>> childFutures = Lists.newLinkedList();
                     for (Transaction tx : transactions) {
                         if (tx == null) continue;
-                        log.info("Downloaded dependency of {}: {}", rootTxHash, tx.getHashAsString());
+                        log.info("{}: Downloaded dependency of {}: {}", new Object[]{address, rootTxHash, tx.getHashAsString()});
                         results.add(tx);
                         // Now recurse into the dependencies of this transaction too.
                         childFutures.add(downloadDependenciesInternal(tx, marker, results));
