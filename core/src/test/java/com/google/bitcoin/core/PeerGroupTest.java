@@ -19,9 +19,6 @@ package com.google.bitcoin.core;
 import com.google.bitcoin.discovery.PeerDiscovery;
 import com.google.bitcoin.discovery.PeerDiscoveryException;
 import com.google.bitcoin.store.MemoryBlockStore;
-
-import org.jboss.netty.bootstrap.ClientBootstrap;
-import org.jboss.netty.channel.*;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -94,7 +91,6 @@ public class PeerGroupTest extends TestWithPeerGroup {
         peerGroup.startAndWait();
 
         // Create a couple of peers.
-        peerGroup.addWallet(wallet);
         FakeChannel p1 = connectPeer(1);
         FakeChannel p2 = connectPeer(2);
         
@@ -111,19 +107,22 @@ public class PeerGroupTest extends TestWithPeerGroup {
         InventoryMessage inv = new InventoryMessage(unitTestParams);
         inv.addTransaction(t1);
 
-        inbound(p1, inv);
-        assertTrue(outbound(p1) instanceof BloomFilter);
-        assertTrue(outbound(p1) instanceof GetDataMessage);
+        // Note: we start with p2 here to verify that transactions are downloaded from whichever peer announces first
+        // which does not have to be the same as the download peer (which is really the "block download peer").
         inbound(p2, inv);
         assertTrue(outbound(p2) instanceof BloomFilter);
-        assertNull(outbound(p2));  // Only one peer is used to download.
-        inbound(p1, t1);
-        assertNull(outbound(p2));
+        assertTrue(outbound(p2) instanceof GetDataMessage);
+        inbound(p1, inv);
+        assertTrue(outbound(p1) instanceof BloomFilter);
+        assertNull(outbound(p1));  // Only one peer is used to download.
+        inbound(p2, t1);
+        assertNull(outbound(p1));
         // Asks for dependency.
-        GetDataMessage getdata = (GetDataMessage) outbound(p1);
-        inbound(p1, new NotFoundMessage(unitTestParams, getdata.getItems()));
+        GetDataMessage getdata = (GetDataMessage) outbound(p2);
+        assertNotNull(getdata);
+        inbound(p2, new NotFoundMessage(unitTestParams, getdata.getItems()));
         assertEquals(value, wallet.getBalance(Wallet.BalanceType.ESTIMATED));
-        peerGroup.stop();
+        peerGroup.stopAndWait();
     }
 
     @Test
@@ -220,19 +219,20 @@ public class PeerGroupTest extends TestWithPeerGroup {
         InventoryMessage inv = new InventoryMessage(params);
         inv.addTransaction(tx);
         
-        // Peer 2 advertises the tx but does not download it.
+        // Peer 2 advertises the tx but does not receive it yet.
         inbound(p2, inv);
         assertTrue(outbound(p2) instanceof BloomFilter);
         assertTrue(outbound(p2) instanceof GetDataMessage);
         assertEquals(0, tx.getConfidence().numBroadcastPeers());
         assertTrue(peerGroup.getMemoryPool().maybeWasSeen(tx.getHash()));
         assertNull(event[0]);
-                // Peer 1 advertises the tx, we don't do anything as it's already been requested.
+        // Peer 1 advertises the tx, we don't do anything as it's already been requested.
         inbound(p1, inv);
         assertTrue(outbound(p1) instanceof BloomFilter);
         assertNull(outbound(p1));
+        // Peer 2 gets sent the tx and requests the dependency.
         inbound(p2, tx);
-        assertNull(outbound(p2));
+        assertTrue(outbound(p2) instanceof GetDataMessage);
         tx = event[0];  // We want to use the canonical copy delivered by the PeerGroup from now on.
         assertNotNull(tx);
         event[0] = null;

@@ -541,6 +541,7 @@ public class PeerGroup extends AbstractIdleService {
      */
     public synchronized void addWallet(Wallet wallet) {
         Preconditions.checkNotNull(wallet);
+        Preconditions.checkState(!wallets.contains(wallet));
         wallets.add(wallet);
         announcePendingWalletTransactions(Collections.singletonList(wallet), peers);
 
@@ -718,6 +719,9 @@ public class PeerGroup extends AbstractIdleService {
         // Link the peer to the memory pool so broadcast transactions have their confidence levels updated.
         peer.setMemoryPool(memoryPool);
         peer.setDownloadData(false);
+        // TODO: The peer should calculate the fast catchup time from the added wallets here.
+        for (Wallet wallet : wallets)
+            peer.addWallet(wallet);
         // Re-evaluate download peers.
         Peer newDownloadPeer = selectDownloadPeer(peers);
         if (downloadPeer != newDownloadPeer) {
@@ -853,17 +857,12 @@ public class PeerGroup extends AbstractIdleService {
         if (downloadPeer != null) {
             log.info("Unsetting download peer: {}", downloadPeer);
             downloadPeer.setDownloadData(false);
-            for (Wallet wallet : wallets)
-                downloadPeer.removeWallet(wallet);
         }
         downloadPeer = peer;
         if (downloadPeer != null) {
             log.info("Setting download peer: {}", downloadPeer);
             downloadPeer.setDownloadData(true);
             downloadPeer.setDownloadParameters(fastCatchupTimeSecs, bloomFilter != null);
-            // TODO: The peer should calculate the fast catchup time from the added wallets here.
-            for (Wallet wallet : wallets)
-                downloadPeer.addWallet(wallet);
         }
     }
 
@@ -941,6 +940,8 @@ public class PeerGroup extends AbstractIdleService {
         }
         // TODO: Remove peerEventListeners from the Peer here.
         peer.removeEventListener(getDataListener);
+        for (Wallet wallet : wallets)
+            peer.removeWallet(wallet);
         EventListenerInvoker.invoke(peerEventListeners, new EventListenerInvoker<PeerEventListener>() {
             @Override
             public void invoke(PeerEventListener listener) {
