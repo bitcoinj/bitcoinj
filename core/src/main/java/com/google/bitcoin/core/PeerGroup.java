@@ -718,15 +718,13 @@ public class PeerGroup extends AbstractIdleService {
         // Link the peer to the memory pool so broadcast transactions have their confidence levels updated.
         peer.setMemoryPool(memoryPool);
         peer.setDownloadData(false);
-        // If we want to download the chain, and we aren't currently doing so, do so now.
-        if (downloadListener != null && downloadPeer == null && chain != null) {
-            log.info("  starting block chain download");
-            startBlockChainDownloadFromPeer(peer);
-        } else {
-            // Re-evaluate download peers.
-            Peer newDownloadPeer = selectDownloadPeer(peers);
-            if (downloadPeer != newDownloadPeer) {
-                setDownloadPeer(newDownloadPeer);
+        // Re-evaluate download peers.
+        Peer newDownloadPeer = selectDownloadPeer(peers);
+        if (downloadPeer != newDownloadPeer) {
+            setDownloadPeer(newDownloadPeer);
+            boolean shouldDownloadChain = downloadListener != null && chain != null;
+            if (shouldDownloadChain) {
+                startBlockChainDownloadFromPeer(downloadPeer);
             }
         }
         // Make sure the peer knows how to upload transactions that are requested from us.
@@ -843,6 +841,9 @@ public class PeerGroup extends AbstractIdleService {
     }
 
     private synchronized void setDownloadPeer(Peer peer) {
+        if (downloadPeer == peer) {
+            return;
+        }
         if (chain == null) {
             // PeerGroup creator did not want us to download any data. We still track the download peer for
             // informational purposes.
