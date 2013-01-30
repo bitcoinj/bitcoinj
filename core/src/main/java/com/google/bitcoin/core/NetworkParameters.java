@@ -176,7 +176,7 @@ public class NetworkParameters implements Serializable {
     public final BigInteger MAX_MONEY = new BigInteger("21000000", 10).multiply(COIN);
 
     /** Sets up the given Networkparemets with testnet3 values. */
-    private static NetworkParameters createTestNet(NetworkParameters n) {
+    private static NetworkParameters createTestNet3(NetworkParameters n) {
         // Genesis hash is 000000000933ea01ad0ee984209779baaec3ced90fa3f408719526f8d77f4943
         n.proofOfWorkLimit = Utils.decodeCompactBits(0x1d00ffffL);
         n.packetMagic = 0x0b110907;
@@ -226,16 +226,19 @@ public class NetworkParameters implements Serializable {
         return n;
     }
 
-    /** The first test chain created by Gavin. Don't use this! */
-    public static NetworkParameters oldTestNet() {
+    /** Returns whatever the latest testNet parameters are.  Use this rather than the versioned equivalents. */
+    public static NetworkParameters testNet() {
+        return testNet3();
+    }
+
+    public static NetworkParameters testNet2() {
         NetworkParameters n = new NetworkParameters();
         return createOldTestNet(n);
     }
 
-    /** The testnet3 chain created by Gavin, included in Bitcoin 0.7. */
-    public static NetworkParameters testNet() {
+    public static NetworkParameters testNet3() {
         NetworkParameters n = new NetworkParameters();
-        return createTestNet(n);
+        return createTestNet3(n);
     }
 
     /** The primary BitCoin chain created by Satoshi. */
@@ -277,7 +280,7 @@ public class NetworkParameters implements Serializable {
     /** Returns a testnet params modified to allow any difficulty target. */
     public static NetworkParameters unitTests() {
         NetworkParameters n = new NetworkParameters();
-        n = createTestNet(n);
+        n = createTestNet3(n);
         n.proofOfWorkLimit = new BigInteger("00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", 16);
         n.genesisBlock.setTime(System.currentTimeMillis() / 1000);
         n.genesisBlock.setDifficultyTarget(Block.EASIEST_DIFFICULTY_TARGET);
