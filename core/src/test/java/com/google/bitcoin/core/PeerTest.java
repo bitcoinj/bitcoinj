@@ -112,12 +112,12 @@ public class PeerTest extends TestWithNetworkConnections {
     @Test
     public void chainDownloadEnd2End() throws Exception {
         // A full end-to-end test of the chain download process, with a new block being solved in the middle.
-        Block b1 = createFakeBlock(unitTestParams, blockStore).block;
+        Block b1 = createFakeBlock(blockStore).block;
         blockChain.add(b1);
-        Block b2 = makeSolvedTestBlock(unitTestParams, b1);
-        Block b3 = makeSolvedTestBlock(unitTestParams, b2);
-        Block b4 = makeSolvedTestBlock(unitTestParams, b3);
-        Block b5 = makeSolvedTestBlock(unitTestParams, b4);
+        Block b2 = makeSolvedTestBlock(b1);
+        Block b3 = makeSolvedTestBlock(b2);
+        Block b4 = makeSolvedTestBlock(b3);
+        Block b5 = makeSolvedTestBlock(b4);
 
         control.replay();
         
@@ -160,7 +160,7 @@ public class PeerTest extends TestWithNetworkConnections {
         // timewaste. The getblocks message that would have been generated is set to be the same as the previous
         // because we walk backwards down the orphan chain and then discover we already asked for those blocks, so
         // nothing is done.
-        Block b6 = makeSolvedTestBlock(unitTestParams, b5);
+        Block b6 = makeSolvedTestBlock(b5);
         inv = new InventoryMessage(unitTestParams);
         inv.addBlock(b6);
         inbound(peer, inv);
@@ -192,11 +192,11 @@ public class PeerTest extends TestWithNetworkConnections {
 
         connect();
 
-        Block b1 = createFakeBlock(unitTestParams, blockStore).block;
+        Block b1 = createFakeBlock(blockStore).block;
         blockChain.add(b1);
         // Make a missing block.
-        Block b2 = makeSolvedTestBlock(unitTestParams, b1);
-        Block b3 = makeSolvedTestBlock(unitTestParams, b2);
+        Block b2 = makeSolvedTestBlock(b1);
+        Block b3 = makeSolvedTestBlock(b2);
         inbound(peer, b3);
         InventoryMessage inv = new InventoryMessage(unitTestParams);
         InventoryItem item = new InventoryItem(InventoryItem.Type.Block, b3.getHash());
@@ -224,9 +224,9 @@ public class PeerTest extends TestWithNetworkConnections {
         connect();
 
         // Make a missing block that we receive.
-        Block b1 = createFakeBlock(unitTestParams, blockStore).block;
+        Block b1 = createFakeBlock(blockStore).block;
         blockChain.add(b1);
-        Block b2 = makeSolvedTestBlock(unitTestParams, b1);
+        Block b2 = makeSolvedTestBlock(b1);
 
         // Receive an inv.
         InventoryMessage inv = new InventoryMessage(unitTestParams);
@@ -309,9 +309,9 @@ public class PeerTest extends TestWithNetworkConnections {
     public void newBlock() throws Exception {
         PeerEventListener listener = control.createMock(PeerEventListener.class);
 
-        Block b1 = createFakeBlock(unitTestParams, blockStore).block;
+        Block b1 = createFakeBlock(blockStore).block;
         blockChain.add(b1);
-        Block b2 = makeSolvedTestBlock(unitTestParams, b1);
+        Block b2 = makeSolvedTestBlock(b1);
         // Receive notification of a new block.
         InventoryMessage inv = new InventoryMessage(unitTestParams);
         InventoryItem item = new InventoryItem(InventoryItem.Type.Block, b2.getHash());
@@ -347,9 +347,9 @@ public class PeerTest extends TestWithNetworkConnections {
     public void startBlockChainDownload() throws Exception {
         PeerEventListener listener = control.createMock(PeerEventListener.class);
 
-        Block b1 = createFakeBlock(unitTestParams, blockStore).block;
+        Block b1 = createFakeBlock(blockStore).block;
         blockChain.add(b1);
-        Block b2 = makeSolvedTestBlock(unitTestParams, b1);
+        Block b2 = makeSolvedTestBlock(b1);
         blockChain.add(b2);
 
         listener.onChainDownloadStarted(peer, 108);
@@ -379,10 +379,10 @@ public class PeerTest extends TestWithNetworkConnections {
         
         connect();
 
-        Block b1 = createFakeBlock(unitTestParams, blockStore).block;
+        Block b1 = createFakeBlock(blockStore).block;
         blockChain.add(b1);
-        Block b2 = makeSolvedTestBlock(unitTestParams, b1);
-        Block b3 = makeSolvedTestBlock(unitTestParams, b2);
+        Block b2 = makeSolvedTestBlock(b1);
+        Block b3 = makeSolvedTestBlock(b2);
 
         // Request the block.
         Future<Block> resultFuture = peer.getBlock(b3.getHash());
@@ -405,14 +405,14 @@ public class PeerTest extends TestWithNetworkConnections {
         
         // Check that blocks before the fast catchup point are retrieved using getheaders, and after using getblocks.
         // This test is INCOMPLETE because it does not check we handle >2000 blocks correctly.
-        Block b1 = createFakeBlock(unitTestParams, blockStore).block;
+        Block b1 = createFakeBlock(blockStore).block;
         blockChain.add(b1);
         Utils.rollMockClock(60 * 10);  // 10 minutes later.
-        Block b2 = makeSolvedTestBlock(unitTestParams, b1);
+        Block b2 = makeSolvedTestBlock(b1);
         Utils.rollMockClock(60 * 10);  // 10 minutes later.
-        Block b3 = makeSolvedTestBlock(unitTestParams, b2);
+        Block b3 = makeSolvedTestBlock(b2);
         Utils.rollMockClock(60 * 10);
-        Block b4 = makeSolvedTestBlock(unitTestParams, b3);
+        Block b4 = makeSolvedTestBlock(b3);
 
         // Request headers until the last 2 blocks.
         peer.setDownloadParameters((Utils.now().getTime() / 1000) - (600*2) + 1, false);

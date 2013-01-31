@@ -972,8 +972,12 @@ public class Block extends Message {
     }
 
     // Visible for testing.
+    public Block createNextBlock(Address to, BigInteger value) {
+        return createNextBlock(to, null, Utils.now().getTime() / 1000, EMPTY_BYTES, value);
+    }
+
     public Block createNextBlock(Address to) {
-        return createNextBlock(to, null, Utils.now().getTime() / 1000, EMPTY_BYTES, Utils.toNanoCoins(50, 0));
+        return createNextBlock(to, Utils.toNanoCoins(50, 0));
     }
 
     // Visible for testing.

@@ -97,7 +97,7 @@ public class LazyParseByteCacheTest {
         Transaction tx2 = createFakeTx(unitTestParams, Utils.toNanoCoins(1, 0),
                 new ECKey().toAddress(unitTestParams));
 
-        Block b1 = createFakeBlock(unitTestParams, blockStore, tx1, tx2).block;
+        Block b1 = createFakeBlock(blockStore, tx1, tx2).block;
 
         BitcoinSerializer bs = new BitcoinSerializer(unitTestParams, true);
         

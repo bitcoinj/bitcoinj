@@ -101,7 +101,7 @@ public class BlockChainTest {
         Transaction tx1 = createFakeTx(unitTestParams,
                                        Utils.toNanoCoins(1, 0),
                                        wallet.keychain.get(0).toAddress(unitTestParams));
-        Block b1 = createFakeBlock(unitTestParams, blockStore, tx1).block;
+        Block b1 = createFakeBlock(blockStore, tx1).block;
         chain.add(b1);
         assertTrue(wallet.getBalance().compareTo(BigInteger.ZERO) > 0);
     }
@@ -113,7 +113,7 @@ public class BlockChainTest {
         Transaction tx1 = createFakeTx(unitTestParams,
                                        Utils.toNanoCoins(1, 0),
                                        wallet.keychain.get(0).toAddress(unitTestParams));
-        Block b1 = createFakeBlock(unitTestParams, blockStore, tx1).block;
+        Block b1 = createFakeBlock(blockStore, tx1).block;
         chain.add(b1);
         resetBlockStore();
         Sha256Hash hash = b1.getMerkleRoot();
@@ -128,7 +128,7 @@ public class BlockChainTest {
         // Now add a second block with no relevant transactions and then break it.
         Transaction tx2 = createFakeTx(unitTestParams, Utils.toNanoCoins(1, 0),
                                        new ECKey().toAddress(unitTestParams));
-        Block b2 = createFakeBlock(unitTestParams, blockStore, tx2).block;
+        Block b2 = createFakeBlock(blockStore, tx2).block;
         hash = b2.getMerkleRoot();
         b2.setMerkleRoot(Sha256Hash.ZERO_HASH);
         b2.solve();
@@ -292,7 +292,7 @@ public class BlockChainTest {
             Transaction tx2 = createFakeTx(unitTestParams, Utils.toNanoCoins(1, 0),
                 new ECKey().toAddress(unitTestParams));
 
-            Block b2 = createFakeBlock(unitTestParams, blockStore, tx2).block;
+            Block b2 = createFakeBlock(blockStore, tx2).block;
             chain.add(b2);
 
             // Wallet still does not have the coinbase transaction available for spend.
@@ -312,7 +312,7 @@ public class BlockChainTest {
         Transaction tx3 = createFakeTx(unitTestParams, Utils.toNanoCoins(1, 0),
             new ECKey().toAddress(unitTestParams));
 
-        Block b3 = createFakeBlock(unitTestParams, blockStore, tx3).block;
+        Block b3 = createFakeBlock(blockStore, tx3).block;
         chain.add(b3);
 
         // Wallet now has the coinbase transaction available for spend.
@@ -331,7 +331,7 @@ public class BlockChainTest {
         assertTrue(wallet.getBalance(BalanceType.AVAILABLE).equals( Utils.toNanoCoins(0, 0)));
 
         // Give it one more block - change from coinbaseSpend should now be available in the first wallet.
-        Block b4 = createFakeBlock(unitTestParams, blockStore, coinbaseSpend).block;
+        Block b4 = createFakeBlock(blockStore, coinbaseSpend).block;
         chain.add(b4);
         assertTrue(wallet.getBalance(BalanceType.AVAILABLE).equals(Utils.toNanoCoins(1, 0)));
 

@@ -137,10 +137,10 @@ public class PeerGroupTest extends TestWithPeerGroup {
 
         // Set up a little block chain. We heard about b1 but not b2 (it is pending download). b3 is solved whilst we
         // are downloading the chain.
-        Block b1 = TestUtils.createFakeBlock(params, blockStore).block;
+        Block b1 = TestUtils.createFakeBlock(blockStore).block;
         blockChain.add(b1);
-        Block b2 = TestUtils.makeSolvedTestBlock(params, b1);
-        Block b3 = TestUtils.makeSolvedTestBlock(params, b2);
+        Block b2 = TestUtils.makeSolvedTestBlock(b1);
+        Block b3 = TestUtils.makeSolvedTestBlock(b2);
 
         // Peer 1 and 2 receives an inv advertising a newly solved block.
         InventoryMessage inv = new InventoryMessage(params);
@@ -171,9 +171,9 @@ public class PeerGroupTest extends TestWithPeerGroup {
         FakeChannel p1 = connectPeer(1);
 
         // Set up a little block chain.
-        Block b1 = TestUtils.createFakeBlock(params, blockStore).block;
-        Block b2 = TestUtils.makeSolvedTestBlock(params, b1);
-        Block b3 = TestUtils.makeSolvedTestBlock(params, b2);
+        Block b1 = TestUtils.createFakeBlock(blockStore).block;
+        Block b2 = TestUtils.makeSolvedTestBlock(b1);
+        Block b3 = TestUtils.makeSolvedTestBlock(b2);
 
         // Expect a zero hash getblocks on p1. This is how the process starts.
         peerGroup.startBlockChainDownload(new AbstractPeerEventListener() {
@@ -272,7 +272,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         peerGroup.setMinBroadcastConnections(2);
 
         // Send ourselves a bit of money.
-        Block b1 = TestUtils.makeSolvedTestBlock(params, blockStore, address);
+        Block b1 = TestUtils.makeSolvedTestBlock(blockStore, address);
         inbound(p1, b1);
         assertTrue(outbound(p1) instanceof BloomFilter);
         assertNull(outbound(p1));
@@ -308,7 +308,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         assertEquals(transactions[0], sendResult.tx);
         assertEquals(transactions[0].getConfidence().numBroadcastPeers(), 2);
         // Confirm it.
-        Block b2 = TestUtils.createFakeBlock(params, blockStore, t1).block;
+        Block b2 = TestUtils.createFakeBlock(blockStore, t1).block;
         inbound(p1, b2);
         assertNull(outbound(p1));
         

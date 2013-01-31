@@ -147,10 +147,11 @@ public class TestUtils {
     }
 
     // Emulates receiving a valid block that builds on top of the chain.
-    public static BlockPair createFakeBlock(NetworkParameters params, BlockStore blockStore, long timeSeconds,
-                                            Transaction... transactions) {
+    public static BlockPair createFakeBlock(BlockStore blockStore, long timeSeconds, Transaction... transactions) {
         try {
-            Block b = blockStore.getChainHead().getHeader().createNextBlock(new ECKey().toAddress(params), timeSeconds);
+            Block chainHead = blockStore.getChainHead().getHeader();
+            Address to = new ECKey().toAddress(chainHead.params);
+            Block b = chainHead.createNextBlock(to, timeSeconds);
             // Coinbase tx was already added.
             for (Transaction tx : transactions)
                 b.addTransaction(tx);
@@ -168,28 +169,19 @@ public class TestUtils {
         }
     }
 
-    public static BlockPair createFakeBlock(NetworkParameters params, BlockStore blockStore,
-                                            Transaction... transactions) {
-        return createFakeBlock(params, blockStore, Utils.now().getTime() / 1000, transactions);
+    public static BlockPair createFakeBlock(BlockStore blockStore, Transaction... transactions) {
+        return createFakeBlock(blockStore, Utils.now().getTime() / 1000, transactions);
     }
 
-    public static Block makeSolvedTestBlock(NetworkParameters params,
-                                            BlockStore blockStore,
-                                            Address coinsTo) throws BlockStoreException {
+    public static Block makeSolvedTestBlock(BlockStore blockStore, Address coinsTo) throws BlockStoreException {
         Block b = blockStore.getChainHead().getHeader().createNextBlock(coinsTo);
         b.solve();
         return b;
     }
 
-    public static Block makeSolvedTestBlock(NetworkParameters params,
-                                            BlockStore blockStore) throws BlockStoreException {
-        return makeSolvedTestBlock(params, blockStore, new ECKey().toAddress(params));
-    }
-
-    public static Block makeSolvedTestBlock(NetworkParameters params,
-                                            Block prev,
-                                            Transaction... transactions) throws BlockStoreException {
-        Block b = prev.createNextBlock(new ECKey().toAddress(params));
+    public static Block makeSolvedTestBlock(Block prev, Transaction... transactions) throws BlockStoreException {
+        Address to = new ECKey().toAddress(prev.params);
+        Block b = prev.createNextBlock(to);
         // Coinbase tx already exists.
         for (Transaction tx : transactions) {
             b.addTransaction(tx);
