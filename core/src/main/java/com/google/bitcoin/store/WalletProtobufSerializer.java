@@ -235,17 +235,6 @@ public class WalletProtobufSerializer {
     }
 
     /**
-     * TEMPORARY API: Used for migrating 0.5 wallets to 0.6 - during deserialization we need to know the chain height
-     * so the depth field of transaction confidence objects can be filled out correctly. Set this before loading a
-     * wallet. It's only used for older wallets that lack the data already.
-     *
-     * @param chainHeight
-     */
-    public void setChainHeight(int chainHeight) {
-        this.chainHeight = chainHeight;
-    }
-
-    /**
      * Parses a wallet from the given stream. The stream is expected to contain a binary serialization of a 
      * {@link Protos.Wallet} object.<p>
      *     
