@@ -225,11 +225,23 @@ public class Wallet implements Serializable, BlockChainListener {
             // have enough.
             for (TransactionOutput output : candidates) {
                 if (total >= target) break;
-                // Only pick chain-included transactions.
-                if (output.parentTransaction.getConfidence().getConfidenceType().equals(ConfidenceType.BUILDING)) {
-                    selected.add(output);
-                    total += output.getValue().longValue();
+                // Only pick chain-included transactions, or transactions that are ours and pending.
+                TransactionConfidence confidence = output.parentTransaction.getConfidence();
+                ConfidenceType type = confidence.getConfidenceType();
+                boolean pending = type.equals(ConfidenceType.NOT_SEEN_IN_CHAIN) ||
+                                  type.equals(ConfidenceType.NOT_IN_BEST_CHAIN);
+                boolean confirmed = type.equals(ConfidenceType.BUILDING);
+                if (!confirmed) {
+                    // If the transaction is still pending ...
+                    if (!pending) continue;
+                    // And it was created by us ...
+                    if (!confidence.getSource().equals(TransactionConfidence.Source.SELF)) continue;
+                    // And it's been seen by the network and propagated ...
+                    if (confidence.numBroadcastPeers() <= 1) continue;
+                    // Then it's OK to select.
                 }
+                selected.add(output);
+                total += output.getValue().longValue();
             }
             // Total may be lower than target here, if the given candidates were insufficient to create to requested
             // transaction.
@@ -1518,7 +1530,7 @@ public class Wallet implements Serializable, BlockChainListener {
         }
     }
 
-    /*
+    /**
      * <p>Statelessly creates a transaction that sends the given value to address. The change is sent to
      * {@link Wallet#getChangeAddress()}, so you must have added at least one key.</p>
      *

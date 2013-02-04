@@ -28,6 +28,8 @@ import org.junit.Test;
 import java.io.File;
 import java.io.IOException;
 import java.math.BigInteger;
+import java.net.InetAddress;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -60,10 +62,16 @@ public class WalletTest {
 
     private Transaction sendMoneyToWallet(Transaction tx, AbstractBlockChain.NewBlockType type)
             throws IOException, ProtocolException, VerificationException {
-        BlockPair bp = createFakeBlock(blockStore, tx);
-        wallet.receiveFromBlock(tx, bp.storedBlock, type);
-        if (type == AbstractBlockChain.NewBlockType.BEST_CHAIN)
-            wallet.notifyNewBestBlock(bp.block);
+        if (type == null) {
+            // Pending/broadcast tx.
+            if (wallet.isPendingTransactionRelevant(tx))
+                wallet.receivePending(tx, new ArrayList<Transaction>());
+        } else {
+            BlockPair bp = createFakeBlock(blockStore, tx);
+            wallet.receiveFromBlock(tx, bp.storedBlock, type);
+            if (type == AbstractBlockChain.NewBlockType.BEST_CHAIN)
+                wallet.notifyNewBestBlock(bp.block);
+        }
         return tx;
     }
 
@@ -78,9 +86,14 @@ public class WalletTest {
         // will attach a small fee. Because the Bitcoin protocol makes it difficult to determine the fee of an
         // arbitrary transaction in isolation, we'll check that the fee was set by examining the size of the change.
 
-        // Receive some money.
+        // Receive some money as a pending transaction.
         BigInteger v1 = Utils.toNanoCoins(1, 0);
-        sendMoneyToWallet(v1, AbstractBlockChain.NewBlockType.BEST_CHAIN);
+        Transaction t1 = sendMoneyToWallet(v1, null);
+        assertEquals(BigInteger.ZERO, wallet.getBalance());
+        assertEquals(v1, wallet.getBalance(Wallet.BalanceType.ESTIMATED));
+        assertEquals(1, wallet.getPoolSize(Pool.PENDING));
+        assertEquals(0, wallet.getPoolSize(WalletTransaction.Pool.UNSPENT));
+        sendMoneyToWallet(t1, AbstractBlockChain.NewBlockType.BEST_CHAIN);
         assertEquals(v1, wallet.getBalance());
         assertEquals(1, wallet.getPoolSize(WalletTransaction.Pool.UNSPENT));
         assertEquals(1, wallet.getPoolSize(WalletTransaction.Pool.ALL));
@@ -103,7 +116,8 @@ public class WalletTest {
         assertEquals(2, t2.getOutputs().size());
         assertEquals(destination, t2.getOutputs().get(0).getScriptPubKey().getToAddress());
         assertEquals(wallet.getChangeAddress(), t2.getOutputs().get(1).getScriptPubKey().getToAddress());
-        assertEquals(toNanoCoins(0, 49), t2.getOutputs().get(1).getValue());
+        BigInteger v3 = toNanoCoins(0, 49);
+        assertEquals(v3, t2.getOutputs().get(1).getValue());
         // Check the script runs and signatures verify.
         t2.getInputs().get(0).verify();
 
@@ -114,12 +128,20 @@ public class WalletTest {
                 txns.add(tx);
             }
         });
+        // We broadcast the TX over the network, and then commit to it.
+        t2.getConfidence().markBroadcastBy(new PeerAddress(InetAddress.getByAddress(new byte[]{1,2,3,4})));
+        t2.getConfidence().markBroadcastBy(new PeerAddress(InetAddress.getByAddress(new byte[]{10,2,3,4})));
         wallet.commitTx(t2);
         assertEquals(1, wallet.getPoolSize(WalletTransaction.Pool.PENDING));
         assertEquals(1, wallet.getPoolSize(WalletTransaction.Pool.SPENT));
         assertEquals(2, wallet.getPoolSize(WalletTransaction.Pool.ALL));
         assertEquals(t2, txns.getFirst());
         assertEquals(1, txns.size());
+
+        // Now check that we can spend the unconfirmed change.
+        assertEquals(v3, wallet.getBalance(Wallet.BalanceType.ESTIMATED));
+        Transaction t3 = wallet.createSend(new ECKey().toAddress(params), v3);
+        assertNotNull(t3);
     }
 
     @Test
