@@ -185,6 +185,8 @@ public class Block extends Message {
         transactions = new ArrayList<Transaction>(numTransactions);
         for (int i = 0; i < numTransactions; i++) {
             Transaction tx = new Transaction(params, bytes, cursor, this, parseLazy, parseRetain, UNKNOWN_LENGTH);
+            // Label the transaction as coming from the P2P network, so code that cares where we first saw it knows.
+            tx.getConfidence().setSource(TransactionConfidence.Source.NETWORK);
             transactions.add(tx);
             cursor += tx.getMessageSize();
             optimalEncodingMessageSize += tx.getOptimalEncodingMessageSize();

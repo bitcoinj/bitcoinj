@@ -153,8 +153,10 @@ public class TestUtils {
             Address to = new ECKey().toAddress(chainHead.params);
             Block b = chainHead.createNextBlock(to, timeSeconds);
             // Coinbase tx was already added.
-            for (Transaction tx : transactions)
+            for (Transaction tx : transactions) {
+                tx.getConfidence().setSource(TransactionConfidence.Source.NETWORK);
                 b.addTransaction(tx);
+            }
             b.solve();
             BlockPair pair = new BlockPair();
             pair.block = b;

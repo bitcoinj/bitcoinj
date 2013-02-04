@@ -56,13 +56,15 @@ public class WalletProtobufSerializerTest {
         Transaction t1 = createFakeTx(params, v1, myAddress);
         t1.getConfidence().markBroadcastBy(new PeerAddress(InetAddress.getByName("1.2.3.4")));
         t1.getConfidence().markBroadcastBy(new PeerAddress(InetAddress.getByName("5.6.7.8")));
-        myWallet.receiveFromBlock(t1, null, BlockChain.NewBlockType.BEST_CHAIN);
+        t1.getConfidence().setSource(TransactionConfidence.Source.NETWORK);
+        myWallet.receivePending(t1, new ArrayList<Transaction>());
         Wallet wallet1 = roundTrip(myWallet);
         assertEquals(1, wallet1.getTransactions(true, true).size());
-        assertEquals(v1, wallet1.getBalance());
-        assertArrayEquals(t1.bitcoinSerialize(),
-                wallet1.getTransaction(t1.getHash()).bitcoinSerialize());
-        assertEquals(2, wallet1.getTransaction(t1.getHash()).getConfidence().numBroadcastPeers());
+        assertEquals(v1, wallet1.getBalance(Wallet.BalanceType.ESTIMATED));
+        Transaction t1copy = wallet1.getTransaction(t1.getHash());
+        assertArrayEquals(t1.bitcoinSerialize(), t1copy.bitcoinSerialize());
+        assertEquals(2, t1copy.getConfidence().numBroadcastPeers());
+        assertEquals(TransactionConfidence.Source.NETWORK, t1copy.getConfidence().getSource());
         
         Protos.Wallet walletProto = new WalletProtobufSerializer().walletToProto(myWallet);
         assertEquals(Protos.Key.Type.ORIGINAL, walletProto.getKey(0).getType());
@@ -73,7 +75,7 @@ public class WalletProtobufSerializerTest {
         Protos.Transaction t1p = walletProto.getTransaction(0);
         assertEquals(0, t1p.getBlockHashCount());
         assertArrayEquals(t1.getHash().getBytes(), t1p.getHash().toByteArray());
-        assertEquals(Protos.Transaction.Pool.UNSPENT, t1p.getPool());
+        assertEquals(Protos.Transaction.Pool.PENDING, t1p.getPool());
         assertFalse(t1p.hasLockTime());
         assertFalse(t1p.getTransactionInput(0).hasSequence());
         assertArrayEquals(t1.getInputs().get(0).getOutpoint().getHash().getBytes(),

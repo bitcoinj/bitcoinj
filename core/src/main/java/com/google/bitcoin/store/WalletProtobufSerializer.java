@@ -213,6 +213,15 @@ public class WalletProtobufSerializer {
                 Sha256Hash overridingHash = confidence.getOverridingTransaction().getHash();
                 confidenceBuilder.setOverridingTransaction(hashToByteString(overridingHash));
             }
+            TransactionConfidence.Source source = confidence.getSource();
+            switch (source) {
+                case SELF: confidenceBuilder.setSource(Protos.TransactionConfidence.Source.SOURCE_SELF); break;
+                case NETWORK: confidenceBuilder.setSource(Protos.TransactionConfidence.Source.SOURCE_NETWORK); break;
+                case UNKNOWN:
+                    // Fall through.
+                default:
+                    confidenceBuilder.setSource(Protos.TransactionConfidence.Source.SOURCE_UNKNOWN); break;
+            }
         }
         for (ListIterator<PeerAddress> it = confidence.getBroadcastBy(); it.hasNext();) {
             PeerAddress address = it.next();
@@ -422,6 +431,13 @@ public class WalletProtobufSerializer {
             PeerAddress address = new PeerAddress(ip, port);
             address.setServices(BigInteger.valueOf(proto.getServices()));
             confidence.markBroadcastBy(address);
+        }
+        switch (confidenceProto.getSource()) {
+            case SOURCE_SELF: confidence.setSource(TransactionConfidence.Source.SELF); break;
+            case SOURCE_NETWORK: confidence.setSource(TransactionConfidence.Source.NETWORK); break;
+            case SOURCE_UNKNOWN:
+                // Fall through.
+            default: confidence.setSource(TransactionConfidence.Source.UNKNOWN); break;
         }
     }
 }

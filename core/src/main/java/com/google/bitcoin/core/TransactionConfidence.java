@@ -67,42 +67,10 @@ public class TransactionConfidence implements Serializable {
     // Lazily created listeners array.
     private transient ArrayList<Listener> listeners;
 
-    /**
-     * The depth of the transaction on the best chain in blocks. An unconfirmed block has depth 0, after one confirmation
-     * its depth is 1.
-     */
+    // The depth of the transaction on the best chain in blocks. An unconfirmed block has depth 0.
     private int depth;
-
-    /**
-     * The cumulative work done for the blocks that bury this transaction. BigInteger.ZERO if the transaction is not
-     * on the best chain.
-     */
+    // The cumulative work done for the blocks that bury this transaction.
     private BigInteger workDone = BigInteger.ZERO;
-
-    /**
-     * <p>Adds an event listener that will be run when this confidence object is updated. The listener will be locked and
-     * is likely to be invoked on a peer thread.</p>
-     * 
-     * <p>Note that this is NOT called when every block arrives. Instead it is called when the transaction
-     * transitions between confidence states, ie, from not being seen in the chain to being seen (not necessarily in 
-     * the best chain). If you want to know when the transaction gets buried under another block, implement a
-     * {@link BlockChainListener}, attach it to a {@link BlockChain} and then use the getters on the
-     * confidence object to determine the new depth.</p>
-     */
-    public synchronized void addEventListener(Listener listener) {
-        Preconditions.checkNotNull(listener);
-        if (listeners == null)
-            listeners = new ArrayList<Listener>(2);
-        // Dedupe registrations. This makes the wallet code simpler.
-        if (!listeners.contains(listener))
-            listeners.add(listener);
-    }
-
-    public synchronized void removeEventListener(Listener listener) {
-        Preconditions.checkNotNull(listener);
-        Preconditions.checkNotNull(listeners);
-        listeners.remove(listener);
-    }
 
     /** Describes the state of the transaction in general terms. Properties can be read to learn specifics. */
     public enum ConfidenceType {
@@ -161,6 +129,32 @@ public class TransactionConfidence implements Serializable {
 
     };
 
+    private ConfidenceType confidenceType = ConfidenceType.UNKNOWN;
+    private int appearedAtChainHeight = -1;
+    // The transaction that double spent this one, if any.
+    private Transaction overridingTransaction;
+
+    /**
+     * Information about where the transaction was first seen (network, sent direct from peer, created by ourselves).
+     * Useful for risk analyzing pending transactions. Probably not that useful after a tx is included in the chain,
+     * unless re-org double spends start happening frequently.
+     */
+    public enum Source {
+        /** We don't know where the transaction came from. */
+        UNKNOWN,
+        /** We got this transaction from a network peer. */
+        NETWORK,
+        /** This transaction was created by our own wallet, so we know it's not a double spend. */
+        SELF
+    }
+    private Source source = Source.UNKNOWN;
+
+    public TransactionConfidence(Transaction tx) {
+        // Assume a default number of peers for our set.
+        broadcastBy = new CopyOnWriteArrayList<PeerAddress>();
+        transaction = tx;
+    }
+
     /**
      * <p>A confidence listener is informed when the level of {@link TransactionConfidence} is updated by something, like
      * for example a {@link Wallet}. You can add listeners to update your user interface or manage your order tracking
@@ -174,14 +168,29 @@ public class TransactionConfidence implements Serializable {
         public void onConfidenceChanged(Transaction tx);
     };
 
-    private ConfidenceType confidenceType = ConfidenceType.UNKNOWN;
-    private int appearedAtChainHeight = -1;
-    private Transaction overridingTransaction;
+    /**
+     * <p>Adds an event listener that will be run when this confidence object is updated. The listener will be locked and
+     * is likely to be invoked on a peer thread.</p>
+     *
+     * <p>Note that this is NOT called when every block arrives. Instead it is called when the transaction
+     * transitions between confidence states, ie, from not being seen in the chain to being seen (not necessarily in
+     * the best chain). If you want to know when the transaction gets buried under another block, implement a
+     * {@link BlockChainListener}, attach it to a {@link BlockChain} and then use the getters on the
+     * confidence object to determine the new depth.</p>
+     */
+    public synchronized void addEventListener(Listener listener) {
+        Preconditions.checkNotNull(listener);
+        if (listeners == null)
+            listeners = new ArrayList<Listener>(2);
+        // Dedupe registrations. This makes the wallet code simpler.
+        if (!listeners.contains(listener))
+            listeners.add(listener);
+    }
 
-    public TransactionConfidence(Transaction tx) {
-        // Assume a default number of peers for our set.
-        broadcastBy = new CopyOnWriteArrayList<PeerAddress>();
-        transaction = tx;
+    public synchronized void removeEventListener(Listener listener) {
+        Preconditions.checkNotNull(listener);
+        Preconditions.checkNotNull(listeners);
+        listeners.remove(listener);
     }
 
     /**
@@ -402,5 +411,25 @@ public class TransactionConfidence implements Serializable {
                 listener.onConfidenceChanged(transaction);
             }
         });
+    }
+
+    /**
+     * The source of a transaction tries to identify where it came from originally. For instance, did we download it
+     * from the peer to peer network, or make it ourselves, or receive it via Bluetooth, or import it from another app,
+     * and so on. This information is useful for {@link Wallet.CoinSelector} implementations to risk analyze
+     * transactions and decide when to spend them.
+     */
+    public synchronized Source getSource() {
+        return source;
+    }
+
+    /**
+     * The source of a transaction tries to identify where it came from originally. For instance, did we download it
+     * from the peer to peer network, or make it ourselves, or receive it via Bluetooth, or import it from another app,
+     * and so on. This information is useful for {@link Wallet.CoinSelector} implementations to risk analyze
+     * transactions and decide when to spend them.
+     */
+    public synchronized void setSource(Source source) {
+        this.source = source;
     }
 }

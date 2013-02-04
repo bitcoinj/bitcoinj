@@ -94,6 +94,7 @@ public class WalletTest {
         Transaction t2 = req.tx;
         assertEquals(1, wallet.getPoolSize(WalletTransaction.Pool.UNSPENT));
         assertEquals(1, wallet.getPoolSize(WalletTransaction.Pool.ALL));
+        assertEquals(TransactionConfidence.Source.SELF, t2.getConfidence().getSource());
 
         // Do some basic sanity checks.
         assertEquals(1, t2.getInputs().size());

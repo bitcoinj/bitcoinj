@@ -416,6 +416,9 @@ public class Peer {
             tx = memoryPool.seen(tx, getAddress());
         }
         final Transaction fTx = tx;
+        // Label the transaction as coming in from the P2P network (as opposed to being created by us, direct import,
+        // etc). This helps the wallet decide how to risk analyze it later.
+        fTx.getConfidence().setSource(TransactionConfidence.Source.NETWORK);
         if (maybeHandleRequestedData(fTx)) {
             return;
         }

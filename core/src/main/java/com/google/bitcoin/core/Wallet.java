@@ -705,6 +705,9 @@ public class Wallet implements Serializable, BlockChainListener {
                     " and sends us %s BTC", tx.getHashAsString(), Utils.bitcoinValueToFriendlyString(valueSentFromMe),
                     Utils.bitcoinValueToFriendlyString(valueSentToMe)));
         }
+        if (tx.getConfidence().getSource().equals(TransactionConfidence.Source.UNKNOWN)) {
+            log.warn("Wallet received transaction with an unknown source. Consider tagging tx!");
+        }
         // Mark the tx as having been seen but is not yet in the chain. This will normally have been done already by
         // the Peer before we got to this point, but in some cases (unit tests, other sources of transactions) it may
         // have been missed out.
@@ -1662,6 +1665,11 @@ public class Wallet implements Serializable, BlockChainListener {
             // happen, if it does it means the wallet has got into an inconsistent state.
             throw new RuntimeException(e);
         }
+
+        // Label the transaction as being self created. We can use this later to spend its change output even before
+        // the transaction is confirmed.
+        req.tx.getConfidence().setSource(TransactionConfidence.Source.SELF);
+
         req.completed = true;
         log.info("  completed {}", req.tx.getHashAsString());
         return true;

@@ -2281,6 +2281,10 @@ public final class Protos {
         getBroadcastByOrBuilderList();
     org.bitcoinj.wallet.Protos.PeerAddressOrBuilder getBroadcastByOrBuilder(
         int index);
+    
+    // optional .wallet.TransactionConfidence.Source source = 7;
+    boolean hasSource();
+    org.bitcoinj.wallet.Protos.TransactionConfidence.Source getSource();
   }
   public static final class TransactionConfidence extends
       com.google.protobuf.GeneratedMessage
@@ -2388,6 +2392,78 @@ public final class Protos {
       // @@protoc_insertion_point(enum_scope:wallet.TransactionConfidence.Type)
     }
     
+    public enum Source
+        implements com.google.protobuf.ProtocolMessageEnum {
+      SOURCE_UNKNOWN(0, 0),
+      SOURCE_NETWORK(1, 1),
+      SOURCE_SELF(2, 2),
+      ;
+      
+      public static final int SOURCE_UNKNOWN_VALUE = 0;
+      public static final int SOURCE_NETWORK_VALUE = 1;
+      public static final int SOURCE_SELF_VALUE = 2;
+      
+      
+      public final int getNumber() { return value; }
+      
+      public static Source valueOf(int value) {
+        switch (value) {
+          case 0: return SOURCE_UNKNOWN;
+          case 1: return SOURCE_NETWORK;
+          case 2: return SOURCE_SELF;
+          default: return null;
+        }
+      }
+      
+      public static com.google.protobuf.Internal.EnumLiteMap<Source>
+          internalGetValueMap() {
+        return internalValueMap;
+      }
+      private static com.google.protobuf.Internal.EnumLiteMap<Source>
+          internalValueMap =
+            new com.google.protobuf.Internal.EnumLiteMap<Source>() {
+              public Source findValueByNumber(int number) {
+                return Source.valueOf(number);
+              }
+            };
+      
+      public final com.google.protobuf.Descriptors.EnumValueDescriptor
+          getValueDescriptor() {
+        return getDescriptor().getValues().get(index);
+      }
+      public final com.google.protobuf.Descriptors.EnumDescriptor
+          getDescriptorForType() {
+        return getDescriptor();
+      }
+      public static final com.google.protobuf.Descriptors.EnumDescriptor
+          getDescriptor() {
+        return org.bitcoinj.wallet.Protos.TransactionConfidence.getDescriptor().getEnumTypes().get(1);
+      }
+      
+      private static final Source[] VALUES = {
+        SOURCE_UNKNOWN, SOURCE_NETWORK, SOURCE_SELF, 
+      };
+      
+      public static Source valueOf(
+          com.google.protobuf.Descriptors.EnumValueDescriptor desc) {
+        if (desc.getType() != getDescriptor()) {
+          throw new java.lang.IllegalArgumentException(
+            "EnumValueDescriptor is not for this type.");
+        }
+        return VALUES[desc.getIndex()];
+      }
+      
+      private final int index;
+      private final int value;
+      
+      private Source(int index, int value) {
+        this.index = index;
+        this.value = value;
+      }
+      
+      // @@protoc_insertion_point(enum_scope:wallet.TransactionConfidence.Source)
+    }
+    
     private int bitField0_;
     // optional .wallet.TransactionConfidence.Type type = 1;
     public static final int TYPE_FIELD_NUMBER = 1;
@@ -2460,6 +2536,16 @@ public final class Protos {
       return broadcastBy_.get(index);
     }
     
+    // optional .wallet.TransactionConfidence.Source source = 7;
+    public static final int SOURCE_FIELD_NUMBER = 7;
+    private org.bitcoinj.wallet.Protos.TransactionConfidence.Source source_;
+    public boolean hasSource() {
+      return ((bitField0_ & 0x00000020) == 0x00000020);
+    }
+    public org.bitcoinj.wallet.Protos.TransactionConfidence.Source getSource() {
+      return source_;
+    }
+    
     private void initFields() {
       type_ = org.bitcoinj.wallet.Protos.TransactionConfidence.Type.UNKNOWN;
       appearedAtHeight_ = 0;
@@ -2467,6 +2553,7 @@ public final class Protos {
       depth_ = 0;
       workDone_ = 0L;
       broadcastBy_ = java.util.Collections.emptyList();
+      source_ = org.bitcoinj.wallet.Protos.TransactionConfidence.Source.SOURCE_UNKNOWN;
     }
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
@@ -2504,6 +2591,9 @@ public final class Protos {
       for (int i = 0; i < broadcastBy_.size(); i++) {
         output.writeMessage(6, broadcastBy_.get(i));
       }
+      if (((bitField0_ & 0x00000020) == 0x00000020)) {
+        output.writeEnum(7, source_.getNumber());
+      }
       getUnknownFields().writeTo(output);
     }
     
@@ -2536,6 +2626,10 @@ public final class Protos {
       for (int i = 0; i < broadcastBy_.size(); i++) {
         size += com.google.protobuf.CodedOutputStream
           .computeMessageSize(6, broadcastBy_.get(i));
+      }
+      if (((bitField0_ & 0x00000020) == 0x00000020)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeEnumSize(7, source_.getNumber());
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSerializedSize = size;
@@ -2678,6 +2772,8 @@ public final class Protos {
         } else {
           broadcastByBuilder_.clear();
         }
+        source_ = org.bitcoinj.wallet.Protos.TransactionConfidence.Source.SOURCE_UNKNOWN;
+        bitField0_ = (bitField0_ & ~0x00000040);
         return this;
       }
       
@@ -2745,6 +2841,10 @@ public final class Protos {
         } else {
           result.broadcastBy_ = broadcastByBuilder_.build();
         }
+        if (((from_bitField0_ & 0x00000040) == 0x00000040)) {
+          to_bitField0_ |= 0x00000020;
+        }
+        result.source_ = source_;
         result.bitField0_ = to_bitField0_;
         onBuilt();
         return result;
@@ -2801,6 +2901,9 @@ public final class Protos {
               broadcastByBuilder_.addAllMessages(other.broadcastBy_);
             }
           }
+        }
+        if (other.hasSource()) {
+          setSource(other.getSource());
         }
         this.mergeUnknownFields(other.getUnknownFields());
         return this;
@@ -2874,6 +2977,17 @@ public final class Protos {
               org.bitcoinj.wallet.Protos.PeerAddress.Builder subBuilder = org.bitcoinj.wallet.Protos.PeerAddress.newBuilder();
               input.readMessage(subBuilder, extensionRegistry);
               addBroadcastBy(subBuilder.buildPartial());
+              break;
+            }
+            case 56: {
+              int rawValue = input.readEnum();
+              org.bitcoinj.wallet.Protos.TransactionConfidence.Source value = org.bitcoinj.wallet.Protos.TransactionConfidence.Source.valueOf(rawValue);
+              if (value == null) {
+                unknownFields.mergeVarintField(7, rawValue);
+              } else {
+                bitField0_ |= 0x00000040;
+                source_ = value;
+              }
               break;
             }
           }
@@ -3177,6 +3291,30 @@ public final class Protos {
           broadcastBy_ = null;
         }
         return broadcastByBuilder_;
+      }
+      
+      // optional .wallet.TransactionConfidence.Source source = 7;
+      private org.bitcoinj.wallet.Protos.TransactionConfidence.Source source_ = org.bitcoinj.wallet.Protos.TransactionConfidence.Source.SOURCE_UNKNOWN;
+      public boolean hasSource() {
+        return ((bitField0_ & 0x00000040) == 0x00000040);
+      }
+      public org.bitcoinj.wallet.Protos.TransactionConfidence.Source getSource() {
+        return source_;
+      }
+      public Builder setSource(org.bitcoinj.wallet.Protos.TransactionConfidence.Source value) {
+        if (value == null) {
+          throw new NullPointerException();
+        }
+        bitField0_ |= 0x00000040;
+        source_ = value;
+        onChanged();
+        return this;
+      }
+      public Builder clearSource() {
+        bitField0_ = (bitField0_ & ~0x00000040);
+        source_ = org.bitcoinj.wallet.Protos.TransactionConfidence.Source.SOURCE_UNKNOWN;
+        onChanged();
+        return this;
       }
       
       // @@protoc_insertion_point(builder_scope:wallet.TransactionConfidence)
@@ -6570,31 +6708,34 @@ public final class Protos {
       "ence\030\004 \001(\r\"\177\n\021TransactionOutput\022\r\n\005value",
       "\030\001 \002(\003\022\024\n\014script_bytes\030\002 \002(\014\022!\n\031spent_by" +
       "_transaction_hash\030\003 \001(\014\022\"\n\032spent_by_tran" +
-      "saction_index\030\004 \001(\005\"\255\002\n\025TransactionConfi" +
+      "saction_index\030\004 \001(\005\"\246\003\n\025TransactionConfi" +
       "dence\0220\n\004type\030\001 \001(\0162\".wallet.Transaction" +
       "Confidence.Type\022\032\n\022appeared_at_height\030\002 " +
       "\001(\005\022\036\n\026overriding_transaction\030\003 \001(\014\022\r\n\005d" +
       "epth\030\004 \001(\005\022\021\n\twork_done\030\005 \001(\003\022)\n\014broadca" +
-      "st_by\030\006 \003(\0132\023.wallet.PeerAddress\"Y\n\004Type" +
-      "\022\013\n\007UNKNOWN\020\000\022\014\n\010BUILDING\020\001\022\025\n\021NOT_SEEN_" +
-      "IN_CHAIN\020\002\022\025\n\021NOT_IN_BEST_CHAIN\020\003\022\010\n\004DEA",
-      "D\020\004\"\211\003\n\013Transaction\022\017\n\007version\030\001 \002(\005\022\014\n\004" +
-      "hash\030\002 \002(\014\022&\n\004pool\030\003 \001(\0162\030.wallet.Transa" +
-      "ction.Pool\022\021\n\tlock_time\030\004 \001(\r\022\022\n\nupdated" +
-      "_at\030\005 \001(\003\0223\n\021transaction_input\030\006 \003(\0132\030.w" +
-      "allet.TransactionInput\0225\n\022transaction_ou" +
-      "tput\030\007 \003(\0132\031.wallet.TransactionOutput\022\022\n" +
-      "\nblock_hash\030\010 \003(\014\0221\n\nconfidence\030\t \001(\0132\035." +
-      "wallet.TransactionConfidence\"Y\n\004Pool\022\013\n\007" +
-      "UNSPENT\020\004\022\t\n\005SPENT\020\005\022\014\n\010INACTIVE\020\002\022\010\n\004DE" +
-      "AD\020\n\022\013\n\007PENDING\020\020\022\024\n\020PENDING_INACTIVE\020\022\"",
-      "8\n\tExtension\022\n\n\002id\030\001 \002(\t\022\014\n\004data\030\002 \002(\014\022\021" +
-      "\n\tmandatory\030\003 \002(\010\"\254\001\n\006Wallet\022\032\n\022network_" +
-      "identifier\030\001 \002(\t\022\034\n\024last_seen_block_hash" +
-      "\030\002 \001(\014\022\030\n\003key\030\003 \003(\0132\013.wallet.Key\022(\n\013tran" +
-      "saction\030\004 \003(\0132\023.wallet.Transaction\022$\n\tex" +
-      "tension\030\n \003(\0132\021.wallet.ExtensionB\035\n\023org." +
-      "bitcoinj.walletB\006Protos"
+      "st_by\030\006 \003(\0132\023.wallet.PeerAddress\0224\n\006sour" +
+      "ce\030\007 \001(\0162$.wallet.TransactionConfidence." +
+      "Source\"Y\n\004Type\022\013\n\007UNKNOWN\020\000\022\014\n\010BUILDING\020",
+      "\001\022\025\n\021NOT_SEEN_IN_CHAIN\020\002\022\025\n\021NOT_IN_BEST_" +
+      "CHAIN\020\003\022\010\n\004DEAD\020\004\"A\n\006Source\022\022\n\016SOURCE_UN" +
+      "KNOWN\020\000\022\022\n\016SOURCE_NETWORK\020\001\022\017\n\013SOURCE_SE" +
+      "LF\020\002\"\211\003\n\013Transaction\022\017\n\007version\030\001 \002(\005\022\014\n" +
+      "\004hash\030\002 \002(\014\022&\n\004pool\030\003 \001(\0162\030.wallet.Trans" +
+      "action.Pool\022\021\n\tlock_time\030\004 \001(\r\022\022\n\nupdate" +
+      "d_at\030\005 \001(\003\0223\n\021transaction_input\030\006 \003(\0132\030." +
+      "wallet.TransactionInput\0225\n\022transaction_o" +
+      "utput\030\007 \003(\0132\031.wallet.TransactionOutput\022\022" +
+      "\n\nblock_hash\030\010 \003(\014\0221\n\nconfidence\030\t \001(\0132\035",
+      ".wallet.TransactionConfidence\"Y\n\004Pool\022\013\n" +
+      "\007UNSPENT\020\004\022\t\n\005SPENT\020\005\022\014\n\010INACTIVE\020\002\022\010\n\004D" +
+      "EAD\020\n\022\013\n\007PENDING\020\020\022\024\n\020PENDING_INACTIVE\020\022" +
+      "\"8\n\tExtension\022\n\n\002id\030\001 \002(\t\022\014\n\004data\030\002 \002(\014\022" +
+      "\021\n\tmandatory\030\003 \002(\010\"\254\001\n\006Wallet\022\032\n\022network" +
+      "_identifier\030\001 \002(\t\022\034\n\024last_seen_block_has" +
+      "h\030\002 \001(\014\022\030\n\003key\030\003 \003(\0132\013.wallet.Key\022(\n\013tra" +
+      "nsaction\030\004 \003(\0132\023.wallet.Transaction\022$\n\te" +
+      "xtension\030\n \003(\0132\021.wallet.ExtensionB\035\n\023org" +
+      ".bitcoinj.walletB\006Protos"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
       new com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner() {
@@ -6638,7 +6779,7 @@ public final class Protos {
           internal_static_wallet_TransactionConfidence_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_wallet_TransactionConfidence_descriptor,
-              new java.lang.String[] { "Type", "AppearedAtHeight", "OverridingTransaction", "Depth", "WorkDone", "BroadcastBy", },
+              new java.lang.String[] { "Type", "AppearedAtHeight", "OverridingTransaction", "Depth", "WorkDone", "BroadcastBy", "Source", },
               org.bitcoinj.wallet.Protos.TransactionConfidence.class,
               org.bitcoinj.wallet.Protos.TransactionConfidence.Builder.class);
           internal_static_wallet_Transaction_descriptor =
