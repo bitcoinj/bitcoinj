@@ -24,6 +24,9 @@ import java.util.Arrays;
  * <p>Base58 is a way to encode Bitcoin addresses as numbers and letters. Note that this is not the same base58 as used by
  * Flickr, which you may see reference to around the internet.</p>
  *
+ * <p>You may instead wish to work with {@link VersionedChecksummedBytes}, which adds support for testing the prefix
+ * and suffix bytes commonly found in addresses.</p>
+ *
  * <p>Satoshi says: why base-58 instead of standard base-64 encoding?<p>
  *
  * <ul>
@@ -35,10 +38,7 @@ import java.util.Arrays;
  * </ul>
  */
 public class Base58 {
-    private static final char[] ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
-            .toCharArray();
-    private static final int BASE_58 = ALPHABET.length;
-    private static final int BASE_256 = 256;
+    public static final char[] ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz".toCharArray();
 
     private static final int[] INDEXES = new int[128];
     static {
@@ -49,7 +49,8 @@ public class Base58 {
             INDEXES[ALPHABET[i]] = i;
         }
     }
-    
+
+    /** Encodes the given bytes in base58. No checksum is appended. */
     public static String encode(byte[] input) {
         if (input.length == 0) {
             return "";
@@ -94,11 +95,8 @@ public class Base58 {
         if (input.length() == 0) {
             return new byte[0];
         }
-
         byte[] input58 = new byte[input.length()];
-        //
         // Transform the String to a base58 byte sequence
-        //
         for (int i = 0; i < input.length(); ++i) {
             char c = input.charAt(i);
 
@@ -112,18 +110,12 @@ public class Base58 {
 
             input58[i] = (byte) digit58;
         }
-
-        //
         // Count leading zeroes
-        //
         int zeroCount = 0;
         while (zeroCount < input58.length && input58[zeroCount] == 0) {
             ++zeroCount;
         }
-
-        //
         // The encoding
-        //
         byte[] temp = new byte[input.length()];
         int j = temp.length;
 
@@ -136,10 +128,7 @@ public class Base58 {
 
             temp[--j] = mod;
         }
-
-        //
         // Do no add extra leading zeroes, move j to first non null byte.
-        //
         while (j < temp.length && temp[j] == 0) {
             ++j;
         }
@@ -148,10 +137,7 @@ public class Base58 {
     }
     
     public static BigInteger decodeToBigInteger(String input) throws AddressFormatException {
-        byte[] bytes = decode(input);
-        
-        // always return a positive BigInteger
-        return new BigInteger(1, bytes);
+        return new BigInteger(1, decode(input));
     }
 
     /**
@@ -182,11 +168,11 @@ public class Base58 {
         int remainder = 0;
         for (int i = startAt; i < number.length; i++) {
             int digit256 = (int) number[i] & 0xFF;
-            int temp = remainder * BASE_256 + digit256;
+            int temp = remainder * 256 + digit256;
 
-            number[i] = (byte) (temp / BASE_58);
+            number[i] = (byte) (temp / 58);
 
-            remainder = temp % BASE_58;
+            remainder = temp % 58;
         }
 
         return (byte) remainder;
@@ -199,11 +185,11 @@ public class Base58 {
         int remainder = 0;
         for (int i = startAt; i < number58.length; i++) {
             int digit58 = (int) number58[i] & 0xFF;
-            int temp = remainder * BASE_58 + digit58;
+            int temp = remainder * 58 + digit58;
 
-            number58[i] = (byte) (temp / BASE_256);
+            number58[i] = (byte) (temp / 256);
 
-            remainder = temp % BASE_256;
+            remainder = temp % 256;
         }
 
         return (byte) remainder;
@@ -215,5 +201,4 @@ public class Base58 {
 
         return range;
     }
-    
 }
