@@ -18,16 +18,18 @@ package com.google.bitcoin.examples;
 
 import com.google.bitcoin.core.*;
 import com.google.bitcoin.discovery.DnsDiscovery;
+import com.google.bitcoin.discovery.IrcDiscovery;
 import com.google.bitcoin.store.BlockStore;
 import com.google.bitcoin.store.BoundedOverheadBlockStore;
 import com.google.bitcoin.utils.BriefLogFormatter;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
 
 import java.io.File;
 import java.io.IOException;
 import java.math.BigInteger;
-import java.net.InetAddress;
-import java.util.Date;
-import java.util.Set;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * <p>
@@ -53,8 +55,6 @@ import java.util.Set;
  * .net/projects/bitcoin/files/Bitcoin/testnet-in-a-box/">testnet in a box</a> to do everything purely locally.</p>
  */
 public class PingService {
-
-    private Wallet w;
     private final PeerGroup peerGroup;
     private final BlockChain chain;
     private final BlockStore blockStore;
@@ -66,15 +66,12 @@ public class PingService {
     }
 
     public PingService(String[] args) throws Exception {
-        String peerHost = args.length > 0 ? args[0] : null;
-        int peerPort = args.length > 1 ? Integer.parseInt(args[1]) : NetworkParameters.prodNet().port;
-
-        boolean testNet = peerPort != NetworkParameters.prodNet().port;
+        boolean testNet = args.length > 0 && args[0].equalsIgnoreCase("testnet");
         final NetworkParameters params = testNet ? NetworkParameters.testNet() : NetworkParameters.prodNet();
         String filePrefix = testNet ? "pingservice-testnet" : "pingservice-prodnet";
-
         // Try to read the wallet from storage, create a new one if not possible.
         walletFile = new File(filePrefix + ".wallet");
+        Wallet w;
         try {
             w = Wallet.loadFromFile(walletFile);
         } catch (IOException e) {
@@ -85,52 +82,20 @@ public class PingService {
         final Wallet wallet = w;
         // Fetch the first key in the wallet (should be the only key).
         ECKey key = wallet.keychain.get(0);
-
-        System.out.println(wallet);
-
         // Load the block chain, if there is one stored locally.
         System.out.println("Reading block store from disk");
         blockStore = new BoundedOverheadBlockStore(params, new File(filePrefix + ".blockchain"));
-
         // Connect to the localhost node. One minute timeout since we won't try any other peers
         System.out.println("Connecting ...");
         chain = new BlockChain(params, wallet, blockStore);
-
         peerGroup = new PeerGroup(params, chain);
-        // Set some version info.
         peerGroup.setUserAgent("PingService", "1.0");
-        // Download headers only until a day ago.
-        peerGroup.setFastCatchupTimeSecs((new Date().getTime() / 1000) - (60 * 60 * 24));
-        if (peerHost != null) {
-            peerGroup.addAddress(new PeerAddress(InetAddress.getByName(peerHost), peerPort));
+        if (testNet) {
+            peerGroup.addPeerDiscovery(new IrcDiscovery("#bitcoinTEST3"));
         } else {
             peerGroup.addPeerDiscovery(new DnsDiscovery(params));
         }
-
         peerGroup.addWallet(wallet);
-        peerGroup.start();
-
-        peerGroup.addEventListener(new AbstractPeerEventListener() {
-            @Override
-            public void onBlocksDownloaded(Peer peer, Block block, int blocksLeft) {
-                super.onBlocksDownloaded(peer, block, blocksLeft);
-
-                // Don't bother printing during block chain downloads.
-                if (blocksLeft > 0)
-                    return;
-
-                Set<Transaction> transactions = wallet.getTransactions(false, false);
-                if (transactions.size() == 0) return;
-                System.out.println("Confidences of wallet transactions:");
-                for (Transaction tx : transactions) {
-                    System.out.println(tx);
-                    System.out.println(tx.getConfidence());
-                    if (tx.getConfidence().getConfidenceType() == TransactionConfidence.ConfidenceType.BUILDING)
-                        System.out.println("Work done: " + tx.getConfidence().getWorkDone().toString());
-                    System.out.println();
-                }
-            }
-        });
 
         // We want to know when the balance changes.
         wallet.addEventListener(new AbstractWalletEventListener() {
@@ -138,66 +103,68 @@ public class PingService {
             public void onCoinsReceived(Wallet w, Transaction tx, BigInteger prevBalance, BigInteger newBalance) {
                 // Running on a peer thread.
                 assert !newBalance.equals(BigInteger.ZERO);
-                if (tx.isPending()) {
-                    // Broadcast, but we can't really verify it's valid until it appears in a block.
-                    BigInteger value = tx.getValueSentToMe(w);
-                    System.out.println("Received pending tx for " + Utils.bitcoinValueToFriendlyString(value) +
-                            ": " + tx);
-                    System.out.println(tx.getConfidence());
-                    tx.getConfidence().addEventListener(new TransactionConfidence.Listener() {
-                        public void onConfidenceChanged(Transaction tx2) {
-                            if (tx2.getConfidence().getConfidenceType() == TransactionConfidence.ConfidenceType.BUILDING) {
-                                // Coins were confirmed.
-                                bounceCoins(tx2);
-                                tx2.getConfidence().removeEventListener(this);
-                            } else {
-                                System.out.println(String.format("Confidence of %s changed, is now: %s",
-                                        tx2.getHashAsString(), tx2.getConfidence().toString()));
-                            }
+                if (!tx.isPending()) return;
+                // It was broadcast, but we can't really verify it's valid until it appears in a block.
+                BigInteger value = tx.getValueSentToMe(w);
+                System.out.println("Received pending tx for " + Utils.bitcoinValueToFriendlyString(value) +
+                        ": " + tx);
+                tx.getConfidence().addEventListener(new TransactionConfidence.Listener() {
+                    public void onConfidenceChanged(Transaction tx2) {
+                        if (tx2.getConfidence().getConfidenceType() == TransactionConfidence.ConfidenceType.BUILDING) {
+                            // Coins were confirmed (appeared in a block).
+                            tx2.getConfidence().removeEventListener(this);
+                            bounceCoins(wallet, tx2);
+                        } else {
+                            System.out.println(String.format("Confidence of %s changed, is now: %s",
+                                    tx2.getHashAsString(), tx2.getConfidence().toString()));
                         }
-                    });
-                    try {
-                        w.saveToFile(walletFile);
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
                     }
-                    // Ignore for now, as we won't be allowed to spend until the tx is no longer pending. This is
-                    // something that should be fixed in future.
-                    return;
-                } else {
-                    // We found the coins in a block directly, without it being broadcast first (catching up with
-                    // the chain), so just send them right back immediately.
-                    bounceCoins(tx);
-                }
+                });
             }
         });
 
+        peerGroup.startAndWait();
         peerGroup.downloadBlockChain();
         System.out.println("Send coins to: " + key.toAddress(params).toString());
         System.out.println("Waiting for coins to arrive. Press Ctrl-C to quit.");
-        while (true) Thread.sleep(Long.MAX_VALUE);
+        try {
+            Thread.sleep(Long.MAX_VALUE);
+        } catch (InterruptedException e) {}
+        peerGroup.stopAndWait();
+        wallet.saveToFile(walletFile);
+        blockStore.close();
     }
 
-    private void bounceCoins(Transaction tx) {
+    private void bounceCoins(final Wallet wallet, Transaction tx) {
         // It's impossible to pick one specific identity that you receive coins from in Bitcoin as there
         // could be inputs from many addresses. So instead we just pick the first and assume they were all
         // owned by the same person.
         try {
-            BigInteger value = tx.getValueSentToMe(w);
+            BigInteger value = tx.getValueSentToMe(wallet);
             TransactionInput input = tx.getInputs().get(0);
             Address from = input.getFromAddress();
             System.out.println("Received " + Utils.bitcoinValueToFriendlyString(value) + " from " + from.toString());
             // Now send the coins back!
-            Wallet.SendResult sendResult = w.sendCoins(peerGroup, from, value);
-            assert sendResult != null;  // We should never try to send more coins than we have!
-            System.out.println("Sent coins back! Transaction hash is " + sendResult.tx.getHashAsString());
-            w.saveToFile(walletFile);
+            final Wallet.SendResult sendResult = wallet.sendCoins(peerGroup, from, value);
+            checkNotNull(sendResult);  // We should never try to send more coins than we have!
+            System.out.println("Sending ...");
+            Futures.addCallback(sendResult.broadcastComplete, new FutureCallback<Transaction>() {
+                public void onSuccess(Transaction transaction) {
+                    System.out.println("Sent coins back! Transaction hash is " + sendResult.tx.getHashAsString());
+                    try {
+                        wallet.saveToFile(walletFile);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+
+                public void onFailure(Throwable throwable) {
+                    System.err.println("Failed to send coins :(");
+                    throwable.printStackTrace();
+                }
+            });
         } catch (ScriptException e) {
             // If we didn't understand the scriptSig, just crash.
-            e.printStackTrace();
-            throw new RuntimeException(e);
-        } catch (IOException e) {
-            e.printStackTrace();
             throw new RuntimeException(e);
         }
     }
