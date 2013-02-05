@@ -2407,4 +2407,13 @@ public class Wallet implements Serializable, BlockChainListener {
         }
         return filter;
     }
+
+    /**
+     * A coin selector is responsible for choosing which outputs to spend when creating transactions. The default
+     * selector implements a policy of spending transactions that appeared in the best chain and pending transactions
+     * that were created by this wallet, but not others.
+     */
+    public synchronized void setCoinSelector(CoinSelector coinSelector) {
+        this.coinSelector = coinSelector;
+    }
 }
