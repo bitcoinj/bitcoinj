@@ -22,6 +22,7 @@ import com.google.bitcoin.core.Peer;
 import com.google.bitcoin.core.PeerGroup;
 import com.google.bitcoin.discovery.DnsDiscovery;
 import com.google.bitcoin.utils.BriefLogFormatter;
+import com.google.common.collect.Lists;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -139,8 +140,8 @@ public class PeerMonitor {
         public static final int PING_TIME = 4;
         public static final int LAST_PING_TIME = 5;
 
-        public List<Peer> connectedPeers;
-        public List<Peer> pendingPeers;
+        public List<Peer> connectedPeers = Lists.newArrayList();
+        public List<Peer> pendingPeers = Lists.newArrayList();
 
         public void updateFromPeerGroup() {
             connectedPeers = peerGroup.getConnectedPeers();
@@ -149,7 +150,7 @@ public class PeerMonitor {
         }
 
         public int getRowCount() {
-            return peerGroup.numConnectedPeers() + peerGroup.getPendingPeers().size();
+            return connectedPeers.size() + pendingPeers.size();
         }
 
         @Override
@@ -183,12 +184,9 @@ public class PeerMonitor {
         }
 
         public Object getValueAt(int row, int col) {
-            // This is racy. A peer can be moving from pending to connected between these two lines.
-            List<Peer> peers = peerGroup.getConnectedPeers();
-            List<Peer> pendingPeers = peerGroup.getPendingPeers();
-            if (row >= peers.size()) {
+            if (row >= connectedPeers.size()) {
                 // Peer that isn't connected yet.
-                Peer peer = pendingPeers.get(row - peers.size());
+                Peer peer = pendingPeers.get(row - connectedPeers.size());
                 switch (col) {
                     case IP_ADDRESS:
                         return peer.getAddress().getAddr().getHostAddress();
@@ -202,7 +200,7 @@ public class PeerMonitor {
                         return "(pending)";
                 }
             }
-            Peer peer = peers.get(row);
+            Peer peer = connectedPeers.get(row);
             switch (col) {
                 case IP_ADDRESS:
                     return peer.getAddress().getAddr().getHostAddress();
