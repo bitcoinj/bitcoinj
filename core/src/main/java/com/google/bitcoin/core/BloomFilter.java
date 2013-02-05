@@ -16,25 +16,21 @@
 
 package com.google.bitcoin.core;
 
+import com.google.common.base.Preconditions;
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Arrays;
 
-import com.google.common.base.Preconditions;
-
 /**
- * <p>BloomFilter is a probabilistic filter which can be sent to another client
- * so that it can filter the transactions it sends us.</p>
+ * <p>A Bloom filter is a probabilistic data structure which can be sent to another client so that it can avoid
+ * sending us transactions that aren't relevant to our set of keys. This allows for significantly more efficient
+ * use of available network bandwidth and CPU time.</p>
  * 
- * <p>This allows for significantly more efficient transaction and block downloads.</p>
- * 
- * <p>By inserting the full set of hashed and full public keys in all of our wallets,
- * a node which has a copy of a BloomFilter will filter transaction inv messages
- * to only those which are to or from one of our wallets.</p>
- * 
- * <p>In order to retain anonymity, the false positive rate can be increased.
- * This will decrease the download efficiency by increasing the number of transactions
- * which match the filter but are not actually ours.</p>
+ * <p>Because a Bloom filter is probabilistic, it has a configurable false positive rate. So the filter will sometimes
+ * match transactions that weren't inserted into it, but it will never fail to match transactions that were. This is
+ * a useful privacy feature - if you have spare bandwidth the false positive rate can be increased so the remote peer
+ * gets a noisy picture of what transactions are relevant to your wallet.</p>
  */
 public class BloomFilter extends Message {
     /** The BLOOM_UPDATE_* constants control when the bloom filter is auto-updated by the peer using

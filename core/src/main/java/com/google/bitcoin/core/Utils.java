@@ -31,7 +31,7 @@ import java.util.Date;
 import static com.google.common.base.Preconditions.checkArgument;
 
 /**
- * A collection of various utility methods that are helpful for working with the BitCoin protocol.
+ * A collection of various utility methods that are helpful for working with the Bitcoin protocol.
  * To enable debug logging from the library, run with -Dbitcoinj.logging=true on your command line.
  */
 public class Utils {

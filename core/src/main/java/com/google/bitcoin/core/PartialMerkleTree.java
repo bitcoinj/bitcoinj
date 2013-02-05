@@ -24,42 +24,30 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * The following comment (and much of the code in this file)
- * is copied from the reference client.
- * 
- * Data structure that represents a partial merkle tree.
+ * <p>A data structure that contains proofs of block inclusion for one or more transactions, in an efficient manner.</p>
  *
- * It respresents a subset of the txid's of a known block, in a way that
- * allows recovery of the list of txid's and the merkle root, in an
- * authenticated way.
+ * <p>The encoding works as follows: we traverse the tree in depth-first order, storing a bit for each traversed node,
+ * signifying whether the node is the parent of at least one matched leaf txid (or a matched txid itself). In case we
+ * are at the leaf level, or this bit is 0, its merkle node hash is stored, and its children are not explored further.
+ * Otherwise, no hash is stored, but we recurse into both (or the only) child branch. During decoding, the same
+ * depth-first traversal is performed, consuming bits and hashes as they were written during encoding.</p>
  *
- * The encoding works as follows: we traverse the tree in depth-first order,
- * storing a bit for each traversed node, signifying whether the node is the
- * parent of at least one matched leaf txid (or a matched txid itself). In
- * case we are at the leaf level, or this bit is 0, its merkle node hash is
- * stored, and its children are not explorer further. Otherwise, no hash is
- * stored, but we recurse into both (or the only) child branch. During
- * decoding, the same depth-first traversal is performed, consuming bits and
- * hashes as they were written during encoding.
+ * <p>The serialization is fixed and provides a hard guarantee about the encoded size,
+ * <tt>SIZE <= 10 + ceil(32.25*N)</tt> where N represents the number of leaf nodes of the partial tree. N itself
+ * is bounded by:</p>
  *
- * The serialization is fixed and provides a hard guarantee about the
- * encoded size:
+ * <p>
+ * N <= total_transactions<br>
+ * N <= 1 + matched_transactions*tree_height
+ * </p>
  *
- *   SIZE <= 10 + ceil(32.25*N)
- *
- * Where N represents the number of leaf nodes of the partial tree. N itself
- * is bounded by:
- *
- *   N <= total_transactions
- *   N <= 1 + matched_transactions*tree_height
- *
- * The serialization format:
+ * <p><pre>The serialization format:
  *  - uint32     total_transactions (4 bytes)
  *  - varint     number of hashes   (1-3 bytes)
  *  - uint256[]  hashes in depth-first order (<= 32*N bytes)
  *  - varint     number of bytes of flag bits (1-3 bytes)
  *  - byte[]     flag bits, packed per 8 in a byte, least significant bit first (<= 2*N-1 bits)
- * The size constraints follow from this.
+ * The size constraints follow from this.</pre></p>
  */
 public class PartialMerkleTree extends Message {
     // the total number of transactions in the block

@@ -19,7 +19,6 @@ package com.google.bitcoin.core;
 import com.google.bitcoin.store.BlockStore;
 import com.google.bitcoin.store.BlockStoreException;
 import com.google.common.base.Preconditions;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,15 +31,16 @@ import static com.google.common.base.Preconditions.*;
  * <p>An AbstractBlockChain holds a series of {@link Block} objects, links them together, and knows how to verify that
  * the chain follows the rules of the {@link NetworkParameters} for this chain.</p>
  *
- * <p>It can be provided with one or more {@link BlockChainListener}s that can receive transactions and
- * notifications of re-organizations. The listener that is most interesting to you is probably a {@link Wallet}.</p>
+ * <p>It can be connected to a {@link Wallet}, and also {@link BlockChainListener}s that can receive transactions and
+ * notifications of re-organizations.</p>
  *
  * <p>An AbstractBlockChain implementation must be connected to a {@link BlockStore} implementation. The chain object
  * by itself doesn't store any data, that's delegated to the store. Which store you use is a decision best made by
- * reading the getting started guide, but briefly, fully validating block chains need fully validating stores.</p>
+ * reading the getting started guide, but briefly, fully validating block chains need fully validating stores. In
+ * the lightweight SPV mode, a {@link com.google.bitcoin.store.BoundedOverheadBlockStore} may be a good choice.</p>
  *
  * <p>This class implements an abstract class which makes it simple to create a BlockChain that does/doesn't do full
- * verification.  It verifies headers and is implements most of what is required to implement a SPV BlockChain, but
+ * verification.  It verifies headers and is implements most of what is required to implement SPV mode, but
  * also provides callback hooks which can be used to do full verification.</p>
  *
  * <p>There are two subclasses of AbstractBlockChain that are useful: {@link BlockChain}, which is the simplest
@@ -52,17 +52,23 @@ import static com.google.common.base.Preconditions.*;
  *
  * <b>Theory</b>
  *
- * <p>The 'chain' is actually a tree although in normal operation it can be thought of as a simple list. When multiple
- * new head blocks are found simultaneously, there are multiple stories of the economy competing to become the one
- * true consensus. This can happen naturally when two miners solve a block within a few seconds of each other, or it
- * can happen when the chain is under attack.</p>
+ * <p>The 'chain' is actually a tree although in normal operation it operates mostly as a list of {@link Block}s.
+ * When multiple new head blocks are found simultaneously, there are multiple stories of the economy competing to become
+ * the one true consensus. This can happen naturally when two miners solve a block within a few seconds of each other,
+ * or it can happen when the chain is under attack.</p>
  *
- * <p>A reference to the head block of every chain is stored. If you can reach the genesis block by repeatedly walking
- * through the prevBlock pointers, then we say this is a full chain. If you cannot reach the genesis block we say it is
- * an orphan chain.</p>
+ * <p>A reference to the head block of the best known chain is stored. If you can reach the genesis block by repeatedly
+ * walking through the prevBlock pointers, then we say this is a full chain. If you cannot reach the genesis block
+ * we say it is an orphan chain. Orphan chains can occur when blocks are solved and received during the initial block
+ * chain download, or if we connect to a peer that doesn't send us blocks in order.</p>
  *
- * <p>Orphan chains can occur when blocks are solved and received during the initial block chain download,
- * or if we connect to a peer that doesn't send us blocks in order.</p>
+ * <p>A reorganize occurs when the blocks that make up the best known chain changes. Note that simply adding a
+ * new block to the top of the best chain isn't as reorganize, but that a reorganize is always triggered by adding
+ * a new block that connects to some other (non best head) block. By "best" we mean the chain representing the largest
+ * amount of work done.</p>
+ *
+ * <p>Every so often the block chain passes a difficulty transition point. At that time, all the blocks in the last
+ * 2016 blocks are examined and a new difficulty target is calculated from them.</p>
  */
 public abstract class AbstractBlockChain {
     private static final Logger log = LoggerFactory.getLogger(AbstractBlockChain.class);

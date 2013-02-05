@@ -23,10 +23,10 @@ import java.util.LinkedList;
 import java.util.List;
 
 /**
- * TransactionOutputChanges is used as a return value for BlockChainBase.connectInputs.
- * It contains the full list of transaction outputs created and spent in a block.
- * It does contain outputs created that were spent later in the block, as those are needed for
- * BIP30 (no duplicate txid creation if the previous one was not fully spent prior to this block) verification.
+ * <p>TransactionOutputChanges represents a delta to the set of unspent outputs. It used as a return value for
+ * {@link AbstractBlockChain#connectTransactions(int, Block)}. It contains the full list of transaction outputs created
+ * and spent in a block. It DOES contain outputs created that were spent later in the block, as those are needed for
+ * BIP30 (no duplicate txid creation if the previous one was not fully spent prior to this block) verification.</p>
  */
 public class TransactionOutputChanges {
     public final List<StoredTransactionOutput> txOutsCreated;

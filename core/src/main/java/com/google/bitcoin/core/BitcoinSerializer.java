@@ -31,19 +31,16 @@ import java.util.Map;
 import static com.google.bitcoin.core.Utils.*;
 
 /**
- * Methods to serialize and de-serialize messages to the bitcoin network format as defined in
- * <a href="https://en.bitcoin.it/wiki/Protocol_specification">the bitcoin protocol specification</a>.<p>
+ * <p>Methods to serialize and de-serialize messages to the Bitcoin network format as defined in
+ * <a href="https://en.bitcoin.it/wiki/Protocol_specification">the protocol specification</a>.</p>
  *
- * To be able to serialize and deserialize new Message subclasses the following criteria needs to be met.
+ * <p>To be able to serialize and deserialize new Message subclasses the following criteria needs to be met.</p>
+ *
  * <ul>
  * <li>The proper Class instance needs to be mapped to it's message name in the names variable below</li>
  * <li>There needs to be a constructor matching: NetworkParameters params, byte[] payload</li>
  * <li>Message.bitcoinSerializeToStream() needs to be properly subclassed</li>
- * </ul><p>
- *
- * BitcoinSerializers can be given a map which will be locked during reading/deserialization. This is used to
- * avoid deserializing identical messages more than once, which is helpful in memory-constrained environments like
- * smartphones.
+ * </ul>
  */
 public class BitcoinSerializer {
     private static final Logger log = LoggerFactory.getLogger(BitcoinSerializer.class);
@@ -100,6 +97,8 @@ public class BitcoinSerializer {
         this.parseLazy = parseLazy;
         this.parseRetain = parseRetain;
     }
+
+    // TODO: Remove this dead code.
 
     public void setUseChecksumming(boolean usesChecksumming) {
         this.usesChecksumming = usesChecksumming;

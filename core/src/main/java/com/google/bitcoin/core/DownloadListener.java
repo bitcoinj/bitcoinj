@@ -21,15 +21,9 @@ import java.util.Date;
 import java.util.concurrent.Semaphore;
 
 /**
- * Listen to chain download events and print useful informational messages.
- *
- * <p>progress, startDownload, doneDownload maybe be overridden to change the way the user
- * is notified.
- *
- * <p>Methods are called with the event listener object locked so your
- * implementation does not have to be thread safe.
- *
- * @author miron@google.com (Miron Cuperman a.k.a. devrandom)
+ * <p>An implementation of {@link AbstractPeerEventListener} that listens to chain download events and tracks progress
+ * as a percentage. The default implementation prints progress to stdout, but you can subclass it and override the
+ * progress method to update a GUI instead.</p>
  */
 public class DownloadListener extends AbstractPeerEventListener {
     private int originalBlocksLeft = -1;

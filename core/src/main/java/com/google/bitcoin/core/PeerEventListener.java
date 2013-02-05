@@ -19,7 +19,9 @@ package com.google.bitcoin.core;
 import java.util.List;
 
 /**
- * <p>Implementing a PeerEventListener allows you to learn when significant Peer communication has occurred.</p>
+ * <p>Implementors can listen to events like blocks being downloaded/transactions being broadcast/connect/disconnects,
+ * they can pre-filter messages before they are procesesed by a {@link Peer} or {@link PeerGroup}, and they can
+ * provide transactions to remote peers when they ask for them.</p>
  */
 public interface PeerEventListener {
     /**

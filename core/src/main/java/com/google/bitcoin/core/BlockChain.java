@@ -23,7 +23,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * A BlockChain forms a usable BlockChain class which implements basic SPV and storage using a {@link BlockStore}
+ * <p>A BlockChain implements the <i>simplified payment verification</i> mode of the Bitcoin protocol. It is the right
+ * choice to use for programs that have limited resources as it won't verify transactions signatures or attempt to store
+ * all of the block chain. Really, this class should be called SPVBlockChain but for backwards compatibility it is not.
+ * </p>
  */
 public class BlockChain extends AbstractBlockChain {
     /** Keeps a map of block hashes to StoredBlocks. */

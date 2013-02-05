@@ -19,8 +19,8 @@ package com.google.bitcoin.core;
 import java.util.List;
 
 /**
- * A block chain listener can be connected to a {@link BlockChain} and have its methods called when various things
- * happen that modify the state of the chain. For example: new blocks being received, a re-org occurring, or the
+ * Implementors can be connected to a {@link BlockChain} and have its methods called when various things
+ * happen that modify the state of the chain, for example: new blocks being received, a re-org occurring, or the
  * best chain head changing.
  */
 public interface BlockChainListener {

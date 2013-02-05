@@ -47,9 +47,18 @@ import static com.google.common.base.Preconditions.checkArgument;
 // refactor this to have better internal layout and a more consistent API.
 
 /**
- * Represents an elliptic curve keypair that we own and can use for signing transactions. Currently,
- * Bouncy Castle is used. In future this may become an interface with multiple implementations using different crypto
- * libraries. The class also provides various methods that can be used to sign and verify different kinds of messages.
+ * <p>Represents an elliptic curve public and (optionally) private key, usable for digital signatures but not encryption.
+ * Creating a new ECKey with the empty constructor will generate a new random keypair. Other constructors can be used
+ * when you already have the public or private parts. If you create a key with only the public part, you can check
+ * signatures but not create them.</p>
+ *
+ * <p>ECKey also provides access to Bitcoin-Qt compatible text message signing, as accessible via the UI or JSON-RPC.
+ * This is slightly different to signing raw bytes - if you want to sign your own data and it won't be exposed as
+ * text to people, you don't want to use this. If in doubt, ask on the mailing list.</p>
+ *
+ * <p>The ECDSA algorithm supports <i>key recovery</i> in which a signature plus a couple of discriminator bits can
+ * be reversed to find the public key used to calculate it. This can be convenient when you have a message and a
+ * signature and want to find out who signed it, rather than requiring the user to provide the expected identity.</p>
  */
 public class ECKey implements Serializable {
     private static final ECDomainParameters ecParams;
@@ -228,7 +237,7 @@ public class ECKey implements Serializable {
     }
 
     /**
-     * Just groups the two components that make up a signature, and provides a way to encode to DER form, which is
+     * Groups the two components that make up a signature, and provides a way to encode to DER form, which is
      * how ECDSA signatures are represented when embedded in other data structures in the Bitcoin protocol. The raw
      * components can be useful for doing further EC maths on them.
      */

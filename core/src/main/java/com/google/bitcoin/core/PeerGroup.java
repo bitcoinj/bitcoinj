@@ -43,7 +43,8 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * <p>Maintain a number of connections to peers.</p>
+ * <p>Runs a set of connections to the P2P network, brings up connections to replace disconnected nodes and manages
+ * the interaction between them all. Most applications will want to use one of these.</p>
  * 
  * <p>PeerGroup tries to maintain a constant number of connections to a set of distinct peers.
  * Each peer runs a network listener in its own thread.  When a connection is lost, a new peer

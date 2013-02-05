@@ -436,6 +436,9 @@ public class Wallet implements Serializable, BlockChainListener {
         return false;
     }
 
+    /**
+     * Implementors can handle exceptions thrown during wallet auto-save, and to do pre/post treatment of the wallet.
+     */
     public interface AutosaveEventListener {
         /**
          * Called on the auto-save thread if an exception is caught whilst saving the wallet.
@@ -665,6 +668,7 @@ public class Wallet implements Serializable, BlockChainListener {
         receive(tx, block, blockType, false);
     }
 
+    /** The results of examining the dependency graph of a pending transaction for protocol abuse. */
     protected static class AnalysisResult {
         // Which tx, if any, had a non-zero lock time.
         Transaction timeLocked;

@@ -18,17 +18,11 @@ package com.google.bitcoin.core;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
- * <p>A FilteredBlock is used to relay a block with its transactions filtered using a bloom filter.</p>
- * 
- * <p>It consists of the block header and a {@link PartialMerkleTree} which contains the transactions
- * which matched the filter.</p>
+ * <p>A FilteredBlock is used to relay a block with its transactions filtered using a {@link BloomFilter}. It consists
+ * of the block header and a {@link PartialMerkleTree} which contains the transactions which matched the filter.</p>
  */
 public class FilteredBlock extends Message {
     private Block header;

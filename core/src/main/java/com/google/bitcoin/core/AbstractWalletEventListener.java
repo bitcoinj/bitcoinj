@@ -19,9 +19,7 @@ package com.google.bitcoin.core;
 import java.math.BigInteger;
 
 /**
- * Implementing a subclass WalletEventListener allows you to learn when the contents of the wallet changes due to
- * receiving money or a block chain re-organize. Methods are called with the event listener object locked so your
- * implementation does not have to be thread safe. The default method implementations simply call onChange().
+ * Convenience implementation of {@link WalletEventListener}.
  */
 public abstract class AbstractWalletEventListener implements WalletEventListener {
     /**

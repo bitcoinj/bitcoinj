@@ -49,7 +49,7 @@ class ScriptChunk {
 }
 
 /**
- * <p>Instructions for redeeming a payment.</p>
+ * <p>Programs embedded inside transactions that control redemption of payments.</p>
  *
  * <p>Bitcoin transactions don't specify what they do directly. Instead <a href="https://en.bitcoin.it/wiki/Script">a
  * small binary stack language</a> is used to define programs that when evaluated return whether the transaction

@@ -17,24 +17,15 @@
 package com.google.bitcoin.core;
 
 /**
- * <p>A Bitcoin address is derived from an elliptic curve public key and a set of network parameters. Not to be confused
- * with a {@link PeerAddress} or {@link AddressMessage} which are about network (TCP) addresses.
- * It has several possible representations:</p>
+ * <p>A Bitcoin address looks like 1MsScoe2fTJoq4ZPdQgqyhgWeoNamYPevy and is derived from an elliptic curve public key
+ * plus a set of network parameters. Not to be confused with a {@link PeerAddress} or {@link AddressMessage}
+ * which are about network (TCP) addresses.</p>
  *
- * <ol>
- * <li>The raw public key bytes themselves.
- * <li>RIPEMD160 hash of the public key bytes.
- * <li>A base58 encoded "human form" that includes a version and check code, to guard against typos.
- * </ol><p>
- *
- * The most common written form is the latter, and there may be several different types of address with the meaning
- * determined by the version code.<p>
- *
- * One may question whether the base58 form is really an improvement over the hash160 form, given
- * they are both very unfriendly for typists. More useful representations might include qrcodes
- * and identicons.<p>
- *
- * Note that an address is specific to a network because the first byte is a discriminator value.
+ * <p>A standard address is built by taking the RIPE-MD160 hash of the public key bytes, with a version prefix and a
+ * checksum suffix, then encoding it textually as base58. The version prefix is used to both denote the network for
+ * which the address is valid (see {@link NetworkParameters}, and also to indicate how the bytes inside the address
+ * should be interpreted. Whilst almost all addresses today are hashes of public keys, another (currently unsupported
+ * type) can contain a hash of a script instead.</p>
  */
 public class Address extends VersionedChecksummedBytes {
     /**

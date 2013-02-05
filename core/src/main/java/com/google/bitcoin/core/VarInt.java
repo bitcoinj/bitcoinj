@@ -18,6 +18,9 @@ package com.google.bitcoin.core;
 
 import static com.google.bitcoin.core.Utils.isLessThanUnsigned;
 
+/**
+ * A variable-length encoded integer using Satoshis encoding.
+ */
 public class VarInt {
     public final long value;
     private final int originallyEncodedSize;
