@@ -89,7 +89,8 @@ public class Peer {
     // It is important to avoid a nasty edge case where we can end up with parallel chain downloads proceeding
     // simultaneously if we were to receive a newly solved block whilst parts of the chain are streaming to us.
     private HashSet<Sha256Hash> pendingBlockDownloads = new HashSet<Sha256Hash>();
-
+    // The lowest version number we're willing to accept. Lower than this will result in an immediate disconnect.
+    private int minProtocolVersion = Pong.MIN_PROTOCOL_VERSION;
     // When an API user explicitly requests a block or transaction from a peer, the InventoryItem is put here
     // whilst waiting for the response. Synchronized on itself. Is not used for downloads Peer generates itself.
     private static class GetDataRequest {
@@ -279,6 +280,11 @@ public class Peer {
                         listener.onPeerConnected(Peer.this);
                     }
                 });
+                if (peerVersionMessage.clientVersion < minProtocolVersion) {
+                    log.warn("Connected to a peer speaking protocol version {} but need {}, closing",
+                            peerVersionMessage.clientVersion, minProtocolVersion);
+                    e.getChannel().close();
+                }
             } else if (m instanceof VersionAck) {
                 synchronized (Peer.this) {
                     if (peerVersionMessage == null) {
@@ -295,7 +301,6 @@ public class Peer {
             } else if (m instanceof Pong) {
                 processPong((Pong)m);
             } else {
-                // TODO: Handle the other messages we can receive.
                 log.warn("Received unhandled message: {}", m);
             }
         }
@@ -1202,5 +1207,22 @@ public class Peer {
      */
     public synchronized long getBestHeight() {
       return peerVersionMessage.bestHeight + blocksAnnounced;
+    }
+
+    /**
+     * The minimum P2P protocol version that is accepted. If the peer speaks a protocol version lower than this, it
+     * will be disconnected.
+     * @return if not-null then this is the future for the Peer disconnection event.
+     */
+    public ChannelFuture setMinProtocolVersion(int minProtocolVersion) {
+        synchronized (this) {
+            this.minProtocolVersion = minProtocolVersion;
+        }
+        if (getVersionMessage().clientVersion < minProtocolVersion) {
+            log.warn("{}: Disconnecting due to new min protocol version {}", this, minProtocolVersion);
+            return Channels.close(channel);
+        } else {
+            return null;
+        }
     }
 }

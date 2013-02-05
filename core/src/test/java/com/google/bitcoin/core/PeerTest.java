@@ -630,8 +630,7 @@ public class PeerTest extends TestWithNetworkConnections {
         t2.setLockTime(999999);
         // Add a fake input to t3 that goes nowhere.
         Sha256Hash t3 = Sha256Hash.create("abc".getBytes(Charset.forName("UTF-8")));
-        t2.addInput(new TransactionInput(unitTestParams, t2, new byte[]{}, new TransactionOutPoint(unitTestParams, 0,
-                t3)));
+        t2.addInput(new TransactionInput(unitTestParams, t2, new byte[]{}, new TransactionOutPoint(unitTestParams, 0, t3)));
         t2.addOutput(Utils.toNanoCoins(1, 0), new ECKey());
         Transaction t1 = new Transaction(unitTestParams);
         t1.addInput(t2.getOutput(0));
@@ -662,6 +661,33 @@ public class PeerTest extends TestWithNetworkConnections {
             assertNotNull(vtx[0]);
         else
             assertNull(vtx[0]);
+    }
+
+    @Test
+    public void disconnectOldVersions1() throws Exception {
+        expect(channel.close()).andReturn(null);
+        control.replay();
+        // Set up the connection with an old version.
+        handler.connectRequested(ctx, new UpstreamChannelStateEvent(channel, ChannelState.CONNECTED, socketAddress));
+        VersionMessage peerVersion = new VersionMessage(unitTestParams, OTHER_PEER_CHAIN_HEIGHT);
+        peerVersion.clientVersion = 500;
+        DownstreamMessageEvent versionEvent =
+                new DownstreamMessageEvent(channel, Channels.future(channel), peerVersion, null);
+        handler.messageReceived(ctx, versionEvent);
+    }
+
+    @Test
+    public void disconnectOldVersions2() throws Exception {
+        expect(channel.close()).andReturn(null);
+        control.replay();
+        // Set up the connection with an old version.
+        handler.connectRequested(ctx, new UpstreamChannelStateEvent(channel, ChannelState.CONNECTED, socketAddress));
+        VersionMessage peerVersion = new VersionMessage(unitTestParams, OTHER_PEER_CHAIN_HEIGHT);
+        peerVersion.clientVersion = 70000;
+        DownstreamMessageEvent versionEvent =
+                new DownstreamMessageEvent(channel, Channels.future(channel), peerVersion, null);
+        handler.messageReceived(ctx, versionEvent);
+        peer.setMinProtocolVersion(500);
     }
 
     // TODO: Use generics here to avoid unnecessary casting.
