@@ -385,7 +385,6 @@ public abstract class AbstractBlockChain {
             // Notify the listeners of the new block, so the depth and workDone of stored transactions can be updated
             // (in the case of the listener being a wallet). Wallets need to know how deep each transaction is so
             // coinbases aren't used before maturity.
-            final BlockChainListener first = listeners.size() > 0 ? listeners.get(0) : null;
             for (int i = 0; i < listeners.size(); i++) {
                 BlockChainListener listener = listeners.get(i);
                 if (block.transactions != null || filteredTxn != null) {
