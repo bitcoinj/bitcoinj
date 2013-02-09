@@ -61,16 +61,15 @@ public interface FullPrunedBlockStore extends BlockStore {
     void put(StoredBlock storedBlock, StoredUndoableBlock undoableBlock) throws BlockStoreException;
     
     /**
-     * Returns the StoredBlock that was added as a StoredUndoableBlock given a hash. The returned values block.getHash() method will be equal to the
-     * parameter. If no such block is found, returns null.
+     * Returns the StoredBlock that was added as a StoredUndoableBlock given a hash. The returned values block.getHash()
+     * method will be equal to the parameter. If no such block is found, returns null.
      */
     StoredBlock getOnceUndoableStoredBlock(Sha256Hash hash) throws BlockStoreException;
 
     /**
-     * Returns a {@link StoredUndoableBlock} who's block.getHash() method will be equal to the
-     * parameter. If no such block is found, returns null.
-     * Note that this may return null more often than get(Sha256Hash hash) as not all {@link StoredBlock}s have a
-     * {@link StoredUndoableBlock} copy stored as well.
+     * Returns a {@link StoredUndoableBlock} whose block.getHash() method will be equal to the parameter. If no such
+     * block is found, returns null. Note that this may return null more often than get(Sha256Hash hash) as not all
+     * {@link StoredBlock}s have a {@link StoredUndoableBlock} copy stored as well.
      */
     StoredUndoableBlock getUndoBlock(Sha256Hash hash) throws BlockStoreException;
     

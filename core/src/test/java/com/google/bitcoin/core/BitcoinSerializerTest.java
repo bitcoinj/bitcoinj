@@ -52,37 +52,8 @@ public class BitcoinSerializerTest {
             "8B 4E CC 52 88 AC 00 00  00 00");
 
     @Test
-    public void testVersion() throws Exception {
-    	BitcoinSerializer bs = new BitcoinSerializer(NetworkParameters.prodNet(), false);
-        // the actual data from https://en.bitcoin.it/wiki/Protocol_specification#version
-        ByteArrayInputStream bais = new ByteArrayInputStream(Hex.decode("f9beb4d976657273696f6e0000000000560000009" +
-                "c7c00000100000000000000e615104d00000000010000000000000000000000000000000000ffff0a000001daf6010000" +
-                "000000000000000000000000000000ffff0a000002208ddd9d202c3ab45713005581010000"));
-        VersionMessage vm = (VersionMessage)bs.deserialize(bais);
-        assertEquals(31900, vm.clientVersion);
-        assertEquals(1292899814L, vm.time);
-        assertEquals(98645L, vm.bestHeight);
-
-        // Standard version messsages don't use strings. Create one and round-trip here to check that works OK.
-        vm.subVer = "test string";
-        byte[] bits = vm.bitcoinSerialize();
-        VersionMessage vm2 = new VersionMessage(NetworkParameters.prodNet(), bits);
-        assertEquals(vm, vm2);
-    }
-
-
-    @Test
-    public void testVerack() throws Exception {
-        BitcoinSerializer bs = new BitcoinSerializer(NetworkParameters.prodNet(), false);
-        // the actual data from https://en.bitcoin.it/wiki/Protocol_specification#verack
-        ByteArrayInputStream bais = new ByteArrayInputStream(Hex.decode("f9beb4d976657261636b00000000000000000000"));
-        VersionAck va = (VersionAck)bs.deserialize(bais);
-        assertNotNull(va);
-    }
-
-    @Test
     public void testAddr() throws Exception {
-    	BitcoinSerializer bs = new BitcoinSerializer(NetworkParameters.prodNet(), true);
+    	BitcoinSerializer bs = new BitcoinSerializer(NetworkParameters.prodNet());
         // the actual data from https://en.bitcoin.it/wiki/Protocol_specification#addr
         ByteArrayInputStream bais = new ByteArrayInputStream(addrMessage);
         AddressMessage a = (AddressMessage)bs.deserialize(bais);
@@ -99,7 +70,7 @@ public class BitcoinSerializerTest {
 
     @Test
     public void testLazyParsing()  throws Exception {
-    	BitcoinSerializer bs = new BitcoinSerializer(NetworkParameters.prodNet(), true, true, false);
+    	BitcoinSerializer bs = new BitcoinSerializer(NetworkParameters.prodNet(), true, false);
     	
     	ByteArrayInputStream bais = new ByteArrayInputStream(txMessage);
     	Transaction tx = (Transaction)bs.deserialize(bais);
@@ -124,7 +95,7 @@ public class BitcoinSerializerTest {
     }
     
     private void testCachedParsing(boolean lazy)  throws Exception {
-    	BitcoinSerializer bs = new BitcoinSerializer(NetworkParameters.prodNet(), true, lazy, true);
+    	BitcoinSerializer bs = new BitcoinSerializer(NetworkParameters.prodNet(), lazy, true);
     	
     	//first try writing to a fields to ensure uncaching and children are not affected
     	ByteArrayInputStream bais = new ByteArrayInputStream(txMessage);
@@ -191,7 +162,7 @@ public class BitcoinSerializerTest {
      */
     @Test
     public void testHeaders1() throws Exception {
-        BitcoinSerializer bs = new BitcoinSerializer(NetworkParameters.prodNet(), true);
+        BitcoinSerializer bs = new BitcoinSerializer(NetworkParameters.prodNet());
 
         ByteArrayInputStream bais = new ByteArrayInputStream(Hex.decode("f9beb4d9686561" +
                 "646572730000000000520000005d4fab8101010000006fe28c0ab6f1b372c1a6a246ae6" +
@@ -218,7 +189,7 @@ public class BitcoinSerializerTest {
      * Get 6 headers of blocks 1-6 in the chain
      */
     public void testHeaders2() throws Exception {
-        BitcoinSerializer bs = new BitcoinSerializer(NetworkParameters.prodNet(), true);
+        BitcoinSerializer bs = new BitcoinSerializer(NetworkParameters.prodNet());
 
         ByteArrayInputStream bais = new ByteArrayInputStream(Hex.decode("f9beb4d96865616465" +
                 "72730000000000e701000085acd4ea06010000006fe28c0ab6f1b372c1a6a246ae63f74f931e" +

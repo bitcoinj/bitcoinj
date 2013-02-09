@@ -99,7 +99,7 @@ public class TestUtils {
      * Roundtrip a transaction so that it appears as if it has just come from the wire
      */
     public static Transaction roundTripTransaction(NetworkParameters params, Transaction tx) throws IOException, ProtocolException {
-        BitcoinSerializer bs = new BitcoinSerializer(params, true);
+        BitcoinSerializer bs = new BitcoinSerializer(params);
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         bs.serialize(tx, bos);
         return (Transaction) bs.deserialize(new ByteArrayInputStream(bos.toByteArray()));

@@ -77,7 +77,7 @@ public class TCPNetworkConnection implements NetworkConnection {
     public TCPNetworkConnection(NetworkParameters params, VersionMessage ver) {
         this.params = params;
         this.myVersionMessage = ver;
-        this.serializer = new BitcoinSerializer(this.params, true);
+        this.serializer = new BitcoinSerializer(this.params);
         this.handler = new NetworkHandler();
     }
 

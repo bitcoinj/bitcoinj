@@ -24,7 +24,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -47,7 +46,6 @@ public class BitcoinSerializer {
     private static final int COMMAND_LEN = 12;
 
     private NetworkParameters params;
-    private boolean usesChecksumming;
     private boolean parseLazy = false;
     private boolean parseRetain = false;
 
@@ -76,44 +74,22 @@ public class BitcoinSerializer {
      * Constructs a BitcoinSerializer with the given behavior.
      *
      * @param params           networkParams used to create Messages instances and termining packetMagic
-     * @param usesChecksumming set to true if checkums should be included and expected in headers
      */
-    public BitcoinSerializer(NetworkParameters params, boolean usesChecksumming) {
-        this(params, usesChecksumming, false, false);
+    public BitcoinSerializer(NetworkParameters params) {
+        this(params, false, false);
     }
 
     /**
      * Constructs a BitcoinSerializer with the given behavior.
      *
      * @param params           networkParams used to create Messages instances and termining packetMagic
-     * @param usesChecksumming set to true if checkums should be included and expected in headers
      * @param parseLazy        deserialize messages in lazy mode.
      * @param parseRetain      retain the backing byte array of a message for fast reserialization.
      */
-    public BitcoinSerializer(NetworkParameters params, boolean usesChecksumming,
-                             boolean parseLazy, boolean parseRetain) {
+    public BitcoinSerializer(NetworkParameters params, boolean parseLazy, boolean parseRetain) {
         this.params = params;
-        this.usesChecksumming = usesChecksumming;
         this.parseLazy = parseLazy;
         this.parseRetain = parseRetain;
-    }
-
-    // TODO: Remove this dead code.
-
-    public void setUseChecksumming(boolean usesChecksumming) {
-        this.usesChecksumming = usesChecksumming;
-    }
-
-    public boolean getUseChecksumming() {
-        return usesChecksumming;
-    }
-
-    /**
-     * Provides the expected header length, which varies depending on whether checksumming is used.
-     * Header length includes 4 byte magic number.
-     */
-    public int getHeaderLength() {
-        return 4 + COMMAND_LEN + 4 + (usesChecksumming ? 4 : 0);
     }
 
     /**
@@ -125,8 +101,7 @@ public class BitcoinSerializer {
             throw new Error("BitcoinSerializer doesn't currently know how to serialize " + message.getClass());
         }
 
-        byte[] header = new byte[4 + COMMAND_LEN + 4 + (usesChecksumming ? 4 : 0)];
-
+        byte[] header = new byte[4 + COMMAND_LEN + 4 + 4 /* checksum */];
         uint32ToByteArrayBE(params.packetMagic, header, 0);
 
         // The header array is initialized to zero by Java so we don't have to worry about
@@ -139,32 +114,27 @@ public class BitcoinSerializer {
 
         Utils.uint32ToByteArrayLE(payload.length, header, 4 + COMMAND_LEN);
 
-        if (usesChecksumming) {
-            byte[] checksum = message.getChecksum();
-            if (checksum == null) {
-                Sha256Hash msgHash = message.getHash();
-                if (msgHash != null && message instanceof Transaction) {
-                    // if the message happens to have a precalculated hash use
-                    // it.
-                    // reverse copying 4 bytes is about 1600 times faster than
-                    // calculating a new hash
-                    // this is only possible for transactions as block hashes
-                    // are hashes of the header only
-                    byte[] hash = msgHash.getBytes();
-                    int start = 4 + COMMAND_LEN + 4;
-                    for (int i = start; i < start + 4; i++)
-                        header[i] = hash[31 - i + start];
+        byte[] checksum = message.getChecksum();
+        if (checksum == null) {
+            Sha256Hash msgHash = message.getHash();
+            if (msgHash != null && message instanceof Transaction) {
+                // if the message happens to have a precalculated hash use
+                // it.
+                // reverse copying 4 bytes is about 1600 times faster than
+                // calculating a new hash
+                // this is only possible for transactions as block hashes
+                // are hashes of the header only
+                byte[] hash = msgHash.getBytes();
+                int start = 4 + COMMAND_LEN + 4;
+                for (int i = start; i < start + 4; i++)
+                    header[i] = hash[31 - i + start];
 
-                } else {
-                    byte[] hash = doubleDigest(payload);
-                    System.arraycopy(hash, 0, header, 4 + COMMAND_LEN + 4, 4);
-                }
             } else {
-                assert Arrays.equals(checksum, Utils.copyOf(doubleDigest(payload), 4))
-                        : "Checksum match failure on serialization.  Cached: " + Arrays.toString(checksum)
-                        + " Calculated: " + Arrays.toString(Utils.copyOf(doubleDigest(payload), 4));
-                System.arraycopy(checksum, 0, header, 4 + COMMAND_LEN + 4, 4);
+                byte[] hash = doubleDigest(payload);
+                System.arraycopy(hash, 0, header, 4 + COMMAND_LEN + 4, 4);
             }
+        } else {
+            System.arraycopy(checksum, 0, header, 4 + COMMAND_LEN + 4, 4);
         }
 
         out.write(header);
@@ -193,7 +163,7 @@ public class BitcoinSerializer {
         // Satoshi's implementation ignores garbage before the magic header bytes. We have to do the same because
         // sometimes it sends us stuff that isn't part of any message.
         seekPastMagicBytes(in);
-        BitcoinPacketHeader header = new BitcoinPacketHeader(usesChecksumming, in);
+        BitcoinPacketHeader header = new BitcoinPacketHeader(in);
         // Now try to read the whole message.
         return deserializePayload(header, in);
     }
@@ -203,7 +173,7 @@ public class BitcoinSerializer {
      * the payload. This method assumes you have already called seekPastMagicBytes()
      */
     public BitcoinPacketHeader deserializeHeader(InputStream in) throws ProtocolException, IOException {
-        return new BitcoinPacketHeader(usesChecksumming, in);
+        return new BitcoinPacketHeader(in);
     }
 
     /**
@@ -223,14 +193,12 @@ public class BitcoinSerializer {
 
         // Verify the checksum.
         byte[] hash = null;
-        if (usesChecksumming) {
-            hash = doubleDigest(payloadBytes);
-            if (header.checksum[0] != hash[0] || header.checksum[1] != hash[1] ||
-                    header.checksum[2] != hash[2] || header.checksum[3] != hash[3]) {
-                throw new ProtocolException("Checksum failed to verify, actual " +
-                        bytesToHexString(hash) +
-                        " vs " + bytesToHexString(header.checksum));
-            }
+        hash = doubleDigest(payloadBytes);
+        if (header.checksum[0] != hash[0] || header.checksum[1] != hash[1] ||
+                header.checksum[2] != hash[2] || header.checksum[3] != hash[3]) {
+            throw new ProtocolException("Checksum failed to verify, actual " +
+                    bytesToHexString(hash) +
+                    " vs " + bytesToHexString(header.checksum));
         }
 
         if (log.isDebugEnabled()) {
@@ -332,13 +300,13 @@ public class BitcoinSerializer {
 
 
     public class BitcoinPacketHeader {
-        final byte[] header;
-        final String command;
-        final int size;
-        final byte[] checksum;
+        public final byte[] header;
+        public final String command;
+        public final int size;
+        public final byte[] checksum;
 
-        BitcoinPacketHeader(boolean usesCheckSumminng, InputStream in) throws ProtocolException, IOException {
-            header = new byte[COMMAND_LEN + 4 + (usesChecksumming ? 4 : 0)];
+        public BitcoinPacketHeader(InputStream in) throws ProtocolException, IOException {
+            header = new byte[COMMAND_LEN + 4 + 4];
             int readCursor = 0;
             while (readCursor < header.length) {
                 int bytesRead = in.read(header, readCursor, header.length - readCursor);
@@ -372,44 +340,9 @@ public class BitcoinSerializer {
 
             // Old clients don't send the checksum.
             checksum = new byte[4];
-            if (usesChecksumming) {
-                // Note that the size read above includes the checksum bytes.
-                System.arraycopy(header, cursor, checksum, 0, 4);
-                cursor += 4;
-            }
+            // Note that the size read above includes the checksum bytes.
+            System.arraycopy(header, cursor, checksum, 0, 4);
+            cursor += 4;
         }
-
-        public boolean hasCheckSum() {
-            return checksum != null;
-        }
-
-        /**
-         * @return the header
-         */
-        public byte[] getHeader() {
-            return header;
-        }
-
-        /**
-         * @return the command
-         */
-        public String getCommand() {
-            return command;
-        }
-
-        /**
-         * @return the size
-         */
-        public int getPayloadSize() {
-            return size;
-        }
-
-        /**
-         * @return the checksum
-         */
-        public byte[] getChecksum() {
-            return checksum;
-        }
-
     }
 }
