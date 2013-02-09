@@ -256,7 +256,7 @@ public class Wallet implements Serializable, BlockChainListener {
      * see loadFromFile.
      */
     public Wallet(NetworkParameters params) {
-        this.params = params;
+        this.params = checkNotNull(params);
         keychain = new ArrayList<ECKey>();
         unspent = new HashMap<Sha256Hash, Transaction>();
         spent = new HashMap<Sha256Hash, Transaction>();
@@ -1681,16 +1681,7 @@ public class Wallet implements Serializable, BlockChainListener {
         // change - it could be pre-calculated and held in RAM, and this is probably an optimization worth doing.
         // Note that output.isMine(this) needs to test the keychain which is currently an array, so it's
         // O(candidate outputs ^ keychain.size())! There's lots of low hanging fruit here.
-        LinkedList<TransactionOutput> candidates = Lists.newLinkedList();
-        for (Transaction tx : Iterables.concat(unspent.values(), pending.values())) {
-            // Do not try and spend coinbases that were mined too recently, the protocol forbids it.
-            if (!tx.isMature()) continue;
-            for (TransactionOutput output : tx.getOutputs()) {
-                if (!output.isAvailableForSpending()) continue;
-                if (!output.isMine(this)) continue;
-                candidates.add(output);
-            }
-        }
+        LinkedList<TransactionOutput> candidates = calculateSpendCandidates(true);
         // Of the coins we could spend, pick some that we actually will spend.
         CoinSelection selection = coinSelector.select(value, candidates);
         // Can we afford this?
@@ -1731,6 +1722,20 @@ public class Wallet implements Serializable, BlockChainListener {
         req.completed = true;
         log.info("  completed {}", req.tx.getHashAsString());
         return true;
+    }
+
+    private LinkedList<TransactionOutput> calculateSpendCandidates(boolean excludeImmatureCoinbases) {
+        LinkedList<TransactionOutput> candidates = Lists.newLinkedList();
+        for (Transaction tx : Iterables.concat(unspent.values(), pending.values())) {
+            // Do not try and spend coinbases that were mined too recently, the protocol forbids it.
+            if (excludeImmatureCoinbases && !tx.isMature()) continue;
+            for (TransactionOutput output : tx.getOutputs()) {
+                if (!output.isAvailableForSpending()) continue;
+                if (!output.isMine(this)) continue;
+                candidates.add(output);
+            }
+        }
+        return candidates;
     }
 
     synchronized Address getChangeAddress() {
@@ -1823,35 +1828,32 @@ public class Wallet implements Serializable, BlockChainListener {
     }
 
     /**
-     * It's possible to calculate a wallets balance from multiple points of view. This enum selects which
-     * getBalance() should use.<p>
-     * <p/>
-     * Consider a real-world example: you buy a snack costing $5 but you only have a $10 bill. At the start you have
+     * <p>It's possible to calculate a wallets balance from multiple points of view. This enum selects which
+     * getBalance() should use.</p>
+     *
+     * <p>Consider a real-world example: you buy a snack costing $5 but you only have a $10 bill. At the start you have
      * $10 viewed from every possible angle. After you order the snack you hand over your $10 bill. From the
      * perspective of your wallet you have zero dollars (AVAILABLE). But you know in a few seconds the shopkeeper
-     * will give you back $5 change so most people in practice would say they have $5 (ESTIMATED).<p>
+     * will give you back $5 change so most people in practice would say they have $5 (ESTIMATED).</p>
      */
     public enum BalanceType {
         /**
          * Balance calculated assuming all pending transactions are in fact included into the best chain by miners.
-         * This is the right balance to show in user interfaces.
+         * This includes the value of immature coinbase transactions.
          */
         ESTIMATED,
 
         /**
-         * Balance that can be safely used to create new spends. This is all confirmed unspent outputs minus the ones
-         * spent by pending transactions, but not including the outputs of those pending transactions.
+         * Balance that can be safely used to create new spends. This is whatever the default coin selector would
+         * make available, which by default means transaction outputs with at least 1 confirmation and pending
+         * transactions created by our own wallet which have been propagated across the network.
          */
         AVAILABLE
     }
 
     /**
      * Returns the AVAILABLE balance of this wallet. See {@link BalanceType#AVAILABLE} for details on what this
-     * means.<p>
-     * <p/>
-     * Note: the estimated balance is usually the one you want to show to the end user - however attempting to
-     * actually spend these coins may result in temporary failure. This method returns how much you can safely
-     * provide to {@link Wallet#createSend(Address, java.math.BigInteger)}.
+     * means.
      */
     public synchronized BigInteger getBalance() {
         return getBalance(BalanceType.AVAILABLE);
@@ -1861,31 +1863,27 @@ public class Wallet implements Serializable, BlockChainListener {
      * Returns the balance of this wallet as calculated by the provided balanceType.
      */
     public synchronized BigInteger getBalance(BalanceType balanceType) {
-        BigInteger available = BigInteger.ZERO;
-        for (Transaction tx : unspent.values()) {
-            // For an 'available to spend' balance exclude coinbase transactions that have not yet matured.
-            if (balanceType == BalanceType.AVAILABLE && !tx.isMature()) {
-                continue;
-            }
+        if (balanceType == BalanceType.AVAILABLE) {
+            return getBalance(coinSelector);
+        } else if (balanceType == BalanceType.ESTIMATED) {
+            LinkedList<TransactionOutput> all = calculateSpendCandidates(false);
+            BigInteger value = BigInteger.ZERO;
+            for (TransactionOutput out : all) value = value.add(out.getValue());
+            return value;
+        } else {
+            throw new AssertionError("Unknown balance type");  // Unreachable.
+        }
+    }
 
-            for (TransactionOutput output : tx.getOutputs()) {
-                if (!output.isMine(this)) continue;
-                if (!output.isAvailableForSpending()) continue;
-                available = available.add(output.getValue());
-            }
-        }
-        if (balanceType == BalanceType.AVAILABLE)
-            return available;
-        checkState(balanceType == BalanceType.ESTIMATED);
-        // Now add back all the pending outputs to assume the transaction goes through.
-        BigInteger estimated = available;
-        for (Transaction tx : pending.values()) {
-            for (TransactionOutput output : tx.getOutputs()) {
-                if (!output.isMine(this)) continue;
-                estimated = estimated.add(output.getValue());
-            }
-        }
-        return estimated;
+    /**
+     * Returns the balance that would be considered spendable by the given coin selector. Just asks it to select
+     * as many coins as possible and returns the total.
+     */
+    public synchronized BigInteger getBalance(CoinSelector selector) {
+        checkNotNull(selector);
+        LinkedList<TransactionOutput> candidates = calculateSpendCandidates(true);
+        CoinSelection selection = selector.select(params.MAX_MONEY, candidates);
+        return selection.valueGathered;
     }
 
     @Override
@@ -2406,6 +2404,11 @@ public class Wallet implements Serializable, BlockChainListener {
             }
         }
         return filter;
+    }
+
+    /** Returns the {@link CoinSelector} object which controls which outputs can be spent by this wallet. */
+    public synchronized CoinSelector getCoinSelector() {
+        return coinSelector;
     }
 
     /**

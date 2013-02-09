@@ -139,7 +139,7 @@ public class WalletTest {
         assertEquals(1, txns.size());
 
         // Now check that we can spend the unconfirmed change.
-        assertEquals(v3, wallet.getBalance(Wallet.BalanceType.ESTIMATED));
+        assertEquals(v3, wallet.getBalance());
         Transaction t3 = wallet.createSend(new ECKey().toAddress(params), v3);
         assertNotNull(t3);
     }
