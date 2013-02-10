@@ -221,9 +221,30 @@ public class Wallet implements Serializable, BlockChainListener {
             long target = biTarget.longValue();
             long total = 0;
             LinkedList<TransactionOutput> selected = Lists.newLinkedList();
-            // Super dumb algorithm: just iterate through candidates and keep adding them in whatever order until we
-            // have enough.
-            for (TransactionOutput output : candidates) {
+            // Sort the inputs by age so we use oldest first.
+            // TODO: Consider changing the wallets internal format to track just outputs and keep them ordered.
+            ArrayList<TransactionOutput> sortedOutputs = new ArrayList<TransactionOutput>(candidates);
+            Collections.sort(sortedOutputs, new Comparator<TransactionOutput>() {
+                public int compare(TransactionOutput a, TransactionOutput b) {
+                    int depth1 = 0;
+                    int depth2 = 0;
+                    TransactionConfidence conf1 = a.parentTransaction.getConfidence();
+                    TransactionConfidence conf2 = b.parentTransaction.getConfidence();
+                    if (conf1.getConfidenceType() == ConfidenceType.BUILDING) depth1 = conf1.getDepthInBlocks();
+                    if (conf2.getConfidenceType() == ConfidenceType.BUILDING) depth2 = conf2.getDepthInBlocks();
+                    if (depth1 < depth2)
+                        return 1;
+                    else if (depth1 > depth2)
+                        return -1;
+                    // Their depths are equal (possibly pending) so sort by hash to ensure a total ordering.
+                    BigInteger aHash = a.parentTransaction.getHash().toBigInteger();
+                    BigInteger bHash = b.parentTransaction.getHash().toBigInteger();
+                    return aHash.compareTo(bHash);
+                }
+            });
+            // Now iterate over the sorted outputs until we have got as close to the target as possible or a little
+            // bit over (excessive value will be change).
+            for (TransactionOutput output : sortedOutputs) {
                 if (total >= target) break;
                 // Only pick chain-included transactions, or transactions that are ours and pending.
                 TransactionConfidence confidence = output.parentTransaction.getConfidence();

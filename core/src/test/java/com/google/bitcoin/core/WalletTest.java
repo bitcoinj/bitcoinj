@@ -866,6 +866,23 @@ public class WalletTest {
         assertFalse(o2.isAvailableForSpending());
     }
 
+    @Test
+    public void ageMattersDuringSelection() throws Exception {
+        // Test that we prefer older coins to newer coins when building spends. This reduces required fees and improves
+        // time to confirmation as the transaction will appear less spammy.
+        final int ITERATIONS = 10;
+        Transaction[] txns = new Transaction[ITERATIONS];
+        for (int i = 0; i < ITERATIONS; i++) {
+            txns[i] = sendMoneyToWallet(Utils.toNanoCoins(1, 0), AbstractBlockChain.NewBlockType.BEST_CHAIN);
+        }
+        // Check that we spend transactions in order of reception.
+        for (int i = 0; i < ITERATIONS; i++) {
+            Transaction spend = wallet.createSend(new ECKey().toAddress(params), Utils.toNanoCoins(1, 0));
+            assertEquals("Failed on iteration " + i, spend.getInput(0).getOutpoint().getHash(), txns[i].getHash());
+            wallet.commitTx(spend);
+        }
+    }
+
     // There is a test for spending a coinbase transaction as it matures in BlockChainTest#coinbaseTransactionAvailability
 
     // Support for offline spending is tested in PeerGroupTest
