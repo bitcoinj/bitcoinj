@@ -42,7 +42,6 @@ import static com.google.common.base.Preconditions.*;
 // - Make the keychain member protected and switch it to be a hashmap of some kind so key lookup ops are faster.
 // - Refactor how keys are managed to better handle things like deterministic wallets in future.
 // - Decompose the class where possible: break logic out into classes that can be customized/replaced by the user.
-//     - Coin selection
 //     - [Auto]saving to a backing store
 //     - Key management
 //     - just generally make Wallet smaller and easier to work with
