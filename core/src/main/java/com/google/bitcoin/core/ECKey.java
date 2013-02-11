@@ -100,10 +100,14 @@ public class ECKey implements Serializable {
         // Unfortunately Bouncy Castle does not let us explicitly change a point to be compressed, even though it
         // could easily do so. We must re-build it here so the ECPoints withCompression flag can be set to true.
         ECPoint uncompressed = pubParams.getQ();
-        ECPoint compressed = new ECPoint.Fp(ecParams.getCurve(), uncompressed.getX(), uncompressed.getY(), true);
+        ECPoint compressed = compressPoint(uncompressed);
         pub = compressed.getEncoded();
 
         creationTimeSeconds = Utils.now().getTime() / 1000;
+    }
+
+    private static ECPoint compressPoint(ECPoint uncompressed) {
+        return new ECPoint.Fp(ecParams.getCurve(), uncompressed.getX(), uncompressed.getY(), true);
     }
 
     /**
@@ -145,19 +149,30 @@ public class ECKey implements Serializable {
      * is supplied, the public key will be calculated from it (this is slow). If both are supplied, it's assumed
      * the public key already correctly matches the public key. If only the public key is supplied, this ECKey cannot
      * be used for signing.
+     * @param compressed If set to true and pubKey is null, the derived public key will be in compressed form.
      */
-    private ECKey(BigInteger privKey, byte[] pubKey) {
+    public ECKey(BigInteger privKey, byte[] pubKey, boolean compressed) {
         this.priv = privKey;
         this.pub = null;
         if (pubKey == null && privKey != null) {
             // Derive public from private.
-            this.pub = publicKeyFromPrivate(privKey);
+            this.pub = publicKeyFromPrivate(privKey, compressed);
         } else if (pubKey != null) {
             // We expect the pubkey to be in regular encoded form, just as a BigInteger. Therefore the first byte is
             // a special marker byte.
             // TODO: This is probably not a useful API and may be confusing.
             this.pub = pubKey;
         }
+    }
+
+    /**
+     * Creates an ECKey given either the private key only, the public key only, or both. If only the private key
+     * is supplied, the public key will be calculated from it (this is slow). If both are supplied, it's assumed
+     * the public key already correctly matches the public key. If only the public key is supplied, this ECKey cannot
+     * be used for signing.
+     */
+    private ECKey(BigInteger privKey, byte[] pubKey) {
+        this(privKey, pubKey, false);
     }
     
     /** Creates an ECKey given the private key only.  The public key is calculated from it (this is slow) */
@@ -183,8 +198,11 @@ public class ECKey implements Serializable {
      * Returns public key bytes from the given private key. To convert a byte array into a BigInteger, use <tt>
      * new BigInteger(1, bytes);</tt>
      */
-    public static byte[] publicKeyFromPrivate(BigInteger privKey) {
-        return ecParams.getG().multiply(privKey).getEncoded();
+    public static byte[] publicKeyFromPrivate(BigInteger privKey, boolean compressed) {
+        ECPoint point = ecParams.getG().multiply(privKey);
+        if (compressed)
+            point = compressPoint(point);
+        return point.getEncoded();
     }
 
     /** Gets the hash160 form of the public key (as seen in addresses). */
@@ -545,7 +563,7 @@ public class ECKey implements Serializable {
      * @return Private key bytes as a {@link DumpedPrivateKey}.
      */
     public DumpedPrivateKey getPrivateKeyEncoded(NetworkParameters params) {
-        return new DumpedPrivateKey(params, getPrivKeyBytes());
+        return new DumpedPrivateKey(params, getPrivKeyBytes(), isCompressed());
     }
 
     /**

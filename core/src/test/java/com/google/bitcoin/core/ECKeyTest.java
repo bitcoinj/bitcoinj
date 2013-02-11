@@ -21,6 +21,7 @@ import org.spongycastle.util.encoders.Hex;
 
 import java.math.BigInteger;
 import java.security.SignatureException;
+import java.util.Arrays;
 
 import static com.google.bitcoin.core.Utils.reverseBytes;
 import static org.junit.Assert.*;
@@ -172,5 +173,17 @@ public class ECKeyTest {
             }
         }
         assertTrue(found);
+    }
+
+    @Test
+    public void roundTripDumpedPrivKey() throws Exception {
+        ECKey key = new ECKey();
+        assertTrue(key.isCompressed());
+        NetworkParameters params = NetworkParameters.unitTests();
+        String base58 = key.getPrivateKeyEncoded(params).toString();
+        ECKey key2 = new DumpedPrivateKey(params, base58).getKey();
+        assertTrue(key2.isCompressed());
+        assertTrue(Arrays.equals(key.getPrivKeyBytes(), key2.getPrivKeyBytes()));
+        assertTrue(Arrays.equals(key.getPubKey(), key2.getPubKey()));
     }
 }
