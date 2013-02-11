@@ -853,9 +853,13 @@ public class Block extends Message {
     }
 
     /**
-     * Returns the difficulty of the proof of work that this block should meet encoded in compact form. The {@link
+     * Returns the difficulty of the proof of work that this block should meet encoded <b>in compact form</b>. The {@link
      * BlockChain} verifies that this is not too easy by looking at the length of the chain when the block is added.
-     * To find the actual value the hash should be compared against, use getDifficultyTargetBI.
+     * To find the actual value the hash should be compared against, use
+     * {@link com.google.bitcoin.core.Block#getDifficultyTargetAsInteger()}. Note that this is <b>not</b> the same as
+     * the difficulty value reported by the Bitcoin "getdifficulty" RPC that you may see on various block explorers.
+     * That number is the result of applying a formula to the underlying difficulty to normalize the minimum to 1.
+     * Calculating the difficulty that way is currently unsupported.
      */
     public long getDifficultyTarget() {
         maybeParseHeader();
