@@ -33,6 +33,8 @@ import java.net.InetSocketAddress;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * A Peer handles the high level communication with a Bitcoin node.
@@ -61,11 +63,11 @@ public class Peer {
     private boolean downloadData = false;
     // The version data to announce to the other side of the connections we make: useful for setting our "user agent"
     // equivalent and other things.
-    private VersionMessage versionMessage;
+    private final VersionMessage versionMessage;
     // How many block messages the peer has announced to us. Peers only announce blocks that attach to their best chain
     // so we can use this to calculate the height of the peers chain, by adding it to the initial height in the version
     // message. This method can go wrong if the peer re-orgs onto a shorter (but harder) chain, however, this is rare.
-    private int blocksAnnounced;
+    private AtomicInteger blocksAnnounced = new AtomicInteger();
     // A class that tracks recent transactions that have been broadcast across the network, counts how many
     // peers announced them and updates the transaction confidence data. It is passed to each Peer.
     // TODO: Make this final and unsynchronized.
@@ -109,7 +111,7 @@ public class Peer {
     private static final int PING_MOVING_AVERAGE_WINDOW = 20;
 
     private Channel channel;
-    private VersionMessage peerVersionMessage;
+    private AtomicReference<VersionMessage> peerVersionMessage = new AtomicReference<VersionMessage>();
     private boolean isAcked;
     private PeerHandler handler;
 
@@ -271,30 +273,26 @@ public class Peer {
             } else if (m instanceof AlertMessage) {
                 processAlert((AlertMessage) m);
             } else if (m instanceof VersionMessage) {
-                synchronized (Peer.this) {
-                    peerVersionMessage = (VersionMessage)m;
-                }
+                peerVersionMessage.set((VersionMessage) m);
                 EventListenerInvoker.invoke(lifecycleListeners, new EventListenerInvoker<PeerLifecycleListener>() {
                     @Override
                     public void invoke(PeerLifecycleListener listener) {
                         listener.onPeerConnected(Peer.this);
                     }
                 });
-                if (peerVersionMessage.clientVersion < minProtocolVersion) {
+                if (getPeerVersionMessage().clientVersion < minProtocolVersion) {
                     log.warn("Connected to a peer speaking protocol version {} but need {}, closing",
-                            peerVersionMessage.clientVersion, minProtocolVersion);
+                            getPeerVersionMessage().clientVersion, minProtocolVersion);
                     e.getChannel().close();
                 }
             } else if (m instanceof VersionAck) {
-                synchronized (Peer.this) {
-                    if (peerVersionMessage == null) {
-                        throw new ProtocolException("got a version ack before version");
-                    }
-                    if (isAcked) {
-                        throw new ProtocolException("got more than one version ack");
-                    }
-                    isAcked = true;
+                if (getPeerVersionMessage() == null) {
+                    throw new ProtocolException("got a version ack before version");
                 }
+                if (isAcked) {
+                    throw new ProtocolException("got more than one version ack");
+                }
+                isAcked = true;
             } else if (m instanceof Ping) {
                 if (((Ping) m).hasNonce())
                     sendMessage(new Pong(((Ping) m).getNonce()));
@@ -738,7 +736,7 @@ public class Peer {
         // It is possible for the peer block height difference to be negative when blocks have been solved and broadcast
         // since the time we first connected to the peer. However, it's weird and unexpected to receive a callback
         // with negative "blocks left" in this case, so we clamp to zero so the API user doesn't have to think about it.
-        final int blocksLeft = Math.max(0, (int)peerVersionMessage.bestHeight - blockChain.getBestChainHeight());
+        final int blocksLeft = Math.max(0, (int)getPeerVersionMessage().bestHeight - blockChain.getBestChainHeight());
         EventListenerInvoker.invoke(eventListeners, new EventListenerInvoker<PeerEventListener>() {
             @Override
             public void invoke(PeerEventListener listener) {
@@ -770,10 +768,10 @@ public class Peer {
             // chain, so count it. This way getBestChainHeight() can be accurate.
             if (downloadData) {
                 if (!blockChain.isOrphan(blocks.get(0).hash)) {
-                    blocksAnnounced++;
+                    blocksAnnounced.incrementAndGet();
                 }
             } else {
-                blocksAnnounced++;
+                blocksAnnounced.incrementAndGet();
             }
         }
 
@@ -1188,25 +1186,21 @@ public class Peer {
         return address;
     }
 
-    /**
-     * @return various version numbers claimed by peer.
-     */
-    public synchronized VersionMessage getPeerVersionMessage() {
-      return peerVersionMessage;
+    /** Returns version data announced by the remote peer. */
+    public VersionMessage getPeerVersionMessage() {
+      return peerVersionMessage.get();
     }
 
-    /**
-     * @return various version numbers we claim.
-     */
-    public synchronized VersionMessage getVersionMessage() {
+    /** Returns version data we announce to our remote peers. */
+    public VersionMessage getVersionMessage() {
       return versionMessage;
     }
 
     /**
      * @return the height of the best chain as claimed by peer: sum of its ver announcement and blocks announced since.
      */
-    public synchronized long getBestHeight() {
-      return peerVersionMessage.bestHeight + blocksAnnounced;
+    public long getBestHeight() {
+      return getPeerVersionMessage().bestHeight + blocksAnnounced.get();
     }
 
     /**
