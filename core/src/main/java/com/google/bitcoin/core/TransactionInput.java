@@ -54,15 +54,14 @@ public class TransactionInput extends ChildMessage implements Serializable {
     private Transaction parentTransaction;
 
     /**
-     * Used only in creation of the genesis block.
+     * Creates an input that connects to nothing - used only in creation of coinbase transactions.
      */
-    TransactionInput(NetworkParameters params, Transaction parentTransaction, byte[] scriptBytes) {
+    public TransactionInput(NetworkParameters params, Transaction parentTransaction, byte[] scriptBytes) {
         super(params);
         this.scriptBytes = scriptBytes;
         this.outpoint = new TransactionOutPoint(params, NO_SEQUENCE, (Transaction)null);
         this.sequence = NO_SEQUENCE;
         this.parentTransaction = parentTransaction;
-
         length = 40 + (scriptBytes == null ? 1 : VarInt.sizeOf(scriptBytes.length) + scriptBytes.length);
     }
 
