@@ -371,7 +371,8 @@ public class Transaction extends ChildMessage implements Serializable {
     }
 
     /**
-     * Returns true if every output owned by the given wallet is spent.
+     * Returns false if this transaction has at least one output that is owned by the given wallet and unspent, true
+     * otherwise.
      */
     public boolean isEveryOwnedOutputSpent(Wallet wallet) {
         maybeParse();
