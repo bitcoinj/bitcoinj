@@ -142,6 +142,14 @@ public class WalletTest {
         assertEquals(v3, wallet.getBalance());
         Transaction t3 = wallet.createSend(new ECKey().toAddress(params), v3);
         assertNotNull(t3);
+        wallet.commitTx(t3);
+        assertTrue(wallet.isConsistent());
+        // t2 and  t3 gets confirmed in the same block.
+        BlockPair bp = createFakeBlock(blockStore, t2, t3);
+        wallet.receiveFromBlock(t2, bp.storedBlock, AbstractBlockChain.NewBlockType.BEST_CHAIN);
+        wallet.receiveFromBlock(t3, bp.storedBlock, AbstractBlockChain.NewBlockType.BEST_CHAIN);
+        wallet.notifyNewBestBlock(bp.block);
+        assertTrue(wallet.isConsistent());
     }
 
     @Test
@@ -848,7 +856,7 @@ public class WalletTest {
         assertEquals(1, wallet.getPoolSize(WalletTransaction.Pool.PENDING));
         assertEquals(2, wallet.getPoolSize(WalletTransaction.Pool.ALL));
         
-        // Now try the spend the output
+        // Now try to the spend the output.
         ECKey k3 = new ECKey();
         BigInteger v3 = toNanoCoins(0, 25);
         Transaction t3 = new Transaction(params);

@@ -933,8 +933,9 @@ public class Wallet implements Serializable, BlockChainListener {
             // A transaction we created appeared in a block. Probably this is a spend we broadcast that has been
             // accepted by the network.
             if (bestChain) {
-                if (valueSentToMe.equals(BigInteger.ZERO)) {
-                    // There were no change transactions so this tx is fully spent.
+                // Was confirmed.
+                if (tx.isEveryOwnedOutputSpent(this)) {
+                    // There were no change transactions so this tx is fully spent
                     log.info("  ->spent");
                     addWalletTransaction(Pool.SPENT, tx);
                 } else {
@@ -1091,7 +1092,7 @@ public class Wallet implements Serializable, BlockChainListener {
 
         updateForSpends(tx, true);
 
-        if (!tx.getValueSentToMe(this).equals(BigInteger.ZERO)) {
+        if (!tx.isEveryOwnedOutputSpent(this)) {
             // It's sending us coins.
             log.info("  new tx {} ->unspent", tx.getHashAsString());
             addWalletTransaction(Pool.UNSPENT, tx);
