@@ -596,7 +596,7 @@ public class Transaction extends ChildMessage implements Serializable {
                 if (scriptSig.chunks.size() == 2)
                     s.append(scriptSig.getFromAddress().toString());
                 else if (scriptSig.chunks.size() == 1)
-                    s.append("[sig:" + bytesToHexString(scriptSig.getPubKey()) + "]");
+                    s.append("[sig:" + bytesToHexString(scriptSig.chunks.get(0).data) + "]");
                 else
                     s.append("???");
                 s.append(" / ");
