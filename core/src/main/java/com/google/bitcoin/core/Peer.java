@@ -35,6 +35,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * A Peer handles the high level communication with a Bitcoin node.
@@ -107,7 +108,8 @@ public class Peer {
 
     // Outstanding pings against this peer and how long the last one took to complete.
     private final CopyOnWriteArrayList<PendingPing> pendingPings;
-    private long[] lastPingTimes;
+    private final ReentrantLock lastPingTimesLock = new ReentrantLock();
+    private long[] lastPingTimes = null;
     private static final int PING_MOVING_AVERAGE_WINDOW = 20;
 
     private Channel channel;
@@ -130,7 +132,6 @@ public class Peer {
         this.isAcked = false;
         this.handler = new PeerHandler();
         this.pendingPings = new CopyOnWriteArrayList<PendingPing>();
-        this.lastPingTimes = null;
         this.wallets = new CopyOnWriteArrayList<Wallet>();
     }
 
@@ -1071,16 +1072,21 @@ public class Peer {
     }
 
     /** Adds a ping time sample to the averaging window. */
-    private synchronized void addPingTimeData(long sample) {
-        if (lastPingTimes == null) {
-            lastPingTimes = new long[PING_MOVING_AVERAGE_WINDOW];
-            // Initialize the averaging window to the first sample.
-            Arrays.fill(lastPingTimes, sample);
-        } else {
-            // Shift all elements backwards by one.
-            System.arraycopy(lastPingTimes, 1, lastPingTimes, 0, lastPingTimes.length - 1);
-            // And append the new sample to the end.
-            lastPingTimes[lastPingTimes.length - 1] = sample;
+    private void addPingTimeData(long sample) {
+        lastPingTimesLock.lock();
+        try {
+            if (lastPingTimes == null) {
+                lastPingTimes = new long[PING_MOVING_AVERAGE_WINDOW];
+                // Initialize the averaging window to the first sample.
+                Arrays.fill(lastPingTimes, sample);
+            } else {
+                // Shift all elements backwards by one.
+                System.arraycopy(lastPingTimes, 1, lastPingTimes, 0, lastPingTimes.length - 1);
+                // And append the new sample to the end.
+                lastPingTimes[lastPingTimes.length - 1] = sample;
+            }
+        } finally {
+            lastPingTimesLock.unlock();
         }
     }
 
@@ -1109,10 +1115,15 @@ public class Peer {
      * Returns the elapsed time of the last ping/pong cycle. If {@link com.google.bitcoin.core.Peer#ping()} has never
      * been called or we did not hear back the "pong" message yet, returns {@link Long#MAX_VALUE}.
      */
-    public synchronized long getLastPingTime() {
-        if (lastPingTimes == null)
-            return Long.MAX_VALUE;
-        return lastPingTimes[lastPingTimes.length - 1];
+    public long getLastPingTime() {
+        lastPingTimesLock.lock();
+        try {
+            if (lastPingTimes == null)
+                return Long.MAX_VALUE;
+            return lastPingTimes[lastPingTimes.length - 1];
+        } finally {
+            lastPingTimesLock.unlock();
+        }
     }
 
     /**
@@ -1120,12 +1131,17 @@ public class Peer {
      * been called or we did not hear back the "pong" message yet, returns {@link Long#MAX_VALUE}. The moving average
      * window is 5 buckets.
      */
-    public synchronized long getPingTime() {
-        if (lastPingTimes == null)
-            return Long.MAX_VALUE;
-        long sum = 0;
-        for (long i : lastPingTimes) sum += i;
-        return (long)((double) sum / lastPingTimes.length);
+    public long getPingTime() {
+        lastPingTimesLock.lock();
+        try {
+            if (lastPingTimes == null)
+                return Long.MAX_VALUE;
+            long sum = 0;
+            for (long i : lastPingTimes) sum += i;
+            return (long)((double) sum / lastPingTimes.length);
+        } finally {
+            lastPingTimesLock.unlock();
+        }
     }
 
     private void processPong(Pong m) {
