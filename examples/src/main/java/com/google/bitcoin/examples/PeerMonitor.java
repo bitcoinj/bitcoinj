@@ -34,6 +34,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -44,6 +45,8 @@ public class PeerMonitor {
     private PeerGroup peerGroup;
     private PeerTableModel peerTableModel;
     private PeerTableRenderer peerTableRenderer;
+
+    private final HashMap<Peer, String> reverseDnsLookups = new HashMap<Peer, String>();
 
     public static void main(String[] args) throws Exception {
         BriefLogFormatter.init();
@@ -66,13 +69,31 @@ public class PeerMonitor {
             @Override
             public void onPeerConnected(final Peer peer, int peerCount) {
                 refreshUI();
+                lookupReverseDNS(peer);
             }
 
             @Override
-            public void onPeerDisconnected(Peer peer, int peerCount) {
+            public void onPeerDisconnected(final Peer peer, int peerCount) {
                 refreshUI();
+                synchronized (reverseDnsLookups) {
+                    reverseDnsLookups.remove(peer);
+                }
             }
         });
+    }
+
+    private void lookupReverseDNS(final Peer peer) {
+        new Thread() {
+            @Override
+            public void run() {
+                // This can take a looooong time.
+                String reverseDns = peer.getAddress().getAddr().getCanonicalHostName();
+                synchronized (reverseDnsLookups) {
+                    reverseDnsLookups.put(peer, reverseDns);
+                }
+                refreshUI();
+            }
+        }.start();
     }
 
     private void refreshUI() {
@@ -117,11 +138,12 @@ public class PeerMonitor {
         peerTable.setDefaultRenderer(String.class, peerTableRenderer);
         peerTable.setDefaultRenderer(Integer.class, peerTableRenderer);
         peerTable.setDefaultRenderer(Long.class, peerTableRenderer);
+        peerTable.getColumnModel().getColumn(0).setPreferredWidth(300);
 
         JScrollPane scrollPane = new JScrollPane(peerTable);
         window.getContentPane().add(scrollPane, BorderLayout.CENTER);
         window.pack();
-        window.setSize(640, 480);
+        window.setSize(720, 480);
         window.setVisible(true);
 
         // Refresh the UI every half second to get the latest ping times. The event handler runs in the UI thread.
@@ -156,7 +178,7 @@ public class PeerMonitor {
         @Override
         public String getColumnName(int i) {
             switch (i) {
-                case IP_ADDRESS: return "IP address";
+                case IP_ADDRESS: return "Address";
                 case PROTOCOL_VERSION: return "Protocol version";
                 case USER_AGENT: return "User Agent";
                 case CHAIN_HEIGHT: return "Chain height";
@@ -189,7 +211,7 @@ public class PeerMonitor {
                 Peer peer = pendingPeers.get(row - connectedPeers.size());
                 switch (col) {
                     case IP_ADDRESS:
-                        return peer.getAddress().getAddr().getHostAddress();
+                        return getAddressForPeer(peer);
                     case PROTOCOL_VERSION:
                         return 0;
                     case CHAIN_HEIGHT:
@@ -203,7 +225,7 @@ public class PeerMonitor {
             Peer peer = connectedPeers.get(row);
             switch (col) {
                 case IP_ADDRESS:
-                    return peer.getAddress().getAddr().getHostAddress();
+                    return getAddressForPeer(peer);
                 case PROTOCOL_VERSION:
                     return Integer.toString(peer.getPeerVersionMessage().clientVersion);
                 case USER_AGENT:
@@ -216,6 +238,17 @@ public class PeerMonitor {
 
                 default: throw new RuntimeException();
             }
+        }
+
+        private Object getAddressForPeer(Peer peer) {
+            String s;
+            synchronized (reverseDnsLookups) {
+                s = reverseDnsLookups.get(peer);
+            }
+            if (s != null)
+                return s;
+            else
+                return peer.getAddress().getAddr().getHostAddress();
         }
     }
 
