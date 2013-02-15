@@ -33,6 +33,7 @@ import java.net.InetSocketAddress;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
@@ -61,7 +62,7 @@ public class Peer {
     // Whether to try and download blocks and transactions from this peer. Set to false by PeerGroup if not the
     // primary peer. This is to avoid redundant work and concurrency problems with downloading the same chain
     // in parallel.
-    private boolean downloadData = false;
+    private final AtomicBoolean downloadData = new AtomicBoolean();
     // The version data to announce to the other side of the connections we make: useful for setting our "user agent"
     // equivalent and other things.
     private final VersionMessage versionMessage;
@@ -124,7 +125,7 @@ public class Peer {
         this.params = Preconditions.checkNotNull(params);
         this.versionMessage = Preconditions.checkNotNull(ver);
         this.blockChain = chain;  // Allowed to be null.
-        this.downloadData = chain != null;
+        this.downloadData.set(chain != null);
         this.getDataFutures = new CopyOnWriteArrayList<GetDataRequest>();
         this.eventListeners = new CopyOnWriteArrayList<PeerEventListener>();
         this.lifecycleListeners = new CopyOnWriteArrayList<PeerLifecycleListener>();
@@ -632,7 +633,7 @@ public class Peer {
             // Was this block requested by getBlock()?
             if (maybeHandleRequestedData(m)) return;
 
-            if (!downloadData) {
+            if (!downloadData.get()) {
                 // This can happen if we lose download peer status after requesting block data.
                 log.debug("{}: Received block we did not ask for: {}", address.get(), m.getHashAsString());
                 return;
@@ -674,7 +675,7 @@ public class Peer {
     private synchronized void processFilteredBlock(FilteredBlock m) throws IOException {
         log.debug("{}: Received broadcast filtered block {}", address.get(), m.getHash().toString());
         try {
-            if (!downloadData) {
+            if (!downloadData.get()) {
                 log.debug("{}: Received block we did not ask for: {}", address.get(), m.getHash().toString());
                 return;
             }
@@ -760,6 +761,8 @@ public class Peer {
                 default: throw new IllegalStateException("Not implemented: " + item.type);
             }
         }
+
+        final boolean downloadData = this.downloadData.get();
 
         if (transactions.size() == 0 && blocks.size() == 1) {
             // Single block announcement. If we're downloading the chain this is just a tickle to make us continue
@@ -1182,16 +1185,16 @@ public class Peer {
      * Returns true if this peer will try and download things it is sent in "inv" messages. Normally you only need
      * one peer to be downloading data. Defaults to true.
      */
-    public synchronized boolean getDownloadData() {
-        return downloadData;
+    public boolean getDownloadData() {
+        return downloadData.get();
     }
 
     /**
      * If set to false, the peer won't try and fetch blocks and transactions it hears about. Normally, only one
      * peer should download missing blocks. Defaults to true.
      */
-    public synchronized void setDownloadData(boolean downloadData) {
-        this.downloadData = downloadData;
+    public void setDownloadData(boolean downloadData) {
+        this.downloadData.set(downloadData);
     }
 
     /**
