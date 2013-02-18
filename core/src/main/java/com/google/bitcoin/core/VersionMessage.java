@@ -72,6 +72,11 @@ public class VersionMessage extends Message {
      */
     public boolean relayTxesBeforeFilter;
 
+    /** The version of this library release, as a string. */
+    public static final String BITCOINJ_VERSION = "0.7-SNAPSHOT";
+    /** The value that is prepended to the subVer field of this application. */
+    public static final String LIBRARY_SUBVER = "/BitCoinJ:" + BITCOINJ_VERSION + "/";
+
     public VersionMessage(NetworkParameters params, byte[] msg) throws ProtocolException {
         super(params, msg, 0);
     }
@@ -101,7 +106,7 @@ public class VersionMessage extends Message {
         } catch (UnknownHostException e) {
             throw new RuntimeException(e);  // Cannot happen (illegal IP length).
         }
-        subVer = "/BitCoinJ:0.7-SNAPSHOT/";
+        subVer = LIBRARY_SUBVER;
         bestHeight = newBestHeight;
         this.relayTxesBeforeFilter = relayTxesBeforeFilter;
 

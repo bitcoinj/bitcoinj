@@ -1,9 +1,9 @@
 package com.google.bitcoin.core;
 
-import static org.junit.Assert.assertTrue;
-
 import org.junit.Test;
 import org.spongycastle.util.encoders.Hex;
+
+import static org.junit.Assert.assertTrue;
 
 public class VersionMessageTest {
     @Test
