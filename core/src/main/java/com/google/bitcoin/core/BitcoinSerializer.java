@@ -68,6 +68,7 @@ public class BitcoinSerializer {
         names.put(BloomFilter.class, "filterload");
         names.put(FilteredBlock.class, "merkleblock");
         names.put(NotFoundMessage.class, "notfound");
+        names.put(MemoryPoolMessage.class, "mempool");
     }
 
     /**
@@ -250,6 +251,8 @@ public class BitcoinSerializer {
             return new BloomFilter(params, payloadBytes);
         } else if (command.equals("notfound")) {
             return new NotFoundMessage(params, payloadBytes);
+        } else if (command.equals("mempool")) {
+            return new MemoryPoolMessage();
         } else {
             log.warn("No support for deserializing message with name {}", command);
             return new UnknownMessage(params, command, payloadBytes);

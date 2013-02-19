@@ -293,4 +293,19 @@ public class VersionMessage extends Message {
         if (component.contains("/") || component.contains("(") || component.contains(")"))
             throw new IllegalArgumentException("name contains invalid characters");
     }
+
+    /**
+     * Returns true if the clientVersion field is >= Pong.MIN_PROTOCOL_VERSION. If it is then ping() is usable.
+     */
+    public boolean isPingPongSupported() {
+        return clientVersion >= Pong.MIN_PROTOCOL_VERSION;
+    }
+
+    /**
+     * Returns true if the clientVersion field is >= FilteredBlock.MIN_PROTOCOL_VERSION. If it is then Bloom filtering
+     * is available and the memory pool of the remote peer will be queried when the downloadData property is true.
+     */
+    public boolean isBloomFilteringSupported() {
+        return clientVersion >= FilteredBlock.MIN_PROTOCOL_VERSION;
+    }
 }

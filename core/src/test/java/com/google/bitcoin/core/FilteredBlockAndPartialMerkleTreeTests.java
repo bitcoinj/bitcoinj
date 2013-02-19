@@ -90,15 +90,10 @@ public class FilteredBlockAndPartialMerkleTreeTests extends TestWithPeerGroup {
         // Create a peer.
         FakeChannel p1 = connectPeer(1);
         assertEquals(1, peerGroup.numConnectedPeers());
-
         // Send an inv for block 100001
         InventoryMessage inv = new InventoryMessage(unitTestParams);
         inv.addBlock(block);
         inbound(p1, inv);
-        
-        // First thing sent is a copy of the generated bloom filter
-        //TODO assertTrue(outbound(p1).equals(filter)); (need to set the nTweak to 0xDEADBEEF)
-        assertTrue(outbound(p1) instanceof BloomFilter);
         
         // Check that we properly requested the correct FilteredBlock
         Object getData = outbound(p1);
@@ -107,7 +102,7 @@ public class FilteredBlockAndPartialMerkleTreeTests extends TestWithPeerGroup {
         assertTrue(((GetDataMessage)getData).getItems().get(0).hash.equals(block.getHash()));
         assertTrue(((GetDataMessage)getData).getItems().get(0).type == InventoryItem.Type.FilteredBlock);
         
-        //Check that we then immediately pinged
+        // Check that we then immediately pinged.
         Object ping = outbound(p1);
         assertTrue(ping instanceof Ping);
         

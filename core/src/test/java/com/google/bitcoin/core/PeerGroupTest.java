@@ -110,10 +110,8 @@ public class PeerGroupTest extends TestWithPeerGroup {
         // Note: we start with p2 here to verify that transactions are downloaded from whichever peer announces first
         // which does not have to be the same as the download peer (which is really the "block download peer").
         inbound(p2, inv);
-        assertTrue(outbound(p2) instanceof BloomFilter);
         assertTrue(outbound(p2) instanceof GetDataMessage);
         inbound(p1, inv);
-        assertTrue(outbound(p1) instanceof BloomFilter);
         assertNull(outbound(p1));  // Only one peer is used to download.
         inbound(p2, t1);
         assertNull(outbound(p1));
@@ -148,11 +146,9 @@ public class PeerGroupTest extends TestWithPeerGroup {
         // Only peer 1 tries to download it.
         inbound(p1, inv);
         
-        assertTrue(outbound(p1) instanceof BloomFilter);
         assertTrue(outbound(p1) instanceof GetDataMessage);
-        assertTrue(outbound(p2) instanceof BloomFilter);
         assertNull(outbound(p2));
-        // Peer 1 goes away.
+        // Peer 1 goes away, peer 2 becomes the download peer and thus queries the remote mempool.
         closePeer(peerOf(p1));
         // Peer 2 fetches it next time it hears an inv (should it fetch immediately?).
         inbound(p2, inv);
@@ -178,7 +174,6 @@ public class PeerGroupTest extends TestWithPeerGroup {
         // Expect a zero hash getblocks on p1. This is how the process starts.
         peerGroup.startBlockChainDownload(new AbstractPeerEventListener() {
         });
-        assertTrue(outbound(p1) instanceof BloomFilter);
         GetBlocksMessage getblocks = (GetBlocksMessage) outbound(p1);
         assertEquals(Sha256Hash.ZERO_HASH, getblocks.getStopHash());
         // We give back an inv with some blocks in it.
@@ -193,7 +188,6 @@ public class PeerGroupTest extends TestWithPeerGroup {
         inbound(p1, b1);
         // Now we successfully connect to another peer. There should be no messages sent.
         FakeChannel p2 = connectPeer(2);
-        assertTrue(outbound(p2) instanceof BloomFilter);
         Message message = (Message)outbound(p2);
         assertNull(message == null ? "" : message.toString(), message);
         peerGroup.stop();
@@ -221,14 +215,12 @@ public class PeerGroupTest extends TestWithPeerGroup {
         
         // Peer 2 advertises the tx but does not receive it yet.
         inbound(p2, inv);
-        assertTrue(outbound(p2) instanceof BloomFilter);
         assertTrue(outbound(p2) instanceof GetDataMessage);
         assertEquals(0, tx.getConfidence().numBroadcastPeers());
         assertTrue(peerGroup.getMemoryPool().maybeWasSeen(tx.getHash()));
         assertNull(event[0]);
         // Peer 1 advertises the tx, we don't do anything as it's already been requested.
         inbound(p1, inv);
-        assertTrue(outbound(p1) instanceof BloomFilter);
         assertNull(outbound(p1));
         // Peer 2 gets sent the tx and requests the dependency.
         inbound(p2, tx);
@@ -274,7 +266,6 @@ public class PeerGroupTest extends TestWithPeerGroup {
         // Send ourselves a bit of money.
         Block b1 = TestUtils.makeSolvedTestBlock(blockStore, address);
         inbound(p1, b1);
-        assertTrue(outbound(p1) instanceof BloomFilter);
         assertNull(outbound(p1));
 
         assertEquals(Utils.toNanoCoins(50, 0), wallet.getBalance());
@@ -325,12 +316,11 @@ public class PeerGroupTest extends TestWithPeerGroup {
         GetDataMessage getdata = new GetDataMessage(params);
         getdata.addItem(inv1.getItems().get(0));
         inbound(p1, getdata);
-        assertTrue(outbound(p1) instanceof BloomFilter);
+        assertTrue(outbound(p1) instanceof BloomFilter);   // Filter is recalculated.
         Transaction t4 = (Transaction) outbound(p1);
         assertEquals(t3, t4);
 
         FakeChannel p3 = connectPeer(3);
-        assertTrue(outbound(p3) instanceof BloomFilter);
         assertTrue(outbound(p3) instanceof InventoryMessage);
         control.verify();
     }
@@ -371,7 +361,6 @@ public class PeerGroupTest extends TestWithPeerGroup {
         VersionMessage versionMessage = new VersionMessage(params, 2);
         versionMessage.clientVersion = Pong.MIN_PROTOCOL_VERSION;
         FakeChannel p1 = connectPeer(1, versionMessage);
-        assertTrue(outbound(p1) instanceof BloomFilter);
         Ping ping = (Ping) outbound(p1);
         inbound(p1, new Pong(ping.getNonce()));
         assertTrue(peerGroup.getConnectedPeers().get(0).getLastPingTime() < Long.MAX_VALUE);

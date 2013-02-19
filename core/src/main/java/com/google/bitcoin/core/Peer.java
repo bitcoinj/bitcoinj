@@ -835,11 +835,12 @@ public class Peer {
                     // the duplicate check in blockChainDownload(). But the satoshi client may change in future so
                     // it's better to be safe here.
                     if (!pendingBlockDownloads.contains(item.hash)) {
-                        if (getPeerVersionMessage().clientVersion > 70000 && useFilteredBlocks) {
+                        if (getPeerVersionMessage().isBloomFilteringSupported() && useFilteredBlocks) {
                             getdata.addItem(new InventoryItem(InventoryItem.Type.FilteredBlock, item.hash));
                             pingAfterGetData = true;
-                        } else
+                        } else {
                             getdata.addItem(item);
+                        }
                         pendingBlockDownloads.add(item.hash);
                     }
                 }
@@ -1108,9 +1109,8 @@ public class Peer {
     }
 
     protected synchronized ListenableFuture<Long> ping(long nonce) throws IOException, ProtocolException {
-        int peerVersion = getPeerVersionMessage().clientVersion;
-        if (peerVersion < Pong.MIN_PROTOCOL_VERSION)
-            throw new ProtocolException("Peer version is too low for measurable pings: " + peerVersion);
+        if (!getPeerVersionMessage().isPingPongSupported())
+            throw new ProtocolException("Peer version is too low for measurable pings: " + getPeerVersionMessage());
         PendingPing pendingPing = new PendingPing(nonce);
         pendingPings.add(pendingPing);
         sendMessage(new Ping(pendingPing.nonce));
@@ -1194,7 +1194,8 @@ public class Peer {
 
     /**
      * If set to false, the peer won't try and fetch blocks and transactions it hears about. Normally, only one
-     * peer should download missing blocks. Defaults to true.
+     * peer should download missing blocks. Defaults to true. Changing this value from false to true may trigger
+     * a request to the remote peer for the contents of its memory pool, if Bloom filtering is active.
      */
     public void setDownloadData(boolean downloadData) {
         this.downloadData.set(downloadData);

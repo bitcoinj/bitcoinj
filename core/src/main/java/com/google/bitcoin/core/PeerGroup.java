@@ -580,12 +580,16 @@ public class PeerGroup extends AbstractIdleService {
             for (Wallet w : wallets)
                 filter.merge(w.getBloomFilter(lastBloomFilterElementCount, bloomFilterFPRate, bloomFilterTweak));
             bloomFilter = filter;
-            log.info("Sending all peers an updated Bloom Filter.");
-            for (Peer peer : peers)
-                try {
-                    // peers of a low version will simply ignore filterload messages
-                    peer.sendMessage(filter);
-                } catch (IOException e) { }
+            for (Peer peer : peers) {
+                if (peer.getPeerVersionMessage().isBloomFilteringSupported()) {
+                    try {
+                        log.info("{}: Sending peer an updated Bloom Filter.", peer);
+                        peer.sendMessage(filter);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+            }
         }
         // Do this last so that bloomFilter is already set when it gets called.
         setFastCatchupTimeSecs(earliestKeyTime);
@@ -709,13 +713,17 @@ public class PeerGroup extends AbstractIdleService {
 
     protected synchronized void handleNewPeer(final Peer peer) {
         // Runs on a netty worker thread for every peer that is newly connected. Peer is not locked at this point.
+        // Sets up the newly connected peer so it can do everything it needs to.
         log.info("{}: New peer", peer);
         // Give the peer a filter that can be used to probabilistically drop transactions that 
         // aren't relevant to our wallet. We may still receive some false positives, which is
-        // OK because it helps improve wallet privacy.
+        // OK because it helps improve wallet privacy. Old nodes will just ignore the message.
         try {
-            if (bloomFilter != null)
+            if (bloomFilter != null && peer.getPeerVersionMessage().isBloomFilteringSupported()) {
+                log.info("{}: Sending Bloom filter and querying memory pool", peer);
                 peer.sendMessage(bloomFilter);
+                peer.sendMessage(new MemoryPoolMessage());
+            }
         } catch (IOException e) { } // That was quick...already disconnected
         // Link the peer to the memory pool so broadcast transactions have their confidence levels updated.
         peer.setMemoryPool(memoryPool);
@@ -742,7 +750,7 @@ public class PeerGroup extends AbstractIdleService {
         // then sends us fake relevant transactions. We'll attempt to relay the bad transactions, our badness score
         // in the Satoshi client will increase and we'll get disconnected.
         //
-        // TODO: Find a way to balance the desire to propagate useful transactions against obscure DoS attacks.
+        // TODO: Find a way to balance the desire to propagate useful transactions against DoS attacks.
         announcePendingWalletTransactions(wallets, Collections.singletonList(peer));
         // And set up event listeners for clients. This will allow them to find out about new transactions and blocks.
         for (PeerEventListener listener : peerEventListeners) {
@@ -756,6 +764,7 @@ public class PeerGroup extends AbstractIdleService {
             }
         });
         final PeerGroup thisGroup = this;
+        // TODO: Move this into the Peer object itself.
         peer.addEventListener(new AbstractPeerEventListener() {
             int filteredBlocksReceivedFromPeer = 0;
             @Override

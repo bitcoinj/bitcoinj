@@ -36,6 +36,7 @@ public class TestWithPeerGroup extends TestWithNetworkConnections {
         super.setUp(blockStore);
 
         remoteVersionMessage = new VersionMessage(unitTestParams, 1);
+        remoteVersionMessage.clientVersion = FilteredBlock.MIN_PROTOCOL_VERSION;
         
         ClientBootstrap bootstrap = new ClientBootstrap(new ChannelFactory() {
             public void releaseExternalResources() {}
@@ -69,6 +70,10 @@ public class TestWithPeerGroup extends TestWithNetworkConnections {
         FakeChannel p = (FakeChannel) peerGroup.connectTo(remoteAddress).getChannel();
         assertTrue(p.nextEvent() instanceof ChannelStateEvent);
         inbound(p, versionMessage);
+        if (versionMessage.isBloomFilteringSupported()) {
+            assertTrue(outbound(p) instanceof BloomFilter);
+            assertTrue(outbound(p) instanceof MemoryPoolMessage);
+        }
         return p;
     }
 }
