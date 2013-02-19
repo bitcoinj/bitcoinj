@@ -35,7 +35,7 @@ import java.util.Arrays;
 public class BloomFilter extends Message {
     /** The BLOOM_UPDATE_* constants control when the bloom filter is auto-updated by the peer using
         it as a filter, either never, for all outputs or only for pay-2-pubkey outputs (default) */
-    public enum bloomUpdate {
+    public enum BloomUpdate {
         UPDATE_NONE, // 0
         UPDATE_ALL, // 1
         /** Only adds outpoints to the filter if the output is a pay-to-pubkey/pay-to-multisig script */
@@ -64,7 +64,7 @@ public class BloomFilter extends Message {
      * Constructs a filter with the given parameters which is updated on pay2pubkey outputs only.
      */
     public BloomFilter(int elements, double falsePositiveRate, long randomNonce) {
-        this(elements, falsePositiveRate, randomNonce, bloomUpdate.UPDATE_P2PUBKEY_ONLY);
+        this(elements, falsePositiveRate, randomNonce, BloomUpdate.UPDATE_P2PUBKEY_ONLY);
     }
     
     /**
@@ -98,14 +98,14 @@ public class BloomFilter extends Message {
      * 
      * <p>updateFlag is used to control filter behavior</p>
      */
-    public BloomFilter(int elements, double falsePositiveRate, long randomNonce, bloomUpdate updateFlag) {
+    public BloomFilter(int elements, double falsePositiveRate, long randomNonce, BloomUpdate updateFlag) {
         // The following formulas were stolen from Wikipedia's page on Bloom Filters (with the addition of min(..., MAX_...))
         //                        Size required for a given number of elements and false-positive rate
         int size = Math.min((int)(-1  / (Math.pow(Math.log(2), 2)) * elements * Math.log(falsePositiveRate)),
                             (int)MAX_FILTER_SIZE * 8) / 8;
         data = new byte[size <= 0 ? 1 : size];
         // Optimal number of hash functions for a given filter size and element count.
-        hashFuncs = Math.min((int)(data.length * 8 / elements * Math.log(2)), MAX_HASH_FUNCS);
+        hashFuncs = Math.min((int)(data.length * 8 / (double)elements * Math.log(2)), MAX_HASH_FUNCS);
         this.nTweak = randomNonce;
         this.nFlags = (byte)(0xff & updateFlag.ordinal());
     }

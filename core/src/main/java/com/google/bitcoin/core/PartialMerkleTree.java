@@ -92,7 +92,7 @@ public class PartialMerkleTree extends Message {
         return (transactionCount+(1 << height)-1) >> height;
     }
     
-    class ValuesUsed {
+    private static class ValuesUsed {
         public int bitsUsed = 0, hashesUsed = 0;
     }
     

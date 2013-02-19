@@ -96,7 +96,7 @@ public abstract class AbstractBlockChain {
     private final List<BlockChainListener> listeners;
 
     // Holds a block header and, optionally, a list of tx hashes or block's transactions
-    class OrphanBlock {
+    protected static class OrphanBlock {
         Block block;
         Set<Sha256Hash> filteredTxHashes;
         List<Transaction> filteredTxn;

@@ -290,7 +290,7 @@ public class WalletProtobufSerializerTest {
     /**
      * An extension of a wallet that stores a number.
      */
-    public class WalletExtension extends Wallet {
+    public static class WalletExtension extends Wallet {
         public byte[] random_bytes;
 
         public WalletExtension(NetworkParameters params) {
@@ -298,7 +298,7 @@ public class WalletProtobufSerializerTest {
         }
     }
 
-    public class WalletExtensionSerializerRandom extends WalletExtensionSerializer {
+    public static class WalletExtensionSerializerRandom extends WalletExtensionSerializer {
         @Override
         public Collection<Protos.Extension> getExtensionsToWrite(Wallet wallet) {
             List<Protos.Extension> lst = new LinkedList<Protos.Extension>();

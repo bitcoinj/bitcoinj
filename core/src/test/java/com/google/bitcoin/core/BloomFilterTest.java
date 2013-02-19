@@ -1,15 +1,16 @@
 package com.google.bitcoin.core;
 
-import static org.junit.Assert.*;
-
-import java.util.Arrays;
 import org.junit.Test;
 import org.spongycastle.util.encoders.Hex;
+
+import java.util.Arrays;
+
+import static org.junit.Assert.*;
 
 public class BloomFilterTest {
     @Test
     public void insertSerializeTest() {
-        BloomFilter filter = new BloomFilter(3, 0.01, 0, BloomFilter.bloomUpdate.UPDATE_ALL);
+        BloomFilter filter = new BloomFilter(3, 0.01, 0, BloomFilter.BloomUpdate.UPDATE_ALL);
         
         filter.insert(Hex.decode("99108ad8ed9bb6274d3980bab5a85c048f0950c8"));
         assertTrue (filter.contains(Hex.decode("99108ad8ed9bb6274d3980bab5a85c048f0950c8")));
