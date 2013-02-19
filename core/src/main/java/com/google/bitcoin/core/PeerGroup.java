@@ -570,7 +570,7 @@ public class PeerGroup extends AbstractIdleService {
             elements += w.getBloomFilterElementCount();
         }
 
-        if (chain == null || !chain.shouldVerifyTransactions()) {
+        if (chain == null || !chain.shouldVerifyTransactions() && elements > 0) {
             // We stair-step our element count so that we avoid creating a filter with different parameters
             // as much as possible as that results in a loss of privacy.
             // The constant 100 here is somewhat arbitrary, but makes sense for small to medium wallets -
@@ -587,7 +587,7 @@ public class PeerGroup extends AbstractIdleService {
                     peer.sendMessage(filter);
                 } catch (IOException e) { }
         }
-        //Do this last so that bloomFilter is already set when it gets called
+        // Do this last so that bloomFilter is already set when it gets called.
         setFastCatchupTimeSecs(earliestKeyTime);
     }
     
