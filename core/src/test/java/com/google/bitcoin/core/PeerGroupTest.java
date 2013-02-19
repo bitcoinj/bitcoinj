@@ -311,12 +311,13 @@ public class PeerGroupTest extends TestWithPeerGroup {
         peerGroup.addWallet(wallet);
         // Transaction announced to the first peer.
         InventoryMessage inv1 = (InventoryMessage) outbound(p1);
+        assertTrue(outbound(p1) instanceof BloomFilter);   // Filter is recalculated.
+        assertTrue(outbound(p1) instanceof MemoryPoolMessage);
         assertEquals(t3.getHash(), inv1.getItems().get(0).hash);
         // Peer asks for the transaction, and get it.
         GetDataMessage getdata = new GetDataMessage(params);
         getdata.addItem(inv1.getItems().get(0));
         inbound(p1, getdata);
-        assertTrue(outbound(p1) instanceof BloomFilter);   // Filter is recalculated.
         Transaction t4 = (Transaction) outbound(p1);
         assertEquals(t3, t4);
 

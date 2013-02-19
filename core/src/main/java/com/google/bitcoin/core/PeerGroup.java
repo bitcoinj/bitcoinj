@@ -580,16 +580,12 @@ public class PeerGroup extends AbstractIdleService {
             for (Wallet w : wallets)
                 filter.merge(w.getBloomFilter(lastBloomFilterElementCount, bloomFilterFPRate, bloomFilterTweak));
             bloomFilter = filter;
-            for (Peer peer : peers) {
-                if (peer.getPeerVersionMessage().isBloomFilteringSupported()) {
-                    try {
-                        log.info("{}: Sending peer an updated Bloom Filter.", peer);
-                        peer.sendMessage(filter);
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
+            for (Peer peer : peers)
+                try {
+                    peer.setBloomFilter(filter);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
                 }
-            }
         }
         // Do this last so that bloomFilter is already set when it gets called.
         setFastCatchupTimeSecs(earliestKeyTime);
@@ -719,11 +715,7 @@ public class PeerGroup extends AbstractIdleService {
         // aren't relevant to our wallet. We may still receive some false positives, which is
         // OK because it helps improve wallet privacy. Old nodes will just ignore the message.
         try {
-            if (bloomFilter != null && peer.getPeerVersionMessage().isBloomFilteringSupported()) {
-                log.info("{}: Sending Bloom filter and querying memory pool", peer);
-                peer.sendMessage(bloomFilter);
-                peer.sendMessage(new MemoryPoolMessage());
-            }
+            if (bloomFilter != null) peer.setBloomFilter(bloomFilter);
         } catch (IOException e) { } // That was quick...already disconnected
         // Link the peer to the memory pool so broadcast transactions have their confidence levels updated.
         peer.setMemoryPool(memoryPool);

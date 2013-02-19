@@ -1241,4 +1241,35 @@ public class Peer {
             return null;
         }
     }
+
+    /**
+     * <p>Sets a Bloom filter on this connection. This will cause the given {@link BloomFilter} object to be sent to the
+     * remote peer and if either a memory pool has been set using {@link Peer#setMemoryPool(MemoryPool)} or the
+     * downloadData property is true, a {@link MemoryPoolMessage} is sent as well to trigger downloading of any
+     * pending transactions that may be relevant.</p>
+     *
+     * <p>The Peer does not keep a reference to the BloomFilter. Also, it will not automatically request filters
+     * from any wallets added using {@link Peer#addWallet(Wallet)}. This is to allow callers to avoid redundantly
+     * recalculating the same filter repeatedly when using multiple peers together.</p>
+     *
+     * <p>Therefore, you should not use this method if your app uses a {@link PeerGroup}. It is called for you.</p>
+     *
+     * <p>If the remote peer doesn't support Bloom filtering, then this call is ignored.</p>
+     */
+    public void setBloomFilter(BloomFilter filter) throws IOException {
+        if (!getPeerVersionMessage().isBloomFilteringSupported())
+            return;
+        boolean shouldQueryMemPool;
+        synchronized (this) {
+            shouldQueryMemPool = memoryPool != null || downloadData.get();
+        }
+        log.info("{}: Sending Bloom filter{}", this, shouldQueryMemPool ? " and querying mempool" : "");
+        ChannelFuture future = sendMessage(filter);
+        if (shouldQueryMemPool)
+            future.addListener(new ChannelFutureListener() {
+                public void operationComplete(ChannelFuture future) throws Exception {
+                    sendMessage(new MemoryPoolMessage());
+                }
+            });
+    }
 }
