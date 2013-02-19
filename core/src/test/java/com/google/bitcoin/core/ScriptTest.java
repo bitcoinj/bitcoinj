@@ -16,20 +16,19 @@
 
 package com.google.bitcoin.core;
 
+import org.junit.Test;
+import org.spongycastle.util.encoders.Hex;
+
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.math.BigInteger;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 
-import org.junit.Test;
-import org.spongycastle.util.encoders.Hex;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 public class ScriptTest {
     // From tx 05e04c26c12fe408a3c1b71aa7996403f6acad1045252b1c62e055496f4d2cb1 on the testnet.
@@ -67,8 +66,9 @@ public class ScriptTest {
         assertTrue(s.isSentToRawPubKey());
     }
     
-    static HashMap<String, Integer> mapOpNames;
-    private Script parseScriptString(NetworkParameters params, String string) throws Exception {
+    private static HashMap<String, Integer> mapOpNames;
+
+    private synchronized static void initMapOpNames() {
         if (mapOpNames == null) {
             mapOpNames = new HashMap<String, Integer>();
             for (int op = Script.OP_NOP; op <= Script.OP_NOP10; op++) {
@@ -79,7 +79,10 @@ public class ScriptTest {
                 mapOpNames.put(name, op);
             }
         }
+    }
 
+    private Script parseScriptString(NetworkParameters params, String string) throws Exception {
+        initMapOpNames();
         String[] words = string.split("[ \\t\\n]");
         
         UnsafeByteArrayOutputStream out = new UnsafeByteArrayOutputStream();
@@ -100,7 +103,7 @@ public class ScriptTest {
             } else if (w.length() >= 2 && w.startsWith("'") && w.endsWith("'")) {
                 // Single-quoted string, pushed as data. NOTE: this is poor-man's
                 // parsing, spaces/tabs/newlines in single-quoted strings won't work.
-                Script.writeBytes(out, w.substring(1, w.length() - 1).getBytes());
+                Script.writeBytes(out, w.substring(1, w.length() - 1).getBytes(Charset.forName("UTF-8")));
             } else if (mapOpNames.containsKey(w)) {
                 // opcode, e.g. OP_ADD or OP_1:
                 out.write(mapOpNames.get(w));
@@ -117,7 +120,8 @@ public class ScriptTest {
     
     @Test
     public void dataDrivenValidScripts() throws Exception {
-        BufferedReader in = new BufferedReader(new InputStreamReader(getClass().getResourceAsStream("script_valid.json")));
+        BufferedReader in = new BufferedReader(new InputStreamReader(
+                getClass().getResourceAsStream("script_valid.json"), Charset.forName("UTF-8")));
         
         NetworkParameters params = NetworkParameters.testNet();
         
@@ -125,6 +129,7 @@ public class ScriptTest {
         String script = "";
         while (in.ready()) {
             String line = in.readLine();
+            if (line == null || line.equals("")) continue;
             script += line;
             if (line.equals("]") && script.equals("]") && !in.ready())
                 break; // ignore last ]
@@ -143,7 +148,8 @@ public class ScriptTest {
     
     @Test
     public void dataDrivenInvalidScripts() throws Exception {
-        BufferedReader in = new BufferedReader(new InputStreamReader(getClass().getResourceAsStream("script_invalid.json")));
+        BufferedReader in = new BufferedReader(new InputStreamReader(
+                getClass().getResourceAsStream("script_invalid.json"), Charset.forName("UTF-8")));
         
         NetworkParameters params = NetworkParameters.testNet();
         
@@ -151,6 +157,7 @@ public class ScriptTest {
         String script = "";
         while (in.ready()) {
             String line = in.readLine();
+            if (line == null || line.equals("")) continue;
             script += line;
             if (line.equals("]") && script.equals("]") && !in.ready())
                 break; // ignore last ]
@@ -162,14 +169,16 @@ public class ScriptTest {
 
                     scriptSig.correctlySpends(new Transaction(params), 0, scriptPubKey, true);
                     fail();
-                } catch (VerificationException e) {}
+                } catch (VerificationException e) {
+                    // Expected.
+                }
                 script = "";
             }
         }
         in.close();
     }
     
-    class JSONObject {
+    private static class JSONObject {
         String string;
         List<JSONObject> list;
         boolean booleanValue;
@@ -209,6 +218,8 @@ public class ScriptTest {
                 case '[':
                     if (!inString)
                         inArray++;
+                    break;
+                default:
                     break;
                 }
             }
@@ -259,7 +270,8 @@ public class ScriptTest {
     
     @Test
     public void dataDrivenValidTransactions() throws Exception {
-        BufferedReader in = new BufferedReader(new InputStreamReader(getClass().getResourceAsStream("tx_valid.json")));
+        BufferedReader in = new BufferedReader(new InputStreamReader(
+                getClass().getResourceAsStream("tx_valid.json"), Charset.forName("UTF-8")));
         
         NetworkParameters params = NetworkParameters.testNet();
         
@@ -269,8 +281,7 @@ public class ScriptTest {
         StringBuffer buffer = new StringBuffer(1000);
         while (in.ready()) {
             String line = in.readLine();
-            if (line.equals(""))
-                continue;
+            if (line == null || line.equals("")) continue;
             buffer.append(line);
             if (line.equals("]") && buffer.toString().equals("]") && !in.ready())
                 break;
@@ -283,10 +294,12 @@ public class ScriptTest {
                     String hash = input.list.get(0).string;
                     int index = input.list.get(1).integer;
                     String script = input.list.get(2).string;
-                    scriptPubKeys.put(new TransactionOutPoint(params, index, new Sha256Hash(Hex.decode(hash.getBytes()))), parseScriptString(params, script));
+                    Sha256Hash sha256Hash = new Sha256Hash(Hex.decode(hash.getBytes(Charset.forName("UTF-8"))));
+                    scriptPubKeys.put(new TransactionOutPoint(params, index, sha256Hash), parseScriptString(params, script));
                 }
-                
-                Transaction transaction = new Transaction(params, Hex.decode(tx.get(0).list.get(1).string.getBytes()));
+
+                byte[] bytes = tx.get(0).list.get(1).string.getBytes(Charset.forName("UTF-8"));
+                Transaction transaction = new Transaction(params, Hex.decode(bytes));
                 boolean enforceP2SH = tx.get(0).list.get(2).booleanValue;
                 assertTrue(tx.get(0).list.get(2).isBoolean());
                 
@@ -307,17 +320,18 @@ public class ScriptTest {
 
     @Test
     public void dataDrivenInvalidTransactions() throws Exception {
-        BufferedReader in = new BufferedReader(new InputStreamReader(getClass().getResourceAsStream("tx_invalid.json")));
+        BufferedReader in = new BufferedReader(new InputStreamReader(
+                getClass().getResourceAsStream("tx_invalid.json"), Charset.forName("UTF-8")));
         
         NetworkParameters params = NetworkParameters.testNet();
         
-        // Poor man's (aka. really, really poor) JSON parser (because pulling in a lib for this is probably not overkill)
+        // Poor man's (aka. really, really poor) JSON parser (because pulling in a lib for this is probably overkill)
         List<JSONObject> tx = new ArrayList<JSONObject>(1);
         in.read(); // remove first [
         StringBuffer buffer = new StringBuffer(1000);
         while (in.ready()) {
             String line = in.readLine();
-            if (line.equals(""))
+            if (line == null || line.equals(""))
                 continue;
             buffer.append(line);
             if (line.equals("]") && buffer.toString().equals("]") && !in.ready())
@@ -331,10 +345,12 @@ public class ScriptTest {
                     String hash = input.list.get(0).string;
                     int index = input.list.get(1).integer;
                     String script = input.list.get(2).string;
-                    scriptPubKeys.put(new TransactionOutPoint(params, index, new Sha256Hash(Hex.decode(hash.getBytes()))), parseScriptString(params, script));
+                    Sha256Hash sha256Hash = new Sha256Hash(Hex.decode(hash.getBytes(Charset.forName("UTF-8"))));
+                    scriptPubKeys.put(new TransactionOutPoint(params, index, sha256Hash), parseScriptString(params, script));
                 }
-                
-                Transaction transaction = new Transaction(params, Hex.decode(tx.get(0).list.get(1).string.getBytes()));
+
+                byte[] bytes = tx.get(0).list.get(1).string.getBytes(Charset.forName("UTF-8"));
+                Transaction transaction = new Transaction(params, Hex.decode(bytes));
                 boolean enforceP2SH = tx.get(0).list.get(2).booleanValue;
                 assertTrue(tx.get(0).list.get(2).isBoolean());
                 

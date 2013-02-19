@@ -240,10 +240,12 @@ public class Peer {
             }
 
             if (m == null) return;
-            
-            if (currentFilteredBlock != null && !(m instanceof Transaction)) {
-                processFilteredBlock(currentFilteredBlock);
-                currentFilteredBlock = null;
+
+            synchronized (Peer.this) {
+                if (currentFilteredBlock != null && !(m instanceof Transaction)) {
+                    processFilteredBlock(currentFilteredBlock);
+                    currentFilteredBlock = null;
+                }
             }
 
             if (m instanceof NotFoundMessage) {
@@ -259,7 +261,9 @@ public class Peer {
                 // messages stream in. We'll call processFilteredBlock when a non-tx message arrives (eg, another
                 // FilteredBlock) or when a tx that isn't needed by that block is found. A ping message is sent after
                 // a getblocks, to force the non-tx message path.
-                currentFilteredBlock = (FilteredBlock)m;
+                synchronized (Peer.this) {
+                    currentFilteredBlock = (FilteredBlock)m;
+                }
             } else if (m instanceof Transaction) {
                 processTransaction((Transaction) m);
             } else if (m instanceof GetDataMessage) {
