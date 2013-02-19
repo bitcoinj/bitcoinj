@@ -302,7 +302,7 @@ public class BitcoinSerializer {
     }
 
 
-    public class BitcoinPacketHeader {
+    public static class BitcoinPacketHeader {
         public final byte[] header;
         public final String command;
         public final int size;

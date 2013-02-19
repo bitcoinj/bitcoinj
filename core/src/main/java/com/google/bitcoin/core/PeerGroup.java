@@ -139,7 +139,7 @@ public class PeerGroup extends AbstractIdleService {
     // The false positive rate for bloomFilter
     private double bloomFilterFPRate = DEFAULT_BLOOM_FILTER_FP_RATE;
     // We use a constant tweak to avoid giving up privacy when we regenerate our filter with new keys
-    private final long bloomFilterTweak = new Random().nextLong();
+    private final long bloomFilterTweak = (long) (Math.random() * Long.MAX_VALUE);
     private int lastBloomFilterElementCount;
     
     /**
