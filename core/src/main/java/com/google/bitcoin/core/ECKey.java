@@ -326,6 +326,9 @@ public class ECKey implements Serializable {
             return signer.verifySignature(data, r.getPositiveValue(), s.getPositiveValue());
         } catch (IOException e) {
             throw new RuntimeException(e);
+        } catch (NullPointerException e) {
+            // Bug in BouncyCastle can cause this for invalid signatures.
+            return false;
         }
     }
 
