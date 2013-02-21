@@ -25,6 +25,8 @@ import java.util.*;
  * of the block header and a {@link PartialMerkleTree} which contains the transactions which matched the filter.</p>
  */
 public class FilteredBlock extends Message {
+    /** The protocol version at which Bloom filtering started to be supported. */
+    public static final int MIN_PROTOCOL_VERSION = 70000;
     private Block header;
 
     // The PartialMerkleTree of transactions

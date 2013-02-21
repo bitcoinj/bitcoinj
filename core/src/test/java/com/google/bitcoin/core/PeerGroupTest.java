@@ -385,7 +385,9 @@ public class PeerGroupTest extends TestWithPeerGroup {
     public void downloadPeerSelection() throws Exception {
         peerGroup.startAndWait();
         VersionMessage versionMessage2 = new VersionMessage(params, 2);
+        versionMessage2.clientVersion = 60000;
         VersionMessage versionMessage3 = new VersionMessage(params, 3);
+        versionMessage3.clientVersion = 60000;
         assertNull(peerGroup.getDownloadPeer());
         Peer a = PeerGroup.peerFromChannel(connectPeer(1, versionMessage2));
         assertEquals(2, peerGroup.getMostCommonChainHeight());
