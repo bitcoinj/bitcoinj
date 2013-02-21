@@ -366,7 +366,7 @@ public class MemoryFullPrunedBlockStore implements FullPrunedBlockStore {
         return storedBlock == null ? null : storedBlock.block;
     }
     
-    public StoredBlock getOnceUndoableStoredBlock(Sha256Hash hash) throws BlockStoreException {
+    public synchronized StoredBlock getOnceUndoableStoredBlock(Sha256Hash hash) throws BlockStoreException {
         Preconditions.checkNotNull(blockMap, "MemoryFullPrunedBlockStore is closed");
         StoredBlockAndWasUndoableFlag storedBlock = blockMap.get(hash);
         return (storedBlock != null && storedBlock.wasUndoable) ? storedBlock.block : null;
@@ -377,7 +377,7 @@ public class MemoryFullPrunedBlockStore implements FullPrunedBlockStore {
         return fullBlockMap.get(hash);
     }
 
-    public StoredBlock getChainHead() throws BlockStoreException {
+    public synchronized StoredBlock getChainHead() throws BlockStoreException {
         Preconditions.checkNotNull(blockMap, "MemoryFullPrunedBlockStore is closed");
         return chainHead;
     }
@@ -387,12 +387,12 @@ public class MemoryFullPrunedBlockStore implements FullPrunedBlockStore {
         this.chainHead = chainHead;
     }
     
-    public StoredBlock getVerifiedChainHead() throws BlockStoreException {
+    public synchronized StoredBlock getVerifiedChainHead() throws BlockStoreException {
         Preconditions.checkNotNull(blockMap, "MemoryFullPrunedBlockStore is closed");
         return verifiedChainHead;
     }
 
-    public void setVerifiedChainHead(StoredBlock chainHead) throws BlockStoreException {
+    public synchronized void setVerifiedChainHead(StoredBlock chainHead) throws BlockStoreException {
         Preconditions.checkNotNull(blockMap, "MemoryFullPrunedBlockStore is closed");
         this.verifiedChainHead = chainHead;
         if (this.chainHead.getHeight() < chainHead.getHeight())
@@ -442,7 +442,7 @@ public class MemoryFullPrunedBlockStore implements FullPrunedBlockStore {
         transactionOutputMap.abortDatabaseBatchWrite();
     }
 
-    public boolean hasUnspentOutputs(Sha256Hash hash, int numOutputs) throws BlockStoreException {
+    public synchronized boolean hasUnspentOutputs(Sha256Hash hash, int numOutputs) throws BlockStoreException {
         for (int i = 0; i < numOutputs; i++)
             if (getTransactionOutput(hash, i) != null)
                 return true;

@@ -131,15 +131,18 @@ public class MemoryPool {
             // We've seen at least one peer announce with an inv.
             Preconditions.checkNotNull(entry.addresses);
             return entry.addresses.size();
-        } else if (entry.tx.get() == null) {
-            // We previously downloaded this transaction, but nothing cared about it so the garbage collector threw
-            // it away. We also deleted the set that tracked which peers had seen it. Treat this case as a zero and
-            // just delete it from the map.
-            memoryPool.remove(txHash);
-            return 0;
         } else {
-            Preconditions.checkState(entry.addresses == null);
-            return entry.tx.get().getConfidence().numBroadcastPeers();
+            final Transaction tx = entry.tx.get();
+            if (tx == null) {
+                // We previously downloaded this transaction, but nothing cared about it so the garbage collector threw
+                // it away. We also deleted the set that tracked which peers had seen it. Treat this case as a zero and
+                // just delete it from the map.
+                memoryPool.remove(txHash);
+                return 0;
+            } else {
+                Preconditions.checkState(entry.addresses == null);
+                return tx.getConfidence().numBroadcastPeers();
+            }
         }
     }
 

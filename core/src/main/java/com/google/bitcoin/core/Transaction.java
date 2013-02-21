@@ -953,7 +953,7 @@ public class Transaction extends ChildMessage implements Serializable {
         maybeParse();
         return outputs.get(index);
     }
-    
+
     public synchronized TransactionConfidence getConfidence() {
         if (confidence == null) {
             confidence = new TransactionConfidence(this);
