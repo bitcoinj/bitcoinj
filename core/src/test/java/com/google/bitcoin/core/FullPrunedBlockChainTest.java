@@ -122,10 +122,13 @@ public class FullPrunedBlockChainTest {
         
         chain.add(rollingBlock);
         WeakReference<StoredUndoableBlock> undoBlock = new WeakReference<StoredUndoableBlock>(store.getUndoBlock(rollingBlock.getHash()));
-        assertTrue(undoBlock.get() != null);
-        assertTrue(undoBlock.get().getTransactions() == null);
-        WeakReference<TransactionOutputChanges> changes = new WeakReference<TransactionOutputChanges>(undoBlock.get().getTxOutChanges());
+
+        StoredUndoableBlock storedUndoableBlock = undoBlock.get();
+        assertTrue(storedUndoableBlock != null);
+        assertTrue(storedUndoableBlock.getTransactions() == null);
+        WeakReference<TransactionOutputChanges> changes = new WeakReference<TransactionOutputChanges>(storedUndoableBlock.getTxOutChanges());
         assertTrue(changes.get() != null);
+        storedUndoableBlock = null;   // Blank the reference so it can be GCd.
         
         // Create a chain longer than UNDOABLE_BLOCKS_STORED
         for (int i = 0; i < UNDOABLE_BLOCKS_STORED; i++) {
