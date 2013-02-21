@@ -212,7 +212,7 @@ public class Peer {
         public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) throws Exception {
             String s;
             PeerAddress addr = address.get();
-            s = address == null ? "?" : address.toString();
+            s = addr == null ? "?" : addr.toString();
             if (e.getCause() instanceof ConnectException || e.getCause() instanceof IOException) {
                 // Short message for network errors
                 log.info(s + " - " + e.getCause().getMessage());
