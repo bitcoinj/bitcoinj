@@ -16,6 +16,7 @@
 
 package com.google.bitcoin.core;
 
+import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 
 import java.io.IOException;
@@ -242,5 +243,10 @@ public class BloomFilter extends Message {
                 Arrays.equals(((BloomFilter)other).data, this.data))
             return true;
         return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(hashFuncs, nTweak, Arrays.hashCode(data));
     }
 }

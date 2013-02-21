@@ -107,7 +107,7 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
         LinkedList<StoredTransactionOutput> txOutsSpent = new LinkedList<StoredTransactionOutput>();
         LinkedList<StoredTransactionOutput> txOutsCreated = new LinkedList<StoredTransactionOutput>();  
         long sigOps = 0;
-        final boolean enforceBIP16 = block.getTimeSeconds() >= params.BIP16_ENFORCE_TIME;
+        final boolean enforceBIP16 = block.getTimeSeconds() >= NetworkParameters.BIP16_ENFORCE_TIME;
         
         if (scriptVerificationExecutor.isShutdown())
             scriptVerificationExecutor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
@@ -261,7 +261,7 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
                 LinkedList<StoredTransactionOutput> txOutsSpent = new LinkedList<StoredTransactionOutput>();
                 LinkedList<StoredTransactionOutput> txOutsCreated = new LinkedList<StoredTransactionOutput>();
                 long sigOps = 0;
-                final boolean enforcePayToScriptHash = newBlock.getHeader().getTimeSeconds() >= params.BIP16_ENFORCE_TIME;
+                final boolean enforcePayToScriptHash = newBlock.getHeader().getTimeSeconds() >= NetworkParameters.BIP16_ENFORCE_TIME;
                 if (!params.isCheckpoint(newBlock.getHeight())) {
                     for(Transaction tx : transactions) {
                         Sha256Hash hash = tx.getHash();
