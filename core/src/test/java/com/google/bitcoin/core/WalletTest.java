@@ -108,6 +108,7 @@ public class WalletTest {
         assertEquals(1, wallet.getPoolSize(WalletTransaction.Pool.UNSPENT));
         assertEquals(1, wallet.getPoolSize(WalletTransaction.Pool.ALL));
         assertEquals(TransactionConfidence.Source.SELF, t2.getConfidence().getSource());
+        assertEquals(wallet.getChangeAddress(), t2.getOutput(1).getScriptPubKey().getToAddress());
 
         // Do some basic sanity checks.
         assertEquals(1, t2.getInputs().size());
@@ -138,9 +139,13 @@ public class WalletTest {
         assertEquals(t2, txns.getFirst());
         assertEquals(1, txns.size());
 
-        // Now check that we can spend the unconfirmed change.
+        // Now check that we can spend the unconfirmed change, with a new change address of our own selection.
         assertEquals(v3, wallet.getBalance());
-        Transaction t3 = wallet.createSend(new ECKey().toAddress(params), v3);
+        req = Wallet.SendRequest.to(new ECKey().toAddress(params), toNanoCoins(0, 48));
+        Address a = req.changeAddress = new ECKey().toAddress(params);
+        wallet.completeTx(req);
+        Transaction t3 = req.tx;
+        assertEquals(a, t3.getOutput(1).getScriptPubKey().getToAddress());
         assertNotNull(t3);
         wallet.commitTx(t3);
         assertTrue(wallet.isConsistent());
