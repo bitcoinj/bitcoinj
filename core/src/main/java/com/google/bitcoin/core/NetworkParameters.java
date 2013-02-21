@@ -16,6 +16,7 @@
 
 package com.google.bitcoin.core;
 
+import com.google.common.base.Objects;
 import org.spongycastle.util.encoders.Hex;
 
 import java.io.ByteArrayOutputStream;
@@ -166,7 +167,7 @@ public class NetworkParameters implements Serializable {
      * network rules in a soft-forking manner, that is, blocks that don't follow the rules are accepted but not
      * mined upon and thus will be quickly re-orged out as long as the majority are enforcing the rule.
      */
-    public final int BIP16_ENFORCE_TIME = 1333238400;
+    public static final int BIP16_ENFORCE_TIME = 1333238400;
     
     /**
      * The maximum money to be generated
@@ -306,10 +307,16 @@ public class NetworkParameters implements Serializable {
         return id;
     }
 
+    @Override
     public boolean equals(Object other) {
         if (!(other instanceof NetworkParameters)) return false;
         NetworkParameters o = (NetworkParameters) other;
         return o.getId().equals(getId());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(getId());
     }
 
     /** Returns the network parameters for the given string ID or NULL if not recognized. */
