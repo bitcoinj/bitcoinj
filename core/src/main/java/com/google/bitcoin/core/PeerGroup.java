@@ -1224,7 +1224,7 @@ public class PeerGroup extends AbstractIdleService {
     protected Peer selectDownloadPeer(List<Peer> origPeers) {
         // Characteristics to select for in order of importance:
         //  - Chain height is reasonable (majority of nodes)
-        //  - Highest protocol version (more likely to be maintained, have the features we want)
+        //  - High enough protocol version for the features we want (but we'll settle for less)
         //  - Ping time.
         List<Peer> peers;
         synchronized (origPeers) {
@@ -1238,15 +1238,19 @@ public class PeerGroup extends AbstractIdleService {
         for (Peer peer : peers) {
             if (peer.getBestHeight() == mostCommonChainHeight) candidates.add(peer);
         }
-        // Of the candidates, find the highest protocol version. Snapshot their ping times (so they don't change
-        // whilst sorting) and then sort to find the lowest.
-        int highestVersion = 0;
+        // Of the candidates, find the peers that meet the minimum protocol version we want to target. We could select
+        // the highest version we've seen on the assumption that newer versions are always better but we don't want to
+        // zap peers if they upgrade early. If we can't find any peers that have our preferred protocol version or
+        // better then we'll settle for the highest we found instead.
+        int highestVersion = 0, preferredVersion = 0;
+        final int PREFERRED_VERSION = FilteredBlock.MIN_PROTOCOL_VERSION;
         for (Peer peer : candidates) {
             highestVersion = Math.max(peer.getPeerVersionMessage().clientVersion, highestVersion);
+            preferredVersion = Math.min(highestVersion, PREFERRED_VERSION);
         }
         List<PeerAndPing> candidates2 = new ArrayList<PeerAndPing>();
         for (Peer peer : candidates) {
-            if (peer.getPeerVersionMessage().clientVersion == highestVersion) {
+            if (peer.getPeerVersionMessage().clientVersion >= preferredVersion) {
                 PeerAndPing pap = new PeerAndPing();
                 pap.peer = peer;
                 pap.pingTime = peer.getPingTime();
