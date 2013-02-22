@@ -485,6 +485,20 @@ public class Wallet implements Serializable, BlockChainListener {
                 long delta = getDelay(TimeUnit.MILLISECONDS) - delayed.getDelay(TimeUnit.MILLISECONDS);
                 return (delta > 0 ? 1 : (delta < 0 ? -1 : 0));
             }
+
+            @Override
+            public boolean equals(Object obj) {
+                if (!(obj instanceof WalletSaveRequest)) return false;
+                WalletSaveRequest w = (WalletSaveRequest) obj;
+                return w.startTimeMs == startTimeMs &&
+                       w.requestedDelayMs == requestedDelayMs &&
+                       w.wallet == wallet;
+            }
+
+            @Override
+            public int hashCode() {
+                return Objects.hash(wallet, startTimeMs, requestedDelayMs);
+            }
         }
     }
 
@@ -1015,11 +1029,11 @@ public class Wallet implements Serializable, BlockChainListener {
             // coins from the wallet.
             if (diff > 0) {
                 invokeOnCoinsReceived(tx, prevBalance, newBalance);
-            } else if (diff == 0) {
-                // Hack. Invoke onCoinsSent in order to let the client save the wallet. This needs to go away.
+            } else if (diff < 0) {
                 invokeOnCoinsSent(tx, prevBalance, newBalance);
             } else {
-                invokeOnCoinsSent(tx, prevBalance, newBalance);
+                // We have a transaction that didn't change our balance. Probably we sent coins between our own keys.
+                invokeOnWalletChanged();
             }
         }
 
