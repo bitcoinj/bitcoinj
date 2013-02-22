@@ -186,10 +186,19 @@ public class BloomFilter extends Message {
         int k1 = 0;
         switch(object.length & 3)
         {
-        case 3: k1 ^= (object[numBlocks + 2] & 0xff) << 16;
-        case 2: k1 ^= (object[numBlocks + 1] & 0xff) << 8;
-        case 1: k1 ^= (object[numBlocks] & 0xff);
+            case 3:
+                k1 ^= (object[numBlocks + 2] & 0xff) << 16;
+                // Fall through.
+            case 2:
+                k1 ^= (object[numBlocks + 1] & 0xff) << 8;
+                // Fall through.
+            case 1:
+                k1 ^= (object[numBlocks] & 0xff);
                 k1 *= c1; k1 = ROTL32(k1,15); k1 *= c2; h1 ^= k1;
+                // Fall through.
+            default:
+                // Do nothing.
+                break;
         };
 
         // finalization

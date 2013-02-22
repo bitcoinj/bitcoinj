@@ -18,7 +18,6 @@ package com.google.bitcoin.store;
 
 import com.google.bitcoin.core.*;
 import com.google.common.collect.Lists;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -291,7 +290,7 @@ public class H2FullPrunedBlockStore implements FullPrunedBlockStore {
             count++;
         }
         rs.close();
-        System.out.printf("Setings size: %d, count: %d, average size: %f\n", size, count, (double)size/count);
+        System.out.printf("Settings size: %d, count: %d, average size: %f%n", size, count, (double)size/count);
         
         totalSize += size; size = 0; count = 0;
         rs = s.executeQuery("SELECT chainWork, header FROM headers");
@@ -303,7 +302,7 @@ public class H2FullPrunedBlockStore implements FullPrunedBlockStore {
             count++;
         }
         rs.close();
-        System.out.printf("Headers size: %d, count: %d, average size: %f\n", size, count, (double)size/count);
+        System.out.printf("Headers size: %d, count: %d, average size: %f%n", size, count, (double)size/count);
         
         totalSize += size; size = 0; count = 0;
         rs = s.executeQuery("SELECT txOutChanges, transactions FROM undoableBlocks");
@@ -320,7 +319,7 @@ public class H2FullPrunedBlockStore implements FullPrunedBlockStore {
             count++;
         }
         rs.close();
-        System.out.printf("Undoable Blocks size: %d, count: %d, average size: %f\n", size, count, (double)size/count);
+        System.out.printf("Undoable Blocks size: %d, count: %d, average size: %f%n", size, count, (double)size/count);
         
         totalSize += size; size = 0; count = 0;
         rs = s.executeQuery("SELECT id FROM openOutputsIndex");
@@ -331,7 +330,7 @@ public class H2FullPrunedBlockStore implements FullPrunedBlockStore {
             count++;
         }
         rs.close();
-        System.out.printf("Open Outputs Index size: %d, count: %d, size in id indexes: %d\n", size, count, count * 8);
+        System.out.printf("Open Outputs Index size: %d, count: %d, size in id indexes: %d%n", size, count, count * 8);
         
         totalSize += size; size = 0; count = 0;
         long scriptSize = 0;
@@ -345,7 +344,7 @@ public class H2FullPrunedBlockStore implements FullPrunedBlockStore {
             count++;
         }
         rs.close();
-        System.out.printf("Open Outputs size: %d, count: %d, average size: %f, average script size: %f (%d in id indexes)\n",
+        System.out.printf("Open Outputs size: %d, count: %d, average size: %f, average script size: %f (%d in id indexes)%n",
                 size, count, (double)size/count, (double)scriptSize/count, count * 8);
         
         totalSize += size;

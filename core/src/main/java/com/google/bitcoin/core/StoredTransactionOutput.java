@@ -39,7 +39,7 @@ public class StoredTransactionOutput implements Serializable {
     /** Which output of that transaction we are talking about. */
     private long index;
 
-    /** arbitrary value lower than -{@link NetworkParameters.spendableCoinbaseDepth}
+    /** arbitrary value lower than -{@link NetworkParameters#spendableCoinbaseDepth}
      * (not too low to get overflows when we do blockHeight - NONCOINBASE_HEIGHT, though) */
     private static final int NONCOINBASE_HEIGHT = -200;
     /** The height of the creating block (for coinbases, NONCOINBASE_HEIGHT otherwise) */
@@ -71,7 +71,8 @@ public class StoredTransactionOutput implements Serializable {
 
     public StoredTransactionOutput(InputStream in) throws IOException {
         byte[] valueBytes = new byte[8];
-        in.read(valueBytes, 0, 8);
+        if (in.read(valueBytes, 0, 8) != 8)
+            throw new EOFException();
         value = BigInteger.valueOf(Utils.readInt64(valueBytes, 0));
         
         int scriptBytesLength = ((in.read() & 0xFF) << 0) |
@@ -154,18 +155,18 @@ public class StoredTransactionOutput implements Serializable {
     public void serializeToStream(OutputStream bos) throws IOException {
         Utils.uint64ToByteStreamLE(value, bos);
         
-        bos.write((int) (0xFF & (scriptBytes.length >> 0)));
-        bos.write((int) (0xFF & (scriptBytes.length >> 8)));
-        bos.write((int) (0xFF & (scriptBytes.length >> 16)));
-        bos.write((int) (0xFF & (scriptBytes.length >> 24)));
+        bos.write(0xFF & scriptBytes.length >> 0);
+        bos.write(0xFF & scriptBytes.length >> 8);
+        bos.write(0xFF & (scriptBytes.length >> 16));
+        bos.write(0xFF & (scriptBytes.length >> 24));
         bos.write(scriptBytes);
         
         bos.write(hash.getBytes());
         Utils.uint32ToByteStreamLE(index, bos);
         
-        bos.write((int) (0xFF & (height >> 0)));
-        bos.write((int) (0xFF & (height >> 8)));
-        bos.write((int) (0xFF & (height >> 16)));
-        bos.write((int) (0xFF & (height >> 24)));
+        bos.write(0xFF & (height >> 0));
+        bos.write(0xFF & (height >> 8));
+        bos.write(0xFF & (height >> 16));
+        bos.write(0xFF & (height >> 24));
     }
 }

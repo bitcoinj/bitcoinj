@@ -57,19 +57,19 @@ public class TransactionOutputChanges {
 
     public void serializeToStream(OutputStream bos) throws IOException {
         int numOutsCreated = txOutsCreated.size();
-        bos.write((int) (0xFF & (numOutsCreated >> 0)));
-        bos.write((int) (0xFF & (numOutsCreated >> 8)));
-        bos.write((int) (0xFF & (numOutsCreated >> 16)));
-        bos.write((int) (0xFF & (numOutsCreated >> 24)));
+        bos.write(0xFF & (numOutsCreated >> 0));
+        bos.write(0xFF & (numOutsCreated >> 8));
+        bos.write(0xFF & (numOutsCreated >> 16));
+        bos.write(0xFF & (numOutsCreated >> 24));
         for (StoredTransactionOutput output : txOutsCreated) {
             output.serializeToStream(bos);
         }
         
         int numOutsSpent = txOutsSpent.size();
-        bos.write((int) (0xFF & (numOutsSpent >> 0)));
-        bos.write((int) (0xFF & (numOutsSpent >> 8)));
-        bos.write((int) (0xFF & (numOutsSpent >> 16)));
-        bos.write((int) (0xFF & (numOutsSpent >> 24)));
+        bos.write(0xFF & (numOutsSpent >> 0));
+        bos.write(0xFF & (numOutsSpent >> 8));
+        bos.write(0xFF & (numOutsSpent >> 16));
+        bos.write(0xFF & (numOutsSpent >> 24));
         for (StoredTransactionOutput output : txOutsSpent) {
             output.serializeToStream(bos);
         }

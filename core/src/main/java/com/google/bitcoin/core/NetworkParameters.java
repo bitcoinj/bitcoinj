@@ -344,7 +344,7 @@ public class NetworkParameters implements Serializable {
      * Returns true if the block height is either not a checkpoint, or is a checkpoint and the hash matches.
      */
     public boolean passesCheckpoint(int height, Sha256Hash hash) {
-        Sha256Hash checkpointHash = checkpoints.get(new Integer(height));
+        Sha256Hash checkpointHash = checkpoints.get(Integer.valueOf(height));
         if (checkpointHash != null)
             return checkpointHash.equals(hash);
         return true;
@@ -356,7 +356,7 @@ public class NetworkParameters implements Serializable {
      * @return
      */
     public boolean isCheckpoint(int height) {
-        Sha256Hash checkpointHash = checkpoints.get(new Integer(height));
+        Sha256Hash checkpointHash = checkpoints.get(Integer.valueOf(height));
         if (checkpointHash != null)
             return true;
         return false;
