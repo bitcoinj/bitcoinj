@@ -726,6 +726,7 @@ public class Script {
                         sigOps += getOpNValue(lastOpCode);
                     else
                         sigOps += 20;
+                    break;
                 default:
                     break;
                 }
@@ -1181,6 +1182,8 @@ public class Script {
                         else
                             numericOPnum = BigInteger.ONE;
                         break;
+                    default:
+                        throw new AssertionError("Unreachable");
                     }
                     
                     stack.add(Utils.reverseBytes(Utils.encodeMPI(numericOPnum, false)));
