@@ -672,7 +672,13 @@ public class Peer {
                 // chain twice (or more!) on the same connection! The block chain would filter out the duplicates but
                 // only at a huge speed penalty. By finding the orphan root we ensure every getblocks looks the same
                 // no matter how many blocks are solved, and therefore that the (2) duplicate filtering can work.
-                blockChainDownload(blockChain.getOrphanRoot(m.getHash()).getHash());
+                //
+                // We only do this if we are not currently downloading headers. If we are then we don't want to kick
+                // off a request for lots more headers in parallel.
+                if (downloadBlockBodies)
+                    blockChainDownload(blockChain.getOrphanRoot(m.getHash()).getHash());
+                else
+                    log.info("Did not start chain download on solved block due to in-flight header download.");
             }
         } catch (VerificationException e) {
             // We don't want verification failures to kill the thread.
@@ -827,8 +833,9 @@ public class Peer {
             // disk IO to figure out what we've got. Normally peers will not send us inv for things we already have
             // so we just re-request it here, and if we get duplicates the block chain / wallet will filter them out.
             for (InventoryItem item : blocks) {
-                if (blockChain.isOrphan(item.hash)) {
-                    // If an orphan was re-advertised, ask for more blocks.
+                if (blockChain.isOrphan(item.hash) && downloadBlockBodies) {
+                    // If an orphan was re-advertised, ask for more blocks unless we are not currently downloading
+                    // full block data because we have a getheaders outstanding.
                     blockChainDownload(blockChain.getOrphanRoot(item.hash).getHash());
                 } else {
                     // Don't re-request blocks we already requested. Normally this should not happen. However there is
@@ -958,8 +965,6 @@ public class Peer {
     private Sha256Hash lastGetBlocksBegin, lastGetBlocksEnd;
 
     private synchronized void blockChainDownload(Sha256Hash toHash) throws IOException {
-        // This may run in ANY thread.
-
         // The block chain download process is a bit complicated. Basically, we start with one or more blocks in a
         // chain that we have from a previous session. We want to catch up to the head of the chain BUT we don't know
         // where that chain is up to or even if the top block we have is even still in the chain - we
