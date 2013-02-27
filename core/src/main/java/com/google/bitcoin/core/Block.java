@@ -47,7 +47,7 @@ public class Block extends Message {
     private static final Logger log = LoggerFactory.getLogger(Block.class);
     private static final long serialVersionUID = 2738848929966035281L;
 
-    /** How many bytes are required to represent a block header. */
+    /** How many bytes are required to represent a block header WITHOUT the trailing 00 length byte. */
     public static final int HEADER_SIZE = 80;
 
     static final long ALLOWED_TIME_DRIFT = 2 * 60 * 60; // Same value as official client.
@@ -380,7 +380,6 @@ public class Block extends Message {
      * @throws IOException
      */
     public byte[] bitcoinSerialize() {
-
         // we have completely cached byte array.
         if (headerBytesValid && transactionBytesValid) {
             Preconditions.checkNotNull(bytes, "Bytes should never be null if headerBytesValid && transactionBytesValid");
