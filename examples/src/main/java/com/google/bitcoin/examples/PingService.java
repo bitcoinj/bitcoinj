@@ -125,15 +125,26 @@ public class PingService {
         });
 
         peerGroup.startAndWait();
+        // Now make sure that we shut down cleanly!
+        Runtime.getRuntime().addShutdownHook(new Thread() {
+            @Override public void run() {
+                try {
+                    System.out.print("Shutting down ... ");
+                    peerGroup.stopAndWait();
+                    wallet.saveToFile(walletFile);
+                    blockStore.close();
+                    System.out.print("done ");
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        });
         peerGroup.downloadBlockChain();
         System.out.println("Send coins to: " + key.toAddress(params).toString());
         System.out.println("Waiting for coins to arrive. Press Ctrl-C to quit.");
         try {
             Thread.sleep(Long.MAX_VALUE);
         } catch (InterruptedException e) {}
-        peerGroup.stopAndWait();
-        wallet.saveToFile(walletFile);
-        blockStore.close();
     }
 
     private void bounceCoins(final Wallet wallet, Transaction tx) {
