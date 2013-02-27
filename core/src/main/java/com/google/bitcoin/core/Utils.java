@@ -28,9 +28,7 @@ import java.nio.charset.Charset;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Date;
-import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
@@ -40,6 +38,17 @@ import static com.google.common.base.Preconditions.checkArgument;
  */
 public class Utils {
     private static CycleDetectingLockFactory lockFactory = CycleDetectingLockFactory.newInstance(CycleDetectingLockFactory.Policies.THROW);
+    private static MessageDigest digest;
+
+    static {
+        try {
+            digest = MessageDigest.getInstance("SHA-256");
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);  // Can't happen.
+        }
+    }
+
+
     /** Returns a cycle detecting re-entrant named lock. */
     public static ReentrantLock lock(String name) {
         return lockFactory.newReentrantLock(name);
@@ -167,23 +176,19 @@ public class Utils {
      * standard procedure in Bitcoin. The resulting hash is in big endian form.
      */
     public static byte[] doubleDigest(byte[] input, int offset, int length) {
-        try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+        synchronized (digest) {
+            digest.reset();
             digest.update(input, offset, length);
             byte[] first = digest.digest();
             return digest.digest(first);
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException(e);  // Cannot happen.
         }
     }
 
     public static byte[] singleDigest(byte[] input, int offset, int length) {
-        try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+        synchronized (digest) {
+            digest.reset();
             digest.update(input, offset, length);
             return digest.digest();
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException(e);  // Cannot happen.
         }
     }
 
@@ -192,14 +197,12 @@ public class Utils {
      */
     public static byte[] doubleDigestTwoBuffers(byte[] input1, int offset1, int length1,
                                                 byte[] input2, int offset2, int length2) {
-        try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+        synchronized (digest) {
+            digest.reset();
             digest.update(input1, offset1, length1);
             digest.update(input2, offset2, length2);
             byte[] first = digest.digest();
             return digest.digest(first);
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException(e);  // Cannot happen.
         }
     }
 

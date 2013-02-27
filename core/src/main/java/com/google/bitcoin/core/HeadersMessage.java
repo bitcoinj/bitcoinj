@@ -72,7 +72,7 @@ public class HeadersMessage extends Message {
             byte[] blockHeader = readBytes(81);
             if (blockHeader[80] != 00)
                 throw new ProtocolException("Block header does not end with a null byte");
-            Block newBlockHeader = new Block(this.params, blockHeader);
+            Block newBlockHeader = new Block(this.params, blockHeader, true, true, 81);
             blockHeaders.add(newBlockHeader);
         }
 

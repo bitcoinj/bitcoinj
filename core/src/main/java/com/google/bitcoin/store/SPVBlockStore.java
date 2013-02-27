@@ -181,8 +181,10 @@ public class SPVBlockStore implements BlockStore {
             }
             buffer.put(chainWorkBytes);
             buffer.putInt(block.getHeight());
-            byte[] header = block.getHeader().bitcoinSerialize();
-            buffer.put(header, 0, Block.HEADER_SIZE);  // Trim the trailing 00 byte (zero transactions).
+            // Using unsafeBitcoinSerialize here can give us direct access to the same bytes we read off the wire,
+            // avoiding serialization round-trips.
+            byte[] bytes = block.getHeader().unsafeBitcoinSerialize();
+            buffer.put(bytes, 0, Block.HEADER_SIZE);  // Trim the trailing 00 byte (zero transactions).
             setRingCursor(buffer, buffer.position());
             blockCache.put(hash, block);
         } finally { lock.unlock(); }

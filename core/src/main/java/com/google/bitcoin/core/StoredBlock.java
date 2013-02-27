@@ -95,7 +95,7 @@ public class StoredBlock implements Serializable {
         // the largest amount of work done not the tallest.
         BigInteger chainWork = this.chainWork.add(block.getWork());
         int height = this.height + 1;
-        return new StoredBlock(block.cloneAsHeader(), chainWork, height);
+        return new StoredBlock(block, chainWork, height);
     }
 
     /**

@@ -379,7 +379,7 @@ public abstract class AbstractBlockChain {
             TransactionOutputChanges txOutChanges = null;
             if (shouldVerifyTransactions())
                 txOutChanges = connectTransactions(storedPrev.getHeight() + 1, block);
-            StoredBlock newStoredBlock = addToBlockStore(storedPrev, block.cloneAsHeader(), txOutChanges);
+            StoredBlock newStoredBlock = addToBlockStore(storedPrev, block, txOutChanges);
             setChainHead(newStoredBlock);
             log.debug("Chain is now {} blocks high", newStoredBlock.getHeight());
             // Notify the listeners of the new block, so the depth and workDone of stored transactions can be updated
