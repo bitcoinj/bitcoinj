@@ -364,6 +364,11 @@ public class Peer {
             for (int i = 0; i < m.getBlockHeaders().size(); i++) {
                 Block header = m.getBlockHeaders().get(i);
                 if (header.getTimeSeconds() < fastCatchupTimeSecs) {
+                    if (!downloadData.get()) {
+                        // Not download peer anymore, some other peer probably became better.
+                        log.info("Lost download peer status, throwing away downloaded headers.");
+                        return;
+                    }
                     if (blockChain.add(header)) {
                         // The block was successfully linked into the chain. Notify the user of our progress.
                         invokeOnBlocksDownloaded(header);
