@@ -640,7 +640,8 @@ public class Peer {
     }
 
     private synchronized void processBlock(Block m) throws IOException {
-        log.debug("{}: Received broadcast block {}", address.get(), m.getHashAsString());
+        if (log.isDebugEnabled())
+            log.debug("{}: Received broadcast block {}", address.get(), m.getHashAsString());
         try {
             // Was this block requested by getBlock()?
             if (maybeHandleRequestedData(m)) return;
@@ -691,7 +692,8 @@ public class Peer {
 
     // TODO: Fix this duplication.
     private synchronized void processFilteredBlock(FilteredBlock m) throws IOException {
-        log.debug("{}: Received broadcast filtered block {}", address.get(), m.getHash().toString());
+        if (log.isDebugEnabled())
+            log.debug("{}: Received broadcast filtered block {}", address.get(), m.getHash().toString());
         try {
             if (!downloadData.get()) {
                 log.debug("{}: Received block we did not ask for: {}", address.get(), m.getHash().toString());
