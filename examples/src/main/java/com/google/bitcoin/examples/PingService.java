@@ -20,7 +20,7 @@ import com.google.bitcoin.core.*;
 import com.google.bitcoin.discovery.DnsDiscovery;
 import com.google.bitcoin.discovery.IrcDiscovery;
 import com.google.bitcoin.store.BlockStore;
-import com.google.bitcoin.store.BoundedOverheadBlockStore;
+import com.google.bitcoin.store.SPVBlockStore;
 import com.google.bitcoin.utils.BriefLogFormatter;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
@@ -84,7 +84,8 @@ public class PingService {
         ECKey key = wallet.keychain.get(0);
         // Load the block chain, if there is one stored locally.
         System.out.println("Reading block store from disk");
-        blockStore = new BoundedOverheadBlockStore(params, new File(filePrefix + ".blockchain"));
+        File file = new File(filePrefix + ".spvchain");
+        blockStore = new SPVBlockStore(params, file);
         // Connect to the localhost node. One minute timeout since we won't try any other peers
         System.out.println("Connecting ...");
         chain = new BlockChain(params, wallet, blockStore);
