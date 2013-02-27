@@ -732,7 +732,9 @@ public abstract class AbstractBlockChain {
             }
             cursor = blockStore.get(cursor.getHeader().getPrevBlockHash());
         }
-        log.info("Difficulty transition traversal took {}msec", System.currentTimeMillis() - now);
+        long elapsed = System.currentTimeMillis() - now;
+        if (elapsed > 50)
+            log.info("Difficulty transition traversal took {}msec", elapsed);
 
         Block blockIntervalAgo = cursor.getHeader();
         int timespan = (int) (prev.getTimeSeconds() - blockIntervalAgo.getTimeSeconds());
