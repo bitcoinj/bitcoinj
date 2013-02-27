@@ -26,6 +26,7 @@ import java.util.Arrays;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 
 public class BitcoinSerializerTest {
     private final byte[] addrMessage = Hex.decode("f9beb4d96164647200000000000000001f000000" +
@@ -177,7 +178,7 @@ public class BitcoinSerializerTest {
         String hash = block.getHashAsString();
         assertEquals(hash, "00000000839a8e6886ab5951d76f411475428afc90947ee320161bbf18eb6048");
 
-        assertEquals(block.transactions.size(), 0);
+        assertNull(block.transactions);
 
         assertEquals(Utils.bytesToHexString(block.getMerkleRoot().getBytes()),
                 "0e3e2357e806b6cdb1f70b54c3a3a17b6714ee1f0e68bebb44a74b1efd512098");
