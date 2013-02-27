@@ -16,6 +16,7 @@
 
 package com.google.bitcoin.core;
 
+import com.google.common.util.concurrent.CycleDetectingLockFactory;
 import org.spongycastle.crypto.digests.RIPEMD160Digest;
 import org.spongycastle.util.encoders.Hex;
 
@@ -27,6 +28,9 @@ import java.nio.charset.Charset;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Date;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
@@ -35,6 +39,12 @@ import static com.google.common.base.Preconditions.checkArgument;
  * To enable debug logging from the library, run with -Dbitcoinj.logging=true on your command line.
  */
 public class Utils {
+    private static CycleDetectingLockFactory lockFactory = CycleDetectingLockFactory.newInstance(CycleDetectingLockFactory.Policies.THROW);
+    /** Returns a cycle detecting re-entrant named lock. */
+    public static ReentrantLock lock(String name) {
+        return lockFactory.newReentrantLock(name);
+    }
+
     /** The string that prefixes all text messages signed using Bitcoin keys. */
     public static final String BITCOIN_SIGNED_MESSAGE_HEADER = "Bitcoin Signed Message:\n";
 
