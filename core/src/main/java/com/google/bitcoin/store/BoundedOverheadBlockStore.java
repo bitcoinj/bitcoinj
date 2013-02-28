@@ -114,7 +114,7 @@ public class BoundedOverheadBlockStore implements BlockStore {
                 buf.put(EMPTY_BYTES, 0, CHAIN_WORK_BYTES - chainWorkBytes.length);
             }
             buf.put(chainWorkBytes);
-            buf.put(block.getHeader().bitcoinSerialize());
+            buf.put(block.getHeader().cloneAsHeader().bitcoinSerialize());
             buf.position(0);
             channel.position(channel.size());
             if (channel.write(buf) < Record.SIZE)
