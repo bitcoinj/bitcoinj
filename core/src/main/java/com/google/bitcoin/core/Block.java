@@ -536,7 +536,7 @@ public class Block extends Message {
     @Override
     public String toString() {
         StringBuffer s = new StringBuffer("v" + version + " block: \n" + "   previous block: "
-                + prevBlockHash.toString() + "\n" + "   merkle root: " + getMerkleRoot().toString() + "\n"
+                + getPrevBlockHash().toString() + "\n" + "   merkle root: " + getMerkleRoot().toString() + "\n"
                 + "   time: [" + time + "] " + new Date(time * 1000).toString() + "\n"
                 + "   difficulty target (nBits): " + difficultyTarget + "\n" + "   nonce: " + nonce + "\n");
         if (transactions != null && transactions.size() > 0) {
