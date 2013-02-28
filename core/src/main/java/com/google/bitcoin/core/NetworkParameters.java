@@ -28,10 +28,8 @@ import java.util.Map;
 import static com.google.bitcoin.core.Utils.COIN;
 import static com.google.common.base.Preconditions.checkState;
 
-// TODO: Refactor this after we stop supporting serialization compatibility to use subclasses and singletons.
-
 /**
- * NetworkParameters contains the data needed for working with an instantiation of a Bitcoin chain.<p>
+ * <p>NetworkParameters contains the data needed for working with an instantiation of a Bitcoin chain.</p>
  *
  * Currently there are only two, the production chain and the test chain. But in future as Bitcoin
  * evolves there may be more. You can create your own as long as they don't conflict.
@@ -58,73 +56,75 @@ public class NetworkParameters implements Serializable {
 
     // TODO: Seed nodes should be here as well.
 
+    // TODO: Replace with getters and then finish making all these fields final.
+
     /**
-     * Genesis block for this chain.<p>
+     * <p>Genesis block for this chain.</p>
      *
-     * The first block in every chain is a well known constant shared between all BitCoin implemenetations. For a
+     * <p>The first block in every chain is a well known constant shared between all BitCoin implemenetations. For a
      * block to be valid, it must be eventually possible to work backwards to the genesis block by following the
-     * prevBlockHash pointers in the block headers.<p>
+     * prevBlockHash pointers in the block headers.</p>
      *
-     * The genesis blocks for both test and prod networks contain the timestamp of when they were created,
+     * <p>The genesis blocks for both test and prod networks contain the timestamp of when they were created,
      * and a message in the coinbase transaction. It says, <i>"The Times 03/Jan/2009 Chancellor on brink of second
-     * bailout for banks"</i>.
+     * bailout for banks"</i>.</p>
      */
-    public Block genesisBlock;
+    public final Block genesisBlock;
     /** What the easiest allowable proof of work should be. */
-    public BigInteger proofOfWorkLimit;
+    public /*final*/ BigInteger proofOfWorkLimit;
     /** Default TCP port on which to connect to nodes. */
-    public int port;
+    public final int port;
     /** The header bytes that identify the start of a packet on this network. */
-    public long packetMagic;
+    public final long packetMagic;
     /**
      * First byte of a base58 encoded address. See {@link Address}. This is the same as acceptableAddressCodes[0] and
      * is the one used for "normal" addresses. Other types of address may be encountered with version codes found in
      * the acceptableAddressCodes array.
      */
-    public int addressHeader;
+    public final int addressHeader;
     /** First byte of a base58 encoded dumped private key. See {@link DumpedPrivateKey}. */
-    public int dumpedPrivateKeyHeader;
+    public final int dumpedPrivateKeyHeader;
     /** How many blocks pass between difficulty adjustment periods. Bitcoin standardises this to be 2015. */
-    public int interval;
+    public /*final*/ int interval;
     /**
      * How much time in seconds is supposed to pass between "interval" blocks. If the actual elapsed time is
      * significantly different from this value, the network difficulty formula will produce a different value. Both
      * test and production Bitcoin networks use 2 weeks (1209600 seconds).
      */
-    public int targetTimespan;
+    public final int targetTimespan;
     /**
      * The key used to sign {@link AlertMessage}s. You can use {@link ECKey#verify(byte[], byte[], byte[])} to verify
      * signatures using it.
      */
-    public byte[] alertSigningKey;
+    public /*final*/ byte[] alertSigningKey;
 
     /**
      * See getId(). This may be null for old deserialized wallets. In that case we derive it heuristically
      * by looking at the port number.
      */
-    private String id;
+    private final String id;
 
     /**
      * The depth of blocks required for a coinbase transaction to be spendable.
      */
-    private int spendableCoinbaseDepth;
+    private final int spendableCoinbaseDepth;
     
     /**
      * Returns the number of blocks between subsidy decreases
      */
-    private int subsidyDecreaseBlockCount;
+    private final int subsidyDecreaseBlockCount;
     
     /**
      * If we are running in testnet-in-a-box mode, we allow connections to nodes with 0 non-genesis blocks
      */
-    boolean allowEmptyPeerChains;
+    final boolean allowEmptyPeerChains;
 
     /**
      * The version codes that prefix addresses which are acceptable on this network. Although Satoshi intended these to
      * be used for "versioning", in fact they are today used to discriminate what kind of data is contained in the
      * address and to prevent accidentally sending coins across chains which would destroy them.
      */
-    public int[] acceptableAddressCodes;
+    public final int[] acceptableAddressCodes;
 
 
     /**
@@ -134,6 +134,99 @@ public class NetworkParameters implements Serializable {
      */
     public Map<Integer, Sha256Hash> checkpoints = new HashMap<Integer, Sha256Hash>();
 
+    private NetworkParameters(int type) {
+        alertSigningKey = SATOSHI_KEY;
+        genesisBlock = createGenesis(this);
+        if (type == 0) {
+            // Production.
+            interval = INTERVAL;
+            targetTimespan = TARGET_TIMESPAN;
+            proofOfWorkLimit = Utils.decodeCompactBits(0x1d00ffffL);
+            acceptableAddressCodes = new int[] { 0 };
+            dumpedPrivateKeyHeader = 128;
+            addressHeader = 0;
+            port = 8333;
+            packetMagic = 0xf9beb4d9L;
+            genesisBlock.setDifficultyTarget(0x1d00ffffL);
+            genesisBlock.setTime(1231006505L);
+            genesisBlock.setNonce(2083236893);
+            id = ID_PRODNET;
+            subsidyDecreaseBlockCount = 210000;
+            allowEmptyPeerChains = false;
+            spendableCoinbaseDepth = 100;
+            String genesisHash = genesisBlock.getHashAsString();
+            checkState(genesisHash.equals("000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f"),
+                    genesisHash);
+
+            // This contains (at a minimum) the blocks which are not BIP30 compliant. BIP30 changed how duplicate
+            // transactions are handled. Duplicated transactions could occur in the case where a coinbase had the same
+            // extraNonce and the same outputs but appeared at different heights, and greatly complicated re-org handling.
+            // Having these here simplifies block connection logic considerably.
+            checkpoints.put(91722, new Sha256Hash("00000000000271a2dc26e7667f8419f2e15416dc6955e5a6c6cdf3f2574dd08e"));
+            checkpoints.put(91812, new Sha256Hash("00000000000af0aed4792b1acee3d966af36cf5def14935db8de83d6f9306f2f"));
+            checkpoints.put(91842, new Sha256Hash("00000000000a4d0a398161ffc163c503763b1f4360639393e0e4c8e300e0caec"));
+            checkpoints.put(91880, new Sha256Hash("00000000000743f190a18c5577a3c2d2a1f610ae9601ac046a38084ccb7cd721"));
+            checkpoints.put(200000, new Sha256Hash("000000000000034a7dedef4a161fa058a2d67a173a90155f3a2fe6fc132e0ebf"));
+        } else if (type == 3) {
+            // Testnet3
+            id = ID_TESTNET;
+            // Genesis hash is 000000000933ea01ad0ee984209779baaec3ced90fa3f408719526f8d77f4943
+            packetMagic = 0x0b110907;
+            interval = INTERVAL;
+            targetTimespan = TARGET_TIMESPAN;
+            proofOfWorkLimit = Utils.decodeCompactBits(0x1d00ffffL);
+            port = 18333;
+            addressHeader = 111;
+            acceptableAddressCodes = new int[] { 111 };
+            dumpedPrivateKeyHeader = 239;
+            genesisBlock.setTime(1296688602L);
+            genesisBlock.setDifficultyTarget(0x1d00ffffL);
+            genesisBlock.setNonce(414098458);
+            allowEmptyPeerChains = true;
+            spendableCoinbaseDepth = 100;
+            subsidyDecreaseBlockCount = 210000;
+            String genesisHash = genesisBlock.getHashAsString();
+            checkState(genesisHash.equals("000000000933ea01ad0ee984209779baaec3ced90fa3f408719526f8d77f4943"),
+                    genesisHash);
+        } else if (type == 2) {
+            id = ID_TESTNET;
+            packetMagic = 0xfabfb5daL;
+            port = 18333;
+            addressHeader = 111;
+            interval = INTERVAL;
+            targetTimespan = TARGET_TIMESPAN;
+            proofOfWorkLimit = Utils.decodeCompactBits(0x1d0fffffL);
+            acceptableAddressCodes = new int[] { 111 };
+            dumpedPrivateKeyHeader = 239;
+            genesisBlock.setTime(1296688602L);
+            genesisBlock.setDifficultyTarget(0x1d07fff8L);
+            genesisBlock.setNonce(384568319);
+            allowEmptyPeerChains = false;
+            spendableCoinbaseDepth = 100;
+            subsidyDecreaseBlockCount = 210000;
+            String genesisHash = genesisBlock.getHashAsString();
+            checkState(genesisHash.equals("00000007199508e34a9ff81e6ec0c477a4cccff2a4767a8eee39c11db367b008"),
+                    genesisHash);
+        } else if (type == -1) {
+            id = ID_UNITTESTNET;
+            packetMagic = 0x0b110907;
+            addressHeader = 111;
+            proofOfWorkLimit = new BigInteger("00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", 16);
+            genesisBlock.setTime(System.currentTimeMillis() / 1000);
+            genesisBlock.setDifficultyTarget(Block.EASIEST_DIFFICULTY_TARGET);
+            genesisBlock.solve();
+            port = 18333;
+            interval = 10;
+            dumpedPrivateKeyHeader = 239;
+            allowEmptyPeerChains = false;
+            targetTimespan = 200000000;  // 6 years. Just a very big number.
+            spendableCoinbaseDepth = 5;
+            acceptableAddressCodes = new int[] { 111 };
+            subsidyDecreaseBlockCount = 100;
+        } else {
+            throw new RuntimeException();
+        }
+    }
 
     private static Block createGenesis(NetworkParameters n) {
         Block genesisBlock = new Block(n);
@@ -172,138 +265,51 @@ public class NetworkParameters implements Serializable {
     /**
      * The maximum money to be generated
      */
-    public final BigInteger MAX_MONEY = new BigInteger("21000000", 10).multiply(COIN);
-
-    /** Sets up the given Networkparemets with testnet3 values. */
-    private static NetworkParameters createTestNet3(NetworkParameters n) {
-        // Genesis hash is 000000000933ea01ad0ee984209779baaec3ced90fa3f408719526f8d77f4943
-        n.proofOfWorkLimit = Utils.decodeCompactBits(0x1d00ffffL);
-        n.packetMagic = 0x0b110907;
-        n.port = 18333;
-        n.addressHeader = 111;
-        n.acceptableAddressCodes = new int[] { 111 };
-        n.dumpedPrivateKeyHeader = 239;
-        n.interval = INTERVAL;
-        n.targetTimespan = TARGET_TIMESPAN;
-        n.alertSigningKey = SATOSHI_KEY;
-        n.genesisBlock = createGenesis(n);
-        n.genesisBlock.setTime(1296688602L);
-        n.genesisBlock.setDifficultyTarget(0x1d00ffffL);
-        n.genesisBlock.setNonce(414098458);
-        n.setSpendableCoinbaseDepth(100);
-        n.setSubsidyDecreaseBlockCount(210000);
-        n.id = ID_TESTNET;
-        String genesisHash = n.genesisBlock.getHashAsString();
-        checkState(genesisHash.equals("000000000933ea01ad0ee984209779baaec3ced90fa3f408719526f8d77f4943"),
-                genesisHash);
-        return n;
-    }
-
-    /** Sets up the given NetworkParameters with testnet2 values. Don't use! */
-    private static NetworkParameters createOldTestNet(NetworkParameters n) {
-        // Genesis hash is 0000000224b1593e3ff16a0e3b61285bbc393a39f78c8aa48c456142671f7110
-        n.proofOfWorkLimit = Utils.decodeCompactBits(0x1d0fffffL);
-        n.packetMagic = 0xfabfb5daL;
-        n.port = 18333;
-        n.addressHeader = 111;
-        n.acceptableAddressCodes = new int[] { 111 };
-        n.dumpedPrivateKeyHeader = 239;
-        n.interval = INTERVAL;
-        n.targetTimespan = TARGET_TIMESPAN;
-        n.alertSigningKey = SATOSHI_KEY;
-        n.genesisBlock = createGenesis(n);
-        n.genesisBlock.setTime(1296688602L);
-        n.genesisBlock.setDifficultyTarget(0x1d07fff8L);
-        n.genesisBlock.setNonce(384568319);
-        n.setSpendableCoinbaseDepth(100);
-        n.setSubsidyDecreaseBlockCount(210000);
-        n.id = ID_TESTNET;
-        n.allowEmptyPeerChains = false;
-        String genesisHash = n.genesisBlock.getHashAsString();
-        checkState(genesisHash.equals("00000007199508e34a9ff81e6ec0c477a4cccff2a4767a8eee39c11db367b008"),
-                genesisHash);
-        return n;
-    }
+    public static final BigInteger MAX_MONEY = new BigInteger("21000000", 10).multiply(COIN);
 
     /** Returns whatever the latest testNet parameters are.  Use this rather than the versioned equivalents. */
     public static NetworkParameters testNet() {
         return testNet3();
     }
 
-    public static NetworkParameters testNet2() {
-        NetworkParameters n = new NetworkParameters();
-        return createOldTestNet(n);
+    private static NetworkParameters tn2;
+    public synchronized static NetworkParameters testNet2() {
+        if (tn2 == null) {
+            tn2 = new NetworkParameters(2);
+        }
+        return tn2;
     }
 
-    public static NetworkParameters testNet3() {
-        NetworkParameters n = new NetworkParameters();
-        return createTestNet3(n);
+    private static NetworkParameters tn3;
+    public synchronized static NetworkParameters testNet3() {
+        if (tn3 == null) {
+            tn3 = new NetworkParameters(3);
+        }
+        return tn3;
     }
 
-    /** The primary BitCoin chain created by Satoshi. */
-    public static NetworkParameters prodNet() {
-        NetworkParameters n = new NetworkParameters();
-        n.proofOfWorkLimit = Utils.decodeCompactBits(0x1d00ffffL);
-        n.port = 8333;
-        n.packetMagic = 0xf9beb4d9L;
-        n.addressHeader = 0;
-        n.acceptableAddressCodes = new int[] { 0 };
-        n.dumpedPrivateKeyHeader = 128;
-        n.interval = INTERVAL;
-        n.targetTimespan = TARGET_TIMESPAN;
-        n.alertSigningKey = SATOSHI_KEY;
-        n.genesisBlock = createGenesis(n);
-        n.genesisBlock.setDifficultyTarget(0x1d00ffffL);
-        n.genesisBlock.setTime(1231006505L);
-        n.genesisBlock.setNonce(2083236893);
-        n.setSpendableCoinbaseDepth(100);
-        n.setSubsidyDecreaseBlockCount(210000);
-        n.id = ID_PRODNET;
-        n.allowEmptyPeerChains = false;
-        String genesisHash = n.genesisBlock.getHashAsString();
-        checkState(genesisHash.equals("000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f"),
-                genesisHash);
-
-        // This contains (at a minimum) the blocks which are not BIP30 compliant. BIP30 changed how duplicate
-        // transactions are handled. Duplicated transactions could occur in the case where a coinbase had the same
-        // extraNonce and the same outputs but appeared at different heights, and greatly complicated re-org handling.
-        // Having these here simplifies block connection logic considerably.
-        n.checkpoints.put(new Integer(91722), new Sha256Hash("00000000000271a2dc26e7667f8419f2e15416dc6955e5a6c6cdf3f2574dd08e"));
-        n.checkpoints.put(new Integer(91812), new Sha256Hash("00000000000af0aed4792b1acee3d966af36cf5def14935db8de83d6f9306f2f"));
-        n.checkpoints.put(new Integer(91842), new Sha256Hash("00000000000a4d0a398161ffc163c503763b1f4360639393e0e4c8e300e0caec"));
-        n.checkpoints.put(new Integer(91880), new Sha256Hash("00000000000743f190a18c5577a3c2d2a1f610ae9601ac046a38084ccb7cd721"));
-        n.checkpoints.put(new Integer(200000), new Sha256Hash("000000000000034a7dedef4a161fa058a2d67a173a90155f3a2fe6fc132e0ebf"));
-        return n;
+    private static NetworkParameters pn;
+    /** The primary Bitcoin chain created by Satoshi. */
+    public synchronized static NetworkParameters prodNet() {
+        if (pn == null) {
+            pn = new NetworkParameters(0);
+        }
+        return pn;
     }
 
+    private static NetworkParameters ut;
     /** Returns a testnet params modified to allow any difficulty target. */
-    public static NetworkParameters unitTests() {
-        NetworkParameters n = new NetworkParameters();
-        n = createTestNet3(n);
-        n.proofOfWorkLimit = new BigInteger("00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", 16);
-        n.genesisBlock.setTime(System.currentTimeMillis() / 1000);
-        n.genesisBlock.setDifficultyTarget(Block.EASIEST_DIFFICULTY_TARGET);
-        n.genesisBlock.solve();
-        n.interval = 10;
-        n.targetTimespan = 200000000;  // 6 years. Just a very big number.
-        n.setSpendableCoinbaseDepth(5);
-        n.setSubsidyDecreaseBlockCount(100);
-        n.id = "com.google.bitcoin.unittest";
-        return n;
+    public synchronized static NetworkParameters unitTests() {
+        if (ut == null) {
+            ut = new NetworkParameters(-1);
+        }
+        return ut;
     }
 
     /**
-     * A java package style string acting as unique ID for these parameters
+     * A Java package style string acting as unique ID for these parameters
      */
     public String getId() {
-        if (id == null) {
-            // Migrate from old serialized wallets which lack the ID field. This code can eventually be deleted.
-            if (port == 8333) {
-                id = ID_PRODNET;
-            } else if (port == 18333) {
-                id = ID_TESTNET;
-            }
-        }
         return id;
     }
 
@@ -336,36 +342,22 @@ public class NetworkParameters implements Serializable {
         return spendableCoinbaseDepth;
     }
 
-    public void setSpendableCoinbaseDepth(int coinbaseDepth) {
-        this.spendableCoinbaseDepth = coinbaseDepth;
-    }
-
     /**
      * Returns true if the block height is either not a checkpoint, or is a checkpoint and the hash matches.
      */
     public boolean passesCheckpoint(int height, Sha256Hash hash) {
-        Sha256Hash checkpointHash = checkpoints.get(Integer.valueOf(height));
-        if (checkpointHash != null)
-            return checkpointHash.equals(hash);
-        return true;
+        Sha256Hash checkpointHash = checkpoints.get(height);
+        return checkpointHash == null || checkpointHash.equals(hash);
     }
 
     /**
      * Returns true if the given height has a recorded checkpoint.
-     * @param height
-     * @return
      */
     public boolean isCheckpoint(int height) {
-        Sha256Hash checkpointHash = checkpoints.get(Integer.valueOf(height));
-        if (checkpointHash != null)
-            return true;
-        return false;
+        Sha256Hash checkpointHash = checkpoints.get(height);
+        return checkpointHash != null;
     }
 
-    public void setSubsidyDecreaseBlockCount(int subsidyDecreaseBlockCount) {
-        this.subsidyDecreaseBlockCount = subsidyDecreaseBlockCount;
-    }
-    
     public int getSubsidyDecreaseBlockCount() {
         return subsidyDecreaseBlockCount;
     }
