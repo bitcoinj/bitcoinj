@@ -113,7 +113,7 @@ public class VersionMessage extends Message {
         length = 85;
         if (protocolVersion > 31402)
             length += 8;
-        length += subVer == null ? 1 : VarInt.sizeOf(subVer.length()) + subVer.length();
+        length += VarInt.sizeOf(subVer.length()) + subVer.length();
     }
 
     @Override
