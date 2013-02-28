@@ -20,6 +20,7 @@ import com.google.bitcoin.core.TransactionConfidence.ConfidenceType;
 import com.google.bitcoin.core.WalletTransaction.Pool;
 import com.google.bitcoin.store.WalletProtobufSerializer;
 import com.google.bitcoin.utils.EventListenerInvoker;
+import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
@@ -497,7 +498,7 @@ public class Wallet implements Serializable, BlockChainListener {
 
             @Override
             public int hashCode() {
-                return Objects.hash(wallet, startTimeMs, requestedDelayMs);
+                return Objects.hashCode(wallet, startTimeMs, requestedDelayMs);
             }
         }
     }
