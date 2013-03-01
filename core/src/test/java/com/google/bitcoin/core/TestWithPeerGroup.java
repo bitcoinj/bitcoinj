@@ -44,6 +44,7 @@ public class TestWithPeerGroup extends TestWithNetworkConnections {
                 ChannelSink sink = new FakeChannelSink();
                 return new FakeChannel(this, pipeline, sink);
             }
+            public void shutdown() {}
         });
         bootstrap.setPipelineFactory(new ChannelPipelineFactory() {
             public ChannelPipeline getPipeline() throws Exception {

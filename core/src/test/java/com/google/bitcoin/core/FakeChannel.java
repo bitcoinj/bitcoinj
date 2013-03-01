@@ -1,14 +1,14 @@
 package com.google.bitcoin.core;
 
 import org.jboss.netty.channel.*;
-import org.jboss.netty.util.internal.QueueFactory;
 
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
 public class FakeChannel extends AbstractChannel {
-    final BlockingQueue<ChannelEvent> events = QueueFactory.createQueue(ChannelEvent.class);
+    final BlockingQueue<ChannelEvent> events = new ArrayBlockingQueue<ChannelEvent>(1000);
 
     private final ChannelConfig config;
     private SocketAddress localAddress;

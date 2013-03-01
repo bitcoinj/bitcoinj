@@ -174,7 +174,7 @@
       <dependency>
 	    <groupId>io.netty</groupId>
 	    <artifactId>netty</artifactId>
-	    <version>3.3.1.Final</version>
+	    <version>${netty.version}</version>
 	    <scope>compile</scope>
       </dependency>
 
@@ -203,6 +203,7 @@
     <slf4j.version>1.6.2</slf4j.version>
     <derby.version>10.8.2.2</derby.version>
     <protobuf.version>2.4.1</protobuf.version>
+    <netty.version>3.6.3.Final</netty.version>
     <generated.sourceDirectory>gen</generated.sourceDirectory>
   </properties>
 
