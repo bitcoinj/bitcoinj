@@ -33,6 +33,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.*;
@@ -441,6 +442,11 @@ public class PeerGroup extends AbstractIdleService {
             newMax = getMaxConnections() + 1;
         }
         setMaxConnections(newMax);
+    }
+
+    /** Convenience method for addAddress(new PeerAddress(address, params.port)); */
+    public void addAddress(InetAddress address) {
+        addAddress(new PeerAddress(address, params.port));
     }
 
     /**
