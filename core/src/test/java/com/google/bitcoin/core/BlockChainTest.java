@@ -61,7 +61,7 @@ public class BlockChainTest {
                 BlockChainTest.this.block[0] = block;
                 if (tx.isCoinBase()) {
                     BlockChainTest.this.coinbaseTransaction = tx;
-                 }
+                }
             }
         };
         wallet.addKey(new ECKey());
