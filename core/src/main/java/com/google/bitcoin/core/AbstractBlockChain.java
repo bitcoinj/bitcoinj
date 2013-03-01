@@ -408,7 +408,7 @@ public abstract class AbstractBlockChain {
                     i--;  // Listener removed itself and it was not the last one.
                     break;
                 }
-                listener.notifyNewBestBlock(newStoredBlock.getHeader());
+                listener.notifyNewBestBlock(newStoredBlock);
                 if (i == listeners.size()) {
                     break;  // Listener removed itself and it was the last one.
                 } else if (listeners.get(i) != listener) {

@@ -71,7 +71,7 @@ public class WalletTest {
             BlockPair bp = createFakeBlock(blockStore, tx);
             wallet.receiveFromBlock(tx, bp.storedBlock, type);
             if (type == AbstractBlockChain.NewBlockType.BEST_CHAIN)
-                wallet.notifyNewBestBlock(bp.block);
+                wallet.notifyNewBestBlock(bp.storedBlock);
         }
         return tx;
     }
@@ -154,7 +154,7 @@ public class WalletTest {
         BlockPair bp = createFakeBlock(blockStore, t2, t3);
         wallet.receiveFromBlock(t2, bp.storedBlock, AbstractBlockChain.NewBlockType.BEST_CHAIN);
         wallet.receiveFromBlock(t3, bp.storedBlock, AbstractBlockChain.NewBlockType.BEST_CHAIN);
-        wallet.notifyNewBestBlock(bp.block);
+        wallet.notifyNewBestBlock(bp.storedBlock);
         assertTrue(wallet.isConsistent());
     }
 
@@ -308,9 +308,9 @@ public class WalletTest {
         wallet.commitTx(send2);
         sendMoneyToWallet(send2, AbstractBlockChain.NewBlockType.BEST_CHAIN);
         assertEquals(bitcoinValueToFriendlyString(wallet.getBalance()), "0.80");
-        Block b4 = createFakeBlock(blockStore).block;
+        BlockPair b4 = createFakeBlock(blockStore);
         confTxns.clear();
-        wallet.notifyNewBestBlock(b4);
+        wallet.notifyNewBestBlock(b4.storedBlock);
         assertEquals(3, confTxns.size());
     }
 

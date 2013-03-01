@@ -1053,10 +1053,11 @@ public class Wallet implements Serializable, BlockChainListener {
      *
      * <p>Used to update confidence data in each transaction and last seen block hash. Triggers auto saving.
      * Invokes the onWalletChanged event listener if there were any affected transactions.</p>
+     * @param block
      */
-    public synchronized void notifyNewBestBlock(Block block) throws VerificationException {
+    public synchronized void notifyNewBestBlock(StoredBlock block) throws VerificationException {
         // Check to see if this block has been seen before.
-        Sha256Hash newBlockHash = block.getHash();
+        Sha256Hash newBlockHash = block.getHeader().getHash();
         if (newBlockHash.equals(getLastBlockSeenHash()))
             return;
         // Store the new block hash.
@@ -1072,7 +1073,7 @@ public class Wallet implements Serializable, BlockChainListener {
                 // notify the tx confidence of work done twice, it'd result in miscounting.
                 ignoreNextNewBlock.remove(tx.getHash());
             } else {
-                tx.getConfidence().notifyWorkDone(block);
+                tx.getConfidence().notifyWorkDone(block.getHeader());
             }
         }
         queueAutoSave();
@@ -2207,7 +2208,7 @@ public class Wallet implements Serializable, BlockChainListener {
                     }
                 }
             }
-            notifyNewBestBlock(b.getHeader());
+            notifyNewBestBlock(b);
         }
 
         // Find the transactions that didn't make it into the new chain yet. For each input, try to connect it to the
@@ -2409,10 +2410,8 @@ public class Wallet implements Serializable, BlockChainListener {
     }
     
     /**
-     * Gets a bloom filter that contains all of the public keys from this wallet,
-     * and which will provide the given false-positive rate.
-     * 
-     * See the docs for {@link BloomFilter#BloomFilter(int, double)} for a brief explanation of anonymity when using bloom filters.
+     * Gets a bloom filter that contains all of the public keys from this wallet, and which will provide the given
+     * false-positive rate. See the docs for {@link BloomFilter} for a brief explanation of anonymity when using filters.
      */
     public BloomFilter getBloomFilter(double falsePositiveRate) {
         return getBloomFilter(getBloomFilterElementCount(), falsePositiveRate, (long)(Math.random()*Long.MAX_VALUE));

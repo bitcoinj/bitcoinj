@@ -29,8 +29,9 @@ public interface BlockChainListener {
      * transactions are extracted and sent to us UNLESS the new block caused a re-org, in which case this will
      * not be called (the {@link Wallet#reorganize(StoredBlock, java.util.List, java.util.List)} method will
      * call this one in that case).</p>
+     * @param block
      */
-    void notifyNewBestBlock(Block block) throws VerificationException;
+    void notifyNewBestBlock(StoredBlock block) throws VerificationException;
 
     /**
      * Called by the {@link BlockChain} when the best chain (representing total work done) has changed. In this case,
