@@ -183,8 +183,7 @@ public class BlockChainTest {
         assertTrue(testNetChain.add(getBlock1()));
         Block b2 = getBlock2();
         assertTrue(testNetChain.add(b2));
-        NetworkParameters params2 = NetworkParameters.testNet();
-        Block bad = new Block(params2);
+        Block bad = new Block(testNet);
         // Merkle root can be anything here, doesn't matter.
         bad.setMerkleRoot(new Sha256Hash("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"));
         // Nonce was just some number that made the hash < difficulty limit set below, it can be anything.
@@ -205,7 +204,8 @@ public class BlockChainTest {
         }
 
         // Accept any level of difficulty now.
-        params2.proofOfWorkLimit = new BigInteger
+        BigInteger oldVal = testNet.proofOfWorkLimit;
+        testNet.proofOfWorkLimit = new BigInteger
                 ("00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", 16);
         try {
             testNetChain.add(bad);
@@ -214,6 +214,7 @@ public class BlockChainTest {
         } catch (VerificationException e) {
             assertTrue(e.getMessage(), e.getCause().getMessage().indexOf("Unexpected change in difficulty") >= 0);
         }
+        testNet.proofOfWorkLimit = oldVal;
 
         // TODO: Test difficulty change is not out of range when a transition period becomes valid.
     }
