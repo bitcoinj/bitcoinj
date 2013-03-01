@@ -539,7 +539,7 @@ public class WalletTool {
             reset();
         }
         if (mode == ValidationMode.SPV) {
-            store = new BoundedOverheadBlockStore(params, chainFileName);
+            store = new SPVBlockStore(params, chainFileName);
             chain = new BlockChain(params, wallet, store);
         } else if (mode == ValidationMode.FULL) {
             FullPrunedBlockStore s = new H2FullPrunedBlockStore(params, chainFileName.getAbsolutePath(), 5000);
