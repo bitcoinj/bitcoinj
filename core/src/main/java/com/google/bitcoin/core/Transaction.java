@@ -47,8 +47,12 @@ public class Transaction extends ChildMessage implements Serializable {
     private static final Logger log = LoggerFactory.getLogger(Transaction.class);
     private static final long serialVersionUID = -8567546957352643140L;
     
-    // Threshold for lockTime: below this value it is interpreted as block number, otherwise as timestamp.
-    static final int LOCKTIME_THRESHOLD = 500000000; // Tue Nov  5 00:53:20 1985 UTC
+    /** Threshold for lockTime: below this value it is interpreted as block number, otherwise as timestamp. **/
+    public static final int LOCKTIME_THRESHOLD = 500000000; // Tue Nov  5 00:53:20 1985 UTC
+
+    /** How many bytes a transaction can be before it won't be relayed anymore. */
+    public static final int MAX_STANDARD_TX_SIZE = 100 * 1024;
+
 
     // These are serialized in both bitcoin and java serialization.
     private long version;
