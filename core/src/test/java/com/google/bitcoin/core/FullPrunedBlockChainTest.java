@@ -21,6 +21,7 @@ import com.google.bitcoin.core.Transaction.SigHash;
 import com.google.bitcoin.store.FullPrunedBlockStore;
 import com.google.bitcoin.store.MemoryFullPrunedBlockStore;
 import com.google.bitcoin.utils.BriefLogFormatter;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -48,14 +49,22 @@ public class FullPrunedBlockChainTest {
     private FullPrunedBlockChain chain;
     private FullPrunedBlockStore store;
 
+    private int oldInterval;
+
     @Before
     public void setUp() throws Exception {
         BriefLogFormatter.init();
         unitTestParams = NetworkParameters.unitTests();
+        oldInterval = unitTestParams.interval;
         unitTestParams.interval = 10000;
         
         store = new MemoryFullPrunedBlockStore(unitTestParams, UNDOABLE_BLOCKS_STORED);
         chain = new FullPrunedBlockChain(unitTestParams, store);
+    }
+
+    @After
+    public void tearDown() {
+        unitTestParams.interval = oldInterval;
     }
     
     @Test
