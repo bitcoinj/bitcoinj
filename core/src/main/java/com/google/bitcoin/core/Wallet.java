@@ -1751,6 +1751,14 @@ public class Wallet implements Serializable, BlockChainListener {
             throw new RuntimeException(e);
         }
 
+        // Check size.
+        int size = req.tx.bitcoinSerialize().length;
+        if (size > Transaction.MAX_STANDARD_TX_SIZE) {
+            // TODO: Throw an exception here.
+            log.error("Transaction could not be created without exceeding max size: {} vs {}", size, Transaction.MAX_STANDARD_TX_SIZE);
+            return false;
+        }
+
         // Label the transaction as being self created. We can use this later to spend its change output even before
         // the transaction is confirmed.
         req.tx.getConfidence().setSource(TransactionConfidence.Source.SELF);

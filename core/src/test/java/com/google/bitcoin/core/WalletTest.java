@@ -32,6 +32,7 @@ import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -894,6 +895,22 @@ public class WalletTest {
             assertEquals("Failed on iteration " + i, spend.getInput(0).getOutpoint().getHash(), txns[i].getHash());
             wallet.commitTx(spend);
         }
+    }
+
+    @Test
+    public void respectMaxStandardSize() throws Exception {
+        // Check that we won't create txns > 100kb. Average tx size is ~220 bytes so this would have to be enormous.
+        sendMoneyToWallet(Utils.toNanoCoins(100, 0), AbstractBlockChain.NewBlockType.BEST_CHAIN);
+        Transaction tx = new Transaction(params);
+        byte[] bits = new byte[20];
+        new Random().nextBytes(bits);
+        BigInteger v = Utils.toNanoCoins(0, 1);
+        // 3100 outputs to a random address.
+        for (int i = 0; i < 3100; i++) {
+            tx.addOutput(v, new Address(params, bits));
+        }
+        Wallet.SendRequest req = Wallet.SendRequest.forTx(tx);
+        assertFalse(wallet.completeTx(req));
     }
 
     // There is a test for spending a coinbase transaction as it matures in BlockChainTest#coinbaseTransactionAvailability
