@@ -25,6 +25,7 @@ import java.net.UnknownHostException;
 
 import static com.google.bitcoin.core.Utils.uint32ToByteStreamLE;
 import static com.google.bitcoin.core.Utils.uint64ToByteStreamLE;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * A PeerAddress holds an IP address and port number representing the network location of
@@ -71,7 +72,7 @@ public class PeerAddress extends ChildMessage {
      * Construct a peer address from a memorized or hardcoded address.
      */
     public PeerAddress(InetAddress addr, int port, int protocolVersion) {
-        this.addr = addr;
+        this.addr = checkNotNull(addr);
         this.port = port;
         this.protocolVersion = protocolVersion;
         this.services = BigInteger.ZERO;
