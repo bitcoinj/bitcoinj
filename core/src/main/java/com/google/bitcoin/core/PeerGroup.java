@@ -562,7 +562,8 @@ public class PeerGroup extends AbstractIdleService {
 
     private synchronized void recalculateFastCatchupAndFilter() {
         // Fully verifying mode doesn't use this optimization (it can't as it needs to see all transactions).
-        if (chain != null && chain.shouldVerifyTransactions()) return;
+        if (chain != null && chain.shouldVerifyTransactions())
+            return;
         long earliestKeyTime = Long.MAX_VALUE;
         int elements = 0;
         for (Wallet w : wallets) {
@@ -570,7 +571,7 @@ public class PeerGroup extends AbstractIdleService {
             elements += w.getBloomFilterElementCount();
         }
 
-        if (chain == null || !chain.shouldVerifyTransactions() && elements > 0) {
+        if (elements > 0) {
             // We stair-step our element count so that we avoid creating a filter with different parameters
             // as much as possible as that results in a loss of privacy.
             // The constant 100 here is somewhat arbitrary, but makes sense for small to medium wallets -
