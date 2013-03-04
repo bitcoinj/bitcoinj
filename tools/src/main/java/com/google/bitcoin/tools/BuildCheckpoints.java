@@ -28,17 +28,22 @@ public class BuildCheckpoints {
         // Sorted map of UNIX time of block to StoredBlock object.
         final TreeMap<Integer, StoredBlock> checkpoints = new TreeMap<Integer, StoredBlock>();
 
+        // Configure bitcoinj to fetch only headers, not save them to disk, connect to a local fully synced/validated
+        // node and to save block headers that are on interval boundaries, as long as they are <1 month old.
         final BlockStore store = new MemoryBlockStore(params);
         final BlockChain chain = new BlockChain(params, store);
         final PeerGroup peerGroup = new PeerGroup(params, chain);
         peerGroup.addAddress(InetAddress.getLocalHost());
-        peerGroup.setFastCatchupTimeSecs(new Date().getTime() / 1000);
+        long now = new Date().getTime() / 1000;
+        peerGroup.setFastCatchupTimeSecs(now);
+
+        final long oneMonthAgo = now - (86400 * 30);
 
         chain.addListener(new AbstractBlockChainListener() {
             @Override
             public void notifyNewBestBlock(StoredBlock block) throws VerificationException {
                 int height = block.getHeight();
-                if (height % params.interval == 0) {
+                if (height % params.interval == 0 && block.getHeader().getTimeSeconds() <= oneMonthAgo) {
                     System.out.println(String.format("Checkpointing block %s at height %d",
                             block.getHeader().getHash(), block.getHeight()));
                     checkpoints.put(height, block);
