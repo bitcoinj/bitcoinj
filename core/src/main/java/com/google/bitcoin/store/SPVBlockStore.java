@@ -173,18 +173,7 @@ public class SPVBlockStore implements BlockStore {
             Sha256Hash hash = block.getHeader().getHash();
             notFoundCache.remove(hash);
             buffer.put(hash.getBytes());
-            byte[] chainWorkBytes = block.getChainWork().toByteArray();
-            checkState(chainWorkBytes.length <= CHAIN_WORK_BYTES, "Ran out of space to store chain work!");
-            if (chainWorkBytes.length < CHAIN_WORK_BYTES) {
-                // Pad to the right size.
-                buffer.put(EMPTY_BYTES, 0, CHAIN_WORK_BYTES - chainWorkBytes.length);
-            }
-            buffer.put(chainWorkBytes);
-            buffer.putInt(block.getHeight());
-            // Using unsafeBitcoinSerialize here can give us direct access to the same bytes we read off the wire,
-            // avoiding serialization round-trips.
-            byte[] bytes = block.getHeader().unsafeBitcoinSerialize();
-            buffer.put(bytes, 0, Block.HEADER_SIZE);  // Trim the trailing 00 byte (zero transactions).
+            block.serializeCompact(buffer);
             setRingCursor(buffer, buffer.position());
             blockCache.put(hash, block);
         } finally { lock.unlock(); }
@@ -220,13 +209,7 @@ public class SPVBlockStore implements BlockStore {
                 buffer.get(scratch);
                 if (Arrays.equals(scratch, targetHashBytes)) {
                     // Found the target.
-                    byte[] chainWorkBytes = new byte[CHAIN_WORK_BYTES];
-                    buffer.get(chainWorkBytes);
-                    BigInteger chainWork = new BigInteger(1, chainWorkBytes);
-                    int height = buffer.getInt();  // +4 bytes
-                    byte[] header = new byte[Block.HEADER_SIZE + 1];    // Extra byte for the 00 transactions length.
-                    buffer.get(header, 0, Block.HEADER_SIZE);
-                    StoredBlock storedBlock = new StoredBlock(new Block(params, header), chainWork, height);
+                    StoredBlock storedBlock = StoredBlock.deserializeCompact(params, buffer);
                     blockCache.put(hash, storedBlock);
                     return storedBlock;
                 }
@@ -281,15 +264,7 @@ public class SPVBlockStore implements BlockStore {
         }
     }
 
-    // A BigInteger representing the total amount of work done so far on this chain. As of May 2011 it takes 8
-    // bytes to represent this field, so 12 bytes should be plenty for now.
-    protected static final int CHAIN_WORK_BYTES = 12;
-    protected static final byte[] EMPTY_BYTES = new byte[CHAIN_WORK_BYTES];
-
-    protected static final int RECORD_SIZE = Block.HEADER_SIZE +
-                                             32 +   // for a SHA256 hash
-                                             4  +   // for a height
-                                             CHAIN_WORK_BYTES;  // == 128 all together.
+    protected static final int RECORD_SIZE = 32 /* hash */ + StoredBlock.COMPACT_SERIALIZED_SIZE;
 
     // File format:
     //   4 header bytes = "SPVB"

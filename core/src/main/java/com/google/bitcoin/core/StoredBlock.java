@@ -19,8 +19,11 @@ package com.google.bitcoin.core;
 import com.google.bitcoin.store.BlockStore;
 import com.google.bitcoin.store.BlockStoreException;
 
-import java.io.Serializable;
+import java.io.*;
 import java.math.BigInteger;
+import java.nio.ByteBuffer;
+
+import static com.google.common.base.Preconditions.checkState;
 
 /**
  * Wraps a {@link Block} object with extra data that can be derived from the block chain but is slow or inconvenient to
@@ -34,6 +37,12 @@ import java.math.BigInteger;
 public class StoredBlock implements Serializable {
     private static final long serialVersionUID = -6097565241243701771L;
 
+    // A BigInteger representing the total amount of work done so far on this chain. As of May 2011 it takes 8
+    // bytes to represent this field, so 12 bytes should be plenty for now.
+    public static final int CHAIN_WORK_BYTES = 12;
+    public static final byte[] EMPTY_BYTES = new byte[CHAIN_WORK_BYTES];
+    public static final int COMPACT_SERIALIZED_SIZE = Block.HEADER_SIZE + CHAIN_WORK_BYTES + 4;  // for height
+
     private Block header;
     private BigInteger chainWork;
     private int height;
@@ -43,7 +52,6 @@ public class StoredBlock implements Serializable {
         this.chainWork = chainWork;
         this.height = height;
     }
-
 
     /**
      * The block header this object wraps. The referenced block object must not have any transactions in it.
@@ -106,6 +114,33 @@ public class StoredBlock implements Serializable {
      */
     public StoredBlock getPrev(BlockStore store) throws BlockStoreException {
         return store.get(getHeader().getPrevBlockHash());
+    }
+
+    /** Serializes the stored block to a custom packed format. Used by {@link CheckpointManager}. */
+    public void serializeCompact(ByteBuffer buffer) {
+        byte[] chainWorkBytes = getChainWork().toByteArray();
+        checkState(chainWorkBytes.length <= CHAIN_WORK_BYTES, "Ran out of space to store chain work!");
+        if (chainWorkBytes.length < CHAIN_WORK_BYTES) {
+            // Pad to the right size.
+            buffer.put(EMPTY_BYTES, 0, CHAIN_WORK_BYTES - chainWorkBytes.length);
+        }
+        buffer.put(chainWorkBytes);
+        buffer.putInt(getHeight());
+        // Using unsafeBitcoinSerialize here can give us direct access to the same bytes we read off the wire,
+        // avoiding serialization round-trips.
+        byte[] bytes = getHeader().unsafeBitcoinSerialize();
+        buffer.put(bytes, 0, Block.HEADER_SIZE);  // Trim the trailing 00 byte (zero transactions).
+    }
+
+    /** De-serializes the stored block from a custom packed format. Used by {@link CheckpointManager}. */
+    public static StoredBlock deserializeCompact(NetworkParameters params, ByteBuffer buffer) throws ProtocolException {
+        byte[] chainWorkBytes = new byte[StoredBlock.CHAIN_WORK_BYTES];
+        buffer.get(chainWorkBytes);
+        BigInteger chainWork = new BigInteger(1, chainWorkBytes);
+        int height = buffer.getInt();  // +4 bytes
+        byte[] header = new byte[Block.HEADER_SIZE + 1];    // Extra byte for the 00 transactions length.
+        buffer.get(header, 0, Block.HEADER_SIZE);
+        return new StoredBlock(new Block(params, header), chainWork, height);
     }
 
     @Override
