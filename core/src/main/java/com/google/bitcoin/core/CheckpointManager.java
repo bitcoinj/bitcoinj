@@ -16,12 +16,13 @@
 
 package com.google.bitcoin.core;
 
+import com.google.bitcoin.store.BlockStore;
+import com.google.bitcoin.store.BlockStoreException;
+import com.google.bitcoin.store.FullPrunedBlockStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.DataInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.nio.ByteBuffer;
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
@@ -98,10 +99,10 @@ public class CheckpointManager {
      * Returns a {@link StoredBlock} representing the last checkpoint before the given time, for example, normally
      * you would want to know the checkpoint before the earliest wallet birthday.
      */
-    public StoredBlock getCheckpointBefore(int time) {
+    public StoredBlock getCheckpointBefore(long time) {
         checkArgument(time > params.genesisBlock.getTimeSeconds());
         // This is thread safe because the map never changes after creation.
-        Map.Entry<Long, StoredBlock> entry = checkpoints.floorEntry((long) time);
+        Map.Entry<Long, StoredBlock> entry = checkpoints.floorEntry(time);
         if (entry == null) {
             try {
                 Block genesis = params.genesisBlock.cloneAsHeader();
@@ -121,5 +122,22 @@ public class CheckpointManager {
     /** Returns a hash of the concatenated checkpoint data. */
     public Sha256Hash getDataHash() {
         return dataHash;
+    }
+
+    /**
+     * Convenience method that creates a CheckpointManager, loads the given data, gets the checkpoint for the given
+     * time, then inserts it into the store and sets that to be the chain head. Useful when you have just created
+     * a new store from scratch and want to use configure it all in one go.
+     */
+    public static void checkpoint(NetworkParameters params, InputStream checkpoints, BlockStore store, long time)
+            throws IOException, BlockStoreException {
+        checkNotNull(params);
+        checkNotNull(store);
+        checkArgument(!(store instanceof FullPrunedBlockStore), "You cannot use checkpointing with a full store.");
+        BufferedInputStream stream = new BufferedInputStream(checkpoints);
+        CheckpointManager manager = new CheckpointManager(params, stream);
+        StoredBlock checkpoint = manager.getCheckpointBefore(time);
+        store.put(checkpoint);
+        store.setChainHead(checkpoint);
     }
 }

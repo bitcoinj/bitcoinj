@@ -26,6 +26,7 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.math.BigInteger;
 
@@ -81,11 +82,19 @@ public class PingService {
         }
         final Wallet wallet = w;
         // Fetch the first key in the wallet (should be the only key).
-        ECKey key = wallet.keychain.get(0);
-        // Load the block chain, if there is one stored locally.
+        ECKey key = wallet.getKeys().iterator().next();
+        // Load the block chain, if there is one stored locally. If it's going to be freshly created, checkpoint it.
         System.out.println("Reading block store from disk");
         File file = new File(filePrefix + ".spvchain");
+        boolean chainExistedAlready = file.exists();
         blockStore = new SPVBlockStore(params, file);
+        if (!chainExistedAlready) {
+            File checkpointsFile = new File("checkpoints");
+            if (checkpointsFile.exists()) {
+                FileInputStream stream = new FileInputStream(checkpointsFile);
+                CheckpointManager.checkpoint(params, stream, blockStore, key.getCreationTimeSeconds());
+            }
+        }
         // Connect to the localhost node. One minute timeout since we won't try any other peers
         System.out.println("Connecting ...");
         chain = new BlockChain(params, wallet, blockStore);
