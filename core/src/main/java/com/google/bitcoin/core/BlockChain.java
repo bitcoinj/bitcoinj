@@ -33,12 +33,13 @@ public class BlockChain extends AbstractBlockChain {
     protected final BlockStore blockStore;
 
     /**
-     * Constructs a BlockChain connected to the given wallet and store. To obtain a {@link Wallet} you can construct
+     * <p>Constructs a BlockChain connected to the given wallet and store. To obtain a {@link Wallet} you can construct
      * one from scratch, or you can deserialize a saved wallet from disk using {@link Wallet#loadFromFile(java.io.File)}
-     * <p/>
+     * </p>
      *
-     * For the store you can use a {@link com.google.bitcoin.store.MemoryBlockStore} if you don't care about saving the downloaded data, or a
-     * {@link com.google.bitcoin.store.BoundedOverheadBlockStore} if you'd like to ensure fast startup the next time you run the program.
+     * <p>For the store, you should use {@link com.google.bitcoin.store.SPVBlockStore} or you could also try a
+     * {@link com.google.bitcoin.store.MemoryBlockStore} if you want to hold all headers in RAM and don't care about
+     * disk serialization (this is rare).</p>
      */
     public BlockChain(NetworkParameters params, Wallet wallet, BlockStore blockStore) throws BlockStoreException {
         this(params, new ArrayList<BlockChainListener>(), blockStore);
