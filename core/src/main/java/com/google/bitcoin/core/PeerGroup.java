@@ -101,7 +101,7 @@ public class PeerGroup extends AbstractIdleService {
     // and network latency. We ping peers every pingIntervalMsec milliseconds.
     private Timer pingTimer;
     /** How many milliseconds to wait after receiving a pong before sending another ping. */
-    public static final long DEFAULT_PING_INTERVAL_MSEC = 1000;
+    public static final long DEFAULT_PING_INTERVAL_MSEC = 2000;
     private long pingIntervalMsec = DEFAULT_PING_INTERVAL_MSEC;
 
     private final NetworkParameters params;
