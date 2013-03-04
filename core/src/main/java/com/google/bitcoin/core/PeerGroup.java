@@ -101,7 +101,7 @@ public class PeerGroup extends AbstractIdleService {
     // and network latency. We ping peers every pingIntervalMsec milliseconds.
     private Timer pingTimer;
     /** How many milliseconds to wait after receiving a pong before sending another ping. */
-    public static final long DEFAULT_PING_INTERVAL_MSEC = 5000;
+    public static final long DEFAULT_PING_INTERVAL_MSEC = 1000;
     private long pingIntervalMsec = DEFAULT_PING_INTERVAL_MSEC;
 
     private final NetworkParameters params;
@@ -793,7 +793,8 @@ public class PeerGroup extends AbstractIdleService {
             return;  // Disabled.
         // Start the process of pinging the peer. Do a ping right now and then ensure there's a fixed delay between
         // each ping. If the peer is taken out of the peers list then the cycle will stop.
-        new Runnable() {
+        final Runnable[] pingRunnable = new Runnable[1];
+        pingRunnable[0] = new Runnable() {
             private boolean firstRun = true;
             public void run() {
                 // Ensure that the first ping happens immediately and later pings after the requested delay.
@@ -817,14 +818,15 @@ public class PeerGroup extends AbstractIdleService {
                         try {
                             if (!peers.contains(peer) || !PeerGroup.this.isRunning())
                                 return;  // Peer was removed/shut down.
-                            peer.ping().addListener(this, MoreExecutors.sameThreadExecutor());
+                            peer.ping().addListener(pingRunnable[0], MoreExecutors.sameThreadExecutor());
                         } catch (Exception e) {
                             log.warn("{}: Exception whilst trying to ping peer: {}", peer, e.toString());
                         }
                     }
                 }, interval);
             }
-        }.run();
+        };
+        pingRunnable[0].run();
     }
 
     /** Returns true if at least one peer received an inv. */
