@@ -169,10 +169,8 @@ public class Wallet implements Serializable, BlockChainListener {
 
     private final NetworkParameters params;
 
-    /**
-     * The hash of the last block seen on the best chain
-     */
     private Sha256Hash lastBlockSeenHash;
+    private int lastBlockSeenHeight = -1;
 
     private transient ArrayList<WalletEventListener> eventListeners;
 
@@ -1050,9 +1048,10 @@ public class Wallet implements Serializable, BlockChainListener {
      * transactions are extracted and sent to us UNLESS the new block caused a re-org, in which case this will
      * not be called (the {@link Wallet#reorganize(StoredBlock, java.util.List, java.util.List)} method will
      * call this one in that case).</p>
-     *
+     * <p/>
      * <p>Used to update confidence data in each transaction and last seen block hash. Triggers auto saving.
      * Invokes the onWalletChanged event listener if there were any affected transactions.</p>
+     *
      * @param block
      */
     public synchronized void notifyNewBestBlock(StoredBlock block) throws VerificationException {
@@ -1062,6 +1061,7 @@ public class Wallet implements Serializable, BlockChainListener {
             return;
         // Store the new block hash.
         setLastBlockSeenHash(newBlockHash);
+        setLastBlockSeenHeight(block.getHeight());
         // TODO: Clarify the code below.
         // Notify all the BUILDING transactions of the new block.
         // This is so that they can update their work done and depth.
@@ -1927,7 +1927,7 @@ public class Wallet implements Serializable, BlockChainListener {
     public synchronized BigInteger getBalance(CoinSelector selector) {
         checkNotNull(selector);
         LinkedList<TransactionOutput> candidates = calculateSpendCandidates(true);
-        CoinSelection selection = selector.select(params.MAX_MONEY, candidates);
+        CoinSelection selection = selector.select(NetworkParameters.MAX_MONEY, candidates);
         return selection.valueGathered;
     }
 
@@ -1951,7 +1951,8 @@ public class Wallet implements Serializable, BlockChainListener {
         builder.append(String.format("  %d pending transactions%n", pending.size()));
         builder.append(String.format("  %d inactive transactions%n", inactive.size()));
         builder.append(String.format("  %d dead transactions%n", dead.size()));
-        builder.append(String.format("Last seen best block: %s%n", getLastBlockSeenHash()));
+        builder.append(String.format("Last seen best block: (%d) %s%n",
+                getLastBlockSeenHeight(), getLastBlockSeenHash()));
         // Do the keys.
         builder.append("\nKeys:\n");
         for (ECKey key : keychain) {
@@ -2383,12 +2384,22 @@ public class Wallet implements Serializable, BlockChainListener {
         return earliestTime;
     }
 
+    /** Returns the hash of the last seen best-chain block. */
     public Sha256Hash getLastBlockSeenHash() {
         return lastBlockSeenHash;
     }
 
     public void setLastBlockSeenHash(Sha256Hash lastBlockSeenHash) {
         this.lastBlockSeenHash = lastBlockSeenHash;
+    }
+
+    public void setLastBlockSeenHeight(int lastBlockSeenHeight) {
+        this.lastBlockSeenHeight = lastBlockSeenHeight;
+    }
+
+    /** Returns the height of the last seen best-chain block. Can be -1 if a wallet is old and doesn't have that data. */
+    public int getLastBlockSeenHeight() {
+        return lastBlockSeenHeight;
     }
     
     /**

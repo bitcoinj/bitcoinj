@@ -129,10 +129,12 @@ public class WalletProtobufSerializerTest {
         Block block = new Block(params, BlockTest.blockBytes);
         Sha256Hash blockHash = block.getHash();
         wallet.setLastBlockSeenHash(blockHash);
+        wallet.setLastBlockSeenHeight(1);
 
         // Roundtrip the wallet and check it has stored the blockHash.
         Wallet wallet1 = roundTrip(wallet);
         assertEquals(blockHash, wallet1.getLastBlockSeenHash());
+        assertEquals(1, wallet1.getLastBlockSeenHeight());
 
         // Test the Satoshi genesis block (hash of all zeroes) is roundtripped ok.
         Block genesisBlock = NetworkParameters.prodNet().genesisBlock;

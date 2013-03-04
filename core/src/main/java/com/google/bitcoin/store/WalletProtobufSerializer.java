@@ -59,11 +59,6 @@ public class WalletProtobufSerializer {
     private Map<ByteString, Transaction> txMap;
     private WalletExtensionSerializer helper;
 
-    // Temporary hack for migrating 0.5 wallets to 0.6 wallets. In 0.5 transactions stored the height at which they
-    // appeared in the block chain (for the current best chain) but not the depth. In 0.6 we store both and update
-    // every transaction every time we receive a block, so we need to fill out depth from best chain height.
-    private int chainHeight;
-
     public WalletProtobufSerializer() {
         txMap = new HashMap<ByteString, Transaction>();
         helper = new WalletExtensionSerializer();
@@ -128,6 +123,7 @@ public class WalletProtobufSerializer {
         Sha256Hash lastSeenBlockHash = wallet.getLastBlockSeenHash();
         if (lastSeenBlockHash != null) {
             walletBuilder.setLastSeenBlockHash(hashToByteString(lastSeenBlockHash));
+            walletBuilder.setLastSeenBlockHeight(wallet.getLastBlockSeenHeight());
         }
 
         Collection<Protos.Extension> extensions = helper.getExtensionsToWrite(wallet);
@@ -291,6 +287,11 @@ public class WalletProtobufSerializer {
             wallet.setLastBlockSeenHash(null);
         } else {
             wallet.setLastBlockSeenHash(byteStringToHash(walletProto.getLastSeenBlockHash()));
+        }
+        if (!walletProto.hasLastSeenBlockHeight()) {
+            wallet.setLastBlockSeenHeight(-1);
+        } else {
+            wallet.setLastBlockSeenHeight(walletProto.getLastSeenBlockHeight());
         }
 
         for (Protos.Extension extProto : walletProto.getExtensionList()) {

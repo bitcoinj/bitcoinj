@@ -192,10 +192,12 @@ message Wallet {
   // org.bitcoin.production = production network (Satoshi genesis block)
   // org.bitcoin.test = test network (Andresen genesis block)
 
-  // The Sha256 hash of the head of the best chain seen by this wallet.
+  // The SHA256 hash of the head of the best chain seen by this wallet.
   optional bytes last_seen_block_hash = 2;
+  // The height in the chain of the last seen block.
+  optional uint32 last_seen_block_height = 5;
 
   repeated Key key = 3;
   repeated Transaction transaction = 4;
-  repeated Extension extension = 10; 
+  repeated Extension extension = 10;
 } // end of Wallet
