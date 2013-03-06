@@ -37,21 +37,16 @@ import java.util.Map;
 import static com.google.common.base.Preconditions.checkState;
 
 /**
- * Stores the block chain to disk.<p>
+ * <p></p>Stores the block chain to disk.<p>
  *
- * This implementation is designed to have constant memory usage, regardless of the size of the block chain being
- * stored. It exploits operating system level buffering and the fact that get() requests are, in normal usage,
- * localized in chain space.<p>
+ * <p>This class is deprecated and has been replaced with {@link SPVBlockStore}, which does the same thing but faster
+ * and using bounded disk space. The primary difference is that BoundedOverheadBlockStore stores all headers, whereas
+ * SPVBlockStore uses a ring buffer and discards older headers that are buried so deep they're unlikely to ever be
+ * needed to process a re-org.</p>
  *
- * Blocks are stored sequentially. Most blocks are fetched out of a small in-memory cache. The slowest part is
- * traversing difficulty transition points, which requires seeking backwards over around 2000 blocks. On a Google
- * Nexus S phone this takes a couple of seconds. On a MacBook Pro it takes around 50msec.<p>
- *
- * The store has much room for optimization. Expanding the size of the cache will likely allow us to traverse
- * difficulty transitions without using too much memory and without hitting the disk at all, for the case of initial
- * block chain download. Storing the hashes on disk would allow us to avoid deserialization and hashing which is
- * expensive on Android.
+ * <p>This class will eventually be deleted.</p>
  */
+@Deprecated
 public class BoundedOverheadBlockStore implements BlockStore {
     private static final Logger log = LoggerFactory.getLogger(BoundedOverheadBlockStore.class);
     private static final byte FILE_FORMAT_VERSION = 1;
