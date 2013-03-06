@@ -245,7 +245,7 @@ public class Wallet implements Serializable, BlockChainListener {
             for (TransactionOutput output : sortedOutputs) {
                 if (total >= target) break;
                 // Only pick chain-included transactions, or transactions that are ours and pending.
-                if (!isSelectable(output)) continue;
+                if (!isSelectable(output.parentTransaction)) continue;
                 selected.add(output);
                 total += output.getValue().longValue();
             }
@@ -254,9 +254,9 @@ public class Wallet implements Serializable, BlockChainListener {
             return new CoinSelection(BigInteger.valueOf(total), selected);
         }
 
-        public static boolean isSelectable(TransactionOutput output) {
+        public static boolean isSelectable(Transaction tx) {
             // Only pick chain-included transactions, or transactions that are ours and pending.
-            TransactionConfidence confidence = output.parentTransaction.getConfidence();
+            TransactionConfidence confidence = tx.getConfidence();
             ConfidenceType type = confidence.getConfidenceType();
             boolean pending = type.equals(ConfidenceType.NOT_SEEN_IN_CHAIN) ||
                     type.equals(ConfidenceType.NOT_IN_BEST_CHAIN);
