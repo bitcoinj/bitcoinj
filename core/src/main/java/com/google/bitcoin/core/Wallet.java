@@ -245,26 +245,32 @@ public class Wallet implements Serializable, BlockChainListener {
             for (TransactionOutput output : sortedOutputs) {
                 if (total >= target) break;
                 // Only pick chain-included transactions, or transactions that are ours and pending.
-                TransactionConfidence confidence = output.parentTransaction.getConfidence();
-                ConfidenceType type = confidence.getConfidenceType();
-                boolean pending = type.equals(ConfidenceType.NOT_SEEN_IN_CHAIN) ||
-                                  type.equals(ConfidenceType.NOT_IN_BEST_CHAIN);
-                boolean confirmed = type.equals(ConfidenceType.BUILDING);
-                if (!confirmed) {
-                    // If the transaction is still pending ...
-                    if (!pending) continue;
-                    // And it was created by us ...
-                    if (!confidence.getSource().equals(TransactionConfidence.Source.SELF)) continue;
-                    // And it's been seen by the network and propagated ...
-                    if (confidence.numBroadcastPeers() <= 1) continue;
-                    // Then it's OK to select.
-                }
+                if (!isSelectable(output)) continue;
                 selected.add(output);
                 total += output.getValue().longValue();
             }
             // Total may be lower than target here, if the given candidates were insufficient to create to requested
             // transaction.
             return new CoinSelection(BigInteger.valueOf(total), selected);
+        }
+
+        public static boolean isSelectable(TransactionOutput output) {
+            // Only pick chain-included transactions, or transactions that are ours and pending.
+            TransactionConfidence confidence = output.parentTransaction.getConfidence();
+            ConfidenceType type = confidence.getConfidenceType();
+            boolean pending = type.equals(ConfidenceType.NOT_SEEN_IN_CHAIN) ||
+                    type.equals(ConfidenceType.NOT_IN_BEST_CHAIN);
+            boolean confirmed = type.equals(ConfidenceType.BUILDING);
+            if (!confirmed) {
+                // If the transaction is still pending ...
+                if (!pending) return false;
+                // And it was created by us ...
+                if (!confidence.getSource().equals(TransactionConfidence.Source.SELF)) return false;
+                // And it's been seen by the network and propagated ...
+                if (confidence.numBroadcastPeers() <= 1) return false;
+                // Then it's OK to select.
+            }
+            return true;
         }
     }
 
@@ -570,7 +576,6 @@ public class Wallet implements Serializable, BlockChainListener {
      * @param delayTime How many time units to wait until saving the wallet on a background thread.
      * @param timeUnit the unit of measurement for delayTime.
      * @param eventListener callback to be informed when the auto-save thread does things, or null
-     * @throws IOException
      */
     public synchronized void autosaveToFile(File f, long delayTime, TimeUnit timeUnit,
                                             AutosaveEventListener eventListener) {
