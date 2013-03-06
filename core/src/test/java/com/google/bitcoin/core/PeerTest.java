@@ -47,11 +47,10 @@ public class PeerTest extends TestWithNetworkConnections {
     public void setUp() throws Exception {
         super.setUp();
 
-        VersionMessage ver = new VersionMessage(unitTestParams, 100);
-        peer = new Peer(unitTestParams, blockChain, ver);
-        peer.addWallet(wallet);
         memoryPool = new MemoryPool();
-        peer.setMemoryPool(memoryPool);
+        VersionMessage ver = new VersionMessage(unitTestParams, 100);
+        peer = new Peer(unitTestParams, blockChain, ver, memoryPool);
+        peer.addWallet(wallet);
         handler = peer.getHandler();
         event = new Capture<DownstreamMessageEvent>(CaptureType.ALL);
         pipeline.sendDownstream(capture(event));
@@ -272,14 +271,10 @@ public class PeerTest extends TestWithNetworkConnections {
         control.replay();
 
         // Check co-ordination of which peer to download via the memory pool.
-        MemoryPool pool = new MemoryPool();
-        peer.setMemoryPool(pool);
-
         MockNetworkConnection conn2 = createMockNetworkConnection();
         VersionMessage ver = new VersionMessage(unitTestParams, 100);
-        Peer peer2 = new Peer(unitTestParams, blockChain, ver);
+        Peer peer2 = new Peer(unitTestParams, blockChain, ver, memoryPool);
         peer2.addWallet(wallet);
-        peer2.setMemoryPool(pool);
 
         connect();
         connect(peer2.getHandler(), channel2, ctx2);
@@ -297,7 +292,7 @@ public class PeerTest extends TestWithNetworkConnections {
         GetDataMessage message = (GetDataMessage)outbound();
         assertEquals(1, message.getItems().size());
         assertEquals(tx.getHash(), message.getItems().get(0).hash);
-        assertTrue(pool.maybeWasSeen(tx.getHash()));
+        assertTrue(memoryPool.maybeWasSeen(tx.getHash()));
 
         // Advertising to peer2 results in no getdata message.
         conn2.inbound(inv);

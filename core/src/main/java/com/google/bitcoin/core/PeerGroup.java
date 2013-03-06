@@ -256,7 +256,7 @@ public class PeerGroup extends AbstractIdleService {
 
                 ChannelPipeline p = Channels.pipeline();
 
-                Peer peer = new Peer(params, chain, ver);
+                Peer peer = new Peer(params, chain, ver, memoryPool);
                 peer.addLifecycleListener(startupListener);
                 pendingPeers.add(peer);
                 TCPNetworkConnection codec = new TCPNetworkConnection(params, peer.getVersionMessage());
@@ -726,7 +726,6 @@ public class PeerGroup extends AbstractIdleService {
             if (bloomFilter != null) peer.setBloomFilter(bloomFilter);
         } catch (IOException e) { } // That was quick...already disconnected
         // Link the peer to the memory pool so broadcast transactions have their confidence levels updated.
-        peer.setMemoryPool(memoryPool);
         peer.setDownloadData(false);
         // TODO: The peer should calculate the fast catchup time from the added wallets here.
         for (Wallet wallet : wallets)

@@ -56,9 +56,8 @@ public class Peer {
     private final NetworkParameters params;
     private final AbstractBlockChain blockChain;
     private final AtomicReference<PeerAddress> address = new AtomicReference<PeerAddress>();
-    // TODO: Make the types here explicit and remove synchronization on adders/removers.
-    private List<PeerEventListener> eventListeners;
-    private List<PeerLifecycleListener> lifecycleListeners;
+    private final CopyOnWriteArrayList<PeerEventListener> eventListeners;
+    private final CopyOnWriteArrayList<PeerLifecycleListener> lifecycleListeners;
     // Whether to try and download blocks and transactions from this peer. Set to false by PeerGroup if not the
     // primary peer. This is to avoid redundant work and concurrency problems with downloading the same chain
     // in parallel.
@@ -69,13 +68,12 @@ public class Peer {
     // How many block messages the peer has announced to us. Peers only announce blocks that attach to their best chain
     // so we can use this to calculate the height of the peers chain, by adding it to the initial height in the version
     // message. This method can go wrong if the peer re-orgs onto a shorter (but harder) chain, however, this is rare.
-    private AtomicInteger blocksAnnounced = new AtomicInteger();
+    private final AtomicInteger blocksAnnounced = new AtomicInteger();
     // A class that tracks recent transactions that have been broadcast across the network, counts how many
     // peers announced them and updates the transaction confidence data. It is passed to each Peer.
-    // TODO: Make this final and unsynchronized.
-    private MemoryPool memoryPool;
+    private final MemoryPool memoryPool;
     // Each wallet added to the peer will be notified of downloaded transaction data.
-    private CopyOnWriteArrayList<Wallet> wallets;
+    private final CopyOnWriteArrayList<Wallet> wallets;
     // A time before which we only download block headers, after that point we download block bodies.
     private long fastCatchupTimeSecs;
     // Whether we are currently downloading headers only or block bodies. Starts at true. If the fast catchup time is
@@ -92,7 +90,7 @@ public class Peer {
     //
     // It is important to avoid a nasty edge case where we can end up with parallel chain downloads proceeding
     // simultaneously if we were to receive a newly solved block whilst parts of the chain are streaming to us.
-    private HashSet<Sha256Hash> pendingBlockDownloads = new HashSet<Sha256Hash>();
+    private final HashSet<Sha256Hash> pendingBlockDownloads = new HashSet<Sha256Hash>();
     // The lowest version number we're willing to accept. Lower than this will result in an immediate disconnect.
     private int minProtocolVersion = Pong.MIN_PROTOCOL_VERSION;
     // When an API user explicitly requests a block or transaction from a peer, the InventoryItem is put here
@@ -114,7 +112,7 @@ public class Peer {
     private static final int PING_MOVING_AVERAGE_WINDOW = 20;
 
     private Channel channel;
-    private AtomicReference<VersionMessage> peerVersionMessage = new AtomicReference<VersionMessage>();
+    private final AtomicReference<VersionMessage> peerVersionMessage = new AtomicReference<VersionMessage>();
     private boolean isAcked;
     private PeerHandler handler;
 
@@ -122,6 +120,15 @@ public class Peer {
      * Construct a peer that reads/writes from the given block chain.
      */
     public Peer(NetworkParameters params, AbstractBlockChain chain, VersionMessage ver) {
+        this(params, chain, ver, null);
+    }
+
+    /**
+     * Construct a peer that reads/writes from the given block chain and memory pool. Transactions stored
+     * in a memory pool will have their confidence levels updated when a peer announces it, to reflect the greater
+     * likelyhood that the transaction is valid.
+     */
+    public Peer(NetworkParameters params, AbstractBlockChain chain, VersionMessage ver, MemoryPool mempool) {
         this.params = Preconditions.checkNotNull(params);
         this.versionMessage = Preconditions.checkNotNull(ver);
         this.blockChain = chain;  // Allowed to be null.
@@ -134,6 +141,7 @@ public class Peer {
         this.handler = new PeerHandler();
         this.pendingPings = new CopyOnWriteArrayList<PendingPing>();
         this.wallets = new CopyOnWriteArrayList<Wallet>();
+        this.memoryPool = mempool;
     }
 
     /**
@@ -146,32 +154,20 @@ public class Peer {
         this.versionMessage.appendToSubVer(thisSoftwareName, thisSoftwareVersion, null);
     }
 
-    public synchronized void addEventListener(PeerEventListener listener) {
+    public void addEventListener(PeerEventListener listener) {
         eventListeners.add(listener);
     }
 
-    public synchronized boolean removeEventListener(PeerEventListener listener) {
+    public boolean removeEventListener(PeerEventListener listener) {
         return eventListeners.remove(listener);
     }
 
-    synchronized void addLifecycleListener(PeerLifecycleListener listener) {
+    void addLifecycleListener(PeerLifecycleListener listener) {
         lifecycleListeners.add(listener);
     }
 
-    synchronized boolean removeLifecycleListener(PeerLifecycleListener listener) {
+    boolean removeLifecycleListener(PeerLifecycleListener listener) {
         return lifecycleListeners.remove(listener);
-    }
-
-    /**
-     * Tells the peer to insert received transactions/transaction announcements into the given {@link MemoryPool}.
-     * This is normally done for you by the {@link PeerGroup} so you don't have to think about it. Transactions stored
-     * in a memory pool will have their confidence levels updated when a peer announces it, to reflect the greater
-     * likelyhood that the transaction is valid.
-     *
-     * @param pool A new pool or null to unlink.
-     */
-    public synchronized void setMemoryPool(MemoryPool pool) {
-        memoryPool = pool;
     }
 
     @Override
@@ -1260,7 +1256,7 @@ public class Peer {
 
     /**
      * <p>Sets a Bloom filter on this connection. This will cause the given {@link BloomFilter} object to be sent to the
-     * remote peer and if either a memory pool has been set using {@link Peer#setMemoryPool(MemoryPool)} or the
+     * remote peer and if either a memory pool has been set using the constructor or the
      * downloadData property is true, a {@link MemoryPoolMessage} is sent as well to trigger downloading of any
      * pending transactions that may be relevant.</p>
      *

@@ -51,7 +51,7 @@ public class TestWithPeerGroup extends TestWithNetworkConnections {
                 VersionMessage ver = new VersionMessage(unitTestParams, 1);
                 ChannelPipeline p = Channels.pipeline();
                 
-                Peer peer = new Peer(unitTestParams, blockChain, ver);
+                Peer peer = new Peer(unitTestParams, blockChain, ver, peerGroup.getMemoryPool());
                 peer.addLifecycleListener(peerGroup.startupListener);
                 p.addLast("peer", peer.getHandler());
                 return p;
