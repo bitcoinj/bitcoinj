@@ -58,10 +58,11 @@ public class CheckpointManager {
 
     public CheckpointManager(NetworkParameters params, InputStream inputStream) throws IOException {
         this.params = checkNotNull(params);
+        DataInputStream dis = null;
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
             DigestInputStream digestInputStream = new DigestInputStream(checkNotNull(inputStream), digest);
-            DataInputStream dis = new DataInputStream(digestInputStream);
+            dis = new DataInputStream(digestInputStream);
             digestInputStream.on(false);
             String magic = "CHECKPOINTS 1";
             byte[] header = new byte[magic.length()];
@@ -77,9 +78,11 @@ public class CheckpointManager {
             digestInputStream.on(true);
             int numCheckpoints = dis.readInt();
             checkState(numCheckpoints > 0);
-            ByteBuffer buffer = ByteBuffer.allocate(StoredBlock.COMPACT_SERIALIZED_SIZE);
+            final int size = StoredBlock.COMPACT_SERIALIZED_SIZE;
+            ByteBuffer buffer = ByteBuffer.allocate(size);
             for (int i = 0; i < numCheckpoints; i++) {
-                dis.read(buffer.array(), 0, StoredBlock.COMPACT_SERIALIZED_SIZE);
+                if (dis.read(buffer.array(), 0, size) < size)
+                    throw new IOException("Incomplete read whilst loading checkpoints.");
                 StoredBlock block = StoredBlock.deserializeCompact(params, buffer);
                 buffer.position(0);
                 checkpoints.put(block.getHeader().getTimeSeconds(), block);
@@ -91,6 +94,7 @@ public class CheckpointManager {
         } catch (ProtocolException e) {
             throw new IOException(e);
         } finally {
+            if (dis != null) dis.close();
             inputStream.close();
         }
     }
