@@ -61,7 +61,7 @@ public class NetworkParameters implements Serializable {
     /**
      * <p>Genesis block for this chain.</p>
      *
-     * <p>The first block in every chain is a well known constant shared between all BitCoin implemenetations. For a
+     * <p>The first block in every chain is a well known constant shared between all Bitcoin implemenetations. For a
      * block to be valid, it must be eventually possible to work backwards to the genesis block by following the
      * prevBlockHash pointers in the block headers.</p>
      *

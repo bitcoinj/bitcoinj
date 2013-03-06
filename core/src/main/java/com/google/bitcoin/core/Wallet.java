@@ -127,7 +127,7 @@ public class Wallet implements Serializable, BlockChainListener {
      * may have unspent "change" outputs.<p>
      * <p/>
      * Note: for now we will not allow spends of transactions that did not make it into the block chain. The code
-     * that handles this in BitCoin C++ is complicated. Satoshis code will not allow you to spend unconfirmed coins,
+     * that handles this in Bitcoin C++ is complicated. Satoshis code will not allow you to spend unconfirmed coins,
      * however, it does seem to support dependency resolution entirely within the context of the memory pool so
      * theoretically you could spend zero-conf coins and all of them would be included together. To simplify we'll
      * make people wait but it would be a good improvement to resolve this in future.
@@ -1590,7 +1590,7 @@ public class Wallet implements Serializable, BlockChainListener {
      * prevent this, but that should only occur once the transaction has been accepted by the network. This implies
      * you cannot have more than one outstanding sending tx at once.</p>
      *
-     * @param address       The BitCoin address to send the money to.
+     * @param address       The Bitcoin address to send the money to.
      * @param nanocoins     How much currency to send, in nanocoins.
      * @return either the created Transaction or null if there are insufficient coins.
      * coins as spent until commitTx is called on the result.

@@ -60,9 +60,9 @@ public class Utils {
     // TODO: Replace this nanocoins business with something better.
 
     /**
-     * How many "nanocoins" there are in a BitCoin.
+     * How many "nanocoins" there are in a Bitcoin.
      * <p/>
-     * A nanocoin is the smallest unit that can be transferred using BitCoin.
+     * A nanocoin is the smallest unit that can be transferred using Bitcoin.
      * The term nanocoin is very misleading, though, because there are only 100 million
      * of them in a coin (whereas one would expect 1 billion.
      */
@@ -71,7 +71,7 @@ public class Utils {
     /**
      * How many "nanocoins" there are in 0.01 BitCoins.
      * <p/>
-     * A nanocoin is the smallest unit that can be transferred using BitCoin.
+     * A nanocoin is the smallest unit that can be transferred using Bitcoin.
      * The term nanocoin is very misleading, though, because there are only 100 million
      * of them in a coin (whereas one would expect 1 billion).
      */
