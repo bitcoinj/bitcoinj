@@ -37,8 +37,8 @@ import static com.google.common.base.Preconditions.checkArgument;
  * To enable debug logging from the library, run with -Dbitcoinj.logging=true on your command line.
  */
 public class Utils {
-    private static CycleDetectingLockFactory lockFactory = CycleDetectingLockFactory.newInstance(CycleDetectingLockFactory.Policies.THROW);
-    private static MessageDigest digest;
+    private static final CycleDetectingLockFactory cycleDetectingLockFactory;
+    private static final MessageDigest digest;
 
     static {
         try {
@@ -46,12 +46,18 @@ public class Utils {
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException(e);  // Can't happen.
         }
+
+        cycleDetectingLockFactory = CycleDetectingLockFactory.newInstance(CycleDetectingLockFactory.Policies.WARN);
     }
 
+    private static final boolean detectLockCycles = true;
 
-    /** Returns a cycle detecting re-entrant named lock. */
+    /** Returns a re-entrant lock that may be cycle detecting, depending on {@link Utils#detectLockCycles}. */
     public static ReentrantLock lock(String name) {
-        return lockFactory.newReentrantLock(name);
+        if (detectLockCycles)
+            return cycleDetectingLockFactory.newReentrantLock(name);
+        else
+            return new ReentrantLock();
     }
 
     /** The string that prefixes all text messages signed using Bitcoin keys. */
@@ -376,7 +382,7 @@ public class Utils {
      * MPI encoded numbers are produced by the OpenSSL BN_bn2mpi function. They consist of
      * a 4 byte big endian length field, followed by the stated number of bytes representing
      * the number in big endian format (with a sign bit).
-     * @param hasLength indicates whether the 4 byte length field should be included
+     * @param includeLength indicates whether the 4 byte length field should be included
      */
     static byte[] encodeMPI(BigInteger value, boolean includeLength) {
         if (value.equals(BigInteger.ZERO)) {
@@ -473,7 +479,7 @@ public class Utils {
     }
 
     public static boolean isWindows() {
-        return System.getProperty("os.name").toLowerCase().indexOf("win") >= 0;
+        return System.getProperty("os.name").toLowerCase().contains("win");
     }
 
     /**
