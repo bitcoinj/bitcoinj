@@ -145,8 +145,11 @@ public class SPVBlockStore implements BlockStore {
         buffer.put(header);
         // Insert the genesis block.
         lock.lock();
-        setRingCursor(buffer, FILE_PROLOGUE_BYTES);
-        lock.unlock();
+        try {
+            setRingCursor(buffer, FILE_PROLOGUE_BYTES);
+        } finally {
+            lock.unlock();
+        }
         Block genesis = params.genesisBlock.cloneAsHeader();
         StoredBlock storedGenesis = new StoredBlock(genesis, genesis.getWork(), 0);
         put(storedGenesis);
