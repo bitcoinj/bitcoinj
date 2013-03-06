@@ -111,7 +111,7 @@ public class ECKey implements Serializable {
     }
 
     /**
-     * Construct an ECKey from an ASN.1 encoded private key. These are produced by OpenSSL and stored by the BitCoin
+     * Construct an ECKey from an ASN.1 encoded private key. These are produced by OpenSSL and stored by the Bitcoin
      * reference implementation in its wallet. Note that this is slow because it requires an EC point multiply.
      */
     public static ECKey fromASN1(byte[] asn1privkey) {

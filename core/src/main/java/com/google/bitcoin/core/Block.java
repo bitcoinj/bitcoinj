@@ -114,7 +114,7 @@ public class Block extends Message {
     }
 
     /**
-     * Contruct a block object from the BitCoin wire format.
+     * Contruct a block object from the Bitcoin wire format.
      * @param params NetworkParameters object.
      * @param parseLazy Whether to perform a full parse immediately or delay until a read is requested.
      * @param parseRetain Whether to retain the backing byte array for quick reserialization.  
@@ -811,7 +811,7 @@ public class Block extends Message {
         hash = null;
     }
 
-    /** Returns the version of the block data structure as defined by the BitCoin protocol. */
+    /** Returns the version of the block data structure as defined by the Bitcoin protocol. */
     public long getVersion() {
         maybeParseHeader();
         return version;

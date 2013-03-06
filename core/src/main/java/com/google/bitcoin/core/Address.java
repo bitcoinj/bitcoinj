@@ -70,7 +70,7 @@ public class Address extends VersionedChecksummedBytes {
         }
     }
 
-    /** The (big endian) 20 byte hash that is the core of a BitCoin address. */
+    /** The (big endian) 20 byte hash that is the core of a Bitcoin address. */
     public byte[] getHash160() {
         return bytes;
     }

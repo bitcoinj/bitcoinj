@@ -529,7 +529,7 @@ public class Transaction extends ChildMessage implements Serializable {
 
     /**
      * A coinbase transaction is one that creates a new coin. They are the first transaction in each block and their
-     * value is determined by a formula that all implementations of BitCoin share. In 2011 the value of a coinbase
+     * value is determined by a formula that all implementations of Bitcoin share. In 2011 the value of a coinbase
      * transaction is 50 coins, but in future it will be less. A coinbase transaction is defined not only by its
      * position in a block but by the data in the inputs.
      */

@@ -150,7 +150,7 @@ public abstract class Message implements Serializable {
         this(params, msg, offset, NetworkParameters.PROTOCOL_VERSION, parseLazy, parseRetain, length);
     }
 
-    // These methods handle the serialization/deserialization using the custom BitCoin protocol.
+    // These methods handle the serialization/deserialization using the custom Bitcoin protocol.
     // It's somewhat painful to work with in Java, so some of these objects support a second 
     // serialization mechanism - the standard Java serialization system. This is used when things 
     // are serialized to the wallet.
