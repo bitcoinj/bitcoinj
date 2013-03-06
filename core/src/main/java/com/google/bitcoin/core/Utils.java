@@ -37,7 +37,7 @@ import static com.google.common.base.Preconditions.checkArgument;
  * To enable debug logging from the library, run with -Dbitcoinj.logging=true on your command line.
  */
 public class Utils {
-    private static final CycleDetectingLockFactory cycleDetectingLockFactory;
+    public static final CycleDetectingLockFactory cycleDetectingLockFactory;
     private static final MessageDigest digest;
 
     static {
@@ -47,7 +47,7 @@ public class Utils {
             throw new RuntimeException(e);  // Can't happen.
         }
 
-        cycleDetectingLockFactory = CycleDetectingLockFactory.newInstance(CycleDetectingLockFactory.Policies.WARN);
+        cycleDetectingLockFactory = CycleDetectingLockFactory.newInstance(CycleDetectingLockFactory.Policies.THROW);
     }
 
     private static final boolean detectLockCycles = true;

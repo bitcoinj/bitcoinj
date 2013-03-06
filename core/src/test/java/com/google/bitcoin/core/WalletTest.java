@@ -22,6 +22,7 @@ import com.google.bitcoin.store.BlockStore;
 import com.google.bitcoin.store.MemoryBlockStore;
 import com.google.bitcoin.utils.BriefLogFormatter;
 import com.google.common.collect.Lists;
+import com.google.common.util.concurrent.CycleDetectingLockFactory;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -35,6 +36,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReentrantLock;
 
 import static com.google.bitcoin.core.TestUtils.*;
 import static com.google.bitcoin.core.Utils.bitcoinValueToFriendlyString;
@@ -911,6 +913,27 @@ public class WalletTest {
         }
         Wallet.SendRequest req = Wallet.SendRequest.forTx(tx);
         assertFalse(wallet.completeTx(req));
+    }
+
+    @Test
+    public void lockCycles() {
+        final ReentrantLock lock = Utils.cycleDetectingLockFactory.newReentrantLock("test");
+        lock.lock();
+        int foo = wallet.getKeychainSize();
+        lock.unlock();
+        // Now make sure if we invert the lock, we get an exception.
+        wallet.addEventListener(new AbstractWalletEventListener() {
+            @Override
+            public void onKeyAdded(ECKey key) {
+                try {
+                    lock.lock();
+                    fail();
+                } catch (CycleDetectingLockFactory.PotentialDeadlockException e) {
+                    // Expected.
+                }
+            }
+        });
+        wallet.addKey(new ECKey());
     }
 
     // There is a test for spending a coinbase transaction as it matures in BlockChainTest#coinbaseTransactionAvailability
