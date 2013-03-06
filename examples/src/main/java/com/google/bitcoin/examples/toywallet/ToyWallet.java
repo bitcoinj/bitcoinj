@@ -21,6 +21,7 @@ import com.google.bitcoin.discovery.DnsDiscovery;
 import com.google.bitcoin.discovery.IrcDiscovery;
 import com.google.bitcoin.store.BoundedOverheadBlockStore;
 import com.google.bitcoin.store.H2FullPrunedBlockStore;
+import com.google.bitcoin.store.SPVBlockStore;
 import com.google.bitcoin.utils.BriefLogFormatter;
 import com.google.common.collect.Lists;
 import org.spongycastle.util.encoders.Hex;
@@ -168,7 +169,7 @@ public class ToyWallet {
             H2FullPrunedBlockStore store = new H2FullPrunedBlockStore(params, blockChainFile.getName(), 100);
             chain = new FullPrunedBlockChain(params, wallet, store);
         } else {
-            chain = new BlockChain(params, wallet, new BoundedOverheadBlockStore(params, blockChainFile));
+            chain = new BlockChain(params, wallet, new SPVBlockStore(params, blockChainFile));
         }
 
         peerGroup = new PeerGroup(params, chain);
