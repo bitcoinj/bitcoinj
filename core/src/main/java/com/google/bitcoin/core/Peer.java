@@ -18,7 +18,6 @@ package com.google.bitcoin.core;
 
 import com.google.bitcoin.store.BlockStore;
 import com.google.bitcoin.store.BlockStoreException;
-import com.google.bitcoin.utils.EventListenerInvoker;
 import com.google.bitcoin.utils.Locks;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
@@ -236,16 +235,14 @@ public class Peer {
 
             // Allow event listeners to filter the message stream. Listeners are allowed to drop messages by
             // returning null.
+            for (PeerEventListener listener : eventListeners) {
+                m = listener.onPreMessageReceived(Peer.this, m);
+                if (m == null) break;
+            }
+            if (m == null) return;
+
             lock.lock();
             try {
-                for (PeerEventListener listener : eventListeners) {
-                    synchronized (listener) {
-                        m = listener.onPreMessageReceived(Peer.this, m);
-                        if (m == null) break;
-                    }
-                }
-                if (m == null) return;
-
                 if (currentFilteredBlock != null && !(m instanceof Transaction)) {
                     processFilteredBlock(currentFilteredBlock);
                     currentFilteredBlock = null;
@@ -287,12 +284,8 @@ public class Peer {
                 processAlert((AlertMessage) m);
             } else if (m instanceof VersionMessage) {
                 peerVersionMessage.set((VersionMessage) m);
-                EventListenerInvoker.invoke(lifecycleListeners, new EventListenerInvoker<PeerLifecycleListener>() {
-                    @Override
-                    public void invoke(PeerLifecycleListener listener) {
-                        listener.onPeerConnected(Peer.this);
-                    }
-                });
+                for (PeerLifecycleListener listener : lifecycleListeners)
+                    listener.onPeerConnected(Peer.this);
                 if (getPeerVersionMessage().clientVersion < minProtocolVersion) {
                     log.warn("Connected to a peer speaking protocol version {} but need {}, closing",
                             getPeerVersionMessage().clientVersion, minProtocolVersion);
@@ -418,11 +411,9 @@ public class Peer {
         log.info("{}: Received getdata message: {}", address.get(), getdata.toString());
         ArrayList<Message> items = new ArrayList<Message>();
         for (PeerEventListener listener : eventListeners) {
-            synchronized (listener) {
-                List<Message> listenerItems = listener.getData(this, getdata);
-                if (listenerItems == null) continue;
-                items.addAll(listenerItems);
-            }
+            List<Message> listenerItems = listener.getData(this, getdata);
+            if (listenerItems == null) continue;
+            items.addAll(listenerItems);
         }
         if (items.size() == 0) {
             return;
@@ -498,17 +489,13 @@ public class Peer {
                     // Carry on, listeners may still want to know.
                 }
             }
-            // Tell all listeners about this tx so they can decide whether to keep it or not. If no listener keeps a
-            // reference around then the memory pool will forget about it after a while too because it uses weak references.
-            EventListenerInvoker.invoke(eventListeners, new EventListenerInvoker<PeerEventListener>() {
-                @Override
-                public void invoke(PeerEventListener listener) {
-                    listener.onTransaction(Peer.this, fTx);
-                }
-            });
         } finally {
             lock.unlock();
         }
+        // Tell all listeners about this tx so they can decide whether to keep it or not. If no listener keeps a
+        // reference around then the memory pool will forget about it after a while too because it uses weak references.
+        for (PeerEventListener listener : eventListeners)
+            listener.onTransaction(this, tx);
     }
 
     /**
@@ -787,12 +774,13 @@ public class Peer {
         // since the time we first connected to the peer. However, it's weird and unexpected to receive a callback
         // with negative "blocks left" in this case, so we clamp to zero so the API user doesn't have to think about it.
         final int blocksLeft = Math.max(0, (int)getPeerVersionMessage().bestHeight - blockChain.getBestChainHeight());
-        EventListenerInvoker.invoke(eventListeners, new EventListenerInvoker<PeerEventListener>() {
-            @Override
-            public void invoke(PeerEventListener listener) {
+        lock.unlock();
+        try {
+            for (PeerEventListener listener : eventListeners)
                 listener.onBlocksDownloaded(Peer.this, m, blocksLeft);
-            }
-        });
+        } finally {
+            lock.lock();
+        }
     }
 
     private void processInv(InventoryMessage inv) throws IOException {
@@ -1115,15 +1103,10 @@ public class Peer {
         setDownloadData(true);
         // TODO: peer might still have blocks that we don't have, and even have a heavier
         // chain even if the chain block count is lower.
-        final int peerBlockHeightDifference = getPeerBlockHeightDifference();
-        if (peerBlockHeightDifference >= 0) {
-            EventListenerInvoker.invoke(eventListeners, new EventListenerInvoker<PeerEventListener>() {
-                @Override
-                public void invoke(PeerEventListener listener) {
-                    listener.onChainDownloadStarted(Peer.this, peerBlockHeightDifference);
-                }
-            });
-
+        final int blocksLeft = getPeerBlockHeightDifference();
+        if (blocksLeft >= 0) {
+            for (PeerEventListener listener : eventListeners)
+                listener.onChainDownloadStarted(this, blocksLeft);
             // When we just want as many blocks as possible, we can set the target hash to zero.
             blockChainDownload(Sha256Hash.ZERO_HASH);
         }
