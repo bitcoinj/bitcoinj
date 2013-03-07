@@ -20,6 +20,7 @@ import com.google.bitcoin.core.TransactionConfidence.ConfidenceType;
 import com.google.bitcoin.core.WalletTransaction.Pool;
 import com.google.bitcoin.store.WalletProtobufSerializer;
 import com.google.bitcoin.utils.EventListenerInvoker;
+import com.google.bitcoin.utils.Locks;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
@@ -74,7 +75,7 @@ public class Wallet implements Serializable, BlockChainListener {
     private static final Logger log = LoggerFactory.getLogger(Wallet.class);
     private static final long serialVersionUID = 2L;
 
-    protected final ReentrantLock lock = Utils.lock("wallet");
+    protected final ReentrantLock lock = Locks.lock("wallet");
 
     // Algorithm for movement of transactions between pools. Outbound tx = us spending coins. Inbound tx = us
     // receiving coins. If a tx is both inbound and outbound (spend with change) it is considered outbound for the
@@ -1388,44 +1389,50 @@ public class Wallet implements Serializable, BlockChainListener {
      * @param includeInactive If true, transactions that are on side chains (are unspendable) are included.
      */
     public Set<Transaction> getTransactions(boolean includeDead, boolean includeInactive) {
-        Set<Transaction> all = new HashSet<Transaction>();
         lock.lock();
-        all.addAll(unspent.values());
-        all.addAll(spent.values());
-        all.addAll(pending.values());
-        if (includeDead)
-            all.addAll(dead.values());
-        if (includeInactive)
-            all.addAll(inactive.values());
-        lock.unlock();
-        return all;
+        try {
+            Set<Transaction> all = new HashSet<Transaction>();
+            all.addAll(unspent.values());
+            all.addAll(spent.values());
+            all.addAll(pending.values());
+            if (includeDead)
+                all.addAll(dead.values());
+            if (includeInactive)
+                all.addAll(inactive.values());
+            return all;
+        } finally {
+            lock.unlock();
+        }
     }
 
     /**
      * Returns a set of all WalletTransactions in the wallet.
      */
     public Iterable<WalletTransaction> getWalletTransactions() {
-        HashSet<Transaction> pendingInactive = new HashSet<Transaction>();
         lock.lock();
-        pendingInactive.addAll(pending.values());
-        pendingInactive.retainAll(inactive.values());
-        HashSet<Transaction> onlyPending = new HashSet<Transaction>();
-        HashSet<Transaction> onlyInactive = new HashSet<Transaction>();
-        onlyPending.addAll(pending.values());
-        onlyPending.removeAll(pendingInactive);
-        onlyInactive.addAll(inactive.values());
-        onlyInactive.removeAll(pendingInactive);
-        
-        Set<WalletTransaction> all = new HashSet<WalletTransaction>();
+        try {
+            HashSet<Transaction> pendingInactive = new HashSet<Transaction>();
+            pendingInactive.addAll(pending.values());
+            pendingInactive.retainAll(inactive.values());
+            HashSet<Transaction> onlyPending = new HashSet<Transaction>();
+            HashSet<Transaction> onlyInactive = new HashSet<Transaction>();
+            onlyPending.addAll(pending.values());
+            onlyPending.removeAll(pendingInactive);
+            onlyInactive.addAll(inactive.values());
+            onlyInactive.removeAll(pendingInactive);
 
-        addWalletTransactionsToSet(all, Pool.UNSPENT, unspent.values());
-        addWalletTransactionsToSet(all, Pool.SPENT, spent.values());
-        addWalletTransactionsToSet(all, Pool.DEAD, dead.values());
-        addWalletTransactionsToSet(all, Pool.PENDING, onlyPending);
-        addWalletTransactionsToSet(all, Pool.INACTIVE, onlyInactive);
-        addWalletTransactionsToSet(all, Pool.PENDING_INACTIVE, pendingInactive);
-        lock.unlock();
-        return all;
+            Set<WalletTransaction> all = new HashSet<WalletTransaction>();
+
+            addWalletTransactionsToSet(all, Pool.UNSPENT, unspent.values());
+            addWalletTransactionsToSet(all, Pool.SPENT, spent.values());
+            addWalletTransactionsToSet(all, Pool.DEAD, dead.values());
+            addWalletTransactionsToSet(all, Pool.PENDING, onlyPending);
+            addWalletTransactionsToSet(all, Pool.INACTIVE, onlyInactive);
+            addWalletTransactionsToSet(all, Pool.PENDING_INACTIVE, pendingInactive);
+            return all;
+        } finally {
+            lock.unlock();
+        }
     }
 
     private static void addWalletTransactionsToSet(Set<WalletTransaction> txs,
@@ -1452,7 +1459,7 @@ public class Wallet implements Serializable, BlockChainListener {
     /**
      * Adds the given transaction to the given pools and registers a confidence change listener on it.
      */
-    private synchronized void addWalletTransaction(Pool pool, Transaction tx) {
+    private void addWalletTransaction(Pool pool, Transaction tx) {
         checkState(lock.isLocked());
         switch (pool) {
         case UNSPENT:

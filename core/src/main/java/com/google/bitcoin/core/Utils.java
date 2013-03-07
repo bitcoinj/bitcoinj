@@ -37,27 +37,13 @@ import static com.google.common.base.Preconditions.checkArgument;
  * To enable debug logging from the library, run with -Dbitcoinj.logging=true on your command line.
  */
 public class Utils {
-    public static final CycleDetectingLockFactory cycleDetectingLockFactory;
     private static final MessageDigest digest;
-
     static {
         try {
             digest = MessageDigest.getInstance("SHA-256");
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException(e);  // Can't happen.
         }
-
-        cycleDetectingLockFactory = CycleDetectingLockFactory.newInstance(CycleDetectingLockFactory.Policies.THROW);
-    }
-
-    private static final boolean detectLockCycles = true;
-
-    /** Returns a re-entrant lock that may be cycle detecting, depending on {@link Utils#detectLockCycles}. */
-    public static ReentrantLock lock(String name) {
-        if (detectLockCycles)
-            return cycleDetectingLockFactory.newReentrantLock(name);
-        else
-            return new ReentrantLock();
     }
 
     /** The string that prefixes all text messages signed using Bitcoin keys. */

@@ -21,6 +21,7 @@ import com.google.bitcoin.core.WalletTransaction.Pool;
 import com.google.bitcoin.store.BlockStore;
 import com.google.bitcoin.store.MemoryBlockStore;
 import com.google.bitcoin.utils.BriefLogFormatter;
+import com.google.bitcoin.utils.Locks;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.CycleDetectingLockFactory;
 import org.junit.Before;
@@ -917,7 +918,9 @@ public class WalletTest {
 
     @Test
     public void lockCycles() {
-        final ReentrantLock lock = Utils.cycleDetectingLockFactory.newReentrantLock("test");
+        Locks.throwOnLockCycles();
+        final ReentrantLock lock = Locks.lock("test");
+        wallet = new Wallet(params);
         lock.lock();
         int foo = wallet.getKeychainSize();
         lock.unlock();

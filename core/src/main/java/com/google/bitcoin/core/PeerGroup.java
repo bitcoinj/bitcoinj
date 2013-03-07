@@ -1,5 +1,5 @@
 /**
- * Copyright 2011 Google Inc.
+ * Copyright 2013 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.google.bitcoin.core.Peer.PeerHandler;
 import com.google.bitcoin.discovery.PeerDiscovery;
 import com.google.bitcoin.discovery.PeerDiscoveryException;
 import com.google.bitcoin.utils.EventListenerInvoker;
+import com.google.bitcoin.utils.Locks;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.*;
@@ -39,9 +40,11 @@ import java.net.SocketAddress;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.ReentrantLock;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 
 /**
  * <p>Runs a set of connections to the P2P network, brings up connections to replace disconnected nodes and manages
@@ -69,12 +72,12 @@ public class PeerGroup extends AbstractIdleService {
     private static final int DEFAULT_CONNECTIONS = 4;
 
     private static final Logger log = LoggerFactory.getLogger(PeerGroup.class);
+    protected final ReentrantLock lock = Locks.lock("peergroup");
 
     // These lists are all thread-safe so do not have to be accessed under the PeerGroup lock.
     // Addresses to try to connect to, excluding active peers.
     private List<PeerAddress> inactives;
-    // Currently active peers. This is an ordered list rather than a set to make unit tests predictable. This is a
-    // synchronized list. Locking order is: PeerGroup < Peer < peers. Same for pendingPeers.
+    // Currently active peers. This is an ordered list rather than a set to make unit tests predictable.
     private List<Peer> peers;
     // Currently connecting peers.
     private List<Peer> pendingPeers;
@@ -85,9 +88,9 @@ public class PeerGroup extends AbstractIdleService {
     // Callback for events related to chain download
     private PeerEventListener downloadListener;
     // Callbacks for events related to peer connection/disconnection
-    private List<PeerEventListener> peerEventListeners;
+    private final CopyOnWriteArrayList<PeerEventListener> peerEventListeners;
     // Peer discovery sources, will be polled occasionally if there aren't enough inactives.
-    private Set<PeerDiscovery> peerDiscoverers;
+    private CopyOnWriteArraySet<PeerDiscovery> peerDiscoverers;
     // The version message to use for new connections.
     private VersionMessage versionMessage;
     // A class that tracks recent transactions that have been broadcast across the network, counts how many
@@ -99,7 +102,7 @@ public class PeerGroup extends AbstractIdleService {
 
     // Runs a background thread that we use for scheduling pings to our peers, so we can measure their performance
     // and network latency. We ping peers every pingIntervalMsec milliseconds.
-    private Timer pingTimer;
+    private volatile Timer pingTimer;
     /** How many milliseconds to wait after receiving a pong before sending another ping. */
     public static final long DEFAULT_PING_INTERVAL_MSEC = 2000;
     private long pingIntervalMsec = DEFAULT_PING_INTERVAL_MSEC;
@@ -107,7 +110,7 @@ public class PeerGroup extends AbstractIdleService {
     private final NetworkParameters params;
     private final AbstractBlockChain chain;
     private long fastCatchupTimeSecs;
-    private ArrayList<Wallet> wallets;
+    private final CopyOnWriteArrayList<Wallet> wallets;
 
     private AbstractPeerEventListener getDataListener;
     private ClientBootstrap bootstrap;
@@ -190,7 +193,7 @@ public class PeerGroup extends AbstractIdleService {
         this.params = params;
         this.chain = chain;  // Can be null.
         this.fastCatchupTimeSecs = params.genesisBlock.getTimeSeconds();
-        this.wallets = new ArrayList<Wallet>(1);
+        this.wallets = new CopyOnWriteArrayList<Wallet>();
 
         // This default sentinel value will be overridden by one of two actions:
         //   - adding a peer discovery source sets it to the default
@@ -217,7 +220,7 @@ public class PeerGroup extends AbstractIdleService {
         pendingPeers = Collections.synchronizedList(new ArrayList<Peer>());
         channels = new DefaultChannelGroup();
         peerDiscoverers = new CopyOnWriteArraySet<PeerDiscovery>(); 
-        peerEventListeners = new ArrayList<PeerEventListener>();
+        peerEventListeners = new CopyOnWriteArrayList<PeerEventListener>();
         // This event listener is added to every peer. It's here so when we announce transactions via an "inv", every
         // peer can fetch them.
         getDataListener = new AbstractPeerEventListener() {
@@ -250,6 +253,7 @@ public class PeerGroup extends AbstractIdleService {
     private ChannelPipelineFactory makePipelineFactory(final NetworkParameters params, final AbstractBlockChain chain) {
         return new ChannelPipelineFactory() {
             public ChannelPipeline getPipeline() throws Exception {
+                // This runs unlocked.
                 VersionMessage ver = getVersionMessage().duplicate();
                 ver.bestHeight = chain == null ? 0 : chain.getBestChainHeight();
                 ver.time = Utils.now().getTime() / 1000;
@@ -274,9 +278,12 @@ public class PeerGroup extends AbstractIdleService {
      */
     public void setMaxConnections(int maxConnections) {
         int adjustment;
-        synchronized (this) {
+        lock.lock();
+        try {
             this.maxConnections = maxConnections;
             if (!isRunning()) return;
+        } finally {
+            lock.unlock();
         }
         // We may now have too many or too few open connections. Add more or drop some to get to the right amount.
         adjustment = maxConnections - channels.size();
@@ -295,37 +302,47 @@ public class PeerGroup extends AbstractIdleService {
     }
 
     /** The maximum number of connections that we will create to peers. */
-    public synchronized int getMaxConnections() {
-        return maxConnections;
+    public int getMaxConnections() {
+        lock.lock();
+        try {
+            return maxConnections;
+        } finally {
+            lock.unlock();
+        }
     }
 
-    private synchronized List<Message> handleGetData(GetDataMessage m) {
+    private List<Message> handleGetData(GetDataMessage m) {
         // Scans the wallets and memory pool for transactions in the getdata message and returns them.
         // Runs on peer threads.
-        LinkedList<Message> transactions = new LinkedList<Message>();
-        LinkedList<InventoryItem> items = new LinkedList<InventoryItem>(m.getItems());
-        Iterator<InventoryItem> it = items.iterator();
-        while (it.hasNext()) {
-            InventoryItem item = it.next();
-            // Check the mempool first.
-            Transaction tx = memoryPool.get(item.hash);
-            if (tx != null) {
-                transactions.add(tx);
-                it.remove();
-            } else {
-                // Check the wallets.
-                for (Wallet w : wallets) {
-                    synchronized (w) {
-                        tx = w.getTransaction(item.hash);
-                        if (tx == null) continue;
-                        transactions.add(tx);
-                        it.remove();
-                        break;
+        lock.lock();
+        try {
+            LinkedList<Message> transactions = new LinkedList<Message>();
+            LinkedList<InventoryItem> items = new LinkedList<InventoryItem>(m.getItems());
+            Iterator<InventoryItem> it = items.iterator();
+            while (it.hasNext()) {
+                InventoryItem item = it.next();
+                // Check the mempool first.
+                Transaction tx = memoryPool.get(item.hash);
+                if (tx != null) {
+                    transactions.add(tx);
+                    it.remove();
+                } else {
+                    // Check the wallets.
+                    for (Wallet w : wallets) {
+                        synchronized (w) {
+                            tx = w.getTransaction(item.hash);
+                            if (tx == null) continue;
+                            transactions.add(tx);
+                            it.remove();
+                            break;
+                        }
                     }
                 }
             }
+            return transactions;
+        } finally {
+            lock.unlock();
         }
-        return transactions;
     }
 
     /**
@@ -337,15 +354,25 @@ public class PeerGroup extends AbstractIdleService {
      * The VersionMessage you provide is copied and the best chain height/time filled in for each new connection,
      * therefore you don't have to worry about setting that. The provided object is really more of a template.
      */
-    public synchronized void setVersionMessage(VersionMessage ver) {
-        versionMessage = ver;
+    public void setVersionMessage(VersionMessage ver) {
+        lock.lock();
+        try {
+            versionMessage = ver;
+        } finally {
+            lock.unlock();
+        }
     }
 
     /**
      * Returns the version message provided by setVersionMessage or a default if none was given.
      */
-    public synchronized VersionMessage getVersionMessage() {
-        return versionMessage;
+    public VersionMessage getVersionMessage() {
+        lock.lock();
+        try {
+            return versionMessage;
+        } finally {
+            lock.unlock();
+        }
     }
 
     /**
@@ -367,11 +394,16 @@ public class PeerGroup extends AbstractIdleService {
     }
     
     // Updates the relayTxesBeforeFilter flag of ver
-    private synchronized void updateVersionMessageRelayTxesBeforeFilter(VersionMessage ver) {
+    private void updateVersionMessageRelayTxesBeforeFilter(VersionMessage ver) {
         // We will provide the remote node with a bloom filter (ie they shouldn't relay yet)
         // iff chain == null || !chain.shouldVerifyTransactions() and a wallet is added
         // Note that the default here means that no tx invs will be received if no wallet is ever added
-        ver.relayTxesBeforeFilter = chain != null && chain.shouldVerifyTransactions() && wallets.size() > 0;
+        lock.lock();
+        try {
+            ver.relayTxesBeforeFilter = chain != null && chain.shouldVerifyTransactions() && wallets.size() > 0;
+        } finally {
+            lock.unlock();
+        }
     }
 
     /**
@@ -401,12 +433,12 @@ public class PeerGroup extends AbstractIdleService {
      * <p>The listener will be locked during callback execution, which in turn will cause network message processing
      * to stop until the listener returns.</p>
      */
-    public synchronized void addEventListener(PeerEventListener listener) {
+    public void addEventListener(PeerEventListener listener) {
         peerEventListeners.add(checkNotNull(listener));
     }
 
     /** The given event listener will no longer be called with events. */
-    public synchronized boolean removeEventListener(PeerEventListener listener) {
+    public boolean removeEventListener(PeerEventListener listener) {
         return peerEventListeners.remove(checkNotNull(listener));
     }
 
@@ -437,9 +469,12 @@ public class PeerGroup extends AbstractIdleService {
      */
     public void addAddress(PeerAddress peerAddress) {
         int newMax;
-        synchronized (this) {
+        lock.lock();
+        try {
             inactives.add(peerAddress);
             newMax = getMaxConnections() + 1;
+        } finally {
+            lock.unlock();
         }
         setMaxConnections(newMax);
     }
@@ -453,13 +488,19 @@ public class PeerGroup extends AbstractIdleService {
      * Add addresses from a discovery source to the list of potential peers to connect to. If max connections has not
      * been configured, or set to zero, then it's set to the default at this point.
      */
-    public synchronized void addPeerDiscovery(PeerDiscovery peerDiscovery) {
-        if (getMaxConnections() == 0)
-            setMaxConnections(DEFAULT_CONNECTIONS);
-        peerDiscoverers.add(peerDiscovery);
+    public void addPeerDiscovery(PeerDiscovery peerDiscovery) {
+        lock.lock();
+        try {
+            if (getMaxConnections() == 0)
+                setMaxConnections(DEFAULT_CONNECTIONS);
+            peerDiscoverers.add(peerDiscovery);
+        } finally {
+            lock.unlock();
+        }
     }
 
     protected void discoverPeers() throws PeerDiscoveryException {
+        // This does not need to be locked.
         long start = System.currentTimeMillis();
         Set<PeerAddress> addressSet = Sets.newHashSet();
         for (PeerDiscovery peerDiscovery : peerDiscoverers) {
@@ -477,9 +518,11 @@ public class PeerGroup extends AbstractIdleService {
 
     /** Picks a peer from discovery and connects to it. If connection fails, picks another and tries again. */
     protected void connectToAnyPeer() throws PeerDiscoveryException {
-        // Do not call this method whilst synchronized on the PeerGroup lock.
+        checkState(!lock.isLocked());
+        final State state = state();
+        if (!(state == State.STARTING || state == State.RUNNING)) return;
+
         final PeerAddress addr;
-        if (!(state() == State.STARTING || state() == State.RUNNING)) return;
         synchronized (inactives) {
             if (inactives.size() == 0) {
                 discoverPeers();
@@ -503,9 +546,7 @@ public class PeerGroup extends AbstractIdleService {
     @Override
     protected void startUp() throws Exception {
         // This is run in a background thread by the AbstractIdleService implementation.
-        synchronized (this) {
-            pingTimer = new Timer("Peer pinging thread", true);
-        }
+        pingTimer = new Timer("Peer pinging thread", true);
         // Bring up the requested number of connections. If a connect attempt fails,
         // new peers will be tried until there is a success, so just calling connectToAnyPeer for the wanted number
         // of peers is sufficient.
@@ -530,9 +571,7 @@ public class PeerGroup extends AbstractIdleService {
         for (PeerDiscovery peerDiscovery : peerDiscoverers) {
             peerDiscovery.shutdown();
         }
-        synchronized (this) {
-            pingTimer.cancel();
-        }
+        pingTimer.cancel();
     }
 
     /**
@@ -546,27 +585,38 @@ public class PeerGroup extends AbstractIdleService {
      * <p>Note that this should be done before chain download commences because if you add a wallet with keys earlier
      * than the current chain head, the relevant parts of the chain won't be redownloaded for you.</p>
      */
-    public synchronized void addWallet(Wallet wallet) {
-        Preconditions.checkNotNull(wallet);
-        Preconditions.checkState(!wallets.contains(wallet));
-        wallets.add(wallet);
-        announcePendingWalletTransactions(Collections.singletonList(wallet), peers);
+    public void addWallet(Wallet wallet) {
+        lock.lock();
+        try {
+            Preconditions.checkNotNull(wallet);
+            Preconditions.checkState(!wallets.contains(wallet));
+            wallets.add(wallet);
+            announcePendingWalletTransactions(Collections.singletonList(wallet), peers);
 
-        // Don't bother downloading block bodies before the oldest keys in all our wallets. Make sure we recalculate
-        // if a key is added. Of course, by then we may have downloaded the chain already. Ideally adding keys would
-        // automatically rewind the block chain and redownload the blocks to find transactions relevant to those keys,
-        // all transparently and in the background. But we are a long way from that yet.
-        wallet.addEventListener(new AbstractWalletEventListener() {
-            @Override
-            public void onKeyAdded(ECKey key) {
-                recalculateFastCatchupAndFilter();
-            }
-        });
-        recalculateFastCatchupAndFilter();
-        updateVersionMessageRelayTxesBeforeFilter(getVersionMessage());
+            // Don't bother downloading block bodies before the oldest keys in all our wallets. Make sure we recalculate
+            // if a key is added. Of course, by then we may have downloaded the chain already. Ideally adding keys would
+            // automatically rewind the block chain and redownload the blocks to find transactions relevant to those keys,
+            // all transparently and in the background. But we are a long way from that yet.
+            wallet.addEventListener(new AbstractWalletEventListener() {
+                @Override
+                public void onKeyAdded(ECKey key) {
+                    lock.lock();
+                    try {
+                        recalculateFastCatchupAndFilter();
+                    } finally {
+                        lock.unlock();
+                    }
+                }
+            });
+            recalculateFastCatchupAndFilter();
+            updateVersionMessageRelayTxesBeforeFilter(getVersionMessage());
+        } finally {
+            lock.unlock();
+        }
     }
 
-    private synchronized void recalculateFastCatchupAndFilter() {
+    private void recalculateFastCatchupAndFilter() {
+        checkState(lock.isLocked());
         // Fully verifying mode doesn't use this optimization (it can't as it needs to see all transactions).
         if (chain != null && chain.shouldVerifyTransactions())
             return;
@@ -606,18 +656,21 @@ public class PeerGroup extends AbstractIdleService {
      * See the docs for {@link BloomFilter#BloomFilter(int, double, long)} for a brief explanation of anonymity when
      * using bloom filters.
      */
-    public synchronized void setBloomFilterFalsePositiveRate(double bloomFilterFPRate) {
-        this.bloomFilterFPRate = bloomFilterFPRate;
-        recalculateFastCatchupAndFilter();
+    public void setBloomFilterFalsePositiveRate(double bloomFilterFPRate) {
+        lock.lock();
+        try {
+            this.bloomFilterFPRate = bloomFilterFPRate;
+            recalculateFastCatchupAndFilter();
+        } finally {
+            lock.unlock();
+        }
     }
 
     /**
      * Unlinks the given wallet so it no longer receives broadcast transactions or has its transactions announced.
      */
     public void removeWallet(Wallet wallet) {
-        if (wallet == null)
-            throw new IllegalArgumentException("wallet is null");
-        wallets.remove(wallet);
+        wallets.remove(checkNotNull(wallet));
     }
 
     /**
@@ -639,8 +692,9 @@ public class PeerGroup extends AbstractIdleService {
         return connectTo(address, true);
     }
 
-    // Internal version. Do not call whilst holding the PeerGroup lock.
+    // Internal version.
     protected ChannelFuture connectTo(SocketAddress address, boolean incrementMaxConnections) {
+        checkState(!lock.isLocked());
         ChannelFuture future = bootstrap.connect(address);
         // Make sure that the channel group gets access to the channel only if it connects successfully (otherwise
         // it cannot be closed and trying to do so will cause problems).
@@ -661,11 +715,14 @@ public class PeerGroup extends AbstractIdleService {
             // This can be null in unit tests or apps that don't use TCP connections.
             networkHandler.getOwnerObject().setRemoteAddress(address);
         }
-        synchronized (this) {
-            if (incrementMaxConnections) {
-                // We don't use setMaxConnections here as that would trigger a recursive attempt to establish a new
-                // outbound connection.
+        if (incrementMaxConnections) {
+            // We don't use setMaxConnections here as that would trigger a recursive attempt to establish a new
+            // outbound connection.
+            lock.lock();
+            try {
                 maxConnections++;
+            } finally {
+                lock.unlock();
             }
         }
         return future;
@@ -687,15 +744,20 @@ public class PeerGroup extends AbstractIdleService {
      *
      * @param listener a listener for chain download events, may not be null
      */
-    public synchronized void startBlockChainDownload(PeerEventListener listener) {
-        this.downloadListener = listener;
-        // TODO: be more nuanced about which peer to download from.  We can also try
-        // downloading from multiple peers and handle the case when a new peer comes along
-        // with a longer chain after we thought we were done.
-        synchronized (peers) {
-            if (!peers.isEmpty()) {
-                startBlockChainDownloadFromPeer(peers.iterator().next());
+    public void startBlockChainDownload(PeerEventListener listener) {
+        lock.lock();
+        try {
+            this.downloadListener = listener;
+            // TODO: be more nuanced about which peer to download from.  We can also try
+            // downloading from multiple peers and handle the case when a new peer comes along
+            // with a longer chain after we thought we were done.
+            synchronized (peers) {
+                if (!peers.isEmpty()) {
+                    startBlockChainDownloadFromPeer(peers.iterator().next());
+                }
             }
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -715,77 +777,85 @@ public class PeerGroup extends AbstractIdleService {
         }
     }
 
-    protected synchronized void handleNewPeer(final Peer peer) {
-        // Runs on a netty worker thread for every peer that is newly connected. Peer is not locked at this point.
-        // Sets up the newly connected peer so it can do everything it needs to.
-        log.info("{}: New peer", peer);
-        // Give the peer a filter that can be used to probabilistically drop transactions that 
-        // aren't relevant to our wallet. We may still receive some false positives, which is
-        // OK because it helps improve wallet privacy. Old nodes will just ignore the message.
+    protected void handleNewPeer(final Peer peer) {
+        lock.lock();
         try {
-            if (bloomFilter != null) peer.setBloomFilter(bloomFilter);
-        } catch (IOException e) { } // That was quick...already disconnected
-        // Link the peer to the memory pool so broadcast transactions have their confidence levels updated.
-        peer.setDownloadData(false);
-        // TODO: The peer should calculate the fast catchup time from the added wallets here.
-        for (Wallet wallet : wallets)
-            peer.addWallet(wallet);
-        // Re-evaluate download peers.
-        Peer newDownloadPeer = selectDownloadPeer(peers);
-        if (downloadPeer != newDownloadPeer) {
-            setDownloadPeer(newDownloadPeer);
-            boolean shouldDownloadChain = downloadListener != null && chain != null;
-            if (shouldDownloadChain) {
-                startBlockChainDownloadFromPeer(downloadPeer);
+            // Runs on a netty worker thread for every peer that is newly connected. Peer is not locked at this point.
+            // Sets up the newly connected peer so it can do everything it needs to.
+            log.info("{}: New peer", peer);
+            // Give the peer a filter that can be used to probabilistically drop transactions that
+            // aren't relevant to our wallet. We may still receive some false positives, which is
+            // OK because it helps improve wallet privacy. Old nodes will just ignore the message.
+            try {
+                if (bloomFilter != null) peer.setBloomFilter(bloomFilter);
+            } catch (IOException e) {
+            } // That was quick...already disconnected
+            // Link the peer to the memory pool so broadcast transactions have their confidence levels updated.
+            peer.setDownloadData(false);
+            // TODO: The peer should calculate the fast catchup time from the added wallets here.
+            for (Wallet wallet : wallets)
+                peer.addWallet(wallet);
+            // Re-evaluate download peers.
+            Peer newDownloadPeer = selectDownloadPeer(peers);
+            if (downloadPeer != newDownloadPeer) {
+                setDownloadPeer(newDownloadPeer);
+                boolean shouldDownloadChain = downloadListener != null && chain != null;
+                if (shouldDownloadChain) {
+                    startBlockChainDownloadFromPeer(downloadPeer);
+                }
             }
-        }
-        // Make sure the peer knows how to upload transactions that are requested from us.
-        peer.addEventListener(getDataListener);
-        // Now tell the peers about any transactions we have which didn't appear in the chain yet. These are not
-        // necessarily spends we created. They may also be transactions broadcast across the network that we saw,
-        // which are relevant to us, and which we therefore wish to help propagate (ie they send us coins).
-        //
-        // Note that this can cause a DoS attack against us if a malicious remote peer knows what keys we own, and
-        // then sends us fake relevant transactions. We'll attempt to relay the bad transactions, our badness score
-        // in the Satoshi client will increase and we'll get disconnected.
-        //
-        // TODO: Find a way to balance the desire to propagate useful transactions against DoS attacks.
-        announcePendingWalletTransactions(wallets, Collections.singletonList(peer));
-        // And set up event listeners for clients. This will allow them to find out about new transactions and blocks.
-        for (PeerEventListener listener : peerEventListeners) {
-            peer.addEventListener(listener);
-        }
-        setupPingingForNewPeer(peer);
-        EventListenerInvoker.invoke(peerEventListeners, new EventListenerInvoker<PeerEventListener>() {
-            @Override
-            public void invoke(PeerEventListener listener) {
-                listener.onPeerConnected(peer, peers.size());
+            // Make sure the peer knows how to upload transactions that are requested from us.
+            peer.addEventListener(getDataListener);
+            // Now tell the peers about any transactions we have which didn't appear in the chain yet. These are not
+            // necessarily spends we created. They may also be transactions broadcast across the network that we saw,
+            // which are relevant to us, and which we therefore wish to help propagate (ie they send us coins).
+            //
+            // Note that this can cause a DoS attack against us if a malicious remote peer knows what keys we own, and
+            // then sends us fake relevant transactions. We'll attempt to relay the bad transactions, our badness score
+            // in the Satoshi client will increase and we'll get disconnected.
+            //
+            // TODO: Find a way to balance the desire to propagate useful transactions against DoS attacks.
+            announcePendingWalletTransactions(wallets, Collections.singletonList(peer));
+            // And set up event listeners for clients. This will allow them to find out about new transactions and blocks.
+            for (PeerEventListener listener : peerEventListeners) {
+                peer.addEventListener(listener);
             }
-        });
-        final PeerGroup thisGroup = this;
-        // TODO: Move this into the Peer object itself.
-        peer.addEventListener(new AbstractPeerEventListener() {
-            int filteredBlocksReceivedFromPeer = 0;
-            @Override
-            public Message onPreMessageReceived(Peer peer, Message m) {
-                if (m instanceof FilteredBlock) {
-                    filteredBlocksReceivedFromPeer++;
-                    if (filteredBlocksReceivedFromPeer % RESEND_BLOOM_FILTER_BLOCK_COUNT == RESEND_BLOOM_FILTER_BLOCK_COUNT-1) {
-                        try {
-                            synchronized(thisGroup) {
+            setupPingingForNewPeer(peer);
+            EventListenerInvoker.invoke(peerEventListeners, new EventListenerInvoker<PeerEventListener>() {
+                @Override
+                public void invoke(PeerEventListener listener) {
+                    listener.onPeerConnected(peer, peers.size());
+                }
+            });
+            // TODO: Move this into the Peer object itself.
+            peer.addEventListener(new AbstractPeerEventListener() {
+                int filteredBlocksReceivedFromPeer = 0;
+
+                @Override
+                public Message onPreMessageReceived(Peer peer, Message m) {
+                    if (m instanceof FilteredBlock) {
+                        filteredBlocksReceivedFromPeer++;
+                        if (filteredBlocksReceivedFromPeer % RESEND_BLOOM_FILTER_BLOCK_COUNT == RESEND_BLOOM_FILTER_BLOCK_COUNT - 1) {
+                            lock.lock();
+                            try {
                                 peer.sendMessage(bloomFilter);
+                            } catch (IOException e) {
+                                throw new RuntimeException(e);
+                            } finally {
+                                lock.unlock();
                             }
-                        } catch (IOException e) {
-                            throw new RuntimeException(e);
                         }
                     }
+                    return m;
                 }
-                return m;
-            }
-        });
+            });
+        } finally {
+            lock.unlock();
+        }
     }
 
     private void setupPingingForNewPeer(final Peer peer) {
+        checkState(lock.isLocked());
         if (peer.getPeerVersionMessage().clientVersion < Pong.MIN_PROTOCOL_VERSION)
             return;
         if (getPingIntervalMsec() <= 0)
@@ -831,6 +901,7 @@ public class PeerGroup extends AbstractIdleService {
     /** Returns true if at least one peer received an inv. */
     private synchronized boolean announcePendingWalletTransactions(List<Wallet> announceWallets,
                                                                    List<Peer> announceToPeers) {
+        checkState(lock.isLocked());
         // Build up an inv announcing the hashes of all pending transactions in all our wallets.
         InventoryMessage inv = new InventoryMessage(params);
         for (Wallet w : announceWallets) {
@@ -855,25 +926,30 @@ public class PeerGroup extends AbstractIdleService {
         return success;
     }
 
-    private synchronized void setDownloadPeer(Peer peer) {
-        if (downloadPeer == peer) {
-            return;
-        }
-        if (chain == null) {
-            // PeerGroup creator did not want us to download any data. We still track the download peer for
-            // informational purposes.
+    private void setDownloadPeer(Peer peer) {
+        lock.lock();
+        try {
+            if (downloadPeer == peer) {
+                return;
+            }
+            if (chain == null) {
+                // PeerGroup creator did not want us to download any data. We still track the download peer for
+                // informational purposes.
+                downloadPeer = peer;
+                return;
+            }
+            if (downloadPeer != null) {
+                log.info("Unsetting download peer: {}", downloadPeer);
+                downloadPeer.setDownloadData(false);
+            }
             downloadPeer = peer;
-            return;
-        }
-        if (downloadPeer != null) {
-            log.info("Unsetting download peer: {}", downloadPeer);
-            downloadPeer.setDownloadData(false);
-        }
-        downloadPeer = peer;
-        if (downloadPeer != null) {
-            log.info("Setting download peer: {}", downloadPeer);
-            downloadPeer.setDownloadData(true);
-            downloadPeer.setDownloadParameters(fastCatchupTimeSecs, bloomFilter != null);
+            if (downloadPeer != null) {
+                log.info("Setting download peer: {}", downloadPeer);
+                downloadPeer.setDownloadData(true);
+                downloadPeer.setDownloadParameters(fastCatchupTimeSecs, bloomFilter != null);
+            }
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -884,19 +960,23 @@ public class PeerGroup extends AbstractIdleService {
      * have that it's really valid.
      */
     public MemoryPool getMemoryPool() {
-        // Locking unneeded as memoryPool is final.
         return memoryPool;
     }
 
     /**
-     * Tells the PeerGroup to download only block headers before a certain time and bodies after that. See
-     * {@link Peer#setFastCatchupTime(long)} for further explanation. Call this before starting block chain download.
+     * Tells the PeerGroup to download only block headers before a certain time and bodies after that. Call this
+     * before starting block chain download.
      */
-    public synchronized void setFastCatchupTimeSecs(long secondsSinceEpoch) {
-        Preconditions.checkState(chain == null || !chain.shouldVerifyTransactions(), "Fast catchup is incompatible with fully verifying");
-        fastCatchupTimeSecs = secondsSinceEpoch;
-        if (downloadPeer != null) {
-            downloadPeer.setDownloadParameters(secondsSinceEpoch, bloomFilter != null);
+    public void setFastCatchupTimeSecs(long secondsSinceEpoch) {
+        lock.lock();
+        try {
+            Preconditions.checkState(chain == null || !chain.shouldVerifyTransactions(), "Fast catchup is incompatible with fully verifying");
+            fastCatchupTimeSecs = secondsSinceEpoch;
+            if (downloadPeer != null) {
+                downloadPeer.setDownloadParameters(secondsSinceEpoch, bloomFilter != null);
+            }
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -906,8 +986,13 @@ public class PeerGroup extends AbstractIdleService {
      * the min of the wallets earliest key times.
      * @return a time in seconds since the epoch
      */
-    public synchronized long getFastCatchupTimeSecs() {
-        return fastCatchupTimeSecs;
+    public long getFastCatchupTimeSecs() {
+        lock.lock();
+        try {
+            return fastCatchupTimeSecs;
+        } finally {
+            lock.unlock();
+        }
     }
 
     protected void handlePeerDeath(final Peer peer) {
@@ -921,9 +1006,12 @@ public class PeerGroup extends AbstractIdleService {
         checkArgument(!peers.contains(peer));
         final Peer downloadPeer;
         final PeerEventListener downloadListener;
-        synchronized (this) {
+        lock.lock();
+        try {
             downloadPeer = this.downloadPeer;
             downloadListener = this.downloadListener;
+        } finally {
+            lock.unlock();
         }
         if (peer == downloadPeer) {
             log.info("Download peer died. Picking a new one.");
@@ -961,7 +1049,8 @@ public class PeerGroup extends AbstractIdleService {
         });
     }
 
-    private synchronized void startBlockChainDownloadFromPeer(Peer peer) {
+    private void startBlockChainDownloadFromPeer(Peer peer) {
+        lock.lock();
         try {
             peer.addEventListener(downloadListener);
             setDownloadPeer(peer);
@@ -969,7 +1058,8 @@ public class PeerGroup extends AbstractIdleService {
             peer.startBlockChainDownload();
         } catch (IOException e) {
             log.error("failed to start block chain download from " + peer, e);
-            return;
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -1006,21 +1096,31 @@ public class PeerGroup extends AbstractIdleService {
      * @return
      */
     public int getMinBroadcastConnections() {
-        if (minBroadcastConnections == 0) {
-            int max = getMaxConnections();
-            if (max <= 1)
-                return max;
-            else
-                return (int)Math.round(getMaxConnections() / 2.0);
+        lock.lock();
+        try {
+            if (minBroadcastConnections == 0) {
+                int max = getMaxConnections();
+                if (max <= 1)
+                    return max;
+                else
+                    return (int) Math.round(getMaxConnections() / 2.0);
+            }
+            return minBroadcastConnections;
+        } finally {
+            lock.unlock();
         }
-        return minBroadcastConnections;
     }
 
     /**
      * See {@link com.google.bitcoin.core.PeerGroup#getMinBroadcastConnections()}.
      */
     public void setMinBroadcastConnections(int value) {
-        minBroadcastConnections = value;
+        lock.lock();
+        try {
+            minBroadcastConnections = value;
+        } finally {
+            lock.unlock();
+        }
     }
 
     /**
@@ -1076,7 +1176,8 @@ public class PeerGroup extends AbstractIdleService {
                             boolean done = false;
                             log.info("broadcastTransaction: TX {} seen by {} peers", pinnedTx.getHashAsString(),
                                     numSeenPeers);
-                            synchronized (PeerGroup.this) {
+                            lock.lock();
+                            try {
                                 if (numSeenPeers >= minConnections) {
                                     // We've seen the min required number of peers announce the transaction. Note that we
                                     // can't wait for the current number of connected peers right now because we could have
@@ -1101,6 +1202,8 @@ public class PeerGroup extends AbstractIdleService {
                                     }
                                     done = true;
                                 }
+                            } finally {
+                                lock.unlock();
                             }
                             if (done) {
                                 // We're done! Run this outside of the peer group lock as setting the future may immediately
@@ -1128,7 +1231,8 @@ public class PeerGroup extends AbstractIdleService {
                     if (minConnections == 1) {
                         sendComplete.addListener(new ChannelFutureListener() {
                             public void operationComplete(ChannelFuture _) throws Exception {
-                                synchronized (PeerGroup.this) {
+                                lock.lock();
+                                try {
                                     for (Wallet wallet : wallets) {
                                         try {
                                             if (wallet.isPendingTransactionRelevant(pinnedTx)) {
@@ -1141,6 +1245,8 @@ public class PeerGroup extends AbstractIdleService {
                                             return;
                                         }
                                     }
+                                } finally {
+                                    lock.unlock();
                                 }
                                 future.set(pinnedTx);
                                 return;
@@ -1161,8 +1267,13 @@ public class PeerGroup extends AbstractIdleService {
      * times are available via {@link com.google.bitcoin.core.Peer#getLastPingTime()} but it increases load on the
      * remote node. It defaults to 5000.
      */
-    public synchronized long getPingIntervalMsec() {
-        return pingIntervalMsec;
+    public long getPingIntervalMsec() {
+        lock.lock();
+        try {
+            return pingIntervalMsec;
+        } finally {
+            lock.unlock();
+        }
     }
 
     /**
@@ -1172,8 +1283,13 @@ public class PeerGroup extends AbstractIdleService {
      * Setting the value to be <= 0 disables pinging entirely, although you can still request one yourself
      * using {@link com.google.bitcoin.core.Peer#ping()}.
      */
-    public synchronized void setPingIntervalMsec(long pingIntervalMsec) {
-        this.pingIntervalMsec = pingIntervalMsec;
+    public void setPingIntervalMsec(long pingIntervalMsec) {
+        lock.lock();
+        try {
+            this.pingIntervalMsec = pingIntervalMsec;
+        } finally {
+            lock.unlock();
+        }
     }
 
     /**
@@ -1181,7 +1297,7 @@ public class PeerGroup extends AbstractIdleService {
      * If no peers are connected, returns zero.
      */
     public int getMostCommonChainHeight() {
-        // Copy the peers list so we can calculate on it without violating lock ordering: Peer < peers
+        // Copy the peers list so we can calculate on it without violating lock ordering.
         ArrayList<Peer> peers;
         synchronized (this.peers) {
             peers = new ArrayList<Peer>(this.peers);
@@ -1307,6 +1423,11 @@ public class PeerGroup extends AbstractIdleService {
      * returns. Can return null if no peer was selected.
      */
     public Peer getDownloadPeer() {
-        return downloadPeer;
+        lock.lock();
+        try {
+            return downloadPeer;
+        } finally {
+            lock.unlock();
+        }
     }
 }
