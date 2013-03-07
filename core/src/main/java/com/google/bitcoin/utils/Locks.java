@@ -20,6 +20,8 @@ import com.google.common.util.concurrent.CycleDetectingLockFactory;
 
 import java.util.concurrent.locks.ReentrantLock;
 
+import static com.google.common.base.Preconditions.checkState;
+
 /**
  * A wrapper around explicit lock creation that lets you control whether bitcoinj performs cycle detection or not.
  */
@@ -58,5 +60,10 @@ public class Locks {
 
     public static CycleDetectingLockFactory.Policy getPolicy() {
         return policy;
+    }
+
+    /** Equivalent to checkState(!lock.isLocked()) but the English description makes it harder to overlook the ! */
+    public static void checkNotLocked(ReentrantLock lock) {
+        checkState(!lock.isLocked());
     }
 }
