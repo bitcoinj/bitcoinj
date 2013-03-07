@@ -205,7 +205,7 @@ public class ToyWallet {
         wallet.addEventListener(new AbstractWalletEventListener() {
             @Override
             public void onWalletChanged(Wallet wallet) {
-                // This is running in some arbitrary bitcoinj provided thread with the wallet locked.
+                // MUST BE THREAD SAFE.
                 final List<Transaction> txns = wallet.getTransactionsByTime();
                 SwingUtilities.invokeLater(new Runnable() {
                     public void run() {

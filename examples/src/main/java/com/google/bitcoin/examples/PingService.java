@@ -111,7 +111,7 @@ public class PingService {
         wallet.addEventListener(new AbstractWalletEventListener() {
             @Override
             public void onCoinsReceived(Wallet w, Transaction tx, BigInteger prevBalance, BigInteger newBalance) {
-                // Running on a peer thread.
+                // MUST BE THREAD SAFE
                 assert !newBalance.equals(BigInteger.ZERO);
                 if (!tx.isPending()) return;
                 // It was broadcast, but we can't really verify it's valid until it appears in a block.

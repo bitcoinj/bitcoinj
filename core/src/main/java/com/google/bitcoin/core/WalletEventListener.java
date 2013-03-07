@@ -21,9 +21,6 @@ import java.math.BigInteger;
 /**
  * <p>Implementors are called when the contents of the wallet changes, for instance due to receiving/sending money
  * or a block chain re-organize. It may be convenient to derive from {@link AbstractWalletEventListener} instead.</p>
- *
- * <p>It is safe to call methods of the wallet during event listener execution, and also for a listener to remove itself.
- * Other types of modifications generally aren't safe.</p>
  */
 public interface WalletEventListener {
     /**
@@ -72,7 +69,6 @@ public interface WalletEventListener {
      */
     void onReorganize(Wallet wallet);
 
-    // TODO: Flesh out the docs below some more to clarify what happens during re-orgs and other edge cases.
     /**
      * <p>Called on a Peer thread when a transaction changes its confidence level. You can also attach event listeners to
      * the individual transactions, if you don't care about all of them. Usually you would save the wallet to disk after
@@ -113,9 +109,7 @@ public interface WalletEventListener {
      *
      * <p>When this is called you can refresh the UI contents from the wallet contents. It's more efficient to use
      * this rather than onTransactionConfidenceChanged() + onReorganize() because you only get one callback per block
-     * rather than one per transaction per block. Note that this is <b>not</b> called when a key is added. The wallet
-     * <b>is locked</b> whilst this handler is invoked, but if you relay the callback into another thread (eg the
-     * main UI thread) you should ensure to lock the wallet in the new thread as well.</p>
+     * rather than one per transaction per block. Note that this is <b>not</b> called when a key is added. </p>
      */
     void onWalletChanged(Wallet wallet);
 

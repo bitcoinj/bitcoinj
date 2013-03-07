@@ -503,7 +503,7 @@ public class WalletTool {
                 }
                 wallet.addEventListener(new AbstractWalletEventListener() {
                     @Override
-                    public void onChange() {
+                    public synchronized void onChange() {
                         super.onChange();
                         saveWallet(walletFile);
                         BigInteger balance = wallet.getBalance(Wallet.BalanceType.ESTIMATED);

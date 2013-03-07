@@ -19,7 +19,6 @@ package com.google.bitcoin.core;
 import com.google.bitcoin.core.TransactionConfidence.ConfidenceType;
 import com.google.bitcoin.core.WalletTransaction.Pool;
 import com.google.bitcoin.store.WalletProtobufSerializer;
-import com.google.bitcoin.utils.EventListenerInvoker;
 import com.google.bitcoin.utils.Locks;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
@@ -293,14 +292,15 @@ public class Wallet implements Serializable, BlockChainListener {
         inactive = new HashMap<Sha256Hash, Transaction>();
         pending = new HashMap<Sha256Hash, Transaction>();
         dead = new HashMap<Sha256Hash, Transaction>();
+        eventListeners = new CopyOnWriteArrayList<WalletEventListener>();
         createTransientState();
     }
 
     private void createTransientState() {
-        eventListeners = new CopyOnWriteArrayList<WalletEventListener>();
         ignoreNextNewBlock = new HashSet<Sha256Hash>();
         txConfidenceListener = new TransactionConfidence.Listener() {
             public void onConfidenceChanged(Transaction tx) {
+                lock.lock();
                 invokeOnTransactionConfidenceChanged(tx);
                 // Many onWalletChanged events will not occur because they are suppressed, eg, because:
                 //   - we are inside a re-org
@@ -312,6 +312,7 @@ public class Wallet implements Serializable, BlockChainListener {
                 // The latter case cannot happen today because we won't hear about it, but in future this may
                 // become more common if conflict notices are implemented.
                 invokeOnWalletChanged();
+                lock.unlock();
             }
         };
         acceptTimeLockedTransactions = false;
@@ -938,23 +939,6 @@ public class Wallet implements Serializable, BlockChainListener {
         }
     }
 
-    // Boilerplate that allows event listeners to delete themselves during execution, and auto locks the listener.
-    private void invokeOnCoinsReceived(final Transaction tx, final BigInteger balance, final BigInteger newBalance) {
-        EventListenerInvoker.invoke(eventListeners, new EventListenerInvoker<WalletEventListener>() {
-            @Override public void invoke(WalletEventListener listener) {
-                listener.onCoinsReceived(Wallet.this, tx, balance, newBalance);
-            }
-        });
-    }
-
-    private void invokeOnCoinsSent(final Transaction tx, final BigInteger prevBalance, final BigInteger newBalance) {
-        EventListenerInvoker.invoke(eventListeners, new EventListenerInvoker<WalletEventListener>() {
-            @Override public void invoke(WalletEventListener listener) {
-                listener.onCoinsSent(Wallet.this, tx, prevBalance, newBalance);
-            }
-        });
-    }
-
     /**
      * <p>Returns true if the given transaction sends coins to any of our keys, or has inputs spending any of our outputs,
      * and if includeDoubleSpending is true, also returns true if tx has inputs that are spending outputs which are
@@ -1134,8 +1118,6 @@ public class Wallet implements Serializable, BlockChainListener {
      * <p/>
      * <p>Used to update confidence data in each transaction and last seen block hash. Triggers auto saving.
      * Invokes the onWalletChanged event listener if there were any affected transactions.</p>
-     *
-     * @param block
      */
     public void notifyNewBestBlock(StoredBlock block) throws VerificationException {
         // Check to see if this block has been seen before.
@@ -1957,28 +1939,28 @@ public class Wallet implements Serializable, BlockChainListener {
      * in the list that was not already present.
      */
     public int addKeys(final List<ECKey> keys) {
+        int added = 0;
         lock.lock();
         try {
             // TODO: Consider making keys a sorted list or hashset so membership testing is faster.
-            int added = 0;
             for (final ECKey key : keys) {
                 if (keychain.contains(key)) continue;
                 keychain.add(key);
-                EventListenerInvoker.invoke(eventListeners, new EventListenerInvoker<WalletEventListener>() {
-                    @Override
-                    public void invoke(WalletEventListener listener) {
-                        listener.onKeyAdded(key);
-                    }
-                });
                 added++;
             }
             if (autosaveToFile != null) {
                 autoSave();
             }
-            return added;
         } finally {
             lock.unlock();
         }
+        for (ECKey key : keys) {
+            // TODO: Change this interface to be batch-oriented.
+            for (WalletEventListener listener : eventListeners) {
+                listener.onKeyAdded(key);
+            }
+        }
+        return added;
     }
 
     /**
@@ -2429,14 +2411,8 @@ public class Wallet implements Serializable, BlockChainListener {
             }
 
             log.info("post-reorg balance is {}", Utils.bitcoinValueToFriendlyString(getBalance()));
-
             // Inform event listeners that a re-org took place. They should save the wallet at this point.
-            EventListenerInvoker.invoke(eventListeners, new EventListenerInvoker<WalletEventListener>() {
-                @Override
-                public void invoke(WalletEventListener listener) {
-                    listener.onReorganize(Wallet.this);
-                }
-            });
+            invokeOnReorganize();
             onWalletChangedSuppressions--;
             invokeOnWalletChanged();
             checkState(isConsistent());
@@ -2516,35 +2492,6 @@ public class Wallet implements Serializable, BlockChainListener {
         // spent so move them into the right bucket here to keep performance good.
         for (Transaction maybeSpent : connectedTransactions) {
             maybeMoveTxToSpent(maybeSpent, "reorg");
-        }
-    }
-
-    private void invokeOnTransactionConfidenceChanged(final Transaction tx) {
-        EventListenerInvoker.invoke(eventListeners, new EventListenerInvoker<WalletEventListener>() {
-            @Override
-            public void invoke(WalletEventListener listener) {
-                listener.onTransactionConfidenceChanged(Wallet.this, tx);
-            }
-        });
-    }
-
-    private int onWalletChangedSuppressions;
-    private void invokeOnWalletChanged() {
-        lock.lock();
-        try {
-            // Don't invoke the callback in some circumstances, eg, whilst we are re-organizing or fiddling with
-            // transactions due to a new block arriving. It will be called later instead.
-            Preconditions.checkState(onWalletChangedSuppressions >= 0);
-            if (onWalletChangedSuppressions > 0) return;
-            // Call with the wallet locked.
-            EventListenerInvoker.invoke(eventListeners, new EventListenerInvoker<WalletEventListener>() {
-                @Override
-                public void invoke(WalletEventListener listener) {
-                    listener.onWalletChanged(Wallet.this);
-                }
-            });
-        } finally {
-            lock.unlock();
         }
     }
 
@@ -2710,6 +2657,75 @@ public class Wallet implements Serializable, BlockChainListener {
             this.coinSelector = coinSelector;
         } finally {
             lock.unlock();
+        }
+    }
+
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Boilerplate for running event listeners - unlocks the wallet, runs, re-locks.
+
+    private void invokeOnTransactionConfidenceChanged(Transaction tx) {
+        checkState(lock.isLocked());
+        lock.unlock();
+        try {
+            for (WalletEventListener listener : eventListeners) {
+                listener.onTransactionConfidenceChanged(this, tx);
+            }
+        } finally {
+            lock.lock();
+        }
+    }
+
+    private int onWalletChangedSuppressions = 0;
+    private void invokeOnWalletChanged() {
+        // Don't invoke the callback in some circumstances, eg, whilst we are re-organizing or fiddling with
+        // transactions due to a new block arriving. It will be called later instead.
+        checkState(lock.isLocked());
+        Preconditions.checkState(onWalletChangedSuppressions >= 0);
+        if (onWalletChangedSuppressions > 0) return;
+        lock.unlock();
+        try {
+            for (WalletEventListener listener : eventListeners) {
+                listener.onWalletChanged(this);
+            }
+        } finally {
+            lock.lock();
+        }
+    }
+
+    private void invokeOnCoinsReceived(Transaction tx, BigInteger balance, BigInteger newBalance) {
+        checkState(lock.isLocked());
+        lock.unlock();
+        try {
+            for (WalletEventListener listener : eventListeners) {
+                listener.onCoinsReceived(Wallet.this, tx, balance, newBalance);
+            }
+        } finally {
+            lock.lock();
+        }
+    }
+
+    private void invokeOnCoinsSent(Transaction tx, BigInteger prevBalance, BigInteger newBalance) {
+        checkState(lock.isLocked());
+        lock.unlock();
+        try {
+            for (WalletEventListener listener : eventListeners) {
+                listener.onCoinsSent(Wallet.this, tx, prevBalance, newBalance);
+            }
+        } finally {
+            lock.lock();
+        }
+    }
+
+    private void invokeOnReorganize() {
+        checkState(lock.isLocked());
+        lock.unlock();
+        try {
+            for (WalletEventListener listener : eventListeners) {
+                listener.onReorganize(Wallet.this);
+            }
+        } finally {
+            lock.lock();
         }
     }
 }
