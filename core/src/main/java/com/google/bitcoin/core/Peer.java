@@ -39,6 +39,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
 
+import static com.google.bitcoin.utils.Locks.checkNotLocked;
 import static com.google.common.base.Preconditions.checkState;
 
 /**
@@ -795,76 +796,78 @@ public class Peer {
     }
 
     private void processInv(InventoryMessage inv) throws IOException {
-        lock.lock();
-        try {
-            // This should be called in the network loop thread for this peer.
-            List<InventoryItem> items = inv.getItems();
+        checkNotLocked(lock);
+        List<InventoryItem> items = inv.getItems();
 
-            // Separate out the blocks and transactions, we'll handle them differently
-            List<InventoryItem> transactions = new LinkedList<InventoryItem>();
-            List<InventoryItem> blocks = new LinkedList<InventoryItem>();
+        // Separate out the blocks and transactions, we'll handle them differently
+        List<InventoryItem> transactions = new LinkedList<InventoryItem>();
+        List<InventoryItem> blocks = new LinkedList<InventoryItem>();
 
-            for (InventoryItem item : items) {
-                switch (item.type) {
-                    case Transaction:
-                        transactions.add(item);
-                        break;
-                    case Block:
-                        blocks.add(item);
-                        break;
-                    default:
-                        throw new IllegalStateException("Not implemented: " + item.type);
-                }
+        for (InventoryItem item : items) {
+            switch (item.type) {
+                case Transaction:
+                    transactions.add(item);
+                    break;
+                case Block:
+                    blocks.add(item);
+                    break;
+                default:
+                    throw new IllegalStateException("Not implemented: " + item.type);
             }
+        }
 
-            final boolean downloadData = this.downloadData.get();
+        final boolean downloadData = this.downloadData.get();
 
-            if (transactions.size() == 0 && blocks.size() == 1) {
-                // Single block announcement. If we're downloading the chain this is just a tickle to make us continue
-                // (the block chain download protocol is very implicit and not well thought out). If we're not downloading
-                // the chain then this probably means a new block was solved and the peer believes it connects to the best
-                // chain, so count it. This way getBestChainHeight() can be accurate.
-                if (downloadData) {
-                    if (!blockChain.isOrphan(blocks.get(0).hash)) {
-                        blocksAnnounced.incrementAndGet();
-                    }
-                } else {
+        if (transactions.size() == 0 && blocks.size() == 1) {
+            // Single block announcement. If we're downloading the chain this is just a tickle to make us continue
+            // (the block chain download protocol is very implicit and not well thought out). If we're not downloading
+            // the chain then this probably means a new block was solved and the peer believes it connects to the best
+            // chain, so count it. This way getBestChainHeight() can be accurate.
+            if (downloadData) {
+                if (!blockChain.isOrphan(blocks.get(0).hash)) {
                     blocksAnnounced.incrementAndGet();
                 }
+            } else {
+                blocksAnnounced.incrementAndGet();
             }
+        }
 
-            GetDataMessage getdata = new GetDataMessage(params);
+        GetDataMessage getdata = new GetDataMessage(params);
 
-            Iterator<InventoryItem> it = transactions.iterator();
-            while (it.hasNext()) {
-                InventoryItem item = it.next();
-                if (memoryPool == null) {
-                    if (downloadData) {
-                        // If there's no memory pool only download transactions if we're configured to.
-                        getdata.addItem(item);
-                    }
-                } else {
-                    // Only download the transaction if we are the first peer that saw it be advertised. Other peers will also
-                    // see it be advertised in inv packets asynchronously, they co-ordinate via the memory pool. We could
-                    // potentially download transactions faster by always asking every peer for a tx when advertised, as remote
-                    // peers run at different speeds. However to conserve bandwidth on mobile devices we try to only download a
-                    // transaction once. This means we can miss broadcasts if the peer disconnects between sending us an inv and
-                    // sending us the transaction: currently we'll never try to re-fetch after a timeout.
-                    if (memoryPool.maybeWasSeen(item.hash)) {
-                        // Some other peer already announced this so don't download.
-                        it.remove();
-                    } else {
-                        log.debug("{}: getdata on tx {}", address.get(), item.hash);
-                        getdata.addItem(item);
-                    }
-                    memoryPool.seen(item.hash, this.getAddress());
+        Iterator<InventoryItem> it = transactions.iterator();
+        while (it.hasNext()) {
+            InventoryItem item = it.next();
+            if (memoryPool == null) {
+                if (downloadData) {
+                    // If there's no memory pool only download transactions if we're configured to.
+                    getdata.addItem(item);
                 }
+            } else {
+                // Only download the transaction if we are the first peer that saw it be advertised. Other peers will also
+                // see it be advertised in inv packets asynchronously, they co-ordinate via the memory pool. We could
+                // potentially download transactions faster by always asking every peer for a tx when advertised, as remote
+                // peers run at different speeds. However to conserve bandwidth on mobile devices we try to only download a
+                // transaction once. This means we can miss broadcasts if the peer disconnects between sending us an inv and
+                // sending us the transaction: currently we'll never try to re-fetch after a timeout.
+                if (memoryPool.maybeWasSeen(item.hash)) {
+                    // Some other peer already announced this so don't download.
+                    it.remove();
+                } else {
+                    log.debug("{}: getdata on tx {}", address.get(), item.hash);
+                    getdata.addItem(item);
+                }
+                // This can trigger transaction confidence listeners.
+                checkNotLocked(lock);
+                memoryPool.seen(item.hash, this.getAddress());
             }
+        }
 
-            // If we are requesting filteredblocks we have to send a ping after the getdata so that we have a clear
-            // end to the final FilteredBlock's transactions (in the form of a pong) sent to us
-            boolean pingAfterGetData = false;
+        // If we are requesting filteredblocks we have to send a ping after the getdata so that we have a clear
+        // end to the final FilteredBlock's transactions (in the form of a pong) sent to us
+        boolean pingAfterGetData = false;
 
+        lock.lock();
+        try {
             if (blocks.size() > 0 && downloadData && blockChain != null) {
                 // Ideally, we'd only ask for the data here if we actually needed it. However that can imply a lot of
                 // disk IO to figure out what we've got. Normally peers will not send us inv for things we already have
@@ -904,17 +907,17 @@ public class Peer {
                 // current best block we have and the orphan block. If more blocks arrive in the meantime they'll also
                 // become orphan.
             }
-
-            if (!getdata.getItems().isEmpty()) {
-                // This will cause us to receive a bunch of block or tx messages.
-                sendMessage(getdata);
-            }
-
-            if (pingAfterGetData)
-                sendMessage(new Ping((long) Math.random() * Long.MAX_VALUE));
         } finally {
             lock.unlock();
         }
+
+        if (!getdata.getItems().isEmpty()) {
+            // This will cause us to receive a bunch of block or tx messages.
+            sendMessage(getdata);
+        }
+
+        if (pingAfterGetData)
+            sendMessage(new Ping((long) Math.random() * Long.MAX_VALUE));
     }
 
     /**
