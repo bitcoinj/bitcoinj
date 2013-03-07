@@ -916,31 +916,6 @@ public class WalletTest {
         assertFalse(wallet.completeTx(req));
     }
 
-    @Test
-    public void lockCycles() {
-        CycleDetectingLockFactory.Policy oldPolicy = Locks.getPolicy();
-        Locks.throwOnLockCycles();
-        final ReentrantLock lock = Locks.lock("test");
-        wallet = new Wallet(params);
-        lock.lock();
-        wallet.getKeychainSize();
-        lock.unlock();
-        // Now make sure if we invert the lock, we get an exception.
-        wallet.addEventListener(new AbstractWalletEventListener() {
-            @Override
-            public void onKeyAdded(ECKey key) {
-                try {
-                    lock.lock();
-                    fail();
-                } catch (CycleDetectingLockFactory.PotentialDeadlockException e) {
-                    // Expected.
-                }
-            }
-        });
-        wallet.addKey(new ECKey());
-        Locks.setPolicy(oldPolicy);
-    }
-
     // There is a test for spending a coinbase transaction as it matures in BlockChainTest#coinbaseTransactionAvailability
 
     // Support for offline spending is tested in PeerGroupTest
