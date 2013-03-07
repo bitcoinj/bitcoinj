@@ -120,6 +120,7 @@ public class PingService {
                         ": " + tx);
                 tx.getConfidence().addEventListener(new TransactionConfidence.Listener() {
                     public void onConfidenceChanged(Transaction tx2) {
+                        // Must be thread safe.
                         if (tx2.getConfidence().getConfidenceType() == TransactionConfidence.ConfidenceType.BUILDING) {
                             // Coins were confirmed (appeared in a block).
                             tx2.getConfidence().removeEventListener(this);
