@@ -32,24 +32,31 @@ public class Locks {
         warnOnLockCycles();
     }
 
-    public static CycleDetectingLockFactory factory = null;
+    private static CycleDetectingLockFactory.Policy policy;
+    public static CycleDetectingLockFactory factory;
 
     public static ReentrantLock lock(String name) {
-        if (factory != null)
-            return factory.newReentrantLock(name);
-        else
-            return new ReentrantLock();
+        return factory.newReentrantLock(name);
     }
 
     public static void warnOnLockCycles() {
-        factory = CycleDetectingLockFactory.newInstance(CycleDetectingLockFactory.Policies.WARN);
+        setPolicy(CycleDetectingLockFactory.Policies.WARN);
     }
 
     public static void throwOnLockCycles() {
-        factory = CycleDetectingLockFactory.newInstance(CycleDetectingLockFactory.Policies.THROW);
+        setPolicy(CycleDetectingLockFactory.Policies.THROW);
     }
 
     public static void ignoreLockCycles() {
-        factory = null;
+        setPolicy(CycleDetectingLockFactory.Policies.DISABLED);
+    }
+
+    public static void setPolicy(CycleDetectingLockFactory.Policy policy) {
+        Locks.policy = policy;
+        factory = CycleDetectingLockFactory.newInstance(policy);
+    }
+
+    public static CycleDetectingLockFactory.Policy getPolicy() {
+        return policy;
     }
 }

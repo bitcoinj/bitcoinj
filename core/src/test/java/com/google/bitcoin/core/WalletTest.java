@@ -918,11 +918,12 @@ public class WalletTest {
 
     @Test
     public void lockCycles() {
+        CycleDetectingLockFactory.Policy oldPolicy = Locks.getPolicy();
         Locks.throwOnLockCycles();
         final ReentrantLock lock = Locks.lock("test");
         wallet = new Wallet(params);
         lock.lock();
-        int foo = wallet.getKeychainSize();
+        wallet.getKeychainSize();
         lock.unlock();
         // Now make sure if we invert the lock, we get an exception.
         wallet.addEventListener(new AbstractWalletEventListener() {
@@ -937,6 +938,7 @@ public class WalletTest {
             }
         });
         wallet.addKey(new ECKey());
+        Locks.setPolicy(oldPolicy);
     }
 
     // There is a test for spending a coinbase transaction as it matures in BlockChainTest#coinbaseTransactionAvailability
