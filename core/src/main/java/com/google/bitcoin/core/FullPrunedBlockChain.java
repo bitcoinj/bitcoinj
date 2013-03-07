@@ -26,6 +26,9 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.*;
+
+import static com.google.common.base.Preconditions.checkState;
+
 /**
  * <p>A FullPrunedBlockChain works in conjunction with a {@link FullPrunedBlockStore} to verify all the rules of the
  * Bitcoin system, with the downside being a larg cost in system resources. Fully verifying means all unspent transaction
@@ -95,8 +98,9 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
     ExecutorService scriptVerificationExecutor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
     
     @Override
-    protected synchronized TransactionOutputChanges connectTransactions(int height, Block block)
+    protected TransactionOutputChanges connectTransactions(int height, Block block)
             throws VerificationException, BlockStoreException {
+        checkState(lock.isLocked());
         if (block.transactions == null)
             throw new RuntimeException("connectTransactions called with Block that didn't have transactions!");
         if (!params.passesCheckpoint(height, block.getHash()))
@@ -244,6 +248,7 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
      */
     protected synchronized TransactionOutputChanges connectTransactions(StoredBlock newBlock)
             throws VerificationException, BlockStoreException, PrunedException {
+        checkState(lock.isLocked());
         if (!params.passesCheckpoint(newBlock.getHeight(), newBlock.getHeader().getHash()))
             throw new VerificationException("Block failed checkpoint lockin at " + newBlock.getHeight());
         
@@ -393,6 +398,7 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
      */
     @Override
     protected void disconnectTransactions(StoredBlock oldBlock) throws PrunedException, BlockStoreException {
+        checkState(lock.isLocked());
         blockStore.beginDatabaseBatchWrite();
         try {
             StoredUndoableBlock undoBlock = blockStore.getUndoBlock(oldBlock.getHeader().getHash());
@@ -413,6 +419,7 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
 
     @Override
     protected void doSetChainHead(StoredBlock chainHead) throws BlockStoreException {
+        checkState(lock.isLocked());
         blockStore.setVerifiedChainHead(chainHead);
         blockStore.commitDatabaseBatchWrite();
     }
@@ -424,6 +431,7 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
 
     @Override
     protected StoredBlock getStoredBlockInCurrentScope(Sha256Hash hash) throws BlockStoreException {
+        checkState(lock.isLocked());
         return blockStore.getOnceUndoableStoredBlock(hash);
     }
 }
