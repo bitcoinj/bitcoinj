@@ -301,6 +301,7 @@ public class Wallet implements Serializable, BlockChainListener {
         txConfidenceListener = new TransactionConfidence.Listener() {
             public void onConfidenceChanged(Transaction tx) {
                 lock.lock();
+                // The invokers unlock us immediately so if an exception is thrown, the lock will be already open.
                 invokeOnTransactionConfidenceChanged(tx);
                 // Many onWalletChanged events will not occur because they are suppressed, eg, because:
                 //   - we are inside a re-org
