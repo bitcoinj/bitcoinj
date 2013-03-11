@@ -119,7 +119,10 @@ public class TestWithNetworkConnections {
     }
 
     protected Object outbound(FakeChannel p1) {
-        MessageEvent nextEvent = (MessageEvent)p1.nextEvent();
+        ChannelEvent channelEvent = p1.nextEvent();
+        if (channelEvent != null && !(channelEvent instanceof MessageEvent))
+            throw new IllegalStateException("Expected message but got: " + channelEvent);
+        MessageEvent nextEvent = (MessageEvent) channelEvent;
         if (nextEvent == null)
             return null;
         return nextEvent.getMessage();
