@@ -875,7 +875,7 @@ public class Peer {
         }
         
         if (pingAfterGetData)
-            sendMessage(new Ping((long) Math.random() * Long.MAX_VALUE));
+            sendMessage(new Ping((long) (Math.random() * Long.MAX_VALUE)));
     }
 
     /**
@@ -1120,7 +1120,7 @@ public class Peer {
      * @throws ProtocolException if the peer version is too low to support measurable pings.
      */
     public synchronized ListenableFuture<Long> ping() throws IOException, ProtocolException {
-        return ping((long) Math.random() * Long.MAX_VALUE);
+        return ping((long) (Math.random() * Long.MAX_VALUE));
     }
 
     protected synchronized ListenableFuture<Long> ping(long nonce) throws IOException, ProtocolException {
