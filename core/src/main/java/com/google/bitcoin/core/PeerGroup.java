@@ -20,7 +20,6 @@ package com.google.bitcoin.core;
 import com.google.bitcoin.core.Peer.PeerHandler;
 import com.google.bitcoin.discovery.PeerDiscovery;
 import com.google.bitcoin.discovery.PeerDiscoveryException;
-import com.google.bitcoin.utils.EventListenerInvoker;
 import com.google.bitcoin.utils.Locks;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Sets;
@@ -744,10 +743,10 @@ public class PeerGroup extends AbstractIdleService {
     }
 
     /**
-     * Start downloading the blockchain from the first available peer.
-     * <p/>
-     * <p>If no peers are currently connected, the download will be started
-     * once a peer starts.  If the peer dies, the download will resume with another peer.
+     * <p>Start downloading the blockchain from the first available peer.</p>
+     *
+     * <p>If no peers are currently connected, the download will be started once a peer starts.  If the peer dies,
+     * the download will resume with another peer.</p>
      *
      * @param listener a listener for chain download events, may not be null
      */
@@ -828,12 +827,8 @@ public class PeerGroup extends AbstractIdleService {
                 peer.addEventListener(listener);
             }
             setupPingingForNewPeer(peer);
-            EventListenerInvoker.invoke(peerEventListeners, new EventListenerInvoker<PeerEventListener>() {
-                @Override
-                public void invoke(PeerEventListener listener) {
-                    listener.onPeerConnected(peer, peers.size());
-                }
-            });
+            for (PeerEventListener listener : peerEventListeners)
+                listener.onPeerConnected(peer, peers.size());
             // TODO: Move this into the Peer object itself.
             peer.addEventListener(new AbstractPeerEventListener() {
                 int filteredBlocksReceivedFromPeer = 0;
@@ -1044,16 +1039,14 @@ public class PeerGroup extends AbstractIdleService {
                 log.error(e.getMessage());
             }
         }
-        // TODO: Remove peerEventListeners from the Peer here.
         peer.removeEventListener(getDataListener);
-        for (Wallet wallet : wallets)
+        for (Wallet wallet : wallets) {
             peer.removeWallet(wallet);
-        EventListenerInvoker.invoke(peerEventListeners, new EventListenerInvoker<PeerEventListener>() {
-            @Override
-            public void invoke(PeerEventListener listener) {
-                listener.onPeerDisconnected(peer, peers.size());
-            }
-        });
+        }
+        for (PeerEventListener listener : peerEventListeners) {
+            listener.onPeerDisconnected(peer, peers.size());
+            peer.removeEventListener(listener);
+        }
     }
 
     private void startBlockChainDownloadFromPeer(Peer peer) {
