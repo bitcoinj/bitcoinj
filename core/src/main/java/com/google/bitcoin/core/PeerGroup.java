@@ -108,9 +108,23 @@ public class PeerGroup extends AbstractIdleService {
     private long fastCatchupTimeSecs;
     private ArrayList<Wallet> wallets;
 
-    private AbstractPeerEventListener getDataListener;
+    // This event listener is added to every peer. It's here so when we announce transactions via an "inv", every
+    // peer can fetch them.
+    private AbstractPeerEventListener getDataListener = new AbstractPeerEventListener() {
+        @Override
+        public List<Message> getData(Peer peer, GetDataMessage m) {
+            return handleGetData(m);
+        }
+    };
+
     private ClientBootstrap bootstrap;
     private int minBroadcastConnections = 0;
+    private AbstractWalletEventListener walletEventListener = new AbstractWalletEventListener() {
+        @Override
+        public void onKeyAdded(ECKey key) {
+            recalculateFastCatchupAndFilter();
+        }
+    };
 
     private class PeerStartupListener implements Peer.PeerLifecycleListener {
         public void onPeerConnected(Peer peer) {
@@ -217,14 +231,6 @@ public class PeerGroup extends AbstractIdleService {
         channels = new DefaultChannelGroup();
         peerDiscoverers = new CopyOnWriteArraySet<PeerDiscovery>(); 
         peerEventListeners = new ArrayList<PeerEventListener>();
-        // This event listener is added to every peer. It's here so when we announce transactions via an "inv", every
-        // peer can fetch them.
-        getDataListener = new AbstractPeerEventListener() {
-            @Override
-            public List<Message> getData(Peer peer, GetDataMessage m) {
-                return handleGetData(m);
-            }
-        };
     }
 
     /**
@@ -531,14 +537,19 @@ public class PeerGroup extends AbstractIdleService {
 
     /**
      * <p>Link the given wallet to this PeerGroup. This is used for three purposes:</p>
+     *
      * <ol>
      *   <li>So the wallet receives broadcast transactions.</li>
      *   <li>Announcing pending transactions that didn't get into the chain yet to our peers.</li>
      *   <li>Set the fast catchup time using {@link PeerGroup#setFastCatchupTimeSecs(long)}, to optimize chain
      *       download.</li>
      * </ol>
+     *
      * <p>Note that this should be done before chain download commences because if you add a wallet with keys earlier
      * than the current chain head, the relevant parts of the chain won't be redownloaded for you.</p>
+     *
+     * <p>The Wallet will have an event listener registered on it, so to avoid leaks remember to use
+     * {@link PeerGroup#removeWallet(Wallet)} on it if you wish to keep the Wallet but lose the PeerGroup.</p>
      */
     public synchronized void addWallet(Wallet wallet) {
         Preconditions.checkNotNull(wallet);
@@ -550,14 +561,17 @@ public class PeerGroup extends AbstractIdleService {
         // if a key is added. Of course, by then we may have downloaded the chain already. Ideally adding keys would
         // automatically rewind the block chain and redownload the blocks to find transactions relevant to those keys,
         // all transparently and in the background. But we are a long way from that yet.
-        wallet.addEventListener(new AbstractWalletEventListener() {
-            @Override
-            public void onKeyAdded(ECKey key) {
-                recalculateFastCatchupAndFilter();
-            }
-        });
+        wallet.addEventListener(walletEventListener);
         recalculateFastCatchupAndFilter();
         updateVersionMessageRelayTxesBeforeFilter(getVersionMessage());
+    }
+
+    /**
+     * Unlinks the given wallet so it no longer receives broadcast transactions or has its transactions announced.
+     */
+    public void removeWallet(Wallet wallet) {
+        wallets.remove(checkNotNull(wallet));
+        wallet.removeEventListener(walletEventListener);
     }
 
     private synchronized void recalculateFastCatchupAndFilter() {
@@ -603,15 +617,6 @@ public class PeerGroup extends AbstractIdleService {
     public synchronized void setBloomFilterFalsePositiveRate(double bloomFilterFPRate) {
         this.bloomFilterFPRate = bloomFilterFPRate;
         recalculateFastCatchupAndFilter();
-    }
-
-    /**
-     * Unlinks the given wallet so it no longer receives broadcast transactions or has its transactions announced.
-     */
-    public void removeWallet(Wallet wallet) {
-        if (wallet == null)
-            throw new IllegalArgumentException("wallet is null");
-        wallets.remove(wallet);
     }
 
     /**
