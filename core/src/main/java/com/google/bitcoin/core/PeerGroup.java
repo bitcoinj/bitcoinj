@@ -163,12 +163,6 @@ public class PeerGroup extends AbstractIdleService {
     // We use a constant tweak to avoid giving up privacy when we regenerate our filter with new keys
     private final long bloomFilterTweak = (long) (Math.random() * Long.MAX_VALUE);
     private int lastBloomFilterElementCount;
-    
-    /**
-     * Every RESEND_BLOOM_FILTER_BLOCK_COUNT FilteredBlocks received, the bloom filter is refreshed.
-     * This prevents the actual false positive rate from ballooning as the filter gets elements added to it automatically.
-     */
-    public static final int RESEND_BLOOM_FILTER_BLOCK_COUNT = 25000;
 
     /**
      * Creates a PeerGroup with the given parameters. No chain is provided so this node will report its chain height
@@ -829,28 +823,6 @@ public class PeerGroup extends AbstractIdleService {
             setupPingingForNewPeer(peer);
             for (PeerEventListener listener : peerEventListeners)
                 listener.onPeerConnected(peer, peers.size());
-            // TODO: Move this into the Peer object itself.
-            peer.addEventListener(new AbstractPeerEventListener() {
-                int filteredBlocksReceivedFromPeer = 0;
-
-                @Override
-                public Message onPreMessageReceived(Peer peer, Message m) {
-                    if (m instanceof FilteredBlock) {
-                        filteredBlocksReceivedFromPeer++;
-                        if (filteredBlocksReceivedFromPeer % RESEND_BLOOM_FILTER_BLOCK_COUNT == RESEND_BLOOM_FILTER_BLOCK_COUNT - 1) {
-                            lock.lock();
-                            try {
-                                peer.sendMessage(bloomFilter);
-                            } catch (IOException e) {
-                                throw new RuntimeException(e);
-                            } finally {
-                                lock.unlock();
-                            }
-                        }
-                    }
-                    return m;
-                }
-            });
         } finally {
             lock.unlock();
         }
