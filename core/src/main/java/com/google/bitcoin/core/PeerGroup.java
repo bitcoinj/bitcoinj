@@ -75,12 +75,12 @@ public class PeerGroup extends AbstractIdleService {
 
     // These lists are all thread-safe so do not have to be accessed under the PeerGroup lock.
     // Addresses to try to connect to, excluding active peers.
-    private List<PeerAddress> inactives;
+    private final List<PeerAddress> inactives;
     // Currently active peers. This is an ordered list rather than a set to make unit tests predictable.
-    private List<Peer> peers;
+    private final List<Peer> peers;
     // Currently connecting peers.
-    private List<Peer> pendingPeers;
-    private ChannelGroup channels;
+    private final List<Peer> pendingPeers;
+    private final ChannelGroup channels;
 
     // The peer that has been selected for the purposes of downloading announced data.
     private Peer downloadPeer;
@@ -132,7 +132,7 @@ public class PeerGroup extends AbstractIdleService {
                 lock.unlock();
             }
         }
-    };;
+    };
 
     private class PeerStartupListener implements Peer.PeerLifecycleListener {
         public void onPeerConnected(Peer peer) {
@@ -333,13 +333,11 @@ public class PeerGroup extends AbstractIdleService {
                 } else {
                     // Check the wallets.
                     for (Wallet w : wallets) {
-                        synchronized (w) {
-                            tx = w.getTransaction(item.hash);
-                            if (tx == null) continue;
-                            transactions.add(tx);
-                            it.remove();
-                            break;
-                        }
+                        tx = w.getTransaction(item.hash);
+                        if (tx == null) continue;
+                        transactions.add(tx);
+                        it.remove();
+                        break;
                     }
                 }
             }
@@ -510,8 +508,7 @@ public class PeerGroup extends AbstractIdleService {
         for (PeerDiscovery peerDiscovery : peerDiscoverers) {
             InetSocketAddress[] addresses;
             addresses = peerDiscovery.getPeers(10, TimeUnit.SECONDS);
-            for (int i = 0; i < addresses.length; i++)
-                addressSet.add(new PeerAddress(addresses[i]));
+            for (InetSocketAddress address : addresses) addressSet.add(new PeerAddress(address));
             if (addressSet.size() > 0) break;
         }
         synchronized (inactives) {
