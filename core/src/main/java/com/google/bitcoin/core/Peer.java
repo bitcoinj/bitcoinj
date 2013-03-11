@@ -214,7 +214,7 @@ public class Peer {
             super.connectRequested(ctx, e);
         }
 
-        /** Catch any exceptions, logging them and then closing the channel. */ 
+        /** Catch any exceptions, logging them and then closing the channel. */
         @Override
         public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) throws Exception {
             String s;
@@ -330,8 +330,7 @@ public class Peer {
         // in the chain).
         //
         // We go through and cancel the pending getdata futures for the items we were told weren't found.
-        for (ListIterator<GetDataRequest> it = getDataFutures.listIterator(); it.hasNext();) {
-            GetDataRequest req = it.next();
+        for (GetDataRequest req : getDataFutures) {
             for (InventoryItem item : m.getItems()) {
                 if (item.hash.equals(req.hash)) {
                     req.future.cancel(true);
@@ -461,8 +460,7 @@ public class Peer {
                 return;
             }
             // It's a broadcast transaction. Tell all wallets about this tx so they can check if it's relevant or not.
-            for (ListIterator<Wallet> it = wallets.listIterator(); it.hasNext(); ) {
-                final Wallet wallet = it.next();
+            for (final Wallet wallet : wallets) {
                 try {
                     if (wallet.isPendingTransactionRelevant(fTx)) {
                         // This transaction seems interesting to us, so let's download its dependencies. This has several
@@ -637,8 +635,7 @@ public class Peer {
                 ping(nonce).addListener(new Runnable() {
                     public void run() {
                         // The pong came back so clear out any transactions we requested but didn't get.
-                        for (ListIterator<GetDataRequest> it = getDataFutures.listIterator(); it.hasNext();) {
-                            GetDataRequest req = it.next();
+                        for (GetDataRequest req : getDataFutures) {
                             if (req.nonce == nonce) {
                                 req.future.cancel(true);
                                 getDataFutures.remove(req);
@@ -757,8 +754,7 @@ public class Peer {
     private boolean maybeHandleRequestedData(Message m) {
         boolean found = false;
         Sha256Hash hash = m.getHash();
-        for (ListIterator<GetDataRequest> it = getDataFutures.listIterator(); it.hasNext();) {
-            GetDataRequest req = it.next();
+        for (GetDataRequest req : getDataFutures) {
             if (hash.equals(req.hash)) {
                 req.future.set(m);
                 getDataFutures.remove(req);
@@ -1119,8 +1115,8 @@ public class Peer {
 
         public void complete() {
             Preconditions.checkNotNull(future, "Already completed");
-            Long elapsed = Long.valueOf(Utils.now().getTime() - startTimeMsec);
-            Peer.this.addPingTimeData(elapsed.longValue());
+            Long elapsed = Utils.now().getTime() - startTimeMsec;
+            Peer.this.addPingTimeData(elapsed);
             log.debug("{}: ping time is {} msec", Peer.this.toString(), elapsed);
             future.set(elapsed);
             future = null;
@@ -1201,12 +1197,10 @@ public class Peer {
     }
 
     private void processPong(Pong m) {
-        // This does not need to be locked.
         PendingPing ping = null;
         // Iterates over a snapshot of the list, so we can run unlocked here.
-        ListIterator<PendingPing> it = pendingPings.listIterator();
-        while (it.hasNext()) {
-            ping = it.next();
+        for (PendingPing pendingPing : pendingPings) {
+            ping = pendingPing;
             if (m.getNonce() == ping.nonce) {
                 pendingPings.remove(ping);
                 break;
