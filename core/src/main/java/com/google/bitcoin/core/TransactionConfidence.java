@@ -16,12 +16,10 @@
 
 package com.google.bitcoin.core;
 
-import com.google.bitcoin.utils.EventListenerInvoker;
 import com.google.common.base.Preconditions;
 
 import java.io.Serializable;
 import java.math.BigInteger;
-import java.util.ArrayList;
 import java.util.ListIterator;
 import java.util.concurrent.CopyOnWriteArrayList;
 
