@@ -31,7 +31,7 @@ public class Locks {
         // Default policy goes here. If you want to change this, use one of the static methods before
         // instantiating any bitcoinj objects. The policy change will take effect only on new objects
         // from that point onwards.
-        warnOnLockCycles();
+        throwOnLockCycles();
     }
 
     private static CycleDetectingLockFactory.Policy policy;
@@ -60,10 +60,5 @@ public class Locks {
 
     public static CycleDetectingLockFactory.Policy getPolicy() {
         return policy;
-    }
-
-    /** Equivalent to checkState(!lock.isLocked()) but the English description makes it harder to overlook the ! */
-    public static void checkNotLocked(ReentrantLock lock) {
-        checkState(!lock.isLocked());
     }
 }
