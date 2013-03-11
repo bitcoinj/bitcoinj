@@ -127,7 +127,7 @@ public class Peer {
     private volatile Channel vChannel;
     private volatile VersionMessage vPeerVersionMessage;
     private boolean isAcked;
-    private PeerHandler handler;
+    private final PeerHandler handler;
 
     /**
      * Construct a peer that reads/writes from the given block chain.
@@ -983,7 +983,7 @@ public class Peer {
     /**
      * Sends the given message on the peers Channel.
      */
-    public ChannelFuture sendMessage(Message m) throws IOException {
+    public ChannelFuture sendMessage(Message m) {
         // This does not need to be locked.
         return Channels.write(vChannel, m);
     }
@@ -1103,9 +1103,9 @@ public class Peer {
         // The future that will be invoked when the pong is heard back.
         public SettableFuture<Long> future;
         // The random nonce that lets us tell apart overlapping pings/pongs.
-        public long nonce;
+        public final long nonce;
         // Measurement of the time elapsed.
-        public long startTimeMsec;
+        public final long startTimeMsec;
 
         public PendingPing(long nonce) {
             future = SettableFuture.create();
