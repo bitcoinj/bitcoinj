@@ -361,7 +361,8 @@ public class Wallet implements Serializable, BlockChainListener {
             if (Utils.isWindows()) {
                 // Work around an issue on Windows whereby you can't rename over existing files.
                 File canonical = destFile.getCanonicalFile();
-                if (canonical.delete() && temp.renameTo(canonical))
+                canonical.delete();
+                if (temp.renameTo(canonical))
                     return;  // else fall through.
                 throw new IOException("Failed to rename " + temp + " to " + canonical);
             } else if (!temp.renameTo(destFile)) {
