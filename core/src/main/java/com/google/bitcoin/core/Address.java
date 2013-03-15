@@ -89,13 +89,6 @@ public class Address extends VersionedChecksummedBytes {
                 new NetworkParameters[] { NetworkParameters.testNet(), NetworkParameters.prodNet() };
 
         for (NetworkParameters params : networks) {
-            if (params.acceptableAddressCodes == null) {
-                // Old Java-serialized wallet. This code can eventually be deleted.
-                if (params.getId().equals(NetworkParameters.ID_PRODNET))
-                    params = NetworkParameters.prodNet();
-                else if (params.getId().equals(NetworkParameters.ID_TESTNET))
-                    params = NetworkParameters.testNet();
-            }
             for (int code : params.acceptableAddressCodes) {
                 if (code == version) {
                     return params;
