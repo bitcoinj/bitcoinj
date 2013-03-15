@@ -139,11 +139,6 @@ public class KeyCrypterScrypt implements KeyCrypter, Serializable {
 
     /**
      * Password based encryption using AES - CBC 256 bits.
-     *
-     * @param plain             The bytes to encrypt
-     * @param aesKey            The AES key to use for encryption
-     * @return                  EncryptedPrivateKey containing IV and the encrypted private key
-     * @throws                  KeyCrypterException
      */
     @Override
     public EncryptedPrivateKey encrypt(byte[] plainBytes, KeyParameter aesKey) throws KeyCrypterException {
@@ -239,7 +234,7 @@ public class KeyCrypterScrypt implements KeyCrypter, Serializable {
 
     @Override
     public String toString() {
-        return "EncrypterDecrypterScrypt [scryptParameters=" + scryptParameters.toString() + "]";
+        return "Scrypt/AES";
     }
 
     @Override
