@@ -16,12 +16,12 @@
 
 package com.google.bitcoin.core;
 
+import com.google.bitcoin.crypto.KeyCrypterScrypt;
 import org.bitcoinj.wallet.Protos.Wallet.EncryptionType;
 import org.spongycastle.crypto.params.KeyParameter;
 
 import com.google.bitcoin.core.TransactionConfidence.ConfidenceType;
 import com.google.bitcoin.core.WalletTransaction.Pool;
-import com.google.bitcoin.crypto.EncryptedPrivateKey;
 import com.google.bitcoin.crypto.KeyCrypter;
 import com.google.bitcoin.crypto.KeyCrypterException;
 import com.google.bitcoin.store.WalletProtobufSerializer;
@@ -288,21 +288,13 @@ public class Wallet implements Serializable, BlockChainListener {
 
     private transient CoinSelector coinSelector = new DefaultCoinSelector();
 
-    /**
-     * The keyCrypter for the wallet. This specifies the algorithm used for encrypting and decrypting the private keys.
-     */
+    // The keyCrypter for the wallet. This specifies the algorithm used for encrypting and decrypting the private keys.
     private KeyCrypter keyCrypter;
-
-    /**
-     * The wallet version. This is an int that can be used to track breaking changes in the wallet format.
-     * You can also use it to detect wallets that come from the future (ie they contain features you
-     * do not know how to deal with).
-     */
+    // The wallet version. This is an int that can be used to track breaking changes in the wallet format.
+    // You can also use it to detect wallets that come from the future (ie they contain features you
+    // do not know how to deal with).
     private int version;
-
-    /**
-     * A description for the wallet.
-     */
+    // User-provided description that may help people keep track of what a wallet is for.
     String description;
 
     /**
@@ -1991,7 +1983,7 @@ public class Wallet implements Serializable, BlockChainListener {
                 // If the key has a keyCrypter that does not match the Wallet's then a KeyCrypterException is thrown.
                 // This is done because only one keyCrypter is persisted per Wallet and hence all the keys must be homogenous.
                 if (keyCrypter != null && keyCrypter.getUnderstoodEncryptionType() != EncryptionType.UNENCRYPTED) {
-                    if ( key.isEncrypted() && !keyCrypter.equals(key.getKeyCrypter())) {
+                    if (key.isEncrypted() && !keyCrypter.equals(key.getKeyCrypter())) {
                         throw new KeyCrypterException("Cannot add key " + key.toString() + " because the keyCrypter does not match the wallets. Keys must be homogenous.");
                     }
                 }
@@ -2197,7 +2189,7 @@ public class Wallet implements Serializable, BlockChainListener {
             }
             // Add the keyCrypter so that any setup parameters are in the wallet toString.
             if (this.keyCrypter != null) {
-                builder.append("\n keyCrypter: " + keyCrypter.toString());
+                builder.append("\nkeyCrypter: " + keyCrypter.toString());
             }
             return builder.toString();
         } finally {
@@ -2629,7 +2621,22 @@ public class Wallet implements Serializable, BlockChainListener {
     }
 
     /**
-     * Encrypt the wallet using the KeyCrypter and the AES key.
+     * Convenience wrapper around {@link Wallet#encrypt(com.google.bitcoin.crypto.KeyCrypter,
+     * org.spongycastle.crypto.params.KeyParameter)} which uses the default Scrypt key derivation algorithm and
+     * parameters, derives a key from the given password and returns the created key.
+     */
+    public KeyParameter encrypt(CharSequence password) {
+        checkNotNull(password);
+        checkArgument(password.length() > 0);
+        KeyCrypter scrypt = new KeyCrypterScrypt();
+        KeyParameter derivedKey = scrypt.deriveKey(password);
+        encrypt(scrypt, derivedKey);
+        return derivedKey;
+    }
+
+    /**
+     * Encrypt the wallet using the KeyCrypter and the AES key. A good default KeyCrypter to use is
+     * {@link com.google.bitcoin.crypto.KeyCrypterScrypt}.
      *
      * @param keyCrypter The KeyCrypter that specifies how to encrypt/ decrypt a key
      * @param aesKey AES key to use (normally created using KeyCrypter#deriveKey and cached as it is time consuming to create from a password)
@@ -2638,16 +2645,10 @@ public class Wallet implements Serializable, BlockChainListener {
     public void encrypt(KeyCrypter keyCrypter, KeyParameter aesKey) {
         lock.lock();
         try {
-            Preconditions.checkNotNull(keyCrypter);
-
-            // If the wallet is already encrypted then you cannot encrypt it again.
-            if (getEncryptionType() != EncryptionType.UNENCRYPTED) {
-                throw new IllegalStateException("Wallet is already encrypted");
-            }
-
+            checkNotNull(keyCrypter);
+            checkState(getEncryptionType() == EncryptionType.UNENCRYPTED, "Wallet is already encrypted");
             // Create a new arraylist that will contain the encrypted keys
             ArrayList<ECKey> encryptedKeyChain = new ArrayList<ECKey>();
-
             for (ECKey key : keychain) {
                 if (key.isEncrypted()) {
                     // Key is already encrypted - add as is.
@@ -2701,13 +2702,10 @@ public class Wallet implements Serializable, BlockChainListener {
         lock.lock();
         try {
             // Check the wallet is already encrypted - you cannot decrypt an unencrypted wallet.
-            if (getEncryptionType() == EncryptionType.UNENCRYPTED) {
-                throw new IllegalStateException("Wallet is already decrypted");
-            }
-
+            checkState(getEncryptionType() != EncryptionType.UNENCRYPTED, "Wallet is already decrypted");
             // Check that the wallet keyCrypter is non-null.
             // This is set either at construction (if an encrypted wallet is created) or by wallet encryption.
-            Preconditions.checkNotNull(keyCrypter);
+            checkNotNull(keyCrypter);
 
             // Create a new arraylist that will contain the decrypted keys
             ArrayList<ECKey> decryptedKeyChain = new ArrayList<ECKey>();
@@ -2738,18 +2736,31 @@ public class Wallet implements Serializable, BlockChainListener {
     }
 
     /**
-     * Create a new encrypted ECKey and add it to the wallet.
+     * Create a new, random encrypted ECKey and add it to the wallet.
      *
      * @param keyCrypter The keyCrypter to use in encrypting the new key
      * @param aesKey The AES key to use to encrypt the new key
      * @return ECKey the new, encrypted ECKey
      */
     public ECKey addNewEncryptedKey(KeyCrypter keyCrypter, KeyParameter aesKey) {
+        ECKey newKey = (new ECKey()).encrypt(checkNotNull(keyCrypter), checkNotNull(aesKey));
+        addKey(newKey);
+        return newKey;
+    }
+
+    /**
+     * <p>Convenience wrapper around {@link Wallet#addNewEncryptedKey(com.google.bitcoin.crypto.KeyCrypter,
+     * org.spongycastle.crypto.params.KeyParameter)} which just derives the key afresh and uses the pre-set
+     * keycrypter. The wallet must have been encrypted using one of the encrypt methods previously.</p>
+     *
+     * <p>Note that key derivation is deliberately very slow! So if you plan to add multiple keys, it can be
+     * faster to use the other method instead and re-use the {@link KeyParameter} object instead.</p>
+     */
+    public ECKey addNewEncryptedKey(CharSequence password) {
         lock.lock();
         try {
-            ECKey newKey = (new ECKey()).encrypt(keyCrypter, aesKey);
-            addKey(newKey);
-            return newKey;
+            checkNotNull(keyCrypter, "Wallet is not encrypted, you must call encrypt() first.");
+            return addNewEncryptedKey(keyCrypter, keyCrypter.deriveKey(password));
         } finally {
             lock.unlock();
         }
@@ -2759,7 +2770,7 @@ public class Wallet implements Serializable, BlockChainListener {
      *  Check whether the password can decrypt the first key in the wallet.
      *  This can be used to check the validity of an entered password.
      *
-     *  @returns boolean true if password supplied can decrypt the first private key in the wallet, false otherwise.
+     *  @return boolean true if password supplied can decrypt the first private key in the wallet, false otherwise.
      */
     public boolean checkPassword(CharSequence password) {
         lock.lock();
@@ -2768,7 +2779,7 @@ public class Wallet implements Serializable, BlockChainListener {
                 // The password cannot decrypt anything as the keyCrypter is null.
                 return false;
             }
-            return checkAESKey(keyCrypter.deriveKey(password));
+            return checkAESKey(keyCrypter.deriveKey(checkNotNull(password)));
         } finally {
             lock.unlock();
         }
@@ -2852,6 +2863,11 @@ public class Wallet implements Serializable, BlockChainListener {
         } finally {
             lock.unlock();
         }
+    }
+
+    /** Returns true if the wallet is encrypted using any scheme, false if not. */
+    public boolean isEncrypted() {
+        return getEncryptionType() != EncryptionType.UNENCRYPTED;
     }
 
     /**
