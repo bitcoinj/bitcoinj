@@ -70,6 +70,7 @@ public class WalletTool {
             "  --condition=...      Allows you to specify a numeric condition for other commands. The format is\n" +
             "                       one of the following operators = < > <= >= immediately followed by a number.\n" +
             "                       For example --condition=\">5.10\" or --condition=\"<=1\"\n" +
+            "  --password=...       For an encrypted wallet, the password is provided here.\n" +
 
             "\n>>> ACTIONS\n" +
             "  --action=DUMP        Loads and prints the given wallet in textual form to stdout.\n" +
@@ -95,6 +96,7 @@ public class WalletTool {
             "                          --fee=0.01  sets the tx fee\n" +
             "                          --locktime=1234  sets the lock time to block 1234\n" +
             "                          --locktime=2013/01/01  sets the lock time to 1st Jan 2013\n" +
+            "                          --allow-unconfirmed will let you create spends of pending non-change outputs.\n" +
 
             "\n>>> WAITING\n" +
             "You can wait for the condition specified by the --waitfor flag to become true. Transactions and new\n" +
@@ -125,6 +127,7 @@ public class WalletTool {
     private static File chainFileName;
     private static PeerDiscovery discovery;
     private static ValidationMode mode;
+    private static String password;
 
     public static class Condition {
         public enum Type {
@@ -249,6 +252,8 @@ public class WalletTool {
         parser.accepts("fee").withRequiredArg();
         conditionFlag = parser.accepts("condition").withRequiredArg();
         parser.accepts("locktime").withRequiredArg();
+        parser.accepts("allow-unconfirmed");
+        OptionSpec<String> passwordFlag = parser.accepts("password").withRequiredArg();
         options = parser.parse(args);
         
         if (args.length == 0 || options.has("help") || options.nonOptionArguments().size() > 0) {
@@ -289,6 +294,10 @@ public class WalletTool {
 
         if (options.has("condition")) {
             condition = new Condition(conditionFlag.value(options));
+        }
+
+        if (options.has(passwordFlag)) {
+            password = passwordFlag.value(options);
         }
 
         ActionEnum action = ActionEnum.NONE;
@@ -351,7 +360,8 @@ public class WalletTool {
                 if (options.has("locktime")) {
                     lockTime = (String) options.valueOf("locktime");
                 }
-                send(outputFlag.values(options), fee, lockTime);
+                boolean allowUnconfirmed = options.has("allow-unconfirmed");
+                send(outputFlag.values(options), fee, lockTime, allowUnconfirmed);
                 break;
         }
 
@@ -381,7 +391,7 @@ public class WalletTool {
         shutdown();
     }
 
-    private static void send(List<String> outputs, BigInteger fee, String lockTimeStr) {
+    private static void send(List<String> outputs, BigInteger fee, String lockTimeStr, boolean allowUnconfirmed) {
         try {
             // Convert the input strings to outputs.
             Transaction t = new Transaction(params);
@@ -416,6 +426,20 @@ public class WalletTool {
             }
             Wallet.SendRequest req = Wallet.SendRequest.forTx(t);
             req.fee = fee;
+            if (allowUnconfirmed) {
+                wallet.setCoinSelector(new Wallet.DefaultCoinSelector() {
+                    @Override protected boolean shouldSelect(Transaction tx) {
+                        return true;  // Accept any transaction that's spendable.
+                    }
+                });
+            }
+            if (password != null) {
+                if (!wallet.checkPassword(password)) {
+                    System.err.println("Password is incorrect.");
+                    return;
+                }
+                req.aesKey = wallet.getKeyCrypter().deriveKey(password);
+            }
             if (!wallet.completeTx(req)) {
                 System.err.println("Insufficient funds: have " + Utils.bitcoinValueToFriendlyString(wallet.getBalance()));
                 return;
@@ -612,8 +636,12 @@ public class WalletTool {
             System.err.println("Wallet creation requested but " + walletFile + " already exists, use --force");
             return;
         }
-        new Wallet(params).saveToFile(walletFile);
-        // Don't add any keys by default.
+        wallet = new Wallet(params);
+        if (password != null) {
+            wallet.encrypt(password);
+            wallet.addNewEncryptedKey(password);
+        }
+        wallet.saveToFile(walletFile);
     }
 
     private static void saveWallet(File walletFile) {
@@ -672,6 +700,13 @@ public class WalletTool {
             return;
         }
         try {
+            if (wallet.isEncrypted()) {
+                if (password == null || !wallet.checkPassword(password)) {
+                    System.err.println("The password is incorrect.");
+                    return;
+                }
+                key = key.encrypt(wallet.getKeyCrypter(), wallet.getKeyCrypter().deriveKey(password));
+            }
             wallet.addKey(key);
         } catch (KeyCrypterException kce) {
             System.err.println("There was an encryption related error when adding the key. The error was '" + kce.getMessage() + "'.");
