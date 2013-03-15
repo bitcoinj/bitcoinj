@@ -1167,19 +1167,17 @@ public class Peer {
     }
 
     private void processPong(Pong m) {
-        PendingPing ping = null;
         // Iterates over a snapshot of the list, so we can run unlocked here.
         ListIterator<PendingPing> it = pendingPings.listIterator();
         while (it.hasNext()) {
-            ping = it.next();
+            final PendingPing ping = it.next();
             if (m.getNonce() == ping.nonce) {
                 pendingPings.remove(ping);
-                break;
+                // This line may trigger an event listener that re-runs ping().
+                ping.complete();
+                return;
             }
         }
-        // This line may trigger an event listener being run on the same thread, if one is attached to the
-        // pending ping future. That event listener may in turn re-run ping, so we need to do it last.
-        if (ping != null) ping.complete();
     }
 
     /**
