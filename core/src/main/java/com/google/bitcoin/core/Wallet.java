@@ -257,13 +257,18 @@ public class Wallet implements Serializable, BlockChainListener {
             for (TransactionOutput output : sortedOutputs) {
                 if (total >= target) break;
                 // Only pick chain-included transactions, or transactions that are ours and pending.
-                if (!isSelectable(output.parentTransaction)) continue;
+                if (!shouldSelect(output.parentTransaction)) continue;
                 selected.add(output);
                 total += output.getValue().longValue();
             }
             // Total may be lower than target here, if the given candidates were insufficient to create to requested
             // transaction.
             return new CoinSelection(BigInteger.valueOf(total), selected);
+        }
+
+        /** Sub-classes can override this to just customize whether transactions are usable, but keep age sorting. */
+        protected boolean shouldSelect(Transaction tx) {
+            return isSelectable(tx);
         }
 
         public static boolean isSelectable(Transaction tx) {
@@ -1686,6 +1691,7 @@ public class Wallet implements Serializable, BlockChainListener {
         /**
          * The AES key to use to decrypt the private keys before signing.
          * If null then no decryption will be performed and if decryption is required an exception will be thrown.
+         * You can get this from a password by doing wallet.getKeyCrypter().derivePassword(password).
          */
         public KeyParameter aesKey = null;
 
