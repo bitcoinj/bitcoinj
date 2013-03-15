@@ -43,6 +43,6 @@ public class WalletExtensionSerializer {
      * Get collection of extensions to add, should be overridden by any class adding wallet extensions.
      */
     public Collection<Protos.Extension> getExtensionsToWrite(Wallet wallet) {
-        return Collections.<Protos.Extension>emptyList();
+        return Collections.emptyList();
     }
 }

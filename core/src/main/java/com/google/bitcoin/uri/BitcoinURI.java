@@ -185,11 +185,11 @@ public class BitcoinURI {
         }
         
         // Attempt to decode the rest of the tokens into a parameter map.
-        for (int i = 0; i < nameValuePairTokens.length; i++) {
-            String[] tokens = nameValuePairTokens[i].split("=");
+        for (String nameValuePairToken : nameValuePairTokens) {
+            String[] tokens = nameValuePairToken.split("=");
             if (tokens.length != 2 || "".equals(tokens[0])) {
                 throw new BitcoinURIParseException("Malformed Bitcoin URI - cannot parse name value pair '" +
-                        nameValuePairTokens[i] + "'");
+                        nameValuePairToken + "'");
             }
 
             String nameToken = tokens[0].toLowerCase();
