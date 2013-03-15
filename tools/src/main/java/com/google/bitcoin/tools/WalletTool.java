@@ -79,6 +79,7 @@ public class WalletTool {
             "                       Will complain and require --force if the wallet already exists.\n" +
             "  --action=ADD_KEY     Adds a new key to the wallet, either specified or freshly generated.\n" +
             "                       If --date is specified, that's the creation date.\n" +
+            "                       If --unixtime is specified, that's the creation time and it overrides --date.\n" +
             "                       If --privkey is specified, use as a hex/base58 encoded private key.\n" +
             "                       Don't specify --pubkey in that case, it will be derived automatically.\n" +
             "                       If --pubkey is specified, use as a hex/base58 encoded non-compressed public key.\n" +
@@ -112,6 +113,7 @@ public class WalletTool {
     private static OptionSpec<ActionEnum> actionFlag;
     private static OptionSpec<NetworkEnum> netFlag;
     private static OptionSpec<Date> dateFlag;
+    private static OptionSpec<Integer> unixtimeFlag;
     private static OptionSpec<WaitForEnum> waitForFlag;
     private static OptionSpec<ValidationMode> modeFlag;
     private static OptionSpec<String> conditionFlag;
@@ -250,6 +252,7 @@ public class WalletTool {
         OptionSpec<String> outputFlag = parser.accepts("output").withRequiredArg();
         parser.accepts("value").withRequiredArg();
         parser.accepts("fee").withRequiredArg();
+        parser.accepts("unixtime").withRequiredArg().ofType(Integer.class);
         conditionFlag = parser.accepts("condition").withRequiredArg();
         parser.accepts("locktime").withRequiredArg();
         parser.accepts("allow-unconfirmed");
@@ -658,7 +661,9 @@ public class WalletTool {
     private static void addKey() {
         ECKey key;
         long creationTimeSeconds = 0;
-        if (options.has(dateFlag)) {
+        if (options.has(unixtimeFlag)) {
+            creationTimeSeconds = unixtimeFlag.value(options);
+        } else if (options.has(dateFlag)) {
             creationTimeSeconds = dateFlag.value(options).getTime() / 1000;
         }
         if (options.has("privkey")) {
