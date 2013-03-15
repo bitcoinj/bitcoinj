@@ -1114,7 +1114,7 @@ public class Peer {
         }
 
         public void complete() {
-            Preconditions.checkNotNull(future, "Already completed");
+            checkNotNull(future, "Already completed");
             Long elapsed = Utils.now().getTime() - startTimeMsec;
             Peer.this.addPingTimeData(elapsed);
             log.debug("{}: ping time is {} msec", Peer.this.toString(), elapsed);
@@ -1197,18 +1197,16 @@ public class Peer {
     }
 
     private void processPong(Pong m) {
-        PendingPing ping = null;
+        log.info("{}: pong! {}", this, m.getNonce());
         // Iterates over a snapshot of the list, so we can run unlocked here.
-        for (PendingPing pendingPing : pendingPings) {
-            ping = pendingPing;
+        for (PendingPing ping : pendingPings) {
             if (m.getNonce() == ping.nonce) {
                 pendingPings.remove(ping);
-                break;
+                // This line may trigger an event listener that re-runs ping().
+                ping.complete();
+                return;
             }
         }
-        // This line may trigger an event listener being run on the same thread, if one is attached to the
-        // pending ping future. That event listener may in turn re-run ping, so we need to do it last.
-        if (ping != null) ping.complete();
     }
 
     /**

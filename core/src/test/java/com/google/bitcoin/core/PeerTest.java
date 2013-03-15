@@ -463,7 +463,7 @@ public class PeerTest extends TestWithNetworkConnections {
         assertEquals(elapsed, peer.getPingTime());
         // Do it again and make sure it affects the average.
         future = peer.ping();
-        outbound();
+        pingMsg = (Ping) outbound();
         Utils.rollMockClock(50);
         inbound(peer, new Pong(pingMsg.getNonce()));
         elapsed = future.get();
