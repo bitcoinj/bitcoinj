@@ -266,6 +266,9 @@ public class ECKey implements Serializable {
         if (creationTimeSeconds != 0) {
             b.append(" timestamp:").append(creationTimeSeconds);
         }
+        if (isEncrypted()) {
+            b.append(" encrypted");
+        }
         return b.toString();
     }
 
@@ -339,8 +342,9 @@ public class ECKey implements Serializable {
 
     /**
      * Signs the given hash and returns the R and S components as BigIntegers. In the Bitcoin protocol, they are
-     * usually encoded using DER format, so you want {@link ECKey#signToDER(Sha256Hash)} instead. However sometimes
-     * the independent components can be useful, for instance, if you're doing to do further EC maths on them.
+     * usually encoded using DER format, so you want {@link com.google.bitcoin.core.ECKey.ECDSASignature#toASN1()}
+     * instead. However sometimes the independent components can be useful, for instance, if you're doing to do
+     * further EC maths on them.
      * @throws KeyCrypterException if this ECKey doesn't have a private part.
      */
     public ECDSASignature sign(Sha256Hash input) throws KeyCrypterException {
