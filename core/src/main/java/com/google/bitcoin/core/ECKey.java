@@ -228,16 +228,16 @@ public class ECKey implements Serializable {
     }
 
     public String toString() {
-        StringBuffer b = new StringBuffer();
+        StringBuilder b = new StringBuilder();
         b.append("pub:").append(Utils.bytesToHexString(pub));
         if (creationTimeSeconds != 0) {
-            b.append(" timestamp:" + creationTimeSeconds);
+            b.append(" timestamp:").append(creationTimeSeconds);
         }
         return b.toString();
     }
 
     public String toStringWithPrivate() {
-        StringBuffer b = new StringBuffer();
+        StringBuilder b = new StringBuilder();
         b.append(toString());
         if (priv != null) {
             b.append(" priv:").append(Utils.bytesToHexString(priv.toByteArray()));
@@ -585,7 +585,6 @@ public class ECKey implements Serializable {
     /**
      * Sets the creation time of this key. Zero is a convention to mean "unavailable". This method can be useful when
      * you have a raw key you are importing from somewhere else.
-     * @param newCreationTimeSeconds
      */
     public void setCreationTimeSeconds(long newCreationTimeSeconds) {
         if (newCreationTimeSeconds < 0)
@@ -600,9 +599,7 @@ public class ECKey implements Serializable {
 
         ECKey ecKey = (ECKey) o;
 
-        if (!Arrays.equals(pub, ecKey.pub)) return false;
-
-        return true;
+        return Arrays.equals(pub, ecKey.pub);
     }
 
     @Override

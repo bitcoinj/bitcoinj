@@ -335,8 +335,7 @@ public class BitcoinURI {
             if (questionMarkHasBeenOutput) {
                 builder.append(AMPERSAND_SEPARATOR);
             } else {
-                builder.append(QUESTION_MARK_SEPARATOR);                
-                questionMarkHasBeenOutput = true;
+                builder.append(QUESTION_MARK_SEPARATOR);
             }
             builder.append(FIELD_MESSAGE).append("=").append(encodeURLString(message));
         }

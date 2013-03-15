@@ -859,13 +859,9 @@ public class Script {
     private static boolean castToBool(byte[] data) {
         for (int i = 0; i < data.length; i++)
         {
+            // "Can be negative zero" -reference client (see OpenSSL's BN_bn2mpi)
             if (data[i] != 0)
-            {
-                // "Can be negative zero" -reference client (see OpenSSL's BN_bn2mpi)
-                if (i == data.length - 1 && (data[i] & 0xFF) == 0x80)
-                    return false;
-                return true;
-            }
+                return !(i == data.length - 1 && (data[i] & 0xFF) == 0x80);
         }
         return false;
     }

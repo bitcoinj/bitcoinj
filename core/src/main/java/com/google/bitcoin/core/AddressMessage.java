@@ -127,14 +127,12 @@ public class AddressMessage extends Message {
             getMessageSize();
         else
             length += address.getMessageSize();
-        ;
     }
 
     public void removeAddress(int index) {
         unCache();
         PeerAddress address = addresses.remove(index);
-        if (address != null)
-            address.setParent(null);
+        address.setParent(null);
         if (length == UNKNOWN_LENGTH)
             getMessageSize();
         else

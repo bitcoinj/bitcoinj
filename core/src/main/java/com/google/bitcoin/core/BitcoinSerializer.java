@@ -193,7 +193,7 @@ public class BitcoinSerializer {
         }
 
         // Verify the checksum.
-        byte[] hash = null;
+        byte[] hash;
         hash = doubleDigest(payloadBytes);
         if (header.checksum[0] != hash[0] || header.checksum[1] != hash[1] ||
                 header.checksum[2] != hash[2] || header.checksum[3] != hash[3]) {

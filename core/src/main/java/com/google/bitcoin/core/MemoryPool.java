@@ -60,7 +60,7 @@ public class MemoryPool {
             super(tx, queue);
             hash = tx.getHash();
         }
-    };
+    }
     private static class Entry {
         // Invariants: one of the two fields must be null, to indicate which is used.
         Set<PeerAddress> addresses;

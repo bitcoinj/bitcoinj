@@ -125,7 +125,7 @@ public class TransactionConfidence implements Serializable {
             }
         }
 
-    };
+    }
 
     private ConfidenceType confidenceType = ConfidenceType.UNKNOWN;
     private int appearedAtChainHeight = -1;
@@ -165,7 +165,7 @@ public class TransactionConfidence implements Serializable {
      */
     public interface Listener {
         public void onConfidenceChanged(Transaction tx);
-    };
+    }
 
     /**
      * <p>Adds an event listener that will be run when this confidence object is updated. The listener will be locked and

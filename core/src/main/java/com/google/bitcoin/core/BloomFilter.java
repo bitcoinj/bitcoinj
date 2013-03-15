@@ -162,7 +162,7 @@ public class BloomFilter extends Message {
     
     private int hash(int hashNum, byte[] object) {
         // The following is MurmurHash3 (x86_32), see http://code.google.com/p/smhasher/source/browse/trunk/MurmurHash3.cpp
-        int h1 = (int)((hashNum * 0xFBA4C795L + nTweak) & 0xFFFFFFFF);
+        int h1 = (int)(hashNum * 0xFBA4C795L + nTweak);
         final int c1 = 0xcc9e2d51;
         final int c2 = 0x1b873593;
 
@@ -199,7 +199,7 @@ public class BloomFilter extends Message {
             default:
                 // Do nothing.
                 break;
-        };
+        }
 
         // finalization
         h1 ^= object.length;
@@ -246,12 +246,10 @@ public class BloomFilter extends Message {
     
     @Override
     public boolean equals(Object other) {
-        if (other instanceof BloomFilter &&
-                ((BloomFilter)other).hashFuncs == this.hashFuncs &&
-                ((BloomFilter)other).nTweak == this.nTweak &&
-                Arrays.equals(((BloomFilter)other).data, this.data))
-            return true;
-        return false;
+        return other instanceof BloomFilter &&
+                ((BloomFilter) other).hashFuncs == this.hashFuncs &&
+                ((BloomFilter) other).nTweak == this.nTweak &&
+                Arrays.equals(((BloomFilter) other).data, this.data);
     }
 
     @Override

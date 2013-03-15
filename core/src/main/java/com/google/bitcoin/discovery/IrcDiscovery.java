@@ -244,11 +244,7 @@ public class IrcDiscovery implements PeerDiscovery {
             // Look for first space.
             int startIndex = response.indexOf(" ") + 1;
             // Next part should be status code.
-            if (response.indexOf(statusCode + " ", startIndex) == startIndex) {
-                return true;
-            } else {
-                return false;
-            }
+            return response.indexOf(statusCode + " ", startIndex) == startIndex;
         } else {
             if (response.startsWith(statusCode + " ")) {
                 return true;

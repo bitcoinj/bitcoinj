@@ -1213,7 +1213,6 @@ public class PeerGroup extends AbstractIdleService {
                                 lock.unlock();
                             }
                             future.set(pinnedTx);
-                            return;
                         }
                     });
                 }

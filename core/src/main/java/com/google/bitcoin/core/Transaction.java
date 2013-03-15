@@ -439,15 +439,15 @@ public class Transaction extends ChildMessage implements Serializable {
 
             //parse();
             //parsed = true;
-            length = calcLength(bytes, cursor, offset);
+            length = calcLength(bytes, offset);
             cursor = offset + length;
         }
     }
 
-    protected static int calcLength(byte[] buf, int cursor, int offset) {
+    protected static int calcLength(byte[] buf, int offset) {
         VarInt varint;
         // jump past version (uint32)
-        cursor = offset + 4;
+        int cursor = offset + 4;
 
         int i;
         long scriptLen;
