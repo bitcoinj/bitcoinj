@@ -2163,6 +2163,9 @@ public class Wallet implements Serializable, BlockChainListener {
             builder.append(String.format("  %d dead transactions%n", dead.size()));
             builder.append(String.format("Last seen best block: (%d) %s%n",
                     getLastBlockSeenHeight(), getLastBlockSeenHash()));
+            if (this.keyCrypter != null) {
+                builder.append(String.format("Encryption: %s%n", keyCrypter.toString()));
+            }
             // Do the keys.
             builder.append("\nKeys:\n");
             for (ECKey key : keychain) {
@@ -2192,10 +2195,6 @@ public class Wallet implements Serializable, BlockChainListener {
             if (dead.size() > 0) {
                 builder.append("\nDEAD:\n");
                 toStringHelper(builder, dead, chain);
-            }
-            // Add the keyCrypter so that any setup parameters are in the wallet toString.
-            if (this.keyCrypter != null) {
-                builder.append("\nkeyCrypter: " + keyCrypter.toString());
             }
             return builder.toString();
         } finally {
