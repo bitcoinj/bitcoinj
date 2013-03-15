@@ -2799,10 +2799,8 @@ public class Wallet implements Serializable, BlockChainListener {
         lock.lock();
         try {
             // If no keys then cannot decrypt.
-            if (!getKeys().iterator().hasNext()) {
+            if (!getKeys().iterator().hasNext())
                 return false;
-            }
-
             // Find the first encrypted key in the wallet.
             ECKey firstEncryptedECKey = null;
             Iterator<ECKey> iterator = getKeys().iterator();
@@ -2812,15 +2810,11 @@ public class Wallet implements Serializable, BlockChainListener {
                     firstEncryptedECKey = loopECKey;
                 }
             }
-
             // There are no encrypted keys in the wallet.
-            if (firstEncryptedECKey == null) {
+            if (firstEncryptedECKey == null)
                 return false;
-            }
-
             String originalAddress = firstEncryptedECKey.toAddress(getNetworkParameters()).toString();
-
-            if (firstEncryptedECKey != null && firstEncryptedECKey.isEncrypted() && firstEncryptedECKey.getEncryptedPrivateKey() != null) {
+            if (firstEncryptedECKey.isEncrypted() && firstEncryptedECKey.getEncryptedPrivateKey() != null) {
                 try {
                     ECKey rebornKey = firstEncryptedECKey.decrypt(keyCrypter, aesKey);
 
