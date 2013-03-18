@@ -1197,7 +1197,6 @@ public class Peer {
     }
 
     private void processPong(Pong m) {
-        log.info("{}: pong! {}", this, m.getNonce());
         // Iterates over a snapshot of the list, so we can run unlocked here.
         for (PendingPing ping : pendingPings) {
             if (m.getNonce() == ping.nonce) {
