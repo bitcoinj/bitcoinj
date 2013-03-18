@@ -141,7 +141,8 @@ public class TCPNetworkConnection implements NetworkConnection {
         versionMessage = (VersionMessage) m;
         // Switch to the new protocol version.
         int peerVersion = versionMessage.clientVersion;
-        log.info("Connected to peer: version={}, subVer='{}', services=0x{}, time={}, blocks={}", new Object[] {
+        log.info("Connected to {}: version={}, subVer='{}', services=0x{}, time={}, blocks={}", new Object[] {
+                getPeerAddress().getAddr().getHostAddress(),
                 peerVersion,
                 versionMessage.subVer,
                 versionMessage.localServices,
