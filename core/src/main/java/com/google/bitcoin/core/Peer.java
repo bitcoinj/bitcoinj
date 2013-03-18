@@ -190,7 +190,7 @@ public class Peer {
             // User-provided NetworkConnection object.
             return "Peer()";
         } else {
-            return "Peer(" + addr.getAddr() + ":" + addr.getPort() + ")";
+            return addr.toString();
         }
     }
 
@@ -333,6 +333,7 @@ public class Peer {
         for (GetDataRequest req : getDataFutures) {
             for (InventoryItem item : m.getItems()) {
                 if (item.hash.equals(req.hash)) {
+                    log.info("{}: Bottomed out dep tree at {}", this, req.hash);
                     req.future.cancel(true);
                     getDataFutures.remove(req);
                     break;
@@ -575,6 +576,8 @@ public class Peer {
             List<ListenableFuture<Transaction>> futures = Lists.newArrayList();
             GetDataMessage getdata = new GetDataMessage(params);
             final long nonce = (long)(Math.random()*Long.MAX_VALUE);
+            if (needToRequest.size() > 1)
+                log.info("{}: Requesting {} transactions for dep resolution", needToRequest.size());
             for (Sha256Hash hash : needToRequest) {
                 getdata.addTransaction(hash);
                 GetDataRequest req = new GetDataRequest();
@@ -632,21 +635,22 @@ public class Peer {
                 // If the peer isn't new enough to support the notfound message, we use a nasty hack instead and
                 // assume if we send a ping message after the getdata message, it'll be processed after all answers
                 // from getdata are done, so we can watch for the pong message as a substitute.
+                log.info("{}: Dep resolution waiting for a pong with nonce {}", this, nonce);
                 ping(nonce).addListener(new Runnable() {
                     public void run() {
                         // The pong came back so clear out any transactions we requested but didn't get.
                         for (GetDataRequest req : getDataFutures) {
                             if (req.nonce == nonce) {
+                                log.info("{}: Bottomed out dep tree at {}", this, req.hash);
                                 req.future.cancel(true);
                                 getDataFutures.remove(req);
-                                break;
                             }
                         }
                     }
                 }, MoreExecutors.sameThreadExecutor());
             }
         } catch (Exception e) {
-            log.error("Couldn't send getdata in downloadDependencies({})", tx.getHash());
+            log.error("{}: Couldn't send getdata in downloadDependencies({})", this, tx.getHash());
             resultFuture.setException(e);
             return resultFuture;
         } finally {
