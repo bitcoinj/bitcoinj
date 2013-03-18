@@ -718,11 +718,26 @@ public class Peer {
             log.debug("{}: Received block we did not ask for: {}", vAddress, m.getHash().toString());
             return;
         }
-        // Note that we currently do nothing about peers which do not include transactions which
-        // actually match our filter or which do not send us all the transactions (TODO: Do something about that).
+        // Note that we currently do nothing about peers which maliciously do not include transactions which
+        // actually match our filter or which simply do not send us all the transactions we need: it can be fixed
+        // by cross-checking peers against each other.
         pendingBlockDownloads.remove(m.getBlockHeader().getHash());
         try {
             // Otherwise it's a block sent to us because the peer thought we needed it, so add it to the block chain.
+            // The FilteredBlock m here contains a list of hashes, and may contain Transaction objects for a subset
+            // of the hashes (those that were sent to us by the remote peer). Any hashes that haven't had a tx
+            // provided in processTransaction are ones that were announced to us previously via an 'inv' so the
+            // assumption is we have already downloaded them and either put them in the wallet, or threw them away
+            // for being false positives.
+            //
+            // TODO: Fix the following protocol race.
+            // It is possible for this code to go wrong such that we miss a confirmation. If the remote peer announces
+            // a relevant transaction via an 'inv' and then it immediately announces the block that confirms
+            // the tx before we had a chance to download it+its dependencies and provide them to the wallet, then we
+            // will add the block to the chain here without the tx being in the wallet and thus it will miss its
+            // confirmation and become stuck forever. The fix is to notice that there's a pending getdata for a tx
+            // that appeared in this block and delay processing until it arrived ... it's complicated by the fact that
+            // the data may be requested by a different peer to this one.
             if (blockChain.add(m)) {
                 // The block was successfully linked into the chain. Notify the user of our progress.
                 invokeOnBlocksDownloaded(m.getBlockHeader());

@@ -232,6 +232,13 @@ public abstract class AbstractBlockChain {
      */
     public boolean add(FilteredBlock block) throws VerificationException, PrunedException {
         try {
+            // The block has a list of hashes of transactions that matched the Bloom filter, and a list of associated
+            // Transaction objects. There may be fewer Transaction objects than hashes, this is expected. It can happen
+            // in the case where we were already around to witness the initial broadcast, so we downloaded the
+            // transaction and sent it to the wallet before this point (the wallet may have thrown it away if it was
+            // a false positive, as expected in any Bloom filtering scheme). The filteredTxn list here will usually
+            // only be full of data when we are catching up to the head of the chain and thus haven't witnessed any
+            // of the transactions.
             Set<Sha256Hash> filteredTxnHashSet = new HashSet<Sha256Hash>(block.getTransactionHashes());
             List<Transaction> filteredTxn = block.getAssociatedTransactions();
             for (Transaction tx : filteredTxn) {
