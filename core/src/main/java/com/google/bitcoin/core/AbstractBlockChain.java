@@ -450,8 +450,8 @@ public abstract class AbstractBlockChain {
             // If we do, send them to the wallet but state that they are on a side chain so it knows not to try and
             // spend them until they become activated.
             if (block.transactions != null || filteredTxn != null) {
-                for (int i = 0; i < listeners.size(); i++) {
-                    BlockChainListener listener = listeners.get(i);
+                boolean first = true;
+                for (BlockChainListener listener : listeners) {
                     List<Transaction> txnToNotify;
                     if (block.transactions != null)
                         txnToNotify = block.transactions;
@@ -462,17 +462,13 @@ public abstract class AbstractBlockChain {
                     // is relevant to both of them, they don't end up accidentally sharing the same object (which can
                     // result in temporary in-memory corruption during re-orgs). See bug 257. We only duplicate in
                     // the case of multiple wallets to avoid an unnecessary efficiency hit in the common case.
-                    sendTransactionsToListener(newBlock, NewBlockType.SIDE_CHAIN, listener, txnToNotify, i > 0);
+                    sendTransactionsToListener(newBlock, NewBlockType.SIDE_CHAIN, listener, txnToNotify, first);
                     if (filteredTxHashList != null) {
                         for (Sha256Hash hash : filteredTxHashList) {
                             listener.notifyTransactionIsInBlock(hash, newBlock, NewBlockType.SIDE_CHAIN);
                         }
                     }
-                    if (i == listeners.size()) {
-                        break;  // Listener removed itself and it was the last one.
-                    } else if (listeners.get(i) != listener) {
-                        i--;  // Listener removed itself and it was not the last one.
-                    }
+                    first = false;
                 }
             }
             
