@@ -1038,10 +1038,10 @@ public class WalletTest {
         assertTrue("Wallet is not an encrypted wallet", wallet.getEncryptionType() == EncryptionType.ENCRYPTED_SCRYPT_AES);
 
         // Correct password should decrypt first encrypted private key.
-        assertTrue("checkPasswordCanDecryptFirstPrivateKey result is wrong with correct password.2", wallet.checkPassword(PASSWORD1));
+        assertTrue("checkPassword result is wrong with correct password.2", wallet.checkPassword(PASSWORD1));
 
         // Incorrect password should not decrypt first encrypted private key.
-        assertTrue("checkPasswordCanDecryptFirstPrivateKey result is wrong with incorrect password.3", !wallet.checkPassword(WRONG_PASSWORD));
+        assertFalse("checkPassword result is wrong with incorrect password.3", wallet.checkPassword(WRONG_PASSWORD));
 
         // Decrypt wallet.
         assertTrue("The keyCrypter is missing but should not be", keyCrypter != null);
@@ -1051,10 +1051,10 @@ public class WalletTest {
         assertTrue("Wallet is not an unencrypted wallet", wallet.getKeyCrypter() == null);
 
         // Correct password should not decrypt first encrypted private key as wallet is unencrypted.
-         assertTrue("checkPasswordCanDecryptFirstPrivateKey result is wrong with correct password", !wallet.checkPassword(PASSWORD1));
+        assertTrue("checkPassword result is wrong with correct password", !wallet.checkPassword(PASSWORD1));
 
         // Incorrect password should not decrypt first encrypted private key as wallet is unencrypted.
-        assertTrue("checkPasswordCanDecryptFirstPrivateKey result is wrong with incorrect password", !wallet.checkPassword(WRONG_PASSWORD));
+        assertTrue("checkPassword result is wrong with incorrect password", !wallet.checkPassword(WRONG_PASSWORD));
 
         // Encrypt wallet.
         wallet.encrypt(keyCrypter, aesKey);
