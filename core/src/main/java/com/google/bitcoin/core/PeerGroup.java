@@ -519,7 +519,6 @@ public class PeerGroup extends AbstractIdleService {
 
     /** Picks a peer from discovery and connects to it. If connection fails, picks another and tries again. */
     protected void connectToAnyPeer() throws PeerDiscoveryException {
-        checkState(!lock.isLocked());
         final State state = state();
         if (!(state == State.STARTING || state == State.RUNNING)) return;
 
@@ -691,7 +690,6 @@ public class PeerGroup extends AbstractIdleService {
 
     // Internal version.
     protected ChannelFuture connectTo(SocketAddress address, boolean incrementMaxConnections) {
-        checkState(!lock.isLocked());
         ChannelFuture future = bootstrap.connect(address);
         // Make sure that the channel group gets access to the channel only if it connects successfully (otherwise
         // it cannot be closed and trying to do so will cause problems).
