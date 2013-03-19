@@ -168,6 +168,7 @@ public class MemoryPool {
      * @return An object that is semantically the same TX but may be a different object instance.
      */
     public Transaction seen(Transaction tx, PeerAddress byPeer) {
+        boolean skipUnlock = false;
         lock.lock();
         try {
             cleanPool();
@@ -197,19 +198,17 @@ public class MemoryPool {
                     // We received a transaction that we have previously seen announced but not downloaded until now.
                     checkNotNull(entry.addresses);
                     entry.tx = new WeakTransactionReference(tx, referenceQueue);
+                    Set<PeerAddress> addrs = entry.addresses;
+                    entry.addresses = null;
                     // Copy the previously announced peers into the confidence and then clear it out. Unlock here
                     // because markBroadcastBy can trigger event listeners and thus inversions.
+                    TransactionConfidence confidence = tx.getConfidence();
+                    log.debug("{}: Adding tx [{}] {} to the memory pool",
+                            new Object[]{byPeer, confidence.numBroadcastPeers(), tx.getHashAsString()});
                     lock.unlock();
-                    try {
-                        TransactionConfidence confidence = tx.getConfidence();
-                        for (PeerAddress a : entry.addresses) {
-                            confidence.markBroadcastBy(a);
-                        }
-                        entry.addresses = null;
-                        log.debug("{}: Adding tx [{}] {} to the memory pool",
-                                new Object[]{byPeer, confidence.numBroadcastPeers(), tx.getHashAsString()});
-                    } finally {
-                        lock.lock();
+                    skipUnlock = true;
+                    for (PeerAddress a : addrs) {
+                        confidence.markBroadcastBy(a);
                     }
                     return tx;
                 }
@@ -225,7 +224,7 @@ public class MemoryPool {
                 return tx;
             }
         } finally {
-            lock.unlock();
+            if (!skipUnlock) lock.unlock();
         }
     }
 
