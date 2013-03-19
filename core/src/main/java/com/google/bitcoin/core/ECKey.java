@@ -353,8 +353,10 @@ public class ECKey implements Serializable {
 
     /**
      * Signs the given hash and returns the R and S components as BigIntegers. In the Bitcoin protocol, they are
-     * usually encoded using DER format, so you want {@link ECKey#signToDER(Sha256Hash)} instead. However sometimes
-     * the independent components can be useful, for instance, if you're doing to do further EC maths on them.
+     * usually encoded using DER format, so you want {@link com.google.bitcoin.core.ECKey.ECDSASignature#encodeToDER()}
+     * instead. However sometimes the independent components can be useful, for instance, if you're doing to do further
+     * EC maths on them.
+     *
      * @param aesKey The AES key to use for decryption of the private key. If null then no decryption is required.
      * @throws KeyCrypterException if this ECKey doesn't have a private part.
      */
@@ -464,7 +466,7 @@ public class ECKey implements Serializable {
      * encoded string.
      *
      * @throws IllegalStateException if this ECKey does not have the private part.
-     * @throws KeyCryptException if this ECKey is encrypted and no AESKey is provided or it does not decrypt the ECKey.
+     * @throws KeyCrypterException if this ECKey is encrypted and no AESKey is provided or it does not decrypt the ECKey.
      */
     public String signMessage(String message) throws KeyCrypterException {
         return signMessage(message, null);
@@ -475,7 +477,7 @@ public class ECKey implements Serializable {
      * encoded string.
      *
      * @throws IllegalStateException if this ECKey does not have the private part.
-     * @throws KeyCryptException if this ECKey is encrypted and no AESKey is provided or it does not decrypt the ECKey.
+     * @throws KeyCrypterException if this ECKey is encrypted and no AESKey is provided or it does not decrypt the ECKey.
      */
     public String signMessage(String message, KeyParameter aesKey) throws KeyCrypterException {
         if (priv == null)
@@ -573,8 +575,7 @@ public class ECKey implements Serializable {
      * output is null OR a key that is not the one you expect, you try again with the next recId.</p>
      *
      * @param recId Which possible key to recover.
-     * @param r The R component of the signature.
-     * @param s The S component of the signature.
+     * @param sig the R and S components of the signature, wrapped.
      * @param message Hash of the data that was signed.
      * @param compressed Whether or not the original pubkey was compressed.
      * @return An ECKey containing only the public part, or null if recovery wasn't possible.
@@ -722,7 +723,9 @@ public class ECKey implements Serializable {
     }
 
     /**
-     * Create a decrypted private key with the keyCrypter and AES key supplied.
+     * Create a decrypted private key with the keyCrypter and AES key supplied. Note that if the aesKey is wrong, this
+     * has some chance of throwing KeyCrypterException due to the corrupted padding that will result, but it can also
+     * just yield a garbage key.
      *
      * @param keyCrypter The keyCrypter that specifies exactly how the decrypted bytes are created.
      * @param aesKey The KeyParameter with the AES encryption key (usually constructed with keyCrypter#deriveKey and cached).
@@ -730,16 +733,15 @@ public class ECKey implements Serializable {
      */
     public ECKey decrypt(KeyCrypter keyCrypter, KeyParameter aesKey) throws KeyCrypterException {
         Preconditions.checkNotNull(keyCrypter);
-
         // Check that the keyCrypter matches the one used to encrypt the keys, if set.
         if (this.keyCrypter != null && !this.keyCrypter.equals(keyCrypter)) {
             throw new KeyCrypterException("The keyCrypter being used to decrypt the key is different to the one that was used to encrypt it");
         }
-
-        // Decrypt the private key.
         byte[] unencryptedPrivateKey = keyCrypter.decrypt(encryptedPrivateKey, aesKey);
-
-        return new ECKey(unencryptedPrivateKey, getPubKey());
+        ECKey key = new ECKey(new BigInteger(1, unencryptedPrivateKey), null, isCompressed());
+        if (!Arrays.equals(key.getPubKey(), getPubKey()))
+            throw new KeyCrypterException("Provided AES key is wrong");
+        return key;
     }
 
     /**
@@ -749,7 +751,7 @@ public class ECKey implements Serializable {
      * by the private key) you can use this method to check when you *encrypt* a wallet that it can definitely be decrypted successfully.
      * See {@link Wallet#encrypt(KeyCrypter keyCrypter, KeyParameter aesKey)} for example usage.
      *
-     * @returns true if the encrypted key can be decrypted back to the original key successfully.
+     * @return true if the encrypted key can be decrypted back to the original key successfully.
      */
     public static boolean encryptionIsReversible(ECKey originalKey, ECKey encryptedKey, KeyCrypter keyCrypter, KeyParameter aesKey) {
         String genericErrorText = "The check that encryption could be reversed failed for key " + originalKey.toString() + ". ";
