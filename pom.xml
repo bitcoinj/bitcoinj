@@ -116,14 +116,14 @@
   <build>
       <pluginManagement>
         <plugins>
-          <!-- Ensure compilation is done under Java 5 for backwards compatibility -->
+          <!-- Ensure compilation is done under Java 6 for backwards compatibility -->
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-compiler-plugin</artifactId>
             <version>2.3.2</version>
             <configuration>
-              <source>1.5</source>
-              <target>1.5</target>
+              <source>1.6</source>
+              <target>1.6</target>
               <showDeprecation>true</showDeprecation>
               <showWarnings>true</showWarnings>
             </configuration>
