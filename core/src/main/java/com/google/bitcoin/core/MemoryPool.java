@@ -200,13 +200,14 @@ public class MemoryPool {
                     entry.tx = new WeakTransactionReference(tx, referenceQueue);
                     Set<PeerAddress> addrs = entry.addresses;
                     entry.addresses = null;
-                    // Copy the previously announced peers into the confidence and then clear it out. Unlock here
-                    // because markBroadcastBy can trigger event listeners and thus inversions.
                     TransactionConfidence confidence = tx.getConfidence();
                     log.debug("{}: Adding tx [{}] {} to the memory pool",
                             new Object[]{byPeer, confidence.numBroadcastPeers(), tx.getHashAsString()});
-                    lock.unlock();
+                    // Copy the previously announced peers into the confidence and then clear it out. Unlock here
+                    // because markBroadcastBy can trigger event listeners and thus inversions. After the lock is
+                    // released "entry" may be changing arbitrarily and isn't usable.
                     skipUnlock = true;
+                    lock.unlock();
                     for (PeerAddress a : addrs) {
                         confidence.markBroadcastBy(a);
                     }
