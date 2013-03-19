@@ -885,6 +885,10 @@ public class Wallet implements Serializable, BlockChainListener {
         // Do a brief risk analysis of the transaction and its dependencies to check for any possible attacks.
         lock.lock();
         try {
+            // Repeat the check of relevancy here, even though the caller may have already done so - this is to avoid
+            // race conditions where receivePending may be being called in parallel.
+            if (!isPendingTransactionRelevant(tx))
+                return;
             AnalysisResult analysis = analyzeTransactionAndDependencies(tx, dependencies);
             if (analysis.timeLocked != null && !doesAcceptTimeLockedTransactions()) {
                 log.warn("Transaction {}, dependency of {} has a time lock value of {}", new Object[]{
