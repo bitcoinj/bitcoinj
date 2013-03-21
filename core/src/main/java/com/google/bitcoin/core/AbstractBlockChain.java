@@ -449,7 +449,7 @@ public abstract class AbstractBlockChain {
                     int splitPointHeight = splitPoint.getHeight();
                     String splitPointHash = splitPoint.getHeader().getHashAsString();
                     log.info("Block forks the chain at height {}/block {}, but it did not cause a reorganize:\n{}",
-                        new Object[]{splitPointHeight, splitPointHash, newBlock});
+                        new Object[]{splitPointHeight, splitPointHash, newBlock.getHeader().getHashAsString()});
                 }
             }
             
