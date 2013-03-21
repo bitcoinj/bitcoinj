@@ -96,6 +96,7 @@ public class Wallet implements Serializable, BlockChainListener {
     //     ->inactive  (remains in pending).
     // 4. Inbound tx is accepted into the best chain:
     //     ->unspent/spent
+    //     check if any pending transactions spend these outputs, if so, potentially <-unspent ->spent
     // 5. Inbound tx is accepted into a side chain:
     //     ->inactive
     //     Whilst it's also 'pending' in some sense, in that miners will probably try and incorporate it into the
@@ -115,9 +116,8 @@ public class Wallet implements Serializable, BlockChainListener {
     //       <-pending ->dead
     //
     // Balance:
-    // 1. Sum up all unspent outputs of the transactions in unspent.
-    // 2. Subtract the inputs of transactions in pending.
-    // 3. If requested, re-add the outputs of pending transactions that are mine. This is the estimated balance.
+    // Take all the candidates for spending from unspent and pending. Select the ones that are actually available
+    // according to our spend policy. Sum them up.
 
     /**
      * Map of txhash->Transactions that have not made it into the best chain yet. They are eligible to move there but
@@ -799,34 +799,6 @@ public class Wallet implements Serializable, BlockChainListener {
         in.defaultReadObject();
         createTransientState();
     }
-
-    /**
-     * Called by the {@link BlockChain} when we receive a new block that sends coins to one of our addresses or
-     * spends coins from one of our addresses (note that a single transaction can do both).<p>
-     *
-     * This is necessary for the internal book-keeping Wallet does. When a transaction is received that sends us
-     * coins it is added to a pool so we can use it later to create spends. When a transaction is received that
-     * consumes outputs they are marked as spent so they won't be used in future.<p>
-     *
-     * A transaction that spends our own coins can be received either because a spend we created was accepted by the
-     * network and thus made it into a block, or because our keys are being shared between multiple instances and
-     * some other node spent the coins instead. We still have to know about that to avoid accidentally trying to
-     * double spend.<p>
-     *
-     * A transaction may be received multiple times if is included into blocks in parallel chains. The blockType
-     * parameter describes whether the containing block is on the main/best chain or whether it's on a presently
-     * inactive side chain. We must still record these transactions and the blocks they appear in because a future
-     * block might change which chain is best causing a reorganize. A re-org can totally change our balance!
-     */
-    public void receiveFromBlock(Transaction tx, StoredBlock block,
-                                 BlockChain.NewBlockType blockType) throws VerificationException {
-        lock.lock();
-        try {
-            receive(tx, block, blockType, false);
-        } finally {
-            lock.unlock();
-        }
-    }
     
     /**
      * Called by the {@link BlockChain} when we receive a new filtered block that contains a transactions previously
@@ -1018,6 +990,34 @@ public class Wallet implements Serializable, BlockChainListener {
         return null;
     }
 
+    /**
+     * Called by the {@link BlockChain} when we receive a new block that sends coins to one of our addresses or
+     * spends coins from one of our addresses (note that a single transaction can do both).<p>
+     *
+     * This is necessary for the internal book-keeping Wallet does. When a transaction is received that sends us
+     * coins it is added to a pool so we can use it later to create spends. When a transaction is received that
+     * consumes outputs they are marked as spent so they won't be used in future.<p>
+     *
+     * A transaction that spends our own coins can be received either because a spend we created was accepted by the
+     * network and thus made it into a block, or because our keys are being shared between multiple instances and
+     * some other node spent the coins instead. We still have to know about that to avoid accidentally trying to
+     * double spend.<p>
+     *
+     * A transaction may be received multiple times if is included into blocks in parallel chains. The blockType
+     * parameter describes whether the containing block is on the main/best chain or whether it's on a presently
+     * inactive side chain. We must still record these transactions and the blocks they appear in because a future
+     * block might change which chain is best causing a reorganize. A re-org can totally change our balance!
+     */
+    public void receiveFromBlock(Transaction tx, StoredBlock block,
+                                 BlockChain.NewBlockType blockType) throws VerificationException {
+        lock.lock();
+        try {
+            receive(tx, block, blockType, false);
+        } finally {
+            lock.unlock();
+        }
+    }
+
     private void receive(Transaction tx, StoredBlock block, BlockChain.NewBlockType blockType, boolean reorg) throws VerificationException {
         // Runs in a peer thread.
         checkState(lock.isLocked());
@@ -1077,7 +1077,7 @@ public class Wallet implements Serializable, BlockChainListener {
                 pending.put(tx.getHash(), tx);
             }
         } else {
-            // This TX didn't originate with us. It could be sending us coins and also spending our own coins if keys
+            // This TX wasn't in the memory pool. It could be sending us coins and also spending our own coins if keys
             // are being shared between different wallets.
             if (sideChain) {
                 if (unspent.containsKey(tx.getHash()) || spent.containsKey(tx.getHash())) {
@@ -1091,7 +1091,7 @@ public class Wallet implements Serializable, BlockChainListener {
                 // Saw a non-pending transaction appear on the best chain, ie, we are replaying the chain or a spend
                 // that we never saw broadcast (and did not originate) got included.
                 //
-                // This can trigger tx confidence listeners to be run in the case of double spends. We may need to
+                // TODO: This can trigger tx confidence listeners to be run in the case of double spends. We may need to
                 // delay the execution of the listeners until the bottom to avoid the wallet mutating during updates.
                 processTxFromBestChain(tx);
             }
@@ -1214,54 +1214,63 @@ public class Wallet implements Serializable, BlockChainListener {
             inactive.remove(tx.getHash());
         }
 
+        // Update tx and other unspent/pending transactions by connecting inputs/outputs.
         updateForSpends(tx, true);
 
-        if (!tx.isEveryOwnedOutputSpent(this)) {
-            // It's sending us coins.
-            log.info("  new tx {} ->unspent", tx.getHashAsString());
-            addWalletTransaction(Pool.UNSPENT, tx);
-        } else if (!tx.getValueSentFromMe(this).equals(BigInteger.ZERO)) {
-            // It spent some of our coins and did not send us any.
+        // Now make sure it ends up in the right pool. Also, handle the case where this TX is double-spending
+        // against our pending transactions. Note that a tx may double spend our pending transactions and also send
+        // us money/spend our money.
+        boolean hasOutputsToMe = tx.getValueSentToMe(this, true).compareTo(BigInteger.ZERO) > 0;
+        if (hasOutputsToMe) {
+            // Needs to go into either unspent or spent (if the outputs were already spent by a pending tx).
+            if (tx.isEveryOwnedOutputSpent(this)) {
+                log.info("  new tx {} ->spent (by pending)", tx.getHashAsString());
+                addWalletTransaction(Pool.SPENT, tx);
+            } else {
+                log.info("  new tx {} ->unspent", tx.getHashAsString());
+                addWalletTransaction(Pool.UNSPENT, tx);
+            }
+        } else if (tx.getValueSentFromMe(this).compareTo(BigInteger.ZERO) > 0) {
+            // Didn't send us any money, but did spend some. Keep it around for record keeping purposes.
             log.info("  new tx {} ->spent", tx.getHashAsString());
             addWalletTransaction(Pool.SPENT, tx);
-        } else {
-            // It didn't send us coins nor spend any of our coins. If we're processing it, that must be because it
-            // spends outpoints that are also spent by some pending transactions - maybe a double spend of somebody
-            // elses coins that were originally sent to us? ie, this might be a Finney attack where we think we
-            // received some money and then the sender co-operated with a miner to take back the coins, using a tx
-            // that isn't involving our keys at all.
-            Transaction doubleSpend = findDoubleSpendAgainstPending(tx);
-            if (doubleSpend == null)
-                throw new IllegalStateException("Received an irrelevant tx that was not a double spend.");
+        }
+
+        Transaction doubleSpend = findDoubleSpendAgainstPending(tx);
+        if (doubleSpend != null) {
             // This is mostly the same as the codepath in updateForSpends, but that one is only triggered when
             // the transaction being double spent is actually in our wallet (ie, maybe we're double spending).
-            log.warn("Saw double spend from chain override pending tx {}", doubleSpend.getHashAsString());
-            log.warn("  <-pending ->dead");
+            log.warn("  saw double spend from chain override pending tx {}", doubleSpend.getHashAsString());
+            log.warn("  <-pending ->dead   killed by {}", tx.getHashAsString());
             pending.remove(doubleSpend.getHash());
             addWalletTransaction(Pool.DEAD, doubleSpend);
             // Inform the event listeners of the newly dead tx.
             doubleSpend.getConfidence().setOverridingTransaction(tx);
+            // TODO: Disconnect the inputs of doubleSpend here.
          }
     }
 
     /**
-     * <p>Updates the wallet by checking if this TX spends any of our outputs, and marking them as spent if so. It can
-     * be called in two contexts. One is when we receive a transaction on the best chain but it wasn't pending, this
-     * most commonly happens when we have a set of keys but the wallet transactions were wiped and we are catching up
-     * with the block chain. It can also happen if a block includes a transaction we never saw at broadcast time.
+     * <p>Updates the wallet by checking if this TX spends any of our outputs, and marking them as spent if so. If
+     * fromChain is true, also checks to see if any pending transaction spends outputs of this transaction and marks
+     * the spent flags appropriately.</p>
+     *
+     * <p>It can be called in two contexts. One is when we receive a transaction on the best chain but it wasn't pending,
+     * this most commonly happens when we have a set of keys but the wallet transactions were wiped and we are catching
+     * up with the block chain. It can also happen if a block includes a transaction we never saw at broadcast time.
      * If this tx double spends, it takes precedence over our pending transactions and the pending tx goes dead.</p>
      *
      * <p>The other context it can be called is from {@link Wallet#receivePending(Transaction, java.util.List)},
      * ie we saw a tx be broadcast or one was submitted directly that spends our own coins. If this tx double spends
      * it does NOT take precedence because the winner will be resolved by the miners - we assume that our version will
      * win, if we are wrong then when a block appears the tx will go dead.</p>
+     *
+     * @param tx The transaction which is being updated.
+     * @param fromChain If true, the tx appeared on the current best chain, if false it was pending.
      */
     private void updateForSpends(Transaction tx, boolean fromChain) throws VerificationException {
         checkState(lock.isLocked());
-        // tx is on the best chain by this point.
-        List<TransactionInput> inputs = tx.getInputs();
-        for (int i = 0; i < inputs.size(); i++) {
-            TransactionInput input = inputs.get(i);
+        for (TransactionInput input : tx.getInputs()) {
             TransactionInput.ConnectionResult result = input.connect(unspent, TransactionInput.ConnectMode.ABORT_ON_CONFLICT);
             if (result == TransactionInput.ConnectionResult.NO_SUCH_TX) {
                 // Not found in the unspent map. Try again with the spent map.
@@ -1280,11 +1289,13 @@ public class Wallet implements Serializable, BlockChainListener {
                 // Double spend! Work backwards like so:
                 //
                 //   A  -> spent by B [pending]
-                //     \-> spent by C [chain]
+                //     \-> spent by C [this tx]
+                //
+                // fromTx here was set by the connect call above.
                 Transaction doubleSpent = input.getOutpoint().fromTx;   // == A
                 checkNotNull(doubleSpent);
                 int index = (int) input.getOutpoint().getIndex();
-                TransactionOutput output = doubleSpent.getOutputs().get(index);
+                TransactionOutput output = doubleSpent.getOutput(index);
                 TransactionInput spentBy = checkNotNull(output.getSpentBy());
                 Transaction connected = checkNotNull(spentBy.getParentTransaction());
                 if (fromChain) {
@@ -1292,13 +1303,15 @@ public class Wallet implements Serializable, BlockChainListener {
                     // that illegally double spend: should never occur if we are connected to an honest node).
                     if (pending.containsKey(connected.getHash())) {
                         log.warn("Saw double spend from chain override pending tx {}", connected.getHashAsString());
-                        log.warn("  <-pending ->dead");
+                        log.warn("  <-pending ->dead   killed by {}", tx.getHashAsString());
                         pending.remove(connected.getHash());
                         dead.put(connected.getHash(), connected);
                         // Now forcibly change the connection.
                         input.connect(unspent, TransactionInput.ConnectMode.DISCONNECT_ON_CONFLICT);
                         // Inform the [tx] event listeners of the newly dead tx. This sets confidence type also.
                         connected.getConfidence().setOverridingTransaction(tx);
+                    } else {
+                        throw new VerificationException("Transaction from chain double spent in unspent/spent maps: " + tx.getHashAsString()) ;
                     }
                 } else {
                     // A pending transaction that tried to double spend our coins - we log and ignore it, because either
@@ -1306,8 +1319,9 @@ public class Wallet implements Serializable, BlockChainListener {
                     // 2) Both txns are pending, neither has priority. Miners will decide in a few minutes which won.
                     log.warn("Saw double spend from another pending transaction, ignoring tx {}",
                              tx.getHashAsString());
-                    log.warn("  offending input is input {}", i);
-                    return;
+                    log.warn("  offending input is input {}", tx.getInputs().indexOf(input));
+                    // TODO: We should report this state via tx confidence somehow ("in jeopardy"?)
+                    // Fall through now to checking the pending inputs.
                 }
             } else if (result == TransactionInput.ConnectionResult.SUCCESS) {
                 // Otherwise we saw a transaction spend our coins, but we didn't try and spend them ourselves yet.
@@ -1315,6 +1329,27 @@ public class Wallet implements Serializable, BlockChainListener {
                 // us to use. Move if not.
                 Transaction connected = checkNotNull(input.getOutpoint().fromTx);
                 maybeMoveTxToSpent(connected, "prevtx");
+            }
+        }
+        // Now check each output and see if there is a pending transaction which spends it. This shouldn't normally
+        // ever occur because we expect transactions to arrive in temporal order, but this assumption can be violated
+        // when we receive a pending transaction from the mempool that is relevant to us, which spends coins that we
+        // didn't see arrive on the best chain yet. For instance, because of a chain replay or because of our keys were
+        // used by another wallet somewhere else.
+        if (fromChain) {
+            for (Transaction pendingTx : pending.values()) {
+                for (TransactionInput input : pendingTx.getInputs()) {
+                    TransactionInput.ConnectionResult result = input.connect(tx, TransactionInput.ConnectMode.ABORT_ON_CONFLICT);
+                    // This TX is supposed to have just appeared on the best chain, so its outputs should not be marked
+                    // as spent yet. If they are, it means something is happening out of order.
+                    checkState(result != TransactionInput.ConnectionResult.ALREADY_SPENT);
+                    if (result == TransactionInput.ConnectionResult.SUCCESS) {
+                        log.info("Connected pending tx input {}:{}",
+                                pendingTx.getHashAsString(), pendingTx.getInputs().indexOf(input));
+                    }
+                }
+                // If the transactions outputs are now all spent, it will be moved into the spent pool by the
+                // processTxFromBestChain method.
             }
         }
     }

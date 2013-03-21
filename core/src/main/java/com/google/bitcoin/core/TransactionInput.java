@@ -24,6 +24,7 @@ import java.io.OutputStream;
 import java.io.Serializable;
 import java.util.Map;
 
+import static com.google.common.base.Preconditions.checkElementIndex;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
@@ -288,14 +289,30 @@ public class TransactionInput extends ChildMessage implements Serializable {
      *
      * @param transactions Map of txhash->transaction.
      * @param mode   Whether to abort if there's a pre-existing connection or not.
-     * @return true if connection took place, false if the referenced transaction was not in the list.
+     * @return NO_SUCH_TX if the prevtx wasn't found, ALREADY_SPENT if there was a conflict, SUCCESS if not.
      */
-    ConnectionResult connect(Map<Sha256Hash, Transaction> transactions, ConnectMode mode) {
+    public ConnectionResult connect(Map<Sha256Hash, Transaction> transactions, ConnectMode mode) {
         Transaction tx = transactions.get(outpoint.getHash());
         if (tx == null) {
             return TransactionInput.ConnectionResult.NO_SUCH_TX;
         }
-        TransactionOutput out = tx.getOutputs().get((int) outpoint.getIndex());
+        return connect(tx, mode);
+    }
+
+    /**
+     * Connects this input to the relevant output of the referenced transaction.
+     * Connecting means updating the internal pointers and spent flags. If the mode is to ABORT_ON_CONFLICT then
+     * the spent output won't be changed, but the outpoint.fromTx pointer will still be updated.
+     *
+     * @param transaction The transaction to try.
+     * @param mode   Whether to abort if there's a pre-existing connection or not.
+     * @return NO_SUCH_TX if transaction is not the prevtx, ALREADY_SPENT if there was a conflict, SUCCESS if not.
+     */
+    public ConnectionResult connect(Transaction transaction, ConnectMode mode) {
+        if (!transaction.getHash().equals(outpoint.getHash()))
+            return ConnectionResult.NO_SUCH_TX;
+        checkElementIndex((int) outpoint.getIndex(), transaction.getOutputs().size(), "Corrupt transaction");
+        TransactionOutput out = transaction.getOutput((int) outpoint.getIndex());
         if (!out.isAvailableForSpending()) {
             if (mode == ConnectMode.DISCONNECT_ON_CONFLICT) {
                 out.markAsUnspent();

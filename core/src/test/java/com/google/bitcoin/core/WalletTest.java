@@ -50,9 +50,10 @@ import java.util.List;
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.ReentrantLock;
 
 import static com.google.bitcoin.core.TestUtils.*;
+import static com.google.bitcoin.core.TestUtils.createFakeBlock;
+import static com.google.bitcoin.core.TestUtils.createFakeTx;
 import static com.google.bitcoin.core.Utils.bitcoinValueToFriendlyString;
 import static com.google.bitcoin.core.Utils.toNanoCoins;
 import static org.junit.Assert.*;
@@ -1028,6 +1029,28 @@ public class WalletTest {
     }
 
     @Test
+    public void replayWhilstPending() throws Exception {
+        // Check that if a pending transaction spends outputs of chain-included transactions, we mark them as spent.
+        // See bug 345. This can happen if there is a pending transaction floating around and then you replay the
+        // chain without emptying the memory pool (or refilling it from a peer).
+        BigInteger value = Utils.toNanoCoins(1, 0);
+        Transaction tx1 = createFakeTx(params, value, myAddress);
+        Transaction tx2 = new Transaction(params);
+        tx2.addInput(tx1.getOutput(0));
+        tx2.addOutput(Utils.toNanoCoins(0, 9), new ECKey());
+        // Add a change address to ensure this tx is relevant.
+        tx2.addOutput(Utils.toNanoCoins(0, 1), wallet.getChangeAddress());
+        wallet.receivePending(tx2, null);
+        BlockPair bp = createFakeBlock(blockStore, tx1);
+        wallet.receiveFromBlock(tx1, bp.storedBlock, AbstractBlockChain.NewBlockType.BEST_CHAIN);
+        wallet.notifyNewBestBlock(bp.storedBlock);
+        assertEquals(BigInteger.ZERO, wallet.getBalance());
+        assertEquals(1, wallet.getPoolSize(Pool.SPENT));
+        assertEquals(1, wallet.getPoolSize(Pool.PENDING));
+        assertEquals(0, wallet.getPoolSize(Pool.UNSPENT));
+    }
+
+    @Test
     public void encryptionDecryptionBasic() throws Exception {
         encryptionDecryptionBasicCommon(encryptedWallet);
         encryptionDecryptionBasicCommon(encryptedHetergeneousWallet);
@@ -1149,6 +1172,7 @@ public class WalletTest {
         assertTrue("Wrong number of keys in wallet after key addition", oneKey && !iterator.hasNext());
     }
 
+    @Test
     public void ageMattersDuringSelection() throws Exception {
         // Test that we prefer older coins to newer coins when building spends. This reduces required fees and improves
         // time to confirmation as the transaction will appear less spammy.
