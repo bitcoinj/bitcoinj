@@ -309,7 +309,7 @@ public class TransactionInput extends ChildMessage implements Serializable {
      * @return NO_SUCH_TX if transaction is not the prevtx, ALREADY_SPENT if there was a conflict, SUCCESS if not.
      */
     public ConnectionResult connect(Transaction transaction, ConnectMode mode) {
-        if (!transaction.getHash().equals(outpoint.getHash()))
+        if (!transaction.getHash().equals(outpoint.getHash()) && mode != ConnectMode.DISCONNECT_ON_CONFLICT)
             return ConnectionResult.NO_SUCH_TX;
         checkElementIndex((int) outpoint.getIndex(), transaction.getOutputs().size(), "Corrupt transaction");
         TransactionOutput out = transaction.getOutput((int) outpoint.getIndex());
@@ -332,15 +332,21 @@ public class TransactionInput extends ChildMessage implements Serializable {
     }
 
     /**
-     * Release the connected output, making it spendable once again.
+     * If this input is connected, check the output is connected back to this input and release it if so, making
+     * it spendable once again.
      *
      * @return true if the disconnection took place, false if it was not connected.
      */
     boolean disconnect() {
         if (outpoint.fromTx == null) return false;
-        outpoint.fromTx.getOutputs().get((int) outpoint.getIndex()).markAsUnspent();
-        outpoint.fromTx = null;
-        return true;
+        TransactionOutput output = outpoint.fromTx.getOutput((int) outpoint.getIndex());
+        if (output.getSpentBy() == this) {
+            output.markAsUnspent();
+            outpoint.fromTx = null;
+            return true;
+        } else {
+            return false;
+        }
     }
 
     /**

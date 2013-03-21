@@ -153,7 +153,7 @@ public class TransactionOutPoint extends ChildMessage implements Serializable {
 
     @Override
     public String toString() {
-        return "outpoint " + hash.toString() + ":" + index;
+        return hash.toString() + ":" + index;
     }
 
 

@@ -971,7 +971,7 @@ public class Wallet implements Serializable, BlockChainListener {
      * Checks if "tx" is spending any inputs of pending transactions. Not a general check, but it can work even if
      * the double spent inputs are not ours. Returns the pending tx that was double spent or null if none found.
      */
-    private Transaction findDoubleSpendAgainstPending(Transaction tx) {
+    private TransactionInput findDoubleSpendAgainstPending(Transaction tx) {
         checkState(lock.isLocked());
         // Compile a set of outpoints that are spent by tx.
         HashSet<TransactionOutPoint> outpoints = new HashSet<TransactionOutPoint>();
@@ -983,7 +983,7 @@ public class Wallet implements Serializable, BlockChainListener {
             for (TransactionInput input : p.getInputs()) {
                 if (outpoints.contains(input.getOutpoint())) {
                     // It does, it's a double spend against the pending pool, which makes it relevant.
-                    return p;
+                    return input;
                 }
             }
         }
@@ -1236,17 +1236,11 @@ public class Wallet implements Serializable, BlockChainListener {
             addWalletTransaction(Pool.SPENT, tx);
         }
 
-        Transaction doubleSpend = findDoubleSpendAgainstPending(tx);
-        if (doubleSpend != null) {
+        TransactionInput doubleSpent = findDoubleSpendAgainstPending(tx);
+        if (doubleSpent != null) {
             // This is mostly the same as the codepath in updateForSpends, but that one is only triggered when
             // the transaction being double spent is actually in our wallet (ie, maybe we're double spending).
-            log.warn("  saw double spend from chain override pending tx {}", doubleSpend.getHashAsString());
-            log.warn("  <-pending ->dead   killed by {}", tx.getHashAsString());
-            pending.remove(doubleSpend.getHash());
-            addWalletTransaction(Pool.DEAD, doubleSpend);
-            // Inform the event listeners of the newly dead tx.
-            doubleSpend.getConfidence().setOverridingTransaction(tx);
-            // TODO: Disconnect the inputs of doubleSpend here.
+            killTx(tx, doubleSpent, doubleSpent.getParentTransaction());
          }
     }
 
@@ -1286,42 +1280,15 @@ public class Wallet implements Serializable, BlockChainListener {
             }
 
             if (result == TransactionInput.ConnectionResult.ALREADY_SPENT) {
-                // Double spend! Work backwards like so:
-                //
-                //   A  -> spent by B [pending]
-                //     \-> spent by C [this tx]
-                //
-                // fromTx here was set by the connect call above.
-                Transaction doubleSpent = input.getOutpoint().fromTx;   // == A
-                checkNotNull(doubleSpent);
-                int index = (int) input.getOutpoint().getIndex();
-                TransactionOutput output = doubleSpent.getOutput(index);
-                TransactionInput spentBy = checkNotNull(output.getSpentBy());
-                Transaction connected = checkNotNull(spentBy.getParentTransaction());
                 if (fromChain) {
-                    // This must have overridden a pending tx, or the block is bad (contains transactions
-                    // that illegally double spend: should never occur if we are connected to an honest node).
-                    if (pending.containsKey(connected.getHash())) {
-                        log.warn("Saw double spend from chain override pending tx {}", connected.getHashAsString());
-                        log.warn("  <-pending ->dead   killed by {}", tx.getHashAsString());
-                        pending.remove(connected.getHash());
-                        dead.put(connected.getHash(), connected);
-                        // Now forcibly change the connection.
-                        input.connect(unspent, TransactionInput.ConnectMode.DISCONNECT_ON_CONFLICT);
-                        // Inform the [tx] event listeners of the newly dead tx. This sets confidence type also.
-                        connected.getConfidence().setOverridingTransaction(tx);
-                    } else {
-                        throw new VerificationException("Transaction from chain double spent in unspent/spent maps: " + tx.getHashAsString()) ;
-                    }
+                    // This will be handled later by processTxFromBestChain.
                 } else {
-                    // A pending transaction that tried to double spend our coins - we log and ignore it, because either
-                    // 1) The double-spent tx is confirmed and thus this tx has no effect .... or
-                    // 2) Both txns are pending, neither has priority. Miners will decide in a few minutes which won.
+                    // We saw two pending transactions that double spend each other. We don't know which will win.
+                    // Either that, or we somehow allowed ourselves to create double spends ourselves!
+                    // TODO: Find some way to communicate to the user that both transactions in jeopardy.
                     log.warn("Saw double spend from another pending transaction, ignoring tx {}",
-                             tx.getHashAsString());
+                            tx.getHashAsString());
                     log.warn("  offending input is input {}", tx.getInputs().indexOf(input));
-                    // TODO: We should report this state via tx confidence somehow ("in jeopardy"?)
-                    // Fall through now to checking the pending inputs.
                 }
             } else if (result == TransactionInput.ConnectionResult.SUCCESS) {
                 // Otherwise we saw a transaction spend our coins, but we didn't try and spend them ourselves yet.
@@ -1352,6 +1319,21 @@ public class Wallet implements Serializable, BlockChainListener {
                 // processTxFromBestChain method.
             }
         }
+    }
+
+    private void killTx(Transaction overridingTx, TransactionInput overridingInput, Transaction killedTx) {
+        TransactionOutPoint overriddenOutPoint = overridingInput.getOutpoint();
+        log.warn("Saw double spend of {} from chain override pending tx {}",
+                overriddenOutPoint, killedTx.getHashAsString());
+        log.warn("  <-pending ->dead   killed by {}", overridingTx.getHashAsString());
+        checkState(overridingInput.connect(overridingTx, TransactionInput.ConnectMode.DISCONNECT_ON_CONFLICT) == TransactionInput.ConnectionResult.SUCCESS);
+        pending.remove(killedTx.getHash());
+        addWalletTransaction(Pool.DEAD, killedTx);
+        // Inform the [tx] event listeners of the newly dead tx and disconnect the other inputs.
+        for (TransactionInput deadInput : killedTx.getInputs()) deadInput.disconnect();
+        killedTx.getConfidence().setOverridingTransaction(overridingTx);
+        // TODO: Move newly unspent transactions (if any) back into the unspent pool to avoid inconsistency.
+        // TODO: Recursively kill other transactions that were double spent.
     }
 
     /**
