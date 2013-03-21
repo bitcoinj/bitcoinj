@@ -470,6 +470,11 @@ public class WalletTool {
             // network. Once propagation is complete and we heard the transaction back from all our peers, it will
             // be committed to the wallet.
             peers.broadcastTransaction(t).get();
+            if (peers.getMinBroadcastConnections() == 1) {
+                // Crap hack to work around some issue with Netty where the write future
+                // completes before the remote peer actually hears the message.
+                Thread.sleep(5000);
+            }
             System.out.println(t.getHashAsString());
         } catch (BlockStoreException e) {
             throw new RuntimeException(e);
