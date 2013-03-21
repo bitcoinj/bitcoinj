@@ -207,7 +207,7 @@
     <sc-light-jdk15on.version>1.47.0.2</sc-light-jdk15on.version>
     <easymock.version>3.0</easymock.version>
     <junit.version>4.8.2</junit.version>
-    <slf4j.version>1.6.2</slf4j.version>
+    <slf4j.version>1.6.4</slf4j.version>
     <derby.version>10.8.2.2</derby.version>
     <protobuf.version>2.4.1</protobuf.version>
     <netty.version>3.6.3.Final</netty.version>
