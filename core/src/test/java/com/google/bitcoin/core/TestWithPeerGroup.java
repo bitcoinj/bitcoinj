@@ -71,6 +71,7 @@ public class TestWithPeerGroup extends TestWithNetworkConnections {
         FakeChannel p = (FakeChannel) peerGroup.connectTo(remoteAddress).getChannel();
         assertTrue(p.nextEvent() instanceof ChannelStateEvent);
         inbound(p, versionMessage);
+        inbound(p, new VersionAck());
         if (versionMessage.isBloomFilteringSupported()) {
             assertTrue(outbound(p) instanceof BloomFilter);
             assertTrue(outbound(p) instanceof MemoryPoolMessage);

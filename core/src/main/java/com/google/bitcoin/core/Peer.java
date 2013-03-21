@@ -283,14 +283,6 @@ public class Peer {
                 processAlert((AlertMessage) m);
             } else if (m instanceof VersionMessage) {
                 vPeerVersionMessage = (VersionMessage) m;
-                for (PeerLifecycleListener listener : lifecycleListeners)
-                    listener.onPeerConnected(this);
-                final int version = vMinProtocolVersion;
-                if (vPeerVersionMessage.clientVersion < version) {
-                    log.warn("Connected to a peer speaking protocol version {} but need {}, closing",
-                            vPeerVersionMessage.clientVersion, version);
-                    e.getChannel().close();
-                }
             } else if (m instanceof VersionAck) {
                 if (vPeerVersionMessage == null) {
                     throw new ProtocolException("got a version ack before version");
@@ -299,6 +291,16 @@ public class Peer {
                     throw new ProtocolException("got more than one version ack");
                 }
                 isAcked = true;
+                for (PeerLifecycleListener listener : lifecycleListeners)
+                    listener.onPeerConnected(this);
+                // We check min version after onPeerConnected as channel.close() will
+                // call onPeerDisconnected, and we should probably call onPeerConnected first.
+                final int version = vMinProtocolVersion;
+                if (vPeerVersionMessage.clientVersion < version) {
+                    log.warn("Connected to a peer speaking protocol version {} but need {}, closing",
+                            vPeerVersionMessage.clientVersion, version);
+                    e.getChannel().close();
+                }
             } else if (m instanceof Ping) {
                 if (((Ping) m).hasNonce())
                     sendMessage(new Pong(((Ping) m).getNonce()));
