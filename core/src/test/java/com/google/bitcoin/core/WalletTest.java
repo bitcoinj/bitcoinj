@@ -569,6 +569,30 @@ public class WalletTest {
     }
 
     @Test
+    public void doubleSpendUnspendsOtherInputs() throws Exception {
+        // Test another Finney attack, but this time the killed transaction was also spending some other outputs in
+        // our wallet which were not themselves double spent. This test ensures the death of the pending transaction
+        // frees up the other outputs and makes them spendable again.
+
+        // Receive 1 coin and then 2 coins in separate transactions.
+        sendMoneyToWallet(Utils.toNanoCoins(1, 0), AbstractBlockChain.NewBlockType.BEST_CHAIN);
+        sendMoneyToWallet(Utils.toNanoCoins(2, 0), AbstractBlockChain.NewBlockType.BEST_CHAIN);
+        // Create a send to a merchant of all our coins.
+        Transaction send1 = wallet.createSend(new ECKey().toAddress(params), toNanoCoins(2, 90));
+        // Create a double spend of just the first one.
+        Transaction send2 = wallet.createSend(new ECKey().toAddress(params), toNanoCoins(1, 0));
+        send2 = new Transaction(params, send2.bitcoinSerialize());
+        // Broadcast send1, it's now pending.
+        wallet.commitTx(send1);
+        assertEquals(BigInteger.ZERO, wallet.getBalance());
+        // Receive a block that overrides the send1 using send2.
+        sendMoneyToWallet(send2, AbstractBlockChain.NewBlockType.BEST_CHAIN);
+        // send1 got rolled back and replaced with a smaller send that only used one of our received coins, thus ...
+        assertEquals(Utils.toNanoCoins(2, 0), wallet.getBalance());
+        assertTrue(wallet.isConsistent());
+    }
+
+    @Test
     public void doubleSpendFinneyAttack() throws Exception {
         // A Finney attack is where a miner includes a transaction spending coins to themselves but does not
         // broadcast it. When they find a solved block, they hold it back temporarily whilst they buy something with
@@ -601,6 +625,7 @@ public class WalletTest {
         // Receive 1 BTC.
         BigInteger nanos = Utils.toNanoCoins(1, 0);
         sendMoneyToWallet(nanos, AbstractBlockChain.NewBlockType.BEST_CHAIN);
+        Transaction received = wallet.getTransactions(false, false).iterator().next();
         // Create a send to a merchant.
         Transaction send1 = wallet.createSend(new ECKey().toAddress(params), toNanoCoins(0, 50));
         // Create a double spend.
@@ -608,13 +633,15 @@ public class WalletTest {
         send2 = new Transaction(params, send2.bitcoinSerialize());
         // Broadcast send1.
         wallet.commitTx(send1);
+        assertEquals(send1, received.getOutput(0).getSpentBy().getParentTransaction());
         // Receive a block that overrides it.
         sendMoneyToWallet(send2, AbstractBlockChain.NewBlockType.BEST_CHAIN);
         assertEquals(send1, eventDead[0]);
         assertEquals(send2, eventReplacement[0]);
         assertEquals(TransactionConfidence.ConfidenceType.DEAD,
                      send1.getConfidence().getConfidenceType());
-        
+        assertEquals(send2, received.getOutput(0).getSpentBy().getParentTransaction());
+
         TestUtils.DoubleSpends doubleSpends = TestUtils.createFakeDoubleSpendTxns(params, myAddress);
         // t1 spends to our wallet. t2 double spends somewhere else.
         wallet.receivePending(doubleSpends.t1, null);

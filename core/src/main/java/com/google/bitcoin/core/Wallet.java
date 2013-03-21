@@ -757,6 +757,7 @@ public class Wallet implements Serializable, BlockChainListener {
                 }
             }
 
+            if (!success) log.error(toString());
             return success;
         } finally {
             lock.unlock();
@@ -961,7 +962,7 @@ public class Wallet implements Serializable, BlockChainListener {
         try {
             return tx.getValueSentFromMe(this).compareTo(BigInteger.ZERO) > 0 ||
                    tx.getValueSentToMe(this).compareTo(BigInteger.ZERO) > 0 ||
-                   findDoubleSpendAgainstPending(tx) != null;
+                   checkForDoubleSpendAgainstPending(tx, false);
         } finally {
             lock.unlock();
         }
@@ -971,7 +972,7 @@ public class Wallet implements Serializable, BlockChainListener {
      * Checks if "tx" is spending any inputs of pending transactions. Not a general check, but it can work even if
      * the double spent inputs are not ours. Returns the pending tx that was double spent or null if none found.
      */
-    private TransactionInput findDoubleSpendAgainstPending(Transaction tx) {
+    private boolean checkForDoubleSpendAgainstPending(Transaction tx, boolean takeAction) {
         checkState(lock.isLocked());
         // Compile a set of outpoints that are spent by tx.
         HashSet<TransactionOutPoint> outpoints = new HashSet<TransactionOutPoint>();
@@ -981,13 +982,24 @@ public class Wallet implements Serializable, BlockChainListener {
         // Now for each pending transaction, see if it shares any outpoints with this tx.
         for (Transaction p : pending.values()) {
             for (TransactionInput input : p.getInputs()) {
-                if (outpoints.contains(input.getOutpoint())) {
+                // This relies on the fact that TransactionOutPoint equality is defined at the protocol not object
+                // level - outpoints from two different inputs that point to the same output compare the same.
+                TransactionOutPoint outpoint = input.getOutpoint();
+                if (outpoints.contains(outpoint)) {
                     // It does, it's a double spend against the pending pool, which makes it relevant.
-                    return input;
+                    if (takeAction) {
+                        // Look for the actual input object in tx that is double spending.
+                        TransactionInput overridingInput = null;
+                        for (TransactionInput txInput : tx.getInputs()) {
+                            if (txInput.getOutpoint().equals(outpoint)) overridingInput = txInput;
+                        }
+                        killTx(tx, checkNotNull(overridingInput), p);
+                    }
+                    return true;
                 }
             }
         }
-        return null;
+        return false;
     }
 
     /**
@@ -1236,12 +1248,7 @@ public class Wallet implements Serializable, BlockChainListener {
             addWalletTransaction(Pool.SPENT, tx);
         }
 
-        TransactionInput doubleSpent = findDoubleSpendAgainstPending(tx);
-        if (doubleSpent != null) {
-            // This is mostly the same as the codepath in updateForSpends, but that one is only triggered when
-            // the transaction being double spent is actually in our wallet (ie, maybe we're double spending).
-            killTx(tx, doubleSpent, doubleSpent.getParentTransaction());
-         }
+        checkForDoubleSpendAgainstPending(tx, true);
     }
 
     /**
@@ -1295,7 +1302,7 @@ public class Wallet implements Serializable, BlockChainListener {
                 // The outputs are already marked as spent by the connect call above, so check if there are any more for
                 // us to use. Move if not.
                 Transaction connected = checkNotNull(input.getOutpoint().fromTx);
-                maybeMoveTxToSpent(connected, "prevtx");
+                maybeMovePool(connected, "prevtx");
             }
         }
         // Now check each output and see if there is a pending transaction which spends it. This shouldn't normally
@@ -1321,34 +1328,61 @@ public class Wallet implements Serializable, BlockChainListener {
         }
     }
 
+    // Updates the wallet when a double spend occurs.
     private void killTx(Transaction overridingTx, TransactionInput overridingInput, Transaction killedTx) {
         TransactionOutPoint overriddenOutPoint = overridingInput.getOutpoint();
+        // It is expected that we may not have the overridden/double-spent tx in our wallet ... in the (common?!) case
+        // where somebody is stealing money from us, the overriden tx belongs to someone else.
         log.warn("Saw double spend of {} from chain override pending tx {}",
                 overriddenOutPoint, killedTx.getHashAsString());
         log.warn("  <-pending ->dead   killed by {}", overridingTx.getHashAsString());
-        checkState(overridingInput.connect(overridingTx, TransactionInput.ConnectMode.DISCONNECT_ON_CONFLICT) == TransactionInput.ConnectionResult.SUCCESS);
         pending.remove(killedTx.getHash());
         addWalletTransaction(Pool.DEAD, killedTx);
-        // Inform the [tx] event listeners of the newly dead tx and disconnect the other inputs.
-        for (TransactionInput deadInput : killedTx.getInputs()) deadInput.disconnect();
-        killedTx.getConfidence().setOverridingTransaction(overridingTx);
-        // TODO: Move newly unspent transactions (if any) back into the unspent pool to avoid inconsistency.
+        log.info("Disconnecting inputs of the newly dead tx");
+        for (TransactionInput deadInput : killedTx.getInputs()) {
+            Transaction connected = deadInput.getOutpoint().fromTx;
+            if (connected == null) continue;
+            deadInput.disconnect();
+            maybeMovePool(connected, "kill");
+        }
+        // Try and connect the overriding input to something in our wallet. It's expected that this will mostly fail
+        // because when somebody else is double-spending away a payment they made to us, we won't have the overridden
+        // tx as it's not ours to begin with. It'll only be found if we're double spending our own payments.
+        log.info("Trying to connect overriding tx back");
+        TransactionInput.ConnectionResult result = overridingInput.connect(unspent, TransactionInput.ConnectMode.DISCONNECT_ON_CONFLICT);
+        if (result == TransactionInput.ConnectionResult.SUCCESS) {
+            maybeMovePool(overridingInput.getOutpoint().fromTx, "kill");
+        } else {
+            result = overridingInput.connect(spent, TransactionInput.ConnectMode.DISCONNECT_ON_CONFLICT);
+            if (result == TransactionInput.ConnectionResult.SUCCESS) {
+                maybeMovePool(overridingInput.getOutpoint().fromTx, "kill");
+            }
+        }
+        log.info("Informing tx listeners of double spend event");
+        killedTx.getConfidence().setOverridingTransaction(overridingTx);  // RE-ENTRY POINT
         // TODO: Recursively kill other transactions that were double spent.
     }
 
     /**
      * If the transactions outputs are all marked as spent, and it's in the unspent map, move it.
+     * If the owned transactions outputs are not all marked as spent, and it's in the spent map, move it.
      */
-    private void maybeMoveTxToSpent(Transaction tx, String context) {
+    private void maybeMovePool(Transaction tx, String context) {
         checkState(lock.isLocked());
         if (tx.isEveryOwnedOutputSpent(this)) {
             // There's nothing left I can spend in this transaction.
             if (unspent.remove(tx.getHash()) != null) {
                 if (log.isInfoEnabled()) {
-                    log.info("  {} {} <-unspent", tx.getHashAsString(), context);
-                    log.info("  {} {} ->spent", tx.getHashAsString(), context);
+                    log.info("  {} {} <-unspent ->spent", tx.getHashAsString(), context);
                 }
                 spent.put(tx.getHash(), tx);
+            }
+        } else {
+            if (spent.remove(tx.getHash()) != null) {
+                if (log.isInfoEnabled()) {
+                    log.info("  {} {} <-spent ->unspent", tx.getHashAsString(), context);
+                }
+                unspent.put(tx.getHash(), tx);
             }
         }
     }
@@ -1947,7 +1981,7 @@ public class Wallet implements Serializable, BlockChainListener {
             req.tx.getConfidence().setSource(TransactionConfidence.Source.SELF);
 
             req.completed = true;
-            log.info("  completed {}", req.tx.getHashAsString());
+            log.info("  completed {} with {} inputs", req.tx.getHashAsString(), req.tx.getInputs().size());
             return true;
         } finally {
             lock.unlock();
@@ -2564,7 +2598,7 @@ public class Wallet implements Serializable, BlockChainListener {
         // The act of re-connecting this un-included transaction may have caused other transactions to become fully
         // spent so move them into the right bucket here to keep performance good.
         for (Transaction maybeSpent : connectedTransactions) {
-            maybeMoveTxToSpent(maybeSpent, "reorg");
+            maybeMovePool(maybeSpent, "reorg");
         }
     }
 
