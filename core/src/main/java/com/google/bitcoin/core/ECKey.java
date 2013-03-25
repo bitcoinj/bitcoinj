@@ -16,6 +16,7 @@
 
 package com.google.bitcoin.core;
 
+import org.bitcoin.NativeSecp256k1;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.google.common.base.Preconditions;
@@ -43,6 +44,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.Serializable;
 import java.math.BigInteger;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.charset.Charset;
 import java.security.SecureRandom;
 import java.security.SignatureException;
@@ -395,13 +398,19 @@ public class ECKey implements Serializable {
     }
 
     /**
-     * Verifies the given ECDSA signature against the message bytes using the public key bytes.
+     * <p>xVerifies the given ECDSA signature against the message bytes using the public key bytes.</p>
+     * 
+     * <p>When using native ECDSA verification, data must be 32 bytes, and no element may be
+     * larger than 520 bytes.</p>
      *
      * @param data      Hash of the data to verify.
      * @param signature ASN.1 encoded signature.
      * @param pub       The public key bytes to use.
      */
     public static boolean verify(byte[] data, ECDSASignature signature, byte[] pub) {
+        if (NativeSecp256k1.enabled)
+            return NativeSecp256k1.verify(data, signature.encodeToDER(), pub);
+
         ECDSASigner signer = new ECDSASigner();
         ECPublicKeyParameters params = new ECPublicKeyParameters(ecParams.getCurve().decodePoint(pub), ecParams);
         signer.init(false, params);
@@ -424,6 +433,9 @@ public class ECKey implements Serializable {
      * @param pub       The public key bytes to use.
      */
     public static boolean verify(byte[] data, byte[] signature, byte[] pub) {
+        if (NativeSecp256k1.enabled)
+            return NativeSecp256k1.verify(data, signature, pub);
+        
         try {
             ASN1InputStream decoder = new ASN1InputStream(signature);
             DLSequence seq = (DLSequence) decoder.readObject();
