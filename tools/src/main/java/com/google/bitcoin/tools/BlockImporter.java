@@ -25,6 +25,7 @@ import com.google.bitcoin.store.H2FullPrunedBlockStore;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 
 /**
@@ -40,38 +41,62 @@ public class BlockImporter {
         
         String defaultDataDir;
         if (System.getProperty("os.name").toLowerCase().indexOf("win") >= 0) {
-            defaultDataDir = System.getenv("APPDATA") + "\\.bitcoin/";
+            defaultDataDir = System.getenv("APPDATA") + "\\.bitcoin\\blocks\\";
         } else {
-            defaultDataDir = System.getProperty("user.home") + "/.bitcoin/";
+            defaultDataDir = System.getProperty("user.home") + "/.bitcoin/blocks/";
         }
         
         // TODO: Move this to a library function
-        FileInputStream stream = new FileInputStream(new File(defaultDataDir + "blk0001.dat"));
         int i = 0;
-        while (stream.available() > 0) {
+        for (int j = 0; true; j++) {
+            FileInputStream stream;
+            System.out.println("Opening " + defaultDataDir + String.format("blk%05d.dat", j));
             try {
-                while(stream.read() != ((params.packetMagic >>> 24) & 0xff) || stream.read() != ((params.packetMagic >>> 16) & 0xff) ||
-                        stream.read() != ((params.packetMagic >>> 8) & 0xff) || stream.read() != (params.packetMagic & 0xff))
-                    ;
-            } catch (IOException e) {
+                stream = new FileInputStream(new File(
+                        defaultDataDir + String.format("blk%05d.dat", j)));
+            } catch (FileNotFoundException e1) {
+                System.out.println(defaultDataDir + String.format("blk%05d.dat", j));
                 break;
             }
-            byte[] bytes = new byte[4];
-            stream.read(bytes, 0, 4);
-            long size = Utils.readUint32BE(Utils.reverseBytes(bytes), 0);
-            if (size > Block.MAX_BLOCK_SIZE || size <= 0)
-                continue;
-            bytes = new byte[(int) size];
-            stream.read(bytes, 0, (int)size);
-            Block block = new Block(params, bytes);
-            if (store.get(block.getHash()) == null)
-                chain.add(block);
-            
-            if (i % 10000 == 0)
-                System.out.println(i);
-            i++;
+            while (stream.available() > 0) {
+                try {
+                    int nextChar = stream.read();
+                    while (nextChar != -1) {
+                        if (nextChar != ((params.packetMagic >>> 24) & 0xff)) {
+                            nextChar = stream.read();
+                            continue;
+                        }
+                        nextChar = stream.read();
+                        if (nextChar != ((params.packetMagic >>> 16) & 0xff))
+                            continue;
+                        nextChar = stream.read();
+                        if (nextChar != ((params.packetMagic >>> 8) & 0xff))
+                            continue;
+                        nextChar = stream.read();
+                        if (nextChar == (params.packetMagic & 0xff))
+                            break;
+                    }
+                } catch (IOException e) {
+                    break;
+                }
+                byte[] bytes = new byte[4];
+                stream.read(bytes, 0, 4);
+                long size = Utils.readUint32BE(Utils.reverseBytes(bytes), 0);
+                if (size > Block.MAX_BLOCK_SIZE || size <= 0)
+                    continue;
+                bytes = new byte[(int) size];
+                stream.read(bytes, 0, (int) size);
+                Block block = new Block(params, bytes);
+                if (store.get(block.getHash()) == null)
+                    chain.add(block);
+
+                if (i % 1000 == 0)
+                    System.out.println(i);
+                i++;
+            }
+            stream.close();
         }
-        stream.close();
         System.out.println("Imported " + chain.getChainHead().getHeight() + " blocks.");
+        System.exit(0);
     }
 }
