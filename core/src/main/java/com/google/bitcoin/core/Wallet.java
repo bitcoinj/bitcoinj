@@ -300,7 +300,7 @@ public class Wallet implements Serializable, BlockChainListener {
     // do not know how to deal with).
     private int version;
     // User-provided description that may help people keep track of what a wallet is for.
-    String description;
+    private String description;
 
     /**
      * Creates a new, empty wallet with no keys and no transactions. If you want to restore a wallet from disk instead,
