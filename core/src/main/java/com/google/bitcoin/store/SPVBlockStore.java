@@ -239,7 +239,10 @@ public class SPVBlockStore implements BlockStore {
                 buffer.position(8);
                 buffer.get(headHash);
                 Sha256Hash hash = new Sha256Hash(headHash);
-                lastChainHead = checkNotNull(get(hash), "Corrupted block store: could not find chain head: " + hash);
+                StoredBlock block = get(hash);
+                if (block == null)
+                    throw new BlockStoreException("Corrupted block store: could not find chain head: " + hash);
+                lastChainHead = block;
             }
             return lastChainHead;
         } finally { lock.unlock(); }
@@ -285,7 +288,7 @@ public class SPVBlockStore implements BlockStore {
     /** Returns the offset from the file start where the latest block should be written (end of prev block). */
     private int getRingCursor(ByteBuffer buffer) {
         int c = buffer.getInt(4);
-        Preconditions.checkState(c >= FILE_PROLOGUE_BYTES, "Integer overflow");
+        checkState(c >= FILE_PROLOGUE_BYTES, "Integer overflow");
         return c;
     }
 
