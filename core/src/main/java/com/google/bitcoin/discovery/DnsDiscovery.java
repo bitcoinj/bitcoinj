@@ -17,17 +17,13 @@
 package com.google.bitcoin.discovery;
 
 import com.google.bitcoin.core.NetworkParameters;
-import com.google.common.collect.Sets;
+import com.google.common.collect.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.*;
 
 /**
@@ -71,50 +67,46 @@ public class DnsDiscovery implements PeerDiscovery {
     }
 
     public InetSocketAddress[] getPeers(long timeoutValue, TimeUnit timeoutUnit) throws PeerDiscoveryException {
-        final BlockingQueue<InetSocketAddress> queue = new LinkedBlockingQueue<InetSocketAddress>();
-
-        ArrayList<String> seeds = new ArrayList<String>(Arrays.asList(hostNames));
         // Java doesn't have an async DNS API so we have to do all lookups in a thread pool, as sometimes seeds go
         // hard down and it takes ages to give up and move on.
-        ExecutorService pool = Executors.newFixedThreadPool(seeds.size());
-        for (final String seed : seeds) {
-            pool.submit(new Runnable() {
-                public void run() {
-                    try {
-                        InetAddress[] addrs = InetAddress.getAllByName(seed);
-                        for (InetAddress addr : addrs) queue.put(new InetSocketAddress(addr, netParams.port));
-                    } catch (UnknownHostException e) {
-                        log.warn("Unable to resolve {}", seed);
-                    } catch (InterruptedException e) {
-                        // Silently go away.
+        ExecutorService threadPool = Executors.newFixedThreadPool(hostNames.length);
+        try {
+            List<Callable<InetAddress[]>> tasks = Lists.newArrayList();
+            for (final String seed : hostNames)
+                tasks.add(new Callable<InetAddress[]>() {
+                    public InetAddress[] call() throws Exception {
+                        return InetAddress.getAllByName(seed);
                     }
+                });
+            final List<Future<InetAddress[]>> futures = threadPool.invokeAll(tasks, timeoutValue, timeoutUnit);
+            ArrayList<InetSocketAddress> addrs = Lists.newArrayList();
+            for (int i = 0; i < futures.size(); i++) {
+                Future<InetAddress[]> future = futures.get(i);
+                if (future.isCancelled()) {
+                    log.warn("{} timed out", hostNames[i]);
+                    continue;  // Timed out.
                 }
-            });
-        }
-        // The queue will fill up with resolutions. Let's wait until we got at least 30 or we run out of time.
-        final long timeout = timeoutUnit.toMillis(timeoutValue);
-        long start = System.currentTimeMillis();
-        Set<InetSocketAddress> addrs = Sets.newHashSet();
-        while (addrs.size() < 30) {
-            try {
-                long pollTime = timeout - (System.currentTimeMillis() - start);
-                if (pollTime < 0) break;
-                InetSocketAddress a = queue.poll(pollTime, TimeUnit.MILLISECONDS);
-                if (a == null) {
-                    break;
+                final InetAddress[] inetAddresses;
+                try {
+                    inetAddresses = future.get();
+                } catch (ExecutionException e) {
+                    log.error("Failed to look up DNS seeds from {}: {}", hostNames[i], e.getMessage());
+                    continue;
                 }
-                addrs.add(a);
-            } catch (InterruptedException e) {
-                break;
+                for (InetAddress addr : inetAddresses) {
+                    addrs.add(new InetSocketAddress(addr, netParams.port));
+                }
             }
+            if (addrs.size() == 0)
+                throw new PeerDiscoveryException("Unable to find any peers via DNS");
+            Collections.shuffle(addrs);
+            threadPool.shutdownNow();
+            return addrs.toArray(new InetSocketAddress[addrs.size()]);
+        } catch (InterruptedException e) {
+            throw new PeerDiscoveryException(e);
+        } finally {
+            threadPool.shutdown();
         }
-        if (addrs.size() == 0) {
-            throw new PeerDiscoveryException("Unable to find any peers via DNS");
-        }
-        ArrayList<InetSocketAddress> shuffledAddrs = new ArrayList<InetSocketAddress>(addrs);
-        Collections.shuffle(shuffledAddrs);
-        pool.shutdown();
-        return shuffledAddrs.toArray(new InetSocketAddress[shuffledAddrs.size()]);
     }
 
     /** We don't have a way to abort a DNS lookup, so this does nothing */
