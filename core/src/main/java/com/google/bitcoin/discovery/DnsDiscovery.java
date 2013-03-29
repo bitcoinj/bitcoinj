@@ -42,8 +42,7 @@ import java.util.concurrent.*;
  *
  * <p>DNS seeds do not attempt to enumerate every peer on the network. {@link DnsDiscovery#getPeers(long, java.util.concurrent.TimeUnit)}
  * will return up to 30 random peers from the set of those returned within the timeout period. If you want more peers
- * to connect to, you need to discover them via other means (like addr broadcasts).
- * </p>
+ * to connect to, you need to discover them via other means (like addr broadcasts).</p>
  */
 public class DnsDiscovery implements PeerDiscovery {
     private static final Logger log = LoggerFactory.getLogger(DnsDiscovery.class);
@@ -51,20 +50,13 @@ public class DnsDiscovery implements PeerDiscovery {
     private String[] hostNames;
     private NetworkParameters netParams;
 
-    public static final String[] defaultHosts = new String[]{
-            "seed.bitcoin.sipa.be",        // Pieter Wuille
-            "dnsseed.bluematt.me",         // Matt Corallo
-            "dnsseed.bitcoin.dashjr.org",  // Luke Dashjr
-            "bitseed.xf2.org",             // Jeff Garzik
-    };
-
     /**
      * Supports finding peers through DNS A records. Community run DNS entry points will be used.
      *
      * @param netParams Network parameters to be used for port information.
      */
     public DnsDiscovery(NetworkParameters netParams) {
-        this(getDefaultHostNames(), netParams);
+        this(netParams.getDnsSeeds(), netParams);
     }
 
     /**
@@ -122,14 +114,7 @@ public class DnsDiscovery implements PeerDiscovery {
         ArrayList<InetSocketAddress> shuffledAddrs = new ArrayList<InetSocketAddress>(addrs);
         Collections.shuffle(shuffledAddrs);
         pool.shutdown();
-        return shuffledAddrs.toArray(new InetSocketAddress[]{});
-    }
-
-    /**
-     * Returns the well known discovery host names on the production network.
-     */
-    public static String[] getDefaultHostNames() {
-        return defaultHosts;
+        return shuffledAddrs.toArray(new InetSocketAddress[shuffledAddrs.size()]);
     }
 
     /** We don't have a way to abort a DNS lookup, so this does nothing */

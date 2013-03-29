@@ -510,7 +510,7 @@ public class PeerGroup extends AbstractIdleService {
         Set<PeerAddress> addressSet = Sets.newHashSet();
         for (PeerDiscovery peerDiscovery : peerDiscoverers) {
             InetSocketAddress[] addresses;
-            addresses = peerDiscovery.getPeers(10, TimeUnit.SECONDS);
+            addresses = peerDiscovery.getPeers(5, TimeUnit.SECONDS);
             for (InetSocketAddress address : addresses) addressSet.add(new PeerAddress(address));
             if (addressSet.size() > 0) break;
         }

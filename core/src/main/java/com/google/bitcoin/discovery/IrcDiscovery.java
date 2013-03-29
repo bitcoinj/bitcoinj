@@ -30,7 +30,10 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * IrcDiscovery provides a way to find network peers by joining a pre-agreed rendevouz point on the LFnet IRC network.
+ * <b>This class is deprecated because LFnet has ceased to operate and DNS seeds now exist for both prod and test
+ * networks.</b> It may conceivably still be useful for running small ad-hoc networks by yourself.
  */
+@Deprecated
 public class IrcDiscovery implements PeerDiscovery {
     private static final Logger log = LoggerFactory.getLogger(IrcDiscovery.class);
 

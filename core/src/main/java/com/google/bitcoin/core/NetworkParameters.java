@@ -17,6 +17,7 @@
 package com.google.bitcoin.core;
 
 import com.google.common.base.Objects;
+import com.google.common.collect.Lists;
 import org.spongycastle.util.encoders.Hex;
 
 import java.io.ByteArrayOutputStream;
@@ -31,8 +32,8 @@ import static com.google.common.base.Preconditions.checkState;
 /**
  * <p>NetworkParameters contains the data needed for working with an instantiation of a Bitcoin chain.</p>
  *
- * Currently there are only two, the production chain and the test chain. But in future as Bitcoin
- * evolves there may be more. You can create your own as long as they don't conflict.
+ * <p></p>Currently there are only two, the production chain and the test chain. There is also a "unit test chain" which
+ * is internal to bitcoinj and can't be used on a real network. In future there may be others. </p>
  */
 public class NetworkParameters implements Serializable {
     private static final long serialVersionUID = 3L;
@@ -126,6 +127,11 @@ public class NetworkParameters implements Serializable {
      */
     public final int[] acceptableAddressCodes;
 
+    /**
+     * DNS names that when resolved, give active peers on the network. Used to bootstrap the P2P connectivity.
+     */
+    private final String[] dnsSeeds;
+
 
     /**
      * Block checkpoints are a safety mechanism that hard-codes the hashes of blocks at particular heights. Re-orgs
@@ -167,6 +173,13 @@ public class NetworkParameters implements Serializable {
             checkpoints.put(91842, new Sha256Hash("00000000000a4d0a398161ffc163c503763b1f4360639393e0e4c8e300e0caec"));
             checkpoints.put(91880, new Sha256Hash("00000000000743f190a18c5577a3c2d2a1f610ae9601ac046a38084ccb7cd721"));
             checkpoints.put(200000, new Sha256Hash("000000000000034a7dedef4a161fa058a2d67a173a90155f3a2fe6fc132e0ebf"));
+
+            dnsSeeds = new String[] {
+                    "seed.bitcoin.sipa.be",        // Pieter Wuille
+                    "dnsseed.bluematt.me",         // Matt Corallo
+                    "dnsseed.bitcoin.dashjr.org",  // Luke Dashjr
+                    "bitseed.xf2.org",             // Jeff Garzik
+            };
         } else if (type == 3) {
             // Testnet3
             id = ID_TESTNET;
@@ -188,6 +201,11 @@ public class NetworkParameters implements Serializable {
             String genesisHash = genesisBlock.getHashAsString();
             checkState(genesisHash.equals("000000000933ea01ad0ee984209779baaec3ced90fa3f408719526f8d77f4943"),
                     genesisHash);
+
+            dnsSeeds = new String[] {
+                    "testnet-seed.bitcoin.petertodd.org",
+                    "testnet-seed.bluematt.me"
+            };
         } else if (type == 2) {
             id = ID_TESTNET;
             packetMagic = 0xfabfb5daL;
@@ -207,6 +225,7 @@ public class NetworkParameters implements Serializable {
             String genesisHash = genesisBlock.getHashAsString();
             checkState(genesisHash.equals("00000007199508e34a9ff81e6ec0c477a4cccff2a4767a8eee39c11db367b008"),
                     genesisHash);
+            dnsSeeds = null;
         } else if (type == -1) {
             id = ID_UNITTESTNET;
             packetMagic = 0x0b110907;
@@ -223,6 +242,7 @@ public class NetworkParameters implements Serializable {
             spendableCoinbaseDepth = 5;
             acceptableAddressCodes = new int[] { 111 };
             subsidyDecreaseBlockCount = 100;
+            dnsSeeds = null;
         } else {
             throw new RuntimeException();
         }
@@ -360,5 +380,10 @@ public class NetworkParameters implements Serializable {
 
     public int getSubsidyDecreaseBlockCount() {
         return subsidyDecreaseBlockCount;
+    }
+
+    /** Returns DNS names that when resolved, give IP addresses of active peers. */
+    public String[] getDnsSeeds() {
+        return dnsSeeds;
     }
 }

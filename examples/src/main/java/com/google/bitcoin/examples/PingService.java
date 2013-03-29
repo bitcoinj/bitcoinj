@@ -19,7 +19,6 @@ package com.google.bitcoin.examples;
 import com.google.bitcoin.core.*;
 import com.google.bitcoin.crypto.KeyCrypterException;
 import com.google.bitcoin.discovery.DnsDiscovery;
-import com.google.bitcoin.discovery.IrcDiscovery;
 import com.google.bitcoin.store.BlockStore;
 import com.google.bitcoin.store.SPVBlockStore;
 import com.google.bitcoin.utils.BriefLogFormatter;
@@ -101,11 +100,7 @@ public class PingService {
         chain = new BlockChain(params, wallet, blockStore);
         peerGroup = new PeerGroup(params, chain);
         peerGroup.setUserAgent("PingService", "1.0");
-        if (testNet) {
-            peerGroup.addPeerDiscovery(new IrcDiscovery("#bitcoinTEST3"));
-        } else {
-            peerGroup.addPeerDiscovery(new DnsDiscovery(params));
-        }
+        peerGroup.addPeerDiscovery(new DnsDiscovery(params));
         peerGroup.addWallet(wallet);
 
         // We want to know when the balance changes.

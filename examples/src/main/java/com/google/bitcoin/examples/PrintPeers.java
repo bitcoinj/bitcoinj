@@ -20,7 +20,6 @@ import com.google.bitcoin.core.NetworkParameters;
 import com.google.bitcoin.core.TCPNetworkConnection;
 import com.google.bitcoin.core.VersionMessage;
 import com.google.bitcoin.discovery.DnsDiscovery;
-import com.google.bitcoin.discovery.IrcDiscovery;
 import com.google.bitcoin.discovery.PeerDiscoveryException;
 import com.google.bitcoin.utils.BriefLogFormatter;
 import com.google.common.collect.Lists;
@@ -35,10 +34,10 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Prints a list of IP addresses connected to the rendezvous point on the LFnet IRC channel.
+ * Prints a list of IP addresses obtained from DNS.
  */
 public class PrintPeers {
-    private static InetSocketAddress[] dnsPeers, ircPeers;
+    private static InetSocketAddress[] dnsPeers;
 
     private static void printElapsed(long start) {
         long now = System.currentTimeMillis();
@@ -48,26 +47,8 @@ public class PrintPeers {
     private static void printPeers(InetSocketAddress[] addresses) {
         for (InetSocketAddress address : addresses) {
             String hostAddress = address.getAddress().getHostAddress();
-            System.out.println(String.format("%s:%d", hostAddress.toString(), address.getPort()));
+            System.out.println(String.format("%s:%d", hostAddress, address.getPort()));
         }
-    }
-
-    private static void printIRC() throws PeerDiscoveryException {
-        long start = System.currentTimeMillis();
-        IrcDiscovery d = new IrcDiscovery("#bitcoinTEST3") {
-            @Override
-            protected void onIRCReceive(String message) {
-                System.out.println("<- " + message);
-            }
-
-            @Override
-            protected void onIRCSend(String message) {
-                System.out.println("-> " + message);
-            }
-        };
-        ircPeers = d.getPeers(10, TimeUnit.SECONDS);
-        printPeers(ircPeers);
-        printElapsed(start);
     }
 
     private static void printDNS() throws PeerDiscoveryException {
@@ -80,15 +61,12 @@ public class PrintPeers {
 
     public static void main(String[] args) throws Exception {
         BriefLogFormatter.init();
-        System.out.println("=== IRC ===");
-        printIRC();
         System.out.println("=== DNS ===");
         printDNS();
         System.out.println("=== Version/chain heights ===");
 
         ArrayList<InetAddress> addrs = new ArrayList<InetAddress>();
         for (InetSocketAddress peer : dnsPeers) addrs.add(peer.getAddress());
-        for (InetSocketAddress peer : ircPeers) addrs.add(peer.getAddress());
         System.out.println("Scanning " + addrs.size() + " peers:");
 
         final NetworkParameters params = NetworkParameters.prodNet();

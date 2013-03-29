@@ -19,7 +19,6 @@ package com.google.bitcoin.tools;
 import com.google.bitcoin.core.*;
 import com.google.bitcoin.crypto.KeyCrypterException;
 import com.google.bitcoin.discovery.DnsDiscovery;
-import com.google.bitcoin.discovery.IrcDiscovery;
 import com.google.bitcoin.discovery.PeerDiscovery;
 import com.google.bitcoin.store.*;
 import com.google.bitcoin.utils.BriefLogFormatter;
@@ -272,17 +271,16 @@ public class WalletTool {
             logger = LogManager.getLogManager().getLogger("");
             logger.setLevel(Level.SEVERE);
         }
-
+        discovery = new DnsDiscovery(params);
         switch (netFlag.value(options)) {
             case PROD: 
                 params = NetworkParameters.prodNet();
                 chainFileName = new File("prodnet.chain");
-                discovery = new DnsDiscovery(params);
+
                 break;
             case TEST: 
                 params = NetworkParameters.testNet();
                 chainFileName = new File("testnet.chain");
-                discovery = new IrcDiscovery("#bitcoinTEST3");
                 break;
             default:
                 throw new RuntimeException("Unreachable.");

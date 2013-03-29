@@ -18,8 +18,6 @@ package com.google.bitcoin.examples.toywallet;
 
 import com.google.bitcoin.core.*;
 import com.google.bitcoin.discovery.DnsDiscovery;
-import com.google.bitcoin.discovery.IrcDiscovery;
-import com.google.bitcoin.store.BoundedOverheadBlockStore;
 import com.google.bitcoin.store.H2FullPrunedBlockStore;
 import com.google.bitcoin.store.SPVBlockStore;
 import com.google.bitcoin.utils.BriefLogFormatter;
@@ -174,11 +172,7 @@ public class ToyWallet {
 
         peerGroup = new PeerGroup(params, chain);
         peerGroup.setUserAgent("ToyWallet", "1.0");
-        if (testnet) {
-            peerGroup.addPeerDiscovery(new IrcDiscovery("#bitcoinTEST3"));
-        } else {
-            peerGroup.addPeerDiscovery(new DnsDiscovery(params));
-        }
+        peerGroup.addPeerDiscovery(new DnsDiscovery(params));
         peerGroup.addWallet(wallet);
 
         // Watch for peers coming and going so we can update the UI.
