@@ -1316,8 +1316,11 @@ public class PeerGroup extends AbstractIdleService {
         long pingTime;
     }
 
-    /** Given a list of Peers, return a Peer to be used as the download peer. */
-    protected static Peer selectDownloadPeer(List<Peer> peers) {
+    /**
+     * Given a list of Peers, return a Peer to be used as the download peer. If you don't want PeerGroup to manage
+     * download peer statuses for you, just override this and always return null.
+     */
+    protected Peer selectDownloadPeer(List<Peer> peers) {
         // Characteristics to select for in order of importance:
         //  - Chain height is reasonable (majority of nodes)
         //  - High enough protocol version for the features we want (but we'll settle for less)
