@@ -24,9 +24,7 @@ import com.google.bitcoin.crypto.KeyCrypterScrypt;
 import com.google.bitcoin.store.BlockStore;
 import com.google.bitcoin.store.MemoryBlockStore;
 import com.google.bitcoin.utils.BriefLogFormatter;
-import com.google.bitcoin.utils.Locks;
 import com.google.common.collect.Lists;
-import com.google.common.util.concurrent.CycleDetectingLockFactory;
 import com.google.protobuf.ByteString;
 
 import org.bitcoinj.wallet.Protos;
@@ -70,7 +68,7 @@ public class WalletTest {
     private Wallet wallet;
     private Wallet encryptedWallet;
     // A wallet with an initial unencrypted private key and an encrypted private key.
-    private Wallet encryptedHetergeneousWallet;
+    private Wallet encryptedMixedWallet;
 
     private BlockChain chain;
     private BlockStore blockStore;
@@ -107,7 +105,7 @@ public class WalletTest {
 
         wallet = new Wallet(params);
         encryptedWallet = new Wallet(params, keyCrypter);
-        encryptedHetergeneousWallet = new Wallet(params, keyCrypter);
+        encryptedMixedWallet = new Wallet(params, keyCrypter);
 
         aesKey = keyCrypter.deriveKey(PASSWORD1);
         wrongAesKey = keyCrypter.deriveKey(WRONG_PASSWORD);
@@ -117,8 +115,8 @@ public class WalletTest {
         myEncryptedKey = encryptedWallet.addNewEncryptedKey(keyCrypter, aesKey);
         myEncryptedAddress = myEncryptedKey.toAddress(params);
 
-        encryptedHetergeneousWallet.addKey(myKey2);
-        myEncryptedKey2 = encryptedHetergeneousWallet.addNewEncryptedKey(keyCrypter, aesKey);
+        encryptedMixedWallet.addKey(myKey2);
+        myEncryptedKey2 = encryptedMixedWallet.addNewEncryptedKey(keyCrypter, aesKey);
         myEncryptedAddress2 = myEncryptedKey2.toAddress(params);
 
         blockStore = new MemoryBlockStore(params);
@@ -167,24 +165,21 @@ public class WalletTest {
     }
 
     @Test
-    public void basicSpendingWithEncryptedHetergeneousWallet() throws Exception {
+    public void basicSpendingWithEncryptedMixedWallet() throws Exception {
         for (int i = 0; i < 100; i++) {
-            encryptedHetergeneousWallet = new Wallet(params, keyCrypter);
+            encryptedMixedWallet = new Wallet(params, keyCrypter);
             myKey2 = new ECKey();
-            encryptedHetergeneousWallet.addKey(myKey2);
-            myEncryptedKey2 = encryptedHetergeneousWallet.addNewEncryptedKey(keyCrypter, aesKey);
+            encryptedMixedWallet.addKey(myKey2);
+            myEncryptedKey2 = encryptedMixedWallet.addNewEncryptedKey(keyCrypter, aesKey);
             myEncryptedAddress2 = myEncryptedKey2.toAddress(params);
-            basicSpendingCommon(encryptedHetergeneousWallet, myEncryptedAddress2, true);
+            basicSpendingCommon(encryptedMixedWallet, myEncryptedAddress2, true);
         }
     }
 
     private void basicSpendingCommon(Wallet wallet, Address toAddress, boolean testEncryption) throws Exception {
-        // We'll set up a wallet that receives a coin, then sends a coin of
-        // lesser value and keeps the change. We
-        // will attach a small fee. Because the Bitcoin protocol makes it
-        // difficult to determine the fee of an
-        // arbitrary transaction in isolation, we'll check that the fee was set
-        // by examining the size of the change.
+        // We'll set up a wallet that receives a coin, then sends a coin of lesser value and keeps the change. We
+        // will attach a small fee. Because the Bitcoin protocol makes it difficult to determine the fee of an
+        // arbitrary transaction in isolation, we'll check that the fee was set by examining the size of the change.
 
         // Receive some money as a pending transaction.
         receiveAPendingTransaction(wallet, toAddress);
@@ -242,8 +237,7 @@ public class WalletTest {
         // Broadcast the transaction and commit.
         broadcastAndCommit(wallet, t2);
 
-        // Now check that we can spend the unconfirmed change, with a new change
-        // address of our own selection.
+        // Now check that we can spend the unconfirmed change, with a new change address of our own selection.
         // (req.aesKey is null for unencrypted / the correct aesKey for encrypted.)
         spendUnconfirmedChange(wallet, t2, req.aesKey);
     }
@@ -1087,7 +1081,7 @@ public class WalletTest {
     @Test
     public void encryptionDecryptionBasic() throws Exception {
         encryptionDecryptionBasicCommon(encryptedWallet);
-        encryptionDecryptionBasicCommon(encryptedHetergeneousWallet);
+        encryptionDecryptionBasicCommon(encryptedMixedWallet);
     }
 
     private void encryptionDecryptionBasicCommon(Wallet wallet) {
