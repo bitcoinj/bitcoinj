@@ -495,7 +495,7 @@ public abstract class AbstractBlockChain {
         while (unused >= 0 && (storedBlock = storedBlock.getPrev(store)) != null)
             timestamps[unused--] = storedBlock.getHeader().getTimeSeconds();
         
-        Arrays.sort(timestamps, unused+1, 10);
+        Arrays.sort(timestamps, unused+1, 11);
         return timestamps[unused + (11-unused)/2];
     }
     
