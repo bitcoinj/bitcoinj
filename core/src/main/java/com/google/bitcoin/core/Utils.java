@@ -16,7 +16,7 @@
 
 package com.google.bitcoin.core;
 
-import com.google.common.util.concurrent.CycleDetectingLockFactory;
+import com.google.common.primitives.UnsignedLongs;
 import org.spongycastle.crypto.digests.RIPEMD160Digest;
 import org.spongycastle.util.encoders.Hex;
 
@@ -202,7 +202,7 @@ public class Utils {
      * Work around lack of unsigned types in Java.
      */
     public static boolean isLessThanUnsigned(long n1, long n2) {
-        return (n1 < n2) ^ ((n1 < 0) != (n2 < 0));
+        return UnsignedLongs.compare(n1, n2) < 0;
     }
 
     /**
