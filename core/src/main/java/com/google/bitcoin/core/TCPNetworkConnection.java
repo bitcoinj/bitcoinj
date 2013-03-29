@@ -110,9 +110,10 @@ public class TCPNetworkConnection implements NetworkConnection {
         ChannelPipeline pipeline = Channels.pipeline();
         final TCPNetworkConnection conn = new TCPNetworkConnection(params, new VersionMessage(params, 0));
         conn.handshakeFuture = SettableFuture.create();
+        conn.setRemoteAddress(address);
         pipeline.addLast("codec", conn.getHandler());
         clientBootstrap.setPipeline(pipeline);
-        clientBootstrap.setOption("connectTimeoutMillis", Integer.valueOf(connectTimeoutMsec));
+        clientBootstrap.setOption("connectTimeoutMillis", connectTimeoutMsec);
         ChannelFuture socketFuture = clientBootstrap.connect(address);
         // Once the socket is either connected on the TCP level, or failed ...
         socketFuture.addListener(new ChannelFutureListener() {
