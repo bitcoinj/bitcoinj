@@ -58,6 +58,7 @@ public class H2FullPrunedBlockStore implements FullPrunedBlockStore {
         + ")";
     static final String CHAIN_HEAD_SETTING = "chainhead";
     static final String VERIFIED_CHAIN_HEAD_SETTING = "verifiedchainhead";
+    static final String VERSION_SETTING = "version";
 
     static final String CREATE_HEADERS_TABLE = "CREATE TABLE headers ( "
         + "hash BINARY(28) NOT NULL CONSTRAINT headers_pk PRIMARY KEY,"
@@ -75,18 +76,13 @@ public class H2FullPrunedBlockStore implements FullPrunedBlockStore {
         + ")";
     static final String CREATE_UNDOABLE_TABLE_INDEX = "CREATE INDEX heightIndex ON undoableBlocks (height)";
     
-    static final String CREATE_OPEN_OUTPUT_INDEX_TABLE = "CREATE TABLE openOutputsIndex ("
-        + "hash BINARY(32) NOT NULL CONSTRAINT openOutputsIndex_pk PRIMARY KEY,"
-        + "height INT NOT NULL,"
-        + "id BIGINT NOT NULL AUTO_INCREMENT"
-        + ")";
     static final String CREATE_OPEN_OUTPUT_TABLE = "CREATE TABLE openOutputs ("
-        + "id BIGINT NOT NULL,"
+        + "hash BINARY(32) NOT NULL,"
         + "index INT NOT NULL,"
+        + "height INT NOT NULL,"
         + "value BLOB NOT NULL,"
         + "scriptBytes BLOB NOT NULL,"
-        + "PRIMARY KEY (id, index),"
-        + "CONSTRAINT openOutputs_fk FOREIGN KEY (id) REFERENCES openOutputsIndex(id)"
+        + "PRIMARY KEY (hash, index),"
         + ")";
 
     /**
@@ -179,7 +175,6 @@ public class H2FullPrunedBlockStore implements FullPrunedBlockStore {
             s.executeUpdate("DROP TABLE headers");
             s.executeUpdate("DROP TABLE undoableBlocks");
             s.executeUpdate("DROP TABLE openOutputs");
-            s.executeUpdate("DROP TABLE openOutputsIndex");
             s.close();
             createTables();
             initFromDatabase();
@@ -202,21 +197,24 @@ public class H2FullPrunedBlockStore implements FullPrunedBlockStore {
         log.debug("H2FullPrunedBlockStore : CREATE undoable block index");
         s.executeUpdate(CREATE_UNDOABLE_TABLE_INDEX);
         
-        log.debug("H2FullPrunedBlockStore : CREATE open output index table");
-        s.executeUpdate(CREATE_OPEN_OUTPUT_INDEX_TABLE);
-        
         log.debug("H2FullPrunedBlockStore : CREATE open output table");
         s.executeUpdate(CREATE_OPEN_OUTPUT_TABLE);
 
         s.executeUpdate("INSERT INTO settings(name, value) VALUES('" + CHAIN_HEAD_SETTING + "', NULL)");
         s.executeUpdate("INSERT INTO settings(name, value) VALUES('" + VERIFIED_CHAIN_HEAD_SETTING + "', NULL)");
+        s.executeUpdate("INSERT INTO settings(name, value) VALUES('" + VERSION_SETTING + "', '03')");
         s.close();
         createNewStore(params);
     }
 
     private void initFromDatabase() throws SQLException, BlockStoreException {
         Statement s = conn.get().createStatement();
-        ResultSet rs = s.executeQuery("SELECT value FROM settings WHERE name = '" + CHAIN_HEAD_SETTING + "'");
+        ResultSet rs = s.executeQuery("SHOW TABLES");
+        while (rs.next())
+            if (rs.getString(1).equalsIgnoreCase("openOutputsIndex"))
+                throw new BlockStoreException("Attempted to open a H2 database with an old schema, please reset database.");
+        
+        rs = s.executeQuery("SELECT value FROM settings WHERE name = '" + CHAIN_HEAD_SETTING + "'");
         if (!rs.next()) {
             throw new BlockStoreException("corrupt H2 block store - no chain head pointer");
         }
@@ -324,22 +322,12 @@ public class H2FullPrunedBlockStore implements FullPrunedBlockStore {
         System.out.printf("Undoable Blocks size: %d, count: %d, average size: %f%n", size, count, (double)size/count);
         
         totalSize += size; size = 0; count = 0;
-        rs = s.executeQuery("SELECT id FROM openOutputsIndex");
-        while (rs.next()) {
-            size += 32; // hash
-            size += 4; // height
-            size += 8; // id
-            count++;
-        }
-        rs.close();
-        System.out.printf("Open Outputs Index size: %d, count: %d, size in id indexes: %d%n", size, count, count * 8);
-        
-        totalSize += size; size = 0; count = 0;
         long scriptSize = 0;
         rs = s.executeQuery("SELECT value, scriptBytes FROM openOutputs");
         while (rs.next()) {
-            size += 8; // id
+            size += 32; // hash
             size += 4; // index
+            size += 4; // height
             size += rs.getBytes(1).length;
             size += rs.getBytes(2).length;
             scriptSize += rs.getBytes(2).length;
@@ -646,9 +634,8 @@ public class H2FullPrunedBlockStore implements FullPrunedBlockStore {
         PreparedStatement s = null;
         try {
             s = conn.get()
-                .prepareStatement("SELECT openOutputsIndex.height, openOutputs.value, openOutputs.scriptBytes " +
-                		"FROM openOutputsIndex NATURAL JOIN openOutputs " +
-                		"WHERE openOutputsIndex.hash = ? AND openOutputs.index = ?");
+                .prepareStatement("SELECT height, value, scriptBytes FROM openOutputs " +
+                		"WHERE hash = ? AND index = ?");
             s.setBytes(1, hash.getBytes());
             // index is actually an unsigned int
             s.setInt(2, (int)index);
@@ -676,28 +663,14 @@ public class H2FullPrunedBlockStore implements FullPrunedBlockStore {
         maybeConnect();
         PreparedStatement s = null;
         try {
-            try {
-                s = conn.get().prepareStatement("INSERT INTO openOutputsIndex(hash, height)"
-                        + " VALUES(?, ?)");
-                s.setBytes(1, out.getHash().getBytes());
-                s.setInt(2, out.getHeight());
-                s.executeUpdate();
-            } catch (SQLException e) {
-                if (e.getErrorCode() != 23505)
-                    throw e;
-            } finally {
-                if (s != null)
-                    s.close();
-            }
-            
-            s = conn.get().prepareStatement("INSERT INTO openOutputs (id, index, value, scriptBytes) " +
-            		"VALUES ((SELECT id FROM openOutputsIndex WHERE hash = ?), " +
-            		"?, ?, ?)");
+            s = conn.get().prepareStatement("INSERT INTO openOutputs (hash, index, height, value, scriptBytes) " +
+            		"VALUES (?, ?, ?, ?, ?)");
             s.setBytes(1, out.getHash().getBytes());
             // index is actually an unsigned int
             s.setInt(2, (int)out.getIndex());
-            s.setBytes(3, out.getValue().toByteArray());
-            s.setBytes(4, out.getScriptBytes());
+            s.setInt(3, out.getHeight());
+            s.setBytes(4, out.getValue().toByteArray());
+            s.setBytes(5, out.getScriptBytes());
             s.executeUpdate();
             s.close();
         } catch (SQLException e) {
@@ -718,20 +691,10 @@ public class H2FullPrunedBlockStore implements FullPrunedBlockStore {
             throw new BlockStoreException("Tried to remove a StoredTransactionOutput from H2FullPrunedBlockStore that it didn't have!");
         try {
             PreparedStatement s = conn.get()
-                .prepareStatement("DELETE FROM openOutputs " +
-                		"WHERE id = (SELECT id FROM openOutputsIndex WHERE hash = ?) AND index = ?");
+                .prepareStatement("DELETE FROM openOutputs WHERE hash = ? AND index = ?");
             s.setBytes(1, out.getHash().getBytes());
             // index is actually an unsigned int
             s.setInt(2, (int)out.getIndex());
-            s.executeUpdate();
-            s.close();
-            
-            // This is quite an ugly query, is there no better way?
-            s = conn.get().prepareStatement("DELETE FROM openOutputsIndex " +
-                            "WHERE hash = ? AND 1 = (CASE WHEN ((SELECT COUNT(*) FROM openOutputs WHERE id =" +
-                            "(SELECT id FROM openOutputsIndex WHERE hash = ?)) = 0) THEN 1 ELSE 0 END)");
-            s.setBytes(1, out.getHash().getBytes());
-            s.setBytes(2, out.getHash().getBytes());
             s.executeUpdate();
             s.close();
         } catch (SQLException e) {
@@ -773,8 +736,7 @@ public class H2FullPrunedBlockStore implements FullPrunedBlockStore {
         PreparedStatement s = null;
         try {
             s = conn.get()
-                .prepareStatement("SELECT COUNT(*) FROM openOutputsIndex " +
-                        "WHERE hash = ?");
+                .prepareStatement("SELECT COUNT(*) FROM openOutputs WHERE hash = ?");
             s.setBytes(1, hash.getBytes());
             ResultSet results = s.executeQuery();
             if (!results.next()) {
