@@ -166,14 +166,7 @@ public class WalletTest {
 
     @Test
     public void basicSpendingWithEncryptedMixedWallet() throws Exception {
-        for (int i = 0; i < 100; i++) {
-            encryptedMixedWallet = new Wallet(params, keyCrypter);
-            myKey2 = new ECKey();
-            encryptedMixedWallet.addKey(myKey2);
-            myEncryptedKey2 = encryptedMixedWallet.addNewEncryptedKey(keyCrypter, aesKey);
-            myEncryptedAddress2 = myEncryptedKey2.toAddress(params);
-            basicSpendingCommon(encryptedMixedWallet, myEncryptedAddress2, true);
-        }
+        basicSpendingCommon(encryptedMixedWallet, myEncryptedAddress2, true);
     }
 
     private void basicSpendingCommon(Wallet wallet, Address toAddress, boolean testEncryption) throws Exception {
