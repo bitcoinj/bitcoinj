@@ -375,6 +375,9 @@ public class ECKey implements Serializable {
             }
 
             privateKeyForSigning = new BigInteger(1, keyCrypter.decrypt(encryptedPrivateKey, aesKey));
+            // Check encryption was correct.
+            if (!Arrays.equals(pub, publicKeyFromPrivate(privateKeyForSigning, isCompressed())))
+                throw new KeyCrypterException("Could not decrypt bytes");
         } else {
             // No decryption of private key required.
             if (priv == null) {

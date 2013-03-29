@@ -168,7 +168,14 @@ public class WalletTest {
 
     @Test
     public void basicSpendingWithEncryptedHetergeneousWallet() throws Exception {
-        basicSpendingCommon(encryptedHetergeneousWallet, myEncryptedAddress2, true);
+        for (int i = 0; i < 100; i++) {
+            encryptedHetergeneousWallet = new Wallet(params, keyCrypter);
+            myKey2 = new ECKey();
+            encryptedHetergeneousWallet.addKey(myKey2);
+            myEncryptedKey2 = encryptedHetergeneousWallet.addNewEncryptedKey(keyCrypter, aesKey);
+            myEncryptedAddress2 = myEncryptedKey2.toAddress(params);
+            basicSpendingCommon(encryptedHetergeneousWallet, myEncryptedAddress2, true);
+        }
     }
 
     private void basicSpendingCommon(Wallet wallet, Address toAddress, boolean testEncryption) throws Exception {
