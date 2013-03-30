@@ -394,6 +394,9 @@ public class WalletProtobufSerializer {
             wallet.setVersion(walletProto.getVersion());
         }
 
+        // Make sure the object can be re-used to read another wallet without corruption.
+        txMap.clear();
+
         return wallet;
     }
 
