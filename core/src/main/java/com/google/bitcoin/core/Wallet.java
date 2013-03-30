@@ -56,6 +56,10 @@ import static com.google.common.base.Preconditions.*;
 //     - Key management
 //     - just generally make Wallet smaller and easier to work with
 // - Make clearing of transactions able to only rewind the wallet a certain distance instead of all blocks.
+// - Make it scale:
+//     - eliminate all the algorithms with quadratic complexity (or worse)
+//     - don't require everything to be held in RAM at once
+//     - consider allowing eviction of no longer re-orgable transactions or keys that were used up
 
 /**
  * <p>A Wallet stores keys and a record of transactions that send and receive value from those keys. Using these,
@@ -2204,7 +2208,6 @@ public class Wallet implements Serializable, BlockChainListener {
      * stable or human readable.
      * @param includePrivateKeys Whether raw private key data should be included.
      * @param chain If set, will be used to estimate lock times for block timelocked transactions.
-     * @return
      */
     public String toString(boolean includePrivateKeys, AbstractBlockChain chain) {
         lock.lock();
@@ -2848,7 +2851,7 @@ public class Wallet implements Serializable, BlockChainListener {
     /**
      *  Check whether the AES key can decrypt the first encrypted key in the wallet.
      *
-     *  @returns boolean true if AES key supplied can decrypt the first encrypted private key in the wallet, false otherwise.
+     *  @return boolean true if AES key supplied can decrypt the first encrypted private key in the wallet, false otherwise.
      */
     public boolean checkAESKey(KeyParameter aesKey) {
         lock.lock();
@@ -2950,7 +2953,6 @@ public class Wallet implements Serializable, BlockChainListener {
 
     /**
      * Get the description of the wallet. See {@link Wallet#setDescription(String))}
-     * @return
      */
     public String getDescription() {
         return description;
@@ -2990,7 +2992,7 @@ public class Wallet implements Serializable, BlockChainListener {
      * This is used to generate a BloomFilter which can be #{link BloomFilter.merge}d with another.
      * It could also be used if you have a specific target for the filter's size.
      * 
-     * See the docs for {@link BloomFilter#BloomFilter(int, double)} for a brief explanation of anonymity when using bloom filters.
+     * See the docs for {@link BloomFilter(int, double)} for a brief explanation of anonymity when using bloom filters.
      */
     public BloomFilter getBloomFilter(int size, double falsePositiveRate, long nTweak) {
         BloomFilter filter = new BloomFilter(size, falsePositiveRate, nTweak);
