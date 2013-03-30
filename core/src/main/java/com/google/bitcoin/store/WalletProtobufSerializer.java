@@ -51,6 +51,8 @@ import com.google.common.base.Preconditions;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.TextFormat;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 /**
  * Serialize and de-serialize a wallet to a byte stream containing a
  * <a href="http://code.google.com/apis/protocolbuffers/docs/overview.html">protocol buffer</a>. Protocol buffers are
@@ -460,8 +462,9 @@ public class WalletProtobufSerializer {
             final Protos.TransactionOutput transactionOutput = txProto.getTransactionOutput(i);
             if (transactionOutput.hasSpentByTransactionHash()) {
                 Transaction spendingTx = txMap.get(transactionOutput.getSpentByTransactionHash());
+                checkNotNull(spendingTx);
                 final int spendingIndex = transactionOutput.getSpentByTransactionIndex();
-                TransactionInput input = spendingTx.getInputs().get(spendingIndex);
+                TransactionInput input = checkNotNull(spendingTx.getInput(spendingIndex));
                 input.connect(output);
             }
         }
