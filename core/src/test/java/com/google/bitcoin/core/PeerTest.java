@@ -17,6 +17,7 @@
 package com.google.bitcoin.core;
 
 import com.google.bitcoin.core.Peer.PeerHandler;
+import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.easymock.Capture;
 import org.easymock.CaptureType;
@@ -764,6 +765,31 @@ public class PeerTest extends TestWithNetworkConnections {
                 new DownstreamMessageEvent(channel, Channels.future(channel), peerVersion, null);
         handler.messageReceived(ctx, versionEvent);
         peer.setMinProtocolVersion(500);
+    }
+
+    @Test
+    public void exceptionListener() throws Exception {
+        wallet.addEventListener(new AbstractWalletEventListener() {
+            @Override
+            public void onCoinsReceived(Wallet wallet, Transaction tx, BigInteger prevBalance, BigInteger newBalance) {
+                throw new NullPointerException("boo!");
+            }
+        });
+        final Throwable[] throwables = new Throwable[1];
+        peer.addEventListener(new AbstractPeerEventListener() {
+            @Override
+            public void onException(Throwable throwable) {
+                throwables[0] = throwable;
+            }
+        });
+        control.replay();
+        connect();
+        Transaction t1 = new Transaction(unitTestParams);
+        t1.addInput(new TransactionInput(unitTestParams, t1, new byte[]{}));
+        t1.addOutput(Utils.toNanoCoins(1, 0), wallet.getChangeAddress());
+        inbound(peer, t1);
+        inbound(peer, new NotFoundMessage(unitTestParams, Lists.newArrayList(new InventoryItem(InventoryItem.Type.Transaction, t1.getInput(0).getHash()))));
+        assertTrue(throwables[0] instanceof NullPointerException);
     }
 
     // TODO: Use generics here to avoid unnecessary casting.

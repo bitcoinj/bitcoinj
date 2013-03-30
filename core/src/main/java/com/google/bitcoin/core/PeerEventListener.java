@@ -78,4 +78,11 @@ public interface PeerEventListener {
      * items as possible which appear in the {@link GetDataMessage}, or null if you're not interested in responding.
      */
     public List<Message> getData(Peer peer, GetDataMessage m);
+
+    /**
+     * Called if there is an exception thrown in a Netty worker thread whilst processing an inbound message. You
+     * can use this to report crashes of the peer threads back to your apps website, for instance. After this callback
+     * runs the peer will be disconnected. Any exceptions thrown by this method will be logged and ignored.
+     */
+    public void onException(Throwable throwable);
 }
