@@ -314,8 +314,8 @@ public class WalletProtobufSerializer {
      * Parses a wallet from the given stream. The stream is expected to contain a binary serialization of a 
      * {@link Protos.Wallet} object.<p>
      *     
-     * If the stream is invalid or the serialized wallet contains unsupported features, 
-     * {@link IllegalArgumentException} is thrown.
+     * @throws IOException if there is a problem reading the stream.
+     * @throws IllegalArgumentException if the wallet is corrupt.
      */
     public Wallet readWallet(InputStream input) throws IOException {
         // TODO: This method should throw more specific exception types than IllegalArgumentException.
@@ -461,8 +461,11 @@ public class WalletProtobufSerializer {
             TransactionOutput output = tx.getOutputs().get(i);
             final Protos.TransactionOutput transactionOutput = txProto.getTransactionOutput(i);
             if (transactionOutput.hasSpentByTransactionHash()) {
-                Transaction spendingTx = txMap.get(transactionOutput.getSpentByTransactionHash());
-                checkNotNull(spendingTx);
+                final ByteString spentByTransactionHash = transactionOutput.getSpentByTransactionHash();
+                Transaction spendingTx = txMap.get(spentByTransactionHash);
+                if (spendingTx == null)
+                    throw new IllegalArgumentException(String.format("Could not connect %s to %s",
+                            tx.getHashAsString(), byteStringToHash(spentByTransactionHash)));
                 final int spendingIndex = transactionOutput.getSpentByTransactionIndex();
                 TransactionInput input = checkNotNull(spendingTx.getInput(spendingIndex));
                 input.connect(output);
