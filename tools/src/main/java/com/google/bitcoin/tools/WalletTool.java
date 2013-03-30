@@ -271,7 +271,6 @@ public class WalletTool {
             logger = LogManager.getLogManager().getLogger("");
             logger.setLevel(Level.SEVERE);
         }
-        discovery = new DnsDiscovery(params);
         switch (netFlag.value(options)) {
             case PROD: 
                 params = NetworkParameters.prodNet();
@@ -285,7 +284,6 @@ public class WalletTool {
             default:
                 throw new RuntimeException("Unreachable.");
         }
-
         mode = modeFlag.value(options);
 
         // Allow the user to override the name of the chain used.
@@ -598,7 +596,7 @@ public class WalletTool {
                 }
             }
         } else {
-            peers.addPeerDiscovery(discovery);
+            peers.addPeerDiscovery(new DnsDiscovery(params));
         }
     }
 
@@ -749,7 +747,10 @@ public class WalletTool {
     }    
     
     private static void dumpWallet() throws BlockStoreException {
-        setup();  // To get the chain height so we can estimate lock times.
+        // Setup to get the chain height so we can estimate lock times, but don't wipe the transactions if it's not
+        // there just for the dump case.
+        if (chainFileName.exists())
+            setup();
         System.out.println(wallet.toString(true, chain));
     }
 }
