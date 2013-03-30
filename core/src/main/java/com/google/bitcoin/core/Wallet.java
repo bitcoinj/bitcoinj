@@ -415,6 +415,9 @@ public class Wallet implements Serializable, BlockChainListener {
             if (stream != null) {
                 stream.close();
             }
+            if (temp.delete()) {
+                log.warn("Deleted temp file after failed save.");
+            }
         }
     }
 
