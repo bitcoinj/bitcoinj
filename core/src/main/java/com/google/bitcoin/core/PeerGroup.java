@@ -936,6 +936,7 @@ public class PeerGroup extends AbstractIdleService {
     /**
      * Tells the PeerGroup to download only block headers before a certain time and bodies after that. Call this
      * before starting block chain download.
+     * Do not use a time > NOW - 1 block, as it will break some block download logic.
      */
     public void setFastCatchupTimeSecs(long secondsSinceEpoch) {
         lock.lock();
