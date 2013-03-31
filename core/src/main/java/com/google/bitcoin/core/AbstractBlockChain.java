@@ -207,6 +207,7 @@ public abstract class AbstractBlockChain {
      * Processes a received block and tries to add it to the chain. If there's something wrong with the block an
      * exception is thrown. If the block is OK but cannot be connected to the chain at this time, returns false.
      * If the block can be connected to the chain, returns true.
+     * Accessing block's transactions in another thread while this method runs may result in undefined behavior.
      */
     public boolean add(Block block) throws VerificationException, PrunedException {
         try {
