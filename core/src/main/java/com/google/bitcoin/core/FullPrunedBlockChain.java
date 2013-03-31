@@ -232,7 +232,7 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
                     throw new RuntimeException(thrownE); // Shouldn't happen
                 } catch (ExecutionException thrownE) {
                     log.error("Script.correctlySpends threw a non-normal exception: " + thrownE.getCause());
-                    throw new VerificationException("Bug in Script.correctlySpends, likely script malformed in some new and interesting way.");
+                    throw new VerificationException("Bug in Script.correctlySpends, likely script malformed in some new and interesting way.", thrownE);
                 }
                 if (e != null)
                     throw e;
@@ -356,7 +356,7 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
                         throw new RuntimeException(thrownE); // Shouldn't happen
                     } catch (ExecutionException thrownE) {
                         log.error("Script.correctlySpends threw a non-normal exception: " + thrownE.getCause());
-                        throw new VerificationException("Bug in Script.correctlySpends, likely script malformed in some new and interesting way.");
+                        throw new VerificationException("Bug in Script.correctlySpends, likely script malformed in some new and interesting way.", thrownE);
                     }
                     if (e != null)
                         throw e;

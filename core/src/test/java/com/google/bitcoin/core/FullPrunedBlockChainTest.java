@@ -83,7 +83,7 @@ public class FullPrunedBlockChainTest {
                 threw = true;
                 if (!block.throwsException) {
                     log.error("Block didn't match throws flag on block " + block.blockName);
-                    fail();
+                    throw e;
                 }
                 if (block.connects) {
                     log.error("Block didn't match connects flag on block " + block.blockName);
