@@ -113,12 +113,12 @@ public class NetworkParameters implements Serializable {
     /**
      * Returns the number of blocks between subsidy decreases
      */
-    private final int subsidyDecreaseBlockCount;
+    private /*final*/ int subsidyDecreaseBlockCount;
     
     /**
      * If we are running in testnet-in-a-box mode, we allow connections to nodes with 0 non-genesis blocks
      */
-    final boolean allowEmptyPeerChains;
+    boolean allowEmptyPeerChains;
 
     /**
      * The version codes that prefix addresses which are acceptable on this network. Although Satoshi intended these to
@@ -380,6 +380,10 @@ public class NetworkParameters implements Serializable {
 
     public int getSubsidyDecreaseBlockCount() {
         return subsidyDecreaseBlockCount;
+    }
+
+    public void setSubsidyDecreaseBlockCount(int value) {
+        subsidyDecreaseBlockCount = value;
     }
 
     /** Returns DNS names that when resolved, give IP addresses of active peers. */
