@@ -1116,8 +1116,6 @@ public class Wallet implements Serializable, BlockChainListener {
             }
         }
 
-        log.info("Balance is now: " + bitcoinValueToFriendlyString(getBalance()));
-
         // WARNING: The code beyond this point can trigger event listeners on transaction confidence objects, which are
         // in turn allowed to re-enter the Wallet. This means we cannot assume anything about the state of the wallet
         // from now on. The balance just received may already be spent.
@@ -1134,6 +1132,9 @@ public class Wallet implements Serializable, BlockChainListener {
             }
         }
 
+        BigInteger newBalance = getBalance();  // This is slow.
+        log.info("Balance is now: " + bitcoinValueToFriendlyString(newBalance));
+
         // Inform anyone interested that we have received or sent coins but only if:
         //  - This is not due to a re-org.
         //  - The coins appeared on the best chain.
@@ -1145,7 +1146,6 @@ public class Wallet implements Serializable, BlockChainListener {
         // TODO: Decide whether to run the event listeners, if a tx confidence listener already modified the wallet.
         boolean wasPending = wtx != null;
         if (!reorg && bestChain && !wasPending) {
-            BigInteger newBalance = getBalance();
             int diff = valueDifference.compareTo(BigInteger.ZERO);
             // We pick one callback based on the value difference, though a tx can of course both send and receive
             // coins from the wallet.
