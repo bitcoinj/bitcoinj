@@ -107,8 +107,8 @@ message TransactionConfidence {
   enum Type {
     UNKNOWN = 0;
     BUILDING = 1; // In best chain.  If and only if appeared_at_height is present.
-    NOT_SEEN_IN_CHAIN = 2; // Pending inclusion in best chain.
-    NOT_IN_BEST_CHAIN = 3; // In non-best chain, pending inclusion in best chain.
+    PENDING = 2; // Unconfirmed and sitting in the networks memory pools, waiting to be included in the chain.
+    NOT_IN_BEST_CHAIN = 3; // Deprecated: equivalent to PENDING.
     DEAD = 4; // Either if overriding_transaction is present or transaction is dead coinbase
   }
 

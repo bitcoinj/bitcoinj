@@ -1153,7 +1153,7 @@ public class PeerGroup extends AbstractIdleService {
                         // Thread safe - this can run in parallel.
                         final TransactionConfidence conf = tx.getConfidence();
                         int numSeenPeers = conf.numBroadcastPeers();
-                        boolean mined = conf.getConfidenceType() != TransactionConfidence.ConfidenceType.NOT_SEEN_IN_CHAIN;
+                        boolean mined = tx.getAppearsInHashes() != null;
                         log.info("broadcastTransaction: TX {} seen by {} peers{}",
                                  new Object[]{pinnedTx.getHashAsString(), numSeenPeers, mined ? " and mined" : ""});
                         if (!(numSeenPeers >= minConnections || mined))

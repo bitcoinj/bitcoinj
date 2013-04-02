@@ -17,6 +17,8 @@
 package com.google.bitcoin.core;
 
 import com.google.bitcoin.crypto.KeyCrypterScrypt;
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Multimap;
 import org.bitcoinj.wallet.Protos.Wallet.EncryptionType;
 import org.spongycastle.crypto.params.KeyParameter;
 
@@ -277,19 +279,10 @@ public class Wallet implements Serializable, BlockChainListener {
             // Only pick chain-included transactions, or transactions that are ours and pending.
             TransactionConfidence confidence = tx.getConfidence();
             ConfidenceType type = confidence.getConfidenceType();
-            boolean pending = type.equals(ConfidenceType.NOT_SEEN_IN_CHAIN) ||
-                    type.equals(ConfidenceType.NOT_IN_BEST_CHAIN);
-            boolean confirmed = type.equals(ConfidenceType.BUILDING);
-            if (!confirmed) {
-                // If the transaction is still pending ...
-                if (!pending) return false;
-                // And it was created by us ...
-                if (!confidence.getSource().equals(TransactionConfidence.Source.SELF)) return false;
-                // And it's been seen by the network and propagated ...
-                if (confidence.numBroadcastPeers() <= 1) return false;
-                // Then it's OK to select.
-            }
-            return true;
+            if (type.equals(ConfidenceType.BUILDING)) return true;
+            return type.equals(ConfidenceType.PENDING) &&
+                   confidence.getSource().equals(TransactionConfidence.Source.SELF) &&
+                   confidence.numBroadcastPeers() > 1;
         }
     }
 
@@ -921,7 +914,7 @@ public class Wallet implements Serializable, BlockChainListener {
             // have been missed out.
             ConfidenceType currentConfidence = tx.getConfidence().getConfidenceType();
             if (currentConfidence == ConfidenceType.UNKNOWN) {
-                tx.getConfidence().setConfidenceType(ConfidenceType.NOT_SEEN_IN_CHAIN);
+                tx.getConfidence().setConfidenceType(ConfidenceType.PENDING);
                 // Manually invoke the wallet tx confidence listener here as we didn't yet commit therefore the
                 // txConfidenceListener wasn't added.
                 invokeOnTransactionConfidenceChanged(tx);
@@ -1983,7 +1976,7 @@ public class Wallet implements Serializable, BlockChainListener {
                 return false;
             }
             checkState(selection.gathered.size() > 0);
-            req.tx.getConfidence().setConfidenceType(ConfidenceType.NOT_SEEN_IN_CHAIN);
+            req.tx.getConfidence().setConfidenceType(ConfidenceType.PENDING);
             BigInteger change = selection.valueGathered.subtract(value);
             if (change.compareTo(BigInteger.ZERO) > 0) {
                 // The value of the inputs is greater than what we want to send. Just like in real life then,
@@ -2318,10 +2311,9 @@ public class Wallet implements Serializable, BlockChainListener {
     /**
      * <p>Don't call this directly. It's not intended for API users.</p>
      *
-     * <p>Called by the {@link BlockChain} when the best chain (representing total work done) has changed. In this case,
-     * we need to go through our transactions and find out if any have become invalid. It's possible for our balance
-     * to go down in this case: money we thought we had can suddenly vanish if the rest of the network agrees it
-     * should be so.</p>
+     * <p>Called by the {@link BlockChain} when the best chain (representing total work done) has changed. This can
+     * cause the number of confirmations of a transaction to go higher, lower, drop to zero and can even result in
+     * a transaction going dead (will never confirm) due to a double spend.</p>
      *
      * <p>The oldBlocks/newBlocks lists are ordered height-wise from top first to bottom last.</p>
      */
@@ -2330,7 +2322,7 @@ public class Wallet implements Serializable, BlockChainListener {
         try {
             // This runs on any peer thread with the block chain synchronized.
             //
-            // The reorganize functionality of the wallet is tested in ChainSplitTests.
+            // The reorganize functionality of the wallet is tested in ChainSplitTest.
             //
             // For each transaction we track which blocks they appeared in. Once a re-org takes place we have to find all
             // transactions in the old branch, all transactions in the new branch and find the difference of those sets.
@@ -2371,9 +2363,16 @@ public class Wallet implements Serializable, BlockChainListener {
                 }
             }
 
+            // Map block hash to transactions that appear in it.
+            Multimap<Sha256Hash, Transaction> blockTxMap = ArrayListMultimap.create();
+
             for (Transaction tx : all.values()) {
                 Collection<Sha256Hash> appearsIn = tx.getAppearsInHashes();
                 checkNotNull(appearsIn);
+
+                for (Sha256Hash block : appearsIn)
+                    blockTxMap.put(block, tx);
+
                 // If the set of blocks this transaction appears in is disjoint with one of the chain segments it means
                 // the transaction was never incorporated by a miner into that side of the chain.
                 boolean inOldSection = !Collections.disjoint(appearsIn, oldBlockHashes);
@@ -2435,24 +2434,15 @@ public class Wallet implements Serializable, BlockChainListener {
             spent.clear();
             inactive.clear();
             for (Transaction tx : commonChainTransactions.values()) {
-                int unspentOutputs = 0;
-                for (TransactionOutput output : tx.getOutputs()) {
-                    if (output.isAvailableForSpending() && output.isMine(this)) unspentOutputs++;
-                }
-                if (unspentOutputs > 0) {
-                    log.info("  TX {} ->unspent", tx.getHashAsString());
-                    unspent.put(tx.getHash(), tx);
-                } else {
-                    log.info("  TX {} ->spent", tx.getHashAsString());
+                if (tx.isEveryOwnedOutputSpent(this))
                     spent.put(tx.getHash(), tx);
-                }
+                else
+                    unspent.put(tx.getHash(), tx);
             }
 
             // Inform all transactions that exist only in the old chain that they have moved, so they can update confidence
             // and timestamps. Transactions will be told they're on the new best chain when the blocks are replayed.
             for (Transaction tx : onlyOldChainTransactions.values()) {
-                tx.notifyNotOnBestChain();
-
                 // Kill any coinbase transactions that are only in the old chain.
                 // These transactions are no longer valid.
                 if (tx.isCoinBase()) {
@@ -2624,12 +2614,15 @@ public class Wallet implements Serializable, BlockChainListener {
 
         // If all inputs do not appear in this wallet move to inactive.
         if (noSuchTx == numInputs) {
-            log.info("   ->inactive", tx.getHashAsString() + ", confidence = " + tx.getConfidence().getConfidenceType().name());
+            tx.getConfidence().setConfidenceType(ConfidenceType.PENDING);
+            log.info("   ->inactive", tx.getHashAsString() + ", confidence = PENDING");
             inactive.put(tx.getHash(), tx);
             dead.remove(tx.getHash());
+
         } else if (success == numInputs - noSuchTx) {
             // All inputs are either valid for spending or don't come from us. Miners are trying to reinclude it.
-            log.info("   ->pending", tx.getHashAsString() + ", confidence = " + tx.getConfidence().getConfidenceType().name());
+            tx.getConfidence().setConfidenceType(ConfidenceType.PENDING);
+            log.info("   ->pending", tx.getHashAsString() + ", confidence = PENDING");
             pending.put(tx.getHash(), tx);
             dead.remove(tx.getHash());
         }

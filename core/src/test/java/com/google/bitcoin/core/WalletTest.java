@@ -190,7 +190,7 @@ public class WalletTest extends TestWithWallet {
     private void basicSanityChecks(Wallet wallet, Transaction t, Address fromAddress, Address destination) throws ScriptException {
         assertEquals("Wrong number of tx inputs", 1, t.getInputs().size());
         assertEquals(fromAddress, t.getInputs().get(0).getScriptSig().getFromAddress(params));
-        assertEquals(t.getConfidence().getConfidenceType(), TransactionConfidence.ConfidenceType.NOT_SEEN_IN_CHAIN);
+        assertEquals(t.getConfidence().getConfidenceType(), TransactionConfidence.ConfidenceType.PENDING);
         assertEquals("Wrong number of tx outputs",2, t.getOutputs().size());
         assertEquals(destination, t.getOutputs().get(0).getScriptPubKey().getToAddress(params));
         assertEquals(wallet.getChangeAddress(), t.getOutputs().get(1).getScriptPubKey().getToAddress(params));
@@ -263,7 +263,7 @@ public class WalletTest extends TestWithWallet {
         assertTrue(complete);
         assertEquals(1, t2.getInputs().size());
         assertEquals(myAddress, t2.getInputs().get(0).getScriptSig().getFromAddress(params));
-        assertEquals(t2.getConfidence().getConfidenceType(), TransactionConfidence.ConfidenceType.NOT_SEEN_IN_CHAIN);
+        assertEquals(t2.getConfidence().getConfidenceType(), TransactionConfidence.ConfidenceType.PENDING);
 
         // We have NOT proven that the signature is correct!
         wallet.commitTx(t2);
@@ -577,7 +577,7 @@ public class WalletTest extends TestWithWallet {
         TestUtils.DoubleSpends doubleSpends = TestUtils.createFakeDoubleSpendTxns(params, myAddress);
         // t1 spends to our wallet. t2 double spends somewhere else.
         wallet.receivePending(doubleSpends.t1, null);
-        assertEquals(TransactionConfidence.ConfidenceType.NOT_SEEN_IN_CHAIN,
+        assertEquals(TransactionConfidence.ConfidenceType.PENDING,
                 doubleSpends.t1.getConfidence().getConfidenceType());
         sendMoneyToWallet(doubleSpends.t2, AbstractBlockChain.NewBlockType.BEST_CHAIN);
         assertEquals(TransactionConfidence.ConfidenceType.DEAD,
@@ -632,7 +632,7 @@ public class WalletTest extends TestWithWallet {
                 flags[1] = true;
             }
         });
-        assertEquals(TransactionConfidence.ConfidenceType.NOT_SEEN_IN_CHAIN,
+        assertEquals(TransactionConfidence.ConfidenceType.PENDING,
                 notifiedTx[0].getConfidence().getConfidenceType());
         final Transaction t1Copy = new Transaction(params, t1.bitcoinSerialize());
         sendMoneyToWallet(t1Copy, AbstractBlockChain.NewBlockType.BEST_CHAIN);

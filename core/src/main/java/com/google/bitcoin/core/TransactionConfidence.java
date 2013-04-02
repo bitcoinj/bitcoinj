@@ -76,21 +76,14 @@ public class TransactionConfidence implements Serializable {
         BUILDING(1),
 
         /**
-         * If NOT_SEEN_IN_CHAIN, then the transaction is pending and should be included shortly, as long as it is being
+         * If PENDING, then the transaction is unconfirmed and should be included shortly, as long as it is being
          * announced and is considered valid by the network. A pending transaction will be announced if the containing
          * wallet has been attached to a live {@link PeerGroup} using {@link PeerGroup#addWallet(Wallet)}.
          * You can estimate how likely the transaction is to be included by connecting to a bunch of nodes then measuring
          * how many announce it, using {@link com.google.bitcoin.core.TransactionConfidence#numBroadcastPeers()}.
          * Or if you saw it from a trusted peer, you can assume it's valid and will get mined sooner or later as well.
          */
-        NOT_SEEN_IN_CHAIN(2),
-
-        /**
-         * If NOT_IN_BEST_CHAIN, then the transaction has been included in a block, but that block is on a fork. A
-         * transaction can change from BUILDING to NOT_IN_BEST_CHAIN and vice versa if a reorganization takes place,
-         * due to a split in the consensus.
-         */
-        NOT_IN_BEST_CHAIN(3),
+        PENDING(2),
 
         /**
          * If DEAD, then it means the transaction won't confirm unless there is another re-org,
@@ -118,8 +111,7 @@ public class TransactionConfidence implements Serializable {
             switch (value) {
             case 0: return UNKNOWN;
             case 1: return BUILDING;
-            case 2: return NOT_SEEN_IN_CHAIN;
-            case 3: return NOT_IN_BEST_CHAIN;
+            case 2: return PENDING;
             case 4: return DEAD;
             default: return null;
             }
@@ -238,7 +230,7 @@ public class TransactionConfidence implements Serializable {
     /**
      * Called by a {@link Peer} when a transaction is pending and announced by a peer. The more peers announce the
      * transaction, the more peers have validated it (assuming your internet connection is not being intercepted).
-     * If confidence is currently unknown, sets it to {@link ConfidenceType#NOT_SEEN_IN_CHAIN}. Listeners will be
+     * If confidence is currently unknown, sets it to {@link ConfidenceType#PENDING}. Listeners will be
      * invoked in this case.
      *
      * @param address IP address of the peer, used as a proxy for identity.
@@ -248,7 +240,7 @@ public class TransactionConfidence implements Serializable {
             return;  // Duplicate.
         synchronized (this) {
             if (getConfidenceType() == ConfidenceType.UNKNOWN) {
-                this.confidenceType = ConfidenceType.NOT_SEEN_IN_CHAIN;
+                this.confidenceType = ConfidenceType.PENDING;
             }
         }
         runListeners();
@@ -292,11 +284,8 @@ public class TransactionConfidence implements Serializable {
             case DEAD:
                 builder.append("Dead: overridden by double spend and will not confirm.");
                 break;
-            case NOT_IN_BEST_CHAIN: 
-                builder.append("Seen in side chain but not best chain.");
-                break;
-            case NOT_SEEN_IN_CHAIN:
-                builder.append("Not seen in chain.");
+            case PENDING:
+                builder.append("Pending/unconfirmed.");
                 break;
             case BUILDING:
                 builder.append(String.format("Appeared in best chain at height %d, depth %d, work done %s.",

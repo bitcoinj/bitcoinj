@@ -25,6 +25,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.math.BigInteger;
+import java.net.InetAddress;
 import java.util.ArrayList;
 
 import static org.junit.Assert.*;
@@ -146,24 +147,27 @@ public class ChainSplitTest {
         Address dest = new ECKey().toAddress(unitTestParams);
         Transaction spend = wallet.createSend(dest, Utils.toNanoCoins(10, 0));
         wallet.commitTx(spend);
-        // Waiting for confirmation ...
+        // Waiting for confirmation ... make it eligible for selection.
         assertEquals(BigInteger.ZERO, wallet.getBalance());
+        spend.getConfidence().markBroadcastBy(new PeerAddress(InetAddress.getByAddress(new byte[]{1, 2, 3, 4})));
+        spend.getConfidence().markBroadcastBy(new PeerAddress(InetAddress.getByAddress(new byte[]{5,6,7,8})));
+        assertEquals(ConfidenceType.PENDING, spend.getConfidence().getConfidenceType());
+        assertEquals(Utils.toNanoCoins(40, 0), wallet.getBalance());
         Block b2 = b1.createNextBlock(someOtherGuy);
         b2.addTransaction(spend);
         b2.solve();
         chain.add(b2);
-        assertEquals(Utils.toNanoCoins(40, 0), wallet.getBalance());
+        // We have 40 coins in change.
+        assertEquals(ConfidenceType.BUILDING, spend.getConfidence().getConfidenceType());
         // genesis -> b1 (receive coins) -> b2 (spend coins)
         //                               \-> b3 -> b4
         Block b3 = b1.createNextBlock(someOtherGuy);
         Block b4 = b3.createNextBlock(someOtherGuy);
         chain.add(b3);
         chain.add(b4);
-        // b4 causes a re-org that should make our spend go inactive. Because the inputs are already spent our
-        // available balance drops to zero again.
-        assertEquals(BigInteger.ZERO, wallet.getBalance(Wallet.BalanceType.AVAILABLE));
-        // We estimate that it'll make it back into the block chain (we know we won't double spend).
-        // assertEquals(Utils.toNanoCoins(40, 0), wallet.getBalance(Wallet.BalanceType.ESTIMATED));
+        // b4 causes a re-org that should make our spend go pending again.
+        assertEquals(Utils.toNanoCoins(40, 0), wallet.getBalance());
+        assertEquals(ConfidenceType.PENDING, spend.getConfidence().getConfidenceType());
     }
 
     @Test
@@ -416,8 +420,8 @@ public class ChainSplitTest {
         assertEquals(4, txns.get(0).getConfidence().getDepthInBlocks());
         assertEquals(work1.add(work4).add(work5).add(work6), txns.get(0).getConfidence().getWorkDone());
 
-        // Transaction 1 (in block b2) is now on a side chain.
-        assertEquals(TransactionConfidence.ConfidenceType.NOT_IN_BEST_CHAIN, txns.get(1).getConfidence().getConfidenceType());
+        // Transaction 1 (in block b2) is now on a side chain, so it goes pending (not see in chain).
+        assertEquals(ConfidenceType.PENDING, txns.get(1).getConfidence().getConfidenceType());
         try {
             txns.get(1).getConfidence().getAppearedAtChainHeight();
             fail();

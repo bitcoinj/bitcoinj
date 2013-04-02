@@ -26,11 +26,9 @@ import java.util.*;
 
 import org.bitcoinj.wallet.Protos;
 import org.bitcoinj.wallet.Protos.Wallet.EncryptionType;
-import org.bitcoinj.wallet.Protos.Key.Type;
 
 import com.google.bitcoin.crypto.EncryptedPrivateKey;
 import com.google.bitcoin.crypto.KeyCrypter;
-import com.google.bitcoin.crypto.KeyCrypterException;
 import com.google.bitcoin.crypto.KeyCrypterScrypt;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -489,8 +487,18 @@ public class WalletProtobufSerializer {
             log.warn("Unknown confidence type for tx {}", tx.getHashAsString());
             return;
         }
-        ConfidenceType confidenceType =
-            TransactionConfidence.ConfidenceType.valueOf(confidenceProto.getType().getNumber());
+        ConfidenceType confidenceType;
+        switch (confidenceProto.getType()) {
+            case BUILDING: confidenceType = ConfidenceType.BUILDING; break;
+            case DEAD: confidenceType = ConfidenceType.DEAD; break;
+            // These two are equivalent (must be able to read old wallets).
+            case NOT_IN_BEST_CHAIN: confidenceType = ConfidenceType.PENDING; break;
+            case NOT_SEEN_IN_CHAIN: confidenceType = ConfidenceType.PENDING; break;
+            case UNKNOWN:
+                // Fall through.
+            default:
+                confidenceType = ConfidenceType.UNKNOWN; break;
+        }
         confidence.setConfidenceType(confidenceType);
         if (confidenceProto.hasAppearedAtHeight()) {
             if (confidence.getConfidenceType() != ConfidenceType.BUILDING) {
