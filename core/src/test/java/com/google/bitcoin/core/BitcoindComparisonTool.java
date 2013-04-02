@@ -43,7 +43,7 @@ public class BitcoindComparisonTool {
     private static FullPrunedBlockChain chain;
     private static PeerGroup peers;
     private static Sha256Hash bitcoindChainHead;
-    private static Peer bitcoind;
+    private static volatile Peer bitcoind;
     
     public static void main(String[] args) throws Exception {
         BriefLogFormatter.init();
@@ -130,7 +130,6 @@ public class BitcoindComparisonTool {
         while (bitcoind == null)
             Thread.sleep(50);
         
-        Random rng = new Random();
         ArrayList<Sha256Hash> locator = new ArrayList<Sha256Hash>(1);
         locator.add(params.genesisBlock.getHash());
         Sha256Hash hashTo = new Sha256Hash("0000000000000000000000000000000000000000000000000000000000000000");
