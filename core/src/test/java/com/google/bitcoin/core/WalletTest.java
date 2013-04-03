@@ -1117,7 +1117,7 @@ public class WalletTest {
             encryptedWallet.decrypt(wrongAesKey);
             fail("Incorrectly decoded wallet with wrong password");
         } catch (KeyCrypterException ede) {
-            assertTrue("Wrong message in EncrypterDecrypterException", ede.getMessage().indexOf("Could not decrypt bytes") > -1);
+            // Expected.
         }
     }
 
