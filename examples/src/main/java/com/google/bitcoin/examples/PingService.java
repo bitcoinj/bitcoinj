@@ -95,9 +95,9 @@ public class PingService {
                 CheckpointManager.checkpoint(params, stream, blockStore, key.getCreationTimeSeconds());
             }
         }
+        chain = new BlockChain(params, wallet, blockStore);
         // Connect to the localhost node. One minute timeout since we won't try any other peers
         System.out.println("Connecting ...");
-        chain = new BlockChain(params, wallet, blockStore);
         peerGroup = new PeerGroup(params, chain);
         peerGroup.setUserAgent("PingService", "1.0");
         peerGroup.addPeerDiscovery(new DnsDiscovery(params));
@@ -115,12 +115,23 @@ public class PingService {
                 System.out.println("Received pending tx for " + Utils.bitcoinValueToFriendlyString(value) +
                         ": " + tx);
                 tx.getConfidence().addEventListener(new TransactionConfidence.Listener() {
-                    public void onConfidenceChanged(Transaction tx2) {
+                    public void onConfidenceChanged(final Transaction tx2) {
                         // Must be thread safe.
                         if (tx2.getConfidence().getConfidenceType() == TransactionConfidence.ConfidenceType.BUILDING) {
                             // Coins were confirmed (appeared in a block).
                             tx2.getConfidence().removeEventListener(this);
-                            bounceCoins(wallet, tx2);
+
+                            // Run the process of sending the coins back on a separate thread. This is a temp hack
+                            // until the threading changes in 0.9 are completed ... TX confidence listeners run
+                            // with the wallet lock held and re-entering the wallet isn't always safe. We can solve
+                            // this by just interacting with the wallet from a separate thread, which will wait until
+                            // this thread is finished. It's a dumb API requirement and will go away soon.
+                            new Thread() {
+                                @Override
+                                public void run() {
+                                    bounceCoins(wallet, tx2);
+                                }
+                            }.start();
                         } else {
                             System.out.println(String.format("Confidence of %s changed, is now: %s",
                                     tx2.getHashAsString(), tx2.getConfidence().toString()));
@@ -169,11 +180,7 @@ public class PingService {
             Futures.addCallback(sendResult.broadcastComplete, new FutureCallback<Transaction>() {
                 public void onSuccess(Transaction transaction) {
                     System.out.println("Sent coins back! Transaction hash is " + sendResult.tx.getHashAsString());
-                    try {
-                        wallet.saveToFile(walletFile);
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
+                    // The wallet has changed now, it'll get auto saved shortly or when the app shuts down.
                 }
 
                 public void onFailure(Throwable throwable) {
