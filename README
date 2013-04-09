@@ -5,6 +5,8 @@ To get started, ensure you have the latest JDK installed, and download Maven fro
 Then run "mvn clean package" to compile the software. You can also run "mvn site:site" to generate a website with
 useful information like JavaDocs. The outputs are under the target/ directory.
 
+Alternatively, just import the project using your IDE. Most good ones have Maven integration.
+
 Now try running one of the example apps:
 
   cd examples
@@ -13,37 +15,6 @@ Now try running one of the example apps:
 It will download the block chain and eventually print a Bitcoin address. If you send coins to it,
 you should get them back a few minutes later when a block is solved.
 
-You can also use a command line tool that exposes basic Bitcoin operations
+Now you are ready to follow the tutorial:
 
-On UNIX:
-  cd tools
-  ./wallet-tool
-
-On other platforms, do what the shell script would do for you:
-  cd tools
-  mvn -q package -DskipTests
-  java -jar target/bitcoinj-tools-*.jar --help
-
-
-Note that if you connect to a node that is itself downloading the block chain, you will see very slow progress (1
-block per second or less). Find a node that isn't heavily loaded to connect to.
-
-If you get a SocketDisconnectedException, the node you've connected to has its max send buffer set to low
-(unfortunately the default is too low). Connect to a node that has a bigger send buffer,
-settable by passing -maxsendbuffer=25600 to the Bitcoin C++ software.
-
-To regenerate the protobuf Java sources from src/bitcoin.proto, install the protobuf compiler package version 2.4.x:
-
-  Debian/Ubuntu: apt-get install protobuf-compiler
-
-  Windows: http://code.google.com/p/protobuf/downloads/list
-
-  OSX: install from ports?
-
-and regenerate:
-
-  mvn clean package -DupdateProtobuf
-
-For eclipse use the maven plugin and run:
-
-  mvn eclipse:eclipse
+https://code.google.com/p/bitcoinj/wiki/GettingStarted
