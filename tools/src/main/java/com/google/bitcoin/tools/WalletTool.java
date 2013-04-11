@@ -426,11 +426,7 @@ public class WalletTool {
             Wallet.SendRequest req = Wallet.SendRequest.forTx(t);
             req.fee = fee;
             if (allowUnconfirmed) {
-                wallet.setCoinSelector(new Wallet.DefaultCoinSelector() {
-                    @Override protected boolean shouldSelect(Transaction tx) {
-                        return true;  // Accept any transaction that's spendable.
-                    }
-                });
+                wallet.allowSpendingUnconfirmedTransactions();
             }
             if (password != null) {
                 if (!wallet.checkPassword(password)) {

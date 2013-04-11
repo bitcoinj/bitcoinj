@@ -295,6 +295,24 @@ public class Wallet implements Serializable, BlockChainListener {
         }
     }
 
+    /**
+     * This coin selector will select any transaction at all, regardless of where it came from or whether it was
+     * confirmed yet.
+     */
+    public static class AllowUnconfirmedCoinSelector extends DefaultCoinSelector {
+        @Override protected boolean shouldSelect(Transaction tx) {
+            return true;
+        }
+
+        private static AllowUnconfirmedCoinSelector instance;
+        public static AllowUnconfirmedCoinSelector get() {
+            // This doesn't have to be thread safe as the object has no state, so discarded duplicates are harmless.
+            if (instance == null)
+                instance = new AllowUnconfirmedCoinSelector();
+            return instance;
+        }
+    }
+
     private transient CoinSelector coinSelector = new DefaultCoinSelector();
 
     // The keyCrypter for the wallet. This specifies the algorithm used for encrypting and decrypting the private keys.
@@ -1403,8 +1421,8 @@ public class Wallet implements Serializable, BlockChainListener {
     }
 
     /**
-     * Removes the given event listener object. Returns true if the listener was removed,
-     * false if that listener was never added.
+     * Removes the given event listener object. Returns true if the listener was removed, false if that listener
+     * was never added.
      */
     public boolean removeEventListener(WalletEventListener listener) {
         return eventListeners.remove(listener);
@@ -3046,6 +3064,15 @@ public class Wallet implements Serializable, BlockChainListener {
         } finally {
             lock.unlock();
         }
+    }
+
+    /**
+     * Convenience wrapper for <tt>setCoinSelector(Wallet.AllowUnconfirmedCoinSelector.get())</tt>. If this method
+     * is called on the wallet then transactions will be used for spending regardless of their confidence. This can
+     * be dangerous - only use this if you absolutely know what you're doing!
+     */
+    public void allowSpendingUnconfirmedTransactions() {
+        setCoinSelector(Wallet.AllowUnconfirmedCoinSelector.get());
     }
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
