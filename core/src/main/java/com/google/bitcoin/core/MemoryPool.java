@@ -245,7 +245,7 @@ public class MemoryPool {
                     Transaction tx = entry.tx.get();
                     if (tx != null) {
                         markBroadcast(byPeer, tx);
-                        log.debug("{}: Announced transaction we have seen before [{}] {}",
+                        log.debug("{}: Peer announced transaction we have seen before [{}] {}",
                                 new Object[]{byPeer, tx.getConfidence().numBroadcastPeers(), tx.getHashAsString()});
                     } else {
                         // The inv is telling us about a transaction that we previously downloaded, and threw away because
@@ -254,7 +254,7 @@ public class MemoryPool {
                 } else {
                     checkNotNull(entry.addresses);
                     entry.addresses.add(byPeer);
-                    log.debug("{}: Announced transaction we have seen announced before [{}] {}",
+                    log.debug("{}: Peer announced transaction we have seen announced before [{}] {}",
                             new Object[]{byPeer, entry.addresses.size(), hash});
                 }
             } else {
@@ -264,7 +264,7 @@ public class MemoryPool {
                 entry.addresses = new HashSet<PeerAddress>();
                 entry.addresses.add(byPeer);
                 memoryPool.put(hash, entry);
-                log.info("{}: Announced new transaction [1] {}", byPeer, hash);
+                log.info("{}: Peer announced new transaction [1] {}", byPeer, hash);
             }
         } finally {
             lock.unlock();
