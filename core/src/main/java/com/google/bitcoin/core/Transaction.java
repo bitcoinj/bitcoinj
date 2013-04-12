@@ -936,6 +936,7 @@ public class Transaction extends ChildMessage implements Serializable {
      */
     public void setLockTime(long lockTime) {
         unCache();
+        // TODO: Consider checking that at least one input has a non-final sequence number.
         this.lockTime = lockTime;
     }
 
@@ -947,20 +948,16 @@ public class Transaction extends ChildMessage implements Serializable {
         return version;
     }
 
-    /**
-     * @return a read-only list of the inputs of this transaction.
-     */
+    /** Returns a modifiable list of all inputs. */
     public List<TransactionInput> getInputs() {
         maybeParse();
-        return Collections.unmodifiableList(inputs);
+        return inputs;
     }
 
-    /**
-     * @return a read-only list of the outputs of this transaction.
-     */
+    /** Returns a modifiable list of all outputs. */
     public List<TransactionOutput> getOutputs() {
         maybeParse();
-        return Collections.unmodifiableList(outputs);
+        return outputs;
     }
 
     /** @return the given transaction: same as getInputs().get(index). */
