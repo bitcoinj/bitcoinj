@@ -112,7 +112,7 @@ public class TransactionOutPoint extends ChildMessage implements Serializable {
      * sides in memory, and they have been linked together, this returns a pointer to the connected output, or null
      * if there is no such connection.
      */
-    TransactionOutput getConnectedOutput() {
+    public TransactionOutput getConnectedOutput() {
         if (fromTx == null) return null;
         return fromTx.getOutputs().get((int) index);
     }
@@ -139,7 +139,9 @@ public class TransactionOutPoint extends ChildMessage implements Serializable {
      * @return an ECKey or null if the connected key cannot be found in the wallet.
      */
     public ECKey getConnectedKey(Wallet wallet) throws ScriptException {
-        Script connectedScript = getConnectedOutput().getScriptPubKey();
+        TransactionOutput connectedOutput = getConnectedOutput();
+        checkState(connectedOutput != null, "Input is not connected in wallet so cannot retrieve connected key");
+        Script connectedScript = connectedOutput.getScriptPubKey();
         if (connectedScript.isSentToAddress()) {
             byte[] addressBytes = connectedScript.getPubKeyHash();
             return wallet.findKeyFromPubHash(addressBytes);

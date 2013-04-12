@@ -337,7 +337,7 @@ public class TransactionInput extends ChildMessage implements Serializable {
      *
      * @return true if the disconnection took place, false if it was not connected.
      */
-    boolean disconnect() {
+    public boolean disconnect() {
         if (outpoint.fromTx == null) return false;
         TransactionOutput output = outpoint.fromTx.getOutput((int) outpoint.getIndex());
         if (output.getSpentBy() == this) {
@@ -374,5 +374,14 @@ public class TransactionInput extends ChildMessage implements Serializable {
         Script sig = getScriptSig();
         int myIndex = parentTransaction.getInputs().indexOf(this);
         sig.correctlySpends(parentTransaction, myIndex, pubKey, true);
+    }
+
+    /**
+     * Returns the connected output, assuming the input was connected with
+     * {@link TransactionInput#connect(TransactionOutput)} or variants at some point. If it wasn't connected, then
+     * this method returns null.
+     */
+    public TransactionOutput getConnectedOutput() {
+        return getOutpoint().getConnectedOutput();
     }
 }
