@@ -29,6 +29,7 @@ public class DownloadListener extends AbstractPeerEventListener {
     private int originalBlocksLeft = -1;
     private int lastPercent = 0;
     private Semaphore done = new Semaphore(0);
+    private boolean caughtUp = false;
 
     @Override
     public void onChainDownloadStarted(Peer peer, int blocksLeft) {
@@ -42,7 +43,11 @@ public class DownloadListener extends AbstractPeerEventListener {
 
     @Override
     public void onBlocksDownloaded(Peer peer, Block block, int blocksLeft) {
+        if (caughtUp)
+            return;
+
         if (blocksLeft == 0) {
+            caughtUp = true;
             doneDownload();
             done.release();
         }
@@ -74,15 +79,15 @@ public class DownloadListener extends AbstractPeerEventListener {
      * @param blocks the number of blocks to download, estimated
      */
     protected void startDownload(int blocks) {
-        System.out.println("Downloading block chain of size " + blocks + ". " +
-                (blocks > 1000 ? "This may take a while." : ""));
+        if (blocks > 0)
+            System.out.println("Downloading block chain of size " + blocks + ". " +
+                    (blocks > 1000 ? "This may take a while." : ""));
     }
 
     /**
      * Called when we are done downloading the block chain.
      */
     protected void doneDownload() {
-        System.out.println("Done downloading block chain");
     }
 
     /**
