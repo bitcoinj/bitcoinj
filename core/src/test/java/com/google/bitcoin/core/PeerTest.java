@@ -786,9 +786,12 @@ public class PeerTest extends TestWithNetworkConnections {
         connect();
         Transaction t1 = new Transaction(unitTestParams);
         t1.addInput(new TransactionInput(unitTestParams, t1, new byte[]{}));
-        t1.addOutput(Utils.toNanoCoins(1, 0), wallet.getChangeAddress());
-        inbound(peer, t1);
-        inbound(peer, new NotFoundMessage(unitTestParams, Lists.newArrayList(new InventoryItem(InventoryItem.Type.Transaction, t1.getInput(0).getHash()))));
+        t1.addOutput(Utils.toNanoCoins(1, 0), new ECKey().toAddress(unitTestParams));
+        Transaction t2 = new Transaction(unitTestParams);
+        t2.addInput(t1.getOutput(0));
+        t2.addOutput(Utils.toNanoCoins(1, 0), wallet.getChangeAddress());
+        inbound(peer, t2);
+        inbound(peer, new NotFoundMessage(unitTestParams, Lists.newArrayList(new InventoryItem(InventoryItem.Type.Transaction, t2.getInput(0).getHash()))));
         assertTrue(throwables[0] instanceof NullPointerException);
     }
 

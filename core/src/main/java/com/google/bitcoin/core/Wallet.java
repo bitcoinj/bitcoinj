@@ -883,6 +883,7 @@ public class Wallet implements Serializable, BlockChainListener {
         // Do a brief risk analysis of the transaction and its dependencies to check for any possible attacks.
         lock.lock();
         try {
+            tx.verify();
             // Repeat the check of relevancy here, even though the caller may have already done so - this is to avoid
             // race conditions where receivePending may be being called in parallel.
             if (!isPendingTransactionRelevant(tx))
@@ -1440,6 +1441,7 @@ public class Wallet implements Serializable, BlockChainListener {
      * <p>Triggers an auto save.</p>
      */
     public void commitTx(Transaction tx) throws VerificationException {
+        tx.verify();
         lock.lock();
         try {
             checkArgument(!pending.containsKey(tx.getHash()), "commitTx called on the same transaction twice");

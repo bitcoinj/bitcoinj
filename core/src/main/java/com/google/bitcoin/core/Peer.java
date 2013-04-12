@@ -448,6 +448,8 @@ public class Peer {
     }
 
     private void processTransaction(Transaction tx) throws VerificationException, IOException {
+        // Check a few basic syntax issues to ensure the received TX isn't nonsense.
+        tx.verify();
         lock.lock();
         try {
             log.debug("{}: Received tx {}", vAddress, tx.getHashAsString());
