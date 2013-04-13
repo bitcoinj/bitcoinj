@@ -178,7 +178,7 @@ public class NetworkParameters implements Serializable {
                     "seed.bitcoin.sipa.be",        // Pieter Wuille
                     "dnsseed.bluematt.me",         // Matt Corallo
                     "dnsseed.bitcoin.dashjr.org",  // Luke Dashjr
-                    "bitseed.xf2.org",             // Jeff Garzik
+                    "dnsseed.plan99.net",          // Mike Hearn
             };
         } else if (type == 3) {
             // Testnet3
