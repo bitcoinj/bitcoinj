@@ -45,7 +45,7 @@ public class WalletProtobufSerializerTest {
     public void empty() throws Exception {
         // Check the base case of a wallet with one key and no transactions.
         Wallet wallet1 = roundTrip(myWallet);
-        assertEquals(0, wallet1.getTransactions(true, true).size());
+        assertEquals(0, wallet1.getTransactions(true).size());
         assertEquals(BigInteger.ZERO, wallet1.getBalance());
         assertArrayEquals(myKey.getPubKey(),
                 wallet1.findKeyFromPubHash(myKey.getPubKeyHash()).getPubKey());
@@ -66,7 +66,7 @@ public class WalletProtobufSerializerTest {
         t1.getConfidence().setSource(TransactionConfidence.Source.NETWORK);
         myWallet.receivePending(t1, new ArrayList<Transaction>());
         Wallet wallet1 = roundTrip(myWallet);
-        assertEquals(1, wallet1.getTransactions(true, true).size());
+        assertEquals(1, wallet1.getTransactions(true).size());
         assertEquals(v1, wallet1.getBalance(Wallet.BalanceType.ESTIMATED));
         Transaction t1copy = wallet1.getTransaction(t1.getHash());
         assertArrayEquals(t1.bitcoinSerialize(), t1copy.bitcoinSerialize());
@@ -100,7 +100,7 @@ public class WalletProtobufSerializerTest {
         // t2 rolls back t1 and spends somewhere else.
         myWallet.receiveFromBlock(doubleSpends.t2, null, BlockChain.NewBlockType.BEST_CHAIN);
         Wallet wallet1 = roundTrip(myWallet);
-        assertEquals(1, wallet1.getTransactions(true, true).size());
+        assertEquals(1, wallet1.getTransactions(true).size());
         Transaction t1 = wallet1.getTransaction(doubleSpends.t1.getHash());
         assertEquals(ConfidenceType.DEAD, t1.getConfidence().getConfidenceType());
         assertEquals(BigInteger.ZERO, wallet1.getBalance());
@@ -197,7 +197,7 @@ public class WalletProtobufSerializerTest {
         // Roundtrip the wallet and check it has stored the depth and workDone.
         Wallet rebornWallet = roundTrip(myWallet);
 
-        Set<Transaction> rebornTxns = rebornWallet.getTransactions(false, false);
+        Set<Transaction> rebornTxns = rebornWallet.getTransactions(false);
         assertEquals(2, rebornTxns.size());
 
         // The transactions are not guaranteed to be in the same order so sort them to be in chain height order if required.
@@ -239,7 +239,7 @@ public class WalletProtobufSerializerTest {
     @Test
     public void testSerializedExtensionNormalWallet() throws Exception {
         Wallet wallet1 = roundTrip(myWallet);     
-        assertEquals(0, wallet1.getTransactions(true, true).size());
+        assertEquals(0, wallet1.getTransactions(true).size());
         assertEquals(BigInteger.ZERO, wallet1.getBalance());
         assertArrayEquals(myKey.getPubKey(),
                 wallet1.findKeyFromPubHash(myKey.getPubKeyHash()).getPubKey());

@@ -274,7 +274,8 @@ public class WalletTest extends TestWithWallet {
 
     @Test
     public void sideChain() throws Exception {
-        // The wallet receives a coin on the main chain, then on a side chain. Only main chain counts towards balance.
+        // The wallet receives a coin on the main chain, then on a side chain. Balance is equal to both added together
+        // as we assume the side chain tx is pending and will be included shortly.
         BigInteger v1 = Utils.toNanoCoins(1, 0);
         sendMoneyToWallet(v1, AbstractBlockChain.NewBlockType.BEST_CHAIN);
         assertEquals(v1, wallet.getBalance());
@@ -283,10 +284,9 @@ public class WalletTest extends TestWithWallet {
 
         BigInteger v2 = toNanoCoins(0, 50);
         sendMoneyToWallet(v2, AbstractBlockChain.NewBlockType.SIDE_CHAIN);
-        assertEquals(1, wallet.getPoolSize(WalletTransaction.Pool.INACTIVE));
         assertEquals(2, wallet.getPoolSize(WalletTransaction.Pool.ALL));
-
         assertEquals(v1, wallet.getBalance());
+        assertEquals(v1.add(v2), wallet.getBalance(Wallet.BalanceType.ESTIMATED));
     }
 
     @Test
@@ -557,7 +557,7 @@ public class WalletTest extends TestWithWallet {
         // Receive 1 BTC.
         BigInteger nanos = Utils.toNanoCoins(1, 0);
         sendMoneyToWallet(nanos, AbstractBlockChain.NewBlockType.BEST_CHAIN);
-        Transaction received = wallet.getTransactions(false, false).iterator().next();
+        Transaction received = wallet.getTransactions(false).iterator().next();
         // Create a send to a merchant.
         Transaction send1 = wallet.createSend(new ECKey().toAddress(params), toNanoCoins(0, 50));
         // Create a double spend.

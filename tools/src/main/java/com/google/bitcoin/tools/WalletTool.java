@@ -562,7 +562,7 @@ public class WalletTool {
     private static void setup() throws BlockStoreException {
         if (store != null) return;  // Already done.
         // Will create a fresh chain if one doesn't exist or there is an issue with this one.
-        if (!chainFileName.exists() && wallet.getTransactions(true, true).size() > 0) {
+        if (!chainFileName.exists() && wallet.getTransactions(true).size() > 0) {
             // No chain, so reset the wallet as we will be downloading from scratch.
             System.out.println("Chain file is missing so clearing transactions from the wallet.");
             reset();
@@ -599,7 +599,7 @@ public class WalletTool {
     private static void syncChain() {
         try {
             setup();
-            int startTransactions = wallet.getTransactions(true, true).size();
+            int startTransactions = wallet.getTransactions(true).size();
             DownloadListener listener = new DownloadListener();
             peers.startAndWait();
             peers.startBlockChainDownload(listener);
@@ -609,7 +609,7 @@ public class WalletTool {
                 System.err.println("Chain download interrupted, quitting ...");
                 System.exit(1);
             }
-            int endTransactions = wallet.getTransactions(true, true).size();
+            int endTransactions = wallet.getTransactions(true).size();
             if (endTransactions > startTransactions) {
                 System.out.println("Synced " + (endTransactions - startTransactions) + " transactions.");
             }

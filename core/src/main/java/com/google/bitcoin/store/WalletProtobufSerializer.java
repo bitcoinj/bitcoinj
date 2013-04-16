@@ -351,7 +351,7 @@ public class WalletProtobufSerializer {
 
             byte[] pubKey = keyProto.hasPublicKey() ? keyProto.getPublicKey().toByteArray() : null;
 
-            ECKey ecKey = null;
+            ECKey ecKey;
             if (keyCrypter != null && keyCrypter.getUnderstoodEncryptionType() != EncryptionType.UNENCRYPTED) {
                 // If the key is encrypted construct an ECKey using the encrypted private key bytes.
                 ecKey = new ECKey(encryptedPrivateKey, pubKey, keyCrypter);
@@ -455,6 +455,13 @@ public class WalletProtobufSerializer {
     protected WalletTransaction connectTransactionOutputs(org.bitcoinj.wallet.Protos.Transaction txProto) {
         Transaction tx = txMap.get(txProto.getHash());
         WalletTransaction.Pool pool = WalletTransaction.Pool.valueOf(txProto.getPool().getNumber());
+        if (pool == WalletTransaction.Pool.INACTIVE || pool == WalletTransaction.Pool.PENDING_INACTIVE) {
+            // Upgrade old wallets: inactive pool has been merged with the pending pool.
+            // Remove this some time after 0.9 is old and everyone has upgraded.
+            // There should not be any spent outputs in this tx as old wallets would not allow them to be spent
+            // in this state.
+            pool = WalletTransaction.Pool.PENDING;
+        }
         for (int i = 0 ; i < tx.getOutputs().size() ; i++) {
             TransactionOutput output = tx.getOutputs().get(i);
             final Protos.TransactionOutput transactionOutput = txProto.getTransactionOutput(i);

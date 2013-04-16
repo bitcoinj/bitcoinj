@@ -114,7 +114,7 @@ public class FilteredBlockAndPartialMerkleTreeTests extends TestWithPeerGroup {
         inbound(p1, tx3);
         inbound(p1, new Pong(((Ping)ping).getNonce()));
         
-        Set<Transaction> transactions = wallet.getTransactions(false, false);
+        Set<Transaction> transactions = wallet.getTransactions(false);
         assertTrue(transactions.size() == 4);
         for (Transaction tx : transactions) {
             assertTrue(tx.getConfidence().getConfidenceType() == ConfidenceType.BUILDING);
