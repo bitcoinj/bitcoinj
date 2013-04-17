@@ -225,6 +225,11 @@ public class TransactionConfidence implements Serializable {
             if (confidenceType == this.confidenceType)
                 return;
             this.confidenceType = confidenceType;
+            if (confidenceType == ConfidenceType.PENDING) {
+                depth = 0;
+                appearedAtChainHeight = -1;
+                workDone = BigInteger.ZERO;
+            }
         }
         runListeners();
     }
