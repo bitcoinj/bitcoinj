@@ -114,7 +114,7 @@ public class TransactionOutput extends ChildMessage implements Serializable {
     public Script getScriptPubKey() throws ScriptException {
         if (scriptPubKey == null) {
             maybeParse();
-            scriptPubKey = new Script(params, scriptBytes, 0, scriptBytes.length);
+            scriptPubKey = new Script(scriptBytes);
         }
         return scriptPubKey;
     }
@@ -225,8 +225,8 @@ public class TransactionOutput extends ChildMessage implements Serializable {
      */
     public String toString() {
         try {
-            return "TxOut of " + Utils.bitcoinValueToFriendlyString(value) + " to " + getScriptPubKey().getToAddress()
-                    .toString() + " script:" + getScriptPubKey().toString();
+            return "TxOut of " + Utils.bitcoinValueToFriendlyString(value) + " to " +
+                    getScriptPubKey().getToAddress(params).toString() + " script:" + getScriptPubKey().toString();
         } catch (ScriptException e) {
             throw new RuntimeException(e);
         }

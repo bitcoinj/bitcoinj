@@ -43,7 +43,7 @@ public class ScriptTest {
     @Test
     public void testScriptSig() throws Exception {
         byte[] sigProgBytes = Hex.decode(sigProg);
-        Script script = new Script(params, sigProgBytes, 0, sigProgBytes.length);
+        Script script = new Script(sigProgBytes);
         // Test we can extract the from address.
         byte[] hash160 = Utils.sha256hash160(script.getPubKey());
         Address a = new Address(params, hash160);
@@ -54,7 +54,7 @@ public class ScriptTest {
     public void testScriptPubKey() throws Exception {
         // Check we can extract the to address
         byte[] pubkeyBytes = Hex.decode(pubkeyProg);
-        Script pubkey = new Script(params, pubkeyBytes, 0, pubkeyBytes.length);
+        Script pubkey = new Script(pubkeyBytes);
         Address toAddr = new Address(params, pubkey.getPubKeyHash());
         assertEquals("mkFQohBpy2HDXrCwyMrYL5RtfrmeiuuPY2", toAddr.toString());
     }
@@ -62,7 +62,7 @@ public class ScriptTest {
     @Test
     public void testIp() throws Exception {
         byte[] bytes = Hex.decode("41043e96222332ea7848323c08116dddafbfa917b8e37f0bdf63841628267148588a09a43540942d58d49717ad3fabfe14978cf4f0a8b84d2435dad16e9aa4d7f935ac");
-        Script s = new Script(params, bytes, 0, bytes.length);
+        Script s = new Script(bytes);
         assertTrue(s.isSentToRawPubKey());
     }
     
@@ -115,7 +115,7 @@ public class ScriptTest {
             }                        
         }
         
-        return new Script(params, out.toByteArray(), 0, out.size());
+        return new Script(out.toByteArray());
     }
     
     @Test

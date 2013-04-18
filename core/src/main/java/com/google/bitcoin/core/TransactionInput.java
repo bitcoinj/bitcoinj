@@ -160,22 +160,23 @@ public class TransactionInput extends ChildMessage implements Serializable {
         // parameter is overloaded to be something totally different.
         if (scriptSig == null) {
             maybeParse();
-            scriptSig = new Script(params, Preconditions.checkNotNull(scriptBytes), 0, scriptBytes.length);
+            scriptSig = new Script(Preconditions.checkNotNull(scriptBytes));
         }
         return scriptSig;
     }
 
     /**
-     * Convenience method that returns the from address of this input by parsing the scriptSig.
-     *
-     * @throws ScriptException if the scriptSig could not be understood (eg, if this is a coinbase transaction).
+     * Convenience method that returns the from address of this input by parsing the scriptSig. The concept of a
+     * "from address" is not well defined in Bitcoin and you should not assume that senders of a transaction can
+     * actually receive coins on the same address they used to sign (e.g. this is not true for shared wallets).
      */
+    @Deprecated
     public Address getFromAddress() throws ScriptException {
         if (isCoinBase()) {
             throw new ScriptException(
                     "This is a coinbase transaction which generates new coins. It does not have a from address.");
         }
-        return getScriptSig().getFromAddress();
+        return getScriptSig().getFromAddress(params);
     }
 
     /**

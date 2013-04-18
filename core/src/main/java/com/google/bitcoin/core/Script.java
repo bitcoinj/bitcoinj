@@ -200,32 +200,24 @@ public class Script {
 
     // The program is a set of byte[]s where each element is either [opcode] or [data, data, data ...]
     List<ScriptChunk> chunks;
-    private final NetworkParameters params;
-    
+
     // Only for internal use
-    private Script() {
-        params = null;
-    }
+    private Script() {}
 
     /**
-     * Construct a Script using the given network parameters and a range of the programBytes array.
-     *
-     * @param params       Network parameters.
+     * Construct a Script that copies and wraps the programBytes array. The array is parsed and checked for syntactic
+     * validity.
      * @param programBytes Array of program bytes from a transaction.
-     * @param offset       How many bytes into programBytes to start reading from.
-     * @param length       How many bytes to read.
-     * @throws ScriptException
      */
-    public Script(NetworkParameters params, byte[] programBytes, int offset, int length) throws ScriptException {
-        this.params = params;
-        parse(programBytes, offset, length);
+    public Script(byte[] programBytes) throws ScriptException {
+        parse(programBytes, 0, programBytes.length);
     }
 
     /**
      * Returns the program opcodes as a string, for example "[1234] DUP HAHS160"
      */
     public String toString() {
-        StringBuffer buf = new StringBuffer();
+        StringBuilder buf = new StringBuilder();
         for (ScriptChunk chunk : chunks) {
             if (chunk.isOpCode) {
                 buf.append(getOpCodeName(chunk.data[0]));
@@ -607,9 +599,12 @@ public class Script {
     }
 
     /**
-     * Convenience wrapper around getPubKey. Only works for scriptSigs.
+     * For 2-element [input] scripts assumes that the paid-to-address can be derived from the public key.
+     * The concept of a "from address" isn't well defined in Bitcoin and you should not assume the sender of a
+     * transaction can actually receive coins on it. This method may be removed in future.
      */
-    public Address getFromAddress() throws ScriptException {
+    @Deprecated
+    public Address getFromAddress(NetworkParameters params) throws ScriptException {
         return new Address(params, Utils.sha256hash160(getPubKey()));
     }
 
@@ -618,7 +613,7 @@ public class Script {
      *
      * @throws ScriptException
      */
-    public Address getToAddress() throws ScriptException {
+    public Address getToAddress(NetworkParameters params) throws ScriptException {
         return new Address(params, getPubKeyHash());
     }
 
@@ -1524,7 +1519,7 @@ public class Script {
                     throw new ScriptException("Attempted to spend a P2SH scriptPubKey with a script that contained script ops");
             
             byte[] scriptPubKeyBytes = p2shStack.pollLast();
-            Script scriptPubKeyP2SH = new Script(params, scriptPubKeyBytes, 0, scriptPubKeyBytes.length);
+            Script scriptPubKeyP2SH = new Script(scriptPubKeyBytes);
             
             executeScript(txContainingThis, scriptSigIndex, scriptPubKeyP2SH, p2shStack);
             

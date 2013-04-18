@@ -222,7 +222,7 @@ public class WalletTest {
         assertEquals("Wrong number of UNSPENT.3", 1, wallet.getPoolSize(WalletTransaction.Pool.UNSPENT));
         assertEquals("Wrong number of ALL.3", 1, wallet.getPoolSize(WalletTransaction.Pool.ALL));
         assertEquals(TransactionConfidence.Source.SELF, t2.getConfidence().getSource());
-        assertEquals(wallet.getChangeAddress(), t2.getOutput(1).getScriptPubKey().getToAddress());
+        assertEquals(wallet.getChangeAddress(), t2.getOutput(1).getScriptPubKey().getToAddress(params));
 
         // Do some basic sanity checks.
         basicSanityChecks(wallet, t2, toAddress, destination);
@@ -251,11 +251,11 @@ public class WalletTest {
 
     private void basicSanityChecks(Wallet wallet, Transaction t, Address fromAddress, Address destination) throws ScriptException {
         assertEquals("Wrong number of tx inputs", 1, t.getInputs().size());
-        assertEquals(fromAddress, t.getInputs().get(0).getScriptSig().getFromAddress());
+        assertEquals(fromAddress, t.getInputs().get(0).getScriptSig().getFromAddress(params));
         assertEquals(t.getConfidence().getConfidenceType(), TransactionConfidence.ConfidenceType.NOT_SEEN_IN_CHAIN);
         assertEquals("Wrong number of tx outputs",2, t.getOutputs().size());
-        assertEquals(destination, t.getOutputs().get(0).getScriptPubKey().getToAddress());
-        assertEquals(wallet.getChangeAddress(), t.getOutputs().get(1).getScriptPubKey().getToAddress());
+        assertEquals(destination, t.getOutputs().get(0).getScriptPubKey().getToAddress(params));
+        assertEquals(wallet.getChangeAddress(), t.getOutputs().get(1).getScriptPubKey().getToAddress(params));
         assertEquals(toNanoCoins(0, 49), t.getOutputs().get(1).getValue());
         // Check the script runs and signatures verify.
         t.getInputs().get(0).verify();
@@ -288,7 +288,7 @@ public class WalletTest {
         Address a = req.changeAddress = new ECKey().toAddress(params);
         wallet.completeTx(req);
         Transaction t3 = req.tx;
-        assertEquals(a, t3.getOutput(1).getScriptPubKey().getToAddress());
+        assertEquals(a, t3.getOutput(1).getScriptPubKey().getToAddress(params));
         assertNotNull(t3);
         wallet.commitTx(t3);
         assertTrue(wallet.isConsistent());
@@ -324,7 +324,7 @@ public class WalletTest {
         // Do some basic sanity checks.
         assertTrue(complete);
         assertEquals(1, t2.getInputs().size());
-        assertEquals(myAddress, t2.getInputs().get(0).getScriptSig().getFromAddress());
+        assertEquals(myAddress, t2.getInputs().get(0).getScriptSig().getFromAddress(params));
         assertEquals(t2.getConfidence().getConfidenceType(), TransactionConfidence.ConfidenceType.NOT_SEEN_IN_CHAIN);
 
         // We have NOT proven that the signature is correct!

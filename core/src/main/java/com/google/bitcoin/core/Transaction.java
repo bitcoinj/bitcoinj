@@ -600,10 +600,12 @@ public class Transaction extends ChildMessage implements Serializable {
             try {
                 Script scriptSig = in.getScriptSig();
                 if (scriptSig.chunks.size() == 2)
-                    s.append(scriptSig.getFromAddress().toString());
-                else if (scriptSig.chunks.size() == 1)
-                    s.append("[sig:" + bytesToHexString(scriptSig.chunks.get(0).data) + "]");
-                else
+                    s.append(scriptSig.getFromAddress(params).toString());
+                else if (scriptSig.chunks.size() == 1) {
+                    s.append("[sig:");
+                    s.append(bytesToHexString(scriptSig.chunks.get(0).data));
+                    s.append("]");
+                } else
                     s.append("???");
                 s.append(" / ");
                 s.append(in.getOutpoint().toString());
@@ -618,7 +620,7 @@ public class Transaction extends ChildMessage implements Serializable {
             try {
                 Script scriptPubKey = out.getScriptPubKey();
                 if (scriptPubKey.isSentToAddress()) {
-                    s.append(scriptPubKey.getToAddress().toString());
+                    s.append(scriptPubKey.getToAddress(params).toString());
                 } else if (scriptPubKey.isSentToRawPubKey()) {
                     s.append("[pubkey:");
                     s.append(bytesToHexString(scriptPubKey.getPubKey()));
