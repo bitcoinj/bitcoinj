@@ -1342,110 +1342,11 @@ public class Script {
                     break;
                 case OP_CHECKSIG:
                 case OP_CHECKSIGVERIFY:
-                    if (stack.size() < 2)
-                        throw new ScriptException("Attempted OP_CHECKSIG(VERIFY) on a stack with size < 2");
-                    byte[] CHECKSIGpubKey = stack.pollLast();
-                    byte[] CHECKSIGsig = stack.pollLast();
-                    
-                    byte[] CHECKSIGconnectedScript = Arrays.copyOfRange(script.program, lastCodeSepLocation, script.program.length);
-                    
-                    UnsafeByteArrayOutputStream OPCHECKSIGOutStream = new UnsafeByteArrayOutputStream(CHECKSIGsig.length + 1);
-                    try {
-                        writeBytes(OPCHECKSIGOutStream, CHECKSIGsig);
-                    } catch (IOException e) {
-                        throw new RuntimeException(e); // Cannot happen
-                    }
-                    CHECKSIGconnectedScript = removeAllInstancesOf(CHECKSIGconnectedScript, OPCHECKSIGOutStream.toByteArray());
-                    
-                    // TODO: Use int for indexes everywhere, we can't have that many inputs/outputs
-                    Sha256Hash CHECKSIGhash = txContainingThis.hashTransactionForSignature((int)index, CHECKSIGconnectedScript,
-                            CHECKSIGsig[CHECKSIGsig.length - 1]);
-                                        
-                    boolean CHECKSIGsigValid;
-                    try {
-                        CHECKSIGsigValid = ECKey.verify(CHECKSIGhash.getBytes(), Arrays.copyOf(CHECKSIGsig, CHECKSIGsig.length - 1), CHECKSIGpubKey);
-                    } catch (Exception e1) {
-                        // There is (at least) one exception that could be hit here (EOFException, if the sig is too short)
-                        // Because I can't verify there aren't more, we use a very generic Exception catch
-                        CHECKSIGsigValid = false;
-                    }
-                    
-                    if (opcode == OP_CHECKSIG)
-                        stack.add(CHECKSIGsigValid ? new byte[] {1} : new byte[] {0});
-                    else if (opcode == OP_CHECKSIGVERIFY)
-                        if (!CHECKSIGsigValid)
-                            throw new ScriptException("Script failed OP_CHECKSIGVERIFY");
+                    executeCheckSig(txContainingThis, (int) index, script, stack, lastCodeSepLocation, opcode);
                     break;
                 case OP_CHECKMULTISIG:
                 case OP_CHECKMULTISIGVERIFY:
-                    if (stack.size() < 2)
-                        throw new ScriptException("Attempted OP_CHECKMULTISIG(VERIFY) on a stack with size < 2");
-                    int CHECKMULTISIGpubKeyCount = castToBigInteger(stack.pollLast()).intValue();
-                    if (CHECKMULTISIGpubKeyCount < 0 || CHECKMULTISIGpubKeyCount > 20)
-                        throw new ScriptException("OP_CHECKMULTISIG(VERIFY) with pubkey count out of range");
-                    opCount += CHECKMULTISIGpubKeyCount;
-                    if (opCount > 201)
-                        throw new ScriptException("Total op count > 201 during OP_CHECKMULTISIG(VERIFY)");
-                    if (stack.size() < CHECKMULTISIGpubKeyCount + 1)
-                        throw new ScriptException("Attempted OP_CHECKMULTISIG(VERIFY) on a stack with size < num_of_pubkeys + 2");
-                    
-                    LinkedList<byte[]> CHECKMULTISIGpubkeys = new LinkedList<byte[]>();
-                    for (int i = 0; i < CHECKMULTISIGpubKeyCount; i++)
-                        CHECKMULTISIGpubkeys.add(stack.pollLast());
-                    
-                    int CHECKMULTISIGsigCount = castToBigInteger(stack.pollLast()).intValue();
-                    if (CHECKMULTISIGsigCount < 0 || CHECKMULTISIGsigCount > CHECKMULTISIGpubKeyCount)
-                        throw new ScriptException("OP_CHECKMULTISIG(VERIFY) with sig count out of range");
-                    if (stack.size() < CHECKMULTISIGsigCount + 1)
-                        throw new ScriptException("Attempted OP_CHECKMULTISIG(VERIFY) on a stack with size < num_of_pubkeys + num_of_signatures + 3");
-                    
-                    LinkedList<byte[]> CHECKMULTISIGsigs = new LinkedList<byte[]>();
-                    for (int i = 0; i < CHECKMULTISIGsigCount; i++)
-                        CHECKMULTISIGsigs.add(stack.pollLast());
-                    
-                    byte[] CHECKMULTISIGconnectedScript = Arrays.copyOfRange(script.program, lastCodeSepLocation, script.program.length);
-                    
-                    for (byte[] CHECKMULTISIGsig : CHECKMULTISIGsigs) {
-                        UnsafeByteArrayOutputStream OPCHECKMULTISIGOutStream = new UnsafeByteArrayOutputStream(CHECKMULTISIGsig.length + 1);
-                        try {
-                            writeBytes(OPCHECKMULTISIGOutStream, CHECKMULTISIGsig);
-                        } catch (IOException e) {
-                            throw new RuntimeException(e); // Cannot happen
-                        }
-                        CHECKMULTISIGconnectedScript = removeAllInstancesOf(CHECKMULTISIGconnectedScript, OPCHECKMULTISIGOutStream.toByteArray());
-                    }
-                    
-                    boolean CHECKMULTISIGValid = true;
-                    while (CHECKMULTISIGsigs.size() > 0) {
-                        byte[] CHECKMULTISIGsig = CHECKMULTISIGsigs.getFirst();
-                        byte[] CHECKMULTISIGpubKey = CHECKMULTISIGpubkeys.pollFirst();
-                        
-                        // We could reasonably move this out of the loop,
-                        // but because signature verification is significantly more expensive than hashing, its not a big deal
-                        Sha256Hash CHECKMULTISIGhash = txContainingThis.hashTransactionForSignature((int)index, CHECKMULTISIGconnectedScript,
-                                CHECKMULTISIGsig[CHECKMULTISIGsig.length - 1]);
-                        try {
-                            if (ECKey.verify(CHECKMULTISIGhash.getBytes(), Arrays.copyOf(CHECKMULTISIGsig, CHECKMULTISIGsig.length - 1), CHECKMULTISIGpubKey))
-                                CHECKMULTISIGsigs.pollFirst();
-                        } catch (Exception e) {
-                            // There is (at least) one exception that could be hit here (EOFException, if the sig is too short)
-                            // Because I can't verify there aren't more, we use a very generic Exception catch
-                        }
-                        
-                        if (CHECKMULTISIGsigs.size() > CHECKMULTISIGpubkeys.size()) {
-                            CHECKMULTISIGValid = false;
-                            break;
-                        }
-                    }
-                    
-                    // We uselessly remove a stack object to emulate a reference client bug
-                    stack.pollLast();
-                    
-                    if (opcode == OP_CHECKMULTISIG)
-                        stack.add(CHECKMULTISIGValid ? new byte[] {1} : new byte[] {0});
-                    else if (opcode == OP_CHECKMULTISIGVERIFY)
-                        if (!CHECKMULTISIGValid)
-                            throw new ScriptException("Script failed OP_CHECKMULTISIGVERIFY");
+                    opCount = executeMultiSig(txContainingThis, (int) index, script, stack, opCount, lastCodeSepLocation, opcode);
                     break;
                 case OP_NOP1:
                 case OP_NOP2:
@@ -1470,6 +1371,115 @@ public class Script {
         
         if (!ifStack.isEmpty())
             throw new ScriptException("OP_IF/OP_NOTIF without OP_ENDIF");
+    }
+
+    private static void executeCheckSig(Transaction txContainingThis, int index, Script script, LinkedList<byte[]> stack,
+                                        int lastCodeSepLocation, int opcode) throws ScriptException {
+        if (stack.size() < 2)
+            throw new ScriptException("Attempted OP_CHECKSIG(VERIFY) on a stack with size < 2");
+        byte[] pubKey = stack.pollLast();
+        byte[] sig = stack.pollLast();
+
+        byte[] connectedScript = Arrays.copyOfRange(script.program, lastCodeSepLocation, script.program.length);
+
+        UnsafeByteArrayOutputStream outStream = new UnsafeByteArrayOutputStream(sig.length + 1);
+        try {
+            writeBytes(outStream, sig);
+        } catch (IOException e) {
+            throw new RuntimeException(e); // Cannot happen
+        }
+        connectedScript = removeAllInstancesOf(connectedScript, outStream.toByteArray());
+
+        // TODO: Use int for indexes everywhere, we can't have that many inputs/outputs
+        Sha256Hash hash = txContainingThis.hashTransactionForSignature(index, connectedScript, sig[sig.length - 1]);
+
+        boolean sigValid;
+        try {
+            sigValid = ECKey.verify(hash.getBytes(), Arrays.copyOf(sig, sig.length - 1), pubKey);
+        } catch (Exception e1) {
+            // There is (at least) one exception that could be hit here (EOFException, if the sig is too short)
+            // Because I can't verify there aren't more, we use a very generic Exception catch
+            sigValid = false;
+        }
+
+        if (opcode == OP_CHECKSIG)
+            stack.add(sigValid ? new byte[] {1} : new byte[] {0});
+        else if (opcode == OP_CHECKSIGVERIFY)
+            if (!sigValid)
+                throw new ScriptException("Script failed OP_CHECKSIGVERIFY");
+    }
+
+    private static int executeMultiSig(Transaction txContainingThis, int index, Script script, LinkedList<byte[]> stack,
+                                       int opCount, int lastCodeSepLocation, int opcode) throws ScriptException {
+        if (stack.size() < 2)
+            throw new ScriptException("Attempted OP_CHECKMULTISIG(VERIFY) on a stack with size < 2");
+        int pubKeyCount = castToBigInteger(stack.pollLast()).intValue();
+        if (pubKeyCount < 0 || pubKeyCount > 20)
+            throw new ScriptException("OP_CHECKMULTISIG(VERIFY) with pubkey count out of range");
+        opCount += pubKeyCount;
+        if (opCount > 201)
+            throw new ScriptException("Total op count > 201 during OP_CHECKMULTISIG(VERIFY)");
+        if (stack.size() < pubKeyCount + 1)
+            throw new ScriptException("Attempted OP_CHECKMULTISIG(VERIFY) on a stack with size < num_of_pubkeys + 2");
+
+        LinkedList<byte[]> pubkeys = new LinkedList<byte[]>();
+        for (int i = 0; i < pubKeyCount; i++)
+            pubkeys.add(stack.pollLast());
+
+        int sigCount = castToBigInteger(stack.pollLast()).intValue();
+        if (sigCount < 0 || sigCount > pubKeyCount)
+            throw new ScriptException("OP_CHECKMULTISIG(VERIFY) with sig count out of range");
+        if (stack.size() < sigCount + 1)
+            throw new ScriptException("Attempted OP_CHECKMULTISIG(VERIFY) on a stack with size < num_of_pubkeys + num_of_signatures + 3");
+
+        LinkedList<byte[]> sigs = new LinkedList<byte[]>();
+        for (int i = 0; i < sigCount; i++)
+            sigs.add(stack.pollLast());
+
+        byte[] connectedScript = Arrays.copyOfRange(script.program, lastCodeSepLocation, script.program.length);
+
+        for (byte[] sig : sigs) {
+            UnsafeByteArrayOutputStream outStream = new UnsafeByteArrayOutputStream(sig.length + 1);
+            try {
+                writeBytes(outStream, sig);
+            } catch (IOException e) {
+                throw new RuntimeException(e); // Cannot happen
+            }
+            connectedScript = removeAllInstancesOf(connectedScript, outStream.toByteArray());
+        }
+
+        boolean valid = true;
+        while (sigs.size() > 0) {
+            byte[] sig = sigs.getFirst();
+            byte[] pubKey = pubkeys.pollFirst();
+
+            // We could reasonably move this out of the loop, but because signature verification is significantly
+            // more expensive than hashing, its not a big deal.
+            Sha256Hash hash = txContainingThis.hashTransactionForSignature(index, connectedScript, sig[sig.length - 1]);
+            try {
+                if (ECKey.verify(hash.getBytes(), Arrays.copyOf(sig, sig.length - 1), pubKey))
+                    sigs.pollFirst();
+            } catch (Exception e) {
+                // There is (at least) one exception that could be hit here (EOFException, if the sig is too short)
+                // Because I can't verify there aren't more, we use a very generic Exception catch
+            }
+
+            if (sigs.size() > pubkeys.size()) {
+                valid = false;
+                break;
+            }
+        }
+
+        // We uselessly remove a stack object to emulate a reference client bug.
+        stack.pollLast();
+
+        if (opcode == OP_CHECKMULTISIG) {
+            stack.add(valid ? new byte[] {1} : new byte[] {0});
+        } else if (opcode == OP_CHECKMULTISIGVERIFY) {
+            if (!valid)
+                throw new ScriptException("Script failed OP_CHECKMULTISIGVERIFY");
+        }
+        return opCount;
     }
 
     /**
