@@ -21,9 +21,6 @@ import com.google.bitcoin.core.WalletTransaction.Pool;
 import com.google.bitcoin.crypto.KeyCrypter;
 import com.google.bitcoin.crypto.KeyCrypterException;
 import com.google.bitcoin.crypto.KeyCrypterScrypt;
-import com.google.bitcoin.store.BlockStore;
-import com.google.bitcoin.store.MemoryBlockStore;
-import com.google.bitcoin.utils.BriefLogFormatter;
 import com.google.common.collect.Lists;
 import com.google.protobuf.ByteString;
 
@@ -37,11 +34,9 @@ import org.slf4j.LoggerFactory;
 import org.spongycastle.crypto.params.KeyParameter;
 
 import java.io.File;
-import java.io.IOException;
 import java.math.BigInteger;
 import java.security.SecureRandom;
 import java.net.InetAddress;
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -56,102 +51,45 @@ import static com.google.bitcoin.core.Utils.bitcoinValueToFriendlyString;
 import static com.google.bitcoin.core.Utils.toNanoCoins;
 import static org.junit.Assert.*;
 
-public class WalletTest {
+public class WalletTest extends TestWithWallet {
     public Logger log = LoggerFactory.getLogger(WalletTest.class.getName());
 
-    static final NetworkParameters params = NetworkParameters.unitTests();
-
-    private Address myAddress;
     private Address myEncryptedAddress;
     private Address myEncryptedAddress2;
 
-    private Wallet wallet;
     private Wallet encryptedWallet;
     // A wallet with an initial unencrypted private key and an encrypted private key.
     private Wallet encryptedMixedWallet;
-
-    private BlockChain chain;
-    private BlockStore blockStore;
-    private ECKey myKey;
-    private ECKey myEncryptedKey;
-
-    private ECKey myKey2;
-    private ECKey myEncryptedKey2;
 
     private static CharSequence PASSWORD1 = "my helicopter contains eels";
     private static CharSequence WRONG_PASSWORD = "nothing noone nobody nowhere";
 
     private KeyParameter aesKey;
     private KeyParameter wrongAesKey;
-
     private KeyCrypter keyCrypter;
-
     private SecureRandom secureRandom = new SecureRandom();
 
     @Before
+    @Override
     public void setUp() throws Exception {
-        myKey = new ECKey();
-        myKey2 = new ECKey();
-        myAddress = myKey.toAddress(params);
-        wallet = new Wallet(params);
-        wallet.addKey(myKey);
-
+        super.setUp();
         byte[] salt = new byte[KeyCrypterScrypt.SALT_LENGTH];
         secureRandom.nextBytes(salt);
         Protos.ScryptParameters.Builder scryptParametersBuilder = Protos.ScryptParameters.newBuilder().setSalt(ByteString.copyFrom(salt));
         ScryptParameters scryptParameters = scryptParametersBuilder.build();
-
         keyCrypter = new KeyCrypterScrypt(scryptParameters);
 
-        wallet = new Wallet(params);
         encryptedWallet = new Wallet(params, keyCrypter);
         encryptedMixedWallet = new Wallet(params, keyCrypter);
 
         aesKey = keyCrypter.deriveKey(PASSWORD1);
         wrongAesKey = keyCrypter.deriveKey(WRONG_PASSWORD);
-
-        wallet.addKey(myKey);
-
-        myEncryptedKey = encryptedWallet.addNewEncryptedKey(keyCrypter, aesKey);
+        ECKey myEncryptedKey = encryptedWallet.addNewEncryptedKey(keyCrypter, aesKey);
         myEncryptedAddress = myEncryptedKey.toAddress(params);
 
-        encryptedMixedWallet.addKey(myKey2);
-        myEncryptedKey2 = encryptedMixedWallet.addNewEncryptedKey(keyCrypter, aesKey);
+        encryptedMixedWallet.addKey(new ECKey());
+        ECKey myEncryptedKey2 = encryptedMixedWallet.addNewEncryptedKey(keyCrypter, aesKey);
         myEncryptedAddress2 = myEncryptedKey2.toAddress(params);
-
-        blockStore = new MemoryBlockStore(params);
-        chain = new BlockChain(params, wallet, blockStore);
-        BriefLogFormatter.init();
-    }
-
-    private Transaction sendMoneyToWallet(Wallet wallet, Transaction tx, AbstractBlockChain.NewBlockType type)
-            throws IOException, ProtocolException, VerificationException {
-        if (type == null) {
-            // Pending/broadcast tx.
-            if (wallet.isPendingTransactionRelevant(tx))
-                wallet.receivePending(tx, new ArrayList<Transaction>());
-        } else {
-            BlockPair bp = createFakeBlock(blockStore, tx);
-            wallet.receiveFromBlock(tx, bp.storedBlock, type);
-            if (type == AbstractBlockChain.NewBlockType.BEST_CHAIN)
-                wallet.notifyNewBestBlock(bp.storedBlock);
-        }
-        return tx;
-    }
-
-    private Transaction sendMoneyToWallet(Transaction tx, AbstractBlockChain.NewBlockType type) throws IOException,
-            ProtocolException, VerificationException {
-        return sendMoneyToWallet(this.wallet, tx, type);
-    }
-
-    private Transaction sendMoneyToWallet(Wallet wallet, BigInteger value, Address toAddress, AbstractBlockChain.NewBlockType type)
-            throws IOException, ProtocolException, VerificationException {
-        return sendMoneyToWallet(wallet, createFakeTx(params, value, toAddress), type);
-    }
-
-    private Transaction sendMoneyToWallet(BigInteger value, AbstractBlockChain.NewBlockType type) throws IOException,
-            ProtocolException, VerificationException {
-        return sendMoneyToWallet(this.wallet, createFakeTx(params, value, myAddress), type);
     }
 
     @Test

@@ -1,0 +1,79 @@
+/*
+ * Copyright 2013 Google Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.google.bitcoin.core;
+
+import com.google.bitcoin.store.BlockStore;
+import com.google.bitcoin.store.MemoryBlockStore;
+import com.google.bitcoin.utils.BriefLogFormatter;
+import org.junit.Before;
+
+import java.io.IOException;
+import java.math.BigInteger;
+import java.util.ArrayList;
+
+import static com.google.bitcoin.core.TestUtils.createFakeBlock;
+import static com.google.bitcoin.core.TestUtils.createFakeTx;
+
+public class TestWithWallet {
+    protected static final NetworkParameters params = NetworkParameters.unitTests();
+    protected ECKey myKey;
+    protected Address myAddress;
+    protected Wallet wallet;
+    protected BlockChain chain;
+    protected BlockStore blockStore;
+
+    @Before
+    public void setUp() throws Exception {
+        BriefLogFormatter.init();
+        myKey = new ECKey();
+        myAddress = myKey.toAddress(params);
+        wallet = new Wallet(params);
+        wallet.addKey(myKey);
+        blockStore = new MemoryBlockStore(params);
+        chain = new BlockChain(params, wallet, blockStore);
+    }
+
+    protected Transaction sendMoneyToWallet(Wallet wallet, Transaction tx, AbstractBlockChain.NewBlockType type)
+            throws IOException, ProtocolException, VerificationException {
+        if (type == null) {
+            // Pending/broadcast tx.
+            if (wallet.isPendingTransactionRelevant(tx))
+                wallet.receivePending(tx, new ArrayList<Transaction>());
+        } else {
+            TestUtils.BlockPair bp = createFakeBlock(blockStore, tx);
+            wallet.receiveFromBlock(tx, bp.storedBlock, type);
+            if (type == AbstractBlockChain.NewBlockType.BEST_CHAIN)
+                wallet.notifyNewBestBlock(bp.storedBlock);
+        }
+        return tx;
+    }
+
+    protected Transaction sendMoneyToWallet(Transaction tx, AbstractBlockChain.NewBlockType type) throws IOException,
+            ProtocolException, VerificationException {
+        return sendMoneyToWallet(this.wallet, tx, type);
+    }
+
+    protected Transaction sendMoneyToWallet(Wallet wallet, BigInteger value, Address toAddress, AbstractBlockChain.NewBlockType type)
+            throws IOException, ProtocolException, VerificationException {
+        return sendMoneyToWallet(wallet, createFakeTx(params, value, toAddress), type);
+    }
+
+    protected Transaction sendMoneyToWallet(BigInteger value, AbstractBlockChain.NewBlockType type) throws IOException,
+            ProtocolException, VerificationException {
+        return sendMoneyToWallet(this.wallet, createFakeTx(params, value, myAddress), type);
+    }
+}
