@@ -16,6 +16,7 @@
 
 package com.google.bitcoin.core;
 
+import com.google.common.collect.Lists;
 import org.junit.Test;
 import org.spongycastle.util.encoders.Hex;
 
@@ -57,6 +58,27 @@ public class ScriptTest {
         Script pubkey = new Script(pubkeyBytes);
         Address toAddr = new Address(params, pubkey.getPubKeyHash());
         assertEquals("mkFQohBpy2HDXrCwyMrYL5RtfrmeiuuPY2", toAddr.toString());
+    }
+
+    @Test
+    public void testMultiSig() throws Exception {
+        List<ECKey> keys = Lists.newArrayList(new ECKey(), new ECKey(), new ECKey());
+        assertTrue(new Script(Script.createMultiSigOutputScript(2, keys)).isSentToMultiSig());
+        assertTrue(new Script(Script.createMultiSigOutputScript(3, keys)).isSentToMultiSig());
+        assertFalse(new Script(Script.createOutputScript(new ECKey())).isSentToMultiSig());
+        try {
+            // Fail if we ask for more signatures than keys.
+            Script.createMultiSigOutputScript(4, keys);
+            fail();
+        } catch (Throwable e) {
+            // Expected.
+        }
+        try {
+            // Must have at least one signature required.
+            Script.createMultiSigOutputScript(0, keys);
+        } catch (Throwable e) {
+            // Expected.
+        }
     }
 
     @Test

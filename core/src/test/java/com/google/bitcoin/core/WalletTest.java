@@ -710,7 +710,7 @@ public class WalletTest extends TestWithWallet {
             @Override
             public void onTransactionConfidenceChanged(Wallet wallet, Transaction tx) {
                 super.onTransactionConfidenceChanged(wallet, tx);
-                if (tx.getConfidence().getConfidenceType() == 
+                if (tx.getConfidence().getConfidenceType() ==
                         TransactionConfidence.ConfidenceType.DEAD) {
                     called[0] = tx;
                     called[1] = tx.getConfidence().getOverridingTransaction();

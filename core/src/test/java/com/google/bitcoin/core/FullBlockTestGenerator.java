@@ -1289,7 +1289,7 @@ public class FullBlockTestGenerator {
         input.setSequenceNumber(sequence);
         t.addInput(input);
 
-        byte[] connectedPubKeyScript = prevOut.scriptPubKey.program;
+        byte[] connectedPubKeyScript = prevOut.scriptPubKey.getProgram();
         Sha256Hash hash = t.hashTransactionForSignature(0, connectedPubKeyScript, SigHash.ALL, false);
 
         // Sign input

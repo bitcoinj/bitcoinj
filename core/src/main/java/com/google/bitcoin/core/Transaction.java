@@ -690,6 +690,14 @@ public class Transaction extends ChildMessage implements Serializable {
     }
 
     /**
+     * Creates an output that pays to the given script. The address and key forms are specialisations of this method,
+     * you won't normally need to use it unless you're doing unusual things.
+     */
+    public void addOutput(BigInteger value, Script script) {
+        addOutput(new TransactionOutput(params, this, value, script.getProgram()));
+    }
+
+    /**
      * Once a transaction has some inputs and outputs added, the signatures in the inputs can be calculated. The
      * signature is over the transaction itself, to prove the redeemer actually created that transaction,
      * so we have to do this step last.<p>

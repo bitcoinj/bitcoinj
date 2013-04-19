@@ -17,6 +17,8 @@
 
 package com.google.bitcoin.core;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.spongycastle.crypto.digests.RIPEMD160Digest;
 
 import java.io.ByteArrayOutputStream;
@@ -28,6 +30,9 @@ import java.security.NoSuchAlgorithmException;
 import java.util.*;
 
 import static com.google.bitcoin.core.Utils.bytesToHexString;
+import static com.google.common.base.Preconditions.checkArgument;
+
+// TODO: Make this class a superclass with derived classes giving accessor methods for the various common templates.
 
 /**
  * A chunk in a script
@@ -60,6 +65,8 @@ class ScriptChunk {
  * static methods for building scripts.</p>
  */
 public class Script {
+    private static final Logger log = LoggerFactory.getLogger(Script.class);
+
     // Some constants used for decoding the scripts, copied from the reference client
     // push value
     public static final int OP_0 = 0x00;
@@ -195,7 +202,7 @@ public class Script {
 
     public static final int OP_INVALIDOPCODE = 0xff;
 
-    byte[] program;
+    private byte[] program;
     private int cursor;
 
     // The program is a set of byte[]s where each element is either [opcode] or [data, data, data ...]
@@ -230,6 +237,11 @@ public class Script {
             }
         }
         return buf.toString();
+    }
+
+    /** Returns the serialized program as a newly created byte array. */
+    public byte[] getProgram() {
+        return Arrays.copyOf(program, program.length);
     }
     
     /**
@@ -679,6 +691,28 @@ public class Script {
         return createOutputScript(pubkey.getPubKey());
     }
 
+    /** Creates a program that requires at least N of the given keys to sign, using OP_CHECKMULTISIG. */
+    public static byte[] createMultiSigOutputScript(int threshold, List<ECKey> pubkeys) {
+        checkArgument(threshold > 0);
+        checkArgument(threshold <= pubkeys.size());
+        checkArgument(pubkeys.size() <= 16);  // That's the max we can represent with a single opcode.
+        if (pubkeys.size() > 3) {
+            log.warn("Creating a multi-signature output that is non-standard: {} pubkeys, should be <= 3", pubkeys.size());
+        }
+        try {
+            ByteArrayOutputStream bits = new ByteArrayOutputStream();
+            bits.write(encodeToOpN(threshold));
+            for (ECKey key : pubkeys) {
+                writeBytes(bits, key.getPubKey());
+            }
+            bits.write(encodeToOpN(pubkeys.size()));
+            bits.write(OP_CHECKMULTISIG);
+            return bits.toByteArray();
+        } catch (IOException e) {
+            throw new RuntimeException(e);  // Cannot happen.
+        }
+    }
+
     public static byte[] createInputScript(byte[] signature, byte[] pubkey) {
         try {
             // TODO: Do this by creating a Script *first* then having the script reassemble itself into bytes.
@@ -718,7 +752,7 @@ public class Script {
                 case OP_CHECKMULTISIG:
                 case OP_CHECKMULTISIGVERIFY:
                     if (accurate && lastOpCode >= OP_1 && lastOpCode <= OP_16)
-                        sigOps += getOpNValue(lastOpCode);
+                        sigOps += decodeFromOpN(lastOpCode);
                     else
                         sigOps += 20;
                     break;
@@ -731,15 +765,26 @@ public class Script {
         return sigOps;
     }
     
-    /**
-     * Convince method to get the int value of OP_N
-     */
-    private static int getOpNValue(int opcode) throws ScriptException {
+    private static int decodeFromOpN(byte opcode) {
+        return decodeFromOpN(0xFF & opcode);
+    }
+    private static int decodeFromOpN(int opcode) {
+        checkArgument(opcode >= 0 && opcode <= OP_16, "decodeFromOpN called on non OP_N opcode");
         if (opcode == OP_0)
             return 0;
-        if (opcode < OP_1 || opcode > OP_16) // This should absolutely never happen
-            throw new ScriptException("getOpNValue called on non OP_N opcode");
-        return opcode + 1 - OP_1;
+        else
+            return opcode + 1 - OP_1;
+    }
+
+    private static int encodeToOpN(byte value) {
+        return encodeToOpN(0xFF & value);
+    }
+    private static int encodeToOpN(int value) {
+        checkArgument(value >= 0 && value <= 16, "encodeToOpN called for a value we cannot encode in an opcode.");
+        if (value == 0)
+            return OP_0;
+        else
+            return value - 1 + OP_1;
     }
 
     /**
@@ -793,7 +838,33 @@ public class Script {
                (program[1] & 0xff) == 0x14 &&
                (program[22] & 0xff) == OP_EQUAL;
     }
-    
+
+    /**
+     * Returns whether this script matches the format used for multisig outputs: [n] [keys...] [m] CHECKMULTISIG
+     */
+    public boolean isSentToMultiSig() {
+        if (chunks.size() < 4) return false;
+        ScriptChunk chunk = chunks.get(chunks.size() - 1);
+        // Must end in OP_CHECKMULTISIG[VERIFY].
+        if (!chunk.isOpCode) return false;
+        if (!(chunk.equalsOpCode(OP_CHECKMULTISIG) || chunk.equalsOpCode(OP_CHECKMULTISIGVERIFY))) return false;
+        try {
+            // Second to last chunk must be an OP_N opcode and there should be that many data chunks (keys).
+            ScriptChunk m = chunks.get(chunks.size() - 2);
+            if (!m.isOpCode) return false;
+            int numKeys = decodeFromOpN(m.data[0]);
+            if (chunks.size() != 3 + numKeys) return false;
+            for (int i = 1; i < chunks.size() - 2; i++) {
+                if (chunks.get(i).isOpCode) return false;
+            }
+            // First chunk must be an OP_N opcode too.
+            decodeFromOpN(chunks.get(0).data[0]);
+        } catch (IllegalStateException e) {
+            return false;   // Not an OP_N opcode.
+        }
+        return true;
+    }
+
     private static boolean equalsRange(byte[] a, int start, byte[] b) {
         if (start + b.length > a.length)
             return false;
@@ -958,7 +1029,7 @@ public class Script {
                 case OP_14:
                 case OP_15:
                 case OP_16:
-                    stack.add(Utils.reverseBytes(Utils.encodeMPI(BigInteger.valueOf(getOpNValue(opcode)), false)));
+                    stack.add(Utils.reverseBytes(Utils.encodeMPI(BigInteger.valueOf(decodeFromOpN(opcode)), false)));
                     break;
                 case OP_NOP:
                     break;
