@@ -534,10 +534,26 @@ public class Block extends Message {
      */
     @Override
     public String toString() {
-        StringBuffer s = new StringBuffer("v" + version + " block: \n" + "   previous block: "
-                + getPrevBlockHash().toString() + "\n" + "   merkle root: " + getMerkleRoot().toString() + "\n"
-                + "   time: [" + time + "] " + new Date(time * 1000).toString() + "\n"
-                + "   difficulty target (nBits): " + difficultyTarget + "\n" + "   nonce: " + nonce + "\n");
+        StringBuilder s = new StringBuilder("v");
+        s.append(version);
+        s.append(" block: \n");
+        s.append("   previous block: ");
+        s.append(getPrevBlockHash());
+        s.append("\n");
+        s.append("   merkle root: ");
+        s.append(getMerkleRoot());
+        s.append("\n");
+        s.append("   time: [");
+        s.append(time);
+        s.append("] ");
+        s.append(new Date(time * 1000));
+        s.append("\n");
+        s.append("   difficulty target (nBits): ");
+        s.append(difficultyTarget);
+        s.append("\n");
+        s.append("   nonce: ");
+        s.append(nonce);
+        s.append("\n");
         if (transactions != null && transactions.size() > 0) {
             s.append("   with ").append(transactions.size()).append(" transaction(s):\n");
             for (Transaction tx : transactions) {
