@@ -726,7 +726,7 @@ public class WalletTool {
         ECKey key = null;
         if (pubkey != null) {
             key = wallet.findKeyFromPubKey(Hex.decode(pubkey));
-        } else if (addr != null) {
+        } else {
             try {
                 Address address = new Address(wallet.getParams(), addr);
                 key = wallet.findKeyFromPubHash(address.getHash160());
