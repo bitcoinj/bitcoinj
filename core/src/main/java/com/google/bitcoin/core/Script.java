@@ -36,23 +36,6 @@ import static com.google.common.base.Preconditions.checkArgument;
 // TODO: Make this class a superclass with derived classes giving accessor methods for the various common templates.
 
 /**
- * A chunk in a script
- */
-class ScriptChunk {
-    public boolean isOpCode;
-    public byte[] data;
-    public int startLocationInProgram;
-    public ScriptChunk(boolean isOpCode, byte[] data, int startLocationInProgram) {
-        this.isOpCode = isOpCode;
-        this.data = data;
-        this.startLocationInProgram = startLocationInProgram;
-    }
-    public boolean equalsOpCode(int opCode) {
-        return isOpCode && data.length == 1 && (0xFF & data[0]) == opCode;
-    }
-}
-
-/**
  * <p>Programs embedded inside transactions that control redemption of payments.</p>
  *
  * <p>Bitcoin transactions don't specify what they do directly. Instead <a href="https://en.bitcoin.it/wiki/Script">a
@@ -66,11 +49,28 @@ class ScriptChunk {
 public class Script {
     private static final Logger log = LoggerFactory.getLogger(Script.class);
 
+    /**
+     * An element that is either an opcode or a raw byte array (signature, pubkey, etc).
+     */
+    public static class Chunk {
+        public boolean isOpCode;
+        public byte[] data;
+        public int startLocationInProgram;
+        public Chunk(boolean isOpCode, byte[] data, int startLocationInProgram) {
+            this.isOpCode = isOpCode;
+            this.data = data;
+            this.startLocationInProgram = startLocationInProgram;
+        }
+        public boolean equalsOpCode(int opCode) {
+            return isOpCode && data.length == 1 && (0xFF & data[0]) == opCode;
+        }
+    }
+
     private byte[] program;
     private int cursor;
 
-    // The program is a set of byte[]s where each element is either [opcode] or [data, data, data ...]
-    List<ScriptChunk> chunks;
+    // The program is a set of chunks where each element is either [opcode] or [data, data, data ...]
+    List<Chunk> chunks;
 
     // Only for internal use
     private Script() {}
@@ -89,7 +89,7 @@ public class Script {
      */
     public String toString() {
         StringBuilder buf = new StringBuilder();
-        for (ScriptChunk chunk : chunks) {
+        for (Chunk chunk : chunks) {
             if (chunk.isOpCode) {
                 buf.append(getOpCodeName(chunk.data[0]));
                 buf.append(" ");
@@ -151,28 +151,28 @@ public class Script {
         System.arraycopy(programBytes, offset, program, 0, length);
 
         offset = 0;
-        chunks = new ArrayList<ScriptChunk>(10);  // Arbitrary choice of initial size.
+        chunks = new ArrayList<Chunk>(10);  // Arbitrary choice of initial size.
         cursor = offset;
         while (cursor < offset + length) {
             int startLocationInProgram = cursor - offset;
             int opcode = readByte();
             if (opcode >= 0 && opcode < OP_PUSHDATA1) {
                 // Read some bytes of data, where how many is the opcode value itself.
-                chunks.add(new ScriptChunk(false, getData(opcode), startLocationInProgram));  // opcode == len here.
+                chunks.add(new Chunk(false, getData(opcode), startLocationInProgram));  // opcode == len here.
             } else if (opcode == OP_PUSHDATA1) {
                 int len = readByte();
-                chunks.add(new ScriptChunk(false, getData(len), startLocationInProgram));
+                chunks.add(new Chunk(false, getData(len), startLocationInProgram));
             } else if (opcode == OP_PUSHDATA2) {
                 // Read a short, then read that many bytes of data.
                 int len = readByte() | (readByte() << 8);
-                chunks.add(new ScriptChunk(false, getData(len), startLocationInProgram));
+                chunks.add(new Chunk(false, getData(len), startLocationInProgram));
             } else if (opcode == OP_PUSHDATA4) {
                 // Read a uint32, then read that many bytes of data.
                 // Though this is allowed, because its value cannot be > 520, it should never actually be used
                 long len = readByte() | (readByte() << 8) | (readByte() << 16) | (readByte() << 24);
-                chunks.add(new ScriptChunk(false, getData((int)len), startLocationInProgram));
+                chunks.add(new Chunk(false, getData((int)len), startLocationInProgram));
             } else {
-                chunks.add(new ScriptChunk(true, new byte[]{(byte) opcode}, startLocationInProgram));
+                chunks.add(new Chunk(true, new byte[]{(byte) opcode}, startLocationInProgram));
             }
         }
     }
@@ -369,10 +369,10 @@ public class Script {
     
     ////////////////////// Interface used during verification of transactions/blocks ////////////////////////////////
     
-    private static int getSigOpCount(List<ScriptChunk> chunks, boolean accurate) throws ScriptException {
+    private static int getSigOpCount(List<Chunk> chunks, boolean accurate) throws ScriptException {
         int sigOps = 0;
         int lastOpCode = OP_INVALIDOPCODE;
-        for (ScriptChunk chunk : chunks) {
+        for (Chunk chunk : chunks) {
             if (chunk.isOpCode) {
                 int opcode = 0xFF & chunk.data[0];
                 switch (opcode) {
@@ -475,13 +475,13 @@ public class Script {
      */
     public boolean isSentToMultiSig() {
         if (chunks.size() < 4) return false;
-        ScriptChunk chunk = chunks.get(chunks.size() - 1);
+        Chunk chunk = chunks.get(chunks.size() - 1);
         // Must end in OP_CHECKMULTISIG[VERIFY].
         if (!chunk.isOpCode) return false;
         if (!(chunk.equalsOpCode(OP_CHECKMULTISIG) || chunk.equalsOpCode(OP_CHECKMULTISIGVERIFY))) return false;
         try {
             // Second to last chunk must be an OP_N opcode and there should be that many data chunks (keys).
-            ScriptChunk m = chunks.get(chunks.size() - 2);
+            Chunk m = chunks.get(chunks.size() - 2);
             if (!m.isOpCode) return false;
             int numKeys = decodeFromOpN(m.data[0]);
             if (chunks.size() != 3 + numKeys) return false;
@@ -577,7 +577,7 @@ public class Script {
         LinkedList<byte[]> altstack = new LinkedList<byte[]>();
         LinkedList<Boolean> ifStack = new LinkedList<Boolean>();
         
-        for (ScriptChunk chunk : script.chunks) {
+        for (Chunk chunk : script.chunks) {
             boolean shouldExecute = !ifStack.contains(false);
             
             if (!chunk.isOpCode) {
@@ -1225,7 +1225,7 @@ public class Script {
 
         // TODO: Check if we can take out enforceP2SH if there's a checkpoint at the enforcement block.
         if (enforceP2SH && scriptPubKey.isPayToScriptHash()) {
-            for (ScriptChunk chunk : chunks)
+            for (Chunk chunk : chunks)
                 if (chunk.isOpCode && (chunk.data[0] & 0xff) > OP_16)
                     throw new ScriptException("Attempted to spend a P2SH scriptPubKey with a script that contained script ops");
             
