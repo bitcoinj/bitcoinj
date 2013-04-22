@@ -177,10 +177,8 @@ public class Wallet implements Serializable, BlockChainListener {
      */
     final Map<Sha256Hash, Transaction> dead;
 
-    /**
-     * A list of public/private EC keys owned by this user. Access it using addKey[s], hasKey[s] and findPubKeyFromHash.
-     */
-    public ArrayList<ECKey> keychain;
+    // A list of public/private EC keys owned by this user. Access it using addKey[s], hasKey[s] and findPubKeyFromHash.
+    private ArrayList<ECKey> keychain;
 
     private final NetworkParameters params;
 
@@ -379,10 +377,24 @@ public class Wallet implements Serializable, BlockChainListener {
     /**
      * Returns a snapshot of the keychain. This view is not live.
      */
-    public Iterable<ECKey> getKeys() {
+    public List<ECKey> getKeys() {
         lock.lock();
         try {
             return new ArrayList<ECKey>(keychain);
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
+     * Removes the given key from the keychain. Be very careful with this - losing a private key <b>destroys the
+     * money associated with it</b>.
+     * @return Whether the key was removed or not.
+     */
+    public boolean removeKey(ECKey key) {
+        lock.lock();
+        try {
+            return keychain.remove(key);
         } finally {
             lock.unlock();
         }

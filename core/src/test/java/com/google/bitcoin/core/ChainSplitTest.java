@@ -47,8 +47,8 @@ public class ChainSplitTest {
         wallet.addKey(new ECKey());
         wallet.addKey(new ECKey());
         chain = new BlockChain(unitTestParams, wallet, new MemoryBlockStore(unitTestParams));
-        coinsTo = wallet.keychain.get(0).toAddress(unitTestParams);
-        coinsTo2 = wallet.keychain.get(1).toAddress(unitTestParams);
+        coinsTo = wallet.getKeys().get(0).toAddress(unitTestParams);
+        coinsTo2 = wallet.getKeys().get(1).toAddress(unitTestParams);
         someOtherGuy = new ECKey().toAddress(unitTestParams);
     }
 
@@ -496,7 +496,7 @@ public class ChainSplitTest {
         // The second block contains a coinbase transaction that spends to coinTo2.
         // The third block contains a normal transaction that spends to coinTo.
         Block b1 = unitTestParams.genesisBlock.createNextBlock(coinsTo);
-        Block b2 = b1.createNextBlockWithCoinbase(wallet.keychain.get(1).getPubKey());
+        Block b2 = b1.createNextBlockWithCoinbase(wallet.getKeys().get(1).getPubKey());
         Block b3 = b2.createNextBlock(coinsTo);
 
         log.debug("Adding block b1");

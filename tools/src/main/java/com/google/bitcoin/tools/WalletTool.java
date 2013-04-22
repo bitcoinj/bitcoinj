@@ -739,7 +739,7 @@ public class WalletTool {
             System.err.println("Wallet does not seem to contain that key.");
             return;
         }
-        wallet.keychain.remove(key);
+        wallet.removeKey(key);
     }    
     
     private static void dumpWallet() throws BlockStoreException {

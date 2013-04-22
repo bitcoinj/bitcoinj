@@ -151,7 +151,7 @@ public class ToyWallet {
             wallet.saveToFile(walletFile);
             freshWallet = true;
         }
-        System.out.println("Send to: " + wallet.keychain.get(0).toAddress(params));
+        System.out.println("Send to: " + wallet.getKeys().get(0).toAddress(params));
         System.out.println(wallet);
 
         wallet.autosaveToFile(walletFile, 500, TimeUnit.MILLISECONDS, null);
@@ -238,7 +238,7 @@ public class ToyWallet {
     }
 
     private void setupWindow(JFrame window) {
-        final Address address = wallet.keychain.get(0).toAddress(params);
+        final Address address = wallet.getKeys().get(0).toAddress(params);
         JLabel instructions = new JLabel(
                 "<html>Broadcast transactions appear below. Watch them gain confidence.<br>" +
                 "Send coins to: <b>" + address + "</b> <i>(click to place on clipboard)</i>");

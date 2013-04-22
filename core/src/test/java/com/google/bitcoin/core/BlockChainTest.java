@@ -69,7 +69,7 @@ public class BlockChainTest {
         resetBlockStore();
         chain = new BlockChain(unitTestParams, wallet, blockStore);
 
-        coinbaseTo = wallet.keychain.get(0).toAddress(unitTestParams);
+        coinbaseTo = wallet.getKeys().get(0).toAddress(unitTestParams);
     }
 
     @Test
@@ -100,7 +100,7 @@ public class BlockChainTest {
         // Quick check that we can actually receive coins.
         Transaction tx1 = createFakeTx(unitTestParams,
                                        Utils.toNanoCoins(1, 0),
-                                       wallet.keychain.get(0).toAddress(unitTestParams));
+                                       wallet.getKeys().get(0).toAddress(unitTestParams));
         Block b1 = createFakeBlock(blockStore, tx1).block;
         chain.add(b1);
         assertTrue(wallet.getBalance().compareTo(BigInteger.ZERO) > 0);
@@ -112,7 +112,7 @@ public class BlockChainTest {
         // there isn't any such tx present (as an optimization).
         Transaction tx1 = createFakeTx(unitTestParams,
                                        Utils.toNanoCoins(1, 0),
-                                       wallet.keychain.get(0).toAddress(unitTestParams));
+                                       wallet.getKeys().get(0).toAddress(unitTestParams));
         Block b1 = createFakeBlock(blockStore, tx1).block;
         chain.add(b1);
         resetBlockStore();
@@ -272,7 +272,7 @@ public class BlockChainTest {
         Address addressToSendTo = receiveKey.toAddress(unitTestParams);
 
         // Create a block, sending the coinbase to the coinbaseTo address (which is in the wallet).
-        Block b1 = unitTestParams.genesisBlock.createNextBlockWithCoinbase(wallet.keychain.get(0).getPubKey());
+        Block b1 = unitTestParams.genesisBlock.createNextBlockWithCoinbase(wallet.getKeys().get(0).getPubKey());
         chain.add(b1);
 
         // Check a transaction has been received.

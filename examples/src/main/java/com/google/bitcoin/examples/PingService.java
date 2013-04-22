@@ -57,7 +57,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 public class PingService {
     private final PeerGroup peerGroup;
-    private final BlockChain chain;
     private final BlockStore blockStore;
     private final File walletFile;
 
@@ -77,7 +76,7 @@ public class PingService {
             w = Wallet.loadFromFile(walletFile);
         } catch (IOException e) {
             w = new Wallet(params);
-            w.keychain.add(new ECKey());
+            w.addKey(new ECKey());
             w.saveToFile(walletFile);
         }
         final Wallet wallet = w;
@@ -95,7 +94,7 @@ public class PingService {
                 CheckpointManager.checkpoint(params, stream, blockStore, key.getCreationTimeSeconds());
             }
         }
-        chain = new BlockChain(params, wallet, blockStore);
+        BlockChain chain = new BlockChain(params, wallet, blockStore);
         // Connect to the localhost node. One minute timeout since we won't try any other peers
         System.out.println("Connecting ...");
         peerGroup = new PeerGroup(params, chain);
