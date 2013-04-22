@@ -927,7 +927,7 @@ public class Block extends Message {
         //
         // Here we will do things a bit differently so a new address isn't needed every time. We'll put a simple
         // counter in the scriptSig so every transaction has a different hash.
-        coinbase.addInput(new TransactionInput(params, coinbase, new byte[]{(byte) txCounter++, (byte) 1}));
+        coinbase.addInput(new TransactionInput(params, coinbase, new byte[]{(byte) txCounter, (byte) (txCounter++ >> 8)}));
         coinbase.addOutput(new TransactionOutput(params, coinbase, value,
                 ScriptBuilder.createOutputScript(new ECKey(null, pubKeyTo)).getProgram()));
         transactions.add(coinbase);
@@ -965,8 +965,8 @@ public class Block extends Message {
                 // Importantly the outpoint hash cannot be zero as that's how we detect a coinbase transaction in isolation
                 // but it must be unique to avoid 'different' transactions looking the same.
                 byte[] counter = new byte[32];
-                counter[0] = (byte) txCounter++;
-                counter[1] = 1;
+                counter[0] = (byte) txCounter;
+                counter[1] = (byte) (txCounter++ >> 8);
                 input.getOutpoint().setHash(new Sha256Hash(counter));
             } else {
                 input = new TransactionInput(params, t, Script.createInputScript(EMPTY_BYTES, EMPTY_BYTES), prevOut);
