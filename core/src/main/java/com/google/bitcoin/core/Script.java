@@ -21,6 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.crypto.digests.RIPEMD160Digest;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -32,6 +33,7 @@ import java.util.*;
 import static com.google.bitcoin.core.ScriptOpCodes.*;
 import static com.google.bitcoin.core.Utils.bytesToHexString;
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkState;
 
 // TODO: Make this class a superclass with derived classes giving accessor methods for the various common templates.
 
@@ -48,6 +50,7 @@ import static com.google.common.base.Preconditions.checkArgument;
  */
 public class Script {
     private static final Logger log = LoggerFactory.getLogger(Script.class);
+    private static final long MAX_SCRIPT_ELEMENT_SIZE = 520;  // bytes
 
     /**
      * An element that is either an opcode or a raw byte array (signature, pubkey, etc).
@@ -64,13 +67,36 @@ public class Script {
         public boolean equalsOpCode(int opCode) {
             return isOpCode && data.length == 1 && (0xFF & data[0]) == opCode;
         }
+
+        public void write(OutputStream stream) throws IOException {
+            if (isOpCode) {
+                checkState(data.length == 1);
+                stream.write(data);
+            } else {
+                checkState(data.length <= MAX_SCRIPT_ELEMENT_SIZE);
+                if (data.length < OP_PUSHDATA1) {
+                    stream.write(data.length);
+                } else if (data.length <= 0xFF) {
+                    stream.write(OP_PUSHDATA1);
+                    stream.write(data.length);
+                } else if (data.length <= 0xFFFF) {
+                    stream.write(OP_PUSHDATA2);
+                    stream.write(0xFF & data.length);
+                    stream.write(0xFF & (data.length >> 8));
+                } else {
+                    stream.write(OP_PUSHDATA4);
+                    Utils.uint32ToByteStreamLE(data.length, stream);
+                }
+                stream.write(data);
+            }
+        }
     }
 
-    private byte[] program;
-    private int cursor;
-
     // The program is a set of chunks where each element is either [opcode] or [data, data, data ...]
-    List<Chunk> chunks;
+    protected List<Chunk> chunks;
+    // Unfortunately, scripts are not ever re-serialized or canonicalized when used in signature hashing. Thus we
+    // must preserve the exact bytes that we read off the wire, along with the parsed form.
+    protected byte[] program;
 
     // Only for internal use
     private Script() {}
@@ -81,7 +107,8 @@ public class Script {
      * @param programBytes Array of program bytes from a transaction.
      */
     public Script(byte[] programBytes) throws ScriptException {
-        parse(programBytes, 0, programBytes.length);
+        program = programBytes;
+        parse(programBytes);
     }
 
     /**
@@ -105,74 +132,64 @@ public class Script {
 
     /** Returns the serialized program as a newly created byte array. */
     public byte[] getProgram() {
-        return Arrays.copyOf(program, program.length);
-    }
-
-
-    private byte[] getData(int len) throws ScriptException {
-        if (len > program.length - cursor)
-            throw new ScriptException("Failed read of " + len + " bytes");
         try {
-            byte[] buf = new byte[len];
-            System.arraycopy(program, cursor, buf, 0, len);
-            cursor += len;
-            return buf;
-        } catch (ArrayIndexOutOfBoundsException e) {
-            // We want running out of data in the array to be treated as a handleable script parsing exception,
-            // not something that abnormally terminates the app.
-            throw new ScriptException("Failed read of " + len + " bytes", e);
-        } catch (NegativeArraySizeException e) {
-            // We want running out of data in the array to be treated as a handleable script parsing exception,
-            // not something that abnormally terminates the app.
-            throw new ScriptException("Failed read of " + len + " bytes", e);
-        }
-    }
-
-    private int readByte() throws ScriptException {
-        try {
-            return 0xFF & program[cursor++];
-        } catch (ArrayIndexOutOfBoundsException e) {
-            throw new ScriptException("Attempted to read outside of script boundaries");
+            // Don't round-trip as Satoshi's code doesn't and it would introduce a mismatch.
+            if (program != null)
+                return Arrays.copyOf(program, program.length);
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            for (Chunk chunk : chunks) {
+                chunk.write(bos);
+            }
+            return bos.toByteArray();
+        } catch (IOException e) {
+            throw new RuntimeException(e);  // Cannot happen.
         }
     }
 
     /**
-     * To run a script, first we parse it which breaks it up into chunks representing pushes of
-     * data or logical opcodes. Then we can run the parsed chunks.
-     * <p/>
-     * The reason for this split, instead of just interpreting directly, is to make it easier
+     * <p>To run a script, first we parse it which breaks it up into chunks representing pushes of data or logical
+     * opcodes. Then we can run the parsed chunks.</p>
+     *
+     * <p>The reason for this split, instead of just interpreting directly, is to make it easier
      * to reach into a programs structure and pull out bits of data without having to run it.
      * This is necessary to render the to/from addresses of transactions in a user interface.
-     * The official client does something similar.
+     * The official client does something similar.</p>
      */
-    private void parse(byte[] programBytes, int offset, int length) throws ScriptException {
-        // TODO: this is inefficient
-        program = new byte[length];
-        System.arraycopy(programBytes, offset, program, 0, length);
+    private void parse(byte[] program) throws ScriptException {
+        chunks = new ArrayList<Chunk>(10);  // Arbitrary choice.
+        ByteArrayInputStream bis = new ByteArrayInputStream(program);
+        int initialSize = bis.available();
+        while (bis.available() > 0) {
+            int startLocationInProgram = initialSize - bis.available();
+            int opcode = bis.read();
 
-        offset = 0;
-        chunks = new ArrayList<Chunk>(10);  // Arbitrary choice of initial size.
-        cursor = offset;
-        while (cursor < offset + length) {
-            int startLocationInProgram = cursor - offset;
-            int opcode = readByte();
+            long dataToRead = -1;
             if (opcode >= 0 && opcode < OP_PUSHDATA1) {
                 // Read some bytes of data, where how many is the opcode value itself.
-                chunks.add(new Chunk(false, getData(opcode), startLocationInProgram));  // opcode == len here.
+                dataToRead = opcode;
             } else if (opcode == OP_PUSHDATA1) {
-                int len = readByte();
-                chunks.add(new Chunk(false, getData(len), startLocationInProgram));
+                if (bis.available() < 1) throw new ScriptException("Unexpected end of script");
+                dataToRead = bis.read();
             } else if (opcode == OP_PUSHDATA2) {
                 // Read a short, then read that many bytes of data.
-                int len = readByte() | (readByte() << 8);
-                chunks.add(new Chunk(false, getData(len), startLocationInProgram));
+                if (bis.available() < 2) throw new ScriptException("Unexpected end of script");
+                dataToRead = bis.read() | (bis.read() << 8);
             } else if (opcode == OP_PUSHDATA4) {
                 // Read a uint32, then read that many bytes of data.
                 // Though this is allowed, because its value cannot be > 520, it should never actually be used
-                long len = readByte() | (readByte() << 8) | (readByte() << 16) | (readByte() << 24);
-                chunks.add(new Chunk(false, getData((int)len), startLocationInProgram));
-            } else {
+                if (bis.available() < 4) throw new ScriptException("Unexpected end of script");
+                dataToRead = bis.read() | (bis.read() << 8) | (bis.read() << 16) | (bis.read() << 24);
+            }
+
+            if (dataToRead == -1) {
                 chunks.add(new Chunk(true, new byte[]{(byte) opcode}, startLocationInProgram));
+            } else {
+                if (dataToRead > MAX_SCRIPT_ELEMENT_SIZE)
+                    throw new ScriptException("Push of data element that is larger than the max element size");
+                byte[] data = new byte[(int)dataToRead];
+                if (dataToRead > 0 && bis.read(data, 0, (int)dataToRead) < dataToRead)
+                    throw new ScriptException("Unexpected end of script");
+                chunks.add(new Chunk(false, data, startLocationInProgram));
             }
         }
     }
@@ -184,10 +201,8 @@ public class Script {
      * useful more exotic types of transaction, but today most payments are to addresses.
      */
     public boolean isSentToRawPubKey() {
-        if (chunks.size() != 2)
-            return false;
-        return chunks.get(1).equalsOpCode(OP_CHECKSIG) &&
-                !chunks.get(0).isOpCode && chunks.get(0).data.length > 1;
+        return chunks.size() == 2 && chunks.get(1).equalsOpCode(OP_CHECKSIG) &&
+               !chunks.get(0).isOpCode && chunks.get(0).data.length > 1;
     }
 
     /**
@@ -197,8 +212,8 @@ public class Script {
      * way to make payments due to the short and recognizable base58 form addresses come in.
      */
     public boolean isSentToAddress() {
-        if (chunks.size() != 5) return false;
-        return chunks.get(0).equalsOpCode(OP_DUP) &&
+        return chunks.size() == 5 &&
+               chunks.get(0).equalsOpCode(OP_DUP) &&
                chunks.get(1).equalsOpCode(OP_HASH160) &&
                chunks.get(2).data.length == Address.LENGTH &&
                chunks.get(3).equalsOpCode(OP_EQUALVERIFY) &&
@@ -424,7 +439,7 @@ public class Script {
     public static int getSigOpCount(byte[] program) throws ScriptException {
         Script script = new Script();
         try {
-            script.parse(program, 0, program.length);
+            script.parse(program);
         } catch (ScriptException e) {
             // Ignore errors and count up to the parse-able length
         }
@@ -437,14 +452,14 @@ public class Script {
     public static long getP2SHSigOpCount(byte[] scriptSig) throws ScriptException {
         Script script = new Script();
         try {
-            script.parse(scriptSig, 0, scriptSig.length);
+            script.parse(scriptSig);
         } catch (ScriptException e) {
             // Ignore errors and count up to the parse-able length
         }
         for (int i = script.chunks.size() - 1; i >= 0; i--)
             if (!script.chunks.get(i).isOpCode) {
                 Script subScript =  new Script();
-                subScript.parse(script.chunks.get(i).data, 0, script.chunks.get(i).data.length);
+                subScript.parse(script.chunks.get(i).data);
                 return getSigOpCount(subScript.chunks, true);
             }
         return 0;
@@ -464,6 +479,10 @@ public class Script {
      * Bitcoin system).</p>
      */
     public boolean isPayToScriptHash() {
+        // We have to check against the serialized form because BIP16 defines a P2SH output using an exact byte
+        // template, not the logical program structure. Thus you can have two programs that look identical when
+        // printed out but one is a P2SH script and the other isn't! :(
+        byte[] program = getProgram();
         return program.length == 23 &&
                (program[0] & 0xff) == OP_HASH160 &&
                (program[1] & 0xff) == 0x14 &&
@@ -581,9 +600,6 @@ public class Script {
             boolean shouldExecute = !ifStack.contains(false);
             
             if (!chunk.isOpCode) {
-                if (chunk.data.length > 520)
-                    throw new ScriptException("Attempted to push a data string larger than 520 bytes");
-                
                 if (!shouldExecute)
                     continue;
                 
@@ -1082,7 +1098,8 @@ public class Script {
         byte[] pubKey = stack.pollLast();
         byte[] sig = stack.pollLast();
 
-        byte[] connectedScript = Arrays.copyOfRange(script.program, lastCodeSepLocation, script.program.length);
+        byte[] prog = script.getProgram();
+        byte[] connectedScript = Arrays.copyOfRange(prog, lastCodeSepLocation, prog.length);
 
         UnsafeByteArrayOutputStream outStream = new UnsafeByteArrayOutputStream(sig.length + 1);
         try {
@@ -1138,7 +1155,8 @@ public class Script {
         for (int i = 0; i < sigCount; i++)
             sigs.add(stack.pollLast());
 
-        byte[] connectedScript = Arrays.copyOfRange(script.program, lastCodeSepLocation, script.program.length);
+        byte[] prog = script.getProgram();
+        byte[] connectedScript = Arrays.copyOfRange(prog, lastCodeSepLocation, prog.length);
 
         for (byte[] sig : sigs) {
             UnsafeByteArrayOutputStream outStream = new UnsafeByteArrayOutputStream(sig.length + 1);
@@ -1194,7 +1212,7 @@ public class Script {
      */
     public void correctlySpends(Transaction txContainingThis, long scriptSigIndex, Script scriptPubKey,
                                 boolean enforceP2SH) throws ScriptException {
-        if (program.length > 10000 || scriptPubKey.program.length > 10000)
+        if (getProgram().length > 10000 || scriptPubKey.getProgram().length > 10000)
             throw new ScriptException("Script larger than 10,000 bytes");
         
         LinkedList<byte[]> stack = new LinkedList<byte[]>();
