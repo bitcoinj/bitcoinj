@@ -157,6 +157,9 @@ public class BitcoindComparisonTool {
             } else if (!chain.getChainHead().getHeader().getHash().equals(block.hashChainTipAfterBlock)) {
                 log.error("New block head didn't match the correct value after block \"" + block.blockName + "\"");
                 invalidBlocks++;
+            } else if (chain.getChainHead().getHeight() != block.heightAfterBlock) {
+                log.error("New block head didn't match the correct height after block " + block.blockName);
+                invalidBlocks++;
             }
             
             bitcoind.sendMessage(block.block);

@@ -96,6 +96,10 @@ public class FullPrunedBlockChainTest {
                 log.error("New block head didn't match the correct value after block " + block.blockName);
                 fail();
             }
+            if (chain.getChainHead().getHeight() != block.heightAfterBlock) {
+                log.error("New block head didn't match the correct height after block " + block.blockName);
+                fail();
+            }
         }
     }
     
