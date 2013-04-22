@@ -47,9 +47,7 @@ class ScriptChunk {
         this.startLocationInProgram = startLocationInProgram;
     }
     public boolean equalsOpCode(int opCode) {
-        return isOpCode &&
-                data.length == 1 &&
-                (0xFF & data[0]) == opCode;
+        return isOpCode && data.length == 1 && (0xFF & data[0]) == opCode;
     }
 }
 
@@ -1560,7 +1558,6 @@ public class Script {
      * @param scriptSigIndex The index in txContainingThis of the scriptSig (note: NOT the index of the scriptPubKey).
      * @param scriptPubKey The connected scriptPubKey containing the conditions needed to claim the value.
      * @param enforceP2SH Whether "pay to script hash" rules should be enforced. If in doubt, set to true.
-     * @throws VerificationException if this script does not correctly spend the scriptPubKey
      */
     public void correctlySpends(Transaction txContainingThis, long scriptSigIndex, Script scriptPubKey,
                                 boolean enforceP2SH) throws ScriptException {
