@@ -93,8 +93,8 @@ public class ScriptTest {
     private synchronized static void initMapOpNames() {
         if (mapOpNames == null) {
             mapOpNames = new HashMap<String, Integer>();
-            for (int op = Script.OP_NOP; op <= Script.OP_NOP10; op++) {
-                String name = Script.getOpCodeName((byte)op);
+            for (int op = ScriptOpCodes.OP_NOP; op <= ScriptOpCodes.OP_NOP10; op++) {
+                String name = ScriptOpCodes.getOpCodeName((byte) op);
                 if (name.startsWith("NON_OP("))
                     continue;
                 // The reference client's implementation supports OP_*, but we only support *
@@ -116,7 +116,7 @@ public class ScriptTest {
                 // Number
                 long val = Long.parseLong(w);
                 if (val == -1 || (val >= 1 && val <= 16))
-                    out.write((int)val + Script.OP_1 - 1);
+                    out.write((int)val + ScriptOpCodes.OP_1 - 1);
                 else
                     Script.writeBytes(out, Utils.reverseBytes(Utils.encodeMPI(BigInteger.valueOf(val), false)));
             } else if (w.matches("^0x[0-9a-fA-F]*$")) {

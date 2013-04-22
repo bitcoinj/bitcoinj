@@ -843,7 +843,7 @@ public class Transaction extends ChildMessage implements Serializable {
             // OP_CODESEPARATOR instruction having no purpose as it was only meant to be used internally, not actually
             // ever put into scripts. Deleting OP_CODESEPARATOR is a step that should never be required but if we don't
             // do it, we could split off the main chain.
-            connectedScript = Script.removeAllInstancesOfOp(connectedScript, Script.OP_CODESEPARATOR);
+            connectedScript = Script.removeAllInstancesOfOp(connectedScript, ScriptOpCodes.OP_CODESEPARATOR);
             
             // Set the input to the script of its output. Satoshi does this but the step has no obvious purpose as
             // the signature covers the hash of the prevout transaction which obviously includes the output script
@@ -934,7 +934,10 @@ public class Transaction extends ChildMessage implements Serializable {
 
 
     /**
-     * @return the lockTime
+     * Transactions can have an associated lock time, specified either as a block height or in seconds since the
+     * UNIX epoch. A transaction is not allowed to be confirmed by miners until the lock time is reached, and
+     * since Bitcoin 0.8+ a transaction that did not end its lock period (non final) is considered to be non
+     * standard and won't be relayed or included in the memory pool either.
      */
     public long getLockTime() {
         maybeParse();
@@ -942,7 +945,10 @@ public class Transaction extends ChildMessage implements Serializable {
     }
 
     /**
-     * @param lockTime the lockTime to set
+     * Transactions can have an associated lock time, specified either as a block height or in seconds since the
+     * UNIX epoch. A transaction is not allowed to be confirmed by miners until the lock time is reached, and
+     * since Bitcoin 0.8+ a transaction that did not end its lock period (non final) is considered to be non
+     * standard and won't be relayed or included in the memory pool either.
      */
     public void setLockTime(long lockTime) {
         unCache();

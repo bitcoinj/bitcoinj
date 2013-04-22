@@ -160,9 +160,9 @@ public class BlockTest {
         // this is broken until the transaction has > 1 input + output (which is required anyway...)
         //assertTrue(tx.length == tx.bitcoinSerialize().length && tx.length == 8);
         byte[] outputScript = new byte[10];
-        Arrays.fill(outputScript, (byte)Script.OP_FALSE);
+        Arrays.fill(outputScript, (byte) ScriptOpCodes.OP_FALSE);
         tx.addOutput(new TransactionOutput(params, null, BigInteger.valueOf(1), outputScript));
-        tx.addInput(new TransactionInput(params, null, new byte[] {(byte)Script.OP_FALSE},
+        tx.addInput(new TransactionInput(params, null, new byte[] {(byte) ScriptOpCodes.OP_FALSE},
                 new TransactionOutPoint(params, 0, Sha256Hash.create(new byte[] {1}))));
         int origTxLength = 8 + 2 + 8 + 1 + 10 + 40 + 1 + 1;
         assertEquals(tx.bitcoinSerialize().length, tx.length);
@@ -170,14 +170,14 @@ public class BlockTest {
         block.addTransaction(tx);
         assertEquals(block.bitcoinSerialize().length, block.length);
         assertEquals(origBlockLen + tx.length, block.length);
-        block.getTransactions().get(1).getInputs().get(0).setScriptBytes(new byte[] {(byte)Script.OP_FALSE, (byte)Script.OP_FALSE});
+        block.getTransactions().get(1).getInputs().get(0).setScriptBytes(new byte[] {(byte) ScriptOpCodes.OP_FALSE, (byte) ScriptOpCodes.OP_FALSE});
         assertEquals(block.length, origBlockLen + tx.length);
         assertEquals(tx.length, origTxLength + 1);
         block.getTransactions().get(1).getInputs().get(0).setScriptBytes(new byte[] {});
         assertEquals(block.length, block.bitcoinSerialize().length);
         assertEquals(block.length, origBlockLen + tx.length);
         assertEquals(tx.length, origTxLength - 1);
-        block.getTransactions().get(1).addInput(new TransactionInput(params, null, new byte[] {(byte)Script.OP_FALSE},
+        block.getTransactions().get(1).addInput(new TransactionInput(params, null, new byte[] {(byte) ScriptOpCodes.OP_FALSE},
                 new TransactionOutPoint(params, 0, Sha256Hash.create(new byte[] {1}))));
         assertEquals(block.length, origBlockLen + tx.length);
         assertEquals(tx.length, origTxLength + 41); // - 1 + 40 + 1 + 1
