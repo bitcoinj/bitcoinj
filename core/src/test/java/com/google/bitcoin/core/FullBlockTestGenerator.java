@@ -1288,6 +1288,105 @@ public class FullBlockTestGenerator {
                 b72.getTransactions().get(0).getOutputs().get(0).getValue(),
                 b72.getTransactions().get(0).getOutputs().get(0).getScriptPubKey()));
         
+        // The remaining tests arent designed to fit in the standard flow, and thus must always come last
+        // Add new tests here.
+        
+        // Test massive reorgs (in terms of tx count)
+        // -> b60 (17) -> b64 (18) -> b65 (19) -> b69 (20) -> b72 (21) -> b73 (22) -> lots of outputs -> lots of spends
+        // Reorg back to:
+        // -> b60 (17) -> b64 (18) -> b65 (19) -> b69 (20) -> b72 (21) -> b73 (22) -> empty blocks
+        //
+        TransactionOutPointWithValue out22 = spendableOutputs.poll(); Preconditions.checkState(out22 != null);
+        Block b73 = createNextBlock(b72, chainHeadHeight + 23, out22, null);
+        blocks.add(new BlockAndValidity(blockToHeightMap, b73, true, false, b73.getHash(), chainHeadHeight + 23, "b73"));
+        spendableOutputs.offer(new TransactionOutPointWithValue(
+                new TransactionOutPoint(params, 0, b73.getTransactions().get(0).getHash()),
+                b73.getTransactions().get(0).getOutputs().get(0).getValue(),
+                b73.getTransactions().get(0).getOutputs().get(0).getScriptPubKey()));
+        
+        if (addExpensiveBlocks) {
+            Block lastBlock = b73;
+            int nextHeight = chainHeadHeight + 24;
+            TransactionOutPoint lastOutput = new TransactionOutPoint(params, 2, b73.getTransactions().get(1).getHash());
+            int blockCountAfter73;
+            
+            List<Sha256Hash> hashesToSpend = new LinkedList<Sha256Hash>(); // all index 0
+            final int TRANSACTION_CREATION_BLOCKS = 50;
+            for (blockCountAfter73 = 0; blockCountAfter73 < TRANSACTION_CREATION_BLOCKS; blockCountAfter73++) {
+                Block block = createNextBlock(lastBlock, nextHeight++, null, null);
+                while (block.getMessageSize() < Block.MAX_BLOCK_SIZE - 500) {
+                    Transaction tx = new Transaction(params);
+                    tx.addInput(new TransactionInput(params, tx, new byte[] { OP_TRUE }, lastOutput));
+                    tx.addOutput(new TransactionOutput(params, tx, BigInteger.ZERO, new byte[] { OP_TRUE }));
+                    tx.addOutput(new TransactionOutput(params, tx, BigInteger.ZERO, new byte[] { OP_TRUE }));
+                    lastOutput = new TransactionOutPoint(params, 1, tx.getHash());
+                    hashesToSpend.add(tx.getHash());
+                    block.addTransaction(tx);
+                }
+                block.solve();
+                blocks.add(new BlockAndValidity(blockToHeightMap, block, true, false, block.getHash(), nextHeight-1,
+                                                "post-b73 repeated transaction generator " + blockCountAfter73 + "/" + TRANSACTION_CREATION_BLOCKS));
+                lastBlock = block;
+            }
+
+            Iterator<Sha256Hash> hashes = hashesToSpend.iterator();
+            for (int i = 0; hashes.hasNext(); i++) {
+                Block block = createNextBlock(lastBlock, nextHeight++, null, null);
+                while (block.getMessageSize() < Block.MAX_BLOCK_SIZE - 500 && hashes.hasNext()) {
+                    Transaction tx = new Transaction(params);
+                    tx.addInput(new TransactionInput(params, tx, new byte[] { OP_TRUE },
+                                    new TransactionOutPoint(params, 0, hashes.next())));
+                    tx.addOutput(new TransactionOutput(params, tx, BigInteger.ZERO, new byte[] { OP_TRUE }));
+                    block.addTransaction(tx);
+                }
+                block.solve();
+                blocks.add(new BlockAndValidity(blockToHeightMap, block, true, false, block.getHash(), nextHeight-1, "post-b73 repeated transaction spender " + i));
+                lastBlock = block;
+                blockCountAfter73++;
+            }
+            
+            // Reorg back to b73 + empty blocks
+            Sha256Hash firstHash = lastBlock.getHash();
+            int height = nextHeight-1;
+            nextHeight = chainHeadHeight + 24;
+            lastBlock = b73;
+            for (int i = 0; i < blockCountAfter73; i++) {
+                Block block = createNextBlock(lastBlock, nextHeight++, null, null);
+                blocks.add(new BlockAndValidity(blockToHeightMap, block, true, false, firstHash, height, "post-b73 empty reorg block " + i + "/" + blockCountAfter73));
+                lastBlock = block;
+            }
+            
+            // Try to spend from the other chain
+            Block b74 = createNextBlock(lastBlock, nextHeight, null, null);
+            {
+                Transaction tx = new Transaction(params);
+                tx.addInput(new TransactionInput(params, tx, new byte[] {OP_TRUE},
+                            new TransactionOutPoint(params, 0, hashesToSpend.get(0))));
+                tx.addOutput(new TransactionOutput(params, tx, BigInteger.ZERO, new byte[] { OP_TRUE }));
+                b74.addTransaction(tx);
+            }
+            b74.solve();
+            blocks.add(new BlockAndValidity(blockToHeightMap, b74, false, true, firstHash, height, "b74"));
+            
+            // Now actually reorg
+            Block b75 = createNextBlock(lastBlock, nextHeight, null, null);
+            blocks.add(new BlockAndValidity(blockToHeightMap, b75, true, false, b75.getHash(), nextHeight, "b75"));
+            
+            // Now try to spend again
+            Block b76 = createNextBlock(b75, nextHeight+1, null, null);
+            {
+                Transaction tx = new Transaction(params);
+                tx.addInput(new TransactionInput(params, tx, new byte[] {OP_TRUE},
+                            new TransactionOutPoint(params, 0, hashesToSpend.get(0))));
+                tx.addOutput(new TransactionOutput(params, tx, BigInteger.ZERO, new byte[] { OP_TRUE }));
+                b76.addTransaction(tx);
+            }
+            b76.solve();
+            blocks.add(new BlockAndValidity(blockToHeightMap, b76, false, true, b75.getHash(), nextHeight, "b74"));
+            
+            ret.maximumReorgBlockCount = Math.max(ret.maximumReorgBlockCount, blockCountAfter73);
+        }
+        
         //TODO: Explicitly address MoneyRange() checks
         
         // (finally) return the created chain
