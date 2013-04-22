@@ -42,9 +42,6 @@ import static org.junit.Assert.*;
 public class FullPrunedBlockChainTest {
     private static final Logger log = LoggerFactory.getLogger(FullPrunedBlockChainTest.class);
 
-    // The number of undoable blocks to keep around
-    private static final int UNDOABLE_BLOCKS_STORED = 10;
-    
     private NetworkParameters unitTestParams;
     private FullPrunedBlockChain chain;
     private FullPrunedBlockStore store;
@@ -57,9 +54,6 @@ public class FullPrunedBlockChainTest {
         unitTestParams = NetworkParameters.unitTests();
         oldInterval = unitTestParams.interval;
         unitTestParams.interval = 10000;
-        
-        store = new MemoryFullPrunedBlockStore(unitTestParams, UNDOABLE_BLOCKS_STORED);
-        chain = new FullPrunedBlockChain(unitTestParams, store);
     }
 
     @After
@@ -69,10 +63,14 @@ public class FullPrunedBlockChainTest {
     
     @Test
     public void testGeneratedChain() throws Exception {
-        // Tests various test cases from FullBlockTestGenerator
+        // Tests various test cases from FullBlockTestGenerator        
         FullBlockTestGenerator generator = new FullBlockTestGenerator(unitTestParams);
-        List<BlockAndValidity> blockList = generator.getBlocksToTest(false);
-        for (BlockAndValidity block : blockList) {
+        BlockAndValidityList blockList = generator.getBlocksToTest(false);
+        
+        store = new MemoryFullPrunedBlockStore(unitTestParams, blockList.maximumReorgBlockCount);
+        chain = new FullPrunedBlockChain(unitTestParams, store);
+        
+        for (BlockAndValidity block : blockList.list) {
             boolean threw = false;
             try {
                 if (chain.add(block.block) != block.connects) {
@@ -103,6 +101,10 @@ public class FullPrunedBlockChainTest {
     
     @Test
     public void testFinalizedBlocks() throws Exception {
+        final int UNDOABLE_BLOCKS_STORED = 10;
+        store = new MemoryFullPrunedBlockStore(unitTestParams, UNDOABLE_BLOCKS_STORED);
+        chain = new FullPrunedBlockChain(unitTestParams, store);
+        
         // Check that we aren't accidentally leaving any references
         // to the full StoredUndoableBlock's lying around (ie memory leaks)
         

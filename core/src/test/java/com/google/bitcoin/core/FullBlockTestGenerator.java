@@ -40,6 +40,15 @@ class TransactionOutPointWithValue {
     }
 }
 
+class BlockAndValidityList {
+    public List<BlockAndValidity> list;
+    public int maximumReorgBlockCount;
+    public BlockAndValidityList(List<BlockAndValidity> list, int maximumReorgBlockCount) {
+        this.list = list;
+        this.maximumReorgBlockCount = maximumReorgBlockCount;
+    }
+}
+
 public class FullBlockTestGenerator {
     // Used by BitcoindComparisonTool and FullPrunedBlockChainTest to create test cases
     private NetworkParameters params;
@@ -53,8 +62,9 @@ public class FullBlockTestGenerator {
         Utils.rollMockClock(0); // Set a mock clock for timestamp tests
     }
 
-    public List<BlockAndValidity> getBlocksToTest(boolean addExpensiveBlocks) throws ScriptException, ProtocolException, IOException {
+    public BlockAndValidityList getBlocksToTest(boolean addExpensiveBlocks) throws ScriptException, ProtocolException, IOException {
         List<BlockAndValidity> blocks = new LinkedList<BlockAndValidity>();
+        BlockAndValidityList ret = new BlockAndValidityList(blocks, 10);
         
         Queue<TransactionOutPointWithValue> spendableOutputs = new LinkedList<TransactionOutPointWithValue>();
         
@@ -1262,7 +1272,7 @@ public class FullBlockTestGenerator {
         //TODO: Explicitly address MoneyRange() checks
         
         // (finally) return the created chain
-        return blocks;
+        return ret;
     }
     
     private Block createNextBlock(Block baseBlock, int nextBlockHeight, TransactionOutPointWithValue prevOut,

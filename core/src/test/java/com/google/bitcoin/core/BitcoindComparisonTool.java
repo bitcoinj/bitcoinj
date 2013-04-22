@@ -68,11 +68,14 @@ public class BitcoindComparisonTool {
         params.genesisBlock.setDifficultyTarget(0x207fFFFFL);
         // Also set block.nTime    = 1296688602; in the same block
         
+        FullBlockTestGenerator generator = new FullBlockTestGenerator(params);
+        BlockAndValidityList blockList = generator.getBlocksToTest(true);
+        
         // Only needs to be set in bitcoinj
         params.allowEmptyPeerChains = true;
         
         try {
-            store = new MemoryFullPrunedBlockStore(params, 10);
+            store = new MemoryFullPrunedBlockStore(params, blockList.maximumReorgBlockCount);
             chain = new FullPrunedBlockChain(params, store);
         } catch (BlockStoreException e) {
             e.printStackTrace();
@@ -128,14 +131,10 @@ public class BitcoindComparisonTool {
         ArrayList<Sha256Hash> locator = new ArrayList<Sha256Hash>(1);
         locator.add(params.genesisBlock.getHash());
         Sha256Hash hashTo = new Sha256Hash("0000000000000000000000000000000000000000000000000000000000000000");
-        
-        // Tests various test cases from FullBlockTestGenerator
-        FullBlockTestGenerator generator = new FullBlockTestGenerator(params);
-        List<BlockAndValidity> blockList = generator.getBlocksToTest(true);
-        
+                
         int differingBlocks = 0;
         int invalidBlocks = 0;
-        for (BlockAndValidity block : blockList) {
+        for (BlockAndValidity block : blockList.list) {
             boolean threw = false;
             try {
                 if (chain.add(block.block) != block.connects) {
