@@ -1,6 +1,7 @@
 package com.google.bitcoin.core;
 
 import com.google.bitcoin.core.Transaction.SigHash;
+import com.google.bitcoin.script.Script;
 import com.google.common.base.Preconditions;
 
 import java.io.ByteArrayOutputStream;
@@ -8,7 +9,7 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.util.*;
 
-import static com.google.bitcoin.core.ScriptOpCodes.*;
+import static com.google.bitcoin.script.ScriptOpCodes.*;
 
 class BlockAndValidity {
     Block block;

@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package com.google.bitcoin.core;
+package com.google.bitcoin.script;
 
 /**
  * Various constants that define the assembly-like scripting language that forms part of the Bitcoin protocol.
- * See {@link Script} for details. Also provides a method to convert them to a string.
+ * See {@link com.google.bitcoin.script.Script} for details. Also provides a method to convert them to a string.
  */
 public class ScriptOpCodes {
     // push value

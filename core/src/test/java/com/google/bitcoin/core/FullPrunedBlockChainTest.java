@@ -18,6 +18,7 @@
 package com.google.bitcoin.core;
 
 import com.google.bitcoin.core.Transaction.SigHash;
+import com.google.bitcoin.script.Script;
 import com.google.bitcoin.store.FullPrunedBlockStore;
 import com.google.bitcoin.store.MemoryFullPrunedBlockStore;
 import com.google.bitcoin.utils.BriefLogFormatter;

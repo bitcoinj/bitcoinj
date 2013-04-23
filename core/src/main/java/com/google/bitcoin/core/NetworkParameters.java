@@ -16,6 +16,8 @@
 
 package com.google.bitcoin.core;
 
+import com.google.bitcoin.script.Script;
+import com.google.bitcoin.script.ScriptOpCodes;
 import com.google.common.base.Objects;
 import org.spongycastle.util.encoders.Hex;
 

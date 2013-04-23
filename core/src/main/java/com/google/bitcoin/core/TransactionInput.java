@@ -16,6 +16,7 @@
 
 package com.google.bitcoin.core;
 
+import com.google.bitcoin.script.Script;
 import com.google.common.base.Preconditions;
 
 import java.io.IOException;

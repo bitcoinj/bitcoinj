@@ -16,6 +16,7 @@
 
 package com.google.bitcoin.core;
 
+import com.google.bitcoin.script.Script;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

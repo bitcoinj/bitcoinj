@@ -15,8 +15,9 @@
  * limitations under the License.
  */
 
-package com.google.bitcoin.core;
+package com.google.bitcoin.script;
 
+import com.google.bitcoin.core.*;
 import com.google.common.collect.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,7 +32,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
 
-import static com.google.bitcoin.core.ScriptOpCodes.*;
+import static com.google.bitcoin.script.ScriptOpCodes.*;
 import static com.google.bitcoin.core.Utils.bytesToHexString;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
@@ -304,7 +305,7 @@ public class Script {
      * Writes out the given byte buffer to the output stream with the correct opcode prefix
      * To write an integer call writeBytes(out, Utils.reverseBytes(Utils.encodeMPI(val, false)));
      */
-    static void writeBytes(OutputStream os, byte[] buf) throws IOException {
+    public static void writeBytes(OutputStream os, byte[] buf) throws IOException {
         if (buf.length < OP_PUSHDATA1) {
             os.write(buf.length);
             os.write(buf);
