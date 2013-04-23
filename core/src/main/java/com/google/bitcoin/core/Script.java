@@ -17,6 +17,7 @@
 
 package com.google.bitcoin.core;
 
+import com.google.common.collect.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.crypto.digests.RIPEMD160Digest;
@@ -56,16 +57,31 @@ public class Script {
      * An element that is either an opcode or a raw byte array (signature, pubkey, etc).
      */
     public static class Chunk {
-        public boolean isOpCode;
+        private boolean isOpCode;
         public byte[] data;
-        public int startLocationInProgram;
+        private int startLocationInProgram;
+
+        public Chunk(boolean isOpCode, byte[] data) {
+            this(isOpCode, data, -1);
+        }
+
         public Chunk(boolean isOpCode, byte[] data, int startLocationInProgram) {
             this.isOpCode = isOpCode;
             this.data = data;
             this.startLocationInProgram = startLocationInProgram;
         }
+
         public boolean equalsOpCode(int opCode) {
             return isOpCode && data.length == 1 && (0xFF & data[0]) == opCode;
+        }
+
+        public boolean isOpCode() {
+            return isOpCode;
+        }
+
+        public int getStartLocationInProgram() {
+            checkState(startLocationInProgram >= 0);
+            return startLocationInProgram;
         }
 
         public void write(OutputStream stream) throws IOException {
@@ -98,8 +114,10 @@ public class Script {
     // must preserve the exact bytes that we read off the wire, along with the parsed form.
     protected byte[] program;
 
-    // Only for internal use
-    private Script() {}
+    /** Creates an empty script that serializes to nothing. */
+    public Script() {
+        chunks = Lists.newArrayList();
+    }
 
     /**
      * Construct a Script that copies and wraps the programBytes array. The array is parsed and checked for syntactic
@@ -144,6 +162,11 @@ public class Script {
         } catch (IOException e) {
             throw new RuntimeException(e);  // Cannot happen.
         }
+    }
+
+    /** Returns an immutable list of the scripts parsed form. */
+    public List<Chunk> getChunks() {
+        return Collections.unmodifiableList(chunks);
     }
 
     /**
@@ -1056,7 +1079,7 @@ public class Script {
                     stack.add(Utils.doubleDigest(stack.pollLast()));
                     break;
                 case OP_CODESEPARATOR:
-                    lastCodeSepLocation = chunk.startLocationInProgram + 1;
+                    lastCodeSepLocation = chunk.getStartLocationInProgram() + 1;
                     break;
                 case OP_CHECKSIG:
                 case OP_CHECKSIGVERIFY:

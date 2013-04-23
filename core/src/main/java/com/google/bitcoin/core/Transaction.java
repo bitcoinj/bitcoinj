@@ -599,11 +599,11 @@ public class Transaction extends ChildMessage implements Serializable {
 
             try {
                 Script scriptSig = in.getScriptSig();
-                if (scriptSig.chunks.size() == 2)
+                if (scriptSig.getChunks().size() == 2)
                     s.append(scriptSig.getFromAddress(params).toString());
-                else if (scriptSig.chunks.size() == 1) {
+                else if (scriptSig.getChunks().size() == 1) {
                     s.append("[sig:");
-                    s.append(bytesToHexString(scriptSig.chunks.get(0).data));
+                    s.append(bytesToHexString(scriptSig.getChunks().get(0).data));
                     s.append("]");
                 } else
                     s.append("???");
@@ -813,7 +813,7 @@ public class Transaction extends ChildMessage implements Serializable {
      * This is required for signatures which use a sigHashType which cannot be represented using SigHash and anyoneCanPay
      * See transaction c99c49da4c38af669dea436d3e73780dfdb6c1ecf9958baa52960e8baee30e73, which has sigHashType 0
      */
-    synchronized Sha256Hash hashTransactionForSignature(int inputIndex, byte[] connectedScript,
+    public synchronized Sha256Hash hashTransactionForSignature(int inputIndex, byte[] connectedScript,
             byte sigHashType) throws ScriptException {
         // TODO: This whole separate method should be un-necessary if we fix how we deserialize sighash flags.
 

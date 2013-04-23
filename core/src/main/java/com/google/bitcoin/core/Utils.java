@@ -347,7 +347,7 @@ public class Utils {
      * the number in big endian format (with a sign bit).
      * @param hasLength can be set to false if the given array is missing the 4 byte length field
      */
-    static BigInteger decodeMPI(byte[] mpi, boolean hasLength) {
+    public static BigInteger decodeMPI(byte[] mpi, boolean hasLength) {
         byte[] buf;
         if (hasLength) {
             int length = (int) readUint32BE(mpi, 0);
@@ -370,7 +370,7 @@ public class Utils {
      * the number in big endian format (with a sign bit).
      * @param includeLength indicates whether the 4 byte length field should be included
      */
-    static byte[] encodeMPI(BigInteger value, boolean includeLength) {
+    public static byte[] encodeMPI(BigInteger value, boolean includeLength) {
         if (value.equals(BigInteger.ZERO)) {
             if (!includeLength)
                 return new byte[] {};

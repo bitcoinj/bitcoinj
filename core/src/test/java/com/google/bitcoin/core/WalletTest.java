@@ -853,8 +853,8 @@ public class WalletTest extends TestWithWallet {
         Transaction t2 = wallet.createSend(new ECKey().toAddress(params), value);
         assertNotNull(t2);
         // TODO: This code is messy, improve the Script class and fixinate!
-        assertEquals(t2.toString(), 1, t2.getInputs().get(0).getScriptSig().chunks.size());
-        assertTrue(t2.getInputs().get(0).getScriptSig().chunks.get(0).data.length > 50);
+        assertEquals(t2.toString(), 1, t2.getInputs().get(0).getScriptSig().getChunks().size());
+        assertTrue(t2.getInputs().get(0).getScriptSig().getChunks().get(0).data.length > 50);
         log.info(t2.toString(chain));
     }
 
