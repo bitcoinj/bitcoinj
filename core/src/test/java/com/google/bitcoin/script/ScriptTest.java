@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-package com.google.bitcoin.core;
+package com.google.bitcoin.script;
 
+import com.google.bitcoin.core.*;
 import com.google.bitcoin.script.Script;
 import com.google.bitcoin.script.ScriptOpCodes;
 import com.google.common.collect.Lists;

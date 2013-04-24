@@ -169,25 +169,16 @@ public class TransactionOutPoint extends ChildMessage implements Serializable {
         return hash;
     }
 
-    /**
-     * @param hash the hash to set
-     */
     void setHash(Sha256Hash hash) {
         this.hash = hash;
     }
 
-    /**
-     * @return the index
-     */
     public long getIndex() {
         maybeParse();
         return index;
     }
     
-    /**
-     * @param index the index to set
-     */
-    void setIndex(long index) {
+    public void setIndex(long index) {
         this.index = index;
     }
 
