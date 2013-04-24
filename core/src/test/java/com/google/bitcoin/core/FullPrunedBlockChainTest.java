@@ -65,7 +65,7 @@ public class FullPrunedBlockChainTest {
     public void testGeneratedChain() throws Exception {
         // Tests various test cases from FullBlockTestGenerator        
         FullBlockTestGenerator generator = new FullBlockTestGenerator(unitTestParams);
-        BlockAndValidityList blockList = generator.getBlocksToTest(false);
+        BlockAndValidityList blockList = generator.getBlocksToTest(false, false);
         
         store = new MemoryFullPrunedBlockStore(unitTestParams, blockList.maximumReorgBlockCount);
         chain = new FullPrunedBlockChain(unitTestParams, store);

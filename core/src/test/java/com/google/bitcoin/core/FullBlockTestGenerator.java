@@ -75,7 +75,7 @@ public class FullBlockTestGenerator {
         Utils.rollMockClock(0); // Set a mock clock for timestamp tests
     }
 
-    public BlockAndValidityList getBlocksToTest(boolean addExpensiveBlocks) throws ScriptException, ProtocolException, IOException {
+    public BlockAndValidityList getBlocksToTest(boolean addSigExpensiveBlocks, boolean runLargeReorgs) throws ScriptException, ProtocolException, IOException {
         List<BlockAndValidity> blocks = new LinkedList<BlockAndValidity>();
         BlockAndValidityList ret = new BlockAndValidityList(blocks, 10);
         
@@ -730,7 +730,7 @@ public class FullBlockTestGenerator {
         blocks.add(new BlockAndValidity(blockToHeightMap, b40, false, true, b39.getHash(), chainHeadHeight + 12, "b40"));
         
         Block b41 = null;
-        if (addExpensiveBlocks) {
+        if (addSigExpensiveBlocks) {
             b41 = createNextBlock(b39, chainHeadHeight + 13, out12, null);
             {
                 int sigOps = 0;
@@ -1304,7 +1304,7 @@ public class FullBlockTestGenerator {
                 b73.getTransactions().get(0).getOutputs().get(0).getValue(),
                 b73.getTransactions().get(0).getOutputs().get(0).getScriptPubKey()));
         
-        if (addExpensiveBlocks) {
+        if (runLargeReorgs) {
             Block lastBlock = b73;
             int nextHeight = chainHeadHeight + 24;
             TransactionOutPoint lastOutput = new TransactionOutPoint(params, 2, b73.getTransactions().get(1).getHash());

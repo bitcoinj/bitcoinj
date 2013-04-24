@@ -45,6 +45,8 @@ public class BitcoindComparisonTool {
     
     public static void main(String[] args) throws Exception {
         BriefLogFormatter.init();
+        System.out.println("USAGE: runLargeReorgs(1/0)");
+        boolean runLargeReorgs = Integer.parseInt(args[0]) == 1;
 
         params = NetworkParameters.testNet2();
         /**
@@ -53,7 +55,7 @@ public class BitcoindComparisonTool {
          * You can also opt to comment out these lines to use the default, however that will cause this tool to be
          * very significantly less efficient and useful (it will likely run forever trying to mine new blocks).
          * 
-         * You could also simply use git apply to apply the "bitcoind-comparison.patch" file included with bitcoinj
+         * You could also simply use git apply to apply the test-patches included with bitcoind
          */
         
         // bnProofOfWorkLimit set in main.cpp
@@ -69,7 +71,7 @@ public class BitcoindComparisonTool {
         // Also set block.nTime    = 1296688602; in the same block
         
         FullBlockTestGenerator generator = new FullBlockTestGenerator(params);
-        BlockAndValidityList blockList = generator.getBlocksToTest(true);
+        BlockAndValidityList blockList = generator.getBlocksToTest(true, runLargeReorgs);
         
         // Only needs to be set in bitcoinj
         params.allowEmptyPeerChains = true;
