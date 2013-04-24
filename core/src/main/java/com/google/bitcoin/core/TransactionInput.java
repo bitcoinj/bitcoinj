@@ -154,7 +154,8 @@ public class TransactionInput extends ChildMessage implements Serializable {
     }
 
     /**
-     * Returns the input script.
+     * Returns the script that is fed to the referenced output (scriptPubKey) script in order to satisfy it: usually
+     * contains signatures and maybe keys, but can contain arbitrary data if the output script accepts it.
      */
     public Script getScriptSig() throws ScriptException {
         // Transactions that generate new coins don't actually have a script. Instead this
@@ -164,6 +165,13 @@ public class TransactionInput extends ChildMessage implements Serializable {
             scriptSig = new Script(Preconditions.checkNotNull(scriptBytes));
         }
         return scriptSig;
+    }
+
+    /** Set the given program as the scriptSig that is supposed to satisfy the connected output script. */
+    public void setScriptSig(Script scriptSig) {
+        this.scriptSig = checkNotNull(scriptSig);
+        // TODO: This should all be cleaned up so we have a consistent internal representation.
+        setScriptBytes(scriptSig.getProgram());
     }
 
     /**

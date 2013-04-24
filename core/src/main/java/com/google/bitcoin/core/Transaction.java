@@ -18,6 +18,7 @@ package com.google.bitcoin.core;
 
 import com.google.bitcoin.core.TransactionConfidence.ConfidenceType;
 import com.google.bitcoin.script.Script;
+import com.google.bitcoin.script.ScriptBuilder;
 import com.google.bitcoin.script.ScriptOpCodes;
 import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
@@ -714,17 +715,16 @@ public class Transaction extends ChildMessage implements Serializable {
     }
 
     /**
-     * Once a transaction has some inputs and outputs added, the signatures in the inputs can be calculated. The
+     * <p>Once a transaction has some inputs and outputs added, the signatures in the inputs can be calculated. The
      * signature is over the transaction itself, to prove the redeemer actually created that transaction,
-     * so we have to do this step last.<p>
-     * <p/>
-     * This method is similar to SignatureHash in script.cpp
+     * so we have to do this step last.</p>
      *
      * @param hashType This should always be set to SigHash.ALL currently. Other types are unused.
-     * @param wallet   A wallet is required to fetch the keys needed for signing.
+     * @param wallet  A wallet is required to fetch the keys needed for signing.
      * @param aesKey The AES key to use to decrypt the key before signing. Null if no decryption is required.
      */
     public synchronized void signInputs(SigHash hashType, Wallet wallet, KeyParameter aesKey) throws ScriptException {
+        // TODO: This should be a method of the TransactionInput that (possibly?) operates with a copy of this object.
         Preconditions.checkState(inputs.size() > 0);
         Preconditions.checkState(outputs.size() > 0);
 
@@ -738,7 +738,8 @@ public class Transaction extends ChildMessage implements Serializable {
         // Note that each input may be claiming an output sent to a different key. So we have to look at the outputs
         // to figure out which key to sign with.
 
-        byte[][] signatures = new byte[inputs.size()][];
+        int[] sigHashFlags = new int[inputs.size()];
+        ECKey.ECDSASignature[] signatures = new ECKey.ECDSASignature[inputs.size()];
         ECKey[] signingKeys = new ECKey[inputs.size()];
         for (int i = 0; i < inputs.size(); i++) {
             TransactionInput input = inputs.get(i);
@@ -756,18 +757,10 @@ public class Transaction extends ChildMessage implements Serializable {
             byte[] connectedPubKeyScript = input.getOutpoint().getConnectedPubKeyScript();
             Sha256Hash hash = hashTransactionForSignature(i, connectedPubKeyScript, hashType, anyoneCanPay);
 
-            // Now sign for the output so we can redeem it. We use the keypair to sign the hash,
-            // and then put the resulting signature in the script along with the public key (below).
-            try {
-                // Usually 71-73 bytes.
-                ByteArrayOutputStream bos = new UnsafeByteArrayOutputStream(73);
-                bos.write(key.sign(hash, aesKey).encodeToDER());
-                bos.write((hashType.ordinal() + 1) | (anyoneCanPay ? 0x80 : 0));
-                signatures[i] = bos.toByteArray();
-                bos.close();
-            } catch (IOException e) {
-                throw new RuntimeException(e);  // Cannot happen.
-            }
+            // Now calculate the signatures we need to prove we own this transaction and are authorized to claim the
+            // associated money.
+            signatures[i] = key.sign(hash, aesKey);
+            sigHashFlags[i] = (hashType.ordinal() + 1) | (anyoneCanPay ? 0x80 : 0);
         }
 
         // Now we have calculated each signature, go through and create the scripts. Reminder: the script consists:
@@ -777,12 +770,11 @@ public class Transaction extends ChildMessage implements Serializable {
         // 2) For pay-to-key outputs: just a signature.
         for (int i = 0; i < inputs.size(); i++) {
             TransactionInput input = inputs.get(i);
-            ECKey key = signingKeys[i];
             Script scriptPubKey = input.getOutpoint().getConnectedOutput().getScriptPubKey();
             if (scriptPubKey.isSentToAddress()) {
-                input.setScriptBytes(Script.createInputScript(signatures[i], key.getPubKey()));
+                input.setScriptSig(ScriptBuilder.createInputScript(signatures[i], signingKeys[i], sigHashFlags[i]));
             } else if (scriptPubKey.isSentToRawPubKey()) {
-                input.setScriptBytes(Script.createInputScript(signatures[i]));
+                input.setScriptSig(ScriptBuilder.createInputScript(signatures[i], sigHashFlags[i]));
             } else {
                 // Should be unreachable - if we don't recognize the type of script we're trying to sign for, we should
                 // have failed above when fetching the key to sign with.

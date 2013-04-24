@@ -17,6 +17,7 @@
 package com.google.bitcoin.core;
 
 import com.google.bitcoin.script.Script;
+import com.google.bitcoin.script.ScriptBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -91,7 +92,7 @@ public class TransactionOutput extends ChildMessage implements Serializable {
      * {@link Transaction#addOutput(java.math.BigInteger, Address)} instead of creating a TransactionOutput directly.
      */
     public TransactionOutput(NetworkParameters params, Transaction parent, BigInteger value, Address to) {
-        this(params, parent, value, Script.createOutputScript(to));
+        this(params, parent, value, ScriptBuilder.createOutputScript(to).getProgram());
     }
 
     /**
@@ -100,7 +101,7 @@ public class TransactionOutput extends ChildMessage implements Serializable {
      * {@link Transaction#addOutput(java.math.BigInteger, ECKey)} instead of creating an output directly.
      */
     public TransactionOutput(NetworkParameters params, Transaction parent, BigInteger value, ECKey to) {
-        this(params, parent, value, Script.createOutputScript(to));
+        this(params, parent, value, ScriptBuilder.createOutputScript(to).getProgram());
     }
 
     public TransactionOutput(NetworkParameters params, Transaction parent, BigInteger value, byte[] scriptBytes) {

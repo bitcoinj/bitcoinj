@@ -66,9 +66,9 @@ public class ScriptTest {
     @Test
     public void testMultiSig() throws Exception {
         List<ECKey> keys = Lists.newArrayList(new ECKey(), new ECKey(), new ECKey());
-        assertTrue(new Script(Script.createMultiSigOutputScript(2, keys)).isSentToMultiSig());
-        assertTrue(new Script(Script.createMultiSigOutputScript(3, keys)).isSentToMultiSig());
-        assertFalse(new Script(Script.createOutputScript(new ECKey())).isSentToMultiSig());
+        assertTrue(ScriptBuilder.createMultiSigOutputScript(2, keys).isSentToMultiSig());
+        assertTrue(ScriptBuilder.createMultiSigOutputScript(3, keys).isSentToMultiSig());
+        assertFalse(ScriptBuilder.createOutputScript(new ECKey()).isSentToMultiSig());
         try {
             // Fail if we ask for more signatures than keys.
             Script.createMultiSigOutputScript(4, keys);
@@ -82,6 +82,7 @@ public class ScriptTest {
         } catch (Throwable e) {
             // Expected.
         }
+        // Actual execution is tested by the data driven tests.
     }
 
     @Test

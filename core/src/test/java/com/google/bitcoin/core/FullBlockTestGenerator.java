@@ -2,6 +2,7 @@ package com.google.bitcoin.core;
 
 import com.google.bitcoin.core.Transaction.SigHash;
 import com.google.bitcoin.script.Script;
+import com.google.bitcoin.script.ScriptBuilder;
 import com.google.common.base.Preconditions;
 
 import java.io.ByteArrayOutputStream;
@@ -811,6 +812,7 @@ public class FullBlockTestGenerator {
         
         // A valid block created exactly like b44 to make sure the creation itself works
         Block b44 = new Block(params);
+        byte[] outScriptBytes = ScriptBuilder.createOutputScript(new ECKey(null, coinbaseOutKeyPubKey)).getProgram();
         {
             b44.setDifficultyTarget(b43.getDifficultyTarget());
             b44.addCoinbaseTransaction(coinbaseOutKeyPubKey, BigInteger.ZERO);
@@ -818,7 +820,7 @@ public class FullBlockTestGenerator {
             Transaction t = new Transaction(params);
             // Entirely invalid scriptPubKey to ensure we aren't pre-verifying too much
             t.addOutput(new TransactionOutput(params, t, BigInteger.valueOf(0), new byte[] {OP_PUSHDATA1 - 1 }));
-            t.addOutput(new TransactionOutput(params, t, BigInteger.valueOf(1), Script.createOutputScript(coinbaseOutKeyPubKey)));
+            t.addOutput(new TransactionOutput(params, t, BigInteger.valueOf(1), outScriptBytes));
             // Spendable output
             t.addOutput(new TransactionOutput(params, t, BigInteger.ZERO, new byte[] {OP_1}));
             addOnlyInputToTransaction(t, out14);
@@ -841,7 +843,7 @@ public class FullBlockTestGenerator {
             Transaction t = new Transaction(params);
             // Entirely invalid scriptPubKey to ensure we aren't pre-verifying too much
             t.addOutput(new TransactionOutput(params, t, BigInteger.valueOf(0), new byte[] {OP_PUSHDATA1 - 1 }));
-            t.addOutput(new TransactionOutput(params, t, BigInteger.valueOf(1), Script.createOutputScript(coinbaseOutKeyPubKey)));
+            t.addOutput(new TransactionOutput(params, t, BigInteger.valueOf(1), outScriptBytes));
             // Spendable output
             t.addOutput(new TransactionOutput(params, t, BigInteger.ZERO, new byte[] {OP_1}));
             addOnlyInputToTransaction(t, out15);
@@ -917,7 +919,7 @@ public class FullBlockTestGenerator {
         {
             Transaction coinbase = new Transaction(params);
             coinbase.addInput(new TransactionInput(params, coinbase, new byte[]{(byte) 0xff, 110, 1}));
-            coinbase.addOutput(new TransactionOutput(params, coinbase, BigInteger.ONE, Script.createOutputScript(coinbaseOutKeyPubKey)));
+            coinbase.addOutput(new TransactionOutput(params, coinbase, BigInteger.ONE, outScriptBytes));
             b51.addTransaction(coinbase, false);
         }
         b51.solve();
@@ -1273,7 +1275,8 @@ public class FullBlockTestGenerator {
             Transaction t = new Transaction(params);
             // Entirely invalid scriptPubKey to ensure we aren't pre-verifying too much
             t.addOutput(new TransactionOutput(params, t, BigInteger.valueOf(0), new byte[] {OP_PUSHDATA1 - 1 }));
-            t.addOutput(new TransactionOutput(params, t, BigInteger.valueOf(1), Script.createOutputScript(coinbaseOutKeyPubKey)));
+            t.addOutput(new TransactionOutput(params, t, BigInteger.valueOf(1),
+                    ScriptBuilder.createOutputScript(new ECKey(null, coinbaseOutKeyPubKey)).getProgram()));
             // Spendable output
             t.addOutput(new TransactionOutput(params, t, BigInteger.ZERO, new byte[] {OP_1}));
             addOnlyInputToTransaction(t, prevOut);

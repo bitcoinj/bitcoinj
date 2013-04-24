@@ -60,8 +60,13 @@ public class Script {
     protected byte[] program;
 
     /** Creates an empty script that serializes to nothing. */
-    public Script() {
+    private Script() {
         chunks = Lists.newArrayList();
+    }
+
+    // Used from ScriptBuilder.
+    Script(List<ScriptChunk> chunks) {
+        this.chunks = Collections.unmodifiableList(new ArrayList<ScriptChunk>(chunks));
     }
 
     /**
@@ -267,44 +272,6 @@ public class Script {
         }
     }
 
-    public static byte[] createOutputScript(Address to) {
-        try {
-            // TODO: Do this by creating a Script *first* then having the script reassemble itself into bytes.
-            ByteArrayOutputStream bits = new UnsafeByteArrayOutputStream(24);
-            bits.write(OP_DUP);
-            bits.write(OP_HASH160);
-            writeBytes(bits, to.getHash160());
-            bits.write(OP_EQUALVERIFY);
-            bits.write(OP_CHECKSIG);
-            return bits.toByteArray();
-        } catch (IOException e) {
-            throw new RuntimeException(e);  // Cannot happen.
-        }
-    }
-
-    /**
-     * Create a script that sends coins directly to the given public key (eg in a coinbase transaction).
-     */
-    public static byte[] createOutputScript(byte[] pubkey) {
-        try {
-            // TODO: Do this by creating a Script *first* then having the script reassemble itself into bytes.
-            ByteArrayOutputStream bits = new UnsafeByteArrayOutputStream(pubkey.length + 1);
-            writeBytes(bits, pubkey);
-            bits.write(OP_CHECKSIG);
-            return bits.toByteArray();
-        } catch (IOException e) {
-            throw new RuntimeException(e);  // Cannot happen.
-        }
-    }
-
-    /**
-     * Creates a script that sends coins directly to the given public key. Same as
-     * {@link Script#createOutputScript(byte[])} but more type safe.
-     */
-    public static byte[] createOutputScript(ECKey pubkey) {
-        return createOutputScript(pubkey.getPubKey());
-    }
-
     /** Creates a program that requires at least N of the given keys to sign, using OP_CHECKMULTISIG. */
     public static byte[] createMultiSigOutputScript(int threshold, List<ECKey> pubkeys) {
         checkArgument(threshold > 0);
@@ -379,10 +346,10 @@ public class Script {
         return sigOps;
     }
     
-    private static int decodeFromOpN(byte opcode) {
+    static int decodeFromOpN(byte opcode) {
         return decodeFromOpN(0xFF & opcode);
     }
-    private static int decodeFromOpN(int opcode) {
+    static int decodeFromOpN(int opcode) {
         checkArgument(opcode >= 0 && opcode <= OP_16, "decodeFromOpN called on non OP_N opcode");
         if (opcode == OP_0)
             return 0;
@@ -390,10 +357,10 @@ public class Script {
             return opcode + 1 - OP_1;
     }
 
-    private static int encodeToOpN(byte value) {
+    static int encodeToOpN(byte value) {
         return encodeToOpN(0xFF & value);
     }
-    private static int encodeToOpN(int value) {
+    static int encodeToOpN(int value) {
         checkArgument(value >= 0 && value <= 16, "encodeToOpN called for a value we cannot encode in an opcode.");
         if (value == 0)
             return OP_0;
@@ -1086,6 +1053,7 @@ public class Script {
         } catch (Exception e1) {
             // There is (at least) one exception that could be hit here (EOFException, if the sig is too short)
             // Because I can't verify there aren't more, we use a very generic Exception catch
+            log.warn(e1.toString());
             sigValid = false;
         }
 
