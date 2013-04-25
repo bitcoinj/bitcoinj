@@ -18,14 +18,21 @@ package com.google.bitcoin.core;
 
 import com.google.bitcoin.store.BlockStoreException;
 import com.google.bitcoin.store.FullPrunedBlockStore;
+import com.google.bitcoin.store.H2FullPrunedBlockStore;
 import com.google.bitcoin.store.MemoryFullPrunedBlockStore;
+import com.google.bitcoin.utils.BlockFileLoader;
 import com.google.bitcoin.utils.BriefLogFormatter;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.math.BigInteger;
 import java.net.InetAddress;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -45,8 +52,8 @@ public class BitcoindComparisonTool {
     
     public static void main(String[] args) throws Exception {
         BriefLogFormatter.init();
-        System.out.println("USAGE: runLargeReorgs(1/0)");
-        boolean runLargeReorgs = Integer.parseInt(args[0]) == 1;
+        System.out.println("USAGE: bitcoinjBlockStoreLocation runLargeReorgs(1/0)");
+        boolean runLargeReorgs = Integer.parseInt(args[1]) == 1;
 
         params = NetworkParameters.testNet2();
         /**
@@ -70,14 +77,20 @@ public class BitcoindComparisonTool {
         params.genesisBlock.setDifficultyTarget(0x207fFFFFL);
         // Also set block.nTime    = 1296688602; in the same block
         
+        File blockFile = File.createTempFile("testBlocks", ".dat");
+        blockFile.deleteOnExit();
+        
         FullBlockTestGenerator generator = new FullBlockTestGenerator(params);
-        BlockAndValidityList blockList = generator.getBlocksToTest(true, runLargeReorgs);
+        BlockAndValidityList blockList = generator.getBlocksToTest(true, runLargeReorgs, blockFile);
+        Iterator<Block> blocks = new BlockFileLoader(params, Arrays.asList(blockFile));
         
         // Only needs to be set in bitcoinj
         params.allowEmptyPeerChains = true;
         
         try {
-            store = new MemoryFullPrunedBlockStore(params, blockList.maximumReorgBlockCount);
+            store = new H2FullPrunedBlockStore(params, args[0], blockList.maximumReorgBlockCount);
+            ((H2FullPrunedBlockStore)store).resetStore();
+            //store = new MemoryFullPrunedBlockStore(params, blockList.maximumReorgBlockCount);
             chain = new FullPrunedBlockChain(params, store);
         } catch (BlockStoreException e) {
             e.printStackTrace();
@@ -138,8 +151,9 @@ public class BitcoindComparisonTool {
         int invalidBlocks = 0;
         for (BlockAndValidity block : blockList.list) {
             boolean threw = false;
+            Block nextBlock = blocks.next();
             try {
-                if (chain.add(block.block) != block.connects) {
+                if (chain.add(nextBlock) != block.connects) {
                     log.error("Block didn't match connects flag on block \"" + block.blockName + "\"");
                     invalidBlocks++;
                 }
@@ -147,9 +161,11 @@ public class BitcoindComparisonTool {
                 threw = true;
                 if (!block.throwsException) {
                     log.error("Block didn't match throws flag on block \"" + block.blockName + "\"");
+                    e.printStackTrace();
                     invalidBlocks++;
                 } else if (block.connects) {
                     log.error("Block didn't match connects flag on block \"" + block.blockName + "\"");
+                    e.printStackTrace();
                     invalidBlocks++;
                 }
             }
@@ -164,7 +180,7 @@ public class BitcoindComparisonTool {
                 invalidBlocks++;
             }
             
-            bitcoind.sendMessage(block.block);
+            bitcoind.sendMessage(nextBlock);
             locator.clear();
             locator.add(bitcoindChainHead);
             bitcoind.sendMessage(new GetHeadersMessage(params, locator, hashTo));

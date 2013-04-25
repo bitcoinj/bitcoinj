@@ -6,6 +6,8 @@ import com.google.bitcoin.script.ScriptBuilder;
 import com.google.common.base.Preconditions;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.util.*;
@@ -75,8 +77,31 @@ public class FullBlockTestGenerator {
         Utils.rollMockClock(0); // Set a mock clock for timestamp tests
     }
 
-    public BlockAndValidityList getBlocksToTest(boolean addSigExpensiveBlocks, boolean runLargeReorgs) throws ScriptException, ProtocolException, IOException {
-        List<BlockAndValidity> blocks = new LinkedList<BlockAndValidity>();
+    public BlockAndValidityList getBlocksToTest(boolean addSigExpensiveBlocks, boolean runLargeReorgs, File blockStorageFile) throws ScriptException, ProtocolException, IOException {
+        final FileOutputStream outStream = blockStorageFile != null ? new FileOutputStream(blockStorageFile) : null;
+        
+        List<BlockAndValidity> blocks = new LinkedList<BlockAndValidity>() {
+            @Override
+            public boolean add(BlockAndValidity element) {
+                if (outStream != null) {
+                    try {
+                        outStream.write((int) (params.packetMagic >>> 24));
+                        outStream.write((int) (params.packetMagic >>> 16));
+                        outStream.write((int) (params.packetMagic >>> 8));
+                        outStream.write((int) (params.packetMagic >>> 0));
+                        byte[] block = element.block.bitcoinSerialize();
+                        byte[] length = new byte[4];
+                        Utils.uint32ToByteArrayBE(block.length, length, 0);
+                        outStream.write(Utils.reverseBytes(length));
+                        outStream.write(block);
+                        element.block = null;
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+                return super.add(element);
+            }
+        };
         BlockAndValidityList ret = new BlockAndValidityList(blocks, 10);
         
         Queue<TransactionOutPointWithValue> spendableOutputs = new LinkedList<TransactionOutPointWithValue>();
@@ -1305,13 +1330,16 @@ public class FullBlockTestGenerator {
                 b73.getTransactions().get(0).getOutputs().get(0).getScriptPubKey()));
         
         if (runLargeReorgs) {
+            // No way you can fit this test in memory
+            Preconditions.checkArgument(blockStorageFile != null);
+            
             Block lastBlock = b73;
             int nextHeight = chainHeadHeight + 24;
             TransactionOutPoint lastOutput = new TransactionOutPoint(params, 2, b73.getTransactions().get(1).getHash());
             int blockCountAfter73;
             
             List<Sha256Hash> hashesToSpend = new LinkedList<Sha256Hash>(); // all index 0
-            final int TRANSACTION_CREATION_BLOCKS = 50;
+            final int TRANSACTION_CREATION_BLOCKS = 100;
             for (blockCountAfter73 = 0; blockCountAfter73 < TRANSACTION_CREATION_BLOCKS; blockCountAfter73++) {
                 Block block = createNextBlock(lastBlock, nextHeight++, null, null);
                 while (block.getMessageSize() < Block.MAX_BLOCK_SIZE - 500) {
@@ -1388,6 +1416,9 @@ public class FullBlockTestGenerator {
         }
         
         //TODO: Explicitly address MoneyRange() checks
+        
+        if (outStream != null)
+            outStream.close();
         
         // (finally) return the created chain
         return ret;
