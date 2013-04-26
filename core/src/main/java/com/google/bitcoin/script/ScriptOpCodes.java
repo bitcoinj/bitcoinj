@@ -162,7 +162,7 @@ public class ScriptOpCodes {
             case OP_PUSHDATA1:
                 return "PUSHDATA1";
             case OP_PUSHDATA2:
-                return "PUSHDATA1";
+                return "PUSHDATA2";
             case OP_PUSHDATA4:
                 return "PUSHDATA4";
             case OP_1NEGATE:
