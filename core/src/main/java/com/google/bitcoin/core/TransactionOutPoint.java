@@ -142,7 +142,7 @@ public class TransactionOutPoint extends ChildMessage implements Serializable {
      */
     public ECKey getConnectedKey(Wallet wallet) throws ScriptException {
         TransactionOutput connectedOutput = getConnectedOutput();
-        checkState(connectedOutput != null, "Input is not connected in wallet so cannot retrieve connected key");
+        checkNotNull(connectedOutput, "Input is not connected so cannot retrieve key");
         Script connectedScript = connectedOutput.getScriptPubKey();
         if (connectedScript.isSentToAddress()) {
             byte[] addressBytes = connectedScript.getPubKeyHash();
