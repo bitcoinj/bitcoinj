@@ -18,6 +18,7 @@ package com.google.bitcoin.script;
 
 import com.google.bitcoin.core.Address;
 import com.google.bitcoin.core.ECKey;
+import com.google.bitcoin.core.Transaction;
 import com.google.common.collect.Lists;
 
 import java.util.Arrays;
@@ -49,7 +50,7 @@ public class ScriptBuilder {
         return this;
     }
 
-    public ScriptBuilder smallNum(byte num) {
+    public ScriptBuilder smallNum(int num) {
         checkArgument(num >= 0, "Cannot encode negative numbers with smallNum");
         checkArgument(num <= 16, "Cannot encode numbers larger than 16 with smallNum");
         chunks.add(new ScriptChunk(true, new byte[]{(byte)Script.encodeToOpN(num)}));
@@ -102,12 +103,23 @@ public class ScriptBuilder {
         checkArgument(threshold <= pubkeys.size());
         checkArgument(pubkeys.size() <= 16);  // That's the max we can represent with a single opcode.
         ScriptBuilder builder = new ScriptBuilder();
-        builder.smallNum((byte)threshold);
+        builder.smallNum((byte) threshold);
         for (ECKey key : pubkeys) {
             builder.data(key.getPubKey());
         }
         builder.smallNum((byte)pubkeys.size());
         builder.op(OP_CHECKMULTISIG);
+        return builder.build();
+    }
+
+    /** Create a program that satisfies an OP_CHECKMULTISIG program. */
+    public static Script createMultiSigInputScript(List<ECKey.ECDSASignature> signatures,
+                                                   Transaction.SigHash sigHash, boolean anyoneCanPay) {
+        checkArgument(signatures.size() <= 16);  // Max allowable.
+        ScriptBuilder builder = new ScriptBuilder();
+        builder.smallNum(0);  // Work around a bug in CHECKMULTISIG that is now a required part of the protocol.
+        for (ECKey.ECDSASignature signature : signatures)
+            builder.data(appendByte(signature.encodeToDER(),(byte) ((sigHash.ordinal() + 1) | (anyoneCanPay ? 0x80 : 0))));
         return builder.build();
     }
 }
