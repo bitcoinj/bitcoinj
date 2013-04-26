@@ -591,7 +591,10 @@ public class Script {
                     continue;
                 
                 switch(opcode) {
-                //case OP_0: dont know why this isnt also here in the reference client
+                case OP_0:
+                    // This is also OP_FALSE (they are both zero).
+                    stack.add(new byte[]{0});
+                    break;
                 case OP_1NEGATE:
                     stack.add(Utils.reverseBytes(Utils.encodeMPI(BigInteger.ONE.negate(), false)));
                     break;
@@ -1014,7 +1017,7 @@ public class Script {
                     break;
                     
                 default:
-                    throw new ScriptException("Script used a reserved Op Code");
+                    throw new ScriptException("Script used a reserved opcode " + opcode);
                 }
             }
             
@@ -1163,7 +1166,7 @@ public class Script {
             throw new ScriptException("Stack empty at end of script execution.");
         
         if (!castToBool(stack.pollLast()))
-            throw new ScriptException("Script resulted in a non-true stack");
+            throw new ScriptException("Script resulted in a non-true stack: " + stack);
 
         // P2SH is pay to script hash. It means that the scriptPubKey has a special form which is a valid
         // program but it has "useless" form that if evaluated as a normal program always returns true.
