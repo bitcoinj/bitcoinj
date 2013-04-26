@@ -786,29 +786,46 @@ public class Transaction extends ChildMessage implements Serializable {
     }
 
     /**
-     * Calculates a signature hash, that is, a hash of a simplified form of the transaction. How exactly the transaction
-     * is simplified is specified by the type and anyoneCanPay parameters.<p>
+     * <p>Calculates a signature hash, that is, a hash of a simplified form of the transaction. How exactly the transaction
+     * is simplified is specified by the type and anyoneCanPay parameters.</p>
      *
-     * You don't normally ever need to call this yourself. It will become more useful in future as the contracts
-     * features of Bitcoin are developed.
+     * <p>You don't normally ever need to call this yourself. It will become more useful in future as the contracts
+     * features of Bitcoin are developed.</p>
      *
      * @param inputIndex input the signature is being calculated for. Tx signatures are always relative to an input.
      * @param connectedScript the bytes that should be in the given input during signing.
      * @param type Should be SigHash.ALL
      * @param anyoneCanPay should be false.
-     * @throws ScriptException if connectedScript is invalid
      */
     public synchronized Sha256Hash hashTransactionForSignature(int inputIndex, byte[] connectedScript,
-                                                               SigHash type, boolean anyoneCanPay) throws ScriptException {
+                                                               SigHash type, boolean anyoneCanPay) {
         return hashTransactionForSignature(inputIndex, connectedScript, (byte)((type.ordinal() + 1) | (anyoneCanPay ? 0x80 : 0x00)));
     }
-    
+
+    /**
+     * <p>Calculates a signature hash, that is, a hash of a simplified form of the transaction. How exactly the transaction
+     * is simplified is specified by the type and anyoneCanPay parameters.</p>
+     *
+     * <p>You don't normally ever need to call this yourself. It will become more useful in future as the contracts
+     * features of Bitcoin are developed.</p>
+     *
+     * @param inputIndex input the signature is being calculated for. Tx signatures are always relative to an input.
+     * @param connectedScript the script that should be in the given input during signing.
+     * @param type Should be SigHash.ALL
+     * @param anyoneCanPay should be false.
+     */
+    public synchronized Sha256Hash hashTransactionForSignature(int inputIndex, Script connectedScript,
+                                                               SigHash type, boolean anyoneCanPay) {
+        return hashTransactionForSignature(inputIndex, connectedScript.getProgram(),
+                (byte)((type.ordinal() + 1) | (anyoneCanPay ? 0x80 : 0x00)));
+    }
+
     /**
      * This is required for signatures which use a sigHashType which cannot be represented using SigHash and anyoneCanPay
      * See transaction c99c49da4c38af669dea436d3e73780dfdb6c1ecf9958baa52960e8baee30e73, which has sigHashType 0
      */
     public synchronized Sha256Hash hashTransactionForSignature(int inputIndex, byte[] connectedScript,
-            byte sigHashType) throws ScriptException {
+            byte sigHashType) {
         // TODO: This whole separate method should be un-necessary if we fix how we deserialize sighash flags.
 
         // The SIGHASH flags are used in the design of contracts, please see this page for a further understanding of
