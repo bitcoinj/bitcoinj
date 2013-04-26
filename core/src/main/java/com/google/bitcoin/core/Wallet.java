@@ -2042,7 +2042,8 @@ public class Wallet implements Serializable, BlockChainListener {
         return candidates;
     }
 
-    Address getChangeAddress() {
+    /** Returns the address used for change outputs. Note: this will probably go away in future. */
+    public Address getChangeAddress() {
         lock.lock();
         try {
             // For now let's just pick the first key in our keychain. In future we might want to do something else to
