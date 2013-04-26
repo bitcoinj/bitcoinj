@@ -395,6 +395,28 @@ public class ECKey implements Serializable {
     }
 
     /**
+     * Verifies the given ECDSA signature against the message bytes using the public key bytes.
+     *
+     * @param data      Hash of the data to verify.
+     * @param signature ASN.1 encoded signature.
+     * @param pub       The public key bytes to use.
+     */
+    public static boolean verify(byte[] data, ECDSASignature signature, byte[] pub) {
+        ECDSASigner signer = new ECDSASigner();
+        ECPublicKeyParameters params = new ECPublicKeyParameters(ecParams.getCurve().decodePoint(pub), ecParams);
+        signer.init(false, params);
+        try {
+            return signer.verifySignature(data, signature.r, signature.s);
+        } catch (NullPointerException e) {
+            // Bouncy Castle contains a bug that can cause NPEs given specially crafted signatures. Those signatures
+            // are inherently invalid/attack sigs so we just fail them here rather than crash the thread.
+            log.error("Caught NPE inside bouncy castle");
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    /**
      * Verifies the given ASN.1 encoded ECDSA signature against a hash using the public key.
      *
      * @param data      Hash of the data to verify.
@@ -402,9 +424,6 @@ public class ECKey implements Serializable {
      * @param pub       The public key bytes to use.
      */
     public static boolean verify(byte[] data, byte[] signature, byte[] pub) {
-        ECDSASigner signer = new ECDSASigner();
-        ECPublicKeyParameters params = new ECPublicKeyParameters(ecParams.getCurve().decodePoint(pub), ecParams);
-        signer.init(false, params);
         try {
             ASN1InputStream decoder = new ASN1InputStream(signature);
             DLSequence seq = (DLSequence) decoder.readObject();
@@ -414,15 +433,7 @@ public class ECKey implements Serializable {
             // OpenSSL deviates from the DER spec by interpreting these values as unsigned, though they should not be
             // Thus, we always use the positive versions.
             // See: http://r6.ca/blog/20111119T211504Z.html
-            try {
-                return signer.verifySignature(data, r.getPositiveValue(), s.getPositiveValue());
-            } catch (NullPointerException e) {
-                // Bouncy Castle contains a bug that can cause NPEs given specially crafted signatures. Those signatures
-                // are inherently invalid/attack sigs so we just fail them here rather than crash the thread.
-                log.error("Caught NPE inside bouncy castle");
-                e.printStackTrace();
-                return false;
-            }
+            return verify(data, new ECDSASignature(r.getPositiveValue(), s.getPositiveValue()), pub);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -435,7 +446,14 @@ public class ECKey implements Serializable {
      * @param signature ASN.1 encoded signature.
      */
     public boolean verify(byte[] data, byte[] signature) {
-        return ECKey.verify(data, signature, pub);
+        return ECKey.verify(data, signature, getPubKey());
+    }
+
+    /**
+     * Verifies the given R/S pair (signature) against a hash using the public key.
+     */
+    public boolean verify(Sha256Hash sigHash, ECDSASignature signature) {
+        return ECKey.verify(sigHash.getBytes(), signature, getPubKey());
     }
 
     private static BigInteger extractPrivateKeyFromASN1(byte[] asn1privkey) {
