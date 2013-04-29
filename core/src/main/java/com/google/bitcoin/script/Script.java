@@ -347,23 +347,24 @@ public class Script {
     }
     
     static int decodeFromOpN(byte opcode) {
-        return decodeFromOpN(0xFF & opcode);
+        return decodeFromOpN((int)opcode);
     }
     static int decodeFromOpN(int opcode) {
-        checkArgument(opcode >= 0 && opcode <= OP_16, "decodeFromOpN called on non OP_N opcode");
+        checkArgument(opcode >= -1 && opcode <= OP_16, "decodeFromOpN called on non OP_N opcode");
         if (opcode == OP_0)
             return 0;
+        else if (opcode == OP_1NEGATE)
+            return -1;
         else
             return opcode + 1 - OP_1;
     }
 
-    static int encodeToOpN(byte value) {
-        return encodeToOpN(0xFF & value);
-    }
     static int encodeToOpN(int value) {
-        checkArgument(value >= 0 && value <= 16, "encodeToOpN called for a value we cannot encode in an opcode.");
+        checkArgument(value >= -1 && value <= 16, "encodeToOpN called for " + value + " which we cannot encode in an opcode.");
         if (value == 0)
             return OP_0;
+        else if (value == -1)
+            return OP_1NEGATE;
         else
             return value - 1 + OP_1;
     }

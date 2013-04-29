@@ -17,8 +17,6 @@
 package com.google.bitcoin.script;
 
 import com.google.bitcoin.core.*;
-import com.google.bitcoin.script.Script;
-import com.google.bitcoin.script.ScriptOpCodes;
 import com.google.common.collect.Lists;
 import org.junit.Test;
 import org.spongycastle.util.encoders.Hex;
@@ -32,6 +30,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 
+import static com.google.bitcoin.script.ScriptOpCodes.OP_INVALIDOPCODE;
 import static org.junit.Assert.*;
 
 public class ScriptTest {
@@ -92,23 +91,7 @@ public class ScriptTest {
         assertTrue(s.isSentToRawPubKey());
     }
     
-    private static HashMap<String, Integer> mapOpNames;
-
-    private synchronized static void initMapOpNames() {
-        if (mapOpNames == null) {
-            mapOpNames = new HashMap<String, Integer>();
-            for (int op = ScriptOpCodes.OP_NOP; op <= ScriptOpCodes.OP_NOP10; op++) {
-                String name = ScriptOpCodes.getOpCodeName((byte) op);
-                if (name.startsWith("NON_OP("))
-                    continue;
-                // The reference client's implementation supports OP_*, but we only support *
-                mapOpNames.put(name, op);
-            }
-        }
-    }
-
-    private Script parseScriptString(NetworkParameters params, String string) throws Exception {
-        initMapOpNames();
+    private Script parseScriptString(String string) throws Exception {
         String[] words = string.split("[ \\t\\n]");
         
         UnsafeByteArrayOutputStream out = new UnsafeByteArrayOutputStream();
@@ -119,8 +102,8 @@ public class ScriptTest {
             if (w.matches("^-?[0-9]*$")) {
                 // Number
                 long val = Long.parseLong(w);
-                if (val == -1 || (val >= 1 && val <= 16))
-                    out.write((int)val + ScriptOpCodes.OP_1 - 1);
+                if (val >= -1 && val <= 16)
+                    out.write(Script.encodeToOpN((int)val));
                 else
                     Script.writeBytes(out, Utils.reverseBytes(Utils.encodeMPI(BigInteger.valueOf(val), false)));
             } else if (w.matches("^0x[0-9a-fA-F]*$")) {
@@ -130,12 +113,12 @@ public class ScriptTest {
                 // Single-quoted string, pushed as data. NOTE: this is poor-man's
                 // parsing, spaces/tabs/newlines in single-quoted strings won't work.
                 Script.writeBytes(out, w.substring(1, w.length() - 1).getBytes(Charset.forName("UTF-8")));
-            } else if (mapOpNames.containsKey(w)) {
+            } else if (ScriptOpCodes.getOpCode(w) != OP_INVALIDOPCODE) {
                 // opcode, e.g. OP_ADD or OP_1:
-                out.write(mapOpNames.get(w));
-            } else if (w.startsWith("OP_") && mapOpNames.containsKey(w.substring(3))) {
+                out.write(ScriptOpCodes.getOpCode(w));
+            } else if (w.startsWith("OP_") && ScriptOpCodes.getOpCode(w.substring(3)) != OP_INVALIDOPCODE) {
                 // opcode, e.g. OP_ADD or OP_1:
-                out.write(mapOpNames.get(w.substring(3)));
+                out.write(ScriptOpCodes.getOpCode(w.substring(3)));
             } else {
                 throw new RuntimeException("Invalid Data");
             }                        
@@ -162,10 +145,19 @@ public class ScriptTest {
             if (line.trim().endsWith("],") || line.trim().endsWith("]")) {
                 String[] scripts = script.split(",");
 
-                Script scriptSig = parseScriptString(params, scripts[0].replaceAll("[\"\\[\\]]", "").trim());
-                Script scriptPubKey = parseScriptString(params, scripts[1].replaceAll("[\"\\[\\]]", "").trim());
+                scripts[0] = scripts[0].replaceAll("[\"\\[\\]]", "").trim();
+                scripts[1] = scripts[1].replaceAll("[\"\\[\\]]", "").trim();
+                Script scriptSig = parseScriptString(scripts[0]);
+                Script scriptPubKey = parseScriptString(scripts[1]);
 
-                scriptSig.correctlySpends(new Transaction(params), 0, scriptPubKey, true);
+                try {
+                    scriptSig.correctlySpends(new Transaction(params), 0, scriptPubKey, true);
+                } catch (ScriptException e) {
+                    System.err.println("scriptSig: " + scripts[0]);
+                    System.err.println("scriptPubKey: " + scripts[1]);
+                    System.err.flush();
+                    throw e;
+                }
                 script = "";
             }
         }
@@ -190,8 +182,8 @@ public class ScriptTest {
             if (line.trim().endsWith("],") || line.trim().equals("]")) {
                 String[] scripts = script.split(",");
                 try {                    
-                    Script scriptSig = parseScriptString(params, scripts[0].replaceAll("[\"\\[\\]]", "").trim());
-                    Script scriptPubKey = parseScriptString(params, scripts[1].replaceAll("[\"\\[\\]]", "").trim());
+                    Script scriptSig = parseScriptString(scripts[0].replaceAll("[\"\\[\\]]", "").trim());
+                    Script scriptPubKey = parseScriptString(scripts[1].replaceAll("[\"\\[\\]]", "").trim());
 
                     scriptSig.correctlySpends(new Transaction(params), 0, scriptPubKey, true);
                     fail();
@@ -321,7 +313,7 @@ public class ScriptTest {
                     int index = input.list.get(1).integer;
                     String script = input.list.get(2).string;
                     Sha256Hash sha256Hash = new Sha256Hash(Hex.decode(hash.getBytes(Charset.forName("UTF-8"))));
-                    scriptPubKeys.put(new TransactionOutPoint(params, index, sha256Hash), parseScriptString(params, script));
+                    scriptPubKeys.put(new TransactionOutPoint(params, index, sha256Hash), parseScriptString(script));
                 }
 
                 byte[] bytes = tx.get(0).list.get(1).string.getBytes(Charset.forName("UTF-8"));
@@ -372,7 +364,7 @@ public class ScriptTest {
                     int index = input.list.get(1).integer;
                     String script = input.list.get(2).string;
                     Sha256Hash sha256Hash = new Sha256Hash(Hex.decode(hash.getBytes(Charset.forName("UTF-8"))));
-                    scriptPubKeys.put(new TransactionOutPoint(params, index, sha256Hash), parseScriptString(params, script));
+                    scriptPubKeys.put(new TransactionOutPoint(params, index, sha256Hash), parseScriptString(script));
                 }
 
                 byte[] bytes = tx.get(0).list.get(1).string.getBytes(Charset.forName("UTF-8"));
