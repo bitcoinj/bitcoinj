@@ -22,6 +22,7 @@ import com.google.bitcoin.crypto.KeyCrypter;
 import com.google.bitcoin.crypto.KeyCrypterException;
 import com.google.bitcoin.crypto.KeyCrypterScrypt;
 import com.google.common.collect.Lists;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.protobuf.ByteString;
 
 import org.bitcoinj.wallet.Protos;
@@ -175,9 +176,15 @@ public class WalletTest extends TestWithWallet {
 
     private void receiveAPendingTransaction(Wallet wallet, Address toAddress) throws Exception {
         BigInteger v1 = Utils.toNanoCoins(1, 0);
+        final ListenableFuture<BigInteger> availFuture = wallet.waitForBalance(v1, Wallet.BalanceType.AVAILABLE);
+        final ListenableFuture<BigInteger> estimatedFuture = wallet.waitForBalance(v1, Wallet.BalanceType.ESTIMATED);
+        assertFalse(availFuture.isDone());
+        assertFalse(estimatedFuture.isDone());
         Transaction t1 = sendMoneyToWallet(wallet, v1, toAddress, null);
         assertEquals(BigInteger.ZERO, wallet.getBalance());
         assertEquals(v1, wallet.getBalance(Wallet.BalanceType.ESTIMATED));
+        assertFalse(availFuture.isDone());
+        assertTrue(estimatedFuture.isDone());
         assertEquals(1, wallet.getPoolSize(Pool.PENDING));
         assertEquals(0, wallet.getPoolSize(WalletTransaction.Pool.UNSPENT));
         sendMoneyToWallet(wallet, t1, AbstractBlockChain.NewBlockType.BEST_CHAIN);
@@ -185,6 +192,8 @@ public class WalletTest extends TestWithWallet {
         assertEquals("Incorrect confirmed tx PENDING pool size", 0, wallet.getPoolSize(WalletTransaction.Pool.PENDING));
         assertEquals("Incorrect confirmed tx UNSPENT pool size", 1, wallet.getPoolSize(WalletTransaction.Pool.UNSPENT));
         assertEquals("Incorrect confirmed tx ALL pool size", 1, wallet.getPoolSize(WalletTransaction.Pool.ALL));
+        assertTrue(availFuture.isDone());
+        assertTrue(estimatedFuture.isDone());
     }
 
     private void basicSanityChecks(Wallet wallet, Transaction t, Address fromAddress, Address destination) throws ScriptException {

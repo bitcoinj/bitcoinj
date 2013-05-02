@@ -19,6 +19,7 @@ package com.google.bitcoin.core;
 import com.google.bitcoin.crypto.KeyCrypterScrypt;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
+import com.google.common.util.concurrent.SettableFuture;
 import org.bitcoinj.wallet.Protos.Wallet.EncryptionType;
 import org.spongycastle.crypto.params.KeyParameter;
 
@@ -2805,6 +2806,45 @@ public class Wallet implements Serializable, BlockChainListener {
      */
     public void allowSpendingUnconfirmedTransactions() {
         setCoinSelector(Wallet.AllowUnconfirmedCoinSelector.get());
+    }
+
+    /**
+     * Returns a future that will complete when the balance of the given type is equal or larger to the given value.
+     * If the wallet already has a large enough balance the future is returned in a pre-completed state. Note that this
+     * method is not blocking, if you want to <i>actually</i> wait immediately, you have to call .get() on the result.
+     */
+    public ListenableFuture<BigInteger> waitForBalance(final BigInteger value, final BalanceType type) {
+        final SettableFuture<BigInteger> future = SettableFuture.create();
+        final BigInteger current = getBalance(type);
+        if (current.compareTo(value) >= 0) {
+            // Already have enough.
+            future.set(current);
+            return future;
+        }
+        addEventListener(new AbstractWalletEventListener() {
+            private boolean done = false;
+
+            @Override
+            public void onTransactionConfidenceChanged(Wallet wallet, Transaction tx) {
+                check();
+            }
+
+            private void check() {
+                final BigInteger newBalance = getBalance(type);
+                if (!done && newBalance.compareTo(value) >= 0) {
+                    // Have enough now.
+                    done = true;
+                    removeEventListener(this);
+                    future.set(newBalance);
+                }
+            }
+
+            @Override
+            public void onCoinsReceived(Wallet w, Transaction t, BigInteger b1, BigInteger b2) {
+                check();
+            }
+        });
+        return future;
     }
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
