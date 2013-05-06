@@ -16,27 +16,22 @@
 
 package com.google.bitcoin.core;
 
-import com.google.bitcoin.crypto.KeyCrypterScrypt;
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.Multimap;
-import com.google.common.util.concurrent.SettableFuture;
-import org.bitcoinj.wallet.Protos.Wallet.EncryptionType;
-import org.spongycastle.crypto.params.KeyParameter;
-
 import com.google.bitcoin.core.TransactionConfidence.ConfidenceType;
 import com.google.bitcoin.core.WalletTransaction.Pool;
 import com.google.bitcoin.crypto.KeyCrypter;
 import com.google.bitcoin.crypto.KeyCrypterException;
+import com.google.bitcoin.crypto.KeyCrypterScrypt;
 import com.google.bitcoin.store.WalletProtobufSerializer;
 import com.google.bitcoin.utils.Locks;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
+import com.google.common.collect.*;
 import com.google.common.util.concurrent.ListenableFuture;
-
+import com.google.common.util.concurrent.SettableFuture;
+import org.bitcoinj.wallet.Protos.Wallet.EncryptionType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.spongycastle.crypto.params.KeyParameter;
 
 import java.io.*;
 import java.math.BigInteger;
@@ -249,6 +244,9 @@ public class Wallet implements Serializable, BlockChainListener {
     private int version;
     // User-provided description that may help people keep track of what a wallet is for.
     private String description;
+    // Stores objects that know how to serialize/unserialize themselves to byte streams and whether they're mandatory
+    // or not. The string key comes from the extension itself.
+    private final HashMap<String, WalletExtension> extensions;
 
     /**
      * Creates a new, empty wallet with no keys and no transactions. If you want to restore a wallet from disk instead,
@@ -270,6 +268,7 @@ public class Wallet implements Serializable, BlockChainListener {
         pending = new HashMap<Sha256Hash, Transaction>();
         dead = new HashMap<Sha256Hash, Transaction>();
         eventListeners = new CopyOnWriteArrayList<WalletEventListener>();
+        extensions = new HashMap<String, WalletExtension>();
         createTransientState();
     }
 
@@ -2845,6 +2844,37 @@ public class Wallet implements Serializable, BlockChainListener {
             }
         });
         return future;
+    }
+
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Extensions to the wallet format.
+
+    /**
+     * By providing an object implementing the {@link WalletExtension} interface, you can save and load arbitrary
+     * additional data that will be stored with the wallet. Each extension is identified by an ID, so attempting to
+     * add the same extension twice (or two different objects that use the same ID) will throw an IllegalStateException.
+     */
+    public void addExtension(WalletExtension extension) {
+        String id = checkNotNull(extension).getWalletExtensionID();
+        lock.lock();
+        try {
+            if (extensions.containsKey(id))
+                throw new IllegalStateException("Cannot add two extensions with the same ID: " + id);
+            extensions.put(id, extension);
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /** Returns a snapshot of all registered extension objects. The extensions themselves are not copied. */
+    public Map<String, WalletExtension> getExtensions() {
+        lock.lock();
+        try {
+            return ImmutableMap.copyOf(extensions);
+        } finally {
+            lock.unlock();
+        }
     }
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
