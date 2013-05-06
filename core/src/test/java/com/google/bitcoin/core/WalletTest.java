@@ -176,8 +176,8 @@ public class WalletTest extends TestWithWallet {
 
     private void receiveAPendingTransaction(Wallet wallet, Address toAddress) throws Exception {
         BigInteger v1 = Utils.toNanoCoins(1, 0);
-        final ListenableFuture<BigInteger> availFuture = wallet.waitForBalance(v1, Wallet.BalanceType.AVAILABLE);
-        final ListenableFuture<BigInteger> estimatedFuture = wallet.waitForBalance(v1, Wallet.BalanceType.ESTIMATED);
+        final ListenableFuture<BigInteger> availFuture = wallet.getBalanceFuture(v1, Wallet.BalanceType.AVAILABLE);
+        final ListenableFuture<BigInteger> estimatedFuture = wallet.getBalanceFuture(v1, Wallet.BalanceType.ESTIMATED);
         assertFalse(availFuture.isDone());
         assertFalse(estimatedFuture.isDone());
         Transaction t1 = sendMoneyToWallet(wallet, v1, toAddress, null);

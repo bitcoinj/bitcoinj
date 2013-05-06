@@ -2813,7 +2813,7 @@ public class Wallet implements Serializable, BlockChainListener {
      * If the wallet already has a large enough balance the future is returned in a pre-completed state. Note that this
      * method is not blocking, if you want to <i>actually</i> wait immediately, you have to call .get() on the result.
      */
-    public ListenableFuture<BigInteger> waitForBalance(final BigInteger value, final BalanceType type) {
+    public ListenableFuture<BigInteger> getBalanceFuture(final BigInteger value, final BalanceType type) {
         final SettableFuture<BigInteger> future = SettableFuture.create();
         final BigInteger current = getBalance(type);
         if (current.compareTo(value) >= 0) {
