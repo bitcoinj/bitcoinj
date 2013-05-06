@@ -602,7 +602,7 @@ public class Transaction extends ChildMessage implements Serializable {
                     s.append(bytesToHexString(scriptSig.getChunks().get(0).data));
                     s.append("]");
                 } else
-                    s.append("???");
+                    s.append(scriptSig);
                 s.append(" / ");
                 s.append(in.getOutpoint().toString());
             } catch (Exception e) {
@@ -621,6 +621,8 @@ public class Transaction extends ChildMessage implements Serializable {
                     s.append("[pubkey:");
                     s.append(bytesToHexString(scriptPubKey.getPubKey()));
                     s.append("]");
+                } else {
+                    s.append(scriptPubKey);
                 }
                 s.append(" ");
                 s.append(bitcoinValueToFriendlyString(out.getValue()));
