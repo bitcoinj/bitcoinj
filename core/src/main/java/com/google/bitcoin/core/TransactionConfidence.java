@@ -17,6 +17,8 @@
 package com.google.bitcoin.core;
 
 import com.google.common.base.Preconditions;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.SettableFuture;
 
 import java.io.Serializable;
 import java.math.BigInteger;
@@ -191,12 +193,13 @@ public class TransactionConfidence implements Serializable {
 
     /**
      * The chain height at which the transaction appeared, if it has been seen in the best chain. Automatically sets
-     * the current type to {@link ConfidenceType#BUILDING}.
+     * the current type to {@link ConfidenceType#BUILDING} and depth to one.
      */
     public synchronized void setAppearedAtChainHeight(int appearedAtChainHeight) {
         if (appearedAtChainHeight < 0)
             throw new IllegalArgumentException("appearedAtChainHeight out of range");
         this.appearedAtChainHeight = appearedAtChainHeight;
+        this.depth = 1;
         setConfidenceType(ConfidenceType.BUILDING);
     }
 
@@ -314,23 +317,16 @@ public class TransactionConfidence implements Serializable {
     }
 
     /**
-     * Depth in the chain is an approximation of how much time has elapsed since the transaction has been confirmed. On
-     * average there is supposed to be a new block every 10 minutes, but the actual rate may vary. The reference
+     * <p>Depth in the chain is an approximation of how much time has elapsed since the transaction has been confirmed.
+     * On average there is supposed to be a new block every 10 minutes, but the actual rate may vary. The reference
      * (Satoshi) implementation considers a transaction impractical to reverse after 6 blocks, but as of EOY 2011 network
      * security is high enough that often only one block is considered enough even for high value transactions. For low
-     * value transactions like songs, or other cheap items, no blocks at all may be necessary.<p>
+     * value transactions like songs, or other cheap items, no blocks at all may be necessary.</p>
      *     
-     * If the transaction appears in the top block, the depth is one. If the transaction does not appear in the best
-     * chain yet, throws IllegalStateException, so use {@link com.google.bitcoin.core.TransactionConfidence#getConfidenceType()}
-     * to check first.
-     *
-     * @throws IllegalStateException if confidence type != BUILDING.
-     * @return depth
+     * <p>If the transaction appears in the top block, the depth is one. If it's anything else (pending, dead, unknown)
+     * the depth is zero.</p>
      */
     public synchronized int getDepthInBlocks() {
-        if (getConfidenceType() != ConfidenceType.BUILDING) {
-            throw new IllegalStateException("Confidence type is not BUILDING");
-        }
         return depth;
     }
 
@@ -345,15 +341,10 @@ public class TransactionConfidence implements Serializable {
      * Returns the estimated amount of work (number of hashes performed) on this transaction. Work done is a measure of
      * security that is related to depth in blocks, but more predictable: the network will always attempt to produce six
      * blocks per hour by adjusting the difficulty target. So to know how much real computation effort is needed to
-     * reverse a transaction, counting blocks is not enough.
-     *
-     * @throws IllegalStateException if confidence type is not BUILDING
+     * reverse a transaction, counting blocks is not enough. If a transaction has not confirmed, the result is zero.
      * @return estimated number of hashes needed to reverse the transaction.
      */
     public synchronized BigInteger getWorkDone() {
-        if (getConfidenceType() != ConfidenceType.BUILDING) {
-            throw new IllegalStateException("Confidence type is not BUILDING");
-        }
         return workDone;
     }
 
@@ -422,5 +413,28 @@ public class TransactionConfidence implements Serializable {
      */
     public synchronized void setSource(Source source) {
         this.source = source;
+    }
+
+    /**
+     * Returns a future that completes when the transaction has been confirmed by "depth" blocks. For instance setting
+     * depth to one will wait until it appears in a block on the best chain, and zero will wait until it has been seen
+     * on the network.
+     */
+    public ListenableFuture<Transaction> getDepthFuture(final int depth) {
+        final SettableFuture<Transaction> result = SettableFuture.create();
+        synchronized (this) {
+            if (getDepthInBlocks() >= depth) {
+                result.set(transaction);
+            }
+            addEventListener(new Listener() {
+                @Override public void onConfidenceChanged(Transaction tx) {
+                    if (getDepthInBlocks() >= depth) {
+                        removeEventListener(this);
+                        result.set(transaction);
+                    }
+                }
+            });
+        }
+        return result;
     }
 }

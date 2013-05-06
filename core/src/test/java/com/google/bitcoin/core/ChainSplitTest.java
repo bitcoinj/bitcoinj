@@ -449,14 +449,8 @@ public class ChainSplitTest {
             txns.get(1).getConfidence().getAppearedAtChainHeight();
             fail();
         } catch (IllegalStateException e) {}
-        try {
-            txns.get(1).getConfidence().getDepthInBlocks();
-            fail();
-        } catch (IllegalStateException e) {}
-        try {
-            txns.get(1).getConfidence().getWorkDone();
-            fail();
-        } catch (IllegalStateException e) {}
+        assertEquals(0, txns.get(1).getConfidence().getDepthInBlocks());
+        assertEquals(BigInteger.ZERO, txns.get(1).getConfidence().getWorkDone());
 
         // ... and back to the first chain.
         Block b7 = b3.createNextBlock(coinsTo);

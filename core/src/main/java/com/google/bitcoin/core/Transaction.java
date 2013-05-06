@@ -265,20 +265,14 @@ public class Transaction extends ChildMessage implements Serializable {
             // This can cause event listeners on TransactionConfidence to run. After these lines complete, the wallets
             // state may have changed!
             TransactionConfidence transactionConfidence = getConfidence();
-            transactionConfidence.setAppearedAtChainHeight(block.getHeight());
-
-            // Reset the confidence block depth.
-            transactionConfidence.setDepthInBlocks(1);
-
             // Reset the work done.
             try {
                 transactionConfidence.setWorkDone(block.getHeader().getWork());
             } catch (VerificationException e) {
                 throw new RuntimeException(e);  // Cannot happen.
             }
-
-            // The transaction is now on the best chain.
-            transactionConfidence.setConfidenceType(ConfidenceType.BUILDING);
+            // This sets type to BUILDING and depth to one.
+            transactionConfidence.setAppearedAtChainHeight(block.getHeight());
         }
     }
 

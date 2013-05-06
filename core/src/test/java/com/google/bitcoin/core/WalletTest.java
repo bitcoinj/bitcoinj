@@ -181,6 +181,8 @@ public class WalletTest extends TestWithWallet {
         assertFalse(availFuture.isDone());
         assertFalse(estimatedFuture.isDone());
         Transaction t1 = sendMoneyToWallet(wallet, v1, toAddress, null);
+        final ListenableFuture<Transaction> depthFuture = t1.getConfidence().getDepthFuture(1);
+        assertFalse(depthFuture.isDone());
         assertEquals(BigInteger.ZERO, wallet.getBalance());
         assertEquals(v1, wallet.getBalance(Wallet.BalanceType.ESTIMATED));
         assertFalse(availFuture.isDone());
@@ -194,6 +196,7 @@ public class WalletTest extends TestWithWallet {
         assertEquals("Incorrect confirmed tx ALL pool size", 1, wallet.getPoolSize(WalletTransaction.Pool.ALL));
         assertTrue(availFuture.isDone());
         assertTrue(estimatedFuture.isDone());
+        assertTrue(depthFuture.isDone());
     }
 
     private void basicSanityChecks(Wallet wallet, Transaction t, Address fromAddress, Address destination) throws ScriptException {
