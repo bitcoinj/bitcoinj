@@ -108,7 +108,7 @@ public class WalletAppKit extends AbstractIdleService {
             Runtime.getRuntime().addShutdownHook(new Thread() {
                 @Override public void run() {
                     try {
-                        WalletAppKit.this.stop();
+                        WalletAppKit.this.stopAndWait();
                     } catch (Exception e) {
                         throw new RuntimeException(e);
                     }
