@@ -20,6 +20,7 @@ import com.google.bitcoin.core.Wallet.BalanceType;
 import com.google.bitcoin.store.BlockStore;
 import com.google.bitcoin.store.MemoryBlockStore;
 import com.google.bitcoin.utils.BriefLogFormatter;
+import com.google.common.util.concurrent.ListenableFuture;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -74,10 +75,12 @@ public class BlockChainTest {
 
     @Test
     public void testBasicChaining() throws Exception {
-        // Check that we can plug a few blocks together.
+        // Check that we can plug a few blocks together and the futures work.
+        ListenableFuture<StoredBlock> future = testNetChain.getHeightFuture(2);
         // Block 1 from the testnet.
         Block b1 = getBlock1();
         assertTrue(testNetChain.add(b1));
+        assertFalse(future.isDone());
         // Block 2 from the testnet.
         Block b2 = getBlock2();
 
@@ -93,6 +96,8 @@ public class BlockChainTest {
 
         // Now it works because we reset the nonce.
         assertTrue(testNetChain.add(b2));
+        assertTrue(future.isDone());
+        assertEquals(2, future.get().getHeight());
     }
 
     @Test

@@ -20,6 +20,8 @@ import com.google.bitcoin.store.BlockStore;
 import com.google.bitcoin.store.BlockStoreException;
 import com.google.bitcoin.utils.Locks;
 import com.google.common.base.Preconditions;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.SettableFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -872,5 +874,23 @@ public abstract class AbstractBlockChain {
             long estimated = (headTime * 1000) + (1000L * 60L * 10L * offset);
             return new Date(estimated);
         }
+    }
+
+    /**
+     * Returns a future that completes when the block chain has reached the given height. Yields the
+     * {@link StoredBlock} of the block that reaches that height first. The future completes on a peer thread.
+     */
+    public ListenableFuture<StoredBlock> getHeightFuture(final int height) {
+        final SettableFuture<StoredBlock> result = SettableFuture.create();
+        addListener(new AbstractBlockChainListener() {
+            @Override
+            public void notifyNewBestBlock(StoredBlock block) throws VerificationException {
+                if (block.getHeight() >= height) {
+                    removeListener(this);
+                    result.set(block);
+                }
+            }
+        });
+        return result;
     }
 }
