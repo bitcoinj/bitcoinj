@@ -129,7 +129,7 @@ public class BlockChainTest {
         Transaction tx2 = createFakeTx(unitTestParams, Utils.toNanoCoins(1, 0),
                                        new ECKey().toAddress(unitTestParams));
         Block b2 = createFakeBlock(blockStore, tx2).block;
-        hash = b2.getMerkleRoot();
+        b2.getMerkleRoot();
         b2.setMerkleRoot(Sha256Hash.ZERO_HASH);
         b2.solve();
         chain.add(b2);  // Broken block is accepted because its contents don't matter to us.
@@ -200,7 +200,7 @@ public class BlockChainTest {
             // allowable difficulty.
             fail();
         } catch (VerificationException e) {
-            assertTrue(e.getMessage(), e.getCause().getMessage().indexOf("Difficulty target is bad") >= 0);
+            assertTrue(e.getMessage(), e.getCause().getMessage().contains("Difficulty target is bad"));
         }
 
         // Accept any level of difficulty now.
@@ -212,7 +212,7 @@ public class BlockChainTest {
             // We should not get here as the difficulty target should not be changing at this point.
             fail();
         } catch (VerificationException e) {
-            assertTrue(e.getMessage(), e.getCause().getMessage().indexOf("Unexpected change in difficulty") >= 0);
+            assertTrue(e.getMessage(), e.getCause().getMessage().contains("Unexpected change in difficulty"));
         }
         testNet.proofOfWorkLimit = oldVal;
 
@@ -279,8 +279,8 @@ public class BlockChainTest {
         assertNotNull(coinbaseTransaction);
 
         // The coinbase tx is not yet available to spend.
-        assertTrue(wallet.getBalance().equals(BigInteger.ZERO));
-        assertTrue(wallet.getBalance(BalanceType.ESTIMATED).equals(Utils.toNanoCoins(50, 0)));
+        assertEquals(BigInteger.ZERO, wallet.getBalance());
+        assertEquals(wallet.getBalance(BalanceType.ESTIMATED), Utils.toNanoCoins(50, 0));
         assertTrue(!coinbaseTransaction.isMature());
 
         // Attempt to spend the coinbase - this should fail as the coinbase is not mature yet.
@@ -297,8 +297,8 @@ public class BlockChainTest {
             chain.add(b2);
 
             // Wallet still does not have the coinbase transaction available for spend.
-            assertTrue(wallet.getBalance().equals(BigInteger.ZERO));
-            assertTrue(wallet.getBalance(BalanceType.ESTIMATED).equals(Utils.toNanoCoins(50, 0)));
+            assertEquals(BigInteger.ZERO, wallet.getBalance());
+            assertEquals(wallet.getBalance(BalanceType.ESTIMATED), Utils.toNanoCoins(50, 0));
 
             // The coinbase transaction is still not mature.
             assertTrue(!coinbaseTransaction.isMature());
@@ -317,32 +317,32 @@ public class BlockChainTest {
         chain.add(b3);
 
         // Wallet now has the coinbase transaction available for spend.
-        assertTrue(wallet.getBalance().equals( Utils.toNanoCoins(50, 0)));
-        assertTrue(wallet.getBalance(BalanceType.ESTIMATED).equals(Utils.toNanoCoins(50, 0)));
+        assertEquals(wallet.getBalance(), Utils.toNanoCoins(50, 0));
+        assertEquals(wallet.getBalance(BalanceType.ESTIMATED), Utils.toNanoCoins(50, 0));
         assertTrue(coinbaseTransaction.isMature());
 
         // Create a spend with the coinbase BTC to the address in the second wallet - this should now succeed.
-        coinbaseSpend = wallet.createSend(addressToSendTo, Utils.toNanoCoins(49, 0));
-        assertNotNull(coinbaseSpend);
+        Transaction coinbaseSend2 = wallet.createSend(addressToSendTo, Utils.toNanoCoins(49, 0));
+        assertNotNull(coinbaseSend2);
 
         // Commit the coinbaseSpend to the first wallet and check the balances decrement.
-        wallet.commitTx(coinbaseSpend);
-        assertTrue(wallet.getBalance(BalanceType.ESTIMATED).equals( Utils.toNanoCoins(1, 0)));
+        wallet.commitTx(coinbaseSend2);
+        assertEquals(wallet.getBalance(BalanceType.ESTIMATED), Utils.toNanoCoins(1, 0));
         // Available balance is zero as change has not been received from a block yet.
-        assertTrue(wallet.getBalance(BalanceType.AVAILABLE).equals( Utils.toNanoCoins(0, 0)));
+        assertEquals(wallet.getBalance(BalanceType.AVAILABLE), Utils.toNanoCoins(0, 0));
 
         // Give it one more block - change from coinbaseSpend should now be available in the first wallet.
-        Block b4 = createFakeBlock(blockStore, coinbaseSpend).block;
+        Block b4 = createFakeBlock(blockStore, coinbaseSend2).block;
         chain.add(b4);
-        assertTrue(wallet.getBalance(BalanceType.AVAILABLE).equals(Utils.toNanoCoins(1, 0)));
+        assertEquals(wallet.getBalance(BalanceType.AVAILABLE), Utils.toNanoCoins(1, 0));
 
         // Check the balances in the second wallet.
-        assertTrue(wallet2.getBalance(BalanceType.ESTIMATED).equals( Utils.toNanoCoins(49, 0)));
-        assertTrue(wallet2.getBalance(BalanceType.AVAILABLE).equals( Utils.toNanoCoins(49, 0)));
+        assertEquals(wallet2.getBalance(BalanceType.ESTIMATED), Utils.toNanoCoins(49, 0));
+        assertEquals(wallet2.getBalance(BalanceType.AVAILABLE), Utils.toNanoCoins(49, 0));
     }
 
     // Some blocks from the test net.
-    private Block getBlock2() throws Exception {
+    private static Block getBlock2() throws Exception {
         Block b2 = new Block(testNet);
         b2.setMerkleRoot(new Sha256Hash("addc858a17e21e68350f968ccd384d6439b64aafa6c193c8b9dd66320470838b"));
         b2.setNonce(2642058077L);
@@ -353,7 +353,7 @@ public class BlockChainTest {
         return b2;
     }
 
-    private Block getBlock1() throws Exception {
+    private static Block getBlock1() throws Exception {
         Block b1 = new Block(testNet);
         b1.setMerkleRoot(new Sha256Hash("0e8e58ecdacaa7b3c6304a35ae4ffff964816d2b80b62b58558866ce4e648c10"));
         b1.setNonce(236038445);
