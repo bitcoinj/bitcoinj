@@ -2232,16 +2232,6 @@ public class Wallet implements Serializable, BlockChainListener {
                 newBlockHashes.add(b.getHeader().getHash());
             }
 
-            boolean affectedUs = false;
-            for (Sha256Hash hash : Iterables.concat(oldBlockHashes, newBlockHashes)) {
-                if (mapBlockTx.get(hash) != null) {
-                    affectedUs = true;
-                    break;
-                }
-            }
-            log.info(affectedUs ? "Re-org affected our transactions" : "Re-org had no effect on our transactions");
-            if (!affectedUs) return;
-
             // Avoid spuriously informing the user of wallet changes whilst we're re-organizing. This also prevents the
             // user from modifying wallet contents (eg, trying to spend) whilst we're in the middle of the process.
             onWalletChangedSuppressions++;
