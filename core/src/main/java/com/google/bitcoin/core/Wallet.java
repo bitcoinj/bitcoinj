@@ -2220,7 +2220,6 @@ public class Wallet implements Serializable, BlockChainListener {
             }
 
             List<Sha256Hash> oldBlockHashes = new ArrayList<Sha256Hash>(oldBlocks.size());
-            List<Sha256Hash> newBlockHashes = new ArrayList<Sha256Hash>(newBlocks.size());
             log.info("Old part of chain (top to bottom):");
             for (StoredBlock b : oldBlocks) {
                 log.info("  {}", b.getHeader().getHashAsString());
@@ -2229,7 +2228,6 @@ public class Wallet implements Serializable, BlockChainListener {
             log.info("New part of chain (top to bottom):");
             for (StoredBlock b : newBlocks) {
                 log.info("  {}", b.getHeader().getHashAsString());
-                newBlockHashes.add(b.getHeader().getHash());
             }
 
             // Avoid spuriously informing the user of wallet changes whilst we're re-organizing. This also prevents the
