@@ -53,7 +53,7 @@ public class SeedPeers implements PeerDiscovery {
     private InetSocketAddress nextPeer() throws UnknownHostException {
         if (pnseedIndex >= seedAddrs.length) return null;
         return new InetSocketAddress(convertAddress(seedAddrs[pnseedIndex++]),
-                params.port);
+                params.getPort());
     }
 
     /**
@@ -70,7 +70,7 @@ public class SeedPeers implements PeerDiscovery {
     private InetSocketAddress[] allPeers() throws UnknownHostException {
         InetSocketAddress[] addresses = new InetSocketAddress[seedAddrs.length];
         for (int i = 0; i < seedAddrs.length; ++i) {
-            addresses[i] = new InetSocketAddress(convertAddress(seedAddrs[i]), params.port);
+            addresses[i] = new InetSocketAddress(convertAddress(seedAddrs[i]), params.getPort());
         }
         return addresses;
     }

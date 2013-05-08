@@ -485,7 +485,7 @@ public class PeerGroup extends AbstractIdleService {
 
     /** Convenience method for addAddress(new PeerAddress(address, params.port)); */
     public void addAddress(InetAddress address) {
-        addAddress(new PeerAddress(address, params.port));
+        addAddress(new PeerAddress(address, params.getPort()));
     }
 
     /**

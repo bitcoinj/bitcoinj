@@ -101,8 +101,8 @@ public class VersionMessage extends Message {
             // We hard-code the IPv4 localhost address here rather than use InetAddress.getLocalHost() because some
             // mobile phones have broken localhost DNS entries, also, this is faster.
             final byte[] localhost = new byte[] { 127, 0, 0, 1 };
-            myAddr = new PeerAddress(InetAddress.getByAddress(localhost), params.port, 0);
-            theirAddr = new PeerAddress(InetAddress.getByAddress(localhost), params.port, 0);
+            myAddr = new PeerAddress(InetAddress.getByAddress(localhost), params.getPort(), 0);
+            theirAddr = new PeerAddress(InetAddress.getByAddress(localhost), params.getPort(), 0);
         } catch (UnknownHostException e) {
             throw new RuntimeException(e);  // Cannot happen (illegal IP length).
         }

@@ -94,7 +94,7 @@ public class DnsDiscovery implements PeerDiscovery {
                     continue;
                 }
                 for (InetAddress addr : inetAddresses) {
-                    addrs.add(new InetSocketAddress(addr, netParams.port));
+                    addrs.add(new InetSocketAddress(addr, netParams.getPort()));
                 }
             }
             if (addrs.size() == 0)

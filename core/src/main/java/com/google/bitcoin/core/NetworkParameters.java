@@ -61,8 +61,7 @@ public class NetworkParameters implements Serializable {
     private final Block genesisBlock;
     /** What the easiest allowable proof of work should be. */
     public /*final*/ BigInteger proofOfWorkLimit;
-    /** Default TCP port on which to connect to nodes. */
-    public final int port;
+    private final int port;
     /** The header bytes that identify the start of a packet on this network. */
     public final long packetMagic;
     /**
@@ -392,5 +391,10 @@ public class NetworkParameters implements Serializable {
      */
     public Block getGenesisBlock() {
         return genesisBlock;
+    }
+
+    /** Default TCP port on which to connect to nodes. */
+    public int getPort() {
+        return port;
     }
 }
