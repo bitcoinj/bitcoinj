@@ -85,10 +85,10 @@ public class FullBlockTestGenerator {
             public boolean add(BlockAndValidity element) {
                 if (outStream != null) {
                     try {
-                        outStream.write((int) (params.packetMagic >>> 24));
-                        outStream.write((int) (params.packetMagic >>> 16));
-                        outStream.write((int) (params.packetMagic >>> 8));
-                        outStream.write((int) (params.packetMagic >>> 0));
+                        outStream.write((int) (params.getPacketMagic() >>> 24));
+                        outStream.write((int) (params.getPacketMagic() >>> 16));
+                        outStream.write((int) (params.getPacketMagic() >>> 8));
+                        outStream.write((int) (params.getPacketMagic() >>> 0));
                         byte[] block = element.block.bitcoinSerialize();
                         byte[] length = new byte[4];
                         Utils.uint32ToByteArrayBE(block.length, length, 0);

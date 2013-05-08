@@ -124,18 +124,18 @@ public class BlockFileLoader implements Iterable<Block>, Iterator<Block> {
             try {
                 int nextChar = currentFileStream.read();
                 while (nextChar != -1) {
-                    if (nextChar != ((params.packetMagic >>> 24) & 0xff)) {
+                    if (nextChar != ((params.getPacketMagic() >>> 24) & 0xff)) {
                         nextChar = currentFileStream.read();
                         continue;
                     }
                     nextChar = currentFileStream.read();
-                    if (nextChar != ((params.packetMagic >>> 16) & 0xff))
+                    if (nextChar != ((params.getPacketMagic() >>> 16) & 0xff))
                         continue;
                     nextChar = currentFileStream.read();
-                    if (nextChar != ((params.packetMagic >>> 8) & 0xff))
+                    if (nextChar != ((params.getPacketMagic() >>> 8) & 0xff))
                         continue;
                     nextChar = currentFileStream.read();
-                    if (nextChar == (params.packetMagic & 0xff))
+                    if (nextChar == (params.getPacketMagic() & 0xff))
                         break;
                 }
                 byte[] bytes = new byte[4];

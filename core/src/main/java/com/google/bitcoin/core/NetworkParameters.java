@@ -62,8 +62,7 @@ public class NetworkParameters implements Serializable {
     /** What the easiest allowable proof of work should be. */
     public /*final*/ BigInteger proofOfWorkLimit;
     private final int port;
-    /** The header bytes that identify the start of a packet on this network. */
-    public final long packetMagic;
+    private final long packetMagic;
     /**
      * First byte of a base58 encoded address. See {@link Address}. This is the same as acceptableAddressCodes[0] and
      * is the one used for "normal" addresses. Other types of address may be encountered with version codes found in
@@ -396,5 +395,10 @@ public class NetworkParameters implements Serializable {
     /** Default TCP port on which to connect to nodes. */
     public int getPort() {
         return port;
+    }
+
+    /** The header bytes that identify the start of a packet on this network. */
+    public long getPacketMagic() {
+        return packetMagic;
     }
 }
