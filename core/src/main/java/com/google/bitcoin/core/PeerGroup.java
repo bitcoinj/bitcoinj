@@ -42,7 +42,6 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
@@ -201,7 +200,7 @@ public class PeerGroup extends AbstractIdleService {
     public PeerGroup(NetworkParameters params, AbstractBlockChain chain, ClientBootstrap bootstrap) {
         this.params = params;
         this.chain = chain;  // Can be null.
-        this.fastCatchupTimeSecs = params.genesisBlock.getTimeSeconds();
+        this.fastCatchupTimeSecs = params.getGenesisBlock().getTimeSeconds();
         this.wallets = new CopyOnWriteArrayList<Wallet>();
 
         // This default sentinel value will be overridden by one of two actions:

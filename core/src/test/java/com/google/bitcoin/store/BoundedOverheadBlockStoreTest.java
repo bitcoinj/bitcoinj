@@ -43,7 +43,7 @@ public class BoundedOverheadBlockStoreTest {
         BoundedOverheadBlockStore store = new BoundedOverheadBlockStore(params, temp);
         // Check the first block in a new store is the genesis block.
         StoredBlock genesis = store.getChainHead();
-        assertEquals(params.genesisBlock, genesis.getHeader());
+        assertEquals(params.getGenesisBlock(), genesis.getHeader());
 
         // Build a new block.
         StoredBlock b1 = genesis.build(genesis.getHeader().createNextBlock(to).cloneAsHeader());

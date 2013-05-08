@@ -142,7 +142,7 @@ public class BlockChainTest {
 
     @Test
     public void unconnectedBlocks() throws Exception {
-        Block b1 = unitTestParams.genesisBlock.createNextBlock(coinbaseTo);
+        Block b1 = unitTestParams.getGenesisBlock().createNextBlock(coinbaseTo);
         Block b2 = b1.createNextBlock(coinbaseTo);
         Block b3 = b2.createNextBlock(coinbaseTo);
         // Connected.
@@ -159,7 +159,7 @@ public class BlockChainTest {
     public void difficultyTransitions() throws Exception {
         // Add a bunch of blocks in a loop until we reach a difficulty transition point. The unit test params have an
         // artificially shortened period.
-        Block prev = unitTestParams.genesisBlock;
+        Block prev = unitTestParams.getGenesisBlock();
         Block.fakeClock = System.currentTimeMillis() / 1000;
         for (int i = 0; i < unitTestParams.interval - 1; i++) {
             Block newBlock = prev.createNextBlock(coinbaseTo, Block.fakeClock);
@@ -227,7 +227,7 @@ public class BlockChainTest {
     @Test
     public void duplicates() throws Exception {
         // Adding a block twice should not have any effect, in particular it should not send the block to the wallet.
-        Block b1 = unitTestParams.genesisBlock.createNextBlock(coinbaseTo);
+        Block b1 = unitTestParams.getGenesisBlock().createNextBlock(coinbaseTo);
         Block b2 = b1.createNextBlock(coinbaseTo);
         Block b3 = b2.createNextBlock(coinbaseTo);
         assertTrue(chain.add(b1));
@@ -248,7 +248,7 @@ public class BlockChainTest {
         // Covers issue 166 in which transactions that depend on each other inside a block were not always being
         // considered relevant.
         Address somebodyElse = new ECKey().toAddress(unitTestParams);
-        Block b1 = unitTestParams.genesisBlock.createNextBlock(somebodyElse);
+        Block b1 = unitTestParams.getGenesisBlock().createNextBlock(somebodyElse);
         ECKey key = new ECKey();
         wallet.addKey(key);
         Address addr = key.toAddress(unitTestParams);
@@ -277,7 +277,7 @@ public class BlockChainTest {
         Address addressToSendTo = receiveKey.toAddress(unitTestParams);
 
         // Create a block, sending the coinbase to the coinbaseTo address (which is in the wallet).
-        Block b1 = unitTestParams.genesisBlock.createNextBlockWithCoinbase(wallet.getKeys().get(0).getPubKey());
+        Block b1 = unitTestParams.getGenesisBlock().createNextBlockWithCoinbase(wallet.getKeys().get(0).getPubKey());
         chain.add(b1);
 
         // Check a transaction has been received.

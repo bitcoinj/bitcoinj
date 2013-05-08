@@ -791,7 +791,7 @@ public abstract class AbstractBlockChain {
             // Walk backwards until we find a block that doesn't have the easiest proof of work, then check
             // that difficulty is equal to that one.
             StoredBlock cursor = storedPrev;
-            while (!cursor.getHeader().equals(params.genesisBlock) &&
+            while (!cursor.getHeader().equals(params.getGenesisBlock()) &&
                    cursor.getHeight() % params.interval != 0 &&
                    cursor.getHeader().getDifficultyTargetAsInteger().equals(params.proofOfWorkLimit))
                 cursor = cursor.getPrev(blockStore);

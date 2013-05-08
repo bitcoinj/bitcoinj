@@ -149,7 +149,7 @@ public class Peer {
         this.getDataFutures = new CopyOnWriteArrayList<GetDataRequest>();
         this.eventListeners = new CopyOnWriteArrayList<PeerEventListener>();
         this.lifecycleListeners = new CopyOnWriteArrayList<PeerLifecycleListener>();
-        this.fastCatchupTimeSecs = params.genesisBlock.getTimeSeconds();
+        this.fastCatchupTimeSecs = params.getGenesisBlock().getTimeSeconds();
         this.isAcked = false;
         this.handler = new PeerHandler();
         this.pendingPings = new CopyOnWriteArrayList<PendingPing>();
@@ -985,7 +985,7 @@ public class Peer {
         try {
             Preconditions.checkNotNull(blockChain);
             if (secondsSinceEpoch == 0) {
-                fastCatchupTimeSecs = params.genesisBlock.getTimeSeconds();
+                fastCatchupTimeSecs = params.getGenesisBlock().getTimeSeconds();
                 downloadBlockBodies = true;
             } else {
                 fastCatchupTimeSecs = secondsSinceEpoch;
@@ -1095,7 +1095,7 @@ public class Peer {
             }
             // Only add the locator if we didn't already do so. If the chain is < 50 blocks we already reached it.
             if (cursor != null) {
-                blockLocator.add(params.genesisBlock.getHash());
+                blockLocator.add(params.getGenesisBlock().getHash());
             }
 
             // Record that we requested this range of blocks so we can filter out duplicate requests in the event of a

@@ -142,7 +142,7 @@ public class WalletProtobufSerializerTest {
         assertEquals(1, wallet1.getLastBlockSeenHeight());
 
         // Test the Satoshi genesis block (hash of all zeroes) is roundtripped ok.
-        Block genesisBlock = NetworkParameters.prodNet().genesisBlock;
+        Block genesisBlock = NetworkParameters.prodNet().getGenesisBlock();
         wallet.setLastBlockSeenHash(genesisBlock.getHash());
         Wallet wallet2 = roundTrip(wallet);
         assertEquals(genesisBlock.getHash(), wallet2.getLastBlockSeenHash());
@@ -163,7 +163,7 @@ public class WalletProtobufSerializerTest {
         });
 
         // Start by building two blocks on top of the genesis block.
-        Block b1 = params.genesisBlock.createNextBlock(myAddress);
+        Block b1 = params.getGenesisBlock().createNextBlock(myAddress);
         BigInteger work1 = b1.getWork();
         assertTrue(work1.compareTo(BigInteger.ZERO) > 0);
 

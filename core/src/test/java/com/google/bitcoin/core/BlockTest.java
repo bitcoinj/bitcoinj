@@ -42,7 +42,7 @@ public class BlockTest {
 
     @Test
     public void testWork() throws Exception {
-        BigInteger work = params.genesisBlock.getWork();
+        BigInteger work = params.getGenesisBlock().getWork();
         // This number is printed by the official client at startup as the calculated value of chainWork on testnet:
         //
         // SetBestChain: new best=00000007199508e34a9f  height=0  work=536879104
@@ -154,7 +154,7 @@ public class BlockTest {
     @Test
     public void testUpdateLength() {
         NetworkParameters params = NetworkParameters.unitTests();
-        Block block = params.genesisBlock.createNextBlockWithCoinbase(new ECKey().getPubKey());
+        Block block = params.getGenesisBlock().createNextBlockWithCoinbase(new ECKey().getPubKey());
         assertEquals(block.bitcoinSerialize().length, block.length);
         final int origBlockLen = block.length;
         Transaction tx = new Transaction(params);

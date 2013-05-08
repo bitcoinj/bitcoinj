@@ -76,8 +76,8 @@ public class BitcoindComparisonTool {
         params.setSubsidyDecreaseBlockCount(150);
         
         // block.nNonce/block.nBits in LoadBlockIndex not the ones under "if (fTestNet)"
-        params.genesisBlock.setNonce(2);
-        params.genesisBlock.setDifficultyTarget(0x207fFFFFL);
+        params.getGenesisBlock().setNonce(2);
+        params.getGenesisBlock().setDifficultyTarget(0x207fFFFFL);
         // Also set block.nTime    = 1296688602; in the same block
         
         File blockFile = File.createTempFile("testBlocks", ".dat");
@@ -141,7 +141,7 @@ public class BitcoindComparisonTool {
             }
         });
         
-        bitcoindChainHead = params.genesisBlock.getHash();
+        bitcoindChainHead = params.getGenesisBlock().getHash();
         
         // Connect to bitcoind and make sure it has no blocks
         peers.start();
@@ -152,7 +152,7 @@ public class BitcoindComparisonTool {
             Thread.sleep(50);
         
         ArrayList<Sha256Hash> locator = new ArrayList<Sha256Hash>(1);
-        locator.add(params.genesisBlock.getHash());
+        locator.add(params.getGenesisBlock().getHash());
         Sha256Hash hashTo = new Sha256Hash("0000000000000000000000000000000000000000000000000000000000000000");
                 
         int differingBlocks = 0;

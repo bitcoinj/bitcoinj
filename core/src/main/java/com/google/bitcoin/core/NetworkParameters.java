@@ -37,8 +37,6 @@ import static com.google.common.base.Preconditions.checkState;
  * is internal to bitcoinj and can't be used on a real network. In future there may be others. </p>
  */
 public class NetworkParameters implements Serializable {
-    private static final long serialVersionUID = 3L;
-
     /**
      * The protocol version this library implements.
      */
@@ -54,24 +52,13 @@ public class NetworkParameters implements Serializable {
     /** The string returned by getId() for the testnet. */
     public static final String ID_TESTNET = "org.bitcoin.test";
     /** Unit test network. */
-    static final String ID_UNITTESTNET = "com.google.bitcoin.unittest";
+    public static final String ID_UNITTESTNET = "com.google.bitcoin.unittest";
 
     // TODO: Seed nodes should be here as well.
 
     // TODO: Replace with getters and then finish making all these fields final.
 
-    /**
-     * <p>Genesis block for this chain.</p>
-     *
-     * <p>The first block in every chain is a well known constant shared between all Bitcoin implemenetations. For a
-     * block to be valid, it must be eventually possible to work backwards to the genesis block by following the
-     * prevBlockHash pointers in the block headers.</p>
-     *
-     * <p>The genesis blocks for both test and prod networks contain the timestamp of when they were created,
-     * and a message in the coinbase transaction. It says, <i>"The Times 03/Jan/2009 Chancellor on brink of second
-     * bailout for banks"</i>.</p>
-     */
-    public final Block genesisBlock;
+    private final Block genesisBlock;
     /** What the easiest allowable proof of work should be. */
     public /*final*/ BigInteger proofOfWorkLimit;
     /** Default TCP port on which to connect to nodes. */
@@ -390,5 +377,20 @@ public class NetworkParameters implements Serializable {
     /** Returns DNS names that when resolved, give IP addresses of active peers. */
     public String[] getDnsSeeds() {
         return dnsSeeds;
+    }
+
+    /**
+     * <p>Genesis block for this chain.</p>
+     *
+     * <p>The first block in every chain is a well known constant shared between all Bitcoin implemenetations. For a
+     * block to be valid, it must be eventually possible to work backwards to the genesis block by following the
+     * prevBlockHash pointers in the block headers.</p>
+     *
+     * <p>The genesis blocks for both test and prod networks contain the timestamp of when they were created,
+     * and a message in the coinbase transaction. It says, <i>"The Times 03/Jan/2009 Chancellor on brink of second
+     * bailout for banks"</i>.</p>
+     */
+    public Block getGenesisBlock() {
+        return genesisBlock;
     }
 }

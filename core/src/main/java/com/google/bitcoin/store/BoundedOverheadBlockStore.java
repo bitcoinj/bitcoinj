@@ -186,7 +186,7 @@ public class BoundedOverheadBlockStore implements BlockStore {
         }
         try {
             // Set up the genesis block. When we start out fresh, it is by definition the top of the chain.
-            Block genesis = params.genesisBlock.cloneAsHeader();
+            Block genesis = params.getGenesisBlock().cloneAsHeader();
             StoredBlock storedGenesis = new StoredBlock(genesis, genesis.getWork(), 0);
             this.chainHead = storedGenesis.getHeader().getHash();
             this.file.write(this.chainHead.getBytes());

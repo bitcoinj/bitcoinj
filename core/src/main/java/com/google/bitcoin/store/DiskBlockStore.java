@@ -95,7 +95,7 @@ public class DiskBlockStore implements BlockStore {
         }
         try {
             // Set up the genesis block. When we start out fresh, it is by definition the top of the chain.
-            Block genesis = params.genesisBlock.cloneAsHeader();
+            Block genesis = params.getGenesisBlock().cloneAsHeader();
             StoredBlock storedGenesis = new StoredBlock(genesis, genesis.getWork(), 0);
             this.chainHead = storedGenesis.getHeader().getHash();
             file.write(this.chainHead.getBytes());
@@ -145,8 +145,8 @@ public class DiskBlockStore implements BlockStore {
                 StoredBlock s;
                 if (prev == null) {
                     // First block in the stored chain has to be treated specially.
-                    if (b.equals(params.genesisBlock)) {
-                        s = new StoredBlock(params.genesisBlock.cloneAsHeader(), params.genesisBlock.getWork(), 0);
+                    if (b.equals(params.getGenesisBlock())) {
+                        s = new StoredBlock(params.getGenesisBlock().cloneAsHeader(), params.getGenesisBlock().getWork(), 0);
                     } else {
                         throw new BlockStoreException("Could not connect " + b.getHash().toString() + " to "
                                 + b.getPrevBlockHash().toString());

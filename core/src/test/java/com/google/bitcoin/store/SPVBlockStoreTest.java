@@ -23,7 +23,6 @@ import com.google.bitcoin.core.StoredBlock;
 import org.junit.Test;
 
 import java.io.File;
-import java.math.BigInteger;
 
 import static org.junit.Assert.assertEquals;
 
@@ -40,7 +39,7 @@ public class SPVBlockStoreTest {
         Address to = new ECKey().toAddress(params);
         // Check the first block in a new store is the genesis block.
         StoredBlock genesis = store.getChainHead();
-        assertEquals(params.genesisBlock, genesis.getHeader());
+        assertEquals(params.getGenesisBlock(), genesis.getHeader());
         assertEquals(0, genesis.getHeight());
 
 

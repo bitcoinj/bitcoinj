@@ -72,7 +72,7 @@ public class ChainSplitTest {
         });
 
         // Start by building a couple of blocks on top of the genesis block.
-        Block b1 = unitTestParams.genesisBlock.createNextBlock(coinsTo);
+        Block b1 = unitTestParams.getGenesisBlock().createNextBlock(coinsTo);
         Block b2 = b1.createNextBlock(coinsTo);
         assertTrue(chain.add(b1));
         assertTrue(chain.add(b2));
@@ -138,7 +138,7 @@ public class ChainSplitTest {
     public void testForking2() throws Exception {
         // Check that if the chain forks and new coins are received in the alternate chain our balance goes up
         // after the re-org takes place.
-        Block b1 = unitTestParams.genesisBlock.createNextBlock(someOtherGuy);
+        Block b1 = unitTestParams.getGenesisBlock().createNextBlock(someOtherGuy);
         Block b2 = b1.createNextBlock(someOtherGuy);
         assertTrue(chain.add(b1));
         assertTrue(chain.add(b2));
@@ -156,7 +156,7 @@ public class ChainSplitTest {
     @Test
     public void testForking3() throws Exception {
         // Check that we can handle our own spends being rolled back by a fork.
-        Block b1 = unitTestParams.genesisBlock.createNextBlock(coinsTo);
+        Block b1 = unitTestParams.getGenesisBlock().createNextBlock(coinsTo);
         chain.add(b1);
         assertEquals("50.00", Utils.bitcoinValueToFriendlyString(wallet.getBalance()));
         Address dest = new ECKey().toAddress(unitTestParams);
@@ -190,7 +190,7 @@ public class ChainSplitTest {
         // Check that we can handle external spends on an inactive chain becoming active. An external spend is where
         // we see a transaction that spends our own coins but we did not broadcast it ourselves. This happens when
         // keys are being shared between wallets.
-        Block b1 = unitTestParams.genesisBlock.createNextBlock(coinsTo);
+        Block b1 = unitTestParams.getGenesisBlock().createNextBlock(coinsTo);
         chain.add(b1);
         assertEquals("50.00", Utils.bitcoinValueToFriendlyString(wallet.getBalance()));
         Address dest = new ECKey().toAddress(unitTestParams);
@@ -220,12 +220,12 @@ public class ChainSplitTest {
     @Test
     public void testForking5() throws Exception {
         // Test the standard case in which a block containing identical transactions appears on a side chain.
-        Block b1 = unitTestParams.genesisBlock.createNextBlock(coinsTo);
+        Block b1 = unitTestParams.getGenesisBlock().createNextBlock(coinsTo);
         chain.add(b1);
         assertEquals("50.00", Utils.bitcoinValueToFriendlyString(wallet.getBalance()));
         // genesis -> b1
         //         -> b2
-        Block b2 = unitTestParams.genesisBlock.createNextBlock(coinsTo);
+        Block b2 = unitTestParams.getGenesisBlock().createNextBlock(coinsTo);
         Transaction b2coinbase = b2.transactions.get(0);
         b2.transactions.clear();
         b2.addTransaction(b2coinbase);
@@ -239,11 +239,11 @@ public class ChainSplitTest {
     @Test
     public void testForking6() throws Exception {
         // Test the case in which a side chain block contains a tx, and then it appears in the main chain too.
-        Block b1 = unitTestParams.genesisBlock.createNextBlock(someOtherGuy);
+        Block b1 = unitTestParams.getGenesisBlock().createNextBlock(someOtherGuy);
         chain.add(b1);
         // genesis -> b1
         //         -> b2
-        Block b2 = unitTestParams.genesisBlock.createNextBlock(coinsTo);
+        Block b2 = unitTestParams.getGenesisBlock().createNextBlock(coinsTo);
         chain.add(b2);
         assertEquals(BigInteger.ZERO, wallet.getBalance());
         // genesis -> b1 -> b3
@@ -270,7 +270,7 @@ public class ChainSplitTest {
             }
         });
 
-        Block b1 = unitTestParams.genesisBlock.createNextBlock(coinsTo);
+        Block b1 = unitTestParams.getGenesisBlock().createNextBlock(coinsTo);
         chain.add(b1);
 
         Transaction t1 = wallet.createSend(someOtherGuy, Utils.toNanoCoins(10, 0));
@@ -315,7 +315,7 @@ public class ChainSplitTest {
         });
 
         // Start with 50 coins.
-        Block b1 = unitTestParams.genesisBlock.createNextBlock(coinsTo);
+        Block b1 = unitTestParams.getGenesisBlock().createNextBlock(coinsTo);
         chain.add(b1);
 
         Transaction t1 = wallet.createSend(someOtherGuy, Utils.toNanoCoins(10, 0));
@@ -372,7 +372,7 @@ public class ChainSplitTest {
         });
 
         // Start by building three blocks on top of the genesis block. All send to us.
-        Block b1 = unitTestParams.genesisBlock.createNextBlock(coinsTo);
+        Block b1 = unitTestParams.getGenesisBlock().createNextBlock(coinsTo);
         BigInteger work1 = b1.getWork();
         Block b2 = b1.createNextBlock(coinsTo2);
         BigInteger work2 = b2.getWork();
@@ -517,7 +517,7 @@ public class ChainSplitTest {
         // The first block contains a normal transaction that spends to coinTo.
         // The second block contains a coinbase transaction that spends to coinTo2.
         // The third block contains a normal transaction that spends to coinTo.
-        Block b1 = unitTestParams.genesisBlock.createNextBlock(coinsTo);
+        Block b1 = unitTestParams.getGenesisBlock().createNextBlock(coinsTo);
         Block b2 = b1.createNextBlockWithCoinbase(wallet.getKeys().get(1).getPubKey());
         Block b3 = b2.createNextBlock(coinsTo);
 

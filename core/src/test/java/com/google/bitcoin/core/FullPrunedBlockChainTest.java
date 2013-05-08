@@ -118,7 +118,7 @@ public class FullPrunedBlockChainTest {
         ECKey outKey = new ECKey();
         
         // Build some blocks on genesis block to create a spendable output
-        Block rollingBlock = unitTestParams.genesisBlock.createNextBlockWithCoinbase(outKey.getPubKey());
+        Block rollingBlock = unitTestParams.getGenesisBlock().createNextBlockWithCoinbase(outKey.getPubKey());
         chain.add(rollingBlock);
         TransactionOutPoint spendableOutput = new TransactionOutPoint(unitTestParams, 0, rollingBlock.getTransactions().get(0).getHash());
         byte[] spendableOutputScriptPubKey = rollingBlock.getTransactions().get(0).getOutputs().get(0).getScriptBytes();

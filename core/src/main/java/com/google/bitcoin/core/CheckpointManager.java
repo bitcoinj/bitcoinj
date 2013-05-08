@@ -104,12 +104,12 @@ public class CheckpointManager {
      * you would want to know the checkpoint before the earliest wallet birthday.
      */
     public StoredBlock getCheckpointBefore(long time) {
-        checkArgument(time > params.genesisBlock.getTimeSeconds());
+        checkArgument(time > params.getGenesisBlock().getTimeSeconds());
         // This is thread safe because the map never changes after creation.
         Map.Entry<Long, StoredBlock> entry = checkpoints.floorEntry(time);
         if (entry == null) {
             try {
-                Block genesis = params.genesisBlock.cloneAsHeader();
+                Block genesis = params.getGenesisBlock().cloneAsHeader();
                 return new StoredBlock(genesis, genesis.getWork(), 0);
             } catch (VerificationException e) {
                 throw new RuntimeException(e);  // Cannot happen.

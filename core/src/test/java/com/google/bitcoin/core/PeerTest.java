@@ -210,7 +210,7 @@ public class PeerTest extends TestWithNetworkConnections {
         GetBlocksMessage getblocks = (GetBlocksMessage)outbound();
         List<Sha256Hash> expectedLocator = new ArrayList<Sha256Hash>();
         expectedLocator.add(b1.getHash());
-        expectedLocator.add(unitTestParams.genesisBlock.getHash());
+        expectedLocator.add(unitTestParams.getGenesisBlock().getHash());
         
         assertEquals(getblocks.getLocator(), expectedLocator);
         assertEquals(getblocks.getStopHash(), b3.getHash());
@@ -366,7 +366,7 @@ public class PeerTest extends TestWithNetworkConnections {
         List<Sha256Hash> expectedLocator = new ArrayList<Sha256Hash>();
         expectedLocator.add(b2.getHash());
         expectedLocator.add(b1.getHash());
-        expectedLocator.add(unitTestParams.genesisBlock.getHash());
+        expectedLocator.add(unitTestParams.getGenesisBlock().getHash());
 
         GetBlocksMessage message = (GetBlocksMessage) event.getValue().getMessage();
         assertEquals(message.getLocator(), expectedLocator);
@@ -420,7 +420,7 @@ public class PeerTest extends TestWithNetworkConnections {
         GetHeadersMessage getheaders = (GetHeadersMessage) outbound();
         List<Sha256Hash> expectedLocator = new ArrayList<Sha256Hash>();
         expectedLocator.add(b1.getHash());
-        expectedLocator.add(unitTestParams.genesisBlock.getHash());
+        expectedLocator.add(unitTestParams.getGenesisBlock().getHash());
         assertEquals(getheaders.getLocator(), expectedLocator);
         assertEquals(getheaders.getStopHash(), Sha256Hash.ZERO_HASH);
         // Now send all the headers.
@@ -430,7 +430,7 @@ public class PeerTest extends TestWithNetworkConnections {
         expectedLocator.clear();
         expectedLocator.add(b2.getHash());
         expectedLocator.add(b1.getHash());
-        expectedLocator.add(unitTestParams.genesisBlock.getHash());
+        expectedLocator.add(unitTestParams.getGenesisBlock().getHash());
         inbound(peer, headers);
         GetBlocksMessage getblocks = (GetBlocksMessage) outbound();
         assertEquals(expectedLocator, getblocks.getLocator());

@@ -32,7 +32,7 @@ public class MemoryBlockStore implements BlockStore {
         blockMap = new HashMap<Sha256Hash, StoredBlock>();
         // Insert the genesis block.
         try {
-            Block genesisHeader = params.genesisBlock.cloneAsHeader();
+            Block genesisHeader = params.getGenesisBlock().cloneAsHeader();
             StoredBlock storedGenesis = new StoredBlock(genesisHeader, genesisHeader.getWork(), 0);
             put(storedGenesis);
             setChainHead(storedGenesis);
