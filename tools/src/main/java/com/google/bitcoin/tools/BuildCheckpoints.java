@@ -1,11 +1,14 @@
 package com.google.bitcoin.tools;
 
 import com.google.bitcoin.core.*;
+import com.google.bitcoin.params.MainNetParams;
 import com.google.bitcoin.store.BlockStore;
 import com.google.bitcoin.store.MemoryBlockStore;
 import com.google.bitcoin.utils.BriefLogFormatter;
 
-import java.io.*;
+import java.io.DataOutputStream;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.security.DigestOutputStream;
@@ -22,7 +25,7 @@ import static com.google.common.base.Preconditions.checkState;
 public class BuildCheckpoints {
     public static void main(String[] args) throws Exception {
         BriefLogFormatter.init();
-        final NetworkParameters params = NetworkParameters.prodNet();
+        final NetworkParameters params = MainNetParams.get();
 
         // Sorted map of UNIX time of block to StoredBlock object.
         final TreeMap<Integer, StoredBlock> checkpoints = new TreeMap<Integer, StoredBlock>();

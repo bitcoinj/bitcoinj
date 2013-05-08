@@ -17,6 +17,7 @@
 package com.google.bitcoin.core;
 
 import com.google.bitcoin.core.Wallet.BalanceType;
+import com.google.bitcoin.params.MainNetParams;
 import com.google.bitcoin.params.TestNet2Params;
 import com.google.bitcoin.store.BlockStore;
 import com.google.bitcoin.store.MemoryBlockStore;
@@ -379,7 +380,7 @@ public class BlockChainTest {
 
     @Test
     public void estimatedBlockTime() throws Exception {
-        NetworkParameters params = NetworkParameters.prodNet();
+        NetworkParameters params = MainNetParams.get();
         BlockChain prod = new BlockChain(params, new MemoryBlockStore(params));
         Date d = prod.estimateBlockTime(200000);
         // The actual date of block 200,000 was 2012-09-22 10:47:00

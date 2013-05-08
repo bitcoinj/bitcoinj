@@ -16,6 +16,7 @@
 
 package com.google.bitcoin.core;
 
+import com.google.bitcoin.params.MainNetParams;
 import com.google.bitcoin.store.BlockStore;
 import com.google.bitcoin.store.MemoryBlockStore;
 import org.junit.Before;
@@ -133,28 +134,28 @@ public class LazyParseByteCacheTest {
     
     @Test
     public void testTransactionsLazyRetain() throws Exception {
-    	testTransaction(NetworkParameters.prodNet(), txMessage, false, true, true);
+    	testTransaction(MainNetParams.get(), txMessage, false, true, true);
     	testTransaction(unitTestParams, tx1BytesWithHeader, false, true, true);
     	testTransaction(unitTestParams, tx2BytesWithHeader, false, true, true);
     }
     
     @Test
     public void testTransactionsLazyNoRetain() throws Exception {
-    	testTransaction(NetworkParameters.prodNet(), txMessage, false, true, false);
+    	testTransaction(MainNetParams.get(), txMessage, false, true, false);
     	testTransaction(unitTestParams, tx1BytesWithHeader, false, true, false);
     	testTransaction(unitTestParams, tx2BytesWithHeader, false, true, false);
     }
     
     @Test
     public void testTransactionsNoLazyNoRetain() throws Exception {
-    	testTransaction(NetworkParameters.prodNet(), txMessage, false, false, false);
+    	testTransaction(MainNetParams.get(), txMessage, false, false, false);
     	testTransaction(unitTestParams, tx1BytesWithHeader, false, false, false);
     	testTransaction(unitTestParams, tx2BytesWithHeader, false, false, false);
     }
     
     @Test
     public void testTransactionsNoLazyRetain() throws Exception {
-    	testTransaction(NetworkParameters.prodNet(), txMessage, false, false, true);
+    	testTransaction(MainNetParams.get(), txMessage, false, false, true);
     	testTransaction(unitTestParams, tx1BytesWithHeader, false, false, true);
     	testTransaction(unitTestParams, tx2BytesWithHeader, false, false, true);
     }

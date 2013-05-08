@@ -36,8 +36,10 @@ import static com.google.bitcoin.core.Utils.COIN;
 /**
  * <p>NetworkParameters contains the data needed for working with an instantiation of a Bitcoin chain.</p>
  *
- * <p>Currently there are only two, the production chain and the test chain. There is also a "unit test chain" which
- * is internal to bitcoinj and can't be used on a real network. In future there may be others. </p>
+ * <p>This is an abstract class, concrete instantiations can be found in the params package. There are four:
+ * one for the main network ({@link MainNetParams}), one for the public test network, and two others that are
+ * intended for unit testing and local app development purposes. Although this class contains some aliases for
+ * them, you are encouraged to call the static get() methods on each specific params class directly.</p>
  */
 public abstract class NetworkParameters implements Serializable {
     /**
@@ -52,14 +54,14 @@ public abstract class NetworkParameters implements Serializable {
 
     /** The string returned by getId() for the main, production network where people trade things. */
     public static final String ID_PRODNET = "org.bitcoin.production";
+    /** The string returned by getId() for the main, production network where people trade things. */
+    public static final String ID_MAINNET = "org.bitcoin.production";
     /** The string returned by getId() for the testnet. */
     public static final String ID_TESTNET = "org.bitcoin.test";
     /** Unit test network. */
     public static final String ID_UNITTESTNET = "com.google.bitcoin.unittest";
 
     // TODO: Seed nodes should be here as well.
-
-    // TODO: Replace with getters and then finish making all these fields final.
 
     protected Block genesisBlock;
     protected BigInteger proofOfWorkLimit;
@@ -177,12 +179,12 @@ public abstract class NetworkParameters implements Serializable {
 
     /** Returns the network parameters for the given string ID or NULL if not recognized. */
     public static NetworkParameters fromID(String id) {
-        if (id.equals(ID_PRODNET)) {
-            return prodNet();
+        if (id.equals(ID_MAINNET)) {
+            return MainNetParams.get();
         } else if (id.equals(ID_TESTNET)) {
-            return testNet();
+            return TestNet3Params.get();
         } else if (id.equals(ID_UNITTESTNET)) {
-            return unitTests();
+            return UnitTestParams.get();
         } else {
             return null;
         }

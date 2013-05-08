@@ -3,6 +3,7 @@ package com.google.bitcoin.store;
 
 import com.google.bitcoin.core.*;
 import com.google.bitcoin.core.TransactionConfidence.ConfidenceType;
+import com.google.bitcoin.params.MainNetParams;
 import com.google.bitcoin.utils.BriefLogFormatter;
 import com.google.protobuf.ByteString;
 import org.bitcoinj.wallet.Protos;
@@ -142,7 +143,7 @@ public class WalletProtobufSerializerTest {
         assertEquals(1, wallet1.getLastBlockSeenHeight());
 
         // Test the Satoshi genesis block (hash of all zeroes) is roundtripped ok.
-        Block genesisBlock = NetworkParameters.prodNet().getGenesisBlock();
+        Block genesisBlock = MainNetParams.get().getGenesisBlock();
         wallet.setLastBlockSeenHash(genesisBlock.getHash());
         Wallet wallet2 = roundTrip(wallet);
         assertEquals(genesisBlock.getHash(), wallet2.getLastBlockSeenHash());

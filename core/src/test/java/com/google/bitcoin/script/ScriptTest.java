@@ -17,6 +17,7 @@
 package com.google.bitcoin.script;
 
 import com.google.bitcoin.core.*;
+import com.google.bitcoin.params.TestNet3Params;
 import com.google.common.collect.Lists;
 import org.junit.Test;
 import org.spongycastle.util.encoders.Hex;
@@ -41,7 +42,7 @@ public class ScriptTest {
     static final String pubkeyProg = "76a91433e81a941e64cda12c6a299ed322ddbdd03f8d0e88ac";
 
 
-    static final NetworkParameters params = NetworkParameters.testNet();
+    static final NetworkParameters params = TestNet3Params.get();
 
     @Test
     public void testScriptSig() throws Exception {
@@ -131,8 +132,8 @@ public class ScriptTest {
     public void dataDrivenValidScripts() throws Exception {
         BufferedReader in = new BufferedReader(new InputStreamReader(
                 getClass().getResourceAsStream("script_valid.json"), Charset.forName("UTF-8")));
-        
-        NetworkParameters params = NetworkParameters.testNet();
+
+        NetworkParameters params = TestNet3Params.get();
         
         // Poor man's JSON parser (because pulling in a lib for this is overkill)
         String script = "";
@@ -168,8 +169,8 @@ public class ScriptTest {
     public void dataDrivenInvalidScripts() throws Exception {
         BufferedReader in = new BufferedReader(new InputStreamReader(
                 getClass().getResourceAsStream("script_invalid.json"), Charset.forName("UTF-8")));
-        
-        NetworkParameters params = NetworkParameters.testNet();
+
+        NetworkParameters params = TestNet3Params.get();
         
         // Poor man's JSON parser (because pulling in a lib for this is overkill)
         String script = "";
@@ -290,8 +291,8 @@ public class ScriptTest {
     public void dataDrivenValidTransactions() throws Exception {
         BufferedReader in = new BufferedReader(new InputStreamReader(
                 getClass().getResourceAsStream("tx_valid.json"), Charset.forName("UTF-8")));
-        
-        NetworkParameters params = NetworkParameters.testNet();
+
+        NetworkParameters params = TestNet3Params.get();
         
         // Poor man's (aka. really, really poor) JSON parser (because pulling in a lib for this is probably not overkill)
         List<JSONObject> tx = new ArrayList<JSONObject>(3);
@@ -340,8 +341,8 @@ public class ScriptTest {
     public void dataDrivenInvalidTransactions() throws Exception {
         BufferedReader in = new BufferedReader(new InputStreamReader(
                 getClass().getResourceAsStream("tx_invalid.json"), Charset.forName("UTF-8")));
-        
-        NetworkParameters params = NetworkParameters.testNet();
+
+        NetworkParameters params = TestNet3Params.get();
         
         // Poor man's (aka. really, really poor) JSON parser (because pulling in a lib for this is probably overkill)
         List<JSONObject> tx = new ArrayList<JSONObject>(1);

@@ -19,6 +19,8 @@ package com.google.bitcoin.examples;
 import com.google.bitcoin.core.*;
 import com.google.bitcoin.crypto.KeyCrypterException;
 import com.google.bitcoin.discovery.DnsDiscovery;
+import com.google.bitcoin.params.MainNetParams;
+import com.google.bitcoin.params.TestNet3Params;
 import com.google.bitcoin.store.BlockStore;
 import com.google.bitcoin.store.SPVBlockStore;
 import com.google.bitcoin.utils.BriefLogFormatter;
@@ -39,7 +41,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * </p>
  *
  * <p>
- * If running on TestNet (slow but better than using real coins on prodnet) do the following:
+ * If running on TestNet (slow but better than using real coins on the main network) do the following:
  * <ol>
  * <li>Backup your current wallet.dat in case of unforeseen problems</li>
  * <li>Start your bitcoin client in test mode <code>bitcoin -testnet</code>. This will create a new sub-directory called testnet and should not interfere with normal wallets or operations.</li>
@@ -67,8 +69,8 @@ public class PingService {
 
     public PingService(String[] args) throws Exception {
         boolean testNet = args.length > 0 && args[0].equalsIgnoreCase("testnet");
-        final NetworkParameters params = testNet ? NetworkParameters.testNet() : NetworkParameters.prodNet();
-        String filePrefix = testNet ? "pingservice-testnet" : "pingservice-prodnet";
+        final NetworkParameters params = testNet ? TestNet3Params.get() : MainNetParams.get();
+        String filePrefix = testNet ? "pingservice-testnet" : "pingservice-mainnet";
         // Try to read the wallet from storage, create a new one if not possible.
         walletFile = new File(filePrefix + ".wallet");
         Wallet w;

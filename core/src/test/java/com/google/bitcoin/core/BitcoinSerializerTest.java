@@ -17,6 +17,7 @@
 package com.google.bitcoin.core;
 
 
+import com.google.bitcoin.params.MainNetParams;
 import org.junit.Test;
 import org.spongycastle.util.encoders.Hex;
 
@@ -24,9 +25,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.util.Arrays;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
+import static org.junit.Assert.*;
 
 public class BitcoinSerializerTest {
     private final byte[] addrMessage = Hex.decode("f9beb4d96164647200000000000000001f000000" +
@@ -54,7 +53,7 @@ public class BitcoinSerializerTest {
 
     @Test
     public void testAddr() throws Exception {
-    	BitcoinSerializer bs = new BitcoinSerializer(NetworkParameters.prodNet());
+    	BitcoinSerializer bs = new BitcoinSerializer(MainNetParams.get());
         // the actual data from https://en.bitcoin.it/wiki/Protocol_specification#addr
         ByteArrayInputStream bais = new ByteArrayInputStream(addrMessage);
         AddressMessage a = (AddressMessage)bs.deserialize(bais);
@@ -71,7 +70,7 @@ public class BitcoinSerializerTest {
 
     @Test
     public void testLazyParsing()  throws Exception {
-    	BitcoinSerializer bs = new BitcoinSerializer(NetworkParameters.prodNet(), true, false);
+    	BitcoinSerializer bs = new BitcoinSerializer(MainNetParams.get(), true, false);
     	
     	ByteArrayInputStream bais = new ByteArrayInputStream(txMessage);
     	Transaction tx = (Transaction)bs.deserialize(bais);
@@ -96,7 +95,7 @@ public class BitcoinSerializerTest {
     }
     
     private void testCachedParsing(boolean lazy)  throws Exception {
-    	BitcoinSerializer bs = new BitcoinSerializer(NetworkParameters.prodNet(), lazy, true);
+    	BitcoinSerializer bs = new BitcoinSerializer(MainNetParams.get(), lazy, true);
     	
     	//first try writing to a fields to ensure uncaching and children are not affected
     	ByteArrayInputStream bais = new ByteArrayInputStream(txMessage);
@@ -163,7 +162,7 @@ public class BitcoinSerializerTest {
      */
     @Test
     public void testHeaders1() throws Exception {
-        BitcoinSerializer bs = new BitcoinSerializer(NetworkParameters.prodNet());
+        BitcoinSerializer bs = new BitcoinSerializer(MainNetParams.get());
 
         ByteArrayInputStream bais = new ByteArrayInputStream(Hex.decode("f9beb4d9686561" +
                 "646572730000000000520000005d4fab8101010000006fe28c0ab6f1b372c1a6a246ae6" +
@@ -190,7 +189,7 @@ public class BitcoinSerializerTest {
      * Get 6 headers of blocks 1-6 in the chain
      */
     public void testHeaders2() throws Exception {
-        BitcoinSerializer bs = new BitcoinSerializer(NetworkParameters.prodNet());
+        BitcoinSerializer bs = new BitcoinSerializer(MainNetParams.get());
 
         ByteArrayInputStream bais = new ByteArrayInputStream(Hex.decode("f9beb4d96865616465" +
                 "72730000000000e701000085acd4ea06010000006fe28c0ab6f1b372c1a6a246ae63f74f931e" +

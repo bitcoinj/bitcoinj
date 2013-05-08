@@ -9,6 +9,8 @@ import com.google.bitcoin.core.FullPrunedBlockChain;
 import com.google.bitcoin.core.NetworkParameters;
 import com.google.bitcoin.core.PrunedException;
 import com.google.bitcoin.core.VerificationException;
+import com.google.bitcoin.params.MainNetParams;
+import com.google.bitcoin.params.TestNet3Params;
 import com.google.bitcoin.store.BlockStore;
 import com.google.bitcoin.store.BlockStoreException;
 import com.google.bitcoin.store.BoundedOverheadBlockStore;
@@ -32,9 +34,9 @@ public class BlockImporter {
         
         NetworkParameters params = null;
         if (args[0].equals("test"))
-            params = NetworkParameters.testNet();
+            params = TestNet3Params.get();
         else
-            params = NetworkParameters.prodNet();
+            params = MainNetParams.get();
         
         BlockStore store = null;
         if (args[1].equals("H2")) {

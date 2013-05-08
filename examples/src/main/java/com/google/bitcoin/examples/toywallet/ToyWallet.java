@@ -18,6 +18,8 @@ package com.google.bitcoin.examples.toywallet;
 
 import com.google.bitcoin.core.*;
 import com.google.bitcoin.discovery.DnsDiscovery;
+import com.google.bitcoin.params.MainNetParams;
+import com.google.bitcoin.params.TestNet3Params;
 import com.google.bitcoin.store.H2FullPrunedBlockStore;
 import com.google.bitcoin.store.SPVBlockStore;
 import com.google.bitcoin.utils.BriefLogFormatter;
@@ -113,9 +115,9 @@ public class ToyWallet {
     public ToyWallet(boolean testnet, boolean fullChain, String[] args) throws Exception {
         // Set up a Bitcoin connection + empty wallet. TODO: Simplify the setup for this use case.
         if (testnet) {
-            params = NetworkParameters.testNet();
+            params = TestNet3Params.get();
         } else {
-            params = NetworkParameters.prodNet();
+            params = MainNetParams.get();
         }
 
         // Try to read the wallet from storage, create a new one if not possible.

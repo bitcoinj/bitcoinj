@@ -16,6 +16,7 @@
 
 package com.google.bitcoin.core;
 
+import com.google.bitcoin.params.MainNetParams;
 import org.junit.Test;
 import org.spongycastle.util.encoders.Hex;
 
@@ -29,8 +30,8 @@ public class PeerAddressTest
     public void testPeerAddressRoundtrip() throws Exception {
         // copied verbatim from https://en.bitcoin.it/wiki/Protocol_specification#Network_address
         String fromSpec = "010000000000000000000000000000000000ffff0a000001208d";
-        PeerAddress pa = new PeerAddress(NetworkParameters.prodNet(),
-                Hex.decode(fromSpec),0,0);
+        PeerAddress pa = new PeerAddress(MainNetParams.get(),
+                Hex.decode(fromSpec), 0, 0);
         String reserialized = Utils.bytesToHexString(pa.bitcoinSerialize());
         assertEquals(reserialized,fromSpec );
     }

@@ -17,6 +17,7 @@
 package com.google.bitcoin.examples;
 
 import com.google.bitcoin.core.*;
+import com.google.bitcoin.params.MainNetParams;
 import com.google.bitcoin.store.MemoryBlockStore;
 
 import java.math.BigInteger;
@@ -33,8 +34,8 @@ import java.net.InetAddress;
  */
 public class PrivateKeys {
     public static void main(String[] args) throws Exception {
-        // TODO: Assumes production network not testnet. Make it selectable.
-        NetworkParameters params = NetworkParameters.prodNet();
+        // TODO: Assumes main network not testnet. Make it selectable.
+        NetworkParameters params = MainNetParams.get();
         try {
             // Decode the private key from Satoshis Base58 variant. If 51 characters long then it's from Bitcoins
             // dumpprivkey command and includes a version byte and checksum. Otherwise assume it's a raw key.

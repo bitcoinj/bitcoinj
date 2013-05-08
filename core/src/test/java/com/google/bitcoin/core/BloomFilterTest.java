@@ -1,5 +1,6 @@
 package com.google.bitcoin.core;
 
+import com.google.bitcoin.params.MainNetParams;
 import org.junit.Test;
 import org.spongycastle.util.encoders.Hex;
 
@@ -48,7 +49,7 @@ public class BloomFilterTest {
 
     @Test
     public void walletTest() throws Exception {
-        NetworkParameters params = NetworkParameters.prodNet();
+        NetworkParameters params = MainNetParams.get();
 
         DumpedPrivateKey privKey = new DumpedPrivateKey(params, "5Kg1gnAjaLfKiwhhPpGS3QfRg2m6awQvaj98JCZBZQ5SuS2F15C");
         

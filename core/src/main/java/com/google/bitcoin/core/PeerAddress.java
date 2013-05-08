@@ -16,6 +16,8 @@
 
 package com.google.bitcoin.core;
 
+import com.google.bitcoin.params.MainNetParams;
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.math.BigInteger;
@@ -90,7 +92,7 @@ public class PeerAddress extends ChildMessage {
      * Constructs a peer address from the given IP address. Port and protocol version are default for the prodnet.
      */
     public PeerAddress(InetAddress addr) {
-        this(addr, NetworkParameters.prodNet().getPort());
+        this(addr, MainNetParams.get().getPort());
     }
 
     public PeerAddress(InetSocketAddress addr) {

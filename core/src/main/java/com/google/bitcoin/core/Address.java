@@ -16,6 +16,9 @@
 
 package com.google.bitcoin.core;
 
+import com.google.bitcoin.params.MainNetParams;
+import com.google.bitcoin.params.TestNet3Params;
+
 /**
  * <p>A Bitcoin address looks like 1MsScoe2fTJoq4ZPdQgqyhgWeoNamYPevy and is derived from an elliptic curve public key
  * plus a set of network parameters. Not to be confused with a {@link PeerAddress} or {@link AddressMessage}
@@ -85,9 +88,7 @@ public class Address extends VersionedChecksummedBytes {
      */
     public NetworkParameters getParameters() {
         // TODO: There should be a more generic way to get all supported networks.
-        NetworkParameters[] networks =
-                new NetworkParameters[] { NetworkParameters.testNet(), NetworkParameters.prodNet() };
-
+        NetworkParameters[] networks = { TestNet3Params.get(), MainNetParams.get() };
         for (NetworkParameters params : networks) {
             for (int code : params.getAcceptableAddressCodes()) {
                 if (code == version) {
@@ -102,9 +103,6 @@ public class Address extends VersionedChecksummedBytes {
      * Given an address, examines the version byte and attempts to find a matching NetworkParameters. If you aren't sure
      * which network the address is intended for (eg, it was provided by a user), you can use this to decide if it is
      * compatible with the current wallet. You should be able to handle a null response from this method.
-     *
-     * @param address
-     * @return a NetworkParameters representing the network the address is intended for, or null if unknown.
      */
     public static NetworkParameters getParametersFromAddress(String address) throws AddressFormatException {
         try {

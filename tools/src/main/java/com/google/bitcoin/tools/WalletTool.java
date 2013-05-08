@@ -20,6 +20,8 @@ import com.google.bitcoin.core.*;
 import com.google.bitcoin.crypto.KeyCrypterException;
 import com.google.bitcoin.discovery.DnsDiscovery;
 import com.google.bitcoin.discovery.PeerDiscovery;
+import com.google.bitcoin.params.MainNetParams;
+import com.google.bitcoin.params.TestNet3Params;
 import com.google.bitcoin.store.*;
 import com.google.bitcoin.utils.BriefLogFormatter;
 import joptsimple.OptionParser;
@@ -272,13 +274,13 @@ public class WalletTool {
             logger.setLevel(Level.SEVERE);
         }
         switch (netFlag.value(options)) {
-            case PROD: 
-                params = NetworkParameters.prodNet();
+            case PROD:
+                params = MainNetParams.get();
                 chainFileName = new File("prodnet.chain");
 
                 break;
-            case TEST: 
-                params = NetworkParameters.testNet();
+            case TEST:
+                params = TestNet3Params.get();
                 chainFileName = new File("testnet.chain");
                 break;
             default:

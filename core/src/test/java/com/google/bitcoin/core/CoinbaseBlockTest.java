@@ -16,8 +16,10 @@
 
 package com.google.bitcoin.core;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import com.google.bitcoin.core.AbstractBlockChain.NewBlockType;
+import com.google.bitcoin.core.Wallet.BalanceType;
+import com.google.bitcoin.params.MainNetParams;
+import org.junit.Test;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -25,16 +27,14 @@ import java.io.InputStream;
 import java.math.BigInteger;
 import java.util.List;
 
-import org.junit.Test;
-
-import com.google.bitcoin.core.AbstractBlockChain.NewBlockType;
-import com.google.bitcoin.core.Wallet.BalanceType;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 /**
  * Test that an example production coinbase transactions can be added to a wallet ok.
  */
 public class CoinbaseBlockTest {
-    static final NetworkParameters params = NetworkParameters.prodNet();
+    static final NetworkParameters params = MainNetParams.get();
 
     // The address for this private key is 1GqtGtn4fctXuKxsVzRPSLmYWN1YioLi9y.
     private static final String MINING_PRIVATE_KEY = "5JDxPrBRghF1EvSBjDigywqfmAjpHPmTJxYtQTYJxJRHLLQA4mG";
