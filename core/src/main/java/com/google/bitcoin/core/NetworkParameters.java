@@ -63,22 +63,11 @@ public class NetworkParameters implements Serializable {
     public /*final*/ BigInteger proofOfWorkLimit;
     private final int port;
     private final long packetMagic;
-    /**
-     * First byte of a base58 encoded address. See {@link Address}. This is the same as acceptableAddressCodes[0] and
-     * is the one used for "normal" addresses. Other types of address may be encountered with version codes found in
-     * the acceptableAddressCodes array.
-     */
-    public final int addressHeader;
-    /** First byte of a base58 encoded dumped private key. See {@link DumpedPrivateKey}. */
-    public final int dumpedPrivateKeyHeader;
+    private final int addressHeader;
+    private final int dumpedPrivateKeyHeader;
     /** How many blocks pass between difficulty adjustment periods. Bitcoin standardises this to be 2015. */
     public /*final*/ int interval;
-    /**
-     * How much time in seconds is supposed to pass between "interval" blocks. If the actual elapsed time is
-     * significantly different from this value, the network difficulty formula will produce a different value. Both
-     * test and production Bitcoin networks use 2 weeks (1209600 seconds).
-     */
-    public final int targetTimespan;
+    private final int targetTimespan;
     /**
      * The key used to sign {@link AlertMessage}s. You can use {@link ECKey#verify(byte[], byte[], byte[])} to verify
      * signatures using it.
@@ -95,36 +84,15 @@ public class NetworkParameters implements Serializable {
      * The depth of blocks required for a coinbase transaction to be spendable.
      */
     private final int spendableCoinbaseDepth;
-    
-    /**
-     * Returns the number of blocks between subsidy decreases
-     */
     private /*final*/ int subsidyDecreaseBlockCount;
     
     /**
      * If we are running in testnet-in-a-box mode, we allow connections to nodes with 0 non-genesis blocks
      */
     boolean allowEmptyPeerChains;
-
-    /**
-     * The version codes that prefix addresses which are acceptable on this network. Although Satoshi intended these to
-     * be used for "versioning", in fact they are today used to discriminate what kind of data is contained in the
-     * address and to prevent accidentally sending coins across chains which would destroy them.
-     */
-    public final int[] acceptableAddressCodes;
-
-    /**
-     * DNS names that when resolved, give active peers on the network. Used to bootstrap the P2P connectivity.
-     */
+    private final int[] acceptableAddressCodes;
     private final String[] dnsSeeds;
-
-
-    /**
-     * Block checkpoints are a safety mechanism that hard-codes the hashes of blocks at particular heights. Re-orgs
-     * beyond this point will never be accepted. This field should be accessed using
-     * {@link NetworkParameters#passesCheckpoint(int, Sha256Hash)} and {@link NetworkParameters#isCheckpoint(int)}.
-     */
-    public Map<Integer, Sha256Hash> checkpoints = new HashMap<Integer, Sha256Hash>();
+    private Map<Integer, Sha256Hash> checkpoints = new HashMap<Integer, Sha256Hash>();
 
     private NetworkParameters(int type) {
         alertSigningKey = SATOSHI_KEY;
@@ -400,5 +368,37 @@ public class NetworkParameters implements Serializable {
     /** The header bytes that identify the start of a packet on this network. */
     public long getPacketMagic() {
         return packetMagic;
+    }
+
+    /**
+     * First byte of a base58 encoded address. See {@link com.google.bitcoin.core.Address}. This is the same as acceptableAddressCodes[0] and
+     * is the one used for "normal" addresses. Other types of address may be encountered with version codes found in
+     * the acceptableAddressCodes array.
+     */
+    public int getAddressHeader() {
+        return addressHeader;
+    }
+
+    /** First byte of a base58 encoded dumped private key. See {@link com.google.bitcoin.core.DumpedPrivateKey}. */
+    public int getDumpedPrivateKeyHeader() {
+        return dumpedPrivateKeyHeader;
+    }
+
+    /**
+     * How much time in seconds is supposed to pass between "interval" blocks. If the actual elapsed time is
+     * significantly different from this value, the network difficulty formula will produce a different value. Both
+     * test and production Bitcoin networks use 2 weeks (1209600 seconds).
+     */
+    public int getTargetTimespan() {
+        return targetTimespan;
+    }
+
+    /**
+     * The version codes that prefix addresses which are acceptable on this network. Although Satoshi intended these to
+     * be used for "versioning", in fact they are today used to discriminate what kind of data is contained in the
+     * address and to prevent accidentally sending coins across chains which would destroy them.
+     */
+    public int[] getAcceptableAddressCodes() {
+        return acceptableAddressCodes;
     }
 }

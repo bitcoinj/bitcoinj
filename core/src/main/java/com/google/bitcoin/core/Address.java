@@ -39,7 +39,7 @@ public class Address extends VersionedChecksummedBytes {
      * <pre>new Address(NetworkParameters.prodNet(), Hex.decode("4a22c3c4cbb31e4d03b15550636762bda0baf85a"));</pre>
      */
     public Address(NetworkParameters params, byte[] hash160) {
-        super(params.addressHeader, hash160);
+        super(params.getAddressHeader(), hash160);
         if (hash160.length != 20)  // 160 = 8 * 20
             throw new RuntimeException("Addresses are 160-bit hashes, so you must provide 20 bytes");
     }
@@ -58,14 +58,14 @@ public class Address extends VersionedChecksummedBytes {
         super(address);
         if (params != null) {
             boolean found = false;
-            for (int v : params.acceptableAddressCodes) {
+            for (int v : params.getAcceptableAddressCodes()) {
                 if (version == v) {
                     found = true;
                     break;
                 }
             }
             if (!found) {
-                throw new WrongNetworkException(version, params.acceptableAddressCodes);
+                throw new WrongNetworkException(version, params.getAcceptableAddressCodes());
             }
         }
     }
@@ -89,7 +89,7 @@ public class Address extends VersionedChecksummedBytes {
                 new NetworkParameters[] { NetworkParameters.testNet(), NetworkParameters.prodNet() };
 
         for (NetworkParameters params : networks) {
-            for (int code : params.acceptableAddressCodes) {
+            for (int code : params.getAcceptableAddressCodes()) {
                 if (code == version) {
                     return params;
                 }

@@ -32,7 +32,7 @@ public class DumpedPrivateKey extends VersionedChecksummedBytes {
 
     // Used by ECKey.getPrivateKeyEncoded()
     DumpedPrivateKey(NetworkParameters params, byte[] keyBytes, boolean compressed) {
-        super(params.dumpedPrivateKeyHeader, encode(keyBytes, compressed));
+        super(params.getDumpedPrivateKeyHeader(), encode(keyBytes, compressed));
         this.compressed = compressed;
     }
 
@@ -58,9 +58,9 @@ public class DumpedPrivateKey extends VersionedChecksummedBytes {
      */
     public DumpedPrivateKey(NetworkParameters params, String encoded) throws AddressFormatException {
         super(encoded);
-        if (params != null && version != params.dumpedPrivateKeyHeader)
+        if (params != null && version != params.getDumpedPrivateKeyHeader())
             throw new AddressFormatException("Mismatched version number, trying to cross networks? " + version +
-                    " vs " + params.dumpedPrivateKeyHeader);
+                    " vs " + params.getDumpedPrivateKeyHeader());
         if (bytes.length == 33) {
             compressed = true;
             bytes = Arrays.copyOf(bytes, 32);  // Chop off the additional marker byte.

@@ -74,8 +74,8 @@ public class AddressTest {
             fail();
         } catch (WrongNetworkException e) {
             // Success.
-            assertEquals(e.verCode, NetworkParameters.prodNet().addressHeader);
-            assertTrue(Arrays.equals(e.acceptableVersions, NetworkParameters.testNet().acceptableAddressCodes));
+            assertEquals(e.verCode, NetworkParameters.prodNet().getAddressHeader());
+            assertTrue(Arrays.equals(e.acceptableVersions, NetworkParameters.testNet().getAcceptableAddressCodes()));
         } catch (AddressFormatException e) {
             fail();
         }
