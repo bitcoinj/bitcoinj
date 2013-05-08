@@ -19,6 +19,7 @@ package com.google.bitcoin.core;
 import com.google.bitcoin.script.Script;
 import com.google.bitcoin.script.ScriptBuilder;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,7 +29,6 @@ import java.io.ObjectInputStream;
 import java.io.OutputStream;
 import java.math.BigInteger;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -68,7 +68,7 @@ public class Block extends Message {
     public static final int MAX_BLOCK_SIGOPS = MAX_BLOCK_SIZE / 50;
 
     /** A value for difficultyTarget (nBits) that allows half of all possible hash solutions. Used in unit testing. */
-    static final long EASIEST_DIFFICULTY_TARGET = 0x207fFFFFL;
+    public static final long EASIEST_DIFFICULTY_TARGET = 0x207fFFFFL;
 
     // For unit testing. If not zero, use this instead of the current time.
     static long fakeClock = 0;
@@ -566,13 +566,13 @@ public class Block extends Message {
     }
 
     /**
-     * Finds a value of nonce that makes the blocks hash lower than the difficulty target. This is called mining, but
-     * solve() is far too slow to do real mining with. It exists only for unit testing purposes and is not a part of
-     * the public API.
+     * <p>Finds a value of nonce that makes the blocks hash lower than the difficulty target. This is called mining, but
+     * solve() is far too slow to do real mining with. It exists only for unit testing purposes.
      *
-     * This can loop forever if a solution cannot be found solely by incrementing nonce. It doesn't change extraNonce.
+     * <p>This can loop forever if a solution cannot be found solely by incrementing nonce. It doesn't change
+     * extraNonce.</p>
      */
-    void solve() {
+    public void solve() {
         maybeParseHeader();
         while (true) {
             try {
@@ -885,7 +885,8 @@ public class Block extends Message {
         return difficultyTarget;
     }
 
-    void setDifficultyTarget(long compactForm) {
+    /** Sets the difficulty target in compact form. */
+    public void setDifficultyTarget(long compactForm) {
         unCacheHeader();
         this.difficultyTarget = compactForm;
         this.hash = null;
@@ -900,15 +901,17 @@ public class Block extends Message {
         return nonce;
     }
 
-    void setNonce(long nonce) {
+    /** Sets the nonce and clears any cached data. */
+    public void setNonce(long nonce) {
         unCacheHeader();
         this.nonce = nonce;
         this.hash = null;
     }
 
+    /** Returns an immutable list of transactions held in this block. */
     public List<Transaction> getTransactions() {
        maybeParseTransactions();
-       return Collections.unmodifiableList(transactions);
+       return ImmutableList.copyOf(transactions);
     }
 
     // ///////////////////////////////////////////////////////////////////////////////////////////////
