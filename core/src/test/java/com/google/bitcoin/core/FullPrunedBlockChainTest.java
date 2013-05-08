@@ -33,8 +33,7 @@ import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.List;
 
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 /**
  * We don't do any wallet tests here, we leave that to {@link ChainSplitTest}
@@ -134,10 +133,10 @@ public class FullPrunedBlockChainTest {
         WeakReference<StoredUndoableBlock> undoBlock = new WeakReference<StoredUndoableBlock>(store.getUndoBlock(rollingBlock.getHash()));
 
         StoredUndoableBlock storedUndoableBlock = undoBlock.get();
-        assertTrue(storedUndoableBlock != null);
-        assertTrue(storedUndoableBlock.getTransactions() == null);
+        assertNotNull(storedUndoableBlock);
+        assertNull(storedUndoableBlock.getTransactions());
         WeakReference<TransactionOutputChanges> changes = new WeakReference<TransactionOutputChanges>(storedUndoableBlock.getTxOutChanges());
-        assertTrue(changes.get() != null);
+        assertNotNull(changes.get());
         storedUndoableBlock = null;   // Blank the reference so it can be GCd.
         
         // Create a chain longer than UNDOABLE_BLOCKS_STORED
@@ -147,9 +146,9 @@ public class FullPrunedBlockChainTest {
         }
         // Try to get the garbage collector to run
         System.gc();
-        assertTrue(undoBlock.get() == null);
-        assertTrue(changes.get() == null);
-        assertTrue(out.get() == null);
+        assertNull(undoBlock.get());
+        assertNull(changes.get());
+        assertNull(out.get());
     }
     
     private void addInputToTransaction(Transaction t, TransactionOutPoint prevOut, byte[] prevOutScriptPubKey, ECKey sigKey) throws ScriptException {
