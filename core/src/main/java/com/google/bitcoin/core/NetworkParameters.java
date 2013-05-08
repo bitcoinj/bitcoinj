@@ -16,6 +16,10 @@
 
 package com.google.bitcoin.core;
 
+import com.google.bitcoin.params.MainNetParams;
+import com.google.bitcoin.params.TestNet2Params;
+import com.google.bitcoin.params.TestNet3Params;
+import com.google.bitcoin.params.UnitTestParams;
 import com.google.bitcoin.script.Script;
 import com.google.bitcoin.script.ScriptOpCodes;
 import com.google.common.base.Objects;
@@ -28,15 +32,14 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static com.google.bitcoin.core.Utils.COIN;
-import static com.google.common.base.Preconditions.checkState;
 
 /**
  * <p>NetworkParameters contains the data needed for working with an instantiation of a Bitcoin chain.</p>
  *
- * <p></p>Currently there are only two, the production chain and the test chain. There is also a "unit test chain" which
+ * <p>Currently there are only two, the production chain and the test chain. There is also a "unit test chain" which
  * is internal to bitcoinj and can't be used on a real network. In future there may be others. </p>
  */
-public class NetworkParameters implements Serializable {
+public abstract class NetworkParameters implements Serializable {
     /**
      * The protocol version this library implements.
      */
@@ -58,148 +61,35 @@ public class NetworkParameters implements Serializable {
 
     // TODO: Replace with getters and then finish making all these fields final.
 
-    private final Block genesisBlock;
-    /** What the easiest allowable proof of work should be. */
-    public /*final*/ BigInteger proofOfWorkLimit;
-    private final int port;
-    private final long packetMagic;
-    private final int addressHeader;
-    private final int dumpedPrivateKeyHeader;
-    /** How many blocks pass between difficulty adjustment periods. Bitcoin standardises this to be 2015. */
-    public /*final*/ int interval;
-    private final int targetTimespan;
-    /**
-     * The key used to sign {@link AlertMessage}s. You can use {@link ECKey#verify(byte[], byte[], byte[])} to verify
-     * signatures using it.
-     */
-    public /*final*/ byte[] alertSigningKey;
+    protected Block genesisBlock;
+    protected BigInteger proofOfWorkLimit;
+    protected int port;
+    protected long packetMagic;
+    protected int addressHeader;
+    protected int dumpedPrivateKeyHeader;
+    protected int interval;
+    protected int targetTimespan;
+    protected byte[] alertSigningKey;
 
     /**
      * See getId(). This may be null for old deserialized wallets. In that case we derive it heuristically
      * by looking at the port number.
      */
-    private final String id;
+    protected String id;
 
     /**
      * The depth of blocks required for a coinbase transaction to be spendable.
      */
-    private final int spendableCoinbaseDepth;
-    private /*final*/ int subsidyDecreaseBlockCount;
+    protected int spendableCoinbaseDepth;
+    protected int subsidyDecreaseBlockCount;
     
-    /**
-     * If we are running in testnet-in-a-box mode, we allow connections to nodes with 0 non-genesis blocks
-     */
-    boolean allowEmptyPeerChains;
-    private final int[] acceptableAddressCodes;
-    private final String[] dnsSeeds;
-    private Map<Integer, Sha256Hash> checkpoints = new HashMap<Integer, Sha256Hash>();
+    protected int[] acceptableAddressCodes;
+    protected String[] dnsSeeds;
+    protected Map<Integer, Sha256Hash> checkpoints = new HashMap<Integer, Sha256Hash>();
 
-    private NetworkParameters(int type) {
+    protected NetworkParameters() {
         alertSigningKey = SATOSHI_KEY;
         genesisBlock = createGenesis(this);
-        if (type == 0) {
-            // Production.
-            interval = INTERVAL;
-            targetTimespan = TARGET_TIMESPAN;
-            proofOfWorkLimit = Utils.decodeCompactBits(0x1d00ffffL);
-            acceptableAddressCodes = new int[] { 0 };
-            dumpedPrivateKeyHeader = 128;
-            addressHeader = 0;
-            port = 8333;
-            packetMagic = 0xf9beb4d9L;
-            genesisBlock.setDifficultyTarget(0x1d00ffffL);
-            genesisBlock.setTime(1231006505L);
-            genesisBlock.setNonce(2083236893);
-            id = ID_PRODNET;
-            subsidyDecreaseBlockCount = 210000;
-            allowEmptyPeerChains = false;
-            spendableCoinbaseDepth = 100;
-            String genesisHash = genesisBlock.getHashAsString();
-            checkState(genesisHash.equals("000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f"),
-                    genesisHash);
-
-            // This contains (at a minimum) the blocks which are not BIP30 compliant. BIP30 changed how duplicate
-            // transactions are handled. Duplicated transactions could occur in the case where a coinbase had the same
-            // extraNonce and the same outputs but appeared at different heights, and greatly complicated re-org handling.
-            // Having these here simplifies block connection logic considerably.
-            checkpoints.put(91722, new Sha256Hash("00000000000271a2dc26e7667f8419f2e15416dc6955e5a6c6cdf3f2574dd08e"));
-            checkpoints.put(91812, new Sha256Hash("00000000000af0aed4792b1acee3d966af36cf5def14935db8de83d6f9306f2f"));
-            checkpoints.put(91842, new Sha256Hash("00000000000a4d0a398161ffc163c503763b1f4360639393e0e4c8e300e0caec"));
-            checkpoints.put(91880, new Sha256Hash("00000000000743f190a18c5577a3c2d2a1f610ae9601ac046a38084ccb7cd721"));
-            checkpoints.put(200000, new Sha256Hash("000000000000034a7dedef4a161fa058a2d67a173a90155f3a2fe6fc132e0ebf"));
-
-            dnsSeeds = new String[] {
-                    "seed.bitcoin.sipa.be",        // Pieter Wuille
-                    "dnsseed.bluematt.me",         // Matt Corallo
-                    "dnsseed.bitcoin.dashjr.org",  // Luke Dashjr
-                    "dnsseed.plan99.net",          // Mike Hearn
-            };
-        } else if (type == 3) {
-            // Testnet3
-            id = ID_TESTNET;
-            // Genesis hash is 000000000933ea01ad0ee984209779baaec3ced90fa3f408719526f8d77f4943
-            packetMagic = 0x0b110907;
-            interval = INTERVAL;
-            targetTimespan = TARGET_TIMESPAN;
-            proofOfWorkLimit = Utils.decodeCompactBits(0x1d00ffffL);
-            port = 18333;
-            addressHeader = 111;
-            acceptableAddressCodes = new int[] { 111 };
-            dumpedPrivateKeyHeader = 239;
-            genesisBlock.setTime(1296688602L);
-            genesisBlock.setDifficultyTarget(0x1d00ffffL);
-            genesisBlock.setNonce(414098458);
-            allowEmptyPeerChains = true;
-            spendableCoinbaseDepth = 100;
-            subsidyDecreaseBlockCount = 210000;
-            String genesisHash = genesisBlock.getHashAsString();
-            checkState(genesisHash.equals("000000000933ea01ad0ee984209779baaec3ced90fa3f408719526f8d77f4943"),
-                    genesisHash);
-
-            dnsSeeds = new String[] {
-                    "testnet-seed.bitcoin.petertodd.org",
-                    "testnet-seed.bluematt.me"
-            };
-        } else if (type == 2) {
-            id = ID_TESTNET;
-            packetMagic = 0xfabfb5daL;
-            port = 18333;
-            addressHeader = 111;
-            interval = INTERVAL;
-            targetTimespan = TARGET_TIMESPAN;
-            proofOfWorkLimit = Utils.decodeCompactBits(0x1d0fffffL);
-            acceptableAddressCodes = new int[] { 111 };
-            dumpedPrivateKeyHeader = 239;
-            genesisBlock.setTime(1296688602L);
-            genesisBlock.setDifficultyTarget(0x1d07fff8L);
-            genesisBlock.setNonce(384568319);
-            allowEmptyPeerChains = false;
-            spendableCoinbaseDepth = 100;
-            subsidyDecreaseBlockCount = 210000;
-            String genesisHash = genesisBlock.getHashAsString();
-            checkState(genesisHash.equals("00000007199508e34a9ff81e6ec0c477a4cccff2a4767a8eee39c11db367b008"),
-                    genesisHash);
-            dnsSeeds = null;
-        } else if (type == -1) {
-            id = ID_UNITTESTNET;
-            packetMagic = 0x0b110907;
-            addressHeader = 111;
-            proofOfWorkLimit = new BigInteger("00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", 16);
-            genesisBlock.setTime(System.currentTimeMillis() / 1000);
-            genesisBlock.setDifficultyTarget(Block.EASIEST_DIFFICULTY_TARGET);
-            genesisBlock.solve();
-            port = 18333;
-            interval = 10;
-            dumpedPrivateKeyHeader = 239;
-            allowEmptyPeerChains = false;
-            targetTimespan = 200000000;  // 6 years. Just a very big number.
-            spendableCoinbaseDepth = 5;
-            acceptableAddressCodes = new int[] { 111 };
-            subsidyDecreaseBlockCount = 100;
-            dnsSeeds = null;
-        } else {
-            throw new RuntimeException();
-        }
     }
 
     private static Block createGenesis(NetworkParameters n) {
@@ -241,43 +131,29 @@ public class NetworkParameters implements Serializable {
      */
     public static final BigInteger MAX_MONEY = new BigInteger("21000000", 10).multiply(COIN);
 
-    /** Returns whatever the latest testNet parameters are.  Use this rather than the versioned equivalents. */
+    /** Alias for TestNet3Params.get(), use that instead. */
     public static NetworkParameters testNet() {
-        return testNet3();
+        return TestNet3Params.get();
     }
 
-    private static NetworkParameters tn2;
-    public synchronized static NetworkParameters testNet2() {
-        if (tn2 == null) {
-            tn2 = new NetworkParameters(2);
-        }
-        return tn2;
+    /** Alias for TestNet2Params.get(), use that instead. */
+    public static NetworkParameters testNet2() {
+        return TestNet2Params.get();
     }
 
-    private static NetworkParameters tn3;
-    public synchronized static NetworkParameters testNet3() {
-        if (tn3 == null) {
-            tn3 = new NetworkParameters(3);
-        }
-        return tn3;
+    /** Alias for TestNet3Params.get(), use that instead. */
+    public static NetworkParameters testNet3() {
+        return TestNet3Params.get();
     }
 
-    private static NetworkParameters pn;
-    /** The primary Bitcoin chain created by Satoshi. */
-    public synchronized static NetworkParameters prodNet() {
-        if (pn == null) {
-            pn = new NetworkParameters(0);
-        }
-        return pn;
+    /** Alias for MainNetParams.get(), use that instead */
+    public static NetworkParameters prodNet() {
+        return MainNetParams.get();
     }
 
-    private static NetworkParameters ut;
     /** Returns a testnet params modified to allow any difficulty target. */
-    public synchronized static NetworkParameters unitTests() {
-        if (ut == null) {
-            ut = new NetworkParameters(-1);
-        }
-        return ut;
+    public static NetworkParameters unitTests() {
+        return UnitTestParams.get();
     }
 
     /**
@@ -334,10 +210,6 @@ public class NetworkParameters implements Serializable {
 
     public int getSubsidyDecreaseBlockCount() {
         return subsidyDecreaseBlockCount;
-    }
-
-    public void setSubsidyDecreaseBlockCount(int value) {
-        subsidyDecreaseBlockCount = value;
     }
 
     /** Returns DNS names that when resolved, give IP addresses of active peers. */
@@ -400,5 +272,30 @@ public class NetworkParameters implements Serializable {
      */
     public int[] getAcceptableAddressCodes() {
         return acceptableAddressCodes;
+    }
+
+    /**
+     * If we are running in testnet-in-a-box mode, we allow connections to nodes with 0 non-genesis blocks.
+     */
+    public boolean allowEmptyPeerChain() {
+        return true;
+    }
+
+    /** How many blocks pass between difficulty adjustment periods. Bitcoin standardises this to be 2015. */
+    public int getInterval() {
+        return interval;
+    }
+
+    /** What the easiest allowable proof of work should be. */
+    public BigInteger getProofOfWorkLimit() {
+        return proofOfWorkLimit;
+    }
+
+    /**
+     * The key used to sign {@link com.google.bitcoin.core.AlertMessage}s. You can use {@link com.google.bitcoin.core.ECKey#verify(byte[], byte[], byte[])} to verify
+     * signatures using it.
+     */
+    public byte[] getAlertSigningKey() {
+        return alertSigningKey;
     }
 }

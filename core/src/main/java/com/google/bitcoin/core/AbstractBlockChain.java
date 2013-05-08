@@ -716,7 +716,7 @@ public abstract class AbstractBlockChain {
         Block prev = storedPrev.getHeader();
         
         // Is this supposed to be a difficulty transition point?
-        if ((storedPrev.getHeight() + 1) % params.interval != 0) {
+        if ((storedPrev.getHeight() + 1) % params.getInterval() != 0) {
 
             // TODO: Refactor this hack after 0.5 is released and we stop supporting deserialization compatibility.
             // This should be a method of the NetworkParameters, which should in turn be using singletons and a subclass
@@ -738,7 +738,7 @@ public abstract class AbstractBlockChain {
         // two weeks after the initial block chain download.
         long now = System.currentTimeMillis();
         StoredBlock cursor = blockStore.get(prev.getHash());
-        for (int i = 0; i < params.interval - 1; i++) {
+        for (int i = 0; i < params.getInterval() - 1; i++) {
             if (cursor == null) {
                 // This should never happen. If it does, it means we are following an incorrect or busted chain.
                 throw new VerificationException(
@@ -763,9 +763,9 @@ public abstract class AbstractBlockChain {
         newDifficulty = newDifficulty.multiply(BigInteger.valueOf(timespan));
         newDifficulty = newDifficulty.divide(BigInteger.valueOf(targetTimespan));
 
-        if (newDifficulty.compareTo(params.proofOfWorkLimit) > 0) {
+        if (newDifficulty.compareTo(params.getProofOfWorkLimit()) > 0) {
             log.info("Difficulty hit proof of work limit: {}", newDifficulty.toString(16));
-            newDifficulty = params.proofOfWorkLimit;
+            newDifficulty = params.getProofOfWorkLimit();
         }
 
         int accuracyBytes = (int) (nextBlock.getDifficultyTarget() >>> 24) - 3;
@@ -793,8 +793,8 @@ public abstract class AbstractBlockChain {
             // that difficulty is equal to that one.
             StoredBlock cursor = storedPrev;
             while (!cursor.getHeader().equals(params.getGenesisBlock()) &&
-                   cursor.getHeight() % params.interval != 0 &&
-                   cursor.getHeader().getDifficultyTargetAsInteger().equals(params.proofOfWorkLimit))
+                   cursor.getHeight() % params.getInterval() != 0 &&
+                   cursor.getHeader().getDifficultyTargetAsInteger().equals(params.getProofOfWorkLimit()))
                 cursor = cursor.getPrev(blockStore);
             BigInteger cursorDifficulty = cursor.getHeader().getDifficultyTargetAsInteger();
             BigInteger newDifficulty = next.getDifficultyTargetAsInteger();

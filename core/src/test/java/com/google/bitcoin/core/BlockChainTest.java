@@ -17,6 +17,7 @@
 package com.google.bitcoin.core;
 
 import com.google.bitcoin.core.Wallet.BalanceType;
+import com.google.bitcoin.params.TestNet2Params;
 import com.google.bitcoin.store.BlockStore;
 import com.google.bitcoin.store.MemoryBlockStore;
 import com.google.bitcoin.utils.BriefLogFormatter;
@@ -35,7 +36,6 @@ import static org.junit.Assert.*;
 // Handling of chain splits/reorgs are in ChainSplitTests.
 
 public class BlockChainTest {
-    private static final NetworkParameters testNet = NetworkParameters.testNet2();
     private BlockChain testNetChain;
 
     private Wallet wallet;
@@ -46,6 +46,13 @@ public class BlockChainTest {
     private final StoredBlock[] block = new StoredBlock[1];
     private Transaction coinbaseTransaction;
 
+    private static class TweakableTestNet2Params extends TestNet2Params {
+        public void setProofOfWorkLimit(BigInteger limit) {
+            proofOfWorkLimit = limit;
+        }
+    }
+    private static final TweakableTestNet2Params testNet = new TweakableTestNet2Params();
+
     private void resetBlockStore() {
         blockStore = new MemoryBlockStore(unitTestParams);
     }
@@ -54,6 +61,7 @@ public class BlockChainTest {
     public void setUp() throws Exception {
         BriefLogFormatter.initVerbose();
         testNetChain = new BlockChain(testNet, new Wallet(testNet), new MemoryBlockStore(testNet));
+
         unitTestParams = NetworkParameters.unitTests();
         wallet = new Wallet(unitTestParams) {
             @Override
@@ -161,7 +169,7 @@ public class BlockChainTest {
         // artificially shortened period.
         Block prev = unitTestParams.getGenesisBlock();
         Block.fakeClock = System.currentTimeMillis() / 1000;
-        for (int i = 0; i < unitTestParams.interval - 1; i++) {
+        for (int i = 0; i < unitTestParams.getInterval() - 1; i++) {
             Block newBlock = prev.createNextBlock(coinbaseTo, Block.fakeClock);
             assertTrue(chain.add(newBlock));
             prev = newBlock;
@@ -209,9 +217,9 @@ public class BlockChainTest {
         }
 
         // Accept any level of difficulty now.
-        BigInteger oldVal = testNet.proofOfWorkLimit;
-        testNet.proofOfWorkLimit = new BigInteger
-                ("00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", 16);
+        BigInteger oldVal = testNet.getProofOfWorkLimit();
+        testNet.setProofOfWorkLimit(new BigInteger
+                ("00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", 16));
         try {
             testNetChain.add(bad);
             // We should not get here as the difficulty target should not be changing at this point.
@@ -219,7 +227,7 @@ public class BlockChainTest {
         } catch (VerificationException e) {
             assertTrue(e.getMessage(), e.getCause().getMessage().contains("Unexpected change in difficulty"));
         }
-        testNet.proofOfWorkLimit = oldVal;
+        testNet.setProofOfWorkLimit(oldVal);
 
         // TODO: Test difficulty change is not out of range when a transition period becomes valid.
     }

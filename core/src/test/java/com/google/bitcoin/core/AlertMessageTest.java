@@ -16,6 +16,7 @@
 
 package com.google.bitcoin.core;
 
+import com.google.bitcoin.params.UnitTestParams;
 import org.junit.Before;
 import org.junit.Test;
 import org.spongycastle.util.encoders.Hex;
@@ -29,9 +30,13 @@ public class AlertMessageTest {
 
     @Before
     public void setUp() throws Exception {
-        ECKey key = new ECKey(TEST_KEY_PRIV, null);
-        params = NetworkParameters.unitTests();
-        params.alertSigningKey = key.getPubKey();
+        final ECKey key = new ECKey(TEST_KEY_PRIV, null);
+        params = new UnitTestParams() {
+            @Override
+            public byte[] getAlertSigningKey() {
+                return key.getPubKey();
+            }
+        };
     }
 
     @Test

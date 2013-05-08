@@ -16,6 +16,7 @@
 
 package com.google.bitcoin.core;
 
+import com.google.bitcoin.params.RegTestParams;
 import com.google.bitcoin.store.BlockStoreException;
 import com.google.bitcoin.store.FullPrunedBlockStore;
 import com.google.bitcoin.store.H2FullPrunedBlockStore;
@@ -58,38 +59,15 @@ public class BitcoindComparisonTool {
         System.out.println("USAGE: bitcoinjBlockStoreLocation runLargeReorgs(1/0) [port=18444]");
         boolean runLargeReorgs = Integer.parseInt(args[1]) == 1;
 
-        params = NetworkParameters.testNet2();
-        /**
-         * The following have been changed from the default and do not match bitcoind's default.
-         * In order for this test to work, bitcoind should be recompiled with the same values you see here.
-         * You can also opt to comment out these lines to use the default, however that will cause this tool to be
-         * very significantly less efficient and useful (it will likely run forever trying to mine new blocks).
-         * 
-         * You could also simply use git apply to apply the test-patches included with bitcoind
-         */
-        
-        // bnProofOfWorkLimit set in main.cpp
-        params.proofOfWorkLimit = new BigInteger("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", 16);
-        // Also set hashGenesisBlock to 0f9188f13cb7b2c71f2a335e3a4fc328bf5beb436012afca590b1a11466e2206 one line up
-        
-        // constant (210000) in GetBlockValue (main.cpp)
-        params.setSubsidyDecreaseBlockCount(150);
-        
-        // block.nNonce/block.nBits in LoadBlockIndex not the ones under "if (fTestNet)"
-        params.getGenesisBlock().setNonce(2);
-        params.getGenesisBlock().setDifficultyTarget(0x207fFFFFL);
-        // Also set block.nTime    = 1296688602; in the same block
-        
+        params = new RegTestParams();
+
         File blockFile = File.createTempFile("testBlocks", ".dat");
         blockFile.deleteOnExit();
-        
+
         FullBlockTestGenerator generator = new FullBlockTestGenerator(params);
         BlockAndValidityList blockList = generator.getBlocksToTest(true, runLargeReorgs, blockFile);
         Iterator<Block> blocks = new BlockFileLoader(params, Arrays.asList(blockFile));
-        
-        // Only needs to be set in bitcoinj
-        params.allowEmptyPeerChains = true;
-        
+
         try {
             store = new H2FullPrunedBlockStore(params, args[0], blockList.maximumReorgBlockCount);
             ((H2FullPrunedBlockStore)store).resetStore();
@@ -104,7 +82,7 @@ public class BitcoindComparisonTool {
         peers.setUserAgent("BlockAcceptanceComparisonTool", "1.0");
         
         // bitcoind MUST be on localhost or we will get banned as a DoSer
-        peers.addAddress(new PeerAddress(InetAddress.getByName("localhost"), args.length > 2 ? Integer.parseInt(args[2]) : 18444));
+        peers.addAddress(new PeerAddress(InetAddress.getByName("localhost"), args.length > 2 ? Integer.parseInt(args[2]) : params.getPort()));
 
         final Set<Sha256Hash> blocksRequested = Collections.synchronizedSet(new HashSet<Sha256Hash>());
         peers.addEventListener(new AbstractPeerEventListener() {

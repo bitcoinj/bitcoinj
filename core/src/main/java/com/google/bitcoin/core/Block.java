@@ -865,7 +865,7 @@ public class Block extends Message {
         return new Date(getTimeSeconds()*1000);
     }
 
-    void setTime(long time) {
+    public void setTime(long time) {
         unCacheHeader();
         this.time = time;
         this.hash = null;
