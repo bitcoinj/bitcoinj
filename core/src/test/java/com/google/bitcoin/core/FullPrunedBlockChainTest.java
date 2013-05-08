@@ -19,8 +19,10 @@ package com.google.bitcoin.core;
 
 import com.google.bitcoin.core.Transaction.SigHash;
 import com.google.bitcoin.script.Script;
+import com.google.bitcoin.store.BlockStoreException;
 import com.google.bitcoin.store.FullPrunedBlockStore;
 import com.google.bitcoin.store.MemoryFullPrunedBlockStore;
+import com.google.bitcoin.utils.BlockFileLoader;
 import com.google.bitcoin.utils.BriefLogFormatter;
 import org.junit.After;
 import org.junit.Before;
@@ -29,9 +31,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
-import java.util.List;
+import java.util.Arrays;
 
 import static org.junit.Assert.*;
 
@@ -174,5 +177,17 @@ public class FullPrunedBlockChainTest {
         } catch (IOException e) {
             throw new RuntimeException(e);  // Cannot happen.
         }
+    }
+    
+    @Test
+    public void testFirst100KBlocks() throws BlockStoreException, VerificationException, PrunedException {
+        NetworkParameters params = NetworkParameters.prodNet();
+        File blockFile = new File(getClass().getResource("first-100k-blocks.dat").getFile());
+        BlockFileLoader loader = new BlockFileLoader(params, Arrays.asList(new File[] {blockFile}));
+        
+        store = new MemoryFullPrunedBlockStore(params, 10);
+        chain = new FullPrunedBlockChain(params, store);
+        for (Block block : loader)
+            chain.add(block);
     }
 }

@@ -45,7 +45,7 @@ import java.util.NoSuchElementException;
  * &nbsp;&nbsp;try { chain.add(block); } catch (Exception e) { }<br>
  * }</p>
  */
-public class BlockFileLoader implements Iterator<Block> {
+public class BlockFileLoader implements Iterable<Block>, Iterator<Block> {
     /**
      * Gets the list of files which contain blocks from the Satoshi client.
      */
@@ -163,5 +163,10 @@ public class BlockFileLoader implements Iterator<Block> {
     @Override
     public void remove() throws UnsupportedOperationException {
         throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Iterator<Block> iterator() {
+        return this;
     }
 }
