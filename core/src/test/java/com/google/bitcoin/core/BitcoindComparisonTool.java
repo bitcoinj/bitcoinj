@@ -20,7 +20,6 @@ import com.google.bitcoin.store.BlockStoreException;
 import com.google.bitcoin.store.FullPrunedBlockStore;
 import com.google.bitcoin.store.MemoryFullPrunedBlockStore;
 import com.google.bitcoin.utils.BriefLogFormatter;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,7 +27,6 @@ import java.math.BigInteger;
 import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 
 /**
  * A tool for comparing the blocks which are accepted/rejected by bitcoind/bitcoinj
@@ -47,10 +45,7 @@ public class BitcoindComparisonTool {
     
     public static void main(String[] args) throws Exception {
         BriefLogFormatter.init();
-        new BitcoindComparisonTool(args.length > 0 ? Integer.parseInt(args[0]) : 8333);
-    }
 
-    public BitcoindComparisonTool(int port) throws Exception {
         params = NetworkParameters.testNet2();
         /**
          * The following have been changed from the default and do not match bitcoind's default.
@@ -88,7 +83,7 @@ public class BitcoindComparisonTool {
         peers.setUserAgent("BlockAcceptanceComparisonTool", "1.0");
         
         // bitcoind MUST be on localhost or we will get banned as a DoSer
-        peers.addAddress(new PeerAddress(InetAddress.getByName("localhost"), port));
+        peers.addAddress(new PeerAddress(InetAddress.getByName("localhost"), 18444));
 
         peers.addEventListener(new AbstractPeerEventListener() {
             @Override
