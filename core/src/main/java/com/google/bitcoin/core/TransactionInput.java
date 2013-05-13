@@ -237,6 +237,7 @@ public class TransactionInput extends ChildMessage implements Serializable {
      */
     void setScriptBytes(byte[] scriptBytes) {
         unCache();
+        this.scriptSig = null;
         int oldLength = length;
         this.scriptBytes = scriptBytes;
         // 40 = previous_outpoint (36) + sequence (4)
