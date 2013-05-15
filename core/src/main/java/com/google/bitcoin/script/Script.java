@@ -345,8 +345,12 @@ public class Script {
         }
         return sigOps;
     }
-    
-    static int decodeFromOpN(byte opcode) {
+
+    /**
+     * Converts an opcode to its int representation
+     * @throws IllegalArgumentException If the opcode is not an OP_N opcode
+     */
+    public static int decodeFromOpN(byte opcode) throws IllegalArgumentException {
         return decodeFromOpN((int)opcode);
     }
     static int decodeFromOpN(int opcode) {

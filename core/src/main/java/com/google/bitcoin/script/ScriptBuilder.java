@@ -20,6 +20,7 @@ import com.google.bitcoin.core.Address;
 import com.google.bitcoin.core.ECKey;
 import com.google.bitcoin.core.Transaction;
 import com.google.common.collect.Lists;
+import com.google.bitcoin.core.Utils;
 
 import java.util.Arrays;
 import java.util.List;
@@ -78,22 +79,16 @@ public class ScriptBuilder {
         return new ScriptBuilder().data(key.getPubKey()).op(OP_CHECKSIG).build();
     }
 
-    private static byte[] appendByte(byte[] buf, byte flags) {
-        byte[] result = Arrays.copyOf(buf, buf.length + 1);
-        result[result.length - 1] = flags;
-        return result;
-    }
-
     /** Creates a scriptSig that can redeem a pay-to-address output. */
     public static Script createInputScript(ECKey.ECDSASignature signature, ECKey pubKey, int sigHashFlags) {
         byte[] pubkeyBytes = pubKey.getPubKey();
-        byte[] sigBytes = appendByte(signature.encodeToDER(), (byte) sigHashFlags);
+        byte[] sigBytes = Utils.appendByte(signature.encodeToDER(), (byte) sigHashFlags);
         return new ScriptBuilder().data(sigBytes).data(pubkeyBytes).build();
     }
 
     /** Creates a scriptSig that can redeem a pay-to-pubkey output. */
     public static Script createInputScript(ECKey.ECDSASignature signature, int sigHashFlags) {
-        byte[] sigBytes = appendByte(signature.encodeToDER(), (byte) sigHashFlags);
+        byte[] sigBytes = Utils.appendByte(signature.encodeToDER(), (byte) sigHashFlags);
         return new ScriptBuilder().data(sigBytes).build();
     }
 
@@ -119,7 +114,17 @@ public class ScriptBuilder {
         ScriptBuilder builder = new ScriptBuilder();
         builder.smallNum(0);  // Work around a bug in CHECKMULTISIG that is now a required part of the protocol.
         for (ECKey.ECDSASignature signature : signatures)
-            builder.data(appendByte(signature.encodeToDER(),(byte) ((sigHash.ordinal() + 1) | (anyoneCanPay ? 0x80 : 0))));
+            builder.data(Utils.appendByte(signature.encodeToDER(),(byte) ((sigHash.ordinal() + 1) | (anyoneCanPay ? 0x80 : 0))));
+        return builder.build();
+    }
+
+    /** Create a program that satisfies an OP_CHECKMULTISIG program, for when the signatures may not have the same SIGHASH/anyoneCanPay flags */
+    public static Script createMultiSigInputScript(List<byte[]> signatures) {
+        checkArgument(signatures.size() <= 16);
+        ScriptBuilder builder = new ScriptBuilder();
+        builder.smallNum(0);  // Work around a bug in CHECKMULTISIG that is now a required part of the protocol.
+        for (byte[] signature : signatures)
+            builder.data(signature);
         return builder.build();
     }
 }

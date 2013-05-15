@@ -27,6 +27,7 @@ import java.math.BigInteger;
 import java.nio.charset.Charset;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -445,6 +446,15 @@ public class Utils {
         byte[] out = new byte[length];
         System.arraycopy(in, 0, out, 0, Math.min(length, in.length));
         return out;
+    }
+
+    /**
+     * Creates a copy of bytes and appends b to the end of it
+     */
+    public static byte[] appendByte(byte[] bytes, byte b) {
+        byte[] result = Arrays.copyOf(bytes, bytes.length + 1);
+        result[result.length - 1] = b;
+        return result;
     }
 
     /**

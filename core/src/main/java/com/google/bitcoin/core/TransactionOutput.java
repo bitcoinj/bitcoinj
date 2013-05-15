@@ -153,6 +153,15 @@ public class TransactionOutput extends ChildMessage implements Serializable {
         return value;
     }
 
+    /**
+     * Sets the value of this output in nanocoins.
+     */
+    public void setValue(BigInteger value) {
+        checkNotNull(value);
+        unCache();
+        this.value = value;
+    }
+
     int getIndex() {
         checkNotNull(parentTransaction);
         for (int i = 0; i < parentTransaction.getOutputs().size(); i++) {
