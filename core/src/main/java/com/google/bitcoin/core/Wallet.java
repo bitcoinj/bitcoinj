@@ -160,12 +160,18 @@ public class Wallet implements Serializable, BlockChainListener {
         public CoinSelection select(BigInteger target, LinkedList<TransactionOutput> candidates);
     }
 
+    /**
+     * This class implements a {@link CoinSelector} which attempts to get the highest priority possible. This means that
+     * the transaction is the most likely to get confirmed
+     * Note that this means we may end up "spending" more priority than would be required to get the transaction we are
+     * creating confirmed.
+     */
     public static class DefaultCoinSelector implements CoinSelector {
         public CoinSelection select(BigInteger biTarget, LinkedList<TransactionOutput> candidates) {
             long target = biTarget.longValue();
             long total = 0;
             LinkedList<TransactionOutput> selected = Lists.newLinkedList();
-            // Sort the inputs by age so we use oldest first.
+            // Sort the inputs by age*value so we get the highest "coindays" spent.
             // TODO: Consider changing the wallets internal format to track just outputs and keep them ordered.
             ArrayList<TransactionOutput> sortedOutputs = new ArrayList<TransactionOutput>(candidates);
             Collections.sort(sortedOutputs, new Comparator<TransactionOutput>() {
@@ -176,11 +182,19 @@ public class Wallet implements Serializable, BlockChainListener {
                     TransactionConfidence conf2 = b.parentTransaction.getConfidence();
                     if (conf1.getConfidenceType() == ConfidenceType.BUILDING) depth1 = conf1.getDepthInBlocks();
                     if (conf2.getConfidenceType() == ConfidenceType.BUILDING) depth2 = conf2.getDepthInBlocks();
-                    if (depth1 < depth2)
+                    BigInteger aCoinDepth = a.getValue().multiply(BigInteger.valueOf(depth1));
+                    BigInteger bCoinDepth = b.getValue().multiply(BigInteger.valueOf(depth2));
+                    if (aCoinDepth.compareTo(bCoinDepth) < 0)
                         return 1;
-                    else if (depth1 > depth2)
+                    else if (bCoinDepth.compareTo(aCoinDepth) < 0)
                         return -1;
-                    // Their depths are equal (possibly pending) so sort by hash to ensure a total ordering.
+                    // The "coin*days" destroyed are equal, sort by value alone to get the lowest transaction size
+                    // (ie sort by reverse depth)
+                    if (depth1 < depth2)
+                        return -1;
+                    else if (depth2 < depth1)
+                        return 1;
+                    // They are entirely equivalent (possibly pending) so sort by hash to ensure a total ordering.
                     BigInteger aHash = a.parentTransaction.getHash().toBigInteger();
                     BigInteger bHash = b.parentTransaction.getHash().toBigInteger();
                     return aHash.compareTo(bHash);
