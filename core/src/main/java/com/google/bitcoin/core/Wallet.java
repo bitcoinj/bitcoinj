@@ -1650,7 +1650,11 @@ public class Wallet implements Serializable, BlockChainListener {
         /**
          * A transaction, probably incomplete, that describes the outline of what you want to do. This typically will
          * mean it has some outputs to the intended destinations, but no inputs or change address (and therefore no
-         * fees) - the wallet will calculate all that for you and update tx later.
+         * fees) - the wallet will calculate all that for you and update tx later.</p>
+         *
+         * <p>Be careful when adding outputs that you check the min output value
+         * ({@link TransactionOutput#getMinNonDustValue(BigInteger)}) to avoid the whole transaction being rejected
+         * because one output is dust.</p>
          */
         public Transaction tx;
 
@@ -1683,6 +1687,12 @@ public class Wallet implements Serializable, BlockChainListener {
 
         private SendRequest() {}
 
+        /**
+         * <p>Creates a new SendRequest to the given address for the given value.</p>
+         *
+         * <p>Be very careful when value is smaller than {@link Transaction#MIN_NONDUST_OUTPUT} as the transaction will
+         * likely be rejected by the network in this case.</p>
+         */
         public static SendRequest to(Address destination, BigInteger value) {
             SendRequest req = new Wallet.SendRequest();
             req.tx = new Transaction(destination.getParameters());
@@ -1690,6 +1700,14 @@ public class Wallet implements Serializable, BlockChainListener {
             return req;
         }
 
+        /**
+         * <p>Creates a new SendRequest to the given pubkey for the given value.</p>
+         *
+         * <p>Be careful to check the output's value is reasonable using
+         * {@link TransactionOutput#getMinNonDustValue(BigInteger)} afterwards or you risk having the transaction
+         * rejected by the network. Note that using {@link SendRequest#to(Address, java.math.BigInteger)} will result
+         * in a smaller output, and thus the ability to use a smaller output value without rejection.</p>
+         */
         public static SendRequest to(NetworkParameters params, ECKey destination, BigInteger value) {
             SendRequest req = new SendRequest();
             req.tx = new Transaction(params);
@@ -1722,6 +1740,9 @@ public class Wallet implements Serializable, BlockChainListener {
      * that spend the same coins. You have to call {@link Wallet#commitTx(Transaction)} on the created transaction to
      * prevent this, but that should only occur once the transaction has been accepted by the network. This implies
      * you cannot have more than one outstanding sending tx at once.</p>
+     *
+     * <p>You MUST ensure that nanocoins is smaller than {@link Transaction#MIN_NONDUST_OUTPUT} or the transaction will
+     * almost certainly be rejected by the network as dust.</p>
      *
      * @param address       The Bitcoin address to send the money to.
      * @param nanocoins     How much currency to send, in nanocoins.
@@ -1770,6 +1791,9 @@ public class Wallet implements Serializable, BlockChainListener {
      * <p>Note that the sending transaction is committed to the wallet immediately, not when the transaction is
      * successfully broadcast. This means that even if the network hasn't heard about your transaction you won't be
      * able to spend those same coins again.</p>
+     *
+     * <p>You MUST ensure that value is smaller than {@link Transaction#MIN_NONDUST_OUTPUT} or the transaction will
+     * almost certainly be rejected by the network as dust.</p>
      *
      * @param peerGroup a PeerGroup to use for broadcast or null.
      * @param to        Which address to send coins to.

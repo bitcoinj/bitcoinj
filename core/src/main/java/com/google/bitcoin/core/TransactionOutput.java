@@ -173,6 +173,19 @@ public class TransactionOutput extends ChildMessage implements Serializable {
     }
 
     /**
+     * Gets the minimum value for a txout of this size to be considered non-dust by a reference client (and thus relayed).
+     * See: CTxOut::IsDust() in the reference client.
+     *
+     * @param feePerKbRequired The fee required per kilobyte. Note that this is the same as the reference client's -minrelaytxfee * 3
+     *                         If you want a safe default, use {@link Transaction#REFERENCE_DEFAULT_MIN_TX_FEE}*3
+     */
+    public BigInteger getMinNonDustValue(BigInteger feePerKbRequired) {
+        // Note we skip the *3 as that should be considered in the parameter and we add one to account for loss of precision
+        // (1/1000 chance we require too much fee, 999/1000 chance we get the exact right value...)
+        return feePerKbRequired.multiply(BigInteger.valueOf(this.bitcoinSerialize().length + 148)).divide(BigInteger.valueOf(1000)).add(BigInteger.ONE);
+    }
+
+    /**
      * Sets this objects availableForSpending flag to false and the spentBy pointer to the given input.
      * If the input is null, it means this output was signed over to somebody else rather than one of our own keys.
      * @throws IllegalStateException if the transaction was already marked as spent.

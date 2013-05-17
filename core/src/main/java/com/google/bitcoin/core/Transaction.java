@@ -57,6 +57,15 @@ public class Transaction extends ChildMessage implements Serializable {
     /** How many bytes a transaction can be before it won't be relayed anymore. */
     public static final int MAX_STANDARD_TX_SIZE = 100 * 1024;
 
+    /** If fee is lower than this value (in satoshis), a default reference client will treat it as if there were no fee */
+    public static final BigInteger REFERENCE_DEFAULT_MIN_TX_FEE = BigInteger.valueOf(10000);
+
+    /**
+     * Any standard (ie pay-to-address) output smaller than this value (in satoshis) will most likely be rejected by the network.
+     * This is calculated by assuming a standard output will be 34 bytes, and then using the formula used in
+     * {@link TransactionOutput#getMinNonDustValue(BigInteger)}.
+     */
+    public static final BigInteger MIN_NONDUST_OUTPUT = BigInteger.valueOf(5461);
 
     // These are serialized in both bitcoin and java serialization.
     private long version;
