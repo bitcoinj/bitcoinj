@@ -320,6 +320,12 @@ public abstract class AbstractBlockChain {
             if (shouldVerifyTransactions() && block.transactions == null)
                 throw new VerificationException("Got a block header while running in full-block mode");
 
+            // Check for already-seen block, but only for full pruned mode, where the DB is
+            // more likely able to handle these queries quickly.
+            if (shouldVerifyTransactions() && blockStore.get(block.getHash()) != null) {
+                return true;
+            }
+
             // Does this block contain any transactions we might care about? Check this up front before verifying the
             // blocks validity so we can skip the merkle root verification if the contents aren't interesting. This saves
             // a lot of time for big blocks.
