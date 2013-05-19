@@ -35,6 +35,7 @@ import java.util.*;
 import static com.google.bitcoin.script.ScriptOpCodes.*;
 import static com.google.bitcoin.core.Utils.bytesToHexString;
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkState;
 
 // TODO: Make this class a superclass with derived classes giving accessor methods for the various common templates.
 
@@ -151,17 +152,16 @@ public class Script {
                 // Read a uint32, then read that many bytes of data.
                 // Though this is allowed, because its value cannot be > 520, it should never actually be used
                 if (bis.available() < 4) throw new ScriptException("Unexpected end of script");
-                dataToRead = bis.read() | (bis.read() << 8) | (bis.read() << 16) | (bis.read() << 24);
+                dataToRead = ((long)bis.read()) | (((long)bis.read()) << 8) | (((long)bis.read()) << 16) | (((long)bis.read()) << 24);
             }
 
             if (dataToRead == -1) {
                 chunks.add(new ScriptChunk(true, new byte[]{(byte) opcode}, startLocationInProgram));
             } else {
-                if (dataToRead > MAX_SCRIPT_ELEMENT_SIZE)
-                    throw new ScriptException("Push of data element that is larger than the max element size");
+                if (dataToRead > bis.available())
+                    throw new ScriptException("Push of data element that is larger than remaining data");
                 byte[] data = new byte[(int)dataToRead];
-                if (dataToRead > 0 && bis.read(data, 0, (int)dataToRead) < dataToRead)
-                    throw new ScriptException("Unexpected end of script");
+                checkState(dataToRead == 0 || bis.read(data, 0, (int)dataToRead) == dataToRead);
                 chunks.add(new ScriptChunk(false, data, startLocationInProgram));
             }
         }
@@ -536,6 +536,9 @@ public class Script {
             boolean shouldExecute = !ifStack.contains(false);
             
             if (!chunk.isOpCode()) {
+                if (chunk.data.length > MAX_SCRIPT_ELEMENT_SIZE)
+                    throw new ScriptException("Attempted to push a data string larger than 520 bytes");
+                
                 if (!shouldExecute)
                     continue;
                 

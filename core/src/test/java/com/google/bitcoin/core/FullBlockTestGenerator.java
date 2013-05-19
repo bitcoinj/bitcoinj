@@ -1312,7 +1312,113 @@ public class FullBlockTestGenerator {
                 new TransactionOutPoint(params, 0, b72.getTransactions().get(0).getHash()),
                 b72.getTransactions().get(0).getOutputs().get(0).getValue(),
                 b72.getTransactions().get(0).getOutputs().get(0).getScriptPubKey()));
-        
+
+        // Have some fun with invalid scripts and MAX_BLOCK_SIGOPS
+        // -> b55 (15) -> b57 (16) -> b60 (17) -> b64 (18) -> b65 (19) -> b69 (20) -> b72 (21)
+        //                                                                                    \-> b** (22)
+        //
+        TransactionOutPointWithValue out22 = spendableOutputs.poll();  Preconditions.checkState(out22 != null);
+
+        Block b73 = createNextBlock(b72, chainHeadHeight + 23, out22, null);
+        {
+            int sigOps = 0;
+            for (Transaction tx : b73.transactions) {
+                sigOps += tx.getSigOpCount();
+            }
+            Transaction tx = new Transaction(params);
+            byte[] outputScript = new byte[Block.MAX_BLOCK_SIGOPS - sigOps + (int)Script.MAX_SCRIPT_ELEMENT_SIZE + 1 + 5 + 1];
+            Arrays.fill(outputScript, (byte) OP_CHECKSIG);
+            // If we push an element that is too large, the CHECKSIGs after that push are still counted
+            outputScript[Block.MAX_BLOCK_SIGOPS - sigOps] = OP_PUSHDATA4;
+            Utils.uint32ToByteArrayLE(Script.MAX_SCRIPT_ELEMENT_SIZE + 1, outputScript, Block.MAX_BLOCK_SIGOPS - sigOps + 1);
+            tx.addOutput(new TransactionOutput(params, tx, BigInteger.valueOf(1), outputScript));
+            addOnlyInputToTransaction(tx, new TransactionOutPointWithValue(
+                    new TransactionOutPoint(params, 1, b73.getTransactions().get(1).getHash()),
+                    BigInteger.valueOf(1), b73.getTransactions().get(1).getOutputs().get(1).getScriptPubKey()));
+            b73.addTransaction(tx);
+        }
+        b73.solve();
+        blocks.add(new BlockAndValidity(blockToHeightMap, b73, false, true, b72.getHash(), chainHeadHeight + 22, "b73"));
+
+        Block b74 = createNextBlock(b72, chainHeadHeight + 23, out22, null);
+        {
+            int sigOps = 0;
+            for (Transaction tx : b74.transactions) {
+                sigOps += tx.getSigOpCount();
+            }
+            Transaction tx = new Transaction(params);
+            byte[] outputScript = new byte[Block.MAX_BLOCK_SIGOPS - sigOps + (int)Script.MAX_SCRIPT_ELEMENT_SIZE + 42];
+            Arrays.fill(outputScript, (byte) OP_CHECKSIG);
+            // If we push an invalid element, all previous CHECKSIGs are counted
+            outputScript[Block.MAX_BLOCK_SIGOPS - sigOps + 1] = OP_PUSHDATA4;
+            outputScript[Block.MAX_BLOCK_SIGOPS - sigOps + 2] = (byte)0xfe;
+            outputScript[Block.MAX_BLOCK_SIGOPS - sigOps + 3] = (byte)0xff;
+            outputScript[Block.MAX_BLOCK_SIGOPS - sigOps + 4] = (byte)0xff;
+            outputScript[Block.MAX_BLOCK_SIGOPS - sigOps + 5] = (byte)0xff;
+            tx.addOutput(new TransactionOutput(params, tx, BigInteger.valueOf(1), outputScript));
+            addOnlyInputToTransaction(tx, new TransactionOutPointWithValue(
+                    new TransactionOutPoint(params, 1, b74.getTransactions().get(1).getHash()),
+                    BigInteger.valueOf(1), b74.getTransactions().get(1).getOutputs().get(1).getScriptPubKey()));
+            b74.addTransaction(tx);
+        }
+        b74.solve();
+        blocks.add(new BlockAndValidity(blockToHeightMap, b74, false, true, b72.getHash(), chainHeadHeight + 22, "b74"));
+
+        Block b75 = createNextBlock(b72, chainHeadHeight + 23, out22, null);
+        {
+            int sigOps = 0;
+            for (Transaction tx : b75.transactions) {
+                sigOps += tx.getSigOpCount();
+            }
+            Transaction tx = new Transaction(params);
+            byte[] outputScript = new byte[Block.MAX_BLOCK_SIGOPS - sigOps + (int)Script.MAX_SCRIPT_ELEMENT_SIZE + 42];
+            Arrays.fill(outputScript, (byte) OP_CHECKSIG);
+            // If we push an invalid element, all subsequent CHECKSIGs are not counted
+            outputScript[Block.MAX_BLOCK_SIGOPS - sigOps] = OP_PUSHDATA4;
+            outputScript[Block.MAX_BLOCK_SIGOPS - sigOps + 1] = (byte)0xff;
+            outputScript[Block.MAX_BLOCK_SIGOPS - sigOps + 2] = (byte)0xff;
+            outputScript[Block.MAX_BLOCK_SIGOPS - sigOps + 3] = (byte)0xff;
+            outputScript[Block.MAX_BLOCK_SIGOPS - sigOps + 4] = (byte)0xff;
+            tx.addOutput(new TransactionOutput(params, tx, BigInteger.valueOf(1), outputScript));
+            addOnlyInputToTransaction(tx, new TransactionOutPointWithValue(
+                    new TransactionOutPoint(params, 1, b75.getTransactions().get(1).getHash()),
+                    BigInteger.valueOf(1), b75.getTransactions().get(1).getOutputs().get(1).getScriptPubKey()));
+            b75.addTransaction(tx);
+        }
+        b75.solve();
+        blocks.add(new BlockAndValidity(blockToHeightMap, b75, true, false, b75.getHash(), chainHeadHeight + 23, "b75"));
+        spendableOutputs.offer(new TransactionOutPointWithValue(
+                new TransactionOutPoint(params, 0, b75.getTransactions().get(0).getHash()),
+                b75.getTransactions().get(0).getOutputs().get(0).getValue(),
+                b75.getTransactions().get(0).getOutputs().get(0).getScriptPubKey()));
+
+        TransactionOutPointWithValue out23 = spendableOutputs.poll();  Preconditions.checkState(out23 != null);
+
+        Block b76 = createNextBlock(b75, chainHeadHeight + 24, out23, null);
+        {
+            int sigOps = 0;
+            for (Transaction tx : b76.transactions) {
+                sigOps += tx.getSigOpCount();
+            }
+            Transaction tx = new Transaction(params);
+            byte[] outputScript = new byte[Block.MAX_BLOCK_SIGOPS - sigOps + (int)Script.MAX_SCRIPT_ELEMENT_SIZE + 1 + 5];
+            Arrays.fill(outputScript, (byte) OP_CHECKSIG);
+            // If we push an element that is filled with CHECKSIGs, they (obviously) arent counted
+            outputScript[Block.MAX_BLOCK_SIGOPS - sigOps] = OP_PUSHDATA4;
+            Utils.uint32ToByteArrayLE(Block.MAX_BLOCK_SIGOPS, outputScript, Block.MAX_BLOCK_SIGOPS - sigOps + 1);
+            tx.addOutput(new TransactionOutput(params, tx, BigInteger.valueOf(1), outputScript));
+            addOnlyInputToTransaction(tx, new TransactionOutPointWithValue(
+                    new TransactionOutPoint(params, 1, b76.getTransactions().get(1).getHash()),
+                    BigInteger.valueOf(1), b76.getTransactions().get(1).getOutputs().get(1).getScriptPubKey()));
+            b76.addTransaction(tx);
+        }
+        b76.solve();
+        blocks.add(new BlockAndValidity(blockToHeightMap, b76, true, false, b76.getHash(), chainHeadHeight + 24, "b76"));
+        spendableOutputs.offer(new TransactionOutPointWithValue(
+                new TransactionOutPoint(params, 0, b76.getTransactions().get(0).getHash()),
+                b76.getTransactions().get(0).getOutputs().get(0).getValue(),
+                b76.getTransactions().get(0).getOutputs().get(0).getScriptPubKey()));
+
         // The remaining tests arent designed to fit in the standard flow, and thus must always come last
         // Add new tests here.
         
@@ -1321,9 +1427,10 @@ public class FullBlockTestGenerator {
         // Reorg back to:
         // -> b60 (17) -> b64 (18) -> b65 (19) -> b69 (20) -> b72 (21) -> b1001 (22) -> empty blocks
         //
-        TransactionOutPointWithValue out22 = spendableOutputs.poll(); Preconditions.checkState(out22 != null);
-        Block b1001 = createNextBlock(b72, chainHeadHeight + 23, out22, null);
-        blocks.add(new BlockAndValidity(blockToHeightMap, b1001, true, false, b1001.getHash(), chainHeadHeight + 23, "b1001"));
+        TransactionOutPointWithValue out24 = spendableOutputs.poll();  Preconditions.checkState(out24 != null);
+
+        Block b1001 = createNextBlock(b76, chainHeadHeight + 25, out24, null);
+        blocks.add(new BlockAndValidity(blockToHeightMap, b1001, true, false, b1001.getHash(), chainHeadHeight + 25, "b1001"));
         spendableOutputs.offer(new TransactionOutPointWithValue(
                 new TransactionOutPoint(params, 0, b1001.getTransactions().get(0).getHash()),
                 b1001.getTransactions().get(0).getOutputs().get(0).getValue(),
@@ -1334,7 +1441,7 @@ public class FullBlockTestGenerator {
             Preconditions.checkArgument(blockStorageFile != null);
             
             Block lastBlock = b1001;
-            int nextHeight = chainHeadHeight + 24;
+            int nextHeight = chainHeadHeight + 26;
             TransactionOutPoint lastOutput = new TransactionOutPoint(params, 2, b1001.getTransactions().get(1).getHash());
             int blockCountAfter1001;
             
@@ -1376,7 +1483,7 @@ public class FullBlockTestGenerator {
             // Reorg back to b1001 + empty blocks
             Sha256Hash firstHash = lastBlock.getHash();
             int height = nextHeight-1;
-            nextHeight = chainHeadHeight + 24;
+            nextHeight = chainHeadHeight + 26;
             lastBlock = b1001;
             for (int i = 0; i < blockCountAfter1001; i++) {
                 Block block = createNextBlock(lastBlock, nextHeight++, null, null);
