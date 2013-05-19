@@ -52,7 +52,7 @@ public class BitcoindComparisonTool {
     
     public static void main(String[] args) throws Exception {
         BriefLogFormatter.init();
-        System.out.println("USAGE: bitcoinjBlockStoreLocation runLargeReorgs(1/0)");
+        System.out.println("USAGE: bitcoinjBlockStoreLocation runLargeReorgs(1/0) [port=18444]");
         boolean runLargeReorgs = Integer.parseInt(args[1]) == 1;
 
         params = NetworkParameters.testNet2();
@@ -101,7 +101,7 @@ public class BitcoindComparisonTool {
         peers.setUserAgent("BlockAcceptanceComparisonTool", "1.0");
         
         // bitcoind MUST be on localhost or we will get banned as a DoSer
-        peers.addAddress(new PeerAddress(InetAddress.getByName("localhost"), 18444));
+        peers.addAddress(new PeerAddress(InetAddress.getByName("localhost"), args.length > 2 ? Integer.parseInt(args[2]) : 18444));
 
         peers.addEventListener(new AbstractPeerEventListener() {
             @Override
