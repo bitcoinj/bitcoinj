@@ -39,10 +39,7 @@ import java.io.File;
 import java.math.BigInteger;
 import java.security.SecureRandom;
 import java.net.InetAddress;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -1551,6 +1548,60 @@ public class WalletTest extends TestWithWallet {
             outValue26 = outValue26.add(out.getValue());
         assertTrue(outValue26.equals(Utils.COIN.subtract(
                 Transaction.REFERENCE_DEFAULT_MIN_TX_FEE.add(Transaction.MIN_NONDUST_OUTPUT))));
+    }
+
+    @Test
+    public void testCompleteTxWithExistingInputs() throws Exception {
+        // Tests calling completeTx with a SendRequest that already has a few inputs in it
+        // Make sure TestWithWallet isnt doing anything crazy.
+        assertTrue(wallet.getTransactions(true).size() == 0);
+
+        Address notMyAddr = new ECKey().toAddress(params);
+
+        // Generate a few outputs to us
+        StoredBlock block = new StoredBlock(makeSolvedTestBlock(blockStore, notMyAddr), BigInteger.ONE, 1);
+        Transaction tx1 = createFakeTx(params, Utils.COIN, myAddress);
+        wallet.receiveFromBlock(tx1, block, AbstractBlockChain.NewBlockType.BEST_CHAIN);
+        Transaction tx2 = createFakeTx(params, Utils.COIN, myAddress); assertTrue(!tx1.getHash().equals(tx2.getHash()));
+        wallet.receiveFromBlock(tx2, block, AbstractBlockChain.NewBlockType.BEST_CHAIN);
+        Transaction tx3 = createFakeTx(params, Utils.CENT, myAddress);
+        wallet.receiveFromBlock(tx3, block, AbstractBlockChain.NewBlockType.BEST_CHAIN);
+
+        SendRequest request1 = SendRequest.to(notMyAddr, Utils.CENT);
+        // If we just complete as-is, we will use one of the COIN outputs to get higher priority,
+        // resulting in a change output
+        assertTrue(wallet.completeTx(request1, true) != null &&
+                request1.tx.getInputs().size() == 1 && request1.tx.getOutputs().size() == 2 &&
+                request1.tx.getOutput(0).getValue().equals(Utils.CENT) && request1.tx.getOutput(1).getValue().equals(Utils.COIN.subtract(Utils.CENT)));
+
+        // Now create an identical request2 and add an unsigned spend of the CENT output
+        SendRequest request2 = SendRequest.to(notMyAddr, Utils.CENT);
+        request2.tx.addInput(tx3.getOutput(0));
+        // Now completeTx will result in one input, one output
+        assertTrue(wallet.completeTx(request2, true) != null &&
+                request2.tx.getInputs().size() == 1 && request2.tx.getOutputs().size() == 1 &&
+                request2.tx.getOutput(0).getValue().equals(Utils.CENT));
+        // Make sure it was properly signed
+        request2.tx.getInput(0).getScriptSig().correctlySpends(request2.tx, 0, tx3.getOutput(0).getScriptPubKey(), true);
+
+        // However, if there is no connected output, we will grab a COIN output anyway and add the CENT to fee
+        SendRequest request3 = SendRequest.to(notMyAddr, Utils.CENT);
+        request3.tx.addInput(new TransactionInput(params, request3.tx, new byte[]{}, new TransactionOutPoint(params, 0, tx3.getHash())));
+        // Now completeTx will result in two inputs, two outputs and a fee of a CENT
+        // Note that it is simply assumed that the inputs are correctly signed, though in fact the first is not
+        assertTrue(wallet.completeTx(request3, true) != null &&
+                request3.tx.getInputs().size() == 2 && request3.tx.getOutputs().size() == 2 &&
+                request3.tx.getOutput(0).getValue().equals(Utils.CENT) && request3.tx.getOutput(1).getValue().equals(Utils.COIN.subtract(Utils.CENT)));
+
+        SendRequest request4 = SendRequest.to(notMyAddr, Utils.CENT);
+        request4.tx.addInput(tx3.getOutput(0));
+        // Now if we manually sign it, completeTx will not replace our signature
+        request4.tx.signInputs(SigHash.ALL, wallet);
+        byte[] scriptSig = request4.tx.getInput(0).getScriptBytes();
+        assertTrue(wallet.completeTx(request4, true) != null &&
+                request4.tx.getInputs().size() == 1 && request4.tx.getOutputs().size() == 1 &&
+                request4.tx.getOutput(0).getValue().equals(Utils.CENT) &&
+                Arrays.equals(scriptSig, request4.tx.getInput(0).getScriptBytes()));
     }
 
     // There is a test for spending a coinbase transaction as it matures in BlockChainTest#coinbaseTransactionAvailability
