@@ -1648,13 +1648,18 @@ public class Wallet implements Serializable, BlockChainListener {
      */
     public static class SendRequest {
         /**
-         * A transaction, probably incomplete, that describes the outline of what you want to do. This typically will
+         * <p>A transaction, probably incomplete, that describes the outline of what you want to do. This typically will
          * mean it has some outputs to the intended destinations, but no inputs or change address (and therefore no
          * fees) - the wallet will calculate all that for you and update tx later.</p>
          *
          * <p>Be careful when adding outputs that you check the min output value
          * ({@link TransactionOutput#getMinNonDustValue(BigInteger)}) to avoid the whole transaction being rejected
          * because one output is dust.</p>
+         *
+         * <p>If there are already inputs to the transaction, make sure their out point has a connected output,
+         * otherwise their value will be added to fee.  Also ensure they are either signed or are spendable by a wallet
+         * key, otherwise the behavior of {@link Wallet#completeTx(Wallet.SendRequest, boolean)} is undefined (likely
+         * RuntimeException).</p>
          */
         public Transaction tx;
 
@@ -1666,14 +1671,36 @@ public class Wallet implements Serializable, BlockChainListener {
         public Address changeAddress = null;
 
         /**
-         * A transaction can have a fee attached, which is defined as the difference between the input values
+         * <p>A transaction can have a fee attached, which is defined as the difference between the input values
          * and output values. Any value taken in that is not provided to an output can be claimed by a miner. This
          * is how mining is incentivized in later years of the Bitcoin system when inflation drops. It also provides
          * a way for people to prioritize their transactions over others and is used as a way to make denial of service
-         * attacks expensive. Some transactions require a fee due to their structure - currently bitcoinj does not
-         * correctly calculate this! As of late 2012 most transactions require no fee.
+         * attacks expensive.</p>
+         *
+         * <p>This is a constant fee (in satoshis) which will be added to the transaction. It is recommended that it be
+         * at least {@link Transaction#REFERENCE_DEFAULT_MIN_TX_FEE} if it is set, as default reference clients will
+         * otherwise simply treat the transaction as if there were no fee at all.</p>
+         *
+         * <p>You might also consider adding a {@link SendRequest#feePerKb} to set the fee per kb of transaction size
+         * (rounded down to the nearest kb) as that is how transactions are sorted when added to a block by miners.</p>
          */
         public BigInteger fee = BigInteger.ZERO;
+
+        /**
+         * <p>A transaction can have a fee attached, which is defined as the difference between the input values
+         * and output values. Any value taken in that is not provided to an output can be claimed by a miner. This
+         * is how mining is incentivized in later years of the Bitcoin system when inflation drops. It also provides
+         * a way for people to prioritize their transactions over others and is used as a way to make denial of service
+         * attacks expensive.</p>
+         *
+         * <p>This is a dynamic fee (in satoshis) which will be added to the transaction for each kilobyte in size after
+         * the first. This is useful as as miners usually sort pending transactions by their fee per unit size when
+         * choosing which transactions to add to a block. Note that, to keep this equivalent to the reference client
+         * definition, a kilobyte is defined as 1000 bytes, not 1024.</p>
+         *
+         * <p>You might also consider using a {@link SendRequest#fee} to set the fee added for the first kb of size.</p>
+         */
+        public BigInteger feePerKb = BigInteger.ZERO;
 
         /**
          * The AES key to use to decrypt the private keys before signing.
@@ -1683,7 +1710,8 @@ public class Wallet implements Serializable, BlockChainListener {
         public KeyParameter aesKey = null;
 
         // Tracks if this has been passed to wallet.completeTx already: just a safety check.
-        private boolean completed;
+        // default for testing
+        boolean completed;
 
         private SendRequest() {}
 
@@ -1733,8 +1761,9 @@ public class Wallet implements Serializable, BlockChainListener {
      * and lets you see the proposed transaction before anything is done with it.</p>
      *
      * <p>This is a helper method that is equivalent to using {@link Wallet.SendRequest#to(Address, java.math.BigInteger)}
-     * followed by {@link Wallet#completeTx(com.google.bitcoin.core.Wallet.SendRequest)} and returning the requests
-     * transaction object. If you want more control over the process, just do those two steps yourself.</p>
+     * followed by {@link Wallet#completeTx(Wallet.SendRequest, true)} and returning the requests transaction object.
+     * Note that this means a fee may be automatically added if required, if you want more control over the process,
+     * just do those two steps yourself.</p>
      *
      * <p>IMPORTANT: This method does NOT update the wallet. If you call createSend again you may get two transactions
      * that spend the same coins. You have to call {@link Wallet#commitTx(Transaction)} on the created transaction to
@@ -1751,7 +1780,7 @@ public class Wallet implements Serializable, BlockChainListener {
      */
     public Transaction createSend(Address address, BigInteger nanocoins) {
         SendRequest req = SendRequest.to(address, nanocoins);
-        if (completeTx(req)) {
+        if (completeTx(req, true) != null) {
             return req.tx;
         } else {
             return null;  // No money.
@@ -1762,14 +1791,19 @@ public class Wallet implements Serializable, BlockChainListener {
      * Sends coins to the given address but does not broadcast the resulting pending transaction. It is still stored
      * in the wallet, so when the wallet is added to a {@link PeerGroup} or {@link Peer} the transaction will be
      * announced to the network. The given {@link SendRequest} is completed first using
-     * {@link Wallet#completeTx(com.google.bitcoin.core.Wallet.SendRequest)} to make it valid.
+     * {@link Wallet#completeTx(Wallet.SendRequest, boolean)} to make it valid.
      *
+     * @param enforceDefaultReferenceClientFeeRelayRules Requires that there be enough fee for a default reference client to at least relay the transaction.
+     *                                                   (ie ensure the transaction will not be outright rejected by the network).
+     *                                                   Note that this does not enforce certain fee rules that only apply to transactions which are larger than
+     *                                                   26,000 bytes. If you get a transaction which is that large, you should set a fee and feePerKb of at least
+     *                                                   {@link Transaction#REFERENCE_DEFAULT_MIN_TX_FEE}
      * @return the Transaction that was created, or null if there are insufficient coins in the wallet.
      */
-    public Transaction sendCoinsOffline(SendRequest request) {
+    public Transaction sendCoinsOffline(SendRequest request, boolean enforceDefaultReferenceClientFeeRelayRules) {
         lock.lock();
         try {
-            if (!completeTx(request))
+            if (completeTx(request, enforceDefaultReferenceClientFeeRelayRules) == null)
                 return null;  // Not enough money! :-(
             commitTx(request.tx);
             return request.tx;
@@ -1782,7 +1816,8 @@ public class Wallet implements Serializable, BlockChainListener {
 
     /**
      * <p>Sends coins to the given address, via the given {@link PeerGroup}. Change is returned to
-     * {@link Wallet#getChangeAddress()}. No fee is attached <b>even if one would be required</b>.</p>
+     * {@link Wallet#getChangeAddress()}. Note that a fee may be automatically added if one may be required for the
+     * transaction to be confirmed.</p>
      *
      * <p>The returned object provides both the transaction, and a future that can be used to learn when the broadcast
      * is complete. Complete means, if the PeerGroup is limited to only one connection, when it was written out to
@@ -1802,7 +1837,7 @@ public class Wallet implements Serializable, BlockChainListener {
      */
     public SendResult sendCoins(PeerGroup peerGroup, Address to, BigInteger value) {
         SendRequest request = SendRequest.to(to, value);
-        return sendCoins(peerGroup, request);
+        return sendCoins(peerGroup, request, true);
     }
 
     /**
@@ -1818,14 +1853,19 @@ public class Wallet implements Serializable, BlockChainListener {
      *
      * @param peerGroup a PeerGroup to use for broadcast or null.
      * @param request the SendRequest that describes what to do, get one using static methods on SendRequest itself.
+     * @param enforceDefaultReferenceClientFeeRelayRules Requires that there be enough fee for a default reference client to at least relay the transaction
+     *                                                   (ie ensure the transaction will not be outright rejected by the network).
+     *                                                   Note that this does not enforce certain fee rules that only apply to transactions which are larger than
+     *                                                   26,000 bytes. If you get a transaction which is that large, you should set a fee and feePerKb of at least
+     *                                                   {@link Transaction#REFERENCE_DEFAULT_MIN_TX_FEE}
      * @return An object containing the transaction that was created, and a future for the broadcast of it.
      */
-    public SendResult sendCoins(PeerGroup peerGroup, SendRequest request) {
+    public SendResult sendCoins(PeerGroup peerGroup, SendRequest request, boolean enforceDefaultReferenceClientFeeRelayRules) {
         // Does not need to be synchronized as sendCoinsOffline is and the rest is all thread-local.
 
         // Commit the TX to the wallet immediately so the spent coins won't be reused.
         // TODO: We should probably allow the request to specify tx commit only after the network has accepted it.
-        Transaction tx = sendCoinsOffline(request);
+        Transaction tx = sendCoinsOffline(request, enforceDefaultReferenceClientFeeRelayRules);
         if (tx == null)
             return null;  // Not enough money.
         SendResult result = new SendResult();
@@ -1842,13 +1882,14 @@ public class Wallet implements Serializable, BlockChainListener {
     /**
      * Sends coins to the given address, via the given {@link Peer}. Change is returned to {@link Wallet#getChangeAddress()}.
      * If an exception is thrown by {@link Peer#sendMessage(Message)} the transaction is still committed, so the
-     * pending transaction must be broadcast <b>by you</b> at some other time.
+     * pending transaction must be broadcast <b>by you</b> at some other time. Note that a fee may be automatically added
+     * if one may be required for the transaction to be confirmed.
      *
      * @return The {@link Transaction} that was created or null if there was insufficient balance to send the coins.
      * @throws IOException if there was a problem broadcasting the transaction
      */
     public Transaction sendCoins(Peer peer, SendRequest request) throws IOException {
-        Transaction tx = sendCoinsOffline(request);
+        Transaction tx = sendCoinsOffline(request, true);
         if (tx == null)
             return null;  // Not enough money.
         peer.sendMessage(tx);
@@ -1860,10 +1901,15 @@ public class Wallet implements Serializable, BlockChainListener {
      * to the instructions in the request. The transaction in the request is modified by this method.
      *
      * @param req a SendRequest that contains the incomplete transaction and details for how to make it valid.
+     * @param enforceDefaultReferenceClientFeeRelayRules Requires that there be enough fee for a default reference client to at least relay the transaction
+     *                                                   (ie ensure the transaction will not be outright rejected by the network).
+     *                                                   Note that this does not enforce certain fee rules that only apply to transactions which are larger than
+     *                                                   26,000 bytes. If you get a transaction which is that large, you should set a fee and feePerKb of at least
+     *                                                   {@link Transaction#REFERENCE_DEFAULT_MIN_TX_FEE}
      * @throws IllegalArgumentException if you try and complete the same SendRequest twice.
-     * @return False if we cannot afford this send, true otherwise.
+     * @return Either the total fee paid (assuming all existing inputs had a connected output) or null if we cannot afford the transaction.
      */
-    public boolean completeTx(SendRequest req) {
+    public BigInteger completeTx(SendRequest req, boolean enforceDefaultReferenceClientFeeRelayRules) {
         lock.lock();
         try {
             Preconditions.checkArgument(!req.completed, "Given SendRequest has already been completed.");
@@ -1872,10 +1918,31 @@ public class Wallet implements Serializable, BlockChainListener {
             for (TransactionOutput output : req.tx.getOutputs()) {
                 value = value.add(output.getValue());
             }
-            value = value.add(req.fee);
+            BigInteger totalOutput = value;
 
-            log.info("Completing send tx with {} outputs totalling {}",
+            log.info("Completing send tx with {} outputs totalling {} (not including fees)",
                     req.tx.getOutputs().size(), bitcoinValueToFriendlyString(value));
+
+            // If any inputs have already been added, we don't need to get their value from wallet
+            BigInteger totalInput = BigInteger.ZERO;
+            for (TransactionInput input : req.tx.getInputs())
+                if (input.getConnectedOutput() != null)
+                    totalInput = totalInput.add(input.getConnectedOutput().getValue());
+                else
+                    log.warn("SendRequest transaction already has inputs but we don't know how much they are worth - they will be added to fee.");
+            value = value.subtract(totalInput);
+
+            List<TransactionInput> originalInputs = new ArrayList(req.tx.getInputs());
+
+            // We need to know if we need to add an additional fee because one of our values are smaller than 0.01 BTC
+            boolean needAtLeastReferenceFee = false;
+            if (enforceDefaultReferenceClientFeeRelayRules) {
+                for (TransactionOutput output : req.tx.getOutputs())
+                    if (output.getValue().compareTo(Utils.CENT) < 0) {
+                        needAtLeastReferenceFee = true;
+                        break;
+                    }
+            }
 
             // Calculate a list of ALL potential candidates for spending and then ask a coin selector to provide us
             // with the actual outputs that'll be used to gather the required amount of value. In this way, users
@@ -1886,29 +1953,197 @@ public class Wallet implements Serializable, BlockChainListener {
             // Note that output.isMine(this) needs to test the keychain which is currently an array, so it's
             // O(candidate outputs ^ keychain.size())! There's lots of low hanging fruit here.
             LinkedList<TransactionOutput> candidates = calculateSpendCandidates(true);
-            // Of the coins we could spend, pick some that we actually will spend.
-            CoinSelection selection = coinSelector.select(value, candidates);
-            // Can we afford this?
-            if (selection.valueGathered.compareTo(value) < 0) {
-                log.warn("Insufficient value in wallet for send, missing " +
-                        bitcoinValueToFriendlyString(value.subtract(selection.valueGathered)));
+            Address changeAddress = req.changeAddress;
+            int minSize = 0;
+            // There are 3 possibilities for what adding change might do:
+            // 1) No effect
+            // 2) Causes increase in fee (change < 0.01 COINS)
+            // 3) Causes the transaction to have a dust output or change < fee increase (ie change will be thrown away)
+            // If we get either of the last 2, we keep note of what the inputs looked like at the time and move try to
+            // add inputs as we go up the list (keeping track of minimum inputs for each category).  At the end, we pick
+            // the best input set as the one which generates the lowest total fee.
+            BigInteger additionalValueForNextCategory = null;
+            CoinSelection selection3 = null;
+            CoinSelection selection2 = null; TransactionOutput selection2Change = null;
+            CoinSelection selection1 = null; TransactionOutput selection1Change = null;
+            while (true) {
+                req.tx.clearInputs();
+                for (TransactionInput input : originalInputs)
+                    req.tx.addInput(input);
+
+                BigInteger fees = req.fee.add(BigInteger.valueOf(minSize/1000).multiply(req.feePerKb));
+                if (needAtLeastReferenceFee && fees.compareTo(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE) < 0)
+                    fees = Transaction.REFERENCE_DEFAULT_MIN_TX_FEE;
+
+                BigInteger valueNeeded = value.add(fees);
+                if (additionalValueForNextCategory != null)
+                    valueNeeded = valueNeeded.add(additionalValueForNextCategory);
+                BigInteger additionalValueSelected = additionalValueForNextCategory;
+
+                // Of the coins we could spend, pick some that we actually will spend.
+                CoinSelection selection = coinSelector.select(valueNeeded, candidates);
+                // Can we afford this?
+                if (selection.valueGathered.compareTo(valueNeeded) < 0)
+                    break;
+                checkState(selection.gathered.size() > 0 || originalInputs.size() > 0);
+
+                // We keep track of an upper bound on transaction size to calculate fees that need added
+                // Note that the difference between the upper bound and lower bound is usually small enough that it
+                // will be very rare that we pay a fee we do not need to
+                int size = 0;
+
+                // We can't be sure a selection is valid until we check fee per kb at the end, so we just store them here temporarily
+                boolean eitherCategory2Or3 = false;
+                boolean isCategory3 = false;
+
+                BigInteger change = selection.valueGathered.subtract(valueNeeded);
+                if (additionalValueSelected != null)
+                    change = change.add(additionalValueSelected);
+
+                TransactionOutput changeOutput = null;
+                // If change is < 0.01 BTC, we will need to have at least minfee to be accepted by the network
+                if (enforceDefaultReferenceClientFeeRelayRules && !change.equals(BigInteger.ZERO) &&
+                        change.compareTo(Utils.CENT) < 0 && fees.compareTo(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE) < 0) {
+                    // This solution may fit into category 2, but it may also be category 3, we'll check that later
+                    eitherCategory2Or3 = true;
+                    additionalValueForNextCategory = Utils.CENT;
+                    // If the change is smaller than the fee we want to add, this will be negative
+                    change = change.subtract(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE.subtract(fees));
+                }
+
+                if (change.compareTo(BigInteger.ZERO) > 0) {
+                    // The value of the inputs is greater than what we want to send. Just like in real life then,
+                    // we need to take back some coins ... this is called "change". Add another output that sends the change
+                    // back to us. The address comes either from the request or getChangeAddress() as a default..
+                    if (changeAddress == null)
+                        changeAddress = getChangeAddress();
+                    changeOutput = new TransactionOutput(params, req.tx, change, changeAddress);
+                    // If the change output would result in this transaction being rejected as dust, just drop the change and make it a fee
+                    if (enforceDefaultReferenceClientFeeRelayRules && Transaction.MIN_NONDUST_OUTPUT.compareTo(change) >= 0) {
+                        // This solution definitely fits in category 3
+                        isCategory3 = true;
+                        additionalValueForNextCategory = Transaction.REFERENCE_DEFAULT_MIN_TX_FEE.add(
+                                                         Transaction.MIN_NONDUST_OUTPUT.add(BigInteger.ONE));
+                    } else {
+                        size += changeOutput.bitcoinSerialize().length + VarInt.sizeOf(req.tx.getOutputs().size()) - VarInt.sizeOf(req.tx.getOutputs().size() - 1);
+                        // This solution is either category 1 or 2
+                        if (!eitherCategory2Or3) // must be category 1
+                            additionalValueForNextCategory = null;
+                    }
+                } else {
+                    if (eitherCategory2Or3) {
+                        // This solution definitely fits in category 3 (we threw away change because it was smaller than MIN_TX_FEE)
+                        isCategory3 = true;
+                        additionalValueForNextCategory = Transaction.REFERENCE_DEFAULT_MIN_TX_FEE.add(BigInteger.ONE);
+                    }
+                }
+
+                for (TransactionOutput output : selection.gathered) {
+                    req.tx.addInput(output);
+                    // If the scriptBytes don't default to none, our size calculations will be thrown off
+                    checkState(req.tx.getInput(req.tx.getInputs().size()-1).getScriptBytes().length == 0);
+                    try {
+                        if (output.getScriptPubKey().isSentToAddress()) {
+                            // Send-to-address spends usually take maximum pubkey.length (as it may be compressed or not) + 75 bytes
+                            size += this.findKeyFromPubHash(output.getScriptPubKey().getPubKeyHash()).getPubKey().length + 75;
+                        } else if (output.getScriptPubKey().isSentToRawPubKey())
+                            size += 74; // Send-to-pubkey spends usually take maximum 74 bytes to spend
+                        else
+                            throw new RuntimeException("Unknown output type returned in coin selection");
+                    } catch (ScriptException e) {
+                        // If this happens it means an output script in a wallet tx could not be understood. That should never
+                        // happen, if it does it means the wallet has got into an inconsistent state.
+                        throw new RuntimeException(e);
+                    }
+                }
+
+                // Estimate transaction size and loop again if we need more fee per kb
+                size += req.tx.bitcoinSerialize().length;
+                if (size/1000 > minSize/1000 && req.feePerKb.compareTo(BigInteger.ZERO) > 0) {
+                    minSize = size;
+                    // We need more fees anyway, just try again with the same additional value
+                    additionalValueForNextCategory = additionalValueSelected;
+                    continue;
+                }
+
+                if (isCategory3) {
+                    if (selection3 == null)
+                        selection3 = selection;
+                } else if (eitherCategory2Or3) {
+                    // If we are in selection2, we will require at least CENT additional. If we do that, there is no way
+                    // we can end up back here because CENT additional will always get us to 1
+                    checkState(selection2 == null);
+                    checkState(additionalValueForNextCategory.equals(Utils.CENT));
+                    selection2 = selection;
+                    selection2Change = checkNotNull(changeOutput); // If we get no change in category 2, we are actually in category 3
+                } else {
+                    // Once we get a category 1 (change kept), we should break out of the loop because we can't do better
+                    checkState(selection1 == null);
+                    checkState(additionalValueForNextCategory == null);
+                    selection1 = selection;
+                    selection1Change = changeOutput;
+                }
+
+                if (additionalValueForNextCategory != null) {
+                    if (additionalValueSelected != null)
+                        checkState(additionalValueForNextCategory.compareTo(additionalValueSelected) > 0);
+                    continue;
+                }
+                break;
+            }
+
+            req.tx.clearInputs();
+            for (TransactionInput input : originalInputs)
+                req.tx.addInput(input);
+
+            if (selection3 == null && selection2 == null && selection1 == null) {
+                log.warn("Insufficient value in wallet for send");
                 // TODO: Should throw an exception here.
-                return false;
+                return null;
             }
-            checkState(selection.gathered.size() > 0);
-            req.tx.getConfidence().setConfidenceType(ConfidenceType.PENDING);
-            BigInteger change = selection.valueGathered.subtract(value);
-            if (change.compareTo(BigInteger.ZERO) > 0) {
-                // The value of the inputs is greater than what we want to send. Just like in real life then,
-                // we need to take back some coins ... this is called "change". Add another output that sends the change
-                // back to us. The address comes either from the request or getChangeAddress() as a default.
-                Address changeAddress = req.changeAddress != null ? req.changeAddress : getChangeAddress();
-                log.info("  with {} coins change", bitcoinValueToFriendlyString(change));
-                req.tx.addOutput(new TransactionOutput(params, req.tx, change, changeAddress));
+
+            BigInteger lowestFee = null;
+            CoinSelection bestCoinSelection = null;
+            TransactionOutput bestChangeOutput = null;
+            if (selection1 != null) {
+                if (selection1Change != null)
+                    lowestFee = selection1.valueGathered.subtract(selection1Change.getValue());
+                else
+                    lowestFee = selection1.valueGathered;
+                bestCoinSelection = selection1;
+                bestChangeOutput = selection1Change;
             }
-            for (TransactionOutput output : selection.gathered) {
+
+            if (selection2 != null) {
+                BigInteger fee = selection2.valueGathered.subtract(checkNotNull(selection2Change).getValue());
+                if (lowestFee == null || fee.compareTo(lowestFee) < 0) {
+                    lowestFee = fee;
+                    bestCoinSelection = selection2;
+                    bestChangeOutput = selection2Change;
+                }
+            }
+
+            if (selection3 != null) {
+                if (lowestFee == null || selection3.valueGathered.compareTo(lowestFee) < 0) {
+                    bestCoinSelection = selection3;
+                    bestChangeOutput = null;
+                }
+            }
+
+            for (TransactionOutput output : bestCoinSelection.gathered)
                 req.tx.addInput(output);
+
+            totalInput = totalInput.add(bestCoinSelection.valueGathered);
+
+            req.tx.getConfidence().setConfidenceType(ConfidenceType.PENDING);
+
+            if (bestChangeOutput != null) {
+                req.tx.addOutput(bestChangeOutput);
+                totalOutput = totalOutput.add(bestChangeOutput.getValue());
+                log.info("  with {} coins change", bitcoinValueToFriendlyString(bestChangeOutput.getValue()));
             }
+
+            //TODO: Shuffle inputs for some anonymity
 
             // Now sign the inputs, thus proving that we are entitled to redeem the connected outputs.
             try {
@@ -1925,7 +2160,7 @@ public class Wallet implements Serializable, BlockChainListener {
                 // TODO: Throw an exception here.
                 log.error("Transaction could not be created without exceeding max size: {} vs {}", size,
                           Transaction.MAX_STANDARD_TX_SIZE);
-                return false;
+                return null;
             }
 
             // Label the transaction as being self created. We can use this later to spend its change output even before
@@ -1934,7 +2169,7 @@ public class Wallet implements Serializable, BlockChainListener {
 
             req.completed = true;
             log.info("  completed {} with {} inputs", req.tx.getHashAsString(), req.tx.getInputs().size());
-            return true;
+            return totalInput.subtract(totalOutput);
         } finally {
             lock.unlock();
         }
