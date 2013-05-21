@@ -637,6 +637,20 @@ public class Transaction extends ChildMessage implements Serializable {
     }
 
     /**
+     * Removes all the inputs from this transaction.
+     * Note that this also invalidates the length attribute
+     */
+    public void clearInputs() {
+        unCache();
+        for (TransactionInput input : inputs) {
+            input.setParent(null);
+        }
+        inputs.clear();
+        // You wanted to reserialize, right?
+        this.length = this.bitcoinSerialize().length;
+    }
+
+    /**
      * Adds an input to this transaction that imports value from the given output. Note that this input is NOT
      * complete and after every input is added with addInput() and every output is added with addOutput(),
      * signInputs() must be called to finalize the transaction and finish the inputs off. Otherwise it won't be
@@ -654,6 +668,20 @@ public class Transaction extends ChildMessage implements Serializable {
         input.setParent(this);
         inputs.add(input);
         adjustLength(inputs.size(), input.length);
+    }
+
+    /**
+     * Removes all the inputs from this transaction.
+     * Note that this also invalidates the length attribute
+     */
+    public void clearOutputs() {
+        unCache();
+        for (TransactionOutput output : outputs) {
+            output.setParent(null);
+        }
+        outputs.clear();
+        // You wanted to reserialize, right?
+        this.length = this.bitcoinSerialize().length;
     }
 
     /**
@@ -964,16 +992,16 @@ public class Transaction extends ChildMessage implements Serializable {
         return version;
     }
 
-    /** Returns a modifiable list of all inputs. */
+    /** Returns an unmodifiable view of all inputs. */
     public List<TransactionInput> getInputs() {
         maybeParse();
-        return inputs;
+        return Collections.unmodifiableList(inputs);
     }
 
-    /** Returns a modifiable list of all outputs. */
+    /** Returns an unmodifiable view of all outputs. */
     public List<TransactionOutput> getOutputs() {
         maybeParse();
-        return outputs;
+        return Collections.unmodifiableList(outputs);
     }
 
     /** @return the given transaction: same as getInputs().get(index). */
