@@ -760,6 +760,19 @@ public class Transaction extends ChildMessage implements Serializable {
         ECKey[] signingKeys = new ECKey[inputs.size()];
         for (int i = 0; i < inputs.size(); i++) {
             TransactionInput input = inputs.get(i);
+            // We don't have the connected output, we assume it was signed already and move on
+            if (input.getOutpoint().getConnectedOutput() == null) {
+                log.warn("Missing connected output, assuming input {} is already signed.", i);
+                continue;
+            }
+            try {
+                // We assume if its already signed, its hopefully got a SIGHASH type that will not invalidate when
+                // we sign missing pieces (to check this would require either assuming any signatures are signing
+                // standard output types or a way to get processed signatures out of script execution)
+                input.getScriptSig().correctlySpends(this, i, input.getOutpoint().getConnectedOutput().getScriptPubKey(), true);
+                log.warn("Input {} already correctly spends output, assuming SIGHASH type used will be safe and skipping signing.", i);
+                continue;
+            } catch (ScriptException e) {}
             if (input.getScriptBytes().length != 0)
                 log.warn("Re-signing an already signed transaction! Be sure this is what you want.");
             // Find the signing key we'll need to use.
@@ -786,6 +799,8 @@ public class Transaction extends ChildMessage implements Serializable {
         //    to the address and then checks the signature.
         // 2) For pay-to-key outputs: just a signature.
         for (int i = 0; i < inputs.size(); i++) {
+            if (signatures[i] == null)
+                continue;
             TransactionInput input = inputs.get(i);
             Script scriptPubKey = input.getOutpoint().getConnectedOutput().getScriptPubKey();
             if (scriptPubKey.isSentToAddress()) {
