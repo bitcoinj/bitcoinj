@@ -31,9 +31,12 @@ import java.math.BigInteger;
 import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 /**
  * A tool for comparing the blocks which are accepted/rejected by bitcoind/bitcoinj
@@ -103,6 +106,7 @@ public class BitcoindComparisonTool {
         // bitcoind MUST be on localhost or we will get banned as a DoSer
         peers.addAddress(new PeerAddress(InetAddress.getByName("localhost"), args.length > 2 ? Integer.parseInt(args[2]) : 18444));
 
+        final Set<Sha256Hash> blocksRequested = Collections.synchronizedSet(new HashSet<Sha256Hash>());
         peers.addEventListener(new AbstractPeerEventListener() {
             @Override
             public void onPeerConnected(Peer peer, int peerCount) {
@@ -124,10 +128,14 @@ public class BitcoindComparisonTool {
                     for (Block block : ((HeadersMessage) m).getBlockHeaders())
                         bitcoindChainHead = block.getHash();
                     return null;
-                }
-                else if (m instanceof Block) {
+                } else if (m instanceof Block) {
                     log.error("bitcoind sent us a block it already had, make sure bitcoind has no blocks!");
                     System.exit(1);
+                } else if (m instanceof GetDataMessage) {
+                    for (InventoryItem item : ((GetDataMessage)m).items)
+                        if (item.type == InventoryItem.Type.Block)
+                            blocksRequested.add(item.hash);
+                    return null;
                 }
                 return m;
             }
@@ -180,6 +188,15 @@ public class BitcoindComparisonTool {
                 invalidBlocks++;
             }
             
+            InventoryMessage message = new InventoryMessage(params);
+            message.addBlock(nextBlock);
+            bitcoind.sendMessage(message);
+            // bitcoind doesn't request blocks inline so we can't rely on a ping for synchronization
+            for (int i = 0; !blocksRequested.contains(nextBlock.getHash()); i++) {
+                if (i % 20 == 19)
+                    log.error("bitcoind still hasn't requested block " + block.blockName);
+                Thread.sleep(50);
+            }
             bitcoind.sendMessage(nextBlock);
             locator.clear();
             locator.add(bitcoindChainHead);
