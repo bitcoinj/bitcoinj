@@ -267,7 +267,7 @@ public class TransactionInput extends ChildMessage implements Serializable {
         }
     }
 
-    enum ConnectionResult {
+    public enum ConnectionResult {
         NO_SUCH_TX,
         ALREADY_SPENT,
         SUCCESS
@@ -288,7 +288,7 @@ public class TransactionInput extends ChildMessage implements Serializable {
         return out;
     }
 
-    enum ConnectMode {
+    public enum ConnectMode {
         DISCONNECT_ON_CONFLICT,
         ABORT_ON_CONFLICT
     }
@@ -320,7 +320,7 @@ public class TransactionInput extends ChildMessage implements Serializable {
      * @return NO_SUCH_TX if transaction is not the prevtx, ALREADY_SPENT if there was a conflict, SUCCESS if not.
      */
     public ConnectionResult connect(Transaction transaction, ConnectMode mode) {
-        if (!transaction.getHash().equals(outpoint.getHash()) && mode != ConnectMode.DISCONNECT_ON_CONFLICT)
+        if (!transaction.getHash().equals(outpoint.getHash()))
             return ConnectionResult.NO_SUCH_TX;
         checkElementIndex((int) outpoint.getIndex(), transaction.getOutputs().size(), "Corrupt transaction");
         TransactionOutput out = transaction.getOutput((int) outpoint.getIndex());
