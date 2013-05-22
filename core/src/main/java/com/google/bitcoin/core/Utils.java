@@ -433,6 +433,14 @@ public class Utils {
     }
 
     /**
+     * Sets the mock clock to the given time (in seconds)
+     * @param mockClock
+     */
+    public static void setMockClock(long mockClock) {
+        mockTime = new Date(mockClock * 1000);
+    }
+
+    /**
      * Returns the current time, or a mocked out equivalent.
      */
     public static Date now() {
