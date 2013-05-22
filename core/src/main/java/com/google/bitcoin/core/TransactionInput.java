@@ -370,6 +370,9 @@ public class TransactionInput extends ChildMessage implements Serializable {
         out.defaultWriteObject();
     }
 
+    /**
+     * @returns true if this transaction's sequence number is set (ie it may be a part of a time-locked transaction)
+     */
     public boolean hasSequence() {
         return sequence != NO_SEQUENCE;
     }

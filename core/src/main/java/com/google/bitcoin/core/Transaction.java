@@ -553,7 +553,7 @@ public class Transaction extends ChildMessage implements Serializable {
         // Basic info about the tx.
         StringBuffer s = new StringBuffer();
         s.append(String.format("  %s: %s%n", getHashAsString(), getConfidence()));
-        if (lockTime > 0) {
+        if (isTimeLocked()) {
             String time;
             if (lockTime < LOCKTIME_THRESHOLD) {
                 time = "block " + lockTime;
@@ -1068,6 +1068,21 @@ public class Transaction extends ChildMessage implements Serializable {
     }
 
     /**
+     * <p>A transaction is time locked if at least one of its inputs is non-final and it has a lock time</p>
+     *
+     * <p>To check if this transaction is final at a given height and time, see {@link Transaction#isFinal(int, long)}
+     * </p>
+     */
+    public boolean isTimeLocked() {
+        if (getLockTime() == 0)
+            return false;
+        for (TransactionInput input : getInputs())
+            if (input.hasSequence())
+                return true;
+        return false;
+    }
+
+    /**
      * <p>Returns true if this transaction is considered finalized and can be placed in a block. Non-finalized
      * transactions won't be included by miners and can be replaced with newer versions using sequence numbers.
      * This is useful in certain types of <a href="http://en.bitcoin.it/wiki/Contracts">contracts</a>, such as
@@ -1077,16 +1092,12 @@ public class Transaction extends ChildMessage implements Serializable {
      * re-activated before this functionality is useful.</p>
      */
     public boolean isFinal(int height, long blockTimeSeconds) {
-        // Time based nLockTime implemented in 0.1.6
         long time = getLockTime();
-        if (time == 0)
-            return true;
         if (time < (time < LOCKTIME_THRESHOLD ? height : blockTimeSeconds))
             return true;
-        for (TransactionInput in : inputs)
-            if (in.hasSequence())
-                return false;
-        return true;
+        if (!isTimeLocked())
+            return true;
+        return false;
     }
 
     /**
