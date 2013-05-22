@@ -16,6 +16,7 @@
 
 package com.google.bitcoin.core;
 
+import com.google.bitcoin.params.UnitTestParams;
 import com.google.bitcoin.store.BlockStore;
 import com.google.bitcoin.store.MemoryBlockStore;
 import com.google.bitcoin.utils.BriefLogFormatter;
@@ -49,7 +50,7 @@ public class TestWithNetworkConnections {
     protected ChannelPipeline pipeline;
     
     public void setUp() throws Exception {
-        setUp(new MemoryBlockStore(NetworkParameters.unitTests()));
+        setUp(new MemoryBlockStore(UnitTestParams.get()));
     }
     
     public void setUp(BlockStore blockStore) throws Exception {
@@ -58,7 +59,7 @@ public class TestWithNetworkConnections {
         control = createStrictControl();
         control.checkOrder(false);
 
-        unitTestParams = NetworkParameters.unitTests();
+        unitTestParams = UnitTestParams.get();
         this.blockStore = blockStore;
         wallet = new Wallet(unitTestParams);
         key = new ECKey();

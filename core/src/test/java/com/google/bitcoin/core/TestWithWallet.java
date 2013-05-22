@@ -16,6 +16,7 @@
 
 package com.google.bitcoin.core;
 
+import com.google.bitcoin.params.UnitTestParams;
 import com.google.bitcoin.store.BlockStore;
 import com.google.bitcoin.store.MemoryBlockStore;
 import com.google.bitcoin.utils.BriefLogFormatter;
@@ -29,7 +30,7 @@ import static com.google.bitcoin.core.TestUtils.createFakeBlock;
 import static com.google.bitcoin.core.TestUtils.createFakeTx;
 
 public class TestWithWallet {
-    protected static final NetworkParameters params = NetworkParameters.unitTests();
+    protected static final NetworkParameters params = UnitTestParams.get();
     protected ECKey myKey;
     protected Address myAddress;
     protected Wallet wallet;

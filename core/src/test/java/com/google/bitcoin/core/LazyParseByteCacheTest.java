@@ -17,6 +17,7 @@
 package com.google.bitcoin.core;
 
 import com.google.bitcoin.params.MainNetParams;
+import com.google.bitcoin.params.UnitTestParams;
 import com.google.bitcoin.store.BlockStore;
 import com.google.bitcoin.store.MemoryBlockStore;
 import org.junit.Before;
@@ -78,7 +79,7 @@ public class LazyParseByteCacheTest {
     
     @Before
     public void setUp() throws Exception {
-        unitTestParams = NetworkParameters.unitTests();
+        unitTestParams = UnitTestParams.get();
         wallet = new Wallet(unitTestParams);
         wallet.addKey(new ECKey());
 

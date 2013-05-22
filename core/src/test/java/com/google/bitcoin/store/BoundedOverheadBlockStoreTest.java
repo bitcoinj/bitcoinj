@@ -19,6 +19,7 @@ import com.google.bitcoin.core.Address;
 import com.google.bitcoin.core.ECKey;
 import com.google.bitcoin.core.NetworkParameters;
 import com.google.bitcoin.core.StoredBlock;
+import com.google.bitcoin.params.UnitTestParams;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -38,7 +39,7 @@ public class BoundedOverheadBlockStoreTest {
         File temp = folder.newFile("bitcoinj-test");
         System.out.println(temp.getAbsolutePath());
 
-        NetworkParameters params = NetworkParameters.unitTests();
+        NetworkParameters params = UnitTestParams.get();
         Address to = new ECKey().toAddress(params);
         BoundedOverheadBlockStore store = new BoundedOverheadBlockStore(params, temp);
         // Check the first block in a new store is the genesis block.
@@ -64,7 +65,7 @@ public class BoundedOverheadBlockStoreTest {
         File temp = folder.newFile("bitcoinj-test");
         System.out.println(temp.getAbsolutePath());
 
-        NetworkParameters params = NetworkParameters.unitTests();
+        NetworkParameters params = UnitTestParams.get();
         BoundedOverheadBlockStore store = new BoundedOverheadBlockStore(params, temp);
         try {
             BoundedOverheadBlockStore store1 = new BoundedOverheadBlockStore(params, temp);

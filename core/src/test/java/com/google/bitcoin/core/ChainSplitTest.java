@@ -17,6 +17,7 @@
 package com.google.bitcoin.core;
 
 import com.google.bitcoin.core.TransactionConfidence.ConfidenceType;
+import com.google.bitcoin.params.UnitTestParams;
 import com.google.bitcoin.store.MemoryBlockStore;
 import com.google.bitcoin.utils.BriefLogFormatter;
 import org.junit.Before;
@@ -43,7 +44,7 @@ public class ChainSplitTest {
     @Before
     public void setUp() throws Exception {
         BriefLogFormatter.init();
-        unitTestParams = NetworkParameters.unitTests();
+        unitTestParams = UnitTestParams.get();
         wallet = new Wallet(unitTestParams);
         wallet.addKey(new ECKey());
         wallet.addKey(new ECKey());

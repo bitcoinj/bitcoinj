@@ -16,6 +16,7 @@
 
 package com.google.bitcoin.core;
 
+import com.google.bitcoin.params.UnitTestParams;
 import com.google.bitcoin.utils.BriefLogFormatter;
 import org.junit.Before;
 import org.junit.Test;
@@ -26,7 +27,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 public class MemoryPoolTest {
-    private NetworkParameters params = NetworkParameters.unitTests();
+    private NetworkParameters params = UnitTestParams.get();
     private Transaction tx1, tx2;
     private PeerAddress address1, address2, address3;
 

@@ -16,6 +16,8 @@
 
 package com.google.bitcoin.core;
 
+import com.google.bitcoin.params.TestNet2Params;
+import com.google.bitcoin.params.UnitTestParams;
 import com.google.bitcoin.script.ScriptOpCodes;
 import org.junit.Test;
 import org.spongycastle.util.encoders.Hex;
@@ -30,7 +32,7 @@ import java.util.Arrays;
 import static org.junit.Assert.*;
 
 public class BlockTest {
-    static final NetworkParameters params = NetworkParameters.testNet2();
+    static final NetworkParameters params = TestNet2Params.get();
 
     public static final byte[] blockBytes;
 
@@ -66,7 +68,7 @@ public class BlockTest {
     @Test
     public void testProofOfWork() throws Exception {
         // This params accepts any difficulty target.
-        NetworkParameters params = NetworkParameters.unitTests();
+        NetworkParameters params = UnitTestParams.get();
         Block block = new Block(params, blockBytes);
         block.setNonce(12346);
         try {
@@ -153,7 +155,7 @@ public class BlockTest {
     
     @Test
     public void testUpdateLength() {
-        NetworkParameters params = NetworkParameters.unitTests();
+        NetworkParameters params = UnitTestParams.get();
         Block block = params.getGenesisBlock().createNextBlockWithCoinbase(new ECKey().getPubKey());
         assertEquals(block.bitcoinSerialize().length, block.length);
         final int origBlockLen = block.length;

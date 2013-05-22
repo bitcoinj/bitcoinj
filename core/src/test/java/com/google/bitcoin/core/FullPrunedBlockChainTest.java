@@ -18,6 +18,7 @@
 package com.google.bitcoin.core;
 
 import com.google.bitcoin.core.Transaction.SigHash;
+import com.google.bitcoin.params.MainNetParams;
 import com.google.bitcoin.params.UnitTestParams;
 import com.google.bitcoin.script.Script;
 import com.google.bitcoin.store.BlockStoreException;
@@ -176,7 +177,7 @@ public class FullPrunedBlockChainTest {
     
     @Test
     public void testFirst100KBlocks() throws BlockStoreException, VerificationException, PrunedException {
-        NetworkParameters params = NetworkParameters.prodNet();
+        NetworkParameters params = MainNetParams.get();
         File blockFile = new File(getClass().getResource("first-100k-blocks.dat").getFile());
         BlockFileLoader loader = new BlockFileLoader(params, Arrays.asList(new File[] {blockFile}));
         

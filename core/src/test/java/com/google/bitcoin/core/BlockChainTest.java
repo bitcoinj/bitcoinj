@@ -19,6 +19,7 @@ package com.google.bitcoin.core;
 import com.google.bitcoin.core.Wallet.BalanceType;
 import com.google.bitcoin.params.MainNetParams;
 import com.google.bitcoin.params.TestNet2Params;
+import com.google.bitcoin.params.UnitTestParams;
 import com.google.bitcoin.store.BlockStore;
 import com.google.bitcoin.store.MemoryBlockStore;
 import com.google.bitcoin.utils.BriefLogFormatter;
@@ -63,7 +64,7 @@ public class BlockChainTest {
         BriefLogFormatter.initVerbose();
         testNetChain = new BlockChain(testNet, new Wallet(testNet), new MemoryBlockStore(testNet));
 
-        unitTestParams = NetworkParameters.unitTests();
+        unitTestParams = UnitTestParams.get();
         wallet = new Wallet(unitTestParams) {
             @Override
             public void receiveFromBlock(Transaction tx, StoredBlock block, BlockChain.NewBlockType blockType) throws VerificationException {

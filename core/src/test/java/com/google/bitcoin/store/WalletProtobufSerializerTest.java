@@ -4,6 +4,7 @@ package com.google.bitcoin.store;
 import com.google.bitcoin.core.*;
 import com.google.bitcoin.core.TransactionConfidence.ConfidenceType;
 import com.google.bitcoin.params.MainNetParams;
+import com.google.bitcoin.params.UnitTestParams;
 import com.google.bitcoin.utils.BriefLogFormatter;
 import com.google.protobuf.ByteString;
 import org.bitcoinj.wallet.Protos;
@@ -22,7 +23,7 @@ import static com.google.bitcoin.core.TestUtils.createFakeTx;
 import static org.junit.Assert.*;
 
 public class WalletProtobufSerializerTest {
-    static final NetworkParameters params = NetworkParameters.unitTests();
+    static final NetworkParameters params = UnitTestParams.get();
     private ECKey myKey;
     private Address myAddress;
     private Wallet myWallet;

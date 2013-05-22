@@ -21,6 +21,7 @@ import com.google.bitcoin.crypto.KeyCrypter;
 import com.google.bitcoin.crypto.KeyCrypterScrypt;
 import com.google.bitcoin.params.MainNetParams;
 import com.google.bitcoin.params.TestNet3Params;
+import com.google.bitcoin.params.UnitTestParams;
 import com.google.bitcoin.utils.BriefLogFormatter;
 import com.google.protobuf.ByteString;
 import org.bitcoinj.wallet.Protos;
@@ -355,7 +356,7 @@ public class ECKeyTest {
     public void roundTripDumpedPrivKey() throws Exception {
         ECKey key = new ECKey();
         assertTrue(key.isCompressed());
-        NetworkParameters params = NetworkParameters.unitTests();
+        NetworkParameters params = UnitTestParams.get();
         String base58 = key.getPrivateKeyEncoded(params).toString();
         ECKey key2 = new DumpedPrivateKey(params, base58).getKey();
         assertTrue(key2.isCompressed());

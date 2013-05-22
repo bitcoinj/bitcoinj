@@ -20,6 +20,7 @@ import com.google.bitcoin.core.ECKey;
 import com.google.bitcoin.core.NetworkParameters;
 import com.google.bitcoin.core.StoredBlock;
 
+import com.google.bitcoin.params.UnitTestParams;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -43,7 +44,7 @@ public class DiskBlockStoreTest {
         temp = folder.newFile("bitcoinj-test");
         System.out.println(temp.getAbsolutePath());
 
-        params = NetworkParameters.unitTests();
+        params = UnitTestParams.get();
         to = new ECKey().toAddress(params);
     }
     
