@@ -439,8 +439,13 @@ public class ECKey implements Serializable {
         try {
             ASN1InputStream decoder = new ASN1InputStream(signature);
             DLSequence seq = (DLSequence) decoder.readObject();
-            DERInteger r = (DERInteger) seq.getObjectAt(0);
-            DERInteger s = (DERInteger) seq.getObjectAt(1);
+            DERInteger r, s;
+            try {
+                r = (DERInteger) seq.getObjectAt(0);
+                s = (DERInteger) seq.getObjectAt(1);
+            } catch (ClassCastException e) {
+                return false; // An invalid signature can cause this
+            }
             decoder.close();
             // OpenSSL deviates from the DER spec by interpreting these values as unsigned, though they should not be
             // Thus, we always use the positive versions.
