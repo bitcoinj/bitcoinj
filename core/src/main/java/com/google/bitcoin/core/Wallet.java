@@ -860,11 +860,11 @@ public class Wallet implements Serializable, BlockChainListener {
 
     private static AnalysisResult analyzeTransactionAndDependencies(Transaction tx, List<Transaction> dependencies) {
         AnalysisResult result = new AnalysisResult();
-        if (tx.getLockTime() > 0)
+        if (tx.isTimeLocked())
             result.timeLocked = tx;
         if (dependencies != null) {
             for (Transaction dep : dependencies) {
-                if (dep.getLockTime() > 0) {
+                if (dep.isTimeLocked()) {
                     result.timeLocked = dep;
                 }
             }
@@ -897,7 +897,7 @@ public class Wallet implements Serializable, BlockChainListener {
                 return false;
             }
 
-            if (tx.getLockTime() > 0 && !acceptTimeLockedTransactions) {
+            if (tx.isTimeLocked() && !acceptTimeLockedTransactions) {
                 log.warn("Received transaction {} with a lock time of {}, but not configured to accept these, discarding",
                         tx.getHashAsString(), tx.getLockTime());
                 return false;

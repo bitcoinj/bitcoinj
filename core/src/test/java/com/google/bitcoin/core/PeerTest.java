@@ -702,6 +702,7 @@ public class PeerTest extends TestWithNetworkConnections {
         // Add a fake input to t3 that goes nowhere.
         Sha256Hash t3 = Sha256Hash.create("abc".getBytes(Charset.forName("UTF-8")));
         t2.addInput(new TransactionInput(unitTestParams, t2, new byte[]{}, new TransactionOutPoint(unitTestParams, 0, t3)));
+        t2.getInput(0).setSequenceNumber(0xDEADBEEF);
         t2.addOutput(Utils.toNanoCoins(1, 0), new ECKey());
         Transaction t1 = new Transaction(unitTestParams);
         t1.addInput(t2.getOutput(0));
