@@ -25,14 +25,14 @@ import java.io.IOException;
 import java.math.BigInteger;
 
 public class TestUtils {
-    public static Transaction createFakeTx(NetworkParameters params, BigInteger nanocoins, Address to) throws IOException, ProtocolException {
+    public static Transaction createFakeTxWithChangeAddress(NetworkParameters params, BigInteger nanocoins, Address to, Address changeOutput)
+            throws IOException, ProtocolException {
         // Create a fake TX of sufficient realism to exercise the unit tests. Two outputs, one to us, one to somewhere
         // else to simulate change.
         Transaction t = new Transaction(params);
         TransactionOutput outputToMe = new TransactionOutput(params, t, nanocoins, to);
         t.addOutput(outputToMe);
-        TransactionOutput change = new TransactionOutput(params, t, Utils.toNanoCoins(1, 11), 
-                new ECKey().toAddress(params));
+        TransactionOutput change = new TransactionOutput(params, t, Utils.toNanoCoins(1, 11), changeOutput);
         t.addOutput(change);
         // Make a previous tx simply to send us sufficient coins. This prev tx is not really valid but it doesn't
         // matter for our purposes.
@@ -43,6 +43,10 @@ public class TestUtils {
         t.addInput(prevOut);
         // Serialize/deserialize to ensure internal state is stripped, as if it had been read from the wire.
         return roundTripTransaction(params, t);
+    }
+
+    public static Transaction createFakeTx(NetworkParameters params, BigInteger nanocoins, Address to) throws IOException, ProtocolException {
+        return createFakeTxWithChangeAddress(params, nanocoins, to, new ECKey().toAddress(params));
     }
 
     public static Transaction createFakeTx(NetworkParameters params, BigInteger nanocoins, ECKey to) throws IOException, ProtocolException {
