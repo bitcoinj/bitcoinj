@@ -129,7 +129,7 @@ public class PeerAddress extends ChildMessage {
     }
 
     @Override
-    protected void parse() {
+    protected void parse() throws ProtocolException {
         // Format of a serialized address:
         //   uint32 timestamp
         //   uint64 services   (flags determining what the node can do)

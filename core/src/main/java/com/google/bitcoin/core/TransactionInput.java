@@ -121,7 +121,7 @@ public class TransactionInput extends ChildMessage implements Serializable {
         this.parentTransaction = parentTransaction;
     }
 
-    protected void parseLite() {
+    protected void parseLite() throws ProtocolException {
         int curs = cursor;
         int scriptLen = (int) readVarInt(36);
         length = cursor - offset + scriptLen + 4;

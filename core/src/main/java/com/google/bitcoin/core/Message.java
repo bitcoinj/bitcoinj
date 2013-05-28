@@ -402,74 +402,104 @@ public abstract class Message implements Serializable {
         return length;
     }
 
-    long readUint32() {
-        long u = Utils.readUint32(bytes, cursor);
-        cursor += 4;
-        return u;
+    long readUint32() throws ProtocolException {
+        try {
+            long u = Utils.readUint32(bytes, cursor);
+            cursor += 4;
+            return u;
+        } catch (ArrayIndexOutOfBoundsException e) {
+            throw new ProtocolException(e);
+        }
     }
 
-    Sha256Hash readHash() {
-        byte[] hash = new byte[32];
-        System.arraycopy(bytes, cursor, hash, 0, 32);
-        // We have to flip it around, as it's been read off the wire in little endian.
-        // Not the most efficient way to do this but the clearest.
-        hash = Utils.reverseBytes(hash);
-        cursor += 32;
-        return new Sha256Hash(hash);
+    Sha256Hash readHash() throws ProtocolException {
+        try {
+            byte[] hash = new byte[32];
+            System.arraycopy(bytes, cursor, hash, 0, 32);
+            // We have to flip it around, as it's been read off the wire in little endian.
+            // Not the most efficient way to do this but the clearest.
+            hash = Utils.reverseBytes(hash);
+            cursor += 32;
+            return new Sha256Hash(hash);
+        } catch (IndexOutOfBoundsException e) {
+            throw new ProtocolException(e);
+        }
     }
 
-    long readInt64() {
-        long u = Utils.readInt64(bytes, cursor);
-        cursor += 8;
-        return u;
+    long readInt64() throws ProtocolException {
+        try {
+            long u = Utils.readInt64(bytes, cursor);
+            cursor += 8;
+            return u;
+        } catch (ArrayIndexOutOfBoundsException e) {
+            throw new ProtocolException(e);
+        }
     }
 
-    BigInteger readUint64() {
-        // Java does not have an unsigned 64 bit type. So scrape it off the wire then flip.
-        byte[] valbytes = new byte[8];
-        System.arraycopy(bytes, cursor, valbytes, 0, 8);
-        valbytes = Utils.reverseBytes(valbytes);
-        cursor += valbytes.length;
-        return new BigInteger(valbytes);
+    BigInteger readUint64() throws ProtocolException {
+        try {
+            // Java does not have an unsigned 64 bit type. So scrape it off the wire then flip.
+            byte[] valbytes = new byte[8];
+            System.arraycopy(bytes, cursor, valbytes, 0, 8);
+            valbytes = Utils.reverseBytes(valbytes);
+            cursor += valbytes.length;
+            return new BigInteger(valbytes);
+        } catch (IndexOutOfBoundsException e) {
+            throw new ProtocolException(e);
+        }
     }
 
-    long readVarInt() {
+    long readVarInt() throws ProtocolException {
         return readVarInt(0);
     }
 
-    long readVarInt(int offset) {
-        VarInt varint = new VarInt(bytes, cursor + offset);
-        cursor += offset + varint.getOriginalSizeInBytes();
-        return varint.value;
+    long readVarInt(int offset) throws ProtocolException {
+        try {
+            VarInt varint = new VarInt(bytes, cursor + offset);
+            cursor += offset + varint.getOriginalSizeInBytes();
+            return varint.value;
+        } catch (ArrayIndexOutOfBoundsException e) {
+            throw new ProtocolException(e);
+        }
     }
 
 
-    byte[] readBytes(int length) {
-        byte[] b = new byte[length];
-        System.arraycopy(bytes, cursor, b, 0, length);
-        cursor += length;
-        return b;
+    byte[] readBytes(int length) throws ProtocolException {
+        try {
+            byte[] b = new byte[length];
+            System.arraycopy(bytes, cursor, b, 0, length);
+            cursor += length;
+            return b;
+        } catch (IndexOutOfBoundsException e) {
+            throw new ProtocolException(e);
+        }
     }
     
-    byte[] readByteArray() {
+    byte[] readByteArray() throws ProtocolException {
         long len = readVarInt();
         return readBytes((int)len);
     }
 
-    String readStr() {
-        VarInt varInt = new VarInt(bytes, cursor);
-        if (varInt.value == 0) {
-            cursor += 1;
-            return "";
-        }
-        cursor += varInt.getOriginalSizeInBytes();
-        byte[] characters = new byte[(int) varInt.value];
-        System.arraycopy(bytes, cursor, characters, 0, characters.length);
-        cursor += characters.length;
+    String readStr() throws ProtocolException {
         try {
-            return new String(characters, "UTF-8");
-        } catch (UnsupportedEncodingException e) {
-            throw new RuntimeException(e);  // Cannot happen, UTF-8 is always supported.
+            VarInt varInt = new VarInt(bytes, cursor);
+            if (varInt.value == 0) {
+                cursor += 1;
+                return "";
+            }
+            cursor += varInt.getOriginalSizeInBytes();
+            byte[] characters = new byte[(int) varInt.value];
+            System.arraycopy(bytes, cursor, characters, 0, characters.length);
+            cursor += characters.length;
+            try {
+                return new String(characters, "UTF-8");
+            } catch (UnsupportedEncodingException e) {
+                throw new RuntimeException(e);  // Cannot happen, UTF-8 is always supported.
+            }
+        } catch (ArrayIndexOutOfBoundsException e) {
+            throw new ProtocolException(e);
+        } catch (IndexOutOfBoundsException e) {
+            throw new ProtocolException(e);
         }
     }
     

@@ -54,7 +54,7 @@ public class Ping extends Message {
         try {
             nonce = readInt64();
             hasNonce = true;
-        } catch(ArrayIndexOutOfBoundsException e) {
+        } catch(ProtocolException e) {
             hasNonce = false;
         }
         length = hasNonce ? 8 : 0;

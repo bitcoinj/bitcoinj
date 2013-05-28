@@ -148,7 +148,7 @@ public class Block extends Message {
         hash = null;
     }
 
-    private void parseHeader() {
+    private void parseHeader() throws ProtocolException {
         if (headerParsed)
             return;
 
@@ -230,7 +230,7 @@ public class Block extends Message {
     /*
      * Block uses some special handling for lazy parsing and retention of cached bytes. Parsing and serializing the
      * block header and the transaction list are both non-trivial so there are good efficiency gains to be had by
-     * separating them. There are many cases where a user may need access to access or change one or the other but not both.
+     * separating them. There are many cases where a user may need to access or change one or the other but not both.
      *
      * With this in mind we ignore the inherited checkParse() and unCache() methods and implement a separate version
      * of them for both header and transactions.
@@ -242,9 +242,15 @@ public class Block extends Message {
     private void maybeParseHeader() {
         if (headerParsed || bytes == null)
             return;
-        parseHeader();
-        if (!(headerBytesValid || transactionBytesValid))
-            bytes = null;
+        try {
+            parseHeader();
+            if (!(headerBytesValid || transactionBytesValid))
+                bytes = null;
+        } catch (ProtocolException e) {
+            throw new LazyParseException(
+                    "ProtocolException caught during lazy parse.  For safe access to fields call ensureParsed before attempting read or write access",
+                    e);
+        }
     }
 
     private void maybeParseTransactions() {

@@ -121,7 +121,7 @@ public class TransactionOutput extends ChildMessage implements Serializable {
         return scriptPubKey;
     }
 
-    protected void parseLite() {
+    protected void parseLite() throws ProtocolException {
         // TODO: There is no reason to use BigInteger for values, they are always smaller than 21 million * COIN
         // The only reason to use BigInteger would be to properly read values from the reference implementation, however
         // the reference implementation uses signed 64-bit integers for its values as well (though it probably shouldn't)

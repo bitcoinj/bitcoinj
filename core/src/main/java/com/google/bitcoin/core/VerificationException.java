@@ -22,6 +22,10 @@ public class VerificationException extends Exception {
         super(msg);
     }
 
+    public VerificationException(Exception e) {
+        super(e);
+    }
+
     public VerificationException(String msg, Throwable t) {
         super(msg, t);
     }

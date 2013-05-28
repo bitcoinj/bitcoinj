@@ -17,7 +17,7 @@
 package com.google.bitcoin.core;
 
 @SuppressWarnings("serial")
-public class ProtocolException extends Exception {
+public class ProtocolException extends VerificationException {
 
     public ProtocolException(String msg) {
         super(msg);
