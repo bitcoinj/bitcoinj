@@ -305,7 +305,7 @@ public class WalletProtobufSerializerTest {
         }
 
         @Override
-        public void deserializeWalletExtension(byte[] data) {
+        public void deserializeWalletExtension(Wallet wallet, byte[] data) {
             assertArrayEquals(this.data, data);
         }
     }

@@ -40,5 +40,5 @@ public interface WalletExtension {
     /** Returns bytes that will be saved in the wallet. */
     public byte[] serializeWalletExtension();
     /** Loads the contents of this object from the wallet. */
-    public void deserializeWalletExtension(byte[] data);
+    public void deserializeWalletExtension(Wallet containingWallet, byte[] data) throws Exception;
 }

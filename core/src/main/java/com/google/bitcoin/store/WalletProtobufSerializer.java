@@ -16,6 +16,17 @@
 
 package com.google.bitcoin.store;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.math.BigInteger;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.ListIterator;
+import java.util.Map;
+
 import com.google.bitcoin.core.*;
 import com.google.bitcoin.core.TransactionConfidence.ConfidenceType;
 import com.google.bitcoin.crypto.EncryptedPrivateKey;
@@ -28,14 +39,6 @@ import org.bitcoinj.wallet.Protos;
 import org.bitcoinj.wallet.Protos.Wallet.EncryptionType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.math.BigInteger;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.util.*;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -404,7 +407,12 @@ public class WalletProtobufSerializer {
                 }
             } else {
                 log.info("Loading wallet extension {}", id);
-                extension.deserializeWalletExtension(extProto.getData().toByteArray());
+                try {
+                    extension.deserializeWalletExtension(wallet, extProto.getData().toByteArray());
+                } catch (Exception e) {
+                    if (extProto.getMandatory())
+                        throw new IllegalArgumentException("Unknown mandatory extension in wallet: " + id);
+                }
             }
         }
     }
