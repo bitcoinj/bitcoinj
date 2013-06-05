@@ -1933,7 +1933,7 @@ public class Wallet implements Serializable, BlockChainListener {
                     log.warn("SendRequest transaction already has inputs but we don't know how much they are worth - they will be added to fee.");
             value = value.subtract(totalInput);
 
-            List<TransactionInput> originalInputs = new ArrayList(req.tx.getInputs());
+            List<TransactionInput> originalInputs = new ArrayList<TransactionInput>(req.tx.getInputs());
 
             // We need to know if we need to add an additional fee because one of our values are smaller than 0.01 BTC
             boolean needAtLeastReferenceFee = false;
