@@ -3122,6 +3122,41 @@ public class Wallet implements Serializable, BlockChainListener {
             if (extensions.containsKey(id))
                 throw new IllegalStateException("Cannot add two extensions with the same ID: " + id);
             extensions.put(id, extension);
+            invokeOnWalletChanged();
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
+     * Atomically adds extension or returns an existing extension if there is one with the same id alreadypresent.
+     */
+    public WalletExtension addOrGetExistingExtension(WalletExtension extension) {
+        String id = checkNotNull(extension).getWalletExtensionID();
+        lock.lock();
+        try {
+            WalletExtension previousExtension = extensions.get(id);
+            if (previousExtension != null)
+                return previousExtension;
+            extensions.put(id, extension);
+            invokeOnWalletChanged();
+            return extension;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
+     * Either adds extension as a new extension or replaces the existing extension if one already exists with the same
+     * id. This also calls onWalletChanged, triggering wallet saving, so may be useful even when called with the same
+     * extension as is already present.
+     */
+    public void addOrUpdateExtension(WalletExtension extension) {
+        String id = checkNotNull(extension).getWalletExtensionID();
+        lock.lock();
+        try {
+            extensions.put(id, extension);
+            invokeOnWalletChanged();
         } finally {
             lock.unlock();
         }
