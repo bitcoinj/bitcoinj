@@ -2144,8 +2144,6 @@ public class Wallet implements Serializable, BlockChainListener {
                 log.info("  with {} coins change", bitcoinValueToFriendlyString(bestChangeOutput.getValue()));
             }
 
-            //TODO: Shuffle inputs for some anonymity
-
             // Now sign the inputs, thus proving that we are entitled to redeem the connected outputs.
             try {
                 req.tx.signInputs(Transaction.SigHash.ALL, this, req.aesKey);
