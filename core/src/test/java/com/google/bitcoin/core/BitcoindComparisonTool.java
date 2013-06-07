@@ -20,24 +20,14 @@ import com.google.bitcoin.params.RegTestParams;
 import com.google.bitcoin.store.BlockStoreException;
 import com.google.bitcoin.store.FullPrunedBlockStore;
 import com.google.bitcoin.store.H2FullPrunedBlockStore;
-import com.google.bitcoin.store.MemoryFullPrunedBlockStore;
 import com.google.bitcoin.utils.BlockFileLoader;
 import com.google.bitcoin.utils.BriefLogFormatter;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.math.BigInteger;
 import java.net.InetAddress;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * A tool for comparing the blocks which are accepted/rejected by bitcoind/bitcoinj
@@ -57,7 +47,7 @@ public class BitcoindComparisonTool {
     public static void main(String[] args) throws Exception {
         BriefLogFormatter.init();
         System.out.println("USAGE: bitcoinjBlockStoreLocation runLargeReorgs(1/0) [port=18444]");
-        boolean runLargeReorgs = Integer.parseInt(args[1]) == 1;
+        boolean runLargeReorgs = args.length > 1 && Integer.parseInt(args[1]) == 1;
 
         params = new RegTestParams();
 
@@ -69,7 +59,7 @@ public class BitcoindComparisonTool {
         Iterator<Block> blocks = new BlockFileLoader(params, Arrays.asList(blockFile));
 
         try {
-            store = new H2FullPrunedBlockStore(params, args[0], blockList.maximumReorgBlockCount);
+            store = new H2FullPrunedBlockStore(params, args.length > 0 ? args[0] : "BitcoindComparisonTool", blockList.maximumReorgBlockCount);
             ((H2FullPrunedBlockStore)store).resetStore();
             //store = new MemoryFullPrunedBlockStore(params, blockList.maximumReorgBlockCount);
             chain = new FullPrunedBlockChain(params, store);
