@@ -29,10 +29,12 @@ public class RegTestParams extends TestNet2Params {
     private static final BigInteger PROOF_OF_WORK_LIMIT = new BigInteger("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", 16);
 
     public RegTestParams() {
+        super();
         interval = 10000;
         proofOfWorkLimit = PROOF_OF_WORK_LIMIT;
         subsidyDecreaseBlockCount = 10000;
         port = 18444;
+        acceptableAddressCodes = new int[] { 0 };
     }
 
     @Override
