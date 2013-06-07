@@ -35,6 +35,7 @@ public class RegTestParams extends TestNet2Params {
         subsidyDecreaseBlockCount = 10000;
         port = 18444;
         acceptableAddressCodes = new int[] { 0 };
+        addressHeader = 0;
     }
 
     @Override
