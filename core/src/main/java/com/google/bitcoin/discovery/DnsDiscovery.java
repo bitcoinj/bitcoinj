@@ -67,6 +67,9 @@ public class DnsDiscovery implements PeerDiscovery {
     }
 
     public InetSocketAddress[] getPeers(long timeoutValue, TimeUnit timeoutUnit) throws PeerDiscoveryException {
+        if (hostNames == null)
+            throw new PeerDiscoveryException("Unable to find any peers via DNS");
+
         // Java doesn't have an async DNS API so we have to do all lookups in a thread pool, as sometimes seeds go
         // hard down and it takes ages to give up and move on.
         ExecutorService threadPool = Executors.newFixedThreadPool(hostNames.length);
