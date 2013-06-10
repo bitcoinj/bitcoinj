@@ -437,7 +437,7 @@ public class WalletTool {
                 }
                 req.aesKey = wallet.getKeyCrypter().deriveKey(password);
             }
-            if (wallet.completeTx(req, false) == null) {
+            if (wallet.completeTx(req) == null) {
                 System.err.println("Insufficient funds: have " + Utils.bitcoinValueToFriendlyString(wallet.getBalance()));
                 return;
             }

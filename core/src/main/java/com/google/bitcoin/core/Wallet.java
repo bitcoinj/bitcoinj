@@ -23,6 +23,7 @@ import com.google.bitcoin.crypto.KeyCrypterException;
 import com.google.bitcoin.crypto.KeyCrypterScrypt;
 import com.google.bitcoin.store.WalletProtobufSerializer;
 import com.google.bitcoin.utils.Locks;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.*;
@@ -1659,7 +1660,7 @@ public class Wallet implements Serializable, BlockChainListener {
          *
          * <p>If there are already inputs to the transaction, make sure their out point has a connected output,
          * otherwise their value will be added to fee.  Also ensure they are either signed or are spendable by a wallet
-         * key, otherwise the behavior of {@link Wallet#completeTx(Wallet.SendRequest, boolean)} is undefined (likely
+         * key, otherwise the behavior of {@link Wallet#completeTx(Wallet.SendRequest)} is undefined (likely
          * RuntimeException).</p>
          */
         public Transaction tx;
@@ -1704,6 +1705,17 @@ public class Wallet implements Serializable, BlockChainListener {
         public BigInteger feePerKb = BigInteger.ZERO;
 
         /**
+         * <p>Requires that there be enough fee for a default reference client to at least relay the transaction.
+         * (ie ensure the transaction will not be outright rejected by the network). Defaults to true, you should
+         * only set this to false if you know what you're doing.</p>
+         *
+         * <p>Note that this does not enforce certain fee rules that only apply to transactions which are larger than
+         * 26,000 bytes. If you get a transaction which is that large, you should set a fee and feePerKb of at least
+         * {@link Transaction#REFERENCE_DEFAULT_MIN_TX_FEE}.</p>
+         */
+        public boolean enforceDefaultReferenceClientFeeRelayRules = true;
+
+        /**
          * The AES key to use to decrypt the private keys before signing.
          * If null then no decryption will be performed and if decryption is required an exception will be thrown.
          * You can get this from a password by doing wallet.getKeyCrypter().derivePassword(password).
@@ -1711,8 +1723,7 @@ public class Wallet implements Serializable, BlockChainListener {
         public KeyParameter aesKey = null;
 
         // Tracks if this has been passed to wallet.completeTx already: just a safety check.
-        // default for testing
-        boolean completed;
+        @VisibleForTesting boolean completed;
 
         private SendRequest() {}
 
@@ -1762,7 +1773,7 @@ public class Wallet implements Serializable, BlockChainListener {
      * and lets you see the proposed transaction before anything is done with it.</p>
      *
      * <p>This is a helper method that is equivalent to using {@link Wallet.SendRequest#to(Address, java.math.BigInteger)}
-     * followed by {@link Wallet#completeTx(Wallet.SendRequest, true)} and returning the requests transaction object.
+     * followed by {@link Wallet#completeTx(Wallet.SendRequest)} and returning the requests transaction object.
      * Note that this means a fee may be automatically added if required, if you want more control over the process,
      * just do those two steps yourself.</p>
      *
@@ -1781,7 +1792,7 @@ public class Wallet implements Serializable, BlockChainListener {
      */
     public Transaction createSend(Address address, BigInteger nanocoins) {
         SendRequest req = SendRequest.to(address, nanocoins);
-        if (completeTx(req, true) != null) {
+        if (completeTx(req) != null) {
             return req.tx;
         } else {
             return null;  // No money.
@@ -1792,19 +1803,14 @@ public class Wallet implements Serializable, BlockChainListener {
      * Sends coins to the given address but does not broadcast the resulting pending transaction. It is still stored
      * in the wallet, so when the wallet is added to a {@link PeerGroup} or {@link Peer} the transaction will be
      * announced to the network. The given {@link SendRequest} is completed first using
-     * {@link Wallet#completeTx(Wallet.SendRequest, boolean)} to make it valid.
+     * {@link Wallet#completeTx(Wallet.SendRequest)} to make it valid.
      *
-     * @param enforceDefaultReferenceClientFeeRelayRules Requires that there be enough fee for a default reference client to at least relay the transaction.
-     *                                                   (ie ensure the transaction will not be outright rejected by the network).
-     *                                                   Note that this does not enforce certain fee rules that only apply to transactions which are larger than
-     *                                                   26,000 bytes. If you get a transaction which is that large, you should set a fee and feePerKb of at least
-     *                                                   {@link Transaction#REFERENCE_DEFAULT_MIN_TX_FEE}
      * @return the Transaction that was created, or null if there are insufficient coins in the wallet.
      */
-    public Transaction sendCoinsOffline(SendRequest request, boolean enforceDefaultReferenceClientFeeRelayRules) {
+    public Transaction sendCoinsOffline(SendRequest request) {
         lock.lock();
         try {
-            if (completeTx(request, enforceDefaultReferenceClientFeeRelayRules) == null)
+            if (completeTx(request) == null)
                 return null;  // Not enough money! :-(
             commitTx(request.tx);
             return request.tx;
@@ -1838,7 +1844,7 @@ public class Wallet implements Serializable, BlockChainListener {
      */
     public SendResult sendCoins(PeerGroup peerGroup, Address to, BigInteger value) {
         SendRequest request = SendRequest.to(to, value);
-        return sendCoins(peerGroup, request, true);
+        return sendCoins(peerGroup, request);
     }
 
     /**
@@ -1854,19 +1860,14 @@ public class Wallet implements Serializable, BlockChainListener {
      *
      * @param peerGroup a PeerGroup to use for broadcast or null.
      * @param request the SendRequest that describes what to do, get one using static methods on SendRequest itself.
-     * @param enforceDefaultReferenceClientFeeRelayRules Requires that there be enough fee for a default reference client to at least relay the transaction
-     *                                                   (ie ensure the transaction will not be outright rejected by the network).
-     *                                                   Note that this does not enforce certain fee rules that only apply to transactions which are larger than
-     *                                                   26,000 bytes. If you get a transaction which is that large, you should set a fee and feePerKb of at least
-     *                                                   {@link Transaction#REFERENCE_DEFAULT_MIN_TX_FEE}
      * @return An object containing the transaction that was created, and a future for the broadcast of it.
      */
-    public SendResult sendCoins(PeerGroup peerGroup, SendRequest request, boolean enforceDefaultReferenceClientFeeRelayRules) {
+    public SendResult sendCoins(PeerGroup peerGroup, SendRequest request) {
         // Does not need to be synchronized as sendCoinsOffline is and the rest is all thread-local.
 
         // Commit the TX to the wallet immediately so the spent coins won't be reused.
         // TODO: We should probably allow the request to specify tx commit only after the network has accepted it.
-        Transaction tx = sendCoinsOffline(request, enforceDefaultReferenceClientFeeRelayRules);
+        Transaction tx = sendCoinsOffline(request);
         if (tx == null)
             return null;  // Not enough money.
         SendResult result = new SendResult();
@@ -1890,7 +1891,7 @@ public class Wallet implements Serializable, BlockChainListener {
      * @throws IOException if there was a problem broadcasting the transaction
      */
     public Transaction sendCoins(Peer peer, SendRequest request) throws IOException {
-        Transaction tx = sendCoinsOffline(request, true);
+        Transaction tx = sendCoinsOffline(request);
         if (tx == null)
             return null;  // Not enough money.
         peer.sendMessage(tx);
@@ -1902,15 +1903,10 @@ public class Wallet implements Serializable, BlockChainListener {
      * to the instructions in the request. The transaction in the request is modified by this method.
      *
      * @param req a SendRequest that contains the incomplete transaction and details for how to make it valid.
-     * @param enforceDefaultReferenceClientFeeRelayRules Requires that there be enough fee for a default reference client to at least relay the transaction
-     *                                                   (ie ensure the transaction will not be outright rejected by the network).
-     *                                                   Note that this does not enforce certain fee rules that only apply to transactions which are larger than
-     *                                                   26,000 bytes. If you get a transaction which is that large, you should set a fee and feePerKb of at least
-     *                                                   {@link Transaction#REFERENCE_DEFAULT_MIN_TX_FEE}
      * @throws IllegalArgumentException if you try and complete the same SendRequest twice.
      * @return Either the total fee paid (assuming all existing inputs had a connected output) or null if we cannot afford the transaction.
      */
-    public BigInteger completeTx(SendRequest req, boolean enforceDefaultReferenceClientFeeRelayRules) {
+    public BigInteger completeTx(SendRequest req) {
         lock.lock();
         try {
             Preconditions.checkArgument(!req.completed, "Given SendRequest has already been completed.");
@@ -1937,7 +1933,7 @@ public class Wallet implements Serializable, BlockChainListener {
 
             // We need to know if we need to add an additional fee because one of our values are smaller than 0.01 BTC
             boolean needAtLeastReferenceFee = false;
-            if (enforceDefaultReferenceClientFeeRelayRules) {
+            if (req.enforceDefaultReferenceClientFeeRelayRules) {
                 for (TransactionOutput output : req.tx.getOutputs())
                     if (output.getValue().compareTo(Utils.CENT) < 0) {
                         needAtLeastReferenceFee = true;
@@ -2003,7 +1999,7 @@ public class Wallet implements Serializable, BlockChainListener {
 
                 TransactionOutput changeOutput = null;
                 // If change is < 0.01 BTC, we will need to have at least minfee to be accepted by the network
-                if (enforceDefaultReferenceClientFeeRelayRules && !change.equals(BigInteger.ZERO) &&
+                if (req.enforceDefaultReferenceClientFeeRelayRules && !change.equals(BigInteger.ZERO) &&
                         change.compareTo(Utils.CENT) < 0 && fees.compareTo(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE) < 0) {
                     // This solution may fit into category 2, but it may also be category 3, we'll check that later
                     eitherCategory2Or3 = true;
@@ -2020,7 +2016,7 @@ public class Wallet implements Serializable, BlockChainListener {
                         changeAddress = getChangeAddress();
                     changeOutput = new TransactionOutput(params, req.tx, change, changeAddress);
                     // If the change output would result in this transaction being rejected as dust, just drop the change and make it a fee
-                    if (enforceDefaultReferenceClientFeeRelayRules && Transaction.MIN_NONDUST_OUTPUT.compareTo(change) >= 0) {
+                    if (req.enforceDefaultReferenceClientFeeRelayRules && Transaction.MIN_NONDUST_OUTPUT.compareTo(change) >= 0) {
                         // This solution definitely fits in category 3
                         isCategory3 = true;
                         additionalValueForNextCategory = Transaction.REFERENCE_DEFAULT_MIN_TX_FEE.add(
