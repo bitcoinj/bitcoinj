@@ -120,7 +120,7 @@ public class WalletTest extends TestWithWallet {
         if (testEncryption) {
             // Try to create a send with a fee but no password (this should fail).
             try {
-                req.enforceDefaultReferenceClientFeeRelayRules = false;
+                req.ensureMinRequiredFee = false;
                 wallet.completeTx(req);
                 fail("No exception was thrown trying to sign an encrypted key with no password supplied.");
             } catch (KeyCrypterException kce) {
@@ -133,7 +133,7 @@ public class WalletTest extends TestWithWallet {
             req = Wallet.SendRequest.to(destination, v2);
             req.aesKey = wrongAesKey;
             req.fee = toNanoCoins(0, 1);
-            req.enforceDefaultReferenceClientFeeRelayRules = false;
+            req.ensureMinRequiredFee = false;
 
             try {
                 wallet.completeTx(req);
@@ -149,7 +149,7 @@ public class WalletTest extends TestWithWallet {
             req = Wallet.SendRequest.to(destination, v2);
             req.aesKey = aesKey;
             req.fee = toNanoCoins(0, 1);
-            req.enforceDefaultReferenceClientFeeRelayRules = false;
+            req.ensureMinRequiredFee = false;
         }
 
         // Complete the transaction successfully.
@@ -234,7 +234,7 @@ public class WalletTest extends TestWithWallet {
         Wallet.SendRequest req = Wallet.SendRequest.to(new ECKey().toAddress(params), toNanoCoins(0, 48));
         req.aesKey = aesKey;
         Address a = req.changeAddress = new ECKey().toAddress(params);
-        req.enforceDefaultReferenceClientFeeRelayRules = false;
+        req.ensureMinRequiredFee = false;
         wallet.completeTx(req);
         Transaction t3 = req.tx;
         assertEquals(a, t3.getOutput(1).getScriptPubKey().getToAddress(params));
@@ -269,7 +269,7 @@ public class WalletTest extends TestWithWallet {
         t2.addOutput(v3, a2);
         t2.addOutput(v4, a2);
         SendRequest req = SendRequest.forTx(t2);
-        req.enforceDefaultReferenceClientFeeRelayRules = false;
+        req.ensureMinRequiredFee = false;
         boolean complete = wallet.completeTx(req) != null;
 
         // Do some basic sanity checks.
@@ -974,7 +974,7 @@ public class WalletTest extends TestWithWallet {
         TransactionOutput o2 = new TransactionOutput(params, t2, v2, k2.toAddress(params));
         t2.addOutput(o2);
         SendRequest req = SendRequest.forTx(t2);
-        req.enforceDefaultReferenceClientFeeRelayRules = false;
+        req.ensureMinRequiredFee = false;
         boolean complete = wallet.completeTx(req) != null;
         assertTrue(complete);
         
@@ -1202,7 +1202,7 @@ public class WalletTest extends TestWithWallet {
         assertNull(wallet.createSend(notMyAddr, BigInteger.ONE));
         // Spend it all without fee enforcement
         SendRequest req = SendRequest.to(notMyAddr, BigInteger.TEN.add(BigInteger.ONE.add(BigInteger.ONE)));
-        req.enforceDefaultReferenceClientFeeRelayRules = false;
+        req.ensureMinRequiredFee = false;
         assertNotNull(wallet.sendCoinsOffline(req));
         assertEquals(BigInteger.ZERO, wallet.getBalance());
 
@@ -1513,7 +1513,7 @@ public class WalletTest extends TestWithWallet {
         // Now check that we dont complete
         assertNull(wallet.completeTx(request24));
 
-        // Test feePerKb when we aren't using enforceDefaultReferenceClientFeeRelayRules
+        // Test feePerKb when we aren't using ensureMinRequiredFee
         // Same as request 19
         SendRequest request25 = SendRequest.to(notMyAddr, Utils.CENT);
         for (int i = 0; i < 99; i++)
@@ -1523,7 +1523,7 @@ public class WalletTest extends TestWithWallet {
         // Now reset request19 and give it a fee per kb
         request25.completed = false; request25.tx.clearInputs();
         request25.feePerKb = Utils.CENT.divide(BigInteger.valueOf(3));
-        request25.enforceDefaultReferenceClientFeeRelayRules = false;
+        request25.ensureMinRequiredFee = false;
         assertTrue(wallet.completeTx(request25).equals(Utils.CENT.subtract(BigInteger.ONE)) && request25.tx.getInputs().size() == 2);
         BigInteger outValue25 = BigInteger.ZERO;
         for (TransactionOutput out : request25.tx.getOutputs())

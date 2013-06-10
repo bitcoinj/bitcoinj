@@ -1713,7 +1713,7 @@ public class Wallet implements Serializable, BlockChainListener {
          * 26,000 bytes. If you get a transaction which is that large, you should set a fee and feePerKb of at least
          * {@link Transaction#REFERENCE_DEFAULT_MIN_TX_FEE}.</p>
          */
-        public boolean enforceDefaultReferenceClientFeeRelayRules = true;
+        public boolean ensureMinRequiredFee = true;
 
         /**
          * The AES key to use to decrypt the private keys before signing.
@@ -1933,7 +1933,7 @@ public class Wallet implements Serializable, BlockChainListener {
 
             // We need to know if we need to add an additional fee because one of our values are smaller than 0.01 BTC
             boolean needAtLeastReferenceFee = false;
-            if (req.enforceDefaultReferenceClientFeeRelayRules) {
+            if (req.ensureMinRequiredFee) {
                 for (TransactionOutput output : req.tx.getOutputs())
                     if (output.getValue().compareTo(Utils.CENT) < 0) {
                         needAtLeastReferenceFee = true;
@@ -1999,7 +1999,7 @@ public class Wallet implements Serializable, BlockChainListener {
 
                 TransactionOutput changeOutput = null;
                 // If change is < 0.01 BTC, we will need to have at least minfee to be accepted by the network
-                if (req.enforceDefaultReferenceClientFeeRelayRules && !change.equals(BigInteger.ZERO) &&
+                if (req.ensureMinRequiredFee && !change.equals(BigInteger.ZERO) &&
                         change.compareTo(Utils.CENT) < 0 && fees.compareTo(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE) < 0) {
                     // This solution may fit into category 2, but it may also be category 3, we'll check that later
                     eitherCategory2Or3 = true;
@@ -2016,7 +2016,7 @@ public class Wallet implements Serializable, BlockChainListener {
                         changeAddress = getChangeAddress();
                     changeOutput = new TransactionOutput(params, req.tx, change, changeAddress);
                     // If the change output would result in this transaction being rejected as dust, just drop the change and make it a fee
-                    if (req.enforceDefaultReferenceClientFeeRelayRules && Transaction.MIN_NONDUST_OUTPUT.compareTo(change) >= 0) {
+                    if (req.ensureMinRequiredFee && Transaction.MIN_NONDUST_OUTPUT.compareTo(change) >= 0) {
                         // This solution definitely fits in category 3
                         isCategory3 = true;
                         additionalValueForNextCategory = Transaction.REFERENCE_DEFAULT_MIN_TX_FEE.add(
