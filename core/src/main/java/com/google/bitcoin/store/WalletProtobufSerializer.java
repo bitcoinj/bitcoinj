@@ -457,7 +457,7 @@ public class WalletProtobufSerializer {
         }
 
         if (txProto.hasLockTime()) {
-            tx.setLockTime(txProto.getLockTime());
+            tx.setLockTime(0xffffffffL & txProto.getLockTime());
         }
 
         // Transaction should now be complete.
