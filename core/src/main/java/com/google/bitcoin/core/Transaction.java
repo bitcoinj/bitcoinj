@@ -665,8 +665,10 @@ public class Transaction extends ChildMessage implements Serializable {
      * signInputs() must be called to finalize the transaction and finish the inputs off. Otherwise it won't be
      * accepted by the network.
      */
-    public void addInput(TransactionOutput from) {
-        addInput(new TransactionInput(params, this, from));
+    public TransactionInput addInput(TransactionOutput from) {
+        final TransactionInput input = new TransactionInput(params, this, from);
+        addInput(input);
+        return input;
     }
 
     /**

@@ -3171,9 +3171,9 @@ public class Wallet implements Serializable, BlockChainListener {
                 }
 
                 for (TransactionOutput output : selection.gathered) {
-                    req.tx.addInput(output);
-                    // If the scriptBytes don't default to none, our size calculations will be thrown off
-                    checkState(req.tx.getInput(req.tx.getInputs().size()-1).getScriptBytes().length == 0);
+                    TransactionInput input = req.tx.addInput(output);
+                    // If the scriptBytes don't default to none, our size calculations will be thrown off.
+                    checkState(input.getScriptBytes().length == 0);
                     try {
                         if (output.getScriptPubKey().isSentToAddress()) {
                             // Send-to-address spends usually take maximum pubkey.length (as it may be compressed or not) + 75 bytes
