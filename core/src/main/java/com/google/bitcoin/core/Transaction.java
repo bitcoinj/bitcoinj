@@ -663,22 +663,21 @@ public class Transaction extends ChildMessage implements Serializable {
      * Adds an input to this transaction that imports value from the given output. Note that this input is NOT
      * complete and after every input is added with addInput() and every output is added with addOutput(),
      * signInputs() must be called to finalize the transaction and finish the inputs off. Otherwise it won't be
-     * accepted by the network.
+     * accepted by the network. Returns the newly created input.
      */
     public TransactionInput addInput(TransactionOutput from) {
-        final TransactionInput input = new TransactionInput(params, this, from);
-        addInput(input);
-        return input;
+        return addInput(new TransactionInput(params, this, from));
     }
 
     /**
-     * Adds an input directly, with no checking that it's valid.
+     * Adds an input directly, with no checking that it's valid. Returns the new input.
      */
-    public void addInput(TransactionInput input) {
+    public TransactionInput addInput(TransactionInput input) {
         unCache();
         input.setParent(this);
         inputs.add(input);
         adjustLength(inputs.size(), input.length);
+        return input;
     }
 
     /**
@@ -696,36 +695,37 @@ public class Transaction extends ChildMessage implements Serializable {
     }
 
     /**
-     * Adds the given output to this transaction. The output must be completely initialized.
+     * Adds the given output to this transaction. The output must be completely initialized. Returns the given output.
      */
-    public void addOutput(TransactionOutput to) {
+    public TransactionOutput addOutput(TransactionOutput to) {
         unCache();
         to.setParent(this);
         outputs.add(to);
         adjustLength(outputs.size(), to.length);
+        return to;
     }
 
     /**
-     * Creates an output based on the given address and value, adds it to this transaction.
+     * Creates an output based on the given address and value, adds it to this transaction, and returns the new output.
      */
-    public void addOutput(BigInteger value, Address address) {
-        addOutput(new TransactionOutput(params, this, value, address));
+    public TransactionOutput addOutput(BigInteger value, Address address) {
+        return addOutput(new TransactionOutput(params, this, value, address));
     }
 
     /**
-     * Creates an output that pays to the given pubkey directly (no address) with the given value, and adds it to this
-     * transaction.
+     * Creates an output that pays to the given pubkey directly (no address) with the given value, adds it to this
+     * transaction, and returns the new output.
      */
-    public void addOutput(BigInteger value, ECKey pubkey) {
-        addOutput(new TransactionOutput(params, this, value, pubkey));
+    public TransactionOutput addOutput(BigInteger value, ECKey pubkey) {
+        return addOutput(new TransactionOutput(params, this, value, pubkey));
     }
 
     /**
      * Creates an output that pays to the given script. The address and key forms are specialisations of this method,
      * you won't normally need to use it unless you're doing unusual things.
      */
-    public void addOutput(BigInteger value, Script script) {
-        addOutput(new TransactionOutput(params, this, value, script.getProgram()));
+    public TransactionOutput addOutput(BigInteger value, Script script) {
+        return addOutput(new TransactionOutput(params, this, value, script.getProgram()));
     }
 
     /**
