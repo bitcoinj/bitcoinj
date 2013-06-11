@@ -1683,6 +1683,9 @@ public class Wallet implements Serializable, BlockChainListener {
          * at least {@link Transaction#REFERENCE_DEFAULT_MIN_TX_FEE} if it is set, as default reference clients will
          * otherwise simply treat the transaction as if there were no fee at all.</p>
          *
+         * <p>Once {@link Wallet#completeTx(com.google.bitcoin.core.Wallet.SendRequest)} is called, this is set to the
+         * value of the fee that was added.</p>
+         *
          * <p>You might also consider adding a {@link SendRequest#feePerKb} to set the fee per kb of transaction size
          * (rounded down to the nearest kb) as that is how transactions are sorted when added to a block by miners.</p>
          */
@@ -1792,7 +1795,7 @@ public class Wallet implements Serializable, BlockChainListener {
      */
     public Transaction createSend(Address address, BigInteger nanocoins) {
         SendRequest req = SendRequest.to(address, nanocoins);
-        if (completeTx(req) != null) {
+        if (completeTx(req)) {
             return req.tx;
         } else {
             return null;  // No money.
@@ -1810,7 +1813,7 @@ public class Wallet implements Serializable, BlockChainListener {
     public Transaction sendCoinsOffline(SendRequest request) {
         lock.lock();
         try {
-            if (completeTx(request) == null)
+            if (!completeTx(request))
                 return null;  // Not enough money! :-(
             commitTx(request.tx);
             return request.tx;
@@ -1900,13 +1903,14 @@ public class Wallet implements Serializable, BlockChainListener {
 
     /**
      * Given a spend request containing an incomplete transaction, makes it valid by adding inputs and outputs according
-     * to the instructions in the request. The transaction in the request is modified by this method.
+     * to the instructions in the request. The transaction in the request is modified by this method, as is the fee
+     * parameter.
      *
      * @param req a SendRequest that contains the incomplete transaction and details for how to make it valid.
      * @throws IllegalArgumentException if you try and complete the same SendRequest twice.
-     * @return Either the total fee paid (assuming all existing inputs had a connected output) or null if we cannot afford the transaction.
+     * @return whether or not the requested send is affordable.
      */
-    public BigInteger completeTx(SendRequest req) {
+    public boolean completeTx(SendRequest req) {
         lock.lock();
         try {
             Preconditions.checkArgument(!req.completed, "Given SendRequest has already been completed.");
@@ -2096,7 +2100,7 @@ public class Wallet implements Serializable, BlockChainListener {
             if (selection3 == null && selection2 == null && selection1 == null) {
                 log.warn("Insufficient value in wallet for send");
                 // TODO: Should throw an exception here.
-                return null;
+                return false;
             }
 
             BigInteger lowestFee = null;
@@ -2155,7 +2159,7 @@ public class Wallet implements Serializable, BlockChainListener {
                 // TODO: Throw an exception here.
                 log.error("Transaction could not be created without exceeding max size: {} vs {}", size,
                           Transaction.MAX_STANDARD_TX_SIZE);
-                return null;
+                return false;
             }
 
             // Label the transaction as being self created. We can use this later to spend its change output even before
@@ -2163,8 +2167,9 @@ public class Wallet implements Serializable, BlockChainListener {
             req.tx.getConfidence().setSource(TransactionConfidence.Source.SELF);
 
             req.completed = true;
+            req.fee = totalInput.subtract(totalOutput);
             log.info("  completed {} with {} inputs", req.tx.getHashAsString(), req.tx.getInputs().size());
-            return totalInput.subtract(totalOutput);
+            return true;
         } finally {
             lock.unlock();
         }
