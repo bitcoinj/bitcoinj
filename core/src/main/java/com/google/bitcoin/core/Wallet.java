@@ -3170,26 +3170,15 @@ public class Wallet implements Serializable, BlockChainListener {
                     }
                 }
 
+                // Now add unsigned inputs for the selected coins.
                 for (TransactionOutput output : selection.gathered) {
                     TransactionInput input = req.tx.addInput(output);
                     // If the scriptBytes don't default to none, our size calculations will be thrown off.
                     checkState(input.getScriptBytes().length == 0);
-                    try {
-                        if (output.getScriptPubKey().isSentToAddress()) {
-                            // Send-to-address spends usually take maximum pubkey.length (as it may be compressed or not) + 75 bytes
-                            size += findKeyFromPubHash(output.getScriptPubKey().getPubKeyHash()).getPubKey().length + 75;
-                        } else if (output.getScriptPubKey().isSentToRawPubKey())
-                            size += 74; // Send-to-pubkey spends usually take maximum 74 bytes to spend
-                        else
-                            throw new RuntimeException("Unknown output type returned in coin selection");
-                    } catch (ScriptException e) {
-                        // If this happens it means an output script in a wallet tx could not be understood. That should never
-                        // happen, if it does it means the wallet has got into an inconsistent state.
-                        throw new RuntimeException(e);
-                    }
                 }
 
                 // Estimate transaction size and loop again if we need more fee per kb
+                size += estimateBytesForSpending(selection);
                 size += req.tx.bitcoinSerialize().length;
                 if (size/1000 > minSize/1000 && req.feePerKb.compareTo(BigInteger.ZERO) > 0) {
                     minSize = size;
@@ -3258,6 +3247,26 @@ public class Wallet implements Serializable, BlockChainListener {
                     bestChangeOutput = null;
                 }
             }
+        }
+
+        private int estimateBytesForSpending(CoinSelection selection) {
+            int size = 0;
+            for (TransactionOutput output : selection.gathered) {
+                try {
+                    if (output.getScriptPubKey().isSentToAddress()) {
+                        // Send-to-address spends usually take maximum pubkey.length (as it may be compressed or not) + 75 bytes
+                        size += findKeyFromPubHash(output.getScriptPubKey().getPubKeyHash()).getPubKey().length + 75;
+                    } else if (output.getScriptPubKey().isSentToRawPubKey())
+                        size += 74; // Send-to-pubkey spends usually take maximum 74 bytes to spend
+                    else
+                        throw new RuntimeException("Unknown output type returned in coin selection");
+                } catch (ScriptException e) {
+                    // If this happens it means an output script in a wallet tx could not be understood. That should never
+                    // happen, if it does it means the wallet has got into an inconsistent state.
+                    throw new RuntimeException(e);
+                }
+            }
+            return size;
         }
 
         private void resetTxInputs(SendRequest req, List<TransactionInput> originalInputs) {
