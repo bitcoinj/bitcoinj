@@ -2771,6 +2771,23 @@ public class Wallet implements Serializable, BlockChainListener {
     }
 
     /**
+     * Sets the wallet's KeyCrypter.
+     * Note that this does not encrypt the wallet, and should only be used if the keyCrypter can not be included in the
+     * constructor during initial wallet loading.
+     * Note that if the keyCrypter was not properly set during wallet load, {@link Wallet#getEncryptionType()} and
+     * {@link Wallet#isEncrypted()} will not return the correct results.
+     */
+    public void setKeyCrypter(KeyCrypter keyCrypter) {
+        lock.lock();
+        try {
+            checkState(this.keyCrypter == null);
+            this.keyCrypter = keyCrypter;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
      * Get the type of encryption used for this wallet.
      *
      * (This is a convenience method - the encryption type is actually stored in the keyCrypter).
@@ -2976,7 +2993,7 @@ public class Wallet implements Serializable, BlockChainListener {
             if (extensions.containsKey(id))
                 throw new IllegalStateException("Cannot add two extensions with the same ID: " + id);
             extensions.put(id, extension);
-            invokeOnWalletChanged();
+            queueAutoSave();
         } finally {
             lock.unlock();
         }
@@ -2993,7 +3010,7 @@ public class Wallet implements Serializable, BlockChainListener {
             if (previousExtension != null)
                 return previousExtension;
             extensions.put(id, extension);
-            invokeOnWalletChanged();
+            queueAutoSave();
             return extension;
         } finally {
             lock.unlock();
@@ -3002,15 +3019,15 @@ public class Wallet implements Serializable, BlockChainListener {
 
     /**
      * Either adds extension as a new extension or replaces the existing extension if one already exists with the same
-     * id. This also calls onWalletChanged, triggering wallet saving, so may be useful even when called with the same
-     * extension as is already present.
+     * id. This also triggers wallet auto-saving, so may be useful even when called with the same extension as is
+     * already present.
      */
     public void addOrUpdateExtension(WalletExtension extension) {
         String id = checkNotNull(extension).getWalletExtensionID();
         lock.lock();
         try {
             extensions.put(id, extension);
-            invokeOnWalletChanged();
+            queueAutoSave();
         } finally {
             lock.unlock();
         }

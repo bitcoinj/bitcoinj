@@ -306,16 +306,8 @@ public class WalletProtobufSerializer {
 
         // System.out.println(TextFormat.printToString(walletProto));
 
-        // Read the scrypt parameters that specify how encryption and decryption is performed.
-        // TODO: Why is the key crypter special? This should just be added to the wallet after construction as well.
-        KeyCrypter keyCrypter = null;
-        if (walletProto.hasEncryptionParameters()) {
-            Protos.ScryptParameters encryptionParameters = walletProto.getEncryptionParameters();
-            keyCrypter = new KeyCrypterScrypt(encryptionParameters);
-        }
-
         NetworkParameters params = NetworkParameters.fromID(walletProto.getNetworkIdentifier());
-        Wallet wallet = new Wallet(params, keyCrypter);
+        Wallet wallet = new Wallet(params);
         readWallet(walletProto, wallet);
         return wallet;
     }
@@ -330,6 +322,12 @@ public class WalletProtobufSerializer {
      */
     public void readWallet(Protos.Wallet walletProto, Wallet wallet) throws IOException {
         // TODO: This method should throw more specific exception types than IllegalArgumentException.
+        // Read the scrypt parameters that specify how encryption and decryption is performed.
+        if (walletProto.hasEncryptionParameters()) {
+            Protos.ScryptParameters encryptionParameters = walletProto.getEncryptionParameters();
+            wallet.setKeyCrypter(new KeyCrypterScrypt(encryptionParameters));
+        }
+
         if (walletProto.hasDescription()) {
             wallet.setDescription(walletProto.getDescription());
         }
