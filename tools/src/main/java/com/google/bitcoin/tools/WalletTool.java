@@ -21,6 +21,7 @@ import com.google.bitcoin.crypto.KeyCrypterException;
 import com.google.bitcoin.discovery.DnsDiscovery;
 import com.google.bitcoin.discovery.PeerDiscovery;
 import com.google.bitcoin.params.MainNetParams;
+import com.google.bitcoin.params.RegTestParams;
 import com.google.bitcoin.params.TestNet3Params;
 import com.google.bitcoin.store.*;
 import com.google.bitcoin.utils.BriefLogFormatter;
@@ -61,7 +62,7 @@ public class WalletTool {
             "Usage:\n" +
             ">>> GENERAL OPTIONS\n" +
             "  --debuglog           Enables logging from the core library.\n" +
-            "  --net=PROD/TEST      Which network to connect to, defaults to PROD.\n" +
+            "  --net=XXX            Which network to connect to, defaults to PROD, can also be TEST or REGTEST.\n" +
             "  --mode=FULL/SPV      Whether to do full verification of the chain or just light mode.\n" +
             "  --wallet=<file>      Specifies what wallet file to load and save.\n" +
             "  --chain=<file>       Specifies the name of the file that stores the block chain.\n" +
@@ -210,7 +211,8 @@ public class WalletTool {
     
     public enum NetworkEnum {
         PROD,
-        TEST
+        TEST,
+        REGTEST
     }
 
     public enum ValidationMode {
@@ -253,7 +255,7 @@ public class WalletTool {
         OptionSpec<String> outputFlag = parser.accepts("output").withRequiredArg();
         parser.accepts("value").withRequiredArg();
         parser.accepts("fee").withRequiredArg();
-        parser.accepts("unixtime").withRequiredArg().ofType(Integer.class);
+        unixtimeFlag = parser.accepts("unixtime").withRequiredArg().ofType(Integer.class);
         conditionFlag = parser.accepts("condition").withRequiredArg();
         parser.accepts("locktime").withRequiredArg();
         parser.accepts("allow-unconfirmed");
@@ -277,11 +279,14 @@ public class WalletTool {
             case PROD:
                 params = MainNetParams.get();
                 chainFileName = new File("prodnet.chain");
-
                 break;
             case TEST:
                 params = TestNet3Params.get();
                 chainFileName = new File("testnet.chain");
+                break;
+            case REGTEST:
+                params = RegTestParams.get();
+                chainFileName = new File("regtest.chain");
                 break;
             default:
                 throw new RuntimeException("Unreachable.");
@@ -715,7 +720,7 @@ public class WalletTool {
         } catch (KeyCrypterException kce) {
             System.err.println("There was an encryption related error when adding the key. The error was '" + kce.getMessage() + "'.");
         }
-        System.out.println("addr:" + key.toAddress(params) + " " + key);
+        System.out.println(key.toAddress(params) + " " + key);
     }
 
     private static void deleteKey() {
