@@ -3111,10 +3111,12 @@ public class Wallet implements Serializable, BlockChainListener {
                 resetTxInputs(req, originalInputs);
 
                 BigInteger fees = req.fee == null ? BigInteger.ZERO : req.fee;
-                if (lastCalculatedSize > 0)
+                if (lastCalculatedSize > 0) {
+                    // If the size is exactly 1000 bytes then we'll over-pay, but this should be rare.
                     fees = fees.add(BigInteger.valueOf((lastCalculatedSize / 1000) + 1).multiply(req.feePerKb));
-                else
+                } else {
                     fees = fees.add(req.feePerKb);  // First time around the loop.
+                }
                 if (needAtLeastReferenceFee && fees.compareTo(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE) < 0)
                     fees = Transaction.REFERENCE_DEFAULT_MIN_TX_FEE;
 
