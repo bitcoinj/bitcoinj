@@ -1457,8 +1457,8 @@ public class WalletTest extends TestWithWallet {
         assertEquals(1, request19.tx.getInputs().size());
         assertEquals(100, request19.tx.getOutputs().size());
         // Now reset request19 and give it a fee per kb
-        request19.completed = false;
         request19.tx.clearInputs();
+        request19 = SendRequest.forTx(request19.tx);
         request19.feePerKb = BigInteger.ONE;
         assertTrue(wallet.completeTx(request19));
         assertEquals(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE, request19.fee);
@@ -1482,7 +1482,8 @@ public class WalletTest extends TestWithWallet {
         assertEquals(1, request20.tx.getInputs().size());
         assertEquals(100, request20.tx.getOutputs().size());
         // Now reset request19 and give it a fee per kb
-        request20.completed = false; request20.tx.clearInputs();
+        request20.tx.clearInputs();
+        request20 = SendRequest.forTx(request20.tx);
         request20.feePerKb = Transaction.REFERENCE_DEFAULT_MIN_TX_FEE;
         assertTrue(wallet.completeTx(request20));
         // 4kb tx.

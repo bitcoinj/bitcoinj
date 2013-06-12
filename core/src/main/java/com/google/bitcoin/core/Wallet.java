@@ -23,7 +23,6 @@ import com.google.bitcoin.crypto.KeyCrypterException;
 import com.google.bitcoin.crypto.KeyCrypterScrypt;
 import com.google.bitcoin.store.WalletProtobufSerializer;
 import com.google.bitcoin.utils.Locks;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.*;
@@ -1732,7 +1731,7 @@ public class Wallet implements Serializable, BlockChainListener {
         public KeyParameter aesKey = null;
 
         // Tracks if this has been passed to wallet.completeTx already: just a safety check.
-        @VisibleForTesting boolean completed;
+        private boolean completed;
 
         private SendRequest() {}
 
