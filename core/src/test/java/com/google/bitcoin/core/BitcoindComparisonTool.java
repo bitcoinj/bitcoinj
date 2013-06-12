@@ -49,7 +49,7 @@ public class BitcoindComparisonTool {
         System.out.println("USAGE: bitcoinjBlockStoreLocation runLargeReorgs(1/0) [port=18444]");
         boolean runLargeReorgs = args.length > 1 && Integer.parseInt(args[1]) == 1;
 
-        params = new RegTestParams();
+        params = RegTestParams.get();
 
         File blockFile = File.createTempFile("testBlocks", ".dat");
         blockFile.deleteOnExit();

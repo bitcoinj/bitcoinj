@@ -58,4 +58,12 @@ public class RegTestParams extends TestNet2Params {
             return genesis;
         }
     }
+
+    private static RegTestParams instance;
+    public static synchronized RegTestParams get() {
+        if (instance == null) {
+            instance = new RegTestParams();
+        }
+        return instance;
+    }
 }
