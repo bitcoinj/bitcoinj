@@ -1499,48 +1499,6 @@ public class WalletTest extends TestWithWallet {
             outValue21 = outValue21.add(out.getValue());
         assertEquals(outValue21, Utils.COIN.add(Utils.CENT).subtract(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE));
 
-        // Now create an identical request22 and give it a fee per kb slightly less than what we will have to pay
-        SendRequest request22 = SendRequest.to(notMyAddr, Utils.CENT);
-        for (int i = 0; i < 99; i++)
-            request22.tx.addOutput(Utils.CENT, notMyAddr);
-        request22.tx.addOutput(Utils.CENT.subtract(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE), notMyAddr);
-        assertTrue(!Transaction.REFERENCE_DEFAULT_MIN_TX_FEE.mod(BigInteger.valueOf(3)).equals(BigInteger.ZERO)); // This test won't work if REFERENCE_DEFAULT_MIN_TX_FEE is divisiable by 3
-        request22.feePerKb = Transaction.REFERENCE_DEFAULT_MIN_TX_FEE.divide(BigInteger.valueOf(3));
-        // Now check that we get the same exact transaction back
-        assertTrue(wallet.completeTx(request22));
-        assertEquals(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE, request22.fee);
-        assertEquals(2, request22.tx.getInputs().size());
-        BigInteger outValue22 = BigInteger.ZERO;
-        for (TransactionOutput out : request22.tx.getOutputs())
-            outValue22 = outValue22.add(out.getValue());
-        assertEquals(outValue22, Utils.COIN.add(Utils.CENT).subtract(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE));
-
-        // Now create an identical request23 and give it a fee equal to what we will have to pay anyway
-        SendRequest request23 = SendRequest.to(notMyAddr, Utils.CENT);
-        for (int i = 0; i < 99; i++)
-            request23.tx.addOutput(Utils.CENT, notMyAddr);
-        request23.tx.addOutput(Utils.CENT.subtract(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE), notMyAddr);
-        request23.feePerKb = Transaction.REFERENCE_DEFAULT_MIN_TX_FEE.divide(BigInteger.valueOf(3));
-        request23.fee = Transaction.REFERENCE_DEFAULT_MIN_TX_FEE.mod(BigInteger.valueOf(3));
-        // Now check that we get the same exact transaction back
-        assertTrue(wallet.completeTx(request23));
-        assertEquals(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE, request23.fee);
-        assertEquals(2, request23.tx.getInputs().size());
-        BigInteger outValue23 = BigInteger.ZERO;
-        for (TransactionOutput out : request23.tx.getOutputs())
-            outValue23 = outValue23.add(out.getValue());
-        assertEquals(outValue23, Utils.COIN.add(Utils.CENT).subtract(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE));
-
-        // Now create an identical request24 and add one nanocoin of fee, putting us over our wallet balance
-        SendRequest request24 = SendRequest.to(notMyAddr, Utils.CENT);
-        for (int i = 0; i < 99; i++)
-            request24.tx.addOutput(Utils.CENT, notMyAddr);
-        request24.tx.addOutput(Utils.CENT.subtract(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE), notMyAddr);
-        request24.feePerKb = request23.feePerKb;
-        request24.fee = request23.fee.add(BigInteger.ONE);
-        // Now check that we dont complete
-        assertFalse(wallet.completeTx(request24));
-
         // Test feePerKb when we aren't using ensureMinRequiredFee
         // Same as request 19
         SendRequest request25 = SendRequest.to(notMyAddr, Utils.CENT);
