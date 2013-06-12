@@ -20,6 +20,7 @@ import com.google.bitcoin.params.UnitTestParams;
 import com.google.bitcoin.store.BlockStore;
 import com.google.bitcoin.store.MemoryBlockStore;
 import com.google.bitcoin.utils.BriefLogFormatter;
+import org.junit.After;
 import org.junit.Before;
 
 import java.io.IOException;
@@ -40,12 +41,18 @@ public class TestWithWallet {
     @Before
     public void setUp() throws Exception {
         BriefLogFormatter.init();
+        Wallet.SendRequest.DEFAULT_FEE_PER_KB = BigInteger.ZERO;
         myKey = new ECKey();
         myAddress = myKey.toAddress(params);
         wallet = new Wallet(params);
         wallet.addKey(myKey);
         blockStore = new MemoryBlockStore(params);
         chain = new BlockChain(params, wallet, blockStore);
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        Wallet.SendRequest.DEFAULT_FEE_PER_KB = Transaction.REFERENCE_DEFAULT_MIN_TX_FEE;
     }
 
     protected Transaction sendMoneyToWallet(Wallet wallet, Transaction tx, AbstractBlockChain.NewBlockType type)

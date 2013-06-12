@@ -24,6 +24,7 @@ import org.easymock.EasyMock;
 import org.easymock.IMocksControl;
 import org.jboss.netty.channel.*;
 
+import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
@@ -60,6 +61,7 @@ public class TestWithNetworkConnections {
         control.checkOrder(false);
 
         unitTestParams = UnitTestParams.get();
+        Wallet.SendRequest.DEFAULT_FEE_PER_KB = BigInteger.ZERO;
         this.blockStore = blockStore;
         wallet = new Wallet(unitTestParams);
         key = new ECKey();
@@ -72,6 +74,10 @@ public class TestWithNetworkConnections {
         ctx = createChannelHandlerContext();
         channel = createChannel();
         pipeline = createPipeline(channel);
+    }
+
+    public void tearDown() throws Exception {
+        Wallet.SendRequest.DEFAULT_FEE_PER_KB = Transaction.REFERENCE_DEFAULT_MIN_TX_FEE;
     }
 
     protected ChannelPipeline createPipeline(Channel channel) {

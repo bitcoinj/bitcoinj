@@ -46,7 +46,8 @@ public class PeerGroupTest extends TestWithPeerGroup {
     }
 
     @After
-    public void shutDown() throws Exception {
+    public void tearDown() throws Exception {
+        super.tearDown();
         peerGroup.stopAndWait();
     }
 

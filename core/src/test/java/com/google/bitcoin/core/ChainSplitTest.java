@@ -44,6 +44,7 @@ public class ChainSplitTest {
     @Before
     public void setUp() throws Exception {
         BriefLogFormatter.init();
+        Wallet.SendRequest.DEFAULT_FEE_PER_KB = BigInteger.ZERO;
         unitTestParams = UnitTestParams.get();
         wallet = new Wallet(unitTestParams);
         wallet.addKey(new ECKey());

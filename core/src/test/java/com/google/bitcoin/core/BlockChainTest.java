@@ -24,6 +24,7 @@ import com.google.bitcoin.store.BlockStore;
 import com.google.bitcoin.store.MemoryBlockStore;
 import com.google.bitcoin.utils.BriefLogFormatter;
 import com.google.common.util.concurrent.ListenableFuture;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -63,6 +64,7 @@ public class BlockChainTest {
     public void setUp() throws Exception {
         BriefLogFormatter.initVerbose();
         testNetChain = new BlockChain(testNet, new Wallet(testNet), new MemoryBlockStore(testNet));
+        Wallet.SendRequest.DEFAULT_FEE_PER_KB = BigInteger.ZERO;
 
         unitTestParams = UnitTestParams.get();
         wallet = new Wallet(unitTestParams) {
@@ -81,6 +83,11 @@ public class BlockChainTest {
         chain = new BlockChain(unitTestParams, wallet, blockStore);
 
         coinbaseTo = wallet.getKeys().get(0).toAddress(unitTestParams);
+    }
+
+    @After
+    public void tearDown() {
+        Wallet.SendRequest.DEFAULT_FEE_PER_KB = Transaction.REFERENCE_DEFAULT_MIN_TX_FEE;
     }
 
     @Test
@@ -323,11 +330,8 @@ public class BlockChainTest {
             assertNull(coinbaseSpend);
         }
 
-        // Give it one more block - should now be able to spend coinbase transaction.
-        // Non relevant tx.
-        Transaction tx3 = createFakeTx(unitTestParams, Utils.toNanoCoins(1, 0),
-            new ECKey().toAddress(unitTestParams));
-
+        // Give it one more block - should now be able to spend coinbase transaction. Non relevant tx.
+        Transaction tx3 = createFakeTx(unitTestParams, Utils.toNanoCoins(1, 0), new ECKey().toAddress(unitTestParams));
         Block b3 = createFakeBlock(blockStore, tx3).block;
         chain.add(b3);
 

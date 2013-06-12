@@ -1689,7 +1689,7 @@ public class Wallet implements Serializable, BlockChainListener {
          * <p>You might also consider adding a {@link SendRequest#feePerKb} to set the fee per kb of transaction size
          * (rounded down to the nearest kb) as that is how transactions are sorted when added to a block by miners.</p>
          */
-        public BigInteger fee = BigInteger.ZERO;
+        public BigInteger fee = null;
 
         /**
          * <p>A transaction can have a fee attached, which is defined as the difference between the input values
@@ -1705,7 +1705,13 @@ public class Wallet implements Serializable, BlockChainListener {
          *
          * <p>You might also consider using a {@link SendRequest#fee} to set the fee added for the first kb of size.</p>
          */
-        public BigInteger feePerKb = BigInteger.ZERO;
+        public BigInteger feePerKb = DEFAULT_FEE_PER_KB;
+
+        /**
+         * If you want to modify the default fee for your entire app without having to change each SendRequest you make,
+         * you can do it here. This is primarily useful for unit tests.
+         */
+        public static BigInteger DEFAULT_FEE_PER_KB = Transaction.REFERENCE_DEFAULT_MIN_TX_FEE;
 
         /**
          * <p>Requires that there be enough fee for a default reference client to at least relay the transaction.
@@ -1954,13 +1960,10 @@ public class Wallet implements Serializable, BlockChainListener {
             // Note that output.isMine(this) needs to test the keychain which is currently an array, so it's
             // O(candidate outputs ^ keychain.size())! There's lots of low hanging fruit here.
             LinkedList<TransactionOutput> candidates = calculateSpendCandidates(true);
-            Address changeAddress = req.changeAddress;
-            int minSize = 0;
             // This can throw InsufficientMoneyException.
-            FeeCalculation feeCalculation = null;
+            FeeCalculation feeCalculation;
             try {
-                feeCalculation = new FeeCalculation(req, value, originalInputs, needAtLeastReferenceFee,
-                                                                   candidates, changeAddress, minSize);
+                feeCalculation = new FeeCalculation(req, value, originalInputs, needAtLeastReferenceFee, candidates);
             } catch (InsufficientMoneyException e) {
                 // TODO: Propagate this after 0.9 is released and stop returning a boolean.
                 return false;
@@ -1979,6 +1982,9 @@ public class Wallet implements Serializable, BlockChainListener {
                 log.info("  with {} coins change", bitcoinValueToFriendlyString(bestChangeOutput.getValue()));
             }
             final BigInteger calculatedFee = totalInput.subtract(totalOutput);
+            if (calculatedFee.compareTo(BigInteger.ZERO) > 0) {
+                log.info("  with a fee of {}", bitcoinValueToFriendlyString(calculatedFee));
+            }
 
             // Now sign the inputs, thus proving that we are entitled to redeem the connected outputs.
             try {
@@ -3084,8 +3090,7 @@ public class Wallet implements Serializable, BlockChainListener {
         private TransactionOutput bestChangeOutput;
 
         public FeeCalculation(SendRequest req, BigInteger value, List<TransactionInput> originalInputs,
-                              boolean needAtLeastReferenceFee, LinkedList<TransactionOutput> candidates,
-                              Address changeAddress, int minSize) throws InsufficientMoneyException {
+                              boolean needAtLeastReferenceFee, LinkedList<TransactionOutput> candidates) throws InsufficientMoneyException {
             // There are 3 possibilities for what adding change might do:
             // 1) No effect
             // 2) Causes increase in fee (change < 0.01 COINS)
@@ -3099,14 +3104,22 @@ public class Wallet implements Serializable, BlockChainListener {
             TransactionOutput selection2Change = null;
             CoinSelection selection1 = null;
             TransactionOutput selection1Change = null;
+            // We keep track of the last size of the transaction we calculated but only if the act of adding inputs and
+            // change resulted in the size crossing a 1000 byte boundary. Otherwise it stays at zero.
+            int lastCalculatedSize = 0;
+            BigInteger valueNeeded;
             while (true) {
                 resetTxInputs(req, originalInputs);
 
-                BigInteger fees = req.fee.add(BigInteger.valueOf(minSize/1000).multiply(req.feePerKb));
+                BigInteger fees = req.fee == null ? BigInteger.ZERO : req.fee;
+                if (lastCalculatedSize > 0)
+                    fees = fees.add(BigInteger.valueOf((lastCalculatedSize / 1000) + 1).multiply(req.feePerKb));
+                else
+                    fees = fees.add(req.feePerKb);  // First time around the loop.
                 if (needAtLeastReferenceFee && fees.compareTo(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE) < 0)
                     fees = Transaction.REFERENCE_DEFAULT_MIN_TX_FEE;
 
-                BigInteger valueNeeded = value.add(fees);
+                valueNeeded = value.add(fees);
                 if (additionalValueForNextCategory != null)
                     valueNeeded = valueNeeded.add(additionalValueForNextCategory);
                 BigInteger additionalValueSelected = additionalValueForNextCategory;
@@ -3146,7 +3159,8 @@ public class Wallet implements Serializable, BlockChainListener {
                 if (change.compareTo(BigInteger.ZERO) > 0) {
                     // The value of the inputs is greater than what we want to send. Just like in real life then,
                     // we need to take back some coins ... this is called "change". Add another output that sends the change
-                    // back to us. The address comes either from the request or getChangeAddress() as a default..
+                    // back to us. The address comes either from the request or getChangeAddress() as a default.
+                    Address changeAddress = req.changeAddress;
                     if (changeAddress == null)
                         changeAddress = getChangeAddress();
                     changeOutput = new TransactionOutput(params, req.tx, change, changeAddress);
@@ -3177,11 +3191,12 @@ public class Wallet implements Serializable, BlockChainListener {
                     checkState(input.getScriptBytes().length == 0);
                 }
 
-                // Estimate transaction size and loop again if we need more fee per kb
-                size += estimateBytesForSpending(selection);
+                // Estimate transaction size and loop again if we need more fee per kb. The serialized tx doesn't
+                // include things we haven't added yet like input signatures/scripts or the change output.
                 size += req.tx.bitcoinSerialize().length;
-                if (size/1000 > minSize/1000 && req.feePerKb.compareTo(BigInteger.ZERO) > 0) {
-                    minSize = size;
+                size += estimateBytesForSigning(selection);
+                if (size/1000 > lastCalculatedSize/1000 && req.feePerKb.compareTo(BigInteger.ZERO) > 0) {
+                    lastCalculatedSize = size;
                     // We need more fees anyway, just try again with the same additional value
                     additionalValueForNextCategory = additionalValueSelected;
                     continue;
@@ -3216,7 +3231,7 @@ public class Wallet implements Serializable, BlockChainListener {
             resetTxInputs(req, originalInputs);
 
             if (selection3 == null && selection2 == null && selection1 == null) {
-                log.warn("Insufficient value in wallet for send");
+                log.warn("Insufficient value in wallet for send: needed {}", bitcoinValueToFriendlyString(valueNeeded));
                 throw new InsufficientMoneyException();
             }
 
@@ -3249,7 +3264,7 @@ public class Wallet implements Serializable, BlockChainListener {
             }
         }
 
-        private int estimateBytesForSpending(CoinSelection selection) {
+        private int estimateBytesForSigning(CoinSelection selection) {
             int size = 0;
             for (TransactionOutput output : selection.gathered) {
                 try {
