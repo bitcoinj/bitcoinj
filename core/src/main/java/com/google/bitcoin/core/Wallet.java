@@ -1360,21 +1360,16 @@ public class Wallet implements Serializable, BlockChainListener {
     }
 
     /**
-     * <p>Updates the wallet with the given transaction: puts it into the pending pool, sets the spent flags and runs
-     * the onCoinsSent/onCoinsReceived event listener. Used in two situations:</p>
+     * Calls {@link Wallet#commitTx} if tx is not already in the pending pool
      *
-     * <ol>
-     *     <li>When we have just successfully transmitted the tx we created to the network.</li>
-     *     <li>When we receive a pending transaction that didn't appear in the chain yet, and we did not create it.</li>
-     * </ol>
-     *
-     * <p>Triggers an auto save.</p>
+     * @return true if the tx was added to the wallet, or false if it was already in the pending pool
      */
-    public void commitTx(Transaction tx) throws VerificationException {
+    public boolean maybeCommitTx(Transaction tx) throws VerificationException {
         tx.verify();
         lock.lock();
         try {
-            checkArgument(!pending.containsKey(tx.getHash()), "commitTx called on the same transaction twice");
+            if (pending.containsKey(tx.getHash()))
+                return false;
             log.info("commitTx of {}", tx.getHashAsString());
             BigInteger balance = getBalance();
             tx.setUpdateTime(Utils.now());
@@ -1408,6 +1403,22 @@ public class Wallet implements Serializable, BlockChainListener {
         } finally {
             lock.unlock();
         }
+        return true;
+    }
+
+    /**
+     * <p>Updates the wallet with the given transaction: puts it into the pending pool, sets the spent flags and runs
+     * the onCoinsSent/onCoinsReceived event listener. Used in two situations:</p>
+     *
+     * <ol>
+     *     <li>When we have just successfully transmitted the tx we created to the network.</li>
+     *     <li>When we receive a pending transaction that didn't appear in the chain yet, and we did not create it.</li>
+     * </ol>
+     *
+     * <p>Triggers an auto save.</p>
+     */
+    public void commitTx(Transaction tx) throws VerificationException {
+        checkArgument(maybeCommitTx(tx), "commitTx called on the same transaction twice");
     }
 
     /**
