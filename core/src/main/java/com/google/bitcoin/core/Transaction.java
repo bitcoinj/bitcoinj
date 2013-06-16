@@ -415,6 +415,7 @@ public class Transaction extends ChildMessage implements Serializable {
         NONE,        // 2
         SINGLE,      // 3
     }
+    public static final byte SIGHASH_ANYONECANPAY_VALUE = (byte) 0x80;
 
     protected void unCache() {
         super.unCache();
@@ -801,7 +802,7 @@ public class Transaction extends ChildMessage implements Serializable {
             // Now calculate the signatures we need to prove we own this transaction and are authorized to claim the
             // associated money.
             signatures[i] = key.sign(hash, aesKey);
-            sigHashFlags[i] = (hashType.ordinal() + 1) | (anyoneCanPay ? 0x80 : 0);
+            sigHashFlags[i] = (hashType.ordinal() + 1) | (anyoneCanPay ? SIGHASH_ANYONECANPAY_VALUE : 0);
         }
 
         // Now we have calculated each signature, go through and create the scripts. Reminder: the script consists:
@@ -842,7 +843,7 @@ public class Transaction extends ChildMessage implements Serializable {
      */
     public synchronized Sha256Hash hashTransactionForSignature(int inputIndex, byte[] connectedScript,
                                                                SigHash type, boolean anyoneCanPay) {
-        return hashTransactionForSignature(inputIndex, connectedScript, (byte)((type.ordinal() + 1) | (anyoneCanPay ? 0x80 : 0x00)));
+        return hashTransactionForSignature(inputIndex, connectedScript, (byte)((type.ordinal() + 1) | (anyoneCanPay ? SIGHASH_ANYONECANPAY_VALUE : 0x00)));
     }
 
     /**
@@ -860,7 +861,7 @@ public class Transaction extends ChildMessage implements Serializable {
     public synchronized Sha256Hash hashTransactionForSignature(int inputIndex, Script connectedScript,
                                                                SigHash type, boolean anyoneCanPay) {
         return hashTransactionForSignature(inputIndex, connectedScript.getProgram(),
-                (byte)((type.ordinal() + 1) | (anyoneCanPay ? 0x80 : 0x00)));
+                (byte)((type.ordinal() + 1) | (anyoneCanPay ? SIGHASH_ANYONECANPAY_VALUE : 0x00)));
     }
 
     /**
@@ -945,7 +946,7 @@ public class Transaction extends ChildMessage implements Serializable {
             }
             
             ArrayList<TransactionInput> inputs = this.inputs;
-            if ((sigHashType & 0x80) == 0x80) {
+            if ((sigHashType & SIGHASH_ANYONECANPAY_VALUE) == SIGHASH_ANYONECANPAY_VALUE) {
                 // SIGHASH_ANYONECANPAY means the signature in the input is not broken by changes/additions/removals
                 // of other inputs. For example, this is useful for building assurance contracts.
                 this.inputs = new ArrayList<TransactionInput>();
