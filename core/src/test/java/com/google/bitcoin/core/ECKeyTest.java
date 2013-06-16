@@ -37,6 +37,8 @@ import java.math.BigInteger;
 import java.security.SecureRandom;
 import java.security.SignatureException;
 import java.util.Arrays;
+import java.util.Random;
+import java.io.InputStream;
 
 import static com.google.bitcoin.core.Utils.reverseBytes;
 import static org.junit.Assert.*;
@@ -353,6 +355,7 @@ public class ECKeyTest {
         assertTrue(found);
     }
 
+    @Test
     public void roundTripDumpedPrivKey() throws Exception {
         ECKey key = new ECKey();
         assertTrue(key.isCompressed());
@@ -383,6 +386,71 @@ public class ECKeyTest {
         checkAllBytesAreZero(encryptedKey.getPrivKeyBytes());
         checkAllBytesAreZero(encryptedKey.getEncryptedPrivateKey().getEncryptedBytes());
         checkAllBytesAreZero(encryptedKey.getEncryptedPrivateKey().getInitialisationVector());
+    }
+
+    @Test
+    public void testCanonicalSigs() throws Exception {
+        // Tests the canonical sigs from the reference client unit tests
+        InputStream in = getClass().getResourceAsStream("sig_canonical.json");
+
+        // Poor man's JSON parser (because pulling in a lib for this is overkill)
+        while (in.available() > 0) {
+            while (in.available() > 0 && in.read() != '"') ;
+            if (in.available() < 1)
+                break;
+
+            StringBuilder sig = new StringBuilder();
+            int c;
+            while (in.available() > 0 && (c = in.read()) != '"')
+                sig.append((char)c);
+
+            assertTrue(ECKey.isSignatureCanonical(Hex.decode(sig.toString())));
+        }
+        in.close();
+    }
+
+    @Test
+    public void testNonCanonicalSigs() throws Exception {
+        // Tests the noncanonical sigs from the reference client unit tests
+        InputStream in = getClass().getResourceAsStream("sig_noncanonical.json");
+
+        // Poor man's JSON parser (because pulling in a lib for this is overkill)
+        while (in.available() > 0) {
+            while (in.available() > 0 && in.read() != '"') ;
+            if (in.available() < 1)
+                break;
+
+            StringBuilder sig = new StringBuilder();
+            int c;
+            while (in.available() > 0 && (c = in.read()) != '"')
+                sig.append((char)c);
+
+            try {
+                assertFalse(ECKey.isSignatureCanonical(Hex.decode(sig.toString())));
+            } catch (StringIndexOutOfBoundsException e) { } // Expected for non-hex strings in the JSON that we should ignore
+        }
+        in.close();
+    }
+
+    @Test
+    public void testCreatedSigAndPubkeyAreCanonical() throws Exception {
+        // Tests that we will not generate non-canonical pubkeys or signatures
+        // We dump failed data to error log because this test is not expected to be deterministic
+        ECKey key = new ECKey();
+        if (!ECKey.isPubKeyCanonical(key.getPubKey())) {
+            log.error(Utils.bytesToHexString(key.getPubKey()));
+            fail();
+        }
+
+        byte[] hash = new byte[32];
+        new Random().nextBytes(hash);
+        byte[] sigBytes = key.sign(new Sha256Hash(hash)).encodeToDER();
+        byte[] encodedSig = Arrays.copyOf(sigBytes, sigBytes.length + 1);
+        encodedSig[sigBytes.length] = (byte) (Transaction.SigHash.ALL.ordinal() + 1);
+        if (!ECKey.isSignatureCanonical(encodedSig)) {
+            log.error(Utils.bytesToHexString(sigBytes));
+            fail();
+        }
     }
 
     private boolean checkSomeBytesAreNonZero(byte[] bytes) {
