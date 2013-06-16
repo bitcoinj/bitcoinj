@@ -65,7 +65,7 @@ public class Transaction extends ChildMessage implements Serializable {
      * This is calculated by assuming a standard output will be 34 bytes, and then using the formula used in
      * {@link TransactionOutput#getMinNonDustValue(BigInteger)}.
      */
-    public static final BigInteger MIN_NONDUST_OUTPUT = BigInteger.valueOf(5461);
+    public static final BigInteger MIN_NONDUST_OUTPUT = BigInteger.valueOf(5460);
 
     // These are serialized in both bitcoin and java serialization.
     private long version;
