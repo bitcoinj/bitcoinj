@@ -36,6 +36,7 @@ public class RegTestParams extends TestNet2Params {
         port = 18444;
         acceptableAddressCodes = new int[] { 0 };
         addressHeader = 0;
+        dumpedPrivateKeyHeader = 128;
     }
 
     @Override
