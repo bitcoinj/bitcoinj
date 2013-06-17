@@ -20,6 +20,7 @@ import com.google.bitcoin.core.*;
 import com.google.bitcoin.crypto.KeyCrypterException;
 import com.google.bitcoin.discovery.DnsDiscovery;
 import com.google.bitcoin.params.MainNetParams;
+import com.google.bitcoin.params.RegTestParams;
 import com.google.bitcoin.params.TestNet3Params;
 import com.google.bitcoin.store.BlockStore;
 import com.google.bitcoin.store.SPVBlockStore;
@@ -31,6 +32,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.math.BigInteger;
+import java.net.InetAddress;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -61,22 +63,46 @@ public class PingService {
     private final PeerGroup peerGroup;
     private final BlockStore blockStore;
     private final File walletFile;
+    private final Address sendToAddress;
 
     public static void main(String[] args) throws Exception {
         BriefLogFormatter.init();
+        System.out.println("Usage: pingservice address-to-send-back-to [regtest|testnet]");
         new PingService(args);
     }
 
     public PingService(String[] args) throws Exception {
-        boolean testNet = args.length > 0 && args[0].equalsIgnoreCase("testnet");
-        final NetworkParameters params = testNet ? TestNet3Params.get() : MainNetParams.get();
-        String filePrefix = testNet ? "pingservice-testnet" : "pingservice-mainnet";
+        NetworkParameters params;
+        String filePrefix;
+
+        if (args[1].equals("testnet")) {
+            params = TestNet3Params.get();
+            filePrefix = "pingservice-testnet";
+        } else if (args[1].equals("regtest")) {
+            params = RegTestParams.get();
+            filePrefix = "pingservice-regtest";
+        } else {
+            params = MainNetParams.get();
+            filePrefix = "pingservice";
+        }
+        sendToAddress = new Address(params, args[0]);
+        File chainFile = new File(filePrefix + ".spvchain");
+        if (params == RegTestParams.get() && chainFile.exists()) {
+            chainFile.delete();
+        }
         // Try to read the wallet from storage, create a new one if not possible.
+        Wallet w = null;
         walletFile = new File(filePrefix + ".wallet");
-        Wallet w;
         try {
-            w = Wallet.loadFromFile(walletFile);
+            // Wipe the wallet if the chain file was deleted.
+            if (walletFile.exists() && chainFile.exists())
+                w = Wallet.loadFromFile(walletFile);
         } catch (IOException e) {
+            System.err.println("Couldn't load wallet: " + e);
+            // Fall through.
+        }
+        if (w == null) {
+            System.out.println("Creating new wallet file.");
             w = new Wallet(params);
             w.addKey(new ECKey());
             w.saveToFile(walletFile);
@@ -86,9 +112,9 @@ public class PingService {
         ECKey key = wallet.getKeys().iterator().next();
         // Load the block chain, if there is one stored locally. If it's going to be freshly created, checkpoint it.
         System.out.println("Reading block store from disk");
-        File file = new File(filePrefix + ".spvchain");
-        boolean chainExistedAlready = file.exists();
-        blockStore = new SPVBlockStore(params, file);
+
+        boolean chainExistedAlready = chainFile.exists();
+        blockStore = new SPVBlockStore(params, chainFile);
         if (!chainExistedAlready) {
             File checkpointsFile = new File("checkpoints");
             if (checkpointsFile.exists()) {
@@ -101,7 +127,11 @@ public class PingService {
         System.out.println("Connecting ...");
         peerGroup = new PeerGroup(params, chain);
         peerGroup.setUserAgent("PingService", "1.0");
-        peerGroup.addPeerDiscovery(new DnsDiscovery(params));
+        if (params == RegTestParams.get()) {
+            peerGroup.addAddress(InetAddress.getLocalHost());
+        } else {
+            peerGroup.addPeerDiscovery(new DnsDiscovery(params));
+        }
         peerGroup.addWallet(wallet);
 
         // We want to know when the balance changes.
@@ -172,10 +202,10 @@ public class PingService {
         try {
             BigInteger value = tx.getValueSentToMe(wallet);
             TransactionInput input = tx.getInputs().get(0);
-            Address from = input.getFromAddress();
-            System.out.println("Received " + Utils.bitcoinValueToFriendlyString(value) + " from " + from.toString());
-            // Now send the coins back!
-            final Wallet.SendResult sendResult = wallet.sendCoins(peerGroup, from, value);
+            System.out.println("Received " + Utils.bitcoinValueToFriendlyString(value));
+            // Now send the coins back! Send with a fee attached to ensure rapid confirmation.
+            final BigInteger amountToSend = value.subtract(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE);
+            final Wallet.SendResult sendResult = wallet.sendCoins(peerGroup, sendToAddress, amountToSend);
             checkNotNull(sendResult);  // We should never try to send more coins than we have!
             System.out.println("Sending ...");
             Futures.addCallback(sendResult.broadcastComplete, new FutureCallback<Transaction>() {
@@ -189,9 +219,6 @@ public class PingService {
                     throwable.printStackTrace();
                 }
             });
-        } catch (ScriptException e) {
-            // If we didn't understand the scriptSig, just crash.
-            throw new RuntimeException(e);
         } catch (KeyCrypterException e) {
             e.printStackTrace();
             throw new RuntimeException(e);
