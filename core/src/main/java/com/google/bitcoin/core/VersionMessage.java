@@ -100,7 +100,7 @@ public class VersionMessage extends Message {
         try {
             // We hard-code the IPv4 localhost address here rather than use InetAddress.getLocalHost() because some
             // mobile phones have broken localhost DNS entries, also, this is faster.
-            final byte[] localhost = new byte[] { 127, 0, 0, 1 };
+            final byte[] localhost = { 127, 0, 0, 1 };
             myAddr = new PeerAddress(InetAddress.getByAddress(localhost), params.getPort(), 0);
             theirAddr = new PeerAddress(InetAddress.getByAddress(localhost), params.getPort(), 0);
         } catch (UnknownHostException e) {
@@ -289,7 +289,7 @@ public class VersionMessage extends Message {
         }
     }
 
-    private void checkSubVerComponent(String component) {
+    private static void checkSubVerComponent(String component) {
         if (component.contains("/") || component.contains("(") || component.contains(")"))
             throw new IllegalArgumentException("name contains invalid characters");
     }
