@@ -22,10 +22,9 @@
     <parent>
         <groupId>com.google</groupId>
         <artifactId>bitcoinj-parent</artifactId>
-        <version>0.9-SNAPSHOT</version>
+        <version>0.10-SNAPSHOT</version>
     </parent>
 
-    <groupId>com.google</groupId>
     <artifactId>bitcoinj</artifactId>
 
     <name>bitcoinj</name>

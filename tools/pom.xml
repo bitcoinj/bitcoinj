@@ -21,11 +21,10 @@
   <parent>
     <groupId>com.google</groupId>
     <artifactId>bitcoinj-parent</artifactId>
-    <version>0.9-SNAPSHOT</version>
+    <version>0.10-SNAPSHOT</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
-  <groupId>com.google</groupId>
   <artifactId>bitcoinj-tools</artifactId>
 
   <name>bitcoinj Tools</name>
