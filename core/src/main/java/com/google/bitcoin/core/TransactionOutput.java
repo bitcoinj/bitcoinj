@@ -173,16 +173,36 @@ public class TransactionOutput extends ChildMessage implements Serializable {
     }
 
     /**
-     * Gets the minimum value for a txout of this size to be considered non-dust by a reference client (and thus relayed).
-     * See: CTxOut::IsDust() in the reference client.
+     * <p>Gets the minimum value for a txout of this size to be considered non-dust by a reference client
+     * (and thus relayed). See: CTxOut::IsDust() in the reference client. The assumption is that any output that would
+     * consume more than a third of its value in fees is not something the Bitcoin system wants to deal with right now,
+     * so we call them "dust outputs" and they're made non standard. The choice of one third is somewhat arbitrary and
+     * may change in future.</p>
+     *
+     * <p>You probably should use {@link com.google.bitcoin.core.TransactionOutput#getMinNonDustValue()} which uses
+     * a safe fee-per-kb by default.</p>
      *
      * @param feePerKbRequired The fee required per kilobyte. Note that this is the same as the reference client's -minrelaytxfee * 3
      *                         If you want a safe default, use {@link Transaction#REFERENCE_DEFAULT_MIN_TX_FEE}*3
      */
     public BigInteger getMinNonDustValue(BigInteger feePerKbRequired) {
-        // Note we skip the *3 as that should be considered in the parameter
-        BigInteger[] nonDustAndRemainder = feePerKbRequired.multiply(BigInteger.valueOf(this.bitcoinSerialize().length + 148)).divideAndRemainder(BigInteger.valueOf(1000));
+        // A typical output is 33 bytes (pubkey hash + opcodes) and requires an input of 148 bytes to spend so we add
+        // that together to find out the total amount of data used to transfer this amount of value. Note that this
+        // formula is wrong for anything that's not a pay-to-address output, unfortunately, we must follow the reference
+        // clients wrongness in order to ensure we're considered standard. A better formula would either estimate the
+        // size of data needed to satisfy all different script types, or just hard code 33 below.
+        final BigInteger size = BigInteger.valueOf(this.bitcoinSerialize().length + 148);
+        BigInteger[] nonDustAndRemainder = feePerKbRequired.multiply(size).divideAndRemainder(BigInteger.valueOf(1000));
         return nonDustAndRemainder[1].equals(BigInteger.ZERO) ? nonDustAndRemainder[0] : nonDustAndRemainder[0].add(BigInteger.ONE);
+    }
+
+    /**
+     * Returns the minimum value for this output to be considered "not dust", i.e. the transaction will be relayable
+     * and mined by default miners. For normal pay to address outputs, this is 5460 satoshis, the same as
+     * {@link Transaction#MIN_NONDUST_OUTPUT}.
+     */
+    public BigInteger getMinNonDustValue() {
+        return getMinNonDustValue(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE.multiply(BigInteger.valueOf(3)));
     }
 
     /**
