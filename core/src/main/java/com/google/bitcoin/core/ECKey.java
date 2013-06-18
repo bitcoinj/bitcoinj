@@ -417,7 +417,7 @@ public class ECKey implements Serializable {
     }
 
     /**
-     * <p>xVerifies the given ECDSA signature against the message bytes using the public key bytes.</p>
+     * <p>Verifies the given ECDSA signature against the message bytes using the public key bytes.</p>
      * 
      * <p>When using native ECDSA verification, data must be 32 bytes, and no element may be
      * larger than 520 bytes.</p>
