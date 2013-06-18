@@ -17,6 +17,7 @@
 package com.google.bitcoin.core;
 
 import com.google.bitcoin.core.TransactionConfidence.ConfidenceType;
+import com.google.bitcoin.crypto.TransactionSignature;
 import com.google.bitcoin.script.Script;
 import com.google.bitcoin.script.ScriptBuilder;
 import com.google.bitcoin.script.ScriptOpCodes;
@@ -767,8 +768,7 @@ public class Transaction extends ChildMessage implements Serializable {
         // Note that each input may be claiming an output sent to a different key. So we have to look at the outputs
         // to figure out which key to sign with.
 
-        int[] sigHashFlags = new int[inputs.size()];
-        ECKey.ECDSASignature[] signatures = new ECKey.ECDSASignature[inputs.size()];
+        TransactionSignature[] signatures = new TransactionSignature[inputs.size()];
         ECKey[] signingKeys = new ECKey[inputs.size()];
         for (int i = 0; i < inputs.size(); i++) {
             TransactionInput input = inputs.get(i);
@@ -801,8 +801,7 @@ public class Transaction extends ChildMessage implements Serializable {
 
             // Now calculate the signatures we need to prove we own this transaction and are authorized to claim the
             // associated money.
-            signatures[i] = key.sign(hash, aesKey);
-            sigHashFlags[i] = (hashType.ordinal() + 1) | (anyoneCanPay ? SIGHASH_ANYONECANPAY_VALUE : 0);
+            signatures[i] = new TransactionSignature(key.sign(hash, aesKey), hashType, anyoneCanPay);
         }
 
         // Now we have calculated each signature, go through and create the scripts. Reminder: the script consists:
@@ -816,9 +815,9 @@ public class Transaction extends ChildMessage implements Serializable {
             TransactionInput input = inputs.get(i);
             Script scriptPubKey = input.getOutpoint().getConnectedOutput().getScriptPubKey();
             if (scriptPubKey.isSentToAddress()) {
-                input.setScriptSig(ScriptBuilder.createInputScript(signatures[i], signingKeys[i], sigHashFlags[i]));
+                input.setScriptSig(ScriptBuilder.createInputScript(signatures[i], signingKeys[i]));
             } else if (scriptPubKey.isSentToRawPubKey()) {
-                input.setScriptSig(ScriptBuilder.createInputScript(signatures[i], sigHashFlags[i]));
+                input.setScriptSig(ScriptBuilder.createInputScript(signatures[i]));
             } else {
                 // Should be unreachable - if we don't recognize the type of script we're trying to sign for, we should
                 // have failed above when fetching the key to sign with.
@@ -843,7 +842,8 @@ public class Transaction extends ChildMessage implements Serializable {
      */
     public synchronized Sha256Hash hashTransactionForSignature(int inputIndex, byte[] connectedScript,
                                                                SigHash type, boolean anyoneCanPay) {
-        return hashTransactionForSignature(inputIndex, connectedScript, (byte)((type.ordinal() + 1) | (anyoneCanPay ? SIGHASH_ANYONECANPAY_VALUE : 0x00)));
+        byte sigHashType = (byte) TransactionSignature.calcSigHashValue(type, anyoneCanPay);
+        return hashTransactionForSignature(inputIndex, connectedScript, sigHashType);
     }
 
     /**
@@ -860,18 +860,15 @@ public class Transaction extends ChildMessage implements Serializable {
      */
     public synchronized Sha256Hash hashTransactionForSignature(int inputIndex, Script connectedScript,
                                                                SigHash type, boolean anyoneCanPay) {
-        return hashTransactionForSignature(inputIndex, connectedScript.getProgram(),
-                (byte)((type.ordinal() + 1) | (anyoneCanPay ? SIGHASH_ANYONECANPAY_VALUE : 0x00)));
+        int sigHash = TransactionSignature.calcSigHashValue(type, anyoneCanPay);
+        return hashTransactionForSignature(inputIndex, connectedScript.getProgram(), (byte) sigHash);
     }
 
     /**
      * This is required for signatures which use a sigHashType which cannot be represented using SigHash and anyoneCanPay
      * See transaction c99c49da4c38af669dea436d3e73780dfdb6c1ecf9958baa52960e8baee30e73, which has sigHashType 0
      */
-    public synchronized Sha256Hash hashTransactionForSignature(int inputIndex, byte[] connectedScript,
-            byte sigHashType) {
-        // TODO: This whole separate method should be un-necessary if we fix how we deserialize sighash flags.
-
+    public synchronized Sha256Hash hashTransactionForSignature(int inputIndex, byte[] connectedScript, byte sigHashType) {
         // The SIGHASH flags are used in the design of contracts, please see this page for a further understanding of
         // the purposes of the code in this method:
         //

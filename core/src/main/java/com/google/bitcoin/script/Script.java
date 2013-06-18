@@ -18,6 +18,7 @@
 package com.google.bitcoin.script;
 
 import com.google.bitcoin.core.*;
+import com.google.bitcoin.crypto.TransactionSignature;
 import com.google.common.collect.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -1042,32 +1043,31 @@ public class Script {
         if (stack.size() < 2)
             throw new ScriptException("Attempted OP_CHECKSIG(VERIFY) on a stack with size < 2");
         byte[] pubKey = stack.pollLast();
-        byte[] sig = stack.pollLast();
-        if (sig.length == 0 || pubKey.length == 0)
+        byte[] sigBytes = stack.pollLast();
+        if (sigBytes.length == 0 || pubKey.length == 0)
             throw new ScriptException("Attempted OP_CHECKSIG(VERIFY) with a sig or pubkey of length 0");
 
         byte[] prog = script.getProgram();
         byte[] connectedScript = Arrays.copyOfRange(prog, lastCodeSepLocation, prog.length);
 
-        UnsafeByteArrayOutputStream outStream = new UnsafeByteArrayOutputStream(sig.length + 1);
+        UnsafeByteArrayOutputStream outStream = new UnsafeByteArrayOutputStream(sigBytes.length + 1);
         try {
-            writeBytes(outStream, sig);
+            writeBytes(outStream, sigBytes);
         } catch (IOException e) {
             throw new RuntimeException(e); // Cannot happen
         }
         connectedScript = removeAllInstancesOf(connectedScript, outStream.toByteArray());
 
         // TODO: Use int for indexes everywhere, we can't have that many inputs/outputs
-        Sha256Hash hash = txContainingThis.hashTransactionForSignature(index, connectedScript, sig[sig.length - 1]);
-
-        boolean sigValid;
+        boolean sigValid = false;
         try {
-            sigValid = ECKey.verify(hash.getBytes(), Arrays.copyOf(sig, sig.length - 1), pubKey);
+            TransactionSignature sig  = TransactionSignature.decodeFromBitcoin(sigBytes);
+            Sha256Hash hash = txContainingThis.hashTransactionForSignature(index, connectedScript, (byte)sig.sighashFlags);
+            sigValid = ECKey.verify(hash.getBytes(), sig, pubKey);
         } catch (Exception e1) {
             // There is (at least) one exception that could be hit here (EOFException, if the sig is too short)
             // Because I can't verify there aren't more, we use a very generic Exception catch
             log.warn(e1.toString());
-            sigValid = false;
         }
 
         if (opcode == OP_CHECKSIG)
@@ -1127,14 +1127,13 @@ public class Script {
 
         boolean valid = true;
         while (sigs.size() > 0) {
-            byte[] sig = sigs.getFirst();
             byte[] pubKey = pubkeys.pollFirst();
-
             // We could reasonably move this out of the loop, but because signature verification is significantly
             // more expensive than hashing, its not a big deal.
-            Sha256Hash hash = txContainingThis.hashTransactionForSignature(index, connectedScript, sig[sig.length - 1]);
             try {
-                if (ECKey.verify(hash.getBytes(), Arrays.copyOf(sig, sig.length - 1), pubKey))
+                TransactionSignature sig = TransactionSignature.decodeFromBitcoin(sigs.getFirst());
+                Sha256Hash hash = txContainingThis.hashTransactionForSignature(index, connectedScript, (byte)sig.sighashFlags);
+                if (ECKey.verify(hash.getBytes(), sig, pubKey))
                     sigs.pollFirst();
             } catch (Exception e) {
                 // There is (at least) one exception that could be hit here (EOFException, if the sig is too short)

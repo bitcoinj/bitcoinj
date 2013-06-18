@@ -309,30 +309,56 @@ public class ECKey implements Serializable {
      * components can be useful for doing further EC maths on them.
      */
     public static class ECDSASignature {
+        /** The two components of the signature. */
         public BigInteger r, s;
 
+        /** Constructs a signature with the given components. */
         public ECDSASignature(BigInteger r, BigInteger s) {
             this.r = r;
             this.s = s;
         }
 
         /**
-         * What we get back from the signer are the two components of a signature, r and s. To get a flat byte stream
-         * of the type used by Bitcoin we have to encode them using DER encoding, which is just a way to pack the two
-         * components into a structure.
+         * DER is an international standard for serializing data structures which is widely used in cryptography.
+         * It's somewhat like protocol buffers but less convenient. This method returns a standard DER encoding
+         * of the signature, as recognized by OpenSSL and other libraries.
          */
         public byte[] encodeToDER() {
             try {
-                // Usually 70-72 bytes.
-                ByteArrayOutputStream bos = new UnsafeByteArrayOutputStream(72);
-                DERSequenceGenerator seq = new DERSequenceGenerator(bos);
-                seq.addObject(new DERInteger(r));
-                seq.addObject(new DERInteger(s));
-                seq.close();
-                return bos.toByteArray();
+                return derByteStream().toByteArray();
             } catch (IOException e) {
                 throw new RuntimeException(e);  // Cannot happen.
             }
+        }
+
+        public static ECDSASignature decodeFromDER(byte[] bytes) {
+            try {
+                ASN1InputStream decoder = new ASN1InputStream(bytes);
+                DLSequence seq = (DLSequence) decoder.readObject();
+                DERInteger r, s;
+                try {
+                    r = (DERInteger) seq.getObjectAt(0);
+                    s = (DERInteger) seq.getObjectAt(1);
+                } catch (ClassCastException e) {
+                    return null;
+                }
+                decoder.close();
+                // OpenSSL deviates from the DER spec by interpreting these values as unsigned, though they should not be
+                // Thus, we always use the positive versions. See: http://r6.ca/blog/20111119T211504Z.html
+                return new ECDSASignature(r.getPositiveValue(), s.getPositiveValue());
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        protected ByteArrayOutputStream derByteStream() throws IOException {
+            // Usually 70-72 bytes.
+            ByteArrayOutputStream bos = new ByteArrayOutputStream(72);
+            DERSequenceGenerator seq = new DERSequenceGenerator(bos);
+            seq.addObject(new DERInteger(r));
+            seq.addObject(new DERInteger(s));
+            seq.close();
+            return bos;
         }
     }
 
@@ -428,25 +454,7 @@ public class ECKey implements Serializable {
     public static boolean verify(byte[] data, byte[] signature, byte[] pub) {
         if (NativeSecp256k1.enabled)
             return NativeSecp256k1.verify(data, signature, pub);
-        
-        try {
-            ASN1InputStream decoder = new ASN1InputStream(signature);
-            DLSequence seq = (DLSequence) decoder.readObject();
-            DERInteger r, s;
-            try {
-                r = (DERInteger) seq.getObjectAt(0);
-                s = (DERInteger) seq.getObjectAt(1);
-            } catch (ClassCastException e) {
-                return false; // An invalid signature can cause this
-            }
-            decoder.close();
-            // OpenSSL deviates from the DER spec by interpreting these values as unsigned, though they should not be
-            // Thus, we always use the positive versions.
-            // See: http://r6.ca/blog/20111119T211504Z.html
-            return verify(data, new ECDSASignature(r.getPositiveValue(), s.getPositiveValue()), pub);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        return verify(data, ECDSASignature.decodeFromDER(signature), pub);
     }
 
     /**

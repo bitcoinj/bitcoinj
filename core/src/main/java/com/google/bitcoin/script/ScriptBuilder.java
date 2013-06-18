@@ -18,10 +18,10 @@ package com.google.bitcoin.script;
 
 import com.google.bitcoin.core.Address;
 import com.google.bitcoin.core.ECKey;
-import com.google.bitcoin.core.Transaction;
+import com.google.bitcoin.crypto.TransactionSignature;
 import com.google.common.collect.Lists;
-import com.google.bitcoin.core.Utils;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -80,16 +80,14 @@ public class ScriptBuilder {
     }
 
     /** Creates a scriptSig that can redeem a pay-to-address output. */
-    public static Script createInputScript(ECKey.ECDSASignature signature, ECKey pubKey, int sigHashFlags) {
+    public static Script createInputScript(TransactionSignature signature, ECKey pubKey) {
         byte[] pubkeyBytes = pubKey.getPubKey();
-        byte[] sigBytes = Utils.appendByte(signature.encodeToDER(), (byte) sigHashFlags);
-        return new ScriptBuilder().data(sigBytes).data(pubkeyBytes).build();
+        return new ScriptBuilder().data(signature.encodeToBitcoin()).data(pubkeyBytes).build();
     }
 
     /** Creates a scriptSig that can redeem a pay-to-pubkey output. */
-    public static Script createInputScript(ECKey.ECDSASignature signature, int sigHashFlags) {
-        byte[] sigBytes = Utils.appendByte(signature.encodeToDER(), (byte) sigHashFlags);
-        return new ScriptBuilder().data(sigBytes).build();
+    public static Script createInputScript(TransactionSignature signature) {
+        return new ScriptBuilder().data(signature.encodeToBitcoin()).build();
     }
 
     /** Creates a program that requires at least N of the given keys to sign, using OP_CHECKMULTISIG. */
@@ -98,28 +96,25 @@ public class ScriptBuilder {
         checkArgument(threshold <= pubkeys.size());
         checkArgument(pubkeys.size() <= 16);  // That's the max we can represent with a single opcode.
         ScriptBuilder builder = new ScriptBuilder();
-        builder.smallNum((byte) threshold);
+        builder.smallNum(threshold);
         for (ECKey key : pubkeys) {
             builder.data(key.getPubKey());
         }
-        builder.smallNum((byte)pubkeys.size());
+        builder.smallNum(pubkeys.size());
         builder.op(OP_CHECKMULTISIG);
         return builder.build();
     }
 
     /** Create a program that satisfies an OP_CHECKMULTISIG program. */
-    public static Script createMultiSigInputScript(List<ECKey.ECDSASignature> signatures,
-                                                   Transaction.SigHash sigHash, boolean anyoneCanPay) {
-        checkArgument(signatures.size() <= 16);  // Max allowable.
-        ScriptBuilder builder = new ScriptBuilder();
-        builder.smallNum(0);  // Work around a bug in CHECKMULTISIG that is now a required part of the protocol.
-        for (ECKey.ECDSASignature signature : signatures)
-            builder.data(Utils.appendByte(signature.encodeToDER(),(byte) ((sigHash.ordinal() + 1) | (anyoneCanPay ? 0x80 : 0))));
-        return builder.build();
+    public static Script createMultiSigInputScript(List<TransactionSignature> signatures) {
+        List<byte[]> sigs = new ArrayList<byte[]>(signatures.size());
+        for (TransactionSignature signature : signatures)
+            sigs.add(signature.encodeToBitcoin());
+        return createMultiSigInputScriptBytes(sigs);
     }
 
-    /** Create a program that satisfies an OP_CHECKMULTISIG program, for when the signatures may not have the same SIGHASH/anyoneCanPay flags */
-    public static Script createMultiSigInputScript(List<byte[]> signatures) {
+    /** Create a program that satisfies an OP_CHECKMULTISIG program, using pre-encoded signatures. */
+    public static Script createMultiSigInputScriptBytes(List<byte[]> signatures) {
         checkArgument(signatures.size() <= 16);
         ScriptBuilder builder = new ScriptBuilder();
         builder.smallNum(0);  // Work around a bug in CHECKMULTISIG that is now a required part of the protocol.
