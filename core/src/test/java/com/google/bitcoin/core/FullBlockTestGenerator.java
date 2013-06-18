@@ -716,7 +716,7 @@ public class FullBlockTestGenerator {
 
                 if (scriptSig == null) {
                     // Exploit the SigHash.SINGLE bug to avoid having to make more than one signature
-                    Sha256Hash hash = tx.hashTransactionForSignature(1, b39p2shScriptPubKey, SigHash.SINGLE, false);
+                    Sha256Hash hash = tx.hashForSignature(1, b39p2shScriptPubKey, SigHash.SINGLE, false);
 
                     // Sign input
                     try {
@@ -785,7 +785,7 @@ public class FullBlockTestGenerator {
 
                     if (scriptSig == null) {
                         // Exploit the SigHash.SINGLE bug to avoid having to make more than one signature
-                        Sha256Hash hash = tx.hashTransactionForSignature(1,
+                        Sha256Hash hash = tx.hashForSignature(1,
                                 b39p2shScriptPubKey, SigHash.SINGLE, false);
 
                         // Sign input
@@ -1565,7 +1565,7 @@ public class FullBlockTestGenerator {
         t.addInput(input);
 
         byte[] connectedPubKeyScript = prevOut.scriptPubKey.getProgram();
-        Sha256Hash hash = t.hashTransactionForSignature(0, connectedPubKeyScript, SigHash.ALL, false);
+        Sha256Hash hash = t.hashForSignature(0, connectedPubKeyScript, SigHash.ALL, false);
 
         // Sign input
         try {

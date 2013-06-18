@@ -797,11 +797,7 @@ public class Transaction extends ChildMessage implements Serializable {
             // The anyoneCanPay feature isn't used at the moment.
             boolean anyoneCanPay = false;
             byte[] connectedPubKeyScript = input.getOutpoint().getConnectedPubKeyScript();
-            Sha256Hash hash = hashTransactionForSignature(i, connectedPubKeyScript, hashType, anyoneCanPay);
-
-            // Now calculate the signatures we need to prove we own this transaction and are authorized to claim the
-            // associated money.
-            signatures[i] = new TransactionSignature(key.sign(hash, aesKey), hashType, anyoneCanPay);
+            signatures[i] = calculateSignature(i, key, aesKey, connectedPubKeyScript, hashType, anyoneCanPay);
         }
 
         // Now we have calculated each signature, go through and create the scripts. Reminder: the script consists:
@@ -829,6 +825,45 @@ public class Transaction extends ChildMessage implements Serializable {
     }
 
     /**
+     * Calculates a signature that is valid for being inserted into the input at the given position. This is simply
+     * a wrapper around calling {@link Transaction#hashForSignature(int, byte[], com.google.bitcoin.core.Transaction.SigHash, boolean)}
+     * followed by {@link ECKey#sign(Sha256Hash, org.spongycastle.crypto.params.KeyParameter)} and then returning
+     * a new {@link TransactionSignature}.
+     *
+     * @param inputIndex Which input to calculate the signature for, as an index.
+     * @param key The private key used to calculate the signature.
+     * @param aesKey If not null, this will be used to decrypt the key.
+     * @param connectedPubKeyScript Byte-exact contents of the scriptPubKey that is being satisified.
+     * @param hashType Signing mode, see the enum for documentation.
+     * @param anyoneCanPay Signing mode, see the SigHash enum for documentation.
+     * @return A newly calculated signature object that wraps the r, s and sighash components.
+     */
+    public synchronized  TransactionSignature calculateSignature(int inputIndex, ECKey key, KeyParameter aesKey,
+                                                                 byte[] connectedPubKeyScript,
+                                                                 SigHash hashType, boolean anyoneCanPay) {
+        Sha256Hash hash = hashForSignature(inputIndex, connectedPubKeyScript, hashType, anyoneCanPay);
+        return new TransactionSignature(key.sign(hash, aesKey), hashType, anyoneCanPay);
+    }
+
+    /**
+     * Calculates a signature that is valid for being inserted into the input at the given position. This is simply
+     * a wrapper around calling {@link Transaction#hashForSignature(int, byte[], com.google.bitcoin.core.Transaction.SigHash, boolean)}
+     * followed by {@link ECKey#sign(Sha256Hash)} and then returning a new {@link TransactionSignature}.
+     *
+     * @param inputIndex Which input to calculate the signature for, as an index.
+     * @param key The private key used to calculate the signature.
+     * @param connectedPubKeyScript The scriptPubKey that is being satisified.
+     * @param hashType Signing mode, see the enum for documentation.
+     * @param anyoneCanPay Signing mode, see the SigHash enum for documentation.
+     * @return A newly calculated signature object that wraps the r, s and sighash components.
+     */
+    public synchronized  TransactionSignature calculateSignature(int inputIndex, ECKey key, Script connectedPubKeyScript,
+                                                                 SigHash hashType, boolean anyoneCanPay) {
+        Sha256Hash hash = hashForSignature(inputIndex, connectedPubKeyScript.getProgram(), hashType, anyoneCanPay);
+        return new TransactionSignature(key.sign(hash), hashType, anyoneCanPay);
+    }
+
+    /**
      * <p>Calculates a signature hash, that is, a hash of a simplified form of the transaction. How exactly the transaction
      * is simplified is specified by the type and anyoneCanPay parameters.</p>
      *
@@ -840,10 +875,10 @@ public class Transaction extends ChildMessage implements Serializable {
      * @param type Should be SigHash.ALL
      * @param anyoneCanPay should be false.
      */
-    public synchronized Sha256Hash hashTransactionForSignature(int inputIndex, byte[] connectedScript,
-                                                               SigHash type, boolean anyoneCanPay) {
+    public synchronized Sha256Hash hashForSignature(int inputIndex, byte[] connectedScript,
+                                                    SigHash type, boolean anyoneCanPay) {
         byte sigHashType = (byte) TransactionSignature.calcSigHashValue(type, anyoneCanPay);
-        return hashTransactionForSignature(inputIndex, connectedScript, sigHashType);
+        return hashForSignature(inputIndex, connectedScript, sigHashType);
     }
 
     /**
@@ -858,17 +893,17 @@ public class Transaction extends ChildMessage implements Serializable {
      * @param type Should be SigHash.ALL
      * @param anyoneCanPay should be false.
      */
-    public synchronized Sha256Hash hashTransactionForSignature(int inputIndex, Script connectedScript,
-                                                               SigHash type, boolean anyoneCanPay) {
+    public synchronized Sha256Hash hashForSignature(int inputIndex, Script connectedScript,
+                                                    SigHash type, boolean anyoneCanPay) {
         int sigHash = TransactionSignature.calcSigHashValue(type, anyoneCanPay);
-        return hashTransactionForSignature(inputIndex, connectedScript.getProgram(), (byte) sigHash);
+        return hashForSignature(inputIndex, connectedScript.getProgram(), (byte) sigHash);
     }
 
     /**
      * This is required for signatures which use a sigHashType which cannot be represented using SigHash and anyoneCanPay
      * See transaction c99c49da4c38af669dea436d3e73780dfdb6c1ecf9958baa52960e8baee30e73, which has sigHashType 0
      */
-    public synchronized Sha256Hash hashTransactionForSignature(int inputIndex, byte[] connectedScript, byte sigHashType) {
+    public synchronized Sha256Hash hashForSignature(int inputIndex, byte[] connectedScript, byte sigHashType) {
         // The SIGHASH flags are used in the design of contracts, please see this page for a further understanding of
         // the purposes of the code in this method:
         //

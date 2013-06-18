@@ -475,57 +475,24 @@ public class ECKey implements Serializable {
     }
 
     /**
-     * Returns true if the given signature is in canonical form (ie will be accepted as standard by the reference client)
+     * Returns true if this pubkey is canonical, i.e. the correct length taking into account compression.
      */
-    public static boolean isSignatureCanonical(byte[] signature) {
-        // See reference client's IsCanonicalSignature, https://bitcointalk.org/index.php?topic=8392.msg127623#msg127623
-        // A canonical signature exists of: <30> <total len> <02> <len R> <R> <02> <len S> <S> <hashtype>
-        // Where R and S are not negative (their first byte has its highest bit not set), and not
-        // excessively padded (do not start with a 0 byte, unless an otherwise negative number follows,
-        // in which case a single 0 byte is necessary and even required).
-        if (signature.length < 9 || signature.length > 73)
-            return false;
-
-        int hashType = signature[signature.length-1] & ((int)(~Transaction.SIGHASH_ANYONECANPAY_VALUE));
-        if (hashType < (Transaction.SigHash.ALL.ordinal() + 1) || hashType > (Transaction.SigHash.SINGLE.ordinal() + 1))
-            return false;
-
-        //                   "wrong type"                  "wrong length marker"
-        if ((signature[0] & 0xff) != 0x30 || (signature[1] & 0xff) != signature.length-3)
-            return false;
-
-        int lenR = signature[3] & 0xff;
-        if (5 + lenR >= signature.length || lenR == 0)
-            return false;
-        int lenS = signature[5+lenR] & 0xff;
-        if (lenR + lenS + 7 != signature.length || lenS == 0)
-            return false;
-
-        //    R value type mismatch          R value negative
-        if (signature[4-2] != 0x02 || (signature[4] & 0x80) == 0x80)
-            return false;
-        if (lenR > 1 && signature[4] == 0x00 && (signature[4+1] & 0x80) != 0x80)
-            return false; // R value excessively padded
-
-        //       S value type mismatch                    S value negative
-        if (signature[6 + lenR - 2] != 0x02 || (signature[6 + lenR] & 0x80) == 0x80)
-            return false;
-        if (lenS > 1 && signature[6 + lenR] == 0x00 && (signature[6 + lenR + 1] & 0x80) != 0x80)
-            return false; // S value excessively padded
-
-        return true;
+    public boolean isPubKeyCanonical() {
+        return isPubKeyCanonical(pub);
     }
 
     /**
-     * Returns true if the given pubkey is canonical (ie the correct length for its declared type)
+     * Returns true if the given pubkey is canonical, i.e. the correct length taking into account compression.
      */
     public static boolean isPubKeyCanonical(byte[] pubkey) {
         if (pubkey.length < 33)
             return false;
-        if (pubkey[0] == 0x04) { // Uncompressed pubkey
+        if (pubkey[0] == 0x04) {
+            // Uncompressed pubkey
             if (pubkey.length != 65)
                 return false;
-        } else if (pubkey[0] == 0x02 || pubkey[0] == 0x03) { // Compressed pubkey
+        } else if (pubkey[0] == 0x02 || pubkey[0] == 0x03) {
+            // Compressed pubkey
             if (pubkey.length != 33)
                 return false;
         } else

@@ -160,7 +160,7 @@ public class FullPrunedBlockChainTest {
         TransactionInput input = new TransactionInput(params, t, new byte[]{}, prevOut);
         t.addInput(input);
 
-        Sha256Hash hash = t.hashTransactionForSignature(0, prevOutScriptPubKey, SigHash.ALL, false);
+        Sha256Hash hash = t.hashForSignature(0, prevOutScriptPubKey, SigHash.ALL, false);
 
         // Sign input
         try {

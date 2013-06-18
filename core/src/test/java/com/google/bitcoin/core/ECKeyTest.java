@@ -19,6 +19,7 @@ package com.google.bitcoin.core;
 import com.google.bitcoin.crypto.EncryptedPrivateKey;
 import com.google.bitcoin.crypto.KeyCrypter;
 import com.google.bitcoin.crypto.KeyCrypterScrypt;
+import com.google.bitcoin.crypto.TransactionSignature;
 import com.google.bitcoin.params.MainNetParams;
 import com.google.bitcoin.params.TestNet3Params;
 import com.google.bitcoin.params.UnitTestParams;
@@ -404,7 +405,7 @@ public class ECKeyTest {
             while (in.available() > 0 && (c = in.read()) != '"')
                 sig.append((char)c);
 
-            assertTrue(ECKey.isSignatureCanonical(Hex.decode(sig.toString())));
+            assertTrue(TransactionSignature.isEncodingCanonical(Hex.decode(sig.toString())));
         }
         in.close();
     }
@@ -426,7 +427,7 @@ public class ECKeyTest {
                 sig.append((char)c);
 
             try {
-                assertFalse(ECKey.isSignatureCanonical(Hex.decode(sig.toString())));
+                assertFalse(TransactionSignature.isEncodingCanonical(Hex.decode(sig.toString())));
             } catch (StringIndexOutOfBoundsException e) { } // Expected for non-hex strings in the JSON that we should ignore
         }
         in.close();
@@ -447,7 +448,7 @@ public class ECKeyTest {
         byte[] sigBytes = key.sign(new Sha256Hash(hash)).encodeToDER();
         byte[] encodedSig = Arrays.copyOf(sigBytes, sigBytes.length + 1);
         encodedSig[sigBytes.length] = (byte) (Transaction.SigHash.ALL.ordinal() + 1);
-        if (!ECKey.isSignatureCanonical(encodedSig)) {
+        if (!TransactionSignature.isEncodingCanonical(encodedSig)) {
             log.error(Utils.bytesToHexString(sigBytes));
             fail();
         }
