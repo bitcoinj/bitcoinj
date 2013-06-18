@@ -116,6 +116,7 @@ public class KeyCrypterScryptTest extends TestCase {
 
         try {
             keyCrypter.decrypt(encryptedPrivateKey, keyCrypter.deriveKey(WRONG_PASSWORD));
+            // TODO: This test sometimes fails due to relying on padding.
             fail("Decrypt with wrong password did not throw exception");
         } catch (KeyCrypterException ede) {
             assertTrue(ede.getMessage().indexOf("Could not decrypt") > -1);
