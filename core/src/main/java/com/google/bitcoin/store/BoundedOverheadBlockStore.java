@@ -17,7 +17,6 @@
 package com.google.bitcoin.store;
 
 import com.google.bitcoin.core.*;
-import com.google.bitcoin.utils.NamedSemaphores;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,7 +49,6 @@ import static com.google.common.base.Preconditions.checkState;
 public class BoundedOverheadBlockStore implements BlockStore {
     private static final Logger log = LoggerFactory.getLogger(BoundedOverheadBlockStore.class);
     private static final byte FILE_FORMAT_VERSION = 1;
-    private static NamedSemaphores semaphores = new NamedSemaphores();
 
     private RandomAccessFile file;
     // We keep some recently found blocks in the blockCache. It can help to optimize some cases where we are
@@ -233,13 +231,9 @@ public class BoundedOverheadBlockStore implements BlockStore {
     }
 
     private void lock() throws IOException, BlockStoreException {
-        if (!semaphores.tryAcquire(fileName)) {
-            throw new BlockStoreException("File in use");
-        }
         try {
             lock = channel.tryLock();
         } catch (OverlappingFileLockException e) {
-            semaphores.release(fileName);
             lock = null;
         }
         if (lock == null) {
@@ -366,7 +360,6 @@ public class BoundedOverheadBlockStore implements BlockStore {
         } catch (IOException e) {
             throw new BlockStoreException(e);
         } finally {
-            semaphores.release(this.fileName);
             file = null;
         }
     }

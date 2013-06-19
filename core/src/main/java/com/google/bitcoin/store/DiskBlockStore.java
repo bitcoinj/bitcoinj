@@ -17,7 +17,6 @@
 package com.google.bitcoin.store;
 
 import com.google.bitcoin.core.*;
-import com.google.bitcoin.utils.NamedSemaphores;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,8 +45,6 @@ public class DiskBlockStore implements BlockStore {
     private NetworkParameters params;
     private FileLock lock;
     private String fileName;
-
-    private static NamedSemaphores semaphores = new NamedSemaphores();
 
     public DiskBlockStore(NetworkParameters params, File theFile) throws BlockStoreException {
         this.params = params;
@@ -79,7 +76,6 @@ public class DiskBlockStore implements BlockStore {
         } catch (IOException e) {
             throw new BlockStoreException(e);
         } finally {
-            semaphores.release(this.fileName);
             file = null;
         }
     }
@@ -213,13 +209,9 @@ public class DiskBlockStore implements BlockStore {
     }
 
     private void lock() throws IOException, BlockStoreException {
-        if (!semaphores.tryAcquire(fileName)) {
-            throw new BlockStoreException("File in use");
-        }
         try {
             lock = file.getChannel().tryLock();
         } catch (OverlappingFileLockException e) {
-            semaphores.release(fileName);
             lock = null;
         }
         if (lock == null) {
