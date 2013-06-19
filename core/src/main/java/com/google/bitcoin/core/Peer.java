@@ -18,7 +18,7 @@ package com.google.bitcoin.core;
 
 import com.google.bitcoin.store.BlockStore;
 import com.google.bitcoin.store.BlockStoreException;
-import com.google.bitcoin.utils.Locks;
+import com.google.bitcoin.utils.Threading;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
@@ -55,7 +55,7 @@ public class Peer {
 
     private static final Logger log = LoggerFactory.getLogger(Peer.class);
 
-    protected final ReentrantLock lock = Locks.lock("peer");
+    protected final ReentrantLock lock = Threading.lock("peer");
 
     private final NetworkParameters params;
     private final AbstractBlockChain blockChain;

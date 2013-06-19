@@ -27,7 +27,7 @@ import java.nio.channels.spi.SelectorProvider;
 import java.util.Iterator;
 import java.util.concurrent.locks.ReentrantLock;
 
-import com.google.bitcoin.utils.Locks;
+import com.google.bitcoin.utils.Threading;
 import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.LoggerFactory;
 
@@ -50,7 +50,7 @@ public class ProtobufServer {
     private static final int BUFFER_SIZE_UPPER_BOUND = 65536;
 
     private class ConnectionHandler extends MessageWriteTarget {
-        private final ReentrantLock lock = Locks.lock("protobufServerConnectionHandler");
+        private final ReentrantLock lock = Threading.lock("protobufServerConnectionHandler");
         private final ByteBuffer dbuf;
         private final SocketChannel channel;
         private final ProtobufParser parser;

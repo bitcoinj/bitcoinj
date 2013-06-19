@@ -16,7 +16,7 @@
 
 package com.google.bitcoin.core;
 
-import com.google.bitcoin.utils.Locks;
+import com.google.bitcoin.utils.Threading;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,7 +45,7 @@ import static com.google.common.base.Preconditions.checkState;
  */
 public class MemoryPool {
     private static final Logger log = LoggerFactory.getLogger(MemoryPool.class);
-    protected ReentrantLock lock = Locks.lock("mempool");
+    protected ReentrantLock lock = Threading.lock("mempool");
 
     // For each transaction we may have seen:
     //   - only its hash in an inv packet

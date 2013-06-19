@@ -20,7 +20,7 @@ package com.google.bitcoin.core;
 import com.google.bitcoin.core.Peer.PeerHandler;
 import com.google.bitcoin.discovery.PeerDiscovery;
 import com.google.bitcoin.discovery.PeerDiscoveryException;
-import com.google.bitcoin.utils.Locks;
+import com.google.bitcoin.utils.Threading;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.*;
@@ -71,7 +71,7 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
     private static final int DEFAULT_CONNECTIONS = 4;
 
     private static final Logger log = LoggerFactory.getLogger(PeerGroup.class);
-    protected final ReentrantLock lock = Locks.lock("peergroup");
+    protected final ReentrantLock lock = Threading.lock("peergroup");
 
     // These lists are all thread-safe so do not have to be accessed under the PeerGroup lock.
     // Addresses to try to connect to, excluding active peers.

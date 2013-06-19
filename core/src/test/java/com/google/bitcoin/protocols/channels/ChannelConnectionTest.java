@@ -17,7 +17,12 @@
 package com.google.bitcoin.protocols.channels;
 
 import com.google.bitcoin.core.*;
-import com.google.bitcoin.utils.Locks;
+import com.google.bitcoin.protocols.niowrapper.ProtobufParser;
+import com.google.bitcoin.protocols.niowrapper.ProtobufParserFactory;
+import com.google.bitcoin.protocols.niowrapper.ProtobufServer;
+import com.google.bitcoin.utils.Threading;
+import org.bitcoin.paymentchannel.Protos;
+import org.junit.Before;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.protobuf.ByteString;
@@ -83,13 +88,13 @@ public class ChannelConnectionTest extends TestWithWallet {
         // Because there are no separate threads in the tests here (we call back into client/server in server/client
         // handlers), we have lots of lock cycles. A normal user shouldn't have this issue as they are probably not both
         // client+server running in the same thread.
-        Locks.warnOnLockCycles();
+        Threading.warnOnLockCycles();
     }
 
     @After
     public void checkFail() {
         assertFalse(fail.get());
-        Locks.throwOnLockCycles();
+        Threading.throwOnLockCycles();
     }
 
     @Test

@@ -22,7 +22,7 @@ import com.google.bitcoin.crypto.KeyCrypter;
 import com.google.bitcoin.crypto.KeyCrypterException;
 import com.google.bitcoin.crypto.KeyCrypterScrypt;
 import com.google.bitcoin.store.WalletProtobufSerializer;
-import com.google.bitcoin.utils.Locks;
+import com.google.bitcoin.utils.Threading;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.*;
@@ -83,7 +83,7 @@ public class Wallet implements Serializable, BlockChainListener {
     private static final Logger log = LoggerFactory.getLogger(Wallet.class);
     private static final long serialVersionUID = 2L;
 
-    protected final ReentrantLock lock = Locks.lock("wallet");
+    protected final ReentrantLock lock = Threading.lock("wallet");
 
     // The various pools below give quick access to wallet-relevant transactions by the state they're in:
     //

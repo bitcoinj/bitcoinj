@@ -25,7 +25,7 @@ import java.util.TimerTask;
 import java.util.concurrent.locks.ReentrantLock;
 
 import com.google.bitcoin.core.*;
-import com.google.bitcoin.utils.Locks;
+import com.google.bitcoin.utils.Threading;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.HashMultimap;
 import net.jcip.annotations.GuardedBy;
@@ -46,7 +46,7 @@ public class StoredPaymentChannelClientStates implements WalletExtension {
     private Wallet containingWallet;
     private final TransactionBroadcaster announcePeerGroup;
 
-    protected final ReentrantLock lock = Locks.lock("StoredPaymentChannelClientStates");
+    protected final ReentrantLock lock = Threading.lock("StoredPaymentChannelClientStates");
 
     /**
      * Creates a new StoredPaymentChannelClientStates and associates it with the given {@link Wallet} and

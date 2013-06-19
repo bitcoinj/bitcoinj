@@ -21,7 +21,7 @@ import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
 
 import com.google.bitcoin.core.*;
-import com.google.bitcoin.utils.Locks;
+import com.google.bitcoin.utils.Threading;
 import com.google.common.annotations.VisibleForTesting;
 import net.jcip.annotations.GuardedBy;
 
@@ -41,7 +41,7 @@ public class StoredPaymentChannelServerStates implements WalletExtension {
 
     private final Timer channelTimeoutHandler = new Timer();
 
-    private final ReentrantLock lock = Locks.lock("StoredPaymentChannelServerStates");
+    private final ReentrantLock lock = Threading.lock("StoredPaymentChannelServerStates");
 
     /**
      * The offset between the refund transaction's lock time and the time channels will be automatically closed.

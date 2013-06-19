@@ -4,7 +4,7 @@ import java.math.BigInteger;
 import java.util.concurrent.locks.ReentrantLock;
 
 import com.google.bitcoin.core.*;
-import com.google.bitcoin.utils.Locks;
+import com.google.bitcoin.utils.Threading;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.protobuf.ByteString;
 import net.jcip.annotations.GuardedBy;
@@ -28,7 +28,7 @@ public class PaymentChannelServer {
     //TODO: Update JavaDocs with notes for communication over stateless protocols
     private static final org.slf4j.Logger log = LoggerFactory.getLogger(PaymentChannelServer.class);
 
-    protected final ReentrantLock lock = Locks.lock("channelserver");
+    protected final ReentrantLock lock = Threading.lock("channelserver");
 
     // The step in the initialization process we are in, some of this is duplicated in the PaymentChannelServerState
     private enum InitStep {

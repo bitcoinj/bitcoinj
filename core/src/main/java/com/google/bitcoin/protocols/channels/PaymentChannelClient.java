@@ -4,7 +4,7 @@ import java.math.BigInteger;
 import java.util.concurrent.locks.ReentrantLock;
 
 import com.google.bitcoin.core.*;
-import com.google.bitcoin.utils.Locks;
+import com.google.bitcoin.utils.Threading;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.protobuf.ByteString;
 import net.jcip.annotations.GuardedBy;
@@ -28,7 +28,7 @@ public class PaymentChannelClient {
     //TODO: Update JavaDocs with notes for communication over stateless protocols
     private static final org.slf4j.Logger log = LoggerFactory.getLogger(PaymentChannelClient.class);
 
-    protected final ReentrantLock lock = Locks.lock("channelclient");
+    protected final ReentrantLock lock = Threading.lock("channelclient");
 
     /**
      * Implements the connection between this client and the server, providing an interface which allows messages to be

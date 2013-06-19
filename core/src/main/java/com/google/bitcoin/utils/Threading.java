@@ -25,7 +25,7 @@ import static com.google.common.base.Preconditions.checkState;
 /**
  * A wrapper around explicit lock creation that lets you control whether bitcoinj performs cycle detection or not.
  */
-public class Locks {
+public class Threading {
 
     static {
         // Default policy goes here. If you want to change this, use one of the static methods before
@@ -54,7 +54,7 @@ public class Locks {
     }
 
     public static void setPolicy(CycleDetectingLockFactory.Policy policy) {
-        Locks.policy = policy;
+        Threading.policy = policy;
         factory = CycleDetectingLockFactory.newInstance(policy);
     }
 

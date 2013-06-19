@@ -17,7 +17,7 @@
 package com.google.bitcoin.store;
 
 import com.google.bitcoin.core.*;
-import com.google.bitcoin.utils.Locks;
+import com.google.bitcoin.utils.Threading;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,7 +53,7 @@ public class SPVBlockStore implements BlockStore {
     protected int numHeaders;
     protected NetworkParameters params;
 
-    protected ReentrantLock lock = Locks.lock("SPVBlockStore");
+    protected ReentrantLock lock = Threading.lock("SPVBlockStore");
 
     // The entire ring-buffer is mmapped and accessing it should be as fast as accessing regular memory once it's
     // faulted in. Unfortunately, in theory practice and theory are the same. In practice they aren't.

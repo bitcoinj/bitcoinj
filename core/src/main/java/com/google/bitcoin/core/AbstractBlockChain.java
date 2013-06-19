@@ -18,7 +18,7 @@ package com.google.bitcoin.core;
 
 import com.google.bitcoin.store.BlockStore;
 import com.google.bitcoin.store.BlockStoreException;
-import com.google.bitcoin.utils.Locks;
+import com.google.bitcoin.utils.Threading;
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
@@ -77,7 +77,7 @@ import static com.google.common.base.Preconditions.*;
  */
 public abstract class AbstractBlockChain {
     private static final Logger log = LoggerFactory.getLogger(AbstractBlockChain.class);
-    protected ReentrantLock lock = Locks.lock("blockchain");
+    protected ReentrantLock lock = Threading.lock("blockchain");
 
     /** Keeps a map of block hashes to StoredBlocks. */
     private final BlockStore blockStore;
