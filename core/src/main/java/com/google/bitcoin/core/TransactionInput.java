@@ -371,7 +371,7 @@ public class TransactionInput extends ChildMessage implements Serializable {
     }
 
     /**
-     * @returns true if this transaction's sequence number is set (ie it may be a part of a time-locked transaction)
+     * @return true if this transaction's sequence number is set (ie it may be a part of a time-locked transaction)
      */
     public boolean hasSequence() {
         return sequence != NO_SEQUENCE;
@@ -380,14 +380,32 @@ public class TransactionInput extends ChildMessage implements Serializable {
     /**
      * For a connected transaction, runs the script against the connected pubkey and verifies they are correct.
      * @throws ScriptException if the script did not verify.
+     * @throws VerificationException If the outpoint doesn't match the given output.
      */
-    public void verify() throws ScriptException {
-        Preconditions.checkNotNull(getOutpoint().fromTx, "Not connected");
+    public void verify() throws VerificationException {
+        final Transaction fromTx = getOutpoint().fromTx;
         long spendingIndex = getOutpoint().getIndex();
-        Script pubKey = getOutpoint().fromTx.getOutputs().get((int) spendingIndex).getScriptPubKey();
-        Script sig = getScriptSig();
+        checkNotNull(fromTx, "Not connected");
+        final TransactionOutput output = fromTx.getOutput((int) spendingIndex);
+        verify(output);
+    }
+
+    /**
+     * Verifies that this input can spend the given output. Note that this input must be a part of a transaction.
+     * Also note that the consistency of the outpoint will be checked, even if this input has not been connected.
+     *
+     * @param output the output that this input is supposed to spend.
+     * @throws ScriptException If the script doesn't verify.
+     * @throws VerificationException If the outpoint doesn't match the given output.
+     */
+    public void verify(TransactionOutput output) throws VerificationException {
+        if (!getOutpoint().getHash().equals(output.parentTransaction.getHash()))
+            throw new VerificationException("This input does not refer to the tx containing the output.");
+        if (getOutpoint().getIndex() != output.getIndex())
+            throw new VerificationException("This input refers to a different output on the given tx.");
+        Script pubKey = output.getScriptPubKey();
         int myIndex = parentTransaction.getInputs().indexOf(this);
-        sig.correctlySpends(parentTransaction, myIndex, pubKey, true);
+        getScriptSig().correctlySpends(parentTransaction, myIndex, pubKey, true);
     }
 
     /**
