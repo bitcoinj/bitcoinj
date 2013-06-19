@@ -28,11 +28,14 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.*;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
+import com.google.common.util.concurrent.Uninterruptibles;
 import org.bitcoinj.wallet.Protos.Wallet.EncryptionType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.crypto.params.KeyParameter;
 
+import javax.annotation.Nullable;
+import javax.annotation.concurrent.GuardedBy;
 import java.io.*;
 import java.math.BigInteger;
 import java.util.*;
@@ -294,7 +297,8 @@ public class Wallet implements Serializable, BlockChainListener {
             public void onConfidenceChanged(Transaction tx) {
                 lock.lock();
                 // The invokers unlock us immediately so if an exception is thrown, the lock will be already open.
-                invokeOnTransactionConfidenceChanged(tx);
+                checkBalanceFuturesLocked(null);
+                queueOnTransactionConfidenceChanged(tx);
                 // Many onWalletChanged events will not occur because they are suppressed, eg, because:
                 //   - we are inside a re-org
                 //   - we are in the middle of processing a block
@@ -304,7 +308,7 @@ public class Wallet implements Serializable, BlockChainListener {
                 //   - the tx is pending and was killed by a detected double spend that was not in a block
                 // The latter case cannot happen today because we won't hear about it, but in future this may
                 // become more common if conflict notices are implemented.
-                invokeOnWalletChanged();
+                maybeQueueOnWalletChanged();
                 lock.unlock();
             }
         };
@@ -856,7 +860,8 @@ public class Wallet implements Serializable, BlockChainListener {
                 tx.getConfidence().setConfidenceType(ConfidenceType.PENDING);
                 // Manually invoke the wallet tx confidence listener here as we didn't yet commit therefore the
                 // txConfidenceListener wasn't added.
-                invokeOnTransactionConfidenceChanged(tx);
+                checkBalanceFuturesLocked(null);
+                queueOnTransactionConfidenceChanged(tx);
             }
             // If this tx spends any of our unspent outputs, mark them as spent now, then add to the pending pool. This
             // ensures that if some other client that has our keys broadcasts a spend we stay in sync. Also updates the
@@ -1088,12 +1093,13 @@ public class Wallet implements Serializable, BlockChainListener {
             // We pick one callback based on the value difference, though a tx can of course both send and receive
             // coins from the wallet.
             if (diff > 0) {
-                invokeOnCoinsReceived(tx, prevBalance, newBalance);
+                checkBalanceFuturesLocked(newBalance);
+                queueOnCoinsReceived(tx, prevBalance, newBalance);
             } else if (diff < 0) {
-                invokeOnCoinsSent(tx, prevBalance, newBalance);
+                queueOnCoinsSent(tx, prevBalance, newBalance);
             } else {
                 // We have a transaction that didn't change our balance. Probably we sent coins between our own keys.
-                invokeOnWalletChanged();
+                maybeQueueOnWalletChanged();
             }
         }
 
@@ -1139,7 +1145,7 @@ public class Wallet implements Serializable, BlockChainListener {
             }
             queueAutoSave();
             onWalletChangedSuppressions--;
-            invokeOnWalletChanged();
+            maybeQueueOnWalletChanged();
         } finally {
             lock.unlock();
         }
@@ -1383,12 +1389,14 @@ public class Wallet implements Serializable, BlockChainListener {
                 BigInteger valueSentFromMe = tx.getValueSentFromMe(this);
                 BigInteger valueSentToMe = tx.getValueSentToMe(this);
                 BigInteger newBalance = balance.add(valueSentToMe).subtract(valueSentFromMe);
-                if (valueSentToMe.compareTo(BigInteger.ZERO) > 0)
-                    invokeOnCoinsReceived(tx, balance, newBalance);
+                if (valueSentToMe.compareTo(BigInteger.ZERO) > 0) {
+                    checkBalanceFuturesLocked(null);
+                    queueOnCoinsReceived(tx, balance, newBalance);
+                }
                 if (valueSentFromMe.compareTo(BigInteger.ZERO) > 0)
-                    invokeOnCoinsSent(tx, balance, newBalance);
+                    queueOnCoinsSent(tx, balance, newBalance);
 
-                invokeOnWalletChanged();
+                maybeQueueOnWalletChanged();
             } catch (ScriptException e) {
                 // Cannot happen as we just created this transaction ourselves.
                 throw new RuntimeException(e);
@@ -2444,11 +2452,13 @@ public class Wallet implements Serializable, BlockChainListener {
                 }
                 notifyNewBestBlock(block);
             }
-            log.info("post-reorg balance is {}", Utils.bitcoinValueToFriendlyString(getBalance()));
+            final BigInteger balance = getBalance();
+            log.info("post-reorg balance is {}", Utils.bitcoinValueToFriendlyString(balance));
             // Inform event listeners that a re-org took place. They should save the wallet at this point.
-            invokeOnReorganize();
+            checkBalanceFuturesLocked(balance);
+            queueOnReorganize();
             onWalletChangedSuppressions--;
-            invokeOnWalletChanged();
+            maybeQueueOnWalletChanged();
             checkState(isConsistent());
         } finally {
             lock.unlock();
@@ -2934,43 +2944,78 @@ public class Wallet implements Serializable, BlockChainListener {
         setCoinSelector(Wallet.AllowUnconfirmedCoinSelector.get());
     }
 
+    private static class BalanceFutureRequest {
+        public SettableFuture<BigInteger> future;
+        public BigInteger value;
+        public BalanceType type;
+    }
+    @GuardedBy("lock") private List<BalanceFutureRequest> balanceFutureRequests = Lists.newLinkedList();
+
     /**
-     * Returns a future that will complete when the balance of the given type is equal or larger to the given value.
-     * If the wallet already has a large enough balance the future is returned in a pre-completed state. Note that this
-     * method is not blocking, if you want to <i>actually</i> wait immediately, you have to call .get() on the result.
+     * <p>Returns a future that will complete when the balance of the given type has becom equal or larger to the given
+     * value. If the wallet already has a large enough balance the future is returned in a pre-completed state. Note
+     * that this method is not blocking, if you want to actually wait immediately, you have to call .get() on
+     * the result.</p>
+     *
+     * <p>Also note that by the time the future completes, the wallet may have changed yet again if something else
+     * is going on in parallel, so you should treat the returned balance as advisory and be prepared for sending
+     * money to fail! Finally please be aware that any listeners on the future will run either on the calling thread
+     * if it completes immediately, or eventually on a background thread if the balance is not yet at the right
+     * level. If you do something that means you know the balance should be sufficient to trigger the future,
+     * you can use {@link com.google.bitcoin.utils.Threading#waitForUserCode()} to block until the future had a
+     * chance to be updated.</p>
      */
     public ListenableFuture<BigInteger> getBalanceFuture(final BigInteger value, final BalanceType type) {
-        final SettableFuture<BigInteger> future = SettableFuture.create();
-        final BigInteger current = getBalance(type);
-        if (current.compareTo(value) >= 0) {
-            // Already have enough.
-            future.set(current);
+        lock.lock();
+        try {
+            final SettableFuture<BigInteger> future = SettableFuture.create();
+            final BigInteger current = getBalance(type);
+            if (current.compareTo(value) >= 0) {
+                // Already have enough.
+                future.set(current);
+            } else {
+                // Will be checked later in checkBalanceFutures. We don't just add an event listener for ourselves
+                // here so that running getBalanceFuture().get() in the user code thread works - generally we must
+                // avoid giving the user back futures that require the user code thread to be free.
+                BalanceFutureRequest req = new BalanceFutureRequest();
+                req.future = future;
+                req.value = value;
+                req.type = type;
+                balanceFutureRequests.add(req);
+            }
             return future;
+        } finally {
+            lock.unlock();
         }
-        addEventListener(new AbstractWalletEventListener() {
-            private boolean done = false;
+    }
 
-            @Override
-            public void onTransactionConfidenceChanged(Wallet wallet, Transaction tx) {
-                check();
+    // Runs any balance futures in the user code thread.
+    private void checkBalanceFuturesLocked(@Nullable BigInteger avail) {
+        checkState(lock.isLocked());
+        BigInteger estimated = null;
+        final ListIterator<BalanceFutureRequest> it = balanceFutureRequests.listIterator();
+        while (it.hasNext()) {
+            final BalanceFutureRequest req = it.next();
+            BigInteger val = null;
+            if (req.type == BalanceType.AVAILABLE) {
+                if (avail == null) avail = getBalance(BalanceType.AVAILABLE);
+                if (avail.compareTo(req.value) < 0) continue;
+                val = avail;
+            } else if (req.type == BalanceType.ESTIMATED) {
+                if (estimated == null) estimated = getBalance(BalanceType.ESTIMATED);
+                if (estimated.compareTo(req.value) < 0) continue;
+                val = estimated;
             }
-
-            private void check() {
-                final BigInteger newBalance = getBalance(type);
-                if (!done && newBalance.compareTo(value) >= 0) {
-                    // Have enough now.
-                    done = true;
-                    removeEventListener(this);
-                    future.set(newBalance);
+            // Found one that's finished.
+            it.remove();
+            final BigInteger v = checkNotNull(val);
+            // Don't run any user-provided future listeners with our lock held.
+            Threading.userCode.execute(new Runnable() {
+                @Override public void run() {
+                    req.future.set(v);
                 }
-            }
-
-            @Override
-            public void onCoinsReceived(Wallet w, Transaction t, BigInteger b1, BigInteger b2) {
-                check();
-            }
-        });
-        return future;
+            });
+        }
     }
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -3041,70 +3086,66 @@ public class Wallet implements Serializable, BlockChainListener {
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //
-    // Boilerplate for running event listeners - unlocks the wallet, runs, re-locks.
+    // Boilerplate for running event listeners - dispatches events onto the user code thread (where we don't do
+    // anything and hold no locks).
 
-    private void invokeOnTransactionConfidenceChanged(Transaction tx) {
+    private void queueOnTransactionConfidenceChanged(final Transaction tx) {
         checkState(lock.isLocked());
-        lock.unlock();
-        try {
-            for (WalletEventListener listener : eventListeners) {
-                listener.onTransactionConfidenceChanged(this, tx);
-            }
-        } finally {
-            lock.lock();
+        for (final WalletEventListener listener : eventListeners) {
+            Threading.userCode.execute(new Runnable() {
+                @Override public void run() {
+                    listener.onTransactionConfidenceChanged(Wallet.this, tx);
+                }
+            });
         }
     }
 
     private int onWalletChangedSuppressions = 0;
-    private void invokeOnWalletChanged() {
+    private void maybeQueueOnWalletChanged() {
         // Don't invoke the callback in some circumstances, eg, whilst we are re-organizing or fiddling with
         // transactions due to a new block arriving. It will be called later instead.
         checkState(lock.isLocked());
-        Preconditions.checkState(onWalletChangedSuppressions >= 0);
+        checkState(onWalletChangedSuppressions >= 0);
         if (onWalletChangedSuppressions > 0) return;
-        lock.unlock();
-        try {
-            for (WalletEventListener listener : eventListeners) {
-                listener.onWalletChanged(this);
-            }
-        } finally {
-            lock.lock();
+        for (final WalletEventListener listener : eventListeners) {
+            Threading.userCode.execute(new Runnable() {
+                @Override public void run() {
+                    listener.onWalletChanged(Wallet.this);
+                }
+            });
         }
     }
 
-    private void invokeOnCoinsReceived(Transaction tx, BigInteger balance, BigInteger newBalance) {
+    private void queueOnCoinsReceived(final Transaction tx, final BigInteger balance, final BigInteger newBalance) {
         checkState(lock.isLocked());
-        lock.unlock();
-        try {
-            for (WalletEventListener listener : eventListeners) {
-                listener.onCoinsReceived(Wallet.this, tx, balance, newBalance);
-            }
-        } finally {
-            lock.lock();
+        for (final WalletEventListener listener : eventListeners) {
+            Threading.userCode.execute(new Runnable() {
+                @Override public void run() {
+                    listener.onCoinsReceived(Wallet.this, tx, balance, newBalance);
+                }
+            });
         }
     }
 
-    private void invokeOnCoinsSent(Transaction tx, BigInteger prevBalance, BigInteger newBalance) {
+    private void queueOnCoinsSent(final Transaction tx, final BigInteger prevBalance, final BigInteger newBalance) {
         checkState(lock.isLocked());
-        lock.unlock();
-        try {
-            for (WalletEventListener listener : eventListeners) {
-                listener.onCoinsSent(Wallet.this, tx, prevBalance, newBalance);
-            }
-        } finally {
-            lock.lock();
+        for (final WalletEventListener listener : eventListeners) {
+            Threading.userCode.execute(new Runnable() {
+                @Override public void run() {
+                    listener.onCoinsSent(Wallet.this, tx, prevBalance, newBalance);
+                }
+            });
         }
     }
 
-    private void invokeOnReorganize() {
+    private void queueOnReorganize() {
         checkState(lock.isLocked());
-        lock.unlock();
-        try {
-            for (WalletEventListener listener : eventListeners) {
-                listener.onReorganize(Wallet.this);
-            }
-        } finally {
-            lock.lock();
+        for (final WalletEventListener listener : eventListeners) {
+            Threading.userCode.execute(new Runnable() {
+                @Override public void run() {
+                    listener.onReorganize(Wallet.this);
+                }
+            });
         }
     }
 

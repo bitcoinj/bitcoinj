@@ -20,6 +20,7 @@ import com.google.bitcoin.core.TransactionConfidence.ConfidenceType;
 import com.google.bitcoin.params.UnitTestParams;
 import com.google.bitcoin.store.MemoryBlockStore;
 import com.google.bitcoin.utils.BriefLogFormatter;
+import com.google.bitcoin.utils.Threading;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -78,6 +79,7 @@ public class ChainSplitTest {
         Block b2 = b1.createNextBlock(coinsTo);
         assertTrue(chain.add(b1));
         assertTrue(chain.add(b2));
+        Threading.waitForUserCode();
         assertFalse(reorgHappened[0]);
         assertEquals(2, walletChanged[0]);
         // We got two blocks which generated 50 coins each, to us.
@@ -93,6 +95,7 @@ public class ChainSplitTest {
         // Nothing should happen at this point. We saw b2 first so it takes priority.
         Block b3 = b1.createNextBlock(someOtherGuy);
         assertTrue(chain.add(b3));
+        Threading.waitForUserCode();
         assertFalse(reorgHappened[0]);  // No re-org took place.
         assertEquals(2, walletChanged[0]);
         assertEquals("100.00", Utils.bitcoinValueToFriendlyString(wallet.getBalance()));
@@ -108,11 +111,13 @@ public class ChainSplitTest {
         b8.addTransaction(b7.getTransactions().get(1));
         b8.solve();
         assertTrue(chain.add(b8));
+        Threading.waitForUserCode();
         assertFalse(reorgHappened[0]);  // No re-org took place.
         assertEquals(2, walletChanged[0]);
         assertEquals("100.00", Utils.bitcoinValueToFriendlyString(wallet.getBalance()));
         // Now we add another block to make the alternative chain longer.
         assertTrue(chain.add(b3.createNextBlock(someOtherGuy)));
+        Threading.waitForUserCode();
         assertTrue(reorgHappened[0]);  // Re-org took place.
         assertEquals(3, walletChanged[0]);
         reorgHappened[0] = false;
@@ -131,6 +136,7 @@ public class ChainSplitTest {
         //     genesis -> b1 -> b2 -> b5 -> b6
         //                  \-> b3 -> b4
         //
+        Threading.waitForUserCode();
         assertTrue(reorgHappened[0]);
         assertEquals(4, walletChanged[0]);
         assertEquals("200.00", Utils.bitcoinValueToFriendlyString(wallet.getBalance()));
@@ -292,7 +298,7 @@ public class ChainSplitTest {
         chain.add(b3);  // Side chain.
         Block b4 = b3.createNextBlock(new ECKey().toAddress(unitTestParams));
         chain.add(b4);  // New best chain.
-
+        Threading.waitForUserCode();
         // Should have seen a double spend.
         assertTrue(eventCalled[0]);
         assertEquals(Utils.toNanoCoins(30, 0), wallet.getBalance());
@@ -339,7 +345,7 @@ public class ChainSplitTest {
         chain.add(b3);  // Side chain.
         Block b4 = b3.createNextBlock(new ECKey().toAddress(unitTestParams));
         chain.add(b4);  // New best chain.
-
+        Threading.waitForUserCode();
         // Should have seen a double spend against the pending pool.
         // genesis -> b1 -> b2 [t1 dead and exited the miners mempools]
         //              \-> b3 (t2) -> b4
@@ -384,7 +390,7 @@ public class ChainSplitTest {
         assertTrue(chain.add(b1));
         assertTrue(chain.add(b2));
         assertTrue(chain.add(b3));
-
+        Threading.waitForUserCode();
         // Check the transaction confidence levels are correct.
         assertEquals(3, txns.size());
 
@@ -417,6 +423,7 @@ public class ChainSplitTest {
 
         assertTrue(chain.add(b4));
         assertTrue(chain.add(b5));
+        Threading.waitForUserCode();
         assertEquals(3, txns.size());
 
         assertEquals(1, txns.get(0).getConfidence().getAppearedAtChainHeight());
@@ -535,6 +542,7 @@ public class ChainSplitTest {
         //
 
         // Check we have seen the three transactions.
+        Threading.waitForUserCode();
         assertEquals(3, txns.size());
 
         // Check the coinbase transaction is building and in the unspent pool only.
@@ -560,6 +568,7 @@ public class ChainSplitTest {
         assertTrue(chain.add(b5));
         log.debug("Adding block b6");
         assertTrue(chain.add(b6));
+        Threading.waitForUserCode();
 
         // Transaction 1 (in block b2) is now on a side chain and should have confidence type of dead and be in the dead pool only
         assertEquals(TransactionConfidence.ConfidenceType.DEAD, txns.get(1).getConfidence().getConfidenceType());
@@ -576,6 +585,7 @@ public class ChainSplitTest {
         assertTrue(chain.add(b7));
         log.debug("Adding block b8");
         assertTrue(chain.add(b8));
+        Threading.waitForUserCode();
 
         //
         //     genesis -> b1 -> b2 -> b3 -> b7 -> b8
@@ -597,6 +607,8 @@ public class ChainSplitTest {
         assertTrue(chain.add(b9));
         log.debug("Adding block b10");
         assertTrue(chain.add(b10));
+        Threading.waitForUserCode();
+
         //
         //     genesis -> b1 -> b2 -> b3 -> b7 -> b8
         //                  \-> b4 -> b5 -> b6 -> b9 -> b10

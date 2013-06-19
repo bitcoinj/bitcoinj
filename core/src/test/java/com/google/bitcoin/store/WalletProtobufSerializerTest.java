@@ -6,6 +6,7 @@ import com.google.bitcoin.core.TransactionConfidence.ConfidenceType;
 import com.google.bitcoin.params.MainNetParams;
 import com.google.bitcoin.params.UnitTestParams;
 import com.google.bitcoin.utils.BriefLogFormatter;
+import com.google.bitcoin.utils.Threading;
 import com.google.protobuf.ByteString;
 import org.bitcoinj.wallet.Protos;
 import org.junit.Before;
@@ -180,6 +181,7 @@ public class WalletProtobufSerializerTest {
         //     genesis -> b1 -> b2
 
         // Check the transaction confidence levels are correct before wallet roundtrip.
+        Threading.waitForUserCode();
         assertEquals(2, txns.size());
 
         TransactionConfidence confidence0 = txns.get(0).getConfidence();

@@ -22,6 +22,7 @@ import com.google.bitcoin.core.WalletTransaction.Pool;
 import com.google.bitcoin.crypto.KeyCrypter;
 import com.google.bitcoin.crypto.KeyCrypterException;
 import com.google.bitcoin.crypto.KeyCrypterScrypt;
+import com.google.bitcoin.utils.Threading;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.protobuf.ByteString;
@@ -179,6 +180,7 @@ public class WalletTest extends TestWithWallet {
         assertFalse(availFuture.isDone());
         assertFalse(estimatedFuture.isDone());
         Transaction t1 = sendMoneyToWallet(wallet, v1, toAddress, null);
+        Threading.waitForUserCode();
         final ListenableFuture<Transaction> depthFuture = t1.getConfidence().getDepthFuture(1);
         assertFalse(depthFuture.isDone());
         assertEquals(BigInteger.ZERO, wallet.getBalance());
@@ -192,6 +194,7 @@ public class WalletTest extends TestWithWallet {
         assertEquals("Incorrect confirmed tx PENDING pool size", 0, wallet.getPoolSize(WalletTransaction.Pool.PENDING));
         assertEquals("Incorrect confirmed tx UNSPENT pool size", 1, wallet.getPoolSize(WalletTransaction.Pool.UNSPENT));
         assertEquals("Incorrect confirmed tx ALL pool size", 1, wallet.getPoolSize(WalletTransaction.Pool.ALL));
+        Threading.waitForUserCode();
         assertTrue(availFuture.isDone());
         assertTrue(estimatedFuture.isDone());
         assertTrue(depthFuture.isDone());
@@ -221,6 +224,7 @@ public class WalletTest extends TestWithWallet {
         t.getConfidence().markBroadcastBy(new PeerAddress(InetAddress.getByAddress(new byte[]{1,2,3,4})));
         t.getConfidence().markBroadcastBy(new PeerAddress(InetAddress.getByAddress(new byte[]{10,2,3,4})));
         wallet.commitTx(t);
+        Threading.waitForUserCode();
         assertEquals(1, wallet.getPoolSize(WalletTransaction.Pool.PENDING));
         assertEquals(1, wallet.getPoolSize(WalletTransaction.Pool.SPENT));
         assertEquals(2, wallet.getPoolSize(WalletTransaction.Pool.ALL));
@@ -374,6 +378,7 @@ public class WalletTest extends TestWithWallet {
         // Receive some money.
         BigInteger oneCoin = Utils.toNanoCoins(1, 0);
         Transaction tx1 = sendMoneyToWallet(oneCoin, AbstractBlockChain.NewBlockType.BEST_CHAIN);
+        Threading.waitForUserCode();
         assertEquals(null, txn[1]);  // onCoinsSent not called.
         assertEquals(tx1, confTxns.getFirst());   // onTransactionConfidenceChanged called
         assertEquals(txn[0].getHash(), tx1.getHash());
@@ -389,6 +394,7 @@ public class WalletTest extends TestWithWallet {
         txn[0] = txn[1] = null;
         confTxns.clear();
         sendMoneyToWallet(send1, AbstractBlockChain.NewBlockType.BEST_CHAIN);
+        Threading.waitForUserCode();
         assertEquals(bitcoinValueToFriendlyString(wallet.getBalance()), "0.90");
         assertEquals(null, txn[0]);
         assertEquals(2, confTxns.size());
@@ -401,9 +407,11 @@ public class WalletTest extends TestWithWallet {
         wallet.commitTx(send2);
         sendMoneyToWallet(send2, AbstractBlockChain.NewBlockType.BEST_CHAIN);
         assertEquals(bitcoinValueToFriendlyString(wallet.getBalance()), "0.80");
+        Threading.waitForUserCode();
         BlockPair b4 = createFakeBlock(blockStore);
         confTxns.clear();
         wallet.notifyNewBestBlock(b4.storedBlock);
+        Threading.waitForUserCode();
         assertEquals(3, confTxns.size());
     }
 
@@ -581,6 +589,7 @@ public class WalletTest extends TestWithWallet {
         assertEquals(send1, received.getOutput(0).getSpentBy().getParentTransaction());
         // Receive a block that overrides it.
         sendMoneyToWallet(send2, AbstractBlockChain.NewBlockType.BEST_CHAIN);
+        Threading.waitForUserCode();
         assertEquals(send1, eventDead[0]);
         assertEquals(send2, eventReplacement[0]);
         assertEquals(TransactionConfidence.ConfidenceType.DEAD,
@@ -593,6 +602,7 @@ public class WalletTest extends TestWithWallet {
         assertEquals(TransactionConfidence.ConfidenceType.PENDING,
                 doubleSpends.t1.getConfidence().getConfidenceType());
         sendMoneyToWallet(doubleSpends.t2, AbstractBlockChain.NewBlockType.BEST_CHAIN);
+        Threading.waitForUserCode();
         assertEquals(TransactionConfidence.ConfidenceType.DEAD,
                      doubleSpends.t1.getConfidence().getConfidenceType());
         assertEquals(doubleSpends.t2, doubleSpends.t1.getConfidence().getOverridingTransaction());
@@ -630,6 +640,7 @@ public class WalletTest extends TestWithWallet {
 
         if (wallet.isPendingTransactionRelevant(t1))
             wallet.receivePending(t1, null);
+        Threading.waitForUserCode();
         assertTrue(flags[0]);
         assertTrue(flags[1]);   // is pending
         flags[0] = false;
@@ -649,6 +660,7 @@ public class WalletTest extends TestWithWallet {
                 notifiedTx[0].getConfidence().getConfidenceType());
         final Transaction t1Copy = new Transaction(params, t1.bitcoinSerialize());
         sendMoneyToWallet(t1Copy, AbstractBlockChain.NewBlockType.BEST_CHAIN);
+        Threading.waitForUserCode();
         assertFalse(flags[0]);
         assertTrue(flags[1]);
         assertEquals(TransactionConfidence.ConfidenceType.BUILDING, notifiedTx[0].getConfidence().getConfidenceType());
@@ -658,6 +670,7 @@ public class WalletTest extends TestWithWallet {
         Transaction irrelevant = createFakeTx(params, nanos, new ECKey().toAddress(params));
         if (wallet.isPendingTransactionRelevant(irrelevant))
             wallet.receivePending(irrelevant, null);
+        Threading.waitForUserCode();
         assertFalse(flags[0]);
         assertEquals(2, walletChanged[0]);
     }
@@ -686,6 +699,7 @@ public class WalletTest extends TestWithWallet {
         if (wallet.isPendingTransactionRelevant(t2))
             wallet.receivePending(t2, null);
         // We received an onCoinsSent() callback.
+        Threading.waitForUserCode();
         assertEquals(t2, txn[0]);
         assertEquals(nanos, bigints[0]);
         assertEquals(halfNanos, bigints[1]);
@@ -734,11 +748,13 @@ public class WalletTest extends TestWithWallet {
         assertEquals(BigInteger.ZERO, wallet.getBalance());
         if (wallet.isPendingTransactionRelevant(t1))
             wallet.receivePending(t1, null);
+        Threading.waitForUserCode();
         assertEquals(t1, called[0]);
         assertEquals(nanos, wallet.getBalance(Wallet.BalanceType.ESTIMATED));
         // Now receive a double spend on the main chain.
         called[0] = called[1] = null;
         sendMoneyToWallet(t2, AbstractBlockChain.NewBlockType.BEST_CHAIN);
+        Threading.waitForUserCode();
         assertEquals(BigInteger.ZERO, wallet.getBalance());
         assertEquals(t1, called[0]); // dead
         assertEquals(t2, called[1]); // replacement

@@ -17,6 +17,7 @@
 package com.google.bitcoin.core;
 
 import com.google.bitcoin.core.Peer.PeerHandler;
+import com.google.bitcoin.utils.Threading;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.easymock.Capture;
@@ -635,12 +636,14 @@ public class PeerTest extends TestWithNetworkConnections {
         } else {
             bouncePing();
         }
+        Threading.waitForUserCode();
         assertNotNull(vtx[0]);
         vtx[0] = null;
         // Send a timelocked transaction, nothing happens.
         Transaction t2 = TestUtils.createFakeTx(unitTestParams, Utils.toNanoCoins(2, 0), key);
         t2.setLockTime(999999);
         inbound(peer, t2);
+        Threading.waitForUserCode();
         assertNull(vtx[0]);
         // Now we want to hear about them. Send another, we are told about it.
         wallet.setAcceptTimeLockedTransactions(true);
@@ -651,6 +654,7 @@ public class PeerTest extends TestWithNetworkConnections {
         } else {
             bouncePing();
         }
+        Threading.waitForUserCode();
         assertEquals(t2, vtx[0]);
     }
 
@@ -734,6 +738,7 @@ public class PeerTest extends TestWithNetworkConnections {
         } else {
             bouncePing();
         }
+        Threading.waitForUserCode();
         // We're done but still not notified because it was timelocked.
         if (shouldAccept)
             assertNotNull(vtx[0]);

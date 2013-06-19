@@ -20,6 +20,7 @@ import com.google.bitcoin.discovery.PeerDiscovery;
 import com.google.bitcoin.discovery.PeerDiscoveryException;
 import com.google.bitcoin.params.UnitTestParams;
 import com.google.bitcoin.store.MemoryBlockStore;
+import com.google.bitcoin.utils.Threading;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -285,6 +286,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         Address dest = new ECKey().toAddress(params);
         Wallet.SendResult sendResult = wallet.sendCoins(peerGroup, dest, Utils.toNanoCoins(1, 0));
         assertNotNull(sendResult.tx);
+        Threading.waitForUserCode();
         assertFalse(sendResult.broadcastComplete.isDone());
         assertEquals(transactions[0], sendResult.tx);
         assertEquals(transactions[0].getConfidence().numBroadcastPeers(), 1);
@@ -298,6 +300,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         inv.addTransaction(t1);
         inbound(p2, inv);
         assertTrue(sendResult.broadcastComplete.isDone());
+        Threading.waitForUserCode();
         assertEquals(transactions[0], sendResult.tx);
         assertEquals(transactions[0].getConfidence().numBroadcastPeers(), 2);
         // Confirm it.
