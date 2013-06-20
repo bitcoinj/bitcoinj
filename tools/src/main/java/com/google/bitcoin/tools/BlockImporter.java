@@ -14,7 +14,6 @@ import com.google.bitcoin.params.TestNet3Params;
 import com.google.bitcoin.store.BlockStore;
 import com.google.bitcoin.store.BlockStoreException;
 import com.google.bitcoin.store.BoundedOverheadBlockStore;
-import com.google.bitcoin.store.DiskBlockStore;
 import com.google.bitcoin.store.FullPrunedBlockStore;
 import com.google.bitcoin.store.H2FullPrunedBlockStore;
 import com.google.bitcoin.store.MemoryBlockStore;
@@ -45,9 +44,6 @@ public class BlockImporter {
         } else if (args[1].equals("BoundedOverhead")) {
             Preconditions.checkArgument(args.length == 3);
             store = new BoundedOverheadBlockStore(params, new File(args[2]));
-        } else if (args[1].equals("Disk")) {
-            Preconditions.checkArgument(args.length == 3);
-            store = new DiskBlockStore(params, new File(args[2]));
         } else if (args[1].equals("MemFull")) {
             Preconditions.checkArgument(args.length == 2);
             store = new MemoryFullPrunedBlockStore(params, 100);
