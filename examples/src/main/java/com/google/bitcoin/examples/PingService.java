@@ -138,7 +138,6 @@ public class PingService {
         wallet.addEventListener(new AbstractWalletEventListener() {
             @Override
             public void onCoinsReceived(Wallet w, Transaction tx, BigInteger prevBalance, BigInteger newBalance) {
-                // MUST BE THREAD SAFE
                 assert !newBalance.equals(BigInteger.ZERO);
                 if (!tx.isPending()) return;
                 // It was broadcast, but we can't really verify it's valid until it appears in a block.
@@ -146,23 +145,12 @@ public class PingService {
                 System.out.println("Received pending tx for " + Utils.bitcoinValueToFriendlyString(value) +
                         ": " + tx);
                 tx.getConfidence().addEventListener(new TransactionConfidence.Listener() {
-                    public void onConfidenceChanged(final Transaction tx2) {
-                        // Must be thread safe.
+                    public void onConfidenceChanged(final Transaction tx2, TransactionConfidence.Listener.ChangeReason reason) {
                         if (tx2.getConfidence().getConfidenceType() == TransactionConfidence.ConfidenceType.BUILDING) {
                             // Coins were confirmed (appeared in a block).
                             tx2.getConfidence().removeEventListener(this);
 
-                            // Run the process of sending the coins back on a separate thread. This is a temp hack
-                            // until the threading changes in 0.9 are completed ... TX confidence listeners run
-                            // with the wallet lock held and re-entering the wallet isn't always safe. We can solve
-                            // this by just interacting with the wallet from a separate thread, which will wait until
-                            // this thread is finished. It's a dumb API requirement and will go away soon.
-                            new Thread() {
-                                @Override
-                                public void run() {
-                                    bounceCoins(wallet, tx2);
-                                }
-                            }.start();
+                            forwardCoins(wallet, tx2);
                         } else {
                             System.out.println(String.format("Confidence of %s changed, is now: %s",
                                     tx2.getHashAsString(), tx2.getConfidence().toString()));
@@ -190,15 +178,13 @@ public class PingService {
         peerGroup.downloadBlockChain();
         System.out.println("Send coins to: " + key.toAddress(params).toString());
         System.out.println("Waiting for coins to arrive. Press Ctrl-C to quit.");
+
         try {
             Thread.sleep(Long.MAX_VALUE);
         } catch (InterruptedException e) {}
     }
 
-    private void bounceCoins(final Wallet wallet, Transaction tx) {
-        // It's impossible to pick one specific identity that you receive coins from in Bitcoin as there
-        // could be inputs from many addresses. So instead we just pick the first and assume they were all
-        // owned by the same person.
+    private void forwardCoins(final Wallet wallet, Transaction tx) {
         try {
             BigInteger value = tx.getValueSentToMe(wallet);
             TransactionInput input = tx.getInputs().get(0);

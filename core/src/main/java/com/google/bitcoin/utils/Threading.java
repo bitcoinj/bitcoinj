@@ -43,7 +43,10 @@ public class Threading {
 
     /**
      * Put a dummy task into the queue and wait for it to be run. Because it's single threaded, this means all
-     * tasks submitted before this point are now completed.
+     * tasks submitted before this point are now completed. Usually you won't want to use this method - it's a
+     * convenience primarily used in unit testing. If you want to wait for an event to be called the right thing
+     * to do is usually to create a {@link com.google.common.util.concurrent.SettableFuture} and then call set
+     * on it. You can then either block on that future, compose it, add listeners to it and so on.
      */
     public static void waitForUserCode() {
         // If this assert fires it means you have a bug in your code - you can't call this method inside your own

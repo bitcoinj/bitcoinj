@@ -179,6 +179,7 @@ public class WalletTest extends TestWithWallet {
         final ListenableFuture<BigInteger> estimatedFuture = wallet.getBalanceFuture(v1, Wallet.BalanceType.ESTIMATED);
         assertFalse(availFuture.isDone());
         assertFalse(estimatedFuture.isDone());
+        // Send some pending coins to the wallet.
         Transaction t1 = sendMoneyToWallet(wallet, v1, toAddress, null);
         Threading.waitForUserCode();
         final ListenableFuture<Transaction> depthFuture = t1.getConfidence().getDepthFuture(1);
@@ -186,9 +187,11 @@ public class WalletTest extends TestWithWallet {
         assertEquals(BigInteger.ZERO, wallet.getBalance());
         assertEquals(v1, wallet.getBalance(Wallet.BalanceType.ESTIMATED));
         assertFalse(availFuture.isDone());
+        // Our estimated balance has reached the requested level.
         assertTrue(estimatedFuture.isDone());
         assertEquals(1, wallet.getPoolSize(Pool.PENDING));
         assertEquals(0, wallet.getPoolSize(WalletTransaction.Pool.UNSPENT));
+        // Confirm the coins.
         sendMoneyToWallet(wallet, t1, AbstractBlockChain.NewBlockType.BEST_CHAIN);
         assertEquals("Incorrect confirmed tx balance", v1, wallet.getBalance());
         assertEquals("Incorrect confirmed tx PENDING pool size", 0, wallet.getPoolSize(WalletTransaction.Pool.PENDING));
@@ -652,7 +655,7 @@ public class WalletTest extends TestWithWallet {
         // Make a fresh copy of the tx to ensure we're testing realistically.
         flags[0] = flags[1] = false;
         notifiedTx[0].getConfidence().addEventListener(new TransactionConfidence.Listener() {
-            public void onConfidenceChanged(Transaction tx) {
+            public void onConfidenceChanged(Transaction tx, TransactionConfidence.Listener.ChangeReason reason) {
                 flags[1] = true;
             }
         });

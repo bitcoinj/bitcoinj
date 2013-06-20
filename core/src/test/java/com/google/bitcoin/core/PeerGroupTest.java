@@ -241,7 +241,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         assertTrue(tx.getConfidence().wasBroadcastBy(peerOf(p2).getAddress()));
 
         tx.getConfidence().addEventListener(new TransactionConfidence.Listener() {
-            public void onConfidenceChanged(Transaction tx) {
+            public void onConfidenceChanged(Transaction tx, TransactionConfidence.Listener.ChangeReason reason) {
                 event[1] = tx;
             }
         });
@@ -299,8 +299,8 @@ public class PeerGroupTest extends TestWithPeerGroup {
         InventoryMessage inv = new InventoryMessage(params);
         inv.addTransaction(t1);
         inbound(p2, inv);
-        assertTrue(sendResult.broadcastComplete.isDone());
         Threading.waitForUserCode();
+        assertTrue(sendResult.broadcastComplete.isDone());
         assertEquals(transactions[0], sendResult.tx);
         assertEquals(transactions[0].getConfidence().numBroadcastPeers(), 2);
         // Confirm it.

@@ -272,8 +272,6 @@ public class Transaction extends ChildMessage implements Serializable {
         addBlockAppearance(block.getHeader().getHash());
 
         if (bestChain) {
-            // This can cause event listeners on TransactionConfidence to run. After these lines complete, the wallets
-            // state may have changed!
             TransactionConfidence transactionConfidence = getConfidence();
             // Reset the work done.
             try {

@@ -28,7 +28,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.*;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
-import com.google.common.util.concurrent.Uninterruptibles;
 import org.bitcoinj.wallet.Protos.Wallet.EncryptionType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -142,6 +141,13 @@ public class Wallet implements Serializable, BlockChainListener {
     private transient HashSet<Sha256Hash> ignoreNextNewBlock;
     // Whether or not to ignore nLockTime > 0 transactions that are received to the mempool.
     private boolean acceptTimeLockedTransactions;
+
+    // Stuff for notifying transaction objects that we changed their confidences. The purpose of this is to avoid
+    // spuriously sending lots of repeated notifications to listeners that API users aren't really interested in as a
+    // side effect of how the code is written (e.g. during re-orgs confidence data gets adjusted multiple times).
+    private int onWalletChangedSuppressions;
+    private boolean insideReorg;
+    private Map<Transaction, TransactionConfidence.Listener.ChangeReason> confidenceChanged;
 
     /** Represents the results of a {@link CoinSelector#select(java.math.BigInteger, java.util.LinkedList)}  operation */
     public static class CoinSelection {
@@ -287,6 +293,7 @@ public class Wallet implements Serializable, BlockChainListener {
         dead = new HashMap<Sha256Hash, Transaction>();
         eventListeners = new CopyOnWriteArrayList<WalletEventListener>();
         extensions = new HashMap<String, WalletExtension>();
+        confidenceChanged = new HashMap<Transaction, TransactionConfidence.Listener.ChangeReason>();
         createTransientState();
     }
 
@@ -294,22 +301,23 @@ public class Wallet implements Serializable, BlockChainListener {
         ignoreNextNewBlock = new HashSet<Sha256Hash>();
         txConfidenceListener = new TransactionConfidence.Listener() {
             @Override
-            public void onConfidenceChanged(Transaction tx) {
-                lock.lock();
-                // The invokers unlock us immediately so if an exception is thrown, the lock will be already open.
-                checkBalanceFuturesLocked(null);
-                queueOnTransactionConfidenceChanged(tx);
-                // Many onWalletChanged events will not occur because they are suppressed, eg, because:
-                //   - we are inside a re-org
-                //   - we are in the middle of processing a block
-                //   - the confidence is changing because a new best block was accepted
-                // It will run in cases like:
-                //   - the tx is pending and another peer announced it
-                //   - the tx is pending and was killed by a detected double spend that was not in a block
-                // The latter case cannot happen today because we won't hear about it, but in future this may
-                // become more common if conflict notices are implemented.
-                maybeQueueOnWalletChanged();
-                lock.unlock();
+            public void onConfidenceChanged(Transaction tx, TransactionConfidence.Listener.ChangeReason reason) {
+                // This will run on the user code thread so we shouldn't do anything too complicated here.
+                // We only want to queue a wallet changed event and auto-save if the number of peers announcing
+                // the transaction has changed, as that confidence change is made by the networking code which
+                // doesn't necessarily know at that point which wallets contain which transactions, so it's up
+                // to us to listen for that. Other types of confidence changes (type, etc) are triggered by us,
+                // so we'll queue up a wallet change event in other parts of the code.
+                if (reason == ChangeReason.SEEN_PEERS) {
+                    lock.lock();
+                    try {
+                        checkBalanceFuturesLocked(null);
+                        queueOnTransactionConfidenceChanged(tx);
+                        maybeQueueOnWalletChanged();
+                    } finally {
+                        lock.unlock();
+                    }
+                }
             }
         };
         acceptTimeLockedTransactions = false;
@@ -799,7 +807,7 @@ public class Wallet implements Serializable, BlockChainListener {
             Transaction tx = pending.get(txHash);
             if (tx == null)
                 return;
-            receive(tx, block, blockType, false);
+            receive(tx, block, blockType);
         } finally {
             lock.unlock();
         }
@@ -850,24 +858,11 @@ public class Wallet implements Serializable, BlockChainListener {
                         Utils.bitcoinValueToFriendlyString(valueSentToMe)));
             }
             if (tx.getConfidence().getSource().equals(TransactionConfidence.Source.UNKNOWN)) {
-                log.warn("Wallet received transaction with an unknown source. Consider tagging tx!");
-            }
-            // Mark the tx as having been seen but is not yet in the chain. This will normally have been done already by
-            // the Peer before we got to this point, but in some cases (unit tests, other sources of transactions) it may
-            // have been missed out.
-            ConfidenceType currentConfidence = tx.getConfidence().getConfidenceType();
-            if (currentConfidence == ConfidenceType.UNKNOWN) {
-                tx.getConfidence().setConfidenceType(ConfidenceType.PENDING);
-                // Manually invoke the wallet tx confidence listener here as we didn't yet commit therefore the
-                // txConfidenceListener wasn't added.
-                checkBalanceFuturesLocked(null);
-                queueOnTransactionConfidenceChanged(tx);
+                log.warn("Wallet received transaction with an unknown source. Consider tagging it!");
             }
             // If this tx spends any of our unspent outputs, mark them as spent now, then add to the pending pool. This
             // ensures that if some other client that has our keys broadcasts a spend we stay in sync. Also updates the
             // timestamp on the transaction and registers/runs event listeners.
-            //
-            // Note that after we return from this function, the wallet may have been modified.
             commitTx(tx);
         } finally {
             lock.unlock();
@@ -999,13 +994,13 @@ public class Wallet implements Serializable, BlockChainListener {
                                  BlockChain.NewBlockType blockType) throws VerificationException {
         lock.lock();
         try {
-            receive(tx, block, blockType, false);
+            receive(tx, block, blockType);
         } finally {
             lock.unlock();
         }
     }
 
-    private void receive(Transaction tx, StoredBlock block, BlockChain.NewBlockType blockType, boolean reorg) throws VerificationException {
+    private void receive(Transaction tx, StoredBlock block, BlockChain.NewBlockType blockType) throws VerificationException {
         // Runs in a peer thread.
         checkState(lock.isLocked());
         BigInteger prevBalance = getBalance();
@@ -1042,8 +1037,6 @@ public class Wallet implements Serializable, BlockChainListener {
                     if (spentBy != null) spentBy.disconnect();
                 }
             }
-            // TODO: This can trigger tx confidence listeners to be run in the case of double spends.
-            // We should delay the execution of the listeners until the bottom to avoid the wallet mutating.
             processTxFromBestChain(tx);
         } else {
             checkState(sideChain);
@@ -1051,7 +1044,7 @@ public class Wallet implements Serializable, BlockChainListener {
             // some miners are also trying to include the transaction into the current best chain too, so let's treat
             // it as pending, except we don't need to do any risk analysis on it.
             if (wasPending) {
-                // Just put it back in without touching the connections.
+                // Just put it back in without touching the connections or confidence.
                 addWalletTransaction(Pool.PENDING, tx);
             } else {
                 // Ignore the case where a tx appears on a side chain at the same time as the best chain (this is
@@ -1060,7 +1053,6 @@ public class Wallet implements Serializable, BlockChainListener {
                 if (!unspent.containsKey(hash) && !spent.containsKey(hash)) {
                     // Otherwise put it (possibly back) into pending.
                     // Committing it updates the spent flags and inserts into the pool as well.
-                    tx.getConfidence().setConfidenceType(ConfidenceType.PENDING);
                     commitTx(tx);
                 }
             }
@@ -1069,7 +1061,6 @@ public class Wallet implements Serializable, BlockChainListener {
         if (block != null) {
             // Mark the tx as appearing in this block so we can find it later after a re-org. This also tells the tx
             // confidence object about the block and sets its work done/depth appropriately.
-            // TODO: This can trigger re-entrancy: delay running confidence listeners.
             tx.setBlockAppearance(block, bestChain);
             if (bestChain) {
                 // Don't notify this tx of work done in notifyNewBestBlock which will be called immediately after
@@ -1079,6 +1070,16 @@ public class Wallet implements Serializable, BlockChainListener {
             }
         }
 
+        onWalletChangedSuppressions--;
+
+        // Side chains don't affect confidence.
+        if (bestChain) {
+            // notifyNewBestBlock will be invoked next and will then call maybeQueueOnWalletChanged for us.
+            confidenceChanged.put(tx, TransactionConfidence.Listener.ChangeReason.TYPE);
+        } else {
+            maybeQueueOnWalletChanged();
+        }
+
         // Inform anyone interested that we have received or sent coins but only if:
         //  - This is not due to a re-org.
         //  - The coins appeared on the best chain.
@@ -1086,28 +1087,36 @@ public class Wallet implements Serializable, BlockChainListener {
         //  - We have not already informed the user about the coins when we received the tx broadcast, or for our
         //    own spends. If users want to know when a broadcast tx becomes confirmed, they need to use tx confidence
         //    listeners.
-        if (!reorg && bestChain && !wasPending) {
+        if (!insideReorg && bestChain) {
             BigInteger newBalance = getBalance();  // This is slow.
             log.info("Balance is now: " + bitcoinValueToFriendlyString(newBalance));
-            int diff = valueDifference.compareTo(BigInteger.ZERO);
-            // We pick one callback based on the value difference, though a tx can of course both send and receive
-            // coins from the wallet.
-            if (diff > 0) {
-                checkBalanceFuturesLocked(newBalance);
-                queueOnCoinsReceived(tx, prevBalance, newBalance);
-            } else if (diff < 0) {
-                queueOnCoinsSent(tx, prevBalance, newBalance);
-            } else {
-                // We have a transaction that didn't change our balance. Probably we sent coins between our own keys.
-                maybeQueueOnWalletChanged();
+            if (!wasPending) {
+                int diff = valueDifference.compareTo(BigInteger.ZERO);
+                // We pick one callback based on the value difference, though a tx can of course both send and receive
+                // coins from the wallet.
+                if (diff > 0) {
+                    queueOnCoinsReceived(tx, prevBalance, newBalance);
+                } else if (diff < 0) {
+                    queueOnCoinsSent(tx, prevBalance, newBalance);
+                }
             }
+            checkBalanceFuturesLocked(newBalance);
         }
 
-        // Wallet change notification will be sent shortly after the block is finished processing, in notifyNewBestBlock
-        onWalletChangedSuppressions--;
-
+        informConfidenceListenersIfNotReorganizing();
         checkState(isConsistent());
         queueAutoSave();
+    }
+
+    private void informConfidenceListenersIfNotReorganizing() {
+        if (insideReorg)
+            return;
+        for (Map.Entry<Transaction, TransactionConfidence.Listener.ChangeReason> entry : confidenceChanged.entrySet()) {
+            final Transaction tx = entry.getKey();
+            tx.getConfidence().queueListeners(entry.getValue());
+            queueOnTransactionConfidenceChanged(tx);
+        }
+        confidenceChanged.clear();
     }
 
     /**
@@ -1132,7 +1141,6 @@ public class Wallet implements Serializable, BlockChainListener {
             // TODO: Clarify the code below.
             // Notify all the BUILDING transactions of the new block.
             // This is so that they can update their work done and depth.
-            onWalletChangedSuppressions++;
             Set<Transaction> transactions = getTransactions(true);
             for (Transaction tx : transactions) {
                 if (ignoreNextNewBlock.contains(tx.getHash())) {
@@ -1141,11 +1149,13 @@ public class Wallet implements Serializable, BlockChainListener {
                     ignoreNextNewBlock.remove(tx.getHash());
                 } else {
                     tx.getConfidence().notifyWorkDone(block.getHeader());
+                    confidenceChanged.put(tx, TransactionConfidence.Listener.ChangeReason.DEPTH);
                 }
             }
-            queueAutoSave();
-            onWalletChangedSuppressions--;
+
+            informConfidenceListenersIfNotReorganizing();
             maybeQueueOnWalletChanged();
+            queueAutoSave();
         } finally {
             lock.unlock();
         }
@@ -1281,6 +1291,7 @@ public class Wallet implements Serializable, BlockChainListener {
         if (overridingTx == null) {
             // killedTx depended on a transaction that died because it was double spent or a coinbase that got re-orgd.
             killedTx.getConfidence().setOverridingTransaction(null);
+            confidenceChanged.put(killedTx, TransactionConfidence.Listener.ChangeReason.TYPE);
             pending.remove(killedTxHash);
             unspent.remove(killedTxHash);
             spent.remove(killedTxHash);
@@ -1316,8 +1327,8 @@ public class Wallet implements Serializable, BlockChainListener {
                 maybeMovePool(overridingInput.getOutpoint().fromTx, "kill");
             }
         }
-        log.info("Informing tx listeners of double spend event");
-        killedTx.getConfidence().setOverridingTransaction(overridingTx);  // RE-ENTRY POINT
+        killedTx.getConfidence().setOverridingTransaction(overridingTx);
+        confidenceChanged.put(killedTx, TransactionConfidence.Listener.ChangeReason.TYPE);
         // TODO: Recursively kill other transactions that were double spent.
     }
 
@@ -1382,9 +1393,10 @@ public class Wallet implements Serializable, BlockChainListener {
             // Add to the pending pool. It'll be moved out once we receive this transaction on the best chain.
             // This also registers txConfidenceListener so wallet listeners get informed.
             log.info("->pending: {}", tx.getHashAsString());
+            tx.getConfidence().setConfidenceType(ConfidenceType.PENDING);
+            confidenceChanged.put(tx, TransactionConfidence.Listener.ChangeReason.TYPE);
             addWalletTransaction(Pool.PENDING, tx);
 
-            // Event listeners may re-enter so we cannot make assumptions about wallet state after this loop completes.
             try {
                 BigInteger valueSentFromMe = tx.getValueSentFromMe(this);
                 BigInteger valueSentToMe = tx.getValueSentToMe(this);
@@ -1403,6 +1415,7 @@ public class Wallet implements Serializable, BlockChainListener {
             }
 
             checkState(isConsistent());
+            informConfidenceListenersIfNotReorganizing();
             queueAutoSave();
         } finally {
             lock.unlock();
@@ -1757,7 +1770,7 @@ public class Wallet implements Serializable, BlockChainListener {
          * likely be rejected by the network in this case.</p>
          */
         public static SendRequest to(Address destination, BigInteger value) {
-            SendRequest req = new Wallet.SendRequest();
+            SendRequest req = new SendRequest();
             req.tx = new Transaction(destination.getParameters());
             req.tx.addOutput(value, destination);
             return req;
@@ -2020,9 +2033,11 @@ public class Wallet implements Serializable, BlockChainListener {
             }
 
             // Label the transaction as being self created. We can use this later to spend its change output even before
-            // the transaction is confirmed.
-            req.tx.getConfidence().setConfidenceType(ConfidenceType.PENDING);
+            // the transaction is confirmed. We deliberately won't bother notifying listeners here as there's not much
+            // point - the user isn't interested in a confidence transition they made themselves.
             req.tx.getConfidence().setSource(TransactionConfidence.Source.SELF);
+            // TODO: Remove this - a newly completed tx isn't really pending, nothing was done with it yet.
+            req.tx.getConfidence().setConfidenceType(ConfidenceType.PENDING);
             req.completed = true;
             req.fee = calculatedFee;
             log.info("  completed {} with {} inputs", req.tx.getHashAsString(), req.tx.getInputs().size());
@@ -2340,6 +2355,13 @@ public class Wallet implements Serializable, BlockChainListener {
             // to try and corrupt the internal data structures. We should try harder to avoid this but it's tricky
             // because there are so many ways the block can be invalid.
 
+            // Avoid spuriously informing the user of wallet/tx confidence changes whilst we're re-organizing.
+            checkState(confidenceChanged.size() == 0);
+            checkState(!insideReorg);
+            insideReorg = true;
+            checkState(onWalletChangedSuppressions == 0);
+            onWalletChangedSuppressions++;
+
             // Map block hash to transactions that appear in it.
             Multimap<Sha256Hash, Transaction> mapBlockTx = ArrayListMultimap.create();
             for (Transaction tx : getTransactions(true)) {
@@ -2359,10 +2381,6 @@ public class Wallet implements Serializable, BlockChainListener {
             for (StoredBlock b : newBlocks) {
                 log.info("  {}", b.getHeader().getHashAsString());
             }
-
-            // Avoid spuriously informing the user of wallet changes whilst we're re-organizing. This also prevents the
-            // user from modifying wallet contents (eg, trying to spend) whilst we're in the middle of the process.
-            onWalletChangedSuppressions++;
 
             Collections.reverse(newBlocks);  // Need bottom-to-top but we get top-to-bottom.
 
@@ -2410,6 +2428,7 @@ public class Wallet implements Serializable, BlockChainListener {
                 if (tx.isCoinBase()) continue;
                 log.info("  ->pending {}", tx.getHash());
                 tx.getConfidence().setConfidenceType(ConfidenceType.PENDING);  // Wipe height/depth/work data.
+                confidenceChanged.put(tx, TransactionConfidence.Listener.ChangeReason.TYPE);
                 addWalletTransaction(Pool.PENDING, tx);
                 updateForSpends(tx, false);
             }
@@ -2445,21 +2464,24 @@ public class Wallet implements Serializable, BlockChainListener {
                 for (Transaction tx : mapBlockTx.get(block.getHeader().getHash())) {
                     log.info("  tx {}", tx.getHash());
                     try {
-                        receive(tx, block, BlockChain.NewBlockType.BEST_CHAIN, true);
+                        receive(tx, block, BlockChain.NewBlockType.BEST_CHAIN);
                     } catch (ScriptException e) {
                         throw new RuntimeException(e);  // Cannot happen as these blocks were already verified.
                     }
                 }
                 notifyNewBestBlock(block);
             }
+            checkState(isConsistent());
             final BigInteger balance = getBalance();
             log.info("post-reorg balance is {}", Utils.bitcoinValueToFriendlyString(balance));
-            // Inform event listeners that a re-org took place. They should save the wallet at this point.
-            checkBalanceFuturesLocked(balance);
+            // Inform event listeners that a re-org took place.
             queueOnReorganize();
+            insideReorg = false;
             onWalletChangedSuppressions--;
             maybeQueueOnWalletChanged();
-            checkState(isConsistent());
+            checkBalanceFuturesLocked(balance);
+            informConfidenceListenersIfNotReorganizing();
+            queueAutoSave();
         } finally {
             lock.unlock();
         }
@@ -2468,12 +2490,13 @@ public class Wallet implements Serializable, BlockChainListener {
     /**
      * Subtract the supplied depth and work done from the given transactions.
      */
-    private static void subtractDepthAndWorkDone(int depthToSubtract, BigInteger workDoneToSubtract,
-                                                 Collection<Transaction> transactions) {
+    private void subtractDepthAndWorkDone(int depthToSubtract, BigInteger workDoneToSubtract,
+                                          Collection<Transaction> transactions) {
         for (Transaction tx : transactions) {
             if (tx.getConfidence().getConfidenceType() == ConfidenceType.BUILDING) {
                 tx.getConfidence().setDepthInBlocks(tx.getConfidence().getDepthInBlocks() - depthToSubtract);
                 tx.getConfidence().setWorkDone(tx.getConfidence().getWorkDone().subtract(workDoneToSubtract));
+                confidenceChanged.put(tx, TransactionConfidence.Listener.ChangeReason.DEPTH);
             }
         }
     }
@@ -3100,7 +3123,6 @@ public class Wallet implements Serializable, BlockChainListener {
         }
     }
 
-    private int onWalletChangedSuppressions = 0;
     private void maybeQueueOnWalletChanged() {
         // Don't invoke the callback in some circumstances, eg, whilst we are re-organizing or fiddling with
         // transactions due to a new block arriving. It will be called later instead.
@@ -3140,6 +3162,7 @@ public class Wallet implements Serializable, BlockChainListener {
 
     private void queueOnReorganize() {
         checkState(lock.isLocked());
+        checkState(insideReorg);
         for (final WalletEventListener listener : eventListeners) {
             Threading.userCode.execute(new Runnable() {
                 @Override public void run() {

@@ -168,7 +168,6 @@ public class MemoryPool {
      * @return An object that is semantically the same TX but may be a different object instance.
      */
     public Transaction seen(Transaction tx, PeerAddress byPeer) {
-        boolean skipUnlock = false;
         lock.lock();
         try {
             cleanPool();
@@ -203,13 +202,8 @@ public class MemoryPool {
                     TransactionConfidence confidence = tx.getConfidence();
                     log.debug("{}: Adding tx [{}] {} to the memory pool",
                             new Object[]{byPeer, confidence.numBroadcastPeers(), tx.getHashAsString()});
-                    // Copy the previously announced peers into the confidence and then clear it out. Unlock here
-                    // because markBroadcastBy can trigger event listeners and thus inversions. After the lock is
-                    // released "entry" may be changing arbitrarily and isn't usable.
-                    skipUnlock = true;
-                    lock.unlock();
                     for (PeerAddress a : addrs) {
-                        confidence.markBroadcastBy(a);
+                        markBroadcast(a, tx);
                     }
                     return tx;
                 }
@@ -225,7 +219,7 @@ public class MemoryPool {
                 return tx;
             }
         } finally {
-            if (!skipUnlock) lock.unlock();
+            lock.unlock();
         }
     }
 
@@ -272,15 +266,10 @@ public class MemoryPool {
     }
 
     private void markBroadcast(PeerAddress byPeer, Transaction tx) {
-        // Marking a TX as broadcast by a peer can run event listeners that might call back into Peer or PeerGroup.
-        // Thus we unlock ourselves here to avoid potential inversions.
         checkState(lock.isLocked());
-        lock.unlock();
-        try {
-            tx.getConfidence().markBroadcastBy(byPeer);
-        } finally {
-            lock.lock();
-        }
+        final TransactionConfidence confidence = tx.getConfidence();
+        confidence.markBroadcastBy(byPeer);
+        confidence.queueListeners(TransactionConfidence.Listener.ChangeReason.SEEN_PEERS);
     }
 
     /**

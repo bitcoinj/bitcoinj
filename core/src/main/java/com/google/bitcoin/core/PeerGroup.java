@@ -1147,9 +1147,8 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
                 // Prepare to send the transaction by adding a listener that'll be called when confidence changes.
                 // Only bother with this if we might actually hear back:
                 if (minConnections > 1) tx.getConfidence().addEventListener(new TransactionConfidence.Listener() {
-                    public void onConfidenceChanged(Transaction tx) {
+                    public void onConfidenceChanged(Transaction tx, TransactionConfidence.Listener.ChangeReason reason) {
                         // The number of peers that announced this tx has gone up.
-                        // Thread safe - this can run in parallel.
                         final TransactionConfidence conf = tx.getConfidence();
                         int numSeenPeers = conf.numBroadcastPeers();
                         boolean mined = tx.getAppearsInHashes() != null;
