@@ -478,7 +478,7 @@ public abstract class AbstractBlockChain {
                     // is relevant to both of them, they don't end up accidentally sharing the same object (which can
                     // result in temporary in-memory corruption during re-orgs). See bug 257. We only duplicate in
                     // the case of multiple wallets to avoid an unnecessary efficiency hit in the common case.
-                    sendTransactionsToListener(newBlock, NewBlockType.SIDE_CHAIN, listener, txnToNotify, first);
+                    sendTransactionsToListener(newBlock, NewBlockType.SIDE_CHAIN, listener, txnToNotify, !first);
                     if (filteredTxHashList != null) {
                         for (Sha256Hash hash : filteredTxHashList) {
                             listener.notifyTransactionIsInBlock(hash, newBlock, NewBlockType.SIDE_CHAIN);

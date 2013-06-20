@@ -206,7 +206,6 @@ public class WalletTest extends TestWithWallet {
     private void basicSanityChecks(Wallet wallet, Transaction t, Address fromAddress, Address destination) throws VerificationException {
         assertEquals("Wrong number of tx inputs", 1, t.getInputs().size());
         assertEquals(fromAddress, t.getInputs().get(0).getScriptSig().getFromAddress(params));
-        assertEquals(TransactionConfidence.ConfidenceType.PENDING, t.getConfidence().getConfidenceType());
         assertEquals("Wrong number of tx outputs",2, t.getOutputs().size());
         assertEquals(destination, t.getOutputs().get(0).getScriptPubKey().getToAddress(params));
         assertEquals(wallet.getChangeAddress(), t.getOutputs().get(1).getScriptPubKey().getToAddress(params));
@@ -283,7 +282,7 @@ public class WalletTest extends TestWithWallet {
         assertTrue(complete);
         assertEquals(1, t2.getInputs().size());
         assertEquals(myAddress, t2.getInputs().get(0).getScriptSig().getFromAddress(params));
-        assertEquals(TransactionConfidence.ConfidenceType.PENDING, t2.getConfidence().getConfidenceType());
+        assertEquals(TransactionConfidence.ConfidenceType.UNKNOWN, t2.getConfidence().getConfidenceType());
 
         // We have NOT proven that the signature is correct!
         wallet.commitTx(t2);

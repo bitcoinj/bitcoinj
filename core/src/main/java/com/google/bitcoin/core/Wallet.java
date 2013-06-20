@@ -2036,8 +2036,6 @@ public class Wallet implements Serializable, BlockChainListener {
             // the transaction is confirmed. We deliberately won't bother notifying listeners here as there's not much
             // point - the user isn't interested in a confidence transition they made themselves.
             req.tx.getConfidence().setSource(TransactionConfidence.Source.SELF);
-            // TODO: Remove this - a newly completed tx isn't really pending, nothing was done with it yet.
-            req.tx.getConfidence().setConfidenceType(ConfidenceType.PENDING);
             req.completed = true;
             req.fee = calculatedFee;
             log.info("  completed {} with {} inputs", req.tx.getHashAsString(), req.tx.getInputs().size());
