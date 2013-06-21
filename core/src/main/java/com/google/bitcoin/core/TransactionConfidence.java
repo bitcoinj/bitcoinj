@@ -161,8 +161,25 @@ public class TransactionConfidence implements Serializable {
     public interface Listener {
         /** An enum that describes why a transaction confidence listener is being invoked (i.e. the class of change). */
         public enum ChangeReason {
+            /**
+             * Occurs when the type returned by {@link com.google.bitcoin.core.TransactionConfidence#getConfidenceType()}
+             * has changed. For example, if a PENDING transaction changes to BUILDING or DEAD, then this reason will
+             * be given. It's a high level summary.
+             */
             TYPE,
+
+            /**
+             * Occurs when a transaction that is in the best known block chain gets buried by another block. If you're
+             * waiting for a certain number of confirmations, this is the reason to watch out for.
+             */
             DEPTH,
+
+            /**
+             * Occurs when a pending transaction (not in the chain) was announced by another connected peers. By
+             * watching the number of peers that announced a transaction go up, you can see whether it's being
+             * accepted by the network or not. If all your peers announce, it's a pretty good bet the transaction
+             * is considered relayable and has thus reached the miners.
+             */
             SEEN_PEERS,
         }
         public void onConfidenceChanged(Transaction tx, ChangeReason reason);
