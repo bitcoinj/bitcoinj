@@ -42,6 +42,7 @@ import java.security.SecureRandom;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.google.bitcoin.core.TestUtils.*;
 import static com.google.bitcoin.core.Utils.bitcoinValueToFriendlyString;
@@ -1806,4 +1807,26 @@ public class WalletTest extends TestWithWallet {
     // There is a test for spending a coinbase transaction as it matures in BlockChainTest#coinbaseTransactionAvailability
 
     // Support for offline spending is tested in PeerGroupTest
+
+    @Test
+    public void exceptionsDoNotBlockAllListeners() throws Exception {
+        // Check that if a wallet listener throws an exception, the others still run.
+        wallet.addEventListener(new AbstractWalletEventListener() {
+            @Override
+            public void onCoinsReceived(Wallet wallet, Transaction tx, BigInteger prevBalance, BigInteger newBalance) {
+                throw new RuntimeException("barf");
+            }
+        });
+        final AtomicInteger flag = new AtomicInteger();
+        wallet.addEventListener(new AbstractWalletEventListener() {
+            @Override
+            public void onCoinsReceived(Wallet wallet, Transaction tx, BigInteger prevBalance, BigInteger newBalance) {
+                flag.incrementAndGet();
+            }
+        });
+
+        sendMoneyToWallet(Utils.toNanoCoins(1, 0), AbstractBlockChain.NewBlockType.BEST_CHAIN);
+        Threading.waitForUserCode();
+        assertEquals(1, flag.get());
+    }
 }
