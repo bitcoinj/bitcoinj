@@ -15,12 +15,9 @@
  */
 package com.google.bitcoin.crypto;
 
-import java.io.UnsupportedEncodingException;
-import java.security.SecureRandom;
-import java.util.Random;
-import java.util.UUID;
-
-import junit.framework.TestCase;
+import com.google.bitcoin.core.Utils;
+import com.google.bitcoin.utils.BriefLogFormatter;
+import com.google.protobuf.ByteString;
 
 import org.bitcoinj.wallet.Protos;
 import org.bitcoinj.wallet.Protos.ScryptParameters;
@@ -29,31 +26,31 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.bitcoin.core.Utils;
-import com.google.bitcoin.utils.BriefLogFormatter;
-import com.google.protobuf.ByteString;
+import java.io.UnsupportedEncodingException;
+import java.security.SecureRandom;
+import java.util.Random;
+import java.util.UUID;
 
-public class KeyCrypterScryptTest extends TestCase {
+import static org.junit.Assert.*;
+
+public class KeyCrypterScryptTest {
 
     private static final Logger log = LoggerFactory.getLogger(KeyCrypterScryptTest.class);
 
     // Nonsense bytes for encryption test.
-    private static final byte[] TEST_BYTES1 = new byte[]{0, -101, 2, 103, -4, 105, 6, 107, 8, -109, 10, 111, -12, 113, 14, -115, 16, 117, -18, 119, 20, 121, 22, 123, -24, 125, 26, 127, -28, 29, -30, 31};
+    private static final byte[] TEST_BYTES1 = {0, -101, 2, 103, -4, 105, 6, 107, 8, -109, 10, 111, -12, 113, 14, -115, 16, 117, -18, 119, 20, 121, 22, 123, -24, 125, 26, 127, -28, 29, -30, 31};
 
-    private static CharSequence PASSWORD1 = "aTestPassword";
-    private static CharSequence PASSWORD2 = "0123456789";
+    private static final CharSequence PASSWORD1 = "aTestPassword";
+    private static final CharSequence PASSWORD2 = "0123456789";
 
-    private static CharSequence WRONG_PASSWORD = "thisIsTheWrongPassword";
+    private static final CharSequence WRONG_PASSWORD = "thisIsTheWrongPassword";
 
-    private SecureRandom secureRandom;
     private ScryptParameters scryptParameters;
 
     @Before
     public void setUp() throws Exception {
-        secureRandom = new SecureRandom();
-
         byte[] salt = new byte[KeyCrypterScrypt.SALT_LENGTH];
-        secureRandom.nextBytes(salt);
+        new SecureRandom().nextBytes(salt);
         Protos.ScryptParameters.Builder scryptParametersBuilder = Protos.ScryptParameters.newBuilder().setSalt(ByteString.copyFrom(salt));
         scryptParameters = scryptParametersBuilder.build();
 
@@ -81,11 +78,12 @@ public class KeyCrypterScryptTest extends TestCase {
      * @throws KeyCrypterException
      * @throws UnsupportedEncodingException
      */
-    public void testKeyCrypterGood2() throws KeyCrypterException, UnsupportedEncodingException {
+    @Test
+    public void testKeyCrypterGood2() throws Exception {
         KeyCrypterScrypt keyCrypter = new KeyCrypterScrypt(scryptParameters);
 
-        int numberOfTests = 16;
         System.out.print("EncrypterDecrypterTest: Trying random UUIDs for plainText and passwords :");
+        int numberOfTests = 16;
         for (int i = 0; i < numberOfTests; i++) {
             // Create a UUID as the plaintext and use another for the password.
             String plainText = UUID.randomUUID().toString();
@@ -102,13 +100,14 @@ public class KeyCrypterScryptTest extends TestCase {
         System.out.println(" Done.");
     }
 
+    @Test
     public void testKeyCrypterWrongPassword() throws KeyCrypterException {
         KeyCrypterScrypt keyCrypter = new KeyCrypterScrypt(scryptParameters);
 
         // create a longer encryption string
-        StringBuffer stringBuffer = new StringBuffer();
+        StringBuilder stringBuffer = new StringBuilder();
         for (int i = 0; i < 100; i++) {
-            stringBuffer.append(i + " ").append("The quick brown fox");
+            stringBuffer.append(i).append(" ").append("The quick brown fox");
         }
 
         EncryptedPrivateKey encryptedPrivateKey = keyCrypter.encrypt(stringBuffer.toString().getBytes(), keyCrypter.deriveKey(PASSWORD2));
@@ -119,7 +118,7 @@ public class KeyCrypterScryptTest extends TestCase {
             // TODO: This test sometimes fails due to relying on padding.
             fail("Decrypt with wrong password did not throw exception");
         } catch (KeyCrypterException ede) {
-            assertTrue(ede.getMessage().indexOf("Could not decrypt") > -1);
+            assertTrue(ede.getMessage().contains("Could not decrypt"));
         }
     }
 
@@ -136,7 +135,7 @@ public class KeyCrypterScryptTest extends TestCase {
 
         log.debug("Original: " + Utils.bytesToHexString(TEST_BYTES1));
         log.debug("Reborn1 : " + Utils.bytesToHexString(rebornPlainBytes));
-        assertEquals( Utils.bytesToHexString(TEST_BYTES1),  Utils.bytesToHexString(rebornPlainBytes));
+        assertEquals(Utils.bytesToHexString(TEST_BYTES1), Utils.bytesToHexString(rebornPlainBytes));
     }
 
     @Test
@@ -158,7 +157,7 @@ public class KeyCrypterScryptTest extends TestCase {
 
             log.debug("Original: (" + i + ") " + Utils.bytesToHexString(plainBytes));
             log.debug("Reborn1 : (" + i + ") " + Utils.bytesToHexString(rebornPlainBytes));
-            assertEquals( Utils.bytesToHexString(plainBytes),  Utils.bytesToHexString(rebornPlainBytes));
+            assertEquals(Utils.bytesToHexString(plainBytes), Utils.bytesToHexString(rebornPlainBytes));
         }
     }
 }
