@@ -32,7 +32,7 @@ import com.google.common.base.Preconditions;
  * </p>
  */
 public class NativeSecp256k1 {
-    public static boolean enabled = true;
+    public static boolean enabled = false;
     static {
         try {
             System.loadLibrary("javasecp256k1");
