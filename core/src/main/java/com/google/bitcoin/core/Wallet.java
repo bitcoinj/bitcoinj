@@ -2092,9 +2092,9 @@ public class Wallet implements Serializable, BlockChainListener {
      * in the list that was not already present.
      */
     public int addKeys(final List<ECKey> keys) {
-        int added = 0;
         lock.lock();
         try {
+            int added = 0;
             // TODO: Consider making keys a sorted list or hashset so membership testing is faster.
             for (final ECKey key : keys) {
                 if (keychain.contains(key)) continue;
@@ -2109,20 +2109,15 @@ public class Wallet implements Serializable, BlockChainListener {
                 keychain.add(key);
                 added++;
             }
+            queueOnKeysAdded(keys);
+            // Force an auto-save immediately rather than queueing one, as keys are too important to risk losing.
             if (autosaveToFile != null) {
                 autoSave();
             }
+            return added;
         } finally {
             lock.unlock();
         }
-
-        for (ECKey key : keys) {
-            // TODO: Change this interface to be batch-oriented.
-            for (WalletEventListener listener : eventListeners) {
-                listener.onKeyAdded(key);
-            }
-        }
-        return added;
     }
 
     /**
@@ -3165,6 +3160,18 @@ public class Wallet implements Serializable, BlockChainListener {
             Threading.userCode.execute(new Runnable() {
                 @Override public void run() {
                     listener.onReorganize(Wallet.this);
+                }
+            });
+        }
+    }
+
+    private void queueOnKeysAdded(final List<ECKey> keys) {
+        checkState(lock.isLocked());
+        for (final WalletEventListener listener : eventListeners) {
+            Threading.userCode.execute(new Runnable() {
+                @Override
+                public void run() {
+                    listener.onKeysAdded(Wallet.this, keys);
                 }
             });
         }

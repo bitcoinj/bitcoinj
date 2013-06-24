@@ -17,6 +17,7 @@
 package com.google.bitcoin.core;
 
 import java.math.BigInteger;
+import java.util.List;
 
 /**
  * Convenience implementation of {@link WalletEventListener}.
@@ -33,6 +34,7 @@ public abstract class AbstractWalletEventListener implements WalletEventListener
      * @param prevBalance Balance before the coins were received.
      * @param newBalance  Current balance of the wallet.
      */
+    @Override
     public void onCoinsReceived(Wallet wallet, Transaction tx, BigInteger prevBalance, BigInteger newBalance) {
         onChange();
     }
@@ -53,6 +55,7 @@ public abstract class AbstractWalletEventListener implements WalletEventListener
      * @param prevBalance  The wallets balance before this transaction was seen.
      * @param newBalance   The wallets balance after this transaction was seen (should be less than prevBalance).
      */
+    @Override
     public void onCoinsSent(Wallet wallet, Transaction tx, BigInteger prevBalance, BigInteger newBalance) {
         onChange();
     }
@@ -66,9 +69,8 @@ public abstract class AbstractWalletEventListener implements WalletEventListener
      * change in arbitrary ways, most likely, we could lose some money we thought we had.<p>
      *
      * It is safe to use methods of wallet whilst inside this callback.
-     *
-     * TODO: Finish this interface.
      */
+    @Override
     public void onReorganize(Wallet wallet) {
         onChange();
     }
@@ -85,14 +87,17 @@ public abstract class AbstractWalletEventListener implements WalletEventListener
      * @param wallet
      * @param tx
      */
+    @Override
     public void onTransactionConfidenceChanged(Wallet wallet, Transaction tx) {
         onChange();
     }
 
-    public void onKeyAdded(ECKey key) {
+    @Override
+    public void onKeysAdded(Wallet wallet, List<ECKey> keys) {
         onChange();
     }
 
+    @Override
     public void onWalletChanged(Wallet wallet) {
         onChange();
     }

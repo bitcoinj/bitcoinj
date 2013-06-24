@@ -17,6 +17,7 @@
 package com.google.bitcoin.core;
 
 import java.math.BigInteger;
+import java.util.List;
 
 /**
  * <p>Implementors are called when the contents of the wallet changes, for instance due to receiving/sending money
@@ -114,7 +115,8 @@ public interface WalletEventListener {
     void onWalletChanged(Wallet wallet);
 
     /**
-     * Called by the {@link Wallet#addKey(ECKey)} method on whatever the calling thread was.
+     * Called whenever a new key is added to the wallet, whether that be via {@link Wallet#addKeys(java.util.List)}
+     * or due to some other automatic derivation.
      */
-    void onKeyAdded(ECKey key);
+    void onKeysAdded(Wallet wallet, List<ECKey> keys);
 }

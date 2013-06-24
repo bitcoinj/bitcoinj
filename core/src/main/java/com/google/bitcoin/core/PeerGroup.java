@@ -124,7 +124,7 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
     private int minBroadcastConnections = 0;
     private AbstractWalletEventListener walletEventListener = new AbstractWalletEventListener() {
         @Override
-        public void onKeyAdded(ECKey key) {
+        public void onKeysAdded(Wallet wallet, List<ECKey> keys) {
             lock.lock();
             try {
                 recalculateFastCatchupAndFilter();

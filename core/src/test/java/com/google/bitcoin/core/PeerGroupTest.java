@@ -344,11 +344,13 @@ public class PeerGroupTest extends TestWithPeerGroup {
         key1.setCreationTimeSeconds(time - 86400);  // One day ago.
         w2.addKey(key1);
         peerGroup.addWallet(w2);
+        Threading.waitForUserCode();
         assertEquals(peerGroup.getFastCatchupTimeSecs(), time - 86400);
         // Adding a key to the wallet should update the fast catchup time.
         ECKey key2 = new ECKey();
         key2.setCreationTimeSeconds(time - 100000);
         w2.addKey(key2);
+        Threading.waitForUserCode();
         assertEquals(peerGroup.getFastCatchupTimeSecs(), time - 100000);
     }
 
