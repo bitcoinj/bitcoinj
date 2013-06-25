@@ -1367,7 +1367,7 @@ public class Wallet implements Serializable, BlockChainListener {
      * like receiving money. The listener is executed by the given executor.
      */
     public void addEventListener(WalletEventListener listener, Executor executor) {
-        eventListeners.add(new ListenerRegistration(listener, executor));
+        eventListeners.add(new ListenerRegistration<WalletEventListener>(listener, executor));
     }
 
     /**
@@ -1375,7 +1375,7 @@ public class Wallet implements Serializable, BlockChainListener {
      * was never added.
      */
     public boolean removeEventListener(WalletEventListener listener) {
-        return eventListeners.remove(listener);
+        return ListenerRegistration.removeFromList(listener, eventListeners);
     }
 
     /**

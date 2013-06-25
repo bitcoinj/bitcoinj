@@ -20,6 +20,7 @@ package com.google.bitcoin.core;
 import com.google.bitcoin.core.Peer.PeerHandler;
 import com.google.bitcoin.discovery.PeerDiscovery;
 import com.google.bitcoin.discovery.PeerDiscoveryException;
+import com.google.bitcoin.utils.ListenerRegistration;
 import com.google.bitcoin.utils.Threading;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Sets;
@@ -87,7 +88,7 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
     // Callback for events related to chain download
     @GuardedBy("lock") private PeerEventListener downloadListener;
     // Callbacks for events related to peer connection/disconnection
-    private final CopyOnWriteArrayList<PeerEventListener> peerEventListeners;
+    private final CopyOnWriteArrayList<ListenerRegistration<PeerEventListener>> peerEventListeners;
     // Peer discovery sources, will be polled occasionally if there aren't enough inactives.
     private CopyOnWriteArraySet<PeerDiscovery> peerDiscoverers;
     // The version message to use for new connections.
@@ -228,7 +229,7 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
         pendingPeers = new ArrayList<Peer>();
         channels = new DefaultChannelGroup();
         peerDiscoverers = new CopyOnWriteArraySet<PeerDiscovery>(); 
-        peerEventListeners = new CopyOnWriteArrayList<PeerEventListener>();
+        peerEventListeners = new CopyOnWriteArrayList<ListenerRegistration<PeerEventListener>>();
     }
 
     /**
@@ -419,7 +420,7 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
 
 
     /**
-     * <p>Adds a listener that will be notified on a library controlled thread when:</p>
+     * <p>Adds a listener that will be notified on the given executor when:</p>
      * <ol>
      *     <li>New peers are connected to.</li>
      *     <li>Peers are disconnected from.</li>
@@ -428,16 +429,22 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
      *     <li>Blocks are downloaded by the download peer.</li>
      *     </li>
      * </ol>
-     * <p>The listener will be locked during callback execution, which in turn will cause network message processing
-     * to stop until the listener returns.</p>
+     */
+    public void addEventListener(PeerEventListener listener, Executor executor) {
+        peerEventListeners.add(new ListenerRegistration<PeerEventListener>(checkNotNull(listener), executor));
+    }
+
+    /**
+     * Same as {@link PeerGroup#addEventListener(PeerEventListener, java.util.concurrent.Executor)} but defaults
+     * to running on the user thread.
      */
     public void addEventListener(PeerEventListener listener) {
-        peerEventListeners.add(checkNotNull(listener));
+        addEventListener(listener, Threading.userCode);
     }
 
     /** The given event listener will no longer be called with events. */
     public boolean removeEventListener(PeerEventListener listener) {
-        return peerEventListeners.remove(checkNotNull(listener));
+        return ListenerRegistration.removeFromList(listener, peerEventListeners);
     }
 
     /**
@@ -816,15 +823,23 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
             // TODO: Find a way to balance the desire to propagate useful transactions against DoS attacks.
             announcePendingWalletTransactions(wallets, Collections.singletonList(peer));
             // And set up event listeners for clients. This will allow them to find out about new transactions and blocks.
-            for (PeerEventListener listener : peerEventListeners) {
-                peer.addEventListener(listener);
+            for (ListenerRegistration<PeerEventListener> registration : peerEventListeners) {
+                peer.addEventListener(registration.listener);
             }
             setupPingingForNewPeer(peer);
         } finally {
             lock.unlock();
         }
-        for (PeerEventListener listener : peerEventListeners)
-            listener.onPeerConnected(peer, newSize);
+
+        final int fNewSize = newSize;
+        for (final ListenerRegistration<PeerEventListener> registration : peerEventListeners) {
+            registration.executor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    registration.listener.onPeerConnected(peer, fNewSize);
+                }
+            });
+        }
     }
 
     private void setupPingingForNewPeer(final Peer peer) {
@@ -1010,9 +1025,16 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
         for (Wallet wallet : wallets) {
             peer.removeWallet(wallet);
         }
-        for (PeerEventListener listener : peerEventListeners) {
-            listener.onPeerDisconnected(peer, numConnectedPeers);
-            peer.removeEventListener(listener);
+
+        final int fNumConnectedPeers = numConnectedPeers;
+        for (final ListenerRegistration<PeerEventListener> registration : peerEventListeners) {
+            registration.executor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    registration.listener.onPeerDisconnected(peer, fNumConnectedPeers);
+                }
+            });
+            peer.removeEventListener(registration.listener);
         }
     }
 
