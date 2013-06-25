@@ -22,6 +22,7 @@ import com.google.bitcoin.crypto.KeyCrypter;
 import com.google.bitcoin.crypto.KeyCrypterException;
 import com.google.bitcoin.crypto.KeyCrypterScrypt;
 import com.google.bitcoin.store.WalletProtobufSerializer;
+import com.google.bitcoin.utils.ListenerRegistration;
 import com.google.bitcoin.utils.Threading;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
@@ -116,16 +117,7 @@ public class Wallet implements Serializable, BlockChainListener {
     private Sha256Hash lastBlockSeenHash;
     private int lastBlockSeenHeight = -1;
 
-    private static class ListenerRegistration {
-        public WalletEventListener listener;
-        public Executor executor;
-
-        public ListenerRegistration(WalletEventListener listener, Executor executor) {
-            this.listener = listener;
-            this.executor = executor;
-        }
-    }
-    private transient CopyOnWriteArrayList<ListenerRegistration> eventListeners;
+    private transient CopyOnWriteArrayList<ListenerRegistration<WalletEventListener>> eventListeners;
 
     // Auto-save code. This all should be generalized in future to not be file specific so you can easily store the
     // wallet into a database using the same mechanism. However we need to inform stores of each specific change with
@@ -297,7 +289,7 @@ public class Wallet implements Serializable, BlockChainListener {
         spent = new HashMap<Sha256Hash, Transaction>();
         pending = new HashMap<Sha256Hash, Transaction>();
         dead = new HashMap<Sha256Hash, Transaction>();
-        eventListeners = new CopyOnWriteArrayList<ListenerRegistration>();
+        eventListeners = new CopyOnWriteArrayList<ListenerRegistration<WalletEventListener>>();
         extensions = new HashMap<String, WalletExtension>();
         confidenceChanged = new HashMap<Transaction, TransactionConfidence.Listener.ChangeReason>();
         createTransientState();
@@ -3121,7 +3113,7 @@ public class Wallet implements Serializable, BlockChainListener {
 
     private void queueOnTransactionConfidenceChanged(final Transaction tx) {
         checkState(lock.isLocked());
-        for (final ListenerRegistration registration : eventListeners) {
+        for (final ListenerRegistration<WalletEventListener> registration : eventListeners) {
             registration.executor.execute(new Runnable() {
                 @Override
                 public void run() {
@@ -3137,7 +3129,7 @@ public class Wallet implements Serializable, BlockChainListener {
         checkState(lock.isLocked());
         checkState(onWalletChangedSuppressions >= 0);
         if (onWalletChangedSuppressions > 0) return;
-        for (final ListenerRegistration registration : eventListeners) {
+        for (final ListenerRegistration<WalletEventListener> registration : eventListeners) {
             registration.executor.execute(new Runnable() {
                 @Override
                 public void run() {
@@ -3149,7 +3141,7 @@ public class Wallet implements Serializable, BlockChainListener {
 
     private void queueOnCoinsReceived(final Transaction tx, final BigInteger balance, final BigInteger newBalance) {
         checkState(lock.isLocked());
-        for (final ListenerRegistration registration : eventListeners) {
+        for (final ListenerRegistration<WalletEventListener> registration : eventListeners) {
             registration.executor.execute(new Runnable() {
                 @Override
                 public void run() {
@@ -3161,7 +3153,7 @@ public class Wallet implements Serializable, BlockChainListener {
 
     private void queueOnCoinsSent(final Transaction tx, final BigInteger prevBalance, final BigInteger newBalance) {
         checkState(lock.isLocked());
-        for (final ListenerRegistration registration : eventListeners) {
+        for (final ListenerRegistration<WalletEventListener> registration : eventListeners) {
             registration.executor.execute(new Runnable() {
                 @Override
                 public void run() {
@@ -3174,7 +3166,7 @@ public class Wallet implements Serializable, BlockChainListener {
     private void queueOnReorganize() {
         checkState(lock.isLocked());
         checkState(insideReorg);
-        for (final ListenerRegistration registration : eventListeners) {
+        for (final ListenerRegistration<WalletEventListener> registration : eventListeners) {
             registration.executor.execute(new Runnable() {
                 @Override
                 public void run() {
@@ -3186,7 +3178,7 @@ public class Wallet implements Serializable, BlockChainListener {
 
     private void queueOnKeysAdded(final List<ECKey> keys) {
         checkState(lock.isLocked());
-        for (final ListenerRegistration registration : eventListeners) {
+        for (final ListenerRegistration<WalletEventListener> registration : eventListeners) {
             registration.executor.execute(new Runnable() {
                 @Override
                 public void run() {
