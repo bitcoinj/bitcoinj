@@ -1,0 +1,211 @@
+/** Copyright 2013 Google Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*
+ * Authors: Mike Hearn, Matt Corallo
+ */
+ 
+/* Notes:
+ * - Endianness: All byte arrays that represent numbers (such as hashes and private keys) are Big Endian
+ * - To regenerate after editing, run mvn clean package -DupdateProtobuf
+ */
+
+package paymentchannels;
+
+option java_package = "org.bitcoin.paymentchannel";
+option java_outer_classname = "Protos";
+
+
+// The connection should be a standard TLS connection and all messages sent over this socket are
+// serialized TwoWayChannelMessages prefixed with 2-byte size in big-endian (smaller than or
+// equal to 32767 bytes in size)
+message TwoWayChannelMessage {
+    enum MessageType {
+        CLIENT_VERSION = 1;
+        SERVER_VERSION = 2;
+        INITIATE = 3;
+        PROVIDE_REFUND = 4;
+        RETURN_REFUND = 5;
+        PROVIDE_CONTRACT = 6;
+        // Note that there are no optional fields set for CHANNEL_OPEN, it is sent from the
+        // secondary to the primary to indicate that the provided contract was received,
+        // verified, and broadcast successfully and the primary can now provide UPDATE messages
+        // at will to begin paying secondary. If the channel is interrupted after the
+        // CHANNEL_OPEN message (ie closed without an explicit CLOSE or ERROR) the primary may
+        // reopen the channel by setting the contract transaction hash in its CLIENT_VERSION
+        // message.
+        CHANNEL_OPEN = 7;
+        UPDATE_PAYMENT = 8;
+        // Note that there are no optional fields set for CLOSE, it is sent by either party to
+        // indicate that the channel is now closed and no further updates can happen. After this,
+        // the secondary takes the most recent signature it received in an UPDATE_PAYMENT and
+        // uses it to create a valid transaction, which it then broadcasts on the network.
+        CLOSE = 9;
+
+        // Used to indicate an error condition.
+        // Both parties should make an effort to send either an ERROR or a CLOSE immediately
+        // before closing the socket (unless they just received an ERROR or a CLOSE)
+        ERROR = 10;
+    };
+
+    // This is required so if a new message type is added in future, old software aborts trying
+    // to read the message as early as possible. If the message doesn't parse, the socket should
+    // be closed.
+    required MessageType type = 1;
+
+    // Now one optional field for each message. Only the field specified by type should be read.
+    optional ClientVersion client_version = 2;
+    optional ServerVersion server_version = 3;
+    optional Initiate initiate = 4;
+    optional ProvideRefund provide_refund = 5;
+    optional ReturnRefund return_refund = 6;
+    optional ProvideContract provide_contract = 7;
+    optional UpdatePayment update_payment = 8;
+
+    optional Error error = 10;
+}
+
+// Sent by primary to secondary on opening the connection. If anything is received before this is
+// sent, the socket is closed.
+message ClientVersion {
+    required int32 major = 1;
+    optional int32 minor = 2 [default = 0];
+
+    // The hash of the multisig contract of a previous channel. This indicates that the primary
+    // wishes to reopen the given channel. If the server is willing to reopen it, it simply
+    // responds with a SERVER_VERSION and then immediately sends a CHANNEL_OPEN, it otherwise
+    // follows SERVER_VERSION with an Initiate representing a new channel
+    optional bytes previous_channel_contract_hash = 3;
+}
+
+// Send by secondary to primary upon receiving the ClientVersion message. If it is willing to
+// speak the given major version, it sends back the same major version and the minor version it
+// speaks. If it is not, it may send back a lower major version representing the highest version
+// it is willing to speak, or sends a NO_ACCEPTABLE_VERSION Error. If the secondary sends back a
+// lower major version, the secondary should either expect to continue with that version, or
+// should immediately close the connection with a NO_ACCEPTABLE_VERSION Error. Backwards
+// incompatible changes to the protocol bump the major version. Extensions bump the minor version
+message ServerVersion {
+    required int32 major = 1;
+    optional int32 minor = 2 [default = 0];
+}
+
+// Sent from secondary to primary once version nego is done.
+message Initiate {
+    // This must be a raw pubkey in regular ECDSA form. Both compressed and non-compressed forms
+    // are accepted. It is used only in the creation of the multisig contract, as outputs are
+    // created entirely by the secondary
+    required bytes multisig_key = 1;
+
+    // Once a channel is exhausted a new one must be set up. So secondary indicates the minimum
+    // size it's willing to accept here. This can be lower to trade off resources against
+    // security but shouldn't be so low the transactions get rejected by the network as spam.
+    // Zero isn't a sensible value to have here, so we make the field required.
+    required uint64 min_accepted_channel_size = 2;
+
+    // Rough UNIX time for when the channel expires. This is determined by the block header
+    // timestamps which can be very inaccurate when miners use the obsolete RollNTime hack.
+    // Channels could also be specified in terms of block heights but then how do you know the
+    // current chain height if you don't have internet access? Trust secondary? Probably opens up
+    // attack vectors. We can assume primary has an independent clock, however. If primary
+    // considers this value too far off (eg more than a day), it may send an ERROR and close the
+    // channel.
+    required uint64 expire_time_secs = 3;
+}
+
+// Sent from primary to secondary after Initiate to begin the refund transaction signing.
+message ProvideRefund {
+    // This must be a raw pubkey in regular ECDSA form. Both compressed and non-compressed forms
+    // are accepted.  It is only used in the creation of the multisig contract.
+    required bytes multisig_key = 1;
+
+    // The serialized bytes of the return transaction in Satoshi format.
+    // * It must have exactly one input which spends the multisig output (see ProvideContract for
+    //   details of exactly what that output must look like). This output must have a sequence
+    //   number of 0.
+    // * It must have the lock time set to a time after the min_time_window_secs (from the
+    //   Initiate message).
+    // * It must have exactly one output which goes back to the primary.  This output's
+    //   scriptPubKey will be reused to create payment transactions.
+    required bytes tx = 2;
+}
+
+// Sent from secondary to primary after it has done initial verification of the refund
+// transaction. Contains the primary's signature which is required to spend the multisig contract
+// to the refund transaction. Must be signed using SIGHASH_NONE|SIGHASH_ANYONECANPAY (and include
+// the postfix type byte) to allow the client to add any outputs/inputs it wants as long as the
+// input's sequence and transaction's nLockTime remain set.
+message ReturnRefund {
+    required bytes signature = 1;
+}
+
+// Sent from the primary to the secondary to complete initialization.
+message ProvideContract {
+    // The serialized bytes of the transaction in Satoshi format.
+    // * It must be signed and completely valid and ready for broadcast (ie it includes the
+    //   necessary fees) TODO: tell the client how much fee it needs
+    // * Its first output must be a 2-of-2 multisig output with the first pubkey being the
+    //   primary's and the second being the secondary's (ie the script must be exactly "OP_2
+    //   ProvideRefund.multisig_key Initiate.multisig_key OP_2 OP_CHECKMULTISIG")
+    required bytes tx = 1;
+}
+
+// This message can only be used by the primary after it has received a CHANNEL_OPEN message. It
+// creates a new payment transaction. Note that we don't resubmit the entire TX, this is to avoid
+// (re)parsing bugs and overhead. The payment transaction is created by the primary by:
+// * Adding an input which spends the multisig contract
+// * Setting this input's scriptSig to the given signature and a new signature created by the
+//   primary (the primary should ensure the signature provided correctly spends the multisig
+//   contract)
+// * Adding an output who's scriptPubKey is the same as the refund output (the only output) in
+//   the refund transaction
+// * Setting this output's value to client_change_value (which must be lower than the most recent
+//   client_change_value and lower than the multisig contract's output value)
+// * Adding any number of additional outputs as desired (leaving sufficient fee, if necessary)
+// * Adding any number of additional inputs as desired (eg to add more fee)
+message UpdatePayment {
+    // The value which is sent back to the primary.  The rest of the multisig output is left for
+    // the secondary to do with as they wish.
+    required uint64 client_change_value = 1;
+    // A SIGHASH_SINGLE|SIGHASH_ANYONECANPAY signature (including the postfix type byte) which
+    // spends the primary's part of the multisig contract's output.  This signature only covers
+    // the primary's refund output and thus the secondary is free to do what they wish with their
+    // part of the multisig output.
+    required bytes signature = 2;
+}
+
+
+// An Error can be sent by either party at any time
+// Both parties should make an effort to send either an ERROR or a CLOSE immediately before
+// closing the socket (unless they just received an ERROR or a CLOSE)
+message Error {
+    enum ErrorCode {
+        TIMEOUT = 1;                 // Protocol timeout occurred (one party hung).
+        SYNTAX_ERROR = 2;            // Generic error indicating some message was not properly
+                                     // formatted or was out of order.
+        NO_ACCEPTABLE_VERSION = 3;   // We don't speak the version the other side asked for.
+        BAD_TRANSACTION = 4;         // A provided transaction was not in the proper structure
+                                     // (wrong inputs/outputs, sequence, lock time, signature,
+                                     // etc)
+        TIME_WINDOW_TOO_LARGE = 5;   // The expire time specified by the secondary was too large
+                                     // for the primary
+        CHANNEL_VALUE_TOO_LARGE = 6; // The minimum channel value specified by the secondary was
+                                     // too large for the primary
+
+        OTHER = 7;
+    };
+    optional ErrorCode code = 1 [default=OTHER];
+    optional string explanation = 2;   // NOT SAFE FOR HTML WITHOUT ESCAPING
+}

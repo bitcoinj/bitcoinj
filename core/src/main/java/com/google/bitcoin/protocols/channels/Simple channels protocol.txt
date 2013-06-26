@@ -1,0 +1,26 @@
+Using the protocol suggestion by Jeremy Spillman
+
+1) Client connects to server and asks for a public key.
+2) Server provides a fresh key. Client creates TX1 which pays to a 2-of-2 multisig output. It creates an invalid
+   TX2 which spends TX1 and pays all money back to itself. The refund TX is time locked.
+3) Client sends TX2 to server which verifies that it's valid and not connected to any transaction in its wallet.
+   Server signs TX2 and sends back the signature.
+4) Client verifies that the server signed TX2 correctly and then sends TX1 to the server, which verifies that it
+   was the tx connected to the thing it just signed, and then broadcasts it thus locking in the money.
+5) Each time the channel is adjusted, the client sends a new signed TX2 to the server which keeps it (does not need
+   to sign itself).
+
+If the client or server wants to close the channel, the last TX2 is broadcast. It's a normal, final transaction so
+it ends the negotiation at that point.
+
+If the server goes away and does not finalize the channel properly, the refund TX can be broadcast once the time lock
+expires. Note that you cannot broadcast the refund tx before the time lock expires (thus filling the mempool) due to
+the recent change to change non-final transactions non-standard. Thus TX replacement is not needed in this particular
+configuration.
+
+When TX replacement is re-activated, this configuration would become vulnerable to having the refund TX be broadcast
+by the client. We can require the refund TX to have an input sequence number of zero. The adjustment transactions have
+a sequence number of UINT_MAX as before, this means they would replace the refund tx if it were to be broadcast.
+
+This configuration is less general than a full payment channel with tx replacement activated, but for our purposes
+it does the trick.
