@@ -51,7 +51,7 @@ public class WalletAppKit extends AbstractIdleService {
     protected final File directory;
     protected volatile File vChainFile, vWalletFile;
 
-    protected volatile InetAddress[] vPeerAddresses;
+    protected volatile PeerAddress[] vPeerAddresses;
 
     public WalletAppKit(NetworkParameters params, File directory, String filePrefix) {
         this.params = checkNotNull(params);
@@ -59,7 +59,7 @@ public class WalletAppKit extends AbstractIdleService {
         this.filePrefix = checkNotNull(filePrefix);
     }
 
-    public WalletAppKit setPeerNodes(InetAddress... addresses) {
+    public WalletAppKit setPeerNodes(PeerAddress... addresses) {
         checkState(state() == State.NEW, "Cannot call after startup");
         this.vPeerAddresses = addresses;
         return this;
@@ -70,6 +70,14 @@ public class WalletAppKit extends AbstractIdleService {
         vUseAutoSave = value;
         return this;
     }
+
+    /**
+     * <p>Override this to load all wallet extensions if any are necessary.</p>
+     *
+     * <p>When this is called, chain(), store(), and peerGroup() will return the created objects, however they are not
+     * initialized/started</p>
+     */
+    protected void addWalletExtensions() throws Exception { }
 
     @Override
     protected void startUp() throws Exception {
@@ -83,21 +91,26 @@ public class WalletAppKit extends AbstractIdleService {
             vChainFile = new File(directory, filePrefix + ".spvchain");
             vWalletFile = new File(directory, filePrefix + ".wallet");
             boolean shouldReplayWallet = vWalletFile.exists() && !vChainFile.exists();
+            vStore = new SPVBlockStore(params, vChainFile);
+            vChain = new BlockChain(params, vStore);
+            vPeerGroup = new PeerGroup(params, vChain);
+
             if (vWalletFile.exists()) {
                 walletStream = new FileInputStream(vWalletFile);
-                vWallet = new WalletProtobufSerializer().readWallet(walletStream);
+                vWallet = new Wallet(params);
+                addWalletExtensions(); // All extensions must be present before we deserialize
+                new WalletProtobufSerializer().readWallet(WalletProtobufSerializer.parseToProto(walletStream), vWallet);
                 if (shouldReplayWallet)
                     vWallet.clearTransactions(0);
             } else {
                 vWallet = new Wallet(params);
+                addWalletExtensions();
             }
             if (vUseAutoSave) vWallet.autosaveToFile(vWalletFile, 1, TimeUnit.SECONDS, null);
-            vStore = new SPVBlockStore(params, vChainFile);
-            vChain = new BlockChain(params, vWallet, vStore);
-            vPeerGroup = new PeerGroup(params, vChain);
+            vChain.addWallet(vWallet);
             vPeerGroup.addWallet(vWallet);
             if (vPeerAddresses != null) {
-                for (InetAddress addr : vPeerAddresses) vPeerGroup.addAddress(addr);
+                for (PeerAddress addr : vPeerAddresses) vPeerGroup.addAddress(addr);
                 vPeerAddresses = null;
             } else {
                 vPeerGroup.addPeerDiscovery(new DnsDiscovery(params));
@@ -143,22 +156,22 @@ public class WalletAppKit extends AbstractIdleService {
     }
 
     public BlockChain chain() {
-        checkState(state() == State.RUNNING, "Cannot call until startup is complete");
+        checkState(state() == State.STARTING || state() == State.RUNNING, "Cannot call until startup is complete");
         return vChain;
     }
 
     public SPVBlockStore store() {
-        checkState(state() == State.RUNNING, "Cannot call until startup is complete");
+        checkState(state() == State.STARTING || state() == State.RUNNING, "Cannot call until startup is complete");
         return vStore;
     }
 
     public Wallet wallet() {
-        checkState(state() == State.RUNNING, "Cannot call until startup is complete");
+        checkState(state() == State.STARTING || state() == State.RUNNING, "Cannot call until startup is complete");
         return vWallet;
     }
 
     public PeerGroup peerGroup() {
-        checkState(state() == State.RUNNING, "Cannot call until startup is complete");
+        checkState(state() == State.STARTING || state() == State.RUNNING, "Cannot call until startup is complete");
         return vPeerGroup;
     }
 
