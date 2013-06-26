@@ -67,7 +67,7 @@ import static com.google.common.base.Preconditions.checkState;
  * when finished. Note that not all methods of PeerGroup are safe to call from a UI thread as some may do
  * network IO, but starting and stopping the service should be fine.</p>
  */
-public class PeerGroup extends AbstractIdleService {
+public class PeerGroup extends AbstractIdleService implements TransactionBroadcaster {
     private static final int DEFAULT_CONNECTIONS = 4;
 
     private static final Logger log = LoggerFactory.getLogger(PeerGroup.class);
