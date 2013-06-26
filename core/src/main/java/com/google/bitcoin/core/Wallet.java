@@ -628,8 +628,8 @@ public class Wallet implements Serializable, BlockChainListener {
         try {
             Preconditions.checkArgument(delayTime >= 0);
             autosaveToFile = Preconditions.checkNotNull(f);
+            autosaveEventListener = eventListener;
             if (delayTime > 0) {
-                autosaveEventListener = eventListener;
                 autosaveDelayMs = TimeUnit.MILLISECONDS.convert(delayTime, timeUnit);
             }
         } finally {
@@ -643,11 +643,7 @@ public class Wallet implements Serializable, BlockChainListener {
             if (this.autosaveToFile == null) return;
             if (autosaveDelayMs == 0) {
                 // No delay time was specified, so save now.
-                try {
-                    saveToFile(autosaveToFile);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
+                autoSave();
             } else {
                 // If we need to, tell the auto save thread to wake us up. This will start the background thread if one
                 // doesn't already exist. It will wake up once the delay expires and call autoSave().
