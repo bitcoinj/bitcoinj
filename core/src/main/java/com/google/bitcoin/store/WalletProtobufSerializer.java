@@ -440,7 +440,7 @@ public class WalletProtobufSerializer {
         for (Protos.TransactionInput transactionInput : txProto.getTransactionInputList()) {
             byte[] scriptBytes = transactionInput.getScriptBytes().toByteArray();
             TransactionOutPoint outpoint = new TransactionOutPoint(params,
-                    transactionInput.getTransactionOutPointIndex(),
+                    transactionInput.getTransactionOutPointIndex() & 0xFFFFFFFFL,
                     byteStringToHash(transactionInput.getTransactionOutPointHash())
             );
             TransactionInput input = new TransactionInput(params, tx, scriptBytes, outpoint);
@@ -515,7 +515,7 @@ public class WalletProtobufSerializer {
             case DEAD: confidenceType = ConfidenceType.DEAD; break;
             // These two are equivalent (must be able to read old wallets).
             case NOT_IN_BEST_CHAIN: confidenceType = ConfidenceType.PENDING; break;
-            case NOT_SEEN_IN_CHAIN: confidenceType = ConfidenceType.PENDING; break;
+            case PENDING: confidenceType = ConfidenceType.PENDING; break;
             case UNKNOWN:
                 // Fall through.
             default:

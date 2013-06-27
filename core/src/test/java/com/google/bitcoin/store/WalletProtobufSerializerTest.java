@@ -235,7 +235,6 @@ public class WalletProtobufSerializerTest {
         return new WalletProtobufSerializer().readWallet(input);
     }
 
-
     @Test
     public void testRoundTripNormalWallet() throws Exception {
         Wallet wallet1 = roundTrip(myWallet);     
@@ -247,7 +246,22 @@ public class WalletProtobufSerializerTest {
                 wallet1.findKeyFromPubHash(myKey.getPubKeyHash()).getPrivKeyBytes());
         assertEquals(myKey.getCreationTimeSeconds(),
                 wallet1.findKeyFromPubHash(myKey.getPubKeyHash()).getCreationTimeSeconds());
- 
+    }
+
+    @Test
+    public void coinbaseTxns() throws Exception {
+        // Covers issue 420 where the outpoint index of a coinbase tx input was being mis-serialized.
+        Block b = params.getGenesisBlock().createNextBlockWithCoinbase(myKey.getPubKey(), Utils.toNanoCoins(50, 0));
+        Transaction coinbase = b.getTransactions().get(0);
+        assertTrue(coinbase.isCoinBase());
+        BlockChain chain = new BlockChain(params, myWallet, new MemoryBlockStore(params));
+        assertTrue(chain.add(b));
+        // Wallet now has a coinbase tx in it.
+        assertEquals(1, myWallet.getTransactions(true).size());
+        assertTrue(myWallet.getTransaction(coinbase.getHash()).isCoinBase());
+        Wallet wallet2 = roundTrip(myWallet);
+        assertEquals(1, wallet2.getTransactions(true).size());
+        assertTrue(wallet2.getTransaction(coinbase.getHash()).isCoinBase());
     }
 
     @Test

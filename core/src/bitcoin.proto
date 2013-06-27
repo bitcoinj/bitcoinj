@@ -81,7 +81,7 @@ message TransactionInput {
   // Hash of the transaction this input is using.
   required bytes transaction_out_point_hash = 1;
   // Index of transaction output used by this input.
-  required int32 transaction_out_point_index = 2;
+  required uint32 transaction_out_point_index = 2;
   // Script that contains the signatures/pubkeys.
   required bytes script_bytes = 3;
   // Sequence number. Currently unused, but intended for contracts in future.

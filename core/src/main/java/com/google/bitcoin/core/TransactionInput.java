@@ -150,7 +150,7 @@ public class TransactionInput extends ChildMessage implements Serializable {
     public boolean isCoinBase() {
         maybeParse();
         return outpoint.getHash().equals(Sha256Hash.ZERO_HASH) &&
-                outpoint.getIndex() == NO_SEQUENCE;
+                (outpoint.getIndex() & 0xFFFFFFFFL) == 0xFFFFFFFFL;  // -1 but all is serialized to the wire as unsigned int.
     }
 
     /**

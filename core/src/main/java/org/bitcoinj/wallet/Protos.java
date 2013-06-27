@@ -1761,7 +1761,7 @@ public final class Protos {
     boolean hasTransactionOutPointHash();
     com.google.protobuf.ByteString getTransactionOutPointHash();
     
-    // required int32 transaction_out_point_index = 2;
+    // required uint32 transaction_out_point_index = 2;
     boolean hasTransactionOutPointIndex();
     int getTransactionOutPointIndex();
     
@@ -1812,7 +1812,7 @@ public final class Protos {
       return transactionOutPointHash_;
     }
     
-    // required int32 transaction_out_point_index = 2;
+    // required uint32 transaction_out_point_index = 2;
     public static final int TRANSACTION_OUT_POINT_INDEX_FIELD_NUMBER = 2;
     private int transactionOutPointIndex_;
     public boolean hasTransactionOutPointIndex() {
@@ -1876,7 +1876,7 @@ public final class Protos {
         output.writeBytes(1, transactionOutPointHash_);
       }
       if (((bitField0_ & 0x00000002) == 0x00000002)) {
-        output.writeInt32(2, transactionOutPointIndex_);
+        output.writeUInt32(2, transactionOutPointIndex_);
       }
       if (((bitField0_ & 0x00000004) == 0x00000004)) {
         output.writeBytes(3, scriptBytes_);
@@ -1899,7 +1899,7 @@ public final class Protos {
       }
       if (((bitField0_ & 0x00000002) == 0x00000002)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeInt32Size(2, transactionOutPointIndex_);
+          .computeUInt32Size(2, transactionOutPointIndex_);
       }
       if (((bitField0_ & 0x00000004) == 0x00000004)) {
         size += com.google.protobuf.CodedOutputStream
@@ -2173,7 +2173,7 @@ public final class Protos {
             }
             case 16: {
               bitField0_ |= 0x00000002;
-              transactionOutPointIndex_ = input.readInt32();
+              transactionOutPointIndex_ = input.readUInt32();
               break;
             }
             case 26: {
@@ -2216,7 +2216,7 @@ public final class Protos {
         return this;
       }
       
-      // required int32 transaction_out_point_index = 2;
+      // required uint32 transaction_out_point_index = 2;
       private int transactionOutPointIndex_ ;
       public boolean hasTransactionOutPointIndex() {
         return ((bitField0_ & 0x00000002) == 0x00000002);
@@ -2893,14 +2893,14 @@ public final class Protos {
         implements com.google.protobuf.ProtocolMessageEnum {
       UNKNOWN(0, 0),
       BUILDING(1, 1),
-      NOT_SEEN_IN_CHAIN(2, 2),
+      PENDING(2, 2),
       NOT_IN_BEST_CHAIN(3, 3),
       DEAD(4, 4),
       ;
       
       public static final int UNKNOWN_VALUE = 0;
       public static final int BUILDING_VALUE = 1;
-      public static final int NOT_SEEN_IN_CHAIN_VALUE = 2;
+      public static final int PENDING_VALUE = 2;
       public static final int NOT_IN_BEST_CHAIN_VALUE = 3;
       public static final int DEAD_VALUE = 4;
       
@@ -2911,7 +2911,7 @@ public final class Protos {
         switch (value) {
           case 0: return UNKNOWN;
           case 1: return BUILDING;
-          case 2: return NOT_SEEN_IN_CHAIN;
+          case 2: return PENDING;
           case 3: return NOT_IN_BEST_CHAIN;
           case 4: return DEAD;
           default: return null;
@@ -2944,7 +2944,7 @@ public final class Protos {
       }
       
       private static final Type[] VALUES = {
-        UNKNOWN, BUILDING, NOT_SEEN_IN_CHAIN, NOT_IN_BEST_CHAIN, DEAD, 
+        UNKNOWN, BUILDING, PENDING, NOT_IN_BEST_CHAIN, DEAD, 
       };
       
       public static Type valueOf(
@@ -8311,47 +8311,47 @@ public final class Protos {
       ".\n\004Type\022\014\n\010ORIGINAL\020\001\022\030\n\024ENCRYPTED_SCRYP",
       "T_AES\020\002\"\203\001\n\020TransactionInput\022\"\n\032transact" +
       "ion_out_point_hash\030\001 \002(\014\022#\n\033transaction_" +
-      "out_point_index\030\002 \002(\005\022\024\n\014script_bytes\030\003 " +
+      "out_point_index\030\002 \002(\r\022\024\n\014script_bytes\030\003 " +
       "\002(\014\022\020\n\010sequence\030\004 \001(\r\"\177\n\021TransactionOutp" +
       "ut\022\r\n\005value\030\001 \002(\003\022\024\n\014script_bytes\030\002 \002(\014\022" +
       "!\n\031spent_by_transaction_hash\030\003 \001(\014\022\"\n\032sp" +
-      "ent_by_transaction_index\030\004 \001(\005\"\246\003\n\025Trans" +
+      "ent_by_transaction_index\030\004 \001(\005\"\234\003\n\025Trans" +
       "actionConfidence\0220\n\004type\030\001 \001(\0162\".wallet." +
       "TransactionConfidence.Type\022\032\n\022appeared_a" +
       "t_height\030\002 \001(\005\022\036\n\026overriding_transaction",
       "\030\003 \001(\014\022\r\n\005depth\030\004 \001(\005\022\021\n\twork_done\030\005 \001(\003" +
       "\022)\n\014broadcast_by\030\006 \003(\0132\023.wallet.PeerAddr" +
       "ess\0224\n\006source\030\007 \001(\0162$.wallet.Transaction" +
-      "Confidence.Source\"Y\n\004Type\022\013\n\007UNKNOWN\020\000\022\014" +
-      "\n\010BUILDING\020\001\022\025\n\021NOT_SEEN_IN_CHAIN\020\002\022\025\n\021N" +
-      "OT_IN_BEST_CHAIN\020\003\022\010\n\004DEAD\020\004\"A\n\006Source\022\022" +
-      "\n\016SOURCE_UNKNOWN\020\000\022\022\n\016SOURCE_NETWORK\020\001\022\017" +
-      "\n\013SOURCE_SELF\020\002\"\211\003\n\013Transaction\022\017\n\007versi" +
-      "on\030\001 \002(\005\022\014\n\004hash\030\002 \002(\014\022&\n\004pool\030\003 \001(\0162\030.w" +
-      "allet.Transaction.Pool\022\021\n\tlock_time\030\004 \001(",
-      "\r\022\022\n\nupdated_at\030\005 \001(\003\0223\n\021transaction_inp" +
-      "ut\030\006 \003(\0132\030.wallet.TransactionInput\0225\n\022tr" +
-      "ansaction_output\030\007 \003(\0132\031.wallet.Transact" +
-      "ionOutput\022\022\n\nblock_hash\030\010 \003(\014\0221\n\nconfide" +
-      "nce\030\t \001(\0132\035.wallet.TransactionConfidence" +
-      "\"Y\n\004Pool\022\013\n\007UNSPENT\020\004\022\t\n\005SPENT\020\005\022\014\n\010INAC" +
-      "TIVE\020\002\022\010\n\004DEAD\020\n\022\013\n\007PENDING\020\020\022\024\n\020PENDING" +
-      "_INACTIVE\020\022\"N\n\020ScryptParameters\022\014\n\004salt\030" +
-      "\001 \002(\014\022\020\n\001n\030\002 \001(\003:\00516384\022\014\n\001r\030\003 \001(\005:\0018\022\014\n" +
-      "\001p\030\004 \001(\005:\0011\"8\n\tExtension\022\n\n\002id\030\001 \002(\t\022\014\n\004",
-      "data\030\002 \002(\014\022\021\n\tmandatory\030\003 \002(\010\"\255\003\n\006Wallet" +
-      "\022\032\n\022network_identifier\030\001 \002(\t\022\034\n\024last_see" +
-      "n_block_hash\030\002 \001(\014\022\036\n\026last_seen_block_he" +
-      "ight\030\014 \001(\r\022\030\n\003key\030\003 \003(\0132\013.wallet.Key\022(\n\013" +
-      "transaction\030\004 \003(\0132\023.wallet.Transaction\022C" +
-      "\n\017encryption_type\030\005 \001(\0162\035.wallet.Wallet." +
-      "EncryptionType:\013UNENCRYPTED\0227\n\025encryptio" +
-      "n_parameters\030\006 \001(\0132\030.wallet.ScryptParame" +
-      "ters\022\017\n\007version\030\007 \001(\005\022$\n\textension\030\n \003(\013" +
-      "2\021.wallet.Extension\022\023\n\013description\030\013 \001(\t",
-      "\";\n\016EncryptionType\022\017\n\013UNENCRYPTED\020\001\022\030\n\024E" +
-      "NCRYPTED_SCRYPT_AES\020\002B\035\n\023org.bitcoinj.wa" +
-      "lletB\006Protos"
+      "Confidence.Source\"O\n\004Type\022\013\n\007UNKNOWN\020\000\022\014" +
+      "\n\010BUILDING\020\001\022\013\n\007PENDING\020\002\022\025\n\021NOT_IN_BEST" +
+      "_CHAIN\020\003\022\010\n\004DEAD\020\004\"A\n\006Source\022\022\n\016SOURCE_U" +
+      "NKNOWN\020\000\022\022\n\016SOURCE_NETWORK\020\001\022\017\n\013SOURCE_S" +
+      "ELF\020\002\"\211\003\n\013Transaction\022\017\n\007version\030\001 \002(\005\022\014" +
+      "\n\004hash\030\002 \002(\014\022&\n\004pool\030\003 \001(\0162\030.wallet.Tran" +
+      "saction.Pool\022\021\n\tlock_time\030\004 \001(\r\022\022\n\nupdat",
+      "ed_at\030\005 \001(\003\0223\n\021transaction_input\030\006 \003(\0132\030" +
+      ".wallet.TransactionInput\0225\n\022transaction_" +
+      "output\030\007 \003(\0132\031.wallet.TransactionOutput\022" +
+      "\022\n\nblock_hash\030\010 \003(\014\0221\n\nconfidence\030\t \001(\0132" +
+      "\035.wallet.TransactionConfidence\"Y\n\004Pool\022\013" +
+      "\n\007UNSPENT\020\004\022\t\n\005SPENT\020\005\022\014\n\010INACTIVE\020\002\022\010\n\004" +
+      "DEAD\020\n\022\013\n\007PENDING\020\020\022\024\n\020PENDING_INACTIVE\020" +
+      "\022\"N\n\020ScryptParameters\022\014\n\004salt\030\001 \002(\014\022\020\n\001n" +
+      "\030\002 \001(\003:\00516384\022\014\n\001r\030\003 \001(\005:\0018\022\014\n\001p\030\004 \001(\005:\001" +
+      "1\"8\n\tExtension\022\n\n\002id\030\001 \002(\t\022\014\n\004data\030\002 \002(\014",
+      "\022\021\n\tmandatory\030\003 \002(\010\"\255\003\n\006Wallet\022\032\n\022networ" +
+      "k_identifier\030\001 \002(\t\022\034\n\024last_seen_block_ha" +
+      "sh\030\002 \001(\014\022\036\n\026last_seen_block_height\030\014 \001(\r" +
+      "\022\030\n\003key\030\003 \003(\0132\013.wallet.Key\022(\n\013transactio" +
+      "n\030\004 \003(\0132\023.wallet.Transaction\022C\n\017encrypti" +
+      "on_type\030\005 \001(\0162\035.wallet.Wallet.Encryption" +
+      "Type:\013UNENCRYPTED\0227\n\025encryption_paramete" +
+      "rs\030\006 \001(\0132\030.wallet.ScryptParameters\022\017\n\007ve" +
+      "rsion\030\007 \001(\005\022$\n\textension\030\n \003(\0132\021.wallet." +
+      "Extension\022\023\n\013description\030\013 \001(\t\";\n\016Encryp",
+      "tionType\022\017\n\013UNENCRYPTED\020\001\022\030\n\024ENCRYPTED_S" +
+      "CRYPT_AES\020\002B\035\n\023org.bitcoinj.walletB\006Prot" +
+      "os"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
       new com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner() {
