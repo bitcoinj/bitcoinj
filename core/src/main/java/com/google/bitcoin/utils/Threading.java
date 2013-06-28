@@ -20,7 +20,9 @@ import com.google.common.util.concurrent.Callables;
 import com.google.common.util.concurrent.CycleDetectingLockFactory;
 import com.google.common.util.concurrent.Futures;
 
+import javax.annotation.Nonnull;
 import java.util.concurrent.Callable;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.locks.ReentrantLock;
@@ -34,10 +36,20 @@ import static com.google.common.base.Preconditions.checkState;
  */
 public class Threading {
     /**
-     * A single-threaded executor that is intended for running event listeners on. This ensures all event listener code
-     * runs without any locks being held.
+     * An executor with one thread that is intended for running event listeners on. This ensures all event listener code
+     * runs without any locks being held. It's intended for the API user to run things on. Callbacks registered by
+     * bitcoinj internally shouldn't normally run here, although currently there are a few exceptions.
      */
-    public static final ExecutorService userCode;
+    public static final ExecutorService USER_THREAD;
+
+    /**
+     * A dummy executor that just invokes the runnable immediately. Use this over
+     * {@link com.google.common.util.concurrent.MoreExecutors#sameThreadExecutor()} because the latter creates a new
+     * object each time in order to implement the more complex {@link ExecutorService} interface, which is overkill
+     * for our needs.
+     */
+    public static final Executor SAME_THREAD;
+
     // For safety reasons keep track of the thread we use to run user-provided event listeners to avoid deadlock.
     private static final Thread executorThread;
 
@@ -53,7 +65,7 @@ public class Threading {
         // event handlers because it would never return. If you aren't calling this method explicitly, then that
         // means there's a bug in bitcoinj.
         checkState(executorThread != Thread.currentThread(), "waitForUserCode() run on user code thread would deadlock.");
-        Futures.getUnchecked(userCode.submit(Callables.returning(null)));
+        Futures.getUnchecked(USER_THREAD.submit(Callables.returning(null)));
     }
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -64,15 +76,21 @@ public class Threading {
         // from that point onwards.
         throwOnLockCycles();
 
-        userCode = Executors.newSingleThreadExecutor();
+        USER_THREAD = Executors.newSingleThreadExecutor();
         // We can't directly get the thread that was just created, but we can fetch it indirectly. We'll use this
         // for deadlock detection by checking for waits on the user code thread.
-        executorThread = Futures.getUnchecked(userCode.submit(new Callable<Thread>() {
+        executorThread = Futures.getUnchecked(USER_THREAD.submit(new Callable<Thread>() {
             @Override public Thread call() throws Exception {
                 Thread.currentThread().setName("bitcoinj user code thread");
                 return Thread.currentThread();
             }
         }));
+        SAME_THREAD = new Executor() {
+            @Override
+            public void execute(@Nonnull Runnable runnable) {
+                runnable.run();
+            }
+        };
     }
 
     private static CycleDetectingLockFactory.Policy policy;

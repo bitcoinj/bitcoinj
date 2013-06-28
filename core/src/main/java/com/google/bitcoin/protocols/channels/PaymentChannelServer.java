@@ -5,7 +5,6 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import com.google.bitcoin.core.*;
 import com.google.bitcoin.utils.Threading;
-import com.google.common.util.concurrent.MoreExecutors;
 import com.google.protobuf.ByteString;
 import net.jcip.annotations.GuardedBy;
 import org.bitcoin.paymentchannel.Protos;
@@ -242,7 +241,7 @@ public class PaymentChannelServer {
                     public void run() {
                         multisigContractPropogated(multisigContract.getHash());
                     }
-                }, MoreExecutors.sameThreadExecutor());
+                }, Threading.SAME_THREAD);
     }
 
     @GuardedBy("lock")

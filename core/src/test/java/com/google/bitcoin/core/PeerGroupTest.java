@@ -206,7 +206,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
             public void onTransaction(Peer peer, Transaction t) {
                 event[0] = t;
             }
-        });
+        }, Threading.SAME_THREAD);
 
         FakeChannel p1 = connectPeer(1);
         FakeChannel p2 = connectPeer(2);

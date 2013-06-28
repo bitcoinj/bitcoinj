@@ -326,7 +326,7 @@ public class PeerTest extends TestWithNetworkConnections {
         control.replay();
 
         connect();
-        peer.addEventListener(listener);
+        peer.addEventListener(listener, Threading.SAME_THREAD);
         long height = peer.getBestHeight();
         
         inbound(peer, inv);
@@ -359,7 +359,7 @@ public class PeerTest extends TestWithNetworkConnections {
         control.replay();
         
         connect();
-        peer.addEventListener(listener);
+        peer.addEventListener(listener, Threading.SAME_THREAD);
 
         peer.startBlockChainDownload();
         control.verify();
@@ -500,7 +500,7 @@ public class PeerTest extends TestWithNetworkConnections {
             public void onTransaction(Peer peer1, Transaction t) {
                 onTx[0] = t;
             }
-        });
+        }, Threading.SAME_THREAD);
 
         // Make the some fake transactions in the following graph:
         //   t1 -> t2 -> [t5]
@@ -787,7 +787,7 @@ public class PeerTest extends TestWithNetworkConnections {
             public void onException(Throwable throwable) {
                 throwables[0] = throwable;
             }
-        });
+        }, Threading.SAME_THREAD);
         control.replay();
         connect();
         Transaction t1 = new Transaction(unitTestParams);

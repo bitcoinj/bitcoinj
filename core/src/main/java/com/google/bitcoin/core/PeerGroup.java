@@ -439,7 +439,7 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
      * to running on the user thread.
      */
     public void addEventListener(PeerEventListener listener) {
-        addEventListener(listener, Threading.userCode);
+        addEventListener(listener, Threading.USER_THREAD);
     }
 
     /** The given event listener will no longer be called with events. */
@@ -611,7 +611,7 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
             // if a key is added. Of course, by then we may have downloaded the chain already. Ideally adding keys would
             // automatically rewind the block chain and redownload the blocks to find transactions relevant to those keys,
             // all transparently and in the background. But we are a long way from that yet.
-            wallet.addEventListener(walletEventListener);
+            wallet.addEventListener(walletEventListener);  // TODO: Run this in the current peer thread.
             recalculateFastCatchupAndFilter();
             updateVersionMessageRelayTxesBeforeFilter(getVersionMessage());
         } finally {
@@ -811,7 +811,7 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
                 }
             }
             // Make sure the peer knows how to upload transactions that are requested from us.
-            peer.addEventListener(getDataListener);
+            peer.addEventListener(getDataListener, Threading.SAME_THREAD);
             // Now tell the peers about any transactions we have which didn't appear in the chain yet. These are not
             // necessarily spends we created. They may also be transactions broadcast across the network that we saw,
             // which are relevant to us, and which we therefore wish to help propagate (ie they send us coins).
@@ -824,7 +824,7 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
             announcePendingWalletTransactions(wallets, Collections.singletonList(peer));
             // And set up event listeners for clients. This will allow them to find out about new transactions and blocks.
             for (ListenerRegistration<PeerEventListener> registration : peerEventListeners) {
-                peer.addEventListener(registration.listener);
+                peer.addEventListener(registration.listener, registration.executor);
             }
             setupPingingForNewPeer(peer);
         } finally {
@@ -858,7 +858,7 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
                 if (firstRun) {
                     firstRun = false;
                     try {
-                        peer.ping().addListener(this, MoreExecutors.sameThreadExecutor());
+                        peer.ping().addListener(this, Threading.SAME_THREAD);
                     } catch (Exception e) {
                         log.warn("{}: Exception whilst trying to ping peer: {}", peer, e.toString());
                         return;
@@ -875,7 +875,7 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
                         try {
                             if (!peers.contains(peer) || !PeerGroup.this.isRunning())
                                 return;  // Peer was removed/shut down.
-                            peer.ping().addListener(pingRunnable[0], MoreExecutors.sameThreadExecutor());
+                            peer.ping().addListener(pingRunnable[0], Threading.SAME_THREAD);
                         } catch (Exception e) {
                             log.warn("{}: Exception whilst trying to ping peer: {}", peer, e.toString());
                         }
@@ -1041,7 +1041,7 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
     private void startBlockChainDownloadFromPeer(Peer peer) {
         lock.lock();
         try {
-            peer.addEventListener(downloadListener);
+            peer.addEventListener(downloadListener, Threading.SAME_THREAD);
             setDownloadPeer(peer);
             // startBlockChainDownload will setDownloadData(true) on itself automatically.
             peer.startBlockChainDownload();
@@ -1245,7 +1245,7 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
                     });
                 }
             }
-        }, MoreExecutors.sameThreadExecutor());
+        }, Threading.SAME_THREAD);
         return future;
     }
 

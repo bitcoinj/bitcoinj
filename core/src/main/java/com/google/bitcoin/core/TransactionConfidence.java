@@ -412,7 +412,7 @@ public class TransactionConfidence implements Serializable {
      */
     public void queueListeners(final Listener.ChangeReason reason) {
         for (final Listener listener : listeners) {
-            Threading.userCode.execute(new Runnable() {
+            Threading.USER_THREAD.execute(new Runnable() {
                 @Override public void run() {
                     listener.onConfidenceChanged(transaction, reason);
                 }

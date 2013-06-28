@@ -18,6 +18,7 @@ package com.google.bitcoin.core;
 
 import com.google.bitcoin.store.BlockStore;
 import com.google.bitcoin.store.BlockStoreException;
+import com.google.bitcoin.utils.ListenerRegistration;
 import com.google.bitcoin.utils.Threading;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
@@ -34,6 +35,7 @@ import java.net.InetSocketAddress;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -60,7 +62,7 @@ public class Peer {
     private final NetworkParameters params;
     private final AbstractBlockChain blockChain;
     private volatile PeerAddress vAddress;
-    private final CopyOnWriteArrayList<PeerEventListener> eventListeners;
+    private final CopyOnWriteArrayList<ListenerRegistration<PeerEventListener>> eventListeners;
     private final CopyOnWriteArrayList<PeerLifecycleListener> lifecycleListeners;
     // Whether to try and download blocks and transactions from this peer. Set to false by PeerGroup if not the
     // primary peer. This is to avoid redundant work and concurrency problems with downloading the same chain
@@ -147,7 +149,7 @@ public class Peer {
         this.blockChain = chain;  // Allowed to be null.
         this.vDownloadData = chain != null;
         this.getDataFutures = new CopyOnWriteArrayList<GetDataRequest>();
-        this.eventListeners = new CopyOnWriteArrayList<PeerEventListener>();
+        this.eventListeners = new CopyOnWriteArrayList<ListenerRegistration<PeerEventListener>>();
         this.lifecycleListeners = new CopyOnWriteArrayList<PeerLifecycleListener>();
         this.fastCatchupTimeSecs = params.getGenesisBlock().getTimeSeconds();
         this.isAcked = false;
@@ -167,12 +169,29 @@ public class Peer {
         this.versionMessage.appendToSubVer(thisSoftwareName, thisSoftwareVersion, null);
     }
 
+    /**
+     * Registers the given object as an event listener that will be invoked on the user thread. Note that listeners
+     * added this way will <b>not</b> receive {@link PeerEventListener#getData(Peer, GetDataMessage)} or
+     * {@link PeerEventListener#onPreMessageReceived(Peer, Message)} calls because those require that the listener
+     * be added using {@link Threading#SAME_THREAD}, which requires the other addListener form.
+     */
     public void addEventListener(PeerEventListener listener) {
-        eventListeners.add(listener);
+        addEventListener(listener, Threading.USER_THREAD);
+    }
+
+    /**
+     * Registers the given object as an event listener that will be invoked by the given executor. Note that listeners
+     * added using any other executor than {@link Threading#SAME_THREAD} will <b>not</b> receive
+     * {@link PeerEventListener#getData(Peer, GetDataMessage)} or
+     * {@link PeerEventListener#onPreMessageReceived(Peer, Message)} calls because this class is not willing to cross
+     * threads in order to get the results of those hook methods.
+     */
+    public void addEventListener(PeerEventListener listener, Executor executor) {
+        eventListeners.add(new ListenerRegistration<PeerEventListener>(listener, executor));
     }
 
     public boolean removeEventListener(PeerEventListener listener) {
-        return eventListeners.remove(listener);
+        return ListenerRegistration.removeFromList(listener, eventListeners);
     }
 
     void addLifecycleListener(PeerLifecycleListener listener) {
@@ -246,9 +265,13 @@ public class Peer {
         try {
             // Allow event listeners to filter the message stream. Listeners are allowed to drop messages by
             // returning null.
-            for (PeerEventListener listener : eventListeners) {
-                m = listener.onPreMessageReceived(this, m);
-                if (m == null) break;
+            for (ListenerRegistration<PeerEventListener> registration : eventListeners) {
+                // Skip any listeners that are supposed to run in another thread as we don't want to block waiting
+                // for it, which might cause circular deadlock.
+                if (registration.executor == Threading.SAME_THREAD) {
+                    m = registration.listener.onPreMessageReceived(this, m);
+                    if (m == null) break;
+                }
             }
             if (m == null) return;
 
@@ -309,12 +332,17 @@ public class Peer {
             } else {
                 log.warn("Received unhandled message: {}", m);
             }
-        } catch (Throwable throwable) {
+        } catch (final Throwable throwable) {
             log.warn("Caught exception in peer thread: {}", throwable.getMessage());
             throwable.printStackTrace();
-            for (PeerEventListener listener : eventListeners) {
+            for (final ListenerRegistration<PeerEventListener> registration : eventListeners) {
                 try {
-                    listener.onException(throwable);
+                    registration.executor.execute(new Runnable() {
+                        @Override
+                        public void run() {
+                            registration.listener.onException(throwable);
+                        }
+                    });
                 } catch (Exception e1) {
                     e1.printStackTrace();
                 }
@@ -435,8 +463,9 @@ public class Peer {
     private void processGetData(GetDataMessage getdata) throws IOException {
         log.info("{}: Received getdata message: {}", vAddress, getdata.toString());
         ArrayList<Message> items = new ArrayList<Message>();
-        for (PeerEventListener listener : eventListeners) {
-            List<Message> listenerItems = listener.getData(this, getdata);
+        for (ListenerRegistration<PeerEventListener> registration : eventListeners) {
+            if (registration.executor != Threading.SAME_THREAD) continue;
+            List<Message> listenerItems = registration.listener.getData(this, getdata);
             if (listenerItems == null) continue;
             items.addAll(listenerItems);
         }
@@ -452,6 +481,7 @@ public class Peer {
     private void processTransaction(Transaction tx) throws VerificationException, IOException {
         // Check a few basic syntax issues to ensure the received TX isn't nonsense.
         tx.verify();
+        final Transaction fTx;
         lock.lock();
         try {
             log.debug("{}: Received tx {}", vAddress, tx.getHashAsString());
@@ -459,7 +489,7 @@ public class Peer {
                 // We may get back a different transaction object.
                 tx = memoryPool.seen(tx, getAddress());
             }
-            final Transaction fTx = tx;
+            fTx = tx;
             // Label the transaction as coming in from the P2P network (as opposed to being created by us, direct import,
             // etc). This helps the wallet decide how to risk analyze it later.
             fTx.getConfidence().setSource(TransactionConfidence.Source.NETWORK);
@@ -520,8 +550,14 @@ public class Peer {
         }
         // Tell all listeners about this tx so they can decide whether to keep it or not. If no listener keeps a
         // reference around then the memory pool will forget about it after a while too because it uses weak references.
-        for (PeerEventListener listener : eventListeners)
-            listener.onTransaction(this, tx);
+        for (final ListenerRegistration<PeerEventListener> registration : eventListeners) {
+            registration.executor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    registration.listener.onTransaction(Peer.this, fTx);
+                }
+            });
+        }
     }
 
     /**
@@ -663,7 +699,7 @@ public class Peer {
                             }
                         }
                     }
-                }, MoreExecutors.sameThreadExecutor());
+                }, Threading.SAME_THREAD);
             }
         } catch (Exception e) {
             log.error("{}: Couldn't send getdata in downloadDependencies({})", this, tx.getHash());
@@ -805,8 +841,14 @@ public class Peer {
         // since the time we first connected to the peer. However, it's weird and unexpected to receive a callback
         // with negative "blocks left" in this case, so we clamp to zero so the API user doesn't have to think about it.
         final int blocksLeft = Math.max(0, (int) vPeerVersionMessage.bestHeight - blockChain.getBestChainHeight());
-        for (PeerEventListener listener : eventListeners)
-            listener.onBlocksDownloaded(Peer.this, m, blocksLeft);
+        for (final ListenerRegistration<PeerEventListener> registration : eventListeners) {
+            registration.executor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    registration.listener.onBlocksDownloaded(Peer.this, m, blocksLeft);
+                }
+            });
+        }
     }
 
     private void processInv(InventoryMessage inv) throws IOException {
@@ -1127,8 +1169,14 @@ public class Peer {
         // chain even if the chain block count is lower.
         final int blocksLeft = getPeerBlockHeightDifference();
         if (blocksLeft >= 0) {
-            for (PeerEventListener listener : eventListeners)
-                listener.onChainDownloadStarted(this, blocksLeft);
+            for (final ListenerRegistration<PeerEventListener> registration : eventListeners) {
+                registration.executor.execute(new Runnable() {
+                    @Override
+                    public void run() {
+                        registration.listener.onChainDownloadStarted(Peer.this, blocksLeft);
+                    }
+                });
+            }
             // When we just want as many blocks as possible, we can set the target hash to zero.
             blockChainDownload(Sha256Hash.ZERO_HASH);
         }

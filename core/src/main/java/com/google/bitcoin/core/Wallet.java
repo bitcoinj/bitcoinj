@@ -1359,7 +1359,7 @@ public class Wallet implements Serializable, BlockChainListener {
      * like receiving money. Runs the listener methods in the user thread.
      */
     public void addEventListener(WalletEventListener listener) {
-        addEventListener(listener, Threading.userCode);
+        addEventListener(listener, Threading.USER_THREAD);
     }
 
     /**
@@ -3032,7 +3032,7 @@ public class Wallet implements Serializable, BlockChainListener {
             it.remove();
             final BigInteger v = checkNotNull(val);
             // Don't run any user-provided future listeners with our lock held.
-            Threading.userCode.execute(new Runnable() {
+            Threading.USER_THREAD.execute(new Runnable() {
                 @Override public void run() {
                     req.future.set(v);
                 }
