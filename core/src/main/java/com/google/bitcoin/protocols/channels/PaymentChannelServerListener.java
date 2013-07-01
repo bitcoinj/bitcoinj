@@ -35,8 +35,9 @@ import org.bitcoin.paymentchannel.Protos;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * Manages a {@link PaymentChannelClient} by connecting to a server using a simple TCP socket and exchanging the
- * necessary protobufs.
+ * Implements a listening TCP server that can accept connections from payment channel clients, and invokes the provided
+ * event listeners when new channels are opened or payments arrive. This is the highest level class in the payment
+ * channels API. Internally, sends protobuf messages to/from a newly created {@link PaymentChannelServer}.
  */
 public class PaymentChannelServerListener {
     // The wallet and peergroup which are used to complete/broadcast transactions
