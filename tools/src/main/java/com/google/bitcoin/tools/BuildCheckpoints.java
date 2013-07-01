@@ -5,6 +5,7 @@ import com.google.bitcoin.params.MainNetParams;
 import com.google.bitcoin.store.BlockStore;
 import com.google.bitcoin.store.MemoryBlockStore;
 import com.google.bitcoin.utils.BriefLogFormatter;
+import com.google.bitcoin.utils.Threading;
 
 import java.io.DataOutputStream;
 import java.io.FileInputStream;
@@ -51,7 +52,7 @@ public class BuildCheckpoints {
                     checkpoints.put(height, block);
                 }
             }
-        });
+        }, Threading.SAME_THREAD);
 
         peerGroup.startAndWait();
         peerGroup.downloadBlockChain();
