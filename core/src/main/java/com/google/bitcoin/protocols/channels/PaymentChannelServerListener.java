@@ -24,8 +24,8 @@ import java.net.SocketAddress;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-import com.google.bitcoin.core.PeerGroup;
 import com.google.bitcoin.core.Sha256Hash;
+import com.google.bitcoin.core.TransactionBroadcaster;
 import com.google.bitcoin.core.Wallet;
 import com.google.bitcoin.protocols.niowrapper.ProtobufParser;
 import com.google.bitcoin.protocols.niowrapper.ProtobufParserFactory;
@@ -42,7 +42,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class PaymentChannelServerListener {
     // The wallet and peergroup which are used to complete/broadcast transactions
     private final Wallet wallet;
-    private final PeerGroup peerGroup;
+    private final TransactionBroadcaster broadcaster;
 
     // The event handler factory which creates new ServerConnectionEventHandler per connection
     private final HandlerFactory eventHandlerFactory;
@@ -63,7 +63,7 @@ public class PaymentChannelServerListener {
 
     private class ServerHandler {
         public ServerHandler(final SocketAddress address, final int timeoutSeconds) {
-            paymentChannelManager = new PaymentChannelServer(peerGroup, wallet, minAcceptedChannelSize, new PaymentChannelServer.ServerConnection() {
+            paymentChannelManager = new PaymentChannelServer(broadcaster, wallet, minAcceptedChannelSize, new PaymentChannelServer.ServerConnection() {
                 @Override public void sendToClient(Protos.TwoWayChannelMessage msg) {
 					socketProtobufHandler.write(msg);
                 }
@@ -142,7 +142,7 @@ public class PaymentChannelServerListener {
     /**
      * Sets up a new payment channel server which listens on the given port.
      *
-     * @param peerGroup The PeerGroup on which transactions will be broadcast - should have multiple connections.
+     * @param broadcaster The PeerGroup on which transactions will be broadcast - should have multiple connections.
      * @param wallet The wallet which will be used to complete transactions
      * @param timeoutSeconds The read timeout between messages. This should accommodate latency and client ECDSA
      *                       signature operations.
@@ -152,10 +152,11 @@ public class PaymentChannelServerListener {
      *                               channel) should generally be chosen.
      * @param eventHandlerFactory A factory which generates event handlers which are created for each new connection
      */
-    public PaymentChannelServerListener(PeerGroup peerGroup, Wallet wallet, final int timeoutSeconds, BigInteger minAcceptedChannelSize,
+    public PaymentChannelServerListener(TransactionBroadcaster broadcaster, Wallet wallet,
+                                        final int timeoutSeconds, BigInteger minAcceptedChannelSize,
                                         HandlerFactory eventHandlerFactory) throws IOException {
         this.wallet = checkNotNull(wallet);
-        this.peerGroup = checkNotNull(peerGroup);
+        this.broadcaster = checkNotNull(broadcaster);
         this.eventHandlerFactory = checkNotNull(eventHandlerFactory);
         this.minAcceptedChannelSize = checkNotNull(minAcceptedChannelSize);
 

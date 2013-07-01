@@ -78,11 +78,11 @@ public class StoredServerChannel implements Serializable {
      *
      * @param wallet The wallet which holds the {@link com.google.bitcoin.protocols.channels.PaymentChannelServerState} in which this is saved and which will
      *               be used to complete transactions
-     * @param peerGroup The {@link com.google.bitcoin.core.PeerGroup} which will be used to broadcast contract/payment transactions.
+     * @param broadcaster The {@link com.google.bitcoin.core.TransactionBroadcaster} which will be used to broadcast contract/payment transactions.
      */
-    public synchronized PaymentChannelServerState getState(Wallet wallet, PeerGroup peerGroup) throws VerificationException {
+    public synchronized PaymentChannelServerState getState(Wallet wallet, TransactionBroadcaster broadcaster) throws VerificationException {
         if (state == null)
-            state = new PaymentChannelServerState(this, wallet, peerGroup);
+            state = new PaymentChannelServerState(this, wallet, broadcaster);
         checkArgument(wallet == state.wallet);
         return state;
     }

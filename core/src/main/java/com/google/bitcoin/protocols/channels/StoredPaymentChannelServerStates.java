@@ -34,7 +34,7 @@ public class StoredPaymentChannelServerStates implements WalletExtension {
 
     @VisibleForTesting final Map<Sha256Hash, StoredServerChannel> mapChannels = new HashMap<Sha256Hash, StoredServerChannel>();
     private final Wallet wallet;
-    private final PeerGroup announcePeerGroup;
+    private final TransactionBroadcaster broadcaster;
 
     private final Timer channelTimeoutHandler = new Timer();
 
@@ -49,11 +49,11 @@ public class StoredPaymentChannelServerStates implements WalletExtension {
 
     /**
      * Creates a new PaymentChannelServerStateManager and associates it with the given {@link Wallet} and
-     * {@link PeerGroup} which are used to complete and announce payment transactions.
+     * {@link TransactionBroadcaster} which are used to complete and announce payment transactions.
      */
-    public StoredPaymentChannelServerStates(Wallet wallet, PeerGroup announcePeerGroup) {
+    public StoredPaymentChannelServerStates(Wallet wallet, TransactionBroadcaster broadcaster) {
         this.wallet = checkNotNull(wallet);
-        this.announcePeerGroup = checkNotNull(announcePeerGroup);
+        this.broadcaster = checkNotNull(broadcaster);
     }
 
     /**
@@ -69,7 +69,7 @@ public class StoredPaymentChannelServerStates implements WalletExtension {
             if (channel.connectedHandler != null)
                 channel.connectedHandler.close(); // connectedHandler will be reset to null in connectionClosed
             try {//TODO add event listener to PaymentChannelServerStateManager
-                channel.getState(wallet, announcePeerGroup).close(); // Closes the actual connection, not the channel
+                channel.getState(wallet, broadcaster).close(); // Closes the actual connection, not the channel
             } catch (ValueOutOfRangeException e) {
                 e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
             } catch (VerificationException e) {

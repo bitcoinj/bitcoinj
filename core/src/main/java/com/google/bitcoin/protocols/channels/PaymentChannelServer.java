@@ -95,7 +95,7 @@ public class PaymentChannelServer {
 
     // The wallet and peergroup which are used to complete/broadcast transactions
     private final Wallet wallet;
-    private final PeerGroup peerGroup;
+    private final TransactionBroadcaster broadcaster;
 
     // The key used for multisig in this channel
     @GuardedBy("lock") private ECKey myKey;
@@ -121,7 +121,7 @@ public class PaymentChannelServer {
     /**
      * Creates a new server-side state manager which handles a single client connection.
      *
-     * @param peerGroup The PeerGroup on which transactions will be broadcast - should have multiple connections.
+     * @param broadcaster The PeerGroup on which transactions will be broadcast - should have multiple connections.
      * @param wallet The wallet which will be used to complete transactions.
      *               Unlike {@link PaymentChannelClient}, this does not have to already contain a StoredState manager
      * @param minAcceptedChannelSize The minimum value the client must lock into this channel. A value too large will be
@@ -132,8 +132,9 @@ public class PaymentChannelServer {
      * @param conn A callback listener which represents the connection to the client (forwards messages we generate to
      *             the client and will close the connection on request)
      */
-    public PaymentChannelServer(PeerGroup peerGroup, Wallet wallet, BigInteger minAcceptedChannelSize, ServerConnection conn) {
-        this.peerGroup = checkNotNull(peerGroup);
+    public PaymentChannelServer(TransactionBroadcaster broadcaster, Wallet wallet,
+                                BigInteger minAcceptedChannelSize, ServerConnection conn) {
+        this.broadcaster = checkNotNull(broadcaster);
         this.wallet = checkNotNull(wallet);
         this.minAcceptedChannelSize = checkNotNull(minAcceptedChannelSize);
         this.conn = checkNotNull(conn);
@@ -159,7 +160,7 @@ public class PaymentChannelServer {
                     if (storedServerChannel.setConnectedHandler(this)) {
                         log.info("Got resume version message, responding with VERSIONS and CHANNEL_OPEN");
 
-                        state = storedServerChannel.getState(wallet, peerGroup);
+                        state = storedServerChannel.getState(wallet, broadcaster);
                         step = InitStep.CHANNEL_OPEN;
                         conn.sendToClient(Protos.TwoWayChannelMessage.newBuilder()
                                 .setType(Protos.TwoWayChannelMessage.MessageType.CHANNEL_OPEN)
@@ -195,7 +196,7 @@ public class PaymentChannelServer {
         log.info("Got refund transaction, returning signature");
 
         Protos.ProvideRefund providedRefund = msg.getProvideRefund();
-        state = new PaymentChannelServerState(peerGroup, wallet, myKey, expireTime);
+        state = new PaymentChannelServerState(broadcaster, wallet, myKey, expireTime);
         byte[] signature = state.provideRefundTransaction(new Transaction(wallet.getParams(), providedRefund.getTx().toByteArray()),
                 providedRefund.getMultisigKey().toByteArray());
 

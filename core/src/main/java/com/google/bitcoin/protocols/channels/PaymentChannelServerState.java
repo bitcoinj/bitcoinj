@@ -90,8 +90,8 @@ public class PaymentChannelServerState {
     // Package-local for checkArguments in StoredServerChannel
     final Wallet wallet;
 
-    // The peer group we will broadcast transactions to
-    private final PeerGroup peerGroup;
+    // The object that will broadcast transactions for us - usually a peer group.
+    private final TransactionBroadcaster broadcaster;
 
     // The multi-sig contract and the output script from it
     private Transaction multisigContract = null;
@@ -113,10 +113,10 @@ public class PaymentChannelServerState {
 
     private StoredServerChannel storedServerChannel = null;
 
-    PaymentChannelServerState(StoredServerChannel storedServerChannel, Wallet wallet, PeerGroup peerGroup) throws VerificationException {
+    PaymentChannelServerState(StoredServerChannel storedServerChannel, Wallet wallet, TransactionBroadcaster broadcaster) throws VerificationException {
         synchronized (storedServerChannel) {
             this.wallet = checkNotNull(wallet);
-            this.peerGroup = checkNotNull(peerGroup);
+            this.broadcaster = checkNotNull(broadcaster);
             this.multisigContract = checkNotNull(storedServerChannel.contract);
             this.multisigScript = multisigContract.getOutput(0).getScriptPubKey();
             this.clientKey = new ECKey(null, multisigScript.getChunks().get(1).data);
@@ -136,17 +136,17 @@ public class PaymentChannelServerState {
     /**
      * Creates a new state object to track the server side of a payment channel.
      *
-     * @param peerGroup The peer group which we will broadcast transactions to, this should have multiple peers
+     * @param broadcaster The peer group which we will broadcast transactions to, this should have multiple peers
      * @param wallet The wallet which will be used to complete transactions
      * @param serverKey The private key which we use for our part of the multi-sig contract
      *                  (this MUST be fresh and CANNOT be used elsewhere)
      * @param minExpireTime The earliest time at which the client can claim the refund transaction (UNIX timestamp of block)
      */
-    public PaymentChannelServerState(PeerGroup peerGroup, Wallet wallet, ECKey serverKey, long minExpireTime) {
+    public PaymentChannelServerState(TransactionBroadcaster broadcaster, Wallet wallet, ECKey serverKey, long minExpireTime) {
         this.state = State.WAITING_FOR_REFUND_TRANSACTION;
         this.serverKey = checkNotNull(serverKey);
         this.wallet = checkNotNull(wallet);
-        this.peerGroup = checkNotNull(peerGroup);
+        this.broadcaster = checkNotNull(broadcaster);
         this.minExpireTime = minExpireTime;
     }
 
@@ -237,7 +237,7 @@ public class PaymentChannelServerState {
         log.info("Broadcasting multisig contract: {}", multisigContract);
         state = State.WAITING_FOR_MULTISIG_ACCEPTANCE;
         final SettableFuture<PaymentChannelServerState> future = SettableFuture.create();
-        Futures.addCallback(peerGroup.broadcastTransaction(multisigContract), new FutureCallback<Transaction>() {
+        Futures.addCallback(broadcaster.broadcastTransaction(multisigContract), new FutureCallback<Transaction>() {
             @Override public void onSuccess(Transaction transaction) {
                 log.info("Successfully broadcast multisig contract {}. Channel now open.", transaction.getHashAsString());
                 state = State.READY;
@@ -387,7 +387,7 @@ public class PaymentChannelServerState {
         state = State.CLOSING;
         log.info("Closing channel, broadcasting tx {}", tx);
         // The act of broadcasting the transaction will add it to the wallet.
-        ListenableFuture<Transaction> future = peerGroup.broadcastTransaction(tx);
+        ListenableFuture<Transaction> future = broadcaster.broadcastTransaction(tx);
         Futures.addCallback(future, new FutureCallback<Transaction>() {
             @Override public void onSuccess(Transaction transaction) {
                 log.info("TX {} propagated, channel successfully closed.", transaction.getHash());
@@ -463,7 +463,7 @@ public class PaymentChannelServerState {
 
         log.info("Storing state with contract hash {}.", multisigContract.getHash());
         StoredPaymentChannelServerStates channels = (StoredPaymentChannelServerStates)
-                wallet.addOrGetExistingExtension(new StoredPaymentChannelServerStates(wallet, peerGroup));
+                wallet.addOrGetExistingExtension(new StoredPaymentChannelServerStates(wallet, broadcaster));
         storedServerChannel = new StoredServerChannel(this, multisigContract, clientOutput, refundTransactionUnlockTimeSecs, serverKey, bestValueToMe, bestValueSignature);
         checkState(storedServerChannel.setConnectedHandler(connectedHandler));
         channels.putChannel(storedServerChannel);
