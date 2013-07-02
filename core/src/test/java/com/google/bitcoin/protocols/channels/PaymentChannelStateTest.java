@@ -27,6 +27,7 @@ import org.junit.Test;
 
 import java.math.BigInteger;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutionException;
@@ -702,5 +703,89 @@ public class PaymentChannelStateTest extends TestWithWallet {
         pair = broadcasts.take();
         pair.future.set(pair.tx);
         assertEquals(PaymentChannelServerState.State.CLOSED, serverState.getState());
+    }
+
+    @Test
+    public void doubleSpendContractTest() throws Exception {
+        // Tests that if the client double-spends the multisig contract after it is sent, no more payments are accepted
+
+        // Start with a copy of basic()....
+        Utils.rollMockClock(0); // Use mock clock
+        final long EXPIRE_TIME = Utils.now().getTime()/1000 + 60*60*24;
+
+        serverState = new PaymentChannelServerState(mockBroadcaster, serverWallet, serverKey, EXPIRE_TIME);
+        assertEquals(PaymentChannelServerState.State.WAITING_FOR_REFUND_TRANSACTION, serverState.getState());
+
+        clientState = new PaymentChannelClientState(wallet, myKey, new ECKey(null, serverKey.getPubKey()), halfCoin, EXPIRE_TIME);
+        assertEquals(PaymentChannelClientState.State.NEW, clientState.getState());
+        clientState.initiate();
+        assertEquals(PaymentChannelClientState.State.INITIATED, clientState.getState());
+
+        // Send the refund tx from client to server and get back the signature.
+        Transaction refund = new Transaction(params, clientState.getIncompleteRefundTransaction().bitcoinSerialize());
+        byte[] refundSig = serverState.provideRefundTransaction(refund, myKey.getPubKey());
+        assertEquals(PaymentChannelServerState.State.WAITING_FOR_MULTISIG_CONTRACT, serverState.getState());
+        // This verifies that the refund can spend the multi-sig output when run.
+        clientState.provideRefundSignature(refundSig);
+        assertEquals(PaymentChannelClientState.State.PROVIDE_MULTISIG_CONTRACT_TO_SERVER, clientState.getState());
+
+        // Validate the multisig contract looks right.
+        Transaction multisigContract = new Transaction(params, clientState.getMultisigContract().bitcoinSerialize());
+        assertEquals(PaymentChannelClientState.State.READY, clientState.getState());
+        assertEquals(2, multisigContract.getOutputs().size());   // One multi-sig, one change.
+        Script script = multisigContract.getOutput(0).getScriptPubKey();
+        assertTrue(script.isSentToMultiSig());
+        script = multisigContract.getOutput(1).getScriptPubKey();
+        assertTrue(script.isSentToAddress());
+        assertTrue(wallet.getPendingTransactions().contains(multisigContract));
+
+        // Provide the server with the multisig contract and simulate successful propagation/acceptance.
+        serverState.provideMultiSigContract(multisigContract);
+        assertEquals(PaymentChannelServerState.State.WAITING_FOR_MULTISIG_ACCEPTANCE, serverState.getState());
+        final TxFuturePair pair = broadcasts.take();
+        pair.future.set(pair.tx);
+        assertEquals(PaymentChannelServerState.State.READY, serverState.getState());
+
+        // Make sure the refund transaction is not in the wallet and multisig contract's output is not connected to it
+        assertEquals(2, wallet.getTransactions(false).size());
+        Iterator<Transaction> walletTransactionIterator = wallet.getTransactions(false).iterator();
+        Transaction clientWalletMultisigContract = walletTransactionIterator.next();
+        assertFalse(clientWalletMultisigContract.getHash().equals(clientState.getCompletedRefundTransaction().getHash()));
+        if (!clientWalletMultisigContract.getHash().equals(multisigContract.getHash())) {
+            clientWalletMultisigContract = walletTransactionIterator.next();
+            assertFalse(clientWalletMultisigContract.getHash().equals(clientState.getCompletedRefundTransaction().getHash()));
+        } else
+            assertFalse(walletTransactionIterator.next().getHash().equals(clientState.getCompletedRefundTransaction().getHash()));
+        assertEquals(multisigContract.getHash(), clientWalletMultisigContract.getHash());
+        assertFalse(clientWalletMultisigContract.getInput(0).getConnectedOutput().getSpentBy().getParentTransaction().getHash().equals(refund.getHash()));
+
+        // Both client and server are now in the ready state. Simulate a few micropayments of 0.005 bitcoins.
+        BigInteger size = halfCoin.divide(BigInteger.TEN).divide(BigInteger.TEN);
+        BigInteger totalPayment = BigInteger.ZERO;
+        for (int i = 0; i < 5; i++) {
+            byte[] signature = clientState.incrementPaymentBy(size);
+            totalPayment = totalPayment.add(size);
+            serverState.incrementPayment(halfCoin.subtract(totalPayment), signature);
+        }
+
+        // Now create a double-spend and send it to the server
+        Transaction doubleSpendContract = new Transaction(params);
+        doubleSpendContract.addInput(new TransactionInput(params, doubleSpendContract, new byte[0],
+                multisigContract.getInput(0).getOutpoint()));
+        doubleSpendContract.addOutput(halfCoin, myKey);
+        doubleSpendContract = new Transaction(params, doubleSpendContract.bitcoinSerialize());
+
+        StoredBlock block = new StoredBlock(params.getGenesisBlock().createNextBlock(myKey.toAddress(params)), BigInteger.TEN, 1);
+        serverWallet.receiveFromBlock(doubleSpendContract, block, AbstractBlockChain.NewBlockType.BEST_CHAIN);
+
+        // Now if we try to spend again the server will reject it since it saw a double-spend
+        try {
+            byte[] signature = clientState.incrementPaymentBy(size);
+            totalPayment = totalPayment.add(size);
+            serverState.incrementPayment(halfCoin.subtract(totalPayment), signature);
+            fail();
+        } catch (VerificationException e) {
+            assertTrue(e.getMessage().contains("double-spent"));
+        }
     }
 }

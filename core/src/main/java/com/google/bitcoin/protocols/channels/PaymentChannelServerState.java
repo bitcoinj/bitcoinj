@@ -18,6 +18,7 @@ package com.google.bitcoin.protocols.channels;
 
 import java.math.BigInteger;
 import java.util.Arrays;
+import java.util.Collections;
 import javax.annotation.Nullable;
 
 import com.google.bitcoin.core.*;
@@ -213,7 +214,7 @@ public class PaymentChannelServerState {
      *         Note that if the network simply rejects the transaction, this future will never complete, a timeout should be used.
      * @throws VerificationException If the provided multisig contract is not well-formed or does not meet previously-specified parameters
      */
-    public synchronized ListenableFuture<PaymentChannelServerState> provideMultiSigContract(Transaction multisigContract) throws VerificationException {
+    public synchronized ListenableFuture<PaymentChannelServerState> provideMultiSigContract(final Transaction multisigContract) throws VerificationException {
         checkNotNull(multisigContract);
         checkState(state == State.WAITING_FOR_MULTISIG_CONTRACT);
         try {
@@ -240,6 +241,13 @@ public class PaymentChannelServerState {
         Futures.addCallback(broadcaster.broadcastTransaction(multisigContract), new FutureCallback<Transaction>() {
             @Override public void onSuccess(Transaction transaction) {
                 log.info("Successfully broadcast multisig contract {}. Channel now open.", transaction.getHashAsString());
+                try {
+                    // Manually add the multisigContract to the wallet, overriding the isRelevant checks so we can track
+                    // it and check for double-spends later
+                    wallet.receivePending(multisigContract, Collections.EMPTY_LIST, true);
+                } catch (VerificationException e) {
+                    throw new RuntimeException(e); // Cannot happen, we already called multisigContract.verify()
+                }
                 state = State.READY;
                 future.set(PaymentChannelServerState.this);
             }
@@ -290,6 +298,21 @@ public class PaymentChannelServerState {
             throw new ValueOutOfRangeException("Attempt to refund more than the contract allows.");
         if (newValueToMe.compareTo(bestValueToMe) < 0)
             return;
+
+        // Get the wallet's copy of the multisigContract (ie with confidence information), if this is null, the wallet
+        // was not connected to the peergroup when the contract was broadcast (which may cause issues down the road, and
+        // disables our double-spend check next)
+        Transaction walletContract = wallet.getTransaction(multisigContract.getHash());
+        checkState(walletContract != null, "Wallet did not contain multisig contract after state was marked READY");
+
+        // Note that we check for DEAD state here, but this test is essentially useless in production because we will
+        // miss most double-spends due to bloom filtering right now anyway. This will eventually fixed by network-wide
+        // double-spend notifications, so we just wait instead of attempting to add all dependant outpoints to our bloom
+        // filters (and probably missing lots of edge-cases).
+        if (walletContract.getConfidence().getConfidenceType() == TransactionConfidence.ConfidenceType.DEAD) {
+            close();
+            throw new VerificationException("Multisig contract was double-spent");
+        }
 
         Transaction.SigHash mode;
         // If the client doesn't want anything back, they shouldn't sign any outputs at all.
