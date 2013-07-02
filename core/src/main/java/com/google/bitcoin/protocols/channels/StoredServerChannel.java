@@ -54,9 +54,9 @@ public class StoredServerChannel implements Serializable {
 
     /**
      * <p>Updates the best value to the server to the given newValue and newSignature without any checking.</p>
-     * <p>Does <i>NOT</i> notify the wallet of an update to the {@link com.google.bitcoin.protocols.channels.StoredPaymentChannelServerStates}.</p>
+     * <p>Does <i>NOT</i> notify the wallet of an update to the {@link StoredPaymentChannelServerStates}.</p>
      */
-    public synchronized void updateValueToMe(BigInteger newValue, byte[] newSignature) {
+    synchronized void updateValueToMe(BigInteger newValue, byte[] newSignature) {
         this.bestValueToMe = newValue;
         this.bestValueSignature = newSignature;
     }
@@ -73,12 +73,12 @@ public class StoredServerChannel implements Serializable {
     }
 
     /**
-     * Gets the canonical {@link com.google.bitcoin.protocols.channels.PaymentChannelServerState} object for this channel, either by returning an existing one
+     * Gets the canonical {@link PaymentChannelServerState} object for this channel, either by returning an existing one
      * or by creating a new one.
      *
-     * @param wallet The wallet which holds the {@link com.google.bitcoin.protocols.channels.PaymentChannelServerState} in which this is saved and which will
+     * @param wallet The wallet which holds the {@link PaymentChannelServerState} in which this is saved and which will
      *               be used to complete transactions
-     * @param broadcaster The {@link com.google.bitcoin.core.TransactionBroadcaster} which will be used to broadcast contract/payment transactions.
+     * @param broadcaster The {@link TransactionBroadcaster} which will be used to broadcast contract/payment transactions.
      */
     public synchronized PaymentChannelServerState getState(Wallet wallet, TransactionBroadcaster broadcaster) throws VerificationException {
         if (state == null)
