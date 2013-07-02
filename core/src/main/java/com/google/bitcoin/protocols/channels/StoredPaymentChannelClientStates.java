@@ -22,10 +22,13 @@ import java.util.Date;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.locks.ReentrantLock;
 
 import com.google.bitcoin.core.*;
+import com.google.bitcoin.utils.Locks;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.HashMultimap;
+import net.jcip.annotations.GuardedBy;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
@@ -37,11 +40,13 @@ import static com.google.common.base.Preconditions.checkState;
 public class StoredPaymentChannelClientStates implements WalletExtension {
     static final String EXTENSION_ID = StoredPaymentChannelClientStates.class.getName();
 
-    @VisibleForTesting final HashMultimap<Sha256Hash, StoredClientChannel> mapChannels = HashMultimap.create();
+    @GuardedBy("lock") @VisibleForTesting final HashMultimap<Sha256Hash, StoredClientChannel> mapChannels = HashMultimap.create();
     @VisibleForTesting final Timer channelTimeoutHandler = new Timer();
 
     private Wallet containingWallet;
     private final TransactionBroadcaster announcePeerGroup;
+
+    protected final ReentrantLock lock = Locks.lock("StoredPaymentChannelClientStates");
 
     /**
      * Creates a new StoredPaymentChannelClientStates and associates it with the given {@link Wallet} and
@@ -56,15 +61,20 @@ public class StoredPaymentChannelClientStates implements WalletExtension {
     /**
      * Finds an inactive channel with the given id and returns it, or returns null.
      */
-    public synchronized StoredClientChannel getInactiveChannelById(Sha256Hash id) {
-        Set<StoredClientChannel> setChannels = mapChannels.get(id);
-        for (StoredClientChannel channel : setChannels) {
-            synchronized (channel) {
-                if (!channel.active) {
-                    channel.active = true;
-                    return channel;
+    public StoredClientChannel getInactiveChannelById(Sha256Hash id) {
+        lock.lock();
+        try {
+            Set<StoredClientChannel> setChannels = mapChannels.get(id);
+            for (StoredClientChannel channel : setChannels) {
+                synchronized (channel) {
+                    if (!channel.active) {
+                        channel.active = true;
+                        return channel;
+                    }
                 }
             }
+        } finally {
+            lock.unlock();
         }
         return null;
     }
@@ -72,13 +82,18 @@ public class StoredPaymentChannelClientStates implements WalletExtension {
     /**
      * Finds a channel with the given id and contract hash and returns it, or returns null.
      */
-    public synchronized StoredClientChannel getChannel(Sha256Hash id, Sha256Hash contractHash) {
-        Set<StoredClientChannel> setChannels = mapChannels.get(id);
-        for (StoredClientChannel channel : setChannels) {
-            if (channel.contract.getHash().equals(contractHash))
-                return channel;
+    public StoredClientChannel getChannel(Sha256Hash id, Sha256Hash contractHash) {
+        lock.lock();
+        try {
+            Set<StoredClientChannel> setChannels = mapChannels.get(id);
+            for (StoredClientChannel channel : setChannels) {
+                if (channel.contract.getHash().equals(contractHash))
+                    return channel;
+            }
+            return null;
+        } finally {
+            lock.unlock();
         }
-        return null;
     }
 
     /**
@@ -90,17 +105,22 @@ public class StoredPaymentChannelClientStates implements WalletExtension {
     }
 
     // Adds this channel and optionally notifies the wallet of an update to this extension (used during deserialize)
-    private synchronized void putChannel(final StoredClientChannel channel, boolean updateWallet) {
-        mapChannels.put(channel.id, channel);
-        channelTimeoutHandler.schedule(new TimerTask() {
-            @Override
-            public void run() {
-                removeChannel(channel);
-                announcePeerGroup.broadcastTransaction(channel.contract);
-                announcePeerGroup.broadcastTransaction(channel.refund);
-            }
-            // Add the difference between real time and Utils.now() so that test-cases can use a mock clock.
-        }, new Date((channel.refund.getLockTime() + 60 * 5) * 1000 + (System.currentTimeMillis() - Utils.now().getTime())));
+    private void putChannel(final StoredClientChannel channel, boolean updateWallet) {
+        lock.lock();
+        try {
+            mapChannels.put(channel.id, channel);
+            channelTimeoutHandler.schedule(new TimerTask() {
+                @Override
+                public void run() {
+                    removeChannel(channel);
+                    announcePeerGroup.broadcastTransaction(channel.contract);
+                    announcePeerGroup.broadcastTransaction(channel.refund);
+                }
+                // Add the difference between real time and Utils.now() so that test-cases can use a mock clock.
+            }, new Date((channel.refund.getLockTime() + 60 * 5) * 1000 + (System.currentTimeMillis() - Utils.now().getTime())));
+        } finally {
+            lock.unlock();
+        }
         if (updateWallet)
             containingWallet.addOrUpdateExtension(this);
     }
@@ -113,8 +133,13 @@ public class StoredPaymentChannelClientStates implements WalletExtension {
      * {@link TransactionBroadcaster} as long as this {@link StoredPaymentChannelClientStates} continues to
      * exist in memory.</p>
      */
-    public synchronized void removeChannel(StoredClientChannel channel) {
-        mapChannels.remove(channel.id, channel);
+    public void removeChannel(StoredClientChannel channel) {
+        lock.lock();
+        try {
+            mapChannels.remove(channel.id, channel);
+        } finally {
+            lock.unlock();
+        }
         containingWallet.addOrUpdateExtension(this);
     }
 
@@ -129,7 +154,8 @@ public class StoredPaymentChannelClientStates implements WalletExtension {
     }
 
     @Override
-    public synchronized byte[] serializeWalletExtension() {
+    public byte[] serializeWalletExtension() {
+        lock.lock();
         try {
             ByteArrayOutputStream out = new ByteArrayOutputStream();
             ObjectOutputStream oos = new ObjectOutputStream(out);
@@ -139,18 +165,25 @@ public class StoredPaymentChannelClientStates implements WalletExtension {
             return out.toByteArray();
         } catch (IOException e) {
             throw new RuntimeException(e);
+        } finally {
+            lock.unlock();
         }
     }
 
     @Override
-    public synchronized void deserializeWalletExtension(Wallet containingWallet, byte[] data) throws Exception {
-        checkState(this.containingWallet == null || this.containingWallet == containingWallet);
-        this.containingWallet = containingWallet;
-        ByteArrayInputStream inStream = new ByteArrayInputStream(data);
-        ObjectInputStream ois = new ObjectInputStream(inStream);
-        while (inStream.available() > 0) {
-            StoredClientChannel channel = (StoredClientChannel)ois.readObject();
-            putChannel(channel, false);
+    public void deserializeWalletExtension(Wallet containingWallet, byte[] data) throws Exception {
+        lock.lock();
+        try {
+            checkState(this.containingWallet == null || this.containingWallet == containingWallet);
+            this.containingWallet = containingWallet;
+            ByteArrayInputStream inStream = new ByteArrayInputStream(data);
+            ObjectInputStream ois = new ObjectInputStream(inStream);
+            while (inStream.available() > 0) {
+                StoredClientChannel channel = (StoredClientChannel)ois.readObject();
+                putChannel(channel, false);
+            }
+        } finally {
+            lock.unlock();
         }
     }
 }
