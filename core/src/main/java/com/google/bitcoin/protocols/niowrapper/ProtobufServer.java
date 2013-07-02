@@ -25,7 +25,9 @@ import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.nio.channels.spi.SelectorProvider;
 import java.util.Iterator;
+import java.util.concurrent.locks.ReentrantLock;
 
+import com.google.bitcoin.utils.Locks;
 import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.LoggerFactory;
 
@@ -48,6 +50,7 @@ public class ProtobufServer {
     private static final int BUFFER_SIZE_UPPER_BOUND = 65536;
 
     private class ConnectionHandler extends MessageWriteTarget {
+        private final ReentrantLock lock = Locks.lock("protobufServerConnectionHandler");
         private final ByteBuffer dbuf;
         private final SocketChannel channel;
         private final ProtobufParser parser;
@@ -66,13 +69,16 @@ public class ProtobufServer {
         }
 
         @Override
-        synchronized void writeBytes(byte[] message) {
+        void writeBytes(byte[] message) {
+            lock.lock();
             try {
                 if (channel.write(ByteBuffer.wrap(message)) != message.length)
                     throw new IOException("Couldn't write all of message to socket");
             } catch (IOException e) {
                 log.error("Error writing message to connection, closing connection", e);
                 closeConnection();
+            } finally {
+                lock.unlock();
             }
         }
 
@@ -86,10 +92,17 @@ public class ProtobufServer {
             connectionClosed();
         }
 
-        private synchronized void connectionClosed() {
-            if (!closeCalled)
+        private void connectionClosed() {
+            boolean callClosed = false;
+            lock.lock();
+            try {
+                callClosed = !closeCalled;
+                closeCalled = true;
+            } finally {
+                lock.unlock();
+            }
+            if (callClosed)
                 parser.connectionClosed();
-            closeCalled = true;
         }
     }
 

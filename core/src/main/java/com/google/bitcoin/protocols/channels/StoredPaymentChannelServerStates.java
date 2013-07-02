@@ -18,9 +18,12 @@ package com.google.bitcoin.protocols.channels;
 
 import java.io.*;
 import java.util.*;
+import java.util.concurrent.locks.ReentrantLock;
 
 import com.google.bitcoin.core.*;
+import com.google.bitcoin.utils.Locks;
 import com.google.common.annotations.VisibleForTesting;
+import net.jcip.annotations.GuardedBy;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -32,11 +35,13 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class StoredPaymentChannelServerStates implements WalletExtension {
     static final String EXTENSION_ID = StoredPaymentChannelServerStates.class.getName();
 
-    @VisibleForTesting final Map<Sha256Hash, StoredServerChannel> mapChannels = new HashMap<Sha256Hash, StoredServerChannel>();
+    @GuardedBy("lock") @VisibleForTesting final Map<Sha256Hash, StoredServerChannel> mapChannels = new HashMap<Sha256Hash, StoredServerChannel>();
     private final Wallet wallet;
     private final TransactionBroadcaster broadcaster;
 
     private final Timer channelTimeoutHandler = new Timer();
+
+    private final ReentrantLock lock = Locks.lock("StoredPaymentChannelServerStates");
 
     /**
      * The offset between the refund transaction's lock time and the time channels will be automatically closed.
@@ -64,19 +69,25 @@ public class StoredPaymentChannelServerStates implements WalletExtension {
      * <p>Removes the given channel from this set of {@link StoredServerChannel}s and notifies the wallet of a change to
      * this wallet extension.</p>
      */
-    public synchronized void closeChannel(StoredServerChannel channel) {
+    public void closeChannel(StoredServerChannel channel) {
+        lock.lock();
+        try {
+            if (mapChannels.remove(channel.contract.getHash()) == null)
+                return;
+        } finally {
+            lock.unlock();
+        }
         synchronized (channel) {
-            if (channel.connectedHandler != null)
-                channel.connectedHandler.close(); // connectedHandler will be reset to null in connectionClosed
+            if (channel.connectedHandler != null) // connectedHandler will be reset to null in connectionClosed
+                channel.connectedHandler.close(); // Closes the actual connection, not the channel
             try {//TODO add event listener to PaymentChannelServerStateManager
-                channel.getState(wallet, broadcaster).close(); // Closes the actual connection, not the channel
+                channel.getState(wallet, broadcaster).close();
             } catch (ValueOutOfRangeException e) {
-                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                e.printStackTrace();
             } catch (VerificationException e) {
-                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                e.printStackTrace();
             }
             channel.state = null;
-            mapChannels.remove(channel.contract.getHash());
         }
         wallet.addOrUpdateExtension(this);
     }
@@ -84,8 +95,13 @@ public class StoredPaymentChannelServerStates implements WalletExtension {
     /**
      * Gets the {@link StoredServerChannel} with the given channel id (ie contract transaction hash).
      */
-    public synchronized StoredServerChannel getChannel(Sha256Hash id) {
-        return mapChannels.get(id);
+    public StoredServerChannel getChannel(Sha256Hash id) {
+        lock.lock();
+        try {
+            return mapChannels.get(id);
+        } finally {
+            lock.unlock();
+        }
     }
 
     /**
@@ -95,16 +111,21 @@ public class StoredPaymentChannelServerStates implements WalletExtension {
      * <p>Because there must be only one, canonical {@link StoredServerChannel} per channel, this method throws if the
      * channel is already present in the set of channels.</p>
      */
-    public synchronized void putChannel(final StoredServerChannel channel) {
-        checkArgument(mapChannels.put(channel.contract.getHash(), checkNotNull(channel)) == null);
-        channelTimeoutHandler.schedule(new TimerTask() {
-            @Override
-            public void run() {
-                closeChannel(channel);
-            }
-            // Add the difference between real time and Utils.now() so that test-cases can use a mock clock.
-        }, new Date((channel.refundTransactionUnlockTimeSecs + CHANNEL_EXPIRE_OFFSET)*1000L
-                + (System.currentTimeMillis() - Utils.now().getTime())));
+    public void putChannel(final StoredServerChannel channel) {
+        lock.lock();
+        try {
+            checkArgument(mapChannels.put(channel.contract.getHash(), checkNotNull(channel)) == null);
+            channelTimeoutHandler.schedule(new TimerTask() {
+                @Override
+                public void run() {
+                    closeChannel(channel);
+                }
+                // Add the difference between real time and Utils.now() so that test-cases can use a mock clock.
+            }, new Date((channel.refundTransactionUnlockTimeSecs + CHANNEL_EXPIRE_OFFSET)*1000L
+                    + (System.currentTimeMillis() - Utils.now().getTime())));
+        } finally {
+            lock.unlock();
+        }
     }
 
     @Override
@@ -118,7 +139,8 @@ public class StoredPaymentChannelServerStates implements WalletExtension {
     }
 
     @Override
-    public synchronized byte[] serializeWalletExtension() {
+    public byte[] serializeWalletExtension() {
+        lock.lock();
         try {
             ByteArrayOutputStream out = new ByteArrayOutputStream();
             ObjectOutputStream oos = new ObjectOutputStream(out);
@@ -128,17 +150,24 @@ public class StoredPaymentChannelServerStates implements WalletExtension {
             return out.toByteArray();
         } catch (IOException e) {
             throw new RuntimeException(e);
+        } finally {
+            lock.unlock();
         }
     }
 
     @Override
-    public synchronized void deserializeWalletExtension(Wallet containingWallet, byte[] data) throws Exception {
-        checkArgument(containingWallet == wallet);
-        ByteArrayInputStream inStream = new ByteArrayInputStream(data);
-        ObjectInputStream ois = new ObjectInputStream(inStream);
-        while (inStream.available() > 0) {
-            StoredServerChannel channel = (StoredServerChannel)ois.readObject();
-            putChannel(channel);
+    public void deserializeWalletExtension(Wallet containingWallet, byte[] data) throws Exception {
+        lock.lock();
+        try {
+            checkArgument(containingWallet == wallet);
+            ByteArrayInputStream inStream = new ByteArrayInputStream(data);
+            ObjectInputStream ois = new ObjectInputStream(inStream);
+            while (inStream.available() > 0) {
+                StoredServerChannel channel = (StoredServerChannel)ois.readObject();
+                putChannel(channel);
+            }
+        } finally {
+            lock.unlock();
         }
     }
 }

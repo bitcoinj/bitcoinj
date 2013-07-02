@@ -343,9 +343,9 @@ public class PaymentChannelServerState {
             storedServerChannel = null;
             StoredPaymentChannelServerStates channels = (StoredPaymentChannelServerStates)
                     wallet.getExtensions().get(StoredPaymentChannelServerStates.EXTENSION_ID);
-            channels.closeChannel(temp); // Calls this method again for us
-            checkState(state.compareTo(State.CLOSING) >= 0);
-            return closedFuture;
+            channels.closeChannel(temp); // May call this method again for us (if it wasn't the original caller)
+            if (state.compareTo(State.CLOSING) >= 0)
+                return closedFuture;
         }
 
         if (state.ordinal() < State.READY.ordinal()) {
