@@ -19,7 +19,10 @@ package com.google.bitcoin.protocols.channels;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import com.google.bitcoin.core.*;
 import com.google.bitcoin.script.Script;
@@ -43,6 +46,18 @@ public class PaymentChannelStateTest extends TestWithWallet {
     private Wallet serverWallet;
     private PaymentChannelServerState serverState;
     private PaymentChannelClientState clientState;
+    private TransactionBroadcaster mockBroadcaster;
+    private BlockingQueue<TxFuturePair> broadcasts;
+
+    private static class TxFuturePair {
+        Transaction tx;
+        SettableFuture<Transaction> future;
+
+        public TxFuturePair(Transaction tx, SettableFuture<Transaction> future) {
+            this.tx = tx;
+            this.future = future;
+        }
+    }
 
     @Before
     public void setUp() throws Exception {
@@ -61,6 +76,16 @@ public class PaymentChannelStateTest extends TestWithWallet {
         serverWallet.addKey(serverKey);
         chain.addWallet(serverWallet);
         halfCoin = Utils.toNanoCoins(0, 50);
+
+        broadcasts = new LinkedBlockingQueue<TxFuturePair>();
+        mockBroadcaster = new TransactionBroadcaster() {
+            @Override
+            public ListenableFuture<Transaction> broadcastTransaction(Transaction tx) {
+                SettableFuture<Transaction> future = SettableFuture.create();
+                broadcasts.add(new TxFuturePair(tx, future));
+                return future;
+            }
+        };
     }
 
     @Test
@@ -86,22 +111,10 @@ public class PaymentChannelStateTest extends TestWithWallet {
     public void basic() throws Exception {
         // Check it all works when things are normal (no attacks, no problems).
 
-        // Set up a mock peergroup.
-        IMocksControl control = createStrictControl();
-        PeerGroup mockPeerGroup = control.createMock(PeerGroup.class);
-        // We'll broadcast two txns: multisig contract and close transaction.
-        SettableFuture<Transaction> multiSigFuture = SettableFuture.create();
-        SettableFuture<Transaction> closeFuture = SettableFuture.create();
-        Capture<Transaction> broadcastMultiSig = new Capture<Transaction>();
-        Capture<Transaction> broadcastClose = new Capture<Transaction>();
-        expect(mockPeerGroup.broadcastTransaction(capture(broadcastMultiSig))).andReturn(multiSigFuture);
-        expect(mockPeerGroup.broadcastTransaction(capture(broadcastClose))).andReturn(closeFuture);
-        control.replay();
-
         Utils.rollMockClock(0); // Use mock clock
         final long EXPIRE_TIME = Utils.now().getTime()/1000 + 60*60*24;
 
-        serverState = new PaymentChannelServerState(mockPeerGroup, serverWallet, serverKey, EXPIRE_TIME);
+        serverState = new PaymentChannelServerState(mockBroadcaster, serverWallet, serverKey, EXPIRE_TIME);
         assertEquals(PaymentChannelServerState.State.WAITING_FOR_REFUND_TRANSACTION, serverState.getState());
 
         clientState = new PaymentChannelClientState(wallet, myKey, new ECKey(null, serverKey.getPubKey()), halfCoin, EXPIRE_TIME);
@@ -130,7 +143,8 @@ public class PaymentChannelStateTest extends TestWithWallet {
         // Provide the server with the multisig contract and simulate successful propagation/acceptance.
         serverState.provideMultiSigContract(multisigContract);
         assertEquals(PaymentChannelServerState.State.WAITING_FOR_MULTISIG_ACCEPTANCE, serverState.getState());
-        multiSigFuture.set(broadcastMultiSig.getValue());
+        final TxFuturePair pair = broadcasts.take();
+        pair.future.set(pair.tx);
         assertEquals(PaymentChannelServerState.State.READY, serverState.getState());
 
         // Make sure the refund transaction is not in the wallet and multisig contract's output is not connected to it
@@ -158,10 +172,10 @@ public class PaymentChannelStateTest extends TestWithWallet {
         // And close the channel.
         serverState.close();
         assertEquals(PaymentChannelServerState.State.CLOSING, serverState.getState());
-        Transaction closeTx = broadcastClose.getValue();
-        closeFuture.set(closeTx);
+        final TxFuturePair pair2 = broadcasts.take();
+        Transaction closeTx = pair2.tx;
+        pair2.future.set(closeTx);
         assertEquals(PaymentChannelServerState.State.CLOSED, serverState.getState());
-        control.verify();
 
         // Create a block with multisig contract and payment transaction in it and give it to both wallets
         chain.add(makeSolvedTestBlock(blockStore.getChainHead().getHeader(), multisigContract,
@@ -195,9 +209,7 @@ public class PaymentChannelStateTest extends TestWithWallet {
         if (!clientWalletCloseTransaction.getHash().equals(closeTx.getHash()))
             clientWalletCloseTransaction = walletTransactionIterator.next();
         assertEquals(closeTx.getHash(), clientWalletCloseTransaction.getHash());
-        assertTrue(clientWalletCloseTransaction.getInput(0).getConnectedOutput() != null);
-
-        control.verify();
+        assertNotNull(clientWalletCloseTransaction.getInput(0).getConnectedOutput());
     }
 
     @Test
@@ -207,41 +219,18 @@ public class PaymentChannelStateTest extends TestWithWallet {
 
         // Spend the client wallet's one coin
         Transaction spendCoinTx = wallet.sendCoinsOffline(Wallet.SendRequest.to(new ECKey().toAddress(params), Utils.COIN));
-        assertEquals(wallet.getBalance(), BigInteger.ZERO);
+        assertEquals(BigInteger.ZERO, wallet.getBalance());
         chain.add(makeSolvedTestBlock(blockStore.getChainHead().getHeader(), spendCoinTx, createFakeTx(params, Utils.CENT, myAddress)));
-        assertEquals(wallet.getBalance(), Utils.CENT);
-
-        // Set up a mock peergroup.
-        IMocksControl control = createStrictControl();
-        final PeerGroup mockPeerGroup = control.createMock(PeerGroup.class);
-        // We'll broadcast three txns: multisig contract twice (both server and client) and refund transaction.
-        SettableFuture<Transaction> serverMultiSigFuture = SettableFuture.create();
-        SettableFuture<Transaction> paymentFuture = SettableFuture.create();
-        SettableFuture<Transaction> clientMultiSigFuture = SettableFuture.create();
-        SettableFuture<Transaction> refundFuture = SettableFuture.create();
-        Capture<Transaction> serverBroadcastMultiSig = new Capture<Transaction>();
-        Capture<Transaction> broadcastPayment = new Capture<Transaction>();
-        Capture<Transaction> clientBroadcastMultiSig = new Capture<Transaction>();
-        Capture<Transaction> broadcastRefund = new Capture<Transaction>();
-        expect(mockPeerGroup.broadcastTransaction(capture(serverBroadcastMultiSig))).andReturn(serverMultiSigFuture);
-        expect(mockPeerGroup.broadcastTransaction(capture(broadcastPayment))).andReturn(paymentFuture);
-        expect(mockPeerGroup.broadcastTransaction(capture(clientBroadcastMultiSig))).andReturn(clientMultiSigFuture);
-        expect(mockPeerGroup.broadcastTransaction(capture(broadcastRefund))).andReturn(refundFuture);
-        control.replay();
+        assertEquals(Utils.CENT, wallet.getBalance());
 
         // Set the wallet's stored states to use our real test PeerGroup
-        StoredPaymentChannelClientStates stateStorage = new StoredPaymentChannelClientStates(new TransactionBroadcaster() {
-            @Override
-            public ListenableFuture<Transaction> broadcastTransaction(Transaction tx) {
-                return mockPeerGroup.broadcastTransaction(tx);
-            }
-        }, wallet);
+        StoredPaymentChannelClientStates stateStorage = new StoredPaymentChannelClientStates(mockBroadcaster, wallet);
         wallet.addOrUpdateExtension(stateStorage);
 
         Utils.rollMockClock(0); // Use mock clock
         final long EXPIRE_TIME = Utils.now().getTime()/1000 + 60*60*24;
 
-        serverState = new PaymentChannelServerState(mockPeerGroup, serverWallet, serverKey, EXPIRE_TIME);
+        serverState = new PaymentChannelServerState(mockBroadcaster, serverWallet, serverKey, EXPIRE_TIME);
         assertEquals(PaymentChannelServerState.State.WAITING_FOR_REFUND_TRANSACTION, serverState.getState());
 
         clientState = new PaymentChannelClientState(wallet, myKey, new ECKey(null, serverKey.getPubKey()),
@@ -274,7 +263,8 @@ public class PaymentChannelStateTest extends TestWithWallet {
         // Provide the server with the multisig contract and simulate successful propagation/acceptance.
         serverState.provideMultiSigContract(multisigContract);
         assertEquals(PaymentChannelServerState.State.WAITING_FOR_MULTISIG_ACCEPTANCE, serverState.getState());
-        serverMultiSigFuture.set(serverBroadcastMultiSig.getValue());
+        final TxFuturePair pop = broadcasts.take();
+        pop.future.set(pop.tx);
         assertEquals(PaymentChannelServerState.State.READY, serverState.getState());
 
         // Pay a tiny bit
@@ -285,40 +275,37 @@ public class PaymentChannelStateTest extends TestWithWallet {
         Utils.rollMockClock(60*60*22);
         // ... and store server to get it to broadcast payment transaction
         serverState.storeChannelInWallet(null);
-        while (!broadcastPayment.hasCaptured())
-            Thread.sleep(100);
+        TxFuturePair broadcastPaymentPair = broadcasts.take();
         Exception paymentException = new RuntimeException("I'm sorry, but the network really just doesn't like you");
-        paymentFuture.setException(paymentException);
+        broadcastPaymentPair.future.setException(paymentException);
         try {
             serverState.close().get();
         } catch (ExecutionException e) {
-            assertTrue(e.getCause() == paymentException);
+            assertSame(e.getCause(), paymentException);
         }
         assertEquals(PaymentChannelServerState.State.ERROR, serverState.getState());
 
         // Now advance until client should rebroadcast
-        Utils.rollMockClock(60*60*2 + 60*5);
+        Utils.rollMockClock(60 * 60 * 2 + 60 * 5);
 
         // Now store the client state in a stored state object which handles the rebroadcasting
-        clientState.storeChannelInWallet(Sha256Hash.create(new byte[] {}));
-        while (!broadcastRefund.hasCaptured())
-            Thread.sleep(100);
-
-        Transaction clientBroadcastedMultiSig = clientBroadcastMultiSig.getValue();
-        assertTrue(clientBroadcastedMultiSig.getHash().equals(multisigContract.getHash()));
-        for (TransactionInput input : clientBroadcastedMultiSig.getInputs())
+        clientState.storeChannelInWallet(Sha256Hash.create(new byte[]{}));
+        TxFuturePair clientBroadcastedMultiSig = broadcasts.take();
+        TxFuturePair broadcastRefund = broadcasts.take();
+        assertEquals(clientBroadcastedMultiSig.tx.getHash(), multisigContract.getHash());
+        for (TransactionInput input : clientBroadcastedMultiSig.tx.getInputs())
             input.verify();
-        clientMultiSigFuture.set(clientBroadcastedMultiSig);
+        clientBroadcastedMultiSig.future.set(clientBroadcastedMultiSig.tx);
 
-        Transaction clientBroadcastedRefund = broadcastRefund.getValue();
-        assertTrue(clientBroadcastedRefund.getHash().equals(clientState.getCompletedRefundTransaction().getHash()));
+        Transaction clientBroadcastedRefund = broadcastRefund.tx;
+        assertEquals(clientBroadcastedRefund.getHash(), clientState.getCompletedRefundTransaction().getHash());
         for (TransactionInput input : clientBroadcastedRefund.getInputs()) {
             // If the multisig output is connected, the wallet will fail to deserialize
-            if (input.getOutpoint().getHash().equals(clientBroadcastedMultiSig.getHash()))
+            if (input.getOutpoint().getHash().equals(clientBroadcastedMultiSig.tx.getHash()))
                 assertNull(input.getConnectedOutput().getSpentBy());
-            input.verify(clientBroadcastedMultiSig.getOutput(0));
+            input.verify(clientBroadcastedMultiSig.tx.getOutput(0));
         }
-        refundFuture.set(clientBroadcastedRefund);
+        broadcastRefund.future.set(clientBroadcastedRefund);
 
         // Create a block with multisig contract and refund transaction in it and give it to both wallets,
         // making getBalance() include the transactions
@@ -332,28 +319,18 @@ public class PaymentChannelStateTest extends TestWithWallet {
             clientState.incrementPaymentBy(Utils.CENT);
             fail();
         } catch (IllegalStateException e) { }
-
-        control.verify();
     }
 
     @Test
     public void checkBadData() throws Exception {
         // Check that if signatures/transactions/etc are corrupted, the protocol rejects them correctly.
 
-        // Set up a mock peergroup.
-        IMocksControl control = createStrictControl();
-        PeerGroup mockPeerGroup = control.createMock(PeerGroup.class);
-
         // We'll broadcast only one tx: multisig contract
-        SettableFuture<Transaction> multiSigFuture = SettableFuture.create();
-        Capture<Transaction> broadcastMultiSig = new Capture<Transaction>();
-        expect(mockPeerGroup.broadcastTransaction(capture(broadcastMultiSig))).andReturn(multiSigFuture);
-        control.replay();
 
         Utils.rollMockClock(0); // Use mock clock
         final long EXPIRE_TIME = Utils.now().getTime()/1000 + 60*60*24;
 
-        serverState = new PaymentChannelServerState(mockPeerGroup, serverWallet, serverKey, EXPIRE_TIME);
+        serverState = new PaymentChannelServerState(mockBroadcaster, serverWallet, serverKey, EXPIRE_TIME);
         assertEquals(PaymentChannelServerState.State.WAITING_FOR_REFUND_TRANSACTION, serverState.getState());
 
         try {
@@ -473,7 +450,8 @@ public class PaymentChannelStateTest extends TestWithWallet {
         try { serverState.provideMultiSigContract(multisigContract); fail(); } catch (IllegalStateException e) {}
         assertEquals(PaymentChannelServerState.State.WAITING_FOR_MULTISIG_ACCEPTANCE, serverState.getState());
         assertFalse(multisigStateFuture.isDone());
-        multiSigFuture.set(broadcastMultiSig.getValue());
+        final TxFuturePair pair = broadcasts.take();
+        pair.future.set(pair.tx);
         assertEquals(multisigStateFuture.get(), serverState);
         assertEquals(PaymentChannelServerState.State.READY, serverState.getState());
 
@@ -541,8 +519,6 @@ public class PaymentChannelStateTest extends TestWithWallet {
             clientState.incrementPaymentBy(halfCoin.subtract(size).add(BigInteger.ONE));
             fail();
         } catch (ValueOutOfRangeException e) {}
-
-        control.verify();
     }
 
     @Test
@@ -551,27 +527,15 @@ public class PaymentChannelStateTest extends TestWithWallet {
 
         // Spend the client wallet's one coin
         wallet.sendCoinsOffline(Wallet.SendRequest.to(new ECKey().toAddress(params), Utils.COIN));
-        assertEquals(wallet.getBalance(), BigInteger.ZERO);
+        assertEquals(BigInteger.ZERO, wallet.getBalance());
 
         chain.add(makeSolvedTestBlock(blockStore.getChainHead().getHeader(), createFakeTx(params, Utils.CENT, myAddress)));
-        assertEquals(wallet.getBalance(), Utils.CENT);
-
-        // Set up a mock peergroup.
-        IMocksControl control = createStrictControl();
-        PeerGroup mockPeerGroup = control.createMock(PeerGroup.class);
-        // We'll broadcast two txns: multisig contract and close transaction.
-        SettableFuture<Transaction> multiSigFuture = SettableFuture.create();
-        SettableFuture<Transaction> closeFuture = SettableFuture.create();
-        Capture<Transaction> broadcastMultiSig = new Capture<Transaction>();
-        Capture<Transaction> broadcastClose = new Capture<Transaction>();
-        expect(mockPeerGroup.broadcastTransaction(capture(broadcastMultiSig))).andReturn(multiSigFuture);
-        expect(mockPeerGroup.broadcastTransaction(capture(broadcastClose))).andReturn(closeFuture);
-        control.replay();
+        assertEquals(Utils.CENT, wallet.getBalance());
 
         Utils.rollMockClock(0); // Use mock clock
         final long EXPIRE_TIME = Utils.now().getTime()/1000 + 60*60*24;
 
-        serverState = new PaymentChannelServerState(mockPeerGroup, serverWallet, serverKey, EXPIRE_TIME);
+        serverState = new PaymentChannelServerState(mockBroadcaster, serverWallet, serverKey, EXPIRE_TIME);
         assertEquals(PaymentChannelServerState.State.WAITING_FOR_REFUND_TRANSACTION, serverState.getState());
 
         // Clearly ONE is far too small to be useful
@@ -622,7 +586,8 @@ public class PaymentChannelStateTest extends TestWithWallet {
         // Provide the server with the multisig contract and simulate successful propagation/acceptance.
         serverState.provideMultiSigContract(multisigContract);
         assertEquals(PaymentChannelServerState.State.WAITING_FOR_MULTISIG_ACCEPTANCE, serverState.getState());
-        multiSigFuture.set(broadcastMultiSig.getValue());
+        TxFuturePair pair = broadcasts.take();
+        pair.future.set(pair.tx);
         assertEquals(PaymentChannelServerState.State.READY, serverState.getState());
 
         // Both client and server are now in the ready state. Simulate a few micropayments
@@ -658,34 +623,21 @@ public class PaymentChannelStateTest extends TestWithWallet {
         // And close the channel.
         serverState.close();
         assertEquals(PaymentChannelServerState.State.CLOSING, serverState.getState());
-        Transaction closeTx = broadcastClose.getValue();
-        closeFuture.set(closeTx);
+        pair = broadcasts.take();  // close
+        pair.future.set(pair.tx);
         assertEquals(PaymentChannelServerState.State.CLOSED, serverState.getState());
         serverState.close();
         assertEquals(PaymentChannelServerState.State.CLOSED, serverState.getState());
-        control.verify();
     }
 
     @Test
     public void serverAddsFeeTest() throws Exception {
         // Test that the server properly adds the necessary fee at the end (or just drops the payment if its not worth it)
 
-        // Set up a mock peergroup.
-        IMocksControl control = createStrictControl();
-        PeerGroup mockPeerGroup = control.createMock(PeerGroup.class);
-        // We'll broadcast two txns: multisig contract and close transaction.
-        SettableFuture<Transaction> multiSigFuture = SettableFuture.create();
-        SettableFuture<Transaction> closeFuture = SettableFuture.create();
-        Capture<Transaction> broadcastMultiSig = new Capture<Transaction>();
-        Capture<Transaction> broadcastClose = new Capture<Transaction>();
-        expect(mockPeerGroup.broadcastTransaction(capture(broadcastMultiSig))).andReturn(multiSigFuture);
-        expect(mockPeerGroup.broadcastTransaction(capture(broadcastClose))).andReturn(closeFuture);
-        control.replay();
-
         Utils.rollMockClock(0); // Use mock clock
         final long EXPIRE_TIME = Utils.now().getTime()/1000 + 60*60*24;
 
-        serverState = new PaymentChannelServerState(mockPeerGroup, serverWallet, serverKey, EXPIRE_TIME);
+        serverState = new PaymentChannelServerState(mockBroadcaster, serverWallet, serverKey, EXPIRE_TIME);
         assertEquals(PaymentChannelServerState.State.WAITING_FOR_REFUND_TRANSACTION, serverState.getState());
 
         clientState = new PaymentChannelClientState(wallet, myKey, new ECKey(null, serverKey.getPubKey()), Utils.CENT, EXPIRE_TIME);
@@ -714,7 +666,8 @@ public class PaymentChannelStateTest extends TestWithWallet {
         // Provide the server with the multisig contract and simulate successful propagation/acceptance.
         serverState.provideMultiSigContract(multisigContract);
         assertEquals(PaymentChannelServerState.State.WAITING_FOR_MULTISIG_ACCEPTANCE, serverState.getState());
-        multiSigFuture.set(broadcastMultiSig.getValue());
+        TxFuturePair pair = broadcasts.take();
+        pair.future.set(pair.tx);
         assertEquals(PaymentChannelServerState.State.READY, serverState.getState());
 
         // Both client and server are now in the ready state, split the channel in half
@@ -750,9 +703,8 @@ public class PaymentChannelStateTest extends TestWithWallet {
         // And close the channel.
         serverState.close();
         assertEquals(PaymentChannelServerState.State.CLOSING, serverState.getState());
-        Transaction closeTx = broadcastClose.getValue();
-        closeFuture.set(closeTx);
+        pair = broadcasts.take();
+        pair.future.set(pair.tx);
         assertEquals(PaymentChannelServerState.State.CLOSED, serverState.getState());
-        control.verify();
     }
 }
