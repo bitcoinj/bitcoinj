@@ -16,28 +16,24 @@
 
 package com.google.bitcoin.protocols.channels;
 
-import java.math.BigInteger;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.LinkedBlockingQueue;
-
 import com.google.bitcoin.core.*;
 import com.google.bitcoin.script.Script;
 import com.google.bitcoin.script.ScriptBuilder;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
-import org.easymock.Capture;
-import org.easymock.IMocksControl;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.math.BigInteger;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.LinkedBlockingQueue;
+
 import static com.google.bitcoin.core.TestUtils.createFakeTx;
 import static com.google.bitcoin.core.TestUtils.makeSolvedTestBlock;
-import static org.easymock.EasyMock.*;
 import static org.junit.Assert.*;
 
 public class PaymentChannelStateTest extends TestWithWallet {

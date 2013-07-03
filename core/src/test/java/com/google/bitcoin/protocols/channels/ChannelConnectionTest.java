@@ -16,15 +16,6 @@
 
 package com.google.bitcoin.protocols.channels;
 
-import java.io.File;
-import java.math.BigInteger;
-import java.net.InetSocketAddress;
-import java.net.SocketAddress;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
-import javax.annotation.Nullable;
-
 import com.google.bitcoin.core.*;
 import com.google.bitcoin.utils.Locks;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -34,6 +25,15 @@ import org.bitcoin.paymentchannel.Protos;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+
+import javax.annotation.Nullable;
+import java.io.File;
+import java.math.BigInteger;
+import java.net.InetSocketAddress;
+import java.net.SocketAddress;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.google.bitcoin.protocols.channels.PaymentChannelCloseException.CloseReason;
 import static org.bitcoin.paymentchannel.Protos.TwoWayChannelMessage.MessageType;
@@ -45,22 +45,6 @@ public class ChannelConnectionTest extends TestWithWallet {
     private BlockingQueue<Transaction> broadcasts;
     private TransactionBroadcaster mockBroadcaster;
     private Semaphore broadcastTxPause;
-
-    private interface PaymentChannelClientReceiver {
-        void receiveMessage(Protos.TwoWayChannelMessage msg);
-        void connectionOpen();
-        void connectionClosed();
-        void close();
-    }
-    private class PaymentChannelClientReceiverImpl implements PaymentChannelClientReceiver {
-        private PaymentChannelClient client;
-        public PaymentChannelClientReceiverImpl(PaymentChannelClient client) { this.client = client; }
-        public void receiveMessage(Protos.TwoWayChannelMessage msg) { client.receiveMessage(msg); }
-        public void connectionOpen() { client.connectionOpen(); }
-        public void connectionClosed() { client.connectionClosed(); }
-        public void close() { client.close(); }
-    }
-    private PaymentChannelClientReceiver sendClient;
 
     @Before
     public void setUp() throws Exception {
