@@ -144,6 +144,10 @@ public abstract class AbstractBlockChain {
      */
     public void addWallet(Wallet wallet) {
         addListener(wallet, Threading.SAME_THREAD);
+        if (wallet.getLastBlockSeenHeight() != getBestChainHeight()) {
+            log.warn("Wallet/chain height mismatch: {} vs {}", wallet.getLastBlockSeenHeight(), getBestChainHeight());
+            log.warn("Hashes: {} vs {}", wallet.getLastBlockSeenHash(), getChainHead().getHeader().getHash());
+        }
     }
 
     /**
@@ -189,11 +193,12 @@ public abstract class AbstractBlockChain {
      * This version is used when the transactions have already been verified to properly spend txOutputChanges.
      * @param storedPrev The {@link StoredBlock} which immediately precedes block.
      * @param header The {@link StoredBlock} to add/update.
-     * @param txOutputChanges The total sum of all changes made by this block to the set of open transaction outputs (from a call to connectTransactions)
+     * @param txOutputChanges The total sum of all changes made by this block to the set of open transaction outputs
+     *                        (from a call to connectTransactions), if in fully verifying mode (null otherwise).
      * @return the newly created {@link StoredBlock}
      */
     protected abstract StoredBlock addToBlockStore(StoredBlock storedPrev, Block header,
-                                                   TransactionOutputChanges txOutputChanges)
+                                                   @Nullable TransactionOutputChanges txOutputChanges)
             throws BlockStoreException, VerificationException;
     
     /**
@@ -373,9 +378,6 @@ public abstract class AbstractBlockChain {
                 return false;
             } else {
                 // It connects to somewhere on the chain. Not necessarily the top of the best known chain.
-                //
-                // Create a new StoredBlock from this block. It will throw away the transaction data so when block goes
-                // out of scope we will reclaim the used memory.
                 checkDifficultyTransitions(storedPrev, block);
                 connectBlock(block, storedPrev, shouldVerifyTransactions(), filteredTxHashList, filteredTxn);
             }
@@ -397,16 +399,29 @@ public abstract class AbstractBlockChain {
                               @Nullable final Set<Sha256Hash> filteredTxHashList,
                               @Nullable final List<Transaction> filteredTxn) throws BlockStoreException, VerificationException, PrunedException {
         checkState(lock.isLocked());
+        boolean filtered = filteredTxHashList != null && filteredTxn != null;
+        boolean fullBlock = block.transactions != null && !filtered;
+        // If !filtered and !fullBlock then we have just a header.
+
         // Check that we aren't connecting a block that fails a checkpoint check
         if (!params.passesCheckpoint(storedPrev.getHeight() + 1, block.getHash()))
             throw new VerificationException("Block failed checkpoint lockin at " + (storedPrev.getHeight() + 1));
-        if (shouldVerifyTransactions())
+        if (shouldVerifyTransactions()) {
+            checkNotNull(block.transactions);
             for (Transaction tx : block.transactions)
                 if (!tx.isFinal(storedPrev.getHeight() + 1, block.getTimeSeconds()))
                    throw new VerificationException("Block contains non-final transaction");
+        }
         
         StoredBlock head = getChainHead();
         if (storedPrev.equals(head)) {
+            if (filtered && filteredTxn.size() > 0)  {
+                // Some temp debug logging to try and track down where transactions are going missing.
+                log.info("Block {} connects to top of best chain with {} transaction(s)",
+                        block.getHashAsString(), filteredTxn.size() + filteredTxHashList.size());
+                for (Sha256Hash hash : filteredTxHashList) log.info("  matched tx {}", hash);
+                for (Transaction tx : filteredTxn) log.info("  matched tx {}", tx.getHash());
+            }
             if (expensiveChecks && block.getTimeSeconds() <= getMedianTimestampOfRecentBlocks(head, blockStore))
                 throw new VerificationException("Block's timestamp is too early");
             
@@ -417,7 +432,7 @@ public abstract class AbstractBlockChain {
             StoredBlock newStoredBlock = addToBlockStore(storedPrev,
                     block.transactions == null ? block : block.cloneAsHeader(), txOutChanges);
             setChainHead(newStoredBlock);
-            log.debug("Chain is now {} blocks high", newStoredBlock.getHeight());
+            log.debug("Chain is now {} blocks high, running listeners", newStoredBlock.getHeight());
             informListenersForNewBlock(block, NewBlockType.BEST_CHAIN, filteredTxHashList, filteredTxn, newStoredBlock);
         } else {
             // This block connects to somewhere other than the top of the best known chain. We treat these differently.
@@ -456,7 +471,7 @@ public abstract class AbstractBlockChain {
             // We may not have any transactions if we received only a header, which can happen during fast catchup.
             // If we do, send them to the wallet but state that they are on a side chain so it knows not to try and
             // spend them until they become activated.
-            if (block.transactions != null || filteredTxn != null) {
+            if (block.transactions != null || filtered) {
                 informListenersForNewBlock(block, NewBlockType.SIDE_CHAIN, filteredTxHashList, filteredTxn, newBlock);
             }
             
