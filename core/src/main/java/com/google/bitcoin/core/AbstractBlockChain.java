@@ -162,7 +162,7 @@ public abstract class AbstractBlockChain {
      * Removes the given {@link BlockChainListener} from the chain.
      */
     public void removeListener(BlockChainListener listener) {
-        listeners.remove(listener);
+        ListenerRegistration.removeFromList(listener, listeners);
     }
     
     /**
@@ -177,7 +177,7 @@ public abstract class AbstractBlockChain {
      * This version is used when the transactions have not been verified.
      * @param storedPrev The {@link StoredBlock} which immediately precedes block.
      * @param block The {@link Block} to add/update.
-     * @returns the newly created {@link StoredBlock}
+     * @return the newly created {@link StoredBlock}
      */
     protected abstract StoredBlock addToBlockStore(StoredBlock storedPrev, Block block)
             throws BlockStoreException, VerificationException;
@@ -188,7 +188,7 @@ public abstract class AbstractBlockChain {
      * @param storedPrev The {@link StoredBlock} which immediately precedes block.
      * @param header The {@link StoredBlock} to add/update.
      * @param txOutputChanges The total sum of all changes made by this block to the set of open transaction outputs (from a call to connectTransactions)
-     * @returns the newly created {@link StoredBlock}
+     * @return the newly created {@link StoredBlock}
      */
     protected abstract StoredBlock addToBlockStore(StoredBlock storedPrev, Block header,
                                                    TransactionOutputChanges txOutputChanges)
