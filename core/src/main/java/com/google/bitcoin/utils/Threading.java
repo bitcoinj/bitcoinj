@@ -21,6 +21,7 @@ import com.google.common.util.concurrent.CycleDetectingLockFactory;
 import com.google.common.util.concurrent.Futures;
 
 import javax.annotation.Nonnull;
+import java.lang.ref.WeakReference;
 import java.util.concurrent.*;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -48,7 +49,7 @@ public class Threading {
     public static final Executor SAME_THREAD;
 
     // For safety reasons keep track of the thread we use to run user-provided event listeners to avoid deadlock.
-    private static Thread userThread;
+    private static WeakReference<Thread> userThread;
 
     /**
      * Put a dummy task into the queue and wait for it to be run. Because it's single threaded, this means all
@@ -61,7 +62,8 @@ public class Threading {
         // If this assert fires it means you have a bug in your code - you can't call this method inside your own
         // event handlers because it would never return. If you aren't calling this method explicitly, then that
         // means there's a bug in bitcoinj.
-        checkState(userThread != Thread.currentThread(), "waitForUserCode() run on user code thread would deadlock.");
+        checkState(userThread.get() != null && userThread.get() != Thread.currentThread(),
+                "waitForUserCode() run on user code thread would deadlock.");
         Futures.getUnchecked(USER_THREAD.submit(Callables.returning(null)));
     }
 
@@ -75,11 +77,11 @@ public class Threading {
 
         USER_THREAD = Executors.newSingleThreadExecutor(new ThreadFactory() {
             @Nonnull @Override public Thread newThread(@Nonnull Runnable runnable) {
-                checkState(userThread == null, "Not single threaded anymore?");
-                userThread = new Thread(runnable);
-                userThread.setName("bitcoinj user thread");
-                userThread.setDaemon(true);
-                return userThread;
+                Thread t = new Thread(runnable);
+                t.setName("bitcoinj user thread");
+                t.setDaemon(true);
+                userThread = new WeakReference<Thread>(t);
+                return t;
             }
         });
         SAME_THREAD = new Executor() {
