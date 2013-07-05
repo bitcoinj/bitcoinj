@@ -26,6 +26,7 @@ import com.google.common.util.concurrent.SettableFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
 import java.math.BigInteger;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -109,9 +110,10 @@ public abstract class AbstractBlockChain {
         Block block;
         Set<Sha256Hash> filteredTxHashes;
         List<Transaction> filteredTxn;
-        OrphanBlock(Block block, Set<Sha256Hash> filteredTxHashes, List<Transaction> filteredTxn) {
-            Preconditions.checkArgument((block.transactions == null && filteredTxHashes != null && filteredTxn != null)
-                    || (block.transactions != null && filteredTxHashes == null && filteredTxn == null));
+        OrphanBlock(Block block, @Nullable Set<Sha256Hash> filteredTxHashes, @Nullable List<Transaction> filteredTxn) {
+            final boolean filtered = filteredTxHashes != null && filteredTxn != null;
+            Preconditions.checkArgument((block.transactions == null && filtered)
+                                        || (block.transactions != null && !filtered));
             this.block = block;
             this.filteredTxHashes = filteredTxHashes;
             this.filteredTxn = filteredTxn;
@@ -223,7 +225,7 @@ public abstract class AbstractBlockChain {
      */
     public boolean add(Block block) throws VerificationException, PrunedException {
         try {
-            return add(block, null, null, true);
+            return add(block, true, null, null);
         } catch (BlockStoreException e) {
             // TODO: Figure out a better way to propagate this exception to the user.
             throw new RuntimeException(e);
@@ -257,7 +259,7 @@ public abstract class AbstractBlockChain {
             for (Transaction tx : filteredTxn) {
                 checkState(filteredTxnHashSet.remove(tx.getHash()));
             }
-            return add(block.getBlockHeader(), filteredTxnHashSet, filteredTxn, true);
+            return add(block.getBlockHeader(), true, filteredTxnHashSet, filteredTxn);
         } catch (BlockStoreException e) {
             // TODO: Figure out a better way to propagate this exception to the user.
             throw new RuntimeException(e);
@@ -305,8 +307,8 @@ public abstract class AbstractBlockChain {
     private long statsBlocksAdded;
 
     // filteredTxHashList and filteredTxn[i].GetHash() should be mutually exclusive
-    private boolean add(Block block, Set<Sha256Hash> filteredTxHashList, List<Transaction> filteredTxn, boolean tryConnecting)
-            throws BlockStoreException, VerificationException, PrunedException {
+    private boolean add(Block block, boolean tryConnecting,
+                        @Nullable Set<Sha256Hash> filteredTxHashList, @Nullable List<Transaction> filteredTxn) throws BlockStoreException, VerificationException, PrunedException {
         lock.lock();
         try {
             // TODO: Use read/write locks to ensure that during chain download properties are still low latency.
@@ -392,8 +394,8 @@ public abstract class AbstractBlockChain {
     // than the previous one when connecting (eg median timestamp check)
     // It could be exposed, but for now we just set it to shouldVerifyTransactions()
     private void connectBlock(final Block block, StoredBlock storedPrev, boolean expensiveChecks,
-                              Set<Sha256Hash> filteredTxHashList, final List<Transaction> filteredTxn)
-            throws BlockStoreException, VerificationException, PrunedException {
+                              @Nullable final Set<Sha256Hash> filteredTxHashList,
+                              @Nullable final List<Transaction> filteredTxn) throws BlockStoreException, VerificationException, PrunedException {
         checkState(lock.isLocked());
         // Check that we aren't connecting a block that fails a checkpoint check
         if (!params.passesCheckpoint(storedPrev.getHeight() + 1, block.getHash()))
@@ -464,8 +466,9 @@ public abstract class AbstractBlockChain {
     }
 
     private void informListenersForNewBlock(final Block block, final NewBlockType newBlockType,
-                                            final Set<Sha256Hash> filteredTxHashList,
-                                            final List<Transaction> filteredTxn, final StoredBlock newStoredBlock) throws VerificationException {
+                                            @Nullable final Set<Sha256Hash> filteredTxHashList,
+                                            @Nullable final List<Transaction> filteredTxn,
+                                            final StoredBlock newStoredBlock) throws VerificationException {
         // Notify the listeners of the new block, so the depth and workDone of stored transactions can be updated
         // (in the case of the listener being a wallet). Wallets need to know how deep each transaction is so
         // coinbases aren't used before maturity.
@@ -501,8 +504,8 @@ public abstract class AbstractBlockChain {
     }
 
     private static void informListenerForNewTransactions(Block block, NewBlockType newBlockType,
-                                                         Set<Sha256Hash> filteredTxHashList,
-                                                         List<Transaction> filteredTxn,
+                                                         @Nullable Set<Sha256Hash> filteredTxHashList,
+                                                         @Nullable List<Transaction> filteredTxn,
                                                          StoredBlock newStoredBlock, boolean first,
                                                          BlockChainListener listener) throws VerificationException {
         if (block.transactions != null || filteredTxn != null) {
@@ -732,7 +735,7 @@ public abstract class AbstractBlockChain {
                 }
                 // Otherwise we can connect it now.
                 // False here ensures we don't recurse infinitely downwards when connecting huge chains.
-                add(orphanBlock.block, orphanBlock.filteredTxHashes, orphanBlock.filteredTxn, false);
+                add(orphanBlock.block, false, orphanBlock.filteredTxHashes, orphanBlock.filteredTxn);
                 iter.remove();
                 blocksConnectedThisRound++;
             }
@@ -880,6 +883,7 @@ public abstract class AbstractBlockChain {
      *
      * @return from or one of froms parents, or null if "from" does not identify an orphan block
      */
+    @Nullable
     public Block getOrphanRoot(Sha256Hash from) {
         lock.lock();
         try {
