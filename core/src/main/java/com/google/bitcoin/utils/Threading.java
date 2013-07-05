@@ -21,10 +21,7 @@ import com.google.common.util.concurrent.CycleDetectingLockFactory;
 import com.google.common.util.concurrent.Futures;
 
 import javax.annotation.Nonnull;
-import java.util.concurrent.Callable;
-import java.util.concurrent.Executor;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.*;
 import java.util.concurrent.locks.ReentrantLock;
 
 import static com.google.common.base.Preconditions.checkState;
@@ -51,7 +48,7 @@ public class Threading {
     public static final Executor SAME_THREAD;
 
     // For safety reasons keep track of the thread we use to run user-provided event listeners to avoid deadlock.
-    private static final Thread executorThread;
+    private static Thread userThread;
 
     /**
      * Put a dummy task into the queue and wait for it to be run. Because it's single threaded, this means all
@@ -64,7 +61,7 @@ public class Threading {
         // If this assert fires it means you have a bug in your code - you can't call this method inside your own
         // event handlers because it would never return. If you aren't calling this method explicitly, then that
         // means there's a bug in bitcoinj.
-        checkState(executorThread != Thread.currentThread(), "waitForUserCode() run on user code thread would deadlock.");
+        checkState(userThread != Thread.currentThread(), "waitForUserCode() run on user code thread would deadlock.");
         Futures.getUnchecked(USER_THREAD.submit(Callables.returning(null)));
     }
 
@@ -76,15 +73,15 @@ public class Threading {
         // from that point onwards.
         throwOnLockCycles();
 
-        USER_THREAD = Executors.newSingleThreadExecutor();
-        // We can't directly get the thread that was just created, but we can fetch it indirectly. We'll use this
-        // for deadlock detection by checking for waits on the user code thread.
-        executorThread = Futures.getUnchecked(USER_THREAD.submit(new Callable<Thread>() {
-            @Override public Thread call() throws Exception {
-                Thread.currentThread().setName("bitcoinj user code thread");
-                return Thread.currentThread();
+        USER_THREAD = Executors.newSingleThreadExecutor(new ThreadFactory() {
+            @Nonnull @Override public Thread newThread(@Nonnull Runnable runnable) {
+                checkState(userThread == null, "Not single threaded anymore?");
+                userThread = new Thread(runnable);
+                userThread.setName("bitcoinj user thread");
+                userThread.setDaemon(true);
+                return userThread;
             }
-        }));
+        });
         SAME_THREAD = new Executor() {
             @Override
             public void execute(@Nonnull Runnable runnable) {
