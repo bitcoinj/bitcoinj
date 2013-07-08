@@ -20,6 +20,7 @@ package com.google.bitcoin.core;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -98,7 +99,7 @@ public class PartialMerkleTree extends Message {
     
     // recursive function that traverses tree nodes, consuming the bits and hashes produced by TraverseAndBuild.
     // it returns the hash of the respective node.
-    private Sha256Hash recursiveExtractHashes(int height, int pos, ValuesUsed used, Set<Sha256Hash> matchedHashes) throws VerificationException {
+    private Sha256Hash recursiveExtractHashes(int height, int pos, ValuesUsed used, List<Sha256Hash> matchedHashes) throws VerificationException {
         if (used.bitsUsed >= matchedChildBits.length*8) {
             // overflowed the bits array - failure
             throw new VerificationException("CPartialMerkleTree overflowed its bits array");
@@ -135,10 +136,11 @@ public class PartialMerkleTree extends Message {
      * merkle root contained in the block header for security.
      * 
      * @param matchedHashes A list which will contain the matched txn (will be cleared)
+     *                      Required to be a LinkedHashSet in order to retain order or transactions in the block
      * @return the merkle root of this merkle tree
      * @throws ProtocolException if this partial merkle tree is invalid
      */
-    public Sha256Hash getTxnHashAndMerkleRoot(Set<Sha256Hash> matchedHashes) throws VerificationException {
+    public Sha256Hash getTxnHashAndMerkleRoot(List<Sha256Hash> matchedHashes) throws VerificationException {
         matchedHashes.clear();
         
         // An empty set will not work

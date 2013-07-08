@@ -108,9 +108,9 @@ public abstract class AbstractBlockChain {
     // Holds a block header and, optionally, a list of tx hashes or block's transactions
     protected static class OrphanBlock {
         Block block;
-        Set<Sha256Hash> filteredTxHashes;
-        List<Transaction> filteredTxn;
-        OrphanBlock(Block block, @Nullable Set<Sha256Hash> filteredTxHashes, @Nullable List<Transaction> filteredTxn) {
+        List<Sha256Hash> filteredTxHashes;
+        Map<Sha256Hash, Transaction> filteredTxn;
+        OrphanBlock(Block block, @Nullable List<Sha256Hash> filteredTxHashes, @Nullable Map<Sha256Hash, Transaction> filteredTxn) {
             final boolean filtered = filteredTxHashes != null && filteredTxn != null;
             Preconditions.checkArgument((block.transactions == null && filtered)
                                         || (block.transactions != null && !filtered));
@@ -259,12 +259,7 @@ public abstract class AbstractBlockChain {
             // a false positive, as expected in any Bloom filtering scheme). The filteredTxn list here will usually
             // only be full of data when we are catching up to the head of the chain and thus haven't witnessed any
             // of the transactions.
-            Set<Sha256Hash> filteredTxnHashSet = new HashSet<Sha256Hash>(block.getTransactionHashes());
-            List<Transaction> filteredTxn = block.getAssociatedTransactions();
-            for (Transaction tx : filteredTxn) {
-                checkState(filteredTxnHashSet.remove(tx.getHash()));
-            }
-            return add(block.getBlockHeader(), true, filteredTxnHashSet, filteredTxn);
+            return add(block.getBlockHeader(), true, block.getTransactionHashes(), block.getAssociatedTransactions());
         } catch (BlockStoreException e) {
             // TODO: Figure out a better way to propagate this exception to the user.
             throw new RuntimeException(e);
@@ -311,9 +306,10 @@ public abstract class AbstractBlockChain {
     private long statsLastTime = System.currentTimeMillis();
     private long statsBlocksAdded;
 
-    // filteredTxHashList and filteredTxn[i].GetHash() should be mutually exclusive
+    // filteredTxHashList contains all transactions, filteredTxn just a subset
     private boolean add(Block block, boolean tryConnecting,
-                        @Nullable Set<Sha256Hash> filteredTxHashList, @Nullable List<Transaction> filteredTxn) throws BlockStoreException, VerificationException, PrunedException {
+                        @Nullable List<Sha256Hash> filteredTxHashList, @Nullable Map<Sha256Hash, Transaction> filteredTxn)
+            throws BlockStoreException, VerificationException, PrunedException {
         lock.lock();
         try {
             // TODO: Use read/write locks to ensure that during chain download properties are still low latency.
@@ -396,8 +392,8 @@ public abstract class AbstractBlockChain {
     // than the previous one when connecting (eg median timestamp check)
     // It could be exposed, but for now we just set it to shouldVerifyTransactions()
     private void connectBlock(final Block block, StoredBlock storedPrev, boolean expensiveChecks,
-                              @Nullable final Set<Sha256Hash> filteredTxHashList,
-                              @Nullable final List<Transaction> filteredTxn) throws BlockStoreException, VerificationException, PrunedException {
+                              @Nullable final List<Sha256Hash> filteredTxHashList,
+                              @Nullable final Map<Sha256Hash, Transaction> filteredTxn) throws BlockStoreException, VerificationException, PrunedException {
         checkState(lock.isLocked());
         boolean filtered = filteredTxHashList != null && filteredTxn != null;
         boolean fullBlock = block.transactions != null && !filtered;
@@ -420,7 +416,6 @@ public abstract class AbstractBlockChain {
                 log.info("Block {} connects to top of best chain with {} transaction(s)",
                         block.getHashAsString(), filteredTxn.size() + filteredTxHashList.size());
                 for (Sha256Hash hash : filteredTxHashList) log.info("  matched tx {}", hash);
-                for (Transaction tx : filteredTxn) log.info("  matched tx {}", tx.getHash());
             }
             if (expensiveChecks && block.getTimeSeconds() <= getMedianTimestampOfRecentBlocks(head, blockStore))
                 throw new VerificationException("Block's timestamp is too early");
@@ -481,8 +476,8 @@ public abstract class AbstractBlockChain {
     }
 
     private void informListenersForNewBlock(final Block block, final NewBlockType newBlockType,
-                                            @Nullable final Set<Sha256Hash> filteredTxHashList,
-                                            @Nullable final List<Transaction> filteredTxn,
+                                            @Nullable final List<Sha256Hash> filteredTxHashList,
+                                            @Nullable final Map<Sha256Hash, Transaction> filteredTxn,
                                             final StoredBlock newStoredBlock) throws VerificationException {
         // Notify the listeners of the new block, so the depth and workDone of stored transactions can be updated
         // (in the case of the listener being a wallet). Wallets need to know how deep each transaction is so
@@ -519,22 +514,28 @@ public abstract class AbstractBlockChain {
     }
 
     private static void informListenerForNewTransactions(Block block, NewBlockType newBlockType,
-                                                         @Nullable Set<Sha256Hash> filteredTxHashList,
-                                                         @Nullable List<Transaction> filteredTxn,
+                                                         @Nullable List<Sha256Hash> filteredTxHashList,
+                                                         @Nullable Map<Sha256Hash, Transaction> filteredTxn,
                                                          StoredBlock newStoredBlock, boolean first,
                                                          BlockChainListener listener) throws VerificationException {
-        if (block.transactions != null || filteredTxn != null) {
+        if (block.transactions != null) {
             // If this is not the first wallet, ask for the transactions to be duplicated before being given
             // to the wallet when relevant. This ensures that if we have two connected wallets and a tx that
             // is relevant to both of them, they don't end up accidentally sharing the same object (which can
             // result in temporary in-memory corruption during re-orgs). See bug 257. We only duplicate in
             // the case of multiple wallets to avoid an unnecessary efficiency hit in the common case.
-            sendTransactionsToListener(newStoredBlock, newBlockType, listener,
-                    block.transactions != null ? block.transactions : filteredTxn, !first);
-        }
-        if (filteredTxHashList != null) {
+            sendTransactionsToListener(newStoredBlock, newBlockType, listener, block.transactions, !first);
+        } else if (filteredTxHashList != null) {
+            checkArgument(filteredTxn != null);
+            // We must send transactions to listeners in the order they appeared in the block - thus we iterate over the
+            // set of hashes and call sendTransactionsToListener with individual txn when they have not already been
+            // seen in loose broadcasts - otherwise notifyTransactionIsInBlock on the hash
             for (Sha256Hash hash : filteredTxHashList) {
-                listener.notifyTransactionIsInBlock(hash, newStoredBlock, newBlockType);
+                Transaction tx = filteredTxn.get(hash);
+                if (tx != null)
+                    sendTransactionsToListener(newStoredBlock, newBlockType, listener, Arrays.asList(tx), !first);
+                else
+                    listener.notifyTransactionIsInBlock(hash, newStoredBlock, newBlockType);
             }
         }
     }
