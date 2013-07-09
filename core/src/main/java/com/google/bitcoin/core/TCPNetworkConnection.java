@@ -30,6 +30,7 @@ import org.jboss.netty.handler.codec.replay.VoidEnum;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -94,10 +95,10 @@ public class TCPNetworkConnection implements NetworkConnection {
      * @param params The network parameters to use (production or testnet)
      * @param address IP address and port to use
      * @param connectTimeoutMsec How long to wait before giving up and setting the future to failure.
-     * @return
+     * @param peer If not null, this peer will be added to the pipeline.
      */
     public static ListenableFuture<TCPNetworkConnection> connectTo(NetworkParameters params, InetSocketAddress address,
-                                                                   int connectTimeoutMsec) {
+                                                                   int connectTimeoutMsec, @Nullable Peer peer) {
         synchronized (TCPNetworkConnection.class) {
             if (channelFactory == null) {
                 ExecutorService bossExecutor = Executors.newCachedThreadPool();
@@ -112,6 +113,7 @@ public class TCPNetworkConnection implements NetworkConnection {
         conn.handshakeFuture = SettableFuture.create();
         conn.setRemoteAddress(address);
         pipeline.addLast("codec", conn.getHandler());
+        if (peer != null) pipeline.addLast("peer", peer.getHandler());
         clientBootstrap.setPipeline(pipeline);
         clientBootstrap.setOption("connectTimeoutMillis", connectTimeoutMsec);
         ChannelFuture socketFuture = clientBootstrap.connect(address);
