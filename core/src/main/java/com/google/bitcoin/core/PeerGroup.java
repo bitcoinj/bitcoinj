@@ -36,6 +36,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
+import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
@@ -113,6 +114,7 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
     private final AbstractBlockChain chain;
     @GuardedBy("lock") private long fastCatchupTimeSecs;
     private final CopyOnWriteArrayList<Wallet> wallets;
+    private final CopyOnWriteArrayList<PeerFilterProvider> peerFilterProviders;
 
     // This event listener is added to every peer. It's here so when we announce transactions via an "inv", every
     // peer can fetch them.
@@ -126,15 +128,12 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
     private ClientBootstrap bootstrap;
     private int minBroadcastConnections = 0;
     private AbstractWalletEventListener walletEventListener = new AbstractWalletEventListener() {
-        @Override
-        public void onKeysAdded(Wallet wallet, List<ECKey> keys) {
-            lock.lock();
-            try {
-                recalculateFastCatchupAndFilter();
-            } finally {
-                lock.unlock();
-            }
+        private void onChanged() {
+            recalculateFastCatchupAndFilter();
         }
+        @Override public void onKeysAdded(Wallet wallet, List<ECKey> keys) { onChanged(); }
+        @Override public void onCoinsReceived(Wallet wallet, Transaction tx, BigInteger prevBalance, BigInteger newBalance) { onChanged(); }
+        @Override public void onCoinsSent(Wallet wallet, Transaction tx, BigInteger prevBalance, BigInteger newBalance) { onChanged(); }
     };
 
     private class PeerStartupListener implements Peer.PeerLifecycleListener {
@@ -205,6 +204,7 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
         this.chain = chain;
         this.fastCatchupTimeSecs = params.getGenesisBlock().getTimeSeconds();
         this.wallets = new CopyOnWriteArrayList<Wallet>();
+        this.peerFilterProviders = new CopyOnWriteArrayList<PeerFilterProvider>();
 
         // This default sentinel value will be overridden by one of two actions:
         //   - adding a peer discovery source sets it to the default
@@ -402,7 +402,7 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
         // Note that the default here means that no tx invs will be received if no wallet is ever added
         lock.lock();
         try {
-            ver.relayTxesBeforeFilter = chain != null && chain.shouldVerifyTransactions() && wallets.size() > 0;
+            ver.relayTxesBeforeFilter = chain != null && chain.shouldVerifyTransactions() && peerFilterProviders.size() > 0;
         } finally {
             lock.unlock();
         }
@@ -613,13 +613,34 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
             Preconditions.checkNotNull(wallet);
             Preconditions.checkState(!wallets.contains(wallet));
             wallets.add(wallet);
+
             announcePendingWalletTransactions(Collections.singletonList(wallet), peers);
+            wallet.addEventListener(walletEventListener);  // TODO: Run this in the current peer thread.
+
+            addPeerFilterProvider(wallet);
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
+     * <p>Link the given PeerFilterProvider to this PeerGroup. DO NOT use this for Wallets, use
+     * {@link PeerGroup#addWallet(Wallet)} instead.</p>
+     *
+     * <p>Note that this should be done before chain download commences because if you add a listener with keys earlier
+     * than the current chain head, the relevant parts of the chain won't be redownloaded for you.</p>
+     */
+    public void addPeerFilterProvider(PeerFilterProvider provider) {
+        lock.lock();
+        try {
+            Preconditions.checkNotNull(provider);
+            Preconditions.checkState(!peerFilterProviders.contains(provider));
+            peerFilterProviders.add(provider);
 
             // Don't bother downloading block bodies before the oldest keys in all our wallets. Make sure we recalculate
             // if a key is added. Of course, by then we may have downloaded the chain already. Ideally adding keys would
             // automatically rewind the block chain and redownload the blocks to find transactions relevant to those keys,
             // all transparently and in the background. But we are a long way from that yet.
-            wallet.addEventListener(walletEventListener);  // TODO: Run this in the current peer thread.
             recalculateFastCatchupAndFilter();
             updateVersionMessageRelayTxesBeforeFilter(getVersionMessage());
         } finally {
@@ -632,40 +653,51 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
      */
     public void removeWallet(Wallet wallet) {
         wallets.remove(checkNotNull(wallet));
+        peerFilterProviders.remove(wallet);
         wallet.removeEventListener(walletEventListener);
     }
 
-    private void recalculateFastCatchupAndFilter() {
-        checkState(lock.isLocked());
-        // Fully verifying mode doesn't use this optimization (it can't as it needs to see all transactions).
-        if (chain != null && chain.shouldVerifyTransactions())
-            return;
-        long earliestKeyTime = Long.MAX_VALUE;
-        int elements = 0;
-        for (Wallet w : wallets) {
-            earliestKeyTime = Math.min(earliestKeyTime, w.getEarliestKeyCreationTime());
-            elements += w.getBloomFilterElementCount();
-        }
+    /**
+     * Recalculates the bloom filter given to peers as well as the timestamp after which full blocks are downloaded
+     * (instead of only headers).
+     */
+    public void recalculateFastCatchupAndFilter() {
+        lock.lock();
+        try {
+            // Fully verifying mode doesn't use this optimization (it can't as it needs to see all transactions).
+            if (chain != null && chain.shouldVerifyTransactions())
+                return;
+            long earliestKeyTime = Long.MAX_VALUE;
+            int elements = 0;
+            for (PeerFilterProvider p : peerFilterProviders) {
+                earliestKeyTime = Math.min(earliestKeyTime, p.getEarliestKeyCreationTime());
+                elements += p.getBloomFilterElementCount();
+            }
 
-        if (elements > 0) {
-            // We stair-step our element count so that we avoid creating a filter with different parameters
-            // as much as possible as that results in a loss of privacy.
-            // The constant 100 here is somewhat arbitrary, but makes sense for small to medium wallets -
-            // it will likely mean we never need to create a filter with different parameters.
-            lastBloomFilterElementCount = elements > lastBloomFilterElementCount ? elements + 100 : lastBloomFilterElementCount;
-            BloomFilter filter = new BloomFilter(lastBloomFilterElementCount, bloomFilterFPRate, bloomFilterTweak);
-            for (Wallet w : wallets)
-                filter.merge(w.getBloomFilter(lastBloomFilterElementCount, bloomFilterFPRate, bloomFilterTweak));
-            bloomFilter = filter;
-            for (Peer peer : peers)
-                try {
-                    peer.setBloomFilter(filter);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
+            if (elements > 0) {
+                // We stair-step our element count so that we avoid creating a filter with different parameters
+                // as much as possible as that results in a loss of privacy.
+                // The constant 100 here is somewhat arbitrary, but makes sense for small to medium wallets -
+                // it will likely mean we never need to create a filter with different parameters.
+                lastBloomFilterElementCount = elements > lastBloomFilterElementCount ? elements + 100 : lastBloomFilterElementCount;
+                BloomFilter filter = new BloomFilter(lastBloomFilterElementCount, bloomFilterFPRate, bloomFilterTweak);
+                for (PeerFilterProvider p : peerFilterProviders)
+                    filter.merge(p.getBloomFilter(lastBloomFilterElementCount, bloomFilterFPRate, bloomFilterTweak));
+                if (!filter.equals(bloomFilter)) {
+                    bloomFilter = filter;
+                    for (Peer peer : peers)
+                        try {
+                            peer.setBloomFilter(filter);
+                        } catch (IOException e) {
+                            throw new RuntimeException(e);
+                        }
                 }
+            }
+            // Do this last so that bloomFilter is already set when it gets called.
+            setFastCatchupTimeSecs(earliestKeyTime);
+        } finally {
+            lock.unlock();
         }
-        // Do this last so that bloomFilter is already set when it gets called.
-        setFastCatchupTimeSecs(earliestKeyTime);
     }
     
     /**

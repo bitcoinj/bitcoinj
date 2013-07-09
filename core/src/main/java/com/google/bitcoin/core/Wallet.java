@@ -79,7 +79,7 @@ import static com.google.common.base.Preconditions.*;
  * {@link Wallet#autosaveToFile(java.io.File, long, java.util.concurrent.TimeUnit, com.google.bitcoin.core.Wallet.AutosaveEventListener)}
  * for more information about this.</p>
  */
-public class Wallet implements Serializable, BlockChainListener {
+public class Wallet implements Serializable, BlockChainListener, PeerFilterProvider {
     private static final Logger log = LoggerFactory.getLogger(Wallet.class);
     private static final long serialVersionUID = 2L;
 
@@ -2527,6 +2527,7 @@ public class Wallet implements Serializable, BlockChainListener {
      * 
      * If there are no keys in the wallet, the current time is returned.
      */
+    @Override
     public long getEarliestKeyCreationTime() {
         lock.lock();
         try {
@@ -2876,9 +2877,7 @@ public class Wallet implements Serializable, BlockChainListener {
         return description;
     }
 
-    /**
-     * Gets the number of elements that will be added to a bloom filter returned by getBloomFilter
-     */
+    @Override
     public int getBloomFilterElementCount() {
         int size = getKeychainSize() * 2;
         for (Transaction tx : getTransactions(false)) {
@@ -2912,6 +2911,7 @@ public class Wallet implements Serializable, BlockChainListener {
      * 
      * See the docs for {@link BloomFilter(int, double)} for a brief explanation of anonymity when using bloom filters.
      */
+    @Override
     public BloomFilter getBloomFilter(int size, double falsePositiveRate, long nTweak) {
         BloomFilter filter = new BloomFilter(size, falsePositiveRate, nTweak);
         lock.lock();
