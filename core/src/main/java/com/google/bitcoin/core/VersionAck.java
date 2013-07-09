@@ -22,12 +22,9 @@ package com.google.bitcoin.core;
  */
 public class VersionAck extends EmptyMessage {
     public VersionAck() {
-
     }
 
     // this is needed by the BitcoinSerializer
     public VersionAck(NetworkParameters params, byte[] payload) {
-
     }
-
 }
