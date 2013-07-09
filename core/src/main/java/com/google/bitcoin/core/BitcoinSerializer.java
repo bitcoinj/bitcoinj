@@ -96,12 +96,7 @@ public class BitcoinSerializer {
     /**
      * Writes message to to the output stream.
      */
-    public void serialize(Message message, OutputStream out) throws IOException {
-        String name = names.get(message.getClass());
-        if (name == null) {
-            throw new Error("BitcoinSerializer doesn't currently know how to serialize " + message.getClass());
-        }
-
+    public void serialize(String name, byte[] message, OutputStream out) throws IOException {
         byte[] header = new byte[4 + COMMAND_LEN + 4 + 4 /* checksum */];
         uint32ToByteArrayBE(params.getPacketMagic(), header, 0);
 
@@ -111,38 +106,26 @@ public class BitcoinSerializer {
             header[4 + i] = (byte) (name.codePointAt(i) & 0xFF);
         }
 
-        byte[] payload = message.bitcoinSerialize();
+        Utils.uint32ToByteArrayLE(message.length, header, 4 + COMMAND_LEN);
 
-        Utils.uint32ToByteArrayLE(payload.length, header, 4 + COMMAND_LEN);
-
-        byte[] checksum = message.getChecksum();
-        if (checksum == null) {
-            Sha256Hash msgHash = message.getHash();
-            if (msgHash != null && message instanceof Transaction) {
-                // if the message happens to have a precalculated hash use
-                // it.
-                // reverse copying 4 bytes is about 1600 times faster than
-                // calculating a new hash
-                // this is only possible for transactions as block hashes
-                // are hashes of the header only
-                byte[] hash = msgHash.getBytes();
-                int start = 4 + COMMAND_LEN + 4;
-                for (int i = start; i < start + 4; i++)
-                    header[i] = hash[31 - i + start];
-
-            } else {
-                byte[] hash = doubleDigest(payload);
-                System.arraycopy(hash, 0, header, 4 + COMMAND_LEN + 4, 4);
-            }
-        } else {
-            System.arraycopy(checksum, 0, header, 4 + COMMAND_LEN + 4, 4);
-        }
-
+        byte[] hash = doubleDigest(message);
+        System.arraycopy(hash, 0, header, 4 + COMMAND_LEN + 4, 4);
         out.write(header);
-        out.write(payload);
+        out.write(message);
 
         if (log.isDebugEnabled())
-            log.debug("Sending {} message: {}", name, bytesToHexString(header) + bytesToHexString(payload));
+            log.debug("Sending {} message: {}", name, bytesToHexString(header) + bytesToHexString(message));
+    }
+
+    /**
+     * Writes message to to the output stream.
+     */
+    public void serialize(Message message, OutputStream out) throws IOException {
+        String name = names.get(message.getClass());
+        if (name == null) {
+            throw new Error("BitcoinSerializer doesn't currently know how to serialize " + message.getClass());
+        }
+        serialize(name, message.bitcoinSerialize(), out);
     }
 
     /**
