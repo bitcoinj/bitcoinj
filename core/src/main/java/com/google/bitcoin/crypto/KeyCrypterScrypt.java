@@ -49,9 +49,7 @@ import com.lambdaworks.crypto.SCrypt;
  * the AES symmetric cipher. Eight bytes of salt is used to prevent dictionary attacks.</p>
  */
 public class KeyCrypterScrypt implements KeyCrypter, Serializable {
-
-    public Logger log = LoggerFactory.getLogger(KeyCrypterScrypt.class.getName());
-
+    private static final Logger log = LoggerFactory.getLogger(KeyCrypterScrypt.class.getName());
     private static final long serialVersionUID = 949662512049152670L;
 
     /**

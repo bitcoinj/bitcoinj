@@ -50,7 +50,7 @@ import static com.google.bitcoin.core.Utils.toNanoCoins;
 import static org.junit.Assert.*;
 
 public class WalletTest extends TestWithWallet {
-    public Logger log = LoggerFactory.getLogger(WalletTest.class.getName());
+    private static final Logger log = LoggerFactory.getLogger(WalletTest.class);
 
     private Address myEncryptedAddress;
     private Address myEncryptedAddress2;
@@ -1541,7 +1541,6 @@ public class WalletTest extends TestWithWallet {
         assertEquals(BigInteger.ZERO, request25.fee);
         assertEquals(1, request25.tx.getInputs().size());
         assertEquals(72, request25.tx.getOutputs().size());
-        System.out.println(request25.tx.bitcoinSerialize().length);
         // Now reset request19 and give it a fee per kb
         request25.tx.clearInputs();
         request25 = SendRequest.forTx(request25.tx);

@@ -82,8 +82,6 @@ public class BitcoinSerializerTest {
         
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         bs.serialize(tx, bos);
-        System.out.println(Utils.bytesToHexString(txMessage));
-        System.out.println(Utils.bytesToHexString(bos.toByteArray()));
         assertEquals(true, Arrays.equals(txMessage, bos.toByteArray()));
         
     }

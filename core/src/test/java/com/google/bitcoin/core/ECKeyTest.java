@@ -45,7 +45,7 @@ import static com.google.bitcoin.core.Utils.reverseBytes;
 import static org.junit.Assert.*;
 
 public class ECKeyTest {
-    public Logger log = LoggerFactory.getLogger(ECKeyTest.class.getName());
+    private static final Logger log = LoggerFactory.getLogger(ECKeyTest.class);
 
     private SecureRandom secureRandom;
 
