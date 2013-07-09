@@ -64,7 +64,7 @@ public class ProtobufServer {
                 throw new IOException("Parser factory.getNewParser returned null");
             }
             this.parser = newParser;
-            dbuf = ByteBuffer.allocate(Math.min(Math.max(newParser.maxMessageSize, BUFFER_SIZE_LOWER_BOUND), BUFFER_SIZE_UPPER_BOUND));
+            dbuf = ByteBuffer.allocateDirect(Math.min(Math.max(newParser.maxMessageSize, BUFFER_SIZE_LOWER_BOUND), BUFFER_SIZE_UPPER_BOUND));
             newParser.setWriteTarget(this);
         }
 

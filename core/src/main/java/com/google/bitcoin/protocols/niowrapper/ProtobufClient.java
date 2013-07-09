@@ -53,7 +53,7 @@ public class ProtobufClient extends MessageWriteTarget {
                           final int connectTimeoutMillis) throws IOException {
         // Try to fit at least one message in the network buffer, but place an upper and lower limit on its size to make
         // sure it doesnt get too large or have to call read too often.
-        dbuf = ByteBuffer.allocate(Math.min(Math.max(parser.maxMessageSize, BUFFER_SIZE_LOWER_BOUND), BUFFER_SIZE_UPPER_BOUND));
+        dbuf = ByteBuffer.allocateDirect(Math.min(Math.max(parser.maxMessageSize, BUFFER_SIZE_LOWER_BOUND), BUFFER_SIZE_UPPER_BOUND));
         parser.setWriteTarget(this);
         sc = SocketChannel.open();
 
