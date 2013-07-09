@@ -2887,7 +2887,7 @@ public class Wallet implements Serializable, BlockChainListener {
                     if (out.isMine(this) && out.getScriptPubKey().isSentToRawPubKey())
                         size++;
                 } catch (ScriptException e) {
-                    throw new RuntimeException(e); // If it is ours, we parsed the script corectly, so this shouldn't happen
+                    throw new RuntimeException(e); // If it is ours, we parsed the script correctly, so this shouldn't happen
                 }
             }
         }
@@ -2932,7 +2932,7 @@ public class Wallet implements Serializable, BlockChainListener {
                         filter.insert(outPoint.bitcoinSerialize());
                     }
                 } catch (ScriptException e) {
-                    throw new RuntimeException(e); // If it is ours, we parsed the script corectly, so this shouldn't happen
+                    throw new RuntimeException(e); // If it is ours, we parsed the script correctly, so this shouldn't happen
                 }
             }
         }

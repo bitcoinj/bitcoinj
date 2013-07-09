@@ -673,8 +673,8 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
      * Be careful regenerating the bloom filter too often, as it decreases anonymity because remote nodes can
      * compare transactions against both the new and old filters to significantly decrease the false positive rate.
      * 
-     * See the docs for {@link BloomFilter#BloomFilter(int, double, long)} for a brief explanation of anonymity when
-     * using bloom filters.
+     * See the docs for {@link BloomFilter#BloomFilter(int, double, long, BloomFilter.BloomUpdate)} for a brief
+     * explanation of anonymity when using bloom filters.
      */
     public void setBloomFilterFalsePositiveRate(double bloomFilterFPRate) {
         lock.lock();

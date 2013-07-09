@@ -157,7 +157,7 @@ public class BloomFilter extends Message {
     }
 
     private int ROTL32 (int x, int r) {
-      return (x << r) | (x >>> (32 - r));
+        return (x << r) | (x >>> (32 - r));
     }
     
     private int hash(int hashNum, byte[] object) {
