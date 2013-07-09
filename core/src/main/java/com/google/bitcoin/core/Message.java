@@ -378,8 +378,6 @@ public abstract class Message implements Serializable {
     /**
      * This method is a NOP for all classes except Block and Transaction.  It is only declared in Message
      * so BitcoinSerializer can avoid 2 instanceof checks + a casting.
-     *
-     * @return
      */
     public Sha256Hash getHash() {
         return null;

@@ -17,20 +17,30 @@
 package com.google.bitcoin.core;
 
 import com.google.bitcoin.core.Peer.PeerHandler;
+import com.google.bitcoin.params.TestNet3Params;
 import com.google.bitcoin.utils.Threading;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.SettableFuture;
 import org.easymock.Capture;
 import org.easymock.CaptureType;
 import org.jboss.netty.channel.*;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.math.BigInteger;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 import static com.google.bitcoin.core.TestUtils.*;
@@ -782,12 +792,21 @@ public class PeerTest extends TestWithNetworkConnections {
             }
         });
         final Throwable[] throwables = new Throwable[1];
-        peer.addEventListener(new AbstractPeerEventListener() {
+        Threading.uncaughtExceptionHandler = new Thread.UncaughtExceptionHandler() {
             @Override
-            public void onException(Throwable throwable) {
+            public void uncaughtException(Thread thread, Throwable throwable) {
                 throwables[0] = throwable;
             }
-        }, Threading.SAME_THREAD);
+        };
+        // In real usage we're not really meant to adjust the uncaught exception handler after stuff started happening
+        // but in the unit test environment other tests have just run so the thread is probably still kicking around.
+        // Force it to crash so it'll be recreated with our new handler.
+        Threading.USER_THREAD.execute(new Runnable() {
+            @Override
+            public void run() {
+                throw new RuntimeException();
+            }
+        });
         control.replay();
         connect();
         Transaction t1 = new Transaction(unitTestParams);
@@ -797,8 +816,59 @@ public class PeerTest extends TestWithNetworkConnections {
         t2.addInput(t1.getOutput(0));
         t2.addOutput(Utils.toNanoCoins(1, 0), wallet.getChangeAddress());
         inbound(peer, t2);
-        inbound(peer, new NotFoundMessage(unitTestParams, Lists.newArrayList(new InventoryItem(InventoryItem.Type.Transaction, t2.getInput(0).getHash()))));
+        final InventoryItem inventoryItem = new InventoryItem(InventoryItem.Type.Transaction, t2.getInput(0).getOutpoint().getHash());
+        final NotFoundMessage nfm = new NotFoundMessage(unitTestParams, Lists.newArrayList(inventoryItem));
+        inbound(peer, nfm);
+        Threading.waitForUserCode();
         assertTrue(throwables[0] instanceof NullPointerException);
+        Threading.uncaughtExceptionHandler = null;
+    }
+
+    @Test
+    public void badMessage() throws Exception {
+        // Bring up an actual network connection and feed it bogus data.
+        final SettableFuture<Void> result = SettableFuture.create();
+        Threading.uncaughtExceptionHandler = new Thread.UncaughtExceptionHandler() {
+            @Override
+            public void uncaughtException(Thread thread, Throwable throwable) {
+                result.setException(throwable);
+            }
+        };
+        ServerSocket server = new ServerSocket(0);
+        final NetworkParameters params = TestNet3Params.testNet();
+        Peer peer = new Peer(params, blockChain, "test", "1.0");
+        ListenableFuture<TCPNetworkConnection> future = TCPNetworkConnection.connectTo(TestNet3Params.get(),
+                new InetSocketAddress(InetAddress.getLocalHost(), server.getLocalPort()), 5000, peer);
+        Socket socket = server.accept();
+        // Write out a verack+version.
+        BitcoinSerializer serializer = new BitcoinSerializer(params);
+        final VersionMessage ver = new VersionMessage(params, 1000);
+        ver.localServices = VersionMessage.NODE_NETWORK;
+        serializer.serialize(ver, socket.getOutputStream());
+        serializer.serialize(new VersionAck(), socket.getOutputStream());
+        // Now write some bogus truncated message.
+        serializer.serialize("inv", new InventoryMessage(params) {
+            @Override
+            public void bitcoinSerializeToStream(OutputStream stream) throws IOException {
+                // Add some hashes.
+                addItem(new InventoryItem(InventoryItem.Type.Transaction, Sha256Hash.create(new byte[] { 1 })));
+                addItem(new InventoryItem(InventoryItem.Type.Transaction, Sha256Hash.create(new byte[] { 2 })));
+                addItem(new InventoryItem(InventoryItem.Type.Transaction, Sha256Hash.create(new byte[] { 3 })));
+
+                // Write out a copy that's truncated in the middle.
+                ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                super.bitcoinSerializeToStream(bos);
+                byte[] bits = bos.toByteArray();
+                bits = Arrays.copyOf(bits, bits.length / 2);
+                stream.write(bits);
+            }
+        }.bitcoinSerialize(), socket.getOutputStream());
+        try {
+            result.get();
+            fail();
+        } catch (ExecutionException e) {
+            assertTrue(e.getCause() instanceof ProtocolException);
+        }
     }
 
     // TODO: Use generics here to avoid unnecessary casting.

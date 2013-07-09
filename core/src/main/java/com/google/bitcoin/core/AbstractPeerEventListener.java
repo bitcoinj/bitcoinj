@@ -52,8 +52,4 @@ public class AbstractPeerEventListener implements PeerEventListener {
     public List<Message> getData(Peer peer, GetDataMessage m) {
         return null;
     }
-
-    @Override
-    public void onException(Throwable throwable) {
-    }
 }

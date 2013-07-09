@@ -21,6 +21,7 @@ import com.google.common.util.concurrent.CycleDetectingLockFactory;
 import com.google.common.util.concurrent.Futures;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.lang.ref.WeakReference;
 import java.util.concurrent.*;
 import java.util.concurrent.locks.ReentrantLock;
@@ -67,6 +68,17 @@ public class Threading {
         Futures.getUnchecked(USER_THREAD.submit(Callables.returning(null)));
     }
 
+    /**
+     * An exception handler that will be invoked for any exceptions that occur in the user thread, and
+     * any unhandled exceptions that are caught whilst the framework is processing network traffic or doing other
+     * background tasks. The purpose of this is to allow you to report back unanticipated crashes from your users
+     * to a central collection center for analysis and debugging. You should configure this <b>before</b> any
+     * bitcoinj library code is run, setting it after you started network traffic and other forms of processing
+     * may result in the change not taking effect.
+     */
+    @Nullable
+    public static volatile Thread.UncaughtExceptionHandler uncaughtExceptionHandler;
+
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     static {
@@ -80,6 +92,7 @@ public class Threading {
                 Thread t = new Thread(runnable);
                 t.setName("bitcoinj user thread");
                 t.setDaemon(true);
+                t.setUncaughtExceptionHandler(uncaughtExceptionHandler);
                 userThread = new WeakReference<Thread>(t);
                 return t;
             }

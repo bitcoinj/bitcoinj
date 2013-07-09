@@ -461,6 +461,9 @@ public class Wallet implements Serializable, BlockChainListener {
             setDaemon(true);
             setName("Wallet auto save thread");
             setPriority(Thread.MIN_PRIORITY);   // Avoid competing with the UI.
+            Thread.UncaughtExceptionHandler handler = Threading.uncaughtExceptionHandler;
+            if (handler != null)
+                setUncaughtExceptionHandler(handler);
         }
 
         /** Returns the global instance that services all wallets. It never shuts down. */

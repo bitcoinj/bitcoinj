@@ -77,7 +77,7 @@ public class PrintPeers {
         List<ListenableFuture<TCPNetworkConnection>> futures = Lists.newArrayList();
         for (final InetAddress addr : addrs) {
             final ListenableFuture<TCPNetworkConnection> future =
-                    TCPNetworkConnection.connectTo(params, new InetSocketAddress(addr, params.getPort()), 1000 /* timeout */);
+                    TCPNetworkConnection.connectTo(params, new InetSocketAddress(addr, params.getPort()), 1000 /* timeout */, null);
             futures.add(future);
             // Once the connection has completed version handshaking ...
             Futures.addCallback(future, new FutureCallback<TCPNetworkConnection>() {

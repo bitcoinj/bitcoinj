@@ -239,11 +239,15 @@ public class Peer {
             String s;
             PeerAddress addr = vAddress;
             s = addr == null ? "?" : addr.toString();
-            if (e.getCause() instanceof ConnectException || e.getCause() instanceof IOException) {
+            final Throwable cause = e.getCause();
+            if (cause instanceof ConnectException || cause instanceof IOException) {
                 // Short message for network errors
-                log.info(s + " - " + e.getCause().getMessage());
+                log.info(s + " - " + cause.getMessage());
             } else {
-                log.warn(s + " - ", e.getCause());
+                log.warn(s + " - ", cause);
+                Thread.UncaughtExceptionHandler handler = Threading.uncaughtExceptionHandler;
+                if (handler != null)
+                    handler.uncaughtException(Thread.currentThread(), cause);
             }
 
             e.getChannel().close();
@@ -261,92 +265,75 @@ public class Peer {
         }
     }
 
-    private void processMessage(MessageEvent e, Message m) throws IOException, VerificationException, ProtocolException {
-        try {
-            // Allow event listeners to filter the message stream. Listeners are allowed to drop messages by
-            // returning null.
-            for (ListenerRegistration<PeerEventListener> registration : eventListeners) {
-                // Skip any listeners that are supposed to run in another thread as we don't want to block waiting
-                // for it, which might cause circular deadlock.
-                if (registration.executor == Threading.SAME_THREAD) {
-                    m = registration.listener.onPreMessageReceived(this, m);
-                    if (m == null) break;
-                }
+    private void processMessage(MessageEvent e, Message m) throws Exception {
+        // Allow event listeners to filter the message stream. Listeners are allowed to drop messages by
+        // returning null.
+        for (ListenerRegistration<PeerEventListener> registration : eventListeners) {
+            // Skip any listeners that are supposed to run in another thread as we don't want to block waiting
+            // for it, which might cause circular deadlock.
+            if (registration.executor == Threading.SAME_THREAD) {
+                m = registration.listener.onPreMessageReceived(this, m);
+                if (m == null) break;
             }
-            if (m == null) return;
+        }
+        if (m == null) return;
 
-            // If we are in the middle of receiving transactions as part of a filtered block push from the remote node,
-            // and we receive something that's not a transaction, then we're done.
-            if (currentFilteredBlock != null && !(m instanceof Transaction)) {
-                endFilteredBlock(currentFilteredBlock);
-                currentFilteredBlock = null;
-            }
+        // If we are in the middle of receiving transactions as part of a filtered block push from the remote node,
+        // and we receive something that's not a transaction, then we're done.
+        if (currentFilteredBlock != null && !(m instanceof Transaction)) {
+            endFilteredBlock(currentFilteredBlock);
+            currentFilteredBlock = null;
+        }
 
-            if (m instanceof NotFoundMessage) {
-                // This is sent to us when we did a getdata on some transactions that aren't in the peers memory pool.
-                // Because NotFoundMessage is a subclass of InventoryMessage, the test for it must come before the next.
-                processNotFoundMessage((NotFoundMessage) m);
-            } else if (m instanceof InventoryMessage) {
-                processInv((InventoryMessage) m);
-            } else if (m instanceof Block) {
-                processBlock((Block) m);
-            } else if (m instanceof FilteredBlock) {
-                startFilteredBlock((FilteredBlock) m);
-            } else if (m instanceof Transaction) {
-                processTransaction((Transaction) m);
-            } else if (m instanceof GetDataMessage) {
-                processGetData((GetDataMessage) m);
-            } else if (m instanceof AddressMessage) {
-                // We don't care about addresses of the network right now. But in future,
-                // we should save them in the wallet so we don't put too much load on the seed nodes and can
-                // properly explore the network.
-            } else if (m instanceof HeadersMessage) {
-                processHeaders((HeadersMessage) m);
-            } else if (m instanceof AlertMessage) {
-                processAlert((AlertMessage) m);
-            } else if (m instanceof VersionMessage) {
-                vPeerVersionMessage = (VersionMessage) m;
-            } else if (m instanceof VersionAck) {
-                if (vPeerVersionMessage == null) {
-                    throw new ProtocolException("got a version ack before version");
-                }
-                if (isAcked) {
-                    throw new ProtocolException("got more than one version ack");
-                }
-                isAcked = true;
-                for (PeerLifecycleListener listener : lifecycleListeners)
-                    listener.onPeerConnected(this);
-                // We check min version after onPeerConnected as channel.close() will
-                // call onPeerDisconnected, and we should probably call onPeerConnected first.
-                final int version = vMinProtocolVersion;
-                if (vPeerVersionMessage.clientVersion < version) {
-                    log.warn("Connected to a peer speaking protocol version {} but need {}, closing",
-                            vPeerVersionMessage.clientVersion, version);
-                    e.getChannel().close();
-                }
-            } else if (m instanceof Ping) {
-                if (((Ping) m).hasNonce())
-                    sendMessage(new Pong(((Ping) m).getNonce()));
-            } else if (m instanceof Pong) {
-                processPong((Pong)m);
-            } else {
-                log.warn("Received unhandled message: {}", m);
+        if (m instanceof NotFoundMessage) {
+            // This is sent to us when we did a getdata on some transactions that aren't in the peers memory pool.
+            // Because NotFoundMessage is a subclass of InventoryMessage, the test for it must come before the next.
+            processNotFoundMessage((NotFoundMessage) m);
+        } else if (m instanceof InventoryMessage) {
+            processInv((InventoryMessage) m);
+        } else if (m instanceof Block) {
+            processBlock((Block) m);
+        } else if (m instanceof FilteredBlock) {
+            startFilteredBlock((FilteredBlock) m);
+        } else if (m instanceof Transaction) {
+            processTransaction((Transaction) m);
+        } else if (m instanceof GetDataMessage) {
+            processGetData((GetDataMessage) m);
+        } else if (m instanceof AddressMessage) {
+            // We don't care about addresses of the network right now. But in future,
+            // we should save them in the wallet so we don't put too much load on the seed nodes and can
+            // properly explore the network.
+        } else if (m instanceof HeadersMessage) {
+            processHeaders((HeadersMessage) m);
+        } else if (m instanceof AlertMessage) {
+            processAlert((AlertMessage) m);
+        } else if (m instanceof VersionMessage) {
+            vPeerVersionMessage = (VersionMessage) m;
+        } else if (m instanceof VersionAck) {
+            if (vPeerVersionMessage == null) {
+                throw new ProtocolException("got a version ack before version");
             }
-        } catch (final Throwable throwable) {
-            log.warn("Caught exception in peer thread: {}", throwable.getMessage());
-            throwable.printStackTrace();
-            for (final ListenerRegistration<PeerEventListener> registration : eventListeners) {
-                try {
-                    registration.executor.execute(new Runnable() {
-                        @Override
-                        public void run() {
-                            registration.listener.onException(throwable);
-                        }
-                    });
-                } catch (Exception e1) {
-                    e1.printStackTrace();
-                }
+            if (isAcked) {
+                throw new ProtocolException("got more than one version ack");
             }
+            isAcked = true;
+            for (PeerLifecycleListener listener : lifecycleListeners)
+                listener.onPeerConnected(this);
+            // We check min version after onPeerConnected as channel.close() will
+            // call onPeerDisconnected, and we should probably call onPeerConnected first.
+            final int version = vMinProtocolVersion;
+            if (vPeerVersionMessage.clientVersion < version) {
+                log.warn("Connected to a peer speaking protocol version {} but need {}, closing",
+                        vPeerVersionMessage.clientVersion, version);
+                e.getChannel().close();
+            }
+        } else if (m instanceof Ping) {
+            if (((Ping) m).hasNonce())
+                sendMessage(new Pong(((Ping) m).getNonce()));
+        } else if (m instanceof Pong) {
+            processPong((Pong)m);
+        } else {
+            log.warn("Received unhandled message: {}", m);
         }
     }
 
