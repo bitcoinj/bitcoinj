@@ -909,7 +909,7 @@ public class Wallet implements Serializable, BlockChainListener {
                 return false;
             }
 
-            if (tx.isTimeLocked() && !acceptTimeLockedTransactions) {
+            if (tx.isTimeLocked() && !acceptTimeLockedTransactions && tx.getConfidence().getSource() != TransactionConfidence.Source.SELF) {
                 log.warn("Received transaction {} with a lock time of {}, but not configured to accept these, discarding",
                         tx.getHashAsString(), tx.getLockTime());
                 return false;

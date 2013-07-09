@@ -196,6 +196,7 @@ public class PaymentChannelClientState {
             refundTx.addOutput(totalValue, myKey.toAddress(params));
             refundFees = multisigFee;
         }
+        refundTx.getConfidence().setSource(TransactionConfidence.Source.SELF);
         state = State.INITIATED;
         // Client should now call getIncompleteRefundTransaction() and send it to the server.
     }

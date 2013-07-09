@@ -406,9 +406,11 @@ public class ChannelConnectionTest extends TestWithWallet {
         StoredPaymentChannelClientStates newClientStates = new StoredPaymentChannelClientStates(mockBroadcaster, wallet);
         newClientStates.deserializeWalletExtension(wallet, clientStoredChannels.serializeWalletExtension());
         // Expect two pairs of contract/refund ...
-        for (int i = 0; i < 4; i++) {
+        for (int i = 0; i < 2; i++) {
             broadcastTxPause.release();
-            broadcasts.take();
+            assertTrue(broadcasts.take().getOutput(0).getScriptPubKey().isSentToMultiSig());
+            broadcastTxPause.release();
+            assertEquals(TransactionConfidence.Source.SELF, broadcasts.take().getConfidence().getSource());
         }
         assertTrue(broadcasts.isEmpty());
         assertTrue(newClientStates.mapChannels.isEmpty());
