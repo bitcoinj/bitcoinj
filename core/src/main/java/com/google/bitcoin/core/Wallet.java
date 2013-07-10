@@ -647,11 +647,13 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
      * and if you trust the sender of the transaction you can choose to assume they are in fact valid and will not
      * be double spent as an optimization.</p>
      *
-     * <p>Before this method is called, {@link Wallet#isPendingTransactionRelevant(Transaction)} should have been
-     * called to decide whether the wallet cares about the transaction - if it does, then this method expects the
-     * transaction and any dependencies it has which are still in the memory pool.</p>
+     * <p>This is the same as {@link Wallet#receivePending(Transaction, java.util.List)} but allows you to override the
+     * {@link Wallet#isPendingTransactionRelevant(Transaction)} sanity-check to keep track of transactions that are not
+     * spendable or spend our coins. This can be useful when you want to keep track of transaction confidence on
+     * arbitrary transactions. Note that transactions added in this way will still be relayed to peers and appear in
+     * transaction lists like any other pending transaction (even when not relevant).</p>
      */
-    public void receivePending(Transaction tx, @Nullable List<Transaction> dependencies) throws VerificationException {
+    public void receivePending(Transaction tx, @Nullable List<Transaction> dependencies, boolean overrideIsRelevant) throws VerificationException {
         // Can run in a peer thread. This method will only be called if a prior call to isPendingTransactionRelevant
         // returned true, so we already know by this point that it sends coins to or from our wallet, or is a double
         // spend against one of our other pending transactions.
@@ -662,7 +664,7 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
             tx.verify();
             // Repeat the check of relevancy here, even though the caller may have already done so - this is to avoid
             // race conditions where receivePending may be being called in parallel.
-            if (!isPendingTransactionRelevant(tx))
+            if (!overrideIsRelevant && !isPendingTransactionRelevant(tx))
                 return;
             AnalysisResult analysis = analyzeTransactionAndDependencies(tx, dependencies);
             if (analysis.timeLocked != null && !doesAcceptTimeLockedTransactions()) {
@@ -687,6 +689,21 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
         } finally {
             lock.unlock();
         }
+    }
+
+    /**
+     * <p>Called when we have found a transaction (via network broadcast or otherwise) that is relevant to this wallet
+     * and want to record it. Note that we <b>cannot verify these transactions at all</b>, they may spend fictional
+     * coins or be otherwise invalid. They are useful to inform the user about coins they can expect to receive soon,
+     * and if you trust the sender of the transaction you can choose to assume they are in fact valid and will not
+     * be double spent as an optimization.</p>
+     *
+     * <p>Before this method is called, {@link Wallet#isPendingTransactionRelevant(Transaction)} should have been
+     * called to decide whether the wallet cares about the transaction - if it does, then this method expects the
+     * transaction and any dependencies it has which are still in the memory pool.</p>
+     */
+    public void receivePending(Transaction tx, List<Transaction> dependencies) throws VerificationException {
+        receivePending(tx, dependencies, false);
     }
 
     private static AnalysisResult analyzeTransactionAndDependencies(Transaction tx, List<Transaction> dependencies) {
