@@ -99,6 +99,8 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
     // How many connections we want to have open at the current time. If we lose connections, we'll try opening more
     // until we reach this count.
     @GuardedBy("lock") private int maxConnections;
+    // Minimum protocol version we will allow ourselves to connect to: require Bloom filtering.
+    private volatile int vMinRequiredProtocolVersion = FilteredBlock.MIN_PROTOCOL_VERSION;
 
     // Runs a background thread that we use for scheduling pings to our peers, so we can measure their performance
     // and network latency. We ping peers every pingIntervalMsec milliseconds.
@@ -263,6 +265,7 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
 
                 Peer peer = new Peer(params, chain, ver, memoryPool);
                 peer.addLifecycleListener(startupListener);
+                peer.setMinProtocolVersion(vMinRequiredProtocolVersion);
                 pendingPeers.add(peer);
                 TCPNetworkConnection codec = new TCPNetworkConnection(params, peer.getVersionMessage());
                 p.addLast("codec", codec.getHandler());
@@ -1283,6 +1286,19 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
         } finally {
             lock.unlock();
         }
+    }
+
+    /**
+     * If a peer is connected to that claims to speak a protocol version lower than the given version, it will
+     * be disconnected and another one will be tried instead.
+     */
+    public void setMinRequiredProtocolVersion(int minRequiredProtocolVersion) {
+        this.vMinRequiredProtocolVersion = minRequiredProtocolVersion;
+    }
+
+    /** The minimum protocol version required: defaults to the version required for Bloom filtering. */
+    public int getMinRequiredProtocolVersion() {
+        return vMinRequiredProtocolVersion;
     }
 
     /**
