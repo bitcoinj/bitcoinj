@@ -1982,6 +1982,10 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
             if (req.ensureMinRequiredFee) {
                 for (TransactionOutput output : req.tx.getOutputs())
                     if (output.getValue().compareTo(Utils.CENT) < 0) {
+                        if (output.getValue().compareTo(output.getMinNonDustValue()) < 0) {
+                            log.error("Tried to send dust with ensureMinRequiredFee set - no way to complete this");
+                            return false;
+                        }
                         needAtLeastReferenceFee = true;
                         break;
                     }
