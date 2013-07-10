@@ -414,7 +414,7 @@ public abstract class AbstractBlockChain {
             if (filtered && filteredTxn.size() > 0)  {
                 // Some temp debug logging to try and track down where transactions are going missing.
                 log.info("Block {} connects to top of best chain with {} transaction(s)",
-                        block.getHashAsString(), filteredTxn.size() + filteredTxHashList.size());
+                        block.getHashAsString(), filteredTxn.size());
                 for (Sha256Hash hash : filteredTxHashList) log.info("  matched tx {}", hash);
             }
             if (expensiveChecks && block.getTimeSeconds() <= getMedianTimestampOfRecentBlocks(head, blockStore))
