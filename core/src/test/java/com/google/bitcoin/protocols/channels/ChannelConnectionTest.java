@@ -17,12 +17,8 @@
 package com.google.bitcoin.protocols.channels;
 
 import com.google.bitcoin.core.*;
-import com.google.bitcoin.protocols.niowrapper.ProtobufParser;
-import com.google.bitcoin.protocols.niowrapper.ProtobufParserFactory;
-import com.google.bitcoin.protocols.niowrapper.ProtobufServer;
 import com.google.bitcoin.utils.Threading;
-import org.bitcoin.paymentchannel.Protos;
-import org.junit.Before;
+import com.google.bitcoin.wallet.WalletFiles;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.protobuf.ByteString;
@@ -143,14 +139,7 @@ public class ChannelConnectionTest extends TestWithWallet {
         final CountDownLatch latch = new CountDownLatch(3);  // Expect 3 calls.
         File tempFile = File.createTempFile("channel_connection_test", ".wallet");
         tempFile.deleteOnExit();
-        serverWallet.autosaveToFile(tempFile, 0, TimeUnit.SECONDS, new Wallet.AutosaveEventListener() {
-            @Override
-            public boolean caughtException(Throwable t) {
-                t.printStackTrace();
-                System.exit(-1);
-                return false;
-            }
-
+        serverWallet.autosaveToFile(tempFile, 0, TimeUnit.SECONDS, new WalletFiles.Listener() {
             @Override
             public void onBeforeAutoSave(File tempFile) {
                 latch.countDown();

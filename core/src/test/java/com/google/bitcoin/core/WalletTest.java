@@ -23,6 +23,7 @@ import com.google.bitcoin.crypto.KeyCrypter;
 import com.google.bitcoin.crypto.KeyCrypterException;
 import com.google.bitcoin.crypto.KeyCrypterScrypt;
 import com.google.bitcoin.utils.Threading;
+import com.google.bitcoin.wallet.WalletFiles;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.protobuf.ByteString;
@@ -925,15 +926,11 @@ public class WalletTest extends TestWithWallet {
         // updates are coalesced together. This test is a bit racy, it assumes we can complete the unit test within
         // an auto-save cycle of 1 second.
         final File[] results = new File[2];
-        final CountDownLatch latch = new CountDownLatch(2);
+        final CountDownLatch latch = new CountDownLatch(3);
         File f = File.createTempFile("bitcoinj-unit-test", null);
         Sha256Hash hash1 = Sha256Hash.hashFileContents(f);
         wallet.autosaveToFile(f, 1, TimeUnit.SECONDS,
-                new Wallet.AutosaveEventListener() {
-                    public boolean caughtException(Throwable t) {
-                        return false;
-                    }
-
+                new WalletFiles.Listener() {
                     public void onBeforeAutoSave(File tempFile) {
                         results[0] = tempFile;
                     }
@@ -952,24 +949,24 @@ public class WalletTest extends TestWithWallet {
         assertEquals(f, results[1]);
         results[0] = results[1] = null;
 
-        Transaction t1 = createFakeTx(params, toNanoCoins(5, 0), key);
-        if (wallet.isPendingTransactionRelevant(t1))
-            wallet.receivePending(t1, null);
+        Block b0 = createFakeBlock(blockStore).block;
+        chain.add(b0);
         Sha256Hash hash3 = Sha256Hash.hashFileContents(f);
-        assertTrue(hash2.equals(hash3));  // File has NOT changed.
+        assertEquals(hash2, hash3);  // File has NOT changed yet. Just new blocks with no txns - delayed.
         assertNull(results[0]);
         assertNull(results[1]);
 
+        Transaction t1 = createFakeTx(params, toNanoCoins(5, 0), key);
         Block b1 = createFakeBlock(blockStore, t1).block;
         chain.add(b1);
         Sha256Hash hash4 = Sha256Hash.hashFileContents(f);
-        assertTrue(hash3.equals(hash4));  // File has NOT changed.
-        assertNull(results[0]);
-        assertNull(results[1]);
+        assertFalse(hash3.equals(hash4));  // File HAS changed.
+        results[0] = results[1] = null;
 
+        // A block that contains some random tx we don't care about.
         Block b2 = b1.createNextBlock(new ECKey().toAddress(params));
         chain.add(b2);
-        assertTrue(hash4.equals(Sha256Hash.hashFileContents(f)));  // File has NOT changed.
+        assertEquals(hash4, Sha256Hash.hashFileContents(f));  // File has NOT changed.
         assertNull(results[0]);
         assertNull(results[1]);
 
