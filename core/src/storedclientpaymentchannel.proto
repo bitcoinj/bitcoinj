@@ -1,0 +1,45 @@
+/** Copyright 2013 Google Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*
+ * Authors: Mike Hearn, Matt Corallo
+ */
+ 
+/* Notes:
+ * - Endianness: All byte arrays that represent numbers (such as hashes and private keys) are Big Endian
+ * - To regenerate after editing, run mvn clean package -DupdateProtobuf
+ */
+
+package paymentchannels;
+
+option java_package = "com.google.bitcoin.protocols.channels";
+option java_outer_classname = "ClientState";
+
+
+// A set of StoredPaymentChannel's
+message StoredClientPaymentChannels {
+    repeated StoredClientPaymentChannel channels = 1;
+}
+
+// A client-side payment channel in serialized form, which can be reloaded later if the client restarts and wants to
+// reopen an existing channel
+message StoredClientPaymentChannel {
+	required bytes id = 1;
+	required bytes contractTransaction = 2;
+	required bytes refundTransaction = 3;
+	required bytes myKey = 4;
+	required uint64 valueToMe = 5;
+	required uint64 refundFees = 6;
+}

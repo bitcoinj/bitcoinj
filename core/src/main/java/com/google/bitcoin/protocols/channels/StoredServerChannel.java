@@ -28,7 +28,7 @@ import static com.google.common.base.Preconditions.checkArgument;
  * channel which was interrupted (eg on connection failure) or close the channel automatically as the channel expire
  * time approaches.
  */
-public class StoredServerChannel implements Serializable {
+public class StoredServerChannel {
     BigInteger bestValueToMe;
     byte[] bestValueSignature;
     long refundTransactionUnlockTimeSecs;
@@ -38,8 +38,8 @@ public class StoredServerChannel implements Serializable {
 
     // In-memory pointer to the event handler which handles this channel if the client is connected.
     // Used as a flag to prevent duplicate connections and to disconnect the channel if its expire time approaches.
-    transient PaymentChannelServer connectedHandler = null;
-    transient PaymentChannelServerState state = null;
+    PaymentChannelServer connectedHandler = null;
+    PaymentChannelServerState state = null;
 
     StoredServerChannel(PaymentChannelServerState state, Transaction contract, TransactionOutput clientOutput,
                         long refundTransactionUnlockTimeSecs, ECKey myKey, BigInteger bestValueToMe, byte[] bestValueSignature) {

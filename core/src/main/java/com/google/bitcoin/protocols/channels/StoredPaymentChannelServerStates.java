@@ -17,16 +17,19 @@
 package com.google.bitcoin.protocols.channels;
 
 import java.io.*;
+import java.math.BigInteger;
 import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
 
 import com.google.bitcoin.core.*;
 import com.google.bitcoin.utils.Threading;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.protobuf.ByteString;
 import net.jcip.annotations.GuardedBy;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 
 /**
  * Keeps track of a set of {@link StoredServerChannel}s and expires them 2 hours before their refund transactions
@@ -142,14 +145,23 @@ public class StoredPaymentChannelServerStates implements WalletExtension {
     public byte[] serializeWalletExtension() {
         lock.lock();
         try {
-            ByteArrayOutputStream out = new ByteArrayOutputStream();
-            ObjectOutputStream oos = new ObjectOutputStream(out);
+            ServerState.StoredServerPaymentChannels.Builder builder = ServerState.StoredServerPaymentChannels.newBuilder();
             for (StoredServerChannel channel : mapChannels.values()) {
-                oos.writeObject(channel);
+                // First a few asserts to make sure things won't break
+                checkState(channel.bestValueToMe.compareTo(BigInteger.ZERO) >= 0 && channel.bestValueToMe.compareTo(NetworkParameters.MAX_MONEY) < 0);
+                checkState(channel.refundTransactionUnlockTimeSecs > 0);
+                checkNotNull(channel.myKey.getPrivKeyBytes());
+                ServerState.StoredServerPaymentChannel.Builder channelBuilder = ServerState.StoredServerPaymentChannel.newBuilder()
+                        .setBestValueToMe(channel.bestValueToMe.longValue())
+                        .setRefundTransactionUnlockTimeSecs(channel.refundTransactionUnlockTimeSecs)
+                        .setContractTransaction(ByteString.copyFrom(channel.contract.bitcoinSerialize()))
+                        .setClientOutput(ByteString.copyFrom(channel.clientOutput.bitcoinSerialize()))
+                        .setMyKey(ByteString.copyFrom(channel.myKey.getPrivKeyBytes()));
+                if (channel.bestValueSignature != null)
+                    channelBuilder.setBestValueSignature(ByteString.copyFrom(channel.bestValueSignature));
+                builder.addChannels(channelBuilder);
             }
-            return out.toByteArray();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+            return builder.build().toByteArray();
         } finally {
             lock.unlock();
         }
@@ -160,10 +172,16 @@ public class StoredPaymentChannelServerStates implements WalletExtension {
         lock.lock();
         try {
             checkArgument(containingWallet == wallet);
-            ByteArrayInputStream inStream = new ByteArrayInputStream(data);
-            ObjectInputStream ois = new ObjectInputStream(inStream);
-            while (inStream.available() > 0) {
-                StoredServerChannel channel = (StoredServerChannel)ois.readObject();
+            ServerState.StoredServerPaymentChannels states = ServerState.StoredServerPaymentChannels.parseFrom(data);
+            NetworkParameters params = containingWallet.getParams();
+            for (ServerState.StoredServerPaymentChannel storedState : states.getChannelsList()) {
+                StoredServerChannel channel = new StoredServerChannel(null,
+                        new Transaction(params, storedState.getContractTransaction().toByteArray()),
+                        new TransactionOutput(params, null, storedState.getClientOutput().toByteArray(), 0),
+                        storedState.getRefundTransactionUnlockTimeSecs(),
+                        new ECKey(storedState.getMyKey().toByteArray(), null),
+                        BigInteger.valueOf(storedState.getBestValueToMe()),
+                        storedState.hasBestValueSignature() ? storedState.getBestValueSignature().toByteArray() : null);
                 putChannel(channel);
             }
         } finally {

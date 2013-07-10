@@ -28,6 +28,7 @@ import com.google.bitcoin.core.*;
 import com.google.bitcoin.utils.Threading;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.HashMultimap;
+import com.google.protobuf.ByteString;
 import net.jcip.annotations.GuardedBy;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -157,14 +158,22 @@ public class StoredPaymentChannelClientStates implements WalletExtension {
     public byte[] serializeWalletExtension() {
         lock.lock();
         try {
-            ByteArrayOutputStream out = new ByteArrayOutputStream();
-            ObjectOutputStream oos = new ObjectOutputStream(out);
+            ClientState.StoredClientPaymentChannels.Builder builder = ClientState.StoredClientPaymentChannels.newBuilder();
             for (StoredClientChannel channel : mapChannels.values()) {
-                oos.writeObject(channel);
+                // First a few asserts to make sure things won't break
+                checkState(channel.valueToMe.compareTo(BigInteger.ZERO) >= 0 && channel.valueToMe.compareTo(NetworkParameters.MAX_MONEY) < 0);
+                checkState(channel.refundFees.compareTo(BigInteger.ZERO) >= 0 && channel.refundFees.compareTo(NetworkParameters.MAX_MONEY) < 0);
+                checkNotNull(channel.myKey.getPrivKeyBytes());
+                checkState(channel.refund.getConfidence().getSource() == TransactionConfidence.Source.SELF);
+                builder.addChannels(ClientState.StoredClientPaymentChannel.newBuilder()
+                        .setId(ByteString.copyFrom(channel.id.getBytes()))
+                        .setContractTransaction(ByteString.copyFrom(channel.contract.bitcoinSerialize()))
+                        .setRefundTransaction(ByteString.copyFrom(channel.refund.bitcoinSerialize()))
+                        .setMyKey(ByteString.copyFrom(channel.myKey.getPrivKeyBytes()))
+                        .setValueToMe(channel.valueToMe.longValue())
+                        .setRefundFees(channel.refundFees.longValue()));
             }
-            return out.toByteArray();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+            return builder.build().toByteArray();
         } finally {
             lock.unlock();
         }
@@ -176,10 +185,17 @@ public class StoredPaymentChannelClientStates implements WalletExtension {
         try {
             checkState(this.containingWallet == null || this.containingWallet == containingWallet);
             this.containingWallet = containingWallet;
-            ByteArrayInputStream inStream = new ByteArrayInputStream(data);
-            ObjectInputStream ois = new ObjectInputStream(inStream);
-            while (inStream.available() > 0) {
-                StoredClientChannel channel = (StoredClientChannel)ois.readObject();
+            NetworkParameters params = containingWallet.getParams();
+            ClientState.StoredClientPaymentChannels states = ClientState.StoredClientPaymentChannels.parseFrom(data);
+            for (ClientState.StoredClientPaymentChannel storedState : states.getChannelsList()) {
+                Transaction refundTransaction = new Transaction(params, storedState.getRefundTransaction().toByteArray());
+                refundTransaction.getConfidence().setSource(TransactionConfidence.Source.SELF);
+                StoredClientChannel channel = new StoredClientChannel(new Sha256Hash(storedState.getId().toByteArray()),
+                        new Transaction(params, storedState.getContractTransaction().toByteArray()),
+                        refundTransaction,
+                        new ECKey(storedState.getMyKey().toByteArray(), null),
+                        BigInteger.valueOf(storedState.getValueToMe()),
+                        BigInteger.valueOf(storedState.getRefundFees()));
                 putChannel(channel, false);
             }
         } finally {
@@ -193,14 +209,14 @@ public class StoredPaymentChannelClientStates implements WalletExtension {
  * channel which was interrupted (eg on connection failure) or keep track of refund transactions which need broadcast
  * when they expire.
  */
-class StoredClientChannel implements Serializable {
+class StoredClientChannel {
     Sha256Hash id;
     Transaction contract, refund;
     ECKey myKey;
     BigInteger valueToMe, refundFees;
 
     // In-memory flag to indicate intent to resume this channel (or that the channel is already in use)
-    transient boolean active = false;
+    boolean active = false;
 
     StoredClientChannel(Sha256Hash id, Transaction contract, Transaction refund, ECKey myKey, BigInteger valueToMe, BigInteger refundFees) {
         this.id = id;
