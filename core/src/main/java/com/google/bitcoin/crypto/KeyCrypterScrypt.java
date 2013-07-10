@@ -15,7 +15,6 @@
  */
 package com.google.bitcoin.crypto;
 
-import com.google.common.base.Preconditions;
 import com.google.protobuf.ByteString;
 import com.lambdaworks.crypto.SCrypt;
 import org.bitcoinj.wallet.Protos;
@@ -32,6 +31,8 @@ import org.spongycastle.crypto.params.ParametersWithIV;
 
 import java.io.Serializable;
 import java.security.SecureRandom;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * <p>This class encrypts and decrypts byte arrays and strings using scrypt as the
@@ -67,10 +68,10 @@ public class KeyCrypterScrypt implements KeyCrypter, Serializable {
      */
     public static final int SALT_LENGTH = 8;
 
-    transient private static SecureRandom secureRandom = new SecureRandom();
+    private static final transient SecureRandom secureRandom = new SecureRandom();
 
     // Scrypt parameters.
-    transient private ScryptParameters scryptParameters;
+    private final transient ScryptParameters scryptParameters;
 
     /**
      * Encryption/ Decryption using default parameters and a random salt
@@ -89,7 +90,7 @@ public class KeyCrypterScrypt implements KeyCrypter, Serializable {
      * @throws NullPointerException if the scryptParameters or any of its N, R or P is null.
      */
     public KeyCrypterScrypt(ScryptParameters scryptParameters) {
-        this.scryptParameters = Preconditions.checkNotNull(scryptParameters);
+        this.scryptParameters = checkNotNull(scryptParameters);
         // Check there is a non-empty salt.
         // (Some early MultiBit wallets has a missing salt so it is not a hard fail).
         if (scryptParameters.getSalt() == null
@@ -139,8 +140,8 @@ public class KeyCrypterScrypt implements KeyCrypter, Serializable {
      */
     @Override
     public EncryptedPrivateKey encrypt(byte[] plainBytes, KeyParameter aesKey) throws KeyCrypterException {
-        Preconditions.checkNotNull(plainBytes);
-        Preconditions.checkNotNull(aesKey);
+        checkNotNull(plainBytes);
+        checkNotNull(aesKey);
 
         try {
             // Generate iv - each encryption call has a different iv.
@@ -173,8 +174,8 @@ public class KeyCrypterScrypt implements KeyCrypter, Serializable {
      */
     @Override
     public byte[] decrypt(EncryptedPrivateKey privateKeyToDecode, KeyParameter aesKey) throws KeyCrypterException {
-        Preconditions.checkNotNull(privateKeyToDecode);
-        Preconditions.checkNotNull(aesKey);
+        checkNotNull(privateKeyToDecode);
+        checkNotNull(aesKey);
 
         try {
             ParametersWithIV keyWithIv = new ParametersWithIV(new KeyParameter(aesKey.getKey()), privateKeyToDecode.getInitialisationVector());
@@ -204,8 +205,8 @@ public class KeyCrypterScrypt implements KeyCrypter, Serializable {
      *
      * Note: a String.getBytes() is not used to avoid creating a String of the password in the JVM.
      */
-    private byte[] convertToByteArray(CharSequence charSequence) {
-        Preconditions.checkNotNull(charSequence);
+    private static byte[] convertToByteArray(CharSequence charSequence) {
+        checkNotNull(charSequence);
 
         byte[] byteArray = new byte[charSequence.length() << 1];
         for(int i = 0; i < charSequence.length(); i++) {
