@@ -25,10 +25,7 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.Nonnull;
 import java.io.File;
 import java.io.IOException;
-import java.util.concurrent.Callable;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -43,7 +40,7 @@ public class WalletFiles {
     private static final Logger log = LoggerFactory.getLogger(WalletFiles.class);
 
     private final Wallet wallet;
-    private final ScheduledExecutorService executor;
+    private final ScheduledThreadPoolExecutor executor;
     private final File file;
     private final AtomicBoolean savePending;
     private final long delay;
@@ -76,7 +73,10 @@ public class WalletFiles {
         Thread.UncaughtExceptionHandler handler = Threading.uncaughtExceptionHandler;
         if (handler != null)
             builder.setUncaughtExceptionHandler(handler);
-        this.executor = Executors.newSingleThreadScheduledExecutor(builder.build());
+        // An executor that starts up threads when needed and shuts them down later.
+        this.executor = new ScheduledThreadPoolExecutor(1, builder.build());
+        this.executor.setKeepAliveTime(5, TimeUnit.SECONDS);
+        this.executor.allowCoreThreadTimeOut(true);
         this.wallet = checkNotNull(wallet);
         // File must only be accessed from the auto-save executor from now on, to avoid simultaneous access.
         this.file = checkNotNull(file);
