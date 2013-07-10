@@ -102,7 +102,7 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
 
     // Runs a background thread that we use for scheduling pings to our peers, so we can measure their performance
     // and network latency. We ping peers every pingIntervalMsec milliseconds.
-    private volatile Timer pingTimer;
+    private volatile Timer vPingTimer;
     /** How many milliseconds to wait after receiving a pong before sending another ping. */
     public static final long DEFAULT_PING_INTERVAL_MSEC = 2000;
     private long pingIntervalMsec = DEFAULT_PING_INTERVAL_MSEC;
@@ -560,7 +560,7 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
     @Override
     protected void startUp() throws Exception {
         // This is run in a background thread by the AbstractIdleService implementation.
-        pingTimer = new Timer("Peer pinging thread", true);
+        vPingTimer = new Timer("Peer pinging thread", true);
         // Bring up the requested number of connections. If a connect attempt fails,
         // new peers will be tried until there is a success, so just calling connectToAnyPeer for the wanted number
         // of peers is sufficient.
@@ -577,7 +577,7 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
     @Override
     protected void shutDown() throws Exception {
         // This is run on a separate thread by the AbstractIdleService implementation.
-        pingTimer.cancel();
+        vPingTimer.cancel();
         // Blocking close of all sockets. TODO: there is a race condition here, for the solution see:
         // http://biasedbit.com/netty-releaseexternalresources-hangs/
         channels.close().await();
@@ -875,7 +875,7 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
                 final long interval = getPingIntervalMsec();
                 if (interval <= 0)
                     return;  // Disabled.
-                pingTimer.schedule(new TimerTask() {
+                vPingTimer.schedule(new TimerTask() {
                     @Override
                     public void run() {
                         try {
