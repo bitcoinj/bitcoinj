@@ -381,7 +381,7 @@ public class PeerTest extends TestWithNetworkConnections {
 
         GetBlocksMessage message = (GetBlocksMessage) event.getValue().getMessage();
         assertEquals(message.getLocator(), expectedLocator);
-        assertEquals(message.getStopHash(), Sha256Hash.ZERO_HASH);
+        assertEquals(Sha256Hash.ZERO_HASH, message.getStopHash());
     }
 
     @Test

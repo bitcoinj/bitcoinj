@@ -34,6 +34,7 @@ import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -74,13 +75,12 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
     private static final Logger log = LoggerFactory.getLogger(PeerGroup.class);
     protected final ReentrantLock lock = Threading.lock("peergroup");
 
-    // These lists are all thread-safe so do not have to be accessed under the PeerGroup lock.
     // Addresses to try to connect to, excluding active peers.
-    private final List<PeerAddress> inactives;
+    @GuardedBy("lock") private final List<PeerAddress> inactives;
     // Currently active peers. This is an ordered list rather than a set to make unit tests predictable.
-    @GuardedBy("lock") private final List<Peer> peers;
+    private final CopyOnWriteArrayList<Peer> peers;
     // Currently connecting peers.
-    @GuardedBy("lock") private final List<Peer> pendingPeers;
+    private final CopyOnWriteArrayList<Peer> pendingPeers;
     private final ChannelGroup channels;
 
     // The peer that has been selected for the purposes of downloading announced data.
@@ -90,9 +90,9 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
     // Callbacks for events related to peer connection/disconnection
     private final CopyOnWriteArrayList<ListenerRegistration<PeerEventListener>> peerEventListeners;
     // Peer discovery sources, will be polled occasionally if there aren't enough inactives.
-    private CopyOnWriteArraySet<PeerDiscovery> peerDiscoverers;
+    private final CopyOnWriteArraySet<PeerDiscovery> peerDiscoverers;
     // The version message to use for new connections.
-    private VersionMessage versionMessage;
+    @GuardedBy("lock") private VersionMessage versionMessage;
     // A class that tracks recent transactions that have been broadcast across the network, counts how many
     // peers announced them and updates the transaction confidence data. It is passed to each Peer.
     private final MemoryPool memoryPool;
@@ -109,12 +109,12 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
 
     private final NetworkParameters params;
     private final AbstractBlockChain chain;
-    private long fastCatchupTimeSecs;
+    @GuardedBy("lock") private long fastCatchupTimeSecs;
     private final CopyOnWriteArrayList<Wallet> wallets;
 
     // This event listener is added to every peer. It's here so when we announce transactions via an "inv", every
     // peer can fetch them.
-    private AbstractPeerEventListener getDataListener = new AbstractPeerEventListener() {
+    private final AbstractPeerEventListener getDataListener = new AbstractPeerEventListener() {
         @Override
         public List<Message> getData(Peer peer, GetDataMessage m) {
             return handleGetData(m);
@@ -198,9 +198,9 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
      * <p>The ClientBootstrap provided does not need a channel pipeline factory set. If one wasn't set, the provided
      * bootstrap will be modified to have one that sets up the pipelines correctly.</p>
      */
-    public PeerGroup(NetworkParameters params, AbstractBlockChain chain, ClientBootstrap bootstrap) {
-        this.params = params;
-        this.chain = chain;  // Can be null.
+    public PeerGroup(NetworkParameters params, @Nullable AbstractBlockChain chain, @Nullable ClientBootstrap bootstrap) {
+        this.params = checkNotNull(params);
+        this.chain = chain;
         this.fastCatchupTimeSecs = params.getGenesisBlock().getTimeSeconds();
         this.wallets = new CopyOnWriteArrayList<Wallet>();
 
@@ -224,9 +224,9 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
             this.bootstrap = bootstrap;
         }
 
-        inactives = Collections.synchronizedList(new ArrayList<PeerAddress>());
-        peers = new ArrayList<Peer>();
-        pendingPeers = new ArrayList<Peer>();
+        inactives = new ArrayList<PeerAddress>();
+        peers = new CopyOnWriteArrayList<Peer>();
+        pendingPeers = new CopyOnWriteArrayList<Peer>();
         channels = new DefaultChannelGroup();
         peerDiscoverers = new CopyOnWriteArraySet<PeerDiscovery>(); 
         peerEventListeners = new CopyOnWriteArrayList<ListenerRegistration<PeerEventListener>>();
@@ -251,7 +251,7 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
     // pipeline with the bitcoin serializer ({@code TCPNetworkConnection}) downstream
     // of the higher level {@code Peer}.  Received packets will first be decoded, then passed
     // {@code Peer}.  Sent packets will be created by the {@code Peer}, then encoded and sent.
-    private ChannelPipelineFactory makePipelineFactory(final NetworkParameters params, final AbstractBlockChain chain) {
+    private ChannelPipelineFactory makePipelineFactory(final NetworkParameters params, @Nullable final AbstractBlockChain chain) {
         return new ChannelPipelineFactory() {
             public ChannelPipeline getPipeline() throws Exception {
                 // This runs unlocked.
@@ -511,7 +511,6 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
     }
 
     protected void discoverPeers() throws PeerDiscoveryException {
-        // This does not need to be locked.
         long start = System.currentTimeMillis();
         Set<PeerAddress> addressSet = Sets.newHashSet();
         for (PeerDiscovery peerDiscovery : peerDiscoverers) {
@@ -520,8 +519,11 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
             for (InetSocketAddress address : addresses) addressSet.add(new PeerAddress(address));
             if (addressSet.size() > 0) break;
         }
-        synchronized (inactives) {
+        lock.lock();
+        try {
             inactives.addAll(addressSet);
+        } finally {
+            lock.unlock();
         }
         log.info("Peer discovery took {}msec", System.currentTimeMillis() - start);
     }
@@ -532,7 +534,8 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
         if (!(state == State.STARTING || state == State.RUNNING)) return;
 
         final PeerAddress addr;
-        synchronized (inactives) {
+        lock.lock();
+        try {
             if (inactives.size() == 0) {
                 discoverPeers();
             }
@@ -541,6 +544,8 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
                 return;
             }
             addr = inactives.remove(inactives.size() - 1);
+        } finally {
+            lock.unlock();
         }
         // Don't do connectTo whilst holding the PeerGroup lock because this can trigger some amazingly deep stacks
         // and potentially circular deadlock in the case of immediate failure (eg, attempt to access IPv6 node from
@@ -795,7 +800,8 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
             try {
                 if (bloomFilter != null) peer.setBloomFilter(bloomFilter);
             } catch (IOException e) {
-            } // That was quick...already disconnected
+                // That was quick...already disconnected
+            }
             // Link the peer to the memory pool so broadcast transactions have their confidence levels updated.
             peer.setDownloadData(false);
             // TODO: The peer should calculate the fast catchup time from the added wallets here.
