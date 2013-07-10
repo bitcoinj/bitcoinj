@@ -115,7 +115,7 @@ public class Wallet implements Serializable, BlockChainListener {
     private final NetworkParameters params;
 
     private Sha256Hash lastBlockSeenHash;
-    private int lastBlockSeenHeight = -1;
+    private int lastBlockSeenHeight;
 
     private transient CopyOnWriteArrayList<ListenerRegistration<WalletEventListener>> eventListeners;
 
@@ -2571,7 +2571,10 @@ public class Wallet implements Serializable, BlockChainListener {
         }
     }
 
-    /** Returns the height of the last seen best-chain block. Can be -1 if a wallet is old and doesn't have that data. */
+    /**
+     * Returns the height of the last seen best-chain block. Can be 0 if a wallet is brand new or -1 if the wallet
+     * is old and doesn't have that data.
+     */
     public int getLastBlockSeenHeight() {
         lock.lock();
         try {
