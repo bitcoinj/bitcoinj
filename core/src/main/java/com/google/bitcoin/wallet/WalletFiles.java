@@ -114,6 +114,7 @@ public class WalletFiles {
     }
 
     private void saveNowInternal() throws IOException {
+        long now = System.currentTimeMillis();
         File directory = file.getAbsoluteFile().getParentFile();
         File temp = File.createTempFile("wallet", null, directory);
         final Listener listener = vListener;
@@ -122,6 +123,7 @@ public class WalletFiles {
         wallet.saveToFile(temp, file);
         if (listener != null)
             listener.onAfterAutoSave(file);
+        log.info("Save completed in {}msec", System.currentTimeMillis() - now);
     }
 
     /** Queues up a save in the background. Useful for not very important wallet changes. */
