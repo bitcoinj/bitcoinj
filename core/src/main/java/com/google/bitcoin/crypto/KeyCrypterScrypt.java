@@ -15,9 +15,9 @@
  */
 package com.google.bitcoin.crypto;
 
-import java.io.Serializable;
-import java.security.SecureRandom;
-
+import com.google.common.base.Preconditions;
+import com.google.protobuf.ByteString;
+import com.lambdaworks.crypto.SCrypt;
 import org.bitcoinj.wallet.Protos;
 import org.bitcoinj.wallet.Protos.ScryptParameters;
 import org.bitcoinj.wallet.Protos.Wallet.EncryptionType;
@@ -30,9 +30,8 @@ import org.spongycastle.crypto.paddings.PaddedBufferedBlockCipher;
 import org.spongycastle.crypto.params.KeyParameter;
 import org.spongycastle.crypto.params.ParametersWithIV;
 
-import com.google.common.base.Preconditions;
-import com.google.protobuf.ByteString;
-import com.lambdaworks.crypto.SCrypt;
+import java.io.Serializable;
+import java.security.SecureRandom;
 
 /**
  * <p>This class encrypts and decrypts byte arrays and strings using scrypt as the
@@ -49,7 +48,7 @@ import com.lambdaworks.crypto.SCrypt;
  * the AES symmetric cipher. Eight bytes of salt is used to prevent dictionary attacks.</p>
  */
 public class KeyCrypterScrypt implements KeyCrypter, Serializable {
-    private static final Logger log = LoggerFactory.getLogger(KeyCrypterScrypt.class.getName());
+    private static final Logger log = LoggerFactory.getLogger(KeyCrypterScrypt.class);
     private static final long serialVersionUID = 949662512049152670L;
 
     /**
