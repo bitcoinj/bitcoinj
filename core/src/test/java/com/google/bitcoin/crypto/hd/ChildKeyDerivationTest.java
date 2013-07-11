@@ -53,56 +53,56 @@ public class ChildKeyDerivationTest {
 
             //////////////////////////////////////////////////////////////////////////
             // Start with an extended PRIVATE key
-            ExtendedHierarchicKey ekprv = HDKeyDerivation.createMasterPrivKeyFromBytes(priv, chain);
+            DeterministicKey ekprv = HDKeyDerivation.createMasterPrivKeyFromBytes(priv, chain);
 
             // Create two accounts
-            ExtendedHierarchicKey ekprv_0 = HDKeyDerivation.deriveChildKey(ekprv, 0);
-            ExtendedHierarchicKey ekprv_1 = HDKeyDerivation.deriveChildKey(ekprv, 1);
+            DeterministicKey ekprv_0 = HDKeyDerivation.deriveChildKey(ekprv, 0);
+            DeterministicKey ekprv_1 = HDKeyDerivation.deriveChildKey(ekprv, 1);
 
             // Create internal and external chain on Account 0
-            ExtendedHierarchicKey ekprv_0_EX = HDKeyDerivation.deriveChildKey(ekprv_0, HDW_CHAIN_EXTERNAL);
-            ExtendedHierarchicKey ekprv_0_IN = HDKeyDerivation.deriveChildKey(ekprv_0, HDW_CHAIN_INTERNAL);
+            DeterministicKey ekprv_0_EX = HDKeyDerivation.deriveChildKey(ekprv_0, HDW_CHAIN_EXTERNAL);
+            DeterministicKey ekprv_0_IN = HDKeyDerivation.deriveChildKey(ekprv_0, HDW_CHAIN_INTERNAL);
 
             // Create three addresses on external chain
-            ExtendedHierarchicKey ekprv_0_EX_0 = HDKeyDerivation.deriveChildKey(ekprv_0_EX, 0);
-            ExtendedHierarchicKey ekprv_0_EX_1 = HDKeyDerivation.deriveChildKey(ekprv_0_EX, 1);
-            ExtendedHierarchicKey ekprv_0_EX_2 = HDKeyDerivation.deriveChildKey(ekprv_0_EX, 2);
+            DeterministicKey ekprv_0_EX_0 = HDKeyDerivation.deriveChildKey(ekprv_0_EX, 0);
+            DeterministicKey ekprv_0_EX_1 = HDKeyDerivation.deriveChildKey(ekprv_0_EX, 1);
+            DeterministicKey ekprv_0_EX_2 = HDKeyDerivation.deriveChildKey(ekprv_0_EX, 2);
 
             // Create three addresses on internal chain
-            ExtendedHierarchicKey ekprv_0_IN_0 = HDKeyDerivation.deriveChildKey(ekprv_0_IN, 0);
-            ExtendedHierarchicKey ekprv_0_IN_1 = HDKeyDerivation.deriveChildKey(ekprv_0_IN, 1);
-            ExtendedHierarchicKey ekprv_0_IN_2 = HDKeyDerivation.deriveChildKey(ekprv_0_IN, 2);
+            DeterministicKey ekprv_0_IN_0 = HDKeyDerivation.deriveChildKey(ekprv_0_IN, 0);
+            DeterministicKey ekprv_0_IN_1 = HDKeyDerivation.deriveChildKey(ekprv_0_IN, 1);
+            DeterministicKey ekprv_0_IN_2 = HDKeyDerivation.deriveChildKey(ekprv_0_IN, 2);
 
             // Now add a few more addresses with very large indices
-            ExtendedHierarchicKey ekprv_1_IN = HDKeyDerivation.deriveChildKey(ekprv_1, HDW_CHAIN_INTERNAL);
-            ExtendedHierarchicKey ekprv_1_IN_4095 = HDKeyDerivation.deriveChildKey(ekprv_1_IN, 4095);
+            DeterministicKey ekprv_1_IN = HDKeyDerivation.deriveChildKey(ekprv_1, HDW_CHAIN_INTERNAL);
+            DeterministicKey ekprv_1_IN_4095 = HDKeyDerivation.deriveChildKey(ekprv_1_IN, 4095);
 //            ExtendedHierarchicKey ekprv_1_IN_4bil = HDKeyDerivation.deriveChildKey(ekprv_1_IN, 4294967295L);
 
             //////////////////////////////////////////////////////////////////////////
             // Repeat the above with PUBLIC key
-            ExtendedHierarchicKey ekpub = HDKeyDerivation.createMasterPubKeyFromBytes(HDUtils.toCompressed(pub), chain);
+            DeterministicKey ekpub = HDKeyDerivation.createMasterPubKeyFromBytes(HDUtils.toCompressed(pub), chain);
 
             // Create two accounts
-            ExtendedHierarchicKey ekpub_0 = HDKeyDerivation.deriveChildKey(ekpub, 0);
-            ExtendedHierarchicKey ekpub_1 = HDKeyDerivation.deriveChildKey(ekpub, 1);
+            DeterministicKey ekpub_0 = HDKeyDerivation.deriveChildKey(ekpub, 0);
+            DeterministicKey ekpub_1 = HDKeyDerivation.deriveChildKey(ekpub, 1);
 
             // Create internal and external chain on Account 0
-            ExtendedHierarchicKey ekpub_0_EX = HDKeyDerivation.deriveChildKey(ekpub_0, HDW_CHAIN_EXTERNAL);
-            ExtendedHierarchicKey ekpub_0_IN = HDKeyDerivation.deriveChildKey(ekpub_0, HDW_CHAIN_INTERNAL);
+            DeterministicKey ekpub_0_EX = HDKeyDerivation.deriveChildKey(ekpub_0, HDW_CHAIN_EXTERNAL);
+            DeterministicKey ekpub_0_IN = HDKeyDerivation.deriveChildKey(ekpub_0, HDW_CHAIN_INTERNAL);
 
             // Create three addresses on external chain
-            ExtendedHierarchicKey ekpub_0_EX_0 = HDKeyDerivation.deriveChildKey(ekpub_0_EX, 0);
-            ExtendedHierarchicKey ekpub_0_EX_1 = HDKeyDerivation.deriveChildKey(ekpub_0_EX, 1);
-            ExtendedHierarchicKey ekpub_0_EX_2 = HDKeyDerivation.deriveChildKey(ekpub_0_EX, 2);
+            DeterministicKey ekpub_0_EX_0 = HDKeyDerivation.deriveChildKey(ekpub_0_EX, 0);
+            DeterministicKey ekpub_0_EX_1 = HDKeyDerivation.deriveChildKey(ekpub_0_EX, 1);
+            DeterministicKey ekpub_0_EX_2 = HDKeyDerivation.deriveChildKey(ekpub_0_EX, 2);
 
             // Create three addresses on internal chain
-            ExtendedHierarchicKey ekpub_0_IN_0 = HDKeyDerivation.deriveChildKey(ekpub_0_IN, 0);
-            ExtendedHierarchicKey ekpub_0_IN_1 = HDKeyDerivation.deriveChildKey(ekpub_0_IN, 1);
-            ExtendedHierarchicKey ekpub_0_IN_2 = HDKeyDerivation.deriveChildKey(ekpub_0_IN, 2);
+            DeterministicKey ekpub_0_IN_0 = HDKeyDerivation.deriveChildKey(ekpub_0_IN, 0);
+            DeterministicKey ekpub_0_IN_1 = HDKeyDerivation.deriveChildKey(ekpub_0_IN, 1);
+            DeterministicKey ekpub_0_IN_2 = HDKeyDerivation.deriveChildKey(ekpub_0_IN, 2);
 
             // Now add a few more addresses with very large indices
-            ExtendedHierarchicKey ekpub_1_IN = HDKeyDerivation.deriveChildKey(ekpub_1, HDW_CHAIN_INTERNAL);
-            ExtendedHierarchicKey ekpub_1_IN_4095 = HDKeyDerivation.deriveChildKey(ekpub_1_IN, 4095);
+            DeterministicKey ekpub_1_IN = HDKeyDerivation.deriveChildKey(ekpub_1, HDW_CHAIN_INTERNAL);
+            DeterministicKey ekpub_1_IN_4095 = HDKeyDerivation.deriveChildKey(ekpub_1_IN, 4095);
 //            ExtendedHierarchicKey ekpub_1_IN_4bil = HDKeyDerivation.deriveChildKey(ekpub_1_IN, 4294967295L);
 
             assertEquals(hexEncodePub(ekprv.getPubOnly()), hexEncodePub(ekpub));
@@ -121,7 +121,7 @@ public class ChildKeyDerivationTest {
         }
     }
 
-    private static String hexEncodePub(ExtendedHierarchicKey pubKey) {
+    private static String hexEncodePub(DeterministicKey pubKey) {
         return hexEncode(pubKey.getPubKeyBytes());
     }
 

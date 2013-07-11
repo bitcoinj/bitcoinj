@@ -31,7 +31,7 @@ import static com.google.common.base.Preconditions.checkArgument;
  * Bitcoin's privacy system require new keys to be created for each transaction, but managing all these
  * keys quickly becomes unwieldy. In particular it becomes hard to back up and distribute them. By having
  * a way to derive random-looking but deterministic keys we can make wallet backup simpler and gain the
- * ability to hand out {@link ExtendedHierarchicKey}s to other people who can then create new addresses
+ * ability to hand out {@link DeterministicKey}s to other people who can then create new addresses
  * on the fly, without having to contact us.</p>
  *
  * <p>The hierarchy is started from a single root key, and a location in the tree is given by a path which
@@ -44,7 +44,7 @@ public class DeterministicHierarchy implements Serializable {
      */
     private static final int MAX_CHILD_DERIVATION_ATTEMPTS = 100;
 
-    private final Map<ImmutableList<ChildNumber>, ExtendedHierarchicKey> keys = Maps.newHashMap();
+    private final Map<ImmutableList<ChildNumber>, DeterministicKey> keys = Maps.newHashMap();
     private final ImmutableList<ChildNumber> rootPath;
     private final Map<ImmutableList<ChildNumber>, ChildNumber> lastPrivDerivedNumbers = Maps.newHashMap();
     private final Map<ImmutableList<ChildNumber>, ChildNumber> lastPubDerivedNumbers = Maps.newHashMap();
@@ -53,12 +53,12 @@ public class DeterministicHierarchy implements Serializable {
      * Constructs a new hierarchy rooted at the given key. Note that this does not have to be the top of the tree.
      * You can construct a DeterministicHierarchy for a subtree of a larger tree that you may not own.
      */
-    public DeterministicHierarchy(ExtendedHierarchicKey rootKey) {
+    public DeterministicHierarchy(DeterministicKey rootKey) {
         putKey(rootKey);
         rootPath = rootKey.getChildNumberPath();
     }
 
-    private void putKey(ExtendedHierarchicKey key) {
+    private void putKey(DeterministicKey key) {
         keys.put(key.getChildNumberPath(), key);
     }
 
@@ -71,14 +71,14 @@ public class DeterministicHierarchy implements Serializable {
      * @return next newly created key using the child derivation function
      * @throws IllegalArgumentException if create is false and the path was not found.
      */
-    public ExtendedHierarchicKey get(List<ChildNumber> path, boolean relativePath, boolean create) {
+    public DeterministicKey get(List<ChildNumber> path, boolean relativePath, boolean create) {
         ImmutableList<ChildNumber> absolutePath = relativePath
                 ? ImmutableList.<ChildNumber>builder().addAll(rootPath).addAll(path).build()
                 : ImmutableList.copyOf(path);
         if (!keys.containsKey(absolutePath)) {
             checkArgument(create, "No key found for {} path {}.", relativePath ? "relative" : "absolute", path);
             checkArgument(absolutePath.size() > 0, "Can't derive the master key: nothing to derive from.");
-            ExtendedHierarchicKey parent = get(absolutePath.subList(0, absolutePath.size() - 1), relativePath, true);
+            DeterministicKey parent = get(absolutePath.subList(0, absolutePath.size() - 1), relativePath, true);
             putKey(HDKeyDerivation.deriveChildKey(parent, absolutePath.get(absolutePath.size() - 1)));
         }
         return keys.get(absolutePath);
@@ -95,8 +95,8 @@ public class DeterministicHierarchy implements Serializable {
      * @return next newly created key using the child derivation funtcion
      * @throws IllegalArgumentException if the parent doesn't exist and createParent is false.
      */
-    public ExtendedHierarchicKey deriveNextChild(ImmutableList<ChildNumber> parentPath, boolean relative, boolean createParent, boolean privateDerivation) {
-        ExtendedHierarchicKey parent = get(parentPath, relative, createParent);
+    public DeterministicKey deriveNextChild(ImmutableList<ChildNumber> parentPath, boolean relative, boolean createParent, boolean privateDerivation) {
+        DeterministicKey parent = get(parentPath, relative, createParent);
         int nAttempts = 0;
         while (nAttempts++ < MAX_CHILD_DERIVATION_ATTEMPTS) {
             try {
@@ -125,12 +125,12 @@ public class DeterministicHierarchy implements Serializable {
      * @return the requested key.
      * @throws IllegalArgumentException if the parent doesn't exist and createParent is false.
      */
-    public ExtendedHierarchicKey deriveChild(List<ChildNumber> parentPath, boolean relative, boolean createParent, ChildNumber createChildNumber) {
+    public DeterministicKey deriveChild(List<ChildNumber> parentPath, boolean relative, boolean createParent, ChildNumber createChildNumber) {
         return deriveChild(get(parentPath, relative, createParent), createChildNumber);
     }
 
-    private ExtendedHierarchicKey deriveChild(ExtendedHierarchicKey parent, ChildNumber createChildNumber) {
-        ExtendedHierarchicKey childKey = HDKeyDerivation.deriveChildKey(parent, createChildNumber);
+    private DeterministicKey deriveChild(DeterministicKey parent, ChildNumber createChildNumber) {
+        DeterministicKey childKey = HDKeyDerivation.deriveChildKey(parent, createChildNumber);
         putKey(childKey);
         return childKey;
     }
@@ -138,7 +138,7 @@ public class DeterministicHierarchy implements Serializable {
     /**
      * Returns the root key that the {@link DeterministicHierarchy} was created with.
      */
-    public ExtendedHierarchicKey getRootKey() {
+    public DeterministicKey getRootKey() {
         return get(rootPath, false, false);
     }
 

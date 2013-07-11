@@ -30,10 +30,10 @@ public class DeterministicHierarchyTest {
      */
     @Test
     public void testHierarchy() throws Exception {
-        ExtendedHierarchicKey m = HDKeyDerivation.createMasterPrivateKey(new SecureRandom().generateSeed(32));
+        DeterministicKey m = HDKeyDerivation.createMasterPrivateKey(new SecureRandom().generateSeed(32));
 
         for (int iWallet = 0; iWallet < 3; iWallet++) {
-            ExtendedHierarchicKey walletRootKey = HDKeyDerivation.deriveChildKey(m, iWallet);
+            DeterministicKey walletRootKey = HDKeyDerivation.deriveChildKey(m, iWallet);
             DeterministicKeyGenerator hdWalletKeyGen = new DeterministicKeyGenerator(walletRootKey);
             assertEquals(walletRootKey.getChildNumber().getChildNumber(), iWallet);
 

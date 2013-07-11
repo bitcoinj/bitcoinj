@@ -24,6 +24,7 @@ import com.google.common.collect.Iterables;
 import org.spongycastle.math.ec.ECPoint;
 import org.spongycastle.util.encoders.Hex;
 
+import javax.annotation.Nullable;
 import java.io.Serializable;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
@@ -31,27 +32,30 @@ import java.text.MessageFormat;
 import java.util.Arrays;
 import java.util.Collections;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+
 /**
  * An extended key is a node in a {@link DeterministicHierarchy}. As per
  * <a href="https://en.bitcoin.it/wiki/BIP_0032">the BIP 32 specification</a> it is a pair (key, chaincode). If you
  * know its path in the tree you can derive more keys from this.
  */
-public class ExtendedHierarchicKey implements Serializable {
-    public static final ChildNumber MASTER_CHILD_NUMBER = new ChildNumber(0);
-
+public class DeterministicKey implements Serializable {
     private static final long serialVersionUID = 1L;
     private static final Joiner PATH_JOINER = Joiner.on("/");
 
-    private final ExtendedHierarchicKey parent;
+    private final DeterministicKey parent;
     private ECPoint publicAsPoint;
     private final BigInteger privateAsFieldElement;
     private final ImmutableList<ChildNumber> childNumberPath;
 
     /** 32 bytes */
-    private byte[] chainCode;
+    private final byte[] chainCode;
 
-    ExtendedHierarchicKey(ImmutableList<ChildNumber> childNumberPath, byte[] chainCode, ECPoint publicAsPoint, BigInteger privateKeyFieldElt, ExtendedHierarchicKey parent) {
-        assert chainCode.length == 32 : chainCode.length;
+    DeterministicKey(ImmutableList<ChildNumber> childNumberPath, byte[] chainCode,
+                     @Nullable ECPoint publicAsPoint, @Nullable BigInteger privateKeyFieldElt,
+                     @Nullable DeterministicKey parent) {
+        checkArgument(chainCode.length == 32);
         this.parent = parent;
         this.childNumberPath = childNumberPath;
         this.chainCode = Arrays.copyOf(chainCode, chainCode.length);
@@ -73,10 +77,10 @@ public class ExtendedHierarchicKey implements Serializable {
     }
 
     /**
-     * Returns the last element of the path returned by {@link com.google.bitcoin.crypto.hd.ExtendedHierarchicKey#getChildNumberPath()}
+     * Returns the last element of the path returned by {@link DeterministicKey#getChildNumberPath()}
      */
     public ChildNumber getChildNumber() {
-        return getDepth() == 0 ? MASTER_CHILD_NUMBER : childNumberPath.get(childNumberPath.size() - 1);
+        return getDepth() == 0 ? ChildNumber.ZERO : childNumberPath.get(childNumberPath.size() - 1);
     }
 
     /**
@@ -101,7 +105,8 @@ public class ExtendedHierarchicKey implements Serializable {
     }
 
     ECPoint getPubPoint() {
-        if (publicAsPoint == null && privateAsFieldElement != null) {
+        if (publicAsPoint == null) {
+            checkNotNull(privateAsFieldElement);
             publicAsPoint = HDUtils.getEcParams().getG().multiply(privateAsFieldElement);
         }
         return HDUtils.compressedCopy(publicAsPoint);
@@ -118,14 +123,20 @@ public class ExtendedHierarchicKey implements Serializable {
         return Arrays.copyOfRange(getIdentifier(), 0, 4);
     }
 
+    @Nullable
     public BigInteger getPrivAsFieldElement() {
         return privateAsFieldElement;
     }
 
-    public ExtendedHierarchicKey getParent() {
+    @Nullable
+    public DeterministicKey getParent() {
         return parent;
     }
 
+    /**
+     * Returns the private key bytes, if they were provided during construction.
+     */
+    @Nullable
     public byte[] getPrivKeyBytes() {
         return privateAsFieldElement == null ? null : privateAsFieldElement.toByteArray();
     }
@@ -135,16 +146,18 @@ public class ExtendedHierarchicKey implements Serializable {
      */
     public byte[] getPrivKeyBytes33() {
         byte[] bytes33 = new byte[33];
-        byte[] priv = getPrivKeyBytes();
+        byte[] priv = checkNotNull(getPrivKeyBytes(), "Private key missing");
         System.arraycopy(priv, 0, bytes33, 33 - priv.length, priv.length);
         return bytes33;
     }
 
     /**
-     * @return The same key with the private part removed. May return the same instance.
+     * Returns the same key with the private part removed. May return the same instance.
      */
-    public ExtendedHierarchicKey getPubOnly() {
-        return hasPrivate() ? new ExtendedHierarchicKey(getChildNumberPath(), getChainCode(), getPubPoint(), null, getParent() == null ? null : getParent().getPubOnly()) : this;
+    public DeterministicKey getPubOnly() {
+        if (!hasPrivate()) return this;
+        final DeterministicKey parentPub = getParent() == null ? null : getParent().getPubOnly();
+        return new DeterministicKey(getChildNumberPath(), getChainCode(), getPubPoint(), null, parentPub);
     }
 
     public boolean hasPrivate() {

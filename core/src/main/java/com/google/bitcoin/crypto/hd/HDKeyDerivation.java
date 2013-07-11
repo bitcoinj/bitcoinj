@@ -43,7 +43,7 @@ public final class HDKeyDerivation {
      *
      * @throws HDDerivationException if generated master key is invalid (private key 0 or >= n).
      */
-    public static ExtendedHierarchicKey createMasterPrivateKey(byte[] seed) throws HDDerivationException {
+    public static DeterministicKey createMasterPrivateKey(byte[] seed) throws HDDerivationException {
         // Calculate I = HMAC-SHA512(key="Bitcoin seed", msg=S)
         byte[] i = HDUtils.hmacSha256(MASTER_HMAC_SHA256, seed);
         // Split I into two 32-byte sequences, Il and Ir.
@@ -52,7 +52,7 @@ public final class HDKeyDerivation {
         byte[] il = Arrays.copyOfRange(i, 0, 32);
         byte[] ir = Arrays.copyOfRange(i, 32, 64);
         Arrays.fill(i, (byte)0);
-        ExtendedHierarchicKey masterPrivKey = createMasterPrivKeyFromBytes(il, ir);
+        DeterministicKey masterPrivKey = createMasterPrivKeyFromBytes(il, ir);
         Arrays.fill(il, (byte)0);
         Arrays.fill(ir, (byte)0);
         return masterPrivKey;
@@ -61,21 +61,21 @@ public final class HDKeyDerivation {
     /**
      * @throws HDDerivationException if privKeyBytes is invalid (0 or >= n).
      */
-    static ExtendedHierarchicKey createMasterPrivKeyFromBytes(byte[] privKeyBytes, byte[] chainCode) throws HDDerivationException {
+    static DeterministicKey createMasterPrivKeyFromBytes(byte[] privKeyBytes, byte[] chainCode) throws HDDerivationException {
         BigInteger privateKeyFieldElt = HDUtils.toBigInteger(privKeyBytes);
         assertNonZero(privateKeyFieldElt, "Generated master key is invalid.");
         assertLessThanN(privateKeyFieldElt, "Generated master key is invalid.");
-        return new ExtendedHierarchicKey(ImmutableList.<ChildNumber>of(), chainCode, null, privateKeyFieldElt, null);
+        return new DeterministicKey(ImmutableList.<ChildNumber>of(), chainCode, null, privateKeyFieldElt, null);
     }
 
-    public static ExtendedHierarchicKey createMasterPubKeyFromBytes(byte[] pubKeyBytes, byte[] chainCode) {
-        return new ExtendedHierarchicKey(ImmutableList.<ChildNumber>of(), chainCode, HDUtils.getCurve().decodePoint(pubKeyBytes), null, null);
+    public static DeterministicKey createMasterPubKeyFromBytes(byte[] pubKeyBytes, byte[] chainCode) {
+        return new DeterministicKey(ImmutableList.<ChildNumber>of(), chainCode, HDUtils.getCurve().decodePoint(pubKeyBytes), null, null);
     }
 
     /**
      * @param childNumber the "extended" child number, ie. with the 0x80000000 bit specifying private/public derivation.
      */
-    public static ExtendedHierarchicKey deriveChildKey(ExtendedHierarchicKey parent, int childNumber) {
+    public static DeterministicKey deriveChildKey(DeterministicKey parent, int childNumber) {
         return deriveChildKey(parent, new ChildNumber(childNumber));
     }
 
@@ -83,11 +83,11 @@ public final class HDKeyDerivation {
      * @throws HDDerivationException if private derivation is attempted for a public-only parent key, or
      * if the resulting derived key is invalid (eg. private key == 0).
      */
-    public static ExtendedHierarchicKey deriveChildKey(ExtendedHierarchicKey parent, ChildNumber childNumber)
+    public static DeterministicKey deriveChildKey(DeterministicKey parent, ChildNumber childNumber)
             throws HDDerivationException {
 
         RawKeyBytes rawKey = deriveChildKeyBytes(parent, childNumber);
-        return new ExtendedHierarchicKey(
+        return new DeterministicKey(
                 HDUtils.append(parent.getChildNumberPath(), childNumber),
                 rawKey.chainCode,
                 parent.hasPrivate() ? null : HDUtils.getCurve().decodePoint(rawKey.keyBytes),
@@ -95,7 +95,7 @@ public final class HDKeyDerivation {
                 parent);
     }
 
-    private static RawKeyBytes deriveChildKeyBytes(ExtendedHierarchicKey parent, ChildNumber childNumber)
+    private static RawKeyBytes deriveChildKeyBytes(DeterministicKey parent, ChildNumber childNumber)
             throws HDDerivationException {
 
         byte[] parentPublicKey = HDUtils.getBytes(parent.getPubPoint());

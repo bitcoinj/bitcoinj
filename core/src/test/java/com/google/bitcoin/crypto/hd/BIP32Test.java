@@ -126,7 +126,7 @@ public class BIP32Test {
     private void testVector(int testCase) throws AddressFormatException {
         log.info("=======  Test vector {}", testCase);
         HDWTestVector tv = tvs[testCase];
-        ExtendedHierarchicKey masterPrivateKey = HDKeyDerivation.createMasterPrivateKey(Hex.decode(tv.seed));
+        DeterministicKey masterPrivateKey = HDKeyDerivation.createMasterPrivateKey(Hex.decode(tv.seed));
         Assert.assertEquals(testEncode(tv.priv), testEncode(masterPrivateKey.serializePrivB58()));
         Assert.assertEquals(testEncode(tv.pub), testEncode(masterPrivateKey.serializePubB58()));
         DeterministicHierarchy dh = new DeterministicHierarchy(masterPrivateKey);
@@ -135,7 +135,7 @@ public class BIP32Test {
             log.info("{}", tc.name);
             Assert.assertEquals(tc.name, String.format("Test%d %s", testCase + 1, tc.getPathDescription()));
             int depth = tc.path.length - 1;
-            ExtendedHierarchicKey ehkey = dh.deriveChild(Arrays.asList(tc.path).subList(0, depth), false, true, tc.path[depth]);
+            DeterministicKey ehkey = dh.deriveChild(Arrays.asList(tc.path).subList(0, depth), false, true, tc.path[depth]);
             Assert.assertEquals(testEncode(tc.priv), testEncode(ehkey.serializePrivB58()));
             Assert.assertEquals(testEncode(tc.pub), testEncode(ehkey.serializePubB58()));
         }

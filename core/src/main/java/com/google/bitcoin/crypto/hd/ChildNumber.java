@@ -23,6 +23,7 @@ package com.google.bitcoin.crypto.hd;
  */
 public class ChildNumber {
     public static final int PRIV_BIT = 0x80000000;
+    public static final ChildNumber ZERO = new ChildNumber(0);
 
     /** Integer i as per BIP 32 spec, including the MSB denoting derivation type (0 = public, 1 = private) **/
     private final int i;
