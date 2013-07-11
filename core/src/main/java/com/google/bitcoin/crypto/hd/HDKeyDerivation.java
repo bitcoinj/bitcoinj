@@ -1,3 +1,19 @@
+/**
+ * Copyright 2013 Matija Mazi.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.google.bitcoin.crypto.hd;
 
 import com.google.common.collect.ImmutableList;
@@ -8,10 +24,10 @@ import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
+import static com.google.common.base.Preconditions.checkState;
+
 /**
- * @author Matija Mazi <br/>
- *
- * Implementation of the (public derivation version) child key generation algorithm as a utility class.
+ * Implementation of the (public derivation version) deterministic wallet child key generation algorithm.
  */
 public final class HDKeyDerivation {
 
@@ -27,7 +43,7 @@ public final class HDKeyDerivation {
         byte[] i = HDUtils.hmacSha256(MASTER_HMAC_SHA256, seed);
         // Split I into two 32-byte sequences, Il and Ir.
         // Use Il as master secret key, and Ir as master chain code.
-        assert i.length == 64 : i.length;
+        checkState(i.length == 64, i.length);
         byte[] il = Arrays.copyOfRange(i, 0, 32);
         byte[] ir = Arrays.copyOfRange(i, 32, 64);
         Arrays.fill(i, (byte)0);

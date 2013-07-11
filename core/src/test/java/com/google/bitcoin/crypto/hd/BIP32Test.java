@@ -1,3 +1,19 @@
+/**
+ * Copyright 2013 Matija Mazi.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.google.bitcoin.crypto.hd;
 
 import com.google.bitcoin.core.AddressFormatException;
@@ -15,15 +31,12 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * @author Matija Mazi <br/>
- * @created 6/19/13 2:25 PM
- *
  * A test with test vectors as per BIP 32 spec: https://en.bitcoin.it/wiki/BIP_0032#Test_Vectors
  */
 public class BIP32Test {
     private static final Logger log = LoggerFactory.getLogger(BIP32Test.class);
 
-    HDWTestVector[] tvs = new HDWTestVector[]{
+    HDWTestVector[] tvs = {
             new HDWTestVector(
                     "000102030405060708090a0b0c0d0e0f",
                     "xprv9s21ZrQH143K3QTDL4LXw2F7HEK3wJUD2nW2nRk4stbPy6cq3jPPqjiChkVvvNKmPGJxWUtg6LnF5kejMRNNU3TGtRBeJgk33yuGBxrMPHi",
