@@ -884,7 +884,7 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
     }
 
     private void setupPingingForNewPeer(final Peer peer) {
-        checkState(lock.isLocked());
+        checkState(lock.isHeldByCurrentThread());
         if (peer.getPeerVersionMessage().clientVersion < Pong.MIN_PROTOCOL_VERSION)
             return;
         if (getPingIntervalMsec() <= 0)
@@ -930,7 +930,7 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
     /** Returns true if at least one peer received an inv. */
     private boolean announcePendingWalletTransactions(List<Wallet> announceWallets,
                                                       List<Peer> announceToPeers) {
-        checkState(lock.isLocked());
+        checkState(lock.isHeldByCurrentThread());
         // Build up an inv announcing the hashes of all pending transactions in all our wallets.
         InventoryMessage inv = new InventoryMessage(params);
         for (Wallet w : announceWallets) {

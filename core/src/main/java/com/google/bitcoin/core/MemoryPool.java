@@ -266,7 +266,7 @@ public class MemoryPool {
     }
 
     private void markBroadcast(PeerAddress byPeer, Transaction tx) {
-        checkState(lock.isLocked());
+        checkState(lock.isHeldByCurrentThread());
         final TransactionConfidence confidence = tx.getConfidence();
         confidence.markBroadcastBy(byPeer);
         confidence.queueListeners(TransactionConfidence.Listener.ChangeReason.SEEN_PEERS);
