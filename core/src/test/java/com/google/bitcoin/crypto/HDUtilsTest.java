@@ -1,4 +1,4 @@
-package com.google.bitcoin.crypto.hd;
+package com.google.bitcoin.crypto;
 
 import com.google.bitcoin.crypto.HDUtils;
 import org.junit.Assert;
