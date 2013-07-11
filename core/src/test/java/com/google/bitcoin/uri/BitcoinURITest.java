@@ -19,7 +19,6 @@
 package com.google.bitcoin.uri;
 
 import com.google.bitcoin.core.Address;
-import com.google.bitcoin.core.AddressFormatException;
 import com.google.bitcoin.core.Utils;
 import com.google.bitcoin.params.MainNetParams;
 import com.google.bitcoin.params.TestNet3Params;
@@ -27,22 +26,14 @@ import org.junit.Test;
 
 import java.io.UnsupportedEncodingException;
 
-import static junit.framework.Assert.assertEquals;
 import static org.junit.Assert.*;
 
-public class BitcoinURITest {
 
+public class BitcoinURITest {
     private BitcoinURI testObject = null;
 
     private static final String MAINNET_GOOD_ADDRESS = "1KzTSfqjF2iKCduwz59nv2uqh1W2JsTxZH";
 
-    /**
-     * Tests conversion to Bitcoin URI
-     * 
-     * @throws BitcoinURIParseException
-     *             If something goes wrong
-     * @throws AddressFormatException 
-     */
     @Test
     public void testConvertToBitcoinURI() throws Exception {
         Address goodAddress = new Address(MainNetParams.get(), MAINNET_GOOD_ADDRESS);
@@ -69,7 +60,7 @@ public class BitcoinURITest {
         assertEquals("bitcoin:" + MAINNET_GOOD_ADDRESS + "?amount=0.1&message=glory", BitcoinURI.convertToBitcoinURI(goodAddress, Utils.toNanoCoins("0.1"), "", "glory"));
 
         // amount present, label present, no message
-        assertEquals("bitcoin:" + MAINNET_GOOD_ADDRESS + "?amount=12.34&label=Hello", BitcoinURI.convertToBitcoinURI(goodAddress,Utils.toNanoCoins("12.34"), "Hello", null));
+        assertEquals("bitcoin:" + MAINNET_GOOD_ADDRESS + "?amount=12.34&label=Hello", BitcoinURI.convertToBitcoinURI(goodAddress, Utils.toNanoCoins("12.34"), "Hello", null));
         assertEquals("bitcoin:" + MAINNET_GOOD_ADDRESS + "?amount=12.34&label=Hello", BitcoinURI.convertToBitcoinURI(goodAddress, Utils.toNanoCoins("12.34"), "Hello", ""));
               
         // amount present, no label, no message
@@ -88,12 +79,6 @@ public class BitcoinURITest {
         assertEquals("bitcoin:" + MAINNET_GOOD_ADDRESS, BitcoinURI.convertToBitcoinURI(goodAddress, null, "", ""));
     }
 
-    /**
-     * Test the simplest well-formed URI
-     * 
-     * @throws BitcoinURIParseException
-     *             If something goes wrong
-     */
     @Test
     public void testGood_Simple() throws BitcoinURIParseException {
         testObject = new BitcoinURI(MainNetParams.get(), BitcoinURI.BITCOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS);
@@ -214,7 +199,7 @@ public class BitcoinURITest {
      * @throws UnsupportedEncodingException 
      */
     @Test
-    public void testGood_LabelWithAmpersandAndPlus() throws BitcoinURIParseException, UnsupportedEncodingException {
+    public void testGood_LabelWithAmpersandAndPlus() throws Exception {
         String testString = "Hello Earth & Mars + Venus";
         String encodedLabel = BitcoinURI.encodeURLString(testString);
         testObject = new BitcoinURI(MainNetParams.get(), BitcoinURI.BITCOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS + "?label="
@@ -230,7 +215,7 @@ public class BitcoinURITest {
      * @throws UnsupportedEncodingException 
      */
     @Test
-    public void testGood_LabelWithRussian() throws BitcoinURIParseException, UnsupportedEncodingException {
+    public void testGood_LabelWithRussian() throws Exception {
         // Moscow in Russian in Cyrillic
         String moscowString = "\u041c\u043e\u0441\u043a\u0432\u0430";
         String encodedLabel = BitcoinURI.encodeURLString(moscowString); 

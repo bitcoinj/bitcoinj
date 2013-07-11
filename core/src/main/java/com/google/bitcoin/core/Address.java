@@ -19,6 +19,8 @@ package com.google.bitcoin.core;
 import com.google.bitcoin.params.MainNetParams;
 import com.google.bitcoin.params.TestNet3Params;
 
+import javax.annotation.Nullable;
+
 /**
  * <p>A Bitcoin address looks like 1MsScoe2fTJoq4ZPdQgqyhgWeoNamYPevy and is derived from an elliptic curve public key
  * plus a set of network parameters. Not to be confused with a {@link PeerAddress} or {@link AddressMessage}
@@ -57,7 +59,7 @@ public class Address extends VersionedChecksummedBytes {
      * @throws AddressFormatException if the given address doesn't parse or the checksum is invalid
      * @throws WrongNetworkException if the given address is valid but for a different chain (eg testnet vs prodnet)
      */
-    public Address(NetworkParameters params, String address) throws AddressFormatException, WrongNetworkException {
+    public Address(@Nullable NetworkParameters params, String address) throws AddressFormatException, WrongNetworkException {
         super(address);
         if (params != null) {
             boolean found = false;
