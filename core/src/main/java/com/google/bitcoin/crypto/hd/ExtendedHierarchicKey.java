@@ -32,7 +32,9 @@ import java.util.Arrays;
 import java.util.Collections;
 
 /**
- * Extended key as per BIP 32 is a pair (key, chaincode).
+ * An extended key is a node in a {@link DeterministicHierarchy}. As per
+ * <a href="https://en.bitcoin.it/wiki/BIP_0032">the BIP 32 specification</a> it is a pair (key, chaincode). If you
+ * know its path in the tree you can derive more keys from this.
  */
 public class ExtendedHierarchicKey implements Serializable {
     public static final ChildNumber MASTER_CHILD_NUMBER = new ChildNumber(0);
@@ -57,6 +59,11 @@ public class ExtendedHierarchicKey implements Serializable {
         this.privateAsFieldElement = privateKeyFieldElt;
     }
 
+    /**
+     * Returns the path through some {@link DeterministicHierarchy} which reaches this keys position in the tree.
+     * A path can be written as 1/2/1 which means the first child of the root, the second child of that node, then
+     * the first child of that node.
+     */
     public ImmutableList<ChildNumber> getChildNumberPath() {
         return childNumberPath;
     }
@@ -65,18 +72,30 @@ public class ExtendedHierarchicKey implements Serializable {
         return childNumberPath.size();
     }
 
+    /**
+     * Returns the last element of the path returned by {@link com.google.bitcoin.crypto.hd.ExtendedHierarchicKey#getChildNumberPath()}
+     */
     public ChildNumber getChildNumber() {
         return getDepth() == 0 ? MASTER_CHILD_NUMBER : childNumberPath.get(childNumberPath.size() - 1);
     }
 
-    byte[] getChainCode() {
+    /**
+     * Returns the chain code associated with this key. See the specification to learn more about chain codes.
+     */
+    public byte[] getChainCode() {
         return chainCode;
     }
 
+    /**
+     * Returns the path of this key as a human readable string starting with M to indicate the master key.
+     */
     public String getPath() {
         return PATH_JOINER.join(Iterables.concat(Collections.singleton("M"), getChildNumberPath()));
     }
 
+    /**
+     * Returns RIPE-MD160(SHA256(pub key bytes)).
+     */
     public byte[] getIdentifier() {
         return Utils.sha256hash160(getPubKeyBytes());
     }
@@ -92,8 +111,10 @@ public class ExtendedHierarchicKey implements Serializable {
         return getPubPoint().getEncoded();
     }
 
+
+    /** Returns the first 32 bits of the result of {@link #getIdentifier()}. */
     public byte[] getFingerprint() {
-        // todo: why is this different than armory's fingerprint? BIP 32: "The first 32 bits of the identifier are called the fingerprint."
+        // TODO: why is this different than armory's fingerprint? BIP 32: "The first 32 bits of the identifier are called the fingerprint."
         return Arrays.copyOfRange(getIdentifier(), 0, 4);
     }
 

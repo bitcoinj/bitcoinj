@@ -24,6 +24,7 @@ import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
 
 /**
@@ -36,6 +37,10 @@ public final class HDKeyDerivation {
     private static final HMac MASTER_HMAC_SHA256 = HDUtils.createHmacSha256Digest("Bitcoin seed".getBytes());
 
     /**
+     * Generates a new deterministic key from the given seed, which can be any arbitrary byte array. However resist
+     * the temptation to use a string as the seed - any key derived from a password is likely to be weak and easily
+     * broken by attackers (this is not theoretical, people have had money stolen that way).
+     *
      * @throws HDDerivationException if generated master key is invalid (private key 0 or >= n).
      */
     public static ExtendedHierarchicKey createMasterPrivateKey(byte[] seed) throws HDDerivationException {
@@ -114,9 +119,9 @@ public final class HDKeyDerivation {
             assertNonZero(ki, "Illegal derived key: derived private key equals 0.");
             keyBytes = ki.toByteArray();
         } else {
-            assertArgument(!childNumber.isPrivateDerivation(), "Can't use private derivation with public keys only.");
+            checkArgument(!childNumber.isPrivateDerivation(), "Can't use private derivation with public keys only.");
             ECPoint Ki = HDUtils.getEcParams().getG().multiply(ilInt).add(parent.getPubPoint());
-            assertArgument(!Ki.equals(HDUtils.getCurve().getInfinity()),
+            checkArgument(!Ki.equals(HDUtils.getCurve().getInfinity()),
                     "Illegal derived key: derived public key equals infinity.");
             keyBytes = HDUtils.toCompressed(Ki.getEncoded());
         }
@@ -124,17 +129,11 @@ public final class HDKeyDerivation {
     }
 
     private static void assertNonZero(BigInteger integer, String errorMessage) {
-        assertArgument(!integer.equals(BigInteger.ZERO), errorMessage);
+        checkArgument(!integer.equals(BigInteger.ZERO), errorMessage);
     }
 
     private static void assertLessThanN(BigInteger integer, String errorMessage) {
-        assertArgument(integer.compareTo(HDUtils.getEcParams().getN()) < 0, errorMessage);
-    }
-
-    private static void assertArgument(boolean assertion, String errorMessage) {
-        if (!assertion) {
-            throw new HDDerivationException(errorMessage);
-        }
+        checkArgument(integer.compareTo(HDUtils.getEcParams().getN()) < 0, errorMessage);
     }
 
     private static class RawKeyBytes {

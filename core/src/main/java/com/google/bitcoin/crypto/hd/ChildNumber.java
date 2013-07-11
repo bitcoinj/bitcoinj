@@ -17,10 +17,9 @@
 package com.google.bitcoin.crypto.hd;
 
 /**
- * This is just a wrapper for the i (child number) as per BIP 32 with a boolean getter for the first bit and a getter
- * for the actual 0-based child number.
- *
- * This class is immutable.
+ * <p>This is just a wrapper for the i (child number) as per BIP 32 with a boolean getter for the first bit and a getter
+ * for the actual 0-based child number. A {@link List} of these forms a <i>path</i> through a
+ * {@link DeterministicHierarchy}. This class is immutable.
  */
 public class ChildNumber {
     public static final int PRIV_BIT = 0x80000000;
