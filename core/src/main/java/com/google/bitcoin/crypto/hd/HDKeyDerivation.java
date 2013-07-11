@@ -114,8 +114,9 @@ public final class HDKeyDerivation {
         BigInteger ilInt = HDUtils.toBigInteger(il);
         assertLessThanN(ilInt, "Illegal derived key: I_L >= n");
         byte[] keyBytes;
-        if (parent.hasPrivate()) {
-            BigInteger ki = parent.getPrivAsFieldElement().add(ilInt).mod(HDUtils.getEcParams().getN());
+        final BigInteger privAsFieldElement = parent.getPrivAsFieldElement();
+        if (privAsFieldElement != null) {
+            BigInteger ki = privAsFieldElement.add(ilInt).mod(HDUtils.getEcParams().getN());
             assertNonZero(ki, "Illegal derived key: derived private key equals 0.");
             keyBytes = ki.toByteArray();
         } else {
