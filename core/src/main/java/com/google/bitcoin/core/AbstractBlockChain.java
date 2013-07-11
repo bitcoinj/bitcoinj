@@ -150,6 +150,11 @@ public abstract class AbstractBlockChain {
         }
     }
 
+    /** Removes a wallet from the chain. */
+    public void removeWallet(Wallet wallet) {
+        removeListener(wallet);
+    }
+
     /**
      * Adds a generic {@link BlockChainListener} listener to the chain.
      */
