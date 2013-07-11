@@ -88,7 +88,7 @@ public class NioServer {
                 } catch (Exception e) {
                     log.error("Error trying to open/read from connection: {}", e);
                 } finally {
-                    // Go through and close everything, without letting IOExceptions getting in our way
+                    // Go through and close everything, without letting IOExceptions get in our way
                     for (SelectionKey key : selector.keys()) {
                         try {
                             key.channel().close();
