@@ -782,7 +782,9 @@ public class Transaction extends ChildMessage implements Serializable {
                 input.getScriptSig().correctlySpends(this, i, input.getOutpoint().getConnectedOutput().getScriptPubKey(), true);
                 log.warn("Input {} already correctly spends output, assuming SIGHASH type used will be safe and skipping signing.", i);
                 continue;
-            } catch (ScriptException e) {}
+            } catch (ScriptException e) {
+                // Expected.
+            }
             if (input.getScriptBytes().length != 0)
                 log.warn("Re-signing an already signed transaction! Be sure this is what you want.");
             // Find the signing key we'll need to use.
