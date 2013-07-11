@@ -26,18 +26,21 @@ import com.google.common.util.concurrent.AbstractIdleService;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.net.InetAddress;
 import java.util.concurrent.TimeUnit;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
 /**
- * Utility class that wraps the boilerplate needed to set up a new SPV bitcoinj app. Instantiate it with a directory
+ * <p>Utility class that wraps the boilerplate needed to set up a new SPV bitcoinj app. Instantiate it with a directory
  * and file prefix, optionally configure a few things, then use start or startAndWait. The object will construct and
  * configure a {@link BlockChain}, {@link SPVBlockStore}, {@link Wallet} and {@link PeerGroup}. Startup will be
  * considered complete once the block chain has fully synchronized, so it can take a while. Once complete, you can
- * go ahead and add the listeners you need to the underlying objects.
+ * go ahead and add the listeners you need to the underlying objects.</p>
+ *
+ * <p>Note that {@link #startAndWait()} can throw an unchecked {@link com.google.common.util.concurrent.UncheckedExecutionException}
+ * if anything goes wrong during startup - you should probably handle it and use {@link Exception#getCause()} to figure
+ * out what went wrong more precisely. Same thing if you use the async start() method.</p>
  */
 public class WalletAppKit extends AbstractIdleService {
     protected final String filePrefix;
@@ -81,6 +84,7 @@ public class WalletAppKit extends AbstractIdleService {
 
     @Override
     protected void startUp() throws Exception {
+        // Runs in a separate thread.
         if (!directory.exists()) {
             if (!directory.mkdir()) {
                 throw new IOException("Could not create named directory.");
