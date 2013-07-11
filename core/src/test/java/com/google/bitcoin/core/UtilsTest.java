@@ -23,6 +23,7 @@ import java.math.BigInteger;
 
 import static com.google.bitcoin.core.Utils.*;
 import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.fail;
 import static org.junit.Assert.assertTrue;
 
 public class UtilsTest {
@@ -42,10 +43,18 @@ public class UtilsTest {
         // int version
         assertEquals(CENT, toNanoCoins(0, 1));
 
-        // TODO: should this really pass?
-        assertEquals(COIN.subtract(CENT), toNanoCoins(1, -1));
-        assertEquals(COIN.negate(), toNanoCoins(-1, 0));
-        assertEquals(COIN.negate(), toNanoCoins("-1"));
+        try {
+            toNanoCoins(1, -1);
+            fail();
+        } catch (IllegalArgumentException e) {}
+        try {
+            toNanoCoins(-1, 0);
+            fail();
+        } catch (IllegalArgumentException e) {}
+        try {
+            toNanoCoins("-1");
+            fail();
+        } catch (ArithmeticException e) {}
     }
 
     @Test
@@ -71,8 +80,7 @@ public class UtilsTest {
 
         assertEquals("0.0015", bitcoinValueToPlainString(BigInteger.valueOf(150000)));
         assertEquals("1.23", bitcoinValueToPlainString(toNanoCoins("1.23")));
-        assertEquals("-1.23", bitcoinValueToPlainString(toNanoCoins("-1.23")));
-        
+
         assertEquals("0.1", bitcoinValueToPlainString(toNanoCoins("0.1")));
         assertEquals("1.1", bitcoinValueToPlainString(toNanoCoins("1.1")));
         assertEquals("21.12", bitcoinValueToPlainString(toNanoCoins("21.12")));
@@ -81,7 +89,10 @@ public class UtilsTest {
         assertEquals("54321.12345", bitcoinValueToPlainString(toNanoCoins("54321.12345")));
         assertEquals("654321.123456", bitcoinValueToPlainString(toNanoCoins("654321.123456")));
         assertEquals("7654321.1234567", bitcoinValueToPlainString(toNanoCoins("7654321.1234567")));
-        assertEquals("87654321.12345678", bitcoinValueToPlainString(toNanoCoins("87654321.12345678")));
+        try {
+            assertEquals("87654321.12345678", bitcoinValueToPlainString(toNanoCoins("87654321.12345678")));
+            Assert.fail();  // More than MAX_MONEY
+        } catch (Exception e) {}
 
         // check there are no trailing zeros
         assertEquals("1", bitcoinValueToPlainString(toNanoCoins("1.0")));

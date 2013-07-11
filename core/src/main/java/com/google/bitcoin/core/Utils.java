@@ -29,7 +29,6 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.Date;
-import java.util.concurrent.locks.ReentrantLock;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
@@ -75,6 +74,9 @@ public class Utils {
      */
     public static BigInteger toNanoCoins(int coins, int cents) {
         checkArgument(cents < 100);
+        checkArgument(cents >= 0);
+        checkArgument(coins >= 0);
+        checkArgument(coins < NetworkParameters.MAX_MONEY.divide(Utils.COIN).longValue());
         BigInteger bi = BigInteger.valueOf(coins).multiply(COIN);
         bi = bi.add(BigInteger.valueOf(cents).multiply(CENT));
         return bi;
@@ -106,10 +108,15 @@ public class Utils {
      * This takes string in a format understood by {@link BigDecimal#BigDecimal(String)},
      * for example "0", "1", "0.10", "1.23E3", "1234.5E-5".
      *
-     * @throws ArithmeticException if you try to specify fractional nanocoins
+     * @throws ArithmeticException if you try to specify fractional nanocoins, or nanocoins out of range.
      */
     public static BigInteger toNanoCoins(String coins) {
-        return new BigDecimal(coins).movePointRight(8).toBigIntegerExact();
+        BigInteger bigint = new BigDecimal(coins).movePointRight(8).toBigIntegerExact();
+        if (bigint.compareTo(BigInteger.ZERO) < 0)
+            throw new ArithmeticException("Negative coins specified");
+        if (bigint.compareTo(NetworkParameters.MAX_MONEY) > 0)
+            throw new ArithmeticException("Amount larger than the total quantity of Bitcoins possible specified.");
+        return bigint;
     }
 
     public static void uint32ToByteArrayBE(long val, byte[] out, int offset) {
