@@ -16,6 +16,8 @@
 
 package com.google.bitcoin.crypto.hd;
 
+import com.google.bitcoin.crypto.DeterministicKey;
+import com.google.bitcoin.crypto.HDKeyDerivation;
 import com.google.bitcoin.crypto.hd.wallet.DeterministicKeyGenerator;
 import org.junit.Test;
 

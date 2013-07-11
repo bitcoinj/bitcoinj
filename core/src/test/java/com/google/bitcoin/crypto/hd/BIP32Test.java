@@ -18,6 +18,10 @@ package com.google.bitcoin.crypto.hd;
 
 import com.google.bitcoin.core.AddressFormatException;
 import com.google.bitcoin.core.Base58;
+import com.google.bitcoin.crypto.ChildNumber;
+import com.google.bitcoin.crypto.DeterministicHierarchy;
+import com.google.bitcoin.crypto.DeterministicKey;
+import com.google.bitcoin.crypto.HDKeyDerivation;
 import com.google.common.base.Functions;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Iterables;

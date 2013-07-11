@@ -16,6 +16,9 @@
 
 package com.google.bitcoin.crypto.hd;
 
+import com.google.bitcoin.crypto.DeterministicKey;
+import com.google.bitcoin.crypto.HDKeyDerivation;
+import com.google.bitcoin.crypto.HDUtils;
 import org.junit.Test;
 import org.spongycastle.util.encoders.Hex;
 

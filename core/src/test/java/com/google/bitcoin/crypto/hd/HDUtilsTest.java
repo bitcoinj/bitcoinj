@@ -1,5 +1,6 @@
 package com.google.bitcoin.crypto.hd;
 
+import com.google.bitcoin.crypto.HDUtils;
 import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;

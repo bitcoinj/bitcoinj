@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.google.bitcoin.crypto.hd;
+package com.google.bitcoin.crypto;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
