@@ -16,11 +16,6 @@
 
 package com.google.bitcoin.protocols.channels;
 
-import java.math.BigInteger;
-import java.util.Arrays;
-import java.util.Collections;
-import javax.annotation.Nullable;
-
 import com.google.bitcoin.core.*;
 import com.google.bitcoin.crypto.TransactionSignature;
 import com.google.bitcoin.script.Script;
@@ -33,6 +28,11 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.annotation.Nullable;
+import java.math.BigInteger;
+import java.util.Arrays;
+import java.util.Collections;
 
 import static com.google.common.base.Preconditions.*;
 
@@ -223,8 +223,8 @@ public class PaymentChannelServerState {
             this.multisigScript = multisigContract.getOutput(0).getScriptPubKey();
 
             // Check that multisigContract's first output is a 2-of-2 multisig to the correct pubkeys in the correct order
-            final Script expectedSecript = ScriptBuilder.createMultiSigOutputScript(2, Lists.newArrayList(clientKey, serverKey));
-            if (!Arrays.equals(multisigScript.getProgram(), expectedSecript.getProgram()))
+            final Script expectedScript = ScriptBuilder.createMultiSigOutputScript(2, Lists.newArrayList(clientKey, serverKey));
+            if (!Arrays.equals(multisigScript.getProgram(), expectedScript.getProgram()))
                 throw new VerificationException("Multisig contract's first output was not a standard 2-of-2 multisig to client and server in that order.");
 
             this.totalValue = multisigContract.getOutput(0).getValue();
