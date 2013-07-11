@@ -451,6 +451,14 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
     }
 
     /**
+     * Removes all event listeners simultaneously. Note that this includes listeners added internally by the framework
+     * so it's generally not advised to use this - it exists for special purposes only.
+     */
+    public void clearEventListeners() {
+        peerEventListeners.clear();
+    }
+
+    /**
      * Returns a newly allocated list containing the currently connected peers. If all you care about is the count,
      * use numConnectedPeers().
      */
