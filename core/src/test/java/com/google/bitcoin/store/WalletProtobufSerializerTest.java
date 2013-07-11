@@ -275,8 +275,8 @@ public class WalletProtobufSerializerTest {
         try {
             new WalletProtobufSerializer().readWallet(proto, wallet2);
             fail();
-        } catch (IllegalArgumentException e) {
-            // Expected.
+        } catch (UnreadableWalletException e) {
+            assertTrue(e.getMessage().contains("mandatory"));
         }
         Wallet wallet3 = new Wallet(params);
         // This time it works.

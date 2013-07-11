@@ -24,13 +24,13 @@ import com.google.bitcoin.params.RegTestParams;
 import com.google.bitcoin.params.TestNet3Params;
 import com.google.bitcoin.store.BlockStore;
 import com.google.bitcoin.store.SPVBlockStore;
+import com.google.bitcoin.store.UnreadableWalletException;
 import com.google.bitcoin.utils.BriefLogFormatter;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.IOException;
 import java.math.BigInteger;
 import java.net.InetAddress;
 
@@ -97,7 +97,7 @@ public class PingService {
             // Wipe the wallet if the chain file was deleted.
             if (walletFile.exists() && chainFile.exists())
                 w = Wallet.loadFromFile(walletFile);
-        } catch (IOException e) {
+        } catch (UnreadableWalletException e) {
             System.err.println("Couldn't load wallet: " + e);
             // Fall through.
         }

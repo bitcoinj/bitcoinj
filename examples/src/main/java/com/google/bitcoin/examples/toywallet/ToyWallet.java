@@ -22,6 +22,7 @@ import com.google.bitcoin.params.MainNetParams;
 import com.google.bitcoin.params.TestNet3Params;
 import com.google.bitcoin.store.H2FullPrunedBlockStore;
 import com.google.bitcoin.store.SPVBlockStore;
+import com.google.bitcoin.store.UnreadableWalletException;
 import com.google.bitcoin.utils.BriefLogFormatter;
 import com.google.common.collect.Lists;
 import org.spongycastle.util.encoders.Hex;
@@ -34,7 +35,6 @@ import java.awt.datatransfer.StringSelection;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
-import java.io.IOException;
 import java.math.BigInteger;
 import java.util.Date;
 import java.util.LinkedList;
@@ -125,7 +125,7 @@ public class ToyWallet {
         walletFile = new File("toy.wallet");
         try {
             wallet = Wallet.loadFromFile(walletFile);
-        } catch (IOException e) {
+        } catch (UnreadableWalletException e) {
             wallet = new Wallet(params);
 
             // Allow user to specify the first key on the command line as:

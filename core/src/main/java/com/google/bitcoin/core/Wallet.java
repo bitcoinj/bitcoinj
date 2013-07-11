@@ -21,6 +21,7 @@ import com.google.bitcoin.core.WalletTransaction.Pool;
 import com.google.bitcoin.crypto.KeyCrypter;
 import com.google.bitcoin.crypto.KeyCrypterException;
 import com.google.bitcoin.crypto.KeyCrypterScrypt;
+import com.google.bitcoin.store.UnreadableWalletException;
 import com.google.bitcoin.store.WalletProtobufSerializer;
 import com.google.bitcoin.utils.ListenerRegistration;
 import com.google.bitcoin.utils.Threading;
@@ -511,12 +512,17 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
     /**
      * Returns a wallet deserialized from the given file.
      */
-    public static Wallet loadFromFile(File f) throws IOException {
-        FileInputStream stream = new FileInputStream(f);
+    public static Wallet loadFromFile(File f) throws UnreadableWalletException {
         try {
-            return loadFromFileStream(stream);
-        } finally {
-            stream.close();
+            FileInputStream stream = null;
+            try {
+                stream = new FileInputStream(f);
+                return loadFromFileStream(stream);
+            } finally {
+                if (stream != null) stream.close();
+            }
+        } catch (IOException e) {
+            throw new UnreadableWalletException("Could not open file", e);
         }
     }
     
@@ -568,29 +574,8 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
     /**
      * Returns a wallet deserialized from the given input stream.
      */
-    public static Wallet loadFromFileStream(InputStream stream) throws IOException {
-        // Determine what kind of wallet stream this is: Java Serialization or protobuf format.
-        stream = new BufferedInputStream(stream);
-        stream.mark(100);
-        boolean serialization = stream.read() == 0xac && stream.read() == 0xed;
-        stream.reset();
-
-        Wallet wallet;
-        
-        if (serialization) {
-            ObjectInputStream ois = null;
-            try {
-                ois = new ObjectInputStream(stream);
-                wallet = (Wallet) ois.readObject();
-            } catch (ClassNotFoundException e) {
-                throw new RuntimeException(e);
-            } finally {
-                if (ois != null) ois.close();
-            }
-        } else {
-            wallet = new WalletProtobufSerializer().readWallet(stream);
-        }
-        
+    public static Wallet loadFromFileStream(InputStream stream) throws UnreadableWalletException {
+        Wallet wallet = new WalletProtobufSerializer().readWallet(stream);
         if (!wallet.isConsistent()) {
             log.error("Loaded an inconsistent wallet");
         }
