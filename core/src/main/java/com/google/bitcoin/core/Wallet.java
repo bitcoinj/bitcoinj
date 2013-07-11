@@ -713,7 +713,7 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
      * called to decide whether the wallet cares about the transaction - if it does, then this method expects the
      * transaction and any dependencies it has which are still in the memory pool.</p>
      */
-    public void receivePending(Transaction tx, List<Transaction> dependencies) throws VerificationException {
+    public void receivePending(Transaction tx, @Nullable List<Transaction> dependencies) throws VerificationException {
         receivePending(tx, dependencies, false);
     }
 

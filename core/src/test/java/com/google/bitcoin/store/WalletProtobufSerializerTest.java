@@ -65,7 +65,7 @@ public class WalletProtobufSerializerTest {
         t1.getConfidence().markBroadcastBy(new PeerAddress(InetAddress.getByName("1.2.3.4")));
         t1.getConfidence().markBroadcastBy(new PeerAddress(InetAddress.getByName("5.6.7.8")));
         t1.getConfidence().setSource(TransactionConfidence.Source.NETWORK);
-        myWallet.receivePending(t1, new ArrayList<Transaction>());
+        myWallet.receivePending(t1, null);
         Wallet wallet1 = roundTrip(myWallet);
         assertEquals(1, wallet1.getTransactions(true).size());
         assertEquals(v1, wallet1.getBalance(Wallet.BalanceType.ESTIMATED));

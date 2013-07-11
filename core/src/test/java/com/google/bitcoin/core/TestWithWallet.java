@@ -60,7 +60,7 @@ public class TestWithWallet {
         if (type == null) {
             // Pending/broadcast tx.
             if (wallet.isPendingTransactionRelevant(tx))
-                wallet.receivePending(tx, new ArrayList<Transaction>());
+                wallet.receivePending(tx, null);
         } else {
             TestUtils.BlockPair bp = createFakeBlock(blockStore, tx);
             wallet.receiveFromBlock(tx, bp.storedBlock, type);

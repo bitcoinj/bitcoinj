@@ -244,7 +244,7 @@ public class PaymentChannelServerState {
                 try {
                     // Manually add the multisigContract to the wallet, overriding the isRelevant checks so we can track
                     // it and check for double-spends later
-                    wallet.receivePending(multisigContract, Collections.EMPTY_LIST, true);
+                    wallet.receivePending(multisigContract, null, true);
                 } catch (VerificationException e) {
                     throw new RuntimeException(e); // Cannot happen, we already called multisigContract.verify()
                 }
