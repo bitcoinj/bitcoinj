@@ -16,20 +16,17 @@
 
 package com.google.bitcoin.protocols.channels;
 
-import java.io.*;
-import java.math.BigInteger;
-import java.util.*;
-import java.util.concurrent.locks.ReentrantLock;
-
 import com.google.bitcoin.core.*;
 import com.google.bitcoin.utils.Threading;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.protobuf.ByteString;
 import net.jcip.annotations.GuardedBy;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
+import java.math.BigInteger;
+import java.util.*;
+import java.util.concurrent.locks.ReentrantLock;
+
+import static com.google.common.base.Preconditions.*;
 
 /**
  * Keeps track of a set of {@link StoredServerChannel}s and expires them 2 hours before their refund transactions
@@ -42,7 +39,7 @@ public class StoredPaymentChannelServerStates implements WalletExtension {
     private final Wallet wallet;
     private final TransactionBroadcaster broadcaster;
 
-    private final Timer channelTimeoutHandler = new Timer();
+    private final Timer channelTimeoutHandler = new Timer(true);
 
     private final ReentrantLock lock = Threading.lock("StoredPaymentChannelServerStates");
 

@@ -16,20 +16,19 @@
 
 package com.google.bitcoin.protocols.channels;
 
-import java.io.*;
-import java.math.BigInteger;
-import java.util.Date;
-import java.util.Set;
-import java.util.Timer;
-import java.util.TimerTask;
-import java.util.concurrent.locks.ReentrantLock;
-
 import com.google.bitcoin.core.*;
 import com.google.bitcoin.utils.Threading;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.HashMultimap;
 import com.google.protobuf.ByteString;
 import net.jcip.annotations.GuardedBy;
+
+import java.math.BigInteger;
+import java.util.Date;
+import java.util.Set;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.concurrent.locks.ReentrantLock;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
@@ -42,7 +41,7 @@ public class StoredPaymentChannelClientStates implements WalletExtension {
     static final String EXTENSION_ID = StoredPaymentChannelClientStates.class.getName();
 
     @GuardedBy("lock") @VisibleForTesting final HashMultimap<Sha256Hash, StoredClientChannel> mapChannels = HashMultimap.create();
-    @VisibleForTesting final Timer channelTimeoutHandler = new Timer();
+    @VisibleForTesting final Timer channelTimeoutHandler = new Timer(true);
 
     private Wallet containingWallet;
     private final TransactionBroadcaster announcePeerGroup;
