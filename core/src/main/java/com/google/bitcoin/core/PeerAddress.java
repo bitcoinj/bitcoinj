@@ -99,6 +99,14 @@ public class PeerAddress extends ChildMessage {
         this(addr.getAddress(), addr.getPort());
     }
 
+    public static PeerAddress localhost(NetworkParameters params) {
+        try {
+            return new PeerAddress(InetAddress.getLocalHost(), params.getPort());
+        } catch (UnknownHostException e) {
+            throw new RuntimeException(e);  // Broken system.
+        }
+    }
+
     @Override
     protected void bitcoinSerializeToStream(OutputStream stream) throws IOException {
         if (protocolVersion >= 31402) {
