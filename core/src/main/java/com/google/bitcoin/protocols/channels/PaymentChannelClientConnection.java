@@ -61,8 +61,6 @@ public class PaymentChannelClientConnection {
      */
     public PaymentChannelClientConnection(InetSocketAddress server, int timeoutSeconds, Wallet wallet, ECKey myKey,
                                           BigInteger maxValue, String serverId) throws IOException, ValueOutOfRangeException {
-        if (wallet.getBalance().compareTo(maxValue) < 0)
-            throw new ValueOutOfRangeException("Insufficient balance in this wallet to open the requested payment channel.");
         // Glue the object which vends/ingests protobuf messages in order to manage state to the network object which
         // reads/writes them to the wire in length prefixed form.
         channelClient = new PaymentChannelClient(wallet, myKey, maxValue, Sha256Hash.create(serverId.getBytes()),
