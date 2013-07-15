@@ -42,7 +42,11 @@ public class FilteredBlock extends Message {
     }
     
     public void bitcoinSerializeToStream(OutputStream stream) throws IOException {
-        throw new RuntimeException("Not implemented");
+        if (header.transactions == null)
+            header.bitcoinSerializeToStream(stream);
+        else
+            header.cloneAsHeader().bitcoinSerializeToStream(stream);
+        merkleTree.bitcoinSerializeToStream(stream);
     }
 
     @Override

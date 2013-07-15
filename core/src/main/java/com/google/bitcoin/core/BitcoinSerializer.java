@@ -213,6 +213,10 @@ public class BitcoinSerializer {
             message = new FilteredBlock(params, payloadBytes);
         } else if (command.equals("getdata")) {
             message = new GetDataMessage(params, payloadBytes, parseLazy, parseRetain, length);
+        } else if (command.equals("getblocks")) {
+            message = new GetBlocksMessage(params, payloadBytes);
+        } else if (command.equals("getheaders")) {
+            message = new GetHeadersMessage(params, payloadBytes);
         } else if (command.equals("tx")) {
             Transaction tx = new Transaction(params, payloadBytes, null, parseLazy, parseRetain, length);
             if (hash != null)

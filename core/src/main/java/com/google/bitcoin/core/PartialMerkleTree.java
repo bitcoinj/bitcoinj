@@ -65,7 +65,14 @@ public class PartialMerkleTree extends Message {
     }
     
     public void bitcoinSerializeToStream(OutputStream stream) throws IOException {
-        throw new RuntimeException("Not implemented");
+        Utils.uint32ToByteStreamLE(transactionCount, stream);
+
+        stream.write(new VarInt(hashes.size()).encode());
+        for (Sha256Hash hash : hashes)
+            stream.write(Utils.reverseBytes(hash.getBytes()));
+
+        stream.write(new VarInt(matchedChildBits.length).encode());
+        stream.write(matchedChildBits);
     }
 
     @Override

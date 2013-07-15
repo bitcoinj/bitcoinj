@@ -29,6 +29,10 @@ public class GetHeadersMessage extends GetBlocksMessage {
         super(params, locator, stopHash);
     }
 
+    public GetHeadersMessage(NetworkParameters params, byte[] msg) throws ProtocolException {
+        super(params, msg);
+    }
+
     @Override
     public String toString() {
         StringBuffer b = new StringBuffer();

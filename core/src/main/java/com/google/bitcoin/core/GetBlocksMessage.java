@@ -38,8 +38,17 @@ public class GetBlocksMessage extends Message {
         this.stopHash = stopHash;
     }
 
+    public GetBlocksMessage(NetworkParameters params, byte[] msg) throws ProtocolException {
+        super(params, msg, 0);
+    }
+
     protected void parseLite() throws ProtocolException {
-        // NOP.  This is a root level message and should always be provided with a length.
+        cursor = offset;
+        version = readUint32();
+        int startCount = (int) readVarInt();
+        if (startCount > 500)
+            throw new ProtocolException("Number of locators cannot be > 500, received: " + startCount);
+        length = (int) (cursor - offset + ((startCount + 1) * 32));
     }
 
     public void parse() throws ProtocolException {
