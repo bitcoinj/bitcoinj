@@ -31,7 +31,7 @@ import static com.google.common.base.Preconditions.checkState;
 /**
  * Creates a simple connection to a server using a {@link StreamParser} to process data.
  */
-public class NioClient extends MessageWriteTarget {
+public class NioClient implements MessageWriteTarget {
     private static final org.slf4j.Logger log = LoggerFactory.getLogger(NioClient.class);
 
     private static final int BUFFER_SIZE_LOWER_BOUND = 4096;
@@ -111,7 +111,7 @@ public class NioClient extends MessageWriteTarget {
 
     // Writes raw bytes to the channel (used by the write method in StreamParser)
     @Override
-    synchronized void writeBytes(byte[] message) {
+    public synchronized void writeBytes(byte[] message) {
         try {
             if (sc.write(ByteBuffer.wrap(message)) != message.length)
                 throw new IOException("Couldn't write all of message to socket");

@@ -20,6 +20,7 @@ import com.google.bitcoin.core.Utils;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.MessageLite;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
@@ -201,7 +202,11 @@ public class ProtobufParser<MessageType extends MessageLite> extends AbstractTim
         checkState(messageBytes.length <= maxMessageSize);
         byte[] messageLength = new byte[4];
         Utils.uint32ToByteArrayBE(messageBytes.length, messageLength, 0);
-        writeTarget.writeBytes(messageLength);
-        writeTarget.writeBytes(messageBytes);
+        try {
+            writeTarget.writeBytes(messageLength);
+            writeTarget.writeBytes(messageBytes);
+        } catch (IOException e) {
+            closeConnection();
+        }
     }
 }

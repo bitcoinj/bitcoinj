@@ -32,7 +32,7 @@ import static com.google.common.base.Preconditions.checkState;
 /**
 * A simple connection handler which handles all the business logic of a connection
 */
-class ConnectionHandler extends MessageWriteTarget {
+class ConnectionHandler implements MessageWriteTarget {
     private static final org.slf4j.Logger log = LoggerFactory.getLogger(ConnectionHandler.class);
 
     private static final int BUFFER_SIZE_LOWER_BOUND = 4096;
@@ -57,7 +57,7 @@ class ConnectionHandler extends MessageWriteTarget {
     }
 
     @Override
-    void writeBytes(byte[] message) {
+    public void writeBytes(byte[] message) throws IOException {
         lock.lock();
         try {
             if (channel.write(ByteBuffer.wrap(message)) != message.length)
@@ -65,13 +65,14 @@ class ConnectionHandler extends MessageWriteTarget {
         } catch (IOException e) {
             log.error("Error writing message to connection, closing connection", e);
             closeConnection();
+            throw e;
         } finally {
             lock.unlock();
         }
     }
 
     @Override
-    void closeConnection() {
+    public void closeConnection() {
         try {
             channel.close();
         } catch (IOException e) {

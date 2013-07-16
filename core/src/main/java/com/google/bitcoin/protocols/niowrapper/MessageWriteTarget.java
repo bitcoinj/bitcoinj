@@ -16,10 +16,12 @@
 
 package com.google.bitcoin.protocols.niowrapper;
 
+import java.io.IOException;
+
 /**
  * A target to which messages can be written/connection can be closed
  */
-abstract class MessageWriteTarget {
-    abstract void writeBytes(byte[] message);
-    abstract void closeConnection();
+public interface MessageWriteTarget {
+    void writeBytes(byte[] message) throws IOException;
+    void closeConnection();
 }
