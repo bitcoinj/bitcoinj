@@ -14,11 +14,14 @@
  * limitations under the License.
  */
 
-package com.google.bitcoin.protocols.niowrapper;
+package com.google.bitcoin.networkabstraction;
 
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.google.bitcoin.core.Utils;
@@ -28,12 +31,48 @@ import org.bitcoin.paymentchannel.Protos;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
 import static com.google.common.base.Preconditions.checkState;
 import static org.junit.Assert.*;
 
-public class NioWrapperTest {
+@RunWith(value = Parameterized.class)
+public class NetworkAbstractionTests {
     private AtomicBoolean fail;
+    private final int clientType;
+    private final ClientConnectionManager channels;
+
+    @Parameterized.Parameters
+    public static Collection<Integer[]> parameters() {
+        return Arrays.asList(new Integer[]{0}, new Integer[]{1}, new Integer[]{2}, new Integer[]{3});
+    }
+
+    public NetworkAbstractionTests(Integer clientType) throws Exception {
+        this.clientType = clientType;
+        if (clientType == 0) {
+            channels = new NioClientManager();
+            channels.start();
+        } else if (clientType == 1) {
+            channels = new BlockingClientManager();
+            channels.start();
+        } else
+            channels = null;
+    }
+
+    private MessageWriteTarget openConnection(SocketAddress addr, ProtobufParser parser) throws Exception {
+        if (clientType == 0 || clientType == 1) {
+            channels.openConnection(addr, parser);
+            if (parser.writeTarget.get() == null)
+                Thread.sleep(100);
+            return (MessageWriteTarget) parser.writeTarget.get();
+        } else if (clientType == 2)
+            return new NioClient(addr, parser, 100);
+        else if (clientType == 3)
+            return new BlockingClient(addr, parser, 100, null);
+        else
+            throw new RuntimeException();
+    }
 
     @Before
     public void setUp() {
@@ -76,8 +115,8 @@ public class NioWrapperTest {
                     }
                 }, Protos.TwoWayChannelMessage.getDefaultInstance(), 1000, 0);
             }
-        });
-        server.start(new InetSocketAddress("localhost", 4243));
+        }, new InetSocketAddress("localhost", 4243));
+        server.startAndWait();
 
         ProtobufParser<Protos.TwoWayChannelMessage> clientHandler = new ProtobufParser<Protos.TwoWayChannelMessage>(
                 new ProtobufParser.Listener<Protos.TwoWayChannelMessage>() {
@@ -100,7 +139,7 @@ public class NioWrapperTest {
                     }
                 }, Protos.TwoWayChannelMessage.getDefaultInstance(), 1000, 0);
 
-        NioClient client = new NioClient(new InetSocketAddress("localhost", 4243), clientHandler, 0);
+        MessageWriteTarget client = openConnection(new InetSocketAddress("localhost", 4243), clientHandler);
 
         clientConnectionOpen.get();
         serverConnectionOpen.get();
@@ -114,7 +153,8 @@ public class NioWrapperTest {
         serverConnectionClosed.get();
         clientConnectionClosed.get();
 
-        server.stop();
+        server.stopAndWait();
+        assertFalse(server.isRunning());
     }
 
     @Test
@@ -157,10 +197,10 @@ public class NioWrapperTest {
                     }
                 }, Protos.TwoWayChannelMessage.getDefaultInstance(), 1000, 10);
             }
-        });
-        server.start(new InetSocketAddress("localhost", 4243));
+        }, new InetSocketAddress("localhost", 4243));
+        server.startAndWait();
 
-        new NioClient(new InetSocketAddress("localhost", 4243), new ProtobufParser<Protos.TwoWayChannelMessage>(
+        openConnection(new InetSocketAddress("localhost", 4243), new ProtobufParser<Protos.TwoWayChannelMessage>(
                 new ProtobufParser.Listener<Protos.TwoWayChannelMessage>() {
                     @Override
                     public void messageReceived(ProtobufParser handler, Protos.TwoWayChannelMessage msg) {
@@ -176,7 +216,7 @@ public class NioWrapperTest {
                     public void connectionClosed(ProtobufParser handler) {
                         clientConnection1Closed.set(null);
                     }
-                }, Protos.TwoWayChannelMessage.getDefaultInstance(), 1000, 0), 0);
+                }, Protos.TwoWayChannelMessage.getDefaultInstance(), 1000, 0));
 
         clientConnection1Open.get();
         serverConnection1Open.get();
@@ -202,7 +242,7 @@ public class NioWrapperTest {
                         clientConnection2Closed.set(null);
                     }
                 }, Protos.TwoWayChannelMessage.getDefaultInstance(), 1000, 0);
-        NioClient client2 = new NioClient(new InetSocketAddress("localhost", 4243), client2Handler, 0);
+        openConnection(new InetSocketAddress("localhost", 4243), client2Handler);
 
         clientConnection2Open.get();
         serverConnection2Open.get();
@@ -213,7 +253,7 @@ public class NioWrapperTest {
         clientConnection2Closed.get();
         serverConnection2Closed.get();
 
-        server.stop();
+        server.stopAndWait();
     }
 
     @Test
@@ -247,8 +287,8 @@ public class NioWrapperTest {
                     }
                 }, Protos.TwoWayChannelMessage.getDefaultInstance(), 0x10000, 0);
             }
-        });
-        server.start(new InetSocketAddress("localhost", 4243));
+        }, new InetSocketAddress("localhost", 4243));
+        server.startAndWait();
 
         ProtobufParser<Protos.TwoWayChannelMessage> clientHandler = new ProtobufParser<Protos.TwoWayChannelMessage>(
                 new ProtobufParser.Listener<Protos.TwoWayChannelMessage>() {
@@ -279,7 +319,7 @@ public class NioWrapperTest {
                     }
                 }, Protos.TwoWayChannelMessage.getDefaultInstance(), 0x10000, 0);
 
-        NioClient client = new NioClient(new InetSocketAddress("localhost", 4243), clientHandler, 0);
+        MessageWriteTarget client = openConnection(new InetSocketAddress("localhost", 4243), clientHandler);
 
         clientConnectionOpen.get();
         serverConnectionOpen.get();
@@ -358,7 +398,7 @@ public class NioWrapperTest {
         serverConnectionClosed.get();
         clientConnectionClosed.get();
 
-        server.stop();
+        server.stopAndWait();
     }
 
     @Test
@@ -411,8 +451,8 @@ public class NioWrapperTest {
                     }
                 }, Protos.TwoWayChannelMessage.getDefaultInstance(), 1000, 0);
             }
-        });
-        server.start(new InetSocketAddress("localhost", 4243));
+        }, new InetSocketAddress("localhost", 4243));
+        server.startAndWait();
 
         ProtobufParser<Protos.TwoWayChannelMessage> client1Handler = new ProtobufParser<Protos.TwoWayChannelMessage>(
                 new ProtobufParser.Listener<Protos.TwoWayChannelMessage>() {
@@ -431,7 +471,7 @@ public class NioWrapperTest {
                         client1ConnectionClosed.set(null);
                     }
                 }, Protos.TwoWayChannelMessage.getDefaultInstance(), 1000, 0);
-        NioClient client1 = new NioClient(new InetSocketAddress("localhost", 4243), client1Handler, 0);
+        MessageWriteTarget client1 = openConnection(new InetSocketAddress("localhost", 4243), client1Handler);
 
         client1ConnectionOpen.get();
         serverConnection1Open.get();
@@ -453,7 +493,7 @@ public class NioWrapperTest {
                         client2ConnectionClosed.set(null);
                     }
                 }, Protos.TwoWayChannelMessage.getDefaultInstance(), 1000, 0);
-        NioClient client2 = new NioClient(new InetSocketAddress("localhost", 4243), client2Handler, 0);
+        openConnection(new InetSocketAddress("localhost", 4243), client2Handler);
 
         client2ConnectionOpen.get();
         serverConnection2Open.get();
@@ -497,17 +537,18 @@ public class NioWrapperTest {
         client3Handler.write(msg3);
         assertEquals(msg3, client3MessageReceived.get());
 
-        // Try to create a race condition by triggering handlerTread closing and client3 closing at the same time
+        // Try to create a race condition by triggering handlerThread closing and client3 closing at the same time
         // This often triggers ClosedByInterruptException in handleKey
-        server.handlerThread.interrupt();
+        server.stop();
+        server.selector.wakeup();
         client3.closeConnection();
         client3ConnectionClosed.get();
         serverConnectionClosed3.get();
 
-        server.handlerThread.join();
+        server.stopAndWait();
         client2ConnectionClosed.get();
         serverConnectionClosed2.get();
 
-        server.stop();
+        server.stopAndWait();
     }
 }

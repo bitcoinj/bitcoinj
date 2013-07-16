@@ -14,31 +14,37 @@
  * limitations under the License.
  */
 
-package com.google.bitcoin.protocols.niowrapper;
+package com.google.bitcoin.networkabstraction;
 
 import java.io.IOException;
-import java.net.InetSocketAddress;
+import java.io.InputStream;
+import java.net.Socket;
+import java.net.SocketAddress;
 import java.nio.ByteBuffer;
-import java.nio.channels.AsynchronousCloseException;
-import java.nio.channels.ClosedChannelException;
-import java.nio.channels.SocketChannel;
+import java.util.Set;
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkState;
 
 /**
- * Creates a simple connection to a server using a {@link StreamParser} to process data.
+ * <p>Creates a simple connection to a server using a {@link StreamParser} to process data.</p>
+ *
+ * <p>Generally, using {@link NioClient} and {@link NioClientManager} should be preferred over {@link BlockingClient}
+ * and {@link BlockingClientManager}, unless you wish to connect over a proxy or use some other network settings that
+ * cannot be set using NIO.</p>
  */
-public class NioClient implements MessageWriteTarget {
-    private static final org.slf4j.Logger log = LoggerFactory.getLogger(NioClient.class);
+public class BlockingClient implements MessageWriteTarget {
+    private static final org.slf4j.Logger log = LoggerFactory.getLogger(BlockingClient.class);
 
     private static final int BUFFER_SIZE_LOWER_BOUND = 4096;
     private static final int BUFFER_SIZE_UPPER_BOUND = 65536;
 
     @Nonnull private final ByteBuffer dbuf;
-    @Nonnull private final SocketChannel sc;
+    @Nonnull private final Socket socket;
+    private volatile boolean vCloseRequested = false;
 
     /**
      * <p>Creates a new client to the given server address using the given {@link StreamParser} to decode the data.
@@ -48,28 +54,35 @@ public class NioClient implements MessageWriteTarget {
      *
      * @param connectTimeoutMillis The connect timeout set on the connection (in milliseconds). 0 is interpreted as no
      *                             timeout.
+     * @param clientSet A set which this object will add itself to after initialization, and then remove itself from
+     *                  when the connection dies. Note that this set must be thread-safe.
      */
-    public NioClient(final InetSocketAddress serverAddress, final StreamParser parser,
-                     final int connectTimeoutMillis) throws IOException {
+    public BlockingClient(final SocketAddress serverAddress, final StreamParser parser,
+                          final int connectTimeoutMillis, @Nullable final Set<BlockingClient> clientSet) throws IOException {
         // Try to fit at least one message in the network buffer, but place an upper and lower limit on its size to make
         // sure it doesnt get too large or have to call read too often.
         dbuf = ByteBuffer.allocateDirect(Math.min(Math.max(parser.getMaxMessageSize(), BUFFER_SIZE_LOWER_BOUND), BUFFER_SIZE_UPPER_BOUND));
         parser.setWriteTarget(this);
-        sc = SocketChannel.open();
+        socket = new Socket();
 
-        new Thread() {
+        Thread t = new Thread() {
             @Override
             public void run() {
+                if (clientSet != null)
+                    clientSet.add(BlockingClient.this);
                 try {
-                    sc.socket().connect(serverAddress, connectTimeoutMillis);
+                    socket.connect(serverAddress, connectTimeoutMillis);
                     parser.connectionOpened();
+                    InputStream stream = socket.getInputStream();
+                    byte[] readBuff = new byte[dbuf.capacity()];
 
                     while (true) {
-                        int read = sc.read(dbuf);
-                        if (read == 0)
-                            continue;
-                        else if (read == -1)
+                        // TODO Kill the message duplication here
+                        checkState(dbuf.remaining() > 0 && dbuf.remaining() <= readBuff.length);
+                        int read = stream.read(readBuff, 0, Math.max(1, Math.min(dbuf.remaining(), stream.available())));
+                        if (read == -1)
                             return;
+                        dbuf.put(readBuff, 0, read);
                         // "flip" the buffer - setting the limit to the current position and setting position to 0
                         dbuf.flip();
                         // Use parser.receiveBytes's return value as a double-check that it stopped reading at the right
@@ -80,20 +93,24 @@ public class NioClient implements MessageWriteTarget {
                         // position)
                         dbuf.compact();
                     }
-                } catch (AsynchronousCloseException e) {// Expected if the connection is closed
-                } catch (ClosedChannelException e) { // Expected if the connection is closed
                 } catch (Exception e) {
-                    log.error("Error trying to open/read from connection", e);
+                    if (!vCloseRequested)
+                        log.error("Error trying to open/read from connection", e);
                 } finally {
                     try {
-                        sc.close();
+                        socket.close();
                     } catch (IOException e1) {
                         // At this point there isn't much we can do, and we can probably assume the channel is closed
                     }
+                    if (clientSet != null)
+                        clientSet.remove(BlockingClient.this);
                     parser.connectionClosed();
                 }
             }
-        }.start();
+        };
+        t.setName("BlockingClient network thread for " + serverAddress);
+        t.setDaemon(true);
+        t.start();
     }
 
     /**
@@ -103,21 +120,21 @@ public class NioClient implements MessageWriteTarget {
     public void closeConnection() {
         // Closes the channel, triggering an exception in the network-handling thread triggering connectionClosed()
         try {
-            sc.close();
+            vCloseRequested = true;
+            socket.close();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
-    // Writes raw bytes to the channel (used by the write method in StreamParser)
     @Override
-    public synchronized void writeBytes(byte[] message) {
+    public synchronized void writeBytes(byte[] message) throws IOException {
         try {
-            if (sc.write(ByteBuffer.wrap(message)) != message.length)
-                throw new IOException("Couldn't write all of message to socket");
+            socket.getOutputStream().write(message);
         } catch (IOException e) {
             log.error("Error writing message to connection, closing connection", e);
             closeConnection();
+            throw e;
         }
     }
 }

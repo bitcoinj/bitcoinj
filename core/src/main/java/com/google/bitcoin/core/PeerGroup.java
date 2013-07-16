@@ -17,30 +17,24 @@
 
 package com.google.bitcoin.core;
 
-import com.google.bitcoin.core.Peer.PeerHandler;
 import com.google.bitcoin.discovery.PeerDiscovery;
 import com.google.bitcoin.discovery.PeerDiscoveryException;
 import com.google.bitcoin.script.Script;
+import com.google.bitcoin.networkabstraction.ClientConnectionManager;
+import com.google.bitcoin.networkabstraction.NioClientManager;
 import com.google.bitcoin.utils.ListenerRegistration;
 import com.google.bitcoin.utils.Threading;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.*;
 import net.jcip.annotations.GuardedBy;
-import org.jboss.netty.bootstrap.ClientBootstrap;
-import org.jboss.netty.channel.*;
-import org.jboss.netty.channel.group.ChannelGroup;
-import org.jboss.netty.channel.group.DefaultChannelGroup;
-import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
-import java.io.IOException;
 import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.SocketAddress;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -83,7 +77,7 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
     private final CopyOnWriteArrayList<Peer> peers;
     // Currently connecting peers.
     private final CopyOnWriteArrayList<Peer> pendingPeers;
-    private final ChannelGroup channels;
+    private final ClientConnectionManager channels;
 
     // The peer that has been selected for the purposes of downloading announced data.
     @GuardedBy("lock") private Peer downloadPeer;
@@ -126,7 +120,6 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
         }
     };
 
-    private ClientBootstrap bootstrap;
     private int minBroadcastConnections = 0;
     private AbstractWalletEventListener walletEventListener = new AbstractWalletEventListener() {
         private void onChanged() {
@@ -138,19 +131,21 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
         @Override public void onCoinsSent(Wallet wallet, Transaction tx, BigInteger prevBalance, BigInteger newBalance) { onChanged(); }
     };
 
-    private class PeerStartupListener implements Peer.PeerLifecycleListener {
-        public void onPeerConnected(Peer peer) {
+    private class PeerStartupListener extends AbstractPeerEventListener {
+        @Override
+        public void onPeerConnected(Peer peer, int peerCount) {
             handleNewPeer(peer);
         }
 
-        public void onPeerDisconnected(Peer peer) {
+        @Override
+        public void onPeerDisconnected(Peer peer, int peerCount) {
             // The channel will be automatically removed from channels.
             handlePeerDeath(peer);
         }
     }
 
     // Visible for testing
-    Peer.PeerLifecycleListener startupListener = new PeerStartupListener();
+    PeerEventListener startupListener = new PeerStartupListener();
 
     // A bloom filter generated from all connected wallets that is given to new peers
     private BloomFilter bloomFilter;
@@ -163,6 +158,10 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
     // We use a constant tweak to avoid giving up privacy when we regenerate our filter with new keys
     private final long bloomFilterTweak = (long) (Math.random() * Long.MAX_VALUE);
     private int lastBloomFilterElementCount;
+
+    /** The default timeout between when a connection attempt begins and version message exchange completes */
+    public static final int DEFAULT_CONNECT_TIMEOUT_MILLIS = 2000;
+    private volatile int vConnectTimeoutMillis = DEFAULT_CONNECT_TIMEOUT_MILLIS;
 
     /**
      * Creates a PeerGroup with the given parameters. No chain is provided so this node will report its chain height
@@ -179,29 +178,15 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
      * Creates a PeerGroup for the given network and chain. Blocks will be passed to the chain as they are broadcast
      * and downloaded. This is probably the constructor you want to use.
      */
-    public PeerGroup(NetworkParameters params, AbstractBlockChain chain) {
-        this(params, chain, null);
+    public PeerGroup(NetworkParameters params, @Nullable AbstractBlockChain chain) {
+        this(params, chain, new NioClientManager());
     }
-    
+
     /**
-     * <p>Creates a PeerGroup for the given network and chain, using the provided Netty {@link ClientBootstrap} object.
-     * </p>
-     *
-     * <p>A ClientBootstrap creates raw (TCP) connections to other nodes on the network. Normally you won't need to
-     * provide one - use the other constructors. Providing your own bootstrap is useful if you want to control
-     * details like how many network threads are used, the connection timeout value and so on. To do this, you can
-     * use {@link PeerGroup#createClientBootstrap()} method and then customize the resulting object. Example:</p>
-     *
-     * <pre>
-     *   ClientBootstrap bootstrap = PeerGroup.createClientBootstrap();
-     *   bootstrap.setOption("connectTimeoutMillis", 3000);
-     *   PeerGroup peerGroup = new PeerGroup(params, chain, bootstrap);
-     * </pre>
-     *
-     * <p>The ClientBootstrap provided does not need a channel pipeline factory set. If one wasn't set, the provided
-     * bootstrap will be modified to have one that sets up the pipelines correctly.</p>
+     * Creates a new PeerGroup allowing you to specify the {@link ClientConnectionManager} which is used to create new
+     * connections and keep track of existing ones.
      */
-    public PeerGroup(NetworkParameters params, @Nullable AbstractBlockChain chain, @Nullable ClientBootstrap bootstrap) {
+    public PeerGroup(NetworkParameters params, @Nullable AbstractBlockChain chain, ClientConnectionManager connectionManager) {
         this.params = checkNotNull(params);
         this.chain = chain;
         this.fastCatchupTimeSecs = params.getGenesisBlock().getTimeSeconds();
@@ -219,62 +204,12 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
 
         memoryPool = new MemoryPool();
 
-        // Configure Netty. The "ClientBootstrap" creates connections to other nodes. It can be configured in various
-        // ways to control the network.
-        if (bootstrap == null) {
-            this.bootstrap = createClientBootstrap();
-            this.bootstrap.setPipelineFactory(makePipelineFactory(params, chain));
-        } else {
-            this.bootstrap = bootstrap;
-        }
-
         inactives = new ArrayList<PeerAddress>();
         peers = new CopyOnWriteArrayList<Peer>();
         pendingPeers = new CopyOnWriteArrayList<Peer>();
-        channels = new DefaultChannelGroup();
-        peerDiscoverers = new CopyOnWriteArraySet<PeerDiscovery>(); 
+        channels = connectionManager;
+        peerDiscoverers = new CopyOnWriteArraySet<PeerDiscovery>();
         peerEventListeners = new CopyOnWriteArrayList<ListenerRegistration<PeerEventListener>>();
-    }
-
-    /**
-     * Helper method that just sets up a normal Netty ClientBootstrap using the default options, except for a custom
-     * thread factory that gives worker threads useful names and lowers their priority (to avoid competing with UI
-     * threads). You don't normally need to call this - if you aren't sure what it does, just use the regular
-     * constructors for {@link PeerGroup} that don't take a ClientBootstrap object.
-     */
-    public static ClientBootstrap createClientBootstrap() {
-        ExecutorService bossExecutor = Executors.newCachedThreadPool(new PeerGroupThreadFactory());
-        ExecutorService workerExecutor = Executors.newCachedThreadPool(new PeerGroupThreadFactory());
-        NioClientSocketChannelFactory channelFactory = new NioClientSocketChannelFactory(bossExecutor, workerExecutor);
-        ClientBootstrap bs = new ClientBootstrap(channelFactory);
-        bs.setOption("connectTimeoutMillis", 2000);
-        return bs;
-    }
-
-    // Create a Netty pipeline factory.  The pipeline factory will create a network processing
-    // pipeline with the bitcoin serializer ({@code TCPNetworkConnection}) downstream
-    // of the higher level {@code Peer}.  Received packets will first be decoded, then passed
-    // {@code Peer}.  Sent packets will be created by the {@code Peer}, then encoded and sent.
-    private ChannelPipelineFactory makePipelineFactory(final NetworkParameters params, @Nullable final AbstractBlockChain chain) {
-        return new ChannelPipelineFactory() {
-            public ChannelPipeline getPipeline() throws Exception {
-                // This runs unlocked.
-                VersionMessage ver = getVersionMessage().duplicate();
-                ver.bestHeight = chain == null ? 0 : chain.getBestChainHeight();
-                ver.time = Utils.now().getTime() / 1000;
-
-                ChannelPipeline p = Channels.pipeline();
-
-                Peer peer = new Peer(params, chain, ver, memoryPool);
-                peer.addLifecycleListener(startupListener);
-                peer.setMinProtocolVersion(vMinRequiredProtocolVersion);
-                pendingPeers.add(peer);
-                TCPNetworkConnection codec = new TCPNetworkConnection(params, peer.getVersionMessage());
-                p.addLast("codec", codec.getHandler());
-                p.addLast("peer", peer.getHandler());
-                return p;
-            }
-        };
     }
 
     /**
@@ -292,7 +227,7 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
             lock.unlock();
         }
         // We may now have too many or too few open connections. Add more or drop some to get to the right amount.
-        adjustment = maxConnections - channels.size();
+        adjustment = maxConnections - channels.getConnectedClientCount();
         while (adjustment > 0) {
             try {
                 connectToAnyPeer();
@@ -301,10 +236,8 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
             }
             adjustment--;
         }
-        while (adjustment < 0) {
-            channels.iterator().next().close();
-            adjustment++;
-        }
+        if (adjustment < 0)
+            channels.closeConnections(-adjustment);
     }
 
     /** The maximum number of connections that we will create to peers. */
@@ -576,6 +509,7 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
     protected void startUp() throws Exception {
         // This is run in a background thread by the AbstractIdleService implementation.
         vPingTimer = new Timer("Peer pinging thread", true);
+        channels.startAndWait();
         // Bring up the requested number of connections. If a connect attempt fails,
         // new peers will be tried until there is a success, so just calling connectToAnyPeer for the wanted number
         // of peers is sufficient.
@@ -593,11 +527,8 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
     protected void shutDown() throws Exception {
         // This is run on a separate thread by the AbstractIdleService implementation.
         vPingTimer.cancel();
-        // Blocking close of all sockets. TODO: there is a race condition here, for the solution see:
-        // http://biasedbit.com/netty-releaseexternalresources-hangs/
-        channels.close().await();
-        // All thread pools should be stopped by this call.
-        bootstrap.releaseExternalResources();
+        // Blocking close of all sockets.
+        channels.stopAndWait();
         for (PeerDiscovery peerDiscovery : peerDiscoverers) {
             peerDiscovery.shutdown();
         }
@@ -701,11 +632,7 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
                 if (!filter.equals(bloomFilter)) {
                     bloomFilter = filter;
                     for (Peer peer : peers)
-                        try {
-                            peer.setBloomFilter(filter);
-                        } catch (IOException e) {
-                            throw new RuntimeException(e);
-                        }
+                        peer.setBloomFilter(filter);
                 }
             }
             // Now adjust the earliest key time backwards by a week to handle the case of clock drift. This can occur
@@ -747,38 +674,32 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
     }
 
     /**
-     * Connect to a peer by creating a Netty channel to the destination address.
+     * Connect to a peer by creating a channel to the destination address.
      * 
      * @param address destination IP and port.
-     * @return a ChannelFuture that can be used to wait for the socket to connect.  A socket
-     *           connection does not mean that protocol handshake has occured.
+     * @return The newly created Peer object. Use {@link com.google.bitcoin.core.Peer#getConnectionOpenFuture()} if you
+     *         want a future which completes when the connection is open.
      */
-    public ChannelFuture connectTo(SocketAddress address) {
+    public Peer connectTo(InetSocketAddress address) {
         return connectTo(address, true);
     }
 
     // Internal version.
-    protected ChannelFuture connectTo(SocketAddress address, boolean incrementMaxConnections) {
-        ChannelFuture future = bootstrap.connect(address);
-        // Make sure that the channel group gets access to the channel only if it connects successfully (otherwise
-        // it cannot be closed and trying to do so will cause problems).
-        future.addListener(new ChannelFutureListener() {
-            public void operationComplete(ChannelFuture future) throws Exception {
-                if (future.isSuccess())
-                    channels.add(future.getChannel());
-            }
-        });
+    protected Peer connectTo(InetSocketAddress address, boolean incrementMaxConnections) {
+        VersionMessage ver = getVersionMessage().duplicate();
+        ver.bestHeight = chain == null ? 0 : chain.getBestChainHeight();
+        ver.time = Utils.now().getTime() / 1000;
+
+        Peer peer = new Peer(params, ver, address, chain, memoryPool);
+        peer.addEventListener(startupListener, Threading.SAME_THREAD);
+        peer.setMinProtocolVersion(vMinRequiredProtocolVersion);
+        pendingPeers.add(peer);
+
+        channels.openConnection(address, peer);
+        peer.setSocketTimeout(vConnectTimeoutMillis);
         // When the channel has connected and version negotiated successfully, handleNewPeer will end up being called on
         // a worker thread.
 
-        // Set up the address on the TCPNetworkConnection handler object.
-        // TODO: This is stupid and racy, get rid of it.
-        TCPNetworkConnection.NetworkHandler networkHandler =
-                (TCPNetworkConnection.NetworkHandler) future.getChannel().getPipeline().get("codec");
-        if (networkHandler != null) {
-            // This can be null in unit tests or apps that don't use TCP connections.
-            networkHandler.getOwnerObject().setRemoteAddress(address);
-        }
         if (incrementMaxConnections) {
             // We don't use setMaxConnections here as that would trigger a recursive attempt to establish a new
             // outbound connection.
@@ -789,15 +710,15 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
                 lock.unlock();
             }
         }
-        return future;
+        return peer;
     }
 
-    static public Peer peerFromChannelFuture(ChannelFuture future) {
-        return peerFromChannel(future.getChannel());
-    }
-
-    static public Peer peerFromChannel(Channel channel) {
-        return ((PeerHandler)channel.getPipeline().get("peer")).getPeer();
+    /**
+     * Sets the timeout between when a connection attempt to a peer begins and when the version message exchange
+     * completes. This does not apply to currently pending peers.
+     */
+    public void setConnectTimeoutMillis(int connectTimeoutMillis) {
+        this.vConnectTimeoutMillis = connectTimeoutMillis;
     }
 
     /**
@@ -852,11 +773,7 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
             // Give the peer a filter that can be used to probabilistically drop transactions that
             // aren't relevant to our wallet. We may still receive some false positives, which is
             // OK because it helps improve wallet privacy. Old nodes will just ignore the message.
-            try {
-                if (bloomFilter != null) peer.setBloomFilter(bloomFilter);
-            } catch (IOException e) {
-                // That was quick...already disconnected
-            }
+            if (bloomFilter != null) peer.setBloomFilter(bloomFilter);
             // Link the peer to the memory pool so broadcast transactions have their confidence levels updated.
             peer.setDownloadData(false);
             // TODO: The peer should calculate the fast catchup time from the added wallets here.
@@ -875,7 +792,7 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
             peer.addEventListener(getDataListener, Threading.SAME_THREAD);
             // And set up event listeners for clients. This will allow them to find out about new transactions and blocks.
             for (ListenerRegistration<PeerEventListener> registration : peerEventListeners) {
-                peer.addEventListener(registration.listener, registration.executor);
+                peer.addEventListenerWithoutOnDisconnect(registration.listener, registration.executor);
             }
             setupPingingForNewPeer(peer);
         } finally {
@@ -1080,8 +997,6 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
             setDownloadPeer(peer);
             // startBlockChainDownload will setDownloadData(true) on itself automatically.
             peer.startBlockChainDownload();
-        } catch (IOException e) {
-            log.error("failed to start block chain download from " + peer, e);
         } finally {
             lock.unlock();
         }
@@ -1335,6 +1250,7 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
         // zap peers if they upgrade early. If we can't find any peers that have our preferred protocol version or
         // better then we'll settle for the highest we found instead.
         int highestVersion = 0, preferredVersion = 0;
+        // If/when PREFERRED_VERSION is not equal to vMinRequiredProtocolVersion, reenable the last test in PeerGroupTest.downloadPeerSelection
         final int PREFERRED_VERSION = FilteredBlock.MIN_PROTOCOL_VERSION;
         for (Peer peer : candidates) {
             highestVersion = Math.max(peer.getPeerVersionMessage().clientVersion, highestVersion);

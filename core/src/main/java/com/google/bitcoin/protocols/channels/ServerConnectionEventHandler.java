@@ -19,7 +19,7 @@ package com.google.bitcoin.protocols.channels;
 import java.math.BigInteger;
 
 import com.google.bitcoin.core.Sha256Hash;
-import com.google.bitcoin.protocols.niowrapper.ProtobufParser;
+import com.google.bitcoin.networkabstraction.ProtobufParser;
 import org.bitcoin.paymentchannel.Protos;
 
 /**

@@ -16,49 +16,64 @@
 
 package com.google.bitcoin.core;
 
+import com.google.bitcoin.networkabstraction.*;
 import com.google.bitcoin.params.UnitTestParams;
 import com.google.bitcoin.store.BlockStore;
 import com.google.bitcoin.store.MemoryBlockStore;
 import com.google.bitcoin.utils.BriefLogFormatter;
-import org.easymock.EasyMock;
-import org.easymock.IMocksControl;
-import org.jboss.netty.channel.*;
+import com.google.bitcoin.utils.Threading;
+import com.google.common.util.concurrent.SettableFuture;
 
 import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
-import java.net.UnknownHostException;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+import javax.annotation.Nullable;
 
-import static org.easymock.EasyMock.createStrictControl;
-import static org.easymock.EasyMock.expect;
+import static com.google.common.base.Preconditions.checkArgument;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Utility class that makes it easy to work with mock NetworkConnections.
  */
 public class TestWithNetworkConnections {
-    protected IMocksControl control;
     protected NetworkParameters unitTestParams;
     protected BlockStore blockStore;
     protected BlockChain blockChain;
     protected Wallet wallet;
     protected ECKey key;
     protected Address address;
-    private static int fakePort;
-    protected ChannelHandlerContext ctx;
-    protected Channel channel;
     protected SocketAddress socketAddress;
-    protected ChannelPipeline pipeline;
-    
+
+    private NioServer peerServer;
+    private final ClientConnectionManager channels;
+    protected final BlockingQueue<InboundMessageQueuer> newPeerWriteTargetQueue = new LinkedBlockingQueue<InboundMessageQueuer>();
+
+    enum ClientType {
+        NIO_CLIENT_MANAGER,
+        BLOCKING_CLIENT_MANAGER,
+        NIO_CLIENT,
+        BLOCKING_CLIENT
+    }
+    private final ClientType clientType;
+    public TestWithNetworkConnections(ClientType clientType) {
+        this.clientType = clientType;
+        if (clientType == ClientType.NIO_CLIENT_MANAGER)
+            channels = new NioClientManager();
+        else if (clientType == ClientType.BLOCKING_CLIENT_MANAGER)
+            channels = new BlockingClientManager();
+        else
+            channels = null;
+    }
+
     public void setUp() throws Exception {
         setUp(new MemoryBlockStore(UnitTestParams.get()));
     }
     
     public void setUp(BlockStore blockStore) throws Exception {
         BriefLogFormatter.init();
-
-        control = createStrictControl();
-        control.checkOrder(false);
 
         unitTestParams = UnitTestParams.get();
         Wallet.SendRequest.DEFAULT_FEE_PER_KB = BigInteger.ZERO;
@@ -69,77 +84,106 @@ public class TestWithNetworkConnections {
         wallet.addKey(key);
         blockChain = new BlockChain(unitTestParams, wallet, blockStore);
 
-        socketAddress = new InetSocketAddress("127.0.0.1", 1111);
+        peerServer = new NioServer(new StreamParserFactory() {
+            @Nullable
+            @Override
+            public StreamParser getNewParser(InetAddress inetAddress, int port) {
+                return new InboundMessageQueuer(unitTestParams) {
+                    @Override public void connectionClosed() { }
+                    @Override
+                    public void connectionOpened() {
+                        newPeerWriteTargetQueue.offer(this);
+                    }
+                };
+            }
+        }, new InetSocketAddress("127.0.0.1", 2000));
+        peerServer.startAndWait();
+        if (clientType == ClientType.NIO_CLIENT_MANAGER || clientType == ClientType.BLOCKING_CLIENT_MANAGER)
+            channels.startAndWait();
 
-        ctx = createChannelHandlerContext();
-        channel = createChannel();
-        pipeline = createPipeline(channel);
+        socketAddress = new InetSocketAddress("127.0.0.1", 1111);
     }
 
     public void tearDown() throws Exception {
         Wallet.SendRequest.DEFAULT_FEE_PER_KB = Transaction.REFERENCE_DEFAULT_MIN_TX_FEE;
+        peerServer.stopAndWait();
     }
 
-    protected ChannelPipeline createPipeline(Channel channel) {
-        ChannelPipeline pipeline = control.createMock(ChannelPipeline.class);
-        expect(channel.getPipeline()).andStubReturn(pipeline);
-        return pipeline;
-    }
-
-    protected Channel createChannel() {
-        Channel channel = control.createMock(Channel.class);
-        expect(channel.getRemoteAddress()).andStubReturn(socketAddress);
-        return channel;
-    }
-
-    protected ChannelHandlerContext createChannelHandlerContext() {
-        ChannelHandlerContext ctx1 = control.createMock(ChannelHandlerContext.class);
-        ctx1.sendDownstream(EasyMock.anyObject(ChannelEvent.class));
-        EasyMock.expectLastCall().anyTimes();
-        ctx1.sendUpstream(EasyMock.anyObject(ChannelEvent.class));
-        EasyMock.expectLastCall().anyTimes();
-        return ctx1;
-    }
-
-    protected MockNetworkConnection createMockNetworkConnection() {
-        MockNetworkConnection conn = new MockNetworkConnection();
-        try {
-            conn.connect(new PeerAddress(InetAddress.getLocalHost(), fakePort++), 0);
-        } catch (UnknownHostException e) {
-            throw new RuntimeException(e); // Cannot happen
-        }
-        return conn;
+    protected InboundMessageQueuer connect(Peer peer, VersionMessage versionMessage) throws Exception {
+        checkArgument(versionMessage.hasBlockChain());
+        if (clientType == ClientType.NIO_CLIENT_MANAGER || clientType == ClientType.BLOCKING_CLIENT_MANAGER)
+            channels.openConnection(new InetSocketAddress("127.0.0.1", 2000), peer);
+        else if (clientType == ClientType.NIO_CLIENT)
+            new NioClient(new InetSocketAddress("127.0.0.1", 2000), peer, 100);
+        else if (clientType == ClientType.BLOCKING_CLIENT)
+            new BlockingClient(new InetSocketAddress("127.0.0.1", 2000), peer, 100, null);
+        else
+            throw new RuntimeException();
+        // Claim we are connected to a different IP that what we really are, so tx confidence broadcastBy sets work
+        InboundMessageQueuer writeTarget = newPeerWriteTargetQueue.take();
+        writeTarget.peer = peer;
+        // Complete handshake with the peer - send/receive version(ack)s, receive bloom filter
+        writeTarget.sendMessage(versionMessage);
+        writeTarget.sendMessage(new VersionAck());
+        assertTrue(writeTarget.nextMessageBlocking() instanceof VersionMessage);
+        assertTrue(writeTarget.nextMessageBlocking() instanceof VersionAck);
+        return writeTarget;
     }
 
     protected void closePeer(Peer peer) throws Exception {
-        peer.getHandler().channelClosed(ctx,
-                new UpstreamChannelStateEvent(channel, ChannelState.CONNECTED, null));
-    }
-    
-    protected void inbound(Peer peer, Message message) throws Exception {
-        peer.getHandler().messageReceived(ctx,
-                new UpstreamMessageEvent(channel, message, socketAddress));
+        peer.close();
     }
 
-    protected void inbound(FakeChannel peerChannel, Message message) {
-        Channels.fireMessageReceived(peerChannel, message);
+    protected void inbound(InboundMessageQueuer peerChannel, Message message) {
+        peerChannel.sendMessage(message);
     }
 
-    protected Object outbound(FakeChannel p1) {
-        ChannelEvent channelEvent = p1.nextEvent();
-        if (channelEvent != null && !(channelEvent instanceof MessageEvent))
-            throw new IllegalStateException("Expected message but got: " + channelEvent);
-        MessageEvent nextEvent = (MessageEvent) channelEvent;
-        if (nextEvent == null)
-            return null;
-        return nextEvent.getMessage();
+    private void outboundPingAndWait(final InboundMessageQueuer p, long nonce) throws Exception {
+        // Send a ping and wait for it to get to the other side
+        SettableFuture<Void> pingReceivedFuture = SettableFuture.create();
+        p.mapPingFutures.put(nonce, pingReceivedFuture);
+        p.peer.sendMessage(new Ping(nonce));
+        pingReceivedFuture.get();
+        p.mapPingFutures.remove(nonce);
     }
 
-    protected Object waitForOutbound(FakeChannel ch) throws InterruptedException {
-        return ((MessageEvent)ch.nextEventBlocking()).getMessage();
+    private void inboundPongAndWait(final InboundMessageQueuer p, final long nonce) throws Exception {
+        // Receive a ping (that the Peer doesn't see) and wait for it to get through the socket
+        final SettableFuture<Void> pongReceivedFuture = SettableFuture.create();
+        PeerEventListener listener = new AbstractPeerEventListener() {
+            @Override
+            public Message onPreMessageReceived(Peer p, Message m) {
+                if (m instanceof Pong && ((Pong) m).getNonce() == nonce) {
+                    pongReceivedFuture.set(null);
+                    return null;
+                }
+                return m;
+            }
+        };
+        p.peer.addEventListener(listener, Threading.SAME_THREAD);
+        inbound(p, new Pong(nonce));
+        pongReceivedFuture.get();
+        p.peer.removeEventListener(listener);
     }
 
-    protected Peer peerOf(Channel ch) {
-        return PeerGroup.peerFromChannel(ch);
+    protected void pingAndWait(final InboundMessageQueuer p) throws Exception {
+        final long nonce = (long) (Math.random() * Long.MAX_VALUE);
+        // Start with an inbound Pong as pingAndWait often happens immediately after an inbound() call, and then wants
+        // to wait on an outbound message, so we do it in the same order or we see race conditions
+        inboundPongAndWait(p, nonce);
+        outboundPingAndWait(p, nonce);
+    }
+
+    protected Message outbound(InboundMessageQueuer p1) throws Exception {
+        pingAndWait(p1);
+        return p1.nextMessage();
+    }
+
+    protected Object waitForOutbound(InboundMessageQueuer ch) throws InterruptedException {
+        return ch.nextMessageBlocking();
+    }
+
+    protected Peer peerOf(InboundMessageQueuer ch) {
+        return ch.peer;
     }
 }

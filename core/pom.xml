@@ -192,12 +192,6 @@
             <optional>true</optional>
         </dependency>
 
-	    <dependency>
-	        <groupId>io.netty</groupId>
-	        <artifactId>netty</artifactId>
-	        <version>3.6.3.Final</version>
-	    </dependency>
-
         <dependency>
             <groupId>com.madgag</groupId>
             <artifactId>sc-light-jdk15on</artifactId>

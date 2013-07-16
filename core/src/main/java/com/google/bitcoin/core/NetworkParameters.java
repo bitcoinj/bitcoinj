@@ -16,10 +16,7 @@
 
 package com.google.bitcoin.core;
 
-import com.google.bitcoin.params.MainNetParams;
-import com.google.bitcoin.params.TestNet2Params;
-import com.google.bitcoin.params.TestNet3Params;
-import com.google.bitcoin.params.UnitTestParams;
+import com.google.bitcoin.params.*;
 import com.google.bitcoin.script.Script;
 import com.google.bitcoin.script.ScriptOpCodes;
 import com.google.common.base.Objects;
@@ -160,6 +157,12 @@ public abstract class NetworkParameters implements Serializable {
     @Deprecated
     public static NetworkParameters unitTests() {
         return UnitTestParams.get();
+    }
+
+    /** Returns a standard regression test params (similar to unitTests) */
+    @Deprecated
+    public static NetworkParameters regTests() {
+        return RegTestParams.get();
     }
 
     /**

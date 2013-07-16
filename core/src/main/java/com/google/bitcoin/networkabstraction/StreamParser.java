@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-package com.google.bitcoin.protocols.niowrapper;
+package com.google.bitcoin.networkabstraction;
 
 import java.nio.ByteBuffer;
 
 /**
- * A generic handler which is used in {@link NioServer} and {@link NioClient} to handle incoming data streams.
+ * A generic handler which is used in {@link NioServer}, {@link NioClient} and {@link BlockingClient} to handle incoming
+ * data streams.
  */
 public interface StreamParser {
     /** Called when the connection socket is closed */
@@ -29,14 +30,22 @@ public interface StreamParser {
     void connectionOpened();
 
     /**
-     * Called when new bytes are available from the remote end.
-     * * buff will start with its limit set to the position we can read to and its position set to the location we will
-     *   start reading at
-     * * May read more than one message (recursively) if there are enough bytes available
-     * * Uses messageBytes/messageBytesOffset to store message which are larger (incl their length prefix) than buff's
-     *   capacity(), ie it is up to this method to ensure we dont run out of buffer space to decode the next message.
-     * * buff will end with its limit the same as it was previously, and its position set to the position up to which
-     *   bytes have been read (the same as its return value)
+     * <p>Called when new bytes are available from the remote end. This should only ever be called by the single
+     * writeTarget associated with any given StreamParser, multiple callers will likely confuse implementations.</p>
+     *
+     * Implementers/callers must follow the following conventions exactly:
+     * <ul>
+     * <li>buff will start with its limit set to the position we can read to and its position set to the location we
+     *     will start reading at (always 0)</li>
+     * <li>May read more than one message (recursively) if there are enough bytes available</li>
+     * <li>Uses some internal buffering to store message which are larger (incl their length prefix) than buff's
+     *     capacity(), ie it is up to this method to ensure we dont run out of buffer space to decode the next message.
+     *     </li>
+     * <li>buff will end with its limit the same as it was previously, and its position set to the position up to which
+     *     bytes have been read (the same as its return value)</li>
+     * <li>buff must be at least the size of a Bitcoin header (incl magic bytes).</li>
+     * </ul>
+     *
      * @return The amount of bytes consumed which should not be provided again
      */
     int receiveBytes(ByteBuffer buff) throws Exception;

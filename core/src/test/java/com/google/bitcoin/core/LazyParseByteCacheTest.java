@@ -24,8 +24,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.spongycastle.util.encoders.Hex;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 
 import static com.google.bitcoin.utils.TestUtils.createFakeBlock;
@@ -179,8 +179,8 @@ public class LazyParseByteCacheTest {
         BitcoinSerializer bs = new BitcoinSerializer(unitTestParams, lazy, retain);
         Block b1;
         Block bRef;
-        b1 = (Block) bs.deserialize(new ByteArrayInputStream(blockBytes));
-        bRef = (Block) bsRef.deserialize(new ByteArrayInputStream(blockBytes));
+        b1 = (Block) bs.deserialize(ByteBuffer.wrap(blockBytes));
+        bRef = (Block) bsRef.deserialize(ByteBuffer.wrap(blockBytes));
         
         //verify our reference BitcoinSerializer produces matching byte array.
         bos.reset();
@@ -231,8 +231,8 @@ public class LazyParseByteCacheTest {
         }
         
         //refresh block
-        b1 = (Block) bs.deserialize(new ByteArrayInputStream(blockBytes));
-        bRef = (Block) bsRef.deserialize(new ByteArrayInputStream(blockBytes));
+        b1 = (Block) bs.deserialize(ByteBuffer.wrap(blockBytes));
+        bRef = (Block) bsRef.deserialize(ByteBuffer.wrap(blockBytes));
         
         //retrieve a value from header
         b1.getDifficultyTarget();
@@ -244,8 +244,8 @@ public class LazyParseByteCacheTest {
 
         
         //refresh block
-        b1 = (Block) bs.deserialize(new ByteArrayInputStream(blockBytes));
-        bRef = (Block) bsRef.deserialize(new ByteArrayInputStream(blockBytes));
+        b1 = (Block) bs.deserialize(ByteBuffer.wrap(blockBytes));
+        bRef = (Block) bsRef.deserialize(ByteBuffer.wrap(blockBytes));
         
         //retrieve a value from a child and header
         b1.getDifficultyTarget();
@@ -270,8 +270,8 @@ public class LazyParseByteCacheTest {
         serDeser(bs, b1, bos.toByteArray(), null, null);
         
         //refresh block
-        b1 = (Block) bs.deserialize(new ByteArrayInputStream(blockBytes));
-        bRef = (Block) bsRef.deserialize(new ByteArrayInputStream(blockBytes));
+        b1 = (Block) bs.deserialize(ByteBuffer.wrap(blockBytes));
+        bRef = (Block) bsRef.deserialize(ByteBuffer.wrap(blockBytes));
         
         //change a value in header
         b1.setNonce(23);
@@ -289,8 +289,8 @@ public class LazyParseByteCacheTest {
         serDeser(bs, b1, bos.toByteArray(), null, null);
         
         //refresh block
-        b1 = (Block) bs.deserialize(new ByteArrayInputStream(blockBytes));
-        bRef = (Block) bsRef.deserialize(new ByteArrayInputStream(blockBytes));
+        b1 = (Block) bs.deserialize(ByteBuffer.wrap(blockBytes));
+        bRef = (Block) bsRef.deserialize(ByteBuffer.wrap(blockBytes));
         
         //retrieve a value from a child of a child
         b1.getTransactions();
@@ -313,8 +313,8 @@ public class LazyParseByteCacheTest {
         }
         
         //refresh block
-        b1 = (Block) bs.deserialize(new ByteArrayInputStream(blockBytes));
-        bRef = (Block) bsRef.deserialize(new ByteArrayInputStream(blockBytes));
+        b1 = (Block) bs.deserialize(ByteBuffer.wrap(blockBytes));
+        bRef = (Block) bsRef.deserialize(ByteBuffer.wrap(blockBytes));
         
         //add an input
         b1.getTransactions();
@@ -357,10 +357,10 @@ public class LazyParseByteCacheTest {
         }
         
         //refresh block
-        b1 = (Block) bs.deserialize(new ByteArrayInputStream(blockBytes));
-        Block b2 = (Block) bs.deserialize(new ByteArrayInputStream(blockBytes));
-        bRef = (Block) bsRef.deserialize(new ByteArrayInputStream(blockBytes));
-        Block bRef2 = (Block) bsRef.deserialize(new ByteArrayInputStream(blockBytes));
+        b1 = (Block) bs.deserialize(ByteBuffer.wrap(blockBytes));
+        Block b2 = (Block) bs.deserialize(ByteBuffer.wrap(blockBytes));
+        bRef = (Block) bsRef.deserialize(ByteBuffer.wrap(blockBytes));
+        Block bRef2 = (Block) bsRef.deserialize(ByteBuffer.wrap(blockBytes));
         
         //reparent an input
         b1.getTransactions();
@@ -397,7 +397,7 @@ public class LazyParseByteCacheTest {
             serDeser(bs, b1, bos.toByteArray(), null, null);
             
             //how about if we refresh it?
-            bRef = (Block) bsRef.deserialize(new ByteArrayInputStream(blockBytes));
+            bRef = (Block) bsRef.deserialize(ByteBuffer.wrap(blockBytes));
             bos.reset();
             bsRef.serialize(bRef, bos);
             serDeser(bs, b1, bos.toByteArray(), null, null);
@@ -406,7 +406,7 @@ public class LazyParseByteCacheTest {
     }
     
     public void testTransaction(NetworkParameters params, byte[] txBytes, boolean isChild, boolean lazy, boolean retain) throws Exception {
-            
+
         //reference serializer to produce comparison serialization output after changes to
         //message structure.
         BitcoinSerializer bsRef = new BitcoinSerializer(params, false, false);
@@ -415,8 +415,8 @@ public class LazyParseByteCacheTest {
         BitcoinSerializer bs = new BitcoinSerializer(params, lazy, retain);
         Transaction t1;
         Transaction tRef;
-        t1 = (Transaction) bs.deserialize(new ByteArrayInputStream(txBytes));
-        tRef = (Transaction) bsRef.deserialize(new ByteArrayInputStream(txBytes));
+        t1 = (Transaction) bs.deserialize(ByteBuffer.wrap(txBytes));
+        tRef = (Transaction) bsRef.deserialize(ByteBuffer.wrap(txBytes));
         
         //verify our reference BitcoinSerializer produces matching byte array.
         bos.reset();
@@ -454,8 +454,8 @@ public class LazyParseByteCacheTest {
         }
         
         //refresh tx
-        t1 = (Transaction) bs.deserialize(new ByteArrayInputStream(txBytes));
-        tRef = (Transaction) bsRef.deserialize(new ByteArrayInputStream(txBytes));
+        t1 = (Transaction) bs.deserialize(ByteBuffer.wrap(txBytes));
+        tRef = (Transaction) bsRef.deserialize(ByteBuffer.wrap(txBytes));
         
         //add an input
         if (t1.getInputs().size() > 0) {
@@ -482,7 +482,7 @@ public class LazyParseByteCacheTest {
         bs.serialize(message, bos);
         byte[] b1 = bos.toByteArray();
         
-        Message m2 = bs.deserialize(new ByteArrayInputStream(b1));
+        Message m2 = bs.deserialize(ByteBuffer.wrap(b1));
 
         assertEquals(message, m2);
  

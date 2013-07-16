@@ -45,7 +45,7 @@ public interface PeerEventListener {
 
     /**
      * Called when a peer is connected. If this listener is registered to a {@link Peer} instead of a {@link PeerGroup},
-     * this will never be called.
+     * peerCount will always be 1.
      *
      * @param peer
      * @param peerCount the total number of connected peers
@@ -55,7 +55,7 @@ public interface PeerEventListener {
     /**
      * Called when a peer is disconnected. Note that this won't be called if the listener is registered on a
      * {@link PeerGroup} and the group is in the process of shutting down. If this listener is registered to a
-     * {@link Peer} instead of a {@link PeerGroup}, this will never be called.
+     * {@link Peer} instead of a {@link PeerGroup}, peerCount will always be 0.
      *
      * @param peer
      * @param peerCount the total number of connected peers
@@ -79,8 +79,11 @@ public interface PeerEventListener {
     public void onTransaction(Peer peer, Transaction t);
 
     /**
-     * Called when a peer receives a getdata message, usually in response to an "inv" being broadcast. Return as many
-     * items as possible which appear in the {@link GetDataMessage}, or null if you're not interested in responding.
+     * <p>Called when a peer receives a getdata message, usually in response to an "inv" being broadcast. Return as many
+     * items as possible which appear in the {@link GetDataMessage}, or null if you're not interested in responding.</p>
+     *
+     * <p>Note that this will never be called if registered with any executor other than
+     * {@link com.google.bitcoin.utils.Threading#SAME_THREAD}</p>
      */
     public List<Message> getData(Peer peer, GetDataMessage m);
 }

@@ -21,16 +21,34 @@ import com.google.bitcoin.store.MemoryBlockStore;
 import com.google.bitcoin.utils.TestUtils;
 import com.google.bitcoin.utils.Threading;
 import com.google.common.util.concurrent.ListenableFuture;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Random;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.junit.Assert.*;
 import static org.junit.Assert.assertEquals;
 
+@RunWith(value = Parameterized.class)
 public class TransactionBroadcastTest extends TestWithPeerGroup {
+    static final NetworkParameters params = UnitTestParams.get();
+
+    @Parameterized.Parameters
+    public static Collection<ClientType[]> parameters() {
+        return Arrays.asList(new ClientType[] {ClientType.NIO_CLIENT_MANAGER},
+                             new ClientType[] {ClientType.BLOCKING_CLIENT_MANAGER});
+    }
+
+    public TransactionBroadcastTest(ClientType clientType) {
+        super(clientType);
+    }
+
     @Override
     @Before
     public void setUp() throws Exception {
@@ -39,11 +57,18 @@ public class TransactionBroadcastTest extends TestWithPeerGroup {
         // Fix the random permutation that TransactionBroadcast uses to shuffle the peers.
         TransactionBroadcast.random = new Random(0);
         peerGroup.setMinBroadcastConnections(2);
+        peerGroup.startAndWait();
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        super.tearDown();
+        peerGroup.stopAndWait();
     }
 
     @Test
     public void fourPeers() throws Exception {
-        FakeChannel[] channels = { connectPeer(1), connectPeer(2), connectPeer(3), connectPeer(4) };
+        InboundMessageQueuer[] channels = { connectPeer(1), connectPeer(2), connectPeer(3), connectPeer(4) };
         Transaction tx = new Transaction(params);
         TransactionBroadcast broadcast = new TransactionBroadcast(peerGroup, tx);
         ListenableFuture<Transaction> future = broadcast.broadcast();
@@ -64,6 +89,7 @@ public class TransactionBroadcastTest extends TestWithPeerGroup {
         Threading.waitForUserCode();
         assertFalse(future.isDone());
         inbound(channels[1], InventoryMessage.with(tx));
+        pingAndWait(channels[1]);
         Threading.waitForUserCode();
         assertTrue(future.isDone());
     }
@@ -72,7 +98,7 @@ public class TransactionBroadcastTest extends TestWithPeerGroup {
     public void retryFailedBroadcast() throws Exception {
         // If we create a spend, it's sent to a peer that swallows it, and the peergroup is removed/re-added then
         // the tx should be broadcast again.
-        FakeChannel p1 = connectPeer(1, new VersionMessage(params, 2));
+        InboundMessageQueuer p1 = connectPeer(1);
         connectPeer(2);
 
         // Send ourselves a bit of money.
@@ -90,11 +116,7 @@ public class TransactionBroadcastTest extends TestWithPeerGroup {
 
         // p1 eats it :( A bit later the PeerGroup is taken down.
         peerGroup.removeWallet(wallet);
-        // ... and put back.
-        initPeerGroup();
         peerGroup.addWallet(wallet);
-        p1 = connectPeer(1, new VersionMessage(params, 2));
-        connectPeer(2);
 
         // We want to hear about it again. Now, because we've disabled the randomness for the unit tests it will
         // re-appear on p1 again. Of course in the real world it would end up with a different set of peers and
@@ -108,12 +130,15 @@ public class TransactionBroadcastTest extends TestWithPeerGroup {
         // Make sure we can create spends, and that they are announced. Then do the same with offline mode.
 
         // Set up connections and block chain.
-        FakeChannel p1 = connectPeer(1, new VersionMessage(params, 2));
-        FakeChannel p2 = connectPeer(2);
+        VersionMessage ver = new VersionMessage(params, 2);
+        ver.localServices = VersionMessage.NODE_NETWORK;
+        InboundMessageQueuer p1 = connectPeer(1, ver);
+        InboundMessageQueuer p2 = connectPeer(2);
 
         // Send ourselves a bit of money.
         Block b1 = TestUtils.makeSolvedTestBlock(blockStore, address);
         inbound(p1, b1);
+        pingAndWait(p1);
         assertNull(outbound(p1));
         assertEquals(Utils.toNanoCoins(50, 0), wallet.getBalance());
 
@@ -143,6 +168,7 @@ public class TransactionBroadcastTest extends TestWithPeerGroup {
         InventoryMessage inv = new InventoryMessage(params);
         inv.addTransaction(t1);
         inbound(p2, inv);
+        pingAndWait(p2);
         Threading.waitForUserCode();
         assertTrue(sendResult.broadcastComplete.isDone());
         assertEquals(transactions[0], sendResult.tx);
@@ -150,6 +176,7 @@ public class TransactionBroadcastTest extends TestWithPeerGroup {
         // Confirm it.
         Block b2 = TestUtils.createFakeBlock(blockStore, t1).block;
         inbound(p1, b2);
+        pingAndWait(p1);
         assertNull(outbound(p1));
 
         // Do the same thing with an offline transaction.

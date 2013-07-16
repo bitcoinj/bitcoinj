@@ -16,17 +16,21 @@
 
 package com.google.bitcoin.examples;
 
+import com.google.bitcoin.core.AbstractPeerEventListener;
 import com.google.bitcoin.core.NetworkParameters;
-import com.google.bitcoin.core.TCPNetworkConnection;
+import com.google.bitcoin.core.Peer;
 import com.google.bitcoin.core.VersionMessage;
 import com.google.bitcoin.discovery.DnsDiscovery;
 import com.google.bitcoin.discovery.PeerDiscoveryException;
+import com.google.bitcoin.networkabstraction.NioClient;
+import com.google.bitcoin.networkabstraction.NioClientManager;
 import com.google.bitcoin.params.MainNetParams;
 import com.google.bitcoin.utils.BriefLogFormatter;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.SettableFuture;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -74,16 +78,16 @@ public class PrintPeers {
         final Object lock = new Object();
         final long[] bestHeight = new long[1];
 
-        List<ListenableFuture<TCPNetworkConnection>> futures = Lists.newArrayList();
+        List<ListenableFuture<Void>> futures = Lists.newArrayList();
+        NioClientManager clientManager = new NioClientManager();
         for (final InetAddress addr : addrs) {
-            final ListenableFuture<TCPNetworkConnection> future =
-                    TCPNetworkConnection.connectTo(params, new InetSocketAddress(addr, params.getPort()), 1000 /* timeout */, null);
-            futures.add(future);
+            final Peer peer = new Peer(params, new VersionMessage(params, 0), null, new InetSocketAddress(addr, params.getPort()));
+            final SettableFuture future = SettableFuture.create();
             // Once the connection has completed version handshaking ...
-            Futures.addCallback(future, new FutureCallback<TCPNetworkConnection>() {
-                public void onSuccess(TCPNetworkConnection conn) {
+            peer.addEventListener(new AbstractPeerEventListener() {
+                public void onPeerConnected(Peer p, int peerCount) {
                     // Check the chain height it claims to have.
-                    VersionMessage ver = conn.getVersionMessage();
+                    VersionMessage ver = peer.getPeerVersionMessage();
                     long nodeHeight = ver.bestHeight;
                     synchronized (lock) {
                         long diff = bestHeight[0] - nodeHeight;
@@ -97,13 +101,19 @@ public class PrintPeers {
                             bestHeight[0] = nodeHeight;
                         }
                     }
-                    conn.close();
+                    // Now finish the future and close the connection
+                    future.set(null);
+                    peer.close();
                 }
 
-                public void onFailure(Throwable throwable) {
-                    System.out.println("Failed to talk to " + addr + ": " + throwable.getMessage());
+                public void onPeerDisconnected(Peer p, int peerCount) {
+                    if (!future.isDone())
+                        System.out.println("Failed to talk to " + addr);
+                    future.set(null);
                 }
             });
+            clientManager.openConnection(new InetSocketAddress(addr, params.getPort()), peer);
+            futures.add(future);
         }
         // Wait for every tried connection to finish.
         Futures.successfulAsList(futures).get();

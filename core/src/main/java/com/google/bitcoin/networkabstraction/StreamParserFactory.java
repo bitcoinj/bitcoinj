@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.google.bitcoin.protocols.niowrapper;
+package com.google.bitcoin.networkabstraction;
 
 import java.net.InetAddress;
 import javax.annotation.Nullable;

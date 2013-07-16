@@ -24,6 +24,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.math.BigInteger;
+import java.nio.ByteBuffer;
 
 public class TestUtils {
     public static Transaction createFakeTxWithChangeAddress(NetworkParameters params, BigInteger nanocoins, Address to, Address changeOutput)
@@ -107,7 +108,7 @@ public class TestUtils {
         BitcoinSerializer bs = new BitcoinSerializer(params);
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         bs.serialize(tx, bos);
-        return (Transaction) bs.deserialize(new ByteArrayInputStream(bos.toByteArray()));
+        return (Transaction) bs.deserialize(ByteBuffer.wrap(bos.toByteArray()));
     }
 
     public static class DoubleSpends {

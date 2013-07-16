@@ -14,13 +14,15 @@
  * limitations under the License.
  */
 
-package com.google.bitcoin.protocols.niowrapper;
+package com.google.bitcoin.networkabstraction;
 
 import java.util.Timer;
 import java.util.TimerTask;
 
 /**
- * <p>A stream parser that provides functionality for creating timeouts between arbitrary events.</p>
+ * <p>A base class which provides basic support for socket timeouts. It is used instead of integrating timeouts into the
+ * NIO select thread both for simplicity and to keep code shared between NIO and blocking sockets as much as possible.
+ * </p>
  */
 public abstract class AbstractTimeoutHandler {
     // TimerTask and timeout value which are added to a timer to kill the connection on timeout
@@ -29,7 +31,7 @@ public abstract class AbstractTimeoutHandler {
     private boolean timeoutEnabled = true;
 
     // A timer which manages expiring channels as their timeouts occur (if configured).
-    private static final Timer timeoutTimer = new Timer("ProtobufParser timeouts", true);
+    private static final Timer timeoutTimer = new Timer("AbstractTimeoutHandler timeouts", true);
 
     /**
      * <p>Enables or disables the timeout entirely. This may be useful if you want to store the timeout value but wish

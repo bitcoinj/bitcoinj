@@ -1774,7 +1774,7 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
      * @throws InsufficientMoneyException if the request could not be completed due to not enough balance.
      * @throws IOException if there was a problem broadcasting the transaction
      */
-    public Transaction sendCoins(Peer peer, SendRequest request) throws IOException, InsufficientMoneyException {
+    public Transaction sendCoins(Peer peer, SendRequest request) throws InsufficientMoneyException {
         Transaction tx = sendCoinsOffline(request);
         peer.sendMessage(tx);
         return tx;

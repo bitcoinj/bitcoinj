@@ -31,7 +31,7 @@ public class ListenerRegistration<T> {
         this.executor = executor;
     }
 
-    public static <T> boolean removeFromList(T listener, List<ListenerRegistration<T>> list) {
+    public static <T> boolean removeFromList(T listener, List<? extends ListenerRegistration<T>> list) {
         ListenerRegistration<T> item = null;
         for (ListenerRegistration<T> registration : list) {
             if (registration.listener == listener) {

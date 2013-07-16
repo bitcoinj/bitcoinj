@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-package com.google.bitcoin.protocols.niowrapper;
+package com.google.bitcoin.networkabstraction;
 
 import com.google.bitcoin.core.Utils;
 import com.google.bitcoin.utils.Threading;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.MessageLite;
 import org.slf4j.Logger;
@@ -74,7 +75,7 @@ public class ProtobufParser<MessageType extends MessageLite> extends AbstractTim
     @GuardedBy("lock") private byte[] messageBytes;
     private final ReentrantLock lock = Threading.lock("ProtobufParser");
 
-    private final AtomicReference<MessageWriteTarget> writeTarget = new AtomicReference<MessageWriteTarget>();
+    @VisibleForTesting final AtomicReference<MessageWriteTarget> writeTarget = new AtomicReference<MessageWriteTarget>();
 
     /**
      * Creates a new protobuf handler.
