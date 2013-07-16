@@ -47,11 +47,15 @@ public class PaymentChannelCloseException extends Exception {
 
     CloseReason error;
     public CloseReason getCloseReason() {
-        return  error;
+        return error;
     }
 
     public PaymentChannelCloseException(String message, CloseReason error) {
         super(message);
         this.error = error;
+    }
+
+    public String toString() {
+        return "PaymentChannelCloseException for reason " + getCloseReason().toString();
     }
 }
