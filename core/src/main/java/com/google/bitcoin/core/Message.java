@@ -372,7 +372,7 @@ public abstract class Message implements Serializable {
      * Serializes this message to the provided stream. If you just want the raw bytes use bitcoinSerialize().
      */
     void bitcoinSerializeToStream(OutputStream stream) throws IOException {
-        log.debug("Warning: {} class has not implemented bitcoinSerializeToStream method.  Generating message with no payload", getClass());
+        log.error("Error: {} class has not implemented bitcoinSerializeToStream method.  Generating message with no payload", getClass());
     }
 
     /**
