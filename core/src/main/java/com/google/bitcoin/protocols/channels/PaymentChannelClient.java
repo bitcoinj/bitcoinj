@@ -166,6 +166,10 @@ public class PaymentChannelClient {
         state.provideRefundSignature(returnedRefund.getSignature().toByteArray());
         step = InitStep.WAITING_FOR_CHANNEL_OPEN;
 
+        // Before we can send the server the contract (ie send it to the network), we must ensure that our refund
+        // transaction is safely in the wallet - thus we store it (this also keeps it up-to-date when we pay)
+        state.storeChannelInWallet(serverId);
+
         Protos.ProvideContract.Builder provideContractBuilder = Protos.ProvideContract.newBuilder()
                 .setTx(ByteString.copyFrom(state.getMultisigContract().bitcoinSerialize()));
 
@@ -182,8 +186,6 @@ public class PaymentChannelClient {
 
         if (step == InitStep.WAITING_FOR_INITIATE)
             state = new PaymentChannelClientState(storedChannel, wallet);
-        // Let state know its wallet id so it gets stored and stays up-to-date
-        state.storeChannelInWallet(serverId);
         step = InitStep.CHANNEL_OPEN;
         // channelOpen should disable timeouts, but
         // TODO accomodate high latency between PROVIDE_CONTRACT and here

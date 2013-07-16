@@ -125,6 +125,8 @@ public class PaymentChannelStateTest extends TestWithWallet {
         assertEquals(PaymentChannelServerState.State.WAITING_FOR_MULTISIG_CONTRACT, serverState.getState());
         // This verifies that the refund can spend the multi-sig output when run.
         clientState.provideRefundSignature(refundSig);
+        assertEquals(PaymentChannelClientState.State.SAVE_STATE_IN_WALLET, clientState.getState());
+        clientState.fakeSave();
         assertEquals(PaymentChannelClientState.State.PROVIDE_MULTISIG_CONTRACT_TO_SERVER, clientState.getState());
 
         // Validate the multisig contract looks right.
@@ -245,6 +247,8 @@ public class PaymentChannelStateTest extends TestWithWallet {
         assertEquals(PaymentChannelServerState.State.WAITING_FOR_MULTISIG_CONTRACT, serverState.getState());
         // This verifies that the refund can spend the multi-sig output when run.
         clientState.provideRefundSignature(refundSig);
+        assertEquals(PaymentChannelClientState.State.SAVE_STATE_IN_WALLET, clientState.getState());
+        clientState.fakeSave();
         assertEquals(PaymentChannelClientState.State.PROVIDE_MULTISIG_CONTRACT_TO_SERVER, clientState.getState());
 
         // Validate the multisig contract looks right.
@@ -286,7 +290,7 @@ public class PaymentChannelStateTest extends TestWithWallet {
         Utils.rollMockClock(60 * 60 * 2 + 60 * 5);
 
         // Now store the client state in a stored state object which handles the rebroadcasting
-        clientState.storeChannelInWallet(Sha256Hash.create(new byte[]{}));
+        clientState.doStoreChannelInWallet(Sha256Hash.create(new byte[]{}));
         TxFuturePair clientBroadcastedMultiSig = broadcasts.take();
         TxFuturePair broadcastRefund = broadcasts.take();
         assertEquals(clientBroadcastedMultiSig.tx.getHash(), multisigContract.getHash());
@@ -408,6 +412,8 @@ public class PaymentChannelStateTest extends TestWithWallet {
         try { clientState.getCompletedRefundTransaction(); fail(); } catch (IllegalStateException e) {}
         clientState.provideRefundSignature(refundSigCopy);
         try { clientState.provideRefundSignature(refundSigCopy); fail(); } catch (IllegalStateException e) {}
+        assertEquals(PaymentChannelClientState.State.SAVE_STATE_IN_WALLET, clientState.getState());
+        clientState.fakeSave();
         assertEquals(PaymentChannelClientState.State.PROVIDE_MULTISIG_CONTRACT_TO_SERVER, clientState.getState());
 
         try { clientState.incrementPaymentBy(BigInteger.ONE); fail(); } catch (IllegalStateException e) {}
@@ -574,6 +580,8 @@ public class PaymentChannelStateTest extends TestWithWallet {
         assertEquals(PaymentChannelServerState.State.WAITING_FOR_MULTISIG_CONTRACT, serverState.getState());
         // This verifies that the refund can spend the multi-sig output when run.
         clientState.provideRefundSignature(refundSig);
+        assertEquals(PaymentChannelClientState.State.SAVE_STATE_IN_WALLET, clientState.getState());
+        clientState.fakeSave();
         assertEquals(PaymentChannelClientState.State.PROVIDE_MULTISIG_CONTRACT_TO_SERVER, clientState.getState());
 
         // Get the multisig contract
@@ -648,6 +656,8 @@ public class PaymentChannelStateTest extends TestWithWallet {
         assertEquals(PaymentChannelServerState.State.WAITING_FOR_MULTISIG_CONTRACT, serverState.getState());
         // This verifies that the refund can spend the multi-sig output when run.
         clientState.provideRefundSignature(refundSig);
+        assertEquals(PaymentChannelClientState.State.SAVE_STATE_IN_WALLET, clientState.getState());
+        clientState.fakeSave();
         assertEquals(PaymentChannelClientState.State.PROVIDE_MULTISIG_CONTRACT_TO_SERVER, clientState.getState());
 
         // Validate the multisig contract looks right.
@@ -727,6 +737,8 @@ public class PaymentChannelStateTest extends TestWithWallet {
         assertEquals(PaymentChannelServerState.State.WAITING_FOR_MULTISIG_CONTRACT, serverState.getState());
         // This verifies that the refund can spend the multi-sig output when run.
         clientState.provideRefundSignature(refundSig);
+        assertEquals(PaymentChannelClientState.State.SAVE_STATE_IN_WALLET, clientState.getState());
+        clientState.fakeSave();
         assertEquals(PaymentChannelClientState.State.PROVIDE_MULTISIG_CONTRACT_TO_SERVER, clientState.getState());
 
         // Validate the multisig contract looks right.

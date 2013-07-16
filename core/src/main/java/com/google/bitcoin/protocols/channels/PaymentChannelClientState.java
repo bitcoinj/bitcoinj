@@ -23,6 +23,7 @@ import com.google.bitcoin.core.*;
 import com.google.bitcoin.crypto.TransactionSignature;
 import com.google.bitcoin.script.Script;
 import com.google.bitcoin.script.ScriptBuilder;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import org.slf4j.Logger;
@@ -55,9 +56,9 @@ import static com.google.common.base.Preconditions.*;
  * exception will be thrown at this point. Once this is done, call
  * {@link PaymentChannelClientState#getIncompleteRefundTransaction()} and pass the resultant transaction through to the
  * server. Once you have retrieved the signature, use {@link PaymentChannelClientState#provideRefundSignature(byte[])}.
- * If no exception is thrown at this point, we are secure against a malicious server attempting to destroy all our coins
- * and can provide the server with the multi-sig contract (via {@link PaymentChannelClientState#getMultisigContract()})
- * safely.
+ * You must then call {@link PaymentChannelClientState#storeChannelInWallet(Sha256Hash)} to store the refund transaction
+ * in the wallet, protecting you against a malicious server attempting to destroy all your coins. At this point, you can
+ * provide the server with the multi-sig contract (via {@link PaymentChannelClientState#getMultisigContract()}) safely.
  * </p>
  */
 public class PaymentChannelClientState {
@@ -92,6 +93,7 @@ public class PaymentChannelClientState {
         NEW,
         INITIATED,
         WAITING_FOR_SIGNED_REFUND,
+        SAVE_STATE_IN_WALLET,
         PROVIDE_MULTISIG_CONTRACT_TO_SERVER,
         READY,
         EXPIRED
@@ -256,8 +258,7 @@ public class PaymentChannelClientState {
         TransactionInput refundInput = refundTx.getInput(0);
         refundInput.setScriptSig(scriptSig);
         refundInput.verify(multisigContractOutput);
-        wallet.commitTx(multisigContract);
-        state = State.PROVIDE_MULTISIG_CONTRACT_TO_SERVER;
+        state = State.SAVE_STATE_IN_WALLET;
     }
 
     private synchronized Transaction makeUnsignedChannelContract(BigInteger valueToMe) throws ValueOutOfRangeException {
@@ -347,6 +348,27 @@ public class PaymentChannelClientState {
     }
 
     /**
+     * Skips saving state in the wallet for testing
+     */
+    @VisibleForTesting synchronized void fakeSave() {
+        try {
+            wallet.commitTx(multisigContract);
+        } catch (VerificationException e) {
+            throw new RuntimeException(e); // We created it
+        }
+        state = State.PROVIDE_MULTISIG_CONTRACT_TO_SERVER;
+    }
+
+    @VisibleForTesting synchronized void doStoreChannelInWallet(Sha256Hash id) {
+        StoredPaymentChannelClientStates channels = (StoredPaymentChannelClientStates)
+                wallet.getExtensions().get(StoredPaymentChannelClientStates.EXTENSION_ID);
+        checkState(channels.getChannel(id, multisigContract.getHash()) == null);
+        storedChannel = new StoredClientChannel(id, multisigContract, refundTx, myKey, valueToMe, refundFees);
+        channels.putChannel(storedChannel);
+        wallet.addOrUpdateExtension(channels);
+    }
+
+    /**
      * <p>Stores this channel's state in the wallet as a part of a {@link StoredPaymentChannelClientStates} wallet
      * extension and keeps it up-to-date each time payment is incremented. This allows the
      * {@link StoredPaymentChannelClientStates} object to keep track of timeouts and broadcast the refund transaction
@@ -359,18 +381,19 @@ public class PaymentChannelClientState {
      *           unique.
      */
     public synchronized void storeChannelInWallet(Sha256Hash id) {
-        checkState(state == State.READY && id != null);
+        checkState(state == State.SAVE_STATE_IN_WALLET && id != null);
         if (storedChannel != null) {
             checkState(storedChannel.id.equals(id));
             return;
         }
+        doStoreChannelInWallet(id);
 
-        StoredPaymentChannelClientStates channels = (StoredPaymentChannelClientStates)
-                                            wallet.getExtensions().get(StoredPaymentChannelClientStates.EXTENSION_ID);
-        checkState(channels.getChannel(id, multisigContract.getHash()) == null);
-        storedChannel = new StoredClientChannel(id, multisigContract, refundTx, myKey, valueToMe, refundFees);
-        channels.putChannel(storedChannel);
-        wallet.addOrUpdateExtension(channels);
+        try {
+            wallet.commitTx(multisigContract);
+        } catch (VerificationException e) {
+            throw new RuntimeException(e); // We created it
+        }
+        state = State.PROVIDE_MULTISIG_CONTRACT_TO_SERVER;
     }
 
     /**
