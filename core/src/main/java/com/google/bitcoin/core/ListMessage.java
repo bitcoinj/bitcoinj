@@ -121,4 +121,10 @@ public abstract class ListMessage extends Message {
             stream.write(Utils.reverseBytes(i.hash.getBytes()));
         }
     }
+
+    @Override
+    public boolean equals(Object o) {
+        return o.getClass() == this.getClass() &&
+                ((ListMessage)o).items.equals(this.items);
+    }
 }
