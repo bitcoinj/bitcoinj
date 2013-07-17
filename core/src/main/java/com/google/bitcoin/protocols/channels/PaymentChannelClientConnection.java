@@ -16,10 +16,6 @@
 
 package com.google.bitcoin.protocols.channels;
 
-import java.io.IOException;
-import java.math.BigInteger;
-import java.net.InetSocketAddress;
-
 import com.google.bitcoin.core.ECKey;
 import com.google.bitcoin.core.Sha256Hash;
 import com.google.bitcoin.core.Wallet;
@@ -28,6 +24,10 @@ import com.google.bitcoin.protocols.niowrapper.ProtobufParser;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import org.bitcoin.paymentchannel.Protos;
+
+import java.io.IOException;
+import java.math.BigInteger;
+import java.net.InetSocketAddress;
 
 /**
  * Manages a {@link PaymentChannelClientState} by connecting to a server over TLS and exchanging the necessary data over
@@ -72,7 +72,7 @@ public class PaymentChannelClientConnection {
 
             @Override
             public void destroyConnection(PaymentChannelCloseException.CloseReason reason) {
-                channelOpenFuture.setException(new PaymentChannelCloseException("Payment channel client requested that the connection be closed", reason));
+                channelOpenFuture.setException(new PaymentChannelCloseException("Payment channel client requested that the connection be closed: " + reason, reason));
                 wireParser.closeConnection();
             }
 
