@@ -473,7 +473,7 @@ public class ChannelConnectionTest extends TestWithWallet {
     }
 
     @Test
-    public void testClientValueTooLarge() throws Exception {
+    public void testValuesAreRespected() throws Exception {
         ChannelTestUtils.RecordingPair pair = ChannelTestUtils.makeRecorders(serverWallet, mockBroadcaster);
         PaymentChannelServer server = pair.server;
         PaymentChannelClient client = new PaymentChannelClient(wallet, myKey, Utils.COIN, Sha256Hash.ZERO_HASH, pair.clientRecorder);
@@ -493,6 +493,27 @@ public class ChannelConnectionTest extends TestWithWallet {
             client.incrementPayment(BigInteger.ONE);
             fail();
         } catch (IllegalStateException e) { }
+
+        // Now check that if the server has a lower min size than what we are willing to spend, we do actually open
+        // a channel of that size.
+        sendMoneyToWallet(Utils.COIN.multiply(BigInteger.TEN), AbstractBlockChain.NewBlockType.BEST_CHAIN);
+
+        pair = ChannelTestUtils.makeRecorders(serverWallet, mockBroadcaster);
+        server = pair.server;
+        final BigInteger myValue = Utils.COIN.multiply(BigInteger.TEN);
+        client = new PaymentChannelClient(wallet, myKey, myValue, Sha256Hash.ZERO_HASH, pair.clientRecorder);
+        client.connectionOpen();
+        server.connectionOpen();
+        server.receiveMessage(pair.clientRecorder.checkNextMsg(MessageType.CLIENT_VERSION));
+        client.receiveMessage(pair.serverRecorder.checkNextMsg(MessageType.SERVER_VERSION));
+        client.receiveMessage(Protos.TwoWayChannelMessage.newBuilder()
+                .setInitiate(Protos.Initiate.newBuilder().setExpireTimeSecs(Utils.now().getTime() / 1000)
+                        .setMinAcceptedChannelSize(Utils.COIN.add(BigInteger.ONE).longValue())
+                        .setMultisigKey(ByteString.copyFrom(new ECKey().getPubKey())))
+                .setType(MessageType.INITIATE).build());
+        final Protos.TwoWayChannelMessage provideRefund = pair.clientRecorder.checkNextMsg(MessageType.PROVIDE_REFUND);
+        Transaction refund = new Transaction(params, provideRefund.getProvideRefund().getTx().toByteArray());
+        assertEquals(myValue, refund.getOutput(0).getValue());
     }
 
     @Test

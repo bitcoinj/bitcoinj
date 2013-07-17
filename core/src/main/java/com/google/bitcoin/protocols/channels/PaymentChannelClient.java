@@ -1,9 +1,7 @@
 package com.google.bitcoin.protocols.channels;
 
-import java.math.BigInteger;
-import java.util.concurrent.locks.ReentrantLock;
-
 import com.google.bitcoin.core.*;
+import com.google.bitcoin.protocols.channels.PaymentChannelCloseException.CloseReason;
 import com.google.bitcoin.utils.Threading;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.protobuf.ByteString;
@@ -11,7 +9,9 @@ import net.jcip.annotations.GuardedBy;
 import org.bitcoin.paymentchannel.Protos;
 import org.slf4j.LoggerFactory;
 
-import com.google.bitcoin.protocols.channels.PaymentChannelCloseException.CloseReason;
+import java.math.BigInteger;
+import java.util.concurrent.locks.ReentrantLock;
+
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
@@ -138,13 +138,12 @@ public class PaymentChannelClient {
     }
 
     @GuardedBy("lock")
-    private void receiveInitiate(Protos.Initiate initiate, BigInteger minChannelSize) throws VerificationException, ValueOutOfRangeException {
+    private void receiveInitiate(Protos.Initiate initiate, BigInteger contractValue) throws VerificationException, ValueOutOfRangeException {
         log.info("Got INITIATE message, providing refund transaction");
 
         state = new PaymentChannelClientState(wallet, myKey,
                 new ECKey(null, initiate.getMultisigKey().toByteArray()),
-                minChannelSize,
-                initiate.getExpireTimeSecs());
+                contractValue, initiate.getExpireTimeSecs());
         state.initiate();
         step = InitStep.WAITING_FOR_REFUND_RETURN;
 
@@ -232,14 +231,14 @@ public class PaymentChannelClient {
                         }
 
                         BigInteger minChannelSize = BigInteger.valueOf(initiate.getMinAcceptedChannelSize());
-                        if (minChannelSize.compareTo(maxValue) > 0) {
+                        if (maxValue.compareTo(minChannelSize) < 0) {
                             errorBuilder = Protos.Error.newBuilder()
                                     .setCode(Protos.Error.ErrorCode.CHANNEL_VALUE_TOO_LARGE);
                             closeReason = CloseReason.SERVER_REQUESTED_TOO_MUCH_VALUE;
                             break;
                         }
 
-                        receiveInitiate(initiate, minChannelSize);
+                        receiveInitiate(initiate, maxValue);
                         return;
                     case RETURN_REFUND:
                         receiveRefund(msg);
