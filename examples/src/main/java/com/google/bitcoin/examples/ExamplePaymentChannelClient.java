@@ -16,20 +16,25 @@
 
 package com.google.bitcoin.examples;
 
-import java.io.File;
-import java.math.BigInteger;
-import java.net.InetSocketAddress;
-
-
-import com.google.bitcoin.core.*;
+import com.google.bitcoin.core.ECKey;
+import com.google.bitcoin.core.NetworkParameters;
+import com.google.bitcoin.core.Utils;
+import com.google.bitcoin.core.Wallet;
 import com.google.bitcoin.kits.WalletAppKit;
 import com.google.bitcoin.params.TestNet3Params;
 import com.google.bitcoin.protocols.channels.PaymentChannelClientConnection;
 import com.google.bitcoin.protocols.channels.StoredPaymentChannelClientStates;
 import com.google.bitcoin.protocols.channels.ValueOutOfRangeException;
 import com.google.bitcoin.utils.BriefLogFormatter;
-import com.google.common.util.concurrent.*;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.Uninterruptibles;
 import org.slf4j.LoggerFactory;
+
+import java.io.File;
+import java.math.BigInteger;
+import java.net.InetSocketAddress;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
@@ -65,7 +70,7 @@ public class ExamplePaymentChannelClient {
                 // The StoredPaymentChannelClientStates object is responsible for, amongst other things, broadcasting
                 // the refund transaction if its lock time has expired. It also persists channels so we can resume them
                 // after a restart.
-                wallet().addExtension(new StoredPaymentChannelClientStates(peerGroup(), wallet()));
+                wallet().addExtension(new StoredPaymentChannelClientStates(wallet(), peerGroup()));
             }
         };
         appKit.startAndWait();

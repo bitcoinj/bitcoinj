@@ -27,7 +27,6 @@ import org.junit.Test;
 
 import java.math.BigInteger;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutionException;
@@ -59,13 +58,13 @@ public class PaymentChannelStateTest extends TestWithWallet {
     @Before
     public void setUp() throws Exception {
         super.setUp();
-        wallet.addExtension(new StoredPaymentChannelClientStates(new TransactionBroadcaster() {
+        wallet.addExtension(new StoredPaymentChannelClientStates(wallet, new TransactionBroadcaster() {
             @Override
             public ListenableFuture<Transaction> broadcastTransaction(Transaction tx) {
                 fail();
                 return null;
             }
-        }, wallet));
+        }));
         sendMoneyToWallet(Utils.COIN, AbstractBlockChain.NewBlockType.BEST_CHAIN);
         chain = new BlockChain(params, wallet, blockStore); // Recreate chain as sendMoneyToWallet will confuse it
         serverKey = new ECKey();
@@ -223,7 +222,7 @@ public class PaymentChannelStateTest extends TestWithWallet {
         assertEquals(Utils.CENT, wallet.getBalance());
 
         // Set the wallet's stored states to use our real test PeerGroup
-        StoredPaymentChannelClientStates stateStorage = new StoredPaymentChannelClientStates(mockBroadcaster, wallet);
+        StoredPaymentChannelClientStates stateStorage = new StoredPaymentChannelClientStates(wallet, mockBroadcaster);
         wallet.addOrUpdateExtension(stateStorage);
 
         Utils.rollMockClock(0); // Use mock clock

@@ -63,7 +63,7 @@ public class ChannelConnectionTest extends TestWithWallet {
         super.setUp();
         sendMoneyToWallet(Utils.COIN, AbstractBlockChain.NewBlockType.BEST_CHAIN);
         sendMoneyToWallet(Utils.COIN, AbstractBlockChain.NewBlockType.BEST_CHAIN);
-        wallet.addExtension(new StoredPaymentChannelClientStates(failBroadcaster, wallet));
+        wallet.addExtension(new StoredPaymentChannelClientStates(wallet, failBroadcaster));
         chain = new BlockChain(params, wallet, blockStore); // Recreate chain as sendMoneyToWallet will confuse it
         serverWallet = new Wallet(params);
         serverWallet.addExtension(new StoredPaymentChannelServerStates(serverWallet, failBroadcaster));
@@ -404,7 +404,7 @@ public class ChannelConnectionTest extends TestWithWallet {
 
         // Now roll the mock clock and recreate the client object so that it removes the channels and announces refunds.
         Utils.rollMockClock(60 * 60 * 24 + 60*5);   // Client announces refund 5 minutes after expire time
-        StoredPaymentChannelClientStates newClientStates = new StoredPaymentChannelClientStates(mockBroadcaster, wallet);
+        StoredPaymentChannelClientStates newClientStates = new StoredPaymentChannelClientStates(wallet, mockBroadcaster);
         newClientStates.deserializeWalletExtension(wallet, clientStoredChannels.serializeWalletExtension());
         // Expect two pairs of contract/refund ...
         for (int i = 0; i < 2; i++) {
@@ -425,7 +425,7 @@ public class ChannelConnectionTest extends TestWithWallet {
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         new WalletProtobufSerializer().writeWallet(wallet, bos);
         Wallet wallet2 = new Wallet(wallet.getParams());
-        wallet2.addExtension(new StoredPaymentChannelClientStates(failBroadcaster, wallet2));
+        wallet2.addExtension(new StoredPaymentChannelClientStates(wallet2, failBroadcaster));
         new WalletProtobufSerializer().readWallet(WalletProtobufSerializer.parseToProto(new ByteArrayInputStream(bos.toByteArray())), wallet2);
         return wallet2;
     }
