@@ -105,7 +105,7 @@ public class PaymentChannelClientConnection {
         }, Protos.TwoWayChannelMessage.getDefaultInstance(), Short.MAX_VALUE, timeoutSeconds*1000);
 
         // Initiate the outbound network connection. We don't need to keep this around. The wireParser object will handle
-        // things from here on our.
+        // things from here on out.
         new ProtobufClient(server, wireParser, timeoutSeconds * 1000);
     }
 
@@ -162,5 +162,13 @@ public class PaymentChannelClientConnection {
         } catch (IllegalStateException e) {
             // Already closed...oh well
         }
+    }
+
+    /**
+     * Disconnects the network connection but doesn't request the server to close the channel first (literally just
+     * unplugs the network socket and marks the stored channel state as inactive).
+     */
+    public void disconnectWithoutChannelClose() {
+        wireParser.closeConnection();
     }
 }
