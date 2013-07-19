@@ -1,16 +1,16 @@
 package com.google.bitcoin.protocols.channels;
 
-import java.math.BigInteger;
-import java.util.concurrent.locks.ReentrantLock;
-
 import com.google.bitcoin.core.*;
+import com.google.bitcoin.protocols.channels.PaymentChannelCloseException.CloseReason;
 import com.google.bitcoin.utils.Threading;
 import com.google.protobuf.ByteString;
 import net.jcip.annotations.GuardedBy;
 import org.bitcoin.paymentchannel.Protos;
 import org.slf4j.LoggerFactory;
 
-import com.google.bitcoin.protocols.channels.PaymentChannelCloseException.CloseReason;
+import java.math.BigInteger;
+import java.util.concurrent.locks.ReentrantLock;
+
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
@@ -147,18 +147,17 @@ public class PaymentChannelServer {
                 .setType(Protos.TwoWayChannelMessage.MessageType.SERVER_VERSION)
                 .setServerVersion(versionNegotiationBuilder)
                 .build());
-
         ByteString reopenChannelContractHash = msg.getClientVersion().getPreviousChannelContractHash();
         if (reopenChannelContractHash != null && reopenChannelContractHash.size() == 32) {
+            Sha256Hash contractHash = new Sha256Hash(reopenChannelContractHash.toByteArray());
+            log.info("New client that wants to resume {}", contractHash);
             StoredPaymentChannelServerStates channels = (StoredPaymentChannelServerStates)
                     wallet.getExtensions().get(StoredPaymentChannelServerStates.EXTENSION_ID);
             if (channels != null) {
-                Sha256Hash contractHash = new Sha256Hash(reopenChannelContractHash.toByteArray());
                 StoredServerChannel storedServerChannel = channels.getChannel(contractHash);
                 if (storedServerChannel != null) {
                     if (storedServerChannel.setConnectedHandler(this)) {
                         log.info("Got resume version message, responding with VERSIONS and CHANNEL_OPEN");
-
                         state = storedServerChannel.getState(wallet, broadcaster);
                         step = InitStep.CHANNEL_OPEN;
                         conn.sendToClient(Protos.TwoWayChannelMessage.newBuilder()
@@ -166,8 +165,14 @@ public class PaymentChannelServer {
                                 .build());
                         conn.channelOpen(contractHash);
                         return;
+                    } else {
+                        log.error("  ... but that contract is already in use.");
                     }
+                } else {
+                    log.error(" ... but we do not have any record of that contract! Resume failed.");
                 }
+            } else {
+                log.error(" ... but we do not have any stored channels! Resume failed.");
             }
         }
         log.info("Got initial version message, responding with VERSIONS and INITIATE");
