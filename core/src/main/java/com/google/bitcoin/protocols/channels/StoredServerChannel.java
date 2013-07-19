@@ -16,10 +16,9 @@
 
 package com.google.bitcoin.protocols.channels;
 
-import java.io.Serializable;
-import java.math.BigInteger;
-
 import com.google.bitcoin.core.*;
+
+import java.math.BigInteger;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
@@ -80,7 +79,7 @@ public class StoredServerChannel {
      *               be used to complete transactions
      * @param broadcaster The {@link TransactionBroadcaster} which will be used to broadcast contract/payment transactions.
      */
-    public synchronized PaymentChannelServerState getState(Wallet wallet, TransactionBroadcaster broadcaster) throws VerificationException {
+    public synchronized PaymentChannelServerState getOrCreateState(Wallet wallet, TransactionBroadcaster broadcaster) throws VerificationException {
         if (state == null)
             state = new PaymentChannelServerState(this, wallet, broadcaster);
         checkArgument(wallet == state.wallet);

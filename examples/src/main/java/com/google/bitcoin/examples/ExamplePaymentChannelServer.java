@@ -16,10 +16,6 @@
 
 package com.google.bitcoin.examples;
 
-import java.io.File;
-import java.math.BigInteger;
-import java.net.SocketAddress;
-
 import com.google.bitcoin.core.NetworkParameters;
 import com.google.bitcoin.core.Sha256Hash;
 import com.google.bitcoin.core.Utils;
@@ -29,6 +25,10 @@ import com.google.bitcoin.params.TestNet3Params;
 import com.google.bitcoin.protocols.channels.*;
 import com.google.bitcoin.utils.BriefLogFormatter;
 import org.slf4j.LoggerFactory;
+
+import java.io.File;
+import java.math.BigInteger;
+import java.net.SocketAddress;
 
 /**
  * Simple server that listens on port 4242 for incoming payment channels.
@@ -79,7 +79,7 @@ public class ExamplePaymentChannelServer implements PaymentChannelServerListener
                 // Try to get the state object from the stored state set in our wallet
                 PaymentChannelServerState state = null;
                 try {
-                    state = storedStates.getChannel(channelId).getState(appKit.wallet(), appKit.peerGroup());
+                    state = storedStates.getChannel(channelId).getOrCreateState(appKit.wallet(), appKit.peerGroup());
                 } catch (VerificationException e) {
                     // This indicates corrupted data, and since the channel was just opened, cannot happen
                     throw new RuntimeException(e);

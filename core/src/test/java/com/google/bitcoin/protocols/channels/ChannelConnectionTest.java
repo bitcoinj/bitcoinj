@@ -167,7 +167,7 @@ public class ChannelConnectionTest extends TestWithWallet {
 
         StoredPaymentChannelServerStates channels = (StoredPaymentChannelServerStates)serverWallet.getExtensions().get(StoredPaymentChannelServerStates.EXTENSION_ID);
         StoredServerChannel storedServerChannel = channels.getChannel(broadcastMultiSig.getHash());
-        PaymentChannelServerState serverState = storedServerChannel.getState(serverWallet, mockBroadcaster);
+        PaymentChannelServerState serverState = storedServerChannel.getOrCreateState(serverWallet, mockBroadcaster);
 
         // Check that you can call close multiple times with no exceptions.
         client.close();

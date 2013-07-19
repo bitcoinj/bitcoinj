@@ -158,7 +158,7 @@ public class PaymentChannelServer {
                 if (storedServerChannel != null) {
                     if (storedServerChannel.setConnectedHandler(this)) {
                         log.info("Got resume version message, responding with VERSIONS and CHANNEL_OPEN");
-                        state = storedServerChannel.getState(wallet, broadcaster);
+                        state = storedServerChannel.getOrCreateState(wallet, broadcaster);
                         step = InitStep.CHANNEL_OPEN;
                         conn.sendToClient(Protos.TwoWayChannelMessage.newBuilder()
                                 .setType(Protos.TwoWayChannelMessage.MessageType.CHANNEL_OPEN)

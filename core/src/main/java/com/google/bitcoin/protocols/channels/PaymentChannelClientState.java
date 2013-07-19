@@ -16,9 +16,6 @@
 
 package com.google.bitcoin.protocols.channels;
 
-import java.math.BigInteger;
-import java.util.List;
-
 import com.google.bitcoin.core.*;
 import com.google.bitcoin.crypto.TransactionSignature;
 import com.google.bitcoin.script.Script;
@@ -28,6 +25,9 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.math.BigInteger;
+import java.util.List;
 
 import static com.google.common.base.Preconditions.*;
 
@@ -326,7 +326,7 @@ public class PaymentChannelClientState {
     private synchronized void updateChannelInWallet() {
         if (storedChannel == null)
             return;
-        storedChannel.updateValueToMe(valueToMe);
+        storedChannel.valueToMe = valueToMe;
         StoredPaymentChannelClientStates channels = (StoredPaymentChannelClientStates)
                 wallet.getExtensions().get(StoredPaymentChannelClientStates.EXTENSION_ID);
         wallet.addOrUpdateExtension(channels);

@@ -81,7 +81,7 @@ public class StoredPaymentChannelServerStates implements WalletExtension {
             if (channel.connectedHandler != null) // connectedHandler will be reset to null in connectionClosed
                 channel.connectedHandler.close(); // Closes the actual connection, not the channel
             try {//TODO add event listener to PaymentChannelServerStateManager
-                channel.getState(wallet, broadcaster).close();
+                channel.getOrCreateState(wallet, broadcaster).close();
             } catch (ValueOutOfRangeException e) {
                 e.printStackTrace();
             } catch (VerificationException e) {

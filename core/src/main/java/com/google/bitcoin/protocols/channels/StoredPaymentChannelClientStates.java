@@ -227,8 +227,4 @@ class StoredClientChannel {
         this.refundFees = refundFees;
         this.active = active;
     }
-
-    void updateValueToMe(BigInteger newValue) {
-        this.valueToMe = newValue;
-    }
 }
