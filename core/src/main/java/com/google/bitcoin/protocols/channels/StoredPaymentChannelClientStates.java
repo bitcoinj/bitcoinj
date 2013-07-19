@@ -192,9 +192,9 @@ public class StoredPaymentChannelClientStates implements WalletExtension {
                 StoredClientChannel channel = new StoredClientChannel(new Sha256Hash(storedState.getId().toByteArray()),
                         new Transaction(params, storedState.getContractTransaction().toByteArray()),
                         refundTransaction,
-                        new ECKey(storedState.getMyKey().toByteArray(), null),
+                        new ECKey(new BigInteger(1, storedState.getMyKey().toByteArray()), null, true),
                         BigInteger.valueOf(storedState.getValueToMe()),
-                        BigInteger.valueOf(storedState.getRefundFees()));
+                        BigInteger.valueOf(storedState.getRefundFees()), false);
                 putChannel(channel, false);
             }
         } finally {
@@ -217,14 +217,15 @@ class StoredClientChannel {
     // In-memory flag to indicate intent to resume this channel (or that the channel is already in use)
     boolean active = false;
 
-    StoredClientChannel(Sha256Hash id, Transaction contract, Transaction refund, ECKey myKey, BigInteger valueToMe, BigInteger refundFees) {
+    StoredClientChannel(Sha256Hash id, Transaction contract, Transaction refund, ECKey myKey, BigInteger valueToMe,
+                        BigInteger refundFees, boolean active) {
         this.id = id;
         this.contract = contract;
         this.refund = refund;
         this.myKey = myKey;
         this.valueToMe = valueToMe;
         this.refundFees = refundFees;
-        this.active = true;
+        this.active = active;
     }
 
     void updateValueToMe(BigInteger newValue) {

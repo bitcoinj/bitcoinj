@@ -363,7 +363,7 @@ public class PaymentChannelClientState {
         StoredPaymentChannelClientStates channels = (StoredPaymentChannelClientStates)
                 wallet.getExtensions().get(StoredPaymentChannelClientStates.EXTENSION_ID);
         checkState(channels.getChannel(id, multisigContract.getHash()) == null);
-        storedChannel = new StoredClientChannel(id, multisigContract, refundTx, myKey, valueToMe, refundFees);
+        storedChannel = new StoredClientChannel(id, multisigContract, refundTx, myKey, valueToMe, refundFees, true);
         channels.putChannel(storedChannel);
         wallet.addOrUpdateExtension(channels);
     }

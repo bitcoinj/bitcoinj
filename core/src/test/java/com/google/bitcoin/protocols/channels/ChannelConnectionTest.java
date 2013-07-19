@@ -17,6 +17,7 @@
 package com.google.bitcoin.protocols.channels;
 
 import com.google.bitcoin.core.*;
+import com.google.bitcoin.store.WalletProtobufSerializer;
 import com.google.bitcoin.utils.Threading;
 import com.google.bitcoin.wallet.WalletFiles;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -28,6 +29,8 @@ import org.junit.Before;
 import org.junit.Test;
 
 import javax.annotation.Nullable;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.math.BigInteger;
 import java.net.InetSocketAddress;
@@ -47,20 +50,23 @@ public class ChannelConnectionTest extends TestWithWallet {
     private TransactionBroadcaster mockBroadcaster;
     private Semaphore broadcastTxPause;
 
+    private static final TransactionBroadcaster failBroadcaster = new TransactionBroadcaster() {
+        @Override
+        public ListenableFuture<Transaction> broadcastTransaction(Transaction tx) {
+            fail();
+            return null;
+        }
+    };
+
     @Before
     public void setUp() throws Exception {
         super.setUp();
         sendMoneyToWallet(Utils.COIN, AbstractBlockChain.NewBlockType.BEST_CHAIN);
         sendMoneyToWallet(Utils.COIN, AbstractBlockChain.NewBlockType.BEST_CHAIN);
-        wallet.addExtension(new StoredPaymentChannelClientStates(new TransactionBroadcaster() {
-            @Override
-            public ListenableFuture<Transaction> broadcastTransaction(Transaction tx) {
-                fail();
-                return null;
-            }
-        }, wallet));
+        wallet.addExtension(new StoredPaymentChannelClientStates(failBroadcaster, wallet));
         chain = new BlockChain(params, wallet, blockStore); // Recreate chain as sendMoneyToWallet will confuse it
         serverWallet = new Wallet(params);
+        serverWallet.addExtension(new StoredPaymentChannelServerStates(serverWallet, failBroadcaster));
         serverWallet.addKey(new ECKey());
         chain.addWallet(serverWallet);
         // Use an atomic boolean to indicate failure because fail()/assert*() dont work in network threads
@@ -270,7 +276,7 @@ public class ChannelConnectionTest extends TestWithWallet {
         client.connectionClosed();
         assertFalse(client.connectionOpen);
 
-        // There is now an open channel worth COIN-CENT with id Sha256.create(new byte[] {})
+        // There is now an inactive open channel worth COIN-CENT with id Sha256.create(new byte[] {})
         StoredPaymentChannelClientStates clientStoredChannels =
                 (StoredPaymentChannelClientStates) wallet.getExtensions().get(StoredPaymentChannelClientStates.EXTENSION_ID);
         assertEquals(1, clientStoredChannels.mapChannels.size());
@@ -289,7 +295,12 @@ public class ChannelConnectionTest extends TestWithWallet {
         pair.serverRecorder.checkNextMsg(MessageType.SERVER_VERSION);
         pair.serverRecorder.checkNextMsg(MessageType.INITIATE);
 
-        // Now reopen/resume the channel.
+        // Now reopen/resume the channel after round-tripping the wallets.
+        wallet = roundTripClientWallet(wallet);
+        serverWallet = roundTripServerWallet(serverWallet);
+        clientStoredChannels =
+                (StoredPaymentChannelClientStates) wallet.getExtensions().get(StoredPaymentChannelClientStates.EXTENSION_ID);
+
         pair = ChannelTestUtils.makeRecorders(serverWallet, mockBroadcaster);
         client = new PaymentChannelClient(wallet, myKey, Utils.COIN, someServerId, pair.clientRecorder);
         server = pair.server;
@@ -297,6 +308,7 @@ public class ChannelConnectionTest extends TestWithWallet {
         server.connectionOpen();
         // Check the contract hash is sent on the wire correctly.
         final Protos.TwoWayChannelMessage clientVersionMsg = pair.clientRecorder.checkNextMsg(MessageType.CLIENT_VERSION);
+        assertTrue(clientVersionMsg.getClientVersion().hasPreviousChannelContractHash());
         assertEquals(contractHash, new Sha256Hash(clientVersionMsg.getClientVersion().getPreviousChannelContractHash().toByteArray()));
         server.receiveMessage(clientVersionMsg);
         client.receiveMessage(pair.serverRecorder.checkNextMsg(MessageType.SERVER_VERSION));
@@ -313,7 +325,7 @@ public class ChannelConnectionTest extends TestWithWallet {
         PaymentChannelClient openClient = client;
         ChannelTestUtils.RecordingPair openPair = pair;
 
-        // Now open up a new client with the same id and make sure it doesnt attempt to reopen the channel.
+        // Now open up a new client with the same id and make sure it doesn't attempt to reopen the channel.
         // If a client connects to a server with the same channel ID as one that's currently in use, the
         // server responds by opening up a new channel instead of letting two client connections conflict.
         pair = ChannelTestUtils.makeRecorders(serverWallet, mockBroadcaster);
@@ -407,6 +419,24 @@ public class ChannelConnectionTest extends TestWithWallet {
         StoredPaymentChannelServerStates serverStoredChannels = new StoredPaymentChannelServerStates(serverWallet, mockBroadcaster);
         Thread.sleep(2000);   // TODO: Fix this stupid hack.
         assertTrue(serverStoredChannels.mapChannels.isEmpty());
+    }
+
+    private static Wallet roundTripClientWallet(Wallet wallet) throws Exception {
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        new WalletProtobufSerializer().writeWallet(wallet, bos);
+        Wallet wallet2 = new Wallet(wallet.getParams());
+        wallet2.addExtension(new StoredPaymentChannelClientStates(failBroadcaster, wallet2));
+        new WalletProtobufSerializer().readWallet(WalletProtobufSerializer.parseToProto(new ByteArrayInputStream(bos.toByteArray())), wallet2);
+        return wallet2;
+    }
+
+    private static Wallet roundTripServerWallet(Wallet wallet) throws Exception {
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        new WalletProtobufSerializer().writeWallet(wallet, bos);
+        Wallet wallet2 = new Wallet(wallet.getParams());
+        wallet2.addExtension(new StoredPaymentChannelServerStates(wallet2, failBroadcaster));
+        new WalletProtobufSerializer().readWallet(WalletProtobufSerializer.parseToProto(new ByteArrayInputStream(bos.toByteArray())), wallet2);
+        return wallet2;
     }
 
     @Test
