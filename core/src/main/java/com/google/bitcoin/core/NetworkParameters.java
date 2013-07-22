@@ -53,8 +53,6 @@ public abstract class NetworkParameters implements Serializable {
     public static final byte[] SATOSHI_KEY = Hex.decode("04fc9702847840aaf195de8442ebecedf5b095cdbb9bc716bda9110971b28a49e0ead8564ff0db22209e0374782c093bb899692d524e9d6a6956e7c5ecbcd68284");
 
     /** The string returned by getId() for the main, production network where people trade things. */
-    public static final String ID_PRODNET = "org.bitcoin.production";
-    /** The string returned by getId() for the main, production network where people trade things. */
     public static final String ID_MAINNET = "org.bitcoin.production";
     /** The string returned by getId() for the testnet. */
     public static final String ID_TESTNET = "org.bitcoin.test";
@@ -134,26 +132,31 @@ public abstract class NetworkParameters implements Serializable {
     public static final BigInteger MAX_MONEY = new BigInteger("21000000", 10).multiply(COIN);
 
     /** Alias for TestNet3Params.get(), use that instead. */
+    @Deprecated
     public static NetworkParameters testNet() {
         return TestNet3Params.get();
     }
 
     /** Alias for TestNet2Params.get(), use that instead. */
+    @Deprecated
     public static NetworkParameters testNet2() {
         return TestNet2Params.get();
     }
 
     /** Alias for TestNet3Params.get(), use that instead. */
+    @Deprecated
     public static NetworkParameters testNet3() {
         return TestNet3Params.get();
     }
 
     /** Alias for MainNetParams.get(), use that instead */
+    @Deprecated
     public static NetworkParameters prodNet() {
         return MainNetParams.get();
     }
 
     /** Returns a testnet params modified to allow any difficulty target. */
+    @Deprecated
     public static NetworkParameters unitTests() {
         return UnitTestParams.get();
     }

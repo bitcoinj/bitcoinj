@@ -1070,6 +1070,7 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
             if (result == TransactionInput.ConnectionResult.ALREADY_SPENT) {
                 if (fromChain) {
                     // Double spend from chain: this will be handled later by checkForDoubleSpendAgainstPending.
+                    log.warn("updateForSpends: saw double spend from chain, handling later.");
                 } else {
                     // We saw two pending transactions that double spend each other. We don't know which will win.
                     // This should not happen.
@@ -1082,6 +1083,7 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
                 // The outputs are already marked as spent by the connect call above, so check if there are any more for
                 // us to use. Move if not.
                 Transaction connected = checkNotNull(input.getOutpoint().fromTx);
+                log.info("  marked {} as spent", input.getOutpoint());
                 maybeMovePool(connected, "prevtx");
             }
         }
