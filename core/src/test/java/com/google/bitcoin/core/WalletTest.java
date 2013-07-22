@@ -46,6 +46,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.google.bitcoin.core.TestUtils.*;
+import static com.google.bitcoin.core.TestUtils.makeSolvedTestBlock;
 import static com.google.bitcoin.core.Utils.bitcoinValueToFriendlyString;
 import static com.google.bitcoin.core.Utils.toNanoCoins;
 import static org.junit.Assert.*;
@@ -1824,5 +1825,57 @@ public class WalletTest extends TestWithWallet {
         sendMoneyToWallet(Utils.toNanoCoins(1, 0), AbstractBlockChain.NewBlockType.BEST_CHAIN);
         Threading.waitForUserCode();
         assertEquals(1, flag.get());
+    }
+
+    @Test
+    public void testEmptyRandomWallet() throws Exception {
+        // Add a random set of outputs
+        StoredBlock block = new StoredBlock(makeSolvedTestBlock(blockStore, new ECKey().toAddress(params)), BigInteger.ONE, 1);
+        Random rng = new Random();
+        for (int i = 0; i < rng.nextInt(100) + 1; i++) {
+            Transaction tx = createFakeTx(params, BigInteger.valueOf(rng.nextInt((int) Utils.COIN.longValue())), myAddress);
+            wallet.receiveFromBlock(tx, block, AbstractBlockChain.NewBlockType.BEST_CHAIN);
+        }
+        SendRequest request = SendRequest.emptyWallet(new ECKey().toAddress(params));
+        assertTrue(wallet.completeTx(request));
+        wallet.commitTx(request.tx);
+        assertEquals(BigInteger.ZERO, wallet.getBalance());
+    }
+
+    @Test
+    public void testEmptyWallet() throws Exception {
+        Address outputKey = new ECKey().toAddress(params);
+        // Add exactly 0.01
+        StoredBlock block = new StoredBlock(makeSolvedTestBlock(blockStore, outputKey), BigInteger.ONE, 1);
+        Transaction tx = createFakeTx(params, Utils.CENT, myAddress);
+        wallet.receiveFromBlock(tx, block, AbstractBlockChain.NewBlockType.BEST_CHAIN);
+        SendRequest request = SendRequest.emptyWallet(outputKey);
+        assertTrue(wallet.completeTx(request));
+        wallet.commitTx(request.tx);
+        assertEquals(BigInteger.ZERO, wallet.getBalance());
+        assertEquals(Utils.CENT, request.tx.getOutput(0).getValue());
+
+        // Add just under 0.01
+        StoredBlock block2 = new StoredBlock(block.getHeader().createNextBlock(outputKey), BigInteger.ONE, 2);
+        tx = createFakeTx(params, Utils.CENT.subtract(BigInteger.ONE), myAddress);
+        wallet.receiveFromBlock(tx, block2, AbstractBlockChain.NewBlockType.BEST_CHAIN);
+        request = SendRequest.emptyWallet(outputKey);
+        assertTrue(wallet.completeTx(request));
+        wallet.commitTx(request.tx);
+        assertEquals(BigInteger.ZERO, wallet.getBalance());
+        assertEquals(Utils.CENT.subtract(BigInteger.ONE).subtract(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE), request.tx.getOutput(0).getValue());
+
+        // Add an unsendable value
+        StoredBlock block3 = new StoredBlock(block2.getHeader().createNextBlock(outputKey), BigInteger.ONE, 3);
+        BigInteger outputValue = Transaction.MIN_NONDUST_OUTPUT.add(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE).subtract(BigInteger.ONE);
+        tx = createFakeTx(params, outputValue, myAddress);
+        wallet.receiveFromBlock(tx, block3, AbstractBlockChain.NewBlockType.BEST_CHAIN);
+        request = SendRequest.emptyWallet(outputKey);
+        assertFalse(wallet.completeTx(request));
+        request.ensureMinRequiredFee = false;
+        assertTrue(wallet.completeTx(request));
+        wallet.commitTx(request.tx);
+        assertEquals(BigInteger.ZERO, wallet.getBalance());
+        assertEquals(outputValue, request.tx.getOutput(0).getValue());
     }
 }

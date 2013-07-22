@@ -142,8 +142,8 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
     /** Represents the results of a {@link CoinSelector#select(java.math.BigInteger, java.util.LinkedList)}  operation */
     public static class CoinSelection {
         public BigInteger valueGathered;
-        public Set<TransactionOutput> gathered;
-        public CoinSelection(BigInteger valueGathered, Set<TransactionOutput> gathered) {
+        public Collection<TransactionOutput> gathered;
+        public CoinSelection(BigInteger valueGathered, Collection<TransactionOutput> gathered) {
             this.valueGathered = valueGathered;
             this.gathered = gathered;
         }
@@ -1524,6 +1524,13 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
         public Transaction tx;
 
         /**
+         * When emptyWallet is set, all available coins are sent to the first output in tx (its value is ignored and set
+         * to {@link com.google.bitcoin.core.Wallet#getBalance()} - the fees required for the transaction). Any
+         * additional outputs are removed.
+         */
+        public boolean emptyWallet = false;
+
+        /**
          * "Change" means the difference between the value gathered by a transactions inputs (the size of which you
          * don't really control as it depends on who sent you money), and the value being sent somewhere else. The
          * change address should be selected from this wallet, normally. <b>If null this will be chosen for you.</b>
@@ -1556,10 +1563,10 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
          * a way for people to prioritize their transactions over others and is used as a way to make denial of service
          * attacks expensive.</p>
          *
-         * <p>This is a dynamic fee (in satoshis) which will be added to the transaction for each kilobyte in size after
-         * the first. This is useful as as miners usually sort pending transactions by their fee per unit size when
-         * choosing which transactions to add to a block. Note that, to keep this equivalent to the reference client
-         * definition, a kilobyte is defined as 1000 bytes, not 1024.</p>
+         * <p>This is a dynamic fee (in satoshis) which will be added to the transaction for each kilobyte in size
+         * including the first. This is useful as as miners usually sort pending transactions by their fee per unit size
+         * when choosing which transactions to add to a block. Note that, to keep this equivalent to the reference
+         * client definition, a kilobyte is defined as 1000 bytes, not 1024.</p>
          *
          * <p>You might also consider using a {@link SendRequest#fee} to set the fee added for the first kb of size.</p>
          */
@@ -1628,6 +1635,14 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
             req.tx = tx;
             return req;
         }
+
+        public static SendRequest emptyWallet(Address destination) {
+            SendRequest req = new SendRequest();
+            req.tx = new Transaction(destination.getParameters());
+            req.tx.addOutput(BigInteger.ZERO, destination);
+            req.emptyWallet = true;
+            return req;
+        }
     }
 
     /**
@@ -1649,7 +1664,7 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
      * prevent this, but that should only occur once the transaction has been accepted by the network. This implies
      * you cannot have more than one outstanding sending tx at once.</p>
      *
-     * <p>You MUST ensure that nanocoins is smaller than {@link Transaction#MIN_NONDUST_OUTPUT} or the transaction will
+     * <p>You MUST ensure that nanocoins is larger than {@link Transaction#MIN_NONDUST_OUTPUT} or the transaction will
      * almost certainly be rejected by the network as dust.</p>
      *
      * @param address       The Bitcoin address to send the money to.
@@ -1801,7 +1816,7 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
 
             // We need to know if we need to add an additional fee because one of our values are smaller than 0.01 BTC
             boolean needAtLeastReferenceFee = false;
-            if (req.ensureMinRequiredFee) {
+            if (req.ensureMinRequiredFee && !req.emptyWallet) { // min fee checking is handled later for emptyWallet
                 for (TransactionOutput output : req.tx.getOutputs())
                     if (output.getValue().compareTo(Utils.CENT) < 0) {
                         if (output.getValue().compareTo(output.getMinNonDustValue()) < 0) {
@@ -1822,19 +1837,44 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
             // Note that output.isMine(this) needs to test the keychain which is currently an array, so it's
             // O(candidate outputs ^ keychain.size())! There's lots of low hanging fruit here.
             LinkedList<TransactionOutput> candidates = calculateSpendCandidates(true);
-            // This can throw InsufficientMoneyException.
-            FeeCalculation feeCalculation;
-            try {
-                feeCalculation = new FeeCalculation(req, value, originalInputs, needAtLeastReferenceFee, candidates);
-            } catch (InsufficientMoneyException e) {
-                // TODO: Propagate this after 0.9 is released and stop returning a boolean.
-                return false;
+            CoinSelection bestCoinSelection;
+            TransactionOutput bestChangeOutput = null;
+            if (!req.emptyWallet) {
+                // This can throw InsufficientMoneyException.
+                FeeCalculation feeCalculation;
+                try {
+                    feeCalculation = new FeeCalculation(req, value, originalInputs, needAtLeastReferenceFee, candidates);
+                } catch (InsufficientMoneyException e) {
+                    // TODO: Propagate this after 0.9 is released and stop returning a boolean.
+                    return false;
+                }
+                bestCoinSelection = feeCalculation.bestCoinSelection;
+                bestChangeOutput = feeCalculation.bestChangeOutput;
+            } else {
+                BigInteger valueGathered = BigInteger.ZERO;
+                for (TransactionOutput output : candidates)
+                    valueGathered = valueGathered.add(output.getValue());
+                bestCoinSelection = new CoinSelection(valueGathered, candidates);
+                req.tx.getOutput(0).setValue(valueGathered);
             }
-            CoinSelection bestCoinSelection = feeCalculation.bestCoinSelection;
-            TransactionOutput bestChangeOutput = feeCalculation.bestChangeOutput;
 
             for (TransactionOutput output : bestCoinSelection.gathered)
                 req.tx.addInput(output);
+
+            if (req.ensureMinRequiredFee && req.emptyWallet) {
+                TransactionOutput output = req.tx.getOutput(0);
+                // Check if we need additional fee due to the transaction's size
+                int size = req.tx.bitcoinSerialize().length;
+                size += estimateBytesForSigning(bestCoinSelection);
+                BigInteger fee = (req.fee == null ? BigInteger.ZERO : req.fee)
+                        .add(BigInteger.valueOf((size / 1000) + 1).multiply(req.feePerKb == null ? BigInteger.ZERO : req.feePerKb));
+                output.setValue(output.getValue().subtract(fee));
+                // Check if we need additional fee due to the output's value
+                if (output.getValue().compareTo(Utils.CENT) < 0 && fee.compareTo(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE) < 0)
+                    output.setValue(output.getValue().subtract(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE.subtract(fee)));
+                if (output.getMinNonDustValue().compareTo(output.getValue()) > 0)
+                    return false;
+            }
 
             totalInput = totalInput.add(bestCoinSelection.valueGathered);
 
@@ -3194,30 +3234,30 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
             }
         }
 
-        private int estimateBytesForSigning(CoinSelection selection) {
-            int size = 0;
-            for (TransactionOutput output : selection.gathered) {
-                try {
-                    if (output.getScriptPubKey().isSentToAddress()) {
-                        // Send-to-address spends usually take maximum pubkey.length (as it may be compressed or not) + 75 bytes
-                        size += findKeyFromPubHash(output.getScriptPubKey().getPubKeyHash()).getPubKey().length + 75;
-                    } else if (output.getScriptPubKey().isSentToRawPubKey())
-                        size += 74; // Send-to-pubkey spends usually take maximum 74 bytes to spend
-                    else
-                        throw new RuntimeException("Unknown output type returned in coin selection");
-                } catch (ScriptException e) {
-                    // If this happens it means an output script in a wallet tx could not be understood. That should never
-                    // happen, if it does it means the wallet has got into an inconsistent state.
-                    throw new RuntimeException(e);
-                }
-            }
-            return size;
-        }
-
         private void resetTxInputs(SendRequest req, List<TransactionInput> originalInputs) {
             req.tx.clearInputs();
             for (TransactionInput input : originalInputs)
                 req.tx.addInput(input);
         }
+    }
+
+    private int estimateBytesForSigning(CoinSelection selection) {
+        int size = 0;
+        for (TransactionOutput output : selection.gathered) {
+            try {
+                if (output.getScriptPubKey().isSentToAddress()) {
+                    // Send-to-address spends usually take maximum pubkey.length (as it may be compressed or not) + 75 bytes
+                    size += findKeyFromPubHash(output.getScriptPubKey().getPubKeyHash()).getPubKey().length + 75;
+                } else if (output.getScriptPubKey().isSentToRawPubKey())
+                    size += 74; // Send-to-pubkey spends usually take maximum 74 bytes to spend
+                else
+                    throw new RuntimeException("Unknown output type returned in coin selection");
+            } catch (ScriptException e) {
+                // If this happens it means an output script in a wallet tx could not be understood. That should never
+                // happen, if it does it means the wallet has got into an inconsistent state.
+                throw new RuntimeException(e);
+            }
+        }
+        return size;
     }
 }
