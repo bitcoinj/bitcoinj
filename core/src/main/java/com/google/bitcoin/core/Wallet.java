@@ -1913,7 +1913,7 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
             req.tx.getConfidence().setSource(TransactionConfidence.Source.SELF);
             req.completed = true;
             req.fee = calculatedFee;
-            log.info("  completed {} with {} inputs", req.tx.getHashAsString(), req.tx.getInputs().size());
+            log.info("  completed: {}", req.tx);
             return true;
         } finally {
             lock.unlock();
