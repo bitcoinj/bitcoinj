@@ -64,39 +64,42 @@ public class FullPrunedBlockChainTest {
     public void testGeneratedChain() throws Exception {
         // Tests various test cases from FullBlockTestGenerator
         FullBlockTestGenerator generator = new FullBlockTestGenerator(params);
-        BlockAndValidityList blockList = generator.getBlocksToTest(false, false, null);
+        RuleList blockList = generator.getBlocksToTest(false, false, null);
         
         store = new MemoryFullPrunedBlockStore(params, blockList.maximumReorgBlockCount);
         chain = new FullPrunedBlockChain(params, store);
         
-        for (BlockAndValidity block : blockList.list) {
+        for (Rule rule : blockList.list) {
+            if (!(rule instanceof BlockAndValidity))
+                continue;
+            BlockAndValidity block = (BlockAndValidity) rule;
             boolean threw = false;
             try {
                 if (chain.add(block.block) != block.connects) {
-                    log.error("Block didn't match connects flag on block " + block.blockName);
+                    log.error("Block didn't match connects flag on block " + block.ruleName);
                     fail();
                 }
             } catch (VerificationException e) {
                 threw = true;
                 if (!block.throwsException) {
-                    log.error("Block didn't match throws flag on block " + block.blockName);
+                    log.error("Block didn't match throws flag on block " + block.ruleName);
                     throw e;
                 }
                 if (block.connects) {
-                    log.error("Block didn't match connects flag on block " + block.blockName);
+                    log.error("Block didn't match connects flag on block " + block.ruleName);
                     fail();
                 }
             }
             if (!threw && block.throwsException) {
-                log.error("Block didn't match throws flag on block " + block.blockName);
+                log.error("Block didn't match throws flag on block " + block.ruleName);
                 fail();
             }
             if (!chain.getChainHead().getHeader().getHash().equals(block.hashChainTipAfterBlock)) {
-                log.error("New block head didn't match the correct value after block " + block.blockName);
+                log.error("New block head didn't match the correct value after block " + block.ruleName);
                 fail();
             }
             if (chain.getChainHead().getHeight() != block.heightAfterBlock) {
-                log.error("New block head didn't match the correct height after block " + block.blockName);
+                log.error("New block head didn't match the correct height after block " + block.ruleName);
                 fail();
             }
         }
