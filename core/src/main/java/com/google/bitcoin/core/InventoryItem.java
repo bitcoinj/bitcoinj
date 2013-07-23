@@ -42,4 +42,14 @@ public class InventoryItem {
     public String toString() {
         return type.toString() + ": " + hash;
     }
+
+    public int hashCode() {
+        return hash.hashCode() + type.ordinal();
+    }
+
+    public boolean equals(Object o) {
+        return o instanceof InventoryItem &&
+                ((InventoryItem)o).type == this.type &&
+                ((InventoryItem)o).hash.equals(this.hash);
+    }
 }
