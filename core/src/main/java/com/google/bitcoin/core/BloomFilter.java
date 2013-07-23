@@ -233,15 +233,35 @@ public class BloomFilter extends Message {
     }
 
     /**
+     * Sets this filter to match all objects
+     */
+    public void setMatchAll() {
+        data = new byte[] {(byte) 0xff};
+    }
+
+    /**
      * Copies filter into this.
      * filter must have the same size, hash function count and nTweak or an exception will be thrown.
      */
     public void merge(BloomFilter filter) {
-        Preconditions.checkArgument(filter.data.length == this.data.length &&
-                filter.hashFuncs == this.hashFuncs &&
-                filter.nTweak == this.nTweak);
-        for (int i = 0; i < data.length; i++)
-            this.data[i] |= filter.data[i];
+        if (!this.matchesAll() && !filter.matchesAll()) {
+            Preconditions.checkArgument(filter.data.length == this.data.length &&
+                    filter.hashFuncs == this.hashFuncs &&
+                    filter.nTweak == this.nTweak);
+            for (int i = 0; i < data.length; i++)
+                this.data[i] |= filter.data[i];
+        } else
+            this.data = new byte[] {(byte) 0xff};
+    }
+
+    /**
+     * Returns true if this filter will match anything
+     */
+    public boolean matchesAll() {
+        for (byte b : data)
+            if (b != (byte) 0xff)
+                return false;
+        return true;
     }
     
     @Override
