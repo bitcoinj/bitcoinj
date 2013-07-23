@@ -422,7 +422,12 @@ public class Peer {
             checkState(!downloadBlockBodies, toString());
             for (int i = 0; i < m.getBlockHeaders().size(); i++) {
                 Block header = m.getBlockHeaders().get(i);
-                if (header.getTimeSeconds() < fastCatchupTimeSecs) {
+                // Process headers until we pass the fast catchup time, or are about to catch up with the head
+                // of the chain - always process the last block as a full/filtered block to kick us out of the
+                // fast catchup mode (in which we ignore new blocks).
+                boolean passedTime = header.getTimeSeconds() >= fastCatchupTimeSecs;
+                boolean reachedTop = blockChain.getBestChainHeight() >= vPeerVersionMessage.bestHeight;
+                if (!passedTime && !reachedTop) {
                     if (!vDownloadData) {
                         // Not download peer anymore, some other peer probably became better.
                         log.info("Lost download peer status, throwing away downloaded headers.");
