@@ -14,15 +14,19 @@ import java.util.*;
 
 import static com.google.bitcoin.script.ScriptOpCodes.*;
 
-class BlockAndValidity {
+/**
+ * Represents a block which is sent to the tested application and which the application must either reject or accept,
+ * depending on the flags in the rule
+ */
+class BlockAndValidity extends Rule {
     Block block;
     boolean connects;
     boolean throwsException;
     Sha256Hash hashChainTipAfterBlock;
     int heightAfterBlock;
-    String blockName;
-    
+
     public BlockAndValidity(Map<Sha256Hash, Integer> blockToHeightMap, Block block, boolean connects, boolean throwsException, Sha256Hash hashChainTipAfterBlock, int heightAfterBlock, String blockName) {
+        super(blockName);
         if (connects && throwsException)
             throw new RuntimeException("A block cannot connect if an exception was thrown while adding it.");
         this.block = block;
@@ -30,14 +34,32 @@ class BlockAndValidity {
         this.throwsException = throwsException;
         this.hashChainTipAfterBlock = hashChainTipAfterBlock;
         this.heightAfterBlock = heightAfterBlock;
-        this.blockName = blockName;
-        
+
         // Double-check that we are always marking any given block at the same height
         Integer height = blockToHeightMap.get(hashChainTipAfterBlock);
         if (height != null)
             Preconditions.checkState(height == heightAfterBlock);
         else
             blockToHeightMap.put(hashChainTipAfterBlock, heightAfterBlock);
+    }
+}
+
+/**
+ * A test which checks the mempool state (ie defined which transactions should be in memory pool
+ */
+class MemoryPoolState extends Rule {
+    Set<InventoryItem> mempool;
+    public MemoryPoolState(Set<InventoryItem> mempool, String ruleName) {
+        super(ruleName);
+        this.mempool = mempool;
+    }
+}
+
+/** An arbitrary rule which the testing client must match */
+class Rule {
+    String ruleName;
+    Rule(String ruleName) {
+        this.ruleName = ruleName;
     }
 }
 
@@ -52,10 +74,10 @@ class TransactionOutPointWithValue {
     }
 }
 
-class BlockAndValidityList {
-    public List<BlockAndValidity> list;
+class RuleList {
+    public List<Rule> list;
     public int maximumReorgBlockCount;
-    public BlockAndValidityList(List<BlockAndValidity> list, int maximumReorgBlockCount) {
+    public RuleList(List<Rule> list, int maximumReorgBlockCount) {
         this.list = list;
         this.maximumReorgBlockCount = maximumReorgBlockCount;
     }
@@ -77,24 +99,24 @@ public class FullBlockTestGenerator {
         Utils.rollMockClock(0); // Set a mock clock for timestamp tests
     }
 
-    public BlockAndValidityList getBlocksToTest(boolean addSigExpensiveBlocks, boolean runLargeReorgs, File blockStorageFile) throws ScriptException, ProtocolException, IOException {
+    public RuleList getBlocksToTest(boolean addSigExpensiveBlocks, boolean runLargeReorgs, File blockStorageFile) throws ScriptException, ProtocolException, IOException {
         final FileOutputStream outStream = blockStorageFile != null ? new FileOutputStream(blockStorageFile) : null;
         
-        List<BlockAndValidity> blocks = new LinkedList<BlockAndValidity>() {
+        List<Rule> blocks = new LinkedList<Rule>() {
             @Override
-            public boolean add(BlockAndValidity element) {
-                if (outStream != null) {
+            public boolean add(Rule element) {
+                if (outStream != null && element instanceof BlockAndValidity) {
                     try {
                         outStream.write((int) (params.getPacketMagic() >>> 24));
                         outStream.write((int) (params.getPacketMagic() >>> 16));
                         outStream.write((int) (params.getPacketMagic() >>> 8));
                         outStream.write((int) (params.getPacketMagic() >>> 0));
-                        byte[] block = element.block.bitcoinSerialize();
+                        byte[] block = ((BlockAndValidity)element).block.bitcoinSerialize();
                         byte[] length = new byte[4];
                         Utils.uint32ToByteArrayBE(block.length, length, 0);
                         outStream.write(Utils.reverseBytes(length));
                         outStream.write(block);
-                        element.block = null;
+                        ((BlockAndValidity)element).block = null;
                     } catch (IOException e) {
                         throw new RuntimeException(e);
                     }
@@ -102,7 +124,7 @@ public class FullBlockTestGenerator {
                 return super.add(element);
             }
         };
-        BlockAndValidityList ret = new BlockAndValidityList(blocks, 10);
+        RuleList ret = new RuleList(blocks, 10);
         
         Queue<TransactionOutPointWithValue> spendableOutputs = new LinkedList<TransactionOutPointWithValue>();
         
@@ -1419,29 +1441,93 @@ public class FullBlockTestGenerator {
                 b76.getTransactions().get(0).getOutputs().get(0).getValue(),
                 b76.getTransactions().get(0).getOutputs().get(0).getScriptPubKey()));
 
+        // Test transaction resurrection
+        // -> b77 (24) -> b78 (22) -> b79 (23)
+        //            \-> b80 (22) -> b81 (23) -> b82 (24)
+        // b78 creates a tx, which is spent in b79. after b82, both should be in mempool
+        //
+        TransactionOutPointWithValue out24 = spendableOutputs.poll();  Preconditions.checkState(out24 != null);
+        TransactionOutPointWithValue out25 = spendableOutputs.poll();  Preconditions.checkState(out25 != null);
+        TransactionOutPointWithValue out26 = spendableOutputs.poll();  Preconditions.checkState(out26 != null);
+        TransactionOutPointWithValue out27 = spendableOutputs.poll();  Preconditions.checkState(out27 != null);
+
+        Block b77 = createNextBlock(b76, chainHeadHeight + 25, out24, null);
+        blocks.add(new BlockAndValidity(blockToHeightMap, b77, true, false, b77.getHash(), chainHeadHeight + 25, "b77"));
+
+        Block b78 = createNextBlock(b77, chainHeadHeight + 26, out25, null);
+        Transaction b78tx = new Transaction(params);
+        {
+            b78tx.addOutput(new TransactionOutput(params, b78tx, BigInteger.ZERO, new byte[]{OP_TRUE}));
+            addOnlyInputToTransaction(b78tx, new TransactionOutPointWithValue(
+                    new TransactionOutPoint(params, 1, b77.getTransactions().get(1).getHash()),
+                    BigInteger.valueOf(1), b77.getTransactions().get(1).getOutputs().get(1).getScriptPubKey()));
+            b78.addTransaction(b78tx);
+        }
+        b78.solve();
+        blocks.add(new BlockAndValidity(blockToHeightMap, b78, true, false, b78.getHash(), chainHeadHeight + 26, "b78"));
+
+        Block b79 = createNextBlock(b78, chainHeadHeight + 27, out26, null);
+        Transaction b79tx = new Transaction(params);
+        {
+            b79tx.addOutput(new TransactionOutput(params, b79tx, BigInteger.ZERO, new byte[]{OP_TRUE}));
+            b79tx.addInput(new TransactionInput(params, b79tx, new byte[]{OP_TRUE}, new TransactionOutPoint(params, 0, b78tx.getHash())));
+            b79.addTransaction(b79tx);
+        }
+        b79.solve();
+        blocks.add(new BlockAndValidity(blockToHeightMap, b79, true, false, b79.getHash(), chainHeadHeight + 27, "b79"));
+
+        blocks.add(new MemoryPoolState(new HashSet<InventoryItem>(), "post-b79 empty mempool"));
+
+        Block b80 = createNextBlock(b77, chainHeadHeight + 26, out25, null);
+        blocks.add(new BlockAndValidity(blockToHeightMap, b80, true, false, b79.getHash(), chainHeadHeight + 27, "b80"));
+        spendableOutputs.offer(new TransactionOutPointWithValue(
+                new TransactionOutPoint(params, 0, b80.getTransactions().get(0).getHash()),
+                b80.getTransactions().get(0).getOutputs().get(0).getValue(),
+                b80.getTransactions().get(0).getOutputs().get(0).getScriptPubKey()));
+
+        Block b81 = createNextBlock(b80, chainHeadHeight + 27, out26, null);
+        blocks.add(new BlockAndValidity(blockToHeightMap, b81, true, false, b79.getHash(), chainHeadHeight + 27, "b81"));
+        spendableOutputs.offer(new TransactionOutPointWithValue(
+                new TransactionOutPoint(params, 0, b81.getTransactions().get(0).getHash()),
+                b81.getTransactions().get(0).getOutputs().get(0).getValue(),
+                b81.getTransactions().get(0).getOutputs().get(0).getScriptPubKey()));
+
+        Block b82 = createNextBlock(b81, chainHeadHeight + 28, out27, null);
+        blocks.add(new BlockAndValidity(blockToHeightMap, b82, true, false, b82.getHash(), chainHeadHeight + 28, "b82"));
+        spendableOutputs.offer(new TransactionOutPointWithValue(
+                new TransactionOutPoint(params, 0, b82.getTransactions().get(0).getHash()),
+                b82.getTransactions().get(0).getOutputs().get(0).getValue(),
+                b82.getTransactions().get(0).getOutputs().get(0).getScriptPubKey()));
+
+        HashSet<InventoryItem> post82Mempool = new HashSet<InventoryItem>();
+        post82Mempool.add(new InventoryItem(InventoryItem.Type.Transaction, b78tx.getHash()));
+        post82Mempool.add(new InventoryItem(InventoryItem.Type.Transaction, b79tx.getHash()));
+        blocks.add(new MemoryPoolState(post82Mempool, "post-b82 tx resurrection"));
+
         // The remaining tests arent designed to fit in the standard flow, and thus must always come last
         // Add new tests here.
-        
+        //TODO: Explicitly address MoneyRange() checks
+
         // Test massive reorgs (in terms of tx count)
         // -> b60 (17) -> b64 (18) -> b65 (19) -> b69 (20) -> b72 (21) -> b1001 (22) -> lots of outputs -> lots of spends
         // Reorg back to:
         // -> b60 (17) -> b64 (18) -> b65 (19) -> b69 (20) -> b72 (21) -> b1001 (22) -> empty blocks
         //
-        TransactionOutPointWithValue out24 = spendableOutputs.poll();  Preconditions.checkState(out24 != null);
+        TransactionOutPointWithValue out28 = spendableOutputs.poll();  Preconditions.checkState(out28 != null);
 
-        Block b1001 = createNextBlock(b76, chainHeadHeight + 25, out24, null);
-        blocks.add(new BlockAndValidity(blockToHeightMap, b1001, true, false, b1001.getHash(), chainHeadHeight + 25, "b1001"));
+        Block b1001 = createNextBlock(b82, chainHeadHeight + 29, out28, null);
+        blocks.add(new BlockAndValidity(blockToHeightMap, b1001, true, false, b1001.getHash(), chainHeadHeight + 29, "b1001"));
         spendableOutputs.offer(new TransactionOutPointWithValue(
                 new TransactionOutPoint(params, 0, b1001.getTransactions().get(0).getHash()),
                 b1001.getTransactions().get(0).getOutputs().get(0).getValue(),
                 b1001.getTransactions().get(0).getOutputs().get(0).getScriptPubKey()));
+        int nextHeight = chainHeadHeight + 30;
         
         if (runLargeReorgs) {
             // No way you can fit this test in memory
             Preconditions.checkArgument(blockStorageFile != null);
             
             Block lastBlock = b1001;
-            int nextHeight = chainHeadHeight + 26;
             TransactionOutPoint lastOutput = new TransactionOutPoint(params, 2, b1001.getTransactions().get(1).getHash());
             int blockCountAfter1001;
             
@@ -1521,8 +1607,6 @@ public class FullBlockTestGenerator {
             
             ret.maximumReorgBlockCount = Math.max(ret.maximumReorgBlockCount, blockCountAfter1001);
         }
-        
-        //TODO: Explicitly address MoneyRange() checks
         
         if (outStream != null)
             outStream.close();
