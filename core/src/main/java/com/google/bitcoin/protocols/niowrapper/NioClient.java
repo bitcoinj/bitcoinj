@@ -29,10 +29,10 @@ import org.slf4j.LoggerFactory;
 import static com.google.common.base.Preconditions.checkState;
 
 /**
- * Creates a simple connection to a server using a {@link ProtobufParser} to process data.
+ * Creates a simple connection to a server using a {@link StreamParser} to process data.
  */
-public class ProtobufClient extends MessageWriteTarget {
-    private static final org.slf4j.Logger log = LoggerFactory.getLogger(ProtobufClient.class);
+public class NioClient extends MessageWriteTarget {
+    private static final org.slf4j.Logger log = LoggerFactory.getLogger(NioClient.class);
 
     private static final int BUFFER_SIZE_LOWER_BOUND = 4096;
     private static final int BUFFER_SIZE_UPPER_BOUND = 65536;
@@ -41,19 +41,19 @@ public class ProtobufClient extends MessageWriteTarget {
     @Nonnull private final SocketChannel sc;
 
     /**
-     * <p>Creates a new client to the given server address using the given {@link ProtobufParser} to decode the data.
+     * <p>Creates a new client to the given server address using the given {@link StreamParser} to decode the data.
      * The given parser <b>MUST</b> be unique to this object. This does not block while waiting for the connection to
-     * open, but will call either the {@link ProtobufParser#connectionOpen()} or {@link ProtobufParser#connectionClosed()}
-     * callback on the created network event processing thread.</p>
+     * open, but will call either the {@link StreamParser#connectionOpened()} or
+     * {@link StreamParser#connectionClosed()} callback on the created network event processing thread.</p>
      *
      * @param connectTimeoutMillis The connect timeout set on the connection (in milliseconds). 0 is interpreted as no
      *                             timeout.
      */
-    public ProtobufClient(final InetSocketAddress serverAddress, final ProtobufParser parser,
-                          final int connectTimeoutMillis) throws IOException {
+    public NioClient(final InetSocketAddress serverAddress, final StreamParser parser,
+                     final int connectTimeoutMillis) throws IOException {
         // Try to fit at least one message in the network buffer, but place an upper and lower limit on its size to make
         // sure it doesnt get too large or have to call read too often.
-        dbuf = ByteBuffer.allocateDirect(Math.min(Math.max(parser.maxMessageSize, BUFFER_SIZE_LOWER_BOUND), BUFFER_SIZE_UPPER_BOUND));
+        dbuf = ByteBuffer.allocateDirect(Math.min(Math.max(parser.getMaxMessageSize(), BUFFER_SIZE_LOWER_BOUND), BUFFER_SIZE_UPPER_BOUND));
         parser.setWriteTarget(this);
         sc = SocketChannel.open();
 
@@ -62,7 +62,7 @@ public class ProtobufClient extends MessageWriteTarget {
             public void run() {
                 try {
                     sc.socket().connect(serverAddress, connectTimeoutMillis);
-                    parser.connectionOpen();
+                    parser.connectionOpened();
 
                     while (true) {
                         int read = sc.read(dbuf);
@@ -72,9 +72,9 @@ public class ProtobufClient extends MessageWriteTarget {
                             return;
                         // "flip" the buffer - setting the limit to the current position and setting position to 0
                         dbuf.flip();
-                        // Use parser.receive's return value as a double-check that it stopped reading at the right
+                        // Use parser.receiveBytes's return value as a double-check that it stopped reading at the right
                         // location
-                        int bytesConsumed = parser.receive(dbuf);
+                        int bytesConsumed = parser.receiveBytes(dbuf);
                         checkState(dbuf.position() == bytesConsumed);
                         // Now drop the bytes which were read by compacting dbuf (resetting limit and keeping relative
                         // position)
@@ -97,7 +97,7 @@ public class ProtobufClient extends MessageWriteTarget {
     }
 
     /**
-     * Closes the connection to the server, triggering the {@link ProtobufParser#connectionClosed()}
+     * Closes the connection to the server, triggering the {@link StreamParser#connectionClosed()}
      * event on the network-handling thread where all callbacks occur.
      */
     public void closeConnection() {
@@ -109,7 +109,7 @@ public class ProtobufClient extends MessageWriteTarget {
         }
     }
 
-    // Writes raw bytes to the channel (used by the write method in ProtobufParser)
+    // Writes raw bytes to the channel (used by the write method in StreamParser)
     @Override
     synchronized void writeBytes(byte[] message) {
         try {

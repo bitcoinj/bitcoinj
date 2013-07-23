@@ -22,20 +22,18 @@ import com.google.protobuf.MessageLite;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.util.Timer;
-import java.util.TimerTask;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
 /**
- * <p>A handler which is used in {@link ProtobufServer} and {@link ProtobufClient} to split up incoming data streams
+ * <p>A handler which is used in {@link NioServer} and {@link NioClient} to split up incoming data streams
  * into protobufs and provide an interface for writing protobufs to the connections.</p>
  *
  * <p>Messages are encoded with a 4-byte signed integer (big endian) prefix to indicate their length followed by the
  * serialized protobuf</p>
  */
-public class ProtobufParser<MessageType extends MessageLite> {
+public class ProtobufParser<MessageType extends MessageLite> extends AbstractTimeoutHandler implements StreamParser {
     /**
      * An interface which can be implemented to handle callbacks as new messages are generated and socket events occur.
      * @param <MessageType> The protobuf type which is used on this socket.
@@ -68,13 +66,6 @@ public class ProtobufParser<MessageType extends MessageLite> {
 
     private MessageWriteTarget writeTarget;
 
-    // TimerTask and timeout value which are added to a timer to kill the connection on timeout
-    private TimerTask timeoutTask;
-    private long timeoutMillis;
-
-    // A timer which manages expiring connections as their timeouts occur (if configured).
-    private static final Timer timeoutTimer = new Timer("ProtobufParser timeouts", true);
-
     /**
      * Creates a new protobuf handler.
      *
@@ -89,14 +80,20 @@ public class ProtobufParser<MessageType extends MessageLite> {
     public ProtobufParser(Listener<MessageType> handler, MessageType prototype, int maxMessageSize, int timeoutMillis) {
         this.handler = handler;
         this.prototype = prototype;
-        this.timeoutMillis = timeoutMillis;
         this.maxMessageSize = Math.min(maxMessageSize, Integer.MAX_VALUE - 4);
+        setTimeoutEnabled(false);
+        setSocketTimeout(timeoutMillis);
     }
 
-    // Sets the upstream write channel
-    synchronized void setWriteTarget(MessageWriteTarget writeTarget) {
+    @Override
+    public synchronized void setWriteTarget(MessageWriteTarget writeTarget) {
         checkState(this.writeTarget == null);
         this.writeTarget = checkNotNull(writeTarget);
+    }
+
+    @Override
+    public int getMaxMessageSize() {
+        return maxMessageSize;
     }
 
     /**
@@ -104,6 +101,11 @@ public class ProtobufParser<MessageType extends MessageLite> {
      */
     public synchronized void closeConnection() {
         this.writeTarget.closeConnection();
+    }
+
+    @Override
+    protected void timeoutOccurred() {
+        closeConnection();
     }
 
     // Deserializes and provides a listener event (buff must not have the length prefix in it)
@@ -114,18 +116,8 @@ public class ProtobufParser<MessageType extends MessageLite> {
         handler.messageReceived(this, msg);
     }
 
-    /**
-     * Called when new bytes are available from the remote end.
-     * * buff will start with its limit set to the position we can read to and its position set to the location we will
-     *   start reading at
-     * * May read more than one message (recursively) if there are enough bytes available
-     * * Uses messageBytes/messageBytesOffset to store message which are larger (incl their length prefix) than buff's
-     *   capacity(), ie it is up to this method to ensure we dont run out of buffer space to decode the next message.
-     * * buff will end with its limit the same as it was previously, and its position set to the position up to which
-     *   bytes have been read (the same as its return value)
-     * @return The amount of bytes consumed which should not be provided again
-     */
-    synchronized int receive(ByteBuffer buff) throws Exception {
+    @Override
+    public synchronized int receiveBytes(ByteBuffer buff) throws Exception {
         if (messageBytes != null) {
             // Just keep filling up the currently being worked on message
             int bytesToGet = Math.min(messageBytes.length - messageBytesOffset, buff.remaining());
@@ -136,7 +128,7 @@ public class ProtobufParser<MessageType extends MessageLite> {
                 deserializeMessage(ByteBuffer.wrap(messageBytes));
                 messageBytes = null;
                 if (buff.hasRemaining())
-                    return bytesToGet + receive(buff);
+                    return bytesToGet + receiveBytes(buff);
             }
             return bytesToGet;
         }
@@ -181,19 +173,19 @@ public class ProtobufParser<MessageType extends MessageLite> {
 
         // If there are still bytes remaining, see if we can pull out another message since we won't get called again
         if (buff.hasRemaining())
-            return len + 4 + receive(buff);
+            return len + 4 + receiveBytes(buff);
         else
             return len + 4;
     }
 
-    /** Called by the upstream connection manager if this connection closes */
-    void connectionClosed() {
+    @Override
+    public void connectionClosed() {
         handler.connectionClosed(this);
     }
 
-    /** Called by the upstream connection manager when this connection is open */
-    void connectionOpen()  {
-        resetTimeout();
+    @Override
+    public void connectionOpened() {
+        setTimeoutEnabled(true);
         handler.connectionOpen(this);
     }
 
@@ -211,30 +203,5 @@ public class ProtobufParser<MessageType extends MessageLite> {
         Utils.uint32ToByteArrayBE(messageBytes.length, messageLength, 0);
         writeTarget.writeBytes(messageLength);
         writeTarget.writeBytes(messageBytes);
-    }
-
-    /**
-     * <p>Sets the receive timeout to the given number of milliseconds, automatically killing the connection if no
-     * messages are received for this long</p>
-     *
-     * <p>A timeout of 0 is interpreted as no timeout</p>
-     */
-    public synchronized void setSocketTimeout(int timeoutMillis) {
-        this.timeoutMillis = timeoutMillis;
-        resetTimeout();
-    }
-
-    private synchronized void resetTimeout() {
-        if (timeoutTask != null)
-            timeoutTask.cancel();
-        if (timeoutMillis == 0)
-            return;
-        timeoutTask = new TimerTask() {
-            @Override
-            public void run() {
-                closeConnection();
-            }
-        };
-        timeoutTimer.schedule(timeoutTask, timeoutMillis);
     }
 }

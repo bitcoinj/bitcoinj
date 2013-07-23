@@ -55,7 +55,7 @@ public class NioWrapperTest {
         final SettableFuture<Void> clientConnectionClosed = SettableFuture.create();
         final SettableFuture<Protos.TwoWayChannelMessage> clientMessage1Received = SettableFuture.create();
         final SettableFuture<Protos.TwoWayChannelMessage> clientMessage2Received = SettableFuture.create();
-        ProtobufServer server = new ProtobufServer(new ProtobufParserFactory() {
+        NioServer server = new NioServer(new StreamParserFactory() {
             @Override
             public ProtobufParser getNewParser(InetAddress inetAddress, int port) {
                 return new ProtobufParser<Protos.TwoWayChannelMessage>(new ProtobufParser.Listener<Protos.TwoWayChannelMessage>() {
@@ -100,7 +100,7 @@ public class NioWrapperTest {
                     }
                 }, Protos.TwoWayChannelMessage.getDefaultInstance(), 1000, 0);
 
-        ProtobufClient client = new ProtobufClient(new InetSocketAddress("localhost", 4243), clientHandler, 0);
+        NioClient client = new NioClient(new InetSocketAddress("localhost", 4243), clientHandler, 0);
 
         clientConnectionOpen.get();
         serverConnectionOpen.get();
@@ -130,7 +130,7 @@ public class NioWrapperTest {
         final SettableFuture<Void> clientConnection2Open = SettableFuture.create();
         final SettableFuture<Void> serverConnection2Closed = SettableFuture.create();
         final SettableFuture<Void> clientConnection2Closed = SettableFuture.create();
-        ProtobufServer server = new ProtobufServer(new ProtobufParserFactory() {
+        NioServer server = new NioServer(new StreamParserFactory() {
             @Override
             public ProtobufParser getNewParser(InetAddress inetAddress, int port) {
                 return new ProtobufParser<Protos.TwoWayChannelMessage>(new ProtobufParser.Listener<Protos.TwoWayChannelMessage>() {
@@ -160,7 +160,7 @@ public class NioWrapperTest {
         });
         server.start(new InetSocketAddress("localhost", 4243));
 
-        new ProtobufClient(new InetSocketAddress("localhost", 4243), new ProtobufParser<Protos.TwoWayChannelMessage>(
+        new NioClient(new InetSocketAddress("localhost", 4243), new ProtobufParser<Protos.TwoWayChannelMessage>(
                 new ProtobufParser.Listener<Protos.TwoWayChannelMessage>() {
                     @Override
                     public void messageReceived(ProtobufParser handler, Protos.TwoWayChannelMessage msg) {
@@ -200,7 +200,7 @@ public class NioWrapperTest {
                         clientConnection2Closed.set(null);
                     }
                 }, Protos.TwoWayChannelMessage.getDefaultInstance(), 1000, 0);
-        ProtobufClient client2 = new ProtobufClient(new InetSocketAddress("localhost", 4243), client2Handler, 0);
+        NioClient client2 = new NioClient(new InetSocketAddress("localhost", 4243), client2Handler, 0);
 
         clientConnection2Open.get();
         serverConnection2Open.get();
@@ -216,7 +216,7 @@ public class NioWrapperTest {
 
     @Test
     public void largeDataTest() throws Exception {
-        /** Test various large-data handling, essentially testing {@link ProtobufParser#receive(java.nio.ByteBuffer)} */
+        /** Test various large-data handling, essentially testing {@link ProtobufParser#receiveBytes(java.nio.ByteBuffer)} */
         final SettableFuture<Void> serverConnectionOpen = SettableFuture.create();
         final SettableFuture<Void> clientConnectionOpen = SettableFuture.create();
         final SettableFuture<Void> serverConnectionClosed = SettableFuture.create();
@@ -225,7 +225,7 @@ public class NioWrapperTest {
         final SettableFuture<Protos.TwoWayChannelMessage> clientMessage2Received = SettableFuture.create();
         final SettableFuture<Protos.TwoWayChannelMessage> clientMessage3Received = SettableFuture.create();
         final SettableFuture<Protos.TwoWayChannelMessage> clientMessage4Received = SettableFuture.create();
-        ProtobufServer server = new ProtobufServer(new ProtobufParserFactory() {
+        NioServer server = new NioServer(new StreamParserFactory() {
             @Override
             public ProtobufParser getNewParser(InetAddress inetAddress, int port) {
                 return new ProtobufParser<Protos.TwoWayChannelMessage>(new ProtobufParser.Listener<Protos.TwoWayChannelMessage>() {
@@ -277,7 +277,7 @@ public class NioWrapperTest {
                     }
                 }, Protos.TwoWayChannelMessage.getDefaultInstance(), 0x10000, 0);
 
-        ProtobufClient client = new ProtobufClient(new InetSocketAddress("localhost", 4243), clientHandler, 0);
+        NioClient client = new NioClient(new InetSocketAddress("localhost", 4243), clientHandler, 0);
 
         clientConnectionOpen.get();
         serverConnectionOpen.get();
@@ -376,7 +376,7 @@ public class NioWrapperTest {
         final SettableFuture<Protos.TwoWayChannelMessage> client1MessageReceived = SettableFuture.create();
         final SettableFuture<Protos.TwoWayChannelMessage> client2MessageReceived = SettableFuture.create();
         final SettableFuture<Protos.TwoWayChannelMessage> client3MessageReceived = SettableFuture.create();
-        ProtobufServer server = new ProtobufServer(new ProtobufParserFactory() {
+        NioServer server = new NioServer(new StreamParserFactory() {
             @Override
             public ProtobufParser getNewParser(InetAddress inetAddress, int port) {
                 return new ProtobufParser<Protos.TwoWayChannelMessage>(new ProtobufParser.Listener<Protos.TwoWayChannelMessage>() {
@@ -429,7 +429,7 @@ public class NioWrapperTest {
                         client1ConnectionClosed.set(null);
                     }
                 }, Protos.TwoWayChannelMessage.getDefaultInstance(), 1000, 0);
-        ProtobufClient client1 = new ProtobufClient(new InetSocketAddress("localhost", 4243), client1Handler, 0);
+        NioClient client1 = new NioClient(new InetSocketAddress("localhost", 4243), client1Handler, 0);
 
         client1ConnectionOpen.get();
         serverConnection1Open.get();
@@ -451,7 +451,7 @@ public class NioWrapperTest {
                         client2ConnectionClosed.set(null);
                     }
                 }, Protos.TwoWayChannelMessage.getDefaultInstance(), 1000, 0);
-        ProtobufClient client2 = new ProtobufClient(new InetSocketAddress("localhost", 4243), client2Handler, 0);
+        NioClient client2 = new NioClient(new InetSocketAddress("localhost", 4243), client2Handler, 0);
 
         client2ConnectionOpen.get();
         serverConnection2Open.get();
@@ -474,7 +474,7 @@ public class NioWrapperTest {
                         client3ConnectionClosed.set(null);
                     }
                 }, Protos.TwoWayChannelMessage.getDefaultInstance(), 1000, 0);
-        ProtobufClient client3 = new ProtobufClient(new InetSocketAddress("localhost", 4243), client3Handler, 0);
+        NioClient client3 = new NioClient(new InetSocketAddress("localhost", 4243), client3Handler, 0);
 
         client3ConnectionOpen.get();
         serverConnection3Open.get();

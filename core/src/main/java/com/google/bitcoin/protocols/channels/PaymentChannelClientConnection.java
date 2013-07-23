@@ -19,7 +19,7 @@ package com.google.bitcoin.protocols.channels;
 import com.google.bitcoin.core.ECKey;
 import com.google.bitcoin.core.Sha256Hash;
 import com.google.bitcoin.core.Wallet;
-import com.google.bitcoin.protocols.niowrapper.ProtobufClient;
+import com.google.bitcoin.protocols.niowrapper.NioClient;
 import com.google.bitcoin.protocols.niowrapper.ProtobufParser;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
@@ -106,7 +106,7 @@ public class PaymentChannelClientConnection {
 
         // Initiate the outbound network connection. We don't need to keep this around. The wireParser object will handle
         // things from here on out.
-        new ProtobufClient(server, wireParser, timeoutSeconds * 1000);
+        new NioClient(server, wireParser, timeoutSeconds * 1000);
     }
 
     /**
@@ -153,7 +153,7 @@ public class PaymentChannelClientConnection {
         //
         // This call will cause the CLOSE message to be written to the wire, and then the destroyConnection() method that
         // we defined above will be called, which in turn will call wireParser.closeConnection(), which in turn will invoke
-        // ProtobufClient.closeConnection(), which will then close the socket triggering interruption of the network
+        // NioClient.closeConnection(), which will then close the socket triggering interruption of the network
         // thread it had created. That causes the background thread to die, which on its way out calls
         // ProtobufParser.connectionClosed which invokes the connectionClosed method we defined above which in turn
         // then configures the open-future correctly and closes the state object. Phew!

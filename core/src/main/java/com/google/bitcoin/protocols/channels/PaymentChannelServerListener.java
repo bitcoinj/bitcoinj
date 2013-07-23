@@ -27,9 +27,9 @@ import javax.annotation.Nullable;
 import com.google.bitcoin.core.Sha256Hash;
 import com.google.bitcoin.core.TransactionBroadcaster;
 import com.google.bitcoin.core.Wallet;
+import com.google.bitcoin.protocols.niowrapper.NioServer;
 import com.google.bitcoin.protocols.niowrapper.ProtobufParser;
-import com.google.bitcoin.protocols.niowrapper.ProtobufParserFactory;
-import com.google.bitcoin.protocols.niowrapper.ProtobufServer;
+import com.google.bitcoin.protocols.niowrapper.StreamParserFactory;
 import org.bitcoin.paymentchannel.Protos;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -48,7 +48,7 @@ public class PaymentChannelServerListener {
     private final HandlerFactory eventHandlerFactory;
     private final BigInteger minAcceptedChannelSize;
 
-    private final ProtobufServer server;
+    private final NioServer server;
 
     /**
      * A factory which generates connection-specific event handlers.
@@ -160,7 +160,7 @@ public class PaymentChannelServerListener {
         this.eventHandlerFactory = checkNotNull(eventHandlerFactory);
         this.minAcceptedChannelSize = checkNotNull(minAcceptedChannelSize);
 
-        server = new ProtobufServer(new ProtobufParserFactory() {
+        server = new NioServer(new StreamParserFactory() {
             @Override
             public ProtobufParser getNewParser(InetAddress inetAddress, int port) {
                 return new ServerHandler(new InetSocketAddress(inetAddress, port), timeoutSeconds).socketProtobufHandler;
