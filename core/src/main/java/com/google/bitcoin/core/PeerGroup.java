@@ -899,6 +899,8 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
             return;  // Disabled.
         // Start the process of pinging the peer. Do a ping right now and then ensure there's a fixed delay between
         // each ping. If the peer is taken out of the peers list then the cycle will stop.
+        //
+        // TODO: This should really be done by a timer integrated with the network thread to avoid races.
         final Runnable[] pingRunnable = new Runnable[1];
         pingRunnable[0] = new Runnable() {
             private boolean firstRun = true;
