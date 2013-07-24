@@ -918,7 +918,7 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
                 final long interval = getPingIntervalMsec();
                 if (interval <= 0)
                     return;  // Disabled.
-                vPingTimer.schedule(new TimerTask() {
+                final TimerTask task = new TimerTask() {
                     @Override
                     public void run() {
                         try {
@@ -929,7 +929,13 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
                             log.warn("{}: Exception whilst trying to ping peer: {}", peer, e.toString());
                         }
                     }
-                }, interval);
+                };
+                try {
+                    vPingTimer.schedule(task, interval);
+                } catch (IllegalStateException ignored) {
+                    // This can happen if there's a shutdown race and this runnable is executing whilst the timer is
+                    // simultaneously cancelled.
+                }
             }
         };
         pingRunnable[0].run();
