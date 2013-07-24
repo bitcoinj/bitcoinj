@@ -647,6 +647,13 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
         lock.lock();
         try {
             tx.verify();
+            // Ignore it if we already know about this transaction. Receiving a pending transaction never moves it
+            // between pools.
+            EnumSet<Pool> containingPools = getContainingPools(tx);
+            if (!containingPools.equals(EnumSet.noneOf(Pool.class))) {
+                log.debug("Received tx we already saw in a block or created ourselves: " + tx.getHashAsString());
+                return;
+            }
             // Repeat the check of relevancy here, even though the caller may have already done so - this is to avoid
             // race conditions where receivePending may be being called in parallel.
             if (!overrideIsRelevant && !isPendingTransactionRelevant(tx))
@@ -691,7 +698,7 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
         receivePending(tx, dependencies, false);
     }
 
-    private static AnalysisResult analyzeTransactionAndDependencies(Transaction tx, List<Transaction> dependencies) {
+    private static AnalysisResult analyzeTransactionAndDependencies(Transaction tx, @Nullable List<Transaction> dependencies) {
         AnalysisResult result = new AnalysisResult();
         if (tx.isTimeLocked())
             result.timeLocked = tx;
