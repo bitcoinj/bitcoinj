@@ -571,7 +571,7 @@ public class Transaction extends ChildMessage implements Serializable {
                             chain.estimateBlockTime((int)lockTime).toString() + ")";
                 }
             } else {
-                time = new Date(lockTime).toString();
+                time = new Date(lockTime*1000).toString();
             }
             s.append(String.format("  time locked until %s%n", time));
         }
