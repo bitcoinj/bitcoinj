@@ -1171,7 +1171,7 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
      * of connections to wait for before commencing broadcast.
      */
     public ListenableFuture<Transaction> broadcastTransaction(final Transaction tx) {
-        return broadcastTransaction(tx, getMinBroadcastConnections());
+        return broadcastTransaction(tx, Math.max(1, getMinBroadcastConnections()));
     }
 
     /**
