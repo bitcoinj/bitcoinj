@@ -98,7 +98,14 @@ public class WalletAppKit extends AbstractIdleService {
             vStore = new SPVBlockStore(params, vChainFile);
             vChain = new BlockChain(params, vStore);
             vPeerGroup = new PeerGroup(params, vChain);
-
+            // Set up peer addresses or discovery first, so if wallet extensions try to broadcast a transaction
+            // before we're actually connected the broadcast waits for an appropriate number of connections.
+            if (vPeerAddresses != null) {
+                for (PeerAddress addr : vPeerAddresses) vPeerGroup.addAddress(addr);
+                vPeerAddresses = null;
+            } else {
+                vPeerGroup.addPeerDiscovery(new DnsDiscovery(params));
+            }
             if (vWalletFile.exists()) {
                 walletStream = new FileInputStream(vWalletFile);
                 vWallet = new Wallet(params);
@@ -113,12 +120,6 @@ public class WalletAppKit extends AbstractIdleService {
             if (vUseAutoSave) vWallet.autosaveToFile(vWalletFile, 1, TimeUnit.SECONDS, null);
             vChain.addWallet(vWallet);
             vPeerGroup.addWallet(vWallet);
-            if (vPeerAddresses != null) {
-                for (PeerAddress addr : vPeerAddresses) vPeerGroup.addAddress(addr);
-                vPeerAddresses = null;
-            } else {
-                vPeerGroup.addPeerDiscovery(new DnsDiscovery(params));
-            }
             vPeerGroup.startAndWait();
             vPeerGroup.downloadBlockChain();
             // Make sure we shut down cleanly.
