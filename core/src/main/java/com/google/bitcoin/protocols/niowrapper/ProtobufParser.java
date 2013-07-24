@@ -16,14 +16,14 @@
 
 package com.google.bitcoin.protocols.niowrapper;
 
+import com.google.bitcoin.core.Utils;
+import com.google.protobuf.ByteString;
+import com.google.protobuf.MessageLite;
+
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Timer;
 import java.util.TimerTask;
-
-import com.google.bitcoin.core.Utils;
-import com.google.protobuf.ByteString;
-import com.google.protobuf.MessageLite;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
@@ -72,8 +72,8 @@ public class ProtobufParser<MessageType extends MessageLite> {
     private TimerTask timeoutTask;
     private long timeoutMillis;
 
-    // A timer which manages expiring channels as their timeouts occur
-    private static final Timer timeoutTimer = new Timer();
+    // A timer which manages expiring connections as their timeouts occur (if configured).
+    private static final Timer timeoutTimer = new Timer("ProtobufParser timeouts", true);
 
     /**
      * Creates a new protobuf handler.
