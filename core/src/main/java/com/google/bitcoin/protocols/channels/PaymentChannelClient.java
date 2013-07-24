@@ -23,9 +23,13 @@ import static com.google.common.base.Preconditions.checkState;
  * <p>Does all required verification of server messages and properly stores state objects in the wallet-attached
  * {@link StoredPaymentChannelClientStates} so that they are automatically closed when necessary and refund
  * transactions are not lost if the application crashes before it unlocks.</p>
+ *
+ * <p>Though this interface is largely designed with stateful protocols (eg simple TCP connections) in mind, it is also
+ * possible to use it with stateless protocols (eg sending protobufs when required over HTTP headers). In this case, the
+ * "connection" translates roughly into the server-client relationship. See the javadocs for specific functions for more
+ * details.</p>
  */
 public class PaymentChannelClient {
-    //TODO: Update JavaDocs with notes for communication over stateless protocols
     private static final org.slf4j.Logger log = LoggerFactory.getLogger(PaymentChannelClient.class);
 
     protected final ReentrantLock lock = Threading.lock("channelclient");
@@ -51,7 +55,9 @@ public class PaymentChannelClient {
         public void sendToServer(Protos.TwoWayChannelMessage msg);
 
         /**
-         * <p>Requests that the connection to the server be closed</p>
+         * <p>Requests that the connection to the server be closed. For stateless protocols, note that after this call,
+         * no more messages should be received from the server and this object is no longer usable. A
+         * {@link PaymentChannelClient#connectionClosed()} event should be generated immediately after this call.</p>
          *
          * <p>Called while holding a lock on the {@link PaymentChannelClient} object - be careful about reentrancy</p>
          *
@@ -293,6 +299,9 @@ public class PaymentChannelClient {
     /**
      * <p>Called when the connection terminates. Notifies the {@link StoredClientChannel} object that we can attempt to
      * resume this channel in the future and stops generating messages for the server.</p>
+     *
+     * <p>For stateless protocols, this translates to a client not using the channel for the immediate future, but
+     * intending to reopen the channel later. There is likely little reason to use this in a stateless protocol.</p>
      *
      * <p>Note that this <b>MUST</b> still be called even after either
      * {@link ClientConnection#destroyConnection(CloseReason)} or
