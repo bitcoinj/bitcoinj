@@ -346,7 +346,7 @@ public class PaymentChannelClient {
 
             StoredPaymentChannelClientStates channels = (StoredPaymentChannelClientStates) wallet.getExtensions().get(StoredPaymentChannelClientStates.EXTENSION_ID);
             if (channels != null)
-                storedChannel = channels.getInactiveChannelById(serverId);
+                storedChannel = channels.getUsableChannelForServerID(serverId);
 
             step = InitStep.WAITING_FOR_VERSION_NEGOTIATION;
 

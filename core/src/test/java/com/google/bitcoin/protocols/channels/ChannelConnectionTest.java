@@ -575,4 +575,43 @@ public class ChannelConnectionTest extends TestWithWallet {
         assertEquals(Protos.Error.ErrorCode.SYNTAX_ERROR, error.getError().getCode());
         assertEquals(CloseReason.REMOTE_SENT_INVALID_MESSAGE, pair.clientRecorder.q.take());
    }
+
+    @Test
+    public void testDontResumeEmptyChannels() throws Exception {
+        // Check that if the client has an empty channel that's being kept around in case we need to broadcast the
+        // refund, we don't accidentally try to resume it).
+
+        // Open up a normal channel.
+        Sha256Hash someServerId = Sha256Hash.ZERO_HASH;
+        ChannelTestUtils.RecordingPair pair = ChannelTestUtils.makeRecorders(serverWallet, mockBroadcaster);
+        pair.server.connectionOpen();
+        PaymentChannelClient client = new PaymentChannelClient(wallet, myKey, Utils.COIN, someServerId, pair.clientRecorder);
+        PaymentChannelServer server = pair.server;
+        client.connectionOpen();
+        server.receiveMessage(pair.clientRecorder.checkNextMsg(MessageType.CLIENT_VERSION));
+        client.receiveMessage(pair.serverRecorder.checkNextMsg(MessageType.SERVER_VERSION));
+        client.receiveMessage(pair.serverRecorder.checkNextMsg(MessageType.INITIATE));
+        server.receiveMessage(pair.clientRecorder.checkNextMsg(MessageType.PROVIDE_REFUND));
+        client.receiveMessage(pair.serverRecorder.checkNextMsg(MessageType.RETURN_REFUND));
+        broadcastTxPause.release();
+        server.receiveMessage(pair.clientRecorder.checkNextMsg(MessageType.PROVIDE_CONTRACT));
+        broadcasts.take();
+        client.receiveMessage(pair.serverRecorder.checkNextMsg(MessageType.CHANNEL_OPEN));
+        Sha256Hash contractHash = (Sha256Hash) pair.serverRecorder.q.take();
+        pair.clientRecorder.checkOpened();
+        assertNull(pair.serverRecorder.q.poll());
+        assertNull(pair.clientRecorder.q.poll());
+        // Send the whole channel at once.
+        client.incrementPayment(Utils.COIN);
+        server.receiveMessage(pair.clientRecorder.checkNextMsg(MessageType.UPDATE_PAYMENT));
+        // The channel is now empty.
+        assertEquals(BigInteger.ZERO, client.state().getValueRefunded());
+        client.connectionClosed();
+
+        // Now try opening a new channel with the same server ID and verify the client asks for a new channel.
+        client = new PaymentChannelClient(wallet, myKey, Utils.COIN, someServerId, pair.clientRecorder);
+        client.connectionOpen();
+        Protos.TwoWayChannelMessage msg = pair.clientRecorder.checkNextMsg(MessageType.CLIENT_VERSION);
+        assertFalse(msg.getClientVersion().hasPreviousChannelContractHash());
+    }
 }

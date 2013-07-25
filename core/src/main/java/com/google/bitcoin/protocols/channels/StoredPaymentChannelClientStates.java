@@ -23,6 +23,7 @@ import com.google.common.collect.HashMultimap;
 import com.google.protobuf.ByteString;
 import net.jcip.annotations.GuardedBy;
 
+import javax.annotation.Nullable;
 import java.math.BigInteger;
 import java.util.Date;
 import java.util.Set;
@@ -61,12 +62,16 @@ public class StoredPaymentChannelClientStates implements WalletExtension {
     /**
      * Finds an inactive channel with the given id and returns it, or returns null.
      */
-    public StoredClientChannel getInactiveChannelById(Sha256Hash id) {
+    @Nullable
+    public StoredClientChannel getUsableChannelForServerID(Sha256Hash id) {
         lock.lock();
         try {
             Set<StoredClientChannel> setChannels = mapChannels.get(id);
             for (StoredClientChannel channel : setChannels) {
                 synchronized (channel) {
+                    // Check if the channel is usable (has money, inactive) and if so, activate it.
+                    if (channel.valueToMe.equals(BigInteger.ZERO))
+                        continue;
                     if (!channel.active) {
                         channel.active = true;
                         return channel;
@@ -244,7 +249,7 @@ class StoredClientChannel {
     @Override
     public String toString() {
         final String newline = String.format("%n");
-        return String.format("Stored client channel %s (%s)%n" +
+        return String.format("Stored client channel for server ID %s (%s)%n" +
                              "    Key:         %s%n" +
                              "    Value to me: %d%n" +
                              "    Refund fees: %d%n" +
