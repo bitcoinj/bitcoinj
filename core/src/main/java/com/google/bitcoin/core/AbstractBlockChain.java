@@ -34,6 +34,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.locks.ReentrantLock;
 
 import static com.google.common.base.Preconditions.*;
+import static java.lang.String.format;
 
 /**
  * <p>An AbstractBlockChain holds a series of {@link Block} objects, links them together, and knows how to verify that
@@ -417,9 +418,8 @@ public abstract class AbstractBlockChain {
         StoredBlock head = getChainHead();
         if (storedPrev.equals(head)) {
             if (filtered && filteredTxn.size() > 0)  {
-                // Some temp debug logging to try and track down where transactions are going missing.
-                log.info("Block {} connects to top of best chain with {} transaction(s)",
-                        block.getHashAsString(), filteredTxn.size());
+                log.info(format("Block %s connects to top of best chain with %d transaction(s) of which we were sent %d",
+                        block.getHashAsString(), filteredTxHashList.size(), filteredTxn.size()));
                 for (Sha256Hash hash : filteredTxHashList) log.info("  matched tx {}", hash);
             }
             if (expensiveChecks && block.getTimeSeconds() <= getMedianTimestampOfRecentBlocks(head, blockStore))
