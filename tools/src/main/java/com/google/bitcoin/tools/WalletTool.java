@@ -431,6 +431,10 @@ public class WalletTool {
                 }
             }
             Wallet.SendRequest req = Wallet.SendRequest.forTx(t);
+            if (t.getOutputs().size() == 1 && t.getOutput(0).getValue().equals(wallet.getBalance())) {
+                log.info("Emptying out wallet, recipient may get less than what you expect");
+                req.emptyWallet = true;
+            }
             req.fee = fee;
             if (allowUnconfirmed) {
                 wallet.allowSpendingUnconfirmedTransactions();
