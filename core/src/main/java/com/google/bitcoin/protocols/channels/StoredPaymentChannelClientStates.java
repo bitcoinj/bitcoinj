@@ -201,6 +201,19 @@ public class StoredPaymentChannelClientStates implements WalletExtension {
             lock.unlock();
         }
     }
+
+    @Override
+    public String toString() {
+        lock.lock();
+        try {
+            StringBuilder buf = new StringBuilder("Client payment channel states:\n");
+            for (StoredClientChannel channel : mapChannels.values())
+                buf.append("  ").append(channel).append("\n");
+            return buf.toString();
+        } finally {
+            lock.unlock();
+        }
+    }
 }
 
 /**
@@ -226,5 +239,19 @@ class StoredClientChannel {
         this.valueToMe = valueToMe;
         this.refundFees = refundFees;
         this.active = active;
+    }
+
+    @Override
+    public String toString() {
+        final String newline = String.format("%n");
+        return String.format("Stored client channel %s (%s)%n" +
+                             "    Key:         %s%n" +
+                             "    Value to me: %d%n" +
+                             "    Refund fees: %d%n" +
+                             "    Contract:  %s" +
+                             "Refund:    %s",
+                id, active ? "active" : "inactive", myKey, valueToMe, refundFees,
+                contract.toString().replaceAll(newline, newline + "    "),
+                refund.toString().replaceAll(newline, newline + "    "));
     }
 }

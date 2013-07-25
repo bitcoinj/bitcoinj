@@ -19,6 +19,7 @@ package com.google.bitcoin.protocols.channels;
 import com.google.bitcoin.core.*;
 
 import java.math.BigInteger;
+import java.util.Date;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
@@ -84,5 +85,19 @@ public class StoredServerChannel {
             state = new PaymentChannelServerState(this, wallet, broadcaster);
         checkArgument(wallet == state.wallet);
         return state;
+    }
+
+    @Override
+    public synchronized String toString() {
+        final String newline = String.format("%n");
+        return String.format("Stored server channel (%s)%n" +
+                "    Key:           %s%n" +
+                "    Value to me:   %d%n" +
+                "    Client output: %s%n" +
+                "    Refund unlock: %s (%d unix time)%n" +
+                "    Contract:    %s%n",
+                connectedHandler != null ? "connected" : "disconnected", myKey, bestValueToMe,
+                clientOutput,  new Date(refundTransactionUnlockTimeSecs * 1000), refundTransactionUnlockTimeSecs,
+                contract.toString().replaceAll(newline, newline + "    "));
     }
 }

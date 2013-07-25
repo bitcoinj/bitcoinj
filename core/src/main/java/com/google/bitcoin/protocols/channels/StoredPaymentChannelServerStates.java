@@ -185,4 +185,18 @@ public class StoredPaymentChannelServerStates implements WalletExtension {
             lock.unlock();
         }
     }
+
+    @Override
+    public String toString() {
+        lock.lock();
+        try {
+            StringBuilder buf = new StringBuilder();
+            for (StoredServerChannel stored : mapChannels.values()) {
+                buf.append(stored);
+            }
+            return buf.toString();
+        } finally {
+            lock.unlock();
+        }
+    }
 }
