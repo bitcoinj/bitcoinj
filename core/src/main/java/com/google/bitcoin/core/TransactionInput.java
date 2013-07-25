@@ -325,7 +325,10 @@ public class TransactionInput extends ChildMessage implements Serializable {
         checkElementIndex((int) outpoint.getIndex(), transaction.getOutputs().size(), "Corrupt transaction");
         TransactionOutput out = transaction.getOutput((int) outpoint.getIndex());
         if (!out.isAvailableForSpending()) {
-            if (mode == ConnectMode.DISCONNECT_ON_CONFLICT) {
+            if (out.parentTransaction.equals(outpoint.fromTx)) {
+                // Already connected.
+                return ConnectionResult.SUCCESS;
+            } else if (mode == ConnectMode.DISCONNECT_ON_CONFLICT) {
                 out.markAsUnspent();
             } else if (mode == ConnectMode.ABORT_ON_CONFLICT) {
                 outpoint.fromTx = checkNotNull(out.parentTransaction);
