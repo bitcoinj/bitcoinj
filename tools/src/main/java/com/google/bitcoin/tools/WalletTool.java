@@ -758,6 +758,6 @@ public class WalletTool {
         // there just for the dump case.
         if (chainFileName.exists())
             setup();
-        System.out.println(wallet.toString(true, chain));
+        System.out.println(wallet.toString(true, true, true, chain));
     }
 }

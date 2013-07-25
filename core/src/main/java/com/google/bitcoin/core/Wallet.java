@@ -2131,16 +2131,18 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
 
     @Override
     public String toString() {
-        return toString(false, null);
+        return toString(false, true, true, null);
     }
 
     /**
      * Formats the wallet as a human readable piece of text. Intended for debugging, the format is not meant to be
      * stable or human readable.
      * @param includePrivateKeys Whether raw private key data should be included.
+     * @param includeTransactions Whether to print transaction data.
+     * @param includeExtensions Whether to print extension data.
      * @param chain If set, will be used to estimate lock times for block timelocked transactions.
      */
-    public String toString(boolean includePrivateKeys, AbstractBlockChain chain) {
+    public String toString(boolean includePrivateKeys, boolean includeTransactions, boolean includeExtensions, AbstractBlockChain chain) {
         lock.lock();
         try {
             StringBuilder builder = new StringBuilder();
@@ -2163,22 +2165,30 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
                 builder.append(includePrivateKeys ? key.toStringWithPrivate() : key.toString());
                 builder.append("\n");
             }
-            // Print the transactions themselves
-            if (unspent.size() > 0) {
-                builder.append("\nUNSPENT:\n");
-                toStringHelper(builder, unspent, chain);
+            if (includeTransactions) {
+                // Print the transactions themselves
+                if (unspent.size() > 0) {
+                    builder.append("\n>>> UNSPENT:\n");
+                    toStringHelper(builder, unspent, chain);
+                }
+                if (spent.size() > 0) {
+                    builder.append("\n>>> SPENT:\n");
+                    toStringHelper(builder, spent, chain);
+                }
+                if (pending.size() > 0) {
+                    builder.append("\n>>> PENDING:\n");
+                    toStringHelper(builder, pending, chain);
+                }
+                if (dead.size() > 0) {
+                    builder.append("\n>>> DEAD:\n");
+                    toStringHelper(builder, dead, chain);
+                }
             }
-            if (spent.size() > 0) {
-                builder.append("\nSPENT:\n");
-                toStringHelper(builder, spent, chain);
-            }
-            if (pending.size() > 0) {
-                builder.append("\nPENDING:\n");
-                toStringHelper(builder, pending, chain);
-            }
-            if (dead.size() > 0) {
-                builder.append("\nDEAD:\n");
-                toStringHelper(builder, dead, chain);
+            if (includeExtensions && extensions.size() > 0) {
+                builder.append("\n>>> EXTENSIONS:\n");
+                for (WalletExtension extension : extensions.values()) {
+                    builder.append(extension).append("\n\n");
+                }
             }
             return builder.toString();
         } finally {
