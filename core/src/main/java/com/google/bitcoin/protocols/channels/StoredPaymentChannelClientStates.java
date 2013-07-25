@@ -251,7 +251,7 @@ class StoredClientChannel {
         final String newline = String.format("%n");
         return String.format("Stored client channel for server ID %s (%s)%n" +
                              "    Key:         %s%n" +
-                             "    Value to me: %d%n" +
+                             "    Value left:  %d%n" +
                              "    Refund fees: %d%n" +
                              "    Contract:  %s" +
                              "Refund:    %s",
