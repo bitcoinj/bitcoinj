@@ -199,6 +199,8 @@ public class PaymentChannelClientState {
             refundFees = multisigFee;
         }
         refundTx.getConfidence().setSource(TransactionConfidence.Source.SELF);
+        log.info("initiated channel with multi-sig contract {}, refund {}", multisigContract.getHashAsString(),
+                refundTx.getHashAsString());
         state = State.INITIATED;
         // Client should now call getIncompleteRefundTransaction() and send it to the server.
     }
@@ -309,7 +311,7 @@ public class PaymentChannelClientState {
         if (Transaction.MIN_NONDUST_OUTPUT.compareTo(newValueToMe) > 0 && !newValueToMe.equals(BigInteger.ZERO))
             throw new ValueOutOfRangeException("New value being sent back as change was smaller than minimum nondust output");
         Transaction tx = makeUnsignedChannelContract(newValueToMe);
-        log.info("Signing new contract: {}", tx);
+        log.info("Signing new payment tx {}", tx);
         Transaction.SigHash mode;
         // If we spent all the money we put into this channel, we (by definition) don't care what the outputs are, so
         // we sign with SIGHASH_NONE to let the server do what it wants.
