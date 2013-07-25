@@ -475,9 +475,10 @@ public class PaymentChannelServerState {
      * a call to {@link PaymentChannelServerState#close()} completes successfully. A channel may only be stored after it
      * has fully opened (ie state == State.READY).
      *
-     * @param connectedHandler The {@link PaymentChannelClientState} object which is managing this object. This will
+     * @param connectedHandler Optional {@link PaymentChannelServer} object that manages this object. This will
      *                         set the appropriate pointer in the newly created {@link StoredServerChannel} before it is
-     *                         committed to wallet.
+     *                         committed to wallet. If set, closing the state object will propagate the close to the
+     *                         handler which can then do a TCP disconnect.
      */
     public synchronized void storeChannelInWallet(@Nullable PaymentChannelServer connectedHandler) {
         checkState(state == State.READY);
@@ -488,7 +489,8 @@ public class PaymentChannelServerState {
         StoredPaymentChannelServerStates channels = (StoredPaymentChannelServerStates)
                 wallet.addOrGetExistingExtension(new StoredPaymentChannelServerStates(wallet, broadcaster));
         storedServerChannel = new StoredServerChannel(this, multisigContract, clientOutput, refundTransactionUnlockTimeSecs, serverKey, bestValueToMe, bestValueSignature);
-        checkState(storedServerChannel.setConnectedHandler(connectedHandler));
+        if (connectedHandler != null)
+            checkState(storedServerChannel.setConnectedHandler(connectedHandler, false) == connectedHandler);
         channels.putChannel(storedServerChannel);
         wallet.addOrUpdateExtension(channels);
     }

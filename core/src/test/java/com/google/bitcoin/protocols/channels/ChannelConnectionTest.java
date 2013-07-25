@@ -325,9 +325,7 @@ public class ChannelConnectionTest extends TestWithWallet {
         PaymentChannelClient openClient = client;
         ChannelTestUtils.RecordingPair openPair = pair;
 
-        // Now open up a new client with the same id and make sure it doesn't attempt to reopen the channel.
-        // If a client connects to a server with the same channel ID as one that's currently in use, the
-        // server responds by opening up a new channel instead of letting two client connections conflict.
+        // Now open up a new client with the same id and make sure the server disconnects the previous client.
         pair = ChannelTestUtils.makeRecorders(serverWallet, mockBroadcaster);
         client = new PaymentChannelClient(wallet, myKey, Utils.COIN, someServerId, pair.clientRecorder);
         server = pair.server;
@@ -339,14 +337,13 @@ public class ChannelConnectionTest extends TestWithWallet {
             Protos.TwoWayChannelMessage msg = pair.clientRecorder.checkNextMsg(MessageType.CLIENT_VERSION);
             assertFalse(msg.getClientVersion().hasPreviousChannelContractHash());
         }
-
-        // Make sure the server won't allow two simultaneous opens either. It will try to reinitiate instead.
+        // Make sure the server allows two simultaneous opens. It will close the first and allow resumption of the second.
         pair = ChannelTestUtils.makeRecorders(serverWallet, mockBroadcaster);
         client = new PaymentChannelClient(wallet, myKey, Utils.COIN, someServerId, pair.clientRecorder);
         server = pair.server;
         client.connectionOpen();
         server.connectionOpen();
-        // Swap out the clients version message for a custom one that incorrectly tries to resume ...
+        // Swap out the clients version message for a custom one that tries to resume ...
         pair.clientRecorder.getNextMsg();
         server.receiveMessage(Protos.TwoWayChannelMessage.newBuilder()
                 .setType(MessageType.CLIENT_VERSION)
@@ -354,48 +351,12 @@ public class ChannelConnectionTest extends TestWithWallet {
                         .setPreviousChannelContractHash(ByteString.copyFrom(contractHash.getBytes()))
                         .setMajor(0).setMinor(42))
                 .build());
-        // We get the usual setup sequence.
-        client.receiveMessage(pair.serverRecorder.checkNextMsg(MessageType.SERVER_VERSION));
-        client.receiveMessage(pair.serverRecorder.checkNextMsg(MessageType.INITIATE));
-        server.receiveMessage(pair.clientRecorder.checkNextMsg(MessageType.PROVIDE_REFUND));
-        client.receiveMessage(pair.serverRecorder.checkNextMsg(MessageType.RETURN_REFUND));
-        broadcastTxPause.release();
-        server.receiveMessage(pair.clientRecorder.checkNextMsg(MessageType.PROVIDE_CONTRACT));
-        broadcasts.take();
-        client.receiveMessage(pair.serverRecorder.checkNextMsg(MessageType.CHANNEL_OPEN));
-        Sha256Hash secondContractHash = (Sha256Hash) pair.serverRecorder.q.take();
-        pair.clientRecorder.checkOpened();
-        assertNull(pair.serverRecorder.q.poll());
-        assertNull(pair.clientRecorder.q.poll());
-        client.close();
-        client.connectionClosed();
-        pair.server.close();
-        pair.server.connectionClosed();
+        // We get the usual resume sequence.
+        pair.serverRecorder.checkNextMsg(MessageType.SERVER_VERSION);
+        pair.serverRecorder.checkNextMsg(MessageType.CHANNEL_OPEN);
+        // Verify the previous one was closed.
+        openPair.serverRecorder.checkNextMsg(MessageType.CLOSE);
 
-        // Now open again with the same id and make sure it reopens the second (because the 1st is still open).
-        pair = ChannelTestUtils.makeRecorders(serverWallet, mockBroadcaster);
-        client = new PaymentChannelClient(wallet, myKey, Utils.COIN, someServerId, pair.clientRecorder);
-        server = pair.server;
-        client.connectionOpen();
-        server.connectionOpen();
-        {
-            Protos.TwoWayChannelMessage msg = pair.clientRecorder.checkNextMsg(MessageType.CLIENT_VERSION);
-            assertEquals(secondContractHash, new Sha256Hash(msg.getClientVersion().getPreviousChannelContractHash().toByteArray()));
-            server.receiveMessage(msg);
-        }
-        client.receiveMessage(pair.serverRecorder.checkNextMsg(MessageType.SERVER_VERSION));
-        client.receiveMessage(pair.serverRecorder.checkNextMsg(MessageType.CHANNEL_OPEN));
-        pair.clientRecorder.checkOpened();
-        // Close it.
-        assertEquals(2, clientStoredChannels.mapChannels.size());
-        broadcastTxPause.release();
-        client.close();
-        server.receiveMessage(pair.clientRecorder.checkNextMsg(MessageType.CLOSE));
-        assertEquals(CloseReason.CLIENT_REQUESTED_CLOSE, pair.clientRecorder.q.take());
-        server.connectionClosed();
-        client.connectionClosed();
-
-        assertFalse(clientStoredChannels.getChannel(Sha256Hash.create(new byte[]{}), secondContractHash).active);
         assertTrue(clientStoredChannels.getChannel(Sha256Hash.create(new byte[]{}), contractHash).active);
 
         // And finally close the first channel too.
@@ -406,13 +367,10 @@ public class ChannelConnectionTest extends TestWithWallet {
         Utils.rollMockClock(60 * 60 * 24 + 60*5);   // Client announces refund 5 minutes after expire time
         StoredPaymentChannelClientStates newClientStates = new StoredPaymentChannelClientStates(wallet, mockBroadcaster);
         newClientStates.deserializeWalletExtension(wallet, clientStoredChannels.serializeWalletExtension());
-        // Expect two pairs of contract/refund ...
-        for (int i = 0; i < 2; i++) {
-            broadcastTxPause.release();
-            assertTrue(broadcasts.take().getOutput(0).getScriptPubKey().isSentToMultiSig());
-            broadcastTxPause.release();
-            assertEquals(TransactionConfidence.Source.SELF, broadcasts.take().getConfidence().getSource());
-        }
+        broadcastTxPause.release();
+        assertTrue(broadcasts.take().getOutput(0).getScriptPubKey().isSentToMultiSig());
+        broadcastTxPause.release();
+        assertEquals(TransactionConfidence.Source.SELF, broadcasts.take().getConfidence().getSource());
         assertTrue(broadcasts.isEmpty());
         assertTrue(newClientStates.mapChannels.isEmpty());
         // Server also knows it's too late.

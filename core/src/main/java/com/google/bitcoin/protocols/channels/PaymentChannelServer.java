@@ -156,18 +156,21 @@ public class PaymentChannelServer {
             if (channels != null) {
                 StoredServerChannel storedServerChannel = channels.getChannel(contractHash);
                 if (storedServerChannel != null) {
-                    if (storedServerChannel.setConnectedHandler(this)) {
-                        log.info("Got resume version message, responding with VERSIONS and CHANNEL_OPEN");
-                        state = storedServerChannel.getOrCreateState(wallet, broadcaster);
-                        step = InitStep.CHANNEL_OPEN;
-                        conn.sendToClient(Protos.TwoWayChannelMessage.newBuilder()
-                                .setType(Protos.TwoWayChannelMessage.MessageType.CHANNEL_OPEN)
-                                .build());
-                        conn.channelOpen(contractHash);
-                        return;
-                    } else {
-                        log.error("  ... but that contract is already in use.");
+                    final PaymentChannelServer existingHandler = storedServerChannel.setConnectedHandler(this, false);
+                    if (existingHandler != this) {
+                        log.warn("  ... and that channel is already in use, disconnecting other user.");
+                        existingHandler.close();
+                        storedServerChannel.setConnectedHandler(this, true);
                     }
+
+                    log.info("Got resume version message, responding with VERSIONS and CHANNEL_OPEN");
+                    state = storedServerChannel.getOrCreateState(wallet, broadcaster);
+                    step = InitStep.CHANNEL_OPEN;
+                    conn.sendToClient(Protos.TwoWayChannelMessage.newBuilder()
+                            .setType(Protos.TwoWayChannelMessage.MessageType.CHANNEL_OPEN)
+                            .build());
+                    conn.channelOpen(contractHash);
+                    return;
                 } else {
                     log.error(" ... but we do not have any record of that contract! Resume failed.");
                 }
@@ -367,7 +370,7 @@ public class PaymentChannelServer {
                     if (channels != null) {
                         StoredServerChannel storedServerChannel = channels.getChannel(state.getMultisigContract().getHash());
                         if (storedServerChannel != null) {
-                            storedServerChannel.setConnectedHandler(null);
+                            storedServerChannel.clearConnectedHandler();
                         }
                     }
                 }

@@ -180,7 +180,7 @@ public class PaymentChannelClient {
 
     @GuardedBy("lock")
     private void receiveChannelOpen() throws VerificationException {
-        checkState(step == InitStep.WAITING_FOR_CHANNEL_OPEN || (step == InitStep.WAITING_FOR_INITIATE && storedChannel != null));
+        checkState(step == InitStep.WAITING_FOR_CHANNEL_OPEN || (step == InitStep.WAITING_FOR_INITIATE && storedChannel != null), step);
         log.info("Got CHANNEL_OPEN message, ready to pay");
 
         if (step == InitStep.WAITING_FOR_INITIATE)

@@ -38,7 +38,7 @@ public class StoredServerChannel {
 
     // In-memory pointer to the event handler which handles this channel if the client is connected.
     // Used as a flag to prevent duplicate connections and to disconnect the channel if its expire time approaches.
-    PaymentChannelServer connectedHandler = null;
+    private PaymentChannelServer connectedHandler = null;
     PaymentChannelServerState state = null;
 
     StoredServerChannel(PaymentChannelServerState state, Transaction contract, TransactionOutput clientOutput,
@@ -63,13 +63,27 @@ public class StoredServerChannel {
 
     /**
      * Attempts to connect the given handler to this, returning true if it is the new handler, false if there was
-     * already one attached. A null connectedHandler clears this's connected handler no matter its current state.
+     * already one attached.
      */
-    synchronized boolean setConnectedHandler(PaymentChannelServer connectedHandler) {
-        if (this.connectedHandler != null && connectedHandler != null)
-            return false;
+    synchronized PaymentChannelServer setConnectedHandler(PaymentChannelServer connectedHandler, boolean override) {
+        if (this.connectedHandler != null && !override)
+            return this.connectedHandler;
         this.connectedHandler = connectedHandler;
-        return true;
+        return connectedHandler;
+    }
+
+    /** Clears a handler that was connected with setConnectedHandler. */
+    synchronized void clearConnectedHandler() {
+        this.connectedHandler = null;
+    }
+
+    /**
+     * If a handler is connected, call its {@link com.google.bitcoin.protocols.channels.PaymentChannelServer#close()}
+     * method thus disconnecting the TCP connection.
+     */
+    synchronized void closeConnectedHandler() {
+        if (connectedHandler != null)
+            connectedHandler.close();
     }
 
     /**
