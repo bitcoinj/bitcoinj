@@ -16,10 +16,7 @@
 
 package com.google.bitcoin.examples;
 
-import com.google.bitcoin.core.NetworkParameters;
-import com.google.bitcoin.core.Sha256Hash;
-import com.google.bitcoin.core.Utils;
-import com.google.bitcoin.core.VerificationException;
+import com.google.bitcoin.core.*;
 import com.google.bitcoin.kits.WalletAppKit;
 import com.google.bitcoin.params.TestNet3Params;
 import com.google.bitcoin.protocols.channels.*;
@@ -62,9 +59,11 @@ public class ExamplePaymentChannelServer implements PaymentChannelServerListener
         };
         appKit.startAndWait();
 
+        System.out.println(appKit.wallet());
+
         // We provide a peer group, a wallet, a timeout in seconds, the amount we require to start a channel and
         // an implementation of HandlerFactory, which we just implement ourselves.
-        new PaymentChannelServerListener(appKit.peerGroup(), appKit.wallet(), 15, Utils.COIN, this).bindAndStart(4242);
+        new PaymentChannelServerListener(appKit.peerGroup(), appKit.wallet(), 15, Utils.CENT, this).bindAndStart(4242);
     }
 
     @Override
