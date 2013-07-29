@@ -1792,9 +1792,9 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
     }
 
     /**
-     * Given a spend request containing an incomplete transaction, makes it valid by adding inputs and outputs according
-     * to the instructions in the request. The transaction in the request is modified by this method, as is the fee
-     * parameter.
+     * Given a spend request containing an incomplete transaction, makes it valid by adding outputs and signed inputs
+     * according to the instructions in the request. The transaction in the request is modified by this method, as is
+     * the fee parameter.
      *
      * @param req a SendRequest that contains the incomplete transaction and details for how to make it valid.
      * @throws IllegalArgumentException if you try and complete the same SendRequest twice.
