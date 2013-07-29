@@ -55,23 +55,25 @@ public class Transaction extends ChildMessage implements Serializable {
     /** Threshold for lockTime: below this value it is interpreted as block number, otherwise as timestamp. **/
     public static final int LOCKTIME_THRESHOLD = 500000000; // Tue Nov  5 00:53:20 1985 UTC
 
-    /** How many bytes a transaction can be before it won't be relayed anymore. */
+    /** How many bytes a transaction can be before it won't be relayed anymore. Currently 100kb. */
     public static final int MAX_STANDARD_TX_SIZE = 100 * 1024;
 
-    /** If fee is lower than this value (in satoshis), a default reference client will treat it as if there were no fee */
+    /**
+     * If fee is lower than this value (in satoshis), a default reference client will treat it as if there were no fee.
+     * Currently this is 10000 satoshis.
+     */
     public static final BigInteger REFERENCE_DEFAULT_MIN_TX_FEE = BigInteger.valueOf(10000);
 
     /**
      * Any standard (ie pay-to-address) output smaller than this value (in satoshis) will most likely be rejected by the network.
      * This is calculated by assuming a standard output will be 34 bytes, and then using the formula used in
-     * {@link TransactionOutput#getMinNonDustValue(BigInteger)}.
+     * {@link TransactionOutput#getMinNonDustValue(BigInteger)}. Currently it's 5460 satoshis.
      */
     public static final BigInteger MIN_NONDUST_OUTPUT = BigInteger.valueOf(5460);
 
     // These are serialized in both bitcoin and java serialization.
     private long version;
     private ArrayList<TransactionInput> inputs;
-
     private ArrayList<TransactionOutput> outputs;
 
     private long lockTime;
