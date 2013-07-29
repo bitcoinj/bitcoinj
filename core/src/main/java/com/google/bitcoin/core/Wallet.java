@@ -455,7 +455,7 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
      * @param eventListener callback to be informed when the auto-save thread does things, or null
      */
     public WalletFiles autosaveToFile(File f, long delayTime, TimeUnit timeUnit,
-                                      WalletFiles.Listener eventListener) {
+                                      @Nullable WalletFiles.Listener eventListener) {
         lock.lock();
         try {
             checkState(vFileManager == null, "Already auto saving this wallet.");
