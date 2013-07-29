@@ -1749,11 +1749,12 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
      * successfully broadcast. This means that even if the network hasn't heard about your transaction you won't be
      * able to spend those same coins again.</p>
      *
-     * @param peerGroup a PeerGroup to use for broadcast or null.
+     * @param broadcaster the target to use for broadcast.
      * @param request the SendRequest that describes what to do, get one using static methods on SendRequest itself.
      * @return An object containing the transaction that was created, and a future for the broadcast of it.
      */
-    public SendResult sendCoins(PeerGroup peerGroup, SendRequest request) {
+    @Nullable
+    public SendResult sendCoins(TransactionBroadcaster broadcaster, SendRequest request) {
         // Does not need to be synchronized as sendCoinsOffline is and the rest is all thread-local.
 
         // Commit the TX to the wallet immediately so the spent coins won't be reused.
@@ -1768,7 +1769,7 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
         // count of seen peers, the memory pool will update the transaction confidence object, that will invoke the
         // txConfidenceListener which will in turn invoke the wallets event listener onTransactionConfidenceChanged
         // method.
-        result.broadcastComplete = peerGroup.broadcastTransaction(tx);
+        result.broadcastComplete = broadcaster.broadcastTransaction(tx);
         return result;
     }
 
@@ -1781,6 +1782,7 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
      * @return The {@link Transaction} that was created or null if there was insufficient balance to send the coins.
      * @throws IOException if there was a problem broadcasting the transaction
      */
+    @Nullable
     public Transaction sendCoins(Peer peer, SendRequest request) throws IOException {
         Transaction tx = sendCoinsOffline(request);
         if (tx == null)
