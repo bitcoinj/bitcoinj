@@ -1845,7 +1845,7 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
             // change - it could be pre-calculated and held in RAM, and this is probably an optimization worth doing.
             // Note that output.isMine(this) needs to test the keychain which is currently an array, so it's
             // O(candidate outputs ^ keychain.size())! There's lots of low hanging fruit here.
-            LinkedList<TransactionOutput> candidates = calculateSpendCandidates(true);
+            LinkedList<TransactionOutput> candidates = calculateAllSpendCandidates(true);
             CoinSelection bestCoinSelection;
             TransactionOutput bestChangeOutput = null;
             if (!req.emptyWallet) {
@@ -1929,19 +1929,28 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
         }
     }
 
-    private LinkedList<TransactionOutput> calculateSpendCandidates(boolean excludeImmatureCoinbases) {
-        checkState(lock.isHeldByCurrentThread());
-        LinkedList<TransactionOutput> candidates = Lists.newLinkedList();
-        for (Transaction tx : Iterables.concat(unspent.values(), pending.values())) {
-            // Do not try and spend coinbases that were mined too recently, the protocol forbids it.
-            if (excludeImmatureCoinbases && !tx.isMature()) continue;
-            for (TransactionOutput output : tx.getOutputs()) {
-                if (!output.isAvailableForSpending()) continue;
-                if (!output.isMine(this)) continue;
-                candidates.add(output);
+    /**
+     * Returns a list of all possible outputs we could possibly spend, potentially even including immature coinbases
+     * (which the protocol may forbid us from spending). In other words, return all outputs that this wallet holds
+     * keys for and which are not already marked as spent.
+     */
+    public LinkedList<TransactionOutput> calculateAllSpendCandidates(boolean excludeImmatureCoinbases) {
+        lock.lock();
+        try {
+            LinkedList<TransactionOutput> candidates = Lists.newLinkedList();
+            for (Transaction tx : Iterables.concat(unspent.values(), pending.values())) {
+                // Do not try and spend coinbases that were mined too recently, the protocol forbids it.
+                if (excludeImmatureCoinbases && !tx.isMature()) continue;
+                for (TransactionOutput output : tx.getOutputs()) {
+                    if (!output.isAvailableForSpending()) continue;
+                    if (!output.isMine(this)) continue;
+                    candidates.add(output);
+                }
             }
+            return candidates;
+        } finally {
+            lock.unlock();
         }
-        return candidates;
     }
 
     /** Returns the address used for change outputs. Note: this will probably go away in future. */
@@ -2101,7 +2110,7 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
             if (balanceType == BalanceType.AVAILABLE) {
                 return getBalance(coinSelector);
             } else if (balanceType == BalanceType.ESTIMATED) {
-                LinkedList<TransactionOutput> all = calculateSpendCandidates(false);
+                LinkedList<TransactionOutput> all = calculateAllSpendCandidates(false);
                 BigInteger value = BigInteger.ZERO;
                 for (TransactionOutput out : all) value = value.add(out.getValue());
                 return value;
@@ -2121,7 +2130,7 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
         lock.lock();
         try {
             checkNotNull(selector);
-            LinkedList<TransactionOutput> candidates = calculateSpendCandidates(true);
+            LinkedList<TransactionOutput> candidates = calculateAllSpendCandidates(true);
             CoinSelection selection = selector.select(NetworkParameters.MAX_MONEY, candidates);
             return selection.valueGathered;
         } finally {
