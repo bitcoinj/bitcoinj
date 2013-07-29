@@ -26,6 +26,8 @@ import com.google.common.util.concurrent.AbstractIdleService;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.concurrent.TimeUnit;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -43,18 +45,18 @@ import static com.google.common.base.Preconditions.checkState;
  * out what went wrong more precisely. Same thing if you use the async start() method.</p>
  */
 public class WalletAppKit extends AbstractIdleService {
-    protected final String filePrefix;
-    protected final NetworkParameters params;
-    protected volatile BlockChain vChain;
-    protected volatile SPVBlockStore vStore;
-    protected volatile Wallet vWallet;
-    protected volatile PeerGroup vPeerGroup;
-    protected volatile boolean vUseAutoSave = true;
+    private final String filePrefix;
+    private final NetworkParameters params;
+    private volatile BlockChain vChain;
+    private volatile SPVBlockStore vStore;
+    private volatile Wallet vWallet;
+    private volatile PeerGroup vPeerGroup;
 
-    protected final File directory;
-    protected volatile File vChainFile, vWalletFile;
+    private final File directory;
+    private volatile File vWalletFile;
 
-    protected volatile PeerAddress[] vPeerAddresses;
+    private boolean useAutoSave = true;
+    private PeerAddress[] peerAddresses;
 
     public WalletAppKit(NetworkParameters params, File directory, String filePrefix) {
         this.params = checkNotNull(params);
@@ -62,15 +64,27 @@ public class WalletAppKit extends AbstractIdleService {
         this.filePrefix = checkNotNull(filePrefix);
     }
 
+    /** Will only connect to the given addresses. Cannot be called after startup. */
     public WalletAppKit setPeerNodes(PeerAddress... addresses) {
         checkState(state() == State.NEW, "Cannot call after startup");
-        this.vPeerAddresses = addresses;
+        this.peerAddresses = addresses;
         return this;
+    }
+
+    /** Will only connect to localhost. Cannot be called after startup. */
+    public WalletAppKit connectToLocalHost() {
+        try {
+            final InetAddress localHost = InetAddress.getLocalHost();
+            return setPeerNodes(new PeerAddress(localHost, params.getPort()));
+        } catch (UnknownHostException e) {
+            // Borked machine with no loopback adapter configured properly.
+            throw new RuntimeException(e);
+        }
     }
 
     public WalletAppKit setAutoSave(boolean value) {
         checkState(state() == State.NEW, "Cannot call after startup");
-        vUseAutoSave = value;
+        useAutoSave = value;
         return this;
     }
 
@@ -82,6 +96,12 @@ public class WalletAppKit extends AbstractIdleService {
      */
     protected void addWalletExtensions() throws Exception { }
 
+    /**
+     * This method is invoked on a background thread after all objects are initialised, but before the peer group
+     * or block chain download is started. You can tweak the objects configuration here.
+     */
+    protected void onSetupCompleted() { }
+
     @Override
     protected void startUp() throws Exception {
         // Runs in a separate thread.
@@ -92,17 +112,17 @@ public class WalletAppKit extends AbstractIdleService {
         }
         FileInputStream walletStream = null;
         try {
-            vChainFile = new File(directory, filePrefix + ".spvchain");
+            File chainFile = new File(directory, filePrefix + ".spvchain");
             vWalletFile = new File(directory, filePrefix + ".wallet");
-            boolean shouldReplayWallet = vWalletFile.exists() && !vChainFile.exists();
-            vStore = new SPVBlockStore(params, vChainFile);
+            boolean shouldReplayWallet = vWalletFile.exists() && !chainFile.exists();
+            vStore = new SPVBlockStore(params, chainFile);
             vChain = new BlockChain(params, vStore);
             vPeerGroup = new PeerGroup(params, vChain);
             // Set up peer addresses or discovery first, so if wallet extensions try to broadcast a transaction
             // before we're actually connected the broadcast waits for an appropriate number of connections.
-            if (vPeerAddresses != null) {
-                for (PeerAddress addr : vPeerAddresses) vPeerGroup.addAddress(addr);
-                vPeerAddresses = null;
+            if (peerAddresses != null) {
+                for (PeerAddress addr : peerAddresses) vPeerGroup.addAddress(addr);
+                peerAddresses = null;
             } else {
                 vPeerGroup.addPeerDiscovery(new DnsDiscovery(params));
             }
@@ -117,9 +137,10 @@ public class WalletAppKit extends AbstractIdleService {
                 vWallet = new Wallet(params);
                 addWalletExtensions();
             }
-            if (vUseAutoSave) vWallet.autosaveToFile(vWalletFile, 1, TimeUnit.SECONDS, null);
+            if (useAutoSave) vWallet.autosaveToFile(vWalletFile, 1, TimeUnit.SECONDS, null);
             vChain.addWallet(vWallet);
             vPeerGroup.addWallet(vWallet);
+            onSetupCompleted();
             vPeerGroup.startAndWait();
             vPeerGroup.downloadBlockChain();
             // Make sure we shut down cleanly.
