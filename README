@@ -5,16 +5,18 @@ To get started, ensure you have the latest JDK installed, and download Maven fro
 Then run "mvn clean package" to compile the software. You can also run "mvn site:site" to generate a website with
 useful information like JavaDocs. The outputs are under the target/ directory.
 
-Alternatively, just import the project using your IDE. Most good ones have Maven integration.
+Alternatively, just import the project using your IDE. IntelliJ has Maven integration once you tell it where to
+find your unzipped Maven install directory.
 
 Now try running one of the example apps:
 
   cd examples
-  mvn exec:java -Dexec.mainClass=com.google.bitcoin.examples.PingService
+  mvn exec:java -Dexec.mainClass=com.google.bitcoin.examples.ForwardingService <insert a bitcoin address here>
 
 It will download the block chain and eventually print a Bitcoin address. If you send coins to it,
-you should get them back a few minutes later when a block is solved.
+it will forward them on to the address you specified.
 
 Now you are ready to follow the tutorial:
 
-https://code.google.com/p/bitcoinj/wiki/GettingStarted
+   https://code.google.com/p/bitcoinj/wiki/GettingStarted
+
