@@ -161,11 +161,18 @@ public class PaymentChannelStateTest extends TestWithWallet {
         // Both client and server are now in the ready state. Simulate a few micropayments of 0.005 bitcoins.
         BigInteger size = halfCoin.divide(BigInteger.TEN).divide(BigInteger.TEN);
         BigInteger totalPayment = BigInteger.ZERO;
-        for (int i = 0; i < 5; i++) {
+        for (int i = 0; i < 4; i++) {
             byte[] signature = clientState.incrementPaymentBy(size);
             totalPayment = totalPayment.add(size);
             serverState.incrementPayment(halfCoin.subtract(totalPayment), signature);
         }
+
+        // Now confirm the contract transaction and make sure payments still work
+        chain.add(makeSolvedTestBlock(blockStore.getChainHead().getHeader(), multisigContract));
+
+        byte[] signature = clientState.incrementPaymentBy(size);
+        totalPayment = totalPayment.add(size);
+        serverState.incrementPayment(halfCoin.subtract(totalPayment), signature);
 
         // And close the channel.
         serverState.close();
@@ -175,9 +182,8 @@ public class PaymentChannelStateTest extends TestWithWallet {
         pair2.future.set(closeTx);
         assertEquals(PaymentChannelServerState.State.CLOSED, serverState.getState());
 
-        // Create a block with multisig contract and payment transaction in it and give it to both wallets
-        chain.add(makeSolvedTestBlock(blockStore.getChainHead().getHeader(), multisigContract,
-                                      new Transaction(params, closeTx.bitcoinSerialize())));
+        // Create a block with the payment transaction in it and give it to both wallets
+        chain.add(makeSolvedTestBlock(blockStore.getChainHead().getHeader(), new Transaction(params, closeTx.bitcoinSerialize())));
 
         assertEquals(size.multiply(BigInteger.valueOf(5)), serverWallet.getBalance(new Wallet.DefaultCoinSelector() {
             @Override
