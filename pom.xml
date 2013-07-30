@@ -42,6 +42,13 @@
     </mailingList>
   </mailingLists>
 
+  <distributionManagement>
+    <repository>
+        <id>bitcoinj-distribution</id>
+        <url>https://distribution.bitcoinj.googlecode.com/git/releases</url>
+    </repository>
+  </distributionManagement>
+
   <scm>
     <url>http://code.google.com/p/bitcoinj/source/checkout</url>
   </scm>
