@@ -866,7 +866,7 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
                     if (spentBy != null) spentBy.disconnect();
                 }
             }
-            processTxFromBestChain(tx);
+            processTxFromBestChain(tx, wasPending);
         } else {
             checkState(sideChain);
             // Transactions that appear in a side chain will have that appearance recorded below - we assume that
@@ -995,7 +995,7 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
      * Handle when a transaction becomes newly active on the best chain, either due to receiving a new block or a
      * re-org. Places the tx into the right pool, handles coinbase transactions, handles double-spends and so on.
      */
-    private void processTxFromBestChain(Transaction tx) throws VerificationException {
+    private void processTxFromBestChain(Transaction tx, boolean forceAddToPool) throws VerificationException {
         checkState(lock.isHeldByCurrentThread());
         checkState(!pending.containsKey(tx.getHash()));
 
@@ -1031,6 +1031,10 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
         } else if (tx.getValueSentFromMe(this).compareTo(BigInteger.ZERO) > 0) {
             // Didn't send us any money, but did spend some. Keep it around for record keeping purposes.
             log.info("  tx {} ->spent", tx.getHashAsString());
+            addWalletTransaction(Pool.SPENT, tx);
+        } else if (forceAddToPool) {
+            // Was manually added to pending, so we should keep it to notify the user of confidence information
+            log.info("  tx {} ->spent (manually added)", tx.getHashAsString());
             addWalletTransaction(Pool.SPENT, tx);
         }
 
