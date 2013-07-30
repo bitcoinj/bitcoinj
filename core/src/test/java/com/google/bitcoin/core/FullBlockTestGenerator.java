@@ -1292,6 +1292,11 @@ public class FullBlockTestGenerator {
         }
         b69.solve();
         blocks.add(new BlockAndValidity(blockToHeightMap, b69, true, false, b69.getHash(), chainHeadHeight + 21, "b69"));
+
+        spendableOutputs.offer(new TransactionOutPointWithValue(
+                new TransactionOutPoint(params, 0, b69.getTransactions().get(0).getHash()),
+                b69.getTransactions().get(0).getOutputs().get(0).getValue(),
+                b69.getTransactions().get(0).getOutputs().get(0).getScriptPubKey()));
         
         // Test spending the outpoint of a non-existent transaction
         // -> b53 (14) -> b55 (15) -> b57 (16) -> b60 (17) -> b64 (18) -> b65 (19) -> b69 (20)
