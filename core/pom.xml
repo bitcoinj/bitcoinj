@@ -104,6 +104,62 @@
                     </execution>
                 </executions>
             </plugin>
+
+            <!-- Verify the dependency chain: see https://github.com/gary-rowe/BitcoinjEnforcerRules for
+               more information on this.
+            -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <version>1.2</version>
+                <executions>
+                    <execution>
+                        <id>enforce</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <digestRule implementation="uk.co.froot.maven.enforcer.DigestRule">
+
+                                    <!-- Create a snapshot to build the list of URNs below -->
+                                    <buildSnapshot>true</buildSnapshot>
+
+                                    <!-- List of required hashes -->
+                                    <!-- Format is URN of groupId:artifactId:version:type:classifier:scope:hash -->
+                                    <!-- classifier is "null" if not present -->
+                                    <urns>
+                                        <urn>com.google.code.findbugs:jsr305:1.3.9:jar:null:compile:40719ea6961c0cb6afaeb6a921eaa1f6afd4cfdf</urn>
+                                        <urn>com.google.guava:guava:13.0.1:jar:null:compile:0d6f22b1e60a2f1ef99e22c9f5fde270b2088365</urn>
+                                        <urn>com.google.protobuf:protobuf-java:2.4.1:jar:null:compile:0c589509ec6fd86d5d2fda37e07c08538235d3b9</urn>
+                                        <urn>com.h2database:h2:1.3.167:jar:null:compile:d3867d586f087e53eb12fc65e5693d8ee9a5da17</urn>
+                                        <urn>com.lambdaworks:scrypt:1.3.3:jar:null:compile:06d6813de41e177189e1722717979b4fb5454b1d</urn>
+                                        <urn>com.madgag:sc-light-jdk15on:1.47.0.2:jar:null:compile:d5c98671cc97fa0d928be1c7eb5edd3fb95d3234</urn>
+                                        <urn>io.netty:netty:3.6.3.Final:jar:null:compile:1eebfd2f79dd72c44d09d9917c549c60322462b8</urn>
+                                        <urn>net.jcip:jcip-annotations:1.0:jar:null:compile:afba4942caaeaf46aab0b976afd57cc7c181467e</urn>
+                                        <urn>net.sf.jopt-simple:jopt-simple:4.3:jar:null:compile:88ffca34311a6564a98f14820431e17b4382a069</urn>
+                                        <urn>org.slf4j:slf4j-api:1.6.4:jar:null:compile:2396d74b12b905f780ed7966738bb78438e8371a</urn>
+                                        <urn>org.slf4j:slf4j-jdk14:1.6.4:jar:null:runtime:6b32bc7c42b2509525ce812cb49bf96e7bf64141</urn>
+                                        <!-- A check for the rules themselves -->
+                                        <urn>uk.co.froot.maven.enforcer:digest-enforcer-rules:0.0.1:jar:null:runtime:16a9e04f3fe4bb143c42782d07d5faf65b32106f</urn>
+                                    </urns>
+                                </digestRule>
+                            </rules>
+                        </configuration>
+                    </execution>
+                </executions>
+
+                <!-- Ensure we download the enforcer rules -->
+                <dependencies>
+                    <dependency>
+                        <groupId>uk.co.froot.maven.enforcer</groupId>
+                        <artifactId>digest-enforcer-rules</artifactId>
+                        <version>0.0.1</version>
+                    </dependency>
+                </dependencies>
+
+            </plugin>
         </plugins>
     </build>
 
