@@ -139,6 +139,8 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
     private Map<Transaction, TransactionConfidence.Listener.ChangeReason> confidenceChanged;
     private volatile WalletFiles vFileManager;
 
+    private TransactionBroadcaster vTransactionBroadcaster;
+
     /** Represents the results of a {@link CoinSelector#select(java.math.BigInteger, java.util.LinkedList)}  operation */
     public static class CoinSelection {
         public BigInteger valueGathered;
@@ -1746,7 +1748,7 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
     }
 
     /**
-     * <p>Sends coins according to the given request, via the given {@link PeerGroup}.</p>
+     * <p>Sends coins according to the given request, via the given {@link TransactionBroadcaster}.</p>
      *
      * <p>The returned object provides both the transaction, and a future that can be used to learn when the broadcast
      * is complete. Complete means, if the PeerGroup is limited to only one connection, when it was written out to
@@ -1762,7 +1764,9 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
      */
     @Nullable
     public SendResult sendCoins(TransactionBroadcaster broadcaster, SendRequest request) {
-        // Does not need to be synchronized as sendCoinsOffline is and the rest is all thread-local.
+        // Should not be locked here, as we're going to call into the broadcaster and that might want to hold its
+        // own lock. sendCoinsOffline handles everything that needs to be locked.
+        checkState(!lock.isHeldByCurrentThread());
 
         // Commit the TX to the wallet immediately so the spent coins won't be reused.
         // TODO: We should probably allow the request to specify tx commit only after the network has accepted it.
@@ -1778,6 +1782,21 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
         // method.
         result.broadcastComplete = broadcaster.broadcastTransaction(tx);
         return result;
+    }
+
+    /**
+     * Satisfies the given {@link SendRequest} using the default transaction broadcaster configured either via
+     * {@link PeerGroup#addWallet(Wallet)} or directly with {@link #setTransactionBroadcaster(TransactionBroadcaster)}.
+     *
+     * @param request the SendRequest that describes what to do, get one using static methods on SendRequest itself.
+     * @return An object containing the transaction that was created, and a future for the broadcast of it.
+     * @throws IllegalStateException if no transaction broadcaster has been configured.
+     */
+    @Nullable
+    public SendResult sendCoins(SendRequest request) {
+        TransactionBroadcaster broadcaster = vTransactionBroadcaster;
+        checkState(broadcaster != null, "No transaction broadcaster is configured");
+        return sendCoins(broadcaster, request);
     }
 
     /**
@@ -3090,6 +3109,10 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
         }
     }
 
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Fee calculation code.
+
     private class FeeCalculation {
         private CoinSelection bestCoinSelection;
         private TransactionOutput bestChangeOutput;
@@ -3296,5 +3319,25 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
             }
         }
         return size;
+    }
+
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Managing wallet-triggered transaction broadcast.
+
+    /**
+     * <p>Specifies that the given {@link TransactionBroadcaster}, typically a {@link PeerGroup}, should be used for
+     * sending transactions to the Bitcoin network by default. Some sendCoins methods let you specify a broadcaster
+     * explicitly, in that case, they don't use this broadcaster. If null is specified then the wallet won't attempt
+     * to broadcast transactions itself.</p>
+     *
+     * <p>You don't normally need to call this. A {@link PeerGroup} will automatically set itself as the wallets
+     * broadcaster when you use {@link PeerGroup#addWallet(Wallet)}. A wallet can use the broadcaster when you ask
+     * it to send money, but in future also at other times to implement various features that may require asynchronous
+     * re-organisation of the wallet contents on the block chain. For instance, in future the wallet may choose to
+     * optimise itself to reduce fees or improve privacy.</p>
+     */
+    public void setTransactionBroadcaster(@Nullable TransactionBroadcaster broadcaster) {
+        vTransactionBroadcaster = broadcaster;
     }
 }
