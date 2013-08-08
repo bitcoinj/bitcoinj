@@ -618,13 +618,14 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
     public void addWallet(Wallet wallet) {
         lock.lock();
         try {
-            Preconditions.checkNotNull(wallet);
-            Preconditions.checkState(!wallets.contains(wallet));
+            checkNotNull(wallet);
+            checkState(!wallets.contains(wallet));
             wallets.add(wallet);
-
+            wallet.setTransactionBroadcaster(this);
+            // TODO: Make wallets announce their own pending transactions.
+            // The only reason it's not done that way now is to try and reduce late, risky changes before 0.10
             announcePendingWalletTransactions(Collections.singletonList(wallet), peers);
             wallet.addEventListener(walletEventListener);  // TODO: Run this in the current peer thread.
-
             addPeerFilterProvider(wallet);
         } finally {
             lock.unlock();
@@ -641,8 +642,8 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
     public void addPeerFilterProvider(PeerFilterProvider provider) {
         lock.lock();
         try {
-            Preconditions.checkNotNull(provider);
-            Preconditions.checkState(!peerFilterProviders.contains(provider));
+            checkNotNull(provider);
+            checkState(!peerFilterProviders.contains(provider));
             peerFilterProviders.add(provider);
 
             // Don't bother downloading block bodies before the oldest keys in all our wallets. Make sure we recalculate
