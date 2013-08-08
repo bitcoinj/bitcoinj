@@ -247,6 +247,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         });
         // A straggler reports in.
         inbound(p3, inv);
+        Threading.waitForUserCode();
         assertEquals(tx, event[1]);
         assertEquals(3, tx.getConfidence().numBroadcastPeers());
         assertTrue(tx.getConfidence().wasBroadcastBy(peerOf(p3).getAddress()));
