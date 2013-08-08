@@ -190,6 +190,18 @@ message Transaction {
 
   // Data describing where the transaction is in the chain.
   optional TransactionConfidence confidence = 9;
+
+  // For what purpose the transaction was created.
+  enum Purpose {
+    // Old wallets or the purpose genuinely is a mystery (e.g. imported from some external source).
+    UNKNOWN = 0;
+    // Created in response to a user request for payment. This is the normal case.
+    USER_PAYMENT = 1;
+    // Created automatically to move money from rotated keys.
+    KEY_ROTATION = 2;
+    // In future: de/refragmentation, privacy boosting/mixing, child-pays-for-parent fees, etc.
+  }
+  optional Purpose purpose = 10 [default = UNKNOWN];
 }
 
 /** The parameters used in the scrypt key derivation function.
@@ -257,4 +269,9 @@ message Wallet {
   optional string description = 11;
 
   // (The field number 12 is used by last_seen_block_height)
-} // end of Wallet
+
+  // UNIX time in seconds since the epoch. If set, then any keys created before this date are assumed to be no longer
+  // wanted. Money sent to them will be re-spent automatically to the first key that was created after this time. It
+  // can be used to recover a compromised wallet, or just as part of preventative defence-in-depth measures.
+  optional uint64 key_rotation_time = 13;
+}
