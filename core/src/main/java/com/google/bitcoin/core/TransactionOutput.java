@@ -21,6 +21,7 @@ import com.google.bitcoin.script.ScriptBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
@@ -281,6 +282,14 @@ public class TransactionOutput extends ChildMessage implements Serializable {
      */
     public TransactionInput getSpentBy() {
         return spentBy;
+    }
+
+    /**
+     * Returns the transaction that owns this output, or null if this is a free standing object.
+     */
+    @Nullable
+    public Transaction getParentTransaction() {
+        return parentTransaction;
     }
 
     /**

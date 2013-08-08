@@ -167,6 +167,11 @@ public class WalletProtobufSerializer {
             }
         }
 
+        if (wallet.getKeyRotationTime() != null) {
+            long timeSecs = wallet.getKeyRotationTime().getTime() / 1000;
+            walletBuilder.setKeyRotationTime(timeSecs);
+        }
+
         populateExtensions(wallet, walletBuilder);
 
         // Populate the wallet version.
@@ -240,6 +245,16 @@ public class WalletProtobufSerializer {
             Protos.TransactionConfidence.Builder confidenceBuilder = Protos.TransactionConfidence.newBuilder();
             writeConfidence(txBuilder, confidence, confidenceBuilder);
         }
+
+        Protos.Transaction.Purpose purpose;
+        switch (tx.getPurpose()) {
+            case UNKNOWN: purpose = Protos.Transaction.Purpose.UNKNOWN; break;
+            case USER_PAYMENT: purpose = Protos.Transaction.Purpose.USER_PAYMENT; break;
+            case KEY_ROTATION: purpose = Protos.Transaction.Purpose.KEY_ROTATION; break;
+            default:
+                throw new RuntimeException("New tx purpose serialization not implemented.");
+        }
+        txBuilder.setPurpose(purpose);
         
         return txBuilder.build();
     }
@@ -396,6 +411,10 @@ public class WalletProtobufSerializer {
             wallet.setLastBlockSeenHeight(walletProto.getLastSeenBlockHeight());
         }
 
+        if (walletProto.hasKeyRotationTime()) {
+            wallet.setKeyRotationTime(new Date(walletProto.getKeyRotationTime() * 1000));
+        }
+
         loadExtensions(wallet, walletProto);
 
         if (walletProto.hasVersion()) {
@@ -468,6 +487,18 @@ public class WalletProtobufSerializer {
 
         if (txProto.hasLockTime()) {
             tx.setLockTime(0xffffffffL & txProto.getLockTime());
+        }
+
+        if (txProto.hasPurpose()) {
+            switch (txProto.getPurpose()) {
+                case UNKNOWN: tx.setPurpose(Transaction.Purpose.UNKNOWN); break;
+                case USER_PAYMENT: tx.setPurpose(Transaction.Purpose.USER_PAYMENT); break;
+                case KEY_ROTATION: tx.setPurpose(Transaction.Purpose.KEY_ROTATION); break;
+                default: throw new RuntimeException("New purpose serialization not implemented");
+            }
+        } else {
+            // Old wallet: assume a user payment as that's the only reason a new tx would have been created back then.
+            tx.setPurpose(Transaction.Purpose.USER_PAYMENT);
         }
 
         // Transaction should now be complete.
