@@ -35,12 +35,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.crypto.params.KeyParameter;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.GuardedBy;
 import java.io.*;
 import java.math.BigInteger;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
 import static com.google.bitcoin.core.Utils.bitcoinValueToFriendlyString;
@@ -1611,6 +1614,13 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
          */
         public KeyParameter aesKey = null;
 
+        /**
+         * If not null, the {@link Wallet.CoinSelector} to use instead of the wallets default. Coin selectors are
+         * responsible for choosing which transaction outputs (coins) in a wallet to use given the desired send value
+         * amount.
+         */
+        public CoinSelector coinSelector = null;
+
         // Tracks if this has been passed to wallet.completeTx already: just a safety check.
         private boolean completed;
 
@@ -2867,12 +2877,13 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
     /**
      * A coin selector is responsible for choosing which outputs to spend when creating transactions. The default
      * selector implements a policy of spending transactions that appeared in the best chain and pending transactions
-     * that were created by this wallet, but not others.
+     * that were created by this wallet, but not others. You can override the coin selector for any given send
+     * operation by changing {@link Wallet.SendRequest#coinSelector}.
      */
-    public void setCoinSelector(CoinSelector coinSelector) {
+    public void setCoinSelector(@Nonnull CoinSelector coinSelector) {
         lock.lock();
         try {
-            this.coinSelector = coinSelector;
+            this.coinSelector = checkNotNull(coinSelector);
         } finally {
             lock.unlock();
         }
@@ -3119,6 +3130,7 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
 
         public FeeCalculation(SendRequest req, BigInteger value, List<TransactionInput> originalInputs,
                               boolean needAtLeastReferenceFee, LinkedList<TransactionOutput> candidates) throws InsufficientMoneyException {
+            checkState(lock.isHeldByCurrentThread());
             // There are 3 possibilities for what adding change might do:
             // 1) No effect
             // 2) Causes increase in fee (change < 0.01 COINS)
@@ -3155,7 +3167,8 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
                 BigInteger additionalValueSelected = additionalValueForNextCategory;
 
                 // Of the coins we could spend, pick some that we actually will spend.
-                CoinSelection selection = coinSelector.select(valueNeeded, candidates);
+                CoinSelector selector = req.coinSelector == null ? coinSelector : req.coinSelector;
+                CoinSelection selection = selector.select(valueNeeded, candidates);
                 // Can we afford this?
                 if (selection.valueGathered.compareTo(valueNeeded) < 0)
                     break;
