@@ -1685,6 +1685,7 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
      * @return either the created Transaction or null if there are insufficient coins.
      * coins as spent until commitTx is called on the result.
      */
+    @Nullable
     public Transaction createSend(Address address, BigInteger nanocoins) {
         SendRequest req = SendRequest.to(address, nanocoins);
         if (completeTx(req)) {
@@ -1702,6 +1703,7 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
      *
      * @return the Transaction that was created, or null if there are insufficient coins in the wallet.
      */
+    @Nullable
     public Transaction sendCoinsOffline(SendRequest request) {
         lock.lock();
         try {
@@ -1732,14 +1734,15 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
      * <p>You MUST ensure that value is smaller than {@link Transaction#MIN_NONDUST_OUTPUT} or the transaction will
      * almost certainly be rejected by the network as dust.</p>
      *
-     * @param peerGroup a PeerGroup to use for broadcast or null.
+     * @param broadcaster a {@link TransactionBroadcaster} to use to send the transactions out.
      * @param to        Which address to send coins to.
      * @param value     How much value to send. You can use Utils.toNanoCoins() to calculate this.
      * @return An object containing the transaction that was created, and a future for the broadcast of it.
      */
-    public SendResult sendCoins(PeerGroup peerGroup, Address to, BigInteger value) {
+    @Nullable
+    public SendResult sendCoins(TransactionBroadcaster broadcaster, Address to, BigInteger value) {
         SendRequest request = SendRequest.to(to, value);
-        return sendCoins(peerGroup, request);
+        return sendCoins(broadcaster, request);
     }
 
     /**
