@@ -48,10 +48,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.google.bitcoin.core.TestUtils.*;
-import static com.google.bitcoin.core.TestUtils.makeSolvedTestBlock;
-import static com.google.bitcoin.core.Utils.CENT;
-import static com.google.bitcoin.core.Utils.bitcoinValueToFriendlyString;
-import static com.google.bitcoin.core.Utils.toNanoCoins;
+import static com.google.bitcoin.core.Utils.*;
 import static org.junit.Assert.*;
 
 public class WalletTest extends TestWithWallet {
@@ -1854,6 +1851,19 @@ public class WalletTest extends TestWithWallet {
         Transaction tx = createFakeTx(params, CENT, myAddress);
         wallet.receiveFromBlock(tx, block, AbstractBlockChain.NewBlockType.BEST_CHAIN);
         SendRequest request = SendRequest.emptyWallet(outputKey);
+        assertTrue(wallet.completeTx(request));
+        wallet.commitTx(request.tx);
+        assertEquals(BigInteger.ZERO, wallet.getBalance());
+        assertEquals(CENT, request.tx.getOutput(0).getValue());
+
+        // Add 1 confirmed cent and 1 unconfirmed cent. Verify only one cent is emptied because of the coin selection
+        // policies that are in use by default.
+        block = new StoredBlock(makeSolvedTestBlock(blockStore, outputKey), BigInteger.ONE, 1);
+        tx = createFakeTx(params, CENT, myAddress);
+        wallet.receiveFromBlock(tx, block, AbstractBlockChain.NewBlockType.BEST_CHAIN);
+        tx = createFakeTx(params, CENT, myAddress);
+        wallet.receivePending(tx, null);
+        request = SendRequest.emptyWallet(outputKey);
         assertTrue(wallet.completeTx(request));
         wallet.commitTx(request.tx);
         assertEquals(BigInteger.ZERO, wallet.getBalance());

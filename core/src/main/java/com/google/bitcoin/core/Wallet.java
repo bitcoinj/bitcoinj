@@ -1561,9 +1561,9 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
         public Transaction tx;
 
         /**
-         * When emptyWallet is set, all available coins are sent to the first output in tx (its value is ignored and set
-         * to {@link com.google.bitcoin.core.Wallet#getBalance()} - the fees required for the transaction). Any
-         * additional outputs are removed.
+         * When emptyWallet is set, all coins selected by the coin selector are sent to the first output in tx
+         * (its value is ignored and set to {@link com.google.bitcoin.core.Wallet#getBalance()} - the fees required
+         * for the transaction). Any additional outputs are removed.
          */
         public boolean emptyWallet = false;
 
@@ -1917,11 +1917,12 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
                 bestCoinSelection = feeCalculation.bestCoinSelection;
                 bestChangeOutput = feeCalculation.bestChangeOutput;
             } else {
-                BigInteger valueGathered = BigInteger.ZERO;
-                for (TransactionOutput output : candidates)
-                    valueGathered = valueGathered.add(output.getValue());
-                bestCoinSelection = new CoinSelection(valueGathered, candidates);
-                req.tx.getOutput(0).setValue(valueGathered);
+                // We're being asked to empty the wallet. What this means is ensuring "tx" has only a single output
+                // of the total value we can currently spend as determined by the selector, and then subtracting the fee.
+                checkState(req.tx.getOutputs().size() == 1, "Empty wallet TX must have a single output only.");
+                CoinSelector selector = req.coinSelector == null ? coinSelector : req.coinSelector;
+                bestCoinSelection = selector.select(NetworkParameters.MAX_MONEY, candidates);
+                req.tx.getOutput(0).setValue(bestCoinSelection.valueGathered);
             }
 
             for (TransactionOutput output : bestCoinSelection.gathered)
