@@ -16,6 +16,9 @@
 
 package com.google.bitcoin.core;
 
+import java.io.IOException;
+import java.io.OutputStream;
+
 /**
  * The "mempool" message asks a remote peer to announce all transactions in its memory pool, possibly restricted by
  * any Bloom filter set on the connection. The list of transaction hashes comes back in an inv message. Note that
@@ -29,4 +32,7 @@ public class MemoryPoolMessage extends Message {
 
     @Override
     protected void parseLite() throws ProtocolException {}
+
+    @Override
+    void bitcoinSerializeToStream(OutputStream stream) throws IOException {}
 }
