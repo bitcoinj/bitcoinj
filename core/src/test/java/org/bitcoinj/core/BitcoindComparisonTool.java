@@ -31,7 +31,6 @@ import java.io.File;
 import java.net.InetAddress;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.locks.Lock;
 
 /**
  * A tool for comparing the blocks which are accepted/rejected by bitcoind/bitcoinj
@@ -48,6 +47,10 @@ public class BitcoindComparisonTool {
     private static Sha256Hash bitcoindChainHead;
     private static volatile Peer bitcoind;
     private static volatile InventoryMessage mostRecentInv = null;
+
+    static class BlockWrapper {
+        public Block block;
+    }
 
     public static void main(String[] args) throws Exception {
         BriefLogFormatter.init();
@@ -79,6 +82,8 @@ public class BitcoindComparisonTool {
         // bitcoind MUST be on localhost or we will get banned as a DoSer
         peers.addAddress(new PeerAddress(InetAddress.getByName("localhost"), args.length > 2 ? Integer.parseInt(args[2]) : params.getPort()));
 
+        final BlockWrapper currentBlock = new BlockWrapper();
+
         final Set<Sha256Hash> blocksRequested = Collections.synchronizedSet(new HashSet<Sha256Hash>());
         final AtomicInteger unexpectedInvs = new AtomicInteger(0);
         peers.addEventListener(new AbstractPeerEventListener() {
@@ -109,6 +114,13 @@ public class BitcoindComparisonTool {
                     for (InventoryItem item : ((GetDataMessage)m).items)
                         if (item.type == InventoryItem.Type.Block)
                             blocksRequested.add(item.hash);
+                    return null;
+                } else if (m instanceof GetHeadersMessage) {
+                    try {
+                        bitcoind.sendMessage(new HeadersMessage(params, currentBlock.block.cloneAsHeader()));
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
                     return null;
                 } else if (m instanceof InventoryMessage) {
                     if (mostRecentInv != null) {
@@ -172,6 +184,8 @@ public class BitcoindComparisonTool {
                 BlockAndValidity block = (BlockAndValidity) rule;
                 boolean threw = false;
                 Block nextBlock = blocks.next();
+                currentBlock.block = nextBlock;
+                log.info("Testing block {}", currentBlock.block.getHash());
                 try {
                     if (chain.add(nextBlock) != block.connects) {
                         log.error("Block didn't match connects flag on block \"" + block.ruleName + "\"");
