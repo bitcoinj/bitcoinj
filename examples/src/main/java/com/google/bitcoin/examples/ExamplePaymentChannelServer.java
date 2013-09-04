@@ -63,7 +63,8 @@ public class ExamplePaymentChannelServer implements PaymentChannelServerListener
 
         // We provide a peer group, a wallet, a timeout in seconds, the amount we require to start a channel and
         // an implementation of HandlerFactory, which we just implement ourselves.
-        new PaymentChannelServerListener(appKit.peerGroup(), appKit.wallet(), 15, Utils.CENT, this).bindAndStart(4242);
+        final int MILLI = 100000;
+        new PaymentChannelServerListener(appKit.peerGroup(), appKit.wallet(), 15, BigInteger.valueOf(MILLI), this).bindAndStart(4242);
     }
 
     @Override
