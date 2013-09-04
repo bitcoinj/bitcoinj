@@ -322,19 +322,19 @@ public class PaymentChannelServer {
                         break;
                 }
             } catch (VerificationException e) {
-                log.error("Caught verification exception handling message from client {}", e);
+                log.error("Caught verification exception handling message from client", e);
                 errorBuilder = Protos.Error.newBuilder()
                         .setCode(Protos.Error.ErrorCode.BAD_TRANSACTION)
                         .setExplanation(e.getMessage());
                 closeReason = CloseReason.REMOTE_SENT_INVALID_MESSAGE;
             } catch (ValueOutOfRangeException e) {
-                log.error("Caught value out of range exception handling message from client {}", e);
+                log.error("Caught value out of range exception handling message from client", e);
                 errorBuilder = Protos.Error.newBuilder()
                         .setCode(Protos.Error.ErrorCode.BAD_TRANSACTION)
                         .setExplanation(e.getMessage());
                 closeReason = CloseReason.REMOTE_SENT_INVALID_MESSAGE;
             } catch (IllegalStateException e) {
-                log.error("Caught illegal state exception handling message from client {}", e);
+                log.error("Caught illegal state exception handling message from client", e);
                 errorBuilder = Protos.Error.newBuilder()
                         .setCode(Protos.Error.ErrorCode.SYNTAX_ERROR);
                 closeReason = CloseReason.REMOTE_SENT_INVALID_MESSAGE;
