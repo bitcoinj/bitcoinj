@@ -380,6 +380,9 @@ public class PaymentChannelServerState {
             return closedFuture;
 
         if (bestValueToMe.equals(BigInteger.ZERO)) {
+            // TODO: This is bogus. We shouldn't allow the client to get into this state (where they open and close
+            // a channel without sending us any money). We should either send an error at this point, or require
+            // the submission of an initial zero-valued payment during the open phase.
             state = State.CLOSED;
             closedFuture.set(this);
             return closedFuture;
@@ -394,7 +397,8 @@ public class PaymentChannelServerState {
                 throw new ValueOutOfRangeException("Unable to complete transaction - unable to pay required fee");
             feePaidForPayment = req.fee;
             if (feePaidForPayment.compareTo(bestValueToMe) >= 0)
-                throw new ValueOutOfRangeException("Had to pay more in fees than the channel was worth");
+                throw new ValueOutOfRangeException(String.format("Had to pay more in fees (%s) than the channel was worth (%s)",
+                        feePaidForPayment, bestValueToMe));
             // Now really sign the multisig input.
             signMultisigInput(tx, Transaction.SigHash.ALL, false);
             // Some checks that shouldn't be necessary but it can't hurt to check.

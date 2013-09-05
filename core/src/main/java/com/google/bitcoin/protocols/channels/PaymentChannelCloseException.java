@@ -18,9 +18,9 @@ public class PaymentChannelCloseException extends Exception {
         /**
          * <p>The {@link com.google.bitcoin.protocols.channels.PaymentChannelClient#close()} method was called or the
          * client sent a CLOSE message.</p>
-         * <p>As long as the server received the CLOSE message, this means that the channel was closed and the payment
-         * transaction (if any) was broadcast. If the client attempts to open a new connection, a new channel will have
-         * to be opened.</p>
+         * <p>As long as the server received the CLOSE message, this means that the channel is closing and the payment
+         * transaction (if any) will be broadcast. If the client attempts to open a new connection, a new channel will
+         * have to be opened.</p>
          */
         CLIENT_REQUESTED_CLOSE,
 

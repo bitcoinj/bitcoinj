@@ -27,10 +27,9 @@ package paymentchannels;
 option java_package = "org.bitcoin.paymentchannel";
 option java_outer_classname = "Protos";
 
-
-// The connection should be a standard TLS connection and all messages sent over this socket are
-// serialized TwoWayChannelMessages prefixed with 2-byte size in big-endian (smaller than or
-// equal to 32767 bytes in size)
+// This message is designed to be either sent raw over the network (e.g. length prefixed) or embedded inside another
+// protocol that is being extended to support micropayments. In this file "primary" typically can be read as "client"
+// and "secondary" as "server".
 message TwoWayChannelMessage {
     enum MessageType {
         CLIENT_VERSION = 1;
