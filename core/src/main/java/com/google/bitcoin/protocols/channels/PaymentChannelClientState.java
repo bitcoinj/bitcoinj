@@ -157,7 +157,9 @@ public class PaymentChannelClientState {
     /**
      * Creates the initial multisig contract and incomplete refund transaction which can be requested at the appropriate
      * time using {@link PaymentChannelClientState#getIncompleteRefundTransaction} and
-     * {@link PaymentChannelClientState#getMultisigContract()}
+     * {@link PaymentChannelClientState#getMultisigContract()}. The way the contract is crafted can be adjusted by
+     * overriding {@link PaymentChannelClientState#editContractSendRequest(com.google.bitcoin.core.Wallet.SendRequest)}.
+     * By default unconfirmed coins are allowed to be used, as for micropayments the risk should be relatively low.
      *
      * @throws ValueOutOfRangeException If the value being used cannot be afforded or is too small to be accepted by the network
      */
@@ -174,6 +176,8 @@ public class PaymentChannelClientState {
         if (multisigOutput.getMinNonDustValue().compareTo(totalValue) > 0)
             throw new ValueOutOfRangeException("totalValue too small to use");
         Wallet.SendRequest req = Wallet.SendRequest.forTx(template);
+        req.coinSelector = Wallet.AllowUnconfirmedCoinSelector.get();
+        editContractSendRequest(req);
         if (!wallet.completeTx(req))
             throw new ValueOutOfRangeException("Cannot afford this channel");
         BigInteger multisigFee = req.fee;
@@ -203,6 +207,14 @@ public class PaymentChannelClientState {
                 refundTx.getHashAsString());
         state = State.INITIATED;
         // Client should now call getIncompleteRefundTransaction() and send it to the server.
+    }
+
+    /**
+     * You can override this method in order to control the construction of the initial contract that creates the
+     * channel. For example if you want it to only use specific coins, you can adjust the coin selector here.
+     * The default implementation does nothing.
+     */
+    protected void editContractSendRequest(Wallet.SendRequest req) {
     }
 
     /**
