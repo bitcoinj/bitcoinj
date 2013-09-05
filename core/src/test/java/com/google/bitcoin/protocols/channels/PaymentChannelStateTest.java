@@ -650,7 +650,12 @@ public class PaymentChannelStateTest extends TestWithWallet {
         serverState = new PaymentChannelServerState(mockBroadcaster, serverWallet, serverKey, EXPIRE_TIME);
         assertEquals(PaymentChannelServerState.State.WAITING_FOR_REFUND_TRANSACTION, serverState.getState());
 
-        clientState = new PaymentChannelClientState(wallet, myKey, new ECKey(null, serverKey.getPubKey()), Utils.CENT, EXPIRE_TIME);
+        clientState = new PaymentChannelClientState(wallet, myKey, new ECKey(null, serverKey.getPubKey()), Utils.CENT, EXPIRE_TIME) {
+            @Override
+            protected void editContractSendRequest(Wallet.SendRequest req) {
+                req.coinSelector = wallet.getCoinSelector();
+            }
+        };
         assertEquals(PaymentChannelClientState.State.NEW, clientState.getState());
         clientState.initiate();
         assertEquals(PaymentChannelClientState.State.INITIATED, clientState.getState());
@@ -705,7 +710,7 @@ public class PaymentChannelStateTest extends TestWithWallet {
             serverState.close();
             fail();
         } catch (ValueOutOfRangeException e) {
-            assertTrue(e.getMessage().contains("more in fees than the channel was worth"));
+            assertTrue(e.getMessage().contains("more in fees"));
         }
 
         signature = clientState.incrementPaymentBy(BigInteger.ONE.shiftLeft(1));

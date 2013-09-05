@@ -396,6 +396,7 @@ public class PaymentChannelServerState {
             if (!wallet.completeTx(req)) // Let wallet handle adding additional inputs/fee as necessary.
                 throw new ValueOutOfRangeException("Unable to complete transaction - unable to pay required fee");
             feePaidForPayment = req.fee;
+            log.info("Calculated fee is {}", feePaidForPayment);
             if (feePaidForPayment.compareTo(bestValueToMe) >= 0)
                 throw new ValueOutOfRangeException(String.format("Had to pay more in fees (%s) than the channel was worth (%s)",
                         feePaidForPayment, bestValueToMe));
