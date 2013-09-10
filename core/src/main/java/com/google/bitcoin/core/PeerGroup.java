@@ -402,7 +402,9 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
         // Note that the default here means that no tx invs will be received if no wallet is ever added
         lock.lock();
         try {
-            ver.relayTxesBeforeFilter = chain != null && chain.shouldVerifyTransactions() && peerFilterProviders.size() > 0;
+			boolean spvMode = chain != null && !chain.shouldVerifyTransactions();
+			boolean willSendFilter = spvMode && peerFilterProviders.size() > 0;
+			ver.relayTxesBeforeFilter = !willSendFilter;
         } finally {
             lock.unlock();
         }
