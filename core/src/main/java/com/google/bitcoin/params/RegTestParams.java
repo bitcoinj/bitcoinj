@@ -34,9 +34,6 @@ public class RegTestParams extends TestNet2Params {
         proofOfWorkLimit = PROOF_OF_WORK_LIMIT;
         subsidyDecreaseBlockCount = 10000;
         port = 18444;
-        acceptableAddressCodes = new int[] { 0 };
-        addressHeader = 0;
-        dumpedPrivateKeyHeader = 128;
     }
 
     @Override
