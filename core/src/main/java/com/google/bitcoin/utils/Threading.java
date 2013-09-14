@@ -39,7 +39,10 @@ public class Threading {
      * runs without any locks being held. It's intended for the API user to run things on. Callbacks registered by
      * bitcoinj internally shouldn't normally run here, although currently there are a few exceptions.
      */
-    public static final ExecutorService USER_THREAD;
+    public static Executor USER_THREAD;
+
+    // Default value for USER_THREAD.
+    private static final ExecutorService SINGLE_THREADED_EXECUTOR;
 
     /**
      * A dummy executor that just invokes the runnable immediately. Use this over
@@ -65,7 +68,7 @@ public class Threading {
         // means there's a bug in bitcoinj.
         checkState(userThread.get() != null && userThread.get() != Thread.currentThread(),
                 "waitForUserCode() run on user code thread would deadlock.");
-        Futures.getUnchecked(USER_THREAD.submit(Callables.returning(null)));
+        Futures.getUnchecked(SINGLE_THREADED_EXECUTOR.submit(Callables.returning(null)));
     }
 
     /**
@@ -87,7 +90,7 @@ public class Threading {
         // from that point onwards.
         throwOnLockCycles();
 
-        USER_THREAD = Executors.newSingleThreadExecutor(new ThreadFactory() {
+        SINGLE_THREADED_EXECUTOR = Executors.newSingleThreadExecutor(new ThreadFactory() {
             @Nonnull @Override public Thread newThread(@Nonnull Runnable runnable) {
                 Thread t = new Thread(runnable);
                 t.setName("bitcoinj user thread");
@@ -97,6 +100,7 @@ public class Threading {
                 return t;
             }
         });
+        USER_THREAD = SINGLE_THREADED_EXECUTOR;
         SAME_THREAD = new Executor() {
             @Override
             public void execute(@Nonnull Runnable runnable) {
