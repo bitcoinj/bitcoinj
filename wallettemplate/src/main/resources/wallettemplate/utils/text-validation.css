@@ -1,0 +1,17 @@
+.text-field.validation_error {
+    -fx-background-color: red,
+    linear-gradient(
+        to bottom,
+        derive(red,70%) 5%,
+        derive(red,90%) 40%
+    );
+}
+
+.text-field.validation_warning {
+    -fx-background-color: orange,
+    linear-gradient(
+        to bottom,
+        derive(orange,70%) 5%,
+        derive(orange,90%) 40%
+    );
+}

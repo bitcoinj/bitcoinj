@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import java.util.*?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.effect.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.paint.*?>
+<?import javafx.scene.text.*?>
+
+<AnchorPane id="AnchorPane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" style="" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" fx:controller="wallettemplate.SendMoneyController">
+  <children>
+    <VBox alignment="CENTER" layoutY="100.0" prefHeight="200.0" prefWidth="600.0" spacing="20.0" style="-fx-background-color: white;" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0">
+      <children>
+        <Label fx:id="titleLabel" text="Send all money to ...">
+          <font>
+            <Font size="25.0" />
+          </font>
+        </Label>
+        <TextField fx:id="address" prefWidth="354.0" promptText="1EZEqFBd8yuc9ir2761987q7k3VcALC8YQ">
+          <VBox.margin>
+            <Insets left="40.0" right="40.0" />
+          </VBox.margin>
+        </TextField>
+        <HBox alignment="CENTER" fillHeight="true" prefHeight="30.0" prefWidth="600.0" spacing="50.0" VBox.vgrow="NEVER">
+          <children>
+            <Button fx:id="cancelBtn" cancelButton="true" mnemonicParsing="false" onAction="#cancel" prefWidth="79.0" text="Cancel" />
+            <Button fx:id="sendBtn" defaultButton="true" mnemonicParsing="false" onAction="#send" prefWidth="79.0" text="Send" />
+          </children>
+        </HBox>
+      </children>
+      <effect>
+        <DropShadow />
+      </effect>
+    </VBox>
+  </children>
+</AnchorPane>
