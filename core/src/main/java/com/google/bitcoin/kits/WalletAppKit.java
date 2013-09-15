@@ -37,9 +37,20 @@ import static com.google.common.base.Preconditions.checkState;
 /**
  * <p>Utility class that wraps the boilerplate needed to set up a new SPV bitcoinj app. Instantiate it with a directory
  * and file prefix, optionally configure a few things, then use start or startAndWait. The object will construct and
- * configure a {@link BlockChain}, {@link SPVBlockStore}, {@link Wallet} and {@link PeerGroup}. Startup will be
- * considered complete once the block chain has fully synchronized, so it can take a while. Once complete, you can
- * go ahead and add the listeners you need to the underlying objects.</p>
+ * configure a {@link BlockChain}, {@link SPVBlockStore}, {@link Wallet} and {@link PeerGroup}. Depending on the value
+ * of the blockingStartup property, startup will be considered complete once the block chain has fully synchronized,
+ * so it can take a while.</p>
+ *
+ * <p>To add listeners and modify the objects that are constructed, you can either do that by overriding the
+ * {@link #onSetupCompleted()} method (which will run on a background thread) and make your changes there,
+ * or by waiting for the service to start and then accessing the objects from wherever you want. However, you cannot
+ * access the objects this class creates until startup is complete.</p>
+ *
+ * <p>The asynchronous design of this class may seem puzzling (just use {@link #startAndWait()} if you don't want that).
+ * It is to make it easier to fit bitcoinj into GUI apps, which require a high degree of responsiveness on their main
+ * thread which handles all the animation and user interaction. Even when blockingStart is false, initializing bitcoinj
+ * means doing potentially blocking file IO, generating keys and other potentially intensive operations. By running it
+ * on a background thread, there's no risk of accidentally causing UI lag.</p>
  *
  * <p>Note that {@link #startAndWait()} can throw an unchecked {@link com.google.common.util.concurrent.UncheckedExecutionException}
  * if anything goes wrong during startup - you should probably handle it and use {@link Exception#getCause()} to figure
@@ -61,6 +72,7 @@ public class WalletAppKit extends AbstractIdleService {
     private PeerEventListener downloadListener;
     private boolean autoStop = true;
     private InputStream checkpoints;
+    private boolean blockingStartup = true;
 
     public WalletAppKit(NetworkParameters params, File directory, String filePrefix) {
         this.params = checkNotNull(params);
@@ -114,6 +126,17 @@ public class WalletAppKit extends AbstractIdleService {
      */
     public WalletAppKit setCheckpoints(InputStream checkpoints) {
         this.checkpoints = checkpoints;
+        return this;
+    }
+
+    /**
+     * If true (the default) then the startup of this service won't be considered complete until the network has been
+     * brought up, peer connections established and the block chain synchronised. Therefore {@link #startAndWait()} can
+     * potentially take a very long time. If false, then startup is considered complete once the network activity
+     * begins and peer connections/block chain sync will continue in the background.
+     */
+    public WalletAppKit setBlockingStartup(boolean blockingStartup) {
+        this.blockingStartup = blockingStartup;
         return this;
     }
 
