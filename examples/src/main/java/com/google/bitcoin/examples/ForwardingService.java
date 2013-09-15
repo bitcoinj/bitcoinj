@@ -64,17 +64,8 @@ public class ForwardingService {
         // Parse the address given as the first parameter.
         forwardingAddress = new Address(params, args[0]);
 
-        // Start up a basic app using a class that automates some boilerplate. Ensure we always have at least one key.
-        kit = new WalletAppKit(params, new File("."), filePrefix) {
-            @Override
-            protected void onSetupCompleted() {
-                // This is called in a background thread after startAndWait is called, as setting up various objects
-                // can do disk and network IO that may cause UI jank/stuttering in wallet apps if it were to be done
-                // on the main thread.
-                if (wallet().getKeychainSize() < 1)
-                    wallet().addKey(new ECKey());
-            }
-        };
+        // Start up a basic app using a class that automates some boilerplate.
+        kit = new WalletAppKit(params, new File("."), filePrefix);
 
         if (params == RegTestParams.get()) {
             // Regression test mode is designed for testing and development only, so there's no public network for it.

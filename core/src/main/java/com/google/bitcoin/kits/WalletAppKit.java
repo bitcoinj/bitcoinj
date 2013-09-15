@@ -26,6 +26,7 @@ import com.google.common.util.concurrent.AbstractIdleService;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.concurrent.TimeUnit;
@@ -57,6 +58,9 @@ public class WalletAppKit extends AbstractIdleService {
 
     private boolean useAutoSave = true;
     private PeerAddress[] peerAddresses;
+    private PeerEventListener downloadListener;
+    private boolean autoStop = true;
+    private InputStream checkpoints;
 
     public WalletAppKit(NetworkParameters params, File directory, String filePrefix) {
         this.params = checkNotNull(params);
@@ -82,9 +86,34 @@ public class WalletAppKit extends AbstractIdleService {
         }
     }
 
+    /** If true, the wallet will save itself to disk automatically whenever it changes. */
     public WalletAppKit setAutoSave(boolean value) {
         checkState(state() == State.NEW, "Cannot call after startup");
         useAutoSave = value;
+        return this;
+    }
+
+    /**
+     * If you want to learn about the sync process, you can provide a listener here. For instance, a
+     * {@link DownloadListener} is a good choice.
+     */
+    public WalletAppKit setDownloadListener(PeerEventListener listener) {
+        this.downloadListener = listener;
+        return this;
+    }
+
+    /** If true, will register a shutdown hook to stop the library. Defaults to true. */
+    public WalletAppKit setAutoStop(boolean autoStop) {
+        this.autoStop = autoStop;
+        return this;
+    }
+
+    /**
+     * If set, the file is expected to contain a checkpoints file calculated with BuildCheckpoints. It makes initial
+     * block sync faster for new users - please refer to the documentation on the bitcoinj website for further details.
+     */
+    public WalletAppKit setCheckpoints(InputStream checkpoints) {
+        this.checkpoints = checkpoints;
         return this;
     }
 
@@ -113,9 +142,26 @@ public class WalletAppKit extends AbstractIdleService {
         FileInputStream walletStream = null;
         try {
             File chainFile = new File(directory, filePrefix + ".spvchain");
+            boolean chainFileExists = chainFile.exists();
             vWalletFile = new File(directory, filePrefix + ".wallet");
-            boolean shouldReplayWallet = vWalletFile.exists() && !chainFile.exists();
+            boolean shouldReplayWallet = vWalletFile.exists() && !chainFileExists;
+            if (vWalletFile.exists()) {
+                walletStream = new FileInputStream(vWalletFile);
+                vWallet = new Wallet(params);
+                addWalletExtensions(); // All extensions must be present before we deserialize
+                new WalletProtobufSerializer().readWallet(WalletProtobufSerializer.parseToProto(walletStream), vWallet);
+                if (shouldReplayWallet)
+                    vWallet.clearTransactions(0);
+            } else {
+                vWallet = new Wallet(params);
+                vWallet.addKey(new ECKey());
+                addWalletExtensions();
+            }
+            if (useAutoSave) vWallet.autosaveToFile(vWalletFile, 1, TimeUnit.SECONDS, null);
             vStore = new SPVBlockStore(params, chainFile);
+            if (!chainFileExists && checkpoints != null) {
+                CheckpointManager.checkpoint(params, checkpoints, vStore, vWallet.getEarliestKeyCreationTime());
+            }
             vChain = new BlockChain(params, vStore);
             vPeerGroup = new PeerGroup(params, vChain);
             // Set up peer addresses or discovery first, so if wallet extensions try to broadcast a transaction
@@ -126,25 +172,12 @@ public class WalletAppKit extends AbstractIdleService {
             } else {
                 vPeerGroup.addPeerDiscovery(new DnsDiscovery(params));
             }
-            if (vWalletFile.exists()) {
-                walletStream = new FileInputStream(vWalletFile);
-                vWallet = new Wallet(params);
-                addWalletExtensions(); // All extensions must be present before we deserialize
-                new WalletProtobufSerializer().readWallet(WalletProtobufSerializer.parseToProto(walletStream), vWallet);
-                if (shouldReplayWallet)
-                    vWallet.clearTransactions(0);
-            } else {
-                vWallet = new Wallet(params);
-                addWalletExtensions();
-            }
-            if (useAutoSave) vWallet.autosaveToFile(vWalletFile, 1, TimeUnit.SECONDS, null);
             vChain.addWallet(vWallet);
             vPeerGroup.addWallet(vWallet);
             onSetupCompleted();
             vPeerGroup.startAndWait();
-            vPeerGroup.downloadBlockChain();
             // Make sure we shut down cleanly.
-            Runtime.getRuntime().addShutdownHook(new Thread() {
+            if (autoStop) Runtime.getRuntime().addShutdownHook(new Thread() {
                 @Override public void run() {
                     try {
                         WalletAppKit.this.stopAndWait();
@@ -153,6 +186,7 @@ public class WalletAppKit extends AbstractIdleService {
                     }
                 }
             });
+            vPeerGroup.startBlockChainDownload(downloadListener == null ? new DownloadListener() : downloadListener);
         } catch (BlockStoreException e) {
             throw new IOException(e);
         } finally {
