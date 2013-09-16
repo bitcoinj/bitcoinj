@@ -21,6 +21,7 @@ import com.google.bitcoin.utils.Threading;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.protobuf.ByteString;
 import net.jcip.annotations.GuardedBy;
+import org.slf4j.LoggerFactory;
 
 import java.math.BigInteger;
 import java.util.*;
@@ -33,6 +34,8 @@ import static com.google.common.base.Preconditions.*;
  * unlock.
  */
 public class StoredPaymentChannelServerStates implements WalletExtension {
+    private static final org.slf4j.Logger log = LoggerFactory.getLogger(StoredPaymentChannelServerStates.class);
+
     static final String EXTENSION_ID = StoredPaymentChannelServerStates.class.getName();
 
     @GuardedBy("lock") @VisibleForTesting final Map<Sha256Hash, StoredServerChannel> mapChannels = new HashMap<Sha256Hash, StoredServerChannel>();
@@ -115,14 +118,17 @@ public class StoredPaymentChannelServerStates implements WalletExtension {
         lock.lock();
         try {
             checkArgument(mapChannels.put(channel.contract.getHash(), checkNotNull(channel)) == null);
+            // Add the difference between real time and Utils.now() so that test-cases can use a mock clock.
+            Date autocloseTime = new Date((channel.refundTransactionUnlockTimeSecs + CHANNEL_EXPIRE_OFFSET) * 1000L
+                    + (System.currentTimeMillis() - Utils.now().getTime()));
+            log.info("Scheduling channel for automatic closure at {}: {}", autocloseTime, channel);
             channelTimeoutHandler.schedule(new TimerTask() {
                 @Override
                 public void run() {
+                    log.info("Auto-closing channel: {}", channel);
                     closeChannel(channel);
                 }
-                // Add the difference between real time and Utils.now() so that test-cases can use a mock clock.
-            }, new Date((channel.refundTransactionUnlockTimeSecs + CHANNEL_EXPIRE_OFFSET)*1000L
-                    + (System.currentTimeMillis() - Utils.now().getTime())));
+            }, autocloseTime);
         } finally {
             lock.unlock();
         }

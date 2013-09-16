@@ -376,13 +376,16 @@ public class PaymentChannelServerState {
             closedFuture.set(this);
             return closedFuture;
         }
-        if (state != State.READY) // We are already closing/closed/in an error state
+        if (state != State.READY) {
+        	log.warn("Failed attempt to close a channel in state " + state);
             return closedFuture;
+		}
 
         if (bestValueToMe.equals(BigInteger.ZERO)) {
             // TODO: This is bogus. We shouldn't allow the client to get into this state (where they open and close
             // a channel without sending us any money). We should either send an error at this point, or require
             // the submission of an initial zero-valued payment during the open phase.
+			log.warn("Closing channel that never received any payments.");
             state = State.CLOSED;
             closedFuture.set(this);
             return closedFuture;
