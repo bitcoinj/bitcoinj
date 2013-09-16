@@ -1,4 +1,4 @@
-package wallettemplate;
+package wallettemplate.utils;
 
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;

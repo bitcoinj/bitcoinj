@@ -9,7 +9,6 @@ import javafx.scene.layout.Pane;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.util.Duration;
-import wallettemplate.AlertWindowController;
 
 import java.io.IOException;
 import java.util.function.BiConsumer;
