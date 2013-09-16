@@ -70,7 +70,7 @@ public class Controller {
                 Desktop.getDesktop().browse(URI.create(uri));
             } catch (IOException e) {
                 // Couldn't open wallet app.
-                GuiUtils.crashAlert(e.getMessage());
+                GuiUtils.informationalAlert("Opening wallet app failed", "Perhaps you don't have one installed?");
             }
         }
     }
