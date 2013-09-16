@@ -80,6 +80,11 @@ public class TestWithWallet {
         return sendMoneyToWallet(wallet, createFakeTx(params, value, toAddress), type);
     }
 
+    protected Transaction sendMoneyToWallet(Wallet wallet, BigInteger value, ECKey toPubKey, AbstractBlockChain.NewBlockType type)
+            throws IOException, ProtocolException, VerificationException {
+        return sendMoneyToWallet(wallet, createFakeTx(params, value, toPubKey), type);
+    }
+
     protected Transaction sendMoneyToWallet(BigInteger value, AbstractBlockChain.NewBlockType type) throws IOException,
             ProtocolException, VerificationException {
         return sendMoneyToWallet(this.wallet, createFakeTx(params, value, myAddress), type);

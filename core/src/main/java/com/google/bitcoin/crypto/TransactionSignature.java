@@ -48,6 +48,17 @@ public class TransactionSignature extends ECKey.ECDSASignature {
         setSigHash(mode, anyoneCanPay);
     }
 
+    /**
+     * Returns a dummy invalid signature whose R/S values are set such that they will take up the same number of
+     * encoded bytes as a real signature. This can be useful when you want to fill out a transaction to be of the
+     * right size (e.g. for fee calculations) but don't have the requisite signing key yet and will fill out the
+     * real signature later.
+     */
+    public static TransactionSignature dummy() {
+        BigInteger val = BigInteger.ONE.shiftLeft(32 * 8);   // 32 byte signatures.
+        return new TransactionSignature(val, val);
+    }
+
     /** Calculates the byte used in the protocol to represent the combination of mode and anyoneCanPay. */
     public static int calcSigHashValue(Transaction.SigHash mode, boolean anyoneCanPay) {
         int sighashFlags = mode.ordinal() + 1;

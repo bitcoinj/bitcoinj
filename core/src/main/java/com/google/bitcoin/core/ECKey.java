@@ -197,6 +197,14 @@ public class ECKey implements Serializable {
         this(privKey, pubKey, false);
     }
 
+    public boolean isPubKeyOnly() {
+        return priv == null;
+    }
+
+    public boolean hasPrivKey() {
+        return priv != null;
+    }
+
     /**
      * Output this ECKey as an ASN.1 encoded private key, as understood by OpenSSL or used by the BitCoin reference
      * implementation in its wallet storage format.
@@ -725,7 +733,7 @@ public class ECKey implements Serializable {
     public byte[] getPrivKeyBytes() {
         return Utils.bigIntegerToBytes(priv, 32);
     }
-    
+
     /**
      * Exports the private key in the form used by the Satoshi client "dumpprivkey" and "importprivkey" commands. Use
      * the {@link com.google.bitcoin.core.DumpedPrivateKey#toString()} method to get the string.

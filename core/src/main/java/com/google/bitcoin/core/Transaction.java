@@ -26,6 +26,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.crypto.params.KeyParameter;
 
+import javax.annotation.Nullable;
 import java.io.*;
 import java.math.BigInteger;
 import java.text.ParseException;
@@ -51,7 +52,7 @@ import static com.google.bitcoin.core.Utils.*;
 public class Transaction extends ChildMessage implements Serializable {
     private static final Logger log = LoggerFactory.getLogger(Transaction.class);
     private static final long serialVersionUID = -8567546957352643140L;
-    
+
     /** Threshold for lockTime: below this value it is interpreted as block number, otherwise as timestamp. **/
     public static final int LOCKTIME_THRESHOLD = 500000000; // Tue Nov  5 00:53:20 1985 UTC
 
@@ -86,7 +87,7 @@ public class Transaction extends ChildMessage implements Serializable {
 
     // This is an in memory helper only.
     private transient Sha256Hash hash;
-    
+
     // Data about how confirmed this tx is. Serialized, may be null. 
     private TransactionConfidence confidence;
 
@@ -97,7 +98,7 @@ public class Transaction extends ChildMessage implements Serializable {
     //
     // If this transaction is not stored in the wallet, appearsInHashes is null.
     private Set<Sha256Hash> appearsInHashes;
-    
+
     // Transactions can be encoded in a way that will use more bytes than is optimal
     // (due to VarInts having multiple encodings)
     // MAX_BLOCK_SIZE must be compared to the optimal encoding, not the actual encoding, so when parsing, we keep track
@@ -222,7 +223,7 @@ public class Transaction extends ChildMessage implements Serializable {
         }
         return v;
     }
-    
+
     /*
      * If isSpent - check that all my outputs spent, otherwise check that there at least
      * one unspent.
@@ -415,7 +416,7 @@ public class Transaction extends ChildMessage implements Serializable {
         }
         return updatedAt;
     }
-    
+
     public void setUpdateTime(Date updatedAt) {
         this.updatedAt = updatedAt;
     }
@@ -534,7 +535,7 @@ public class Transaction extends ChildMessage implements Serializable {
         optimalEncodingMessageSize += 4;
         length = cursor - offset;
     }
-    
+
     public int getOptimalEncodingMessageSize() {
         if (optimalEncodingMessageSize != 0)
             return optimalEncodingMessageSize;
@@ -613,18 +614,11 @@ public class Transaction extends ChildMessage implements Serializable {
         }
         for (TransactionInput in : inputs) {
             s.append("     ");
-            s.append("from ");
+            s.append("in   ");
 
             try {
                 Script scriptSig = in.getScriptSig();
-                if (scriptSig.getChunks().size() == 2)
-                    s.append(scriptSig.getFromAddress(params).toString());
-                else if (scriptSig.getChunks().size() == 1) {
-                    s.append("[sig:");
-                    s.append(bytesToHexString(scriptSig.getChunks().get(0).data));
-                    s.append("]");
-                } else
-                    s.append(scriptSig);
+                s.append(scriptSig);
                 s.append(" / ");
                 s.append(in.getOutpoint().toString());
             } catch (Exception e) {
@@ -633,19 +627,11 @@ public class Transaction extends ChildMessage implements Serializable {
             s.append(String.format("%n"));
         }
         for (TransactionOutput out : outputs) {
-            s.append("       ");
-            s.append("to ");
+            s.append("     ");
+            s.append("out  ");
             try {
                 Script scriptPubKey = out.getScriptPubKey();
-                if (scriptPubKey.isSentToAddress()) {
-                    s.append(scriptPubKey.getToAddress(params).toString());
-                } else if (scriptPubKey.isSentToRawPubKey()) {
-                    s.append("[pubkey:");
-                    s.append(bytesToHexString(scriptPubKey.getPubKey()));
-                    s.append("]");
-                } else {
-                    s.append(scriptPubKey);
-                }
+                s.append(scriptPubKey);
                 s.append(" ");
                 s.append(bitcoinValueToFriendlyString(out.getValue()));
                 s.append(" BTC");
@@ -770,7 +756,7 @@ public class Transaction extends ChildMessage implements Serializable {
      * @param wallet  A wallet is required to fetch the keys needed for signing.
      * @param aesKey The AES key to use to decrypt the key before signing. Null if no decryption is required.
      */
-    public synchronized void signInputs(SigHash hashType, Wallet wallet, KeyParameter aesKey) throws ScriptException {
+    public synchronized void signInputs(SigHash hashType, Wallet wallet, @Nullable KeyParameter aesKey) throws ScriptException {
         // TODO: This should be a method of the TransactionInput that (possibly?) operates with a copy of this object.
         Preconditions.checkState(inputs.size() > 0);
         Preconditions.checkState(outputs.size() > 0);
@@ -816,7 +802,14 @@ public class Transaction extends ChildMessage implements Serializable {
             // The anyoneCanPay feature isn't used at the moment.
             boolean anyoneCanPay = false;
             byte[] connectedPubKeyScript = input.getOutpoint().getConnectedPubKeyScript();
-            signatures[i] = calculateSignature(i, key, aesKey, connectedPubKeyScript, hashType, anyoneCanPay);
+            if (key.hasPrivKey() || key.isEncrypted()) {
+                signatures[i] = calculateSignature(i, key, aesKey, connectedPubKeyScript, hashType, anyoneCanPay);
+            } else {
+                // Create a dummy signature to ensure the transaction is of the correct size when we try to ensure
+                // the right fee-per-kb is attached. If the wallet doesn't have the privkey, the user is assumed to
+                // be doing something special and that they will replace the dummy signature with a real one later.
+                signatures[i] = TransactionSignature.dummy();
+            }
         }
 
         // Now we have calculated each signature, go through and create the scripts. Reminder: the script consists:
@@ -950,13 +943,13 @@ public class Transaction extends ChildMessage implements Serializable {
             // ever put into scripts. Deleting OP_CODESEPARATOR is a step that should never be required but if we don't
             // do it, we could split off the main chain.
             connectedScript = Script.removeAllInstancesOfOp(connectedScript, ScriptOpCodes.OP_CODESEPARATOR);
-            
+
             // Set the input to the script of its output. Satoshi does this but the step has no obvious purpose as
             // the signature covers the hash of the prevout transaction which obviously includes the output script
             // already. Perhaps it felt safer to him in some way, or is another leftover from how the code was written.
             TransactionInput input = inputs.get(inputIndex);
             input.setScriptBytes(connectedScript);
-            
+
             ArrayList<TransactionOutput> outputs = this.outputs;
             if ((sigHashType & 0x1f) == (SigHash.NONE.ordinal() + 1)) {
                 // SIGHASH_NONE means no outputs are signed at all - the signature is effectively for a "blank cheque".
@@ -995,7 +988,7 @@ public class Transaction extends ChildMessage implements Serializable {
                     if (i != inputIndex)
                         inputs.get(i).setSequenceNumber(0);
             }
-            
+
             ArrayList<TransactionInput> inputs = this.inputs;
             if ((sigHashType & SIGHASH_ANYONECANPAY_VALUE) == SIGHASH_ANYONECANPAY_VALUE) {
                 // SIGHASH_ANYONECANPAY means the signature in the input is not broken by changes/additions/removals
@@ -1153,7 +1146,7 @@ public class Transaction extends ChildMessage implements Serializable {
             throw new VerificationException("Transaction had no inputs or no outputs.");
         if (this.getMessageSize() > Block.MAX_BLOCK_SIZE)
             throw new VerificationException("Transaction larger than MAX_BLOCK_SIZE");
-        
+
         BigInteger valueOut = BigInteger.ZERO;
         for (TransactionOutput output : outputs) {
             if (output.getValue().compareTo(BigInteger.ZERO) < 0)
@@ -1162,7 +1155,7 @@ public class Transaction extends ChildMessage implements Serializable {
         }
         if (valueOut.compareTo(params.MAX_MONEY) > 0)
             throw new VerificationException("Total transaction output value greater than possible");
-        
+
         if (isCoinBase()) {
             if (inputs.get(0).getScriptBytes().length < 2 || inputs.get(0).getScriptBytes().length > 100)
                 throw new VerificationException("Coinbase script size out of range");

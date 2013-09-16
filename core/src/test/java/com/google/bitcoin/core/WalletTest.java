@@ -22,6 +22,7 @@ import com.google.bitcoin.core.WalletTransaction.Pool;
 import com.google.bitcoin.crypto.KeyCrypter;
 import com.google.bitcoin.crypto.KeyCrypterException;
 import com.google.bitcoin.crypto.KeyCrypterScrypt;
+import com.google.bitcoin.crypto.TransactionSignature;
 import com.google.bitcoin.store.WalletProtobufSerializer;
 import com.google.bitcoin.utils.Threading;
 import com.google.bitcoin.wallet.KeyTimeCoinSelector;
@@ -380,7 +381,7 @@ public class WalletTest extends TestWithWallet {
                 confTxns.add(tx);
             }
         });
-        
+
         // Receive some money.
         BigInteger oneCoin = Utils.toNanoCoins(1, 0);
         Transaction tx1 = sendMoneyToWallet(oneCoin, AbstractBlockChain.NewBlockType.BEST_CHAIN);
@@ -443,9 +444,9 @@ public class WalletTest extends TestWithWallet {
         TransactionOutput output = new TransactionOutput(params, tx, Utils.toNanoCoins(0, 5), someOtherGuy);
         tx.addOutput(output);
         wallet.receiveFromBlock(tx, null, BlockChain.NewBlockType.BEST_CHAIN);
-        
+
         assertTrue("Wallet is not consistent", wallet.isConsistent());
-        
+
         Transaction txClone = new Transaction(params, tx.bitcoinSerialize());
         try {
             wallet.receiveFromBlock(txClone, null, BlockChain.NewBlockType.BEST_CHAIN);
@@ -463,9 +464,9 @@ public class WalletTest extends TestWithWallet {
         TransactionOutput output = new TransactionOutput(params, tx, Utils.toNanoCoins(0, 5), someOtherGuy);
         tx.addOutput(output);
         wallet.receiveFromBlock(tx, null, BlockChain.NewBlockType.BEST_CHAIN);
-        
+
         assertTrue(wallet.isConsistent());
-        
+
         wallet.addWalletTransaction(new WalletTransaction(Pool.PENDING, tx));
         assertFalse(wallet.isConsistent());
     }
@@ -479,7 +480,7 @@ public class WalletTest extends TestWithWallet {
         TransactionOutput output = new TransactionOutput(params, tx, Utils.toNanoCoins(0, 5), someOtherGuy);
         tx.addOutput(output);
         assertTrue(wallet.isConsistent());
-        
+
         wallet.addWalletTransaction(new WalletTransaction(Pool.SPENT, tx));
         assertFalse(wallet.isConsistent());
     }
@@ -978,7 +979,7 @@ public class WalletTest extends TestWithWallet {
         assertNotNull(results[0]);
         assertEquals(f, results[1]);
     }
-    
+
     @Test
     public void spendOutputFromPendingTransaction() throws Exception {
         // We'll set up a wallet that receives a coin, then sends a coin of lesser value and keeps the change.
@@ -995,13 +996,13 @@ public class WalletTest extends TestWithWallet {
         req.ensureMinRequiredFee = false;
         boolean complete = wallet.completeTx(req);
         assertTrue(complete);
-        
+
         // Commit t2, so it is placed in the pending pool
         wallet.commitTx(t2);
         assertEquals(0, wallet.getPoolSize(WalletTransaction.Pool.UNSPENT));
         assertEquals(1, wallet.getPoolSize(WalletTransaction.Pool.PENDING));
         assertEquals(2, wallet.getPoolSize(WalletTransaction.Pool.ALL));
-        
+
         // Now try to the spend the output.
         ECKey k3 = new ECKey();
         BigInteger v3 = toNanoCoins(0, 25);
@@ -1009,13 +1010,13 @@ public class WalletTest extends TestWithWallet {
         t3.addOutput(v3, k3.toAddress(params));
         t3.addInput(o2);
         t3.signInputs(SigHash.ALL, wallet);
-        
+
         // Commit t3, so the coins from the pending t2 are spent
         wallet.commitTx(t3);
         assertEquals(0, wallet.getPoolSize(WalletTransaction.Pool.UNSPENT));
         assertEquals(2, wallet.getPoolSize(WalletTransaction.Pool.PENDING));
         assertEquals(3, wallet.getPoolSize(WalletTransaction.Pool.ALL));
-        
+
         // Now the output of t2 must not be available for spending
         assertFalse(o2.isAvailableForSpending());
     }
@@ -1994,5 +1995,39 @@ public class WalletTest extends TestWithWallet {
         tx = broadcaster.broadcasts.take();
         assertNotNull(tx);
         assertEquals(200, tx.getInputs().size());
+    }
+
+    @SuppressWarnings("ConstantConditions")
+    @Test
+    public void completeTxPartiallySigned() throws Exception {
+        // Check the wallet will write dummy scriptSigs for inputs that we have only pubkeys for without the privkey.
+        ECKey priv = new ECKey();
+        ECKey pub = new ECKey(null, priv.getPubKey());
+        wallet.addKey(pub);
+        ECKey priv2 = new ECKey();
+        wallet.addKey(priv2);
+        // Send three transactions, with one being an address type and the other being a raw CHECKSIG type pubkey only,
+        // and the final one being a key we do have. We expect the first two inputs to be dummy values and the last
+        // to be signed correctly.
+        Transaction t1 = sendMoneyToWallet(wallet, Utils.CENT, pub.toAddress(params), AbstractBlockChain.NewBlockType.BEST_CHAIN);
+        Transaction t2 = sendMoneyToWallet(wallet, Utils.CENT, pub, AbstractBlockChain.NewBlockType.BEST_CHAIN);
+        Transaction t3 = sendMoneyToWallet(wallet, Utils.CENT, priv2, AbstractBlockChain.NewBlockType.BEST_CHAIN);
+
+        ECKey dest = new ECKey();
+        Wallet.SendRequest req = Wallet.SendRequest.emptyWallet(dest.toAddress(params));
+        assertTrue(wallet.completeTx(req));
+        byte[] dummySig = TransactionSignature.dummy().encodeToBitcoin();
+        // Selected inputs can be in any order.
+        for (int i = 0; i < req.tx.getInputs().size(); i++) {
+            TransactionInput input = req.tx.getInput(i);
+            if (input.getConnectedOutput().getParentTransaction().equals(t1)) {
+                assertArrayEquals(dummySig, input.getScriptSig().getChunks().get(0).data);
+            } else if (input.getConnectedOutput().getParentTransaction().equals(t2)) {
+                assertArrayEquals(dummySig, input.getScriptSig().getChunks().get(0).data);
+            } else if (input.getConnectedOutput().getParentTransaction().equals(t3)) {
+                input.getScriptSig().correctlySpends(req.tx, i, t3.getOutput(0).getScriptPubKey(), true);
+            }
+        }
+        assertTrue(TransactionSignature.isEncodingCanonical(dummySig));
     }
 }
