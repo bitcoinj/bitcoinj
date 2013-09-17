@@ -14,18 +14,35 @@
  * limitations under the License.
  */
 
-package com.google.bitcoin.core;
+package com.google.bitcoin.utils;
 
-import com.google.bitcoin.utils.Threading;
+import com.google.bitcoin.core.Transaction;
+import com.google.bitcoin.core.TransactionBroadcaster;
+import com.google.bitcoin.core.Wallet;
 import com.google.common.util.concurrent.SettableFuture;
 
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.locks.ReentrantLock;
 
+/**
+ * A mock transaction broadcaster can be used in unit tests as a stand-in for a PeerGroup. It catches any transactions
+ * broadcast through it and makes them available via the {@link #broadcasts} member. Reading from that
+ * {@link LinkedBlockingQueue} will block the thread until a transaction is available.
+ */
 public class MockTransactionBroadcaster implements TransactionBroadcaster {
-    private ReentrantLock lock = Threading.lock("mock tx broadcaster");
+    private final ReentrantLock lock = Threading.lock("mock tx broadcaster");
 
-    public LinkedBlockingQueue<Transaction> broadcasts = new LinkedBlockingQueue<Transaction>();
+	public static class TxFuturePair {
+		public Transaction tx;
+		public SettableFuture<Transaction> future;
+
+		public TxFuturePair(Transaction tx, SettableFuture<Transaction> future) {
+			this.tx = tx;
+			this.future = future;
+		}
+	}
+
+    private final LinkedBlockingQueue<TxFuturePair> broadcasts = new LinkedBlockingQueue<TxFuturePair>();
 
     public MockTransactionBroadcaster(Wallet wallet) {
         // This code achieves nothing directly, but it sets up the broadcaster/peergroup > wallet lock ordering
@@ -40,11 +57,11 @@ public class MockTransactionBroadcaster implements TransactionBroadcaster {
 
     @Override
     public SettableFuture<Transaction> broadcastTransaction(Transaction tx) {
-        // Use a lock just to catch lock ordering inversions.
+        // Use a lock just to catch lock ordering inversions e.g. wallet->broadcaster.
         lock.lock();
         try {
             SettableFuture<Transaction> result = SettableFuture.create();
-            broadcasts.put(tx);
+            broadcasts.put(new TxFuturePair(tx, result));
             return result;
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
@@ -52,4 +69,20 @@ public class MockTransactionBroadcaster implements TransactionBroadcaster {
             lock.unlock();
         }
     }
+
+	public Transaction waitForTransaction() {
+		return waitForTxFuture().tx;
+	}
+
+	public TxFuturePair waitForTxFuture() {
+		try {
+			return broadcasts.take();
+		} catch (InterruptedException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	public int size() {
+		return broadcasts.size();
+	}
 }

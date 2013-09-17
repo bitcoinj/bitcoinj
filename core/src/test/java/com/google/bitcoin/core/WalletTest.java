@@ -24,6 +24,7 @@ import com.google.bitcoin.crypto.KeyCrypterException;
 import com.google.bitcoin.crypto.KeyCrypterScrypt;
 import com.google.bitcoin.crypto.TransactionSignature;
 import com.google.bitcoin.store.WalletProtobufSerializer;
+import com.google.bitcoin.utils.MockTransactionBroadcaster;
 import com.google.bitcoin.utils.Threading;
 import com.google.bitcoin.wallet.KeyTimeCoinSelector;
 import com.google.bitcoin.wallet.WalletFiles;
@@ -1910,7 +1911,7 @@ public class WalletTest extends TestWithWallet {
         sendMoneyToWallet(wallet, CENT, key2.toAddress(params), AbstractBlockChain.NewBlockType.BEST_CHAIN);
         Utils.rollMockClock(86400);
         Date compromiseTime = Utils.now();
-        assertEquals(0, broadcaster.broadcasts.size());
+        assertEquals(0, broadcaster.size());
         assertFalse(wallet.isKeyRotating(key1));
 
         // Rotate the wallet.
@@ -1919,7 +1920,7 @@ public class WalletTest extends TestWithWallet {
         // We see a broadcast triggered by setting the rotation time.
         wallet.setKeyRotationTime(compromiseTime);
         assertTrue(wallet.isKeyRotating(key1));
-        Transaction tx = broadcaster.broadcasts.take();
+        Transaction tx = broadcaster.waitForTransaction();
         final BigInteger THREE_CENTS = CENT.add(CENT).add(CENT);
         assertEquals(THREE_CENTS, tx.getValueSentFromMe(wallet));
         assertEquals(THREE_CENTS.subtract(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE), tx.getValueSentToMe(wallet));
@@ -1931,11 +1932,11 @@ public class WalletTest extends TestWithWallet {
 
         // Now receive some more money to key3 (secure) via a new block and check that nothing happens.
         sendMoneyToWallet(wallet, CENT, key3.toAddress(params), AbstractBlockChain.NewBlockType.BEST_CHAIN);
-        assertTrue(broadcaster.broadcasts.isEmpty());
+        assertEquals(0, broadcaster.size());
 
         // Receive money via a new block on key1 and ensure it's immediately moved.
         sendMoneyToWallet(wallet, CENT, key1.toAddress(params), AbstractBlockChain.NewBlockType.BEST_CHAIN);
-        tx = broadcaster.broadcasts.take();
+        tx = broadcaster.waitForTransaction();
         assertArrayEquals(key3.getPubKey(), tx.getOutput(0).getScriptPubKey().getPubKey());
         assertEquals(1, tx.getInputs().size());
         assertEquals(1, tx.getOutputs().size());
@@ -1958,11 +1959,8 @@ public class WalletTest extends TestWithWallet {
         // Make a normal spend and check it's all ok.
         final Address address = new ECKey().toAddress(params);
         wallet.sendCoins(broadcaster, address, wallet.getBalance());
-        tx = broadcaster.broadcasts.take();
+        tx = broadcaster.waitForTransaction();
         assertArrayEquals(address.getHash160(), tx.getOutput(0).getScriptPubKey().getPubKeyHash());
-        // We have to race here because we're checking for the ABSENCE of a broadcast, and if there were to be one,
-        // it'd be happening in parallel.
-        assertEquals(null, broadcaster.broadcasts.poll(1, TimeUnit.SECONDS));
     }
 
     @Test
@@ -1985,14 +1983,14 @@ public class WalletTest extends TestWithWallet {
         wallet.addKey(new ECKey());
         wallet.setKeyRotationTime(compromise);
 
-        Transaction tx = broadcaster.broadcasts.take();
+        Transaction tx = broadcaster.waitForTransaction();
         final BigInteger valueSentToMe = tx.getValueSentToMe(wallet);
         BigInteger fee = tx.getValueSentFromMe(wallet).subtract(valueSentToMe);
         assertEquals(BigInteger.valueOf(900000), fee);
         assertEquals(KeyTimeCoinSelector.MAX_SIMULTANEOUS_INPUTS, tx.getInputs().size());
         assertEquals(BigInteger.valueOf(599100000), valueSentToMe);
 
-        tx = broadcaster.broadcasts.take();
+        tx = broadcaster.waitForTransaction();
         assertNotNull(tx);
         assertEquals(200, tx.getInputs().size());
     }
