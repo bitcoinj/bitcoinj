@@ -201,7 +201,7 @@ public class PaymentChannelClient {
      * Called when a message is received from the server. Processes the given message and generates events based on its
      * content.
      */
-    public void receiveMessage(Protos.TwoWayChannelMessage msg) {
+    public void receiveMessage(Protos.TwoWayChannelMessage msg) throws ValueOutOfRangeException {
         lock.lock();
         try {
             checkState(connectionOpen);
@@ -270,12 +270,6 @@ public class PaymentChannelClient {
                 }
             } catch (VerificationException e) {
                 log.error("Caught verification exception handling message from server", e);
-                errorBuilder = Protos.Error.newBuilder()
-                        .setCode(Protos.Error.ErrorCode.BAD_TRANSACTION)
-                        .setExplanation(e.getMessage());
-                closeReason = CloseReason.REMOTE_SENT_INVALID_MESSAGE;
-            } catch (ValueOutOfRangeException e) {
-                log.error("Caught value out of range exception handling message from server", e);
                 errorBuilder = Protos.Error.newBuilder()
                         .setCode(Protos.Error.ErrorCode.BAD_TRANSACTION)
                         .setExplanation(e.getMessage());
