@@ -61,7 +61,8 @@ public final class HDKeyDerivation {
     /**
      * @throws HDDerivationException if privKeyBytes is invalid (0 or >= n).
      */
-    static DeterministicKey createMasterPrivKeyFromBytes(byte[] privKeyBytes, byte[] chainCode) throws HDDerivationException {
+    public static DeterministicKey createMasterPrivKeyFromBytes(
+            byte[] privKeyBytes, byte[] chainCode) throws HDDerivationException {
         BigInteger privateKeyFieldElt = HDUtils.toBigInteger(privKeyBytes);
         assertNonZero(privateKeyFieldElt, "Generated master key is invalid.");
         assertLessThanN(privateKeyFieldElt, "Generated master key is invalid.");
