@@ -6,6 +6,7 @@ import com.google.bitcoin.core.TransactionConfidence.ConfidenceType;
 import com.google.bitcoin.params.MainNetParams;
 import com.google.bitcoin.params.UnitTestParams;
 import com.google.bitcoin.utils.BriefLogFormatter;
+import com.google.bitcoin.utils.TestUtils;
 import com.google.bitcoin.utils.Threading;
 import com.google.protobuf.ByteString;
 import org.bitcoinj.wallet.Protos;
@@ -20,7 +21,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Set;
 
-import static com.google.bitcoin.core.TestUtils.createFakeTx;
+import static com.google.bitcoin.utils.TestUtils.createFakeTx;
 import static org.junit.Assert.*;
 
 public class WalletProtobufSerializerTest {

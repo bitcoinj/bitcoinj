@@ -18,6 +18,7 @@ package com.google.bitcoin.protocols.channels;
 
 import com.google.bitcoin.core.*;
 import com.google.bitcoin.store.WalletProtobufSerializer;
+import com.google.bitcoin.utils.TestWithWallet;
 import com.google.bitcoin.utils.Threading;
 import com.google.bitcoin.wallet.WalletFiles;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -93,7 +94,13 @@ public class ChannelConnectionTest extends TestWithWallet {
         Threading.warnOnLockCycles();
     }
 
-    @After
+	@After
+	@Override
+	public void tearDown() throws Exception {
+		super.tearDown();
+	}
+
+	@After
     public void checkFail() {
         assertFalse(fail.get());
         Threading.throwOnLockCycles();

@@ -20,6 +20,7 @@ import com.google.bitcoin.core.TransactionConfidence.ConfidenceType;
 import com.google.bitcoin.params.UnitTestParams;
 import com.google.bitcoin.store.MemoryBlockStore;
 import com.google.bitcoin.utils.BriefLogFormatter;
+import com.google.bitcoin.utils.TestUtils;
 import com.google.bitcoin.utils.Threading;
 import org.junit.Before;
 import org.junit.Test;

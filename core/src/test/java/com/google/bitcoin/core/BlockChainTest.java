@@ -23,6 +23,7 @@ import com.google.bitcoin.params.UnitTestParams;
 import com.google.bitcoin.store.BlockStore;
 import com.google.bitcoin.store.MemoryBlockStore;
 import com.google.bitcoin.utils.BriefLogFormatter;
+import com.google.bitcoin.utils.TestUtils;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.junit.After;
 import org.junit.Before;
@@ -32,8 +33,8 @@ import java.math.BigInteger;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-import static com.google.bitcoin.core.TestUtils.createFakeBlock;
-import static com.google.bitcoin.core.TestUtils.createFakeTx;
+import static com.google.bitcoin.utils.TestUtils.createFakeBlock;
+import static com.google.bitcoin.utils.TestUtils.createFakeTx;
 import static org.junit.Assert.*;
 
 // Handling of chain splits/reorgs are in ChainSplitTests.
