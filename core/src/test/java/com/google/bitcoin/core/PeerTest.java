@@ -18,6 +18,7 @@ package com.google.bitcoin.core;
 
 import com.google.bitcoin.core.Peer.PeerHandler;
 import com.google.bitcoin.params.TestNet3Params;
+import com.google.bitcoin.utils.TestUtils;
 import com.google.bitcoin.utils.Threading;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -43,7 +44,7 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
-import static com.google.bitcoin.core.TestUtils.*;
+import static com.google.bitcoin.utils.TestUtils.*;
 import static org.easymock.EasyMock.*;
 import static org.junit.Assert.*;
 

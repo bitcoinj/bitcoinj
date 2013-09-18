@@ -18,6 +18,7 @@ package com.google.bitcoin.core;
 
 import com.google.bitcoin.params.UnitTestParams;
 import com.google.bitcoin.utils.BriefLogFormatter;
+import com.google.bitcoin.utils.TestUtils;
 import org.junit.Before;
 import org.junit.Test;
 

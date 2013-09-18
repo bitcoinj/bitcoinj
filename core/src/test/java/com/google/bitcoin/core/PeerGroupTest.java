@@ -20,6 +20,7 @@ import com.google.bitcoin.discovery.PeerDiscovery;
 import com.google.bitcoin.discovery.PeerDiscoveryException;
 import com.google.bitcoin.params.UnitTestParams;
 import com.google.bitcoin.store.MemoryBlockStore;
+import com.google.bitcoin.utils.TestUtils;
 import com.google.bitcoin.utils.Threading;
 import org.junit.After;
 import org.junit.Before;

@@ -14,22 +14,27 @@
  * limitations under the License.
  */
 
-package com.google.bitcoin.core;
+package com.google.bitcoin.utils;
 
+import com.google.bitcoin.core.*;
 import com.google.bitcoin.params.UnitTestParams;
 import com.google.bitcoin.store.BlockStore;
 import com.google.bitcoin.store.MemoryBlockStore;
-import com.google.bitcoin.utils.BriefLogFormatter;
-import org.junit.After;
-import org.junit.Before;
 
 import java.io.IOException;
 import java.math.BigInteger;
-import java.util.ArrayList;
 
-import static com.google.bitcoin.core.TestUtils.createFakeBlock;
-import static com.google.bitcoin.core.TestUtils.createFakeTx;
+import static com.google.bitcoin.utils.TestUtils.createFakeBlock;
+import static com.google.bitcoin.utils.TestUtils.createFakeTx;
 
+/**
+ * A utility class that you can derive from in your unit tests. TestWithWallet sets up a wallet with a key,
+ * an in memory block store and a block chain object. It also provides helper methods for filling the wallet
+ * with money in whatever ways you wish. Note that for simplicity with amounts, this class sets the default
+ * fee per kilobyte to zero in setUp and back to normal in tearDown. If you are wanting to test your behaviour
+ * with fees (a good idea!) make sure you set the {@link Wallet.SendRequest#DEFAULT_FEE_PER_KB} value to
+ * {@link Transaction#REFERENCE_DEFAULT_MIN_TX_FEE} before doing so.
+ */
 public class TestWithWallet {
     protected static final NetworkParameters params = UnitTestParams.get();
     protected ECKey myKey;
@@ -38,7 +43,6 @@ public class TestWithWallet {
     protected BlockChain chain;
     protected BlockStore blockStore;
 
-    @Before
     public void setUp() throws Exception {
         BriefLogFormatter.init();
         Wallet.SendRequest.DEFAULT_FEE_PER_KB = BigInteger.ZERO;
@@ -50,13 +54,12 @@ public class TestWithWallet {
         chain = new BlockChain(params, wallet, blockStore);
     }
 
-    @After
     public void tearDown() throws Exception {
         Wallet.SendRequest.DEFAULT_FEE_PER_KB = Transaction.REFERENCE_DEFAULT_MIN_TX_FEE;
     }
 
     protected Transaction sendMoneyToWallet(Wallet wallet, Transaction tx, AbstractBlockChain.NewBlockType type)
-            throws IOException, ProtocolException, VerificationException {
+            throws IOException, VerificationException {
         if (type == null) {
             // Pending/broadcast tx.
             if (wallet.isPendingTransactionRelevant(tx))

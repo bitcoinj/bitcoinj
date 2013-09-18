@@ -25,6 +25,8 @@ import com.google.bitcoin.crypto.KeyCrypterScrypt;
 import com.google.bitcoin.crypto.TransactionSignature;
 import com.google.bitcoin.store.WalletProtobufSerializer;
 import com.google.bitcoin.utils.MockTransactionBroadcaster;
+import com.google.bitcoin.utils.TestUtils;
+import com.google.bitcoin.utils.TestWithWallet;
 import com.google.bitcoin.utils.Threading;
 import com.google.bitcoin.wallet.KeyTimeCoinSelector;
 import com.google.bitcoin.wallet.WalletFiles;
@@ -34,6 +36,7 @@ import com.google.protobuf.ByteString;
 import org.bitcoinj.wallet.Protos;
 import org.bitcoinj.wallet.Protos.ScryptParameters;
 import org.bitcoinj.wallet.Protos.Wallet.EncryptionType;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -49,7 +52,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static com.google.bitcoin.core.TestUtils.*;
+import static com.google.bitcoin.utils.TestUtils.*;
 import static com.google.bitcoin.core.Utils.*;
 import static org.junit.Assert.*;
 
@@ -94,7 +97,13 @@ public class WalletTest extends TestWithWallet {
         myEncryptedAddress2 = myEncryptedKey2.toAddress(params);
     }
 
-    @Test
+	@After
+	@Override
+	public void tearDown() throws Exception {
+		super.tearDown();
+	}
+
+	@Test
     public void basicSpending() throws Exception {
         basicSpendingCommon(wallet, myAddress, false);
     }

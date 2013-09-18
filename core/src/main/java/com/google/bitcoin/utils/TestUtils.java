@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-package com.google.bitcoin.core;
+package com.google.bitcoin.utils;
 
+import com.google.bitcoin.core.*;
 import com.google.bitcoin.store.BlockStore;
 import com.google.bitcoin.store.BlockStoreException;
 
@@ -146,15 +147,15 @@ public class TestUtils {
     }
 
     public static class BlockPair {
-        StoredBlock storedBlock;
-        Block block;
+        public StoredBlock storedBlock;
+        public Block block;
     }
 
     // Emulates receiving a valid block that builds on top of the chain.
     public static BlockPair createFakeBlock(BlockStore blockStore, long timeSeconds, Transaction... transactions) {
         try {
             Block chainHead = blockStore.getChainHead().getHeader();
-            Address to = new ECKey().toAddress(chainHead.params);
+            Address to = new ECKey().toAddress(chainHead.getParams());
             Block b = chainHead.createNextBlock(to, timeSeconds);
             // Coinbase tx was already added.
             for (Transaction tx : transactions) {
@@ -186,7 +187,7 @@ public class TestUtils {
     }
 
     public static Block makeSolvedTestBlock(Block prev, Transaction... transactions) throws BlockStoreException {
-        Address to = new ECKey().toAddress(prev.params);
+        Address to = new ECKey().toAddress(prev.getParams());
         Block b = prev.createNextBlock(to);
         // Coinbase tx already exists.
         for (Transaction tx : transactions) {

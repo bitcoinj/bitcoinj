@@ -28,8 +28,8 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.util.Arrays;
 
-import static com.google.bitcoin.core.TestUtils.createFakeBlock;
-import static com.google.bitcoin.core.TestUtils.createFakeTx;
+import static com.google.bitcoin.utils.TestUtils.createFakeBlock;
+import static com.google.bitcoin.utils.TestUtils.createFakeTx;
 import static org.junit.Assert.*;
 
 public class LazyParseByteCacheTest {

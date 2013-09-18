@@ -505,6 +505,11 @@ public abstract class Message implements Serializable {
         return cursor < bytes.length;
     }
 
+	/** Network parameters this message was created with. */
+	public NetworkParameters getParams() {
+		return params;
+	}
+
     public static class LazyParseException extends RuntimeException {
         private static final long serialVersionUID = 6971943053112975594L;
 

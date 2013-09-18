@@ -739,7 +739,7 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
      * risky it is. If this method returns true then {@link Wallet#receivePending(Transaction, java.util.List)}
      * will soon be called with the transactions dependencies as well.
      */
-    boolean isPendingTransactionRelevant(Transaction tx) throws ScriptException {
+    public boolean isPendingTransactionRelevant(Transaction tx) throws ScriptException {
         lock.lock();
         try {
             // Ignore it if we already know about this transaction. Receiving a pending transaction never moves it
