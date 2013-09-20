@@ -75,8 +75,7 @@ public class Main extends Application {
 
         // Now configure and start the appkit. This will take a second or two - we could show a temporary splash screen
         // or progress widget to keep the user engaged whilst we initialise, but we don't.
-        bitcoin.setAutoSave(true)
-               .setDownloadListener(controller.progressBarUpdater())
+        bitcoin.setDownloadListener(controller.progressBarUpdater())
                .setBlockingStartup(false)
                .startAndWait();
         // Don't make the user wait for confirmations for now, as the intention is they're sending it their own money!
