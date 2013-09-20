@@ -25,6 +25,7 @@ import com.google.bitcoin.store.UnreadableWalletException;
 import com.google.bitcoin.store.WalletProtobufSerializer;
 import com.google.bitcoin.utils.ListenerRegistration;
 import com.google.bitcoin.utils.Threading;
+import com.google.bitcoin.wallet.CoinSelection;
 import com.google.bitcoin.wallet.CoinSelector;
 import com.google.bitcoin.wallet.KeyTimeCoinSelector;
 import com.google.bitcoin.wallet.WalletFiles;
@@ -154,16 +155,6 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
     // that was created after it. Useful when you believe some keys have been compromised.
     private volatile long vKeyRotationTimestamp;
     private volatile boolean vKeyRotationEnabled;
-
-    /** Represents the results of a {@link CoinSelector#select(java.math.BigInteger, java.util.LinkedList)}  operation */
-    public static class CoinSelection {
-        public BigInteger valueGathered;
-        public Collection<TransactionOutput> gathered;
-        public CoinSelection(BigInteger valueGathered, Collection<TransactionOutput> gathered) {
-            this.valueGathered = valueGathered;
-            this.gathered = gathered;
-        }
-    }
 
     /**
      * This class implements a {@link CoinSelector} which attempts to get the highest priority possible. This means that

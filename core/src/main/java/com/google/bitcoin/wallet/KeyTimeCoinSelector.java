@@ -46,7 +46,7 @@ public class KeyTimeCoinSelector implements CoinSelector {
     }
 
     @Override
-    public Wallet.CoinSelection select(BigInteger target, LinkedList<TransactionOutput> candidates) {
+    public CoinSelection select(BigInteger target, LinkedList<TransactionOutput> candidates) {
         try {
             LinkedList<TransactionOutput> gathered = Lists.newLinkedList();
             BigInteger valueGathered = BigInteger.ZERO;
@@ -74,7 +74,7 @@ public class KeyTimeCoinSelector implements CoinSelector {
                     break;
                 }
             }
-            return new Wallet.CoinSelection(valueGathered, gathered);
+            return new CoinSelection(valueGathered, gathered);
         } catch (ScriptException e) {
             throw new RuntimeException(e);  // We should never have problems understanding scripts in our wallet.
         }
