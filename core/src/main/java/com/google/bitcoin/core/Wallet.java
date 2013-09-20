@@ -116,6 +116,9 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
     final Map<Sha256Hash, Transaction> spent;
     final Map<Sha256Hash, Transaction> dead;
 
+    // All transactions together.
+    final Map<Sha256Hash, Transaction> transactions;
+
     // A list of public/private EC keys owned by this user. Access it using addKey[s], hasKey[s] and findPubKeyFromHash.
     private ArrayList<ECKey> keychain;
 
@@ -295,6 +298,7 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
         spent = new HashMap<Sha256Hash, Transaction>();
         pending = new HashMap<Sha256Hash, Transaction>();
         dead = new HashMap<Sha256Hash, Transaction>();
+        transactions = new HashMap<Sha256Hash, Transaction>();
         eventListeners = new CopyOnWriteArrayList<ListenerRegistration<WalletEventListener>>();
         extensions = new HashMap<String, WalletExtension>();
         confidenceChanged = new HashMap<Transaction, TransactionConfidence.Listener.ChangeReason>();
@@ -875,13 +879,15 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
 
         // If this transaction is already in the wallet we may need to move it into a different pool. At the very
         // least we need to ensure we're manipulating the canonical object rather than a duplicate.
-        Transaction wtx;
-        if ((wtx = pending.remove(txHash)) != null) {
-            log.info("  <-pending");
-            // Make sure "tx" is always the canonical object we want to manipulate, send to event handlers, etc.
-            tx = wtx;
+        {
+            Transaction tmp = transactions.get(tx.getHash());
+            if (tmp != null)
+                tx = tmp;
         }
-        boolean wasPending = wtx != null;
+
+        boolean wasPending = pending.remove(txHash) != null;
+        if (wasPending)
+            log.info("  <-pending");
 
         if (bestChain) {
             if (wasPending) {
@@ -1370,6 +1376,7 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
      */
     private void addWalletTransaction(Pool pool, Transaction tx) {
         checkState(lock.isHeldByCurrentThread());
+        transactions.put(tx.getHash(), tx);
         switch (pool) {
         case UNSPENT:
             checkState(unspent.put(tx.getHash(), tx) == null);
@@ -1441,19 +1448,11 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
     /**
      * Returns a transaction object given its hash, if it exists in this wallet, or null otherwise.
      */
+    @Nullable
     public Transaction getTransaction(Sha256Hash hash) {
         lock.lock();
         try {
-            Transaction tx;
-            if ((tx = pending.get(hash)) != null)
-                return tx;
-            else if ((tx = unspent.get(hash)) != null)
-                return tx;
-            else if ((tx = spent.get(hash)) != null)
-                return tx;
-            else if ((tx = dead.get(hash)) != null)
-                return tx;
-            return null;
+            return transactions.get(hash);
         } finally {
             lock.unlock();
         }
@@ -1472,6 +1471,7 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
                 spent.clear();
                 pending.clear();
                 dead.clear();
+                transactions.clear();
                 saveLater();
             } else {
                 throw new UnsupportedOperationException();

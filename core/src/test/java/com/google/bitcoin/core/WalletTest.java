@@ -1436,9 +1436,9 @@ public class WalletTest extends TestWithWallet {
         assertEquals(999, theoreticalMaxLength17);
         Transaction spend17 = request17.tx;
         {
-            // Its actual size must be between 997 and 999 (inclusive) as signatures have a 3-byte size range (almost always)
+            // Its actual size must be between 996 and 999 (inclusive) as signatures have a 3-byte size range (almost always)
             final int length = spend17.bitcoinSerialize().length;
-            assertTrue(Integer.toString(length), length >= 997 && length <= 999);
+            assertTrue(Integer.toString(length), length >= 996 && length <= 999);
         }
         // Now check that it got a fee of 1 since its max size is 999 (1kb).
         assertEquals(25, spend17.getOutputs().size());
