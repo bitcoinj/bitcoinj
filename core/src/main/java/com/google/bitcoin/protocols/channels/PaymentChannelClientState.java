@@ -20,6 +20,7 @@ import com.google.bitcoin.core.*;
 import com.google.bitcoin.crypto.TransactionSignature;
 import com.google.bitcoin.script.Script;
 import com.google.bitcoin.script.ScriptBuilder;
+import com.google.bitcoin.wallet.AllowUnconfirmedCoinSelector;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
@@ -176,7 +177,7 @@ public class PaymentChannelClientState {
         if (multisigOutput.getMinNonDustValue().compareTo(totalValue) > 0)
             throw new ValueOutOfRangeException("totalValue too small to use");
         Wallet.SendRequest req = Wallet.SendRequest.forTx(template);
-        req.coinSelector = Wallet.AllowUnconfirmedCoinSelector.get();
+        req.coinSelector = AllowUnconfirmedCoinSelector.get();
         editContractSendRequest(req);
         if (!wallet.completeTx(req))
             throw new ValueOutOfRangeException("Cannot afford this channel");
