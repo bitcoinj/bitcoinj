@@ -20,6 +20,7 @@ import com.google.bitcoin.core.*;
 import com.google.bitcoin.script.Script;
 import com.google.bitcoin.script.ScriptBuilder;
 import com.google.bitcoin.utils.TestWithWallet;
+import com.google.bitcoin.wallet.DefaultCoinSelector;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
@@ -193,7 +194,7 @@ public class PaymentChannelStateTest extends TestWithWallet {
         // Create a block with the payment transaction in it and give it to both wallets
         chain.add(makeSolvedTestBlock(blockStore.getChainHead().getHeader(), new Transaction(params, closeTx.bitcoinSerialize())));
 
-        assertEquals(size.multiply(BigInteger.valueOf(5)), serverWallet.getBalance(new Wallet.DefaultCoinSelector() {
+        assertEquals(size.multiply(BigInteger.valueOf(5)), serverWallet.getBalance(new DefaultCoinSelector() {
             @Override
             protected boolean shouldSelect(Transaction tx) {
                 if (tx.getConfidence().getConfidenceType() == TransactionConfidence.ConfidenceType.BUILDING)
@@ -203,7 +204,7 @@ public class PaymentChannelStateTest extends TestWithWallet {
         }));
         assertEquals(0, serverWallet.getPendingTransactions().size());
 
-        assertEquals(Utils.COIN.subtract(size.multiply(BigInteger.valueOf(5))), wallet.getBalance(new Wallet.DefaultCoinSelector() {
+        assertEquals(Utils.COIN.subtract(size.multiply(BigInteger.valueOf(5))), wallet.getBalance(new DefaultCoinSelector() {
             @Override
             protected boolean shouldSelect(Transaction tx) {
                 if (tx.getConfidence().getConfidenceType() == TransactionConfidence.ConfidenceType.BUILDING)

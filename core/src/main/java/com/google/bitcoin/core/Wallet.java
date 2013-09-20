@@ -25,10 +25,7 @@ import com.google.bitcoin.store.UnreadableWalletException;
 import com.google.bitcoin.store.WalletProtobufSerializer;
 import com.google.bitcoin.utils.ListenerRegistration;
 import com.google.bitcoin.utils.Threading;
-import com.google.bitcoin.wallet.CoinSelection;
-import com.google.bitcoin.wallet.CoinSelector;
-import com.google.bitcoin.wallet.KeyTimeCoinSelector;
-import com.google.bitcoin.wallet.WalletFiles;
+import com.google.bitcoin.wallet.*;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.*;
 import com.google.common.util.concurrent.FutureCallback;
@@ -155,77 +152,6 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
     // that was created after it. Useful when you believe some keys have been compromised.
     private volatile long vKeyRotationTimestamp;
     private volatile boolean vKeyRotationEnabled;
-
-    /**
-     * This class implements a {@link CoinSelector} which attempts to get the highest priority possible. This means that
-     * the transaction is the most likely to get confirmed
-     * Note that this means we may end up "spending" more priority than would be required to get the transaction we are
-     * creating confirmed.
-     */
-    public static class DefaultCoinSelector implements CoinSelector {
-        public CoinSelection select(BigInteger biTarget, LinkedList<TransactionOutput> candidates) {
-            long target = biTarget.longValue();
-            HashSet<TransactionOutput> selected = new HashSet<TransactionOutput>();
-            // Sort the inputs by age*value so we get the highest "coindays" spent.
-            // TODO: Consider changing the wallets internal format to track just outputs and keep them ordered.
-            ArrayList<TransactionOutput> sortedOutputs = new ArrayList<TransactionOutput>(candidates);
-            // When calculating the wallet balance, we may be asked to select all possible coins, if so, avoid sorting
-            // them in order to improve performance.
-            if (!biTarget.equals(NetworkParameters.MAX_MONEY)) {
-                Collections.sort(sortedOutputs, new Comparator<TransactionOutput>() {
-                    public int compare(TransactionOutput a, TransactionOutput b) {
-                        int depth1 = 0;
-                        int depth2 = 0;
-                        TransactionConfidence conf1 = a.parentTransaction.getConfidence();
-                        TransactionConfidence conf2 = b.parentTransaction.getConfidence();
-                        if (conf1.getConfidenceType() == ConfidenceType.BUILDING) depth1 = conf1.getDepthInBlocks();
-                        if (conf2.getConfidenceType() == ConfidenceType.BUILDING) depth2 = conf2.getDepthInBlocks();
-                        BigInteger aValue = a.getValue();
-                        BigInteger bValue = b.getValue();
-                        BigInteger aCoinDepth = aValue.multiply(BigInteger.valueOf(depth1));
-                        BigInteger bCoinDepth = bValue.multiply(BigInteger.valueOf(depth2));
-                        int c1 = bCoinDepth.compareTo(aCoinDepth);
-                        if (c1 != 0) return c1;
-                        // The "coin*days" destroyed are equal, sort by value alone to get the lowest transaction size.
-                        int c2 = bValue.compareTo(aValue);
-                        if (c2 != 0) return c2;
-                        // They are entirely equivalent (possibly pending) so sort by hash to ensure a total ordering.
-                        BigInteger aHash = a.parentTransaction.getHash().toBigInteger();
-                        BigInteger bHash = b.parentTransaction.getHash().toBigInteger();
-                        return aHash.compareTo(bHash);
-                    }
-                });
-            }
-            // Now iterate over the sorted outputs until we have got as close to the target as possible or a little
-            // bit over (excessive value will be change).
-            long total = 0;
-            for (TransactionOutput output : sortedOutputs) {
-                if (total >= target) break;
-                // Only pick chain-included transactions, or transactions that are ours and pending.
-                if (!shouldSelect(output.parentTransaction)) continue;
-                selected.add(output);
-                total += output.getValue().longValue();
-            }
-            // Total may be lower than target here, if the given candidates were insufficient to create to requested
-            // transaction.
-            return new CoinSelection(BigInteger.valueOf(total), selected);
-        }
-
-        /** Sub-classes can override this to just customize whether transactions are usable, but keep age sorting. */
-        protected boolean shouldSelect(Transaction tx) {
-            return isSelectable(tx);
-        }
-
-        public static boolean isSelectable(Transaction tx) {
-            // Only pick chain-included transactions, or transactions that are ours and pending.
-            TransactionConfidence confidence = tx.getConfidence();
-            ConfidenceType type = confidence.getConfidenceType();
-            if (type.equals(ConfidenceType.BUILDING)) return true;
-            return type.equals(ConfidenceType.PENDING) &&
-                   confidence.getSource().equals(TransactionConfidence.Source.SELF) &&
-                   confidence.numBroadcastPeers() > 1;
-        }
-    }
 
     /**
      * This coin selector will select any transaction at all, regardless of where it came from or whether it was
