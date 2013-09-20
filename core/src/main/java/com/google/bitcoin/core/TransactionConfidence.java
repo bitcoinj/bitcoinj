@@ -423,7 +423,7 @@ public class TransactionConfidence implements Serializable {
     /**
      * The source of a transaction tries to identify where it came from originally. For instance, did we download it
      * from the peer to peer network, or make it ourselves, or receive it via Bluetooth, or import it from another app,
-     * and so on. This information is useful for {@link Wallet.CoinSelector} implementations to risk analyze
+     * and so on. This information is useful for {@link com.google.bitcoin.wallet.CoinSelector} implementations to risk analyze
      * transactions and decide when to spend them.
      */
     public synchronized Source getSource() {
@@ -433,7 +433,7 @@ public class TransactionConfidence implements Serializable {
     /**
      * The source of a transaction tries to identify where it came from originally. For instance, did we download it
      * from the peer to peer network, or make it ourselves, or receive it via Bluetooth, or import it from another app,
-     * and so on. This information is useful for {@link Wallet.CoinSelector} implementations to risk analyze
+     * and so on. This information is useful for {@link com.google.bitcoin.wallet.CoinSelector} implementations to risk analyze
      * transactions and decide when to spend them.
      */
     public synchronized void setSource(Source source) {

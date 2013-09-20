@@ -25,6 +25,7 @@ import com.google.bitcoin.store.UnreadableWalletException;
 import com.google.bitcoin.store.WalletProtobufSerializer;
 import com.google.bitcoin.utils.ListenerRegistration;
 import com.google.bitcoin.utils.Threading;
+import com.google.bitcoin.wallet.CoinSelector;
 import com.google.bitcoin.wallet.KeyTimeCoinSelector;
 import com.google.bitcoin.wallet.WalletFiles;
 import com.google.common.base.Preconditions;
@@ -162,16 +163,6 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
             this.valueGathered = valueGathered;
             this.gathered = gathered;
         }
-    }
-
-    /**
-     * A CoinSelector is responsible for picking some outputs to spend, from the list of all spendable outputs. It
-     * allows you to customize the policies for creation of transactions to suit your needs. The select operation
-     * may return a {@link CoinSelection} that has a valueGathered lower than the requested target, if there's not
-     * enough money in the wallet.
-     */
-    public interface CoinSelector {
-        public CoinSelection select(BigInteger target, LinkedList<TransactionOutput> candidates);
     }
 
     /**
@@ -1636,7 +1627,7 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
         public KeyParameter aesKey = null;
 
         /**
-         * If not null, the {@link Wallet.CoinSelector} to use instead of the wallets default. Coin selectors are
+         * If not null, the {@link com.google.bitcoin.wallet.CoinSelector} to use instead of the wallets default. Coin selectors are
          * responsible for choosing which transaction outputs (coins) in a wallet to use given the desired send value
          * amount.
          */

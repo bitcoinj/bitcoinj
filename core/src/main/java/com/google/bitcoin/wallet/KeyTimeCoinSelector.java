@@ -29,7 +29,7 @@ import java.util.LinkedList;
  * A coin selector that takes all coins assigned to keys created before the given timestamp.
  * Used as part of the implementation of {@link Wallet#setKeyRotationTime(java.util.Date)}.
  */
-public class KeyTimeCoinSelector implements Wallet.CoinSelector {
+public class KeyTimeCoinSelector implements CoinSelector {
     private static final Logger log = LoggerFactory.getLogger(KeyTimeCoinSelector.class);
 
     /** A number of inputs chosen to avoid hitting {@link com.google.bitcoin.core.Transaction.MAX_STANDARD_TX_SIZE} */
