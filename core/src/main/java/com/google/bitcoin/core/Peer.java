@@ -601,7 +601,7 @@ public class Peer {
         final ListenableFuture future = downloadDependenciesInternal(tx, new Object(), results);
         final SettableFuture<List<Transaction>> resultFuture = SettableFuture.create();
         Futures.addCallback(future, new FutureCallback() {
-            public void onSuccess(Object _) {
+            public void onSuccess(Object ignored) {
                 resultFuture.set(results);
             }
 

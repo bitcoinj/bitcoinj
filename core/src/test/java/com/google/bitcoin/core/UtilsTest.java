@@ -22,9 +22,7 @@ import org.junit.Test;
 import java.math.BigInteger;
 
 import static com.google.bitcoin.core.Utils.*;
-import static junit.framework.Assert.assertEquals;
-import static junit.framework.Assert.fail;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 public class UtilsTest {
 

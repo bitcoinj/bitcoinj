@@ -836,7 +836,7 @@ public class PeerTest extends TestWithNetworkConnections {
             }
         };
         ServerSocket server = new ServerSocket(0);
-        final NetworkParameters params = TestNet3Params.testNet();
+        final NetworkParameters params = TestNet3Params.get();
         Peer peer = new Peer(params, blockChain, "test", "1.0");
         ListenableFuture<TCPNetworkConnection> future = TCPNetworkConnection.connectTo(TestNet3Params.get(),
                 new InetSocketAddress(InetAddress.getLocalHost(), server.getLocalPort()), 5000, peer);
