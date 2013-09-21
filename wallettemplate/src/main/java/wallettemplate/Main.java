@@ -4,6 +4,7 @@ import com.google.bitcoin.core.NetworkParameters;
 import com.google.bitcoin.kits.WalletAppKit;
 import com.google.bitcoin.params.MainNetParams;
 import com.google.bitcoin.params.RegTestParams;
+import com.google.bitcoin.store.BlockStoreException;
 import com.google.bitcoin.utils.BriefLogFormatter;
 import com.google.bitcoin.utils.Threading;
 import javafx.application.Application;
@@ -37,7 +38,13 @@ public class Main extends Application {
         try {
             init(mainWindow);
         } catch (Throwable t) {
-            GuiUtils.crashAlert(t.getLocalizedMessage());
+            final Throwable cause = t.getCause();
+            if (cause != null && cause.getCause() instanceof BlockStoreException) {
+                GuiUtils.informationalAlert("Already running", "This application is already running and cannot be started twice.");
+            } else {
+                GuiUtils.crashAlert(t.getLocalizedMessage());
+            }
+            Platform.exit();
         }
     }
 
