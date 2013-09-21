@@ -168,14 +168,26 @@ public class WalletAppKit extends AbstractIdleService {
         try {
             File chainFile = new File(directory, filePrefix + ".spvchain");
             boolean chainFileExists = chainFile.exists();
+            vWalletFile = new File(directory, filePrefix + ".wallet");
+            boolean shouldReplayWallet = vWalletFile.exists() && !chainFileExists;
+
             vStore = new SPVBlockStore(params, chainFile);
             if (!chainFileExists && checkpoints != null) {
-                CheckpointManager.checkpoint(params, checkpoints, vStore, vWallet.getEarliestKeyCreationTime());
+                // Ugly hack! We have to create the wallet once here to learn the earliest key time, and then throw it
+                // away. The reason is that wallet extensions might need access to peergroups/chains/etc so we have to
+                // create the wallet later, but we need to know the time early here before we create the BlockChain
+                // object.
+                long time = Long.MAX_VALUE;
+                if (vWalletFile.exists()) {
+                    Wallet wallet = new Wallet(params);
+                    FileInputStream stream = new FileInputStream(vWalletFile);
+                    new WalletProtobufSerializer().readWallet(WalletProtobufSerializer.parseToProto(stream), wallet);
+                    time = wallet.getEarliestKeyCreationTime();
+                }
+                CheckpointManager.checkpoint(params, checkpoints, vStore, time);
             }
             vChain = new BlockChain(params, vStore);
             vPeerGroup = new PeerGroup(params, vChain);
-            vWalletFile = new File(directory, filePrefix + ".wallet");
-            boolean shouldReplayWallet = vWalletFile.exists() && !chainFileExists;
             if (vWalletFile.exists()) {
                 walletStream = new FileInputStream(vWalletFile);
                 vWallet = new Wallet(params);
