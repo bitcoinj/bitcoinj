@@ -148,7 +148,7 @@
     <junit.version>4.8.2</junit.version>
     <slf4j.version>1.6.4</slf4j.version>
     <derby.version>10.8.2.2</derby.version>
-    <protobuf.version>2.4.1</protobuf.version>
+    <protobuf.version>2.5.0</protobuf.version>
     <netty.version>3.6.3.Final</netty.version>
     <generated.sourceDirectory>gen</generated.sourceDirectory>
   </properties>
