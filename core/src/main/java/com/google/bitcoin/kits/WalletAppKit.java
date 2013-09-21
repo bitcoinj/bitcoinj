@@ -168,6 +168,12 @@ public class WalletAppKit extends AbstractIdleService {
         try {
             File chainFile = new File(directory, filePrefix + ".spvchain");
             boolean chainFileExists = chainFile.exists();
+            vStore = new SPVBlockStore(params, chainFile);
+            if (!chainFileExists && checkpoints != null) {
+                CheckpointManager.checkpoint(params, checkpoints, vStore, vWallet.getEarliestKeyCreationTime());
+            }
+            vChain = new BlockChain(params, vStore);
+            vPeerGroup = new PeerGroup(params, vChain);
             vWalletFile = new File(directory, filePrefix + ".wallet");
             boolean shouldReplayWallet = vWalletFile.exists() && !chainFileExists;
             if (vWalletFile.exists()) {
@@ -183,12 +189,6 @@ public class WalletAppKit extends AbstractIdleService {
                 addWalletExtensions();
             }
             if (useAutoSave) vWallet.autosaveToFile(vWalletFile, 1, TimeUnit.SECONDS, null);
-            vStore = new SPVBlockStore(params, chainFile);
-            if (!chainFileExists && checkpoints != null) {
-                CheckpointManager.checkpoint(params, checkpoints, vStore, vWallet.getEarliestKeyCreationTime());
-            }
-            vChain = new BlockChain(params, vStore);
-            vPeerGroup = new PeerGroup(params, vChain);
             // Set up peer addresses or discovery first, so if wallet extensions try to broadcast a transaction
             // before we're actually connected the broadcast waits for an appropriate number of connections.
             if (peerAddresses != null) {
