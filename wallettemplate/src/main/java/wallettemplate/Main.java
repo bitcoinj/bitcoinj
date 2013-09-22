@@ -1,5 +1,6 @@
 package wallettemplate;
 
+import com.aquafx_project.AquaFx;
 import com.google.bitcoin.core.NetworkParameters;
 import com.google.bitcoin.kits.WalletAppKit;
 import com.google.bitcoin.params.MainNetParams;
@@ -50,6 +51,9 @@ public class Main extends Application {
     }
 
     private void init(Stage mainWindow) throws IOException {
+        if (System.getProperty("os.name").toLowerCase().contains("mac")) {
+            AquaFx.style();
+        }
         // Load the GUI. The Controller class will be automagically created and wired up.
         URL location = getClass().getResource("main.fxml");
         FXMLLoader loader = new FXMLLoader(location);
