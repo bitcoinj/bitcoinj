@@ -52,7 +52,7 @@ public class SendMoneyController {
                 @Override
                 public void onFailure(Throwable t) {
                     // We died trying to empty the wallet.
-                    Platform.runLater(() -> GuiUtils.crashAlert(t.getMessage()));
+                    GuiUtils.crashAlert(t);
                 }
             });
             sendBtn.setDisable(true);

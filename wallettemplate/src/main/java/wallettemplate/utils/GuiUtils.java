@@ -1,6 +1,8 @@
 package wallettemplate.utils;
 
+import com.google.common.base.Throwables;
 import javafx.animation.*;
+import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.Scene;
@@ -33,12 +35,29 @@ public class GuiUtils {
         }
     }
 
-    public static void crashAlert(String alert) {
-        runAlert((stage, controller) -> controller.crashAlert(stage, alert));
+    public static void crashAlert(Throwable t) {
+        t.printStackTrace();
+        Throwable rootCause = Throwables.getRootCause(t);
+        Runnable r = () -> runAlert((stage, controller) -> controller.crashAlert(stage, rootCause.toString()));
+        if (Platform.isFxApplicationThread())
+            r.run();
+        else
+            Platform.runLater(r);
+    }
+
+    /** Show a GUI alert box for any unhandled exceptions that propagate out of this thread. */
+    public static void handleCrashesOnThisThread() {
+        Thread.currentThread().setUncaughtExceptionHandler((thread, exception) -> {
+            GuiUtils.crashAlert(Throwables.getRootCause(exception));
+        });
     }
 
     public static void informationalAlert(String message, String details) {
-        runAlert((stage, controller) -> controller.informational(stage, message, details));
+        Runnable r = () -> runAlert((stage, controller) -> controller.informational(stage, message, details));
+        if (Platform.isFxApplicationThread())
+            r.run();
+        else
+            Platform.runLater(r);
     }
 
     private static final int UI_ANIMATION_TIME_MSEC = 350;

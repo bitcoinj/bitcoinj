@@ -7,6 +7,7 @@ import com.google.bitcoin.params.RegTestParams;
 import com.google.bitcoin.store.BlockStoreException;
 import com.google.bitcoin.utils.BriefLogFormatter;
 import com.google.bitcoin.utils.Threading;
+import com.google.common.base.Throwables;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
@@ -35,16 +36,16 @@ public class Main extends Application {
     @Override
     public void start(Stage mainWindow) throws Exception {
         instance = this;
+        GuiUtils.handleCrashesOnThisThread();
         try {
             init(mainWindow);
         } catch (Throwable t) {
-            final Throwable cause = t.getCause();
-            if (cause != null && cause.getCause() instanceof BlockStoreException) {
+            // Nicer message for the case where the block store file is locked.
+            if (Throwables.getRootCause(t) instanceof BlockStoreException) {
                 GuiUtils.informationalAlert("Already running", "This application is already running and cannot be started twice.");
             } else {
-                GuiUtils.crashAlert(t.getLocalizedMessage());
+                throw t;
             }
-            Platform.exit();
         }
     }
 
