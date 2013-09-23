@@ -515,9 +515,11 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
                                            BlockChain.NewBlockType blockType) throws VerificationException {
         lock.lock();
         try {
-            Transaction tx = pending.get(txHash);
-            if (tx == null)
+            Transaction tx = transactions.get(txHash);
+            if (tx == null) {
+                log.error("TX {} not found despite being sent to wallet", txHash);
                 return;
+            }
             receive(tx, block, blockType);
         } finally {
             lock.unlock();
