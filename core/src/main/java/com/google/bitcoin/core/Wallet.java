@@ -797,6 +797,7 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
             if (wasPending) {
                 // Just put it back in without touching the connections or confidence.
                 addWalletTransaction(Pool.PENDING, tx);
+                log.info("  ->pending");
             } else {
                 // Ignore the case where a tx appears on a side chain at the same time as the best chain (this is
                 // quite normal and expected).
@@ -1586,7 +1587,7 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
      * {@link Wallet#getChangeAddress()}, so you must have added at least one key.</p>
      *
      * <p>If you just want to send money quickly, you probably want
-     * {@link Wallet#sendCoins(PeerGroup, Address, java.math.BigInteger)} instead. That will create the sending
+     * {@link Wallet#sendCoins(TransactionBroadcaster, Address, java.math.BigInteger)} instead. That will create the sending
      * transaction, commit to the wallet and broadcast it to the network all in one go. This method is lower level
      * and lets you see the proposed transaction before anything is done with it.</p>
      *
