@@ -1290,7 +1290,7 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
                 // any peer discovery source and the user just calls connectTo() once.
                 if (minConnections == 1) {
                     sendComplete.addListener(new ChannelFutureListener() {
-                        public void operationComplete(ChannelFuture operation) throws Exception {
+                        public void operationComplete(ChannelFuture ignored) throws Exception {
                             for (Wallet wallet : wallets) {
                                 try {
                                     // Assumption here is there are no dependencies of the created transaction.
