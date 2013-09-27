@@ -16,6 +16,7 @@
 
 package com.google.bitcoin.core;
 
+import com.google.bitcoin.utils.ListenerRegistration;
 import com.google.bitcoin.utils.Threading;
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -25,6 +26,7 @@ import java.io.Serializable;
 import java.math.BigInteger;
 import java.util.ListIterator;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.Executor;
 
 /**
  * <p>A TransactionConfidence object tracks data you can use to make a confidence decision about a transaction.
@@ -66,7 +68,7 @@ public class TransactionConfidence implements Serializable {
     /** The Transaction that this confidence object is associated with. */
     private final Transaction transaction;
     // Lazily created listeners array.
-    private transient CopyOnWriteArrayList<Listener> listeners;
+    private transient CopyOnWriteArrayList<ListenerRegistration<Listener>> listeners;
 
     // The depth of the transaction on the best chain in blocks. An unconfirmed block has depth 0.
     private int depth;
@@ -145,7 +147,7 @@ public class TransactionConfidence implements Serializable {
     public TransactionConfidence(Transaction tx) {
         // Assume a default number of peers for our set.
         broadcastBy = new CopyOnWriteArrayList<PeerAddress>();
-        listeners = new CopyOnWriteArrayList<Listener>();
+        listeners = new CopyOnWriteArrayList<ListenerRegistration<Listener>>();
         transaction = tx;
     }
 
@@ -191,18 +193,31 @@ public class TransactionConfidence implements Serializable {
      *
      * <p>Note that this is NOT called when every block arrives. Instead it is called when the transaction
      * transitions between confidence states, ie, from not being seen in the chain to being seen (not necessarily in
+     * the best chain). If you want to know when the transaction gets buried under another block, consider using
+     * a future from {@link #getDepthFuture(int)}.</p>
+     */
+    public void addEventListener(Listener listener, Executor executor) {
+        Preconditions.checkNotNull(listener);
+        listeners.addIfAbsent(new ListenerRegistration<Listener>(listener, executor));
+    }
+
+    /**
+     * <p>Adds an event listener that will be run when this confidence object is updated. The listener will be locked and
+     * is likely to be invoked on a peer thread.</p>
+     *
+     * <p>Note that this is NOT called when every block arrives. Instead it is called when the transaction
+     * transitions between confidence states, ie, from not being seen in the chain to being seen (not necessarily in
      * the best chain). If you want to know when the transaction gets buried under another block, implement a
      * {@link BlockChainListener}, attach it to a {@link BlockChain} and then use the getters on the
      * confidence object to determine the new depth.</p>
      */
     public void addEventListener(Listener listener) {
-        Preconditions.checkNotNull(listener);
-        listeners.addIfAbsent(listener);
+        addEventListener(listener, Threading.USER_THREAD);
     }
 
-    public void removeEventListener(Listener listener) {
+    public boolean removeEventListener(Listener listener) {
         Preconditions.checkNotNull(listener);
-        listeners.remove(listener);
+        return ListenerRegistration.removeFromList(listener, listeners);
     }
 
     /**
@@ -411,10 +426,11 @@ public class TransactionConfidence implements Serializable {
      * explicitly, more precise control is available. Note that this will run the listeners on the user code thread.
      */
     public void queueListeners(final Listener.ChangeReason reason) {
-        for (final Listener listener : listeners) {
-            Threading.USER_THREAD.execute(new Runnable() {
-                @Override public void run() {
-                    listener.onConfidenceChanged(transaction, reason);
+        for (final ListenerRegistration<Listener> registration : listeners) {
+            registration.executor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    registration.listener.onConfidenceChanged(transaction, reason);
                 }
             });
         }
@@ -445,20 +461,23 @@ public class TransactionConfidence implements Serializable {
      * depth to one will wait until it appears in a block on the best chain, and zero will wait until it has been seen
      * on the network.
      */
-    public synchronized ListenableFuture<Transaction> getDepthFuture(final int depth) {
+    public synchronized ListenableFuture<Transaction> getDepthFuture(final int depth, Executor executor) {
         final SettableFuture<Transaction> result = SettableFuture.create();
         if (getDepthInBlocks() >= depth) {
             result.set(transaction);
         }
         addEventListener(new Listener() {
             @Override public void onConfidenceChanged(Transaction tx, ChangeReason reason) {
-                // Runs in user code thread.
                 if (getDepthInBlocks() >= depth) {
                     removeEventListener(this);
                     result.set(transaction);
                 }
             }
-        });
+        }, executor);
         return result;
+    }
+
+    public synchronized ListenableFuture<Transaction> getDepthFuture(final int depth) {
+        return getDepthFuture(depth, Threading.USER_THREAD);
     }
 }
