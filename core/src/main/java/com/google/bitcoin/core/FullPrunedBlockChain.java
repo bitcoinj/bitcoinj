@@ -99,14 +99,17 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
     
     // TODO: execute in order of largest transaction (by input count) first
     ExecutorService scriptVerificationExecutor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
-    
-    class Verifyer implements Callable<VerificationException> {
+
+    /** A job submitted to the executor which verifies signatures. */
+    private static class Verifier implements Callable<VerificationException> {
         final Transaction tx;
         final List<Script> prevOutScripts;
         final boolean enforcePayToScriptHash;
-        Verifyer(final Transaction tx, final List<Script> prevOutScripts, final boolean enforcePayToScriptHash) {
+
+        public Verifier(final Transaction tx, final List<Script> prevOutScripts, final boolean enforcePayToScriptHash) {
             this.tx = tx; this.prevOutScripts = prevOutScripts; this.enforcePayToScriptHash = enforcePayToScriptHash;
         }
+
         @Override
         public VerificationException call() throws Exception {
             try{
@@ -217,7 +220,7 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
                 
                 if (!isCoinBase) {
                     // Because correctlySpends modifies transactions, this must come after we are done with tx
-                    FutureTask<VerificationException> future = new FutureTask<VerificationException>(new Verifyer(tx, prevOutScripts, enforcePayToScriptHash));
+                    FutureTask<VerificationException> future = new FutureTask<VerificationException>(new Verifier(tx, prevOutScripts, enforcePayToScriptHash));
                     scriptVerificationExecutor.execute(future);
                     listScriptVerificationResults.add(future);
                 }
@@ -339,7 +342,7 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
                     
                     if (!isCoinBase) {
                         // Because correctlySpends modifies transactions, this must come after we are done with tx
-                        FutureTask<VerificationException> future = new FutureTask<VerificationException>(new Verifyer(tx, prevOutScripts, enforcePayToScriptHash));
+                        FutureTask<VerificationException> future = new FutureTask<VerificationException>(new Verifier(tx, prevOutScripts, enforcePayToScriptHash));
                         scriptVerificationExecutor.execute(future);
                         listScriptVerificationResults.add(future);
                     }
