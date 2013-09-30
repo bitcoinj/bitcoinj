@@ -102,6 +102,41 @@ public class FullPrunedBlockChainTest {
     }
 
     @Test
+    public void skipScripts() throws Exception {
+        store = new MemoryFullPrunedBlockStore(params, 10);
+        chain = new FullPrunedBlockChain(params, store);
+
+        // Check that we aren't accidentally leaving any references
+        // to the full StoredUndoableBlock's lying around (ie memory leaks)
+
+        ECKey outKey = new ECKey();
+
+        // Build some blocks on genesis block to create a spendable output
+        Block rollingBlock = params.getGenesisBlock().createNextBlockWithCoinbase(outKey.getPubKey());
+        chain.add(rollingBlock);
+        TransactionOutput spendableOutput = rollingBlock.getTransactions().get(0).getOutput(0);
+        for (int i = 1; i < params.getSpendableCoinbaseDepth(); i++) {
+            rollingBlock = rollingBlock.createNextBlockWithCoinbase(outKey.getPubKey());
+            chain.add(rollingBlock);
+        }
+
+        rollingBlock = rollingBlock.createNextBlock(null);
+        Transaction t = new Transaction(params);
+        t.addOutput(new TransactionOutput(params, t, Utils.toNanoCoins(50, 0), new byte[] {}));
+        TransactionInput input = t.addInput(spendableOutput);
+        // Invalid script.
+        input.setScriptBytes(new byte[]{});
+        rollingBlock.addTransaction(t);
+        rollingBlock.solve();
+        chain.setRunScripts(false);
+        try {
+            chain.add(rollingBlock);
+        } catch (VerificationException e) {
+            fail();
+        }
+    }
+
+    @Test
     public void testFinalizedBlocks() throws Exception {
         final int UNDOABLE_BLOCKS_STORED = 10;
         store = new MemoryFullPrunedBlockStore(params, UNDOABLE_BLOCKS_STORED);
