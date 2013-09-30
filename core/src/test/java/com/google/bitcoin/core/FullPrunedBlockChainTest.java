@@ -17,11 +17,9 @@
 
 package com.google.bitcoin.core;
 
-import com.google.bitcoin.core.Transaction.SigHash;
 import com.google.bitcoin.params.MainNetParams;
 import com.google.bitcoin.params.UnitTestParams;
 import com.google.bitcoin.script.Script;
-import com.google.bitcoin.store.BlockStoreException;
 import com.google.bitcoin.store.FullPrunedBlockStore;
 import com.google.bitcoin.store.MemoryFullPrunedBlockStore;
 import com.google.bitcoin.utils.BlockFileLoader;
@@ -31,9 +29,7 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.Arrays;
 
@@ -104,7 +100,7 @@ public class FullPrunedBlockChainTest {
             }
         }
     }
-    
+
     @Test
     public void testFinalizedBlocks() throws Exception {
         final int UNDOABLE_BLOCKS_STORED = 10;
@@ -133,7 +129,7 @@ public class FullPrunedBlockChainTest {
         Transaction t = new Transaction(params);
         // Entirely invalid scriptPubKey
         t.addOutput(new TransactionOutput(params, t, Utils.toNanoCoins(50, 0), new byte[] {}));
-        addInputToTransaction(t, spendableOutput, spendableOutputScriptPubKey, outKey);
+        t.addSignedInput(spendableOutput, new Script(spendableOutputScriptPubKey), outKey);
         rollingBlock.addTransaction(t);
         rollingBlock.solve();
         
@@ -159,30 +155,11 @@ public class FullPrunedBlockChainTest {
         assertNull(out.get());
     }
     
-    private void addInputToTransaction(Transaction t, TransactionOutPoint prevOut, byte[] prevOutScriptPubKey, ECKey sigKey) throws ScriptException {
-        TransactionInput input = new TransactionInput(params, t, new byte[]{}, prevOut);
-        t.addInput(input);
-
-        Sha256Hash hash = t.hashForSignature(0, prevOutScriptPubKey, SigHash.ALL, false);
-
-        // Sign input
-        try {
-            ByteArrayOutputStream bos = new UnsafeByteArrayOutputStream(73);
-            bos.write(sigKey.sign(hash).encodeToDER());
-            bos.write(SigHash.ALL.ordinal() + 1);
-            byte[] signature = bos.toByteArray();
-            
-            input.setScriptBytes(Script.createInputScript(signature));
-        } catch (IOException e) {
-            throw new RuntimeException(e);  // Cannot happen.
-        }
-    }
-    
     @Test
-    public void testFirst100KBlocks() throws BlockStoreException, VerificationException, PrunedException {
+    public void testFirst100KBlocks() throws Exception {
         NetworkParameters params = MainNetParams.get();
         File blockFile = new File(getClass().getResource("first-100k-blocks.dat").getFile());
-        BlockFileLoader loader = new BlockFileLoader(params, Arrays.asList(new File[] {blockFile}));
+        BlockFileLoader loader = new BlockFileLoader(params, Arrays.asList(blockFile));
         
         store = new MemoryFullPrunedBlockStore(params, 10);
         chain = new FullPrunedBlockChain(params, store);

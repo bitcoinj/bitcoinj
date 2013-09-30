@@ -686,6 +686,38 @@ public class Transaction extends ChildMessage implements Serializable {
     }
 
     /**
+     * Adds a new and fully signed input for the given parameters. Note that this method is <b>not</b> thread safe
+     * and requires external synchronization. Please refer to general documentation on Bitcoin scripting and contracts
+     * to understand the values of sigHash and anyoneCanPay: otherwise you can use the other form of this method
+     * that sets them to typical defaults.
+     *
+     * @throws ScriptException if the scriptPubKey is not a pay to address or pay to pubkey script.
+     */
+    public TransactionInput addSignedInput(TransactionOutPoint prevOut, Script scriptPubKey, ECKey sigKey,
+                                           SigHash sigHash, boolean anyoneCanPay) throws ScriptException {
+        TransactionInput input = new TransactionInput(params, this, new byte[]{}, prevOut);
+        addInput(input);
+        Sha256Hash hash = hashForSignature(inputs.size() - 1, scriptPubKey, sigHash, anyoneCanPay);
+        ECKey.ECDSASignature ecSig = sigKey.sign(hash);
+        TransactionSignature txSig = new TransactionSignature(ecSig, sigHash, anyoneCanPay);
+        if (scriptPubKey.isSentToRawPubKey())
+            input.setScriptSig(ScriptBuilder.createInputScript(txSig));
+        else if (scriptPubKey.isSentToAddress())
+            input.setScriptSig(ScriptBuilder.createInputScript(txSig, sigKey));
+        else
+            throw new ScriptException("Don't know how to sign for this kind of scriptPubKey: " + scriptPubKey);
+        return input;
+    }
+
+    /**
+     * Same as {@link #addSignedInput(TransactionOutPoint, com.google.bitcoin.script.Script, ECKey, com.google.bitcoin.core.Transaction.SigHash, boolean)}
+     * but defaults to {@link SigHash#ALL} and "false" for the anyoneCanPay flag. This is normally what you want.
+     */
+    public TransactionInput addSignedInput(TransactionOutPoint prevOut, Script scriptPubKey, ECKey sigKey) throws ScriptException {
+        return addSignedInput(prevOut, scriptPubKey, sigKey, SigHash.ALL, false);
+    }
+
+    /**
      * Removes all the inputs from this transaction.
      * Note that this also invalidates the length attribute
      */
