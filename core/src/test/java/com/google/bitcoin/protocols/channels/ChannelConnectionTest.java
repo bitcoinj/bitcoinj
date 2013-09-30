@@ -41,11 +41,13 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.google.bitcoin.protocols.channels.PaymentChannelCloseException.CloseReason;
+import static com.google.bitcoin.utils.TestUtils.createFakeBlock;
 import static org.bitcoin.paymentchannel.Protos.TwoWayChannelMessage.MessageType;
 import static org.junit.Assert.*;
 
 public class ChannelConnectionTest extends TestWithWallet {
     private Wallet serverWallet;
+    private BlockChain serverChain;
     private AtomicBoolean fail;
     private BlockingQueue<Transaction> broadcasts;
     private TransactionBroadcaster mockBroadcaster;
@@ -65,11 +67,10 @@ public class ChannelConnectionTest extends TestWithWallet {
         sendMoneyToWallet(Utils.COIN, AbstractBlockChain.NewBlockType.BEST_CHAIN);
         sendMoneyToWallet(Utils.COIN, AbstractBlockChain.NewBlockType.BEST_CHAIN);
         wallet.addExtension(new StoredPaymentChannelClientStates(wallet, failBroadcaster));
-        chain = new BlockChain(params, wallet, blockStore); // Recreate chain as sendMoneyToWallet will confuse it
         serverWallet = new Wallet(params);
         serverWallet.addExtension(new StoredPaymentChannelServerStates(serverWallet, failBroadcaster));
         serverWallet.addKey(new ECKey());
-        chain.addWallet(serverWallet);
+        serverChain = new BlockChain(params, serverWallet, blockStore);
         // Use an atomic boolean to indicate failure because fail()/assert*() dont work in network threads
         fail = new AtomicBoolean(false);
 
@@ -181,16 +182,27 @@ public class ChannelConnectionTest extends TestWithWallet {
         client.close();
 
         broadcastTxPause.release();
-        broadcasts.take();
+        Transaction closeTx = broadcasts.take();
         assertEquals(PaymentChannelServerState.State.CLOSED, serverState.getState());
-
         if (!serverState.getBestValueToMe().equals(Utils.CENT.multiply(BigInteger.valueOf(3))) || !serverState.getFeePaid().equals(BigInteger.ZERO))
             fail();
-
         assertTrue(channels.mapChannels.isEmpty());
 
+        // Send the close TX to the client wallet.
+        sendMoneyToWallet(closeTx, AbstractBlockChain.NewBlockType.BEST_CHAIN);
+        assertEquals(PaymentChannelClientState.State.CLOSED, client.state().getState());
+
         server.close();
         server.close();
+
+        // Now confirm the close TX and see if the channel deletes itself from the wallet.
+        assertEquals(1, StoredPaymentChannelClientStates.getFromWallet(wallet).mapChannels.size());
+        wallet.notifyNewBestBlock(createFakeBlock(blockStore).storedBlock);
+        assertEquals(1, StoredPaymentChannelClientStates.getFromWallet(wallet).mapChannels.size());
+        wallet.notifyNewBestBlock(createFakeBlock(blockStore).storedBlock);
+        assertEquals(1, StoredPaymentChannelClientStates.getFromWallet(wallet).mapChannels.size());
+        wallet.notifyNewBestBlock(createFakeBlock(blockStore).storedBlock);
+        assertEquals(0, StoredPaymentChannelClientStates.getFromWallet(wallet).mapChannels.size());
     }
 
     @Test
@@ -601,5 +613,88 @@ public class ChannelConnectionTest extends TestWithWallet {
         client.connectionOpen();
         Protos.TwoWayChannelMessage msg = pair.clientRecorder.checkNextMsg(MessageType.CLIENT_VERSION);
         assertFalse(msg.getClientVersion().hasPreviousChannelContractHash());
+    }
+
+    @Test
+    public void repeatedChannels() throws Exception {
+        // Ensures we're selecting channels correctly. Covers a bug in which we'd always try and fail to resume
+        // the first channel due to lack of proper closing behaviour.
+        // Open up a normal channel, but don't spend all of it, then close it.
+        {
+            Sha256Hash someServerId = Sha256Hash.ZERO_HASH;
+            ChannelTestUtils.RecordingPair pair = ChannelTestUtils.makeRecorders(serverWallet, mockBroadcaster);
+            pair.server.connectionOpen();
+            PaymentChannelClient client = new PaymentChannelClient(wallet, myKey, Utils.COIN, someServerId, pair.clientRecorder);
+            PaymentChannelServer server = pair.server;
+            client.connectionOpen();
+            server.receiveMessage(pair.clientRecorder.checkNextMsg(MessageType.CLIENT_VERSION));
+            client.receiveMessage(pair.serverRecorder.checkNextMsg(MessageType.SERVER_VERSION));
+            client.receiveMessage(pair.serverRecorder.checkNextMsg(MessageType.INITIATE));
+            server.receiveMessage(pair.clientRecorder.checkNextMsg(MessageType.PROVIDE_REFUND));
+            client.receiveMessage(pair.serverRecorder.checkNextMsg(MessageType.RETURN_REFUND));
+            broadcastTxPause.release();
+            server.receiveMessage(pair.clientRecorder.checkNextMsg(MessageType.PROVIDE_CONTRACT));
+            broadcasts.take();
+            client.receiveMessage(pair.serverRecorder.checkNextMsg(MessageType.CHANNEL_OPEN));
+            Sha256Hash contractHash = (Sha256Hash) pair.serverRecorder.q.take();
+            pair.clientRecorder.checkOpened();
+            assertNull(pair.serverRecorder.q.poll());
+            assertNull(pair.clientRecorder.q.poll());
+            client.incrementPayment(Utils.CENT);
+            client.incrementPayment(Utils.CENT);
+            client.incrementPayment(Utils.CENT);
+            server.receiveMessage(pair.clientRecorder.checkNextMsg(MessageType.UPDATE_PAYMENT));
+            server.receiveMessage(pair.clientRecorder.checkNextMsg(MessageType.UPDATE_PAYMENT));
+            server.receiveMessage(pair.clientRecorder.checkNextMsg(MessageType.UPDATE_PAYMENT));
+            // Close it and verify it's considered to be closed.
+            broadcastTxPause.release();
+            client.close();
+            server.receiveMessage(pair.clientRecorder.checkNextMsg(MessageType.CLOSE));
+            Transaction close = broadcasts.take();
+            sendMoneyToWallet(close, AbstractBlockChain.NewBlockType.BEST_CHAIN);
+            client.connectionClosed();
+            server.connectionClosed();
+        }
+        // Now open a second channel and don't spend all of it/don't close it.
+        {
+            Sha256Hash someServerId = Sha256Hash.ZERO_HASH;
+            ChannelTestUtils.RecordingPair pair = ChannelTestUtils.makeRecorders(serverWallet, mockBroadcaster);
+            pair.server.connectionOpen();
+            PaymentChannelClient client = new PaymentChannelClient(wallet, myKey, Utils.COIN, someServerId, pair.clientRecorder);
+            PaymentChannelServer server = pair.server;
+            client.connectionOpen();
+            final Protos.TwoWayChannelMessage msg = pair.clientRecorder.checkNextMsg(MessageType.CLIENT_VERSION);
+            assertFalse(msg.getClientVersion().hasPreviousChannelContractHash());
+            server.receiveMessage(msg);
+            client.receiveMessage(pair.serverRecorder.checkNextMsg(MessageType.SERVER_VERSION));
+            client.receiveMessage(pair.serverRecorder.checkNextMsg(MessageType.INITIATE));
+            server.receiveMessage(pair.clientRecorder.checkNextMsg(MessageType.PROVIDE_REFUND));
+            client.receiveMessage(pair.serverRecorder.checkNextMsg(MessageType.RETURN_REFUND));
+            broadcastTxPause.release();
+            server.receiveMessage(pair.clientRecorder.checkNextMsg(MessageType.PROVIDE_CONTRACT));
+            broadcasts.take();
+            client.receiveMessage(pair.serverRecorder.checkNextMsg(MessageType.CHANNEL_OPEN));
+            Sha256Hash contractHash = (Sha256Hash) pair.serverRecorder.q.take();
+            pair.clientRecorder.checkOpened();
+            assertNull(pair.serverRecorder.q.poll());
+            assertNull(pair.clientRecorder.q.poll());
+            client.incrementPayment(Utils.CENT);
+            server.receiveMessage(pair.clientRecorder.checkNextMsg(MessageType.UPDATE_PAYMENT));
+            client.connectionClosed();
+            server.connectionClosed();
+        }
+        // Now connect again and check we resume the second channel.
+        {
+            Sha256Hash someServerId = Sha256Hash.ZERO_HASH;
+            ChannelTestUtils.RecordingPair pair = ChannelTestUtils.makeRecorders(serverWallet, mockBroadcaster);
+            pair.server.connectionOpen();
+            PaymentChannelClient client = new PaymentChannelClient(wallet, myKey, Utils.COIN, someServerId, pair.clientRecorder);
+            PaymentChannelServer server = pair.server;
+            client.connectionOpen();
+            server.receiveMessage(pair.clientRecorder.checkNextMsg(MessageType.CLIENT_VERSION));
+            client.receiveMessage(pair.serverRecorder.checkNextMsg(MessageType.SERVER_VERSION));
+            client.receiveMessage(pair.serverRecorder.checkNextMsg(MessageType.CHANNEL_OPEN));
+        }
+        assertEquals(2, StoredPaymentChannelClientStates.getFromWallet(wallet).mapChannels.size());
     }
 }

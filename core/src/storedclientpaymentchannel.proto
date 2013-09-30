@@ -42,4 +42,8 @@ message StoredClientPaymentChannel {
 	required bytes myKey = 4;
 	required uint64 valueToMe = 5;
 	required uint64 refundFees = 6;
+    // When set, the hash of the transaction that was presented by the server for closure of the channel.
+    // It spends the contractTransaction and is expected to be broadcast to the network by the server.
+    // It's supposed to be in the wallet already.
+    optional bytes closeTransactionHash = 7;
 }

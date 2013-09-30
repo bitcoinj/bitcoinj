@@ -22,6 +22,8 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.HashMultimap;
 import com.google.protobuf.ByteString;
 import net.jcip.annotations.GuardedBy;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 import java.math.BigInteger;
@@ -39,6 +41,7 @@ import static com.google.common.base.Preconditions.checkState;
  * and broadcasting the refund transaction over the given {@link TransactionBroadcaster}.
  */
 public class StoredPaymentChannelClientStates implements WalletExtension {
+    private static final Logger log = LoggerFactory.getLogger(StoredPaymentChannelClientStates.class);
     static final String EXTENSION_ID = StoredPaymentChannelClientStates.class.getName();
 
     @GuardedBy("lock") @VisibleForTesting final HashMultimap<Sha256Hash, StoredClientChannel> mapChannels = HashMultimap.create();
@@ -59,6 +62,30 @@ public class StoredPaymentChannelClientStates implements WalletExtension {
         this.containingWallet = checkNotNull(containingWallet);
     }
 
+    /** Returns this extension from the given wallet, or null if no such extension was added. */
+    @Nullable
+    public static StoredPaymentChannelClientStates getFromWallet(Wallet wallet) {
+        return (StoredPaymentChannelClientStates) wallet.getExtensions().get(EXTENSION_ID);
+    }
+
+    /** Returns the outstanding amount of money sent back to us for all channels to this server added together. */
+    public BigInteger getBalanceForServer(Sha256Hash id) {
+        BigInteger balance = BigInteger.ZERO;
+        lock.lock();
+        try {
+            Set<StoredClientChannel> setChannels = mapChannels.get(id);
+            for (StoredClientChannel channel : setChannels) {
+                synchronized (channel) {
+                    if (channel.close != null) continue;
+                    balance = balance.add(channel.valueToMe);
+                }
+            }
+            return balance;
+        } finally {
+            lock.unlock();
+        }
+    }
+
     /**
      * Finds an inactive channel with the given id and returns it, or returns null.
      */
@@ -70,12 +97,17 @@ public class StoredPaymentChannelClientStates implements WalletExtension {
             for (StoredClientChannel channel : setChannels) {
                 synchronized (channel) {
                     // Check if the channel is usable (has money, inactive) and if so, activate it.
-                    if (channel.valueToMe.equals(BigInteger.ZERO))
+                    log.info("Considering channel {} contract {}", channel.hashCode(), channel.contract.getHash());
+                    if (channel.close != null || channel.valueToMe.equals(BigInteger.ZERO)) {
+                        log.info("  ... but is closed or empty");
                         continue;
+                    }
                     if (!channel.active) {
+                        log.info("  ... activating");
                         channel.active = true;
                         return channel;
                     }
+                    log.info("  ... but is already active");
                 }
             }
         } finally {
@@ -169,13 +201,16 @@ public class StoredPaymentChannelClientStates implements WalletExtension {
                 checkState(channel.refundFees.compareTo(BigInteger.ZERO) >= 0 && channel.refundFees.compareTo(NetworkParameters.MAX_MONEY) < 0);
                 checkNotNull(channel.myKey.getPrivKeyBytes());
                 checkState(channel.refund.getConfidence().getSource() == TransactionConfidence.Source.SELF);
-                builder.addChannels(ClientState.StoredClientPaymentChannel.newBuilder()
+                final ClientState.StoredClientPaymentChannel.Builder value = ClientState.StoredClientPaymentChannel.newBuilder()
                         .setId(ByteString.copyFrom(channel.id.getBytes()))
                         .setContractTransaction(ByteString.copyFrom(channel.contract.bitcoinSerialize()))
                         .setRefundTransaction(ByteString.copyFrom(channel.refund.bitcoinSerialize()))
                         .setMyKey(ByteString.copyFrom(channel.myKey.getPrivKeyBytes()))
                         .setValueToMe(channel.valueToMe.longValue())
-                        .setRefundFees(channel.refundFees.longValue()));
+                        .setRefundFees(channel.refundFees.longValue());
+                if (channel.close != null)
+                    value.setCloseTransactionHash(ByteString.copyFrom(channel.close.getHash().getBytes()));
+                builder.addChannels(value);
             }
             return builder.build().toByteArray();
         } finally {
@@ -200,6 +235,8 @@ public class StoredPaymentChannelClientStates implements WalletExtension {
                         new ECKey(new BigInteger(1, storedState.getMyKey().toByteArray()), null, true),
                         BigInteger.valueOf(storedState.getValueToMe()),
                         BigInteger.valueOf(storedState.getRefundFees()), false);
+                if (storedState.hasCloseTransactionHash())
+                    channel.close = containingWallet.getTransaction(new Sha256Hash(storedState.toByteArray()));
                 putChannel(channel, false);
             }
         } finally {
@@ -229,6 +266,8 @@ public class StoredPaymentChannelClientStates implements WalletExtension {
 class StoredClientChannel {
     Sha256Hash id;
     Transaction contract, refund;
+    // The transaction that closed the channel (generated by the server)
+    Transaction close;
     ECKey myKey;
     BigInteger valueToMe, refundFees;
 
@@ -249,14 +288,17 @@ class StoredClientChannel {
     @Override
     public String toString() {
         final String newline = String.format("%n");
+        final String closeStr = close == null ? "still open" : close.toString().replaceAll(newline, newline + "   ");
         return String.format("Stored client channel for server ID %s (%s)%n" +
-                             "    Key:         %s%n" +
-                             "    Value left:  %d%n" +
-                             "    Refund fees: %d%n" +
-                             "    Contract:  %s" +
-                             "Refund:    %s",
+                "    Key:         %s%n" +
+                "    Value left:  %d%n" +
+                "    Refund fees: %d%n" +
+                "    Contract:  %s" +
+                "Refund:    %s" +
+                "Close:     %s",
                 id, active ? "active" : "inactive", myKey, valueToMe, refundFees,
                 contract.toString().replaceAll(newline, newline + "    "),
-                refund.toString().replaceAll(newline, newline + "    "));
+                refund.toString().replaceAll(newline, newline + "    "),
+                closeStr);
     }
 }

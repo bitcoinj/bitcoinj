@@ -20,6 +20,7 @@ import com.google.bitcoin.core.*;
 import com.google.bitcoin.crypto.TransactionSignature;
 import com.google.bitcoin.script.Script;
 import com.google.bitcoin.script.ScriptBuilder;
+import com.google.bitcoin.utils.Threading;
 import com.google.bitcoin.wallet.AllowUnconfirmedCoinSelector;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
@@ -64,6 +65,7 @@ import static com.google.common.base.Preconditions.*;
  */
 public class PaymentChannelClientState {
     private static final Logger log = LoggerFactory.getLogger(PaymentChannelClientState.class);
+    private static final int CONFIRMATIONS_FOR_DELETE = 3;
 
     private final Wallet wallet;
     // Both sides need a key (private in our case, public for the server) in order to manage the multisig contract
@@ -97,7 +99,8 @@ public class PaymentChannelClientState {
         SAVE_STATE_IN_WALLET,
         PROVIDE_MULTISIG_CONTRACT_TO_SERVER,
         READY,
-        EXPIRED
+        EXPIRED,
+        CLOSED
     }
     private State state;
 
@@ -118,6 +121,16 @@ public class PaymentChannelClientState {
         this.valueToMe = checkNotNull(storedClientChannel.valueToMe);
         this.storedChannel = storedClientChannel;
         this.state = State.READY;
+        initWalletListeners();
+    }
+
+    private boolean isCloseTransaction(Transaction tx) {
+        try {
+            tx.getInput(0).verify(multisigContract.getOutput(0));
+            return true;
+        } catch (VerificationException e) {
+            return false;
+        }
     }
 
     /**
@@ -139,6 +152,7 @@ public class PaymentChannelClientState {
                                      BigInteger value, long expiryTimeInSeconds) throws VerificationException {
         checkArgument(value.compareTo(BigInteger.ZERO) > 0);
         this.wallet = checkNotNull(wallet);
+        initWalletListeners();
         this.serverMultisigKey = checkNotNull(serverMultisigKey);
         if (!myKey.isPubKeyCanonical() || !serverMultisigKey.isPubKeyCanonical())
             throw new VerificationException("Pubkey was not canonical (ie non-standard)");
@@ -146,6 +160,51 @@ public class PaymentChannelClientState {
         this.valueToMe = this.totalValue = checkNotNull(value);
         this.expiryTime = expiryTimeInSeconds;
         this.state = State.NEW;
+    }
+
+    private synchronized void initWalletListeners() {
+        // Register a listener that watches out for the server closing the channel.
+        if (storedChannel != null && storedChannel.close != null) {
+            watchCloseConfirmations();
+        }
+        wallet.addEventListener(new AbstractWalletEventListener() {
+            @Override
+            public void onCoinsReceived(Wallet wallet, Transaction tx, BigInteger prevBalance, BigInteger newBalance) {
+                synchronized (PaymentChannelClientState.this) {
+                    if (multisigContract == null) return;
+                    if (isCloseTransaction(tx)) {
+                        log.info("Close: transaction {} closed contract {}", tx.getHash(), multisigContract.getHash());
+                        // Record the fact that it was closed along with the transaction that closed it.
+                        state = State.CLOSED;
+                        if (storedChannel == null) return;
+                        storedChannel.close = tx;
+                        updateChannelInWallet();
+                        watchCloseConfirmations();
+                    }
+                }
+            }
+        }, Threading.SAME_THREAD);
+    }
+
+    private void watchCloseConfirmations() {
+        // When we see the close transaction get a few confirmations, we can just delete the record
+        // of this channel along with the refund tx from the wallet, because we're not going to need
+        // any of that any more.
+        storedChannel.close.getConfidence().getDepthFuture(CONFIRMATIONS_FOR_DELETE).addListener(new Runnable() {
+            @Override
+            public void run() {
+                deleteChannelFromWallet();
+            }
+        }, Threading.SAME_THREAD);
+    }
+
+    private synchronized void deleteChannelFromWallet() {
+        log.info("Close tx has confirmed, deleting channel from wallet: {}", storedChannel);
+        StoredPaymentChannelClientStates channels = (StoredPaymentChannelClientStates)
+                wallet.getExtensions().get(StoredPaymentChannelClientStates.EXTENSION_ID);
+        channels.removeChannel(storedChannel);
+        wallet.addOrUpdateExtension(channels);
+        storedChannel = null;
     }
 
     /**
@@ -359,7 +418,6 @@ public class PaymentChannelClientState {
         synchronized (storedChannel) {
             storedChannel.active = false;
         }
-        storedChannel = null;
     }
 
     /**
