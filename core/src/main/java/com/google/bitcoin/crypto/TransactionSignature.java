@@ -55,7 +55,7 @@ public class TransactionSignature extends ECKey.ECDSASignature {
      * real signature later.
      */
     public static TransactionSignature dummy() {
-        BigInteger val = BigInteger.ONE.shiftLeft(32 * 8);   // 32 byte signatures.
+        BigInteger val = BigInteger.ONE.shiftLeft(32 * 8);   // 32 byte components.
         return new TransactionSignature(val, val);
     }
 
