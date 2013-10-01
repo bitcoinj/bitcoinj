@@ -113,6 +113,11 @@ public class ScriptBuilder {
         return createMultiSigInputScriptBytes(sigs);
     }
 
+    /** Create a program that satisfies an OP_CHECKMULTISIG program. */
+    public static Script createMultiSigInputScript(TransactionSignature... signatures) {
+        return createMultiSigInputScript(Arrays.asList(signatures));
+    }
+
     /** Create a program that satisfies an OP_CHECKMULTISIG program, using pre-encoded signatures. */
     public static Script createMultiSigInputScriptBytes(List<byte[]> signatures) {
         checkArgument(signatures.size() <= 16);
