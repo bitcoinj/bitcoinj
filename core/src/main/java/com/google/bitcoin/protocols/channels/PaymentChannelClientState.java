@@ -23,7 +23,6 @@ import com.google.bitcoin.script.ScriptBuilder;
 import com.google.bitcoin.utils.Threading;
 import com.google.bitcoin.wallet.AllowUnconfirmedCoinSelector;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -326,7 +325,7 @@ public class PaymentChannelClientState {
         TransactionSignature ourSignature =
                 refundTx.calculateSignature(0, myKey, multisigScript, Transaction.SigHash.ALL, false);
         // Insert the signatures.
-        Script scriptSig = ScriptBuilder.createMultiSigInputScript(ImmutableList.of(ourSignature, theirSig));
+        Script scriptSig = ScriptBuilder.createMultiSigInputScript(ourSignature, theirSig);
         log.info("Refund scriptSig: {}", scriptSig);
         log.info("Multi-sig contract scriptPubKey: {}", multisigScript);
         TransactionInput refundInput = refundTx.getInput(0);

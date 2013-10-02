@@ -32,7 +32,6 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.Nullable;
 import java.math.BigInteger;
 import java.util.Arrays;
-import java.util.Collections;
 
 import static com.google.common.base.Preconditions.*;
 
@@ -394,9 +393,13 @@ public class PaymentChannelServerState {
         try {
             Wallet.SendRequest req = makeUnsignedChannelContract(bestValueToMe);
             tx = req.tx;
-            // Provide a BS signature so that completeTx wont freak out about unsigned inputs.
+            // Provide a throwaway signature so that completeTx won't complain out about unsigned inputs it doesn't
+            // know how to sign. Note that this signature does actually have to be valid, so we can't use a dummy
+            // signature to save time, because otherwise completeTx will try to re-sign it to make it valid and then
+            // die. We could probably add features to the SendRequest API to make this a bit more efficient.
             signMultisigInput(tx, Transaction.SigHash.NONE, true);
-            if (!wallet.completeTx(req)) // Let wallet handle adding additional inputs/fee as necessary.
+            // Let wallet handle adding additional inputs/fee as necessary.
+            if (!wallet.completeTx(req))
                 throw new ValueOutOfRangeException("Unable to complete transaction - unable to pay required fee");
             feePaidForPayment = req.fee;
             log.info("Calculated fee is {}", feePaidForPayment);
