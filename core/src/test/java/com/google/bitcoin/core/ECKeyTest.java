@@ -173,7 +173,7 @@ public class ECKeyTest {
     @Test
     public void signTextMessage() throws Exception {
         ECKey key = new ECKey();
-        String message = "Hello World!";
+        String message = "聡中本";
         String signatureBase64 = key.signMessage(message);
         log.info("Message signed with " + key.toAddress(MainNetParams.get()) + ": " + signatureBase64);
         // Should verify correctly.
@@ -454,29 +454,15 @@ public class ECKeyTest {
         }
     }
 
-    private boolean checkSomeBytesAreNonZero(byte[] bytes) {
-        if (bytes == null) {
-            return false;
-        } else {
-            for (int i  = 0; i < bytes.length; i++) {
-                if (bytes[i] != 0) {
-                    return true;
-                }
-            }
-            return false;
-        }
+    private static boolean checkSomeBytesAreNonZero(byte[] bytes) {
+        if (bytes == null) return false;
+        for (byte b : bytes) if (b != 0) return true;
+        return false;
     }
 
-    private boolean checkAllBytesAreZero(byte[] bytes) {
-        if (bytes == null) {
-            return true;
-        } else {
-            for (int i  = 0; i < bytes.length; i++) {
-                if (bytes[i] != 0) {
-                    return false;
-                }
-            }
-            return true;
-        }
+    private static boolean checkAllBytesAreZero(byte[] bytes) {
+        if (bytes == null) return true;
+        for (byte b : bytes) if (b != 0) return false;
+        return true;
     }
 }
