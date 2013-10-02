@@ -16,15 +16,16 @@
 
 package com.google.bitcoin.core;
 
+import com.google.common.base.Charsets;
 import com.google.common.primitives.UnsignedLongs;
 import org.spongycastle.crypto.digests.RIPEMD160Digest;
 import org.spongycastle.util.encoders.Hex;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.nio.charset.Charset;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
@@ -48,6 +49,7 @@ public class Utils {
 
     /** The string that prefixes all text messages signed using Bitcoin keys. */
     public static final String BITCOIN_SIGNED_MESSAGE_HEADER = "Bitcoin Signed Message:\n";
+    public static final byte[] BITCOIN_SIGNED_MESSAGE_HEADER_BYTES = BITCOIN_SIGNED_MESSAGE_HEADER.getBytes(Charsets.UTF_8);
 
     // TODO: Replace this nanocoins business with something better.
 
@@ -510,20 +512,18 @@ public class Utils {
      * <tt><p>[24] "Bitcoin Signed Message:\n" [message.length as a varint] message</p></tt>
      */
     public static byte[] formatMessageForSigning(String message) {
-        VarInt size = new VarInt(message.length());
-        int totalSize = 1 + BITCOIN_SIGNED_MESSAGE_HEADER.length() + size.getSizeInBytes() + message.length();
-        byte[] result = new byte[totalSize];
-        int cursor = 0;
-        result[cursor++] = (byte) BITCOIN_SIGNED_MESSAGE_HEADER.length();
-        byte[] bytes = BITCOIN_SIGNED_MESSAGE_HEADER.getBytes(Charset.forName("UTF-8"));
-        System.arraycopy(bytes, 0, result, cursor, bytes.length);
-        cursor += bytes.length;
-        bytes = size.encode();
-        System.arraycopy(bytes, 0, result, cursor, bytes.length);
-        cursor += bytes.length;
-        bytes = message.getBytes(Charset.forName("UTF-8"));
-        System.arraycopy(bytes, 0, result, cursor, bytes.length);
-        return result;
+        try {
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            bos.write(BITCOIN_SIGNED_MESSAGE_HEADER_BYTES.length);
+            bos.write(BITCOIN_SIGNED_MESSAGE_HEADER_BYTES);
+            byte[] messageBytes = message.getBytes(Charsets.UTF_8);
+            VarInt size = new VarInt(messageBytes.length);
+            bos.write(size.encode());
+            bos.write(messageBytes);
+            return bos.toByteArray();
+        } catch (IOException e) {
+            throw new RuntimeException(e);  // Cannot happen.
+        }
     }
     
     // 00000001, 00000010, 00000100, 00001000, ...
