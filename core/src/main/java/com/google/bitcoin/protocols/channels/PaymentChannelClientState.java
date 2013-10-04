@@ -123,8 +123,12 @@ public class PaymentChannelClientState {
         initWalletListeners();
     }
 
-    private boolean isCloseTransaction(Transaction tx) {
+    /**
+     * Returns true if the tx is a valid close transaction.
+     */
+    public boolean isCloseTransaction(Transaction tx) {
         try {
+            tx.verify();
             tx.getInput(0).verify(multisigContract.getOutput(0));
             return true;
         } catch (VerificationException e) {

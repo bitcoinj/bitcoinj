@@ -344,7 +344,7 @@ public class PaymentChannelServerState {
         tx.getInput(0).setScriptSig(scriptSig);
     }
 
-    final SettableFuture<PaymentChannelServerState> closedFuture = SettableFuture.create();
+    final SettableFuture<Transaction> closedFuture = SettableFuture.create();
     /**
      * <p>Closes this channel and broadcasts the highest value payment transaction on the network.</p>
      *
@@ -355,11 +355,12 @@ public class PaymentChannelServerState {
      * simply set the state to {@link State#CLOSED} and let the client handle getting its refund transaction confirmed.
      * </p>
      *
-     * @return a future which completes when the provided multisig contract successfully broadcasts, or throws if the broadcast fails for some reason
-     *          Note that if the network simply rejects the transaction, this future will never complete, a timeout should be used.
-     * @throws ValueOutOfRangeException If the payment transaction would have cost more in fees to spend than it was worth
+     * @return a future which completes when the provided multisig contract successfully broadcasts, or throws if the
+     *         broadcast fails for some reason. Note that if the network simply rejects the transaction, this future
+     *         will never complete, a timeout should be used.
+     * @throws ValueOutOfRangeException If the payment tx would have cost more in fees to spend than it is worth.
      */
-    public synchronized ListenableFuture<PaymentChannelServerState> close() throws ValueOutOfRangeException {
+    public synchronized ListenableFuture<Transaction> close() throws ValueOutOfRangeException {
         if (storedServerChannel != null) {
             StoredServerChannel temp = storedServerChannel;
             storedServerChannel = null;
@@ -371,11 +372,13 @@ public class PaymentChannelServerState {
         }
 
         if (state.ordinal() < State.READY.ordinal()) {
+            log.error("Attempt to close channel in state " + state);
             state = State.CLOSED;
-            closedFuture.set(this);
+            closedFuture.set(null);
             return closedFuture;
         }
         if (state != State.READY) {
+            // TODO: What is this codepath for?
         	log.warn("Failed attempt to close a channel in state " + state);
             return closedFuture;
 		}
@@ -386,7 +389,7 @@ public class PaymentChannelServerState {
             // the submission of an initial zero-valued payment during the open phase.
 			log.warn("Closing channel that never received any payments.");
             state = State.CLOSED;
-            closedFuture.set(this);
+            closedFuture.set(null);
             return closedFuture;
         }
         Transaction tx = null;
@@ -426,7 +429,7 @@ public class PaymentChannelServerState {
             @Override public void onSuccess(Transaction transaction) {
                 log.info("TX {} propagated, channel successfully closed.", transaction.getHash());
                 state = State.CLOSED;
-                closedFuture.set(PaymentChannelServerState.this);
+                closedFuture.set(transaction);
             }
 
             @Override public void onFailure(Throwable throwable) {

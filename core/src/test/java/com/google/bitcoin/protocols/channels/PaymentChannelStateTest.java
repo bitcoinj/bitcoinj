@@ -20,7 +20,6 @@ import com.google.bitcoin.core.*;
 import com.google.bitcoin.script.Script;
 import com.google.bitcoin.script.ScriptBuilder;
 import com.google.bitcoin.utils.TestWithWallet;
-import com.google.bitcoin.wallet.DefaultCoinSelector;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
@@ -189,29 +188,19 @@ public class PaymentChannelStateTest extends TestWithWallet {
         final TxFuturePair pair2 = broadcasts.take();
         Transaction closeTx = pair2.tx;
         pair2.future.set(closeTx);
+        final Transaction reserializedCloseTx = new Transaction(params, closeTx.bitcoinSerialize());
         assertEquals(PaymentChannelServerState.State.CLOSED, serverState.getState());
+        // ... and on the client side.
+        wallet.receivePending(reserializedCloseTx, null);
+        assertEquals(PaymentChannelClientState.State.CLOSED, clientState.getState());
 
         // Create a block with the payment transaction in it and give it to both wallets
-        chain.add(makeSolvedTestBlock(blockStore.getChainHead().getHeader(), new Transaction(params, closeTx.bitcoinSerialize())));
+        chain.add(makeSolvedTestBlock(blockStore.getChainHead().getHeader(), reserializedCloseTx));
 
-        assertEquals(size.multiply(BigInteger.valueOf(5)), serverWallet.getBalance(new DefaultCoinSelector() {
-            @Override
-            protected boolean shouldSelect(Transaction tx) {
-                if (tx.getConfidence().getConfidenceType() == TransactionConfidence.ConfidenceType.BUILDING)
-                    return true;
-                return false;
-            }
-        }));
+        assertEquals(size.multiply(BigInteger.valueOf(5)), serverWallet.getBalance());
         assertEquals(0, serverWallet.getPendingTransactions().size());
 
-        assertEquals(Utils.COIN.subtract(size.multiply(BigInteger.valueOf(5))), wallet.getBalance(new DefaultCoinSelector() {
-            @Override
-            protected boolean shouldSelect(Transaction tx) {
-                if (tx.getConfidence().getConfidenceType() == TransactionConfidence.ConfidenceType.BUILDING)
-                    return true;
-                return false;
-            }
-        }));
+        assertEquals(Utils.COIN.subtract(size.multiply(BigInteger.valueOf(5))), wallet.getBalance());
         assertEquals(0, wallet.getPendingTransactions().size());
         assertEquals(3, wallet.getTransactions(false).size());
 

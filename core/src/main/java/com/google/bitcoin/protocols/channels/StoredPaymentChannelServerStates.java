@@ -83,7 +83,6 @@ public class StoredPaymentChannelServerStates implements WalletExtension {
         synchronized (channel) {
             channel.closeConnectedHandler();
             try {
-                //TODO add event listener to PaymentChannelServerStateManager
                 channel.getOrCreateState(wallet, broadcaster).close();
             } catch (ValueOutOfRangeException e) {
                 e.printStackTrace();

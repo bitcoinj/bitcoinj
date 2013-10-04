@@ -3,6 +3,8 @@ package com.google.bitcoin.protocols.channels;
 import com.google.bitcoin.core.*;
 import com.google.bitcoin.protocols.channels.PaymentChannelCloseException.CloseReason;
 import com.google.bitcoin.utils.Threading;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
 import com.google.protobuf.ByteString;
 import net.jcip.annotations.GuardedBy;
 import org.bitcoin.paymentchannel.Protos;
@@ -304,9 +306,31 @@ public class PaymentChannelServer {
                     case CLOSE:
                         log.info("Got CLOSE message, closing channel");
                         connectionClosing = true;
-                        if (state != null)
-                            state.close();
-                        conn.destroyConnection(CloseReason.CLIENT_REQUESTED_CLOSE);
+                        if (state != null) {
+                            Futures.addCallback(state.close(), new FutureCallback<Transaction>() {
+                                @Override
+                                public void onSuccess(Transaction result) {
+                                    // Send the successfully accepted transaction back to the client.
+                                    final Protos.TwoWayChannelMessage.Builder msg = Protos.TwoWayChannelMessage.newBuilder();
+                                    msg.setType(Protos.TwoWayChannelMessage.MessageType.CLOSE);
+                                    if (result != null) {
+                                        // Result can be null on various error paths, like if we never actually opened
+                                        // properly and so on.
+                                        msg.getCloseBuilder().setTx(ByteString.copyFrom(result.bitcoinSerialize()));
+                                    }
+                                    conn.sendToClient(msg.build());
+                                    conn.destroyConnection(CloseReason.CLIENT_REQUESTED_CLOSE);
+                                }
+
+                                @Override
+                                public void onFailure(Throwable t) {
+                                    log.error("Failed to broadcast close TX", t);
+                                    conn.destroyConnection(CloseReason.CLIENT_REQUESTED_CLOSE);
+                                }
+                            });
+                        } else {
+                            conn.destroyConnection(CloseReason.CLIENT_REQUESTED_CLOSE);
+                        }
                         return;
                     case ERROR:
                         checkState(msg.hasError());
@@ -407,9 +431,9 @@ public class PaymentChannelServer {
         lock.lock();
         try {
             if (connectionOpen && !connectionClosing) {
-                conn.sendToClient(Protos.TwoWayChannelMessage.newBuilder()
-                        .setType(Protos.TwoWayChannelMessage.MessageType.CLOSE)
-                        .build());
+                final Protos.TwoWayChannelMessage.Builder msg = Protos.TwoWayChannelMessage.newBuilder();
+                msg.setType(Protos.TwoWayChannelMessage.MessageType.CLOSE);
+                conn.sendToClient(msg.build());
                 conn.destroyConnection(CloseReason.SERVER_REQUESTED_CLOSE);
             }
         } finally {

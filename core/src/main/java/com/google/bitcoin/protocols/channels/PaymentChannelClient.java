@@ -91,7 +91,9 @@ public class PaymentChannelClient {
         WAITING_FOR_INITIATE,
         WAITING_FOR_REFUND_RETURN,
         WAITING_FOR_CHANNEL_OPEN,
-        CHANNEL_OPEN
+        CHANNEL_OPEN,
+        WAITING_FOR_CHANNEL_CLOSE,
+        CHANNEL_CLOSED,
     }
     @GuardedBy("lock") private InitStep step = InitStep.WAITING_FOR_CONNECTION_OPEN;
 
@@ -253,7 +255,7 @@ public class PaymentChannelClient {
                         receiveChannelOpen();
                         return;
                     case CLOSE:
-                        conn.destroyConnection(CloseReason.SERVER_REQUESTED_CLOSE);
+                        receiveClose(msg);
                         return;
                     case ERROR:
                         checkState(msg.hasError());
@@ -288,6 +290,26 @@ public class PaymentChannelClient {
         } finally {
             lock.unlock();
         }
+    }
+
+    @GuardedBy("lock")
+    private void receiveClose(Protos.TwoWayChannelMessage msg) throws VerificationException {
+        checkState(lock.isHeldByCurrentThread());
+        if (msg.hasClose()) {
+            Transaction closeTx = new Transaction(wallet.getParams(), msg.getClose().getTx().toByteArray());
+            // TODO: set source
+            if (state != null && state().isCloseTransaction(closeTx)) {
+                // The wallet has a listener on it that the state object will use to do the right thing at this
+                // point (like watching it for confirmations). The tx has been checked by now for syntactical validity
+                // and that it correctly spends the multisig contract.
+                wallet.receivePending(closeTx, null);
+            }
+        }
+        if (step == InitStep.WAITING_FOR_CHANNEL_CLOSE)
+            conn.destroyConnection(CloseReason.CLIENT_REQUESTED_CLOSE);
+        else
+            conn.destroyConnection(CloseReason.SERVER_REQUESTED_CLOSE);
+        step = InitStep.CHANNEL_CLOSED;
     }
 
     /**
@@ -327,10 +349,11 @@ public class PaymentChannelClient {
         lock.lock();
         try {
             checkState(connectionOpen);
+            step = InitStep.WAITING_FOR_CHANNEL_CLOSE;
+            log.info("Sending a CLOSE message to the server and waiting for response indicating successful propagation.");
             conn.sendToServer(Protos.TwoWayChannelMessage.newBuilder()
                     .setType(Protos.TwoWayChannelMessage.MessageType.CLOSE)
                     .build());
-            conn.destroyConnection(CloseReason.CLIENT_REQUESTED_CLOSE);
         } finally {
             lock.unlock();
         }

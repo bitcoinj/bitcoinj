@@ -47,15 +47,21 @@ message TwoWayChannelMessage {
         // message.
         CHANNEL_OPEN = 7;
         UPDATE_PAYMENT = 8;
-        // Note that there are no optional fields set for CLOSE, it is sent by either party to
-        // indicate that the channel is now closed and no further updates can happen. After this,
-        // the secondary takes the most recent signature it received in an UPDATE_PAYMENT and
-        // uses it to create a valid transaction, which it then broadcasts on the network.
+        // Either side can send this message. If the client sends it to the server, then the server
+        // takes the most recent signature it received in an UPDATE_PAYMENT and uses it to create a
+        // valid transaction, which it then broadcasts on the network.
+        //
+        // If the server sends it to the client, then it can either be a simple "good bye" message or
+        // it can include the fully signed close transaction and give it back so the client can
+        // eventually broadcast it as well, in case the server fails to do so for some reason (and
+        // more usefully so the client can build on it). In that case the server replies to a CLOSE
+        // with another CLOSE and then disconnects.
         CLOSE = 9;
 
         // Used to indicate an error condition.
         // Both parties should make an effort to send either an ERROR or a CLOSE immediately
-        // before closing the socket (unless they just received an ERROR or a CLOSE)
+        // before closing the socket (unless they just received an ERROR or a CLOSE). This is important
+        // because the protocol may not run over TCP.
         ERROR = 10;
     };
 
@@ -72,6 +78,7 @@ message TwoWayChannelMessage {
     optional ReturnRefund return_refund = 6;
     optional ProvideContract provide_contract = 7;
     optional UpdatePayment update_payment = 8;
+    optional Close close = 9;
 
     optional Error error = 10;
 }
@@ -185,6 +192,11 @@ message UpdatePayment {
     required bytes signature = 2;
 }
 
+message Close {
+    // A copy of the fully signed final contract that closes the channel. The client can verify
+    // the transaction is correct and then commit it to their wallet.
+    required bytes tx = 3;
+}
 
 // An Error can be sent by either party at any time
 // Both parties should make an effort to send either an ERROR or a CLOSE immediately before

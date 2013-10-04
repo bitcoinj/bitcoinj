@@ -644,13 +644,23 @@ public class ChannelConnectionTest extends TestWithWallet {
             client.incrementPayment(Utils.CENT);
             client.incrementPayment(Utils.CENT);
             server.receiveMessage(pair.clientRecorder.checkNextMsg(MessageType.UPDATE_PAYMENT));
+            pair.serverRecorder.q.take();
             server.receiveMessage(pair.clientRecorder.checkNextMsg(MessageType.UPDATE_PAYMENT));
+            pair.serverRecorder.q.take();
             server.receiveMessage(pair.clientRecorder.checkNextMsg(MessageType.UPDATE_PAYMENT));
+            pair.serverRecorder.q.take();
+
             // Close it and verify it's considered to be closed.
             broadcastTxPause.release();
             client.close();
             server.receiveMessage(pair.clientRecorder.checkNextMsg(MessageType.CLOSE));
             Transaction close = broadcasts.take();
+            // Server sends back the close TX it just broadcast.
+            final Protos.TwoWayChannelMessage closeMsg = pair.serverRecorder.checkNextMsg(MessageType.CLOSE);
+            final Transaction closeTx = new Transaction(params, closeMsg.getClose().getTx().toByteArray());
+            assertEquals(close, closeTx);
+            client.receiveMessage(closeMsg);
+            assertNotNull(wallet.getTransaction(closeTx.getHash()));   // Close TX entered the wallet.
             sendMoneyToWallet(close, AbstractBlockChain.NewBlockType.BEST_CHAIN);
             client.connectionClosed();
             server.connectionClosed();
