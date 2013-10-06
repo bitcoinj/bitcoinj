@@ -57,6 +57,11 @@ public abstract class NetworkParameters implements Serializable {
     /** Unit test network. */
     public static final String ID_UNITTESTNET = "com.google.bitcoin.unittest";
 
+    /** The string used by the payment protocol to represent the main net. */
+    public static final String PAYMENT_PROTOCOL_ID_MAINNET = "main";
+    /** The string used by the payment protocol to represent the test net. */
+    public static final String PAYMENT_PROTOCOL_ID_TESTNET = "test";
+
     // TODO: Seed nodes should be here as well.
 
     protected Block genesisBlock;
@@ -173,6 +178,8 @@ public abstract class NetworkParameters implements Serializable {
         return id;
     }
 
+    public abstract String getPaymentProtocolId();
+
     @Override
     public boolean equals(Object other) {
         if (!(other instanceof NetworkParameters)) return false;
@@ -194,6 +201,18 @@ public abstract class NetworkParameters implements Serializable {
             return TestNet3Params.get();
         } else if (id.equals(ID_UNITTESTNET)) {
             return UnitTestParams.get();
+        } else {
+            return null;
+        }
+    }
+
+    /** Returns the network parameters for the given string paymentProtocolID or NULL if not recognized. */
+    @Nullable
+    public static NetworkParameters fromPmtProtocolID(String pmtProtocolId) {
+        if (pmtProtocolId.equals(PAYMENT_PROTOCOL_ID_MAINNET)) {
+            return MainNetParams.get();
+        } else if (pmtProtocolId.equals(PAYMENT_PROTOCOL_ID_TESTNET)) {
+            return TestNet3Params.get();
         } else {
             return null;
         }

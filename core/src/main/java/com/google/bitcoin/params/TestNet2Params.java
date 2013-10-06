@@ -55,4 +55,8 @@ public class TestNet2Params extends NetworkParameters {
         }
         return instance;
     }
+
+    public String getPaymentProtocolId() {
+        return null;
+    }
 }

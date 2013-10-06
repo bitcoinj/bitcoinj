@@ -86,6 +86,7 @@ public class BitcoinURI {
     public static final String FIELD_LABEL = "label";
     public static final String FIELD_AMOUNT = "amount";
     public static final String FIELD_ADDRESS = "address";
+    public static final String FIELD_PAYMENT_REQUEST_URL = "r";
 
     public static final String BITCOIN_SCHEME = "bitcoin";
     private static final String ENCODED_SPACE_CHARACTER = "%20";
@@ -267,6 +268,14 @@ public class BitcoinURI {
      */
     public String getMessage() {
         return (String) parameterMap.get(FIELD_MESSAGE);
+    }
+
+    /**
+     * @return The URL where a payment request (as specified in BIP 70) may
+     *         be fetched.
+     */
+    public String getPaymentRequestUrl() {
+        return (String) parameterMap.get(FIELD_PAYMENT_REQUEST_URL);
     }
     
     /**

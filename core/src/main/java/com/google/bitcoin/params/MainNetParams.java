@@ -72,4 +72,8 @@ public class MainNetParams extends NetworkParameters {
         }
         return instance;
     }
+
+    public String getPaymentProtocolId() {
+        return PAYMENT_PROTOCOL_ID_MAINNET;
+    }
 }

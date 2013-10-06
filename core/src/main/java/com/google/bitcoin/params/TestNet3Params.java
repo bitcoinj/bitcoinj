@@ -62,4 +62,8 @@ public class TestNet3Params extends NetworkParameters {
         }
         return instance;
     }
+
+    public String getPaymentProtocolId() {
+        return PAYMENT_PROTOCOL_ID_TESTNET;
+    }
 }
