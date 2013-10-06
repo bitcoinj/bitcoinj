@@ -17,17 +17,13 @@ package com.google.bitcoin.crypto;
 
 import java.util.Arrays;
 
-import com.google.bitcoin.core.BlockChain;
-import com.google.bitcoin.core.Wallet;
-import com.google.common.base.Preconditions;
-
 /**
  * <p>An EncryptedPrivateKey contains the information produced after encrypting the private key bytes of an ECKey.</p>
  *
  * <p>It contains two member variables - initialisationVector and encryptedPrivateBytes. The initialisationVector is
  * a randomly chosen list of bytes that were used to initialise the AES block cipher when the private key bytes were encrypted.
  * You need these for decryption. The encryptedPrivateBytes are the result of AES encrypting the private keys using
- * an AES key that is drrived from a user entered password. You need the password to recreate the AES key in order
+ * an AES key that is derived from a user entered password. You need the password to recreate the AES key in order
  * to decrypt these bytes.</p>
  */
 public class EncryptedPrivateKey {
@@ -40,7 +36,6 @@ public class EncryptedPrivateKey {
      * @param encryptedPrivateKey EncryptedPrivateKey to clone.
      */
     public EncryptedPrivateKey(EncryptedPrivateKey encryptedPrivateKey) {
-        Preconditions.checkNotNull(encryptedPrivateKey);
         setInitialisationVector(encryptedPrivateKey.getInitialisationVector());
         setEncryptedPrivateBytes(encryptedPrivateKey.getEncryptedBytes());
     }
