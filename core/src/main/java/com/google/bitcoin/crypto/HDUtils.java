@@ -45,23 +45,23 @@ public final class HDUtils {
         ecParams = new ECDomainParameters(params.getCurve(), params.getG(), params.getN(), params.getH());
     }
 
-    static HMac createHmacSha256Digest(byte[] key) {
+    static HMac createHmacSha512Digest(byte[] key) {
         SHA512Digest digest = new SHA512Digest();
         HMac hMac = new HMac(digest);
         hMac.init(new KeyParameter(key));
         return hMac;
     }
 
-    static byte[] hmacSha256(HMac hmacSha256, byte[] input) {
-        hmacSha256.reset();
-        hmacSha256.update(input, 0, input.length);
+    static byte[] hmacSha512(HMac hmacSha512, byte[] input) {
+        hmacSha512.reset();
+        hmacSha512.update(input, 0, input.length);
         byte[] out = new byte[64];
-        hmacSha256.doFinal(out, 0);
+        hmacSha512.doFinal(out, 0);
         return out;
     }
 
-    public static byte[] hmacSha256(byte[] key, byte[] data) {
-        return hmacSha256(createHmacSha256Digest(key), data);
+    public static byte[] hmacSha512(byte[] key, byte[] data) {
+        return hmacSha512(createHmacSha512Digest(key), data);
     }
 
     static BigInteger toBigInteger(byte[] bytes) {

@@ -34,7 +34,7 @@ public final class HDKeyDerivation {
 
     private HDKeyDerivation() { }
 
-    private static final HMac MASTER_HMAC_SHA256 = HDUtils.createHmacSha256Digest("Bitcoin seed".getBytes());
+    private static final HMac MASTER_HMAC_SHA512 = HDUtils.createHmacSha512Digest("Bitcoin seed".getBytes());
 
     /**
      * Generates a new deterministic key from the given seed, which can be any arbitrary byte array. However resist
@@ -45,7 +45,7 @@ public final class HDKeyDerivation {
      */
     public static DeterministicKey createMasterPrivateKey(byte[] seed) throws HDDerivationException {
         // Calculate I = HMAC-SHA512(key="Bitcoin seed", msg=S)
-        byte[] i = HDUtils.hmacSha256(MASTER_HMAC_SHA256, seed);
+        byte[] i = HDUtils.hmacSha512(MASTER_HMAC_SHA512, seed);
         // Split I into two 32-byte sequences, Il and Ir.
         // Use Il as master secret key, and Ir as master chain code.
         checkState(i.length == 64, i.length);
@@ -108,7 +108,7 @@ public final class HDKeyDerivation {
             data.put(parentPublicKey);
         }
         data.putInt(childNumber.getI());
-        byte[] i = HDUtils.hmacSha256(parent.getChainCode(), data.array());
+        byte[] i = HDUtils.hmacSha512(parent.getChainCode(), data.array());
         assert i.length == 64 : i.length;
         byte[] il = Arrays.copyOfRange(i, 0, 32);
         byte[] chainCode = Arrays.copyOfRange(i, 32, 64);

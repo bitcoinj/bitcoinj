@@ -1,6 +1,5 @@
 package com.google.bitcoin.crypto;
 
-import com.google.bitcoin.crypto.HDUtils;
 import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -105,7 +104,7 @@ public class HDUtilsTest {
         };
 
         for (int i = 0; i < tv.length; i += 3) {
-            Assert.assertArrayEquals("Case " + i, getBytes(tv, i + 2), HDUtils.hmacSha256(getBytes(tv, i), getBytes(tv, i + 1)));
+            Assert.assertArrayEquals("Case " + i, getBytes(tv, i + 2), HDUtils.hmacSha512(getBytes(tv, i), getBytes(tv, i + 1)));
         }
     }
 
