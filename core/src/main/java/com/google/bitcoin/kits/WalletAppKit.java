@@ -75,6 +75,7 @@ public class WalletAppKit extends AbstractIdleService {
     private boolean autoStop = true;
     private InputStream checkpoints;
     private boolean blockingStartup = true;
+    private String userAgent, version;
 
     public WalletAppKit(NetworkParameters params, File directory, String filePrefix) {
         this.params = checkNotNull(params);
@@ -127,7 +128,7 @@ public class WalletAppKit extends AbstractIdleService {
      * block sync faster for new users - please refer to the documentation on the bitcoinj website for further details.
      */
     public WalletAppKit setCheckpoints(InputStream checkpoints) {
-        this.checkpoints = checkpoints;
+        this.checkpoints = checkNotNull(checkpoints);
         return this;
     }
 
@@ -139,6 +140,17 @@ public class WalletAppKit extends AbstractIdleService {
      */
     public WalletAppKit setBlockingStartup(boolean blockingStartup) {
         this.blockingStartup = blockingStartup;
+        return this;
+    }
+
+    /**
+     * Sets the string that will appear in the subver field of the version message.
+     * @param userAgent A short string that should be the name of your app, e.g. "My Wallet"
+     * @param version A short string that contains the version number, e.g. "1.0-BETA"
+     */
+    public WalletAppKit setUserAgent(String userAgent, String version) {
+        this.userAgent = checkNotNull(userAgent);
+        this.version = checkNotNull(version);
         return this;
     }
 
@@ -188,6 +200,8 @@ public class WalletAppKit extends AbstractIdleService {
             }
             vChain = new BlockChain(params, vStore);
             vPeerGroup = new PeerGroup(params, vChain);
+            if (this.userAgent != null)
+                vPeerGroup.setUserAgent(userAgent, version);
             if (vWalletFile.exists()) {
                 walletStream = new FileInputStream(vWalletFile);
                 vWallet = new Wallet(params);
