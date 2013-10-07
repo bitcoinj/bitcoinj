@@ -259,9 +259,7 @@ public class TransactionInput extends ChildMessage implements Serializable {
         if (isCoinBase())
             return "TxIn: COINBASE";
         try {
-            return "TxIn from tx " + outpoint + " (pubkey: " + Utils.bytesToHexString(getScriptSig().getPubKey()) +
-                    ") script:" +
-                    getScriptSig().toString();
+            return "TxIn for [" + outpoint + "]: " + getScriptSig();
         } catch (ScriptException e) {
             throw new RuntimeException(e);
         }
