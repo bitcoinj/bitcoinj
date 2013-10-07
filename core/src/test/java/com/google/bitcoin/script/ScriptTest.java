@@ -295,10 +295,12 @@ public class ScriptTest {
         NetworkParameters params = TestNet3Params.get();
         
         // Poor man's (aka. really, really poor) JSON parser (because pulling in a lib for this is probably not overkill)
+        int lineNum = -1;
         List<JSONObject> tx = new ArrayList<JSONObject>(3);
         in.read(); // remove first [
         StringBuffer buffer = new StringBuffer(1000);
         while (in.ready()) {
+            lineNum++;
             String line = in.readLine();
             if (line == null || line.equals("")) continue;
             buffer.append(line);
@@ -308,30 +310,38 @@ public class ScriptTest {
             while (tx.size() > 0 && tx.get(0).isList() && tx.get(0).list.size() == 1 && tx.get(0).list.get(0).isString())
                 tx.remove(0); // ignore last ]
             if (isFinished && tx.size() == 1 && tx.get(0).list.size() == 3) {
-                HashMap<TransactionOutPoint, Script> scriptPubKeys = new HashMap<TransactionOutPoint, Script>();
-                for (JSONObject input : tx.get(0).list.get(0).list) {
-                    String hash = input.list.get(0).string;
-                    int index = input.list.get(1).integer;
-                    String script = input.list.get(2).string;
-                    Sha256Hash sha256Hash = new Sha256Hash(Hex.decode(hash.getBytes(Charset.forName("UTF-8"))));
-                    scriptPubKeys.put(new TransactionOutPoint(params, index, sha256Hash), parseScriptString(script));
-                }
+                Transaction transaction = null;
+                try {
+                    HashMap<TransactionOutPoint, Script> scriptPubKeys = new HashMap<TransactionOutPoint, Script>();
+                    for (JSONObject input : tx.get(0).list.get(0).list) {
+                        String hash = input.list.get(0).string;
+                        int index = input.list.get(1).integer;
+                        String script = input.list.get(2).string;
+                        Sha256Hash sha256Hash = new Sha256Hash(Hex.decode(hash.getBytes(Charset.forName("UTF-8"))));
+                        scriptPubKeys.put(new TransactionOutPoint(params, index, sha256Hash), parseScriptString(script));
+                    }
 
-                byte[] bytes = tx.get(0).list.get(1).string.getBytes(Charset.forName("UTF-8"));
-                Transaction transaction = new Transaction(params, Hex.decode(bytes));
-                boolean enforceP2SH = tx.get(0).list.get(2).booleanValue;
-                assertTrue(tx.get(0).list.get(2).isBoolean());
-                
-                transaction.verify();
-                
-                for (int i = 0; i < transaction.getInputs().size(); i++) {
-                    TransactionInput input = transaction.getInputs().get(i);
-                    if (input.getOutpoint().getIndex() == 0xffffffffL)
-                        input.getOutpoint().setIndex(-1);
-                    assertTrue(scriptPubKeys.containsKey(input.getOutpoint()));
-                    input.getScriptSig().correctlySpends(transaction, i, scriptPubKeys.get(input.getOutpoint()), enforceP2SH);
+                    byte[] bytes = tx.get(0).list.get(1).string.getBytes(Charset.forName("UTF-8"));
+                    transaction = new Transaction(params, Hex.decode(bytes));
+                    boolean enforceP2SH = tx.get(0).list.get(2).booleanValue;
+                    assertTrue(tx.get(0).list.get(2).isBoolean());
+
+                    transaction.verify();
+
+                    for (int i = 0; i < transaction.getInputs().size(); i++) {
+                        TransactionInput input = transaction.getInputs().get(i);
+                        if (input.getOutpoint().getIndex() == 0xffffffffL)
+                            input.getOutpoint().setIndex(-1);
+                        assertTrue(scriptPubKeys.containsKey(input.getOutpoint()));
+                        input.getScriptSig().correctlySpends(transaction, i, scriptPubKeys.get(input.getOutpoint()), enforceP2SH);
+                    }
+                    tx.clear();
+                } catch (Exception e) {
+                    System.err.println("Exception processing line " + lineNum + ": " + line);
+                    if (transaction != null)
+                        System.err.println(transaction);
+                    throw e;
                 }
-                tx.clear();
             }
         }
         in.close();
