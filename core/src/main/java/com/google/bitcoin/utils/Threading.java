@@ -53,7 +53,7 @@ public class Threading {
     public static final Executor SAME_THREAD;
 
     // For safety reasons keep track of the thread we use to run user-provided event listeners to avoid deadlock.
-    private static WeakReference<Thread> userThread;
+    private static volatile WeakReference<Thread> vUserThread;
 
     /**
      * Put a dummy task into the queue and wait for it to be run. Because it's single threaded, this means all
@@ -66,8 +66,10 @@ public class Threading {
         // If this assert fires it means you have a bug in your code - you can't call this method inside your own
         // event handlers because it would never return. If you aren't calling this method explicitly, then that
         // means there's a bug in bitcoinj.
-        checkState(userThread.get() != null && userThread.get() != Thread.currentThread(),
-                "waitForUserCode() run on user code thread would deadlock.");
+        if (vUserThread != null) {
+            checkState(vUserThread.get() != null && vUserThread.get() != Thread.currentThread(),
+                    "waitForUserCode() run on user code thread would deadlock.");
+        }
         Futures.getUnchecked(SINGLE_THREADED_EXECUTOR.submit(Callables.returning(null)));
     }
 
@@ -96,7 +98,7 @@ public class Threading {
                 t.setName("bitcoinj user thread");
                 t.setDaemon(true);
                 t.setUncaughtExceptionHandler(uncaughtExceptionHandler);
-                userThread = new WeakReference<Thread>(t);
+                vUserThread = new WeakReference<Thread>(t);
                 return t;
             }
         });
