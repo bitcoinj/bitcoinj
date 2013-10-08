@@ -1577,10 +1577,6 @@ public class FullBlockTestGenerator {
         post82Mempool.add(new InventoryItem(InventoryItem.Type.Transaction, b79tx.getHash()));
         blocks.add(new MemoryPoolState(post82Mempool, "post-b82 tx resurrection"));
 
-        System.err.println("b78tx: " + b78tx);
-        System.err.println("b79tx: " + b79tx);
-        System.err.flush();
-
         // Check the UTXO query takes mempool into account.
         {
             TransactionOutPoint outpoint = new TransactionOutPoint(params, 0, b79tx.getHash());
@@ -1589,6 +1585,33 @@ public class FullBlockTestGenerator {
             UTXORule utxo3 = new UTXORule("utxo3", outpoint, result);
             blocks.add(utxo3);
         }
+
+        // Test invalid opcodes in dead execution paths.
+        // -> b81 (26) -> b82 (27) -> b83 (28)
+        // b83 creates a tx which contains a transaction script with an invalid opcode in a dead execution path:
+        // OP_FALSE OP_IF OP_INVALIDOPCODE OP_ELSE OP_TRUE OP_ENDIF
+        //
+        TransactionOutPointWithValue out28 = spendableOutputs.poll();  Preconditions.checkState(out28 != null);
+
+        Block b83 = createNextBlock(b82, chainHeadHeight + 29, null, null);
+        {
+            Transaction tx1 = new Transaction(params);
+            tx1.addOutput(new TransactionOutput(params, tx1, out28.value,
+                    new byte[]{OP_IF, (byte) OP_INVALIDOPCODE, OP_ELSE, OP_TRUE, OP_ENDIF}));
+            addOnlyInputToTransaction(tx1, out28, 0);
+            b83.addTransaction(tx1);
+            Transaction tx2 = new Transaction(params);
+            tx2.addOutput(new TransactionOutput(params, tx2, BigInteger.ZERO, new byte[]{OP_TRUE}));
+            tx2.addInput(new TransactionInput(params, tx2, new byte[]{OP_FALSE},
+                    new TransactionOutPoint(params, 0, tx1.getHash())));
+            b83.addTransaction(tx2);
+        }
+        b83.solve();
+        blocks.add(new BlockAndValidity(blockToHeightMap, hashHeaderMap, b83, true, false, b83.getHash(), chainHeadHeight + 29, "b83"));
+        spendableOutputs.offer(new TransactionOutPointWithValue(
+                new TransactionOutPoint(params, 0, b83.getTransactions().get(0).getHash()),
+                b83.getTransactions().get(0).getOutputs().get(0).getValue(),
+                b83.getTransactions().get(0).getOutputs().get(0).getScriptPubKey()));
 
         // The remaining tests arent designed to fit in the standard flow, and thus must always come last
         // Add new tests here.
@@ -1599,15 +1622,15 @@ public class FullBlockTestGenerator {
         // Reorg back to:
         // -> b60 (17) -> b64 (18) -> b65 (19) -> b69 (20) -> b72 (21) -> b1001 (22) -> empty blocks
         //
-        TransactionOutPointWithValue out28 = spendableOutputs.poll();  checkState(out28 != null);
+        TransactionOutPointWithValue out29 = spendableOutputs.poll();  checkState(out29 != null);
 
-        Block b1001 = createNextBlock(b82, chainHeadHeight + 29, out28, null);
-        blocks.add(new BlockAndValidity(blockToHeightMap, hashHeaderMap, b1001, true, false, b1001.getHash(), chainHeadHeight + 29, "b1001"));
+        Block b1001 = createNextBlock(b83, chainHeadHeight + 30, out29, null);
+        blocks.add(new BlockAndValidity(blockToHeightMap, hashHeaderMap, b1001, true, false, b1001.getHash(), chainHeadHeight + 30, "b1001"));
         spendableOutputs.offer(new TransactionOutPointWithValue(
                 new TransactionOutPoint(params, 0, b1001.getTransactions().get(0).getHash()),
                 b1001.getTransactions().get(0).getOutputs().get(0).getValue(),
                 b1001.getTransactions().get(0).getOutputs().get(0).getScriptPubKey()));
-        int nextHeight = chainHeadHeight + 30;
+        int nextHeight = chainHeadHeight + 31;
         
         if (runLargeReorgs) {
             // No way you can fit this test in memory
