@@ -1514,8 +1514,8 @@ public class FullBlockTestGenerator {
                 b76tx.getOutput(0).getScriptPubKey()));
 
         // Test transaction resurrection
-        // -> b77 (24) -> b78 (22) -> b79 (23)
-        //            \-> b80 (22) -> b81 (23) -> b82 (24)
+        // -> b77 (24) -> b78 (25) -> b79 (26)
+        //            \-> b80 (25) -> b81 (26) -> b82 (27)
         // b78 creates a tx, which is spent in b79. after b82, both should be in mempool
         //
         TransactionOutPointWithValue out24 = checkNotNull(spendableOutputs.poll());
