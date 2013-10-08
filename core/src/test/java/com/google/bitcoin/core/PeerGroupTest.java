@@ -28,7 +28,6 @@ import org.junit.Test;
 
 import java.math.BigInteger;
 import java.net.InetSocketAddress;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.Semaphore;
@@ -336,23 +335,24 @@ public class PeerGroupTest extends TestWithPeerGroup {
 
     @Test
     public void testWalletCatchupTime() throws Exception {
-        // Check the fast catchup time was initialized to something around the current runtime. The wallet was
-        // already added to the peer in setup.
-        long time = new Date().getTime() / 1000;
-        assertTrue(peerGroup.getFastCatchupTimeSecs() > time - 10000);
+        // Check the fast catchup time was initialized to something around the current runtime minus a week.
+        // The wallet was already added to the peer in setup.
+        final int WEEK = 86400 * 7;
+        final long now = Utils.now().getTime() / 1000;
+        assertTrue(peerGroup.getFastCatchupTimeSecs() > now - WEEK - 10000);
         Wallet w2 = new Wallet(params);
         ECKey key1 = new ECKey();
-        key1.setCreationTimeSeconds(time - 86400);  // One day ago.
+        key1.setCreationTimeSeconds(now - 86400);  // One day ago.
         w2.addKey(key1);
         peerGroup.addWallet(w2);
         Threading.waitForUserCode();
-        assertEquals(peerGroup.getFastCatchupTimeSecs(), time - 86400);
+        assertEquals(peerGroup.getFastCatchupTimeSecs(), now - 86400 - WEEK);
         // Adding a key to the wallet should update the fast catchup time.
         ECKey key2 = new ECKey();
-        key2.setCreationTimeSeconds(time - 100000);
+        key2.setCreationTimeSeconds(now - 100000);
         w2.addKey(key2);
         Threading.waitForUserCode();
-        assertEquals(peerGroup.getFastCatchupTimeSecs(), time - 100000);
+        assertEquals(peerGroup.getFastCatchupTimeSecs(), now - WEEK - 100000);
     }
 
     @Test

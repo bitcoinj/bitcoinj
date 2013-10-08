@@ -678,10 +678,10 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
             // Fully verifying mode doesn't use this optimization (it can't as it needs to see all transactions).
             if (chain != null && chain.shouldVerifyTransactions())
                 return;
-            long earliestKeyTime = Long.MAX_VALUE;
+            long earliestKeyTimeSecs = Long.MAX_VALUE;
             int elements = 0;
             for (PeerFilterProvider p : peerFilterProviders) {
-                earliestKeyTime = Math.min(earliestKeyTime, p.getEarliestKeyCreationTime());
+                earliestKeyTimeSecs = Math.min(earliestKeyTimeSecs, p.getEarliestKeyCreationTime());
                 elements += p.getBloomFilterElementCount();
             }
 
@@ -704,8 +704,13 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
                         }
                 }
             }
+            // Now adjust the earliest key time backwards by a week to handle the case of clock drift. This can occur
+            // both in block header timestamps and if the users clock was out of sync when the key was first created
+            // (to within a small amount of tolerance).
+            earliestKeyTimeSecs -= 86400 * 7;
+
             // Do this last so that bloomFilter is already set when it gets called.
-            setFastCatchupTimeSecs(earliestKeyTime);
+            setFastCatchupTimeSecs(earliestKeyTimeSecs);
         } finally {
             lock.unlock();
         }
