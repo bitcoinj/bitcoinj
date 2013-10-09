@@ -214,8 +214,8 @@ public class PaymentChannelClient {
                 switch (msg.getType()) {
                     case SERVER_VERSION:
                         checkState(step == InitStep.WAITING_FOR_VERSION_NEGOTIATION && msg.hasServerVersion());
-                        // Server might send back a major version lower than our own if they want to fallback to a lower version
-                        // We can't handle that, so we just close the channel
+                        // Server might send back a major version lower than our own if they want to fallback to a
+                        // lower version. We can't handle that, so we just close the channel.
                         if (msg.getServerVersion().getMajor() != 0) {
                             errorBuilder = Protos.Error.newBuilder()
                                     .setCode(Protos.Error.ErrorCode.NO_ACCEPTABLE_VERSION);
@@ -243,6 +243,7 @@ public class PaymentChannelClient {
                             errorBuilder = Protos.Error.newBuilder()
                                     .setCode(Protos.Error.ErrorCode.CHANNEL_VALUE_TOO_LARGE);
                             closeReason = CloseReason.SERVER_REQUESTED_TOO_MUCH_VALUE;
+                            log.error("Server requested too much value");
                             break;
                         }
 
@@ -411,29 +412,34 @@ public class PaymentChannelClient {
     }
 
     /**
-     * Increments the total value which we pay the server.
+     * Increments the total value which we pay the server. Note that the amount of money sent may not be the same as the
+     * amount of money actually requested. It can be larger if the amount left over in the channel would be too small to
+     * be accepted by the Bitcoin network. ValueOutOfRangeException will be thrown, however, if there's not enough money
+     * left in the channel to make the payment at all.
      *
      * @param size How many satoshis to increment the payment by (note: not the new total).
      * @throws ValueOutOfRangeException If the size is negative or would pay more than this channel's total value
      *                                  ({@link PaymentChannelClientConnection#state()}.getTotalValue())
      * @throws IllegalStateException If the channel has been closed or is not yet open
      *                               (see {@link PaymentChannelClientConnection#getChannelOpenFuture()} for the second)
+     * @return amount of money actually sent.
      */
-    public void incrementPayment(BigInteger size) throws ValueOutOfRangeException, IllegalStateException {
+    public BigInteger incrementPayment(BigInteger size) throws ValueOutOfRangeException, IllegalStateException {
         lock.lock();
         try {
             if (state() == null || !connectionOpen || step != InitStep.CHANNEL_OPEN)
                 throw new IllegalStateException("Channel is not fully initialized/has already been closed");
 
-            byte[] signature = state().incrementPaymentBy(size);
+            PaymentChannelClientState.IncrementedPayment payment = state().incrementPaymentBy(size);
             Protos.UpdatePayment.Builder updatePaymentBuilder = Protos.UpdatePayment.newBuilder()
-                    .setSignature(ByteString.copyFrom(signature))
+                    .setSignature(ByteString.copyFrom(payment.signature.encodeToBitcoin()))
                     .setClientChangeValue(state.getValueRefunded().longValue());
 
             conn.sendToServer(Protos.TwoWayChannelMessage.newBuilder()
                     .setUpdatePayment(updatePaymentBuilder)
                     .setType(Protos.TwoWayChannelMessage.MessageType.UPDATE_PAYMENT)
                     .build());
+            return payment.amount;
         } finally {
             lock.unlock();
         }

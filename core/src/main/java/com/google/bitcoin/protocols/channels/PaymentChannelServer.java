@@ -180,7 +180,8 @@ public class PaymentChannelServer {
                 log.error(" ... but we do not have any stored channels! Resume failed.");
             }
         }
-        log.info("Got initial version message, responding with VERSIONS and INITIATE");
+        log.info("Got initial version message, responding with VERSIONS and INITIATE: min value={}",
+                minAcceptedChannelSize.longValue());
 
         myKey = new ECKey();
         wallet.addKey(myKey);

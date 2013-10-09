@@ -360,6 +360,12 @@ public class PaymentChannelClientState {
         }
     }
 
+    /** Container for a signature and an amount that was sent. */
+    public static class IncrementedPayment {
+        public TransactionSignature signature;
+        public BigInteger amount;
+    }
+
     /**
      * <p>Updates the outputs on the payment contract transaction and re-signs it. The state must be READY in order to
      * call this method. The signature that is returned should be sent to the server so it has the ability to broadcast
@@ -372,19 +378,23 @@ public class PaymentChannelClientState {
      * {@link PaymentChannelClientState#getValueRefunded()}</p>
      *
      * @param size How many satoshis to increment the payment by (note: not the new total).
-     * @throws ValueOutOfRangeException If size is negative or the new value being returned as change is smaller than
-     *                                  min nondust output size (including if the new total payment is larger than this
-     *                                  channel's totalValue)
+     * @throws ValueOutOfRangeException If size is negative or the channel does not have sufficient money in it to
+     *                                  complete this payment.
      */
-    public synchronized byte[] incrementPaymentBy(BigInteger size) throws ValueOutOfRangeException {
+    public synchronized IncrementedPayment incrementPaymentBy(BigInteger size) throws ValueOutOfRangeException {
         checkState(state == State.READY);
         checkNotExpired();
         checkNotNull(size);  // Validity of size will be checked by makeUnsignedChannelContract.
         if (size.compareTo(BigInteger.ZERO) < 0)
             throw new ValueOutOfRangeException("Tried to decrement payment");
         BigInteger newValueToMe = valueToMe.subtract(size);
-        if (Transaction.MIN_NONDUST_OUTPUT.compareTo(newValueToMe) > 0 && !newValueToMe.equals(BigInteger.ZERO))
-            throw new ValueOutOfRangeException("New value being sent back as change was smaller than minimum nondust output");
+        if (newValueToMe.compareTo(Transaction.MIN_NONDUST_OUTPUT) < 0 && newValueToMe.compareTo(BigInteger.ZERO) > 0) {
+            log.info("New value being sent back as change was smaller than minimum nondust output, sending all");
+            size = valueToMe;
+            newValueToMe = BigInteger.ZERO;
+        }
+        if (newValueToMe.compareTo(BigInteger.ZERO) < 0)
+            throw new ValueOutOfRangeException("Channel has too little money to pay " + size + " satoshis");
         Transaction tx = makeUnsignedChannelContract(newValueToMe);
         log.info("Signing new payment tx {}", tx);
         Transaction.SigHash mode;
@@ -397,7 +407,10 @@ public class PaymentChannelClientState {
         TransactionSignature sig = tx.calculateSignature(0, myKey, multisigScript, mode, true);
         valueToMe = newValueToMe;
         updateChannelInWallet();
-        return sig.encodeToBitcoin();
+        IncrementedPayment payment = new IncrementedPayment();
+        payment.signature = sig;
+        payment.amount = size;
+        return payment;
     }
 
     private synchronized void updateChannelInWallet() {
