@@ -319,8 +319,10 @@ public class PaymentChannelServer {
                                         // properly and so on.
                                         msg.getCloseBuilder().setTx(ByteString.copyFrom(result.bitcoinSerialize()));
                                     }
+                                    log.info("Sending CLOSE back with finalized broadcast contract.");
                                     conn.sendToClient(msg.build());
-                                    conn.destroyConnection(CloseReason.CLIENT_REQUESTED_CLOSE);
+                                    // The client is expected to hang up the TCP connection after we send back the
+                                    // CLOSE message.
                                 }
 
                                 @Override

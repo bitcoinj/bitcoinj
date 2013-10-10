@@ -298,6 +298,7 @@ public class PaymentChannelClient {
         checkState(lock.isHeldByCurrentThread());
         if (msg.hasClose()) {
             Transaction closeTx = new Transaction(wallet.getParams(), msg.getClose().getTx().toByteArray());
+            log.info("CLOSE message received with final contract {}", closeTx.getHash());
             // TODO: set source
             if (state != null && state().isCloseTransaction(closeTx)) {
                 // The wallet has a listener on it that the state object will use to do the right thing at this
@@ -305,6 +306,8 @@ public class PaymentChannelClient {
                 // and that it correctly spends the multisig contract.
                 wallet.receivePending(closeTx, null);
             }
+        } else {
+            log.info("CLOSE message received without final contract");
         }
         if (step == InitStep.WAITING_FOR_CHANNEL_CLOSE)
             conn.destroyConnection(CloseReason.CLIENT_REQUESTED_CLOSE);
