@@ -139,8 +139,8 @@
                                         <urn>io.netty:netty:3.6.3.Final:jar:null:compile:1eebfd2f79dd72c44d09d9917c549c60322462b8</urn>
                                         <urn>net.jcip:jcip-annotations:1.0:jar:null:compile:afba4942caaeaf46aab0b976afd57cc7c181467e</urn>
                                         <urn>net.sf.jopt-simple:jopt-simple:4.3:jar:null:compile:88ffca34311a6564a98f14820431e17b4382a069</urn>
-                                        <urn>org.slf4j:slf4j-api:1.6.4:jar:null:compile:2396d74b12b905f780ed7966738bb78438e8371a</urn>
-                                        <urn>org.slf4j:slf4j-jdk14:1.6.4:jar:null:runtime:6b32bc7c42b2509525ce812cb49bf96e7bf64141</urn>
+                                        <urn>org.slf4j:slf4j-api:1.7.5:jar:null:compile:6b262da268f8ad9eff941b25503a9198f0a0ac93</urn>
+                                        <urn>org.slf4j:slf4j-jdk14:1.7.5:jar:null:runtime:33cf4abac351aa45dd130d31a1e7e33fbbba4762</urn>
                                         <!-- A check for the rules themselves -->
                                         <urn>uk.co.froot.maven.enforcer:digest-enforcer-rules:0.0.1:jar:null:runtime:16a9e04f3fe4bb143c42782d07d5faf65b32106f</urn>
                                     </urns>
