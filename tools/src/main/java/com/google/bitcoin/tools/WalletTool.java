@@ -69,6 +69,7 @@ public class WalletTool {
             "  --force              Overrides any safety checks on the requested action.\n" +
             "  --date               Provide a date in form YYYY/MM/DD to any action that requires one.\n" +
             "  --peers=1.2.3.4      Comma separated IP addresses/domain names for connections instead of peer discovery.\n" +
+            "  --offline            If specified when sending, don't try and connect, just write the tx to the wallet.\n" +
             "  --condition=...      Allows you to specify a numeric condition for other commands. The format is\n" +
             "                       one of the following operators = < > <= >= immediately followed by a number.\n" +
             "                       For example --condition=\">5.10\" or --condition=\"<=1\"\n" +
@@ -259,6 +260,7 @@ public class WalletTool {
         conditionFlag = parser.accepts("condition").withRequiredArg();
         parser.accepts("locktime").withRequiredArg();
         parser.accepts("allow-unconfirmed");
+        parser.accepts("offline");
         OptionSpec<String> passwordFlag = parser.accepts("password").withRequiredArg();
         options = parser.parse(args);
         
@@ -397,7 +399,7 @@ public class WalletTool {
         shutdown();
     }
 
-    private static void send(List<String> outputs, BigInteger fee, String lockTimeStr, boolean allowUnconfirmed) {
+    private static void send(List<String> outputs, BigInteger fee, String lockTimeStr, boolean allowUnconfirmed) throws VerificationException {
         try {
             // Convert the input strings to outputs.
             Transaction t = new Transaction(params);
@@ -467,6 +469,12 @@ public class WalletTool {
                 throw new RuntimeException(e);
             }
             t = req.tx;   // Not strictly required today.
+            System.out.println(t.getHashAsString());
+            if (options.has("offline")) {
+                wallet.commitTx(t);
+                return;
+            }
+
             setup();
             peers.startAndWait();
             // Wait for peers to connect, the tx to be sent to one of them and for it to be propagated across the
@@ -478,7 +486,6 @@ public class WalletTool {
                 // completes before the remote peer actually hears the message.
                 Thread.sleep(5000);
             }
-            System.out.println(t.getHashAsString());
         } catch (BlockStoreException e) {
             throw new RuntimeException(e);
         } catch (KeyCrypterException e) {
