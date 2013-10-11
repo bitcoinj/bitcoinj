@@ -3275,7 +3275,24 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
      * optimise itself to reduce fees or improve privacy.</p>
      */
     public void setTransactionBroadcaster(@Nullable com.google.bitcoin.core.TransactionBroadcaster broadcaster) {
-        vTransactionBroadcaster = broadcaster;
+        lock.lock();
+        try {
+            if (vTransactionBroadcaster == broadcaster)
+                return;
+            vTransactionBroadcaster = broadcaster;
+            if (broadcaster == null)
+                return;
+            // Now use it to upload any pending transactions we have that are marked as not being seen by any peers yet.
+            for (Transaction tx : pending.values()) {
+                checkState(tx.getConfidence().getConfidenceType() == ConfidenceType.PENDING);
+                if (tx.getConfidence().numBroadcastPeers() == 0) {
+                    log.info("New broadcaster so uploading waiting tx {}", tx.getHash());
+                    broadcaster.broadcastTransaction(tx);
+                }
+            }
+        } finally {
+            lock.unlock();
+        }
     }
 
     /**

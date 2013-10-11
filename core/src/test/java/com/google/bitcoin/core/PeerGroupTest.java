@@ -33,6 +33,7 @@ import java.util.Set;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static org.junit.Assert.*;
 
 public class PeerGroupTest extends TestWithPeerGroup {
@@ -303,7 +304,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         Threading.waitForUserCode();
         assertTrue(sendResult.broadcastComplete.isDone());
         assertEquals(transactions[0], sendResult.tx);
-        assertEquals(transactions[0].getConfidence().numBroadcastPeers(), 2);
+        assertEquals(2, transactions[0].getConfidence().numBroadcastPeers());
         // Confirm it.
         Block b2 = TestUtils.createFakeBlock(blockStore, t1).block;
         inbound(p1, b2);
@@ -313,24 +314,12 @@ public class PeerGroupTest extends TestWithPeerGroup {
         peerGroup.removeWallet(wallet);
         Wallet.SendRequest req = Wallet.SendRequest.to(dest, Utils.toNanoCoins(2, 0));
         req.ensureMinRequiredFee = false;
-        Transaction t3 = wallet.sendCoinsOffline(req);
+        Transaction t3 = checkNotNull(wallet.sendCoinsOffline(req));
         assertNull(outbound(p1));  // Nothing sent.
         // Add the wallet to the peer group (simulate initialization). Transactions should be announced.
         peerGroup.addWallet(wallet);
         // Transaction announced to the first peer.
-        InventoryMessage inv1 = (InventoryMessage) outbound(p1);
-        // Filter is still the same as it was, so it is not rebroadcast
-        assertEquals(t3.getHash(), inv1.getItems().get(0).hash);
-        // Peer asks for the transaction, and get it.
-        GetDataMessage getdata = new GetDataMessage(params);
-        getdata.addItem(inv1.getItems().get(0));
-        inbound(p1, getdata);
-        Transaction t4 = (Transaction) outbound(p1);
-        assertEquals(t3, t4);
-
-        FakeChannel p3 = connectPeer(3);
-        assertTrue(outbound(p3) instanceof InventoryMessage);
-        control.verify();
+        assertEquals(t3.getHash(), ((Transaction) outbound(p1)).getHash());
     }
 
     @Test
