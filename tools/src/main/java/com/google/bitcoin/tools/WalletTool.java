@@ -68,7 +68,7 @@ public class WalletTool {
             "  --chain=<file>       Specifies the name of the file that stores the block chain.\n" +
             "  --force              Overrides any safety checks on the requested action.\n" +
             "  --date               Provide a date in form YYYY/MM/DD to any action that requires one.\n" +
-            "  --peers=1.2.3.4      Comma separaterd IP addresses/domain names for connections instead of peer discovery.\n" +
+            "  --peers=1.2.3.4      Comma separated IP addresses/domain names for connections instead of peer discovery.\n" +
             "  --condition=...      Allows you to specify a numeric condition for other commands. The format is\n" +
             "                       one of the following operators = < > <= >= immediately followed by a number.\n" +
             "                       For example --condition=\">5.10\" or --condition=\"<=1\"\n" +
