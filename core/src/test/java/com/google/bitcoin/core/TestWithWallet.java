@@ -63,7 +63,7 @@ public class TestWithWallet {
                 wallet.receivePending(tx, new ArrayList<Transaction>());
         } else {
             TestUtils.BlockPair bp = createFakeBlock(blockStore, tx);
-            wallet.receiveFromBlock(tx, bp.storedBlock, type);
+            wallet.receiveFromBlock(tx, bp.storedBlock, type, 0);
             if (type == AbstractBlockChain.NewBlockType.BEST_CHAIN)
                 wallet.notifyNewBestBlock(bp.storedBlock);
         }

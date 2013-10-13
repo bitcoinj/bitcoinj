@@ -529,18 +529,21 @@ public abstract class AbstractBlockChain {
             // is relevant to both of them, they don't end up accidentally sharing the same object (which can
             // result in temporary in-memory corruption during re-orgs). See bug 257. We only duplicate in
             // the case of multiple wallets to avoid an unnecessary efficiency hit in the common case.
-            sendTransactionsToListener(newStoredBlock, newBlockType, listener, block.transactions, !first);
+            sendTransactionsToListener(newStoredBlock, newBlockType, listener, 0, block.transactions, !first);
         } else if (filteredTxHashList != null) {
-            checkArgument(filteredTxn != null);
+            checkNotNull(filteredTxn);
             // We must send transactions to listeners in the order they appeared in the block - thus we iterate over the
             // set of hashes and call sendTransactionsToListener with individual txn when they have not already been
-            // seen in loose broadcasts - otherwise notifyTransactionIsInBlock on the hash
+            // seen in loose broadcasts - otherwise notifyTransactionIsInBlock on the hash.
+            int relativityOffset = 0;
             for (Sha256Hash hash : filteredTxHashList) {
                 Transaction tx = filteredTxn.get(hash);
                 if (tx != null)
-                    sendTransactionsToListener(newStoredBlock, newBlockType, listener, Arrays.asList(tx), !first);
+                    sendTransactionsToListener(newStoredBlock, newBlockType, listener, relativityOffset,
+                            Arrays.asList(tx), !first);
                 else
-                    listener.notifyTransactionIsInBlock(hash, newStoredBlock, newBlockType);
+                    listener.notifyTransactionIsInBlock(hash, newStoredBlock, newBlockType, relativityOffset);
+                relativityOffset++;
             }
         }
     }
@@ -702,6 +705,7 @@ public abstract class AbstractBlockChain {
 
     private static void sendTransactionsToListener(StoredBlock block, NewBlockType blockType,
                                                    BlockChainListener listener,
+                                                   int relativityOffset,
                                                    List<Transaction> transactions,
                                                    boolean clone) throws VerificationException {
         for (Transaction tx : transactions) {
@@ -709,7 +713,7 @@ public abstract class AbstractBlockChain {
                 if (listener.isTransactionRelevant(tx)) {
                     if (clone)
                         tx = new Transaction(tx.params, tx.bitcoinSerialize());
-                    listener.receiveFromBlock(tx, block, blockType);
+                    listener.receiveFromBlock(tx, block, blockType, relativityOffset++);
                 }
             } catch (ScriptException e) {
                 // We don't want scripts we don't understand to break the block chain so just note that this tx was

@@ -234,9 +234,11 @@ public class WalletProtobufSerializer {
         }
         
         // Handle which blocks tx was seen in.
-        if (tx.getAppearsInHashes() != null) {
-            for (Sha256Hash hash : tx.getAppearsInHashes()) {
-                txBuilder.addBlockHash(hashToByteString(hash));
+        final Map<Sha256Hash, Integer> appearsInHashes = tx.getAppearsInHashes();
+        if (appearsInHashes != null) {
+            for (Map.Entry<Sha256Hash, Integer> entry : appearsInHashes.entrySet()) {
+                txBuilder.addBlockHash(hashToByteString(entry.getKey()));
+                txBuilder.addBlockRelativityOffsets(entry.getValue());
             }
         }
         
@@ -481,8 +483,12 @@ public class WalletProtobufSerializer {
             tx.addInput(input);
         }
 
-        for (ByteString blockHash : txProto.getBlockHashList()) {
-            tx.addBlockAppearance(byteStringToHash(blockHash));
+        for (int i = 0; i < txProto.getBlockHashCount(); i++) {
+            ByteString blockHash = txProto.getBlockHash(i);
+            int relativityOffset = 0;
+            if (txProto.getBlockRelativityOffsetsCount() > 0)
+                relativityOffset = txProto.getBlockRelativityOffsets(i);
+            tx.addBlockAppearance(byteStringToHash(blockHash), relativityOffset);
         }
 
         if (txProto.hasLockTime()) {
