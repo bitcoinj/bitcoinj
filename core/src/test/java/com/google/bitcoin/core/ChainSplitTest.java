@@ -20,12 +20,15 @@ import com.google.bitcoin.core.TransactionConfidence.ConfidenceType;
 import com.google.bitcoin.params.UnitTestParams;
 import com.google.bitcoin.store.MemoryBlockStore;
 import com.google.bitcoin.utils.BriefLogFormatter;
+import com.google.bitcoin.utils.TestUtils;
 import com.google.bitcoin.utils.Threading;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.math.BigInteger;
 import java.net.InetAddress;
 import java.util.ArrayList;
@@ -44,6 +47,7 @@ public class ChainSplitTest {
     private Address coinsTo;
     private Address coinsTo2;
     private Address someOtherGuy;
+    private MemoryBlockStore blockStore;
 
     @Before
     public void setUp() throws Exception {
@@ -53,7 +57,8 @@ public class ChainSplitTest {
         wallet = new Wallet(unitTestParams);
         wallet.addKey(new ECKey());
         wallet.addKey(new ECKey());
-        chain = new BlockChain(unitTestParams, wallet, new MemoryBlockStore(unitTestParams));
+        blockStore = new MemoryBlockStore(unitTestParams);
+        chain = new BlockChain(unitTestParams, wallet, blockStore);
         coinsTo = wallet.getKeys().get(0).toAddress(unitTestParams);
         coinsTo2 = wallet.getKeys().get(1).toAddress(unitTestParams);
         someOtherGuy = new ECKey().toAddress(unitTestParams);
@@ -526,6 +531,41 @@ public class ChainSplitTest {
         assertEquals(newWork1.add(extraWork), txns.get(0).getConfidence().getWorkDone());
         assertEquals(newWork2.add(extraWork), txns.get(1).getConfidence().getWorkDone());
         assertEquals(newWork3.add(extraWork), txns.get(2).getConfidence().getWorkDone());
+    }
+
+    @Test
+    public void orderingInsideBlock() throws Exception {
+        // Test that transactions received in the same block have their ordering preserved when reorganising.
+        // This covers issue 468.
+
+        // Receive some money to the wallet.
+        Transaction t1 = TestUtils.createFakeTx(unitTestParams, Utils.COIN, coinsTo);
+        final Block b1 = TestUtils.makeSolvedTestBlock(unitTestParams.genesisBlock, t1);
+        chain.add(b1);
+
+        // Send a couple of payments one after the other (so the second depends on the change output of the first).
+        wallet.allowSpendingUnconfirmedTransactions();
+        Transaction t2 = checkNotNull(wallet.createSend(new ECKey().toAddress(unitTestParams), Utils.CENT));
+        wallet.commitTx(t2);
+        Transaction t3 = checkNotNull(wallet.createSend(new ECKey().toAddress(unitTestParams), Utils.CENT));
+        wallet.commitTx(t3);
+        chain.add(TestUtils.makeSolvedTestBlock(b1, t2, t3));
+
+        final BigInteger coins0point98 = Utils.COIN.subtract(Utils.CENT).subtract(Utils.CENT);
+        assertEquals(coins0point98, wallet.getBalance());
+
+        // Now round trip the wallet and force a re-org.
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        wallet.saveToFileStream(bos);
+        wallet = Wallet.loadFromFileStream(new ByteArrayInputStream(bos.toByteArray()));
+        final Block b2 = TestUtils.makeSolvedTestBlock(b1, t2, t3);
+        final Block b3 = TestUtils.makeSolvedTestBlock(b2);
+        chain.add(b2);
+        chain.add(b3);
+
+        // And verify that the balance is as expected. Because signatures are currently non-deterministic if the order
+        // isn't being stored correctly this should fail 50% of the time.
+        assertEquals(coins0point98, wallet.getBalance());
     }
 
     @Test

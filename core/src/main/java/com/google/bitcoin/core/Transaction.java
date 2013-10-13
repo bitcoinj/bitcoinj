@@ -22,6 +22,7 @@ import com.google.bitcoin.script.Script;
 import com.google.bitcoin.script.ScriptBuilder;
 import com.google.bitcoin.script.ScriptOpCodes;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.crypto.params.KeyParameter;
@@ -91,13 +92,14 @@ public class Transaction extends ChildMessage implements Serializable {
     // Data about how confirmed this tx is. Serialized, may be null. 
     private TransactionConfidence confidence;
 
-    // This records which blocks the transaction has been included in. For most transactions this set will have a
-    // single member. In the case of a chain split a transaction may appear in multiple blocks but only one of them
-    // is part of the best chain. It's not valid to have an identical transaction appear in two blocks in the same chain
-    // but this invariant is expensive to check, so it's not directly enforced anywhere.
+    // Records a map of which blocks the transaction has appeared in (keys) to an index within that block (values).
+    // The "index" is not a real index, instead the values are only meaningful relative to each other. For example,
+    // consider two transactions that appear in the same block, t1 and t2, where t2 spends an output of t1. Both
+    // will have the same block hash as a key in their appearsInHashes, but the counter would be 1 and 2 respectively
+    // regardless of where they actually appeared in the block.
     //
     // If this transaction is not stored in the wallet, appearsInHashes is null.
-    private Set<Sha256Hash> appearsInHashes;
+    private Map<Sha256Hash, Integer> appearsInHashes;
 
     // Transactions can be encoded in a way that will use more bytes than is optimal
     // (due to VarInts having multiple encodings)
@@ -255,11 +257,13 @@ public class Transaction extends ChildMessage implements Serializable {
     }
 
     /**
-     * Returns a set of blocks which contain the transaction, or null if this transaction doesn't have that data
-     * because it's not stored in the wallet or because it has never appeared in a block.
+     * Returns a map of block [hashes] which contain the transaction mapped to relativity counters, or null if this
+     * transaction doesn't have that data because it's not stored in the wallet or because it has never appeared in a
+     * block.
      */
-    public Collection<Sha256Hash> getAppearsInHashes() {
-        return appearsInHashes;
+    @Nullable
+    public Map<Sha256Hash, Integer> getAppearsInHashes() {
+        return appearsInHashes != null ? ImmutableMap.copyOf(appearsInHashes) : null;
     }
 
     /**
@@ -271,7 +275,7 @@ public class Transaction extends ChildMessage implements Serializable {
     }
 
     /**
-     * <p>Puts the given block in the internal serializable set of blocks in which this transaction appears. This is
+     * <p>Puts the given block in the internal set of blocks in which this transaction appears. This is
      * used by the wallet to ensure transactions that appear on side chains are recorded properly even though the
      * block stores do not save the transaction data at all.</p>
      *
@@ -282,14 +286,15 @@ public class Transaction extends ChildMessage implements Serializable {
      * 
      * @param block     The {@link StoredBlock} in which the transaction has appeared.
      * @param bestChain whether to set the updatedAt timestamp from the block header (only if not already set)
+     * @param relativityOffset A number that disambiguates the order of transactions within a block.
      */
-    public void setBlockAppearance(StoredBlock block, boolean bestChain) {
+    public void setBlockAppearance(StoredBlock block, boolean bestChain, int relativityOffset) {
         long blockTime = block.getHeader().getTimeSeconds() * 1000;
         if (bestChain && (updatedAt == null || updatedAt.getTime() == 0 || updatedAt.getTime() > blockTime)) {
             updatedAt = new Date(blockTime);
         }
 
-        addBlockAppearance(block.getHeader().getHash());
+        addBlockAppearance(block.getHeader().getHash(), relativityOffset);
 
         if (bestChain) {
             TransactionConfidence transactionConfidence = getConfidence();
@@ -304,11 +309,12 @@ public class Transaction extends ChildMessage implements Serializable {
         }
     }
 
-    public void addBlockAppearance(final Sha256Hash blockHash) {
+    public void addBlockAppearance(final Sha256Hash blockHash, int relativityOffset) {
         if (appearsInHashes == null) {
-            appearsInHashes = new HashSet<Sha256Hash>();
+            // TODO: This could be a lot more memory efficient as we'll typically only store one element.
+            appearsInHashes = new TreeMap<Sha256Hash, Integer>();
         }
-        appearsInHashes.add(blockHash);
+        appearsInHashes.put(blockHash, relativityOffset);
     }
 
     /**

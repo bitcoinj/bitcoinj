@@ -70,8 +70,9 @@ public class BlockChainTest {
         unitTestParams = UnitTestParams.get();
         wallet = new Wallet(unitTestParams) {
             @Override
-            public void receiveFromBlock(Transaction tx, StoredBlock block, BlockChain.NewBlockType blockType) throws VerificationException {
-                super.receiveFromBlock(tx, block, blockType);
+            public void receiveFromBlock(Transaction tx, StoredBlock block, BlockChain.NewBlockType blockType,
+                                         int relativityOffset) throws VerificationException {
+                super.receiveFromBlock(tx, block, blockType, relativityOffset);
                 BlockChainTest.this.block[0] = block;
                 if (tx.isCoinBase()) {
                     BlockChainTest.this.coinbaseTransaction = tx;

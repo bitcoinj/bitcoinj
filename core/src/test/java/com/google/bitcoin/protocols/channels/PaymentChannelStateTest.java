@@ -701,7 +701,7 @@ public class PaymentChannelStateTest extends TestWithWallet {
         // Now give the server enough coins to pay the fee
         StoredBlock block = new StoredBlock(makeSolvedTestBlock(blockStore, new ECKey().toAddress(params)), BigInteger.ONE, 1);
         Transaction tx1 = createFakeTx(params, Utils.COIN, serverKey.toAddress(params));
-        serverWallet.receiveFromBlock(tx1, block, AbstractBlockChain.NewBlockType.BEST_CHAIN);
+        serverWallet.receiveFromBlock(tx1, block, AbstractBlockChain.NewBlockType.BEST_CHAIN, 0);
 
         // The contract is still not worth redeeming - its worth less than we pay in fee
         try {
@@ -796,7 +796,7 @@ public class PaymentChannelStateTest extends TestWithWallet {
         doubleSpendContract = new Transaction(params, doubleSpendContract.bitcoinSerialize());
 
         StoredBlock block = new StoredBlock(params.getGenesisBlock().createNextBlock(myKey.toAddress(params)), BigInteger.TEN, 1);
-        serverWallet.receiveFromBlock(doubleSpendContract, block, AbstractBlockChain.NewBlockType.BEST_CHAIN);
+        serverWallet.receiveFromBlock(doubleSpendContract, block, AbstractBlockChain.NewBlockType.BEST_CHAIN, 0);
 
         // Now if we try to spend again the server will reject it since it saw a double-spend
         try {

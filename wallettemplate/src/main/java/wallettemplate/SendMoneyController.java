@@ -45,7 +45,6 @@ public class SendMoneyController {
             Futures.addCallback(sendResult.broadcastComplete, new FutureCallback<Transaction>() {
                 @Override
                 public void onSuccess(Transaction result) {
-                    // TODO: Fix bitcoinj so these callbacks run on the user thread.
                     Platform.runLater(overlayUi::done);
                 }
 

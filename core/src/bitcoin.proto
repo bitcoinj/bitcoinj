@@ -185,8 +185,10 @@ message Transaction {
   repeated TransactionInput transaction_input = 6;
   repeated TransactionOutput transaction_output = 7;
 
-  // A list of blocks in which the transaction has been observed (on any chain).
+  // A list of blocks in which the transaction has been observed (on any chain). Also, a number used to disambiguate
+  // ordering within a block.
   repeated bytes block_hash = 8;
+  repeated int32 block_relativity_offsets = 11;
 
   // Data describing where the transaction is in the chain.
   optional TransactionConfidence confidence = 9;
@@ -202,6 +204,8 @@ message Transaction {
     // In future: de/refragmentation, privacy boosting/mixing, child-pays-for-parent fees, etc.
   }
   optional Purpose purpose = 10 [default = UNKNOWN];
+
+  // Next tag: 12
 }
 
 /** The parameters used in the scrypt key derivation function.

@@ -75,7 +75,7 @@ public class CoinbaseBlockTest {
         // Give the wallet the first transaction in the block - this is the coinbase tx.
         List<Transaction> transactions = block.getTransactions();
         assertNotNull(transactions);
-        wallet.receiveFromBlock(transactions.get(0), storedBlock, NewBlockType.BEST_CHAIN);
+        wallet.receiveFromBlock(transactions.get(0), storedBlock, NewBlockType.BEST_CHAIN, 0);
 
         // Coinbase transaction should have been received successfully but be unavailable to spend (too young).
         assertEquals(BALANCE_AFTER_BLOCK, wallet.getBalance(BalanceType.ESTIMATED));
