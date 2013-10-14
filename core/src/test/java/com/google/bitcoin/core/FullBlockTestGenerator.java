@@ -1117,11 +1117,16 @@ public class FullBlockTestGenerator {
         
         Block b61 = createNextBlock(b60, chainHeadHeight + 19, out18, null);
         {
-            byte[] scriptBytes = b61.getTransactions().get(0).getInputs().get(0).getScriptBytes();
-            scriptBytes[0]--; // createNextBlock will increment the first script byte on each new block
-            b61.getTransactions().get(0).getInputs().get(0).setScriptBytes(scriptBytes);
+            final Transaction tx = b61.getTransactions().get(0);
+            byte[] scriptBytes = tx.getInputs().get(0).getScriptBytes();
+            // createNextBlock will increment a uint16 in the first script bytes of each new block.
+            int tmp = (scriptBytes[0] | (scriptBytes[1] << 8)) - 1;
+            scriptBytes[0] = (byte) tmp;
+            scriptBytes[1] = (byte) (tmp >> 8);
+            tx.getInputs().get(0).setScriptBytes(scriptBytes);
             b61.unCache();
-            Preconditions.checkState(b61.getTransactions().get(0).equals(b60.getTransactions().get(0)));
+            final Transaction tx2 = b60.getTransactions().get(0);
+            Preconditions.checkState(tx.equals(tx2));
         }
         b61.solve();
         blocks.add(new BlockAndValidity(blockToHeightMap, b61, false, true, b60.getHash(), chainHeadHeight + 18, "b61"));
