@@ -274,12 +274,13 @@ public class TransactionConfidence implements Serializable {
      *
      * @param address IP address of the peer, used as a proxy for identity.
      */
-    public synchronized void markBroadcastBy(PeerAddress address) {
+    public synchronized boolean markBroadcastBy(PeerAddress address) {
         if (!broadcastBy.addIfAbsent(address))
-            return;  // Duplicate.
+            return false;  // Duplicate.
         if (getConfidenceType() == ConfidenceType.UNKNOWN) {
             this.confidenceType = ConfidenceType.PENDING;
         }
+        return true;
     }
 
     /**
