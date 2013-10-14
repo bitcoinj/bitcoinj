@@ -88,13 +88,13 @@ public class PaymentChannelClientConnection {
         wireParser = new ProtobufParser<Protos.TwoWayChannelMessage>(new ProtobufParser.Listener<Protos.TwoWayChannelMessage>() {
             @Override
             public void messageReceived(ProtobufParser handler, Protos.TwoWayChannelMessage msg) {
-				try {
-					channelClient.receiveMessage(msg);
-				} catch (ValueOutOfRangeException e) {
-					// We should only get this exception during INITIATE, so channelOpen wasn't called yet.
-					channelOpenFuture.setException(e);
-				}
-			}
+                try {
+                    channelClient.receiveMessage(msg);
+                } catch (ValueOutOfRangeException e) {
+                    // We should only get this exception during INITIATE, so channelOpen wasn't called yet.
+                    channelOpenFuture.setException(e);
+                }
+            }
 
             @Override
             public void connectionOpen(ProtobufParser handler) {

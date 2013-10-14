@@ -237,8 +237,8 @@ public class BitcoindComparisonTool {
         }
 
         log.info("Done testing.\n" +
-        		"Blocks which were not handled the same between bitcoind/bitcoinj: " + differingBlocks + "\n" +
-        		"Blocks which should/should not have been accepted but weren't/were: " + invalidBlocks + "\n" +
+                "Blocks which were not handled the same between bitcoind/bitcoinj: " + differingBlocks + "\n" +
+                "Blocks which should/should not have been accepted but weren't/were: " + invalidBlocks + "\n" +
                 "Transactions which were/weren't in memory pool but shouldn't/should have been: " + mempoolRulesFailed + "\n" +
                 "Unexpected inv messages: " + unexpectedInvs.get());
         System.exit(differingBlocks > 0 || invalidBlocks > 0 || mempoolRulesFailed > 0 || unexpectedInvs.get() > 0 ? 1 : 0);

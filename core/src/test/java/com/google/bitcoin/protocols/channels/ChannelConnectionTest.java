@@ -95,13 +95,13 @@ public class ChannelConnectionTest extends TestWithWallet {
         Threading.warnOnLockCycles();
     }
 
-	@After
-	@Override
-	public void tearDown() throws Exception {
-		super.tearDown();
-	}
+    @After
+    @Override
+    public void tearDown() throws Exception {
+        super.tearDown();
+    }
 
-	@After
+    @After
     public void checkFail() {
         assertFalse(fail.get());
         Threading.throwOnLockCycles();
@@ -523,28 +523,28 @@ public class ChannelConnectionTest extends TestWithWallet {
         assertEquals(myValue, refund.getOutput(0).getValue());
     }
 
-	@Test
-	public void testEmptyWallet() throws Exception {
-		Wallet emptyWallet = new Wallet(params);
-		emptyWallet.addKey(new ECKey());
-		ChannelTestUtils.RecordingPair pair = ChannelTestUtils.makeRecorders(serverWallet, mockBroadcaster);
-		PaymentChannelServer server = pair.server;
-		PaymentChannelClient client = new PaymentChannelClient(emptyWallet, myKey, Utils.COIN, Sha256Hash.ZERO_HASH, pair.clientRecorder);
-		client.connectionOpen();
-		server.connectionOpen();
-		server.receiveMessage(pair.clientRecorder.checkNextMsg(MessageType.CLIENT_VERSION));
-		client.receiveMessage(pair.serverRecorder.checkNextMsg(MessageType.SERVER_VERSION));
-		try {
-			client.receiveMessage(Protos.TwoWayChannelMessage.newBuilder()
-					.setInitiate(Protos.Initiate.newBuilder().setExpireTimeSecs(Utils.now().getTime() / 1000)
-							.setMinAcceptedChannelSize(Utils.CENT.longValue())
-							.setMultisigKey(ByteString.copyFrom(new ECKey().getPubKey())))
-					.setType(MessageType.INITIATE).build());
-			fail();
-		} catch (ValueOutOfRangeException expected) {
-			// This should be thrown.
-		}
-	}
+    @Test
+    public void testEmptyWallet() throws Exception {
+        Wallet emptyWallet = new Wallet(params);
+        emptyWallet.addKey(new ECKey());
+        ChannelTestUtils.RecordingPair pair = ChannelTestUtils.makeRecorders(serverWallet, mockBroadcaster);
+        PaymentChannelServer server = pair.server;
+        PaymentChannelClient client = new PaymentChannelClient(emptyWallet, myKey, Utils.COIN, Sha256Hash.ZERO_HASH, pair.clientRecorder);
+        client.connectionOpen();
+        server.connectionOpen();
+        server.receiveMessage(pair.clientRecorder.checkNextMsg(MessageType.CLIENT_VERSION));
+        client.receiveMessage(pair.serverRecorder.checkNextMsg(MessageType.SERVER_VERSION));
+        try {
+            client.receiveMessage(Protos.TwoWayChannelMessage.newBuilder()
+                    .setInitiate(Protos.Initiate.newBuilder().setExpireTimeSecs(Utils.now().getTime() / 1000)
+                            .setMinAcceptedChannelSize(Utils.CENT.longValue())
+                            .setMultisigKey(ByteString.copyFrom(new ECKey().getPubKey())))
+                    .setType(MessageType.INITIATE).build());
+            fail();
+        } catch (ValueOutOfRangeException expected) {
+            // This should be thrown.
+        }
+    }
 
     @Test
     public void testClientResumeNothing() throws Exception {

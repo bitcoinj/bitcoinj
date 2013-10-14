@@ -32,15 +32,15 @@ import java.util.concurrent.locks.ReentrantLock;
 public class MockTransactionBroadcaster implements TransactionBroadcaster {
     private final ReentrantLock lock = Threading.lock("mock tx broadcaster");
 
-	public static class TxFuturePair {
-		public Transaction tx;
-		public SettableFuture<Transaction> future;
+    public static class TxFuturePair {
+        public Transaction tx;
+        public SettableFuture<Transaction> future;
 
-		public TxFuturePair(Transaction tx, SettableFuture<Transaction> future) {
-			this.tx = tx;
-			this.future = future;
-		}
-	}
+        public TxFuturePair(Transaction tx, SettableFuture<Transaction> future) {
+            this.tx = tx;
+            this.future = future;
+        }
+    }
 
     private final LinkedBlockingQueue<TxFuturePair> broadcasts = new LinkedBlockingQueue<TxFuturePair>();
 
@@ -70,19 +70,19 @@ public class MockTransactionBroadcaster implements TransactionBroadcaster {
         }
     }
 
-	public Transaction waitForTransaction() {
-		return waitForTxFuture().tx;
-	}
+    public Transaction waitForTransaction() {
+        return waitForTxFuture().tx;
+    }
 
-	public TxFuturePair waitForTxFuture() {
-		try {
-			return broadcasts.take();
-		} catch (InterruptedException e) {
-			throw new RuntimeException(e);
-		}
-	}
+    public TxFuturePair waitForTxFuture() {
+        try {
+            return broadcasts.take();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
-	public int size() {
-		return broadcasts.size();
-	}
+    public int size() {
+        return broadcasts.size();
+    }
 }

@@ -635,7 +635,7 @@ public class H2FullPrunedBlockStore implements FullPrunedBlockStore {
         try {
             s = conn.get()
                 .prepareStatement("SELECT height, value, scriptBytes FROM openOutputs " +
-                		"WHERE hash = ? AND index = ?");
+                        "WHERE hash = ? AND index = ?");
             s.setBytes(1, hash.getBytes());
             // index is actually an unsigned int
             s.setInt(2, (int)index);
@@ -664,7 +664,7 @@ public class H2FullPrunedBlockStore implements FullPrunedBlockStore {
         PreparedStatement s = null;
         try {
             s = conn.get().prepareStatement("INSERT INTO openOutputs (hash, index, height, value, scriptBytes) " +
-            		"VALUES (?, ?, ?, ?, ?)");
+                    "VALUES (?, ?, ?, ?, ?)");
             s.setBytes(1, out.getHash().getBytes());
             // index is actually an unsigned int
             s.setInt(2, (int)out.getIndex());

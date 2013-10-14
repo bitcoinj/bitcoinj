@@ -53,7 +53,7 @@ public class BitcoinSerializerTest {
 
     @Test
     public void testAddr() throws Exception {
-    	BitcoinSerializer bs = new BitcoinSerializer(MainNetParams.get());
+        BitcoinSerializer bs = new BitcoinSerializer(MainNetParams.get());
         // the actual data from https://en.bitcoin.it/wiki/Protocol_specification#addr
         ByteArrayInputStream bais = new ByteArrayInputStream(addrMessage);
         AddressMessage a = (AddressMessage)bs.deserialize(bais);
@@ -70,10 +70,10 @@ public class BitcoinSerializerTest {
 
     @Test
     public void testLazyParsing()  throws Exception {
-    	BitcoinSerializer bs = new BitcoinSerializer(MainNetParams.get(), true, false);
-    	
-    	ByteArrayInputStream bais = new ByteArrayInputStream(txMessage);
-    	Transaction tx = (Transaction)bs.deserialize(bais);
+        BitcoinSerializer bs = new BitcoinSerializer(MainNetParams.get(), true, false);
+        
+        ByteArrayInputStream bais = new ByteArrayInputStream(txMessage);
+        Transaction tx = (Transaction)bs.deserialize(bais);
         assertNotNull(tx);
         assertEquals(false, tx.isParsed());
         assertEquals(true, tx.isCached());
@@ -88,16 +88,16 @@ public class BitcoinSerializerTest {
     
     @Test 
     public void testCachedParsing()  throws Exception {
-    	testCachedParsing(true);
-    	testCachedParsing(false);
+        testCachedParsing(true);
+        testCachedParsing(false);
     }
     
     private void testCachedParsing(boolean lazy)  throws Exception {
-    	BitcoinSerializer bs = new BitcoinSerializer(MainNetParams.get(), lazy, true);
-    	
-    	//first try writing to a fields to ensure uncaching and children are not affected
-    	ByteArrayInputStream bais = new ByteArrayInputStream(txMessage);
-    	Transaction tx = (Transaction)bs.deserialize(bais);
+        BitcoinSerializer bs = new BitcoinSerializer(MainNetParams.get(), lazy, true);
+        
+        //first try writing to a fields to ensure uncaching and children are not affected
+        ByteArrayInputStream bais = new ByteArrayInputStream(txMessage);
+        Transaction tx = (Transaction)bs.deserialize(bais);
         assertNotNull(tx);
         assertEquals(!lazy, tx.isParsed());
         assertEquals(true, tx.isCached());
@@ -111,11 +111,11 @@ public class BitcoinSerializerTest {
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         bs.serialize(tx, bos);
         assertEquals(true, !Arrays.equals(txMessage, bos.toByteArray()));
-    	
+        
       //now try writing to a child to ensure uncaching is propagated up to parent but not to siblings
-    	bais = new ByteArrayInputStream(txMessage);
-    	tx = (Transaction)bs.deserialize(bais);
-    	assertNotNull(tx);
+        bais = new ByteArrayInputStream(txMessage);
+        tx = (Transaction)bs.deserialize(bais);
+        assertNotNull(tx);
         assertEquals(!lazy, tx.isParsed());
         assertEquals(true, tx.isCached());
         
@@ -131,8 +131,8 @@ public class BitcoinSerializerTest {
         
       //deserialize/reserialize to check for equals.
         bais = new ByteArrayInputStream(txMessage);
-    	tx = (Transaction)bs.deserialize(bais);
-    	assertNotNull(tx);
+        tx = (Transaction)bs.deserialize(bais);
+        assertNotNull(tx);
         assertEquals(!lazy, tx.isParsed());
         assertEquals(true, tx.isCached());
         bos = new ByteArrayOutputStream();
@@ -141,8 +141,8 @@ public class BitcoinSerializerTest {
         
       //deserialize/reserialize to check for equals.  Set a field to it's existing value to trigger uncache
         bais = new ByteArrayInputStream(txMessage);
-    	tx = (Transaction)bs.deserialize(bais);
-    	assertNotNull(tx);
+        tx = (Transaction)bs.deserialize(bais);
+        assertNotNull(tx);
         assertEquals(!lazy, tx.isParsed());
         assertEquals(true, tx.isCached());
        

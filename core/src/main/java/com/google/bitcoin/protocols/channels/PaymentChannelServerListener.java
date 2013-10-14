@@ -65,13 +65,13 @@ public class PaymentChannelServerListener {
         public ServerHandler(final SocketAddress address, final int timeoutSeconds) {
             paymentChannelManager = new PaymentChannelServer(broadcaster, wallet, minAcceptedChannelSize, new PaymentChannelServer.ServerConnection() {
                 @Override public void sendToClient(Protos.TwoWayChannelMessage msg) {
-					socketProtobufHandler.write(msg);
+                    socketProtobufHandler.write(msg);
                 }
 
                 @Override public void destroyConnection(PaymentChannelCloseException.CloseReason reason) {
                     if (closeReason != null)
                         closeReason = reason;
-					socketProtobufHandler.closeConnection();
+                    socketProtobufHandler.closeConnection();
                 }
 
                 @Override public void channelOpen(Sha256Hash contractHash) {
@@ -125,11 +125,11 @@ public class PaymentChannelServerListener {
         private final PaymentChannelServer paymentChannelManager;
 
         // The connection handler which puts/gets protobufs from the TCP socket
-		private final ProtobufParser<Protos.TwoWayChannelMessage> socketProtobufHandler;
+        private final ProtobufParser<Protos.TwoWayChannelMessage> socketProtobufHandler;
 
         // The listener which connects to socketProtobufHandler
         private final ProtobufParser.Listener<Protos.TwoWayChannelMessage> protobufHandlerListener;
-	}
+    }
 
     /**
      * Binds to the given port and starts accepting new client connections.

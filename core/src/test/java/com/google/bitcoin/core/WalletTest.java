@@ -97,13 +97,13 @@ public class WalletTest extends TestWithWallet {
         myEncryptedAddress2 = myEncryptedKey2.toAddress(params);
     }
 
-	@After
-	@Override
-	public void tearDown() throws Exception {
-		super.tearDown();
-	}
+    @After
+    @Override
+    public void tearDown() throws Exception {
+        super.tearDown();
+    }
 
-	@Test
+    @Test
     public void basicSpending() throws Exception {
         basicSpendingCommon(wallet, myAddress, false);
     }

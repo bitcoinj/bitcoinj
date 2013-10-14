@@ -86,13 +86,13 @@ public class PaymentChannelStateTest extends TestWithWallet {
         };
     }
 
-	@After
-	@Override
-	public void tearDown() throws Exception {
-		super.tearDown();
-	}
+    @After
+    @Override
+    public void tearDown() throws Exception {
+        super.tearDown();
+    }
 
-	@Test
+    @Test
     public void stateErrors() throws Exception {
         PaymentChannelClientState channelState = new PaymentChannelClientState(wallet, myKey, serverKey,
                 Utils.COIN.multiply(BigInteger.TEN), 20);

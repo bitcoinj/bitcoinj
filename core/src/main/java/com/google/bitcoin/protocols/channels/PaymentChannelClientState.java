@@ -451,7 +451,7 @@ public class PaymentChannelClientState {
     @VisibleForTesting synchronized void doStoreChannelInWallet(Sha256Hash id) {
         StoredPaymentChannelClientStates channels = (StoredPaymentChannelClientStates)
                 wallet.getExtensions().get(StoredPaymentChannelClientStates.EXTENSION_ID);
-		checkNotNull(channels, "You have not added the StoredPaymentChannelClientStates extension to the wallet.");
+        checkNotNull(channels, "You have not added the StoredPaymentChannelClientStates extension to the wallet.");
         checkState(channels.getChannel(id, multisigContract.getHash()) == null);
         storedChannel = new StoredClientChannel(id, multisigContract, refundTx, myKey, valueToMe, refundFees, true);
         channels.putChannel(storedChannel);

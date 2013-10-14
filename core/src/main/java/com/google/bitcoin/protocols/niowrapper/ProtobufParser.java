@@ -37,7 +37,7 @@ import static com.google.common.base.Preconditions.checkState;
  * serialized protobuf</p>
  */
 public class ProtobufParser<MessageType extends MessageLite> extends AbstractTimeoutHandler implements StreamParser {
-	private static final Logger log = LoggerFactory.getLogger(ProtobufParser.class);
+    private static final Logger log = LoggerFactory.getLogger(ProtobufParser.class);
 
     /**
      * An interface which can be implemented to handle callbacks as new messages are generated and socket events occur.
@@ -110,7 +110,7 @@ public class ProtobufParser<MessageType extends MessageLite> extends AbstractTim
 
     @Override
     protected void timeoutOccurred() {
-		log.warn("Timeout occurred for " + handler);
+        log.warn("Timeout occurred for " + handler);
         closeConnection();
     }
 

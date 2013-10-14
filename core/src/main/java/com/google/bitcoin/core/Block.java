@@ -976,7 +976,7 @@ public class Block extends Message {
     /**
      * Returns a solved block that builds on top of this one. This exists for unit tests.
      */
-	@VisibleForTesting
+    @VisibleForTesting
     public Block createNextBlock(Address to, long time) {
         return createNextBlock(to, null, time, EMPTY_BYTES, Utils.toNanoCoins(50, 0));
     }
