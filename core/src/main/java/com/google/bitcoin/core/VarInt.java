@@ -97,11 +97,6 @@ public class VarInt {
     }
 
     public byte[] encode() {
-        return encodeBE();
-    }
-
-
-    public byte[] encodeBE() {
         if (isLessThanUnsigned(value, 253)) {
             return new byte[]{(byte) value};
         } else if (isLessThanUnsigned(value, 65536)) {
