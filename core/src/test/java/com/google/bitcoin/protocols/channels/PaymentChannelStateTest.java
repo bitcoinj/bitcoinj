@@ -513,7 +513,11 @@ public class PaymentChannelStateTest extends TestWithWallet {
 
         serverState.incrementPayment(halfCoin.subtract(totalPayment), signature2);
 
-        serverState.incrementPayment(halfCoin.subtract(totalPayment.subtract(size)), signature);
+        // Trying to take reduce the refund size fails.
+        try {
+            serverState.incrementPayment(halfCoin.subtract(totalPayment.subtract(size)), signature);
+            fail();
+        } catch (ValueOutOfRangeException e) {}
         assertEquals(serverState.getBestValueToMe(), totalPayment);
 
         try {

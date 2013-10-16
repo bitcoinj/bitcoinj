@@ -281,8 +281,9 @@ public class PaymentChannelServerState {
      * @param refundSize How many satoshis of the original contract are refunded to the client (the rest are ours)
      * @param signatureBytes The new signature spending the multi-sig contract to a new payment transaction
      * @throws VerificationException If the signature does not verify or size is out of range (incl being rejected by the network as dust).
+     * @return true if there is more value left on the channel, false if it is now fully used up.
      */
-    public synchronized void incrementPayment(BigInteger refundSize, byte[] signatureBytes) throws VerificationException, ValueOutOfRangeException {
+    public synchronized boolean incrementPayment(BigInteger refundSize, byte[] signatureBytes) throws VerificationException, ValueOutOfRangeException {
         checkState(state == State.READY);
         checkNotNull(refundSize);
         checkNotNull(signatureBytes);
@@ -296,7 +297,7 @@ public class PaymentChannelServerState {
         if (newValueToMe.compareTo(BigInteger.ZERO) < 0)
             throw new ValueOutOfRangeException("Attempt to refund more than the contract allows.");
         if (newValueToMe.compareTo(bestValueToMe) < 0)
-            return;
+            throw new ValueOutOfRangeException("Attempt to roll back payment on the channel.");
 
         // Get the wallet's copy of the multisigContract (ie with confidence information), if this is null, the wallet
         // was not connected to the peergroup when the contract was broadcast (which may cause issues down the road, and
@@ -334,6 +335,7 @@ public class PaymentChannelServerState {
         bestValueToMe = newValueToMe;
         bestValueSignature = signatureBytes;
         updateChannelInWallet();
+        return !fullyUsedUp;
     }
 
     // Signs the first input of the transaction which must spend the multisig contract.

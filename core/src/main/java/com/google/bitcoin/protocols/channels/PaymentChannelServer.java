@@ -87,7 +87,7 @@ public class PaymentChannelServer {
          */
         public void paymentIncrease(BigInteger by, BigInteger to);
     }
-    @GuardedBy("lock") private final ServerConnection conn;
+    private final ServerConnection conn;
 
     // Used to keep track of whether or not the "socket" ie connection is open and we can generate messages
     @GuardedBy("lock") private boolean connectionOpen = false;
@@ -262,11 +262,17 @@ public class PaymentChannelServer {
 
         Protos.UpdatePayment updatePayment = msg.getUpdatePayment();
         BigInteger lastBestPayment = state.getBestValueToMe();
-        state.incrementPayment(BigInteger.valueOf(updatePayment.getClientChangeValue()), updatePayment.getSignature().toByteArray());
+        final BigInteger refundSize = BigInteger.valueOf(updatePayment.getClientChangeValue());
+        boolean stillUsable = state.incrementPayment(refundSize, updatePayment.getSignature().toByteArray());
         BigInteger bestPaymentChange = state.getBestValueToMe().subtract(lastBestPayment);
 
         if (bestPaymentChange.compareTo(BigInteger.ZERO) > 0)
             conn.paymentIncrease(bestPaymentChange, state.getBestValueToMe());
+
+        if (!stillUsable) {
+            log.info("Channel is now fully exhausted, closing/initiating settlement");
+            settlePayment(CloseReason.CHANNEL_EXHAUSTED);
+        }
     }
 
     /**
@@ -351,34 +357,42 @@ public class PaymentChannelServer {
     @GuardedBy("lock")
     private void receiveCloseMessage() throws ValueOutOfRangeException {
         log.info("Got CLOSE message, closing channel");
-        connectionClosing = true;
         if (state != null) {
-            Futures.addCallback(state.close(), new FutureCallback<Transaction>() {
-                @Override
-                public void onSuccess(Transaction result) {
-                    // Send the successfully accepted transaction back to the client.
-                    final Protos.TwoWayChannelMessage.Builder msg = Protos.TwoWayChannelMessage.newBuilder();
-                    msg.setType(Protos.TwoWayChannelMessage.MessageType.CLOSE);
-                    if (result != null) {
-                        // Result can be null on various error paths, like if we never actually opened
-                        // properly and so on.
-                        msg.getCloseBuilder().setTx(ByteString.copyFrom(result.bitcoinSerialize()));
-                    }
-                    log.info("Sending CLOSE back with finalized broadcast contract.");
-                    conn.sendToClient(msg.build());
-                    // The client is expected to hang up the TCP connection after we send back the
-                    // CLOSE message.
-                }
-
-                @Override
-                public void onFailure(Throwable t) {
-                    log.error("Failed to broadcast close TX", t);
-                    conn.destroyConnection(CloseReason.CLIENT_REQUESTED_CLOSE);
-                }
-            });
+            settlePayment(CloseReason.CLIENT_REQUESTED_CLOSE);
         } else {
             conn.destroyConnection(CloseReason.CLIENT_REQUESTED_CLOSE);
         }
+    }
+
+    @GuardedBy("lock")
+    private void settlePayment(final CloseReason clientRequestedClose) throws ValueOutOfRangeException {
+        // Setting connectionClosing here prevents us from sending another CLOSE when state.close() calls
+        // close() on us here below via the stored channel state.
+        // TODO: Strongly separate the lifecycle of the payment channel from the TCP connection in these classes.
+        connectionClosing = true;
+        Futures.addCallback(state.close(), new FutureCallback<Transaction>() {
+            @Override
+            public void onSuccess(Transaction result) {
+                // Send the successfully accepted transaction back to the client.
+                final Protos.TwoWayChannelMessage.Builder msg = Protos.TwoWayChannelMessage.newBuilder();
+                msg.setType(Protos.TwoWayChannelMessage.MessageType.CLOSE);
+                if (result != null) {
+                    // Result can be null on various error paths, like if we never actually opened
+                    // properly and so on.
+                    msg.getCloseBuilder().setTx(ByteString.copyFrom(result.bitcoinSerialize()));
+                    log.info("Sending CLOSE back with finalized broadcast contract.");
+                } else {
+                    log.info("Sending CLOSE back without finalized broadcast contract.");
+                }
+                conn.sendToClient(msg.build());
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+                log.error("Failed to broadcast close TX", t);
+                conn.destroyConnection(clientRequestedClose);
+            }
+        });
     }
 
     /**

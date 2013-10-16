@@ -601,11 +601,16 @@ public class ChannelConnectionTest extends TestWithWallet {
         pair.clientRecorder.checkOpened();
         assertNull(pair.serverRecorder.q.poll());
         assertNull(pair.clientRecorder.q.poll());
-        // Send the whole channel at once.
+        // Send the whole channel at once. The server will broadcast the final contract and close the channel for us.
         client.incrementPayment(Utils.COIN);
+        broadcastTxPause.release();
         server.receiveMessage(pair.clientRecorder.checkNextMsg(MessageType.UPDATE_PAYMENT));
+        broadcasts.take();
         // The channel is now empty.
         assertEquals(BigInteger.ZERO, client.state().getValueRefunded());
+        pair.serverRecorder.q.take();  // Take the BigInteger.
+        client.receiveMessage(pair.serverRecorder.checkNextMsg(MessageType.CLOSE));
+        assertEquals(CloseReason.SERVER_REQUESTED_CLOSE, pair.clientRecorder.q.take());
         client.connectionClosed();
 
         // Now try opening a new channel with the same server ID and verify the client asks for a new channel.
