@@ -305,35 +305,7 @@ public class PaymentChannelServer {
                         receiveUpdatePaymentMessage(msg);
                         return;
                     case CLOSE:
-                        log.info("Got CLOSE message, closing channel");
-                        connectionClosing = true;
-                        if (state != null) {
-                            Futures.addCallback(state.close(), new FutureCallback<Transaction>() {
-                                @Override
-                                public void onSuccess(Transaction result) {
-                                    // Send the successfully accepted transaction back to the client.
-                                    final Protos.TwoWayChannelMessage.Builder msg = Protos.TwoWayChannelMessage.newBuilder();
-                                    msg.setType(Protos.TwoWayChannelMessage.MessageType.CLOSE);
-                                    if (result != null) {
-                                        // Result can be null on various error paths, like if we never actually opened
-                                        // properly and so on.
-                                        msg.getCloseBuilder().setTx(ByteString.copyFrom(result.bitcoinSerialize()));
-                                    }
-                                    log.info("Sending CLOSE back with finalized broadcast contract.");
-                                    conn.sendToClient(msg.build());
-                                    // The client is expected to hang up the TCP connection after we send back the
-                                    // CLOSE message.
-                                }
-
-                                @Override
-                                public void onFailure(Throwable t) {
-                                    log.error("Failed to broadcast close TX", t);
-                                    conn.destroyConnection(CloseReason.CLIENT_REQUESTED_CLOSE);
-                                }
-                            });
-                        } else {
-                            conn.destroyConnection(CloseReason.CLIENT_REQUESTED_CLOSE);
-                        }
+                        receiveCloseMessage();
                         return;
                     case ERROR:
                         checkState(msg.hasError());
@@ -373,6 +345,39 @@ public class PaymentChannelServer {
             conn.destroyConnection(closeReason);
         } finally {
             lock.unlock();
+        }
+    }
+
+    @GuardedBy("lock")
+    private void receiveCloseMessage() throws ValueOutOfRangeException {
+        log.info("Got CLOSE message, closing channel");
+        connectionClosing = true;
+        if (state != null) {
+            Futures.addCallback(state.close(), new FutureCallback<Transaction>() {
+                @Override
+                public void onSuccess(Transaction result) {
+                    // Send the successfully accepted transaction back to the client.
+                    final Protos.TwoWayChannelMessage.Builder msg = Protos.TwoWayChannelMessage.newBuilder();
+                    msg.setType(Protos.TwoWayChannelMessage.MessageType.CLOSE);
+                    if (result != null) {
+                        // Result can be null on various error paths, like if we never actually opened
+                        // properly and so on.
+                        msg.getCloseBuilder().setTx(ByteString.copyFrom(result.bitcoinSerialize()));
+                    }
+                    log.info("Sending CLOSE back with finalized broadcast contract.");
+                    conn.sendToClient(msg.build());
+                    // The client is expected to hang up the TCP connection after we send back the
+                    // CLOSE message.
+                }
+
+                @Override
+                public void onFailure(Throwable t) {
+                    log.error("Failed to broadcast close TX", t);
+                    conn.destroyConnection(CloseReason.CLIENT_REQUESTED_CLOSE);
+                }
+            });
+        } else {
+            conn.destroyConnection(CloseReason.CLIENT_REQUESTED_CLOSE);
         }
     }
 
