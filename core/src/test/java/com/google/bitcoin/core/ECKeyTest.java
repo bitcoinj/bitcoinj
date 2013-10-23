@@ -24,6 +24,11 @@ import com.google.bitcoin.params.MainNetParams;
 import com.google.bitcoin.params.TestNet3Params;
 import com.google.bitcoin.params.UnitTestParams;
 import com.google.bitcoin.utils.BriefLogFormatter;
+import com.google.common.collect.Lists;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.protobuf.ByteString;
 import org.bitcoinj.wallet.Protos;
 import org.bitcoinj.wallet.Protos.ScryptParameters;
@@ -38,8 +43,12 @@ import java.math.BigInteger;
 import java.security.SecureRandom;
 import java.security.SignatureException;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Random;
 import java.io.InputStream;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import static com.google.bitcoin.core.Utils.reverseBytes;
 import static org.junit.Assert.*;
@@ -65,6 +74,29 @@ public class ECKeyTest {
         keyCrypter = new KeyCrypterScrypt(scryptParameters);
 
         BriefLogFormatter.init();
+    }
+
+    @Test
+    public void sValue() throws Exception {
+        // Check that we never generate an S value that is larger than half the curve order. This avoids a malleability
+        // issue that can allow someone to change a transaction [hash] without invalidating the signature.
+        final int ITERATIONS = 10;
+        ListeningExecutorService executor = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(ITERATIONS));
+        List<ListenableFuture<ECKey.ECDSASignature>> sigFutures = Lists.newArrayList();
+        final ECKey key = new ECKey();
+        for (byte i = 0; i < ITERATIONS; i++) {
+            final Sha256Hash hash = Sha256Hash.create(new byte[]{i});
+            sigFutures.add(executor.submit(new Callable<ECKey.ECDSASignature>() {
+                @Override
+                public ECKey.ECDSASignature call() throws Exception {
+                    return key.sign(hash);
+                }
+            }));
+        }
+        List<ECKey.ECDSASignature> sigs = Futures.allAsList(sigFutures).get();
+        for (ECKey.ECDSASignature signature : sigs) {
+            assertTrue(signature.s.compareTo(ECKey.HALF_CURVE_ORDER) <= 0);
+        }
     }
 
     @Test
