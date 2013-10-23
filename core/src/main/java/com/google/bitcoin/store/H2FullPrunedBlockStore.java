@@ -686,9 +686,6 @@ public class H2FullPrunedBlockStore implements FullPrunedBlockStore {
 
     public void removeUnspentTransactionOutput(StoredTransactionOutput out) throws BlockStoreException {
         maybeConnect();
-        // TODO: This should only need one query (maybe a stored procedure)
-        if (getTransactionOutput(out.getHash(), out.getIndex()) == null)
-            throw new BlockStoreException("Tried to remove a StoredTransactionOutput from H2FullPrunedBlockStore that it didn't have!");
         try {
             PreparedStatement s = conn.get()
                 .prepareStatement("DELETE FROM openOutputs WHERE hash = ? AND index = ?");
@@ -696,7 +693,10 @@ public class H2FullPrunedBlockStore implements FullPrunedBlockStore {
             // index is actually an unsigned int
             s.setInt(2, (int)out.getIndex());
             s.executeUpdate();
+            int updateCount = s.getUpdateCount();
             s.close();
+            if (updateCount == 0)
+                throw new BlockStoreException("Tried to remove a StoredTransactionOutput from H2FullPrunedBlockStore that it didn't have!");
         } catch (SQLException e) {
             throw new BlockStoreException(e);
         }
