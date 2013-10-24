@@ -376,14 +376,15 @@ public class ChannelConnectionTest extends TestWithWallet {
         // Verify the previous one was closed.
         openPair.serverRecorder.checkNextMsg(MessageType.CLOSE);
 
-        assertTrue(clientStoredChannels.getChannel(Sha256Hash.create(new byte[]{}), contractHash).active);
+        assertTrue(clientStoredChannels.getChannel(someServerId, contractHash).active);
 
         // And finally close the first channel too.
         openClient.connectionClosed();
-        assertFalse(clientStoredChannels.getChannel(Sha256Hash.create(new byte[]{}), contractHash).active);
+        assertFalse(clientStoredChannels.getChannel(someServerId, contractHash).active);
 
         // Now roll the mock clock and recreate the client object so that it removes the channels and announces refunds.
-        Utils.rollMockClock(60 * 60 * 24 + 60*5);   // Client announces refund 5 minutes after expire time
+        assertEquals(86640, clientStoredChannels.getSecondsUntilExpiry(someServerId));
+        Utils.rollMockClock(60 * 60 * 24 + 60 * 5);   // Client announces refund 5 minutes after expire time
         StoredPaymentChannelClientStates newClientStates = new StoredPaymentChannelClientStates(wallet, mockBroadcaster);
         newClientStates.deserializeWalletExtension(wallet, clientStoredChannels.serializeWalletExtension());
         broadcastTxPause.release();

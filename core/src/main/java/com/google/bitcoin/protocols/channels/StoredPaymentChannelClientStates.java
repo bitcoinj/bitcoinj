@@ -87,10 +87,32 @@ public class StoredPaymentChannelClientStates implements WalletExtension {
     }
 
     /**
+     * Returns the number of seconds from now until this servers next channel will expire, or zero if no unexpired
+     * channels found.
+     */
+    public long getSecondsUntilExpiry(Sha256Hash id) {
+        lock.lock();
+        try {
+            final Set<StoredClientChannel> setChannels = mapChannels.get(id);
+            final long nowSeconds = Utils.now().getTime() / 1000;
+            int earliestTime = Integer.MAX_VALUE;
+            for (StoredClientChannel channel : setChannels) {
+                synchronized (channel) {
+                    if (channel.expiryTimeSeconds() > nowSeconds)
+                        earliestTime = Math.min(earliestTime, (int) channel.expiryTimeSeconds());
+                }
+            }
+            return earliestTime == Integer.MAX_VALUE ? 0 : earliestTime - nowSeconds;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
      * Finds an inactive channel with the given id and returns it, or returns null.
      */
     @Nullable
-    public StoredClientChannel getUsableChannelForServerID(Sha256Hash id) {
+    StoredClientChannel getUsableChannelForServerID(Sha256Hash id) {
         lock.lock();
         try {
             Set<StoredClientChannel> setChannels = mapChannels.get(id);
@@ -119,7 +141,7 @@ public class StoredPaymentChannelClientStates implements WalletExtension {
     /**
      * Finds a channel with the given id and contract hash and returns it, or returns null.
      */
-    public StoredClientChannel getChannel(Sha256Hash id, Sha256Hash contractHash) {
+    StoredClientChannel getChannel(Sha256Hash id, Sha256Hash contractHash) {
         lock.lock();
         try {
             Set<StoredClientChannel> setChannels = mapChannels.get(id);
@@ -137,7 +159,7 @@ public class StoredPaymentChannelClientStates implements WalletExtension {
      * Adds the given channel to this set of stored states, broadcasting the contract and refund transactions when the
      * channel expires and notifies the wallet of an update to this wallet extension
      */
-    public void putChannel(final StoredClientChannel channel) {
+    void putChannel(final StoredClientChannel channel) {
         putChannel(channel, true);
     }
 
@@ -154,7 +176,7 @@ public class StoredPaymentChannelClientStates implements WalletExtension {
                     announcePeerGroup.broadcastTransaction(channel.refund);
                 }
                 // Add the difference between real time and Utils.now() so that test-cases can use a mock clock.
-            }, new Date((channel.refund.getLockTime() + 60 * 5) * 1000 + (System.currentTimeMillis() - Utils.now().getTime())));
+            }, new Date(channel.expiryTimeSeconds() * 1000 + (System.currentTimeMillis() - Utils.now().getTime())));
         } finally {
             lock.unlock();
         }
@@ -170,7 +192,7 @@ public class StoredPaymentChannelClientStates implements WalletExtension {
      * {@link TransactionBroadcaster} as long as this {@link StoredPaymentChannelClientStates} continues to
      * exist in memory.</p>
      */
-    public void removeChannel(StoredClientChannel channel) {
+    void removeChannel(StoredClientChannel channel) {
         lock.lock();
         try {
             mapChannels.remove(channel.id, channel);
@@ -283,6 +305,10 @@ class StoredClientChannel {
         this.valueToMe = valueToMe;
         this.refundFees = refundFees;
         this.active = active;
+    }
+
+    long expiryTimeSeconds() {
+        return refund.getLockTime() + 60 * 5;
     }
 
     @Override
