@@ -53,6 +53,7 @@ class Rule {
  */
 class BlockAndValidity extends Rule {
     Block block;
+    Sha256Hash blockHash;
     boolean connects;
     boolean throwsException;
     Sha256Hash hashChainTipAfterBlock;
@@ -64,6 +65,7 @@ class BlockAndValidity extends Rule {
         if (connects && throwsException)
             throw new RuntimeException("A block cannot connect if an exception was thrown while adding it.");
         this.block = block;
+        this.blockHash = block.getHash();
         this.connects = connects;
         this.throwsException = throwsException;
         this.hashChainTipAfterBlock = hashChainTipAfterBlock;
