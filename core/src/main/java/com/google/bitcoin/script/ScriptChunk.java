@@ -48,6 +48,9 @@ public class ScriptChunk {
         return isOpCode && data.length == 1 && (0xFF & data[0]) == opCode;
     }
 
+    /**
+     * If this chunk is a single byte of non-pushdata content (could be OP_RESERVED or some invalid Opcode)
+     */
     public boolean isOpCode() {
         return isOpCode;
     }

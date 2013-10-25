@@ -348,14 +348,14 @@ public class Script {
     }
 
     /**
-     * Converts an opcode to its int representation
+     * Converts an opcode to its int representation (including OP_1NEGATE and OP_0/OP_FALSE)
      * @throws IllegalArgumentException If the opcode is not an OP_N opcode
      */
     public static int decodeFromOpN(byte opcode) throws IllegalArgumentException {
         return decodeFromOpN((int)opcode);
     }
     static int decodeFromOpN(int opcode) {
-        checkArgument(opcode >= -1 && opcode <= OP_16, "decodeFromOpN called on non OP_N opcode");
+        checkArgument((opcode == OP_0 || opcode == OP_1NEGATE) || (opcode >= OP_1 && opcode <= OP_16), "decodeFromOpN called on non OP_N opcode");
         if (opcode == OP_0)
             return 0;
         else if (opcode == OP_1NEGATE)
@@ -444,12 +444,12 @@ public class Script {
             ScriptChunk m = chunks.get(chunks.size() - 2);
             if (!m.isOpCode()) return false;
             int numKeys = decodeFromOpN(m.data[0]);
-            if (chunks.size() != 3 + numKeys) return false;
+            if (numKeys < 1 || chunks.size() != 3 + numKeys) return false;
             for (int i = 1; i < chunks.size() - 2; i++) {
                 if (chunks.get(i).isOpCode()) return false;
             }
             // First chunk must be an OP_N opcode too.
-            decodeFromOpN(chunks.get(0).data[0]);
+            if (decodeFromOpN(chunks.get(0).data[0]) < 1) return false;
         } catch (IllegalStateException e) {
             return false;   // Not an OP_N opcode.
         }
