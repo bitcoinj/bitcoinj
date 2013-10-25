@@ -47,6 +47,11 @@ public class HeadersMessage extends Message {
         blockHeaders = Arrays.asList(headers);
     }
 
+    public HeadersMessage(NetworkParameters params, List<Block> headers) throws ProtocolException {
+        super(params);
+        blockHeaders = headers;
+    }
+
     @Override
     public void bitcoinSerializeToStream(OutputStream stream) throws IOException {
         stream.write(new VarInt(blockHeaders.size()).encode());
