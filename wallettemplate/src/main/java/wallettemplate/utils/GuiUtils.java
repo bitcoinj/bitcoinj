@@ -15,6 +15,8 @@ import javafx.util.Duration;
 import java.io.IOException;
 import java.util.function.BiConsumer;
 
+import static com.google.common.base.Preconditions.checkState;
+
 public class GuiUtils {
     private static void runAlert(BiConsumer<Stage, AlertWindowController> setup) {
         try {
@@ -24,8 +26,8 @@ public class GuiUtils {
             Stage dialogStage = new Stage();
             dialogStage.initModality(Modality.WINDOW_MODAL);
             FXMLLoader loader = new FXMLLoader(GuiUtils.class.getResource("alert.fxml"));
-            Pane pane = (Pane) loader.load();
-            AlertWindowController controller = (AlertWindowController) loader.getController();
+            Pane pane = loader.load();
+            AlertWindowController controller = loader.getController();
             setup.accept(dialogStage, controller);
             dialogStage.setScene(new Scene(pane));
             dialogStage.showAndWait();
@@ -52,8 +54,9 @@ public class GuiUtils {
         });
     }
 
-    public static void informationalAlert(String message, String details) {
-        Runnable r = () -> runAlert((stage, controller) -> controller.informational(stage, message, details));
+    public static void informationalAlert(String message, String details, Object... args) {
+        String formattedDetails = String.format(details, args);
+        Runnable r = () -> runAlert((stage, controller) -> controller.informational(stage, message, formattedDetails));
         if (Platform.isFxApplicationThread())
             r.run();
         else
@@ -101,5 +104,9 @@ public class GuiUtils {
         timeline.getKeyFrames().add(kf);
         timeline.setOnFinished(actionEvent -> node.setEffect(null));
         timeline.play();
+    }
+
+    public static void checkGuiThread() {
+        checkState(Platform.isFxApplicationThread());
     }
 }

@@ -1,27 +1,22 @@
 package wallettemplate;
 
-import com.google.bitcoin.core.*;
-import com.google.bitcoin.uri.BitcoinURI;
+import com.google.bitcoin.core.AbstractWalletEventListener;
+import com.google.bitcoin.core.DownloadListener;
+import com.google.bitcoin.core.Utils;
+import com.google.bitcoin.core.Wallet;
 import javafx.animation.*;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.scene.control.Button;
-import javafx.scene.control.*;
+import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
-import javafx.scene.image.ImageView;
-import javafx.scene.input.Clipboard;
-import javafx.scene.input.ClipboardContent;
-import javafx.scene.input.MouseButton;
-import javafx.scene.input.MouseEvent;
+import javafx.scene.control.ProgressBar;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.util.Duration;
-import wallettemplate.utils.GuiUtils;
+import wallettemplate.controls.ClickableBitcoinAddress;
 
-import java.awt.*;
-import java.io.IOException;
 import java.math.BigInteger;
-import java.net.URI;
 import java.util.Date;
 
 import static com.google.common.base.Preconditions.checkState;
@@ -36,64 +31,21 @@ public class Controller {
     public ProgressBar syncProgress;
     public VBox syncBox;
     public HBox controlsBox;
-    public Label requestMoneyLink;
     public Label balance;
     public ContextMenu addressMenu;
-    public HBox addressLabelBox;
     public Button sendMoneyOutBtn;
-    public ImageView copyWidget;
-
-    private Address primaryAddress;
+    public ClickableBitcoinAddress addressControl;
 
     // Called by FXMLLoader.
     public void initialize() {
         syncProgress.setProgress(-1);
-        addressLabelBox.setOpacity(0.0);
-        Tooltip tooltip = new Tooltip("Copy address to clipboard");
-        Tooltip.install(copyWidget, tooltip);
+        addressControl.setOpacity(0.0);
     }
 
     public void onBitcoinSetup() {
         bitcoin.wallet().addEventListener(new BalanceUpdater());
-        primaryAddress = bitcoin.wallet().getKeys().get(0).toAddress(Main.params);
+        addressControl.setAddress(bitcoin.wallet().getKeys().get(0).toAddress(Main.params).toString());
         refreshBalanceLabel();
-    }
-
-    public void requestMoney(MouseEvent event) {
-        // User clicked on the address.
-        if (event.getButton() == MouseButton.SECONDARY || (event.getButton() == MouseButton.PRIMARY && event.isMetaDown())) {
-            addressMenu.show(requestMoneyLink, event.getScreenX(), event.getScreenY());
-        } else {
-            String uri = getURI();
-            System.out.println("Opening " + uri);
-            try {
-                Desktop.getDesktop().browse(URI.create(uri));
-            } catch (IOException e) {
-                // Couldn't open wallet app.
-                GuiUtils.informationalAlert("Opening wallet app failed", "Perhaps you don't have one installed?");
-            }
-        }
-    }
-
-    private String getURI() {
-        return BitcoinURI.convertToBitcoinURI(getAddress(), Utils.COIN, Main.APP_NAME, null);
-    }
-
-    private String getAddress() {
-        return primaryAddress.toString();
-    }
-
-    public void copyWidgetClicked(MouseEvent event) {
-        copyAddress(null);
-    }
-
-    public void copyAddress(ActionEvent event) {
-        // User clicked icon or menu item.
-        Clipboard clipboard = Clipboard.getSystemClipboard();
-        ClipboardContent content = new ClipboardContent();
-        content.putString(getAddress());
-        content.putHtml(String.format("<a href='%s'>%s</a>", getURI(), getAddress()));
-        clipboard.setContent(content);
     }
 
     public void sendMoneyOut(ActionEvent event) {
@@ -122,8 +74,7 @@ public class Controller {
         // Buttons slide in and clickable address appears simultaneously.
         TranslateTransition arrive = new TranslateTransition(Duration.millis(600), controlsBox);
         arrive.setToY(0.0);
-        requestMoneyLink.setText(primaryAddress.toString());
-        FadeTransition reveal = new FadeTransition(Duration.millis(500), addressLabelBox);
+        FadeTransition reveal = new FadeTransition(Duration.millis(500), addressControl);
         reveal.setToValue(1.0);
         ParallelTransition group = new ParallelTransition(arrive, reveal);
         // Slide out happens then slide in/fade happens.

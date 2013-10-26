@@ -1,4 +1,4 @@
-package wallettemplate;
+package wallettemplate.controls;
 
 import com.google.bitcoin.core.Address;
 import com.google.bitcoin.core.AddressFormatException;

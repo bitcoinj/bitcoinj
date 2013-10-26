@@ -44,5 +44,15 @@
             <artifactId>aquafx</artifactId>
             <version>0.1</version>
         </dependency>
+        <dependency>
+            <groupId>de.jensd</groupId>
+            <artifactId>fontawesomefx</artifactId>
+            <version>8.0.0</version>
+        </dependency>
+        <dependency>
+            <groupId>net.glxn</groupId>
+            <artifactId>qrgen</artifactId>
+            <version>1.3</version>
+        </dependency>
     </dependencies>
 </project>

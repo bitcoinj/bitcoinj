@@ -24,6 +24,8 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 
+import static wallettemplate.utils.GuiUtils.*;
+
 public class Main extends Application {
     public static String APP_NAME = "WalletTemplate";
 
@@ -37,6 +39,7 @@ public class Main extends Application {
     @Override
     public void start(Stage mainWindow) throws Exception {
         instance = this;
+        // Show the crash dialog for any exceptions that we don't handle and that hit the main loop.
         GuiUtils.handleCrashesOnThisThread();
         try {
             init(mainWindow);
@@ -57,7 +60,7 @@ public class Main extends Application {
         // Load the GUI. The Controller class will be automagically created and wired up.
         URL location = getClass().getResource("main.fxml");
         FXMLLoader loader = new FXMLLoader(location);
-        mainUI = (Pane) loader.load();
+        mainUI = loader.load();
         Controller controller = loader.getController();
         // Configure the window with a StackPane so we can overlay things on top of the main UI.
         uiStack = new StackPane(mainUI);
@@ -89,6 +92,7 @@ public class Main extends Application {
         // or progress widget to keep the user engaged whilst we initialise, but we don't.
         bitcoin.setDownloadListener(controller.progressBarUpdater())
                .setBlockingStartup(false)
+               .setUserAgent(APP_NAME, "1.0")
                .startAndWait();
         // Don't make the user wait for confirmations for now, as the intention is they're sending it their own money!
         bitcoin.wallet().allowSpendingUnconfirmedTransactions();
@@ -97,40 +101,58 @@ public class Main extends Application {
         mainWindow.show();
     }
 
-    public class OverlayUI {
-        Node ui;
-        Object controller;
+    public class OverlayUI<T> {
+        public Node ui;
+        public T controller;
 
-        public OverlayUI(Node ui, Object controller) {
+        public OverlayUI(Node ui, T controller) {
             this.ui = ui;
             this.controller = controller;
         }
 
+        public void show() {
+            blurOut(mainUI);
+            uiStack.getChildren().add(ui);
+            fadeIn(ui);
+        }
+
         public void done() {
-            GuiUtils.fadeOutAndRemove(ui, uiStack);
-            GuiUtils.blurIn(mainUI);
+            checkGuiThread();
+            fadeOutAndRemove(ui, uiStack);
+            blurIn(mainUI);
             this.ui = null;
             this.controller = null;
         }
     }
 
-    /** Loads the FXML file with the given name, blurs out the main UI and puts this one on top. */
-    public OverlayUI overlayUI(String name) {
+    public <T> OverlayUI<T> overlayUI(Node node, T controller) {
+        checkGuiThread();
+        OverlayUI<T> pair = new OverlayUI<T>(node, controller);
+        // Auto-magically set the overlayUi member, if it's there.
         try {
+            controller.getClass().getDeclaredField("overlayUi").set(controller, pair);
+        } catch (IllegalAccessException | NoSuchFieldException ignored) {
+        }
+        pair.show();
+        return pair;
+    }
+
+    /** Loads the FXML file with the given name, blurs out the main UI and puts this one on top. */
+    public <T> OverlayUI<T> overlayUI(String name) {
+        try {
+            checkGuiThread();
             // Load the UI from disk.
             URL location = getClass().getResource(name);
             FXMLLoader loader = new FXMLLoader(location);
-            Pane ui = (Pane) loader.load();
-            Object controller = loader.getController();
-            OverlayUI pair = new OverlayUI(ui, controller);
+            Pane ui = loader.load();
+            T controller = loader.getController();
+            OverlayUI<T> pair = new OverlayUI<T>(ui, controller);
             // Auto-magically set the overlayUi member, if it's there.
             try {
                 controller.getClass().getDeclaredField("overlayUi").set(controller, pair);
             } catch (IllegalAccessException | NoSuchFieldException ignored) {
             }
-            GuiUtils.blurOut(mainUI);
-            uiStack.getChildren().add(ui);
-            GuiUtils.fadeIn(ui);
+            pair.show();
             return pair;
         } catch (IOException e) {
             throw new RuntimeException(e);  // Can't happen.

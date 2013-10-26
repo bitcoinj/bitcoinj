@@ -306,7 +306,8 @@ public class BitcoinURI {
      * @param message A message
      * @return A String containing the Bitcoin URI
      */
-    public static String convertToBitcoinURI(String address, BigInteger amount, String label, String message) {
+    public static String convertToBitcoinURI(String address, @Nullable BigInteger amount, @Nullable String label,
+                                             @Nullable String message) {
         checkNotNull(address);
         if (amount != null && amount.compareTo(BigInteger.ZERO) < 0) {
             throw new IllegalArgumentException("Amount must be positive");
