@@ -1197,14 +1197,14 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
                 final Transaction pinnedTx = memoryPool.seen(tx, somePeer.getAddress());
                 // Prepare to send the transaction by adding a listener that'll be called when confidence changes.
                 // Only bother with this if we might actually hear back:
-                if (minConnections > 1) tx.getConfidence().addEventListener(new TransactionConfidence.Listener() {
+                if (minConnections > 1) pinnedTx.getConfidence().addEventListener(new TransactionConfidence.Listener() {
                     public void onConfidenceChanged(Transaction tx, TransactionConfidence.Listener.ChangeReason reason) {
                         // The number of peers that announced this tx has gone up.
                         final TransactionConfidence conf = tx.getConfidence();
                         int numSeenPeers = conf.numBroadcastPeers();
                         boolean mined = tx.getAppearsInHashes() != null;
-                        log.info("broadcastTransaction: TX {} seen by {} peers{}",
-                                 new Object[]{pinnedTx.getHashAsString(), numSeenPeers, mined ? " and mined" : ""});
+                        log.info("broadcastTransaction: {}:  TX {} seen by {} peers{}", reason, pinnedTx.getHashAsString(),
+                                numSeenPeers, mined ? " and mined" : "");
                         if (!(numSeenPeers >= minConnections || mined))
                             return;
                         // We've seen the min required number of peers announce the transaction, or it was included
