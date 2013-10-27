@@ -668,13 +668,19 @@ public class WalletTest extends TestWithWallet {
         // However the confidence should be updated.
         // Make a fresh copy of the tx to ensure we're testing realistically.
         flags[0] = flags[1] = false;
+        final TransactionConfidence.Listener.ChangeReason[] reasons = new TransactionConfidence.Listener.ChangeReason[1];
         notifiedTx[0].getConfidence().addEventListener(new TransactionConfidence.Listener() {
             public void onConfidenceChanged(Transaction tx, TransactionConfidence.Listener.ChangeReason reason) {
                 flags[1] = true;
+                reasons[0] = reason;
             }
         });
         assertEquals(TransactionConfidence.ConfidenceType.PENDING,
                 notifiedTx[0].getConfidence().getConfidenceType());
+        // Send a block with nothing interesting. Verify we don't get a callback.
+        wallet.notifyNewBestBlock(createFakeBlock(blockStore).storedBlock);
+        Threading.waitForUserCode();
+        assertNull(reasons[0]);
         final Transaction t1Copy = new Transaction(params, t1.bitcoinSerialize());
         sendMoneyToWallet(t1Copy, AbstractBlockChain.NewBlockType.BEST_CHAIN);
         Threading.waitForUserCode();
@@ -689,7 +695,7 @@ public class WalletTest extends TestWithWallet {
             wallet.receivePending(irrelevant, null);
         Threading.waitForUserCode();
         assertFalse(flags[0]);
-        assertEquals(2, walletChanged[0]);
+        assertEquals(3, walletChanged[0]);
     }
 
     @Test

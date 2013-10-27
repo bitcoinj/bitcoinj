@@ -910,7 +910,7 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
                     // tx was already processed in receive() due to it appearing in this block, so we don't want to
                     // notify the tx confidence of work done twice, it'd result in miscounting.
                     ignoreNextNewBlock.remove(tx.getHash());
-                } else {
+                } else if (tx.getConfidence().getConfidenceType() == ConfidenceType.BUILDING) {
                     tx.getConfidence().notifyWorkDone(block.getHeader());
                     confidenceChanged.put(tx, TransactionConfidence.Listener.ChangeReason.DEPTH);
                 }
@@ -1770,8 +1770,8 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
             }
             BigInteger totalOutput = value;
 
-            log.info("Completing send tx with {} outputs totalling {} (not including fees)",
-                    req.tx.getOutputs().size(), bitcoinValueToFriendlyString(value));
+            log.info("Completing send tx with {} outputs totalling {} satoshis (not including fees)",
+                    req.tx.getOutputs().size(), value);
 
             // If any inputs have already been added, we don't need to get their value from wallet
             BigInteger totalInput = BigInteger.ZERO;
@@ -1816,6 +1816,7 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
                     feeCalculation = new FeeCalculation(req, value, originalInputs, needAtLeastReferenceFee, candidates);
                 } catch (InsufficientMoneyException e) {
                     // TODO: Propagate this after 0.9 is released and stop returning a boolean.
+                    log.error("Insufficent money in wallet to pay the required fee");
                     return false;
                 }
                 bestCoinSelection = feeCalculation.bestCoinSelection;
@@ -1827,6 +1828,7 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
                 CoinSelector selector = req.coinSelector == null ? coinSelector : req.coinSelector;
                 bestCoinSelection = selector.select(NetworkParameters.MAX_MONEY, candidates);
                 req.tx.getOutput(0).setValue(bestCoinSelection.valueGathered);
+                totalOutput = bestCoinSelection.valueGathered;
             }
 
             for (TransactionOutput output : bestCoinSelection.gathered)
@@ -1836,8 +1838,10 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
                 final BigInteger baseFee = req.fee == null ? BigInteger.ZERO : req.fee;
                 final BigInteger feePerKb = req.feePerKb == null ? BigInteger.ZERO : req.feePerKb;
                 Transaction tx = req.tx;
-                if (!adjustOutputDownwardsForFee(tx, bestCoinSelection, baseFee, feePerKb))
+                if (!adjustOutputDownwardsForFee(tx, bestCoinSelection, baseFee, feePerKb)) {
+                    log.error("Could not adjust output downwards to pay min fee.");
                     return false;
+                }
             }
 
             totalInput = totalInput.add(bestCoinSelection.valueGathered);
@@ -1865,9 +1869,8 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
             int size = req.tx.bitcoinSerialize().length;
             if (size > Transaction.MAX_STANDARD_TX_SIZE) {
                 // TODO: Throw an unchecked protocol exception here.
-                log.warn(String.format(
-                        "Transaction could not be created without exceeding max size: %d vs %d",
-                        size, Transaction.MAX_STANDARD_TX_SIZE));
+                log.error("Transaction could not be created without exceeding max size: {} vs {}", size,
+                        Transaction.MAX_STANDARD_TX_SIZE);
                 return false;
             }
 
