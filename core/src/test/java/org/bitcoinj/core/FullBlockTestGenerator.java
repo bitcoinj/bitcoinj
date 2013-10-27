@@ -1039,7 +1039,9 @@ public class FullBlockTestGenerator {
         
         // Block with invalid merkle hash
         Block b49 = createNextBlock(b44, chainHeadHeight + 16, out15, null);
-        b49.setMerkleRoot(Sha256Hash.ZERO_HASH);
+        byte[] b49MerkleHash = Sha256Hash.ZERO_HASH.getBytes().clone();
+        b49MerkleHash[1] = (byte) 0xDE;
+        b49.setMerkleRoot(Sha256Hash.create(b49MerkleHash));
         b49.solve();
         blocks.add(new BlockAndValidity(blockToHeightMap, hashHeaderMap, b49, false, true, b44.getHash(), chainHeadHeight + 15, "b49"));
         
