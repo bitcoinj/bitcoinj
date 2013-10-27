@@ -1631,39 +1631,39 @@ public class FullBlockTestGenerator {
         TransactionOutPointWithValue out32 = spendableOutputs.poll();  Preconditions.checkState(out32 != null);
 
         Block b84 = createNextBlock(b83, chainHeadHeight + 30, out29, null);
+        Transaction b84tx1 = new Transaction(params);
         {
-            Transaction tx1 = new Transaction(params);
-            tx1.addOutput(new TransactionOutput(params, tx1, ZERO, new byte[]{OP_RETURN}));
-            tx1.addOutput(new TransactionOutput(params, tx1, ZERO, new byte[]{OP_TRUE}));
-            tx1.addOutput(new TransactionOutput(params, tx1, ZERO, new byte[]{OP_TRUE}));
-            tx1.addOutput(new TransactionOutput(params, tx1, ZERO, new byte[]{OP_TRUE}));
-            tx1.addOutput(new TransactionOutput(params, tx1, ZERO, new byte[]{OP_TRUE}));
-            addOnlyInputToTransaction(tx1, new TransactionOutPointWithValue(
+            b84tx1.addOutput(new TransactionOutput(params, b84tx1, ZERO, new byte[]{OP_RETURN}));
+            b84tx1.addOutput(new TransactionOutput(params, b84tx1, ZERO, new byte[]{OP_TRUE}));
+            b84tx1.addOutput(new TransactionOutput(params, b84tx1, ZERO, new byte[]{OP_TRUE}));
+            b84tx1.addOutput(new TransactionOutput(params, b84tx1, ZERO, new byte[]{OP_TRUE}));
+            b84tx1.addOutput(new TransactionOutput(params, b84tx1, ZERO, new byte[]{OP_TRUE}));
+            addOnlyInputToTransaction(b84tx1, new TransactionOutPointWithValue(
                     new TransactionOutPoint(params, 1, b84.getTransactions().get(1).getHash()),
                     SATOSHI, b84.getTransactions().get(1).getOutputs().get(1).getScriptPubKey()));
-            b84.addTransaction(tx1);
+            b84.addTransaction(b84tx1);
 
             Transaction tx2 = new Transaction(params);
             tx2.addOutput(new TransactionOutput(params, tx2, ZERO, new byte[]{OP_RETURN}));
             tx2.addOutput(new TransactionOutput(params, tx2, ZERO, new byte[]{OP_RETURN}));
-            tx2.addInput(new TransactionInput(params, tx2, new byte[]{OP_TRUE}, new TransactionOutPoint(params, 1, tx1)));
+            tx2.addInput(new TransactionInput(params, tx2, new byte[]{OP_TRUE}, new TransactionOutPoint(params, 1, b84tx1)));
             b84.addTransaction(tx2);
 
             Transaction tx3 = new Transaction(params);
             tx3.addOutput(new TransactionOutput(params, tx3, ZERO, new byte[]{OP_RETURN}));
             tx3.addOutput(new TransactionOutput(params, tx3, ZERO, new byte[]{OP_TRUE}));
-            tx3.addInput(new TransactionInput(params, tx3, new byte[]{OP_TRUE}, new TransactionOutPoint(params, 2, tx1)));
+            tx3.addInput(new TransactionInput(params, tx3, new byte[]{OP_TRUE}, new TransactionOutPoint(params, 2, b84tx1)));
             b84.addTransaction(tx3);
 
             Transaction tx4 = new Transaction(params);
             tx4.addOutput(new TransactionOutput(params, tx4, ZERO, new byte[]{OP_TRUE}));
             tx4.addOutput(new TransactionOutput(params, tx4, ZERO, new byte[]{OP_RETURN}));
-            tx4.addInput(new TransactionInput(params, tx4, new byte[]{OP_TRUE}, new TransactionOutPoint(params, 3, tx1)));
+            tx4.addInput(new TransactionInput(params, tx4, new byte[]{OP_TRUE}, new TransactionOutPoint(params, 3, b84tx1)));
             b84.addTransaction(tx4);
 
             Transaction tx5 = new Transaction(params);
             tx5.addOutput(new TransactionOutput(params, tx5, ZERO, new byte[]{OP_RETURN}));
-            tx5.addInput(new TransactionInput(params, tx5, new byte[]{OP_TRUE}, new TransactionOutPoint(params, 4, tx1)));
+            tx5.addInput(new TransactionInput(params, tx5, new byte[]{OP_TRUE}, new TransactionOutPoint(params, 4, b84tx1)));
             b84.addTransaction(tx5);
         }
         b84.solve();
@@ -1681,9 +1681,27 @@ public class FullBlockTestGenerator {
 
         Block b87 = createNextBlock(b84, chainHeadHeight + 31, out30, null);
         blocks.add(new BlockAndValidity(blockToHeightMap, hashHeaderMap, b87, true, false, b86.getHash(), chainHeadHeight + 31, "b87"));
+        spendableOutputs.offer(new TransactionOutPointWithValue(
+                new TransactionOutPoint(params, 0, b87.getTransactions().get(0).getHash()),
+                b87.getTransactions().get(0).getOutputs().get(0).getValue(),
+                b87.getTransactions().get(0).getOutputs().get(0).getScriptPubKey()));
 
         Block b88 = createNextBlock(b87, chainHeadHeight + 32, out31, null);
         blocks.add(new BlockAndValidity(blockToHeightMap, hashHeaderMap, b88, true, false, b88.getHash(), chainHeadHeight + 32, "b88"));
+        spendableOutputs.offer(new TransactionOutPointWithValue(
+                new TransactionOutPoint(params, 0, b88.getTransactions().get(0).getHash()),
+                b88.getTransactions().get(0).getOutputs().get(0).getValue(),
+                b88.getTransactions().get(0).getOutputs().get(0).getScriptPubKey()));
+
+        Block b89 = createNextBlock(b88, chainHeadHeight + 33, out32, null);
+        {
+            Transaction tx = new Transaction(params);
+            tx.addOutput(new TransactionOutput(params, tx, BigInteger.ZERO, new byte[] {OP_TRUE}));
+            tx.addInput(new TransactionInput(params, tx, new byte[]{OP_TRUE}, new TransactionOutPoint(params, 0, b84tx1)));
+            b89.addTransaction(tx);
+            b89.solve();
+        }
+        blocks.add(new BlockAndValidity(blockToHeightMap, hashHeaderMap, b89, false, true, b88.getHash(), chainHeadHeight + 32, "b89"));
 
         // The remaining tests arent designed to fit in the standard flow, and thus must always come last
         // Add new tests here.
