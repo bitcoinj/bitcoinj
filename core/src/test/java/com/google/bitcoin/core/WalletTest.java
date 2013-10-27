@@ -1972,7 +1972,7 @@ public class WalletTest extends TestWithWallet {
         assertArrayEquals(address.getHash160(), tx.getOutput(0).getScriptPubKey().getPubKeyHash());
     }
 
-    @Test
+    //@Test   - this test is slow, disable for now.
     public void fragmentedReKeying() throws Exception {
         // Send lots of small coins and check the fee is correct.
         ECKey key = new ECKey();
