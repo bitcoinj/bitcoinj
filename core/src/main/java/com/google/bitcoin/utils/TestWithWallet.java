@@ -28,6 +28,8 @@ import java.math.BigInteger;
 import static com.google.bitcoin.utils.TestUtils.createFakeBlock;
 import static com.google.bitcoin.utils.TestUtils.createFakeTx;
 
+// TODO: This needs to be somewhat rewritten - the "sendMoneyToWallet" methods aren't sending via the block chain object
+
 /**
  * A utility class that you can derive from in your unit tests. TestWithWallet sets up a wallet with a key,
  * an in memory block store and a block chain object. It also provides helper methods for filling the wallet
