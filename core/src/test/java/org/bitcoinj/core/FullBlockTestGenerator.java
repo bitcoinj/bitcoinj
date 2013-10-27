@@ -1609,7 +1609,7 @@ public class FullBlockTestGenerator {
             addOnlyInputToTransaction(tx1, out28, 0);
             b83.addTransaction(tx1);
             Transaction tx2 = new Transaction(params);
-            tx2.addOutput(new TransactionOutput(params, tx2, BigInteger.ZERO, new byte[]{OP_TRUE}));
+            tx2.addOutput(new TransactionOutput(params, tx2, ZERO, new byte[]{OP_TRUE}));
             tx2.addInput(new TransactionInput(params, tx2, new byte[]{OP_FALSE},
                     new TransactionOutPoint(params, 0, tx1.getHash())));
             b83.addTransaction(tx2);
@@ -1621,6 +1621,70 @@ public class FullBlockTestGenerator {
                 b83.getTransactions().get(0).getOutputs().get(0).getValue(),
                 b83.getTransactions().get(0).getOutputs().get(0).getScriptPubKey()));
 
+        // Reorg on/off blocks that have OP_RETURN in them (and try to spend them)
+        // -> b81 (26) -> b82 (27) -> b83 (28) -> b84 (29) -> b87 (30) -> b88 (31)
+        //                                    \-> b85 (29) -> b86 (30)            \-> b89 (32)
+        //
+        TransactionOutPointWithValue out29 = spendableOutputs.poll();  Preconditions.checkState(out29 != null);
+        TransactionOutPointWithValue out30 = spendableOutputs.poll();  Preconditions.checkState(out30 != null);
+        TransactionOutPointWithValue out31 = spendableOutputs.poll();  Preconditions.checkState(out31 != null);
+        TransactionOutPointWithValue out32 = spendableOutputs.poll();  Preconditions.checkState(out32 != null);
+
+        Block b84 = createNextBlock(b83, chainHeadHeight + 30, out29, null);
+        {
+            Transaction tx1 = new Transaction(params);
+            tx1.addOutput(new TransactionOutput(params, tx1, ZERO, new byte[]{OP_RETURN}));
+            tx1.addOutput(new TransactionOutput(params, tx1, ZERO, new byte[]{OP_TRUE}));
+            tx1.addOutput(new TransactionOutput(params, tx1, ZERO, new byte[]{OP_TRUE}));
+            tx1.addOutput(new TransactionOutput(params, tx1, ZERO, new byte[]{OP_TRUE}));
+            tx1.addOutput(new TransactionOutput(params, tx1, ZERO, new byte[]{OP_TRUE}));
+            addOnlyInputToTransaction(tx1, new TransactionOutPointWithValue(
+                    new TransactionOutPoint(params, 1, b84.getTransactions().get(1).getHash()),
+                    SATOSHI, b84.getTransactions().get(1).getOutputs().get(1).getScriptPubKey()));
+            b84.addTransaction(tx1);
+
+            Transaction tx2 = new Transaction(params);
+            tx2.addOutput(new TransactionOutput(params, tx2, ZERO, new byte[]{OP_RETURN}));
+            tx2.addOutput(new TransactionOutput(params, tx2, ZERO, new byte[]{OP_RETURN}));
+            tx2.addInput(new TransactionInput(params, tx2, new byte[]{OP_TRUE}, new TransactionOutPoint(params, 1, tx1)));
+            b84.addTransaction(tx2);
+
+            Transaction tx3 = new Transaction(params);
+            tx3.addOutput(new TransactionOutput(params, tx3, ZERO, new byte[]{OP_RETURN}));
+            tx3.addOutput(new TransactionOutput(params, tx3, ZERO, new byte[]{OP_TRUE}));
+            tx3.addInput(new TransactionInput(params, tx3, new byte[]{OP_TRUE}, new TransactionOutPoint(params, 2, tx1)));
+            b84.addTransaction(tx3);
+
+            Transaction tx4 = new Transaction(params);
+            tx4.addOutput(new TransactionOutput(params, tx4, ZERO, new byte[]{OP_TRUE}));
+            tx4.addOutput(new TransactionOutput(params, tx4, ZERO, new byte[]{OP_RETURN}));
+            tx4.addInput(new TransactionInput(params, tx4, new byte[]{OP_TRUE}, new TransactionOutPoint(params, 3, tx1)));
+            b84.addTransaction(tx4);
+
+            Transaction tx5 = new Transaction(params);
+            tx5.addOutput(new TransactionOutput(params, tx5, ZERO, new byte[]{OP_RETURN}));
+            tx5.addInput(new TransactionInput(params, tx5, new byte[]{OP_TRUE}, new TransactionOutPoint(params, 4, tx1)));
+            b84.addTransaction(tx5);
+        }
+        b84.solve();
+        blocks.add(new BlockAndValidity(blockToHeightMap, hashHeaderMap, b84, true, false, b84.getHash(), chainHeadHeight + 30, "b84"));
+        spendableOutputs.offer(new TransactionOutPointWithValue(
+                new TransactionOutPoint(params, 0, b84.getTransactions().get(0).getHash()),
+                b84.getTransactions().get(0).getOutputs().get(0).getValue(),
+                b84.getTransactions().get(0).getOutputs().get(0).getScriptPubKey()));
+
+        Block b85 = createNextBlock(b83, chainHeadHeight + 30, out29, null);
+        blocks.add(new BlockAndValidity(blockToHeightMap, hashHeaderMap, b85, true, false, b84.getHash(), chainHeadHeight + 30, "b85"));
+
+        Block b86 = createNextBlock(b85, chainHeadHeight + 31, out30, null);
+        blocks.add(new BlockAndValidity(blockToHeightMap, hashHeaderMap, b86, true, false, b86.getHash(), chainHeadHeight + 31, "b86"));
+
+        Block b87 = createNextBlock(b84, chainHeadHeight + 31, out30, null);
+        blocks.add(new BlockAndValidity(blockToHeightMap, hashHeaderMap, b87, true, false, b86.getHash(), chainHeadHeight + 31, "b87"));
+
+        Block b88 = createNextBlock(b87, chainHeadHeight + 32, out31, null);
+        blocks.add(new BlockAndValidity(blockToHeightMap, hashHeaderMap, b88, true, false, b88.getHash(), chainHeadHeight + 32, "b88"));
+
         // The remaining tests arent designed to fit in the standard flow, and thus must always come last
         // Add new tests here.
         //TODO: Explicitly address MoneyRange() checks
@@ -1630,15 +1694,13 @@ public class FullBlockTestGenerator {
         // Reorg back to:
         // -> b60 (17) -> b64 (18) -> b65 (19) -> b69 (20) -> b72 (21) -> b1001 (22) -> empty blocks
         //
-        TransactionOutPointWithValue out29 = spendableOutputs.poll();  checkState(out29 != null);
-
-        Block b1001 = createNextBlock(b83, chainHeadHeight + 30, out29, null);
-        blocks.add(new BlockAndValidity(blockToHeightMap, hashHeaderMap, b1001, true, false, b1001.getHash(), chainHeadHeight + 30, "b1001"));
+        Block b1001 = createNextBlock(b88, chainHeadHeight + 33, out32, null);
+        blocks.add(new BlockAndValidity(blockToHeightMap, hashHeaderMap, b1001, true, false, b1001.getHash(), chainHeadHeight + 33, "b1001"));
         spendableOutputs.offer(new TransactionOutPointWithValue(
                 new TransactionOutPoint(params, 0, b1001.getTransactions().get(0).getHash()),
                 b1001.getTransactions().get(0).getOutputs().get(0).getValue(),
                 b1001.getTransactions().get(0).getOutputs().get(0).getScriptPubKey()));
-        int heightAfter1001 = chainHeadHeight + 31;
+        int heightAfter1001 = chainHeadHeight + 34;
         
         if (runLargeReorgs) {
             // No way you can fit this test in memory
