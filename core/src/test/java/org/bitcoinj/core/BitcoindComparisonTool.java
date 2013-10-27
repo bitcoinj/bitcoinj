@@ -287,6 +287,8 @@ public class BitcoindComparisonTool {
                     differingBlocks++;
                     log.error("bitcoind and bitcoinj acceptance differs on block \"" + block.ruleName + "\"");
                 }
+                if (block.sendOnce)
+                    preloadedBlocks.remove(nextBlock.getHash());
                 log.info("Block \"" + block.ruleName + "\" completed processing");
             } else if (rule instanceof MemoryPoolState) {
                 MemoryPoolMessage message = new MemoryPoolMessage();
