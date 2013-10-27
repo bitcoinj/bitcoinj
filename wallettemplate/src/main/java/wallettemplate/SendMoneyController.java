@@ -1,9 +1,6 @@
 package wallettemplate;
 
-import com.google.bitcoin.core.Address;
-import com.google.bitcoin.core.AddressFormatException;
-import com.google.bitcoin.core.Transaction;
-import com.google.bitcoin.core.Wallet;
+import com.google.bitcoin.core.*;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import javafx.application.Platform;
@@ -12,7 +9,9 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import wallettemplate.controls.BitcoinAddressValidator;
-import wallettemplate.utils.GuiUtils;
+
+import static wallettemplate.utils.GuiUtils.crashAlert;
+import static wallettemplate.utils.GuiUtils.informationalAlert;
 
 public class SendMoneyController {
     public Button sendBtn;
@@ -21,6 +20,8 @@ public class SendMoneyController {
     public Label titleLabel;
 
     public Main.OverlayUI overlayUi;
+
+    private Wallet.SendResult sendResult;
 
     // Called by FXMLLoader
     public void initialize() {
@@ -35,14 +36,15 @@ public class SendMoneyController {
         try {
             Address destination = new Address(Main.params, address.getText());
             Wallet.SendRequest req = Wallet.SendRequest.emptyWallet(destination);
-            final Wallet.SendResult sendResult = Main.bitcoin.wallet().sendCoins(req);
+            sendResult = Main.bitcoin.wallet().sendCoins(req);
             if (sendResult == null) {
                 // We couldn't empty the wallet for some reason. TODO: When bitcoinj issue 425 is fixed, be more helpful
-                GuiUtils.informationalAlert("Could not empty the wallet",
+                informationalAlert("Could not empty the wallet",
                         "You may have too little money left in the wallet to make a transaction.");
                 overlayUi.done();
                 return;
             }
+
             Futures.addCallback(sendResult.broadcastComplete, new FutureCallback<Transaction>() {
                 @Override
                 public void onSuccess(Transaction result) {
@@ -52,15 +54,24 @@ public class SendMoneyController {
                 @Override
                 public void onFailure(Throwable t) {
                     // We died trying to empty the wallet.
-                    GuiUtils.crashAlert(t);
+                    crashAlert(t);
                 }
+            });
+            sendResult.tx.getConfidence().addEventListener((tx, reason) -> {
+                if (reason == TransactionConfidence.Listener.ChangeReason.SEEN_PEERS)
+                    updateTitleForBroadcast();
             });
             sendBtn.setDisable(true);
             address.setDisable(true);
-            titleLabel.setText("Broadcasting ...");
+            updateTitleForBroadcast();
         } catch (AddressFormatException e) {
             // Cannot happen because we already validated it when the text field changed.
             throw new RuntimeException(e);
         }
+    }
+
+    private void updateTitleForBroadcast() {
+        final int peers = sendResult.tx.getConfidence().numBroadcastPeers();
+        titleLabel.setText(String.format("Broadcasting ... seen by %d peers", peers));
     }
 }
