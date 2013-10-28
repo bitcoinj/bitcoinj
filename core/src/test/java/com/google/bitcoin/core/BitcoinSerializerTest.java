@@ -23,6 +23,8 @@ import org.spongycastle.util.encoders.Hex;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Arrays;
 
 import static org.junit.Assert.*;
@@ -83,7 +85,6 @@ public class BitcoinSerializerTest {
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         bs.serialize(tx, bos);
         assertEquals(true, Arrays.equals(txMessage, bos.toByteArray()));
-        
     }
     
     @Test 
@@ -229,5 +230,118 @@ public class BitcoinSerializerTest {
         assertEquals(thirdBlock.getNonce(), 2850094635L);
     }
 
+    @Test
+    public void testDeserializePayload() {
+        BitcoinSerializer bs = new BitcoinSerializer(MainNetParams.get());
+        ByteArrayInputStream bais = new ByteArrayInputStream(Hex.decode("000000000000000000000000000000020000000000"));
+        BitcoinSerializer.BitcoinPacketHeader bitcoinPacketHeader = null;
+
+        // Test socket is disconnected.
+        InputStream inputStream = new InputStream() {
+            @Override
+            public int read() throws IOException {
+                return -1;
+            }
+        };
+
+        try {
+            bitcoinPacketHeader = new BitcoinSerializer.BitcoinPacketHeader(bais);
+        } catch (ProtocolException e) {
+            fail();
+        } catch (IOException e) {
+            fail();
+        }
+
+        try {
+            bs.deserializePayload(bitcoinPacketHeader, inputStream);
+            fail();
+        } catch (ProtocolException e) {
+            fail();
+        } catch (IOException e) {
+            // expected
+        }
+
+        // TODO Test protocol exception in deserializePayload.
+    }
+
+    @Test
+    public void testBitcoinPacketHeader() {
+        BitcoinSerializer bs = new BitcoinSerializer(MainNetParams.get());
+        ByteArrayInputStream bais = new ByteArrayInputStream(new byte[]{});
+        BitcoinSerializer.BitcoinPacketHeader bitcoinPacketHeader;
+        try {
+            bitcoinPacketHeader = new BitcoinSerializer.BitcoinPacketHeader(bais);
+        } catch (ProtocolException e) {
+            fail();
+        } catch (IOException e) {
+            // expected
+        }
+
+        // Message with a Message size which is 1 too big, in little endian format.
+        byte[] wrongMessageLength = Hex.decode("000000000000000000000000010000020000000000");
+        bais = new ByteArrayInputStream(wrongMessageLength);
+
+        try {
+            bitcoinPacketHeader = new BitcoinSerializer.BitcoinPacketHeader(bais);
+            fail();
+        } catch (ProtocolException e) {
+            // expected
+        } catch (IOException e) {
+            fail();
+        }
+    }
+
+    @Test
+    public void testSeekPastMagicBytes() {
+        BitcoinSerializer bs = new BitcoinSerializer(MainNetParams.get());
+
+        // Empty byte stream, should give IOException.
+        ByteArrayInputStream bais = new ByteArrayInputStream(new byte[]{});
+        try {
+            bs.seekPastMagicBytes(bais);
+            fail();
+        } catch (IOException e) {
+            // expected
+        }
+
+        // Fail in another way, there is data in the stream but no magic bytes.
+        byte[] brokenMessage = Hex.decode("000000");
+        bais = new ByteArrayInputStream(brokenMessage);
+        try {
+            bs.seekPastMagicBytes(bais);
+            fail();
+        } catch (IOException e) {
+            // expected
+        }
+    }
+
+    @Test
+    /**
+     * Tests serialization of an unknown message.
+     */
+    public void testSerializeUnknownMessage() {
+        BitcoinSerializer bs = new BitcoinSerializer(MainNetParams.get());
+
+        UnknownMessage a = new UnknownMessage();
+        ByteArrayOutputStream bos = new ByteArrayOutputStream(addrMessage.length);
+        try {
+            bs.serialize(a, bos);
+            fail();
+        } catch (Throwable e) {
+        }
+    }
+
+    /**
+     * Unknown message for testSerializeUnknownMessage.
+     */
+    class UnknownMessage extends Message {
+        @Override
+        void parse() throws ProtocolException {
+        }
+
+        @Override
+        protected void parseLite() throws ProtocolException {
+        }
+    }
 
 }

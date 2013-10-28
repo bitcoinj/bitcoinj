@@ -149,7 +149,7 @@ public class Base58 {
     public static byte[] decodeChecked(String input) throws AddressFormatException {
         byte tmp [] = decode(input);
         if (tmp.length < 4)
-            throw new AddressFormatException("Input to short");
+            throw new AddressFormatException("Input too short");
         byte[] bytes = copyOfRange(tmp, 0, tmp.length - 4);
         byte[] checksum = copyOfRange(tmp, tmp.length - 4, tmp.length);
         

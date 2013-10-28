@@ -36,7 +36,7 @@ import static com.google.bitcoin.core.Utils.*;
  * <p>To be able to serialize and deserialize new Message subclasses the following criteria needs to be met.</p>
  *
  * <ul>
- * <li>The proper Class instance needs to be mapped to it's message name in the names variable below</li>
+ * <li>The proper Class instance needs to be mapped to its message name in the names variable below</li>
  * <li>There needs to be a constructor matching: NetworkParameters params, byte[] payload</li>
  * <li>Message.bitcoinSerializeToStream() needs to be properly subclassed</li>
  * </ul>
