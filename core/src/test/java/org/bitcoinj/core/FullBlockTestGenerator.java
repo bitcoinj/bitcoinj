@@ -1533,6 +1533,10 @@ public class FullBlockTestGenerator {
 
         Block b77 = createNextBlock(b76, chainHeadHeight + 25, out24, null);
         blocks.add(new BlockAndValidity(blockToHeightMap, hashHeaderMap, b77, true, false, b77.getHash(), chainHeadHeight + 25, "b77"));
+        spendableOutputs.offer(new TransactionOutPointWithValue(
+                new TransactionOutPoint(params, 0, b77.getTransactions().get(0).getHash()),
+                b77.getTransactions().get(0).getOutputs().get(0).getValue(),
+                b77.getTransactions().get(0).getOutputs().get(0).getScriptPubKey()));
 
         Block b78 = createNextBlock(b77, chainHeadHeight + 26, out25, null);
         Transaction b78tx = new Transaction(params);
