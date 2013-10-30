@@ -180,8 +180,10 @@ public class NioWrapperTest {
 
         clientConnection1Open.get();
         serverConnection1Open.get();
-        Thread.sleep(15);
-        assertTrue(clientConnection1Closed.isDone() && serverConnection1Closed.isDone());
+        long closeDelayStart = System.currentTimeMillis();
+        clientConnection1Closed.get();
+        serverConnection1Closed.get();
+        long closeDelayFinish = System.currentTimeMillis();
 
         ProtobufParser<Protos.TwoWayChannelMessage> client2Handler = new ProtobufParser<Protos.TwoWayChannelMessage>(
                 new ProtobufParser.Listener<Protos.TwoWayChannelMessage>() {
@@ -204,12 +206,12 @@ public class NioWrapperTest {
 
         clientConnection2Open.get();
         serverConnection2Open.get();
-        Thread.sleep(15);
+        Thread.sleep((closeDelayFinish - closeDelayStart) * 10);
         assertFalse(clientConnection2Closed.isDone() || serverConnection2Closed.isDone());
 
         client2Handler.setSocketTimeout(10);
-        Thread.sleep(15);
-        assertTrue(clientConnection2Closed.isDone() && serverConnection2Closed.isDone());
+        clientConnection2Closed.get();
+        serverConnection2Closed.get();
 
         server.stop();
     }
