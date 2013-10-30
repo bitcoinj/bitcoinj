@@ -18,7 +18,10 @@ package com.google.bitcoin.utils;
 
 import com.google.bitcoin.core.Transaction;
 import com.google.bitcoin.core.TransactionBroadcaster;
+import com.google.bitcoin.core.VerificationException;
 import com.google.bitcoin.core.Wallet;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.SettableFuture;
 
 import java.util.concurrent.LinkedBlockingQueue;
@@ -31,6 +34,7 @@ import java.util.concurrent.locks.ReentrantLock;
  */
 public class MockTransactionBroadcaster implements TransactionBroadcaster {
     private final ReentrantLock lock = Threading.lock("mock tx broadcaster");
+    private final Wallet wallet;
 
     public static class TxFuturePair {
         public Transaction tx;
@@ -49,6 +53,7 @@ public class MockTransactionBroadcaster implements TransactionBroadcaster {
         // so inversions can be caught.
         lock.lock();
         try {
+            this.wallet = wallet;
             wallet.getPendingTransactions();
         } finally {
             lock.unlock();
@@ -62,6 +67,20 @@ public class MockTransactionBroadcaster implements TransactionBroadcaster {
         try {
             SettableFuture<Transaction> result = SettableFuture.create();
             broadcasts.put(new TxFuturePair(tx, result));
+            Futures.addCallback(result, new FutureCallback<Transaction>() {
+                @Override
+                public void onSuccess(Transaction result) {
+                    try {
+                        wallet.receivePending(result, null);
+                    } catch (VerificationException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+
+                @Override
+                public void onFailure(Throwable t) {
+                }
+            });
             return result;
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
