@@ -17,14 +17,18 @@
 package com.google.bitcoin.protocols.niowrapper;
 
 import com.google.bitcoin.core.Utils;
+import com.google.bitcoin.utils.Threading;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.MessageLite;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.concurrent.GuardedBy;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.ReentrantLock;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
@@ -66,10 +70,11 @@ public class ProtobufParser<MessageType extends MessageLite> extends AbstractTim
     // a smaller network buffer per client and only allocate more memory when we need it to deserialize large messages.
     // Though this is not in of itself a DoS protection, it allows for handling more legitimate clients per server and
     // attacking clients can be made to timeout/get blocked if they are sending crap to fill buffers.
-    private int messageBytesOffset = 0;
-    private byte[] messageBytes;
+    @GuardedBy("lock") private int messageBytesOffset = 0;
+    @GuardedBy("lock") private byte[] messageBytes;
+    private final ReentrantLock lock = Threading.lock("ProtobufParser");
 
-    private MessageWriteTarget writeTarget;
+    private final AtomicReference<MessageWriteTarget> writeTarget = new AtomicReference<MessageWriteTarget>();
 
     /**
      * Creates a new protobuf handler.
@@ -91,9 +96,9 @@ public class ProtobufParser<MessageType extends MessageLite> extends AbstractTim
     }
 
     @Override
-    public synchronized void setWriteTarget(MessageWriteTarget writeTarget) {
-        checkState(this.writeTarget == null);
-        this.writeTarget = checkNotNull(writeTarget);
+    public void setWriteTarget(MessageWriteTarget writeTarget) {
+        // Only allow it to be set once.
+        checkState(this.writeTarget.getAndSet(checkNotNull(writeTarget)) == null);
     }
 
     @Override
@@ -104,8 +109,8 @@ public class ProtobufParser<MessageType extends MessageLite> extends AbstractTim
     /**
      * Closes this connection, eventually triggering a {@link ProtobufParser.Listener#connectionClosed()} event.
      */
-    public synchronized void closeConnection() {
-        this.writeTarget.closeConnection();
+    public void closeConnection() {
+        this.writeTarget.get().closeConnection();
     }
 
     @Override
@@ -123,65 +128,70 @@ public class ProtobufParser<MessageType extends MessageLite> extends AbstractTim
     }
 
     @Override
-    public synchronized int receiveBytes(ByteBuffer buff) throws Exception {
-        if (messageBytes != null) {
-            // Just keep filling up the currently being worked on message
-            int bytesToGet = Math.min(messageBytes.length - messageBytesOffset, buff.remaining());
-            buff.get(messageBytes, messageBytesOffset, bytesToGet);
-            messageBytesOffset += bytesToGet;
-            if (messageBytesOffset == messageBytes.length) {
-                // Filled up our buffer, decode the message
-                deserializeMessage(ByteBuffer.wrap(messageBytes));
-                messageBytes = null;
-                if (buff.hasRemaining())
-                    return bytesToGet + receiveBytes(buff);
+    public int receiveBytes(ByteBuffer buff) throws Exception {
+        lock.lock();
+        try {
+            if (messageBytes != null) {
+                // Just keep filling up the currently being worked on message
+                int bytesToGet = Math.min(messageBytes.length - messageBytesOffset, buff.remaining());
+                buff.get(messageBytes, messageBytesOffset, bytesToGet);
+                messageBytesOffset += bytesToGet;
+                if (messageBytesOffset == messageBytes.length) {
+                    // Filled up our buffer, decode the message
+                    deserializeMessage(ByteBuffer.wrap(messageBytes));
+                    messageBytes = null;
+                    if (buff.hasRemaining())
+                        return bytesToGet + receiveBytes(buff);
+                }
+                return bytesToGet;
             }
-            return bytesToGet;
+
+            // If we cant read the length prefix yet, give up
+            if (buff.remaining() < 4)
+                return 0;
+
+            // Read one integer in big endian
+            buff.order(ByteOrder.BIG_ENDIAN);
+            final int len = buff.getInt();
+
+            // If length is larger than the maximum message size (or is negative/overflows) throw an exception and close the
+            // connection
+            if (len > maxMessageSize || len + 4 < 4)
+                throw new IllegalStateException("Message too large or length underflowed");
+
+            // If the buffer's capacity is less than the next messages length + 4 (length prefix), we must use messageBytes
+            // as a temporary buffer to store the message
+            if (buff.capacity() < len + 4) {
+                messageBytes = new byte[len];
+                // Now copy all remaining bytes into the new buffer, set messageBytesOffset and tell the caller how many
+                // bytes we consumed
+                int bytesToRead = buff.remaining();
+                buff.get(messageBytes, 0, bytesToRead);
+                messageBytesOffset = bytesToRead;
+                return bytesToRead + 4;
+            }
+
+            if (buff.remaining() < len) {
+                // Wait until the whole message is available in the buffer
+                buff.position(buff.position() - 4); // Make sure the buffer's position is right at the end
+                return 0;
+            }
+
+            // Temporarily limit the buffer to the size of the message so that the protobuf decode doesn't get messed up
+            int limit = buff.limit();
+            buff.limit(buff.position() + len);
+            deserializeMessage(buff);
+            checkState(buff.remaining() == 0);
+            buff.limit(limit); // Reset the limit in case we have to recurse
+
+            // If there are still bytes remaining, see if we can pull out another message since we won't get called again
+            if (buff.hasRemaining())
+                return len + 4 + receiveBytes(buff);
+            else
+                return len + 4;
+        } finally {
+            lock.unlock();
         }
-
-        // If we cant read the length prefix yet, give up
-        if (buff.remaining() < 4)
-            return 0;
-
-        // Read one integer in big endian
-        buff.order(ByteOrder.BIG_ENDIAN);
-        final int len = buff.getInt();
-
-        // If length is larger than the maximum message size (or is negative/overflows) throw an exception and close the
-        // connection
-        if (len > maxMessageSize || len + 4 < 4)
-            throw new IllegalStateException("Message too large or length underflowed");
-
-        // If the buffer's capacity is less than the next messages length + 4 (length prefix), we must use messageBytes
-        // as a temporary buffer to store the message
-        if (buff.capacity() < len + 4) {
-            messageBytes = new byte[len];
-            // Now copy all remaining bytes into the new buffer, set messageBytesOffset and tell the caller how many
-            // bytes we consumed
-            int bytesToRead = buff.remaining();
-            buff.get(messageBytes, 0, bytesToRead);
-            messageBytesOffset = bytesToRead;
-            return bytesToRead + 4;
-        }
-
-        if (buff.remaining() < len) {
-            // Wait until the whole message is available in the buffer
-            buff.position(buff.position() - 4); // Make sure the buffer's position is right at the end
-            return 0;
-        }
-
-        // Temporarily limit the buffer to the size of the message so that the protobuf decode doesn't get messed up
-        int limit = buff.limit();
-        buff.limit(buff.position() + len);
-        deserializeMessage(buff);
-        checkState(buff.remaining() == 0);
-        buff.limit(limit); // Reset the limit in case we have to recurse
-
-        // If there are still bytes remaining, see if we can pull out another message since we won't get called again
-        if (buff.hasRemaining())
-            return len + 4 + receiveBytes(buff);
-        else
-            return len + 4;
     }
 
     @Override
@@ -202,14 +212,15 @@ public class ProtobufParser<MessageType extends MessageLite> extends AbstractTim
      *
      * @throws IllegalStateException If the encoded message is larger than the maximum message size.
      */
-    public synchronized void write(MessageType msg) throws IllegalStateException {
+    public void write(MessageType msg) throws IllegalStateException {
         byte[] messageBytes = msg.toByteArray();
         checkState(messageBytes.length <= maxMessageSize);
         byte[] messageLength = new byte[4];
         Utils.uint32ToByteArrayBE(messageBytes.length, messageLength, 0);
         try {
-            writeTarget.writeBytes(messageLength);
-            writeTarget.writeBytes(messageBytes);
+            MessageWriteTarget target = writeTarget.get();
+            target.writeBytes(messageLength);
+            target.writeBytes(messageBytes);
         } catch (IOException e) {
             closeConnection();
         }

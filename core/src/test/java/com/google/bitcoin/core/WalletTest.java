@@ -1829,6 +1829,7 @@ public class WalletTest extends TestWithWallet {
         wallet.addEventListener(new AbstractWalletEventListener() {
             @Override
             public void onCoinsReceived(Wallet wallet, Transaction tx, BigInteger prevBalance, BigInteger newBalance) {
+                log.info("onCoinsReceived 1");
                 throw new RuntimeException("barf");
             }
         });
@@ -1836,12 +1837,15 @@ public class WalletTest extends TestWithWallet {
         wallet.addEventListener(new AbstractWalletEventListener() {
             @Override
             public void onCoinsReceived(Wallet wallet, Transaction tx, BigInteger prevBalance, BigInteger newBalance) {
+                log.info("onCoinsReceived 2");
                 flag.incrementAndGet();
             }
         });
 
         sendMoneyToWallet(Utils.toNanoCoins(1, 0), AbstractBlockChain.NewBlockType.BEST_CHAIN);
+        log.info("Wait for user thread");
         Threading.waitForUserCode();
+        log.info("... and test flag.");
         assertEquals(1, flag.get());
     }
 

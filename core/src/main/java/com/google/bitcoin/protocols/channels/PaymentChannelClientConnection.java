@@ -134,7 +134,7 @@ public class PaymentChannelClientConnection {
      * @throws IllegalStateException If the channel has been closed or is not yet open
      *                               (see {@link PaymentChannelClientConnection#getChannelOpenFuture()} for the second)
      */
-    public synchronized void incrementPayment(BigInteger size) throws ValueOutOfRangeException, IllegalStateException {
+    public void incrementPayment(BigInteger size) throws ValueOutOfRangeException, IllegalStateException {
         channelClient.incrementPayment(size);
     }
 
@@ -145,7 +145,7 @@ public class PaymentChannelClientConnection {
      * <p>Note that if you call any methods which update state directly the server will not be notified and channel
      * initialization logic in the connection may fail unexpectedly.</p>
      */
-    public synchronized PaymentChannelClientState state() {
+    public PaymentChannelClientState state() {
         return channelClient.state();
     }
 
@@ -153,7 +153,7 @@ public class PaymentChannelClientConnection {
      * Closes the connection, notifying the server it should close the channel by broadcasting the most recent payment
      * transaction.
      */
-    public synchronized void close() {
+    public void close() {
         // Shutdown is a little complicated.
         //
         // This call will cause the CLOSE message to be written to the wire, and then the destroyConnection() method that
