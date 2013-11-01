@@ -1,3 +1,19 @@
+/*
+ * Copyright 2013 Google Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.google.bitcoin.protocols.channels;
 
 import com.google.bitcoin.core.*;
@@ -30,53 +46,11 @@ import static com.google.common.base.Preconditions.checkState;
  * "connection" translates roughly into the server-client relationship. See the javadocs for specific functions for more
  * details.</p>
  */
-public class PaymentChannelClient {
+public class PaymentChannelClient implements IPaymentChannelClient {
     private static final org.slf4j.Logger log = LoggerFactory.getLogger(PaymentChannelClient.class);
 
     protected final ReentrantLock lock = Threading.lock("channelclient");
 
-    /**
-     * Implements the connection between this client and the server, providing an interface which allows messages to be
-     * sent to the server, requests for the connection to the server to be closed, and a callback which occurs when the
-     * channel is fully open.
-     */
-    public interface ClientConnection {
-        /**
-         * <p>Requests that the given message be sent to the server. There are no blocking requirements for this method,
-         * however the order of messages must be preserved.</p>
-         *
-         * <p>If the send fails, no exception should be thrown, however
-         * {@link PaymentChannelClient#connectionClosed()} should be called immediately. In the case of messages which
-         * are a part of initialization, initialization will simply fail and the refund transaction will be broadcasted
-         * when it unlocks (if necessary).  In the case of a payment message, the payment will be lost however if the
-         * channel is resumed it will begin again from the channel value <i>after</i> the failed payment.</p>
-         *
-         * <p>Called while holding a lock on the {@link PaymentChannelClient} object - be careful about reentrancy</p>
-         */
-        public void sendToServer(Protos.TwoWayChannelMessage msg);
-
-        /**
-         * <p>Requests that the connection to the server be closed. For stateless protocols, note that after this call,
-         * no more messages should be received from the server and this object is no longer usable. A
-         * {@link PaymentChannelClient#connectionClosed()} event should be generated immediately after this call.</p>
-         *
-         * <p>Called while holding a lock on the {@link PaymentChannelClient} object - be careful about reentrancy</p>
-         *
-         * @param reason The reason for the closure, see the individual values for more details.
-         *               It is usually safe to ignore this and treat any value below
-         *               {@link CloseReason#CLIENT_REQUESTED_CLOSE} as "unrecoverable error" and all others as
-         *               "try again once and see if it works then"
-         */
-        public void destroyConnection(CloseReason reason);
-
-        /**
-         * <p>Indicates the channel has been successfully opened and
-         * {@link PaymentChannelClient#incrementPayment(java.math.BigInteger)} may be called at will.</p>
-         *
-         * <p>Called while holding a lock on the {@link PaymentChannelClient} object - be careful about reentrancy</p>
-         */
-        public void channelOpen();
-    }
     @GuardedBy("lock") private final ClientConnection conn;
 
     // Used to keep track of whether or not the "socket" ie connection is open and we can generate messages
@@ -204,9 +178,9 @@ public class PaymentChannelClient {
     }
 
     /**
-     * Called when a message is received from the server. Processes the given message and generates events based on its
-     * content.
+     * {@inheritDoc}
      */
+    @Override
     public void receiveMessage(Protos.TwoWayChannelMessage msg) throws ValueOutOfRangeException {
         lock.lock();
         try {
@@ -331,9 +305,10 @@ public class PaymentChannelClient {
      * intending to reopen the channel later. There is likely little reason to use this in a stateless protocol.</p>
      *
      * <p>Note that this <b>MUST</b> still be called even after either
-     * {@link ClientConnection#destroyConnection(CloseReason)} or
+     * {@link ClientConnection#destroyConnection(com.google.bitcoin.protocols.channels.PaymentChannelCloseException.CloseReason)} or
      * {@link PaymentChannelClient#close()} is called to actually handle the connection close logic.</p>
      */
+    @Override
     public void connectionClosed() {
         lock.lock();
         try {
@@ -356,6 +331,7 @@ public class PaymentChannelClient {
      *
      * @throws IllegalStateException If the connection is not currently open (ie the CLOSE message cannot be sent)
      */
+    @Override
     public void close() throws IllegalStateException {
         lock.lock();
         try {
@@ -376,6 +352,7 @@ public class PaymentChannelClient {
      * <p>Attempts to find a channel to resume and generates a CLIENT_VERSION message for the server based on the
      * result.</p>
      */
+    @Override
     public void connectionOpen() {
         lock.lock();
         try {
@@ -435,6 +412,7 @@ public class PaymentChannelClient {
      *                               (see {@link PaymentChannelClientConnection#getChannelOpenFuture()} for the second)
      * @return a future that completes when the server acknowledges receipt and acceptance of the payment.
      */
+    @Override
     public ListenableFuture<BigInteger> incrementPayment(BigInteger size) throws ValueOutOfRangeException, IllegalStateException {
         lock.lock();
         try {
