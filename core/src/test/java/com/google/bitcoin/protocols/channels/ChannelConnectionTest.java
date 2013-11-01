@@ -165,11 +165,11 @@ public class ChannelConnectionTest extends TestWithWallet {
         });
 
         Thread.sleep(1250); // No timeouts once the channel is open
-        client.incrementPayment(Utils.CENT);
+        client.incrementPayment(Utils.CENT).get();
         assertEquals(Utils.CENT, q.take());
-        client.incrementPayment(Utils.CENT);
+        client.incrementPayment(Utils.CENT).get();
         assertEquals(Utils.CENT.multiply(BigInteger.valueOf(2)), q.take());
-        client.incrementPayment(Utils.CENT);
+        client.incrementPayment(Utils.CENT).get();
         assertEquals(Utils.CENT.multiply(BigInteger.valueOf(3)), q.take());
         latch.await();
 
@@ -291,6 +291,7 @@ public class ChannelConnectionTest extends TestWithWallet {
         assertEquals(Utils.CENT, pair.serverRecorder.q.take());
         server.close();
         server.connectionClosed();
+        client.receiveMessage(pair.serverRecorder.checkNextMsg(MessageType.PAYMENT_ACK));
         client.receiveMessage(pair.serverRecorder.checkNextMsg(MessageType.CLOSE));
         client.connectionClosed();
         assertFalse(client.connectionOpen);
@@ -340,6 +341,7 @@ public class ChannelConnectionTest extends TestWithWallet {
         client.incrementPayment(Utils.CENT);
         server.receiveMessage(pair.clientRecorder.checkNextMsg(MessageType.UPDATE_PAYMENT));
         pair.serverRecorder.checkTotalPayment(Utils.CENT.multiply(BigInteger.valueOf(2)));
+        client.receiveMessage(pair.serverRecorder.checkNextMsg(MessageType.PAYMENT_ACK));
 
         PaymentChannelClient openClient = client;
         ChannelTestUtils.RecordingPair openPair = pair;
@@ -610,6 +612,7 @@ public class ChannelConnectionTest extends TestWithWallet {
         // The channel is now empty.
         assertEquals(BigInteger.ZERO, client.state().getValueRefunded());
         pair.serverRecorder.q.take();  // Take the BigInteger.
+        client.receiveMessage(pair.serverRecorder.checkNextMsg(MessageType.PAYMENT_ACK));
         client.receiveMessage(pair.serverRecorder.checkNextMsg(MessageType.CLOSE));
         assertEquals(CloseReason.SERVER_REQUESTED_CLOSE, pair.clientRecorder.q.take());
         client.connectionClosed();
@@ -646,15 +649,20 @@ public class ChannelConnectionTest extends TestWithWallet {
             pair.clientRecorder.checkOpened();
             assertNull(pair.serverRecorder.q.poll());
             assertNull(pair.clientRecorder.q.poll());
-            client.incrementPayment(Utils.CENT);
-            client.incrementPayment(Utils.CENT);
+            ListenableFuture<BigInteger> future = client.incrementPayment(Utils.CENT);
+            server.receiveMessage(pair.clientRecorder.checkNextMsg(MessageType.UPDATE_PAYMENT));
+            pair.serverRecorder.q.take();
+            client.receiveMessage(pair.serverRecorder.checkNextMsg(MessageType.PAYMENT_ACK));
+            assertTrue(future.isDone());
             client.incrementPayment(Utils.CENT);
             server.receiveMessage(pair.clientRecorder.checkNextMsg(MessageType.UPDATE_PAYMENT));
             pair.serverRecorder.q.take();
+            client.receiveMessage(pair.serverRecorder.checkNextMsg(MessageType.PAYMENT_ACK));
+
+            client.incrementPayment(Utils.CENT);
             server.receiveMessage(pair.clientRecorder.checkNextMsg(MessageType.UPDATE_PAYMENT));
             pair.serverRecorder.q.take();
-            server.receiveMessage(pair.clientRecorder.checkNextMsg(MessageType.UPDATE_PAYMENT));
-            pair.serverRecorder.q.take();
+            client.receiveMessage(pair.serverRecorder.checkNextMsg(MessageType.PAYMENT_ACK));
 
             // Close it and verify it's considered to be closed.
             broadcastTxPause.release();

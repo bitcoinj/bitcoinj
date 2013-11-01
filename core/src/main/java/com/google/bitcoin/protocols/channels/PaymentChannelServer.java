@@ -269,6 +269,10 @@ public class PaymentChannelServer {
         if (bestPaymentChange.compareTo(BigInteger.ZERO) > 0)
             conn.paymentIncrease(bestPaymentChange, state.getBestValueToMe());
 
+        Protos.TwoWayChannelMessage.Builder ack = Protos.TwoWayChannelMessage.newBuilder();
+        ack.setType(Protos.TwoWayChannelMessage.MessageType.PAYMENT_ACK);
+        conn.sendToClient(ack.build());
+
         if (!stillUsable) {
             log.info("Channel is now fully exhausted, closing/initiating settlement");
             settlePayment(CloseReason.CHANNEL_EXHAUSTED);

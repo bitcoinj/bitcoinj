@@ -443,6 +443,14 @@ public final class Protos {
        */
       UPDATE_PAYMENT(7, 8),
       /**
+       * <code>PAYMENT_ACK = 11;</code>
+       *
+       * <pre>
+       * Sent by the server to the client after an UPDATE_PAYMENT message is successfully processed.
+       * </pre>
+       */
+      PAYMENT_ACK(8, 11),
+      /**
        * <code>CLOSE = 9;</code>
        *
        * <pre>
@@ -457,7 +465,7 @@ public final class Protos {
        * with another CLOSE and then disconnects.
        * </pre>
        */
-      CLOSE(8, 9),
+      CLOSE(9, 9),
       /**
        * <code>ERROR = 10;</code>
        *
@@ -468,7 +476,7 @@ public final class Protos {
        * because the protocol may not run over TCP.
        * </pre>
        */
-      ERROR(9, 10),
+      ERROR(10, 10),
       ;
 
       /**
@@ -514,6 +522,14 @@ public final class Protos {
        */
       public static final int UPDATE_PAYMENT_VALUE = 8;
       /**
+       * <code>PAYMENT_ACK = 11;</code>
+       *
+       * <pre>
+       * Sent by the server to the client after an UPDATE_PAYMENT message is successfully processed.
+       * </pre>
+       */
+      public static final int PAYMENT_ACK_VALUE = 11;
+      /**
        * <code>CLOSE = 9;</code>
        *
        * <pre>
@@ -554,6 +570,7 @@ public final class Protos {
           case 6: return PROVIDE_CONTRACT;
           case 7: return CHANNEL_OPEN;
           case 8: return UPDATE_PAYMENT;
+          case 11: return PAYMENT_ACK;
           case 9: return CLOSE;
           case 10: return ERROR;
           default: return null;
@@ -7968,7 +7985,7 @@ public final class Protos {
   static {
     java.lang.String[] descriptorData = {
       "\n\024paymentchannel.proto\022\017paymentchannels\"" +
-      "\343\005\n\024TwoWayChannelMessage\022?\n\004type\030\001 \002(\01621" +
+      "\364\005\n\024TwoWayChannelMessage\022?\n\004type\030\001 \002(\01621" +
       ".paymentchannels.TwoWayChannelMessage.Me" +
       "ssageType\0226\n\016client_version\030\002 \001(\0132\036.paym" +
       "entchannels.ClientVersion\0226\n\016server_vers" +
@@ -7981,30 +7998,30 @@ public final class Protos {
       ".ProvideContract\0226\n\016update_payment\030\010 \001(\013" +
       "2\036.paymentchannels.UpdatePayment\022%\n\005clos" +
       "e\030\t \001(\0132\026.paymentchannels.Close\022%\n\005error" +
-      "\030\n \001(\0132\026.paymentchannels.Error\"\274\001\n\013Messa" +
+      "\030\n \001(\0132\026.paymentchannels.Error\"\315\001\n\013Messa" +
       "geType\022\022\n\016CLIENT_VERSION\020\001\022\022\n\016SERVER_VER" +
       "SION\020\002\022\014\n\010INITIATE\020\003\022\022\n\016PROVIDE_REFUND\020\004" +
       "\022\021\n\rRETURN_REFUND\020\005\022\024\n\020PROVIDE_CONTRACT\020" +
       "\006\022\020\n\014CHANNEL_OPEN\020\007\022\022\n\016UPDATE_PAYMENT\020\010\022" +
-      "\t\n\005CLOSE\020\t\022\t\n\005ERROR\020\n\"X\n\rClientVersion\022\r",
-      "\n\005major\030\001 \002(\005\022\020\n\005minor\030\002 \001(\005:\0010\022&\n\036previ" +
-      "ous_channel_contract_hash\030\003 \001(\014\"0\n\rServe" +
-      "rVersion\022\r\n\005major\030\001 \002(\005\022\020\n\005minor\030\002 \001(\005:\001" +
-      "0\"]\n\010Initiate\022\024\n\014multisig_key\030\001 \002(\014\022!\n\031m" +
-      "in_accepted_channel_size\030\002 \002(\004\022\030\n\020expire" +
-      "_time_secs\030\003 \002(\004\"1\n\rProvideRefund\022\024\n\014mul" +
-      "tisig_key\030\001 \002(\014\022\n\n\002tx\030\002 \002(\014\"!\n\014ReturnRef" +
-      "und\022\021\n\tsignature\030\001 \002(\014\"\035\n\017ProvideContrac" +
-      "t\022\n\n\002tx\030\001 \002(\014\"?\n\rUpdatePayment\022\033\n\023client" +
-      "_change_value\030\001 \002(\004\022\021\n\tsignature\030\002 \002(\014\"\023",
-      "\n\005Close\022\n\n\002tx\030\003 \002(\014\"\363\001\n\005Error\0225\n\004code\030\001 " +
-      "\001(\0162 .paymentchannels.Error.ErrorCode:\005O" +
-      "THER\022\023\n\013explanation\030\002 \001(\t\"\235\001\n\tErrorCode\022" +
-      "\013\n\007TIMEOUT\020\001\022\020\n\014SYNTAX_ERROR\020\002\022\031\n\025NO_ACC" +
-      "EPTABLE_VERSION\020\003\022\023\n\017BAD_TRANSACTION\020\004\022\031" +
-      "\n\025TIME_WINDOW_TOO_LARGE\020\005\022\033\n\027CHANNEL_VAL" +
-      "UE_TOO_LARGE\020\006\022\t\n\005OTHER\020\007B$\n\032org.bitcoin" +
-      ".paymentchannelB\006Protos"
+      "\017\n\013PAYMENT_ACK\020\013\022\t\n\005CLOSE\020\t\022\t\n\005ERROR\020\n\"X",
+      "\n\rClientVersion\022\r\n\005major\030\001 \002(\005\022\020\n\005minor\030" +
+      "\002 \001(\005:\0010\022&\n\036previous_channel_contract_ha" +
+      "sh\030\003 \001(\014\"0\n\rServerVersion\022\r\n\005major\030\001 \002(\005" +
+      "\022\020\n\005minor\030\002 \001(\005:\0010\"]\n\010Initiate\022\024\n\014multis" +
+      "ig_key\030\001 \002(\014\022!\n\031min_accepted_channel_siz" +
+      "e\030\002 \002(\004\022\030\n\020expire_time_secs\030\003 \002(\004\"1\n\rPro" +
+      "videRefund\022\024\n\014multisig_key\030\001 \002(\014\022\n\n\002tx\030\002" +
+      " \002(\014\"!\n\014ReturnRefund\022\021\n\tsignature\030\001 \002(\014\"" +
+      "\035\n\017ProvideContract\022\n\n\002tx\030\001 \002(\014\"?\n\rUpdate" +
+      "Payment\022\033\n\023client_change_value\030\001 \002(\004\022\021\n\t",
+      "signature\030\002 \002(\014\"\023\n\005Close\022\n\n\002tx\030\003 \002(\014\"\363\001\n" +
+      "\005Error\0225\n\004code\030\001 \001(\0162 .paymentchannels.E" +
+      "rror.ErrorCode:\005OTHER\022\023\n\013explanation\030\002 \001" +
+      "(\t\"\235\001\n\tErrorCode\022\013\n\007TIMEOUT\020\001\022\020\n\014SYNTAX_" +
+      "ERROR\020\002\022\031\n\025NO_ACCEPTABLE_VERSION\020\003\022\023\n\017BA" +
+      "D_TRANSACTION\020\004\022\031\n\025TIME_WINDOW_TOO_LARGE" +
+      "\020\005\022\033\n\027CHANNEL_VALUE_TOO_LARGE\020\006\022\t\n\005OTHER" +
+      "\020\007B$\n\032org.bitcoin.paymentchannelB\006Protos"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
       new com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner() {

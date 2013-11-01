@@ -4,6 +4,7 @@ import com.google.bitcoin.core.*;
 import com.google.bitcoin.protocols.channels.PaymentChannelCloseException.CloseReason;
 import com.google.bitcoin.utils.Threading;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.util.concurrent.*;
 import com.google.protobuf.ByteString;
 import net.jcip.annotations.GuardedBy;
 import org.bitcoin.paymentchannel.Protos;
@@ -108,6 +109,9 @@ public class PaymentChannelClient {
     // Information used during channel initialization to send to the server or check what the server sends to us
     private final ECKey myKey;
     private final BigInteger maxValue;
+
+    @GuardedBy("lock") SettableFuture<BigInteger> increasePaymentFuture;
+    @GuardedBy("lock") BigInteger lastPaymentActualAmount;
 
     /**
      * <p>The maximum amount of time for which we will accept the server locking up our funds for the multisig
@@ -254,6 +258,9 @@ public class PaymentChannelClient {
                         return;
                     case CHANNEL_OPEN:
                         receiveChannelOpen();
+                        return;
+                    case PAYMENT_ACK:
+                        receivePaymentAck();
                         return;
                     case CLOSE:
                         receiveClose(msg);
@@ -418,33 +425,66 @@ public class PaymentChannelClient {
      * Increments the total value which we pay the server. Note that the amount of money sent may not be the same as the
      * amount of money actually requested. It can be larger if the amount left over in the channel would be too small to
      * be accepted by the Bitcoin network. ValueOutOfRangeException will be thrown, however, if there's not enough money
-     * left in the channel to make the payment at all.
+     * left in the channel to make the payment at all. Only one payment can be in-flight at once. You have to ensure
+     * you wait for the previous increase payment future to complete before incrementing the payment again.
      *
      * @param size How many satoshis to increment the payment by (note: not the new total).
      * @throws ValueOutOfRangeException If the size is negative or would pay more than this channel's total value
      *                                  ({@link PaymentChannelClientConnection#state()}.getTotalValue())
      * @throws IllegalStateException If the channel has been closed or is not yet open
      *                               (see {@link PaymentChannelClientConnection#getChannelOpenFuture()} for the second)
-     * @return amount of money actually sent.
+     * @return a future that completes when the server acknowledges receipt and acceptance of the payment.
      */
-    public BigInteger incrementPayment(BigInteger size) throws ValueOutOfRangeException, IllegalStateException {
+    public ListenableFuture<BigInteger> incrementPayment(BigInteger size) throws ValueOutOfRangeException, IllegalStateException {
         lock.lock();
         try {
             if (state() == null || !connectionOpen || step != InitStep.CHANNEL_OPEN)
                 throw new IllegalStateException("Channel is not fully initialized/has already been closed");
+            if (increasePaymentFuture != null)
+                throw new IllegalStateException("Already incrementing paying, wait for previous payment to complete.");
 
             PaymentChannelClientState.IncrementedPayment payment = state().incrementPaymentBy(size);
             Protos.UpdatePayment.Builder updatePaymentBuilder = Protos.UpdatePayment.newBuilder()
                     .setSignature(ByteString.copyFrom(payment.signature.encodeToBitcoin()))
                     .setClientChangeValue(state.getValueRefunded().longValue());
 
+            increasePaymentFuture = SettableFuture.create();
+            increasePaymentFuture.addListener(new Runnable() {
+                @Override
+                public void run() {
+                    lock.lock();
+                    increasePaymentFuture = null;
+                    lock.unlock();
+                }
+            }, MoreExecutors.sameThreadExecutor());
+
             conn.sendToServer(Protos.TwoWayChannelMessage.newBuilder()
                     .setUpdatePayment(updatePaymentBuilder)
                     .setType(Protos.TwoWayChannelMessage.MessageType.UPDATE_PAYMENT)
                     .build());
-            return payment.amount;
+            lastPaymentActualAmount = payment.amount;
+            return increasePaymentFuture;
         } finally {
             lock.unlock();
         }
+    }
+
+    private void receivePaymentAck() {
+        SettableFuture<BigInteger> future;
+        BigInteger value;
+
+        lock.lock();
+        try {
+            if (increasePaymentFuture == null) return;
+            checkNotNull(increasePaymentFuture, "Server sent a PAYMENT_ACK with no outstanding payment");
+            log.info("Received a PAYMENT_ACK from the server");
+            future = increasePaymentFuture;
+            value = lastPaymentActualAmount;
+        } finally {
+            lock.unlock();
+        }
+
+        // Ensure the future runs without the client lock held.
+        future.set(value);
     }
 }

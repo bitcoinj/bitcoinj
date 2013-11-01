@@ -30,8 +30,7 @@ import java.math.BigInteger;
 import java.net.InetSocketAddress;
 
 /**
- * Manages a {@link PaymentChannelClientState} by connecting to a server over TLS and exchanging the necessary data over
- * protobufs.
+ * A simple utility class that runs the micropayment protocol over a raw TCP socket using NIO, standalone.
  */
 public class PaymentChannelClientConnection {
     // Various futures which will be completed later
@@ -134,8 +133,8 @@ public class PaymentChannelClientConnection {
      * @throws IllegalStateException If the channel has been closed or is not yet open
      *                               (see {@link PaymentChannelClientConnection#getChannelOpenFuture()} for the second)
      */
-    public void incrementPayment(BigInteger size) throws ValueOutOfRangeException, IllegalStateException {
-        channelClient.incrementPayment(size);
+    public ListenableFuture<BigInteger> incrementPayment(BigInteger size) throws ValueOutOfRangeException, IllegalStateException {
+        return channelClient.incrementPayment(size);
     }
 
     /**

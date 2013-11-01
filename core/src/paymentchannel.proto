@@ -47,6 +47,8 @@ message TwoWayChannelMessage {
         // message.
         CHANNEL_OPEN = 7;
         UPDATE_PAYMENT = 8;
+        // Sent by the server to the client after an UPDATE_PAYMENT message is successfully processed.
+        PAYMENT_ACK = 11;
         // Either side can send this message. If the client sends it to the server, then the server
         // takes the most recent signature it received in an UPDATE_PAYMENT and uses it to create a
         // valid transaction, which it then broadcasts on the network.
