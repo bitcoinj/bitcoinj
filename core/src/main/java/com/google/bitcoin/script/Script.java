@@ -481,7 +481,7 @@ public class Script {
             if (opcode >= 0 && opcode < OP_PUSHDATA1) {
                 additionalBytes = opcode;
             } else if (opcode == OP_PUSHDATA1) {
-                additionalBytes = inputScript[cursor] + 1;
+                additionalBytes = (0xFF & inputScript[cursor]) + 1;
             } else if (opcode == OP_PUSHDATA2) {
                 additionalBytes = ((0xFF & inputScript[cursor]) |
                                   ((0xFF & inputScript[cursor+1]) << 8)) + 2;
