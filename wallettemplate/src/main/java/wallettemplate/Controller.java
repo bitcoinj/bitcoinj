@@ -8,7 +8,6 @@ import javafx.animation.*;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.scene.control.Button;
-import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.layout.HBox;
@@ -19,9 +18,8 @@ import wallettemplate.controls.ClickableBitcoinAddress;
 import java.math.BigInteger;
 import java.util.Date;
 
-import static com.google.common.base.Preconditions.checkState;
-import static javafx.application.Platform.isFxApplicationThread;
 import static wallettemplate.Main.bitcoin;
+import static wallettemplate.utils.GuiUtils.checkGuiThread;
 
 /**
  * Gets created auto-magically by FXMLLoader via reflection. The widget fields are set to the GUI controls they're named
@@ -32,7 +30,6 @@ public class Controller {
     public VBox syncBox;
     public HBox controlsBox;
     public Label balance;
-    public ContextMenu addressMenu;
     public Button sendMoneyOutBtn;
     public ClickableBitcoinAddress addressControl;
 
@@ -91,7 +88,7 @@ public class Controller {
     public class BalanceUpdater extends AbstractWalletEventListener {
         @Override
         public void onWalletChanged(Wallet wallet) {
-            checkState(isFxApplicationThread());
+            checkGuiThread();
             refreshBalanceLabel();
         }
     }
