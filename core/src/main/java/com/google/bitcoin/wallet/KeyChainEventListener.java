@@ -26,4 +26,7 @@ public interface KeyChainEventListener {
      * can trigger this event.
      */
     void onKeysAdded(List<ECKey> keys);
+
+    /** Called if the keys are encrypted. */
+    void onEncrypt();
 }

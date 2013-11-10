@@ -53,4 +53,7 @@ public class NativeWalletEventListener implements WalletEventListener {
 
     @Override
     public native void onScriptsAdded(Wallet wallet, List<Script> scripts);
+
+    @Override
+    public native void onEncrypt();
 }
