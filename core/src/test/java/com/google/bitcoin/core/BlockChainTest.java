@@ -79,7 +79,7 @@ public class BlockChainTest {
                 }
             }
         };
-        wallet.addKey(new ECKey());
+        wallet.newKey();
 
         resetBlockStore();
         chain = new BlockChain(unitTestParams, wallet, blockStore);
@@ -268,8 +268,7 @@ public class BlockChainTest {
         // considered relevant.
         Address somebodyElse = new ECKey().toAddress(unitTestParams);
         Block b1 = unitTestParams.getGenesisBlock().createNextBlock(somebodyElse);
-        ECKey key = new ECKey();
-        wallet.addKey(key);
+        ECKey key = wallet.newKey();
         Address addr = key.toAddress(unitTestParams);
         // Create a tx that gives us some coins, and another that spends it to someone else in the same block.
         Transaction t1 = TestUtils.createFakeTx(unitTestParams, Utils.toNanoCoins(1, 0), addr);
@@ -289,8 +288,7 @@ public class BlockChainTest {
 
         // Create a second wallet to receive the coinbase spend.
         Wallet wallet2 = new Wallet(unitTestParams);
-        ECKey receiveKey = new ECKey();
-        wallet2.addKey(receiveKey);
+        ECKey receiveKey = wallet2.newKey();
         chain.addWallet(wallet2);
 
         Address addressToSendTo = receiveKey.toAddress(unitTestParams);

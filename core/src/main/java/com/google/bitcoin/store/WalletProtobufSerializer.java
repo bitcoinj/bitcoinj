@@ -424,7 +424,7 @@ public class WalletProtobufSerializer {
                 ecKey = new ECKey(privKey, pubKey);
             }
             ecKey.setCreationTimeSeconds((keyProto.getCreationTimestamp() + 500) / 1000);
-            wallet.addKey(ecKey);
+            wallet.importKey(ecKey);
         }
 
         List<Script> scripts = Lists.newArrayList();

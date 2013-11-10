@@ -81,7 +81,7 @@ public class LazyParseByteCacheTest {
     public void setUp() throws Exception {
         unitTestParams = UnitTestParams.get();
         wallet = new Wallet(unitTestParams);
-        wallet.addKey(new ECKey());
+        wallet.newKey();
 
         resetBlockStore();
         

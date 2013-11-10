@@ -813,7 +813,7 @@ public class WalletTool {
                 }
                 key = key.encrypt(wallet.getKeyCrypter(), wallet.getKeyCrypter().deriveKey(password));
             }
-            wallet.addKey(key);
+            wallet.importKey(key);
         } catch (KeyCrypterException kce) {
             System.err.println("There was an encryption related error when adding the key. The error was '" + kce.getMessage() + "'.");
         }

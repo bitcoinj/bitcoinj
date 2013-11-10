@@ -53,7 +53,7 @@ public class PrivateKeys {
 
             // Import the private key to a fresh wallet.
             Wallet wallet = new Wallet(params);
-            wallet.addKey(key);
+            wallet.importKey(key);
 
             // Find the transactions that involve those coins.
             final MemoryBlockStore blockStore = new MemoryBlockStore(params);

@@ -55,8 +55,8 @@ public class ChainSplitTest {
         Wallet.SendRequest.DEFAULT_FEE_PER_KB = BigInteger.ZERO;
         unitTestParams = UnitTestParams.get();
         wallet = new Wallet(unitTestParams);
-        wallet.addKey(new ECKey());
-        wallet.addKey(new ECKey());
+        wallet.newKey();
+        wallet.newKey();
         blockStore = new MemoryBlockStore(unitTestParams);
         chain = new BlockChain(unitTestParams, wallet, blockStore);
         coinsTo = wallet.getKeys().get(0).toAddress(unitTestParams);

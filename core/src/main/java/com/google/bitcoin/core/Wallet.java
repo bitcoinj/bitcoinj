@@ -2058,23 +2058,52 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
     }
 
     /**
-     * Adds the given ECKey to the wallet. There is currently no way to delete keys (that would result in coin loss).
+     * <p><Adds the given ECKey to the wallet.
      * If {@link Wallet#autosaveToFile(java.io.File, long, java.util.concurrent.TimeUnit, com.google.bitcoin.wallet.WalletFiles.Listener)}
      * has been called, triggers an auto save bypassing the normal coalescing delay and event handlers.
-     * If the key already exists in the wallet, does nothing and returns false.
+     * If the key already exists in the wallet, does nothing and returns false.</p>
+     *
+     * <p><b>Replace with either {@link #newKey()} if your call is addKey(new ECKey()), or with {@link #importKey(ECKey)}
+     * which does the same thing this method used to, but with a better name.</b></p>
      */
-    public boolean addKey(final ECKey key) {
-        return addKeys(Lists.newArrayList(key)) == 1;
+    @Deprecated
+    public boolean addKey(ECKey key) {
+        return importKey(key);
     }
 
     /**
-     * Adds the given keys to the wallet. There is currently no way to delete keys (that would result in coin loss).
+     * <p>Imports the given ECKey to the wallet.</p>
+     *
+     * <p>If the wallet is configured to auto save to a file, triggers a save immediately. Runs the onKeysAdded event
+     * handler. If the key already exists in the wallet, does nothing and returns false.</p>
+     */
+    public boolean importKey(ECKey key) {
+        return importKeys(Lists.newArrayList(key)) == 1;
+    }
+
+    /**
+     * Creates a new random key and adds it to the wallet. You should use this in preference to addKey(new ECKey()).
+     */
+    public ECKey newKey() {
+        ECKey key = new ECKey();
+        importKey(key);
+        return key;
+    }
+
+    /** Replace with {@link #importKeys(java.util.List)}, which does the same thing but with a better name. */
+    @Deprecated
+    public int addKeys(List<ECKey> keys) {
+        return importKeys(keys);
+    }
+
+    /**
+     * Imports the given keys to the wallet. There is currently no way to delete keys (that would result in coin loss).
      * If {@link Wallet#autosaveToFile(java.io.File, long, java.util.concurrent.TimeUnit, com.google.bitcoin.wallet.WalletFiles.Listener)}
      * has been called, triggers an auto save bypassing the normal coalescing delay and event handlers.
      * Returns the number of keys added, after duplicates are ignored. The onKeyAdded event will be called for each key
      * in the list that was not already present.
      */
-    public int addKeys(final List<ECKey> keys) {
+    public int importKeys(final List<ECKey> keys) {
         lock.lock();
         try {
             int added = 0;
@@ -2871,7 +2900,7 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
      */
     public ECKey addNewEncryptedKey(KeyCrypter keyCrypter, KeyParameter aesKey) {
         ECKey newKey = (new ECKey()).encrypt(checkNotNull(keyCrypter), checkNotNull(aesKey));
-        addKey(newKey);
+        importKey(newKey);
         return newKey;
     }
 

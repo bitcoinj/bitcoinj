@@ -343,7 +343,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         Wallet w2 = new Wallet(params);
         ECKey key1 = new ECKey();
         key1.setCreationTimeSeconds(now - 86400);  // One day ago.
-        w2.addKey(key1);
+        w2.importKey(key1);
         peerGroup.addWallet(w2);
         peerGroup.waitForJobQueue();
         assertEquals(peerGroup.getFastCatchupTimeSecs(), now - 86400 - WEEK);
@@ -351,7 +351,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         // due to the need to avoid complicated lock inversions.
         ECKey key2 = new ECKey();
         key2.setCreationTimeSeconds(now - 100000);
-        w2.addKey(key2);
+        w2.importKey(key2);
         peerGroup.waitForJobQueue();
         assertEquals(peerGroup.getFastCatchupTimeSecs(), now - WEEK - 100000);
     }

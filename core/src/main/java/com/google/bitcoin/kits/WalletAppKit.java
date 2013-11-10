@@ -211,7 +211,7 @@ public class WalletAppKit extends AbstractIdleService {
                     vWallet.clearTransactions(0);
             } else {
                 vWallet = new Wallet(params);
-                vWallet.addKey(new ECKey());
+                vWallet.newKey();
                 addWalletExtensions();
             }
             if (useAutoSave) vWallet.autosaveToFile(vWalletFile, 1, TimeUnit.SECONDS, null);

@@ -52,7 +52,7 @@ public class TestWithWallet {
         myKey = new ECKey();
         myAddress = myKey.toAddress(params);
         wallet = new Wallet(params);
-        wallet.addKey(myKey);
+        wallet.importKey(myKey);
         blockStore = new MemoryBlockStore(params);
         chain = new BlockChain(params, wallet, blockStore);
     }

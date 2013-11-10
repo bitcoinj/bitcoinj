@@ -66,7 +66,6 @@ public class WalletTest extends TestWithWallet {
     private static final Logger log = LoggerFactory.getLogger(WalletTest.class);
 
     private Address myEncryptedAddress;
-    private Address myEncryptedAddress2;
 
     private Wallet encryptedWallet;
 
@@ -990,10 +989,10 @@ public class WalletTest extends TestWithWallet {
         // No keys returns current time.
         assertEquals(now, wallet.getEarliestKeyCreationTime());
         Utils.rollMockClock(60);
-        wallet.addKey(new ECKey());
+        wallet.newKey();
         assertEquals(now + 60, wallet.getEarliestKeyCreationTime());
         Utils.rollMockClock(60);
-        wallet.addKey(new ECKey());
+        wallet.newKey();
         assertEquals(now + 60, wallet.getEarliestKeyCreationTime());
     }
 
@@ -1066,8 +1065,7 @@ public class WalletTest extends TestWithWallet {
     @Test
     public void pubkeyOnlyScripts() throws Exception {
         // Verify that we support outputs like OP_PUBKEY and the corresponding inputs.
-        ECKey key1 = new ECKey();
-        wallet.addKey(key1);
+        ECKey key1 = wallet.newKey();
         BigInteger value = toNanoCoins(5, 0);
         Transaction t1 = createFakeTx(params, value, key1);
         if (wallet.isPendingTransactionRelevant(t1))
@@ -1168,8 +1166,7 @@ public class WalletTest extends TestWithWallet {
         Sha256Hash hash1 = Sha256Hash.hashFileContents(f);
         // Start with zero delay and ensure the wallet file changes after adding a key.
         wallet.autosaveToFile(f, 0, TimeUnit.SECONDS, null);
-        ECKey key = new ECKey();
-        wallet.addKey(key);
+        ECKey key = wallet.newKey();
         Sha256Hash hash2 = Sha256Hash.hashFileContents(f);
         assertFalse("Wallet not saved after addKey", hash1.equals(hash2));  // File has changed.
 
@@ -1201,8 +1198,7 @@ public class WalletTest extends TestWithWallet {
                     }
                 }
         );
-        ECKey key = new ECKey();
-        wallet.addKey(key);
+        ECKey key = wallet.newKey();
         Sha256Hash hash2 = Sha256Hash.hashFileContents(f);
         assertFalse(hash1.equals(hash2));  // File has changed immediately despite the delay, as keys are important.
         assertNotNull(results[0]);
@@ -1258,8 +1254,7 @@ public class WalletTest extends TestWithWallet {
         BigInteger v1 = Utils.toNanoCoins(1, 0);
         sendMoneyToWallet(v1, AbstractBlockChain.NewBlockType.BEST_CHAIN);
         // First create our current transaction
-        ECKey k2 = new ECKey();
-        wallet.addKey(k2);
+        ECKey k2 = wallet.newKey();
         BigInteger v2 = toNanoCoins(0, 50);
         Transaction t2 = new Transaction(params);
         TransactionOutput o2 = new TransactionOutput(params, t2, v2, k2.toAddress(params));
@@ -1430,7 +1425,7 @@ public class WalletTest extends TestWithWallet {
         assertTrue("Wrong number of keys in wallet before key addition", oneKey && !iterator.hasNext());
 
         try {
-            encryptedWallet.addKey(ecKeyDifferent);
+            encryptedWallet.importKey(ecKeyDifferent);
             fail("AddKey should have thrown an EncrypterDecrypterException but did not.");
         } catch (KeyCrypterException ede) {
             // Expected behaviour.
@@ -2191,10 +2186,8 @@ public class WalletTest extends TestWithWallet {
         wallet.setTransactionBroadcaster(broadcaster);
         wallet.setKeyRotationEnabled(true);
         // Send three cents to two different keys, then add a key and mark the initial keys as compromised.
-        ECKey key1 = new ECKey();
-        ECKey key2 = new ECKey();
-        wallet.addKey(key1);
-        wallet.addKey(key2);
+        ECKey key1 = wallet.newKey();
+        ECKey key2 = wallet.newKey();
         sendMoneyToWallet(wallet, CENT, key1.toAddress(params), AbstractBlockChain.NewBlockType.BEST_CHAIN);
         sendMoneyToWallet(wallet, CENT, key2.toAddress(params), AbstractBlockChain.NewBlockType.BEST_CHAIN);
         sendMoneyToWallet(wallet, CENT, key2.toAddress(params), AbstractBlockChain.NewBlockType.BEST_CHAIN);
@@ -2204,8 +2197,7 @@ public class WalletTest extends TestWithWallet {
         assertFalse(wallet.isKeyRotating(key1));
 
         // Rotate the wallet.
-        ECKey key3 = new ECKey();
-        wallet.addKey(key3);
+        ECKey key3 = wallet.newKey();
         // We see a broadcast triggered by setting the rotation time.
         wallet.setKeyRotationTime(compromiseTime);
         assertTrue(wallet.isKeyRotating(key1));
@@ -2255,8 +2247,7 @@ public class WalletTest extends TestWithWallet {
     //@Test   - this test is slow, disable for now.
     public void fragmentedReKeying() throws Exception {
         // Send lots of small coins and check the fee is correct.
-        ECKey key = new ECKey();
-        wallet.addKey(key);
+        ECKey key = wallet.newKey();
         Address address = key.toAddress(params);
         Utils.rollMockClock(86400);
         for (int i = 0; i < 800; i++) {
@@ -2269,7 +2260,7 @@ public class WalletTest extends TestWithWallet {
 
         Date compromise = Utils.now();
         Utils.rollMockClock(86400);
-        wallet.addKey(new ECKey());
+        wallet.newKey();
         wallet.setKeyRotationTime(compromise);
 
         Transaction tx = broadcaster.waitForTransaction();
@@ -2290,9 +2281,8 @@ public class WalletTest extends TestWithWallet {
         // Check the wallet will write dummy scriptSigs for inputs that we have only pubkeys for without the privkey.
         ECKey priv = new ECKey();
         ECKey pub = new ECKey(null, priv.getPubKey());
-        wallet.addKey(pub);
-        ECKey priv2 = new ECKey();
-        wallet.addKey(priv2);
+        wallet.importKey(pub);
+        ECKey priv2 = wallet.newKey();
         // Send three transactions, with one being an address type and the other being a raw CHECKSIG type pubkey only,
         // and the final one being a key we do have. We expect the first two inputs to be dummy values and the last
         // to be signed correctly.
