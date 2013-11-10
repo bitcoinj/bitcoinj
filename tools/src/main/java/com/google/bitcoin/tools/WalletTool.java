@@ -74,6 +74,8 @@ public class WalletTool {
             "                       one of the following operators = < > <= >= immediately followed by a number.\n" +
             "                       For example --condition=\">5.10\" or --condition=\"<=1\"\n" +
             "  --password=...       For an encrypted wallet, the password is provided here.\n" +
+            "  --ignore-mandatory-extensions   If a wallet has unknown required extensions that would otherwise cause\n" +
+            "                       load failures, this overrides that.\n" +
 
             "\n>>> ACTIONS\n" +
             "  --action=DUMP        Loads and prints the given wallet in textual form to stdout.\n" +
@@ -261,6 +263,7 @@ public class WalletTool {
         parser.accepts("locktime").withRequiredArg();
         parser.accepts("allow-unconfirmed");
         parser.accepts("offline");
+        parser.accepts("ignore-mandatory-extensions");
         OptionSpec<String> passwordFlag = parser.accepts("password").withRequiredArg();
         options = parser.parse(args);
         
@@ -336,6 +339,8 @@ public class WalletTool {
 
         try {
             WalletProtobufSerializer loader = new WalletProtobufSerializer();
+            if (options.has("ignore-mandatory-extensions"))
+                loader.setRequireMandatoryExtensions(false);
             wallet = loader.readWallet(new BufferedInputStream(new FileInputStream(walletFile)));
             if (!wallet.getParams().equals(params)) {
                 System.err.println("Wallet does not match requested network parameters: " +

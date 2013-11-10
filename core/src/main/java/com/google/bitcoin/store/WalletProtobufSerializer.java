@@ -66,8 +66,19 @@ public class WalletProtobufSerializer {
     // Used for de-serialization
     protected Map<ByteString, Transaction> txMap;
 
+    private boolean requireMandatoryExtensions = true;
+
     public WalletProtobufSerializer() {
         txMap = new HashMap<ByteString, Transaction>();
+    }
+
+    /**
+     * If this property is set to false, then unknown mandatory extensions will be ignored instead of causing load
+     * errors. You should only use this if you know exactly what you are doing, as the extension data will NOT be
+     * round-tripped, possibly resulting in a corrupted wallet if you save it back out again.
+     */
+    public void setRequireMandatoryExtensions(boolean value) {
+        requireMandatoryExtensions = value;
     }
 
     /**
@@ -427,22 +438,27 @@ public class WalletProtobufSerializer {
         txMap.clear();
     }
 
-    private static void loadExtensions(Wallet wallet, Protos.Wallet walletProto) throws UnreadableWalletException {
+    private void loadExtensions(Wallet wallet, Protos.Wallet walletProto) throws UnreadableWalletException {
         final Map<String, WalletExtension> extensions = wallet.getExtensions();
         for (Protos.Extension extProto : walletProto.getExtensionList()) {
             String id = extProto.getId();
             WalletExtension extension = extensions.get(id);
             if (extension == null) {
                 if (extProto.getMandatory()) {
-                    throw new UnreadableWalletException("Unknown mandatory extension in wallet: " + id);
+                    if (requireMandatoryExtensions)
+                        throw new UnreadableWalletException("Unknown mandatory extension in wallet: " + id);
+                    else
+                        log.error("Unknown extension in wallet {}, ignoring", id);
                 }
             } else {
                 log.info("Loading wallet extension {}", id);
                 try {
                     extension.deserializeWalletExtension(wallet, extProto.getData().toByteArray());
                 } catch (Exception e) {
-                    if (extProto.getMandatory())
+                    if (extProto.getMandatory() && requireMandatoryExtensions)
                         throw new UnreadableWalletException("Could not parse mandatory extension in wallet: " + id);
+                    else
+                        log.error("Error whilst reading extension {}, ignoring: {}", id, e);
                 }
             }
         }
