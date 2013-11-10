@@ -96,6 +96,7 @@ public class Main extends Application {
                .startAndWait();
         // Don't make the user wait for confirmations for now, as the intention is they're sending it their own money!
         bitcoin.wallet().allowSpendingUnconfirmedTransactions();
+        bitcoin.peerGroup().setMaxConnections(11);
         System.out.println(bitcoin.wallet());
         controller.onBitcoinSetup();
         mainWindow.show();
