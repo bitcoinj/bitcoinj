@@ -46,7 +46,7 @@ public abstract class AbstractWalletEventListener implements WalletEventListener
     }
 
     @Override
-    public void onKeysAdded(Wallet wallet, List<ECKey> keys) {
+    public void onKeysAdded(List<ECKey> keys) {
         onChange();
     }
 
