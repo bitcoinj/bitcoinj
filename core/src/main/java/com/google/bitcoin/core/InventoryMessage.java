@@ -16,6 +16,8 @@
 
 package com.google.bitcoin.core;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 /**
  * <p>Represents the "inv" P2P network message. An inv contains a list of hashes of either blocks or transactions. It's
  * a bandwidth optimization - on receiving some data, a (fully validating) peer sends every connected peer an inv
@@ -56,5 +58,14 @@ public class InventoryMessage extends ListMessage {
 
     public void addTransaction(Transaction tx) {
         addItem(new InventoryItem(InventoryItem.Type.Transaction, tx.getHash()));
+    }
+
+    /** Creates a new inv message for the given transactions. */
+    public static InventoryMessage with(Transaction... txns) {
+        checkArgument(txns.length > 0);
+        InventoryMessage result = new InventoryMessage(txns[0].getParams());
+        for (Transaction tx : txns)
+            result.addTransaction(tx);
+        return result;
     }
 }
