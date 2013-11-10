@@ -33,17 +33,16 @@ import java.util.Set;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static org.junit.Assert.*;
 
+
+// TX announcement and broadcast is tested in TransactionBroadcastTest.
+
 public class PeerGroupTest extends TestWithPeerGroup {
-    static final NetworkParameters params = UnitTestParams.get();
-    
     @Override
     @Before
     public void setUp() throws Exception {
         super.setUp(new MemoryBlockStore(UnitTestParams.get()));
-        
         peerGroup.addWallet(wallet);
     }
 
@@ -252,74 +251,6 @@ public class PeerGroupTest extends TestWithPeerGroup {
         assertEquals(tx, event[1]);
         assertEquals(3, tx.getConfidence().numBroadcastPeers());
         assertTrue(tx.getConfidence().wasBroadcastBy(peerOf(p3).getAddress()));
-    }
-
-    @Test
-    public void announce() throws Exception {
-        // Make sure we can create spends, and that they are announced. Then do the same with offline mode.
-
-        // Set up connections and block chain.
-        FakeChannel p1 = connectPeer(1, new VersionMessage(params, 2));
-        FakeChannel p2 = connectPeer(2);
-
-        assertNotNull(peerGroup.getDownloadPeer());
-
-        control.replay();
-
-        peerGroup.setMinBroadcastConnections(2);
-
-        // Send ourselves a bit of money.
-        Block b1 = TestUtils.makeSolvedTestBlock(blockStore, address);
-        inbound(p1, b1);
-        assertNull(outbound(p1));
-
-        assertEquals(Utils.toNanoCoins(50, 0), wallet.getBalance());
-
-        // Check that the wallet informs us of changes in confidence as the transaction ripples across the network.
-        final Transaction[] transactions = new Transaction[1];
-        wallet.addEventListener(new AbstractWalletEventListener() {
-            @Override
-            public void onTransactionConfidenceChanged(Wallet wallet, Transaction tx) {
-                transactions[0] = tx;
-            }
-        });
-
-        // Now create a spend, and expect the announcement on p1.
-        Address dest = new ECKey().toAddress(params);
-        Wallet.SendResult sendResult = wallet.sendCoins(peerGroup, dest, Utils.toNanoCoins(1, 0));
-        assertNotNull(sendResult.tx);
-        Threading.waitForUserCode();
-        assertFalse(sendResult.broadcastComplete.isDone());
-        assertEquals(transactions[0], sendResult.tx);
-        assertEquals(transactions[0].getConfidence().numBroadcastPeers(), 1);
-        transactions[0] = null;
-        Transaction t1 = (Transaction) outbound(p1);
-        assertNotNull(t1);
-        // 49 BTC in change.
-        assertEquals(Utils.toNanoCoins(49, 0), t1.getValueSentToMe(wallet));
-        // The future won't complete until it's heard back from the network on p2.
-        InventoryMessage inv = new InventoryMessage(params);
-        inv.addTransaction(t1);
-        inbound(p2, inv);
-        Threading.waitForUserCode();
-        assertTrue(sendResult.broadcastComplete.isDone());
-        assertEquals(transactions[0], sendResult.tx);
-        assertEquals(2, transactions[0].getConfidence().numBroadcastPeers());
-        // Confirm it.
-        Block b2 = TestUtils.createFakeBlock(blockStore, t1).block;
-        inbound(p1, b2);
-        assertNull(outbound(p1));
-        
-        // Do the same thing with an offline transaction.
-        peerGroup.removeWallet(wallet);
-        Wallet.SendRequest req = Wallet.SendRequest.to(dest, Utils.toNanoCoins(2, 0));
-        req.ensureMinRequiredFee = false;
-        Transaction t3 = checkNotNull(wallet.sendCoinsOffline(req));
-        assertNull(outbound(p1));  // Nothing sent.
-        // Add the wallet to the peer group (simulate initialization). Transactions should be announced.
-        peerGroup.addWallet(wallet);
-        // Transaction announced to the first peer.
-        assertEquals(t3.getHash(), ((Transaction) outbound(p1)).getHash());
     }
 
     @Test

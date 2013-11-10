@@ -16,6 +16,7 @@
 
 package com.google.bitcoin.core;
 
+import com.google.bitcoin.params.UnitTestParams;
 import com.google.bitcoin.store.BlockStore;
 import org.jboss.netty.bootstrap.ClientBootstrap;
 import org.jboss.netty.channel.*;
@@ -28,6 +29,7 @@ import static org.junit.Assert.assertTrue;
  * Utility class that makes it easy to work with mock NetworkConnections in PeerGroups.
  */
 public class TestWithPeerGroup extends TestWithNetworkConnections {
+    protected static final NetworkParameters params = UnitTestParams.get();
     protected PeerGroup peerGroup;
 
     protected VersionMessage remoteVersionMessage;
