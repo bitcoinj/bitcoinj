@@ -145,7 +145,7 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
     // it sent transactions to the wallet, without this we'd double count.
     private transient HashSet<Sha256Hash> ignoreNextNewBlock;
     // Whether or not to ignore nLockTime > 0 transactions that are received to the mempool.
-    private boolean acceptTimeLockedTransactions;
+    private boolean acceptRiskyTransactions;
 
     // Stuff for notifying transaction objects that we changed their confidences. The purpose of this is to avoid
     // spuriously sending lots of repeated notifications to listeners that API users aren't really interested in as a
@@ -174,6 +174,9 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
     // Stores objects that know how to serialize/unserialize themselves to byte streams and whether they're mandatory
     // or not. The string key comes from the extension itself.
     private final HashMap<String, WalletExtension> extensions;
+    // Object that performs risk analysis of received pending transactions. We might reject transactions that seem like
+    // a high risk of being a double spending attack.
+    private RiskAnalysis.Analyzer riskAnalyzer = DefaultRiskAnalysis.FACTORY;
 
     /**
      * Creates a new, empty wallet with no keys and no transactions. If you want to restore a wallet from disk instead,
@@ -224,7 +227,7 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
                 }
             }
         };
-        acceptTimeLockedTransactions = false;
+        acceptRiskyTransactions = false;
     }
 
     public NetworkParameters getNetworkParameters() {
@@ -315,32 +318,57 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
     }
 
     /**
-     * <p>Whether or not the wallet will ignore transactions that have a lockTime parameter > 0. By default, all such
-     * transactions are ignored, because they are useful only in special protocols and such a transaction may not
-     * confirm as fast as an app typically expects. By setting this property to true, you are acknowledging that
-     * you understand what time-locked transactions are, and that your code is capable of handling them without risk.
-     * For instance you are not providing anything valuable in return for an unconfirmed transaction that has a lock
-     * time far in the future (which opens you up to Finney attacks).</p>
+     * <p>Whether or not the wallet will ignore received pending transactions that fail the selected
+     * {@link RiskAnalysis}. By default, if a transaction is considered risky then it won't enter the wallet
+     * and won't trigger any event listeners. If you set this property to true, then all transactions will
+     * be allowed in regardless of risk. Currently, the {@link DefaultRiskAnalysis} checks for non-finality of
+     * transactions. You should not encounter these outside of special protocols.</p>
      *
-     * <p>Note that this property is not serialized. So you have to set it to true each time you load or create a
-     * wallet.</p>
+     * <p>Note that this property is not serialized. You have to set it each time a Wallet object is constructed,
+     * even if it's loaded from a protocol buffer.</p>
      */
-    public void setAcceptTimeLockedTransactions(boolean acceptTimeLockedTransactions) {
+    public void setAcceptRiskyTransactions(boolean acceptRiskyTransactions) {
         lock.lock();
         try {
-            this.acceptTimeLockedTransactions = acceptTimeLockedTransactions;
+            this.acceptRiskyTransactions = acceptRiskyTransactions;
         } finally {
             lock.unlock();
         }
     }
 
     /**
-     * See {@link Wallet#setAcceptTimeLockedTransactions(boolean)} for an explanation of this property.
+     * See {@link Wallet#setAcceptRiskyTransactions(boolean)} for an explanation of this property.
      */
-    public boolean doesAcceptTimeLockedTransactions() {
+    public boolean doesAcceptRiskyTransactions() {
         lock.lock();
         try {
-            return acceptTimeLockedTransactions;
+            return acceptRiskyTransactions;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
+     * Sets the {@link RiskAnalysis} implementation to use for deciding whether received pending transactions are risky
+     * or not. If the analyzer says a transaction is risky, by default it will be dropped. You can customize this
+     * behaviour with {@link #setAcceptRiskyTransactions(boolean)}.
+     */
+    public void setRiskAnalyzer(RiskAnalysis.Analyzer analyzer) {
+        lock.lock();
+        try {
+            this.riskAnalyzer = checkNotNull(analyzer);
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
+     * Gets the current {@link RiskAnalysis} implementation. The default is {@link DefaultRiskAnalysis}.
+     */
+    public RiskAnalysis.Analyzer getRiskAnalyzer() {
+        lock.lock();
+        try {
+            return riskAnalyzer;
         } finally {
             lock.unlock();
         }
@@ -540,13 +568,6 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
         }
     }
 
-    /** The results of examining the dependency graph of a pending transaction for protocol abuse. */
-    protected static class AnalysisResult {
-        // Which tx, if any, had a non-zero lock time.
-        Transaction timeLocked;
-        // In future, depth, fees, if any are non-standard, anything else that's interesting ...
-    }
-
     /**
      * <p>Called when we have found a transaction (via network broadcast or otherwise) that is relevant to this wallet
      * and want to record it. Note that we <b>cannot verify these transactions at all</b>, they may spend fictional
@@ -564,8 +585,6 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
         // Can run in a peer thread. This method will only be called if a prior call to isPendingTransactionRelevant
         // returned true, so we already know by this point that it sends coins to or from our wallet, or is a double
         // spend against one of our other pending transactions.
-        //
-        // Do a brief risk analysis of the transaction and its dependencies to check for any possible attacks.
         lock.lock();
         try {
             tx.verify();
@@ -580,12 +599,8 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
             // race conditions where receivePending may be being called in parallel.
             if (!overrideIsRelevant && !isPendingTransactionRelevant(tx))
                 return;
-            AnalysisResult analysis = analyzeTransactionAndDependencies(tx, dependencies);
-            if (analysis.timeLocked != null && !doesAcceptTimeLockedTransactions()) {
-                log.warn("Transaction {}, dependency of {} has a time lock value of {}",
-                        analysis.timeLocked.getHashAsString(), tx.getHashAsString(), analysis.timeLocked.getLockTime());
+            if (isTransactionRisky(tx, dependencies) && !acceptRiskyTransactions)
                 return;
-            }
             BigInteger valueSentToMe = tx.getValueSentToMe(this);
             BigInteger valueSentFromMe = tx.getValueSentFromMe(this);
             if (log.isInfoEnabled()) {
@@ -608,6 +623,30 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
     }
 
     /**
+     * Given a transaction and an optional list of dependencies (recursive/flattened), returns true if the given
+     * transaction would be rejected by the analyzer, or false otherwise. The result of this call is independent
+     * of the value of {@link #doesAcceptRiskyTransactions()}. Risky transactions yield a logged warning. If you
+     * want to know the reason why a transaction is risky, create an instance of the {@link RiskAnalysis} yourself
+     * using the factory returned by {@link #getRiskAnalyzer()} and use it directly.
+     */
+    public boolean isTransactionRisky(Transaction tx, @Nullable List<Transaction> dependencies) {
+        lock.lock();
+        try {
+            if (dependencies == null)
+                dependencies = ImmutableList.of();
+            RiskAnalysis analysis = riskAnalyzer.create(this, tx, dependencies);
+            RiskAnalysis.Result result = analysis.analyze();
+            if (result != RiskAnalysis.Result.OK) {
+                log.warn("Pending transaction {} was considered risky: {}", tx.getHashAsString(), analysis);
+                return true;
+            }
+            return false;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
      * <p>Called when we have found a transaction (via network broadcast or otherwise) that is relevant to this wallet
      * and want to record it. Note that we <b>cannot verify these transactions at all</b>, they may spend fictional
      * coins or be otherwise invalid. They are useful to inform the user about coins they can expect to receive soon,
@@ -620,20 +659,6 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
      */
     public void receivePending(Transaction tx, @Nullable List<Transaction> dependencies) throws VerificationException {
         receivePending(tx, dependencies, false);
-    }
-
-    private static AnalysisResult analyzeTransactionAndDependencies(Transaction tx, @Nullable List<Transaction> dependencies) {
-        AnalysisResult result = new AnalysisResult();
-        if (tx.isTimeLocked())
-            result.timeLocked = tx;
-        if (dependencies != null) {
-            for (Transaction dep : dependencies) {
-                if (dep.isTimeLocked()) {
-                    result.timeLocked = dep;
-                }
-            }
-        }
-        return result;
     }
 
     /**
@@ -661,7 +686,7 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
                 return false;
             }
 
-            if (tx.isTimeLocked() && !acceptTimeLockedTransactions && tx.getConfidence().getSource() != TransactionConfidence.Source.SELF) {
+            if (isTransactionRisky(tx, null) && !acceptRiskyTransactions) {
                 log.warn("Received transaction {} with a lock time of {}, but not configured to accept these, discarding",
                         tx.getHashAsString(), tx.getLockTime());
                 return false;

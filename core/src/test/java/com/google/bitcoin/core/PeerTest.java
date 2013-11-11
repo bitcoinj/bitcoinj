@@ -657,7 +657,7 @@ public class PeerTest extends TestWithNetworkConnections {
         Threading.waitForUserCode();
         assertNull(vtx[0]);
         // Now we want to hear about them. Send another, we are told about it.
-        wallet.setAcceptTimeLockedTransactions(true);
+        wallet.setAcceptRiskyTransactions(true);
         inbound(peer, t2);
         getdata = (GetDataMessage) outbound();
         if (useNotFound) {
@@ -702,7 +702,7 @@ public class PeerTest extends TestWithNetworkConnections {
         ECKey key = new ECKey();
         Wallet wallet = new Wallet(unitTestParams);
         wallet.addKey(key);
-        wallet.setAcceptTimeLockedTransactions(shouldAccept);
+        wallet.setAcceptRiskyTransactions(shouldAccept);
         peer.addWallet(wallet);
         final Transaction[] vtx = new Transaction[1];
         wallet.addEventListener(new AbstractWalletEventListener() {
