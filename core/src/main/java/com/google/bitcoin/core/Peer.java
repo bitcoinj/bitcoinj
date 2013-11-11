@@ -670,8 +670,7 @@ public class Peer {
                     List<ListenableFuture<Object>> childFutures = Lists.newLinkedList();
                     for (Transaction tx : transactions) {
                         if (tx == null) continue;
-                        log.info("{}: Downloaded dependency of {}: {}", new Object[]{vAddress,
-                                rootTxHash, tx.getHashAsString()});
+                        log.info("{}: Downloaded dependency of {}: {}", vAddress, rootTxHash, tx.getHashAsString());
                         results.add(tx);
                         // Now recurse into the dependencies of this transaction too.
                         childFutures.add(downloadDependenciesInternal(tx, marker, results));
@@ -1162,8 +1161,8 @@ public class Peer {
             log.info("blockChainDownloadLocked({}): ignoring duplicated request", toHash.toString());
             return;
         }
-        log.debug("{}: blockChainDownloadLocked({}) current head = {}", new Object[]{toString(),
-                toHash.toString(), chainHead.getHeader().getHashAsString()});
+        log.debug("{}: blockChainDownloadLocked({}) current head = {}",
+                toString(), toHash.toString(), chainHead.getHeader().getHashAsString());
         StoredBlock cursor = chainHead;
         for (int i = 100; cursor != null && i > 0; i--) {
             blockLocator.add(cursor.getHeader().getHash());

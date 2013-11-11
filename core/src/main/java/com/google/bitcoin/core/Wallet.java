@@ -581,8 +581,8 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
                 return;
             AnalysisResult analysis = analyzeTransactionAndDependencies(tx, dependencies);
             if (analysis.timeLocked != null && !doesAcceptTimeLockedTransactions()) {
-                log.warn("Transaction {}, dependency of {} has a time lock value of {}", new Object[]{
-                        analysis.timeLocked.getHashAsString(), tx.getHashAsString(), analysis.timeLocked.getLockTime()});
+                log.warn("Transaction {}, dependency of {} has a time lock value of {}",
+                        analysis.timeLocked.getHashAsString(), tx.getHashAsString(), analysis.timeLocked.getLockTime());
                 return;
             }
             BigInteger valueSentToMe = tx.getValueSentToMe(this);
@@ -772,9 +772,9 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
         BigInteger valueSentToMe = tx.getValueSentToMe(this);
         BigInteger valueDifference = valueSentToMe.subtract(valueSentFromMe);
 
-        log.info("Received tx{} for {} BTC: {} [{}] in block {}", new Object[]{sideChain ? " on a side chain" : "",
+        log.info("Received tx{} for {} BTC: {} [{}] in block {}", sideChain ? " on a side chain" : "",
                 bitcoinValueToFriendlyString(valueDifference), tx.getHashAsString(), relativityOffset,
-                block != null ? block.getHeader().getHash() : "(unit test)"});
+                block != null ? block.getHeader().getHash() : "(unit test)");
 
         onWalletChangedSuppressions++;
 

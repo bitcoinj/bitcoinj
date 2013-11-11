@@ -186,11 +186,8 @@ public class BitcoinSerializer {
         }
 
         if (log.isDebugEnabled()) {
-            log.debug("Received {} byte '{}' message: {}", new Object[]{
-                    header.size,
-                    header.command,
-                    Utils.bytesToHexString(payloadBytes)
-            });
+            log.debug("Received {} byte '{}' message: {}", header.size, header.command,
+                    Utils.bytesToHexString(payloadBytes));
         }
 
         try {

@@ -189,7 +189,7 @@ public class MemoryPool {
                         // We saw it before and kept it around. Hand back the canonical copy.
                         tx = transaction;
                         log.info("{}: Provided with a transaction downloaded before: [{}] {}",
-                                new Object[]{byPeer, tx.getConfidence().numBroadcastPeers(), tx.getHash()});
+                                byPeer, tx.getConfidence().numBroadcastPeers(), tx.getHash());
                     }
                     markBroadcast(byPeer, tx);
                     return tx;
@@ -201,7 +201,7 @@ public class MemoryPool {
                     entry.addresses = null;
                     TransactionConfidence confidence = tx.getConfidence();
                     log.debug("{}: Adding tx [{}] {} to the memory pool",
-                            new Object[]{byPeer, confidence.numBroadcastPeers(), tx.getHashAsString()});
+                            byPeer, confidence.numBroadcastPeers(), tx.getHashAsString());
                     for (PeerAddress a : addrs) {
                         markBroadcast(a, tx);
                     }
@@ -240,7 +240,7 @@ public class MemoryPool {
                     if (tx != null) {
                         markBroadcast(byPeer, tx);
                         log.debug("{}: Peer announced transaction we have seen before [{}] {}",
-                                new Object[]{byPeer, tx.getConfidence().numBroadcastPeers(), tx.getHashAsString()});
+                                byPeer, tx.getConfidence().numBroadcastPeers(), tx.getHashAsString());
                     } else {
                         // The inv is telling us about a transaction that we previously downloaded, and threw away because
                         // nothing found it interesting enough to keep around. So do nothing.
@@ -249,7 +249,7 @@ public class MemoryPool {
                     checkNotNull(entry.addresses);
                     entry.addresses.add(byPeer);
                     log.debug("{}: Peer announced transaction we have seen announced before [{}] {}",
-                            new Object[]{byPeer, entry.addresses.size(), hash});
+                            byPeer, entry.addresses.size(), hash);
                 }
             } else {
                 // This TX has never been seen before.

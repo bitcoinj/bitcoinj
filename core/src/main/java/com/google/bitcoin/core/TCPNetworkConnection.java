@@ -144,14 +144,13 @@ public class TCPNetworkConnection implements NetworkConnection {
         versionMessage = (VersionMessage) m;
         // Switch to the new protocol version.
         int peerVersion = versionMessage.clientVersion;
-        log.info("Connected to {}: version={}, subVer='{}', services=0x{}, time={}, blocks={}", new Object[] {
+        log.info("Connected to {}: version={}, subVer='{}', services=0x{}, time={}, blocks={}",
                 getPeerAddress().getAddr().getHostAddress(),
                 peerVersion,
                 versionMessage.subVer,
                 versionMessage.localServices,
                 new Date(versionMessage.time * 1000),
-                versionMessage.bestHeight
-        });
+                versionMessage.bestHeight);
         // Now it's our turn ...
         // Send an ACK message stating we accept the peers protocol version.
         write(channel, new VersionAck());
