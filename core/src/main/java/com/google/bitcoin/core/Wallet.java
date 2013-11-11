@@ -132,6 +132,7 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
 
     private Sha256Hash lastBlockSeenHash;
     private int lastBlockSeenHeight;
+    private long lastBlockSeenTimeSecs;
 
     private transient CopyOnWriteArrayList<ListenerRegistration<WalletEventListener>> eventListeners;
 
@@ -901,6 +902,7 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
             // Store the new block hash.
             setLastBlockSeenHash(newBlockHash);
             setLastBlockSeenHeight(block.getHeight());
+            setLastBlockSeenTimeSecs(block.getHeader().getTimeSeconds());
             // TODO: Clarify the code below.
             // Notify all the BUILDING transactions of the new block.
             // This is so that they can update their work done and depth.
@@ -2127,7 +2129,8 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
      * @param includeExtensions Whether to print extension data.
      * @param chain If set, will be used to estimate lock times for block timelocked transactions.
      */
-    public String toString(boolean includePrivateKeys, boolean includeTransactions, boolean includeExtensions, AbstractBlockChain chain) {
+    public String toString(boolean includePrivateKeys, boolean includeTransactions, boolean includeExtensions,
+                           @Nullable AbstractBlockChain chain) {
         lock.lock();
         try {
             StringBuilder builder = new StringBuilder();
@@ -2136,8 +2139,10 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
             builder.append(String.format("  %d spent transactions%n", spent.size()));
             builder.append(String.format("  %d pending transactions%n", pending.size()));
             builder.append(String.format("  %d dead transactions%n", dead.size()));
-            builder.append(String.format("Last seen best block: (%d) %s%n",
-                    getLastBlockSeenHeight(), getLastBlockSeenHash()));
+            final Date lastBlockSeenTime = getLastBlockSeenTime();
+            final String lastBlockSeenTimeStr = lastBlockSeenTime == null ? "time unknown" : lastBlockSeenTime.toString();
+            builder.append(String.format("Last seen best block: %d (%s): %s%n",
+                    getLastBlockSeenHeight(), lastBlockSeenTimeStr, getLastBlockSeenHash()));
             if (this.keyCrypter != null) {
                 builder.append(String.format("Encryption: %s%n", keyCrypter.toString()));
             }
@@ -2454,6 +2459,47 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
         } finally {
             lock.unlock();
         }
+    }
+
+    public void setLastBlockSeenTimeSecs(long timeSecs) {
+        lock.lock();
+        try {
+            lastBlockSeenTimeSecs = timeSecs;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
+     * Returns the UNIX time in seconds since the epoch extracted from the last best seen block header. This timestamp
+     * is <b>not</b> the local time at which the block was first observed by this application but rather what the block
+     * (i.e. miner) self declares. It is allowed to have some significant drift from the real time at which the block
+     * was found, although most miners do use accurate times. If this wallet is old and does not have a recorded
+     * time then this method returns zero.
+     */
+    public long getLastBlockSeenTimeSecs() {
+        lock.lock();
+        try {
+            return lastBlockSeenTimeSecs;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
+     * Returns a {@link Date} representing the time extracted from the last best seen block header. This timestamp
+     * is <b>not</b> the local time at which the block was first observed by this application but rather what the block
+     * (i.e. miner) self declares. It is allowed to have some significant drift from the real time at which the block
+     * was found, although most miners do use accurate times. If this wallet is old and does not have a recorded
+     * time then this method returns null.
+     */
+    @Nullable
+    public Date getLastBlockSeenTime() {
+        final long secs = getLastBlockSeenTimeSecs();
+        if (secs == 0)
+            return null;
+        else
+            return new Date(secs * 1000);
     }
 
     /**

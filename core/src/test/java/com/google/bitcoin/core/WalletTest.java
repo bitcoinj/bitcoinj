@@ -857,7 +857,7 @@ public class WalletTest extends TestWithWallet {
     }
 
     @Test
-    public void rememberLastBlockSeenHash() throws Exception {
+    public void lastBlockSeen() throws Exception {
         BigInteger v1 = toNanoCoins(5, 0);
         BigInteger v2 = toNanoCoins(0, 50);
         BigInteger v3 = toNanoCoins(0, 25);
@@ -874,6 +874,8 @@ public class WalletTest extends TestWithWallet {
         // Receive a block on the best chain - this should set the last block seen hash.
         chain.add(b10);
         assertEquals(b10.getHash(), wallet.getLastBlockSeenHash());
+        assertEquals(b10.getTimeSeconds(), wallet.getLastBlockSeenTimeSecs());
+        assertEquals(1, wallet.getLastBlockSeenHeight());
         // Receive a block on the side chain - this should not change the last block seen hash.
         chain.add(b11);
         assertEquals(b10.getHash(), wallet.getLastBlockSeenHash());

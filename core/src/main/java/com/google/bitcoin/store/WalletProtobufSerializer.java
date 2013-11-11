@@ -160,6 +160,8 @@ public class WalletProtobufSerializer {
             walletBuilder.setLastSeenBlockHash(hashToByteString(lastSeenBlockHash));
             walletBuilder.setLastSeenBlockHeight(wallet.getLastBlockSeenHeight());
         }
+        if (wallet.getLastBlockSeenTimeSecs() > 0)
+            walletBuilder.setLastSeenBlockTimeSecs(wallet.getLastBlockSeenTimeSecs());
 
         // Populate the scrypt parameters.
         KeyCrypter keyCrypter = wallet.getKeyCrypter();
@@ -423,6 +425,8 @@ public class WalletProtobufSerializer {
         } else {
             wallet.setLastBlockSeenHeight(walletProto.getLastSeenBlockHeight());
         }
+        // Will default to zero if not present.
+        wallet.setLastBlockSeenTimeSecs(walletProto.getLastSeenBlockTimeSecs());
 
         if (walletProto.hasKeyRotationTime()) {
             wallet.setKeyRotationTime(new Date(walletProto.getKeyRotationTime() * 1000));

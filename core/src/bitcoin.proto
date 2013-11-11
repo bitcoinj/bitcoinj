@@ -253,6 +253,7 @@ message Wallet {
   optional bytes last_seen_block_hash = 2;
   // The height in the chain of the last seen block.
   optional uint32 last_seen_block_height = 12;
+  optional int64 last_seen_block_time_secs = 14;
 
   repeated Key key = 3;
   repeated Transaction transaction = 4;
@@ -278,4 +279,6 @@ message Wallet {
   // wanted. Money sent to them will be re-spent automatically to the first key that was created after this time. It
   // can be used to recover a compromised wallet, or just as part of preventative defence-in-depth measures.
   optional uint64 key_rotation_time = 13;
+
+  // Next tag: 15
 }
