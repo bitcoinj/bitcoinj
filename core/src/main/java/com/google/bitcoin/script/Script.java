@@ -1044,8 +1044,13 @@ public class Script {
             throw new ScriptException("Attempted OP_CHECKSIG(VERIFY) on a stack with size < 2");
         byte[] pubKey = stack.pollLast();
         byte[] sigBytes = stack.pollLast();
-        if (sigBytes.length == 0 || pubKey.length == 0)
-            throw new ScriptException("Attempted OP_CHECKSIG(VERIFY) with a sig or pubkey of length 0");
+        if (sigBytes.length == 0 || pubKey.length == 0) {
+            if (opcode == OP_CHECKSIG)
+                stack.add(new byte[] {0});
+            else if (opcode == OP_CHECKSIGVERIFY)
+                throw new ScriptException("Attempted OP_CHECKSIG(VERIFY) with a sig or pubkey of length 0");
+            return;
+        }
 
         byte[] prog = script.getProgram();
         byte[] connectedScript = Arrays.copyOfRange(prog, lastCodeSepLocation, prog.length);
