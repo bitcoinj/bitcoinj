@@ -129,11 +129,11 @@ public class ExamplePaymentChannelClient {
                     // left. If we never do this then eventually the server will time out and do it anyway and if the
                     // server goes away for longer, then eventually WE will time out and the refund tx will get broadcast
                     // by ourselves.
-                    log.info("Closing channel for good");
-                    client.close();
+                    log.info("Settling channel for good");
+                    client.settle();
                 } else {
                     // Just unplug from the server but leave the channel open so it can resume later.
-                    client.disconnectWithoutChannelClose();
+                    client.disconnectWithoutSettlement();
                 }
                 latch.countDown();
             }

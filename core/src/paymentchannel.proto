@@ -53,11 +53,14 @@ message TwoWayChannelMessage {
         // takes the most recent signature it received in an UPDATE_PAYMENT and uses it to create a
         // valid transaction, which it then broadcasts on the network.
         //
-        // If the server sends it to the client, then it can either be a simple "good bye" message or
-        // it can include the fully signed close transaction and give it back so the client can
-        // eventually broadcast it as well, in case the server fails to do so for some reason (and
-        // more usefully so the client can build on it). In that case the server replies to a CLOSE
-        // with another CLOSE and then disconnects.
+        // Once broadcast is complete, it sends back another CLOSE message with the settlement field set, containing
+        // the final state of the contract.
+        //
+        // The server is allowed to initiate settlement whenever it wants, in which case the client will
+        // asynchronously receive a CLOSE message with the settlement field set. The server is also allowed
+        // to send a CLOSE to mark the end of a connection without any settlement taking place, in which
+        // case this is just an equivalent to a TCP FIN packet. An explicit end-of-protocol markers can be
+        // useful when this protocol is embedded inside another.
         CLOSE = 9;
 
         // Used to indicate an error condition.
@@ -80,7 +83,7 @@ message TwoWayChannelMessage {
     optional ReturnRefund return_refund = 6;
     optional ProvideContract provide_contract = 7;
     optional UpdatePayment update_payment = 8;
-    optional Close close = 9;
+    optional Settlement settlement = 9;
 
     optional Error error = 10;
 }
@@ -110,7 +113,7 @@ message ServerVersion {
     optional int32 minor = 2 [default = 0];
 }
 
-// Sent from secondary to primary once version nego is done.
+// Sent from server to client once version nego is done.
 message Initiate {
     // This must be a raw pubkey in regular ECDSA form. Both compressed and non-compressed forms
     // are accepted. It is used only in the creation of the multisig contract, as outputs are
@@ -194,8 +197,8 @@ message UpdatePayment {
     required bytes signature = 2;
 }
 
-message Close {
-    // A copy of the fully signed final contract that closes the channel. The client can verify
+message Settlement {
+    // A copy of the fully signed final contract that settles the channel. The client can verify
     // the transaction is correct and then commit it to their wallet.
     required bytes tx = 3;
 }

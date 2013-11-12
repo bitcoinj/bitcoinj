@@ -109,7 +109,7 @@ public class ChannelConnectionTest extends TestWithWallet {
 
     @Test
     public void testSimpleChannel() throws Exception {
-        // Test with network code and without any issues. We'll broadcast two txns: multisig contract and close transaction.
+        // Test with network code and without any issues. We'll broadcast two txns: multisig contract and settle transaction.
         final SettableFuture<ListenableFuture<PaymentChannelServerState>> serverCloseFuture = SettableFuture.create();
         final SettableFuture<Sha256Hash> channelOpenFuture = SettableFuture.create();
         final BlockingQueue<BigInteger> q = new LinkedBlockingQueue<BigInteger>();
@@ -177,25 +177,25 @@ public class ChannelConnectionTest extends TestWithWallet {
         StoredServerChannel storedServerChannel = channels.getChannel(broadcastMultiSig.getHash());
         PaymentChannelServerState serverState = storedServerChannel.getOrCreateState(serverWallet, mockBroadcaster);
 
-        // Check that you can call close multiple times with no exceptions.
-        client.close();
-        client.close();
+        // Check that you can call settle multiple times with no exceptions.
+        client.settle();
+        client.settle();
 
         broadcastTxPause.release();
-        Transaction closeTx = broadcasts.take();
+        Transaction settleTx = broadcasts.take();
         assertEquals(PaymentChannelServerState.State.CLOSED, serverState.getState());
         if (!serverState.getBestValueToMe().equals(Utils.CENT.multiply(BigInteger.valueOf(3))) || !serverState.getFeePaid().equals(BigInteger.ZERO))
             fail();
         assertTrue(channels.mapChannels.isEmpty());
 
-        // Send the close TX to the client wallet.
-        sendMoneyToWallet(closeTx, AbstractBlockChain.NewBlockType.BEST_CHAIN);
+        // Send the settle TX to the client wallet.
+        sendMoneyToWallet(settleTx, AbstractBlockChain.NewBlockType.BEST_CHAIN);
         assertEquals(PaymentChannelClientState.State.CLOSED, client.state().getState());
 
         server.close();
         server.close();
 
-        // Now confirm the close TX and see if the channel deletes itself from the wallet.
+        // Now confirm the settle TX and see if the channel deletes itself from the wallet.
         assertEquals(1, StoredPaymentChannelClientStates.getFromWallet(wallet).mapChannels.size());
         wallet.notifyNewBestBlock(createFakeBlock(blockStore).storedBlock);
         assertEquals(1, StoredPaymentChannelClientStates.getFromWallet(wallet).mapChannels.size());
@@ -237,7 +237,7 @@ public class ChannelConnectionTest extends TestWithWallet {
         client.connectionOpen();
         server.receiveMessage(pair.clientRecorder.checkNextMsg(MessageType.CLIENT_VERSION));
         client.receiveMessage(pair.serverRecorder.checkNextMsg(MessageType.SERVER_VERSION));
-        client.close();
+        client.settle();
         client.receiveMessage(pair.serverRecorder.checkNextMsg(MessageType.INITIATE));
         server.receiveMessage(pair.clientRecorder.checkNextMsg(MessageType.CLOSE));
         assertEquals(CloseReason.CLIENT_REQUESTED_CLOSE, pair.serverRecorder.q.take());
@@ -604,7 +604,7 @@ public class ChannelConnectionTest extends TestWithWallet {
         pair.clientRecorder.checkOpened();
         assertNull(pair.serverRecorder.q.poll());
         assertNull(pair.clientRecorder.q.poll());
-        // Send the whole channel at once. The server will broadcast the final contract and close the channel for us.
+        // Send the whole channel at once. The server will broadcast the final contract and settle the channel for us.
         client.incrementPayment(Utils.COIN);
         broadcastTxPause.release();
         server.receiveMessage(pair.clientRecorder.checkNextMsg(MessageType.UPDATE_PAYMENT));
@@ -628,7 +628,7 @@ public class ChannelConnectionTest extends TestWithWallet {
     public void repeatedChannels() throws Exception {
         // Ensures we're selecting channels correctly. Covers a bug in which we'd always try and fail to resume
         // the first channel due to lack of proper closing behaviour.
-        // Open up a normal channel, but don't spend all of it, then close it.
+        // Open up a normal channel, but don't spend all of it, then settle it.
         {
             Sha256Hash someServerId = Sha256Hash.ZERO_HASH;
             ChannelTestUtils.RecordingPair pair = ChannelTestUtils.makeRecorders(serverWallet, mockBroadcaster);
@@ -664,22 +664,22 @@ public class ChannelConnectionTest extends TestWithWallet {
             pair.serverRecorder.q.take();
             client.receiveMessage(pair.serverRecorder.checkNextMsg(MessageType.PAYMENT_ACK));
 
-            // Close it and verify it's considered to be closed.
+            // Settle it and verify it's considered to be settled.
             broadcastTxPause.release();
-            client.close();
+            client.settle();
             server.receiveMessage(pair.clientRecorder.checkNextMsg(MessageType.CLOSE));
-            Transaction close = broadcasts.take();
-            // Server sends back the close TX it just broadcast.
+            Transaction settlement1 = broadcasts.take();
+            // Server sends back the settle TX it just broadcast.
             final Protos.TwoWayChannelMessage closeMsg = pair.serverRecorder.checkNextMsg(MessageType.CLOSE);
-            final Transaction closeTx = new Transaction(params, closeMsg.getClose().getTx().toByteArray());
-            assertEquals(close, closeTx);
+            final Transaction settlement2 = new Transaction(params, closeMsg.getSettlement().getTx().toByteArray());
+            assertEquals(settlement1, settlement2);
             client.receiveMessage(closeMsg);
-            assertNotNull(wallet.getTransaction(closeTx.getHash()));   // Close TX entered the wallet.
-            sendMoneyToWallet(close, AbstractBlockChain.NewBlockType.BEST_CHAIN);
+            assertNotNull(wallet.getTransaction(settlement2.getHash()));   // Close TX entered the wallet.
+            sendMoneyToWallet(settlement1, AbstractBlockChain.NewBlockType.BEST_CHAIN);
             client.connectionClosed();
             server.connectionClosed();
         }
-        // Now open a second channel and don't spend all of it/don't close it.
+        // Now open a second channel and don't spend all of it/don't settle it.
         {
             Sha256Hash someServerId = Sha256Hash.ZERO_HASH;
             ChannelTestUtils.RecordingPair pair = ChannelTestUtils.makeRecorders(serverWallet, mockBroadcaster);

@@ -25,22 +25,21 @@ public interface IPaymentChannelClient {
      *
      * <p>Note that this <b>MUST</b> still be called even after either
      * {@link PaymentChannelClient.ClientConnection#destroyConnection(com.google.bitcoin.protocols.channels.PaymentChannelCloseException.CloseReason)} or
-     * {@link IPaymentChannelClient#close()} is called to actually handle the connection close logic.</p>
+     * {@link IPaymentChannelClient#settle()} is called, to actually handle the connection close logic.</p>
      */
     void connectionClosed();
 
-    // TODO: Rename this to settle.
     /**
      * <p>Settles the channel, notifying the server it can broadcast the most recent payment transaction.</p>
      *
      * <p>Note that this only generates a CLOSE message for the server and calls
      * {@link PaymentChannelClient.ClientConnection#destroyConnection(com.google.bitcoin.protocols.channels.PaymentChannelCloseException.CloseReason)}
-     * to close the connection, it does not actually handle connection close logic, and
+     * to settle the connection, it does not actually handle connection close logic, and
      * {@link PaymentChannelClient#connectionClosed()} must still be called after the connection fully settles.</p>
      *
      * @throws IllegalStateException If the connection is not currently open (ie the CLOSE message cannot be sent)
      */
-    void close() throws IllegalStateException;
+    void settle() throws IllegalStateException;
 
     /**
      * <p>Called to indicate the connection has been opened and messages can now be generated for the server.</p>

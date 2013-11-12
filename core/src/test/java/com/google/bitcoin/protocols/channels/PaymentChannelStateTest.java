@@ -182,7 +182,7 @@ public class PaymentChannelStateTest extends TestWithWallet {
         totalPayment = totalPayment.add(size);
         serverState.incrementPayment(halfCoin.subtract(totalPayment), signature);
 
-        // And close the channel.
+        // And settle the channel.
         serverState.close();
         assertEquals(PaymentChannelServerState.State.CLOSING, serverState.getState());
         final TxFuturePair pair2 = broadcasts.take();
@@ -631,10 +631,10 @@ public class PaymentChannelStateTest extends TestWithWallet {
 
         serverState.incrementPayment(Utils.CENT.subtract(totalPayment), payment.signature.encodeToBitcoin());
 
-        // And close the channel.
+        // And settle the channel.
         serverState.close();
         assertEquals(PaymentChannelServerState.State.CLOSING, serverState.getState());
-        pair = broadcasts.take();  // close
+        pair = broadcasts.take();  // settle
         pair.future.set(pair.tx);
         assertEquals(PaymentChannelServerState.State.CLOSED, serverState.getState());
         serverState.close();
@@ -719,7 +719,7 @@ public class PaymentChannelStateTest extends TestWithWallet {
         totalRefund = totalRefund.subtract(BigInteger.ONE.shiftLeft(1));
         serverState.incrementPayment(totalRefund, signature);
 
-        // And close the channel.
+        // And settle the channel.
         serverState.close();
         assertEquals(PaymentChannelServerState.State.CLOSING, serverState.getState());
         pair = broadcasts.take();

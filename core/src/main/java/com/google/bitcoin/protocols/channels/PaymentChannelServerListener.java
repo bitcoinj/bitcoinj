@@ -171,7 +171,7 @@ public class PaymentChannelServerListener {
     /**
      * <p>Closes all client connections currently connected gracefully.</p>
      *
-     * <p>Note that this does <i>not</i> close the actual payment channels (and broadcast payment transactions), which
+     * <p>Note that this does <i>not</i> settle the actual payment channels (and broadcast payment transactions), which
      * must be done using the {@link StoredPaymentChannelServerStates} which manages the states for the associated
      * wallet.</p>
      */

@@ -374,14 +374,14 @@ public class PaymentChannelServerState {
         }
 
         if (state.ordinal() < State.READY.ordinal()) {
-            log.error("Attempt to close channel in state " + state);
+            log.error("Attempt to settle channel in state " + state);
             state = State.CLOSED;
             closedFuture.set(null);
             return closedFuture;
         }
         if (state != State.READY) {
             // TODO: What is this codepath for?
-            log.warn("Failed attempt to close a channel in state " + state);
+            log.warn("Failed attempt to settle a channel in state " + state);
             return closedFuture;
         }
 
@@ -435,7 +435,7 @@ public class PaymentChannelServerState {
             }
 
             @Override public void onFailure(Throwable throwable) {
-                log.error("Failed to close channel, could not broadcast: {}", throwable.toString());
+                log.error("Failed to settle channel, could not broadcast: {}", throwable.toString());
                 throwable.printStackTrace();
                 state = State.ERROR;
                 closedFuture.setException(throwable);
@@ -445,14 +445,14 @@ public class PaymentChannelServerState {
     }
 
     /**
-     * Gets the highest payment to ourselves (which we will receive on close(), not including fees)
+     * Gets the highest payment to ourselves (which we will receive on settle(), not including fees)
      */
     public synchronized BigInteger getBestValueToMe() {
         return bestValueToMe;
     }
 
     /**
-     * Gets the fee paid in the final payment transaction (only available if close() did not throw an exception)
+     * Gets the fee paid in the final payment transaction (only available if settle() did not throw an exception)
      */
     public synchronized BigInteger getFeePaid() {
         checkState(state == State.CLOSED || state == State.CLOSING);

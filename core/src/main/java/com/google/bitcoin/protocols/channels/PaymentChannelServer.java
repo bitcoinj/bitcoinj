@@ -91,8 +91,8 @@ public class PaymentChannelServer {
 
     // Used to keep track of whether or not the "socket" ie connection is open and we can generate messages
     @GuardedBy("lock") private boolean connectionOpen = false;
-    // Indicates that no further messages should be sent and we intend to close the connection
-    @GuardedBy("lock") private boolean connectionClosing = false;
+    // Indicates that no further messages should be sent and we intend to settle the connection
+    @GuardedBy("lock") private boolean channelSettling = false;
 
     // The wallet and peergroup which are used to complete/broadcast transactions
     private final Wallet wallet;
@@ -127,7 +127,7 @@ public class PaymentChannelServer {
      *               Unlike {@link PaymentChannelClient}, this does not have to already contain a StoredState manager
      * @param minAcceptedChannelSize The minimum value the client must lock into this channel. A value too large will be
      *                               rejected by clients, and a value too low will require excessive channel reopening
-     *                               and may cause fees to be require to close the channel. A reasonable value depends
+     *                               and may cause fees to be require to settle the channel. A reasonable value depends
      *                               entirely on the expected maximum for the channel, and should likely be somewhere
      *                               between a few bitcents and a bitcoin.
      * @param conn A callback listener which represents the connection to the client (forwards messages we generate to
@@ -224,7 +224,7 @@ public class PaymentChannelServer {
     private void multisigContractPropogated(Sha256Hash contractHash) {
         lock.lock();
         try {
-            if (!connectionOpen || connectionClosing)
+            if (!connectionOpen || channelSettling)
                 return;
             state.storeChannelInWallet(PaymentChannelServer.this);
             conn.sendToClient(Protos.TwoWayChannelMessage.newBuilder()
@@ -287,7 +287,7 @@ public class PaymentChannelServer {
         lock.lock();
         try {
             checkState(connectionOpen);
-            if (connectionClosing)
+            if (channelSettling)
                 return;
             // If we generate an error, we set errorBuilder and closeReason and break, otherwise we return
             Protos.Error.Builder errorBuilder;
@@ -370,10 +370,10 @@ public class PaymentChannelServer {
 
     @GuardedBy("lock")
     private void settlePayment(final CloseReason clientRequestedClose) throws ValueOutOfRangeException {
-        // Setting connectionClosing here prevents us from sending another CLOSE when state.close() calls
+        // Setting channelSettling here prevents us from sending another CLOSE when state.close() calls
         // close() on us here below via the stored channel state.
         // TODO: Strongly separate the lifecycle of the payment channel from the TCP connection in these classes.
-        connectionClosing = true;
+        channelSettling = true;
         Futures.addCallback(state.close(), new FutureCallback<Transaction>() {
             @Override
             public void onSuccess(Transaction result) {
@@ -383,17 +383,17 @@ public class PaymentChannelServer {
                 if (result != null) {
                     // Result can be null on various error paths, like if we never actually opened
                     // properly and so on.
-                    msg.getCloseBuilder().setTx(ByteString.copyFrom(result.bitcoinSerialize()));
-                    log.info("Sending CLOSE back with finalized broadcast contract.");
+                    msg.getSettlementBuilder().setTx(ByteString.copyFrom(result.bitcoinSerialize()));
+                    log.info("Sending CLOSE back with broadcast settlement tx.");
                 } else {
-                    log.info("Sending CLOSE back without finalized broadcast contract.");
+                    log.info("Sending CLOSE back without broadcast settlement tx.");
                 }
                 conn.sendToClient(msg.build());
             }
 
             @Override
             public void onFailure(Throwable t) {
-                log.error("Failed to broadcast close TX", t);
+                log.error("Failed to broadcast settlement tx", t);
                 conn.destroyConnection(clientRequestedClose);
             }
         });
@@ -446,7 +446,7 @@ public class PaymentChannelServer {
     }
 
     /**
-     * <p>Closes the connection by generating a close message for the client and calls
+     * <p>Closes the connection by generating a settle message for the client and calls
      * {@link ServerConnection#destroyConnection(CloseReason)}. Note that this does not broadcast
      * the payment transaction and the client may still resume the same channel if they reconnect</p>
      *
@@ -456,7 +456,7 @@ public class PaymentChannelServer {
     public void close() {
         lock.lock();
         try {
-            if (connectionOpen && !connectionClosing) {
+            if (connectionOpen && !channelSettling) {
                 final Protos.TwoWayChannelMessage.Builder msg = Protos.TwoWayChannelMessage.newBuilder();
                 msg.setType(Protos.TwoWayChannelMessage.MessageType.CLOSE);
                 conn.sendToClient(msg.build());

@@ -277,18 +277,18 @@ public class PaymentChannelClient implements IPaymentChannelClient {
     @GuardedBy("lock")
     private void receiveClose(Protos.TwoWayChannelMessage msg) throws VerificationException {
         checkState(lock.isHeldByCurrentThread());
-        if (msg.hasClose()) {
-            Transaction closeTx = new Transaction(wallet.getParams(), msg.getClose().getTx().toByteArray());
-            log.info("CLOSE message received with final contract {}", closeTx.getHash());
+        if (msg.hasSettlement()) {
+            Transaction settleTx = new Transaction(wallet.getParams(), msg.getSettlement().getTx().toByteArray());
+            log.info("CLOSE message received with settlement tx {}", settleTx.getHash());
             // TODO: set source
-            if (state != null && state().isCloseTransaction(closeTx)) {
+            if (state != null && state().isSettlementTransaction(settleTx)) {
                 // The wallet has a listener on it that the state object will use to do the right thing at this
                 // point (like watching it for confirmations). The tx has been checked by now for syntactical validity
                 // and that it correctly spends the multisig contract.
-                wallet.receivePending(closeTx, null);
+                wallet.receivePending(settleTx, null);
             }
         } else {
-            log.info("CLOSE message received without final contract");
+            log.info("CLOSE message received without settlement tx");
         }
         if (step == InitStep.WAITING_FOR_CHANNEL_CLOSE)
             conn.destroyConnection(CloseReason.CLIENT_REQUESTED_CLOSE);
@@ -306,7 +306,7 @@ public class PaymentChannelClient implements IPaymentChannelClient {
      *
      * <p>Note that this <b>MUST</b> still be called even after either
      * {@link ClientConnection#destroyConnection(com.google.bitcoin.protocols.channels.PaymentChannelCloseException.CloseReason)} or
-     * {@link PaymentChannelClient#close()} is called to actually handle the connection close logic.</p>
+     * {@link PaymentChannelClient#settle()} is called, to actually handle the connection close logic.</p>
      */
     @Override
     public void connectionClosed() {
@@ -321,23 +321,23 @@ public class PaymentChannelClient implements IPaymentChannelClient {
     }
 
     /**
-     * <p>Closes the connection, notifying the server it should close the channel by broadcasting the most recent payment
-     * transaction.</p>
+     * <p>Closes the connection, notifying the server it should settle the channel by broadcasting the most recent
+     * payment transaction.</p>
      *
      * <p>Note that this only generates a CLOSE message for the server and calls
-     * {@link ClientConnection#destroyConnection(CloseReason)} to close the connection, it does not
+     * {@link ClientConnection#destroyConnection(CloseReason)} to settle the connection, it does not
      * actually handle connection close logic, and {@link PaymentChannelClient#connectionClosed()} must still be called
      * after the connection fully closes.</p>
      *
      * @throws IllegalStateException If the connection is not currently open (ie the CLOSE message cannot be sent)
      */
     @Override
-    public void close() throws IllegalStateException {
+    public void settle() throws IllegalStateException {
         lock.lock();
         try {
             checkState(connectionOpen);
             step = InitStep.WAITING_FOR_CHANNEL_CLOSE;
-            log.info("Sending a CLOSE message to the server and waiting for response indicating successful propagation.");
+            log.info("Sending a CLOSE message to the server and waiting for response indicating successful settlement.");
             conn.sendToServer(Protos.TwoWayChannelMessage.newBuilder()
                     .setType(Protos.TwoWayChannelMessage.MessageType.CLOSE)
                     .build());

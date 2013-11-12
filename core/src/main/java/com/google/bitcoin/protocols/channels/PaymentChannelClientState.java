@@ -72,7 +72,7 @@ public class PaymentChannelClientState {
     private final ECKey myKey, serverMultisigKey;
     // How much value (in satoshis) is locked up into the channel.
     private final BigInteger totalValue;
-    // When the channel will automatically close in favor of the client, if the server halts before protocol termination
+    // When the channel will automatically settle in favor of the client, if the server halts before protocol termination
     // specified in terms of block timestamps (so it can off real time by a few hours).
     private final long expiryTime;
 
@@ -124,9 +124,9 @@ public class PaymentChannelClientState {
     }
 
     /**
-     * Returns true if the tx is a valid close transaction.
+     * Returns true if the tx is a valid settlement transaction.
      */
-    public boolean isCloseTransaction(Transaction tx) {
+    public boolean isSettlementTransaction(Transaction tx) {
         try {
             tx.verify();
             tx.getInput(0).verify(multisigContract.getOutput(0));
@@ -175,7 +175,7 @@ public class PaymentChannelClientState {
             public void onCoinsReceived(Wallet wallet, Transaction tx, BigInteger prevBalance, BigInteger newBalance) {
                 synchronized (PaymentChannelClientState.this) {
                     if (multisigContract == null) return;
-                    if (isCloseTransaction(tx)) {
+                    if (isSettlementTransaction(tx)) {
                         log.info("Close: transaction {} closed contract {}", tx.getHash(), multisigContract.getHash());
                         // Record the fact that it was closed along with the transaction that closed it.
                         state = State.CLOSED;
@@ -487,7 +487,7 @@ public class PaymentChannelClientState {
     }
 
     /**
-     * Returns the fees that will be paid if the refund transaction has to be claimed because the server failed to close
+     * Returns the fees that will be paid if the refund transaction has to be claimed because the server failed to settle
      * the channel properly. May only be called after {@link PaymentChannelClientState#initiate()}
      */
     public synchronized BigInteger getRefundTxFees() {

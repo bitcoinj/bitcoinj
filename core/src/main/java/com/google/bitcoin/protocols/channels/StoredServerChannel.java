@@ -25,7 +25,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 /**
  * Represents the state of a channel once it has been opened in such a way that it can be stored and used to resume a
- * channel which was interrupted (eg on connection failure) or close the channel automatically as the channel expire
+ * channel which was interrupted (eg on connection failure) or settle the channel automatically as the channel expire
  * time approaches.
  */
 public class StoredServerChannel {

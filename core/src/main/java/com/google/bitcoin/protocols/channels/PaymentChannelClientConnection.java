@@ -149,10 +149,10 @@ public class PaymentChannelClientConnection {
     }
 
     /**
-     * Closes the connection, notifying the server it should close the channel by broadcasting the most recent payment
+     * Closes the connection, notifying the server it should settle the channel by broadcasting the most recent payment
      * transaction.
      */
-    public void close() {
+    public void settle() {
         // Shutdown is a little complicated.
         //
         // This call will cause the CLOSE message to be written to the wire, and then the destroyConnection() method that
@@ -162,17 +162,17 @@ public class PaymentChannelClientConnection {
         // ProtobufParser.connectionClosed which invokes the connectionClosed method we defined above which in turn
         // then configures the open-future correctly and closes the state object. Phew!
         try {
-            channelClient.close();
+            channelClient.settle();
         } catch (IllegalStateException e) {
             // Already closed...oh well
         }
     }
 
     /**
-     * Disconnects the network connection but doesn't request the server to close the channel first (literally just
+     * Disconnects the network connection but doesn't request the server to settle the channel first (literally just
      * unplugs the network socket and marks the stored channel state as inactive).
      */
-    public void disconnectWithoutChannelClose() {
+    public void disconnectWithoutSettlement() {
         wireParser.closeConnection();
     }
 }

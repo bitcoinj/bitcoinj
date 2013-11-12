@@ -18,9 +18,9 @@ public class PaymentChannelCloseException extends Exception {
         // Values after here indicate its probably possible to try reopening channel again
 
         /**
-         * <p>The {@link com.google.bitcoin.protocols.channels.PaymentChannelClient#close()} method was called or the
+         * <p>The {@link com.google.bitcoin.protocols.channels.PaymentChannelClient#settle()} method was called or the
          * client sent a CLOSE message.</p>
-         * <p>As long as the server received the CLOSE message, this means that the channel is closing and the payment
+         * <p>As long as the server received the CLOSE message, this means that the channel is settling and the payment
          * transaction (if any) will be broadcast. If the client attempts to open a new connection, a new channel will
          * have to be opened.</p>
          */
