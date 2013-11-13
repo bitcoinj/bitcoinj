@@ -26,6 +26,7 @@ import net.jcip.annotations.GuardedBy;
 import org.bitcoin.paymentchannel.Protos;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
 import java.math.BigInteger;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -155,6 +156,15 @@ public class PaymentChannelServer {
         this.wallet = checkNotNull(wallet);
         this.minAcceptedChannelSize = checkNotNull(minAcceptedChannelSize);
         this.conn = checkNotNull(conn);
+    }
+
+    /**
+     * Returns the underlying {@link PaymentChannelServerState} object that is being manipulated. This object allows
+     * you to learn how much money has been transferred, etc. May be null if the channel wasn't negotiated yet.
+     */
+    @Nullable
+    public PaymentChannelServerState state() {
+        return state;
     }
 
     @GuardedBy("lock")
