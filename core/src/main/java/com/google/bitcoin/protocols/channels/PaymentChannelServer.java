@@ -169,8 +169,15 @@ public class PaymentChannelServer {
 
     @GuardedBy("lock")
     private void receiveVersionMessage(Protos.TwoWayChannelMessage msg) throws VerificationException {
+        checkState(step == InitStep.WAITING_ON_CLIENT_VERSION && msg.hasClientVersion());
+        if (msg.getClientVersion().getMajor() != 1) {
+            error("This server needs protocol v1", Protos.Error.ErrorCode.NO_ACCEPTABLE_VERSION,
+                    CloseReason.NO_ACCEPTABLE_VERSION);
+            return;
+        }
+
         Protos.ServerVersion.Builder versionNegotiationBuilder = Protos.ServerVersion.newBuilder()
-                .setMajor(0).setMinor(1);
+                .setMajor(1).setMinor(0);
         conn.sendToClient(Protos.TwoWayChannelMessage.newBuilder()
                 .setType(Protos.TwoWayChannelMessage.MessageType.SERVER_VERSION)
                 .setServerVersion(versionNegotiationBuilder)
@@ -333,14 +340,6 @@ public class PaymentChannelServer {
             try {
                 switch (msg.getType()) {
                     case CLIENT_VERSION:
-                        checkState(step == InitStep.WAITING_ON_CLIENT_VERSION && msg.hasClientVersion());
-                        if (msg.getClientVersion().getMajor() != 0) {
-                            errorBuilder = Protos.Error.newBuilder()
-                                    .setCode(Protos.Error.ErrorCode.NO_ACCEPTABLE_VERSION);
-                            closeReason = CloseReason.NO_ACCEPTABLE_VERSION;
-                            break;
-                        }
-
                         receiveVersionMessage(msg);
                         return;
                     case PROVIDE_REFUND:
@@ -363,11 +362,8 @@ public class PaymentChannelServer {
                         conn.destroyConnection(CloseReason.REMOTE_SENT_ERROR);
                         return;
                     default:
-                        log.error("Got unknown message type or type that doesn't apply to servers.");
-                        errorBuilder = Protos.Error.newBuilder()
-                                .setCode(Protos.Error.ErrorCode.SYNTAX_ERROR);
-                        closeReason = CloseReason.REMOTE_SENT_INVALID_MESSAGE;
-                        break;
+                        final String errorText = "Got unknown message type or type that doesn't apply to servers.";
+                        error(errorText, Protos.Error.ErrorCode.SYNTAX_ERROR, CloseReason.REMOTE_SENT_INVALID_MESSAGE);
                 }
             } catch (VerificationException e) {
                 log.error("Caught verification exception handling message from client", e);
@@ -385,6 +381,7 @@ public class PaymentChannelServer {
     }
 
     private void error(String message, Protos.Error.ErrorCode errorCode, CloseReason closeReason) {
+        log.error(message);
         Protos.Error.Builder errorBuilder;
         errorBuilder = Protos.Error.newBuilder()
                 .setCode(errorCode)

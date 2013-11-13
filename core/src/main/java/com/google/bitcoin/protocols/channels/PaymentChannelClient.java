@@ -243,7 +243,7 @@ public class PaymentChannelClient implements IPaymentChannelClient {
                         checkState(step == InitStep.WAITING_FOR_VERSION_NEGOTIATION && msg.hasServerVersion());
                         // Server might send back a major version lower than our own if they want to fallback to a
                         // lower version. We can't handle that, so we just close the channel.
-                        if (msg.getServerVersion().getMajor() != 0) {
+                        if (msg.getServerVersion().getMajor() != 1) {
                             errorBuilder = Protos.Error.newBuilder()
                                     .setCode(Protos.Error.ErrorCode.NO_ACCEPTABLE_VERSION);
                             closeReason = CloseReason.NO_ACCEPTABLE_VERSION;
@@ -399,7 +399,7 @@ public class PaymentChannelClient implements IPaymentChannelClient {
             step = InitStep.WAITING_FOR_VERSION_NEGOTIATION;
 
             Protos.ClientVersion.Builder versionNegotiationBuilder = Protos.ClientVersion.newBuilder()
-                    .setMajor(0).setMinor(1);
+                    .setMajor(1).setMinor(0);
 
             if (storedChannel != null) {
                 versionNegotiationBuilder.setPreviousChannelContractHash(ByteString.copyFrom(storedChannel.contract.getHash().getBytes()));

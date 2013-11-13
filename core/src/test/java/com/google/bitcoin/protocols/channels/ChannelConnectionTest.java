@@ -319,7 +319,7 @@ public class ChannelConnectionTest extends TestWithWallet {
                 .setType(MessageType.CLIENT_VERSION)
                 .setClientVersion(Protos.ClientVersion.newBuilder()
                         .setPreviousChannelContractHash(ByteString.copyFrom(Sha256Hash.create(new byte[]{0x03}).getBytes()))
-                        .setMajor(0).setMinor(42))
+                        .setMajor(1).setMinor(42))
                 .build());
         pair.serverRecorder.checkNextMsg(MessageType.SERVER_VERSION);
         pair.serverRecorder.checkNextMsg(MessageType.INITIATE);
@@ -380,7 +380,7 @@ public class ChannelConnectionTest extends TestWithWallet {
                 .setType(MessageType.CLIENT_VERSION)
                 .setClientVersion(Protos.ClientVersion.newBuilder()
                         .setPreviousChannelContractHash(ByteString.copyFrom(contractHash.getBytes()))
-                        .setMajor(0).setMinor(42))
+                        .setMajor(1).setMinor(42))
                 .build());
         // We get the usual resume sequence.
         pair.serverRecorder.checkNextMsg(MessageType.SERVER_VERSION);
@@ -440,7 +440,7 @@ public class ChannelConnectionTest extends TestWithWallet {
                 .setType(MessageType.CLIENT_VERSION)
                 .setClientVersion(Protos.ClientVersion.newBuilder()
                         .setPreviousChannelContractHash(ByteString.copyFrom(new byte[]{0x00, 0x01}))
-                        .setMajor(0).setMinor(42))
+                        .setMajor(1).setMinor(42))
                 .build());
 
         srv.serverRecorder.checkNextMsg(MessageType.SERVER_VERSION);
