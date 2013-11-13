@@ -117,11 +117,15 @@ public interface IPaymentChannelClient {
 
         /**
          * <p>Indicates the channel has been successfully opened and
-         * {@link com.google.bitcoin.protocols.channels.PaymentChannelClient#incrementPayment(java.math.BigInteger)} may be called at will.</p>
+         * {@link com.google.bitcoin.protocols.channels.PaymentChannelClient#incrementPayment(java.math.BigInteger)}
+         * may be called at will.</p>
          *
-         * <p>Called while holding a lock on the {@link com.google.bitcoin.protocols.channels.PaymentChannelClient} object - be careful about reentrancy</p>
+         * <p>Called while holding a lock on the {@link com.google.bitcoin.protocols.channels.PaymentChannelClient}
+         * object - be careful about reentrancy</p>
+         *
+         * @param wasInitiated If true, the channel is newly opened. If false, it was resumed.
          */
-        void channelOpen();
+        void channelOpen(boolean wasInitiated);
     }
 
     /**

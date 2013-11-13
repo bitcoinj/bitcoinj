@@ -59,6 +59,7 @@ public class ChannelTestUtils {
         public BlockingQueue<Object> q = new LinkedBlockingQueue<Object>();
 
         // An arbitrary sentinel object for equality testing.
+        public static final Object CHANNEL_INITIATED = new Object();
         public static final Object CHANNEL_OPEN = new Object();
 
         @Override
@@ -72,7 +73,9 @@ public class ChannelTestUtils {
         }
 
         @Override
-        public void channelOpen() {
+        public void channelOpen(boolean wasInitiated) {
+            if (wasInitiated)
+                q.add(CHANNEL_INITIATED);
             q.add(CHANNEL_OPEN);
         }
 
@@ -88,6 +91,11 @@ public class ChannelTestUtils {
 
         public void checkOpened() throws InterruptedException {
             assertEquals(CHANNEL_OPEN, q.take());
+        }
+
+        public void checkInitiated() throws InterruptedException {
+            assertEquals(CHANNEL_INITIATED, q.take());
+            checkOpened();
         }
     }
 

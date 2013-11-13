@@ -76,7 +76,7 @@ public class PaymentChannelClientConnection {
             }
 
             @Override
-            public void channelOpen() {
+            public void channelOpen(boolean wasInitiated) {
                 wireParser.setSocketTimeout(0);
                 // Inform the API user that we're done and ready to roll.
                 channelOpenFuture.set(PaymentChannelClientConnection.this);

@@ -282,7 +282,7 @@ public class ChannelConnectionTest extends TestWithWallet {
         broadcasts.take();
         client.receiveMessage(pair.serverRecorder.checkNextMsg(MessageType.CHANNEL_OPEN));
         Sha256Hash contractHash = (Sha256Hash) pair.serverRecorder.q.take();
-        pair.clientRecorder.checkOpened();
+        pair.clientRecorder.checkInitiated();
         assertNull(pair.serverRecorder.q.poll());
         assertNull(pair.clientRecorder.q.poll());
         // Send a bitcent.
@@ -601,7 +601,7 @@ public class ChannelConnectionTest extends TestWithWallet {
         broadcasts.take();
         client.receiveMessage(pair.serverRecorder.checkNextMsg(MessageType.CHANNEL_OPEN));
         Sha256Hash contractHash = (Sha256Hash) pair.serverRecorder.q.take();
-        pair.clientRecorder.checkOpened();
+        pair.clientRecorder.checkInitiated();
         assertNull(pair.serverRecorder.q.poll());
         assertNull(pair.clientRecorder.q.poll());
         // Send the whole channel at once. The server will broadcast the final contract and settle the channel for us.
@@ -646,7 +646,7 @@ public class ChannelConnectionTest extends TestWithWallet {
             broadcasts.take();
             client.receiveMessage(pair.serverRecorder.checkNextMsg(MessageType.CHANNEL_OPEN));
             Sha256Hash contractHash = (Sha256Hash) pair.serverRecorder.q.take();
-            pair.clientRecorder.checkOpened();
+            pair.clientRecorder.checkInitiated();
             assertNull(pair.serverRecorder.q.poll());
             assertNull(pair.clientRecorder.q.poll());
             ListenableFuture<BigInteger> future = client.incrementPayment(Utils.CENT);
@@ -699,7 +699,7 @@ public class ChannelConnectionTest extends TestWithWallet {
             broadcasts.take();
             client.receiveMessage(pair.serverRecorder.checkNextMsg(MessageType.CHANNEL_OPEN));
             Sha256Hash contractHash = (Sha256Hash) pair.serverRecorder.q.take();
-            pair.clientRecorder.checkOpened();
+            pair.clientRecorder.checkInitiated();
             assertNull(pair.serverRecorder.q.poll());
             assertNull(pair.clientRecorder.q.poll());
             client.incrementPayment(Utils.CENT);

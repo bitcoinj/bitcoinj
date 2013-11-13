@@ -169,12 +169,16 @@ public class PaymentChannelClient implements IPaymentChannelClient {
         checkState(step == InitStep.WAITING_FOR_CHANNEL_OPEN || (step == InitStep.WAITING_FOR_INITIATE && storedChannel != null), step);
         log.info("Got CHANNEL_OPEN message, ready to pay");
 
-        if (step == InitStep.WAITING_FOR_INITIATE)
+        boolean wasInitiated = true;
+        if (step == InitStep.WAITING_FOR_INITIATE) {
+            // We skipped the initiate step, because a previous channel that's still valid was resumed.
+            wasInitiated  = false;
             state = new PaymentChannelClientState(storedChannel, wallet);
+        }
         step = InitStep.CHANNEL_OPEN;
         // channelOpen should disable timeouts, but
         // TODO accomodate high latency between PROVIDE_CONTRACT and here
-        conn.channelOpen();
+        conn.channelOpen(wasInitiated);
     }
 
     /**
