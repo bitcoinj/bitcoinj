@@ -69,6 +69,7 @@ public class FullPrunedBlockChainTest {
             if (!(rule instanceof BlockAndValidity))
                 continue;
             BlockAndValidity block = (BlockAndValidity) rule;
+            log.info("Testing rule " + block.ruleName + " with block hash " + block.block.getHash());
             boolean threw = false;
             try {
                 if (chain.add(block.block) != block.connects) {
