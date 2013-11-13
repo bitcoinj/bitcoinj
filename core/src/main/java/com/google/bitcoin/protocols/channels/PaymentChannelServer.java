@@ -218,7 +218,8 @@ public class PaymentChannelServer {
         Protos.Initiate.Builder initiateBuilder = Protos.Initiate.newBuilder()
                 .setMultisigKey(ByteString.copyFrom(myKey.getPubKey()))
                 .setExpireTimeSecs(expireTime)
-                .setMinAcceptedChannelSize(minAcceptedChannelSize.longValue());
+                .setMinAcceptedChannelSize(minAcceptedChannelSize.longValue())
+                .setMinPayment(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE.longValue());
 
         conn.sendToClient(Protos.TwoWayChannelMessage.newBuilder()
                 .setInitiate(initiateBuilder)
@@ -247,12 +248,23 @@ public class PaymentChannelServer {
                 .build());
     }
 
-    private void multisigContractPropogated(Sha256Hash contractHash) {
+    private void multisigContractPropogated(Protos.ProvideContract providedContract, Sha256Hash contractHash) {
         lock.lock();
         try {
             if (!connectionOpen || channelSettling)
                 return;
             state.storeChannelInWallet(PaymentChannelServer.this);
+            try {
+                receiveUpdatePaymentMessage(providedContract.getInitialPayment(), false /* no ack msg */);
+            } catch (VerificationException e) {
+                log.error("Initial payment failed to verify", e);
+                error(e.getMessage(), Protos.Error.ErrorCode.BAD_TRANSACTION, CloseReason.REMOTE_SENT_INVALID_MESSAGE);
+                return;
+            } catch (ValueOutOfRangeException e) {
+                log.error("Initial payment value was out of range", e);
+                error(e.getMessage(), Protos.Error.ErrorCode.BAD_TRANSACTION, CloseReason.REMOTE_SENT_INVALID_MESSAGE);
+                return;
+            }
             conn.sendToClient(Protos.TwoWayChannelMessage.newBuilder()
                     .setType(Protos.TwoWayChannelMessage.MessageType.CHANNEL_OPEN)
                     .build());
@@ -267,7 +279,7 @@ public class PaymentChannelServer {
     private void receiveContractMessage(Protos.TwoWayChannelMessage msg) throws VerificationException {
         checkState(step == InitStep.WAITING_ON_CONTRACT && msg.hasProvideContract());
         log.info("Got contract, broadcasting and responding with CHANNEL_OPEN");
-        Protos.ProvideContract providedContract = msg.getProvideContract();
+        final Protos.ProvideContract providedContract = msg.getProvideContract();
 
         //TODO notify connection handler that timeout should be significantly extended as we wait for network propagation?
         final Transaction multisigContract = new Transaction(wallet.getParams(), providedContract.getTx().toByteArray());
@@ -276,28 +288,28 @@ public class PaymentChannelServer {
                 .addListener(new Runnable() {
                     @Override
                     public void run() {
-                        multisigContractPropogated(multisigContract.getHash());
+                        multisigContractPropogated(providedContract, multisigContract.getHash());
                     }
                 }, Threading.SAME_THREAD);
     }
 
     @GuardedBy("lock")
-    private void receiveUpdatePaymentMessage(Protos.TwoWayChannelMessage msg) throws VerificationException, ValueOutOfRangeException {
-        checkState(step == InitStep.CHANNEL_OPEN && msg.hasUpdatePayment());
+    private void receiveUpdatePaymentMessage(Protos.UpdatePayment msg, boolean sendAck) throws VerificationException, ValueOutOfRangeException {
         log.info("Got a payment update");
 
-        Protos.UpdatePayment updatePayment = msg.getUpdatePayment();
         BigInteger lastBestPayment = state.getBestValueToMe();
-        final BigInteger refundSize = BigInteger.valueOf(updatePayment.getClientChangeValue());
-        boolean stillUsable = state.incrementPayment(refundSize, updatePayment.getSignature().toByteArray());
+        final BigInteger refundSize = BigInteger.valueOf(msg.getClientChangeValue());
+        boolean stillUsable = state.incrementPayment(refundSize, msg.getSignature().toByteArray());
         BigInteger bestPaymentChange = state.getBestValueToMe().subtract(lastBestPayment);
 
         if (bestPaymentChange.compareTo(BigInteger.ZERO) > 0)
             conn.paymentIncrease(bestPaymentChange, state.getBestValueToMe());
 
-        Protos.TwoWayChannelMessage.Builder ack = Protos.TwoWayChannelMessage.newBuilder();
-        ack.setType(Protos.TwoWayChannelMessage.MessageType.PAYMENT_ACK);
-        conn.sendToClient(ack.build());
+        if (sendAck) {
+            Protos.TwoWayChannelMessage.Builder ack = Protos.TwoWayChannelMessage.newBuilder();
+            ack.setType(Protos.TwoWayChannelMessage.MessageType.PAYMENT_ACK);
+            conn.sendToClient(ack.build());
+        }
 
         if (!stillUsable) {
             log.info("Channel is now fully exhausted, closing/initiating settlement");
@@ -338,7 +350,8 @@ public class PaymentChannelServer {
                         receiveContractMessage(msg);
                         return;
                     case UPDATE_PAYMENT:
-                        receiveUpdatePaymentMessage(msg);
+                        checkState(step == InitStep.CHANNEL_OPEN && msg.hasUpdatePayment());
+                        receiveUpdatePaymentMessage(msg.getUpdatePayment(), true);
                         return;
                     case CLOSE:
                         receiveCloseMessage();
@@ -358,30 +371,29 @@ public class PaymentChannelServer {
                 }
             } catch (VerificationException e) {
                 log.error("Caught verification exception handling message from client", e);
-                errorBuilder = Protos.Error.newBuilder()
-                        .setCode(Protos.Error.ErrorCode.BAD_TRANSACTION)
-                        .setExplanation(e.getMessage());
-                closeReason = CloseReason.REMOTE_SENT_INVALID_MESSAGE;
+                error(e.getMessage(), Protos.Error.ErrorCode.BAD_TRANSACTION, CloseReason.REMOTE_SENT_INVALID_MESSAGE);
             } catch (ValueOutOfRangeException e) {
                 log.error("Caught value out of range exception handling message from client", e);
-                errorBuilder = Protos.Error.newBuilder()
-                        .setCode(Protos.Error.ErrorCode.BAD_TRANSACTION)
-                        .setExplanation(e.getMessage());
-                closeReason = CloseReason.REMOTE_SENT_INVALID_MESSAGE;
+                error(e.getMessage(), Protos.Error.ErrorCode.BAD_TRANSACTION, CloseReason.REMOTE_SENT_INVALID_MESSAGE);
             } catch (IllegalStateException e) {
                 log.error("Caught illegal state exception handling message from client", e);
-                errorBuilder = Protos.Error.newBuilder()
-                        .setCode(Protos.Error.ErrorCode.SYNTAX_ERROR);
-                closeReason = CloseReason.REMOTE_SENT_INVALID_MESSAGE;
+                error(e.getMessage(), Protos.Error.ErrorCode.SYNTAX_ERROR, CloseReason.REMOTE_SENT_INVALID_MESSAGE);
             }
-            conn.sendToClient(Protos.TwoWayChannelMessage.newBuilder()
-                    .setError(errorBuilder)
-                    .setType(Protos.TwoWayChannelMessage.MessageType.ERROR)
-                    .build());
-            conn.destroyConnection(closeReason);
         } finally {
             lock.unlock();
         }
+    }
+
+    private void error(String message, Protos.Error.ErrorCode errorCode, CloseReason closeReason) {
+        Protos.Error.Builder errorBuilder;
+        errorBuilder = Protos.Error.newBuilder()
+                .setCode(errorCode)
+                .setExplanation(message);
+        conn.sendToClient(Protos.TwoWayChannelMessage.newBuilder()
+                .setError(errorBuilder)
+                .setType(Protos.TwoWayChannelMessage.MessageType.ERROR)
+                .build());
+        conn.destroyConnection(closeReason);
     }
 
     @GuardedBy("lock")

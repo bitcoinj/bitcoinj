@@ -3797,8 +3797,8 @@ public final class Protos {
      * Rough UNIX time for when the channel expires. This is determined by the block header
      * timestamps which can be very inaccurate when miners use the obsolete RollNTime hack.
      * Channels could also be specified in terms of block heights but then how do you know the
-     * current chain height if you don't have internet access? Trust secondary? Probably opens up
-     * attack vectors. We can assume primary has an independent clock, however. If primary
+     * current chain height if you don't have internet access? Trust the server? Probably opens up
+     * attack vectors. We can assume the client has an independent clock, however. If the client
      * considers this value too far off (eg more than a day), it may send an ERROR and close the
      * channel.
      * </pre>
@@ -3811,13 +3811,41 @@ public final class Protos {
      * Rough UNIX time for when the channel expires. This is determined by the block header
      * timestamps which can be very inaccurate when miners use the obsolete RollNTime hack.
      * Channels could also be specified in terms of block heights but then how do you know the
-     * current chain height if you don't have internet access? Trust secondary? Probably opens up
-     * attack vectors. We can assume primary has an independent clock, however. If primary
+     * current chain height if you don't have internet access? Trust the server? Probably opens up
+     * attack vectors. We can assume the client has an independent clock, however. If the client
      * considers this value too far off (eg more than a day), it may send an ERROR and close the
      * channel.
      * </pre>
      */
     long getExpireTimeSecs();
+
+    // required uint64 min_payment = 4;
+    /**
+     * <code>required uint64 min_payment = 4;</code>
+     *
+     * <pre>
+     * The amount of money the server requires for the initial payment. The act of opening a channel
+     * always transfers some quantity of money to the server: it's impossible to have a channel with
+     * zero value transferred. This rule ensures that you can't get a channel that can't be settled
+     * due to having paid under the dust limit. Because the dust limit will float in future, the
+     * server tells the client what it thinks it is, and the client is supposed to sanity check this
+     * value.
+     * </pre>
+     */
+    boolean hasMinPayment();
+    /**
+     * <code>required uint64 min_payment = 4;</code>
+     *
+     * <pre>
+     * The amount of money the server requires for the initial payment. The act of opening a channel
+     * always transfers some quantity of money to the server: it's impossible to have a channel with
+     * zero value transferred. This rule ensures that you can't get a channel that can't be settled
+     * due to having paid under the dust limit. Because the dust limit will float in future, the
+     * server tells the client what it thinks it is, and the client is supposed to sanity check this
+     * value.
+     * </pre>
+     */
+    long getMinPayment();
   }
   /**
    * Protobuf type {@code paymentchannels.Initiate}
@@ -3887,6 +3915,11 @@ public final class Protos {
             case 24: {
               bitField0_ |= 0x00000004;
               expireTimeSecs_ = input.readUInt64();
+              break;
+            }
+            case 32: {
+              bitField0_ |= 0x00000008;
+              minPayment_ = input.readUInt64();
               break;
             }
           }
@@ -3997,8 +4030,8 @@ public final class Protos {
      * Rough UNIX time for when the channel expires. This is determined by the block header
      * timestamps which can be very inaccurate when miners use the obsolete RollNTime hack.
      * Channels could also be specified in terms of block heights but then how do you know the
-     * current chain height if you don't have internet access? Trust secondary? Probably opens up
-     * attack vectors. We can assume primary has an independent clock, however. If primary
+     * current chain height if you don't have internet access? Trust the server? Probably opens up
+     * attack vectors. We can assume the client has an independent clock, however. If the client
      * considers this value too far off (eg more than a day), it may send an ERROR and close the
      * channel.
      * </pre>
@@ -4013,8 +4046,8 @@ public final class Protos {
      * Rough UNIX time for when the channel expires. This is determined by the block header
      * timestamps which can be very inaccurate when miners use the obsolete RollNTime hack.
      * Channels could also be specified in terms of block heights but then how do you know the
-     * current chain height if you don't have internet access? Trust secondary? Probably opens up
-     * attack vectors. We can assume primary has an independent clock, however. If primary
+     * current chain height if you don't have internet access? Trust the server? Probably opens up
+     * attack vectors. We can assume the client has an independent clock, however. If the client
      * considers this value too far off (eg more than a day), it may send an ERROR and close the
      * channel.
      * </pre>
@@ -4023,10 +4056,45 @@ public final class Protos {
       return expireTimeSecs_;
     }
 
+    // required uint64 min_payment = 4;
+    public static final int MIN_PAYMENT_FIELD_NUMBER = 4;
+    private long minPayment_;
+    /**
+     * <code>required uint64 min_payment = 4;</code>
+     *
+     * <pre>
+     * The amount of money the server requires for the initial payment. The act of opening a channel
+     * always transfers some quantity of money to the server: it's impossible to have a channel with
+     * zero value transferred. This rule ensures that you can't get a channel that can't be settled
+     * due to having paid under the dust limit. Because the dust limit will float in future, the
+     * server tells the client what it thinks it is, and the client is supposed to sanity check this
+     * value.
+     * </pre>
+     */
+    public boolean hasMinPayment() {
+      return ((bitField0_ & 0x00000008) == 0x00000008);
+    }
+    /**
+     * <code>required uint64 min_payment = 4;</code>
+     *
+     * <pre>
+     * The amount of money the server requires for the initial payment. The act of opening a channel
+     * always transfers some quantity of money to the server: it's impossible to have a channel with
+     * zero value transferred. This rule ensures that you can't get a channel that can't be settled
+     * due to having paid under the dust limit. Because the dust limit will float in future, the
+     * server tells the client what it thinks it is, and the client is supposed to sanity check this
+     * value.
+     * </pre>
+     */
+    public long getMinPayment() {
+      return minPayment_;
+    }
+
     private void initFields() {
       multisigKey_ = com.google.protobuf.ByteString.EMPTY;
       minAcceptedChannelSize_ = 0L;
       expireTimeSecs_ = 0L;
+      minPayment_ = 0L;
     }
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
@@ -4045,6 +4113,10 @@ public final class Protos {
         memoizedIsInitialized = 0;
         return false;
       }
+      if (!hasMinPayment()) {
+        memoizedIsInitialized = 0;
+        return false;
+      }
       memoizedIsInitialized = 1;
       return true;
     }
@@ -4060,6 +4132,9 @@ public final class Protos {
       }
       if (((bitField0_ & 0x00000004) == 0x00000004)) {
         output.writeUInt64(3, expireTimeSecs_);
+      }
+      if (((bitField0_ & 0x00000008) == 0x00000008)) {
+        output.writeUInt64(4, minPayment_);
       }
       getUnknownFields().writeTo(output);
     }
@@ -4081,6 +4156,10 @@ public final class Protos {
       if (((bitField0_ & 0x00000004) == 0x00000004)) {
         size += com.google.protobuf.CodedOutputStream
           .computeUInt64Size(3, expireTimeSecs_);
+      }
+      if (((bitField0_ & 0x00000008) == 0x00000008)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeUInt64Size(4, minPayment_);
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSerializedSize = size;
@@ -4208,6 +4287,8 @@ public final class Protos {
         bitField0_ = (bitField0_ & ~0x00000002);
         expireTimeSecs_ = 0L;
         bitField0_ = (bitField0_ & ~0x00000004);
+        minPayment_ = 0L;
+        bitField0_ = (bitField0_ & ~0x00000008);
         return this;
       }
 
@@ -4248,6 +4329,10 @@ public final class Protos {
           to_bitField0_ |= 0x00000004;
         }
         result.expireTimeSecs_ = expireTimeSecs_;
+        if (((from_bitField0_ & 0x00000008) == 0x00000008)) {
+          to_bitField0_ |= 0x00000008;
+        }
+        result.minPayment_ = minPayment_;
         result.bitField0_ = to_bitField0_;
         onBuilt();
         return result;
@@ -4273,6 +4358,9 @@ public final class Protos {
         if (other.hasExpireTimeSecs()) {
           setExpireTimeSecs(other.getExpireTimeSecs());
         }
+        if (other.hasMinPayment()) {
+          setMinPayment(other.getMinPayment());
+        }
         this.mergeUnknownFields(other.getUnknownFields());
         return this;
       }
@@ -4287,6 +4375,10 @@ public final class Protos {
           return false;
         }
         if (!hasExpireTimeSecs()) {
+          
+          return false;
+        }
+        if (!hasMinPayment()) {
           
           return false;
         }
@@ -4442,8 +4534,8 @@ public final class Protos {
        * Rough UNIX time for when the channel expires. This is determined by the block header
        * timestamps which can be very inaccurate when miners use the obsolete RollNTime hack.
        * Channels could also be specified in terms of block heights but then how do you know the
-       * current chain height if you don't have internet access? Trust secondary? Probably opens up
-       * attack vectors. We can assume primary has an independent clock, however. If primary
+       * current chain height if you don't have internet access? Trust the server? Probably opens up
+       * attack vectors. We can assume the client has an independent clock, however. If the client
        * considers this value too far off (eg more than a day), it may send an ERROR and close the
        * channel.
        * </pre>
@@ -4458,8 +4550,8 @@ public final class Protos {
        * Rough UNIX time for when the channel expires. This is determined by the block header
        * timestamps which can be very inaccurate when miners use the obsolete RollNTime hack.
        * Channels could also be specified in terms of block heights but then how do you know the
-       * current chain height if you don't have internet access? Trust secondary? Probably opens up
-       * attack vectors. We can assume primary has an independent clock, however. If primary
+       * current chain height if you don't have internet access? Trust the server? Probably opens up
+       * attack vectors. We can assume the client has an independent clock, however. If the client
        * considers this value too far off (eg more than a day), it may send an ERROR and close the
        * channel.
        * </pre>
@@ -4474,8 +4566,8 @@ public final class Protos {
        * Rough UNIX time for when the channel expires. This is determined by the block header
        * timestamps which can be very inaccurate when miners use the obsolete RollNTime hack.
        * Channels could also be specified in terms of block heights but then how do you know the
-       * current chain height if you don't have internet access? Trust secondary? Probably opens up
-       * attack vectors. We can assume primary has an independent clock, however. If primary
+       * current chain height if you don't have internet access? Trust the server? Probably opens up
+       * attack vectors. We can assume the client has an independent clock, however. If the client
        * considers this value too far off (eg more than a day), it may send an ERROR and close the
        * channel.
        * </pre>
@@ -4493,8 +4585,8 @@ public final class Protos {
        * Rough UNIX time for when the channel expires. This is determined by the block header
        * timestamps which can be very inaccurate when miners use the obsolete RollNTime hack.
        * Channels could also be specified in terms of block heights but then how do you know the
-       * current chain height if you don't have internet access? Trust secondary? Probably opens up
-       * attack vectors. We can assume primary has an independent clock, however. If primary
+       * current chain height if you don't have internet access? Trust the server? Probably opens up
+       * attack vectors. We can assume the client has an independent clock, however. If the client
        * considers this value too far off (eg more than a day), it may send an ERROR and close the
        * channel.
        * </pre>
@@ -4502,6 +4594,75 @@ public final class Protos {
       public Builder clearExpireTimeSecs() {
         bitField0_ = (bitField0_ & ~0x00000004);
         expireTimeSecs_ = 0L;
+        onChanged();
+        return this;
+      }
+
+      // required uint64 min_payment = 4;
+      private long minPayment_ ;
+      /**
+       * <code>required uint64 min_payment = 4;</code>
+       *
+       * <pre>
+       * The amount of money the server requires for the initial payment. The act of opening a channel
+       * always transfers some quantity of money to the server: it's impossible to have a channel with
+       * zero value transferred. This rule ensures that you can't get a channel that can't be settled
+       * due to having paid under the dust limit. Because the dust limit will float in future, the
+       * server tells the client what it thinks it is, and the client is supposed to sanity check this
+       * value.
+       * </pre>
+       */
+      public boolean hasMinPayment() {
+        return ((bitField0_ & 0x00000008) == 0x00000008);
+      }
+      /**
+       * <code>required uint64 min_payment = 4;</code>
+       *
+       * <pre>
+       * The amount of money the server requires for the initial payment. The act of opening a channel
+       * always transfers some quantity of money to the server: it's impossible to have a channel with
+       * zero value transferred. This rule ensures that you can't get a channel that can't be settled
+       * due to having paid under the dust limit. Because the dust limit will float in future, the
+       * server tells the client what it thinks it is, and the client is supposed to sanity check this
+       * value.
+       * </pre>
+       */
+      public long getMinPayment() {
+        return minPayment_;
+      }
+      /**
+       * <code>required uint64 min_payment = 4;</code>
+       *
+       * <pre>
+       * The amount of money the server requires for the initial payment. The act of opening a channel
+       * always transfers some quantity of money to the server: it's impossible to have a channel with
+       * zero value transferred. This rule ensures that you can't get a channel that can't be settled
+       * due to having paid under the dust limit. Because the dust limit will float in future, the
+       * server tells the client what it thinks it is, and the client is supposed to sanity check this
+       * value.
+       * </pre>
+       */
+      public Builder setMinPayment(long value) {
+        bitField0_ |= 0x00000008;
+        minPayment_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>required uint64 min_payment = 4;</code>
+       *
+       * <pre>
+       * The amount of money the server requires for the initial payment. The act of opening a channel
+       * always transfers some quantity of money to the server: it's impossible to have a channel with
+       * zero value transferred. This rule ensures that you can't get a channel that can't be settled
+       * due to having paid under the dust limit. Because the dust limit will float in future, the
+       * server tells the client what it thinks it is, and the client is supposed to sanity check this
+       * value.
+       * </pre>
+       */
+      public Builder clearMinPayment() {
+        bitField0_ = (bitField0_ & ~0x00000008);
+        minPayment_ = 0L;
         onChanged();
         return this;
       }
@@ -5605,6 +5766,41 @@ public final class Protos {
      * </pre>
      */
     com.google.protobuf.ByteString getTx();
+
+    // required .paymentchannels.UpdatePayment initial_payment = 2;
+    /**
+     * <code>required .paymentchannels.UpdatePayment initial_payment = 2;</code>
+     *
+     * <pre>
+     * To open the channel, an initial payment of the server-specified dust limit value must be
+     * provided. This ensures that the channel is never in an un-settleable state due to either
+     * no payment tx having been provided at all, or a payment that is smaller than the dust
+     * limit being provided.
+     * </pre>
+     */
+    boolean hasInitialPayment();
+    /**
+     * <code>required .paymentchannels.UpdatePayment initial_payment = 2;</code>
+     *
+     * <pre>
+     * To open the channel, an initial payment of the server-specified dust limit value must be
+     * provided. This ensures that the channel is never in an un-settleable state due to either
+     * no payment tx having been provided at all, or a payment that is smaller than the dust
+     * limit being provided.
+     * </pre>
+     */
+    org.bitcoin.paymentchannel.Protos.UpdatePayment getInitialPayment();
+    /**
+     * <code>required .paymentchannels.UpdatePayment initial_payment = 2;</code>
+     *
+     * <pre>
+     * To open the channel, an initial payment of the server-specified dust limit value must be
+     * provided. This ensures that the channel is never in an un-settleable state due to either
+     * no payment tx having been provided at all, or a payment that is smaller than the dust
+     * limit being provided.
+     * </pre>
+     */
+    org.bitcoin.paymentchannel.Protos.UpdatePaymentOrBuilder getInitialPaymentOrBuilder();
   }
   /**
    * Protobuf type {@code paymentchannels.ProvideContract}
@@ -5664,6 +5860,19 @@ public final class Protos {
             case 10: {
               bitField0_ |= 0x00000001;
               tx_ = input.readBytes();
+              break;
+            }
+            case 18: {
+              org.bitcoin.paymentchannel.Protos.UpdatePayment.Builder subBuilder = null;
+              if (((bitField0_ & 0x00000002) == 0x00000002)) {
+                subBuilder = initialPayment_.toBuilder();
+              }
+              initialPayment_ = input.readMessage(org.bitcoin.paymentchannel.Protos.UpdatePayment.PARSER, extensionRegistry);
+              if (subBuilder != null) {
+                subBuilder.mergeFrom(initialPayment_);
+                initialPayment_ = subBuilder.buildPartial();
+              }
+              bitField0_ |= 0x00000002;
               break;
             }
           }
@@ -5740,8 +5949,52 @@ public final class Protos {
       return tx_;
     }
 
+    // required .paymentchannels.UpdatePayment initial_payment = 2;
+    public static final int INITIAL_PAYMENT_FIELD_NUMBER = 2;
+    private org.bitcoin.paymentchannel.Protos.UpdatePayment initialPayment_;
+    /**
+     * <code>required .paymentchannels.UpdatePayment initial_payment = 2;</code>
+     *
+     * <pre>
+     * To open the channel, an initial payment of the server-specified dust limit value must be
+     * provided. This ensures that the channel is never in an un-settleable state due to either
+     * no payment tx having been provided at all, or a payment that is smaller than the dust
+     * limit being provided.
+     * </pre>
+     */
+    public boolean hasInitialPayment() {
+      return ((bitField0_ & 0x00000002) == 0x00000002);
+    }
+    /**
+     * <code>required .paymentchannels.UpdatePayment initial_payment = 2;</code>
+     *
+     * <pre>
+     * To open the channel, an initial payment of the server-specified dust limit value must be
+     * provided. This ensures that the channel is never in an un-settleable state due to either
+     * no payment tx having been provided at all, or a payment that is smaller than the dust
+     * limit being provided.
+     * </pre>
+     */
+    public org.bitcoin.paymentchannel.Protos.UpdatePayment getInitialPayment() {
+      return initialPayment_;
+    }
+    /**
+     * <code>required .paymentchannels.UpdatePayment initial_payment = 2;</code>
+     *
+     * <pre>
+     * To open the channel, an initial payment of the server-specified dust limit value must be
+     * provided. This ensures that the channel is never in an un-settleable state due to either
+     * no payment tx having been provided at all, or a payment that is smaller than the dust
+     * limit being provided.
+     * </pre>
+     */
+    public org.bitcoin.paymentchannel.Protos.UpdatePaymentOrBuilder getInitialPaymentOrBuilder() {
+      return initialPayment_;
+    }
+
     private void initFields() {
       tx_ = com.google.protobuf.ByteString.EMPTY;
+      initialPayment_ = org.bitcoin.paymentchannel.Protos.UpdatePayment.getDefaultInstance();
     }
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
@@ -5749,6 +6002,14 @@ public final class Protos {
       if (isInitialized != -1) return isInitialized == 1;
 
       if (!hasTx()) {
+        memoizedIsInitialized = 0;
+        return false;
+      }
+      if (!hasInitialPayment()) {
+        memoizedIsInitialized = 0;
+        return false;
+      }
+      if (!getInitialPayment().isInitialized()) {
         memoizedIsInitialized = 0;
         return false;
       }
@@ -5762,6 +6023,9 @@ public final class Protos {
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
         output.writeBytes(1, tx_);
       }
+      if (((bitField0_ & 0x00000002) == 0x00000002)) {
+        output.writeMessage(2, initialPayment_);
+      }
       getUnknownFields().writeTo(output);
     }
 
@@ -5774,6 +6038,10 @@ public final class Protos {
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
         size += com.google.protobuf.CodedOutputStream
           .computeBytesSize(1, tx_);
+      }
+      if (((bitField0_ & 0x00000002) == 0x00000002)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeMessageSize(2, initialPayment_);
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSerializedSize = size;
@@ -5887,6 +6155,7 @@ public final class Protos {
       }
       private void maybeForceBuilderInitialization() {
         if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+          getInitialPaymentFieldBuilder();
         }
       }
       private static Builder create() {
@@ -5897,6 +6166,12 @@ public final class Protos {
         super.clear();
         tx_ = com.google.protobuf.ByteString.EMPTY;
         bitField0_ = (bitField0_ & ~0x00000001);
+        if (initialPaymentBuilder_ == null) {
+          initialPayment_ = org.bitcoin.paymentchannel.Protos.UpdatePayment.getDefaultInstance();
+        } else {
+          initialPaymentBuilder_.clear();
+        }
+        bitField0_ = (bitField0_ & ~0x00000002);
         return this;
       }
 
@@ -5929,6 +6204,14 @@ public final class Protos {
           to_bitField0_ |= 0x00000001;
         }
         result.tx_ = tx_;
+        if (((from_bitField0_ & 0x00000002) == 0x00000002)) {
+          to_bitField0_ |= 0x00000002;
+        }
+        if (initialPaymentBuilder_ == null) {
+          result.initialPayment_ = initialPayment_;
+        } else {
+          result.initialPayment_ = initialPaymentBuilder_.build();
+        }
         result.bitField0_ = to_bitField0_;
         onBuilt();
         return result;
@@ -5948,12 +6231,23 @@ public final class Protos {
         if (other.hasTx()) {
           setTx(other.getTx());
         }
+        if (other.hasInitialPayment()) {
+          mergeInitialPayment(other.getInitialPayment());
+        }
         this.mergeUnknownFields(other.getUnknownFields());
         return this;
       }
 
       public final boolean isInitialized() {
         if (!hasTx()) {
+          
+          return false;
+        }
+        if (!hasInitialPayment()) {
+          
+          return false;
+        }
+        if (!getInitialPayment().isInitialized()) {
           
           return false;
         }
@@ -6049,6 +6343,186 @@ public final class Protos {
         tx_ = getDefaultInstance().getTx();
         onChanged();
         return this;
+      }
+
+      // required .paymentchannels.UpdatePayment initial_payment = 2;
+      private org.bitcoin.paymentchannel.Protos.UpdatePayment initialPayment_ = org.bitcoin.paymentchannel.Protos.UpdatePayment.getDefaultInstance();
+      private com.google.protobuf.SingleFieldBuilder<
+          org.bitcoin.paymentchannel.Protos.UpdatePayment, org.bitcoin.paymentchannel.Protos.UpdatePayment.Builder, org.bitcoin.paymentchannel.Protos.UpdatePaymentOrBuilder> initialPaymentBuilder_;
+      /**
+       * <code>required .paymentchannels.UpdatePayment initial_payment = 2;</code>
+       *
+       * <pre>
+       * To open the channel, an initial payment of the server-specified dust limit value must be
+       * provided. This ensures that the channel is never in an un-settleable state due to either
+       * no payment tx having been provided at all, or a payment that is smaller than the dust
+       * limit being provided.
+       * </pre>
+       */
+      public boolean hasInitialPayment() {
+        return ((bitField0_ & 0x00000002) == 0x00000002);
+      }
+      /**
+       * <code>required .paymentchannels.UpdatePayment initial_payment = 2;</code>
+       *
+       * <pre>
+       * To open the channel, an initial payment of the server-specified dust limit value must be
+       * provided. This ensures that the channel is never in an un-settleable state due to either
+       * no payment tx having been provided at all, or a payment that is smaller than the dust
+       * limit being provided.
+       * </pre>
+       */
+      public org.bitcoin.paymentchannel.Protos.UpdatePayment getInitialPayment() {
+        if (initialPaymentBuilder_ == null) {
+          return initialPayment_;
+        } else {
+          return initialPaymentBuilder_.getMessage();
+        }
+      }
+      /**
+       * <code>required .paymentchannels.UpdatePayment initial_payment = 2;</code>
+       *
+       * <pre>
+       * To open the channel, an initial payment of the server-specified dust limit value must be
+       * provided. This ensures that the channel is never in an un-settleable state due to either
+       * no payment tx having been provided at all, or a payment that is smaller than the dust
+       * limit being provided.
+       * </pre>
+       */
+      public Builder setInitialPayment(org.bitcoin.paymentchannel.Protos.UpdatePayment value) {
+        if (initialPaymentBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          initialPayment_ = value;
+          onChanged();
+        } else {
+          initialPaymentBuilder_.setMessage(value);
+        }
+        bitField0_ |= 0x00000002;
+        return this;
+      }
+      /**
+       * <code>required .paymentchannels.UpdatePayment initial_payment = 2;</code>
+       *
+       * <pre>
+       * To open the channel, an initial payment of the server-specified dust limit value must be
+       * provided. This ensures that the channel is never in an un-settleable state due to either
+       * no payment tx having been provided at all, or a payment that is smaller than the dust
+       * limit being provided.
+       * </pre>
+       */
+      public Builder setInitialPayment(
+          org.bitcoin.paymentchannel.Protos.UpdatePayment.Builder builderForValue) {
+        if (initialPaymentBuilder_ == null) {
+          initialPayment_ = builderForValue.build();
+          onChanged();
+        } else {
+          initialPaymentBuilder_.setMessage(builderForValue.build());
+        }
+        bitField0_ |= 0x00000002;
+        return this;
+      }
+      /**
+       * <code>required .paymentchannels.UpdatePayment initial_payment = 2;</code>
+       *
+       * <pre>
+       * To open the channel, an initial payment of the server-specified dust limit value must be
+       * provided. This ensures that the channel is never in an un-settleable state due to either
+       * no payment tx having been provided at all, or a payment that is smaller than the dust
+       * limit being provided.
+       * </pre>
+       */
+      public Builder mergeInitialPayment(org.bitcoin.paymentchannel.Protos.UpdatePayment value) {
+        if (initialPaymentBuilder_ == null) {
+          if (((bitField0_ & 0x00000002) == 0x00000002) &&
+              initialPayment_ != org.bitcoin.paymentchannel.Protos.UpdatePayment.getDefaultInstance()) {
+            initialPayment_ =
+              org.bitcoin.paymentchannel.Protos.UpdatePayment.newBuilder(initialPayment_).mergeFrom(value).buildPartial();
+          } else {
+            initialPayment_ = value;
+          }
+          onChanged();
+        } else {
+          initialPaymentBuilder_.mergeFrom(value);
+        }
+        bitField0_ |= 0x00000002;
+        return this;
+      }
+      /**
+       * <code>required .paymentchannels.UpdatePayment initial_payment = 2;</code>
+       *
+       * <pre>
+       * To open the channel, an initial payment of the server-specified dust limit value must be
+       * provided. This ensures that the channel is never in an un-settleable state due to either
+       * no payment tx having been provided at all, or a payment that is smaller than the dust
+       * limit being provided.
+       * </pre>
+       */
+      public Builder clearInitialPayment() {
+        if (initialPaymentBuilder_ == null) {
+          initialPayment_ = org.bitcoin.paymentchannel.Protos.UpdatePayment.getDefaultInstance();
+          onChanged();
+        } else {
+          initialPaymentBuilder_.clear();
+        }
+        bitField0_ = (bitField0_ & ~0x00000002);
+        return this;
+      }
+      /**
+       * <code>required .paymentchannels.UpdatePayment initial_payment = 2;</code>
+       *
+       * <pre>
+       * To open the channel, an initial payment of the server-specified dust limit value must be
+       * provided. This ensures that the channel is never in an un-settleable state due to either
+       * no payment tx having been provided at all, or a payment that is smaller than the dust
+       * limit being provided.
+       * </pre>
+       */
+      public org.bitcoin.paymentchannel.Protos.UpdatePayment.Builder getInitialPaymentBuilder() {
+        bitField0_ |= 0x00000002;
+        onChanged();
+        return getInitialPaymentFieldBuilder().getBuilder();
+      }
+      /**
+       * <code>required .paymentchannels.UpdatePayment initial_payment = 2;</code>
+       *
+       * <pre>
+       * To open the channel, an initial payment of the server-specified dust limit value must be
+       * provided. This ensures that the channel is never in an un-settleable state due to either
+       * no payment tx having been provided at all, or a payment that is smaller than the dust
+       * limit being provided.
+       * </pre>
+       */
+      public org.bitcoin.paymentchannel.Protos.UpdatePaymentOrBuilder getInitialPaymentOrBuilder() {
+        if (initialPaymentBuilder_ != null) {
+          return initialPaymentBuilder_.getMessageOrBuilder();
+        } else {
+          return initialPayment_;
+        }
+      }
+      /**
+       * <code>required .paymentchannels.UpdatePayment initial_payment = 2;</code>
+       *
+       * <pre>
+       * To open the channel, an initial payment of the server-specified dust limit value must be
+       * provided. This ensures that the channel is never in an un-settleable state due to either
+       * no payment tx having been provided at all, or a payment that is smaller than the dust
+       * limit being provided.
+       * </pre>
+       */
+      private com.google.protobuf.SingleFieldBuilder<
+          org.bitcoin.paymentchannel.Protos.UpdatePayment, org.bitcoin.paymentchannel.Protos.UpdatePayment.Builder, org.bitcoin.paymentchannel.Protos.UpdatePaymentOrBuilder> 
+          getInitialPaymentFieldBuilder() {
+        if (initialPaymentBuilder_ == null) {
+          initialPaymentBuilder_ = new com.google.protobuf.SingleFieldBuilder<
+              org.bitcoin.paymentchannel.Protos.UpdatePayment, org.bitcoin.paymentchannel.Protos.UpdatePayment.Builder, org.bitcoin.paymentchannel.Protos.UpdatePaymentOrBuilder>(
+                  initialPayment_,
+                  getParentForChildren(),
+                  isClean());
+          initialPayment_ = null;
+        }
+        return initialPaymentBuilder_;
       }
 
       // @@protoc_insertion_point(builder_scope:paymentchannels.ProvideContract)
@@ -7172,6 +7646,24 @@ public final class Protos {
      */
     com.google.protobuf.ByteString
         getExplanationBytes();
+
+    // optional uint64 expected_value = 3;
+    /**
+     * <code>optional uint64 expected_value = 3;</code>
+     *
+     * <pre>
+     * Can be set by the client when erroring to the server if a value was out of range. Can help with debugging.
+     * </pre>
+     */
+    boolean hasExpectedValue();
+    /**
+     * <code>optional uint64 expected_value = 3;</code>
+     *
+     * <pre>
+     * Can be set by the client when erroring to the server if a value was out of range. Can help with debugging.
+     * </pre>
+     */
+    long getExpectedValue();
   }
   /**
    * Protobuf type {@code paymentchannels.Error}
@@ -7244,6 +7736,11 @@ public final class Protos {
             case 18: {
               bitField0_ |= 0x00000002;
               explanation_ = input.readBytes();
+              break;
+            }
+            case 24: {
+              bitField0_ |= 0x00000004;
+              expectedValue_ = input.readUInt64();
               break;
             }
           }
@@ -7340,9 +7837,17 @@ public final class Protos {
        */
       CHANNEL_VALUE_TOO_LARGE(5, 6),
       /**
-       * <code>OTHER = 7;</code>
+       * <code>MIN_PAYMENT_TOO_LARGE = 7;</code>
+       *
+       * <pre>
+       * too large for the primary
+       * </pre>
        */
-      OTHER(6, 7),
+      MIN_PAYMENT_TOO_LARGE(6, 7),
+      /**
+       * <code>OTHER = 8;</code>
+       */
+      OTHER(7, 8),
       ;
 
       /**
@@ -7395,9 +7900,17 @@ public final class Protos {
        */
       public static final int CHANNEL_VALUE_TOO_LARGE_VALUE = 6;
       /**
-       * <code>OTHER = 7;</code>
+       * <code>MIN_PAYMENT_TOO_LARGE = 7;</code>
+       *
+       * <pre>
+       * too large for the primary
+       * </pre>
        */
-      public static final int OTHER_VALUE = 7;
+      public static final int MIN_PAYMENT_TOO_LARGE_VALUE = 7;
+      /**
+       * <code>OTHER = 8;</code>
+       */
+      public static final int OTHER_VALUE = 8;
 
 
       public final int getNumber() { return value; }
@@ -7410,7 +7923,8 @@ public final class Protos {
           case 4: return BAD_TRANSACTION;
           case 5: return TIME_WINDOW_TOO_LARGE;
           case 6: return CHANNEL_VALUE_TOO_LARGE;
-          case 7: return OTHER;
+          case 7: return MIN_PAYMENT_TOO_LARGE;
+          case 8: return OTHER;
           default: return null;
         }
       }
@@ -7534,9 +8048,34 @@ public final class Protos {
       }
     }
 
+    // optional uint64 expected_value = 3;
+    public static final int EXPECTED_VALUE_FIELD_NUMBER = 3;
+    private long expectedValue_;
+    /**
+     * <code>optional uint64 expected_value = 3;</code>
+     *
+     * <pre>
+     * Can be set by the client when erroring to the server if a value was out of range. Can help with debugging.
+     * </pre>
+     */
+    public boolean hasExpectedValue() {
+      return ((bitField0_ & 0x00000004) == 0x00000004);
+    }
+    /**
+     * <code>optional uint64 expected_value = 3;</code>
+     *
+     * <pre>
+     * Can be set by the client when erroring to the server if a value was out of range. Can help with debugging.
+     * </pre>
+     */
+    public long getExpectedValue() {
+      return expectedValue_;
+    }
+
     private void initFields() {
       code_ = org.bitcoin.paymentchannel.Protos.Error.ErrorCode.OTHER;
       explanation_ = "";
+      expectedValue_ = 0L;
     }
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
@@ -7556,6 +8095,9 @@ public final class Protos {
       if (((bitField0_ & 0x00000002) == 0x00000002)) {
         output.writeBytes(2, getExplanationBytes());
       }
+      if (((bitField0_ & 0x00000004) == 0x00000004)) {
+        output.writeUInt64(3, expectedValue_);
+      }
       getUnknownFields().writeTo(output);
     }
 
@@ -7572,6 +8114,10 @@ public final class Protos {
       if (((bitField0_ & 0x00000002) == 0x00000002)) {
         size += com.google.protobuf.CodedOutputStream
           .computeBytesSize(2, getExplanationBytes());
+      }
+      if (((bitField0_ & 0x00000004) == 0x00000004)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeUInt64Size(3, expectedValue_);
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSerializedSize = size;
@@ -7699,6 +8245,8 @@ public final class Protos {
         bitField0_ = (bitField0_ & ~0x00000001);
         explanation_ = "";
         bitField0_ = (bitField0_ & ~0x00000002);
+        expectedValue_ = 0L;
+        bitField0_ = (bitField0_ & ~0x00000004);
         return this;
       }
 
@@ -7735,6 +8283,10 @@ public final class Protos {
           to_bitField0_ |= 0x00000002;
         }
         result.explanation_ = explanation_;
+        if (((from_bitField0_ & 0x00000004) == 0x00000004)) {
+          to_bitField0_ |= 0x00000004;
+        }
+        result.expectedValue_ = expectedValue_;
         result.bitField0_ = to_bitField0_;
         onBuilt();
         return result;
@@ -7758,6 +8310,9 @@ public final class Protos {
           bitField0_ |= 0x00000002;
           explanation_ = other.explanation_;
           onChanged();
+        }
+        if (other.hasExpectedValue()) {
+          setExpectedValue(other.getExpectedValue());
         }
         this.mergeUnknownFields(other.getUnknownFields());
         return this;
@@ -7920,6 +8475,55 @@ public final class Protos {
         return this;
       }
 
+      // optional uint64 expected_value = 3;
+      private long expectedValue_ ;
+      /**
+       * <code>optional uint64 expected_value = 3;</code>
+       *
+       * <pre>
+       * Can be set by the client when erroring to the server if a value was out of range. Can help with debugging.
+       * </pre>
+       */
+      public boolean hasExpectedValue() {
+        return ((bitField0_ & 0x00000004) == 0x00000004);
+      }
+      /**
+       * <code>optional uint64 expected_value = 3;</code>
+       *
+       * <pre>
+       * Can be set by the client when erroring to the server if a value was out of range. Can help with debugging.
+       * </pre>
+       */
+      public long getExpectedValue() {
+        return expectedValue_;
+      }
+      /**
+       * <code>optional uint64 expected_value = 3;</code>
+       *
+       * <pre>
+       * Can be set by the client when erroring to the server if a value was out of range. Can help with debugging.
+       * </pre>
+       */
+      public Builder setExpectedValue(long value) {
+        bitField0_ |= 0x00000004;
+        expectedValue_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional uint64 expected_value = 3;</code>
+       *
+       * <pre>
+       * Can be set by the client when erroring to the server if a value was out of range. Can help with debugging.
+       * </pre>
+       */
+      public Builder clearExpectedValue() {
+        bitField0_ = (bitField0_ & ~0x00000004);
+        expectedValue_ = 0L;
+        onChanged();
+        return this;
+      }
+
       // @@protoc_insertion_point(builder_scope:paymentchannels.Error)
     }
 
@@ -8013,22 +8617,25 @@ public final class Protos {
       "\005ERROR\020\n\"X\n\rClientVersion\022\r\n\005major\030\001 \002(\005" +
       "\022\020\n\005minor\030\002 \001(\005:\0010\022&\n\036previous_channel_c" +
       "ontract_hash\030\003 \001(\014\"0\n\rServerVersion\022\r\n\005m" +
-      "ajor\030\001 \002(\005\022\020\n\005minor\030\002 \001(\005:\0010\"]\n\010Initiate" +
+      "ajor\030\001 \002(\005\022\020\n\005minor\030\002 \001(\005:\0010\"r\n\010Initiate" +
       "\022\024\n\014multisig_key\030\001 \002(\014\022!\n\031min_accepted_c" +
       "hannel_size\030\002 \002(\004\022\030\n\020expire_time_secs\030\003 " +
-      "\002(\004\"1\n\rProvideRefund\022\024\n\014multisig_key\030\001 \002" +
-      "(\014\022\n\n\002tx\030\002 \002(\014\"!\n\014ReturnRefund\022\021\n\tsignat" +
-      "ure\030\001 \002(\014\"\035\n\017ProvideContract\022\n\n\002tx\030\001 \002(\014" +
-      "\"?\n\rUpdatePayment\022\033\n\023client_change_value",
-      "\030\001 \002(\004\022\021\n\tsignature\030\002 \002(\014\"\030\n\nSettlement\022" +
-      "\n\n\002tx\030\003 \002(\014\"\363\001\n\005Error\0225\n\004code\030\001 \001(\0162 .pa" +
-      "ymentchannels.Error.ErrorCode:\005OTHER\022\023\n\013" +
-      "explanation\030\002 \001(\t\"\235\001\n\tErrorCode\022\013\n\007TIMEO" +
-      "UT\020\001\022\020\n\014SYNTAX_ERROR\020\002\022\031\n\025NO_ACCEPTABLE_" +
-      "VERSION\020\003\022\023\n\017BAD_TRANSACTION\020\004\022\031\n\025TIME_W" +
-      "INDOW_TOO_LARGE\020\005\022\033\n\027CHANNEL_VALUE_TOO_L" +
-      "ARGE\020\006\022\t\n\005OTHER\020\007B$\n\032org.bitcoin.payment" +
-      "channelB\006Protos"
+      "\002(\004\022\023\n\013min_payment\030\004 \002(\004\"1\n\rProvideRefun" +
+      "d\022\024\n\014multisig_key\030\001 \002(\014\022\n\n\002tx\030\002 \002(\014\"!\n\014R" +
+      "eturnRefund\022\021\n\tsignature\030\001 \002(\014\"V\n\017Provid" +
+      "eContract\022\n\n\002tx\030\001 \002(\014\0227\n\017initial_payment",
+      "\030\002 \002(\0132\036.paymentchannels.UpdatePayment\"?" +
+      "\n\rUpdatePayment\022\033\n\023client_change_value\030\001" +
+      " \002(\004\022\021\n\tsignature\030\002 \002(\014\"\030\n\nSettlement\022\n\n" +
+      "\002tx\030\003 \002(\014\"\246\002\n\005Error\0225\n\004code\030\001 \001(\0162 .paym" +
+      "entchannels.Error.ErrorCode:\005OTHER\022\023\n\013ex" +
+      "planation\030\002 \001(\t\022\026\n\016expected_value\030\003 \001(\004\"" +
+      "\270\001\n\tErrorCode\022\013\n\007TIMEOUT\020\001\022\020\n\014SYNTAX_ERR" +
+      "OR\020\002\022\031\n\025NO_ACCEPTABLE_VERSION\020\003\022\023\n\017BAD_T" +
+      "RANSACTION\020\004\022\031\n\025TIME_WINDOW_TOO_LARGE\020\005\022" +
+      "\033\n\027CHANNEL_VALUE_TOO_LARGE\020\006\022\031\n\025MIN_PAYM",
+      "ENT_TOO_LARGE\020\007\022\t\n\005OTHER\020\010B$\n\032org.bitcoi" +
+      "n.paymentchannelB\006Protos"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
       new com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner() {
@@ -8058,7 +8665,7 @@ public final class Protos {
           internal_static_paymentchannels_Initiate_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_paymentchannels_Initiate_descriptor,
-              new java.lang.String[] { "MultisigKey", "MinAcceptedChannelSize", "ExpireTimeSecs", });
+              new java.lang.String[] { "MultisigKey", "MinAcceptedChannelSize", "ExpireTimeSecs", "MinPayment", });
           internal_static_paymentchannels_ProvideRefund_descriptor =
             getDescriptor().getMessageTypes().get(4);
           internal_static_paymentchannels_ProvideRefund_fieldAccessorTable = new
@@ -8076,7 +8683,7 @@ public final class Protos {
           internal_static_paymentchannels_ProvideContract_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_paymentchannels_ProvideContract_descriptor,
-              new java.lang.String[] { "Tx", });
+              new java.lang.String[] { "Tx", "InitialPayment", });
           internal_static_paymentchannels_UpdatePayment_descriptor =
             getDescriptor().getMessageTypes().get(7);
           internal_static_paymentchannels_UpdatePayment_fieldAccessorTable = new
@@ -8094,7 +8701,7 @@ public final class Protos {
           internal_static_paymentchannels_Error_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_paymentchannels_Error_descriptor,
-              new java.lang.String[] { "Code", "Explanation", });
+              new java.lang.String[] { "Code", "Explanation", "ExpectedValue", });
           return null;
         }
       };

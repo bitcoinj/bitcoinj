@@ -20,12 +20,15 @@ import com.google.bitcoin.core.*;
 import com.google.bitcoin.protocols.channels.PaymentChannelCloseException.CloseReason;
 import com.google.bitcoin.utils.Threading;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.util.concurrent.*;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
+import com.google.common.util.concurrent.SettableFuture;
 import com.google.protobuf.ByteString;
 import net.jcip.annotations.GuardedBy;
 import org.bitcoin.paymentchannel.Protos;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
 import java.math.BigInteger;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -83,6 +86,7 @@ public class PaymentChannelClient implements IPaymentChannelClient {
     // Information used during channel initialization to send to the server or check what the server sends to us
     private final ECKey myKey;
     private final BigInteger maxValue;
+    @GuardedBy("lock") private long minPayment;
 
     @GuardedBy("lock") SettableFuture<BigInteger> increasePaymentFuture;
     @GuardedBy("lock") BigInteger lastPaymentActualAmount;
@@ -123,14 +127,44 @@ public class PaymentChannelClient implements IPaymentChannelClient {
         this.conn = checkNotNull(conn);
     }
 
+    @Nullable
     @GuardedBy("lock")
-    private void receiveInitiate(Protos.Initiate initiate, BigInteger contractValue) throws VerificationException, ValueOutOfRangeException {
-        log.info("Got INITIATE message, providing refund transaction");
+    private CloseReason receiveInitiate(Protos.Initiate initiate, BigInteger contractValue, Protos.Error.Builder errorBuilder) throws VerificationException, ValueOutOfRangeException {
+        log.info("Got INITIATE message:\n{}", initiate.toString());
+
+        checkState(initiate.getExpireTimeSecs() > 0 && initiate.getMinAcceptedChannelSize() >= 0);
+
+        final long MAX_EXPIRY_TIME = Utils.now().getTime() / 1000 + MAX_TIME_WINDOW;
+        if (initiate.getExpireTimeSecs() > MAX_EXPIRY_TIME) {
+            log.error("Server expiry time was out of our allowed bounds: {} vs {}", initiate.getExpireTimeSecs(),
+                    MAX_EXPIRY_TIME);
+            errorBuilder.setCode(Protos.Error.ErrorCode.TIME_WINDOW_TOO_LARGE);
+            errorBuilder.setExpectedValue(MAX_EXPIRY_TIME);
+            return CloseReason.TIME_WINDOW_TOO_LARGE;
+        }
+
+        BigInteger minChannelSize = BigInteger.valueOf(initiate.getMinAcceptedChannelSize());
+        if (maxValue.compareTo(minChannelSize) < 0) {
+            log.error("Server requested too much value");
+            errorBuilder.setCode(Protos.Error.ErrorCode.CHANNEL_VALUE_TOO_LARGE);
+            return CloseReason.SERVER_REQUESTED_TOO_MUCH_VALUE;
+        }
+
+        // For now we require a hard-coded value. In future this will have to get more complex and dynamic as the fees
+        // start to float.
+        final long MIN_PAYMENT = Transaction.REFERENCE_DEFAULT_MIN_TX_FEE.longValue();
+        if (initiate.getMinPayment() != MIN_PAYMENT) {
+            log.error("Server requested a min payment of {} but we expected {}", initiate.getMinPayment(), MIN_PAYMENT);
+            errorBuilder.setCode(Protos.Error.ErrorCode.MIN_PAYMENT_TOO_LARGE);
+            errorBuilder.setExpectedValue(MIN_PAYMENT);
+            return CloseReason.SERVER_REQUESTED_TOO_MUCH_VALUE;
+        }
 
         state = new PaymentChannelClientState(wallet, myKey,
                 new ECKey(null, initiate.getMultisigKey().toByteArray()),
                 contractValue, initiate.getExpireTimeSecs());
         state.initiate();
+        minPayment = initiate.getMinPayment();
         step = InitStep.WAITING_FOR_REFUND_RETURN;
 
         Protos.ProvideRefund.Builder provideRefundBuilder = Protos.ProvideRefund.newBuilder()
@@ -141,13 +175,14 @@ public class PaymentChannelClient implements IPaymentChannelClient {
                 .setProvideRefund(provideRefundBuilder)
                 .setType(Protos.TwoWayChannelMessage.MessageType.PROVIDE_REFUND)
                 .build());
+        return null;
     }
 
     @GuardedBy("lock")
-    private void receiveRefund(Protos.TwoWayChannelMessage msg) throws VerificationException {
-        checkState(step == InitStep.WAITING_FOR_REFUND_RETURN && msg.hasReturnRefund());
+    private void receiveRefund(Protos.TwoWayChannelMessage refundMsg) throws VerificationException {
+        checkState(step == InitStep.WAITING_FOR_REFUND_RETURN && refundMsg.hasReturnRefund());
         log.info("Got RETURN_REFUND message, providing signed contract");
-        Protos.ReturnRefund returnedRefund = msg.getReturnRefund();
+        Protos.ReturnRefund returnedRefund = refundMsg.getReturnRefund();
         state.provideRefundSignature(returnedRefund.getSignature().toByteArray());
         step = InitStep.WAITING_FOR_CHANNEL_OPEN;
 
@@ -155,13 +190,23 @@ public class PaymentChannelClient implements IPaymentChannelClient {
         // transaction is safely in the wallet - thus we store it (this also keeps it up-to-date when we pay)
         state.storeChannelInWallet(serverId);
 
-        Protos.ProvideContract.Builder provideContractBuilder = Protos.ProvideContract.newBuilder()
+        Protos.ProvideContract.Builder contractMsg = Protos.ProvideContract.newBuilder()
                 .setTx(ByteString.copyFrom(state.getMultisigContract().bitcoinSerialize()));
+        try {
+            // Make an initial payment of the dust limit, and put it into the message as well. The size of the
+            // server-requested dust limit was already sanity checked by this point.
+            PaymentChannelClientState.IncrementedPayment payment = state().incrementPaymentBy(BigInteger.valueOf(minPayment));
+            Protos.UpdatePayment.Builder initialMsg = contractMsg.getInitialPaymentBuilder();
+            initialMsg.setSignature(ByteString.copyFrom(payment.signature.encodeToBitcoin()));
+            initialMsg.setClientChangeValue(state.getValueRefunded().longValue());
+        } catch (ValueOutOfRangeException e) {
+            throw new IllegalStateException(e);  // This cannot happen.
+        }
 
-        conn.sendToServer(Protos.TwoWayChannelMessage.newBuilder()
-                .setProvideContract(provideContractBuilder)
-                .setType(Protos.TwoWayChannelMessage.MessageType.PROVIDE_CONTRACT)
-                .build());
+        final Protos.TwoWayChannelMessage.Builder msg = Protos.TwoWayChannelMessage.newBuilder();
+        msg.setProvideContract(contractMsg);
+        msg.setType(Protos.TwoWayChannelMessage.MessageType.PROVIDE_CONTRACT);
+        conn.sendToServer(msg.build());
     }
 
     @GuardedBy("lock")
@@ -209,28 +254,13 @@ public class PaymentChannelClient implements IPaymentChannelClient {
                         return;
                     case INITIATE:
                         checkState(step == InitStep.WAITING_FOR_INITIATE && msg.hasInitiate());
-
                         Protos.Initiate initiate = msg.getInitiate();
-                        checkState(initiate.getExpireTimeSecs() > 0 && initiate.getMinAcceptedChannelSize() >= 0);
-
-                        if (initiate.getExpireTimeSecs() > Utils.now().getTime()/1000 + MAX_TIME_WINDOW) {
-                            errorBuilder = Protos.Error.newBuilder()
-                                    .setCode(Protos.Error.ErrorCode.TIME_WINDOW_TOO_LARGE);
-                            closeReason = CloseReason.TIME_WINDOW_TOO_LARGE;
-                            break;
-                        }
-
-                        BigInteger minChannelSize = BigInteger.valueOf(initiate.getMinAcceptedChannelSize());
-                        if (maxValue.compareTo(minChannelSize) < 0) {
-                            errorBuilder = Protos.Error.newBuilder()
-                                    .setCode(Protos.Error.ErrorCode.CHANNEL_VALUE_TOO_LARGE);
-                            closeReason = CloseReason.SERVER_REQUESTED_TOO_MUCH_VALUE;
-                            log.error("Server requested too much value");
-                            break;
-                        }
-
-                        receiveInitiate(initiate, maxValue);
-                        return;
+                        errorBuilder = Protos.Error.newBuilder();
+                        closeReason = receiveInitiate(initiate, maxValue, errorBuilder);
+                        if (closeReason == null)
+                            return;
+                        log.error("Initiate failed with error: {}", errorBuilder.build().toString());
+                        break;
                     case RETURN_REFUND:
                         receiveRefund(msg);
                         return;

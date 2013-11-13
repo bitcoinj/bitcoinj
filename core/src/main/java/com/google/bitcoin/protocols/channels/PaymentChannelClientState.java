@@ -519,4 +519,11 @@ public class PaymentChannelClientState {
         checkState(state == State.READY);
         return valueToMe;
     }
+
+    /**
+     * Returns the amount of money sent on this channel so far.
+     */
+    public synchronized BigInteger getValueSpent() {
+        return getTotalValue().subtract(getValueRefunded());
+    }
 }

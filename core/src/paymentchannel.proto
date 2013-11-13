@@ -129,11 +129,19 @@ message Initiate {
     // Rough UNIX time for when the channel expires. This is determined by the block header
     // timestamps which can be very inaccurate when miners use the obsolete RollNTime hack.
     // Channels could also be specified in terms of block heights but then how do you know the
-    // current chain height if you don't have internet access? Trust secondary? Probably opens up
-    // attack vectors. We can assume primary has an independent clock, however. If primary
+    // current chain height if you don't have internet access? Trust the server? Probably opens up
+    // attack vectors. We can assume the client has an independent clock, however. If the client
     // considers this value too far off (eg more than a day), it may send an ERROR and close the
     // channel.
     required uint64 expire_time_secs = 3;
+
+    // The amount of money the server requires for the initial payment. The act of opening a channel
+    // always transfers some quantity of money to the server: it's impossible to have a channel with
+    // zero value transferred. This rule ensures that you can't get a channel that can't be settled
+    // due to having paid under the dust limit. Because the dust limit will float in future, the
+    // server tells the client what it thinks it is, and the client is supposed to sanity check this
+    // value.
+    required uint64 min_payment = 4;
 }
 
 // Sent from primary to secondary after Initiate to begin the refund transaction signing.
@@ -171,6 +179,12 @@ message ProvideContract {
     //   primary's and the second being the secondary's (ie the script must be exactly "OP_2
     //   ProvideRefund.multisig_key Initiate.multisig_key OP_2 OP_CHECKMULTISIG")
     required bytes tx = 1;
+
+    // To open the channel, an initial payment of the server-specified dust limit value must be
+    // provided. This ensures that the channel is never in an un-settleable state due to either
+    // no payment tx having been provided at all, or a payment that is smaller than the dust
+    // limit being provided.
+    required UpdatePayment initial_payment = 2;
 }
 
 // This message can only be used by the primary after it has received a CHANNEL_OPEN message. It
@@ -219,9 +233,13 @@ message Error {
                                      // for the primary
         CHANNEL_VALUE_TOO_LARGE = 6; // The minimum channel value specified by the secondary was
                                      // too large for the primary
+        MIN_PAYMENT_TOO_LARGE = 7;   // The min "dust limit" specified by the server was too large for the client.
 
-        OTHER = 7;
+        OTHER = 8;
     };
     optional ErrorCode code = 1 [default=OTHER];
     optional string explanation = 2;   // NOT SAFE FOR HTML WITHOUT ESCAPING
+
+    // Can be set by the client when erroring to the server if a value was out of range. Can help with debugging.
+    optional uint64 expected_value = 3;
 }

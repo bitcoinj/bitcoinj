@@ -384,16 +384,6 @@ public class PaymentChannelServerState {
             log.warn("Failed attempt to settle a channel in state " + state);
             return closedFuture;
         }
-
-        if (bestValueToMe.equals(BigInteger.ZERO)) {
-            // TODO: This is bogus. We shouldn't allow the client to get into this state (where they open and close
-            // a channel without sending us any money). We should either send an error at this point, or require
-            // the submission of an initial zero-valued payment during the open phase.
-            log.warn("Closing channel that never received any payments.");
-            state = State.CLOSED;
-            closedFuture.set(null);
-            return closedFuture;
-        }
         Transaction tx = null;
         try {
             Wallet.SendRequest req = makeUnsignedChannelContract(bestValueToMe);
