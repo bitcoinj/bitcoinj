@@ -40,4 +40,6 @@ public interface PeerFilterProvider {
      * Default value should be an empty bloom filter with the given size, falsePositiveRate, and nTweak.
      */
     public BloomFilter getBloomFilter(int size, double falsePositiveRate, long nTweak);
+
+    boolean isRequiringUpdateAllBloomFilter();
 }

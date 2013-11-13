@@ -61,6 +61,9 @@ public class Script {
     // must preserve the exact bytes that we read off the wire, along with the parsed form.
     protected byte[] program;
 
+    // Creation time of the associated keys in seconds since the epoch.
+    private long creationTimeSeconds;
+
     /** Creates an empty script that serializes to nothing. */
     private Script() {
         chunks = Lists.newArrayList();
@@ -69,6 +72,7 @@ public class Script {
     // Used from ScriptBuilder.
     Script(List<ScriptChunk> chunks) {
         this.chunks = Collections.unmodifiableList(new ArrayList<ScriptChunk>(chunks));
+        creationTimeSeconds = Utils.now().getTime() / 1000;
     }
 
     /**
@@ -79,6 +83,21 @@ public class Script {
     public Script(byte[] programBytes) throws ScriptException {
         program = programBytes;
         parse(programBytes);
+        creationTimeSeconds = Utils.now().getTime() / 1000;
+    }
+
+    public Script(byte[] programBytes, long creationTimeSeconds) throws ScriptException {
+        program = programBytes;
+        parse(programBytes);
+        this.creationTimeSeconds = creationTimeSeconds;
+    }
+
+    public long getCreationTimeSeconds() {
+        return creationTimeSeconds;
+    }
+
+    public void setCreationTimeSeconds(long creationTimeSeconds) {
+        this.creationTimeSeconds = creationTimeSeconds;
     }
 
     /**
@@ -97,6 +116,11 @@ public class Script {
                 buf.append("] ");
             }
         }
+
+        if (creationTimeSeconds != 0) {
+            buf.append(" timestamp:").append(creationTimeSeconds);
+        }
+
         return buf.toString();
     }
 
@@ -110,7 +134,8 @@ public class Script {
             for (ScriptChunk chunk : chunks) {
                 chunk.write(bos);
             }
-            return bos.toByteArray();
+            program = bos.toByteArray();
+            return program;
         } catch (IOException e) {
             throw new RuntimeException(e);  // Cannot happen.
         }
@@ -1240,5 +1265,26 @@ public class Script {
             if (!castToBool(p2shStack.pollLast()))
                 throw new ScriptException("P2SH script execution resulted in a non-true stack");
         }
+    }
+
+    // Utility that doesn't copy for internal use
+    private byte[] getQuickProgram() {
+        if (program != null)
+            return program;
+        return getProgram();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (!(obj instanceof Script))
+            return false;
+        Script s = (Script)obj;
+        return Arrays.equals(getQuickProgram(), s.getQuickProgram());
+    }
+
+    @Override
+    public int hashCode() {
+        byte[] bytes = getQuickProgram();
+        return Arrays.hashCode(bytes);
     }
 }

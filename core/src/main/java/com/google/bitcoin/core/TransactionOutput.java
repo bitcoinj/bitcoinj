@@ -251,6 +251,27 @@ public class TransactionOutput extends ChildMessage implements Serializable {
     }
 
     /**
+     * Returns true if this output is to a key in the wallet or to an address/script we are watching.
+     */
+    public boolean isMineOrWatched(Wallet wallet) {
+        return isMine(wallet) || isWatched(wallet);
+    }
+
+    /**
+     * Returns true if this output is to a key, or an address we have the keys for, in the wallet.
+     */
+    public boolean isWatched(Wallet wallet) {
+        try {
+            Script script = getScriptPubKey();
+            return wallet.isWatchedScript(script);
+        } catch (ScriptException e) {
+            // Just means we didn't understand the output of this transaction: ignore it.
+            log.debug("Could not parse tx output script: {}", e.toString());
+            return false;
+        }
+    }
+
+    /**
      * Returns true if this output is to a key, or an address we have the keys for, in the wallet.
      */
     public boolean isMine(Wallet wallet) {

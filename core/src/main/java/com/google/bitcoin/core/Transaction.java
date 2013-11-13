@@ -219,7 +219,7 @@ public class Transaction extends ChildMessage implements Serializable {
         // This is tested in WalletTest.
         BigInteger v = BigInteger.ZERO;
         for (TransactionOutput o : outputs) {
-            if (!o.isMine(wallet)) continue;
+            if (!o.isMineOrWatched(wallet)) continue;
             if (!includeSpent && !o.isAvailableForSpending()) continue;
             v = v.add(o.getValue());
         }
@@ -234,7 +234,7 @@ public class Transaction extends ChildMessage implements Serializable {
         boolean isActuallySpent = true;
         for (TransactionOutput o : outputs) {
             if (o.isAvailableForSpending()) {
-                if (o.isMine(wallet)) isActuallySpent = false;
+                if (o.isMineOrWatched(wallet)) isActuallySpent = false;
                 if (o.getSpentBy() != null) {
                     log.error("isAvailableForSpending != spentBy");
                     return false;
@@ -340,7 +340,7 @@ public class Transaction extends ChildMessage implements Serializable {
                 continue;
             // The connected output may be the change to the sender of a previous input sent to this wallet. In this
             // case we ignore it.
-            if (!connected.isMine(wallet))
+            if (!connected.isMineOrWatched(wallet))
                 continue;
             v = v.add(connected.getValue());
         }
@@ -405,7 +405,7 @@ public class Transaction extends ChildMessage implements Serializable {
     public boolean isEveryOwnedOutputSpent(Wallet wallet) {
         maybeParse();
         for (TransactionOutput output : outputs) {
-            if (output.isAvailableForSpending() && output.isMine(wallet))
+            if (output.isAvailableForSpending() && output.isMineOrWatched(wallet))
                 return false;
         }
         return true;

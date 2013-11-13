@@ -16,6 +16,8 @@
 
 package com.google.bitcoin.core;
 
+import com.google.bitcoin.script.Script;
+
 import java.math.BigInteger;
 import java.util.List;
 
@@ -119,4 +121,7 @@ public interface WalletEventListener {
      * or due to some other automatic derivation.
      */
     void onKeysAdded(Wallet wallet, List<ECKey> keys);
+
+    /** Called whenever a new watched script is added to the wallet. */
+    void onScriptsAdded(Wallet wallet, List<Script> scripts);
 }

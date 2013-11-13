@@ -127,6 +127,11 @@ public class BitcoindComparisonTool {
                 return 1;
             }
 
+            @Override
+            public boolean isRequiringUpdateAllBloomFilter() {
+                return false;
+            }
+
             @Override public BloomFilter getBloomFilter(int size, double falsePositiveRate, long nTweak) {
                 BloomFilter filter = new BloomFilter(1, 0.99, 0);
                 filter.setMatchAll();

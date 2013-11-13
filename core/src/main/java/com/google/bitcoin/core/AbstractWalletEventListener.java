@@ -16,6 +16,8 @@
 
 package com.google.bitcoin.core;
 
+import com.google.bitcoin.script.Script;
+
 import java.math.BigInteger;
 import java.util.List;
 
@@ -45,6 +47,11 @@ public abstract class AbstractWalletEventListener implements WalletEventListener
 
     @Override
     public void onKeysAdded(Wallet wallet, List<ECKey> keys) {
+        onChange();
+    }
+
+    @Override
+    public void onScriptsAdded(Wallet wallet, List<Script> scripts) {
         onChange();
     }
 
