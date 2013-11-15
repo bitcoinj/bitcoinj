@@ -41,7 +41,10 @@ public class MnemonicCode {
 
     public static String BIP39_ENGLISH_SHA256 = "ad90bf3beb7b0eb7e5acd74727dc0da96e0a280a258354e7293fb7e211ac03db";
 
-    private static final int PBKDF2_ROUNDS = 4096;
+    public enum Version { V0_5, V0_6 }
+
+    private static final int PBKDF2_ROUNDS_V0_5 = 4096;
+    private static final int PBKDF2_ROUNDS_V0_6 = 2048;
 
     public MnemonicCode() throws IOException {
         this(MnemonicCode.class.getResourceAsStream("mnemonic/wordlist/english.txt"), BIP39_ENGLISH_SHA256);
@@ -83,6 +86,10 @@ public class MnemonicCode {
      * Convert mnemonic word list to seed.
      */
     public static byte[] toSeed(List<String> words, String passphrase) {
+        return toSeed(words, passphrase, Version.V0_6);
+    }
+
+    public static byte[] toSeed(List<String> words, String passphrase, Version version) {
 
         // To create binary seed from mnemonic, we use PBKDF2 function
         // with mnemonic sentence (in UTF-8) used as a password and
@@ -94,7 +101,9 @@ public class MnemonicCode {
         String pass = Joiner.on(' ').join(words);
         String salt = "mnemonic" + passphrase;
 
-        return PBKDF2SHA512.derive(pass, salt, PBKDF2_ROUNDS, 64);
+        int rounds = (version == Version.V0_5) ? PBKDF2_ROUNDS_V0_5 : PBKDF2_ROUNDS_V0_6;
+
+        return PBKDF2SHA512.derive(pass, salt, rounds, 64);
     }
 
     /**
