@@ -54,6 +54,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.google.bitcoin.utils.TestUtils.*;
 import static com.google.bitcoin.core.Utils.*;
+import static com.google.common.base.Preconditions.checkNotNull;
 import static org.junit.Assert.*;
 
 public class WalletTest extends TestWithWallet {
@@ -560,6 +561,27 @@ public class WalletTest extends TestWithWallet {
         // send1 got rolled back and replaced with a smaller send that only used one of our received coins, thus ...
         assertEquals(Utils.toNanoCoins(2, 0), wallet.getBalance());
         assertTrue(wallet.isConsistent());
+    }
+
+    @Test
+    public void doubleSpendIdenticalTx() throws Exception {
+        // Test the case where two semantically identical but bitwise different transactions double spend each other.
+        // This can (and has!) happened when a wallet is cloned between devices, and both devices decide to make the
+        // same spend simultaneously - for example due a re-keying operation.
+        final BigInteger value = Utils.toNanoCoins(1, 0);
+        // Give us two outputs.
+        sendMoneyToWallet(value, AbstractBlockChain.NewBlockType.BEST_CHAIN);
+        sendMoneyToWallet(value, AbstractBlockChain.NewBlockType.BEST_CHAIN);
+        final BigInteger value2 = Utils.toNanoCoins(2, 0);
+        // The two transactions will have different hashes due to the lack of deterministic signing, but will be
+        // otherwise identical. Once deterministic signatures are implemented, this test will have to be tweaked.
+        Transaction send1 = checkNotNull(wallet.createSend(new ECKey().toAddress(params), value2));
+        Transaction send2 = checkNotNull(wallet.createSend(new ECKey().toAddress(params), value2));
+        send1 = roundTripTransaction(params, send1);
+        wallet.commitTx(send2);
+        assertEquals(BigInteger.ZERO, wallet.getBalance());
+        sendMoneyToWallet(send1, AbstractBlockChain.NewBlockType.BEST_CHAIN);
+        assertEquals(BigInteger.ZERO, wallet.getBalance());
     }
 
     @Test

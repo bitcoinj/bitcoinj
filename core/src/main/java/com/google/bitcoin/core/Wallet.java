@@ -728,6 +728,7 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
             outpoints.add(input.getOutpoint());
         }
         // Now for each pending transaction, see if it shares any outpoints with this tx.
+        LinkedList<Transaction> doubleSpentTxns = Lists.newLinkedList();
         for (Transaction p : pending.values()) {
             for (TransactionInput input : p.getInputs()) {
                 // This relies on the fact that TransactionOutPoint equality is defined at the protocol not object
@@ -735,19 +736,15 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
                 TransactionOutPoint outpoint = input.getOutpoint();
                 if (outpoints.contains(outpoint)) {
                     // It does, it's a double spend against the pending pool, which makes it relevant.
-                    if (takeAction) {
-                        // Look for the actual input object in tx that is double spending.
-                        TransactionInput overridingInput = null;
-                        for (TransactionInput txInput : tx.getInputs()) {
-                            if (txInput.getOutpoint().equals(outpoint)) overridingInput = txInput;
-                        }
-                        killTx(tx, checkNotNull(overridingInput), p);
-                    }
-                    return true;
+                    if (!doubleSpentTxns.isEmpty() && doubleSpentTxns.getLast() == p) continue;
+                    doubleSpentTxns.add(p);
                 }
             }
         }
-        return false;
+        if (takeAction) {
+            killTx(tx, doubleSpentTxns);
+        }
+        return !doubleSpentTxns.isEmpty();
     }
 
     /**
@@ -1082,50 +1079,47 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
         }
     }
 
-    // Updates the wallet when a double spend occurs.
-    private void killTx(Transaction overridingTx, TransactionInput overridingInput, Transaction killedTx) {
-        final Sha256Hash killedTxHash = killedTx.getHash();
-        if (overridingTx == null) {
-            // killedTx depended on a transaction that died because it was double spent or a coinbase that got re-orgd.
-            killedTx.getConfidence().setOverridingTransaction(null);
-            confidenceChanged.put(killedTx, TransactionConfidence.Listener.ChangeReason.TYPE);
-            pending.remove(killedTxHash);
-            unspent.remove(killedTxHash);
-            spent.remove(killedTxHash);
-            addWalletTransaction(Pool.DEAD, killedTx);
-            // TODO: Properly handle the recursive nature of killing transactions here.
-            return;
+    private void killCoinbase(Transaction coinbase) {
+        log.warn("Coinbase killed by re-org: {}", coinbase.getHashAsString());
+        coinbase.getConfidence().setOverridingTransaction(null);
+        confidenceChanged.put(coinbase, TransactionConfidence.Listener.ChangeReason.TYPE);
+        final Sha256Hash hash = coinbase.getHash();
+        pending.remove(hash);
+        unspent.remove(hash);
+        spent.remove(hash);
+        addWalletTransaction(Pool.DEAD, coinbase);
+        // TODO: Properly handle the recursive nature of killing transactions here.
+    }
+
+    // Updates the wallet when a double spend occurs. overridingTx/overridingInput can be null for the case of coinbases
+    private void killTx(Transaction overridingTx, List<Transaction> killedTx) {
+        for (Transaction tx : killedTx) {
+            log.warn("Saw double spend from chain override pending tx {}", tx.getHashAsString());
+            log.warn("  <-pending ->dead   killed by {}", overridingTx.getHashAsString());
+            log.warn("Disconnecting each input and moving connected transactions.");
+            pending.remove(tx.getHash());
+            addWalletTransaction(Pool.DEAD, tx);
+            for (TransactionInput deadInput : tx.getInputs()) {
+                Transaction connected = deadInput.getOutpoint().fromTx;
+                if (connected == null) continue;
+                deadInput.disconnect();
+                maybeMovePool(connected, "kill");
+            }
+            tx.getConfidence().setOverridingTransaction(overridingTx);
+            confidenceChanged.put(tx, TransactionConfidence.Listener.ChangeReason.TYPE);
         }
-        TransactionOutPoint overriddenOutPoint = overridingInput.getOutpoint();
-        // It is expected that we may not have the overridden/double-spent tx in our wallet ... in the (common?!) case
-        // where somebody is stealing money from us, the overriden tx belongs to someone else.
-        log.warn("Saw double spend of {} from chain override pending tx {}",
-                overriddenOutPoint, killedTx.getHashAsString());
-        log.warn("  <-pending ->dead   killed by {}", overridingTx.getHashAsString());
-        pending.remove(killedTxHash);
-        addWalletTransaction(Pool.DEAD, killedTx);
-        log.info("Disconnecting inputs of the newly dead tx");
-        for (TransactionInput deadInput : killedTx.getInputs()) {
-            Transaction connected = deadInput.getOutpoint().fromTx;
-            if (connected == null) continue;
-            deadInput.disconnect();
-            maybeMovePool(connected, "kill");
-        }
-        // Try and connect the overriding input to something in our wallet. It's expected that this will mostly fail
-        // because when somebody else is double-spending away a payment they made to us, we won't have the overridden
-        // tx as it's not ours to begin with. It'll only be found if we're double spending our own payments.
-        log.info("Trying to connect overriding tx back");
-        TransactionInput.ConnectionResult result = overridingInput.connect(unspent, TransactionInput.ConnectMode.DISCONNECT_ON_CONFLICT);
-        if (result == TransactionInput.ConnectionResult.SUCCESS) {
-            maybeMovePool(overridingInput.getOutpoint().fromTx, "kill");
-        } else {
-            result = overridingInput.connect(spent, TransactionInput.ConnectMode.DISCONNECT_ON_CONFLICT);
+        log.warn("Now attempting to connect the inputs of the overriding transaction.");
+        for (TransactionInput input : overridingTx.getInputs()) {
+            TransactionInput.ConnectionResult result = input.connect(unspent, TransactionInput.ConnectMode.DISCONNECT_ON_CONFLICT);
             if (result == TransactionInput.ConnectionResult.SUCCESS) {
-                maybeMovePool(overridingInput.getOutpoint().fromTx, "kill");
+                maybeMovePool(input.getOutpoint().fromTx, "kill");
+            } else {
+                result = input.connect(spent, TransactionInput.ConnectMode.DISCONNECT_ON_CONFLICT);
+                if (result == TransactionInput.ConnectionResult.SUCCESS) {
+                    maybeMovePool(input.getOutpoint().fromTx, "kill");
+                }
             }
         }
-        killedTx.getConfidence().setOverridingTransaction(overridingTx);
-        confidenceChanged.put(killedTx, TransactionConfidence.Listener.ChangeReason.TYPE);
         // TODO: Recursively kill other transactions that were double spent.
     }
 
@@ -2308,7 +2302,6 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
                     Transaction tx = pair.tx;
                     final Sha256Hash txHash = tx.getHash();
                     if (tx.isCoinBase()) {
-                        log.warn("Coinbase tx {} -> dead", tx.getHash());
                         // All the transactions that we have in our wallet which spent this coinbase are now invalid
                         // and will never confirm. Hopefully this should never happen - that's the point of the maturity
                         // rule that forbids spending of coinbase transactions for 100 blocks.
@@ -2319,7 +2312,7 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
                         // can do our best.
                         //
                         // TODO: Is it better to try and sometimes fail, or not try at all?
-                        killTx(null, null, tx);
+                        killCoinbase(tx);
                     } else {
                         for (TransactionOutput output : tx.getOutputs()) {
                             TransactionInput input = output.getSpentBy();
