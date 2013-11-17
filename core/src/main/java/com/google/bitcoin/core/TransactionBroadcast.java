@@ -82,7 +82,8 @@ public class TransactionBroadcast {
             // be seen, 4 peers is probably too little - it doesn't taken many broken peers for tx propagation to have
             // a big effect.
             List<Peer> peers = peerGroup.getConnectedPeers();    // snapshots
-            pinnedTx = peerGroup.getMemoryPool().seen(tx, peers.get(0).getAddress());
+            // We intern the tx here so we are using a canonical version of the object (as it's unfortunately mutable).
+            pinnedTx = peerGroup.getMemoryPool().intern(tx);
             // Prepare to send the transaction by adding a listener that'll be called when confidence changes.
             // Only bother with this if we might actually hear back:
             if (minConnections > 1)
@@ -105,7 +106,8 @@ public class TransactionBroadcast {
             for (Peer peer : peers) {
                 try {
                     peer.sendMessage(pinnedTx);
-                    peerGroup.getMemoryPool().seen(pinnedTx, peer.getAddress());
+                    // We don't record the peer as having seen the tx in the memory pool because we want to track only
+                    // how many peers announced to us.
                 } catch (Exception e) {
                     log.error("Caught exception sending to {}", peer, e);
                 }
@@ -128,7 +130,7 @@ public class TransactionBroadcast {
             boolean mined = tx.getAppearsInHashes() != null;
             log.info("broadcastTransaction: {}:  TX {} seen by {} peers{}", reason, pinnedTx.getHashAsString(),
                     numSeenPeers, mined ? " and mined" : "");
-            if (numSeenPeers >= numWaitingFor + numToBroadcastTo || mined) {
+            if (numSeenPeers >= numWaitingFor || mined) {
                 // We've seen the min required number of peers announce the transaction, or it was included
                 // in a block. Normally we'd expect to see it fully propagate before it gets mined, but
                 // it can be that a block is solved very soon after broadcast, and it's also possible that

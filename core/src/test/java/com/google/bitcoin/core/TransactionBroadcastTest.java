@@ -98,7 +98,7 @@ public class TransactionBroadcastTest extends TestWithPeerGroup {
         Threading.waitForUserCode();
         assertFalse(sendResult.broadcastComplete.isDone());
         assertEquals(transactions[0], sendResult.tx);
-        assertEquals(transactions[0].getConfidence().numBroadcastPeers(), 1);
+        assertEquals(transactions[0].getConfidence().numBroadcastPeers(), 0);
         transactions[0] = null;
         Transaction t1 = (Transaction) outbound(p1);
         assertNotNull(t1);
@@ -111,7 +111,7 @@ public class TransactionBroadcastTest extends TestWithPeerGroup {
         Threading.waitForUserCode();
         assertTrue(sendResult.broadcastComplete.isDone());
         assertEquals(transactions[0], sendResult.tx);
-        assertEquals(2, transactions[0].getConfidence().numBroadcastPeers());
+        assertEquals(1, transactions[0].getConfidence().numBroadcastPeers());
         // Confirm it.
         Block b2 = TestUtils.createFakeBlock(blockStore, t1).block;
         inbound(p1, b2);

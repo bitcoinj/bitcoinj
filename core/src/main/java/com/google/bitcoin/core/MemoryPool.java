@@ -20,6 +20,7 @@ import com.google.bitcoin.utils.Threading;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
 import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
@@ -49,7 +50,8 @@ public class MemoryPool {
 
     // For each transaction we may have seen:
     //   - only its hash in an inv packet
-    //   - the full transaction itself, if we asked for it to be sent to us (or a peer sent it regardless)
+    //   - the full transaction itself, if we asked for it to be sent to us (or a peer sent it regardless), or if we
+    //     sent it.
     //
     // Before we see the full transaction, we need to track how many peers advertised it, so we can estimate its
     // confidence pre-chain inclusion assuming an un-tampered with network connection. After we see the full transaction
@@ -162,36 +164,27 @@ public class MemoryPool {
     }
 
     /**
-     * Called by peers when they receive a "tx" message containing a valid serialized transaction.
-     * @param tx The TX deserialized from the wire.
-     * @param byPeer The Peer that received it.
-     * @return An object that is semantically the same TX but may be a different object instance.
+     * Puts the tx into the table and returns either it, or a different Transaction object that has the same hash.
+     * Unlike seen and the other methods, this one does not imply that a tx has been announced by a peer and does
+     * not mark it as such.
      */
-    public Transaction seen(Transaction tx, PeerAddress byPeer) {
+    public Transaction intern(Transaction tx) {
         lock.lock();
         try {
             cleanPool();
             Entry entry = memoryPool.get(tx.getHash());
             if (entry != null) {
-                // This TX or its hash have been previously announced.
+                // This TX or its hash have been previously interned.
                 if (entry.tx != null) {
-                    // We already downloaded it.
+                    // We already interned it (but may have thrown it away).
                     checkState(entry.addresses == null);
                     // We only want one canonical object instance for a transaction no matter how many times it is
                     // deserialized.
                     Transaction transaction = entry.tx.get();
-                    if (transaction == null) {
-                        // We previously downloaded this transaction, but the garbage collector threw it away because
-                        // no other part of the system cared enough to keep it around (it's not relevant to us).
-                        // Given the lack of interest last time we probably don't need to track it this time either.
-                        log.info("{}: Provided with a transaction that we previously threw away: {}", byPeer, tx.getHash());
-                    } else {
+                    if (transaction != null) {
                         // We saw it before and kept it around. Hand back the canonical copy.
                         tx = transaction;
-                        log.info("{}: Provided with a transaction downloaded before: [{}] {}",
-                                byPeer, tx.getConfidence().numBroadcastPeers(), tx.getHash());
                     }
-                    markBroadcast(byPeer, tx);
                     return tx;
                 } else {
                     // We received a transaction that we have previously seen announced but not downloaded until now.
@@ -200,8 +193,8 @@ public class MemoryPool {
                     Set<PeerAddress> addrs = entry.addresses;
                     entry.addresses = null;
                     TransactionConfidence confidence = tx.getConfidence();
-                    log.debug("{}: Adding tx [{}] {} to the memory pool",
-                            byPeer, confidence.numBroadcastPeers(), tx.getHashAsString());
+                    log.debug("Adding tx [{}] {} to the memory pool",
+                            confidence.numBroadcastPeers(), tx.getHashAsString());
                     for (PeerAddress a : addrs) {
                         markBroadcast(a, tx);
                     }
@@ -210,14 +203,29 @@ public class MemoryPool {
             } else {
                 // This often happens when we are downloading a Bloom filtered chain, or recursively downloading
                 // dependencies of a relevant transaction (see Peer.downloadDependencies).
-                log.debug("{}: Provided with a downloaded transaction we didn't see announced yet: {}",
-                        byPeer, tx.getHashAsString());
+                log.debug("Provided with a downloaded transaction we didn't see announced yet: {}", tx.getHashAsString());
                 entry = new Entry();
                 entry.tx = new WeakTransactionReference(tx, referenceQueue);
                 memoryPool.put(tx.getHash(), entry);
-                markBroadcast(byPeer, tx);
                 return tx;
             }
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
+     * Called by peers when they receive a "tx" message containing a valid serialized transaction.
+     * @param tx The TX deserialized from the wire.
+     * @param byPeer The Peer that received it.
+     * @return An object that is semantically the same TX but may be a different object instance.
+     */
+    public Transaction seen(Transaction tx, PeerAddress byPeer) {
+        lock.lock();
+        try {
+            final Transaction interned = intern(tx);
+            markBroadcast(byPeer, interned);
+            return interned;
         } finally {
             lock.unlock();
         }
@@ -242,8 +250,8 @@ public class MemoryPool {
                         log.debug("{}: Peer announced transaction we have seen before [{}] {}",
                                 byPeer, tx.getConfidence().numBroadcastPeers(), tx.getHashAsString());
                     } else {
-                        // The inv is telling us about a transaction that we previously downloaded, and threw away because
-                        // nothing found it interesting enough to keep around. So do nothing.
+                        // The inv is telling us about a transaction that we previously downloaded, and threw away
+                        // because nothing found it interesting enough to keep around. So do nothing.
                     }
                 } else {
                     checkNotNull(entry.addresses);
@@ -277,6 +285,7 @@ public class MemoryPool {
      * we only saw advertisements for it yet or it has been downloaded but garbage collected due to nowhere else
      * holding a reference to it.
      */
+    @Nullable
     public Transaction get(Sha256Hash hash) {
         lock.lock();
         try {
