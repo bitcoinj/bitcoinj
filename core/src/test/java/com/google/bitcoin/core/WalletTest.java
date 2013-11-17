@@ -929,16 +929,6 @@ public class WalletTest extends TestWithWallet {
             wallet.receivePending(t1, null);
         Sha256Hash hash3 = Sha256Hash.hashFileContents(f);
         assertFalse("Wallet not saved after receivePending", hash2.equals(hash3));  // File has changed again.
-
-        Block b1 = createFakeBlock(blockStore, t1).block;
-        chain.add(b1);
-        Sha256Hash hash4 = Sha256Hash.hashFileContents(f);
-        assertFalse("Wallet not saved after chain add.1", hash3.equals(hash4));  // File has changed again.
-
-        // Check that receiving some block without any relevant transactions still triggers a save.
-        Block b2 = b1.createNextBlock(new ECKey().toAddress(params));
-        chain.add(b2);
-        assertFalse("Wallet not saved after chain add.2", hash4.equals(Sha256Hash.hashFileContents(f)));  // File has changed again.
     }
 
     @Test
