@@ -126,7 +126,7 @@ public class PaymentChannelClientState {
     /**
      * Returns true if the tx is a valid settlement transaction.
      */
-    public boolean isSettlementTransaction(Transaction tx) {
+    public synchronized boolean isSettlementTransaction(Transaction tx) {
         try {
             tx.verify();
             tx.getInput(0).verify(multisigContract.getOutput(0));
