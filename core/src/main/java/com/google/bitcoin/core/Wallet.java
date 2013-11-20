@@ -3379,10 +3379,12 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
             // Now use it to upload any pending transactions we have that are marked as not being seen by any peers yet.
             for (Transaction tx : pending.values()) {
                 checkState(tx.getConfidence().getConfidenceType() == ConfidenceType.PENDING);
-                if (tx.getConfidence().numBroadcastPeers() == 0) {
-                    log.info("New broadcaster so uploading waiting tx {}", tx.getHash());
-                    broadcaster.broadcastTransaction(tx);
-                }
+                // Re-broadcast even if it's marked as already seen for two reasons
+                // 1) Old wallets may have transactions marked as broadcast by 1 peer when in reality the network
+                //    never saw it, due to bugs.
+                // 2) It can't really hurt.
+                log.info("New broadcaster so uploading waiting tx {}", tx.getHash());
+                broadcaster.broadcastTransaction(tx);
             }
         } finally {
             lock.unlock();
