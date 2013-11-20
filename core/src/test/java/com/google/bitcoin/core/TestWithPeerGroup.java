@@ -33,14 +33,18 @@ public class TestWithPeerGroup extends TestWithNetworkConnections {
     protected PeerGroup peerGroup;
 
     protected VersionMessage remoteVersionMessage;
+    private ClientBootstrap bootstrap;
 
     public void setUp(BlockStore blockStore) throws Exception {
         super.setUp(blockStore);
 
         remoteVersionMessage = new VersionMessage(unitTestParams, 1);
         remoteVersionMessage.clientVersion = FilteredBlock.MIN_PROTOCOL_VERSION;
-        
-        ClientBootstrap bootstrap = new ClientBootstrap(new ChannelFactory() {
+        initPeerGroup();
+    }
+
+    protected void initPeerGroup() {
+        bootstrap = new ClientBootstrap(new ChannelFactory() {
             public void releaseExternalResources() {}
             public Channel newChannel(ChannelPipeline pipeline) {
                 ChannelSink sink = new FakeChannelSink();
@@ -52,7 +56,7 @@ public class TestWithPeerGroup extends TestWithNetworkConnections {
             public ChannelPipeline getPipeline() throws Exception {
                 VersionMessage ver = new VersionMessage(unitTestParams, 1);
                 ChannelPipeline p = Channels.pipeline();
-                
+
                 Peer peer = new Peer(unitTestParams, blockChain, ver, peerGroup.getMemoryPool());
                 peer.addLifecycleListener(peerGroup.startupListener);
                 p.addLast("peer", peer.getHandler());
@@ -63,7 +67,7 @@ public class TestWithPeerGroup extends TestWithNetworkConnections {
         peerGroup = new PeerGroup(unitTestParams, blockChain, bootstrap);
         peerGroup.setPingIntervalMsec(0);  // Disable the pings as they just get in the way of most tests.
     }
-    
+
     protected FakeChannel connectPeer(int id) {
         return connectPeer(id, remoteVersionMessage);
     }
