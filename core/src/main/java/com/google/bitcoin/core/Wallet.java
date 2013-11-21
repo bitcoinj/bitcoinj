@@ -741,7 +741,7 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
                 }
             }
         }
-        if (takeAction) {
+        if (takeAction && !doubleSpentTxns.isEmpty()) {
             killTx(tx, doubleSpentTxns);
         }
         return !doubleSpentTxns.isEmpty();
