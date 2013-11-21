@@ -189,9 +189,11 @@ public abstract class PeerSocketHandler extends AbstractTimeoutHandler implement
      */
     @Override
     public void setWriteTarget(MessageWriteTarget writeTarget) {
+        checkArgument(writeTarget != null);
         lock.lock();
         boolean closeNow = false;
         try {
+            checkArgument(this.writeTarget == null);
             closeNow = closePending;
             this.writeTarget = writeTarget;
         } finally {
