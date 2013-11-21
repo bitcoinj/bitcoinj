@@ -23,7 +23,11 @@ import com.google.bitcoin.script.ScriptBuilder;
 import com.google.bitcoin.utils.Threading;
 import com.google.bitcoin.wallet.AllowUnconfirmedCoinSelector;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -193,12 +197,19 @@ public class PaymentChannelClientState {
         // When we see the close transaction get a few confirmations, we can just delete the record
         // of this channel along with the refund tx from the wallet, because we're not going to need
         // any of that any more.
-        storedChannel.close.getConfidence().getDepthFuture(CONFIRMATIONS_FOR_DELETE).addListener(new Runnable() {
+        final TransactionConfidence confidence = storedChannel.close.getConfidence();
+        ListenableFuture<Transaction> future = confidence.getDepthFuture(CONFIRMATIONS_FOR_DELETE, Threading.SAME_THREAD);
+        Futures.addCallback(future, new FutureCallback<Transaction>() {
             @Override
-            public void run() {
+            public void onSuccess(Transaction result) {
                 deleteChannelFromWallet();
             }
-        }, Threading.SAME_THREAD);
+
+            @Override
+            public void onFailure(Throwable t) {
+                Throwables.propagate(t);
+            }
+        });
     }
 
     private synchronized void deleteChannelFromWallet() {

@@ -92,12 +92,15 @@ public class ChannelConnectionTest extends TestWithWallet {
         // handlers), we have lots of lock cycles. A normal user shouldn't have this issue as they are probably not both
         // client+server running in the same thread.
         Threading.warnOnLockCycles();
+
+        ECKey.FAKE_SIGNATURES = true;
     }
 
     @After
     @Override
     public void tearDown() throws Exception {
         super.tearDown();
+        ECKey.FAKE_SIGNATURES = false;
     }
 
     @After
@@ -112,7 +115,7 @@ public class ChannelConnectionTest extends TestWithWallet {
         final SettableFuture<ListenableFuture<PaymentChannelServerState>> serverCloseFuture = SettableFuture.create();
         final SettableFuture<Sha256Hash> channelOpenFuture = SettableFuture.create();
         final BlockingQueue<BigInteger> q = new LinkedBlockingQueue<BigInteger>();
-        final PaymentChannelServerListener server = new PaymentChannelServerListener(mockBroadcaster, serverWallet, 1, Utils.COIN,
+        final PaymentChannelServerListener server = new PaymentChannelServerListener(mockBroadcaster, serverWallet, 30, Utils.COIN,
                 new PaymentChannelServerListener.HandlerFactory() {
                     @Nullable
                     @Override
@@ -138,7 +141,7 @@ public class ChannelConnectionTest extends TestWithWallet {
         server.bindAndStart(4243);
 
         PaymentChannelClientConnection client = new PaymentChannelClientConnection(
-                new InetSocketAddress("localhost", 4243), 1, wallet, myKey, Utils.COIN, "");
+                new InetSocketAddress("localhost", 4243), 30, wallet, myKey, Utils.COIN, "");
 
         // Wait for the multi-sig tx to be transmitted.
         broadcastTxPause.release();
@@ -200,8 +203,6 @@ public class ChannelConnectionTest extends TestWithWallet {
         server.close();
 
         // Now confirm the settle TX and see if the channel deletes itself from the wallet.
-        assertEquals(1, StoredPaymentChannelClientStates.getFromWallet(wallet).mapChannels.size());
-        wallet.notifyNewBestBlock(createFakeBlock(blockStore).storedBlock);
         assertEquals(1, StoredPaymentChannelClientStates.getFromWallet(wallet).mapChannels.size());
         wallet.notifyNewBestBlock(createFakeBlock(blockStore).storedBlock);
         assertEquals(1, StoredPaymentChannelClientStates.getFromWallet(wallet).mapChannels.size());
