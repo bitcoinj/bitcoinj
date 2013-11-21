@@ -19,6 +19,8 @@ package com.google.bitcoin.core;
 import com.google.bitcoin.crypto.EncryptedPrivateKey;
 import com.google.bitcoin.crypto.KeyCrypter;
 import com.google.bitcoin.crypto.KeyCrypterException;
+import com.google.bitcoin.crypto.TransactionSignature;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import org.bitcoin.NativeSecp256k1;
 import org.slf4j.Logger;
@@ -410,6 +412,14 @@ public class ECKey implements Serializable {
     }
 
     /**
+     * If this global variable is set to true, sign() creates a dummy signature and verify() always returns true.
+     * This is intended to help accelerate unit tests that do a lot of signing/verifying, which in the debugger
+     * can be painfully slow.
+     */
+    @VisibleForTesting
+    public static boolean FAKE_SIGNATURES = false;
+
+    /**
      * Signs the given hash and returns the R and S components as BigIntegers. In the Bitcoin protocol, they are
      * usually encoded using DER format, so you want {@link com.google.bitcoin.core.ECKey.ECDSASignature#encodeToDER()}
      * instead. However sometimes the independent components can be useful, for instance, if you're doing to do further
@@ -419,6 +429,9 @@ public class ECKey implements Serializable {
      * @throws KeyCrypterException if this ECKey doesn't have a private part.
      */
     public ECDSASignature sign(Sha256Hash input, KeyParameter aesKey) throws KeyCrypterException {
+        if (FAKE_SIGNATURES)
+            return TransactionSignature.dummy();
+
         // The private key bytes to use for signing.
         BigInteger privateKeyForSigning;
 
@@ -465,6 +478,9 @@ public class ECKey implements Serializable {
      * @param pub       The public key bytes to use.
      */
     public static boolean verify(byte[] data, ECDSASignature signature, byte[] pub) {
+        if (FAKE_SIGNATURES)
+            return true;
+
         if (NativeSecp256k1.enabled)
             return NativeSecp256k1.verify(data, signature.encodeToDER(), pub);
 
