@@ -194,11 +194,13 @@ public class MnemonicCode {
         //    Set block size to input size (that's why Rijndael is used, not AES).
         byte[] mnemonic = {'m', 'n', 'e', 'm', 'o', 'n', 'i', 'c'};
         byte[] key = Sha256Hash.create(mnemonic).getBytes();
+        byte[] buffer = new byte[data.length];
+        System.arraycopy(data, 0, buffer, 0, data.length);
         RijndaelEngine cipher = new RijndaelEngine(len);
         cipher.init(true, new KeyParameter(key));
         for (int ii = 0; ii < 10000; ++ii)
-            cipher.processBlock(data, 0, data, 0);
-        return data;
+            cipher.processBlock(buffer, 0, buffer, 0);
+        return buffer;
     }
 
     private byte[] unstretch(int len, byte[] data) {
@@ -206,11 +208,13 @@ public class MnemonicCode {
         //    use the same parameters as used in step 3 of encryption.
         byte[] mnemonic = {'m', 'n', 'e', 'm', 'o', 'n', 'i', 'c'};
         byte[] key = Sha256Hash.create(mnemonic).getBytes();
+        byte[] buffer = new byte[data.length];
+        System.arraycopy(data, 0, buffer, 0, data.length);
         RijndaelEngine cipher = new RijndaelEngine(len);
         cipher.init(false, new KeyParameter(key));
         for (int ii = 0; ii < 10000; ++ii)
-            cipher.processBlock(data, 0, data, 0);
-        return data;
+            cipher.processBlock(buffer, 0, buffer, 0);
+        return buffer;
     }
 
     private boolean[] checksum(boolean[] bits) {
