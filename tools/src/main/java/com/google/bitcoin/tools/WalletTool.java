@@ -688,7 +688,7 @@ public class WalletTool {
         }
         if (options.has("privkey")) {
             String data = (String) options.valueOf("privkey");
-            if (data.charAt(0) == 'L') {
+            if (data.startsWith("5J") || data.startsWith("5H") || data.startsWith("5K")) {
                 DumpedPrivateKey dpk;
                 try {
                     dpk = new DumpedPrivateKey(params, data);
