@@ -16,19 +16,19 @@
 
 package com.google.bitcoin.crypto;
 
+import com.google.common.base.Joiner;
+import org.junit.Before;
 import org.junit.Test;
+import org.spongycastle.util.encoders.Hex;
 
-import java.io.InputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import org.spongycastle.util.encoders.Hex;
-
 import static org.junit.Assert.assertEquals;
 
 public class MnemonicCodeTest {
-
     // These vectors are from https://raw.github.com/trezor/python-mnemonic/master/vectors.json
     String vectors[] = {
     
@@ -104,71 +104,39 @@ public class MnemonicCodeTest {
         "c87c135433c16f1ecbf9919dc53dd9f30f85824dc7264d4e1bd644826c902be2", 
         "upper will wisdom term once bean blur inquiry used bamboo frequent hamster amazing cake attack any author mimic leopard day token joy install company",
     };
+    private MnemonicCode mc;
+
+    @Before
+    public void setup() throws IOException {
+        mc = new MnemonicCode();
+    }
 
     @Test
     public void testEncodeVectors() throws Exception {
-        InputStream wordstream = getClass().getResourceAsStream("mnemonic/wordlist/english.txt");
-        MnemonicCode mc = new MnemonicCode(wordstream, MnemonicCode.BIP0039_ENGLISH_SHA256);
-
         for (int ii = 0; ii < vectors.length; ii += 2) {
             List<String> words = mc.encode(Hex.decode(vectors[ii]));
-            assertEquals(vectors[ii+1], join(words));
+            assertEquals(vectors[ii + 1], Joiner.on(' ').join(words));
         }
     }
 
     @Test
     public void testDecodeVectors() throws Exception {
-        InputStream wordstream = getClass().getResourceAsStream("mnemonic/wordlist/english.txt");
-        MnemonicCode mc = new MnemonicCode(wordstream, MnemonicCode.BIP0039_ENGLISH_SHA256);
-
         for (int ii = 0; ii < vectors.length; ii += 2) {
             byte[] seed = mc.decode(split(vectors[ii+1]));
             assertEquals(vectors[ii], new String(Hex.encode(seed)));
         }
     }
 
-    @Test
+    @Test(expected = IllegalArgumentException.class)
     public void testBadSeedLength() throws Exception {
-        InputStream wordstream = getClass().getResourceAsStream("mnemonic/wordlist/english.txt");
-        MnemonicCode mc = new MnemonicCode(wordstream, MnemonicCode.BIP0039_ENGLISH_SHA256);
-
-        boolean sawException = false;
-        try {
-            byte[] seed = Hex.decode("7f7f7f7f7f7f7f7f7f7f7f7f7f7f");
-            List<String> words = mc.encode(seed);
-        } catch (IllegalArgumentException ex) {
-            sawException = true;
-        }
-        assertEquals(true, sawException);
+        byte[] seed = Hex.decode("7f7f7f7f7f7f7f7f7f7f7f7f7f7f");
+        mc.encode(seed);
     }    
 
-    @Test
+    @Test(expected = IllegalArgumentException.class)
     public void testBadWordsLength() throws Exception {
-        InputStream wordstream = getClass().getResourceAsStream("mnemonic/wordlist/english.txt");
-        MnemonicCode mc = new MnemonicCode(wordstream, MnemonicCode.BIP0039_ENGLISH_SHA256);
-
-        boolean sawException = false;
-        try {
-            List<String> words = split("risk tiger venture dinner age assume float denial penalty");
-            byte[] seed = mc.decode(words);
-        } catch (IllegalArgumentException ex) {
-            sawException = true;
-        }
-        assertEquals(true, sawException);
-    }    
-
-    static public String join(List<String> list) {
-        StringBuilder sb = new StringBuilder();
-        boolean first = true;
-        for (String item : list)
-        {
-            if (first)
-                first = false;
-            else
-                sb.append(" ");
-            sb.append(item);
-        }
-        return sb.toString();
+        List<String> words = split("risk tiger venture dinner age assume float denial penalty");
+        mc.decode(words);
     }
 
     static public List<String> split(String words) {

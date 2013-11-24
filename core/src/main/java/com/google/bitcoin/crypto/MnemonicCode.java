@@ -16,23 +16,21 @@
 
 package com.google.bitcoin.crypto;
 
+import com.google.bitcoin.core.Sha256Hash;
+import org.spongycastle.crypto.engines.RijndaelEngine;
+import org.spongycastle.crypto.params.KeyParameter;
+import org.spongycastle.util.encoders.Hex;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.nio.ByteBuffer;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-
-import org.spongycastle.crypto.engines.RijndaelEngine;
-import org.spongycastle.crypto.params.KeyParameter;
-import org.spongycastle.util.encoders.Hex;
-
-import com.google.bitcoin.core.Sha256Hash;
 
 /**
  * A MnemonicCode object may be used to convert between binary seed values and
@@ -45,19 +43,19 @@ import com.google.bitcoin.core.Sha256Hash;
  */
 
 public class MnemonicCode {
+    private ArrayList<String> wordList;
 
-    private ArrayList<String>	wordList;
+    public static String BIP39_ENGLISH_SHA256 = "ad90bf3beb7b0eb7e5acd74727dc0da96e0a280a258354e7293fb7e211ac03db";
 
-    public static String BIP0039_ENGLISH_SHA256 =
-        "ad90bf3beb7b0eb7e5acd74727dc0da96e0a280a258354e7293fb7e211ac03db";
+    public MnemonicCode() throws IOException {
+        this(MnemonicCode.class.getResourceAsStream("mnemonic/wordlist/english.txt"), BIP39_ENGLISH_SHA256);
+    }
 
     /**
-     * Creates an MnemonicCode object, initializing with words read
-     * from the supplied input stream.  If a wordListDigest is
-     * supplied the digest of the words will be checked.
+     * Creates an MnemonicCode object, initializing with words read from the supplied input stream.  If a wordListDigest
+     * is supplied the digest of the words will be checked.
      */
-    public MnemonicCode(InputStream wordstream, String wordListDigest)
-        throws IOException, IllegalArgumentException {
+    public MnemonicCode(InputStream wordstream, String wordListDigest) throws IOException, IllegalArgumentException {
         BufferedReader br = new BufferedReader(new InputStreamReader(wordstream, "UTF-8"));
         String word;
         this.wordList = new ArrayList<String>();
