@@ -37,6 +37,7 @@ import org.spongycastle.math.ec.ECFieldElement;
 import org.spongycastle.math.ec.ECPoint;
 import org.spongycastle.util.encoders.Base64;
 
+import javax.annotation.Nullable;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.Serializable;
@@ -47,6 +48,7 @@ import java.security.SignatureException;
 import java.util.Arrays;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkState;
 
 // TODO: This class is quite a mess by now. Once users are migrated away from Java serialization for the wallets,
 // refactor this to have better internal layout and a more consistent API.
@@ -774,8 +776,9 @@ public class ECKey implements Serializable {
     }
 
     /**
-     * Returns a 32 byte array containing the private key.
+     * Returns a 32 byte array containing the private key, or null if the key is encrypted or public only
      */
+    @Nullable
     public byte[] getPrivKeyBytes() {
         return Utils.bigIntegerToBytes(priv, 32);
     }
@@ -786,9 +789,12 @@ public class ECKey implements Serializable {
      *
      * @param params The network this key is intended for use on.
      * @return Private key bytes as a {@link DumpedPrivateKey}.
+     * @throws IllegalStateException if the private key is not available.
      */
     public DumpedPrivateKey getPrivateKeyEncoded(NetworkParameters params) {
-        return new DumpedPrivateKey(params, getPrivKeyBytes(), isCompressed());
+        final byte[] privKeyBytes = getPrivKeyBytes();
+        checkState(privKeyBytes != null, "Private key is not available");
+        return new DumpedPrivateKey(params, privKeyBytes, isCompressed());
     }
 
     /**
@@ -837,7 +843,9 @@ public class ECKey implements Serializable {
      */
     public ECKey encrypt(KeyCrypter keyCrypter, KeyParameter aesKey) throws KeyCrypterException {
         Preconditions.checkNotNull(keyCrypter);
-        EncryptedPrivateKey encryptedPrivateKey = keyCrypter.encrypt(getPrivKeyBytes(), aesKey);
+        final byte[] privKeyBytes = getPrivKeyBytes();
+        checkState(privKeyBytes != null, "Private key is not available");
+        EncryptedPrivateKey encryptedPrivateKey = keyCrypter.encrypt(privKeyBytes, aesKey);
         return new ECKey(encryptedPrivateKey, getPubKey(), keyCrypter);
     }
 
@@ -921,6 +929,7 @@ public class ECKey implements Serializable {
      * @return The encryptedPrivateKey (containing the encrypted private key bytes and initialisation vector) for this ECKey,
      *         or null if the ECKey is not encrypted.
      */
+    @Nullable
     public EncryptedPrivateKey getEncryptedPrivateKey() {
         if (encryptedPrivateKey == null) {
             return null;
