@@ -10,6 +10,6 @@ public class AbstractKeyChainEventListener implements KeyChainEventListener {
     }
 
     @Override
-    public void onEncrypt() {
+    public void onEncryptionChanged() {
     }
 }

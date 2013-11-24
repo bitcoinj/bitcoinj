@@ -46,7 +46,7 @@ public class WalletProtobufSerializerTest {
         myWallet.importKey(myKey);
         myAddress = myKey.toAddress(params);
         myWallet = new Wallet(params);
-        myWallet.addKey(myKey);
+        myWallet.importKey(myKey);
         mScriptCreationTime = new Date().getTime() / 1000 - 1234;
         myWallet.addWatchedAddress(myWatchedKey.toAddress(params), mScriptCreationTime);
         myWallet.setDescription(WALLET_DESCRIPTION);

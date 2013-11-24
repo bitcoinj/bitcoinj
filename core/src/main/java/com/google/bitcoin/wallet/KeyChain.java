@@ -55,7 +55,7 @@ public interface KeyChain {
     }
 
     /** Obtains a key intended for the given purpose. The chain may create a new key, derive one, or re-use an old one. */
-    public ECKey getKey(KeyPurpose type);
+    public ECKey getKey(KeyPurpose purpose);
 
     /** Adds a listener for events that are run when keys are added, on the user thread. */
     public void addEventListener(KeyChainEventListener listener);

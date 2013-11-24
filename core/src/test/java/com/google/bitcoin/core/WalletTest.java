@@ -1006,7 +1006,7 @@ public class WalletTest extends TestWithWallet {
         wallet.addWatchedAddress(new ECKey().toAddress(params));
 
         Utils.rollMockClock(60);
-        wallet.addKey(new ECKey());
+        wallet.newKey();
         assertEquals(now + 60, wallet.getEarliestKeyCreationTime());
     }
 

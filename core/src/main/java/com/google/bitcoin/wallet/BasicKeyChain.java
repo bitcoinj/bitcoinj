@@ -41,14 +41,14 @@ import static com.google.common.base.Preconditions.*;
  * it will automatically add one to itself if it's empty or if encryption is requested.
  */
 public class BasicKeyChain implements EncryptableKeyChain {
-    protected final ReentrantLock lock = Threading.lock("BasicKeyChain");
+    private final ReentrantLock lock = Threading.lock("BasicKeyChain");
 
     // Maps used to let us quickly look up a key given data we find in transcations or the block chain.
-    protected LinkedHashMap<ByteString, ECKey> hashToKeys;
-    protected LinkedHashMap<ByteString, ECKey> pubkeyToKeys;
-    @Nullable protected KeyCrypter keyCrypter;
+    private LinkedHashMap<ByteString, ECKey> hashToKeys;
+    private LinkedHashMap<ByteString, ECKey> pubkeyToKeys;
+    @Nullable private KeyCrypter keyCrypter;
 
-    protected CopyOnWriteArrayList<ListenerRegistration<KeyChainEventListener>> listeners;
+    private CopyOnWriteArrayList<ListenerRegistration<KeyChainEventListener>> listeners;
 
     public BasicKeyChain() {
         hashToKeys = new LinkedHashMap<ByteString, ECKey>();
@@ -68,7 +68,7 @@ public class BasicKeyChain implements EncryptableKeyChain {
     }
 
     @Override
-    public ECKey getKey(KeyPurpose type) {
+    public ECKey getKey(KeyPurpose purpose) {
         lock.lock();
         try {
             if (hashToKeys.isEmpty()) {
@@ -78,6 +78,16 @@ public class BasicKeyChain implements EncryptableKeyChain {
                 queueOnKeysAdded(ImmutableList.of(key));
             }
             return hashToKeys.values().iterator().next();
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /** Returns a copy of the list of keys that this chain is managing. */
+    public List<ECKey> getKeys() {
+        lock.lock();
+        try {
+            return new ArrayList<ECKey>(hashToKeys.values());
         } finally {
             lock.unlock();
         }
@@ -234,16 +244,16 @@ public class BasicKeyChain implements EncryptableKeyChain {
         for (ECKey key : cryptedKeys)
             importKeyLocked(key);
         this.keyCrypter = keyCrypter;
-        queueOnEncrypt();
+        queueOnEncryptionChanged();
     }
 
-    private void queueOnEncrypt() {
+    private void queueOnEncryptionChanged() {
         checkState(lock.isHeldByCurrentThread());
         for (final ListenerRegistration<KeyChainEventListener> registration : listeners) {
             registration.executor.execute(new Runnable() {
                 @Override
                 public void run() {
-                    registration.listener.onEncrypt();
+                    registration.listener.onEncryptionChanged();
                 }
             });
         }

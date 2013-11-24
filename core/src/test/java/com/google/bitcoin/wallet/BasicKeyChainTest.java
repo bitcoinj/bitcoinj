@@ -115,7 +115,7 @@ public class BasicKeyChainTest {
         final AtomicBoolean listenerRan = new AtomicBoolean();
         chain.addEventListener(new AbstractKeyChainEventListener() {
             @Override
-            public void onEncrypt() {
+            public void onEncryptionChanged() {
                 listenerRan.set(true);
             }
         }, Threading.SAME_THREAD);

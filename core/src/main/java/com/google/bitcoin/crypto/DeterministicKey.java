@@ -39,8 +39,9 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * A deterministic key is a node in a {@link DeterministicHierarchy}. As per
- * <a href="https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki">the BIP 32 specification</a> it is a pair (key, chaincode). If you
- * know its path in the tree you can derive more keys from this.
+ * <a href="https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki">the BIP 32 specification</a> it is a pair
+ * (key, chaincode). If you know its path in the tree you can derive more keys from this. To obtain one of these, you
+ * can call {@link HDKeyDerivation#createMasterPrivateKey(byte[])}.
  */
 public class DeterministicKey implements Serializable {
     private static final long serialVersionUID = 1L;
