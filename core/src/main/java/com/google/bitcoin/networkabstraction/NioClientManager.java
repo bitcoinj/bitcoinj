@@ -64,11 +64,11 @@ public class NioClientManager extends AbstractExecutionThreadService implements 
                 }
             } catch (IOException e) {
                 // Calling sc.socket().getRemoteSocketAddress() here throws an exception, so we can only log the error itself
-                log.error("Failed to connect with exception", e);
+                log.error("Failed to connect with exception: {}", e.getMessage());
                 handler.closeConnection();
             } catch (CancelledKeyException e) { // There is a race to get to interestOps after finishConnect() which may cause this
                 // Calling sc.socket().getRemoteSocketAddress() here throws an exception, so we can only log the error itself
-                log.error("Failed to connect with exception", e);
+                log.error("Failed to connect with exception: {}", e.getMessage());
                 handler.closeConnection();
             }
         } else // Process bytes read

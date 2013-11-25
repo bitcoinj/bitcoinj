@@ -691,7 +691,13 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
         peer.setMinProtocolVersion(vMinRequiredProtocolVersion);
         pendingPeers.add(peer);
 
-        channels.openConnection(address, peer);
+        try {
+            channels.openConnection(address, peer);
+        } catch (Exception e) {
+            log.warn("Failed to connect to " + address + ": " + e.getMessage());
+            handlePeerDeath(peer);
+            return null;
+        }
         peer.setSocketTimeout(vConnectTimeoutMillis);
         // When the channel has connected and version negotiated successfully, handleNewPeer will end up being called on
         // a worker thread.
