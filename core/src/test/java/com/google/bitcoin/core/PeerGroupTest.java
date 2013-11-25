@@ -32,8 +32,8 @@ import org.junit.runners.Parameterized;
 import java.math.BigInteger;
 import java.net.InetSocketAddress;
 import java.util.*;
-import java.util.concurrent.Semaphore;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.Assert.*;
@@ -70,23 +70,20 @@ public class PeerGroupTest extends TestWithPeerGroup {
 
     @Test
     public void listener() throws Exception {
-        final AtomicInteger connectedPeers = new AtomicInteger(0);
-        final AtomicInteger disconnectedPeers = new AtomicInteger(0);
+        final BlockingQueue<Peer> connectedPeers = new LinkedBlockingQueue<Peer>();
+        final BlockingQueue<Peer> disconnectedPeers = new LinkedBlockingQueue<Peer>();
         final SettableFuture<Void> firstDisconnectFuture = SettableFuture.create();
         final SettableFuture<Void> secondDisconnectFuture = SettableFuture.create();
         final Map<Peer, AtomicInteger> peerToMessageCount = new HashMap<Peer, AtomicInteger>();
         AbstractPeerEventListener listener = new AbstractPeerEventListener() {
             @Override
             public void onPeerConnected(Peer peer, int peerCount) {
-                connectedPeers.incrementAndGet();
+                connectedPeers.add(peer);
             }
 
             @Override
             public void onPeerDisconnected(Peer peer, int peerCount) {
-                if (disconnectedPeers.incrementAndGet() == 1)
-                    firstDisconnectFuture.set(null);
-                else
-                    secondDisconnectFuture.set(null);
+                disconnectedPeers.add(peer);
             }
 
             @Override
@@ -106,54 +103,50 @@ public class PeerGroupTest extends TestWithPeerGroup {
 
         // Create a couple of peers.
         InboundMessageQueuer p1 = connectPeer(1);
-        Threading.waitForUserCode();
-        assertEquals(1, connectedPeers.get());
         InboundMessageQueuer p2 = connectPeer(2);
-        Threading.waitForUserCode();
-        assertEquals(2, connectedPeers.get());
+        connectedPeers.take();
+        connectedPeers.take();
 
         pingAndWait(p1);
         pingAndWait(p2);
         Threading.waitForUserCode();
-        assertEquals(0, disconnectedPeers.get());
+        assertEquals(0, disconnectedPeers.size());
 
         p1.close();
-        firstDisconnectFuture.get();
-        assertEquals(1, disconnectedPeers.get());
+        disconnectedPeers.take();
+        assertEquals(0, disconnectedPeers.size());
         p2.close();
-        secondDisconnectFuture.get();
-        assertEquals(2, disconnectedPeers.get());
+        disconnectedPeers.take();
+        assertEquals(0, disconnectedPeers.size());
 
         assertTrue(peerGroup.removeEventListener(listener));
         assertFalse(peerGroup.removeEventListener(listener));
     }
 
     @Test
-    public void peerDiscoveryPolling() throws Exception {
+    public void peerDiscoveryPolling() throws InterruptedException {
         // Check that if peer discovery fails, we keep trying until we have some nodes to talk with.
-        final Semaphore sem = new Semaphore(0);
-        final boolean[] result = new boolean[1];
-        result[0] = false;
+        final CountDownLatch latch = new CountDownLatch(1);
+        final AtomicBoolean result = new AtomicBoolean();
         peerGroup.addPeerDiscovery(new PeerDiscovery() {
             public InetSocketAddress[] getPeers(long unused, TimeUnit unused2) throws PeerDiscoveryException {
-                if (result[0] == false) {
+                if (!result.getAndSet(true)) {
                     // Pretend we are not connected to the internet.
-                    result[0] = true;
                     throw new PeerDiscoveryException("test failure");
                 } else {
                     // Return a bogus address.
-                    sem.release();
-                    return new InetSocketAddress[]{new InetSocketAddress("localhost", 0)};
+                    latch.countDown();
+                    return new InetSocketAddress[]{new InetSocketAddress("localhost", 1)};
                 }
             }
             public void shutdown() {
             }
         });
         peerGroup.startAndWait();
-        sem.acquire();
+        latch.await();
         // Check that we did indeed throw an exception. If we got here it means we threw and then PeerGroup tried
         // again a bit later.
-        assertTrue(result[0]);
+        assertTrue(result.get());
     }
 
     @Test

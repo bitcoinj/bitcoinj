@@ -495,10 +495,6 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
         } finally {
             lock.unlock();
         }
-        // Don't do connectTo whilst holding the PeerGroup lock because this can trigger some amazingly deep stacks
-        // and potentially circular deadlock in the case of immediate failure (eg, attempt to access IPv6 node from
-        // a non-v6 capable machine). It doesn't relay control immediately to the netty boss thread as you may expect.
-        //
         // This method eventually constructs a Peer and puts it into pendingPeers. If the connection fails to establish,
         // handlePeerDeath will be called, which will potentially call this method again to replace the dead or failed
         // connection.
@@ -764,7 +760,6 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
         int newSize = -1;
         lock.lock();
         try {
-            // Runs on a netty worker thread for every peer that is newly connected. Peer is not locked at this point.
             // Sets up the newly connected peer so it can do everything it needs to.
             log.info("{}: New peer", peer);
             pendingPeers.remove(peer);
@@ -933,10 +928,6 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
     }
 
     protected void handlePeerDeath(final Peer peer) {
-        // This can run on any Netty worker thread. Because connectToAnyPeer() must run unlocked to avoid circular
-        // deadlock, this method must run largely unlocked too. Some members are thread-safe and others aren't, so
-        // we synchronize only the parts that need it.
-
         // Peer deaths can occur during startup if a connect attempt after peer discovery aborts immediately.
         final State state = state();
         if (state != State.RUNNING && state != State.STARTING) return;

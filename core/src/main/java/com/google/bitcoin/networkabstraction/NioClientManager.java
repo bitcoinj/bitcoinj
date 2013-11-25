@@ -16,18 +16,15 @@
 
 package com.google.bitcoin.networkabstraction;
 
+import com.google.common.util.concurrent.AbstractExecutionThreadService;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.net.SocketAddress;
 import java.nio.channels.*;
 import java.nio.channels.spi.SelectorProvider;
 import java.util.*;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.locks.Lock;
-
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.util.concurrent.AbstractExecutionThreadService;
-import org.slf4j.LoggerFactory;
 
 /**
  * A class which manages a set of client connections. Uses Java NIO to select network events and processes them in a
@@ -149,6 +146,7 @@ public class NioClientManager extends AbstractExecutionThreadService implements 
             newConnectionChannels.offer(new SocketChannelAndParser(sc, parser));
             selector.wakeup();
         } catch (IOException e) {
+            log.error("Could not connect to " + serverAddress);
             throw new RuntimeException(e); // This should only happen if we are, eg, out of system resources
         }
     }

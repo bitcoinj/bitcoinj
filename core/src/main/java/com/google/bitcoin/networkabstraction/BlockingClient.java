@@ -16,16 +16,16 @@
 
 package com.google.bitcoin.networkabstraction;
 
+import org.slf4j.LoggerFactory;
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.Socket;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.util.Set;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-
-import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkState;
 
@@ -95,7 +95,7 @@ public class BlockingClient implements MessageWriteTarget {
                     }
                 } catch (Exception e) {
                     if (!vCloseRequested)
-                        log.error("Error trying to open/read from connection", e);
+                        log.error("Error trying to open/read from connection: " + serverAddress, e);
                 } finally {
                     try {
                         socket.close();
