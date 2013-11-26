@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import java.util.*?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.*?>
+<?import javafx.scene.input.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.paint.*?>
+
+<fx:root type="javafx.scene.layout.AnchorPane" prefWidth="441.0" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2">
+  <children>
+    <HBox id="addressLabelBox" fx:id="box" alignment="CENTER_LEFT" layoutX="0.0" layoutY="0.0" prefHeight="21.0" prefWidth="391.0" spacing="10.0">
+      <children>
+        <Label fx:id="addressLabel" onMouseClicked="#requestMoney" style="-fx-cursor: hand" text="&lt;address goes here&gt;" textFill="BLUE" underline="true">
+          <contextMenu>
+            <ContextMenu fx:id="addressMenu">
+              <items>
+                <MenuItem mnemonicParsing="false" onAction="#copyAddress" text="Copy to clipboard">
+                  <accelerator>
+                    <KeyCodeCombination alt="UP" code="C" control="DOWN" meta="UP" shift="UP" shortcut="UP" />
+                  </accelerator>
+                </MenuItem>
+              </items>
+            </ContextMenu>
+          </contextMenu>
+        </Label>
+        <Label fx:id="copyWidget" onMouseClicked="#copyWidgetClicked" text="&lt;COPY&gt;" />
+        <Label fx:id="qrCode" onMouseClicked="#showQRCode" text="&lt;QR&gt;" />
+      </children>
+    </HBox>
+  </children>
+</fx:root>
