@@ -129,7 +129,7 @@ public class PaymentChannelClient implements IPaymentChannelClient {
 
     @Nullable
     @GuardedBy("lock")
-    private CloseReason receiveInitiate(Protos.Initiate initiate, BigInteger contractValue, Protos.Error.Builder errorBuilder) throws VerificationException, ValueOutOfRangeException {
+    private CloseReason receiveInitiate(Protos.Initiate initiate, BigInteger contractValue, Protos.Error.Builder errorBuilder) throws VerificationException, InsufficientMoneyException {
         log.info("Got INITIATE message:\n{}", initiate.toString());
 
         checkState(initiate.getExpireTimeSecs() > 0 && initiate.getMinAcceptedChannelSize() >= 0);
@@ -163,7 +163,13 @@ public class PaymentChannelClient implements IPaymentChannelClient {
         state = new PaymentChannelClientState(wallet, myKey,
                 new ECKey(null, initiate.getMultisigKey().toByteArray()),
                 contractValue, initiate.getExpireTimeSecs());
-        state.initiate();
+        try {
+            state.initiate();
+        } catch (ValueOutOfRangeException e) {
+            log.error("Value out of range when trying to initiate", e);
+            errorBuilder.setCode(Protos.Error.ErrorCode.CHANNEL_VALUE_TOO_LARGE);
+            return CloseReason.SERVER_REQUESTED_TOO_MUCH_VALUE;
+        }
         minPayment = initiate.getMinPayment();
         step = InitStep.WAITING_FOR_REFUND_RETURN;
 
@@ -230,7 +236,7 @@ public class PaymentChannelClient implements IPaymentChannelClient {
      * {@inheritDoc}
      */
     @Override
-    public void receiveMessage(Protos.TwoWayChannelMessage msg) throws ValueOutOfRangeException {
+    public void receiveMessage(Protos.TwoWayChannelMessage msg) throws InsufficientMoneyException {
         lock.lock();
         try {
             checkState(connectionOpen);

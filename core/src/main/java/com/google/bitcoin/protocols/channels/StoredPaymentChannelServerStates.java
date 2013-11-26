@@ -84,7 +84,7 @@ public class StoredPaymentChannelServerStates implements WalletExtension {
             channel.closeConnectedHandler();
             try {
                 channel.getOrCreateState(wallet, broadcaster).close();
-            } catch (ValueOutOfRangeException e) {
+            } catch (InsufficientMoneyException e) {
                 e.printStackTrace();
             } catch (VerificationException e) {
                 e.printStackTrace();

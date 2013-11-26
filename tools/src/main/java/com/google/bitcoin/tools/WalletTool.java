@@ -453,10 +453,8 @@ public class WalletTool {
                 }
                 req.aesKey = wallet.getKeyCrypter().deriveKey(password);
             }
-            if (!wallet.completeTx(req)) {
-                System.err.println("Insufficient funds: have " + Utils.bitcoinValueToFriendlyString(wallet.getBalance()));
-                return;
-            }
+            wallet.completeTx(req);
+
             try {
                 if (lockTimeStr != null) {
                     t.setLockTime(Transaction.parseLockTimeStr(lockTimeStr));
@@ -499,6 +497,8 @@ public class WalletTool {
             throw new RuntimeException(e);
         } catch (ExecutionException e) {
             throw new RuntimeException(e);
+        } catch (InsufficientMoneyException e) {
+            System.err.println("Insufficient funds: have " + Utils.bitcoinValueToFriendlyString(wallet.getBalance()));
         }
     }
 

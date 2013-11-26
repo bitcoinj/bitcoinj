@@ -106,8 +106,7 @@ public class PaymentChannelStateTest extends TestWithWallet {
         try {
             channelState.initiate();
             fail();
-        } catch (ValueOutOfRangeException e) {
-            assertTrue(e.getMessage().contains("afford"));
+        } catch (InsufficientMoneyException e) {
         }
     }
 
@@ -698,8 +697,7 @@ public class PaymentChannelStateTest extends TestWithWallet {
         try {
             serverState.close();
             fail();
-        } catch (ValueOutOfRangeException e) {
-            assertTrue(e.getMessage().contains("unable to pay required fee"));
+        } catch (InsufficientMoneyException e) {
         }
 
         // Now give the server enough coins to pay the fee
@@ -711,7 +709,7 @@ public class PaymentChannelStateTest extends TestWithWallet {
         try {
             serverState.close();
             fail();
-        } catch (ValueOutOfRangeException e) {
+        } catch (InsufficientMoneyException e) {
             assertTrue(e.getMessage().contains("more in fees"));
         }
 

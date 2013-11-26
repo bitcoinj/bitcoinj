@@ -17,6 +17,7 @@
 package com.google.bitcoin.protocols.channels;
 
 import com.google.bitcoin.core.ECKey;
+import com.google.bitcoin.core.InsufficientMoneyException;
 import com.google.bitcoin.core.Sha256Hash;
 import com.google.bitcoin.core.Wallet;
 import com.google.bitcoin.protocols.niowrapper.NioClient;
@@ -89,7 +90,7 @@ public class PaymentChannelClientConnection {
             public void messageReceived(ProtobufParser handler, Protos.TwoWayChannelMessage msg) {
                 try {
                     channelClient.receiveMessage(msg);
-                } catch (ValueOutOfRangeException e) {
+                } catch (InsufficientMoneyException e) {
                     // We should only get this exception during INITIATE, so channelOpen wasn't called yet.
                     channelOpenFuture.setException(e);
                 }

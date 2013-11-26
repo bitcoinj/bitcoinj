@@ -235,9 +235,10 @@ public class PaymentChannelClientState {
      * overriding {@link PaymentChannelClientState#editContractSendRequest(com.google.bitcoin.core.Wallet.SendRequest)}.
      * By default unconfirmed coins are allowed to be used, as for micropayments the risk should be relatively low.
      *
-     * @throws ValueOutOfRangeException If the value being used cannot be afforded or is too small to be accepted by the network
+     * @throws ValueOutOfRangeException if the value being used is too small to be accepted by the network
+     * @throws InsufficientMoneyException if the wallet doesn't contain enough balance to initiate
      */
-    public synchronized void initiate() throws ValueOutOfRangeException {
+    public synchronized void initiate() throws ValueOutOfRangeException, InsufficientMoneyException {
         final NetworkParameters params = wallet.getParams();
         Transaction template = new Transaction(params);
         // We always place the client key before the server key because, if either side wants some privacy, they can
@@ -252,8 +253,7 @@ public class PaymentChannelClientState {
         Wallet.SendRequest req = Wallet.SendRequest.forTx(template);
         req.coinSelector = AllowUnconfirmedCoinSelector.get();
         editContractSendRequest(req);
-        if (!wallet.completeTx(req))
-            throw new ValueOutOfRangeException("Cannot afford this channel");
+        wallet.completeTx(req);
         BigInteger multisigFee = req.fee;
         multisigContract = req.tx;
         // Build a refund transaction that protects us in the case of a bad server that's just trying to cause havoc

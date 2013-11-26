@@ -795,7 +795,6 @@ public class Transaction extends ChildMessage implements Serializable {
      * @param aesKey The AES key to use to decrypt the key before signing. Null if no decryption is required.
      */
     public synchronized void signInputs(SigHash hashType, Wallet wallet, @Nullable KeyParameter aesKey) throws ScriptException {
-        // TODO: This should be a method of the TransactionInput that (possibly?) operates with a copy of this object.
         Preconditions.checkState(inputs.size() > 0);
         Preconditions.checkState(outputs.size() > 0);
 

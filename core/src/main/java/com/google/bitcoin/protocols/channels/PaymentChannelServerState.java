@@ -283,7 +283,7 @@ public class PaymentChannelServerState {
      * @throws VerificationException If the signature does not verify or size is out of range (incl being rejected by the network as dust).
      * @return true if there is more value left on the channel, false if it is now fully used up.
      */
-    public synchronized boolean incrementPayment(BigInteger refundSize, byte[] signatureBytes) throws VerificationException, ValueOutOfRangeException {
+    public synchronized boolean incrementPayment(BigInteger refundSize, byte[] signatureBytes) throws VerificationException, ValueOutOfRangeException, InsufficientMoneyException {
         checkState(state == State.READY);
         checkNotNull(refundSize);
         checkNotNull(signatureBytes);
@@ -360,9 +360,9 @@ public class PaymentChannelServerState {
      * @return a future which completes when the provided multisig contract successfully broadcasts, or throws if the
      *         broadcast fails for some reason. Note that if the network simply rejects the transaction, this future
      *         will never complete, a timeout should be used.
-     * @throws ValueOutOfRangeException If the payment tx would have cost more in fees to spend than it is worth.
+     * @throws InsufficientMoneyException If the payment tx would have cost more in fees to spend than it is worth.
      */
-    public synchronized ListenableFuture<Transaction> close() throws ValueOutOfRangeException {
+    public synchronized ListenableFuture<Transaction> close() throws InsufficientMoneyException {
         if (storedServerChannel != null) {
             StoredServerChannel temp = storedServerChannel;
             storedServerChannel = null;
@@ -394,20 +394,21 @@ public class PaymentChannelServerState {
             // die. We could probably add features to the SendRequest API to make this a bit more efficient.
             signMultisigInput(tx, Transaction.SigHash.NONE, true);
             // Let wallet handle adding additional inputs/fee as necessary.
-            if (!wallet.completeTx(req))
-                throw new ValueOutOfRangeException("Unable to complete transaction - unable to pay required fee");
+            wallet.completeTx(req);
             feePaidForPayment = req.fee;
             log.info("Calculated fee is {}", feePaidForPayment);
-            if (feePaidForPayment.compareTo(bestValueToMe) >= 0)
-                throw new ValueOutOfRangeException(String.format("Had to pay more in fees (%s) than the channel was worth (%s)",
-                        feePaidForPayment, bestValueToMe));
+            if (feePaidForPayment.compareTo(bestValueToMe) >= 0) {
+                final String msg = String.format("Had to pay more in fees (%s) than the channel was worth (%s)",
+                        feePaidForPayment, bestValueToMe);
+                throw new InsufficientMoneyException(feePaidForPayment.subtract(bestValueToMe), msg);
+            }
             // Now really sign the multisig input.
             signMultisigInput(tx, Transaction.SigHash.ALL, false);
             // Some checks that shouldn't be necessary but it can't hurt to check.
             tx.verify();  // Sanity check syntax.
             for (TransactionInput input : tx.getInputs())
                 input.verify();  // Run scripts and ensure it is valid.
-        } catch (ValueOutOfRangeException e) {
+        } catch (InsufficientMoneyException e) {
             throw e;  // Don't fall through.
         } catch (Exception e) {
             log.error("Could not verify self-built tx\nMULTISIG {}\nCLOSE {}", multisigContract, tx != null ? tx : "");

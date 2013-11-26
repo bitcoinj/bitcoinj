@@ -559,7 +559,7 @@ public class ChannelConnectionTest extends TestWithWallet {
                             .setMinPayment(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE.longValue()))
                     .setType(MessageType.INITIATE).build());
             fail();
-        } catch (ValueOutOfRangeException expected) {
+        } catch (InsufficientMoneyException expected) {
             // This should be thrown.
         }
     }

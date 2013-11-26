@@ -271,6 +271,12 @@ public class PaymentChannelServer {
                 log.error("Initial payment value was out of range", e);
                 error(e.getMessage(), Protos.Error.ErrorCode.BAD_TRANSACTION, CloseReason.REMOTE_SENT_INVALID_MESSAGE);
                 return;
+            } catch (InsufficientMoneyException e) {
+                // This shouldn't happen because the server shouldn't allow itself to get into this situation in the
+                // first place, by specifying a min up front payment.
+                log.error("Tried to settle channel and could not afford the fees whilst updating payment", e);
+                error(e.getMessage(), Protos.Error.ErrorCode.BAD_TRANSACTION, CloseReason.REMOTE_SENT_INVALID_MESSAGE);
+                return;
             }
             conn.sendToClient(Protos.TwoWayChannelMessage.newBuilder()
                     .setType(Protos.TwoWayChannelMessage.MessageType.CHANNEL_OPEN)
@@ -301,7 +307,7 @@ public class PaymentChannelServer {
     }
 
     @GuardedBy("lock")
-    private void receiveUpdatePaymentMessage(Protos.UpdatePayment msg, boolean sendAck) throws VerificationException, ValueOutOfRangeException {
+    private void receiveUpdatePaymentMessage(Protos.UpdatePayment msg, boolean sendAck) throws VerificationException, ValueOutOfRangeException, InsufficientMoneyException {
         log.info("Got a payment update");
 
         BigInteger lastBestPayment = state.getBestValueToMe();
@@ -371,6 +377,9 @@ public class PaymentChannelServer {
             } catch (ValueOutOfRangeException e) {
                 log.error("Caught value out of range exception handling message from client", e);
                 error(e.getMessage(), Protos.Error.ErrorCode.BAD_TRANSACTION, CloseReason.REMOTE_SENT_INVALID_MESSAGE);
+            } catch (InsufficientMoneyException e) {
+                log.error("Caught insufficient money exception handling message from client", e);
+                error(e.getMessage(), Protos.Error.ErrorCode.BAD_TRANSACTION, CloseReason.REMOTE_SENT_INVALID_MESSAGE);
             } catch (IllegalStateException e) {
                 log.error("Caught illegal state exception handling message from client", e);
                 error(e.getMessage(), Protos.Error.ErrorCode.SYNTAX_ERROR, CloseReason.REMOTE_SENT_INVALID_MESSAGE);
@@ -394,7 +403,7 @@ public class PaymentChannelServer {
     }
 
     @GuardedBy("lock")
-    private void receiveCloseMessage() throws ValueOutOfRangeException {
+    private void receiveCloseMessage() throws InsufficientMoneyException {
         log.info("Got CLOSE message, closing channel");
         if (state != null) {
             settlePayment(CloseReason.CLIENT_REQUESTED_CLOSE);
@@ -404,7 +413,7 @@ public class PaymentChannelServer {
     }
 
     @GuardedBy("lock")
-    private void settlePayment(final CloseReason clientRequestedClose) throws ValueOutOfRangeException {
+    private void settlePayment(final CloseReason clientRequestedClose) throws InsufficientMoneyException {
         // Setting channelSettling here prevents us from sending another CLOSE when state.close() calls
         // close() on us here below via the stored channel state.
         // TODO: Strongly separate the lifecycle of the payment channel from the TCP connection in these classes.

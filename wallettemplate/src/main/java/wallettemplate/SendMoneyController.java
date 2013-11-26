@@ -36,15 +36,7 @@ public class SendMoneyController {
         try {
             Address destination = new Address(Main.params, address.getText());
             Wallet.SendRequest req = Wallet.SendRequest.emptyWallet(destination);
-            sendResult = Main.bitcoin.wallet().sendCoins(req);
-            if (sendResult == null) {
-                // We couldn't empty the wallet for some reason. TODO: When bitcoinj issue 425 is fixed, be more helpful
-                informationalAlert("Could not empty the wallet",
-                        "You may have too little money left in the wallet to make a transaction.");
-                overlayUi.done();
-                return;
-            }
-
+            Main.bitcoin.wallet().sendCoins(req);
             Futures.addCallback(sendResult.broadcastComplete, new FutureCallback<Transaction>() {
                 @Override
                 public void onSuccess(Transaction result) {
@@ -67,6 +59,10 @@ public class SendMoneyController {
         } catch (AddressFormatException e) {
             // Cannot happen because we already validated it when the text field changed.
             throw new RuntimeException(e);
+        } catch (InsufficientMoneyException e) {
+            informationalAlert("Could not empty the wallet",
+                    "You may have too little money left in the wallet to make a transaction.");
+            overlayUi.done();
         }
     }
 

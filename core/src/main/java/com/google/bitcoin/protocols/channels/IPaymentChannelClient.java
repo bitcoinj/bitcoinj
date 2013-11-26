@@ -16,6 +16,7 @@
 
 package com.google.bitcoin.protocols.channels;
 
+import com.google.bitcoin.core.InsufficientMoneyException;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.bitcoin.paymentchannel.Protos;
 
@@ -31,7 +32,7 @@ public interface IPaymentChannelClient {
      * Called when a message is received from the server. Processes the given message and generates events based on its
      * content.
      */
-    void receiveMessage(Protos.TwoWayChannelMessage msg) throws ValueOutOfRangeException;
+    void receiveMessage(Protos.TwoWayChannelMessage msg) throws InsufficientMoneyException;
 
     /**
      * <p>Called when the connection to the server terminates.</p>

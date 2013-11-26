@@ -308,8 +308,11 @@ public class BlockChainTest {
         assertTrue(!coinbaseTransaction.isMature());
 
         // Attempt to spend the coinbase - this should fail as the coinbase is not mature yet.
-        Transaction coinbaseSpend = wallet.createSend(addressToSendTo, Utils.toNanoCoins(49, 0));
-        assertNull(coinbaseSpend);
+        try {
+            wallet.createSend(addressToSendTo, Utils.toNanoCoins(49, 0));
+            fail();
+        } catch (InsufficientMoneyException e) {
+        }
 
         // Check that the coinbase is unavailable to spend for the next spendableCoinbaseDepth - 2 blocks.
         for (int i = 0; i < unitTestParams.getSpendableCoinbaseDepth() - 2; i++) {
@@ -328,8 +331,11 @@ public class BlockChainTest {
             assertTrue(!coinbaseTransaction.isMature());
 
             // Attempt to spend the coinbase - this should fail.
-            coinbaseSpend = wallet.createSend(addressToSendTo, Utils.toNanoCoins(49, 0));
-            assertNull(coinbaseSpend);
+            try {
+                wallet.createSend(addressToSendTo, Utils.toNanoCoins(49, 0));
+                fail();
+            } catch (InsufficientMoneyException e) {
+            }
         }
 
         // Give it one more block - should now be able to spend coinbase transaction. Non relevant tx.
