@@ -30,6 +30,7 @@ import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
 import javax.annotation.Nullable;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -111,6 +112,17 @@ public class TestWithNetworkConnections {
 
     protected InboundMessageQueuer connect(Peer peer, VersionMessage versionMessage) throws Exception {
         checkArgument(versionMessage.hasBlockChain());
+        final AtomicBoolean doneConnecting = new AtomicBoolean(false);
+        final Thread thisThread = Thread.currentThread();
+        peer.addEventListener(new AbstractPeerEventListener() {
+            @Override
+            public void onPeerDisconnected(Peer p, int peerCount) {
+                synchronized (doneConnecting) {
+                    if (!doneConnecting.get())
+                        thisThread.interrupt();
+                }
+            }
+        });
         if (clientType == ClientType.NIO_CLIENT_MANAGER || clientType == ClientType.BLOCKING_CLIENT_MANAGER)
             channels.openConnection(new InetSocketAddress("127.0.0.1", 2000), peer);
         else if (clientType == ClientType.NIO_CLIENT)
@@ -125,8 +137,15 @@ public class TestWithNetworkConnections {
         // Complete handshake with the peer - send/receive version(ack)s, receive bloom filter
         writeTarget.sendMessage(versionMessage);
         writeTarget.sendMessage(new VersionAck());
-        assertTrue(writeTarget.nextMessageBlocking() instanceof VersionMessage);
-        assertTrue(writeTarget.nextMessageBlocking() instanceof VersionAck);
+        try {
+            assertTrue(writeTarget.nextMessageBlocking() instanceof VersionMessage);
+            assertTrue(writeTarget.nextMessageBlocking() instanceof VersionAck);
+            synchronized (doneConnecting) {
+                doneConnecting.set(true);
+            }
+        } catch (InterruptedException e) {
+            // We were disconnected before we got back version/verack
+        }
         return writeTarget;
     }
 

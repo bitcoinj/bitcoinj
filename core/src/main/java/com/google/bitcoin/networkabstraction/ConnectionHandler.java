@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.concurrent.GuardedBy;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.channels.CancelledKeyException;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
 import java.util.Arrays;
@@ -96,6 +97,14 @@ class ConnectionHandler implements MessageWriteTarget {
             checkState(connectedHandlers.add(this));
     }
 
+    @GuardedBy("lock")
+    private void setWriteOps() {
+        // Make sure we are registered to get updated when writing is available again
+        key.interestOps(key.interestOps() | SelectionKey.OP_WRITE);
+        // Refresh the selector to make sure it gets the new interestOps
+        key.selector().wakeup();
+    }
+
     // Tries to write any outstanding write bytes, runs in any thread (possibly unlocked)
     private void tryWriteBytes() throws IOException {
         lock.lock();
@@ -108,10 +117,7 @@ class ConnectionHandler implements MessageWriteTarget {
                 if (!buff.hasRemaining())
                     bytesIterator.remove();
                 else {
-                    // Make sure we are registered to get updated when writing is available again
-                    key.interestOps(key.interestOps() | SelectionKey.OP_WRITE);
-                    // Refresh the selector to make sure it gets the new interestOps
-                    key.selector().wakeup();
+                    setWriteOps();
                     break;
                 }
             }
@@ -139,12 +145,17 @@ class ConnectionHandler implements MessageWriteTarget {
             // TODO: Kill the needless message duplication when the write completes right away
             bytesToWrite.offer(ByteBuffer.wrap(Arrays.copyOf(message, message.length)));
             bytesToWriteRemaining += message.length;
-            tryWriteBytes();
+            setWriteOps();
         } catch (IOException e) {
             lock.unlock();
             log.error("Error writing message to connection, closing connection", e);
             closeConnection();
             throw e;
+        } catch (CancelledKeyException e) {
+            lock.unlock();
+            log.error("Error writing message to connection, closing connection", e);
+            closeConnection();
+            throw new IOException(e);
         }
         lock.unlock();
     }
@@ -211,7 +222,7 @@ class ConnectionHandler implements MessageWriteTarget {
         } catch (Exception e) {
             // This can happen eg if the channel closes while the thread is about to get killed
             // (ClosedByInterruptException), or if handler.parser.receiveBytes throws something
-            log.error("Error handling SelectionKey: " + e.getMessage());
+            log.error("Error handling SelectionKey: ", e);
             if (handler != null)
                 handler.closeConnection();
         }

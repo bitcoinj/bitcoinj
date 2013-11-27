@@ -34,6 +34,7 @@ import java.io.OutputStream;
 import java.math.BigInteger;
 import java.net.InetSocketAddress;
 import java.net.SocketException;
+import java.nio.channels.CancelledKeyException;
 import java.nio.channels.ClosedChannelException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
@@ -803,8 +804,8 @@ public class PeerTest extends TestWithNetworkConnections {
             peer.writeTarget.writeBytes(new byte[1]);
             fail();
         } catch (IOException e) {
-            assertTrue(e instanceof ClosedChannelException ||
-                    (e instanceof SocketException && e.getMessage().equals("Socket is closed")));
+            assertTrue((e.getCause() != null && e.getCause() instanceof CancelledKeyException)
+                    || (e instanceof SocketException && e.getMessage().equals("Socket is closed")));
         }
     }
 
@@ -881,6 +882,13 @@ public class PeerTest extends TestWithNetworkConnections {
             }
         };
         connect(); // Writes out a verack+version.
+        final SettableFuture<Void> peerDisconnected = SettableFuture.create();
+        writeTarget.peer.addEventListener(new AbstractPeerEventListener() {
+            @Override
+            public void onPeerDisconnected(Peer p, int peerCount) {
+                peerDisconnected.set(null);
+            }
+        });
         final NetworkParameters params = TestNet3Params.testNet();
         BitcoinSerializer serializer = new BitcoinSerializer(params);
         // Now write some bogus truncated message.
@@ -908,12 +916,13 @@ public class PeerTest extends TestWithNetworkConnections {
         } catch (ExecutionException e) {
             assertTrue(e.getCause() instanceof ProtocolException);
         }
+        peerDisconnected.get();
         try {
             peer.writeTarget.writeBytes(new byte[1]);
             fail();
         } catch (IOException e) {
-            assertTrue(e instanceof ClosedChannelException ||
-                    (e instanceof SocketException && e.getMessage().equals("Socket is closed")));
+            assertTrue((e.getCause() != null && e.getCause() instanceof CancelledKeyException)
+                    || (e instanceof SocketException && e.getMessage().equals("Socket is closed")));
         }
     }
 }
