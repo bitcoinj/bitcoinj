@@ -293,16 +293,15 @@ public class BitcoinSerializer {
 
             // The command is a NULL terminated string, unless the command fills all twelve bytes
             // in which case the termination is implicit.
-            int mark = cursor;
-            for (; header[cursor] != 0 && cursor - mark < COMMAND_LEN; cursor++) ;
-            byte[] commandBytes = new byte[cursor - mark];
-            System.arraycopy(header, mark, commandBytes, 0, cursor - mark);
+            for (; header[cursor] != 0 && cursor < COMMAND_LEN; cursor++) ;
+            byte[] commandBytes = new byte[cursor];
+            System.arraycopy(header, 0, commandBytes, 0, cursor);
             try {
                 command = new String(commandBytes, "US-ASCII");
             } catch (UnsupportedEncodingException e) {
                 throw new RuntimeException(e);  // Cannot happen.
             }
-            cursor = mark + COMMAND_LEN;
+            cursor = COMMAND_LEN;
 
             size = (int) readUint32(header, cursor);
             cursor += 4;
