@@ -88,6 +88,7 @@ public class WalletTool {
             "                       If --privkey is specified, use as a hex/base58 encoded private key.\n" +
             "                       Don't specify --pubkey in that case, it will be derived automatically.\n" +
             "                       If --pubkey is specified, use as a hex/base58 encoded non-compressed public key.\n" +
+            "  --action=ADD_ADDR    Requires --addr to be specified, and adds it as a watching address.\n" +
             "  --action=DELETE_KEY  Removes the key specified by --pubkey or --addr from the wallet.\n" +
             "  --action=SYNC        Sync the wallet with the latest block chain (download new transactions).\n" +
             "                       If the chain file does not exist this will RESET the wallet.\n" +
@@ -199,6 +200,7 @@ public class WalletTool {
         RAW_DUMP,
         CREATE,
         ADD_KEY,
+        ADD_ADDR,
         DELETE_KEY,
         SYNC,
         RESET,
@@ -357,6 +359,7 @@ public class WalletTool {
         switch (action) {
             case DUMP: dumpWallet(); break;
             case ADD_KEY: addKey(); break;
+            case ADD_ADDR: addAddr(); break;
             case DELETE_KEY: deleteKey(); break;
             case RESET: reset(); break;
             case SYNC: syncChain(); break;
@@ -402,6 +405,21 @@ public class WalletTool {
             saveWallet(walletFile);
         }
         shutdown();
+    }
+
+    private static void addAddr() {
+        String addr = (String) options.valueOf("addr");
+        if (addr == null) {
+            System.err.println("You must specify an --addr to watch.");
+            return;
+        }
+        try {
+            Address address = new Address(params, addr);
+            // If no creation time is specified, assume genesis (zero).
+            wallet.addWatchedAddress(address, getCreationTimeSeconds());
+        } catch (AddressFormatException e) {
+            System.err.println("Could not parse given address, or wrong network: " + addr);
+        }
     }
 
     private static void send(List<String> outputs, BigInteger fee, String lockTimeStr, boolean allowUnconfirmed) throws VerificationException {
@@ -680,12 +698,7 @@ public class WalletTool {
 
     private static void addKey() {
         ECKey key;
-        long creationTimeSeconds = 0;
-        if (options.has(unixtimeFlag)) {
-            creationTimeSeconds = unixtimeFlag.value(options);
-        } else if (options.has(dateFlag)) {
-            creationTimeSeconds = dateFlag.value(options).getTime() / 1000;
-        }
+        long creationTimeSeconds = getCreationTimeSeconds();
         if (options.has("privkey")) {
             String data = (String) options.valueOf("privkey");
             if (data.startsWith("5J") || data.startsWith("5H") || data.startsWith("5K")) {
@@ -737,6 +750,16 @@ public class WalletTool {
             System.err.println("There was an encryption related error when adding the key. The error was '" + kce.getMessage() + "'.");
         }
         System.out.println(key.toAddress(params) + " " + key);
+    }
+
+    private static long getCreationTimeSeconds() {
+        long creationTimeSeconds = 0;
+        if (options.has(unixtimeFlag)) {
+            creationTimeSeconds = unixtimeFlag.value(options);
+        } else if (options.has(dateFlag)) {
+            creationTimeSeconds = dateFlag.value(options).getTime() / 1000;
+        }
+        return creationTimeSeconds;
     }
 
     private static void deleteKey() {

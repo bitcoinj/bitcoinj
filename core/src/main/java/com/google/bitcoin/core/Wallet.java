@@ -1942,6 +1942,11 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
         }
     }
 
+    /**
+     * Returns all the outputs that match addresses or scripts added via {@link #addWatchedAddress(Address)} or
+     * {@link #addWatchedScripts(java.util.List)}.
+     * @param excludeImmatureCoinbases Whether to ignore outputs that are unspendable due to being immature.
+     */
     public LinkedList<TransactionOutput> getWatchedOutputs(boolean excludeImmatureCoinbases) {
         lock.lock();
         try {
@@ -2031,18 +2036,18 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
         return isWatchedScript(script);
     }
 
-    /** See {@link #addWatchedAddress(Address, long)} */
+    /**
+     * Same as {@link #addWatchedAddress(Address, long)} with the current time as the creation time.
+     */
     public boolean addWatchedAddress(final Address address) {
         long now = Utils.now().getTime() / 1000;
         return addWatchedAddresses(Lists.newArrayList(address), now) == 1;
     }
 
     /**
-     * Adds the given address to the wallet to be watched. Outputs can be retrieved
-     * by {@link #getWatchedOutputs(boolean)}.
+     * Adds the given address to the wallet to be watched. Outputs can be retrieved by {@link #getWatchedOutputs(boolean)}.
      *
      * @param creationTime creation time in seconds since the epoch, for scanning the blockchain
-     *
      * @return whether the address was added successfully (not already present)
      */
     public boolean addWatchedAddress(final Address address, long creationTime) {
@@ -2289,6 +2294,16 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
                 builder.append(includePrivateKeys ? key.toStringWithPrivate() : key.toString());
                 builder.append("\n");
             }
+
+            if (!watchedScripts.isEmpty()) {
+                builder.append("\nWatched scripts:\n");
+                for (Script script : watchedScripts) {
+                    builder.append("  ");
+                    builder.append(script.toString());
+                    builder.append("\n");
+                }
+            }
+
             if (includeTransactions) {
                 // Print the transactions themselves
                 if (unspent.size() > 0) {
