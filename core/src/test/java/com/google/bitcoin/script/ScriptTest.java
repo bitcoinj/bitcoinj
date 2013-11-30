@@ -17,8 +17,10 @@
 package com.google.bitcoin.script;
 
 import com.google.bitcoin.core.*;
+import com.google.bitcoin.params.MainNetParams;
 import com.google.bitcoin.params.TestNet3Params;
 import com.google.common.collect.Lists;
+
 import org.junit.Test;
 import org.spongycastle.util.encoders.Hex;
 
@@ -83,6 +85,12 @@ public class ScriptTest {
             // Expected.
         }
         // Actual execution is tested by the data driven tests.
+    }
+
+    @Test
+    public void testP2SHOutputScript() throws Exception {
+      Address p2shAddress = new Address(MainNetParams.get(), "35b9vsyH1KoFT5a5KtrKusaCcPLkiSo1tU");
+      assertTrue(ScriptBuilder.createOutputScript(p2shAddress).isSentToP2SH());
     }
 
     @Test

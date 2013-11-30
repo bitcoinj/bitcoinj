@@ -34,9 +34,11 @@ public class AddressTest {
         // Test a testnet address.
         Address a = new Address(testParams, Hex.decode("fda79a24e50ff70ff42f7d89585da5bd19d9e5cc"));
         assertEquals("n4eA2nbYqErp7H6jebchxAN59DmNpksexv", a.toString());
+        assertFalse(a.isP2SHAddress());
 
         Address b = new Address(mainParams, Hex.decode("4a22c3c4cbb31e4d03b15550636762bda0baf85a"));
         assertEquals("17kzeh4N8g49GFvdDzSf8PjaPfyoD1MndL", b.toString());
+        assertFalse(b.isP2SHAddress());
     }
     
     @Test
@@ -89,5 +91,28 @@ public class AddressTest {
         assertEquals(MainNetParams.get().getId(), params.getId());
         params = Address.getParametersFromAddress("n4eA2nbYqErp7H6jebchxAN59DmNpksexv");
         assertEquals(TestNet3Params.get().getId(), params.getId());
+    }
+    
+    @Test
+    public void p2shAddress() throws Exception {
+        // Test that we can construct P2SH addresses
+        Address mainNetP2SHAddress = new Address(MainNetParams.get(), "35b9vsyH1KoFT5a5KtrKusaCcPLkiSo1tU");
+        assertEquals(mainNetP2SHAddress.version, MainNetParams.get().p2shHeader);
+        assertTrue(mainNetP2SHAddress.isP2SHAddress());
+        Address testNetP2SHAddress = new Address(TestNet3Params.get(), "2MuVSxtfivPKJe93EC1Tb9UhJtGhsoWEHCe");
+        assertEquals(testNetP2SHAddress.version, TestNet3Params.get().p2shHeader);
+        assertTrue(testNetP2SHAddress.isP2SHAddress());
+
+        // Test that we can determine what network a P2SH address belongs to
+        NetworkParameters mainNetParams = Address.getParametersFromAddress("35b9vsyH1KoFT5a5KtrKusaCcPLkiSo1tU");
+        assertEquals(MainNetParams.get().getId(), mainNetParams.getId());
+        NetworkParameters testNetParams = Address.getParametersFromAddress("2MuVSxtfivPKJe93EC1Tb9UhJtGhsoWEHCe");
+        assertEquals(TestNet3Params.get().getId(), testNetParams.getId());
+
+        // Test that we can convert them from hashes
+        Address a = new Address(mainParams, MainNetParams.get().p2shHeader, Hex.decode("2ac4b0b501117cc8119c5797b519538d4942e90e"));
+        assertEquals("35b9vsyH1KoFT5a5KtrKusaCcPLkiSo1tU", a.toString());
+        Address b = new Address(testParams, TestNet3Params.get().p2shHeader, Hex.decode("18a0e827269b5211eb51a4af1b2fa69333efa722"));
+        assertEquals("2MuVSxtfivPKJe93EC1Tb9UhJtGhsoWEHCe", b.toString());
     }
 }

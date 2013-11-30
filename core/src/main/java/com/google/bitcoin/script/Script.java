@@ -195,16 +195,30 @@ public class Script {
     }
 
     /**
+     * Returns true if this script is of the form OP_HASH160 <scriptHash> OP_EQUAL, ie, payment to an
+     * address like 35b9vsyH1KoFT5a5KtrKusaCcPLkiSo1tU. This form was codified as part of BIP13 and BIP16,
+     * for pay to script hash type addresses.
+     */
+    public boolean isSentToP2SH() {
+        return chunks.size() == 3 &&
+               chunks.get(0).equalsOpCode(OP_HASH160) &&
+               chunks.get(1).data.length == Address.LENGTH &&
+               chunks.get(2).equalsOpCode(OP_EQUAL);
+    }
+
+    /**
      * If a program matches the standard template DUP HASH160 <pubkey hash> EQUALVERIFY CHECKSIG
      * then this function retrieves the third element, otherwise it throws a ScriptException.<p>
      *
      * This is useful for fetching the destination address of a transaction.
      */
     public byte[] getPubKeyHash() throws ScriptException {
-        if (!isSentToAddress())
+        if (isSentToAddress())
+            return chunks.get(2).data;
+        else if (isSentToP2SH())
+            return chunks.get(1).data;
+        else
             throw new ScriptException("Script not in the standard scriptPubKey form");
-        // Otherwise, the third element is the hash of the public key, ie the bitcoin address.
-        return chunks.get(2).data;
     }
 
     /**

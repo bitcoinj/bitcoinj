@@ -31,6 +31,8 @@ public class UnitTestParams extends NetworkParameters {
         id = ID_UNITTESTNET;
         packetMagic = 0x0b110907;
         addressHeader = 111;
+        p2shHeader = 196;
+        acceptableAddressCodes = new int[] { addressHeader, p2shHeader };
         proofOfWorkLimit = new BigInteger("00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", 16);
         genesisBlock.setTime(System.currentTimeMillis() / 1000);
         genesisBlock.setDifficultyTarget(Block.EASIEST_DIFFICULTY_TARGET);
@@ -40,7 +42,6 @@ public class UnitTestParams extends NetworkParameters {
         dumpedPrivateKeyHeader = 239;
         targetTimespan = 200000000;  // 6 years. Just a very big number.
         spendableCoinbaseDepth = 5;
-        acceptableAddressCodes = new int[] { 111 };
         subsidyDecreaseBlockCount = 100;
         dnsSeeds = null;
     }

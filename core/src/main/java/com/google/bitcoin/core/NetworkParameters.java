@@ -66,6 +66,7 @@ public abstract class NetworkParameters implements Serializable {
     protected int port;
     protected long packetMagic;
     protected int addressHeader;
+    protected int p2shHeader;
     protected int dumpedPrivateKeyHeader;
     protected int interval;
     protected int targetTimespan;
@@ -254,6 +255,13 @@ public abstract class NetworkParameters implements Serializable {
      */
     public int getAddressHeader() {
         return addressHeader;
+    }
+
+    /**
+     * First byte of a base58 encoded P2SH address.  P2SH addresses are defined as part of BIP0013.
+     */
+    public int getP2SHHeader() {
+        return p2shHeader;
     }
 
     /** First byte of a base58 encoded dumped private key. See {@link com.google.bitcoin.core.DumpedPrivateKey}. */

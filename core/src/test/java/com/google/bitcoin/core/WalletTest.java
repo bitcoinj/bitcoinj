@@ -33,6 +33,7 @@ import com.google.bitcoin.wallet.WalletFiles;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.protobuf.ByteString;
+
 import org.bitcoinj.wallet.Protos;
 import org.bitcoinj.wallet.Protos.ScryptParameters;
 import org.bitcoinj.wallet.Protos.Wallet.EncryptionType;
@@ -42,6 +43,7 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.crypto.params.KeyParameter;
+import org.spongycastle.util.encoders.Hex;
 
 import java.io.File;
 import java.math.BigInteger;
@@ -106,20 +108,26 @@ public class WalletTest extends TestWithWallet {
 
     @Test
     public void basicSpending() throws Exception {
-        basicSpendingCommon(wallet, myAddress, false);
+        basicSpendingCommon(wallet, myAddress, new ECKey().toAddress(params), false);
+    }
+    
+    @Test
+    public void basicSpendingToP2SH() throws Exception {
+        Address destination = new Address(params, params.getP2SHHeader(), Hex.decode("4a22c3c4cbb31e4d03b15550636762bda0baf85a"));
+        basicSpendingCommon(wallet, myAddress, destination, false);
     }
 
     @Test
     public void basicSpendingWithEncryptedWallet() throws Exception {
-        basicSpendingCommon(encryptedWallet, myEncryptedAddress, true);
+        basicSpendingCommon(encryptedWallet, myEncryptedAddress, new ECKey().toAddress(params), true);
     }
 
     @Test
     public void basicSpendingWithEncryptedMixedWallet() throws Exception {
-        basicSpendingCommon(encryptedMixedWallet, myEncryptedAddress2, true);
+        basicSpendingCommon(encryptedMixedWallet, myEncryptedAddress2, new ECKey().toAddress(params), true);
     }
 
-    private void basicSpendingCommon(Wallet wallet, Address toAddress, boolean testEncryption) throws Exception {
+    private void basicSpendingCommon(Wallet wallet, Address toAddress, Address destination, boolean testEncryption) throws Exception {
         // We'll set up a wallet that receives a coin, then sends a coin of lesser value and keeps the change. We
         // will attach a small fee. Because the Bitcoin protocol makes it difficult to determine the fee of an
         // arbitrary transaction in isolation, we'll check that the fee was set by examining the size of the change.
@@ -128,7 +136,6 @@ public class WalletTest extends TestWithWallet {
         receiveATransaction(wallet, toAddress);
 
         // Try to send too much and fail.
-        Address destination = new ECKey().toAddress(params);
         BigInteger vHuge = toNanoCoins(10, 0);
         Wallet.SendRequest req = Wallet.SendRequest.to(destination, vHuge);
         try {

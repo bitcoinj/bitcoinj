@@ -37,7 +37,8 @@ public class TestNet3Params extends NetworkParameters {
         proofOfWorkLimit = Utils.decodeCompactBits(0x1d00ffffL);
         port = 18333;
         addressHeader = 111;
-        acceptableAddressCodes = new int[] { 111 };
+        p2shHeader = 196;
+        acceptableAddressCodes = new int[] { addressHeader, p2shHeader };
         dumpedPrivateKeyHeader = 239;
         genesisBlock.setTime(1296688602L);
         genesisBlock.setDifficultyTarget(0x1d00ffffL);

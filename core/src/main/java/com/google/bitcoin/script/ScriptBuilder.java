@@ -64,14 +64,23 @@ public class ScriptBuilder {
 
     /** Creates a scriptPubKey that encodes payment to the given address. */
     public static Script createOutputScript(Address to) {
-        // OP_DUP OP_HASH160 <pubKeyHash> OP_EQUALVERIFY OP_CHECKSIG
-        return new ScriptBuilder()
+        if (to.isP2SHAddress()) {
+            // OP_HASH160 <scriptHash> OP_EQUAL
+            return new ScriptBuilder()
+                .op(OP_HASH160)
+                .data(to.getHash160())
+                .op(OP_EQUAL)
+                .build();
+        } else {
+            // OP_DUP OP_HASH160 <pubKeyHash> OP_EQUALVERIFY OP_CHECKSIG
+            return new ScriptBuilder()
                 .op(OP_DUP)
                 .op(OP_HASH160)
                 .data(to.getHash160())
                 .op(OP_EQUALVERIFY)
                 .op(OP_CHECKSIG)
                 .build();
+        }
     }
 
     /** Creates a scriptPubKey that encodes payment to the given raw public key. */
