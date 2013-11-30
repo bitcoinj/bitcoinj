@@ -86,12 +86,12 @@ public class MnemonicCode {
     /**
      * Encodes a 128, 192 or 256 bit seed into a list of words.
      */
-    public List<String> encode(byte[] seed) throws IllegalArgumentException {
+    public List<String> encode(byte[] seed) throws MnemonicLengthException {
         
         // 2. Make sure its length (L) is 128, 192 or 256 bits.
         int len = seed.length * 8;
         if (len != 128 && len != 192 && len != 256)
-            throw new IllegalArgumentException("seed not 128, 192 or 256 bits");
+            throw new MnemonicLengthException("seed not 128, 192 or 256 bits");
 
         // 3. Encrypt input data 10000x with Rijndael (ECB mode).
         //    Set key to SHA256 hash of string ("mnemonic" + user_password).
@@ -134,12 +134,12 @@ public class MnemonicCode {
     /**
      * Decodes a list of words into a seed value.
      */
-    public byte[] decode(List<String> words) throws IllegalArgumentException {
+    public byte[] decode(List<String> words) throws MnemonicLengthException, MnemonicWordException, MnemonicChecksumException {
         int nwords = words.size();
 
         // 2. Make sure the number of words is 12, 18 or 24.
         if (nwords != 12 && nwords != 18 && nwords != 24)
-            throw new IllegalArgumentException("Mnemonic code not 12, 18 or 24 words");
+            throw new MnemonicLengthException("Mnemonic code not 12, 18 or 24 words");
 
         // 3. Figure out word indexes in a dictionary and output them as binary stream E.
         int len = nwords * 11;
@@ -149,7 +149,7 @@ public class MnemonicCode {
             // Find the words index in the wordlist.
             int ndx = Collections.binarySearch(this.wordList, word);
             if (ndx < 0)
-                throw new IllegalArgumentException("\"" + word + "\" invalid");
+                throw new MnemonicWordException("\"" + word + "\" invalid", word);
 
             // Set the next 11 bits to the value of the index.
             for (int ii = 0; ii < 11; ++ii)
@@ -172,7 +172,7 @@ public class MnemonicCode {
         // 6. Make sure C is the checksum of B (using the step 5 from the above paragraph).
         boolean[] chksum = checksum(bb);
         if (!Arrays.equals(chksum, cc))
-            throw new IllegalArgumentException("checksum error");
+            throw new MnemonicChecksumException("checksum error");
 
         // 8. Treat B as binary data.
         byte[] outdata = new byte[bblen / 8];

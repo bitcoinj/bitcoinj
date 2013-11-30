@@ -127,15 +127,27 @@ public class MnemonicCodeTest {
         }
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test(expected = MnemonicLengthException.class)
     public void testBadSeedLength() throws Exception {
         byte[] seed = Hex.decode("7f7f7f7f7f7f7f7f7f7f7f7f7f7f");
         mc.encode(seed);
     }    
 
-    @Test(expected = IllegalArgumentException.class)
-    public void testBadWordsLength() throws Exception {
+    @Test(expected = MnemonicLengthException.class)
+    public void testBadLength() throws Exception {
         List<String> words = split("risk tiger venture dinner age assume float denial penalty");
+        mc.decode(words);
+    }
+
+    @Test(expected = MnemonicWordException.class)
+    public void testBadWord() throws Exception {
+        List<String> words = split("risk tiger venture dinner xyzzy assume float denial penalty hello game wing");
+        mc.decode(words);
+    }
+
+    @Test(expected = MnemonicChecksumException.class)
+    public void testBadChecksum() throws Exception {
+        List<String> words = split("risk tiger venture dinner age assume float denial penalty hello game game");
         mc.decode(words);
     }
 
