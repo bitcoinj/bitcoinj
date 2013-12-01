@@ -975,7 +975,7 @@ public class WalletTest extends TestWithWallet {
         assertTrue(wallet.isPendingTransactionRelevant(t1));
     }
 
-    @Test
+    @Test(expected = InsufficientMoneyException.class)
     public void watchingScriptsConfirmed() throws Exception {
         ECKey key = new ECKey();
         Address watchedAddress = key.toAddress(params);
@@ -988,7 +988,7 @@ public class WalletTest extends TestWithWallet {
 
         // We can't spend watched balances
         Address notMyAddr = new ECKey().toAddress(params);
-        assertNull(wallet.createSend(notMyAddr, CENT));
+        wallet.createSend(notMyAddr, CENT);
     }
 
     @Test
