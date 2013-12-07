@@ -109,7 +109,7 @@ public class MnemonicCode {
     }
 
     /**
-     * Convert arbitrary data to mnemonic word list.
+     * Convert entropy data to mnemonic word list.
      */
     public List<String> toMnemonic(byte[] entropy) throws MnemonicLengthException {
         if (entropy.length % 4 > 0)
