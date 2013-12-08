@@ -993,10 +993,14 @@ public class WalletTest extends TestWithWallet {
 
     @Test
     public void watchingScriptsSentFrom() throws Exception {
+        assertEquals(2, wallet.getBloomFilterElementCount());
+
         ECKey key = new ECKey();
         ECKey notMyAddr = new ECKey();
         Address watchedAddress = key.toAddress(params);
         wallet.addWatchedAddress(watchedAddress);
+        assertEquals(3, wallet.getBloomFilterElementCount());
+
         Transaction t1 = createFakeTx(params, CENT, watchedAddress);
         Transaction t2 = createFakeTx(params, COIN, notMyAddr);
         StoredBlock b1 = createFakeBlock(blockStore, t1).storedBlock;
@@ -1006,7 +1010,9 @@ public class WalletTest extends TestWithWallet {
         st2.addInput(t1.getOutput(0));
         st2.addInput(t2.getOutput(0));
         wallet.receiveFromBlock(t1, b1, BlockChain.NewBlockType.BEST_CHAIN, 0);
+        assertEquals(4, wallet.getBloomFilterElementCount());
         wallet.receiveFromBlock(st2, b1, BlockChain.NewBlockType.BEST_CHAIN, 0);
+        assertEquals(4, wallet.getBloomFilterElementCount());
         assertEquals(CENT, st2.getValueSentFromMe(wallet));
     }
 

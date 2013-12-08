@@ -2956,7 +2956,7 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
         for (Transaction tx : getTransactions(false)) {
             for (TransactionOutput out : tx.getOutputs()) {
                 try {
-                    if (out.isMine(this) && out.getScriptPubKey().isSentToRawPubKey())
+                    if (isTxOutputBloomFilterable(out))
                         size++;
                 } catch (ScriptException e) {
                     throw new RuntimeException(e); // If it is ours, we parsed the script correctly, so this shouldn't happen
@@ -3026,8 +3026,7 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
             for (int i = 0; i < tx.getOutputs().size(); i++) {
                 TransactionOutput out = tx.getOutputs().get(i);
                 try {
-                    if ((out.isMine(this) && out.getScriptPubKey().isSentToRawPubKey()) ||
-                            out.isWatched(this)) {
+                    if (isTxOutputBloomFilterable(out)) {
                         TransactionOutPoint outPoint = new TransactionOutPoint(params, i, tx);
                         filter.insert(outPoint.bitcoinSerialize());
                     }
@@ -3038,6 +3037,11 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
         }
 
         return filter;
+    }
+
+    private boolean isTxOutputBloomFilterable(TransactionOutput out) {
+        return (out.isMine(this) && out.getScriptPubKey().isSentToRawPubKey()) ||
+                out.isWatched(this);
     }
 
     /** Returns the {@link CoinSelector} object which controls which outputs can be spent by this wallet. */
