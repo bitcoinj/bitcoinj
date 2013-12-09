@@ -110,4 +110,9 @@ public class FilteredBlock extends Message {
     public Map<Sha256Hash, Transaction> getAssociatedTransactions() {
         return Collections.unmodifiableMap(associatedTransactions);
     }
+
+    /** Number of transactions in this block, before it was filtered */
+    public int getTransactionCount() {
+        return merkleTree.transactionCount;
+    }
 }

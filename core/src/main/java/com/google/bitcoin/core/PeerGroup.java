@@ -113,23 +113,36 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
 
     // This event listener is added to every peer. It's here so when we announce transactions via an "inv", every
     // peer can fetch them.
-    private final AbstractPeerEventListener getDataListener = new AbstractPeerEventListener() {
+    private final AbstractPeerEventListener peerListener = new AbstractPeerEventListener() {
         @Override
         public List<Message> getData(Peer peer, GetDataMessage m) {
             return handleGetData(m);
+        }
+
+        @Override
+        public void onBlocksDownloaded(Peer peer, Block block, int blocksLeft) {
+            handleBlocksDownloaded();
         }
     };
 
     private int minBroadcastConnections = 0;
     private AbstractWalletEventListener walletEventListener = new AbstractWalletEventListener() {
         private void onChanged() {
-            recalculateFastCatchupAndFilter();
+            recalculateFastCatchupAndFilter(false);
         }
         @Override public void onScriptsAdded(Wallet wallet, List<Script> scripts) { onChanged(); }
         @Override public void onKeysAdded(Wallet wallet, List<ECKey> keys) { onChanged(); }
         @Override public void onCoinsReceived(Wallet wallet, Transaction tx, BigInteger prevBalance, BigInteger newBalance) { onChanged(); }
         @Override public void onCoinsSent(Wallet wallet, Transaction tx, BigInteger prevBalance, BigInteger newBalance) { onChanged(); }
     };
+
+    private void handleBlocksDownloaded() {
+        double rate = chain.getFalsePositiveRate();
+        if (rate > bloomFilterFPRate * MAX_FP_RATE_INCREASE) {
+            log.info("Force update Bloom filter due to high false positive rate");
+            recalculateFastCatchupAndFilter(true);
+        }
+    }
 
     private class PeerStartupListener extends AbstractPeerEventListener {
         @Override
@@ -153,6 +166,8 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
      * Users for which low data usage is of utmost concern, 0.0001 may be better, for users
      * to whom anonymity is of utmost concern, 0.001 should provide very good privacy */
     public static final double DEFAULT_BLOOM_FILTER_FP_RATE = 0.0005;
+    /** Maximum increase in FP rate before forced refresh of the bloom filter */
+    public static final double MAX_FP_RATE_INCREASE = 2.0f;
     // The false positive rate for bloomFilter
     private double bloomFilterFPRate = DEFAULT_BLOOM_FILTER_FP_RATE;
     // We use a constant tweak to avoid giving up privacy when we regenerate our filter with new keys
@@ -170,6 +185,7 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
      *
      * @param params Network parameters
      */
+
     public PeerGroup(NetworkParameters params) {
         this(params, null);
     }
@@ -578,7 +594,7 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
             // if a key is added. Of course, by then we may have downloaded the chain already. Ideally adding keys would
             // automatically rewind the block chain and redownload the blocks to find transactions relevant to those keys,
             // all transparently and in the background. But we are a long way from that yet.
-            recalculateFastCatchupAndFilter();
+            recalculateFastCatchupAndFilter(false);
             updateVersionMessageRelayTxesBeforeFilter(getVersionMessage());
         } finally {
             lock.unlock();
@@ -598,8 +614,11 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
     /**
      * Recalculates the bloom filter given to peers as well as the timestamp after which full blocks are downloaded
      * (instead of only headers).
+     *
+     * @param forceFilterUpdate send the bloom filter even if it didn't change.  Use
+     *                          this if the false positive rate is high due to server auto-update.
      */
-    public void recalculateFastCatchupAndFilter() {
+    public void recalculateFastCatchupAndFilter(boolean forceFilterUpdate) {
         lock.lock();
         try {
             // Fully verifying mode doesn't use this optimization (it can't as it needs to see all transactions).
@@ -625,10 +644,13 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
                 BloomFilter filter = new BloomFilter(lastBloomFilterElementCount, bloomFilterFPRate, bloomFilterTweak, bloomFlags);
                 for (PeerFilterProvider p : peerFilterProviders)
                     filter.merge(p.getBloomFilter(lastBloomFilterElementCount, bloomFilterFPRate, bloomFilterTweak));
-                if (!filter.equals(bloomFilter)) {
+                if (forceFilterUpdate || !filter.equals(bloomFilter)) {
                     bloomFilter = filter;
                     for (Peer peer : peers)
                         peer.setBloomFilter(filter);
+                    // Reset the false positive estimate so that we don't send a flood of filter updates
+                    // if the estimate temporarily overshoots our threshold.
+                    chain.resetFalsePositiveEstimate();
                 }
             }
             // Now adjust the earliest key time backwards by a week to handle the case of clock drift. This can occur
@@ -655,7 +677,7 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
         lock.lock();
         try {
             this.bloomFilterFPRate = bloomFilterFPRate;
-            recalculateFastCatchupAndFilter();
+            recalculateFastCatchupAndFilter(false);
         } finally {
             lock.unlock();
         }
@@ -792,7 +814,7 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
                 }
             }
             // Make sure the peer knows how to upload transactions that are requested from us.
-            peer.addEventListener(getDataListener, Threading.SAME_THREAD);
+            peer.addEventListener(peerListener, Threading.SAME_THREAD);
             // And set up event listeners for clients. This will allow them to find out about new transactions and blocks.
             for (ListenerRegistration<PeerEventListener> registration : peerEventListeners) {
                 peer.addEventListenerWithoutOnDisconnect(registration.listener, registration.executor);
@@ -976,7 +998,7 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
                 log.error(e.getMessage());
             }
         }
-        peer.removeEventListener(getDataListener);
+        peer.removeEventListener(peerListener);
         for (Wallet wallet : wallets) {
             peer.removeWallet(wallet);
         }

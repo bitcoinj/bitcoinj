@@ -124,6 +124,9 @@ public abstract class AbstractBlockChain {
     // were downloading the block chain.
     private final LinkedHashMap<Sha256Hash, OrphanBlock> orphanBlocks = new LinkedHashMap<Sha256Hash, OrphanBlock>();
 
+    private static final double FP_ESTIMATOR_DECAY = 0.0001;
+    private double falsePositiveRate;
+
     /**
      * Constructs a BlockChain connected to the given list of listeners (eg, wallets) and a store.
      */
@@ -265,7 +268,12 @@ public abstract class AbstractBlockChain {
             // a false positive, as expected in any Bloom filtering scheme). The filteredTxn list here will usually
             // only be full of data when we are catching up to the head of the chain and thus haven't witnessed any
             // of the transactions.
-            return add(block.getBlockHeader(), true, block.getTransactionHashes(), block.getAssociatedTransactions());
+            boolean success =
+                    add(block.getBlockHeader(), true, block.getTransactionHashes(), block.getAssociatedTransactions());
+            if (success) {
+                onFilteredTransactions(block.getTransactionCount());
+            }
+            return success;
         } catch (BlockStoreException e) {
             // TODO: Figure out a better way to propagate this exception to the user.
             throw new RuntimeException(e);
@@ -518,7 +526,7 @@ public abstract class AbstractBlockChain {
         }
     }
 
-    private static void informListenerForNewTransactions(Block block, NewBlockType newBlockType,
+    private void informListenerForNewTransactions(Block block, NewBlockType newBlockType,
                                                          @Nullable List<Sha256Hash> filteredTxHashList,
                                                          @Nullable Map<Sha256Hash, Transaction> filteredTxn,
                                                          StoredBlock newStoredBlock, boolean first,
@@ -703,7 +711,7 @@ public abstract class AbstractBlockChain {
         SIDE_CHAIN
     }
 
-    private static void sendTransactionsToListener(StoredBlock block, NewBlockType blockType,
+    private void sendTransactionsToListener(StoredBlock block, NewBlockType blockType,
                                                    BlockChainListener listener,
                                                    int relativityOffset,
                                                    List<Transaction> transactions,
@@ -714,6 +722,8 @@ public abstract class AbstractBlockChain {
                     if (clone)
                         tx = new Transaction(tx.params, tx.bitcoinSerialize());
                     listener.receiveFromBlock(tx, block, blockType, relativityOffset++);
+                } else {
+                    onFalsePositive(tx, block, blockType);
                 }
             } catch (ScriptException e) {
                 // We don't want scripts we don't understand to break the block chain so just note that this tx was
@@ -966,5 +976,28 @@ public abstract class AbstractBlockChain {
             }
         }, Threading.SAME_THREAD);
         return result;
+    }
+
+    /**
+     * The upstream server filtered a number of transactions. Update false-positive estimate based
+     * on this.
+     */
+    public void onFilteredTransactions(int count) {
+        falsePositiveRate *= Math.pow(1-FP_ESTIMATOR_DECAY, count);
+    }
+
+    /** An irrelevant transaction was received.  Update false-positive estimate. */
+    public void onFalsePositive(Transaction tx, StoredBlock block, AbstractBlockChain.NewBlockType blockType) {
+        falsePositiveRate += FP_ESTIMATOR_DECAY;
+        log.warn("false positive, current rate = {}", falsePositiveRate);
+    }
+
+    /** Resets estimates of false positives, used when the filter is sent to the peer. */
+    public void resetFalsePositiveEstimate() {
+        falsePositiveRate = 0;
+    }
+
+    public double getFalsePositiveRate() {
+        return 0;
     }
 }

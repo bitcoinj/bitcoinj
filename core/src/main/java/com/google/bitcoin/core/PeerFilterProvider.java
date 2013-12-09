@@ -18,7 +18,7 @@ package com.google.bitcoin.core;
 
 /**
  * An interface which provides the information required to properly filter data downloaded from Peers.
- * Note that an implementer is responsible for calling {@link PeerGroup#recalculateFastCatchupAndFilter()} whenever a
+ * Note that an implementer is responsible for calling {@link PeerGroup#recalculateFastCatchupAndFilter(boolean)} whenever a
  * change occurs which effects the data provided via this interface.
  */
 public interface PeerFilterProvider {
@@ -41,5 +41,6 @@ public interface PeerFilterProvider {
      */
     public BloomFilter getBloomFilter(int size, double falsePositiveRate, long nTweak);
 
+    /** Whether this filter provider depends on the server updating the filter on all matches */
     boolean isRequiringUpdateAllBloomFilter();
 }
