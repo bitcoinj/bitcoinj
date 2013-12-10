@@ -18,6 +18,7 @@ package com.google.bitcoin.core;
 
 import com.google.bitcoin.params.MainNetParams;
 import com.google.bitcoin.params.TestNet3Params;
+import com.google.bitcoin.script.ScriptBuilder;
 import org.junit.Test;
 import org.spongycastle.util.encoders.Hex;
 
@@ -110,9 +111,12 @@ public class AddressTest {
         assertEquals(TestNet3Params.get().getId(), testNetParams.getId());
 
         // Test that we can convert them from hashes
-        Address a = new Address(mainParams, MainNetParams.get().p2shHeader, Hex.decode("2ac4b0b501117cc8119c5797b519538d4942e90e"));
+        byte[] hex = Hex.decode("2ac4b0b501117cc8119c5797b519538d4942e90e");
+        Address a = Address.fromP2SHScript(mainParams, hex);
         assertEquals("35b9vsyH1KoFT5a5KtrKusaCcPLkiSo1tU", a.toString());
-        Address b = new Address(testParams, TestNet3Params.get().p2shHeader, Hex.decode("18a0e827269b5211eb51a4af1b2fa69333efa722"));
+        Address b = Address.fromP2SHScript(testParams, Hex.decode("18a0e827269b5211eb51a4af1b2fa69333efa722"));
         assertEquals("2MuVSxtfivPKJe93EC1Tb9UhJtGhsoWEHCe", b.toString());
+        Address c = Address.fromP2SHScript(mainParams, ScriptBuilder.createP2SHOutputScript(hex));
+        assertEquals("35b9vsyH1KoFT5a5KtrKusaCcPLkiSo1tU", c.toString());
     }
 }

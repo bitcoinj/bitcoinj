@@ -136,4 +136,14 @@ public class ScriptBuilder {
             builder.data(signature);
         return builder.build();
     }
+
+    /**
+     * Creates a scriptPubKey that sends to the given script hash. Read
+     * <a href="https://github.com/bitcoin/bips/blob/master/bip-0016.mediawiki">BIP 16</a> to learn more about this
+     * kind of script.
+     */
+    public static Script createP2SHOutputScript(byte[] hash) {
+        checkArgument(hash.length == 20);
+        return new ScriptBuilder().op(OP_HASH160).data(hash).op(OP_EQUAL).build();
+    }
 }
