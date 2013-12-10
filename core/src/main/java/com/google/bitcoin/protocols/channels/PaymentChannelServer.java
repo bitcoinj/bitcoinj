@@ -433,6 +433,7 @@ public class PaymentChannelServer {
                     log.info("Sending CLOSE back without broadcast settlement tx.");
                 }
                 conn.sendToClient(msg.build());
+                conn.destroyConnection(clientRequestedClose);
             }
 
             @Override
