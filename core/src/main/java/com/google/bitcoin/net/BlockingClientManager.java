@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.google.bitcoin.networkabstraction;
+package com.google.bitcoin.net;
 
 import com.google.common.util.concurrent.AbstractIdleService;
 
@@ -24,7 +24,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
-import java.util.concurrent.CopyOnWriteArraySet;
 
 /**
  * <p>A thin wrapper around a set of {@link BlockingClient}s.</p>

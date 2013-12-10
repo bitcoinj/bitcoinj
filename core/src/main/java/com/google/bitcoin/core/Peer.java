@@ -48,8 +48,8 @@ import static com.google.common.base.Preconditions.checkState;
  * handles low-level message (de)serialization.</p>
  *
  * <p>Note that timeouts are handled by the extended
- * {@link com.google.bitcoin.networkabstraction.AbstractTimeoutHandler} and timeout is automatically disabled (using
- * {@link com.google.bitcoin.networkabstraction.AbstractTimeoutHandler#setTimeoutEnabled(boolean)}) once the version
+ * {@link com.google.bitcoin.net.AbstractTimeoutHandler} and timeout is automatically disabled (using
+ * {@link com.google.bitcoin.net.AbstractTimeoutHandler#setTimeoutEnabled(boolean)}) once the version
  * handshake completes.</p>
  */
 public class Peer extends PeerSocketHandler {
@@ -148,9 +148,9 @@ public class Peer extends PeerSocketHandler {
      *
      * <p>Note that this does <b>NOT</b> make a connection to the given remoteAddress, it only creates a handler for a
      * connection. If you want to create a one-off connection, create a Peer and pass it to
-     * {@link com.google.bitcoin.networkabstraction.NioClientManager#openConnection(java.net.SocketAddress, com.google.bitcoin.networkabstraction.StreamParser)}
+     * {@link com.google.bitcoin.net.NioClientManager#openConnection(java.net.SocketAddress, com.google.bitcoin.net.StreamParser)}
      * or
-     * {@link com.google.bitcoin.networkabstraction.NioClient#NioClient(java.net.SocketAddress, com.google.bitcoin.networkabstraction.StreamParser, int)}.</p>
+     * {@link com.google.bitcoin.net.NioClient#NioClient(java.net.SocketAddress, com.google.bitcoin.net.StreamParser, int)}.</p>
      *
      * <p>The remoteAddress provided should match the remote address of the peer which is being connected to, and is
      * used to keep track of which peers relayed transactions and offer more descriptive logging.</p>
@@ -166,9 +166,9 @@ public class Peer extends PeerSocketHandler {
      *
      * <p>Note that this does <b>NOT</b> make a connection to the given remoteAddress, it only creates a handler for a
      * connection. If you want to create a one-off connection, create a Peer and pass it to
-     * {@link com.google.bitcoin.networkabstraction.NioClientManager#openConnection(java.net.SocketAddress, com.google.bitcoin.networkabstraction.StreamParser)}
+     * {@link com.google.bitcoin.net.NioClientManager#openConnection(java.net.SocketAddress, com.google.bitcoin.net.StreamParser)}
      * or
-     * {@link com.google.bitcoin.networkabstraction.NioClient#NioClient(java.net.SocketAddress, com.google.bitcoin.networkabstraction.StreamParser, int)}.</p>
+     * {@link com.google.bitcoin.net.NioClient#NioClient(java.net.SocketAddress, com.google.bitcoin.net.StreamParser, int)}.</p>
      *
      * <p>The remoteAddress provided should match the remote address of the peer which is being connected to, and is
      * used to keep track of which peers relayed transactions and offer more descriptive logging.</p>
@@ -196,9 +196,9 @@ public class Peer extends PeerSocketHandler {
      *
      * <p>Note that this does <b>NOT</b> make a connection to the given remoteAddress, it only creates a handler for a
      * connection. If you want to create a one-off connection, create a Peer and pass it to
-     * {@link com.google.bitcoin.networkabstraction.NioClientManager#openConnection(java.net.SocketAddress, com.google.bitcoin.networkabstraction.StreamParser)}
+     * {@link com.google.bitcoin.net.NioClientManager#openConnection(java.net.SocketAddress, com.google.bitcoin.net.StreamParser)}
      * or
-     * {@link com.google.bitcoin.networkabstraction.NioClient#NioClient(java.net.SocketAddress, com.google.bitcoin.networkabstraction.StreamParser, int)}.</p>
+     * {@link com.google.bitcoin.net.NioClient#NioClient(java.net.SocketAddress, com.google.bitcoin.net.StreamParser, int)}.</p>
      *
      * <p>The remoteAddress provided should match the remote address of the peer which is being connected to, and is
      * used to keep track of which peers relayed transactions and offer more descriptive logging.</p>

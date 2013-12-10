@@ -16,7 +16,7 @@
 
 package com.google.bitcoin.core;
 
-import com.google.bitcoin.networkabstraction.*;
+import com.google.bitcoin.net.*;
 import com.google.bitcoin.params.UnitTestParams;
 import com.google.bitcoin.store.BlockStore;
 import com.google.bitcoin.store.MemoryBlockStore;
@@ -117,10 +117,8 @@ public class TestWithNetworkConnections {
         peer.addEventListener(new AbstractPeerEventListener() {
             @Override
             public void onPeerDisconnected(Peer p, int peerCount) {
-                synchronized (doneConnecting) {
-                    if (!doneConnecting.get())
-                        thisThread.interrupt();
-                }
+                if (!doneConnecting.get())
+                    thisThread.interrupt();
             }
         });
         if (clientType == ClientType.NIO_CLIENT_MANAGER || clientType == ClientType.BLOCKING_CLIENT_MANAGER)
@@ -140,9 +138,7 @@ public class TestWithNetworkConnections {
         try {
             assertTrue(writeTarget.nextMessageBlocking() instanceof VersionMessage);
             assertTrue(writeTarget.nextMessageBlocking() instanceof VersionAck);
-            synchronized (doneConnecting) {
-                doneConnecting.set(true);
-            }
+            doneConnecting.set(true);
         } catch (InterruptedException e) {
             // We were disconnected before we got back version/verack
         }

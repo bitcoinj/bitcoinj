@@ -17,8 +17,8 @@
 package com.google.bitcoin.core;
 
 import com.google.bitcoin.params.UnitTestParams;
-import com.google.bitcoin.networkabstraction.BlockingClientManager;
-import com.google.bitcoin.networkabstraction.NioClientManager;
+import com.google.bitcoin.net.BlockingClientManager;
+import com.google.bitcoin.net.NioClientManager;
 import com.google.bitcoin.store.BlockStore;
 
 import java.net.InetSocketAddress;

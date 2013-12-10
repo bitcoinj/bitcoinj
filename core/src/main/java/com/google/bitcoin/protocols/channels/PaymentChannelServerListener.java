@@ -27,9 +27,9 @@ import javax.annotation.Nullable;
 import com.google.bitcoin.core.Sha256Hash;
 import com.google.bitcoin.core.TransactionBroadcaster;
 import com.google.bitcoin.core.Wallet;
-import com.google.bitcoin.networkabstraction.NioServer;
-import com.google.bitcoin.networkabstraction.ProtobufParser;
-import com.google.bitcoin.networkabstraction.StreamParserFactory;
+import com.google.bitcoin.net.NioServer;
+import com.google.bitcoin.net.ProtobufParser;
+import com.google.bitcoin.net.StreamParserFactory;
 import org.bitcoin.paymentchannel.Protos;
 
 import static com.google.common.base.Preconditions.checkNotNull;

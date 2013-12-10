@@ -14,11 +14,10 @@
  * limitations under the License.
  */
 
-package com.google.bitcoin.networkabstraction;
+package com.google.bitcoin.net;
 
 import com.google.common.util.concurrent.Service;
 
-import java.io.IOException;
 import java.net.SocketAddress;
 
 /**

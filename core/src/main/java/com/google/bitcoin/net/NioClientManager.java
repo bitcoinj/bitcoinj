@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.google.bitcoin.networkabstraction;
+package com.google.bitcoin.net;
 
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import org.slf4j.LoggerFactory;

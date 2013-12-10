@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.google.bitcoin.networkabstraction;
+package com.google.bitcoin.net;
 
 import com.google.bitcoin.core.Message;
 import com.google.bitcoin.utils.Threading;

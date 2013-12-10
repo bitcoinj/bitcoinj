@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.google.bitcoin.networkabstraction;
+package com.google.bitcoin.net;
 
 import java.net.InetAddress;
 import javax.annotation.Nullable;
