@@ -799,8 +799,10 @@ public class PeerTest extends TestWithNetworkConnections {
             }
         });
         connectWithVersion(500);
-        connectedFuture.get();
-        disconnectedFuture.get();
+        // We must wait uninterruptibly here because connect[WithVersion] generates a peer that interrupts the current
+        // thread when it disconnects.
+        Uninterruptibles.getUninterruptibly(connectedFuture);
+        Uninterruptibles.getUninterruptibly(disconnectedFuture);
         try {
             peer.writeTarget.writeBytes(new byte[1]);
             fail();
