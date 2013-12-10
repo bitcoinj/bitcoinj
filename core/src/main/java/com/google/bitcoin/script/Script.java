@@ -281,11 +281,14 @@ public class Script {
 
     /**
      * Gets the destination address from this script, if it's in the required form (see getPubKey).
-     *
-     * @throws ScriptException
      */
     public Address getToAddress(NetworkParameters params) throws ScriptException {
-        return new Address(params, getPubKeyHash());
+        if (isSentToAddress())
+            return new Address(params, getPubKeyHash());
+        else if (isSentToP2SH())
+            return Address.fromP2SHScript(params, this);
+        else
+            throw new ScriptException("Cannot cast this script to a pay-to-address type");
     }
 
     ////////////////////// Interface for writing scripts from scratch ////////////////////////////////
