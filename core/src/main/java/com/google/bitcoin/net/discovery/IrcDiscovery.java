@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.google.bitcoin.discovery;
+package com.google.bitcoin.net.discovery;
 
 import com.google.bitcoin.core.AddressFormatException;
 import com.google.bitcoin.core.Base58;

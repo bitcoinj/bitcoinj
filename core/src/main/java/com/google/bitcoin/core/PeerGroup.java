@@ -17,8 +17,8 @@
 
 package com.google.bitcoin.core;
 
-import com.google.bitcoin.discovery.PeerDiscovery;
-import com.google.bitcoin.discovery.PeerDiscoveryException;
+import com.google.bitcoin.net.discovery.PeerDiscovery;
+import com.google.bitcoin.net.discovery.PeerDiscoveryException;
 import com.google.bitcoin.script.Script;
 import com.google.bitcoin.net.ClientConnectionManager;
 import com.google.bitcoin.net.NioClientManager;

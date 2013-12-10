@@ -17,7 +17,7 @@
 package com.google.bitcoin.kits;
 
 import com.google.bitcoin.core.*;
-import com.google.bitcoin.discovery.DnsDiscovery;
+import com.google.bitcoin.net.discovery.DnsDiscovery;
 import com.google.bitcoin.store.BlockStoreException;
 import com.google.bitcoin.store.SPVBlockStore;
 import com.google.bitcoin.store.WalletProtobufSerializer;

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.google.bitcoin.discovery;
+package com.google.bitcoin.net.discovery;
 
 import java.net.InetSocketAddress;
 import java.util.concurrent.TimeUnit;

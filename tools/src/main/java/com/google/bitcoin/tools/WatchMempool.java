@@ -1,7 +1,7 @@
 package com.google.bitcoin.tools;
 
 import com.google.bitcoin.core.*;
-import com.google.bitcoin.discovery.DnsDiscovery;
+import com.google.bitcoin.net.discovery.DnsDiscovery;
 import com.google.bitcoin.params.MainNetParams;
 import com.google.bitcoin.utils.BriefLogFormatter;
 import org.slf4j.Logger;

@@ -16,8 +16,8 @@
 
 package com.google.bitcoin.core;
 
-import com.google.bitcoin.discovery.PeerDiscovery;
-import com.google.bitcoin.discovery.PeerDiscoveryException;
+import com.google.bitcoin.net.discovery.PeerDiscovery;
+import com.google.bitcoin.net.discovery.PeerDiscoveryException;
 import com.google.bitcoin.params.UnitTestParams;
 import com.google.bitcoin.store.MemoryBlockStore;
 import com.google.bitcoin.utils.TestUtils;
