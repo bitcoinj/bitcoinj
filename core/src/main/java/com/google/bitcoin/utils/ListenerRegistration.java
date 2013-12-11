@@ -19,19 +19,23 @@ package com.google.bitcoin.utils;
 import java.util.List;
 import java.util.concurrent.Executor;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 /**
 * A simple wrapper around a listener and an executor, with some utility methods.
 */
 public class ListenerRegistration<T> {
-    public T listener;
-    public Executor executor;
+    public final T listener;
+    public final Executor executor;
 
     public ListenerRegistration(T listener, Executor executor) {
-        this.listener = listener;
-        this.executor = executor;
+        this.listener = checkNotNull(listener);
+        this.executor = checkNotNull(executor);
     }
 
     public static <T> boolean removeFromList(T listener, List<? extends ListenerRegistration<T>> list) {
+        checkNotNull(listener);
+
         ListenerRegistration<T> item = null;
         for (ListenerRegistration<T> registration : list) {
             if (registration.listener == listener) {
