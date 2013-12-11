@@ -734,12 +734,14 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
     public void startBlockChainDownload(PeerEventListener listener) {
         lock.lock();
         try {
+            if (downloadPeer != null)
+                downloadPeer.removeEventListener(this.downloadListener);
             this.downloadListener = listener;
             // TODO: be more nuanced about which peer to download from.  We can also try
             // downloading from multiple peers and handle the case when a new peer comes along
             // with a longer chain after we thought we were done.
             if (!peers.isEmpty()) {
-                startBlockChainDownloadFromPeer(peers.iterator().next());
+                startBlockChainDownloadFromPeer(peers.iterator().next()); // Will add the new download listener
             }
         } finally {
             lock.unlock();
@@ -877,11 +879,13 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
             }
             if (downloadPeer != null) {
                 log.info("Unsetting download peer: {}", downloadPeer);
+                downloadPeer.removeEventListener(downloadListener);
                 downloadPeer.setDownloadData(false);
             }
             downloadPeer = peer;
             if (downloadPeer != null) {
                 log.info("Setting download peer: {}", downloadPeer);
+                peer.addEventListener(downloadListener, Threading.SAME_THREAD);
                 downloadPeer.setDownloadData(true);
                 downloadPeer.setDownloadParameters(fastCatchupTimeSecs, bloomFilter != null);
             }
@@ -990,7 +994,6 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
     private void startBlockChainDownloadFromPeer(Peer peer) {
         lock.lock();
         try {
-            peer.addEventListener(downloadListener, Threading.SAME_THREAD);
             setDownloadPeer(peer);
             // startBlockChainDownload will setDownloadData(true) on itself automatically.
             peer.startBlockChainDownload();
