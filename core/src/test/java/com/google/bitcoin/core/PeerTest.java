@@ -892,7 +892,7 @@ public class PeerTest extends TestWithNetworkConnections {
                 peerDisconnected.set(null);
             }
         });
-        final NetworkParameters params = TestNet3Params.testNet();
+        final NetworkParameters params = TestNet3Params.get();
         BitcoinSerializer serializer = new BitcoinSerializer(params);
         // Now write some bogus truncated message.
         ByteArrayOutputStream out = new ByteArrayOutputStream();
