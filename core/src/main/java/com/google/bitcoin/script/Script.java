@@ -116,11 +116,6 @@ public class Script {
                 buf.append("] ");
             }
         }
-
-        if (creationTimeSeconds != 0) {
-            buf.append(" timestamp:").append(creationTimeSeconds);
-        }
-
         return buf.toString();
     }
 
