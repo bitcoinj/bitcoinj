@@ -368,14 +368,14 @@ public class Peer extends PeerSocketHandler {
         // Switch to the new protocol version.
         int peerVersion = vPeerVersionMessage.clientVersion;
         PeerAddress peerAddress = getAddress();
-        log.info("Connected to {}: version={}, subVer='{}', services=0x{}, time={}, blocks={}", new Object[] {
+        long peerTime = vPeerVersionMessage.time * 1000;
+        log.info("Connected to {}: version={}, subVer='{}', services=0x{}, time={}, blocks={}",
                 peerAddress == null ? "Peer" : peerAddress.getAddr().getHostAddress(),
                 peerVersion,
-				vPeerVersionMessage.subVer,
-				vPeerVersionMessage.localServices,
-                new Date(vPeerVersionMessage.time * 1000),
-				vPeerVersionMessage.bestHeight
-        });
+                vPeerVersionMessage.subVer,
+                vPeerVersionMessage.localServices,
+                String.format("%tF %tT", peerTime, peerTime),
+                vPeerVersionMessage.bestHeight);
         // Now it's our turn ...
         // Send an ACK message stating we accept the peers protocol version.
         sendMessage(new VersionAck());
