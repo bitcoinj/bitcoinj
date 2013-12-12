@@ -116,4 +116,13 @@ public class BlockChain extends AbstractBlockChain {
     protected StoredBlock getStoredBlockInCurrentScope(Sha256Hash hash) throws BlockStoreException {
         return blockStore.get(hash);
     }
+
+    @Override
+    public boolean add(FilteredBlock block) throws VerificationException, PrunedException {
+        boolean success = super.add(block);
+        if (success) {
+            trackFilteredTransactions(block.getTransactionCount());
+        }
+        return success;
+    }
 }
