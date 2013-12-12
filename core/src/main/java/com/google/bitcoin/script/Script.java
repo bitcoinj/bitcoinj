@@ -101,7 +101,7 @@ public class Script {
     }
 
     /**
-     * Returns the program opcodes as a string, for example "[1234] DUP HAHS160"
+     * Returns the program opcodes as a string, for example "[1234] DUP HASH160"
      */
     public String toString() {
         StringBuilder buf = new StringBuilder();
@@ -116,7 +116,7 @@ public class Script {
                 buf.append("] ");
             }
         }
-        return buf.toString();
+        return buf.toString().trim();
     }
 
     /** Returns the serialized program as a newly created byte array. */
