@@ -813,27 +813,6 @@ public class PeerTest extends TestWithNetworkConnections {
     }
 
     @Test
-    public void disconnectOldVersions2() throws Exception {
-        // Set up the connection with an old version.
-        final SettableFuture<Void> connectedFuture = SettableFuture.create();
-        final SettableFuture<Void> disconnectedFuture = SettableFuture.create();
-        peer.addEventListener(new AbstractPeerEventListener() {
-            @Override
-            public void onPeerConnected(Peer peer, int peerCount) {
-                connectedFuture.set(null);
-            }
-
-            @Override
-            public void onPeerDisconnected(Peer peer, int peerCount) {
-                disconnectedFuture.set(null);
-            }
-        });
-        peer.setMinProtocolVersion(500);
-        connectWithVersion(542);
-        pingAndWait(writeTarget);
-    }
-
-    @Test
     public void exceptionListener() throws Exception {
         wallet.addEventListener(new AbstractWalletEventListener() {
             @Override
