@@ -52,6 +52,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
 import static com.google.bitcoin.core.Utils.bitcoinValueToFriendlyString;
+import static com.google.bitcoin.core.Utils.bitcoinValueToPlainString;
 import static com.google.common.base.Preconditions.*;
 
 // To do list:
@@ -2273,7 +2274,9 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
         lock.lock();
         try {
             StringBuilder builder = new StringBuilder();
-            builder.append(String.format("Wallet containing %s BTC in:%n", bitcoinValueToFriendlyString(getBalance())));
+            BigInteger balance = getBalance(BalanceType.ESTIMATED);
+            builder.append(String.format("Wallet containing %s BTC (%d satoshis) in:%n",
+                    bitcoinValueToPlainString(balance), balance.longValue()));
             builder.append(String.format("  %d unspent transactions%n", unspent.size()));
             builder.append(String.format("  %d spent transactions%n", spent.size()));
             builder.append(String.format("  %d pending transactions%n", pending.size()));
