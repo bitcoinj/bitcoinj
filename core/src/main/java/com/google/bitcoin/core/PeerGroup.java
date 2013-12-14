@@ -162,9 +162,13 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
 
     // A bloom filter generated from all connected wallets that is given to new peers
     private BloomFilter bloomFilter;
-    /** A reasonable default for the bloom filter false positive rate on mainnet.
-     * Users for which low data usage is of utmost concern, 0.0001 may be better, for users
-     * to whom anonymity is of utmost concern, 0.001 should provide very good privacy */
+    /**
+     * <p>A reasonable default for the bloom filter false positive rate on mainnet. FP rates are values between 0.0 and 1.0
+     * where 1.0 is "all transactions" i.e. 100%.</p>
+     *
+     * <p>Users for which low data usage is of utmost concern, 0.0001 may be better, for users
+     * to whom anonymity is of utmost concern, 0.001 (0.1%) should provide very good privacy.</p>
+     */
     public static final double DEFAULT_BLOOM_FILTER_FP_RATE = 0.0005;
     /** Maximum increase in FP rate before forced refresh of the bloom filter */
     public static final double MAX_FP_RATE_INCREASE = 2.0f;
@@ -666,12 +670,13 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
     }
     
     /**
-     * Sets the false positive rate of bloom filters given to peers.
-     * Be careful regenerating the bloom filter too often, as it decreases anonymity because remote nodes can
-     * compare transactions against both the new and old filters to significantly decrease the false positive rate.
+     * <p>Sets the false positive rate of bloom filters given to peers. The default is {@link #DEFAULT_BLOOM_FILTER_FP_RATE}.</p>
+     *
+     * <p>Be careful regenerating the bloom filter too often, as it decreases anonymity because remote nodes can
+     * compare transactions against both the new and old filters to significantly decrease the false positive rate.</p>
      * 
-     * See the docs for {@link BloomFilter#BloomFilter(int, double, long, BloomFilter.BloomUpdate)} for a brief
-     * explanation of anonymity when using bloom filters.
+     * <p>See the docs for {@link BloomFilter#BloomFilter(int, double, long, BloomFilter.BloomUpdate)} for a brief
+     * explanation of anonymity when using bloom filters.</p>
      */
     public void setBloomFilterFalsePositiveRate(double bloomFilterFPRate) {
         lock.lock();

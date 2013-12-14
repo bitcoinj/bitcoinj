@@ -428,9 +428,9 @@ public abstract class AbstractBlockChain {
         StoredBlock head = getChainHead();
         if (storedPrev.equals(head)) {
             if (filtered && filteredTxn.size() > 0)  {
-                log.info(format("Block %s connects to top of best chain with %d transaction(s) of which we were sent %d",
-                        block.getHashAsString(), filteredTxHashList.size(), filteredTxn.size()));
-                for (Sha256Hash hash : filteredTxHashList) log.info("  matched tx {}", hash);
+                log.debug("Block {} connects to top of best chain with {} transaction(s) of which we were sent {}",
+                        block.getHashAsString(), filteredTxHashList.size(), filteredTxn.size());
+                for (Sha256Hash hash : filteredTxHashList) log.debug("  matched tx {}", hash);
             }
             if (expensiveChecks && block.getTimeSeconds() <= getMedianTimestampOfRecentBlocks(head, blockStore))
                 throw new VerificationException("Block's timestamp is too early");
