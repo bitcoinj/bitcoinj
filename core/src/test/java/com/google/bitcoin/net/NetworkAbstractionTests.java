@@ -388,10 +388,8 @@ public class NetworkAbstractionTests {
         } catch (IllegalStateException e) {}
 
         // Override max size and make sure the server drops our connection
-        byte[] messageBytes5 = msg5.toByteArray();
         byte[] messageLength5 = new byte[4];
-        Utils.uint32ToByteArrayBE(messageBytes5.length, messageLength5, 0);
-        client.writeBytes(messageBytes5);
+        Utils.uint32ToByteArrayBE(msg5.toByteArray().length, messageLength5, 0);
         client.writeBytes(messageLength5);
 
         serverConnectionClosed.get();
