@@ -129,15 +129,11 @@ public class BloomFilter extends Message {
         data = readByteArray();
         if (data.length > MAX_FILTER_SIZE)
             throw new ProtocolException ("Bloom filter out of size range.");
-        
         hashFuncs = readUint32();
         if (hashFuncs > MAX_HASH_FUNCS)
             throw new ProtocolException("Bloom filter hash function count out of range");
-        
         nTweak = readUint32();
-        
         nFlags = readBytes(1)[0];
-
         length = cursor - offset;
     }
     
@@ -157,7 +153,7 @@ public class BloomFilter extends Message {
         // Do nothing, lazy parsing isn't useful for bloom filters.
     }
 
-    private int ROTL32 (int x, int r) {
+    private static int rotateLeft32(int x, int r) {
         return (x << r) | (x >>> (32 - r));
     }
     
@@ -176,11 +172,11 @@ public class BloomFilter extends Message {
                   ((object[i+3] & 0xFF) << 24);
             
             k1 *= c1;
-            k1 = ROTL32(k1,15);
+            k1 = rotateLeft32(k1, 15);
             k1 *= c2;
 
             h1 ^= k1;
-            h1 = ROTL32(h1,13); 
+            h1 = rotateLeft32(h1, 13);
             h1 = h1*5+0xe6546b64;
         }
         
@@ -195,7 +191,7 @@ public class BloomFilter extends Message {
                 // Fall through.
             case 1:
                 k1 ^= (object[numBlocks] & 0xff);
-                k1 *= c1; k1 = ROTL32(k1,15); k1 *= c2; h1 ^= k1;
+                k1 *= c1; k1 = rotateLeft32(k1, 15); k1 *= c2; h1 ^= k1;
                 // Fall through.
             default:
                 // Do nothing.
