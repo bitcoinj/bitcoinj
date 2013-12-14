@@ -126,9 +126,13 @@ public abstract class AbstractBlockChain {
     private final LinkedHashMap<Sha256Hash, OrphanBlock> orphanBlocks = new LinkedHashMap<Sha256Hash, OrphanBlock>();
 
     // False positive estimation uses an exponential moving average, with alpha = FP_ESTIMATOR_DECAY
-    static final double FP_ESTIMATOR_DECAY = 0.0001;
+    static final double FP_ESTIMATOR_ALPHA = 0.0001;
+    static final double FP_ESTIMATOR_BETA = 0.01;
 
     protected double falsePositiveRate;
+    protected double falsePositiveTrend;
+    protected double previousFalsePositiveRate;
+
 
     /**
      * Constructs a BlockChain connected to the given list of listeners (eg, wallets) and a store.
@@ -1001,29 +1005,47 @@ public abstract class AbstractBlockChain {
      * on the total number of transactions in the original block.
      *
      * count includes filtered transactions, transactions that were passed in and were relevant
-     * and transactions that were false positives.
+     * and transactions that were false positives (i.e. includes all transactions in the block).
      */
     protected void trackFilteredTransactions(int count) {
-        // Track non-false-positives in batch by multiplying by (1-alpha) count times.  Each
-        // non-false-positive counts as 0.0 towards the estimate.
+        // Track non-false-positives in batch.  Each non-false-positive counts as
+        // 0.0 towards the estimate.
         //
         // This is slightly off because we are applying false positive tracking before non-FP tracking,
         // which counts FP as if they came at the beginning of the block.  Assuming uniform FP
         // spread in a block, this will somewhat underestimate the FP rate (5% for 1000 tx block).
-        falsePositiveRate *= Math.pow(1-FP_ESTIMATOR_DECAY, count);
+        double alphaDecay = Math.pow(1 - FP_ESTIMATOR_ALPHA, count);
+
+        // new_rate = alpha_decay * new_rate
+        falsePositiveRate = alphaDecay * falsePositiveRate;
+
+        double betaDecay = Math.pow(1 - FP_ESTIMATOR_BETA, count);
+
+        // trend = beta * (new_rate - old_rate) + beta_decay * trend
+        falsePositiveTrend =
+                FP_ESTIMATOR_BETA * count * (falsePositiveRate - previousFalsePositiveRate) +
+                betaDecay * falsePositiveTrend;
+
+        // new_rate += alpha_decay * trend
+        falsePositiveRate += alphaDecay * falsePositiveTrend;
+
+        // Stash new_rate in old_rate
+        previousFalsePositiveRate = falsePositiveRate;
     }
 
-    /* An irrelevant transaction was received.  Update false-positive estimate. */
+    /* Irrelevant transactions were received.  Update false-positive estimate. */
     void trackFalsePositives(int count) {
         // Track false positives in batch by adding alpha to the false positive estimate once per count.
         // Each false positive counts as 1.0 towards the estimate.
-        falsePositiveRate += FP_ESTIMATOR_DECAY * count;
+        falsePositiveRate += FP_ESTIMATOR_ALPHA * count;
         if (count > 0)
-            log.warn("{} false positives, current rate = {}", count, falsePositiveRate);
+            log.debug("{} false positives, current rate = {} trend = {}", count, falsePositiveRate, falsePositiveTrend);
     }
 
     /** Resets estimates of false positives. Used when the filter is sent to the peer. */
     public void resetFalsePositiveEstimate() {
         falsePositiveRate = 0;
+        falsePositiveTrend = 0;
+        previousFalsePositiveRate = 0;
     }
 }
