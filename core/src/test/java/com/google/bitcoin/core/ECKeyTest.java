@@ -349,11 +349,7 @@ public class ECKeyTest {
         byte[] goodEncryptedPrivateKeyBytes = encryptedPrivateKey.getEncryptedBytes();
 
         // Break the encrypted private key and check it is broken.
-        byte[] badEncryptedPrivateKeyBytes = goodEncryptedPrivateKeyBytes;
-
-        // XOR the 16th byte with 0x0A (this is fairly arbitary) to break it.
-        badEncryptedPrivateKeyBytes[16] = (byte) (badEncryptedPrivateKeyBytes[12] ^ new Byte("12").byteValue());
-
+        byte[] badEncryptedPrivateKeyBytes = new byte[goodEncryptedPrivateKeyBytes.length];
         encryptedPrivateKey.setEncryptedPrivateBytes(badEncryptedPrivateKeyBytes);
         ECKey badEncryptedKey = new ECKey(encryptedPrivateKey, originalUnencryptedKey.getPubKey(), keyCrypter);
         assertTrue("Key encryption is reversible with faulty encrypted bytes", !ECKey.encryptionIsReversible(originalUnencryptedKey, badEncryptedKey, keyCrypter, keyCrypter.deriveKey(PASSWORD1)));
