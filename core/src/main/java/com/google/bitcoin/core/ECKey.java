@@ -28,6 +28,7 @@ import org.slf4j.LoggerFactory;
 import org.spongycastle.asn1.*;
 import org.spongycastle.asn1.sec.SECNamedCurves;
 import org.spongycastle.asn1.x9.X9ECParameters;
+import org.spongycastle.asn1.x9.X9IntegerConverter;
 import org.spongycastle.crypto.AsymmetricCipherKeyPair;
 import org.spongycastle.crypto.generators.ECKeyPairGenerator;
 import org.spongycastle.crypto.params.*;
@@ -759,20 +760,10 @@ public class ECKey implements Serializable {
 
     /** Decompress a compressed public key (x co-ord and low-bit of y-coord). */
     private static ECPoint decompressKey(BigInteger xBN, boolean yBit) {
-        // This code is adapted from Bouncy Castle ECCurve.Fp.decodePoint(), but it wasn't easily re-used.
-        ECCurve.Fp curve = (ECCurve.Fp) CURVE.getCurve();
-        ECFieldElement x = new ECFieldElement.Fp(curve.getQ(), xBN);
-        ECFieldElement alpha = x.multiply(x.square().add(curve.getA())).add(curve.getB());
-        ECFieldElement beta = alpha.sqrt();
-        // If we can't find a sqrt we haven't got a point on the curve - invalid inputs.
-        if (beta == null)
-            throw new IllegalArgumentException("Invalid point compression");
-        if (beta.toBigInteger().testBit(0) == yBit) {
-            return new ECPoint.Fp(curve, x, beta, true);
-        } else {
-            ECFieldElement.Fp y = new ECFieldElement.Fp(curve.getQ(), curve.getQ().subtract(beta.toBigInteger()));
-            return new ECPoint.Fp(curve, x, y, true);
-        }
+        X9IntegerConverter x9 = new X9IntegerConverter();
+        byte[] compEnc = x9.integerToBytes(xBN, 1 + x9.getByteLength(CURVE.getCurve()));
+        compEnc[0] = (byte)(yBit ? 0x03 : 0x02);
+        return CURVE.getCurve().decodePoint(compEnc);
     }
 
     /**
