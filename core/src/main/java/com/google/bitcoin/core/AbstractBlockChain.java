@@ -35,7 +35,6 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.locks.ReentrantLock;
 
 import static com.google.common.base.Preconditions.*;
-import static java.lang.String.format;
 
 /**
  * <p>An AbstractBlockChain holds a series of {@link Block} objects, links them together, and knows how to verify that
@@ -82,7 +81,7 @@ import static java.lang.String.format;
  */
 public abstract class AbstractBlockChain {
     private static final Logger log = LoggerFactory.getLogger(AbstractBlockChain.class);
-    protected ReentrantLock lock = Threading.lock("blockchain");
+    protected final ReentrantLock lock = Threading.lock("blockchain");
 
     /** Keeps a map of block hashes to StoredBlocks. */
     private final BlockStore blockStore;
@@ -108,10 +107,10 @@ public abstract class AbstractBlockChain {
     private final CopyOnWriteArrayList<ListenerRegistration<BlockChainListener>> listeners;
 
     // Holds a block header and, optionally, a list of tx hashes or block's transactions
-    protected static class OrphanBlock {
-        Block block;
-        List<Sha256Hash> filteredTxHashes;
-        Map<Sha256Hash, Transaction> filteredTxn;
+    static class OrphanBlock {
+        final Block block;
+        final List<Sha256Hash> filteredTxHashes;
+        final Map<Sha256Hash, Transaction> filteredTxn;
         OrphanBlock(Block block, @Nullable List<Sha256Hash> filteredTxHashes, @Nullable Map<Sha256Hash, Transaction> filteredTxn) {
             final boolean filtered = filteredTxHashes != null && filteredTxn != null;
             Preconditions.checkArgument((block.transactions == null && filtered)
@@ -125,13 +124,14 @@ public abstract class AbstractBlockChain {
     // were downloading the block chain.
     private final LinkedHashMap<Sha256Hash, OrphanBlock> orphanBlocks = new LinkedHashMap<Sha256Hash, OrphanBlock>();
 
-    // False positive estimation uses an exponential moving average, with alpha = FP_ESTIMATOR_DECAY
-    static final double FP_ESTIMATOR_ALPHA = 0.0001;
-    static final double FP_ESTIMATOR_BETA = 0.01;
+    /** False positive estimation uses a double exponential moving average. */
+    public static final double FP_ESTIMATOR_ALPHA = 0.0001;
+    /** False positive estimation uses a double exponential moving average. */
+    public static final double FP_ESTIMATOR_BETA = 0.01;
 
-    protected double falsePositiveRate;
-    protected double falsePositiveTrend;
-    protected double previousFalsePositiveRate;
+    private double falsePositiveRate;
+    private double falsePositiveTrend;
+    private double previousFalsePositiveRate;
 
 
     /**
@@ -412,9 +412,6 @@ public abstract class AbstractBlockChain {
                               @Nullable final Map<Sha256Hash, Transaction> filteredTxn) throws BlockStoreException, VerificationException, PrunedException {
         checkState(lock.isHeldByCurrentThread());
         boolean filtered = filteredTxHashList != null && filteredTxn != null;
-        boolean fullBlock = block.transactions != null && !filtered;
-        // If !filtered and !fullBlock then we have just a header.
-
         // Check that we aren't connecting a block that fails a checkpoint check
         if (!params.passesCheckpoint(storedPrev.getHeight() + 1, block.getHash()))
             throw new VerificationException("Block failed checkpoint lockin at " + (storedPrev.getHeight() + 1));
@@ -534,7 +531,7 @@ public abstract class AbstractBlockChain {
         trackFalsePositives(falsePositives.size());
     }
 
-    private void informListenerForNewTransactions(Block block, NewBlockType newBlockType,
+    private static void informListenerForNewTransactions(Block block, NewBlockType newBlockType,
                                                          @Nullable List<Sha256Hash> filteredTxHashList,
                                                          @Nullable Map<Sha256Hash, Transaction> filteredTxn,
                                                          StoredBlock newStoredBlock, boolean first,
@@ -791,7 +788,7 @@ public abstract class AbstractBlockChain {
     }
 
     // February 16th 2012
-    private static Date testnetDiffDate = new Date(1329264000000L);
+    private static final Date testnetDiffDate = new Date(1329264000000L);
 
     /**
      * Throws an exception if the blocks difficulty is not correct.
