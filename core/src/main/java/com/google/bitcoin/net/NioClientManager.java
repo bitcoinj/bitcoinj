@@ -93,13 +93,12 @@ public class NioClientManager extends AbstractExecutionThreadService implements 
             while (isRunning()) {
                 SocketChannelAndParser conn;
                 while ((conn = newConnectionChannels.poll()) != null) {
-                    SelectionKey key = null;
                     try {
-                        key = conn.sc.register(selector, SelectionKey.OP_CONNECT);
+                        SelectionKey key = conn.sc.register(selector, SelectionKey.OP_CONNECT);
+                        key.attach(conn.parser);
                     } catch (ClosedChannelException e) {
                         log.info("SocketChannel was closed before it could be registered");
                     }
-                    key.attach(conn.parser);
                 }
 
                 selector.select();
@@ -108,7 +107,6 @@ public class NioClientManager extends AbstractExecutionThreadService implements 
                 while (keyIterator.hasNext()) {
                     SelectionKey key = keyIterator.next();
                     keyIterator.remove();
-
                     handleKey(key);
                 }
             }
