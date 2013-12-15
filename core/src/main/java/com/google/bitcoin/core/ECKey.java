@@ -33,8 +33,8 @@ import org.spongycastle.crypto.AsymmetricCipherKeyPair;
 import org.spongycastle.crypto.generators.ECKeyPairGenerator;
 import org.spongycastle.crypto.params.*;
 import org.spongycastle.crypto.signers.ECDSASigner;
+import org.spongycastle.math.ec.ECAlgorithms;
 import org.spongycastle.math.ec.ECCurve;
-import org.spongycastle.math.ec.ECFieldElement;
 import org.spongycastle.math.ec.ECPoint;
 import org.spongycastle.util.encoders.Base64;
 
@@ -748,9 +748,7 @@ public class ECKey implements Serializable {
         BigInteger rInv = sig.r.modInverse(n);
         BigInteger srInv = rInv.multiply(sig.s).mod(n);
         BigInteger eInvrInv = rInv.multiply(eInv).mod(n);
-        ECPoint p1 = CURVE.getG().multiply(eInvrInv);
-        ECPoint p2 = R.multiply(srInv);
-        ECPoint.Fp q = (ECPoint.Fp) p2.add(p1);
+        ECPoint.Fp q = (ECPoint.Fp) ECAlgorithms.sumOfTwoMultiplies(CURVE.getG(), eInvrInv, R, srInv);
         if (compressed) {
             // We have to manually recompress the point as the compressed-ness gets lost when multiply() is used.
             q = new ECPoint.Fp(curve, q.getX(), q.getY(), true);
