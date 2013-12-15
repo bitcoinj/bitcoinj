@@ -701,13 +701,15 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
      * 
      * @param address destination IP and port.
      * @return The newly created Peer object. Use {@link com.google.bitcoin.core.Peer#getConnectionOpenFuture()} if you
-     *         want a future which completes when the connection is open.
+     *         want a future which completes when the connection is open, or null if the peer could not be connected.
      */
+    @Nullable
     public Peer connectTo(InetSocketAddress address) {
         return connectTo(address, true);
     }
 
     // Internal version.
+    @Nullable
     protected Peer connectTo(InetSocketAddress address, boolean incrementMaxConnections) {
         VersionMessage ver = getVersionMessage().duplicate();
         ver.bestHeight = chain == null ? 0 : chain.getBestChainHeight();
