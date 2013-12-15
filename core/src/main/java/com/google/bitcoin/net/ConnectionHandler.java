@@ -223,8 +223,7 @@ class ConnectionHandler implements MessageWriteTarget {
             // This can happen eg if the channel closes while the thread is about to get killed
             // (ClosedByInterruptException), or if handler.parser.receiveBytes throws something
             log.error("Error handling SelectionKey: ", e);
-            if (handler != null)
-                handler.closeConnection();
+            handler.closeConnection();
         }
     }
 }
