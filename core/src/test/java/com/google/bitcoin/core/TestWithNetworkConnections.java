@@ -117,8 +117,10 @@ public class TestWithNetworkConnections {
         peer.addEventListener(new AbstractPeerEventListener() {
             @Override
             public void onPeerDisconnected(Peer p, int peerCount) {
-                if (!doneConnecting.get())
-                    thisThread.interrupt();
+                synchronized (doneConnecting) {
+                    if (!doneConnecting.get())
+                        thisThread.interrupt();
+                }
             }
         });
         if (clientType == ClientType.NIO_CLIENT_MANAGER || clientType == ClientType.BLOCKING_CLIENT_MANAGER)
@@ -138,7 +140,10 @@ public class TestWithNetworkConnections {
         try {
             assertTrue(writeTarget.nextMessageBlocking() instanceof VersionMessage);
             assertTrue(writeTarget.nextMessageBlocking() instanceof VersionAck);
-            doneConnecting.set(true);
+            synchronized (doneConnecting) {
+                doneConnecting.set(true);
+            }
+            Thread.interrupted(); // Clear interrupted bit in case it was set before we got into the CS
         } catch (InterruptedException e) {
             // We were disconnected before we got back version/verack
         }
