@@ -49,6 +49,7 @@ import java.security.SignatureException;
 import java.util.Arrays;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
 // TODO: This class is quite a mess by now. Once users are migrated away from Java serialization for the wallets,
@@ -148,7 +149,7 @@ public class ECKey implements Serializable {
 
     /** Creates an ECKey given the private key only.  The public key is calculated from it (this is slow) */
     public ECKey(BigInteger privKey) {
-        this(privKey, (byte[])null);
+        this(checkNotNull(privKey), (byte[])null);
     }
 
     /** A constructor variant with BigInteger pubkey. See {@link ECKey#ECKey(BigInteger, byte[])}. */
@@ -175,7 +176,7 @@ public class ECKey implements Serializable {
     public ECKey(@Nullable EncryptedPrivateKey encryptedPrivateKey, @Nullable byte[] pubKey, KeyCrypter keyCrypter) {
         this((byte[])null, pubKey);
 
-        this.keyCrypter = Preconditions.checkNotNull(keyCrypter);
+        this.keyCrypter = checkNotNull(keyCrypter);
         this.encryptedPrivateKey = encryptedPrivateKey;
     }
 
@@ -823,7 +824,12 @@ public class ECKey implements Serializable {
 
         ECKey ecKey = (ECKey) o;
 
-        return Arrays.equals(pub, ecKey.pub);
+        if (creationTimeSeconds != ecKey.creationTimeSeconds) return false;
+        if (keyCrypter != null ? !keyCrypter.equals(ecKey.keyCrypter) : ecKey.keyCrypter != null) return false;
+        if (priv != null && !priv.equals(ecKey.priv)) return false;
+        if (!Arrays.equals(pub, ecKey.pub)) return false;
+
+        return true;
     }
 
     @Override
@@ -843,7 +849,7 @@ public class ECKey implements Serializable {
      * @return encryptedKey
      */
     public ECKey encrypt(KeyCrypter keyCrypter, KeyParameter aesKey) throws KeyCrypterException {
-        Preconditions.checkNotNull(keyCrypter);
+        checkNotNull(keyCrypter);
         final byte[] privKeyBytes = getPrivKeyBytes();
         checkState(privKeyBytes != null, "Private key is not available");
         EncryptedPrivateKey encryptedPrivateKey = keyCrypter.encrypt(privKeyBytes, aesKey);
@@ -862,7 +868,7 @@ public class ECKey implements Serializable {
      * @return unencryptedKey
      */
     public ECKey decrypt(KeyCrypter keyCrypter, KeyParameter aesKey) throws KeyCrypterException {
-        Preconditions.checkNotNull(keyCrypter);
+        checkNotNull(keyCrypter);
         // Check that the keyCrypter matches the one used to encrypt the keys, if set.
         if (this.keyCrypter != null && !this.keyCrypter.equals(keyCrypter)) {
             throw new KeyCrypterException("The keyCrypter being used to decrypt the key is different to the one that was used to encrypt it");
