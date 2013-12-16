@@ -1,0 +1,4 @@
+- Add support for serialization to basic and deterministic key chain objects
+- Switch Wallet to using keychain objects
+- Make Wallet notify key chains when a key has been observed in a transaction.
+- Make DeterministicKeyChain auto-extend when a key was observed, to keep a gap limit in place.
