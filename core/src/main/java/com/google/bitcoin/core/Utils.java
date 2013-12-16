@@ -30,8 +30,12 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.util.concurrent.Uninterruptibles.sleepUninterruptibly;
 
 /**
  * A collection of various utility methods that are helpful for working with the Bitcoin protocol.
@@ -71,6 +75,7 @@ public class Utils {
      * of them in a coin (whereas one would expect 1 billion).
      */
     public static final BigInteger CENT = new BigInteger("1000000", 10);
+    private static BlockingQueue<Boolean> mockSleepQueue;
 
     /**
      * Convert an amount expressed in the way humans are used to into nanocoins.
@@ -447,15 +452,21 @@ public class Utils {
      * Advances (or rewinds) the mock clock by the given number of seconds.
      */
     public static Date rollMockClock(int seconds) {
+        return rollMockClockMillis(seconds * 1000);
+    }
+
+    /**
+     * Advances (or rewinds) the mock clock by the given number of milliseconds.
+     */
+    public static Date rollMockClockMillis(long millis) {
         if (mockTime == null)
             mockTime = new Date();
-        mockTime = new Date(mockTime.getTime() + (seconds * 1000));
+        mockTime = new Date(mockTime.getTime() + millis);
         return mockTime;
     }
 
     /**
      * Sets the mock clock to the given time (in seconds)
-     * @param mockClock
      */
     public static void setMockClock(long mockClock) {
         mockTime = new Date(mockClock * 1000);
@@ -469,6 +480,14 @@ public class Utils {
             return mockTime;
         else
             return new Date();
+    }
+
+    /** Returns the current time in seconds since the epoch, or a mocked out equivalent. */
+    public static long currentTimeMillis() {
+        if (mockTime != null)
+            return mockTime.getTime();
+        else
+            return System.currentTimeMillis();
     }
     
     public static byte[] copyOf(byte[] in, int length) {
@@ -538,5 +557,43 @@ public class Utils {
     // Sets the given bit in data to one
     public static void setBitLE(byte[] data, int index) {
         data[index >>> 3] |= bitMask[7 & index];
+    }
+
+    /** Sleep for a span of time, or mock sleep if enabled */
+    public static void sleep(long millis) {
+        if (mockSleepQueue == null) {
+            sleepUninterruptibly(millis, TimeUnit.MILLISECONDS);
+        } else {
+            try {
+                boolean isMultiPass = mockSleepQueue.take();
+                rollMockClockMillis(millis);
+                if (isMultiPass)
+                    mockSleepQueue.offer(true);
+            } catch (InterruptedException e) {
+                // Ignored.
+            }
+        }
+    }
+
+    /** Enable or disable mock sleep.  If enabled, set mock time to current time. */
+    public static void setMockSleep(boolean isEnable) {
+        if (isEnable) {
+            mockSleepQueue = new ArrayBlockingQueue<Boolean>(1);
+            mockTime = new Date(System.currentTimeMillis());
+        } else {
+            mockSleepQueue = null;
+        }
+    }
+
+    /** Let sleeping thread pass the synchronization point.  */
+    public static void passMockSleep() {
+        mockSleepQueue.offer(false);
+    }
+
+    /** Let the sleeping thread pass the synchronization point any number of times. */
+    public static void finishMockSleep() {
+        if (mockSleepQueue != null) {
+            mockSleepQueue.offer(true);
+        }
     }
 }

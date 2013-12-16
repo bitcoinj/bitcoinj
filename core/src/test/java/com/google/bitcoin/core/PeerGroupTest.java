@@ -22,6 +22,7 @@ import com.google.bitcoin.params.UnitTestParams;
 import com.google.bitcoin.store.MemoryBlockStore;
 import com.google.bitcoin.utils.TestUtils;
 import com.google.bitcoin.utils.Threading;
+import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.SettableFuture;
 import org.junit.After;
 import org.junit.Before;
@@ -44,6 +45,10 @@ import static org.junit.Assert.*;
 @RunWith(value = Parameterized.class)
 public class PeerGroupTest extends TestWithPeerGroup {
     static final NetworkParameters params = UnitTestParams.get();
+    private BlockingQueue<Peer> connectedPeers;
+    private BlockingQueue<Peer> disconnectedPeers;
+    private PeerEventListener listener;
+    private Map<Peer, AtomicInteger> peerToMessageCount;
 
     @Parameterized.Parameters
     public static Collection<ClientType[]> parameters() {
@@ -58,24 +63,10 @@ public class PeerGroupTest extends TestWithPeerGroup {
     @Override
     @Before
     public void setUp() throws Exception {
-        super.setUp(new MemoryBlockStore(UnitTestParams.get()));
-        peerGroup.addWallet(wallet);
-    }
-
-    @After
-    public void tearDown() throws Exception {
-        super.tearDown();
-        peerGroup.stopAndWait();
-    }
-
-    @Test
-    public void listener() throws Exception {
-        final BlockingQueue<Peer> connectedPeers = new LinkedBlockingQueue<Peer>();
-        final BlockingQueue<Peer> disconnectedPeers = new LinkedBlockingQueue<Peer>();
-        final SettableFuture<Void> firstDisconnectFuture = SettableFuture.create();
-        final SettableFuture<Void> secondDisconnectFuture = SettableFuture.create();
-        final Map<Peer, AtomicInteger> peerToMessageCount = new HashMap<Peer, AtomicInteger>();
-        AbstractPeerEventListener listener = new AbstractPeerEventListener() {
+        peerToMessageCount = new HashMap<Peer, AtomicInteger>();
+        connectedPeers = new LinkedBlockingQueue<Peer>();
+        disconnectedPeers = new LinkedBlockingQueue<Peer>();
+        listener = new AbstractPeerEventListener() {
             @Override
             public void onPeerConnected(Peer peer, int peerCount) {
                 connectedPeers.add(peer);
@@ -98,6 +89,21 @@ public class PeerGroupTest extends TestWithPeerGroup {
                 return m;
             }
         };
+        super.setUp(new MemoryBlockStore(UnitTestParams.get()));
+        peerGroup.addWallet(wallet);
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        super.tearDown();
+        Utils.finishMockSleep();
+        peerGroup.stopAndWait();
+    }
+
+    @Test
+    public void listener() throws Exception {
+        final SettableFuture<Void> firstDisconnectFuture = SettableFuture.create();
+        final SettableFuture<Void> secondDisconnectFuture = SettableFuture.create();
         peerGroup.startAndWait();
         peerGroup.addEventListener(listener);
 
@@ -430,6 +436,75 @@ public class PeerGroupTest extends TestWithPeerGroup {
         Thread.sleep(50);
         assertFalse(peerConnectedFuture.isDone() || peerDisconnectedFuture.isDone());
         Thread.sleep(60);
+        assertTrue(!peerConnectedFuture.isDone());
         assertTrue(!peerConnectedFuture.isDone() && peerDisconnectedFuture.isDone());
+    }
+
+    @Test
+    public void peerPriority() throws Exception {
+        final List<InetSocketAddress> addresses = Lists.newArrayList(
+                new InetSocketAddress("localhost", 2000),
+                new InetSocketAddress("localhost", 2001),
+                new InetSocketAddress("localhost", 2002)
+        );
+        peerGroup.addEventListener(listener);
+        peerGroup.addPeerDiscovery(new PeerDiscovery() {
+            public InetSocketAddress[] getPeers(long unused, TimeUnit unused2) throws PeerDiscoveryException {
+                return addresses.toArray(new InetSocketAddress[0]);
+            }
+
+            public void shutdown() {
+            }
+        });
+        peerGroup.setMaxConnections(3);
+        Utils.setMockSleep(true);
+        peerGroup.startAndWait();
+
+        handleConnectToPeer(0);
+        handleConnectToPeer(1);
+        handleConnectToPeer(2);
+        connectedPeers.take();
+        connectedPeers.take();
+        connectedPeers.take();
+        addresses.clear();
+        addresses.addAll(Lists.newArrayList(new InetSocketAddress("localhost", 2003)));
+        stopPeerServer(2);
+        assertEquals(2002, disconnectedPeers.take().getAddress().getPort()); // peer died
+
+        // discovers, connects to new peer
+        handleConnectToPeer(3);
+        assertEquals(2003, connectedPeers.take().getAddress().getPort());
+
+        stopPeerServer(1);
+        assertEquals(2001, disconnectedPeers.take().getAddress().getPort()); // peer died
+
+        // Alternates trying two offline peers
+        Utils.passMockSleep();
+        assertEquals(2001, disconnectedPeers.take().getAddress().getPort());
+        Utils.passMockSleep();
+        assertEquals(2002, disconnectedPeers.take().getAddress().getPort());
+        Utils.passMockSleep();
+        assertEquals(2001, disconnectedPeers.take().getAddress().getPort());
+        Utils.passMockSleep();
+        assertEquals(2002, disconnectedPeers.take().getAddress().getPort());
+        Utils.passMockSleep();
+        assertEquals(2001, disconnectedPeers.take().getAddress().getPort());
+
+        // Peer 2 comes online
+        startPeerServer(2);
+        Utils.passMockSleep();
+        handleConnectToPeer(2);
+        assertEquals(2002, connectedPeers.take().getAddress().getPort());
+
+        stopPeerServer(2);
+        assertEquals(2002, disconnectedPeers.take().getAddress().getPort()); // peer died
+
+        // Peer 2 is tried twice before peer 1, since it has a lower backoff due to recent success
+        Utils.passMockSleep();
+        assertEquals(2002, disconnectedPeers.take().getAddress().getPort());
+        Utils.passMockSleep();
+        assertEquals(2002, disconnectedPeers.take().getAddress().getPort());
+        Utils.passMockSleep();
+        assertEquals(2001, disconnectedPeers.take().getAddress().getPort());
     }
 }

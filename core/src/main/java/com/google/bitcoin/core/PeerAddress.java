@@ -252,6 +252,7 @@ public class PeerAddress extends ChildMessage {
                 other.port == port &&
                 other.services.equals(services) &&
                 other.time == time;
+        //FIXME including services and time could cause same peer to be added multiple times in collections
     }
 
     @Override

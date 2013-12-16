@@ -78,7 +78,8 @@ public class PeerTest extends TestWithNetworkConnections {
 
         memoryPool = new MemoryPool();
         VersionMessage ver = new VersionMessage(unitTestParams, 100);
-        peer = new Peer(unitTestParams, ver, new InetSocketAddress("127.0.0.1", 4000), blockChain, memoryPool);
+        InetSocketAddress address = new InetSocketAddress("127.0.0.1", 4000);
+        peer = new Peer(unitTestParams, ver, new PeerAddress(address), blockChain, memoryPool);
         peer.addWallet(wallet);
     }
 
@@ -265,7 +266,8 @@ public class PeerTest extends TestWithNetworkConnections {
     public void invDownloadTxMultiPeer() throws Exception {
         // Check co-ordination of which peer to download via the memory pool.
         VersionMessage ver = new VersionMessage(unitTestParams, 100);
-        Peer peer2 = new Peer(unitTestParams, ver, new InetSocketAddress("127.0.0.1", 4242), blockChain, memoryPool);
+        InetSocketAddress address = new InetSocketAddress("127.0.0.1", 4242);
+        Peer peer2 = new Peer(unitTestParams, ver, new PeerAddress(address), blockChain, memoryPool);
         peer2.addWallet(wallet);
         VersionMessage peerVersion = new VersionMessage(unitTestParams, OTHER_PEER_CHAIN_HEIGHT);
         peerVersion.clientVersion = 70001;
@@ -276,7 +278,7 @@ public class PeerTest extends TestWithNetworkConnections {
 
         // Make a tx and advertise it to one of the peers.
         BigInteger value = Utils.toNanoCoins(1, 0);
-        Transaction tx = createFakeTx(unitTestParams, value, address);
+        Transaction tx = createFakeTx(unitTestParams, value, this.address);
         InventoryMessage inv = new InventoryMessage(unitTestParams);
         InventoryItem item = new InventoryItem(InventoryItem.Type.Transaction, tx.getHash());
         inv.addItem(item);

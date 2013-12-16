@@ -19,6 +19,7 @@ package com.google.bitcoin.examples;
 import com.google.bitcoin.core.AbstractPeerEventListener;
 import com.google.bitcoin.core.NetworkParameters;
 import com.google.bitcoin.core.Peer;
+import com.google.bitcoin.core.PeerAddress;
 import com.google.bitcoin.core.VersionMessage;
 import com.google.bitcoin.net.discovery.DnsDiscovery;
 import com.google.bitcoin.net.discovery.PeerDiscoveryException;
@@ -79,7 +80,8 @@ public class PrintPeers {
         List<ListenableFuture<Void>> futures = Lists.newArrayList();
         NioClientManager clientManager = new NioClientManager();
         for (final InetAddress addr : addrs) {
-            final Peer peer = new Peer(params, new VersionMessage(params, 0), null, new InetSocketAddress(addr, params.getPort()));
+            InetSocketAddress address = new InetSocketAddress(addr, params.getPort());
+            final Peer peer = new Peer(params, new VersionMessage(params, 0), null, new PeerAddress(address));
             final SettableFuture future = SettableFuture.create();
             // Once the connection has completed version handshaking ...
             peer.addEventListener(new AbstractPeerEventListener() {
@@ -110,7 +112,7 @@ public class PrintPeers {
                     future.set(null);
                 }
             });
-            clientManager.openConnection(new InetSocketAddress(addr, params.getPort()), peer);
+            clientManager.openConnection(address, peer);
             futures.add(future);
         }
         // Wait for every tried connection to finish.

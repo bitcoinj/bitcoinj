@@ -22,6 +22,7 @@ import com.google.bitcoin.net.NioClientManager;
 import com.google.bitcoin.net.discovery.PeerDiscovery;
 import com.google.bitcoin.net.discovery.PeerDiscoveryException;
 import com.google.bitcoin.script.Script;
+import com.google.bitcoin.utils.ExponentialBackoff;
 import com.google.bitcoin.utils.ListenerRegistration;
 import com.google.bitcoin.utils.Threading;
 import com.google.common.base.Preconditions;
@@ -36,10 +37,7 @@ import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.*;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.CopyOnWriteArraySet;
-import java.util.concurrent.Executor;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.locks.ReentrantLock;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -67,14 +65,16 @@ import static com.google.common.base.Preconditions.checkState;
  * when finished. Note that not all methods of PeerGroup are safe to call from a UI thread as some may do
  * network IO, but starting and stopping the service should be fine.</p>
  */
-public class PeerGroup extends AbstractIdleService implements TransactionBroadcaster {
+public class PeerGroup extends AbstractExecutionThreadService implements TransactionBroadcaster {
     private static final int DEFAULT_CONNECTIONS = 4;
 
     private static final Logger log = LoggerFactory.getLogger(PeerGroup.class);
     protected final ReentrantLock lock = Threading.lock("peergroup");
 
     // Addresses to try to connect to, excluding active peers.
-    @GuardedBy("lock") private final List<PeerAddress> inactives;
+    @GuardedBy("lock") private final PriorityQueue<PeerAddress> inactives;
+    @GuardedBy("lock") private final Map<PeerAddress, ExponentialBackoff> backoffMap;
+
     // Currently active peers. This is an ordered list rather than a set to make unit tests predictable.
     private final CopyOnWriteArrayList<Peer> peers;
     // Currently connecting peers.
@@ -141,6 +141,21 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
         @Override public void onCoinsReceived(Wallet wallet, Transaction tx, BigInteger prevBalance, BigInteger newBalance) { onChanged(); }
         @Override public void onCoinsSent(Wallet wallet, Transaction tx, BigInteger prevBalance, BigInteger newBalance) { onChanged(); }
     };
+
+    // Exponential backoff for peers starts at 1 second and maxes at 10 minutes.
+    private ExponentialBackoff.Params peerBackoffParams = new ExponentialBackoff.Params(1000, 1.5f, 10 * 60 * 1000);
+    // Tracks failures globally in case of a network failure
+    private ExponentialBackoff groupBackoff = new ExponentialBackoff(new ExponentialBackoff.Params(100, 1.1f, 30 * 1000));
+
+    private LinkedBlockingQueue<Object> morePeersMailbox = new LinkedBlockingQueue<Object>();
+
+    private void handleBlocksDownloaded() {
+        double rate = chain.getFalsePositiveRate();
+        if (rate > bloomFilterFPRate * MAX_FP_RATE_INCREASE) {
+            log.info("Force update Bloom filter due to high false positive rate");
+            recalculateFastCatchupAndFilter(true);
+        }
+    }
 
     private class PeerStartupListener extends AbstractPeerEventListener {
         @Override
@@ -222,7 +237,17 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
 
         memoryPool = new MemoryPool();
 
-        inactives = new ArrayList<PeerAddress>();
+        inactives = new PriorityQueue<PeerAddress>(1, new Comparator<PeerAddress>() {
+            @Override
+            public int compare(PeerAddress a, PeerAddress b) {
+                int result = backoffMap.get(a).compareTo(backoffMap.get(b));
+                // Sort by port if otherwise equals - for testing
+                if (result == 0)
+                    result = Integer.valueOf(a.getPort()).compareTo(b.getPort());
+                return result;
+            }
+        });
+        backoffMap = new HashMap<PeerAddress, ExponentialBackoff>();
         peers = new CopyOnWriteArrayList<Peer>();
         pendingPeers = new CopyOnWriteArrayList<Peer>();
         channels = connectionManager;
@@ -246,16 +271,15 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
         }
         // We may now have too many or too few open connections. Add more or drop some to get to the right amount.
         adjustment = maxConnections - channels.getConnectedClientCount();
-        while (adjustment > 0) {
-            try {
-                connectToAnyPeer();
-            } catch (PeerDiscoveryException e) {
-                throw new RuntimeException(e);
-            }
-            adjustment--;
-        }
+        if (adjustment > 0)
+            notifyServiceThread();
+
         if (adjustment < 0)
             channels.closeConnections(-adjustment);
+    }
+
+    private void notifyServiceThread() {
+        morePeersMailbox.offer(this);   // Any non-null object will do.
     }
 
     /** The maximum number of connections that we will create to peers. */
@@ -442,12 +466,20 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
         int newMax;
         lock.lock();
         try {
-            inactives.add(peerAddress);
+            addInactive(peerAddress);
             newMax = getMaxConnections() + 1;
         } finally {
             lock.unlock();
         }
         setMaxConnections(newMax);
+    }
+
+    private void addInactive(PeerAddress peerAddress) {
+        // Deduplicate
+        if (backoffMap.containsKey(peerAddress))
+            return;
+        backoffMap.put(peerAddress, new ExponentialBackoff(peerBackoffParams));
+        inactives.offer(peerAddress);
     }
 
     /** Convenience method for addAddress(new PeerAddress(address, params.port)); */
@@ -481,11 +513,37 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
         }
         lock.lock();
         try {
-            inactives.addAll(addressSet);
+            for (PeerAddress address : addressSet) {
+                addInactive(address);
+            }
         } finally {
             lock.unlock();
         }
-        log.info("Peer discovery took {}msec", System.currentTimeMillis() - start);
+        log.info("Peer discovery took {}msec and returned {} items",
+                System.currentTimeMillis() - start, addressSet.size());
+    }
+
+    @Override
+    protected void run() throws Exception {
+        while (isRunning()) {
+            int numPeers;
+            lock.lock();
+            try {
+                numPeers = peers.size() + pendingPeers.size();
+            } finally {
+                lock.unlock();
+            }
+
+            if (numPeers < getMaxConnections()) {
+                try {
+                    connectToAnyPeer();
+                } catch(PeerDiscoveryException e) {
+                    groupBackoff.trackFailure();
+                }
+            }
+            else
+                morePeersMailbox.take();
+        }
     }
 
     /** Picks a peer from discovery and connects to it. If connection fails, picks another and tries again. */
@@ -494,52 +552,67 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
         if (!(state == State.STARTING || state == State.RUNNING)) return;
 
         final PeerAddress addr;
+
+        long nowMillis = Utils.currentTimeMillis();
+
         lock.lock();
         try {
-            if (inactives.size() == 0) {
+            if (!haveReadyInactivePeer(nowMillis)) {
                 discoverPeers();
+                groupBackoff.trackSuccess();
+                nowMillis = Utils.currentTimeMillis();
             }
             if (inactives.size() == 0) {
                 log.debug("Peer discovery didn't provide us any more peers, not trying to build new connection.");
                 return;
             }
-            addr = inactives.remove(inactives.size() - 1);
+            addr = inactives.poll();
         } finally {
             lock.unlock();
         }
-        // This method eventually constructs a Peer and puts it into pendingPeers. If the connection fails to establish,
-        // handlePeerDeath will be called, which will potentially call this method again to replace the dead or failed
-        // connection.
-        connectTo(addr.toSocketAddress(), false);
+
+        // Delay if any backoff is required
+        long retryTime = Math.max(backoffMap.get(addr).getRetryTime(), groupBackoff.getRetryTime());
+        if (retryTime > nowMillis) {
+            // Sleep until retry time
+            Utils.sleep(retryTime - nowMillis);
+        }
+
+        // This method constructs a Peer and puts it into pendingPeers.
+        connectTo(addr, false);
+    }
+
+    private boolean haveReadyInactivePeer(long nowMillis) {
+        // No inactive peers to try?
+        if (inactives.size() == 0)
+            return false;
+        // All peers have not reached backoff retry time?
+        if (backoffMap.get(inactives.peek()).getRetryTime() > nowMillis)
+            return false;
+        return true;
     }
 
     @Override
     protected void startUp() throws Exception {
-        // This is run in a background thread by the AbstractIdleService implementation.
+        // This is run in a background thread by the Service implementation.
         vPingTimer = new Timer("Peer pinging thread", true);
         channels.startAndWait();
-        // Bring up the requested number of connections. If a connect attempt fails,
-        // new peers will be tried until there is a success, so just calling connectToAnyPeer for the wanted number
-        // of peers is sufficient.
-        for (int i = 0; i < getMaxConnections(); i++) {
-            try {
-                connectToAnyPeer();
-            } catch (PeerDiscoveryException e) {
-                if (e.getCause() instanceof InterruptedException) return;
-                log.error(e.getMessage());
-            }
-        }
     }
 
     @Override
     protected void shutDown() throws Exception {
-        // This is run on a separate thread by the AbstractIdleService implementation.
+        // This is run on a separate thread by the Service implementation.
         vPingTimer.cancel();
         // Blocking close of all sockets.
         channels.stopAndWait();
         for (PeerDiscovery peerDiscovery : peerDiscoverers) {
             peerDiscovery.shutdown();
         }
+    }
+
+    @Override
+    protected void triggerShutdown() {
+        notifyServiceThread();
     }
 
     /**
@@ -690,20 +763,24 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
     }
 
     /**
-     * Connect to a peer by creating a channel to the destination address.
+     * Connect to a peer by creating a channel to the destination address.  This should not be
+     * used normally - let the PeerGroup manage connections through {@link #start()}
      * 
      * @param address destination IP and port.
-     * @return The newly created Peer object. Use {@link com.google.bitcoin.core.Peer#getConnectionOpenFuture()} if you
-     *         want a future which completes when the connection is open, or null if the peer could not be connected.
+     * @return The newly created Peer object or null if the peer could not be connected.
+     *         Use {@link com.google.bitcoin.core.Peer#getConnectionOpenFuture()} if you
+     *         want a future which completes when the connection is open.
      */
     @Nullable
     public Peer connectTo(InetSocketAddress address) {
-        return connectTo(address, true);
+        PeerAddress peerAddress = new PeerAddress(address);
+        backoffMap.put(peerAddress, new ExponentialBackoff(peerBackoffParams));
+        return connectTo(peerAddress, true);
     }
 
     // Internal version.
     @Nullable
-    protected Peer connectTo(InetSocketAddress address, boolean incrementMaxConnections) {
+    protected Peer connectTo(PeerAddress address, boolean incrementMaxConnections) {
         VersionMessage ver = getVersionMessage().duplicate();
         ver.bestHeight = chain == null ? 0 : chain.getBestChainHeight();
         ver.time = Utils.now().getTime() / 1000;
@@ -714,7 +791,7 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
         pendingPeers.add(peer);
 
         try {
-            channels.openConnection(address, peer);
+            channels.openConnection(address.toSocketAddress(), peer);
         } catch (Exception e) {
             log.warn("Failed to connect to " + address + ": " + e.getMessage());
             handlePeerDeath(peer);
@@ -790,6 +867,9 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
         int newSize = -1;
         lock.lock();
         try {
+            groupBackoff.trackSuccess();
+            backoffMap.get(peer.getAddress()).trackSuccess();
+
             // Sets up the newly connected peer so it can do everything it needs to.
             log.info("{}: New peer", peer);
             pendingPeers.remove(peer);
@@ -972,7 +1052,10 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
         try {
             pendingPeers.remove(peer);
             peers.remove(peer);
-            log.info("{}: Peer died", peer.getAddress());
+
+            PeerAddress address = peer.getAddress();
+
+            log.info("{}: Peer died", address);
             if (peer == downloadPeer) {
                 log.info("Download peer died. Picking a new one.");
                 setDownloadPeer(null);
@@ -987,17 +1070,21 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
             }
             numPeers = peers.size() + pendingPeers.size();
             numConnectedPeers = peers.size();
+
+            groupBackoff.trackFailure();
+
+            //TODO: if network failure is suspected, do not backoff peer
+            backoffMap.get(address).trackFailure();
+            // Put back on inactive list
+            inactives.offer(address);
+
+            if (numPeers < getMaxConnections()) {
+                notifyServiceThread();
+            }
         } finally {
             lock.unlock();
         }
-        // Replace this peer with a new one to keep our connection count up, if necessary.
-        if (numPeers < getMaxConnections()) {
-            try {
-                connectToAnyPeer();
-            } catch (PeerDiscoveryException e) {
-                log.error(e.getMessage());
-            }
-        }
+
         peer.removeEventListener(peerListener);
         for (Wallet wallet : wallets) {
             peer.removeWallet(wallet);

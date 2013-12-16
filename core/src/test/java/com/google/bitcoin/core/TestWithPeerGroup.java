@@ -20,6 +20,8 @@ import com.google.bitcoin.params.UnitTestParams;
 import com.google.bitcoin.net.BlockingClientManager;
 import com.google.bitcoin.net.NioClientManager;
 import com.google.bitcoin.store.BlockStore;
+import com.google.bitcoin.utils.ExponentialBackoff;
+import com.google.common.base.Preconditions;
 
 import java.net.InetSocketAddress;
 
@@ -61,10 +63,9 @@ public class TestWithPeerGroup extends TestWithNetworkConnections {
     }
 
     protected InboundMessageQueuer connectPeerWithoutVersionExchange(int id) throws Exception {
-        InetSocketAddress remoteAddress = new InetSocketAddress("127.0.0.1", 2000);
+        Preconditions.checkArgument(id < PEER_SERVERS);
+        InetSocketAddress remoteAddress = new InetSocketAddress("127.0.0.1", 2000 + id);
         Peer peer = peerGroup.connectTo(remoteAddress).getConnectionOpenFuture().get();
-        // Claim we are connected to a different IP that what we really are, so tx confidence broadcastBy sets work
-        peer.remoteIp = new InetSocketAddress("127.0.0.1", 2000 + id);
         InboundMessageQueuer writeTarget = newPeerWriteTargetQueue.take();
         writeTarget.peer = peer;
         return writeTarget;
@@ -77,6 +78,27 @@ public class TestWithPeerGroup extends TestWithNetworkConnections {
     protected InboundMessageQueuer connectPeer(int id, VersionMessage versionMessage) throws Exception {
         checkArgument(versionMessage.hasBlockChain());
         InboundMessageQueuer writeTarget = connectPeerWithoutVersionExchange(id);
+        // Complete handshake with the peer - send/receive version(ack)s, receive bloom filter
+        writeTarget.sendMessage(versionMessage);
+        writeTarget.sendMessage(new VersionAck());
+        assertTrue(writeTarget.nextMessageBlocking() instanceof VersionMessage);
+        assertTrue(writeTarget.nextMessageBlocking() instanceof VersionAck);
+        if (versionMessage.isBloomFilteringSupported()) {
+            assertTrue(writeTarget.nextMessageBlocking() instanceof BloomFilter);
+            assertTrue(writeTarget.nextMessageBlocking() instanceof MemoryPoolMessage);
+        }
+        return writeTarget;
+    }
+
+    // handle peer discovered by PeerGroup
+    protected InboundMessageQueuer handleConnectToPeer(int id) throws Exception {
+        return handleConnectToPeer(id, remoteVersionMessage);
+    }
+
+    // handle peer discovered by PeerGroup
+    protected InboundMessageQueuer handleConnectToPeer(int id, VersionMessage versionMessage) throws Exception {
+        InboundMessageQueuer writeTarget = newPeerWriteTargetQueue.take();
+        checkArgument(versionMessage.hasBlockChain());
         // Complete handshake with the peer - send/receive version(ack)s, receive bloom filter
         writeTarget.sendMessage(versionMessage);
         writeTarget.sendMessage(new VersionAck());

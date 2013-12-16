@@ -42,13 +42,9 @@ import static com.google.common.base.Preconditions.*;
 public abstract class PeerSocketHandler extends AbstractTimeoutHandler implements StreamParser {
     private static final Logger log = LoggerFactory.getLogger(PeerSocketHandler.class);
 
-    // The IP address to which we are connecting.
-    @VisibleForTesting
-    InetSocketAddress remoteIp;
-
     private final BitcoinSerializer serializer;
-
-    /** If we close() before we know our writeTarget, set this to true to call writeTarget.closeConnection() right away */
+    protected PeerAddress peerAddress;
+    // If we close() before we know our writeTarget, set this to true to call writeTarget.closeConnection() right away.
     private boolean closePending = false;
     // writeTarget will be thread-safe, and may call into PeerGroup, which calls us, so we should call it unlocked
     @VisibleForTesting MessageWriteTarget writeTarget = null;
@@ -62,9 +58,14 @@ public abstract class PeerSocketHandler extends AbstractTimeoutHandler implement
 
     private Lock lock = Threading.lock("PeerSocketHandler");
 
-    public PeerSocketHandler(NetworkParameters params, InetSocketAddress peerAddress) {
+    public PeerSocketHandler(NetworkParameters params, InetSocketAddress remoteIp) {
         serializer = new BitcoinSerializer(checkNotNull(params));
-        this.remoteIp = checkNotNull(peerAddress);
+        this.peerAddress = new PeerAddress(remoteIp);
+    }
+
+    public PeerSocketHandler(NetworkParameters params, PeerAddress peerAddress) {
+        serializer = new BitcoinSerializer(checkNotNull(params));
+        this.peerAddress = checkNotNull(peerAddress);
     }
 
     /**
@@ -212,7 +213,7 @@ public abstract class PeerSocketHandler extends AbstractTimeoutHandler implement
      * @return the IP address and port of peer.
      */
     public PeerAddress getAddress() {
-        return new PeerAddress(remoteIp);
+        return peerAddress;
     }
 
     /** Catch any exceptions, logging them and then closing the channel. */
