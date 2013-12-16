@@ -43,7 +43,7 @@ import java.util.concurrent.locks.ReentrantLock;
  */
 public class DeterministicKeyChain implements KeyChain {
     private static final Logger log = LoggerFactory.getLogger(DeterministicKeyChain.class);
-    private ReentrantLock lock = Threading.lock("DeterministicKeyChain");
+    private final ReentrantLock lock = Threading.lock("DeterministicKeyChain");
 
     private final DeterministicHierarchy hierarchy;
     private final DeterministicKey rootKey;
@@ -53,7 +53,7 @@ public class DeterministicKeyChain implements KeyChain {
     // Paths through the key tree. External keys are ones that are communicated to other parties. Internal keys are
     // keys created for change addresses, coinbases, mixing, etc - anything that isn't communicated. The distinction
     // is somewhat arbitrary but can be useful for audits.
-    private ImmutableList<ChildNumber> externalPath, internalPath;
+    private final ImmutableList<ChildNumber> externalPath, internalPath;
     // How many keys have been issued on each path.
     private int externalCount, internalCount;
 

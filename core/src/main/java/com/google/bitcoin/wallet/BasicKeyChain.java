@@ -44,11 +44,11 @@ public class BasicKeyChain implements EncryptableKeyChain {
     private final ReentrantLock lock = Threading.lock("BasicKeyChain");
 
     // Maps used to let us quickly look up a key given data we find in transcations or the block chain.
-    private LinkedHashMap<ByteString, ECKey> hashToKeys;
-    private LinkedHashMap<ByteString, ECKey> pubkeyToKeys;
+    private final LinkedHashMap<ByteString, ECKey> hashToKeys;
+    private final LinkedHashMap<ByteString, ECKey> pubkeyToKeys;
     @Nullable private KeyCrypter keyCrypter;
 
-    private CopyOnWriteArrayList<ListenerRegistration<KeyChainEventListener>> listeners;
+    private final CopyOnWriteArrayList<ListenerRegistration<KeyChainEventListener>> listeners;
 
     public BasicKeyChain() {
         hashToKeys = new LinkedHashMap<ByteString, ECKey>();
