@@ -356,6 +356,9 @@ public class Peer extends PeerSocketHandler {
                 sendMessage(new Pong(((Ping) m).getNonce()));
         } else if (m instanceof Pong) {
             processPong((Pong)m);
+        } else if (m instanceof RejectMessage) {
+            if (memoryPool != null && ((RejectMessage) m).getRejectedMessage().equals("tx"))
+                memoryPool.rejected(((RejectMessage) m).getRejectedObjectHash(), this.getAddress(), ((RejectMessage) m).getReasonCode());
         } else {
             log.warn("Received unhandled message: {}", m);
         }

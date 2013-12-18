@@ -292,6 +292,15 @@ public class TransactionConfidence implements Serializable {
         return broadcastBy.contains(address);
     }
 
+    /**
+     * Called by a {@link Peer} when it receives a rejection message after we relayed it this transaction. A peer might
+     * reject a transaction for a number of reasons (ranging from not enough fee for that particular peer's fee policy
+     * to the transaction being entirely invalid), indicated by the reasonCode.
+     */
+    public void warnRejected(RejectMessage.RejectCode reasonCode) {
+        //TODO: Do something here! (ie store this, and maybe do really fun stuff in the RiskAnalyzer since we now have enough data to do things there!
+    }
+
     @Override
     public synchronized String toString() {
         StringBuilder builder = new StringBuilder();

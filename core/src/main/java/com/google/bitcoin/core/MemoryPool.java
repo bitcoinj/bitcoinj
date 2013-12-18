@@ -273,6 +273,18 @@ public class MemoryPool {
         }
     }
 
+    /**
+     * Called by peers when a transaction relayed is rejected. If a transaction is rejected, we mark it as such and hope
+     * the risk analysis engine takes this into account.
+     */
+    public void rejected(Sha256Hash hash, PeerAddress byPeer, RejectMessage.RejectCode reasonCode) {
+        // We just use get() here as we should never see a rejection for a transaction if we did not relay it ourselves
+        // (and thus it was added to the mempool by TransactionBroadcast)
+        Transaction tx = get(hash);
+        if (tx != null)
+            tx.getConfidence().warnRejected(reasonCode);
+    }
+
     private void markBroadcast(PeerAddress byPeer, Transaction tx) {
         checkState(lock.isHeldByCurrentThread());
         final TransactionConfidence confidence = tx.getConfidence();
