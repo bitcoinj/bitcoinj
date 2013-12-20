@@ -18,13 +18,16 @@ package com.google.bitcoin.wallet;
 
 import com.google.bitcoin.core.ECKey;
 import com.google.bitcoin.crypto.*;
+import com.google.bitcoin.store.UnreadableWalletException;
 import com.google.bitcoin.utils.Threading;
 import com.google.common.collect.ImmutableList;
+import org.bitcoinj.wallet.Protos;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.ref.WeakReference;
+import java.security.SecureRandom;
 import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.concurrent.locks.ReentrantLock;
@@ -60,6 +63,20 @@ public class DeterministicKeyChain implements KeyChain {
     // We simplify by wrapping a basic key chain and that way we get some functionality like key lookup and event
     // listeners "for free".
     private final BasicKeyChain basicKeyChain;
+
+    /**
+     * Generates a new key chain with a 128 bit seed selected randomly from the given {@link java.security.SecureRandom}
+     * object.
+     */
+    public DeterministicKeyChain(SecureRandom random) {
+        this(getRandomSeed(random));
+    }
+
+    private static byte[] getRandomSeed(SecureRandom random) {
+        byte[] seed = new byte[128 / 8];
+        random.nextBytes(seed);
+        return seed;
+    }
 
     /**
      * Creates a deterministic key chain starting from the given seed. All keys yielded by this chain will be the same
@@ -158,6 +175,11 @@ public class DeterministicKeyChain implements KeyChain {
         } finally {
             lock.unlock();
         }
+    }
+
+    @Override
+    public List<Protos.Key> serializeToProtobuf() {
+        return null;
     }
 
     @Override

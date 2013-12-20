@@ -17,7 +17,10 @@
 package com.google.bitcoin.wallet;
 
 import com.google.bitcoin.core.ECKey;
+import com.google.bitcoin.store.UnreadableWalletException;
+import org.bitcoinj.wallet.Protos;
 
+import java.util.List;
 import java.util.concurrent.Executor;
 
 /**
@@ -56,6 +59,9 @@ public interface KeyChain {
 
     /** Obtains a key intended for the given purpose. The chain may create a new key, derive one, or re-use an old one. */
     public ECKey getKey(KeyPurpose purpose);
+
+    /** Returns a list of keys serialized to the bitcoinj protobuf format. */
+    public List<Protos.Key> serializeToProtobuf();
 
     /** Adds a listener for events that are run when keys are added, on the user thread. */
     public void addEventListener(KeyChainEventListener listener);

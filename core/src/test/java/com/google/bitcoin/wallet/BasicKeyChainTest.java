@@ -17,21 +17,26 @@
 package com.google.bitcoin.wallet;
 
 import com.google.bitcoin.core.ECKey;
+import com.google.bitcoin.core.Utils;
 import com.google.bitcoin.crypto.KeyCrypter;
 import com.google.bitcoin.crypto.KeyCrypterException;
 import com.google.bitcoin.crypto.KeyCrypterScrypt;
+import com.google.bitcoin.store.UnreadableWalletException;
 import com.google.bitcoin.utils.Threading;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import org.bitcoinj.wallet.Protos;
 import org.junit.Before;
 import org.junit.Test;
 import org.spongycastle.crypto.params.KeyParameter;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static org.junit.Assert.*;
 
 public class BasicKeyChainTest {
@@ -157,5 +162,44 @@ public class BasicKeyChainTest {
 
         BasicKeyChain chain2 = new BasicKeyChain();
         chain2.importKeys(ImmutableList.of(encryptedKey));
+    }
+
+    @Test
+    public void serializationUnencrypted() throws UnreadableWalletException {
+        Date now = Utils.now();
+        final ECKey key1 = new ECKey();
+        Utils.rollMockClock(5000);
+        final ECKey key2 = new ECKey();
+        chain.importKeys(ImmutableList.of(key1, key2));
+        List<Protos.Key> keys = chain.serializeToProtobuf();
+        assertEquals(2, keys.size());
+        assertArrayEquals(key1.getPubKey(), keys.get(0).getPublicKey().toByteArray());
+        assertArrayEquals(key2.getPubKey(), keys.get(1).getPublicKey().toByteArray());
+        assertArrayEquals(key1.getPrivKeyBytes(), keys.get(0).getPrivateKey().toByteArray());
+        assertArrayEquals(key2.getPrivKeyBytes(), keys.get(1).getPrivateKey().toByteArray());
+        long normTime = now.getTime() / 1000 * 1000;
+        assertEquals(normTime, keys.get(0).getCreationTimestamp());
+        assertEquals(normTime + 5000 * 1000, keys.get(1).getCreationTimestamp());
+
+        chain = BasicKeyChain.fromProtobufUnencrypted(keys);
+        assertEquals(2, chain.getKeys().size());
+        assertEquals(key1, chain.getKeys().get(0));
+        assertEquals(key2, chain.getKeys().get(1));
+    }
+
+    @Test
+    public void serializationEncrypted() throws UnreadableWalletException {
+        ECKey key1 = new ECKey();
+        chain.importKeys(ImmutableList.of(key1));
+        chain.encrypt("foo bar");
+        key1 = chain.getKeys().get(0);
+        List<Protos.Key> keys = chain.serializeToProtobuf();
+        assertEquals(1, keys.size());
+        assertArrayEquals(key1.getPubKey(), keys.get(0).getPublicKey().toByteArray());
+        assertFalse(keys.get(0).hasPrivateKey());
+        assertTrue(keys.get(0).hasEncryptedPrivateKey());
+
+        chain = BasicKeyChain.fromProtobufEncrypted(keys, checkNotNull(chain.getKeyCrypter()), "foo bar");
+        assertEquals(key1.getEncryptedPrivateKey(), chain.getKeys().get(0).getEncryptedPrivateKey());
     }
 }

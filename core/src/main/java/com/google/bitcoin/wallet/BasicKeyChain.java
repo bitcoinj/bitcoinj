@@ -17,14 +17,17 @@
 package com.google.bitcoin.wallet;
 
 import com.google.bitcoin.core.ECKey;
+import com.google.bitcoin.crypto.EncryptedPrivateKey;
 import com.google.bitcoin.crypto.KeyCrypter;
 import com.google.bitcoin.crypto.KeyCrypterException;
 import com.google.bitcoin.crypto.KeyCrypterScrypt;
+import com.google.bitcoin.store.UnreadableWalletException;
 import com.google.bitcoin.utils.ListenerRegistration;
 import com.google.bitcoin.utils.Threading;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.protobuf.ByteString;
+import org.bitcoinj.wallet.Protos;
 import org.spongycastle.crypto.params.KeyParameter;
 
 import javax.annotation.Nullable;
@@ -145,6 +148,115 @@ public class BasicKeyChain implements EncryptableKeyChain {
     public boolean hasKey(ECKey key) {
         return findKeyFromPubKey(key.getPubKey()) != null;
     }
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Serialization support
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    @Override
+    public List<Protos.Key> serializeToProtobuf() {
+        List<Protos.Key> result = Lists.newArrayListWithExpectedSize(hashToKeys.size());
+        for (ECKey ecKey : hashToKeys.values()) {
+            Protos.Key.Builder protoKey = Protos.Key.newBuilder();
+            protoKey.setType(Protos.Key.Type.ORIGINAL)
+                    .setCreationTimestamp(ecKey.getCreationTimeSeconds() * 1000)
+                    .setPublicKey(ByteString.copyFrom(ecKey.getPubKey()));
+            byte[] priv = ecKey.getPrivKeyBytes();
+            if (priv != null)
+                protoKey.setPrivateKey(ByteString.copyFrom(priv));
+            if (keyCrypter != null) {
+                EncryptedPrivateKey encryptedPrivateKey = checkNotNull(ecKey.getEncryptedPrivateKey());
+                protoKey.getEncryptedPrivateKeyBuilder()
+                        .setEncryptedPrivateKey(ByteString.copyFrom(encryptedPrivateKey.getEncryptedBytes()))
+                        .setInitialisationVector(ByteString.copyFrom(encryptedPrivateKey.getInitialisationVector()));
+                // We don't allow mixing of encryption types at the moment.
+                checkState(ecKey.getKeyCrypter().getUnderstoodEncryptionType() == Protos.Wallet.EncryptionType.ENCRYPTED_SCRYPT_AES);
+                protoKey.setType(Protos.Key.Type.ENCRYPTED_SCRYPT_AES);
+            }
+            result.add(protoKey.build());
+        }
+        return result;
+    }
+
+    /**
+     * Returns a new BasicKeyChain that contains all basic, ORIGINAL type keys extracted from the list. Unrecognised
+     * key types are ignored.
+     */
+    public static BasicKeyChain fromProtobufUnencrypted(List<Protos.Key> keys) throws UnreadableWalletException {
+        BasicKeyChain chain = new BasicKeyChain();
+        chain.deserializeFromProtobuf(keys);
+        return chain;
+    }
+
+    /**
+     * Returns a new BasicKeyChain that contains all basic, ORIGINAL type keys and also any encrypted keys extracted
+     * from the list. Unrecognised key types are ignored.
+     * @throws com.google.bitcoin.store.UnreadableWalletException.BadPassword if the password doesn't seem to match
+     * @throws com.google.bitcoin.store.UnreadableWalletException if the data structures are corrupted/inconsistent
+     */
+    public static BasicKeyChain fromProtobufEncrypted(List<Protos.Key> keys, KeyCrypter crypter, CharSequence password) throws UnreadableWalletException {
+        BasicKeyChain chain = new BasicKeyChain();
+        chain.keyCrypter = checkNotNull(crypter);
+        chain.deserializeFromProtobuf(keys);
+        if (!chain.checkPassword(password))
+            throw new UnreadableWalletException.BadPassword();
+        return chain;
+    }
+
+    /**
+     * Returns a new BasicKeyChain that contains all basic, ORIGINAL type keys and also any encrypted keys extracted
+     * from the list. Unrecognised key types are ignored.
+     * @throws com.google.bitcoin.store.UnreadableWalletException.BadPassword if the password doesn't seem to match
+     * @throws com.google.bitcoin.store.UnreadableWalletException if the data structures are corrupted/inconsistent
+     */
+    public static BasicKeyChain fromProtobufEncrypted(List<Protos.Key> keys, KeyParameter aesKey) throws UnreadableWalletException {
+        BasicKeyChain chain = new BasicKeyChain();
+        chain.deserializeFromProtobuf(keys);
+        if (!chain.checkAESKey(aesKey))
+            throw new UnreadableWalletException.BadPassword();
+        return chain;
+    }
+
+    private void deserializeFromProtobuf(List<Protos.Key> keys) throws UnreadableWalletException {
+        lock.lock();
+        try {
+            checkState(hashToKeys.isEmpty(), "Tried to deserialize into a non-empty chain");
+            for (Protos.Key key : keys) {
+                if (key.getType() != Protos.Key.Type.ORIGINAL && key.getType() != Protos.Key.Type.ENCRYPTED_SCRYPT_AES)
+                    continue;
+                boolean encrypted = key.getType() == Protos.Key.Type.ENCRYPTED_SCRYPT_AES;
+                byte[] priv = key.hasPrivateKey() ? key.getPrivateKey().toByteArray() : null;
+                if (!key.hasPublicKey())
+                    throw new UnreadableWalletException("Public key missing");
+                byte[] pub = key.getPublicKey().toByteArray();
+                ECKey ecKey;
+                if (encrypted) {
+                    checkState(keyCrypter != null, "This wallet is encrypted but encrypt() was not called prior to deserialization");
+                    if (!key.hasEncryptedPrivateKey())
+                        throw new UnreadableWalletException("Encrypted private key data missing");
+                    Protos.EncryptedPrivateKey proto = key.getEncryptedPrivateKey();
+                    EncryptedPrivateKey e = new EncryptedPrivateKey(proto.getInitialisationVector().toByteArray(),
+                            proto.getEncryptedPrivateKey().toByteArray());
+                    ecKey = new ECKey(e, pub, keyCrypter);
+                } else {
+                    ecKey = new ECKey(priv, pub);
+                }
+                ecKey.setCreationTimeSeconds((key.getCreationTimestamp() + 500) / 1000);
+                importKeyLocked(ecKey);
+            }
+        } finally {
+            lock.unlock();
+        }
+    }
+
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Event listener support
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     @Override
     public void addEventListener(KeyChainEventListener listener) {
@@ -286,10 +398,11 @@ public class BasicKeyChain implements EncryptableKeyChain {
      */
     @Override
     public boolean checkPassword(CharSequence password) {
+        checkNotNull(password);
         lock.lock();
         try {
             checkState(keyCrypter != null, "Key chain not encrypted");
-            return checkAESKey(keyCrypter.deriveKey(checkNotNull(password)));
+            return checkAESKey(keyCrypter.deriveKey(password));
         } finally {
             lock.unlock();
         }

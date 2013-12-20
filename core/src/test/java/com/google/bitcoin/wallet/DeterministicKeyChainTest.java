@@ -22,6 +22,7 @@ import com.google.bitcoin.core.Sha256Hash;
 import com.google.bitcoin.params.UnitTestParams;
 import com.google.bitcoin.utils.Threading;
 import com.google.common.base.Joiner;
+import org.bitcoinj.wallet.Protos;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -35,6 +36,7 @@ public class DeterministicKeyChainTest {
 
     @Before
     public void setup() {
+        // You should use a random seed instead.
         final byte[] seed = "don't use a string seed like this in real life".getBytes();
         chain = new DeterministicKeyChain(Sha256Hash.create(seed).getBytes());
     }
@@ -71,5 +73,17 @@ public class DeterministicKeyChainTest {
         }, Threading.SAME_THREAD);
         ECKey key = chain.getKey(KeyChain.KeyPurpose.CHANGE);
         assertEquals(key, listenerKeys.get().get(0));
+    }
+
+    @Test
+    public void serialize() {
+        ECKey key1 = chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
+        ECKey key2 = chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
+
+        List<Protos.Key> keys = chain.serializeToProtobuf();
+        assertEquals(3, keys.size());   // 1 root seed and 2 derived keys
+        assertEquals(Protos.Key.Type.DETERMINISTIC_ROOT_SEED, keys.get(0).getType());
+        assertEquals(Protos.Key.Type.DETERMINISTIC_KEY, keys.get(1).getType());
+        assertEquals(Protos.Key.Type.DETERMINISTIC_KEY, keys.get(2).getType());
     }
 }

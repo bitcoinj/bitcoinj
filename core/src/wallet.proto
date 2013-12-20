@@ -33,13 +33,23 @@ message PeerAddress {
   required uint64 services = 3;
 }
 
-/**
- * The data to store a private key encrypted with Scrypt and AES
- *
- */
+/** The data to store a private key encrypted with Scrypt and AES */
 message EncryptedPrivateKey {
   required bytes initialisation_vector = 1;       // The initialisation vector for the AES encryption (16 bytes)
   required bytes encrypted_private_key = 2;       // The encrypted private key
+}
+
+/**
+ * Data attached to a Key message that defines the data needed by the BIP32 deterministic key hierarchy algorithm.
+ */
+message DeterministicKey {
+  // Random data that allows us to extend a key. Without this, we can't figure out the next key in the chain and
+  // should just treat it as a regular ORIGINAL type key.
+  required bytes chain_code = 1;
+
+  // The path through the key tree. Each number is encoded in the standard form: high bit set for private derivation
+  // and high bit unset for public derivation.
+  repeated uint32 path = 2;
 }
 
 /**
@@ -53,8 +63,24 @@ message EncryptedPrivateKey {
  */
 message Key {
   enum Type {
-    ORIGINAL = 1;              // Unencrypted - Original bitcoin secp256k1 curve
-    ENCRYPTED_SCRYPT_AES = 2;  // Encrypted with Scrypt and AES - - Original bitcoin secp256k1 curve
+    /** Unencrypted - Original bitcoin secp256k1 curve */
+    ORIGINAL = 1;
+
+    /** Encrypted with Scrypt and AES - Original bitcoin secp256k1 curve */
+    ENCRYPTED_SCRYPT_AES = 2;
+
+    /**
+     * Not really a key, but rather contains the seed for a deterministic key hierarchy in the private_key field.
+     * The label and public_key fields are missing. Creation timestamp will exist.
+     */
+    DETERMINISTIC_ROOT_SEED = 3;
+
+    /**
+     * A key that was derived deterministically. Note that the root seed that created it may NOT be present in the
+     * wallet, for the case of watching wallets. A deterministic key may or may not have the private key bytes present.
+     * However the public key bytes and the deterministic_key field are guaranteed to exist.
+     */
+    DETERMINISTIC_KEY = 4;
   }
   required Type type = 1;
 
@@ -75,6 +101,8 @@ message Key {
 
   // Timestamp stored as millis since epoch. Useful for skipping block bodies before this point.
   optional int64 creation_timestamp = 5;
+
+  optional DeterministicKey deterministic_key = 7;
 }
 
 message Script {

@@ -27,7 +27,6 @@ import java.util.Arrays;
  * to decrypt these bytes.</p>
  */
 public class EncryptedPrivateKey {
-
     private byte[] initialisationVector = null;
     private byte[] encryptedPrivateBytes = null;
 
@@ -94,22 +93,23 @@ public class EncryptedPrivateKey {
     }
 
     @Override
-    public int hashCode() {
-        return com.google.common.base.Objects.hashCode(encryptedPrivateBytes, initialisationVector);
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        EncryptedPrivateKey that = (EncryptedPrivateKey) o;
+
+        if (!Arrays.equals(encryptedPrivateBytes, that.encryptedPrivateBytes)) return false;
+        if (!Arrays.equals(initialisationVector, that.initialisationVector)) return false;
+
+        return true;
     }
 
     @Override
-    public boolean equals(Object obj) {
-        if (obj == null) {
-            return false;
-        }
-        if (getClass() != obj.getClass()) {
-            return false;
-        }
-        final EncryptedPrivateKey other = (EncryptedPrivateKey) obj;
-
-        return com.google.common.base.Objects.equal(this.initialisationVector, other.initialisationVector)
-                && com.google.common.base.Objects.equal(this.encryptedPrivateBytes, other.encryptedPrivateBytes);
+    public int hashCode() {
+        int result = Arrays.hashCode(initialisationVector);
+        result = 31 * result + Arrays.hashCode(encryptedPrivateBytes);
+        return result;
     }
 
     @Override
