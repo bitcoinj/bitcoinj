@@ -211,8 +211,9 @@ public class BasicKeyChain implements EncryptableKeyChain {
      * @throws com.google.bitcoin.store.UnreadableWalletException.BadPassword if the password doesn't seem to match
      * @throws com.google.bitcoin.store.UnreadableWalletException if the data structures are corrupted/inconsistent
      */
-    public static BasicKeyChain fromProtobufEncrypted(List<Protos.Key> keys, KeyParameter aesKey) throws UnreadableWalletException {
+    public static BasicKeyChain fromProtobufEncrypted(List<Protos.Key> keys, KeyCrypter crypter,  KeyParameter aesKey) throws UnreadableWalletException {
         BasicKeyChain chain = new BasicKeyChain();
+        chain.keyCrypter = checkNotNull(crypter);
         chain.deserializeFromProtobuf(keys);
         if (!chain.checkAESKey(aesKey))
             throw new UnreadableWalletException.BadPassword();

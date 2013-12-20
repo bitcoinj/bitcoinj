@@ -24,6 +24,7 @@ import com.google.bitcoin.utils.Threading;
 import com.google.common.base.Joiner;
 import org.bitcoinj.wallet.Protos;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.List;
@@ -75,6 +76,7 @@ public class DeterministicKeyChainTest {
         assertEquals(key, listenerKeys.get().get(0));
     }
 
+    @Ignore
     @Test
     public void serialize() {
         ECKey key1 = chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);

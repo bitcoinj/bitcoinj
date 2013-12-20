@@ -199,6 +199,11 @@ public class BasicKeyChainTest {
         assertFalse(keys.get(0).hasPrivateKey());
         assertTrue(keys.get(0).hasEncryptedPrivateKey());
 
+        try {
+            BasicKeyChain.fromProtobufEncrypted(keys, checkNotNull(chain.getKeyCrypter()), "wrong password");
+            fail();
+        } catch (UnreadableWalletException e) {
+        }
         chain = BasicKeyChain.fromProtobufEncrypted(keys, checkNotNull(chain.getKeyCrypter()), "foo bar");
         assertEquals(key1.getEncryptedPrivateKey(), chain.getKeys().get(0).getEncryptedPrivateKey());
     }
