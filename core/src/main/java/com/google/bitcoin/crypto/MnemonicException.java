@@ -21,14 +21,12 @@ package com.google.bitcoin.crypto;
  */
 @SuppressWarnings("serial")
 public class MnemonicException extends Exception {
+    public MnemonicException() {
+        super();
+    }
+
     public MnemonicException(String msg) {
         super(msg);
-    }
-    public MnemonicException(Exception ex) {
-        super(ex);
-    }
-    public MnemonicException(String msg, Exception ex) {
-        super(msg, ex);
     }
 
     /**
@@ -38,26 +36,14 @@ public class MnemonicException extends Exception {
         public MnemonicLengthException(String msg) {
             super(msg);
         }
-        public MnemonicLengthException(Exception ex) {
-            super(ex);
-        }
-        public MnemonicLengthException(String msg, Exception ex) {
-            super(msg, ex);
-        }
     }
 
     /**
      * Thrown when a list of MnemonicCode words fails the checksum check.
      */
     public static class MnemonicChecksumException extends MnemonicException {
-        public MnemonicChecksumException(String msg) {
-            super(msg);
-        }
-        public MnemonicChecksumException(Exception ex) {
-            super(ex);
-        }
-        public MnemonicChecksumException(String msg, Exception ex) {
-            super(msg, ex);
+        public MnemonicChecksumException() {
+            super();
         }
     }
 
@@ -66,22 +52,11 @@ public class MnemonicException extends Exception {
      */
     public static class MnemonicWordException extends MnemonicException {
         /** Contains the word that was not found in the word list. */
-        public String badWord;
+        public final String badWord;
 
-        public MnemonicWordException(String msg, String badWord) {
-            super(msg);
+        public MnemonicWordException(String badWord) {
+            super();
             this.badWord = badWord;
-        }
-        public MnemonicWordException(String badWord, Exception ex) {
-            super(ex);
-            this.badWord = badWord;
-        }
-        public MnemonicWordException(String msg, String badWord, Exception ex) {
-            super(msg, ex);
-            this.badWord = badWord;
-        }
-        public String getBadWord() {
-            return badWord;
         }
     }
 }
