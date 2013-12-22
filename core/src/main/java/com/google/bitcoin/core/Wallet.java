@@ -1333,9 +1333,6 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
         case DEAD:
             checkState(dead.put(tx.getHash(), tx) == null);
             break;
-        case PENDING_INACTIVE:
-            checkState(pending.put(tx.getHash(), tx) == null);
-            break;
         default:
             throw new RuntimeException("Unknown wallet transaction type " + pool);
         }
@@ -1459,8 +1456,6 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
                     return pending.size();
                 case DEAD:
                     return dead.size();
-                case ALL:
-                    return unspent.size() + spent.size() + pending.size() + dead.size();
             }
             throw new RuntimeException("Unreachable");
         } finally {

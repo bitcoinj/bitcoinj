@@ -16,60 +16,22 @@
 
 package com.google.bitcoin.wallet;
 
-
 import com.google.bitcoin.core.Transaction;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * A Transaction in a Wallet - includes the pool ID
- * 
- * @author Miron Cuperman
+ * Stores data about a transaction that is only relevant to the {@link com.google.bitcoin.core.Wallet} class.
  */
 public class WalletTransaction {
-    /**
-     * This is a bitfield oriented enum, with the following bits:
-     * 
-     * <li>bit 0 - spent
-     * <li>bit 1 - appears in alt chain
-     * <li>bit 2 - appears in best chain
-     * <li>bit 3 - double-spent
-     * <li>bit 4 - pending (we would like the tx to go into the best chain)
-     * 
-     * <p>Not all combinations are interesting, just the ones actually used in the enum.
-     */
     public enum Pool {
-        UNSPENT(4), // unspent in best chain
-        SPENT(5), // spent in best chain
-        INACTIVE(2), // in alt chain
-        DEAD(10), // double-spend in alt chain
-        PENDING(16), // a pending tx we would like to go into the best chain
-        PENDING_INACTIVE(18), // a pending tx in alt but not in best yet
-        ALL(-1);
-        
-        private int value;
-        Pool(int value) {
-            this.value = value;
-        }
-        
-        public int getValue() {
-            return value;
-        }
-
-        public static Pool valueOf(int value) {
-            switch (value) {
-            case 4: return UNSPENT;
-            case 5: return SPENT;
-            case 2: return INACTIVE;
-            case 10: return DEAD;
-            case 16: return PENDING;
-            case 18: return PENDING_INACTIVE;
-            default: return null;
-            }
-        }
+        UNSPENT, // unspent in best chain
+        SPENT, // spent in best chain
+        DEAD, // double-spend in alt chain
+        PENDING, // a pending tx we would like to go into the best chain
     }
-    private Transaction transaction;
-    private Pool pool;
+    private final Transaction transaction;
+    private final Pool pool;
     
     public WalletTransaction(Pool pool, Transaction transaction) {
         this.pool = checkNotNull(pool);

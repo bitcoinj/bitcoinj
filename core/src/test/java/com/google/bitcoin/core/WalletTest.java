@@ -161,7 +161,7 @@ public class WalletTest extends TestWithWallet {
                 assertEquals("This ECKey is encrypted but no decryption key has been supplied.", kce.getMessage());
             }
             assertEquals("Wrong number of UNSPENT.1", 1, wallet.getPoolSize(WalletTransaction.Pool.UNSPENT));
-            assertEquals("Wrong number of ALL.1", 1, wallet.getPoolSize(WalletTransaction.Pool.ALL));
+            assertEquals("Wrong number of ALL.1", 1, wallet.getTransactions(true).size());
 
             // Try to create a send with a fee but the wrong password (this should fail).
             req = Wallet.SendRequest.to(destination, v2);
@@ -177,7 +177,7 @@ public class WalletTest extends TestWithWallet {
             }
 
             assertEquals("Wrong number of UNSPENT.2", 1, wallet.getPoolSize(WalletTransaction.Pool.UNSPENT));
-            assertEquals("Wrong number of ALL.2", 1, wallet.getPoolSize(WalletTransaction.Pool.ALL));
+            assertEquals("Wrong number of ALL.2", 1, wallet.getTransactions(true).size());
 
             // Create a send with a fee with the correct password (this should succeed).
             req = Wallet.SendRequest.to(destination, v2);
@@ -191,7 +191,7 @@ public class WalletTest extends TestWithWallet {
 
         Transaction t2 = req.tx;
         assertEquals("Wrong number of UNSPENT.3", 1, wallet.getPoolSize(WalletTransaction.Pool.UNSPENT));
-        assertEquals("Wrong number of ALL.3", 1, wallet.getPoolSize(WalletTransaction.Pool.ALL));
+        assertEquals("Wrong number of ALL.3", 1, wallet.getTransactions(true).size());
         assertEquals(TransactionConfidence.Source.SELF, t2.getConfidence().getSource());
         assertEquals(Transaction.Purpose.USER_PAYMENT, t2.getPurpose());
         assertEquals(wallet.getChangeAddress(), t2.getOutput(1).getScriptPubKey().getToAddress(params));
@@ -230,7 +230,7 @@ public class WalletTest extends TestWithWallet {
         assertEquals("Incorrect confirmed tx balance", v1, wallet.getBalance());
         assertEquals("Incorrect confirmed tx PENDING pool size", 0, wallet.getPoolSize(WalletTransaction.Pool.PENDING));
         assertEquals("Incorrect confirmed tx UNSPENT pool size", 1, wallet.getPoolSize(WalletTransaction.Pool.UNSPENT));
-        assertEquals("Incorrect confirmed tx ALL pool size", 1, wallet.getPoolSize(WalletTransaction.Pool.ALL));
+        assertEquals("Incorrect confirmed tx ALL pool size", 1, wallet.getTransactions(true).size());
         Threading.waitForUserCode();
         assertTrue(availFuture.isDone());
         assertTrue(estimatedFuture.isDone());
@@ -263,7 +263,7 @@ public class WalletTest extends TestWithWallet {
         Threading.waitForUserCode();
         assertEquals(1, wallet.getPoolSize(WalletTransaction.Pool.PENDING));
         assertEquals(1, wallet.getPoolSize(WalletTransaction.Pool.SPENT));
-        assertEquals(2, wallet.getPoolSize(WalletTransaction.Pool.ALL));
+        assertEquals(2, wallet.getTransactions(true).size());
         assertEquals(t, txns.getFirst());
         assertEquals(1, txns.size());
     }
@@ -296,7 +296,7 @@ public class WalletTest extends TestWithWallet {
         sendMoneyToWallet(v1, AbstractBlockChain.NewBlockType.BEST_CHAIN);
         assertEquals(v1, wallet.getBalance());
         assertEquals(1, wallet.getPoolSize(WalletTransaction.Pool.UNSPENT));
-        assertEquals(1, wallet.getPoolSize(WalletTransaction.Pool.ALL));
+        assertEquals(1, wallet.getTransactions(true).size());
 
         ECKey k2 = new ECKey();
         Address a2 = k2.toAddress(params);
@@ -321,7 +321,7 @@ public class WalletTest extends TestWithWallet {
         wallet.commitTx(t2);
         assertEquals(1, wallet.getPoolSize(WalletTransaction.Pool.PENDING));
         assertEquals(1, wallet.getPoolSize(WalletTransaction.Pool.SPENT));
-        assertEquals(2, wallet.getPoolSize(WalletTransaction.Pool.ALL));
+        assertEquals(2, wallet.getTransactions(true).size());
     }
 
     @Test
@@ -332,11 +332,11 @@ public class WalletTest extends TestWithWallet {
         sendMoneyToWallet(v1, AbstractBlockChain.NewBlockType.BEST_CHAIN);
         assertEquals(v1, wallet.getBalance());
         assertEquals(1, wallet.getPoolSize(WalletTransaction.Pool.UNSPENT));
-        assertEquals(1, wallet.getPoolSize(WalletTransaction.Pool.ALL));
+        assertEquals(1, wallet.getTransactions(true).size());
 
         BigInteger v2 = toNanoCoins(0, 50);
         sendMoneyToWallet(v2, AbstractBlockChain.NewBlockType.SIDE_CHAIN);
-        assertEquals(2, wallet.getPoolSize(WalletTransaction.Pool.ALL));
+        assertEquals(2, wallet.getTransactions(true).size());
         assertEquals(v1, wallet.getBalance());
         assertEquals(v1.add(v2), wallet.getBalance(Wallet.BalanceType.ESTIMATED));
     }
@@ -347,7 +347,7 @@ public class WalletTest extends TestWithWallet {
         BigInteger v1 = toNanoCoins(5, 0);
         BigInteger v2 = toNanoCoins(0, 50);
         BigInteger expected = toNanoCoins(5, 50);
-        assertEquals(0, wallet.getPoolSize(WalletTransaction.Pool.ALL));
+        assertEquals(0, wallet.getTransactions(true).size());
         sendMoneyToWallet(v1, AbstractBlockChain.NewBlockType.BEST_CHAIN);
         assertEquals(1, wallet.getPoolSize(WalletTransaction.Pool.UNSPENT));
         sendMoneyToWallet(v2, AbstractBlockChain.NewBlockType.BEST_CHAIN);
@@ -543,7 +543,7 @@ public class WalletTest extends TestWithWallet {
         // in the unspent pool, not pending or spent.
         BigInteger coinHalf = Utils.toNanoCoins(0, 50);
         assertEquals(1, wallet.getPoolSize(WalletTransaction.Pool.UNSPENT));
-        assertEquals(1, wallet.getPoolSize(WalletTransaction.Pool.ALL));
+        assertEquals(1, wallet.getTransactions(true).size());
         Address someOtherGuy = new ECKey().toAddress(params);
         Transaction outbound1 = wallet.createSend(someOtherGuy, coinHalf);
         wallet.commitTx(outbound1);
@@ -899,7 +899,7 @@ public class WalletTest extends TestWithWallet {
         sendMoneyToWallet(coin1, AbstractBlockChain.NewBlockType.BEST_CHAIN);
         // Send half to ourselves. We should then have a balance available to spend of zero.
         assertEquals(1, wallet.getPoolSize(WalletTransaction.Pool.UNSPENT));
-        assertEquals(1, wallet.getPoolSize(WalletTransaction.Pool.ALL));
+        assertEquals(1, wallet.getTransactions(true).size());
         Transaction outbound1 = wallet.createSend(myAddress, coinHalf);
         wallet.commitTx(outbound1);
         // We should have a zero available balance before the next block.
@@ -1134,7 +1134,7 @@ public class WalletTest extends TestWithWallet {
         wallet.commitTx(t2);
         assertEquals(0, wallet.getPoolSize(WalletTransaction.Pool.UNSPENT));
         assertEquals(1, wallet.getPoolSize(WalletTransaction.Pool.PENDING));
-        assertEquals(2, wallet.getPoolSize(WalletTransaction.Pool.ALL));
+        assertEquals(2, wallet.getTransactions(true).size());
 
         // Now try to the spend the output.
         ECKey k3 = new ECKey();
@@ -1148,7 +1148,7 @@ public class WalletTest extends TestWithWallet {
         wallet.commitTx(t3);
         assertEquals(0, wallet.getPoolSize(WalletTransaction.Pool.UNSPENT));
         assertEquals(2, wallet.getPoolSize(WalletTransaction.Pool.PENDING));
-        assertEquals(3, wallet.getPoolSize(WalletTransaction.Pool.ALL));
+        assertEquals(3, wallet.getTransactions(true).size());
 
         // Now the output of t2 must not be available for spending
         assertFalse(o2.isAvailableForSpending());

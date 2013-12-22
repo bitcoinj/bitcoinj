@@ -221,7 +221,7 @@ public class WalletProtobufSerializer {
         Transaction tx = wtx.getTransaction();
         Protos.Transaction.Builder txBuilder = Protos.Transaction.newBuilder();
         
-        txBuilder.setPool(Protos.Transaction.Pool.valueOf(wtx.getPool().getValue()))
+        txBuilder.setPool(getProtoPool(wtx))
                  .setHash(hashToByteString(tx.getHash()))
                  .setVersion((int) tx.getVersion());
 
@@ -288,6 +288,17 @@ public class WalletProtobufSerializer {
         return txBuilder.build();
     }
 
+    private static Protos.Transaction.Pool getProtoPool(WalletTransaction wtx) {
+        switch (wtx.getPool()) {
+            case UNSPENT: return Protos.Transaction.Pool.UNSPENT;
+            case SPENT: return Protos.Transaction.Pool.SPENT;
+            case DEAD: return Protos.Transaction.Pool.DEAD;
+            case PENDING: return Protos.Transaction.Pool.PENDING;
+            default:
+                throw new RuntimeException("Unreachable");
+        }
+    }
+
     private static void writeConfidence(Protos.Transaction.Builder txBuilder,
                                         TransactionConfidence confidence,
                                         Protos.TransactionConfidence.Builder confidenceBuilder) {
@@ -351,19 +362,15 @@ public class WalletProtobufSerializer {
      * @throws UnreadableWalletException thrown in various error conditions (see description).
      */
     public Wallet readWallet(InputStream input) throws UnreadableWalletException {
-        Protos.Wallet walletProto = null;
         try {
-            walletProto = parseToProto(input);
+            Protos.Wallet walletProto = parseToProto(input);
+            NetworkParameters params = NetworkParameters.fromID(walletProto.getNetworkIdentifier());
+            Wallet wallet = new Wallet(params);
+            readWallet(walletProto, wallet);
+            return wallet;
         } catch (IOException e) {
-            throw new UnreadableWalletException("Could not load wallet file", e);
+            throw new UnreadableWalletException("Could not parse input stream to protobuf", e);
         }
-
-        // System.out.println(TextFormat.printToString(walletProto));
-
-        NetworkParameters params = NetworkParameters.fromID(walletProto.getNetworkIdentifier());
-        Wallet wallet = new Wallet(params);
-        readWallet(walletProto, wallet);
-        return wallet;
     }
 
     /**
@@ -566,13 +573,22 @@ public class WalletProtobufSerializer {
 
     private WalletTransaction connectTransactionOutputs(org.bitcoinj.wallet.Protos.Transaction txProto) throws UnreadableWalletException {
         Transaction tx = txMap.get(txProto.getHash());
-        WalletTransaction.Pool pool = WalletTransaction.Pool.valueOf(txProto.getPool().getNumber());
-        if (pool == WalletTransaction.Pool.INACTIVE || pool == WalletTransaction.Pool.PENDING_INACTIVE) {
+        final WalletTransaction.Pool pool;
+        switch (txProto.getPool()) {
+            case DEAD: pool = WalletTransaction.Pool.DEAD; break;
+            case PENDING: pool = WalletTransaction.Pool.PENDING; break;
+            case SPENT: pool = WalletTransaction.Pool.SPENT; break;
+            case UNSPENT: pool = WalletTransaction.Pool.UNSPENT; break;
             // Upgrade old wallets: inactive pool has been merged with the pending pool.
             // Remove this some time after 0.9 is old and everyone has upgraded.
             // There should not be any spent outputs in this tx as old wallets would not allow them to be spent
             // in this state.
-            pool = WalletTransaction.Pool.PENDING;
+            case INACTIVE:
+            case PENDING_INACTIVE:
+                pool = WalletTransaction.Pool.PENDING;
+                break;
+            default:
+                throw new UnreadableWalletException("Unknown transaction pool: " + txProto.getPool());
         }
         for (int i = 0 ; i < tx.getOutputs().size() ; i++) {
             TransactionOutput output = tx.getOutputs().get(i);
