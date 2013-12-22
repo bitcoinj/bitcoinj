@@ -584,9 +584,9 @@ public class Transaction extends ChildMessage implements Serializable {
      * A human readable version of the transaction useful for debugging. The format is not guaranteed to be stable.
      * @param chain If provided, will be used to estimate lock times (if set). Can be null.
      */
-    public String toString(AbstractBlockChain chain) {
+    public String toString(@Nullable AbstractBlockChain chain) {
         // Basic info about the tx.
-        StringBuffer s = new StringBuffer();
+        StringBuilder s = new StringBuilder();
         s.append(String.format("  %s: %s%n", getHashAsString(), getConfidence()));
         if (isTimeLocked()) {
             String time;
