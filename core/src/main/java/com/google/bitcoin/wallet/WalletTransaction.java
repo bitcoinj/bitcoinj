@@ -14,8 +14,10 @@
  * limitations under the License.
  */
 
-package com.google.bitcoin.core;
+package com.google.bitcoin.wallet;
 
+
+import com.google.bitcoin.core.Transaction;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 

@@ -18,7 +18,8 @@ package com.google.bitcoin.core;
 
 import com.google.bitcoin.core.Transaction.SigHash;
 import com.google.bitcoin.core.Wallet.SendRequest;
-import com.google.bitcoin.core.WalletTransaction.Pool;
+import com.google.bitcoin.wallet.WalletTransaction;
+import com.google.bitcoin.wallet.WalletTransaction.Pool;
 import com.google.bitcoin.crypto.KeyCrypter;
 import com.google.bitcoin.crypto.KeyCrypterException;
 import com.google.bitcoin.crypto.KeyCrypterScrypt;
