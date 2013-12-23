@@ -17,11 +17,11 @@
 
 package com.google.bitcoin.core;
 
+import com.google.bitcoin.net.ClientConnectionManager;
+import com.google.bitcoin.net.NioClientManager;
 import com.google.bitcoin.net.discovery.PeerDiscovery;
 import com.google.bitcoin.net.discovery.PeerDiscoveryException;
 import com.google.bitcoin.script.Script;
-import com.google.bitcoin.net.ClientConnectionManager;
-import com.google.bitcoin.net.NioClientManager;
 import com.google.bitcoin.utils.ListenerRegistration;
 import com.google.bitcoin.utils.Threading;
 import com.google.common.base.Preconditions;
@@ -36,8 +36,10 @@ import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.*;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -121,7 +123,11 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
 
         @Override
         public void onBlocksDownloaded(Peer peer, Block block, int blocksLeft) {
-            handleBlocksDownloaded();
+            double rate = checkNotNull(chain).getFalsePositiveRate();
+            if (rate > bloomFilterFPRate * MAX_FP_RATE_INCREASE) {
+                log.info("Force update Bloom filter due to high false positive rate");
+                recalculateFastCatchupAndFilter(true);
+            }
         }
     };
 
@@ -135,14 +141,6 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
         @Override public void onCoinsReceived(Wallet wallet, Transaction tx, BigInteger prevBalance, BigInteger newBalance) { onChanged(); }
         @Override public void onCoinsSent(Wallet wallet, Transaction tx, BigInteger prevBalance, BigInteger newBalance) { onChanged(); }
     };
-
-    private void handleBlocksDownloaded() {
-        double rate = chain.getFalsePositiveRate();
-        if (rate > bloomFilterFPRate * MAX_FP_RATE_INCREASE) {
-            log.info("Force update Bloom filter due to high false positive rate");
-            recalculateFastCatchupAndFilter(true);
-        }
-    }
 
     private class PeerStartupListener extends AbstractPeerEventListener {
         @Override
@@ -337,11 +335,8 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
      * a new {@link VersionMessage}, calling {@link VersionMessage#appendToSubVer(String, String, String)} on it,
      * and then calling {@link PeerGroup#setVersionMessage(VersionMessage)} on the result of that. See the docs for
      * {@link VersionMessage#appendToSubVer(String, String, String)} for information on what the fields should contain.
-     *
-     * @param name
-     * @param version
      */
-    public void setUserAgent(String name, String version, String comments) {
+    public void setUserAgent(String name, String version, @Nullable String comments) {
         //TODO Check that height is needed here (it wasnt, but it should be, no?)
         int height = chain == null ? 0 : chain.getBestChainHeight();
         VersionMessage ver = new VersionMessage(params, height, false);
@@ -370,9 +365,6 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
      * a new {@link VersionMessage}, calling {@link VersionMessage#appendToSubVer(String, String, String)} on it,
      * and then calling {@link PeerGroup#setVersionMessage(VersionMessage)} on the result of that. See the docs for
      * {@link VersionMessage#appendToSubVer(String, String, String)} for information on what the fields should contain.
-     *
-     * @param name
-     * @param version
      */
     public void setUserAgent(String name, String version) {
         setUserAgent(name, version, null);
@@ -654,7 +646,8 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
                         peer.setBloomFilter(filter);
                     // Reset the false positive estimate so that we don't send a flood of filter updates
                     // if the estimate temporarily overshoots our threshold.
-                    chain.resetFalsePositiveEstimate();
+                    if (chain != null)
+                        chain.resetFalsePositiveEstimate();
                 }
             }
             // Now adjust the earliest key time backwards by a week to handle the case of clock drift. This can occur
@@ -894,7 +887,7 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
         pingRunnable[0].run();
     }
 
-    private void setDownloadPeer(Peer peer) {
+    private void setDownloadPeer(@Nullable Peer peer) {
         lock.lock();
         try {
             if (downloadPeer == peer) {
@@ -1068,7 +1061,6 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
      * propagation across the network can be observed. If no value has been set using
      * {@link PeerGroup#setMinBroadcastConnections(int)} a default of half of whatever
      * {@link com.google.bitcoin.core.PeerGroup#getMaxConnections()} returns is used.
-     * @return
      */
     public int getMinBroadcastConnections() {
         lock.lock();
@@ -1263,6 +1255,7 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
      * Given a list of Peers, return a Peer to be used as the download peer. If you don't want PeerGroup to manage
      * download peer statuses for you, just override this and always return null.
      */
+    @Nullable
     protected Peer selectDownloadPeer(List<Peer> peers) {
         // Characteristics to select for in order of importance:
         //  - Chain height is reasonable (majority of nodes)
@@ -1309,28 +1302,6 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
             }
         });
         return candidates2.get(0).peer;
-    }
-
-    private static class PeerGroupThreadFactory implements ThreadFactory {
-        static final AtomicInteger poolNumber = new AtomicInteger(1);
-        final ThreadGroup group;
-        final AtomicInteger threadNumber = new AtomicInteger(1);
-        final String namePrefix;
-
-        PeerGroupThreadFactory() {
-            group = Thread.currentThread().getThreadGroup();
-            namePrefix = "PeerGroup-" + poolNumber.getAndIncrement() + "-thread-";
-        }
-
-        public Thread newThread(Runnable r) {
-            Thread t = new Thread(group, r, namePrefix + threadNumber.getAndIncrement(), 0);
-            // Lower the priority of the peer threads. This is to avoid competing with UI threads created by the API
-            // user when doing lots of work, like downloading the block chain. We select a priority level one lower
-            // than the parent thread, or the minimum.
-            t.setPriority(Math.max(Thread.MIN_PRIORITY, Thread.currentThread().getPriority() - 1));
-            t.setDaemon(true);
-            return t;
-        }
     }
 
     /**
