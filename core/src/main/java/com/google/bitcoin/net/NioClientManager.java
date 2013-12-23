@@ -16,6 +16,7 @@
 
 package com.google.bitcoin.net;
 
+import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import org.slf4j.LoggerFactory;
 
@@ -62,13 +63,11 @@ public class NioClientManager extends AbstractExecutionThreadService implements 
                     log.error("Failed to connect to {}", sc.socket().getRemoteSocketAddress());
                     handler.closeConnection(); // Failed to connect for some reason
                 }
-            } catch (IOException e) {
+            } catch (Exception e) {
+                // If e is a CancelledKeyException, there is a race to get to interestOps after finishConnect() which
+                // may cause this. Otherwise it may be any arbitrary kind of connection failure.
                 // Calling sc.socket().getRemoteSocketAddress() here throws an exception, so we can only log the error itself
-                log.error("Failed to connect with exception: {}", e.getMessage());
-                handler.closeConnection();
-            } catch (CancelledKeyException e) { // There is a race to get to interestOps after finishConnect() which may cause this
-                // Calling sc.socket().getRemoteSocketAddress() here throws an exception, so we can only log the error itself
-                log.error("Failed to connect with exception: {}", e.getMessage());
+                log.error("Failed to connect with exception: {}", Throwables.getRootCause(e).getMessage());
                 handler.closeConnection();
             }
         } else // Process bytes read

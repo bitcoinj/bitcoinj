@@ -179,7 +179,7 @@ public class PeerGroup extends AbstractIdleService implements TransactionBroadca
     private int lastBloomFilterElementCount;
 
     /** The default timeout between when a connection attempt begins and version message exchange completes */
-    public static final int DEFAULT_CONNECT_TIMEOUT_MILLIS = 2000;
+    public static final int DEFAULT_CONNECT_TIMEOUT_MILLIS = 5000;
     private volatile int vConnectTimeoutMillis = DEFAULT_CONNECT_TIMEOUT_MILLIS;
 
     /**

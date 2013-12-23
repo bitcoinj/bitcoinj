@@ -16,14 +16,6 @@
 
 package com.google.bitcoin.core;
 
-import java.io.*;
-import java.net.ConnectException;
-import java.net.InetSocketAddress;
-import java.nio.BufferUnderflowException;
-import java.nio.ByteBuffer;
-import java.nio.channels.NotYetConnectedException;
-import java.util.concurrent.locks.Lock;
-
 import com.google.bitcoin.net.AbstractTimeoutHandler;
 import com.google.bitcoin.net.MessageWriteTarget;
 import com.google.bitcoin.net.StreamParser;
@@ -32,9 +24,16 @@ import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.net.ConnectException;
+import java.net.InetSocketAddress;
+import java.nio.BufferUnderflowException;
+import java.nio.ByteBuffer;
+import java.nio.channels.NotYetConnectedException;
+import java.util.concurrent.locks.Lock;
+
+import static com.google.common.base.Preconditions.*;
 
 /**
  * Handles high-level message (de)serialization for peers, acting as the bridge between the
@@ -109,6 +108,7 @@ public abstract class PeerSocketHandler extends AbstractTimeoutHandler implement
 
     @Override
     protected void timeoutOccurred() {
+        log.info("{}: Timed out", getAddress());
         close();
     }
 
