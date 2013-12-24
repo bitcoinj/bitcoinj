@@ -21,6 +21,7 @@ import com.google.common.collect.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -458,6 +459,7 @@ public class H2FullPrunedBlockStore implements FullPrunedBlockStore {
         }
     }
 
+    @Nullable
     public StoredBlock get(Sha256Hash hash, boolean wasUndoableOnly) throws BlockStoreException {
         // Optimize for chain head
         if (chainHeadHash != null && chainHeadHash.equals(hash))
@@ -467,8 +469,7 @@ public class H2FullPrunedBlockStore implements FullPrunedBlockStore {
         maybeConnect();
         PreparedStatement s = null;
         try {
-            s = conn.get()
-                .prepareStatement("SELECT chainWork, height, header, wasUndoable FROM headers WHERE hash = ?");
+            s = conn.get().prepareStatement("SELECT chainWork, height, header, wasUndoable FROM headers WHERE hash = ?");
             // We skip the first 4 bytes because (on prodnet) the minimum target has 4 0-bytes
             byte[] hashBytes = new byte[28];
             System.arraycopy(hash.getBytes(), 3, hashBytes, 0, 28);
@@ -478,16 +479,13 @@ public class H2FullPrunedBlockStore implements FullPrunedBlockStore {
                 return null;
             }
             // Parse it.
-            
             if (wasUndoableOnly && !results.getBoolean(4))
                 return null;
-            
             BigInteger chainWork = new BigInteger(results.getBytes(1));
             int height = results.getInt(2);
             Block b = new Block(params, results.getBytes(3));
             b.verifyHeader();
-            StoredBlock stored = new StoredBlock(b, chainWork, height);
-            return stored;
+            return new StoredBlock(b, chainWork, height);
         } catch (SQLException ex) {
             throw new BlockStoreException(ex);
         } catch (ProtocolException e) {
@@ -498,21 +496,27 @@ public class H2FullPrunedBlockStore implements FullPrunedBlockStore {
             // blocks.
             throw new BlockStoreException(e);
         } finally {
-            if (s != null)
+            if (s != null) {
                 try {
                     s.close();
-                } catch (SQLException e) { throw new BlockStoreException("Failed to close PreparedStatement"); }
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Failed to close PreparedStatement");
+                }
+            }
         }
     }
     
+    @Nullable
     public StoredBlock get(Sha256Hash hash) throws BlockStoreException {
         return get(hash, false);
     }
     
+    @Nullable
     public StoredBlock getOnceUndoableStoredBlock(Sha256Hash hash) throws BlockStoreException {
         return get(hash, true);
     }
     
+    @Nullable
     public StoredUndoableBlock getUndoBlock(Sha256Hash hash) throws BlockStoreException {
         maybeConnect();
         PreparedStatement s = null;
@@ -629,6 +633,7 @@ public class H2FullPrunedBlockStore implements FullPrunedBlockStore {
         }
     }
 
+    @Nullable
     public StoredTransactionOutput getTransactionOutput(Sha256Hash hash, long index) throws BlockStoreException {
         maybeConnect();
         PreparedStatement s = null;
@@ -647,8 +652,7 @@ public class H2FullPrunedBlockStore implements FullPrunedBlockStore {
             int height = results.getInt(1);
             BigInteger value = new BigInteger(results.getBytes(2));
             // Tell the StoredTransactionOutput that we are a coinbase, as that is encoded in height
-            StoredTransactionOutput txout = new StoredTransactionOutput(hash, index, value, height, true, results.getBytes(3));
-            return txout;
+            return new StoredTransactionOutput(hash, index, value, height, true, results.getBytes(3));
         } catch (SQLException ex) {
             throw new BlockStoreException(ex);
         } finally {

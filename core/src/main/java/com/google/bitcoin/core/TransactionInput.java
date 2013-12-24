@@ -19,6 +19,7 @@ package com.google.bitcoin.core;
 import com.google.bitcoin.script.Script;
 import com.google.common.base.Preconditions;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
@@ -67,15 +68,13 @@ public class TransactionInput extends ChildMessage implements Serializable {
         length = 40 + (scriptBytes == null ? 1 : VarInt.sizeOf(scriptBytes.length) + scriptBytes.length);
     }
 
-    public TransactionInput(NetworkParameters params, Transaction parentTransaction,
-            byte[] scriptBytes,
-            TransactionOutPoint outpoint) {
+    public TransactionInput(NetworkParameters params, @Nullable Transaction parentTransaction, byte[] scriptBytes,
+                            TransactionOutPoint outpoint) {
         super(params);
         this.scriptBytes = scriptBytes;
         this.outpoint = outpoint;
         this.sequence = NO_SEQUENCE;
         this.parentTransaction = parentTransaction;
-
         length = 40 + (scriptBytes == null ? 1 : VarInt.sizeOf(scriptBytes.length) + scriptBytes.length);
     }
 
@@ -278,12 +277,12 @@ public class TransactionInput extends ChildMessage implements Serializable {
      *
      * @return The TransactionOutput or null if the transactions map doesn't contain the referenced tx.
      */
+    @Nullable
     TransactionOutput getConnectedOutput(Map<Sha256Hash, Transaction> transactions) {
         Transaction tx = transactions.get(outpoint.getHash());
         if (tx == null)
             return null;
-        TransactionOutput out = tx.getOutputs().get((int) outpoint.getIndex());
-        return out;
+        return tx.getOutputs().get((int) outpoint.getIndex());
     }
 
     public enum ConnectMode {
@@ -414,6 +413,7 @@ public class TransactionInput extends ChildMessage implements Serializable {
      * {@link TransactionInput#connect(TransactionOutput)} or variants at some point. If it wasn't connected, then
      * this method returns null.
      */
+    @Nullable
     public TransactionOutput getConnectedOutput() {
         return getOutpoint().getConnectedOutput();
     }

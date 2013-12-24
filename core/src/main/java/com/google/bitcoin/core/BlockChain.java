@@ -88,18 +88,19 @@ public class BlockChain extends AbstractBlockChain {
     @Override
     protected TransactionOutputChanges connectTransactions(int height, Block block) {
         // Don't have to do anything as this is only called if(shouldVerifyTransactions())
-        return null;
+        throw new UnsupportedOperationException();
     }
 
     @Override
     protected TransactionOutputChanges connectTransactions(StoredBlock newBlock) {
         // Don't have to do anything as this is only called if(shouldVerifyTransactions())
-        return null;
+        throw new UnsupportedOperationException();
     }
 
     @Override
     protected void disconnectTransactions(StoredBlock block) {
-        // Don't have to do anything as this is only called if(shouldVerifyTransactions())        
+        // Don't have to do anything as this is only called if(shouldVerifyTransactions())
+        throw new UnsupportedOperationException();
     }
 
     @Override

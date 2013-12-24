@@ -18,6 +18,7 @@ package com.google.bitcoin.protocols.channels;
 
 import com.google.bitcoin.core.*;
 
+import javax.annotation.Nullable;
 import java.math.BigInteger;
 import java.util.Date;
 
@@ -41,8 +42,8 @@ public class StoredServerChannel {
     private PaymentChannelServer connectedHandler = null;
     PaymentChannelServerState state = null;
 
-    StoredServerChannel(PaymentChannelServerState state, Transaction contract, TransactionOutput clientOutput,
-                        long refundTransactionUnlockTimeSecs, ECKey myKey, BigInteger bestValueToMe, byte[] bestValueSignature) {
+    StoredServerChannel(@Nullable PaymentChannelServerState state, Transaction contract, TransactionOutput clientOutput,
+                        long refundTransactionUnlockTimeSecs, ECKey myKey, BigInteger bestValueToMe, @Nullable byte[] bestValueSignature) {
         this.contract = contract;
         this.clientOutput = clientOutput;
         this.refundTransactionUnlockTimeSecs = refundTransactionUnlockTimeSecs;

@@ -22,6 +22,7 @@ import com.google.bitcoin.store.FullPrunedBlockStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -124,6 +125,7 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
             this.tx = tx; this.prevOutScripts = prevOutScripts; this.enforcePayToScriptHash = enforcePayToScriptHash;
         }
 
+        @Nullable
         @Override
         public VerificationException call() throws Exception {
             try{

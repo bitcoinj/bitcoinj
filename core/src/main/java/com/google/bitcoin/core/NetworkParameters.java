@@ -22,6 +22,7 @@ import com.google.bitcoin.script.ScriptOpCodes;
 import com.google.common.base.Objects;
 import org.spongycastle.util.encoders.Hex;
 
+import javax.annotation.Nullable;
 import java.io.ByteArrayOutputStream;
 import java.io.Serializable;
 import java.math.BigInteger;
@@ -185,6 +186,7 @@ public abstract class NetworkParameters implements Serializable {
     }
 
     /** Returns the network parameters for the given string ID or NULL if not recognized. */
+    @Nullable
     public static NetworkParameters fromID(String id) {
         if (id.equals(ID_MAINNET)) {
             return MainNetParams.get();

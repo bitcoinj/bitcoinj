@@ -137,7 +137,7 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
 
     private final NetworkParameters params;
 
-    private Sha256Hash lastBlockSeenHash;
+    @Nullable private Sha256Hash lastBlockSeenHash;
     private int lastBlockSeenHeight;
     private long lastBlockSeenTimeSecs;
 
@@ -2584,7 +2584,8 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
         }
     }
 
-    /** Returns the hash of the last seen best-chain block. */
+    /** Returns the hash of the last seen best-chain block, or null if the wallet is too old to store this data. */
+    @Nullable
     public Sha256Hash getLastBlockSeenHash() {
         lock.lock();
         try {
@@ -2594,7 +2595,7 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
         }
     }
 
-    public void setLastBlockSeenHash(Sha256Hash lastBlockSeenHash) {
+    public void setLastBlockSeenHash(@Nullable Sha256Hash lastBlockSeenHash) {
         lock.lock();
         try {
             this.lastBlockSeenHash = lastBlockSeenHash;

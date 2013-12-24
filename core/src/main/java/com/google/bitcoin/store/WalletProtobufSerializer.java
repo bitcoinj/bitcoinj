@@ -364,7 +364,10 @@ public class WalletProtobufSerializer {
     public Wallet readWallet(InputStream input) throws UnreadableWalletException {
         try {
             Protos.Wallet walletProto = parseToProto(input);
-            NetworkParameters params = NetworkParameters.fromID(walletProto.getNetworkIdentifier());
+            final String paramsID = walletProto.getNetworkIdentifier();
+            NetworkParameters params = NetworkParameters.fromID(paramsID);
+            if (params == null)
+                throw new UnreadableWalletException("Unknown network parameters ID " + paramsID);
             Wallet wallet = new Wallet(params);
             readWallet(walletProto, wallet);
             return wallet;

@@ -16,6 +16,7 @@
 
 package com.google.bitcoin.core;
 
+import javax.annotation.Nullable;
 import java.util.List;
 
 /**
@@ -85,5 +86,6 @@ public interface PeerEventListener {
      * <p>Note that this will never be called if registered with any executor other than
      * {@link com.google.bitcoin.utils.Threading#SAME_THREAD}</p>
      */
+    @Nullable
     public List<Message> getData(Peer peer, GetDataMessage m);
 }

@@ -22,6 +22,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 
+import javax.annotation.Nullable;
 import java.io.Serializable;
 import java.math.BigInteger;
 import java.util.ListIterator;
@@ -111,17 +112,6 @@ public class TransactionConfidence implements Serializable {
         public int getValue() {
             return value;
         }
-
-        public static ConfidenceType valueOf(int value) {
-            switch (value) {
-            case 0: return UNKNOWN;
-            case 1: return BUILDING;
-            case 2: return PENDING;
-            case 4: return DEAD;
-            default: return null;
-            }
-        }
-
     }
 
     private ConfidenceType confidenceType = ConfidenceType.UNKNOWN;
@@ -402,7 +392,7 @@ public class TransactionConfidence implements Serializable {
      * in such a way that the double-spending transaction takes precedence over this one. It will not become valid now
      * unless there is a re-org. Automatically sets the confidence type to DEAD.
      */
-    public synchronized void setOverridingTransaction(Transaction overridingTransaction) {
+    public synchronized void setOverridingTransaction(@Nullable Transaction overridingTransaction) {
         this.overridingTransaction = overridingTransaction;
         setConfidenceType(ConfidenceType.DEAD);
     }

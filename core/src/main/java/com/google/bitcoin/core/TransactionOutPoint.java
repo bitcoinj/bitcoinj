@@ -18,6 +18,7 @@ package com.google.bitcoin.core;
 
 import com.google.bitcoin.script.Script;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
@@ -43,7 +44,7 @@ public class TransactionOutPoint extends ChildMessage implements Serializable {
     // It points to the connected transaction.
     Transaction fromTx;
 
-    public TransactionOutPoint(NetworkParameters params, long index, Transaction fromTx) {
+    public TransactionOutPoint(NetworkParameters params, long index, @Nullable Transaction fromTx) {
         super(params);
         this.index = index;
         if (fromTx != null) {
@@ -114,6 +115,7 @@ public class TransactionOutPoint extends ChildMessage implements Serializable {
      * sides in memory, and they have been linked together, this returns a pointer to the connected output, or null
      * if there is no such connection.
      */
+    @Nullable
     public TransactionOutput getConnectedOutput() {
         if (fromTx == null) return null;
         return fromTx.getOutputs().get((int) index);
@@ -121,18 +123,12 @@ public class TransactionOutPoint extends ChildMessage implements Serializable {
 
     /**
      * Returns the pubkey script from the connected output.
+     * @throws java.lang.NullPointerException if there is no connected output.
      */
     byte[] getConnectedPubKeyScript() {
-        byte[] result = checkNotNull(getConnectedOutput().getScriptBytes());
+        byte[] result = checkNotNull(getConnectedOutput()).getScriptBytes();
         checkState(result.length > 0);
         return result;
-    }
-
-    /**
-     * Convenience method to get the connected outputs pubkey hash.
-     */
-    byte[] getConnectedPubKeyHash() throws ScriptException {
-        return getConnectedOutput().getScriptPubKey().getPubKeyHash();
     }
 
     /**
@@ -140,6 +136,7 @@ public class TransactionOutPoint extends ChildMessage implements Serializable {
      * If the script forms cannot be understood, throws ScriptException.
      * @return an ECKey or null if the connected key cannot be found in the wallet.
      */
+    @Nullable
     public ECKey getConnectedKey(Wallet wallet) throws ScriptException {
         TransactionOutput connectedOutput = getConnectedOutput();
         checkNotNull(connectedOutput, "Input is not connected so cannot retrieve key");

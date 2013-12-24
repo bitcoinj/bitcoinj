@@ -18,7 +18,6 @@ package com.google.bitcoin.net;
 
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
@@ -42,8 +41,8 @@ public class BlockingClient implements MessageWriteTarget {
     private static final int BUFFER_SIZE_LOWER_BOUND = 4096;
     private static final int BUFFER_SIZE_UPPER_BOUND = 65536;
 
-    @Nonnull private final ByteBuffer dbuf;
-    @Nonnull private final Socket socket;
+    private final ByteBuffer dbuf;
+    private final Socket socket;
     private volatile boolean vCloseRequested = false;
 
     /**

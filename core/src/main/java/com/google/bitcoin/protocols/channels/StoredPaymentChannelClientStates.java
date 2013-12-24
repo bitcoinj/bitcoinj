@@ -141,6 +141,7 @@ public class StoredPaymentChannelClientStates implements WalletExtension {
     /**
      * Finds a channel with the given id and contract hash and returns it, or returns null.
      */
+    @Nullable
     StoredClientChannel getChannel(Sha256Hash id, Sha256Hash contractHash) {
         lock.lock();
         try {

@@ -16,14 +16,6 @@
 
 package com.google.bitcoin.protocols.channels;
 
-import java.io.IOException;
-import java.math.BigInteger;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.SocketAddress;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-
 import com.google.bitcoin.core.Sha256Hash;
 import com.google.bitcoin.core.TransactionBroadcaster;
 import com.google.bitcoin.core.Wallet;
@@ -31,6 +23,13 @@ import com.google.bitcoin.net.NioServer;
 import com.google.bitcoin.net.ProtobufParser;
 import com.google.bitcoin.net.StreamParserFactory;
 import org.bitcoin.paymentchannel.Protos;
+
+import javax.annotation.Nullable;
+import java.io.IOException;
+import java.math.BigInteger;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -120,7 +119,7 @@ public class PaymentChannelServerListener {
         private PaymentChannelCloseException.CloseReason closeReason;
 
         // The user-provided event handler
-        @Nonnull private ServerConnectionEventHandler eventHandler;
+        private ServerConnectionEventHandler eventHandler;
 
         // The payment channel server which does the actual payment channel handling
         private final PaymentChannelServer paymentChannelManager;

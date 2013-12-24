@@ -161,7 +161,7 @@ public class ECKey implements Serializable {
      * is more convenient if you are importing a key from elsewhere. The public key will be automatically derived
      * from the private key.
      */
-    public ECKey(byte[] privKeyBytes, byte[] pubKey) {
+    public ECKey(@Nullable byte[] privKeyBytes, @Nullable byte[] pubKey) {
         this(privKeyBytes == null ? null : new BigInteger(1, privKeyBytes), pubKey);
     }
 
@@ -172,7 +172,7 @@ public class ECKey implements Serializable {
      * @param pubKey The keys public key
      * @param keyCrypter The KeyCrypter that will be used, with an AES key, to encrypt and decrypt the private key
      */
-    public ECKey(EncryptedPrivateKey encryptedPrivateKey, byte[] pubKey, KeyCrypter keyCrypter) {
+    public ECKey(@Nullable EncryptedPrivateKey encryptedPrivateKey, @Nullable byte[] pubKey, KeyCrypter keyCrypter) {
         this((byte[])null, pubKey);
 
         this.keyCrypter = Preconditions.checkNotNull(keyCrypter);
@@ -186,13 +186,15 @@ public class ECKey implements Serializable {
      * be used for signing.
      * @param compressed If set to true and pubKey is null, the derived public key will be in compressed form.
      */
-    public ECKey(BigInteger privKey, byte[] pubKey, boolean compressed) {
+    public ECKey(@Nullable BigInteger privKey, @Nullable byte[] pubKey, boolean compressed) {
+        if (privKey == null && pubKey == null)
+            throw new IllegalArgumentException("ECKey requires at least private or public key");
         this.priv = privKey;
         this.pub = null;
-        if (pubKey == null && privKey != null) {
+        if (pubKey == null) {
             // Derive public from private.
             this.pub = publicKeyFromPrivate(privKey, compressed);
-        } else if (pubKey != null) {
+        } else {
             // We expect the pubkey to be in regular encoded form, just as a BigInteger. Therefore the first byte is
             // a special marker byte.
             // TODO: This is probably not a useful API and may be confusing.
@@ -206,7 +208,7 @@ public class ECKey implements Serializable {
      * the public key already correctly matches the public key. If only the public key is supplied, this ECKey cannot
      * be used for signing.
      */
-    private ECKey(BigInteger privKey, byte[] pubKey) {
+    private ECKey(@Nullable BigInteger privKey, @Nullable byte[] pubKey) {
         this(privKey, pubKey, false);
     }
 
@@ -381,7 +383,7 @@ public class ECKey implements Serializable {
                     r = (DERInteger) seq.getObjectAt(0);
                     s = (DERInteger) seq.getObjectAt(1);
                 } catch (ClassCastException e) {
-                    return null;
+                    throw new IllegalArgumentException(e);
                 }
                 decoder.close();
                 // OpenSSL deviates from the DER spec by interpreting these values as unsigned, though they should not be
@@ -431,7 +433,7 @@ public class ECKey implements Serializable {
      * @param aesKey The AES key to use for decryption of the private key. If null then no decryption is required.
      * @throws KeyCrypterException if this ECKey doesn't have a private part.
      */
-    public ECDSASignature sign(Sha256Hash input, KeyParameter aesKey) throws KeyCrypterException {
+    public ECDSASignature sign(Sha256Hash input, @Nullable KeyParameter aesKey) throws KeyCrypterException {
         if (FAKE_SIGNATURES)
             return TransactionSignature.dummy();
 
@@ -601,7 +603,7 @@ public class ECKey implements Serializable {
      * @throws IllegalStateException if this ECKey does not have the private part.
      * @throws KeyCrypterException if this ECKey is encrypted and no AESKey is provided or it does not decrypt the ECKey.
      */
-    public String signMessage(String message, KeyParameter aesKey) throws KeyCrypterException {
+    public String signMessage(String message, @Nullable KeyParameter aesKey) throws KeyCrypterException {
         if (priv == null)
             throw new IllegalStateException("This ECKey does not have the private key necessary for signing.");
         byte[] data = Utils.formatMessageForSigning(message);
@@ -702,6 +704,7 @@ public class ECKey implements Serializable {
      * @param compressed Whether or not the original pubkey was compressed.
      * @return An ECKey containing only the public part, or null if recovery wasn't possible.
      */
+    @Nullable
     public static ECKey recoverFromSignature(int recId, ECDSASignature sig, Sha256Hash message, boolean compressed) {
         Preconditions.checkArgument(recId >= 0, "recId must be positive");
         Preconditions.checkArgument(sig.r.compareTo(BigInteger.ZERO) >= 0, "r must be positive");

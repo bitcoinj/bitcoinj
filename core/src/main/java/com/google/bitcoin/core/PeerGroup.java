@@ -149,14 +149,6 @@ public class PeerGroup extends AbstractExecutionThreadService implements Transac
 
     private LinkedBlockingQueue<Object> morePeersMailbox = new LinkedBlockingQueue<Object>();
 
-    private void handleBlocksDownloaded() {
-        double rate = chain.getFalsePositiveRate();
-        if (rate > bloomFilterFPRate * MAX_FP_RATE_INCREASE) {
-            log.info("Force update Bloom filter due to high false positive rate");
-            recalculateFastCatchupAndFilter(true);
-        }
-    }
-
     private class PeerStartupListener extends AbstractPeerEventListener {
         @Override
         public void onPeerConnected(Peer peer, int peerCount) {

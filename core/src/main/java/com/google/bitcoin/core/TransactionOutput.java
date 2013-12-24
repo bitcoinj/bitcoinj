@@ -28,9 +28,7 @@ import java.io.OutputStream;
 import java.io.Serializable;
 import java.math.BigInteger;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
+import static com.google.common.base.Preconditions.*;
 
 /**
  * A TransactionOutput message contains a scriptPubKey that controls who is able to spend its value. It is a sub-part
@@ -62,7 +60,7 @@ public class TransactionOutput extends ChildMessage implements Serializable {
     /**
      * Deserializes a transaction output message. This is usually part of a transaction message.
      */
-    public TransactionOutput(NetworkParameters params, Transaction parent, byte[] payload,
+    public TransactionOutput(NetworkParameters params, @Nullable Transaction parent, byte[] payload,
                              int offset) throws ProtocolException {
         super(params, payload, offset);
         parentTransaction = parent;
@@ -311,11 +309,10 @@ public class TransactionOutput extends ChildMessage implements Serializable {
     }
 
     /**
-     * Returns the transaction that owns this output, or null if this is a free standing object.
+     * Returns the transaction that owns this output, or throws NullPointerException if unowned.
      */
-    @Nullable
     public Transaction getParentTransaction() {
-        return parentTransaction;
+        return checkNotNull(parentTransaction, "Free-standing TransactionOutput");
     }
 
     /**

@@ -21,6 +21,7 @@ import com.google.bitcoin.utils.Threading;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -74,10 +75,10 @@ public class SPVBlockStore implements BlockStore {
     //
     // We don't care about the value in this cache. It is always notFoundMarker. Unfortunately LinkedHashSet does not
     // provide the removeEldestEntry control.
-    protected static final StoredBlock notFoundMarker = new StoredBlock(null, null, -1);
-    protected LinkedHashMap<Sha256Hash, StoredBlock> notFoundCache = new LinkedHashMap<Sha256Hash, StoredBlock>() {
+    protected static final Object notFoundMarker = new Object();
+    protected LinkedHashMap<Sha256Hash, Object> notFoundCache = new LinkedHashMap<Sha256Hash, Object>() {
         @Override
-        protected boolean removeEldestEntry(Map.Entry<Sha256Hash, StoredBlock> entry) {
+        protected boolean removeEldestEntry(Map.Entry<Sha256Hash, Object> entry) {
             return size() > 100;  // This was chosen arbitrarily.
         }
     };
@@ -181,6 +182,7 @@ public class SPVBlockStore implements BlockStore {
         } finally { lock.unlock(); }
     }
 
+    @Nullable
     public StoredBlock get(Sha256Hash hash) throws BlockStoreException {
         final MappedByteBuffer buffer = this.buffer;
         if (buffer == null) throw new BlockStoreException("Store closed");

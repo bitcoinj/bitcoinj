@@ -15,6 +15,8 @@
  */
 package com.google.bitcoin.core;
 
+import javax.annotation.Nullable;
+
 /**
  * Represents a Message type that can be contained within another Message.  ChildMessages that have a cached
  * backing byte array need to invalidate their parent's caches as well as their own if they are modified.
@@ -24,7 +26,7 @@ package com.google.bitcoin.core;
 public abstract class ChildMessage extends Message {
     private static final long serialVersionUID = -7657113383624517931L;
 
-    private Message parent;
+    @Nullable private Message parent;
 
     protected ChildMessage() {
     }
@@ -47,13 +49,13 @@ public abstract class ChildMessage extends Message {
         super(params, msg, offset);
     }
 
-    public ChildMessage(NetworkParameters params, byte[] msg, int offset, Message parent, boolean parseLazy, boolean parseRetain, int length)
+    public ChildMessage(NetworkParameters params, byte[] msg, int offset, @Nullable Message parent, boolean parseLazy, boolean parseRetain, int length)
             throws ProtocolException {
         super(params, msg, offset, parseLazy, parseRetain, length);
         this.parent = parent;
     }
 
-    public void setParent(Message parent) {
+    public void setParent(@Nullable Message parent) {
         if (this.parent != null && this.parent != parent && parent != null) {
             // After old parent is unlinked it won't be able to receive notice if this ChildMessage
             // changes internally.  To be safe we invalidate the parent cache to ensure it rebuilds

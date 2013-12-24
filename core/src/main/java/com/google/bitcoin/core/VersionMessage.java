@@ -218,7 +218,7 @@ public class VersionMessage extends Message {
      */
     @Override
     byte[] getChecksum() {
-        return null;
+        throw new UnsupportedOperationException();
     }
 
     /**
@@ -226,6 +226,7 @@ public class VersionMessage extends Message {
      */
     @Override
     void setChecksum(byte[] checksum) {
+        throw new UnsupportedOperationException();
     }
 
     @Override

@@ -17,6 +17,7 @@ package com.google.bitcoin.net.discovery;
 
 import com.google.bitcoin.core.NetworkParameters;
 
+import javax.annotation.Nullable;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
@@ -42,6 +43,7 @@ public class SeedPeers implements PeerDiscovery {
      * @return InetSocketAddress - The address/port of the next node.
      * @throws PeerDiscoveryException
      */
+    @Nullable
     public InetSocketAddress getPeer() throws PeerDiscoveryException {
         try {
             return nextPeer();
@@ -50,6 +52,7 @@ public class SeedPeers implements PeerDiscovery {
         }
     }
 
+    @Nullable
     private InetSocketAddress nextPeer() throws UnknownHostException {
         if (pnseedIndex >= seedAddrs.length) return null;
         return new InetSocketAddress(convertAddress(seedAddrs[pnseedIndex++]),

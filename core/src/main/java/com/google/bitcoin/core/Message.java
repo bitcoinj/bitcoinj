@@ -380,7 +380,7 @@ public abstract class Message implements Serializable {
      * so BitcoinSerializer can avoid 2 instanceof checks + a casting.
      */
     public Sha256Hash getHash() {
-        return null;
+        throw new UnsupportedOperationException();
     }
 
     /**
@@ -388,8 +388,6 @@ public abstract class Message implements Serializable {
      * implemented in a subclass of ChildMessage lazy parsing may have no effect.
      *
      * This default implementation is a safe fall back that will ensure it returns a correct value by parsing the message.
-     *
-     * @return
      */
     public int getMessageSize() {
         if (length != UNKNOWN_LENGTH)
