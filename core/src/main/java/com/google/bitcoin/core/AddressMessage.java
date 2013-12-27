@@ -13,7 +13,8 @@ import java.util.List;
  */
 public class AddressMessage extends Message {
     private static final long serialVersionUID = 8058283864924679460L;
-    public static final long MAX_ADDRESSES = 1024;
+    /** The maximum number of addresses that can be in an AddressMessage as defined by the protocol */
+    public static final long MAX_ADDRESSES = 1000;
     private List<PeerAddress> addresses;
     private transient long numAddresses = -1;
 
@@ -56,6 +57,9 @@ public class AddressMessage extends Message {
         super(params, payload, 0, false, false, UNKNOWN_LENGTH);
     }
 
+    /**
+     * Creates a new AddressMessage with no addresses.
+     */
     public AddressMessage(NetworkParameters params) {
         super(params);
         numAddresses = 0;
