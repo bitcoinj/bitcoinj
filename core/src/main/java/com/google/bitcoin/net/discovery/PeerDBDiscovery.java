@@ -18,6 +18,7 @@ package com.google.bitcoin.net.discovery;
 
 import com.google.bitcoin.core.*;
 import com.google.common.annotations.VisibleForTesting;
+import net.jcip.annotations.GuardedBy;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
@@ -26,38 +27,59 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Logger;
 
 import static com.google.common.base.Preconditions.checkState;
 
 /**
- * Keeps a database of peers and acts as a peer discovery
+ * <p>A Peer discovery mechanism that keeps a database of peers which are announced by other peers and which we've
+ * connected to and returns a subset of those.</p>
+ *
+ * <p>It is important to use a peer db in addition to DNS seeds (via a {@link DnsDiscovery}) as it:<ul>
+ *     <li>Spreads load across the network better, instead of having all bitcoinj clients connect to a specific set of
+ *     (rotating) peers.</li>
+ *     <li>Prevents DNS seeds from (maliciously or accidentally) forcing you to connect to a specific set of nodes which
+ *     are conspiring to provide bad data.</li>
+ *     <li>Allows for future protocol changes which allow nodes to fully verify the chain without serving the entire
+ *     blockchain.</li>
+ * </ul></p>
+ *
+ * <p>The design is based pretty heavily on sipa/Bitcoin Core's addrman/addr.dat:
+ * <ul>
+ * <li>Addresses are stored in limited-size sets and thrown away randomly with weight given to addresses not seen in
+ * some time (ie no peers have announced them in some time and we have not successfully connected to them in some time).
+ * Unlike Bitcoin Core's addrman, we do not have separate groups of sets for addresses which are new and addresses which
+ * have been connected to in the past.</li>
+ * <li>Sets are indexed by three values: first the IP subnet of the peer which announced the given address, second by
+ * the address' IP subnet, and third by a random key which randomizes where collisions will happen. The random key and
+ * announcing peer subnet is used to select a group of 16 sets. The random key and IP's subnet are then used to select
+ * one of these 16 sets, to which the address is added.</li>
+ * <li>The random key is important as it prevents determinism and makes it impossible to predict which sets a given
+ * source subnet is able to get its addresses placed in. Thus, an attacker which wants to fill the address database with
+ * nodes it controls can only probabilistically fill all sets instead of being able to pick specific source IPs which
+ * allow it to place entries in all sets.</li>
+ * </ul></p>
  */
 public class PeerDBDiscovery implements PeerDiscovery {
     private static final org.slf4j.Logger log = LoggerFactory.getLogger(PeerDBDiscovery.class);
 
-    /**
-     * The design is based pretty heavily on sipa/Bitcoin Core's addrman/addr.dat:
-     *  * Addresses are stored in limited-size sets and thrown away randomly with weight given to addresses not seen in
-     *    some time (ie no peers have announced them in some time and we have note successfully connected to them in some
-     *    time). Unlike Bitcoin Core's addrman, we do not have separate groups of sets for addresses which are new and
-     *    addresses which have been connected to in the past.
-     *  * Sets are indexed by three values: first the IP subnet of the peer which announced the given address, second by
-     *    the address' IP subnet, and third by a secret key which randomizes where collisions will happen. The random
-     *    key and announcing peer subnet is used to select a group of 16 sets. The random key and IP's subnet are then
-     *    used to select one of these 16 sets, to which the address is added.
-     */
-    static final int SETS_PER_SOURCE = 16;
-    static final int TOTAL_SETS = 256;
-    static final int MAX_SET_SIZE = 128;
-    static final int ADDRESSES_RETURNED = 4096; // Way more than DNSSeeds will return, so that we can maybe hide them
-    static final int MAX_ADDRESSES_FACTOR = 8; // Only ever return at max 1/8th the total addresses we have
+    // Threading notes:
+    //  * In general all calls will come in on the USER_THREAD so we're probably OK to just ignore threading, but we
+    //    make some effort to ensure we are thread-safe against calls coming in via broken PeerGroup extensions.
+    //  * This means addAddress is synchronized so PeerData objects are created and updated atomically, however
+    //    PeerData.connected() is called outside of addAddress, so we have to ensure the fields it accesses are always
+    //    accessed in a thread-safe manner.
 
-    protected class PeerData {
-        public PeerAddress address;
-        public volatile long vTimeLastHeard = Utils.now().getTime(); // Last time we heard of this node (ie a peer told us about it/we connected to it)
-        public volatile long lastConnected = 0; // Last time we successfully connected to this node
-        public long triedSinceLastConnection = 0; // Number of times we've tried to connect to this node since the last success
+    @VisibleForTesting static final int SETS_PER_SOURCE = 16;
+    @VisibleForTesting static final int TOTAL_SETS = 256;
+    static final int MAX_SET_SIZE = 128;
+    private static final int ADDRESSES_RETURNED = 4096; // Way more than DNSSeeds will return, so that we can maybe hide them
+    private static final int MAX_ADDRESSES_FACTOR = 8; // Only ever return at max 1/8th the total addresses we have
+
+    @VisibleForTesting class PeerData {
+        @VisibleForTesting PeerAddress address;
+        @VisibleForTesting /*@GuardedBy("super")*/ volatile long vTimeLastHeard = Utils.currentTimeMillis(); // Last time we heard of this node (ie a peer told us about it/we connected to it)
+        @VisibleForTesting @GuardedBy("this") long lastConnected = 0; // Last time we successfully connected to this node
+        @VisibleForTesting @GuardedBy("this") long triedSinceLastConnection = 0; // Number of times we've tried to connect to this node since the last success
 
         PeerData(PeerAddress address) { this.address = address; }
 
@@ -80,46 +102,62 @@ public class PeerDBDiscovery implements PeerDiscovery {
 
         synchronized void connected() {
             triedSinceLastConnection = -1;
-            lastConnected = Utils.now().getTime();
+            lastConnected = Utils.currentTimeMillis();
         }
 
         synchronized void disconnected() {
             triedSinceLastConnection++;
         }
 
-        @Override public int hashCode() { return (int) (address.toSocketAddress().hashCode() ^ rotatingRandomKey); }
-        @Override public boolean equals(Object o) { return (o instanceof PeerData) && ((PeerData) o).address.toSocketAddress().equals(address.toSocketAddress()); }
+        synchronized boolean isBad() {
+            return (lastConnected == 0 && triedSinceLastConnection >= 3) || // Tried 3 times and never connected
+                    (lastConnected < Utils.currentTimeMillis() - TimeUnit.DAYS.toMillis(5) &&
+                            triedSinceLastConnection >= 5) || // Tried 5 times since last connection, which was > 5 days ago
+                    (vTimeLastHeard < Utils.currentTimeMillis() - TimeUnit.DAYS.toMillis(14)); // Haven't heard of node in 14 days
+        }
+
+        @Override public synchronized int hashCode() { return (int) (address.toSocketAddress().hashCode() ^ rotatingRandomKey); }
+        @Override public synchronized boolean equals(Object o) { return (o instanceof PeerData) && ((PeerData) o).address.toSocketAddress().equals(address.toSocketAddress()); }
     }
 
     @VisibleForTesting class AddressSet extends HashSet<PeerData> {
         @Override
         public boolean add(PeerData peer) {
-            if (size() >= MAX_SET_SIZE) {
+            if (size() == MAX_SET_SIZE) {
                 // Loop through our elements, throwing away ones which are considered useless
                 Iterator<PeerData> it = iterator();
                 while (it.hasNext()) {
-                    if (!peerGood(it.next()))
+                    PeerData peerToCheck = it.next();
+                    if (peerToCheck.isBad()) {
+                        log.debug("Removing bad node " + peerToCheck.address);
                         it.remove();
+                    }
                 }
-                if (size() >= MAX_SET_SIZE) {
+                if (size() == MAX_SET_SIZE) {
                     // If we're still too large, throw away an element selected based on rotatingRandomKey
                     it = iterator();
                     it.next(); it.remove();
                 }
             }
+            checkState(size() < MAX_SET_SIZE);
             return super.add(peer);
         }
     }
 
     private NetworkParameters params;
 
-    @VisibleForTesting List<AddressSet> addressBuckets = new ArrayList<AddressSet>(TOTAL_SETS);
-    @VisibleForTesting Map<InetAddress, PeerData> addressToSetMap = new HashMap<InetAddress, PeerData>(); // We never keep multiple entries for a peer on different ports
+    @VisibleForTesting @GuardedBy("this") List<AddressSet> addressBuckets = new ArrayList<AddressSet>(TOTAL_SETS);
+    // We never keep multiple entries for a peer on different ports as one of our primary goals it to get as diverse a set of peers as possible
+    @VisibleForTesting @GuardedBy("this") Map<InetAddress, PeerData> addressToSetMap = new HashMap<InetAddress, PeerData>();
     // Keep a static random key that is used to select set groups/sets and a rotating random key that changes on each restart
-    private long randomKey, rotatingRandomKey = new Random(Utils.now().getTime()).nextLong();
+    private long randomKey;
+    private long rotatingRandomKey = new Random(Utils.currentTimeMillis()).nextLong();
 
-    File db;
+    private final File db;
 
+    // Write some data representing the subnet address is in to out. Trying to figure out which subnet size we should
+    // use to ensure a single ISP/user cannot get in tons of address groups simply by switching IPs within their
+    // allocation.
     private void writeAddressGroup(PeerAddress address, OutputStream out) throws IOException {
         // We use a system similar to GetGroup() in Bitcoin Core, however we do not handle nearly as many cases for
         // address types which are rarely used (RFC6052) and a few which are used more commonly (Teredo, 6to4).
@@ -157,6 +195,9 @@ public class PeerDBDiscovery implements PeerDiscovery {
             addressToSetMap.put(address.getAddr(), peer);
 
             try {
+                // We write out information needed and use a cryptographic hash to ensure there are no sets of IP groups
+                // which have a higher probability of filling all sets than any other sets of groups (and because we do
+                // not use a secure random value for randomKey).
                 // setSelector is used to select the set used within the possible sets for a given source group
                 // it is used % SETS_PER_SOURCE as there should only be SETS_PER_SOURCE sets used per source group
                 ByteArrayOutputStream setWithinGroupSelector = new UnsafeByteArrayOutputStream();
@@ -171,10 +212,11 @@ public class PeerDBDiscovery implements PeerDiscovery {
 
                 addressBuckets.get(Math.abs(Sha256Hash.create(setSelector.toByteArray()).hashCode()) % TOTAL_SETS).add(peer);
             } catch (IOException e) {
-                e.printStackTrace();
+                throw new RuntimeException(e);
             }
         } else {
-            // We only keep one entry per IP, so if the port differs we have to either throw peer away or replace it
+            // We only keep one entry per IP to ensure our set of peers is as diverse as possible, so if the port
+            // differs we have to either throw peer away or replace it
             if (address.getPort() != peer.address.getPort()) {
                 if (from.getAddr().equals(address.getAddr())) // If the node announced itself or we connected, replace
                     peer.address = address;
@@ -184,12 +226,12 @@ public class PeerDBDiscovery implements PeerDiscovery {
             // Pick up new service bits
             peer.address.setServices(peer.address.getServices().or(address.getServices()));
         }
-        peer.vTimeLastHeard = Utils.now().getTime();
+        peer.vTimeLastHeard = Utils.currentTimeMillis();
         return peer;
     }
 
     /**
-     * Creates a PeerDB for the given peergoup, adding this as a PeerDiscovery to the given group.
+     * Creates a PeerDB for the given {@link PeerGroup}, adding this as a PeerDiscovery to the given group.
      */
     public PeerDBDiscovery(NetworkParameters params, File db, PeerGroup group) {
         this.params = params;
@@ -199,10 +241,19 @@ public class PeerDBDiscovery implements PeerDiscovery {
 
         boolean doInit = !db.exists();
         if (!doInit)
-            doInit = !loadFromFile(db);
+            doInit = !maybeLoadFromFile(db);
         if (doInit)
-            randomKey = new Random(Utils.now().getTime()).nextLong();
+            randomKey = new Random(Utils.currentTimeMillis()).nextLong();
 
+        listenForPeers(group);
+        group.addPeerDiscovery(this);
+    }
+
+    /**
+     * Attaches a {@link PeerEventListener} to the given {@link PeerGroup} which listens for {@link AddressMessage}
+     * announcements and peer connections to track known peers.
+     */
+    public void listenForPeers(PeerGroup group) {
         group.addEventListener(new AbstractPeerEventListener() {
             @Override
             public Message onPreMessageReceived(Peer p, Message m) {
@@ -218,17 +269,16 @@ public class PeerDBDiscovery implements PeerDiscovery {
                 // When PeerGroups accept incoming connections, we should skip this and onPeerDisconnected
                 addAddress(p.getAddress(), p.getAddress()).connected();
             }
-            
+
             @Override
             public void onPeerDisconnected(Peer p, int peerCount) {
                 addAddress(p.getAddress(), p.getAddress()).disconnected();
             }
         });
-        group.addPeerDiscovery(this);
     }
 
     @Override
-    public InetSocketAddress[] getPeers(long timeoutValue, TimeUnit timeoutUnit) throws PeerDiscoveryException {
+    public synchronized InetSocketAddress[] getPeers(long timeoutValue, TimeUnit timeoutUnit) throws PeerDiscoveryException {
         int addressesToReturn = Math.min(ADDRESSES_RETURNED, addressToSetMap.size()/MAX_ADDRESSES_FACTOR);
         InetSocketAddress[] addresses = new InetSocketAddress[addressesToReturn];
         //TODO: There is a better way to get a random set here
@@ -237,19 +287,12 @@ public class PeerDBDiscovery implements PeerDiscovery {
         Iterator<PeerData> iterator = peerList.iterator();
         for (int i = 0; i < addressesToReturn; i++) {
             PeerData peer = iterator.next();
-            while (!peerGood(peer) && iterator.hasNext())
+            while (peer.isBad() && iterator.hasNext())
                 peer = iterator.next();
             if (iterator.hasNext())
                 addresses[i] = peer.address.toSocketAddress();
         }
         return addresses;
-    }
-
-    protected boolean peerGood(PeerData peerData) {
-        return (peerData.lastConnected != 0 || peerData.triedSinceLastConnection < 3) && // Tried 3 times and never connected
-                (peerData.lastConnected > Utils.now().getTime() - TimeUnit.DAYS.toSeconds(5) ||
-                        peerData.triedSinceLastConnection < 5) && // Tried 5 times since last connection, which was > 5 days ago
-                (peerData.vTimeLastHeard > Utils.now().getTime() - TimeUnit.DAYS.toSeconds(14)); // Haven't heard of node in 14 days
     }
 
     @Override public void shutdown() {
@@ -260,13 +303,16 @@ public class PeerDBDiscovery implements PeerDiscovery {
         }
     }
 
-    private boolean loadFromFile(File f) {
+    @GuardedBy("this")
+    private boolean maybeLoadFromFile(File f) {
         try {
             InputStream s = new FileInputStream(f);
-            byte[] randomKeyBytes = new byte[8];
-            if (s.read(randomKeyBytes) != randomKeyBytes.length)
+            byte[] versionAndRandomKeyBytes = new byte[12];
+            if (s.read(versionAndRandomKeyBytes) != versionAndRandomKeyBytes.length)
                 return false;
-            randomKey = Utils.readInt64(randomKeyBytes, 0);
+            if (Utils.readUint32(versionAndRandomKeyBytes, 0) != 1)
+                return false; // Newer version
+            randomKey = Utils.readInt64(versionAndRandomKeyBytes, 4);
             for (int i = 0; i < TOTAL_SETS; i++) {
                 byte[] addressCountBytes = new byte[4];
                 checkState(s.read(addressCountBytes) == addressCountBytes.length);
@@ -282,6 +328,7 @@ public class PeerDBDiscovery implements PeerDiscovery {
         } catch (FileNotFoundException e) {
             return false;
         } catch (IOException e) {
+            log.error("Error reading PeerDB from file", e);
             return false;
         }
     }
@@ -289,6 +336,7 @@ public class PeerDBDiscovery implements PeerDiscovery {
     //TODO Call on a regular basis
     private synchronized void saveToFile(File f) throws IOException {
         OutputStream s = new FileOutputStream(f);
+        Utils.uint32ToByteStreamLE(1, s); // Version tag
         Utils.int64ToByteStreamLE(randomKey, s);
         for (int i = 0; i < TOTAL_SETS; i++) {
             Utils.uint32ToByteStreamLE(addressBuckets.get(i).size(), s);
