@@ -13,7 +13,7 @@ import java.util.List;
  */
 public class AddressMessage extends Message {
     private static final long serialVersionUID = 8058283864924679460L;
-    private static final long MAX_ADDRESSES = 1024;
+    public static final long MAX_ADDRESSES = 1024;
     private List<PeerAddress> addresses;
     private transient long numAddresses = -1;
 
@@ -54,6 +54,12 @@ public class AddressMessage extends Message {
 
     AddressMessage(NetworkParameters params, byte[] payload) throws ProtocolException {
         super(params, payload, 0, false, false, UNKNOWN_LENGTH);
+    }
+
+    public AddressMessage(NetworkParameters params) {
+        super(params);
+        numAddresses = 0;
+        addresses = new ArrayList<PeerAddress>((int) numAddresses);
     }
 
     @Override
