@@ -303,15 +303,18 @@ public class PeerDBDiscovery implements PeerDiscovery {
         }
     }
 
-    @GuardedBy("this")
-    private boolean maybeLoadFromFile(File f) {
+    private synchronized boolean maybeLoadFromFile(File f) {
         try {
             InputStream s = new FileInputStream(f);
             byte[] versionAndRandomKeyBytes = new byte[12];
-            if (s.read(versionAndRandomKeyBytes) != versionAndRandomKeyBytes.length)
+            if (s.read(versionAndRandomKeyBytes) != versionAndRandomKeyBytes.length) {
+                log.warn("Failed to read PeerDB Header");
                 return false;
-            if (Utils.readUint32(versionAndRandomKeyBytes, 0) != 1)
+            }
+            if (Utils.readUint32(versionAndRandomKeyBytes, 0) != 1) {
+                log.warn("PeerDB is a different version (expected version 1 got " + Utils.readUint32(versionAndRandomKeyBytes, 0) + ")");
                 return false; // Newer version
+            }
             randomKey = Utils.readInt64(versionAndRandomKeyBytes, 4);
             for (int i = 0; i < TOTAL_SETS; i++) {
                 byte[] addressCountBytes = new byte[4];
