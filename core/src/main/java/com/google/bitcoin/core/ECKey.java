@@ -52,9 +52,6 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
-// TODO: This class is quite a mess by now. Once users are migrated away from Java serialization for the wallets,
-// refactor this to have better internal layout and a more consistent API.
-
 /**
  * <p>Represents an elliptic curve public and (optionally) private key, usable for digital signatures but not encryption.
  * Creating a new ECKey with the empty constructor will generate a new random keypair. Other constructors can be used
@@ -94,9 +91,9 @@ public class ECKey implements Serializable {
 
     // The two parts of the key. If "priv" is set, "pub" can always be calculated. If "pub" is set but not "priv", we
     // can only verify signatures not make them.
-    // TODO: Redesign this class to use consistent internals and more efficient serialization.
-    private BigInteger priv;
-    private byte[] pub;
+    private final BigInteger priv;  // A field element.
+    private final byte[] pub;
+
     // Creation time of the key in seconds since the epoch, or zero if the key was deserialized from a version that did
     // not have this field.
     private long creationTimeSeconds;
@@ -191,7 +188,6 @@ public class ECKey implements Serializable {
         if (privKey == null && pubKey == null)
             throw new IllegalArgumentException("ECKey requires at least private or public key");
         this.priv = privKey;
-        this.pub = null;
         if (pubKey == null) {
             // Derive public from private.
             this.pub = publicKeyFromPrivate(privKey, compressed);
@@ -312,19 +308,6 @@ public class ECKey implements Serializable {
     public Address toAddress(NetworkParameters params) {
         byte[] hash160 = Utils.sha256hash160(pub);
         return new Address(params, hash160);
-    }
-
-    /**
-     * Clears all the ECKey private key contents from memory.
-     * WARNING - this method irreversibly deletes the private key information.
-     * It turns the ECKEy into a watch only key.
-     */
-    public void clearPrivateKey() {
-       priv = BigInteger.ZERO;
-
-       if (encryptedPrivateKey != null) {
-           encryptedPrivateKey.clear();
-       }
     }
 
     /**

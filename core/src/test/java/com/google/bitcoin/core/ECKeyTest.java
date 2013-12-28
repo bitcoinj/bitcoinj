@@ -368,8 +368,6 @@ public class ECKeyTest {
         ECKey encryptedKey = (new ECKey()).encrypt(keyCrypter, keyCrypter.deriveKey(PASSWORD1));
 
         checkSomeBytesAreNonZero(unencryptedKey.getPrivKeyBytes());
-        unencryptedKey.clearPrivateKey();
-        checkAllBytesAreZero(unencryptedKey.getPrivKeyBytes());
 
         // The encryptedPrivateKey should be null in an unencrypted ECKey anyhow but check all the same.
         assertTrue(unencryptedKey.getEncryptedPrivateKey() == null);
@@ -377,10 +375,6 @@ public class ECKeyTest {
         checkSomeBytesAreNonZero(encryptedKey.getPrivKeyBytes());
         checkSomeBytesAreNonZero(encryptedKey.getEncryptedPrivateKey().getEncryptedBytes());
         checkSomeBytesAreNonZero(encryptedKey.getEncryptedPrivateKey().getInitialisationVector());
-        encryptedKey.clearPrivateKey();
-        checkAllBytesAreZero(encryptedKey.getPrivKeyBytes());
-        checkAllBytesAreZero(encryptedKey.getEncryptedPrivateKey().getEncryptedBytes());
-        checkAllBytesAreZero(encryptedKey.getEncryptedPrivateKey().getInitialisationVector());
     }
 
     @Test

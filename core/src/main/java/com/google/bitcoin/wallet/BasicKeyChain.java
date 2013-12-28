@@ -335,14 +335,6 @@ public class BasicKeyChain implements EncryptableKeyChain {
                     throw new KeyCrypterException("The key " + key.toString() + " cannot be successfully decrypted after encryption so aborting wallet encryption.");
                 cryptedKeys.add(encryptedKey);
             }
-
-            // Now ready to use the encrypted keychain so go through the old keychain clearing all the unencrypted
-            // private keys. This is to avoid the possibility of key recovery from memory.
-            for (ECKey key : hashToKeys.values()) {
-                if (!key.isEncrypted()) {
-                    key.clearPrivateKey();
-                }
-            }
             replaceKeysLocked(keyCrypter, cryptedKeys);
         } finally {
             lock.unlock();

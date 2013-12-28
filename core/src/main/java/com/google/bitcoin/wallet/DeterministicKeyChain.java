@@ -18,7 +18,6 @@ package com.google.bitcoin.wallet;
 
 import com.google.bitcoin.core.ECKey;
 import com.google.bitcoin.crypto.*;
-import com.google.bitcoin.store.UnreadableWalletException;
 import com.google.bitcoin.utils.Threading;
 import com.google.common.collect.ImmutableList;
 import org.bitcoinj.wallet.Protos;
@@ -105,7 +104,7 @@ public class DeterministicKeyChain implements KeyChain {
     public List<String> toMnemonicCode(MnemonicCode code) {
         try {
             return code.toMnemonic(seed);
-        } catch (MnemonicLengthException e) {
+        } catch (MnemonicException.MnemonicLengthException e) {
             throw new RuntimeException(e);  // Cannot happen.
         }
     }

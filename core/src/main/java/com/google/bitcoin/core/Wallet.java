@@ -2831,14 +2831,6 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
                 }
             }
 
-            // Now ready to use the encrypted keychain so go through the old keychain clearing all the unencrypted private keys.
-            // (This is to avoid the possibility of key recovery from memory).
-            for (ECKey key : keychain) {
-                if (!key.isEncrypted()) {
-                    key.clearPrivateKey();
-                }
-            }
-
             // Replace the old keychain with the encrypted one.
             keychain = encryptedKeyChain;
 
