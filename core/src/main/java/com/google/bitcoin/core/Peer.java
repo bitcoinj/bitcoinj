@@ -1268,12 +1268,12 @@ public class Peer extends PeerSocketHandler {
         public PendingPing(long nonce) {
             future = SettableFuture.create();
             this.nonce = nonce;
-            startTimeMsec = Utils.now().getTime();
+            startTimeMsec = Utils.currentTimeMillis();
         }
 
         public void complete() {
             checkNotNull(future, "Already completed");
-            Long elapsed = Utils.now().getTime() - startTimeMsec;
+            Long elapsed = Utils.currentTimeMillis() - startTimeMsec;
             Peer.this.addPingTimeData(elapsed);
             log.debug("{}: ping time is {} msec", Peer.this.toString(), elapsed);
             future.set(elapsed);

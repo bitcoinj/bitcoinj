@@ -479,7 +479,7 @@ public class ChannelConnectionTest extends TestWithWallet {
         server.receiveMessage(pair.clientRecorder.checkNextMsg(MessageType.CLIENT_VERSION));
         client.receiveMessage(pair.serverRecorder.checkNextMsg(MessageType.SERVER_VERSION));
         client.receiveMessage(Protos.TwoWayChannelMessage.newBuilder()
-                .setInitiate(Protos.Initiate.newBuilder().setExpireTimeSecs(Utils.now().getTime() / 1000 + 60 * 60 * 48)
+                .setInitiate(Protos.Initiate.newBuilder().setExpireTimeSecs(Utils.currentTimeMillis() / 1000 + 60 * 60 * 48)
                         .setMinAcceptedChannelSize(100)
                         .setMultisigKey(ByteString.copyFrom(new ECKey().getPubKey()))
                         .setMinPayment(Transaction.MIN_NONDUST_OUTPUT.longValue()))
@@ -504,7 +504,7 @@ public class ChannelConnectionTest extends TestWithWallet {
         server.receiveMessage(pair.clientRecorder.checkNextMsg(MessageType.CLIENT_VERSION));
         client.receiveMessage(pair.serverRecorder.checkNextMsg(MessageType.SERVER_VERSION));
         client.receiveMessage(Protos.TwoWayChannelMessage.newBuilder()
-                .setInitiate(Protos.Initiate.newBuilder().setExpireTimeSecs(Utils.now().getTime() / 1000)
+                .setInitiate(Protos.Initiate.newBuilder().setExpireTimeSecs(Utils.currentTimeMillis() / 1000)
                         .setMinAcceptedChannelSize(Utils.COIN.add(BigInteger.ONE).longValue())
                         .setMultisigKey(ByteString.copyFrom(new ECKey().getPubKey()))
                         .setMinPayment(Transaction.MIN_NONDUST_OUTPUT.longValue()))
@@ -530,7 +530,7 @@ public class ChannelConnectionTest extends TestWithWallet {
         server.receiveMessage(pair.clientRecorder.checkNextMsg(MessageType.CLIENT_VERSION));
         client.receiveMessage(pair.serverRecorder.checkNextMsg(MessageType.SERVER_VERSION));
         client.receiveMessage(Protos.TwoWayChannelMessage.newBuilder()
-                .setInitiate(Protos.Initiate.newBuilder().setExpireTimeSecs(Utils.now().getTime() / 1000)
+                .setInitiate(Protos.Initiate.newBuilder().setExpireTimeSecs(Utils.currentTimeMillis() / 1000)
                         .setMinAcceptedChannelSize(Utils.COIN.add(BigInteger.ONE).longValue())
                         .setMultisigKey(ByteString.copyFrom(new ECKey().getPubKey()))
                         .setMinPayment(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE.longValue()))
@@ -553,7 +553,7 @@ public class ChannelConnectionTest extends TestWithWallet {
         client.receiveMessage(pair.serverRecorder.checkNextMsg(MessageType.SERVER_VERSION));
         try {
             client.receiveMessage(Protos.TwoWayChannelMessage.newBuilder()
-                    .setInitiate(Protos.Initiate.newBuilder().setExpireTimeSecs(Utils.now().getTime() / 1000)
+                    .setInitiate(Protos.Initiate.newBuilder().setExpireTimeSecs(Utils.currentTimeMillis() / 1000)
                             .setMinAcceptedChannelSize(Utils.CENT.longValue())
                             .setMultisigKey(ByteString.copyFrom(new ECKey().getPubKey()))
                             .setMinPayment(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE.longValue()))

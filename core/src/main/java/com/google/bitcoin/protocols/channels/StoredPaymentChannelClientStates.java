@@ -94,7 +94,7 @@ public class StoredPaymentChannelClientStates implements WalletExtension {
         lock.lock();
         try {
             final Set<StoredClientChannel> setChannels = mapChannels.get(id);
-            final long nowSeconds = Utils.now().getTime() / 1000;
+            final long nowSeconds = Utils.currentTimeMillis() / 1000;
             int earliestTime = Integer.MAX_VALUE;
             for (StoredClientChannel channel : setChannels) {
                 synchronized (channel) {
@@ -177,7 +177,7 @@ public class StoredPaymentChannelClientStates implements WalletExtension {
                     announcePeerGroup.broadcastTransaction(channel.refund);
                 }
                 // Add the difference between real time and Utils.now() so that test-cases can use a mock clock.
-            }, new Date(channel.expiryTimeSeconds() * 1000 + (System.currentTimeMillis() - Utils.now().getTime())));
+            }, new Date(channel.expiryTimeSeconds() * 1000 + (System.currentTimeMillis() - Utils.currentTimeMillis())));
         } finally {
             lock.unlock();
         }

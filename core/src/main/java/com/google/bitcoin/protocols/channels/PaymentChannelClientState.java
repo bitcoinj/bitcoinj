@@ -364,7 +364,7 @@ public class PaymentChannelClientState {
      * storage and throwing an {@link IllegalStateException} if it is.
      */
     public synchronized void checkNotExpired() {
-        if (Utils.now().getTime()/1000 > expiryTime) {
+        if (Utils.currentTimeMillis()/1000 > expiryTime) {
             state = State.EXPIRED;
             disconnectFromChannel();
             throw new IllegalStateException("Channel expired");

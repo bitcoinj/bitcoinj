@@ -113,7 +113,7 @@ public class PeerAddress extends ChildMessage {
             //TODO this appears to be dynamic because the client only ever sends out it's own address
             //so assumes itself to be up.  For a fuller implementation this needs to be dynamic only if
             //the address refers to this client.
-            int secs = (int) (Utils.now().getTime() / 1000);
+            int secs = (int) (Utils.currentTimeMillis() / 1000);
             uint32ToByteStreamLE(secs, stream);
         }
         uint64ToByteStreamLE(services, stream);  // nServices.
