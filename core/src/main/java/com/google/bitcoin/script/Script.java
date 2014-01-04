@@ -72,7 +72,7 @@ public class Script {
     // Used from ScriptBuilder.
     Script(List<ScriptChunk> chunks) {
         this.chunks = Collections.unmodifiableList(new ArrayList<ScriptChunk>(chunks));
-        creationTimeSeconds = Utils.now().getTime() / 1000;
+        creationTimeSeconds = Utils.currentTimeMillis() / 1000;
     }
 
     /**
@@ -83,7 +83,7 @@ public class Script {
     public Script(byte[] programBytes) throws ScriptException {
         program = programBytes;
         parse(programBytes);
-        creationTimeSeconds = Utils.now().getTime() / 1000;
+        creationTimeSeconds = Utils.currentTimeMillis() / 1000;
     }
 
     public Script(byte[] programBytes, long creationTimeSeconds) throws ScriptException {

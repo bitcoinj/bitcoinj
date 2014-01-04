@@ -178,7 +178,7 @@ public class TestUtils {
     }
 
     public static BlockPair createFakeBlock(BlockStore blockStore, Transaction... transactions) {
-        return createFakeBlock(blockStore, Utils.now().getTime() / 1000, transactions);
+        return createFakeBlock(blockStore, Utils.currentTimeMillis() / 1000, transactions);
     }
 
     public static Block makeSolvedTestBlock(BlockStore blockStore, Address coinsTo) throws BlockStoreException {
