@@ -2039,7 +2039,7 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
      * Same as {@link #addWatchedAddress(Address, long)} with the current time as the creation time.
      */
     public boolean addWatchedAddress(final Address address) {
-        long now = Utils.now().getTime() / 1000;
+        long now = Utils.currentTimeMillis() / 1000;
         return addWatchedAddresses(Lists.newArrayList(address), now) == 1;
     }
 
@@ -2577,7 +2577,7 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
             for (Script script : watchedScripts)
                 earliestTime = Math.min(script.getCreationTimeSeconds(), earliestTime);
             if (earliestTime == Long.MAX_VALUE)
-                return Utils.now().getTime() / 1000;
+                return Utils.currentTimeMillis() / 1000;
             return earliestTime;
         } finally {
             lock.unlock();

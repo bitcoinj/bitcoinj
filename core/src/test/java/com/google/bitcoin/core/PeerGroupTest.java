@@ -338,7 +338,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         // Check the fast catchup time was initialized to something around the current runtime minus a week.
         // The wallet was already added to the peer in setup.
         final int WEEK = 86400 * 7;
-        final long now = Utils.now().getTime() / 1000;
+        final long now = Utils.currentTimeMillis() / 1000;
         assertTrue(peerGroup.getFastCatchupTimeSecs() > now - WEEK - 10000);
         Wallet w2 = new Wallet(params);
         ECKey key1 = new ECKey();

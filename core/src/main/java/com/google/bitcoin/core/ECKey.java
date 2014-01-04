@@ -131,7 +131,7 @@ public class ECKey implements Serializable {
         ECPoint compressed = compressPoint(uncompressed);
         pub = compressed.getEncoded();
 
-        creationTimeSeconds = Utils.now().getTime() / 1000;
+        creationTimeSeconds = Utils.currentTimeMillis() / 1000;
     }
 
     private static ECPoint compressPoint(ECPoint uncompressed) {
