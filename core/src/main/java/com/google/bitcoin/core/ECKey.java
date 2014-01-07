@@ -92,7 +92,7 @@ public class ECKey implements Serializable {
     // The two parts of the key. If "priv" is set, "pub" can always be calculated. If "pub" is set but not "priv", we
     // can only verify signatures not make them.
     private final BigInteger priv;  // A field element.
-    private final byte[] pub;
+    private final ECPoint pub;
 
     // Creation time of the key in seconds since the epoch, or zero if the key was deserialized from a version that did
     // not have this field.
@@ -126,9 +126,7 @@ public class ECKey implements Serializable {
         // Unfortunately Bouncy Castle does not let us explicitly change a point to be compressed, even though it
         // could easily do so. We must re-build it here so the ECPoints withCompression flag can be set to true.
         ECPoint uncompressed = pubParams.getQ();
-        ECPoint compressed = compressPoint(uncompressed);
-        pub = compressed.getEncoded();
-
+        pub = compressPoint(uncompressed);
         creationTimeSeconds = Utils.currentTimeMillis() / 1000;
     }
 
@@ -190,12 +188,15 @@ public class ECKey implements Serializable {
         this.priv = privKey;
         if (pubKey == null) {
             // Derive public from private.
-            this.pub = publicKeyFromPrivate(privKey, compressed);
+            ECPoint point = CURVE.getG().multiply(privKey);
+            if (compressed)
+                point = compressPoint(point);
+            this.pub = point;
         } else {
             // We expect the pubkey to be in regular encoded form, just as a BigInteger. Therefore the first byte is
             // a special marker byte.
             // TODO: This is probably not a useful API and may be confusing.
-            this.pub = pubKey;
+            this.pub = CURVE.getCurve().decodePoint(pubKey);
         }
     }
 
@@ -222,6 +223,7 @@ public class ECKey implements Serializable {
      * implementation in its wallet storage format.
      */
     public byte[] toASN1() {
+        checkState(priv != null, "Private key bytes not available, cannot serialize to ASN.1");
         try {
             ByteArrayOutputStream baos = new ByteArrayOutputStream(400);
 
@@ -257,7 +259,7 @@ public class ECKey implements Serializable {
     /** Gets the hash160 form of the public key (as seen in addresses). */
     public byte[] getPubKeyHash() {
         if (pubKeyHash == null)
-            pubKeyHash = Utils.sha256hash160(this.pub);
+            pubKeyHash = Utils.sha256hash160(this.pub.getEncoded());
         return pubKeyHash;
     }
 
@@ -266,19 +268,19 @@ public class ECKey implements Serializable {
      * as the pubKeyHash/address.
      */
     public byte[] getPubKey() {
-        return pub;
+        return pub.getEncoded();
     }
 
     /**
      * Returns whether this key is using the compressed form or not. Compressed pubkeys are only 33 bytes, not 64.
      */
     public boolean isCompressed() {
-        return pub.length == 33;
+        return pub.isCompressed();
     }
 
     public String toString() {
         StringBuilder b = new StringBuilder();
-        b.append("pub:").append(Utils.bytesToHexString(pub));
+        b.append("pub:").append(Utils.bytesToHexString(pub.getEncoded()));
         if (creationTimeSeconds != 0) {
             b.append(" timestamp:").append(creationTimeSeconds);
         }
@@ -306,8 +308,7 @@ public class ECKey implements Serializable {
      * the RIPEMD-160 hash of the public key and is not the public key itself (which is too large to be convenient).
      */
     public Address toAddress(NetworkParameters params) {
-        byte[] hash160 = Utils.sha256hash160(pub);
-        return new Address(params, hash160);
+        return new Address(params, getPubKeyHash());
     }
 
     /**
@@ -436,7 +437,7 @@ public class ECKey implements Serializable {
 
             privateKeyForSigning = new BigInteger(1, keyCrypter.decrypt(encryptedPrivateKey, aesKey));
             // Check encryption was correct.
-            if (!Arrays.equals(pub, publicKeyFromPrivate(privateKeyForSigning, isCompressed())))
+            if (!Arrays.equals(pub.getEncoded(), publicKeyFromPrivate(privateKeyForSigning, isCompressed())))
                 throw new KeyCrypterException("Could not decrypt bytes");
         } else {
             // No decryption of private key required.
@@ -515,13 +516,6 @@ public class ECKey implements Serializable {
      */
     public boolean verify(Sha256Hash sigHash, ECDSASignature signature) {
         return ECKey.verify(sigHash.getBytes(), signature, getPubKey());
-    }
-
-    /**
-     * Returns true if this pubkey is canonical, i.e. the correct length taking into account compression.
-     */
-    public boolean isPubKeyCanonical() {
-        return isPubKeyCanonical(pub);
     }
 
     /**
@@ -606,7 +600,7 @@ public class ECKey implements Serializable {
         int recId = -1;
         for (int i = 0; i < 4; i++) {
             ECKey k = ECKey.recoverFromSignature(i, sig, hash, isCompressed());
-            if (k != null && Arrays.equals(k.pub, pub)) {
+            if (k != null && k.pub.equals(pub)) {
                 recId = i;
                 break;
             }
@@ -673,7 +667,7 @@ public class ECKey implements Serializable {
      */
     public void verifyMessage(String message, String signatureBase64) throws SignatureException {
         ECKey key = ECKey.signedMessageToKey(message, signatureBase64);
-        if (!Arrays.equals(key.getPubKey(), pub))
+        if (!key.pub.equals(pub))
             throw new SignatureException("Signature did not match for message");
     }
 
@@ -810,7 +804,7 @@ public class ECKey implements Serializable {
         if (creationTimeSeconds != ecKey.creationTimeSeconds) return false;
         if (keyCrypter != null ? !keyCrypter.equals(ecKey.keyCrypter) : ecKey.keyCrypter != null) return false;
         if (priv != null && !priv.equals(ecKey.priv)) return false;
-        if (!Arrays.equals(pub, ecKey.pub)) return false;
+        if (pub != null && !pub.equals(ecKey.pub)) return false;
 
         return true;
     }
@@ -819,7 +813,8 @@ public class ECKey implements Serializable {
     public int hashCode() {
         // Public keys are random already so we can just use a part of them as the hashcode. Read from the start to
         // avoid picking up the type code (compressed vs uncompressed) which is tacked on the end.
-        return (pub[0] & 0xFF) | ((pub[1] & 0xFF) << 8) | ((pub[2] & 0xFF) << 16) | ((pub[3] & 0xFF) << 24);
+        byte[] bits = getPubKey();
+        return (bits[0] & 0xFF) | ((bits[1] & 0xFF) << 8) | ((bits[2] & 0xFF) << 16) | ((bits[3] & 0xFF) << 24);
     }
 
     /**

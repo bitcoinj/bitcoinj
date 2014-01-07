@@ -175,8 +175,11 @@ public class PaymentChannelClient implements IPaymentChannelClient {
             return CloseReason.SERVER_REQUESTED_TOO_MUCH_VALUE;
         }
 
+        final byte[] pubKeyBytes = initiate.getMultisigKey().toByteArray();
+        if (!ECKey.isPubKeyCanonical(pubKeyBytes))
+            throw new VerificationException("Server gave us a non-canonical public key, protocol error.");
         state = new PaymentChannelClientState(wallet, myKey,
-                new ECKey(null, initiate.getMultisigKey().toByteArray()),
+                new ECKey(null, pubKeyBytes),
                 contractValue, initiate.getExpireTimeSecs());
         try {
             state.initiate();

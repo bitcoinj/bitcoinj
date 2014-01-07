@@ -36,6 +36,7 @@ import java.io.File;
 import java.math.BigInteger;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
+import java.util.Arrays;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -562,6 +563,24 @@ public class ChannelConnectionTest extends TestWithWallet {
         } catch (InsufficientMoneyException expected) {
             // This should be thrown.
         }
+    }
+
+    @Test
+    public void testClientRefusesNonCanonicalKey() throws Exception {
+        ChannelTestUtils.RecordingPair pair = ChannelTestUtils.makeRecorders(serverWallet, mockBroadcaster);
+        PaymentChannelServer server = pair.server;
+        PaymentChannelClient client = new PaymentChannelClient(wallet, myKey, Utils.COIN, Sha256Hash.ZERO_HASH, pair.clientRecorder);
+        client.connectionOpen();
+        server.connectionOpen();
+        server.receiveMessage(pair.clientRecorder.checkNextMsg(MessageType.CLIENT_VERSION));
+        client.receiveMessage(pair.serverRecorder.checkNextMsg(MessageType.SERVER_VERSION));
+        Protos.TwoWayChannelMessage.Builder initiateMsg = Protos.TwoWayChannelMessage.newBuilder(pair.serverRecorder.checkNextMsg(MessageType.INITIATE));
+        ByteString brokenKey = initiateMsg.getInitiate().getMultisigKey();
+        brokenKey = ByteString.copyFrom(Arrays.copyOf(brokenKey.toByteArray(), brokenKey.size() + 1));
+        initiateMsg.getInitiateBuilder().setMultisigKey(brokenKey);
+        client.receiveMessage(initiateMsg.build());
+        pair.clientRecorder.checkNextMsg(MessageType.ERROR);
+        assertEquals(CloseReason.REMOTE_SENT_INVALID_MESSAGE, pair.clientRecorder.q.take());
     }
 
     @Test

@@ -973,12 +973,15 @@ public class Block extends Message {
 
     static final byte[] EMPTY_BYTES = new byte[32];
 
+    // It's pretty weak to have this around at runtime: fix later.
+    private static final byte[] pubkeyForTesting = new ECKey().getPubKey();
+
     /**
      * Returns a solved block that builds on top of this one. This exists for unit tests.
      */
     @VisibleForTesting
     public Block createNextBlock(Address to, long time) {
-        return createNextBlock(to, null, time, EMPTY_BYTES, Utils.toNanoCoins(50, 0));
+        return createNextBlock(to, null, time, pubkeyForTesting, Utils.toNanoCoins(50, 0));
     }
 
     /**
@@ -1029,12 +1032,12 @@ public class Block extends Message {
 
     @VisibleForTesting
     public Block createNextBlock(@Nullable Address to, TransactionOutPoint prevOut) {
-        return createNextBlock(to, prevOut, Utils.currentTimeMillis() / 1000, EMPTY_BYTES, Utils.toNanoCoins(50, 0));
+        return createNextBlock(to, prevOut, Utils.currentTimeMillis(), pubkeyForTesting, Utils.toNanoCoins(50, 0));
     }
 
     @VisibleForTesting
     public Block createNextBlock(@Nullable Address to, BigInteger value) {
-        return createNextBlock(to, null, Utils.currentTimeMillis() / 1000, EMPTY_BYTES, value);
+        return createNextBlock(to, null, Utils.currentTimeMillis() / 1000, pubkeyForTesting, value);
     }
 
     @VisibleForTesting
