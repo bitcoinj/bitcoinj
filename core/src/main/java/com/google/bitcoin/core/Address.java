@@ -56,7 +56,7 @@ public class Address extends VersionedChecksummedBytes {
     }
 
     /** Returns an Address that represents the given P2SH script hash. */
-    public static Address fromP2SHScript(NetworkParameters params, byte[] hash160) {
+    public static Address fromP2SHHash(NetworkParameters params, byte[] hash160) {
         try {
             return new Address(params, params.getP2SHHeader(), hash160);
         } catch (WrongNetworkException e) {
@@ -67,7 +67,7 @@ public class Address extends VersionedChecksummedBytes {
     /** Returns an Address that represents the script hash extracted from the given scriptPubKey */
     public static Address fromP2SHScript(NetworkParameters params, Script scriptPubKey) {
         checkArgument(scriptPubKey.isPayToScriptHash(), "Not a P2SH script");
-        return fromP2SHScript(params, scriptPubKey.getPubKeyHash());
+        return fromP2SHHash(params, scriptPubKey.getPubKeyHash());
     }
 
     /**

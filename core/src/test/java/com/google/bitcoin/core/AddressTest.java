@@ -112,9 +112,9 @@ public class AddressTest {
 
         // Test that we can convert them from hashes
         byte[] hex = Hex.decode("2ac4b0b501117cc8119c5797b519538d4942e90e");
-        Address a = Address.fromP2SHScript(mainParams, hex);
+        Address a = Address.fromP2SHHash(mainParams, hex);
         assertEquals("35b9vsyH1KoFT5a5KtrKusaCcPLkiSo1tU", a.toString());
-        Address b = Address.fromP2SHScript(testParams, Hex.decode("18a0e827269b5211eb51a4af1b2fa69333efa722"));
+        Address b = Address.fromP2SHHash(testParams, Hex.decode("18a0e827269b5211eb51a4af1b2fa69333efa722"));
         assertEquals("2MuVSxtfivPKJe93EC1Tb9UhJtGhsoWEHCe", b.toString());
         Address c = Address.fromP2SHScript(mainParams, ScriptBuilder.createP2SHOutputScript(hex));
         assertEquals("35b9vsyH1KoFT5a5KtrKusaCcPLkiSo1tU", c.toString());
