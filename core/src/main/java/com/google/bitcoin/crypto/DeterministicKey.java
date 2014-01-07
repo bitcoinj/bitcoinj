@@ -109,7 +109,7 @@ public class DeterministicKey implements Serializable {
     ECPoint getPubPoint() {
         if (publicAsPoint == null) {
             checkNotNull(privateAsFieldElement);
-            publicAsPoint = HDUtils.getEcParams().getG().multiply(privateAsFieldElement);
+            publicAsPoint = ECKey.CURVE.getG().multiply(privateAsFieldElement);
         }
         return HDUtils.compressedCopy(publicAsPoint);
     }

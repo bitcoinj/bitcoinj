@@ -16,6 +16,7 @@
 
 package com.google.bitcoin.crypto;
 
+import com.google.bitcoin.core.ECKey;
 import com.google.common.collect.ImmutableList;
 import org.spongycastle.crypto.macs.HMac;
 import org.spongycastle.math.ec.ECPoint;
@@ -66,14 +67,14 @@ public final class HDKeyDerivation {
      */
     public static DeterministicKey createMasterPrivKeyFromBytes(
             byte[] privKeyBytes, byte[] chainCode) throws HDDerivationException {
-        BigInteger privateKeyFieldElt = HDUtils.toBigInteger(privKeyBytes);
+        BigInteger privateKeyFieldElt = new BigInteger(1, privKeyBytes);
         assertNonZero(privateKeyFieldElt, "Generated master key is invalid.");
         assertLessThanN(privateKeyFieldElt, "Generated master key is invalid.");
         return new DeterministicKey(ImmutableList.<ChildNumber>of(), chainCode, null, privateKeyFieldElt, null);
     }
 
     public static DeterministicKey createMasterPubKeyFromBytes(byte[] pubKeyBytes, byte[] chainCode) {
-        return new DeterministicKey(ImmutableList.<ChildNumber>of(), chainCode, HDUtils.getCurve().decodePoint(pubKeyBytes), null, null);
+        return new DeterministicKey(ImmutableList.<ChildNumber>of(), chainCode, ECKey.CURVE.getCurve().decodePoint(pubKeyBytes), null, null);
     }
 
     /**
@@ -94,8 +95,8 @@ public final class HDKeyDerivation {
         return new DeterministicKey(
                 HDUtils.append(parent.getChildNumberPath(), childNumber),
                 rawKey.chainCode,
-                parent.hasPrivate() ? null : HDUtils.getCurve().decodePoint(rawKey.keyBytes),
-                parent.hasPrivate() ? HDUtils.toBigInteger(rawKey.keyBytes) : null,
+                parent.hasPrivate() ? null : ECKey.CURVE.getCurve().decodePoint(rawKey.keyBytes),
+                parent.hasPrivate() ? new BigInteger(1, rawKey.keyBytes) : null,
                 parent);
     }
 
@@ -115,18 +116,18 @@ public final class HDKeyDerivation {
         assert i.length == 64 : i.length;
         byte[] il = Arrays.copyOfRange(i, 0, 32);
         byte[] chainCode = Arrays.copyOfRange(i, 32, 64);
-        BigInteger ilInt = HDUtils.toBigInteger(il);
+        BigInteger ilInt = new BigInteger(1, il);
         assertLessThanN(ilInt, "Illegal derived key: I_L >= n");
         byte[] keyBytes;
         final BigInteger privAsFieldElement = parent.getPrivAsFieldElement();
         if (privAsFieldElement != null) {
-            BigInteger ki = privAsFieldElement.add(ilInt).mod(HDUtils.getEcParams().getN());
+            BigInteger ki = privAsFieldElement.add(ilInt).mod(ECKey.CURVE.getN());
             assertNonZero(ki, "Illegal derived key: derived private key equals 0.");
             keyBytes = ki.toByteArray();
         } else {
             checkArgument(!childNumber.isPrivateDerivation(), "Can't use private derivation with public keys only.");
-            ECPoint Ki = HDUtils.getEcParams().getG().multiply(ilInt).add(parent.getPubPoint());
-            checkArgument(!Ki.equals(HDUtils.getCurve().getInfinity()),
+            ECPoint Ki = ECKey.CURVE.getG().multiply(ilInt).add(parent.getPubPoint());
+            checkArgument(!Ki.equals(ECKey.CURVE.getCurve().getInfinity()),
                     "Illegal derived key: derived public key equals infinity.");
             keyBytes = HDUtils.toCompressed(Ki.getEncoded());
         }
@@ -138,7 +139,7 @@ public final class HDKeyDerivation {
     }
 
     private static void assertLessThanN(BigInteger integer, String errorMessage) {
-        checkArgument(integer.compareTo(HDUtils.getEcParams().getN()) < 0, errorMessage);
+        checkArgument(integer.compareTo(ECKey.CURVE.getN()) < 0, errorMessage);
     }
 
     private static class RawKeyBytes {
