@@ -17,6 +17,7 @@
 package com.google.bitcoin.wallet;
 
 import com.google.bitcoin.core.ECKey;
+import com.google.bitcoin.core.Utils;
 import com.google.bitcoin.crypto.*;
 import com.google.bitcoin.utils.Threading;
 import com.google.common.collect.ImmutableList;
@@ -50,6 +51,7 @@ public class DeterministicKeyChain implements KeyChain {
     private final DeterministicHierarchy hierarchy;
     private final DeterministicKey rootKey;
     private final byte[] seed;
+    private final long seedCreationTimeSecs;  // Seconds since the epoch.
     private WeakReference<MnemonicCode> mnemonicCode;
 
     // Paths through the key tree. External keys are ones that are communicated to other parties. Internal keys are
@@ -68,7 +70,7 @@ public class DeterministicKeyChain implements KeyChain {
      * object.
      */
     public DeterministicKeyChain(SecureRandom random) {
-        this(getRandomSeed(random));
+        this(getRandomSeed(random), Utils.currentTimeMillis() / 1000);
     }
 
     private static byte[] getRandomSeed(SecureRandom random) {
@@ -79,10 +81,12 @@ public class DeterministicKeyChain implements KeyChain {
 
     /**
      * Creates a deterministic key chain starting from the given seed. All keys yielded by this chain will be the same
-     * if the starting seed is the same.
+     * if the starting seed is the same. You should provide the creation time in seconds since the UNIX epoch for the
+     * seed: this lets us know from what part of the chain we can expect to see derived keys appear.
      */
-    public DeterministicKeyChain(byte[] seed) {
+    public DeterministicKeyChain(byte[] seed, long seedCreationTimeSecs) {
         this.seed = seed;
+        this.seedCreationTimeSecs = seedCreationTimeSecs;
         rootKey = HDKeyDerivation.createMasterPrivateKey(seed);
         hierarchy = new DeterministicHierarchy(rootKey);
         basicKeyChain = new BasicKeyChain();
@@ -122,6 +126,11 @@ public class DeterministicKeyChain implements KeyChain {
         } finally {
             lock.unlock();
         }
+    }
+
+    /** Returns the time in seconds since the UNIX epoch at which the seed was randomly generated. */
+    public long getSeedCreationTimeSecs() {
+        return seedCreationTimeSecs;
     }
 
     @Override

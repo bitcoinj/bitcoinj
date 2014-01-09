@@ -19,6 +19,7 @@ package com.google.bitcoin.wallet;
 import com.google.bitcoin.core.Address;
 import com.google.bitcoin.core.ECKey;
 import com.google.bitcoin.core.Sha256Hash;
+import com.google.bitcoin.core.Utils;
 import com.google.bitcoin.params.UnitTestParams;
 import com.google.bitcoin.utils.Threading;
 import com.google.common.base.Joiner;
@@ -39,7 +40,9 @@ public class DeterministicKeyChainTest {
     public void setup() {
         // You should use a random seed instead.
         final byte[] seed = "don't use a string seed like this in real life".getBytes();
-        chain = new DeterministicKeyChain(Sha256Hash.create(seed).getBytes());
+        final long secs = Utils.currentTimeMillis() / 1000;
+        chain = new DeterministicKeyChain(Sha256Hash.create(seed).getBytes(), secs);
+        assertEquals(secs, chain.getSeedCreationTimeSecs());
     }
 
     @Test
