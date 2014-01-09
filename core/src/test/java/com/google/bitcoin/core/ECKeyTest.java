@@ -32,11 +32,15 @@ import com.google.common.util.concurrent.MoreExecutors;
 import com.google.protobuf.ByteString;
 import org.bitcoinj.wallet.Protos;
 import org.bitcoinj.wallet.Protos.ScryptParameters;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.spongycastle.crypto.params.ECDomainParameters;
 import org.spongycastle.crypto.params.KeyParameter;
+import org.spongycastle.math.ec.ECCurve;
+import org.spongycastle.math.ec.ECPoint;
 import org.spongycastle.util.encoders.Hex;
 
 import java.io.InputStream;
@@ -441,6 +445,44 @@ public class ECKeyTest {
         if (!TransactionSignature.isEncodingCanonical(encodedSig)) {
             log.error(Utils.bytesToHexString(sigBytes));
             fail();
+        }
+    }
+
+    @Test
+    public void testCompressionUtils() {
+        List<String> testPubKey = Arrays.asList(
+                "044f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa385b6b1b8ead809ca67454d9683fcf2ba03456d6fe2c4abe2b07f0fbdbb2f1c1",
+                "04ed83704c95d829046f1ac27806211132102c34e9ac7ffa1b71110658e5b9d1bdedc416f5cefc1db0625cd0c75de8192d2b592d7e3b00bcfb4a0e860d880fd1fc",
+                "042596957532fc37e40486b910802ff45eeaa924548c0e1c080ef804e523ec3ed3ed0a9004acf927666eee18b7f5e8ad72ff100a3bb710a577256fd7ec81eb1cb3");
+
+        ECDomainParameters ecp = ECKey.CURVE;
+        ECCurve curve = ecp.getCurve();
+
+        for (String testpkStr : testPubKey) {
+            byte[] testpk = Hex.decode(testpkStr);
+
+            BigInteger pubX = new BigInteger(1, Arrays.copyOfRange(testpk, 1, 33));
+            BigInteger pubY = new BigInteger(1, Arrays.copyOfRange(testpk, 33, 65));
+
+            ECPoint ptFlat = curve.createPoint(pubX, pubY, false); // 65
+            ECPoint ptComp = curve.createPoint(pubX, pubY, true);  // 33
+            ECPoint uncompressed = ECKey.decompressPoint(ptComp);
+            ECPoint recompressed = ECKey.compressPoint(uncompressed);
+            ECPoint orig = curve.decodePoint(testpk);
+
+            // assert point equality:
+            Assert.assertEquals(ptFlat, uncompressed);
+            Assert.assertEquals(ptFlat, ptComp);
+            Assert.assertEquals(ptComp, recompressed);
+            Assert.assertEquals(ptComp, orig);
+
+            // assert bytes equality:
+            Assert.assertArrayEquals(ptFlat.getEncoded(), uncompressed.getEncoded());
+            Assert.assertArrayEquals(ptComp.getEncoded(), recompressed.getEncoded());
+            Assert.assertArrayEquals(ptFlat.getEncoded(), orig.getEncoded());
+            Assert.assertFalse(Arrays.equals(ptFlat.getEncoded(), ptComp.getEncoded()));
+
+            // todo: assert header byte
         }
     }
 

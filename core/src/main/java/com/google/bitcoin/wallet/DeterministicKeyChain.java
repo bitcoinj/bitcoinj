@@ -138,9 +138,8 @@ public class DeterministicKeyChain implements KeyChain {
             } else
                 throw new IllegalArgumentException("Unknown key purpose " + purpose);
             DeterministicKey key = hierarchy.deriveNextChild(path, true, true, true);
-            final ECKey eckey = key.toECKey();
-            basicKeyChain.importKeys(ImmutableList.of(eckey));
-            return eckey;
+            basicKeyChain.importKeys(ImmutableList.of(key));
+            return key;
         } finally {
             lock.unlock();
         }

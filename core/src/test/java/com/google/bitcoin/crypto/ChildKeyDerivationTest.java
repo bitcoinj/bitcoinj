@@ -122,7 +122,7 @@ public class ChildKeyDerivationTest {
     }
 
     private static String hexEncodePub(DeterministicKey pubKey) {
-        return hexEncode(pubKey.getPubKeyBytes());
+        return hexEncode(pubKey.getPubKey());
     }
 
     private static String hexEncode(byte[] bytes) {

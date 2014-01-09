@@ -65,12 +65,11 @@ public final class HDKeyDerivation {
     /**
      * @throws HDDerivationException if privKeyBytes is invalid (0 or >= n).
      */
-    public static DeterministicKey createMasterPrivKeyFromBytes(
-            byte[] privKeyBytes, byte[] chainCode) throws HDDerivationException {
-        BigInteger privateKeyFieldElt = new BigInteger(1, privKeyBytes);
-        assertNonZero(privateKeyFieldElt, "Generated master key is invalid.");
-        assertLessThanN(privateKeyFieldElt, "Generated master key is invalid.");
-        return new DeterministicKey(ImmutableList.<ChildNumber>of(), chainCode, null, privateKeyFieldElt, null);
+    public static DeterministicKey createMasterPrivKeyFromBytes(byte[] privKeyBytes, byte[] chainCode) throws HDDerivationException {
+        BigInteger priv = new BigInteger(1, privKeyBytes);
+        assertNonZero(priv, "Generated master key is invalid.");
+        assertLessThanN(priv, "Generated master key is invalid.");
+        return new DeterministicKey(ImmutableList.<ChildNumber>of(), chainCode, priv, null);
     }
 
     public static DeterministicKey createMasterPubKeyFromBytes(byte[] pubKeyBytes, byte[] chainCode) {
@@ -88,22 +87,28 @@ public final class HDKeyDerivation {
      * @throws HDDerivationException if private derivation is attempted for a public-only parent key, or
      * if the resulting derived key is invalid (eg. private key == 0).
      */
-    public static DeterministicKey deriveChildKey(DeterministicKey parent, ChildNumber childNumber)
-            throws HDDerivationException {
-
+    public static DeterministicKey deriveChildKey(DeterministicKey parent, ChildNumber childNumber) throws HDDerivationException {
+        // The bytes calculated below are EITHER:
+        // 1) A private key, if the parent key has a private key.
+        // 2) A public key, if the parent key does not have any private key.
         RawKeyBytes rawKey = deriveChildKeyBytes(parent, childNumber);
-        return new DeterministicKey(
-                HDUtils.append(parent.getChildNumberPath(), childNumber),
-                rawKey.chainCode,
-                parent.hasPrivate() ? null : ECKey.CURVE.getCurve().decodePoint(rawKey.keyBytes),
-                parent.hasPrivate() ? new BigInteger(1, rawKey.keyBytes) : null,
-                parent);
+        if (parent.isPubKeyOnly())
+            return new DeterministicKey(
+                    HDUtils.append(parent.getChildNumberPath(), childNumber),
+                    rawKey.chainCode,
+                    ECKey.CURVE.getCurve().decodePoint(rawKey.keyBytes),   // c'tor will compress
+                    null,
+                    parent);
+        else
+            return new DeterministicKey(
+                    HDUtils.append(parent.getChildNumberPath(), childNumber),
+                    rawKey.chainCode,
+                    new BigInteger(1, rawKey.keyBytes),
+                    parent);
     }
 
-    private static RawKeyBytes deriveChildKeyBytes(DeterministicKey parent, ChildNumber childNumber)
-            throws HDDerivationException {
-
-        byte[] parentPublicKey = HDUtils.getBytes(parent.getPubPoint());
+    private static RawKeyBytes deriveChildKeyBytes(DeterministicKey parent, ChildNumber childNumber) throws HDDerivationException {
+        byte[] parentPublicKey = ECKey.compressPoint(parent.getPubKeyPoint()).getEncoded();
         assert parentPublicKey.length == 33 : parentPublicKey.length;
         ByteBuffer data = ByteBuffer.allocate(37);
         if (childNumber.isPrivateDerivation()) {
@@ -119,14 +124,14 @@ public final class HDKeyDerivation {
         BigInteger ilInt = new BigInteger(1, il);
         assertLessThanN(ilInt, "Illegal derived key: I_L >= n");
         byte[] keyBytes;
-        final BigInteger privAsFieldElement = parent.getPrivAsFieldElement();
-        if (privAsFieldElement != null) {
-            BigInteger ki = privAsFieldElement.add(ilInt).mod(ECKey.CURVE.getN());
+        final BigInteger priv = parent.isPubKeyOnly() ? null : parent.getPrivKey();
+        if (priv != null) {
+            BigInteger ki = priv.add(ilInt).mod(ECKey.CURVE.getN());
             assertNonZero(ki, "Illegal derived key: derived private key equals 0.");
             keyBytes = ki.toByteArray();
         } else {
             checkArgument(!childNumber.isPrivateDerivation(), "Can't use private derivation with public keys only.");
-            ECPoint Ki = ECKey.CURVE.getG().multiply(ilInt).add(parent.getPubPoint());
+            ECPoint Ki = ECKey.CURVE.getG().multiply(ilInt).add(parent.getPubKeyPoint());
             checkArgument(!Ki.equals(ECKey.CURVE.getCurve().getInfinity()),
                     "Illegal derived key: derived public key equals infinity.");
             keyBytes = HDUtils.toCompressed(Ki.getEncoded());

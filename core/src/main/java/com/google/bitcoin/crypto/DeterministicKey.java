@@ -25,7 +25,6 @@ import org.spongycastle.math.ec.ECPoint;
 import org.spongycastle.util.encoders.Hex;
 
 import javax.annotation.Nullable;
-import java.io.Serializable;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.text.MessageFormat;
@@ -34,36 +33,45 @@ import java.util.Collections;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-
-// TODO: Merge this with a redesigned ECKey class.
+import static com.google.common.base.Preconditions.checkState;
 
 /**
  * A deterministic key is a node in a {@link DeterministicHierarchy}. As per
  * <a href="https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki">the BIP 32 specification</a> it is a pair
- * (key, chaincode). If you know its path in the tree you can derive more keys from this. To obtain one of these, you
- * can call {@link HDKeyDerivation#createMasterPrivateKey(byte[])}.
+ * (key, chaincode). If you know its path in the tree and its chain code you can derive more keys from this. To obtain
+ * one of these, you can call {@link HDKeyDerivation#createMasterPrivateKey(byte[])}.
  */
-public class DeterministicKey implements Serializable {
+public class DeterministicKey extends ECKey {
     private static final long serialVersionUID = 1L;
     private static final Joiner PATH_JOINER = Joiner.on("/");
 
     private final DeterministicKey parent;
-    private ECPoint publicAsPoint;
-    private final BigInteger privateAsFieldElement;
     private final ImmutableList<ChildNumber> childNumberPath;
 
     /** 32 bytes */
     private final byte[] chainCode;
 
-    DeterministicKey(ImmutableList<ChildNumber> childNumberPath, byte[] chainCode,
-                     @Nullable ECPoint publicAsPoint, @Nullable BigInteger privateKeyFieldElt,
+    DeterministicKey(ImmutableList<ChildNumber> childNumberPath,
+                     byte[] chainCode,
+                     ECPoint publicAsPoint,
+                     @Nullable BigInteger priv,
                      @Nullable DeterministicKey parent) {
+        super(priv, compressPoint(checkNotNull(publicAsPoint)));
         checkArgument(chainCode.length == 32);
         this.parent = parent;
-        this.childNumberPath = childNumberPath;
+        this.childNumberPath = checkNotNull(childNumberPath);
         this.chainCode = Arrays.copyOf(chainCode, chainCode.length);
-        this.publicAsPoint = publicAsPoint == null ? null : HDUtils.compressedCopy(publicAsPoint);
-        this.privateAsFieldElement = privateKeyFieldElt;
+    }
+
+    DeterministicKey(ImmutableList<ChildNumber> childNumberPath,
+                     byte[] chainCode,
+                     BigInteger priv,
+                     @Nullable DeterministicKey parent) {
+        super(priv, compressPoint(ECKey.CURVE.getG().multiply(priv)));
+        checkArgument(chainCode.length == 32);
+        this.parent = parent;
+        this.childNumberPath = checkNotNull(childNumberPath);
+        this.chainCode = Arrays.copyOf(chainCode, chainCode.length);
     }
 
     /**
@@ -104,21 +112,8 @@ public class DeterministicKey implements Serializable {
      * Returns RIPE-MD160(SHA256(pub key bytes)).
      */
     public byte[] getIdentifier() {
-        return Utils.sha256hash160(getPubKeyBytes());
+        return Utils.sha256hash160(getPubKey());
     }
-
-    ECPoint getPubPoint() {
-        if (publicAsPoint == null) {
-            checkNotNull(privateAsFieldElement);
-            publicAsPoint = ECKey.CURVE.getG().multiply(privateAsFieldElement);
-        }
-        return HDUtils.compressedCopy(publicAsPoint);
-    }
-
-    public byte[] getPubKeyBytes() {
-        return getPubPoint().getEncoded();
-    }
-
 
     /** Returns the first 32 bits of the result of {@link #getIdentifier()}. */
     public byte[] getFingerprint() {
@@ -127,21 +122,8 @@ public class DeterministicKey implements Serializable {
     }
 
     @Nullable
-    public BigInteger getPrivAsFieldElement() {
-        return privateAsFieldElement;
-    }
-
-    @Nullable
     public DeterministicKey getParent() {
         return parent;
-    }
-
-    /**
-     * Returns the private key bytes, if they were provided during construction.
-     */
-    @Nullable
-    public byte[] getPrivKeyBytes() {
-        return privateAsFieldElement == null ? null : privateAsFieldElement.toByteArray();
     }
 
     /**
@@ -158,20 +140,9 @@ public class DeterministicKey implements Serializable {
      * Returns the same key with the private part removed. May return the same instance.
      */
     public DeterministicKey getPubOnly() {
-        if (!hasPrivate()) return this;
+        if (isPubKeyOnly()) return this;
         final DeterministicKey parentPub = getParent() == null ? null : getParent().getPubOnly();
-        return new DeterministicKey(getChildNumberPath(), getChainCode(), getPubPoint(), null, parentPub);
-    }
-
-    public boolean hasPrivate() {
-        return privateAsFieldElement != null;
-    }
-
-    public ECKey toECKey() {
-        if (privateAsFieldElement != null)
-            return ECKey.fromPrivateAndPrecalculatedPublic(privateAsFieldElement, getPubPoint());
-        else
-            return ECKey.fromPublicOnly(publicAsPoint);
+        return new DeterministicKey(getChildNumberPath(), getChainCode(), getPubKeyPoint(), null, parentPub);
     }
 
     public String serializePubB58() {
@@ -214,14 +185,13 @@ public class DeterministicKey implements Serializable {
         }
         ser.putInt(getChildNumber().getI());
         ser.put(getChainCode());
-        ser.put(pub ? getPubKeyBytes() : getPrivKeyBytes33());
-        assert ser.position() == 78;
-
+        ser.put(pub ? getPubKey() : getPrivKeyBytes33());
+        checkState(ser.position() == 78);
         return ser.array();
     }
 
     @Override
     public String toString() {
-        return MessageFormat.format("ExtendedHierarchicKey[pub: {0}]", new String(Hex.encode(getPubKeyBytes())));
+        return MessageFormat.format("ExtendedHierarchicKey[pub: {0}]", new String(Hex.encode(getPubKey())));
     }
 }

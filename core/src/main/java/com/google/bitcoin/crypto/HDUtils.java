@@ -21,7 +21,6 @@ import com.google.common.collect.ImmutableList;
 import org.spongycastle.crypto.digests.SHA512Digest;
 import org.spongycastle.crypto.macs.HMac;
 import org.spongycastle.crypto.params.KeyParameter;
-import org.spongycastle.math.ec.ECPoint;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
@@ -52,26 +51,14 @@ public final class HDUtils {
         return hmacSha512(createHmacSha512Digest(key), data);
     }
 
-    static ECPoint compressedCopy(ECPoint pubKPoint) {
-        return ECKey.CURVE.getCurve().createPoint(pubKPoint.getX().toBigInteger(), pubKPoint.getY().toBigInteger(), true);
-    }
-
-    static ECPoint toUncompressed(ECPoint pubKPoint) {
-        return ECKey.CURVE.getCurve().createPoint(pubKPoint.getX().toBigInteger(), pubKPoint.getY().toBigInteger(), false);
-    }
-
     static byte[] toCompressed(byte[] uncompressedPoint) {
-        return compressedCopy(ECKey.CURVE.getCurve().decodePoint(uncompressedPoint)).getEncoded();
+        return ECKey.compressPoint(ECKey.CURVE.getCurve().decodePoint(uncompressedPoint)).getEncoded();
     }
 
     static byte[] longTo4ByteArray(long n) {
         byte[] bytes = Arrays.copyOfRange(ByteBuffer.allocate(8).putLong(n).array(), 4, 8);
         assert bytes.length == 4 : bytes.length;
         return bytes;
-    }
-
-    static byte[] getBytes(ECPoint pubKPoint) {
-        return compressedCopy(pubKPoint).getEncoded();
     }
 
     static ImmutableList<ChildNumber> append(ImmutableList<ChildNumber> path, ChildNumber childNumber) {

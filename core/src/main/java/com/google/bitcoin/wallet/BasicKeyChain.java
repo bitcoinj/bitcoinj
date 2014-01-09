@@ -96,7 +96,7 @@ public class BasicKeyChain implements EncryptableKeyChain {
         }
     }
 
-    public int importKeys(List<ECKey> keys) {
+    public int importKeys(List<? extends ECKey> keys) {
         lock.lock();
         try {
             // Check none of the keys are encrypted: we disallow mixing of encrypted keys between wallets in case the

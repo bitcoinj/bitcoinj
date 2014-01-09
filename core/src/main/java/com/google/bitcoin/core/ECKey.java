@@ -105,8 +105,8 @@ public class ECKey implements Serializable {
 
     // The two parts of the key. If "priv" is set, "pub" can always be calculated. If "pub" is set but not "priv", we
     // can only verify signatures not make them.
-    private final BigInteger priv;  // A field element.
-    private final ECPoint pub;
+    protected final BigInteger priv;  // A field element.
+    protected final ECPoint pub;
 
     // Creation time of the key in seconds since the epoch, or zero if the key was deserialized from a version that did
     // not have this field.
@@ -157,11 +157,19 @@ public class ECKey implements Serializable {
         this.pub = checkNotNull(pub);
     }
 
-    private static ECPoint.Fp compressPoint(ECPoint uncompressed) {
+    /**
+     * Utility for compressing an elliptic curve point. Returns the same point if it's already compressed.
+     * See the ECKey class docs for a discussion of point compression.
+     */
+    public static ECPoint.Fp compressPoint(ECPoint uncompressed) {
         return new ECPoint.Fp(CURVE.getCurve(), uncompressed.getX(), uncompressed.getY(), true);
     }
 
-    private static ECPoint.Fp decompressPoint(ECPoint compressed) {
+    /**
+     * Utility for decompressing an elliptic curve point. Returns the same point if it's already compressed.
+     * See the ECKey class docs for a discussion of point compression.
+     */
+    public static ECPoint.Fp decompressPoint(ECPoint compressed) {
         return new ECPoint.Fp(CURVE.getCurve(), compressed.getX(), compressed.getY(), false);
     }
 
