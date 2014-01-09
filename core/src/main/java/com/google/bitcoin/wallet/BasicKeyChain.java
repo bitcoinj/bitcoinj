@@ -17,10 +17,7 @@
 package com.google.bitcoin.wallet;
 
 import com.google.bitcoin.core.ECKey;
-import com.google.bitcoin.crypto.EncryptedData;
-import com.google.bitcoin.crypto.KeyCrypter;
-import com.google.bitcoin.crypto.KeyCrypterException;
-import com.google.bitcoin.crypto.KeyCrypterScrypt;
+import com.google.bitcoin.crypto.*;
 import com.google.bitcoin.store.UnreadableWalletException;
 import com.google.bitcoin.utils.ListenerRegistration;
 import com.google.bitcoin.utils.Threading;
@@ -37,6 +34,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.locks.ReentrantLock;
 
 import static com.google.common.base.Preconditions.*;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * A {@link KeyChain} that implements the simplest model possible: it can have keys imported into it, and just acts as
@@ -159,25 +157,29 @@ public class BasicKeyChain implements EncryptableKeyChain {
     public List<Protos.Key> serializeToProtobuf() {
         List<Protos.Key> result = Lists.newArrayListWithExpectedSize(hashToKeys.size());
         for (ECKey ecKey : hashToKeys.values()) {
-            Protos.Key.Builder protoKey = Protos.Key.newBuilder();
-            protoKey.setType(Protos.Key.Type.ORIGINAL)
-                    .setCreationTimestamp(ecKey.getCreationTimeSeconds() * 1000)
-                    .setPublicKey(ByteString.copyFrom(ecKey.getPubKey()));
-            byte[] priv = ecKey.getPrivKeyBytes();
-            if (priv != null)
-                protoKey.setSecretBytes(ByteString.copyFrom(priv));
-            if (keyCrypter != null) {
-                EncryptedData encryptedPrivateKey = checkNotNull(ecKey.getEncryptedPrivateKey());
-                protoKey.getEncryptedDataBuilder()
-                        .setEncryptedPrivateKey(ByteString.copyFrom(encryptedPrivateKey.encryptedBytes))
-                        .setInitialisationVector(ByteString.copyFrom(encryptedPrivateKey.initialisationVector));
-                // We don't allow mixing of encryption types at the moment.
-                checkState(ecKey.getKeyCrypter().getUnderstoodEncryptionType() == Protos.Wallet.EncryptionType.ENCRYPTED_SCRYPT_AES);
-                protoKey.setType(Protos.Key.Type.ENCRYPTED_SCRYPT_AES);
-            }
+            Protos.Key.Builder protoKey = serializeEncryptableItem(ecKey);
+            protoKey.setPublicKey(ByteString.copyFrom(ecKey.getPubKey()));
             result.add(protoKey.build());
         }
         return result;
+    }
+
+    /*package*/ Protos.Key.Builder serializeEncryptableItem(EncryptableItem item) {
+        Protos.Key.Builder proto = Protos.Key.newBuilder();
+        proto.setCreationTimestamp(item.getCreationTimeSeconds() * 1000);
+        if (item.isEncrypted()) {
+            EncryptedData data = checkNotNull(item.getEncryptedData());
+            proto.getEncryptedDataBuilder()
+                    .setEncryptedPrivateKey(ByteString.copyFrom(data.encryptedBytes))
+                    .setInitialisationVector(ByteString.copyFrom(data.initialisationVector));
+            // We don't allow mixing of encryption types at the moment.
+            checkState(item.getEncryptionType() == Protos.Wallet.EncryptionType.ENCRYPTED_SCRYPT_AES);
+            proto.setType(Protos.Key.Type.ENCRYPTED_SCRYPT_AES);
+        } else {
+            proto.setSecretBytes(ByteString.copyFrom(item.getSecretBytes()));
+            proto.setType(Protos.Key.Type.ORIGINAL);
+        }
+        return proto;
     }
 
     /**

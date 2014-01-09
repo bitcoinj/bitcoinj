@@ -16,13 +16,11 @@
 
 package com.google.bitcoin.core;
 
-import com.google.bitcoin.crypto.EncryptedData;
-import com.google.bitcoin.crypto.KeyCrypter;
-import com.google.bitcoin.crypto.KeyCrypterException;
-import com.google.bitcoin.crypto.TransactionSignature;
+import com.google.bitcoin.crypto.*;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import org.bitcoin.NativeSecp256k1;
+import org.bitcoinj.wallet.Protos;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.asn1.*;
@@ -80,7 +78,7 @@ import static com.google.common.base.Preconditions.checkState;
  * this class so round-tripping preserves state. Unless you're working with old software or doing unusual things, you
  * can usually ignore the compressed/uncompressed distinction.</p>
  */
-public class ECKey implements Serializable {
+public class ECKey implements EncryptableItem, Serializable {
     private static final Logger log = LoggerFactory.getLogger(ECKey.class);
 
     /** The parameters of the secp256k1 curve that Bitcoin uses. */
@@ -871,9 +869,7 @@ public class ECKey implements Serializable {
         return CURVE.getCurve().decodePoint(compEnc);
     }
 
-    /**
-     * Returns a 32 byte array containing the private key, or null if the key is encrypted or public only
-     */
+    /** Returns a 32 byte array containing the private key, or null if the key is encrypted or public only */
     @Nullable
     public byte[] getPrivKeyBytes() {
         return Utils.bigIntegerToBytes(priv, 32);
@@ -897,6 +893,7 @@ public class ECKey implements Serializable {
      * Returns the creation time of this key or zero if the key was deserialized from a version that did not store
      * that data.
      */
+    @Override
     public long getCreationTimeSeconds() {
         return creationTimeSeconds;
     }
@@ -1029,12 +1026,32 @@ public class ECKey implements Serializable {
      * A private key is deemed to be encrypted when there is both a KeyCrypter and the encryptedPrivateKey is non-zero.
      */
     public boolean isEncrypted() {
-        return keyCrypter != null && encryptedPrivateKey != null && encryptedPrivateKey.encryptedBytes != null &&  encryptedPrivateKey.encryptedBytes.length > 0;
+        return keyCrypter != null && encryptedPrivateKey != null && encryptedPrivateKey.encryptedBytes.length > 0;
+    }
+
+    @Nullable
+    @Override
+    public Protos.Wallet.EncryptionType getEncryptionType() {
+        return keyCrypter != null ? keyCrypter.getUnderstoodEncryptionType() : Protos.Wallet.EncryptionType.UNENCRYPTED;
+    }
+
+    /** An alias for {@link #getPrivKeyBytes()}. */
+    @Nullable
+    @Override
+    public byte[] getSecretBytes() {
+        return getPrivKeyBytes();
+    }
+
+    /** An alias for {@link #getEncryptedPrivateKey()} */
+    @Nullable
+    @Override
+    public EncryptedData getEncryptedData() {
+        return getEncryptedPrivateKey();
     }
 
     /**
-     * @return The encryptedPrivateKey (containing the encrypted private key bytes and initialisation vector) for this ECKey,
-     *         or null if the ECKey is not encrypted.
+     * Returns the the encrypted private key bytes and initialisation vector for this ECKey, or null if the ECKey
+     * is not encrypted.
      */
     @Nullable
     public EncryptedData getEncryptedPrivateKey() {
