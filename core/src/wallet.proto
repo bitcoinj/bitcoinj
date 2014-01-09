@@ -94,7 +94,7 @@ message Key {
 
   // The public EC key derived from the private key. We allow both to be stored to avoid mobile clients having to
   // do lots of slow EC math on startup.
-  optional bytes public_key = 3;
+  required bytes public_key = 3;
 
   // User-provided label associated with the key.
   optional string label = 4;

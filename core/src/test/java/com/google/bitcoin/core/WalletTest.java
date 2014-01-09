@@ -2280,7 +2280,7 @@ public class WalletTest extends TestWithWallet {
     public void completeTxPartiallySigned() throws Exception {
         // Check the wallet will write dummy scriptSigs for inputs that we have only pubkeys for without the privkey.
         ECKey priv = new ECKey();
-        ECKey pub = new ECKey(null, priv.getPubKey());
+        ECKey pub = ECKey.fromPublicOnly(priv.getPubKeyPoint());
         wallet.importKey(pub);
         ECKey priv2 = wallet.newKey();
         // Send three transactions, with one being an address type and the other being a raw CHECKSIG type pubkey only,

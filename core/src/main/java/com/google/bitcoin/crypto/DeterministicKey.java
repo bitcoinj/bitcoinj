@@ -168,7 +168,10 @@ public class DeterministicKey implements Serializable {
     }
 
     public ECKey toECKey() {
-        return new ECKey(getPrivKeyBytes(), getPubKeyBytes());
+        if (privateAsFieldElement != null)
+            return ECKey.fromPrivateAndPrecalculatedPublic(privateAsFieldElement, getPubPoint());
+        else
+            return ECKey.fromPublicOnly(publicAsPoint);
     }
 
     public String serializePubB58() {

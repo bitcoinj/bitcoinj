@@ -181,7 +181,7 @@ public class StoredPaymentChannelServerStates implements WalletExtension {
                         new Transaction(params, storedState.getContractTransaction().toByteArray()),
                         new TransactionOutput(params, null, storedState.getClientOutput().toByteArray(), 0),
                         storedState.getRefundTransactionUnlockTimeSecs(),
-                        new ECKey(storedState.getMyKey().toByteArray(), null),
+                        ECKey.fromPrivate(storedState.getMyKey().toByteArray()),
                         BigInteger.valueOf(storedState.getBestValueToMe()),
                         storedState.hasBestValueSignature() ? storedState.getBestValueSignature().toByteArray() : null);
                 putChannel(channel);

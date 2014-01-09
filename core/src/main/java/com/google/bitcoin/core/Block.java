@@ -964,7 +964,7 @@ public class Block extends Message {
         // counter in the scriptSig so every transaction has a different hash.
         coinbase.addInput(new TransactionInput(params, coinbase, new byte[]{(byte) txCounter, (byte) (txCounter++ >> 8)}));
         coinbase.addOutput(new TransactionOutput(params, coinbase, value,
-                ScriptBuilder.createOutputScript(new ECKey(null, pubKeyTo)).getProgram()));
+                ScriptBuilder.createOutputScript(ECKey.fromPublicOnly(pubKeyTo)).getProgram()));
         transactions.add(coinbase);
         coinbase.setParent(this);
         coinbase.length = coinbase.bitcoinSerialize().length;

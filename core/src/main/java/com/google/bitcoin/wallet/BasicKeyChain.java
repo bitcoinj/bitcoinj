@@ -240,9 +240,12 @@ public class BasicKeyChain implements EncryptableKeyChain {
                     Protos.EncryptedPrivateKey proto = key.getEncryptedPrivateKey();
                     EncryptedPrivateKey e = new EncryptedPrivateKey(proto.getInitialisationVector().toByteArray(),
                             proto.getEncryptedPrivateKey().toByteArray());
-                    ecKey = new ECKey(e, pub, keyCrypter);
+                    ecKey = ECKey.fromEncrypted(e, keyCrypter, pub);
                 } else {
-                    ecKey = new ECKey(priv, pub);
+                    if (priv != null)
+                        ecKey = ECKey.fromPrivateAndPrecalculatedPublic(priv, pub);
+                    else
+                        ecKey = ECKey.fromPublicOnly(pub);
                 }
                 ecKey.setCreationTimeSeconds((key.getCreationTimestamp() + 500) / 1000);
                 importKeyLocked(ecKey);

@@ -412,16 +412,21 @@ public class WalletProtobufSerializer {
                         encryptedPrivateKeyProto.getEncryptedPrivateKey().toByteArray());
             }
 
-            byte[] pubKey = keyProto.hasPublicKey() ? keyProto.getPublicKey().toByteArray() : null;
+            byte[] pubKey = keyProto.getPublicKey().toByteArray();
 
             ECKey ecKey;
             final KeyCrypter keyCrypter = wallet.getKeyCrypter();
             if (keyCrypter != null && keyCrypter.getUnderstoodEncryptionType() != EncryptionType.UNENCRYPTED) {
                 // If the key is encrypted construct an ECKey using the encrypted private key bytes.
-                ecKey = new ECKey(encryptedPrivateKey, pubKey, keyCrypter);
+                checkNotNull(encryptedPrivateKey);
+                ecKey = ECKey.fromEncrypted(encryptedPrivateKey, keyCrypter, pubKey);
             } else {
                 // Construct an unencrypted private key.
-                ecKey = new ECKey(privKey, pubKey);
+                checkNotNull(pubKey);
+                if (privKey != null)
+                    ecKey = ECKey.fromPrivateAndPrecalculatedPublic(privKey, pubKey);
+                else
+                    ecKey = ECKey.fromPublicOnly(pubKey);
             }
             ecKey.setCreationTimeSeconds((keyProto.getCreationTimestamp() + 500) / 1000);
             wallet.importKey(ecKey);

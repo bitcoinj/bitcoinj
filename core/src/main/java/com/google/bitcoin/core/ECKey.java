@@ -54,17 +54,31 @@ import static com.google.common.base.Preconditions.checkState;
 
 /**
  * <p>Represents an elliptic curve public and (optionally) private key, usable for digital signatures but not encryption.
- * Creating a new ECKey with the empty constructor will generate a new random keypair. Other constructors can be used
+ * Creating a new ECKey with the empty constructor will generate a new random keypair. Other static methods can be used
  * when you already have the public or private parts. If you create a key with only the public part, you can check
  * signatures but not create them.</p>
  *
- * <p>ECKey also provides access to Bitcoin-Qt compatible text message signing, as accessible via the UI or JSON-RPC.
+ * <p>ECKey also provides access to Bitcoin Core compatible text message signing, as accessible via the UI or JSON-RPC.
  * This is slightly different to signing raw bytes - if you want to sign your own data and it won't be exposed as
  * text to people, you don't want to use this. If in doubt, ask on the mailing list.</p>
  *
  * <p>The ECDSA algorithm supports <i>key recovery</i> in which a signature plus a couple of discriminator bits can
  * be reversed to find the public key used to calculate it. This can be convenient when you have a message and a
  * signature and want to find out who signed it, rather than requiring the user to provide the expected identity.</p>
+ *
+ * <p>This class supports a variety of serialization forms. The methods that accept/return byte arrays serialize
+ * private keys as raw byte arrays and public keys using the SEC standard byte encoding for public keys. Signatures
+ * are encoded using ASN.1/DER inside the Bitcoin protocol.</p>
+ *
+ * <p>A key can be <i>compressed</i> or <i>uncompressed</i>. This refers to whether the public key is represented
+ * when encoded into bytes as an (x, y) coordinate on the elliptic curve, or whether it's represented as just an X
+ * co-ordinate and an extra byte that carries a sign bit. With the latter form the Y coordinate can be calculated
+ * dynamically, however, <b>because the binary serialization is different the address of a key changes if its
+ * compression status is changed</b>. If you deviate from the defaults it's important to understand this: money sent
+ * to a compressed version of the key will have a different address to the same key in uncompressed form. Whether
+ * a public key is compressed or not is recorded in the SEC binary serialisation format, and preserved in a flag in
+ * this class so round-tripping preserves state. Unless you're working with old software or doing unusual things, you
+ * can usually ignore the compressed/uncompressed distinction.</p>
  */
 public class ECKey implements Serializable {
     private static final Logger log = LoggerFactory.getLogger(ECKey.class);
@@ -101,21 +115,29 @@ public class ECKey implements Serializable {
     /**
      * Instance of the KeyCrypter interface to use for encrypting and decrypting the key.
      */
-    transient private KeyCrypter keyCrypter;
+    private transient KeyCrypter keyCrypter;
 
     /**
      * The encrypted private key information.
      */
     private EncryptedPrivateKey encryptedPrivateKey;
 
-    // Transient because it's calculated on demand.
-    transient private byte[] pubKeyHash;
+    // Transient because it's calculated on demand/cached.
+    private transient byte[] pubKeyHash;
 
     /**
      * Generates an entirely new keypair. Point compression is used so the resulting public key will be 33 bytes
      * (32 for the co-ordinate and 1 byte to represent the y bit).
      */
     public ECKey() {
+        this(secureRandom);
+    }
+
+    /**
+     * Generates an entirely new keypair with the given {@link SecureRandom} object. Point compression is used so the
+     * resulting public key will be 33 bytes (32 for the co-ordinate and 1 byte to represent the y bit).
+     */
+    public ECKey(SecureRandom secureRandom) {
         ECKeyPairGenerator generator = new ECKeyPairGenerator();
         ECKeyGenerationParameters keygenParams = new ECKeyGenerationParameters(CURVE, secureRandom);
         generator.init(keygenParams);
@@ -130,8 +152,17 @@ public class ECKey implements Serializable {
         creationTimeSeconds = Utils.currentTimeMillis() / 1000;
     }
 
-    private static ECPoint compressPoint(ECPoint uncompressed) {
+    protected ECKey(@Nullable BigInteger priv, ECPoint pub) {
+        this.priv = priv;
+        this.pub = checkNotNull(pub);
+    }
+
+    private static ECPoint.Fp compressPoint(ECPoint uncompressed) {
         return new ECPoint.Fp(CURVE.getCurve(), uncompressed.getX(), uncompressed.getY(), true);
+    }
+
+    private static ECPoint.Fp decompressPoint(ECPoint compressed) {
+        return new ECPoint.Fp(CURVE.getCurve(), compressed.getX(), compressed.getY(), false);
     }
 
     /**
@@ -142,14 +173,67 @@ public class ECKey implements Serializable {
         return extractKeyFromASN1(asn1privkey);
     }
 
-    /** Creates an ECKey given the private key only.  The public key is calculated from it (this is slow) */
-    public ECKey(BigInteger privKey) {
-        this(checkNotNull(privKey), (byte[])null);
+    /**
+     * Creates an ECKey given the private key only.  The public key is calculated from it (this is slow). Note that
+     * the resulting public key is compressed.
+     */
+    public static ECKey fromPrivate(BigInteger privKey) {
+        return new ECKey(privKey, compressPoint(CURVE.getG().multiply(privKey)));
     }
 
-    /** A constructor variant with BigInteger pubkey. See {@link ECKey#ECKey(BigInteger, byte[])}. */
-    public ECKey(BigInteger privKey, BigInteger pubKey) {
-        this(privKey, Utils.bigIntegerToBytes(pubKey, 65));
+    /**
+     * Creates an ECKey given the private key only.  The public key is calculated from it (this is slow). The resulting
+     * public key is compressed.
+     */
+    public static ECKey fromPrivate(byte[] privKeyBytes) {
+        return fromPrivate(new BigInteger(1, privKeyBytes));
+    }
+
+    /**
+     * Creates an ECKey that simply trusts the caller to ensure that point is really the result of multiplying the
+     * generator point by the private key. This is used to speed things up when you know you have the right values
+     * already. The compression state of pub will be preserved.
+     */
+    public static ECKey fromPrivateAndPrecalculatedPublic(BigInteger priv, ECPoint pub) {
+        return new ECKey(priv, pub);
+    }
+
+    /**
+     * Creates an ECKey that simply trusts the caller to ensure that point is really the result of multiplying the
+     * generator point by the private key. This is used to speed things up when you know you have the right values
+     * already. The compression state of the point will be preserved.
+     */
+    public static ECKey fromPrivateAndPrecalculatedPublic(byte[] priv, byte[] pub) {
+        checkNotNull(priv);
+        checkNotNull(pub);
+        return new ECKey(new BigInteger(1, priv), CURVE.getCurve().decodePoint(pub));
+    }
+
+    /**
+     * Creates an ECKey that cannot be used for signing, only verifying signatures, from the given point. The
+     * compression state of pub will be preserved.
+     */
+    public static ECKey fromPublicOnly(ECPoint pub) {
+        return new ECKey(null, pub);
+    }
+
+    /**
+     * Creates an ECKey that cannot be used for signing, only verifying signatures, from the given encoded point.
+     * The compression state of pub will be preserved.
+     */
+    public static ECKey fromPublicOnly(byte[] pub) {
+        return new ECKey(null, CURVE.getCurve().decodePoint(pub));
+    }
+
+    /**
+     * Returns a copy of this key, but with the public point represented in uncompressed form. Normally you would
+     * never need this: it's for specialised scenarios or when backwards compatibility in encoded form is necessary.
+     */
+    public ECKey decompress() {
+        if (!pub.isCompressed())
+            return this;
+        else
+            return new ECKey(priv, decompressPoint(pub));
     }
 
     /**
@@ -157,6 +241,7 @@ public class ECKey implements Serializable {
      * is more convenient if you are importing a key from elsewhere. The public key will be automatically derived
      * from the private key.
      */
+    @Deprecated
     public ECKey(@Nullable byte[] privKeyBytes, @Nullable byte[] pubKey) {
         this(privKeyBytes == null ? null : new BigInteger(1, privKeyBytes), pubKey);
     }
@@ -168,7 +253,8 @@ public class ECKey implements Serializable {
      * @param pubKey The keys public key
      * @param keyCrypter The KeyCrypter that will be used, with an AES key, to encrypt and decrypt the private key
      */
-    public ECKey(@Nullable EncryptedPrivateKey encryptedPrivateKey, @Nullable byte[] pubKey, KeyCrypter keyCrypter) {
+    @Deprecated
+    public ECKey(EncryptedPrivateKey encryptedPrivateKey, byte[] pubKey, KeyCrypter keyCrypter) {
         this((byte[])null, pubKey);
 
         this.keyCrypter = checkNotNull(keyCrypter);
@@ -176,12 +262,25 @@ public class ECKey implements Serializable {
     }
 
     /**
-     * Creates an ECKey given either the private key only, the public key only, or both. If only the private key 
+     * Constructs a key that has an encrypted private component. The given object wraps encrypted bytes and an
+     * initialization vector. Note that the key will not be decrypted during this call: the returned ECKey is
+     * unusable for signing unless a decryption key is supplied.
+     */
+    public static ECKey fromEncrypted(EncryptedPrivateKey encryptedPrivateKey, KeyCrypter crypter, byte[] pubKey) {
+        ECKey key = fromPublicOnly(pubKey);
+        key.encryptedPrivateKey = checkNotNull(encryptedPrivateKey);
+        key.keyCrypter = checkNotNull(crypter);
+        return key;
+    }
+
+    /**
+     * Creates an ECKey given either the private key only, the public key only, or both. If only the private key
      * is supplied, the public key will be calculated from it (this is slow). If both are supplied, it's assumed
      * the public key already correctly matches the public key. If only the public key is supplied, this ECKey cannot
      * be used for signing.
      * @param compressed If set to true and pubKey is null, the derived public key will be in compressed form.
      */
+    @Deprecated
     public ECKey(@Nullable BigInteger privKey, @Nullable byte[] pubKey, boolean compressed) {
         if (privKey == null && pubKey == null)
             throw new IllegalArgumentException("ECKey requires at least private or public key");
@@ -206,6 +305,7 @@ public class ECKey implements Serializable {
      * the public key already correctly matches the public key. If only the public key is supplied, this ECKey cannot
      * be used for signing.
      */
+    @Deprecated
     private ECKey(@Nullable BigInteger privKey, @Nullable byte[] pubKey) {
         this(privKey, pubKey, false);
     }
@@ -269,6 +369,22 @@ public class ECKey implements Serializable {
      */
     public byte[] getPubKey() {
         return pub.getEncoded();
+    }
+
+    /** Gets the public key in the form of an elliptic curve point object from Bouncy Castle. */
+    public ECPoint getPubKeyPoint() {
+        return pub;
+    }
+
+    /**
+     * Gets the private key in the form of an integer field element. The public key is derived by performing EC
+     * point addition this number of times (i.e. point multiplying).
+     *
+     * @throws java.lang.IllegalStateException if the private key bytes are not available.
+     */
+    public BigInteger getPrivKey() {
+        checkState(priv != null, "Private key not available");
+        return priv;
     }
 
     /**
@@ -741,9 +857,9 @@ public class ECKey implements Serializable {
         ECPoint.Fp q = (ECPoint.Fp) ECAlgorithms.sumOfTwoMultiplies(CURVE.getG(), eInvrInv, R, srInv);
         if (compressed) {
             // We have to manually recompress the point as the compressed-ness gets lost when multiply() is used.
-            q = new ECPoint.Fp(curve, q.getX(), q.getY(), true);
+            q = compressPoint(q);
         }
-        return new ECKey((byte[])null, q.getEncoded());
+        return ECKey.fromPublicOnly(q);
     }
 
     /** Decompress a compressed public key (x co-ord and low-bit of y-coord). */
@@ -831,7 +947,7 @@ public class ECKey implements Serializable {
         final byte[] privKeyBytes = getPrivKeyBytes();
         checkState(privKeyBytes != null, "Private key is not available");
         EncryptedPrivateKey encryptedPrivateKey = keyCrypter.encrypt(privKeyBytes, aesKey);
-        ECKey result = new ECKey(encryptedPrivateKey, getPubKey(), keyCrypter);
+        ECKey result = ECKey.fromEncrypted(encryptedPrivateKey, keyCrypter, getPubKey());
         result.setCreationTimeSeconds(creationTimeSeconds);
         return result;
     }
@@ -852,7 +968,9 @@ public class ECKey implements Serializable {
             throw new KeyCrypterException("The keyCrypter being used to decrypt the key is different to the one that was used to encrypt it");
         }
         byte[] unencryptedPrivateKey = keyCrypter.decrypt(encryptedPrivateKey, aesKey);
-        ECKey key = new ECKey(new BigInteger(1, unencryptedPrivateKey), null, isCompressed());
+        ECKey key = ECKey.fromPrivate(unencryptedPrivateKey);
+        if (!isCompressed())
+            key = key.decompress();
         if (!Arrays.equals(key.getPubKey(), getPubKey()))
             throw new KeyCrypterException("Provided AES key is wrong");
         key.setCreationTimeSeconds(creationTimeSeconds);
