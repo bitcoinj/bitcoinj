@@ -158,7 +158,7 @@ public class KeyCrypterScrypt implements KeyCrypter, Serializable {
      * Password based encryption using AES - CBC 256 bits.
      */
     @Override
-    public EncryptedPrivateKey encrypt(byte[] plainBytes, KeyParameter aesKey) throws KeyCrypterException {
+    public EncryptedData encrypt(byte[] plainBytes, KeyParameter aesKey) throws KeyCrypterException {
         checkNotNull(plainBytes);
         checkNotNull(aesKey);
 
@@ -177,7 +177,7 @@ public class KeyCrypterScrypt implements KeyCrypter, Serializable {
 
             cipher.doFinal(encryptedBytes, length);
 
-            return new EncryptedPrivateKey(iv, encryptedBytes);
+            return new EncryptedData(iv, encryptedBytes);
         } catch (Exception e) {
             throw new KeyCrypterException("Could not encrypt bytes.", e);
         }
@@ -192,18 +192,18 @@ public class KeyCrypterScrypt implements KeyCrypter, Serializable {
      * @throws                 KeyCrypterException if bytes could not be decoded to a valid key
      */
     @Override
-    public byte[] decrypt(EncryptedPrivateKey privateKeyToDecode, KeyParameter aesKey) throws KeyCrypterException {
+    public byte[] decrypt(EncryptedData privateKeyToDecode, KeyParameter aesKey) throws KeyCrypterException {
         checkNotNull(privateKeyToDecode);
         checkNotNull(aesKey);
 
         try {
-            ParametersWithIV keyWithIv = new ParametersWithIV(new KeyParameter(aesKey.getKey()), privateKeyToDecode.getInitialisationVector());
+            ParametersWithIV keyWithIv = new ParametersWithIV(new KeyParameter(aesKey.getKey()), privateKeyToDecode.initialisationVector);
 
             // Decrypt the message.
             BufferedBlockCipher cipher = new PaddedBufferedBlockCipher(new CBCBlockCipher(new AESFastEngine()));
             cipher.init(false, keyWithIv);
 
-            byte[] cipherBytes = privateKeyToDecode.getEncryptedBytes();
+            byte[] cipherBytes = privateKeyToDecode.encryptedBytes;
             int minimumSize = cipher.getOutputSize(cipherBytes.length);
             byte[] outputBuffer = new byte[minimumSize];
             int length1 = cipher.processBytes(cipherBytes, 0, cipherBytes.length, outputBuffer, 0);

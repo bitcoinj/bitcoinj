@@ -17,7 +17,7 @@
 package com.google.bitcoin.wallet;
 
 import com.google.bitcoin.core.ECKey;
-import com.google.bitcoin.crypto.EncryptedPrivateKey;
+import com.google.bitcoin.crypto.EncryptedData;
 import com.google.bitcoin.crypto.KeyCrypter;
 import com.google.bitcoin.crypto.KeyCrypterException;
 import com.google.bitcoin.crypto.KeyCrypterScrypt;
@@ -167,10 +167,10 @@ public class BasicKeyChain implements EncryptableKeyChain {
             if (priv != null)
                 protoKey.setPrivateKey(ByteString.copyFrom(priv));
             if (keyCrypter != null) {
-                EncryptedPrivateKey encryptedPrivateKey = checkNotNull(ecKey.getEncryptedPrivateKey());
+                EncryptedData encryptedPrivateKey = checkNotNull(ecKey.getEncryptedPrivateKey());
                 protoKey.getEncryptedPrivateKeyBuilder()
-                        .setEncryptedPrivateKey(ByteString.copyFrom(encryptedPrivateKey.getEncryptedBytes()))
-                        .setInitialisationVector(ByteString.copyFrom(encryptedPrivateKey.getInitialisationVector()));
+                        .setEncryptedPrivateKey(ByteString.copyFrom(encryptedPrivateKey.encryptedBytes))
+                        .setInitialisationVector(ByteString.copyFrom(encryptedPrivateKey.initialisationVector));
                 // We don't allow mixing of encryption types at the moment.
                 checkState(ecKey.getKeyCrypter().getUnderstoodEncryptionType() == Protos.Wallet.EncryptionType.ENCRYPTED_SCRYPT_AES);
                 protoKey.setType(Protos.Key.Type.ENCRYPTED_SCRYPT_AES);
@@ -238,7 +238,7 @@ public class BasicKeyChain implements EncryptableKeyChain {
                     if (!key.hasEncryptedPrivateKey())
                         throw new UnreadableWalletException("Encrypted private key data missing");
                     Protos.EncryptedPrivateKey proto = key.getEncryptedPrivateKey();
-                    EncryptedPrivateKey e = new EncryptedPrivateKey(proto.getInitialisationVector().toByteArray(),
+                    EncryptedData e = new EncryptedData(proto.getInitialisationVector().toByteArray(),
                             proto.getEncryptedPrivateKey().toByteArray());
                     ecKey = ECKey.fromEncrypted(e, keyCrypter, pub);
                 } else {

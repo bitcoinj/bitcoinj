@@ -18,7 +18,7 @@ package com.google.bitcoin.store;
 
 import com.google.bitcoin.core.*;
 import com.google.bitcoin.core.TransactionConfidence.ConfidenceType;
-import com.google.bitcoin.crypto.EncryptedPrivateKey;
+import com.google.bitcoin.crypto.EncryptedData;
 import com.google.bitcoin.crypto.KeyCrypter;
 import com.google.bitcoin.crypto.KeyCrypterScrypt;
 import com.google.bitcoin.script.Script;
@@ -130,12 +130,12 @@ public class WalletProtobufSerializer {
             if (key.getPrivKeyBytes() != null)
                 keyBuilder.setPrivateKey(ByteString.copyFrom(key.getPrivKeyBytes()));
 
-            EncryptedPrivateKey encryptedPrivateKey = key.getEncryptedPrivateKey();
+            EncryptedData encryptedPrivateKey = key.getEncryptedPrivateKey();
             if (encryptedPrivateKey != null) {
                 // Key is encrypted.
                 Protos.EncryptedPrivateKey.Builder encryptedKeyBuilder = Protos.EncryptedPrivateKey.newBuilder()
-                    .setEncryptedPrivateKey(ByteString.copyFrom(encryptedPrivateKey.getEncryptedBytes()))
-                    .setInitialisationVector(ByteString.copyFrom(encryptedPrivateKey.getInitialisationVector()));
+                    .setEncryptedPrivateKey(ByteString.copyFrom(encryptedPrivateKey.encryptedBytes))
+                    .setInitialisationVector(ByteString.copyFrom(encryptedPrivateKey.initialisationVector));
 
                 if (key.getKeyCrypter() == null) {
                     throw new IllegalStateException("The encrypted key " + key.toString() + " has no KeyCrypter.");
@@ -405,10 +405,10 @@ public class WalletProtobufSerializer {
             }
 
             byte[] privKey = keyProto.hasPrivateKey() ? keyProto.getPrivateKey().toByteArray() : null;
-            EncryptedPrivateKey encryptedPrivateKey = null;
+            EncryptedData encryptedPrivateKey = null;
             if (keyProto.hasEncryptedPrivateKey()) {
                 Protos.EncryptedPrivateKey encryptedPrivateKeyProto = keyProto.getEncryptedPrivateKey();
-                encryptedPrivateKey = new EncryptedPrivateKey(encryptedPrivateKeyProto.getInitialisationVector().toByteArray(),
+                encryptedPrivateKey = new EncryptedData(encryptedPrivateKeyProto.getInitialisationVector().toByteArray(),
                         encryptedPrivateKeyProto.getEncryptedPrivateKey().toByteArray());
             }
 

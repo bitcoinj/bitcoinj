@@ -88,7 +88,7 @@ message Key {
   optional bytes private_key = 2;
 
   // The message containing the encrypted private EC key information.
-  // When an EncryptedPrivateKey is present then the (unencrypted) private_key will be a zero length byte array or contain all zeroes.
+  // When an EncryptedData is present then the (unencrypted) private_key will be a zero length byte array or contain all zeroes.
   // This is for security of the private key information.
   optional EncryptedPrivateKey encrypted_private_key = 6;
 

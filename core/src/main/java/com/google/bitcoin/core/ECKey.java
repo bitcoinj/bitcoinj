@@ -16,7 +16,7 @@
 
 package com.google.bitcoin.core;
 
-import com.google.bitcoin.crypto.EncryptedPrivateKey;
+import com.google.bitcoin.crypto.EncryptedData;
 import com.google.bitcoin.crypto.KeyCrypter;
 import com.google.bitcoin.crypto.KeyCrypterException;
 import com.google.bitcoin.crypto.TransactionSignature;
@@ -112,15 +112,8 @@ public class ECKey implements Serializable {
     // not have this field.
     private long creationTimeSeconds;
 
-    /**
-     * Instance of the KeyCrypter interface to use for encrypting and decrypting the key.
-     */
     private transient KeyCrypter keyCrypter;
-
-    /**
-     * The encrypted private key information.
-     */
-    private EncryptedPrivateKey encryptedPrivateKey;
+    private EncryptedData encryptedPrivateKey;
 
     // Transient because it's calculated on demand/cached.
     private transient byte[] pubKeyHash;
@@ -262,7 +255,7 @@ public class ECKey implements Serializable {
      * @param keyCrypter The KeyCrypter that will be used, with an AES key, to encrypt and decrypt the private key
      */
     @Deprecated
-    public ECKey(EncryptedPrivateKey encryptedPrivateKey, byte[] pubKey, KeyCrypter keyCrypter) {
+    public ECKey(EncryptedData encryptedPrivateKey, byte[] pubKey, KeyCrypter keyCrypter) {
         this((byte[])null, pubKey);
 
         this.keyCrypter = checkNotNull(keyCrypter);
@@ -274,7 +267,7 @@ public class ECKey implements Serializable {
      * initialization vector. Note that the key will not be decrypted during this call: the returned ECKey is
      * unusable for signing unless a decryption key is supplied.
      */
-    public static ECKey fromEncrypted(EncryptedPrivateKey encryptedPrivateKey, KeyCrypter crypter, byte[] pubKey) {
+    public static ECKey fromEncrypted(EncryptedData encryptedPrivateKey, KeyCrypter crypter, byte[] pubKey) {
         ECKey key = fromPublicOnly(pubKey);
         key.encryptedPrivateKey = checkNotNull(encryptedPrivateKey);
         key.keyCrypter = checkNotNull(crypter);
@@ -954,7 +947,7 @@ public class ECKey implements Serializable {
         checkNotNull(keyCrypter);
         final byte[] privKeyBytes = getPrivKeyBytes();
         checkState(privKeyBytes != null, "Private key is not available");
-        EncryptedPrivateKey encryptedPrivateKey = keyCrypter.encrypt(privKeyBytes, aesKey);
+        EncryptedData encryptedPrivateKey = keyCrypter.encrypt(privKeyBytes, aesKey);
         ECKey result = ECKey.fromEncrypted(encryptedPrivateKey, keyCrypter, getPubKey());
         result.setCreationTimeSeconds(creationTimeSeconds);
         return result;
@@ -1036,7 +1029,7 @@ public class ECKey implements Serializable {
      * A private key is deemed to be encrypted when there is both a KeyCrypter and the encryptedPrivateKey is non-zero.
      */
     public boolean isEncrypted() {
-         return keyCrypter != null && encryptedPrivateKey != null && encryptedPrivateKey.getEncryptedBytes() != null &&  encryptedPrivateKey.getEncryptedBytes().length > 0;
+        return keyCrypter != null && encryptedPrivateKey != null && encryptedPrivateKey.encryptedBytes != null &&  encryptedPrivateKey.encryptedBytes.length > 0;
     }
 
     /**
@@ -1044,12 +1037,8 @@ public class ECKey implements Serializable {
      *         or null if the ECKey is not encrypted.
      */
     @Nullable
-    public EncryptedPrivateKey getEncryptedPrivateKey() {
-        if (encryptedPrivateKey == null) {
-            return null;
-        } else {
-            return encryptedPrivateKey.clone();
-        }
+    public EncryptedData getEncryptedPrivateKey() {
+        return encryptedPrivateKey;
     }
 
     /**

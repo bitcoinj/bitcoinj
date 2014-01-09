@@ -1880,7 +1880,7 @@ public final class Protos {
      *
      * <pre>
      * The message containing the encrypted private EC key information.
-     * When an EncryptedPrivateKey is present then the (unencrypted) private_key will be a zero length byte array or contain all zeroes.
+     * When an EncryptedData is present then the (unencrypted) private_key will be a zero length byte array or contain all zeroes.
      * This is for security of the private key information.
      * </pre>
      */
@@ -1890,7 +1890,7 @@ public final class Protos {
      *
      * <pre>
      * The message containing the encrypted private EC key information.
-     * When an EncryptedPrivateKey is present then the (unencrypted) private_key will be a zero length byte array or contain all zeroes.
+     * When an EncryptedData is present then the (unencrypted) private_key will be a zero length byte array or contain all zeroes.
      * This is for security of the private key information.
      * </pre>
      */
@@ -1900,15 +1900,15 @@ public final class Protos {
      *
      * <pre>
      * The message containing the encrypted private EC key information.
-     * When an EncryptedPrivateKey is present then the (unencrypted) private_key will be a zero length byte array or contain all zeroes.
+     * When an EncryptedData is present then the (unencrypted) private_key will be a zero length byte array or contain all zeroes.
      * This is for security of the private key information.
      * </pre>
      */
     org.bitcoinj.wallet.Protos.EncryptedPrivateKeyOrBuilder getEncryptedPrivateKeyOrBuilder();
 
-    // optional bytes public_key = 3;
+    // required bytes public_key = 3;
     /**
-     * <code>optional bytes public_key = 3;</code>
+     * <code>required bytes public_key = 3;</code>
      *
      * <pre>
      * The public EC key derived from the private key. We allow both to be stored to avoid mobile clients having to
@@ -1917,7 +1917,7 @@ public final class Protos {
      */
     boolean hasPublicKey();
     /**
-     * <code>optional bytes public_key = 3;</code>
+     * <code>required bytes public_key = 3;</code>
      *
      * <pre>
      * The public EC key derived from the private key. We allow both to be stored to avoid mobile clients having to
@@ -2334,7 +2334,7 @@ public final class Protos {
      *
      * <pre>
      * The message containing the encrypted private EC key information.
-     * When an EncryptedPrivateKey is present then the (unencrypted) private_key will be a zero length byte array or contain all zeroes.
+     * When an EncryptedData is present then the (unencrypted) private_key will be a zero length byte array or contain all zeroes.
      * This is for security of the private key information.
      * </pre>
      */
@@ -2346,7 +2346,7 @@ public final class Protos {
      *
      * <pre>
      * The message containing the encrypted private EC key information.
-     * When an EncryptedPrivateKey is present then the (unencrypted) private_key will be a zero length byte array or contain all zeroes.
+     * When an EncryptedData is present then the (unencrypted) private_key will be a zero length byte array or contain all zeroes.
      * This is for security of the private key information.
      * </pre>
      */
@@ -2358,7 +2358,7 @@ public final class Protos {
      *
      * <pre>
      * The message containing the encrypted private EC key information.
-     * When an EncryptedPrivateKey is present then the (unencrypted) private_key will be a zero length byte array or contain all zeroes.
+     * When an EncryptedData is present then the (unencrypted) private_key will be a zero length byte array or contain all zeroes.
      * This is for security of the private key information.
      * </pre>
      */
@@ -2366,11 +2366,11 @@ public final class Protos {
       return encryptedPrivateKey_;
     }
 
-    // optional bytes public_key = 3;
+    // required bytes public_key = 3;
     public static final int PUBLIC_KEY_FIELD_NUMBER = 3;
     private com.google.protobuf.ByteString publicKey_;
     /**
-     * <code>optional bytes public_key = 3;</code>
+     * <code>required bytes public_key = 3;</code>
      *
      * <pre>
      * The public EC key derived from the private key. We allow both to be stored to avoid mobile clients having to
@@ -2381,7 +2381,7 @@ public final class Protos {
       return ((bitField0_ & 0x00000008) == 0x00000008);
     }
     /**
-     * <code>optional bytes public_key = 3;</code>
+     * <code>required bytes public_key = 3;</code>
      *
      * <pre>
      * The public EC key derived from the private key. We allow both to be stored to avoid mobile clients having to
@@ -2508,6 +2508,10 @@ public final class Protos {
       if (isInitialized != -1) return isInitialized == 1;
 
       if (!hasType()) {
+        memoizedIsInitialized = 0;
+        return false;
+      }
+      if (!hasPublicKey()) {
         memoizedIsInitialized = 0;
         return false;
       }
@@ -2851,6 +2855,10 @@ public final class Protos {
           
           return false;
         }
+        if (!hasPublicKey()) {
+          
+          return false;
+        }
         if (hasEncryptedPrivateKey()) {
           if (!getEncryptedPrivateKey().isInitialized()) {
             
@@ -2982,7 +2990,7 @@ public final class Protos {
        *
        * <pre>
        * The message containing the encrypted private EC key information.
-       * When an EncryptedPrivateKey is present then the (unencrypted) private_key will be a zero length byte array or contain all zeroes.
+       * When an EncryptedData is present then the (unencrypted) private_key will be a zero length byte array or contain all zeroes.
        * This is for security of the private key information.
        * </pre>
        */
@@ -2994,7 +3002,7 @@ public final class Protos {
        *
        * <pre>
        * The message containing the encrypted private EC key information.
-       * When an EncryptedPrivateKey is present then the (unencrypted) private_key will be a zero length byte array or contain all zeroes.
+       * When an EncryptedData is present then the (unencrypted) private_key will be a zero length byte array or contain all zeroes.
        * This is for security of the private key information.
        * </pre>
        */
@@ -3010,7 +3018,7 @@ public final class Protos {
        *
        * <pre>
        * The message containing the encrypted private EC key information.
-       * When an EncryptedPrivateKey is present then the (unencrypted) private_key will be a zero length byte array or contain all zeroes.
+       * When an EncryptedData is present then the (unencrypted) private_key will be a zero length byte array or contain all zeroes.
        * This is for security of the private key information.
        * </pre>
        */
@@ -3032,7 +3040,7 @@ public final class Protos {
        *
        * <pre>
        * The message containing the encrypted private EC key information.
-       * When an EncryptedPrivateKey is present then the (unencrypted) private_key will be a zero length byte array or contain all zeroes.
+       * When an EncryptedData is present then the (unencrypted) private_key will be a zero length byte array or contain all zeroes.
        * This is for security of the private key information.
        * </pre>
        */
@@ -3052,7 +3060,7 @@ public final class Protos {
        *
        * <pre>
        * The message containing the encrypted private EC key information.
-       * When an EncryptedPrivateKey is present then the (unencrypted) private_key will be a zero length byte array or contain all zeroes.
+       * When an EncryptedData is present then the (unencrypted) private_key will be a zero length byte array or contain all zeroes.
        * This is for security of the private key information.
        * </pre>
        */
@@ -3077,7 +3085,7 @@ public final class Protos {
        *
        * <pre>
        * The message containing the encrypted private EC key information.
-       * When an EncryptedPrivateKey is present then the (unencrypted) private_key will be a zero length byte array or contain all zeroes.
+       * When an EncryptedData is present then the (unencrypted) private_key will be a zero length byte array or contain all zeroes.
        * This is for security of the private key information.
        * </pre>
        */
@@ -3096,7 +3104,7 @@ public final class Protos {
        *
        * <pre>
        * The message containing the encrypted private EC key information.
-       * When an EncryptedPrivateKey is present then the (unencrypted) private_key will be a zero length byte array or contain all zeroes.
+       * When an EncryptedData is present then the (unencrypted) private_key will be a zero length byte array or contain all zeroes.
        * This is for security of the private key information.
        * </pre>
        */
@@ -3110,7 +3118,7 @@ public final class Protos {
        *
        * <pre>
        * The message containing the encrypted private EC key information.
-       * When an EncryptedPrivateKey is present then the (unencrypted) private_key will be a zero length byte array or contain all zeroes.
+       * When an EncryptedData is present then the (unencrypted) private_key will be a zero length byte array or contain all zeroes.
        * This is for security of the private key information.
        * </pre>
        */
@@ -3126,7 +3134,7 @@ public final class Protos {
        *
        * <pre>
        * The message containing the encrypted private EC key information.
-       * When an EncryptedPrivateKey is present then the (unencrypted) private_key will be a zero length byte array or contain all zeroes.
+       * When an EncryptedData is present then the (unencrypted) private_key will be a zero length byte array or contain all zeroes.
        * This is for security of the private key information.
        * </pre>
        */
@@ -3144,10 +3152,10 @@ public final class Protos {
         return encryptedPrivateKeyBuilder_;
       }
 
-      // optional bytes public_key = 3;
+      // required bytes public_key = 3;
       private com.google.protobuf.ByteString publicKey_ = com.google.protobuf.ByteString.EMPTY;
       /**
-       * <code>optional bytes public_key = 3;</code>
+       * <code>required bytes public_key = 3;</code>
        *
        * <pre>
        * The public EC key derived from the private key. We allow both to be stored to avoid mobile clients having to
@@ -3158,7 +3166,7 @@ public final class Protos {
         return ((bitField0_ & 0x00000008) == 0x00000008);
       }
       /**
-       * <code>optional bytes public_key = 3;</code>
+       * <code>required bytes public_key = 3;</code>
        *
        * <pre>
        * The public EC key derived from the private key. We allow both to be stored to avoid mobile clients having to
@@ -3169,7 +3177,7 @@ public final class Protos {
         return publicKey_;
       }
       /**
-       * <code>optional bytes public_key = 3;</code>
+       * <code>required bytes public_key = 3;</code>
        *
        * <pre>
        * The public EC key derived from the private key. We allow both to be stored to avoid mobile clients having to
@@ -3186,7 +3194,7 @@ public final class Protos {
         return this;
       }
       /**
-       * <code>optional bytes public_key = 3;</code>
+       * <code>required bytes public_key = 3;</code>
        *
        * <pre>
        * The public EC key derived from the private key. We allow both to be stored to avoid mobile clients having to
@@ -14733,7 +14741,7 @@ public final class Protos {
       "type\030\001 \002(\0162\020.wallet.Key.Type\022\023\n\013private_" +
       "key\030\002 \001(\014\022:\n\025encrypted_private_key\030\006 \001(\013" +
       "2\033.wallet.EncryptedPrivateKey\022\022\n\npublic_" +
-      "key\030\003 \001(\014\022\r\n\005label\030\004 \001(\t\022\032\n\022creation_tim",
+      "key\030\003 \002(\014\022\r\n\005label\030\004 \001(\t\022\032\n\022creation_tim",
       "estamp\030\005 \001(\003\0223\n\021deterministic_key\030\007 \001(\0132" +
       "\030.wallet.DeterministicKey\"b\n\004Type\022\014\n\010ORI" +
       "GINAL\020\001\022\030\n\024ENCRYPTED_SCRYPT_AES\020\002\022\033\n\027DET" +

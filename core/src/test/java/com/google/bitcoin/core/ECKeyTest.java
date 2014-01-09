@@ -16,7 +16,7 @@
 
 package com.google.bitcoin.core;
 
-import com.google.bitcoin.crypto.EncryptedPrivateKey;
+import com.google.bitcoin.crypto.EncryptedData;
 import com.google.bitcoin.crypto.KeyCrypter;
 import com.google.bitcoin.crypto.KeyCrypterScrypt;
 import com.google.bitcoin.crypto.TransactionSignature;
@@ -280,7 +280,7 @@ public class ECKeyTest {
         byte[] originalPrivateKeyBytes = checkNotNull(unencryptedKey.getPrivKeyBytes());
         log.info("Original private key = " + Utils.bytesToHexString(originalPrivateKeyBytes));
 
-        EncryptedPrivateKey encryptedPrivateKey = keyCrypter.encrypt(unencryptedKey.getPrivKeyBytes(), keyCrypter.deriveKey(PASSWORD1));
+        EncryptedData encryptedPrivateKey = keyCrypter.encrypt(unencryptedKey.getPrivKeyBytes(), keyCrypter.deriveKey(PASSWORD1));
         ECKey encryptedKey = ECKey.fromEncrypted(encryptedPrivateKey, keyCrypter, unencryptedKey.getPubKey());
 
         // The key should initially be encrypted
@@ -303,7 +303,7 @@ public class ECKeyTest {
     @Test
     public void testEncryptionIsReversible() throws Exception {
         ECKey originalUnencryptedKey = new ECKey();
-        EncryptedPrivateKey encryptedPrivateKey = keyCrypter.encrypt(originalUnencryptedKey.getPrivKeyBytes(), keyCrypter.deriveKey(PASSWORD1));
+        EncryptedData encryptedPrivateKey = keyCrypter.encrypt(originalUnencryptedKey.getPrivKeyBytes(), keyCrypter.deriveKey(PASSWORD1));
         ECKey encryptedKey = ECKey.fromEncrypted(encryptedPrivateKey, keyCrypter, originalUnencryptedKey.getPubKey());
 
         // The key should be encrypted
@@ -317,11 +317,11 @@ public class ECKeyTest {
 
         // Change one of the encrypted key bytes (this is to simulate a faulty keyCrypter).
         // Encryption should not be reversible
-        byte[] goodEncryptedPrivateKeyBytes = encryptedPrivateKey.getEncryptedBytes();
+        byte[] goodEncryptedPrivateKeyBytes = encryptedPrivateKey.encryptedBytes;
 
         // Break the encrypted private key and check it is broken.
         byte[] badEncryptedPrivateKeyBytes = new byte[goodEncryptedPrivateKeyBytes.length];
-        encryptedPrivateKey.setEncryptedPrivateBytes(badEncryptedPrivateKeyBytes);
+        encryptedPrivateKey = new EncryptedData(encryptedPrivateKey.initialisationVector, badEncryptedPrivateKeyBytes);
         ECKey badEncryptedKey = ECKey.fromEncrypted(encryptedPrivateKey, keyCrypter, originalUnencryptedKey.getPubKey());
         assertTrue("Key encryption is reversible with faulty encrypted bytes", !ECKey.encryptionIsReversible(originalUnencryptedKey, badEncryptedKey, keyCrypter, keyCrypter.deriveKey(PASSWORD1)));
     }
@@ -379,8 +379,8 @@ public class ECKeyTest {
         assertTrue(unencryptedKey.getEncryptedPrivateKey() == null);
 
         checkSomeBytesAreNonZero(encryptedKey.getPrivKeyBytes());
-        checkSomeBytesAreNonZero(encryptedKey.getEncryptedPrivateKey().getEncryptedBytes());
-        checkSomeBytesAreNonZero(encryptedKey.getEncryptedPrivateKey().getInitialisationVector());
+        checkSomeBytesAreNonZero(encryptedKey.getEncryptedPrivateKey().encryptedBytes);
+        checkSomeBytesAreNonZero(encryptedKey.getEncryptedPrivateKey().initialisationVector);
     }
 
     @Test
