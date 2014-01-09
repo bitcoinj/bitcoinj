@@ -33,8 +33,7 @@ message PeerAddress {
   required uint64 services = 3;
 }
 
-/** The data to store a private key encrypted with Scrypt and AES */
-message EncryptedPrivateKey {
+message EncryptedData {
   required bytes initialisation_vector = 1;       // The initialisation vector for the AES encryption (16 bytes)
   required bytes encrypted_private_key = 2;       // The encrypted private key
 }
@@ -84,22 +83,21 @@ message Key {
   }
   required Type type = 1;
 
-  // The private EC key bytes without any ASN.1 wrapping.
-  optional bytes private_key = 2;
-
-  // The message containing the encrypted private EC key information.
-  // When an EncryptedData is present then the (unencrypted) private_key will be a zero length byte array or contain all zeroes.
-  // This is for security of the private key information.
-  optional EncryptedPrivateKey encrypted_private_key = 6;
+  // Either the private EC key bytes (without any ASN.1 wrapping), or the deterministic root seed.
+  // If the secret is encrypted, or this is a "watching entry" then this is missing.
+  optional bytes secret_bytes = 2;
+  // If the secret data is encrypted, then secret_bytes is missing and this field is set.
+  optional EncryptedData encrypted_data = 6;
 
   // The public EC key derived from the private key. We allow both to be stored to avoid mobile clients having to
-  // do lots of slow EC math on startup.
-  required bytes public_key = 3;
+  // do lots of slow EC math on startup. For DETERMINISTIC_ROOT_SEED entries this is missing.
+  optional bytes public_key = 3;
 
   // User-provided label associated with the key.
   optional string label = 4;
 
-  // Timestamp stored as millis since epoch. Useful for skipping block bodies before this point.
+  // Timestamp stored as millis since epoch. Useful for skipping block bodies before this point. Only reason it's
+  // optional is that some very old wallets don't have this data.
   optional int64 creation_timestamp = 5;
 
   optional DeterministicKey deterministic_key = 7;

@@ -593,7 +593,7 @@ public final class Protos {
     // @@protoc_insertion_point(class_scope:wallet.PeerAddress)
   }
 
-  public interface EncryptedPrivateKeyOrBuilder
+  public interface EncryptedDataOrBuilder
       extends com.google.protobuf.MessageOrBuilder {
 
     // required bytes initialisation_vector = 1;
@@ -633,28 +633,24 @@ public final class Protos {
     com.google.protobuf.ByteString getEncryptedPrivateKey();
   }
   /**
-   * Protobuf type {@code wallet.EncryptedPrivateKey}
-   *
-   * <pre>
-   ** The data to store a private key encrypted with Scrypt and AES 
-   * </pre>
+   * Protobuf type {@code wallet.EncryptedData}
    */
-  public static final class EncryptedPrivateKey extends
+  public static final class EncryptedData extends
       com.google.protobuf.GeneratedMessage
-      implements EncryptedPrivateKeyOrBuilder {
-    // Use EncryptedPrivateKey.newBuilder() to construct.
-    private EncryptedPrivateKey(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+      implements EncryptedDataOrBuilder {
+    // Use EncryptedData.newBuilder() to construct.
+    private EncryptedData(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
       super(builder);
       this.unknownFields = builder.getUnknownFields();
     }
-    private EncryptedPrivateKey(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
+    private EncryptedData(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
 
-    private static final EncryptedPrivateKey defaultInstance;
-    public static EncryptedPrivateKey getDefaultInstance() {
+    private static final EncryptedData defaultInstance;
+    public static EncryptedData getDefaultInstance() {
       return defaultInstance;
     }
 
-    public EncryptedPrivateKey getDefaultInstanceForType() {
+    public EncryptedData getDefaultInstanceForType() {
       return defaultInstance;
     }
 
@@ -664,7 +660,7 @@ public final class Protos {
         getUnknownFields() {
       return this.unknownFields;
     }
-    private EncryptedPrivateKey(
+    private EncryptedData(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
@@ -711,28 +707,28 @@ public final class Protos {
     }
     public static final com.google.protobuf.Descriptors.Descriptor
         getDescriptor() {
-      return org.bitcoinj.wallet.Protos.internal_static_wallet_EncryptedPrivateKey_descriptor;
+      return org.bitcoinj.wallet.Protos.internal_static_wallet_EncryptedData_descriptor;
     }
 
     protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
         internalGetFieldAccessorTable() {
-      return org.bitcoinj.wallet.Protos.internal_static_wallet_EncryptedPrivateKey_fieldAccessorTable
+      return org.bitcoinj.wallet.Protos.internal_static_wallet_EncryptedData_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
-              org.bitcoinj.wallet.Protos.EncryptedPrivateKey.class, org.bitcoinj.wallet.Protos.EncryptedPrivateKey.Builder.class);
+              org.bitcoinj.wallet.Protos.EncryptedData.class, org.bitcoinj.wallet.Protos.EncryptedData.Builder.class);
     }
 
-    public static com.google.protobuf.Parser<EncryptedPrivateKey> PARSER =
-        new com.google.protobuf.AbstractParser<EncryptedPrivateKey>() {
-      public EncryptedPrivateKey parsePartialFrom(
+    public static com.google.protobuf.Parser<EncryptedData> PARSER =
+        new com.google.protobuf.AbstractParser<EncryptedData>() {
+      public EncryptedData parsePartialFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
           throws com.google.protobuf.InvalidProtocolBufferException {
-        return new EncryptedPrivateKey(input, extensionRegistry);
+        return new EncryptedData(input, extensionRegistry);
       }
     };
 
     @java.lang.Override
-    public com.google.protobuf.Parser<EncryptedPrivateKey> getParserForType() {
+    public com.google.protobuf.Parser<EncryptedData> getParserForType() {
       return PARSER;
     }
 
@@ -844,53 +840,53 @@ public final class Protos {
       return super.writeReplace();
     }
 
-    public static org.bitcoinj.wallet.Protos.EncryptedPrivateKey parseFrom(
+    public static org.bitcoinj.wallet.Protos.EncryptedData parseFrom(
         com.google.protobuf.ByteString data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data);
     }
-    public static org.bitcoinj.wallet.Protos.EncryptedPrivateKey parseFrom(
+    public static org.bitcoinj.wallet.Protos.EncryptedData parseFrom(
         com.google.protobuf.ByteString data,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data, extensionRegistry);
     }
-    public static org.bitcoinj.wallet.Protos.EncryptedPrivateKey parseFrom(byte[] data)
+    public static org.bitcoinj.wallet.Protos.EncryptedData parseFrom(byte[] data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data);
     }
-    public static org.bitcoinj.wallet.Protos.EncryptedPrivateKey parseFrom(
+    public static org.bitcoinj.wallet.Protos.EncryptedData parseFrom(
         byte[] data,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data, extensionRegistry);
     }
-    public static org.bitcoinj.wallet.Protos.EncryptedPrivateKey parseFrom(java.io.InputStream input)
+    public static org.bitcoinj.wallet.Protos.EncryptedData parseFrom(java.io.InputStream input)
         throws java.io.IOException {
       return PARSER.parseFrom(input);
     }
-    public static org.bitcoinj.wallet.Protos.EncryptedPrivateKey parseFrom(
+    public static org.bitcoinj.wallet.Protos.EncryptedData parseFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
       return PARSER.parseFrom(input, extensionRegistry);
     }
-    public static org.bitcoinj.wallet.Protos.EncryptedPrivateKey parseDelimitedFrom(java.io.InputStream input)
+    public static org.bitcoinj.wallet.Protos.EncryptedData parseDelimitedFrom(java.io.InputStream input)
         throws java.io.IOException {
       return PARSER.parseDelimitedFrom(input);
     }
-    public static org.bitcoinj.wallet.Protos.EncryptedPrivateKey parseDelimitedFrom(
+    public static org.bitcoinj.wallet.Protos.EncryptedData parseDelimitedFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
       return PARSER.parseDelimitedFrom(input, extensionRegistry);
     }
-    public static org.bitcoinj.wallet.Protos.EncryptedPrivateKey parseFrom(
+    public static org.bitcoinj.wallet.Protos.EncryptedData parseFrom(
         com.google.protobuf.CodedInputStream input)
         throws java.io.IOException {
       return PARSER.parseFrom(input);
     }
-    public static org.bitcoinj.wallet.Protos.EncryptedPrivateKey parseFrom(
+    public static org.bitcoinj.wallet.Protos.EncryptedData parseFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
@@ -899,7 +895,7 @@ public final class Protos {
 
     public static Builder newBuilder() { return Builder.create(); }
     public Builder newBuilderForType() { return newBuilder(); }
-    public static Builder newBuilder(org.bitcoinj.wallet.Protos.EncryptedPrivateKey prototype) {
+    public static Builder newBuilder(org.bitcoinj.wallet.Protos.EncryptedData prototype) {
       return newBuilder().mergeFrom(prototype);
     }
     public Builder toBuilder() { return newBuilder(this); }
@@ -911,28 +907,24 @@ public final class Protos {
       return builder;
     }
     /**
-     * Protobuf type {@code wallet.EncryptedPrivateKey}
-     *
-     * <pre>
-     ** The data to store a private key encrypted with Scrypt and AES 
-     * </pre>
+     * Protobuf type {@code wallet.EncryptedData}
      */
     public static final class Builder extends
         com.google.protobuf.GeneratedMessage.Builder<Builder>
-       implements org.bitcoinj.wallet.Protos.EncryptedPrivateKeyOrBuilder {
+       implements org.bitcoinj.wallet.Protos.EncryptedDataOrBuilder {
       public static final com.google.protobuf.Descriptors.Descriptor
           getDescriptor() {
-        return org.bitcoinj.wallet.Protos.internal_static_wallet_EncryptedPrivateKey_descriptor;
+        return org.bitcoinj.wallet.Protos.internal_static_wallet_EncryptedData_descriptor;
       }
 
       protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
           internalGetFieldAccessorTable() {
-        return org.bitcoinj.wallet.Protos.internal_static_wallet_EncryptedPrivateKey_fieldAccessorTable
+        return org.bitcoinj.wallet.Protos.internal_static_wallet_EncryptedData_fieldAccessorTable
             .ensureFieldAccessorsInitialized(
-                org.bitcoinj.wallet.Protos.EncryptedPrivateKey.class, org.bitcoinj.wallet.Protos.EncryptedPrivateKey.Builder.class);
+                org.bitcoinj.wallet.Protos.EncryptedData.class, org.bitcoinj.wallet.Protos.EncryptedData.Builder.class);
       }
 
-      // Construct using org.bitcoinj.wallet.Protos.EncryptedPrivateKey.newBuilder()
+      // Construct using org.bitcoinj.wallet.Protos.EncryptedData.newBuilder()
       private Builder() {
         maybeForceBuilderInitialization();
       }
@@ -965,23 +957,23 @@ public final class Protos {
 
       public com.google.protobuf.Descriptors.Descriptor
           getDescriptorForType() {
-        return org.bitcoinj.wallet.Protos.internal_static_wallet_EncryptedPrivateKey_descriptor;
+        return org.bitcoinj.wallet.Protos.internal_static_wallet_EncryptedData_descriptor;
       }
 
-      public org.bitcoinj.wallet.Protos.EncryptedPrivateKey getDefaultInstanceForType() {
-        return org.bitcoinj.wallet.Protos.EncryptedPrivateKey.getDefaultInstance();
+      public org.bitcoinj.wallet.Protos.EncryptedData getDefaultInstanceForType() {
+        return org.bitcoinj.wallet.Protos.EncryptedData.getDefaultInstance();
       }
 
-      public org.bitcoinj.wallet.Protos.EncryptedPrivateKey build() {
-        org.bitcoinj.wallet.Protos.EncryptedPrivateKey result = buildPartial();
+      public org.bitcoinj.wallet.Protos.EncryptedData build() {
+        org.bitcoinj.wallet.Protos.EncryptedData result = buildPartial();
         if (!result.isInitialized()) {
           throw newUninitializedMessageException(result);
         }
         return result;
       }
 
-      public org.bitcoinj.wallet.Protos.EncryptedPrivateKey buildPartial() {
-        org.bitcoinj.wallet.Protos.EncryptedPrivateKey result = new org.bitcoinj.wallet.Protos.EncryptedPrivateKey(this);
+      public org.bitcoinj.wallet.Protos.EncryptedData buildPartial() {
+        org.bitcoinj.wallet.Protos.EncryptedData result = new org.bitcoinj.wallet.Protos.EncryptedData(this);
         int from_bitField0_ = bitField0_;
         int to_bitField0_ = 0;
         if (((from_bitField0_ & 0x00000001) == 0x00000001)) {
@@ -998,16 +990,16 @@ public final class Protos {
       }
 
       public Builder mergeFrom(com.google.protobuf.Message other) {
-        if (other instanceof org.bitcoinj.wallet.Protos.EncryptedPrivateKey) {
-          return mergeFrom((org.bitcoinj.wallet.Protos.EncryptedPrivateKey)other);
+        if (other instanceof org.bitcoinj.wallet.Protos.EncryptedData) {
+          return mergeFrom((org.bitcoinj.wallet.Protos.EncryptedData)other);
         } else {
           super.mergeFrom(other);
           return this;
         }
       }
 
-      public Builder mergeFrom(org.bitcoinj.wallet.Protos.EncryptedPrivateKey other) {
-        if (other == org.bitcoinj.wallet.Protos.EncryptedPrivateKey.getDefaultInstance()) return this;
+      public Builder mergeFrom(org.bitcoinj.wallet.Protos.EncryptedData other) {
+        if (other == org.bitcoinj.wallet.Protos.EncryptedData.getDefaultInstance()) return this;
         if (other.hasInitialisationVector()) {
           setInitialisationVector(other.getInitialisationVector());
         }
@@ -1034,11 +1026,11 @@ public final class Protos {
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
           throws java.io.IOException {
-        org.bitcoinj.wallet.Protos.EncryptedPrivateKey parsedMessage = null;
+        org.bitcoinj.wallet.Protos.EncryptedData parsedMessage = null;
         try {
           parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
         } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-          parsedMessage = (org.bitcoinj.wallet.Protos.EncryptedPrivateKey) e.getUnfinishedMessage();
+          parsedMessage = (org.bitcoinj.wallet.Protos.EncryptedData) e.getUnfinishedMessage();
           throw e;
         } finally {
           if (parsedMessage != null) {
@@ -1153,15 +1145,15 @@ public final class Protos {
         return this;
       }
 
-      // @@protoc_insertion_point(builder_scope:wallet.EncryptedPrivateKey)
+      // @@protoc_insertion_point(builder_scope:wallet.EncryptedData)
     }
 
     static {
-      defaultInstance = new EncryptedPrivateKey(true);
+      defaultInstance = new EncryptedData(true);
       defaultInstance.initFields();
     }
 
-    // @@protoc_insertion_point(class_scope:wallet.EncryptedPrivateKey)
+    // @@protoc_insertion_point(class_scope:wallet.EncryptedData)
   }
 
   public interface DeterministicKeyOrBuilder
@@ -1856,72 +1848,68 @@ public final class Protos {
      */
     org.bitcoinj.wallet.Protos.Key.Type getType();
 
-    // optional bytes private_key = 2;
+    // optional bytes secret_bytes = 2;
     /**
-     * <code>optional bytes private_key = 2;</code>
+     * <code>optional bytes secret_bytes = 2;</code>
      *
      * <pre>
-     * The private EC key bytes without any ASN.1 wrapping.
+     * Either the private EC key bytes (without any ASN.1 wrapping), or the deterministic root seed.
+     * If the secret is encrypted, or this is a "watching entry" then this is missing.
      * </pre>
      */
-    boolean hasPrivateKey();
+    boolean hasSecretBytes();
     /**
-     * <code>optional bytes private_key = 2;</code>
+     * <code>optional bytes secret_bytes = 2;</code>
      *
      * <pre>
-     * The private EC key bytes without any ASN.1 wrapping.
+     * Either the private EC key bytes (without any ASN.1 wrapping), or the deterministic root seed.
+     * If the secret is encrypted, or this is a "watching entry" then this is missing.
      * </pre>
      */
-    com.google.protobuf.ByteString getPrivateKey();
+    com.google.protobuf.ByteString getSecretBytes();
 
-    // optional .wallet.EncryptedPrivateKey encrypted_private_key = 6;
+    // optional .wallet.EncryptedData encrypted_data = 6;
     /**
-     * <code>optional .wallet.EncryptedPrivateKey encrypted_private_key = 6;</code>
+     * <code>optional .wallet.EncryptedData encrypted_data = 6;</code>
      *
      * <pre>
-     * The message containing the encrypted private EC key information.
-     * When an EncryptedData is present then the (unencrypted) private_key will be a zero length byte array or contain all zeroes.
-     * This is for security of the private key information.
+     * If the secret data is encrypted, then secret_bytes is missing and this field is set.
      * </pre>
      */
-    boolean hasEncryptedPrivateKey();
+    boolean hasEncryptedData();
     /**
-     * <code>optional .wallet.EncryptedPrivateKey encrypted_private_key = 6;</code>
+     * <code>optional .wallet.EncryptedData encrypted_data = 6;</code>
      *
      * <pre>
-     * The message containing the encrypted private EC key information.
-     * When an EncryptedData is present then the (unencrypted) private_key will be a zero length byte array or contain all zeroes.
-     * This is for security of the private key information.
+     * If the secret data is encrypted, then secret_bytes is missing and this field is set.
      * </pre>
      */
-    org.bitcoinj.wallet.Protos.EncryptedPrivateKey getEncryptedPrivateKey();
+    org.bitcoinj.wallet.Protos.EncryptedData getEncryptedData();
     /**
-     * <code>optional .wallet.EncryptedPrivateKey encrypted_private_key = 6;</code>
+     * <code>optional .wallet.EncryptedData encrypted_data = 6;</code>
      *
      * <pre>
-     * The message containing the encrypted private EC key information.
-     * When an EncryptedData is present then the (unencrypted) private_key will be a zero length byte array or contain all zeroes.
-     * This is for security of the private key information.
+     * If the secret data is encrypted, then secret_bytes is missing and this field is set.
      * </pre>
      */
-    org.bitcoinj.wallet.Protos.EncryptedPrivateKeyOrBuilder getEncryptedPrivateKeyOrBuilder();
+    org.bitcoinj.wallet.Protos.EncryptedDataOrBuilder getEncryptedDataOrBuilder();
 
-    // required bytes public_key = 3;
+    // optional bytes public_key = 3;
     /**
-     * <code>required bytes public_key = 3;</code>
+     * <code>optional bytes public_key = 3;</code>
      *
      * <pre>
      * The public EC key derived from the private key. We allow both to be stored to avoid mobile clients having to
-     * do lots of slow EC math on startup.
+     * do lots of slow EC math on startup. For DETERMINISTIC_ROOT_SEED entries this is missing.
      * </pre>
      */
     boolean hasPublicKey();
     /**
-     * <code>required bytes public_key = 3;</code>
+     * <code>optional bytes public_key = 3;</code>
      *
      * <pre>
      * The public EC key derived from the private key. We allow both to be stored to avoid mobile clients having to
-     * do lots of slow EC math on startup.
+     * do lots of slow EC math on startup. For DETERMINISTIC_ROOT_SEED entries this is missing.
      * </pre>
      */
     com.google.protobuf.ByteString getPublicKey();
@@ -1958,7 +1946,8 @@ public final class Protos {
      * <code>optional int64 creation_timestamp = 5;</code>
      *
      * <pre>
-     * Timestamp stored as millis since epoch. Useful for skipping block bodies before this point.
+     * Timestamp stored as millis since epoch. Useful for skipping block bodies before this point. Only reason it's
+     * optional is that some very old wallets don't have this data.
      * </pre>
      */
     boolean hasCreationTimestamp();
@@ -1966,7 +1955,8 @@ public final class Protos {
      * <code>optional int64 creation_timestamp = 5;</code>
      *
      * <pre>
-     * Timestamp stored as millis since epoch. Useful for skipping block bodies before this point.
+     * Timestamp stored as millis since epoch. Useful for skipping block bodies before this point. Only reason it's
+     * optional is that some very old wallets don't have this data.
      * </pre>
      */
     long getCreationTimestamp();
@@ -2060,7 +2050,7 @@ public final class Protos {
             }
             case 18: {
               bitField0_ |= 0x00000002;
-              privateKey_ = input.readBytes();
+              secretBytes_ = input.readBytes();
               break;
             }
             case 26: {
@@ -2079,14 +2069,14 @@ public final class Protos {
               break;
             }
             case 50: {
-              org.bitcoinj.wallet.Protos.EncryptedPrivateKey.Builder subBuilder = null;
+              org.bitcoinj.wallet.Protos.EncryptedData.Builder subBuilder = null;
               if (((bitField0_ & 0x00000004) == 0x00000004)) {
-                subBuilder = encryptedPrivateKey_.toBuilder();
+                subBuilder = encryptedData_.toBuilder();
               }
-              encryptedPrivateKey_ = input.readMessage(org.bitcoinj.wallet.Protos.EncryptedPrivateKey.PARSER, extensionRegistry);
+              encryptedData_ = input.readMessage(org.bitcoinj.wallet.Protos.EncryptedData.PARSER, extensionRegistry);
               if (subBuilder != null) {
-                subBuilder.mergeFrom(encryptedPrivateKey_);
-                encryptedPrivateKey_ = subBuilder.buildPartial();
+                subBuilder.mergeFrom(encryptedData_);
+                encryptedData_ = subBuilder.buildPartial();
               }
               bitField0_ |= 0x00000004;
               break;
@@ -2302,90 +2292,86 @@ public final class Protos {
       return type_;
     }
 
-    // optional bytes private_key = 2;
-    public static final int PRIVATE_KEY_FIELD_NUMBER = 2;
-    private com.google.protobuf.ByteString privateKey_;
+    // optional bytes secret_bytes = 2;
+    public static final int SECRET_BYTES_FIELD_NUMBER = 2;
+    private com.google.protobuf.ByteString secretBytes_;
     /**
-     * <code>optional bytes private_key = 2;</code>
+     * <code>optional bytes secret_bytes = 2;</code>
      *
      * <pre>
-     * The private EC key bytes without any ASN.1 wrapping.
+     * Either the private EC key bytes (without any ASN.1 wrapping), or the deterministic root seed.
+     * If the secret is encrypted, or this is a "watching entry" then this is missing.
      * </pre>
      */
-    public boolean hasPrivateKey() {
+    public boolean hasSecretBytes() {
       return ((bitField0_ & 0x00000002) == 0x00000002);
     }
     /**
-     * <code>optional bytes private_key = 2;</code>
+     * <code>optional bytes secret_bytes = 2;</code>
      *
      * <pre>
-     * The private EC key bytes without any ASN.1 wrapping.
+     * Either the private EC key bytes (without any ASN.1 wrapping), or the deterministic root seed.
+     * If the secret is encrypted, or this is a "watching entry" then this is missing.
      * </pre>
      */
-    public com.google.protobuf.ByteString getPrivateKey() {
-      return privateKey_;
+    public com.google.protobuf.ByteString getSecretBytes() {
+      return secretBytes_;
     }
 
-    // optional .wallet.EncryptedPrivateKey encrypted_private_key = 6;
-    public static final int ENCRYPTED_PRIVATE_KEY_FIELD_NUMBER = 6;
-    private org.bitcoinj.wallet.Protos.EncryptedPrivateKey encryptedPrivateKey_;
+    // optional .wallet.EncryptedData encrypted_data = 6;
+    public static final int ENCRYPTED_DATA_FIELD_NUMBER = 6;
+    private org.bitcoinj.wallet.Protos.EncryptedData encryptedData_;
     /**
-     * <code>optional .wallet.EncryptedPrivateKey encrypted_private_key = 6;</code>
+     * <code>optional .wallet.EncryptedData encrypted_data = 6;</code>
      *
      * <pre>
-     * The message containing the encrypted private EC key information.
-     * When an EncryptedData is present then the (unencrypted) private_key will be a zero length byte array or contain all zeroes.
-     * This is for security of the private key information.
+     * If the secret data is encrypted, then secret_bytes is missing and this field is set.
      * </pre>
      */
-    public boolean hasEncryptedPrivateKey() {
+    public boolean hasEncryptedData() {
       return ((bitField0_ & 0x00000004) == 0x00000004);
     }
     /**
-     * <code>optional .wallet.EncryptedPrivateKey encrypted_private_key = 6;</code>
+     * <code>optional .wallet.EncryptedData encrypted_data = 6;</code>
      *
      * <pre>
-     * The message containing the encrypted private EC key information.
-     * When an EncryptedData is present then the (unencrypted) private_key will be a zero length byte array or contain all zeroes.
-     * This is for security of the private key information.
+     * If the secret data is encrypted, then secret_bytes is missing and this field is set.
      * </pre>
      */
-    public org.bitcoinj.wallet.Protos.EncryptedPrivateKey getEncryptedPrivateKey() {
-      return encryptedPrivateKey_;
+    public org.bitcoinj.wallet.Protos.EncryptedData getEncryptedData() {
+      return encryptedData_;
     }
     /**
-     * <code>optional .wallet.EncryptedPrivateKey encrypted_private_key = 6;</code>
+     * <code>optional .wallet.EncryptedData encrypted_data = 6;</code>
      *
      * <pre>
-     * The message containing the encrypted private EC key information.
-     * When an EncryptedData is present then the (unencrypted) private_key will be a zero length byte array or contain all zeroes.
-     * This is for security of the private key information.
+     * If the secret data is encrypted, then secret_bytes is missing and this field is set.
      * </pre>
      */
-    public org.bitcoinj.wallet.Protos.EncryptedPrivateKeyOrBuilder getEncryptedPrivateKeyOrBuilder() {
-      return encryptedPrivateKey_;
+    public org.bitcoinj.wallet.Protos.EncryptedDataOrBuilder getEncryptedDataOrBuilder() {
+      return encryptedData_;
     }
 
-    // required bytes public_key = 3;
+    // optional bytes public_key = 3;
     public static final int PUBLIC_KEY_FIELD_NUMBER = 3;
     private com.google.protobuf.ByteString publicKey_;
     /**
-     * <code>required bytes public_key = 3;</code>
+     * <code>optional bytes public_key = 3;</code>
      *
      * <pre>
      * The public EC key derived from the private key. We allow both to be stored to avoid mobile clients having to
-     * do lots of slow EC math on startup.
+     * do lots of slow EC math on startup. For DETERMINISTIC_ROOT_SEED entries this is missing.
      * </pre>
      */
     public boolean hasPublicKey() {
       return ((bitField0_ & 0x00000008) == 0x00000008);
     }
     /**
-     * <code>required bytes public_key = 3;</code>
+     * <code>optional bytes public_key = 3;</code>
      *
      * <pre>
      * The public EC key derived from the private key. We allow both to be stored to avoid mobile clients having to
-     * do lots of slow EC math on startup.
+     * do lots of slow EC math on startup. For DETERMINISTIC_ROOT_SEED entries this is missing.
      * </pre>
      */
     public com.google.protobuf.ByteString getPublicKey() {
@@ -2454,7 +2440,8 @@ public final class Protos {
      * <code>optional int64 creation_timestamp = 5;</code>
      *
      * <pre>
-     * Timestamp stored as millis since epoch. Useful for skipping block bodies before this point.
+     * Timestamp stored as millis since epoch. Useful for skipping block bodies before this point. Only reason it's
+     * optional is that some very old wallets don't have this data.
      * </pre>
      */
     public boolean hasCreationTimestamp() {
@@ -2464,7 +2451,8 @@ public final class Protos {
      * <code>optional int64 creation_timestamp = 5;</code>
      *
      * <pre>
-     * Timestamp stored as millis since epoch. Useful for skipping block bodies before this point.
+     * Timestamp stored as millis since epoch. Useful for skipping block bodies before this point. Only reason it's
+     * optional is that some very old wallets don't have this data.
      * </pre>
      */
     public long getCreationTimestamp() {
@@ -2495,8 +2483,8 @@ public final class Protos {
 
     private void initFields() {
       type_ = org.bitcoinj.wallet.Protos.Key.Type.ORIGINAL;
-      privateKey_ = com.google.protobuf.ByteString.EMPTY;
-      encryptedPrivateKey_ = org.bitcoinj.wallet.Protos.EncryptedPrivateKey.getDefaultInstance();
+      secretBytes_ = com.google.protobuf.ByteString.EMPTY;
+      encryptedData_ = org.bitcoinj.wallet.Protos.EncryptedData.getDefaultInstance();
       publicKey_ = com.google.protobuf.ByteString.EMPTY;
       label_ = "";
       creationTimestamp_ = 0L;
@@ -2511,12 +2499,8 @@ public final class Protos {
         memoizedIsInitialized = 0;
         return false;
       }
-      if (!hasPublicKey()) {
-        memoizedIsInitialized = 0;
-        return false;
-      }
-      if (hasEncryptedPrivateKey()) {
-        if (!getEncryptedPrivateKey().isInitialized()) {
+      if (hasEncryptedData()) {
+        if (!getEncryptedData().isInitialized()) {
           memoizedIsInitialized = 0;
           return false;
         }
@@ -2538,7 +2522,7 @@ public final class Protos {
         output.writeEnum(1, type_.getNumber());
       }
       if (((bitField0_ & 0x00000002) == 0x00000002)) {
-        output.writeBytes(2, privateKey_);
+        output.writeBytes(2, secretBytes_);
       }
       if (((bitField0_ & 0x00000008) == 0x00000008)) {
         output.writeBytes(3, publicKey_);
@@ -2550,7 +2534,7 @@ public final class Protos {
         output.writeInt64(5, creationTimestamp_);
       }
       if (((bitField0_ & 0x00000004) == 0x00000004)) {
-        output.writeMessage(6, encryptedPrivateKey_);
+        output.writeMessage(6, encryptedData_);
       }
       if (((bitField0_ & 0x00000040) == 0x00000040)) {
         output.writeMessage(7, deterministicKey_);
@@ -2570,7 +2554,7 @@ public final class Protos {
       }
       if (((bitField0_ & 0x00000002) == 0x00000002)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeBytesSize(2, privateKey_);
+          .computeBytesSize(2, secretBytes_);
       }
       if (((bitField0_ & 0x00000008) == 0x00000008)) {
         size += com.google.protobuf.CodedOutputStream
@@ -2586,7 +2570,7 @@ public final class Protos {
       }
       if (((bitField0_ & 0x00000004) == 0x00000004)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(6, encryptedPrivateKey_);
+          .computeMessageSize(6, encryptedData_);
       }
       if (((bitField0_ & 0x00000040) == 0x00000040)) {
         size += com.google.protobuf.CodedOutputStream
@@ -2711,7 +2695,7 @@ public final class Protos {
       }
       private void maybeForceBuilderInitialization() {
         if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
-          getEncryptedPrivateKeyFieldBuilder();
+          getEncryptedDataFieldBuilder();
           getDeterministicKeyFieldBuilder();
         }
       }
@@ -2723,12 +2707,12 @@ public final class Protos {
         super.clear();
         type_ = org.bitcoinj.wallet.Protos.Key.Type.ORIGINAL;
         bitField0_ = (bitField0_ & ~0x00000001);
-        privateKey_ = com.google.protobuf.ByteString.EMPTY;
+        secretBytes_ = com.google.protobuf.ByteString.EMPTY;
         bitField0_ = (bitField0_ & ~0x00000002);
-        if (encryptedPrivateKeyBuilder_ == null) {
-          encryptedPrivateKey_ = org.bitcoinj.wallet.Protos.EncryptedPrivateKey.getDefaultInstance();
+        if (encryptedDataBuilder_ == null) {
+          encryptedData_ = org.bitcoinj.wallet.Protos.EncryptedData.getDefaultInstance();
         } else {
-          encryptedPrivateKeyBuilder_.clear();
+          encryptedDataBuilder_.clear();
         }
         bitField0_ = (bitField0_ & ~0x00000004);
         publicKey_ = com.google.protobuf.ByteString.EMPTY;
@@ -2778,14 +2762,14 @@ public final class Protos {
         if (((from_bitField0_ & 0x00000002) == 0x00000002)) {
           to_bitField0_ |= 0x00000002;
         }
-        result.privateKey_ = privateKey_;
+        result.secretBytes_ = secretBytes_;
         if (((from_bitField0_ & 0x00000004) == 0x00000004)) {
           to_bitField0_ |= 0x00000004;
         }
-        if (encryptedPrivateKeyBuilder_ == null) {
-          result.encryptedPrivateKey_ = encryptedPrivateKey_;
+        if (encryptedDataBuilder_ == null) {
+          result.encryptedData_ = encryptedData_;
         } else {
-          result.encryptedPrivateKey_ = encryptedPrivateKeyBuilder_.build();
+          result.encryptedData_ = encryptedDataBuilder_.build();
         }
         if (((from_bitField0_ & 0x00000008) == 0x00000008)) {
           to_bitField0_ |= 0x00000008;
@@ -2826,11 +2810,11 @@ public final class Protos {
         if (other.hasType()) {
           setType(other.getType());
         }
-        if (other.hasPrivateKey()) {
-          setPrivateKey(other.getPrivateKey());
+        if (other.hasSecretBytes()) {
+          setSecretBytes(other.getSecretBytes());
         }
-        if (other.hasEncryptedPrivateKey()) {
-          mergeEncryptedPrivateKey(other.getEncryptedPrivateKey());
+        if (other.hasEncryptedData()) {
+          mergeEncryptedData(other.getEncryptedData());
         }
         if (other.hasPublicKey()) {
           setPublicKey(other.getPublicKey());
@@ -2855,12 +2839,8 @@ public final class Protos {
           
           return false;
         }
-        if (!hasPublicKey()) {
-          
-          return false;
-        }
-        if (hasEncryptedPrivateKey()) {
-          if (!getEncryptedPrivateKey().isInitialized()) {
+        if (hasEncryptedData()) {
+          if (!getEncryptedData().isInitialized()) {
             
             return false;
           }
@@ -2929,259 +2909,245 @@ public final class Protos {
         return this;
       }
 
-      // optional bytes private_key = 2;
-      private com.google.protobuf.ByteString privateKey_ = com.google.protobuf.ByteString.EMPTY;
+      // optional bytes secret_bytes = 2;
+      private com.google.protobuf.ByteString secretBytes_ = com.google.protobuf.ByteString.EMPTY;
       /**
-       * <code>optional bytes private_key = 2;</code>
+       * <code>optional bytes secret_bytes = 2;</code>
        *
        * <pre>
-       * The private EC key bytes without any ASN.1 wrapping.
+       * Either the private EC key bytes (without any ASN.1 wrapping), or the deterministic root seed.
+       * If the secret is encrypted, or this is a "watching entry" then this is missing.
        * </pre>
        */
-      public boolean hasPrivateKey() {
+      public boolean hasSecretBytes() {
         return ((bitField0_ & 0x00000002) == 0x00000002);
       }
       /**
-       * <code>optional bytes private_key = 2;</code>
+       * <code>optional bytes secret_bytes = 2;</code>
        *
        * <pre>
-       * The private EC key bytes without any ASN.1 wrapping.
+       * Either the private EC key bytes (without any ASN.1 wrapping), or the deterministic root seed.
+       * If the secret is encrypted, or this is a "watching entry" then this is missing.
        * </pre>
        */
-      public com.google.protobuf.ByteString getPrivateKey() {
-        return privateKey_;
+      public com.google.protobuf.ByteString getSecretBytes() {
+        return secretBytes_;
       }
       /**
-       * <code>optional bytes private_key = 2;</code>
+       * <code>optional bytes secret_bytes = 2;</code>
        *
        * <pre>
-       * The private EC key bytes without any ASN.1 wrapping.
+       * Either the private EC key bytes (without any ASN.1 wrapping), or the deterministic root seed.
+       * If the secret is encrypted, or this is a "watching entry" then this is missing.
        * </pre>
        */
-      public Builder setPrivateKey(com.google.protobuf.ByteString value) {
+      public Builder setSecretBytes(com.google.protobuf.ByteString value) {
         if (value == null) {
     throw new NullPointerException();
   }
   bitField0_ |= 0x00000002;
-        privateKey_ = value;
+        secretBytes_ = value;
         onChanged();
         return this;
       }
       /**
-       * <code>optional bytes private_key = 2;</code>
+       * <code>optional bytes secret_bytes = 2;</code>
        *
        * <pre>
-       * The private EC key bytes without any ASN.1 wrapping.
+       * Either the private EC key bytes (without any ASN.1 wrapping), or the deterministic root seed.
+       * If the secret is encrypted, or this is a "watching entry" then this is missing.
        * </pre>
        */
-      public Builder clearPrivateKey() {
+      public Builder clearSecretBytes() {
         bitField0_ = (bitField0_ & ~0x00000002);
-        privateKey_ = getDefaultInstance().getPrivateKey();
+        secretBytes_ = getDefaultInstance().getSecretBytes();
         onChanged();
         return this;
       }
 
-      // optional .wallet.EncryptedPrivateKey encrypted_private_key = 6;
-      private org.bitcoinj.wallet.Protos.EncryptedPrivateKey encryptedPrivateKey_ = org.bitcoinj.wallet.Protos.EncryptedPrivateKey.getDefaultInstance();
+      // optional .wallet.EncryptedData encrypted_data = 6;
+      private org.bitcoinj.wallet.Protos.EncryptedData encryptedData_ = org.bitcoinj.wallet.Protos.EncryptedData.getDefaultInstance();
       private com.google.protobuf.SingleFieldBuilder<
-          org.bitcoinj.wallet.Protos.EncryptedPrivateKey, org.bitcoinj.wallet.Protos.EncryptedPrivateKey.Builder, org.bitcoinj.wallet.Protos.EncryptedPrivateKeyOrBuilder> encryptedPrivateKeyBuilder_;
+          org.bitcoinj.wallet.Protos.EncryptedData, org.bitcoinj.wallet.Protos.EncryptedData.Builder, org.bitcoinj.wallet.Protos.EncryptedDataOrBuilder> encryptedDataBuilder_;
       /**
-       * <code>optional .wallet.EncryptedPrivateKey encrypted_private_key = 6;</code>
+       * <code>optional .wallet.EncryptedData encrypted_data = 6;</code>
        *
        * <pre>
-       * The message containing the encrypted private EC key information.
-       * When an EncryptedData is present then the (unencrypted) private_key will be a zero length byte array or contain all zeroes.
-       * This is for security of the private key information.
+       * If the secret data is encrypted, then secret_bytes is missing and this field is set.
        * </pre>
        */
-      public boolean hasEncryptedPrivateKey() {
+      public boolean hasEncryptedData() {
         return ((bitField0_ & 0x00000004) == 0x00000004);
       }
       /**
-       * <code>optional .wallet.EncryptedPrivateKey encrypted_private_key = 6;</code>
+       * <code>optional .wallet.EncryptedData encrypted_data = 6;</code>
        *
        * <pre>
-       * The message containing the encrypted private EC key information.
-       * When an EncryptedData is present then the (unencrypted) private_key will be a zero length byte array or contain all zeroes.
-       * This is for security of the private key information.
+       * If the secret data is encrypted, then secret_bytes is missing and this field is set.
        * </pre>
        */
-      public org.bitcoinj.wallet.Protos.EncryptedPrivateKey getEncryptedPrivateKey() {
-        if (encryptedPrivateKeyBuilder_ == null) {
-          return encryptedPrivateKey_;
+      public org.bitcoinj.wallet.Protos.EncryptedData getEncryptedData() {
+        if (encryptedDataBuilder_ == null) {
+          return encryptedData_;
         } else {
-          return encryptedPrivateKeyBuilder_.getMessage();
+          return encryptedDataBuilder_.getMessage();
         }
       }
       /**
-       * <code>optional .wallet.EncryptedPrivateKey encrypted_private_key = 6;</code>
+       * <code>optional .wallet.EncryptedData encrypted_data = 6;</code>
        *
        * <pre>
-       * The message containing the encrypted private EC key information.
-       * When an EncryptedData is present then the (unencrypted) private_key will be a zero length byte array or contain all zeroes.
-       * This is for security of the private key information.
+       * If the secret data is encrypted, then secret_bytes is missing and this field is set.
        * </pre>
        */
-      public Builder setEncryptedPrivateKey(org.bitcoinj.wallet.Protos.EncryptedPrivateKey value) {
-        if (encryptedPrivateKeyBuilder_ == null) {
+      public Builder setEncryptedData(org.bitcoinj.wallet.Protos.EncryptedData value) {
+        if (encryptedDataBuilder_ == null) {
           if (value == null) {
             throw new NullPointerException();
           }
-          encryptedPrivateKey_ = value;
+          encryptedData_ = value;
           onChanged();
         } else {
-          encryptedPrivateKeyBuilder_.setMessage(value);
+          encryptedDataBuilder_.setMessage(value);
         }
         bitField0_ |= 0x00000004;
         return this;
       }
       /**
-       * <code>optional .wallet.EncryptedPrivateKey encrypted_private_key = 6;</code>
+       * <code>optional .wallet.EncryptedData encrypted_data = 6;</code>
        *
        * <pre>
-       * The message containing the encrypted private EC key information.
-       * When an EncryptedData is present then the (unencrypted) private_key will be a zero length byte array or contain all zeroes.
-       * This is for security of the private key information.
+       * If the secret data is encrypted, then secret_bytes is missing and this field is set.
        * </pre>
        */
-      public Builder setEncryptedPrivateKey(
-          org.bitcoinj.wallet.Protos.EncryptedPrivateKey.Builder builderForValue) {
-        if (encryptedPrivateKeyBuilder_ == null) {
-          encryptedPrivateKey_ = builderForValue.build();
+      public Builder setEncryptedData(
+          org.bitcoinj.wallet.Protos.EncryptedData.Builder builderForValue) {
+        if (encryptedDataBuilder_ == null) {
+          encryptedData_ = builderForValue.build();
           onChanged();
         } else {
-          encryptedPrivateKeyBuilder_.setMessage(builderForValue.build());
+          encryptedDataBuilder_.setMessage(builderForValue.build());
         }
         bitField0_ |= 0x00000004;
         return this;
       }
       /**
-       * <code>optional .wallet.EncryptedPrivateKey encrypted_private_key = 6;</code>
+       * <code>optional .wallet.EncryptedData encrypted_data = 6;</code>
        *
        * <pre>
-       * The message containing the encrypted private EC key information.
-       * When an EncryptedData is present then the (unencrypted) private_key will be a zero length byte array or contain all zeroes.
-       * This is for security of the private key information.
+       * If the secret data is encrypted, then secret_bytes is missing and this field is set.
        * </pre>
        */
-      public Builder mergeEncryptedPrivateKey(org.bitcoinj.wallet.Protos.EncryptedPrivateKey value) {
-        if (encryptedPrivateKeyBuilder_ == null) {
+      public Builder mergeEncryptedData(org.bitcoinj.wallet.Protos.EncryptedData value) {
+        if (encryptedDataBuilder_ == null) {
           if (((bitField0_ & 0x00000004) == 0x00000004) &&
-              encryptedPrivateKey_ != org.bitcoinj.wallet.Protos.EncryptedPrivateKey.getDefaultInstance()) {
-            encryptedPrivateKey_ =
-              org.bitcoinj.wallet.Protos.EncryptedPrivateKey.newBuilder(encryptedPrivateKey_).mergeFrom(value).buildPartial();
+              encryptedData_ != org.bitcoinj.wallet.Protos.EncryptedData.getDefaultInstance()) {
+            encryptedData_ =
+              org.bitcoinj.wallet.Protos.EncryptedData.newBuilder(encryptedData_).mergeFrom(value).buildPartial();
           } else {
-            encryptedPrivateKey_ = value;
+            encryptedData_ = value;
           }
           onChanged();
         } else {
-          encryptedPrivateKeyBuilder_.mergeFrom(value);
+          encryptedDataBuilder_.mergeFrom(value);
         }
         bitField0_ |= 0x00000004;
         return this;
       }
       /**
-       * <code>optional .wallet.EncryptedPrivateKey encrypted_private_key = 6;</code>
+       * <code>optional .wallet.EncryptedData encrypted_data = 6;</code>
        *
        * <pre>
-       * The message containing the encrypted private EC key information.
-       * When an EncryptedData is present then the (unencrypted) private_key will be a zero length byte array or contain all zeroes.
-       * This is for security of the private key information.
+       * If the secret data is encrypted, then secret_bytes is missing and this field is set.
        * </pre>
        */
-      public Builder clearEncryptedPrivateKey() {
-        if (encryptedPrivateKeyBuilder_ == null) {
-          encryptedPrivateKey_ = org.bitcoinj.wallet.Protos.EncryptedPrivateKey.getDefaultInstance();
+      public Builder clearEncryptedData() {
+        if (encryptedDataBuilder_ == null) {
+          encryptedData_ = org.bitcoinj.wallet.Protos.EncryptedData.getDefaultInstance();
           onChanged();
         } else {
-          encryptedPrivateKeyBuilder_.clear();
+          encryptedDataBuilder_.clear();
         }
         bitField0_ = (bitField0_ & ~0x00000004);
         return this;
       }
       /**
-       * <code>optional .wallet.EncryptedPrivateKey encrypted_private_key = 6;</code>
+       * <code>optional .wallet.EncryptedData encrypted_data = 6;</code>
        *
        * <pre>
-       * The message containing the encrypted private EC key information.
-       * When an EncryptedData is present then the (unencrypted) private_key will be a zero length byte array or contain all zeroes.
-       * This is for security of the private key information.
+       * If the secret data is encrypted, then secret_bytes is missing and this field is set.
        * </pre>
        */
-      public org.bitcoinj.wallet.Protos.EncryptedPrivateKey.Builder getEncryptedPrivateKeyBuilder() {
+      public org.bitcoinj.wallet.Protos.EncryptedData.Builder getEncryptedDataBuilder() {
         bitField0_ |= 0x00000004;
         onChanged();
-        return getEncryptedPrivateKeyFieldBuilder().getBuilder();
+        return getEncryptedDataFieldBuilder().getBuilder();
       }
       /**
-       * <code>optional .wallet.EncryptedPrivateKey encrypted_private_key = 6;</code>
+       * <code>optional .wallet.EncryptedData encrypted_data = 6;</code>
        *
        * <pre>
-       * The message containing the encrypted private EC key information.
-       * When an EncryptedData is present then the (unencrypted) private_key will be a zero length byte array or contain all zeroes.
-       * This is for security of the private key information.
+       * If the secret data is encrypted, then secret_bytes is missing and this field is set.
        * </pre>
        */
-      public org.bitcoinj.wallet.Protos.EncryptedPrivateKeyOrBuilder getEncryptedPrivateKeyOrBuilder() {
-        if (encryptedPrivateKeyBuilder_ != null) {
-          return encryptedPrivateKeyBuilder_.getMessageOrBuilder();
+      public org.bitcoinj.wallet.Protos.EncryptedDataOrBuilder getEncryptedDataOrBuilder() {
+        if (encryptedDataBuilder_ != null) {
+          return encryptedDataBuilder_.getMessageOrBuilder();
         } else {
-          return encryptedPrivateKey_;
+          return encryptedData_;
         }
       }
       /**
-       * <code>optional .wallet.EncryptedPrivateKey encrypted_private_key = 6;</code>
+       * <code>optional .wallet.EncryptedData encrypted_data = 6;</code>
        *
        * <pre>
-       * The message containing the encrypted private EC key information.
-       * When an EncryptedData is present then the (unencrypted) private_key will be a zero length byte array or contain all zeroes.
-       * This is for security of the private key information.
+       * If the secret data is encrypted, then secret_bytes is missing and this field is set.
        * </pre>
        */
       private com.google.protobuf.SingleFieldBuilder<
-          org.bitcoinj.wallet.Protos.EncryptedPrivateKey, org.bitcoinj.wallet.Protos.EncryptedPrivateKey.Builder, org.bitcoinj.wallet.Protos.EncryptedPrivateKeyOrBuilder> 
-          getEncryptedPrivateKeyFieldBuilder() {
-        if (encryptedPrivateKeyBuilder_ == null) {
-          encryptedPrivateKeyBuilder_ = new com.google.protobuf.SingleFieldBuilder<
-              org.bitcoinj.wallet.Protos.EncryptedPrivateKey, org.bitcoinj.wallet.Protos.EncryptedPrivateKey.Builder, org.bitcoinj.wallet.Protos.EncryptedPrivateKeyOrBuilder>(
-                  encryptedPrivateKey_,
+          org.bitcoinj.wallet.Protos.EncryptedData, org.bitcoinj.wallet.Protos.EncryptedData.Builder, org.bitcoinj.wallet.Protos.EncryptedDataOrBuilder> 
+          getEncryptedDataFieldBuilder() {
+        if (encryptedDataBuilder_ == null) {
+          encryptedDataBuilder_ = new com.google.protobuf.SingleFieldBuilder<
+              org.bitcoinj.wallet.Protos.EncryptedData, org.bitcoinj.wallet.Protos.EncryptedData.Builder, org.bitcoinj.wallet.Protos.EncryptedDataOrBuilder>(
+                  encryptedData_,
                   getParentForChildren(),
                   isClean());
-          encryptedPrivateKey_ = null;
+          encryptedData_ = null;
         }
-        return encryptedPrivateKeyBuilder_;
+        return encryptedDataBuilder_;
       }
 
-      // required bytes public_key = 3;
+      // optional bytes public_key = 3;
       private com.google.protobuf.ByteString publicKey_ = com.google.protobuf.ByteString.EMPTY;
       /**
-       * <code>required bytes public_key = 3;</code>
+       * <code>optional bytes public_key = 3;</code>
        *
        * <pre>
        * The public EC key derived from the private key. We allow both to be stored to avoid mobile clients having to
-       * do lots of slow EC math on startup.
+       * do lots of slow EC math on startup. For DETERMINISTIC_ROOT_SEED entries this is missing.
        * </pre>
        */
       public boolean hasPublicKey() {
         return ((bitField0_ & 0x00000008) == 0x00000008);
       }
       /**
-       * <code>required bytes public_key = 3;</code>
+       * <code>optional bytes public_key = 3;</code>
        *
        * <pre>
        * The public EC key derived from the private key. We allow both to be stored to avoid mobile clients having to
-       * do lots of slow EC math on startup.
+       * do lots of slow EC math on startup. For DETERMINISTIC_ROOT_SEED entries this is missing.
        * </pre>
        */
       public com.google.protobuf.ByteString getPublicKey() {
         return publicKey_;
       }
       /**
-       * <code>required bytes public_key = 3;</code>
+       * <code>optional bytes public_key = 3;</code>
        *
        * <pre>
        * The public EC key derived from the private key. We allow both to be stored to avoid mobile clients having to
-       * do lots of slow EC math on startup.
+       * do lots of slow EC math on startup. For DETERMINISTIC_ROOT_SEED entries this is missing.
        * </pre>
        */
       public Builder setPublicKey(com.google.protobuf.ByteString value) {
@@ -3194,11 +3160,11 @@ public final class Protos {
         return this;
       }
       /**
-       * <code>required bytes public_key = 3;</code>
+       * <code>optional bytes public_key = 3;</code>
        *
        * <pre>
        * The public EC key derived from the private key. We allow both to be stored to avoid mobile clients having to
-       * do lots of slow EC math on startup.
+       * do lots of slow EC math on startup. For DETERMINISTIC_ROOT_SEED entries this is missing.
        * </pre>
        */
       public Builder clearPublicKey() {
@@ -3312,7 +3278,8 @@ public final class Protos {
        * <code>optional int64 creation_timestamp = 5;</code>
        *
        * <pre>
-       * Timestamp stored as millis since epoch. Useful for skipping block bodies before this point.
+       * Timestamp stored as millis since epoch. Useful for skipping block bodies before this point. Only reason it's
+       * optional is that some very old wallets don't have this data.
        * </pre>
        */
       public boolean hasCreationTimestamp() {
@@ -3322,7 +3289,8 @@ public final class Protos {
        * <code>optional int64 creation_timestamp = 5;</code>
        *
        * <pre>
-       * Timestamp stored as millis since epoch. Useful for skipping block bodies before this point.
+       * Timestamp stored as millis since epoch. Useful for skipping block bodies before this point. Only reason it's
+       * optional is that some very old wallets don't have this data.
        * </pre>
        */
       public long getCreationTimestamp() {
@@ -3332,7 +3300,8 @@ public final class Protos {
        * <code>optional int64 creation_timestamp = 5;</code>
        *
        * <pre>
-       * Timestamp stored as millis since epoch. Useful for skipping block bodies before this point.
+       * Timestamp stored as millis since epoch. Useful for skipping block bodies before this point. Only reason it's
+       * optional is that some very old wallets don't have this data.
        * </pre>
        */
       public Builder setCreationTimestamp(long value) {
@@ -3345,7 +3314,8 @@ public final class Protos {
        * <code>optional int64 creation_timestamp = 5;</code>
        *
        * <pre>
-       * Timestamp stored as millis since epoch. Useful for skipping block bodies before this point.
+       * Timestamp stored as millis since epoch. Useful for skipping block bodies before this point. Only reason it's
+       * optional is that some very old wallets don't have this data.
        * </pre>
        */
       public Builder clearCreationTimestamp() {
@@ -14669,10 +14639,10 @@ public final class Protos {
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_wallet_PeerAddress_fieldAccessorTable;
   private static com.google.protobuf.Descriptors.Descriptor
-    internal_static_wallet_EncryptedPrivateKey_descriptor;
+    internal_static_wallet_EncryptedData_descriptor;
   private static
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
-      internal_static_wallet_EncryptedPrivateKey_fieldAccessorTable;
+      internal_static_wallet_EncryptedData_fieldAccessorTable;
   private static com.google.protobuf.Descriptors.Descriptor
     internal_static_wallet_DeterministicKey_descriptor;
   private static
@@ -14734,68 +14704,68 @@ public final class Protos {
     java.lang.String[] descriptorData = {
       "\n\014wallet.proto\022\006wallet\"A\n\013PeerAddress\022\022\n" +
       "\nip_address\030\001 \002(\014\022\014\n\004port\030\002 \002(\r\022\020\n\010servi" +
-      "ces\030\003 \002(\004\"S\n\023EncryptedPrivateKey\022\035\n\025init" +
-      "ialisation_vector\030\001 \002(\014\022\035\n\025encrypted_pri" +
-      "vate_key\030\002 \002(\014\"4\n\020DeterministicKey\022\022\n\nch" +
-      "ain_code\030\001 \002(\014\022\014\n\004path\030\002 \003(\r\"\316\002\n\003Key\022\036\n\004" +
-      "type\030\001 \002(\0162\020.wallet.Key.Type\022\023\n\013private_" +
-      "key\030\002 \001(\014\022:\n\025encrypted_private_key\030\006 \001(\013" +
-      "2\033.wallet.EncryptedPrivateKey\022\022\n\npublic_" +
-      "key\030\003 \002(\014\022\r\n\005label\030\004 \001(\t\022\032\n\022creation_tim",
-      "estamp\030\005 \001(\003\0223\n\021deterministic_key\030\007 \001(\0132" +
-      "\030.wallet.DeterministicKey\"b\n\004Type\022\014\n\010ORI" +
-      "GINAL\020\001\022\030\n\024ENCRYPTED_SCRYPT_AES\020\002\022\033\n\027DET" +
-      "ERMINISTIC_ROOT_SEED\020\003\022\025\n\021DETERMINISTIC_" +
-      "KEY\020\004\"5\n\006Script\022\017\n\007program\030\001 \002(\014\022\032\n\022crea" +
-      "tion_timestamp\030\002 \002(\003\"\203\001\n\020TransactionInpu" +
-      "t\022\"\n\032transaction_out_point_hash\030\001 \002(\014\022#\n" +
-      "\033transaction_out_point_index\030\002 \002(\r\022\024\n\014sc" +
-      "ript_bytes\030\003 \002(\014\022\020\n\010sequence\030\004 \001(\r\"\177\n\021Tr" +
-      "ansactionOutput\022\r\n\005value\030\001 \002(\003\022\024\n\014script",
-      "_bytes\030\002 \002(\014\022!\n\031spent_by_transaction_has" +
-      "h\030\003 \001(\014\022\"\n\032spent_by_transaction_index\030\004 " +
-      "\001(\005\"\234\003\n\025TransactionConfidence\0220\n\004type\030\001 " +
-      "\001(\0162\".wallet.TransactionConfidence.Type\022" +
-      "\032\n\022appeared_at_height\030\002 \001(\005\022\036\n\026overridin" +
-      "g_transaction\030\003 \001(\014\022\r\n\005depth\030\004 \001(\005\022\021\n\two" +
-      "rk_done\030\005 \001(\003\022)\n\014broadcast_by\030\006 \003(\0132\023.wa" +
-      "llet.PeerAddress\0224\n\006source\030\007 \001(\0162$.walle" +
-      "t.TransactionConfidence.Source\"O\n\004Type\022\013" +
-      "\n\007UNKNOWN\020\000\022\014\n\010BUILDING\020\001\022\013\n\007PENDING\020\002\022\025",
-      "\n\021NOT_IN_BEST_CHAIN\020\003\022\010\n\004DEAD\020\004\"A\n\006Sourc" +
-      "e\022\022\n\016SOURCE_UNKNOWN\020\000\022\022\n\016SOURCE_NETWORK\020" +
-      "\001\022\017\n\013SOURCE_SELF\020\002\"\236\004\n\013Transaction\022\017\n\007ve" +
-      "rsion\030\001 \002(\005\022\014\n\004hash\030\002 \002(\014\022&\n\004pool\030\003 \001(\0162" +
-      "\030.wallet.Transaction.Pool\022\021\n\tlock_time\030\004" +
-      " \001(\r\022\022\n\nupdated_at\030\005 \001(\003\0223\n\021transaction_" +
-      "input\030\006 \003(\0132\030.wallet.TransactionInput\0225\n" +
-      "\022transaction_output\030\007 \003(\0132\031.wallet.Trans" +
-      "actionOutput\022\022\n\nblock_hash\030\010 \003(\014\022 \n\030bloc" +
-      "k_relativity_offsets\030\013 \003(\005\0221\n\nconfidence",
-      "\030\t \001(\0132\035.wallet.TransactionConfidence\0225\n" +
-      "\007purpose\030\n \001(\0162\033.wallet.Transaction.Purp" +
-      "ose:\007UNKNOWN\"Y\n\004Pool\022\013\n\007UNSPENT\020\004\022\t\n\005SPE" +
-      "NT\020\005\022\014\n\010INACTIVE\020\002\022\010\n\004DEAD\020\n\022\013\n\007PENDING\020" +
-      "\020\022\024\n\020PENDING_INACTIVE\020\022\":\n\007Purpose\022\013\n\007UN" +
-      "KNOWN\020\000\022\020\n\014USER_PAYMENT\020\001\022\020\n\014KEY_ROTATIO" +
-      "N\020\002\"N\n\020ScryptParameters\022\014\n\004salt\030\001 \002(\014\022\020\n" +
-      "\001n\030\002 \001(\003:\00516384\022\014\n\001r\030\003 \001(\005:\0018\022\014\n\001p\030\004 \001(\005" +
-      ":\0011\"8\n\tExtension\022\n\n\002id\030\001 \002(\t\022\014\n\004data\030\002 \002" +
-      "(\014\022\021\n\tmandatory\030\003 \002(\010\"\223\004\n\006Wallet\022\032\n\022netw",
-      "ork_identifier\030\001 \002(\t\022\034\n\024last_seen_block_" +
-      "hash\030\002 \001(\014\022\036\n\026last_seen_block_height\030\014 \001" +
-      "(\r\022!\n\031last_seen_block_time_secs\030\016 \001(\003\022\030\n" +
-      "\003key\030\003 \003(\0132\013.wallet.Key\022(\n\013transaction\030\004" +
-      " \003(\0132\023.wallet.Transaction\022&\n\016watched_scr" +
-      "ipt\030\017 \003(\0132\016.wallet.Script\022C\n\017encryption_" +
-      "type\030\005 \001(\0162\035.wallet.Wallet.EncryptionTyp" +
-      "e:\013UNENCRYPTED\0227\n\025encryption_parameters\030" +
-      "\006 \001(\0132\030.wallet.ScryptParameters\022\017\n\007versi" +
-      "on\030\007 \001(\005\022$\n\textension\030\n \003(\0132\021.wallet.Ext",
-      "ension\022\023\n\013description\030\013 \001(\t\022\031\n\021key_rotat" +
-      "ion_time\030\r \001(\004\";\n\016EncryptionType\022\017\n\013UNEN" +
-      "CRYPTED\020\001\022\030\n\024ENCRYPTED_SCRYPT_AES\020\002B\035\n\023o" +
-      "rg.bitcoinj.walletB\006Protos"
+      "ces\030\003 \002(\004\"M\n\rEncryptedData\022\035\n\025initialisa" +
+      "tion_vector\030\001 \002(\014\022\035\n\025encrypted_private_k" +
+      "ey\030\002 \002(\014\"4\n\020DeterministicKey\022\022\n\nchain_co" +
+      "de\030\001 \002(\014\022\014\n\004path\030\002 \003(\r\"\302\002\n\003Key\022\036\n\004type\030\001" +
+      " \002(\0162\020.wallet.Key.Type\022\024\n\014secret_bytes\030\002" +
+      " \001(\014\022-\n\016encrypted_data\030\006 \001(\0132\025.wallet.En" +
+      "cryptedData\022\022\n\npublic_key\030\003 \001(\014\022\r\n\005label" +
+      "\030\004 \001(\t\022\032\n\022creation_timestamp\030\005 \001(\003\0223\n\021de",
+      "terministic_key\030\007 \001(\0132\030.wallet.Determini" +
+      "sticKey\"b\n\004Type\022\014\n\010ORIGINAL\020\001\022\030\n\024ENCRYPT" +
+      "ED_SCRYPT_AES\020\002\022\033\n\027DETERMINISTIC_ROOT_SE" +
+      "ED\020\003\022\025\n\021DETERMINISTIC_KEY\020\004\"5\n\006Script\022\017\n" +
+      "\007program\030\001 \002(\014\022\032\n\022creation_timestamp\030\002 \002" +
+      "(\003\"\203\001\n\020TransactionInput\022\"\n\032transaction_o" +
+      "ut_point_hash\030\001 \002(\014\022#\n\033transaction_out_p" +
+      "oint_index\030\002 \002(\r\022\024\n\014script_bytes\030\003 \002(\014\022\020" +
+      "\n\010sequence\030\004 \001(\r\"\177\n\021TransactionOutput\022\r\n" +
+      "\005value\030\001 \002(\003\022\024\n\014script_bytes\030\002 \002(\014\022!\n\031sp",
+      "ent_by_transaction_hash\030\003 \001(\014\022\"\n\032spent_b" +
+      "y_transaction_index\030\004 \001(\005\"\234\003\n\025Transactio" +
+      "nConfidence\0220\n\004type\030\001 \001(\0162\".wallet.Trans" +
+      "actionConfidence.Type\022\032\n\022appeared_at_hei" +
+      "ght\030\002 \001(\005\022\036\n\026overriding_transaction\030\003 \001(" +
+      "\014\022\r\n\005depth\030\004 \001(\005\022\021\n\twork_done\030\005 \001(\003\022)\n\014b" +
+      "roadcast_by\030\006 \003(\0132\023.wallet.PeerAddress\0224" +
+      "\n\006source\030\007 \001(\0162$.wallet.TransactionConfi" +
+      "dence.Source\"O\n\004Type\022\013\n\007UNKNOWN\020\000\022\014\n\010BUI" +
+      "LDING\020\001\022\013\n\007PENDING\020\002\022\025\n\021NOT_IN_BEST_CHAI",
+      "N\020\003\022\010\n\004DEAD\020\004\"A\n\006Source\022\022\n\016SOURCE_UNKNOW" +
+      "N\020\000\022\022\n\016SOURCE_NETWORK\020\001\022\017\n\013SOURCE_SELF\020\002" +
+      "\"\236\004\n\013Transaction\022\017\n\007version\030\001 \002(\005\022\014\n\004has" +
+      "h\030\002 \002(\014\022&\n\004pool\030\003 \001(\0162\030.wallet.Transacti" +
+      "on.Pool\022\021\n\tlock_time\030\004 \001(\r\022\022\n\nupdated_at" +
+      "\030\005 \001(\003\0223\n\021transaction_input\030\006 \003(\0132\030.wall" +
+      "et.TransactionInput\0225\n\022transaction_outpu" +
+      "t\030\007 \003(\0132\031.wallet.TransactionOutput\022\022\n\nbl" +
+      "ock_hash\030\010 \003(\014\022 \n\030block_relativity_offse" +
+      "ts\030\013 \003(\005\0221\n\nconfidence\030\t \001(\0132\035.wallet.Tr",
+      "ansactionConfidence\0225\n\007purpose\030\n \001(\0162\033.w" +
+      "allet.Transaction.Purpose:\007UNKNOWN\"Y\n\004Po" +
+      "ol\022\013\n\007UNSPENT\020\004\022\t\n\005SPENT\020\005\022\014\n\010INACTIVE\020\002" +
+      "\022\010\n\004DEAD\020\n\022\013\n\007PENDING\020\020\022\024\n\020PENDING_INACT" +
+      "IVE\020\022\":\n\007Purpose\022\013\n\007UNKNOWN\020\000\022\020\n\014USER_PA" +
+      "YMENT\020\001\022\020\n\014KEY_ROTATION\020\002\"N\n\020ScryptParam" +
+      "eters\022\014\n\004salt\030\001 \002(\014\022\020\n\001n\030\002 \001(\003:\00516384\022\014\n" +
+      "\001r\030\003 \001(\005:\0018\022\014\n\001p\030\004 \001(\005:\0011\"8\n\tExtension\022\n" +
+      "\n\002id\030\001 \002(\t\022\014\n\004data\030\002 \002(\014\022\021\n\tmandatory\030\003 " +
+      "\002(\010\"\223\004\n\006Wallet\022\032\n\022network_identifier\030\001 \002",
+      "(\t\022\034\n\024last_seen_block_hash\030\002 \001(\014\022\036\n\026last" +
+      "_seen_block_height\030\014 \001(\r\022!\n\031last_seen_bl" +
+      "ock_time_secs\030\016 \001(\003\022\030\n\003key\030\003 \003(\0132\013.walle" +
+      "t.Key\022(\n\013transaction\030\004 \003(\0132\023.wallet.Tran" +
+      "saction\022&\n\016watched_script\030\017 \003(\0132\016.wallet" +
+      ".Script\022C\n\017encryption_type\030\005 \001(\0162\035.walle" +
+      "t.Wallet.EncryptionType:\013UNENCRYPTED\0227\n\025" +
+      "encryption_parameters\030\006 \001(\0132\030.wallet.Scr" +
+      "yptParameters\022\017\n\007version\030\007 \001(\005\022$\n\textens" +
+      "ion\030\n \003(\0132\021.wallet.Extension\022\023\n\013descript",
+      "ion\030\013 \001(\t\022\031\n\021key_rotation_time\030\r \001(\004\";\n\016" +
+      "EncryptionType\022\017\n\013UNENCRYPTED\020\001\022\030\n\024ENCRY" +
+      "PTED_SCRYPT_AES\020\002B\035\n\023org.bitcoinj.wallet" +
+      "B\006Protos"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
       new com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner() {
@@ -14808,11 +14778,11 @@ public final class Protos {
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_wallet_PeerAddress_descriptor,
               new java.lang.String[] { "IpAddress", "Port", "Services", });
-          internal_static_wallet_EncryptedPrivateKey_descriptor =
+          internal_static_wallet_EncryptedData_descriptor =
             getDescriptor().getMessageTypes().get(1);
-          internal_static_wallet_EncryptedPrivateKey_fieldAccessorTable = new
+          internal_static_wallet_EncryptedData_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
-              internal_static_wallet_EncryptedPrivateKey_descriptor,
+              internal_static_wallet_EncryptedData_descriptor,
               new java.lang.String[] { "InitialisationVector", "EncryptedPrivateKey", });
           internal_static_wallet_DeterministicKey_descriptor =
             getDescriptor().getMessageTypes().get(2);
@@ -14825,7 +14795,7 @@ public final class Protos {
           internal_static_wallet_Key_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_wallet_Key_descriptor,
-              new java.lang.String[] { "Type", "PrivateKey", "EncryptedPrivateKey", "PublicKey", "Label", "CreationTimestamp", "DeterministicKey", });
+              new java.lang.String[] { "Type", "SecretBytes", "EncryptedData", "PublicKey", "Label", "CreationTimestamp", "DeterministicKey", });
           internal_static_wallet_Script_descriptor =
             getDescriptor().getMessageTypes().get(4);
           internal_static_wallet_Script_fieldAccessorTable = new

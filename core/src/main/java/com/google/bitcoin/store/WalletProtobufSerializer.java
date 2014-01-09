@@ -128,12 +128,12 @@ public class WalletProtobufSerializer {
                                                          // .setLabel() TODO
                                                             .setType(Protos.Key.Type.ORIGINAL);
             if (key.getPrivKeyBytes() != null)
-                keyBuilder.setPrivateKey(ByteString.copyFrom(key.getPrivKeyBytes()));
+                keyBuilder.setSecretBytes(ByteString.copyFrom(key.getPrivKeyBytes()));
 
             EncryptedData encryptedPrivateKey = key.getEncryptedPrivateKey();
             if (encryptedPrivateKey != null) {
                 // Key is encrypted.
-                Protos.EncryptedPrivateKey.Builder encryptedKeyBuilder = Protos.EncryptedPrivateKey.newBuilder()
+                Protos.EncryptedData.Builder encryptedKeyBuilder = Protos.EncryptedData.newBuilder()
                     .setEncryptedPrivateKey(ByteString.copyFrom(encryptedPrivateKey.encryptedBytes))
                     .setInitialisationVector(ByteString.copyFrom(encryptedPrivateKey.initialisationVector));
 
@@ -148,7 +148,7 @@ public class WalletProtobufSerializer {
                                 ". This WalletProtobufSerialiser does not understand that type of encryption.");
                     }
                 }
-                keyBuilder.setEncryptedPrivateKey(encryptedKeyBuilder);
+                keyBuilder.setEncryptedData(encryptedKeyBuilder);
             }
 
             // We serialize the public key even if the private key is present for speed reasons: we don't want to do
@@ -404,12 +404,12 @@ public class WalletProtobufSerializer {
                 throw new UnreadableWalletException("Unknown key type in wallet, type = " + keyProto.getType());
             }
 
-            byte[] privKey = keyProto.hasPrivateKey() ? keyProto.getPrivateKey().toByteArray() : null;
+            byte[] privKey = keyProto.hasSecretBytes() ? keyProto.getSecretBytes().toByteArray() : null;
             EncryptedData encryptedPrivateKey = null;
-            if (keyProto.hasEncryptedPrivateKey()) {
-                Protos.EncryptedPrivateKey encryptedPrivateKeyProto = keyProto.getEncryptedPrivateKey();
-                encryptedPrivateKey = new EncryptedData(encryptedPrivateKeyProto.getInitialisationVector().toByteArray(),
-                        encryptedPrivateKeyProto.getEncryptedPrivateKey().toByteArray());
+            if (keyProto.hasEncryptedData()) {
+                Protos.EncryptedData proto = keyProto.getEncryptedData();
+                encryptedPrivateKey = new EncryptedData(proto.getInitialisationVector().toByteArray(),
+                        proto.getEncryptedPrivateKey().toByteArray());
             }
 
             byte[] pubKey = keyProto.getPublicKey().toByteArray();

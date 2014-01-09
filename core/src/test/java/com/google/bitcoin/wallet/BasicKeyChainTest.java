@@ -175,8 +175,8 @@ public class BasicKeyChainTest {
         assertEquals(2, keys.size());
         assertArrayEquals(key1.getPubKey(), keys.get(0).getPublicKey().toByteArray());
         assertArrayEquals(key2.getPubKey(), keys.get(1).getPublicKey().toByteArray());
-        assertArrayEquals(key1.getPrivKeyBytes(), keys.get(0).getPrivateKey().toByteArray());
-        assertArrayEquals(key2.getPrivKeyBytes(), keys.get(1).getPrivateKey().toByteArray());
+        assertArrayEquals(key1.getPrivKeyBytes(), keys.get(0).getSecretBytes().toByteArray());
+        assertArrayEquals(key2.getPrivKeyBytes(), keys.get(1).getSecretBytes().toByteArray());
         long normTime = now.getTime() / 1000 * 1000;
         assertEquals(normTime, keys.get(0).getCreationTimestamp());
         assertEquals(normTime + 5000 * 1000, keys.get(1).getCreationTimestamp());
@@ -196,8 +196,8 @@ public class BasicKeyChainTest {
         List<Protos.Key> keys = chain.serializeToProtobuf();
         assertEquals(1, keys.size());
         assertArrayEquals(key1.getPubKey(), keys.get(0).getPublicKey().toByteArray());
-        assertFalse(keys.get(0).hasPrivateKey());
-        assertTrue(keys.get(0).hasEncryptedPrivateKey());
+        assertFalse(keys.get(0).hasSecretBytes());
+        assertTrue(keys.get(0).hasEncryptedData());
 
         try {
             BasicKeyChain.fromProtobufEncrypted(keys, checkNotNull(chain.getKeyCrypter()), "wrong password");
