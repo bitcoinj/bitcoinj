@@ -482,14 +482,14 @@ public class Utils {
             return new Date();
     }
 
-    /** Returns the current time in seconds since the epoch, or a mocked out equivalent. */
+    /** Returns the current time in milliseconds since the epoch, or a mocked out equivalent. */
     public static long currentTimeMillis() {
         if (mockTime != null)
             return mockTime.getTime();
         else
             return System.currentTimeMillis();
     }
-    
+
     public static byte[] copyOf(byte[] in, int length) {
         byte[] out = new byte[length];
         System.arraycopy(in, 0, out, 0, Math.min(length, in.length));
