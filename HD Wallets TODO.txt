@@ -1,5 +1,6 @@
 - Add support for serialization to basic and deterministic key chain objects
-- Make EncryptedPrivateKey immutable/get rid of the clearing stuff
+- Add unit tests for encryption of deterministic key chains
+- Add unit tests for watching-only/seedless deterministic key chains
 - Recheck coverage of BasicKeyChain/DeterministicKeyChain once back on IJ13
 - Switch Wallet to using keychain objects
 - Make Wallet notify key chains when a key has been observed in a transaction.
