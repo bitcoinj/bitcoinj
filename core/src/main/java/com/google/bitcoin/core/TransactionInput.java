@@ -17,13 +17,13 @@
 package com.google.bitcoin.core;
 
 import com.google.bitcoin.script.Script;
-import com.google.common.base.Preconditions;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.io.Serializable;
+import java.lang.ref.WeakReference;
 import java.util.Map;
 
 import static com.google.common.base.Preconditions.checkElementIndex;
@@ -52,7 +52,7 @@ public class TransactionInput extends ChildMessage implements Serializable {
     private byte[] scriptBytes;
     // The Script object obtained from parsing scriptBytes. Only filled in on demand and if the transaction is not
     // coinbase.
-    transient private Script scriptSig;
+    transient private WeakReference<Script> scriptSig;
     // A pointer to the transaction that owns this input.
     private Transaction parentTransaction;
 
@@ -159,16 +159,19 @@ public class TransactionInput extends ChildMessage implements Serializable {
     public Script getScriptSig() throws ScriptException {
         // Transactions that generate new coins don't actually have a script. Instead this
         // parameter is overloaded to be something totally different.
-        if (scriptSig == null) {
+        Script script = scriptSig == null ? null : scriptSig.get();
+        if (script == null) {
             maybeParse();
-            scriptSig = new Script(Preconditions.checkNotNull(scriptBytes));
+            script = new Script(scriptBytes);
+            scriptSig = new WeakReference<Script>(script);
+            return script;
         }
-        return scriptSig;
+        return script;
     }
 
     /** Set the given program as the scriptSig that is supposed to satisfy the connected output script. */
     public void setScriptSig(Script scriptSig) {
-        this.scriptSig = checkNotNull(scriptSig);
+        this.scriptSig = new WeakReference<Script>(checkNotNull(scriptSig));
         // TODO: This should all be cleaned up so we have a consistent internal representation.
         setScriptBytes(scriptSig.getProgram());
     }

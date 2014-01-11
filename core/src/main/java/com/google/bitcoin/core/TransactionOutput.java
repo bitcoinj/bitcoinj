@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.io.Serializable;
+import java.lang.ref.WeakReference;
 import java.math.BigInteger;
 
 import static com.google.common.base.Preconditions.*;
@@ -44,7 +45,7 @@ public class TransactionOutput extends ChildMessage implements Serializable {
     private byte[] scriptBytes;
 
     // The script bytes are parsed and turned into a Script on demand.
-    private transient Script scriptPubKey;
+    private transient WeakReference<Script> scriptPubKey;
 
     // These fields are Java serialized but not Bitcoin serialized. They are used for tracking purposes in our wallet
     // only. If set to true, this output is counted towards our balance. If false and spentBy is null the tx output
@@ -118,11 +119,17 @@ public class TransactionOutput extends ChildMessage implements Serializable {
     }
 
     public Script getScriptPubKey() throws ScriptException {
-        if (scriptPubKey == null) {
+        // Quick hack to try and reduce memory consumption on Androids. SoftReference is the same as WeakReference
+        // on Dalvik (by design), so this arrangement just means that we can avoid the cost of re-parsing the script
+        // bytes if getScriptPubKey is called multiple times in quick succession in between garbage collections.
+        Script script = scriptPubKey == null ? null : scriptPubKey.get();
+        if (script == null) {
             maybeParse();
-            scriptPubKey = new Script(scriptBytes);
+            script = new Script(scriptBytes);
+            scriptPubKey = new WeakReference<Script>(script);
+            return script;
         }
-        return scriptPubKey;
+        return script;
     }
 
     protected void parseLite() throws ProtocolException {
