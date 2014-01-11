@@ -55,7 +55,7 @@ public class DeterministicHierarchy implements Serializable {
      */
     public DeterministicHierarchy(DeterministicKey rootKey) {
         putKey(rootKey);
-        rootPath = rootKey.getChildNumberPath();
+        rootPath = rootKey.getPath();
     }
 
     /**
@@ -63,12 +63,12 @@ public class DeterministicHierarchy implements Serializable {
      * inserted in order.
      */
     public void putKey(DeterministicKey key) {
-        ImmutableList<ChildNumber> path = key.getChildNumberPath();
+        ImmutableList<ChildNumber> path = key.getPath();
         // Update our tracking of what the next child in each branch of the tree should be. Just assume that keys are
         // inserted in order here.
         final DeterministicKey parent = key.getParent();
         if (parent != null)
-            getLastDerivedNumbers(!key.isPubKeyOnly()).put(parent.getChildNumberPath(), key.getChildNumber());
+            getLastDerivedNumbers(!key.isPubKeyOnly()).put(parent.getPath(), key.getChildNumber());
         keys.put(path, key);
     }
 
@@ -112,7 +112,7 @@ public class DeterministicHierarchy implements Serializable {
         int nAttempts = 0;
         while (nAttempts++ < MAX_CHILD_DERIVATION_ATTEMPTS) {
             try {
-                ChildNumber createChildNumber = getNextChildNumberToDerive(parent.getChildNumberPath(), privateDerivation);
+                ChildNumber createChildNumber = getNextChildNumberToDerive(parent.getPath(), privateDerivation);
                 return deriveChild(parent, createChildNumber);
             } catch (HDDerivationException ignore) { }
         }
@@ -122,7 +122,7 @@ public class DeterministicHierarchy implements Serializable {
     private ChildNumber getNextChildNumberToDerive(ImmutableList<ChildNumber> path, boolean privateDerivation) {
         Map<ImmutableList<ChildNumber>, ChildNumber> lastDerivedNumbers = getLastDerivedNumbers(privateDerivation);
         ChildNumber lastChildNumber = lastDerivedNumbers.get(path);
-        ChildNumber nextChildNumber = new ChildNumber(lastChildNumber != null ? lastChildNumber.getChildNumber() + 1 : 0, privateDerivation);
+        ChildNumber nextChildNumber = new ChildNumber(lastChildNumber != null ? lastChildNumber.num() + 1 : 0, privateDerivation);
         lastDerivedNumbers.put(path, nextChildNumber);
         return nextChildNumber;
     }

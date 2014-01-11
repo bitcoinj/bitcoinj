@@ -75,17 +75,22 @@ public class DeterministicKey extends ECKey {
      * A path can be written as 1/2/1 which means the first child of the root, the second child of that node, then
      * the first child of that node.
      */
-    public ImmutableList<ChildNumber> getChildNumberPath() {
+    public ImmutableList<ChildNumber> getPath() {
         return childNumberPath;
+    }
+
+    /**
+     * Returns the path of this key as a human readable string starting with M to indicate the master key.
+     */
+    public String getPathAsString() {
+        return HDUtils.formatPath(getPath());
     }
 
     private int getDepth() {
         return childNumberPath.size();
     }
 
-    /**
-     * Returns the last element of the path returned by {@link DeterministicKey#getChildNumberPath()}
-     */
+    /** Returns the last element of the path returned by {@link DeterministicKey#getPath()} */
     public ChildNumber getChildNumber() {
         return getDepth() == 0 ? ChildNumber.ZERO : childNumberPath.get(childNumberPath.size() - 1);
     }
@@ -95,13 +100,6 @@ public class DeterministicKey extends ECKey {
      */
     public byte[] getChainCode() {
         return chainCode;
-    }
-
-    /**
-     * Returns the path of this key as a human readable string starting with M to indicate the master key.
-     */
-    public String getPath() {
-        return HDUtils.formatPath(getChildNumberPath());
     }
 
     /**
@@ -138,7 +136,7 @@ public class DeterministicKey extends ECKey {
     public DeterministicKey getPubOnly() {
         if (isPubKeyOnly()) return this;
         final DeterministicKey parentPub = getParent() == null ? null : getParent().getPubOnly();
-        return new DeterministicKey(getChildNumberPath(), getChainCode(), getPubKeyPoint(), null, parentPub);
+        return new DeterministicKey(getPath(), getChainCode(), getPubKeyPoint(), null, parentPub);
     }
 
     public String serializePubB58() {
@@ -179,7 +177,7 @@ public class DeterministicKey extends ECKey {
         } else {
             ser.put(parent.getFingerprint());
         }
-        ser.putInt(getChildNumber().getI());
+        ser.putInt(getChildNumber().i());
         ser.put(getChainCode());
         ser.put(pub ? getPubKey() : getPrivKeyBytes33());
         checkState(ser.position() == 78);
@@ -191,7 +189,7 @@ public class DeterministicKey extends ECKey {
         return Objects.toStringHelper(this)
                 .add("pub", new String(Hex.encode(getPubKey())))
                 .add("chaincode", new String(Hex.encode(getChainCode())))
-                .add("path", getPath())
+                .add("path", getPathAsString())
                 .toString();
     }
 }

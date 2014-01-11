@@ -235,8 +235,8 @@ public class DeterministicKeyChain implements KeyChain {
             proto.setType(Protos.Key.Type.DETERMINISTIC_KEY);
             final Protos.DeterministicKey.Builder detKey = proto.getDeterministicKeyBuilder();
             detKey.setChainCode(ByteString.copyFrom(key.getChainCode()));
-            for (ChildNumber childNumber : key.getChildNumberPath())
-                detKey.addPath(childNumber.getI());
+            for (ChildNumber num : key.getPath())
+                detKey.addPath(num.i());
             entries.add(proto.build());
         }
         return entries;

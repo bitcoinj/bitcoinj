@@ -94,14 +94,14 @@ public final class HDKeyDerivation {
         RawKeyBytes rawKey = deriveChildKeyBytes(parent, childNumber);
         if (parent.isPubKeyOnly())
             return new DeterministicKey(
-                    HDUtils.append(parent.getChildNumberPath(), childNumber),
+                    HDUtils.append(parent.getPath(), childNumber),
                     rawKey.chainCode,
                     ECKey.CURVE.getCurve().decodePoint(rawKey.keyBytes),   // c'tor will compress
                     null,
                     parent);
         else
             return new DeterministicKey(
-                    HDUtils.append(parent.getChildNumberPath(), childNumber),
+                    HDUtils.append(parent.getPath(), childNumber),
                     rawKey.chainCode,
                     new BigInteger(1, rawKey.keyBytes),
                     parent);
@@ -116,7 +116,7 @@ public final class HDKeyDerivation {
         } else {
             data.put(parentPublicKey);
         }
-        data.putInt(childNumber.getI());
+        data.putInt(childNumber.i());
         byte[] i = HDUtils.hmacSha512(parent.getChainCode(), data.array());
         assert i.length == 64 : i.length;
         byte[] il = Arrays.copyOfRange(i, 0, 32);

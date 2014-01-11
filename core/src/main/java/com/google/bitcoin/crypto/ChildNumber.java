@@ -46,6 +46,9 @@ public class ChildNumber {
         return i;
     }
 
+    /** Returns the uint32 encoded form of the path element, including the MSB bit. */
+    public int i() { return i; }
+
     public boolean isPrivateDerivation() {
         return hasPrivateBit(i);
     }
@@ -54,15 +57,13 @@ public class ChildNumber {
         return (a & PRIV_BIT) != 0;
     }
 
-    /**
-     * @return the child number without the private/public derivation bit set.
-     */
-    public int getChildNumber() {
+    /** Returns the child number without the private/public derivation bit set (i.e. index in that part of the tree). */
+    public int num() {
         return i & (~PRIV_BIT);
     }
 
     public String toString() {
-        return String.format("%d%s", getChildNumber(), isPrivateDerivation() ? "'" : "");
+        return String.format("%d%s", num(), isPrivateDerivation() ? "'" : "");
     }
 
     @Override
