@@ -58,8 +58,18 @@ public class DeterministicHierarchy implements Serializable {
         rootPath = rootKey.getChildNumberPath();
     }
 
-    private void putKey(DeterministicKey key) {
-        keys.put(key.getChildNumberPath(), key);
+    /**
+     * Inserts a key into the heirarchy. Used during deserialization: you normally don't need this. Keys must be
+     * inserted in order.
+     */
+    public void putKey(DeterministicKey key) {
+        ImmutableList<ChildNumber> path = key.getChildNumberPath();
+        // Update our tracking of what the next child in each branch of the tree should be. Just assume that keys are
+        // inserted in order here.
+        final DeterministicKey parent = key.getParent();
+        if (parent != null)
+            getLastDerivedNumbers(!key.isPubKeyOnly()).put(parent.getChildNumberPath(), key.getChildNumber());
+        keys.put(path, key);
     }
 
     /**
@@ -76,7 +86,9 @@ public class DeterministicHierarchy implements Serializable {
                 ? ImmutableList.<ChildNumber>builder().addAll(rootPath).addAll(path).build()
                 : ImmutableList.copyOf(path);
         if (!keys.containsKey(absolutePath)) {
-            checkArgument(create, "No key found for {} path {}.", relativePath ? "relative" : "absolute", path);
+            if (!create)
+                throw new IllegalArgumentException(String.format("No key found for %s path %s.",
+                    relativePath ? "relative" : "absolute", HDUtils.formatPath(path)));
             checkArgument(absolutePath.size() > 0, "Can't derive the master key: nothing to derive from.");
             DeterministicKey parent = get(absolutePath.subList(0, absolutePath.size() - 1), relativePath, true);
             putKey(HDKeyDerivation.deriveChildKey(parent, absolutePath.get(absolutePath.size() - 1)));

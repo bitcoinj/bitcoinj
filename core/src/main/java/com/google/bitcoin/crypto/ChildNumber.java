@@ -23,7 +23,9 @@ package com.google.bitcoin.crypto;
  */
 public class ChildNumber {
     public static final int PRIV_BIT = 0x80000000;
+
     public static final ChildNumber ZERO = new ChildNumber(0);
+    public static final ChildNumber ZERO_PRIV = new ChildNumber(0, true);
 
     /** Integer i as per BIP 32 spec, including the MSB denoting derivation type (0 = public, 1 = private) **/
     private final int i;
@@ -39,6 +41,7 @@ public class ChildNumber {
         this.i = i;
     }
 
+    /** Returns the uint32 encoded form of the path element, including the MSB bit. */
     public int getI() {
         return i;
     }

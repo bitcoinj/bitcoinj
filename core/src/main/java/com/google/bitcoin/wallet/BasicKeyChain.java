@@ -34,7 +34,6 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.locks.ReentrantLock;
 
 import static com.google.common.base.Preconditions.*;
-import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * A {@link KeyChain} that implements the simplest model possible: it can have keys imported into it, and just acts as
@@ -153,18 +152,25 @@ public class BasicKeyChain implements EncryptableKeyChain {
     //
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    @Override
-    public List<Protos.Key> serializeToProtobuf() {
-        List<Protos.Key> result = Lists.newArrayListWithExpectedSize(hashToKeys.size());
+    Map<ECKey, Protos.Key.Builder> serializeToEditableProtobufs() {
+        Map<ECKey, Protos.Key.Builder> result = new LinkedHashMap<ECKey, Protos.Key.Builder>();
         for (ECKey ecKey : hashToKeys.values()) {
             Protos.Key.Builder protoKey = serializeEncryptableItem(ecKey);
             protoKey.setPublicKey(ByteString.copyFrom(ecKey.getPubKey()));
-            result.add(protoKey.build());
+            result.put(ecKey, protoKey);
         }
         return result;
     }
 
-    /*package*/ Protos.Key.Builder serializeEncryptableItem(EncryptableItem item) {
+    @Override
+    public List<Protos.Key> serializeToProtobuf() {
+        Collection<Protos.Key.Builder> builders = serializeToEditableProtobufs().values();
+        List<Protos.Key> result = new ArrayList<Protos.Key>(builders.size());
+        for (Protos.Key.Builder builder : builders) result.add(builder.build());
+        return result;
+    }
+
+    /*package*/ static Protos.Key.Builder serializeEncryptableItem(EncryptableItem item) {
         Protos.Key.Builder proto = Protos.Key.newBuilder();
         proto.setCreationTimestamp(item.getCreationTimeSeconds() * 1000);
         if (item.isEncrypted()) {

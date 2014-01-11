@@ -18,22 +18,17 @@ package com.google.bitcoin.crypto;
 import com.google.bitcoin.core.Base58;
 import com.google.bitcoin.core.ECKey;
 import com.google.bitcoin.core.Utils;
-import com.google.common.base.Joiner;
+import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterables;
 import org.spongycastle.math.ec.ECPoint;
 import org.spongycastle.util.encoders.Hex;
 
 import javax.annotation.Nullable;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
-import java.text.MessageFormat;
 import java.util.Arrays;
-import java.util.Collections;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
+import static com.google.common.base.Preconditions.*;
 
 /**
  * A deterministic key is a node in a {@link DeterministicHierarchy}. As per
@@ -43,7 +38,6 @@ import static com.google.common.base.Preconditions.checkState;
  */
 public class DeterministicKey extends ECKey {
     private static final long serialVersionUID = 1L;
-    private static final Joiner PATH_JOINER = Joiner.on("/");
 
     private final DeterministicKey parent;
     private final ImmutableList<ChildNumber> childNumberPath;
@@ -51,11 +45,12 @@ public class DeterministicKey extends ECKey {
     /** 32 bytes */
     private final byte[] chainCode;
 
-    DeterministicKey(ImmutableList<ChildNumber> childNumberPath,
-                     byte[] chainCode,
-                     ECPoint publicAsPoint,
-                     @Nullable BigInteger priv,
-                     @Nullable DeterministicKey parent) {
+    /** Constructs a key from its components. This is not normally something you should use. */
+    public DeterministicKey(ImmutableList<ChildNumber> childNumberPath,
+                            byte[] chainCode,
+                            ECPoint publicAsPoint,
+                            @Nullable BigInteger priv,
+                            @Nullable DeterministicKey parent) {
         super(priv, compressPoint(checkNotNull(publicAsPoint)));
         checkArgument(chainCode.length == 32);
         this.parent = parent;
@@ -63,10 +58,11 @@ public class DeterministicKey extends ECKey {
         this.chainCode = Arrays.copyOf(chainCode, chainCode.length);
     }
 
-    DeterministicKey(ImmutableList<ChildNumber> childNumberPath,
-                     byte[] chainCode,
-                     BigInteger priv,
-                     @Nullable DeterministicKey parent) {
+    /** Constructs a key from its components. This is not normally something you should use. */
+    public DeterministicKey(ImmutableList<ChildNumber> childNumberPath,
+                            byte[] chainCode,
+                            BigInteger priv,
+                            @Nullable DeterministicKey parent) {
         super(priv, compressPoint(ECKey.CURVE.getG().multiply(priv)));
         checkArgument(chainCode.length == 32);
         this.parent = parent;
@@ -105,7 +101,7 @@ public class DeterministicKey extends ECKey {
      * Returns the path of this key as a human readable string starting with M to indicate the master key.
      */
     public String getPath() {
-        return PATH_JOINER.join(Iterables.concat(Collections.singleton("M"), getChildNumberPath()));
+        return HDUtils.formatPath(getChildNumberPath());
     }
 
     /**
@@ -192,6 +188,10 @@ public class DeterministicKey extends ECKey {
 
     @Override
     public String toString() {
-        return MessageFormat.format("ExtendedHierarchicKey[pub: {0}]", new String(Hex.encode(getPubKey())));
+        return Objects.toStringHelper(this)
+                .add("pub", new String(Hex.encode(getPubKey())))
+                .add("chaincode", new String(Hex.encode(getChainCode())))
+                .add("path", getPath())
+                .toString();
     }
 }
