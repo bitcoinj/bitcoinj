@@ -25,6 +25,8 @@ import com.google.bitcoin.params.RegTestParams;
 import com.google.bitcoin.params.TestNet3Params;
 import com.google.bitcoin.store.*;
 import com.google.bitcoin.utils.BriefLogFormatter;
+import com.google.common.base.Charsets;
+import com.google.common.io.Resources;
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
 import joptsimple.OptionSpec;
@@ -56,67 +58,7 @@ import java.util.logging.LogManager;
 public class WalletTool {
     private static final Logger log = LoggerFactory.getLogger(WalletTool.class);
 
-    private static final String HELP_TEXT =
-            "WalletTool: print and manipulate wallets\n\n" +
-
-            "Usage:\n" +
-            ">>> GENERAL OPTIONS\n" +
-            "  --debuglog           Enables logging from the core library.\n" +
-            "  --net=XXX            Which network to connect to, defaults to PROD, can also be TEST or REGTEST.\n" +
-            "  --mode=FULL/SPV      Whether to do full verification of the chain or just light mode.\n" +
-            "  --wallet=<file>      Specifies what wallet file to load and save.\n" +
-            "  --chain=<file>       Specifies the name of the file that stores the block chain.\n" +
-            "  --force              Overrides any safety checks on the requested action.\n" +
-            "  --date               Provide a date in form YYYY/MM/DD to any action that requires one.\n" +
-            "  --peers=1.2.3.4      Comma separated IP addresses/domain names for connections instead of peer discovery.\n" +
-            "  --offline            If specified when sending, don't try and connect, just write the tx to the wallet.\n" +
-            "  --condition=...      Allows you to specify a numeric condition for other commands. The format is\n" +
-            "                       one of the following operators = < > <= >= immediately followed by a number.\n" +
-            "                       For example --condition=\">5.10\" or --condition=\"<=1\"\n" +
-            "  --password=...       For an encrypted wallet, the password is provided here.\n" +
-            "  --ignore-mandatory-extensions   If a wallet has unknown required extensions that would otherwise cause\n" +
-            "                       load failures, this overrides that.\n" +
-
-            "\n>>> ACTIONS\n" +
-            "  --action=DUMP        Loads and prints the given wallet in textual form to stdout.\n" +
-            "  --action=RAW_DUMP    Prints the wallet as a raw protobuf with no parsing or sanity checking applied.\n" +
-            "  --action=CREATE      Makes a new wallet in the file specified by --wallet.\n" +
-            "                       Will complain and require --force if the wallet already exists.\n" +
-            "  --action=ADD_KEY     Adds a new key to the wallet, either specified or freshly generated.\n" +
-            "                       If --date is specified, that's the creation date.\n" +
-            "                       If --unixtime is specified, that's the creation time and it overrides --date.\n" +
-            "                       If --privkey is specified, use as a hex/base58 encoded private key.\n" +
-            "                       Don't specify --pubkey in that case, it will be derived automatically.\n" +
-            "                       If --pubkey is specified, use as a hex/base58 encoded non-compressed public key.\n" +
-            "  --action=ADD_ADDR    Requires --addr to be specified, and adds it as a watching address.\n" +
-            "  --action=DELETE_KEY  Removes the key specified by --pubkey or --addr from the wallet.\n" +
-            "  --action=SYNC        Sync the wallet with the latest block chain (download new transactions).\n" +
-            "                       If the chain file does not exist this will RESET the wallet.\n" +
-            "  --action=RESET       Deletes all transactions from the wallet, for if you want to replay the chain.\n" +
-            "  --action=SEND        Creates a transaction with the given --output from this wallet and broadcasts, eg:\n" +
-            "                         --output=1GthXFQMktFLWdh5EPNGqbq3H6WdG8zsWj:1.245\n" +
-            "                       You can repeat --output=address:value multiple times.\n" +
-            "                       If the output destination starts with 04 and is 65 or 33 bytes long it will be\n" +
-            "                       treated as a public key instead of an address and the send will use \n" +
-            "                       <key> CHECKSIG as the script.\n" +
-            "                       Other options include:\n" +
-            "                          --fee=0.01  sets the tx fee\n" +
-            "                          --locktime=1234  sets the lock time to block 1234\n" +
-            "                          --locktime=2013/01/01  sets the lock time to 1st Jan 2013\n" +
-            "                          --allow-unconfirmed will let you create spends of pending non-change outputs.\n" +
-
-            "\n>>> WAITING\n" +
-            "You can wait for the condition specified by the --waitfor flag to become true. Transactions and new\n" +
-            "blocks will be processed during this time. When the waited for condition is met, the tx/block hash\n" +
-            "will be printed. Waiting occurs after the --action is performed, if any is specified.\n\n" +
-
-            "  --waitfor=EVER       Never quit.\n" +
-            "  --waitfor=WALLET_TX  Any transaction that sends coins to or from the wallet.\n" +
-            "  --waitfor=BLOCK      A new block that builds on the best chain.\n" +
-            "  --waitfor=BALANCE    Waits until the wallets balance meets the --condition.\n";
-
     private static OptionSpec<String> walletFileName;
-    private static OptionSpec<ActionEnum> actionFlag;
     private static OptionSpec<NetworkEnum> netFlag;
     private static OptionSpec<Date> dateFlag;
     private static OptionSpec<Integer> unixtimeFlag;
@@ -233,9 +175,6 @@ public class WalletTool {
         walletFileName = parser.accepts("wallet")
                 .withRequiredArg()
                 .defaultsTo("wallet");
-        actionFlag = parser.accepts("action")
-                .withRequiredArg()
-                .ofType(ActionEnum.class);
         netFlag = parser.accepts("net")
                 .withOptionalArg()
                 .ofType(NetworkEnum.class)
@@ -268,12 +207,24 @@ public class WalletTool {
         parser.accepts("ignore-mandatory-extensions");
         OptionSpec<String> passwordFlag = parser.accepts("password").withRequiredArg();
         options = parser.parse(args);
-        
-        if (args.length == 0 || options.has("help") || options.nonOptionArguments().size() > 0) {
+
+        final String HELP_TEXT = Resources.toString(WalletTool.class.getResource("wallet-tool-help.txt"), Charsets.UTF_8);
+
+        if (args.length == 0 || options.has("help") || options.nonOptionArguments().size() < 1) {
             System.out.println(HELP_TEXT);
             return;
         }
-        
+
+        ActionEnum action;
+        try {
+            String actionStr = options.nonOptionArguments().get(0);
+            actionStr = actionStr.toUpperCase().replace("-", "_");
+            action = ActionEnum.valueOf(actionStr);
+        } catch (IllegalArgumentException e) {
+            System.err.println("Could not understand action name " + options.nonOptionArguments().get(0));
+            return;
+        }
+
         if (options.has("debuglog")) {
             BriefLogFormatter.init();
             log.info("Starting up ...");
@@ -313,16 +264,13 @@ public class WalletTool {
             password = passwordFlag.value(options);
         }
 
-        ActionEnum action = ActionEnum.NONE;
-        if (options.has(actionFlag))
-            action = actionFlag.value(options);
         walletFile = new File(walletFileName.value(options));
         if (action == ActionEnum.CREATE) {
             createWallet(options, params, walletFile);
             return;  // We're done.
         }
         if (!walletFile.exists()) {
-            System.err.println("Specified wallet file " + walletFile + " does not exist. Try --action=CREATE");
+            System.err.println("Specified wallet file " + walletFile + " does not exist. Try wallet-tool --wallet=" + walletFile + " create");
             return;
         }
 
