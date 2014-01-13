@@ -19,6 +19,7 @@ package com.google.bitcoin.script;
 
 import com.google.bitcoin.core.*;
 import com.google.bitcoin.crypto.TransactionSignature;
+import com.google.bitcoin.params.MainNetParams;
 import com.google.common.collect.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -141,6 +142,19 @@ public class Script {
         return Collections.unmodifiableList(chunks);
     }
 
+    private static final ScriptChunk INTERN_TABLE[];
+
+    static {
+        Script examplePayToAddress = ScriptBuilder.createOutputScript(new Address(MainNetParams.get(), new byte[20]));
+        examplePayToAddress = new Script(examplePayToAddress.getProgram());
+        INTERN_TABLE = new ScriptChunk[] {
+                examplePayToAddress.chunks.get(0),  // DUP
+                examplePayToAddress.chunks.get(1),  // HASH160
+                examplePayToAddress.chunks.get(3),  // EQUALVERIFY
+                examplePayToAddress.chunks.get(4),  // CHECKSIG
+        };
+    }
+
     /**
      * <p>To run a script, first we parse it which breaks it up into chunks representing pushes of data or logical
      * opcodes. Then we can run the parsed chunks.</p>
@@ -151,7 +165,7 @@ public class Script {
      * The official client does something similar.</p>
      */
     private void parse(byte[] program) throws ScriptException {
-        chunks = new ArrayList<ScriptChunk>(10);  // Arbitrary choice.
+        chunks = new ArrayList<ScriptChunk>(5);   // Common size.
         ByteArrayInputStream bis = new ByteArrayInputStream(program);
         int initialSize = bis.available();
         while (bis.available() > 0) {
@@ -176,15 +190,24 @@ public class Script {
                 dataToRead = ((long)bis.read()) | (((long)bis.read()) << 8) | (((long)bis.read()) << 16) | (((long)bis.read()) << 24);
             }
 
+            ScriptChunk chunk;
             if (dataToRead == -1) {
-                chunks.add(new ScriptChunk(true, new byte[]{(byte) opcode}, startLocationInProgram));
+                chunk = new ScriptChunk(true, new byte[]{(byte) opcode}, startLocationInProgram);
             } else {
                 if (dataToRead > bis.available())
                     throw new ScriptException("Push of data element that is larger than remaining data");
                 byte[] data = new byte[(int)dataToRead];
                 checkState(dataToRead == 0 || bis.read(data, 0, (int)dataToRead) == dataToRead);
-                chunks.add(new ScriptChunk(false, data, startLocationInProgram));
+                chunk = new ScriptChunk(false, data, startLocationInProgram);
             }
+            // Save some memory by eliminating redundant copies of the same chunk objects. INTERN_TABLE can be null
+            // here because this method is called whilst setting it up.
+            if (INTERN_TABLE != null) {
+                for (ScriptChunk c : INTERN_TABLE) {
+                    if (c.equals(chunk)) chunk = c;
+                }
+            }
+            chunks.add(chunk);
         }
     }
 
