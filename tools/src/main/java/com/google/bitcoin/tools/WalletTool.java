@@ -53,23 +53,17 @@ import java.util.logging.Level;
 import java.util.logging.LogManager;
 
 /**
- * A command line tool for manipulating wallets and working with Bitcoin.<p>
+ * A command line tool for manipulating wallets and working with Bitcoin.
  */
 public class WalletTool {
     private static final Logger log = LoggerFactory.getLogger(WalletTool.class);
 
-    private static OptionSpec<String> walletFileName;
-    private static OptionSpec<NetworkEnum> netFlag;
     private static OptionSpec<Date> dateFlag;
     private static OptionSpec<Integer> unixtimeFlag;
-    private static OptionSpec<WaitForEnum> waitForFlag;
-    private static OptionSpec<ValidationMode> modeFlag;
-    private static OptionSpec<String> conditionFlag;
 
     private static NetworkParameters params;
     private static File walletFile;
     private static OptionSet options;
-    private static java.util.logging.Logger logger;
     private static BlockStore store;
     private static AbstractBlockChain chain;
     private static PeerGroup peers;
@@ -137,7 +131,6 @@ public class WalletTool {
     private static Condition condition;
 
     public enum ActionEnum {
-        NONE,
         DUMP,
         RAW_DUMP,
         CREATE,
@@ -147,14 +140,14 @@ public class WalletTool {
         SYNC,
         RESET,
         SEND
-    };
+    }
 
     public enum WaitForEnum {
         EVER,
         WALLET_TX,
         BLOCK,
         BALANCE
-    };
+    }
     
     public enum NetworkEnum {
         PROD,
@@ -172,10 +165,10 @@ public class WalletTool {
         parser.accepts("help");
         parser.accepts("force");
         parser.accepts("debuglog");
-        walletFileName = parser.accepts("wallet")
+        OptionSpec<String> walletFileName = parser.accepts("wallet")
                 .withRequiredArg()
                 .defaultsTo("wallet");
-        netFlag = parser.accepts("net")
+        OptionSpec<NetworkEnum> netFlag = parser.accepts("net")
                 .withOptionalArg()
                 .ofType(NetworkEnum.class)
                 .defaultsTo(NetworkEnum.PROD);
@@ -183,10 +176,10 @@ public class WalletTool {
                 .withRequiredArg()
                 .ofType(Date.class)
                 .withValuesConvertedBy(DateConverter.datePattern("yyyy/MM/dd"));
-        waitForFlag = parser.accepts("waitfor")
+        OptionSpec<WaitForEnum> waitForFlag = parser.accepts("waitfor")
                 .withRequiredArg()
                 .ofType(WaitForEnum.class);
-        modeFlag = parser.accepts("mode")
+        OptionSpec<ValidationMode> modeFlag = parser.accepts("mode")
                 .withRequiredArg()
                 .ofType(ValidationMode.class)
                 .defaultsTo(ValidationMode.SPV);
@@ -200,7 +193,7 @@ public class WalletTool {
         parser.accepts("value").withRequiredArg();
         parser.accepts("fee").withRequiredArg();
         unixtimeFlag = parser.accepts("unixtime").withRequiredArg().ofType(Integer.class);
-        conditionFlag = parser.accepts("condition").withRequiredArg();
+        OptionSpec<String> conditionFlag = parser.accepts("condition").withRequiredArg();
         parser.accepts("locktime").withRequiredArg();
         parser.accepts("allow-unconfirmed");
         parser.accepts("offline");
@@ -230,7 +223,7 @@ public class WalletTool {
             log.info("Starting up ...");
         } else {
             // Disable logspam unless there is a flag.
-            logger = LogManager.getLogManager().getLogger("");
+            java.util.logging.Logger logger = LogManager.getLogManager().getLogger("");
             logger.setLevel(Level.SEVERE);
         }
         switch (netFlag.value(options)) {
@@ -538,6 +531,7 @@ public class WalletTool {
         try {
             latch.await();
         } catch (InterruptedException e) {
+            // Ignore.
         }
     }
 
