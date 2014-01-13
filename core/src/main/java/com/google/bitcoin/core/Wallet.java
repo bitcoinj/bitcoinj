@@ -315,6 +315,9 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
             } else if (!temp.renameTo(destFile)) {
                 throw new IOException("Failed to rename " + temp + " to " + destFile);
             }
+        } catch (RuntimeException e) {
+            log.error("Failed whilst saving wallet", e);
+            throw e;
         } finally {
             lock.unlock();
             if (stream != null) {
