@@ -34,6 +34,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
+import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.*;
@@ -138,11 +139,43 @@ public class PeerGroup extends AbstractExecutionThreadService implements Transac
         }
     };
     private AbstractWalletEventListener walletEventListener = new AbstractWalletEventListener() {
-        @Override public void onScriptsAdded(Wallet wallet, List<Script> scripts) {
+        private void queueRecalc() {
             Uninterruptibles.putUninterruptibly(jobQueue, recalculateRunnable);
         }
+
+        @Override public void onScriptsAdded(Wallet wallet, List<Script> scripts) {
+            queueRecalc();
+        }
+
         @Override public void onKeysAdded(Wallet wallet, List<ECKey> keys) {
-            Uninterruptibles.putUninterruptibly(jobQueue, recalculateRunnable);
+            queueRecalc();
+        }
+
+        @Override
+        public void onCoinsReceived(Wallet wallet, Transaction tx, BigInteger prevBalance, BigInteger newBalance) {
+            // We received a relevant transaction. We MAY need to recalculate and resend the Bloom filter, but only
+            // if we have received a transaction that includes a relevant pay-to-pubkey output.
+            //
+            // The reason is that pay-to-pubkey outputs, when spent, will not repeat any data we can predict in their
+            // inputs. So a remote peer will update the Bloom filter for us when such an output is seen matching the
+            // existing filter, so that it includes the tx hash in which the pay-to-pubkey output was observed. Thus
+            // the spending transaction will always match (due to the outpoint structure).
+            //
+            // Unfortunately, whilst this is required for correct sync of the chain in blocks, there is an edge case.
+            // If a wallet receives a relevant pay-to-pubkey output in a block that was not broadcast across the network
+            // for example, in a coinbase transaction, then the node that's serving us the chain will update its filter
+            // but the rest will not. If another transaction then spends it, the other nodes won't match/relay it.
+            //
+            // For this reason we check if the transaction contained any relevant pay to pubkeys and force a recalc
+            // and thus retransmit if so.
+            boolean shouldRecalc = false;
+            for (TransactionOutput output : tx.getOutputs()) {
+                if (output.getScriptPubKey().isSentToRawPubKey() && output.isMine(wallet)) {
+                    shouldRecalc = true;
+                    break;
+                }
+            }
+            if (shouldRecalc) queueRecalc();
         }
     };
 
