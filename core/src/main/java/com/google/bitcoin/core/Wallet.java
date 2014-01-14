@@ -1341,7 +1341,7 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
         }
         // This is safe even if the listener has been added before, as TransactionConfidence ignores duplicate
         // registration requests. That makes the code in the wallet simpler.
-        tx.getConfidence().addEventListener(txConfidenceListener);
+        tx.getConfidence().addEventListener(txConfidenceListener, Threading.SAME_THREAD);
     }
 
     /**
@@ -3550,6 +3550,7 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
      * optimise itself to reduce fees or improve privacy.</p>
      */
     public void setTransactionBroadcaster(@Nullable com.google.bitcoin.core.TransactionBroadcaster broadcaster) {
+        Transaction[] toBroadcast = {};
         lock.lock();
         try {
             if (vTransactionBroadcaster == broadcaster)
@@ -3557,18 +3558,21 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
             vTransactionBroadcaster = broadcaster;
             if (broadcaster == null)
                 return;
-            // Now use it to upload any pending transactions we have that are marked as not being seen by any peers yet.
-            for (Transaction tx : pending.values()) {
-                checkState(tx.getConfidence().getConfidenceType() == ConfidenceType.PENDING);
-                // Re-broadcast even if it's marked as already seen for two reasons
-                // 1) Old wallets may have transactions marked as broadcast by 1 peer when in reality the network
-                //    never saw it, due to bugs.
-                // 2) It can't really hurt.
-                log.info("New broadcaster so uploading waiting tx {}", tx.getHash());
-                broadcaster.broadcastTransaction(tx);
-            }
+            toBroadcast = pending.values().toArray(toBroadcast);
         } finally {
             lock.unlock();
+        }
+        // Now use it to upload any pending transactions we have that are marked as not being seen by any peers yet.
+        // Don't hold the wallet lock whilst doing this, so if the broadcaster accesses the wallet at some point there
+        // is no inversion.
+        for (Transaction tx : toBroadcast) {
+            checkState(tx.getConfidence().getConfidenceType() == ConfidenceType.PENDING);
+            // Re-broadcast even if it's marked as already seen for two reasons
+            // 1) Old wallets may have transactions marked as broadcast by 1 peer when in reality the network
+            //    never saw it, due to bugs.
+            // 2) It can't really hurt.
+            log.info("New broadcaster so uploading waiting tx {}", tx.getHash());
+            broadcaster.broadcastTransaction(tx);
         }
     }
 
