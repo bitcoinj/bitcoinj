@@ -94,9 +94,6 @@ public class Threading {
         @SuppressWarnings("InfiniteLoopStatement") @Override
         public void run() {
             while (true) {
-                if (tasks.remainingCapacity() < 2)
-                    log.warn("User thread saturated, {} tasks queued. Review your event handlers to make sure they are not too slow",
-                             tasks.size());
                 Runnable task = Uninterruptibles.takeUninterruptibly(tasks);
                 try {
                     task.run();
@@ -112,7 +109,12 @@ public class Threading {
         @Override
         public void execute(Runnable command) {
             // Will block if the event thread is saturated.
-            Uninterruptibles.putUninterruptibly(tasks, command);
+            if (!tasks.offer(command)) {
+                log.warn("User thread saturated, check for deadlocked or slow event handlers. Sample tasks:");
+                for (Object task : tasks.toArray()) log.warn(task.toString());
+                // Try again and wait this time.
+                Uninterruptibles.putUninterruptibly(tasks, command);
+            }
         }
     }
 
