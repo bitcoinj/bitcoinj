@@ -108,10 +108,10 @@ public class ECKey implements EncryptableItem, Serializable {
 
     // Creation time of the key in seconds since the epoch, or zero if the key was deserialized from a version that did
     // not have this field.
-    private long creationTimeSeconds;
+    protected long creationTimeSeconds;
 
-    private transient KeyCrypter keyCrypter;
-    private EncryptedData encryptedPrivateKey;
+    protected KeyCrypter keyCrypter;
+    protected EncryptedData encryptedPrivateKey;
 
     // Transient because it's calculated on demand/cached.
     private transient byte[] pubKeyHash;
@@ -309,10 +309,19 @@ public class ECKey implements EncryptableItem, Serializable {
         this(privKey, pubKey, false);
     }
 
+    /**
+     * Returns true if this key doesn't have unencrypted access to private key bytes. This may be because it was never
+     * given any private key bytes to begin with (a watching key), or because the key is encrypted. You can use
+     * {@link #isEncrypted()} to tell the cases apart.
+     */
     public boolean isPubKeyOnly() {
         return priv == null;
     }
 
+    /**
+     * Returns true if this key has unencrypted access to private key bytes. Does the opposite of
+     * {@link #isPubKeyOnly()}.
+     */
     public boolean hasPrivKey() {
         return priv != null;
     }
@@ -541,30 +550,17 @@ public class ECKey implements EncryptableItem, Serializable {
         BigInteger privateKeyForSigning;
 
         if (isEncrypted()) {
-            // The private key needs decrypting before use.
-            if (aesKey == null) {
+            if (aesKey == null)
                 throw new KeyCrypterException("This ECKey is encrypted but no decryption key has been supplied.");
-            }
-
-            if (keyCrypter == null) {
-                throw new KeyCrypterException("There is no KeyCrypter to decrypt the private key for signing.");
-            }
-
-            privateKeyForSigning = new BigInteger(1, keyCrypter.decrypt(encryptedPrivateKey, aesKey));
-            // Check encryption was correct.
-            if (!Arrays.equals(pub.getEncoded(), publicKeyFromPrivate(privateKeyForSigning, isCompressed())))
-                throw new KeyCrypterException("Could not decrypt bytes");
-        } else {
-            // No decryption of private key required.
-            if (priv == null) {
-                throw new KeyCrypterException("This ECKey does not have the private key necessary for signing.");
-            } else {
-                privateKeyForSigning = priv;
-            }
+            return decrypt(getKeyCrypter(), aesKey).sign(input);
         }
 
+        // No decryption of private key required.
+        if (priv == null)
+            throw new KeyCrypterException("This ECKey does not have the private key necessary for signing.");
+
         ECDSASigner signer = new ECDSASigner();
-        ECPrivateKeyParameters privKey = new ECPrivateKeyParameters(privateKeyForSigning, CURVE);
+        ECPrivateKeyParameters privKey = new ECPrivateKeyParameters(priv, CURVE);
         signer.init(true, privKey);
         BigInteger[] components = signer.generateSignature(input.getBytes());
         final ECDSASignature signature = new ECDSASignature(components[0], components[1]);
@@ -911,7 +907,7 @@ public class ECKey implements EncryptableItem, Serializable {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (o == null || !(o instanceof ECKey)) return false;
 
         ECKey ecKey = (ECKey) o;
 
@@ -934,7 +930,6 @@ public class ECKey implements EncryptableItem, Serializable {
     /**
      * Create an encrypted private key with the keyCrypter and the AES key supplied.
      * This method returns a new encrypted key and leaves the original unchanged.
-     * To be secure you need to clear the original, unencrypted private key bytes.
      *
      * @param keyCrypter The keyCrypter that specifies exactly how the encrypted bytes are created.
      * @param aesKey The KeyParameter with the AES encryption key (usually constructed with keyCrypter#deriveKey and cached as it is slow to create).
@@ -962,9 +957,9 @@ public class ECKey implements EncryptableItem, Serializable {
     public ECKey decrypt(KeyCrypter keyCrypter, KeyParameter aesKey) throws KeyCrypterException {
         checkNotNull(keyCrypter);
         // Check that the keyCrypter matches the one used to encrypt the keys, if set.
-        if (this.keyCrypter != null && !this.keyCrypter.equals(keyCrypter)) {
+        if (this.keyCrypter != null && !this.keyCrypter.equals(keyCrypter))
             throw new KeyCrypterException("The keyCrypter being used to decrypt the key is different to the one that was used to encrypt it");
-        }
+        checkState(encryptedPrivateKey != null, "This key is not encrypted");
         byte[] unencryptedPrivateKey = keyCrypter.decrypt(encryptedPrivateKey, aesKey);
         ECKey key = ECKey.fromPrivate(unencryptedPrivateKey);
         if (!isCompressed())
@@ -1059,8 +1054,9 @@ public class ECKey implements EncryptableItem, Serializable {
     }
 
     /**
-     * @return The KeyCrypter that was used to encrypt to encrypt this ECKey. You need this to decrypt the ECKey.
+     * Returns the KeyCrypter that was used to encrypt to encrypt this ECKey. You need this to decrypt the ECKey.
      */
+    @Nullable
     public KeyCrypter getKeyCrypter() {
         return keyCrypter;
     }
