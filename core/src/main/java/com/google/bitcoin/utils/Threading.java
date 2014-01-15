@@ -84,10 +84,10 @@ public class Threading {
         private static final Logger log = LoggerFactory.getLogger(UserThread.class);
         private LinkedBlockingQueue<Runnable> tasks;
 
-        public UserThread(int tasksBound) {
+        public UserThread() {
             super("bitcoinj user thread");
             setDaemon(true);
-            tasks = new LinkedBlockingQueue<Runnable>(tasksBound);
+            tasks = new LinkedBlockingQueue<Runnable>();
             start();
         }
 
@@ -108,13 +108,12 @@ public class Threading {
 
         @Override
         public void execute(Runnable command) {
-            // Will block if the event thread is saturated.
-            if (!tasks.offer(command)) {
-                log.warn("User thread saturated, check for deadlocked or slow event handlers. Sample tasks:");
+            if (tasks.size() > 100) {
+                log.warn("User thread saturated, memory exhaustion may occur.");
+                log.warn("Check for deadlocked or slow event handlers. Sample tasks:");
                 for (Object task : tasks.toArray()) log.warn(task.toString());
-                // Try again and wait this time.
-                Uninterruptibles.putUninterruptibly(tasks, command);
             }
+            Uninterruptibles.putUninterruptibly(tasks, command);
         }
     }
 
@@ -124,7 +123,7 @@ public class Threading {
         // from that point onwards.
         throwOnLockCycles();
 
-        USER_THREAD = new UserThread(100);   // 100 pending event listeners to avoid memory blowup.
+        USER_THREAD = new UserThread();
         SAME_THREAD = new Executor() {
             @Override
             public void execute(@Nonnull Runnable runnable) {
