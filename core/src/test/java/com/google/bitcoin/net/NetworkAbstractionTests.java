@@ -16,13 +16,6 @@
 
 package com.google.bitcoin.net;
 
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.SocketAddress;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.concurrent.atomic.AtomicBoolean;
-
 import com.google.bitcoin.core.Utils;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.protobuf.ByteString;
@@ -33,8 +26,17 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
+import javax.net.SocketFactory;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.SocketAddress;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import static com.google.common.base.Preconditions.checkState;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 
 @RunWith(value = Parameterized.class)
 public class NetworkAbstractionTests {
@@ -68,7 +70,7 @@ public class NetworkAbstractionTests {
         } else if (clientType == 2)
             return new NioClient(addr, parser, 100);
         else if (clientType == 3)
-            return new BlockingClient(addr, parser, 100, null);
+            return new BlockingClient(addr, parser, 100, SocketFactory.getDefault(), null);
         else
             throw new RuntimeException();
     }
