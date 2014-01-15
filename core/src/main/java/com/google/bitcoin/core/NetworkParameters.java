@@ -16,18 +16,24 @@
 
 package com.google.bitcoin.core;
 
-import com.google.bitcoin.params.*;
+import com.google.bitcoin.params.MainNetParams;
+import com.google.bitcoin.params.RegTestParams;
+import com.google.bitcoin.params.TestNet2Params;
+import com.google.bitcoin.params.TestNet3Params;
+import com.google.bitcoin.params.UnitTestParams;
 import com.google.bitcoin.script.Script;
 import com.google.bitcoin.script.ScriptOpCodes;
 import com.google.common.base.Objects;
+
 import org.spongycastle.util.encoders.Hex;
 
-import javax.annotation.Nullable;
 import java.io.ByteArrayOutputStream;
 import java.io.Serializable;
 import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.Map;
+
+import javax.annotation.Nullable;
 
 import static com.google.bitcoin.core.Utils.COIN;
 
@@ -48,8 +54,7 @@ public abstract class NetworkParameters implements Serializable {
     /**
      * The alert signing key originally owned by Satoshi, and now passed on to Gavin along with a few others.
      */
-    public static final byte[] SATOSHI_KEY = Hex.decode("04fc9702847840aaf195de8442ebecedf5b095cdbb9bc716bda9110971b28a49e0ead8564ff0db22209e0374782c093bb899692d524e9d6a6956e7c5ecbcd68284");
-
+    public static final byte[] SATOSHI_KEY = Hex.decode("04f09702847840aaf195de8442ebecedf5b095cdbb9bc716bda9110971b28a49e0ead8564ff0db22209e0374782c093bb899692d524e9d6a6956e7c5ecbcd68284");
     /** The string returned by getId() for the main, production network where people trade things. */
     public static final String ID_MAINNET = "org.bitcoin.production";
     /** The string returned by getId() for the testnet. */
@@ -105,7 +110,7 @@ public abstract class NetworkParameters implements Serializable {
             Script.writeBytes(scriptPubKeyBytes, Hex.decode
                     ("04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5f"));
             scriptPubKeyBytes.write(ScriptOpCodes.OP_CHECKSIG);
-            t.addOutput(new TransactionOutput(n, t, Utils.toNanoCoins(50, 0), scriptPubKeyBytes.toByteArray()));
+            t.addOutput(new TransactionOutput(n, t, Utils.toNanoCoins(1000, 0), scriptPubKeyBytes.toByteArray()));
         } catch (Exception e) {
             // Cannot happen.
             throw new RuntimeException(e);
@@ -114,8 +119,8 @@ public abstract class NetworkParameters implements Serializable {
         return genesisBlock;
     }
 
-    public static final int TARGET_TIMESPAN = 14 * 24 * 60 * 60;  // 2 weeks per difficulty cycle, on average.
-    public static final int TARGET_SPACING = 10 * 60;  // 10 minutes per block.
+    public static final int TARGET_TIMESPAN = 2 * 60;  // 2 minutes per difficulty cycle, on average.
+    public static final int TARGET_SPACING = 30;  // 30 seconds per block.
     public static final int INTERVAL = TARGET_TIMESPAN / TARGET_SPACING;
     
     /**
