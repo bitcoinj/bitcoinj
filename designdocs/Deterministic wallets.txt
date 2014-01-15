@@ -65,11 +65,49 @@ hierarchy at once. Key rotation is a special case because it is expected that (a
 available on a rotating chain and (b) the only spends crafted for keys in these chains will be created internally by
 bitcoinj and thus there is virtually no added complexity to the API or UI to handle it.
 
+When chains are encrypted, they must all be encrypted under exactly the same key. This is also true of rotating chains.
+The API will not support the case of multiple keychains in the same wallet that have a different password, as this would
+make the API and wallet apps too confusing.
+
 For hardware/watching wallets, where the private key/seed material is not available, the correct approach is to create
 an entirely separate Wallet object with a single deterministic key chain that does not have access to the seed. Special
 support can be added to the wallet code later to handle "external signing" which would be a separate/new feature.
 External signing can be done today already of course by manually building a transaction and using hashForSignature, but
 it's less convenient than an integrated solution would be.
+
+Chain structure
+---------------
+
+We follow the suggested chain structure outlined in BIP32 in which there is the notion of a top-level account, though
+in bitcoinj this will always be zero as it won't be exposed in the API for now. Under the account are two keys, one
+for receiving of funds (i.e. exposed to the use) and one which is used for "internal purposes", typically change keys
+though it may also be used for things like micropayment channels and, in future, de/refragmentation.
+
+In the most obvious implementation, a standard key chain would have all private or all pubkey only nodes. However,
+this will not be the case in bitcoinj. Instead private keys will largely be rederived on the fly, for a few reasons:
+
+1) When a chain is encrypted, the private key/seed bytes are not available, yet the chain still needs to be extended
+   on demand. In this sense an encrypted wallet is somewhat like a watching wallet.
+2) Private keys can be derived from their parent extremely fast, as it merely involves a single bigint modular addition.
+3) We would like to hold as many keys in RAM as possible, and so throwing away and rederiving private key bytes on the
+   fly seems to be a good way to make some savings. This is important because RAM on Android devices can be extremely
+   tight and there is no swap file on those platforms.
+
+When synchronizing, the system may need to extend the key heirarchy without access to the seed or master private keys,
+due to the need to calculate public keys in the gap.
+
+Because it would be complicated and confusing to have some user-exposed keys that have an encrypted private part and
+others that are missing it entirely, and because private key derivation is fast, we use the following arrangement for
+an encrypted deterministic key chain:
+
+- The root seed is encrypted. We keep it around even after the master private key is derived from it, because wallet
+  apps may wish to show it to users so they can opt to write it down later.
+- The private keys at the top of the heirarchy M, M/0, M/0/0, M/0/1 are precalculated when the heirarchy is initialized
+  and stored in the wallet encrypted.
+- Keys that hang off the external/internal parent keys only have their public keys stored. The private key is always
+  derived on the fly. The ECKey API already allows an AES key/password to be specified when signing, and this operation
+  will be extended to decrypting not the current key but the parent key and then rederiving.
+
 
 Bloom filtering
 ---------------
@@ -107,10 +145,10 @@ Efficiency considerations
 -------------------------
 
 Elliptic curve maths can be slow, especially on cheap phones that run Android Gingerbread, which has only a basic
-tracing JIT compiler. Thus, we try to avoid it as much as possible. Public and private keys that are derived from the
+tracing JIT compiler. Thus, we try to avoid it as much as possible. Public keys that are derived from the
 root seed are stored in memory and on disk. They are not recalculated at any point. Extending the tree takes place
-only when the gap gets too small. It may or may not be useful to use a thread pool for this, experimentation would
-be required to determine this.
+only when the gap gets too small or the API user requests it. It may or may not be useful to use a thread pool for
+this, experimentation would be required to determine this.
 
 
 Encryption
@@ -128,7 +166,6 @@ private keys derived from it.
 Because there are no seeds or private keys, watching/hardware wallets do not support encryption. An attempt to encrypt
 a wallet that contains both a basic key chain and a key heirarchy without a seed/private keys will throw an exception
 to avoid the case where a wallet is "half encrypted".
-
 
 Serialization
 -------------
