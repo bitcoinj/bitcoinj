@@ -3229,12 +3229,16 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
     private void queueOnTransactionConfidenceChanged(final Transaction tx) {
         checkState(lock.isHeldByCurrentThread());
         for (final ListenerRegistration<WalletEventListener> registration : eventListeners) {
-            registration.executor.execute(new Runnable() {
-                @Override
-                public void run() {
-                    registration.listener.onTransactionConfidenceChanged(Wallet.this, tx);
-                }
-            });
+            if (registration.executor == Threading.SAME_THREAD) {
+                registration.listener.onTransactionConfidenceChanged(this, tx);
+            } else {
+                registration.executor.execute(new Runnable() {
+                    @Override
+                    public void run() {
+                        registration.listener.onTransactionConfidenceChanged(Wallet.this, tx);
+                    }
+                });
+            }
         }
     }
 
