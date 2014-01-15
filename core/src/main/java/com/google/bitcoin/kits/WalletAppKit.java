@@ -59,23 +59,23 @@ import static com.google.common.base.Preconditions.checkState;
  * out what went wrong more precisely. Same thing if you use the async start() method.</p>
  */
 public class WalletAppKit extends AbstractIdleService {
-    private final String filePrefix;
-    private final NetworkParameters params;
-    private volatile BlockChain vChain;
-    private volatile SPVBlockStore vStore;
-    private volatile Wallet vWallet;
-    private volatile PeerGroup vPeerGroup;
+    protected final String filePrefix;
+    protected final NetworkParameters params;
+    protected volatile BlockChain vChain;
+    protected volatile SPVBlockStore vStore;
+    protected volatile Wallet vWallet;
+    protected volatile PeerGroup vPeerGroup;
 
-    private final File directory;
-    private volatile File vWalletFile;
+    protected final File directory;
+    protected volatile File vWalletFile;
 
-    private boolean useAutoSave = true;
-    private PeerAddress[] peerAddresses;
-    private PeerEventListener downloadListener;
-    private boolean autoStop = true;
-    private InputStream checkpoints;
-    private boolean blockingStartup = true;
-    private String userAgent, version;
+    protected boolean useAutoSave = true;
+    protected PeerAddress[] peerAddresses;
+    protected PeerEventListener downloadListener;
+    protected boolean autoStop = true;
+    protected InputStream checkpoints;
+    protected boolean blockingStartup = true;
+    protected String userAgent, version;
 
     public WalletAppKit(NetworkParameters params, File directory, String filePrefix) {
         this.params = checkNotNull(params);
@@ -199,7 +199,7 @@ public class WalletAppKit extends AbstractIdleService {
                 CheckpointManager.checkpoint(params, checkpoints, vStore, time);
             }
             vChain = new BlockChain(params, vStore);
-            vPeerGroup = new PeerGroup(params, vChain);
+            vPeerGroup = createPeerGroup();
             if (this.userAgent != null)
                 vPeerGroup.setUserAgent(userAgent, version);
             if (vWalletFile.exists()) {
@@ -254,6 +254,10 @@ public class WalletAppKit extends AbstractIdleService {
         } finally {
             if (walletStream != null) walletStream.close();
         }
+    }
+
+    protected PeerGroup createPeerGroup() {
+        return new PeerGroup(params, vChain);
     }
 
     private void installShutdownHook() {
