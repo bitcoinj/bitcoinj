@@ -90,7 +90,7 @@ public final class HDKeyDerivation {
     public static DeterministicKey deriveChildKey(DeterministicKey parent, ChildNumber childNumber) throws HDDerivationException {
         // The bytes calculated below are EITHER:
         // 1) A private key, if the parent key has a private key.
-        // 2) A public key, if the parent key does not have any private key.
+        // 2) A public key, if the parent key does not have any private key OR if the parent private key is encrypted.
         RawKeyBytes rawKey = deriveChildKeyBytes(parent, childNumber);
         if (parent.isPubKeyOnly())
             return new DeterministicKey(

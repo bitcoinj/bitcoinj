@@ -16,10 +16,13 @@
 
 package com.google.bitcoin.crypto;
 
+import com.google.bitcoin.core.ECKey;
+import com.google.bitcoin.core.Sha256Hash;
 import org.junit.Test;
+import org.spongycastle.crypto.params.KeyParameter;
 import org.spongycastle.util.encoders.Hex;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 /**
  * This test is adapted from Armory's BIP 32 tests.
@@ -119,6 +122,35 @@ public class ChildKeyDerivationTest {
             assertEquals(hexEncodePub(ekprv_1_IN_4095.getPubOnly()), hexEncodePub(ekpub_1_IN_4095));
             //assertEquals(hexEncodePub(ekprv_1_IN_4bil.getPubOnly()), hexEncodePub(ekpub_1_IN_4bil));
         }
+    }
+
+    @Test
+    public void encryptedDerivation() throws Exception {
+        // Check that encrypting a parent key in the heirarchy and then deriving from it yields a DeterministicKey
+        // with no private key component, and that the private key bytes are derived on demand.
+        KeyCrypter scrypter = new KeyCrypterScrypt();
+        KeyParameter aesKey = scrypter.deriveKey("we never went to the moon");
+
+        DeterministicKey key1 = HDKeyDerivation.createMasterPrivateKey("it was all a hoax".getBytes());
+        DeterministicKey encryptedKey1 = key1.encrypt(scrypter, aesKey);
+        DeterministicKey decryptedKey1 = encryptedKey1.decrypt(scrypter, aesKey);
+        assertEquals(key1, decryptedKey1);
+
+        DeterministicKey key2 = HDKeyDerivation.deriveChildKey(key1, ChildNumber.ZERO);
+        DeterministicKey derivedKey2 = HDKeyDerivation.deriveChildKey(encryptedKey1, ChildNumber.ZERO);
+        assertTrue(derivedKey2.isEncrypted());   // parent is encrypted.
+        DeterministicKey decryptedKey2 = derivedKey2.decrypt(scrypter, aesKey);
+        assertFalse(decryptedKey2.isEncrypted());
+        assertEquals(key2, decryptedKey2);
+
+        Sha256Hash hash = Sha256Hash.create("the mainstream media won't cover it. why is that?".getBytes());
+        try {
+            derivedKey2.sign(hash);
+            fail();
+        } catch (KeyCrypterException e) {
+        }
+        ECKey.ECDSASignature signature = derivedKey2.sign(hash, aesKey);
+        assertTrue(derivedKey2.verify(hash, signature));
     }
 
     private static String hexEncodePub(DeterministicKey pubKey) {

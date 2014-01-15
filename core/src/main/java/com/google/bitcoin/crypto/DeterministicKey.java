@@ -20,6 +20,7 @@ import com.google.bitcoin.core.ECKey;
 import com.google.bitcoin.core.Utils;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
+import org.spongycastle.crypto.params.KeyParameter;
 import org.spongycastle.math.ec.ECPoint;
 import org.spongycastle.util.encoders.Hex;
 
@@ -68,6 +69,18 @@ public class DeterministicKey extends ECKey {
         this.parent = parent;
         this.childNumberPath = checkNotNull(childNumberPath);
         this.chainCode = Arrays.copyOf(chainCode, chainCode.length);
+    }
+
+    /** Constructs a key from its components. This is not normally something you should use. */
+    public DeterministicKey(ImmutableList<ChildNumber> childNumberPath,
+                            byte[] chainCode,
+                            @Nullable DeterministicKey parent,
+                            ECPoint pub,
+                            EncryptedData priv,
+                            KeyCrypter crypter) {
+        this(childNumberPath, chainCode, pub, null, parent);
+        this.encryptedPrivateKey = checkNotNull(priv);
+        this.keyCrypter = checkNotNull(crypter);
     }
 
     /**
@@ -160,6 +173,81 @@ public class DeterministicKey extends ECKey {
         return checksummed;
     }
 
+    /** {@inheritDoc} */
+    @Override
+    public DeterministicKey encrypt(KeyCrypter keyCrypter, KeyParameter aesKey) throws KeyCrypterException {
+        // Same as the parent code, except we construct a DeterministicKey instead of an ECKey.
+        checkNotNull(keyCrypter);
+        final byte[] privKeyBytes = getPrivKeyBytes();
+        checkState(privKeyBytes != null, "Private key is not available");
+        EncryptedData encryptedPrivateKey = keyCrypter.encrypt(privKeyBytes, aesKey);
+        return new DeterministicKey(childNumberPath, chainCode, parent, pub, encryptedPrivateKey, keyCrypter);
+    }
+
+    /**
+     * A determinstic key is considered to be encrypted if it has access to encrypted private key bytes, OR if its
+     * parent does. The reason is because the parent would be encrypted under the same key and this key knows how to
+     * rederive its own private key bytes from the parent, if needed.
+     */
+    @Override
+    public boolean isEncrypted() {
+        return priv == null && (super.isEncrypted() || (parent != null && parent.isEncrypted()));
+    }
+
+    /**
+     * Returns this keys {@link com.google.bitcoin.crypto.KeyCrypter} <b>or</b> the keycrypter of its parent key.
+     */
+    @Override @Nullable
+    public KeyCrypter getKeyCrypter() {
+        if (keyCrypter != null)
+            return keyCrypter;
+        else if (parent != null)
+            return parent.getKeyCrypter();
+        else
+            return null;
+    }
+
+    @Override
+    public DeterministicKey decrypt(KeyCrypter keyCrypter, KeyParameter aesKey) throws KeyCrypterException {
+        checkNotNull(keyCrypter);
+        // Check that the keyCrypter matches the one used to encrypt the keys, if set.
+        if (this.keyCrypter != null && !this.keyCrypter.equals(keyCrypter))
+            throw new KeyCrypterException("The keyCrypter being used to decrypt the key is different to the one that was used to encrypt it");
+        BigInteger privKey = findOrDerivePrivateKey(keyCrypter, aesKey);
+        DeterministicKey key = new DeterministicKey(childNumberPath, chainCode, privKey, parent);
+        if (!Arrays.equals(key.getPubKey(), getPubKey()))
+            throw new KeyCrypterException("Provided AES key is wrong");
+        return key;
+    }
+
+    // For when a key is encrypted, either decrypt our encrypted private key bytes, or work up the tree asking parents
+    // to decrypt and re-derive.
+    private BigInteger findOrDerivePrivateKey(KeyCrypter keyCrypter, KeyParameter aesKey) {
+        if (encryptedPrivateKey != null)
+            return new BigInteger(1, keyCrypter.decrypt(encryptedPrivateKey, aesKey));
+        // Otherwise we don't have it, but maybe we can figure it out from our parents. Walk up the tree looking for
+        // the first key that has some encrypted private key data.
+        DeterministicKey cursor = parent;
+        while (cursor != null) {
+            if (cursor.encryptedPrivateKey != null) break;
+            cursor = cursor.parent;
+        }
+        if (cursor == null)
+            throw new KeyCrypterException("Neither this key nor its parents have an encrypted private key");
+        byte[] parentalPrivateKeyBytes = keyCrypter.decrypt(cursor.encryptedPrivateKey, aesKey);
+        DeterministicKey downCursor = new DeterministicKey(cursor.childNumberPath, cursor.chainCode,
+                cursor.pub, new BigInteger(1, parentalPrivateKeyBytes), cursor.parent);
+        // Now we have to rederive the keys along the path back to ourselves. That path can be found by just truncating
+        // our path with the length of the parents path.
+        ImmutableList<ChildNumber> path = childNumberPath.subList(cursor.getDepth(), childNumberPath.size());
+        for (ChildNumber num : path) {
+            downCursor = HDKeyDerivation.deriveChildKey(downCursor, num);
+        }
+        // downCursor is now the same key as us, but with private key bytes.
+        checkState(downCursor.pub.equals(pub));
+        return checkNotNull(downCursor.priv);
+    }
+
     public byte[] serializePublic() {
         return serialize(true);
     }
@@ -182,6 +270,33 @@ public class DeterministicKey extends ECKey {
         ser.put(pub ? getPubKey() : getPrivKeyBytes33());
         checkState(ser.position() == 78);
         return ser.array();
+    }
+
+    /**
+     * Verifies equality of all fields but NOT the parent pointer (thus the same key derived in two separate heirarchy
+     * objects will equal each other.
+     */
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
+
+        DeterministicKey key = (DeterministicKey) o;
+
+        if (!Arrays.equals(chainCode, key.chainCode)) return false;
+        if (!childNumberPath.equals(key.childNumberPath)) return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = super.hashCode();
+        result = 31 * result + (parent != null ? parent.hashCode() : 0);
+        result = 31 * result + childNumberPath.hashCode();
+        result = 31 * result + Arrays.hashCode(chainCode);
+        return result;
     }
 
     @Override
