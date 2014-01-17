@@ -28,7 +28,6 @@ import com.google.common.collect.Lists;
 import org.bitcoinj.wallet.Protos;
 import org.junit.Before;
 import org.junit.Test;
-import org.spongycastle.crypto.params.KeyParameter;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -111,42 +110,32 @@ public class BasicKeyChainTest {
     public void doubleEncryptFails() {
         final ArrayList<ECKey> keys = Lists.newArrayList(new ECKey(), new ECKey());
         chain.importKeys(keys);
-        chain.encrypt("foo");
-        chain.encrypt("foo");
+        chain = chain.toEncrypted("foo");
+        chain.toEncrypted("foo");
     }
 
     @Test
     public void encryptDecrypt() {
-        final AtomicBoolean listenerRan = new AtomicBoolean();
-        chain.addEventListener(new AbstractKeyChainEventListener() {
-            @Override
-            public void onEncryptionChanged() {
-                listenerRan.set(true);
-            }
-        }, Threading.SAME_THREAD);
-
         final ECKey key1 = new ECKey();
         final ArrayList<ECKey> keys = Lists.newArrayList(key1, new ECKey());
         chain.importKeys(keys);
-        KeyParameter aesKey = chain.encrypt("foobar");
-        assertNotNull(aesKey);
-        assertTrue(listenerRan.getAndSet(false));
+        final String PASSWORD = "foobar";
+        chain = chain.toEncrypted(PASSWORD);
         final KeyCrypter keyCrypter = chain.getKeyCrypter();
         assertNotNull(keyCrypter);
         assertTrue(keyCrypter instanceof KeyCrypterScrypt);
 
-        assertTrue(chain.checkPassword("foobar"));
+        assertTrue(chain.checkPassword(PASSWORD));
         assertFalse(chain.checkPassword("wrong"));
         ECKey key = chain.findKeyFromPubKey(key1.getPubKey());
         assertTrue(key.isEncrypted());
         assertNull(key.getPrivKeyBytes());
 
         try {
-            chain.decrypt(keyCrypter.deriveKey("wrong"));
+            chain.toDecrypted(keyCrypter.deriveKey("wrong"));
             fail();
         } catch (KeyCrypterException e) {}
-        chain.decrypt(aesKey);
-        assertTrue(listenerRan.getAndSet(false));
+        chain = chain.toDecrypted(PASSWORD);
         key = chain.findKeyFromPubKey(key1.getPubKey());
         assertFalse(key.isEncrypted());
         key.getPrivKeyBytes();
@@ -156,7 +145,7 @@ public class BasicKeyChainTest {
     public void cannotImportEncryptedKey() {
         final ECKey key1 = new ECKey();
         chain.importKeys(ImmutableList.of(key1));
-        chain.encrypt("foobar");
+        chain = chain.toEncrypted("foobar");
         ECKey encryptedKey = chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         assertTrue(encryptedKey.isEncrypted());
 
@@ -166,6 +155,7 @@ public class BasicKeyChainTest {
 
     @Test
     public void serializationUnencrypted() throws UnreadableWalletException {
+        Utils.rollMockClock(0);
         Date now = Utils.now();
         final ECKey key1 = new ECKey();
         Utils.rollMockClock(5000);
@@ -177,7 +167,7 @@ public class BasicKeyChainTest {
         assertArrayEquals(key2.getPubKey(), keys.get(1).getPublicKey().toByteArray());
         assertArrayEquals(key1.getPrivKeyBytes(), keys.get(0).getSecretBytes().toByteArray());
         assertArrayEquals(key2.getPrivKeyBytes(), keys.get(1).getSecretBytes().toByteArray());
-        long normTime = now.getTime() / 1000 * 1000;
+        long normTime = (long) (Math.floor(now.getTime() / 1000) * 1000);
         assertEquals(normTime, keys.get(0).getCreationTimestamp());
         assertEquals(normTime + 5000 * 1000, keys.get(1).getCreationTimestamp());
 
@@ -191,7 +181,7 @@ public class BasicKeyChainTest {
     public void serializationEncrypted() throws UnreadableWalletException {
         ECKey key1 = new ECKey();
         chain.importKeys(ImmutableList.of(key1));
-        chain.encrypt("foo bar");
+        chain = chain.toEncrypted("foo bar");
         key1 = chain.getKeys().get(0);
         List<Protos.Key> keys = chain.serializeToProtobuf();
         assertEquals(1, keys.size());

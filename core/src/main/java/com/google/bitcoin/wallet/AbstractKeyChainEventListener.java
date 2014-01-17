@@ -8,8 +8,4 @@ public class AbstractKeyChainEventListener implements KeyChainEventListener {
     @Override
     public void onKeysAdded(List<ECKey> keys) {
     }
-
-    @Override
-    public void onEncryptionChanged() {
-    }
 }

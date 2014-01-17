@@ -27,8 +27,10 @@ import com.google.protobuf.ByteString;
 import org.bitcoinj.wallet.Protos;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.spongycastle.crypto.params.KeyParameter;
 import org.spongycastle.math.ec.ECPoint;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.math.BigInteger;
@@ -39,7 +41,9 @@ import java.util.Map;
 import java.util.concurrent.Executor;
 import java.util.concurrent.locks.ReentrantLock;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 
 /**
  * <p>A deterministic key chain is a {@link KeyChain} that uses the BIP 32
@@ -53,7 +57,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * for auditing, and new public keys can be generated without access to the private keys, yielding a highly secure
  * configuration for web servers which can accept payments into a wallet but not spend from them.</p>
  */
-public class DeterministicKeyChain implements KeyChain {
+public class DeterministicKeyChain implements EncryptableKeyChain {
     private static final Logger log = LoggerFactory.getLogger(DeterministicKeyChain.class);
     private final ReentrantLock lock = Threading.lock("DeterministicKeyChain");
 
@@ -122,44 +126,6 @@ public class DeterministicKeyChain implements KeyChain {
         return h;
     }
 
-    /** Returns a list of words that represent the seed. */
-    public List<String> toMnemonicCode() {
-        try {
-            return toMnemonicCode(getCachedMnemonicCode());
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    /** Returns a list of words that represent the seed, or IllegalStateException if the seed is encrypted or missing. */
-    public List<String> toMnemonicCode(MnemonicCode code) {
-        try {
-            if (seed == null)
-                throw new IllegalStateException("The seed is not present in this key chain");
-            if (seed.isEncrypted())
-                throw new IllegalStateException("The seed is encrypted");
-            final byte[] seed = checkNotNull(this.seed.getSecretBytes());
-            return code.toMnemonic(seed);
-        } catch (MnemonicException.MnemonicLengthException e) {
-            throw new RuntimeException(e);  // Cannot happen.
-        }
-    }
-
-    private MnemonicCode getCachedMnemonicCode() throws IOException {
-        lock.lock();
-        try {
-            // This object can be large and has to load the word list from disk, so we lazy cache it.
-            MnemonicCode m = mnemonicCode != null ? mnemonicCode.get() : null;
-            if (m == null) {
-                m = new MnemonicCode();
-                mnemonicCode = new WeakReference<MnemonicCode>(m);
-            }
-            return m;
-        } finally {
-            lock.unlock();
-        }
-    }
-
     /** Returns the time in seconds since the UNIX epoch at which the seed was randomly generated. */
     public long getSeedCreationTimeSecs() {
         return seed.getCreationTimeSeconds();
@@ -219,27 +185,97 @@ public class DeterministicKeyChain implements KeyChain {
     }
 
     @Override
+    public void addEventListener(KeyChainEventListener listener) {
+        basicKeyChain.addEventListener(listener);
+    }
+
+    @Override
+    public void addEventListener(KeyChainEventListener listener, Executor executor) {
+        basicKeyChain.addEventListener(listener, executor);
+    }
+
+    @Override
+    public boolean removeEventListener(KeyChainEventListener listener) {
+        return basicKeyChain.removeEventListener(listener);
+    }
+
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Mnemonic code support
+    //
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    /** Returns a list of words that represent the seed. */
+    public List<String> toMnemonicCode() {
+        try {
+            return toMnemonicCode(getCachedMnemonicCode());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /** Returns a list of words that represent the seed, or IllegalStateException if the seed is encrypted or missing. */
+    public List<String> toMnemonicCode(MnemonicCode code) {
+        try {
+            if (seed == null)
+                throw new IllegalStateException("The seed is not present in this key chain");
+            if (seed.isEncrypted())
+                throw new IllegalStateException("The seed is encrypted");
+            final byte[] seed = checkNotNull(this.seed.getSecretBytes());
+            return code.toMnemonic(seed);
+        } catch (MnemonicException.MnemonicLengthException e) {
+            throw new RuntimeException(e);  // Cannot happen.
+        }
+    }
+
+    private MnemonicCode getCachedMnemonicCode() throws IOException {
+        lock.lock();
+        try {
+            // This object can be large and has to load the word list from disk, so we lazy cache it.
+            MnemonicCode m = mnemonicCode != null ? mnemonicCode.get() : null;
+            if (m == null) {
+                m = new MnemonicCode();
+                mnemonicCode = new WeakReference<MnemonicCode>(m);
+            }
+            return m;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Serialization support
+    //
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    @Override
     public List<Protos.Key> serializeToProtobuf() {
-        // Most of the serialization work is delegated to the basic key chain, which will serialize the bulk of the
-        // data (handling encryption along the way), and letting us patch it up with the extra data we care about.
-        LinkedList<Protos.Key> entries = Lists.newLinkedList();
-        if (seed != null) {
-            Protos.Key.Builder seedEntry = BasicKeyChain.serializeEncryptableItem(seed);
-            seedEntry.setType(Protos.Key.Type.DETERMINISTIC_ROOT_SEED);
-            entries.add(seedEntry.build());
+        lock.lock();
+        try {
+            // Most of the serialization work is delegated to the basic key chain, which will serialize the bulk of the
+            // data (handling encryption along the way), and letting us patch it up with the extra data we care about.
+            LinkedList<Protos.Key> entries = Lists.newLinkedList();
+            if (seed != null) {
+                Protos.Key.Builder seedEntry = BasicKeyChain.serializeEncryptableItem(seed);
+                seedEntry.setType(Protos.Key.Type.DETERMINISTIC_ROOT_SEED);
+                entries.add(seedEntry.build());
+            }
+            Map<ECKey, Protos.Key.Builder> keys = basicKeyChain.serializeToEditableProtobufs();
+            for (Map.Entry<ECKey, Protos.Key.Builder> entry : keys.entrySet()) {
+                DeterministicKey key = (DeterministicKey) entry.getKey();
+                Protos.Key.Builder proto = entry.getValue();
+                proto.setType(Protos.Key.Type.DETERMINISTIC_KEY);
+                final Protos.DeterministicKey.Builder detKey = proto.getDeterministicKeyBuilder();
+                detKey.setChainCode(ByteString.copyFrom(key.getChainCode()));
+                for (ChildNumber num : key.getPath())
+                    detKey.addPath(num.i());
+                entries.add(proto.build());
+            }
+            return entries;
+        } finally {
+            lock.unlock();
         }
-        Map<ECKey, Protos.Key.Builder> keys = basicKeyChain.serializeToEditableProtobufs();
-        for (Map.Entry<ECKey, Protos.Key.Builder> entry : keys.entrySet()) {
-            DeterministicKey key = (DeterministicKey) entry.getKey();
-            Protos.Key.Builder proto = entry.getValue();
-            proto.setType(Protos.Key.Type.DETERMINISTIC_KEY);
-            final Protos.DeterministicKey.Builder detKey = proto.getDeterministicKeyBuilder();
-            detKey.setChainCode(ByteString.copyFrom(key.getChainCode()));
-            for (ChildNumber num : key.getPath())
-                detKey.addPath(num.i());
-            entries.add(proto.build());
-        }
-        return entries;
     }
 
     /**
@@ -313,18 +349,56 @@ public class DeterministicKeyChain implements KeyChain {
         return chains;
     }
 
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Encryption support
+    //
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     @Override
-    public void addEventListener(KeyChainEventListener listener) {
-        basicKeyChain.addEventListener(listener);
+    public DeterministicKeyChain toEncrypted(CharSequence password) {
+        checkNotNull(password);
+        checkArgument(password.length() > 0);
+        KeyCrypter scrypt = new KeyCrypterScrypt();
+        KeyParameter derivedKey = scrypt.deriveKey(password);
+        return toEncrypted(scrypt, derivedKey);
     }
 
     @Override
-    public void addEventListener(KeyChainEventListener listener, Executor executor) {
-        basicKeyChain.addEventListener(listener, executor);
+    public DeterministicKeyChain toEncrypted(KeyCrypter keyCrypter, KeyParameter aesKey) {
+        return null;  // TODO
     }
 
     @Override
-    public boolean removeEventListener(KeyChainEventListener listener) {
-        return basicKeyChain.removeEventListener(listener);
+    public DeterministicKeyChain toDecrypted(CharSequence password) {
+        checkNotNull(password);
+        checkArgument(password.length() > 0);
+        KeyCrypter scrypt = getKeyCrypter();
+        checkState(scrypt != null, "Chain not encrypted");
+        KeyParameter derivedKey = scrypt.deriveKey(password);
+        return toDecrypted(derivedKey);
+    }
+
+    @Override
+    public DeterministicKeyChain toDecrypted(KeyParameter aesKey) {
+        return null;  // TODO
+    }
+
+    @Override
+    public boolean checkPassword(CharSequence password) {
+        checkNotNull(password);
+        checkState(getKeyCrypter() != null, "Key chain not encrypted");
+        return checkAESKey(getKeyCrypter().deriveKey(password));
+    }
+
+    @Override
+    public boolean checkAESKey(KeyParameter aesKey) {
+        return false;
+    }
+
+    @Nullable
+    @Override
+    public KeyCrypter getKeyCrypter() {
+        return basicKeyChain.getKeyCrypter();
     }
 }

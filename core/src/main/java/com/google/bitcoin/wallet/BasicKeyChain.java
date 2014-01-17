@@ -22,7 +22,6 @@ import com.google.bitcoin.store.UnreadableWalletException;
 import com.google.bitcoin.utils.ListenerRegistration;
 import com.google.bitcoin.utils.Threading;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
 import com.google.protobuf.ByteString;
 import org.bitcoinj.wallet.Protos;
 import org.spongycastle.crypto.params.KeyParameter;
@@ -46,11 +45,16 @@ public class BasicKeyChain implements EncryptableKeyChain {
     // Maps used to let us quickly look up a key given data we find in transcations or the block chain.
     private final LinkedHashMap<ByteString, ECKey> hashToKeys;
     private final LinkedHashMap<ByteString, ECKey> pubkeyToKeys;
-    @Nullable private KeyCrypter keyCrypter;
+    @Nullable private final KeyCrypter keyCrypter;
 
     private final CopyOnWriteArrayList<ListenerRegistration<KeyChainEventListener>> listeners;
 
     public BasicKeyChain() {
+        this(null);
+    }
+
+    private BasicKeyChain(@Nullable KeyCrypter crypter) {
+        this.keyCrypter = crypter;
         hashToKeys = new LinkedHashMap<ByteString, ECKey>();
         pubkeyToKeys = new LinkedHashMap<ByteString, ECKey>();
         listeners = new CopyOnWriteArrayList<ListenerRegistration<KeyChainEventListener>>();
@@ -116,7 +120,6 @@ public class BasicKeyChain implements EncryptableKeyChain {
     }
 
     private void importKeyLocked(ECKey key) {
-        checkState(lock.isHeldByCurrentThread());
         pubkeyToKeys.put(ByteString.copyFrom(key.getPubKey()), key);
         hashToKeys.put(ByteString.copyFrom(key.getPubKeyHash()), key);
     }
@@ -205,8 +208,7 @@ public class BasicKeyChain implements EncryptableKeyChain {
      * @throws com.google.bitcoin.store.UnreadableWalletException if the data structures are corrupted/inconsistent
      */
     public static BasicKeyChain fromProtobufEncrypted(List<Protos.Key> keys, KeyCrypter crypter, CharSequence password) throws UnreadableWalletException {
-        BasicKeyChain chain = new BasicKeyChain();
-        chain.keyCrypter = checkNotNull(crypter);
+        BasicKeyChain chain = new BasicKeyChain(checkNotNull(crypter));
         chain.deserializeFromProtobuf(keys);
         if (!chain.checkPassword(password))
             throw new UnreadableWalletException.BadPassword();
@@ -220,8 +222,7 @@ public class BasicKeyChain implements EncryptableKeyChain {
      * @throws com.google.bitcoin.store.UnreadableWalletException if the data structures are corrupted/inconsistent
      */
     public static BasicKeyChain fromProtobufEncrypted(List<Protos.Key> keys, KeyCrypter crypter,  KeyParameter aesKey) throws UnreadableWalletException {
-        BasicKeyChain chain = new BasicKeyChain();
-        chain.keyCrypter = checkNotNull(crypter);
+        BasicKeyChain chain = new BasicKeyChain(checkNotNull(crypter));
         chain.deserializeFromProtobuf(keys);
         if (!chain.checkAESKey(aesKey))
             throw new UnreadableWalletException.BadPassword();
@@ -303,20 +304,18 @@ public class BasicKeyChain implements EncryptableKeyChain {
     //
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
     /**
-     * Convenience wrapper around {@link #encrypt(com.google.bitcoin.crypto.KeyCrypter,
+     * Convenience wrapper around {@link #toEncrypted(com.google.bitcoin.crypto.KeyCrypter,
      * org.spongycastle.crypto.params.KeyParameter)} which uses the default Scrypt key derivation algorithm and
      * parameters, derives a key from the given password and returns the created key.
      */
     @Override
-    public KeyParameter encrypt(CharSequence password) {
+    public BasicKeyChain toEncrypted(CharSequence password) {
         checkNotNull(password);
         checkArgument(password.length() > 0);
         KeyCrypter scrypt = new KeyCrypterScrypt();
         KeyParameter derivedKey = scrypt.deriveKey(password);
-        encrypt(scrypt, derivedKey);
-        return derivedKey;
+        return toEncrypted(scrypt, derivedKey);
     }
 
     /**
@@ -329,12 +328,12 @@ public class BasicKeyChain implements EncryptableKeyChain {
      * @throws KeyCrypterException Thrown if the wallet encryption fails. If so, the wallet state is unchanged.
      */
     @Override
-    public void encrypt(KeyCrypter keyCrypter, KeyParameter aesKey) {
+    public BasicKeyChain toEncrypted(KeyCrypter keyCrypter, KeyParameter aesKey) {
         lock.lock();
         try {
             checkNotNull(keyCrypter);
             checkState(this.keyCrypter == null, "Key chain is already encrypted");
-            LinkedList<ECKey> cryptedKeys = Lists.newLinkedList();
+            BasicKeyChain encrypted = new BasicKeyChain(keyCrypter);
             for (ECKey key : hashToKeys.values()) {
                 ECKey encryptedKey = key.encrypt(keyCrypter, aesKey);
                 // Check that the encrypted key can be successfully decrypted.
@@ -344,53 +343,34 @@ public class BasicKeyChain implements EncryptableKeyChain {
                 // being as cautious as possible.
                 if (!ECKey.encryptionIsReversible(key, encryptedKey, keyCrypter, aesKey))
                     throw new KeyCrypterException("The key " + key.toString() + " cannot be successfully decrypted after encryption so aborting wallet encryption.");
-                cryptedKeys.add(encryptedKey);
+                encrypted.importKeyLocked(encryptedKey);
             }
-            replaceKeysLocked(keyCrypter, cryptedKeys);
+            return encrypted;
         } finally {
             lock.unlock();
         }
     }
 
-    private void replaceKeysLocked(@Nullable KeyCrypter keyCrypter, List<ECKey> cryptedKeys) {
-        checkState(lock.isHeldByCurrentThread());
-        // Replace the old keychain with the encrypted one.
-        hashToKeys.clear();
-        pubkeyToKeys.clear();
-        for (ECKey key : cryptedKeys)
-            importKeyLocked(key);
-        this.keyCrypter = keyCrypter;
-        queueOnEncryptionChanged();
-    }
-
-    private void queueOnEncryptionChanged() {
-        checkState(lock.isHeldByCurrentThread());
-        for (final ListenerRegistration<KeyChainEventListener> registration : listeners) {
-            registration.executor.execute(new Runnable() {
-                @Override
-                public void run() {
-                    registration.listener.onEncryptionChanged();
-                }
-            });
-        }
+    @Override
+    public BasicKeyChain toDecrypted(CharSequence password) {
+        checkNotNull(keyCrypter, "Wallet is already decrypted");
+        KeyParameter aesKey = keyCrypter.deriveKey(password);
+        return toDecrypted(aesKey);
     }
 
     @Override
-    public void decrypt(KeyParameter aesKey) {
+    public BasicKeyChain toDecrypted(KeyParameter aesKey) {
         lock.lock();
         try {
             checkNotNull(keyCrypter, "Wallet is already decrypted");
             // Do an up-front check.
             if (!checkAESKey(aesKey))
                 throw new KeyCrypterException("Password/key was incorrect.");
-
-            // Create a new arraylist that will contain the decrypted keys
-            LinkedList<ECKey> decryptedKeys = Lists.newLinkedList();
-
+            BasicKeyChain decrypted = new BasicKeyChain();
             for (ECKey key : hashToKeys.values()) {
-                decryptedKeys.add(key.decrypt(keyCrypter, aesKey));
+                decrypted.importKeyLocked(key.decrypt(keyCrypter, aesKey));
             }
-            replaceKeysLocked(null, decryptedKeys);
+            return decrypted;
         } finally {
             lock.unlock();
         }
@@ -403,13 +383,8 @@ public class BasicKeyChain implements EncryptableKeyChain {
     @Override
     public boolean checkPassword(CharSequence password) {
         checkNotNull(password);
-        lock.lock();
-        try {
-            checkState(keyCrypter != null, "Key chain not encrypted");
-            return checkAESKey(keyCrypter.deriveKey(password));
-        } finally {
-            lock.unlock();
-        }
+        checkState(keyCrypter != null, "Key chain not encrypted");
+        return checkAESKey(keyCrypter.deriveKey(password));
     }
 
     /**

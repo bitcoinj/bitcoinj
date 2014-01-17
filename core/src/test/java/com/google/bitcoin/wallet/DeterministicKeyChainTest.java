@@ -121,6 +121,11 @@ public class DeterministicKeyChainTest {
         assertEquals(key4, chain.getKey(KeyChain.KeyPurpose.CHANGE));
     }
 
+    @Test
+    public void encryption() {
+
+    }
+
     private String protoToString(List<Protos.Key> keys) {
         StringBuilder sb = new StringBuilder();
         for (Protos.Key key : keys) {

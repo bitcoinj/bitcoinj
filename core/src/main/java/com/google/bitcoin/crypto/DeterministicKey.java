@@ -17,6 +17,7 @@ package com.google.bitcoin.crypto;
 
 import com.google.bitcoin.core.Base58;
 import com.google.bitcoin.core.ECKey;
+import com.google.bitcoin.core.Sha256Hash;
 import com.google.bitcoin.core.Utils;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
@@ -81,6 +82,15 @@ public class DeterministicKey extends ECKey {
         this(childNumberPath, chainCode, pub, null, parent);
         this.encryptedPrivateKey = checkNotNull(priv);
         this.keyCrypter = checkNotNull(crypter);
+    }
+
+    /** Clones the key */
+    public DeterministicKey(DeterministicKey rootKey) {
+        super(rootKey.priv, rootKey.pub);
+        this.parent = rootKey.parent;
+        this.childNumberPath = rootKey.childNumberPath;
+        this.chainCode = rootKey.chainCode;
+        this.encryptedPrivateKey = rootKey.encryptedPrivateKey;
     }
 
     /**
@@ -208,12 +218,26 @@ public class DeterministicKey extends ECKey {
     }
 
     @Override
+    public ECDSASignature sign(Sha256Hash input, @Nullable KeyParameter aesKey) throws KeyCrypterException {
+        if (isEncrypted()) {
+            // If the key is encrypted, ECKey.sign will decrypt it first before rerunning sign. Decryption walks the
+            // key heirarchy to find the private key (see below), so, we can just run the inherited method.
+            return super.sign(input, aesKey);
+        } else {
+            // If it's not encrypted, derive the private via the parents.
+            final BigInteger privateKey = findOrDerivePrivateKey();
+            checkNotNull(privateKey, "This key is a part of a public-key only heirarchy and cannot be used for signing");
+            return super.doSign(input, privateKey);
+        }
+    }
+
+    @Override
     public DeterministicKey decrypt(KeyCrypter keyCrypter, KeyParameter aesKey) throws KeyCrypterException {
         checkNotNull(keyCrypter);
         // Check that the keyCrypter matches the one used to encrypt the keys, if set.
         if (this.keyCrypter != null && !this.keyCrypter.equals(keyCrypter))
             throw new KeyCrypterException("The keyCrypter being used to decrypt the key is different to the one that was used to encrypt it");
-        BigInteger privKey = findOrDerivePrivateKey(keyCrypter, aesKey);
+        BigInteger privKey = findOrDeriveEncryptedPrivateKey(keyCrypter, aesKey);
         DeterministicKey key = new DeterministicKey(childNumberPath, chainCode, privKey, parent);
         if (!Arrays.equals(key.getPubKey(), getPubKey()))
             throw new KeyCrypterException("Provided AES key is wrong");
@@ -222,7 +246,7 @@ public class DeterministicKey extends ECKey {
 
     // For when a key is encrypted, either decrypt our encrypted private key bytes, or work up the tree asking parents
     // to decrypt and re-derive.
-    private BigInteger findOrDerivePrivateKey(KeyCrypter keyCrypter, KeyParameter aesKey) {
+    private BigInteger findOrDeriveEncryptedPrivateKey(KeyCrypter keyCrypter, KeyParameter aesKey) {
         if (encryptedPrivateKey != null)
             return new BigInteger(1, keyCrypter.decrypt(encryptedPrivateKey, aesKey));
         // Otherwise we don't have it, but maybe we can figure it out from our parents. Walk up the tree looking for
@@ -235,6 +259,22 @@ public class DeterministicKey extends ECKey {
         if (cursor == null)
             throw new KeyCrypterException("Neither this key nor its parents have an encrypted private key");
         byte[] parentalPrivateKeyBytes = keyCrypter.decrypt(cursor.encryptedPrivateKey, aesKey);
+        return derivePrivateKeyDownwards(cursor, parentalPrivateKeyBytes);
+    }
+
+    @Nullable
+    private BigInteger findOrDerivePrivateKey() {
+        DeterministicKey cursor = this;
+        while (cursor != null) {
+            if (cursor.priv != null) break;
+            cursor = cursor.parent;
+        }
+        if (cursor == null)
+            return null;
+        return derivePrivateKeyDownwards(cursor, cursor.priv.toByteArray());
+    }
+
+    private BigInteger derivePrivateKeyDownwards(DeterministicKey cursor, byte[] parentalPrivateKeyBytes) {
         DeterministicKey downCursor = new DeterministicKey(cursor.childNumberPath, cursor.chainCode,
                 cursor.pub, new BigInteger(1, parentalPrivateKeyBytes), cursor.parent);
         // Now we have to rederive the keys along the path back to ourselves. That path can be found by just truncating

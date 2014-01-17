@@ -26,7 +26,4 @@ public interface KeyChainEventListener {
      * can trigger this event.
      */
     void onKeysAdded(List<ECKey> keys);
-
-    /** Called if the encryption status of the keys change, i.e. encrypted or decrypted. */
-    void onEncryptionChanged();
 }

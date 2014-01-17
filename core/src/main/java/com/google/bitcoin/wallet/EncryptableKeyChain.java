@@ -28,17 +28,24 @@ import javax.annotation.Nullable;
 public interface EncryptableKeyChain extends KeyChain {
     /**
      * Takes the given password, which should be strong, derives a key from it and then invokes
-     * {@link #encrypt(com.google.bitcoin.crypto.KeyCrypter, org.spongycastle.crypto.params.KeyParameter)} with
+     * {@link #toEncrypted(com.google.bitcoin.crypto.KeyCrypter, org.spongycastle.crypto.params.KeyParameter)} with
      * {@link com.google.bitcoin.crypto.KeyCrypterScrypt} as the crypter.
      *
      * @return The derived key, in case you wish to cache it for future use.
      */
-    public KeyParameter encrypt(CharSequence password);
+    public EncryptableKeyChain toEncrypted(CharSequence password);
 
     /**
-     * Encrypts the key chain with the given key crypter and AES key.
+     * Returns a new keychain holding identical/cloned keys to this chain, but encrypted under the given key.
+     * Old keys and keychains remain valid and so you should ensure you don't accidentally hold references to them.
      */
-    public void encrypt(KeyCrypter keyCrypter, KeyParameter aesKey);
+    public EncryptableKeyChain toEncrypted(KeyCrypter keyCrypter, KeyParameter aesKey);
+
+    /**
+     * Decrypts the key chain with the given password. See {@link #toDecrypted(org.spongycastle.crypto.params.KeyParameter)}
+     * for details.
+     */
+    public EncryptableKeyChain toDecrypted(CharSequence password);
 
     /**
      * Decrypt the key chain with the given AES key and whatever {@link KeyCrypter} is already set. Note that if you
@@ -49,7 +56,7 @@ public interface EncryptableKeyChain extends KeyChain {
      *               create from a password)
      * @throws KeyCrypterException Thrown if the wallet decryption fails. If so, the wallet state is unchanged.
      */
-    public void decrypt(KeyParameter aesKey);
+    public EncryptableKeyChain toDecrypted(KeyParameter aesKey);
 
     public boolean checkPassword(CharSequence password);
     public boolean checkAESKey(KeyParameter aesKey);

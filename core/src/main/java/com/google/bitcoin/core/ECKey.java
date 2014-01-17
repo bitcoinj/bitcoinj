@@ -543,24 +543,24 @@ public class ECKey implements EncryptableItem, Serializable {
      * @throws KeyCrypterException if this ECKey doesn't have a private part.
      */
     public ECDSASignature sign(Sha256Hash input, @Nullable KeyParameter aesKey) throws KeyCrypterException {
-        if (FAKE_SIGNATURES)
-            return TransactionSignature.dummy();
-
-        // The private key bytes to use for signing.
-        BigInteger privateKeyForSigning;
-
         if (isEncrypted()) {
             if (aesKey == null)
                 throw new KeyCrypterException("This ECKey is encrypted but no decryption key has been supplied.");
             return decrypt(getKeyCrypter(), aesKey).sign(input);
+        } else {
+            // No decryption of private key required.
+            if (priv == null)
+                throw new KeyCrypterException("This ECKey does not have the private key necessary for signing.");
         }
+        return doSign(input, priv);
+    }
 
-        // No decryption of private key required.
-        if (priv == null)
-            throw new KeyCrypterException("This ECKey does not have the private key necessary for signing.");
-
+    protected ECDSASignature doSign(Sha256Hash input, BigInteger privateKeyForSigning) {
+        if (FAKE_SIGNATURES)
+            return TransactionSignature.dummy();
+        checkNotNull(privateKeyForSigning);
         ECDSASigner signer = new ECDSASigner();
-        ECPrivateKeyParameters privKey = new ECPrivateKeyParameters(priv, CURVE);
+        ECPrivateKeyParameters privKey = new ECPrivateKeyParameters(privateKeyForSigning, CURVE);
         signer.init(true, privKey);
         BigInteger[] components = signer.generateSignature(input.getBytes());
         final ECDSASignature signature = new ECDSASignature(components[0], components[1]);
