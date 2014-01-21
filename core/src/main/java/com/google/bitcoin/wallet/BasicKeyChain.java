@@ -185,7 +185,11 @@ public class BasicKeyChain implements EncryptableKeyChain {
             checkState(item.getEncryptionType() == Protos.Wallet.EncryptionType.ENCRYPTED_SCRYPT_AES);
             proto.setType(Protos.Key.Type.ENCRYPTED_SCRYPT_AES);
         } else {
-            proto.setSecretBytes(ByteString.copyFrom(item.getSecretBytes()));
+            final byte[] secret = item.getSecretBytes();
+            // The secret might be missing in the case of a watching wallet, or a key for which the private key
+            // is expected to be rederived on the fly from its parent.
+            if (secret != null)
+                proto.setSecretBytes(ByteString.copyFrom(secret));
             proto.setType(Protos.Key.Type.ORIGINAL);
         }
         return proto;

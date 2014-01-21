@@ -69,8 +69,11 @@ public class DeterministicKeyChainTest {
         assertEquals(key1, chain.findKeyFromPubHash(address.getHash160()));
         assertEquals(key2, chain.findKeyFromPubKey(key2.getPubKey()));
 
+        key1.sign(Sha256Hash.ZERO_HASH);
+
         ECKey key3 = chain.getKey(KeyChain.KeyPurpose.CHANGE);
         assertEquals("n2w2rMFRcxvwSnJsRn3euoTxZQiAJqKVa2", key3.toAddress(UnitTestParams.get()).toString());
+        key3.sign(Sha256Hash.ZERO_HASH);
     }
 
     @Test
@@ -91,8 +94,8 @@ public class DeterministicKeyChainTest {
         // Can't test much here but verify the constructor worked and the class is functional. The other tests rely on
         // a fixed seed to be deterministic.
         chain = new DeterministicKeyChain(new SecureRandom());
-        chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
-        chain.getKey(KeyChain.KeyPurpose.CHANGE);
+        chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS).sign(Sha256Hash.ZERO_HASH);
+        chain.getKey(KeyChain.KeyPurpose.CHANGE).sign(Sha256Hash.ZERO_HASH);
     }
 
     @Test
@@ -119,6 +122,10 @@ public class DeterministicKeyChainTest {
         assertEquals(key3, chain.findKeyFromPubHash(key3.getPubKeyHash()));
 
         assertEquals(key4, chain.getKey(KeyChain.KeyPurpose.CHANGE));
+        key1.sign(Sha256Hash.ZERO_HASH);
+        key2.sign(Sha256Hash.ZERO_HASH);
+        key3.sign(Sha256Hash.ZERO_HASH);
+        key4.sign(Sha256Hash.ZERO_HASH);
     }
 
     @Test

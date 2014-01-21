@@ -77,7 +77,9 @@ message Key {
     /**
      * A key that was derived deterministically. Note that the root seed that created it may NOT be present in the
      * wallet, for the case of watching wallets. A deterministic key may or may not have the private key bytes present.
-     * However the public key bytes and the deterministic_key field are guaranteed to exist.
+     * However the public key bytes and the deterministic_key field are guaranteed to exist. In a wallet where there
+     * is a path from this key up to a key that has (possibly encrypted) private bytes, it's expected that the private
+     * key can be rederived on the fly.
      */
     DETERMINISTIC_KEY = 4;
   }

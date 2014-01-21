@@ -22,7 +22,6 @@ import com.google.bitcoin.crypto.*;
 import com.google.bitcoin.store.UnreadableWalletException;
 import com.google.bitcoin.utils.Threading;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
 import com.google.protobuf.ByteString;
 import org.bitcoinj.wallet.Protos;
 import org.slf4j.Logger;
@@ -41,9 +40,8 @@ import java.util.Map;
 import java.util.concurrent.Executor;
 import java.util.concurrent.locks.ReentrantLock;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
+import static com.google.common.base.Preconditions.*;
+import static com.google.common.collect.Lists.newLinkedList;
 
 /**
  * <p>A deterministic key chain is a {@link KeyChain} that uses the BIP 32
@@ -70,6 +68,8 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
     // keys created for change addresses, coinbases, mixing, etc - anything that isn't communicated. The distinction
     // is somewhat arbitrary but can be useful for audits.
     private final ImmutableList<ChildNumber> externalPath, internalPath;
+    private final DeterministicKey externalKey, internalKey;
+    private int issuedExternalKeys, issuedInternalKeys;
 
     // We simplify by wrapping a basic key chain and that way we get some functionality like key lookup and event
     // listeners "for free". All keys in the key tree appear here, even if they aren't meant to be used for receiving
@@ -108,6 +108,8 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         if (!seed.isEncrypted()) {
             rootKey = HDKeyDerivation.createMasterPrivateKey(seed.getSecretBytes());
             hierarchy = initializeHierarchy();
+            externalKey = hierarchy.get(externalPath, false, false);
+            internalKey = hierarchy.get(internalPath, false, false);
         } else {
             // We can't initialize ourselves with just an encrypted seed, so we expected deserialization code to do the
             // rest of the setup (loading the root key).
@@ -135,14 +137,17 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
     public DeterministicKey getKey(KeyPurpose purpose) {
         lock.lock();
         try {
-            ImmutableList<ChildNumber> path;
+            DeterministicKey key;
             if (purpose == KeyPurpose.RECEIVE_FUNDS) {
-                path = externalPath;
+                key = HDKeyDerivation.derivePublicUnneutered(externalKey, issuedExternalKeys);
+                issuedExternalKeys++;
             } else if (purpose == KeyPurpose.CHANGE) {
-                path = internalPath;
-            } else
+                key = HDKeyDerivation.derivePublicUnneutered(internalKey, issuedInternalKeys);
+                issuedInternalKeys++;
+            } else {
                 throw new IllegalArgumentException("Unknown key purpose " + purpose);
-            DeterministicKey key = hierarchy.deriveNextChild(path, true, true, true);
+            }
+            hierarchy.putKey(key);
             addToBasicChain(key);
             return key;
         } finally {
@@ -255,7 +260,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         try {
             // Most of the serialization work is delegated to the basic key chain, which will serialize the bulk of the
             // data (handling encryption along the way), and letting us patch it up with the extra data we care about.
-            LinkedList<Protos.Key> entries = Lists.newLinkedList();
+            LinkedList<Protos.Key> entries = newLinkedList();
             if (seed != null) {
                 Protos.Key.Builder seedEntry = BasicKeyChain.serializeEncryptableItem(seed);
                 seedEntry.setType(Protos.Key.Type.DETERMINISTIC_ROOT_SEED);
@@ -283,7 +288,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
      * key rotation it can happen that there are multiple chains found.
      */
     public static List<DeterministicKeyChain> parseFrom(List<Protos.Key> keys) throws UnreadableWalletException {
-        List<DeterministicKeyChain> chains = Lists.newLinkedList();
+        List<DeterministicKeyChain> chains = newLinkedList();
         DeterministicSeed seed = null;
         DeterministicKeyChain chain = null;
         for (Protos.Key key : keys) {
@@ -318,7 +323,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                 }
                 byte[] chainCode = key.getDeterministicKey().getChainCode().toByteArray();
                 // Deserialize the path through the tree, and grab the parent key.
-                LinkedList<ChildNumber> path = Lists.newLinkedList();
+                LinkedList<ChildNumber> path = newLinkedList();
                 for (int i : key.getDeterministicKey().getPathList())
                     path.add(new ChildNumber(i));
                 DeterministicKey parent = null;
@@ -328,20 +333,30 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                     path.add(index);
                 }
                 ECPoint pubkey = ECKey.CURVE.getCurve().decodePoint(key.getPublicKey().toByteArray());
+                final ImmutableList<ChildNumber> immutablePath = ImmutableList.copyOf(path);
                 DeterministicKey detkey;
                 if (key.hasSecretBytes()) {
                     // Not encrypted: private key is available.
                     final BigInteger priv = new BigInteger(1, key.getSecretBytes().toByteArray());
-                    detkey = new DeterministicKey(ImmutableList.copyOf(path), chainCode, pubkey, priv, parent);
+                    detkey = new DeterministicKey(immutablePath, chainCode, pubkey, priv, parent);
                 } else {
-                    if (key.hasEncryptedData())
+                    if (key.hasEncryptedData()) {
                         throw new UnsupportedOperationException();  // TODO: Encryption support
-                    else
-                        throw new UnreadableWalletException("Malformed deterministic key: " + key.toString());
+                    } else {
+                        // No secret key bytes and key is not encrypted: either a watching key or private key bytes
+                        // will be rederived on the fly from the parent.
+                        detkey = new DeterministicKey(immutablePath, chainCode, pubkey, null, parent);
+                    }
                 }
                 log.info("Deserializing: DETERMINISTIC_KEY: {}", detkey);
                 chain.hierarchy.putKey(detkey);
                 chain.addToBasicChain(detkey);
+                if (parent != null) {
+                    if (parent.equals(chain.internalKey))
+                        chain.issuedInternalKeys++;
+                    else if (parent.equals(chain.externalKey))
+                        chain.issuedExternalKeys++;
+                }
             }
         }
         if (chain != null)

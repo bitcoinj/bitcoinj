@@ -288,6 +288,10 @@ public class DeterministicKey extends ECKey {
         return checkNotNull(downCursor.priv);
     }
 
+    public DeterministicKey derive(int child) {
+        return HDKeyDerivation.deriveChildKey(this, new ChildNumber(child, true));
+    }
+
     public byte[] serializePublic() {
         return serialize(true);
     }
@@ -333,7 +337,6 @@ public class DeterministicKey extends ECKey {
     @Override
     public int hashCode() {
         int result = super.hashCode();
-        result = 31 * result + (parent != null ? parent.hashCode() : 0);
         result = 31 * result + childNumberPath.hashCode();
         result = 31 * result + Arrays.hashCode(chainCode);
         return result;

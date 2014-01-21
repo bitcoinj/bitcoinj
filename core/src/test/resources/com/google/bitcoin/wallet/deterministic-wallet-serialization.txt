@@ -40,7 +40,6 @@ deterministic_key {
 }
 
 type: DETERMINISTIC_KEY
-secret_bytes: "HLj>\032\374\344%o\347i\235\332T\365\024\202\360o\241\034W\212s\252\233\326\202\370\224+\000"
 public_key: "\002|d\255\016A\243\243y\b9\006\352:\316\226\323\251!1\374\315W \364b\267J\005\327\v\030\222"
 creation_timestamp: 0
 deterministic_key {
@@ -51,7 +50,6 @@ deterministic_key {
 }
 
 type: DETERMINISTIC_KEY
-secret_bytes: "72\3755:\365c@hY\247\300\t\330#b|JO\205\344s!\272\307\360\245cT]\262\306"
 public_key: "\003\005F\034\376=\2005\340\036\302[ii\372\354\330:\222\027\250hA\266)\231\3552\244\243\221\311"
 creation_timestamp: 0
 deterministic_key {
@@ -62,7 +60,6 @@ deterministic_key {
 }
 
 type: DETERMINISTIC_KEY
-secret_bytes: "2\236\347fEr\023\006\025\\c\273\345\360\214\227[N\005@zN\374\337\355\234:\275`\366\265b"
 public_key: "\003\253$\353c\3227t\201t>\031b\307B\373`\307\2167\225]\211\342\200\343M\001\336\242\210\206"
 creation_timestamp: 0
 deterministic_key {

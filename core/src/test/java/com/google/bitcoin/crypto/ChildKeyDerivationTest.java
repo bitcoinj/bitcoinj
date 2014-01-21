@@ -153,6 +153,14 @@ public class ChildKeyDerivationTest {
         assertTrue(derivedKey2.verify(hash, signature));
     }
 
+    @Test
+    public void pubOnlyDerivation() throws Exception {
+        DeterministicKey key1 = HDKeyDerivation.createMasterPrivateKey("satoshi live!".getBytes());
+        DeterministicKey key2 = HDKeyDerivation.deriveChildKey(key1, ChildNumber.ZERO_PRIV);
+        DeterministicKey pubkey2 = HDKeyDerivation.derivePublicUnneutered(key1, 0);
+        assertEquals(key2.getPubKeyPoint(), pubkey2.getPubKeyPoint());
+    }
+
     private static String hexEncodePub(DeterministicKey pubKey) {
         return hexEncode(pubKey.getPubKey());
     }
