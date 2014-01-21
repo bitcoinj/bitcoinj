@@ -103,11 +103,11 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         this.seed = seed;
         basicKeyChain = new BasicKeyChain();
         // The first number is the "account number" but we don't use that feature.
-        externalPath = ImmutableList.of(ChildNumber.ZERO_PRIV, ChildNumber.ZERO_PRIV);
-        internalPath = ImmutableList.of(ChildNumber.ZERO_PRIV, new ChildNumber(1, true));
+        externalPath = ImmutableList.of(ChildNumber.ZERO_PRIV, ChildNumber.ZERO);
+        internalPath = ImmutableList.of(ChildNumber.ZERO_PRIV, new ChildNumber(1, false));
         if (!seed.isEncrypted()) {
-            rootKey = HDKeyDerivation.createMasterPrivateKey(seed.getSecretBytes());
-            hierarchy = initializeHierarchy();
+            rootKey = HDKeyDerivation.createMasterPrivateKey(checkNotNull(seed.getSecretBytes()));
+            hierarchy = initializeHierarchyUnencrypted();
             externalKey = hierarchy.get(externalPath, false, false);
             internalKey = hierarchy.get(internalPath, false, false);
         } else {
@@ -117,9 +117,51 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         }
     }
 
+    // For use in encryption.
+    private DeterministicKeyChain(KeyCrypter crypter, KeyParameter aesKey, DeterministicKeyChain chain) {
+        checkArgument(!chain.rootKey.isEncrypted(), "Chain already encrypted");
+
+        this.issuedExternalKeys = chain.issuedExternalKeys;
+        this.issuedInternalKeys = chain.issuedInternalKeys;
+
+        this.seed = chain.seed.encrypt(crypter, aesKey);
+        basicKeyChain = new BasicKeyChain(crypter);
+        // The first number is the "account number" but we don't use that feature.
+        externalPath = ImmutableList.of(ChildNumber.ZERO_PRIV, ChildNumber.ZERO);
+        internalPath = ImmutableList.of(ChildNumber.ZERO_PRIV, new ChildNumber(1, false));
+        rootKey = chain.rootKey.encrypt(crypter, aesKey, null);
+        hierarchy = new DeterministicHierarchy(rootKey);
+        basicKeyChain.importKey(rootKey);
+
+        DeterministicKey account = encryptNonLeaf(aesKey, chain, rootKey, ImmutableList.of(ChildNumber.ZERO_PRIV));
+        externalKey = encryptNonLeaf(aesKey, chain, account, externalPath);
+        internalKey = encryptNonLeaf(aesKey, chain, account, internalPath);
+
+        // Now copy the (pubkey only) leaf keys across to avoid rederiving them. The private key bytes are missing
+        // anyway so there's nothing to encrypt.
+        for (ECKey eckey : chain.basicKeyChain.getKeys()) {
+            DeterministicKey key = (DeterministicKey) eckey;
+            if (key.getPath().size() != 3) continue; // Not a leaf key.
+            DeterministicKey parent = hierarchy.get(checkNotNull(key.getParent()).getPath(), false, false);
+            // Clone the key to the new encrypted hierarchy.
+            key = new DeterministicKey(key.getPubOnly(), parent);
+            hierarchy.putKey(key);
+            basicKeyChain.importKey(key);
+        }
+    }
+
+    private DeterministicKey encryptNonLeaf(KeyParameter aesKey, DeterministicKeyChain chain,
+                                            DeterministicKey parent, ImmutableList<ChildNumber> path) {
+        DeterministicKey key = chain.hierarchy.get(path, false, false);
+        key = key.encrypt(checkNotNull(basicKeyChain.getKeyCrypter()), aesKey, parent);
+        hierarchy.putKey(key);
+        basicKeyChain.importKey(key);
+        return key;
+    }
+
     // Derives the account path keys and inserts them into the basic key chain. This is important to preserve their
     // order for serialization, amongst other things.
-    private DeterministicHierarchy initializeHierarchy() {
+    private DeterministicHierarchy initializeHierarchyUnencrypted() {
         addToBasicChain(rootKey);
         DeterministicHierarchy h = new DeterministicHierarchy(rootKey);
         addToBasicChain(h.get(ImmutableList.of(ChildNumber.ZERO_PRIV), false, true));
@@ -139,16 +181,16 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         try {
             DeterministicKey key;
             if (purpose == KeyPurpose.RECEIVE_FUNDS) {
-                key = HDKeyDerivation.derivePublicUnneutered(externalKey, issuedExternalKeys);
+                key = HDKeyDerivation.deriveChildKey(externalKey, issuedExternalKeys);
                 issuedExternalKeys++;
             } else if (purpose == KeyPurpose.CHANGE) {
-                key = HDKeyDerivation.derivePublicUnneutered(internalKey, issuedInternalKeys);
+                key = HDKeyDerivation.deriveChildKey(internalKey, issuedInternalKeys);
                 issuedInternalKeys++;
             } else {
                 throw new IllegalArgumentException("Unknown key purpose " + purpose);
             }
             hierarchy.putKey(key);
-            addToBasicChain(key);
+            basicKeyChain.importKey(key);
             return key;
         } finally {
             lock.unlock();
@@ -160,20 +202,20 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
     }
 
     @Override
-    public ECKey findKeyFromPubHash(byte[] pubkeyHash) {
+    public DeterministicKey findKeyFromPubHash(byte[] pubkeyHash) {
         lock.lock();
         try {
-            return basicKeyChain.findKeyFromPubHash(pubkeyHash);
+            return (DeterministicKey) basicKeyChain.findKeyFromPubHash(pubkeyHash);
         } finally {
             lock.unlock();
         }
     }
 
     @Override
-    public ECKey findKeyFromPubKey(byte[] pubkey) {
+    public DeterministicKey findKeyFromPubKey(byte[] pubkey) {
         lock.lock();
         try {
-            return basicKeyChain.findKeyFromPubKey(pubkey);
+            return (DeterministicKey) basicKeyChain.findKeyFromPubKey(pubkey);
         } finally {
             lock.unlock();
         }
@@ -381,7 +423,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
 
     @Override
     public DeterministicKeyChain toEncrypted(KeyCrypter keyCrypter, KeyParameter aesKey) {
-        return null;  // TODO
+        return new DeterministicKeyChain(keyCrypter, aesKey, this);
     }
 
     @Override

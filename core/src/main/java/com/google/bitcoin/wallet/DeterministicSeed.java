@@ -18,7 +18,9 @@ package com.google.bitcoin.wallet;
 
 import com.google.bitcoin.crypto.EncryptableItem;
 import com.google.bitcoin.crypto.EncryptedData;
+import com.google.bitcoin.crypto.KeyCrypter;
 import org.bitcoinj.wallet.Protos;
+import org.spongycastle.crypto.params.KeyParameter;
 import org.spongycastle.util.encoders.Hex;
 
 import javax.annotation.Nullable;
@@ -82,5 +84,12 @@ class DeterministicSeed implements EncryptableItem {
     @Override
     public long getCreationTimeSeconds() {
         return creationTimeSeconds;
+    }
+
+    public DeterministicSeed encrypt(KeyCrypter keyCrypter, KeyParameter aesKey) {
+        checkState(encryptedSeed == null, "Trying to encrypt seed twice");
+        checkState(unencryptedSeed != null, "Seed bytes missing so cannot encrypt");
+        EncryptedData data = keyCrypter.encrypt(unencryptedSeed, aesKey);
+        return new DeterministicSeed(data, creationTimeSeconds);
     }
 }

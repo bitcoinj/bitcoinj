@@ -106,36 +106,6 @@ public final class HDKeyDerivation {
         }
     }
 
-    /**
-     * Returns a pubkey-only deterministic key that was derived using the private derivation algorithm. You are not
-     * expected to be able to make any sense of this until I rewrite the BIP32 spec to not be horrifically confusing.
-     */
-    public static DeterministicKey derivePublicUnneutered(DeterministicKey parent, int childNum) {
-        checkArgument(parent.hasPrivKey(), "Parent key must have private key bytes for this method.");
-        byte[] parentPublicKey = ECKey.compressPoint(parent.getPubKeyPoint()).getEncoded();
-        assert parentPublicKey.length == 33 : parentPublicKey.length;
-        ByteBuffer data = ByteBuffer.allocate(37);
-        data.put(parent.getPrivKeyBytes33());
-        ChildNumber childNumber = new ChildNumber(childNum, true);
-        data.putInt(childNumber.i());
-        byte[] i = HDUtils.hmacSha512(parent.getChainCode(), data.array());
-        assert i.length == 64 : i.length;
-        byte[] il = Arrays.copyOfRange(i, 0, 32);
-        byte[] chainCode = Arrays.copyOfRange(i, 32, 64);
-        BigInteger ilInt = new BigInteger(1, il);
-        assertLessThanN(ilInt, "Illegal derived key: I_L >= n");
-        final BigInteger priv = parent.getPrivKey();
-        ECPoint Ki = ECKey.CURVE.getG().multiply(ilInt).add(parent.getPubKeyPoint());
-        checkArgument(!Ki.equals(ECKey.CURVE.getCurve().getInfinity()),
-                "Illegal derived key: derived public key equals infinity.");
-        return new DeterministicKey(
-                HDUtils.append(parent.getPath(), childNumber),
-                chainCode,
-                ECKey.compressPoint(Ki),
-                null,
-                parent);
-    }
-
     private static RawKeyBytes deriveChildKeyBytesFromPrivate(DeterministicKey parent,
                                                               ChildNumber childNumber) throws HDDerivationException {
         checkArgument(parent.hasPrivKey(), "Parent key must have private key bytes for this method.");

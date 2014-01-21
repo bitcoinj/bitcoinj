@@ -85,12 +85,12 @@ public class DeterministicKey extends ECKey {
     }
 
     /** Clones the key */
-    public DeterministicKey(DeterministicKey rootKey) {
-        super(rootKey.priv, rootKey.pub);
-        this.parent = rootKey.parent;
-        this.childNumberPath = rootKey.childNumberPath;
-        this.chainCode = rootKey.chainCode;
-        this.encryptedPrivateKey = rootKey.encryptedPrivateKey;
+    public DeterministicKey(DeterministicKey keyToClone, DeterministicKey newParent) {
+        super(keyToClone.priv, keyToClone.pub);
+        this.parent = newParent;
+        this.childNumberPath = keyToClone.childNumberPath;
+        this.chainCode = keyToClone.chainCode;
+        this.encryptedPrivateKey = keyToClone.encryptedPrivateKey;
     }
 
     /**
@@ -183,19 +183,24 @@ public class DeterministicKey extends ECKey {
         return checksummed;
     }
 
-    /** {@inheritDoc} */
     @Override
     public DeterministicKey encrypt(KeyCrypter keyCrypter, KeyParameter aesKey) throws KeyCrypterException {
+        throw new UnsupportedOperationException("Must supply a new parent for encryption");
+    }
+
+    public DeterministicKey encrypt(KeyCrypter keyCrypter, KeyParameter aesKey, @Nullable DeterministicKey newParent) throws KeyCrypterException {
         // Same as the parent code, except we construct a DeterministicKey instead of an ECKey.
         checkNotNull(keyCrypter);
+        if (newParent != null)
+            checkArgument(newParent.isEncrypted());
         final byte[] privKeyBytes = getPrivKeyBytes();
         checkState(privKeyBytes != null, "Private key is not available");
         EncryptedData encryptedPrivateKey = keyCrypter.encrypt(privKeyBytes, aesKey);
-        return new DeterministicKey(childNumberPath, chainCode, parent, pub, encryptedPrivateKey, keyCrypter);
+        return new DeterministicKey(childNumberPath, chainCode, newParent, pub, encryptedPrivateKey, keyCrypter);
     }
 
     /**
-     * A determinstic key is considered to be encrypted if it has access to encrypted private key bytes, OR if its
+     * A deterministic key is considered to be encrypted if it has access to encrypted private key bytes, OR if its
      * parent does. The reason is because the parent would be encrypted under the same key and this key knows how to
      * rederive its own private key bytes from the parent, if needed.
      */

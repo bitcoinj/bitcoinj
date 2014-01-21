@@ -53,7 +53,7 @@ public class BasicKeyChain implements EncryptableKeyChain {
         this(null);
     }
 
-    private BasicKeyChain(@Nullable KeyCrypter crypter) {
+    BasicKeyChain(@Nullable KeyCrypter crypter) {
         this.keyCrypter = crypter;
         hashToKeys = new LinkedHashMap<ByteString, ECKey>();
         pubkeyToKeys = new LinkedHashMap<ByteString, ECKey>();
@@ -122,6 +122,16 @@ public class BasicKeyChain implements EncryptableKeyChain {
     private void importKeyLocked(ECKey key) {
         pubkeyToKeys.put(ByteString.copyFrom(key.getPubKey()), key);
         hashToKeys.put(ByteString.copyFrom(key.getPubKeyHash()), key);
+    }
+
+    void importKey(ECKey key) {
+        lock.lock();
+        try {
+            importKeyLocked(key);
+            queueOnKeysAdded(ImmutableList.of(key));
+        } finally {
+            lock.unlock();
+        }
     }
 
     @Override

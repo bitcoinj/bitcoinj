@@ -30,13 +30,17 @@ import com.google.common.io.Resources;
 import org.bitcoinj.wallet.Protos;
 import org.junit.Before;
 import org.junit.Test;
+import org.spongycastle.crypto.params.KeyParameter;
 
 import java.io.IOException;
 import java.security.SecureRandom;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 public class DeterministicKeyChainTest {
     private DeterministicKeyChain chain;
@@ -63,16 +67,16 @@ public class DeterministicKeyChainTest {
         ECKey key1 = chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         ECKey key2 = chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
 
-        final Address address = new Address(UnitTestParams.get(), "mtCEpdE8NG1H8YDrZ7mnMSwQorHxNoxWR8");
+        final Address address = new Address(UnitTestParams.get(), "n1GyUANZand9Kw6hGSV9837cCC9FFUQzQa");
         assertEquals(address, key1.toAddress(UnitTestParams.get()));
-        assertEquals("moxUawkcnyiGqQBq8MRhoTKnwi11W1zu2p", key2.toAddress(UnitTestParams.get()).toString());
+        assertEquals("n2fiWrHqD6GM5GiEqkbWAc6aaZQp3ba93X", key2.toAddress(UnitTestParams.get()).toString());
         assertEquals(key1, chain.findKeyFromPubHash(address.getHash160()));
         assertEquals(key2, chain.findKeyFromPubKey(key2.getPubKey()));
 
         key1.sign(Sha256Hash.ZERO_HASH);
 
         ECKey key3 = chain.getKey(KeyChain.KeyPurpose.CHANGE);
-        assertEquals("n2w2rMFRcxvwSnJsRn3euoTxZQiAJqKVa2", key3.toAddress(UnitTestParams.get()).toString());
+        assertEquals("mnXiDR4MKsFxcKJEZjx4353oXvo55iuptn", key3.toAddress(UnitTestParams.get()).toString());
         key3.sign(Sha256Hash.ZERO_HASH);
     }
 
@@ -130,7 +134,16 @@ public class DeterministicKeyChainTest {
 
     @Test
     public void encryption() {
-
+        DeterministicKey key1 = chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
+        DeterministicKeyChain encChain = chain.toEncrypted("open secret");
+        DeterministicKey encKey1 = encChain.findKeyFromPubKey(key1.getPubKey());
+        DeterministicKey encKey2 = encChain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
+        assertFalse(key1.isEncrypted());
+        assertTrue(encKey1.isEncrypted());
+        assertEquals(encKey1.getPubKeyPoint(), key1.getPubKeyPoint());
+        final KeyParameter aesKey = checkNotNull(encChain.getKeyCrypter()).deriveKey("open secret");
+        encKey1.sign(Sha256Hash.ZERO_HASH, aesKey);
+        encKey2.sign(Sha256Hash.ZERO_HASH, aesKey);
     }
 
     private String protoToString(List<Protos.Key> keys) {
