@@ -1,7 +1,5 @@
-- Add support for serialization to basic and deterministic key chain objects
-- Add unit tests for encryption of deterministic key chains
-- Add unit tests for watching-only/seedless deterministic key chains
-- Recheck coverage of BasicKeyChain/DeterministicKeyChain once back on IJ13
+- Finish support for watching-only/seedless deterministic key chains
+- Add Bloom filtering support to basic/deterministic key chains
 - Switch Wallet to using keychain objects
 - Make Wallet notify key chains when a key has been observed in a transaction.
 - Make DeterministicKeyChain auto-extend when a key was observed, to keep a gap limit in place.
