@@ -75,10 +75,7 @@ public class DeterministicKey extends ECKey {
     /** Constructs a key from its components. This is not normally something you should use. */
     public DeterministicKey(ImmutableList<ChildNumber> childNumberPath,
                             byte[] chainCode,
-                            @Nullable DeterministicKey parent,
-                            ECPoint pub,
-                            EncryptedData priv,
-                            KeyCrypter crypter) {
+                            KeyCrypter crypter, ECPoint pub, EncryptedData priv, @Nullable DeterministicKey parent) {
         this(childNumberPath, chainCode, pub, null, parent);
         this.encryptedPrivateKey = checkNotNull(priv);
         this.keyCrypter = checkNotNull(crypter);
@@ -196,7 +193,7 @@ public class DeterministicKey extends ECKey {
         final byte[] privKeyBytes = getPrivKeyBytes();
         checkState(privKeyBytes != null, "Private key is not available");
         EncryptedData encryptedPrivateKey = keyCrypter.encrypt(privKeyBytes, aesKey);
-        return new DeterministicKey(childNumberPath, chainCode, newParent, pub, encryptedPrivateKey, keyCrypter);
+        return new DeterministicKey(childNumberPath, chainCode, keyCrypter, pub, encryptedPrivateKey, newParent);
     }
 
     /**

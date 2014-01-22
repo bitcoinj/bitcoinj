@@ -26,6 +26,7 @@ import com.google.bitcoin.utils.BriefLogFormatter;
 import com.google.bitcoin.utils.Threading;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
+import com.google.common.collect.Lists;
 import com.google.common.io.Resources;
 import org.bitcoinj.wallet.Protos;
 import org.junit.Before;
@@ -38,9 +39,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 public class DeterministicKeyChainTest {
     private DeterministicKeyChain chain;
@@ -119,12 +118,11 @@ public class DeterministicKeyChainTest {
         assertEquals(EXPECTED_SERIALIZATION, sb);
 
         // Round trip the data back and forth to check it is preserved.
-        chain = DeterministicKeyChain.parseFrom(keys).get(0);
+        chain = DeterministicKeyChain.parseFrom(keys, null).get(0);
         assertEquals(EXPECTED_SERIALIZATION, protoToString(chain.serializeToProtobuf()));
         assertEquals(key1, chain.findKeyFromPubHash(key1.getPubKeyHash()));
         assertEquals(key2, chain.findKeyFromPubHash(key2.getPubKeyHash()));
         assertEquals(key3, chain.findKeyFromPubHash(key3.getPubKeyHash()));
-
         assertEquals(key4, chain.getKey(KeyChain.KeyPurpose.CHANGE));
         key1.sign(Sha256Hash.ZERO_HASH);
         key2.sign(Sha256Hash.ZERO_HASH);
@@ -132,10 +130,19 @@ public class DeterministicKeyChainTest {
         key4.sign(Sha256Hash.ZERO_HASH);
     }
 
-    @Test
-    public void encryption() {
-        DeterministicKey key1 = chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
-        DeterministicKeyChain encChain = chain.toEncrypted("open secret");
+    @Test(expected = IllegalStateException.class)
+    public void notEncrypted() {
+        chain.toDecrypted("fail");
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void encryptTwice() {
+        chain = chain.toEncrypted("once");
+        chain = chain.toEncrypted("twice");
+    }
+
+    private void checkEncryptedKeyChain(DeterministicKeyChain encChain, DeterministicKey key1) {
+        // Check we can look keys up and extend the chain without the AES key being provided.
         DeterministicKey encKey1 = encChain.findKeyFromPubKey(key1.getPubKey());
         DeterministicKey encKey2 = encChain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         assertFalse(key1.isEncrypted());
@@ -144,6 +151,42 @@ public class DeterministicKeyChainTest {
         final KeyParameter aesKey = checkNotNull(encChain.getKeyCrypter()).deriveKey("open secret");
         encKey1.sign(Sha256Hash.ZERO_HASH, aesKey);
         encKey2.sign(Sha256Hash.ZERO_HASH, aesKey);
+        assertTrue(encChain.checkAESKey(aesKey));
+        assertFalse(encChain.checkPassword("access denied"));
+        assertTrue(encChain.checkPassword("open secret"));
+    }
+
+    @Test
+    public void encryption() throws UnreadableWalletException {
+        DeterministicKey key1 = chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
+        DeterministicKeyChain encChain = chain.toEncrypted("open secret");
+        DeterministicKey encKey1 = encChain.findKeyFromPubKey(key1.getPubKey());
+        checkEncryptedKeyChain(encChain, key1);
+
+        // Round-trip to ensure de/serialization works and that we can store two chains and they both deserialize.
+        List<Protos.Key> serialized = encChain.serializeToProtobuf();
+        List<Protos.Key> doubled = Lists.newArrayListWithExpectedSize(serialized.size() * 2);
+        doubled.addAll(serialized);
+        doubled.addAll(serialized);
+        final List<DeterministicKeyChain> chains = DeterministicKeyChain.parseFrom(doubled, encChain.getKeyCrypter());
+        assertEquals(2, chains.size());
+        encChain = chains.get(0);
+        checkEncryptedKeyChain(encChain, chain.findKeyFromPubKey(key1.getPubKey()));
+        encChain = chains.get(1);
+        checkEncryptedKeyChain(encChain, chain.findKeyFromPubKey(key1.getPubKey()));
+
+        DeterministicKey encKey2 = encChain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
+        // Decrypt and check the keys match.
+        DeterministicKeyChain decChain = encChain.toDecrypted("open secret");
+        DeterministicKey decKey1 = decChain.findKeyFromPubHash(encKey1.getPubKeyHash());
+        DeterministicKey decKey2 = decChain.findKeyFromPubHash(encKey2.getPubKeyHash());
+        assertEquals(decKey1.getPubKeyPoint(), encKey1.getPubKeyPoint());
+        assertEquals(decKey2.getPubKeyPoint(), encKey2.getPubKeyPoint());
+        assertFalse(decKey1.isEncrypted());
+        assertFalse(decKey2.isEncrypted());
+        assertNotEquals(encKey1.getParent(), decKey1.getParent());   // parts of a different hierarchy
+        // Check we can once again derive keys from the decrypted chain.
+        decChain.getKey(KeyChain.KeyPurpose.CHANGE).sign(Sha256Hash.ZERO_HASH);
     }
 
     private String protoToString(List<Protos.Key> keys) {

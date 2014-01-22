@@ -59,16 +59,16 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
     private static final Logger log = LoggerFactory.getLogger(DeterministicKeyChain.class);
     private final ReentrantLock lock = Threading.lock("DeterministicKeyChain");
 
-    private final DeterministicHierarchy hierarchy;
-    private final DeterministicKey rootKey;
-    private final DeterministicSeed seed;
+    private DeterministicHierarchy hierarchy;
+    private DeterministicKey rootKey;
+    private DeterministicSeed seed;
     private WeakReference<MnemonicCode> mnemonicCode;
 
     // Paths through the key tree. External keys are ones that are communicated to other parties. Internal keys are
     // keys created for change addresses, coinbases, mixing, etc - anything that isn't communicated. The distinction
     // is somewhat arbitrary but can be useful for audits.
-    private final ImmutableList<ChildNumber> externalPath, internalPath;
-    private final DeterministicKey externalKey, internalKey;
+    private ImmutableList<ChildNumber> externalPath, internalPath;
+    private DeterministicKey externalKey, internalKey;
     private int issuedExternalKeys, issuedInternalKeys;
 
     // We simplify by wrapping a basic key chain and that way we get some functionality like key lookup and event
@@ -100,8 +100,12 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
     }
 
     public DeterministicKeyChain(DeterministicSeed seed) {
+        this(seed, null);
+    }
+
+    DeterministicKeyChain(DeterministicSeed seed, @Nullable KeyCrypter crypter) {
         this.seed = seed;
-        basicKeyChain = new BasicKeyChain();
+        basicKeyChain = new BasicKeyChain(crypter);
         // The first number is the "account number" but we don't use that feature.
         externalPath = ImmutableList.of(ChildNumber.ZERO_PRIV, ChildNumber.ZERO);
         internalPath = ImmutableList.of(ChildNumber.ZERO_PRIV, new ChildNumber(1, false));
@@ -113,7 +117,6 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         } else {
             // We can't initialize ourselves with just an encrypted seed, so we expected deserialization code to do the
             // rest of the setup (loading the root key).
-            throw new UnsupportedOperationException();
         }
     }
 
@@ -329,7 +332,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
      * Returns all the key chains found in the given list of keys. Typically there will only be one, but in the case of
      * key rotation it can happen that there are multiple chains found.
      */
-    public static List<DeterministicKeyChain> parseFrom(List<Protos.Key> keys) throws UnreadableWalletException {
+    public static List<DeterministicKeyChain> parseFrom(List<Protos.Key> keys, @Nullable KeyCrypter crypter) throws UnreadableWalletException {
         List<DeterministicKeyChain> chains = newLinkedList();
         DeterministicSeed seed = null;
         DeterministicKeyChain chain = null;
@@ -359,8 +362,10 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                         // TODO: This is a watching wallet that doesn't have the associated seed.
                         throw new UnsupportedOperationException();
                     } else {
-                        chain = new DeterministicKeyChain(seed);
-                        log.info("Starting new chain");
+                        chain = new DeterministicKeyChain(seed, crypter);
+                        // If the seed is encrypted, then the chain is incomplete at this point. However, we will load
+                        // it up below as we parse in the keys. We just need to check at the end that we've loaded
+                        // everything afterwards.
                     }
                 }
                 byte[] chainCode = key.getDeterministicKey().getChainCode().toByteArray();
@@ -383,7 +388,11 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                     detkey = new DeterministicKey(immutablePath, chainCode, pubkey, priv, parent);
                 } else {
                     if (key.hasEncryptedData()) {
-                        throw new UnsupportedOperationException();  // TODO: Encryption support
+                        Protos.EncryptedData proto = key.getEncryptedData();
+                        EncryptedData data = new EncryptedData(proto.getInitialisationVector().toByteArray(),
+                                proto.getEncryptedPrivateKey().toByteArray());
+                        checkNotNull(crypter, "Encountered an encrypted key but no key crypter provided");
+                        detkey = new DeterministicKey(immutablePath, chainCode, crypter, pubkey, data, parent);
                     } else {
                         // No secret key bytes and key is not encrypted: either a watching key or private key bytes
                         // will be rederived on the fly from the parent.
@@ -391,8 +400,22 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                     }
                 }
                 log.info("Deserializing: DETERMINISTIC_KEY: {}", detkey);
+                // If the non-encrypted case, the non-leaf keys (account, internal, external) have already been
+                // rederived and inserted at this point and the two lines below are just a no-op. In the encrypted
+                // case though, we can't rederive and we must reinsert, potentially building the heirarchy object
+                // if need be.
+                if (path.size() == 0) {
+                    // Master key.
+                    chain.rootKey = detkey;
+                    chain.hierarchy = new DeterministicHierarchy(detkey);
+                } else if (path.size() == 2) {
+                    if (detkey.getChildNumber().num() == 0)
+                        chain.externalKey = detkey;
+                    else if (detkey.getChildNumber().num() == 1)
+                        chain.internalKey = detkey;
+                }
                 chain.hierarchy.putKey(detkey);
-                chain.addToBasicChain(detkey);
+                chain.basicKeyChain.importKey(detkey);
                 if (parent != null) {
                     if (parent.equals(chain.internalKey))
                         chain.issuedInternalKeys++;
@@ -416,6 +439,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
     public DeterministicKeyChain toEncrypted(CharSequence password) {
         checkNotNull(password);
         checkArgument(password.length() > 0);
+        checkState(!seed.isEncrypted());
         KeyCrypter scrypt = new KeyCrypterScrypt();
         KeyParameter derivedKey = scrypt.deriveKey(password);
         return toEncrypted(scrypt, derivedKey);
@@ -430,15 +454,31 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
     public DeterministicKeyChain toDecrypted(CharSequence password) {
         checkNotNull(password);
         checkArgument(password.length() > 0);
-        KeyCrypter scrypt = getKeyCrypter();
-        checkState(scrypt != null, "Chain not encrypted");
-        KeyParameter derivedKey = scrypt.deriveKey(password);
+        KeyCrypter crypter = getKeyCrypter();
+        checkState(crypter != null, "Chain not encrypted");
+        KeyParameter derivedKey = crypter.deriveKey(password);
         return toDecrypted(derivedKey);
     }
 
     @Override
     public DeterministicKeyChain toDecrypted(KeyParameter aesKey) {
-        return null;  // TODO
+        checkState(getKeyCrypter() != null, "Key chain not encrypted");
+        checkState(seed.isEncrypted());
+        DeterministicSeed decSeed = seed.decrypt(getKeyCrypter(), aesKey);
+        DeterministicKeyChain chain = new DeterministicKeyChain(decSeed);
+        // Now copy the (pubkey only) leaf keys across to avoid rederiving them. The private key bytes are missing
+        // anyway so there's nothing to encrypt.
+        for (ECKey eckey : basicKeyChain.getKeys()) {
+            DeterministicKey key = (DeterministicKey) eckey;
+            if (key.getPath().size() != 3) continue; // Not a leaf key.
+            checkState(key.isEncrypted());
+            DeterministicKey parent = chain.hierarchy.get(checkNotNull(key.getParent()).getPath(), false, false);
+            // Clone the key to the new encrypted hierarchy.
+            key = new DeterministicKey(key.getPubOnly(), parent);
+            chain.hierarchy.putKey(key);
+            chain.basicKeyChain.importKey(key);
+        }
+        return chain;
     }
 
     @Override
@@ -450,7 +490,13 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
 
     @Override
     public boolean checkAESKey(KeyParameter aesKey) {
-        return false;
+        checkNotNull(aesKey);
+        checkState(getKeyCrypter() != null, "Key chain not encrypted");
+        try {
+            return rootKey.decrypt(getKeyCrypter(), aesKey).getPubKeyPoint().equals(rootKey.getPubKeyPoint());
+        } catch (KeyCrypterException e) {
+            return false;
+        }
     }
 
     @Nullable

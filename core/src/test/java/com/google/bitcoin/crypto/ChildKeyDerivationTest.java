@@ -132,7 +132,7 @@ public class ChildKeyDerivationTest {
         KeyParameter aesKey = scrypter.deriveKey("we never went to the moon");
 
         DeterministicKey key1 = HDKeyDerivation.createMasterPrivateKey("it was all a hoax".getBytes());
-        DeterministicKey encryptedKey1 = key1.encrypt(scrypter, aesKey);
+        DeterministicKey encryptedKey1 = key1.encrypt(scrypter, aesKey, null);
         DeterministicKey decryptedKey1 = encryptedKey1.decrypt(scrypter, aesKey);
         assertEquals(key1, decryptedKey1);
 

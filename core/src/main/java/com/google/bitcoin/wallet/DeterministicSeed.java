@@ -92,4 +92,10 @@ class DeterministicSeed implements EncryptableItem {
         EncryptedData data = keyCrypter.encrypt(unencryptedSeed, aesKey);
         return new DeterministicSeed(data, creationTimeSeconds);
     }
+
+    public DeterministicSeed decrypt(KeyCrypter crypter, KeyParameter aesKey) {
+        checkState(isEncrypted());
+        checkNotNull(encryptedSeed);
+        return new DeterministicSeed(crypter.decrypt(encryptedSeed, aesKey), creationTimeSeconds);
+    }
 }
