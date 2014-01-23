@@ -107,7 +107,7 @@ public abstract class AbstractBlockChain {
     private final CopyOnWriteArrayList<ListenerRegistration<BlockChainListener>> listeners;
 
     // Holds a block header and, optionally, a list of tx hashes or block's transactions
-    static class OrphanBlock {
+    class OrphanBlock {
         final Block block;
         final List<Sha256Hash> filteredTxHashes;
         final Map<Sha256Hash, Transaction> filteredTxn;
@@ -115,7 +115,10 @@ public abstract class AbstractBlockChain {
             final boolean filtered = filteredTxHashes != null && filteredTxn != null;
             Preconditions.checkArgument((block.transactions == null && filtered)
                                         || (block.transactions != null && !filtered));
-            this.block = block;
+            if (!shouldVerifyTransactions())
+                this.block = block.cloneAsHeader();
+            else
+                this.block = block;
             this.filteredTxHashes = filteredTxHashes;
             this.filteredTxn = filteredTxn;
         }
