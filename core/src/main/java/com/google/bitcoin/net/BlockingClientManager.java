@@ -18,12 +18,15 @@ package com.google.bitcoin.net;
 
 import com.google.common.util.concurrent.AbstractIdleService;
 
+import javax.net.SocketFactory;
 import java.io.IOException;
 import java.net.SocketAddress;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * <p>A thin wrapper around a set of {@link BlockingClient}s.</p>
@@ -33,16 +36,37 @@ import java.util.Set;
  * some other network settings that cannot be set using NIO.</p>
  */
 public class BlockingClientManager extends AbstractIdleService implements ClientConnectionManager {
+    private final SocketFactory socketFactory;
     private final Set<BlockingClient> clients = Collections.synchronizedSet(new HashSet<BlockingClient>());
+
+    private int connectTimeoutMillis = 1000;
+
+    public BlockingClientManager() {
+        socketFactory = SocketFactory.getDefault();
+    }
+
+    /**
+     * Creates a blocking client manager that will obtain sockets from the given factory. Useful for customising how
+     * bitcoinj connects to the P2P network.
+     */
+    public BlockingClientManager(SocketFactory socketFactory) {
+        this.socketFactory = checkNotNull(socketFactory);
+    }
+
     @Override
     public void openConnection(SocketAddress serverAddress, StreamParser parser) {
         if (!isRunning())
             throw new IllegalStateException();
         try {
-            new BlockingClient(serverAddress, parser, 1000, clients);
+            new BlockingClient(serverAddress, parser, connectTimeoutMillis, socketFactory, clients);
         } catch (IOException e) {
             throw new RuntimeException(e); // This should only happen if we are, eg, out of system resources
         }
+    }
+
+    /** Sets the number of milliseconds to wait before giving up on a connect attempt */
+    public void setConnectTimeoutMillis(int connectTimeoutMillis) {
+        this.connectTimeoutMillis = connectTimeoutMillis;
     }
 
     @Override

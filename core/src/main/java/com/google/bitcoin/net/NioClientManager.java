@@ -89,6 +89,7 @@ public class NioClientManager extends AbstractExecutionThreadService implements 
     @Override
     public void run() {
         try {
+            Thread.currentThread().setPriority(Thread.MIN_PRIORITY);
             while (isRunning()) {
                 SocketChannelAndParser conn;
                 while ((conn = newConnectionChannels.poll()) != null) {

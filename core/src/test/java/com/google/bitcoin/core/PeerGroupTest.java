@@ -339,19 +339,21 @@ public class PeerGroupTest extends TestWithPeerGroup {
         // The wallet was already added to the peer in setup.
         final int WEEK = 86400 * 7;
         final long now = Utils.currentTimeMillis() / 1000;
+        peerGroup.startAndWait();
         assertTrue(peerGroup.getFastCatchupTimeSecs() > now - WEEK - 10000);
         Wallet w2 = new Wallet(params);
         ECKey key1 = new ECKey();
         key1.setCreationTimeSeconds(now - 86400);  // One day ago.
         w2.addKey(key1);
         peerGroup.addWallet(w2);
-        Threading.waitForUserCode();
+        peerGroup.waitForJobQueue();
         assertEquals(peerGroup.getFastCatchupTimeSecs(), now - 86400 - WEEK);
-        // Adding a key to the wallet should update the fast catchup time.
+        // Adding a key to the wallet should update the fast catchup time, but asynchronously and in the background
+        // due to the need to avoid complicated lock inversions.
         ECKey key2 = new ECKey();
         key2.setCreationTimeSeconds(now - 100000);
         w2.addKey(key2);
-        Threading.waitForUserCode();
+        peerGroup.waitForJobQueue();
         assertEquals(peerGroup.getFastCatchupTimeSecs(), now - WEEK - 100000);
     }
 

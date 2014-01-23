@@ -24,6 +24,8 @@ import com.google.bitcoin.utils.BriefLogFormatter;
 import com.google.bitcoin.utils.Threading;
 import com.google.common.util.concurrent.SettableFuture;
 
+import javax.annotation.Nullable;
+import javax.net.SocketFactory;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.net.InetAddress;
@@ -32,7 +34,6 @@ import java.net.SocketAddress;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
-import javax.annotation.Nullable;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static org.junit.Assert.assertTrue;
@@ -152,7 +153,7 @@ public class TestWithNetworkConnections {
         else if (clientType == ClientType.NIO_CLIENT)
             new NioClient(new InetSocketAddress("127.0.0.1", 2000), peer, 100);
         else if (clientType == ClientType.BLOCKING_CLIENT)
-            new BlockingClient(new InetSocketAddress("127.0.0.1", 2000), peer, 100, null);
+            new BlockingClient(new InetSocketAddress("127.0.0.1", 2000), peer, 100, SocketFactory.getDefault(), null);
         else
             throw new RuntimeException();
         // Claim we are connected to a different IP that what we really are, so tx confidence broadcastBy sets work

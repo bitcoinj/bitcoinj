@@ -25,6 +25,7 @@ import com.google.bitcoin.script.Script;
 import com.google.bitcoin.utils.ExponentialBackoff;
 import com.google.bitcoin.utils.ListenerRegistration;
 import com.google.bitcoin.utils.Threading;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.*;
@@ -132,14 +133,50 @@ public class PeerGroup extends AbstractExecutionThreadService implements Transac
     };
 
     private int minBroadcastConnections = 0;
-    private AbstractWalletEventListener walletEventListener = new AbstractWalletEventListener() {
-        private void onChanged() {
+    private Runnable recalculateRunnable = new Runnable() {
+        @Override public void run() {
             recalculateFastCatchupAndFilter(false);
         }
-        @Override public void onScriptsAdded(Wallet wallet, List<Script> scripts) { onChanged(); }
-        @Override public void onKeysAdded(Wallet wallet, List<ECKey> keys) { onChanged(); }
-        @Override public void onCoinsReceived(Wallet wallet, Transaction tx, BigInteger prevBalance, BigInteger newBalance) { onChanged(); }
-        @Override public void onCoinsSent(Wallet wallet, Transaction tx, BigInteger prevBalance, BigInteger newBalance) { onChanged(); }
+    };
+    private AbstractWalletEventListener walletEventListener = new AbstractWalletEventListener() {
+        private void queueRecalc() {
+            Uninterruptibles.putUninterruptibly(jobQueue, recalculateRunnable);
+        }
+
+        @Override public void onScriptsAdded(Wallet wallet, List<Script> scripts) {
+            queueRecalc();
+        }
+
+        @Override public void onKeysAdded(Wallet wallet, List<ECKey> keys) {
+            queueRecalc();
+        }
+
+        @Override
+        public void onCoinsReceived(Wallet wallet, Transaction tx, BigInteger prevBalance, BigInteger newBalance) {
+            // We received a relevant transaction. We MAY need to recalculate and resend the Bloom filter, but only
+            // if we have received a transaction that includes a relevant pay-to-pubkey output.
+            //
+            // The reason is that pay-to-pubkey outputs, when spent, will not repeat any data we can predict in their
+            // inputs. So a remote peer will update the Bloom filter for us when such an output is seen matching the
+            // existing filter, so that it includes the tx hash in which the pay-to-pubkey output was observed. Thus
+            // the spending transaction will always match (due to the outpoint structure).
+            //
+            // Unfortunately, whilst this is required for correct sync of the chain in blocks, there is an edge case.
+            // If a wallet receives a relevant pay-to-pubkey output in a block that was not broadcast across the network
+            // for example, in a coinbase transaction, then the node that's serving us the chain will update its filter
+            // but the rest will not. If another transaction then spends it, the other nodes won't match/relay it.
+            //
+            // For this reason we check if the transaction contained any relevant pay to pubkeys and force a recalc
+            // and thus retransmit if so.
+            boolean shouldRecalc = false;
+            for (TransactionOutput output : tx.getOutputs()) {
+                if (output.getScriptPubKey().isSentToRawPubKey() && output.isMine(wallet)) {
+                    shouldRecalc = true;
+                    break;
+                }
+            }
+            if (shouldRecalc) queueRecalc();
+        }
     };
 
     // Exponential backoff for peers starts at 1 second and maxes at 10 minutes.
@@ -147,7 +184,8 @@ public class PeerGroup extends AbstractExecutionThreadService implements Transac
     // Tracks failures globally in case of a network failure
     private ExponentialBackoff groupBackoff = new ExponentialBackoff(new ExponentialBackoff.Params(100, 1.1f, 30 * 1000));
 
-    private LinkedBlockingQueue<Object> morePeersMailbox = new LinkedBlockingQueue<Object>();
+    // Things for the dedicated PeerGroup management thread to do.
+    private LinkedBlockingQueue<Runnable> jobQueue = new LinkedBlockingQueue<Runnable>();
 
     private class PeerStartupListener extends AbstractPeerEventListener {
         @Override
@@ -264,14 +302,31 @@ public class PeerGroup extends AbstractExecutionThreadService implements Transac
         // We may now have too many or too few open connections. Add more or drop some to get to the right amount.
         adjustment = maxConnections - channels.getConnectedClientCount();
         if (adjustment > 0)
-            notifyServiceThread();
+            triggerConnections();
 
         if (adjustment < 0)
             channels.closeConnections(-adjustment);
     }
 
-    private void notifyServiceThread() {
-        morePeersMailbox.offer(this);   // Any non-null object will do.
+
+    private Runnable triggerConnectionsJob = new Runnable() {
+        @Override
+        public void run() {
+            // We have to test the condition at the end, because during startup we need to run this at least once
+            // when isRunning() can return false.
+            do {
+                try {
+                    connectToAnyPeer();
+                } catch(PeerDiscoveryException e) {
+                    groupBackoff.trackFailure();
+                }
+            } while (isRunning() && countConnectedAndPendingPeers() < getMaxConnections());
+        }
+    };
+
+    private void triggerConnections() {
+        // Run on a background thread due to the need to potentially retry and back off in the background.
+        Uninterruptibles.putUninterruptibly(jobQueue, triggerConnectionsJob);
     }
 
     /** The maximum number of connections that we will create to peers. */
@@ -517,24 +572,31 @@ public class PeerGroup extends AbstractExecutionThreadService implements Transac
 
     @Override
     protected void run() throws Exception {
+        // Runs in a background thread dedicated to the PeerGroup. Jobs are for handling peer connections with backoff,
+        // and also recalculating filters.
         while (isRunning()) {
-            int numPeers;
-            lock.lock();
-            try {
-                numPeers = peers.size() + pendingPeers.size();
-            } finally {
-                lock.unlock();
-            }
+            jobQueue.take().run();
+        }
+    }
 
-            if (numPeers < getMaxConnections()) {
-                try {
-                    connectToAnyPeer();
-                } catch(PeerDiscoveryException e) {
-                    groupBackoff.trackFailure();
-                }
+    @VisibleForTesting
+    void waitForJobQueue() {
+        final CountDownLatch latch = new CountDownLatch(1);
+        Uninterruptibles.putUninterruptibly(jobQueue, new Runnable() {
+            @Override
+            public void run() {
+                latch.countDown();
             }
-            else
-                morePeersMailbox.take();
+        });
+        Uninterruptibles.awaitUninterruptibly(latch);
+    }
+
+    private int countConnectedAndPendingPeers() {
+        lock.lock();
+        try {
+            return peers.size() + pendingPeers.size();
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -589,6 +651,7 @@ public class PeerGroup extends AbstractExecutionThreadService implements Transac
         // This is run in a background thread by the Service implementation.
         vPingTimer = new Timer("Peer pinging thread", true);
         channels.startAndWait();
+        triggerConnections();
     }
 
     @Override
@@ -604,7 +667,11 @@ public class PeerGroup extends AbstractExecutionThreadService implements Transac
 
     @Override
     protected void triggerShutdown() {
-        notifyServiceThread();
+        // Force the thread to wake up.
+        Uninterruptibles.putUninterruptibly(jobQueue, new Runnable() {
+            public void run() {
+            }
+        });
     }
 
     /**
@@ -630,7 +697,7 @@ public class PeerGroup extends AbstractExecutionThreadService implements Transac
             checkState(!wallets.contains(wallet));
             wallets.add(wallet);
             wallet.setTransactionBroadcaster(this);
-            wallet.addEventListener(walletEventListener);  // TODO: Run this in the current peer thread.
+            wallet.addEventListener(walletEventListener, Threading.SAME_THREAD);
             addPeerFilterProvider(wallet);
         } finally {
             lock.unlock();
@@ -1071,7 +1138,7 @@ public class PeerGroup extends AbstractExecutionThreadService implements Transac
             inactives.offer(address);
 
             if (numPeers < getMaxConnections()) {
-                notifyServiceThread();
+                triggerConnections();
             }
         } finally {
             lock.unlock();

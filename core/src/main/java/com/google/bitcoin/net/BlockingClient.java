@@ -19,8 +19,10 @@ package com.google.bitcoin.net;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
+import javax.net.SocketFactory;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.Socket;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
@@ -42,7 +44,7 @@ public class BlockingClient implements MessageWriteTarget {
     private static final int BUFFER_SIZE_UPPER_BOUND = 65536;
 
     private final ByteBuffer dbuf;
-    private final Socket socket;
+    private Socket socket;
     private volatile boolean vCloseRequested = false;
 
     /**
@@ -53,17 +55,17 @@ public class BlockingClient implements MessageWriteTarget {
      *
      * @param connectTimeoutMillis The connect timeout set on the connection (in milliseconds). 0 is interpreted as no
      *                             timeout.
+     * @param socketFactory An object that creates {@link Socket} objects on demand, which may be customised to control
+     *                      how this client connects to the internet. If not sure, use SocketFactory.getDefault()
      * @param clientSet A set which this object will add itself to after initialization, and then remove itself from
-     *                  when the connection dies. Note that this set must be thread-safe.
      */
     public BlockingClient(final SocketAddress serverAddress, final StreamParser parser,
-                          final int connectTimeoutMillis, @Nullable final Set<BlockingClient> clientSet) throws IOException {
+                          final int connectTimeoutMillis, final SocketFactory socketFactory, @Nullable final Set<BlockingClient> clientSet) throws IOException {
         // Try to fit at least one message in the network buffer, but place an upper and lower limit on its size to make
         // sure it doesnt get too large or have to call read too often.
         dbuf = ByteBuffer.allocateDirect(Math.min(Math.max(parser.getMaxMessageSize(), BUFFER_SIZE_LOWER_BOUND), BUFFER_SIZE_UPPER_BOUND));
         parser.setWriteTarget(this);
-        socket = new Socket();
-
+        socket = socketFactory.createSocket();
         Thread t = new Thread() {
             @Override
             public void run() {
@@ -129,7 +131,9 @@ public class BlockingClient implements MessageWriteTarget {
     @Override
     public synchronized void writeBytes(byte[] message) throws IOException {
         try {
-            socket.getOutputStream().write(message);
+            OutputStream stream = socket.getOutputStream();
+            stream.write(message);
+            stream.flush();
         } catch (IOException e) {
             log.error("Error writing message to connection, closing connection", e);
             closeConnection();
