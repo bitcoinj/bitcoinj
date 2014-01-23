@@ -102,7 +102,7 @@ public class DeterministicKeyChainTest {
     }
 
     @Test
-    public void serializeUnencrypted() throws IOException, UnreadableWalletException {
+    public void serializeUnencrypted() throws UnreadableWalletException {
         DeterministicKey key1 = chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         DeterministicKey key2 = chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         DeterministicKey key3 = chain.getKey(KeyChain.KeyPurpose.CHANGE);
@@ -113,9 +113,7 @@ public class DeterministicKeyChainTest {
         // Get another key that will be lost during round-tripping, to ensure we can derive it again.
         DeterministicKey key4 = chain.getKey(KeyChain.KeyPurpose.CHANGE);
 
-        String sb = protoToString(keys);
-        final String EXPECTED_SERIALIZATION = Resources.toString(getClass().getResource("deterministic-wallet-serialization.txt"), Charsets.UTF_8);
-        assertEquals(EXPECTED_SERIALIZATION, sb);
+        final String EXPECTED_SERIALIZATION = checkSerialization(keys, "deterministic-wallet-serialization.txt");
 
         // Round trip the data back and forth to check it is preserved.
         chain = DeterministicKeyChain.parseFrom(keys, null).get(0);
@@ -189,6 +187,43 @@ public class DeterministicKeyChainTest {
         decChain.getKey(KeyChain.KeyPurpose.CHANGE).sign(Sha256Hash.ZERO_HASH);
     }
 
+    @Test
+    public void watchingChain() throws UnreadableWalletException {
+        DeterministicKey key1 = chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
+        DeterministicKey key2 = chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
+        DeterministicKey key3 = chain.getKey(KeyChain.KeyPurpose.CHANGE);
+        DeterministicKey key4 = chain.getKey(KeyChain.KeyPurpose.CHANGE);
+
+        DeterministicKey watchingKey = chain.getWatchingKey();
+        assertEquals("xpub68KFnj3bqUx1s7mHejLDBPywCAKdJEu1b49uniEEn2WSbHmZ7xbLqFTjJbtx1LUcAt1DwhoqWHmo2s5WMJp6wi38CiF2hYD49qVViKVvAoi", watchingKey.serializePubB58());
+        // TODO: Write the deserialization routines and roundtrip it through text.
+        chain = DeterministicKeyChain.watch(watchingKey);
+
+        assertEquals(key1.getPubKeyPoint(), chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS).getPubKeyPoint());
+        assertEquals(key2.getPubKeyPoint(), chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS).getPubKeyPoint());
+        final DeterministicKey key = chain.getKey(KeyChain.KeyPurpose.CHANGE);
+        assertEquals(key3.getPubKeyPoint(), key.getPubKeyPoint());
+        try {
+            // Can't sign with a key from a watching chain.
+            key.sign(Sha256Hash.ZERO_HASH);
+            fail();
+        } catch (IllegalStateException e) {
+        }
+        // Test we can serialize and deserialize a watching chain OK.
+        List<Protos.Key> serialization = chain.serializeToProtobuf();
+        checkSerialization(serialization, "watching-wallet-serialization.txt");
+        chain = DeterministicKeyChain.parseFrom(serialization, null).get(0);
+        final DeterministicKey rekey4 = chain.getKey(KeyChain.KeyPurpose.CHANGE);
+        assertEquals(key4.getPubKeyPoint(), rekey4.getPubKeyPoint());
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void watchingCannotEncrypt() throws Exception {
+        final DeterministicKey accountKey = chain.getKeyByPath(DeterministicKeyChain.ACCOUNT_ZERO_PATH);
+        chain = DeterministicKeyChain.watch(accountKey.getPubOnly());
+        chain = chain.toEncrypted("this doesn't make any sense");
+    }
+
     private String protoToString(List<Protos.Key> keys) {
         StringBuilder sb = new StringBuilder();
         for (Protos.Key key : keys) {
@@ -196,5 +231,16 @@ public class DeterministicKeyChainTest {
             sb.append("\n");
         }
         return sb.toString().trim();
+    }
+
+    private String checkSerialization(List<Protos.Key> keys, String filename) {
+        try {
+            String sb = protoToString(keys);
+            String expected = Resources.toString(getClass().getResource(filename), Charsets.UTF_8);
+            assertEquals(expected, sb);
+            return expected;
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

@@ -159,17 +159,6 @@ public class DeterministicKey extends ECKey {
         return new DeterministicKey(getPath(), getChainCode(), getPubKeyPoint(), null, parentPub);
     }
 
-    public String serializePubB58() {
-        return toBase58(serialize(true));
-    }
-
-    public String serializePrivB58() {
-        return toBase58(serialize(false));
-    }
-
-    static String toBase58(byte[] ser) {
-        return Base58.encode(addChecksum(ser));
-    }
 
     static byte[] addChecksum(byte[] input) {
         int inputLength = input.length;
@@ -228,7 +217,7 @@ public class DeterministicKey extends ECKey {
         } else {
             // If it's not encrypted, derive the private via the parents.
             final BigInteger privateKey = findOrDerivePrivateKey();
-            checkNotNull(privateKey, "This key is a part of a public-key only heirarchy and cannot be used for signing");
+            checkState(privateKey != null, "This key is a part of a public-key only heirarchy and cannot be used for signing");
             return super.doSign(input, privateKey);
         }
     }
@@ -316,6 +305,18 @@ public class DeterministicKey extends ECKey {
         ser.put(pub ? getPubKey() : getPrivKeyBytes33());
         checkState(ser.position() == 78);
         return ser.array();
+    }
+
+    public String serializePubB58() {
+        return toBase58(serialize(true));
+    }
+
+    public String serializePrivB58() {
+        return toBase58(serialize(false));
+    }
+
+    static String toBase58(byte[] ser) {
+        return Base58.encode(addChecksum(ser));
     }
 
     /**
