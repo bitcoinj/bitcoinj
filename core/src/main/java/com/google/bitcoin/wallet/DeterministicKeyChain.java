@@ -44,8 +44,9 @@ import static com.google.common.base.Preconditions.*;
 import static com.google.common.collect.Lists.newLinkedList;
 
 /**
- * <p>A deterministic key chain is a {@link KeyChain} that uses the BIP 32
- * {@link com.google.bitcoin.crypto.DeterministicHierarchy} to derive all the keys in the keychain from a master seed.
+ * <p>A deterministic key chain is a {@link KeyChain} that uses the
+ * <a href="https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki">BIP 32 standard</a>, as implemented by
+ * {@link com.google.bitcoin.crypto.DeterministicHierarchy}, to derive all the keys in the keychain from a master seed.
  * This type of wallet is extremely convenient and flexible. Although backing up full wallet files is always a good
  * idea, to recover money only the root seed needs to be preserved and that is a number small enough that it can be
  * written down on paper or, when represented using a BIP 39 {@link com.google.bitcoin.crypto.MnemonicCode},
@@ -54,6 +55,15 @@ import static com.google.common.collect.Lists.newLinkedList;
  * <p>Deterministic key chains have other advantages: parts of the key tree can be selectively revealed to allow
  * for auditing, and new public keys can be generated without access to the private keys, yielding a highly secure
  * configuration for web servers which can accept payments into a wallet but not spend from them.</p>
+ *
+ * <p>This class builds on {@link com.google.bitcoin.crypto.DeterministicHierarchy} and
+ * {@link com.google.bitcoin.crypto.DeterministicKey} by adding support for serialization to and from protobufs,
+ * and encryption of parts of the key tree. Internally it arranges itself as per the BIP 32 spec, with the seed being
+ * used to derive a master key, which is then used to derive an account key, the account key is used to derive two
+ * child keys called the <i>internal</i> and <i>external</i> keys (for change and handing out addresses respectively)
+ * and finally the actual leaf keys that users use hanging off the end. The leaf keys are special in that they don't
+ * internally store the private part at all, instead choosing to rederive the private key from the parent when
+ * needed for signing. This simplifies the design for encrypted key chains.</p>
  */
 public class DeterministicKeyChain implements EncryptableKeyChain {
     private static final Logger log = LoggerFactory.getLogger(DeterministicKeyChain.class);
