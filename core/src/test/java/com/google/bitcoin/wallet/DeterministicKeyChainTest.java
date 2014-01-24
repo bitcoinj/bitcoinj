@@ -195,8 +195,9 @@ public class DeterministicKeyChainTest {
         DeterministicKey key4 = chain.getKey(KeyChain.KeyPurpose.CHANGE);
 
         DeterministicKey watchingKey = chain.getWatchingKey();
-        assertEquals("xpub68KFnj3bqUx1s7mHejLDBPywCAKdJEu1b49uniEEn2WSbHmZ7xbLqFTjJbtx1LUcAt1DwhoqWHmo2s5WMJp6wi38CiF2hYD49qVViKVvAoi", watchingKey.serializePubB58());
-        // TODO: Write the deserialization routines and roundtrip it through text.
+        final String pub58 = watchingKey.serializePubB58();
+        assertEquals("xpub68KFnj3bqUx1s7mHejLDBPywCAKdJEu1b49uniEEn2WSbHmZ7xbLqFTjJbtx1LUcAt1DwhoqWHmo2s5WMJp6wi38CiF2hYD49qVViKVvAoi", pub58);
+        watchingKey = DeterministicKey.deserializeB58(null, pub58);
         chain = DeterministicKeyChain.watch(watchingKey);
 
         assertEquals(key1.getPubKeyPoint(), chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS).getPubKeyPoint());

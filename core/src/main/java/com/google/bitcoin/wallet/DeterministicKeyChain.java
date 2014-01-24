@@ -58,7 +58,11 @@ import static com.google.common.collect.Lists.newLinkedList;
  * quite how you would expect due to a quirk of elliptic curve mathematics and the techniques used to deal with it.
  * A watching wallet is not instantiated using the public part of the master key as you may imagine. Instead, you
  * need to take the account key (first child of the master key) and provide the public part of that to the watching
- * wallet instead. You can do this by calling {@link #getWatchingKey()} and then serializing it with </p>
+ * wallet instead. You can do this by calling {@link #getWatchingKey()} and then serializing it with
+ * {@link com.google.bitcoin.crypto.DeterministicKey#serializePubB58()}. The resulting "xpub..." string encodes
+ * sufficient information about the account key to create a watching chain via
+ * {@link com.google.bitcoin.crypto.DeterministicKey#deserializeB58(com.google.bitcoin.crypto.DeterministicKey, String)}
+ * (with null as the first parameter) and then {@link #watch(com.google.bitcoin.crypto.DeterministicKey)}.</p>
  *
  * <p>This class builds on {@link com.google.bitcoin.crypto.DeterministicHierarchy} and
  * {@link com.google.bitcoin.crypto.DeterministicKey} by adding support for serialization to and from protobufs,
@@ -206,10 +210,10 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         } else {
             throw new IllegalArgumentException();
         }
-        addToBasicChain(hierarchy.get(EXTERNAL_PATH, false, true));
-        addToBasicChain(hierarchy.get(INTERNAL_PATH, false, true));
-        externalKey = hierarchy.get(EXTERNAL_PATH, false, false);
-        internalKey = hierarchy.get(INTERNAL_PATH, false, false);
+        externalKey = hierarchy.deriveChild(ACCOUNT_ZERO_PATH, false, false, ChildNumber.ZERO);
+        internalKey = hierarchy.deriveChild(ACCOUNT_ZERO_PATH, false, false, ChildNumber.ONE);
+        addToBasicChain(externalKey);
+        addToBasicChain(internalKey);
     }
 
     /** Returns the time in seconds since the UNIX epoch at which the seed was randomly generated. */

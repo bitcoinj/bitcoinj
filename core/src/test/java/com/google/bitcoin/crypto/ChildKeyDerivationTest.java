@@ -155,11 +155,31 @@ public class ChildKeyDerivationTest {
 
     @Test
     public void pubOnlyDerivation() throws Exception {
-        DeterministicKey key1 = HDKeyDerivation.createMasterPrivateKey("satoshi live!".getBytes());
+        DeterministicKey key1 = HDKeyDerivation.createMasterPrivateKey("satoshi lives!".getBytes());
         DeterministicKey key2 = HDKeyDerivation.deriveChildKey(key1, ChildNumber.ZERO_PRIV);
         DeterministicKey key3 = HDKeyDerivation.deriveChildKey(key2, ChildNumber.ZERO);
         DeterministicKey pubkey3 = HDKeyDerivation.deriveChildKey(key2.getPubOnly(), ChildNumber.ZERO);
         assertEquals(key3.getPubKeyPoint(), pubkey3.getPubKeyPoint());
+    }
+
+    @Test
+    public void serializeToText() {
+        DeterministicKey key1 = HDKeyDerivation.createMasterPrivateKey("satoshi lives!".getBytes());
+        DeterministicKey key2 = HDKeyDerivation.deriveChildKey(key1, ChildNumber.ZERO_PRIV);
+        {
+            final String pub58 = key1.serializePubB58();
+            final String priv58 = key1.serializePrivB58();
+            assertEquals("xpub661MyMwAqRbcF7mq7Aejj5xZNzFfgi3ABamE9FedDHVmViSzSxYTgAQGcATDo2J821q7Y9EAagjg5EP3L7uBZk11PxZU3hikL59dexfLkz3", pub58);
+            assertEquals("xprv9s21ZrQH143K2dhN197jMx1ppxRBHFKJpMqdLsF1ewxncv7quRED8N5nksxphju3W7naj1arF56L5PUEWfuSk8h73Sb2uh7bSwyXNrjzhAZ", priv58);
+            assertEquals(DeterministicKey.deserializeB58(null, priv58), key1);
+            assertEquals(DeterministicKey.deserializeB58(null, pub58).getPubKeyPoint(), key1.getPubKeyPoint());
+        }
+        {
+            final String pub58 = key2.serializePubB58();
+            final String priv58 = key2.serializePrivB58();
+            assertEquals(DeterministicKey.deserializeB58(key1, priv58), key2);
+            assertEquals(DeterministicKey.deserializeB58(key1, pub58).getPubKeyPoint(), key2.getPubKeyPoint());
+        }
     }
 
     private static String hexEncodePub(DeterministicKey pubKey) {

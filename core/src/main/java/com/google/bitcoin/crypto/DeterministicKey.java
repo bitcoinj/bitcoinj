@@ -15,10 +15,7 @@
  */
 package com.google.bitcoin.crypto;
 
-import com.google.bitcoin.core.Base58;
-import com.google.bitcoin.core.ECKey;
-import com.google.bitcoin.core.Sha256Hash;
-import com.google.bitcoin.core.Utils;
+import com.google.bitcoin.core.*;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 import org.spongycastle.crypto.params.KeyParameter;
@@ -46,6 +43,11 @@ public class DeterministicKey extends ECKey {
 
     /** 32 bytes */
     private final byte[] chainCode;
+
+    /** The 4 byte header that serializes in base58 to "xpub" */
+    public static final int HEADER_PUB = 0x0488B21E;
+    /** The 4 byte header that serializes in base58 to "xprv" */
+    public static final int HEADER_PRIV = 0x0488ADE4;
 
     /** Constructs a key from its components. This is not normally something you should use. */
     public DeterministicKey(ImmutableList<ChildNumber> childNumberPath,
@@ -293,7 +295,7 @@ public class DeterministicKey extends ECKey {
 
     private byte[] serialize(boolean pub) {
         ByteBuffer ser = ByteBuffer.allocate(78);
-        ser.putInt(pub ? 0x0488B21E : 0x0488ADE4);
+        ser.putInt(pub ? HEADER_PUB : HEADER_PRIV);
         ser.put((byte) getDepth());
         if (parent == null) {
             ser.putInt(0);
@@ -317,6 +319,56 @@ public class DeterministicKey extends ECKey {
 
     static String toBase58(byte[] ser) {
         return Base58.encode(addChecksum(ser));
+    }
+
+    public static DeterministicKey deserializeB58(@Nullable DeterministicKey parent, String base58) {
+        try {
+            ByteBuffer buffer = ByteBuffer.wrap(Base58.decodeChecked(base58));
+            int header = buffer.getInt();
+            if (header != HEADER_PRIV && header != HEADER_PUB)
+                throw new IllegalArgumentException("Unknown header bytes: " + base58.substring(0, 4));
+            boolean pub = header == HEADER_PUB;
+            byte depth = buffer.get();
+            byte[] parentFingerprint = new byte[4];
+            buffer.get(parentFingerprint);
+            final int i = buffer.getInt();
+            final ChildNumber childNumber = new ChildNumber(i);
+            ImmutableList<ChildNumber> path;
+            if (parent != null) {
+                if (Arrays.equals(parentFingerprint, HDUtils.longTo4ByteArray(0)))
+                    throw new IllegalArgumentException("Parent was provided but this key doesn't have one");
+                if (!Arrays.equals(parent.getFingerprint(), parentFingerprint))
+                    throw new IllegalArgumentException("Parent fingerprints don't match");
+                path = HDUtils.append(parent.getPath(), childNumber);
+                if (path.size() != depth)
+                    throw new IllegalArgumentException("Depth does not match");
+            } else {
+                if (depth == 0) {
+                    path = ImmutableList.of();
+                } else if (depth == 1) {
+                    // We have been given a key that is not a root key, yet we also don't have any object representing
+                    // the parent. This can happen when deserializing an account key for a watching wallet. In this case,
+                    // we assume that the parent has a path of zero.
+                    path = ImmutableList.of(childNumber);
+                } else {
+                    throw new IllegalArgumentException("Depth is " + depth + " and no parent key was provided, so we " +
+                        "cannot reconstruct the key path from the provided data.");
+                }
+            }
+            byte[] chainCode = new byte[32];
+            buffer.get(chainCode);
+            byte[] data = new byte[33];
+            buffer.get(data);
+            checkArgument(!buffer.hasRemaining(), "Found unexpected data in key");
+            if (pub) {
+                ECPoint point = ECKey.CURVE.getCurve().decodePoint(data);
+                return new DeterministicKey(path, chainCode, point, null, parent);
+            } else {
+                return new DeterministicKey(path, chainCode, new BigInteger(1, data), parent);
+            }
+        } catch (AddressFormatException e) {
+            throw new IllegalArgumentException(e);
+        }
     }
 
     /**

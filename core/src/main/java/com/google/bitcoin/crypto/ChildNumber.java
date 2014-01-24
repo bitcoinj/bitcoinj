@@ -25,6 +25,7 @@ public class ChildNumber {
     public static final int PRIV_BIT = 0x80000000;
 
     public static final ChildNumber ZERO = new ChildNumber(0);
+    public static final ChildNumber ONE = new ChildNumber(1);
     public static final ChildNumber ZERO_PRIV = new ChildNumber(0, true);
 
     /** Integer i as per BIP 32 spec, including the MSB denoting derivation type (0 = public, 1 = private) **/
