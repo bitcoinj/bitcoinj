@@ -69,17 +69,17 @@ public class PeerDBDiscovery implements PeerDiscovery {
     //    PeerData.connected() is called outside of addAddress, so we have to ensure the fields it accesses are always
     //    accessed in a thread-safe manner.
 
-    @VisibleForTesting static final int SETS_PER_SOURCE = 16;
-    @VisibleForTesting static final int TOTAL_SETS = 256;
+    static final int SETS_PER_SOURCE = 16;
+    static final int TOTAL_SETS = 256;
     static final int MAX_SET_SIZE = 128;
     private static final int ADDRESSES_RETURNED = 4096; // Way more than DNSSeeds will return, so that we can maybe hide them
     private static final int MAX_ADDRESSES_FACTOR = 8; // Only ever return at max 1/8th the total addresses we have
 
-    @VisibleForTesting class PeerData {
-        @VisibleForTesting PeerAddress address;
-        @VisibleForTesting /*@GuardedBy("super")*/ volatile long vTimeLastHeard = Utils.currentTimeMillis(); // Last time we heard of this node (ie a peer told us about it/we connected to it)
-        @VisibleForTesting @GuardedBy("this") long lastConnected = 0; // Last time we successfully connected to this node
-        @VisibleForTesting @GuardedBy("this") long triedSinceLastConnection = 0; // Number of times we've tried to connect to this node since the last success
+    class PeerData {
+         PeerAddress address;
+         /*@GuardedBy("super")*/ volatile long vTimeLastHeard = Utils.currentTimeMillis(); // Last time we heard of this node (ie a peer told us about it/we connected to it)
+         @GuardedBy("this") long lastConnected = 0; // Last time we successfully connected to this node
+         @GuardedBy("this") long triedSinceLastConnection = 0; // Number of times we've tried to connect to this node since the last success
 
         PeerData(PeerAddress address) { this.address = address; }
 
@@ -120,7 +120,7 @@ public class PeerDBDiscovery implements PeerDiscovery {
         @Override public synchronized boolean equals(Object o) { return (o instanceof PeerData) && ((PeerData) o).address.toSocketAddress().equals(address.toSocketAddress()); }
     }
 
-    @VisibleForTesting class AddressSet extends HashSet<PeerData> {
+    class AddressSet extends HashSet<PeerData> {
         @Override
         public boolean add(PeerData peer) {
             if (size() == MAX_SET_SIZE) {
@@ -146,9 +146,9 @@ public class PeerDBDiscovery implements PeerDiscovery {
 
     private NetworkParameters params;
 
-    @VisibleForTesting @GuardedBy("this") List<AddressSet> addressBuckets = new ArrayList<AddressSet>(TOTAL_SETS);
+    @GuardedBy("this") List<AddressSet> addressBuckets = new ArrayList<AddressSet>(TOTAL_SETS);
     // We never keep multiple entries for a peer on different ports as one of our primary goals it to get as diverse a set of peers as possible
-    @VisibleForTesting @GuardedBy("this") Map<InetAddress, PeerData> addressToSetMap = new HashMap<InetAddress, PeerData>();
+    @GuardedBy("this") Map<InetAddress, PeerData> addressToSetMap = new HashMap<InetAddress, PeerData>();
     // Keep a static random key that is used to select set groups/sets and a rotating random key that changes on each restart
     private long randomKey;
     private long rotatingRandomKey = new Random(Utils.currentTimeMillis()).nextLong();
