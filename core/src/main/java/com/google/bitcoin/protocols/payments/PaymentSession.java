@@ -18,24 +18,21 @@ package com.google.bitcoin.protocols.payments;
 
 import com.google.bitcoin.core.*;
 import com.google.bitcoin.params.MainNetParams;
-import com.google.bitcoin.params.TestNet3Params;
 import com.google.bitcoin.script.ScriptBuilder;
 import com.google.bitcoin.uri.BitcoinURI;
+import com.google.bitcoin.utils.Threading;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
-import com.google.common.util.concurrent.MoreExecutors;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import org.bitcoin.protocols.payments.Protos;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.spongycastle.asn1.ASN1String;
 import org.spongycastle.asn1.x500.AttributeTypeAndValue;
 import org.spongycastle.asn1.x500.RDN;
-import org.spongycastle.asn1.x500.style.RFC4519Style;
 import org.spongycastle.asn1.x500.X500Name;
+import org.spongycastle.asn1.x500.style.RFC4519Style;
 
 import javax.annotation.Nullable;
 import javax.security.auth.x500.X500Principal;
@@ -47,7 +44,6 @@ import java.security.cert.*;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.Callable;
-import java.util.concurrent.Executors;
 
 /**
  * <p>Provides a standard implementation of the Payment Protocol (BIP 0070)</p>
@@ -79,8 +75,7 @@ import java.util.concurrent.Executors;
  * @see <a href="https://github.com/bitcoin/bips/blob/master/bip-0070.mediawiki">BIP 0070</a>
  */
 public class PaymentSession {
-    private static final Logger log = LoggerFactory.getLogger(PaymentSession.class);
-    private ListeningExecutorService executor = MoreExecutors.listeningDecorator(Executors.newCachedThreadPool());
+    private static ListeningExecutorService executor = Threading.THREAD_POOL;
     private NetworkParameters params;
     private String trustStorePath;
     private Protos.PaymentRequest paymentRequest;
@@ -184,7 +179,6 @@ public class PaymentSession {
     }
 
     private static ListenableFuture<PaymentSession> fetchPaymentRequest(final URI uri, final boolean verifyPki, @Nullable final String trustStorePath) {
-        ListeningExecutorService executor = MoreExecutors.listeningDecorator(Executors.newCachedThreadPool());
         return executor.submit(new Callable<PaymentSession>() {
             @Override
             public PaymentSession call() throws Exception {

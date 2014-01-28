@@ -32,8 +32,6 @@ import com.google.bitcoin.utils.BriefLogFormatter;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.Resources;
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
@@ -444,8 +442,6 @@ public class WalletTool {
                 return;
             } catch (ScriptException e) {
                 throw new RuntimeException(e);
-            } catch (KeyCrypterException e) {
-                throw new RuntimeException(e);
             }
             t = req.tx;   // Not strictly required today.
             System.out.println(t.getHashAsString());
@@ -460,11 +456,6 @@ public class WalletTool {
             // network. Once propagation is complete and we heard the transaction back from all our peers, it will
             // be committed to the wallet.
             peers.broadcastTransaction(t).get();
-            if (peers.getMinBroadcastConnections() == 1) {
-                // Crap hack to work around some issue with Netty where the write future
-                // completes before the remote peer actually hears the message.
-                Thread.sleep(5000);
-            }
         } catch (BlockStoreException e) {
             throw new RuntimeException(e);
         } catch (KeyCrypterException e) {
@@ -479,56 +470,32 @@ public class WalletTool {
     }
 
     private static void sendPaymentRequest(String location, boolean verifyPki) {
-        if (location.startsWith("http")) {
+        if (location.startsWith("http") || location.startsWith("bitcoin")) {
             try {
-                ListenableFuture<PaymentSession> future = PaymentSession.createFromUrl(location, verifyPki);
-                Futures.addCallback(future, new FutureCallback<PaymentSession>() {
-                    @Override
-                    public void onSuccess(PaymentSession session) {
-                        if (session != null)
-                            send(session);
-                        else {
-                            System.err.println("Server returned null session");
-                            System.exit(1);
-                        }
-                    }
-                    public void onFailure(Throwable thrown) {
-                        System.err.println("Failed to fetch payment request " + thrown.getMessage());
-                        System.exit(1);
-                    }
-                });
+                ListenableFuture<PaymentSession> future;
+                if (location.startsWith("http")) {
+                    future = PaymentSession.createFromUrl(location, verifyPki);
+                } else {
+                    BitcoinURI paymentRequestURI = new BitcoinURI(location);
+                    future = PaymentSession.createFromBitcoinUri(paymentRequestURI, verifyPki);
+                }
+                PaymentSession session = future.get();
+                if (session != null) {
+                    send(session);
+                } else {
+                    System.err.println("Server returned null session");
+                    System.exit(1);
+                }
             } catch (PaymentRequestException e) {
                 System.err.println("Error creating payment session " + e.getMessage());
                 System.exit(1);
-            }
-        } else if (location.startsWith("bitcoin")) {
-            BitcoinURI paymentRequestURI = null;
-            try {
-                paymentRequestURI = new BitcoinURI(location);
             } catch (BitcoinURIParseException e) {
                 System.err.println("Invalid bitcoin uri: " + e.getMessage());
                 System.exit(1);
-            }
-            try {
-                ListenableFuture<PaymentSession> future = PaymentSession.createFromBitcoinUri(paymentRequestURI, verifyPki);
-                Futures.addCallback(future, new FutureCallback<PaymentSession>() {
-                    @Override
-                    public void onSuccess(PaymentSession session) {
-                        if (session != null)
-                            send(session);
-                        else {
-                            System.err.println("Server returned null session");
-                            System.exit(1);
-                        }
-                    }
-                    public void onFailure(Throwable thrown) {
-                        System.err.println("Failed to fetch payment request " + thrown.getMessage());
-                        System.exit(1);
-                    }
-                });
-            } catch (PaymentRequestException e) {
-                System.err.println("Error creating payment session " + e.getMessage());
-                System.exit(1);
+            } catch (InterruptedException e) {
+                // Ignore.
+            } catch (ExecutionException e) {
+                throw new RuntimeException(e);
             }
         } else {
             // Try to open the payment request as a file.
@@ -537,7 +504,7 @@ public class WalletTool {
                 File paymentRequestFile = new File(location);
                 stream = new FileInputStream(paymentRequestFile);
             } catch (Exception e) {
-                System.err.println("Failed to open file " + e.getMessage());
+                System.err.println("Failed to open file: " + e.getMessage());
                 System.exit(1);
             }
             try {
@@ -554,6 +521,63 @@ public class WalletTool {
                 System.exit(1);
             }
             send(session);
+        }
+    }
+
+    private static void send(PaymentSession session) {
+        try {
+            System.out.println("Payment Request");
+            System.out.println("Amount: " + session.getValue().doubleValue() / 100000 + "mBTC");
+            System.out.println("Date: " + session.getDate());
+            System.out.println("Memo: " + session.getMemo());
+            if (session.pkiVerificationData != null) {
+                System.out.println("Pki-Verified Name: " + session.pkiVerificationData.name);
+                if (session.pkiVerificationData.orgName != null)
+                    System.out.println("Pki-Verified Org: " + session.pkiVerificationData.orgName);
+            }
+            final Wallet.SendRequest req = session.getSendRequest();
+            if (password != null) {
+                if (!wallet.checkPassword(password)) {
+                    System.err.println("Password is incorrect.");
+                    return;
+                }
+                req.aesKey = wallet.getKeyCrypter().deriveKey(password);
+            }
+            wallet.completeTx(req);  // may throw InsufficientMoneyException.
+            if (options.has("offline")) {
+                wallet.commitTx(req.tx);
+                return;
+            }
+            setup();
+            // No refund address specified, no user-specified memo field.
+            ListenableFuture<PaymentSession.Ack> future = session.sendPayment(ImmutableList.of(req.tx), null, null);
+            if (future == null) {
+                // No payment_url for submission so, broadcast and wait.
+                peers.startAndWait();
+                peers.broadcastTransaction(req.tx).get();
+            } else {
+                PaymentSession.Ack ack = future.get();
+                wallet.commitTx(req.tx);
+                System.out.println("Memo from server: " + ack.getMemo());
+            }
+        } catch (PaymentRequestException e) {
+            System.err.println("Failed to send payment " + e.getMessage());
+            System.exit(1);
+        } catch (VerificationException e) {
+            System.err.println("Failed to send payment " + e.getMessage());
+            System.exit(1);
+        } catch (ExecutionException e) {
+            System.err.println("Failed to send payment " + e.getMessage());
+            System.exit(1);
+        } catch (IOException e) {
+            System.err.println("Invalid payment " + e.getMessage());
+            System.exit(1);
+        } catch (InterruptedException e1) {
+            // Ignore.
+        } catch (InsufficientMoneyException e) {
+            System.err.println("Insufficient funds: have " + Utils.bitcoinValueToFriendlyString(wallet.getBalance()));
+        } catch (BlockStoreException e) {
+            throw new RuntimeException(e);
         }
     }
 
@@ -817,65 +841,20 @@ public class WalletTool {
             } catch (AddressFormatException e) {
                 System.err.println(addr + " does not parse as a Bitcoin address of the right network parameters.");
                 return;
-            }            
+            }
         }
         if (key == null) {
             System.err.println("Wallet does not seem to contain that key.");
             return;
         }
         wallet.removeKey(key);
-    }    
-    
+    }
+
     private static void dumpWallet() throws BlockStoreException {
         // Setup to get the chain height so we can estimate lock times, but don't wipe the transactions if it's not
         // there just for the dump case.
         if (chainFileName.exists())
             setup();
         System.out.println(wallet.toString(true, true, true, chain));
-    }
-
-    private static void send(PaymentSession session) {
-        try {
-            System.out.println("Payment Request");
-            System.out.println("Amount: " + session.getValue().doubleValue() / 100000 + "mBTC");
-            System.out.println("Date: " + session.getDate());
-            System.out.println("Memo: " + session.getMemo());
-            if (session.pkiVerificationData != null) {
-                System.out.println("Pki-Verified Name: " + session.pkiVerificationData.name);
-                if (session.pkiVerificationData.orgName != null)
-                    System.out.println("Pki-Verified Org: " + session.pkiVerificationData.orgName);
-            }
-            final Wallet.SendRequest req = session.getSendRequest();
-            wallet.completeTx(req);  // may throw InsufficientMoneyException.
-            // No refund address specified, no user-specified memo field.
-            ListenableFuture<PaymentSession.Ack> future = session.sendPayment(ImmutableList.of(req.tx), null, null);
-            Futures.addCallback(future, new FutureCallback<PaymentSession.Ack>() {
-                @Override
-                public void onSuccess(PaymentSession.Ack ack) {
-                    try {
-                        wallet.commitTx(req.tx);
-                        System.out.println(ack.getMemo());
-                    } catch (VerificationException e) {
-                        System.err.println("Failed to send tx " + e.getMessage());
-                        System.exit(1);
-                    }
-                }
-                public void onFailure(Throwable thrown) {
-                    System.err.println("Failed to send payment " + thrown.getMessage());
-                    System.exit(1);
-                }
-            });
-        }catch (PaymentRequestException e) {
-            System.err.println("Failed to send payment " + e.getMessage());
-            System.exit(1);
-        } catch (VerificationException e) {
-            System.err.println("Failed to send payment " + e.getMessage());
-            System.exit(1);
-        } catch (IOException e) {
-            System.err.println("Invalid payment " + e.getMessage());
-            System.exit(1);
-        } catch (InsufficientMoneyException e) {
-            System.err.println("Insufficient funds: have " + Utils.bitcoinValueToFriendlyString(wallet.getBalance()));
-        }
     }
 }
