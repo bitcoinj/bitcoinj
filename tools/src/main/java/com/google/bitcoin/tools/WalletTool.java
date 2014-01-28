@@ -506,7 +506,7 @@ public class WalletTool {
             try {
                 paymentRequestURI = new BitcoinURI(location);
             } catch (BitcoinURIParseException e) {
-                System.err.println("Invalid bitcoin uri " + e.getMessage());
+                System.err.println("Invalid bitcoin uri: " + e.getMessage());
                 System.exit(1);
             }
             try {

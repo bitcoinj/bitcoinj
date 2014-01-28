@@ -240,7 +240,7 @@ public class BitcoinURITest {
         testObject = new BitcoinURI(MainNetParams.get(), BitcoinURI.BITCOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS
                 + "?amount=6543210&label=Hello%20World&message=Be%20well");
         assertEquals(
-                "BitcoinURI['address'='1KzTSfqjF2iKCduwz59nv2uqh1W2JsTxZH','amount'='654321000000000','label'='Hello World','message'='Be well']",
+                "BitcoinURI['amount'='654321000000000','label'='Hello World','message'='Be well','address'='1KzTSfqjF2iKCduwz59nv2uqh1W2JsTxZH']",
                 testObject.toString());
     }
 
@@ -367,7 +367,7 @@ public class BitcoinURITest {
         // Unknown not required field
         testObject = new BitcoinURI(MainNetParams.get(), BitcoinURI.BITCOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS
                 + "?aardvark=true");
-        assertEquals("BitcoinURI['address'='1KzTSfqjF2iKCduwz59nv2uqh1W2JsTxZH','aardvark'='true']", testObject.toString());
+        assertEquals("BitcoinURI['aardvark'='true','address'='1KzTSfqjF2iKCduwz59nv2uqh1W2JsTxZH']", testObject.toString());
 
         assertEquals("true", (String) testObject.getParameterByName("aardvark"));
 
@@ -415,5 +415,13 @@ public class BitcoinURITest {
     public void testBad_TooLargeAmount() throws BitcoinURIParseException {
         new BitcoinURI(MainNetParams.get(), BitcoinURI.BITCOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS
                 + "?amount=100000000");
+    }
+
+    @Test
+    public void testPaymentProtocolReq() throws Exception {
+        // Non-backwards compatible form ...
+        BitcoinURI uri = new BitcoinURI(TestNet3Params.get(), "bitcoin:?r=https%3A%2F%2Fbitcoincore.org%2F%7Egavin%2Ff.php%3Fh%3Db0f02e7cea67f168e25ec9b9f9d584f9");
+        assertEquals("https://bitcoincore.org/~gavin/f.php?h=b0f02e7cea67f168e25ec9b9f9d584f9", uri.getPaymentRequestUrl());
+        assertNull(uri.getAddress());
     }
 }

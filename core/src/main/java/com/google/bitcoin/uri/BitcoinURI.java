@@ -149,10 +149,9 @@ public class BitcoinURI {
 
         // Split off the address from the rest of the query parameters.
         String[] addressSplitTokens = schemeSpecificPart.split("\\?");
-        if (addressSplitTokens.length == 0 || "".equals(addressSplitTokens[0])) {
-            throw new BitcoinURIParseException("Missing address");
-        }
-        String addressToken = addressSplitTokens[0];
+        if (addressSplitTokens.length == 0)
+            throw new BitcoinURIParseException("No data found after the bitcoin: prefix");
+        String addressToken = addressSplitTokens[0];  // may be empty!
 
         String[] nameValuePairTokens;
         if (addressSplitTokens.length == 1) {
@@ -169,6 +168,20 @@ public class BitcoinURI {
 
         // Attempt to parse the rest of the URI parameters.
         parseParameters(params, addressToken, nameValuePairTokens);
+
+        if (!addressToken.isEmpty()) {
+            // Attempt to parse the addressToken as a Bitcoin address for this network
+            try {
+                Address address = new Address(params, addressToken);
+                putWithValidation(FIELD_ADDRESS, address);
+            } catch (final AddressFormatException e) {
+                throw new BitcoinURIParseException("Bad address", e);
+            }
+        }
+
+        if (addressToken.isEmpty() && getPaymentRequestUrl() == null) {
+            throw new BitcoinURIParseException("No address and no r= parameter found");
+        }
     }
 
     /**
@@ -177,14 +190,6 @@ public class BitcoinURI {
      *                            separated by '=' e.g. 'amount=0.2')
      */
     private void parseParameters(@Nullable NetworkParameters params, String addressToken, String[] nameValuePairTokens) throws BitcoinURIParseException {
-        // Attempt to parse the addressToken as a Bitcoin address for this network
-        try {
-            Address address = new Address(params, addressToken);
-            putWithValidation(FIELD_ADDRESS, address);
-        } catch (final AddressFormatException e) {
-            throw new BitcoinURIParseException("Bad address", e);
-        }
-        
         // Attempt to decode the rest of the tokens into a parameter map.
         for (String nameValuePairToken : nameValuePairTokens) {
             String[] tokens = nameValuePairToken.split("=");
@@ -242,8 +247,11 @@ public class BitcoinURI {
     }
 
     /**
-     * @return The Bitcoin Address from the URI
+     * The Bitcoin Address from the URI, if one was present. It's possible to have Bitcoin URI's with no address if a
+     * r= payment protocol parameter is specified, though this form is not recommended as older wallets can't understand
+     * it.
      */
+    @Nullable
     public Address getAddress() {
         return (Address) parameterMap.get(FIELD_ADDRESS);
     }
