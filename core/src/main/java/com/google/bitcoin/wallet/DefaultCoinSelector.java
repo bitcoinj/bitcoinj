@@ -4,6 +4,7 @@ import com.google.bitcoin.core.NetworkParameters;
 import com.google.bitcoin.core.Transaction;
 import com.google.bitcoin.core.TransactionConfidence;
 import com.google.bitcoin.core.TransactionOutput;
+import com.google.bitcoin.params.RegTestParams;
 import com.google.common.annotations.VisibleForTesting;
 
 import java.math.BigInteger;
@@ -78,10 +79,12 @@ public class DefaultCoinSelector implements CoinSelector {
         // Only pick chain-included transactions, or transactions that are ours and pending.
         TransactionConfidence confidence = tx.getConfidence();
         TransactionConfidence.ConfidenceType type = confidence.getConfidenceType();
-        if (type.equals(TransactionConfidence.ConfidenceType.BUILDING))
-            return true;
-        return type.equals(TransactionConfidence.ConfidenceType.PENDING) &&
+        return type.equals(TransactionConfidence.ConfidenceType.BUILDING) ||
+
+               type.equals(TransactionConfidence.ConfidenceType.PENDING) &&
                confidence.getSource().equals(TransactionConfidence.Source.SELF) &&
-               confidence.numBroadcastPeers() > 1;
+               // In regtest mode we expect to have only one peer, so we won't see transactions propagate.
+               // TODO: The value 1 below dates from a time when transactions we broadcast *to* were counted, set to 0
+               (confidence.numBroadcastPeers() > 1 || tx.getParams() == RegTestParams.get());
     }
 }
