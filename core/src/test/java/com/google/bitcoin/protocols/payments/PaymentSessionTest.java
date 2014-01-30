@@ -23,8 +23,6 @@ import com.google.protobuf.ByteString;
 import org.bitcoin.protocols.payments.Protos;
 import org.junit.Before;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.InputStream;
 import java.math.BigInteger;
@@ -35,7 +33,6 @@ import java.util.Date;
 import static org.junit.Assert.*;
 
 public class PaymentSessionTest {
-    private static final Logger log = LoggerFactory.getLogger(PaymentSessionTest.class);
     private static final NetworkParameters params = TestNet3Params.get();
     private static final String simplePaymentUrl = "http://a.simple.url.com/";
     private static final String paymentRequestMemo = "send coinz noa plz kthx";
