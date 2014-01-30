@@ -206,6 +206,11 @@ public class PeerGroup extends AbstractExecutionThreadService implements Transac
     // Things for the dedicated PeerGroup management thread to do.
     private LinkedBlockingQueue<Runnable> jobQueue = new LinkedBlockingQueue<Runnable>();
 
+    // This is a synchronized set, so it locks on itself. We use it to prevent TransactionBroadcast objects from
+    // being garbage collected if nothing in the apps code holds on to them transitively. See the discussion
+    // in broadcastTransaction.
+    private final Set<TransactionBroadcast> runningBroadcasts;
+
     private class PeerStartupListener extends AbstractPeerEventListener {
         @Override
         public void onPeerConnected(Peer peer, int peerCount) {
@@ -302,6 +307,7 @@ public class PeerGroup extends AbstractExecutionThreadService implements Transac
         channels = connectionManager;
         peerDiscoverers = new CopyOnWriteArraySet<PeerDiscovery>();
         peerEventListeners = new CopyOnWriteArrayList<ListenerRegistration<PeerEventListener>>();
+        runningBroadcasts = Collections.synchronizedSet(new HashSet<TransactionBroadcast>());
     }
 
     /**
@@ -1300,12 +1306,13 @@ public class PeerGroup extends AbstractExecutionThreadService implements Transac
      * bringup of the peer group you can lower it.</p>
      */
     public ListenableFuture<Transaction> broadcastTransaction(final Transaction tx, final int minConnections) {
-        TransactionBroadcast broadcast = new TransactionBroadcast(this, tx);
+        final TransactionBroadcast broadcast = new TransactionBroadcast(this, tx);
         broadcast.setMinConnections(minConnections);
         // Send the TX to the wallet once we have a successful broadcast.
         Futures.addCallback(broadcast.future(), new FutureCallback<Transaction>() {
             @Override
             public void onSuccess(Transaction transaction) {
+                runningBroadcasts.remove(broadcast);
                 // OK, now tell the wallet about the transaction. If the wallet created the transaction then
                 // it already knows and will ignore this. If it's a transaction we received from
                 // somebody else via a side channel and are now broadcasting, this will put it into the
@@ -1325,8 +1332,16 @@ public class PeerGroup extends AbstractExecutionThreadService implements Transac
 
             @Override
             public void onFailure(Throwable throwable) {
+                // This can't happen with the current code, but just in case one day that changes ...
+                runningBroadcasts.remove(broadcast);
+                throw new RuntimeException(throwable);
             }
         });
+        // Keep a reference to the TransactionBroadcast object. This is important because otherwise, the entire tree
+        // of objects we just created would become garbage if the user doens't hold on to the returned future, and
+        // eventually be collected. This in turn could result in the transaction not being committed to the wallet
+        // at all.
+        runningBroadcasts.add(broadcast);
         broadcast.broadcast();
         return broadcast.future();
     }
