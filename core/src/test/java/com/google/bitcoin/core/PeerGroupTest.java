@@ -102,8 +102,6 @@ public class PeerGroupTest extends TestWithPeerGroup {
 
     @Test
     public void listener() throws Exception {
-        final SettableFuture<Void> firstDisconnectFuture = SettableFuture.create();
-        final SettableFuture<Void> secondDisconnectFuture = SettableFuture.create();
         peerGroup.startAndWait();
         peerGroup.addEventListener(listener);
 
@@ -452,7 +450,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         peerGroup.addEventListener(listener);
         peerGroup.addPeerDiscovery(new PeerDiscovery() {
             public InetSocketAddress[] getPeers(long unused, TimeUnit unused2) throws PeerDiscoveryException {
-                return addresses.toArray(new InetSocketAddress[0]);
+                return addresses.toArray(new InetSocketAddress[addresses.size()]);
             }
 
             public void shutdown() {
