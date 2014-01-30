@@ -512,10 +512,9 @@ public class PaymentSession {
         }
         try {
             // Check if we are on Android.
-            Class Build = Class.forName("android.os.Build");
-            Object version = Build.getDeclaredField("VERSION").get(Build);
+            Class version = Class.forName("android.os.Build$VERSION");
             // Build.VERSION_CODES.ICE_CREAM_SANDWICH is 14.
-            if (version.getClass().getDeclaredField("SDK_INT").getInt(version) >= 14) {
+            if (version.getDeclaredField("SDK_INT").getInt(version) >= 14) {
                 // After ICS, Android provided this nice method for loading the keystore,
                 // so we don't have to specify the location explicitly.
                 KeyStore keystore = KeyStore.getInstance("AndroidCAStore");
