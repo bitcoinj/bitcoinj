@@ -1,14 +1,12 @@
 package com.google.bitcoin.core;
 
+import com.google.common.util.concurrent.SettableFuture;
+
 import java.net.InetSocketAddress;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
-
-import com.google.common.util.concurrent.SettableFuture;
 
 /**
  * An extension of {@link PeerSocketHandler} that keeps inbound messages in a queue for later processing
@@ -16,7 +14,9 @@ import com.google.common.util.concurrent.SettableFuture;
 public abstract class InboundMessageQueuer extends PeerSocketHandler {
     final BlockingQueue<Message> inboundMessages = new ArrayBlockingQueue<Message>(1000);
     final Map<Long, SettableFuture<Void>> mapPingFutures = new HashMap<Long, SettableFuture<Void>>();
+
     public Peer peer;
+    public BloomFilter lastReceivedFilter;
 
     protected InboundMessageQueuer(NetworkParameters params) {
         super(params, new InetSocketAddress("127.0.0.1", 2000));
@@ -38,6 +38,9 @@ public abstract class InboundMessageQueuer extends PeerSocketHandler {
                 future.set(null);
                 return;
             }
+        }
+        if (m instanceof BloomFilter) {
+            lastReceivedFilter = (BloomFilter) m;
         }
         inboundMessages.offer(m);
     }

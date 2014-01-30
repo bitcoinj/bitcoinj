@@ -127,28 +127,39 @@ public class PeerGroup extends AbstractExecutionThreadService implements Transac
             double rate = checkNotNull(chain).getFalsePositiveRate();
             if (rate > bloomFilterFPRate * MAX_FP_RATE_INCREASE) {
                 log.info("Force update Bloom filter due to high false positive rate");
-                recalculateFastCatchupAndFilter(true);
+                recalculateFastCatchupAndFilter(FilterRecalculateMode.FORCE_SEND);
             }
         }
     };
 
     private int minBroadcastConnections = 0;
-    private Runnable recalculateRunnable = new Runnable() {
+    private Runnable bloomSendIfChanged = new Runnable() {
         @Override public void run() {
-            recalculateFastCatchupAndFilter(false);
+            recalculateFastCatchupAndFilter(FilterRecalculateMode.SEND_IF_CHANGED);
+        }
+    };
+    private Runnable bloomDontSend = new Runnable() {
+        @Override public void run() {
+            recalculateFastCatchupAndFilter(FilterRecalculateMode.DONT_SEND);
         }
     };
     private AbstractWalletEventListener walletEventListener = new AbstractWalletEventListener() {
-        private void queueRecalc() {
-            Uninterruptibles.putUninterruptibly(jobQueue, recalculateRunnable);
+        private void queueRecalc(boolean andTransmit) {
+            if (andTransmit) {
+                log.info("Queuing recalc of the Bloom filter due to new keys or scripts becoming available");
+                Uninterruptibles.putUninterruptibly(jobQueue, bloomSendIfChanged);
+            } else {
+                log.info("Queuing recalc of the Bloom filter due to observing a pay to pubkey output on a relevant tx");
+                Uninterruptibles.putUninterruptibly(jobQueue, bloomDontSend);
+            }
         }
 
         @Override public void onScriptsAdded(Wallet wallet, List<Script> scripts) {
-            queueRecalc();
+            queueRecalc(true);
         }
 
         @Override public void onKeysAdded(Wallet wallet, List<ECKey> keys) {
-            queueRecalc();
+            queueRecalc(true);
         }
 
         @Override
@@ -161,21 +172,29 @@ public class PeerGroup extends AbstractExecutionThreadService implements Transac
             // existing filter, so that it includes the tx hash in which the pay-to-pubkey output was observed. Thus
             // the spending transaction will always match (due to the outpoint structure).
             //
-            // Unfortunately, whilst this is required for correct sync of the chain in blocks, there is an edge case.
-            // If a wallet receives a relevant pay-to-pubkey output in a block that was not broadcast across the network
-            // for example, in a coinbase transaction, then the node that's serving us the chain will update its filter
+            // Unfortunately, whilst this is required for correct sync of the chain in blocks, there are two edge cases.
+            //
+            // (1) If a wallet receives a relevant, confirmed p2pubkey output that was not broadcast across the network,
+            // for example in a coinbase transaction, then the node that's serving us the chain will update its filter
             // but the rest will not. If another transaction then spends it, the other nodes won't match/relay it.
             //
+            // (2) If we receive a p2pubkey output broadcast across the network, all currently connected nodes will see
+            // it and update their filter themselves, but any newly connected nodes will receive the last filter we
+            // calculated, which would not include this transaction.
+            //
             // For this reason we check if the transaction contained any relevant pay to pubkeys and force a recalc
-            // and thus retransmit if so.
-            boolean shouldRecalc = false;
+            // and possibly retransmit if so. The recalculation process will end up including the tx hash into the
+            // filter. In case (1), we need to retransmit the filter to the connected peers. In case (2), we don't
+            // and shouldn't, we should just recalculate and cache the new filter for next time.
             for (TransactionOutput output : tx.getOutputs()) {
                 if (output.getScriptPubKey().isSentToRawPubKey() && output.isMine(wallet)) {
-                    shouldRecalc = true;
-                    break;
+                    if (tx.getConfidence().getConfidenceType() == TransactionConfidence.ConfidenceType.BUILDING)
+                        queueRecalc(true);
+                    else
+                        queueRecalc(false);
+                    return;
                 }
             }
-            if (shouldRecalc) queueRecalc();
         }
     };
 
@@ -722,7 +741,7 @@ public class PeerGroup extends AbstractExecutionThreadService implements Transac
             // if a key is added. Of course, by then we may have downloaded the chain already. Ideally adding keys would
             // automatically rewind the block chain and redownload the blocks to find transactions relevant to those keys,
             // all transparently and in the background. But we are a long way from that yet.
-            recalculateFastCatchupAndFilter(false);
+            recalculateFastCatchupAndFilter(FilterRecalculateMode.SEND_IF_CHANGED);
             updateVersionMessageRelayTxesBeforeFilter(getVersionMessage());
         } finally {
             lock.unlock();
@@ -739,19 +758,25 @@ public class PeerGroup extends AbstractExecutionThreadService implements Transac
         wallet.setTransactionBroadcaster(null);
     }
 
+    public static enum FilterRecalculateMode {
+        SEND_IF_CHANGED,
+        FORCE_SEND,
+        DONT_SEND,
+    }
+
     /**
      * Recalculates the bloom filter given to peers as well as the timestamp after which full blocks are downloaded
      * (instead of only headers).
      *
-     * @param forceFilterUpdate send the bloom filter even if it didn't change.  Use
-     *                          this if the false positive rate is high due to server auto-update.
+     * @param mode In what situations to send the filter to connected peers.
      */
-    public void recalculateFastCatchupAndFilter(boolean forceFilterUpdate) {
+    public void recalculateFastCatchupAndFilter(FilterRecalculateMode mode) {
         lock.lock();
         try {
             // Fully verifying mode doesn't use this optimization (it can't as it needs to see all transactions).
             if (chain != null && chain.shouldVerifyTransactions())
                 return;
+            log.info("Recalculating filter in mode {}", mode);
             long earliestKeyTimeSecs = Long.MAX_VALUE;
             int elements = 0;
             boolean requiresUpdateAll = false;
@@ -772,8 +797,18 @@ public class PeerGroup extends AbstractExecutionThreadService implements Transac
                 BloomFilter filter = new BloomFilter(lastBloomFilterElementCount, bloomFilterFPRate, bloomFilterTweak, bloomFlags);
                 for (PeerFilterProvider p : peerFilterProviders)
                     filter.merge(p.getBloomFilter(lastBloomFilterElementCount, bloomFilterFPRate, bloomFilterTweak));
-                if (forceFilterUpdate || !filter.equals(bloomFilter)) {
-                    bloomFilter = filter;
+                bloomFilter = filter;
+
+                boolean changed = !filter.equals(bloomFilter);
+                boolean send = false;
+
+                switch (mode) {
+                    case SEND_IF_CHANGED: send = changed; break;
+                    case DONT_SEND: send = false; break;
+                    case FORCE_SEND: send = true; break;
+                }
+
+                if (send) {
                     for (Peer peer : peers)
                         peer.setBloomFilter(filter);
                     // Reset the false positive estimate so that we don't send a flood of filter updates
@@ -807,7 +842,7 @@ public class PeerGroup extends AbstractExecutionThreadService implements Transac
         lock.lock();
         try {
             this.bloomFilterFPRate = bloomFilterFPRate;
-            recalculateFastCatchupAndFilter(false);
+            recalculateFastCatchupAndFilter(FilterRecalculateMode.SEND_IF_CHANGED);
         } finally {
             lock.unlock();
         }
