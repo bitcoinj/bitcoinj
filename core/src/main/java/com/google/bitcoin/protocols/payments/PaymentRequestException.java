@@ -45,6 +45,10 @@ public class PaymentRequestException extends Exception {
         public InvalidPaymentURL(Exception e) {
             super(e);
         }
+
+        public InvalidPaymentURL(String msg) {
+            super(msg);
+        }
     }
 
     public static class InvalidOutputs extends PaymentRequestException {
