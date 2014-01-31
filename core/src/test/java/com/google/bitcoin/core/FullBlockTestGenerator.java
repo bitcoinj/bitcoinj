@@ -84,7 +84,7 @@ class RuleList {
 }
 
 public class FullBlockTestGenerator {
-    // Used by BitcoindComparisonTool and FullPrunedBlockChainTest to create test cases
+    // Used by BitcoindComparisonTool and AbstractFullPrunedBlockChainTest to create test cases
     private NetworkParameters params;
     private ECKey coinbaseOutKey;
     private byte[] coinbaseOutKeyPubKey;
