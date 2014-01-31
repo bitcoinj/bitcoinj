@@ -18,7 +18,7 @@ public class PostgresFullPrunedBlockChainTest extends AbstractFullPrunedBlockCha
     private static final String DB_PASSWORD = "password";
 
     @Override
-    public FullPrunedBlockStore createStoreFromParamsAndBlockCount(NetworkParameters params, int blockCount)
+    public FullPrunedBlockStore createStore(NetworkParameters params, int blockCount)
             throws BlockStoreException {
         return new PostgresFullPrunedBlockStore(params, blockCount, DB_HOSTNAME, DB_NAME, DB_USERNAME, DB_PASSWORD);
     }

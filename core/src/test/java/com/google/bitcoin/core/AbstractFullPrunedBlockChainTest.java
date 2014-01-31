@@ -22,7 +22,6 @@ import com.google.bitcoin.params.UnitTestParams;
 import com.google.bitcoin.script.Script;
 import com.google.bitcoin.store.BlockStoreException;
 import com.google.bitcoin.store.FullPrunedBlockStore;
-import com.google.bitcoin.store.MemoryFullPrunedBlockStore;
 import com.google.bitcoin.utils.BlockFileLoader;
 import com.google.bitcoin.utils.BriefLogFormatter;
 import org.junit.Before;
@@ -58,7 +57,7 @@ public abstract class AbstractFullPrunedBlockChainTest
         };
     }
 
-    public abstract FullPrunedBlockStore createStoreFromParamsAndBlockCount(NetworkParameters params, int blockCount)
+    public abstract FullPrunedBlockStore createStore(NetworkParameters params, int blockCount)
         throws BlockStoreException;
 
     public abstract void resetStore(FullPrunedBlockStore store) throws BlockStoreException;
@@ -69,7 +68,7 @@ public abstract class AbstractFullPrunedBlockChainTest
         FullBlockTestGenerator generator = new FullBlockTestGenerator(params);
         RuleList blockList = generator.getBlocksToTest(false, false, null);
         
-        store = createStoreFromParamsAndBlockCount(params, blockList.maximumReorgBlockCount);
+        store = createStore(params, blockList.maximumReorgBlockCount);
         resetStore(store);
         chain = new FullPrunedBlockChain(params, store);
 
@@ -112,7 +111,7 @@ public abstract class AbstractFullPrunedBlockChainTest
 
     @Test
     public void skipScripts() throws Exception {
-        store = createStoreFromParamsAndBlockCount(params, 10);
+        store = createStore(params, 10);
         resetStore(store);
         chain = new FullPrunedBlockChain(params, store);
 
@@ -149,7 +148,7 @@ public abstract class AbstractFullPrunedBlockChainTest
     @Test
     public void testFinalizedBlocks() throws Exception {
         final int UNDOABLE_BLOCKS_STORED = 10;
-        store = createStoreFromParamsAndBlockCount(params, UNDOABLE_BLOCKS_STORED);
+        store = createStore(params, UNDOABLE_BLOCKS_STORED);
         resetStore(store);
         chain = new FullPrunedBlockChain(params, store);
         
@@ -207,7 +206,7 @@ public abstract class AbstractFullPrunedBlockChainTest
         File blockFile = new File(getClass().getResource("first-100k-blocks.dat").getFile());
         BlockFileLoader loader = new BlockFileLoader(params, Arrays.asList(blockFile));
         
-        store = createStoreFromParamsAndBlockCount(params, 10);
+        store = createStore(params, 10);
         resetStore(store);
         chain = new FullPrunedBlockChain(params, store);
         for (Block block : loader)

@@ -10,7 +10,7 @@ import com.google.bitcoin.store.MemoryFullPrunedBlockStore;
 public class MemoryFullPrunedBlockChainTest extends AbstractFullPrunedBlockChainTest
 {
     @Override
-    public FullPrunedBlockStore createStoreFromParamsAndBlockCount(NetworkParameters params, int blockCount) throws BlockStoreException
+    public FullPrunedBlockStore createStore(NetworkParameters params, int blockCount) throws BlockStoreException
     {
         return new MemoryFullPrunedBlockStore(params, blockCount);
     }
