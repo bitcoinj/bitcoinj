@@ -17,16 +17,15 @@
 package com.google.bitcoin.utils;
 
 import com.google.common.util.concurrent.CycleDetectingLockFactory;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.Uninterruptibles;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Executor;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.*;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
@@ -35,6 +34,13 @@ import java.util.concurrent.locks.ReentrantLock;
  * Also provides a worker thread that is designed for event listeners to be dispatched on.
  */
 public class Threading {
+
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //
+    // User thread/event handling utilities
+    //
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     /**
      * An executor with one thread that is intended for running event listeners on. This ensures all event listener code
      * runs without any locks being held. It's intended for the API user to run things on. Callbacks registered by
@@ -77,8 +83,6 @@ public class Threading {
      */
     @Nullable
     public static volatile Thread.UncaughtExceptionHandler uncaughtExceptionHandler;
-
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public static class UserThread extends Thread implements Executor {
         private static final Logger log = LoggerFactory.getLogger(UserThread.class);
@@ -132,6 +136,12 @@ public class Threading {
         };
     }
 
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Cycle detecting lock factories
+    //
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     private static CycleDetectingLockFactory.Policy policy;
     public static CycleDetectingLockFactory factory;
 
@@ -159,4 +169,23 @@ public class Threading {
     public static CycleDetectingLockFactory.Policy getPolicy() {
         return policy;
     }
+
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Generic worker pool.
+    //
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    /** A caching thread pool that creates daemon threads, which won't keep the JVM alive waiting for more work. */
+    public static ListeningExecutorService THREAD_POOL = MoreExecutors.listeningDecorator(
+            Executors.newCachedThreadPool(new ThreadFactory() {
+                @Override
+                public Thread newThread(Runnable r) {
+                    Thread t = new Thread(r);
+                    t.setName("Threading.THREAD_POOL worker");
+                    t.setDaemon(true);
+                    return t;
+                }
+            })
+    );
 }

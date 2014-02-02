@@ -86,6 +86,9 @@ public class PaymentChannelClient implements IPaymentChannelClient {
     // Information used during channel initialization to send to the server or check what the server sends to us
     private final ECKey myKey;
     private final BigInteger maxValue;
+
+    private BigInteger missing;
+
     @GuardedBy("lock") private long minPayment;
 
     @GuardedBy("lock") SettableFuture<BigInteger> increasePaymentFuture;
@@ -127,6 +130,16 @@ public class PaymentChannelClient implements IPaymentChannelClient {
         this.conn = checkNotNull(conn);
     }
 
+    /** 
+     * <p>Returns the amount of satoshis missing when a server requests too much value.</p>
+     *
+     * <p>When InsufficientMoneyException is thrown due to the server requesting too much value, an instance of 
+     * PaymentChannelClient needs access to how many satoshis are missing.</p>
+     */
+    public BigInteger getMissing() {
+        return missing;
+    }
+
     @Nullable
     @GuardedBy("lock")
     private CloseReason receiveInitiate(Protos.Initiate initiate, BigInteger contractValue, Protos.Error.Builder errorBuilder) throws VerificationException, InsufficientMoneyException {
@@ -144,9 +157,10 @@ public class PaymentChannelClient implements IPaymentChannelClient {
         }
 
         BigInteger minChannelSize = BigInteger.valueOf(initiate.getMinAcceptedChannelSize());
-        if (maxValue.compareTo(minChannelSize) < 0) {
+        if (contractValue.compareTo(minChannelSize) < 0) {
             log.error("Server requested too much value");
             errorBuilder.setCode(Protos.Error.ErrorCode.CHANNEL_VALUE_TOO_LARGE);
+            missing = minChannelSize.subtract(contractValue);
             return CloseReason.SERVER_REQUESTED_TOO_MUCH_VALUE;
         }
 
@@ -157,6 +171,7 @@ public class PaymentChannelClient implements IPaymentChannelClient {
             log.error("Server requested a min payment of {} but we expected {}", initiate.getMinPayment(), MIN_PAYMENT);
             errorBuilder.setCode(Protos.Error.ErrorCode.MIN_PAYMENT_TOO_LARGE);
             errorBuilder.setExpectedValue(MIN_PAYMENT);
+            missing = BigInteger.valueOf(initiate.getMinPayment() - MIN_PAYMENT);
             return CloseReason.SERVER_REQUESTED_TOO_MUCH_VALUE;
         }
 

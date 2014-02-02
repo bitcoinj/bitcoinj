@@ -22,6 +22,7 @@ import com.google.bitcoin.params.UnitTestParams;
 import com.google.bitcoin.store.MemoryBlockStore;
 import com.google.bitcoin.utils.TestUtils;
 import com.google.bitcoin.utils.Threading;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.SettableFuture;
 import org.junit.After;
@@ -102,8 +103,6 @@ public class PeerGroupTest extends TestWithPeerGroup {
 
     @Test
     public void listener() throws Exception {
-        final SettableFuture<Void> firstDisconnectFuture = SettableFuture.create();
-        final SettableFuture<Void> secondDisconnectFuture = SettableFuture.create();
         peerGroup.startAndWait();
         peerGroup.addEventListener(listener);
 
@@ -452,7 +451,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         peerGroup.addEventListener(listener);
         peerGroup.addPeerDiscovery(new PeerDiscovery() {
             public InetSocketAddress[] getPeers(long unused, TimeUnit unused2) throws PeerDiscoveryException {
-                return addresses.toArray(new InetSocketAddress[0]);
+                return addresses.toArray(new InetSocketAddress[addresses.size()]);
             }
 
             public void shutdown() {
@@ -508,5 +507,37 @@ public class PeerGroupTest extends TestWithPeerGroup {
         assertEquals(2002, disconnectedPeers.take().getAddress().getPort());
         Utils.passMockSleep();
         assertEquals(2001, disconnectedPeers.take().getAddress().getPort());
+    }
+
+    @Test
+    public void testBloomOnP2Pubkey() throws Exception {
+        // Cover bug 513. When a relevant transaction with a p2pubkey output is found, the Bloom filter should be
+        // recalculated to include that transaction hash but not re-broadcast as the remote nodes should have followed
+        // the same procedure. However a new node that's connected should get the fresh filter.
+        peerGroup.startAndWait();
+        final ECKey key = wallet.getKeys().get(0);
+        // Create a couple of peers.
+        InboundMessageQueuer p1 = connectPeer(1);
+        InboundMessageQueuer p2 = connectPeer(2);
+        // Create a pay to pubkey tx.
+        Transaction tx = TestUtils.createFakeTx(params, Utils.COIN, key);
+        Transaction tx2 = new Transaction(params);
+        tx2.addInput(tx.getOutput(0));
+        TransactionOutPoint outpoint = tx2.getInput(0).getOutpoint();
+        assertTrue(p1.lastReceivedFilter.contains(key.getPubKey()));
+        assertFalse(p1.lastReceivedFilter.contains(tx.getHash().getBytes()));
+        inbound(p1, tx);
+        // p1 requests dep resolution, p2 is quiet.
+        assertTrue(outbound(p1) instanceof GetDataMessage);
+        final Sha256Hash dephash = tx.getInput(0).getOutpoint().getHash();
+        final InventoryItem inv = new InventoryItem(InventoryItem.Type.Transaction, dephash);
+        inbound(p1, new NotFoundMessage(params, ImmutableList.of(inv)));
+        assertNull(outbound(p1));
+        assertNull(outbound(p2));
+        peerGroup.waitForJobQueue();
+        // Now we connect p3 and there is a new bloom filter sent, that DOES match the relevant outpoint.
+        InboundMessageQueuer p3 = connectPeer(3);
+        assertTrue(p3.lastReceivedFilter.contains(key.getPubKey()));
+        assertTrue(p3.lastReceivedFilter.contains(outpoint.bitcoinSerialize()));
     }
 }

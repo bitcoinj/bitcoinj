@@ -20,8 +20,8 @@ package com.google.bitcoin.core;
 import com.google.bitcoin.params.MainNetParams;
 import com.google.bitcoin.params.UnitTestParams;
 import com.google.bitcoin.script.Script;
+import com.google.bitcoin.store.BlockStoreException;
 import com.google.bitcoin.store.FullPrunedBlockStore;
-import com.google.bitcoin.store.MemoryFullPrunedBlockStore;
 import com.google.bitcoin.utils.BlockFileLoader;
 import com.google.bitcoin.utils.BriefLogFormatter;
 import org.junit.Before;
@@ -39,8 +39,9 @@ import static org.junit.Assert.*;
  * We don't do any wallet tests here, we leave that to {@link ChainSplitTest}
  */
 
-public class FullPrunedBlockChainTest {
-    private static final Logger log = LoggerFactory.getLogger(FullPrunedBlockChainTest.class);
+public abstract class AbstractFullPrunedBlockChainTest
+{
+    private static final Logger log = LoggerFactory.getLogger(AbstractFullPrunedBlockChainTest.class);
 
     private NetworkParameters params;
     private FullPrunedBlockChain chain;
@@ -56,15 +57,21 @@ public class FullPrunedBlockChainTest {
         };
     }
 
+    public abstract FullPrunedBlockStore createStore(NetworkParameters params, int blockCount)
+        throws BlockStoreException;
+
+    public abstract void resetStore(FullPrunedBlockStore store) throws BlockStoreException;
+
     @Test
     public void testGeneratedChain() throws Exception {
         // Tests various test cases from FullBlockTestGenerator
         FullBlockTestGenerator generator = new FullBlockTestGenerator(params);
         RuleList blockList = generator.getBlocksToTest(false, false, null);
         
-        store = new MemoryFullPrunedBlockStore(params, blockList.maximumReorgBlockCount);
+        store = createStore(params, blockList.maximumReorgBlockCount);
+        resetStore(store);
         chain = new FullPrunedBlockChain(params, store);
-        
+
         for (Rule rule : blockList.list) {
             if (!(rule instanceof BlockAndValidity))
                 continue;
@@ -104,7 +111,8 @@ public class FullPrunedBlockChainTest {
 
     @Test
     public void skipScripts() throws Exception {
-        store = new MemoryFullPrunedBlockStore(params, 10);
+        store = createStore(params, 10);
+        resetStore(store);
         chain = new FullPrunedBlockChain(params, store);
 
         // Check that we aren't accidentally leaving any references
@@ -140,7 +148,8 @@ public class FullPrunedBlockChainTest {
     @Test
     public void testFinalizedBlocks() throws Exception {
         final int UNDOABLE_BLOCKS_STORED = 10;
-        store = new MemoryFullPrunedBlockStore(params, UNDOABLE_BLOCKS_STORED);
+        store = createStore(params, UNDOABLE_BLOCKS_STORED);
+        resetStore(store);
         chain = new FullPrunedBlockChain(params, store);
         
         // Check that we aren't accidentally leaving any references
@@ -197,7 +206,8 @@ public class FullPrunedBlockChainTest {
         File blockFile = new File(getClass().getResource("first-100k-blocks.dat").getFile());
         BlockFileLoader loader = new BlockFileLoader(params, Arrays.asList(blockFile));
         
-        store = new MemoryFullPrunedBlockStore(params, 10);
+        store = createStore(params, 10);
+        resetStore(store);
         chain = new FullPrunedBlockChain(params, store);
         for (Block block : loader)
             chain.add(block);

@@ -224,6 +224,15 @@
           <artifactId>scrypt</artifactId>
           <version>1.3.3</version>
         </dependency>
+
+        <!-- Add in to test/use Postgres blockstore -->
+        <!--
+        <dependency>
+          <groupId>postgresql</groupId>
+          <artifactId>postgresql</artifactId>
+          <version>9.1-901.jdbc4</version>
+        </dependency>
+        -->
     </dependencies>
 
 </project>

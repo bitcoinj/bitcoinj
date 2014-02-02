@@ -1104,13 +1104,6 @@ public class Script {
             throw new ScriptException("Attempted OP_CHECKSIG(VERIFY) on a stack with size < 2");
         byte[] pubKey = stack.pollLast();
         byte[] sigBytes = stack.pollLast();
-        if (sigBytes.length == 0 || pubKey.length == 0) {
-            if (opcode == OP_CHECKSIG)
-                stack.add(new byte[] {0});
-            else if (opcode == OP_CHECKSIGVERIFY)
-                throw new ScriptException("Attempted OP_CHECKSIG(VERIFY) with a sig or pubkey of length 0");
-            return;
-        }
 
         byte[] prog = script.getProgram();
         byte[] connectedScript = Arrays.copyOfRange(prog, lastCodeSepLocation, prog.length);
@@ -1158,8 +1151,6 @@ public class Script {
         LinkedList<byte[]> pubkeys = new LinkedList<byte[]>();
         for (int i = 0; i < pubKeyCount; i++) {
             byte[] pubKey = stack.pollLast();
-            if (pubKey.length == 0)
-                throw new ScriptException("Attempted OP_CHECKMULTISIG(VERIFY) with a pubkey of length 0");
             pubkeys.add(pubKey);
         }
 
@@ -1172,8 +1163,6 @@ public class Script {
         LinkedList<byte[]> sigs = new LinkedList<byte[]>();
         for (int i = 0; i < sigCount; i++) {
             byte[] sig = stack.pollLast();
-            if (sig.length == 0)
-                throw new ScriptException("Attempted OP_CHECKMULTISIG(VERIFY) with a sig of length 0");
             sigs.add(sig);
         }
 

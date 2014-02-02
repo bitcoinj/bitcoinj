@@ -17,6 +17,7 @@
 package com.google.bitcoin.wallet;
 
 import com.google.bitcoin.core.*;
+import com.google.bitcoin.params.RegTestParams;
 import com.google.bitcoin.params.UnitTestParams;
 import com.google.bitcoin.utils.TestUtils;
 import com.google.bitcoin.utils.TestWithWallet;
@@ -60,6 +61,10 @@ public class DefaultCoinSelectorTest extends TestWithWallet {
         assertTrue(DefaultCoinSelector.isSelectable(t));
         t = new Transaction(params);
         t.getConfidence().setConfidenceType(TransactionConfidence.ConfidenceType.BUILDING);
+        assertTrue(DefaultCoinSelector.isSelectable(t));
+        t = new Transaction(RegTestParams.get());
+        t.getConfidence().setConfidenceType(TransactionConfidence.ConfidenceType.PENDING);
+        t.getConfidence().setSource(TransactionConfidence.Source.SELF);
         assertTrue(DefaultCoinSelector.isSelectable(t));
     }
 

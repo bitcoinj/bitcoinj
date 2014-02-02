@@ -16,11 +16,10 @@
 
 package com.google.bitcoin.core;
 
-import com.google.bitcoin.params.UnitTestParams;
 import com.google.bitcoin.net.BlockingClientManager;
 import com.google.bitcoin.net.NioClientManager;
+import com.google.bitcoin.params.UnitTestParams;
 import com.google.bitcoin.store.BlockStore;
-import com.google.bitcoin.utils.ExponentialBackoff;
 import com.google.common.base.Preconditions;
 
 import java.net.InetSocketAddress;
@@ -50,7 +49,7 @@ public class TestWithPeerGroup extends TestWithNetworkConnections {
 
         remoteVersionMessage = new VersionMessage(unitTestParams, 1);
         remoteVersionMessage.localServices = VersionMessage.NODE_NETWORK;
-        remoteVersionMessage.clientVersion = FilteredBlock.MIN_PROTOCOL_VERSION;
+        remoteVersionMessage.clientVersion = NotFoundMessage.MIN_PROTOCOL_VERSION;
         initPeerGroup();
     }
 

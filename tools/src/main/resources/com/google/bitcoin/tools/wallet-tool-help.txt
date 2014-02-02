@@ -19,18 +19,28 @@ Usage: wallet-tool --flags action-name
   sync                 Sync the wallet with the latest block chain (download new transactions).
                        If the chain file does not exist this will RESET the wallet.
   reset                Deletes all transactions from the wallet, for if you want to replay the chain.
-  send                 Creates a transaction with the given --output from this wallet and broadcasts, eg:
+  send                 Creates and broadcasts a transaction from the given wallet.
+                       Requires either --output or --payment-request to be specified.
+                       If --output is specified, a transaction is created from the provided output
+                       from this wallet and broadcasted, eg:
                          --output=1GthXFQMktFLWdh5EPNGqbq3H6WdG8zsWj:1.245
                        You can repeat --output=address:value multiple times.
                        If the output destination starts with 04 and is 65 or 33 bytes long it will be
                        treated as a public key instead of an address and the send will use
                        <key> CHECKSIG as the script.
+                       If --payment-request is specified, a transaction will be created using the provided
+                       payment request. A payment request can be a local file, a bitcoin uri, or url to
+                       download the payment request, e.g.:
+                         --payment-request=/path/to/my.bitcoinpaymentrequest
+                         --payment-request=bitcoin:?r=http://merchant.com/pay.php?123
+                         --payment-request=http://merchant.com/pay.php?123
+
                        Other options include:
                           --fee=0.01  sets the tx fee
                           --locktime=1234  sets the lock time to block 1234
                           --locktime=2013/01/01  sets the lock time to 1st Jan 2013
                           --allow-unconfirmed will let you create spends of pending non-change outputs.
-
+                          --no-pki disables pki verification for payment requests.
 
 >>> GENERAL OPTIONS
   --debuglog           Enables logging from the core library.
