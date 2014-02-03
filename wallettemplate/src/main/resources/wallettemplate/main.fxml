@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?scenebuilder-classpath-element ../../../../target/classes?>
-<?scenebuilder-classpath-element ../../../../../core/target/bitcoinj-0.11-SNAPSHOT.jar?>
+<?scenebuilder-classpath-element ../../../../../core/target/bitcoinj-0.11.jar?>
 <?import java.lang.*?>
 <?import java.util.*?>
 <?import javafx.geometry.*?>

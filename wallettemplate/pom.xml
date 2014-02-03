@@ -6,7 +6,7 @@
 
     <groupId>org.bitcoinj</groupId>
     <artifactId>wallettemplate</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>1.0</version>
 
     <build>
         <plugins>
@@ -27,7 +27,7 @@
         <dependency>
             <groupId>com.google</groupId>
             <artifactId>bitcoinj</artifactId>
-            <version>0.11-SNAPSHOT</version>
+            <version>0.11</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
@@ -37,7 +37,7 @@
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
-            <version>13.0</version>
+            <version>13.0.1</version>
         </dependency>
         <dependency>
             <groupId>com.aquafx-project</groupId>
