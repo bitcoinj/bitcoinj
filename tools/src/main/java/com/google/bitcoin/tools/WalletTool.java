@@ -391,10 +391,11 @@ public class WalletTool {
                 String destination = parts[0];
                 try {
                     BigInteger value = Utils.toNanoCoins(parts[1]);
-                    if (destination.startsWith("04") && (destination.length() == 130 || destination.length() == 66)) {
+                    if (destination.startsWith("0")) {
+                        boolean compressed = destination.startsWith("02") || destination.startsWith("03");
                         // Treat as a raw public key.
                         BigInteger pubKey = new BigInteger(destination, 16);
-                        ECKey key = new ECKey(null, pubKey);
+                        ECKey key = new ECKey(null, pubKey.toByteArray(), compressed);
                         t.addOutput(value, key);
                     } else {
                         // Treat as an address.
@@ -456,6 +457,10 @@ public class WalletTool {
             // network. Once propagation is complete and we heard the transaction back from all our peers, it will
             // be committed to the wallet.
             peers.broadcastTransaction(t).get();
+            // Hack for regtest/single peer mode, as we're about to shut down and won't get an ACK from the remote end.
+            List<Peer> peerList = peers.getConnectedPeers();
+            if (peerList.size() == 1)
+                peerList.get(0).ping().get();
         } catch (BlockStoreException e) {
             throw new RuntimeException(e);
         } catch (KeyCrypterException e) {
