@@ -22,6 +22,7 @@ import com.google.common.collect.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -49,6 +50,7 @@ public class PostgresFullPrunedBlockStore implements FullPrunedBlockStore {
     private int fullStoreDepth;
     private String username;
     private String password;
+    private String schemaName;
 
     private static final String driver = "org.postgresql.Driver";
     private static final String CREATE_SETTINGS_TABLE = "CREATE TABLE settings (\n" +
@@ -107,7 +109,7 @@ public class PostgresFullPrunedBlockStore implements FullPrunedBlockStore {
      */
     public PostgresFullPrunedBlockStore(NetworkParameters params, int fullStoreDepth, String hostname, String dbName,
                                         String username, String password) throws BlockStoreException {
-        this(params, fullStoreDepth, "jdbc:postgresql://" + hostname + "/" + dbName, username, password);
+        this(params, "jdbc:postgresql://" + hostname + "/" + dbName, fullStoreDepth, username, password, null);
     }
 
     /**
@@ -115,16 +117,36 @@ public class PostgresFullPrunedBlockStore implements FullPrunedBlockStore {
      *
      * @param params A copy of the NetworkParameters used
      * @param fullStoreDepth The number of blocks of history stored in full (something like 1000 is pretty safe)
-     * @param connectionURL The jdbc url to connect to the database.
+     * @param hostname The hostname of the database to connect to
+     * @param dbName The database to connect to
      * @param username The database username
      * @param password The password to the database
+     * @param schemaName The name of the schema to put the tables in.  May be null if no schema is being used
      * @throws BlockStoreException if the database fails to open for any reason
      */
-    public PostgresFullPrunedBlockStore(NetworkParameters params, int fullStoreDepth, String connectionURL,
-                                        String username, String password) throws BlockStoreException {
+    public PostgresFullPrunedBlockStore(NetworkParameters params, int fullStoreDepth, String hostname, String dbName,
+                                        String username, String password, @Nullable String schemaName) throws BlockStoreException {
+        this(params, "jdbc:postgresql://" + hostname + "/" + dbName, fullStoreDepth, username, password, schemaName);
+    }
+
+    /**
+     * Creates a new PostgresFullPrunedBlockStore.
+     *
+     *
+     * @param params A copy of the NetworkParameters used
+     * @param connectionURL The jdbc url to connect to the database.
+     * @param fullStoreDepth The number of blocks of history stored in full (something like 1000 is pretty safe)
+     * @param username The database username
+     * @param password The password to the database
+     * @param schemaName The name of the schema to put the tables in.  May be null if no schema is being used
+     * @throws BlockStoreException if the database fails to open for any reason
+     */
+    public PostgresFullPrunedBlockStore(NetworkParameters params, String connectionURL, int fullStoreDepth,
+                                        String username, String password, @Nullable String schemaName) throws BlockStoreException {
         this.params = params;
         this.fullStoreDepth = fullStoreDepth;
         this.connectionURL = connectionURL;
+        this.schemaName = schemaName;
 
         this.username = username;
         this.password = password;
@@ -165,6 +187,12 @@ public class PostgresFullPrunedBlockStore implements FullPrunedBlockStore {
             conn.set(DriverManager.getConnection(connectionURL, props));
 
             Connection connection = conn.get();
+            // set the schema if one is needed
+            if( schemaName != null ) {
+                Statement s = connection.createStatement();
+                s.execute("CREATE SCHEMA IF NOT EXISTS " + schemaName + ";");
+                s.execute("set search_path to '" + schemaName +"';");
+            }
             allConnections.add(conn.get());
             log.info("Made a new connection to database " + connectionURL);
         } catch (SQLException ex) {
