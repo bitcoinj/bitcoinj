@@ -107,9 +107,24 @@ public class PostgresFullPrunedBlockStore implements FullPrunedBlockStore {
      */
     public PostgresFullPrunedBlockStore(NetworkParameters params, int fullStoreDepth, String hostname, String dbName,
                                         String username, String password) throws BlockStoreException {
+        this(params, fullStoreDepth, "jdbc:postgresql://" + hostname + "/" + dbName, username, password);
+    }
+
+    /**
+     * Creates a new PostgresFullPrunedBlockStore.
+     *
+     * @param params A copy of the NetworkParameters used
+     * @param fullStoreDepth The number of blocks of history stored in full (something like 1000 is pretty safe)
+     * @param connectionURL The jdbc url to connect to the database.
+     * @param username The database username
+     * @param password The password to the database
+     * @throws BlockStoreException if the database fails to open for any reason
+     */
+    public PostgresFullPrunedBlockStore(NetworkParameters params, int fullStoreDepth, String connectionURL,
+                                        String username, String password) throws BlockStoreException {
         this.params = params;
         this.fullStoreDepth = fullStoreDepth;
-        connectionURL = "jdbc:postgresql://" + hostname + "/" + dbName;
+        this.connectionURL = connectionURL;
 
         this.username = username;
         this.password = password;
@@ -160,7 +175,9 @@ public class PostgresFullPrunedBlockStore implements FullPrunedBlockStore {
     public synchronized void close() {
         for (Connection conn : allConnections) {
             try {
-                conn.rollback();
+                if(!conn.getAutoCommit()) {
+                    conn.rollback();
+                }
             } catch (SQLException ex) {
                 throw new RuntimeException(ex);
             }
