@@ -28,6 +28,8 @@ import com.google.bitcoin.utils.Threading;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Sets;
+import com.google.common.primitives.Ints;
+import com.google.common.primitives.Longs;
 import com.google.common.util.concurrent.*;
 import net.jcip.annotations.GuardedBy;
 import org.slf4j.Logger;
@@ -297,7 +299,7 @@ public class PeerGroup extends AbstractExecutionThreadService implements Transac
                 int result = backoffMap.get(a).compareTo(backoffMap.get(b));
                 // Sort by port if otherwise equals - for testing
                 if (result == 0)
-                    result = Integer.valueOf(a.getPort()).compareTo(b.getPort());
+                    result = Ints.compare(a.getPort(), b.getPort());
                 return result;
             }
         });
@@ -1488,13 +1490,7 @@ public class PeerGroup extends AbstractExecutionThreadService implements Transac
         // Sort by ping time.
         Collections.sort(candidates2, new Comparator<PeerAndPing>() {
             public int compare(PeerAndPing peerAndPing, PeerAndPing peerAndPing2) {
-                if (peerAndPing.pingTime < peerAndPing2.pingTime)
-                    return -1;
-                else if (peerAndPing.pingTime == peerAndPing2.pingTime)
-                    return 0;
-                else
-                    return 1;
-
+                return Longs.compare(peerAndPing.pingTime, peerAndPing2.pingTime);
             }
         });
         return candidates2.get(0).peer;
