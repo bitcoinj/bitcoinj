@@ -1,5 +1,6 @@
 /**
  * Copyright 2013 Google Inc.
+ * Copyright 2014 Andreas Schildbach
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +32,7 @@ import com.google.bitcoin.wallet.*;
 import com.google.bitcoin.wallet.WalletTransaction.Pool;
 import com.google.common.collect.*;
 import com.google.common.primitives.Ints;
+import com.google.common.primitives.Longs;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -2264,6 +2266,30 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
         return toString(false, true, true, null);
     }
 
+    private static final Comparator<Transaction> SORT_ORDER_BY_UPDATE_TIME = new Comparator<Transaction>() {
+
+        @Override
+        public int compare(final Transaction tx1, final Transaction tx2) {
+
+            final long time1 = tx1.getUpdateTime().getTime();
+            final long time2 = tx2.getUpdateTime().getTime();
+
+            return -(Longs.compare(time1, time2));
+        }
+    };
+
+    private static final Comparator<Transaction> SORT_ORDER_BY_HEIGHT = new Comparator<Transaction>() {
+
+        @Override
+        public int compare(final Transaction tx1, final Transaction tx2) {
+
+            final int height1 = tx1.getConfidence().getAppearedAtChainHeight();
+            final int height2 = tx2.getConfidence().getAppearedAtChainHeight();
+
+            return -(Ints.compare(height1, height2));
+        }
+    };
+
     /**
      * Formats the wallet as a human readable piece of text. Intended for debugging, the format is not meant to be
      * stable or human readable.
@@ -2314,19 +2340,19 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
                 // Print the transactions themselves
                 if (pending.size() > 0) {
                     builder.append("\n>>> PENDING:\n");
-                    toStringHelper(builder, pending, chain);
+                    toStringHelper(builder, pending, chain, SORT_ORDER_BY_UPDATE_TIME);
                 }
                 if (unspent.size() > 0) {
                     builder.append("\n>>> UNSPENT:\n");
-                    toStringHelper(builder, unspent, chain);
+                    toStringHelper(builder, unspent, chain, SORT_ORDER_BY_HEIGHT);
                 }
                 if (spent.size() > 0) {
                     builder.append("\n>>> SPENT:\n");
-                    toStringHelper(builder, spent, chain);
+                    toStringHelper(builder, spent, chain, SORT_ORDER_BY_HEIGHT);
                 }
                 if (dead.size() > 0) {
                     builder.append("\n>>> DEAD:\n");
-                    toStringHelper(builder, dead, chain);
+                    toStringHelper(builder, dead, chain, SORT_ORDER_BY_HEIGHT);
                 }
             }
             if (includeExtensions && extensions.size() > 0) {
@@ -2342,9 +2368,18 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
     }
 
     private void toStringHelper(StringBuilder builder, Map<Sha256Hash, Transaction> transactionMap,
-                                @Nullable AbstractBlockChain chain) {
+                                @Nullable AbstractBlockChain chain, @Nullable Comparator<Transaction> sortOrder) {
         checkState(lock.isHeldByCurrentThread());
-        for (Transaction tx : transactionMap.values()) {
+
+        final Collection<Transaction> txns;
+        if (sortOrder != null) {
+            txns = new TreeSet<Transaction>(sortOrder);
+            txns.addAll(transactionMap.values());
+        } else {
+            txns = transactionMap.values();
+        }
+
+        for (Transaction tx : txns) {
             try {
                 builder.append("Sends ");
                 builder.append(Utils.bitcoinValueToFriendlyString(tx.getValueSentFromMe(this)));
