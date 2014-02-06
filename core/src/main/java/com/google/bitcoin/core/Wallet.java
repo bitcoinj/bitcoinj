@@ -2280,9 +2280,9 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
             BigInteger balance = getBalance(BalanceType.ESTIMATED);
             builder.append(String.format("Wallet containing %s BTC (%d satoshis) in:%n",
                     bitcoinValueToPlainString(balance), balance.longValue()));
+            builder.append(String.format("  %d pending transactions%n", pending.size()));
             builder.append(String.format("  %d unspent transactions%n", unspent.size()));
             builder.append(String.format("  %d spent transactions%n", spent.size()));
-            builder.append(String.format("  %d pending transactions%n", pending.size()));
             builder.append(String.format("  %d dead transactions%n", dead.size()));
             final Date lastBlockSeenTime = getLastBlockSeenTime();
             final String lastBlockSeenTimeStr = lastBlockSeenTime == null ? "time unknown" : lastBlockSeenTime.toString();
@@ -2312,6 +2312,10 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
 
             if (includeTransactions) {
                 // Print the transactions themselves
+                if (pending.size() > 0) {
+                    builder.append("\n>>> PENDING:\n");
+                    toStringHelper(builder, pending, chain);
+                }
                 if (unspent.size() > 0) {
                     builder.append("\n>>> UNSPENT:\n");
                     toStringHelper(builder, unspent, chain);
@@ -2319,10 +2323,6 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
                 if (spent.size() > 0) {
                     builder.append("\n>>> SPENT:\n");
                     toStringHelper(builder, spent, chain);
-                }
-                if (pending.size() > 0) {
-                    builder.append("\n>>> PENDING:\n");
-                    toStringHelper(builder, pending, chain);
                 }
                 if (dead.size() > 0) {
                     builder.append("\n>>> DEAD:\n");
