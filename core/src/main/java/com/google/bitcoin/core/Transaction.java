@@ -22,6 +22,8 @@ import com.google.bitcoin.script.Script;
 import com.google.bitcoin.script.ScriptBuilder;
 import com.google.bitcoin.script.ScriptOpCodes;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.primitives.Ints;
+import com.google.common.primitives.Longs;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.crypto.params.KeyParameter;
@@ -51,6 +53,24 @@ import static com.google.common.base.Preconditions.*;
  * are building a wallet, how to present confidence to your users is something to consider carefully.</p>
  */
 public class Transaction extends ChildMessage implements Serializable {
+    /** A comparator that can be used to sort transactions by their updateTime field. */
+    public static final Comparator<Transaction> SORT_TX_BY_UPDATE_TIME = new Comparator<Transaction>() {
+        @Override
+        public int compare(final Transaction tx1, final Transaction tx2) {
+            final long time1 = tx1.getUpdateTime().getTime();
+            final long time2 = tx2.getUpdateTime().getTime();
+            return -(Longs.compare(time1, time2));
+        }
+    };
+    /** A comparator that can be used to sort transactions by their chain height. */
+    public static final Comparator<Transaction> SORT_TX_BY_HEIGHT = new Comparator<Transaction>() {
+        @Override
+        public int compare(final Transaction tx1, final Transaction tx2) {
+            final int height1 = tx1.getConfidence().getAppearedAtChainHeight();
+            final int height2 = tx2.getConfidence().getAppearedAtChainHeight();
+            return -(Ints.compare(height1, height2));
+        }
+    };
     private static final Logger log = LoggerFactory.getLogger(Transaction.class);
     private static final long serialVersionUID = -8567546957352643140L;
 

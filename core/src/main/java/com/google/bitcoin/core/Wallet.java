@@ -32,7 +32,6 @@ import com.google.bitcoin.wallet.*;
 import com.google.bitcoin.wallet.WalletTransaction.Pool;
 import com.google.common.collect.*;
 import com.google.common.primitives.Ints;
-import com.google.common.primitives.Longs;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -2266,29 +2265,6 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
         return toString(false, true, true, null);
     }
 
-    private static final Comparator<Transaction> SORT_ORDER_BY_UPDATE_TIME = new Comparator<Transaction>() {
-
-        @Override
-        public int compare(final Transaction tx1, final Transaction tx2) {
-
-            final long time1 = tx1.getUpdateTime().getTime();
-            final long time2 = tx2.getUpdateTime().getTime();
-
-            return -(Longs.compare(time1, time2));
-        }
-    };
-
-    private static final Comparator<Transaction> SORT_ORDER_BY_HEIGHT = new Comparator<Transaction>() {
-
-        @Override
-        public int compare(final Transaction tx1, final Transaction tx2) {
-
-            final int height1 = tx1.getConfidence().getAppearedAtChainHeight();
-            final int height2 = tx2.getConfidence().getAppearedAtChainHeight();
-
-            return -(Ints.compare(height1, height2));
-        }
-    };
 
     /**
      * Formats the wallet as a human readable piece of text. Intended for debugging, the format is not meant to be
@@ -2340,19 +2316,19 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
                 // Print the transactions themselves
                 if (pending.size() > 0) {
                     builder.append("\n>>> PENDING:\n");
-                    toStringHelper(builder, pending, chain, SORT_ORDER_BY_UPDATE_TIME);
+                    toStringHelper(builder, pending, chain, Transaction.SORT_TX_BY_UPDATE_TIME);
                 }
                 if (unspent.size() > 0) {
                     builder.append("\n>>> UNSPENT:\n");
-                    toStringHelper(builder, unspent, chain, SORT_ORDER_BY_HEIGHT);
+                    toStringHelper(builder, unspent, chain, Transaction.SORT_TX_BY_HEIGHT);
                 }
                 if (spent.size() > 0) {
                     builder.append("\n>>> SPENT:\n");
-                    toStringHelper(builder, spent, chain, SORT_ORDER_BY_HEIGHT);
+                    toStringHelper(builder, spent, chain, Transaction.SORT_TX_BY_HEIGHT);
                 }
                 if (dead.size() > 0) {
                     builder.append("\n>>> DEAD:\n");
-                    toStringHelper(builder, dead, chain, SORT_ORDER_BY_HEIGHT);
+                    toStringHelper(builder, dead, chain, Transaction.SORT_TX_BY_HEIGHT);
                 }
             }
             if (includeExtensions && extensions.size() > 0) {
