@@ -1184,7 +1184,7 @@ public class Transaction extends ChildMessage implements Serializable {
 
         BigInteger valueOut = BigInteger.ZERO;
         for (TransactionOutput output : outputs) {
-            if (output.getValue().compareTo(BigInteger.ZERO) < 0)
+            if (output.getValue().signum() < 0)
                 throw new VerificationException("Transaction output negative");
             valueOut = valueOut.add(output.getValue());
         }

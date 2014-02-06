@@ -181,11 +181,11 @@ public class WalletProtobufSerializerTest {
         // Start by building two blocks on top of the genesis block.
         Block b1 = params.getGenesisBlock().createNextBlock(myAddress);
         BigInteger work1 = b1.getWork();
-        assertTrue(work1.compareTo(BigInteger.ZERO) > 0);
+        assertTrue(work1.signum() > 0);
 
         Block b2 = b1.createNextBlock(myAddress);
         BigInteger work2 = b2.getWork();
-        assertTrue(work2.compareTo(BigInteger.ZERO) > 0);
+        assertTrue(work2.signum() > 0);
 
         assertTrue(chain.add(b1));
         assertTrue(chain.add(b2));

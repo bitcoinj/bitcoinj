@@ -883,7 +883,7 @@ public class Script {
                         numericOPnum = numericOPnum.negate();
                         break;
                     case OP_ABS:
-                        if (numericOPnum.compareTo(BigInteger.ZERO) < 0)
+                        if (numericOPnum.signum() < 0)
                             numericOPnum = numericOPnum.negate();
                         break;
                     case OP_NOT:
