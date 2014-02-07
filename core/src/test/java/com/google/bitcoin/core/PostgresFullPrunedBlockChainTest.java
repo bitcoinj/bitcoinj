@@ -25,10 +25,12 @@ public class PostgresFullPrunedBlockChainTest extends AbstractFullPrunedBlockCha
     @Override
     public FullPrunedBlockStore createStore(NetworkParameters params, int blockCount)
             throws BlockStoreException {
-        if( useSchema )
+        if(useSchema) {
             return new PostgresFullPrunedBlockStore(params, blockCount, DB_HOSTNAME, DB_NAME, DB_USERNAME, DB_PASSWORD, DB_SCHEMA);
-        else
+        }
+        else {
             return new PostgresFullPrunedBlockStore(params, blockCount, DB_HOSTNAME, DB_NAME, DB_USERNAME, DB_PASSWORD);
+        }
     }
 
     @Override
@@ -36,10 +38,6 @@ public class PostgresFullPrunedBlockChainTest extends AbstractFullPrunedBlockCha
         ((PostgresFullPrunedBlockStore)store).resetStore();
     }
 
-    /**
-     * Run a test with a custom schema name to make sure
-     * everything works when we set a schema.
-     */
     @Test
     public void testFirst100kBlocksWithCustomSchema() throws Exception {
         boolean oldSchema = useSchema;
