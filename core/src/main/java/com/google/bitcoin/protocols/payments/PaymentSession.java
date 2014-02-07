@@ -386,10 +386,49 @@ public class PaymentSession {
      * Information about the X509 signature's issuer and subject.
      */
     public static class PkiVerificationData {
-        public String name;
-        public PublicKey merchantSigningKey;
-        public TrustAnchor rootAuthority;
-        public String orgName;
+        /** Display name of the payment requestor, could be a domain name, email address, legal name, etc */
+        public final String name;
+        /** The "org" part of the payment requestors ID. */
+        public final String orgName;
+        /** SSL public key that was used to sign. */
+        public final PublicKey merchantSigningKey;
+        /** Object representing the CA that verified the merchant's ID */
+        public final TrustAnchor rootAuthority;
+        /** String representing the display name of the CA that verified the merchant's ID */
+        public final String rootAuthorityName;
+
+        private PkiVerificationData(@Nullable String name, @Nullable String orgName, PublicKey merchantSigningKey,
+                                    TrustAnchor rootAuthority) throws PaymentRequestException.PkiVerificationException {
+            this.name = name;
+            this.orgName = orgName;
+            this.merchantSigningKey = merchantSigningKey;
+            this.rootAuthority = rootAuthority;
+            this.rootAuthorityName = getNameFromCert(rootAuthority);
+        }
+
+        private String getNameFromCert(TrustAnchor rootAuthority) throws PaymentRequestException.PkiVerificationException {
+            org.spongycastle.asn1.x500.X500Name name = new X500Name(rootAuthority.getTrustedCert().getSubjectX500Principal().getName());
+            String commonName = null, org = null, location = null, country = null;
+            for (RDN rdn : name.getRDNs()) {
+                AttributeTypeAndValue pair = rdn.getFirst();
+                String val = ((ASN1String)pair.getValue()).getString();
+                if (pair.getType().equals(RFC4519Style.cn))
+                    commonName = val;
+                else if (pair.getType().equals(RFC4519Style.o))
+                    org = val;
+                else if (pair.getType().equals(RFC4519Style.l))
+                    location = val;
+                else if (pair.getType().equals(RFC4519Style.c))
+                    country = val;
+            }
+            if (org != null && location != null && country != null) {
+                return org + ", " + location + ", " + country;
+            } else {
+                if (commonName == null)
+                    throw new PaymentRequestException.PkiVerificationException("Could not find any identity info for root CA");
+                return commonName;
+            }
+        }
     }
 
     /**
@@ -461,13 +500,10 @@ public class PaymentSession {
                 else if (pair.getType().equals(RFC4519Style.o))
                     orgName = ((ASN1String)pair.getValue()).getString();
             }
-
+            if (entityName == null && orgName == null)
+                throw new PaymentRequestException.PkiVerificationException("Invalid certificate, no CN or O fields");
             // Everything is peachy. Return some useful data to the caller.
-            PkiVerificationData data = new PkiVerificationData();
-            data.name = entityName;
-            data.orgName = orgName;
-            data.merchantSigningKey = publicKey;
-            data.rootAuthority = result.getTrustAnchor();
+            PkiVerificationData data = new PkiVerificationData(entityName, orgName, publicKey, result.getTrustAnchor());
             // Cache the result so we don't have to re-verify if this method is called again.
             pkiVerificationData = data;
             return data;
