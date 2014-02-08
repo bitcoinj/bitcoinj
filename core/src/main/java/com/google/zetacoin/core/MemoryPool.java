@@ -17,10 +17,10 @@
 package com.google.zetacoin.core;
 
 import com.google.zetacoin.utils.Threading;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nullable;
 import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
@@ -29,6 +29,8 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.locks.ReentrantLock;
+
+import javax.annotation.Nullable;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
@@ -92,7 +94,7 @@ public class MemoryPool {
     public MemoryPool(final int size) {
         memoryPool = new LinkedHashMap<Sha256Hash, Entry>() {
             @Override
-            protected boolean removeEldestEntry(Map.Entry<Sha256Hash, Entry> entry) {
+            protected boolean removeEldestEntry(Map.Entry<Sha256Hash, MemoryPool.Entry> entry) {
                 // An arbitrary choice to stop the memory used by tracked transactions getting too huge in the event
                 // of some kind of DoS attack.
                 return size() > size;
