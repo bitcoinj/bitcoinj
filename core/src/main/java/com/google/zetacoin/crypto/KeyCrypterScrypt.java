@@ -17,9 +17,9 @@ package com.google.zetacoin.crypto;
 
 import com.google.protobuf.ByteString;
 import com.lambdaworks.crypto.SCrypt;
-import org.bitcoinj.wallet.Protos;
-import org.bitcoinj.wallet.Protos.ScryptParameters;
-import org.bitcoinj.wallet.Protos.Wallet.EncryptionType;
+import org.zetacoinj.wallet.Protos;
+import org.zetacoinj.wallet.Protos.ScryptParameters;
+import org.zetacoinj.wallet.Protos.Wallet.EncryptionType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.crypto.BufferedBlockCipher;

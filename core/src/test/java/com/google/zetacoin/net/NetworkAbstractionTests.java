@@ -19,7 +19,7 @@ package com.google.zetacoin.net;
 import com.google.zetacoin.core.Utils;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.protobuf.ByteString;
-import org.bitcoin.paymentchannel.Protos;
+import org.zetacoin.paymentchannel.Protos;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;

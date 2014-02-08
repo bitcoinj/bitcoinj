@@ -25,7 +25,7 @@ import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.protobuf.ByteString;
 import net.jcip.annotations.GuardedBy;
-import org.bitcoin.paymentchannel.Protos;
+import org.zetacoin.paymentchannel.Protos;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;

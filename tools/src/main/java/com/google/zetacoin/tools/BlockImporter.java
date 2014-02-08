@@ -14,7 +14,7 @@ public class BlockImporter {
     public static void main(String[] args) throws BlockStoreException, VerificationException, PrunedException {
         System.out.println("USAGE: BlockImporter (prod|test) (H2|Disk|MemFull|Mem|SPV) [blockStore]");
         System.out.println("       blockStore is required unless type is Mem or MemFull");
-        System.out.println("       eg BlockImporter prod H2 /home/user/bitcoinj.h2store");
+        System.out.println("       eg BlockImporter prod H2 /home/user/zetacoinj.h2store");
         System.out.println("       Does full verification if the store supports it");
         Preconditions.checkArgument(args.length == 2 || args.length == 3);
         

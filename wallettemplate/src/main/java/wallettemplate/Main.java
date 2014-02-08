@@ -71,7 +71,7 @@ public class Main extends Application {
 
         // Make log output concise.
         BriefLogFormatter.init();
-        // Tell bitcoinj to run event handlers on the JavaFX UI thread. This keeps things simple and means
+        // Tell zetacoinj to run event handlers on the JavaFX UI thread. This keeps things simple and means
         // we cannot forget to switch threads when adding event handlers. Unfortunately, the DownloadListener
         // we give to the app kit is currently an exception and runs on a library thread. It'll get fixed in
         // a future version.

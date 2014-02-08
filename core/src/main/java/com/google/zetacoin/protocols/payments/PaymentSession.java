@@ -27,7 +27,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
-import org.bitcoin.protocols.payments.Protos;
+import org.zetacoin.protocols.payments.Protos;
 import org.spongycastle.asn1.ASN1String;
 import org.spongycastle.asn1.x500.AttributeTypeAndValue;
 import org.spongycastle.asn1.x500.RDN;

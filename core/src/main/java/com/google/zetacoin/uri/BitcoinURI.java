@@ -49,8 +49,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * <p>The following input forms are accepted:</p>
  *
  * <ul>
- * <li>{@code bitcoin:<address>}</li>
- * <li>{@code bitcoin:<address>?<name1>=<value1>&<name2>=<value2>} with multiple
+ * <li>{@code zetacoin:<address>}</li>
+ * <li>{@code zetacoin:<address>?<name1>=<value1>&<name2>=<value2>} with multiple
  * additional name/value pairs</li>
  * </ul>
  *
@@ -129,13 +129,13 @@ public class BitcoinURI {
             throw new BitcoinURIParseException("Bad URI syntax", e);
         }
 
-        // URI is formed as  bitcoin:<address>?<query parameters>
+        // URI is formed as  zetacoin:<address>?<query parameters>
         // blockchain.info generates URIs of non-BIP compliant form bitcoin://address?....
         // We support both until Ben fixes his code.
         
-        // Remove the bitcoin scheme.
+        // Remove the zetacoin scheme.
         // (Note: getSchemeSpecificPart() is not used as it unescapes the label and parse then fails.
-        // For instance with : bitcoin:129mVqKUmJ9uwPxKJBnNdABbuaaNfho4Ha?amount=0.06&label=Tom%20%26%20Jerry
+        // For instance with : zetacoin:129mVqKUmJ9uwPxKJBnNdABbuaaNfho4Ha?amount=0.06&label=Tom%20%26%20Jerry
         // the & (%26) in Tom and Jerry gets interpreted as a separator and the label then gets parsed
         // as 'Tom ' instead of 'Tom & Jerry')
         String schemeSpecificPart;

@@ -121,7 +121,7 @@ public class IrcDiscovery implements PeerDiscovery {
             reader = new BufferedReader(new InputStreamReader(connection.getInputStream(), "UTF-8"));
 
             // Generate a random nick for the connection. This is chosen to be clearly identifiable as coming from
-            // bitcoinj but not match the standard nick format, so full peers don't try and connect to us.
+            // zetacoinj but not match the standard nick format, so full peers don't try and connect to us.
             String nickRnd = String.format("bcj%d", new Random().nextInt(Integer.MAX_VALUE));
             String command = "NICK " + nickRnd;
             logAndSend(command);

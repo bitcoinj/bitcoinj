@@ -31,7 +31,7 @@ public class BuildCheckpoints {
         // Sorted map of UNIX time of block to StoredBlock object.
         final TreeMap<Integer, StoredBlock> checkpoints = new TreeMap<Integer, StoredBlock>();
 
-        // Configure bitcoinj to fetch only headers, not save them to disk, connect to a local fully synced/validated
+        // Configure zetacoinj to fetch only headers, not save them to disk, connect to a local fully synced/validated
         // node and to save block headers that are on interval boundaries, as long as they are <1 month old.
         final BlockStore store = new MemoryBlockStore(params);
         final BlockChain chain = new BlockChain(params, store);

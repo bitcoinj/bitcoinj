@@ -16,6 +16,17 @@
 
 package com.google.zetacoin.core;
 
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
+import com.google.common.primitives.Ints;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.SettableFuture;
 import com.google.zetacoin.core.TransactionConfidence.ConfidenceType;
 import com.google.zetacoin.crypto.KeyCrypter;
 import com.google.zetacoin.crypto.KeyCrypterException;
@@ -27,33 +38,60 @@ import com.google.zetacoin.store.UnreadableWalletException;
 import com.google.zetacoin.store.WalletProtobufSerializer;
 import com.google.zetacoin.utils.ListenerRegistration;
 import com.google.zetacoin.utils.Threading;
-import com.google.zetacoin.wallet.*;
+import com.google.zetacoin.wallet.AllowUnconfirmedCoinSelector;
+import com.google.zetacoin.wallet.CoinSelection;
+import com.google.zetacoin.wallet.CoinSelector;
+import com.google.zetacoin.wallet.DefaultCoinSelector;
+import com.google.zetacoin.wallet.DefaultRiskAnalysis;
+import com.google.zetacoin.wallet.KeyTimeCoinSelector;
+import com.google.zetacoin.wallet.RiskAnalysis;
+import com.google.zetacoin.wallet.WalletFiles;
+import com.google.zetacoin.wallet.WalletTransaction;
 import com.google.zetacoin.wallet.WalletTransaction.Pool;
-import com.google.common.collect.*;
-import com.google.common.primitives.Ints;
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.SettableFuture;
-import org.bitcoinj.wallet.Protos.Wallet.EncryptionType;
+
+import org.zetacoinj.wallet.Protos.Wallet.EncryptionType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.crypto.params.KeyParameter;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-import javax.annotation.concurrent.GuardedBy;
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.ObjectInputStream;
+import java.io.OutputStream;
+import java.io.Serializable;
 import java.math.BigInteger;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import javax.annotation.concurrent.GuardedBy;
+
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 import static com.google.zetacoin.core.Utils.bitcoinValueToFriendlyString;
 import static com.google.zetacoin.core.Utils.bitcoinValueToPlainString;
-import static com.google.common.base.Preconditions.*;
 
 // To do list:
 //
@@ -87,7 +125,7 @@ import static com.google.common.base.Preconditions.*;
  * other objects, see the <a href="http://code.google.com/p/bitcoinj/wiki/GettingStarted">Getting started</a> tutorial
  * on the website to learn more about how to set everything up.</p>
  *
- * <p>Wallets can be serialized using either Java serialization - this is not compatible across versions of bitcoinj,
+ * <p>Wallets can be serialized using either Java serialization - this is not compatible across versions of zetacoinj,
  * or protocol buffer serialization. You need to save the wallet whenever it changes, there is an auto-save feature
  * that simplifies this for you although you're still responsible for manually triggering a save when your app is about
  * to quit because the auto-save feature waits a moment before actually committing to disk to avoid IO thrashing when
@@ -2709,7 +2747,7 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
 
                     // Check that the encrypted key can be successfully decrypted.
                     // This is done as it is a critical failure if the private key cannot be decrypted successfully
-                    // (all bitcoin controlled by that private key is lost forever).
+                    // (all zetacoin controlled by that private key is lost forever).
                     // For a correctly constructed keyCrypter the encryption should always be reversible so it is just being as cautious as possible.
                     if (!ECKey.encryptionIsReversible(key, encryptedKey, keyCrypter, aesKey)) {
                         // Abort encryption

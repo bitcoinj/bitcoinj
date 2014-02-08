@@ -30,7 +30,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Various threading related utilities. Provides a wrapper around explicit lock creation that lets you control whether
- * bitcoinj performs cycle detection or not. Cycle detection is useful to detect bugs but comes with a small cost.
+ * zetacoinj performs cycle detection or not. Cycle detection is useful to detect bugs but comes with a small cost.
  * Also provides a worker thread that is designed for event listeners to be dispatched on.
  */
 public class Threading {
@@ -44,7 +44,7 @@ public class Threading {
     /**
      * An executor with one thread that is intended for running event listeners on. This ensures all event listener code
      * runs without any locks being held. It's intended for the API user to run things on. Callbacks registered by
-     * bitcoinj internally shouldn't normally run here, although currently there are a few exceptions.
+     * zetacoinj internally shouldn't normally run here, although currently there are a few exceptions.
      */
     public static Executor USER_THREAD;
 
@@ -78,7 +78,7 @@ public class Threading {
      * any unhandled exceptions that are caught whilst the framework is processing network traffic or doing other
      * background tasks. The purpose of this is to allow you to report back unanticipated crashes from your users
      * to a central collection center for analysis and debugging. You should configure this <b>before</b> any
-     * bitcoinj library code is run, setting it after you started network traffic and other forms of processing
+     * zetacoinj library code is run, setting it after you started network traffic and other forms of processing
      * may result in the change not taking effect.
      */
     @Nullable
@@ -89,7 +89,7 @@ public class Threading {
         private LinkedBlockingQueue<Runnable> tasks;
 
         public UserThread() {
-            super("bitcoinj user thread");
+            super("zetacoinj user thread");
             setDaemon(true);
             tasks = new LinkedBlockingQueue<Runnable>();
             start();
@@ -123,7 +123,7 @@ public class Threading {
 
     static {
         // Default policy goes here. If you want to change this, use one of the static methods before
-        // instantiating any bitcoinj objects. The policy change will take effect only on new objects
+        // instantiating any zetacoinj objects. The policy change will take effect only on new objects
         // from that point onwards.
         throwOnLockCycles();
 

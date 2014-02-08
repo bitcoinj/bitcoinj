@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package org.bitcoin;
+package org.zetacoin;
+
+import com.google.common.base.Preconditions;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-
-import com.google.common.base.Preconditions;
 
 
 /**
@@ -27,7 +27,7 @@ import com.google.common.base.Preconditions;
  *
  * <p>You can find an example library that can be used for this at https://github.com/sipa/secp256k1</p>
  *
- * <p>To build secp256k1 for use with bitcoinj, run `./configure` and `make libjavasecp256k1.so` then copy
+ * <p>To build secp256k1 for use with zetacoinj, run `./configure` and `make libjavasecp256k1.so` then copy
  * libjavasecp256k1.so to your system library path or point the JVM to the folder containing it with -Djava.library.path
  * </p>
  */

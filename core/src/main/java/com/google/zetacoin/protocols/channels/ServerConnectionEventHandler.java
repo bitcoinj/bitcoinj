@@ -20,7 +20,7 @@ import java.math.BigInteger;
 
 import com.google.zetacoin.core.Sha256Hash;
 import com.google.zetacoin.net.ProtobufParser;
-import org.bitcoin.paymentchannel.Protos;
+import org.zetacoin.paymentchannel.Protos;
 
 import javax.annotation.Nullable;
 

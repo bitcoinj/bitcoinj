@@ -20,7 +20,7 @@ import java.io.OutputStream;
 
 /**
  * Parent class for header only messages that don't have a payload.
- * Currently this includes getaddr, ping, verack as well as the special bitcoinj class UnknownMessage
+ * Currently this includes getaddr, ping, verack as well as the special zetacoinj class UnknownMessage
  *
  * @author git
  */

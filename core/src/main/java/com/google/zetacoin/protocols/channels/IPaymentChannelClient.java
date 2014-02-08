@@ -18,7 +18,7 @@ package com.google.zetacoin.protocols.channels;
 
 import com.google.zetacoin.core.InsufficientMoneyException;
 import com.google.common.util.concurrent.ListenableFuture;
-import org.bitcoin.paymentchannel.Protos;
+import org.zetacoin.paymentchannel.Protos;
 
 import java.math.BigInteger;
 

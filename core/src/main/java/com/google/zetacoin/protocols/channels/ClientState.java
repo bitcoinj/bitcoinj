@@ -314,7 +314,7 @@ public final class ClientState {
                 com.google.zetacoin.protocols.channels.ClientState.StoredClientPaymentChannels.class, com.google.zetacoin.protocols.channels.ClientState.StoredClientPaymentChannels.Builder.class);
       }
 
-      // Construct using com.google.bitcoin.protocols.channels.ClientState.StoredClientPaymentChannels.newBuilder()
+      // Construct using com.google.zetacoin.protocols.channels.ClientState.StoredClientPaymentChannels.newBuilder()
       private Builder() {
         maybeForceBuilderInitialization();
       }
@@ -1246,7 +1246,7 @@ public final class ClientState {
                 com.google.zetacoin.protocols.channels.ClientState.StoredClientPaymentChannel.class, com.google.zetacoin.protocols.channels.ClientState.StoredClientPaymentChannel.Builder.class);
       }
 
-      // Construct using com.google.bitcoin.protocols.channels.ClientState.StoredClientPaymentChannel.newBuilder()
+      // Construct using com.google.zetacoin.protocols.channels.ClientState.StoredClientPaymentChannel.newBuilder()
       private Builder() {
         maybeForceBuilderInitialization();
       }

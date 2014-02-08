@@ -17,7 +17,7 @@ package com.google.zetacoin.crypto;
 
 import java.io.Serializable;
 
-import org.bitcoinj.wallet.Protos.Wallet.EncryptionType;
+import org.zetacoinj.wallet.Protos.Wallet.EncryptionType;
 import org.spongycastle.crypto.params.KeyParameter;
 
 /**

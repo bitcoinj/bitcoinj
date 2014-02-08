@@ -147,7 +147,7 @@ public class BlockTest {
         Transaction tx2 = (Transaction) ois.readObject();
         ois.close();
 
-        // Note that this will actually check the transactions are equal by doing bitcoin serialization and checking
+        // Note that this will actually check the transactions are equal by doing zetacoin serialization and checking
         // the bytestreams are the same! A true "deep equals" is not implemented for Transaction. The primary purpose
         // of this test is to ensure no errors occur during the Java serialization/deserialization process.
         assertEquals(tx, tx2);

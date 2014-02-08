@@ -24,7 +24,7 @@ import com.google.zetacoin.net.NioClient;
 import com.google.zetacoin.net.ProtobufParser;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
-import org.bitcoin.paymentchannel.Protos;
+import org.zetacoin.paymentchannel.Protos;
 
 import java.io.IOException;
 import java.math.BigInteger;

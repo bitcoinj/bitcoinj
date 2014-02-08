@@ -24,7 +24,7 @@ import com.google.zetacoin.wallet.WalletFiles;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.protobuf.ByteString;
-import org.bitcoin.paymentchannel.Protos;
+import org.zetacoin.paymentchannel.Protos;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -41,7 +41,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.google.zetacoin.protocols.channels.PaymentChannelCloseException.CloseReason;
 import static com.google.zetacoin.utils.TestUtils.createFakeBlock;
-import static org.bitcoin.paymentchannel.Protos.TwoWayChannelMessage.MessageType;
+import static org.zetacoin.paymentchannel.Protos.TwoWayChannelMessage.MessageType;
 import static org.junit.Assert.*;
 
 public class ChannelConnectionTest extends TestWithWallet {

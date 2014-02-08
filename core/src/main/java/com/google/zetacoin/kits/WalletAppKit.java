@@ -37,7 +37,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
 /**
- * <p>Utility class that wraps the boilerplate needed to set up a new SPV bitcoinj app. Instantiate it with a directory
+ * <p>Utility class that wraps the boilerplate needed to set up a new SPV zetacoinj app. Instantiate it with a directory
  * and file prefix, optionally configure a few things, then use start or startAndWait. The object will construct and
  * configure a {@link BlockChain}, {@link SPVBlockStore}, {@link Wallet} and {@link PeerGroup}. Depending on the value
  * of the blockingStartup property, startup will be considered complete once the block chain has fully synchronized,
@@ -49,8 +49,8 @@ import static com.google.common.base.Preconditions.checkState;
  * access the objects this class creates until startup is complete.</p>
  *
  * <p>The asynchronous design of this class may seem puzzling (just use {@link #startAndWait()} if you don't want that).
- * It is to make it easier to fit bitcoinj into GUI apps, which require a high degree of responsiveness on their main
- * thread which handles all the animation and user interaction. Even when blockingStart is false, initializing bitcoinj
+ * It is to make it easier to fit zetacoinj into GUI apps, which require a high degree of responsiveness on their main
+ * thread which handles all the animation and user interaction. Even when blockingStart is false, initializing zetacoinj
  * means doing potentially blocking file IO, generating keys and other potentially intensive operations. By running it
  * on a background thread, there's no risk of accidentally causing UI lag.</p>
  *
@@ -125,7 +125,7 @@ public class WalletAppKit extends AbstractIdleService {
 
     /**
      * If set, the file is expected to contain a checkpoints file calculated with BuildCheckpoints. It makes initial
-     * block sync faster for new users - please refer to the documentation on the bitcoinj website for further details.
+     * block sync faster for new users - please refer to the documentation on the zetacoinj website for further details.
      */
     public WalletAppKit setCheckpoints(InputStream checkpoints) {
         this.checkpoints = checkNotNull(checkpoints);

@@ -4,7 +4,7 @@ import com.google.zetacoin.core.Sha256Hash;
 import com.google.zetacoin.core.TransactionBroadcaster;
 import com.google.zetacoin.core.Utils;
 import com.google.zetacoin.core.Wallet;
-import org.bitcoin.paymentchannel.Protos;
+import org.zetacoin.paymentchannel.Protos;
 
 import java.math.BigInteger;
 import java.util.concurrent.BlockingQueue;

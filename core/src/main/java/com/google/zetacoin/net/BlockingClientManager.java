@@ -47,7 +47,7 @@ public class BlockingClientManager extends AbstractIdleService implements Client
 
     /**
      * Creates a blocking client manager that will obtain sockets from the given factory. Useful for customising how
-     * bitcoinj connects to the P2P network.
+     * zetacoinj connects to the P2P network.
      */
     public BlockingClientManager(SocketFactory socketFactory) {
         this.socketFactory = checkNotNull(socketFactory);

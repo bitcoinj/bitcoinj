@@ -22,7 +22,7 @@ import com.google.zetacoin.crypto.KeyCrypterException;
 import com.google.zetacoin.crypto.TransactionSignature;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
-import org.bitcoin.NativeSecp256k1;
+import org.zetacoin.NativeSecp256k1;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.asn1.*;

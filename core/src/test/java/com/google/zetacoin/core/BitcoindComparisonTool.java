@@ -32,8 +32,8 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * A tool for comparing the blocks which are accepted/rejected by bitcoind/bitcoinj
- * It is designed to run as a testnet-in-a-box network between a single bitcoind node and bitcoinj
+ * A tool for comparing the blocks which are accepted/rejected by bitcoind/zetacoinj
+ * It is designed to run as a testnet-in-a-box network between a single bitcoind node and zetacoinj
  * It is not an automated unit-test because it requires a bit more set-up...read comments below
  */
 public class BitcoindComparisonTool {
@@ -205,7 +205,7 @@ public class BitcoindComparisonTool {
                 bitcoind.ping().get();
                 if (!chain.getChainHead().getHeader().getHash().equals(bitcoindChainHead)) {
                     differingBlocks++;
-                    log.error("bitcoind and bitcoinj acceptance differs on block \"" + block.ruleName + "\"");
+                    log.error("bitcoind and zetacoinj acceptance differs on block \"" + block.ruleName + "\"");
                 }
                 log.info("Block \"" + block.ruleName + "\" completed processing");
             } else if (rule instanceof MemoryPoolState) {
@@ -242,7 +242,7 @@ public class BitcoindComparisonTool {
         }
 
         log.info("Done testing.\n" +
-                "Blocks which were not handled the same between bitcoind/bitcoinj: " + differingBlocks + "\n" +
+                "Blocks which were not handled the same between bitcoind/zetacoinj: " + differingBlocks + "\n" +
                 "Blocks which should/should not have been accepted but weren't/were: " + invalidBlocks + "\n" +
                 "Transactions which were/weren't in memory pool but shouldn't/should have been: " + mempoolRulesFailed + "\n" +
                 "Unexpected inv messages: " + unexpectedInvs.get());

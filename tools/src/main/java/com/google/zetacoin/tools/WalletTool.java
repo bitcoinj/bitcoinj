@@ -37,7 +37,7 @@ import joptsimple.OptionParser;
 import joptsimple.OptionSet;
 import joptsimple.OptionSpec;
 import joptsimple.util.DateConverter;
-import org.bitcoinj.wallet.Protos;
+import org.zetacoinj.wallet.Protos;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.util.encoders.Hex;
@@ -78,7 +78,7 @@ public class WalletTool {
     private static PeerDiscovery discovery;
     private static ValidationMode mode;
     private static String password;
-    private static org.bitcoin.protocols.payments.Protos.PaymentRequest paymentRequest;
+    private static org.zetacoin.protocols.payments.Protos.PaymentRequest paymentRequest;
 
     public static class Condition {
         public enum Type {
@@ -513,7 +513,7 @@ public class WalletTool {
                 System.exit(1);
             }
             try {
-                paymentRequest = org.bitcoin.protocols.payments.Protos.PaymentRequest.newBuilder().mergeFrom(stream).build();
+                paymentRequest = org.zetacoin.protocols.payments.Protos.PaymentRequest.newBuilder().mergeFrom(stream).build();
             } catch(IOException e) {
                 System.err.println("Failed to parse payment request from file " + e.getMessage());
                 System.exit(1);

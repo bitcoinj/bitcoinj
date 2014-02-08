@@ -26,8 +26,8 @@ import com.google.zetacoin.wallet.WalletTransaction;
 import com.google.common.collect.Lists;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.TextFormat;
-import org.bitcoinj.wallet.Protos;
-import org.bitcoinj.wallet.Protos.Wallet.EncryptionType;
+import org.zetacoinj.wallet.Protos;
+import org.zetacoinj.wallet.Protos.Wallet.EncryptionType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,7 +51,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * a data interchange format developed by Google with an efficient binary representation, a type safe specification
  * language and compilers that generate code to work with those data structures for many languages. Protocol buffers
  * can have their format evolved over time: conceptually they represent data using (tag, length, value) tuples. The
- * format is defined by the <tt>bitcoin.proto</tt> file in the bitcoinj source distribution.<p>
+ * format is defined by the <tt>zetacoin.proto</tt> file in the zetacoinj source distribution.<p>
  *
  * This class is used through its static methods. The most common operations are writeWallet and readWallet, which do
  * the obvious operations on Output/InputStreams. You can use a {@link java.io.ByteArrayInputStream} and equivalent
@@ -574,7 +574,7 @@ public class WalletProtobufSerializer {
         txMap.put(txProto.getHash(), tx);
     }
 
-    private WalletTransaction connectTransactionOutputs(org.bitcoinj.wallet.Protos.Transaction txProto) throws UnreadableWalletException {
+    private WalletTransaction connectTransactionOutputs(org.zetacoinj.wallet.Protos.Transaction txProto) throws UnreadableWalletException {
         Transaction tx = txMap.get(txProto.getHash());
         final WalletTransaction.Pool pool;
         switch (txProto.getPool()) {

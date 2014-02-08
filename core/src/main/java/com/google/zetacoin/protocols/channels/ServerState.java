@@ -314,7 +314,7 @@ public final class ServerState {
                 com.google.zetacoin.protocols.channels.ServerState.StoredServerPaymentChannels.class, com.google.zetacoin.protocols.channels.ServerState.StoredServerPaymentChannels.Builder.class);
       }
 
-      // Construct using com.google.bitcoin.protocols.channels.ServerState.StoredServerPaymentChannels.newBuilder()
+      // Construct using com.google.zetacoin.protocols.channels.ServerState.StoredServerPaymentChannels.newBuilder()
       private Builder() {
         maybeForceBuilderInitialization();
       }
@@ -1177,7 +1177,7 @@ public final class ServerState {
                 com.google.zetacoin.protocols.channels.ServerState.StoredServerPaymentChannel.class, com.google.zetacoin.protocols.channels.ServerState.StoredServerPaymentChannel.Builder.class);
       }
 
-      // Construct using com.google.bitcoin.protocols.channels.ServerState.StoredServerPaymentChannel.newBuilder()
+      // Construct using com.google.zetacoin.protocols.channels.ServerState.StoredServerPaymentChannel.newBuilder()
       private Builder() {
         maybeForceBuilderInitialization();
       }

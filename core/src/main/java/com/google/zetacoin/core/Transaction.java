@@ -16,25 +16,42 @@
 
 package com.google.zetacoin.core;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.zetacoin.core.TransactionConfidence.ConfidenceType;
 import com.google.zetacoin.crypto.TransactionSignature;
 import com.google.zetacoin.script.Script;
 import com.google.zetacoin.script.ScriptBuilder;
 import com.google.zetacoin.script.ScriptOpCodes;
-import com.google.common.collect.ImmutableMap;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.crypto.params.KeyParameter;
 
-import javax.annotation.Nullable;
-import java.io.*;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.io.OutputStream;
+import java.io.Serializable;
 import java.math.BigInteger;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
-import static com.google.zetacoin.core.Utils.*;
-import static com.google.common.base.Preconditions.*;
+import javax.annotation.Nullable;
+
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
+import static com.google.zetacoin.core.Utils.NEGATIVE_ONE;
+import static com.google.zetacoin.core.Utils.bitcoinValueToFriendlyString;
+import static com.google.zetacoin.core.Utils.doubleDigest;
+import static com.google.zetacoin.core.Utils.reverseBytes;
+import static com.google.zetacoin.core.Utils.uint32ToByteStreamLE;
 
 /**
  * <p>A transaction represents the movement of coins from some addresses to some other addresses. It can also represent
@@ -73,7 +90,7 @@ public class Transaction extends ChildMessage implements Serializable {
      */
     public static final BigInteger MIN_NONDUST_OUTPUT = BigInteger.valueOf(5460);
 
-    // These are serialized in both bitcoin and java serialization.
+    // These are serialized in both zetacoin and java serialization.
     private long version;
     private ArrayList<TransactionInput> inputs;
     private ArrayList<TransactionOutput> outputs;

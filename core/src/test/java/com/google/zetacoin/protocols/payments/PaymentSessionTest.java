@@ -20,7 +20,7 @@ import com.google.zetacoin.core.*;
 import com.google.zetacoin.params.TestNet3Params;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.protobuf.ByteString;
-import org.bitcoin.protocols.payments.Protos;
+import org.zetacoin.protocols.payments.Protos;
 import org.junit.Before;
 import org.junit.Test;
 

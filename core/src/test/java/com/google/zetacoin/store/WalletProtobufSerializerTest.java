@@ -10,7 +10,7 @@ import com.google.zetacoin.utils.BriefLogFormatter;
 import com.google.zetacoin.utils.TestUtils;
 import com.google.zetacoin.utils.Threading;
 import com.google.protobuf.ByteString;
-import org.bitcoinj.wallet.Protos;
+import org.zetacoinj.wallet.Protos;
 import org.junit.Before;
 import org.junit.Test;
 

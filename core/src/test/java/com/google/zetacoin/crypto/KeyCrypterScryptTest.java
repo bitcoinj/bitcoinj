@@ -19,8 +19,8 @@ import com.google.zetacoin.core.Utils;
 import com.google.zetacoin.utils.BriefLogFormatter;
 import com.google.protobuf.ByteString;
 
-import org.bitcoinj.wallet.Protos;
-import org.bitcoinj.wallet.Protos.ScryptParameters;
+import org.zetacoinj.wallet.Protos;
+import org.zetacoinj.wallet.Protos.ScryptParameters;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;

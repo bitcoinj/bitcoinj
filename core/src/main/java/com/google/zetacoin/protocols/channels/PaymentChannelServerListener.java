@@ -22,7 +22,7 @@ import com.google.zetacoin.core.Wallet;
 import com.google.zetacoin.net.NioServer;
 import com.google.zetacoin.net.ProtobufParser;
 import com.google.zetacoin.net.StreamParserFactory;
-import org.bitcoin.paymentchannel.Protos;
+import org.zetacoin.paymentchannel.Protos;
 
 import javax.annotation.Nullable;
 import java.io.IOException;

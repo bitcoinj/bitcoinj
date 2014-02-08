@@ -22,7 +22,7 @@ import com.google.zetacoin.core.NetworkParameters;
 import java.math.BigInteger;
 
 /**
- * Network parameters used by the bitcoinj unit tests (and potentially your own). This lets you solve a block using
+ * Network parameters used by the zetacoinj unit tests (and potentially your own). This lets you solve a block using
  * {@link com.google.zetacoin.core.Block#solve()} by setting difficulty to the easiest possible.
  */
 public class UnitTestParams extends NetworkParameters {

@@ -35,9 +35,9 @@ import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.protobuf.ByteString;
 
-import org.bitcoinj.wallet.Protos;
-import org.bitcoinj.wallet.Protos.ScryptParameters;
-import org.bitcoinj.wallet.Protos.Wallet.EncryptionType;
+import org.zetacoinj.wallet.Protos;
+import org.zetacoinj.wallet.Protos.ScryptParameters;
+import org.zetacoinj.wallet.Protos.Wallet.EncryptionType;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -1041,7 +1041,7 @@ public class WalletTest extends TestWithWallet {
     @Test
     public void autosaveImmediate() throws Exception {
         // Test that the wallet will save itself automatically when it changes.
-        File f = File.createTempFile("bitcoinj-unit-test", null);
+        File f = File.createTempFile("zetacoinj-unit-test", null);
         Sha256Hash hash1 = Sha256Hash.hashFileContents(f);
         // Start with zero delay and ensure the wallet file changes after adding a key.
         wallet.autosaveToFile(f, 0, TimeUnit.SECONDS, null);
@@ -1064,7 +1064,7 @@ public class WalletTest extends TestWithWallet {
         // an auto-save cycle of 1 second.
         final File[] results = new File[2];
         final CountDownLatch latch = new CountDownLatch(3);
-        File f = File.createTempFile("bitcoinj-unit-test", null);
+        File f = File.createTempFile("zetacoinj-unit-test", null);
         Sha256Hash hash1 = Sha256Hash.hashFileContents(f);
         wallet.autosaveToFile(f, 1, TimeUnit.SECONDS,
                 new WalletFiles.Listener() {

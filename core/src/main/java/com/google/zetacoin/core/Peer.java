@@ -378,7 +378,7 @@ public class Peer extends PeerSocketHandler {
         // Now it's our turn ...
         // Send an ACK message stating we accept the peers protocol version.
         sendMessage(new VersionAck());
-        // bitcoinj is a client mode implementation. That means there's not much point in us talking to other client
+        // zetacoinj is a client mode implementation. That means there's not much point in us talking to other client
         // mode nodes because we can't download the data from them we need to find/verify transactions. Some bogus
         // implementations claim to have a block chain in their services field but then report a height of zero, filter
         // them out here.
