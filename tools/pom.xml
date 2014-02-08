@@ -52,7 +52,7 @@
                   </filters>
                   <transformers>
                       <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                          <mainClass>com.google.bitcoin.tools.WalletTool</mainClass>
+                          <mainClass>com.google.zetacoin.tools.WalletTool</mainClass>
                       </transformer>
                   </transformers>
               </configuration>

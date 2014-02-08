@@ -11,7 +11,7 @@ find your unzipped Maven install directory.
 Now try running one of the example apps:
 
   cd examples
-  mvn exec:java -Dexec.mainClass=com.google.bitcoin.examples.ForwardingService <insert a bitcoin address here>
+  mvn exec:java -Dexec.mainClass=com.google.zetacoin.examples.ForwardingService <insert a bitcoin address here>
 
 It will download the block chain and eventually print a Bitcoin address. If you send coins to it,
 it will forward them on to the address you specified.

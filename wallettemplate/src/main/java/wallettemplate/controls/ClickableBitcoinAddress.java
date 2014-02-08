@@ -1,6 +1,6 @@
 package wallettemplate.controls;
 
-import com.google.bitcoin.uri.BitcoinURI;
+import com.google.zetacoin.uri.BitcoinURI;
 import de.jensd.fx.fontawesome.AwesomeDude;
 import de.jensd.fx.fontawesome.AwesomeIcon;
 import javafx.beans.property.StringProperty;
@@ -25,7 +25,6 @@ import net.glxn.qrgen.image.ImageType;
 import wallettemplate.Main;
 import wallettemplate.utils.GuiUtils;
 
-import java.awt.*;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.URI;
