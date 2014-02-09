@@ -59,7 +59,7 @@ public class BitcoinSerializerTest {
         AddressMessage a = (AddressMessage)bs.deserialize(ByteBuffer.wrap(addrMessage));
         assertEquals(1, a.getAddresses().size());
         PeerAddress pa = a.getAddresses().get(0);
-        assertEquals(8333, pa.getPort());
+        assertEquals(17333, pa.getPort());
         assertEquals("10.0.0.1", pa.getAddr().getHostAddress());
         ByteArrayOutputStream bos = new ByteArrayOutputStream(addrMessage.length);
         bs.serialize(a, bos);
