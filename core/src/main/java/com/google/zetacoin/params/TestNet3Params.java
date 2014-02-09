@@ -31,28 +31,28 @@ public class TestNet3Params extends NetworkParameters {
         super();
         id = ID_TESTNET;
         // Genesis hash is 000000000933ea01ad0ee984209779baaec3ced90fa3f408719526f8d77f4943
-        packetMagic = 0x0b110907;
+        packetMagic = 0x05fea901L;
         interval = INTERVAL;
         targetTimespan = TARGET_TIMESPAN;
-        proofOfWorkLimit = Utils.decodeCompactBits(0x1d00ffffL);
-        port = 18333;
-        addressHeader = 111;
-        p2shHeader = 196;
+        proofOfWorkLimit = Utils.decodeCompactBits(0x1e0ffff0L);
+        port = 27333;
+        addressHeader = 88;
+        p2shHeader = 188;
         acceptableAddressCodes = new int[] { addressHeader, p2shHeader };
         dumpedPrivateKeyHeader = 239;
-        genesisBlock.setTime(1296688602L);
-        genesisBlock.setDifficultyTarget(0x1d00ffffL);
-        genesisBlock.setNonce(414098458);
+        genesisBlock.setTime(1374901773L);
+        genesisBlock.setDifficultyTarget(0x1e0fffffL);
+        genesisBlock.setNonce(414708675);
         spendableCoinbaseDepth = 100;
-        subsidyDecreaseBlockCount = 210000;
+        subsidyDecreaseBlockCount = 80640;
         String genesisHash = genesisBlock.getHashAsString();
-        checkState(genesisHash.equals("000000000933ea01ad0ee984209779baaec3ced90fa3f408719526f8d77f4943"));
-        alertSigningKey = Hex.decode("04302390343f91cc401d56d68b123028bf52e5fca1939df127f63c6467cdf9c8e2c14b61104cf817d0b780da337893ecc4aaff1309e536162dabbdb45200ca2b0a");
+        checkState(genesisHash.equals("000007717e2e2df52a9ff29b0771901c9c12f5cbb4914cdf0c8047b459bb21d8"));
+        alertSigningKey = Hex.decode("04deffaef5b9552d1635013708eff25f2fac734cd6720d86fe83f9618572eb095b738efd752128b885c40ca0a37535df5a4b2b2cae5c80cea9bf315fb67ce9fcb2");
 
-        dnsSeeds = new String[] {
+        /* dnsSeeds = new String[] {
                 "testnet-seed.zetacoin.petertodd.org",
                 "testnet-seed.bluematt.me"
-        };
+        };*/
     }
 
     private static TestNet3Params instance;
