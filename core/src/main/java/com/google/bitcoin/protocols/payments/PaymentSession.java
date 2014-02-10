@@ -56,20 +56,19 @@ import java.util.concurrent.Callable;
  * <li>Directly with a {@link Protos.PaymentRequest} object</li>
  * </ul>
  *
- * If initialized with a BitcoinURI or a url, a network request is made for the payment request object and a
- * ListenableFuture is returned that will be notified with the PaymentSession object after it is downloaded.
+ * <p>If initialized with a BitcoinURI or a url, a network request is made for the payment request object and a
+ * ListenableFuture is returned that will be notified with the PaymentSession object after it is downloaded.</p>
  *
- * Once the PaymentSession is initialized, typically a wallet application will prompt the user to confirm that the
+ * <p>Once the PaymentSession is initialized, typically a wallet application will prompt the user to confirm that the
  * amount and recipient are correct, perform any additional steps, and then construct a list of transactions to pass to
- * the sendPayment method.
+ * the sendPayment method.</p>
  *
- * Call sendPayment with a list of transactions that will be broadcast. A {@link Protos.Payment} message will be sent to
- * the merchant if a payment url is provided in the PaymentRequest.
- * NOTE: sendPayment does NOT broadcast the transactions to the bitcoin network.
- *
- * sendPayment returns a ListenableFuture that will be notified when a {@link Protos.PaymentACK} is received from the
- * merchant. Typically a wallet will show the message to the user as a confirmation message that the payment is now
- * "processing" or that an error occurred.
+ * <p>Call sendPayment with a list of transactions that will be broadcast. A {@link Protos.Payment} message will be sent
+ * to the merchant if a payment url is provided in the PaymentRequest. NOTE: sendPayment does NOT broadcast the
+ * transactions to the bitcoin network. Instead it returns a ListenableFuture that will be notified when a
+ * {@link Protos.PaymentACK} is received from the merchant. Typically a wallet will show the message to the user
+ * as a confirmation message that the payment is now "processing" or that an error occurred, and then broadcast the
+ * tx itself later if needed.</p>
  *
  * @author Kevin Greene
  * @see <a href="https://github.com/bitcoin/bips/blob/master/bip-0070.mediawiki">BIP 0070</a>
