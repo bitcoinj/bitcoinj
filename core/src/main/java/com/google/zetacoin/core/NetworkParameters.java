@@ -54,7 +54,7 @@ public abstract class NetworkParameters implements Serializable {
     /**
      * The alert signing key originally owned by Satoshi, and now passed on to Gavin along with a few others.
      */
-    public static final byte[] SATOSHI_KEY = Hex.decode("04f09702847840aaf195de8442ebecedf5b095cdbb9bc716bda9110971b28a49e0ead8564ff0db22209e0374782c093bb899692d524e9d6a6956e7c5ecbcd68284");
+    public static final byte[] SATOSHI_KEY = Hex.decode("045337216002ca6a71d63edf062895417610a723d453e722bf4728996c58661cdac3d4dec5cecd449b9086e9602b35cc726a9e0163e1a4d40f521fbdaebb674658");
     /** The string returned by getId() for the main, production network where people trade things. */
     public static final String ID_MAINNET = "org.zetacoin.production";
     /** The string returned by getId() for the testnet. */
@@ -121,6 +121,8 @@ public abstract class NetworkParameters implements Serializable {
             throw new RuntimeException(e);
         }
         genesisBlock.addTransaction(t);
+        // Unable to figure out the exact transaction input script therefore taking the shortcut by setting merkle root directly
+        genesisBlock.setMerkleRoot(new Sha256Hash("d0227b8c3e3d07bce9656b3d9e474f050d23458aaead93357dcfdac9ab9b79f9"));
         return genesisBlock;
     }
 

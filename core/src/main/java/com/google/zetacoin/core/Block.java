@@ -832,7 +832,7 @@ public class Block extends Message {
     }
 
     /** Exists only for unit testing. */
-    void setMerkleRoot(Sha256Hash value) {
+    public void setMerkleRoot(Sha256Hash value) {
         unCacheHeader();
         merkleRoot = value;
         hash = null;
