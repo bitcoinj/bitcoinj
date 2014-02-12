@@ -1,5 +1,6 @@
 /*
  * Copyright 2013 Google Inc.
+ * Copyright 2014 Andreas Schildbach
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +17,14 @@
 
 package com.google.bitcoin.wallet;
 
+import com.google.bitcoin.core.NetworkParameters;
 import com.google.bitcoin.core.Transaction;
 import com.google.bitcoin.core.TransactionConfidence;
+import com.google.bitcoin.core.TransactionOutput;
 import com.google.bitcoin.core.Wallet;
 
 import javax.annotation.Nullable;
+
 import java.util.List;
 
 import static com.google.common.base.Preconditions.checkState;
@@ -34,6 +38,7 @@ public class DefaultRiskAnalysis implements RiskAnalysis {
     protected final List<Transaction> dependencies;
     protected final Wallet wallet;
 
+    private Transaction nonStandard;
     protected Transaction nonFinal;
     protected boolean analyzed;
 
@@ -48,6 +53,14 @@ public class DefaultRiskAnalysis implements RiskAnalysis {
         checkState(!analyzed);
         analyzed = true;
 
+        Result result = analyzeIsFinal();
+        if (result != Result.OK)
+            return result;
+
+        return analyzeIsStandard();
+    }
+
+    private Result analyzeIsFinal() {
         // Transactions we create ourselves are, by definition, not at risk of double spending against us.
         if (tx.getConfidence().getSource() == TransactionConfidence.Source.SELF)
             return Result.OK;
@@ -71,6 +84,49 @@ public class DefaultRiskAnalysis implements RiskAnalysis {
         return Result.OK;
     }
 
+    private Result analyzeIsStandard() {
+        if (!wallet.getNetworkParameters().getId().equals(NetworkParameters.ID_MAINNET))
+            return Result.OK;
+
+        nonStandard = isStandard(tx);
+        if (nonStandard != null)
+            return Result.NON_STANDARD;
+
+        for (Transaction dep : dependencies) {
+            nonStandard = isStandard(dep);
+            if (nonStandard != null)
+                return Result.NON_STANDARD;
+        }
+
+        return Result.OK;
+    }
+
+    /**
+     * <p>Checks if a transaction is considered "standard" by the reference client's IsStandardTx and AreInputsStandard
+     * functions.</p>
+     *
+     * <p>Note that this method currently only implements a minimum of checks. More to be added later.</p>
+     *
+     * @return Either null if the transaction is standard, or the first transaction found which is considered nonstandard
+     */
+    public Transaction isStandard(Transaction tx) {
+        if (tx.getVersion() > 1 || tx.getVersion() < 1)
+            return tx;
+
+        for (TransactionOutput output : tx.getOutputs()) {
+            if (output.getMinNonDustValue().compareTo(output.getValue()) > 0)
+                return tx;
+        }
+
+        return null;
+    }
+
+    /** Returns the transaction that was found to be non-standard, or null. */
+    @Nullable
+    public Transaction getNonStandard() {
+        return nonStandard;
+    }
+
     /** Returns the transaction that was found to be non-final, or null. */
     @Nullable
     public Transaction getNonFinal() {
@@ -83,6 +139,8 @@ public class DefaultRiskAnalysis implements RiskAnalysis {
             return "Pending risk analysis for " + tx.getHashAsString();
         else if (nonFinal != null)
             return "Risky due to non-finality of " + nonFinal.getHashAsString();
+        else if (nonStandard != null)
+            return "Risky due to non-standard tx " + nonStandard.getHashAsString();
         else
             return "Non-risky";
     }
