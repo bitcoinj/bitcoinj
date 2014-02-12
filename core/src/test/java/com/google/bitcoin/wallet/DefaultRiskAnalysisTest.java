@@ -1,5 +1,6 @@
 /*
  * Copyright 2013 Google Inc.
+ * Copyright 2014 Andreas Schildbach
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +17,10 @@
 
 package com.google.bitcoin.wallet;
 
+import java.math.BigInteger;
+
 import com.google.bitcoin.core.*;
-import com.google.bitcoin.params.UnitTestParams;
+import com.google.bitcoin.params.MainNetParams;
 import com.google.common.collect.ImmutableList;
 import org.junit.Before;
 import org.junit.Test;
@@ -27,7 +30,8 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 
 public class DefaultRiskAnalysisTest {
-    private static final NetworkParameters params = UnitTestParams.get();
+    // Uses mainnet because isStandard checks are disabled on testnet.
+    private static final NetworkParameters params = MainNetParams.get();
     private Wallet wallet;
     private final int TIMESTAMP = 1384190189;
     private ECKey key1;
@@ -118,5 +122,23 @@ public class DefaultRiskAnalysisTest {
         DefaultRiskAnalysis analysis = DefaultRiskAnalysis.FACTORY.create(wallet, tx2, ImmutableList.of(tx1));
         assertEquals(RiskAnalysis.Result.NON_FINAL, analysis.analyze());
         assertEquals(tx1, analysis.getNonFinal());
+    }
+
+    @Test
+    public void nonStandardDust() {
+        Transaction standardTx = new Transaction(params);
+        standardTx.addInput(params.getGenesisBlock().getTransactions().get(0).getOutput(0));
+        standardTx.addOutput(Utils.COIN, key1);
+        assertEquals(RiskAnalysis.Result.OK, DefaultRiskAnalysis.FACTORY.create(wallet, standardTx, NO_DEPS).analyze());
+
+        Transaction dustTx = new Transaction(params);
+        dustTx.addInput(params.getGenesisBlock().getTransactions().get(0).getOutput(0));
+        dustTx.addOutput(BigInteger.ONE, key1); // 1 Satoshi
+        assertEquals(RiskAnalysis.Result.NON_STANDARD, DefaultRiskAnalysis.FACTORY.create(wallet, dustTx, NO_DEPS).analyze());
+
+        Transaction edgeCaseTx = new Transaction(params);
+        edgeCaseTx.addInput(params.getGenesisBlock().getTransactions().get(0).getOutput(0));
+        edgeCaseTx.addOutput(dustTx.getOutput(0).getMinNonDustValue(), key1); // Dust threshold
+        assertEquals(RiskAnalysis.Result.OK, DefaultRiskAnalysis.FACTORY.create(wallet, edgeCaseTx, NO_DEPS).analyze());
     }
 }
