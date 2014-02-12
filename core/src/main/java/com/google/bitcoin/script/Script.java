@@ -516,6 +516,17 @@ public class Script {
         return true;
     }
 
+    /**
+     * Returns true if the script includes any {@link ScriptChunk}s which are non-data (ie
+     * {@link ScriptChunk#isOpCode()} is true)
+     */
+    public boolean hasNonPushOpCodes() {
+        for (ScriptChunk chunk : getChunks())
+            if (chunk.isOpCode())
+                return true;
+        return false;
+    }
+
     private static boolean equalsRange(byte[] a, int start, byte[] b) {
         if (start + b.length > a.length)
             return false;

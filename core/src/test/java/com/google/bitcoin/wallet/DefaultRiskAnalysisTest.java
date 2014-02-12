@@ -17,7 +17,9 @@
 package com.google.bitcoin.wallet;
 
 import com.google.bitcoin.core.*;
-import com.google.bitcoin.params.UnitTestParams;
+import com.google.bitcoin.params.MainNetParams;
+import com.google.bitcoin.script.ScriptBuilder;
+import com.google.bitcoin.script.ScriptOpCodes;
 import com.google.common.collect.ImmutableList;
 import org.junit.Before;
 import org.junit.Test;
@@ -27,7 +29,8 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 
 public class DefaultRiskAnalysisTest {
-    private static final NetworkParameters params = UnitTestParams.get();
+    // Uses mainnet because isStandard checks are disabled on testnet.
+    private static final NetworkParameters params = MainNetParams.get();
     private Wallet wallet;
     private final int TIMESTAMP = 1384190189;
     private ECKey key1;
@@ -118,5 +121,31 @@ public class DefaultRiskAnalysisTest {
         DefaultRiskAnalysis analysis = DefaultRiskAnalysis.FACTORY.create(wallet, tx2, ImmutableList.of(tx1));
         assertEquals(RiskAnalysis.Result.NON_FINAL, analysis.analyze());
         assertEquals(tx1, analysis.getNonFinal());
+    }
+
+    @Test
+    public void simpleStandardTransaction() {
+        Transaction tx = new Transaction(params);
+        tx.addInput(params.getGenesisBlock().getTransactions().get(0).getOutput(0));
+        tx.addOutput(Utils.COIN, new ScriptBuilder().op(ScriptOpCodes.OP_TRUE).build());
+        DefaultRiskAnalysis analysis = DefaultRiskAnalysis.FACTORY.create(wallet, tx, NO_DEPS);
+        assertEquals(RiskAnalysis.Result.NON_STANDARD, analysis.analyze());
+    }
+
+    @Test
+    public void simpleNonStandardDependency() {
+        Transaction tx1 = new Transaction(params);
+        tx1.addInput(params.getGenesisBlock().getTransactions().get(0).getOutput(0)).setSequenceNumber(1);
+        TransactionOutput output = tx1.addOutput(Utils.COIN, new ScriptBuilder().op(ScriptOpCodes.OP_TRUE).build());
+        Transaction tx2 = new Transaction(params);
+        tx2.addInput(output);
+        tx2.addOutput(Utils.COIN, key1);
+
+        DefaultRiskAnalysis analysis = DefaultRiskAnalysis.FACTORY.create(wallet, tx2, NO_DEPS);
+        assertEquals(RiskAnalysis.Result.OK, analysis.analyze());
+
+        analysis = DefaultRiskAnalysis.FACTORY.create(wallet, tx2, ImmutableList.of(tx1));
+        assertEquals(RiskAnalysis.Result.NON_STANDARD, analysis.analyze());
+        assertEquals(tx1, analysis.getNonStandard());
     }
 }
