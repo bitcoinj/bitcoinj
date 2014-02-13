@@ -16,11 +16,12 @@
 
 package com.google.zetacoin.core;
 
-import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+
+import javax.annotation.Nullable;
 
 /**
  * A VersionMessage holds information exchanged during connection setup with another peer. Most of the fields are not
@@ -76,7 +77,7 @@ public class VersionMessage extends Message {
     /** The version of this library release, as a string. */
     public static final String BITCOINJ_VERSION = "0.12-SNAPSHOT";
     /** The value that is prepended to the subVer field of this application. */
-    public static final String LIBRARY_SUBVER = "/BitCoinJ:" + BITCOINJ_VERSION + "/";
+    public static final String LIBRARY_SUBVER = "/ZetaCoinJ:" + BITCOINJ_VERSION + "/";
 
     public VersionMessage(NetworkParameters params, byte[] msg) throws ProtocolException {
         super(params, msg, 0);

@@ -18,6 +18,7 @@ package com.google.zetacoin.core;
 
 import com.google.zetacoin.params.MainNetParams;
 import com.google.zetacoin.params.TestNet3Params;
+import com.google.zetacoin.params.UnitTestParams;
 import com.google.zetacoin.script.Script;
 
 import javax.annotation.Nullable;
@@ -124,7 +125,7 @@ public class Address extends VersionedChecksummedBytes {
     @Nullable
     public NetworkParameters getParameters() {
         // TODO: There should be a more generic way to get all supported networks.
-        NetworkParameters[] networks = { TestNet3Params.get(), MainNetParams.get() };
+        NetworkParameters[] networks = { TestNet3Params.get(), MainNetParams.get(), UnitTestParams.get() };
         for (NetworkParameters params : networks) {
             if (isAcceptableVersion(params, version)) {
                 return params;

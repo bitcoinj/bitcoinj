@@ -36,8 +36,8 @@ import static org.junit.Assert.assertNotNull;
 public class CoinbaseBlockTest {
     static final NetworkParameters params = MainNetParams.get();
 
-    // The address for this private key is 1GqtGtn4fctXuKxsVzRPSLmYWN1YioLi9y.
-    private static final String MINING_PRIVATE_KEY = "5JDxPrBRghF1EvSBjDigywqfmAjpHPmTJxYtQTYJxJRHLLQA4mG";
+    // The address for this private key is ZTt93ad7U3xdL17oTZ4tENYUrid1eioLtV.
+    private static final String MINING_PRIVATE_KEY = "8WqRL7GVVYAkBgDtksJcYjQ1g7rkgzfWrKMDpqaNPD4Wi4EhxNE";
 
     private static final int BLOCK_OF_INTEREST = 169482;
     private static final int BLOCK_LENGTH_AS_HEX = 37357;
