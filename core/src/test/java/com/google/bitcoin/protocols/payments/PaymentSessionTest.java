@@ -1,5 +1,6 @@
 /**
  * Copyright 2013 Google Inc.
+ * Copyright 2014 Andreas Schildbach
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -80,6 +81,23 @@ public class PaymentSessionTest {
         TransactionOutput refundOutput = new TransactionOutput(params, null, nanoCoins, refundAddr);
         ByteString refundScript = ByteString.copyFrom(refundOutput.getScriptBytes());
         assertTrue(refundScript.equals(payment.getRefundTo(0).getScript()));
+    }
+
+    @Test
+    public void testDefaults() throws Exception {
+        Protos.Output.Builder outputBuilder = Protos.Output.newBuilder()
+                .setScript(ByteString.copyFrom(outputToMe.getScriptBytes()));
+        Protos.PaymentDetails paymentDetails = Protos.PaymentDetails.newBuilder()
+                .setTime(time)
+                .addOutputs(outputBuilder)
+                .build();
+        Protos.PaymentRequest paymentRequest = Protos.PaymentRequest.newBuilder()
+                .setSerializedPaymentDetails(paymentDetails.toByteString())
+                .build();
+        MockPaymentSession paymentSession = new MockPaymentSession(paymentRequest);
+        assertEquals(BigInteger.ZERO, paymentSession.getValue());
+        assertNull(paymentSession.getPaymentUrl());
+        assertNull(paymentSession.getMemo());
     }
 
     @Test
