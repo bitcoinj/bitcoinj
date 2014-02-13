@@ -1,5 +1,6 @@
 /**
  * Copyright 2013 Google Inc.
+ * Copyright 2014 Andreas Schildbach
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -73,6 +74,7 @@ import java.util.concurrent.Callable;
  * "processing" or that an error occurred.
  *
  * @author Kevin Greene
+ * @author Andreas Schildbach
  * @see <a href="https://github.com/bitcoin/bips/blob/master/bip-0070.mediawiki">BIP 0070</a>
  */
 public class PaymentSession {
@@ -598,8 +600,6 @@ public class PaymentSession {
         try {
             if (request == null)
                 throw new PaymentRequestException("request cannot be null");
-            if (!request.hasPaymentDetailsVersion())
-                throw new PaymentRequestException.InvalidVersion("No version");
             if (request.getPaymentDetailsVersion() != 1)
                 throw new PaymentRequestException.InvalidVersion("Version 1 required. Received version " + request.getPaymentDetailsVersion());
             paymentRequest = request;
