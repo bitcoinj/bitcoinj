@@ -531,7 +531,13 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
                 }
             }
 
-            if (!success) log.error(toString());
+            if (!success) {
+                try {
+                    log.error(toString());
+                } catch (RuntimeException x) {
+                    log.error("Printing inconsistent wallet failed", x);
+                }
+            }
             return success;
         } finally {
             lock.unlock();
