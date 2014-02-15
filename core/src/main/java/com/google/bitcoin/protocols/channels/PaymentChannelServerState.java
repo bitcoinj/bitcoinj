@@ -227,7 +227,7 @@ public class PaymentChannelServerState {
                 throw new VerificationException("Multisig contract's first output was not a standard 2-of-2 multisig to client and server in that order.");
 
             this.totalValue = multisigContract.getOutput(0).getValue();
-            if (this.totalValue.compareTo(BigInteger.ZERO) <= 0)
+            if (this.totalValue.signum() <= 0)
                 throw new VerificationException("Not accepting an attempt to open a contract with zero value.");
         } catch (VerificationException e) {
             // We couldn't parse the multisig transaction or its output.
@@ -294,7 +294,7 @@ public class PaymentChannelServerState {
         if (refundSize.compareTo(clientOutput.getMinNonDustValue()) < 0 && !fullyUsedUp)
             throw new ValueOutOfRangeException("Attempt to refund negative value or value too small to be accepted by the network");
         BigInteger newValueToMe = totalValue.subtract(refundSize);
-        if (newValueToMe.compareTo(BigInteger.ZERO) < 0)
+        if (newValueToMe.signum() < 0)
             throw new ValueOutOfRangeException("Attempt to refund more than the contract allows.");
         if (newValueToMe.compareTo(bestValueToMe) < 0)
             throw new ValueOutOfRangeException("Attempt to roll back payment on the channel.");

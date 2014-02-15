@@ -127,7 +127,7 @@ public class BlockChainTest {
                                        wallet.getKeys().get(0).toAddress(unitTestParams));
         Block b1 = createFakeBlock(blockStore, tx1).block;
         chain.add(b1);
-        assertTrue(wallet.getBalance().compareTo(BigInteger.ZERO) > 0);
+        assertTrue(wallet.getBalance().signum() > 0);
     }
 
     @Test

@@ -120,7 +120,7 @@ public class Utils {
      */
     public static BigInteger toNanoCoins(String coins) {
         BigInteger bigint = new BigDecimal(coins).movePointRight(8).toBigIntegerExact();
-        if (bigint.compareTo(BigInteger.ZERO) < 0)
+        if (bigint.signum() < 0)
             throw new ArithmeticException("Negative coins specified");
         if (bigint.compareTo(NetworkParameters.MAX_MONEY) > 0)
             throw new ArithmeticException("Amount larger than the total quantity of Bitcoins possible specified.");
@@ -331,7 +331,7 @@ public class Utils {
      */
     public static String bitcoinValueToFriendlyString(BigInteger value) {
         // TODO: This API is crap. This method should go away when we encapsulate money values.
-        boolean negative = value.compareTo(BigInteger.ZERO) < 0;
+        boolean negative = value.signum() < 0;
         if (negative)
             value = value.negate();
         BigDecimal bd = new BigDecimal(value, 8);
@@ -404,7 +404,7 @@ public class Utils {
             else
                 return new byte[] {0x00, 0x00, 0x00, 0x00};
         }
-        boolean isNegative = value.compareTo(BigInteger.ZERO) < 0;
+        boolean isNegative = value.signum() < 0;
         if (isNegative)
             value = value.negate();
         byte[] array = value.toByteArray();

@@ -707,8 +707,8 @@ public class ECKey implements Serializable {
     @Nullable
     public static ECKey recoverFromSignature(int recId, ECDSASignature sig, Sha256Hash message, boolean compressed) {
         Preconditions.checkArgument(recId >= 0, "recId must be positive");
-        Preconditions.checkArgument(sig.r.compareTo(BigInteger.ZERO) >= 0, "r must be positive");
-        Preconditions.checkArgument(sig.s.compareTo(BigInteger.ZERO) >= 0, "s must be positive");
+        Preconditions.checkArgument(sig.r.signum() >= 0, "r must be positive");
+        Preconditions.checkArgument(sig.s.signum() >= 0, "s must be positive");
         Preconditions.checkNotNull(message);
         // 1.0 For j from 0 to h   (h == recId here and the loop is outside this function)
         //   1.1 Let x = r + jn

@@ -732,8 +732,8 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
     public boolean isTransactionRelevant(Transaction tx) throws ScriptException {
         lock.lock();
         try {
-            return tx.getValueSentFromMe(this).compareTo(BigInteger.ZERO) > 0 ||
-                   tx.getValueSentToMe(this).compareTo(BigInteger.ZERO) > 0 ||
+            return tx.getValueSentFromMe(this).signum() > 0 ||
+                   tx.getValueSentToMe(this).signum() > 0 ||
                    checkForDoubleSpendAgainstPending(tx, false);
         } finally {
             lock.unlock();
@@ -901,7 +901,7 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
             BigInteger newBalance = getBalance();  // This is slow.
             log.info("Balance is now: " + bitcoinValueToFriendlyString(newBalance));
             if (!wasPending) {
-                int diff = valueDifference.compareTo(BigInteger.ZERO);
+                int diff = valueDifference.signum();
                 // We pick one callback based on the value difference, though a tx can of course both send and receive
                 // coins from the wallet.
                 if (diff > 0) {
@@ -1000,7 +1000,7 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
         // Now make sure it ends up in the right pool. Also, handle the case where this TX is double-spending
         // against our pending transactions. Note that a tx may double spend our pending transactions and also send
         // us money/spend our money.
-        boolean hasOutputsToMe = tx.getValueSentToMe(this, true).compareTo(BigInteger.ZERO) > 0;
+        boolean hasOutputsToMe = tx.getValueSentToMe(this, true).signum() > 0;
         if (hasOutputsToMe) {
             // Needs to go into either unspent or spent (if the outputs were already spent by a pending tx).
             if (tx.isEveryOwnedOutputSpent(this)) {
@@ -1010,7 +1010,7 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
                 log.info("  tx {} ->unspent", tx.getHashAsString());
                 addWalletTransaction(Pool.UNSPENT, tx);
             }
-        } else if (tx.getValueSentFromMe(this).compareTo(BigInteger.ZERO) > 0) {
+        } else if (tx.getValueSentFromMe(this).signum() > 0) {
             // Didn't send us any money, but did spend some. Keep it around for record keeping purposes.
             log.info("  tx {} ->spent", tx.getHashAsString());
             addWalletTransaction(Pool.SPENT, tx);
@@ -1224,11 +1224,11 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
                 BigInteger valueSentFromMe = tx.getValueSentFromMe(this);
                 BigInteger valueSentToMe = tx.getValueSentToMe(this);
                 BigInteger newBalance = balance.add(valueSentToMe).subtract(valueSentFromMe);
-                if (valueSentToMe.compareTo(BigInteger.ZERO) > 0) {
+                if (valueSentToMe.signum() > 0) {
                     checkBalanceFuturesLocked(null);
                     queueOnCoinsReceived(tx, balance, newBalance);
                 }
-                if (valueSentFromMe.compareTo(BigInteger.ZERO) > 0)
+                if (valueSentFromMe.signum() > 0)
                     queueOnCoinsSent(tx, balance, newBalance);
 
                 maybeQueueOnWalletChanged();
@@ -1876,7 +1876,7 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
                 log.info("  with {} coins change", bitcoinValueToFriendlyString(bestChangeOutput.getValue()));
             }
             final BigInteger calculatedFee = totalInput.subtract(totalOutput);
-            if (calculatedFee.compareTo(BigInteger.ZERO) > 0) {
+            if (calculatedFee.signum() > 0) {
                 log.info("  with a fee of {}", bitcoinValueToFriendlyString(calculatedFee));
             }
 
@@ -3411,7 +3411,7 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
 
                 int size = 0;
                 TransactionOutput changeOutput = null;
-                if (change.compareTo(BigInteger.ZERO) > 0) {
+                if (change.signum() > 0) {
                     // The value of the inputs is greater than what we want to send. Just like in real life then,
                     // we need to take back some coins ... this is called "change". Add another output that sends the change
                     // back to us. The address comes either from the request or getChangeAddress() as a default.
@@ -3450,7 +3450,7 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
                 // include things we haven't added yet like input signatures/scripts or the change output.
                 size += req.tx.bitcoinSerialize().length;
                 size += estimateBytesForSigning(selection);
-                if (size/1000 > lastCalculatedSize/1000 && req.feePerKb.compareTo(BigInteger.ZERO) > 0) {
+                if (size/1000 > lastCalculatedSize/1000 && req.feePerKb.signum() > 0) {
                     lastCalculatedSize = size;
                     // We need more fees anyway, just try again with the same additional value
                     additionalValueForNextCategory = additionalValueSelected;
