@@ -1425,6 +1425,40 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
         }
     }
 
+    /**
+     * Clean up the wallet. Currently, it only removes risky pending transaction from the wallet and only if their
+     * outputs have not been spent.
+     */
+    public void cleanup() {
+        lock.lock();
+        try {
+            boolean dirty = false;
+            for (Iterator<Transaction> i = pending.values().iterator(); i.hasNext();) {
+                Transaction tx = i.next();
+                if (isTransactionRisky(tx, null) && !acceptRiskyTransactions) {
+                    log.debug("Found risky transaction {} in wallet during cleanup.", tx.getHashAsString());
+                    if (!tx.isAnyOutputSpent()) {
+                        tx.disconnectInputs();
+                        i.remove();
+                        transactions.remove(tx.getHash());
+                        dirty = true;
+                        log.info("Removed transaction {} from pending pool during cleanup.", tx.getHashAsString());
+                    } else {
+                        log.info(
+                                "Cannot remove transaction {} from pending pool during cleanup, as it's already spent partially.",
+                                tx.getHashAsString());
+                    }
+                }
+            }
+            if (dirty) {
+                checkState(isConsistent());
+                saveLater();
+            }
+        } finally {
+            lock.unlock();
+        }
+    }
+
     EnumSet<Pool> getContainingPools(Transaction tx) {
         lock.lock();
         try {
