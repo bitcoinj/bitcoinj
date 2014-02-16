@@ -376,6 +376,18 @@ public class Transaction extends ChildMessage implements Serializable {
     }
 
     /**
+     * Returns true if any of the outputs is marked as spent.
+     */
+    public boolean isAnyOutputSpent() {
+        maybeParse();
+        for (TransactionOutput output : outputs) {
+            if (!output.isAvailableForSpending())
+                return true;
+        }
+        return false;
+    }
+
+    /**
      * Returns false if this transaction has at least one output that is owned by the given wallet and unspent, true
      * otherwise.
      */
