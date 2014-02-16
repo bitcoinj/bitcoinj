@@ -18,6 +18,8 @@ package com.google.bitcoin.core;
 
 import com.google.bitcoin.core.Transaction.SigHash;
 import com.google.bitcoin.core.Wallet.SendRequest;
+import com.google.bitcoin.wallet.DefaultCoinSelector;
+import com.google.bitcoin.wallet.RiskAnalysis;
 import com.google.bitcoin.wallet.WalletTransaction;
 import com.google.bitcoin.wallet.WalletTransaction.Pool;
 import com.google.bitcoin.crypto.KeyCrypter;
@@ -111,7 +113,7 @@ public class WalletTest extends TestWithWallet {
     public void basicSpending() throws Exception {
         basicSpendingCommon(wallet, myAddress, new ECKey().toAddress(params), false);
     }
-    
+
     @Test
     public void basicSpendingToP2SH() throws Exception {
         Address destination = new Address(params, params.getP2SHHeader(), Hex.decode("4a22c3c4cbb31e4d03b15550636762bda0baf85a"));
@@ -126,6 +128,116 @@ public class WalletTest extends TestWithWallet {
     @Test
     public void basicSpendingWithEncryptedMixedWallet() throws Exception {
         basicSpendingCommon(encryptedMixedWallet, myEncryptedAddress2, new ECKey().toAddress(params), true);
+    }
+
+    static class TestRiskAnalysis implements RiskAnalysis {
+        private final boolean risky;
+
+        public TestRiskAnalysis(boolean risky) {
+            this.risky = risky;
+        }
+
+        @Override
+        public Result analyze() {
+            return risky ? Result.NON_FINAL : Result.OK;
+        }
+
+        public static class Analyzer implements RiskAnalysis.Analyzer {
+            private final Transaction riskyTx;
+
+            Analyzer(Transaction riskyTx) {
+                this.riskyTx = riskyTx;
+            }
+
+            @Override
+            public RiskAnalysis create(Wallet wallet, Transaction tx, List<Transaction> dependencies) {
+                return new TestRiskAnalysis(tx == riskyTx);
+            }
+        }
+    }
+
+    static class TestCoinSelector extends DefaultCoinSelector {
+        @Override
+        protected boolean shouldSelect(Transaction tx) {
+            return true;
+        }
+    }
+
+    private Transaction cleanupCommon(Address destination) throws Exception {
+        receiveATransaction(wallet, myAddress);
+
+        BigInteger v2 = toNanoCoins(0, 50);
+        SendRequest req = SendRequest.to(destination, v2);
+        req.fee = toNanoCoins(0, 1);
+        wallet.completeTx(req);
+
+        Transaction t2 = req.tx;
+
+        // Broadcast the transaction and commit.
+        broadcastAndCommit(wallet, t2);
+
+        // At this point we have one pending and one spent
+
+        BigInteger v1 = toNanoCoins(0, 10);
+        Transaction t = sendMoneyToWallet(wallet, v1, myAddress, null);
+        Threading.waitForUserCode();
+        sendMoneyToWallet(wallet, t, null);
+        assertEquals("Wrong number of PENDING.4", 2, wallet.getPoolSize(Pool.PENDING));
+        assertEquals("Wrong number of UNSPENT.4", 0, wallet.getPoolSize(Pool.UNSPENT));
+        assertEquals("Wrong number of ALL.4", 3, wallet.getTransactions(true).size());
+        assertEquals(toNanoCoins(0, 59), wallet.getBalance(Wallet.BalanceType.ESTIMATED));
+
+        // Now we have another incoming pending
+        return t;
+    }
+
+    @Test
+    public void cleanup() throws Exception {
+        Address destination = new ECKey().toAddress(params);
+        Transaction t = cleanupCommon(destination);
+
+        // Consider the new pending as risky and remove it from the wallet
+        wallet.setRiskAnalyzer(new TestRiskAnalysis.Analyzer(t));
+
+        wallet.cleanup();
+        assertTrue(wallet.isConsistent());
+        assertEquals("Wrong number of PENDING.5", 1, wallet.getPoolSize(WalletTransaction.Pool.PENDING));
+        assertEquals("Wrong number of UNSPENT.5", 0, wallet.getPoolSize(WalletTransaction.Pool.UNSPENT));
+        assertEquals("Wrong number of ALL.5", 2, wallet.getTransactions(true).size());
+        assertEquals(toNanoCoins(0, 49), wallet.getBalance(Wallet.BalanceType.ESTIMATED));
+    }
+
+    @Test
+    public void cleanupFailsDueToSpend() throws Exception {
+        Address destination = new ECKey().toAddress(params);
+        Transaction t = cleanupCommon(destination);
+
+        // Now we have another incoming pending.  Spend everything.
+        BigInteger v3 = toNanoCoins(0, 58);
+        SendRequest req = SendRequest.to(destination, v3);
+
+        // Force selection of the incoming coin so that we can spend it
+        req.coinSelector = new TestCoinSelector();
+
+        req.fee = toNanoCoins(0, 1);
+        wallet.completeTx(req);
+        wallet.commitTx(req.tx);
+
+        assertEquals("Wrong number of PENDING.5", 3, wallet.getPoolSize(WalletTransaction.Pool.PENDING));
+        assertEquals("Wrong number of UNSPENT.5", 0, wallet.getPoolSize(WalletTransaction.Pool.UNSPENT));
+        assertEquals("Wrong number of ALL.5", 4, wallet.getTransactions(true).size());
+
+        // Consider the new pending as risky and try to remove it from the wallet
+        wallet.setRiskAnalyzer(new TestRiskAnalysis.Analyzer(t));
+
+        wallet.cleanup();
+        assertTrue(wallet.isConsistent());
+
+        // The removal should have failed
+        assertEquals("Wrong number of PENDING.5", 3, wallet.getPoolSize(WalletTransaction.Pool.PENDING));
+        assertEquals("Wrong number of UNSPENT.5", 0, wallet.getPoolSize(WalletTransaction.Pool.UNSPENT));
+        assertEquals("Wrong number of ALL.5", 4, wallet.getTransactions(true).size());
+        assertEquals(toNanoCoins(0, 0), wallet.getBalance(Wallet.BalanceType.ESTIMATED));
     }
 
     private void basicSpendingCommon(Wallet wallet, Address toAddress, Address destination, boolean testEncryption) throws Exception {
