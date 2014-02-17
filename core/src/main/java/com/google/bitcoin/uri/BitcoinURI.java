@@ -326,7 +326,7 @@ public class BitcoinURI {
     public static String convertToBitcoinURI(String address, @Nullable BigInteger amount, @Nullable String label,
                                              @Nullable String message) {
         checkNotNull(address);
-        if (amount != null && amount.compareTo(BigInteger.ZERO) < 0) {
+        if (amount != null && amount.signum() < 0) {
             throw new IllegalArgumentException("Amount must be positive");
         }
         
