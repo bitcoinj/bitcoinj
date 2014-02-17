@@ -31,7 +31,7 @@ public class MainNetParams extends NetworkParameters {
         targetTimespan = TARGET_TIMESPAN;
         // Note: proofOfWorkLimit is copied from litecoinj only because
         // - zetacoin satoshi client's bnProofOfWorkLimit is the same as litecoin satoshi client's
-        proofOfWorkLimit = Utils.decodeCompactBits(0x1e0ffff0L);
+        proofOfWorkLimit = Utils.decodeCompactBits(0x1e0fffffL);
         dumpedPrivateKeyHeader = 224;
         addressHeader = 80;
         p2shHeader = 9;
