@@ -33,9 +33,6 @@ import java.util.concurrent.TimeUnit;
  * SeedPeers contains a pre-determined list of Bitcoin node addresses. These nodes are selected based on being
  * active on the network for a long period of time. The intention is to be a last resort way of finding a connection
  * to the network, in case IRC and DNS fail. The list is stored in the resource file named <code>resourceFileName</code>.
- *
- * @author Michael Swiggs
- * @author Sean Gilligan
  */
 public class SeedPeers implements PeerDiscovery {
     private NetworkParameters params;
