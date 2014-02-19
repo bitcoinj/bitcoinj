@@ -1,0 +1,3 @@
+Placeholder file.
+
+The Gradle 'downloadSeeds' task will downlaod 'seeds.txt' in to this directory.
