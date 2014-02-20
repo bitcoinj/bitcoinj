@@ -25,7 +25,7 @@ import static com.google.common.base.Preconditions.checkState;
 /**
  * Network parameters for the regression test mode of bitcoind in which all blocks are trivially solvable.
  */
-public class RegTestParams extends TestNet2Params {
+public class RegTestParams extends TestNet3Params {
     private static final BigInteger PROOF_OF_WORK_LIMIT = new BigInteger("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", 16);
 
     public RegTestParams() {
@@ -53,10 +53,10 @@ public class RegTestParams extends TestNet2Params {
         synchronized (RegTestParams.class) {
             if (genesis == null) {
                 genesis = super.getGenesisBlock();
-                genesis.setNonce(3);
-                genesis.setDifficultyTarget(0x207fFFFFL);
+                genesis.setDifficultyTarget(0x207fffffL);
                 genesis.setTime(1296688602L);
-                checkState(genesis.getHashAsString().toLowerCase().equals("0f9188f13cb7b2c71f2a335e3a4fc328bf5beb436012afca590b1a11466e2206"));
+                genesis.setNonce(5);
+                checkState(genesis.getHashAsString().toLowerCase().equals("3955bc48e256fbd241260f8d2d9fdf7dc8518991f796e85818204bb5869d2217"));
             }
             return genesis;
         }
