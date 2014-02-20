@@ -298,6 +298,13 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
     }
 
     @Override
+    public int numKeys() {
+        // We need to return here the total number of keys including the lookahead zone, not the number of keys we
+        // have issued via getKey/newKey.
+        return basicKeyChain.numKeys();
+    }
+
+    @Override
     public void addEventListener(KeyChainEventListener listener) {
         basicKeyChain.addEventListener(listener);
     }

@@ -65,6 +65,7 @@ public class BasicKeyChainTest {
 
         // Import two keys, check the event is correct.
         assertEquals(2, chain.importKeys(keys));
+        assertEquals(2, chain.numKeys());
         assertTrue(onKeysAddedRan.getAndSet(false));
         assertArrayEquals(keys.toArray(), onKeysAdded.get().toArray());
         // Check we ignore duplicates.
@@ -117,8 +118,7 @@ public class BasicKeyChainTest {
     @Test
     public void encryptDecrypt() {
         final ECKey key1 = new ECKey();
-        final ArrayList<ECKey> keys = Lists.newArrayList(key1, new ECKey());
-        chain.importKeys(keys);
+        chain.importKeys(key1, new ECKey());
         final String PASSWORD = "foobar";
         chain = chain.toEncrypted(PASSWORD);
         final KeyCrypter keyCrypter = chain.getKeyCrypter();
@@ -180,7 +180,7 @@ public class BasicKeyChainTest {
     @Test
     public void serializationEncrypted() throws UnreadableWalletException {
         ECKey key1 = new ECKey();
-        chain.importKeys(ImmutableList.of(key1));
+        chain.importKeys(key1);
         chain = chain.toEncrypted("foo bar");
         key1 = chain.getKeys().get(0);
         List<Protos.Key> keys = chain.serializeToProtobuf();

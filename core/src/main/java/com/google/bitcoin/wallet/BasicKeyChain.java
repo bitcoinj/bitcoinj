@@ -97,6 +97,10 @@ public class BasicKeyChain implements EncryptableKeyChain {
         }
     }
 
+    public int importKeys(ECKey... keys) {
+        return importKeys(ImmutableList.copyOf(keys));
+    }
+
     public int importKeys(List<? extends ECKey> keys) {
         lock.lock();
         try {
@@ -157,6 +161,11 @@ public class BasicKeyChain implements EncryptableKeyChain {
     @Override
     public boolean hasKey(ECKey key) {
         return findKeyFromPubKey(key.getPubKey()) != null;
+    }
+
+    @Override
+    public int numKeys() {
+        return pubkeyToKeys.size();
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -17,7 +17,6 @@
 package com.google.bitcoin.wallet;
 
 import com.google.bitcoin.core.ECKey;
-import com.google.bitcoin.store.UnreadableWalletException;
 import org.bitcoinj.wallet.Protos;
 
 import java.util.List;
@@ -71,4 +70,7 @@ public interface KeyChain {
 
     /** Removes a listener for events that are run when keys are added. */
     public boolean removeEventListener(KeyChainEventListener listener);
+
+    /** Returns the number of keys this key chain manages. This value is used during construction of Bloom filters. */
+    public int numKeys();
 }
