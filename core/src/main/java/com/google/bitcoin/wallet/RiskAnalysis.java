@@ -34,7 +34,8 @@ import java.util.List;
 public interface RiskAnalysis {
     public enum Result {
         OK,
-        NON_FINAL
+        NON_FINAL,
+        NON_STANDARD
     }
 
     public Result analyze();
