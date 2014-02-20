@@ -20,8 +20,6 @@ import com.google.bitcoin.core.Transaction.SigHash;
 import com.google.bitcoin.core.Wallet.SendRequest;
 import com.google.bitcoin.wallet.DefaultCoinSelector;
 import com.google.bitcoin.wallet.RiskAnalysis;
-import com.google.bitcoin.wallet.WalletTransaction;
-import com.google.bitcoin.wallet.WalletTransaction.Pool;
 import com.google.bitcoin.crypto.KeyCrypter;
 import com.google.bitcoin.crypto.KeyCrypterException;
 import com.google.bitcoin.crypto.KeyCrypterScrypt;
@@ -33,10 +31,11 @@ import com.google.bitcoin.utils.TestWithWallet;
 import com.google.bitcoin.utils.Threading;
 import com.google.bitcoin.wallet.KeyTimeCoinSelector;
 import com.google.bitcoin.wallet.WalletFiles;
+import com.google.bitcoin.wallet.WalletTransaction;
+import com.google.bitcoin.wallet.WalletTransaction.Pool;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.protobuf.ByteString;
-
 import org.bitcoinj.wallet.Protos;
 import org.bitcoinj.wallet.Protos.ScryptParameters;
 import org.bitcoinj.wallet.Protos.Wallet.EncryptionType;
@@ -57,8 +56,8 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static com.google.bitcoin.utils.TestUtils.*;
 import static com.google.bitcoin.core.Utils.*;
+import static com.google.bitcoin.utils.TestUtils.*;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.junit.Assert.*;
 
@@ -693,24 +692,47 @@ public class WalletTest extends TestWithWallet {
     }
 
     @Test
-    public void doubleSpendIdenticalTx() throws Exception {
+    public void doubleSpends() throws Exception {
         // Test the case where two semantically identical but bitwise different transactions double spend each other.
+        // We call the second transaction a "mutant" of the first.
+        //
         // This can (and has!) happened when a wallet is cloned between devices, and both devices decide to make the
-        // same spend simultaneously - for example due a re-keying operation.
+        // same spend simultaneously - for example due a re-keying operation. It can also happen if there are malicious
+        // nodes in the P2P network that are mutating transactions on the fly as occurred during Feb 2014.
         final BigInteger value = Utils.toNanoCoins(1, 0);
-        // Give us two outputs.
-        sendMoneyToWallet(value, AbstractBlockChain.NewBlockType.BEST_CHAIN);
-        sendMoneyToWallet(value, AbstractBlockChain.NewBlockType.BEST_CHAIN);
         final BigInteger value2 = Utils.toNanoCoins(2, 0);
+        // Give us three coins and make sure we have some change.
+        sendMoneyToWallet(value.add(value2), AbstractBlockChain.NewBlockType.BEST_CHAIN);
         // The two transactions will have different hashes due to the lack of deterministic signing, but will be
         // otherwise identical. Once deterministic signatures are implemented, this test will have to be tweaked.
-        Transaction send1 = checkNotNull(wallet.createSend(new ECKey().toAddress(params), value2));
-        Transaction send2 = checkNotNull(wallet.createSend(new ECKey().toAddress(params), value2));
+        final Address address = new ECKey().toAddress(params);
+        Transaction send1 = checkNotNull(wallet.createSend(address, value2));
+        Transaction send2 = checkNotNull(wallet.createSend(address, value2));
         send1 = roundTripTransaction(params, send1);
         wallet.commitTx(send2);
+        wallet.allowSpendingUnconfirmedTransactions();
+        assertEquals(value, wallet.getBalance(Wallet.BalanceType.ESTIMATED));
+        // Now spend the change. This transaction should die permanently when the mutant appears in the chain.
+        Transaction send3 = checkNotNull(wallet.createSend(address, value));
+        wallet.commitTx(send3);
         assertEquals(BigInteger.ZERO, wallet.getBalance());
+        final LinkedList<Transaction> dead = new LinkedList<Transaction>();
+        final TransactionConfidence.Listener listener = new TransactionConfidence.Listener() {
+            @Override
+            public void onConfidenceChanged(Transaction tx, ChangeReason reason) {
+                final TransactionConfidence.ConfidenceType type = tx.getConfidence().getConfidenceType();
+                if (reason == ChangeReason.TYPE && type == TransactionConfidence.ConfidenceType.DEAD)
+                    dead.add(tx);
+            }
+        };
+        send2.getConfidence().addEventListener(listener, Threading.SAME_THREAD);
+        send3.getConfidence().addEventListener(listener, Threading.SAME_THREAD);
+        // Double spend!
         sendMoneyToWallet(send1, AbstractBlockChain.NewBlockType.BEST_CHAIN);
-        assertEquals(BigInteger.ZERO, wallet.getBalance());
+        // Back to having one coin.
+        assertEquals(value, wallet.getBalance());
+        assertEquals(send2, dead.poll());
+        assertEquals(send3, dead.poll());
     }
 
     @Test

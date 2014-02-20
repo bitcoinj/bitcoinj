@@ -52,7 +52,7 @@ public class TransactionOutput extends ChildMessage implements Serializable {
     // was owned by us and was sent to somebody else. If false and spentBy is set it means this output was owned by
     // us and used in one of our own transactions (eg, because it is a change output).
     private boolean availableForSpending;
-    private TransactionInput spentBy;
+    @Nullable private TransactionInput spentBy;
 
     // A reference to the transaction which holds this output.
     Transaction parentTransaction;
@@ -311,6 +311,7 @@ public class TransactionOutput extends ChildMessage implements Serializable {
     /**
      * Returns the connected input.
      */
+    @Nullable
     public TransactionInput getSpentBy() {
         return spentBy;
     }

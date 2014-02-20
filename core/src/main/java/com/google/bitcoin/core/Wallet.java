@@ -201,7 +201,8 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
         transactions = new HashMap<Sha256Hash, Transaction>();
         eventListeners = new CopyOnWriteArrayList<ListenerRegistration<WalletEventListener>>();
         extensions = new HashMap<String, WalletExtension>();
-        confidenceChanged = new HashMap<Transaction, TransactionConfidence.Listener.ChangeReason>();
+        // Use a linked hash map to ensure ordering of event listeners is correct.
+        confidenceChanged = new LinkedHashMap<Transaction, TransactionConfidence.Listener.ChangeReason>();
         createTransientState();
     }
 
@@ -987,9 +988,13 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
         boolean isDeadCoinbase = tx.isCoinBase() && dead.containsKey(tx.getHash());
         if (isDeadCoinbase) {
             // There is a dead coinbase tx being received on the best chain. A coinbase tx is made dead when it moves
-            // to a side chain but it can be switched back on a reorg and 'resurrected' back to spent or unspent.
-            // So take it out of the dead pool.
-            log.info("  coinbase tx {} <-dead: confidence {}", tx.getHashAsString(),
+            // to a side chain but it can be switched back on a reorg and resurrected back to spent or unspent.
+            // So take it out of the dead pool. Note that we don't resurrect dependent transactions here, even though
+            // we could. Bitcoin Core nodes on the network have deleted the dependent transactions from their mempools
+            // entirely by this point. We could and maybe should rebroadcast them so the network remembers and tries
+            // to confirm them again. But this is a deeply unusual edge case that due to the maturity rule should never
+            // happen in practice, thus for simplicities sake we ignore it here.
+            log.info("  coinbase tx <-dead: confidence {}", tx.getHashAsString(),
                     tx.getConfidence().getConfidenceType().name());
             dead.remove(tx.getHash());
         }
@@ -1103,25 +1108,18 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
         }
     }
 
-    private void killCoinbase(Transaction coinbase) {
-        log.warn("Coinbase killed by re-org: {}", coinbase.getHashAsString());
-        coinbase.getConfidence().setOverridingTransaction(null);
-        confidenceChanged.put(coinbase, TransactionConfidence.Listener.ChangeReason.TYPE);
-        final Sha256Hash hash = coinbase.getHash();
-        pending.remove(hash);
-        unspent.remove(hash);
-        spent.remove(hash);
-        addWalletTransaction(Pool.DEAD, coinbase);
-        // TODO: Properly handle the recursive nature of killing transactions here.
-    }
-
-    // Updates the wallet when a double spend occurs. overridingTx/overridingInput can be null for the case of coinbases
-    private void killTx(Transaction overridingTx, List<Transaction> killedTx) {
-        for (Transaction tx : killedTx) {
-            log.warn("Saw double spend from chain override pending tx {}", tx.getHashAsString());
-            log.warn("  <-pending ->dead   killed by {}", overridingTx.getHashAsString());
+    // Updates the wallet when a double spend occurs. overridingTx can be null for the case of coinbases
+    private void killTx(@Nullable Transaction overridingTx, List<Transaction> killedTx) {
+        LinkedList<Transaction> work = new LinkedList<Transaction>(killedTx);
+        while (!work.isEmpty()) {
+            final Transaction tx = work.poll();
+            log.warn("TX {} killed{}", tx.getHashAsString(),
+                    overridingTx != null ? "by " + overridingTx.getHashAsString() : "");
             log.warn("Disconnecting each input and moving connected transactions.");
+            // TX could be pending (finney attack), or in unspent/spent (coinbase killed by reorg).
             pending.remove(tx.getHash());
+            unspent.remove(tx.getHash());
+            spent.remove(tx.getHash());
             addWalletTransaction(Pool.DEAD, tx);
             for (TransactionInput deadInput : tx.getInputs()) {
                 Transaction connected = deadInput.getOutpoint().fromTx;
@@ -1131,7 +1129,17 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
             }
             tx.getConfidence().setOverridingTransaction(overridingTx);
             confidenceChanged.put(tx, TransactionConfidence.Listener.ChangeReason.TYPE);
+            // Now kill any transactions we have that depended on this one.
+            for (TransactionOutput deadOutput : tx.getOutputs()) {
+                TransactionInput connected = deadOutput.getSpentBy();
+                if (connected == null) continue;
+                final Transaction parentTransaction = connected.getParentTransaction();
+                log.info("This death invalidated dependent tx {}", parentTransaction.getHash());
+                work.push(parentTransaction);
+            }
         }
+        if (overridingTx == null)
+            return;
         log.warn("Now attempting to connect the inputs of the overriding transaction.");
         for (TransactionInput input : overridingTx.getInputs()) {
             TransactionInput.ConnectionResult result = input.connect(unspent, TransactionInput.ConnectMode.DISCONNECT_ON_CONFLICT);
@@ -1144,7 +1152,6 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
                 }
             }
         }
-        // TODO: Recursively kill other transactions that were double spent.
     }
 
     /**
@@ -2491,17 +2498,14 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
                         // graph we can never reliably kill all transactions we might have that were rooted in
                         // this coinbase tx. Some can just go pending forever, like the Satoshi client. However we
                         // can do our best.
-                        //
-                        // TODO: Is it better to try and sometimes fail, or not try at all?
-                        killCoinbase(tx);
+                        log.warn("Coinbase killed by re-org: {}", tx.getHashAsString());
+                        killTx(null, ImmutableList.of(tx));
                     } else {
                         for (TransactionOutput output : tx.getOutputs()) {
                             TransactionInput input = output.getSpentBy();
                             if (input != null) input.disconnect();
                         }
-                        for (TransactionInput input : tx.getInputs()) {
-                            input.disconnect();
-                        }
+                        tx.disconnectInputs();
                         oldChainTxns.add(tx);
                         unspent.remove(txHash);
                         spent.remove(txHash);
