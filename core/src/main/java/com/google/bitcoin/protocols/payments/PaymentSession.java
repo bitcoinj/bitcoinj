@@ -412,7 +412,7 @@ public class PaymentSession {
             this.rootAuthorityName = getNameFromCert(rootAuthority);
         }
 
-        private String getNameFromCert(TrustAnchor rootAuthority) throws PaymentRequestException.PkiVerificationException {
+        private @Nullable String getNameFromCert(TrustAnchor rootAuthority) throws PaymentRequestException.PkiVerificationException {
             org.spongycastle.asn1.x500.X500Name name = new X500Name(rootAuthority.getTrustedCert().getSubjectX500Principal().getName());
             String commonName = null, org = null, location = null, country = null;
             for (RDN rdn : name.getRDNs()) {
@@ -430,8 +430,6 @@ public class PaymentSession {
             if (org != null) {
                 return Joiner.on(", ").skipNulls().join(org, location, country);
             } else {
-                if (commonName == null)
-                    throw new PaymentRequestException.PkiVerificationException("Could not find any identity info for root CA");
                 return commonName;
             }
         }
