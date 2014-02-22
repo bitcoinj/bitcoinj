@@ -40,9 +40,10 @@ buildscript {
 import de.undercouch.gradle.tasks.download.Download
 
 def sipasSeedsUrl = "http://bitcoin.sipa.be/seeds.txt"  // URL do download seeds file from
-def dataDir = "data"                                    // Directory for local copy of seeds file    
-def sipasSeedsFile = file("${dataDir}/seeds.txt")       // path to local seeds file
-def addrResourceFile = file("${buildDir}/addrs.txt")    // path to output addr file
+def dataDir = "data"                                    // Dir for local copy of seeds.txt & hand-made -seeds.txt files
+def resourceDir = "../../core/src/main/resources/com/google/bitcoin/net/discovery"
+def sipasSeedsFile = file("${buildDir}/seeds.txt")       // path to local seeds file
+def addrResourceFile = file("${buildDir}/org.bitcoin.production-seeds.txt")    // path to output addr file
 def numSeeds = 600                                      // num of addresses to go in resource file
 def ipv4only = true                                     // only allow IPv4 address in output?
 def reachabilityTimeout = 1000                          // msecs
@@ -51,7 +52,7 @@ task downloadSeeds(type: Download,
     group: 'seeds') {
     description = "Download ${sipasSeedsUrl} to ${sipasSeedsFile} if newer"
     src sipasSeedsUrl
-    dest dataDir
+    dest sipasSeedsFile
     onlyIfNewer true
 }
 
@@ -65,6 +66,14 @@ task buildAddrs(description: "Build ${addrResourceFile} from ${sipasSeedsFile}",
             writer.println addr.hostString
         }
     }
+}
+
+task copyToCore(type: Copy, dependsOn: buildAddrs,
+    description: "Copy data/*-seeds.txt to core resources",
+    group: 'seeds' ) {
+    from dataDir, buildDir
+    into resourceDir
+    include '*-seeds.txt'
 }
 
 task testAddrs(dependsOn: buildAddrs,
