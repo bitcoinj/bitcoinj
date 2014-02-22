@@ -572,22 +572,19 @@ public class ChainSplitTest {
     public void coinbaseDeath() throws Exception {
         // Check that a coinbase tx is marked as dead after a reorg rather than pending as normal non-double-spent
         // transactions would be. Also check that a dead coinbase on a sidechain is resurrected if the sidechain
-        // becomes the best chain once more.
+        // becomes the best chain once more. Finally, check that dependent transactions are killed recursively.
         final ArrayList<Transaction> txns = new ArrayList<Transaction>(3);
         wallet.addEventListener(new AbstractWalletEventListener() {
             @Override
             public void onCoinsReceived(Wallet wallet, Transaction tx, BigInteger prevBalance, BigInteger newBalance) {
                 txns.add(tx);
             }
-        });
+        }, Threading.SAME_THREAD);
 
-        // Start by building three blocks on top of the genesis block.
-        // The first block contains a normal transaction that spends to coinTo.
-        // The second block contains a coinbase transaction that spends to coinTo2.
-        // The third block contains a normal transaction that spends to coinTo.
-        Block b1 = unitTestParams.getGenesisBlock().createNextBlock(coinsTo);
-        Block b2 = b1.createNextBlockWithCoinbase(wallet.getKeys().get(1).getPubKey());
-        Block b3 = b2.createNextBlock(coinsTo);
+        Block b1 = unitTestParams.getGenesisBlock().createNextBlock(someOtherGuy);
+        final ECKey coinsTo2 = wallet.getKeys().get(1);
+        Block b2 = b1.createNextBlockWithCoinbase(coinsTo2.getPubKey());
+        Block b3 = b2.createNextBlock(someOtherGuy);
 
         log.debug("Adding block b1");
         assertTrue(chain.add(b1));
@@ -600,21 +597,38 @@ public class ChainSplitTest {
         //     genesis -> b1 -> b2 -> b3
         //
 
-        // Check we have seen the three transactions.
-        Threading.waitForUserCode();
-        assertEquals(3, txns.size());
+        // Check we have seen the coinbase.
+        assertEquals(1, txns.size());
 
         // Check the coinbase transaction is building and in the unspent pool only.
-        assertEquals(ConfidenceType.BUILDING, txns.get(1).getConfidence().getConfidenceType());
-        assertTrue(!wallet.pending.containsKey(txns.get(1).getHash()));
-        assertTrue(wallet.unspent.containsKey(txns.get(1).getHash()));
-        assertTrue(!wallet.spent.containsKey(txns.get(1).getHash()));
-        assertTrue(!wallet.dead.containsKey(txns.get(1).getHash()));
+        final Transaction coinbase = txns.get(0);
+        assertEquals(ConfidenceType.BUILDING, coinbase.getConfidence().getConfidenceType());
+        assertTrue(!wallet.pending.containsKey(coinbase.getHash()));
+        assertTrue(wallet.unspent.containsKey(coinbase.getHash()));
+        assertTrue(!wallet.spent.containsKey(coinbase.getHash()));
+        assertTrue(!wallet.dead.containsKey(coinbase.getHash()));
+
+        // Add blocks to b3 until we can spend the coinbase.
+        Block firstTip = b3;
+        for (int i = 0; i < unitTestParams.getSpendableCoinbaseDepth() - 2; i++) {
+            firstTip = firstTip.createNextBlock(someOtherGuy);
+            chain.add(firstTip);
+        }
+        // ... and spend.
+        Transaction fodder = wallet.createSend(new ECKey().toAddress(unitTestParams), Utils.toNanoCoins(50, 0));
+        wallet.commitTx(fodder);
+        final AtomicBoolean fodderIsDead = new AtomicBoolean(false);
+        fodder.getConfidence().addEventListener(new TransactionConfidence.Listener() {
+            @Override
+            public void onConfidenceChanged(Transaction tx, ChangeReason reason) {
+                fodderIsDead.set(tx.getConfidence().getConfidenceType() == ConfidenceType.DEAD);
+            }
+        }, Threading.SAME_THREAD);
 
         // Fork like this:
         //
-        //     genesis -> b1 -> b2 -> b3
-        //                  \-> b4 -> b5 -> b6
+        //     genesis -> b1 -> b2 -> b3 -> [...]
+        //                  \-> b4 -> b5 -> b6 -> [...]
         //
         // The b4/ b5/ b6 is now the best chain
         Block b4 = b1.createNextBlock(someOtherGuy);
@@ -627,57 +641,64 @@ public class ChainSplitTest {
         assertTrue(chain.add(b5));
         log.debug("Adding block b6");
         assertTrue(chain.add(b6));
-        Threading.waitForUserCode();
 
-        // Transaction 1 (in block b2) is now on a side chain and should have confidence type of dead and be in the dead pool only
-        assertEquals(TransactionConfidence.ConfidenceType.DEAD, txns.get(1).getConfidence().getConfidenceType());
-        assertTrue(!wallet.pending.containsKey(txns.get(1).getHash()));
-        assertTrue(!wallet.unspent.containsKey(txns.get(1).getHash()));
-        assertTrue(!wallet.spent.containsKey(txns.get(1).getHash()));
-        assertTrue(wallet.dead.containsKey(txns.get(1).getHash()));
+        Block secondTip = b6;
+        for (int i = 0; i < unitTestParams.getSpendableCoinbaseDepth() - 2; i++) {
+            secondTip = secondTip.createNextBlock(someOtherGuy);
+            chain.add(secondTip);
+        }
+
+        // Transaction 1 (in block b2) is now on a side chain and should have confidence type of dead and be in
+        // the dead pool only.
+        assertEquals(TransactionConfidence.ConfidenceType.DEAD, coinbase.getConfidence().getConfidenceType());
+        assertTrue(!wallet.pending.containsKey(coinbase.getHash()));
+        assertTrue(!wallet.unspent.containsKey(coinbase.getHash()));
+        assertTrue(!wallet.spent.containsKey(coinbase.getHash()));
+        assertTrue(wallet.dead.containsKey(coinbase.getHash()));
+        assertTrue(fodderIsDead.get());
 
         // ... and back to the first chain.
-        Block b7 = b3.createNextBlock(coinsTo);
-        Block b8 = b7.createNextBlock(coinsTo);
+        Block b7 = firstTip.createNextBlock(someOtherGuy);
+        Block b8 = b7.createNextBlock(someOtherGuy);
 
         log.debug("Adding block b7");
         assertTrue(chain.add(b7));
         log.debug("Adding block b8");
         assertTrue(chain.add(b8));
-        Threading.waitForUserCode();
 
         //
-        //     genesis -> b1 -> b2 -> b3 -> b7 -> b8
-        //                  \-> b4 -> b5 -> b6
+        //     genesis -> b1 -> b2 -> b3 -> [...] -> b7 -> b8
+        //                  \-> b4 -> b5 -> b6 -> [...]
         //
 
         // The coinbase transaction should now have confidence type of building once more and in the unspent pool only.
-        assertEquals(TransactionConfidence.ConfidenceType.BUILDING, txns.get(1).getConfidence().getConfidenceType());
-        assertTrue(!wallet.pending.containsKey(txns.get(1).getHash()));
-        assertTrue(wallet.unspent.containsKey(txns.get(1).getHash()));
-        assertTrue(!wallet.spent.containsKey(txns.get(1).getHash()));
-        assertTrue(!wallet.dead.containsKey(txns.get(1).getHash()));
+        assertEquals(TransactionConfidence.ConfidenceType.BUILDING, coinbase.getConfidence().getConfidenceType());
+        assertTrue(!wallet.pending.containsKey(coinbase.getHash()));
+        assertTrue(wallet.unspent.containsKey(coinbase.getHash()));
+        assertTrue(!wallet.spent.containsKey(coinbase.getHash()));
+        assertTrue(!wallet.dead.containsKey(coinbase.getHash()));
+        // However, fodder is still dead. Bitcoin Core doesn't keep killed transactions around in case they become
+        // valid again later. They are just deleted from the mempool for good.
 
         // ... make the side chain dominant again.
-        Block b9 = b6.createNextBlock(coinsTo);
-        Block b10 = b9.createNextBlock(coinsTo);
+        Block b9 = secondTip.createNextBlock(someOtherGuy);
+        Block b10 = b9.createNextBlock(someOtherGuy);
 
         log.debug("Adding block b9");
         assertTrue(chain.add(b9));
         log.debug("Adding block b10");
         assertTrue(chain.add(b10));
-        Threading.waitForUserCode();
 
         //
-        //     genesis -> b1 -> b2 -> b3 -> b7 -> b8
-        //                  \-> b4 -> b5 -> b6 -> b9 -> b10
+        //     genesis -> b1 -> b2 -> b3 -> [...] -> b7 -> b8
+        //                  \-> b4 -> b5 -> b6 -> [...] -> b9 -> b10
         //
 
         // The coinbase transaction should now have the confidence type of dead and be in the dead pool only.
-        assertEquals(TransactionConfidence.ConfidenceType.DEAD, txns.get(1).getConfidence().getConfidenceType());
-        assertTrue(!wallet.pending.containsKey(txns.get(1).getHash()));
-        assertTrue(!wallet.unspent.containsKey(txns.get(1).getHash()));
-        assertTrue(!wallet.spent.containsKey(txns.get(1).getHash()));
-        assertTrue(wallet.dead.containsKey(txns.get(1).getHash()));
+        assertEquals(TransactionConfidence.ConfidenceType.DEAD, coinbase.getConfidence().getConfidenceType());
+        assertTrue(!wallet.pending.containsKey(coinbase.getHash()));
+        assertTrue(!wallet.unspent.containsKey(coinbase.getHash()));
+        assertTrue(!wallet.spent.containsKey(coinbase.getHash()));
+        assertTrue(wallet.dead.containsKey(coinbase.getHash()));
     }
 }

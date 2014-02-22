@@ -1,5 +1,6 @@
 /**
  * Copyright 2013 Google Inc.
+ * Copyright 2014 Andreas Schildbach
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +23,7 @@ import com.google.bitcoin.script.ScriptBuilder;
 import com.google.bitcoin.uri.BitcoinURI;
 import com.google.bitcoin.utils.Threading;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
@@ -56,22 +58,22 @@ import java.util.concurrent.Callable;
  * <li>Directly with a {@link Protos.PaymentRequest} object</li>
  * </ul>
  *
- * If initialized with a BitcoinURI or a url, a network request is made for the payment request object and a
- * ListenableFuture is returned that will be notified with the PaymentSession object after it is downloaded.
+ * <p>If initialized with a BitcoinURI or a url, a network request is made for the payment request object and a
+ * ListenableFuture is returned that will be notified with the PaymentSession object after it is downloaded.</p>
  *
- * Once the PaymentSession is initialized, typically a wallet application will prompt the user to confirm that the
+ * <p>Once the PaymentSession is initialized, typically a wallet application will prompt the user to confirm that the
  * amount and recipient are correct, perform any additional steps, and then construct a list of transactions to pass to
- * the sendPayment method.
+ * the sendPayment method.</p>
  *
- * Call sendPayment with a list of transactions that will be broadcast. A {@link Protos.Payment} message will be sent to
- * the merchant if a payment url is provided in the PaymentRequest.
- * NOTE: sendPayment does NOT broadcast the transactions to the bitcoin network.
- *
- * sendPayment returns a ListenableFuture that will be notified when a {@link Protos.PaymentACK} is received from the
- * merchant. Typically a wallet will show the message to the user as a confirmation message that the payment is now
- * "processing" or that an error occurred.
+ * <p>Call sendPayment with a list of transactions that will be broadcast. A {@link Protos.Payment} message will be sent
+ * to the merchant if a payment url is provided in the PaymentRequest. NOTE: sendPayment does NOT broadcast the
+ * transactions to the bitcoin network. Instead it returns a ListenableFuture that will be notified when a
+ * {@link Protos.PaymentACK} is received from the merchant. Typically a wallet will show the message to the user
+ * as a confirmation message that the payment is now "processing" or that an error occurred, and then broadcast the
+ * tx itself later if needed.</p>
  *
  * @author Kevin Greene
+ * @author Andreas Schildbach
  * @see <a href="https://github.com/bitcoin/bips/blob/master/bip-0070.mediawiki">BIP 0070</a>
  */
 public class PaymentSession {
@@ -227,26 +229,30 @@ public class PaymentSession {
      * Message returned by the merchant in response to a Payment message.
      */
     public class Ack {
-        private String memo = "";
+        @Nullable private String memo;
 
-        Ack(String memo) {
+        Ack(@Nullable String memo) {
             this.memo = memo;
         }
 
         /**
          * Returns the memo included by the merchant in the payment ack. This message is typically displayed to the user
-         * as a notification (e.g. "Your payment was received and is being processed").
+         * as a notification (e.g. "Your payment was received and is being processed"). If none was provided, returns
+         * null.
          */
-        public String getMemo() {
+        @Nullable public String getMemo() {
             return memo;
         }
     }
 
     /**
-     * Returns the memo included by the merchant in the payment request.
+     * Returns the memo included by the merchant in the payment request, or null if not found.
      */
-    public String getMemo() {
-        return paymentDetails.getMemo();
+    @Nullable public String getMemo() {
+        if (paymentDetails.hasMemo())
+            return paymentDetails.getMemo();
+        else
+            return null;
     }
 
     /**
@@ -374,7 +380,7 @@ public class PaymentSession {
                 InputStream inStream = connection.getInputStream();
                 Protos.PaymentACK.Builder paymentAckBuilder = Protos.PaymentACK.newBuilder().mergeFrom(inStream);
                 Protos.PaymentACK paymentAck = paymentAckBuilder.build();
-                String memo = "";
+                String memo = null;
                 if (paymentAck.hasMemo())
                     memo = paymentAck.getMemo();
                 return new Ack(memo);
@@ -406,7 +412,7 @@ public class PaymentSession {
             this.rootAuthorityName = getNameFromCert(rootAuthority);
         }
 
-        private String getNameFromCert(TrustAnchor rootAuthority) throws PaymentRequestException.PkiVerificationException {
+        private @Nullable String getNameFromCert(TrustAnchor rootAuthority) throws PaymentRequestException.PkiVerificationException {
             org.spongycastle.asn1.x500.X500Name name = new X500Name(rootAuthority.getTrustedCert().getSubjectX500Principal().getName());
             String commonName = null, org = null, location = null, country = null;
             for (RDN rdn : name.getRDNs()) {
@@ -421,11 +427,9 @@ public class PaymentSession {
                 else if (pair.getType().equals(RFC4519Style.c))
                     country = val;
             }
-            if (org != null && location != null && country != null) {
-                return org + ", " + location + ", " + country;
+            if (org != null) {
+                return Joiner.on(", ").skipNulls().join(org, location, country);
             } else {
-                if (commonName == null)
-                    throw new PaymentRequestException.PkiVerificationException("Could not find any identity info for root CA");
                 return commonName;
             }
         }
@@ -593,8 +597,6 @@ public class PaymentSession {
         try {
             if (request == null)
                 throw new PaymentRequestException("request cannot be null");
-            if (!request.hasPaymentDetailsVersion())
-                throw new PaymentRequestException.InvalidVersion("No version");
             if (request.getPaymentDetailsVersion() != 1)
                 throw new PaymentRequestException.InvalidVersion("Version 1 required. Received version " + request.getPaymentDetailsVersion());
             paymentRequest = request;
@@ -617,10 +619,20 @@ public class PaymentSession {
             }
             // This won't ever happen in practice. It would only happen if the user provided outputs
             // that are obviously invalid. Still, we don't want to silently overflow.
-            if (totalValue.compareTo(BigInteger.valueOf(Long.MAX_VALUE)) > 0)
+            if (totalValue.compareTo(NetworkParameters.MAX_MONEY) > 0)
                 throw new PaymentRequestException.InvalidOutputs("The outputs are way too big.");
         } catch (InvalidProtocolBufferException e) {
             throw new PaymentRequestException(e);
         }
+    }
+
+    /** Returns the protobuf that this object was instantiated with. */
+    public Protos.PaymentRequest getPaymentRequest() {
+        return paymentRequest;
+    }
+
+    /** Returns the protobuf that describes the payment to be made. */
+    public Protos.PaymentDetails getPaymentDetails() {
+        return paymentDetails;
     }
 }
