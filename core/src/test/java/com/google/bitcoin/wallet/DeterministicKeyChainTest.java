@@ -17,6 +17,7 @@
 package com.google.bitcoin.wallet;
 
 import com.google.bitcoin.core.Address;
+import com.google.bitcoin.core.BloomFilter;
 import com.google.bitcoin.core.ECKey;
 import com.google.bitcoin.core.Sha256Hash;
 import com.google.bitcoin.crypto.DeterministicKey;
@@ -223,6 +224,23 @@ public class DeterministicKeyChainTest {
         final DeterministicKey accountKey = chain.getKeyByPath(DeterministicKeyChain.ACCOUNT_ZERO_PATH);
         chain = DeterministicKeyChain.watch(accountKey.getPubOnly());
         chain = chain.toEncrypted("this doesn't make any sense");
+    }
+
+    @Test
+    public void bloom() {
+        DeterministicKey key1 = chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
+        DeterministicKey key2 = chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
+        // The filter includes the internal keys as well (for now), although I'm not sure if we should allow funds to
+        // be received on them or not ....
+        assertEquals(12, chain.numBloomFilterEntries());
+        BloomFilter filter = chain.getFilter(12, 0.001, 1);
+        assertTrue(filter.contains(key1.getPubKey()));
+        assertTrue(filter.contains(key1.getPubKeyHash()));
+        assertTrue(filter.contains(key2.getPubKey()));
+        assertTrue(filter.contains(key2.getPubKeyHash()));
+        // Filter does not yet contain lookahead.
+        DeterministicKey key3 = chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
+        assertFalse(filter.contains(key3.getPubKey()));
     }
 
     private String protoToString(List<Protos.Key> keys) {

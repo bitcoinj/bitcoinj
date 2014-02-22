@@ -49,6 +49,14 @@ message DeterministicKey {
   // The path through the key tree. Each number is encoded in the standard form: high bit set for private derivation
   // and high bit unset for public derivation.
   repeated uint32 path = 2;
+
+  // How many children of this key have been issued, that is, given to the user when they requested a fresh key?
+  // For the parents of keys being handed out, this is always less than the true number of children: the difference is
+  // called the lookahead zone. These keys are put into Bloom filters so we can spot transactions made by clones of
+  // this wallet - for instance when restoring from backup or if the seed was shared between devices.
+  //
+  // If this field is missing it means we're not issuing subkeys of this key to users.
+  optional uint32 issued_subkeys = 3;
 }
 
 /**
@@ -106,11 +114,11 @@ message Key {
 }
 
 message Script {
-    required bytes program = 1;
+  required bytes program = 1;
 
-    // Timestamp stored as millis since epoch. Useful for skipping block bodies before this point
-    // when watching for scripts on the blockchain.
-    required int64 creation_timestamp = 2;
+  // Timestamp stored as millis since epoch. Useful for skipping block bodies before this point
+  // when watching for scripts on the blockchain.
+  required int64 creation_timestamp = 2;
 }
 
 message TransactionInput {

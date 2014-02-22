@@ -1,5 +1,5 @@
 /**
- * Copyright 2013 Google Inc.
+ * Copyright 2013 The bitcoinj developers.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 package com.google.bitcoin.wallet;
 
+import com.google.bitcoin.core.BloomFilter;
 import com.google.bitcoin.core.ECKey;
 import com.google.bitcoin.core.Utils;
 import com.google.bitcoin.crypto.*;
@@ -90,7 +91,14 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
     public static final ImmutableList<ChildNumber> EXTERNAL_PATH = ImmutableList.of(ChildNumber.ZERO_PRIV, ChildNumber.ZERO);
     public static final ImmutableList<ChildNumber> INTERNAL_PATH = ImmutableList.of(ChildNumber.ZERO_PRIV, new ChildNumber(1, false));
 
+    // We try to ensure we have at least this many keys ready and waiting to be handed out via getKey().
+    // See docs for getLookaheadSize() for more info on what this is for.
+    private int lookaheadSize = 1000;
+
+    // The parent keys for external keys (handed out to other people) and internal keys (used for change addresses).
     private DeterministicKey externalKey, internalKey;
+    // How many keys on each path have actually been used. This may be fewer than the number that have been deserialized
+    // or held in memory, because of the lookahead zone.
     private int issuedExternalKeys, issuedInternalKeys;
 
     // We simplify by wrapping a basic key chain and that way we get some functionality like key lookup and event
@@ -390,6 +398,10 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                 detKey.setChainCode(ByteString.copyFrom(key.getChainCode()));
                 for (ChildNumber num : key.getPath())
                     detKey.addPath(num.i());
+                if (key.equals(externalKey))
+                    detKey.setIssuedSubkeys(issuedExternalKeys);
+                else if (key.equals(internalKey))
+                    detKey.setIssuedSubkeys(issuedInternalKeys);
                 entries.add(proto.build());
             }
             return entries;
@@ -410,6 +422,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
             final Protos.Key.Type t = key.getType();
             if (t == Protos.Key.Type.DETERMINISTIC_ROOT_SEED) {
                 if (chain != null) {
+                    chain.maybeLookAhead();
                     chains.add(chain);
                     chain = null;
                 }
@@ -488,24 +501,23 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                         chain.rootKey = detkey;
                         chain.hierarchy = new DeterministicHierarchy(detkey);
                     } else if (path.size() == 2) {
-                        if (detkey.getChildNumber().num() == 0)
+                        if (detkey.getChildNumber().num() == 0) {
                             chain.externalKey = detkey;
-                        else if (detkey.getChildNumber().num() == 1)
+                            chain.issuedExternalKeys = key.getDeterministicKey().getIssuedSubkeys();
+                        } else if (detkey.getChildNumber().num() == 1) {
                             chain.internalKey = detkey;
+                            chain.issuedInternalKeys = key.getDeterministicKey().getIssuedSubkeys();
+                        }
                     }
                 }
                 chain.hierarchy.putKey(detkey);
                 chain.basicKeyChain.importKey(detkey);
-                if (parent != null) {
-                    if (parent.equals(chain.internalKey))
-                        chain.issuedInternalKeys++;
-                    else if (parent.equals(chain.externalKey))
-                        chain.issuedExternalKeys++;
-                }
             }
         }
-        if (chain != null)
+        if (chain != null) {
+            chain.maybeLookAhead();
             chains.add(chain);
+        }
         return chains;
     }
 
@@ -548,7 +560,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         DeterministicSeed decSeed = seed.decrypt(getKeyCrypter(), aesKey);
         DeterministicKeyChain chain = new DeterministicKeyChain(decSeed);
         // Now copy the (pubkey only) leaf keys across to avoid rederiving them. The private key bytes are missing
-        // anyway so there's nothing to encrypt.
+        // anyway so there's nothing to decrypt.
         for (ECKey eckey : basicKeyChain.getKeys()) {
             DeterministicKey key = (DeterministicKey) eckey;
             if (key.getPath().size() != 3) continue; // Not a leaf key.
@@ -584,5 +596,81 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
     @Override
     public KeyCrypter getKeyCrypter() {
         return basicKeyChain.getKeyCrypter();
+    }
+
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Bloom filtering support
+    //
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+    @Override
+    public int numBloomFilterEntries() {
+        return numKeys() * 2;
+    }
+
+    @Override
+    public BloomFilter getFilter(int size, double falsePositiveRate, long tweak) {
+        checkArgument(size >= numBloomFilterEntries());
+        return basicKeyChain.getFilter(size, falsePositiveRate, tweak);
+    }
+
+    /**
+     * <p>The number of public keys we should pre-generate on each path before they are requested by the app. This is
+     * required so that when scanning through the chain given only a seed, we can give enough keys to the remote node
+     * via the Bloom filter such that we see transactions that are "from the future", for example transactions created
+     * by a different app that's sharing the same seed, or transactions we made before but we're replaying the chain
+     * given just the seed. The default is 1000.</p>
+     */
+    public int getLookaheadSize() {
+        lock.lock();
+        try {
+            return lookaheadSize;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
+     * Sets a new lookahead size. See {@link #getLookaheadSize()} for details on what this is. Setting a new size
+     * that's larger than the current size will return immediately and the new size will only take effect next time
+     * a fresh filter is requested (e.g. due to a new peer being connected). So you should set this before starting
+     * to sync the chain, if you want to modify it.
+     */
+    public void setLookaheadSize(int lookaheadSize) {
+        lock.lock();
+        try {
+            this.lookaheadSize = lookaheadSize;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    // Pre-generate enough keys to reach the lookahead size.
+    private void maybeLookAhead() {
+        lock.lock();
+        try {
+            maybeLookAhead(externalKey, issuedExternalKeys);
+            maybeLookAhead(internalKey, issuedInternalKeys);
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    private void maybeLookAhead(DeterministicKey parent, int issued) {
+        checkState(lock.isHeldByCurrentThread());
+        final int numChildren = hierarchy.getNumChildren(parent.getPath());
+        int needed = issued + lookaheadSize - numChildren;
+        checkState(needed >= 0);
+        if (needed == 0) return;
+        long now = System.currentTimeMillis();
+        log.info("Pre-generating {} keys for {}", needed, parent.getPathAsString());
+        for (int i = 0; i < needed; i++) {
+            DeterministicKey key = HDKeyDerivation.deriveChildKey(parent, numChildren + i);
+            hierarchy.putKey(key);
+            basicKeyChain.importKey(key);
+        }
+        log.info("Took {} msec", System.currentTimeMillis() - now);
     }
 }

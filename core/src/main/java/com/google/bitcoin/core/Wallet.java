@@ -3096,12 +3096,11 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
     }
 
     /**
-     * <p>Gets a bloom filter that contains all of the public keys from this wallet,
-     * and which will provide the given false-positive rate if it has size elements.
-     * Keep in mind that you will get 2 elements in the bloom filter for each key in the wallet, for the public key
-     * and the hash of the public key (address form).</p>
+     * <p>Gets a bloom filter that contains all of the public keys from this wallet, and which will provide the given
+     * false-positive rate if it has size elements. Keep in mind that you will get 2 elements in the bloom filter for
+     * each key in the wallet, for the public key and the hash of the public key (address form).</p>
      * 
-     * <p>This is used to generate a BloomFilter which can be #{link BloomFilter.merge}d with another.
+     * <p>This is used to generate a BloomFilter which can be {@link BloomFilter#merge(BloomFilter)}d with another.
      * It could also be used if you have a specific target for the filter's size.</p>
      * 
      * <p>See the docs for {@link BloomFilter(int, double)} for a brief explanation of anonymity when using bloom

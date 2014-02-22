@@ -25,6 +25,10 @@ import java.util.Map;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
+// TODO: This whole API feels a bit object heavy. Do we really need ChildNumber and so many maps, etc?
+// TODO: Why is there separate tracking of priv/pub "last child numbers"?
+// TODO: Should we be representing this using an actual tree arrangement in memory instead of a bunch of hashmaps?
+
 /**
  * <p>A DeterministicHierarchy calculates and keeps a whole tree (hierarchy) of keys originating from a single
  * root key. This implements part of the BIP 32 specification. A deterministic key tree is useful because
@@ -125,6 +129,16 @@ public class DeterministicHierarchy implements Serializable {
         ChildNumber nextChildNumber = new ChildNumber(lastChildNumber != null ? lastChildNumber.num() + 1 : 0, privateDerivation);
         lastDerivedNumbers.put(path, nextChildNumber);
         return nextChildNumber;
+    }
+
+    public int getNumChildren(ImmutableList<ChildNumber> path) {
+        final boolean privateDerivation = path.get(path.size() - 1).isPrivateDerivation();
+        Map<ImmutableList<ChildNumber>, ChildNumber> lastDerivedNumbers = getLastDerivedNumbers(privateDerivation);
+        final ChildNumber cn = lastDerivedNumbers.get(path);
+        if (cn == null)
+            return 0;
+        else
+            return cn.num() + 1;   // children start with zero based childnumbers
     }
 
     /**

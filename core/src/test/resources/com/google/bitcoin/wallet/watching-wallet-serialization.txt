@@ -13,6 +13,7 @@ deterministic_key {
   chain_code: "\000Mm\373e\255\363\373\'\265A\003\247\320U\305\340\342\233\033\034\312zTR\006\347Yu\362b\366"
   path: 2147483648
   path: 0
+  issued_subkeys: 2
 }
 
 type: DETERMINISTIC_KEY
@@ -22,6 +23,7 @@ deterministic_key {
   chain_code: "\367j\245\025U\265\346\v\234\275\343\rd\214q\004\232\253\312\222Hi\305\201\370`^\304\210\034p*"
   path: 2147483648
   path: 1
+  issued_subkeys: 1
 }
 
 type: DETERMINISTIC_KEY

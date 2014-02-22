@@ -16,6 +16,7 @@
 
 package com.google.bitcoin.wallet;
 
+import com.google.bitcoin.core.BloomFilter;
 import com.google.bitcoin.core.ECKey;
 import com.google.bitcoin.core.Utils;
 import com.google.bitcoin.crypto.KeyCrypter;
@@ -196,5 +197,21 @@ public class BasicKeyChainTest {
         }
         chain = BasicKeyChain.fromProtobufEncrypted(keys, checkNotNull(chain.getKeyCrypter()), "foo bar");
         assertEquals(key1.getEncryptedPrivateKey(), chain.getKeys().get(0).getEncryptedPrivateKey());
+    }
+
+    @Test
+    public void bloom() throws Exception {
+        ECKey key1 = new ECKey();
+        ECKey key2 = new ECKey();
+        chain.importKeys(key1, key2);
+        assertEquals(2, chain.numKeys());
+        assertEquals(4, chain.numBloomFilterEntries());
+        BloomFilter filter = chain.getFilter(4, 0.001, 100);
+        assertTrue(filter.contains(key1.getPubKey()));
+        assertTrue(filter.contains(key1.getPubKeyHash()));
+        assertTrue(filter.contains(key2.getPubKey()));
+        assertTrue(filter.contains(key2.getPubKeyHash()));
+        ECKey key3 = new ECKey();
+        assertFalse(filter.contains(key3.getPubKey()));
     }
 }

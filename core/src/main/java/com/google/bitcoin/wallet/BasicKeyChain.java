@@ -16,6 +16,7 @@
 
 package com.google.bitcoin.wallet;
 
+import com.google.bitcoin.core.BloomFilter;
 import com.google.bitcoin.core.ECKey;
 import com.google.bitcoin.crypto.*;
 import com.google.bitcoin.store.UnreadableWalletException;
@@ -446,5 +447,27 @@ public class BasicKeyChain implements EncryptableKeyChain {
         } finally {
             lock.unlock();
         }
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Bloom filtering support
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+    @Override
+    public BloomFilter getFilter(int size, double falsePositiveRate, long tweak) {
+        BloomFilter filter = new BloomFilter(size, falsePositiveRate, tweak);
+        for (ECKey key : hashToKeys.values()) {
+            filter.insert(key.getPubKey());
+            filter.insert(key.getPubKeyHash());
+        }
+        return filter;
+    }
+
+    @Override
+    public int numBloomFilterEntries() {
+        return numKeys() * 2;
     }
 }

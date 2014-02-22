@@ -1207,6 +1207,34 @@ public final class Protos {
      * </pre>
      */
     int getPath(int index);
+
+    // optional uint32 issued_subkeys = 3;
+    /**
+     * <code>optional uint32 issued_subkeys = 3;</code>
+     *
+     * <pre>
+     * How many children of this key have been issued, that is, given to the user when they requested a fresh key?
+     * For the parents of keys being handed out, this is always less than the true number of children: the difference is
+     * called the lookahead zone. These keys are put into Bloom filters so we can spot transactions made by clones of
+     * this wallet - for instance when restoring from backup or if the seed was shared between devices.
+     *
+     * If this field is missing it means we're not issuing subkeys of this key to users.
+     * </pre>
+     */
+    boolean hasIssuedSubkeys();
+    /**
+     * <code>optional uint32 issued_subkeys = 3;</code>
+     *
+     * <pre>
+     * How many children of this key have been issued, that is, given to the user when they requested a fresh key?
+     * For the parents of keys being handed out, this is always less than the true number of children: the difference is
+     * called the lookahead zone. These keys are put into Bloom filters so we can spot transactions made by clones of
+     * this wallet - for instance when restoring from backup or if the seed was shared between devices.
+     *
+     * If this field is missing it means we're not issuing subkeys of this key to users.
+     * </pre>
+     */
+    int getIssuedSubkeys();
   }
   /**
    * Protobuf type {@code wallet.DeterministicKey}
@@ -1288,6 +1316,11 @@ public final class Protos {
                 path_.add(input.readUInt32());
               }
               input.popLimit(limit);
+              break;
+            }
+            case 24: {
+              bitField0_ |= 0x00000002;
+              issuedSubkeys_ = input.readUInt32();
               break;
             }
           }
@@ -1397,9 +1430,44 @@ public final class Protos {
       return path_.get(index);
     }
 
+    // optional uint32 issued_subkeys = 3;
+    public static final int ISSUED_SUBKEYS_FIELD_NUMBER = 3;
+    private int issuedSubkeys_;
+    /**
+     * <code>optional uint32 issued_subkeys = 3;</code>
+     *
+     * <pre>
+     * How many children of this key have been issued, that is, given to the user when they requested a fresh key?
+     * For the parents of keys being handed out, this is always less than the true number of children: the difference is
+     * called the lookahead zone. These keys are put into Bloom filters so we can spot transactions made by clones of
+     * this wallet - for instance when restoring from backup or if the seed was shared between devices.
+     *
+     * If this field is missing it means we're not issuing subkeys of this key to users.
+     * </pre>
+     */
+    public boolean hasIssuedSubkeys() {
+      return ((bitField0_ & 0x00000002) == 0x00000002);
+    }
+    /**
+     * <code>optional uint32 issued_subkeys = 3;</code>
+     *
+     * <pre>
+     * How many children of this key have been issued, that is, given to the user when they requested a fresh key?
+     * For the parents of keys being handed out, this is always less than the true number of children: the difference is
+     * called the lookahead zone. These keys are put into Bloom filters so we can spot transactions made by clones of
+     * this wallet - for instance when restoring from backup or if the seed was shared between devices.
+     *
+     * If this field is missing it means we're not issuing subkeys of this key to users.
+     * </pre>
+     */
+    public int getIssuedSubkeys() {
+      return issuedSubkeys_;
+    }
+
     private void initFields() {
       chainCode_ = com.google.protobuf.ByteString.EMPTY;
       path_ = java.util.Collections.emptyList();
+      issuedSubkeys_ = 0;
     }
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
@@ -1423,6 +1491,9 @@ public final class Protos {
       for (int i = 0; i < path_.size(); i++) {
         output.writeUInt32(2, path_.get(i));
       }
+      if (((bitField0_ & 0x00000002) == 0x00000002)) {
+        output.writeUInt32(3, issuedSubkeys_);
+      }
       getUnknownFields().writeTo(output);
     }
 
@@ -1444,6 +1515,10 @@ public final class Protos {
         }
         size += dataSize;
         size += 1 * getPathList().size();
+      }
+      if (((bitField0_ & 0x00000002) == 0x00000002)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeUInt32Size(3, issuedSubkeys_);
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSerializedSize = size;
@@ -1570,6 +1645,8 @@ public final class Protos {
         bitField0_ = (bitField0_ & ~0x00000001);
         path_ = java.util.Collections.emptyList();
         bitField0_ = (bitField0_ & ~0x00000002);
+        issuedSubkeys_ = 0;
+        bitField0_ = (bitField0_ & ~0x00000004);
         return this;
       }
 
@@ -1607,6 +1684,10 @@ public final class Protos {
           bitField0_ = (bitField0_ & ~0x00000002);
         }
         result.path_ = path_;
+        if (((from_bitField0_ & 0x00000004) == 0x00000004)) {
+          to_bitField0_ |= 0x00000002;
+        }
+        result.issuedSubkeys_ = issuedSubkeys_;
         result.bitField0_ = to_bitField0_;
         onBuilt();
         return result;
@@ -1635,6 +1716,9 @@ public final class Protos {
             path_.addAll(other.path_);
           }
           onChanged();
+        }
+        if (other.hasIssuedSubkeys()) {
+          setIssuedSubkeys(other.getIssuedSubkeys());
         }
         this.mergeUnknownFields(other.getUnknownFields());
         return this;
@@ -1820,6 +1904,75 @@ public final class Protos {
       public Builder clearPath() {
         path_ = java.util.Collections.emptyList();
         bitField0_ = (bitField0_ & ~0x00000002);
+        onChanged();
+        return this;
+      }
+
+      // optional uint32 issued_subkeys = 3;
+      private int issuedSubkeys_ ;
+      /**
+       * <code>optional uint32 issued_subkeys = 3;</code>
+       *
+       * <pre>
+       * How many children of this key have been issued, that is, given to the user when they requested a fresh key?
+       * For the parents of keys being handed out, this is always less than the true number of children: the difference is
+       * called the lookahead zone. These keys are put into Bloom filters so we can spot transactions made by clones of
+       * this wallet - for instance when restoring from backup or if the seed was shared between devices.
+       *
+       * If this field is missing it means we're not issuing subkeys of this key to users.
+       * </pre>
+       */
+      public boolean hasIssuedSubkeys() {
+        return ((bitField0_ & 0x00000004) == 0x00000004);
+      }
+      /**
+       * <code>optional uint32 issued_subkeys = 3;</code>
+       *
+       * <pre>
+       * How many children of this key have been issued, that is, given to the user when they requested a fresh key?
+       * For the parents of keys being handed out, this is always less than the true number of children: the difference is
+       * called the lookahead zone. These keys are put into Bloom filters so we can spot transactions made by clones of
+       * this wallet - for instance when restoring from backup or if the seed was shared between devices.
+       *
+       * If this field is missing it means we're not issuing subkeys of this key to users.
+       * </pre>
+       */
+      public int getIssuedSubkeys() {
+        return issuedSubkeys_;
+      }
+      /**
+       * <code>optional uint32 issued_subkeys = 3;</code>
+       *
+       * <pre>
+       * How many children of this key have been issued, that is, given to the user when they requested a fresh key?
+       * For the parents of keys being handed out, this is always less than the true number of children: the difference is
+       * called the lookahead zone. These keys are put into Bloom filters so we can spot transactions made by clones of
+       * this wallet - for instance when restoring from backup or if the seed was shared between devices.
+       *
+       * If this field is missing it means we're not issuing subkeys of this key to users.
+       * </pre>
+       */
+      public Builder setIssuedSubkeys(int value) {
+        bitField0_ |= 0x00000004;
+        issuedSubkeys_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional uint32 issued_subkeys = 3;</code>
+       *
+       * <pre>
+       * How many children of this key have been issued, that is, given to the user when they requested a fresh key?
+       * For the parents of keys being handed out, this is always less than the true number of children: the difference is
+       * called the lookahead zone. These keys are put into Bloom filters so we can spot transactions made by clones of
+       * this wallet - for instance when restoring from backup or if the seed was shared between devices.
+       *
+       * If this field is missing it means we're not issuing subkeys of this key to users.
+       * </pre>
+       */
+      public Builder clearIssuedSubkeys() {
+        bitField0_ = (bitField0_ & ~0x00000004);
+        issuedSubkeys_ = 0;
         onChanged();
         return this;
       }
@@ -2171,7 +2324,9 @@ public final class Protos {
        **
        * A key that was derived deterministically. Note that the root seed that created it may NOT be present in the
        * wallet, for the case of watching wallets. A deterministic key may or may not have the private key bytes present.
-       * However the public key bytes and the deterministic_key field are guaranteed to exist.
+       * However the public key bytes and the deterministic_key field are guaranteed to exist. In a wallet where there
+       * is a path from this key up to a key that has (possibly encrypted) private bytes, it's expected that the private
+       * key can be rederived on the fly.
        * </pre>
        */
       DETERMINISTIC_KEY(3, 4),
@@ -2210,7 +2365,9 @@ public final class Protos {
        **
        * A key that was derived deterministically. Note that the root seed that created it may NOT be present in the
        * wallet, for the case of watching wallets. A deterministic key may or may not have the private key bytes present.
-       * However the public key bytes and the deterministic_key field are guaranteed to exist.
+       * However the public key bytes and the deterministic_key field are guaranteed to exist. In a wallet where there
+       * is a path from this key up to a key that has (possibly encrypted) private bytes, it's expected that the private
+       * key can be rederived on the fly.
        * </pre>
        */
       public static final int DETERMINISTIC_KEY_VALUE = 4;
@@ -14706,66 +14863,66 @@ public final class Protos {
       "\nip_address\030\001 \002(\014\022\014\n\004port\030\002 \002(\r\022\020\n\010servi" +
       "ces\030\003 \002(\004\"M\n\rEncryptedData\022\035\n\025initialisa" +
       "tion_vector\030\001 \002(\014\022\035\n\025encrypted_private_k" +
-      "ey\030\002 \002(\014\"4\n\020DeterministicKey\022\022\n\nchain_co" +
-      "de\030\001 \002(\014\022\014\n\004path\030\002 \003(\r\"\302\002\n\003Key\022\036\n\004type\030\001" +
-      " \002(\0162\020.wallet.Key.Type\022\024\n\014secret_bytes\030\002" +
-      " \001(\014\022-\n\016encrypted_data\030\006 \001(\0132\025.wallet.En" +
-      "cryptedData\022\022\n\npublic_key\030\003 \001(\014\022\r\n\005label" +
-      "\030\004 \001(\t\022\032\n\022creation_timestamp\030\005 \001(\003\0223\n\021de",
-      "terministic_key\030\007 \001(\0132\030.wallet.Determini" +
-      "sticKey\"b\n\004Type\022\014\n\010ORIGINAL\020\001\022\030\n\024ENCRYPT" +
-      "ED_SCRYPT_AES\020\002\022\033\n\027DETERMINISTIC_ROOT_SE" +
-      "ED\020\003\022\025\n\021DETERMINISTIC_KEY\020\004\"5\n\006Script\022\017\n" +
-      "\007program\030\001 \002(\014\022\032\n\022creation_timestamp\030\002 \002" +
-      "(\003\"\203\001\n\020TransactionInput\022\"\n\032transaction_o" +
-      "ut_point_hash\030\001 \002(\014\022#\n\033transaction_out_p" +
-      "oint_index\030\002 \002(\r\022\024\n\014script_bytes\030\003 \002(\014\022\020" +
-      "\n\010sequence\030\004 \001(\r\"\177\n\021TransactionOutput\022\r\n" +
-      "\005value\030\001 \002(\003\022\024\n\014script_bytes\030\002 \002(\014\022!\n\031sp",
-      "ent_by_transaction_hash\030\003 \001(\014\022\"\n\032spent_b" +
-      "y_transaction_index\030\004 \001(\005\"\234\003\n\025Transactio" +
-      "nConfidence\0220\n\004type\030\001 \001(\0162\".wallet.Trans" +
-      "actionConfidence.Type\022\032\n\022appeared_at_hei" +
-      "ght\030\002 \001(\005\022\036\n\026overriding_transaction\030\003 \001(" +
-      "\014\022\r\n\005depth\030\004 \001(\005\022\021\n\twork_done\030\005 \001(\003\022)\n\014b" +
-      "roadcast_by\030\006 \003(\0132\023.wallet.PeerAddress\0224" +
-      "\n\006source\030\007 \001(\0162$.wallet.TransactionConfi" +
-      "dence.Source\"O\n\004Type\022\013\n\007UNKNOWN\020\000\022\014\n\010BUI" +
-      "LDING\020\001\022\013\n\007PENDING\020\002\022\025\n\021NOT_IN_BEST_CHAI",
-      "N\020\003\022\010\n\004DEAD\020\004\"A\n\006Source\022\022\n\016SOURCE_UNKNOW" +
-      "N\020\000\022\022\n\016SOURCE_NETWORK\020\001\022\017\n\013SOURCE_SELF\020\002" +
-      "\"\236\004\n\013Transaction\022\017\n\007version\030\001 \002(\005\022\014\n\004has" +
-      "h\030\002 \002(\014\022&\n\004pool\030\003 \001(\0162\030.wallet.Transacti" +
-      "on.Pool\022\021\n\tlock_time\030\004 \001(\r\022\022\n\nupdated_at" +
-      "\030\005 \001(\003\0223\n\021transaction_input\030\006 \003(\0132\030.wall" +
-      "et.TransactionInput\0225\n\022transaction_outpu" +
-      "t\030\007 \003(\0132\031.wallet.TransactionOutput\022\022\n\nbl" +
-      "ock_hash\030\010 \003(\014\022 \n\030block_relativity_offse" +
-      "ts\030\013 \003(\005\0221\n\nconfidence\030\t \001(\0132\035.wallet.Tr",
-      "ansactionConfidence\0225\n\007purpose\030\n \001(\0162\033.w" +
-      "allet.Transaction.Purpose:\007UNKNOWN\"Y\n\004Po" +
-      "ol\022\013\n\007UNSPENT\020\004\022\t\n\005SPENT\020\005\022\014\n\010INACTIVE\020\002" +
-      "\022\010\n\004DEAD\020\n\022\013\n\007PENDING\020\020\022\024\n\020PENDING_INACT" +
-      "IVE\020\022\":\n\007Purpose\022\013\n\007UNKNOWN\020\000\022\020\n\014USER_PA" +
-      "YMENT\020\001\022\020\n\014KEY_ROTATION\020\002\"N\n\020ScryptParam" +
-      "eters\022\014\n\004salt\030\001 \002(\014\022\020\n\001n\030\002 \001(\003:\00516384\022\014\n" +
-      "\001r\030\003 \001(\005:\0018\022\014\n\001p\030\004 \001(\005:\0011\"8\n\tExtension\022\n" +
-      "\n\002id\030\001 \002(\t\022\014\n\004data\030\002 \002(\014\022\021\n\tmandatory\030\003 " +
-      "\002(\010\"\223\004\n\006Wallet\022\032\n\022network_identifier\030\001 \002",
-      "(\t\022\034\n\024last_seen_block_hash\030\002 \001(\014\022\036\n\026last" +
-      "_seen_block_height\030\014 \001(\r\022!\n\031last_seen_bl" +
-      "ock_time_secs\030\016 \001(\003\022\030\n\003key\030\003 \003(\0132\013.walle" +
-      "t.Key\022(\n\013transaction\030\004 \003(\0132\023.wallet.Tran" +
-      "saction\022&\n\016watched_script\030\017 \003(\0132\016.wallet" +
-      ".Script\022C\n\017encryption_type\030\005 \001(\0162\035.walle" +
-      "t.Wallet.EncryptionType:\013UNENCRYPTED\0227\n\025" +
-      "encryption_parameters\030\006 \001(\0132\030.wallet.Scr" +
-      "yptParameters\022\017\n\007version\030\007 \001(\005\022$\n\textens" +
-      "ion\030\n \003(\0132\021.wallet.Extension\022\023\n\013descript",
-      "ion\030\013 \001(\t\022\031\n\021key_rotation_time\030\r \001(\004\";\n\016" +
-      "EncryptionType\022\017\n\013UNENCRYPTED\020\001\022\030\n\024ENCRY" +
-      "PTED_SCRYPT_AES\020\002B\035\n\023org.bitcoinj.wallet" +
-      "B\006Protos"
+      "ey\030\002 \002(\014\"L\n\020DeterministicKey\022\022\n\nchain_co" +
+      "de\030\001 \002(\014\022\014\n\004path\030\002 \003(\r\022\026\n\016issued_subkeys" +
+      "\030\003 \001(\r\"\302\002\n\003Key\022\036\n\004type\030\001 \002(\0162\020.wallet.Ke" +
+      "y.Type\022\024\n\014secret_bytes\030\002 \001(\014\022-\n\016encrypte" +
+      "d_data\030\006 \001(\0132\025.wallet.EncryptedData\022\022\n\np" +
+      "ublic_key\030\003 \001(\014\022\r\n\005label\030\004 \001(\t\022\032\n\022creati",
+      "on_timestamp\030\005 \001(\003\0223\n\021deterministic_key\030" +
+      "\007 \001(\0132\030.wallet.DeterministicKey\"b\n\004Type\022" +
+      "\014\n\010ORIGINAL\020\001\022\030\n\024ENCRYPTED_SCRYPT_AES\020\002\022" +
+      "\033\n\027DETERMINISTIC_ROOT_SEED\020\003\022\025\n\021DETERMIN" +
+      "ISTIC_KEY\020\004\"5\n\006Script\022\017\n\007program\030\001 \002(\014\022\032" +
+      "\n\022creation_timestamp\030\002 \002(\003\"\203\001\n\020Transacti" +
+      "onInput\022\"\n\032transaction_out_point_hash\030\001 " +
+      "\002(\014\022#\n\033transaction_out_point_index\030\002 \002(\r" +
+      "\022\024\n\014script_bytes\030\003 \002(\014\022\020\n\010sequence\030\004 \001(\r" +
+      "\"\177\n\021TransactionOutput\022\r\n\005value\030\001 \002(\003\022\024\n\014",
+      "script_bytes\030\002 \002(\014\022!\n\031spent_by_transacti" +
+      "on_hash\030\003 \001(\014\022\"\n\032spent_by_transaction_in" +
+      "dex\030\004 \001(\005\"\234\003\n\025TransactionConfidence\0220\n\004t" +
+      "ype\030\001 \001(\0162\".wallet.TransactionConfidence" +
+      ".Type\022\032\n\022appeared_at_height\030\002 \001(\005\022\036\n\026ove" +
+      "rriding_transaction\030\003 \001(\014\022\r\n\005depth\030\004 \001(\005" +
+      "\022\021\n\twork_done\030\005 \001(\003\022)\n\014broadcast_by\030\006 \003(" +
+      "\0132\023.wallet.PeerAddress\0224\n\006source\030\007 \001(\0162$" +
+      ".wallet.TransactionConfidence.Source\"O\n\004" +
+      "Type\022\013\n\007UNKNOWN\020\000\022\014\n\010BUILDING\020\001\022\013\n\007PENDI",
+      "NG\020\002\022\025\n\021NOT_IN_BEST_CHAIN\020\003\022\010\n\004DEAD\020\004\"A\n" +
+      "\006Source\022\022\n\016SOURCE_UNKNOWN\020\000\022\022\n\016SOURCE_NE" +
+      "TWORK\020\001\022\017\n\013SOURCE_SELF\020\002\"\236\004\n\013Transaction" +
+      "\022\017\n\007version\030\001 \002(\005\022\014\n\004hash\030\002 \002(\014\022&\n\004pool\030" +
+      "\003 \001(\0162\030.wallet.Transaction.Pool\022\021\n\tlock_" +
+      "time\030\004 \001(\r\022\022\n\nupdated_at\030\005 \001(\003\0223\n\021transa" +
+      "ction_input\030\006 \003(\0132\030.wallet.TransactionIn" +
+      "put\0225\n\022transaction_output\030\007 \003(\0132\031.wallet" +
+      ".TransactionOutput\022\022\n\nblock_hash\030\010 \003(\014\022 " +
+      "\n\030block_relativity_offsets\030\013 \003(\005\0221\n\nconf",
+      "idence\030\t \001(\0132\035.wallet.TransactionConfide" +
+      "nce\0225\n\007purpose\030\n \001(\0162\033.wallet.Transactio" +
+      "n.Purpose:\007UNKNOWN\"Y\n\004Pool\022\013\n\007UNSPENT\020\004\022" +
+      "\t\n\005SPENT\020\005\022\014\n\010INACTIVE\020\002\022\010\n\004DEAD\020\n\022\013\n\007PE" +
+      "NDING\020\020\022\024\n\020PENDING_INACTIVE\020\022\":\n\007Purpose" +
+      "\022\013\n\007UNKNOWN\020\000\022\020\n\014USER_PAYMENT\020\001\022\020\n\014KEY_R" +
+      "OTATION\020\002\"N\n\020ScryptParameters\022\014\n\004salt\030\001 " +
+      "\002(\014\022\020\n\001n\030\002 \001(\003:\00516384\022\014\n\001r\030\003 \001(\005:\0018\022\014\n\001p" +
+      "\030\004 \001(\005:\0011\"8\n\tExtension\022\n\n\002id\030\001 \002(\t\022\014\n\004da" +
+      "ta\030\002 \002(\014\022\021\n\tmandatory\030\003 \002(\010\"\223\004\n\006Wallet\022\032",
+      "\n\022network_identifier\030\001 \002(\t\022\034\n\024last_seen_" +
+      "block_hash\030\002 \001(\014\022\036\n\026last_seen_block_heig" +
+      "ht\030\014 \001(\r\022!\n\031last_seen_block_time_secs\030\016 " +
+      "\001(\003\022\030\n\003key\030\003 \003(\0132\013.wallet.Key\022(\n\013transac" +
+      "tion\030\004 \003(\0132\023.wallet.Transaction\022&\n\016watch" +
+      "ed_script\030\017 \003(\0132\016.wallet.Script\022C\n\017encry" +
+      "ption_type\030\005 \001(\0162\035.wallet.Wallet.Encrypt" +
+      "ionType:\013UNENCRYPTED\0227\n\025encryption_param" +
+      "eters\030\006 \001(\0132\030.wallet.ScryptParameters\022\017\n" +
+      "\007version\030\007 \001(\005\022$\n\textension\030\n \003(\0132\021.wall",
+      "et.Extension\022\023\n\013description\030\013 \001(\t\022\031\n\021key" +
+      "_rotation_time\030\r \001(\004\";\n\016EncryptionType\022\017" +
+      "\n\013UNENCRYPTED\020\001\022\030\n\024ENCRYPTED_SCRYPT_AES\020" +
+      "\002B\035\n\023org.bitcoinj.walletB\006Protos"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
       new com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner() {
@@ -14789,7 +14946,7 @@ public final class Protos {
           internal_static_wallet_DeterministicKey_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_wallet_DeterministicKey_descriptor,
-              new java.lang.String[] { "ChainCode", "Path", });
+              new java.lang.String[] { "ChainCode", "Path", "IssuedSubkeys", });
           internal_static_wallet_Key_descriptor =
             getDescriptor().getMessageTypes().get(3);
           internal_static_wallet_Key_fieldAccessorTable = new

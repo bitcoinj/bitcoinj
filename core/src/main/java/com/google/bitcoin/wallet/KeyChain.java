@@ -16,6 +16,7 @@
 
 package com.google.bitcoin.wallet;
 
+import com.google.bitcoin.core.BloomFilter;
 import com.google.bitcoin.core.ECKey;
 import org.bitcoinj.wallet.Protos;
 
@@ -71,6 +72,26 @@ public interface KeyChain {
     /** Removes a listener for events that are run when keys are added. */
     public boolean removeEventListener(KeyChainEventListener listener);
 
-    /** Returns the number of keys this key chain manages. This value is used during construction of Bloom filters. */
+    /** Returns the number of keys this key chain manages. */
     public int numKeys();
+
+    /**
+     * Returns the number of elements this chain wishes to insert into the Bloom filter. The size passed to
+     * {@link #getFilter(int, double, long)} should be at least this large.
+     */
+    public int numBloomFilterEntries();
+
+    /**
+     * <p>Gets a bloom filter that contains all of the public keys from this chain, and which will provide the given
+     * false-positive rate if it has size elements. Keep in mind that you will get 2 elements in the bloom filter for
+     * each key in the key chain, for the public key and the hash of the public key (address form). For this reason
+     * size should be <i>at least</i> 2x the result of {@link #numKeys()}.</p>
+     *
+     * <p>This is used to generate a {@link BloomFilter} which can be {@link BloomFilter#merge(BloomFilter)}d with
+     * another. It could also be used if you have a specific target for the filter's size.</p>
+     *
+     * <p>See the docs for {@link com.google.bitcoin.core.BloomFilter#BloomFilter(int, double, long)} for a brief
+     * explanation of anonymity when using bloom filters, and for the meaning of these parameters.</p>
+     */
+    public BloomFilter getFilter(int size, double falsePositiveRate, long tweak);
 }
