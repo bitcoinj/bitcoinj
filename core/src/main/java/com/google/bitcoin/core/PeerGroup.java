@@ -805,10 +805,11 @@ public class PeerGroup extends AbstractExecutionThreadService implements Transac
                 BloomFilter filter = new BloomFilter(lastBloomFilterElementCount, bloomFilterFPRate, bloomFilterTweak, bloomFlags);
                 for (PeerFilterProvider p : peerFilterProviders)
                     filter.merge(p.getBloomFilter(lastBloomFilterElementCount, bloomFilterFPRate, bloomFilterTweak));
-                bloomFilter = filter;
 
                 boolean changed = !filter.equals(bloomFilter);
                 boolean send = false;
+
+                bloomFilter = filter;
 
                 switch (mode) {
                     case SEND_IF_CHANGED: send = changed; break;

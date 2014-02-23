@@ -540,4 +540,29 @@ public class PeerGroupTest extends TestWithPeerGroup {
         assertTrue(p3.lastReceivedFilter.contains(key.getPubKey()));
         assertTrue(p3.lastReceivedFilter.contains(outpoint.bitcoinSerialize()));
     }
+
+    @Test
+    public void testBloomResendOnNewKey() throws Exception {
+        // Check that when we add a new key to the wallet, the Bloom filter is re-calculated and re-sent.
+        peerGroup.startAndWait();
+        // Create a couple of peers.
+        InboundMessageQueuer p1 = connectPeer(1);
+        InboundMessageQueuer p2 = connectPeer(2);
+        BloomFilter f1 = p1.lastReceivedFilter;
+        BloomFilter f2 = p2.lastReceivedFilter;
+        final ECKey key = new ECKey();
+        wallet.addKey(key);
+        peerGroup.waitForJobQueue();
+        BloomFilter f3 = (BloomFilter) outbound(p1);
+        BloomFilter f4 = (BloomFilter) outbound(p2);
+        assertTrue(outbound(p1) instanceof MemoryPoolMessage);
+        assertTrue(outbound(p2) instanceof MemoryPoolMessage);
+        assertNotEquals(f1, f3);
+        assertNotEquals(f2, f4);
+        assertEquals(f3, f4);
+        assertTrue(f3.contains(key.getPubKey()));
+        assertTrue(f3.contains(key.getPubKeyHash()));
+        assertFalse(f1.contains(key.getPubKey()));
+        assertFalse(f1.contains(key.getPubKeyHash()));
+    }
 }
