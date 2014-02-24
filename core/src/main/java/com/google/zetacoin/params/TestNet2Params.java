@@ -44,7 +44,6 @@ public class TestNet2Params extends NetworkParameters {
         spendableCoinbaseDepth = 100;
         subsidyDecreaseBlockCount = 80640;
         String genesisHash = genesisBlock.getHashAsString();
-        // TODO: Find out what the genesis block hash should be here
         checkState(genesisHash.equals("000007717e2e2df52a9ff29b0771901c9c12f5cbb4914cdf0c8047b459bb21d8"));
         dnsSeeds = null;
     }

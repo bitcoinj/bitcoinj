@@ -77,7 +77,7 @@ import static com.google.common.base.Preconditions.*;
  * amount of work done.</p>
  *
  * <p>Every so often the block chain passes a difficulty transition point. At that time, all the blocks in the last
- * 2016 blocks are examined and a new difficulty target is calculated from them.</p>
+ * 4 blocks are examined and a new difficulty target is calculated from them.</p>
  */
 public abstract class AbstractBlockChain {
     private static final Logger log = LoggerFactory.getLogger(AbstractBlockChain.class);
@@ -956,7 +956,7 @@ public abstract class AbstractBlockChain {
     }
 
     /**
-     * Returns an estimate of when the given block will be reached, assuming a perfect 10 minute average for each
+     * Returns an estimate of when the given block will be reached, assuming a perfect 30 second average for each
      * block. This is useful for turning transaction lock times into human readable times. Note that a height in
      * the past will still be estimated, even though the time of solving is actually known (we won't scan backwards
      * through the chain to obtain the right answer).
@@ -965,7 +965,7 @@ public abstract class AbstractBlockChain {
         synchronized (chainHeadLock) {
             long offset = height - chainHead.getHeight();
             long headTime = chainHead.getHeader().getTimeSeconds();
-            long estimated = (headTime * 1000) + (1000L * 60L * 10L * offset);
+            long estimated = (headTime * 1000) + (1000L * 30L * offset);
             return new Date(estimated);
         }
     }

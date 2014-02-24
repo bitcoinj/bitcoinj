@@ -372,10 +372,11 @@ public class BlockChainTest {
     private static Block getBlock2() throws Exception {
         Block b2 = new Block(testNet);
         b2.setMerkleRoot(new Sha256Hash("addc858a17e21e68350f968ccd384d6439b64aafa6c193c8b9dd66320470838b"));
-        b2.setNonce(2642058077L);
+        b2.setNonce(59797);
         b2.setTime(1296734343L);
-        b2.setPrevBlockHash(new Sha256Hash("000000033cc282bc1fa9dcae7a533263fd7fe66490f550d80076433340831604"));
-        assertEquals("000000037b21cac5d30fc6fda2581cf7b2612908aed2abbcc429c45b0557a15f", b2.getHashAsString());
+        b2.setPrevBlockHash(new Sha256Hash("00000971c67f9107c11b82dd2ef369d6fbdfde092408a2ac0ba77adb0159aeea"));
+        b2.setDifficultyTarget(0x1e0fffff);
+        assertEquals("000000f2ae7a220beeabb96835c95a6741cfb0bb1f15057d52282564ac42ca41", b2.getHashAsString());
         b2.verifyHeader();
         return b2;
     }
@@ -383,10 +384,11 @@ public class BlockChainTest {
     private static Block getBlock1() throws Exception {
         Block b1 = new Block(testNet);
         b1.setMerkleRoot(new Sha256Hash("0e8e58ecdacaa7b3c6304a35ae4ffff964816d2b80b62b58558866ce4e648c10"));
-        b1.setNonce(236038445);
+        b1.setNonce(640691);
         b1.setTime(1296734340);
-        b1.setPrevBlockHash(new Sha256Hash("00000007199508e34a9ff81e6ec0c477a4cccff2a4767a8eee39c11db367b008"));
-        assertEquals("000000033cc282bc1fa9dcae7a533263fd7fe66490f550d80076433340831604", b1.getHashAsString());
+        b1.setPrevBlockHash(new Sha256Hash("000007717e2e2df52a9ff29b0771901c9c12f5cbb4914cdf0c8047b459bb21d8"));
+        b1.setDifficultyTarget(0x1e0fffff);
+        assertEquals("00000971c67f9107c11b82dd2ef369d6fbdfde092408a2ac0ba77adb0159aeea", b1.getHashAsString());
         b1.verifyHeader();
         return b1;
     }
@@ -397,7 +399,7 @@ public class BlockChainTest {
         BlockChain prod = new BlockChain(params, new MemoryBlockStore(params));
         Date d = prod.estimateBlockTime(200000);
         // The actual date of block 200,000 was TODO: Find out actual time for Zetacoin Block 200000
-        assertEquals(new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ").parse("2012-10-23T08:35:05.000-0700"), d);
+        assertEquals(new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ").parse("2013-10-11T20:36:26.000-0700"), d);
     }
 
     @Test
