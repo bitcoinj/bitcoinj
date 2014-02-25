@@ -19,6 +19,7 @@ package com.google.zetacoin.core;
 import com.google.zetacoin.params.TestNet2Params;
 import com.google.zetacoin.params.UnitTestParams;
 import com.google.zetacoin.script.ScriptOpCodes;
+
 import org.junit.Test;
 import org.spongycastle.util.encoders.Hex;
 
@@ -29,7 +30,9 @@ import java.io.ObjectOutputStream;
 import java.math.BigInteger;
 import java.util.Arrays;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 public class BlockTest {
     static final NetworkParameters params = TestNet2Params.get();
@@ -47,8 +50,8 @@ public class BlockTest {
         BigInteger work = params.getGenesisBlock().getWork();
         // This number is printed by the official client at startup as the calculated value of chainWork on testnet:
         //
-        // SetBestChain: new best=00000007199508e34a9f  height=0  work=536879104
-        assertEquals(BigInteger.valueOf(536879104L), work);
+        // SetBestChain: new best=000007717e2e2df52a9f height=0  work=1048577
+        assertEquals(BigInteger.valueOf(1048577L), work);
     }
 
     @Test
