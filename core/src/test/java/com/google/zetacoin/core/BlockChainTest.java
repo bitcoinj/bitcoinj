@@ -398,7 +398,7 @@ public class BlockChainTest {
         NetworkParameters params = MainNetParams.get();
         BlockChain prod = new BlockChain(params, new MemoryBlockStore(params));
         Date d = prod.estimateBlockTime(200000);
-        // The actual date of block 200,000 was TODO: Find out actual time for Zetacoin Block 200000
+        // The actual date of block 200,000 was 23 Sep 2013 15:21:27 GMT
         assertEquals(new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ").parse("2013-10-11T20:36:26.000-0700"), d);
     }
 
