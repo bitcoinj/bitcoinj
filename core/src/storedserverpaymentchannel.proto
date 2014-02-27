@@ -24,7 +24,7 @@
 
 package paymentchannels;
 
-option java_package = "com.google.bitcoin.protocols.channels";
+option java_package = "com.google.zetacoin.protocols.channels";
 option java_outer_classname = "ServerState";
 
 

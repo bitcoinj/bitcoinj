@@ -20,15 +20,15 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <parent>
     <groupId>com.google</groupId>
-    <artifactId>bitcoinj-parent</artifactId>
+    <artifactId>zetacoinj-parent</artifactId>
     <version>0.12-SNAPSHOT</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
-  <artifactId>bitcoinj-tools</artifactId>
+  <artifactId>zetacoinj-tools</artifactId>
 
-  <name>bitcoinj Tools</name>
-  <description>A collection of useful tools that use the bitcoinj library to perform wallet operations</description>
+  <name>zetacoinj Tools</name>
+  <description>A collection of useful tools that use the zetacoinj library to perform wallet operations</description>
 
   <build>
       <plugins>
@@ -71,7 +71,7 @@
   <dependencies>
     <dependency>
       <groupId>com.google</groupId>
-      <artifactId>bitcoinj</artifactId>
+      <artifactId>zetacoinj</artifactId>
       <version>${project.parent.version}</version>
     </dependency>
     <dependency>

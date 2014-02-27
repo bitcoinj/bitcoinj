@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>com.google</groupId>
-  <artifactId>bitcoinj-parent</artifactId>
+  <artifactId>zetacoinj-parent</artifactId>
   <version>0.12-SNAPSHOT</version>
   <packaging>pom</packaging>
 
@@ -20,14 +20,14 @@
   </parent>
 
   <scm>
-    <connection>scm:git:https://code.google.com/p/bitcoinj/</connection>
-    <developerConnection>scm:git:https://code.google.com/p/bitcoinj/</developerConnection>
-    <url>http://code.google.com/p/bitcoinj/source/browse</url>
+    <connection>scm:git:http://github.com/zbad405/zetacoinj</connection>
+    <developerConnection>scm:git:http://github.com/zbad405/zetacoinj</developerConnection>
+    <url>http://github.com/zbad405/zetacoinj</url>
   </scm>
 
-  <name>bitcoinj Parent</name>
+  <name>zetacoinj Parent</name>
   <description>Provides the common configuration for the BitCoinJ modules</description>
-  <url>http://code.google.com/p/bitcoinj</url>
+  <url>http://github.com/zbad405/zetacoinj</url>
 
   <licenses>
     <license>
@@ -38,24 +38,24 @@
     </license>
   </licenses>
 
-  <issueManagement>
-    <system>Google Code</system>
-    <url>http://code.google.com/p/bitcoinj/issues/list</url>
-  </issueManagement>
+  <!--<issueManagement>-->
+    <!--<system>Google Code</system>-->
+    <!--<url>http://code.google.com/p/bitcoinj/issues/list</url>-->
+  <!--</issueManagement>-->
 
-  <mailingLists>
-    <mailingList>
-      <name>bitcoinj Google Group</name>
-      <post>https://groups.google.com/forum/#!forum/bitcoinj</post>
-    </mailingList>
-  </mailingLists>
+  <!--<mailingLists>-->
+    <!--<mailingList>-->
+      <!--<name>zetacoinj Google Group</name>-->
+      <!--<post>https://groups.google.com/forum/#!forum/bitcoinj</post>-->
+    <!--</mailingList>-->
+  <!--</mailingLists>-->
 
-  <repositories>
-    <repository>
-        <id>bitcoinj-distribution</id>
-        <url>https://distribution.bitcoinj.googlecode.com/git/releases</url>
-    </repository>
-  </repositories>
+  <!--<repositories>-->
+    <!--<repository>-->
+        <!--<id>bitcoinj-distribution</id>-->
+        <!--<url>https://distribution.bitcoinj.googlecode.com/git/releases</url>-->
+    <!--</repository>-->
+  <!--</repositories>-->
 
   <!-- Common build plugin configuration -->
   <build>
