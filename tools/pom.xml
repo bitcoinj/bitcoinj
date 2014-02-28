@@ -33,19 +33,6 @@
   <build>
 
       <plugins>
-          <!-- We allow Java 7 for this module -->
-          <plugin>
-              <groupId>org.apache.maven.plugins</groupId>
-              <artifactId>maven-compiler-plugin</artifactId>
-              <version>3.1</version>
-              <configuration>
-                  <source>1.7</source>
-                  <target>1.7</target>
-                  <showDeprecation>true</showDeprecation>
-                  <showWarnings>true</showWarnings>
-              </configuration>
-          </plugin>
-
           <plugin>
               <groupId>org.apache.maven.plugins</groupId>
               <artifactId>maven-shade-plugin</artifactId>

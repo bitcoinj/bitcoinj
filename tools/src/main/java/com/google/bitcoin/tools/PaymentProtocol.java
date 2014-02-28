@@ -71,7 +71,9 @@ public class PaymentProtocol {
             }
             output.append(format("%n%n%s%n%s", session.getPaymentRequest(), session.getPaymentDetails()));
             System.out.println(output);
-        } catch (URISyntaxException | BitcoinURIParseException e) {
+        } catch (URISyntaxException e) {
+            System.err.println("Could not parse URI: " + e.getMessage());
+        } catch (BitcoinURIParseException e) {
             System.err.println("Could not parse URI: " + e.getMessage());
         } catch (PaymentRequestException e) {
             System.err.println("Could not handle payment URL: " + e.getMessage());
