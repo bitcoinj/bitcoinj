@@ -73,7 +73,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * @author Andreas Schildbach (initial code)
  * @author Jim Burton (enhancements for MultiBit)
  * @author Gary Rowe (BIP21 support)
- * @see <a href="https://en.bitcoin.it/wiki/BIP_0021">BIP 0021</a>
+ * @see <a href="https://github.com/bitcoin/bips/blob/master/bip-0021.mediawiki">BIP 0021</a>
  */
 public class BitcoinURI {
     /**
