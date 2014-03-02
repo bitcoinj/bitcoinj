@@ -106,7 +106,7 @@ public class Address extends VersionedChecksummedBytes {
 
     /*
      * Returns true if this address is a Pay-To-Script-Hash (P2SH) address.
-     * See also https://en.bitcoin.it/wiki/BIP_0013: Address Format for pay-to-script-hash
+     * See also https://github.com/bitcoin/bips/blob/master/bip-0013.mediawiki: Address Format for pay-to-script-hash
      */
     public boolean isP2SHAddress() {
         final NetworkParameters parameters = getParameters();

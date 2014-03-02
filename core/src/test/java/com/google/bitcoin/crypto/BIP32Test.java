@@ -35,7 +35,7 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * A test with test vectors as per BIP 32 spec: https://en.bitcoin.it/wiki/BIP_0032#Test_Vectors
+ * A test with test vectors as per BIP 32 spec: https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki#Test_Vectors
  */
 public class BIP32Test {
     private static final Logger log = LoggerFactory.getLogger(BIP32Test.class);
