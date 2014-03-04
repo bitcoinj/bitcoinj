@@ -45,7 +45,6 @@ def resourceDir = "../../core/src/main/resources/com/google/bitcoin/net/discover
 def sipasSeedsFile = file("${buildDir}/seeds.txt")       // path to local seeds file
 def addrResourceFile = file("${buildDir}/org.bitcoin.production-seeds.txt")    // path to output addr file
 def numSeeds = 600                                      // num of addresses to go in resource file
-def ipv4only = true                                     // only allow IPv4 address in output?
 def reachabilityTimeout = 1000                          // msecs
 
 task downloadSeeds(type: Download,
@@ -60,7 +59,7 @@ task buildAddrs(description: "Build ${addrResourceFile} from ${sipasSeedsFile}",
     group: 'seeds' ) << {
     buildDir.mkdirs()
     SeedsParser parser = new SeedsParser(sipasSeedsFile)
-    List<InetSocketAddress> addrs = parser.parse(numSeeds, ipv4only)
+    List<InetSocketAddress> addrs = parser.parse(numSeeds)
     addrResourceFile.withPrintWriter { writer ->
         addrs.each { addr ->
             writer.println addr.hostString
@@ -113,7 +112,7 @@ class SeedsParser {
         this.input = input
     }
 
-    List<InetSocketAddress> parse(int max, boolean ipv4only) {
+    List<InetSocketAddress> parse(int max) {
         int count = 0;
         List<InetSocketAddress> addrs = []
 
@@ -126,10 +125,8 @@ class SeedsParser {
                 if (InetAddresses.isInetAddress(hostAndPort.hostText)) {
                     def sockAddr = new InetSocketAddress(hostAndPort.hostText, hostAndPort.port)
                     // We could do some validation/qualification here if we want
-                    if (!(ipv4only && sockAddr.address instanceof Inet6Address)) {
-                        addrs.add(sockAddr)
-                        count++
-                    }
+                    addrs.add(sockAddr)
+                    count++
                 }
             }
         }

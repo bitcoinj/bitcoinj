@@ -20,9 +20,12 @@ import com.google.bitcoin.params.MainNetParams;
 import com.google.bitcoin.params.TestNet3Params;
 import com.google.bitcoin.params.UnitTestParams;
 import com.google.common.net.InetAddresses;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -48,10 +51,29 @@ public class SeedPeersTest {
         SeedPeersTest.networkList.add(UnitTestParams.get());
     }
 
+    @Before
+    public void setUpTest() {
+        SeedPeers.inputStreamOverride = null;
+    }
+
     @Test
-    public void checkHasResource() {
-        // TODO: Once implemented properly test needs to verify based upon platform
-        assertThat(SeedPeers.hasResources(), equalTo(true));
+    public void getPeersCheckArrayInputStream() throws Exception {
+        // Simulate Android Configuration
+        String seedsSuffix = "-seeds.txt";
+        // Test for all networks configured in SeedPeersTest.networkList
+        for (NetworkParameters params : SeedPeersTest.networkList) {
+            String path = params.getId() + seedsSuffix;
+            String seedsFile = SeedPeers.class.getResource(path).getFile();
+            SeedPeers.inputStreamOverride = new FileInputStream(seedsFile);
+            SeedPeers seedPeers = new SeedPeers(params);
+            InetSocketAddress[] addresses = seedPeers.getPeers(0, TimeUnit.SECONDS);
+            assertThat(addresses, notNullValue());
+            assertThat(addresses.length, equalTo( SeedPeersTest.numEntries.get(params.getId()) ));
+            for (InetSocketAddress address : addresses) {
+                assertThat("Port should match params", address.getPort(), equalTo(params.getPort()));
+                assertThat("Should be IP address not hostname", InetAddresses.isInetAddress(address.getHostString()), equalTo(true));
+            }
+        }
     }
 
     /**

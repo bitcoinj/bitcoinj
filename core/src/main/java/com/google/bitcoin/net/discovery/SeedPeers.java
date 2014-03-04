@@ -30,23 +30,23 @@ import java.util.concurrent.TimeUnit;
  * active on the network for a long period of time. The intention is to be a last resort way of finding a connection
  * to the network, in case IRC and DNS fail.
  * <p>
- * In the current implementation, the list is stored in a file named <code>resourceFileName</code>.
+ * In the current implementation, the list is stored in a file with the suffix <code>resourceFileSuffix</code>.
+ * The basename of the file is the result of calling <code>getId()</code> for <code<NetworkParameters</code>.
  * This file will be stored in a resource in the same package as this class, except on Android which doesn't allow this.
+ * On Android you should set <code>inputStreamOverride</code> with an InputStream from inside the <code>.apk</code> file.
  * <p>
  * The file is a text file containing string-formatted ipv4 and/or ipv6 addresses, one-per-line.
- * ipv6 addresses are currently ignored, but if the <code>ipv4only</code> variable is set to <code>false</code>, both
- * types will be used. There is no API for setting <code>ipv4only</code> to <code>false</code>,
- * we'd have to add code to determine that ipv6 addresses
- * could be used.
  */
 public class SeedPeers implements PeerDiscovery {
+    /**
+     * To override loading seeds.txt from a resource file, set this InputStream.
+     */
+    public static InputStream inputStreamOverride = null;
+    private static final String resourceFileSuffix = "-seeds.txt";
+    private static final int expectedNumberSeeds = 600;  // Number of expected seeds in stream (initial array size)
     private NetworkParameters params;
     private InetSocketAddress[] allPeers = null;
     private BufferedReader peerFileReader;
-    private boolean ipv4only = true;
-    private static final String resourceFileSuffix = "-seeds.txt";
-    private static final int expectedNumberSeeds = 600;  // Number of expected seeds in stream (initial array size)
-    private static final String alternateFilePath = "assets/";
 
     /**
      * Private constructor that could be made public if we want to allow using an arbitrary InputStream
@@ -61,25 +61,17 @@ public class SeedPeers implements PeerDiscovery {
     }
 
     /**
-     * Construct a list of SeedPeers from a file configured in NetworkParameters.
-     * Uses <code>hasResources</code> to determine whether to use resource or file path to create InputStream
+     * Construct a list of SeedPeers from a resource file based on NetworkParameters id field.
+     * static member <code>inputStreamOverride</code> can be used to override behavior and set
+     * an input stream explicitly for Android or other platforms that don't support JAR resources.
      * @param params
      * @throws FileNotFoundException
      */
     public SeedPeers(NetworkParameters params) throws FileNotFoundException {
-        this(hasResources() ?
+        this((inputStreamOverride == null) ?
                 SeedPeers.class.getResourceAsStream(params.getId() + resourceFileSuffix) :
-                new FileInputStream(alternateFilePath + params.getId() + resourceFileSuffix),
+                inputStreamOverride,
                 params);
-    }
-
-    /**
-     * Does the current platform support resources in a JAR file.
-     * @return Should return true most everywhere but Android.
-     */
-    static boolean hasResources() {
-        // TODO: return false if this is android (or maybe use feature testing if alternateFilePath unchanged)
-        return true;      // Need a way to determine if this is Android and we can't use JAR resources
     }
 
     /**
@@ -117,10 +109,8 @@ public class SeedPeers implements PeerDiscovery {
                 InetSocketAddress sockAddr;
                 // Use port from params
                 sockAddr = new InetSocketAddress(line, params.getPort());
-                if (!(ipv4only && sockAddr.getAddress() instanceof Inet6Address)) {
-                    // Add address to list (unless ipv4only mode and we have an ipv6 address)
-                    addressList.add(sockAddr);
-                }
+                // Add address to list
+                addressList.add(sockAddr);
             }
         } catch (IOException e) {
             e.printStackTrace();
