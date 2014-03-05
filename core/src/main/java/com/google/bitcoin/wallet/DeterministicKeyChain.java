@@ -86,14 +86,18 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
     // Paths through the key tree. External keys are ones that are communicated to other parties. Internal keys are
     // keys created for change addresses, coinbases, mixing, etc - anything that isn't communicated. The distinction
     // is somewhat arbitrary but can be useful for audits. The first number is the "account number" but we don't use
-    // that feature.
+    // that feature yet. In future we might hand out different accounts for cases where we wish to hand payers
+    // a payment request that can generate lots of addresses independently.
     public static final ImmutableList<ChildNumber> ACCOUNT_ZERO_PATH = ImmutableList.of(ChildNumber.ZERO_PRIV);
     public static final ImmutableList<ChildNumber> EXTERNAL_PATH = ImmutableList.of(ChildNumber.ZERO_PRIV, ChildNumber.ZERO);
     public static final ImmutableList<ChildNumber> INTERNAL_PATH = ImmutableList.of(ChildNumber.ZERO_PRIV, new ChildNumber(1, false));
 
     // We try to ensure we have at least this many keys ready and waiting to be handed out via getKey().
-    // See docs for getLookaheadSize() for more info on what this is for.
-    private int lookaheadSize = 1000;
+    // See docs for getLookaheadSize() for more info on what this is for. The -1 value means it hasn't been calculated
+    // yet. For new chains it's set to whatever the default is, unless overridden by setLookaheadSize. For deserialized
+    // chains, it will be calculated on demand from the number of loaded keys.
+    private static final int LAZY_CALCULATE_LOOKAHEAD = -1;
+    private int lookaheadSize = 100;
 
     // The parent keys for external keys (handed out to other people) and internal keys (used for change addresses).
     private DeterministicKey externalKey, internalKey;
@@ -169,6 +173,8 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         this.issuedExternalKeys = chain.issuedExternalKeys;
         this.issuedInternalKeys = chain.issuedInternalKeys;
 
+        this.lookaheadSize = chain.lookaheadSize;
+
         this.seed = chain.seed.encrypt(crypter, aesKey);
         basicKeyChain = new BasicKeyChain(crypter);
         // The first number is the "account number" but we don't use that feature.
@@ -235,11 +241,13 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         try {
             DeterministicKey key;
             if (purpose == KeyPurpose.RECEIVE_FUNDS) {
-                key = HDKeyDerivation.deriveChildKey(externalKey, issuedExternalKeys);
                 issuedExternalKeys++;
+                maybeLookAhead(externalKey, issuedExternalKeys);
+                key = HDKeyDerivation.deriveChildKey(externalKey, issuedExternalKeys - 1);
             } else if (purpose == KeyPurpose.CHANGE) {
-                key = HDKeyDerivation.deriveChildKey(internalKey, issuedInternalKeys);
                 issuedInternalKeys++;
+                maybeLookAhead(internalKey, issuedInternalKeys);
+                key = HDKeyDerivation.deriveChildKey(internalKey, issuedInternalKeys - 1);
             } else {
                 throw new IllegalArgumentException("Unknown key purpose " + purpose);
             }
@@ -398,10 +406,13 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                 detKey.setChainCode(ByteString.copyFrom(key.getChainCode()));
                 for (ChildNumber num : key.getPath())
                     detKey.addPath(num.i());
-                if (key.equals(externalKey))
+                if (key.equals(externalKey)) {
                     detKey.setIssuedSubkeys(issuedExternalKeys);
-                else if (key.equals(internalKey))
+                    detKey.setLookaheadSize(lookaheadSize);
+                } else if (key.equals(internalKey)) {
                     detKey.setIssuedSubkeys(issuedInternalKeys);
+                    detKey.setLookaheadSize(lookaheadSize);
+                }
                 entries.add(proto.build());
             }
             return entries;
@@ -418,10 +429,13 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         List<DeterministicKeyChain> chains = newLinkedList();
         DeterministicSeed seed = null;
         DeterministicKeyChain chain = null;
+        int lookaheadSize = -1;
         for (Protos.Key key : keys) {
             final Protos.Key.Type t = key.getType();
             if (t == Protos.Key.Type.DETERMINISTIC_ROOT_SEED) {
                 if (chain != null) {
+                    checkState(lookaheadSize >= 0);
+                    chain.setLookaheadSize(lookaheadSize);
                     chain.maybeLookAhead();
                     chains.add(chain);
                     chain = null;
@@ -460,6 +474,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                         isWatchingAccountKey = true;
                     } else {
                         chain = new DeterministicKeyChain(seed, crypter);
+                        chain.lookaheadSize = LAZY_CALCULATE_LOOKAHEAD;
                         // If the seed is encrypted, then the chain is incomplete at this point. However, we will load
                         // it up below as we parse in the keys. We just need to check at the end that we've loaded
                         // everything afterwards.
@@ -504,6 +519,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                         if (detkey.getChildNumber().num() == 0) {
                             chain.externalKey = detkey;
                             chain.issuedExternalKeys = key.getDeterministicKey().getIssuedSubkeys();
+                            lookaheadSize = Math.max(lookaheadSize, key.getDeterministicKey().getLookaheadSize());
                         } else if (detkey.getChildNumber().num() == 1) {
                             chain.internalKey = detkey;
                             chain.issuedInternalKeys = key.getDeterministicKey().getIssuedSubkeys();
@@ -515,6 +531,8 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
             }
         }
         if (chain != null) {
+            checkState(lookaheadSize >= 0);
+            chain.setLookaheadSize(lookaheadSize);
             chain.maybeLookAhead();
             chains.add(chain);
         }
@@ -559,6 +577,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         checkState(seed.isEncrypted());
         DeterministicSeed decSeed = seed.decrypt(getKeyCrypter(), aesKey);
         DeterministicKeyChain chain = new DeterministicKeyChain(decSeed);
+        chain.lookaheadSize = lookaheadSize;
         // Now copy the (pubkey only) leaf keys across to avoid rederiving them. The private key bytes are missing
         // anyway so there's nothing to decrypt.
         for (ECKey eckey : basicKeyChain.getKeys()) {
@@ -621,7 +640,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
      * required so that when scanning through the chain given only a seed, we can give enough keys to the remote node
      * via the Bloom filter such that we see transactions that are "from the future", for example transactions created
      * by a different app that's sharing the same seed, or transactions we made before but we're replaying the chain
-     * given just the seed. The default is 1000.</p>
+     * given just the seed. The default is 100.</p>
      */
     public int getLookaheadSize() {
         lock.lock();
@@ -661,8 +680,8 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
     private void maybeLookAhead(DeterministicKey parent, int issued) {
         checkState(lock.isHeldByCurrentThread());
         final int numChildren = hierarchy.getNumChildren(parent.getPath());
-        int needed = issued + lookaheadSize - numChildren;
-        checkState(needed >= 0);
+        int needed = issued + getLookaheadSize() - numChildren;
+        checkState(needed >= 0, "needed = " + needed);
         if (needed == 0) return;
         long now = System.currentTimeMillis();
         log.info("Pre-generating {} keys for {}", needed, parent.getPathAsString());

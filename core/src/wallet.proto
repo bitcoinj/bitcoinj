@@ -57,6 +57,7 @@ message DeterministicKey {
   //
   // If this field is missing it means we're not issuing subkeys of this key to users.
   optional uint32 issued_subkeys = 3;
+  optional uint32 lookahead_size = 4;
 }
 
 /**

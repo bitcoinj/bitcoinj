@@ -53,6 +53,7 @@ public class DeterministicKeyChainTest {
         long secs = 1389353062L;
         byte[] SEED = Sha256Hash.create("don't use a string seed like this in real life".getBytes()).getBytes();
         chain = new DeterministicKeyChain(SEED, secs);
+        chain.setLookaheadSize(10);
         assertEquals(secs, chain.getSeedCreationTimeSecs());
     }
 
@@ -98,6 +99,7 @@ public class DeterministicKeyChainTest {
         // Can't test much here but verify the constructor worked and the class is functional. The other tests rely on
         // a fixed seed to be deterministic.
         chain = new DeterministicKeyChain(new SecureRandom());
+        chain.setLookaheadSize(10);
         chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS).sign(Sha256Hash.ZERO_HASH);
         chain.getKey(KeyChain.KeyPurpose.CHANGE).sign(Sha256Hash.ZERO_HASH);
     }
@@ -109,7 +111,8 @@ public class DeterministicKeyChainTest {
         DeterministicKey key3 = chain.getKey(KeyChain.KeyPurpose.CHANGE);
 
         List<Protos.Key> keys = chain.serializeToProtobuf();
-        assertEquals(8, keys.size());   // 1 root seed, 1 master key, 1 account key, 2 internal keys and 3 derived keys
+        // 1 root seed, 1 master key, 1 account key, 2 internal keys, 3 derived and 20 lookahead.
+        assertEquals(28, keys.size());
 
         // Get another key that will be lost during round-tripping, to ensure we can derive it again.
         DeterministicKey key4 = chain.getKey(KeyChain.KeyPurpose.CHANGE);
@@ -117,6 +120,7 @@ public class DeterministicKeyChainTest {
         final String EXPECTED_SERIALIZATION = checkSerialization(keys, "deterministic-wallet-serialization.txt");
 
         // Round trip the data back and forth to check it is preserved.
+        int oldLookaheadSize = chain.getLookaheadSize();
         chain = DeterministicKeyChain.parseFrom(keys, null).get(0);
         assertEquals(EXPECTED_SERIALIZATION, protoToString(chain.serializeToProtobuf()));
         assertEquals(key1, chain.findKeyFromPubHash(key1.getPubKeyHash()));
@@ -127,6 +131,7 @@ public class DeterministicKeyChainTest {
         key2.sign(Sha256Hash.ZERO_HASH);
         key3.sign(Sha256Hash.ZERO_HASH);
         key4.sign(Sha256Hash.ZERO_HASH);
+        assertEquals(oldLookaheadSize, chain.getLookaheadSize());
     }
 
     @Test(expected = IllegalStateException.class)
@@ -200,6 +205,7 @@ public class DeterministicKeyChainTest {
         assertEquals("xpub68KFnj3bqUx1s7mHejLDBPywCAKdJEu1b49uniEEn2WSbHmZ7xbLqFTjJbtx1LUcAt1DwhoqWHmo2s5WMJp6wi38CiF2hYD49qVViKVvAoi", pub58);
         watchingKey = DeterministicKey.deserializeB58(null, pub58);
         chain = DeterministicKeyChain.watch(watchingKey);
+        chain.setLookaheadSize(10);
 
         assertEquals(key1.getPubKeyPoint(), chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS).getPubKeyPoint());
         assertEquals(key2.getPubKeyPoint(), chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS).getPubKeyPoint());
@@ -232,15 +238,12 @@ public class DeterministicKeyChainTest {
         DeterministicKey key2 = chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         // The filter includes the internal keys as well (for now), although I'm not sure if we should allow funds to
         // be received on them or not ....
-        assertEquals(12, chain.numBloomFilterEntries());
-        BloomFilter filter = chain.getFilter(12, 0.001, 1);
+        assertEquals(32, chain.numBloomFilterEntries());
+        BloomFilter filter = chain.getFilter(32, 0.001, 1);
         assertTrue(filter.contains(key1.getPubKey()));
         assertTrue(filter.contains(key1.getPubKeyHash()));
         assertTrue(filter.contains(key2.getPubKey()));
         assertTrue(filter.contains(key2.getPubKeyHash()));
-        // Filter does not yet contain lookahead.
-        DeterministicKey key3 = chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
-        assertFalse(filter.contains(key3.getPubKey()));
     }
 
     private String protoToString(List<Protos.Key> keys) {
