@@ -1,3 +1,19 @@
+/**
+ * Copyright 2014 Andreas Schildbach
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.google.bitcoin.store;
 
 
@@ -305,6 +321,21 @@ public class WalletProtobufSerializerTest {
         Wallet wallet5 = new Wallet(params);
         new WalletProtobufSerializer().readWallet(proto4, wallet5);
         assertEquals(0, wallet5.getExtensions().size());
+    }
+
+    @Test
+    public void testSkipRedundant() throws Exception {
+        myWallet.setLastBlockSeenHash(new Block(params, BlockTest.blockBytes).getHash());
+        myWallet.setLastBlockSeenHeight(1);
+        myWallet.setLastBlockSeenTimeSecs(1234);
+        // Round-trip wallet, but throw away redundant data.
+        ByteArrayOutputStream output = new ByteArrayOutputStream();
+        new WalletProtobufSerializer().writeWallet(myWallet, output, true);
+        ByteArrayInputStream input = new ByteArrayInputStream(output.toByteArray());
+        final Wallet wallet = new WalletProtobufSerializer().readWallet(input);
+        assertNull(wallet.getLastBlockSeenHash());
+        assertEquals(-1, wallet.getLastBlockSeenHeight());
+        assertEquals(0, wallet.getLastBlockSeenTimeSecs());
     }
 
     private static class SomeFooExtension implements WalletExtension {

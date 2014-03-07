@@ -1,5 +1,6 @@
 /**
  * Copyright 2012 Google Inc.
+ * Copyright 2014 Andreas Schildbach
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -91,7 +92,16 @@ public class WalletProtobufSerializer {
      * Equivalent to <tt>walletToProto(wallet).writeTo(output);</tt>
      */
     public void writeWallet(Wallet wallet, OutputStream output) throws IOException {
-        Protos.Wallet walletProto = walletToProto(wallet);
+        writeWallet(wallet, output, false);
+    }
+
+    /**
+     * Formats the given wallet (transactions and keys) to the given output stream in protocol buffer format.<p>
+     *
+     * Equivalent to <tt>walletToProto(wallet).writeTo(output);</tt>
+     */
+    public void writeWallet(Wallet wallet, OutputStream output, boolean skipRedundant) throws IOException {
+        Protos.Wallet walletProto = walletToProto(wallet, skipRedundant);
         walletProto.writeTo(output);
     }
 
@@ -112,15 +122,25 @@ public class WalletProtobufSerializer {
      * additional data fields set, before serialization takes place.
      */
     public Protos.Wallet walletToProto(Wallet wallet) {
+        return walletToProto(wallet, false);
+    }
+
+    /**
+     * Converts the given wallet to the object representation of the protocol buffers. This can be modified, or
+     * additional data fields set, before serialization takes place.
+     */
+    public Protos.Wallet walletToProto(Wallet wallet, boolean skipRedundant) {
         Protos.Wallet.Builder walletBuilder = Protos.Wallet.newBuilder();
         walletBuilder.setNetworkIdentifier(wallet.getNetworkParameters().getId());
         if (wallet.getDescription() != null) {
             walletBuilder.setDescription(wallet.getDescription());
         }
 
-        for (WalletTransaction wtx : wallet.getWalletTransactions()) {
-            Protos.Transaction txProto = makeTxProto(wtx);
-            walletBuilder.addTransaction(txProto);
+        if (!skipRedundant) {
+            for (WalletTransaction wtx : wallet.getWalletTransactions()) {
+                Protos.Transaction txProto = makeTxProto(wtx);
+                walletBuilder.addTransaction(txProto);
+            }
         }
 
         for (ECKey key : wallet.getKeys()) {
@@ -169,13 +189,15 @@ public class WalletProtobufSerializer {
         }
 
         // Populate the lastSeenBlockHash field.
-        Sha256Hash lastSeenBlockHash = wallet.getLastBlockSeenHash();
-        if (lastSeenBlockHash != null) {
-            walletBuilder.setLastSeenBlockHash(hashToByteString(lastSeenBlockHash));
-            walletBuilder.setLastSeenBlockHeight(wallet.getLastBlockSeenHeight());
+        if (!skipRedundant) {
+            Sha256Hash lastSeenBlockHash = wallet.getLastBlockSeenHash();
+            if (lastSeenBlockHash != null) {
+                walletBuilder.setLastSeenBlockHash(hashToByteString(lastSeenBlockHash));
+                walletBuilder.setLastSeenBlockHeight(wallet.getLastBlockSeenHeight());
+            }
+            if (wallet.getLastBlockSeenTimeSecs() > 0)
+                walletBuilder.setLastSeenBlockTimeSecs(wallet.getLastBlockSeenTimeSecs());
         }
-        if (wallet.getLastBlockSeenTimeSecs() > 0)
-            walletBuilder.setLastSeenBlockTimeSecs(wallet.getLastBlockSeenTimeSecs());
 
         // Populate the scrypt parameters.
         KeyCrypter keyCrypter = wallet.getKeyCrypter();
