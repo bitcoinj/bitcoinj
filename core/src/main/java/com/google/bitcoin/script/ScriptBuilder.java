@@ -42,20 +42,31 @@ public class ScriptBuilder {
     }
 
     public ScriptBuilder op(int opcode) {
-        chunks.add(new ScriptChunk(true, new byte[]{(byte)opcode}));
+        checkArgument(opcode > OP_PUSHDATA4);
+        chunks.add(new ScriptChunk(opcode, null));
         return this;
     }
 
     public ScriptBuilder data(byte[] data) {
         byte[] copy = Arrays.copyOf(data, data.length);
-        chunks.add(new ScriptChunk(false, copy));
+        int opcode;
+        if (data.length < OP_PUSHDATA1) {
+            opcode = data.length; // OP_0 in case of empty vector
+        } else if (data.length < 256) {
+            opcode = OP_PUSHDATA1;
+        } else if (data.length < 65536) {
+            opcode = OP_PUSHDATA2;
+        } else {
+            throw new RuntimeException("Unimplemented");
+        }
+        chunks.add(new ScriptChunk(opcode, copy));
         return this;
     }
 
     public ScriptBuilder smallNum(int num) {
         checkArgument(num >= 0, "Cannot encode negative numbers with smallNum");
         checkArgument(num <= 16, "Cannot encode numbers larger than 16 with smallNum");
-        chunks.add(new ScriptChunk(true, new byte[]{(byte)Script.encodeToOpN(num)}));
+        chunks.add(new ScriptChunk(Script.encodeToOpN(num), null));
         return this;
     }
 
