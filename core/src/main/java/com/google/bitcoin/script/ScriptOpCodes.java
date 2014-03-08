@@ -393,6 +393,16 @@ public class ScriptOpCodes {
     }
 
     /**
+     * Converts the given pushdata OpCode into a string (eg "PUSHDATA2", or "PUSHDATA(23)")
+     */
+    public static String getPushDataName(int opcode) {
+        if (opCodeMap.containsKey(opcode))
+            return opCodeMap.get(opcode);
+
+        return "PUSHDATA(" + opcode + ")";
+    }
+
+    /**
      * Converts the given OpCodeName into an int
      */
     public static int getOpCode(String opCodeName) {

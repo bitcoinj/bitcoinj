@@ -69,7 +69,7 @@ public class ScriptTest {
         // Check we can extract the to address
         byte[] pubkeyBytes = Hex.decode(pubkeyProg);
         Script pubkey = new Script(pubkeyBytes);
-        assertEquals("DUP HASH160 [33e81a941e64cda12c6a299ed322ddbdd03f8d0e] EQUALVERIFY CHECKSIG", pubkey.toString());
+        assertEquals("DUP HASH160 PUSHDATA(20)[33e81a941e64cda12c6a299ed322ddbdd03f8d0e] EQUALVERIFY CHECKSIG", pubkey.toString());
         Address toAddr = new Address(params, pubkey.getPubKeyHash());
         assertEquals("mkFQohBpy2HDXrCwyMrYL5RtfrmeiuuPY2", toAddr.toString());
     }

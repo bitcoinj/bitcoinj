@@ -111,11 +111,15 @@ public class Script {
             if (chunk.isOpCode()) {
                 buf.append(getOpCodeName(chunk.opcode));
                 buf.append(" ");
-            } else {
+            } else if (chunk.data != null) {
                 // Data chunk
+                buf.append(getPushDataName(chunk.opcode));
                 buf.append("[");
-                buf.append(chunk.data != null ? bytesToHexString(chunk.data) : "null");
+                buf.append(bytesToHexString(chunk.data));
                 buf.append("] ");
+            } else {
+                // Small num
+                buf.append(decodeFromOpN(chunk.opcode));
             }
         }
         return buf.toString().trim();
