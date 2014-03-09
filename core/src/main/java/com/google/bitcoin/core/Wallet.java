@@ -1620,7 +1620,7 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
         /**
          * The AES key to use to decrypt the private keys before signing.
          * If null then no decryption will be performed and if decryption is required an exception will be thrown.
-         * You can get this from a password by doing wallet.getKeyCrypter().derivePassword(password).
+         * You can get this from a password by doing wallet.getKeyCrypter().deriveKey(password).
          */
         public KeyParameter aesKey = null;
 
