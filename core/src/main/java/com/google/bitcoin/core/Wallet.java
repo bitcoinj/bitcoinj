@@ -40,6 +40,7 @@ import org.bitcoinj.wallet.Protos.Wallet.EncryptionType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.crypto.params.KeyParameter;
+import org.spongycastle.util.encoders.Hex;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -1077,10 +1078,13 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
                     log.warn("updateForSpends: saw double spend from chain, handling later.");
                 } else {
                     // We saw two pending transactions that double spend each other. We don't know which will win.
-                    // This should not happen.
-                    log.warn("Saw two pending transactions double spend each other: {} vs {}",
-                            tx.getHash(), input.getConnectedOutput().getSpentBy().getParentTransaction().getHash());
+                    // This can happen in the case of bad network nodes that mutate transactions. Do a hex dump
+                    // so the exact nature of the mutation can be examined.
+                    log.warn("Saw two pending transactions double spend each other");
                     log.warn("  offending input is input {}", tx.getInputs().indexOf(input));
+                    log.warn("{}: {}", tx.getHash(), new String(Hex.encode(tx.unsafeBitcoinSerialize())));
+                    Transaction other = input.getConnectedOutput().getSpentBy().getParentTransaction();
+                    log.warn("{}: {}", other.getHash(), new String(Hex.encode(tx.unsafeBitcoinSerialize())));
                 }
             } else if (result == TransactionInput.ConnectionResult.SUCCESS) {
                 // Otherwise we saw a transaction spend our coins, but we didn't try and spend them ourselves yet.
