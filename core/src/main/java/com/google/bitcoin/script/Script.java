@@ -660,10 +660,7 @@ public class Script {
                     continue;
                 
                 switch(opcode) {
-                case OP_0:
-                    // This is also OP_FALSE (they are both zero).
-                    stack.add(new byte[]{0});
-                    break;
+                // OP_0 is no opcode
                 case OP_1NEGATE:
                     stack.add(Utils.reverseBytes(Utils.encodeMPI(BigInteger.ONE.negate(), false)));
                     break;
