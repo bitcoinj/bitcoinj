@@ -1,5 +1,6 @@
 /**
  * Copyright 2011 Google Inc.
+ * Copyright 2014 Andreas Schildbach
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -192,10 +193,15 @@ public class ScriptTest {
             if (line.trim().endsWith("],") || line.trim().equals("]")) {
                 String[] scripts = script.split(",");
                 try {                    
-                    Script scriptSig = parseScriptString(scripts[0].replaceAll("[\"\\[\\]]", "").trim());
-                    Script scriptPubKey = parseScriptString(scripts[1].replaceAll("[\"\\[\\]]", "").trim());
+                    scripts[0] = scripts[0].replaceAll("[\"\\[\\]]", "").trim();
+                    scripts[1] = scripts[1].replaceAll("[\"\\[\\]]", "").trim();
+                    Script scriptSig = parseScriptString(scripts[0]);
+                    Script scriptPubKey = parseScriptString(scripts[1]);
 
                     scriptSig.correctlySpends(new Transaction(params), 0, scriptPubKey, true);
+                    System.err.println("scriptSig: " + scripts[0]);
+                    System.err.println("scriptPubKey: " + scripts[1]);
+                    System.err.flush();
                     fail();
                 } catch (VerificationException e) {
                     // Expected.
