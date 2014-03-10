@@ -28,7 +28,7 @@
     <artifactId>zetacoinj</artifactId>
 
     <name>zetacoinj</name>
-    <description>A Java Zetatcoin library</description>
+    <description>A Java Zetacoin library</description>
 
     <packaging>jar</packaging>
 
