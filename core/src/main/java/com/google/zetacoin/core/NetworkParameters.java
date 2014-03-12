@@ -77,6 +77,7 @@ public abstract class NetworkParameters implements Serializable {
     protected int p2shHeader;
     protected int dumpedPrivateKeyHeader;
     protected int interval;
+    protected int averagingInterval = AVERAGING_INTERVAL;
     protected int targetTimespan;
     protected int minActualTimespan = MIN_ACTUAL_TIMESPAN;
     protected int maxActualTimespan = MAX_ACTUAL_TIMESPAN;
@@ -357,10 +358,13 @@ public abstract class NetworkParameters implements Serializable {
         return true;
     }
 
-    /** How many blocks pass between difficulty adjustment periods. Bitcoin standardises this to be 2015. */
+    /** How many blocks pass between difficulty adjustment periods. Zetacoin standardises this to be 4. */
     public int getInterval() {
         return interval;
     }
+
+    /** How many blocks whose average should the difficulty adjustment be based on. */
+    public int getAveragingInterval() { return averagingInterval; }
 
     /** What the easiest allowable proof of work should be. */
     public BigInteger getProofOfWorkLimit() {

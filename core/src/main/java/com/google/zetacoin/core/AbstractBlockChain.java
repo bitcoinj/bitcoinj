@@ -799,9 +799,12 @@ public abstract class AbstractBlockChain {
     private void checkDifficultyTransitions(StoredBlock storedPrev, Block nextBlock) throws BlockStoreException, VerificationException {
         checkState(lock.isHeldByCurrentThread());
         Block prev = storedPrev.getHeader();
+        int currentHeight = storedPrev.getHeight() + 1;
+        final int interval = params.getInterval();
+        final int averagingInterval = params.getAveragingInterval();
         
         // Is this supposed to be a difficulty transition point?
-        if ((storedPrev.getHeight() + 1) % params.getInterval() != 0) {
+        if (currentHeight < averagingInterval || currentHeight % interval != 0) {
 
             // TODO: Refactor this hack after 0.5 is released and we stop supporting deserialization compatibility.
             // This should be a method of the NetworkParameters, which should in turn be using singletons and a subclass
@@ -823,7 +826,7 @@ public abstract class AbstractBlockChain {
         // two weeks after the initial block chain download.
         long now = System.currentTimeMillis();
         StoredBlock cursor = blockStore.get(prev.getHash());
-        for (int i = 0; i < params.getInterval() - 1; i++) {
+        for (int i = 0; i < averagingInterval - 1; i++) {
             if (cursor == null) {
                 // This should never happen. If it does, it means we are following an incorrect or busted chain.
                 throw new VerificationException(
