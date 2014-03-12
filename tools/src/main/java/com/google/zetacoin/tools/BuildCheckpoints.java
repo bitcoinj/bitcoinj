@@ -46,7 +46,7 @@ public class BuildCheckpoints {
             @Override
             public void notifyNewBestBlock(StoredBlock block) throws VerificationException {
                 int height = block.getHeight();
-                if (height % params.getInterval() == 0 && block.getHeader().getTimeSeconds() <= twoDaysAgo) {
+                if (height % params.getAveragingInterval() == 0 && block.getHeader().getTimeSeconds() <= twoDaysAgo) {
                     System.out.println(String.format("Checkpointing block %s at height %d",
                             block.getHeader().getHash(), block.getHeight()));
                     checkpoints.put(height, block);
@@ -87,8 +87,8 @@ public class BuildCheckpoints {
         // Sanity check the created file.
         CheckpointManager manager = new CheckpointManager(params, new FileInputStream("checkpoints"));
         checkState(manager.numCheckpoints() == checkpoints.size());
-        StoredBlock test = manager.getCheckpointBefore(1348310800);  // Just after block 200,000
-        checkState(test.getHeight() == 199584);
-        checkState(test.getHeader().getHashAsString().equals("000000000000002e00a243fe9aa49c78f573091d17372c2ae0ae5e0f24f55b52"));
+        StoredBlock test = manager.getCheckpointBefore(1379949687);  // Just after block 200,000
+        checkState(test.getHeight() == 200000);
+        checkState(test.getHeader().getHashAsString().equals("00000000000385605562868a7d0db471ba9a5609a945f1e506090c9c38f44ced"));
     }
 }
