@@ -838,15 +838,17 @@ public abstract class AbstractBlockChain {
         Block blockIntervalAgo = cursor.getHeader();
         int timespan = (int) (prev.getTimeSeconds() - blockIntervalAgo.getTimeSeconds());
         // Limit the adjustment step.
-        final int targetTimespan = params.getTargetTimespan();
-        if (timespan < targetTimespan / 4)
-            timespan = targetTimespan / 4;
-        if (timespan > targetTimespan * 4)
-            timespan = targetTimespan * 4;
+        final int minActualTimespan = params.getMinActualTimespan();
+        final int maxActualTimespan = params.getMaxActualTimespan();
+        if (timespan < minActualTimespan)
+            timespan = minActualTimespan;
+        if (timespan > maxActualTimespan)
+            timespan = maxActualTimespan;
 
+        final int averagingTargetTimespan = params.getAveratingTargetTimespan();
         BigInteger newDifficulty = Utils.decodeCompactBits(prev.getDifficultyTarget());
         newDifficulty = newDifficulty.multiply(BigInteger.valueOf(timespan));
-        newDifficulty = newDifficulty.divide(BigInteger.valueOf(targetTimespan));
+        newDifficulty = newDifficulty.divide(BigInteger.valueOf(averagingTargetTimespan));
 
         if (newDifficulty.compareTo(params.getProofOfWorkLimit()) > 0) {
             log.info("Difficulty hit proof of work limit: {}", newDifficulty.toString(16));

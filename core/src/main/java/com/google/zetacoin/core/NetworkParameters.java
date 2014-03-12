@@ -78,6 +78,9 @@ public abstract class NetworkParameters implements Serializable {
     protected int dumpedPrivateKeyHeader;
     protected int interval;
     protected int targetTimespan;
+    protected int minActualTimespan = MIN_ACTUAL_TIMESPAN;
+    protected int maxActualTimespan = MAX_ACTUAL_TIMESPAN;
+    protected int averatingTargetTimespan = AVERAGING_TARGET_TIMESPAN;
     protected byte[] alertSigningKey;
 
     /**
@@ -126,10 +129,18 @@ public abstract class NetworkParameters implements Serializable {
         return genesisBlock;
     }
 
+    // Difficulty calculation parameters
     public static final int TARGET_TIMESPAN = 2 * 60;  // 2 minutes per difficulty cycle, on average.
     public static final int TARGET_SPACING = 30;  // 30 seconds per block.
-    public static final int INTERVAL = TARGET_TIMESPAN / TARGET_SPACING;
-    
+    public static final int INTERVAL = TARGET_TIMESPAN / TARGET_SPACING; // 4 blocks
+    public static final int AVERAGING_INTERVAL = INTERVAL * 20; // 80 blocks
+    public static final int AVERAGING_TARGET_TIMESPAN = AVERAGING_INTERVAL * TARGET_SPACING; // 40 minutes
+    public static final int MAX_ADJUST_DOWN = 20; // 20% adjustment down
+    public static final int MAX_ADJUST_UP = 1; // 1% adjustment up
+    public static final int TARGET_TIMESPAM_ADJ_DOWN = TARGET_TIMESPAN * (100 + MAX_ADJUST_DOWN) / 100;
+    public static final int MIN_ACTUAL_TIMESPAN = AVERAGING_TARGET_TIMESPAN * (100 - MAX_ADJUST_UP) / 100;
+    public static final int MAX_ACTUAL_TIMESPAN = AVERAGING_TARGET_TIMESPAN * (100 + MAX_ADJUST_DOWN) / 100;
+
     /**
      * Blocks with a timestamp after this should enforce BIP 16, aka "Pay to script hash". This BIP changed the
      * network rules in a soft-forking manner, that is, blocks that don't follow the rules are accepted but not
@@ -303,10 +314,31 @@ public abstract class NetworkParameters implements Serializable {
     /**
      * How much time in seconds is supposed to pass between "interval" blocks. If the actual elapsed time is
      * significantly different from this value, the network difficulty formula will produce a different value. Both
-     * test and production Bitcoin networks use 2 weeks (1209600 seconds).
+     * test and production Zetacoin networks use 2 minutes (120 seconds).
      */
     public int getTargetTimespan() {
         return targetTimespan;
+    }
+
+    /**
+     * Documentation to be added. Used in difficulty transition calculation.
+     */
+    public int getMinActualTimespan() {
+        return minActualTimespan;
+    }
+
+    /**
+     * Documentation to be added. Used in difficulty transition calculation.
+     */
+    public int getMaxActualTimespan() {
+        return maxActualTimespan;
+    }
+
+    /**
+     * Documentation to be added. Used in difficulty transition calculation.
+     */
+    public int getAveratingTargetTimespan() {
+        return averatingTargetTimespan;
     }
 
     /**
