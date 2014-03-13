@@ -280,6 +280,11 @@
           <version>9.1-901.jdbc4</version>
         </dependency>
         -->
+        <dependency>
+            <groupId>com.subgraph</groupId>
+            <artifactId>orchid</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
     </dependencies>
 
 </project>

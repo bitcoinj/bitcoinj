@@ -1,0 +1,1853 @@
+
+                   TC: A Tor control protocol (Version 1)
+
+0. Scope
+
+  This document describes an implementation-specific protocol that is used
+  for other programs (such as frontend user-interfaces) to communicate with a
+  locally running Tor process.  It is not part of the Tor onion routing
+  protocol.
+
+  This protocol replaces version 0 of TC, which is now deprecated.  For
+  reference, TC is described in "control-spec-v0.txt".  Implementors are
+  recommended to avoid using TC directly, but instead to use a library that
+  can easily be updated to use the newer protocol.  (Version 0 is used by Tor
+  versions 0.1.0.x; the protocol in this document only works with Tor
+  versions in the 0.1.1.x series and later.)
+
+1. Protocol outline
+
+  TC is a bidirectional message-based protocol.  It assumes an underlying
+  stream for communication between a controlling process (the "client"
+  or "controller") and a Tor process (or "server").  The stream may be
+  implemented via TCP, TLS-over-TCP, a Unix-domain socket, or so on,
+  but it must provide reliable in-order delivery.  For security, the
+  stream should not be accessible by untrusted parties.
+
+  In TC, the client and server send typed messages to each other over the
+  underlying stream.  The client sends "commands" and the server sends
+  "replies".
+
+  By default, all messages from the server are in response to messages from
+  the client.  Some client requests, however, will cause the server to send
+  messages to the client indefinitely far into the future.  Such
+  "asynchronous" replies are marked as such.
+
+  Servers respond to messages in the order messages are received.
+
+2. Message format
+
+2.1. Description format
+
+  The message formats listed below use ABNF as described in RFC 2234.
+  The protocol itself is loosely based on SMTP (see RFC 2821).
+
+  We use the following nonterminals from RFC 2822: atom, qcontent
+
+  We define the following general-use nonterminals:
+
+     String = DQUOTE *qcontent DQUOTE
+
+  There are explicitly no limits on line length.  All 8-bit characters are
+  permitted unless explicitly disallowed.
+
+  Wherever CRLF is specified to be accepted from the controller, Tor MAY also
+  accept LF.  Tor, however, MUST NOT generate LF instead of CRLF.
+  Controllers SHOULD always send CRLF.
+
+2.2. Commands from controller to Tor
+
+    Command = Keyword Arguments CRLF / "+" Keyword Arguments CRLF Data
+    Keyword = 1*ALPHA
+    Arguments = *(SP / VCHAR)
+
+  Specific commands and their arguments are described below in section 3.
+
+2.3. Replies from Tor to the controller
+
+    Reply = SyncReply / AsyncReply
+    SyncReply = *(MidReplyLine / DataReplyLine) EndReplyLine
+    AsyncReply = *(MidReplyLine / DataReplyLine) EndReplyLine
+
+    MidReplyLine = StatusCode "-" ReplyLine
+    DataReplyLine = StatusCode "+" ReplyLine Data
+    EndReplyLine = StatusCode SP ReplyLine
+    ReplyLine = [ReplyText] CRLF
+    ReplyText = XXXX
+    StatusCode = 3DIGIT
+
+  Specific replies are mentioned below in section 3, and described more fully
+  in section 4.
+
+  [Compatibility note:  versions of Tor before 0.2.0.3-alpha sometimes
+  generate AsyncReplies of the form "*(MidReplyLine / DataReplyLine)".
+  This is incorrect, but controllers that need to work with these
+  versions of Tor should be prepared to get multi-line AsyncReplies with
+  the final line (usually "650 OK") omitted.]
+
+2.4. General-use tokens
+
+  ; Identifiers for servers.
+  ServerID = Nickname / Fingerprint
+
+  Nickname = 1*19 NicknameChar
+  NicknameChar = "a"-"z" / "A"-"Z" / "0" - "9"
+  Fingerprint = "$" 40*HEXDIG
+
+  ; A "=" indicates that the given nickname is canonical; a "~" indicates
+  ; that the given nickname is not canonical.  If no nickname is given at
+  ; all, Tor does not even have a guess for what this router calls itself.
+  LongName = Fingerprint [ ( "=" / "~" ) Nickname ]
+
+  ; How a controller tells Tor about a particular OR.  There are four
+  ; possible formats:
+  ;    $Digest -- The router whose identity key hashes to the given digest.
+  ;        This is the preferred way to refer to an OR.
+  ;    $Digest~Name -- The router whose identity key hashes to the given
+  ;        digest, but only if the router has the given nickname.
+  ;    $Digest=Name -- The router whose identity key hashes to the given
+  ;        digest, but only if the router is Named and has the given
+  ;        nickname.
+  ;    Name -- The Named router with the given nickname, or, if no such
+  ;        router exists, any router whose nickname matches the one given.
+  ;        This is not a safe way to refer to routers, since Named status
+  ;        could under some circumstances change over time.
+  ServerSpec = LongName / Nickname
+
+  ; Unique identifiers for streams or circuits.  Currently, Tor only
+  ; uses digits, but this may change
+  StreamID = 1*16 IDChar
+  CircuitID = 1*16 IDChar
+  IDChar = ALPHA / DIGIT
+
+  Address = ip4-address / ip6-address / hostname   (XXXX Define these)
+
+  ; A "Data" section is a sequence of octets concluded by the terminating
+  ; sequence CRLF "." CRLF.  The terminating sequence may not appear in the
+  ; body of the data.  Leading periods on lines in the data are escaped with
+  ; an additional leading period as in RFC 2821 section 4.5.2.
+  Data = *DataLine "." CRLF
+  DataLine = CRLF / "." 1*LineItem CRLF / NonDotItem *LineItem CRLF
+  LineItem = NonCR / 1*CR NonCRLF
+  NonDotItem = NonDotCR / 1*CR NonCRLF
+
+3. Commands
+
+  All commands are case-insensitive, but most keywords are case-sensitive.
+
+3.1. SETCONF
+
+  Change the value of one or more configuration variables.  The syntax is:
+
+    "SETCONF" 1*(SP keyword ["=" value]) CRLF
+    value = String / QuotedString
+
+  Tor behaves as though it had just read each of the key-value pairs
+  from its configuration file.  Keywords with no corresponding values have
+  their configuration values reset to 0 or NULL (use RESETCONF if you want
+  to set it back to its default).  SETCONF is all-or-nothing: if there
+  is an error in any of the configuration settings, Tor sets none of them.
+
+  Tor responds with a "250 configuration values set" reply on success.
+  If some of the listed keywords can't be found, Tor replies with a
+  "552 Unrecognized option" message. Otherwise, Tor responds with a
+  "513 syntax error in configuration values" reply on syntax error, or a
+  "553 impossible configuration setting" reply on a semantic error.
+
+  When a configuration option takes multiple values, or when multiple
+  configuration keys form a context-sensitive group (see GETCONF below), then
+  setting _any_ of the options in a SETCONF command is taken to reset all of
+  the others.  For example, if two ORBindAddress values are configured, and a
+  SETCONF command arrives containing a single ORBindAddress value, the new
+  command's value replaces the two old values.
+
+  Sometimes it is not possible to change configuration options solely by
+  issuing a series of SETCONF commands, because the value of one of the
+  configuration options depends on the value of another which has not yet
+  been set. Such situations can be overcome by setting multiple configuration
+  options with a single SETCONF command (e.g. SETCONF ORPort=443
+  ORListenAddress=9001).
+
+3.2. RESETCONF
+
+  Remove all settings for a given configuration option entirely, assign
+  its default value (if any), and then assign the String provided.
+  Typically the String is left empty, to simply set an option back to
+  its default. The syntax is:
+
+    "RESETCONF" 1*(SP keyword ["=" String]) CRLF
+
+  Otherwise it behaves like SETCONF above.
+
+3.3. GETCONF
+
+  Request the value of a configuration variable.  The syntax is:
+
+    "GETCONF" 1*(SP keyword) CRLF
+
+  If all of the listed keywords exist in the Tor configuration, Tor replies
+  with a series of reply lines of the form:
+      250 keyword=value
+  If any option is set to a 'default' value semantically different from an
+  empty string, Tor may reply with a reply line of the form:
+      250 keyword
+
+  Value may be a raw value or a quoted string.  Tor will try to use
+  unquoted values except when the value could be misinterpreted through
+  not being quoted.
+
+  If some of the listed keywords can't be found, Tor replies with a
+  "552 unknown configuration keyword" message.
+
+  If an option appears multiple times in the configuration, all of its
+  key-value pairs are returned in order.
+
+  Some options are context-sensitive, and depend on other options with
+  different keywords.  These cannot be fetched directly.  Currently there
+  is only one such option: clients should use the "HiddenServiceOptions"
+  virtual keyword to get all HiddenServiceDir, HiddenServicePort,
+  HiddenServiceNodes, and HiddenServiceExcludeNodes option settings.
+
+3.4. SETEVENTS
+
+  Request the server to inform the client about interesting events.  The
+  syntax is:
+
+     "SETEVENTS" [SP "EXTENDED"] *(SP EventCode) CRLF
+
+     EventCode = "CIRC" / "STREAM" / "ORCONN" / "BW" / "DEBUG" /
+         "INFO" / "NOTICE" / "WARN" / "ERR" / "NEWDESC" / "ADDRMAP" /
+         "AUTHDIR_NEWDESCS" / "DESCCHANGED" / "STATUS_GENERAL" /
+         "STATUS_CLIENT" / "STATUS_SERVER" / "GUARD" / "NS" / "STREAM_BW" /
+         "CLIENTS_SEEN" / "NEWCONSENSUS"
+
+  Any events *not* listed in the SETEVENTS line are turned off; thus, sending
+  SETEVENTS with an empty body turns off all event reporting.
+
+  The server responds with a "250 OK" reply on success, and a "552
+  Unrecognized event" reply if one of the event codes isn't recognized.  (On
+  error, the list of active event codes isn't changed.)
+
+  If the flag string "EXTENDED" is provided, Tor may provide extra
+  information with events for this connection; see 4.1 for more information.
+  NOTE: All events on a given connection will be provided in extended format,
+  or none.
+  NOTE: "EXTENDED" is only supported in Tor 0.1.1.9-alpha or later.
+
+  Each event is described in more detail in Section 4.1.
+
+3.5. AUTHENTICATE
+
+  Sent from the client to the server.  The syntax is:
+     "AUTHENTICATE" [ SP 1*HEXDIG / QuotedString ] CRLF
+
+  The server responds with "250 OK" on success or "515 Bad authentication" if
+  the authentication cookie is incorrect.  Tor closes the connection on an
+  authentication failure.
+
+  The format of the 'cookie' is implementation-dependent; see 5.1 below for
+  information on how the standard Tor implementation handles it.
+
+  Before the client has authenticated, no command other than PROTOCOLINFO,
+  AUTHENTICATE, or QUIT is valid.  If the controller sends any other command,
+  or sends a malformed command, or sends an unsuccessful AUTHENTICATE
+  command, or sends PROTOCOLINFO more than once, Tor sends an error reply and
+  closes the connection.
+
+  To prevent some cross-protocol attacks, the AUTHENTICATE command is still
+  required even if all authentication methods in Tor are disabled.  In this
+  case, the controller should just send "AUTHENTICATE" CRLF.
+
+  (Versions of Tor before 0.1.2.16 and 0.2.0.4-alpha did not close the
+  connection after an authentication failure.)
+
+3.6. SAVECONF
+
+  Sent from the client to the server.  The syntax is:
+     "SAVECONF" CRLF
+
+  Instructs the server to write out its config options into its torrc. Server
+  returns "250 OK" if successful, or "551 Unable to write configuration
+  to disk" if it can't write the file or some other error occurs.
+
+3.7. SIGNAL
+
+  Sent from the client to the server. The syntax is:
+
+     "SIGNAL" SP Signal CRLF
+
+     Signal = "RELOAD" / "SHUTDOWN" / "DUMP" / "DEBUG" / "HALT" /
+              "HUP" / "INT" / "USR1" / "USR2" / "TERM" / "NEWNYM" /
+              "CLEARDNSCACHE"
+
+  The meaning of the signals are:
+
+      RELOAD    -- Reload: reload config items, refetch directory. (like HUP)
+      SHUTDOWN  -- Controlled shutdown: if server is an OP, exit immediately.
+                   If it's an OR, close listeners and exit after 30 seconds.
+                   (like INT)
+      DUMP      -- Dump stats: log information about open connections and
+                   circuits. (like USR1)
+      DEBUG     -- Debug: switch all open logs to loglevel debug. (like USR2)
+      HALT      -- Immediate shutdown: clean up and exit now. (like TERM)
+      CLEARDNSCACHE -- Forget the client-side cached IPs for all hostnames.
+      NEWNYM    -- Switch to clean circuits, so new application requests
+                   don't share any circuits with old ones.  Also clears
+                   the client-side DNS cache.  (Tor MAY rate-limit its
+                   response to this signal.)
+
+  The server responds with "250 OK" if the signal is recognized (or simply
+  closes the socket if it was asked to close immediately), or "552
+  Unrecognized signal" if the signal is unrecognized.
+
+3.8. MAPADDRESS
+
+  Sent from the client to the server.  The syntax is:
+
+    "MAPADDRESS" 1*(Address "=" Address SP) CRLF
+
+  The first address in each pair is an "original" address; the second is a
+  "replacement" address.  The client sends this message to the server in
+  order to tell it that future SOCKS requests for connections to the original
+  address should be replaced with connections to the specified replacement
+  address.  If the addresses are well-formed, and the server is able to
+  fulfill the request, the server replies with a 250 message:
+    250-OldAddress1=NewAddress1
+    250 OldAddress2=NewAddress2
+
+  containing the source and destination addresses.  If request is
+  malformed, the server replies with "512 syntax error in command
+  argument".  If the server can't fulfill the request, it replies with
+  "451 resource exhausted".
+
+  The client may decline to provide a body for the original address, and
+  instead send a special null address ("0.0.0.0" for IPv4, "::0" for IPv6, or
+  "." for hostname), signifying that the server should choose the original
+  address itself, and return that address in the reply.  The server
+  should ensure that it returns an element of address space that is unlikely
+  to be in actual use.  If there is already an address mapped to the
+  destination address, the server may reuse that mapping.
+
+  If the original address is already mapped to a different address, the old
+  mapping is removed.  If the original address and the destination address
+  are the same, the server removes any mapping in place for the original
+  address.
+
+  Example:
+    C: MAPADDRESS 0.0.0.0=torproject.org 1.2.3.4=tor.freehaven.net
+    S: 250-127.192.10.10=torproject.org
+    S: 250 1.2.3.4=tor.freehaven.net
+
+  {Note: This feature is designed to be used to help Tor-ify applications
+  that need to use SOCKS4 or hostname-less SOCKS5.  There are three
+  approaches to doing this:
+     1. Somehow make them use SOCKS4a or SOCKS5-with-hostnames instead.
+     2. Use tor-resolve (or another interface to Tor's resolve-over-SOCKS
+        feature) to resolve the hostname remotely.  This doesn't work
+        with special addresses like x.onion or x.y.exit.
+     3. Use MAPADDRESS to map an IP address to the desired hostname, and then
+        arrange to fool the application into thinking that the hostname
+        has resolved to that IP.
+  This functionality is designed to help implement the 3rd approach.}
+
+  Mappings set by the controller last until the Tor process exits:
+  they never expire. If the controller wants the mapping to last only
+  a certain time, then it must explicitly un-map the address when that
+  time has elapsed.
+
+3.9. GETINFO
+
+  Sent from the client to the server.  The syntax is as for GETCONF:
+    "GETINFO" 1*(SP keyword) CRLF
+  one or more NL-terminated strings.  The server replies with an INFOVALUE
+  message, or a 551 or 552 error.
+
+  Unlike GETCONF, this message is used for data that are not stored in the Tor
+  configuration file, and that may be longer than a single line.  On success,
+  one ReplyLine is sent for each requested value, followed by a final 250 OK
+  ReplyLine.  If a value fits on a single line, the format is:
+      250-keyword=value
+  If a value must be split over multiple lines, the format is:
+      250+keyword=
+      value
+      .
+  Recognized keys and their values include:
+
+    "version" -- The version of the server's software, including the name
+      of the software. (example: "Tor 0.0.9.4")
+
+    "config-file" -- The location of Tor's configuration file ("torrc").
+
+    ["exit-policy/prepend" -- The default exit policy lines that Tor will
+      *prepend* to the ExitPolicy config option.
+     -- Never implemented. Useful?]
+
+    "exit-policy/default" -- The default exit policy lines that Tor will
+      *append* to the ExitPolicy config option.
+
+    "desc/id/<OR identity>" or "desc/name/<OR nickname>" -- the latest
+      server descriptor for a given OR, NUL-terminated.
+
+    "desc-annotations/id/<OR identity>" -- outputs the annotations string
+      (source, timestamp of arrival, purpose, etc) for the corresponding
+      descriptor. [First implemented in 0.2.0.13-alpha.]
+
+    "extra-info/digest/<digest>"  -- the extrainfo document whose digest (in
+      hex) is <digest>.  Only available if we're downloading extra-info
+      documents.
+
+    "ns/id/<OR identity>" or "ns/name/<OR nickname>" -- the latest router
+      status info (v2 directory style) for a given OR.  Router status
+      info is as given in
+      dir-spec.txt, and reflects the current beliefs of this Tor about the
+      router in question. Like directory clients, controllers MUST
+      tolerate unrecognized flags and lines.  The published date and
+      descriptor digest are those believed to be best by this Tor,
+      not necessarily those for a descriptor that Tor currently has.
+      [First implemented in 0.1.2.3-alpha.]
+
+    "ns/all" -- Router status info (v2 directory style) for all ORs we
+      have an opinion about, joined by newlines. [First implemented
+      in 0.1.2.3-alpha.]
+
+    "ns/purpose/<purpose>" -- Router status info (v2 directory style)
+      for all ORs of this purpose. Mostly designed for /ns/purpose/bridge
+      queries. [First implemented in 0.2.0.13-alpha.]
+
+    "desc/all-recent" -- the latest server descriptor for every router that
+      Tor knows about.
+
+    "network-status" -- a space-separated list (v1 directory style)
+      of all known OR identities. This is in the same format as the
+      router-status line in v1 directories; see dir-spec-v1.txt section
+      3 for details.  (If VERBOSE_NAMES is enabled, the output will
+      not conform to dir-spec-v1.txt; instead, the result will be a
+      space-separated list of LongName, each preceded by a "!" if it is
+      believed to be not running.) This option is deprecated; use
+      "ns/all" instead.
+
+    "address-mappings/all"
+    "address-mappings/config"
+    "address-mappings/cache"
+    "address-mappings/control" -- a \r\n-separated list of address
+      mappings, each in the form of "from-address to-address expiry".
+      The 'config' key returns those address mappings set in the
+      configuration; the 'cache' key returns the mappings in the
+      client-side DNS cache; the 'control' key returns the mappings set
+      via the control interface; the 'all' target returns the mappings
+      set through any mechanism.
+      Expiry is formatted as with ADDRMAP events, except that "expiry" is
+      always a time in GMT or the string "NEVER"; see section 4.1.7.
+      First introduced in 0.2.0.3-alpha.
+
+    "addr-mappings/*" -- as for address-mappings/*, but without the
+      expiry portion of the value.  Use of this value is deprecated
+      since 0.2.0.3-alpha; use address-mappings instead.
+
+    "address" -- the best guess at our external IP address. If we
+      have no guess, return a 551 error. (Added in 0.1.2.2-alpha)
+
+    "fingerprint" -- the contents of the fingerprint file that Tor
+      writes as a server, or a 551 if we're not a server currently.
+      (Added in 0.1.2.3-alpha)
+
+    "circuit-status"
+      A series of lines as for a circuit status event. Each line is of
+      the form:
+         CircuitID SP CircStatus [SP Path] CRLF
+
+    "stream-status"
+      A series of lines as for a stream status event.  Each is of the form:
+         StreamID SP StreamStatus SP CircID SP Target CRLF
+
+    "orconn-status"
+      A series of lines as for an OR connection status event.  Each is of the
+      form:
+         ServerID SP ORStatus CRLF
+
+    "entry-guards"
+      A series of lines listing the currently chosen entry guards, if any.
+      Each is of the form:
+         ServerID2 SP Status [SP ISOTime] CRLF
+
+         Status-with-time = ("unlisted") SP ISOTime
+         Status = ("up" / "never-connected" / "down" /
+                      "unusable" / "unlisted" )
+
+         ServerID2 = Nickname / 40*HEXDIG
+
+      [From 0.1.1.4-alpha to 0.1.1.10-alpha, this was called "helper-nodes".
+       Tor still supports calling it that for now, but support will be
+       removed in 0.1.3.x.]
+
+      [Older versions of Tor (before 0.1.2.x-final) generated 'down' instead
+       of unlisted/unusable.  Current Tors never generate 'down'.]
+
+      [XXXX ServerID2 differs from ServerID in not prefixing fingerprints
+       with a $.  This is an implementation error.  It would be nice to add
+       the $ back in if we can do so without breaking compatibility.]
+
+    "accounting/enabled"
+    "accounting/hibernating"
+    "accounting/bytes"
+    "accounting/bytes-left"
+    "accounting/interval-start"
+    "accounting/interval-wake"
+    "accounting/interval-end"
+      Information about accounting status.  If accounting is enabled,
+      "enabled" is 1; otherwise it is 0.  The "hibernating" field is "hard"
+      if we are accepting no data; "soft" if we're accepting no new
+      connections, and "awake" if we're not hibernating at all.  The "bytes"
+      and "bytes-left" fields contain (read-bytes SP write-bytes), for the
+      start and the rest of the interval respectively.  The 'interval-start'
+      and 'interval-end' fields are the borders of the current interval; the
+      'interval-wake' field is the time within the current interval (if any)
+      where we plan[ned] to start being active. The times are GMT.
+
+    "config/names"
+      A series of lines listing the available configuration options. Each is
+      of the form:
+         OptionName SP OptionType [ SP Documentation ] CRLF
+         OptionName = Keyword
+         OptionType = "Integer" / "TimeInterval" / "DataSize" / "Float" /
+           "Boolean" / "Time" / "CommaList" / "Dependant" / "Virtual" /
+           "String" / "LineList"
+         Documentation = Text
+
+    "info/names"
+      A series of lines listing the available GETINFO options.  Each is of
+      one of these forms:
+         OptionName SP Documentation CRLF
+         OptionPrefix SP Documentation CRLF
+         OptionPrefix = OptionName "/*"
+
+    "events/names"
+      A space-separated list of all the events supported by this version of
+      Tor's SETEVENTS.
+
+    "features/names"
+      A space-separated list of all the events supported by this version of
+      Tor's USEFEATURE.
+
+    "ip-to-country/*"
+      Maps IP addresses to 2-letter country codes.  For example,
+      "GETINFO ip-to-country/18.0.0.1" should give "US".
+
+    "next-circuit/IP:port"
+      XXX todo.
+
+    "dir/status-vote/current/consensus" [added in Tor 0.2.1.6-alpha]
+    "dir/status/authority"
+    "dir/status/fp/<F>"
+    "dir/status/fp/<F1>+<F2>+<F3>"
+    "dir/status/all"
+    "dir/server/fp/<F>"
+    "dir/server/fp/<F1>+<F2>+<F3>"
+    "dir/server/d/<D>"
+    "dir/server/d/<D1>+<D2>+<D3>"
+    "dir/server/authority"
+    "dir/server/all"
+      A series of lines listing directory contents, provided according to the
+      specification for the URLs listed in Section 4.4 of dir-spec.txt.  Note
+      that Tor MUST NOT provide private information, such as descriptors for
+      routers not marked as general-purpose.  When asked for 'authority'
+      information for which this Tor is not authoritative, Tor replies with
+      an empty string.
+
+    "status/circuit-established"
+    "status/enough-dir-info"
+    "status/good-server-descriptor"
+    "status/accepted-server-descriptor"
+    "status/..."
+      These provide the current internal Tor values for various Tor
+      states. See Section 4.1.10 for explanations. (Only a few of the
+      status events are available as getinfo's currently. Let us know if
+      you want more exposed.)
+    "status/reachability-succeeded/or"
+      0 or 1, depending on whether we've found our ORPort reachable.
+    "status/reachability-succeeded/dir"
+      0 or 1, depending on whether we've found our DirPort reachable.
+    "status/reachability-succeeded"
+      "OR=" ("0"/"1") SP "DIR=" ("0"/"1")
+      Combines status/reachability-succeeded/*; controllers MUST ignore
+      unrecognized elements in this entry.
+    "status/bootstrap-phase"
+      Returns the most recent bootstrap phase status event
+      sent. Specifically, it returns a string starting with either
+      "NOTICE BOOTSTRAP ..." or "WARN BOOTSTRAP ...". Controllers should
+      use this getinfo when they connect or attach to Tor to learn its
+      current bootstrap state.
+    "status/version/recommended"
+      List of currently recommended versions.
+    "status/version/current"
+      Status of the current version. One of: new, old, unrecommended,
+      recommended, new in series, obsolete.
+    "status/clients-seen"
+      A summary of which countries we've seen clients from recently,
+      formatted the same as the CLIENTS_SEEN status event described in
+      Section 4.1.14. This GETINFO option is currently available only
+      for bridge relays.
+
+  Examples:
+     C: GETINFO version desc/name/moria1
+     S: 250+desc/name/moria=
+     S: [Descriptor for moria]
+     S: .
+     S: 250-version=Tor 0.1.1.0-alpha-cvs
+     S: 250 OK
+
+3.10. EXTENDCIRCUIT
+
+  Sent from the client to the server.  The format is:
+      "EXTENDCIRCUIT" SP CircuitID SP
+                      ServerSpec *("," ServerSpec)
+                      [SP "purpose=" Purpose] CRLF
+
+  This request takes one of two forms: either the CircuitID is zero, in
+  which case it is a request for the server to build a new circuit according
+  to the specified path, or the CircuitID is nonzero, in which case it is a
+  request for the server to extend an existing circuit with that ID according
+  to the specified path.
+
+  If CircuitID is 0 and "purpose=" is specified, then the circuit's
+  purpose is set. Two choices are recognized: "general" and
+  "controller". If not specified, circuits are created as "general".
+
+  If the request is successful, the server sends a reply containing a
+  message body consisting of the CircuitID of the (maybe newly created)
+  circuit. The syntax is "250" SP "EXTENDED" SP CircuitID CRLF.
+
+3.11. SETCIRCUITPURPOSE
+
+  Sent from the client to the server.  The format is:
+      "SETCIRCUITPURPOSE" SP CircuitID SP Purpose CRLF
+
+  This changes the circuit's purpose. See EXTENDCIRCUIT above for details.
+
+3.12. SETROUTERPURPOSE
+
+  Sent from the client to the server.  The format is:
+      "SETROUTERPURPOSE" SP NicknameOrKey SP Purpose CRLF
+
+  This changes the descriptor's purpose. See +POSTDESCRIPTOR below
+  for details.
+
+  NOTE: This command was disabled and made obsolete as of Tor
+  0.2.0.8-alpha. It doesn't exist anymore, and is listed here only for
+  historical interest.
+
+3.13. ATTACHSTREAM
+
+  Sent from the client to the server.  The syntax is:
+     "ATTACHSTREAM" SP StreamID SP CircuitID [SP "HOP=" HopNum] CRLF
+
+  This message informs the server that the specified stream should be
+  associated with the specified circuit.  Each stream may be associated with
+  at most one circuit, and multiple streams may share the same circuit.
+  Streams can only be attached to completed circuits (that is, circuits that
+  have sent a circuit status 'BUILT' event or are listed as built in a
+  GETINFO circuit-status request).
+
+  If the circuit ID is 0, responsibility for attaching the given stream is
+  returned to Tor.
+
+  If HOP=HopNum is specified, Tor will choose the HopNumth hop in the
+  circuit as the exit node, rather than the last node in the circuit.
+  Hops are 1-indexed; generally, it is not permitted to attach to hop 1.
+
+  Tor responds with "250 OK" if it can attach the stream, 552 if the circuit
+  or stream didn't exist, or 551 if the stream couldn't be attached for
+  another reason.
+
+  {Implementation note: Tor will close unattached streams by itself,
+  roughly two minutes after they are born. Let the developers know if
+  that turns out to be a problem.}
+
+  {Implementation note: By default, Tor automatically attaches streams to
+  circuits itself, unless the configuration variable
+  "__LeaveStreamsUnattached" is set to "1".  Attempting to attach streams
+  via TC when "__LeaveStreamsUnattached" is false may cause a race between
+  Tor and the controller, as both attempt to attach streams to circuits.}
+
+  {Implementation note: You can try to attachstream to a stream that
+  has already sent a connect or resolve request but hasn't succeeded
+  yet, in which case Tor will detach the stream from its current circuit
+  before proceeding with the new attach request.}
+
+3.14. POSTDESCRIPTOR
+
+  Sent from the client to the server. The syntax is:
+    "+POSTDESCRIPTOR" [SP "purpose=" Purpose] [SP "cache=" Cache]
+                      CRLF Descriptor CRLF "." CRLF
+
+  This message informs the server about a new descriptor. If Purpose is
+  specified, it must be either "general", "controller", or "bridge",
+  else we return a 552 error. The default is "general".
+
+  If Cache is specified, it must be either "no" or "yes", else we
+  return a 552 error. If Cache is not specified, Tor will decide for
+  itself whether it wants to cache the descriptor, and controllers
+  must not rely on its choice.
+
+  The descriptor, when parsed, must contain a number of well-specified
+  fields, including fields for its nickname and identity.
+
+  If there is an error in parsing the descriptor, the server must send a
+  "554 Invalid descriptor" reply. If the descriptor is well-formed but
+  the server chooses not to add it, it must reply with a 251 message
+  whose body explains why the server was not added. If the descriptor
+  is added, Tor replies with "250 OK".
+
+3.15. REDIRECTSTREAM
+
+  Sent from the client to the server. The syntax is:
+    "REDIRECTSTREAM" SP StreamID SP Address [SP Port] CRLF
+
+  Tells the server to change the exit address on the specified stream.  If
+  Port is specified, changes the destination port as well.  No remapping
+  is performed on the new provided address.
+
+  To be sure that the modified address will be used, this event must be sent
+  after a new stream event is received, and before attaching this stream to
+  a circuit.
+
+  Tor replies with "250 OK" on success.
+
+3.16. CLOSESTREAM
+
+  Sent from the client to the server.  The syntax is:
+
+    "CLOSESTREAM" SP StreamID SP Reason *(SP Flag) CRLF
+
+  Tells the server to close the specified stream.  The reason should be one
+  of the Tor RELAY_END reasons given in tor-spec.txt, as a decimal.  Flags is
+  not used currently; Tor servers SHOULD ignore unrecognized flags.  Tor may
+  hold the stream open for a while to flush any data that is pending.
+
+  Tor replies with "250 OK" on success, or a 512 if there aren't enough
+  arguments, or a 552 if it doesn't recognize the StreamID or reason.
+
+3.17. CLOSECIRCUIT
+
+   The syntax is:
+     CLOSECIRCUIT SP CircuitID *(SP Flag) CRLF
+     Flag = "IfUnused"
+
+  Tells the server to close the specified circuit.   If "IfUnused" is
+  provided, do not close the circuit unless it is unused.
+
+  Other flags may be defined in the future; Tor SHOULD ignore unrecognized
+  flags.
+
+  Tor replies with "250 OK" on success, or a 512 if there aren't enough
+  arguments, or a 552 if it doesn't recognize the CircuitID.
+
+3.18. QUIT
+
+  Tells the server to hang up on this controller connection. This command
+  can be used before authenticating.
+
+3.19. USEFEATURE
+
+  The syntax is:
+
+    "USEFEATURE" *(SP FeatureName) CRLF
+    FeatureName = 1*(ALPHA / DIGIT / "_" / "-")
+
+  Sometimes extensions to the controller protocol break compatibility with
+  older controllers.  In this case, whenever possible, the extensions are
+  first included in Tor disabled by default, and only enabled on a given
+  controller connection when the "USEFEATURE" command is given.  Once a
+  "USEFEATURE" command is given, it applies to all subsequent interactions on
+  the same connection; to disable an enabled feature, a new controller
+  connection must be opened.
+
+  This is a forward-compatibility mechanism; each feature will eventually
+  become a regular part of the control protocol in some future version of Tor.
+  Tor will ignore a request to use any feature that is already on by default.
+  Tor will give a "552" error if any requested feature is not recognized.
+
+  Feature names are case-insensitive.
+
+  EXTENDED_EVENTS
+
+     Same as passing 'EXTENDED' to SETEVENTS; this is the preferred way to
+     request the extended event syntax.
+
+    This feature was first used in 0.1.2.3-alpha.  It is always-on in
+    Tor 0.2.2.1-alpha and later.
+
+  VERBOSE_NAMES
+
+     Instead of ServerID as specified above, the controller should
+     identify ORs by LongName in events and GETINFO results.  This format is
+     strictly more informative: rather than including Nickname for
+     known Named routers and Fingerprint for unknown or unNamed routers, the
+     LongName format includes a Fingerprint, an indication of Named status,
+     and a Nickname (if one is known).
+
+     This will not be always-enabled until at least two stable
+     releases after 0.1.2.2-alpha, the release where it was first
+     available.  It is always-on in Tor 0.2.2.1-alpha and later.
+
+3.20. RESOLVE
+
+  The syntax is
+    "RESOLVE" *Option *Address CRLF
+    Option = "mode=reverse"
+    Address = a hostname or IPv4 address
+
+  This command launches a remote hostname lookup request for every specified
+  request (or reverse lookup if "mode=reverse" is specified).  Note that the
+  request is done in the background: to see the answers, your controller will
+  need to listen for ADDRMAP events; see 4.1.7 below.
+
+  [Added in Tor 0.2.0.3-alpha]
+
+3.21. PROTOCOLINFO
+
+  The syntax is:
+    "PROTOCOLINFO" *(SP PIVERSION) CRLF
+
+  The server reply format is:
+    "250-PROTOCOLINFO" SP PIVERSION CRLF *InfoLine "250 OK" CRLF
+
+    InfoLine = AuthLine / VersionLine / OtherLine
+
+     AuthLine = "250-AUTH" SP "METHODS=" AuthMethod *(",")AuthMethod
+                       *(SP "COOKIEFILE=" AuthCookieFile) CRLF
+     VersionLine = "250-VERSION" SP "Tor=" TorVersion [SP Arguments] CRLF
+
+     AuthMethod =
+      "NULL"           / ; No authentication is required
+      "HASHEDPASSWORD" / ; A controller must supply the original password
+      "COOKIE"         / ; A controller must supply the contents of a cookie
+
+     AuthCookieFile = QuotedString
+     TorVersion = QuotedString
+
+     OtherLine = "250-" Keyword [SP Arguments] CRLF
+
+    PIVERSION: 1*DIGIT
+
+  Tor MAY give its InfoLines in any order; controllers MUST ignore InfoLines
+  with keywords they do not recognize.  Controllers MUST ignore extraneous
+  data on any InfoLine.
+
+  PIVERSION is there in case we drastically change the syntax one day. For
+  now it should always be "1".  Controllers MAY provide a list of the
+  protocolinfo versions they support; Tor MAY select a version that the
+  controller does not support.
+
+  AuthMethod is used to specify one or more control authentication
+  methods that Tor currently accepts.
+
+  AuthCookieFile specifies the absolute path and filename of the
+  authentication cookie that Tor is expecting and is provided iff
+  the METHODS field contains the method "COOKIE".  Controllers MUST handle
+  escape sequences inside this string.
+
+  The VERSION line contains the Tor version.
+
+  [Unlike other commands besides AUTHENTICATE, PROTOCOLINFO may be used (but
+  only once!) before AUTHENTICATE.]
+
+  [PROTOCOLINFO was not supported before Tor 0.2.0.5-alpha.]
+
+4. Replies
+
+  Reply codes follow the same 3-character format as used by SMTP, with the
+  first character defining a status, the second character defining a
+  subsystem, and the third designating fine-grained information.
+
+  The TC protocol currently uses the following first characters:
+
+    2yz   Positive Completion Reply
+       The command was successful; a new request can be started.
+
+    4yz   Temporary Negative Completion reply
+       The command was unsuccessful but might be reattempted later.
+
+    5yz   Permanent Negative Completion Reply
+       The command was unsuccessful; the client should not try exactly
+       that sequence of commands again.
+
+    6yz   Asynchronous Reply
+       Sent out-of-order in response to an earlier SETEVENTS command.
+
+  The following second characters are used:
+
+    x0z   Syntax
+       Sent in response to ill-formed or nonsensical commands.
+
+    x1z   Protocol
+       Refers to operations of the Tor Control protocol.
+
+    x5z   Tor
+       Refers to actual operations of Tor system.
+
+  The following codes are defined:
+
+     250 OK
+     251 Operation was unnecessary
+         [Tor has declined to perform the operation, but no harm was done.]
+
+     451 Resource exhausted
+
+     500 Syntax error: protocol
+
+     510 Unrecognized command
+     511 Unimplemented command
+     512 Syntax error in command argument
+     513 Unrecognized command argument
+     514 Authentication required
+     515 Bad authentication
+
+     550 Unspecified Tor error
+
+     551 Internal error
+               [Something went wrong inside Tor, so that the client's
+                request couldn't be fulfilled.]
+
+     552 Unrecognized entity
+               [A configuration key, a stream ID, circuit ID, event,
+                mentioned in the command did not actually exist.]
+
+     553 Invalid configuration value
+         [The client tried to set a configuration option to an
+           incorrect, ill-formed, or impossible value.]
+
+     554 Invalid descriptor
+
+     555 Unmanaged entity
+
+     650 Asynchronous event notification
+
+  Unless specified to have specific contents, the human-readable messages
+  in error replies should not be relied upon to match those in this document.
+
+4.1. Asynchronous events
+
+  These replies can be sent after a corresponding SETEVENTS command has been
+  received.  They will not be interleaved with other Reply elements, but they
+  can appear between a command and its corresponding reply.  For example,
+  this sequence is possible:
+
+     C: SETEVENTS CIRC
+     S: 250 OK
+     C: GETCONF SOCKSPORT ORPORT
+     S: 650 CIRC 1000 EXTENDED moria1,moria2
+     S: 250-SOCKSPORT=9050
+     S: 250 ORPORT=0
+
+  But this sequence is disallowed:
+     C: SETEVENTS CIRC
+     S: 250 OK
+     C: GETCONF SOCKSPORT ORPORT
+     S: 250-SOCKSPORT=9050
+     S: 650 CIRC 1000 EXTENDED moria1,moria2
+     S: 250 ORPORT=0
+
+  Clients MUST tolerate more arguments in an asynchonous reply than
+  expected, and MUST tolerate more lines in an asynchronous reply than
+  expected.  For instance, a client that expects a CIRC message like:
+      650 CIRC 1000 EXTENDED moria1,moria2
+  must tolerate:
+      650-CIRC 1000 EXTENDED moria1,moria2 0xBEEF
+      650-EXTRAMAGIC=99
+      650 ANONYMITY=high
+
+  If clients ask for extended events, then each event line as specified below
+  will be followed by additional extensions. Additional lines will be of the
+  form
+      "650" ("-"/" ") KEYWORD ["=" ARGUMENTS] CRLF
+  Additional arguments will be of the form
+      SP KEYWORD ["=" ( QuotedString / * NonSpDquote ) ]
+  Such clients MUST tolerate lines with keywords they do not recognize.
+
+4.1.1. Circuit status changed
+
+   The syntax is:
+
+     "650" SP "CIRC" SP CircuitID SP CircStatus [SP Path]
+          [SP "REASON=" Reason [SP "REMOTE_REASON=" Reason]] CRLF
+
+      CircStatus =
+               "LAUNCHED" / ; circuit ID assigned to new circuit
+               "BUILT"    / ; all hops finished, can now accept streams
+               "EXTENDED" / ; one more hop has been completed
+               "FAILED"   / ; circuit closed (was not built)
+               "CLOSED"     ; circuit closed (was built)
+
+      Path = ServerID *("," ServerID)
+
+      Reason = "NONE" / "TORPROTOCOL" / "INTERNAL" / "REQUESTED" /
+               "HIBERNATING" / "RESOURCELIMIT" / "CONNECTFAILED" /
+               "OR_IDENTITY" / "OR_CONN_CLOSED" / "TIMEOUT" /
+               "FINISHED" / "DESTROYED" / "NOPATH" / "NOSUCHSERVICE"
+
+   The path is provided only when the circuit has been extended at least one
+   hop.
+
+   The "REASON" field is provided only for FAILED and CLOSED events, and only
+   if extended events are enabled (see 3.19).  Clients MUST accept reasons
+   not listed above.  Reasons are as given in tor-spec.txt, except for:
+
+      NOPATH          (Not enough nodes to make circuit)
+
+   The "REMOTE_REASON" field is provided only when we receive a DESTROY or
+   TRUNCATE cell, and only if extended events are enabled.  It contains the
+   actual reason given by the remote OR for closing the circuit. Clients MUST
+   accept reasons not listed above.  Reasons are as listed in tor-spec.txt.
+
+4.1.2. Stream status changed
+
+    The syntax is:
+
+      "650" SP "STREAM" SP StreamID SP StreamStatus SP CircID SP Target
+          [SP "REASON=" Reason [ SP "REMOTE_REASON=" Reason ]]
+          [SP "SOURCE=" Source] [ SP "SOURCE_ADDR=" Address ":" Port ]
+          [SP "PURPOSE=" Purpose]
+          CRLF
+
+      StreamStatus =
+               "NEW"          / ; New request to connect
+               "NEWRESOLVE"   / ; New request to resolve an address
+               "REMAP"        / ; Address re-mapped to another
+               "SENTCONNECT"  / ; Sent a connect cell along a circuit
+               "SENTRESOLVE"  / ; Sent a resolve cell along a circuit
+               "SUCCEEDED"    / ; Received a reply; stream established
+               "FAILED"       / ; Stream failed and not retriable
+               "CLOSED"       / ; Stream closed
+               "DETACHED"       ; Detached from circuit; still retriable
+
+       Target = Address ":" Port
+
+  The circuit ID designates which circuit this stream is attached to.  If
+  the stream is unattached, the circuit ID "0" is given.
+
+      Reason = "MISC" / "RESOLVEFAILED" / "CONNECTREFUSED" /
+               "EXITPOLICY" / "DESTROY" / "DONE" / "TIMEOUT" /
+               "HIBERNATING" / "INTERNAL"/ "RESOURCELIMIT" /
+               "CONNRESET" / "TORPROTOCOL" / "NOTDIRECTORY" / "END"
+
+   The "REASON" field is provided only for FAILED, CLOSED, and DETACHED
+   events, and only if extended events are enabled (see 3.19).  Clients MUST
+   accept reasons not listed above.  Reasons are as given in tor-spec.txt,
+   except for:
+
+      END          (We received a RELAY_END cell from the other side of this
+                    stream.)
+      [XXXX document more. -NM]
+
+   The "REMOTE_REASON" field is provided only when we receive a RELAY_END
+   cell, and only if extended events are enabled.  It contains the actual
+   reason given by the remote OR for closing the stream. Clients MUST accept
+   reasons not listed above.  Reasons are as listed in tor-spec.txt.
+
+   "REMAP" events include a Source if extended events are enabled:
+      Source = "CACHE" / "EXIT"
+   Clients MUST accept sources not listed above.  "CACHE" is given if
+   the Tor client decided to remap the address because of a cached
+   answer, and "EXIT" is given if the remote node we queried gave us
+   the new address as a response.
+
+   The "SOURCE_ADDR" field is included with NEW and NEWRESOLVE events if
+   extended events are enabled.  It indicates the address and port
+   that requested the connection, and can be (e.g.) used to look up the
+   requesting program.
+
+      Purpose = "DIR_FETCH" / "UPLOAD_DESC" / "DNS_REQUEST" /
+                 "USER" /  "DIRPORT_TEST"
+
+   The "PURPOSE" field is provided only for NEW and NEWRESOLVE events, and
+   only if extended events are enabled (see 3.19).  Clients MUST accept
+   purposes not listed above.
+
+4.1.3. OR Connection status changed
+
+  The syntax is:
+    "650" SP "ORCONN" SP (ServerID / Target) SP ORStatus [ SP "REASON="
+             Reason ] [ SP "NCIRCS=" NumCircuits ] CRLF
+
+    ORStatus = "NEW" / "LAUNCHED" / "CONNECTED" / "FAILED" / "CLOSED"
+
+  NEW is for incoming connections, and LAUNCHED is for outgoing
+  connections. CONNECTED means the TLS handshake has finished (in
+  either direction). FAILED means a connection is being closed that
+  hasn't finished its handshake, and CLOSED is for connections that
+  have handshaked.
+
+  A ServerID is specified unless it's a NEW connection, in which
+  case we don't know what server it is yet, so we use Address:Port.
+
+  If extended events are enabled (see 3.19), optional reason and
+  circuit counting information is provided for CLOSED and FAILED
+  events.
+
+      Reason = "MISC" / "DONE" / "CONNECTREFUSED" /
+               "IDENTITY" / "CONNECTRESET" / "TIMEOUT" / "NOROUTE" /
+               "IOERROR" / "RESOURCELIMIT"
+
+  NumCircuits counts both established and pending circuits.
+
+4.1.4. Bandwidth used in the last second
+
+  The syntax is:
+     "650" SP "BW" SP BytesRead SP BytesWritten *(SP Type "=" Num) CRLF
+     BytesRead = 1*DIGIT
+     BytesWritten = 1*DIGIT
+     Type = "DIR" / "OR" / "EXIT" / "APP" / ...
+     Num = 1*DIGIT
+
+  BytesRead and BytesWritten are the totals. [In a future Tor version,
+  we may also include a breakdown of the connection types that used
+  bandwidth this second (not implemented yet).]
+
+4.1.5. Log messages
+
+  The syntax is:
+     "650" SP Severity SP ReplyText CRLF
+  or
+     "650+" Severity CRLF Data 650 SP "OK" CRLF
+
+     Severity = "DEBUG" / "INFO" / "NOTICE" / "WARN"/ "ERR"
+
+4.1.6. New descriptors available
+
+  Syntax:
+     "650" SP "NEWDESC" 1*(SP ServerID) CRLF
+
+4.1.7. New Address mapping
+
+  Syntax:
+     "650" SP "ADDRMAP" SP Address SP NewAddress SP Expiry
+       [SP Error] SP GMTExpiry CRLF
+
+     NewAddress = Address / "<error>"
+     Expiry = DQUOTE ISOTime DQUOTE / "NEVER"
+
+     Error = "error=" ErrorCode
+     ErrorCode = XXXX
+     GMTExpiry = "EXPIRES=" DQUOTE IsoTime DQUOTE
+
+  Error and GMTExpiry are only provided if extended events are enabled.
+
+  Expiry is expressed as the local time (rather than GMT).  This is a bug,
+  left in for backward compatibility; new code should look at GMTExpiry
+  instead.
+
+  These events are generated when a new address mapping is entered in the
+  cache, or when the answer for a RESOLVE command is found.
+
+4.1.8. Descriptors uploaded to us in our role as authoritative dirserver
+
+  Syntax:
+     "650" "+" "AUTHDIR_NEWDESCS" CRLF Action CRLF Message CRLF
+       Descriptor CRLF "." CRLF "650" SP "OK" CRLF
+     Action = "ACCEPTED" / "DROPPED" / "REJECTED"
+     Message = Text
+
+4.1.9. Our descriptor changed
+
+  Syntax:
+     "650" SP "DESCCHANGED" CRLF
+
+  [First added in 0.1.2.2-alpha.]
+
+4.1.10. Status events
+
+  Status events (STATUS_GENERAL, STATUS_CLIENT, and STATUS_SERVER) are sent
+  based on occurrences in the Tor process pertaining to the general state of
+  the program.  Generally, they correspond to log messages of severity Notice
+  or higher.  They differ from log messages in that their format is a
+  specified interface.
+
+  Syntax:
+     "650" SP StatusType SP StatusSeverity SP StatusAction
+                                         [SP StatusArguments] CRLF
+
+     StatusType = "STATUS_GENERAL" / "STATUS_CLIENT" / "STATUS_SERVER"
+     StatusSeverity = "NOTICE" / "WARN" / "ERR"
+     StatusAction = 1*ALPHA
+     StatusArguments = StatusArgument *(SP StatusArgument)
+     StatusArgument = StatusKeyword '=' StatusValue
+     StatusKeyword = 1*(ALNUM / "_")
+     StatusValue = 1*(ALNUM / '_')  / QuotedString
+
+     Action is a string, and Arguments is a series of keyword=value
+     pairs on the same line.  Values may be space-terminated strings,
+     or quoted strings.
+
+     These events are always produced with EXTENDED_EVENTS and
+     VERBOSE_NAMES; see the explanations in the USEFEATURE section
+     for details.
+
+     Controllers MUST tolerate unrecognized actions, MUST tolerate
+     unrecognized arguments, MUST tolerate missing arguments, and MUST
+     tolerate arguments that arrive in any order.
+
+     Each event description below is accompanied by a recommendation for
+     controllers.  These recommendations are suggestions only; no controller
+     is required to implement them.
+
+  Compatibility note: versions of Tor before 0.2.0.22-rc incorrectly
+  generated "STATUS_SERVER" as "STATUS_SEVER".  To be compatible with those
+  versions, tools should accept both.
+
+  Actions for STATUS_GENERAL events can be as follows:
+
+     CLOCK_JUMPED
+     "TIME=NUM"
+       Tor spent enough time without CPU cycles that it has closed all
+       its circuits and will establish them anew. This typically
+       happens when a laptop goes to sleep and then wakes up again. It
+       also happens when the system is swapping so heavily that Tor is
+       starving. The "time" argument specifies the number of seconds Tor
+       thinks it was unconscious for (or alternatively, the number of
+       seconds it went back in time).
+
+       This status event is sent as NOTICE severity normally, but WARN
+       severity if Tor is acting as a server currently.
+
+       {Recommendation for controller: ignore it, since we don't really
+       know what the user should do anyway. Hm.}
+
+     DANGEROUS_VERSION
+     "CURRENT=version"
+     "REASON=NEW/OBSOLETE/UNRECOMMENDED"
+     "RECOMMENDED=\"version, version, ...\""
+       Tor has found that directory servers don't recommend its version of
+       the Tor software.  RECOMMENDED is a comma-and-space-separated string
+       of Tor versions that are recommended.  REASON is NEW if this version
+       of Tor is newer than any recommended version, OBSOLETE if
+       this version of Tor is older than any recommended version, and
+       UNRECOMMENDED if some recommended versions of Tor are newer and
+       some are older than this version. (The "OBSOLETE" reason was called
+       "OLD" from Tor 0.1.2.3-alpha up to and including 0.2.0.12-alpha.)
+
+       {Controllers may want to suggest that the user upgrade OLD or
+       UNRECOMMENDED versions.  NEW versions may be known-insecure, or may
+       simply be development versions.}
+
+     TOO_MANY_CONNECTIONS
+     "CURRENT=NUM"
+       Tor has reached its ulimit -n or whatever the native limit is on file
+       descriptors or sockets.  CURRENT is the number of sockets Tor
+       currently has open.  The user should really do something about
+       this. The "current" argument shows the number of connections currently
+       open.
+
+       {Controllers may recommend that the user increase the limit, or
+       increase it for them.  Recommendations should be phrased in an
+       OS-appropriate way and automated when possible.}
+
+     BUG
+     "REASON=STRING"
+       Tor has encountered a situation that its developers never expected,
+       and the developers would like to learn that it happened. Perhaps
+       the controller can explain this to the user and encourage her to
+       file a bug report?
+
+       {Controllers should log bugs, but shouldn't annoy the user in case a
+       bug appears frequently.}
+
+     CLOCK_SKEW
+       SKEW="+" / "-" SECONDS
+       MIN_SKEW="+" / "-" SECONDS.
+       SOURCE="DIRSERV:" IP ":" Port /
+              "NETWORKSTATUS:" IP ":" Port /
+              "OR:" IP ":" Port /
+              "CONSENSUS"
+         If "SKEW" is present, it's an estimate of how far we are from the
+         time declared in the source.  (In other words, if we're an hour in
+         the past, the value is -3600.)  "MIN_SKEW" is present, it's a lower
+         bound.  If the source is a DIRSERV, we got the current time from a
+         connection to a dirserver.  If the source is a NETWORKSTATUS, we
+         decided we're skewed because we got a v2 networkstatus from far in
+         the future.  If the source is OR, the skew comes from a NETINFO
+         cell from a connection to another relay.  If the source is
+         CONSENSUS, we decided we're skewed because we got a networkstatus
+         consensus from the future.
+
+         {Tor should send this message to controllers when it thinks the
+         skew is so high that it will interfere with proper Tor operation.
+         Controllers shouldn't blindly adjust the clock, since the more
+         accurate source of skew info (DIRSERV) is currently
+         unauthenticated.}
+
+     BAD_LIBEVENT
+     "METHOD=" libevent method
+     "VERSION=" libevent version
+     "BADNESS=" "BROKEN" / "BUGGY" / "SLOW"
+     "RECOVERED=" "NO" / "YES"
+        Tor knows about bugs in using the configured event method in this
+        version of libevent.  "BROKEN" libevents won't work at all;
+        "BUGGY" libevents might work okay; "SLOW" libevents will work
+        fine, but not quickly.  If "RECOVERED" is YES, Tor managed to
+        switch to a more reliable (but probably slower!) libevent method.
+
+        {Controllers may want to warn the user if this event occurs, though
+        generally it's the fault of whoever built the Tor binary and there's
+        not much the user can do besides upgrade libevent or upgrade the
+        binary.}
+
+     DIR_ALL_UNREACHABLE
+       Tor believes that none of the known directory servers are
+       reachable -- this is most likely because the local network is
+       down or otherwise not working, and might help to explain for the
+       user why Tor appears to be broken.
+
+       {Controllers may want to warn the user if this event occurs; further
+       action is generally not possible.}
+
+     CONSENSUS_ARRIVED
+        Tor has received and validated a new consensus networkstatus.
+        (This event can be delayed a little while after the consensus
+        is received, if Tor needs to fetch certificates.)
+
+  Actions for STATUS_CLIENT events can be as follows:
+
+     BOOTSTRAP
+     "PROGRESS=" num
+     "TAG=" Keyword
+     "SUMMARY=" String
+     ["WARNING=" String
+      "REASON=" Keyword
+      "COUNT=" num
+      "RECOMMENDATION=" Keyword
+     ]
+
+       Tor has made some progress at establishing a connection to the
+       Tor network, fetching directory information, or making its first
+       circuit; or it has encountered a problem while bootstrapping. This
+       status event is especially useful for users with slow connections
+       or with connectivity problems.
+
+       "Progress" gives a number between 0 and 100 for how far through
+       the bootstrapping process we are. "Summary" is a string that can
+       be displayed to the user to describe the *next* task that Tor
+       will tackle, i.e., the task it is working on after sending the
+       status event. "Tag" is a string that controllers can use to
+       recognize bootstrap phases, if they want to do something smarter
+       than just blindly displaying the summary string; see Section 5
+       for the current tags that Tor issues.
+
+       The StatusSeverity describes whether this is a normal bootstrap
+       phase (severity notice) or an indication of a bootstrapping
+       problem (severity warn).
+
+       For bootstrap problems, we include the same progress, tag, and
+       summary values as we would for a normal bootstrap event, but we
+       also include "warning", "reason", "count", and "recommendation"
+       key/value combos. The "count" number tells how many bootstrap
+       problems there have been so far at this phase. The "reason"
+       string lists one of the reasons allowed in the ORCONN event. The
+       "warning" argument string with any hints Tor has to offer about
+       why it's having troubles bootstrapping.
+
+       The "reason" values are long-term-stable controller-facing tags to
+       identify particular issues in a bootstrapping step.  The warning
+       strings, on the other hand, are human-readable. Controllers
+       SHOULD NOT rely on the format of any warning string. Currently
+       the possible values for "recommendation" are either "ignore" or
+       "warn" -- if ignore, the controller can accumulate the string in
+       a pile of problems to show the user if the user asks; if warn,
+       the controller should alert the user that Tor is pretty sure
+       there's a bootstrapping problem.
+
+       Currently Tor uses recommendation=ignore for the first
+       nine bootstrap problem reports for a given phase, and then
+       uses recommendation=warn for subsequent problems at that
+       phase. Hopefully this is a good balance between tolerating
+       occasional errors and reporting serious problems quickly.
+
+     ENOUGH_DIR_INFO
+       Tor now knows enough network-status documents and enough server
+       descriptors that it's going to start trying to build circuits now.
+
+       {Controllers may want to use this event to decide when to indicate
+       progress to their users, but should not interrupt the user's browsing
+       to tell them so.}
+
+     NOT_ENOUGH_DIR_INFO
+       We discarded expired statuses and router descriptors to fall
+       below the desired threshold of directory information. We won't
+       try to build any circuits until ENOUGH_DIR_INFO occurs again.
+
+       {Controllers may want to use this event to decide when to indicate
+       progress to their users, but should not interrupt the user's browsing
+       to tell them so.}
+
+     CIRCUIT_ESTABLISHED
+       Tor is able to establish circuits for client use. This event will
+       only be sent if we just built a circuit that changed our mind --
+       that is, prior to this event we didn't know whether we could
+       establish circuits.
+
+       {Suggested use: controllers can notify their users that Tor is
+       ready for use as a client once they see this status event. [Perhaps
+       controllers should also have a timeout if too much time passes and
+       this event hasn't arrived, to give tips on how to troubleshoot.
+       On the other hand, hopefully Tor will send further status events
+       if it can identify the problem.]}
+
+     CIRCUIT_NOT_ESTABLISHED
+     "REASON=" "EXTERNAL_ADDRESS" / "DIR_ALL_UNREACHABLE" / "CLOCK_JUMPED"
+       We are no longer confident that we can build circuits. The "reason"
+       keyword provides an explanation: which other status event type caused
+       our lack of confidence.
+
+       {Controllers may want to use this event to decide when to indicate
+       progress to their users, but should not interrupt the user's browsing
+       to do so.}
+       [Note: only REASON=CLOCK_JUMPED is implemented currently.]
+
+     DANGEROUS_PORT
+     "PORT=" port
+     "RESULT=" "REJECT" / "WARN"
+       A stream was initiated to a port that's commonly used for
+       vulnerable-plaintext protocols. If the Result is "reject", we
+       refused the connection; whereas if it's "warn", we allowed it.
+
+       {Controllers should warn their users when this occurs, unless they
+       happen to know that the application using Tor is in fact doing so
+       correctly (e.g., because it is part of a distributed bundle). They
+       might also want some sort of interface to let the user configure
+       their RejectPlaintextPorts and WarnPlaintextPorts config options.}
+
+     DANGEROUS_SOCKS
+     "PROTOCOL=" "SOCKS4" / "SOCKS5"
+     "ADDRESS=" IP:port
+       A connection was made to Tor's SOCKS port using one of the SOCKS
+       approaches that doesn't support hostnames -- only raw IP addresses.
+       If the client application got this address from gethostbyname(),
+       it may be leaking target addresses via DNS.
+
+       {Controllers should warn their users when this occurs, unless they
+       happen to know that the application using Tor is in fact doing so
+       correctly (e.g., because it is part of a distributed bundle).}
+
+     SOCKS_UNKNOWN_PROTOCOL
+       "DATA=string"
+       A connection was made to Tor's SOCKS port that tried to use it
+       for something other than the SOCKS protocol. Perhaps the user is
+       using Tor as an HTTP proxy?   The DATA is the first few characters
+       sent to Tor on the SOCKS port.
+
+       {Controllers may want to warn their users when this occurs: it
+       indicates a misconfigured application.}
+
+     SOCKS_BAD_HOSTNAME
+      "HOSTNAME=QuotedString"
+       Some application gave us a funny-looking hostname. Perhaps
+       it is broken? In any case it won't work with Tor and the user
+       should know.
+
+       {Controllers may want to warn their users when this occurs: it
+       usually indicates a misconfigured application.}
+
+  Actions for STATUS_SERVER can be as follows:
+
+     EXTERNAL_ADDRESS
+     "ADDRESS=IP"
+     "HOSTNAME=NAME"
+     "METHOD=CONFIGURED/DIRSERV/RESOLVED/INTERFACE/GETHOSTNAME"
+       Our best idea for our externally visible IP has changed to 'IP'.
+       If 'HOSTNAME' is present, we got the new IP by resolving 'NAME'.  If the
+       method is 'CONFIGURED', the IP was given verbatim as a configuration
+       option.  If the method is 'RESOLVED', we resolved the Address
+       configuration option to get the IP.  If the method is 'GETHOSTNAME',
+       we resolved our hostname to get the IP.  If the method is 'INTERFACE',
+       we got the address of one of our network interfaces to get the IP.  If
+       the method is 'DIRSERV', a directory server told us a guess for what
+       our IP might be.
+
+       {Controllers may want to record this info and display it to the user.}
+
+     CHECKING_REACHABILITY
+     "ORADDRESS=IP:port"
+     "DIRADDRESS=IP:port"
+       We're going to start testing the reachability of our external OR port
+       or directory port.
+
+       {This event could affect the controller's idea of server status, but
+       the controller should not interrupt the user to tell them so.}
+
+     REACHABILITY_SUCCEEDED
+     "ORADDRESS=IP:port"
+     "DIRADDRESS=IP:port"
+       We successfully verified the reachability of our external OR port or
+       directory port (depending on which of ORADDRESS or DIRADDRESS is
+       given.)
+
+       {This event could affect the controller's idea of server status, but
+       the controller should not interrupt the user to tell them so.}
+
+     GOOD_SERVER_DESCRIPTOR
+       We successfully uploaded our server descriptor to at least one
+       of the directory authorities, with no complaints.
+
+       {Originally, the goal of this event was to declare "every authority
+       has accepted the descriptor, so there will be no complaints
+       about it." But since some authorities might be offline, it's
+       harder to get certainty than we had thought. As such, this event
+       is equivalent to ACCEPTED_SERVER_DESCRIPTOR below. Controllers
+       should just look at ACCEPTED_SERVER_DESCRIPTOR and should ignore
+       this event for now.}
+
+     NAMESERVER_STATUS
+     "NS=addr"
+     "STATUS=" "UP" / "DOWN"
+     "ERR=" message
+        One of our nameservers has changed status.
+
+        {This event could affect the controller's idea of server status, but
+        the controller should not interrupt the user to tell them so.}
+
+     NAMESERVER_ALL_DOWN
+        All of our nameservers have gone down.
+
+        {This is a problem; if it happens often without the nameservers
+        coming up again, the user needs to configure more or better
+        nameservers.}
+
+     DNS_HIJACKED
+        Our DNS provider is providing an address when it should be saying
+        "NOTFOUND"; Tor will treat the address as a synonym for "NOTFOUND".
+
+        {This is an annoyance; controllers may want to tell admins that their
+        DNS provider is not to be trusted.}
+
+     DNS_USELESS
+        Our DNS provider is giving a hijacked address instead of well-known
+        websites; Tor will not try to be an exit node.
+
+        {Controllers could warn the admin if the server is running as an
+        exit server: the admin needs to configure a good DNS server.
+        Alternatively, this happens a lot in some restrictive environments
+        (hotels, universities, coffeeshops) when the user hasn't registered.}
+
+     BAD_SERVER_DESCRIPTOR
+     "DIRAUTH=addr:port"
+     "REASON=string"
+        A directory authority rejected our descriptor.  Possible reasons
+        include malformed descriptors, incorrect keys, highly skewed clocks,
+        and so on.
+
+        {Controllers should warn the admin, and try to cope if they can.}
+
+     ACCEPTED_SERVER_DESCRIPTOR
+     "DIRAUTH=addr:port"
+        A single directory authority accepted our descriptor.
+        // actually notice
+
+       {This event could affect the controller's idea of server status, but
+       the controller should not interrupt the user to tell them so.}
+
+     REACHABILITY_FAILED
+     "ORADDRESS=IP:port"
+     "DIRADDRESS=IP:port"
+       We failed to connect to our external OR port or directory port
+       successfully.
+
+       {This event could affect the controller's idea of server status.  The
+       controller should warn the admin and suggest reasonable steps to take.}
+
+4.1.11. Our set of guard nodes has changed
+
+  Syntax:
+     "650" SP "GUARD" SP Type SP Name SP Status ... CRLF
+     Type = "ENTRY"
+     Name = The (possibly verbose) nickname of the guard affected.
+     Status = "NEW" | "UP" | "DOWN" | "BAD" | "GOOD" | "DROPPED"
+
+  [explain states. XXX]
+
+4.1.12. Network status has changed
+
+  Syntax:
+     "650" "+" "NS" CRLF 1*NetworkStatus "." CRLF "650" SP "OK" CRLF
+
+  The event is used whenever our local view of a relay status changes.
+  This happens when we get a new v3 consensus (in which case the entries
+  we see are a duplicate of what we see in the NEWCONSENSUS event,
+  below), but it also happens when we decide to mark a relay as up or
+  down in our local status, for example based on connection attempts.
+
+  [First added in 0.1.2.3-alpha]
+
+4.1.13. Bandwidth used on an application stream
+
+  The syntax is:
+     "650" SP "STREAM_BW" SP StreamID SP BytesRead SP BytesWritten CRLF
+     BytesRead = 1*DIGIT
+     BytesWritten = 1*DIGIT
+
+  BytesRead and BytesWritten are the number of bytes read and written since
+  the last STREAM_BW event on this stream.  These events are generated about
+  once per second per stream; no events are generated for streams that have
+  not read or written.
+
+  These events apply only to streams entering Tor (such as on a SOCKSPort,
+  TransPort, or so on).  They are not generated for exiting streams.
+
+4.1.14. Per-country client stats
+
+  The syntax is:
+     "650" SP "CLIENTS_SEEN" SP TimeStarted SP CountrySummary CRLF
+
+  We just generated a new summary of which countries we've seen clients
+  from recently. The controller could display this for the user, e.g.
+  in their "relay" configuration window, to give them a sense that they
+  are actually being useful.
+
+  Currently only bridge relays will receive this event, but once we figure
+  out how to sufficiently aggregate and sanitize the client counts on
+  main relays, we might start sending these events in other cases too.
+
+  TimeStarted is a quoted string indicating when the reported summary
+  counts from (in GMT).
+
+  The CountrySummary keyword has as its argument a comma-separated
+  set of "countrycode=count" pairs. For example,
+  650-CLIENTS_SEEN TimeStarted="Thu Dec 25 23:50:43 EST 2008"
+  650 CountrySummary=us=16,de=8,uk=8
+[XXX Matt Edman informs me that the time format above is wrong. -RD]
+
+4.1.15. New consensus networkstatus has arrived.
+
+  The syntax is:
+     "650" "+" "NEWCONSENSUS" CRLF 1*NetworkStatus "." CRLF "650" SP
+     "OK" CRLF
+
+  A new consensus networkstatus has arrived. We include NS-style lines for
+  every relay in the consensus. NEWCONSENSUS is a separate event from the
+  NS event, because the list here represents every usable relay: so any
+  relay *not* mentioned in this list is implicitly no longer recommended.
+
+  [First added in 0.2.1.13-alpha]
+
+5. Implementation notes
+
+5.1. Authentication
+
+  If the control port is open and no authentication operation is enabled, Tor
+  trusts any local user that connects to the control port.  This is generally
+  a poor idea.
+
+  If the 'CookieAuthentication' option is true, Tor writes a "magic cookie"
+  file named "control_auth_cookie" into its data directory.  To authenticate,
+  the controller must send the contents of this file, encoded in hexadecimal.
+
+  If the 'HashedControlPassword' option is set, it must contain the salted
+  hash of a secret password.  The salted hash is computed according to the
+  S2K algorithm in RFC 2440 (OpenPGP), and prefixed with the s2k specifier.
+  This is then encoded in hexadecimal, prefixed by the indicator sequence
+  "16:".  Thus, for example, the password 'foo' could encode to:
+     16:660537E3E1CD49996044A3BF558097A981F539FEA2F9DA662B4626C1C2
+        ++++++++++++++++**^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+           salt                       hashed value
+                       indicator
+  You can generate the salt of a password by calling
+           'tor --hash-password <password>'
+  or by using the example code in the Python and Java controller libraries.
+  To authenticate under this scheme, the controller sends Tor the original
+  secret that was used to generate the password, either as a quoted string
+  or encoded in hexadecimal.
+
+5.2. Don't let the buffer get too big.
+
+  If you ask for lots of events, and 16MB of them queue up on the buffer,
+  the Tor process will close the socket.
+
+5.3. Backward compatibility with v0 control protocol.
+
+  The 'version 0' control protocol was replaced in Tor 0.1.1.x. Support
+  was removed in Tor 0.2.0.x. Every non-obsolete version of Tor now
+  supports the version 1 control protocol.
+
+  For backward compatibility with the "version 0" control protocol,
+  Tor used to check whether the third octet of the first command is zero.
+  (If it was, Tor assumed that version 0 is in use.)
+
+  This compatibility was removed in Tor 0.1.2.16 and 0.2.0.4-alpha.
+
+5.4. Tor config options for use by controllers
+
+  Tor provides a few special configuration options for use by controllers.
+  These options can be set and examined by the SETCONF and GETCONF commands,
+  but are not saved to disk by SAVECONF.
+
+  Generally, these options make Tor unusable by disabling a portion of Tor's
+  normal operations.  Unless a controller provides replacement functionality
+  to fill this gap, Tor will not correctly handle user requests.
+
+  __AllDirOptionsPrivate
+
+    If true, Tor will try to launch all directory operations through
+    anonymous connections.  (Ordinarily, Tor only tries to anonymize
+    requests related to hidden services.)  This option will slow down
+    directory access, and may stop Tor from working entirely if it does not
+    yet have enough directory information to build circuits.
+
+    (Boolean. Default: "0".)
+
+  __DisablePredictedCircuits
+
+    If true, Tor will not launch preemptive "general-purpose" circuits for
+    streams to attach to.  (It will still launch circuits for testing and
+    for hidden services.)
+
+    (Boolean. Default: "0".)
+
+  __LeaveStreamsUnattached
+
+    If true, Tor will not automatically attach new streams to circuits;
+    instead, the controller must attach them with ATTACHSTREAM.  If the
+    controller does not attach the streams, their data will never be routed.
+
+    (Boolean. Default: "0".)
+
+  __HashedControlSessionPassword
+
+    As HashedControlPassword, but is not saved to the torrc file by
+    SAVECONF.  Added in Tor 0.2.0.20-rc.
+
+  __ReloadTorrcOnSIGHUP
+
+    If this option is true (the default), we reload the torrc from disk
+    every time we get a SIGHUP (from the controller or via a signal).
+    Otherwise, we don't.  This option exists so that controllers can keep
+    their options from getting overwritten when a user sends Tor a HUP for
+    some other reason (for example, to rotate the logs).
+
+    (Boolean.  Default: "1")
+
+5.5. Phases from the Bootstrap status event.
+
+  This section describes the various bootstrap phases currently reported
+  by Tor. Controllers should not assume that the percentages and tags
+  listed here will continue to match up, or even that the tags will stay
+  in the same order. Some phases might also be skipped (not reported)
+  if the associated bootstrap step is already complete, or if the phase
+  no longer is necessary. Only "starting" and "done" are guaranteed to
+  exist in all future versions.
+
+  Current Tor versions enter these phases in order, monotonically.
+  Future Tors MAY revisit earlier stages.
+
+  Phase 0:
+  tag=starting summary="Starting"
+
+  Tor starts out in this phase.
+
+  Phase 5:
+  tag=conn_dir summary="Connecting to directory mirror"
+
+  Tor sends this event as soon as Tor has chosen a directory mirror --
+  e.g. one of the authorities if bootstrapping for the first time or
+  after a long downtime, or one of the relays listed in its cached
+  directory information otherwise.
+
+  Tor will stay at this phase until it has successfully established
+  a TCP connection with some directory mirror. Problems in this phase
+  generally happen because Tor doesn't have a network connection, or
+  because the local firewall is dropping SYN packets.
+
+  Phase 10:
+  tag=handshake_dir summary="Finishing handshake with directory mirror"
+
+  This event occurs when Tor establishes a TCP connection with a relay used
+  as a directory mirror (or its https proxy if it's using one). Tor remains
+  in this phase until the TLS handshake with the relay is finished.
+
+  Problems in this phase generally happen because Tor's firewall is
+  doing more sophisticated MITM attacks on it, or doing packet-level
+  keyword recognition of Tor's handshake.
+
+  Phase 15:
+  tag=onehop_create summary="Establishing one-hop circuit for dir info"
+
+  Once TLS is finished with a relay, Tor will send a CREATE_FAST cell
+  to establish a one-hop circuit for retrieving directory information.
+  It will remain in this phase until it receives the CREATED_FAST cell
+  back, indicating that the circuit is ready.
+
+  Phase 20:
+  tag=requesting_status summary="Asking for networkstatus consensus"
+
+  Once we've finished our one-hop circuit, we will start a new stream
+  for fetching the networkstatus consensus. We'll stay in this phase
+  until we get the 'connected' relay cell back, indicating that we've
+  established a directory connection.
+
+  Phase 25:
+  tag=loading_status summary="Loading networkstatus consensus"
+
+  Once we've established a directory connection, we will start fetching
+  the networkstatus consensus document. This could take a while; this
+  phase is a good opportunity for using the "progress" keyword to indicate
+  partial progress.
+
+  This phase could stall if the directory mirror we picked doesn't
+  have a copy of the networkstatus consensus so we have to ask another,
+  or it does give us a copy but we don't find it valid.
+
+  Phase 40:
+  tag=loading_keys summary="Loading authority key certs"
+
+  Sometimes when we've finished loading the networkstatus consensus,
+  we find that we don't have all the authority key certificates for the
+  keys that signed the consensus. At that point we put the consensus we
+  fetched on hold and fetch the keys so we can verify the signatures.
+
+  Phase 45
+  tag=requesting_descriptors summary="Asking for relay descriptors"
+
+  Once we have a valid networkstatus consensus and we've checked all
+  its signatures, we start asking for relay descriptors. We stay in this
+  phase until we have received a 'connected' relay cell in response to
+  a request for descriptors.
+
+  Phase 50:
+  tag=loading_descriptors summary="Loading relay descriptors"
+
+  We will ask for relay descriptors from several different locations,
+  so this step will probably make up the bulk of the bootstrapping,
+  especially for users with slow connections. We stay in this phase until
+  we have descriptors for at least 1/4 of the usable relays listed in
+  the networkstatus consensus. This phase is also a good opportunity to
+  use the "progress" keyword to indicate partial steps.
+
+  Phase 80:
+  tag=conn_or summary="Connecting to entry guard"
+
+  Once we have a valid consensus and enough relay descriptors, we choose
+  some entry guards and start trying to build some circuits. This step
+  is similar to the "conn_dir" phase above; the only difference is
+  the context.
+
+  If a Tor starts with enough recent cached directory information,
+  its first bootstrap status event will be for the conn_or phase.
+
+  Phase 85:
+  tag=handshake_or summary="Finishing handshake with entry guard"
+
+  This phase is similar to the "handshake_dir" phase, but it gets reached
+  if we finish a TCP connection to a Tor relay and we have already reached
+  the "conn_or" phase. We'll stay in this phase until we complete a TLS
+  handshake with a Tor relay.
+
+  Phase 90:
+  tag=circuit_create summary="Establishing circuits"
+
+  Once we've finished our TLS handshake with an entry guard, we will
+  set about trying to make some 3-hop circuits in case we need them soon.
+
+  Phase 100:
+  tag=done summary="Done"
+
+  A full 3-hop exit circuit has been established. Tor is ready to handle
+  application connections now.
+

@@ -1,0 +1,249 @@
+
+                          Tor bridges specification
+
+0. Preface
+
+  This document describes the design decisions around support for bridge
+  users, bridge relays, and bridge authorities. It acts as an overview
+  of the bridge design and deployment for developers, and it also tries
+  to point out limitations in the current design and implementation.
+
+  For more details on what all of these mean, look at blocking.tex in
+  /doc/design-paper/
+
+1. Bridge relays
+
+  Bridge relays are just like normal Tor relays except they don't publish
+  their server descriptors to the main directory authorities.
+
+1.1. PublishServerDescriptor
+
+  To configure your relay to be a bridge relay, just add
+    BridgeRelay 1
+    PublishServerDescriptor bridge
+  to your torrc. This will cause your relay to publish its descriptor
+  to the bridge authorities rather than to the default authorities.
+
+  Alternatively, you can say
+    BridgeRelay 1
+    PublishServerDescriptor 0
+  which will cause your relay to not publish anywhere. This could be
+  useful for private bridges.
+
+1.2. Recommendations.
+
+  Bridge relays should use an exit policy of "reject *:*". This is
+  because they only need to relay traffic between the bridge users
+  and the rest of the Tor network, so there's no need to let people
+  exit directly from them.
+
+  We invented the RelayBandwidth* options for this situation: Tor clients
+  who want to allow relaying too. See proposal 111 for details. Relay
+  operators should feel free to rate-limit their relayed traffic.
+
+1.3. Implementation note.
+
+  Vidalia 0.0.15 has turned its "Relay" settings page into a tri-state
+  "Don't relay" / "Relay for the Tor network" / "Help censored users".
+
+  If you click the third choice, it forces your exit policy to reject *:*.
+
+  If all the bridges end up on port 9001, that's not so good. On the
+  other hand, putting the bridges on a low-numbered port in the Unix
+  world requires jumping through extra hoops. The current compromise is
+  that Vidalia makes the ORPort default to 443 on Windows, and 9001 on
+  other platforms.
+
+  At the bottom of the relay config settings window, Vidalia displays
+  the bridge identifier to the operator (see Section 3.1) so he can pass
+  it on to bridge users.
+
+2. Bridge authorities.
+
+  Bridge authorities are like normal v3 directory authorities, except
+  they don't create their own network-status documents or votes. So if
+  you ask a bridge authority for a network-status document or consensus,
+  they behave like a directory mirror: they give you one from one of
+  the main authorities. But if you ask the bridge authority for the
+  descriptor corresponding to a particular identity fingerprint, it will
+  happily give you the latest descriptor for that fingerprint.
+
+  To become a bridge authority, add these lines to your torrc:
+    AuthoritativeDirectory 1
+    BridgeAuthoritativeDir 1
+
+  Right now there's one bridge authority, running on the Tonga relay.
+
+2.1. Exporting bridge-purpose descriptors
+
+  We've added a new purpose for server descriptors: the "bridge"
+  purpose. With the new router-descriptors file format that includes
+  annotations, it's easy to look through it and find the bridge-purpose
+  descriptors.
+
+  Currently we export the bridge descriptors from Tonga to the
+  BridgeDB server, so it can give them out according to the policies
+  in blocking.pdf.
+
+2.2. Reachability/uptime testing
+
+  Right now the bridge authorities do active reachability testing of
+  bridges, so we know which ones to recommend for users.
+
+  But in the design document, we suggested that bridges should publish
+  anonymously (i.e. via Tor) to the bridge authority, so somebody watching
+  the bridge authority can't just enumerate all the bridges. But if we're
+  doing active measurement, the game is up. Perhaps we should back off on
+  this goal, or perhaps we should do our active measurement anonymously?
+
+  Answering this issue is scheduled for 0.2.1.x.
+
+2.3. Future work: migrating to multiple bridge authorities
+
+  Having only one bridge authority is both a trust bottleneck (if you
+  break into one place you learn about every single bridge we've got)
+  and a robustness bottleneck (when it's down, bridge users become sad).
+
+  Right now if we put up a second bridge authority, all the bridges would
+  publish to it, and (assuming the code works) bridge users would query
+  a random bridge authority. This resolves the robustness bottleneck,
+  but makes the trust bottleneck even worse.
+
+  In 0.2.2.x and later we should think about better ways to have multiple
+  bridge authorities.
+
+3. Bridge users.
+
+  Bridge users are like ordinary Tor users except they use encrypted
+  directory connections by default, and they use bridge relays as both
+  entry guards (their first hop) and directory guards (the source of
+  all their directory information).
+
+  To become a bridge user, add the following line to your torrc:
+    UseBridges 1
+
+  and then add at least one "Bridge" line to your torrc based on the
+  format below.
+
+3.1. Format of the bridge identifier.
+
+  The canonical format for a bridge identifier contains an IP address,
+  an ORPort, and an identity fingerprint:
+    bridge 128.31.0.34:9009 4C17 FB53 2E20 B2A8 AC19 9441 ECD2 B017 7B39 E4B1
+
+  However, the identity fingerprint can be left out, in which case the
+  bridge user will connect to that relay and use it as a bridge regardless
+  of what identity key it presents:
+    bridge 128.31.0.34:9009
+  This might be useful for cases where only short bridge identifiers
+  can be communicated to bridge users.
+
+  In a future version we may also support bridge identifiers that are
+  only a key fingerprint:
+    bridge 4C17 FB53 2E20 B2A8 AC19 9441 ECD2 B017 7B39 E4B1
+  and the bridge user can fetch the latest descriptor from the bridge
+  authority (see Section 3.4).
+
+3.2. Bridges as entry guards
+
+  For now, bridge users add their bridge relays to their list of "entry
+  guards" (see path-spec.txt for background on entry guards). They are
+  managed by the entry guard algorithms exactly as if they were a normal
+  entry guard -- their keys and timing get cached in the "state" file,
+  etc. This means that when the Tor user starts up with "UseBridges"
+  disabled, he will skip past the bridge entries since they won't be
+  listed as up and usable in his networkstatus consensus. But to be clear,
+  the "entry_guards" list doesn't currently distinguish guards by purpose.
+
+  Internally, each bridge user keeps a smartlist of "bridge_info_t"
+  that reflects the "bridge" lines from his torrc along with a download
+  schedule (see Section 3.5 below). When he starts Tor, he attempts
+  to fetch a descriptor for each configured bridge (see Section 3.4
+  below). When he succeeds at getting a descriptor for one of the bridges
+  in his list, he adds it directly to the entry guard list using the
+  normal add_an_entry_guard() interface. Once a bridge descriptor has
+  been added, should_delay_dir_fetches() will stop delaying further
+  directory fetches, and the user begins to bootstrap his directory
+  information from that bridge (see Section 3.3).
+
+  Currently bridge users cache their bridge descriptors to the
+  "cached-descriptors" file (annotated with purpose "bridge"), but
+  they don't make any attempt to reuse descriptors they find in this
+  file. The theory is that either the bridge is available now, in which
+  case you can get a fresh descriptor, or it's not, in which case an
+  old descriptor won't do you much good.
+
+  We could disable writing out the bridge lines to the state file, if
+  we think this is a problem.
+
+  As an exception, if we get an application request when we have one
+  or more bridge descriptors but we believe none of them are running,
+  we mark them all as running again. This is similar to the exception
+  already in place to help long-idle Tor clients realize they should
+  fetch fresh directory information rather than just refuse requests.
+
+3.3. Bridges as directory guards
+
+  In addition to using bridges as the first hop in their circuits, bridge
+  users also use them to fetch directory updates. Other than initial
+  bootstrapping to find a working bridge descriptor (see Section 3.4
+  below), all further non-anonymized directory fetches will be redirected
+  to the bridge.
+
+  This means that bridge relays need to have cached answers for all
+  questions the bridge user might ask. This makes the upgrade path
+  tricky --- for example, if we migrate to a v4 directory design, the
+  bridge user would need to keep using v3 so long as his bridge relays
+  only knew how to answer v3 queries.
+
+  In a future design, for cases where the user has enough information
+  to build circuits yet the chosen bridge doesn't know how to answer a
+  given query, we might teach bridge users to make an anonymized request
+  to a more suitable directory server.
+
+3.4. How bridge users get their bridge descriptor
+
+  Bridge users can fetch bridge descriptors in two ways: by going directly
+  to the bridge and asking for "/tor/server/authority", or by going to
+  the bridge authority and asking for "/tor/server/fp/ID". By default,
+  they will only try the direct queries. If the user sets
+    UpdateBridgesFromAuthority 1
+  in his config file, then he will try querying the bridge authority
+  first for bridges where he knows a digest (if he only knows an IP
+  address and ORPort, then his only option is a direct query).
+
+  If the user has at least one working bridge, then he will do further
+  queries to the bridge authority through a full three-hop Tor circuit.
+  But when bootstrapping, he will make a direct begin_dir-style connection
+  to the bridge authority.
+
+  As of Tor 0.2.0.10-alpha, if the user attempts to fetch a descriptor
+  from the bridge authority and it returns a 404 not found, the user
+  will automatically fall back to trying a direct query. Therefore it is
+  recommended that bridge users always set UpdateBridgesFromAuthority,
+  since at worst it will delay their fetches a little bit and notify
+  the bridge authority of the identity fingerprint (but not location)
+  of their intended bridges.
+
+3.5. Bridge descriptor retry schedule
+
+  Bridge users try to fetch a descriptor for each bridge (using the
+  steps in Section 3.4 above) on startup. Whenever they receive a
+  bridge descriptor, they reschedule a new descriptor download for 1
+  hour from then.
+
+  If on the other hand it fails, they try again after 15 minutes for the
+  first attempt, after 15 minutes for the second attempt, and after 60
+  minutes for subsequent attempts.
+
+  In 0.2.2.x we should come up with some smarter retry schedules.
+
+3.6. Implementation note.
+
+  Vidalia 0.1.0 has a new checkbox in its Network config window called
+  "My ISP blocks connections to the Tor network." Users who click that
+  box change their configuration to:
+    UseBridges 1
+    UpdateBridgesFromAuthority 1
+  and should add at least one bridge identifier.
+
