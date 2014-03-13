@@ -15,7 +15,7 @@ public final class ServerState {
     /**
      * <code>repeated .paymentchannels.StoredServerPaymentChannel channels = 1;</code>
      */
-    java.util.List<com.google.zetacoin.protocols.channels.ServerState.StoredServerPaymentChannel>
+    java.util.List<com.google.zetacoin.protocols.channels.ServerState.StoredServerPaymentChannel> 
         getChannelsList();
     /**
      * <code>repeated .paymentchannels.StoredServerPaymentChannel channels = 1;</code>
@@ -28,7 +28,7 @@ public final class ServerState {
     /**
      * <code>repeated .paymentchannels.StoredServerPaymentChannel channels = 1;</code>
      */
-    java.util.List<? extends com.google.zetacoin.protocols.channels.ServerState.StoredServerPaymentChannelOrBuilder>
+    java.util.List<? extends com.google.zetacoin.protocols.channels.ServerState.StoredServerPaymentChannelOrBuilder> 
         getChannelsOrBuilderList();
     /**
      * <code>repeated .paymentchannels.StoredServerPaymentChannel channels = 1;</code>
@@ -153,7 +153,7 @@ public final class ServerState {
     /**
      * <code>repeated .paymentchannels.StoredServerPaymentChannel channels = 1;</code>
      */
-    public java.util.List<? extends com.google.zetacoin.protocols.channels.ServerState.StoredServerPaymentChannelOrBuilder>
+    public java.util.List<? extends com.google.zetacoin.protocols.channels.ServerState.StoredServerPaymentChannelOrBuilder> 
         getChannelsOrBuilderList() {
       return channels_;
     }
@@ -646,7 +646,7 @@ public final class ServerState {
       /**
        * <code>repeated .paymentchannels.StoredServerPaymentChannel channels = 1;</code>
        */
-      public java.util.List<? extends com.google.zetacoin.protocols.channels.ServerState.StoredServerPaymentChannelOrBuilder>
+      public java.util.List<? extends com.google.zetacoin.protocols.channels.ServerState.StoredServerPaymentChannelOrBuilder> 
            getChannelsOrBuilderList() {
         if (channelsBuilder_ != null) {
           return channelsBuilder_.getMessageOrBuilderList();
@@ -672,12 +672,12 @@ public final class ServerState {
       /**
        * <code>repeated .paymentchannels.StoredServerPaymentChannel channels = 1;</code>
        */
-      public java.util.List<com.google.zetacoin.protocols.channels.ServerState.StoredServerPaymentChannel.Builder>
+      public java.util.List<com.google.zetacoin.protocols.channels.ServerState.StoredServerPaymentChannel.Builder> 
            getChannelsBuilderList() {
         return getChannelsFieldBuilder().getBuilderList();
       }
       private com.google.protobuf.RepeatedFieldBuilder<
-          com.google.zetacoin.protocols.channels.ServerState.StoredServerPaymentChannel, com.google.zetacoin.protocols.channels.ServerState.StoredServerPaymentChannel.Builder, com.google.zetacoin.protocols.channels.ServerState.StoredServerPaymentChannelOrBuilder>
+          com.google.zetacoin.protocols.channels.ServerState.StoredServerPaymentChannel, com.google.zetacoin.protocols.channels.ServerState.StoredServerPaymentChannel.Builder, com.google.zetacoin.protocols.channels.ServerState.StoredServerPaymentChannelOrBuilder> 
           getChannelsFieldBuilder() {
         if (channelsBuilder_ == null) {
           channelsBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
@@ -1590,8 +1590,8 @@ public final class ServerState {
       "\032\n\022bestValueSignature\030\002 \001(\014\022\'\n\037refundTra" +
       "nsactionUnlockTimeSecs\030\003 \002(\004\022\033\n\023contract" +
       "Transaction\030\004 \002(\014\022\024\n\014clientOutput\030\005 \002(\014\022" +
-      "\r\n\005myKey\030\006 \002(\014B4\n%com.google.zetacoin.pro" +
-      "tocols.channelsB\013ServerState"
+      "\r\n\005myKey\030\006 \002(\014B5\n&com.google.zetacoin.pr" +
+      "otocols.channelsB\013ServerState"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
       new com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner() {

@@ -1640,7 +1640,7 @@ public final class Protos {
        * </pre>
        */
       private com.google.protobuf.SingleFieldBuilder<
-          org.zetacoin.paymentchannel.Protos.ClientVersion, org.zetacoin.paymentchannel.Protos.ClientVersion.Builder, org.zetacoin.paymentchannel.Protos.ClientVersionOrBuilder>
+          org.zetacoin.paymentchannel.Protos.ClientVersion, org.zetacoin.paymentchannel.Protos.ClientVersion.Builder, org.zetacoin.paymentchannel.Protos.ClientVersionOrBuilder> 
           getClientVersionFieldBuilder() {
         if (clientVersionBuilder_ == null) {
           clientVersionBuilder_ = new com.google.protobuf.SingleFieldBuilder<
@@ -1757,7 +1757,7 @@ public final class Protos {
        * <code>optional .paymentchannels.ServerVersion server_version = 3;</code>
        */
       private com.google.protobuf.SingleFieldBuilder<
-          org.zetacoin.paymentchannel.Protos.ServerVersion, org.zetacoin.paymentchannel.Protos.ServerVersion.Builder, org.zetacoin.paymentchannel.Protos.ServerVersionOrBuilder>
+          org.zetacoin.paymentchannel.Protos.ServerVersion, org.zetacoin.paymentchannel.Protos.ServerVersion.Builder, org.zetacoin.paymentchannel.Protos.ServerVersionOrBuilder> 
           getServerVersionFieldBuilder() {
         if (serverVersionBuilder_ == null) {
           serverVersionBuilder_ = new com.google.protobuf.SingleFieldBuilder<
@@ -1874,7 +1874,7 @@ public final class Protos {
        * <code>optional .paymentchannels.Initiate initiate = 4;</code>
        */
       private com.google.protobuf.SingleFieldBuilder<
-          org.zetacoin.paymentchannel.Protos.Initiate, org.zetacoin.paymentchannel.Protos.Initiate.Builder, org.zetacoin.paymentchannel.Protos.InitiateOrBuilder>
+          org.zetacoin.paymentchannel.Protos.Initiate, org.zetacoin.paymentchannel.Protos.Initiate.Builder, org.zetacoin.paymentchannel.Protos.InitiateOrBuilder> 
           getInitiateFieldBuilder() {
         if (initiateBuilder_ == null) {
           initiateBuilder_ = new com.google.protobuf.SingleFieldBuilder<
@@ -1991,7 +1991,7 @@ public final class Protos {
        * <code>optional .paymentchannels.ProvideRefund provide_refund = 5;</code>
        */
       private com.google.protobuf.SingleFieldBuilder<
-          org.zetacoin.paymentchannel.Protos.ProvideRefund, org.zetacoin.paymentchannel.Protos.ProvideRefund.Builder, org.zetacoin.paymentchannel.Protos.ProvideRefundOrBuilder>
+          org.zetacoin.paymentchannel.Protos.ProvideRefund, org.zetacoin.paymentchannel.Protos.ProvideRefund.Builder, org.zetacoin.paymentchannel.Protos.ProvideRefundOrBuilder> 
           getProvideRefundFieldBuilder() {
         if (provideRefundBuilder_ == null) {
           provideRefundBuilder_ = new com.google.protobuf.SingleFieldBuilder<
@@ -2108,7 +2108,7 @@ public final class Protos {
        * <code>optional .paymentchannels.ReturnRefund return_refund = 6;</code>
        */
       private com.google.protobuf.SingleFieldBuilder<
-          org.zetacoin.paymentchannel.Protos.ReturnRefund, org.zetacoin.paymentchannel.Protos.ReturnRefund.Builder, org.zetacoin.paymentchannel.Protos.ReturnRefundOrBuilder>
+          org.zetacoin.paymentchannel.Protos.ReturnRefund, org.zetacoin.paymentchannel.Protos.ReturnRefund.Builder, org.zetacoin.paymentchannel.Protos.ReturnRefundOrBuilder> 
           getReturnRefundFieldBuilder() {
         if (returnRefundBuilder_ == null) {
           returnRefundBuilder_ = new com.google.protobuf.SingleFieldBuilder<
@@ -2225,7 +2225,7 @@ public final class Protos {
        * <code>optional .paymentchannels.ProvideContract provide_contract = 7;</code>
        */
       private com.google.protobuf.SingleFieldBuilder<
-          org.zetacoin.paymentchannel.Protos.ProvideContract, org.zetacoin.paymentchannel.Protos.ProvideContract.Builder, org.zetacoin.paymentchannel.Protos.ProvideContractOrBuilder>
+          org.zetacoin.paymentchannel.Protos.ProvideContract, org.zetacoin.paymentchannel.Protos.ProvideContract.Builder, org.zetacoin.paymentchannel.Protos.ProvideContractOrBuilder> 
           getProvideContractFieldBuilder() {
         if (provideContractBuilder_ == null) {
           provideContractBuilder_ = new com.google.protobuf.SingleFieldBuilder<
@@ -2342,7 +2342,7 @@ public final class Protos {
        * <code>optional .paymentchannels.UpdatePayment update_payment = 8;</code>
        */
       private com.google.protobuf.SingleFieldBuilder<
-          org.zetacoin.paymentchannel.Protos.UpdatePayment, org.zetacoin.paymentchannel.Protos.UpdatePayment.Builder, org.zetacoin.paymentchannel.Protos.UpdatePaymentOrBuilder>
+          org.zetacoin.paymentchannel.Protos.UpdatePayment, org.zetacoin.paymentchannel.Protos.UpdatePayment.Builder, org.zetacoin.paymentchannel.Protos.UpdatePaymentOrBuilder> 
           getUpdatePaymentFieldBuilder() {
         if (updatePaymentBuilder_ == null) {
           updatePaymentBuilder_ = new com.google.protobuf.SingleFieldBuilder<
@@ -2459,7 +2459,7 @@ public final class Protos {
        * <code>optional .paymentchannels.Settlement settlement = 9;</code>
        */
       private com.google.protobuf.SingleFieldBuilder<
-          org.zetacoin.paymentchannel.Protos.Settlement, org.zetacoin.paymentchannel.Protos.Settlement.Builder, org.zetacoin.paymentchannel.Protos.SettlementOrBuilder>
+          org.zetacoin.paymentchannel.Protos.Settlement, org.zetacoin.paymentchannel.Protos.Settlement.Builder, org.zetacoin.paymentchannel.Protos.SettlementOrBuilder> 
           getSettlementFieldBuilder() {
         if (settlementBuilder_ == null) {
           settlementBuilder_ = new com.google.protobuf.SingleFieldBuilder<
@@ -2576,7 +2576,7 @@ public final class Protos {
        * <code>optional .paymentchannels.Error error = 10;</code>
        */
       private com.google.protobuf.SingleFieldBuilder<
-          org.zetacoin.paymentchannel.Protos.Error, org.zetacoin.paymentchannel.Protos.Error.Builder, org.zetacoin.paymentchannel.Protos.ErrorOrBuilder>
+          org.zetacoin.paymentchannel.Protos.Error, org.zetacoin.paymentchannel.Protos.Error.Builder, org.zetacoin.paymentchannel.Protos.ErrorOrBuilder> 
           getErrorFieldBuilder() {
         if (errorBuilder_ == null) {
           errorBuilder_ = new com.google.protobuf.SingleFieldBuilder<
@@ -6512,7 +6512,7 @@ public final class Protos {
        * </pre>
        */
       private com.google.protobuf.SingleFieldBuilder<
-          org.zetacoin.paymentchannel.Protos.UpdatePayment, org.zetacoin.paymentchannel.Protos.UpdatePayment.Builder, org.zetacoin.paymentchannel.Protos.UpdatePaymentOrBuilder>
+          org.zetacoin.paymentchannel.Protos.UpdatePayment, org.zetacoin.paymentchannel.Protos.UpdatePayment.Builder, org.zetacoin.paymentchannel.Protos.UpdatePaymentOrBuilder> 
           getInitialPaymentFieldBuilder() {
         if (initialPaymentBuilder_ == null) {
           initialPaymentBuilder_ = new com.google.protobuf.SingleFieldBuilder<
@@ -8634,8 +8634,8 @@ public final class Protos {
       "OR\020\002\022\031\n\025NO_ACCEPTABLE_VERSION\020\003\022\023\n\017BAD_T" +
       "RANSACTION\020\004\022\031\n\025TIME_WINDOW_TOO_LARGE\020\005\022" +
       "\033\n\027CHANNEL_VALUE_TOO_LARGE\020\006\022\031\n\025MIN_PAYM",
-      "ENT_TOO_LARGE\020\007\022\t\n\005OTHER\020\010B$\n\032org.bitcoi" +
-      "n.paymentchannelB\006Protos"
+      "ENT_TOO_LARGE\020\007\022\t\n\005OTHER\020\010B%\n\033org.zetaco" +
+      "in.paymentchannelB\006Protos"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
       new com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner() {

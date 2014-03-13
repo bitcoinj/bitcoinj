@@ -51,7 +51,7 @@ public final class Protos {
    * Protobuf type {@code payments.Output}
    *
    * <pre>
-   * Generalized form of "send payment to this/these zetacoin addresses"
+   * Generalized form of "send payment to this/these bitcoin addresses"
    * </pre>
    */
   public static final class Output extends
@@ -325,7 +325,7 @@ public final class Protos {
      * Protobuf type {@code payments.Output}
      *
      * <pre>
-     * Generalized form of "send payment to this/these zetacoin addresses"
+     * Generalized form of "send payment to this/these bitcoin addresses"
      * </pre>
      */
     public static final class Builder extends
@@ -606,7 +606,7 @@ public final class Protos {
      * Where payment should be sent
      * </pre>
      */
-    java.util.List<org.zetacoin.protocols.payments.Protos.Output>
+    java.util.List<org.zetacoin.protocols.payments.Protos.Output> 
         getOutputsList();
     /**
      * <code>repeated .payments.Output outputs = 2;</code>
@@ -631,7 +631,7 @@ public final class Protos {
      * Where payment should be sent
      * </pre>
      */
-    java.util.List<? extends org.zetacoin.protocols.payments.Protos.OutputOrBuilder>
+    java.util.List<? extends org.zetacoin.protocols.payments.Protos.OutputOrBuilder> 
         getOutputsOrBuilderList();
     /**
      * <code>repeated .payments.Output outputs = 2;</code>
@@ -958,7 +958,7 @@ public final class Protos {
      * Where payment should be sent
      * </pre>
      */
-    public java.util.List<? extends org.zetacoin.protocols.payments.Protos.OutputOrBuilder>
+    public java.util.List<? extends org.zetacoin.protocols.payments.Protos.OutputOrBuilder> 
         getOutputsOrBuilderList() {
       return outputs_;
     }
@@ -1917,7 +1917,7 @@ public final class Protos {
        * Where payment should be sent
        * </pre>
        */
-      public java.util.List<? extends org.zetacoin.protocols.payments.Protos.OutputOrBuilder>
+      public java.util.List<? extends org.zetacoin.protocols.payments.Protos.OutputOrBuilder> 
            getOutputsOrBuilderList() {
         if (outputsBuilder_ != null) {
           return outputsBuilder_.getMessageOrBuilderList();
@@ -1955,12 +1955,12 @@ public final class Protos {
        * Where payment should be sent
        * </pre>
        */
-      public java.util.List<org.zetacoin.protocols.payments.Protos.Output.Builder>
+      public java.util.List<org.zetacoin.protocols.payments.Protos.Output.Builder> 
            getOutputsBuilderList() {
         return getOutputsFieldBuilder().getBuilderList();
       }
       private com.google.protobuf.RepeatedFieldBuilder<
-          org.zetacoin.protocols.payments.Protos.Output, org.zetacoin.protocols.payments.Protos.Output.Builder, org.zetacoin.protocols.payments.Protos.OutputOrBuilder>
+          org.zetacoin.protocols.payments.Protos.Output, org.zetacoin.protocols.payments.Protos.Output.Builder, org.zetacoin.protocols.payments.Protos.OutputOrBuilder> 
           getOutputsFieldBuilder() {
         if (outputsBuilder_ == null) {
           outputsBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
@@ -3856,7 +3856,7 @@ public final class Protos {
      * Where to send refunds, if a refund is necessary
      * </pre>
      */
-    java.util.List<org.zetacoin.protocols.payments.Protos.Output>
+    java.util.List<org.zetacoin.protocols.payments.Protos.Output> 
         getRefundToList();
     /**
      * <code>repeated .payments.Output refund_to = 3;</code>
@@ -3881,7 +3881,7 @@ public final class Protos {
      * Where to send refunds, if a refund is necessary
      * </pre>
      */
-    java.util.List<? extends org.zetacoin.protocols.payments.Protos.OutputOrBuilder>
+    java.util.List<? extends org.zetacoin.protocols.payments.Protos.OutputOrBuilder> 
         getRefundToOrBuilderList();
     /**
      * <code>repeated .payments.Output refund_to = 3;</code>
@@ -4122,7 +4122,7 @@ public final class Protos {
      * Where to send refunds, if a refund is necessary
      * </pre>
      */
-    public java.util.List<? extends org.zetacoin.protocols.payments.Protos.OutputOrBuilder>
+    public java.util.List<? extends org.zetacoin.protocols.payments.Protos.OutputOrBuilder> 
         getRefundToOrBuilderList() {
       return refundTo_;
     }
@@ -4958,7 +4958,7 @@ public final class Protos {
        * Where to send refunds, if a refund is necessary
        * </pre>
        */
-      public java.util.List<? extends org.zetacoin.protocols.payments.Protos.OutputOrBuilder>
+      public java.util.List<? extends org.zetacoin.protocols.payments.Protos.OutputOrBuilder> 
            getRefundToOrBuilderList() {
         if (refundToBuilder_ != null) {
           return refundToBuilder_.getMessageOrBuilderList();
@@ -4996,12 +4996,12 @@ public final class Protos {
        * Where to send refunds, if a refund is necessary
        * </pre>
        */
-      public java.util.List<org.zetacoin.protocols.payments.Protos.Output.Builder>
+      public java.util.List<org.zetacoin.protocols.payments.Protos.Output.Builder> 
            getRefundToBuilderList() {
         return getRefundToFieldBuilder().getBuilderList();
       }
       private com.google.protobuf.RepeatedFieldBuilder<
-          org.zetacoin.protocols.payments.Protos.Output, org.zetacoin.protocols.payments.Protos.Output.Builder, org.zetacoin.protocols.payments.Protos.OutputOrBuilder>
+          org.zetacoin.protocols.payments.Protos.Output, org.zetacoin.protocols.payments.Protos.Output.Builder, org.zetacoin.protocols.payments.Protos.OutputOrBuilder> 
           getRefundToFieldBuilder() {
         if (refundToBuilder_ == null) {
           refundToBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
@@ -5789,7 +5789,7 @@ public final class Protos {
        * </pre>
        */
       private com.google.protobuf.SingleFieldBuilder<
-          org.zetacoin.protocols.payments.Protos.Payment, org.zetacoin.protocols.payments.Protos.Payment.Builder, org.zetacoin.protocols.payments.Protos.PaymentOrBuilder>
+          org.zetacoin.protocols.payments.Protos.Payment, org.zetacoin.protocols.payments.Protos.Payment.Builder, org.zetacoin.protocols.payments.Protos.PaymentOrBuilder> 
           getPaymentFieldBuilder() {
         if (paymentBuilder_ == null) {
           paymentBuilder_ = new com.google.protobuf.SingleFieldBuilder<
@@ -5965,8 +5965,8 @@ public final class Protos {
       "ctions\030\002 \003(\014\022#\n\trefund_to\030\003 \003(\0132\020.paymen" +
       "ts.Output\022\014\n\004memo\030\004 \001(\t\">\n\nPaymentACK\022\"\n" +
       "\007payment\030\001 \002(\0132\021.payments.Payment\022\014\n\004mem" +
-      "o\030\002 \001(\tB(\n\036org.zetacoin.protocols.payment" +
-      "sB\006Protos"
+      "o\030\002 \001(\tB)\n\037org.zetacoin.protocols.paymen" +
+      "tsB\006Protos"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
       new com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner() {

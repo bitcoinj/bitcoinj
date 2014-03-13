@@ -1448,7 +1448,7 @@ public final class Protos {
        * <code>ORIGINAL = 1;</code>
        *
        * <pre>
-       * Unencrypted - Original zetacoin secp256k1 curve
+       * Unencrypted - Original bitcoin secp256k1 curve
        * </pre>
        */
       ORIGINAL(0, 1),
@@ -1456,7 +1456,7 @@ public final class Protos {
        * <code>ENCRYPTED_SCRYPT_AES = 2;</code>
        *
        * <pre>
-       * Encrypted with Scrypt and AES - - Original zetacoin secp256k1 curve
+       * Encrypted with Scrypt and AES - - Original bitcoin secp256k1 curve
        * </pre>
        */
       ENCRYPTED_SCRYPT_AES(1, 2),
@@ -1466,7 +1466,7 @@ public final class Protos {
        * <code>ORIGINAL = 1;</code>
        *
        * <pre>
-       * Unencrypted - Original zetacoin secp256k1 curve
+       * Unencrypted - Original bitcoin secp256k1 curve
        * </pre>
        */
       public static final int ORIGINAL_VALUE = 1;
@@ -1474,7 +1474,7 @@ public final class Protos {
        * <code>ENCRYPTED_SCRYPT_AES = 2;</code>
        *
        * <pre>
-       * Encrypted with Scrypt and AES - - Original zetacoin secp256k1 curve
+       * Encrypted with Scrypt and AES - - Original bitcoin secp256k1 curve
        * </pre>
        */
       public static final int ENCRYPTED_SCRYPT_AES_VALUE = 2;
@@ -2323,7 +2323,7 @@ public final class Protos {
        * </pre>
        */
       private com.google.protobuf.SingleFieldBuilder<
-          org.zetacoinj.wallet.Protos.EncryptedPrivateKey, org.zetacoinj.wallet.Protos.EncryptedPrivateKey.Builder, org.zetacoinj.wallet.Protos.EncryptedPrivateKeyOrBuilder>
+          org.zetacoinj.wallet.Protos.EncryptedPrivateKey, org.zetacoinj.wallet.Protos.EncryptedPrivateKey.Builder, org.zetacoinj.wallet.Protos.EncryptedPrivateKeyOrBuilder> 
           getEncryptedPrivateKeyFieldBuilder() {
         if (encryptedPrivateKeyBuilder_ == null) {
           encryptedPrivateKeyBuilder_ = new com.google.protobuf.SingleFieldBuilder<
@@ -4745,7 +4745,7 @@ public final class Protos {
     /**
      * <code>repeated .wallet.PeerAddress broadcast_by = 6;</code>
      */
-    java.util.List<org.zetacoinj.wallet.Protos.PeerAddress>
+    java.util.List<org.zetacoinj.wallet.Protos.PeerAddress> 
         getBroadcastByList();
     /**
      * <code>repeated .wallet.PeerAddress broadcast_by = 6;</code>
@@ -4758,7 +4758,7 @@ public final class Protos {
     /**
      * <code>repeated .wallet.PeerAddress broadcast_by = 6;</code>
      */
-    java.util.List<? extends org.zetacoinj.wallet.Protos.PeerAddressOrBuilder>
+    java.util.List<? extends org.zetacoinj.wallet.Protos.PeerAddressOrBuilder> 
         getBroadcastByOrBuilderList();
     /**
      * <code>repeated .wallet.PeerAddress broadcast_by = 6;</code>
@@ -5328,7 +5328,7 @@ public final class Protos {
     /**
      * <code>repeated .wallet.PeerAddress broadcast_by = 6;</code>
      */
-    public java.util.List<? extends org.zetacoinj.wallet.Protos.PeerAddressOrBuilder>
+    public java.util.List<? extends org.zetacoinj.wallet.Protos.PeerAddressOrBuilder> 
         getBroadcastByOrBuilderList() {
       return broadcastBy_;
     }
@@ -6212,7 +6212,7 @@ public final class Protos {
       /**
        * <code>repeated .wallet.PeerAddress broadcast_by = 6;</code>
        */
-      public java.util.List<? extends org.zetacoinj.wallet.Protos.PeerAddressOrBuilder>
+      public java.util.List<? extends org.zetacoinj.wallet.Protos.PeerAddressOrBuilder> 
            getBroadcastByOrBuilderList() {
         if (broadcastByBuilder_ != null) {
           return broadcastByBuilder_.getMessageOrBuilderList();
@@ -6238,12 +6238,12 @@ public final class Protos {
       /**
        * <code>repeated .wallet.PeerAddress broadcast_by = 6;</code>
        */
-      public java.util.List<org.zetacoinj.wallet.Protos.PeerAddress.Builder>
+      public java.util.List<org.zetacoinj.wallet.Protos.PeerAddress.Builder> 
            getBroadcastByBuilderList() {
         return getBroadcastByFieldBuilder().getBuilderList();
       }
       private com.google.protobuf.RepeatedFieldBuilder<
-          org.zetacoinj.wallet.Protos.PeerAddress, org.zetacoinj.wallet.Protos.PeerAddress.Builder, org.zetacoinj.wallet.Protos.PeerAddressOrBuilder>
+          org.zetacoinj.wallet.Protos.PeerAddress, org.zetacoinj.wallet.Protos.PeerAddress.Builder, org.zetacoinj.wallet.Protos.PeerAddressOrBuilder> 
           getBroadcastByFieldBuilder() {
         if (broadcastByBuilder_ == null) {
           broadcastByBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
@@ -6399,7 +6399,7 @@ public final class Protos {
     /**
      * <code>repeated .wallet.TransactionInput transaction_input = 6;</code>
      */
-    java.util.List<org.zetacoinj.wallet.Protos.TransactionInput>
+    java.util.List<org.zetacoinj.wallet.Protos.TransactionInput> 
         getTransactionInputList();
     /**
      * <code>repeated .wallet.TransactionInput transaction_input = 6;</code>
@@ -6412,7 +6412,7 @@ public final class Protos {
     /**
      * <code>repeated .wallet.TransactionInput transaction_input = 6;</code>
      */
-    java.util.List<? extends org.zetacoinj.wallet.Protos.TransactionInputOrBuilder>
+    java.util.List<? extends org.zetacoinj.wallet.Protos.TransactionInputOrBuilder> 
         getTransactionInputOrBuilderList();
     /**
      * <code>repeated .wallet.TransactionInput transaction_input = 6;</code>
@@ -6424,7 +6424,7 @@ public final class Protos {
     /**
      * <code>repeated .wallet.TransactionOutput transaction_output = 7;</code>
      */
-    java.util.List<org.zetacoinj.wallet.Protos.TransactionOutput>
+    java.util.List<org.zetacoinj.wallet.Protos.TransactionOutput> 
         getTransactionOutputList();
     /**
      * <code>repeated .wallet.TransactionOutput transaction_output = 7;</code>
@@ -6437,7 +6437,7 @@ public final class Protos {
     /**
      * <code>repeated .wallet.TransactionOutput transaction_output = 7;</code>
      */
-    java.util.List<? extends org.zetacoinj.wallet.Protos.TransactionOutputOrBuilder>
+    java.util.List<? extends org.zetacoinj.wallet.Protos.TransactionOutputOrBuilder> 
         getTransactionOutputOrBuilderList();
     /**
      * <code>repeated .wallet.TransactionOutput transaction_output = 7;</code>
@@ -7155,7 +7155,7 @@ public final class Protos {
     /**
      * <code>repeated .wallet.TransactionInput transaction_input = 6;</code>
      */
-    public java.util.List<? extends org.zetacoinj.wallet.Protos.TransactionInputOrBuilder>
+    public java.util.List<? extends org.zetacoinj.wallet.Protos.TransactionInputOrBuilder> 
         getTransactionInputOrBuilderList() {
       return transactionInput_;
     }
@@ -7191,7 +7191,7 @@ public final class Protos {
     /**
      * <code>repeated .wallet.TransactionOutput transaction_output = 7;</code>
      */
-    public java.util.List<? extends org.zetacoinj.wallet.Protos.TransactionOutputOrBuilder>
+    public java.util.List<? extends org.zetacoinj.wallet.Protos.TransactionOutputOrBuilder> 
         getTransactionOutputOrBuilderList() {
       return transactionOutput_;
     }
@@ -8318,7 +8318,7 @@ public final class Protos {
       /**
        * <code>repeated .wallet.TransactionInput transaction_input = 6;</code>
        */
-      public java.util.List<? extends org.zetacoinj.wallet.Protos.TransactionInputOrBuilder>
+      public java.util.List<? extends org.zetacoinj.wallet.Protos.TransactionInputOrBuilder> 
            getTransactionInputOrBuilderList() {
         if (transactionInputBuilder_ != null) {
           return transactionInputBuilder_.getMessageOrBuilderList();
@@ -8344,12 +8344,12 @@ public final class Protos {
       /**
        * <code>repeated .wallet.TransactionInput transaction_input = 6;</code>
        */
-      public java.util.List<org.zetacoinj.wallet.Protos.TransactionInput.Builder>
+      public java.util.List<org.zetacoinj.wallet.Protos.TransactionInput.Builder> 
            getTransactionInputBuilderList() {
         return getTransactionInputFieldBuilder().getBuilderList();
       }
       private com.google.protobuf.RepeatedFieldBuilder<
-          org.zetacoinj.wallet.Protos.TransactionInput, org.zetacoinj.wallet.Protos.TransactionInput.Builder, org.zetacoinj.wallet.Protos.TransactionInputOrBuilder>
+          org.zetacoinj.wallet.Protos.TransactionInput, org.zetacoinj.wallet.Protos.TransactionInput.Builder, org.zetacoinj.wallet.Protos.TransactionInputOrBuilder> 
           getTransactionInputFieldBuilder() {
         if (transactionInputBuilder_ == null) {
           transactionInputBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
@@ -8558,7 +8558,7 @@ public final class Protos {
       /**
        * <code>repeated .wallet.TransactionOutput transaction_output = 7;</code>
        */
-      public java.util.List<? extends org.zetacoinj.wallet.Protos.TransactionOutputOrBuilder>
+      public java.util.List<? extends org.zetacoinj.wallet.Protos.TransactionOutputOrBuilder> 
            getTransactionOutputOrBuilderList() {
         if (transactionOutputBuilder_ != null) {
           return transactionOutputBuilder_.getMessageOrBuilderList();
@@ -8584,12 +8584,12 @@ public final class Protos {
       /**
        * <code>repeated .wallet.TransactionOutput transaction_output = 7;</code>
        */
-      public java.util.List<org.zetacoinj.wallet.Protos.TransactionOutput.Builder>
+      public java.util.List<org.zetacoinj.wallet.Protos.TransactionOutput.Builder> 
            getTransactionOutputBuilderList() {
         return getTransactionOutputFieldBuilder().getBuilderList();
       }
       private com.google.protobuf.RepeatedFieldBuilder<
-          org.zetacoinj.wallet.Protos.TransactionOutput, org.zetacoinj.wallet.Protos.TransactionOutput.Builder, org.zetacoinj.wallet.Protos.TransactionOutputOrBuilder>
+          org.zetacoinj.wallet.Protos.TransactionOutput, org.zetacoinj.wallet.Protos.TransactionOutput.Builder, org.zetacoinj.wallet.Protos.TransactionOutputOrBuilder> 
           getTransactionOutputFieldBuilder() {
         if (transactionOutputBuilder_ == null) {
           transactionOutputBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
@@ -8916,7 +8916,7 @@ public final class Protos {
        * </pre>
        */
       private com.google.protobuf.SingleFieldBuilder<
-          org.zetacoinj.wallet.Protos.TransactionConfidence, org.zetacoinj.wallet.Protos.TransactionConfidence.Builder, org.zetacoinj.wallet.Protos.TransactionConfidenceOrBuilder>
+          org.zetacoinj.wallet.Protos.TransactionConfidence, org.zetacoinj.wallet.Protos.TransactionConfidence.Builder, org.zetacoinj.wallet.Protos.TransactionConfidenceOrBuilder> 
           getConfidenceFieldBuilder() {
         if (confidenceBuilder_ == null) {
           confidenceBuilder_ = new com.google.protobuf.SingleFieldBuilder<
@@ -10614,7 +10614,7 @@ public final class Protos {
     /**
      * <code>repeated .wallet.Key key = 3;</code>
      */
-    java.util.List<org.zetacoinj.wallet.Protos.Key>
+    java.util.List<org.zetacoinj.wallet.Protos.Key> 
         getKeyList();
     /**
      * <code>repeated .wallet.Key key = 3;</code>
@@ -10627,7 +10627,7 @@ public final class Protos {
     /**
      * <code>repeated .wallet.Key key = 3;</code>
      */
-    java.util.List<? extends org.zetacoinj.wallet.Protos.KeyOrBuilder>
+    java.util.List<? extends org.zetacoinj.wallet.Protos.KeyOrBuilder> 
         getKeyOrBuilderList();
     /**
      * <code>repeated .wallet.Key key = 3;</code>
@@ -10639,7 +10639,7 @@ public final class Protos {
     /**
      * <code>repeated .wallet.Transaction transaction = 4;</code>
      */
-    java.util.List<org.zetacoinj.wallet.Protos.Transaction>
+    java.util.List<org.zetacoinj.wallet.Protos.Transaction> 
         getTransactionList();
     /**
      * <code>repeated .wallet.Transaction transaction = 4;</code>
@@ -10652,7 +10652,7 @@ public final class Protos {
     /**
      * <code>repeated .wallet.Transaction transaction = 4;</code>
      */
-    java.util.List<? extends org.zetacoinj.wallet.Protos.TransactionOrBuilder>
+    java.util.List<? extends org.zetacoinj.wallet.Protos.TransactionOrBuilder> 
         getTransactionOrBuilderList();
     /**
      * <code>repeated .wallet.Transaction transaction = 4;</code>
@@ -10664,7 +10664,7 @@ public final class Protos {
     /**
      * <code>repeated .wallet.Script watched_script = 15;</code>
      */
-    java.util.List<org.zetacoinj.wallet.Protos.Script>
+    java.util.List<org.zetacoinj.wallet.Protos.Script> 
         getWatchedScriptList();
     /**
      * <code>repeated .wallet.Script watched_script = 15;</code>
@@ -10677,7 +10677,7 @@ public final class Protos {
     /**
      * <code>repeated .wallet.Script watched_script = 15;</code>
      */
-    java.util.List<? extends org.zetacoinj.wallet.Protos.ScriptOrBuilder>
+    java.util.List<? extends org.zetacoinj.wallet.Protos.ScriptOrBuilder> 
         getWatchedScriptOrBuilderList();
     /**
      * <code>repeated .wallet.Script watched_script = 15;</code>
@@ -10733,7 +10733,7 @@ public final class Protos {
     /**
      * <code>repeated .wallet.Extension extension = 10;</code>
      */
-    java.util.List<org.zetacoinj.wallet.Protos.Extension>
+    java.util.List<org.zetacoinj.wallet.Protos.Extension> 
         getExtensionList();
     /**
      * <code>repeated .wallet.Extension extension = 10;</code>
@@ -10746,7 +10746,7 @@ public final class Protos {
     /**
      * <code>repeated .wallet.Extension extension = 10;</code>
      */
-    java.util.List<? extends org.zetacoinj.wallet.Protos.ExtensionOrBuilder>
+    java.util.List<? extends org.zetacoinj.wallet.Protos.ExtensionOrBuilder> 
         getExtensionOrBuilderList();
     /**
      * <code>repeated .wallet.Extension extension = 10;</code>
@@ -10807,7 +10807,7 @@ public final class Protos {
    * Protobuf type {@code wallet.Wallet}
    *
    * <pre>
-   ** A zetacoin wallet
+   ** A bitcoin wallet 
    * </pre>
    */
   public static final class Wallet extends
@@ -11239,7 +11239,7 @@ public final class Protos {
     /**
      * <code>repeated .wallet.Key key = 3;</code>
      */
-    public java.util.List<? extends org.zetacoinj.wallet.Protos.KeyOrBuilder>
+    public java.util.List<? extends org.zetacoinj.wallet.Protos.KeyOrBuilder> 
         getKeyOrBuilderList() {
       return key_;
     }
@@ -11275,7 +11275,7 @@ public final class Protos {
     /**
      * <code>repeated .wallet.Transaction transaction = 4;</code>
      */
-    public java.util.List<? extends org.zetacoinj.wallet.Protos.TransactionOrBuilder>
+    public java.util.List<? extends org.zetacoinj.wallet.Protos.TransactionOrBuilder> 
         getTransactionOrBuilderList() {
       return transaction_;
     }
@@ -11311,7 +11311,7 @@ public final class Protos {
     /**
      * <code>repeated .wallet.Script watched_script = 15;</code>
      */
-    public java.util.List<? extends org.zetacoinj.wallet.Protos.ScriptOrBuilder>
+    public java.util.List<? extends org.zetacoinj.wallet.Protos.ScriptOrBuilder> 
         getWatchedScriptOrBuilderList() {
       return watchedScript_;
     }
@@ -11411,7 +11411,7 @@ public final class Protos {
     /**
      * <code>repeated .wallet.Extension extension = 10;</code>
      */
-    public java.util.List<? extends org.zetacoinj.wallet.Protos.ExtensionOrBuilder>
+    public java.util.List<? extends org.zetacoinj.wallet.Protos.ExtensionOrBuilder> 
         getExtensionOrBuilderList() {
       return extension_;
     }
@@ -11761,7 +11761,7 @@ public final class Protos {
      * Protobuf type {@code wallet.Wallet}
      *
      * <pre>
-     ** A zetacoin wallet
+     ** A bitcoin wallet 
      * </pre>
      */
     public static final class Builder extends
@@ -12593,7 +12593,7 @@ public final class Protos {
       /**
        * <code>repeated .wallet.Key key = 3;</code>
        */
-      public java.util.List<? extends org.zetacoinj.wallet.Protos.KeyOrBuilder>
+      public java.util.List<? extends org.zetacoinj.wallet.Protos.KeyOrBuilder> 
            getKeyOrBuilderList() {
         if (keyBuilder_ != null) {
           return keyBuilder_.getMessageOrBuilderList();
@@ -12619,12 +12619,12 @@ public final class Protos {
       /**
        * <code>repeated .wallet.Key key = 3;</code>
        */
-      public java.util.List<org.zetacoinj.wallet.Protos.Key.Builder>
+      public java.util.List<org.zetacoinj.wallet.Protos.Key.Builder> 
            getKeyBuilderList() {
         return getKeyFieldBuilder().getBuilderList();
       }
       private com.google.protobuf.RepeatedFieldBuilder<
-          org.zetacoinj.wallet.Protos.Key, org.zetacoinj.wallet.Protos.Key.Builder, org.zetacoinj.wallet.Protos.KeyOrBuilder>
+          org.zetacoinj.wallet.Protos.Key, org.zetacoinj.wallet.Protos.Key.Builder, org.zetacoinj.wallet.Protos.KeyOrBuilder> 
           getKeyFieldBuilder() {
         if (keyBuilder_ == null) {
           keyBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
@@ -12833,7 +12833,7 @@ public final class Protos {
       /**
        * <code>repeated .wallet.Transaction transaction = 4;</code>
        */
-      public java.util.List<? extends org.zetacoinj.wallet.Protos.TransactionOrBuilder>
+      public java.util.List<? extends org.zetacoinj.wallet.Protos.TransactionOrBuilder> 
            getTransactionOrBuilderList() {
         if (transactionBuilder_ != null) {
           return transactionBuilder_.getMessageOrBuilderList();
@@ -12859,12 +12859,12 @@ public final class Protos {
       /**
        * <code>repeated .wallet.Transaction transaction = 4;</code>
        */
-      public java.util.List<org.zetacoinj.wallet.Protos.Transaction.Builder>
+      public java.util.List<org.zetacoinj.wallet.Protos.Transaction.Builder> 
            getTransactionBuilderList() {
         return getTransactionFieldBuilder().getBuilderList();
       }
       private com.google.protobuf.RepeatedFieldBuilder<
-          org.zetacoinj.wallet.Protos.Transaction, org.zetacoinj.wallet.Protos.Transaction.Builder, org.zetacoinj.wallet.Protos.TransactionOrBuilder>
+          org.zetacoinj.wallet.Protos.Transaction, org.zetacoinj.wallet.Protos.Transaction.Builder, org.zetacoinj.wallet.Protos.TransactionOrBuilder> 
           getTransactionFieldBuilder() {
         if (transactionBuilder_ == null) {
           transactionBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
@@ -13073,7 +13073,7 @@ public final class Protos {
       /**
        * <code>repeated .wallet.Script watched_script = 15;</code>
        */
-      public java.util.List<? extends org.zetacoinj.wallet.Protos.ScriptOrBuilder>
+      public java.util.List<? extends org.zetacoinj.wallet.Protos.ScriptOrBuilder> 
            getWatchedScriptOrBuilderList() {
         if (watchedScriptBuilder_ != null) {
           return watchedScriptBuilder_.getMessageOrBuilderList();
@@ -13099,12 +13099,12 @@ public final class Protos {
       /**
        * <code>repeated .wallet.Script watched_script = 15;</code>
        */
-      public java.util.List<org.zetacoinj.wallet.Protos.Script.Builder>
+      public java.util.List<org.zetacoinj.wallet.Protos.Script.Builder> 
            getWatchedScriptBuilderList() {
         return getWatchedScriptFieldBuilder().getBuilderList();
       }
       private com.google.protobuf.RepeatedFieldBuilder<
-          org.zetacoinj.wallet.Protos.Script, org.zetacoinj.wallet.Protos.Script.Builder, org.zetacoinj.wallet.Protos.ScriptOrBuilder>
+          org.zetacoinj.wallet.Protos.Script, org.zetacoinj.wallet.Protos.Script.Builder, org.zetacoinj.wallet.Protos.ScriptOrBuilder> 
           getWatchedScriptFieldBuilder() {
         if (watchedScriptBuilder_ == null) {
           watchedScriptBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
@@ -13258,7 +13258,7 @@ public final class Protos {
        * <code>optional .wallet.ScryptParameters encryption_parameters = 6;</code>
        */
       private com.google.protobuf.SingleFieldBuilder<
-          org.zetacoinj.wallet.Protos.ScryptParameters, org.zetacoinj.wallet.Protos.ScryptParameters.Builder, org.zetacoinj.wallet.Protos.ScryptParametersOrBuilder>
+          org.zetacoinj.wallet.Protos.ScryptParameters, org.zetacoinj.wallet.Protos.ScryptParameters.Builder, org.zetacoinj.wallet.Protos.ScryptParametersOrBuilder> 
           getEncryptionParametersFieldBuilder() {
         if (encryptionParametersBuilder_ == null) {
           encryptionParametersBuilder_ = new com.google.protobuf.SingleFieldBuilder<
@@ -13519,7 +13519,7 @@ public final class Protos {
       /**
        * <code>repeated .wallet.Extension extension = 10;</code>
        */
-      public java.util.List<? extends org.zetacoinj.wallet.Protos.ExtensionOrBuilder>
+      public java.util.List<? extends org.zetacoinj.wallet.Protos.ExtensionOrBuilder> 
            getExtensionOrBuilderList() {
         if (extensionBuilder_ != null) {
           return extensionBuilder_.getMessageOrBuilderList();
@@ -13545,12 +13545,12 @@ public final class Protos {
       /**
        * <code>repeated .wallet.Extension extension = 10;</code>
        */
-      public java.util.List<org.zetacoinj.wallet.Protos.Extension.Builder>
+      public java.util.List<org.zetacoinj.wallet.Protos.Extension.Builder> 
            getExtensionBuilderList() {
         return getExtensionFieldBuilder().getBuilderList();
       }
       private com.google.protobuf.RepeatedFieldBuilder<
-          org.zetacoinj.wallet.Protos.Extension, org.zetacoinj.wallet.Protos.Extension.Builder, org.zetacoinj.wallet.Protos.ExtensionOrBuilder>
+          org.zetacoinj.wallet.Protos.Extension, org.zetacoinj.wallet.Protos.Extension.Builder, org.zetacoinj.wallet.Protos.ExtensionOrBuilder> 
           getExtensionFieldBuilder() {
         if (extensionBuilder_ == null) {
           extensionBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
@@ -13794,66 +13794,66 @@ public final class Protos {
       descriptor;
   static {
     java.lang.String[] descriptorData = {
-      "\n\rzetacoin.proto\022\006wallet\"A\n\013PeerAddress\022\022" +
-      "\n\nip_address\030\001 \002(\014\022\014\n\004port\030\002 \002(\r\022\020\n\010serv" +
-      "ices\030\003 \002(\004\"S\n\023EncryptedPrivateKey\022\035\n\025ini" +
-      "tialisation_vector\030\001 \002(\014\022\035\n\025encrypted_pr" +
-      "ivate_key\030\002 \002(\014\"\345\001\n\003Key\022\036\n\004type\030\001 \002(\0162\020." +
-      "wallet.Key.Type\022\023\n\013private_key\030\002 \001(\014\022:\n\025" +
-      "encrypted_private_key\030\006 \001(\0132\033.wallet.Enc" +
-      "ryptedPrivateKey\022\022\n\npublic_key\030\003 \001(\014\022\r\n\005" +
-      "label\030\004 \001(\t\022\032\n\022creation_timestamp\030\005 \001(\003\"" +
-      ".\n\004Type\022\014\n\010ORIGINAL\020\001\022\030\n\024ENCRYPTED_SCRYP",
-      "T_AES\020\002\"5\n\006Script\022\017\n\007program\030\001 \002(\014\022\032\n\022cr" +
-      "eation_timestamp\030\002 \002(\003\"\203\001\n\020TransactionIn" +
-      "put\022\"\n\032transaction_out_point_hash\030\001 \002(\014\022" +
-      "#\n\033transaction_out_point_index\030\002 \002(\r\022\024\n\014" +
-      "script_bytes\030\003 \002(\014\022\020\n\010sequence\030\004 \001(\r\"\177\n\021" +
-      "TransactionOutput\022\r\n\005value\030\001 \002(\003\022\024\n\014scri" +
-      "pt_bytes\030\002 \002(\014\022!\n\031spent_by_transaction_h" +
-      "ash\030\003 \001(\014\022\"\n\032spent_by_transaction_index\030" +
-      "\004 \001(\005\"\234\003\n\025TransactionConfidence\0220\n\004type\030" +
-      "\001 \001(\0162\".wallet.TransactionConfidence.Typ",
-      "e\022\032\n\022appeared_at_height\030\002 \001(\005\022\036\n\026overrid" +
-      "ing_transaction\030\003 \001(\014\022\r\n\005depth\030\004 \001(\005\022\021\n\t" +
-      "work_done\030\005 \001(\003\022)\n\014broadcast_by\030\006 \003(\0132\023." +
-      "wallet.PeerAddress\0224\n\006source\030\007 \001(\0162$.wal" +
-      "let.TransactionConfidence.Source\"O\n\004Type" +
-      "\022\013\n\007UNKNOWN\020\000\022\014\n\010BUILDING\020\001\022\013\n\007PENDING\020\002" +
-      "\022\025\n\021NOT_IN_BEST_CHAIN\020\003\022\010\n\004DEAD\020\004\"A\n\006Sou" +
-      "rce\022\022\n\016SOURCE_UNKNOWN\020\000\022\022\n\016SOURCE_NETWOR" +
-      "K\020\001\022\017\n\013SOURCE_SELF\020\002\"\236\004\n\013Transaction\022\017\n\007" +
-      "version\030\001 \002(\005\022\014\n\004hash\030\002 \002(\014\022&\n\004pool\030\003 \001(",
-      "\0162\030.wallet.Transaction.Pool\022\021\n\tlock_time" +
-      "\030\004 \001(\r\022\022\n\nupdated_at\030\005 \001(\003\0223\n\021transactio" +
-      "n_input\030\006 \003(\0132\030.wallet.TransactionInput\022" +
-      "5\n\022transaction_output\030\007 \003(\0132\031.wallet.Tra" +
-      "nsactionOutput\022\022\n\nblock_hash\030\010 \003(\014\022 \n\030bl" +
-      "ock_relativity_offsets\030\013 \003(\005\0221\n\nconfiden" +
-      "ce\030\t \001(\0132\035.wallet.TransactionConfidence\022" +
-      "5\n\007purpose\030\n \001(\0162\033.wallet.Transaction.Pu" +
-      "rpose:\007UNKNOWN\"Y\n\004Pool\022\013\n\007UNSPENT\020\004\022\t\n\005S" +
-      "PENT\020\005\022\014\n\010INACTIVE\020\002\022\010\n\004DEAD\020\n\022\013\n\007PENDIN",
-      "G\020\020\022\024\n\020PENDING_INACTIVE\020\022\":\n\007Purpose\022\013\n\007" +
-      "UNKNOWN\020\000\022\020\n\014USER_PAYMENT\020\001\022\020\n\014KEY_ROTAT" +
-      "ION\020\002\"N\n\020ScryptParameters\022\014\n\004salt\030\001 \002(\014\022" +
-      "\020\n\001n\030\002 \001(\003:\00516384\022\014\n\001r\030\003 \001(\005:\0018\022\014\n\001p\030\004 \001" +
-      "(\005:\0011\"8\n\tExtension\022\n\n\002id\030\001 \002(\t\022\014\n\004data\030\002" +
-      " \002(\014\022\021\n\tmandatory\030\003 \002(\010\"\223\004\n\006Wallet\022\032\n\022ne" +
-      "twork_identifier\030\001 \002(\t\022\034\n\024last_seen_bloc" +
-      "k_hash\030\002 \001(\014\022\036\n\026last_seen_block_height\030\014" +
-      " \001(\r\022!\n\031last_seen_block_time_secs\030\016 \001(\003\022" +
-      "\030\n\003key\030\003 \003(\0132\013.wallet.Key\022(\n\013transaction",
-      "\030\004 \003(\0132\023.wallet.Transaction\022&\n\016watched_s" +
-      "cript\030\017 \003(\0132\016.wallet.Script\022C\n\017encryptio" +
-      "n_type\030\005 \001(\0162\035.wallet.Wallet.EncryptionT" +
-      "ype:\013UNENCRYPTED\0227\n\025encryption_parameter" +
-      "s\030\006 \001(\0132\030.wallet.ScryptParameters\022\017\n\007ver" +
-      "sion\030\007 \001(\005\022$\n\textension\030\n \003(\0132\021.wallet.E" +
-      "xtension\022\023\n\013description\030\013 \001(\t\022\031\n\021key_rot" +
-      "ation_time\030\r \001(\004\";\n\016EncryptionType\022\017\n\013UN" +
-      "ENCRYPTED\020\001\022\030\n\024ENCRYPTED_SCRYPT_AES\020\002B\035\n" +
-      "\023org.zetacoinj.walletB\006Protos"
+      "\n\016zetacoin.proto\022\006wallet\"A\n\013PeerAddress\022" +
+      "\022\n\nip_address\030\001 \002(\014\022\014\n\004port\030\002 \002(\r\022\020\n\010ser" +
+      "vices\030\003 \002(\004\"S\n\023EncryptedPrivateKey\022\035\n\025in" +
+      "itialisation_vector\030\001 \002(\014\022\035\n\025encrypted_p" +
+      "rivate_key\030\002 \002(\014\"\345\001\n\003Key\022\036\n\004type\030\001 \002(\0162\020" +
+      ".wallet.Key.Type\022\023\n\013private_key\030\002 \001(\014\022:\n" +
+      "\025encrypted_private_key\030\006 \001(\0132\033.wallet.En" +
+      "cryptedPrivateKey\022\022\n\npublic_key\030\003 \001(\014\022\r\n" +
+      "\005label\030\004 \001(\t\022\032\n\022creation_timestamp\030\005 \001(\003" +
+      "\".\n\004Type\022\014\n\010ORIGINAL\020\001\022\030\n\024ENCRYPTED_SCRY",
+      "PT_AES\020\002\"5\n\006Script\022\017\n\007program\030\001 \002(\014\022\032\n\022c" +
+      "reation_timestamp\030\002 \002(\003\"\203\001\n\020TransactionI" +
+      "nput\022\"\n\032transaction_out_point_hash\030\001 \002(\014" +
+      "\022#\n\033transaction_out_point_index\030\002 \002(\r\022\024\n" +
+      "\014script_bytes\030\003 \002(\014\022\020\n\010sequence\030\004 \001(\r\"\177\n" +
+      "\021TransactionOutput\022\r\n\005value\030\001 \002(\003\022\024\n\014scr" +
+      "ipt_bytes\030\002 \002(\014\022!\n\031spent_by_transaction_" +
+      "hash\030\003 \001(\014\022\"\n\032spent_by_transaction_index" +
+      "\030\004 \001(\005\"\234\003\n\025TransactionConfidence\0220\n\004type" +
+      "\030\001 \001(\0162\".wallet.TransactionConfidence.Ty",
+      "pe\022\032\n\022appeared_at_height\030\002 \001(\005\022\036\n\026overri" +
+      "ding_transaction\030\003 \001(\014\022\r\n\005depth\030\004 \001(\005\022\021\n" +
+      "\twork_done\030\005 \001(\003\022)\n\014broadcast_by\030\006 \003(\0132\023" +
+      ".wallet.PeerAddress\0224\n\006source\030\007 \001(\0162$.wa" +
+      "llet.TransactionConfidence.Source\"O\n\004Typ" +
+      "e\022\013\n\007UNKNOWN\020\000\022\014\n\010BUILDING\020\001\022\013\n\007PENDING\020" +
+      "\002\022\025\n\021NOT_IN_BEST_CHAIN\020\003\022\010\n\004DEAD\020\004\"A\n\006So" +
+      "urce\022\022\n\016SOURCE_UNKNOWN\020\000\022\022\n\016SOURCE_NETWO" +
+      "RK\020\001\022\017\n\013SOURCE_SELF\020\002\"\236\004\n\013Transaction\022\017\n" +
+      "\007version\030\001 \002(\005\022\014\n\004hash\030\002 \002(\014\022&\n\004pool\030\003 \001",
+      "(\0162\030.wallet.Transaction.Pool\022\021\n\tlock_tim" +
+      "e\030\004 \001(\r\022\022\n\nupdated_at\030\005 \001(\003\0223\n\021transacti" +
+      "on_input\030\006 \003(\0132\030.wallet.TransactionInput" +
+      "\0225\n\022transaction_output\030\007 \003(\0132\031.wallet.Tr" +
+      "ansactionOutput\022\022\n\nblock_hash\030\010 \003(\014\022 \n\030b" +
+      "lock_relativity_offsets\030\013 \003(\005\0221\n\nconfide" +
+      "nce\030\t \001(\0132\035.wallet.TransactionConfidence" +
+      "\0225\n\007purpose\030\n \001(\0162\033.wallet.Transaction.P" +
+      "urpose:\007UNKNOWN\"Y\n\004Pool\022\013\n\007UNSPENT\020\004\022\t\n\005" +
+      "SPENT\020\005\022\014\n\010INACTIVE\020\002\022\010\n\004DEAD\020\n\022\013\n\007PENDI",
+      "NG\020\020\022\024\n\020PENDING_INACTIVE\020\022\":\n\007Purpose\022\013\n" +
+      "\007UNKNOWN\020\000\022\020\n\014USER_PAYMENT\020\001\022\020\n\014KEY_ROTA" +
+      "TION\020\002\"N\n\020ScryptParameters\022\014\n\004salt\030\001 \002(\014" +
+      "\022\020\n\001n\030\002 \001(\003:\00516384\022\014\n\001r\030\003 \001(\005:\0018\022\014\n\001p\030\004 " +
+      "\001(\005:\0011\"8\n\tExtension\022\n\n\002id\030\001 \002(\t\022\014\n\004data\030" +
+      "\002 \002(\014\022\021\n\tmandatory\030\003 \002(\010\"\223\004\n\006Wallet\022\032\n\022n" +
+      "etwork_identifier\030\001 \002(\t\022\034\n\024last_seen_blo" +
+      "ck_hash\030\002 \001(\014\022\036\n\026last_seen_block_height\030" +
+      "\014 \001(\r\022!\n\031last_seen_block_time_secs\030\016 \001(\003" +
+      "\022\030\n\003key\030\003 \003(\0132\013.wallet.Key\022(\n\013transactio",
+      "n\030\004 \003(\0132\023.wallet.Transaction\022&\n\016watched_" +
+      "script\030\017 \003(\0132\016.wallet.Script\022C\n\017encrypti" +
+      "on_type\030\005 \001(\0162\035.wallet.Wallet.Encryption" +
+      "Type:\013UNENCRYPTED\0227\n\025encryption_paramete" +
+      "rs\030\006 \001(\0132\030.wallet.ScryptParameters\022\017\n\007ve" +
+      "rsion\030\007 \001(\005\022$\n\textension\030\n \003(\0132\021.wallet." +
+      "Extension\022\023\n\013description\030\013 \001(\t\022\031\n\021key_ro" +
+      "tation_time\030\r \001(\004\";\n\016EncryptionType\022\017\n\013U" +
+      "NENCRYPTED\020\001\022\030\n\024ENCRYPTED_SCRYPT_AES\020\002B\036" +
+      "\n\024org.zetacoinj.walletB\006Protos"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
       new com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner() {
