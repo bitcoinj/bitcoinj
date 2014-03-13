@@ -81,18 +81,12 @@ public class WalletTest extends TestWithWallet {
     @Override
     public void setUp() throws Exception {
         super.setUp();
-        byte[] salt = new byte[KeyCrypterScrypt.SALT_LENGTH];
-        secureRandom.nextBytes(salt);
-        Protos.ScryptParameters.Builder scryptParametersBuilder = Protos.ScryptParameters.newBuilder().setSalt(ByteString.copyFrom(salt));
-        ScryptParameters scryptParameters = scryptParametersBuilder.build();
-        keyCrypter = new KeyCrypterScrypt(scryptParameters);
-
-        encryptedWallet = new Wallet(params, keyCrypter);
-
+        encryptedWallet = new Wallet(params);
+        myEncryptedAddress = encryptedWallet.freshReceiveKey().toAddress(params);
+        encryptedWallet.encrypt(PASSWORD1);
+        keyCrypter = encryptedWallet.getKeyCrypter();
         aesKey = keyCrypter.deriveKey(PASSWORD1);
         wrongAesKey = keyCrypter.deriveKey(WRONG_PASSWORD);
-        ECKey myEncryptedKey = encryptedWallet.addNewEncryptedKey(keyCrypter, aesKey);
-        myEncryptedAddress = myEncryptedKey.toAddress(params);
     }
 
     @After

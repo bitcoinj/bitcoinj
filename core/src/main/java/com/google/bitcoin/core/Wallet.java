@@ -207,14 +207,6 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
         createTransientState();
     }
 
-    /**
-     * Create a wallet with a keyCrypter to use in encrypting and decrypting keys.
-     */
-    public Wallet(NetworkParameters params, KeyCrypter keyCrypter) {
-        this(params);
-        this.keyCrypter = checkNotNull(keyCrypter);
-    }
-
     private void createTransientState() {
         ignoreNextNewBlock = new HashSet<Sha256Hash>();
         txConfidenceListener = new TransactionConfidence.Listener() {
@@ -2922,37 +2914,6 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
             // The wallet is now unencrypted.
             keyCrypter = null;
             saveNow();
-        } finally {
-            lock.unlock();
-        }
-    }
-
-    /**
-     * Create a new, random encrypted ECKey and add it to the wallet.
-     *
-     * @param keyCrypter The keyCrypter to use in encrypting the new key
-     * @param aesKey The AES key to use to encrypt the new key
-     * @return ECKey the new, encrypted ECKey
-     */
-    public ECKey addNewEncryptedKey(KeyCrypter keyCrypter, KeyParameter aesKey) {
-        ECKey newKey = (new ECKey()).encrypt(checkNotNull(keyCrypter), checkNotNull(aesKey));
-        importKey(newKey);
-        return newKey;
-    }
-
-    /**
-     * <p>Convenience wrapper around {@link Wallet#addNewEncryptedKey(com.google.bitcoin.crypto.KeyCrypter,
-     * org.spongycastle.crypto.params.KeyParameter)} which just derives the key afresh and uses the pre-set
-     * keycrypter. The wallet must have been encrypted using one of the encrypt methods previously.</p>
-     *
-     * <p>Note that key derivation is deliberately very slow! So if you plan to add multiple keys, it can be
-     * faster to use the other method instead and re-use the {@link KeyParameter} object instead.</p>
-     */
-    public ECKey addNewEncryptedKey(CharSequence password) {
-        lock.lock();
-        try {
-            checkNotNull(keyCrypter, "Wallet is not encrypted, you must call encrypt() first.");
-            return addNewEncryptedKey(keyCrypter, keyCrypter.deriveKey(password));
         } finally {
             lock.unlock();
         }

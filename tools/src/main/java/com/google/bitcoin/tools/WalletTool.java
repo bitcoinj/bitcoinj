@@ -745,10 +745,9 @@ public class WalletTool {
             return;
         }
         wallet = new Wallet(params);
-        if (password != null) {
+        wallet.freshReceiveKey();
+        if (password != null)
             wallet.encrypt(password);
-            wallet.addNewEncryptedKey(password);
-        }
         wallet.saveToFile(walletFile);
     }
 
