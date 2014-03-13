@@ -36,7 +36,6 @@ import java.math.BigInteger;
 import java.net.InetSocketAddress;
 import java.net.SocketException;
 import java.nio.channels.CancelledKeyException;
-import java.nio.channels.ClosedChannelException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -653,7 +652,7 @@ public class PeerTest extends TestWithNetworkConnections {
         // Test that if we receive a relevant transaction that has a lock time, it doesn't result in a notification
         // until we explicitly opt in to seeing those.
         Wallet wallet = new Wallet(unitTestParams);
-        ECKey key = wallet.newKey();
+        ECKey key = wallet.freshReceiveKey();
         peer.addWallet(wallet);
         final Transaction[] vtx = new Transaction[1];
         wallet.addEventListener(new AbstractWalletEventListener() {
@@ -725,7 +724,7 @@ public class PeerTest extends TestWithNetworkConnections {
         // Initial setup.
         connectWithVersion(useNotFound ? 70001 : 60001);
         Wallet wallet = new Wallet(unitTestParams);
-        ECKey key = wallet.newKey();
+        ECKey key = wallet.freshReceiveKey();
         wallet.setAcceptRiskyTransactions(shouldAccept);
         peer.addWallet(wallet);
         final Transaction[] vtx = new Transaction[1];

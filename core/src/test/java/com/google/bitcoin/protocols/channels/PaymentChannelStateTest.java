@@ -70,7 +70,7 @@ public class PaymentChannelStateTest extends TestWithWallet {
         sendMoneyToWallet(Utils.COIN, AbstractBlockChain.NewBlockType.BEST_CHAIN);
         chain = new BlockChain(params, wallet, blockStore); // Recreate chain as sendMoneyToWallet will confuse it
         serverWallet = new Wallet(params);
-        serverKey = serverWallet.newKey();
+        serverKey = serverWallet.freshReceiveKey();
         chain.addWallet(serverWallet);
         halfCoin = Utils.toNanoCoins(0, 50);
 

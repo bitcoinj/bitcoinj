@@ -515,7 +515,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         // recalculated to include that transaction hash but not re-broadcast as the remote nodes should have followed
         // the same procedure. However a new node that's connected should get the fresh filter.
         peerGroup.startAndWait();
-        final ECKey key = wallet.getKeys().get(0);
+        final ECKey key = wallet.currentReceiveKey();
         // Create a couple of peers.
         InboundMessageQueuer p1 = connectPeer(1);
         InboundMessageQueuer p2 = connectPeer(2);
@@ -550,8 +550,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         InboundMessageQueuer p2 = connectPeer(2);
         BloomFilter f1 = p1.lastReceivedFilter;
         BloomFilter f2 = p2.lastReceivedFilter;
-        final ECKey key = new ECKey();
-        wallet.addKey(key);
+        ECKey key = wallet.freshReceiveKey();
         peerGroup.waitForJobQueue();
         BloomFilter f3 = (BloomFilter) outbound(p1);
         BloomFilter f4 = (BloomFilter) outbound(p2);

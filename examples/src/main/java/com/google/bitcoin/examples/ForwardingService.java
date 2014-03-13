@@ -108,7 +108,7 @@ public class ForwardingService {
             }
         });
 
-        Address sendToAddress = kit.wallet().getKeys().get(0).toAddress(params);
+        Address sendToAddress = kit.wallet().currentReceiveKey().toAddress(params);
         System.out.println("Send coins to: " + sendToAddress);
         System.out.println("Waiting for coins to arrive. Press Ctrl-C to quit.");
 

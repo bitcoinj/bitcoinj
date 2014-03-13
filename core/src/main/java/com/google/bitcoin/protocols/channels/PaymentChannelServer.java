@@ -217,7 +217,7 @@ public class PaymentChannelServer {
                 minAcceptedChannelSize.longValue());
 
         myKey = new ECKey();
-        wallet.newKey();
+        wallet.freshReceiveKey();
 
         expireTime = Utils.currentTimeMillis() / 1000 + timeWindow;
         step = InitStep.WAITING_ON_UNSIGNED_REFUND;

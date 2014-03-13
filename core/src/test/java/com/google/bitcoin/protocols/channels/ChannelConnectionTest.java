@@ -69,7 +69,7 @@ public class ChannelConnectionTest extends TestWithWallet {
         wallet.addExtension(new StoredPaymentChannelClientStates(wallet, failBroadcaster));
         serverWallet = new Wallet(params);
         serverWallet.addExtension(new StoredPaymentChannelServerStates(serverWallet, failBroadcaster));
-        serverWallet.newKey();
+        serverWallet.freshReceiveKey();
         serverChain = new BlockChain(params, serverWallet, blockStore);
         // Use an atomic boolean to indicate failure because fail()/assert*() dont work in network threads
         fail = new AtomicBoolean(false);
@@ -544,7 +544,7 @@ public class ChannelConnectionTest extends TestWithWallet {
     @Test
     public void testEmptyWallet() throws Exception {
         Wallet emptyWallet = new Wallet(params);
-        emptyWallet.newKey();
+        emptyWallet.freshReceiveKey();
         ChannelTestUtils.RecordingPair pair = ChannelTestUtils.makeRecorders(serverWallet, mockBroadcaster);
         PaymentChannelServer server = pair.server;
         PaymentChannelClient client = new PaymentChannelClient(emptyWallet, myKey, Utils.COIN, Sha256Hash.ZERO_HASH, pair.clientRecorder);

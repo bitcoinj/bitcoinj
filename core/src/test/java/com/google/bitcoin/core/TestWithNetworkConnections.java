@@ -83,7 +83,7 @@ public class TestWithNetworkConnections {
         Wallet.SendRequest.DEFAULT_FEE_PER_KB = BigInteger.ZERO;
         this.blockStore = blockStore;
         wallet = new Wallet(unitTestParams);
-        key = wallet.newKey();
+        key = wallet.freshReceiveKey();
         address = key.toAddress(unitTestParams);
         blockChain = new BlockChain(unitTestParams, wallet, blockStore);
 
