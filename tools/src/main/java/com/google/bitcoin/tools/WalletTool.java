@@ -19,8 +19,10 @@ package com.google.bitcoin.tools;
 
 import com.google.bitcoin.core.*;
 import com.google.bitcoin.crypto.KeyCrypterException;
+import com.google.bitcoin.net.BlockingClientManager;
 import com.google.bitcoin.net.discovery.DnsDiscovery;
 import com.google.bitcoin.net.discovery.PeerDiscovery;
+import com.google.bitcoin.net.discovery.TorDiscovery;
 import com.google.bitcoin.params.MainNetParams;
 import com.google.bitcoin.params.RegTestParams;
 import com.google.bitcoin.params.TestNet3Params;
@@ -34,6 +36,8 @@ import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.Resources;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.subgraph.orchid.TorClient;
+
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
 import joptsimple.OptionSpec;
@@ -80,6 +84,7 @@ public class WalletTool {
     private static ValidationMode mode;
     private static String password;
     private static org.bitcoin.protocols.payments.Protos.PaymentRequest paymentRequest;
+    private static TorClient torClient;
 
     public static class Condition {
         public enum Type {
@@ -209,6 +214,7 @@ public class WalletTool {
         OptionSpec<String> passwordFlag = parser.accepts("password").withRequiredArg();
         OptionSpec<String> paymentRequestLocation = parser.accepts("payment-request").withRequiredArg();
         parser.accepts("no-pki");
+        parser.accepts("tor");
         options = parser.parse(args);
 
         final String HELP_TEXT = Resources.toString(WalletTool.class.getResource("wallet-tool-help.txt"), Charsets.UTF_8);
@@ -688,7 +694,13 @@ public class WalletTool {
         }
         // This will ensure the wallet is saved when it changes.
         wallet.autosaveToFile(walletFile, 200, TimeUnit.MILLISECONDS, null);
-        peers = new PeerGroup(params, chain);
+        if (options.has("tor")) {
+            torClient = new TorClient();
+            torClient.start();
+            peers = new PeerGroup(params, chain, new BlockingClientManager(torClient.getSocketFactory()));
+        } else {
+            peers = new PeerGroup(params, chain);
+        }
         peers.setUserAgent("WalletTool", "1.0");
         peers.addWallet(wallet);
         if (options.has("peers")) {
@@ -702,6 +714,8 @@ public class WalletTool {
                     System.exit(1);
                 }
             }
+        } else if (options.has("tor")) {
+            peers.addPeerDiscovery(new TorDiscovery(params, torClient));
         } else {
             if (params == RegTestParams.get()) {
                 log.info("Assuming regtest node on localhost");

@@ -23,6 +23,7 @@ import javax.net.SocketFactory;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
@@ -65,14 +66,15 @@ public class BlockingClient implements MessageWriteTarget {
         // sure it doesnt get too large or have to call read too often.
         dbuf = ByteBuffer.allocateDirect(Math.min(Math.max(parser.getMaxMessageSize(), BUFFER_SIZE_LOWER_BOUND), BUFFER_SIZE_UPPER_BOUND));
         parser.setWriteTarget(this);
-        socket = socketFactory.createSocket();
         Thread t = new Thread() {
             @Override
             public void run() {
                 if (clientSet != null)
                     clientSet.add(BlockingClient.this);
                 try {
-                    socket.connect(serverAddress, connectTimeoutMillis);
+                    InetSocketAddress iServerAddress = (InetSocketAddress)serverAddress;
+                    socket = socketFactory.createSocket(iServerAddress.getAddress(), iServerAddress.getPort());
+                    //socket.connect(serverAddress, connectTimeoutMillis);
                     parser.connectionOpened();
                     InputStream stream = socket.getInputStream();
                     byte[] readBuff = new byte[dbuf.capacity()];
