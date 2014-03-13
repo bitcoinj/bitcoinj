@@ -804,7 +804,7 @@ public abstract class AbstractBlockChain {
         final int averagingInterval = params.getAveragingInterval();
         
         // Is this supposed to be a difficulty transition point?
-        if (currentHeight < averagingInterval || currentHeight % interval != 0) {
+        if (currentHeight < averagingInterval - 1 || currentHeight % interval != 0) {
 
             // TODO: Refactor this hack after 0.5 is released and we stop supporting deserialization compatibility.
             // This should be a method of the NetworkParameters, which should in turn be using singletons and a subclass
