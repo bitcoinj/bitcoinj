@@ -88,10 +88,11 @@ public class SeedPeers implements PeerDiscovery {
         return InetAddress.getByAddress(v4addr);
     }
 
-    // TODO: improve seed addresses
+    // hexadecimal little-endian
     public static int[] seedAddrs =
             {
-                    0x12345678
+                    0x486FEC69, 0x6E10FCBC, 0xEC33D436, 0x2DDCA24B, 0x6D10FCBC, 0xC3565545,
+                    0x19C9BE58, 0x5BB241AD, 0xA998F918, 0xB0E31155, 0x1D343048, 0x35CFD23E
             };
     
     public void shutdown() {
