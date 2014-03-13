@@ -24,6 +24,10 @@ import static com.google.common.base.Preconditions.checkState;
  * to a file which is then signed with your key.
  */
 public class BuildCheckpoints {
+
+    // multiplier to enlarge the checkpoint interval
+    private static final int INTERVAL_MULTIPLIER = 400;
+
     public static void main(String[] args) throws Exception {
         BriefLogFormatter.init();
         final NetworkParameters params = MainNetParams.get();
@@ -46,7 +50,8 @@ public class BuildCheckpoints {
             @Override
             public void notifyNewBestBlock(StoredBlock block) throws VerificationException {
                 int height = block.getHeight();
-                if (height % params.getAveragingInterval() == 0 && block.getHeader().getTimeSeconds() <= twoDaysAgo) {
+                final int interval = params.getAveragingInterval() * INTERVAL_MULTIPLIER;
+                if (height % interval == 0 && block.getHeader().getTimeSeconds() <= twoDaysAgo) {
                     System.out.println(String.format("Checkpointing block %s at height %d",
                             block.getHeader().getHash(), block.getHeight()));
                     checkpoints.put(height, block);
@@ -88,7 +93,7 @@ public class BuildCheckpoints {
         CheckpointManager manager = new CheckpointManager(params, new FileInputStream("checkpoints"));
         checkState(manager.numCheckpoints() == checkpoints.size());
         StoredBlock test = manager.getCheckpointBefore(1379949687);  // Just after block 200,000
-        checkState(test.getHeight() == 200000);
-        checkState(test.getHeader().getHashAsString().equals("00000000000385605562868a7d0db471ba9a5609a945f1e506090c9c38f44ced"));
+        checkState(test.getHeight() == 192000);
+        checkState(test.getHeader().getHashAsString().equals("0000000000099a6717c7dfdb9a3021c4693f283bac7079ab1ca34860d3f3b35e"));
     }
 }
