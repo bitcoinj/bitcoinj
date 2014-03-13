@@ -180,7 +180,7 @@ public class BlockChainTest {
         // artificially shortened period.
         Block prev = unitTestParams.getGenesisBlock();
         Utils.setMockClock(System.currentTimeMillis()/1000);
-        for (int i = 0; i < unitTestParams.getInterval() - 1; i++) {
+        for (int i = 0; i < unitTestParams.getAveragingInterval() - 1 || i < unitTestParams.getInterval() - 1; i++) {
             Block newBlock = prev.createNextBlock(coinbaseTo, Utils.currentTimeMillis()/1000);
             assertTrue(chain.add(newBlock));
             prev = newBlock;
@@ -196,7 +196,7 @@ public class BlockChainTest {
         // Create a new block with the right difficulty target given our blistering speed relative to the huge amount
         // of time it's supposed to take (set in the unit test network parameters).
         Block b = prev.createNextBlock(coinbaseTo, Utils.currentTimeMillis()/1000);
-        b.setDifficultyTarget(0x201fFFFFL);
+        b.setDifficultyTarget(0x207eb850L);
         b.solve();
         assertTrue(chain.add(b));
         // Successfully traversed a difficulty transition period.
