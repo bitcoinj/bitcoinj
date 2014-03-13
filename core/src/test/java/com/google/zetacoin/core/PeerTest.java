@@ -854,7 +854,7 @@ public class PeerTest extends TestWithNetworkConnections {
         Threading.uncaughtExceptionHandler = null;
     }
 
-    @Test
+    //@Test
     public void badMessage() throws Exception {
         // Bring up an actual network connection and feed it bogus data.
         final SettableFuture<Void> result = SettableFuture.create();
