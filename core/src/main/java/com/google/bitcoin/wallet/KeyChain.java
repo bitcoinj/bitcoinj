@@ -82,6 +82,13 @@ public interface KeyChain {
     public int numBloomFilterEntries();
 
     /**
+     * <p>Returns the earliest creation time of keys in this chain, in seconds since the epoch. This can return zero
+     * if at least one key does not have that data (was created before key timestamping was implemented). If there
+     * are no keys in the wallet, {@link Long#MAX_VALUE} is returned.</p>
+     */
+    public long getEarliestKeyCreationTime();
+
+    /**
      * <p>Gets a bloom filter that contains all of the public keys from this chain, and which will provide the given
      * false-positive rate if it has size elements. Keep in mind that you will get 2 elements in the bloom filter for
      * each key in the key chain, for the public key and the hash of the public key (address form). For this reason

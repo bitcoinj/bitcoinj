@@ -105,11 +105,15 @@ public class BasicKeyChain implements EncryptableKeyChain {
     public int importKeys(List<? extends ECKey> keys) {
         lock.lock();
         try {
-            // Check none of the keys are encrypted: we disallow mixing of encrypted keys between wallets in case the
-            // passwords are different.
-            for (ECKey key : keys)
-                if (key.isEncrypted())
-                    throw new IllegalArgumentException("Cannot import an encrypted key, decrypt it first.");
+            // Check that if we're encrypted, the keys are all encrypted, and if we're not, that none are.
+            // We are NOT checking that the parameters or actual password match here: if you screw up and
+            // import keys with mismatched crypters or keys/passwords, you lose!
+            for (ECKey key : keys) {
+                if (keyCrypter == null && key.isEncrypted())
+                    throw new KeyCrypterException("Key is encrypted but chain is not");
+                else if (keyCrypter != null && !key.isEncrypted())
+                    throw new KeyCrypterException("Key is not encrypted but chain is");
+            }
             List<ECKey> actuallyAdded = new ArrayList<ECKey>(keys.size());
             for (final ECKey key : keys) {
                 if (hasKey(key)) continue;
@@ -167,6 +171,36 @@ public class BasicKeyChain implements EncryptableKeyChain {
     @Override
     public int numKeys() {
         return pubkeyToKeys.size();
+    }
+
+    /**
+     * Removes the given key from the keychain. Be very careful with this - losing a private key <b>destroys the
+     * money associated with it</b>.
+     * @return Whether the key was removed or not.
+     */
+    public boolean removeKey(ECKey key) {
+        lock.lock();
+        try {
+            boolean a = hashToKeys.remove(ByteString.copyFrom(key.getPubKeyHash())) != null;
+            boolean b = pubkeyToKeys.remove(ByteString.copyFrom(key.getPubKey())) != null;
+            checkState(a == b);   // Should be in both maps or neither.
+            return a;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    @Override
+    public long getEarliestKeyCreationTime() {
+        lock.lock();
+        try {
+            long time = Long.MAX_VALUE;
+            for (ECKey key : hashToKeys.values())
+                time = Math.min(key.getCreationTimeSeconds(), time);
+            return time;
+        } finally {
+            lock.unlock();
+        }
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -389,7 +423,7 @@ public class BasicKeyChain implements EncryptableKeyChain {
     public BasicKeyChain toDecrypted(KeyParameter aesKey) {
         lock.lock();
         try {
-            checkNotNull(keyCrypter, "Wallet is already decrypted");
+            checkState(keyCrypter != null, "Wallet is already decrypted");
             // Do an up-front check.
             if (!checkAESKey(aesKey))
                 throw new KeyCrypterException("Password/key was incorrect.");

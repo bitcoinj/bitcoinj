@@ -321,6 +321,11 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
     }
 
     @Override
+    public long getEarliestKeyCreationTime() {
+        return seed.getCreationTimeSeconds();
+    }
+
+    @Override
     public void addEventListener(KeyChainEventListener listener) {
         basicKeyChain.addEventListener(listener);
     }

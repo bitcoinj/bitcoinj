@@ -57,10 +57,6 @@ public class BloomFilterTest {
         assertTrue(addr.toString().equals("17Wx1GQfyPTNWpQMHrTwRSMTCAonSiZx9e"));
         
         Wallet wallet = new Wallet(params);
-        // Check that the wallet was created with no keys
-        // If wallets ever get created with keys, this test needs redone.
-        for (ECKey key : wallet.getKeys())
-            fail();
         wallet.importKey(privKey.getKey());
         // Add a random key which happens to have been used in a recent generation
         wallet.importKey(ECKey.fromPublicOnly(Hex.decode("03cb219f69f1b49468bd563239a86667e74a06fcba69ac50a08a5cbc42a5808e99")));
