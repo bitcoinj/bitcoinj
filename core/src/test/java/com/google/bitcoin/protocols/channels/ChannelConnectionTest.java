@@ -416,19 +416,17 @@ public class ChannelConnectionTest extends TestWithWallet {
     private static Wallet roundTripClientWallet(Wallet wallet) throws Exception {
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         new WalletProtobufSerializer().writeWallet(wallet, bos);
-        Wallet wallet2 = new Wallet(wallet.getParams());
-        wallet2.addExtension(new StoredPaymentChannelClientStates(wallet2, failBroadcaster));
-        new WalletProtobufSerializer().readWallet(WalletProtobufSerializer.parseToProto(new ByteArrayInputStream(bos.toByteArray())), wallet2);
-        return wallet2;
+        org.bitcoinj.wallet.Protos.Wallet proto = WalletProtobufSerializer.parseToProto(new ByteArrayInputStream(bos.toByteArray()));
+        StoredPaymentChannelClientStates state = new StoredPaymentChannelClientStates(null, failBroadcaster);
+        return new WalletProtobufSerializer().readWallet(wallet.getParams(), new WalletExtension[] { state }, proto);
     }
 
     private static Wallet roundTripServerWallet(Wallet wallet) throws Exception {
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         new WalletProtobufSerializer().writeWallet(wallet, bos);
-        Wallet wallet2 = new Wallet(wallet.getParams());
-        wallet2.addExtension(new StoredPaymentChannelServerStates(wallet2, failBroadcaster));
-        new WalletProtobufSerializer().readWallet(WalletProtobufSerializer.parseToProto(new ByteArrayInputStream(bos.toByteArray())), wallet2);
-        return wallet2;
+        StoredPaymentChannelServerStates state = new StoredPaymentChannelServerStates(null, failBroadcaster);
+        org.bitcoinj.wallet.Protos.Wallet proto = WalletProtobufSerializer.parseToProto(new ByteArrayInputStream(bos.toByteArray()));
+        return new WalletProtobufSerializer().readWallet(wallet.getParams(), new WalletExtension[] { state }, proto);
     }
 
     @Test

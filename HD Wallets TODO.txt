@@ -4,3 +4,12 @@
 - Make DeterministicKeyChain auto-extend when a key was observed, to keep a gap limit in place.
 - Support for key rotation
 - Support for auto upgrade
+
+
+API changes:
+- WalletAppKit: addWalletExtensions has become provideWalletExtensions has to return the extensions as a list rather
+  than adding them to the wallet.
+- WalletProtobufSerializer: loadWallet now returns a new Wallet object and takes a list of extensions.
+- Wallet: addKey() is now a deprecated alias for importKey(). If you are adding a newly created key, stop. Instead use
+  either wallet.currentReceiveKey() or wallet.freshReceiveKey() depending on whether you are going to show an address
+  to the user in the UI or you know you need a fresh, unused key right at that moment.

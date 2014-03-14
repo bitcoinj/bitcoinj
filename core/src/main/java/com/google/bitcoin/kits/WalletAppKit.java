@@ -21,9 +21,11 @@ import com.google.bitcoin.net.discovery.DnsDiscovery;
 import com.google.bitcoin.store.BlockStoreException;
 import com.google.bitcoin.store.SPVBlockStore;
 import com.google.bitcoin.store.WalletProtobufSerializer;
+import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
+import org.bitcoinj.wallet.Protos;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -31,6 +33,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -155,12 +158,14 @@ public class WalletAppKit extends AbstractIdleService {
     }
 
     /**
-     * <p>Override this to load all wallet extensions if any are necessary.</p>
+     * <p>Override this to return wallet extensions if any are necessary.</p>
      *
      * <p>When this is called, chain(), store(), and peerGroup() will return the created objects, however they are not
-     * initialized/started</p>
+     * initialized/started.</p>
      */
-    protected void addWalletExtensions() throws Exception { }
+    protected List<WalletExtension> provideWalletExtensions() throws Exception {
+        return ImmutableList.of();
+    }
 
     /**
      * This method is invoked on a background thread after all objects are initialised, but before the peer group
@@ -191,9 +196,9 @@ public class WalletAppKit extends AbstractIdleService {
                 // object.
                 long time = Long.MAX_VALUE;
                 if (vWalletFile.exists()) {
-                    Wallet wallet = new Wallet(params);
                     FileInputStream stream = new FileInputStream(vWalletFile);
-                    new WalletProtobufSerializer().readWallet(WalletProtobufSerializer.parseToProto(stream), wallet);
+                    final WalletProtobufSerializer serializer = new WalletProtobufSerializer();
+                    final Wallet wallet = serializer.readWallet(params, null, WalletProtobufSerializer.parseToProto(stream));
                     time = wallet.getEarliestKeyCreationTime();
                 }
                 CheckpointManager.checkpoint(params, checkpoints, vStore, time);
@@ -204,15 +209,18 @@ public class WalletAppKit extends AbstractIdleService {
                 vPeerGroup.setUserAgent(userAgent, version);
             if (vWalletFile.exists()) {
                 walletStream = new FileInputStream(vWalletFile);
+                List<WalletExtension> extensions = provideWalletExtensions();
                 vWallet = new Wallet(params);
-                addWalletExtensions(); // All extensions must be present before we deserialize
-                new WalletProtobufSerializer().readWallet(WalletProtobufSerializer.parseToProto(walletStream), vWallet);
+                Protos.Wallet proto = WalletProtobufSerializer.parseToProto(walletStream);
+                new WalletProtobufSerializer().readWallet(params, (WalletExtension[]) extensions.toArray(), proto);
                 if (shouldReplayWallet)
                     vWallet.clearTransactions(0);
             } else {
                 vWallet = new Wallet(params);
                 vWallet.freshReceiveKey();
-                addWalletExtensions();
+                for (WalletExtension e : provideWalletExtensions()) {
+                    vWallet.addExtension(e);
+                }
             }
             if (useAutoSave) vWallet.autosaveToFile(vWalletFile, 1, TimeUnit.SECONDS, null);
             // Set up peer addresses or discovery first, so if wallet extensions try to broadcast a transaction

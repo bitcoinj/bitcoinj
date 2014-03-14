@@ -16,16 +16,21 @@
 
 package com.google.bitcoin.examples;
 
-import com.google.bitcoin.core.*;
+import com.google.bitcoin.core.NetworkParameters;
+import com.google.bitcoin.core.Sha256Hash;
+import com.google.bitcoin.core.VerificationException;
+import com.google.bitcoin.core.WalletExtension;
 import com.google.bitcoin.kits.WalletAppKit;
 import com.google.bitcoin.params.TestNet3Params;
 import com.google.bitcoin.protocols.channels.*;
 import com.google.bitcoin.utils.BriefLogFormatter;
+import com.google.common.collect.ImmutableList;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.math.BigInteger;
 import java.net.SocketAddress;
+import java.util.List;
 
 /**
  * Simple server that listens on port 4242 for incoming payment channels.
@@ -49,12 +54,11 @@ public class ExamplePaymentChannelServer implements PaymentChannelServerListener
         // the plugin that knows how to parse all the additional data is present during the load.
         appKit = new WalletAppKit(params, new File("."), "payment_channel_example_server") {
             @Override
-            protected void addWalletExtensions() {
+            protected List<WalletExtension> provideWalletExtensions() {
                 // The StoredPaymentChannelClientStates object is responsible for, amongst other things, broadcasting
                 // the refund transaction if its lock time has expired. It also persists channels so we can resume them
                 // after a restart.
-                storedStates = new StoredPaymentChannelServerStates(wallet(), peerGroup());
-                wallet().addExtension(storedStates);
+                return ImmutableList.<WalletExtension>of(new StoredPaymentChannelServerStates(null, peerGroup()));
             }
         };
         appKit.startAndWait();

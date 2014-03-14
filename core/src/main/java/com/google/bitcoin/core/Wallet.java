@@ -188,8 +188,14 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
      * see loadFromFile.
      */
     public Wallet(NetworkParameters params) {
+        this(params, new BasicKeyChain());
+    }
+
+    // TODO: When this class moves to the Wallet package, along with the protobuf serializer, then hide this.
+    /** For internal use only. */
+    public Wallet(NetworkParameters params, BasicKeyChain basicKeyChain) {
         this.params = checkNotNull(params);
-        keychain = new BasicKeyChain();
+        keychain = basicKeyChain;
         watchedScripts = Sets.newHashSet();
         unspent = new HashMap<Sha256Hash, Transaction>();
         spent = new HashMap<Sha256Hash, Transaction>();
@@ -537,6 +543,21 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
      */
     public boolean isPubKeyMine(byte[] pubkey) {
         return findKeyFromPubKey(pubkey) != null;
+    }
+
+    /**
+     * Returns the {@link com.google.bitcoin.wallet.BasicKeyChain} this wallet uses, if there is one, or null otherwise.
+     * The basic key chain stores unrelated (i.e. random) keys. For newly created HD wallets therefore, this class
+     * is not useful and won't exist. One will be created if a key is imported using the importKey* methods.
+     */
+    @Nullable
+    public BasicKeyChain getBasicKeyChain() {
+        lock.lock();
+        try {
+            return keychain;
+        } finally {
+            lock.unlock();
+        }
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2904,17 +2925,6 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
         } finally {
             lock.unlock();
         }
-    }
-
-    /**
-     * Sets the wallet's KeyCrypter.
-     * Note that this does not encrypt the wallet, and should only be used if the keyCrypter can not be included in the
-     * constructor during initial wallet loading.
-     * Note that if the keyCrypter was not properly set during wallet load, {@link Wallet#getEncryptionType()} and
-     * {@link Wallet#isEncrypted()} will not return the correct results.
-     */
-    public void setKeyCrypter(KeyCrypter keyCrypter) {
-        throw new RuntimeException("FIXME");
     }
 
     /**

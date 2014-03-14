@@ -2210,8 +2210,7 @@ public class WalletTest extends TestWithWallet {
 
         // Now round-trip the wallet and check the protobufs are storing the data correctly.
         Protos.Wallet protos = new WalletProtobufSerializer().walletToProto(wallet);
-        wallet = new Wallet(params);
-        new WalletProtobufSerializer().readWallet(protos, wallet);
+        wallet = new WalletProtobufSerializer().readWallet(params, null, protos);
 
         tx = wallet.getTransaction(tx.getHash());
         assertEquals(Transaction.Purpose.KEY_ROTATION, tx.getPurpose());
