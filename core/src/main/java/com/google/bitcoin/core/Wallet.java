@@ -2869,6 +2869,20 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
     }
 
     /**
+     * Decrypt the wallet with the wallets keyCrypter and password.
+     * @throws KeyCrypterException Thrown if the wallet decryption fails. If so, the wallet state is unchanged.
+     */
+    public void decrypt(CharSequence password) {
+        lock.lock();
+        try {
+            keychain = keychain.toDecrypted(password);
+            saveNow();
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
      * Decrypt the wallet with the wallets keyCrypter and AES key.
      *
      * @param aesKey AES key to use (normally created using KeyCrypter#deriveKey and cached as it is time consuming to create from a password)
@@ -2915,9 +2929,10 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
     }
 
     /**
-     * Get the wallet's KeyCrypter.
+     * Get the wallet's KeyCrypter, or null if the wallet is not encrypted.
      * (Used in encrypting/ decrypting an ECKey).
      */
+    @Nullable
     public KeyCrypter getKeyCrypter() {
         lock.lock();
         try {
@@ -2935,7 +2950,7 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
     public EncryptionType getEncryptionType() {
         lock.lock();
         try {
-            if (keychain.getKeyCrypter() != null)
+            if (getKeyCrypter() != null)
                 return keychain.getKeyCrypter().getUnderstoodEncryptionType();
             else
                 return EncryptionType.UNENCRYPTED;

@@ -146,7 +146,9 @@ public class WalletTool {
         DELETE_KEY,
         SYNC,
         RESET,
-        SEND
+        SEND,
+        ENCRYPT,
+        DECRYPT,
     }
 
     public enum WaitForEnum {
@@ -212,7 +214,8 @@ public class WalletTool {
 
         final String HELP_TEXT = Resources.toString(WalletTool.class.getResource("wallet-tool-help.txt"), Charsets.UTF_8);
 
-        if (args.length == 0 || options.has("help") || options.nonOptionArguments().size() < 1) {
+        if (args.length == 0 || options.has("help") ||
+                options.nonOptionArguments().size() < 1 || options.nonOptionArguments().contains("help")) {
             System.out.println(HELP_TEXT);
             return;
         }
@@ -335,6 +338,8 @@ public class WalletTool {
                     return;
                 }
                 break;
+            case ENCRYPT: encrypt(); break;
+            case DECRYPT: decrypt(); break;
         }
 
         if (!wallet.isConsistent()) {
@@ -361,6 +366,30 @@ public class WalletTool {
             saveWallet(walletFile);
         }
         shutdown();
+    }
+
+    private static void encrypt() {
+        if (password == null) {
+            System.err.println("You must provide a --password");
+            return;
+        }
+        if (wallet.isEncrypted()) {
+            System.err.println("This wallet is already encrypted.");
+            return;
+        }
+        wallet.encrypt(password);
+    }
+
+    private static void decrypt() {
+        if (password == null) {
+            System.err.println("You must provide a --password");
+            return;
+        }
+        if (!wallet.isEncrypted()) {
+            System.err.println("This wallet is not encrypted.");
+            return;
+        }
+        wallet.decrypt(password);
     }
 
     private static void addAddr() {
