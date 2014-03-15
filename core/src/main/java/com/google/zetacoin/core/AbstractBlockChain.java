@@ -828,9 +828,20 @@ public abstract class AbstractBlockChain {
         StoredBlock cursor = blockStore.get(prev.getHash());
         for (int i = 0; i < averagingInterval - 1; i++) {
             if (cursor == null) {
+
+                // TODO: Figure out how to make this work with checkpoints
+                // problem now is if checkpoint is at 100,000, a difficulty check is done on 100,004
+                // This loop will go through 80 blocks, which does not exist because the block checked
+                // is only 4 blocks away from the checkpoint chainhead
+
+                // START OF ORIGINAL CODE
                 // This should never happen. If it does, it means we are following an incorrect or busted chain.
-                throw new VerificationException(
-                        "Difficulty transition point but we did not find a way back to the genesis block.");
+                //throw new VerificationException(
+                //       "Difficulty transition point but we did not find a way back to the genesis block.");
+                // END OF ORIGINAL CODE
+
+                // For now, just return
+                return;
             }
             cursor = blockStore.get(cursor.getHeader().getPrevBlockHash());
         }
