@@ -133,6 +133,13 @@ public class BasicKeyChainTest {
         assertNull(key.getPrivKeyBytes());
 
         try {
+            // Don't allow import of an unencrypted key.
+            chain.importKey(new ECKey());
+            fail();
+        } catch (IllegalArgumentException e) {
+        }
+
+        try {
             chain.toDecrypted(keyCrypter.deriveKey("wrong"));
             fail();
         } catch (KeyCrypterException e) {}

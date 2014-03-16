@@ -109,10 +109,7 @@ public class BasicKeyChain implements EncryptableKeyChain {
             // We are NOT checking that the parameters or actual password match here: if you screw up and
             // import keys with mismatched crypters or keys/passwords, you lose!
             for (ECKey key : keys) {
-                if (keyCrypter == null && key.isEncrypted())
-                    throw new KeyCrypterException("Key is encrypted but chain is not");
-                else if (keyCrypter != null && !key.isEncrypted())
-                    throw new KeyCrypterException("Key is not encrypted but chain is");
+                checkKeyEncryptionStateMatches(key);
             }
             List<ECKey> actuallyAdded = new ArrayList<ECKey>(keys.size());
             for (final ECKey key : keys) {
@@ -128,6 +125,13 @@ public class BasicKeyChain implements EncryptableKeyChain {
         }
     }
 
+    private void checkKeyEncryptionStateMatches(ECKey key) {
+        if (keyCrypter == null && key.isEncrypted())
+            throw new KeyCrypterException("Key is encrypted but chain is not");
+        else if (keyCrypter != null && !key.isEncrypted())
+            throw new KeyCrypterException("Key is not encrypted but chain is");
+    }
+
     private void importKeyLocked(ECKey key) {
         pubkeyToKeys.put(ByteString.copyFrom(key.getPubKey()), key);
         hashToKeys.put(ByteString.copyFrom(key.getPubKeyHash()), key);
@@ -136,6 +140,7 @@ public class BasicKeyChain implements EncryptableKeyChain {
     void importKey(ECKey key) {
         lock.lock();
         try {
+            checkKeyEncryptionStateMatches(key);
             importKeyLocked(key);
             queueOnKeysAdded(ImmutableList.of(key));
         } finally {
