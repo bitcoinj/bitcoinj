@@ -13,3 +13,4 @@ API changes:
 - Wallet: addKey() is now a deprecated alias for importKey(). If you are adding a newly created key, stop. Instead use
   either wallet.currentReceiveKey() or wallet.freshReceiveKey() depending on whether you are going to show an address
   to the user in the UI or you know you need a fresh, unused key right at that moment.
+- Most ECKey constructors were replaced with static methods.
