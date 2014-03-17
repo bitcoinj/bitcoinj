@@ -482,12 +482,17 @@ public class Utils {
             return new Date();
     }
 
+    // TODO: Replace usages of this where the result is / 1000 with currentTimeSeconds.
     /** Returns the current time in milliseconds since the epoch, or a mocked out equivalent. */
     public static long currentTimeMillis() {
         if (mockTime != null)
             return mockTime.getTime();
         else
             return System.currentTimeMillis();
+    }
+
+    public static long currentTimeSeconds() {
+        return currentTimeMillis() / 1000;
     }
 
     public static byte[] copyOf(byte[] in, int length) {

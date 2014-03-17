@@ -60,7 +60,10 @@ public class BasicKeyChainTest {
 
     @Test
     public void importKeys() {
+        long now = Utils.currentTimeSeconds();
+        Utils.rollMockClock(0);
         final ECKey key1 = new ECKey();
+        Utils.rollMockClock(86400);
         final ECKey key2 = new ECKey();
         final ArrayList<ECKey> keys = Lists.newArrayList(key1, key2);
 
@@ -69,6 +72,7 @@ public class BasicKeyChainTest {
         assertEquals(2, chain.numKeys());
         assertTrue(onKeysAddedRan.getAndSet(false));
         assertArrayEquals(keys.toArray(), onKeysAdded.get().toArray());
+        assertEquals(now, chain.getEarliestKeyCreationTime());
         // Check we ignore duplicates.
         final ECKey newKey = new ECKey();
         keys.add(newKey);
@@ -84,6 +88,16 @@ public class BasicKeyChainTest {
         assertEquals(key1, chain.findKeyFromPubHash(key1.getPubKeyHash()));
         assertEquals(key2, chain.findKeyFromPubKey(key2.getPubKey()));
         assertNull(chain.findKeyFromPubKey(key2.getPubKeyHash()));
+    }
+
+    @Test
+    public void removeKey() {
+        ECKey key = new ECKey();
+        chain.importKeys(key);
+        assertEquals(1, chain.numKeys());
+        assertTrue(chain.removeKey(key));
+        assertEquals(0, chain.numKeys());
+        assertFalse(chain.removeKey(key));
     }
 
     @Test
@@ -134,7 +148,7 @@ public class BasicKeyChainTest {
 
         try {
             // Don't allow import of an unencrypted key.
-            chain.importKey(new ECKey());
+            chain.importKeys(new ECKey());
             fail();
         } catch (IllegalArgumentException e) {
         }
@@ -199,6 +213,21 @@ public class BasicKeyChainTest {
         chain = BasicKeyChain.fromProtobufEncrypted(keys, checkNotNull(chain.getKeyCrypter()));
         assertEquals(key1.getEncryptedPrivateKey(), chain.getKeys().get(0).getEncryptedPrivateKey());
         assertTrue(chain.checkPassword("foo bar"));
+    }
+
+    @Test
+    public void watching() throws UnreadableWalletException {
+        ECKey key1 = new ECKey();
+        ECKey pub = ECKey.fromPublicOnly(key1.getPubKeyPoint());
+        chain.importKeys(pub);
+        assertEquals(1, chain.numKeys());
+        List<Protos.Key> keys = chain.serializeToProtobuf();
+        assertEquals(1, keys.size());
+        assertTrue(keys.get(0).hasPublicKey());
+        assertFalse(keys.get(0).hasSecretBytes());
+        chain = BasicKeyChain.fromProtobufUnencrypted(keys);
+        assertEquals(1, chain.numKeys());
+        assertFalse(chain.findKeyFromPubKey(pub.getPubKey()).hasPrivKey());
     }
 
     @Test

@@ -137,10 +137,9 @@ public class BasicKeyChain implements EncryptableKeyChain {
         hashToKeys.put(ByteString.copyFrom(key.getPubKeyHash()), key);
     }
 
-    void importKey(ECKey key) {
+    /* package */ void importKey(ECKey key) {
         lock.lock();
         try {
-            checkKeyEncryptionStateMatches(key);
             importKeyLocked(key);
             queueOnKeysAdded(ImmutableList.of(key));
         } finally {
