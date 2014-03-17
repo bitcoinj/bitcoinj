@@ -39,15 +39,14 @@ import org.slf4j.LoggerFactory;
 import org.spongycastle.crypto.params.KeyParameter;
 import org.spongycastle.util.encoders.Hex;
 
+import java.io.InputStream;
 import java.math.BigInteger;
 import java.security.SecureRandom;
 import java.security.SignatureException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
-import java.io.InputStream;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import static com.google.bitcoin.core.Utils.reverseBytes;
@@ -171,6 +170,11 @@ public class ECKeyTest {
             "11da3761e86431e4a54c176789e41f1651b324d240d599a7067bee23d328ec2a"));
         assertTrue(roundtripKey.verify(message, decodedKey.sign(new Sha256Hash(message)).encodeToDER()));
         assertTrue(decodedKey.verify(message, roundtripKey.sign(new Sha256Hash(message)).encodeToDER()));
+
+        // Verify bytewise equivalence of public keys (i.e. compression state is preserved)
+        ECKey key = new ECKey();
+        ECKey key2 = ECKey.fromASN1(key.toASN1());
+        assertArrayEquals(key.getPubKey(), key2.getPubKey());
     }
 
     @Test
@@ -367,7 +371,7 @@ public class ECKeyTest {
     public void keyRecoveryWithEncryptedKey() throws Exception {
         ECKey unencryptedKey = new ECKey();
         KeyParameter aesKey =  keyCrypter.deriveKey(PASSWORD1);
-        ECKey encryptedKey = unencryptedKey.encrypt(keyCrypter,aesKey);
+        ECKey encryptedKey = unencryptedKey.encrypt(keyCrypter, aesKey);
 
         String message = "Goodbye Jupiter!";
         Sha256Hash hash = Sha256Hash.create(message.getBytes());

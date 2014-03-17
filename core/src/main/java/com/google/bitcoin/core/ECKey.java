@@ -143,7 +143,7 @@ public class ECKey implements Serializable {
      * reference implementation in its wallet. Note that this is slow because it requires an EC point multiply.
      */
     public static ECKey fromASN1(byte[] asn1privkey) {
-        return new ECKey(extractPrivateKeyFromASN1(asn1privkey));
+        return extractKeyFromASN1(asn1privkey);
     }
 
     /** Creates an ECKey given the private key only.  The public key is calculated from it (this is slow) */
@@ -559,7 +559,7 @@ public class ECKey implements Serializable {
         return true;
     }
 
-    private static BigInteger extractPrivateKeyFromASN1(byte[] asn1privkey) {
+    private static ECKey extractKeyFromASN1(byte[] asn1privkey) {
         // To understand this code, see the definition of the ASN.1 format for EC private keys in the OpenSSL source
         // code in ec_asn1.c:
         //
@@ -577,9 +577,18 @@ public class ECKey implements Serializable {
             checkArgument(((DERInteger) seq.getObjectAt(0)).getValue().equals(BigInteger.ONE),
                     "Input is of wrong version");
             Object obj = seq.getObjectAt(1);
-            byte[] bits = ((ASN1OctetString) obj).getOctets();
+            byte[] privbits = ((ASN1OctetString) obj).getOctets();
             decoder.close();
-            return new BigInteger(1, bits);
+            BigInteger privkey = new BigInteger(1, privbits);
+            byte[] pubbits = ((DERBitString)((ASN1TaggedObject)seq.getObjectAt(3)).getObject()).getBytes();
+            // Now sanity check to ensure the pubkey bytes match the privkey.
+            byte[] compressed = publicKeyFromPrivate(privkey, true);
+            if (Arrays.equals(pubbits, compressed))
+                return new ECKey(privkey, compressed);
+            byte[] uncompressed = publicKeyFromPrivate(privkey, false);
+            if (Arrays.equals(pubbits, uncompressed))
+                return new ECKey(privkey, uncompressed);
+            throw new IllegalArgumentException("Public key in ASN.1 structure does not match private key.");
         } catch (IOException e) {
             throw new RuntimeException(e);  // Cannot happen, reading from memory stream.
         }
