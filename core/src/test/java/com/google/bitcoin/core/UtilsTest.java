@@ -19,12 +19,92 @@ package com.google.bitcoin.core;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.math.BigInteger;
+import java.security.MessageDigest;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import static com.google.bitcoin.core.Utils.*;
 import static org.junit.Assert.*;
 
 public class UtilsTest {
+	
+	@Test
+	public void testGetDigestThreadSafety() throws InterruptedException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException {
+		int concurrency = 1000;
+		
+		final Method getDigest = Utils.class.getDeclaredMethod("getDigest");
+		getDigest.setAccessible(true);
+		
+		// setup test case
+		final byte[] input = new byte[]{
+				0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,
+				0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,
+				0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,
+				0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,
+				0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,
+				0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,
+				0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,
+				0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,
+				0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,
+				0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,
+				0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,
+				0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,};
+		MessageDigest digest = (MessageDigest) getDigest.invoke(null);
+		digest.update(input);
+		final byte[] hash = digest.digest();
+		
+		final Collection<byte[]> hashes = new ConcurrentLinkedQueue<byte[]>();
+		
+		List<Thread> threads = new ArrayList<Thread>();
+		
+		// initialize threads
+		for (int i = 0; i < concurrency; i++) {
+			Runnable test = new Runnable() {
+				
+				@Override
+				public void run() {
+					try {
+						MessageDigest digest = (MessageDigest) getDigest.invoke(null);
+						digest.update(input);
+						hashes.add(digest.digest());
+						
+					} catch (IllegalAccessException e) {
+						throw new RuntimeException(e);
+					} catch (IllegalArgumentException e) {
+						throw new RuntimeException(e);
+					} catch (InvocationTargetException e) {
+						throw new RuntimeException(e);
+					}
+				}
+				
+			};
+			threads.add(new Thread(test));
+			
+		}
+		
+		// start parallel tests
+		for (Thread thread : threads) {
+			thread.start();
+			
+		}
+		
+		// let threads finish
+		for (Thread thread: threads) {
+			thread.join();
+			
+		}
+		
+		// compare hashes
+		for (byte[] concurrentHash : hashes) {
+			assertArrayEquals(hash, concurrentHash);
+			
+		}
+	}
 
     @Test
     public void testToNanoCoins() {
