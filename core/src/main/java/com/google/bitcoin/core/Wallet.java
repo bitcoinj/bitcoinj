@@ -2348,8 +2348,11 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
             // Do the keys.
             builder.append("\nKeys:\n");
             for (ECKey key : keychain) {
+                final Address address = key.toAddress(params);
                 builder.append("  addr:");
-                builder.append(key.toAddress(params));
+                builder.append(address.toString());
+                builder.append(" hash160:");
+                builder.append(Utils.bytesToHexString(address.getHash160()));
                 builder.append(" ");
                 builder.append(includePrivateKeys ? key.toStringWithPrivate() : key.toString());
                 builder.append("\n");
