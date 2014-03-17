@@ -106,8 +106,9 @@ public class BasicKeyChain implements EncryptableKeyChain {
         lock.lock();
         try {
             // Check that if we're encrypted, the keys are all encrypted, and if we're not, that none are.
-            // We are NOT checking that the parameters or actual password match here: if you screw up and
-            // import keys with mismatched crypters or keys/passwords, you lose!
+            // We are NOT checking that the actual password matches here because we don't have access to the password at
+            // this point: if you screw up and import keys with mismatched passwords, you lose! So make sure the
+            // password is checked first.
             for (ECKey key : keys) {
                 checkKeyEncryptionStateMatches(key);
             }
@@ -130,6 +131,8 @@ public class BasicKeyChain implements EncryptableKeyChain {
             throw new KeyCrypterException("Key is encrypted but chain is not");
         else if (keyCrypter != null && !key.isEncrypted())
             throw new KeyCrypterException("Key is not encrypted but chain is");
+        else if (keyCrypter != null && key.getKeyCrypter() != null && !key.getKeyCrypter().equals(keyCrypter))
+            throw new KeyCrypterException("Key encrypted under different parameters to chain");
     }
 
     private void importKeyLocked(ECKey key) {

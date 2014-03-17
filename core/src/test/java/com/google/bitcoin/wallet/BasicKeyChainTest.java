@@ -150,7 +150,7 @@ public class BasicKeyChainTest {
             // Don't allow import of an unencrypted key.
             chain.importKeys(new ECKey());
             fail();
-        } catch (IllegalArgumentException e) {
+        } catch (KeyCrypterException e) {
         }
 
         try {
@@ -163,7 +163,7 @@ public class BasicKeyChainTest {
         key.getPrivKeyBytes();
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test(expected = KeyCrypterException.class)
     public void cannotImportEncryptedKey() {
         final ECKey key1 = new ECKey();
         chain.importKeys(ImmutableList.of(key1));
@@ -173,6 +173,14 @@ public class BasicKeyChainTest {
 
         BasicKeyChain chain2 = new BasicKeyChain();
         chain2.importKeys(ImmutableList.of(encryptedKey));
+    }
+
+    @Test(expected = KeyCrypterException.class)
+    public void cannotMixParams() throws Exception {
+        chain = chain.toEncrypted("foobar");
+        KeyCrypterScrypt scrypter = new KeyCrypterScrypt(2);    // Some bogus params.
+        ECKey key1 = new ECKey().encrypt(scrypter, scrypter.deriveKey("other stuff"));
+        chain.importKeys(key1);
     }
 
     @Test
