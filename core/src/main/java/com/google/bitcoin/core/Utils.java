@@ -199,7 +199,6 @@ public class Utils {
      */
     public static byte[] doubleDigest(byte[] input, int offset, int length) {
     	MessageDigest digest = getDigest();
-        digest.reset();
         digest.update(input, offset, length);
         byte[] first = digest.digest();
         return digest.digest(first);
@@ -207,7 +206,6 @@ public class Utils {
 
     public static byte[] singleDigest(byte[] input, int offset, int length) {
     	MessageDigest digest = getDigest();
-        digest.reset();
         digest.update(input, offset, length);
         return digest.digest();
     }
@@ -218,7 +216,6 @@ public class Utils {
     public static byte[] doubleDigestTwoBuffers(byte[] input1, int offset1, int length1,
                                                 byte[] input2, int offset2, int length2) {
     	MessageDigest digest = getDigest();
-        digest.reset();
         digest.update(input1, offset1, length1);
         digest.update(input2, offset2, length2);
         byte[] first = digest.digest();
