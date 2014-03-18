@@ -1,13 +1,13 @@
 /*
  * Gradle build file to create address seeds resource file
  *
- * To list available tasks use:
+ * Requires Gradle installed and on your classpath
+ * http://www.gradle.org/downloads
+ * Recommended Gradle 1.11 or later
  *
- * # ./gradlew tasks        # UNIX
- * 
- * or
- * 
- * # ./gradlew.bat tasks     # Windows
+ * To list available tasks run the gradle command from this directory:
+ *
+ * # gradle tasks
  *
  * The tasks defined in this build file are listed in the 'Seeds' group.
  * 
@@ -68,7 +68,7 @@ task buildAddrs(description: "Build ${addrResourceFile} from ${sipasSeedsFile}",
 }
 
 task copyToCore(type: Copy, dependsOn: buildAddrs,
-    description: "Copy data/*-seeds.txt to core resources",
+    description: "Copy data/*-seeds.txt and build/*-seeds.txt to core resources",
     group: 'seeds' ) {
     from dataDir, buildDir
     into resourceDir
