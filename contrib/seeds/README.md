@@ -8,9 +8,9 @@ The Gradle script (which will probably be replaced by a Python script) does the 
 1. Filter the top 600 valid IPv4 or IPv6 addresses in to ```build/org.bitcoin.production-seeds.txt```
 1. Copy the following files to ```../../core/src/main/resources/com/google/bitcoin/net/discovery```
 
-    build/org.bitcoin.production-seeds.txt
-    data/org.bitcoin.test-seeds.txt
-    data/com.google.bitcoin.unittest-seeds.txt
+        build/org.bitcoin.production-seeds.txt
+        data/org.bitcoin.test-seeds.txt
+        data/com.google.bitcoin.unittest-seeds.txt
 
 Note that these seed files use the ID string from the ```NetworkParameters``` class with a ```-seeds.txt``` suffix.
 
