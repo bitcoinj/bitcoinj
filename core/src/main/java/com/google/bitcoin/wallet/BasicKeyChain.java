@@ -73,7 +73,7 @@ public class BasicKeyChain implements EncryptableKeyChain {
     }
 
     @Override
-    public ECKey getKey(KeyPurpose purpose) {
+    public ECKey getKey(@Nullable KeyPurpose ignored) {
         lock.lock();
         try {
             if (hashToKeys.isEmpty()) {

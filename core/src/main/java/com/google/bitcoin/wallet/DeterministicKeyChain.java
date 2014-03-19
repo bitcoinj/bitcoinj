@@ -235,6 +235,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         return seed.getCreationTimeSeconds();
     }
 
+    /** Returns a freshly derived key that has not been returned by this method before. */
     @Override
     public DeterministicKey getKey(KeyPurpose purpose) {
         lock.lock();
@@ -430,7 +431,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
      * Returns all the key chains found in the given list of keys. Typically there will only be one, but in the case of
      * key rotation it can happen that there are multiple chains found.
      */
-    public static List<DeterministicKeyChain> parseFrom(List<Protos.Key> keys, @Nullable KeyCrypter crypter) throws UnreadableWalletException {
+    public static List<DeterministicKeyChain> fromProtobuf(List<Protos.Key> keys, @Nullable KeyCrypter crypter) throws UnreadableWalletException {
         List<DeterministicKeyChain> chains = newLinkedList();
         DeterministicSeed seed = null;
         DeterministicKeyChain chain = null;

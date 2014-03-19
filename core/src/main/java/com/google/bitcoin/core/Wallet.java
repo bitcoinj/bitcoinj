@@ -250,7 +250,7 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
      * user interface as "a convenient key to receive funds on" when the purpose parameter is
      * {@link com.google.bitcoin.wallet.KeyChain.KeyPurpose#RECEIVE_FUNDS}. The returned key is stable until
      * it's actually seen in a pending or confirmed transaction, at which point this method will start returning
-     * a different key.
+     * a different key (for each purpose independently).
      */
     public ECKey currentKey(KeyChain.KeyPurpose purpose) {
         return getKeys().get(0);
@@ -2989,6 +2989,10 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
         return description;
     }
 
+    /**
+     * Returns the number of distinct data items (note: NOT keys) that will be inserted into a bloom filter, when it
+     * is constructed.
+     */
     @Override
     public int getBloomFilterElementCount() {
         int size = basicKeyChain.numBloomFilterEntries();

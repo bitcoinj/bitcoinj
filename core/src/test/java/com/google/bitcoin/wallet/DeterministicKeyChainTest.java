@@ -121,7 +121,7 @@ public class DeterministicKeyChainTest {
 
         // Round trip the data back and forth to check it is preserved.
         int oldLookaheadSize = chain.getLookaheadSize();
-        chain = DeterministicKeyChain.parseFrom(keys, null).get(0);
+        chain = DeterministicKeyChain.fromProtobuf(keys, null).get(0);
         assertEquals(EXPECTED_SERIALIZATION, protoToString(chain.serializeToProtobuf()));
         assertEquals(key1, chain.findKeyFromPubHash(key1.getPubKeyHash()));
         assertEquals(key2, chain.findKeyFromPubHash(key2.getPubKeyHash()));
@@ -172,7 +172,7 @@ public class DeterministicKeyChainTest {
         List<Protos.Key> doubled = Lists.newArrayListWithExpectedSize(serialized.size() * 2);
         doubled.addAll(serialized);
         doubled.addAll(serialized);
-        final List<DeterministicKeyChain> chains = DeterministicKeyChain.parseFrom(doubled, encChain.getKeyCrypter());
+        final List<DeterministicKeyChain> chains = DeterministicKeyChain.fromProtobuf(doubled, encChain.getKeyCrypter());
         assertEquals(2, chains.size());
         encChain = chains.get(0);
         checkEncryptedKeyChain(encChain, chain.findKeyFromPubKey(key1.getPubKey()));
@@ -220,7 +220,7 @@ public class DeterministicKeyChainTest {
         // Test we can serialize and deserialize a watching chain OK.
         List<Protos.Key> serialization = chain.serializeToProtobuf();
         checkSerialization(serialization, "watching-wallet-serialization.txt");
-        chain = DeterministicKeyChain.parseFrom(serialization, null).get(0);
+        chain = DeterministicKeyChain.fromProtobuf(serialization, null).get(0);
         final DeterministicKey rekey4 = chain.getKey(KeyChain.KeyPurpose.CHANGE);
         assertEquals(key4.getPubKeyPoint(), rekey4.getPubKeyPoint());
     }
