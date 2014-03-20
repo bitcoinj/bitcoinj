@@ -279,22 +279,10 @@ public class ECKeyTest {
         ECKey unencryptedKey = new ECKey();
         byte[] originalPrivateKeyBytes = checkNotNull(unencryptedKey.getPrivKeyBytes());
         log.info("Original private key = " + Utils.bytesToHexString(originalPrivateKeyBytes));
-
         EncryptedData encryptedPrivateKey = keyCrypter.encrypt(unencryptedKey.getPrivKeyBytes(), keyCrypter.deriveKey(PASSWORD1));
         ECKey encryptedKey = ECKey.fromEncrypted(encryptedPrivateKey, keyCrypter, unencryptedKey.getPubKey());
-
-        // The key should initially be encrypted
-        assertTrue("Key not encrypted at start",  encryptedKey.isEncrypted());
-
-        // The unencrypted private key bytes of the encrypted keychain should all be blank.
-        byte[] privateKeyBytes = encryptedKey.getPrivKeyBytes();
-        if (privateKeyBytes != null) {
-            for (int i = 0; i < privateKeyBytes.length; i++) {
-                assertEquals("Byte " + i + " of the private key was not zero but should be", 0, privateKeyBytes[i]);
-            }
-        }
-
-        // Decrypt the key.
+        assertTrue(encryptedKey.isEncrypted());
+        assertNull(encryptedKey.getPrivKeyBytes());
         ECKey rebornUnencryptedKey = encryptedKey.decrypt(keyCrypter, keyCrypter.deriveKey(PASSWORD1));
         assertTrue(!rebornUnencryptedKey.isEncrypted());
         assertArrayEquals(originalPrivateKeyBytes, rebornUnencryptedKey.getPrivKeyBytes());
