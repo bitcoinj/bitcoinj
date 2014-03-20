@@ -35,6 +35,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 public class KeyChainGroupTest {
     // Number of initial keys in this tests HD wallet, including interior keys.
@@ -80,15 +81,9 @@ public class KeyChainGroupTest {
     @Test
     public void imports() throws Exception {
         ECKey key1 = new ECKey();
-        assertFalse(group.hasBasicChain());
-        try {
-            group.removeImportedKey(key1);
-            fail();
-        } catch (IllegalStateException e) {
-        }
+        assertFalse(group.removeImportedKey(key1));
         assertEquals(1, group.importKeys(ImmutableList.of(key1)));
         assertEquals(INITIAL_KEYS + 1, group.numKeys());   // Lookahead is triggered by requesting a key, so none yet.
-        assertTrue(group.hasBasicChain());
         group.removeImportedKey(key1);
         assertEquals(INITIAL_KEYS, group.numKeys());
     }
@@ -124,29 +119,35 @@ public class KeyChainGroupTest {
     // Check encryption with and without a basic keychain.
 
     @Test
-    public void encryption1() throws Exception {
+    public void encryptionWithoutImported() throws Exception {
         encryption(false);
     }
 
     @Test
-    public void encryption2() throws Exception {
+    public void encryptionWithImported() throws Exception {
         encryption(true);
     }
 
     public void encryption(boolean withImported) throws Exception {
+        Utils.rollMockClock(0);
+        long now = Utils.currentTimeSeconds();
         ECKey a = group.freshKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
+        assertEquals(now, group.getEarliestKeyCreationTime());
+        Utils.rollMockClock(-86400);
+        long yesterday = Utils.currentTimeSeconds();
         ECKey b = new ECKey();
 
-        assertFalse(group.hasBasicChain());
         assertFalse(group.isEncrypted());
         try {
             group.checkPassword("foo");   // Cannot check password of an unencrypted group.
             fail();
         } catch (IllegalStateException e) {
         }
-        if (withImported)
+        if (withImported) {
+            assertEquals(now, group.getEarliestKeyCreationTime());
             group.importKeys(b);
-        assertEquals(withImported, group.hasBasicChain());
+            assertEquals(yesterday, group.getEarliestKeyCreationTime());
+        }
         KeyCrypterScrypt scrypt = new KeyCrypterScrypt(2);
         final KeyParameter aesKey = scrypt.deriveKey("password");
         group.encrypt(scrypt, aesKey);
@@ -155,8 +156,12 @@ public class KeyChainGroupTest {
         assertFalse(group.checkPassword("wrong password"));
         final ECKey ea = group.findKeyFromPubKey(a.getPubKey());
         assertTrue(checkNotNull(ea).isEncrypted());
-        if (withImported)
+        if (withImported) {
             assertTrue(checkNotNull(group.findKeyFromPubKey(b.getPubKey())).isEncrypted());
+            assertEquals(yesterday, group.getEarliestKeyCreationTime());
+        } else {
+            assertEquals(now, group.getEarliestKeyCreationTime());
+        }
         try {
             ea.sign(Sha256Hash.ZERO_HASH);
             fail();
@@ -187,8 +192,26 @@ public class KeyChainGroupTest {
         group.decrypt(aesKey);
         assertFalse(group.isEncrypted());
         assertFalse(checkNotNull(group.findKeyFromPubKey(a.getPubKey())).isEncrypted());
-        if (withImported)
+        if (withImported) {
             assertFalse(checkNotNull(group.findKeyFromPubKey(b.getPubKey())).isEncrypted());
+            assertEquals(yesterday, group.getEarliestKeyCreationTime());
+        } else {
+            assertEquals(now, group.getEarliestKeyCreationTime());
+        }
+    }
+
+    @Test
+    public void encryptionWhilstEmpty() throws Exception {
+        group = new KeyChainGroup();
+        group.setLookaheadSize(5);
+        KeyCrypterScrypt scrypt = new KeyCrypterScrypt(2);
+        final KeyParameter aesKey = scrypt.deriveKey("password");
+        group.encrypt(scrypt, aesKey);
+        assertEquals(4, group.numKeys());
+        assertTrue(group.freshKey(KeyChain.KeyPurpose.RECEIVE_FUNDS).isEncrypted());
+        final ECKey key = group.currentKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
+        group.decrypt(aesKey);
+        assertFalse(checkNotNull(group.findKeyFromPubKey(key.getPubKey())).isEncrypted());
     }
 
     @Test

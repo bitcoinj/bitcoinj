@@ -416,7 +416,7 @@ public class BasicKeyChain implements EncryptableKeyChain {
         try {
             checkState(keyCrypter != null, "Wallet is already decrypted");
             // Do an up-front check.
-            if (!checkAESKey(aesKey))
+            if (numKeys() > 0 && !checkAESKey(aesKey))
                 throw new KeyCrypterException("Password/key was incorrect.");
             BasicKeyChain decrypted = new BasicKeyChain();
             for (ECKey key : hashToKeys.values()) {

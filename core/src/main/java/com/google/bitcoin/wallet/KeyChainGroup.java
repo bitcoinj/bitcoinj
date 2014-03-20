@@ -22,7 +22,6 @@ import com.google.bitcoin.core.PeerFilterProvider;
 import com.google.bitcoin.crypto.DeterministicKey;
 import com.google.bitcoin.crypto.KeyCrypter;
 import com.google.bitcoin.store.UnreadableWalletException;
-import com.google.bitcoin.utils.ListenerRegistration;
 import com.google.bitcoin.utils.Threading;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
@@ -41,33 +40,25 @@ import static com.google.common.base.Preconditions.*;
 
 /**
  * <p>A KeyChainGroup is used by the {@link com.google.bitcoin.core.Wallet} and
- * manages: zero or one {@link com.google.bitcoin.wallet.BasicKeyChain} objects, and one or more
- * {@link com.google.bitcoin.wallet.DeterministicKeyChain}s, depending on the following criteria:</p>
+ * manages: a {@link com.google.bitcoin.wallet.BasicKeyChain} object (which will normally be empty), and zero or more
+ * {@link com.google.bitcoin.wallet.DeterministicKeyChain}s. A deterministic key chain will be created lazily/on demand
+ * when a fresh or current key is requested, possibly being initialized from the private key bytes of the earliest non
+ * rotating key in the basic key chain if one is available, or from a fresh random seed if not.</p>
  *
- * <ul>
- *     <li>A pre-HD wallet contains a single bag of arbitrary, unrelated keys. They will be managed by the
- *     BasicKeyChain</li>
- *     <li>A wallet that was upgraded during the transition from basic to HD will have a BasicKeyChain and one
- *     DeterministicKeyChain, with the seed being initialized from the earliest non-rotating key in the basic chain.</li>
- *     <li>A wallet created post-HD support will not have any BasicKeyChain unless a key is imported. It will have
- *     at least one DeterministicKeyChain.</li>
- *     <li>If a key rotation time is set, it may be necessary to add a new DeterministicKeyChain with a fresh seed
- *     and also preserve the old one, so funds can be swept from the rotating keys. In this case, there may be
- *     more than one deterministic chain. The latest chain is called the active chain and is where new keys are served
- *     from.</li>
- * </ul>
+ * <p>If a key rotation time is set, it may be necessary to add a new DeterministicKeyChain with a fresh seed
+ * and also preserve the old one, so funds can be swept from the rotating keys. In this case, there may be
+ * more than one deterministic chain. The latest chain is called the active chain and is where new keys are served
+ * from.</p>
  *
  * <p>The wallet delegates most key management tasks to this class. It is <b>not</b> thread safe and requires external
  * locking, i.e. by the wallet lock. The group then in turn delegates most operations to the key chain objects,
  * combining their responses together when necessary.</p>
  */
 public class KeyChainGroup implements PeerFilterProvider {
-    @Nullable private BasicKeyChain basic;
+    private BasicKeyChain basic;
     private final List<DeterministicKeyChain> chains;
     private final EnumMap<KeyChain.KeyPurpose, DeterministicKey> currentKeys;
     @Nullable private KeyCrypter keyCrypter;
-    // We keep track of added listeners so that we can attach them to new chains as they are created.
-    private List<ListenerRegistration<KeyChainEventListener>> listeners;
 
     /** Creates a keychain group with no basic chain, and a single randomly initialized HD chain. */
     public KeyChainGroup() {
@@ -77,11 +68,10 @@ public class KeyChainGroup implements PeerFilterProvider {
 
     // Used for deserialization.
     private KeyChainGroup(@Nullable BasicKeyChain basicKeyChain, List<DeterministicKeyChain> chains, @Nullable KeyCrypter crypter) {
-        this.basic = basicKeyChain;
+        this.basic = basicKeyChain == null ? new BasicKeyChain() : basicKeyChain;
         this.chains = checkNotNull(chains);
         this.keyCrypter = crypter;
         this.currentKeys = new EnumMap<KeyChain.KeyPurpose, DeterministicKey>(KeyChain.KeyPurpose.class);
-        this.listeners = new ArrayList<ListenerRegistration<KeyChainEventListener>>(1);
     }
 
     private void createAndActivateNewHDChain() {
@@ -135,7 +125,7 @@ public class KeyChainGroup implements PeerFilterProvider {
 
     /** Imports the given keys into the basic chain, creating it if necessary. */
     public int importKeys(List<ECKey> keys) {
-        return obtainBasic().importKeys(keys);
+        return basic.importKeys(keys);
     }
 
     /** Imports the given keys into the basic chain, creating it if necessary. */
@@ -150,8 +140,8 @@ public class KeyChainGroup implements PeerFilterProvider {
 
     public boolean checkAESKey(KeyParameter aesKey) {
         checkState(keyCrypter != null, "Not encrypted");
-        if (basic != null && basic.numKeys() > 0)
-            return basic.checkAESKey(aesKey);
+        if (basic.numKeys() > 0)
+            return basic.checkAESKey(aesKey) && getActiveKeyChain().checkAESKey(aesKey);
         return getActiveKeyChain().checkAESKey(aesKey);
     }
 
@@ -168,23 +158,10 @@ public class KeyChainGroup implements PeerFilterProvider {
         return importKeys(encryptedKeys);
     }
 
-    /** Returns true if this group has a basic key chain. By default it's false for a newly created group. */
-    public boolean hasBasicChain() {
-        return basic != null;
-    }
-
-    private BasicKeyChain obtainBasic() {
-        if (basic != null) return basic;
-        basic = new BasicKeyChain();
-        for (ListenerRegistration<KeyChainEventListener> registration : listeners)
-            basic.addEventListener(registration.listener, registration.executor);
-        return basic;
-    }
-
     @Nullable
     public ECKey findKeyFromPubHash(byte[] pubkeyHash) {
         ECKey result;
-        if (basic != null && (result = basic.findKeyFromPubHash(pubkeyHash)) != null)
+        if ((result = basic.findKeyFromPubHash(pubkeyHash)) != null)
             return result;
         for (DeterministicKeyChain chain : chains) {
             if ((result = chain.findKeyFromPubHash(pubkeyHash)) != null)
@@ -194,7 +171,7 @@ public class KeyChainGroup implements PeerFilterProvider {
     }
 
     public boolean hasKey(ECKey key) {
-        if (basic != null && basic.hasKey(key))
+        if (basic.hasKey(key))
             return true;
         for (DeterministicKeyChain chain : chains)
             if (chain.hasKey(key))
@@ -205,7 +182,7 @@ public class KeyChainGroup implements PeerFilterProvider {
     @Nullable
     public ECKey findKeyFromPubKey(byte[] pubkey) {
         ECKey result;
-        if (basic != null && (result = basic.findKeyFromPubKey(pubkey)) != null)
+        if ((result = basic.findKeyFromPubKey(pubkey)) != null)
             return result;
         for (DeterministicKeyChain chain : chains) {
             if ((result = chain.findKeyFromPubKey(pubkey)) != null)
@@ -216,9 +193,7 @@ public class KeyChainGroup implements PeerFilterProvider {
 
     /** Returns the number of keys managed by this group, including the lookahead buffers. */
     public int numKeys() {
-        int result = 0;
-        if (basic != null)
-            result += basic.numKeys();
+        int result = basic.numKeys();
         for (DeterministicKeyChain chain : chains)
             result += chain.numKeys();
         return result;
@@ -227,11 +202,9 @@ public class KeyChainGroup implements PeerFilterProvider {
     /**
      * Removes a key that was imported into the basic key chain. You cannot remove deterministic keys.
      * @throws java.lang.IllegalArgumentException if the key is deterministic.
-     * @throws java.lang.IllegalStateException if there is no basic chain.
      */
     public boolean removeImportedKey(ECKey key) {
         checkNotNull(key);
-        checkState(basic != null);
         checkArgument(!(key instanceof DeterministicKey));
         return basic.removeKey(key);
     }
@@ -246,9 +219,7 @@ public class KeyChainGroup implements PeerFilterProvider {
         checkNotNull(keyCrypter);
         checkNotNull(aesKey);
         // This code must be exception safe.
-        BasicKeyChain newBasic = null;
-        if (basic != null)
-            newBasic = basic.toEncrypted(keyCrypter, aesKey);
+        BasicKeyChain newBasic = basic.toEncrypted(keyCrypter, aesKey);
         List<DeterministicKeyChain> newChains = new ArrayList<DeterministicKeyChain>(chains.size());
         for (DeterministicKeyChain chain : chains)
             newChains.add(chain.toEncrypted(keyCrypter, aesKey));
@@ -268,9 +239,7 @@ public class KeyChainGroup implements PeerFilterProvider {
     public void decrypt(KeyParameter aesKey) {
         // This code must be exception safe.
         checkNotNull(aesKey);
-        BasicKeyChain newBasic = null;
-        if (basic != null)
-            newBasic = basic.toDecrypted(aesKey);
+        BasicKeyChain newBasic = basic.toDecrypted(aesKey);
         List<DeterministicKeyChain> newChains = new ArrayList<DeterministicKeyChain>(chains.size());
         for (DeterministicKeyChain chain : chains)
             newChains.add(chain.toDecrypted(aesKey));
@@ -289,11 +258,7 @@ public class KeyChainGroup implements PeerFilterProvider {
     /** {@inheritDoc} */
     @Override
     public long getEarliestKeyCreationTime() {
-        long time;
-        if (basic != null)
-            time = basic.getEarliestKeyCreationTime();
-        else
-            time = Long.MAX_VALUE;
+        long time = basic.getEarliestKeyCreationTime();   // Long.MAX_VALUE if empty.
         for (DeterministicKeyChain chain : chains)
             time = Math.min(time, chain.getEarliestKeyCreationTime());
         return time;
@@ -301,9 +266,7 @@ public class KeyChainGroup implements PeerFilterProvider {
 
     /** {@inheritDoc} */
     public int getBloomFilterElementCount() {
-        int result = 0;
-        if (basic != null)
-            result += basic.numBloomFilterEntries();
+        int result = basic.numBloomFilterEntries();
         for (DeterministicKeyChain chain : chains)
             result += chain.numBloomFilterEntries();
         return result;
@@ -312,11 +275,10 @@ public class KeyChainGroup implements PeerFilterProvider {
     /** {@inheritDoc} */
     public BloomFilter getBloomFilter(int size, double falsePositiveRate, long nTweak) {
         BloomFilter filter = new BloomFilter(size, falsePositiveRate, nTweak);
-        if (basic != null)
+        if (basic.numKeys() > 0)
             filter.merge(basic.getFilter(size, falsePositiveRate, nTweak));
-        for (DeterministicKeyChain chain : chains) {
+        for (DeterministicKeyChain chain : chains)
             filter.merge(chain.getFilter(size, falsePositiveRate, nTweak));
-        }
         return filter;
     }
 
@@ -335,21 +297,17 @@ public class KeyChainGroup implements PeerFilterProvider {
     public void addEventListener(KeyChainEventListener listener, Executor executor) {
         checkNotNull(listener);
         checkNotNull(executor);
-        if (basic != null)
-            basic.addEventListener(listener, executor);
+        basic.addEventListener(listener, executor);
         for (DeterministicKeyChain chain : chains)
             chain.addEventListener(listener, executor);
-        listeners.add(new ListenerRegistration<KeyChainEventListener>(listener, executor));
     }
 
     /** Removes a listener for events that are run when keys are added. */
     public boolean removeEventListener(KeyChainEventListener listener) {
         checkNotNull(listener);
-        if (basic != null)
-            basic.removeEventListener(listener);
         for (DeterministicKeyChain chain : chains)
             chain.removeEventListener(listener);
-        return ListenerRegistration.removeFromList(listener, listeners);
+        return basic.removeEventListener(listener);
     }
 
     /** Returns a list of key protobufs obtained by merging the chains. */
@@ -369,8 +327,6 @@ public class KeyChainGroup implements PeerFilterProvider {
     public static KeyChainGroup fromProtobufUnencrypted(List<Protos.Key> keys) throws UnreadableWalletException {
         BasicKeyChain basicKeyChain = BasicKeyChain.fromProtobufUnencrypted(keys);
         List<DeterministicKeyChain> chains = DeterministicKeyChain.fromProtobuf(keys, null);
-        if (basicKeyChain.numKeys() == 0)
-            basicKeyChain = null;
         if (chains.isEmpty()) {
             // Old bag-of-keys style wallet only! Auto-upgrade time!
             throw new UnsupportedOperationException("FIXME");
@@ -382,8 +338,6 @@ public class KeyChainGroup implements PeerFilterProvider {
         checkNotNull(crypter);
         BasicKeyChain basicKeyChain = BasicKeyChain.fromProtobufEncrypted(keys, crypter);
         List<DeterministicKeyChain> chains = DeterministicKeyChain.fromProtobuf(keys, crypter);
-        if (basicKeyChain.numKeys() == 0)
-            basicKeyChain = null;
         if (chains.isEmpty()) {
             // Old bag-of-keys style wallet only! Auto-upgrade time!
             throw new UnsupportedOperationException("FIXME");
