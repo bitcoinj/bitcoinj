@@ -29,6 +29,8 @@ import java.util.Arrays;
 
 import static com.google.common.base.Preconditions.*;
 
+// TODO: Override getPrivKey/getPrivKeyBytes properly here so they work for leaf keys.
+
 /**
  * A deterministic key is a node in a {@link DeterministicHierarchy}. As per
  * <a href="https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki">the BIP 32 specification</a> it is a pair
