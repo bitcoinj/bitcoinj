@@ -35,6 +35,7 @@ import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.math.BigInteger;
 import java.security.SecureRandom;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -241,19 +242,19 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         lock.lock();
         try {
             DeterministicKey key;
+            List<DeterministicKey> lookahead;
             if (purpose == KeyPurpose.RECEIVE_FUNDS) {
                 issuedExternalKeys++;
-                maybeLookAhead(externalKey, issuedExternalKeys);
+                lookahead = maybeLookAhead(externalKey, issuedExternalKeys);
                 key = HDKeyDerivation.deriveChildKey(externalKey, issuedExternalKeys - 1);
             } else if (purpose == KeyPurpose.CHANGE) {
                 issuedInternalKeys++;
-                maybeLookAhead(internalKey, issuedInternalKeys);
+                lookahead = maybeLookAhead(internalKey, issuedInternalKeys);
                 key = HDKeyDerivation.deriveChildKey(internalKey, issuedInternalKeys - 1);
             } else {
                 throw new IllegalArgumentException("Unknown key purpose " + purpose);
             }
-            hierarchy.putKey(key);
-            basicKeyChain.importKey(key);
+            basicKeyChain.importKeys(lookahead);
             return key;
         } finally {
             lock.unlock();
@@ -676,26 +677,33 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
     private void maybeLookAhead() {
         lock.lock();
         try {
-            maybeLookAhead(externalKey, issuedExternalKeys);
-            maybeLookAhead(internalKey, issuedInternalKeys);
+            List<DeterministicKey> keys = maybeLookAhead(externalKey, issuedExternalKeys);
+            keys.addAll(maybeLookAhead(internalKey, issuedInternalKeys));
+            // Batch add all keys at once so there's only one event listener invocation, as this will be listened to
+            // by the wallet and used to rebuild/broadcast the Bloom filter. That's expensive so we don't want to do
+            // it more often than necessary.
+            basicKeyChain.importKeys(keys);
         } finally {
             lock.unlock();
         }
     }
 
-    private void maybeLookAhead(DeterministicKey parent, int issued) {
+    // Returned keys must be inserted into the basic key chain.
+    private List<DeterministicKey> maybeLookAhead(DeterministicKey parent, int issued) {
         checkState(lock.isHeldByCurrentThread());
         final int numChildren = hierarchy.getNumChildren(parent.getPath());
         int needed = issued + getLookaheadSize() - numChildren;
         checkState(needed >= 0, "needed = " + needed);
-        if (needed == 0) return;
+        List<DeterministicKey> result  = new ArrayList<DeterministicKey>(needed);
+        if (needed == 0) return result;
         long now = System.currentTimeMillis();
         log.info("Pre-generating {} keys for {}", needed, parent.getPathAsString());
         for (int i = 0; i < needed; i++) {
             DeterministicKey key = HDKeyDerivation.deriveChildKey(parent, numChildren + i);
             hierarchy.putKey(key);
-            basicKeyChain.importKey(key);
+            result.add(key);
         }
         log.info("Took {} msec", System.currentTimeMillis() - now);
+        return result;
     }
 }

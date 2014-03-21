@@ -37,13 +37,13 @@ import org.spongycastle.crypto.params.KeyParameter;
 import java.io.IOException;
 import java.security.SecureRandom;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.junit.Assert.*;
 
 public class DeterministicKeyChainTest {
     private DeterministicKeyChain chain;
+    private final byte[] SEED = Sha256Hash.create("don't use a string seed like this in real life".getBytes()).getBytes();
 
     @Before
     public void setup() {
@@ -51,7 +51,6 @@ public class DeterministicKeyChainTest {
         // You should use a random seed instead. The secs constant comes from the unit test file, so we can compare
         // serialized data properly.
         long secs = 1389353062L;
-        byte[] SEED = Sha256Hash.create("don't use a string seed like this in real life".getBytes()).getBytes();
         chain = new DeterministicKeyChain(SEED, secs);
         chain.setLookaheadSize(10);
         assertEquals(secs, chain.getSeedCreationTimeSecs());
@@ -83,15 +82,39 @@ public class DeterministicKeyChainTest {
 
     @Test
     public void events() throws Exception {
-        final AtomicReference<List<ECKey>> listenerKeys = new AtomicReference<List<ECKey>>();
+        // Check that we get the right events at the right time.
+        final List<List<ECKey>> listenerKeys = Lists.newArrayList();
+        long secs = 1389353062L;
+        chain = new DeterministicKeyChain(SEED, secs);
         chain.addEventListener(new AbstractKeyChainEventListener() {
             @Override
             public void onKeysAdded(List<ECKey> keys) {
-                listenerKeys.set(keys);
+                listenerKeys.add(keys);
             }
         }, Threading.SAME_THREAD);
+        assertEquals(0, listenerKeys.size());
+        chain.setLookaheadSize(5);
+        assertEquals(0, listenerKeys.size());
         ECKey key = chain.getKey(KeyChain.KeyPurpose.CHANGE);
-        assertEquals(key, listenerKeys.get().get(0));
+        assertEquals(1, listenerKeys.size());  // 1 event
+        final List<ECKey> firstEvent = listenerKeys.get(0);
+        assertEquals(6, firstEvent.size());  // 5 lookahead keys and 1 to satisfy the request.
+        assertTrue(firstEvent.contains(key));   // order is not specified.
+        listenerKeys.clear();
+        key = chain.getKey(KeyChain.KeyPurpose.CHANGE);
+        assertEquals(1, listenerKeys.size());  // 1 event
+        assertEquals(1, listenerKeys.get(0).size());  // 1 key.
+        DeterministicKey eventKey = (DeterministicKey) listenerKeys.get(0).get(0);
+        assertNotEquals(key, eventKey);  // The key added is not the one that's served.
+        assertEquals(6, eventKey.getChildNumber().i());
+        listenerKeys.clear();
+        key = chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
+        assertEquals(1, listenerKeys.size());  // 1 event
+        assertEquals(6, listenerKeys.get(0).size());  // 1 key.
+        eventKey = (DeterministicKey) listenerKeys.get(0).get(0);
+        // The key added IS the one that's served because we did not previously request any RECEIVE_FUNDS keys.
+        assertEquals(key, eventKey);
+        assertEquals(0, eventKey.getChildNumber().i());
     }
 
     @Test
