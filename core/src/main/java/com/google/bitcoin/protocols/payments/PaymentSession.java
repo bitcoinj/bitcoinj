@@ -441,6 +441,7 @@ public class PaymentSession {
      * Returns null if no PKI method was specified in the {@link Protos.PaymentRequest}.
      */
     public @Nullable PkiVerificationData verifyPki() throws PaymentRequestException {
+        List<X509Certificate> certs = null;
         try {
             if (pkiVerificationData != null)
                 return pkiVerificationData;
@@ -464,7 +465,7 @@ public class PaymentSession {
             // The ordering of certificates is defined by the payment protocol spec to be the same as what the Java
             // crypto API requires - convenient!
             CertificateFactory certificateFactory = CertificateFactory.getInstance("X.509");
-            List<X509Certificate> certs = Lists.newArrayList();
+            certs = Lists.newArrayList();
             for (ByteString bytes : protoCerts.getCertificateList())
                 certs.add((X509Certificate) certificateFactory.generateCertificate(bytes.newInput()));
             CertPath path = certificateFactory.generateCertPath(certs);
@@ -536,7 +537,7 @@ public class PaymentSession {
         } catch (CertPathValidatorException e) {
             // The certificate chain isn't known or trusted, probably, the server is using an SSL root we don't
             // know about and the user needs to upgrade to a new version of the software (or import a root cert).
-            throw new PaymentRequestException.PkiVerificationException(e);
+            throw new PaymentRequestException.PkiVerificationException(e, certs);
         } catch (InvalidKeyException e) {
             // Shouldn't happen if the certs verified correctly.
             throw new PaymentRequestException.PkiVerificationException(e);
@@ -586,8 +587,7 @@ public class PaymentSession {
             path = System.getProperty("javax.net.ssl.trustStore");
         }
         if (path == null) {
-            // Try this default system location for Linux/Windows/OSX.
-            path = System.getProperty("java.home") + "/lib/security/cacerts".replace('/', File.separatorChar);
+            return loadFallbackStore(defaultPassword);
         }
         try {
             KeyStore keyStore = KeyStore.getInstance(keyStoreType);
@@ -597,11 +597,15 @@ public class PaymentSession {
         } catch (FileNotFoundException e) {
             // If we failed to find a system trust store, load our own fallback trust store. This can fail on Android
             // but we should never reach it there.
-            KeyStore keyStore = KeyStore.getInstance("JKS");
-            InputStream is = getClass().getResourceAsStream("cacerts");
-            keyStore.load(is, defaultPassword);
-            return keyStore;
+            return loadFallbackStore(defaultPassword);
         }
+    }
+
+    private KeyStore loadFallbackStore(char[] defaultPassword) throws KeyStoreException, IOException, NoSuchAlgorithmException, CertificateException {
+        KeyStore keyStore = KeyStore.getInstance("JKS");
+        InputStream is = getClass().getResourceAsStream("cacerts");
+        keyStore.load(is, defaultPassword);
+        return keyStore;
     }
 
     private void parsePaymentRequest(Protos.PaymentRequest request) throws PaymentRequestException {
