@@ -44,6 +44,7 @@ import java.net.*;
 import java.security.*;
 import java.security.cert.*;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.Callable;
 
@@ -490,7 +491,8 @@ public class PaymentSession {
                 throw new PaymentRequestException.PkiVerificationException("Invalid signature, this payment request is not valid.");
 
             // Signature verifies, get the names from the identity we just verified for presentation to the user.
-            X500Principal principal = certs.get(0).getSubjectX500Principal();
+            final X509Certificate cert = certs.get(0);
+            X500Principal principal = cert.getSubjectX500Principal();
             // At this point the Java crypto API falls flat on its face and dies - there's no clean way to get the
             // different parts of the certificate name except for parsing the string. That's hard because of various
             // custom escaping rules and the usual crap. So, use Bouncy Castle to re-parse the string into binary form
@@ -504,8 +506,17 @@ public class PaymentSession {
                 else if (pair.getType().equals(RFC4519Style.o))
                     orgName = ((ASN1String)pair.getValue()).getString();
             }
-            if (entityName == null && orgName == null)
-                throw new PaymentRequestException.PkiVerificationException("Invalid certificate, no CN or O fields");
+            if (entityName == null && orgName == null) {
+                // This cert might not be an SSL cert. Just grab the first "subject alt name" if present, e.g. for
+                // S/MIME certs.
+                final Iterator<List<?>> it = cert.getSubjectAlternativeNames().iterator();
+                List<?> list;
+                // email addresses have a type code of one.
+                if (it.hasNext() && (list = it.next()) != null && (Integer) list.get(0) == 1)
+                    entityName = (String) list.get(1);
+                if (entityName == null)
+                    throw new PaymentRequestException.PkiVerificationException("Could not extract name from certificate");
+            }
             // Everything is peachy. Return some useful data to the caller.
             PkiVerificationData data = new PkiVerificationData(entityName, orgName, publicKey, result.getTrustAnchor());
             // Cache the result so we don't have to re-verify if this method is called again.
