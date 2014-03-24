@@ -60,6 +60,8 @@ public class MainNetParams extends NetworkParameters {
         // TODO: Is ZetaCoin post-BIP30? Do we need these?
 
         dnsSeeds = new String[] {
+                "zetachain.cc",
+                "zet.dsync.net",
                 "zetacoin.zapto.org",
                 "zetacoin.no-ip.org",
                 "zetacoin.strangled.net",
