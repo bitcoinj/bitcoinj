@@ -93,7 +93,7 @@ public class SeedPeers implements PeerDiscovery {
             {
                     0x486FEC69, 0x6E10FCBC, 0xEC33D436, 0x2DDCA24B, 0x6D10FCBC, 0xC3565545,
                     0x19C9BE58, 0x5BB241AD, 0xA998F918, 0xB0E31155, 0x1D343048, 0x35CFD23E,
-                    0x9EBB5A40, 0x0CA2B66B
+                    0x7294B992, 0x9EBB5A40, 0x0CA2B66B
             };
     
     public void shutdown() {
