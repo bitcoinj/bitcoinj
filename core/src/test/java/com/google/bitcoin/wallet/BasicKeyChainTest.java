@@ -144,7 +144,7 @@ public class BasicKeyChainTest {
         assertFalse(chain.checkPassword("wrong"));
         ECKey key = chain.findKeyFromPubKey(key1.getPubKey());
         assertTrue(key.isEncrypted());
-        assertNull(key.getPrivKeyBytes());
+        assertNull(key.getSecretBytes());
 
         try {
             // Don't allow import of an unencrypted key.

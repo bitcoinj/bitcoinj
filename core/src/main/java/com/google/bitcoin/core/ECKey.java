@@ -866,10 +866,12 @@ public class ECKey implements EncryptableItem, Serializable {
         return CURVE.getCurve().decodePoint(compEnc);
     }
 
-    /** Returns a 32 byte array containing the private key, or null if the key is encrypted or public only */
-    @Nullable
+    /**
+     * Returns a 32 byte array containing the private key.
+     * @throws java.lang.IllegalStateException if the private key bytes are missing/encrypted.
+     */
     public byte[] getPrivKeyBytes() {
-        return Utils.bigIntegerToBytes(priv, 32);
+        return Utils.bigIntegerToBytes(getPrivKey(), 32);
     }
 
     /**
@@ -881,9 +883,7 @@ public class ECKey implements EncryptableItem, Serializable {
      * @throws IllegalStateException if the private key is not available.
      */
     public DumpedPrivateKey getPrivateKeyEncoded(NetworkParameters params) {
-        final byte[] privKeyBytes = getPrivKeyBytes();
-        checkState(privKeyBytes != null, "Private key is not available");
-        return new DumpedPrivateKey(params, privKeyBytes, isCompressed());
+        return new DumpedPrivateKey(params, getPrivKeyBytes(), isCompressed());
     }
 
     /**
@@ -939,7 +939,6 @@ public class ECKey implements EncryptableItem, Serializable {
     public ECKey encrypt(KeyCrypter keyCrypter, KeyParameter aesKey) throws KeyCrypterException {
         checkNotNull(keyCrypter);
         final byte[] privKeyBytes = getPrivKeyBytes();
-        checkState(privKeyBytes != null, "Private key is not available");
         EncryptedData encryptedPrivateKey = keyCrypter.encrypt(privKeyBytes, aesKey);
         ECKey result = ECKey.fromEncrypted(encryptedPrivateKey, keyCrypter, getPubKey());
         result.setCreationTimeSeconds(creationTimeSeconds);
@@ -972,49 +971,30 @@ public class ECKey implements EncryptableItem, Serializable {
     }
 
     /**
-     * Check that it is possible to decrypt the key with the keyCrypter and that the original key is returned.
+     * <p>Check that it is possible to decrypt the key with the keyCrypter and that the original key is returned.</p>
      *
-     * Because it is a critical failure if the private keys cannot be decrypted successfully (resulting of loss of all bitcoins controlled
-     * by the private key) you can use this method to check when you *encrypt* a wallet that it can definitely be decrypted successfully.
-     * See {@link Wallet#encrypt(KeyCrypter keyCrypter, KeyParameter aesKey)} for example usage.
+     * <p>Because it is a critical failure if the private keys cannot be decrypted successfully (resulting of loss of all
+     * bitcoins controlled by the private key) you can use this method to check when you *encrypt* a wallet that
+     * it can definitely be decrypted successfully.</p>
+     *
+     * <p>See {@link Wallet#encrypt(KeyCrypter keyCrypter, KeyParameter aesKey)} for example usage.</p>
      *
      * @return true if the encrypted key can be decrypted back to the original key successfully.
      */
     public static boolean encryptionIsReversible(ECKey originalKey, ECKey encryptedKey, KeyCrypter keyCrypter, KeyParameter aesKey) {
-        String genericErrorText = "The check that encryption could be reversed failed for key " + originalKey.toString() + ". ";
         try {
             ECKey rebornUnencryptedKey = encryptedKey.decrypt(keyCrypter, aesKey);
-            if (rebornUnencryptedKey == null) {
-                log.error(genericErrorText + "The test decrypted key was missing.");
+            byte[] originalPrivateKeyBytes = originalKey.getPrivKeyBytes();
+            byte[] rebornKeyBytes = rebornUnencryptedKey.getPrivKeyBytes();
+            if (!Arrays.equals(originalPrivateKeyBytes, rebornKeyBytes)) {
+                log.error("The check that encryption could be reversed failed for {}", originalKey);
                 return false;
             }
-
-            byte[] originalPrivateKeyBytes = originalKey.getPrivKeyBytes();
-            if (originalPrivateKeyBytes != null) {
-                if (rebornUnencryptedKey.getPrivKeyBytes() == null) {
-                    log.error(genericErrorText + "The test decrypted key was missing.");
-                    return false;
-                } else {
-                    if (originalPrivateKeyBytes.length != rebornUnencryptedKey.getPrivKeyBytes().length) {
-                        log.error(genericErrorText + "The test decrypted private key was a different length to the original.");
-                        return false;
-                    } else {
-                        for (int i = 0; i < originalPrivateKeyBytes.length; i++) {
-                            if (originalPrivateKeyBytes[i] != rebornUnencryptedKey.getPrivKeyBytes()[i]) {
-                                log.error(genericErrorText + "Byte " + i + " of the private key did not match the original.");
-                                return false;
-                            }
-                        }
-                    }
-                }
-            }
+            return true;
         } catch (KeyCrypterException kce) {
             log.error(kce.getMessage());
             return false;
         }
-
-        // Key can successfully be decrypted.
-        return true;
     }
 
     /**
@@ -1031,11 +1011,17 @@ public class ECKey implements EncryptableItem, Serializable {
         return keyCrypter != null ? keyCrypter.getUnderstoodEncryptionType() : Protos.Wallet.EncryptionType.UNENCRYPTED;
     }
 
-    /** An alias for {@link #getPrivKeyBytes()}. */
-    @Nullable
+    /**
+     * A wrapper for {@link #getPrivKeyBytes()} that returns null if the private key bytes are missing or would have
+     * to be derived (for the HD key case).
+     */
     @Override
+    @Nullable
     public byte[] getSecretBytes() {
-        return getPrivKeyBytes();
+        if (hasPrivKey())
+            return getPrivKeyBytes();
+        else
+            return null;
     }
 
     /** An alias for {@link #getEncryptedPrivateKey()} */

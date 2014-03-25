@@ -268,7 +268,7 @@ public class ECKeyTest {
         ECKey encryptedKey = key.encrypt(keyCrypter, keyCrypter.deriveKey(PASSWORD1));
         assertEquals(time, encryptedKey.getCreationTimeSeconds());
         assertTrue(encryptedKey.isEncrypted());
-        assertNull(encryptedKey.getPrivKeyBytes());
+        assertNull(encryptedKey.getSecretBytes());
         key = encryptedKey.decrypt(keyCrypter, keyCrypter.deriveKey(PASSWORD1));
         assertTrue(!key.isEncrypted());
         assertArrayEquals(originalPrivateKeyBytes, key.getPrivKeyBytes());
@@ -282,7 +282,7 @@ public class ECKeyTest {
         EncryptedData encryptedPrivateKey = keyCrypter.encrypt(unencryptedKey.getPrivKeyBytes(), keyCrypter.deriveKey(PASSWORD1));
         ECKey encryptedKey = ECKey.fromEncrypted(encryptedPrivateKey, keyCrypter, unencryptedKey.getPubKey());
         assertTrue(encryptedKey.isEncrypted());
-        assertNull(encryptedKey.getPrivKeyBytes());
+        assertNull(encryptedKey.getSecretBytes());
         ECKey rebornUnencryptedKey = encryptedKey.decrypt(keyCrypter, keyCrypter.deriveKey(PASSWORD1));
         assertTrue(!rebornUnencryptedKey.isEncrypted());
         assertArrayEquals(originalPrivateKeyBytes, rebornUnencryptedKey.getPrivKeyBytes());
@@ -366,7 +366,7 @@ public class ECKeyTest {
         // The encryptedPrivateKey should be null in an unencrypted ECKey anyhow but check all the same.
         assertTrue(unencryptedKey.getEncryptedPrivateKey() == null);
 
-        checkSomeBytesAreNonZero(encryptedKey.getPrivKeyBytes());
+        checkSomeBytesAreNonZero(encryptedKey.getSecretBytes());
         checkSomeBytesAreNonZero(encryptedKey.getEncryptedPrivateKey().encryptedBytes);
         checkSomeBytesAreNonZero(encryptedKey.getEncryptedPrivateKey().initialisationVector);
     }

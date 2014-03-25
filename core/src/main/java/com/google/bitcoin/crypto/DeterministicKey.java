@@ -29,8 +29,6 @@ import java.util.Arrays;
 
 import static com.google.common.base.Preconditions.*;
 
-// TODO: Override getPrivKey/getPrivKeyBytes properly here so they work for leaf keys.
-
 /**
  * A deterministic key is a node in a {@link DeterministicHierarchy}. As per
  * <a href="https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki">the BIP 32 specification</a> it is a pair
@@ -145,11 +143,12 @@ public class DeterministicKey extends ECKey {
     }
 
     /**
-     * @return private key bytes, padded with zeros to 33 bytes.
+     * Returns private key bytes, padded with zeros to 33 bytes.
+     * @throws java.lang.IllegalStateException if the private key bytes are missing.
      */
     public byte[] getPrivKeyBytes33() {
         byte[] bytes33 = new byte[33];
-        byte[] priv = checkNotNull(getPrivKeyBytes(), "Private key missing");
+        byte[] priv = getPrivKeyBytes();
         System.arraycopy(priv, 0, bytes33, 33 - priv.length, priv.length);
         return bytes33;
     }
@@ -285,6 +284,18 @@ public class DeterministicKey extends ECKey {
 
     public DeterministicKey derive(int child) {
         return HDKeyDerivation.deriveChildKey(this, new ChildNumber(child, true));
+    }
+
+    /**
+     * Returns the private key of this deterministic key. Even if this object isn't storing the private key,
+     * it can be re-derived by walking up to the parents if necessary and this is what will happen.
+     * @throws java.lang.IllegalStateException if the parents are encrypted or a watching chain.
+     */
+    @Override
+    public BigInteger getPrivKey() {
+        final BigInteger key = findOrDerivePrivateKey();
+        checkState(key != null, "Private key bytes not available");
+        return key;
     }
 
     public byte[] serializePublic() {
