@@ -55,6 +55,7 @@ public class ChainSplitTest {
         Wallet.SendRequest.DEFAULT_FEE_PER_KB = BigInteger.ZERO;
         unitTestParams = UnitTestParams.get();
         wallet = new Wallet(unitTestParams);
+        wallet.setKeychainLookaheadSize(5);  // Make tests faster.
         ECKey key1 = wallet.freshReceiveKey();
         ECKey key2 = wallet.freshReceiveKey();
         blockStore = new MemoryBlockStore(unitTestParams);

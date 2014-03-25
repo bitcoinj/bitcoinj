@@ -812,7 +812,11 @@ public class PeerGroup extends AbstractExecutionThreadService implements Transac
                 bloomFilter = filter;
 
                 switch (mode) {
-                    case SEND_IF_CHANGED: send = changed; break;
+                    case SEND_IF_CHANGED:
+                        send = changed;
+                        if (!send)
+                            log.info(" ... however filter did not change.");  // Optimisation opportunity!
+                        break;
                     case DONT_SEND: send = false; break;
                     case FORCE_SEND: send = true; break;
                 }

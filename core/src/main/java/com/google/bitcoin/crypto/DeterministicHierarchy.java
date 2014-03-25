@@ -26,7 +26,6 @@ import java.util.Map;
 import static com.google.common.base.Preconditions.checkArgument;
 
 // TODO: This whole API feels a bit object heavy. Do we really need ChildNumber and so many maps, etc?
-// TODO: Why is there separate tracking of priv/pub "last child numbers"?
 // TODO: Should we be representing this using an actual tree arrangement in memory instead of a bunch of hashmaps?
 
 /**
@@ -50,8 +49,8 @@ public class DeterministicHierarchy implements Serializable {
 
     private final Map<ImmutableList<ChildNumber>, DeterministicKey> keys = Maps.newHashMap();
     private final ImmutableList<ChildNumber> rootPath;
-    private final Map<ImmutableList<ChildNumber>, ChildNumber> lastPrivDerivedNumbers = Maps.newHashMap();
-    private final Map<ImmutableList<ChildNumber>, ChildNumber> lastPubDerivedNumbers = Maps.newHashMap();
+    // Keep track of how many child keys each node has. This is kind of weak.
+    private final Map<ImmutableList<ChildNumber>, ChildNumber> lastChildNumbers = Maps.newHashMap();
 
     /**
      * Constructs a new hierarchy rooted at the given key. Note that this does not have to be the top of the tree.
@@ -72,7 +71,7 @@ public class DeterministicHierarchy implements Serializable {
         // inserted in order here.
         final DeterministicKey parent = key.getParent();
         if (parent != null)
-            getLastDerivedNumbers(!key.isPubKeyOnly()).put(parent.getPath(), key.getChildNumber());
+            lastChildNumbers.put(parent.getPath(), key.getChildNumber());
         keys.put(path, key);
     }
 
@@ -124,17 +123,14 @@ public class DeterministicHierarchy implements Serializable {
     }
 
     private ChildNumber getNextChildNumberToDerive(ImmutableList<ChildNumber> path, boolean privateDerivation) {
-        Map<ImmutableList<ChildNumber>, ChildNumber> lastDerivedNumbers = getLastDerivedNumbers(privateDerivation);
-        ChildNumber lastChildNumber = lastDerivedNumbers.get(path);
+        ChildNumber lastChildNumber = lastChildNumbers.get(path);
         ChildNumber nextChildNumber = new ChildNumber(lastChildNumber != null ? lastChildNumber.num() + 1 : 0, privateDerivation);
-        lastDerivedNumbers.put(path, nextChildNumber);
+        lastChildNumbers.put(path, nextChildNumber);
         return nextChildNumber;
     }
 
     public int getNumChildren(ImmutableList<ChildNumber> path) {
-        final boolean privateDerivation = path.get(path.size() - 1).isPrivateDerivation();
-        Map<ImmutableList<ChildNumber>, ChildNumber> lastDerivedNumbers = getLastDerivedNumbers(privateDerivation);
-        final ChildNumber cn = lastDerivedNumbers.get(path);
+        final ChildNumber cn = lastChildNumbers.get(path);
         if (cn == null)
             return 0;
         else
@@ -166,9 +162,5 @@ public class DeterministicHierarchy implements Serializable {
      */
     public DeterministicKey getRootKey() {
         return get(rootPath, false, false);
-    }
-
-    private Map<ImmutableList<ChildNumber>, ChildNumber> getLastDerivedNumbers(boolean privateDerivation) {
-        return privateDerivation ? lastPrivDerivedNumbers : lastPubDerivedNumbers;
     }
 }

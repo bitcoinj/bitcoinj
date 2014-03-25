@@ -83,6 +83,7 @@ public class WalletTest extends TestWithWallet {
     public void setUp() throws Exception {
         super.setUp();
         encryptedWallet = new Wallet(params);
+        encryptedWallet.setKeychainLookaheadSize(5);  // For speed.
         myEncryptedAddress = encryptedWallet.freshReceiveKey().toAddress(params);
         encryptedWallet.encrypt(PASSWORD1);
         keyCrypter = encryptedWallet.getKeyCrypter();
@@ -980,6 +981,7 @@ public class WalletTest extends TestWithWallet {
     @Test
     public void keyCreationTime() throws Exception {
         wallet = new Wallet(params);
+        wallet.setKeychainLookaheadSize(5);  // For speed.
         long now = Utils.rollMockClock(0).getTime() / 1000;  // Fix the mock clock.
         // No keys returns current time.
         assertEquals(now, wallet.getEarliestKeyCreationTime());
@@ -994,6 +996,7 @@ public class WalletTest extends TestWithWallet {
     @Test
     public void scriptCreationTime() throws Exception {
         wallet = new Wallet(params);
+        wallet.setKeychainLookaheadSize(5);  // For speed.
         long now = Utils.rollMockClock(0).getTime() / 1000;  // Fix the mock clock.
         // No keys returns current time.
         assertEquals(now, wallet.getEarliestKeyCreationTime());
@@ -1163,7 +1166,7 @@ public class WalletTest extends TestWithWallet {
         wallet.autosaveToFile(f, 0, TimeUnit.SECONDS, null);
         ECKey key = wallet.freshReceiveKey();
         Sha256Hash hash2 = Sha256Hash.hashFileContents(f);
-        assertFalse("Wallet not saved after addKey", hash1.equals(hash2));  // File has changed.
+        assertFalse("Wallet not saved after generating fresh key", hash1.equals(hash2));  // File has changed.
 
         Transaction t1 = createFakeTx(params, toNanoCoins(5, 0), key);
         if (wallet.isPendingTransactionRelevant(t1))
@@ -1389,23 +1392,18 @@ public class WalletTest extends TestWithWallet {
         wallet.importKey(key1);
     }
 
-    @Test
-    public void encryptionDecryptionHomogenousKeys() throws Exception {
-        // Check the wallet is currently encrypted
-        assertTrue("Wallet is not an encrypted wallet", encryptedWallet.getEncryptionType() == EncryptionType.ENCRYPTED_SCRYPT_AES);
-
+    @Test(expected = KeyCrypterException.class)
+    public void mismatchedCrypter() throws Exception {
         // Try added an ECKey that was encrypted with a differenct ScryptParameters (i.e. a non-homogenous key).
         // This is not allowed as the ScryptParameters is stored at the Wallet level.
         byte[] salt = new byte[KeyCrypterScrypt.SALT_LENGTH];
         secureRandom.nextBytes(salt);
         Protos.ScryptParameters.Builder scryptParametersBuilder = Protos.ScryptParameters.newBuilder().setSalt(ByteString.copyFrom(salt));
         Protos.ScryptParameters scryptParameters = scryptParametersBuilder.build();
-
         KeyCrypter keyCrypterDifferent = new KeyCrypterScrypt(scryptParameters);
-
         ECKey ecKeyDifferent = new ECKey();
         ecKeyDifferent = ecKeyDifferent.encrypt(keyCrypterDifferent, aesKey);
-        assertEquals("Wrong number of keys in wallet before key addition", 1, encryptedWallet.getKeychainSize());
+        encryptedWallet.importKey(ecKeyDifferent);
     }
 
     @Test
@@ -1415,7 +1413,7 @@ public class WalletTest extends TestWithWallet {
         sendMoneyToWallet(encryptedWallet, Utils.COIN, key.toAddress(params), AbstractBlockChain.NewBlockType.BEST_CHAIN);
         assertEquals(Utils.COIN, encryptedWallet.getBalance());
         SendRequest req = Wallet.SendRequest.emptyWallet(new ECKey().toAddress(params));
-        req.aesKey = encryptedWallet.getKeyCrypter().deriveKey(PASSWORD1);
+        req.aesKey = checkNotNull(encryptedWallet.getKeyCrypter()).deriveKey(PASSWORD1);
         encryptedWallet.sendCoinsOffline(req);
     }
 

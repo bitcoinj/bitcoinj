@@ -16,9 +16,7 @@
 
 package com.google.bitcoin.wallet;
 
-import com.google.bitcoin.core.BloomFilter;
-import com.google.bitcoin.core.ECKey;
-import com.google.bitcoin.core.PeerFilterProvider;
+import com.google.bitcoin.core.*;
 import com.google.bitcoin.crypto.DeterministicKey;
 import com.google.bitcoin.crypto.KeyCrypter;
 import com.google.bitcoin.store.UnreadableWalletException;
@@ -59,11 +57,11 @@ public class KeyChainGroup implements PeerFilterProvider {
     private final List<DeterministicKeyChain> chains;
     private final EnumMap<KeyChain.KeyPurpose, DeterministicKey> currentKeys;
     @Nullable private KeyCrypter keyCrypter;
+    private int lookaheadSize = -1;
 
     /** Creates a keychain group with no basic chain, and a single randomly initialized HD chain. */
     public KeyChainGroup() {
         this(null, new ArrayList<DeterministicKeyChain>(1), null);
-        createAndActivateNewHDChain();
     }
 
     // Used for deserialization.
@@ -76,6 +74,8 @@ public class KeyChainGroup implements PeerFilterProvider {
 
     private void createAndActivateNewHDChain() {
         final DeterministicKeyChain chain = new DeterministicKeyChain(new SecureRandom());
+        if (lookaheadSize >= 0)
+            chain.setLookaheadSize(lookaheadSize);
         chains.add(chain);
     }
 
@@ -108,19 +108,30 @@ public class KeyChainGroup implements PeerFilterProvider {
 
     /** Returns the key chain that's used for generation of fresh/current keys. This is always the newest HD chain. */
     public DeterministicKeyChain getActiveKeyChain() {
-        checkState(!chains.isEmpty());   // We should never arrive here without being properly initialized.
+        if (chains.isEmpty())
+            createAndActivateNewHDChain();
         return chains.get(chains.size() - 1);
     }
 
     /**
-     * Sets the lookahead buffer size for ALL deterministic key chains, see {@link com.google.bitcoin.wallet.DeterministicKeyChain#setLookaheadSize(int)}
+     * Sets the lookahead buffer size for ALL deterministic key chains, see
+     * {@link com.google.bitcoin.wallet.DeterministicKeyChain#setLookaheadSize(int)}
      * for more information.
      */
     public void setLookaheadSize(int lookaheadSize) {
-        checkState(!chains.isEmpty());
+        this.lookaheadSize = lookaheadSize;
         for (DeterministicKeyChain chain : chains) {
             chain.setLookaheadSize(lookaheadSize);
         }
+    }
+
+    /**
+     * Gets the current lookahead size being used for ALL deterministic key chains. See
+     * {@link com.google.bitcoin.wallet.DeterministicKeyChain#setLookaheadSize(int)}
+     * for more information.
+     */
+    public int getLookaheadSize() {
+        return lookaheadSize;
     }
 
     /** Imports the given keys into the basic chain, creating it if necessary. */
@@ -221,6 +232,10 @@ public class KeyChainGroup implements PeerFilterProvider {
         // This code must be exception safe.
         BasicKeyChain newBasic = basic.toEncrypted(keyCrypter, aesKey);
         List<DeterministicKeyChain> newChains = new ArrayList<DeterministicKeyChain>(chains.size());
+        // If the user is trying to encrypt us before ever asking for a key, we might not have lazy created an HD chain
+        // yet. So do it now.
+        if (chains.isEmpty())
+            createAndActivateNewHDChain();
         for (DeterministicKeyChain chain : chains)
             newChains.add(chain.toEncrypted(keyCrypter, aesKey));
 
@@ -254,6 +269,9 @@ public class KeyChainGroup implements PeerFilterProvider {
     public boolean isEncrypted() {
         return keyCrypter != null;
     }
+
+    /** Returns the key crypter or null if the group is not encrypted. */
+    @Nullable public KeyCrypter getKeyCrypter() { return keyCrypter; }
 
     /** {@inheritDoc} */
     @Override
@@ -328,8 +346,7 @@ public class KeyChainGroup implements PeerFilterProvider {
         BasicKeyChain basicKeyChain = BasicKeyChain.fromProtobufUnencrypted(keys);
         List<DeterministicKeyChain> chains = DeterministicKeyChain.fromProtobuf(keys, null);
         if (chains.isEmpty()) {
-            // Old bag-of-keys style wallet only! Auto-upgrade time!
-            throw new UnsupportedOperationException("FIXME");
+            // TODO: Old bag-of-keys style wallet only! Auto-upgrade time!
         }
         return new KeyChainGroup(basicKeyChain, chains, null);
     }
@@ -339,9 +356,35 @@ public class KeyChainGroup implements PeerFilterProvider {
         BasicKeyChain basicKeyChain = BasicKeyChain.fromProtobufEncrypted(keys, crypter);
         List<DeterministicKeyChain> chains = DeterministicKeyChain.fromProtobuf(keys, crypter);
         if (chains.isEmpty()) {
-            // Old bag-of-keys style wallet only! Auto-upgrade time!
-            throw new UnsupportedOperationException("FIXME");
+            // TODO: Old bag-of-keys style wallet only! Auto-upgrade time!
         }
         return new KeyChainGroup(basicKeyChain, chains, crypter);
+    }
+
+    public String toString(@Nullable NetworkParameters params, boolean includePrivateKeys) {
+        final StringBuilder builder = new StringBuilder();
+        if (basic != null) {
+            for (ECKey key : basic.getKeys())
+                formatKeyWithAddress(params, includePrivateKeys, key, builder);
+        }
+        for (DeterministicKeyChain chain : chains) {
+            for (ECKey key : chain.getKeys())
+                formatKeyWithAddress(params, includePrivateKeys, key, builder);
+        }
+        return builder.toString();
+    }
+
+    private void formatKeyWithAddress(@Nullable NetworkParameters params, boolean includePrivateKeys,
+                                      ECKey key, StringBuilder builder) {
+        if (params != null) {
+            final Address address = key.toAddress(params);
+            builder.append("  addr:");
+            builder.append(address.toString());
+        }
+        builder.append("  hash160:");
+        builder.append(Utils.bytesToHexString(key.getPubKeyHash()));
+        builder.append(" ");
+        builder.append(includePrivateKeys ? key.toStringWithPrivate() : key.toString());
+        builder.append("\n");
     }
 }

@@ -706,4 +706,9 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         log.info("Took {} msec", System.currentTimeMillis() - now);
         return result;
     }
+
+    // For internal usage only (for printing keys in KeyChainGroup).
+    /* package */ List<ECKey> getKeys() {
+        return basicKeyChain.getKeys();
+    }
 }

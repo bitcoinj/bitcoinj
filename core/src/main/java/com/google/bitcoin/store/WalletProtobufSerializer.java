@@ -21,7 +21,7 @@ import com.google.bitcoin.core.TransactionConfidence.ConfidenceType;
 import com.google.bitcoin.crypto.KeyCrypter;
 import com.google.bitcoin.crypto.KeyCrypterScrypt;
 import com.google.bitcoin.script.Script;
-import com.google.bitcoin.wallet.BasicKeyChain;
+import com.google.bitcoin.wallet.KeyChainGroup;
 import com.google.bitcoin.wallet.WalletTransaction;
 import com.google.common.collect.Lists;
 import com.google.protobuf.ByteString;
@@ -120,9 +120,7 @@ public class WalletProtobufSerializer {
             walletBuilder.addTransaction(txProto);
         }
 
-        BasicKeyChain basicKeyChain = wallet.getBasicKeyChain();
-        if (basicKeyChain != null)
-            walletBuilder.addAllKey(basicKeyChain.serializeToProtobuf());
+        walletBuilder.addAllKey(wallet.serializeKeychainToProtobuf());
 
         for (Script script : wallet.getWatchedScripts()) {
             Protos.Script protoScript =
@@ -354,13 +352,13 @@ public class WalletProtobufSerializer {
     public Wallet readWallet(NetworkParameters params, @Nullable WalletExtension[] extensions,
                              Protos.Wallet walletProto) throws UnreadableWalletException {
         // Read the scrypt parameters that specify how encryption and decryption is performed.
-        BasicKeyChain chain;
+        KeyChainGroup chain;
         if (walletProto.hasEncryptionParameters()) {
             Protos.ScryptParameters encryptionParameters = walletProto.getEncryptionParameters();
             final KeyCrypterScrypt keyCrypter = new KeyCrypterScrypt(encryptionParameters);
-            chain = BasicKeyChain.fromProtobufEncrypted(walletProto.getKeyList(), keyCrypter);
+            chain = KeyChainGroup.fromProtobufEncrypted(walletProto.getKeyList(), keyCrypter);
         } else {
-            chain = BasicKeyChain.fromProtobufUnencrypted(walletProto.getKeyList());
+            chain = KeyChainGroup.fromProtobufUnencrypted(walletProto.getKeyList());
         }
         Wallet wallet = new Wallet(params, chain);
 

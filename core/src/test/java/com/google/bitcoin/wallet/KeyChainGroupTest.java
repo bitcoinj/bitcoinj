@@ -48,11 +48,12 @@ public class KeyChainGroupTest {
         Utils.rollMockClock(0);
         group = new KeyChainGroup();
         group.setLookaheadSize(LOOKAHEAD_SIZE);   // Don't want slow tests.
-        assertEquals(INITIAL_KEYS, group.numKeys());
+        group.getActiveKeyChain();  // Force create a chain.
     }
 
     @Test
     public void freshCurrentKeys() throws Exception {
+        assertEquals(INITIAL_KEYS, group.numKeys());
         assertEquals(2 * INITIAL_KEYS, group.getBloomFilterElementCount());
         ECKey r1 = group.currentKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         final int keys = INITIAL_KEYS + LOOKAHEAD_SIZE + 1;

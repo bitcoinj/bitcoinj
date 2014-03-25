@@ -63,7 +63,7 @@ public class BloomFilterTest {
         wallet.commitTx(new Transaction(params, Hex.decode("01000000010000000000000000000000000000000000000000000000000000000000000000ffffffff0d038754030114062f503253482fffffffff01c05e559500000000232103cb219f69f1b49468bd563239a86667e74a06fcba69ac50a08a5cbc42a5808e99ac00000000")));
         
         // We should have 2 per pubkey, and one for the pay-2-pubkey output we have
-        assertTrue(wallet.getBloomFilterElementCount() == 5);
+        assertEquals(5, wallet.getBloomFilterElementCount());
         
         BloomFilter filter = wallet.getBloomFilter(wallet.getBloomFilterElementCount(), 0.001, 0);
         

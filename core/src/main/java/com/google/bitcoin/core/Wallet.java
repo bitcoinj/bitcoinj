@@ -20,6 +20,7 @@ package com.google.bitcoin.core;
 import com.google.bitcoin.core.TransactionConfidence.ConfidenceType;
 import com.google.bitcoin.crypto.KeyCrypter;
 import com.google.bitcoin.crypto.KeyCrypterException;
+import com.google.bitcoin.crypto.KeyCrypterScrypt;
 import com.google.bitcoin.script.Script;
 import com.google.bitcoin.script.ScriptBuilder;
 import com.google.bitcoin.script.ScriptChunk;
@@ -33,6 +34,7 @@ import com.google.common.collect.*;
 import com.google.common.primitives.Ints;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
+import org.bitcoinj.wallet.Protos;
 import org.bitcoinj.wallet.Protos.Wallet.EncryptionType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -126,10 +128,9 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
     // All transactions together.
     final Map<Sha256Hash, Transaction> transactions;
 
-    // A bag of arbitrary unrelated keys that can be encrypted. Having one of these is optional: wallets created after
-    // HD wallets were fully implemented don't have one unless a key is imported. Old wallets that are migrated from
-    // the pre-HD world have one to store the non-deterministic/random keys.
-    @GuardedBy("lock") private BasicKeyChain basicKeyChain;
+    // The key chain group is not thread safe, and generally the whole hierarchy of objects should not be mutated
+    // outside the wallet lock. So don't expose this object directly via any accessors!
+    @GuardedBy("lock") protected KeyChainGroup keychain;
 
     // A list of scripts watched by this wallet.
     private Set<Script> watchedScripts;
@@ -187,14 +188,14 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
      * see loadFromFile.
      */
     public Wallet(NetworkParameters params) {
-        this(params, new BasicKeyChain());
+        this(params, new KeyChainGroup());
     }
 
     // TODO: When this class moves to the Wallet package, along with the protobuf serializer, then hide this.
     /** For internal use only. */
-    public Wallet(NetworkParameters params, BasicKeyChain basicKeyChain) {
+    public Wallet(NetworkParameters params, KeyChainGroup keyChainGroup) {
         this.params = checkNotNull(params);
-        this.basicKeyChain = basicKeyChain;
+        this.keychain = checkNotNull(keyChainGroup);
         watchedScripts = Sets.newHashSet();
         unspent = new HashMap<Sha256Hash, Transaction>();
         spent = new HashMap<Sha256Hash, Transaction>();
@@ -253,7 +254,12 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
      * a different key (for each purpose independently).
      */
     public ECKey currentKey(KeyChain.KeyPurpose purpose) {
-        return getKeys().get(0);
+        lock.lock();
+        try {
+            return keychain.currentKey(purpose);
+        } finally {
+            lock.unlock();
+        }
     }
 
     /**
@@ -273,9 +279,16 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
      * to someone who wishes to send money.
      */
     public ECKey freshKey(KeyChain.KeyPurpose purpose) {
-        final ECKey key = new ECKey();
-        importKey(key);
-        return key;
+        lock.lock();
+        try {
+            ECKey key = keychain.freshKey(purpose);
+            // Do we really need an immediate hard save? Arguably all this is doing is saving the 'current' key
+            // and that's not quite so important, so we could coalesce for more performance.
+            saveNow();
+            return key;
+        } finally {
+            lock.unlock();
+        }
     }
 
     /**
@@ -284,18 +297,6 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
      */
     public ECKey freshReceiveKey() {
         return freshKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
-    }
-
-
-    /** Returns a snapshot of the basicKeyChain. This view is not live. */
-    @Deprecated
-    public List<ECKey> getKeys() {
-        lock.lock();
-        try {
-            return basicKeyChain.getKeys();
-        } finally {
-            lock.unlock();
-        }
     }
 
     /**
@@ -318,19 +319,19 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
     public boolean removeKey(ECKey key) {
         lock.lock();
         try {
-            return basicKeyChain.removeKey(key);
+            return keychain.removeImportedKey(key);
         } finally {
             lock.unlock();
         }
     }
 
     /**
-     * Returns the number of keys in the basicKeyChain.
+     * Returns the number of keys in the key chain, including lookahead keys.
      */
     public int getKeychainSize() {
         lock.lock();
         try {
-            return basicKeyChain.numKeys();
+            return keychain.numKeys();
         } finally {
             lock.unlock();
         }
@@ -378,7 +379,7 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
     public int importKeys(final List<ECKey> keys) {
         lock.lock();
         try {
-            int result = basicKeyChain.importKeys(keys);
+            int result = keychain.importKeys(keys);
             saveNow();
             return result;
         } finally {
@@ -386,26 +387,40 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
         }
     }
 
+    /** Takes a list of keys and a password, then encrypts and imports them in one step using the current keycrypter. */
     public int importKeysAndEncrypt(final List<ECKey> keys, CharSequence password) {
-        checkNotNull(getKeyCrypter(), "Wallet is not encrypted");
-        return importKeysAndEncrypt(keys, getKeyCrypter().deriveKey(password));
-    }
-
-    public int importKeysAndEncrypt(final List<ECKey> keys, KeyParameter aesKey) {
         lock.lock();
         try {
-            final KeyCrypter crypter = getKeyCrypter();
-            checkNotNull(crypter, "Wallet is not encrypted");
-            LinkedList<ECKey> encryptedKeys = Lists.newLinkedList();
-            for (ECKey key : keys) {
-                if (key.isEncrypted())
-                    throw new IllegalArgumentException("Cannot provide already encrypted keys to this method");
-                encryptedKeys.add(key.encrypt(crypter, aesKey));
-            }
-            return basicKeyChain.importKeys(encryptedKeys);
+            checkNotNull(getKeyCrypter(), "Wallet is not encrypted");
+            return importKeysAndEncrypt(keys, getKeyCrypter().deriveKey(password));
         } finally {
             lock.unlock();
         }
+    }
+
+    /** Takes a list of keys and an AES key, then encrypts and imports them in one step using the current keycrypter. */
+    public int importKeysAndEncrypt(final List<ECKey> keys, KeyParameter aesKey) {
+        lock.lock();
+        try {
+            return keychain.importKeysAndEncrypt(keys, aesKey);
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /** See {@link com.google.bitcoin.wallet.DeterministicKeyChain#setLookaheadSize(int)} for more info on this. */
+    public void setKeychainLookaheadSize(int lookaheadSize) {
+        lock.lock();
+        try {
+            keychain.setLookaheadSize(lookaheadSize);
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /** See {@link com.google.bitcoin.wallet.DeterministicKeyChain#setLookaheadSize(int)} for more info on this. */
+    public int getKeychainLookaheadSize() {
+        return keychain.getLookaheadSize();
     }
 
     /**
@@ -487,7 +502,7 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
     public ECKey findKeyFromPubHash(byte[] pubkeyHash) {
         lock.lock();
         try {
-            return basicKeyChain.findKeyFromPubHash(pubkeyHash);
+            return keychain.findKeyFromPubHash(pubkeyHash);
         } finally {
             lock.unlock();
         }
@@ -497,7 +512,7 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
     public boolean hasKey(ECKey key) {
         lock.lock();
         try {
-            return basicKeyChain.hasKey(key);
+            return keychain.hasKey(key);
         } finally {
             lock.unlock();
         }
@@ -528,7 +543,7 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
     public ECKey findKeyFromPubKey(byte[] pubkey) {
         lock.lock();
         try {
-            return basicKeyChain.findKeyFromPubKey(pubkey);
+            return keychain.findKeyFromPubKey(pubkey);
         } finally {
             lock.unlock();
         }
@@ -541,25 +556,21 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
         return findKeyFromPubKey(pubkey) != null;
     }
 
-    /**
-     * Returns the {@link com.google.bitcoin.wallet.BasicKeyChain} this wallet uses, if there is one, or null otherwise.
-     * The basic key chain stores unrelated (i.e. random) keys. For newly created HD wallets therefore, this class
-     * is not useful and won't exist. One will be created if a key is imported using the importKey* methods.
-     */
-    @Nullable
-    public BasicKeyChain getBasicKeyChain() {
-        lock.lock();
-        try {
-            return basicKeyChain;
-        } finally {
-            lock.unlock();
-        }
-    }
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //
     // Serialization support
     //
+
+    // TODO: Make this package private once the classes finish moving around.
+    /** Internal use only. */
+    public List<Protos.Key> serializeKeychainToProtobuf() {
+        lock.lock();
+        try {
+            return keychain.serializeToProtobuf();
+        } finally {
+            lock.unlock();
+        }
+    }
 
     /** Saves the wallet first to the given temp file, then renames to the dest file. */
     public void saveToFile(File temp, File destFile) throws IOException {
@@ -1489,7 +1500,7 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
         lock.lock();
         try {
             eventListeners.add(new ListenerRegistration<WalletEventListener>(listener, executor));
-            basicKeyChain.addEventListener(listener, executor);
+            keychain.addEventListener(listener, executor);
         } finally {
             lock.unlock();
         }
@@ -1502,7 +1513,7 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
     public boolean removeEventListener(WalletEventListener listener) {
         lock.lock();
         try {
-            basicKeyChain.removeEventListener(listener);
+            keychain.removeEventListener(listener);
             return ListenerRegistration.removeFromList(listener, eventListeners);
         } finally {
             lock.unlock();
@@ -2440,21 +2451,13 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
             final String lastBlockSeenTimeStr = lastBlockSeenTime == null ? "time unknown" : lastBlockSeenTime.toString();
             builder.append(String.format("Last seen best block: %d (%s): %s%n",
                     getLastBlockSeenHeight(), lastBlockSeenTimeStr, getLastBlockSeenHash()));
-            if (basicKeyChain.getKeyCrypter() != null) {
-                builder.append(String.format("Encryption: %s%n", basicKeyChain.getKeyCrypter().toString()));
-            }
+            final KeyCrypter crypter = keychain.getKeyCrypter();
+            if (crypter != null)
+                builder.append(String.format("Encryption: %s%n", crypter));
+
             // Do the keys.
             builder.append("\nKeys:\n");
-            for (ECKey key : basicKeyChain.getKeys()) {
-                final Address address = key.toAddress(params);
-                builder.append("  addr:");
-                builder.append(address.toString());
-                builder.append(" hash160:");
-                builder.append(Utils.bytesToHexString(address.getHash160()));
-                builder.append(" ");
-                builder.append(includePrivateKeys ? key.toStringWithPrivate() : key.toString());
-                builder.append("\n");
-            }
+            builder.append(keychain.toString(params, includePrivateKeys));
 
             if (!watchedScripts.isEmpty()) {
                 builder.append("\nWatched scripts:\n");
@@ -2735,7 +2738,7 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
     public long getEarliestKeyCreationTime() {
         lock.lock();
         try {
-            long earliestTime = basicKeyChain.getEarliestKeyCreationTime();
+            long earliestTime = keychain.getEarliestKeyCreationTime();
             for (Script script : watchedScripts)
                 earliestTime = Math.min(script.getCreationTimeSeconds(), earliestTime);
             if (earliestTime == Long.MAX_VALUE)
@@ -2837,7 +2840,8 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
     public void encrypt(CharSequence password) {
         lock.lock();
         try {
-            basicKeyChain = basicKeyChain.toEncrypted(password);
+            final KeyCrypterScrypt scrypt = new KeyCrypterScrypt();
+            keychain.encrypt(scrypt, scrypt.deriveKey(password));
             saveNow();
         } finally {
             lock.unlock();
@@ -2855,7 +2859,7 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
     public void encrypt(KeyCrypter keyCrypter, KeyParameter aesKey) {
         lock.lock();
         try {
-            basicKeyChain = basicKeyChain.toEncrypted(keyCrypter, aesKey);
+            keychain.encrypt(keyCrypter, aesKey);
             saveNow();
         } finally {
             lock.unlock();
@@ -2869,7 +2873,9 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
     public void decrypt(CharSequence password) {
         lock.lock();
         try {
-            basicKeyChain = basicKeyChain.toDecrypted(password);
+            final KeyCrypter crypter = keychain.getKeyCrypter();
+            checkState(crypter != null, "Not encrypted");
+            keychain.decrypt(crypter.deriveKey(password));
             saveNow();
         } finally {
             lock.unlock();
@@ -2885,7 +2891,7 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
     public void decrypt(KeyParameter aesKey) {
         lock.lock();
         try {
-            basicKeyChain = basicKeyChain.toDecrypted(aesKey);
+            keychain.decrypt(aesKey);
             saveNow();
         } finally {
             lock.unlock();
@@ -2902,7 +2908,7 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
     public boolean checkPassword(CharSequence password) {
         lock.lock();
         try {
-            return basicKeyChain.checkPassword(password);
+            return keychain.checkPassword(password);
         } finally {
             lock.unlock();
         }
@@ -2916,7 +2922,7 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
     public boolean checkAESKey(KeyParameter aesKey) {
         lock.lock();
         try {
-            return basicKeyChain.checkAESKey(aesKey);
+            return keychain.checkAESKey(aesKey);
         } finally {
             lock.unlock();
         }
@@ -2930,7 +2936,7 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
     public KeyCrypter getKeyCrypter() {
         lock.lock();
         try {
-            return basicKeyChain.getKeyCrypter();
+            return keychain.getKeyCrypter();
         } finally {
             lock.unlock();
         }
@@ -2944,8 +2950,9 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
     public EncryptionType getEncryptionType() {
         lock.lock();
         try {
-            if (getKeyCrypter() != null)
-                return basicKeyChain.getKeyCrypter().getUnderstoodEncryptionType();
+            KeyCrypter crypter = keychain.getKeyCrypter();
+            if (crypter != null)
+                return crypter.getUnderstoodEncryptionType();
             else
                 return EncryptionType.UNENCRYPTED;
         } finally {
@@ -2995,7 +3002,7 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
      */
     @Override
     public int getBloomFilterElementCount() {
-        int size = basicKeyChain.numBloomFilterEntries();
+        int size = keychain.getBloomFilterElementCount();
         for (Transaction tx : getTransactions(false)) {
             for (TransactionOutput out : tx.getOutputs()) {
                 try {
@@ -3048,7 +3055,7 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
         BloomFilter filter;
         lock.lock();
         try {
-            filter = basicKeyChain.getFilter(size, falsePositiveRate, nTweak);
+            filter = keychain.getBloomFilter(size, falsePositiveRate, nTweak);
 
             for (Script script : watchedScripts) {
                 for (ScriptChunk chunk : script.getChunks()) {
