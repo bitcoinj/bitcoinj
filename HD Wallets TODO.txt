@@ -1,7 +1,9 @@
+- Switch to the tree format agreed on with slush/stick
 - Make Wallet notify key chains when a key has been observed in a transaction.
 - Make DeterministicKeyChain auto-extend when a key was observed, to keep a gap limit in place.
 - Support for key rotation
 - Support for auto upgrade
+- Redo internals of DKC to support arbitrary tree structures.
 
 
 API changes:
@@ -12,3 +14,5 @@ API changes:
   either wallet.currentReceiveKey() or wallet.freshReceiveKey() depending on whether you are going to show an address
   to the user in the UI or you know you need a fresh, unused key right at that moment.
 - Most ECKey constructors were replaced with static methods.
+- DeterministicKey now derives from ECKey
+
