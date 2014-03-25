@@ -16,14 +16,14 @@
 
 package com.google.bitcoin.wallet;
 
-import com.google.bitcoin.crypto.EncryptableItem;
-import com.google.bitcoin.crypto.EncryptedData;
-import com.google.bitcoin.crypto.KeyCrypter;
+import com.google.bitcoin.crypto.*;
 import org.bitcoinj.wallet.Protos;
 import org.spongycastle.crypto.params.KeyParameter;
 import org.spongycastle.util.encoders.Hex;
 
 import javax.annotation.Nullable;
+import java.io.IOException;
+import java.util.List;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
@@ -61,7 +61,16 @@ class DeterministicSeed implements EncryptableItem {
         if (isEncrypted())
             return "DeterministicSeed [encrypted]";
         else
-            return "DeterministicSeed " + new String(Hex.encode(unencryptedSeed));
+            return "DeterministicSeed " + toHexString();
+    }
+
+    /** Returns the seed as hex or null if encrypted. */
+    @Nullable
+    public String toHexString() {
+        if (unencryptedSeed != null)
+            return new String(Hex.encode(unencryptedSeed));
+        else
+            return null;
     }
 
     @Nullable
@@ -97,5 +106,36 @@ class DeterministicSeed implements EncryptableItem {
         checkState(isEncrypted());
         checkNotNull(encryptedSeed);
         return new DeterministicSeed(crypter.decrypt(encryptedSeed, aesKey), creationTimeSeconds);
+    }
+
+    /** Returns a list of words that represent the seed, or IllegalStateException if the seed is encrypted or missing. */
+    public List<String> toMnemonicCode(MnemonicCode code) {
+        try {
+            if (isEncrypted())
+                throw new IllegalStateException("The seed is encrypted");
+            final byte[] seed = checkNotNull(getSecretBytes());
+            return code.toMnemonic(seed);
+        } catch (MnemonicException.MnemonicLengthException e) {
+            throw new RuntimeException(e);  // Cannot happen.
+        }
+    }
+
+    /** Returns a list of words that represent the seed, or IllegalStateException if the seed is encrypted or missing. */
+    public List<String> toMnemonicCode() {
+        return toMnemonicCode(getCachedMnemonicCode());
+    }
+
+    private static MnemonicCode MNEMONIC_CODE;
+
+    private static synchronized MnemonicCode getCachedMnemonicCode() {
+        try {
+            // This object can be large and has to load the word list from disk, so we lazy cache it.
+            if (MNEMONIC_CODE == null) {
+                MNEMONIC_CODE = new MnemonicCode();
+            }
+            return MNEMONIC_CODE;
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

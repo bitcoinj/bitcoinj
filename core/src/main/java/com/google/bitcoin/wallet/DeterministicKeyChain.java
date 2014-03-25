@@ -31,7 +31,6 @@ import org.spongycastle.crypto.params.KeyParameter;
 import org.spongycastle.math.ec.ECPoint;
 
 import javax.annotation.Nullable;
-import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.math.BigInteger;
 import java.security.SecureRandom;
@@ -342,45 +341,11 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         return basicKeyChain.removeEventListener(listener);
     }
 
-    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //
-    // Mnemonic code support
-    //
-    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
     /** Returns a list of words that represent the seed. */
     public List<String> toMnemonicCode() {
-        try {
-            return toMnemonicCode(getCachedMnemonicCode());
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    /** Returns a list of words that represent the seed, or IllegalStateException if the seed is encrypted or missing. */
-    public List<String> toMnemonicCode(MnemonicCode code) {
-        try {
-            if (seed == null)
-                throw new IllegalStateException("The seed is not present in this key chain");
-            if (seed.isEncrypted())
-                throw new IllegalStateException("The seed is encrypted");
-            final byte[] seed = checkNotNull(this.seed.getSecretBytes());
-            return code.toMnemonic(seed);
-        } catch (MnemonicException.MnemonicLengthException e) {
-            throw new RuntimeException(e);  // Cannot happen.
-        }
-    }
-
-    private MnemonicCode getCachedMnemonicCode() throws IOException {
         lock.lock();
         try {
-            // This object can be large and has to load the word list from disk, so we lazy cache it.
-            MnemonicCode m = mnemonicCode != null ? mnemonicCode.get() : null;
-            if (m == null) {
-                m = new MnemonicCode();
-                mnemonicCode = new WeakReference<MnemonicCode>(m);
-            }
-            return m;
+            return seed.toMnemonicCode();
         } finally {
             lock.unlock();
         }
@@ -592,11 +557,13 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
             if (key.getPath().size() != 3) continue; // Not a leaf key.
             checkState(key.isEncrypted());
             DeterministicKey parent = chain.hierarchy.get(checkNotNull(key.getParent()).getPath(), false, false);
-            // Clone the key to the new encrypted hierarchy.
+            // Clone the key to the new decrypted hierarchy.
             key = new DeterministicKey(key.getPubOnly(), parent);
             chain.hierarchy.putKey(key);
             chain.basicKeyChain.importKey(key);
         }
+        chain.issuedExternalKeys = issuedExternalKeys;
+        chain.issuedInternalKeys = issuedInternalKeys;
         return chain;
     }
 
@@ -705,6 +672,17 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         }
         log.info("Took {} msec", System.currentTimeMillis() - now);
         return result;
+    }
+
+    /** Returns the seed or null if this chain is encrypted or watching. */
+    @Nullable
+    public DeterministicSeed getSeed() {
+        lock.lock();
+        try {
+            return seed;
+        } finally {
+            lock.unlock();
+        }
     }
 
     // For internal usage only (for printing keys in KeyChainGroup).

@@ -213,6 +213,7 @@ public class DeterministicKeyChainTest {
         assertFalse(decKey2.isEncrypted());
         assertNotEquals(encKey1.getParent(), decKey1.getParent());   // parts of a different hierarchy
         // Check we can once again derive keys from the decrypted chain.
+        decChain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS).sign(Sha256Hash.ZERO_HASH);
         decChain.getKey(KeyChain.KeyPurpose.CHANGE).sign(Sha256Hash.ZERO_HASH);
     }
 
