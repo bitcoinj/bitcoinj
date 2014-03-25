@@ -21,6 +21,7 @@ import com.google.bitcoin.crypto.DeterministicKey;
 import com.google.bitcoin.crypto.KeyCrypter;
 import com.google.bitcoin.store.UnreadableWalletException;
 import com.google.bitcoin.utils.Threading;
+import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import org.bitcoinj.wallet.Protos;
@@ -367,7 +368,21 @@ public class KeyChainGroup implements PeerFilterProvider {
             for (ECKey key : basic.getKeys())
                 formatKeyWithAddress(params, includePrivateKeys, key, builder);
         }
+        final String newline = String.format("%n");
         for (DeterministicKeyChain chain : chains) {
+            DeterministicSeed seed = chain.getSeed();
+            if (seed != null && !seed.isEncrypted()) {
+                final List<String> words = seed.toMnemonicCode();
+                builder.append("Seed as words: ");
+                builder.append(Joiner.on(' ').join(words));
+                builder.append(newline);
+                builder.append("Seed as hex:   ");
+                builder.append(seed.toHexString());
+                builder.append(newline);
+            } else {
+                builder.append("Seed is encrypted");
+                builder.append(newline);
+            }
             for (ECKey key : chain.getKeys())
                 formatKeyWithAddress(params, includePrivateKeys, key, builder);
         }
