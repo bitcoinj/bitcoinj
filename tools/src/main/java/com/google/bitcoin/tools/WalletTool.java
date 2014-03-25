@@ -774,7 +774,6 @@ public class WalletTool {
             return;
         }
         wallet = new Wallet(params);
-        wallet.freshReceiveKey();
         if (password != null)
             wallet.encrypt(password);
         wallet.saveToFile(walletFile);
@@ -792,6 +791,16 @@ public class WalletTool {
     }
 
     private static void addKey() {
+        // If we're being given precise details, we have to import the key.
+        if (options.has("privkey") || options.has("pubkey")) {
+            importKey();
+        } else {
+            ECKey key = wallet.freshReceiveKey();
+            System.out.println(key.toAddress(params) + " " + key);
+        }
+    }
+
+    private static void importKey() {
         ECKey key;
         long creationTimeSeconds = getCreationTimeSeconds();
         if (options.has("privkey")) {
@@ -823,10 +832,7 @@ public class WalletTool {
             key = ECKey.fromPublicOnly(pubkey);
             key.setCreationTimeSeconds(creationTimeSeconds);
         } else {
-            // Freshly generated key.
-            key = new ECKey();
-            if (creationTimeSeconds > 0)
-                key.setCreationTimeSeconds(creationTimeSeconds);
+            throw new IllegalStateException();
         }
         if (wallet.findKeyFromPubKey(key.getPubKey()) != null) {
             System.err.println("That key already exists in this wallet.");
@@ -841,10 +847,10 @@ public class WalletTool {
                 key = key.encrypt(wallet.getKeyCrypter(), wallet.getKeyCrypter().deriveKey(password));
             }
             wallet.importKey(key);
+            System.out.println(key.toAddress(params) + " " + key);
         } catch (KeyCrypterException kce) {
             System.err.println("There was an encryption related error when adding the key. The error was '" + kce.getMessage() + "'.");
         }
-        System.out.println(key.toAddress(params) + " " + key);
     }
 
     private static long getCreationTimeSeconds() {
