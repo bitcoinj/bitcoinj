@@ -16,7 +16,6 @@
 package com.google.bitcoin.crypto;
 
 import com.google.bitcoin.core.*;
-import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 import org.spongycastle.crypto.params.KeyParameter;
 import org.spongycastle.math.ec.ECPoint;
@@ -412,10 +411,7 @@ public class DeterministicKey extends ECKey {
 
     @Override
     public String toString() {
-        return Objects.toStringHelper(this)
-                .add("pub", new String(Hex.encode(getPubKey())))
-                .add("chaincode", new String(Hex.encode(getChainCode())))
-                .add("path", getPathAsString())
-                .toString();
+        return String.format("pub:%s chaincode:%s path:%s", new String(Hex.encode(getPubKey())),
+                new String(Hex.encode(getChainCode())), getPathAsString());
     }
 }
