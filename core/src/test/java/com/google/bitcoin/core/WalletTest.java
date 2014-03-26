@@ -251,9 +251,8 @@ public class WalletTest extends TestWithWallet {
             try {
                 req.ensureMinRequiredFee = false;
                 wallet.completeTx(req);
-                fail("No exception was thrown trying to sign an encrypted key with no password supplied.");
-            } catch (KeyCrypterException kce) {
-                assertEquals("This ECKey is encrypted but no decryption key has been supplied.", kce.getMessage());
+                fail();
+            } catch (ECKey.MissingPrivateKeyException kce) {
             }
             assertEquals("Wrong number of UNSPENT.1", 1, wallet.getPoolSize(WalletTransaction.Pool.UNSPENT));
             assertEquals("Wrong number of ALL.1", 1, wallet.getTransactions(true).size());
@@ -1309,16 +1308,9 @@ public class WalletTest extends TestWithWallet {
 
     @Test
     public void encryptionDecryptionBasic() throws Exception {
-        // Check the wallet is initially of WalletType ENCRYPTED.
-        assertTrue("Wallet is not an encrypted wallet", encryptedWallet.getEncryptionType() == EncryptionType.ENCRYPTED_SCRYPT_AES);
-
-        // Correct password should decrypt first encrypted private key.
-        assertTrue("checkPassword result is wrong with correct password.2", encryptedWallet.checkPassword(PASSWORD1));
-
-        // Incorrect password should not decrypt first encrypted private key.
-        assertFalse("checkPassword result is wrong with incorrect password.3", encryptedWallet.checkPassword(WRONG_PASSWORD));
-
-        // Decrypt wallet.
+        assertEquals(EncryptionType.ENCRYPTED_SCRYPT_AES, encryptedWallet.getEncryptionType());
+        assertTrue(encryptedWallet.checkPassword(PASSWORD1));
+        assertFalse(encryptedWallet.checkPassword(WRONG_PASSWORD));
         assertTrue("The keyCrypter is missing but should not be", keyCrypter != null);
         encryptedWallet.decrypt(aesKey);
 

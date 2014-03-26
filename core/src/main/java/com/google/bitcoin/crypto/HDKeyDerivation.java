@@ -29,7 +29,8 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
 
 /**
- * Implementation of the (public derivation version) deterministic wallet child key generation algorithm.
+ * Implementation of the <a href="https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki">BIP 32</a>
+ * deterministic wallet child key generation algorithm.
  */
 public final class HDKeyDerivation {
 
@@ -77,7 +78,8 @@ public final class HDKeyDerivation {
     }
 
     /**
-     * @param childNumber the "extended" child number, ie. with the 0x80000000 bit specifying private/public derivation.
+     * Derives a key given the "extended" child number, ie. with the 0x80000000 bit specifying whether to use hardened
+     * derivation or not.
      */
     public static DeterministicKey deriveChildKey(DeterministicKey parent, int childNumber) {
         return deriveChildKey(parent, new ChildNumber(childNumber));
@@ -112,7 +114,7 @@ public final class HDKeyDerivation {
         byte[] parentPublicKey = ECKey.compressPoint(parent.getPubKeyPoint()).getEncoded();
         assert parentPublicKey.length == 33 : parentPublicKey.length;
         ByteBuffer data = ByteBuffer.allocate(37);
-        if (childNumber.isPrivateDerivation()) {
+        if (childNumber.isHardened()) {
             data.put(parent.getPrivKeyBytes33());
         } else {
             data.put(parentPublicKey);
@@ -131,7 +133,7 @@ public final class HDKeyDerivation {
     }
 
     private static RawKeyBytes deriveChildKeyBytesFromPublic(DeterministicKey parent, ChildNumber childNumber) throws HDDerivationException {
-        checkArgument(!childNumber.isPrivateDerivation(), "Can't use private derivation with public keys only.");
+        checkArgument(!childNumber.isHardened(), "Can't use private derivation with public keys only.");
         byte[] parentPublicKey = ECKey.compressPoint(parent.getPubKeyPoint()).getEncoded();
         assert parentPublicKey.length == 33 : parentPublicKey.length;
         ByteBuffer data = ByteBuffer.allocate(37);
@@ -142,6 +144,7 @@ public final class HDKeyDerivation {
         byte[] il = Arrays.copyOfRange(i, 0, 32);
         byte[] chainCode = Arrays.copyOfRange(i, 32, 64);
         BigInteger ilInt = new BigInteger(1, il);
+        // TODO: Throw a specific exception here to make sure the caller iterates.
         assertLessThanN(ilInt, "Illegal derived key: I_L >= n");
         ECPoint Ki = ECKey.CURVE.getG().multiply(ilInt).add(parent.getPubKeyPoint());
         checkArgument(!Ki.equals(ECKey.CURVE.getCurve().getInfinity()),

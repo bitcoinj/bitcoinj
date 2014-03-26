@@ -43,7 +43,7 @@ parameter as getKey, but tells the keychain to ignore usage heuristics and alway
 There can be multiple key chains. There is always:
 
 <=1 basic key chain
->0 deterministic key chains
+>=0 deterministic key chains
 
 Thus it's possible to have more than one deterministic key chain, but not more than one basic key chain. New wallets
 will not have a basic key chain unless an attempt to import a key is made. Old wallets will have both a basic and
@@ -206,3 +206,24 @@ address" with the new wallet app. The wallet class will have a maybeUpgradeToDet
 at various places where private key bytes might become available, like just after deserialization or a method being
 called which has an AES key parameter. The method will check if an upgrade is necessary, and if so add a
 DeterministicKeyChain to the internal list of chains.
+
+
+Test plan
+---------
+
+Basic:
+[ ] Create an empty wallet with wallet-tool. Dump: check is empty.
+[ ] Add a couple of keys. Dump: check keys were pre-genned and the correct addresses were returned.
+[ ] Send some money to the wallet. Check that it's found in the mempool correctly.
+[ ] Generate a block. Check that it's found in the block correctly.
+[ ] Send half back. Check that the change address is properly generated and the first key can be spent from.
+[ ] Send another half back. Check that the change output is being properly signed for and can be spent from.
+[ ] Encrypt the wallet.
+[ ] Attempt to decrypt with the wrong password.
+[ ] Send another half back. Check that we can send from an encrypted wallet.
+[ ] Receive another coin. Check we can receive to an encrypted wallet.
+[ ] Decrypt the wallet. Dump: check it's the same as the first wallet, modulo a few pregenned public keys.
+[ ] Send another half coin back. Check we can send from a decrypted wallet.
+[ ] Send another half coin back. Check we can send from the change in a decrypted wallet.
+
+

@@ -166,7 +166,8 @@ public class KeyChainGroupTest {
         try {
             ea.sign(Sha256Hash.ZERO_HASH);
             fail();
-        } catch (KeyCrypterException e) {
+        } catch (ECKey.KeyIsEncryptedException e) {
+            // Ignored.
         }
         if (withImported) {
             ECKey c = new ECKey();

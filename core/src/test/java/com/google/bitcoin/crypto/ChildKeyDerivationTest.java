@@ -147,7 +147,8 @@ public class ChildKeyDerivationTest {
         try {
             derivedKey2.sign(hash);
             fail();
-        } catch (KeyCrypterException e) {
+        } catch (ECKey.KeyIsEncryptedException e) {
+            // Ignored.
         }
         ECKey.ECDSASignature signature = derivedKey2.sign(hash, aesKey);
         assertTrue(derivedKey2.verify(hash, signature));
@@ -156,7 +157,7 @@ public class ChildKeyDerivationTest {
     @Test
     public void pubOnlyDerivation() throws Exception {
         DeterministicKey key1 = HDKeyDerivation.createMasterPrivateKey("satoshi lives!".getBytes());
-        DeterministicKey key2 = HDKeyDerivation.deriveChildKey(key1, ChildNumber.ZERO_PRIV);
+        DeterministicKey key2 = HDKeyDerivation.deriveChildKey(key1, ChildNumber.ZERO_HARDENED);
         DeterministicKey key3 = HDKeyDerivation.deriveChildKey(key2, ChildNumber.ZERO);
         DeterministicKey pubkey3 = HDKeyDerivation.deriveChildKey(key2.getPubOnly(), ChildNumber.ZERO);
         assertEquals(key3.getPubKeyPoint(), pubkey3.getPubKeyPoint());
@@ -165,7 +166,7 @@ public class ChildKeyDerivationTest {
     @Test
     public void serializeToText() {
         DeterministicKey key1 = HDKeyDerivation.createMasterPrivateKey("satoshi lives!".getBytes());
-        DeterministicKey key2 = HDKeyDerivation.deriveChildKey(key1, ChildNumber.ZERO_PRIV);
+        DeterministicKey key2 = HDKeyDerivation.deriveChildKey(key1, ChildNumber.ZERO_HARDENED);
         {
             final String pub58 = key1.serializePubB58();
             final String priv58 = key1.serializePrivB58();

@@ -2,16 +2,9 @@ package com.google.bitcoin.crypto;
 
 import org.junit.Assert;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.spongycastle.util.encoders.Hex;
 
-/**
- * @author Matija Mazi <br/>
- */
 public class HDUtilsTest {
-    private static final Logger log = LoggerFactory.getLogger(HDUtilsTest.class);
-
     @Test
     public void testHmac() throws Exception {
         String tv[] = {

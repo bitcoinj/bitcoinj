@@ -391,7 +391,8 @@ public class ECKey implements EncryptableItem, Serializable {
      * @throws java.lang.IllegalStateException if the private key bytes are not available.
      */
     public BigInteger getPrivKey() {
-        checkState(priv != null, "Private key not available");
+        if (priv == null)
+            throw new MissingPrivateKeyException();
         return priv;
     }
 
@@ -533,7 +534,6 @@ public class ECKey implements EncryptableItem, Serializable {
     @VisibleForTesting
     public static boolean FAKE_SIGNATURES = false;
 
-    // TODO: These should not return KeyCrypterException
     /**
      * Signs the given hash and returns the R and S components as BigIntegers. In the Bitcoin protocol, they are
      * usually encoded using DER format, so you want {@link com.google.bitcoin.core.ECKey.ECDSASignature#encodeToDER()}
@@ -544,14 +544,15 @@ public class ECKey implements EncryptableItem, Serializable {
      * @throws KeyCrypterException if this ECKey doesn't have a private part.
      */
     public ECDSASignature sign(Sha256Hash input, @Nullable KeyParameter aesKey) throws KeyCrypterException {
-        if (isEncrypted()) {
+        KeyCrypter crypter = getKeyCrypter();
+        if (crypter != null) {
             if (aesKey == null)
-                throw new KeyCrypterException("This ECKey is encrypted but no decryption key has been supplied.");
-            return decrypt(getKeyCrypter(), aesKey).sign(input);
+                throw new KeyIsEncryptedException();
+            return decrypt(crypter, aesKey).sign(input);
         } else {
             // No decryption of private key required.
             if (priv == null)
-                throw new KeyCrypterException("This ECKey does not have the private key necessary for signing.");
+                throw new MissingPrivateKeyException();
         }
         return doSign(input, priv);
     }
@@ -704,7 +705,7 @@ public class ECKey implements EncryptableItem, Serializable {
      */
     public String signMessage(String message, @Nullable KeyParameter aesKey) throws KeyCrypterException {
         if (priv == null)
-            throw new IllegalStateException("This ECKey does not have the private key necessary for signing.");
+            throw new MissingPrivateKeyException();
         byte[] data = Utils.formatMessageForSigning(message);
         Sha256Hash hash = Sha256Hash.createDouble(data);
         ECDSASignature sig = sign(hash, aesKey);
@@ -1046,5 +1047,11 @@ public class ECKey implements EncryptableItem, Serializable {
     @Nullable
     public KeyCrypter getKeyCrypter() {
         return keyCrypter;
+    }
+
+    public static class MissingPrivateKeyException extends RuntimeException {
+    }
+
+    public static class KeyIsEncryptedException extends MissingPrivateKeyException {
     }
 }
