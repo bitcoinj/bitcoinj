@@ -1,5 +1,6 @@
 /**
  * Copyright 2011 Google Inc.
+ * Copyright 2014 Andreas Schildbach
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1231,9 +1232,24 @@ public class WalletTest extends TestWithWallet {
 
         // Wait for an auto-save to occur.
         latch.await();
-        assertFalse(hash4.equals(Sha256Hash.hashFileContents(f)));  // File has now changed.
+        Sha256Hash hash5 = Sha256Hash.hashFileContents(f);
+        assertFalse(hash4.equals(hash5));  // File has now changed.
         assertNotNull(results[0]);
         assertEquals(f, results[1]);
+
+        // Now we shutdown auto-saving and expect wallet changes to remain unsaved, even "important" changes.
+        wallet.shutdownAutosaveAndWait();
+        results[0] = results[1] = null;
+        ECKey key2 = new ECKey();
+        wallet.addKey(key2);
+        assertEquals(hash5, Sha256Hash.hashFileContents(f)); // File has NOT changed.
+        Transaction t2 = createFakeTx(params, toNanoCoins(5, 0), key2);
+        Block b3 = createFakeBlock(blockStore, t2).block;
+        chain.add(b3);
+        Thread.sleep(2000); // Wait longer than autosave delay. TODO Fix the racyness.
+        assertEquals(hash5, Sha256Hash.hashFileContents(f)); // File has still NOT changed.
+        assertNull(results[0]);
+        assertNull(results[1]);
     }
 
     @Test
