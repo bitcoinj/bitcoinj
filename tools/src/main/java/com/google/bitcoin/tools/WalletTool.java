@@ -389,7 +389,11 @@ public class WalletTool {
             System.err.println("This wallet is not encrypted.");
             return;
         }
-        wallet.decrypt(password);
+        try {
+            wallet.decrypt(password);
+        } catch (KeyCrypterException e) {
+            System.err.println("Password incorrect.");
+        }
     }
 
     private static void addAddr() {
@@ -729,7 +733,11 @@ public class WalletTool {
                 }
             }
         } else {
-            peers.addPeerDiscovery(new DnsDiscovery(params));
+            if (params == RegTestParams.get()) {
+                peers.addAddress(PeerAddress.localhost(params));
+            } else {
+                peers.addPeerDiscovery(new DnsDiscovery(params));
+            }
         }
     }
 
