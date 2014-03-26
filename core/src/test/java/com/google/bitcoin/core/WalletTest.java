@@ -98,6 +98,12 @@ public class WalletTest extends TestWithWallet {
     }
 
     @Test
+    public void getSeedAsWords1() {
+        // Can't verify much here as the wallet is random each time. We could fix the RNG for the unit tests and solve.
+        assertEquals(12, wallet.getKeyChainSeed().toMnemonicCode().size());
+    }
+
+    @Test
     public void basicSpending() throws Exception {
         basicSpendingCommon(wallet, myAddress, new ECKey().toAddress(params), false);
     }
