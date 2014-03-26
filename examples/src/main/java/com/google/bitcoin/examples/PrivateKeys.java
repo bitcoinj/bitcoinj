@@ -46,7 +46,7 @@ public class PrivateKeys {
                 key = dumpedPrivateKey.getKey();
             } else {
                 BigInteger privKey = Base58.decodeToBigInteger(args[0]);
-                key = new ECKey(privKey);
+                key = ECKey.fromPrivate(privKey);
             }
             System.out.println("Address from private key is: " + key.toAddress(params).toString());
             // And the address ...
@@ -54,7 +54,7 @@ public class PrivateKeys {
 
             // Import the private key to a fresh wallet.
             Wallet wallet = new Wallet(params);
-            wallet.addKey(key);
+            wallet.importKey(key);
 
             // Find the transactions that involve those coins.
             final MemoryBlockStore blockStore = new MemoryBlockStore(params);

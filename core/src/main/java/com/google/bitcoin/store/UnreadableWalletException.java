@@ -12,4 +12,10 @@ public class UnreadableWalletException extends Exception {
     public UnreadableWalletException(String s, Throwable t) {
         super(s, t);
     }
+
+    public static class BadPassword extends UnreadableWalletException {
+        public BadPassword() {
+            super("Password incorrect");
+        }
+    }
 }

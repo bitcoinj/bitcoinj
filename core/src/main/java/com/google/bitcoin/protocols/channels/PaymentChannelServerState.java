@@ -119,7 +119,7 @@ public class PaymentChannelServerState {
             this.broadcaster = checkNotNull(broadcaster);
             this.multisigContract = checkNotNull(storedServerChannel.contract);
             this.multisigScript = multisigContract.getOutput(0).getScriptPubKey();
-            this.clientKey = new ECKey(null, multisigScript.getChunks().get(1).data);
+            this.clientKey = ECKey.fromPublicOnly(multisigScript.getChunks().get(1).data);
             this.clientOutput = checkNotNull(storedServerChannel.clientOutput);
             this.refundTransactionUnlockTimeSecs = storedServerChannel.refundTransactionUnlockTimeSecs;
             this.serverKey = checkNotNull(storedServerChannel.myKey);
@@ -192,7 +192,7 @@ public class PaymentChannelServerState {
 
         // Sign the refund tx with the scriptPubKey and return the signature. We don't have the spending transaction
         // so do the steps individually.
-        clientKey = new ECKey(null, clientMultiSigPubKey);
+        clientKey = ECKey.fromPublicOnly(clientMultiSigPubKey);
         Script multisigPubKey = ScriptBuilder.createMultiSigOutputScript(2, ImmutableList.of(clientKey, serverKey));
         // We are really only signing the fact that the transaction has a proper lock time and don't care about anything
         // else, so we sign SIGHASH_NONE and SIGHASH_ANYONECANPAY.

@@ -173,7 +173,7 @@ public class PeerGroup extends AbstractExecutionThreadService implements Transac
             queueRecalc(true);
         }
 
-        @Override public void onKeysAdded(Wallet wallet, List<ECKey> keys) {
+        @Override public void onKeysAdded(List<ECKey> keys) {
             queueRecalc(true);
         }
 

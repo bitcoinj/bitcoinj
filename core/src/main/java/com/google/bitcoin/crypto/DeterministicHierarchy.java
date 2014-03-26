@@ -25,6 +25,9 @@ import java.util.Map;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
+// TODO: This whole API feels a bit object heavy. Do we really need ChildNumber and so many maps, etc?
+// TODO: Should we be representing this using an actual tree arrangement in memory instead of a bunch of hashmaps?
+
 /**
  * <p>A DeterministicHierarchy calculates and keeps a whole tree (hierarchy) of keys originating from a single
  * root key. This implements part of the BIP 32 specification. A deterministic key tree is useful because
@@ -46,8 +49,8 @@ public class DeterministicHierarchy implements Serializable {
 
     private final Map<ImmutableList<ChildNumber>, DeterministicKey> keys = Maps.newHashMap();
     private final ImmutableList<ChildNumber> rootPath;
-    private final Map<ImmutableList<ChildNumber>, ChildNumber> lastPrivDerivedNumbers = Maps.newHashMap();
-    private final Map<ImmutableList<ChildNumber>, ChildNumber> lastPubDerivedNumbers = Maps.newHashMap();
+    // Keep track of how many child keys each node has. This is kind of weak.
+    private final Map<ImmutableList<ChildNumber>, ChildNumber> lastChildNumbers = Maps.newHashMap();
 
     /**
      * Constructs a new hierarchy rooted at the given key. Note that this does not have to be the top of the tree.
@@ -55,11 +58,21 @@ public class DeterministicHierarchy implements Serializable {
      */
     public DeterministicHierarchy(DeterministicKey rootKey) {
         putKey(rootKey);
-        rootPath = rootKey.getChildNumberPath();
+        rootPath = rootKey.getPath();
     }
 
-    private void putKey(DeterministicKey key) {
-        keys.put(key.getChildNumberPath(), key);
+    /**
+     * Inserts a key into the heirarchy. Used during deserialization: you normally don't need this. Keys must be
+     * inserted in order.
+     */
+    public void putKey(DeterministicKey key) {
+        ImmutableList<ChildNumber> path = key.getPath();
+        // Update our tracking of what the next child in each branch of the tree should be. Just assume that keys are
+        // inserted in order here.
+        final DeterministicKey parent = key.getParent();
+        if (parent != null)
+            lastChildNumbers.put(parent.getPath(), key.getChildNumber());
+        keys.put(path, key);
     }
 
     /**
@@ -76,7 +89,9 @@ public class DeterministicHierarchy implements Serializable {
                 ? ImmutableList.<ChildNumber>builder().addAll(rootPath).addAll(path).build()
                 : ImmutableList.copyOf(path);
         if (!keys.containsKey(absolutePath)) {
-            checkArgument(create, "No key found for {} path {}.", relativePath ? "relative" : "absolute", path);
+            if (!create)
+                throw new IllegalArgumentException(String.format("No key found for %s path %s.",
+                    relativePath ? "relative" : "absolute", HDUtils.formatPath(path)));
             checkArgument(absolutePath.size() > 0, "Can't derive the master key: nothing to derive from.");
             DeterministicKey parent = get(absolutePath.subList(0, absolutePath.size() - 1), relativePath, true);
             putKey(HDKeyDerivation.deriveChildKey(parent, absolutePath.get(absolutePath.size() - 1)));
@@ -100,7 +115,7 @@ public class DeterministicHierarchy implements Serializable {
         int nAttempts = 0;
         while (nAttempts++ < MAX_CHILD_DERIVATION_ATTEMPTS) {
             try {
-                ChildNumber createChildNumber = getNextChildNumberToDerive(parent.getChildNumberPath(), privateDerivation);
+                ChildNumber createChildNumber = getNextChildNumberToDerive(parent.getPath(), privateDerivation);
                 return deriveChild(parent, createChildNumber);
             } catch (HDDerivationException ignore) { }
         }
@@ -108,11 +123,18 @@ public class DeterministicHierarchy implements Serializable {
     }
 
     private ChildNumber getNextChildNumberToDerive(ImmutableList<ChildNumber> path, boolean privateDerivation) {
-        Map<ImmutableList<ChildNumber>, ChildNumber> lastDerivedNumbers = getLastDerivedNumbers(privateDerivation);
-        ChildNumber lastChildNumber = lastDerivedNumbers.get(path);
-        ChildNumber nextChildNumber = new ChildNumber(lastChildNumber != null ? lastChildNumber.getChildNumber() + 1 : 0, privateDerivation);
-        lastDerivedNumbers.put(path, nextChildNumber);
+        ChildNumber lastChildNumber = lastChildNumbers.get(path);
+        ChildNumber nextChildNumber = new ChildNumber(lastChildNumber != null ? lastChildNumber.num() + 1 : 0, privateDerivation);
+        lastChildNumbers.put(path, nextChildNumber);
         return nextChildNumber;
+    }
+
+    public int getNumChildren(ImmutableList<ChildNumber> path) {
+        final ChildNumber cn = lastChildNumbers.get(path);
+        if (cn == null)
+            return 0;
+        else
+            return cn.num() + 1;   // children start with zero based childnumbers
     }
 
     /**
@@ -140,9 +162,5 @@ public class DeterministicHierarchy implements Serializable {
      */
     public DeterministicKey getRootKey() {
         return get(rootPath, false, false);
-    }
-
-    private Map<ImmutableList<ChildNumber>, ChildNumber> getLastDerivedNumbers(boolean privateDerivation) {
-        return privateDerivation ? lastPrivDerivedNumbers : lastPubDerivedNumbers;
     }
 }

@@ -30,7 +30,7 @@ public class AlertMessageTest {
 
     @Before
     public void setUp() throws Exception {
-        final ECKey key = new ECKey(TEST_KEY_PRIV, null);
+        final ECKey key = ECKey.fromPrivate(TEST_KEY_PRIV);
         params = new UnitTestParams() {
             @Override
             public byte[] getAlertSigningKey() {

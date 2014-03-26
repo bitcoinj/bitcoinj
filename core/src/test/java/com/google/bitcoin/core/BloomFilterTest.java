@@ -57,17 +57,13 @@ public class BloomFilterTest {
         assertTrue(addr.toString().equals("17Wx1GQfyPTNWpQMHrTwRSMTCAonSiZx9e"));
         
         Wallet wallet = new Wallet(params);
-        // Check that the wallet was created with no keys
-        // If wallets ever get created with keys, this test needs redone.
-        for (ECKey key : wallet.getKeys())
-            fail();
-        wallet.addKey(privKey.getKey());
+        wallet.importKey(privKey.getKey());
         // Add a random key which happens to have been used in a recent generation
-        wallet.addKey(new ECKey(null, Hex.decode("03cb219f69f1b49468bd563239a86667e74a06fcba69ac50a08a5cbc42a5808e99")));
+        wallet.importKey(ECKey.fromPublicOnly(Hex.decode("03cb219f69f1b49468bd563239a86667e74a06fcba69ac50a08a5cbc42a5808e99")));
         wallet.commitTx(new Transaction(params, Hex.decode("01000000010000000000000000000000000000000000000000000000000000000000000000ffffffff0d038754030114062f503253482fffffffff01c05e559500000000232103cb219f69f1b49468bd563239a86667e74a06fcba69ac50a08a5cbc42a5808e99ac00000000")));
         
         // We should have 2 per pubkey, and one for the pay-2-pubkey output we have
-        assertTrue(wallet.getBloomFilterElementCount() == 5);
+        assertEquals(5, wallet.getBloomFilterElementCount());
         
         BloomFilter filter = wallet.getBloomFilter(wallet.getBloomFilterElementCount(), 0.001, 0);
         

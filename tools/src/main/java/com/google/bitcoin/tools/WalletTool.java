@@ -148,7 +148,9 @@ public class WalletTool {
         DELETE_KEY,
         SYNC,
         RESET,
-        SEND
+        SEND,
+        ENCRYPT,
+        DECRYPT,
     }
 
     public enum WaitForEnum {
@@ -215,7 +217,8 @@ public class WalletTool {
 
         final String HELP_TEXT = Resources.toString(WalletTool.class.getResource("wallet-tool-help.txt"), Charsets.UTF_8);
 
-        if (args.length == 0 || options.has("help") || options.nonOptionArguments().size() < 1) {
+        if (args.length == 0 || options.has("help") ||
+                options.nonOptionArguments().size() < 1 || options.nonOptionArguments().contains("help")) {
             System.out.println(HELP_TEXT);
             return;
         }
@@ -338,6 +341,8 @@ public class WalletTool {
                     return;
                 }
                 break;
+            case ENCRYPT: encrypt(); break;
+            case DECRYPT: decrypt(); break;
         }
 
         if (!wallet.isConsistent()) {
@@ -364,6 +369,34 @@ public class WalletTool {
             saveWallet(walletFile);
         }
         shutdown();
+    }
+
+    private static void encrypt() {
+        if (password == null) {
+            System.err.println("You must provide a --password");
+            return;
+        }
+        if (wallet.isEncrypted()) {
+            System.err.println("This wallet is already encrypted.");
+            return;
+        }
+        wallet.encrypt(password);
+    }
+
+    private static void decrypt() {
+        if (password == null) {
+            System.err.println("You must provide a --password");
+            return;
+        }
+        if (!wallet.isEncrypted()) {
+            System.err.println("This wallet is not encrypted.");
+            return;
+        }
+        try {
+            wallet.decrypt(password);
+        } catch (KeyCrypterException e) {
+            System.err.println("Password incorrect.");
+        }
     }
 
     private static void addAddr() {
@@ -395,10 +428,9 @@ public class WalletTool {
                 try {
                     BigInteger value = Utils.toNanoCoins(parts[1]);
                     if (destination.startsWith("0")) {
-                        boolean compressed = destination.startsWith("02") || destination.startsWith("03");
                         // Treat as a raw public key.
-                        BigInteger pubKey = new BigInteger(destination, 16);
-                        ECKey key = new ECKey(null, pubKey.toByteArray(), compressed);
+                        byte[] pubKey = new BigInteger(destination, 16).toByteArray();
+                        ECKey key = ECKey.fromPublicOnly(pubKey);
                         t.addOutput(value, key);
                     } else {
                         // Treat as an address.
@@ -767,10 +799,8 @@ public class WalletTool {
             return;
         }
         wallet = new Wallet(params);
-        if (password != null) {
+        if (password != null)
             wallet.encrypt(password);
-            wallet.addNewEncryptedKey(password);
-        }
         wallet.saveToFile(walletFile);
     }
 
@@ -786,6 +816,16 @@ public class WalletTool {
     }
 
     private static void addKey() {
+        // If we're being given precise details, we have to import the key.
+        if (options.has("privkey") || options.has("pubkey")) {
+            importKey();
+        } else {
+            ECKey key = wallet.freshReceiveKey();
+            System.out.println(key.toAddress(params) + " " + key);
+        }
+    }
+
+    private static void importKey() {
         ECKey key;
         long creationTimeSeconds = getCreationTimeSeconds();
         if (options.has("privkey")) {
@@ -805,7 +845,7 @@ public class WalletTool {
                     System.err.println("Could not understand --privkey as either hex or base58: " + data);
                     return;
                 }
-                key = new ECKey(new BigInteger(1, decode));
+                key = ECKey.fromPrivate(new BigInteger(1, decode));
             }
             if (options.has("pubkey")) {
                 // Give the user a hint.
@@ -814,13 +854,10 @@ public class WalletTool {
             key.setCreationTimeSeconds(creationTimeSeconds);
         } else if (options.has("pubkey")) {
             byte[] pubkey = Utils.parseAsHexOrBase58((String) options.valueOf("pubkey"));
-            key = new ECKey(null, pubkey);
+            key = ECKey.fromPublicOnly(pubkey);
             key.setCreationTimeSeconds(creationTimeSeconds);
         } else {
-            // Freshly generated key.
-            key = new ECKey();
-            if (creationTimeSeconds > 0)
-                key.setCreationTimeSeconds(creationTimeSeconds);
+            throw new IllegalStateException();
         }
         if (wallet.findKeyFromPubKey(key.getPubKey()) != null) {
             System.err.println("That key already exists in this wallet.");
@@ -834,11 +871,11 @@ public class WalletTool {
                 }
                 key = key.encrypt(wallet.getKeyCrypter(), wallet.getKeyCrypter().deriveKey(password));
             }
-            wallet.addKey(key);
+            wallet.importKey(key);
+            System.out.println(key.toAddress(params) + " " + key);
         } catch (KeyCrypterException kce) {
             System.err.println("There was an encryption related error when adding the key. The error was '" + kce.getMessage() + "'.");
         }
-        System.out.println(key.toAddress(params) + " " + key);
     }
 
     private static long getCreationTimeSeconds() {

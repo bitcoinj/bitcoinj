@@ -161,8 +161,6 @@ public class PaymentChannelClientState {
         this.wallet = checkNotNull(wallet);
         initWalletListeners();
         this.serverMultisigKey = checkNotNull(serverMultisigKey);
-        if (!myKey.isPubKeyCanonical() || !serverMultisigKey.isPubKeyCanonical())
-            throw new VerificationException("Pubkey was not canonical (ie non-standard)");
         this.myKey = checkNotNull(myKey);
         this.valueToMe = this.totalValue = checkNotNull(value);
         this.expiryTime = expiryTimeInSeconds;
