@@ -573,6 +573,22 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
         return findKeyFromPubKey(pubkey) != null;
     }
 
+    /**
+     * Returns the immutable seed for the current active HD chain.
+     * @throws com.google.bitcoin.core.ECKey.MissingPrivateKeyException if the seed is unavailable (watching wallet)
+     */
+    public DeterministicSeed getKeyChainSeed() {
+        lock.lock();
+        try {
+            DeterministicSeed seed = keychain.getActiveKeyChain().getSeed();
+            if (seed == null)
+                throw new ECKey.MissingPrivateKeyException();
+            return seed;
+        } finally {
+            lock.unlock();
+        }
+    }
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //
     // Serialization support
