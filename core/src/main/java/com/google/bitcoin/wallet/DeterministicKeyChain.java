@@ -422,7 +422,8 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                 } else {
                     throw new UnreadableWalletException("Malformed key proto: " + key.toString());
                 }
-                log.info("Deserializing: DETERMINISTIC_ROOT_SEED: {}", seed);
+                if (log.isDebugEnabled())
+                    log.debug("Deserializing: DETERMINISTIC_ROOT_SEED: {}", seed);
             } else if (t == Protos.Key.Type.DETERMINISTIC_KEY) {
                 if (!key.hasDeterministicKey())
                     throw new UnreadableWalletException("Deterministic key missing extra data: " + key.toString());
@@ -477,7 +478,8 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                         detkey = new DeterministicKey(immutablePath, chainCode, pubkey, null, parent);
                     }
                 }
-                log.info("Deserializing: DETERMINISTIC_KEY: {}", detkey);
+                if (log.isDebugEnabled())
+                    log.debug("Deserializing: DETERMINISTIC_KEY: {}", detkey);
                 if (!isWatchingAccountKey) {
                     // If the non-encrypted case, the non-leaf keys (account, internal, external) have already been
                     // rederived and inserted at this point and the two lines below are just a no-op. In the encrypted
