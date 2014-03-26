@@ -29,10 +29,7 @@ import org.spongycastle.crypto.params.KeyParameter;
 
 import javax.annotation.Nullable;
 import java.security.SecureRandom;
-import java.util.ArrayList;
-import java.util.EnumMap;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.Executor;
 
 import static com.google.common.base.Preconditions.*;
@@ -384,8 +381,14 @@ public class KeyChainGroup implements PeerFilterProvider {
                 builder.append("Seed as hex:   ");
                 builder.append(seed.toHexString());
                 builder.append(newline);
+                builder.append("Seed birthday: ");
+                builder.append(seed.getCreationTimeSeconds());
+                builder.append("  [" + new Date(seed.getCreationTimeSeconds() * 1000) + "]");
+                builder.append(newline);
+                builder.append(newline);
             } else {
                 builder.append("Seed is encrypted");
+                builder.append(newline);
                 builder.append(newline);
             }
             for (ECKey key : chain.getKeys())
