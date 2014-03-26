@@ -191,6 +191,10 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
         this(params, new KeyChainGroup());
     }
 
+    public static Wallet fromSeed(NetworkParameters params, DeterministicSeed seed) {
+        return new Wallet(params, new KeyChainGroup(seed));
+    }
+
     // TODO: When this class moves to the Wallet package, along with the protobuf serializer, then hide this.
     /** For internal use only. */
     public Wallet(NetworkParameters params, KeyChainGroup keyChainGroup) {
