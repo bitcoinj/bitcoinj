@@ -19,10 +19,10 @@ package com.google.bitcoin.store;
 
 import com.google.bitcoin.core.*;
 import com.google.bitcoin.core.TransactionConfidence.ConfidenceType;
-import com.google.bitcoin.crypto.EncryptedPrivateKey;
 import com.google.bitcoin.crypto.KeyCrypter;
 import com.google.bitcoin.crypto.KeyCrypterScrypt;
 import com.google.bitcoin.script.Script;
+import com.google.bitcoin.wallet.KeyChainGroup;
 import com.google.bitcoin.wallet.WalletTransaction;
 import com.google.common.collect.Lists;
 import com.google.protobuf.ByteString;
@@ -35,17 +35,14 @@ import org.bitcoinj.wallet.Protos.Wallet.EncryptionType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.ListIterator;
-import java.util.Map;
+import java.util.*;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -55,7 +52,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * a data interchange format developed by Google with an efficient binary representation, a type safe specification
  * language and compilers that generate code to work with those data structures for many languages. Protocol buffers
  * can have their format evolved over time: conceptually they represent data using (tag, length, value) tuples. The
- * format is defined by the <tt>bitcoin.proto</tt> file in the bitcoinj source distribution.<p>
+ * format is defined by the <tt>wallet.proto</tt> file in the bitcoinj source distribution.<p>
  *
  * This class is used through its static methods. The most common operations are writeWallet and readWallet, which do
  * the obvious operations on Output/InputStreams. You can use a {@link java.io.ByteArrayInputStream} and equivalent
@@ -127,40 +124,7 @@ public class WalletProtobufSerializer {
             walletBuilder.addTransaction(txProto);
         }
 
-        for (ECKey key : wallet.getKeys()) {
-            Protos.Key.Builder keyBuilder = Protos.Key.newBuilder().setCreationTimestamp(key.getCreationTimeSeconds() * 1000)
-                                                         // .setLabel() TODO
-                                                            .setType(Protos.Key.Type.ORIGINAL);
-            if (key.getPrivKeyBytes() != null)
-                keyBuilder.setPrivateKey(ByteString.copyFrom(key.getPrivKeyBytes()));
-
-            EncryptedPrivateKey encryptedPrivateKey = key.getEncryptedPrivateKey();
-            if (encryptedPrivateKey != null) {
-                // Key is encrypted.
-                Protos.EncryptedPrivateKey.Builder encryptedKeyBuilder = Protos.EncryptedPrivateKey.newBuilder()
-                    .setEncryptedPrivateKey(ByteString.copyFrom(encryptedPrivateKey.getEncryptedBytes()))
-                    .setInitialisationVector(ByteString.copyFrom(encryptedPrivateKey.getInitialisationVector()));
-
-                if (key.getKeyCrypter() == null) {
-                    throw new IllegalStateException("The encrypted key " + key.toString() + " has no KeyCrypter.");
-                } else {
-                    // If it is a Scrypt + AES encrypted key, set the persisted key type.
-                    if (key.getKeyCrypter().getUnderstoodEncryptionType() == Protos.Wallet.EncryptionType.ENCRYPTED_SCRYPT_AES) {
-                        keyBuilder.setType(Protos.Key.Type.ENCRYPTED_SCRYPT_AES);
-                    } else {
-                        throw new IllegalArgumentException("The key " + key.toString() + " is encrypted with a KeyCrypter of type " + key.getKeyCrypter().getUnderstoodEncryptionType() +
-                                ". This WalletProtobufSerialiser does not understand that type of encryption.");
-                    }
-                }
-                keyBuilder.setEncryptedPrivateKey(encryptedKeyBuilder);
-            }
-
-            // We serialize the public key even if the private key is present for speed reasons: we don't want to do
-            // lots of slow EC math to load the wallet, we prefer to store the redundant data instead. It matters more
-            // on mobile platforms.
-            keyBuilder.setPublicKey(ByteString.copyFrom(key.getPubKey()));
-            walletBuilder.addKey(keyBuilder);
-        }
+        walletBuilder.addAllKey(wallet.serializeKeychainToProtobuf());
 
         for (Script script : wallet.getWatchedScripts()) {
             Protos.Script protoScript =
@@ -372,9 +336,7 @@ public class WalletProtobufSerializer {
             NetworkParameters params = NetworkParameters.fromID(paramsID);
             if (params == null)
                 throw new UnreadableWalletException("Unknown network parameters ID " + paramsID);
-            Wallet wallet = new Wallet(params);
-            readWallet(walletProto, wallet);
-            return wallet;
+            return readWallet(params, null, walletProto);
         } catch (IOException e) {
             throw new UnreadableWalletException("Could not parse input stream to protobuf", e);
         }
@@ -391,45 +353,18 @@ public class WalletProtobufSerializer {
      *
      * @throws UnreadableWalletException thrown in various error conditions (see description).
      */
-    public void readWallet(Protos.Wallet walletProto, Wallet wallet) throws UnreadableWalletException {
+    public Wallet readWallet(NetworkParameters params, @Nullable WalletExtension[] extensions,
+                             Protos.Wallet walletProto) throws UnreadableWalletException {
         // Read the scrypt parameters that specify how encryption and decryption is performed.
+        KeyChainGroup chain;
         if (walletProto.hasEncryptionParameters()) {
             Protos.ScryptParameters encryptionParameters = walletProto.getEncryptionParameters();
-            wallet.setKeyCrypter(new KeyCrypterScrypt(encryptionParameters));
+            final KeyCrypterScrypt keyCrypter = new KeyCrypterScrypt(encryptionParameters);
+            chain = KeyChainGroup.fromProtobufEncrypted(walletProto.getKeyList(), keyCrypter);
+        } else {
+            chain = KeyChainGroup.fromProtobufUnencrypted(walletProto.getKeyList());
         }
-
-        if (walletProto.hasDescription()) {
-            wallet.setDescription(walletProto.getDescription());
-        }
-
-        // Read all keys
-        for (Protos.Key keyProto : walletProto.getKeyList()) {
-            if (!(keyProto.getType() == Protos.Key.Type.ORIGINAL || keyProto.getType() == Protos.Key.Type.ENCRYPTED_SCRYPT_AES)) {
-                throw new UnreadableWalletException("Unknown key type in wallet, type = " + keyProto.getType());
-            }
-
-            byte[] privKey = keyProto.hasPrivateKey() ? keyProto.getPrivateKey().toByteArray() : null;
-            EncryptedPrivateKey encryptedPrivateKey = null;
-            if (keyProto.hasEncryptedPrivateKey()) {
-                Protos.EncryptedPrivateKey encryptedPrivateKeyProto = keyProto.getEncryptedPrivateKey();
-                encryptedPrivateKey = new EncryptedPrivateKey(encryptedPrivateKeyProto.getInitialisationVector().toByteArray(),
-                        encryptedPrivateKeyProto.getEncryptedPrivateKey().toByteArray());
-            }
-
-            byte[] pubKey = keyProto.hasPublicKey() ? keyProto.getPublicKey().toByteArray() : null;
-
-            ECKey ecKey;
-            final KeyCrypter keyCrypter = wallet.getKeyCrypter();
-            if (keyCrypter != null && keyCrypter.getUnderstoodEncryptionType() != EncryptionType.UNENCRYPTED) {
-                // If the key is encrypted construct an ECKey using the encrypted private key bytes.
-                ecKey = new ECKey(encryptedPrivateKey, pubKey, keyCrypter);
-            } else {
-                // Construct an unencrypted private key.
-                ecKey = new ECKey(privKey, pubKey);
-            }
-            ecKey.setCreationTimeSeconds((keyProto.getCreationTimestamp() + 500) / 1000);
-            wallet.addKey(ecKey);
-        }
+        Wallet wallet = new Wallet(params, chain);
 
         List<Script> scripts = Lists.newArrayList();
         for (Protos.Script protoScript : walletProto.getWatchedScriptList()) {
@@ -444,6 +379,10 @@ public class WalletProtobufSerializer {
         }
 
         wallet.addWatchedScripts(scripts);
+
+        if (walletProto.hasDescription()) {
+            wallet.setDescription(walletProto.getDescription());
+        }
 
         // Read all transactions and insert into the txMap.
         for (Protos.Transaction txProto : walletProto.getTransactionList()) {
@@ -474,7 +413,7 @@ public class WalletProtobufSerializer {
             wallet.setKeyRotationTime(new Date(walletProto.getKeyRotationTime() * 1000));
         }
 
-        loadExtensions(wallet, walletProto);
+        loadExtensions(wallet, extensions != null ? extensions : new WalletExtension[0], walletProto);
 
         if (walletProto.hasVersion()) {
             wallet.setVersion(walletProto.getVersion());
@@ -482,10 +421,14 @@ public class WalletProtobufSerializer {
 
         // Make sure the object can be re-used to read another wallet without corruption.
         txMap.clear();
+
+        return wallet;
     }
 
-    private void loadExtensions(Wallet wallet, Protos.Wallet walletProto) throws UnreadableWalletException {
-        final Map<String, WalletExtension> extensions = wallet.getExtensions();
+    private void loadExtensions(Wallet wallet, WalletExtension[] extensionsList, Protos.Wallet walletProto) throws UnreadableWalletException {
+        final Map<String, WalletExtension> extensions = new HashMap<String, WalletExtension>();
+        for (WalletExtension e : extensionsList)
+            extensions.put(e.getWalletExtensionID(), e);
         for (Protos.Extension extProto : walletProto.getExtensionList()) {
             String id = extProto.getId();
             WalletExtension extension = extensions.get(id);
@@ -500,6 +443,7 @@ public class WalletProtobufSerializer {
                 log.info("Loading wallet extension {}", id);
                 try {
                     extension.deserializeWalletExtension(wallet, extProto.getData().toByteArray());
+                    wallet.addExtension(extension);
                 } catch (Exception e) {
                     if (extProto.getMandatory() && requireMandatoryExtensions)
                         throw new UnreadableWalletException("Could not parse mandatory extension in wallet: " + id);

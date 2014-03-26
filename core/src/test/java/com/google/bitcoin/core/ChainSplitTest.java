@@ -56,12 +56,13 @@ public class ChainSplitTest {
         Wallet.SendRequest.DEFAULT_FEE_PER_KB = BigInteger.ZERO;
         unitTestParams = UnitTestParams.get();
         wallet = new Wallet(unitTestParams);
-        wallet.addKey(new ECKey());
-        wallet.addKey(new ECKey());
+        wallet.setKeychainLookaheadSize(5);  // Make tests faster.
+        ECKey key1 = wallet.freshReceiveKey();
+        ECKey key2 = wallet.freshReceiveKey();
         blockStore = new MemoryBlockStore(unitTestParams);
         chain = new BlockChain(unitTestParams, wallet, blockStore);
-        coinsTo = wallet.getKeys().get(0).toAddress(unitTestParams);
-        coinsTo2 = wallet.getKeys().get(1).toAddress(unitTestParams);
+        coinsTo = key1.toAddress(unitTestParams);
+        coinsTo2 = key2.toAddress(unitTestParams);
         someOtherGuy = new ECKey().toAddress(unitTestParams);
     }
 
@@ -583,7 +584,7 @@ public class ChainSplitTest {
         }, Threading.SAME_THREAD);
 
         Block b1 = unitTestParams.getGenesisBlock().createNextBlock(someOtherGuy);
-        final ECKey coinsTo2 = wallet.getKeys().get(1);
+        final ECKey coinsTo2 = wallet.freshReceiveKey();
         Block b2 = b1.createNextBlockWithCoinbase(coinsTo2.getPubKey());
         Block b3 = b2.createNextBlock(someOtherGuy);
 

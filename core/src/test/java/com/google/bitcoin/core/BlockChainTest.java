@@ -79,12 +79,12 @@ public class BlockChainTest {
                 }
             }
         };
-        wallet.addKey(new ECKey());
+        wallet.freshReceiveKey();
 
         resetBlockStore();
         chain = new BlockChain(unitTestParams, wallet, blockStore);
 
-        coinbaseTo = wallet.getKeys().get(0).toAddress(unitTestParams);
+        coinbaseTo = wallet.currentReceiveKey().toAddress(unitTestParams);
     }
 
     @After
@@ -124,7 +124,7 @@ public class BlockChainTest {
         // Quick check that we can actually receive coins.
         Transaction tx1 = createFakeTx(unitTestParams,
                                        Utils.toNanoCoins(1, 0),
-                                       wallet.getKeys().get(0).toAddress(unitTestParams));
+                                       wallet.currentReceiveKey().toAddress(unitTestParams));
         Block b1 = createFakeBlock(blockStore, tx1).block;
         chain.add(b1);
         assertTrue(wallet.getBalance().signum() > 0);
@@ -136,7 +136,7 @@ public class BlockChainTest {
         // there isn't any such tx present (as an optimization).
         Transaction tx1 = createFakeTx(unitTestParams,
                                        Utils.toNanoCoins(1, 0),
-                                       wallet.getKeys().get(0).toAddress(unitTestParams));
+                                       wallet.currentReceiveKey().toAddress(unitTestParams));
         Block b1 = createFakeBlock(blockStore, tx1).block;
         chain.add(b1);
         resetBlockStore();
@@ -268,8 +268,7 @@ public class BlockChainTest {
         // considered relevant.
         Address somebodyElse = new ECKey().toAddress(unitTestParams);
         Block b1 = unitTestParams.getGenesisBlock().createNextBlock(somebodyElse);
-        ECKey key = new ECKey();
-        wallet.addKey(key);
+        ECKey key = wallet.freshReceiveKey();
         Address addr = key.toAddress(unitTestParams);
         // Create a tx that gives us some coins, and another that spends it to someone else in the same block.
         Transaction t1 = TestUtils.createFakeTx(unitTestParams, Utils.toNanoCoins(1, 0), addr);
@@ -289,14 +288,13 @@ public class BlockChainTest {
 
         // Create a second wallet to receive the coinbase spend.
         Wallet wallet2 = new Wallet(unitTestParams);
-        ECKey receiveKey = new ECKey();
-        wallet2.addKey(receiveKey);
+        ECKey receiveKey = wallet2.freshReceiveKey();
         chain.addWallet(wallet2);
 
         Address addressToSendTo = receiveKey.toAddress(unitTestParams);
 
         // Create a block, sending the coinbase to the coinbaseTo address (which is in the wallet).
-        Block b1 = unitTestParams.getGenesisBlock().createNextBlockWithCoinbase(wallet.getKeys().get(0).getPubKey());
+        Block b1 = unitTestParams.getGenesisBlock().createNextBlockWithCoinbase(wallet.currentReceiveKey().getPubKey());
         chain.add(b1);
 
         // Check a transaction has been received.

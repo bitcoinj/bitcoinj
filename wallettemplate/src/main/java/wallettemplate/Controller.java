@@ -41,7 +41,7 @@ public class Controller {
 
     public void onBitcoinSetup() {
         bitcoin.wallet().addEventListener(new BalanceUpdater());
-        addressControl.setAddress(bitcoin.wallet().getKeys().get(0).toAddress(Main.params).toString());
+        addressControl.setAddress(bitcoin.wallet().currentReceiveKey().toAddress(Main.params).toString());
         refreshBalanceLabel();
     }
 

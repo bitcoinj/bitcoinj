@@ -16,10 +16,13 @@
 
 package com.google.bitcoin.crypto;
 
+import com.google.bitcoin.core.ECKey;
+import com.google.bitcoin.core.Sha256Hash;
 import org.junit.Test;
+import org.spongycastle.crypto.params.KeyParameter;
 import org.spongycastle.util.encoders.Hex;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 /**
  * This test is adapted from Armory's BIP 32 tests.
@@ -121,8 +124,67 @@ public class ChildKeyDerivationTest {
         }
     }
 
+    @Test
+    public void encryptedDerivation() throws Exception {
+        // Check that encrypting a parent key in the heirarchy and then deriving from it yields a DeterministicKey
+        // with no private key component, and that the private key bytes are derived on demand.
+        KeyCrypter scrypter = new KeyCrypterScrypt();
+        KeyParameter aesKey = scrypter.deriveKey("we never went to the moon");
+
+        DeterministicKey key1 = HDKeyDerivation.createMasterPrivateKey("it was all a hoax".getBytes());
+        DeterministicKey encryptedKey1 = key1.encrypt(scrypter, aesKey, null);
+        DeterministicKey decryptedKey1 = encryptedKey1.decrypt(scrypter, aesKey);
+        assertEquals(key1, decryptedKey1);
+
+        DeterministicKey key2 = HDKeyDerivation.deriveChildKey(key1, ChildNumber.ZERO);
+        DeterministicKey derivedKey2 = HDKeyDerivation.deriveChildKey(encryptedKey1, ChildNumber.ZERO);
+        assertTrue(derivedKey2.isEncrypted());   // parent is encrypted.
+        DeterministicKey decryptedKey2 = derivedKey2.decrypt(scrypter, aesKey);
+        assertFalse(decryptedKey2.isEncrypted());
+        assertEquals(key2, decryptedKey2);
+
+        Sha256Hash hash = Sha256Hash.create("the mainstream media won't cover it. why is that?".getBytes());
+        try {
+            derivedKey2.sign(hash);
+            fail();
+        } catch (ECKey.KeyIsEncryptedException e) {
+            // Ignored.
+        }
+        ECKey.ECDSASignature signature = derivedKey2.sign(hash, aesKey);
+        assertTrue(derivedKey2.verify(hash, signature));
+    }
+
+    @Test
+    public void pubOnlyDerivation() throws Exception {
+        DeterministicKey key1 = HDKeyDerivation.createMasterPrivateKey("satoshi lives!".getBytes());
+        DeterministicKey key2 = HDKeyDerivation.deriveChildKey(key1, ChildNumber.ZERO_HARDENED);
+        DeterministicKey key3 = HDKeyDerivation.deriveChildKey(key2, ChildNumber.ZERO);
+        DeterministicKey pubkey3 = HDKeyDerivation.deriveChildKey(key2.getPubOnly(), ChildNumber.ZERO);
+        assertEquals(key3.getPubKeyPoint(), pubkey3.getPubKeyPoint());
+    }
+
+    @Test
+    public void serializeToText() {
+        DeterministicKey key1 = HDKeyDerivation.createMasterPrivateKey("satoshi lives!".getBytes());
+        DeterministicKey key2 = HDKeyDerivation.deriveChildKey(key1, ChildNumber.ZERO_HARDENED);
+        {
+            final String pub58 = key1.serializePubB58();
+            final String priv58 = key1.serializePrivB58();
+            assertEquals("xpub661MyMwAqRbcF7mq7Aejj5xZNzFfgi3ABamE9FedDHVmViSzSxYTgAQGcATDo2J821q7Y9EAagjg5EP3L7uBZk11PxZU3hikL59dexfLkz3", pub58);
+            assertEquals("xprv9s21ZrQH143K2dhN197jMx1ppxRBHFKJpMqdLsF1ewxncv7quRED8N5nksxphju3W7naj1arF56L5PUEWfuSk8h73Sb2uh7bSwyXNrjzhAZ", priv58);
+            assertEquals(DeterministicKey.deserializeB58(null, priv58), key1);
+            assertEquals(DeterministicKey.deserializeB58(null, pub58).getPubKeyPoint(), key1.getPubKeyPoint());
+        }
+        {
+            final String pub58 = key2.serializePubB58();
+            final String priv58 = key2.serializePrivB58();
+            assertEquals(DeterministicKey.deserializeB58(key1, priv58), key2);
+            assertEquals(DeterministicKey.deserializeB58(key1, pub58).getPubKeyPoint(), key2.getPubKeyPoint());
+        }
+    }
+
     private static String hexEncodePub(DeterministicKey pubKey) {
-        return hexEncode(pubKey.getPubKeyBytes());
+        return hexEncode(pubKey.getPubKey());
     }
 
     private static String hexEncode(byte[] bytes) {

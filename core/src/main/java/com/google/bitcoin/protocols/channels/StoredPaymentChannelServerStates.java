@@ -23,6 +23,7 @@ import com.google.protobuf.ByteString;
 import net.jcip.annotations.GuardedBy;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
 import java.math.BigInteger;
 import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
@@ -39,7 +40,7 @@ public class StoredPaymentChannelServerStates implements WalletExtension {
     static final String EXTENSION_ID = StoredPaymentChannelServerStates.class.getName();
 
     @GuardedBy("lock") @VisibleForTesting final Map<Sha256Hash, StoredServerChannel> mapChannels = new HashMap<Sha256Hash, StoredServerChannel>();
-    private final Wallet wallet;
+    private Wallet wallet;
     private final TransactionBroadcaster broadcaster;
 
     private final Timer channelTimeoutHandler = new Timer(true);
@@ -59,8 +60,8 @@ public class StoredPaymentChannelServerStates implements WalletExtension {
      * Creates a new PaymentChannelServerStateManager and associates it with the given {@link Wallet} and
      * {@link TransactionBroadcaster} which are used to complete and announce payment transactions.
      */
-    public StoredPaymentChannelServerStates(Wallet wallet, TransactionBroadcaster broadcaster) {
-        this.wallet = checkNotNull(wallet);
+    public StoredPaymentChannelServerStates(@Nullable Wallet wallet, TransactionBroadcaster broadcaster) {
+        this.wallet = wallet;
         this.broadcaster = checkNotNull(broadcaster);
     }
 
@@ -173,7 +174,7 @@ public class StoredPaymentChannelServerStates implements WalletExtension {
     public void deserializeWalletExtension(Wallet containingWallet, byte[] data) throws Exception {
         lock.lock();
         try {
-            checkArgument(containingWallet == wallet);
+            this.wallet = containingWallet;
             ServerState.StoredServerPaymentChannels states = ServerState.StoredServerPaymentChannels.parseFrom(data);
             NetworkParameters params = containingWallet.getParams();
             for (ServerState.StoredServerPaymentChannel storedState : states.getChannelsList()) {
@@ -181,7 +182,7 @@ public class StoredPaymentChannelServerStates implements WalletExtension {
                         new Transaction(params, storedState.getContractTransaction().toByteArray()),
                         new TransactionOutput(params, null, storedState.getClientOutput().toByteArray(), 0),
                         storedState.getRefundTransactionUnlockTimeSecs(),
-                        new ECKey(storedState.getMyKey().toByteArray(), null),
+                        ECKey.fromPrivate(storedState.getMyKey().toByteArray()),
                         BigInteger.valueOf(storedState.getBestValueToMe()),
                         storedState.hasBestValueSignature() ? storedState.getBestValueSignature().toByteArray() : null);
                 putChannel(channel);

@@ -33,13 +33,31 @@ message PeerAddress {
   required uint64 services = 3;
 }
 
-/**
- * The data to store a private key encrypted with Scrypt and AES
- *
- */
-message EncryptedPrivateKey {
+message EncryptedData {
   required bytes initialisation_vector = 1;       // The initialisation vector for the AES encryption (16 bytes)
   required bytes encrypted_private_key = 2;       // The encrypted private key
+}
+
+/**
+ * Data attached to a Key message that defines the data needed by the BIP32 deterministic key hierarchy algorithm.
+ */
+message DeterministicKey {
+  // Random data that allows us to extend a key. Without this, we can't figure out the next key in the chain and
+  // should just treat it as a regular ORIGINAL type key.
+  required bytes chain_code = 1;
+
+  // The path through the key tree. Each number is encoded in the standard form: high bit set for private derivation
+  // and high bit unset for public derivation.
+  repeated uint32 path = 2;
+
+  // How many children of this key have been issued, that is, given to the user when they requested a fresh key?
+  // For the parents of keys being handed out, this is always less than the true number of children: the difference is
+  // called the lookahead zone. These keys are put into Bloom filters so we can spot transactions made by clones of
+  // this wallet - for instance when restoring from backup or if the seed was shared between devices.
+  //
+  // If this field is missing it means we're not issuing subkeys of this key to users.
+  optional uint32 issued_subkeys = 3;
+  optional uint32 lookahead_size = 4;
 }
 
 /**
@@ -53,36 +71,55 @@ message EncryptedPrivateKey {
  */
 message Key {
   enum Type {
-    ORIGINAL = 1;              // Unencrypted - Original bitcoin secp256k1 curve
-    ENCRYPTED_SCRYPT_AES = 2;  // Encrypted with Scrypt and AES - - Original bitcoin secp256k1 curve
+    /** Unencrypted - Original bitcoin secp256k1 curve */
+    ORIGINAL = 1;
+
+    /** Encrypted with Scrypt and AES - Original bitcoin secp256k1 curve */
+    ENCRYPTED_SCRYPT_AES = 2;
+
+    /**
+     * Not really a key, but rather contains the seed for a deterministic key hierarchy in the private_key field.
+     * The label and public_key fields are missing. Creation timestamp will exist.
+     */
+    DETERMINISTIC_ROOT_SEED = 3;
+
+    /**
+     * A key that was derived deterministically. Note that the root seed that created it may NOT be present in the
+     * wallet, for the case of watching wallets. A deterministic key may or may not have the private key bytes present.
+     * However the public key bytes and the deterministic_key field are guaranteed to exist. In a wallet where there
+     * is a path from this key up to a key that has (possibly encrypted) private bytes, it's expected that the private
+     * key can be rederived on the fly.
+     */
+    DETERMINISTIC_KEY = 4;
   }
   required Type type = 1;
 
-  // The private EC key bytes without any ASN.1 wrapping.
-  optional bytes private_key = 2;
-
-  // The message containing the encrypted private EC key information.
-  // When an EncryptedPrivateKey is present then the (unencrypted) private_key will be a zero length byte array or contain all zeroes.
-  // This is for security of the private key information.
-  optional EncryptedPrivateKey encrypted_private_key = 6;
+  // Either the private EC key bytes (without any ASN.1 wrapping), or the deterministic root seed.
+  // If the secret is encrypted, or this is a "watching entry" then this is missing.
+  optional bytes secret_bytes = 2;
+  // If the secret data is encrypted, then secret_bytes is missing and this field is set.
+  optional EncryptedData encrypted_data = 6;
 
   // The public EC key derived from the private key. We allow both to be stored to avoid mobile clients having to
-  // do lots of slow EC math on startup.
+  // do lots of slow EC math on startup. For DETERMINISTIC_ROOT_SEED entries this is missing.
   optional bytes public_key = 3;
 
   // User-provided label associated with the key.
   optional string label = 4;
 
-  // Timestamp stored as millis since epoch. Useful for skipping block bodies before this point.
+  // Timestamp stored as millis since epoch. Useful for skipping block bodies before this point. Only reason it's
+  // optional is that some very old wallets don't have this data.
   optional int64 creation_timestamp = 5;
+
+  optional DeterministicKey deterministic_key = 7;
 }
 
 message Script {
-    required bytes program = 1;
+  required bytes program = 1;
 
-    // Timestamp stored as millis since epoch. Useful for skipping block bodies before this point
-    // when watching for scripts on the blockchain.
-    required int64 creation_timestamp = 2;
+  // Timestamp stored as millis since epoch. Useful for skipping block bodies before this point
+  // when watching for scripts on the blockchain.
+  required int64 creation_timestamp = 2;
 }
 
 message TransactionInput {

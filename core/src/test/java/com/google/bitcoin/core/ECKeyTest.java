@@ -16,7 +16,7 @@
 
 package com.google.bitcoin.core;
 
-import com.google.bitcoin.crypto.EncryptedPrivateKey;
+import com.google.bitcoin.crypto.EncryptedData;
 import com.google.bitcoin.crypto.KeyCrypter;
 import com.google.bitcoin.crypto.KeyCrypterScrypt;
 import com.google.bitcoin.crypto.TransactionSignature;
@@ -32,12 +32,16 @@ import com.google.common.util.concurrent.MoreExecutors;
 import com.google.protobuf.ByteString;
 import org.bitcoinj.wallet.Protos;
 import org.bitcoinj.wallet.Protos.ScryptParameters;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.spongycastle.crypto.params.ECDomainParameters;
 import org.spongycastle.crypto.params.KeyParameter;
 import org.spongycastle.util.encoders.DecoderException;
+import org.spongycastle.math.ec.ECCurve;
+import org.spongycastle.math.ec.ECPoint;
 import org.spongycastle.util.encoders.Hex;
 
 import java.io.InputStream;
@@ -108,7 +112,7 @@ public class ECKeyTest {
         // Test that we can construct an ECKey from a private key (deriving the public from the private), then signing
         // a message with it.
         BigInteger privkey = new BigInteger(1, Hex.decode("180cb41c7c600be951b5d3d0a7334acc7506173875834f7a6c4c786a28fcbb19"));
-        ECKey key = new ECKey(privkey);
+        ECKey key = ECKey.fromPrivate(privkey);
         byte[] output = key.sign(Sha256Hash.ZERO_HASH).encodeToDER();
         assertTrue(key.verify(Sha256Hash.ZERO_HASH.getBytes(), output));
 
@@ -157,7 +161,7 @@ public class ECKeyTest {
         // Now re-encode and decode the ASN.1 to see if it is equivalent (it does not produce the exact same byte
         // sequence, some integers are padded now).
         ECKey roundtripKey =
-            new ECKey(decodedKey.getPrivKeyBytes(), decodedKey.getPubKey());
+            ECKey.fromPrivateAndPrecalculatedPublic(decodedKey.getPrivKey(), decodedKey.getPubKeyPoint());
 
         for (ECKey key : new ECKey[] {decodedKey, roundtripKey}) {
             byte[] message = reverseBytes(Hex.decode(
@@ -244,10 +248,11 @@ public class ECKeyTest {
         String message = "Hello World!";
         Sha256Hash hash = Sha256Hash.create(message.getBytes());
         ECKey.ECDSASignature sig = key.sign(hash);
-        key = new ECKey(null, key.getPubKey());
+        key = ECKey.fromPublicOnly(key.getPubKeyPoint());
         boolean found = false;
         for (int i = 0; i < 4; i++) {
             ECKey key2 = ECKey.recoverFromSignature(i, sig, hash, true);
+            checkNotNull(key2);
             if (key.equals(key2)) {
                 found = true;
                 break;
@@ -267,7 +272,7 @@ public class ECKeyTest {
         ECKey encryptedKey = key.encrypt(keyCrypter, keyCrypter.deriveKey(PASSWORD1));
         assertEquals(time, encryptedKey.getCreationTimeSeconds());
         assertTrue(encryptedKey.isEncrypted());
-        assertNull(encryptedKey.getPrivKeyBytes());
+        assertNull(encryptedKey.getSecretBytes());
         key = encryptedKey.decrypt(keyCrypter, keyCrypter.deriveKey(PASSWORD1));
         assertTrue(!key.isEncrypted());
         assertArrayEquals(originalPrivateKeyBytes, key.getPrivKeyBytes());
@@ -278,22 +283,10 @@ public class ECKeyTest {
         ECKey unencryptedKey = new ECKey();
         byte[] originalPrivateKeyBytes = checkNotNull(unencryptedKey.getPrivKeyBytes());
         log.info("Original private key = " + Utils.bytesToHexString(originalPrivateKeyBytes));
-
-        EncryptedPrivateKey encryptedPrivateKey = keyCrypter.encrypt(unencryptedKey.getPrivKeyBytes(), keyCrypter.deriveKey(PASSWORD1));
-        ECKey encryptedKey = new ECKey(encryptedPrivateKey, unencryptedKey.getPubKey(), keyCrypter);
-
-        // The key should initially be encrypted
-        assertTrue("Key not encrypted at start",  encryptedKey.isEncrypted());
-
-        // The unencrypted private key bytes of the encrypted keychain should all be blank.
-        byte[] privateKeyBytes = encryptedKey.getPrivKeyBytes();
-        if (privateKeyBytes != null) {
-            for (int i = 0; i < privateKeyBytes.length; i++) {
-                assertEquals("Byte " + i + " of the private key was not zero but should be", 0, privateKeyBytes[i]);
-            }
-        }
-
-        // Decrypt the key.
+        EncryptedData encryptedPrivateKey = keyCrypter.encrypt(unencryptedKey.getPrivKeyBytes(), keyCrypter.deriveKey(PASSWORD1));
+        ECKey encryptedKey = ECKey.fromEncrypted(encryptedPrivateKey, keyCrypter, unencryptedKey.getPubKey());
+        assertTrue(encryptedKey.isEncrypted());
+        assertNull(encryptedKey.getSecretBytes());
         ECKey rebornUnencryptedKey = encryptedKey.decrypt(keyCrypter, keyCrypter.deriveKey(PASSWORD1));
         assertTrue(!rebornUnencryptedKey.isEncrypted());
         assertArrayEquals(originalPrivateKeyBytes, rebornUnencryptedKey.getPrivKeyBytes());
@@ -302,8 +295,8 @@ public class ECKeyTest {
     @Test
     public void testEncryptionIsReversible() throws Exception {
         ECKey originalUnencryptedKey = new ECKey();
-        EncryptedPrivateKey encryptedPrivateKey = keyCrypter.encrypt(originalUnencryptedKey.getPrivKeyBytes(), keyCrypter.deriveKey(PASSWORD1));
-        ECKey encryptedKey = new ECKey(encryptedPrivateKey, originalUnencryptedKey.getPubKey(), keyCrypter);
+        EncryptedData encryptedPrivateKey = keyCrypter.encrypt(originalUnencryptedKey.getPrivKeyBytes(), keyCrypter.deriveKey(PASSWORD1));
+        ECKey encryptedKey = ECKey.fromEncrypted(encryptedPrivateKey, keyCrypter, originalUnencryptedKey.getPubKey());
 
         // The key should be encrypted
         assertTrue("Key not encrypted at start",  encryptedKey.isEncrypted());
@@ -316,18 +309,18 @@ public class ECKeyTest {
 
         // Change one of the encrypted key bytes (this is to simulate a faulty keyCrypter).
         // Encryption should not be reversible
-        byte[] goodEncryptedPrivateKeyBytes = encryptedPrivateKey.getEncryptedBytes();
+        byte[] goodEncryptedPrivateKeyBytes = encryptedPrivateKey.encryptedBytes;
 
         // Break the encrypted private key and check it is broken.
         byte[] badEncryptedPrivateKeyBytes = new byte[goodEncryptedPrivateKeyBytes.length];
-        encryptedPrivateKey.setEncryptedPrivateBytes(badEncryptedPrivateKeyBytes);
-        ECKey badEncryptedKey = new ECKey(encryptedPrivateKey, originalUnencryptedKey.getPubKey(), keyCrypter);
+        encryptedPrivateKey = new EncryptedData(encryptedPrivateKey.initialisationVector, badEncryptedPrivateKeyBytes);
+        ECKey badEncryptedKey = ECKey.fromEncrypted(encryptedPrivateKey, keyCrypter, originalUnencryptedKey.getPubKey());
         assertTrue("Key encryption is reversible with faulty encrypted bytes", !ECKey.encryptionIsReversible(originalUnencryptedKey, badEncryptedKey, keyCrypter, keyCrypter.deriveKey(PASSWORD1)));
     }
 
     @Test
     public void testToString() throws Exception {
-        ECKey key = new ECKey(BigInteger.TEN); // An example private key.
+        ECKey key = ECKey.fromPrivate(BigInteger.TEN).decompress(); // An example private key.
 
         assertEquals("pub:04a0434d9e47f3c86235477c7b1ae6ae5d3442d49b1943c2b752a68e2a47e247c7893aba425419bc27a3b6c7e693a24c696f794c2ed877a1593cbee53b037368d7", key.toString());
         assertEquals("pub:04a0434d9e47f3c86235477c7b1ae6ae5d3442d49b1943c2b752a68e2a47e247c7893aba425419bc27a3b6c7e693a24c696f794c2ed877a1593cbee53b037368d7 priv:0a", key.toStringWithPrivate());
@@ -342,10 +335,11 @@ public class ECKeyTest {
         String message = "Goodbye Jupiter!";
         Sha256Hash hash = Sha256Hash.create(message.getBytes());
         ECKey.ECDSASignature sig = encryptedKey.sign(hash, aesKey);
-        unencryptedKey = new ECKey(null, unencryptedKey.getPubKey());
+        unencryptedKey = ECKey.fromPublicOnly(unencryptedKey.getPubKeyPoint());
         boolean found = false;
         for (int i = 0; i < 4; i++) {
             ECKey key2 = ECKey.recoverFromSignature(i, sig, hash, true);
+            checkNotNull(key2);
             if (unencryptedKey.equals(key2)) {
                 found = true;
                 break;
@@ -372,19 +366,13 @@ public class ECKeyTest {
         ECKey encryptedKey = (new ECKey()).encrypt(keyCrypter, keyCrypter.deriveKey(PASSWORD1));
 
         checkSomeBytesAreNonZero(unencryptedKey.getPrivKeyBytes());
-        unencryptedKey.clearPrivateKey();
-        checkAllBytesAreZero(unencryptedKey.getPrivKeyBytes());
 
         // The encryptedPrivateKey should be null in an unencrypted ECKey anyhow but check all the same.
         assertTrue(unencryptedKey.getEncryptedPrivateKey() == null);
 
-        checkSomeBytesAreNonZero(encryptedKey.getPrivKeyBytes());
-        checkSomeBytesAreNonZero(encryptedKey.getEncryptedPrivateKey().getEncryptedBytes());
-        checkSomeBytesAreNonZero(encryptedKey.getEncryptedPrivateKey().getInitialisationVector());
-        encryptedKey.clearPrivateKey();
-        checkAllBytesAreZero(encryptedKey.getPrivKeyBytes());
-        checkAllBytesAreZero(encryptedKey.getEncryptedPrivateKey().getEncryptedBytes());
-        checkAllBytesAreZero(encryptedKey.getEncryptedPrivateKey().getInitialisationVector());
+        checkSomeBytesAreNonZero(encryptedKey.getSecretBytes());
+        checkSomeBytesAreNonZero(encryptedKey.getEncryptedPrivateKey().encryptedBytes);
+        checkSomeBytesAreNonZero(encryptedKey.getEncryptedPrivateKey().initialisationVector);
     }
 
     @Test
@@ -459,11 +447,5 @@ public class ECKeyTest {
         if (bytes == null) return false;
         for (byte b : bytes) if (b != 0) return true;
         return false;
-    }
-
-    private static boolean checkAllBytesAreZero(byte[] bytes) {
-        if (bytes == null) return true;
-        for (byte b : bytes) if (b != 0) return false;
-        return true;
     }
 }

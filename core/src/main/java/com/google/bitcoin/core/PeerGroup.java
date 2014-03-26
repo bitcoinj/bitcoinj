@@ -160,7 +160,7 @@ public class PeerGroup extends AbstractExecutionThreadService implements Transac
             queueRecalc(true);
         }
 
-        @Override public void onKeysAdded(Wallet wallet, List<ECKey> keys) {
+        @Override public void onKeysAdded(List<ECKey> keys) {
             queueRecalc(true);
         }
 
@@ -819,7 +819,11 @@ public class PeerGroup extends AbstractExecutionThreadService implements Transac
                 bloomFilter = filter;
 
                 switch (mode) {
-                    case SEND_IF_CHANGED: send = changed; break;
+                    case SEND_IF_CHANGED:
+                        send = changed;
+                        if (!send)
+                            log.info(" ... however filter did not change.");  // Optimisation opportunity!
+                        break;
                     case DONT_SEND: send = false; break;
                     case FORCE_SEND: send = true; break;
                 }

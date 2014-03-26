@@ -17,21 +17,23 @@
 package com.google.bitcoin.crypto;
 
 import com.google.bitcoin.core.ECKey;
+import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
 import org.spongycastle.crypto.digests.SHA512Digest;
 import org.spongycastle.crypto.macs.HMac;
 import org.spongycastle.crypto.params.KeyParameter;
-import org.spongycastle.math.ec.ECPoint;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Static utilities used in BIP 32 Hierarchical Deterministic Wallets (HDW).
  */
 public final class HDUtils {
-
-    private HDUtils() { }
+    private static final Joiner PATH_JOINER = Joiner.on("/");
 
     static HMac createHmacSha512Digest(byte[] key) {
         SHA512Digest digest = new SHA512Digest();
@@ -62,11 +64,11 @@ public final class HDUtils {
         return bytes;
     }
 
-    static byte[] getBytes(ECPoint pubKPoint) {
-        return pubKPoint.getEncoded(true);
-    }
-
     static ImmutableList<ChildNumber> append(ImmutableList<ChildNumber> path, ChildNumber childNumber) {
         return ImmutableList.<ChildNumber>builder().addAll(path).add(childNumber).build();
+    }
+
+    public static String formatPath(List<ChildNumber> path) {
+        return PATH_JOINER.join(Iterables.concat(Collections.singleton("M"), path));
     }
 }

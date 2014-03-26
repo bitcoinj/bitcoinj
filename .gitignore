@@ -4,3 +4,6 @@ target
 .settings
 .idea
 *.iml
+*.chain
+*.spvchain
+*.wallet

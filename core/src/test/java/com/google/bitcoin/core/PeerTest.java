@@ -651,9 +651,8 @@ public class PeerTest extends TestWithNetworkConnections {
         connectWithVersion(useNotFound ? 70001 : 60001);
         // Test that if we receive a relevant transaction that has a lock time, it doesn't result in a notification
         // until we explicitly opt in to seeing those.
-        ECKey key = new ECKey();
         Wallet wallet = new Wallet(unitTestParams);
-        wallet.addKey(key);
+        ECKey key = wallet.freshReceiveKey();
         peer.addWallet(wallet);
         final Transaction[] vtx = new Transaction[1];
         wallet.addEventListener(new AbstractWalletEventListener() {
@@ -724,9 +723,8 @@ public class PeerTest extends TestWithNetworkConnections {
     private void checkTimeLockedDependency(boolean shouldAccept, boolean useNotFound) throws Exception {
         // Initial setup.
         connectWithVersion(useNotFound ? 70001 : 60001);
-        ECKey key = new ECKey();
         Wallet wallet = new Wallet(unitTestParams);
-        wallet.addKey(key);
+        ECKey key = wallet.freshReceiveKey();
         wallet.setAcceptRiskyTransactions(shouldAccept);
         peer.addWallet(wallet);
         final Transaction[] vtx = new Transaction[1];

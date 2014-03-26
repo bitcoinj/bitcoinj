@@ -32,17 +32,15 @@ import com.google.bitcoin.wallet.*;
 import com.google.bitcoin.wallet.WalletTransaction.Pool;
 import com.google.common.collect.*;
 import com.google.common.primitives.Ints;
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
+import org.bitcoinj.wallet.Protos;
 import org.bitcoinj.wallet.Protos.Wallet.EncryptionType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.crypto.params.KeyParameter;
 import org.spongycastle.util.encoders.Hex;
 
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.GuardedBy;
 import java.io.*;
@@ -69,7 +67,6 @@ import static com.google.common.base.Preconditions.*;
 //   process and sort every single transaction.
 // - Decompose the class where possible: break logic out into classes that can be customized/replaced by the user.
 //     - [Auto]saving to a backing store
-//     - Key management
 //     - just generally make Wallet smaller and easier to work with
 // - Make clearing of transactions able to only rewind the wallet a certain distance instead of all blocks.
 // - Make it scale:
@@ -131,8 +128,9 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
     // All transactions together.
     final Map<Sha256Hash, Transaction> transactions;
 
-    // A list of public/private EC keys owned by this user. Access it using addKey[s], hasKey[s] and findPubKeyFromHash.
-    private ArrayList<ECKey> keychain;
+    // The key chain group is not thread safe, and generally the whole hierarchy of objects should not be mutated
+    // outside the wallet lock. So don't expose this object directly via any accessors!
+    @GuardedBy("lock") protected KeyChainGroup keychain;
 
     // A list of scripts watched by this wallet.
     private Set<Script> watchedScripts;
@@ -172,8 +170,6 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
 
     private transient CoinSelector coinSelector = new DefaultCoinSelector();
 
-    // The keyCrypter for the wallet. This specifies the algorithm used for encrypting and decrypting the private keys.
-    private KeyCrypter keyCrypter;
     // The wallet version. This is an int that can be used to track breaking changes in the wallet format.
     // You can also use it to detect wallets that come from the future (ie they contain features you
     // do not know how to deal with).
@@ -192,8 +188,14 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
      * see loadFromFile.
      */
     public Wallet(NetworkParameters params) {
+        this(params, new KeyChainGroup());
+    }
+
+    // TODO: When this class moves to the Wallet package, along with the protobuf serializer, then hide this.
+    /** For internal use only. */
+    public Wallet(NetworkParameters params, KeyChainGroup keyChainGroup) {
         this.params = checkNotNull(params);
-        keychain = new ArrayList<ECKey>();
+        this.keychain = checkNotNull(keyChainGroup);
         watchedScripts = Sets.newHashSet();
         unspent = new HashMap<Sha256Hash, Transaction>();
         spent = new HashMap<Sha256Hash, Transaction>();
@@ -205,14 +207,6 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
         // Use a linked hash map to ensure ordering of event listeners is correct.
         confidenceChanged = new LinkedHashMap<Transaction, TransactionConfidence.Listener.ChangeReason>();
         createTransientState();
-    }
-
-    /**
-     * Create a wallet with a keyCrypter to use in encrypting and decrypting keys.
-     */
-    public Wallet(NetworkParameters params, KeyCrypter keyCrypter) {
-        this(params);
-        this.keyCrypter = checkNotNull(keyCrypter);
     }
 
     private void createTransientState() {
@@ -245,16 +239,64 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
         return params;
     }
 
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Key management
+    //
+
     /**
-     * Returns a snapshot of the keychain. This view is not live.
+     * Returns a key that hasn't been seen in a transaction yet, and which is suitable for displaying in a wallet
+     * user interface as "a convenient key to receive funds on" when the purpose parameter is
+     * {@link com.google.bitcoin.wallet.KeyChain.KeyPurpose#RECEIVE_FUNDS}. The returned key is stable until
+     * it's actually seen in a pending or confirmed transaction, at which point this method will start returning
+     * a different key (for each purpose independently).
      */
-    public List<ECKey> getKeys() {
+    public ECKey currentKey(KeyChain.KeyPurpose purpose) {
         lock.lock();
         try {
-            return new ArrayList<ECKey>(keychain);
+            return keychain.currentKey(purpose);
         } finally {
             lock.unlock();
         }
+    }
+
+    /**
+     * An alias for calling {@link #currentKey(com.google.bitcoin.wallet.KeyChain.KeyPurpose)} with
+     * {@link com.google.bitcoin.wallet.KeyChain.KeyPurpose#RECEIVE_FUNDS} as the parameter.
+     */
+    public ECKey currentReceiveKey() {
+        return currentKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
+    }
+
+    /**
+     * Returns a key that has not been returned by this method before (fresh). You can think of this as being
+     * a newly created key, although the notion of "create" is not really valid for a
+     * {@link com.google.bitcoin.wallet.DeterministicKeyChain}. When the parameter is
+     * {@link com.google.bitcoin.wallet.KeyChain.KeyPurpose#RECEIVE_FUNDS} the returned key is suitable for being put
+     * into a receive coins wizard type UI. You should use this when the user is definitely going to hand this key out
+     * to someone who wishes to send money.
+     */
+    public ECKey freshKey(KeyChain.KeyPurpose purpose) {
+        lock.lock();
+        try {
+            ECKey key = keychain.freshKey(purpose);
+            // Do we really need an immediate hard save? Arguably all this is doing is saving the 'current' key
+            // and that's not quite so important, so we could coalesce for more performance.
+            saveNow();
+            return key;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
+     * An alias for calling {@link #freshKey(com.google.bitcoin.wallet.KeyChain.KeyPurpose)} with
+     * {@link com.google.bitcoin.wallet.KeyChain.KeyPurpose#RECEIVE_FUNDS} as the parameter.
+     */
+    public ECKey freshReceiveKey() {
+        return freshKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
     }
 
     /**
@@ -270,26 +312,261 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
     }
 
     /**
-     * Removes the given key from the keychain. Be very careful with this - losing a private key <b>destroys the
+     * Removes the given key from the basicKeyChain. Be very careful with this - losing a private key <b>destroys the
      * money associated with it</b>.
      * @return Whether the key was removed or not.
      */
     public boolean removeKey(ECKey key) {
         lock.lock();
         try {
-            return keychain.remove(key);
+            return keychain.removeImportedKey(key);
         } finally {
             lock.unlock();
         }
     }
-    
+
     /**
-     * Returns the number of keys in the keychain.
+     * Returns the number of keys in the key chain, including lookahead keys.
      */
     public int getKeychainSize() {
         lock.lock();
         try {
-            return keychain.size();
+            return keychain.numKeys();
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /** Returns the address used for change outputs. Note: this will probably go away in future. */
+    public Address getChangeAddress() {
+        return currentKey(KeyChain.KeyPurpose.CHANGE).toAddress(params);
+    }
+
+    /**
+     * <p>Deprecated alias for {@link #importKey(ECKey)}.</p>
+     *
+     * <p><b>Replace with either {@link #freshReceiveKey()} if your call is addKey(new ECKey()), or with {@link #importKey(ECKey)}
+     * which does the same thing this method used to, but with a better name.</b></p>
+     */
+    @Deprecated
+    public boolean addKey(ECKey key) {
+        return importKey(key);
+    }
+
+    /**
+     * <p>Imports the given ECKey to the wallet.</p>
+     *
+     * <p>If the wallet is configured to auto save to a file, triggers a save immediately. Runs the onKeysAdded event
+     * handler. If the key already exists in the wallet, does nothing and returns false.</p>
+     */
+    public boolean importKey(ECKey key) {
+        return importKeys(Lists.newArrayList(key)) == 1;
+    }
+
+    /** Replace with {@link #importKeys(java.util.List)}, which does the same thing but with a better name. */
+    @Deprecated
+    public int addKeys(List<ECKey> keys) {
+        return importKeys(keys);
+    }
+
+    /**
+     * Imports the given keys to the wallet.
+     * If {@link Wallet#autosaveToFile(java.io.File, long, java.util.concurrent.TimeUnit, com.google.bitcoin.wallet.WalletFiles.Listener)}
+     * has been called, triggers an auto save bypassing the normal coalescing delay and event handlers.
+     * Returns the number of keys added, after duplicates are ignored. The onKeyAdded event will be called for each key
+     * in the list that was not already present.
+     */
+    public int importKeys(final List<ECKey> keys) {
+        lock.lock();
+        try {
+            int result = keychain.importKeys(keys);
+            saveNow();
+            return result;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /** Takes a list of keys and a password, then encrypts and imports them in one step using the current keycrypter. */
+    public int importKeysAndEncrypt(final List<ECKey> keys, CharSequence password) {
+        lock.lock();
+        try {
+            checkNotNull(getKeyCrypter(), "Wallet is not encrypted");
+            return importKeysAndEncrypt(keys, getKeyCrypter().deriveKey(password));
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /** Takes a list of keys and an AES key, then encrypts and imports them in one step using the current keycrypter. */
+    public int importKeysAndEncrypt(final List<ECKey> keys, KeyParameter aesKey) {
+        lock.lock();
+        try {
+            return keychain.importKeysAndEncrypt(keys, aesKey);
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /** See {@link com.google.bitcoin.wallet.DeterministicKeyChain#setLookaheadSize(int)} for more info on this. */
+    public void setKeychainLookaheadSize(int lookaheadSize) {
+        lock.lock();
+        try {
+            keychain.setLookaheadSize(lookaheadSize);
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /** See {@link com.google.bitcoin.wallet.DeterministicKeyChain#setLookaheadSize(int)} for more info on this. */
+    public int getKeychainLookaheadSize() {
+        return keychain.getLookaheadSize();
+    }
+
+    /**
+     * Return true if we are watching this address.
+     */
+    public boolean isAddressWatched(Address address) {
+        Script script = ScriptBuilder.createOutputScript(address);
+        return isWatchedScript(script);
+    }
+
+    /**
+     * Same as {@link #addWatchedAddress(Address, long)} with the current time as the creation time.
+     */
+    public boolean addWatchedAddress(final Address address) {
+        long now = Utils.currentTimeMillis() / 1000;
+        return addWatchedAddresses(Lists.newArrayList(address), now) == 1;
+    }
+
+    /**
+     * Adds the given address to the wallet to be watched. Outputs can be retrieved by {@link #getWatchedOutputs(boolean)}.
+     *
+     * @param creationTime creation time in seconds since the epoch, for scanning the blockchain
+     * @return whether the address was added successfully (not already present)
+     */
+    public boolean addWatchedAddress(final Address address, long creationTime) {
+        return addWatchedAddresses(Lists.newArrayList(address), creationTime) == 1;
+    }
+
+    /**
+     * Adds the given address to the wallet to be watched. Outputs can be retrieved
+     * by {@link #getWatchedOutputs(boolean)}.
+     *
+     * @return how many addresses were added successfully
+     */
+    public int addWatchedAddresses(final List<Address> addresses, long creationTime) {
+        List<Script> scripts = Lists.newArrayList();
+
+        for (Address address : addresses) {
+            Script script = ScriptBuilder.createOutputScript(address);
+            script.setCreationTimeSeconds(creationTime);
+            scripts.add(script);
+        }
+
+        return addWatchedScripts(scripts);
+    }
+
+    /**
+     * Adds the given output scripts to the wallet to be watched. Outputs can be retrieved
+     * by {@link #getWatchedOutputs(boolean)}.
+     *
+     * @return how many scripts were added successfully
+     */
+    public int addWatchedScripts(final List<Script> scripts) {
+        lock.lock();
+        try {
+            int added = 0;
+            for (final Script script : scripts) {
+                if (watchedScripts.contains(script)) continue;
+
+                watchedScripts.add(script);
+                added++;
+            }
+
+            queueOnScriptsAdded(scripts);
+            saveNow();
+            return added;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
+     * Locates a keypair from the basicKeyChain given the hash of the public key. This is needed when finding out which
+     * key we need to use to redeem a transaction output.
+     *
+     * @return ECKey object or null if no such key was found.
+     */
+    @Nullable
+    public ECKey findKeyFromPubHash(byte[] pubkeyHash) {
+        lock.lock();
+        try {
+            return keychain.findKeyFromPubHash(pubkeyHash);
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /** Returns true if the given key is in the wallet, false otherwise. Currently an O(N) operation. */
+    public boolean hasKey(ECKey key) {
+        lock.lock();
+        try {
+            return keychain.hasKey(key);
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
+     * Returns true if this wallet contains a public key which hashes to the given hash.
+     */
+    public boolean isPubKeyHashMine(byte[] pubkeyHash) {
+        return findKeyFromPubHash(pubkeyHash) != null;
+    }
+
+    /** Returns true if this wallet is watching transactions for outputs with the script. */
+    public boolean isWatchedScript(Script script) {
+        lock.lock();
+        try {
+            return watchedScripts.contains(script);
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
+     * Locates a keypair from the basicKeyChain given the raw public key bytes.
+     * @return ECKey or null if no such key was found.
+     */
+    @Nullable
+    public ECKey findKeyFromPubKey(byte[] pubkey) {
+        lock.lock();
+        try {
+            return keychain.findKeyFromPubKey(pubkey);
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
+     * Returns true if this wallet contains a keypair with the given public key.
+     */
+    public boolean isPubKeyMine(byte[] pubkey) {
+        return findKeyFromPubKey(pubkey) != null;
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Serialization support
+    //
+
+    // TODO: Make this package private once the classes finish moving around.
+    /** Internal use only. */
+    public List<Protos.Key> serializeKeychainToProtobuf() {
+        lock.lock();
+        try {
+            return keychain.serializeToProtobuf();
         } finally {
             lock.unlock();
         }
@@ -1220,7 +1497,13 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
      * like receiving money. The listener is executed by the given executor.
      */
     public void addEventListener(WalletEventListener listener, Executor executor) {
-        eventListeners.add(new ListenerRegistration<WalletEventListener>(listener, executor));
+        lock.lock();
+        try {
+            eventListeners.add(new ListenerRegistration<WalletEventListener>(listener, executor));
+            keychain.addEventListener(listener, executor);
+        } finally {
+            lock.unlock();
+        }
     }
 
     /**
@@ -1228,7 +1511,13 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
      * was never added.
      */
     public boolean removeEventListener(WalletEventListener listener) {
-        return ListenerRegistration.removeFromList(listener, eventListeners);
+        lock.lock();
+        try {
+            keychain.removeEventListener(listener);
+            return ListenerRegistration.removeFromList(listener, eventListeners);
+        } finally {
+            lock.unlock();
+        }
     }
 
     /**
@@ -1906,8 +2195,6 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
             //
             // Note that this code is poorly optimized: the spend candidates only alter when transactions in the wallet
             // change - it could be pre-calculated and held in RAM, and this is probably an optimization worth doing.
-            // Note that output.isMine(this) needs to test the keychain which is currently an array, so it's
-            // O(candidate outputs ^ keychain.size())! There's lots of low hanging fruit here.
             LinkedList<TransactionOutput> candidates = calculateAllSpendCandidates(true);
             CoinSelection bestCoinSelection;
             TransactionOutput bestChangeOutput = null;
@@ -2043,203 +2330,6 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
         }
     }
 
-    /** Returns the address used for change outputs. Note: this will probably go away in future. */
-    public Address getChangeAddress() {
-        lock.lock();
-        try {
-            // For now let's just pick the first key in our keychain. In future we might want to do something else to
-            // give the user better privacy here, eg in incognito mode.
-            checkState(keychain.size() > 0, "Can't send value without an address to use for receiving change");
-            ECKey first = keychain.get(0);
-            return first.toAddress(params);
-        } finally {
-            lock.unlock();
-        }
-    }
-
-    /**
-     * Adds the given ECKey to the wallet. There is currently no way to delete keys (that would result in coin loss).
-     * If {@link Wallet#autosaveToFile(java.io.File, long, java.util.concurrent.TimeUnit, com.google.bitcoin.wallet.WalletFiles.Listener)}
-     * has been called, triggers an auto save bypassing the normal coalescing delay and event handlers.
-     * If the key already exists in the wallet, does nothing and returns false.
-     */
-    public boolean addKey(final ECKey key) {
-        return addKeys(Lists.newArrayList(key)) == 1;
-    }
-
-    /**
-     * Adds the given keys to the wallet. There is currently no way to delete keys (that would result in coin loss).
-     * If {@link Wallet#autosaveToFile(java.io.File, long, java.util.concurrent.TimeUnit, com.google.bitcoin.wallet.WalletFiles.Listener)}
-     * has been called, triggers an auto save bypassing the normal coalescing delay and event handlers.
-     * Returns the number of keys added, after duplicates are ignored. The onKeyAdded event will be called for each key
-     * in the list that was not already present.
-     */
-    public int addKeys(final List<ECKey> keys) {
-        lock.lock();
-        try {
-            int added = 0;
-            // TODO: Consider making keys a sorted list or hashset so membership testing is faster.
-            for (final ECKey key : keys) {
-                if (keychain.contains(key)) continue;
-
-                // If the key has a keyCrypter that does not match the Wallet's then a KeyCrypterException is thrown.
-                // This is done because only one keyCrypter is persisted per Wallet and hence all the keys must be homogenous.
-                if (isEncrypted() && (!key.isEncrypted() || !keyCrypter.equals(key.getKeyCrypter()))) {
-                    throw new KeyCrypterException("Cannot add key " + key.toString() + " because the keyCrypter does not match the wallets. Keys must be homogenous.");
-                } else if (key.isEncrypted() && !isEncrypted()) {
-                    throw new KeyCrypterException("Cannot add key because it's encrypted and this wallet is not.");
-                }
-                keychain.add(key);
-                added++;
-            }
-            queueOnKeysAdded(keys);
-            // Force an auto-save immediately rather than queueing one, as keys are too important to risk losing.
-            saveNow();
-            return added;
-        } finally {
-            lock.unlock();
-        }
-    }
-
-    /**
-     * Return true if we are watching this address.
-     */
-    public boolean isAddressWatched(Address address) {
-        Script script = ScriptBuilder.createOutputScript(address);
-        return isWatchedScript(script);
-    }
-
-    /**
-     * Same as {@link #addWatchedAddress(Address, long)} with the current time as the creation time.
-     */
-    public boolean addWatchedAddress(final Address address) {
-        long now = Utils.currentTimeSeconds();
-        return addWatchedAddresses(Lists.newArrayList(address), now) == 1;
-    }
-
-    /**
-     * Adds the given address to the wallet to be watched. Outputs can be retrieved by {@link #getWatchedOutputs(boolean)}.
-     *
-     * @param creationTime creation time in seconds since the epoch, for scanning the blockchain
-     * @return whether the address was added successfully (not already present)
-     */
-    public boolean addWatchedAddress(final Address address, long creationTime) {
-        return addWatchedAddresses(Lists.newArrayList(address), creationTime) == 1;
-    }
-
-    /**
-     * Adds the given address to the wallet to be watched. Outputs can be retrieved
-     * by {@link #getWatchedOutputs(boolean)}.
-     *
-     * @return how many addresses were added successfully
-     */
-    public int addWatchedAddresses(final List<Address> addresses, long creationTime) {
-        List<Script> scripts = Lists.newArrayList();
-
-        for (Address address : addresses) {
-            Script script = ScriptBuilder.createOutputScript(address);
-            script.setCreationTimeSeconds(creationTime);
-            scripts.add(script);
-        }
-
-        return addWatchedScripts(scripts);
-    }
-
-    /**
-     * Adds the given output scripts to the wallet to be watched. Outputs can be retrieved
-     * by {@link #getWatchedOutputs(boolean)}.
-     *
-     * @return how many scripts were added successfully
-     */
-    public int addWatchedScripts(final List<Script> scripts) {
-        lock.lock();
-        try {
-            int added = 0;
-            for (final Script script : scripts) {
-                if (watchedScripts.contains(script)) continue;
-
-                watchedScripts.add(script);
-                added++;
-            }
-
-            queueOnScriptsAdded(scripts);
-            saveNow();
-            return added;
-        } finally {
-            lock.unlock();
-        }
-    }
-
-    /**
-     * Locates a keypair from the keychain given the hash of the public key. This is needed when finding out which
-     * key we need to use to redeem a transaction output.
-     *
-     * @return ECKey object or null if no such key was found.
-     */
-    @Nullable
-    public ECKey findKeyFromPubHash(byte[] pubkeyHash) {
-        lock.lock();
-        try {
-            for (ECKey key : keychain) {
-                if (Arrays.equals(key.getPubKeyHash(), pubkeyHash)) return key;
-            }
-            return null;
-        } finally {
-            lock.unlock();
-        }
-    }
-
-    /** Returns true if the given key is in the wallet, false otherwise. Currently an O(N) operation. */
-    public boolean hasKey(ECKey key) {
-        lock.lock();
-        try {
-            return keychain.contains(key);
-        } finally {
-            lock.unlock();
-        }
-    }
-
-    /**
-     * Returns true if this wallet contains a public key which hashes to the given hash.
-     */
-    public boolean isPubKeyHashMine(byte[] pubkeyHash) {
-        return findKeyFromPubHash(pubkeyHash) != null;
-    }
-
-    /** Returns true if this wallet is watching transactions for outputs with the script. */
-    public boolean isWatchedScript(Script script) {
-        lock.lock();
-        try {
-            return watchedScripts.contains(script);
-        } finally {
-            lock.unlock();
-        }
-    }
-
-    /**
-     * Locates a keypair from the keychain given the raw public key bytes.
-     * @return ECKey or null if no such key was found.
-     */
-    @Nullable
-    public ECKey findKeyFromPubKey(byte[] pubkey) {
-        lock.lock();
-        try {
-            for (ECKey key : keychain) {
-                if (Arrays.equals(key.getPubKey(), pubkey)) return key;
-            }
-            return null;
-        } finally {
-            lock.unlock();
-        }
-    }
-
-    /**
-     * Returns true if this wallet contains a keypair with the given public key.
-     */
-    public boolean isPubKeyMine(byte[] pubkey) {
-        return findKeyFromPubKey(pubkey) != null;
-    }
-
     /**
      * <p>It's possible to calculate a wallets balance from multiple points of view. This enum selects which
      * getBalance() should use.</p>
@@ -2361,21 +2451,13 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
             final String lastBlockSeenTimeStr = lastBlockSeenTime == null ? "time unknown" : lastBlockSeenTime.toString();
             builder.append(String.format("Last seen best block: %d (%s): %s%n",
                     getLastBlockSeenHeight(), lastBlockSeenTimeStr, getLastBlockSeenHash()));
-            if (this.keyCrypter != null) {
-                builder.append(String.format("Encryption: %s%n", keyCrypter.toString()));
-            }
+            final KeyCrypter crypter = keychain.getKeyCrypter();
+            if (crypter != null)
+                builder.append(String.format("Encryption: %s%n", crypter));
+
             // Do the keys.
             builder.append("\nKeys:\n");
-            for (ECKey key : keychain) {
-                final Address address = key.toAddress(params);
-                builder.append("  addr:");
-                builder.append(address.toString());
-                builder.append(" hash160:");
-                builder.append(Utils.bytesToHexString(address.getHash160()));
-                builder.append(" ");
-                builder.append(includePrivateKeys ? key.toStringWithPrivate() : key.toString());
-                builder.append("\n");
-            }
+            builder.append(keychain.toString(params, includePrivateKeys));
 
             if (!watchedScripts.isEmpty()) {
                 builder.append("\nWatched scripts:\n");
@@ -2656,9 +2738,7 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
     public long getEarliestKeyCreationTime() {
         lock.lock();
         try {
-            long earliestTime = Long.MAX_VALUE;
-            for (ECKey key : keychain)
-                earliestTime = Math.min(key.getCreationTimeSeconds(), earliestTime);
+            long earliestTime = keychain.getEarliestKeyCreationTime();
             for (Script script : watchedScripts)
                 earliestTime = Math.min(script.getCreationTimeSeconds(), earliestTime);
             if (earliestTime == Long.MAX_VALUE)
@@ -2755,15 +2835,17 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
     /**
      * Convenience wrapper around {@link Wallet#encrypt(com.google.bitcoin.crypto.KeyCrypter,
      * org.spongycastle.crypto.params.KeyParameter)} which uses the default Scrypt key derivation algorithm and
-     * parameters, derives a key from the given password and returns the created key.
+     * parameters to derive a key from the given password.
      */
-    public KeyParameter encrypt(CharSequence password) {
-        checkNotNull(password);
-        checkArgument(password.length() > 0);
-        KeyCrypter scrypt = new KeyCrypterScrypt();
-        KeyParameter derivedKey = scrypt.deriveKey(password);
-        encrypt(scrypt, derivedKey);
-        return derivedKey;
+    public void encrypt(CharSequence password) {
+        lock.lock();
+        try {
+            final KeyCrypterScrypt scrypt = new KeyCrypterScrypt();
+            keychain.encrypt(scrypt, scrypt.deriveKey(password));
+            saveNow();
+        } finally {
+            lock.unlock();
+        }
     }
 
     /**
@@ -2777,45 +2859,23 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
     public void encrypt(KeyCrypter keyCrypter, KeyParameter aesKey) {
         lock.lock();
         try {
-            checkNotNull(keyCrypter);
-            checkState(getEncryptionType() == EncryptionType.UNENCRYPTED, "Wallet is already encrypted");
-            // Create a new arraylist that will contain the encrypted keys
-            ArrayList<ECKey> encryptedKeyChain = new ArrayList<ECKey>();
-            for (ECKey key : keychain) {
-                if (key.isEncrypted()) {
-                    // Key is already encrypted - add as is.
-                    encryptedKeyChain.add(key);
-                } else {
-                    // Encrypt the key.
-                    ECKey encryptedKey = key.encrypt(keyCrypter, aesKey);
+            keychain.encrypt(keyCrypter, aesKey);
+            saveNow();
+        } finally {
+            lock.unlock();
+        }
+    }
 
-                    // Check that the encrypted key can be successfully decrypted.
-                    // This is done as it is a critical failure if the private key cannot be decrypted successfully
-                    // (all bitcoin controlled by that private key is lost forever).
-                    // For a correctly constructed keyCrypter the encryption should always be reversible so it is just being as cautious as possible.
-                    if (!ECKey.encryptionIsReversible(key, encryptedKey, keyCrypter, aesKey)) {
-                        // Abort encryption
-                        throw new KeyCrypterException("The key " + key.toString() + " cannot be successfully decrypted after encryption so aborting wallet encryption.");
-                    }
-
-                    encryptedKeyChain.add(encryptedKey);
-                }
-            }
-
-            // Now ready to use the encrypted keychain so go through the old keychain clearing all the unencrypted private keys.
-            // (This is to avoid the possibility of key recovery from memory).
-            for (ECKey key : keychain) {
-                if (!key.isEncrypted()) {
-                    key.clearPrivateKey();
-                }
-            }
-
-            // Replace the old keychain with the encrypted one.
-            keychain = encryptedKeyChain;
-
-            // The wallet is now encrypted.
-            this.keyCrypter = keyCrypter;
-
+    /**
+     * Decrypt the wallet with the wallets keyCrypter and password.
+     * @throws KeyCrypterException Thrown if the wallet decryption fails. If so, the wallet state is unchanged.
+     */
+    public void decrypt(CharSequence password) {
+        lock.lock();
+        try {
+            final KeyCrypter crypter = keychain.getKeyCrypter();
+            checkState(crypter != null, "Not encrypted");
+            keychain.decrypt(crypter.deriveKey(password));
             saveNow();
         } finally {
             lock.unlock();
@@ -2831,63 +2891,8 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
     public void decrypt(KeyParameter aesKey) {
         lock.lock();
         try {
-            // Check the wallet is already encrypted - you cannot decrypt an unencrypted wallet.
-            checkState(getEncryptionType() != EncryptionType.UNENCRYPTED, "Wallet is already decrypted");
-            // Check that the wallet keyCrypter is non-null.
-            // This is set either at construction (if an encrypted wallet is created) or by wallet encryption.
-            checkNotNull(keyCrypter);
-
-            // Create a new arraylist that will contain the decrypted keys
-            ArrayList<ECKey> decryptedKeyChain = new ArrayList<ECKey>();
-
-            for (ECKey key : keychain) {
-                // Decrypt the key.
-                if (!key.isEncrypted()) {
-                    // Not encrypted - add to chain as is.
-                    decryptedKeyChain.add(key);
-                } else {
-                    ECKey decryptedECKey = key.decrypt(keyCrypter, aesKey);
-                    decryptedKeyChain.add(decryptedECKey);
-                }
-            }
-
-            // Replace the old keychain with the unencrypted one.
-            keychain = decryptedKeyChain;
-
-            // The wallet is now unencrypted.
-            keyCrypter = null;
+            keychain.decrypt(aesKey);
             saveNow();
-        } finally {
-            lock.unlock();
-        }
-    }
-
-    /**
-     * Create a new, random encrypted ECKey and add it to the wallet.
-     *
-     * @param keyCrypter The keyCrypter to use in encrypting the new key
-     * @param aesKey The AES key to use to encrypt the new key
-     * @return ECKey the new, encrypted ECKey
-     */
-    public ECKey addNewEncryptedKey(KeyCrypter keyCrypter, KeyParameter aesKey) {
-        ECKey newKey = (new ECKey()).encrypt(checkNotNull(keyCrypter), checkNotNull(aesKey));
-        addKey(newKey);
-        return newKey;
-    }
-
-    /**
-     * <p>Convenience wrapper around {@link Wallet#addNewEncryptedKey(com.google.bitcoin.crypto.KeyCrypter,
-     * org.spongycastle.crypto.params.KeyParameter)} which just derives the key afresh and uses the pre-set
-     * keycrypter. The wallet must have been encrypted using one of the encrypt methods previously.</p>
-     *
-     * <p>Note that key derivation is deliberately very slow! So if you plan to add multiple keys, it can be
-     * faster to use the other method instead and re-use the {@link KeyParameter} object instead.</p>
-     */
-    public ECKey addNewEncryptedKey(CharSequence password) {
-        lock.lock();
-        try {
-            checkNotNull(keyCrypter, "Wallet is not encrypted, you must call encrypt() first.");
-            return addNewEncryptedKey(keyCrypter, keyCrypter.deriveKey(password));
         } finally {
             lock.unlock();
         }
@@ -2898,11 +2903,12 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
      *  This can be used to check the validity of an entered password.
      *
      *  @return boolean true if password supplied can decrypt the first private key in the wallet, false otherwise.
+     *  @throws IllegalStateException if the wallet is not encrypted.
      */
     public boolean checkPassword(CharSequence password) {
         lock.lock();
         try {
-            return keyCrypter != null && checkAESKey(keyCrypter.deriveKey(checkNotNull(password)));
+            return keychain.checkPassword(password);
         } finally {
             lock.unlock();
         }
@@ -2916,65 +2922,21 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
     public boolean checkAESKey(KeyParameter aesKey) {
         lock.lock();
         try {
-            // If no keys then cannot decrypt.
-            if (!getKeys().iterator().hasNext())
-                return false;
-            // Find the first encrypted key in the wallet.
-            ECKey firstEncryptedECKey = null;
-            Iterator<ECKey> iterator = getKeys().iterator();
-            while (iterator.hasNext() && firstEncryptedECKey == null) {
-                ECKey loopECKey = iterator.next();
-                if (loopECKey.isEncrypted()) {
-                    firstEncryptedECKey = loopECKey;
-                }
-            }
-            // There are no encrypted keys in the wallet.
-            if (firstEncryptedECKey == null)
-                return false;
-            String originalAddress = firstEncryptedECKey.toAddress(getNetworkParameters()).toString();
-            if (firstEncryptedECKey.isEncrypted() && firstEncryptedECKey.getEncryptedPrivateKey() != null) {
-                try {
-                    ECKey rebornKey = firstEncryptedECKey.decrypt(keyCrypter, aesKey);
-
-                    // Check that the decrypted private key's address is correct ie it decrypted accurately.
-                    String rebornAddress = rebornKey.toAddress(getNetworkParameters()).toString();
-                    return originalAddress.equals(rebornAddress);
-                } catch (KeyCrypterException ede) {
-                    // The AES key supplied is incorrect.
-                    return false;
-                }
-            }
-            return false;
+            return keychain.checkAESKey(aesKey);
         } finally {
             lock.unlock();
         }
     }
 
     /**
-     * Get the wallet's KeyCrypter.
+     * Get the wallet's KeyCrypter, or null if the wallet is not encrypted.
      * (Used in encrypting/ decrypting an ECKey).
      */
+    @Nullable
     public KeyCrypter getKeyCrypter() {
         lock.lock();
         try {
-            return keyCrypter;
-        } finally {
-            lock.unlock();
-        }
-    }
-
-    /**
-     * Sets the wallet's KeyCrypter.
-     * Note that this does not encrypt the wallet, and should only be used if the keyCrypter can not be included in the
-     * constructor during initial wallet loading.
-     * Note that if the keyCrypter was not properly set during wallet load, {@link Wallet#getEncryptionType()} and
-     * {@link Wallet#isEncrypted()} will not return the correct results.
-     */
-    public void setKeyCrypter(KeyCrypter keyCrypter) {
-        lock.lock();
-        try {
-            checkState(this.keyCrypter == null);
-            this.keyCrypter = keyCrypter;
+            return keychain.getKeyCrypter();
         } finally {
             lock.unlock();
         }
@@ -2988,12 +2950,11 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
     public EncryptionType getEncryptionType() {
         lock.lock();
         try {
-            if (keyCrypter == null) {
-                // Unencrypted wallet.
+            KeyCrypter crypter = keychain.getKeyCrypter();
+            if (crypter != null)
+                return crypter.getUnderstoodEncryptionType();
+            else
                 return EncryptionType.UNENCRYPTED;
-            } else {
-                return keyCrypter.getUnderstoodEncryptionType();
-            }
         } finally {
             lock.unlock();
         }
@@ -3035,9 +2996,13 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
         return description;
     }
 
+    /**
+     * Returns the number of distinct data items (note: NOT keys) that will be inserted into a bloom filter, when it
+     * is constructed.
+     */
     @Override
     public int getBloomFilterElementCount() {
-        int size = getKeychainSize() * 2;
+        int size = keychain.getBloomFilterElementCount();
         for (Transaction tx : getTransactions(false)) {
             for (TransactionOutput out : tx.getOutputs()) {
                 try {
@@ -3075,24 +3040,22 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
     }
 
     /**
-     * Gets a bloom filter that contains all of the public keys from this wallet,
-     * and which will provide the given false-positive rate if it has size elements.
-     * Keep in mind that you will get 2 elements in the bloom filter for each key in the wallet.
+     * <p>Gets a bloom filter that contains all of the public keys from this wallet, and which will provide the given
+     * false-positive rate if it has size elements. Keep in mind that you will get 2 elements in the bloom filter for
+     * each key in the wallet, for the public key and the hash of the public key (address form).</p>
      * 
-     * This is used to generate a BloomFilter which can be #{link BloomFilter.merge}d with another.
-     * It could also be used if you have a specific target for the filter's size.
+     * <p>This is used to generate a BloomFilter which can be {@link BloomFilter#merge(BloomFilter)}d with another.
+     * It could also be used if you have a specific target for the filter's size.</p>
      * 
-     * See the docs for {@link BloomFilter(int, double)} for a brief explanation of anonymity when using bloom filters.
+     * <p>See the docs for {@link BloomFilter(int, double)} for a brief explanation of anonymity when using bloom
+     * filters.</p>
      */
     @Override
     public BloomFilter getBloomFilter(int size, double falsePositiveRate, long nTweak) {
-        BloomFilter filter = new BloomFilter(size, falsePositiveRate, nTweak);
+        BloomFilter filter;
         lock.lock();
         try {
-            for (ECKey key : keychain) {
-                filter.insert(key.getPubKey());
-                filter.insert(key.getPubKeyHash());
-            }
+            filter = keychain.getBloomFilter(size, falsePositiveRate, nTweak);
 
             for (Script script : watchedScripts) {
                 for (ScriptChunk chunk : script.getChunks()) {
@@ -3145,7 +3108,7 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
      * that were created by this wallet, but not others. You can override the coin selector for any given send
      * operation by changing {@link Wallet.SendRequest#coinSelector}.
      */
-    public void setCoinSelector(@Nonnull CoinSelector coinSelector) {
+    public void setCoinSelector(CoinSelector coinSelector) {
         lock.lock();
         try {
             this.coinSelector = checkNotNull(coinSelector);
@@ -3372,18 +3335,6 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
                 @Override
                 public void run() {
                     registration.listener.onReorganize(Wallet.this);
-                }
-            });
-        }
-    }
-
-    private void queueOnKeysAdded(final List<ECKey> keys) {
-        checkState(lock.isHeldByCurrentThread());
-        for (final ListenerRegistration<WalletEventListener> registration : eventListeners) {
-            registration.executor.execute(new Runnable() {
-                @Override
-                public void run() {
-                    registration.listener.onKeysAdded(Wallet.this, keys);
                 }
             });
         }
@@ -3734,14 +3685,14 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
 
     @Nullable
     private Transaction rekeyOneBatch(long keyRotationTimestamp, final TransactionBroadcaster broadcaster) {
-        final Transaction rekeyTx;
+        /*final Transaction rekeyTx;
 
         lock.lock();
         try {
             // Firstly, see if we have any keys that are beyond the rotation time, and any before.
             ECKey safeKey = null;
             boolean haveRotatingKeys = false;
-            for (ECKey key : keychain) {
+            for (ECKey key : basicKeyChain) {
                 final long t = key.getCreationTimeSeconds();
                 if (t < keyRotationTimestamp) {
                     haveRotatingKeys = true;
@@ -3814,6 +3765,7 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
                 }
             }
         }.start();
-        return rekeyTx;
+        return rekeyTx;*/
+        throw new RuntimeException("FIXME");
     }
 }

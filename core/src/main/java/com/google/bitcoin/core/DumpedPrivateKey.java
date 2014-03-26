@@ -19,7 +19,6 @@ package com.google.bitcoin.core;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 
-import java.math.BigInteger;
 import java.util.Arrays;
 
 /**
@@ -75,7 +74,8 @@ public class DumpedPrivateKey extends VersionedChecksummedBytes {
      * Returns an ECKey created from this encoded private key.
      */
     public ECKey getKey() {
-        return new ECKey(new BigInteger(1, bytes), null, compressed);
+        final ECKey key = ECKey.fromPrivate(bytes);
+        return compressed ? key : key.decompress();
     }
 
     @Override
