@@ -49,7 +49,7 @@ public class NativeWalletEventListener implements WalletEventListener {
     public native void onWalletChanged(Wallet wallet);
 
     @Override
-    public native void onKeysAdded(Wallet wallet, List<ECKey> keys);
+    public native void onKeysAdded(List<ECKey> keys);
 
     @Override
     public native void onScriptsAdded(Wallet wallet, List<Script> scripts);

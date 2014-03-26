@@ -36,6 +36,7 @@ import java.io.File;
 import java.math.BigInteger;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
+import java.util.Arrays;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -68,8 +69,9 @@ public class ChannelConnectionTest extends TestWithWallet {
         sendMoneyToWallet(Utils.COIN, AbstractBlockChain.NewBlockType.BEST_CHAIN);
         wallet.addExtension(new StoredPaymentChannelClientStates(wallet, failBroadcaster));
         serverWallet = new Wallet(params);
+        serverWallet.setKeychainLookaheadSize(5);
         serverWallet.addExtension(new StoredPaymentChannelServerStates(serverWallet, failBroadcaster));
-        serverWallet.addKey(new ECKey());
+        serverWallet.freshReceiveKey();
         serverChain = new BlockChain(params, serverWallet, blockStore);
         // Use an atomic boolean to indicate failure because fail()/assert*() dont work in network threads
         fail = new AtomicBoolean(false);
@@ -416,19 +418,17 @@ public class ChannelConnectionTest extends TestWithWallet {
     private static Wallet roundTripClientWallet(Wallet wallet) throws Exception {
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         new WalletProtobufSerializer().writeWallet(wallet, bos);
-        Wallet wallet2 = new Wallet(wallet.getParams());
-        wallet2.addExtension(new StoredPaymentChannelClientStates(wallet2, failBroadcaster));
-        new WalletProtobufSerializer().readWallet(WalletProtobufSerializer.parseToProto(new ByteArrayInputStream(bos.toByteArray())), wallet2);
-        return wallet2;
+        org.bitcoinj.wallet.Protos.Wallet proto = WalletProtobufSerializer.parseToProto(new ByteArrayInputStream(bos.toByteArray()));
+        StoredPaymentChannelClientStates state = new StoredPaymentChannelClientStates(null, failBroadcaster);
+        return new WalletProtobufSerializer().readWallet(wallet.getParams(), new WalletExtension[] { state }, proto);
     }
 
     private static Wallet roundTripServerWallet(Wallet wallet) throws Exception {
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         new WalletProtobufSerializer().writeWallet(wallet, bos);
-        Wallet wallet2 = new Wallet(wallet.getParams());
-        wallet2.addExtension(new StoredPaymentChannelServerStates(wallet2, failBroadcaster));
-        new WalletProtobufSerializer().readWallet(WalletProtobufSerializer.parseToProto(new ByteArrayInputStream(bos.toByteArray())), wallet2);
-        return wallet2;
+        StoredPaymentChannelServerStates state = new StoredPaymentChannelServerStates(null, failBroadcaster);
+        org.bitcoinj.wallet.Protos.Wallet proto = WalletProtobufSerializer.parseToProto(new ByteArrayInputStream(bos.toByteArray()));
+        return new WalletProtobufSerializer().readWallet(wallet.getParams(), new WalletExtension[] { state }, proto);
     }
 
     @Test
@@ -544,7 +544,8 @@ public class ChannelConnectionTest extends TestWithWallet {
     @Test
     public void testEmptyWallet() throws Exception {
         Wallet emptyWallet = new Wallet(params);
-        emptyWallet.addKey(new ECKey());
+        emptyWallet.setKeychainLookaheadSize(5);
+        emptyWallet.freshReceiveKey();
         ChannelTestUtils.RecordingPair pair = ChannelTestUtils.makeRecorders(serverWallet, mockBroadcaster);
         PaymentChannelServer server = pair.server;
         PaymentChannelClient client = new PaymentChannelClient(emptyWallet, myKey, Utils.COIN, Sha256Hash.ZERO_HASH, pair.clientRecorder);
@@ -563,6 +564,24 @@ public class ChannelConnectionTest extends TestWithWallet {
         } catch (InsufficientMoneyException expected) {
             // This should be thrown.
         }
+    }
+
+    @Test
+    public void testClientRefusesNonCanonicalKey() throws Exception {
+        ChannelTestUtils.RecordingPair pair = ChannelTestUtils.makeRecorders(serverWallet, mockBroadcaster);
+        PaymentChannelServer server = pair.server;
+        PaymentChannelClient client = new PaymentChannelClient(wallet, myKey, Utils.COIN, Sha256Hash.ZERO_HASH, pair.clientRecorder);
+        client.connectionOpen();
+        server.connectionOpen();
+        server.receiveMessage(pair.clientRecorder.checkNextMsg(MessageType.CLIENT_VERSION));
+        client.receiveMessage(pair.serverRecorder.checkNextMsg(MessageType.SERVER_VERSION));
+        Protos.TwoWayChannelMessage.Builder initiateMsg = Protos.TwoWayChannelMessage.newBuilder(pair.serverRecorder.checkNextMsg(MessageType.INITIATE));
+        ByteString brokenKey = initiateMsg.getInitiate().getMultisigKey();
+        brokenKey = ByteString.copyFrom(Arrays.copyOf(brokenKey.toByteArray(), brokenKey.size() + 1));
+        initiateMsg.getInitiateBuilder().setMultisigKey(brokenKey);
+        client.receiveMessage(initiateMsg.build());
+        pair.clientRecorder.checkNextMsg(MessageType.ERROR);
+        assertEquals(CloseReason.REMOTE_SENT_INVALID_MESSAGE, pair.clientRecorder.q.take());
     }
 
     @Test
