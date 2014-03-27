@@ -147,7 +147,7 @@ public class PaymentChannelClient implements IPaymentChannelClient {
 
         checkState(initiate.getExpireTimeSecs() > 0 && initiate.getMinAcceptedChannelSize() >= 0);
 
-        final long MAX_EXPIRY_TIME = Utils.currentTimeMillis() / 1000 + MAX_TIME_WINDOW;
+        final long MAX_EXPIRY_TIME = Utils.currentTimeSeconds() + MAX_TIME_WINDOW;
         if (initiate.getExpireTimeSecs() > MAX_EXPIRY_TIME) {
             log.error("Server expiry time was out of our allowed bounds: {} vs {}", initiate.getExpireTimeSecs(),
                     MAX_EXPIRY_TIME);
