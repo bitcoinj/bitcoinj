@@ -886,7 +886,7 @@ public class PeerGroup extends AbstractExecutionThreadService implements Transac
     protected Peer connectTo(PeerAddress address, boolean incrementMaxConnections) {
         VersionMessage ver = getVersionMessage().duplicate();
         ver.bestHeight = chain == null ? 0 : chain.getBestChainHeight();
-        ver.time = Utils.currentTimeMillis() / 1000;
+        ver.time = Utils.currentTimeSeconds();
 
         Peer peer = new Peer(params, ver, address, chain, memoryPool);
         peer.addEventListener(startupListener, Threading.SAME_THREAD);
