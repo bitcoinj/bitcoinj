@@ -181,7 +181,7 @@ public class BlockChainTest {
         Block prev = unitTestParams.getGenesisBlock();
         Utils.setMockClock(System.currentTimeMillis()/1000);
         for (int i = 0; i < unitTestParams.getInterval() - 1; i++) {
-            Block newBlock = prev.createNextBlock(coinbaseTo, Utils.currentTimeMillis()/1000);
+            Block newBlock = prev.createNextBlock(coinbaseTo, Utils.currentTimeSeconds());
             assertTrue(chain.add(newBlock));
             prev = newBlock;
             // The fake chain should seem to be "fast" for the purposes of difficulty calculations.
@@ -189,13 +189,13 @@ public class BlockChainTest {
         }
         // Now add another block that has no difficulty adjustment, it should be rejected.
         try {
-            chain.add(prev.createNextBlock(coinbaseTo, Utils.currentTimeMillis()/1000));
+            chain.add(prev.createNextBlock(coinbaseTo, Utils.currentTimeSeconds()));
             fail();
         } catch (VerificationException e) {
         }
         // Create a new block with the right difficulty target given our blistering speed relative to the huge amount
         // of time it's supposed to take (set in the unit test network parameters).
-        Block b = prev.createNextBlock(coinbaseTo, Utils.currentTimeMillis()/1000);
+        Block b = prev.createNextBlock(coinbaseTo, Utils.currentTimeSeconds());
         b.setDifficultyTarget(0x201fFFFFL);
         b.solve();
         assertTrue(chain.add(b));

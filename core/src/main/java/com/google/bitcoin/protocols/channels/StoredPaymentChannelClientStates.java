@@ -94,7 +94,7 @@ public class StoredPaymentChannelClientStates implements WalletExtension {
         lock.lock();
         try {
             final Set<StoredClientChannel> setChannels = mapChannels.get(id);
-            final long nowSeconds = Utils.currentTimeMillis() / 1000;
+            final long nowSeconds = Utils.currentTimeSeconds();
             int earliestTime = Integer.MAX_VALUE;
             for (StoredClientChannel channel : setChannels) {
                 synchronized (channel) {

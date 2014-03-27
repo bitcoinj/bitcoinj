@@ -964,7 +964,7 @@ public class FullBlockTestGenerator {
         
         // Block with timestamp > 2h in the future
         Block b48 = createNextBlock(b44, chainHeadHeight + 16, out15, null);
-        b48.setTime(Utils.currentTimeMillis() / 1000 + 60*60*3);
+        b48.setTime(Utils.currentTimeSeconds() + 60*60*3);
         b48.solve();
         blocks.add(new BlockAndValidity(blockToHeightMap, b48, false, true, b44.getHash(), chainHeadHeight + 15, "b48"));
         
