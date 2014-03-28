@@ -1410,6 +1410,8 @@ public class WalletTest extends TestWithWallet {
     public void importAndEncrypt() throws IOException, InsufficientMoneyException {
         final ECKey key = new ECKey();
         encryptedWallet.importKeysAndEncrypt(ImmutableList.of(key), PASSWORD1);
+        assertEquals(1, encryptedWallet.getImportedKeys().size());
+        assertEquals(key.getPubKeyPoint(), encryptedWallet.getImportedKeys().get(0).getPubKeyPoint());
         sendMoneyToWallet(encryptedWallet, Utils.COIN, key.toAddress(params), AbstractBlockChain.NewBlockType.BEST_CHAIN);
         assertEquals(Utils.COIN, encryptedWallet.getBalance());
         SendRequest req = Wallet.SendRequest.emptyWallet(new ECKey().toAddress(params));
