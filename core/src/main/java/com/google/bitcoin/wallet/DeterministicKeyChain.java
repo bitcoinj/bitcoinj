@@ -233,22 +233,21 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
     public DeterministicKey getKey(KeyPurpose purpose) {
         lock.lock();
         try {
-            DeterministicKey key;
-            List<DeterministicKey> lookahead;
+            DeterministicKey key, parentKey;
+            int index;
             if (purpose == KeyPurpose.RECEIVE_FUNDS) {
-                issuedExternalKeys++;
-                lookahead = maybeLookAhead(externalKey, issuedExternalKeys);
-                // TODO: Handle the case where the derived key is >= curve order.
-                key = HDKeyDerivation.deriveChildKey(externalKey, issuedExternalKeys - 1);
+                index = ++issuedExternalKeys;
+                parentKey = externalKey;
             } else if (purpose == KeyPurpose.CHANGE) {
-                issuedInternalKeys++;
-                lookahead = maybeLookAhead(internalKey, issuedInternalKeys);
-                // TODO: Handle the case where the derived key is >= curve order.
-                key = HDKeyDerivation.deriveChildKey(internalKey, issuedInternalKeys - 1);
+                index = ++issuedInternalKeys;
+                parentKey = internalKey;
             } else {
                 throw new IllegalArgumentException("Unknown key purpose " + purpose);
             }
+            // TODO: Handle the case where the derived key is >= curve order.
+            List<DeterministicKey> lookahead = maybeLookAhead(parentKey, index);
             basicKeyChain.importKeys(lookahead);
+            key = hierarchy.get(HDUtils.append(parentKey.getPath(), new ChildNumber(index - 1, false)), false, false);
             return key;
         } finally {
             lock.unlock();
@@ -665,6 +664,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         for (int i = 0; i < needed; i++) {
             // TODO: Handle the case where the derived key is >= curve order.
             DeterministicKey key = HDKeyDerivation.deriveChildKey(parent, numChildren + i);
+            key = key.getPubOnly();
             hierarchy.putKey(key);
             result.add(key);
         }
