@@ -157,8 +157,8 @@ public class DeterministicKey extends ECKey {
      */
     public DeterministicKey getPubOnly() {
         if (isPubKeyOnly()) return this;
-        final DeterministicKey parentPub = getParent() == null ? null : getParent().getPubOnly();
-        return new DeterministicKey(getPath(), getChainCode(), getPubKeyPoint(), null, parentPub);
+        //final DeterministicKey parentPub = getParent() == null ? null : getParent().getPubOnly();
+        return new DeterministicKey(getPath(), getChainCode(), getPubKeyPoint(), null, parent);
     }
 
 

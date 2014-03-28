@@ -64,7 +64,7 @@ public final class HDUtils {
         return bytes;
     }
 
-    static ImmutableList<ChildNumber> append(ImmutableList<ChildNumber> path, ChildNumber childNumber) {
+    public static ImmutableList<ChildNumber> append(ImmutableList<ChildNumber> path, ChildNumber childNumber) {
         return ImmutableList.<ChildNumber>builder().addAll(path).add(childNumber).build();
     }
 
