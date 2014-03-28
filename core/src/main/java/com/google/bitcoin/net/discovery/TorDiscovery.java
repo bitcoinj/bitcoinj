@@ -1,5 +1,5 @@
 /**
- * Copyright 2011 John Sample
+ * Copyright 2014 Miron Cuperman
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,10 @@ import com.google.bitcoin.core.NetworkParameters;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.subgraph.orchid.Circuit;
 import com.subgraph.orchid.RelayCell;
 import com.subgraph.orchid.Router;
@@ -35,15 +39,14 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -60,12 +63,18 @@ public class TorDiscovery implements PeerDiscovery {
     private static final Logger log = LoggerFactory.getLogger(TorDiscovery.class);
     public static final int MINIMUM_ROUTER_COUNT = 4;
     public static final int MINIMUM_ROUTER_LOOKUP_COUNT = 10;
-    public static final int RECEIVE_RETRIES = 5;
+    public static final int RECEIVE_RETRIES = 3;
+    public static final int RESOLVE_STREAM_ID = 0x1000; // An arbitrary stream ID
+    public static final int RESOLVE_CNAME = 0x00;
+    public static final int RESOLVE_ERROR = 0xf0;
+    public static final int RESOLVE_IPV4 = 0x04;
+    public static final int RESOLVE_IPV6 = 0x06;
 
     private final String[] hostNames;
     private final NetworkParameters netParams;
     private final CircuitPathChooser pathChooser;
     private final TorClient torClient;
+    private ListeningExecutorService threadPool;
 
     /**
      * Supports finding peers through Tor. Community run DNS entry points will be used.
@@ -91,7 +100,7 @@ public class TorDiscovery implements PeerDiscovery {
         this.pathChooser = CircuitPathChooser.create(torClient.getConfig(), torClient.getDirectory());
     }
 
-    static class Lookup {
+    private static class Lookup {
         final Router router;
         final InetAddress address;
 
@@ -108,105 +117,128 @@ public class TorDiscovery implements PeerDiscovery {
         Set<Router> routers = Sets.newHashSet();
         ArrayList<ExitTarget> dummyTargets = Lists.newArrayList();
 
+        // Collect exit nodes until we have enough
         while (routers.size() < MINIMUM_ROUTER_LOOKUP_COUNT) {
             Router router = pathChooser.chooseExitNodeForTargets(dummyTargets);
             routers.add(router);
         }
 
-        ExecutorService threadPool = Executors.newFixedThreadPool(routers.size());
-
         try {
-            List<Circuit> circuits = getCircuits(timeoutValue, timeoutUnit, routers, threadPool);
+            List<Circuit> circuits = getCircuits(timeoutValue, timeoutUnit, routers);
 
-            threadPool = Executors.newFixedThreadPool(circuits.size() * hostNames.length);
-            Map<HexDigest, InetSocketAddress> lookupMap = lookupAddresses(timeoutValue, timeoutUnit, threadPool, circuits);
+            Collection<InetSocketAddress> addresses = lookupAddresses(timeoutValue, timeoutUnit, circuits);
 
-            ArrayList<InetSocketAddress> addrs = Lists.newArrayList();
-            addrs.addAll(lookupMap.values());
-            if (addrs.size() < MINIMUM_ROUTER_COUNT)
-                throw new PeerDiscoveryException("Unable to find enough peers via Tor - got " + addrs.size());
-            Collections.shuffle(addrs);
-            threadPool.shutdownNow();
-            return addrs.toArray(new InetSocketAddress[addrs.size()]);
+            if (addresses.size() < MINIMUM_ROUTER_COUNT)
+                throw new PeerDiscoveryException("Unable to find enough peers via Tor - got " + addresses.size());
+            ArrayList<InetSocketAddress> addressList = Lists.newArrayList();
+            addressList.addAll(addresses);
+            Collections.shuffle(addressList);
+            return addressList.toArray(new InetSocketAddress[addressList.size()]);
         } catch (InterruptedException e) {
             throw new PeerDiscoveryException(e);
-        } finally {
-            threadPool.shutdown();
         }
     }
 
-    private List<Circuit> getCircuits(long timeoutValue, TimeUnit timeoutUnit, Set<Router> routers, ExecutorService threadPool) throws InterruptedException {
-        List<Circuit> circuits = Lists.newArrayList();
+    private List<Circuit> getCircuits(long timeoutValue, TimeUnit timeoutUnit, Set<Router> routers) throws InterruptedException {
+        createThreadPool(routers.size());
 
-        List<Callable<Circuit>> circuitTasks = Lists.newArrayList();
-        for (final Router router : routers) {
-            circuitTasks.add(new Callable<Circuit>() {
-                public Circuit call() throws Exception {
-                    return torClient.getCircuitManager().openInternalCircuitTo(Lists.newArrayList(router));
-                }
-            });
-        }
-
-        final List<Future<Circuit>> circuitFutures =
-                threadPool.invokeAll(circuitTasks, timeoutValue, timeoutUnit);
-        for (int i = 0; i < circuitFutures.size(); i++) {
-            Future<Circuit> future = circuitFutures.get(i);
-            if (future.isCancelled()) {
-                log.warn("circuit timed out");
-                continue;  // Timed out.
-            }
-            try {
-                circuits.add(future.get());
-            } catch (ExecutionException e) {
-                log.error("Failed to construct circuit - {}", e.getMessage());
-                continue;
-            }
-        }
-
-        threadPool.shutdownNow();
-        return circuits;
-    }
-
-    private Map<HexDigest, InetSocketAddress> lookupAddresses(long timeoutValue, TimeUnit timeoutUnit, ExecutorService threadPool, List<Circuit> circuits) throws InterruptedException {
-        List<Callable<Lookup>> lookupTasks = Lists.newArrayList();
-        for (final Circuit circuit : circuits) {
-            for (final String seed : hostNames) {
-                lookupTasks.add(new Callable<Lookup>() {
-                    public Lookup call() throws Exception {
-                        return new Lookup(circuit.getFinalCircuitNode().getRouter(), lookup(circuit, seed));
+        try {
+            List<ListenableFuture<Circuit>> circuitFutures = Lists.newArrayList();
+            for (final Router router : routers) {
+                circuitFutures.add(threadPool.submit(new Callable<Circuit>() {
+                    public Circuit call() throws Exception {
+                        return torClient.getCircuitManager().openInternalCircuitTo(Lists.newArrayList(router));
                     }
-                });
+                }));
             }
-        }
 
-        final List<Future<Lookup>> lookupFutures =
-                threadPool.invokeAll(lookupTasks, timeoutValue, timeoutUnit);
-        Map<HexDigest, InetSocketAddress> lookupMap = Maps.newHashMap();
-        for (int i = 0; i < lookupFutures.size(); i++) {
-            Future<Lookup> future = lookupFutures.get(i);
-            if (future.isCancelled()) {
-                log.warn("circuit timed out");
-                continue;  // Timed out.
+            threadPool.awaitTermination(timeoutValue, timeoutUnit);
+            for (ListenableFuture<Circuit> future : circuitFutures) {
+                if (!future.isDone()) {
+                    log.warn("circuit timed out");
+                    future.cancel(true);
+                }
             }
+
+            List<Circuit> circuits;
             try {
-                Lookup lookup = future.get();
-                // maximum one entry per exit node
-                // TODO randomize result selection better
-
-                InetSocketAddress address = new InetSocketAddress(lookup.address, netParams.getPort());
-                lookupMap.put(lookup.router.getIdentityHash(), address);
+                circuits = Futures.successfulAsList(circuitFutures).get();
+                // Any failures will result in null entries.  Remove them.
+                circuits.removeAll(Collections.singleton(null));
+                return circuits;
             } catch (ExecutionException e) {
-                log.error("Failed to construct circuit - {}", e.getMessage());
-                continue;
+                // Cannot happen, successfulAsList accepts failures
+                throw new RuntimeException(e);
             }
+        } finally {
+            shutdownThreadPool();
         }
-        return lookupMap;
+    }
+
+    private Collection<InetSocketAddress> lookupAddresses(long timeoutValue, TimeUnit timeoutUnit, List<Circuit> circuits) throws InterruptedException {
+        createThreadPool(circuits.size() * hostNames.length);
+
+        try {
+            List<ListenableFuture<Lookup>> lookupFutures = Lists.newArrayList();
+            for (final Circuit circuit : circuits) {
+                for (final String seed : hostNames) {
+                    lookupFutures.add(threadPool.submit(new Callable<Lookup>() {
+                        public Lookup call() throws Exception {
+                            return new Lookup(circuit.getFinalCircuitNode().getRouter(), lookup(circuit, seed));
+                        }
+                    }));
+                }
+            }
+
+            threadPool.awaitTermination(timeoutValue, timeoutUnit);
+            for (ListenableFuture<Lookup> future : lookupFutures) {
+                if (!future.isDone()) {
+                    log.warn("circuit timed out");
+                    future.cancel(true);
+                }
+            }
+
+            try {
+                List<Lookup> lookups = Futures.successfulAsList(lookupFutures).get();
+                // Any failures will result in null entries.  Remove them.
+                lookups.removeAll(Collections.singleton(null));
+
+                // Use a map to enforce one result per exit node
+                // TODO: randomize result selection better
+                Map<HexDigest, InetSocketAddress> lookupMap = Maps.newHashMap();
+
+                for (Lookup lookup : lookups) {
+                    InetSocketAddress address = new InetSocketAddress(lookup.address, netParams.getPort());
+                    lookupMap.put(lookup.router.getIdentityHash(), address);
+                }
+
+                return lookupMap.values();
+            } catch (ExecutionException e) {
+                // Cannot happen, successfulAsList accepts failures
+                throw new RuntimeException(e);
+            }
+        } finally {
+            shutdownThreadPool();
+        }
+    }
+
+    private synchronized void shutdownThreadPool() {
+        threadPool.shutdownNow();
+        threadPool = null;
+    }
+
+    private synchronized void createThreadPool(int size) {
+        threadPool =
+                MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(size));
     }
 
     private InetAddress lookup(Circuit circuit, String seed) throws UnknownHostException {
-        RelayCell cell = circuit.createRelayCell(RelayCell.RELAY_RESOLVE, 0x1000, circuit.getFinalCircuitNode());
+        // Send a resolve cell to the exit node
+        RelayCell cell = circuit.createRelayCell(RelayCell.RELAY_RESOLVE, RESOLVE_STREAM_ID, circuit.getFinalCircuitNode());
         cell.putString(seed);
         circuit.sendRelayCell(cell);
+
+        // Wait a few cell timeout periods (3 * 20 sec) for replies, in case the path is slow
         for (int i = 0 ; i < RECEIVE_RETRIES; i++) {
             RelayCell res = circuit.receiveRelayCell();
             if (res != null) {
@@ -216,9 +248,11 @@ public class TorDiscovery implements PeerDiscovery {
                     byte[] value = new byte[len];
                     res.getByteArray(value);
                     int ttl = res.getInt();
-                    if (type == 0 || type >= 0xf0)
+
+                    if (type == RESOLVE_CNAME || type >= RESOLVE_ERROR) {
+                        // TODO handle .onion CNAME replies
                         throw new RuntimeException(new String(value));
-                    else if (type == 4 || type == 6) {
+                    } else if (type == RESOLVE_IPV4 || type == RESOLVE_IPV6) {
                         return InetAddress.getByAddress(value);
                     }
                 }
@@ -228,7 +262,9 @@ public class TorDiscovery implements PeerDiscovery {
         throw new RuntimeException("Could not look up " + seed);
     }
 
-    /** We don't have a way to abort a DNS lookup, so this does nothing */
-    public void shutdown() {
+    public synchronized void shutdown() {
+        if (threadPool != null) {
+            shutdownThreadPool();
+        }
     }
 }
