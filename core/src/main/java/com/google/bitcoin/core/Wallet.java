@@ -18,6 +18,7 @@
 package com.google.bitcoin.core;
 
 import com.google.bitcoin.core.TransactionConfidence.ConfidenceType;
+import com.google.bitcoin.crypto.DeterministicKey;
 import com.google.bitcoin.crypto.KeyCrypter;
 import com.google.bitcoin.crypto.KeyCrypterException;
 import com.google.bitcoin.crypto.KeyCrypterScrypt;
@@ -195,6 +196,10 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
         return new Wallet(params, new KeyChainGroup(seed));
     }
 
+    public static Wallet fromWatchingKey(NetworkParameters params, DeterministicKey watchKey) {
+        return new Wallet(params, new KeyChainGroup(watchKey));
+    }
+
     // TODO: When this class moves to the Wallet package, along with the protobuf serializer, then hide this.
     /** For internal use only. */
     public Wallet(NetworkParameters params, KeyChainGroup keyChainGroup) {
@@ -257,7 +262,7 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
      * it's actually seen in a pending or confirmed transaction, at which point this method will start returning
      * a different key (for each purpose independently).
      */
-    public ECKey currentKey(KeyChain.KeyPurpose purpose) {
+    public DeterministicKey currentKey(KeyChain.KeyPurpose purpose) {
         lock.lock();
         try {
             return keychain.currentKey(purpose);
@@ -270,7 +275,7 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
      * An alias for calling {@link #currentKey(com.google.bitcoin.wallet.KeyChain.KeyPurpose)} with
      * {@link com.google.bitcoin.wallet.KeyChain.KeyPurpose#RECEIVE_FUNDS} as the parameter.
      */
-    public ECKey currentReceiveKey() {
+    public DeterministicKey currentReceiveKey() {
         return currentKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
     }
 
@@ -282,10 +287,10 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
      * into a receive coins wizard type UI. You should use this when the user is definitely going to hand this key out
      * to someone who wishes to send money.
      */
-    public ECKey freshKey(KeyChain.KeyPurpose purpose) {
+    public DeterministicKey freshKey(KeyChain.KeyPurpose purpose) {
         lock.lock();
         try {
-            ECKey key = keychain.freshKey(purpose);
+            DeterministicKey key = keychain.freshKey(purpose);
             // Do we really need an immediate hard save? Arguably all this is doing is saving the 'current' key
             // and that's not quite so important, so we could coalesce for more performance.
             saveNow();
@@ -299,7 +304,7 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
      * An alias for calling {@link #freshKey(com.google.bitcoin.wallet.KeyChain.KeyPurpose)} with
      * {@link com.google.bitcoin.wallet.KeyChain.KeyPurpose#RECEIVE_FUNDS} as the parameter.
      */
-    public ECKey freshReceiveKey() {
+    public DeterministicKey freshReceiveKey() {
         return freshKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
     }
 
@@ -437,6 +442,20 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
     /** See {@link com.google.bitcoin.wallet.DeterministicKeyChain#setLookaheadSize(int)} for more info on this. */
     public int getKeychainLookaheadSize() {
         return keychain.getLookaheadSize();
+    }
+
+    /**
+     * Returns a public-only DeterministicKey that can be used to set up a watching wallet: that is, a wallet that
+     * can import transactions from the block chain just as the normal wallet can, but which cannot spend. Watching
+     * wallets are very useful for things like web servers that accept payments.
+     */
+    public DeterministicKey getWatchingKey() {
+        lock.lock();
+        try {
+            return keychain.getActiveKeyChain().getWatchingKey();
+        } finally {
+            lock.unlock();
+        }
     }
 
     /**

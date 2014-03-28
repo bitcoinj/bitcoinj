@@ -19,10 +19,7 @@ package com.google.bitcoin.core;
 
 import com.google.bitcoin.core.Transaction.SigHash;
 import com.google.bitcoin.core.Wallet.SendRequest;
-import com.google.bitcoin.crypto.KeyCrypter;
-import com.google.bitcoin.crypto.KeyCrypterException;
-import com.google.bitcoin.crypto.KeyCrypterScrypt;
-import com.google.bitcoin.crypto.TransactionSignature;
+import com.google.bitcoin.crypto.*;
 import com.google.bitcoin.store.WalletProtobufSerializer;
 import com.google.bitcoin.utils.MockTransactionBroadcaster;
 import com.google.bitcoin.utils.TestUtils;
@@ -1089,6 +1086,23 @@ public class WalletTest extends TestWithWallet {
         assertEquals(t2.toString(), 1, t2.getInputs().get(0).getScriptSig().getChunks().size());
         assertTrue(t2.getInputs().get(0).getScriptSig().getChunks().get(0).data.length > 50);
         log.info(t2.toString(chain));
+    }
+
+    @Test(expected = ECKey.MissingPrivateKeyException.class)
+    public void watchingWallet() throws Exception {
+        DeterministicKey key = wallet.freshReceiveKey();
+        DeterministicKey watchKey = wallet.getWatchingKey();
+        String serialized = watchKey.serializePubB58();
+        watchKey = DeterministicKey.deserializeB58(null, serialized);
+        Wallet watchingWallet = Wallet.fromWatchingKey(params, watchKey);
+        DeterministicKey key2 = watchingWallet.freshReceiveKey();
+        assertEquals(key, key2);
+
+        key = wallet.freshKey(KeyChain.KeyPurpose.CHANGE);
+        key2 = watchingWallet.freshKey(KeyChain.KeyPurpose.CHANGE);
+        assertEquals(key, key2);
+        key.sign(Sha256Hash.ZERO_HASH);
+        key2.sign(Sha256Hash.ZERO_HASH);
     }
 
     @Test

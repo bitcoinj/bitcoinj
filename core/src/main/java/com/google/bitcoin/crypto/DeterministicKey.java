@@ -219,7 +219,10 @@ public class DeterministicKey extends ECKey {
         } else {
             // If it's not encrypted, derive the private via the parents.
             final BigInteger privateKey = findOrDerivePrivateKey();
-            checkState(privateKey != null, "This key is a part of a public-key only heirarchy and cannot be used for signing");
+            if (privateKey == null) {
+                // This key is a part of a public-key only heirarchy and cannot be used for signing
+                throw new MissingPrivateKeyException();
+            }
             return super.doSign(input, privateKey);
         }
     }

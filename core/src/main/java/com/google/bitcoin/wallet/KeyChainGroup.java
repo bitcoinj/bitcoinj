@@ -67,6 +67,14 @@ public class KeyChainGroup implements PeerFilterProvider {
         this(null, ImmutableList.of(new DeterministicKeyChain(seed)), null);
     }
 
+    /**
+     * Creates a keychain group with no basic chain, and an HD chain that is watching the given watching key.
+     * This HAS to be an account key as returned by {@link DeterministicKeyChain#getWatchingKey()}.
+     */
+    public KeyChainGroup(DeterministicKey watchKey) {
+        this(null, ImmutableList.of(new DeterministicKeyChain(watchKey)), null);
+    }
+
     // Used for deserialization.
     private KeyChainGroup(@Nullable BasicKeyChain basicKeyChain, List<DeterministicKeyChain> chains, @Nullable KeyCrypter crypter) {
         this.basic = basicKeyChain == null ? new BasicKeyChain() : basicKeyChain;
@@ -89,7 +97,7 @@ public class KeyChainGroup implements PeerFilterProvider {
      * it's actually seen in a pending or confirmed transaction, at which point this method will start returning
      * a different key (for each purpose independently).
      */
-    public ECKey currentKey(KeyChain.KeyPurpose purpose) {
+    public DeterministicKey currentKey(KeyChain.KeyPurpose purpose) {
         final DeterministicKey current = currentKeys.get(purpose);
         return current != null ? current  : freshKey(purpose);
     }
@@ -102,7 +110,7 @@ public class KeyChainGroup implements PeerFilterProvider {
      * into a receive coins wizard type UI. You should use this when the user is definitely going to hand this key out
      * to someone who wishes to send money.
      */
-    public ECKey freshKey(KeyChain.KeyPurpose purpose) {
+    public DeterministicKey freshKey(KeyChain.KeyPurpose purpose) {
         DeterministicKeyChain chain = getActiveKeyChain();
         DeterministicKey key = chain.getKey(purpose);   // Always returns the next key along the key chain.
         currentKeys.put(purpose, key);
@@ -377,26 +385,27 @@ public class KeyChainGroup implements PeerFilterProvider {
             for (ECKey key : basic.getKeys())
                 formatKeyWithAddress(params, includePrivateKeys, key, builder);
         }
-        final String newline = String.format("%n");
         for (DeterministicKeyChain chain : chains) {
             DeterministicSeed seed = chain.getSeed();
-            if (seed != null && !seed.isEncrypted()) {
-                final List<String> words = seed.toMnemonicCode();
-                builder.append("Seed as words: ");
-                builder.append(Joiner.on(' ').join(words));
-                builder.append(newline);
-                builder.append("Seed as hex:   ");
-                builder.append(seed.toHexString());
-                builder.append(newline);
-                builder.append("Seed birthday: ");
-                builder.append(seed.getCreationTimeSeconds());
-                builder.append("  [" + new Date(seed.getCreationTimeSeconds() * 1000) + "]");
-                builder.append(newline);
-                builder.append(newline);
-            } else {
-                builder.append("Seed is encrypted");
-                builder.append(newline);
-                builder.append(newline);
+            if (seed != null) {
+                if (seed.isEncrypted()) {
+                    builder.append(String.format("Seed is encrypted%n"));
+                } else if (includePrivateKeys) {
+                    final List<String> words = seed.toMnemonicCode();
+                    builder.append(
+                            String.format("Seed as words: %s%nSeed as hex:   %s%n", Joiner.on(' ').join(words),
+                                    seed.toHexString())
+                    );
+                }
+                builder.append(String.format("Seed birthday: %d  [%s]%n", seed.getCreationTimeSeconds(), new Date(seed.getCreationTimeSeconds() * 1000)));
+            }
+            final DeterministicKey watchingKey = chain.getWatchingKey();
+            // Don't show if it's been imported from a watching wallet already, because it'd result in a weird/
+            // unintuitive result where the watching key in a watching wallet is not the one it was created with
+            // due to the parent fingerprint being missing/not stored. In future we could store the parent fingerprint
+            // optionally as well to fix this, but it seems unimportant for now.
+            if (watchingKey.getParent() != null) {
+                builder.append(String.format("Key to watch:  %s%n%n", watchingKey.serializePubB58()));
             }
             for (ECKey key : chain.getKeys())
                 formatKeyWithAddress(params, includePrivateKeys, key, builder);
