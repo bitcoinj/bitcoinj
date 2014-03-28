@@ -235,14 +235,22 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         try {
             DeterministicKey key, parentKey;
             int index;
-            if (purpose == KeyPurpose.RECEIVE_FUNDS) {
-                index = ++issuedExternalKeys;
-                parentKey = externalKey;
-            } else if (purpose == KeyPurpose.CHANGE) {
-                index = ++issuedInternalKeys;
-                parentKey = internalKey;
-            } else {
-                throw new IllegalArgumentException("Unknown key purpose " + purpose);
+            switch (purpose) {
+                // Map both REFUND and RECEIVE_KEYS to the same branch for now. Refunds are a feature of the BIP 70
+                // payment protocol. Later we may wish to map it to a different branch (in a new wallet version?).
+                // This would allow a watching wallet to only be able to see inbound payments, but not change
+                // (i.e. spends) or refunds. Might be useful for auditing ...
+                case RECEIVE_FUNDS:
+                case REFUND:
+                    index = ++issuedExternalKeys;
+                    parentKey = externalKey;
+                    break;
+                case CHANGE:
+                    index = ++issuedInternalKeys;
+                    parentKey = internalKey;
+                    break;
+                default:
+                    throw new UnsupportedOperationException();
             }
             // TODO: Handle the case where the derived key is >= curve order.
             List<DeterministicKey> lookahead = maybeLookAhead(parentKey, index);
