@@ -230,7 +230,7 @@ public class DeterministicKeyChainTest {
         final String pub58 = watchingKey.serializePubB58();
         assertEquals("xpub68KFnj3bqUx1s7mHejLDBPywCAKdJEu1b49uniEEn2WSbHmZ7xbLqFTjJbtx1LUcAt1DwhoqWHmo2s5WMJp6wi38CiF2hYD49qVViKVvAoi", pub58);
         watchingKey = DeterministicKey.deserializeB58(null, pub58);
-        chain = DeterministicKeyChain.watch(watchingKey);
+        chain = new DeterministicKeyChain(watchingKey);
         chain.setLookaheadSize(10);
 
         assertEquals(key1.getPubKeyPoint(), chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS).getPubKeyPoint());
@@ -241,7 +241,8 @@ public class DeterministicKeyChainTest {
             // Can't sign with a key from a watching chain.
             key.sign(Sha256Hash.ZERO_HASH);
             fail();
-        } catch (IllegalStateException e) {
+        } catch (ECKey.MissingPrivateKeyException e) {
+            // Ignored.
         }
         // Test we can serialize and deserialize a watching chain OK.
         List<Protos.Key> serialization = chain.serializeToProtobuf();
@@ -254,7 +255,7 @@ public class DeterministicKeyChainTest {
     @Test(expected = IllegalStateException.class)
     public void watchingCannotEncrypt() throws Exception {
         final DeterministicKey accountKey = chain.getKeyByPath(DeterministicKeyChain.ACCOUNT_ZERO_PATH);
-        chain = DeterministicKeyChain.watch(accountKey.getPubOnly());
+        chain = new DeterministicKeyChain(accountKey.getPubOnly());
         chain = chain.toEncrypted("this doesn't make any sense");
     }
 

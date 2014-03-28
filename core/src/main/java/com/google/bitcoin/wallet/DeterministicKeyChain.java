@@ -62,7 +62,8 @@ import static com.google.common.collect.Lists.newLinkedList;
  * {@link com.google.bitcoin.crypto.DeterministicKey#serializePubB58()}. The resulting "xpub..." string encodes
  * sufficient information about the account key to create a watching chain via
  * {@link com.google.bitcoin.crypto.DeterministicKey#deserializeB58(com.google.bitcoin.crypto.DeterministicKey, String)}
- * (with null as the first parameter) and then {@link #watch(com.google.bitcoin.crypto.DeterministicKey)}.</p>
+ * (with null as the first parameter) and then
+ * {@link DeterministicKeyChain#DeterministicKeyChain(com.google.bitcoin.crypto.DeterministicKey)}.</p>
  *
  * <p>This class builds on {@link com.google.bitcoin.crypto.DeterministicHierarchy} and
  * {@link com.google.bitcoin.crypto.DeterministicKey} by adding support for serialization to and from protobufs,
@@ -135,19 +136,18 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         this(seed, null);
     }
 
-    // c'tor for building watching chains, we keep it private and give it a static name to make the purpose clear.
-    private DeterministicKeyChain(DeterministicKey accountKey) {
-        checkArgument(accountKey.isPubKeyOnly(), "Private subtrees not currently supported");
-        checkArgument(accountKey.getPath().size() == 1, "You can only watch an account key currently");
-        basicKeyChain = new BasicKeyChain();
-        initializeHierarchyUnencrypted(accountKey);
-    }
-
     /**
      * Creates a deterministic key chain that watches the given (public only) root key. You can use this to calculate
      * balances and generally follow along, but spending is not possible with such a chain. Currently you can't use
      * this method to watch an arbitrary fragment of some other tree, this limitation may be removed in future.
      */
+    public DeterministicKeyChain(DeterministicKey watchingKey) {
+        checkArgument(watchingKey.isPubKeyOnly(), "Private subtrees not currently supported");
+        checkArgument(watchingKey.getPath().size() == 1, "You can only watch an account key currently");
+        basicKeyChain = new BasicKeyChain();
+        initializeHierarchyUnencrypted(watchingKey);
+    }
+
     public static DeterministicKeyChain watch(DeterministicKey accountKey) {
         return new DeterministicKeyChain(accountKey);
     }
@@ -445,7 +445,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                         if (!accountKey.getPath().equals(ACCOUNT_ZERO_PATH))
                             throw new UnreadableWalletException("Expecting account key but found key with path: " +
                                     HDUtils.formatPath(accountKey.getPath()));
-                        chain = DeterministicKeyChain.watch(accountKey);
+                        chain = new DeterministicKeyChain(accountKey);
                         isWatchingAccountKey = true;
                     } else {
                         chain = new DeterministicKeyChain(seed, crypter);
