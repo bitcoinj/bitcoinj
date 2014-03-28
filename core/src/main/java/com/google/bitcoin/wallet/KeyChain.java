@@ -54,7 +54,8 @@ public interface KeyChain {
 
     enum KeyPurpose {
         RECEIVE_FUNDS,
-        CHANGE
+        CHANGE,
+        REFUND
     }
 
     /** Obtains a key intended for the given purpose. The chain may create a new key, derive one, or re-use an old one. */
