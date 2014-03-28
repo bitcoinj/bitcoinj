@@ -358,6 +358,18 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
         }
     }
 
+    /**
+     * Returns a list of the non-deterministic keys that have been imported into the wallet, or the empty list if none.
+     */
+    public List<ECKey> getImportedKeys() {
+        lock.lock();
+        try {
+            return keychain.getImportedKeys();
+        } finally {
+            lock.unlock();
+        }
+    }
+
     /** Returns the address used for change outputs. Note: this will probably go away in future. */
     public Address getChangeAddress() {
         return currentKey(KeyChain.KeyPurpose.CHANGE).toAddress(params);

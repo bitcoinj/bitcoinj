@@ -276,6 +276,13 @@ public class KeyChainGroup {
     /** Returns the key crypter or null if the group is not encrypted. */
     @Nullable public KeyCrypter getKeyCrypter() { return keyCrypter; }
 
+    /**
+     * Returns a list of the non-deterministic keys that have been imported into the wallet, or the empty list if none.
+     */
+    public List<ECKey> getImportedKeys() {
+        return basic.getKeys();
+    }
+
     public long getEarliestKeyCreationTime() {
         long time = basic.getEarliestKeyCreationTime();   // Long.MAX_VALUE if empty.
         for (DeterministicKeyChain chain : chains)
