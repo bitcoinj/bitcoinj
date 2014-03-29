@@ -394,9 +394,7 @@ public class PaymentSession {
      */
     public static class PkiVerificationData {
         /** Display name of the payment requestor, could be a domain name, email address, legal name, etc */
-        public final String name;
-        /** The "org" part of the payment requestors ID. */
-        public final String orgName;
+        public final String displayName;
         /** SSL public key that was used to sign. */
         public final PublicKey merchantSigningKey;
         /** Object representing the CA that verified the merchant's ID */
@@ -404,34 +402,15 @@ public class PaymentSession {
         /** String representing the display name of the CA that verified the merchant's ID */
         public final String rootAuthorityName;
 
-        private PkiVerificationData(@Nullable String name, @Nullable String orgName, PublicKey merchantSigningKey,
+        private PkiVerificationData(@Nullable String displayName, PublicKey merchantSigningKey,
                                     TrustAnchor rootAuthority) throws PaymentRequestException.PkiVerificationException {
-            this.name = name;
-            this.orgName = orgName;
-            this.merchantSigningKey = merchantSigningKey;
-            this.rootAuthority = rootAuthority;
-            this.rootAuthorityName = getNameFromCert(rootAuthority);
-        }
-
-        private @Nullable String getNameFromCert(TrustAnchor rootAuthority) throws PaymentRequestException.PkiVerificationException {
-            org.spongycastle.asn1.x500.X500Name name = new X500Name(rootAuthority.getTrustedCert().getSubjectX500Principal().getName());
-            String commonName = null, org = null, location = null, country = null;
-            for (RDN rdn : name.getRDNs()) {
-                AttributeTypeAndValue pair = rdn.getFirst();
-                String val = ((ASN1String)pair.getValue()).getString();
-                if (pair.getType().equals(RFC4519Style.cn))
-                    commonName = val;
-                else if (pair.getType().equals(RFC4519Style.o))
-                    org = val;
-                else if (pair.getType().equals(RFC4519Style.l))
-                    location = val;
-                else if (pair.getType().equals(RFC4519Style.c))
-                    country = val;
-            }
-            if (org != null) {
-                return Joiner.on(", ").skipNulls().join(org, location, country);
-            } else {
-                return commonName;
+            try {
+                this.displayName = displayName;
+                this.merchantSigningKey = merchantSigningKey;
+                this.rootAuthority = rootAuthority;
+                this.rootAuthorityName = X509Utils.getDisplayNameFromCertificate(rootAuthority.getTrustedCert());
+            } catch (CertificateParsingException x) {
+                throw new PaymentRequestException.PkiVerificationException(x);
             }
         }
     }
@@ -493,33 +472,11 @@ public class PaymentSession {
 
             // Signature verifies, get the names from the identity we just verified for presentation to the user.
             final X509Certificate cert = certs.get(0);
-            X500Principal principal = cert.getSubjectX500Principal();
-            // At this point the Java crypto API falls flat on its face and dies - there's no clean way to get the
-            // different parts of the certificate name except for parsing the string. That's hard because of various
-            // custom escaping rules and the usual crap. So, use Bouncy Castle to re-parse the string into binary form
-            // again and then look for the names we want. Fail!
-            org.spongycastle.asn1.x500.X500Name name = new X500Name(principal.getName());
-            String entityName = null, orgName = null;
-            for (RDN rdn : name.getRDNs()) {
-                AttributeTypeAndValue pair = rdn.getFirst();
-                if (pair.getType().equals(RFC4519Style.cn))
-                    entityName = ((ASN1String)pair.getValue()).getString();
-                else if (pair.getType().equals(RFC4519Style.o))
-                    orgName = ((ASN1String)pair.getValue()).getString();
-            }
-            if (entityName == null && orgName == null) {
-                // This cert might not be an SSL cert. Just grab the first "subject alt name" if present, e.g. for
-                // S/MIME certs.
-                final Iterator<List<?>> it = cert.getSubjectAlternativeNames().iterator();
-                List<?> list;
-                // email addresses have a type code of one.
-                if (it.hasNext() && (list = it.next()) != null && (Integer) list.get(0) == 1)
-                    entityName = (String) list.get(1);
-                if (entityName == null)
-                    throw new PaymentRequestException.PkiVerificationException("Could not extract name from certificate");
-            }
+            String displayName = X509Utils.getDisplayNameFromCertificate(cert);
+            if (displayName == null)
+                throw new PaymentRequestException.PkiVerificationException("Could not extract name from certificate");
             // Everything is peachy. Return some useful data to the caller.
-            PkiVerificationData data = new PkiVerificationData(entityName, orgName, publicKey, result.getTrustAnchor());
+            PkiVerificationData data = new PkiVerificationData(displayName, publicKey, result.getTrustAnchor());
             // Cache the result so we don't have to re-verify if this method is called again.
             pkiVerificationData = data;
             return data;
