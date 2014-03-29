@@ -476,8 +476,8 @@ public class Utils {
     /**
      * Sets the mock clock to the given time (in seconds).
      */
-    public static void setMockClock(long mockClock) {
-        mockTime = new Date(mockClock * 1000);
+    public static void setMockClock(long mockClockSeconds) {
+        mockTime = new Date(mockClockSeconds * 1000);
     }
 
     /**

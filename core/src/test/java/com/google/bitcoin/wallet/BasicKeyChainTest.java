@@ -61,7 +61,7 @@ public class BasicKeyChainTest {
     @Test
     public void importKeys() {
         long now = Utils.currentTimeSeconds();
-        Utils.rollMockClock(0);
+        Utils.setMockClock(now);
         final ECKey key1 = new ECKey();
         Utils.rollMockClock(86400);
         final ECKey key2 = new ECKey();
@@ -185,7 +185,7 @@ public class BasicKeyChainTest {
 
     @Test
     public void serializationUnencrypted() throws UnreadableWalletException {
-        Utils.rollMockClock(0);
+        Utils.setMockClock();
         Date now = Utils.now();
         final ECKey key1 = new ECKey();
         Utils.rollMockClock(5000);
