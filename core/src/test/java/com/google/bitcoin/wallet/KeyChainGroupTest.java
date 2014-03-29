@@ -45,7 +45,7 @@ public class KeyChainGroupTest {
 
     public KeyChainGroupTest() {
         BriefLogFormatter.init();
-        Utils.rollMockClock(0);
+        Utils.setMockClock();
         group = new KeyChainGroup();
         group.setLookaheadSize(LOOKAHEAD_SIZE);   // Don't want slow tests.
         group.getActiveKeyChain();  // Force create a chain.
