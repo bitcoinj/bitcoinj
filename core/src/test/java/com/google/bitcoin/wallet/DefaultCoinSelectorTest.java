@@ -39,6 +39,7 @@ public class DefaultCoinSelectorTest extends TestWithWallet {
     @Override
     public void setUp() throws Exception {
         super.setUp();
+        Utils.setMockClock(); // Use mock clock
     }
 
     @After

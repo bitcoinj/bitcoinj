@@ -63,6 +63,7 @@ public class ChannelConnectionTest extends TestWithWallet {
     @Before
     public void setUp() throws Exception {
         super.setUp();
+        Utils.setMockClock(); // Use mock clock
         sendMoneyToWallet(Utils.COIN, AbstractBlockChain.NewBlockType.BEST_CHAIN);
         sendMoneyToWallet(Utils.COIN, AbstractBlockChain.NewBlockType.BEST_CHAIN);
         wallet.addExtension(new StoredPaymentChannelClientStates(wallet, failBroadcaster));

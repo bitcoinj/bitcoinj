@@ -52,6 +52,7 @@ public class TransactionBroadcastTest extends TestWithPeerGroup {
     @Override
     @Before
     public void setUp() throws Exception {
+        Utils.setMockClock(); // Use mock clock
         super.setUp(new MemoryBlockStore(UnitTestParams.get()));
         peerGroup.addWallet(wallet);
         // Fix the random permutation that TransactionBroadcast uses to shuffle the peers.

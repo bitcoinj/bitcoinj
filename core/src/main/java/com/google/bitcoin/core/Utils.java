@@ -1,5 +1,6 @@
 /**
  * Copyright 2011 Google Inc.
+ * Copyright 2014 Andreas Schildbach
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -460,13 +461,20 @@ public class Utils {
      */
     public static Date rollMockClockMillis(long millis) {
         if (mockTime == null)
-            mockTime = new Date();
+            throw new IllegalStateException("You need to use setMockClock() first.");
         mockTime = new Date(mockTime.getTime() + millis);
         return mockTime;
     }
 
     /**
-     * Sets the mock clock to the given time (in seconds)
+     * Sets the mock clock to the current time.
+     */
+    public static void setMockClock() {
+        mockTime = new Date();
+    }
+
+    /**
+     * Sets the mock clock to the given time (in seconds).
      */
     public static void setMockClock(long mockClock) {
         mockTime = new Date(mockClock * 1000);
