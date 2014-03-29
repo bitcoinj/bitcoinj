@@ -52,6 +52,7 @@ public class ChainSplitTest {
     @Before
     public void setUp() throws Exception {
         BriefLogFormatter.init();
+        Utils.setMockClock(); // Use mock clock
         Wallet.SendRequest.DEFAULT_FEE_PER_KB = BigInteger.ZERO;
         unitTestParams = UnitTestParams.get();
         wallet = new Wallet(unitTestParams);
