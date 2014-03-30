@@ -16,6 +16,11 @@
 
 package com.google.bitcoin.protocols.payments;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.security.GeneralSecurityException;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
 import java.security.cert.CertificateParsingException;
 import java.security.cert.X509Certificate;
 import java.util.Collection;
@@ -62,6 +67,24 @@ public class X509Utils {
             return commonName;
         } else {
             return altName;
+        }
+    }
+
+    public static @Nonnull KeyStore loadKeyStore(@Nonnull String keystoreType, @Nullable String keystorePassword, @Nonnull InputStream is)
+            throws KeyStoreException {
+        try {
+            KeyStore keystore = KeyStore.getInstance(keystoreType);
+            keystore.load(is, keystorePassword != null ? keystorePassword.toCharArray() : null);
+            return keystore;
+        } catch (IOException x) {
+            throw new KeyStoreException(x);
+        } catch (GeneralSecurityException x) {
+            throw new KeyStoreException(x);
+        } finally {
+            try {
+                is.close();
+            } catch (IOException x) {
+            }
         }
     }
 }

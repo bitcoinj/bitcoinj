@@ -23,28 +23,20 @@ import com.google.bitcoin.script.ScriptBuilder;
 import com.google.bitcoin.uri.BitcoinURI;
 import com.google.bitcoin.utils.Threading;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import org.bitcoin.protocols.payments.Protos;
-import org.spongycastle.asn1.ASN1String;
-import org.spongycastle.asn1.x500.AttributeTypeAndValue;
-import org.spongycastle.asn1.x500.RDN;
-import org.spongycastle.asn1.x500.X500Name;
-import org.spongycastle.asn1.x500.style.RFC4519Style;
 
 import javax.annotation.Nullable;
-import javax.security.auth.x500.X500Principal;
 import java.io.*;
 import java.math.BigInteger;
 import java.net.*;
 import java.security.*;
 import java.security.cert.*;
 import java.util.Date;
-import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.Callable;
 
@@ -80,7 +72,7 @@ import java.util.concurrent.Callable;
 public class PaymentSession {
     private static ListeningExecutorService executor = Threading.THREAD_POOL;
     private NetworkParameters params;
-    private String trustStorePath;
+    private final TrustStoreLoader trustStoreLoader;
     private Protos.PaymentRequest paymentRequest;
     private Protos.PaymentDetails paymentDetails;
     private BigInteger totalValue = BigInteger.ZERO;
@@ -123,16 +115,15 @@ public class PaymentSession {
      * If verifyPki is specified and the payment request object specifies a PKI method, then the system trust store will
      * be used to verify the signature provided by the payment request. An exception is thrown by the future if the
      * signature cannot be verified.
-     * If trustStorePath is not null, the trust store used for PKI verification will be loaded from the given location
-     * instead of using the system default trust store location.
+     * If trustStoreLoader is null, the system default trust store is used.
      */
-    public static ListenableFuture<PaymentSession> createFromBitcoinUri(final BitcoinURI uri, final boolean verifyPki, @Nullable final String trustStorePath)
+    public static ListenableFuture<PaymentSession> createFromBitcoinUri(final BitcoinURI uri, final boolean verifyPki, @Nullable final TrustStoreLoader trustStoreLoader)
             throws PaymentRequestException {
         String url = uri.getPaymentRequestUrl();
         if (url == null)
             throw new PaymentRequestException.InvalidPaymentRequestURL("No payment request URL (r= parameter) in BitcoinURI " + uri);
         try {
-            return fetchPaymentRequest(new URI(url), verifyPki, trustStorePath);
+            return fetchPaymentRequest(new URI(url), verifyPki, trustStoreLoader);
         } catch (URISyntaxException e) {
             throw new PaymentRequestException.InvalidPaymentRequestURL(e);
         }
@@ -167,21 +158,20 @@ public class PaymentSession {
      * If the payment request object specifies a PKI method, then the system trust store will
      * be used to verify the signature provided by the payment request. An exception is thrown by the future if the
      * signature cannot be verified.
-     * If trustStorePath is not null, the trust store used for PKI verification will be loaded from the given location
-     * instead of using the system default trust store location.
+     * If trustStoreLoader is null, the system default trust store is used.
      */
-    public static ListenableFuture<PaymentSession> createFromUrl(final String url, final boolean verifyPki, @Nullable final String trustStorePath)
+    public static ListenableFuture<PaymentSession> createFromUrl(final String url, final boolean verifyPki, @Nullable final TrustStoreLoader trustStoreLoader)
             throws PaymentRequestException {
         if (url == null)
             throw new PaymentRequestException.InvalidPaymentRequestURL("null paymentRequestUrl");
         try {
-            return fetchPaymentRequest(new URI(url), verifyPki, trustStorePath);
+            return fetchPaymentRequest(new URI(url), verifyPki, trustStoreLoader);
         } catch(URISyntaxException e) {
             throw new PaymentRequestException.InvalidPaymentRequestURL(e);
         }
     }
 
-    private static ListenableFuture<PaymentSession> fetchPaymentRequest(final URI uri, final boolean verifyPki, @Nullable final String trustStorePath) {
+    private static ListenableFuture<PaymentSession> fetchPaymentRequest(final URI uri, final boolean verifyPki, @Nullable final TrustStoreLoader trustStoreLoader) {
         return executor.submit(new Callable<PaymentSession>() {
             @Override
             public PaymentSession call() throws Exception {
@@ -189,7 +179,7 @@ public class PaymentSession {
                 connection.setRequestProperty("Accept", "application/bitcoin-paymentrequest");
                 connection.setUseCaches(false);
                 Protos.PaymentRequest paymentRequest = Protos.PaymentRequest.parseFrom(connection.getInputStream());
-                return new PaymentSession(paymentRequest, verifyPki, trustStorePath);
+                return new PaymentSession(paymentRequest, verifyPki, trustStoreLoader);
             }
         });
     }
@@ -199,8 +189,7 @@ public class PaymentSession {
      * Verifies PKI by default.
      */
     public PaymentSession(Protos.PaymentRequest request) throws PaymentRequestException {
-        parsePaymentRequest(request);
-        verifyPki();
+        this(request, true, null);
     }
 
     /**
@@ -208,19 +197,16 @@ public class PaymentSession {
      * If verifyPki is true, also validates the signature and throws an exception if it fails.
      */
     public PaymentSession(Protos.PaymentRequest request, boolean verifyPki) throws PaymentRequestException {
-        parsePaymentRequest(request);
-        if (verifyPki)
-            verifyPki();
+        this(request, verifyPki, null);
     }
 
     /**
      * Creates a PaymentSession from the provided {@link Protos.PaymentRequest}.
      * If verifyPki is true, also validates the signature and throws an exception if it fails.
-     * If trustStorePath is not null, the trust store used for PKI verification will be loaded from the given location
-     * instead of using the system default trust store location.
+     * If trustStoreLoader is null, the system default trust store is used.
      */
-    public PaymentSession(Protos.PaymentRequest request, boolean verifyPki, @Nullable final String trustStorePath) throws PaymentRequestException {
-        this.trustStorePath = trustStorePath;
+    public PaymentSession(Protos.PaymentRequest request, boolean verifyPki, @Nullable final TrustStoreLoader trustStoreLoader) throws PaymentRequestException {
+        this.trustStoreLoader = trustStoreLoader != null ? trustStoreLoader : new TrustStoreLoader.DefaultTrustStoreLoader();
         parsePaymentRequest(request);
         if (verifyPki)
             verifyPki();
@@ -450,7 +436,7 @@ public class PaymentSession {
             CertPath path = certificateFactory.generateCertPath(certs);
 
             // Retrieves the most-trusted CAs from keystore.
-            PKIXParameters params = new PKIXParameters(createKeyStore(trustStorePath));
+            PKIXParameters params = new PKIXParameters(trustStoreLoader.getKeyStore());
             // Revocation not supported in the current version.
             params.setRevocationEnabled(false);
 
@@ -506,63 +492,6 @@ public class PaymentSession {
         } catch (KeyStoreException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    private KeyStore createKeyStore(@Nullable String path)
-            throws IOException, KeyStoreException, NoSuchAlgorithmException, CertificateException {
-        String keyStoreType = KeyStore.getDefaultType();
-        char[] defaultPassword = "changeit".toCharArray();
-        if (path != null) {
-            // If the user provided path, only try to load the keystore at that path.
-            KeyStore keyStore = KeyStore.getInstance(keyStoreType);
-            FileInputStream is = new FileInputStream(path);
-            keyStore.load(is, defaultPassword);
-            return keyStore;
-        }
-        try {
-            // Check if we are on Android.
-            Class version = Class.forName("android.os.Build$VERSION");
-            // Build.VERSION_CODES.ICE_CREAM_SANDWICH is 14.
-            if (version.getDeclaredField("SDK_INT").getInt(version) >= 14) {
-                // After ICS, Android provided this nice method for loading the keystore,
-                // so we don't have to specify the location explicitly.
-                KeyStore keystore = KeyStore.getInstance("AndroidCAStore");
-                keystore.load(null, null);
-                return keystore;
-            } else {
-                keyStoreType = "BKS";
-                path = System.getProperty("java.home") + "/etc/security/cacerts.bks".replace('/', File.separatorChar);
-            }
-        } catch (ClassNotFoundException e) {
-            // NOP. android.os.Build is not present, so we are not on Android. Fall through.
-        } catch (NoSuchFieldException e) {
-            throw new RuntimeException(e);   // Should never happen.
-        } catch (IllegalAccessException e) {
-            throw new RuntimeException(e);   // Should never happen.
-        }
-        if (path == null) {
-            path = System.getProperty("javax.net.ssl.trustStore");
-        }
-        if (path == null) {
-            return loadFallbackStore(defaultPassword);
-        }
-        try {
-            KeyStore keyStore = KeyStore.getInstance(keyStoreType);
-            FileInputStream is = new FileInputStream(path);
-            keyStore.load(is, defaultPassword);
-            return keyStore;
-        } catch (FileNotFoundException e) {
-            // If we failed to find a system trust store, load our own fallback trust store. This can fail on Android
-            // but we should never reach it there.
-            return loadFallbackStore(defaultPassword);
-        }
-    }
-
-    private KeyStore loadFallbackStore(char[] defaultPassword) throws KeyStoreException, IOException, NoSuchAlgorithmException, CertificateException {
-        KeyStore keyStore = KeyStore.getInstance("JKS");
-        InputStream is = getClass().getResourceAsStream("cacerts");
-        keyStore.load(is, defaultPassword);
-        return keyStore;
     }
 
     private void parsePaymentRequest(Protos.PaymentRequest request) throws PaymentRequestException {
