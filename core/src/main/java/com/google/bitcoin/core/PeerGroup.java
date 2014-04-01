@@ -344,7 +344,7 @@ public class PeerGroup extends AbstractExecutionThreadService implements Transac
             do {
                 try {
                     connectToAnyPeer();
-                } catch(PeerDiscoveryException e) {
+                } catch (PeerDiscoveryException e) {
                     groupBackoff.trackFailure();
                 }
             } while (isRunning() && countConnectedAndPendingPeers() < getMaxConnections());
@@ -577,6 +577,8 @@ public class PeerGroup extends AbstractExecutionThreadService implements Transac
     }
 
     protected void discoverPeers() throws PeerDiscoveryException {
+        if (peerDiscoverers.isEmpty())
+            throw new PeerDiscoveryException("No peer discoverers registered");
         long start = System.currentTimeMillis();
         Set<PeerAddress> addressSet = Sets.newHashSet();
         for (PeerDiscovery peerDiscovery : peerDiscoverers) {
@@ -632,10 +634,10 @@ public class PeerGroup extends AbstractExecutionThreadService implements Transac
         final State state = state();
         if (!(state == State.STARTING || state == State.RUNNING)) return;
 
-        final PeerAddress addr;
+        PeerAddress addr = null;
 
         long nowMillis = Utils.currentTimeMillis();
-
+        long retryTime = 0;
         lock.lock();
         try {
             if (!haveReadyInactivePeer(nowMillis)) {
@@ -648,18 +650,21 @@ public class PeerGroup extends AbstractExecutionThreadService implements Transac
                 return;
             }
             addr = inactives.poll();
+            retryTime = backoffMap.get(addr).getRetryTime();
         } finally {
+            // discoverPeers might throw an exception if something goes wrong: we then hit this path with addr == null.
+            retryTime = Math.max(retryTime, groupBackoff.getRetryTime());
             lock.unlock();
-        }
-
-        // Delay if any backoff is required
-        long retryTime = Math.max(backoffMap.get(addr).getRetryTime(), groupBackoff.getRetryTime());
-        if (retryTime > nowMillis) {
-            // Sleep until retry time
-            Utils.sleep(retryTime - nowMillis);
+            if (retryTime > nowMillis) {
+                // Sleep until retry time
+                final long millis = retryTime - nowMillis;
+                log.info("Waiting {} msec before next connect attempt", millis, addr == null ? "" : " to " + addr);
+                Utils.sleep(millis);
+            }
         }
 
         // This method constructs a Peer and puts it into pendingPeers.
+        checkNotNull(addr);   // Help static analysis which can't see that addr is always set if we didn't throw above.
         connectTo(addr, false);
     }
 
