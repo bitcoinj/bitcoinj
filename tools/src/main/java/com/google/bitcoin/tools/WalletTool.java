@@ -701,7 +701,12 @@ public class WalletTool {
                 }
             }
         } else {
-            peers.addPeerDiscovery(new DnsDiscovery(params));
+            if (params == RegTestParams.get()) {
+                log.info("Assuming regtest node on localhost");
+                peers.addAddress(InetAddress.getLoopbackAddress());
+            } else {
+                peers.addPeerDiscovery(new DnsDiscovery(params));
+            }
         }
     }
 
