@@ -202,8 +202,8 @@ public class PeerGroup extends AbstractExecutionThreadService implements Transac
 
     // Exponential backoff for peers starts at 1 second and maxes at 10 minutes.
     private ExponentialBackoff.Params peerBackoffParams = new ExponentialBackoff.Params(1000, 1.5f, 10 * 60 * 1000);
-    // Tracks failures globally in case of a network failure
-    private ExponentialBackoff groupBackoff = new ExponentialBackoff(new ExponentialBackoff.Params(100, 1.1f, 30 * 1000));
+    // Tracks failures globally in case of a network failure.
+    private ExponentialBackoff groupBackoff = new ExponentialBackoff(new ExponentialBackoff.Params(1000, 1.5f, 10 * 1000));
 
     // Things for the dedicated PeerGroup management thread to do.
     private LinkedBlockingQueue<Runnable> jobQueue = new LinkedBlockingQueue<Runnable>();
