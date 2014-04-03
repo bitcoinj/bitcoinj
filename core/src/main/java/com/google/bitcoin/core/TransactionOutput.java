@@ -54,8 +54,8 @@ public class TransactionOutput extends ChildMessage implements Serializable {
     private boolean availableForSpending;
     @Nullable private TransactionInput spentBy;
 
-    // A reference to the transaction which holds this output.
-    Transaction parentTransaction;
+    // A reference to the transaction which holds this output, if any.
+    @Nullable Transaction parentTransaction;
     private transient int scriptLen;
 
     /**
@@ -80,7 +80,7 @@ public class TransactionOutput extends ChildMessage implements Serializable {
      * the cached bytes may be repopulated and retained if the message is serialized again in the future.
      * @throws ProtocolException
      */
-    public TransactionOutput(NetworkParameters params, Transaction parent, byte[] msg, int offset,
+    public TransactionOutput(NetworkParameters params, @Nullable Transaction parent, byte[] msg, int offset,
                              boolean parseLazy, boolean parseRetain) throws ProtocolException {
         super(params, msg, offset, parent, parseLazy, parseRetain, UNKNOWN_LENGTH);
         parentTransaction = parent;
@@ -92,7 +92,7 @@ public class TransactionOutput extends ChildMessage implements Serializable {
      * something like {@link Utils#toNanoCoins(int, int)}. Typically you would use
      * {@link Transaction#addOutput(java.math.BigInteger, Address)} instead of creating a TransactionOutput directly.
      */
-    public TransactionOutput(NetworkParameters params, Transaction parent, BigInteger value, Address to) {
+    public TransactionOutput(NetworkParameters params, @Nullable Transaction parent, BigInteger value, Address to) {
         this(params, parent, value, ScriptBuilder.createOutputScript(to).getProgram());
     }
 
@@ -101,11 +101,11 @@ public class TransactionOutput extends ChildMessage implements Serializable {
      * amount should be created with something like {@link Utils#toNanoCoins(int, int)}. Typically you would use
      * {@link Transaction#addOutput(java.math.BigInteger, ECKey)} instead of creating an output directly.
      */
-    public TransactionOutput(NetworkParameters params, Transaction parent, BigInteger value, ECKey to) {
+    public TransactionOutput(NetworkParameters params, @Nullable Transaction parent, BigInteger value, ECKey to) {
         this(params, parent, value, ScriptBuilder.createOutputScript(to).getProgram());
     }
 
-    public TransactionOutput(NetworkParameters params, Transaction parent, BigInteger value, byte[] scriptBytes) {
+    public TransactionOutput(NetworkParameters params, @Nullable Transaction parent, BigInteger value, byte[] scriptBytes) {
         super(params);
         // Negative values obviously make no sense, except for -1 which is used as a sentinel value when calculating
         // SIGHASH_SINGLE signatures, so unfortunately we have to allow that here.
