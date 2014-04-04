@@ -268,7 +268,7 @@ public class ChannelConnectionTest extends TestWithWallet {
     @Test
     public void testChannelResume() throws Exception {
         // Tests various aspects of channel resuming.
-        Utils.rollMockClock(0);
+        Utils.setMockClock();
 
         final Sha256Hash someServerId = Sha256Hash.create(new byte[]{});
 
