@@ -16,10 +16,7 @@
 
 package com.google.bitcoin.wallet;
 
-import com.google.bitcoin.core.Address;
-import com.google.bitcoin.core.BloomFilter;
-import com.google.bitcoin.core.ECKey;
-import com.google.bitcoin.core.Sha256Hash;
+import com.google.bitcoin.core.*;
 import com.google.bitcoin.crypto.DeterministicKey;
 import com.google.bitcoin.params.UnitTestParams;
 import com.google.bitcoin.store.UnreadableWalletException;
@@ -61,7 +58,7 @@ public class DeterministicKeyChainTest {
         final List<String> words = chain.toMnemonicCode();
         assertEquals("aerobic toe save section draw warm cute upon raccoon mother priority pilot taste sweet next traffic fatal sword dentist original crisp team caution rebel",
                 Joiner.on(" ").join(words));
-        DeterministicSeed seed = new DeterministicSeed(words, checkNotNull(chain.getSeed()).getCreationTimeSeconds());
+        new DeterministicSeed(words, checkNotNull(chain.getSeed()).getCreationTimeSeconds());
     }
 
     @Test
@@ -221,6 +218,7 @@ public class DeterministicKeyChainTest {
 
     @Test
     public void watchingChain() throws UnreadableWalletException {
+        Utils.setMockClock();
         DeterministicKey key1 = chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         DeterministicKey key2 = chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         DeterministicKey key3 = chain.getKey(KeyChain.KeyPurpose.CHANGE);
@@ -231,6 +229,7 @@ public class DeterministicKeyChainTest {
         assertEquals("xpub68KFnj3bqUx1s7mHejLDBPywCAKdJEu1b49uniEEn2WSbHmZ7xbLqFTjJbtx1LUcAt1DwhoqWHmo2s5WMJp6wi38CiF2hYD49qVViKVvAoi", pub58);
         watchingKey = DeterministicKey.deserializeB58(null, pub58);
         chain = new DeterministicKeyChain(watchingKey);
+        assertEquals(Utils.currentTimeSeconds(), chain.getEarliestKeyCreationTime());
         chain.setLookaheadSize(10);
 
         assertEquals(key1.getPubKeyPoint(), chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS).getPubKeyPoint());
