@@ -1090,15 +1090,14 @@ public class WalletTest extends TestWithWallet {
 
     @Test(expected = ECKey.MissingPrivateKeyException.class)
     public void watchingWallet() throws Exception {
-        DeterministicKey key = wallet.freshReceiveKey();
         DeterministicKey watchKey = wallet.getWatchingKey();
         String serialized = watchKey.serializePubB58();
         watchKey = DeterministicKey.deserializeB58(null, serialized);
         Wallet watchingWallet = Wallet.fromWatchingKey(params, watchKey);
         DeterministicKey key2 = watchingWallet.freshReceiveKey();
-        assertEquals(key, key2);
+        assertEquals(myKey, key2);
 
-        key = wallet.freshKey(KeyChain.KeyPurpose.CHANGE);
+        ECKey key = wallet.freshKey(KeyChain.KeyPurpose.CHANGE);
         key2 = watchingWallet.freshKey(KeyChain.KeyPurpose.CHANGE);
         assertEquals(key, key2);
         key.sign(Sha256Hash.ZERO_HASH);
@@ -1134,13 +1133,13 @@ public class WalletTest extends TestWithWallet {
 
     @Test
     public void watchingScriptsSentFrom() throws Exception {
-        assertEquals(2, wallet.getBloomFilterElementCount());
+        int baseElements = wallet.getBloomFilterElementCount();
 
         ECKey key = new ECKey();
         ECKey notMyAddr = new ECKey();
         Address watchedAddress = key.toAddress(params);
         wallet.addWatchedAddress(watchedAddress);
-        assertEquals(3, wallet.getBloomFilterElementCount());
+        assertEquals(baseElements + 1, wallet.getBloomFilterElementCount());
 
         Transaction t1 = createFakeTx(params, CENT, watchedAddress);
         Transaction t2 = createFakeTx(params, COIN, notMyAddr);
@@ -1151,9 +1150,9 @@ public class WalletTest extends TestWithWallet {
         st2.addInput(t1.getOutput(0));
         st2.addInput(t2.getOutput(0));
         wallet.receiveFromBlock(t1, b1, BlockChain.NewBlockType.BEST_CHAIN, 0);
-        assertEquals(4, wallet.getBloomFilterElementCount());
+        assertEquals(baseElements + 2, wallet.getBloomFilterElementCount());
         wallet.receiveFromBlock(st2, b1, BlockChain.NewBlockType.BEST_CHAIN, 0);
-        assertEquals(4, wallet.getBloomFilterElementCount());
+        assertEquals(baseElements + 2, wallet.getBloomFilterElementCount());
         assertEquals(CENT, st2.getValueSentFromMe(wallet));
     }
 

@@ -49,11 +49,10 @@ public class TestWithWallet {
     public void setUp() throws Exception {
         BriefLogFormatter.init();
         Wallet.SendRequest.DEFAULT_FEE_PER_KB = BigInteger.ZERO;
-        myKey = new ECKey();
-        myAddress = myKey.toAddress(params);
         wallet = new Wallet(params);
         wallet.setKeychainLookaheadSize(5);
-        wallet.importKey(myKey);
+        myKey = wallet.currentReceiveKey();
+        myAddress = myKey.toAddress(params);
         blockStore = new MemoryBlockStore(params);
         chain = new BlockChain(params, wallet, blockStore);
     }
