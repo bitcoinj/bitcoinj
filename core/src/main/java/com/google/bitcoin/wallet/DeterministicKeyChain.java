@@ -325,7 +325,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
 
     @Override
     public long getEarliestKeyCreationTime() {
-        return seed.getCreationTimeSeconds();
+        return seed != null ? seed.getCreationTimeSeconds() : Utils.currentTimeSeconds();
     }
 
     @Override
