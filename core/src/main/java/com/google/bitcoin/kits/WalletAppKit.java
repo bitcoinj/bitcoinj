@@ -212,9 +212,8 @@ public class WalletAppKit extends AbstractIdleService {
                 walletStream = new FileInputStream(vWalletFile);
                 List<WalletExtension> extensions = provideWalletExtensions();
                 WalletExtension[] extArray = extensions.toArray(new WalletExtension[extensions.size()]);
-                vWallet = new Wallet(params);
                 Protos.Wallet proto = WalletProtobufSerializer.parseToProto(walletStream);
-                new WalletProtobufSerializer().readWallet(params, extArray, proto);
+                vWallet = new WalletProtobufSerializer().readWallet(params, extArray, proto);
                 if (shouldReplayWallet)
                     vWallet.clearTransactions(0);
             } else {
