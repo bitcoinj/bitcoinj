@@ -96,7 +96,7 @@ public class FullBlockTestGenerator {
         this.params = params;
         coinbaseOutKey = new ECKey();
         coinbaseOutKeyPubKey = coinbaseOutKey.getPubKey();
-        Utils.rollMockClock(0); // Set a mock clock for timestamp tests
+        Utils.setMockClock();
     }
 
     public RuleList getBlocksToTest(boolean addSigExpensiveBlocks, boolean runLargeReorgs, File blockStorageFile) throws ScriptException, ProtocolException, IOException {

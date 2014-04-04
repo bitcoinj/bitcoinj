@@ -250,7 +250,7 @@ public class ECKeyTest {
 
     @Test
     public void testUnencryptedCreate() throws Exception {
-        Utils.rollMockClock(0);
+        Utils.setMockClock();
         ECKey key = new ECKey();
         long time = key.getCreationTimeSeconds();
         assertNotEquals(0, time);

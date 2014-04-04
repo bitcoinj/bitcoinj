@@ -36,7 +36,6 @@ import java.math.BigInteger;
 import java.net.InetSocketAddress;
 import java.net.SocketException;
 import java.nio.channels.CancelledKeyException;
-import java.nio.channels.ClosedChannelException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -436,7 +435,7 @@ public class PeerTest extends TestWithNetworkConnections {
     @Test
     public void fastCatchup() throws Exception {
         connect();
-        
+        Utils.setMockClock();
         // Check that blocks before the fast catchup point are retrieved using getheaders, and after using getblocks.
         // This test is INCOMPLETE because it does not check we handle >2000 blocks correctly.
         Block b1 = createFakeBlock(blockStore).block;
@@ -484,7 +483,7 @@ public class PeerTest extends TestWithNetworkConnections {
     @Test
     public void pingPong() throws Exception {
         connect();
-        Utils.rollMockClock(0);
+        Utils.setMockClock();
         // No ping pong happened yet.
         assertEquals(Long.MAX_VALUE, peer.getLastPingTime());
         assertEquals(Long.MAX_VALUE, peer.getPingTime());

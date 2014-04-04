@@ -926,7 +926,7 @@ public class WalletTest extends TestWithWallet {
     @Test
     public void transactionsList() throws Exception {
         // Check the wallet can give us an ordered list of all received transactions.
-        Utils.rollMockClock(0);
+        Utils.setMockClock();
         Transaction tx1 = sendMoneyToWallet(Utils.toNanoCoins(1, 0), AbstractBlockChain.NewBlockType.BEST_CHAIN);
         Utils.rollMockClock(60 * 10);
         Transaction tx2 = sendMoneyToWallet(Utils.toNanoCoins(0, 5), AbstractBlockChain.NewBlockType.BEST_CHAIN);
@@ -964,7 +964,8 @@ public class WalletTest extends TestWithWallet {
     @Test
     public void keyCreationTime() throws Exception {
         wallet = new Wallet(params);
-        long now = Utils.rollMockClock(0).getTime() / 1000;  // Fix the mock clock.
+        Utils.setMockClock();
+        long now = Utils.currentTimeMillis() / 1000;
         // No keys returns current time.
         assertEquals(now, wallet.getEarliestKeyCreationTime());
         Utils.rollMockClock(60);
@@ -978,7 +979,8 @@ public class WalletTest extends TestWithWallet {
     @Test
     public void scriptCreationTime() throws Exception {
         wallet = new Wallet(params);
-        long now = Utils.rollMockClock(0).getTime() / 1000;  // Fix the mock clock.
+        Utils.setMockClock();
+        long now = Utils.currentTimeMillis() / 1000;
         // No keys returns current time.
         assertEquals(now, wallet.getEarliestKeyCreationTime());
         Utils.rollMockClock(60);
@@ -2164,6 +2166,7 @@ public class WalletTest extends TestWithWallet {
 
     @Test
     public void keyRotation() throws Exception {
+        Utils.setMockClock();
         // Watch out for wallet-initiated broadcasts.
         MockTransactionBroadcaster broadcaster = new MockTransactionBroadcaster(wallet);
         wallet.setTransactionBroadcaster(broadcaster);
@@ -2236,6 +2239,7 @@ public class WalletTest extends TestWithWallet {
         ECKey key = new ECKey();
         wallet.addKey(key);
         Address address = key.toAddress(params);
+        Utils.setMockClock();
         Utils.rollMockClock(86400);
         for (int i = 0; i < 800; i++) {
             sendMoneyToWallet(wallet, Utils.CENT, address, AbstractBlockChain.NewBlockType.BEST_CHAIN);
