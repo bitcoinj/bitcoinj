@@ -20,6 +20,7 @@ import com.google.bitcoin.core.*;
 import com.google.bitcoin.crypto.DeterministicKey;
 import com.google.bitcoin.crypto.KeyCrypter;
 import com.google.bitcoin.store.UnreadableWalletException;
+import com.google.bitcoin.utils.ListenerRegistration;
 import com.google.bitcoin.utils.Threading;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
@@ -85,6 +86,8 @@ public class KeyChainGroup implements PeerFilterProvider {
 
     private void createAndActivateNewHDChain() {
         final DeterministicKeyChain chain = new DeterministicKeyChain(new SecureRandom());
+        for (ListenerRegistration<KeyChainEventListener> registration : basic.getListeners())
+            chain.addEventListener(registration.listener, registration.executor);
         if (lookaheadSize >= 0)
             chain.setLookaheadSize(lookaheadSize);
         chains.add(chain);

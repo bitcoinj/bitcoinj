@@ -2302,4 +2302,20 @@ public class WalletTest extends TestWithWallet {
         }
         assertTrue(TransactionSignature.isEncodingCanonical(dummySig));
     }
+
+    @Test
+    public void keyEvents() throws Exception {
+        // Check that we can register an event listener, generate some keys and the callbacks are invoked properly.
+        wallet = new Wallet(params);
+        final List<ECKey> keys = Lists.newLinkedList();
+        wallet.addEventListener(new AbstractWalletEventListener() {
+            @Override
+            public void onKeysAdded(List<ECKey> k) {
+                keys.addAll(k);
+            }
+        }, Threading.SAME_THREAD);
+        wallet.setKeychainLookaheadSize(5);
+        wallet.freshReceiveKey();
+        assertEquals(6, keys.size());
+    }
 }

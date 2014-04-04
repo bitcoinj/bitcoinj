@@ -210,6 +210,10 @@ public class BasicKeyChain implements EncryptableKeyChain {
         }
     }
 
+    public List<ListenerRegistration<KeyChainEventListener>> getListeners() {
+        return new ArrayList<ListenerRegistration<KeyChainEventListener>>(listeners);
+    }
+
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //
     // Serialization support
