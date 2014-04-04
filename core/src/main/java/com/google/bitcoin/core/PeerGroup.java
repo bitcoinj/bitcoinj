@@ -658,7 +658,7 @@ public class PeerGroup extends AbstractExecutionThreadService implements Transac
             if (retryTime > nowMillis) {
                 // Sleep until retry time
                 final long millis = retryTime - nowMillis;
-                log.info("Waiting {} msec before next connect attempt", millis, addr == null ? "" : " to " + addr);
+                log.info("Waiting {} msec before next connect attempt {}", millis, addr == null ? "" : " to " + addr);
                 Utils.sleep(millis);
             }
         }

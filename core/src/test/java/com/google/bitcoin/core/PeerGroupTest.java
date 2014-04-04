@@ -500,9 +500,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         stopPeerServer(2);
         assertEquals(2002, disconnectedPeers.take().getAddress().getPort()); // peer died
 
-        // Peer 2 is tried twice before peer 1, since it has a lower backoff due to recent success
-        Utils.passMockSleep();
-        assertEquals(2002, disconnectedPeers.take().getAddress().getPort());
+        // Peer 2 is tried before peer 1, since it has a lower backoff due to recent success
         Utils.passMockSleep();
         assertEquals(2002, disconnectedPeers.take().getAddress().getPort());
         Utils.passMockSleep();
