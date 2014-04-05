@@ -1,5 +1,6 @@
 /**
  * Copyright 2012 Google Inc.
+ * Copyright 2014 Andreas Schildbach
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +26,10 @@ import com.google.bitcoin.script.Script;
 import com.google.bitcoin.wallet.WalletTransaction;
 import com.google.common.collect.Lists;
 import com.google.protobuf.ByteString;
+import com.google.protobuf.CodedInputStream;
 import com.google.protobuf.TextFormat;
+import com.google.protobuf.WireFormat;
+
 import org.bitcoinj.wallet.Protos;
 import org.bitcoinj.wallet.Protos.Wallet.EncryptionType;
 import org.slf4j.Logger;
@@ -691,6 +695,27 @@ public class WalletProtobufSerializer {
             case SOURCE_UNKNOWN:
                 // Fall through.
             default: confidence.setSource(TransactionConfidence.Source.UNKNOWN); break;
+        }
+    }
+
+    /**
+     * Cheap test to see if input stream is a wallet. This checks for a magic value at the beginning of the stream.
+     * 
+     * @param is
+     *            input stream to test
+     * @return true if input stream is a wallet
+     */
+    public static boolean isWallet(InputStream is) {
+        try {
+            final CodedInputStream cis = CodedInputStream.newInstance(is);
+            final int tag = cis.readTag();
+            final int field = WireFormat.getTagFieldNumber(tag);
+            if (field != 1) // network_identifier
+                return false;
+            final String network = cis.readString();
+            return NetworkParameters.fromID(network) != null;
+        } catch (IOException x) {
+            return false;
         }
     }
 }
