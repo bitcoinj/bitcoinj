@@ -1,5 +1,6 @@
 /*
  * Copyright 2011 Google Inc.
+ * Copyright 2014 Andreas Schildbach
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +42,7 @@ public class RefreshWallet {
 
         final PeerGroup peerGroup = new PeerGroup(params, chain);
         peerGroup.addAddress(new PeerAddress(InetAddress.getLocalHost()));
-        peerGroup.start();
+        peerGroup.startAsync();
 
         wallet.addEventListener(new AbstractWalletEventListener() {
             @Override
@@ -53,7 +54,7 @@ public class RefreshWallet {
 
         // Now download and process the block chain.
         peerGroup.downloadBlockChain();
-        peerGroup.stop();
+        peerGroup.stopAsync();
         wallet.saveToFile(file);
         System.out.println("\nDone!\n");
         System.out.println(wallet.toString());

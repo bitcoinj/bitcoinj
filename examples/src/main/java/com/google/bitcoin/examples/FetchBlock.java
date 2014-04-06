@@ -1,5 +1,6 @@
 /*
  * Copyright 2011 Google Inc.
+ * Copyright 2014 Andreas Schildbach
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +38,8 @@ public class FetchBlock {
         BlockStore blockStore = new MemoryBlockStore(params);
         BlockChain chain = new BlockChain(params, blockStore);
         PeerGroup peerGroup = new PeerGroup(params, chain);
-        peerGroup.startAndWait();
+        peerGroup.startAsync();
+        peerGroup.awaitRunning();
         PeerAddress addr = new PeerAddress(InetAddress.getLocalHost(), params.getPort());
         peerGroup.addAddress(addr);
         peerGroup.waitForPeers(1).get();
@@ -48,6 +50,6 @@ public class FetchBlock {
         System.out.println("Waiting for node to send us the requested block: " + blockHash);
         Block block = future.get();
         System.out.println(block);
-        peerGroup.stop();
+        peerGroup.stopAsync();
     }
 }

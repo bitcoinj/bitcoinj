@@ -1,5 +1,6 @@
 /*
  * Copyright 2013 Google Inc.
+ * Copyright 2014 Andreas Schildbach
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +25,8 @@ import com.google.bitcoin.store.WalletProtobufSerializer;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.MoreExecutors;
+import com.google.common.util.concurrent.Service;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -228,26 +231,29 @@ public class WalletAppKit extends AbstractIdleService {
             onSetupCompleted();
 
             if (blockingStartup) {
-                vPeerGroup.startAndWait();
+                vPeerGroup.startAsync();
+                vPeerGroup.awaitRunning();
                 // Make sure we shut down cleanly.
                 installShutdownHook();
+
                 // TODO: Be able to use the provided download listener when doing a blocking startup.
                 final DownloadListener listener = new DownloadListener();
                 vPeerGroup.startBlockChainDownload(listener);
                 listener.await();
             } else {
-                Futures.addCallback(vPeerGroup.start(), new FutureCallback<State>() {
+                vPeerGroup.startAsync();
+                vPeerGroup.addListener(new Service.Listener() {
                     @Override
-                    public void onSuccess(State result) {
+                    public void running() {
                         final PeerEventListener l = downloadListener == null ? new DownloadListener() : downloadListener;
                         vPeerGroup.startBlockChainDownload(l);
                     }
 
                     @Override
-                    public void onFailure(Throwable t) {
-                        throw new RuntimeException(t);
+                    public void failed(State from, Throwable failure) {
+                        throw new RuntimeException(failure);
                     }
-                });
+                }, MoreExecutors.sameThreadExecutor());
             }
         } catch (BlockStoreException e) {
             throw new IOException(e);
@@ -264,7 +270,8 @@ public class WalletAppKit extends AbstractIdleService {
         if (autoStop) Runtime.getRuntime().addShutdownHook(new Thread() {
             @Override public void run() {
                 try {
-                    WalletAppKit.this.stopAndWait();
+                    WalletAppKit.this.stopAsync();
+                    WalletAppKit.this.awaitTerminated();
                 } catch (Exception e) {
                     throw new RuntimeException(e);
                 }
@@ -276,7 +283,8 @@ public class WalletAppKit extends AbstractIdleService {
     protected void shutDown() throws Exception {
         // Runs in a separate thread.
         try {
-            vPeerGroup.stopAndWait();
+            vPeerGroup.stopAsync();
+            vPeerGroup.awaitTerminated();
             vWallet.saveToFile(vWalletFile);
             vStore.close();
 

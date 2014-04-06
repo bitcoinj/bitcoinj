@@ -1,5 +1,6 @@
 /**
  * Copyright 2011 Google Inc.
+ * Copyright 2014 Andreas Schildbach
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,9 +62,9 @@ public class PrivateKeys {
 
             final PeerGroup peerGroup = new PeerGroup(params, chain);
             peerGroup.addAddress(new PeerAddress(InetAddress.getLocalHost()));
-            peerGroup.start();
+            peerGroup.startAsync();
             peerGroup.downloadBlockChain();
-            peerGroup.stop();
+            peerGroup.stopAsync();
 
             // And take them!
             System.out.println("Claiming " + Utils.bitcoinValueToFriendlyString(wallet.getBalance()) + " coins");
