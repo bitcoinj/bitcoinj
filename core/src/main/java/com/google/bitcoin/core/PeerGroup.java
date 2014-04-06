@@ -1,5 +1,6 @@
 /**
  * Copyright 2013 Google Inc.
+ * Copyright 2014 Andreas Schildbach
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +14,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 
 package com.google.bitcoin.core;
 
@@ -682,7 +682,8 @@ public class PeerGroup extends AbstractExecutionThreadService implements Transac
     protected void startUp() throws Exception {
         // This is run in a background thread by the Service implementation.
         vPingTimer = new Timer("Peer pinging thread", true);
-        channels.startAndWait();
+        channels.startAsync();
+        channels.awaitRunning();
         triggerConnections();
     }
 
@@ -691,7 +692,8 @@ public class PeerGroup extends AbstractExecutionThreadService implements Transac
         // This is run on a separate thread by the Service implementation.
         vPingTimer.cancel();
         // Blocking close of all sockets.
-        channels.stopAndWait();
+        channels.stopAsync();
+        channels.awaitTerminated();
         for (PeerDiscovery peerDiscovery : peerDiscoverers) {
             peerDiscovery.shutdown();
         }
