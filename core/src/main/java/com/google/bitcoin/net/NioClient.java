@@ -1,5 +1,6 @@
 /*
  * Copyright 2013 Google Inc.
+ * Copyright 2014 Andreas Schildbach
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,7 +49,7 @@ public class NioClient implements MessageWriteTarget {
         @Override
         public void connectionClosed() {
             upstreamParser.connectionClosed();
-            manager.stop();
+            manager.stopAsync();
         }
 
         @Override
@@ -90,7 +91,8 @@ public class NioClient implements MessageWriteTarget {
      */
     public NioClient(final SocketAddress serverAddress, final StreamParser parser,
                      final int connectTimeoutMillis) throws IOException {
-        manager.startAndWait();
+        manager.startAsync();
+        manager.awaitRunning();
         handler = new Handler(parser, connectTimeoutMillis);
         manager.openConnection(serverAddress, handler);
     }

@@ -1,5 +1,6 @@
 /*
  * Copyright 2013 Google Inc.
+ * Copyright 2014 Andreas Schildbach
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,10 +54,10 @@ public class NetworkAbstractionTests {
         this.clientType = clientType;
         if (clientType == 0) {
             channels = new NioClientManager();
-            channels.start();
+            channels.startAsync();
         } else if (clientType == 1) {
             channels = new BlockingClientManager();
-            channels.start();
+            channels.startAsync();
         } else
             channels = null;
     }
@@ -117,7 +118,8 @@ public class NetworkAbstractionTests {
                 }, Protos.TwoWayChannelMessage.getDefaultInstance(), 1000, 0);
             }
         }, new InetSocketAddress("localhost", 4243));
-        server.startAndWait();
+        server.startAsync();
+        server.awaitRunning();
 
         ProtobufParser<Protos.TwoWayChannelMessage> clientHandler = new ProtobufParser<Protos.TwoWayChannelMessage>(
                 new ProtobufParser.Listener<Protos.TwoWayChannelMessage>() {
@@ -154,7 +156,8 @@ public class NetworkAbstractionTests {
         serverConnectionClosed.get();
         clientConnectionClosed.get();
 
-        server.stopAndWait();
+        server.stopAsync();
+        server.awaitTerminated();
         assertFalse(server.isRunning());
     }
 
@@ -199,7 +202,8 @@ public class NetworkAbstractionTests {
                 }, Protos.TwoWayChannelMessage.getDefaultInstance(), 1000, 10);
             }
         }, new InetSocketAddress("localhost", 4243));
-        server.startAndWait();
+        server.startAsync();
+        server.awaitRunning();
 
         openConnection(new InetSocketAddress("localhost", 4243), new ProtobufParser<Protos.TwoWayChannelMessage>(
                 new ProtobufParser.Listener<Protos.TwoWayChannelMessage>() {
@@ -254,7 +258,8 @@ public class NetworkAbstractionTests {
         clientConnection2Closed.get();
         serverConnection2Closed.get();
 
-        server.stopAndWait();
+        server.stopAsync();
+        server.awaitTerminated();
     }
 
     @Test
@@ -289,7 +294,8 @@ public class NetworkAbstractionTests {
                 }, Protos.TwoWayChannelMessage.getDefaultInstance(), 0x10000, 0);
             }
         }, new InetSocketAddress("localhost", 4243));
-        server.startAndWait();
+        server.startAsync();
+        server.awaitRunning();
 
         ProtobufParser<Protos.TwoWayChannelMessage> clientHandler = new ProtobufParser<Protos.TwoWayChannelMessage>(
                 new ProtobufParser.Listener<Protos.TwoWayChannelMessage>() {
@@ -397,7 +403,8 @@ public class NetworkAbstractionTests {
         serverConnectionClosed.get();
         clientConnectionClosed.get();
 
-        server.stopAndWait();
+        server.stopAsync();
+        server.awaitTerminated();
     }
 
     @Test
@@ -451,7 +458,8 @@ public class NetworkAbstractionTests {
                 }, Protos.TwoWayChannelMessage.getDefaultInstance(), 1000, 0);
             }
         }, new InetSocketAddress("localhost", 4243));
-        server.startAndWait();
+        server.startAsync();
+        server.awaitRunning();
 
         ProtobufParser<Protos.TwoWayChannelMessage> client1Handler = new ProtobufParser<Protos.TwoWayChannelMessage>(
                 new ProtobufParser.Listener<Protos.TwoWayChannelMessage>() {
@@ -538,16 +546,18 @@ public class NetworkAbstractionTests {
 
         // Try to create a race condition by triggering handlerThread closing and client3 closing at the same time
         // This often triggers ClosedByInterruptException in handleKey
-        server.stop();
+        server.stopAsync();
         server.selector.wakeup();
         client3.closeConnection();
         client3ConnectionClosed.get();
         serverConnectionClosed3.get();
 
-        server.stopAndWait();
+        server.stopAsync();
+        server.awaitTerminated();
         client2ConnectionClosed.get();
         serverConnectionClosed2.get();
 
-        server.stopAndWait();
+        server.stopAsync();
+        server.awaitTerminated();
     }
 }
