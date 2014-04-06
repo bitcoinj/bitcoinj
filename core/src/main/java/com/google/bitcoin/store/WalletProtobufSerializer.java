@@ -90,13 +90,28 @@ public class WalletProtobufSerializer {
     }
 
     /**
-     * Formats the given wallet (transactions and keys) to the given output stream in protocol buffer format.<p>
-     *
-     * Equivalent to <tt>walletToProto(wallet).writeTo(output);</tt>
+     * <p>Formats the given wallet to the given output stream in protocol buffer format.</p>
+     * 
+     * <p>Equivalent to <tt>walletToProto(wallet).writeTo(output);</tt></p>
+     * 
+     * <p>Use this method only for delimited streams (like files), otherwise you will not be able to read it back
+     * easily.</p>
      */
     public void writeWallet(Wallet wallet, OutputStream output) throws IOException {
         Protos.Wallet walletProto = walletToProto(wallet);
         walletProto.writeTo(output);
+    }
+
+    /**
+     * <p>Formats the given wallet to the given output stream in protocol buffer format.</p>
+     * 
+     * <p>Equivalent to <tt>walletToProto(wallet).writeDelimitedTo(output);</tt></p>
+     * 
+     * <p>This method adds a varint size limiter, so you can use it on undelimited streams.</p>
+     */
+    public void writeWalletDelimited(Wallet wallet, OutputStream output) throws IOException {
+        Protos.Wallet walletProto = walletToProto(wallet);
+        walletProto.writeDelimitedTo(output);
     }
 
     /**
@@ -362,12 +377,43 @@ public class WalletProtobufSerializer {
      * <p>A wallet can be unreadable for various reasons, such as inability to open the file, corrupt data, internally
      * inconsistent data, a wallet extension marked as mandatory that cannot be handled and so on. You should always
      * handle {@link UnreadableWalletException} and communicate failure to the user in an appropriate manner.</p>
+     * 
+     * <p>This method depends on an EOF at the end of the serialized protobuf.</p>
      *
      * @throws UnreadableWalletException thrown in various error conditions (see description).
      */
     public Wallet readWallet(InputStream input) throws UnreadableWalletException {
         try {
             Protos.Wallet walletProto = parseToProto(input);
+            final String paramsID = walletProto.getNetworkIdentifier();
+            NetworkParameters params = NetworkParameters.fromID(paramsID);
+            if (params == null)
+                throw new UnreadableWalletException("Unknown network parameters ID " + paramsID);
+            Wallet wallet = new Wallet(params);
+            readWallet(walletProto, wallet);
+            return wallet;
+        } catch (IOException e) {
+            throw new UnreadableWalletException("Could not parse input stream to protobuf", e);
+        }
+    }
+
+    /**
+     * <p>Parses a wallet from the given stream, using the provided Wallet instance to load data into. This is primarily
+     * used when you want to register extensions. Data in the proto will be added into the wallet where applicable and
+     * overwrite where not.</p>
+     *
+     * <p>A wallet can be unreadable for various reasons, such as inability to open the file, corrupt data, internally
+     * inconsistent data, a wallet extension marked as mandatory that cannot be handled and so on. You should always
+     * handle {@link UnreadableWalletException} and communicate failure to the user in an appropriate manner.</p>
+     *
+     * <p>This method doesn't depend on an EOF at the end of the serialized protobuf, because it is using a varint size
+     * delimiter.</p>
+     *
+     * @throws UnreadableWalletException thrown in various error conditions (see description).
+     */
+    public Wallet readWalletDelimited(InputStream input) throws UnreadableWalletException {
+        try {
+            Protos.Wallet walletProto = Protos.Wallet.parseDelimitedFrom(input);
             final String paramsID = walletProto.getNetworkIdentifier();
             NetworkParameters params = NetworkParameters.fromID(paramsID);
             if (params == null)
@@ -578,7 +624,7 @@ public class WalletProtobufSerializer {
         txMap.put(txProto.getHash(), tx);
     }
 
-    private WalletTransaction connectTransactionOutputs(org.bitcoinj.wallet.Protos.Transaction txProto) throws UnreadableWalletException {
+    private WalletTransaction connectTransactionOutputs(Protos.Transaction txProto) throws UnreadableWalletException {
         Transaction tx = txMap.get(txProto.getHash());
         final WalletTransaction.Pool pool;
         switch (txProto.getPool()) {
@@ -708,6 +754,28 @@ public class WalletProtobufSerializer {
     public static boolean isWallet(InputStream is) {
         try {
             final CodedInputStream cis = CodedInputStream.newInstance(is);
+            final int tag = cis.readTag();
+            final int field = WireFormat.getTagFieldNumber(tag);
+            if (field != 1) // network_identifier
+                return false;
+            final String network = cis.readString();
+            return NetworkParameters.fromID(network) != null;
+        } catch (IOException x) {
+            return false;
+        }
+    }
+
+    /**
+     * Cheap test to see if input stream is a delimited wallet. This checks for a magic value at the beginning of the stream.
+     * 
+     * @param is
+     *            input stream to test
+     * @return true if input stream is a wallet
+     */
+    public static boolean isDelimitedWallet(InputStream is) {
+        try {
+            final CodedInputStream cis = CodedInputStream.newInstance(is);
+            /* final int length = */cis.readRawVarint32();
             final int tag = cis.readTag();
             final int field = WireFormat.getTagFieldNumber(tag);
             if (field != 1) // network_identifier

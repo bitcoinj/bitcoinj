@@ -261,7 +261,6 @@ public class WalletProtobufSerializerTest {
 
     private static Wallet roundTrip(Wallet wallet) throws Exception {
         ByteArrayOutputStream output = new ByteArrayOutputStream();
-        //System.out.println(WalletProtobufSerializer.walletToText(wallet));
         new WalletProtobufSerializer().writeWallet(wallet, output);
         ByteArrayInputStream test = new ByteArrayInputStream(output.toByteArray());
         assertTrue(WalletProtobufSerializer.isWallet(test));
@@ -269,9 +268,32 @@ public class WalletProtobufSerializerTest {
         return new WalletProtobufSerializer().readWallet(input);
     }
 
+    private static Wallet roundTripDelimited(Wallet wallet) throws Exception {
+        ByteArrayOutputStream output = new ByteArrayOutputStream();
+        new WalletProtobufSerializer().writeWalletDelimited(wallet, output);
+        output.write(0xdeadbeef); // intentionally write some garbage at end of stream
+        ByteArrayInputStream test = new ByteArrayInputStream(output.toByteArray());
+        assertTrue(WalletProtobufSerializer.isDelimitedWallet(test));
+        ByteArrayInputStream input = new ByteArrayInputStream(output.toByteArray());
+        return new WalletProtobufSerializer().readWalletDelimited(input);
+    }
+
     @Test
     public void testRoundTripNormalWallet() throws Exception {
         Wallet wallet1 = roundTrip(myWallet);     
+        assertEquals(0, wallet1.getTransactions(true).size());
+        assertEquals(BigInteger.ZERO, wallet1.getBalance());
+        assertArrayEquals(myKey.getPubKey(),
+                wallet1.findKeyFromPubHash(myKey.getPubKeyHash()).getPubKey());
+        assertArrayEquals(myKey.getPrivKeyBytes(),
+                wallet1.findKeyFromPubHash(myKey.getPubKeyHash()).getPrivKeyBytes());
+        assertEquals(myKey.getCreationTimeSeconds(),
+                wallet1.findKeyFromPubHash(myKey.getPubKeyHash()).getCreationTimeSeconds());
+    }
+
+    @Test
+    public void testRoundTripNormalWalletDelimited() throws Exception {
+        Wallet wallet1 = roundTripDelimited(myWallet);
         assertEquals(0, wallet1.getTransactions(true).size());
         assertEquals(BigInteger.ZERO, wallet1.getBalance());
         assertArrayEquals(myKey.getPubKey(),
