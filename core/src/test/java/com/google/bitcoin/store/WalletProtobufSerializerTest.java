@@ -1,3 +1,20 @@
+/**
+ * Copyright 2012 Google Inc.
+ * Copyright 2014 Andreas Schildbach
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.google.bitcoin.store;
 
 
@@ -244,15 +261,39 @@ public class WalletProtobufSerializerTest {
 
     private static Wallet roundTrip(Wallet wallet) throws Exception {
         ByteArrayOutputStream output = new ByteArrayOutputStream();
-        //System.out.println(WalletProtobufSerializer.walletToText(wallet));
         new WalletProtobufSerializer().writeWallet(wallet, output);
+        ByteArrayInputStream test = new ByteArrayInputStream(output.toByteArray());
+        assertTrue(WalletProtobufSerializer.isWallet(test));
         ByteArrayInputStream input = new ByteArrayInputStream(output.toByteArray());
         return new WalletProtobufSerializer().readWallet(input);
+    }
+
+    private static Wallet roundTripDelimited(Wallet wallet) throws Exception {
+        ByteArrayOutputStream output = new ByteArrayOutputStream();
+        new WalletProtobufSerializer().writeWalletDelimited(wallet, output);
+        output.write(0xdeadbeef); // intentionally write some garbage at end of stream
+        ByteArrayInputStream test = new ByteArrayInputStream(output.toByteArray());
+        assertTrue(WalletProtobufSerializer.isDelimitedWallet(test));
+        ByteArrayInputStream input = new ByteArrayInputStream(output.toByteArray());
+        return new WalletProtobufSerializer().readWalletDelimited(input);
     }
 
     @Test
     public void testRoundTripNormalWallet() throws Exception {
         Wallet wallet1 = roundTrip(myWallet);     
+        assertEquals(0, wallet1.getTransactions(true).size());
+        assertEquals(BigInteger.ZERO, wallet1.getBalance());
+        assertArrayEquals(myKey.getPubKey(),
+                wallet1.findKeyFromPubHash(myKey.getPubKeyHash()).getPubKey());
+        assertArrayEquals(myKey.getPrivKeyBytes(),
+                wallet1.findKeyFromPubHash(myKey.getPubKeyHash()).getPrivKeyBytes());
+        assertEquals(myKey.getCreationTimeSeconds(),
+                wallet1.findKeyFromPubHash(myKey.getPubKeyHash()).getCreationTimeSeconds());
+    }
+
+    @Test
+    public void testRoundTripNormalWalletDelimited() throws Exception {
+        Wallet wallet1 = roundTripDelimited(myWallet);
         assertEquals(0, wallet1.getTransactions(true).size());
         assertEquals(BigInteger.ZERO, wallet1.getBalance());
         assertArrayEquals(myKey.getPubKey(),
