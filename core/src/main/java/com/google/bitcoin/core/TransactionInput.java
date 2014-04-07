@@ -402,10 +402,12 @@ public class TransactionInput extends ChildMessage implements Serializable {
      * @throws VerificationException If the outpoint doesn't match the given output.
      */
     public void verify(TransactionOutput output) throws VerificationException {
-        if (!getOutpoint().getHash().equals(output.parentTransaction.getHash()))
-            throw new VerificationException("This input does not refer to the tx containing the output.");
-        if (getOutpoint().getIndex() != output.getIndex())
-            throw new VerificationException("This input refers to a different output on the given tx.");
+        if (output.parentTransaction != null) {
+            if (!getOutpoint().getHash().equals(output.parentTransaction.getHash()))
+                throw new VerificationException("This input does not refer to the tx containing the output.");
+            if (getOutpoint().getIndex() != output.getIndex())
+                throw new VerificationException("This input refers to a different output on the given tx.");
+        }
         Script pubKey = output.getScriptPubKey();
         int myIndex = parentTransaction.getInputs().indexOf(this);
         getScriptSig().correctlySpends(parentTransaction, myIndex, pubKey, true);
