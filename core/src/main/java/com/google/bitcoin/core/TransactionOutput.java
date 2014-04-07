@@ -28,6 +28,7 @@ import java.io.OutputStream;
 import java.io.Serializable;
 import java.lang.ref.WeakReference;
 import java.math.BigInteger;
+import java.util.Arrays;
 
 import static com.google.common.base.Preconditions.*;
 
@@ -331,5 +332,31 @@ public class TransactionOutput extends ChildMessage implements Serializable {
     private void writeObject(ObjectOutputStream out) throws IOException {
         maybeParse();
         out.defaultWriteObject();
+    }
+
+    /** Returns a copy of the output detached from its containing transaction, if need be. */
+    public TransactionOutput duplicateDetached() {
+        return new TransactionOutput(params, null, value, org.spongycastle.util.Arrays.clone(scriptBytes));
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        TransactionOutput output = (TransactionOutput) o;
+
+        if (!Arrays.equals(scriptBytes, output.scriptBytes)) return false;
+        if (value != null ? !value.equals(output.value) : output.value != null) return false;
+        if (parentTransaction != null && parentTransaction != output.parentTransaction) return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = value != null ? value.hashCode() : 0;
+        result = 31 * result + (scriptBytes != null ? Arrays.hashCode(scriptBytes) : 0);
+        return result;
     }
 }
