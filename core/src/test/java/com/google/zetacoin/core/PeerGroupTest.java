@@ -154,7 +154,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         assertTrue(result.get());
     }
 
-    //@Test
+    @Test
     public void receiveTxBroadcast() throws Exception {
         // Check that when we receive transactions on all our peers, we do the right thing.
         peerGroup.startAndWait();
@@ -272,7 +272,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         peerGroup.stop();
     }
 
-    //@Test
+    @Test
     public void transactionConfidence() throws Exception {
         // Checks that we correctly count how many peers broadcast a transaction, so we can establish some measure of
         // its trustworthyness assuming an untampered with internet connection.
@@ -386,7 +386,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         assertTrue(peerGroup.getConnectedPeers().get(0).getLastPingTime() < Long.MAX_VALUE);
     }
 
-    //@Test
+    @Test
     public void downloadPeerSelection() throws Exception {
         peerGroup.startAndWait();
         VersionMessage versionMessage2 = new VersionMessage(params, 2);
@@ -441,7 +441,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         assertTrue(!peerConnectedFuture.isDone() && peerDisconnectedFuture.isDone());
     }
 
-    //@Test
+    @Test
     public void peerPriority() throws Exception {
         final List<InetSocketAddress> addresses = Lists.newArrayList(
                 new InetSocketAddress("localhost", 2000),
