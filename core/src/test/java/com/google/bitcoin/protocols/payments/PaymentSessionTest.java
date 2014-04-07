@@ -125,8 +125,8 @@ public class PaymentSessionTest {
         Protos.PaymentRequest paymentRequest = Protos.PaymentRequest.newBuilder().mergeFrom(in).build();
         MockPaymentSession paymentSession = new MockPaymentSession(paymentRequest);
         PaymentSession.PkiVerificationData pkiData = paymentSession.verifyPki();
-        assertEquals("www.bitcoincore.org", pkiData.name);
-        assertEquals("The USERTRUST Network, Salt Lake City, US", pkiData.rootAuthorityName);
+        assertEquals("www.bitcoincore.org", pkiData.displayName);
+        assertEquals("The USERTRUST Network", pkiData.rootAuthorityName);
     }
 
     private Protos.PaymentRequest newSimplePaymentRequest() {

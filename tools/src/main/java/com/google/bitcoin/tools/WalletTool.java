@@ -536,9 +536,7 @@ public class WalletTool {
             System.out.println("Date: " + session.getDate());
             System.out.println("Memo: " + session.getMemo());
             if (session.pkiVerificationData != null) {
-                System.out.println("Pki-Verified Name: " + session.pkiVerificationData.name);
-                if (session.pkiVerificationData.orgName != null)
-                    System.out.println("Pki-Verified Org: " + session.pkiVerificationData.orgName);
+                System.out.println("Pki-Verified Name: " + session.pkiVerificationData.displayName);
                 System.out.println("PKI data verified by: " + session.pkiVerificationData.rootAuthorityName);
             }
             final Wallet.SendRequest req = session.getSendRequest();

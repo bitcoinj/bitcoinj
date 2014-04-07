@@ -71,7 +71,7 @@ public class PaymentProtocol {
                     format("Bitcoin payment request, version %d%nDate: %s%n", version, session.getDate()));
             PaymentSession.PkiVerificationData pki = session.verifyPki();
             if (pki != null) {
-                output.append(format("Signed by: %s%nIdentity verified by: %s%n", pki.name, pki.rootAuthorityName));
+                output.append(format("Signed by: %s%nIdentity verified by: %s%n", pki.displayName, pki.rootAuthorityName));
             }
             if (session.getPaymentDetails().hasExpires()) {
                 output.append(format("Expires: %s%n", new Date(session.getPaymentDetails().getExpires() * 1000)));
