@@ -529,6 +529,11 @@ public class PaymentSession {
         }
     }
 
+    /** Gets the params as read from the PaymentRequest.network field: main is the default if missing. */
+    public NetworkParameters getNetworkParameters() {
+        return params;
+    }
+
     /** Returns the protobuf that this object was instantiated with. */
     public Protos.PaymentRequest getPaymentRequest() {
         return paymentRequest;
