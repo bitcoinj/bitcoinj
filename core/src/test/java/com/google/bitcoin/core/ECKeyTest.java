@@ -97,6 +97,9 @@ public class ECKeyTest {
         for (ECKey.ECDSASignature signature : sigs) {
             assertTrue(signature.s.compareTo(ECKey.HALF_CURVE_ORDER) <= 0);
         }
+        final ECKey.ECDSASignature duplicate = new ECKey.ECDSASignature(sigs.get(0).r, sigs.get(0).s);
+        assertEquals(sigs.get(0), duplicate);
+        assertEquals(sigs.get(0).hashCode(), duplicate.hashCode());
     }
 
     @Test

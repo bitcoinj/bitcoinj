@@ -333,7 +333,7 @@ public class ECKey implements Serializable {
      */
     public static class ECDSASignature {
         /** The two components of the signature. */
-        public BigInteger r, s;
+        public final BigInteger r, s;
 
         /**
          * Constructs a signature with the given components. Does NOT automatically canonicalise the signature.
@@ -350,14 +350,16 @@ public class ECKey implements Serializable {
          * been signed, as that violates various assumed invariants. Thus in future only one of those forms will be
          * considered legal and the other will be banned.
          */
-        public void ensureCanonical() {
+        public ECDSASignature toCanonicalised() {
             if (s.compareTo(HALF_CURVE_ORDER) > 0) {
                 // The order of the curve is the number of valid points that exist on that curve. If S is in the upper
                 // half of the number of valid points, then bring it back to the lower half. Otherwise, imagine that
                 //    N = 10
                 //    s = 8, so (-8 % 10 == 2) thus both (r, 8) and (r, 2) are valid solutions.
                 //    10 - 8 == 2, giving us always the latter solution, which is canonical.
-                s = CURVE.getN().subtract(s);
+                return new ECDSASignature(r, CURVE.getN().subtract(s));
+            } else {
+                return this;
             }
         }
 
@@ -402,6 +404,26 @@ public class ECKey implements Serializable {
             seq.addObject(new DERInteger(s));
             seq.close();
             return bos;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            ECDSASignature signature = (ECDSASignature) o;
+
+            if (!r.equals(signature.r)) return false;
+            if (!s.equals(signature.s)) return false;
+
+            return true;
+        }
+
+        @Override
+        public int hashCode() {
+            int result = r.hashCode();
+            result = 31 * result + s.hashCode();
+            return result;
         }
     }
 
@@ -467,9 +489,7 @@ public class ECKey implements Serializable {
         ECPrivateKeyParameters privKey = new ECPrivateKeyParameters(privateKeyForSigning, CURVE);
         signer.init(true, privKey);
         BigInteger[] components = signer.generateSignature(input.getBytes());
-        final ECDSASignature signature = new ECDSASignature(components[0], components[1]);
-        signature.ensureCanonical();
-        return signature;
+        return new ECDSASignature(components[0], components[1]).toCanonicalised();
     }
 
     /**
