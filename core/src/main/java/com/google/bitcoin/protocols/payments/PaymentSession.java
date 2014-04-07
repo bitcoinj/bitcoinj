@@ -18,6 +18,8 @@
 package com.google.bitcoin.protocols.payments;
 
 import com.google.bitcoin.core.*;
+import com.google.bitcoin.crypto.TrustStoreLoader;
+import com.google.bitcoin.crypto.X509Utils;
 import com.google.bitcoin.params.MainNetParams;
 import com.google.bitcoin.script.ScriptBuilder;
 import com.google.bitcoin.uri.BitcoinURI;
@@ -394,7 +396,7 @@ public class PaymentSession {
                 this.displayName = displayName;
                 this.merchantSigningKey = merchantSigningKey;
                 this.rootAuthority = rootAuthority;
-                this.rootAuthorityName = X509Utils.getDisplayNameFromCertificate(rootAuthority.getTrustedCert());
+                this.rootAuthorityName = X509Utils.getDisplayNameFromCertificate(rootAuthority.getTrustedCert(), true);
             } catch (CertificateParsingException x) {
                 throw new PaymentRequestException.PkiVerificationException(x);
             }
@@ -458,7 +460,7 @@ public class PaymentSession {
 
             // Signature verifies, get the names from the identity we just verified for presentation to the user.
             final X509Certificate cert = certs.get(0);
-            String displayName = X509Utils.getDisplayNameFromCertificate(cert);
+            String displayName = X509Utils.getDisplayNameFromCertificate(cert, true);
             if (displayName == null)
                 throw new PaymentRequestException.PkiVerificationException("Could not extract name from certificate");
             // Everything is peachy. Return some useful data to the caller.

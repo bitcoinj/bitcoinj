@@ -16,12 +16,13 @@
 
 package com.google.bitcoin.protocols.payments;
 
-import static org.junit.Assert.assertEquals;
+import com.google.bitcoin.crypto.X509Utils;
+import org.junit.Test;
 
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 
-import org.junit.Test;
+import static org.junit.Assert.assertEquals;
 
 public class X509UtilsTest {
 
@@ -31,10 +32,10 @@ public class X509UtilsTest {
 
         X509Certificate clientCert = (X509Certificate) cf.generateCertificate(getClass().getResourceAsStream(
                 "startssl-client.crt"));
-        assertEquals("Andreas Schildbach", X509Utils.getDisplayNameFromCertificate(clientCert));
+        assertEquals("Andreas Schildbach", X509Utils.getDisplayNameFromCertificate(clientCert, false));
 
         X509Certificate comodoCert = (X509Certificate) cf.generateCertificate(getClass().getResourceAsStream(
                 "comodo-smime.crt"));
-        assertEquals("comodo.com@schildbach.de", X509Utils.getDisplayNameFromCertificate(comodoCert));
+        assertEquals("comodo.com@schildbach.de", X509Utils.getDisplayNameFromCertificate(comodoCert, true));
     }
 }

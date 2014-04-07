@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-package com.google.bitcoin.protocols.payments;
+package com.google.bitcoin.crypto;
 
+import javax.annotation.Nonnull;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -24,17 +25,19 @@ import java.security.GeneralSecurityException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 
-import javax.annotation.Nonnull;
-
+/**
+ * An implementation of TrustStoreLoader handles fetching a KeyStore from the operating system, a file, etc. It's
+ * necessary because the Java {@link java.security.KeyStore} abstraction is not completely seamless and for example
+ * we sometimes need slightly different techniques to load the key store on different versions of Android, MacOS,
+ * Windows, etc.
+ */
 public interface TrustStoreLoader {
+    public KeyStore getKeyStore() throws FileNotFoundException, KeyStoreException;
 
-    KeyStore getKeyStore() throws FileNotFoundException, KeyStoreException;
-
-    static final String DEFAULT_KEYSTORE_TYPE = KeyStore.getDefaultType();
-    static final String DEFAULT_KEYSTORE_PASSWORD = "changeit";
+    public static final String DEFAULT_KEYSTORE_TYPE = KeyStore.getDefaultType();
+    public static final String DEFAULT_KEYSTORE_PASSWORD = "changeit";
 
     public class DefaultTrustStoreLoader implements TrustStoreLoader {
-
         @Override
         public KeyStore getKeyStore() throws FileNotFoundException, KeyStoreException {
 
@@ -94,7 +97,6 @@ public interface TrustStoreLoader {
     }
 
     public class FileTrustStoreLoader implements TrustStoreLoader {
-
         private final File path;
 
         public FileTrustStoreLoader(@Nonnull File path) throws FileNotFoundException {

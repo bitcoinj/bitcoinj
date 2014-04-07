@@ -1,5 +1,5 @@
 /**
- * Copyright 2014 Andreas Schildbach
+ * Copyright 2014 The bitcoinj authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,18 @@
  * limitations under the License.
  */
 
-package com.google.bitcoin.protocols.payments;
+package com.google.bitcoin.crypto;
 
+import com.google.common.base.Joiner;
+import org.spongycastle.asn1.ASN1ObjectIdentifier;
+import org.spongycastle.asn1.ASN1String;
+import org.spongycastle.asn1.x500.AttributeTypeAndValue;
+import org.spongycastle.asn1.x500.RDN;
+import org.spongycastle.asn1.x500.X500Name;
+import org.spongycastle.asn1.x500.style.RFC4519Style;
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.GeneralSecurityException;
@@ -26,19 +36,19 @@ import java.security.cert.X509Certificate;
 import java.util.Collection;
 import java.util.List;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-
-import org.spongycastle.asn1.ASN1ObjectIdentifier;
-import org.spongycastle.asn1.ASN1String;
-import org.spongycastle.asn1.x500.AttributeTypeAndValue;
-import org.spongycastle.asn1.x500.RDN;
-import org.spongycastle.asn1.x500.X500Name;
-import org.spongycastle.asn1.x500.style.RFC4519Style;
-
+/**
+ * X509Utils provides tools for working with X.509 certificates and keystores, as used in the BIP 70 payment protocol.
+ * For more details on this, see {@link com.google.bitcoin.protocols.payments.PaymentSession}, the article "Working with
+ * the payment protocol" on the bitcoinj website, or the Bitcoin developer guide.
+ */
 public class X509Utils {
-
-    public static @Nullable String getDisplayNameFromCertificate(@Nonnull X509Certificate certificate) throws CertificateParsingException {
+    /**
+     * Returns either a string that "sums up" the certificate for humans, in a similar manner to what you might see
+     * in a web browser, or null if one cannot be extracted. This will typically be the common name (CN) field, but
+     * can also be the org (O) field, org+location+country if withLocation is set, or the email
+     * address for S/MIME certificates.
+     */
+    public static @Nullable String getDisplayNameFromCertificate(@Nonnull X509Certificate certificate, boolean withLocation) throws CertificateParsingException {
         X500Name name = new X500Name(certificate.getSubjectX500Principal().getName());
         String commonName = null, org = null, location = null, country = null;
         for (RDN rdn : name.getRDNs()) {
@@ -62,7 +72,7 @@ public class X509Utils {
                     altName = (String) subjectAlternativeName.get(1);
 
         if (org != null) {
-            return org;
+            return withLocation ? Joiner.on(", ").skipNulls().join(org, location, country) : org;
         } else if (commonName != null) {
             return commonName;
         } else {
@@ -70,7 +80,8 @@ public class X509Utils {
         }
     }
 
-    public static @Nonnull KeyStore loadKeyStore(@Nonnull String keystoreType, @Nullable String keystorePassword, @Nonnull InputStream is)
+    /** Returns a key store loaded from the given stream. Just a convenience around the Java APIs. */
+    public static KeyStore loadKeyStore(String keystoreType, @Nullable String keystorePassword, InputStream is)
             throws KeyStoreException {
         try {
             KeyStore keystore = KeyStore.getInstance(keystoreType);
@@ -84,6 +95,7 @@ public class X509Utils {
             try {
                 is.close();
             } catch (IOException x) {
+                // Ignored.
             }
         }
     }

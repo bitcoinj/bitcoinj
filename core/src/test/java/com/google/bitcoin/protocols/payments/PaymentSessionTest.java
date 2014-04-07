@@ -126,7 +126,7 @@ public class PaymentSessionTest {
         MockPaymentSession paymentSession = new MockPaymentSession(paymentRequest);
         PaymentSession.PkiVerificationData pkiData = paymentSession.verifyPki();
         assertEquals("www.bitcoincore.org", pkiData.displayName);
-        assertEquals("The USERTRUST Network", pkiData.rootAuthorityName);
+        assertEquals("The USERTRUST Network, Salt Lake City, US", pkiData.rootAuthorityName);
     }
 
     private Protos.PaymentRequest newSimplePaymentRequest() {
