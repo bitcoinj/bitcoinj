@@ -704,7 +704,7 @@ public class WalletTool {
         } else {
             if (params == RegTestParams.get()) {
                 log.info("Assuming regtest node on localhost");
-                peers.addAddress(InetAddress.getLoopbackAddress());
+                peers.addAddress(PeerAddress.localhost(params));
             } else {
                 peers.addPeerDiscovery(new DnsDiscovery(params));
             }
