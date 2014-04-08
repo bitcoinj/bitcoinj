@@ -372,10 +372,10 @@ public class ECKey implements Serializable {
             try {
                 ASN1InputStream decoder = new ASN1InputStream(bytes);
                 DLSequence seq = (DLSequence) decoder.readObject();
-                DERInteger r, s;
+                ASN1Integer r, s;
                 try {
-                    r = (DERInteger) seq.getObjectAt(0);
-                    s = (DERInteger) seq.getObjectAt(1);
+                    r = (ASN1Integer) seq.getObjectAt(0);
+                    s = (ASN1Integer) seq.getObjectAt(1);
                 } catch (ClassCastException e) {
                     throw new IllegalArgumentException(e);
                 }
@@ -392,8 +392,8 @@ public class ECKey implements Serializable {
             // Usually 70-72 bytes.
             ByteArrayOutputStream bos = new ByteArrayOutputStream(72);
             DERSequenceGenerator seq = new DERSequenceGenerator(bos);
-            seq.addObject(new DERInteger(r));
-            seq.addObject(new DERInteger(s));
+            seq.addObject(new ASN1Integer(r));
+            seq.addObject(new ASN1Integer(s));
             seq.close();
             return bos;
         }
@@ -586,7 +586,7 @@ public class ECKey implements Serializable {
             ASN1InputStream decoder = new ASN1InputStream(asn1privkey);
             DLSequence seq = (DLSequence) decoder.readObject();
             checkArgument(seq.size() == 4, "Input does not appear to be an ASN.1 OpenSSL EC private key");
-            checkArgument(((DERInteger) seq.getObjectAt(0)).getValue().equals(BigInteger.ONE),
+            checkArgument(((ASN1Integer) seq.getObjectAt(0)).getValue().equals(BigInteger.ONE),
                     "Input is of wrong version");
             Object obj = seq.getObjectAt(1);
             byte[] privbits = ((ASN1OctetString) obj).getOctets();
