@@ -4,6 +4,7 @@
 - Make DeterministicKeyChain auto-extend when a key was observed, to keep a gap limit in place.
 - Support for key rotation
 - Support for auto upgrade
+- Calculate lookahead keys on a background thread.
 - Redo internals of DKC to support arbitrary tree structures.
 - Add a REFUND key purpose and map to the receive tree (for now).
 
