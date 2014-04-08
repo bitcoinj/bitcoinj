@@ -30,9 +30,11 @@ import org.spongycastle.asn1.sec.SECNamedCurves;
 import org.spongycastle.asn1.x9.X9ECParameters;
 import org.spongycastle.asn1.x9.X9IntegerConverter;
 import org.spongycastle.crypto.AsymmetricCipherKeyPair;
+import org.spongycastle.crypto.digests.SHA256Digest;
 import org.spongycastle.crypto.generators.ECKeyPairGenerator;
 import org.spongycastle.crypto.params.*;
 import org.spongycastle.crypto.signers.ECDSASigner;
+import org.spongycastle.crypto.signers.HMacDSAKCalculator;
 import org.spongycastle.math.ec.ECAlgorithms;
 import org.spongycastle.math.ec.ECCurve;
 import org.spongycastle.math.ec.ECPoint;
@@ -125,17 +127,9 @@ public class ECKey implements Serializable {
         ECPrivateKeyParameters privParams = (ECPrivateKeyParameters) keypair.getPrivate();
         ECPublicKeyParameters pubParams = (ECPublicKeyParameters) keypair.getPublic();
         priv = privParams.getD();
-        // Unfortunately Bouncy Castle does not let us explicitly change a point to be compressed, even though it
-        // could easily do so. We must re-build it here so the ECPoints withCompression flag can be set to true.
-        ECPoint uncompressed = pubParams.getQ();
-        ECPoint compressed = compressPoint(uncompressed);
-        pub = compressed.getEncoded();
+        pub = pubParams.getQ().getEncoded(true);
 
         creationTimeSeconds = Utils.currentTimeSeconds();
-    }
-
-    private static ECPoint compressPoint(ECPoint uncompressed) {
-        return new ECPoint.Fp(CURVE.getCurve(), uncompressed.getX(), uncompressed.getY(), true);
     }
 
     /**
@@ -252,9 +246,7 @@ public class ECKey implements Serializable {
      */
     public static byte[] publicKeyFromPrivate(BigInteger privKey, boolean compressed) {
         ECPoint point = CURVE.getG().multiply(privKey);
-        if (compressed)
-            point = compressPoint(point);
-        return point.getEncoded();
+        return point.getEncoded(compressed);
     }
 
     /** Gets the hash160 form of the public key (as seen in addresses). */
@@ -485,7 +477,7 @@ public class ECKey implements Serializable {
             }
         }
 
-        ECDSASigner signer = new ECDSASigner();
+        ECDSASigner signer = new ECDSASigner(new HMacDSAKCalculator(new SHA256Digest()));
         ECPrivateKeyParameters privKey = new ECPrivateKeyParameters(privateKeyForSigning, CURVE);
         signer.init(true, privKey);
         BigInteger[] components = signer.generateSignature(input.getBytes());
@@ -781,11 +773,7 @@ public class ECKey implements Serializable {
         BigInteger srInv = rInv.multiply(sig.s).mod(n);
         BigInteger eInvrInv = rInv.multiply(eInv).mod(n);
         ECPoint.Fp q = (ECPoint.Fp) ECAlgorithms.sumOfTwoMultiplies(CURVE.getG(), eInvrInv, R, srInv);
-        if (compressed) {
-            // We have to manually recompress the point as the compressed-ness gets lost when multiply() is used.
-            q = new ECPoint.Fp(curve, q.getX(), q.getY(), true);
-        }
-        return new ECKey((byte[])null, q.getEncoded());
+        return new ECKey((byte[])null, q.getEncoded(compressed));
     }
 
     /** Decompress a compressed public key (x co-ord and low-bit of y-coord). */

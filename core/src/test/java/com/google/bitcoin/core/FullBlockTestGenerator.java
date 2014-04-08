@@ -1617,7 +1617,8 @@ public class FullBlockTestGenerator {
         // (finally) return the created chain
         return ret;
     }
-    
+
+    private byte uniquenessCounter = 0;
     private Block createNextBlock(Block baseBlock, int nextBlockHeight, TransactionOutPointWithValue prevOut,
             BigInteger additionalCoinbaseValue) throws ScriptException {
         Integer height = blockToHeightMap.get(baseBlock.getHash());
@@ -1634,7 +1635,7 @@ public class FullBlockTestGenerator {
             t.addOutput(new TransactionOutput(params, t, BigInteger.valueOf(1),
                     ScriptBuilder.createOutputScript(new ECKey(null, coinbaseOutKeyPubKey)).getProgram()));
             // Spendable output
-            t.addOutput(new TransactionOutput(params, t, BigInteger.ZERO, new byte[] {OP_1}));
+            t.addOutput(new TransactionOutput(params, t, BigInteger.ZERO, new byte[] {OP_1, uniquenessCounter++}));
             addOnlyInputToTransaction(t, prevOut);
             block.addTransaction(t);
             block.solve();

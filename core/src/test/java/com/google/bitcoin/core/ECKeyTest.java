@@ -37,6 +37,7 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.crypto.params.KeyParameter;
+import org.spongycastle.util.encoders.DecoderException;
 import org.spongycastle.util.encoders.Hex;
 
 import java.io.InputStream;
@@ -424,8 +425,11 @@ public class ECKeyTest {
                 sig.append((char)c);
 
             try {
-                assertFalse(TransactionSignature.isEncodingCanonical(Hex.decode(sig.toString())));
-            } catch (StringIndexOutOfBoundsException e) { } // Expected for non-hex strings in the JSON that we should ignore
+                final String sigStr = sig.toString();
+                assertFalse(TransactionSignature.isEncodingCanonical(Hex.decode(sigStr)));
+            } catch (DecoderException e) {
+                // Expected for non-hex strings in the JSON that we should ignore
+            }
         }
         in.close();
     }

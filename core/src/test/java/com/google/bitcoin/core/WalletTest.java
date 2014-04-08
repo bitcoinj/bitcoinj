@@ -19,8 +19,6 @@ package com.google.bitcoin.core;
 
 import com.google.bitcoin.core.Transaction.SigHash;
 import com.google.bitcoin.core.Wallet.SendRequest;
-import com.google.bitcoin.wallet.DefaultCoinSelector;
-import com.google.bitcoin.wallet.RiskAnalysis;
 import com.google.bitcoin.crypto.KeyCrypter;
 import com.google.bitcoin.crypto.KeyCrypterException;
 import com.google.bitcoin.crypto.KeyCrypterScrypt;
@@ -30,9 +28,7 @@ import com.google.bitcoin.utils.MockTransactionBroadcaster;
 import com.google.bitcoin.utils.TestUtils;
 import com.google.bitcoin.utils.TestWithWallet;
 import com.google.bitcoin.utils.Threading;
-import com.google.bitcoin.wallet.KeyTimeCoinSelector;
-import com.google.bitcoin.wallet.WalletFiles;
-import com.google.bitcoin.wallet.WalletTransaction;
+import com.google.bitcoin.wallet.*;
 import com.google.bitcoin.wallet.WalletTransaction.Pool;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -692,12 +688,12 @@ public class WalletTest extends TestWithWallet {
         final BigInteger value2 = Utils.toNanoCoins(2, 0);
         // Give us three coins and make sure we have some change.
         sendMoneyToWallet(value.add(value2), AbstractBlockChain.NewBlockType.BEST_CHAIN);
-        // The two transactions will have different hashes due to the lack of deterministic signing, but will be
-        // otherwise identical. Once deterministic signatures are implemented, this test will have to be tweaked.
         final Address address = new ECKey().toAddress(params);
         Transaction send1 = checkNotNull(wallet.createSend(address, value2));
         Transaction send2 = checkNotNull(wallet.createSend(address, value2));
-        send1 = roundTripTransaction(params, send1);
+        byte[] buf = send1.bitcoinSerialize();
+        buf[43] = 0;  // Break the signature: bitcoinj won't check in SPV mode and this is easier than other mutations.
+        send1 = new Transaction(params, buf);
         wallet.commitTx(send2);
         wallet.allowSpendingUnconfirmedTransactions();
         assertEquals(value, wallet.getBalance(Wallet.BalanceType.ESTIMATED));
