@@ -116,24 +116,36 @@ public class ScriptBuilder {
 
     /** Create a program that satisfies an OP_CHECKMULTISIG program. */
     public static Script createMultiSigInputScript(List<TransactionSignature> signatures) {
-        List<byte[]> sigs = new ArrayList<byte[]>(signatures.size());
-        for (TransactionSignature signature : signatures)
-            sigs.add(signature.encodeToBitcoin());
-        return createMultiSigInputScriptBytes(sigs);
+        return createP2SHMultiSigInputScript(signatures, null);
     }
 
     /** Create a program that satisfies an OP_CHECKMULTISIG program. */
     public static Script createMultiSigInputScript(TransactionSignature... signatures) {
         return createMultiSigInputScript(Arrays.asList(signatures));
     }
-
+    
     /** Create a program that satisfies an OP_CHECKMULTISIG program, using pre-encoded signatures. */
     public static Script createMultiSigInputScriptBytes(List<byte[]> signatures) {
+    	return createMultiSigInputScriptBytes(signatures, null);
+    }
+    
+    /** Create a program that satisfies a pay-to-script hashed OP_CHECKMULTISIG program. */
+    public static Script createP2SHMultiSigInputScript(List<TransactionSignature> signatures, byte[] multisigProgramBytes) {
+    	List<byte[]> sigs = new ArrayList<byte[]>(signatures.size());
+        for (TransactionSignature signature : signatures)
+            sigs.add(signature.encodeToBitcoin());
+        return createMultiSigInputScriptBytes(sigs, multisigProgramBytes);
+    }
+
+    /** Create a program that satisfies an OP_CHECKMULTISIG program, using pre-encoded signatures and appends the script program bytes if the program was pay-to-script hashed */
+    public static Script createMultiSigInputScriptBytes(List<byte[]> signatures, byte[] multisigProgramBytes) {
         checkArgument(signatures.size() <= 16);
         ScriptBuilder builder = new ScriptBuilder();
         builder.smallNum(0);  // Work around a bug in CHECKMULTISIG that is now a required part of the protocol.
         for (byte[] signature : signatures)
             builder.data(signature);
+        if(multisigProgramBytes!= null)
+        	builder.data(multisigProgramBytes);
         return builder.build();
     }
 
