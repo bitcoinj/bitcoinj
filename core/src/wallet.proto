@@ -319,7 +319,7 @@ message Wallet {
 
   // The version number of the wallet - used to detect wallets that were produced in the future
   // (i.e the wallet may contain some future format this protobuf/ code does not know about)
-  optional int32 version = 7;
+  optional int32 version = 7 [default = 1];
 
   // deprecated - do not recycle this numeric identifier
   // optional int32 minor_version = 8;

@@ -332,6 +332,13 @@ public class WalletProtobufSerializerTest {
         assertEquals(0, wallet5.getExtensions().size());
     }
 
+    @Test(expected = UnreadableWalletException.FutureVersion.class)
+    public void versions() throws Exception {
+        Protos.Wallet.Builder proto = Protos.Wallet.newBuilder(new WalletProtobufSerializer().walletToProto(myWallet));
+        proto.setVersion(2);
+        new WalletProtobufSerializer().readWallet(params, null, proto.build());
+    }
+
     private static class SomeFooExtension implements WalletExtension {
         private final byte[] data = new byte[]{1, 2, 3};
 
