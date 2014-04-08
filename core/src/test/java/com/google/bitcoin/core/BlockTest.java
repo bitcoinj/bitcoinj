@@ -20,7 +20,7 @@ import com.google.bitcoin.params.TestNet2Params;
 import com.google.bitcoin.params.UnitTestParams;
 import com.google.bitcoin.script.ScriptOpCodes;
 import org.junit.Test;
-import org.spongycastle.util.encoders.Hex;
+import org.bouncycastle.util.encoders.Hex;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;

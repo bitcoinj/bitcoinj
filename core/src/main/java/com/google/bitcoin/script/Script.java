@@ -23,7 +23,7 @@ import com.google.bitcoin.params.MainNetParams;
 import com.google.common.collect.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.spongycastle.crypto.digests.RIPEMD160Digest;
+import org.bouncycastle.crypto.digests.RIPEMD160Digest;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;

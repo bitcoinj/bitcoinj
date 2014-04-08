@@ -5,10 +5,10 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.spongycastle.crypto.params.ECDomainParameters;
-import org.spongycastle.math.ec.ECCurve;
-import org.spongycastle.math.ec.ECPoint;
-import org.spongycastle.util.encoders.Hex;
+import org.bouncycastle.crypto.params.ECDomainParameters;
+import org.bouncycastle.math.ec.ECCurve;
+import org.bouncycastle.math.ec.ECPoint;
+import org.bouncycastle.util.encoders.Hex;
 
 import java.util.Arrays;
 import java.util.List;

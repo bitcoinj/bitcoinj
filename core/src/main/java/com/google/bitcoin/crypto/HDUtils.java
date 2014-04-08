@@ -18,10 +18,10 @@ package com.google.bitcoin.crypto;
 
 import com.google.bitcoin.core.ECKey;
 import com.google.common.collect.ImmutableList;
-import org.spongycastle.crypto.digests.SHA512Digest;
-import org.spongycastle.crypto.macs.HMac;
-import org.spongycastle.crypto.params.KeyParameter;
-import org.spongycastle.math.ec.ECPoint;
+import org.bouncycastle.crypto.digests.SHA512Digest;
+import org.bouncycastle.crypto.macs.HMac;
+import org.bouncycastle.crypto.params.KeyParameter;
+import org.bouncycastle.math.ec.ECPoint;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;

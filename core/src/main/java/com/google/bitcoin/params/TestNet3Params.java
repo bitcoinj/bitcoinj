@@ -18,7 +18,7 @@ package com.google.bitcoin.params;
 
 import com.google.bitcoin.core.NetworkParameters;
 import com.google.bitcoin.core.Utils;
-import org.spongycastle.util.encoders.Hex;
+import org.bouncycastle.util.encoders.Hex;
 
 import static com.google.common.base.Preconditions.checkState;
 

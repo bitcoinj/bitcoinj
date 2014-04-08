@@ -19,8 +19,8 @@ package com.google.bitcoin.core;
 
 import com.google.common.base.Charsets;
 import com.google.common.primitives.UnsignedLongs;
-import org.spongycastle.crypto.digests.RIPEMD160Digest;
-import org.spongycastle.util.encoders.Hex;
+import org.bouncycastle.crypto.digests.RIPEMD160Digest;
+import org.bouncycastle.util.encoders.Hex;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;

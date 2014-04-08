@@ -17,7 +17,7 @@
 package com.google.bitcoin.core;
 
 import com.google.common.io.ByteStreams;
-import org.spongycastle.util.encoders.Hex;
+import org.bouncycastle.util.encoders.Hex;
 
 import java.io.File;
 import java.io.FileInputStream;

@@ -29,7 +29,7 @@ import org.hamcrest.core.IsEqual;
 import org.hamcrest.core.IsNot;
 import org.junit.Assert;
 import org.junit.Test;
-import org.spongycastle.util.encoders.Hex;
+import org.bouncycastle.util.encoders.Hex;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;

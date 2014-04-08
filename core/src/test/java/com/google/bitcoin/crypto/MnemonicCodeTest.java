@@ -19,7 +19,7 @@ package com.google.bitcoin.crypto;
 import com.google.common.base.Joiner;
 import org.junit.Before;
 import org.junit.Test;
-import org.spongycastle.util.encoders.Hex;
+import org.bouncycastle.util.encoders.Hex;
 
 import java.io.IOException;
 import java.util.ArrayList;

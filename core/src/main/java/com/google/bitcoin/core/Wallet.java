@@ -39,8 +39,8 @@ import com.google.common.util.concurrent.SettableFuture;
 import org.bitcoinj.wallet.Protos.Wallet.EncryptionType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.spongycastle.crypto.params.KeyParameter;
-import org.spongycastle.util.encoders.Hex;
+import org.bouncycastle.crypto.params.KeyParameter;
+import org.bouncycastle.util.encoders.Hex;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;

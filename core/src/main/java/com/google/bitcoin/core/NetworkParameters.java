@@ -20,7 +20,7 @@ import com.google.bitcoin.params.*;
 import com.google.bitcoin.script.Script;
 import com.google.bitcoin.script.ScriptOpCodes;
 import com.google.common.base.Objects;
-import org.spongycastle.util.encoders.Hex;
+import org.bouncycastle.util.encoders.Hex;
 
 import javax.annotation.Nullable;
 import java.io.ByteArrayOutputStream;

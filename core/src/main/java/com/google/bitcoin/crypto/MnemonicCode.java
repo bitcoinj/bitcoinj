@@ -18,7 +18,7 @@ package com.google.bitcoin.crypto;
 
 import com.google.bitcoin.core.Sha256Hash;
 import com.google.common.base.Joiner;
-import org.spongycastle.util.encoders.Hex;
+import org.bouncycastle.util.encoders.Hex;
 
 import java.io.BufferedReader;
 import java.io.IOException;

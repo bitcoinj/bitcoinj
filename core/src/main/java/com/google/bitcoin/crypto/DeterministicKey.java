@@ -21,8 +21,8 @@ import com.google.bitcoin.core.Utils;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
-import org.spongycastle.math.ec.ECPoint;
-import org.spongycastle.util.encoders.Hex;
+import org.bouncycastle.math.ec.ECPoint;
+import org.bouncycastle.util.encoders.Hex;
 
 import javax.annotation.Nullable;
 import java.io.Serializable;

@@ -41,8 +41,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.spongycastle.crypto.params.KeyParameter;
-import org.spongycastle.util.encoders.Hex;
+import org.bouncycastle.crypto.params.KeyParameter;
+import org.bouncycastle.util.encoders.Hex;
 
 import java.io.File;
 import java.math.BigInteger;

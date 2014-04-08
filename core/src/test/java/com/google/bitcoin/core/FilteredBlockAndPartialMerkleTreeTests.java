@@ -23,7 +23,7 @@ import com.google.bitcoin.store.MemoryBlockStore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-import org.spongycastle.util.encoders.Hex;
+import org.bouncycastle.util.encoders.Hex;
 
 import java.math.BigInteger;
 import java.util.Arrays;
