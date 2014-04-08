@@ -87,6 +87,7 @@ public class WalletTool {
     private static ValidationMode mode;
     private static String password;
     private static org.bitcoin.protocols.payments.Protos.PaymentRequest paymentRequest;
+    private static OptionSpec<Integer> lookaheadSize;
 
     public static class Condition {
         public enum Type {
@@ -206,6 +207,7 @@ public class WalletTool {
         parser.accepts("allow-unconfirmed");
         parser.accepts("offline");
         parser.accepts("ignore-mandatory-extensions");
+        lookaheadSize = parser.accepts("lookahead-size").withRequiredArg().ofType(Integer.class);
         OptionSpec<String> passwordFlag = parser.accepts("password").withRequiredArg();
         OptionSpec<String> paymentRequestLocation = parser.accepts("payment-request").withRequiredArg();
         parser.accepts("no-pki");
@@ -853,6 +855,11 @@ public class WalletTool {
         if (options.has("privkey") || options.has("pubkey")) {
             importKey();
         } else {
+            if (options.has(lookaheadSize)) {
+                Integer size = options.valueOf(lookaheadSize);
+                log.info("Setting keychain lookahead size to {}", size);
+                wallet.setKeychainLookaheadSize(size);
+            }
             ECKey key = wallet.freshReceiveKey();
             System.out.println(key.toAddress(params) + " " + key);
         }
