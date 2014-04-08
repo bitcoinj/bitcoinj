@@ -18,4 +18,8 @@ public class UnreadableWalletException extends Exception {
             super("Password incorrect");
         }
     }
+
+    public static class FutureVersion extends UnreadableWalletException {
+        public FutureVersion() { super("Unknown wallet version from the future."); }
+    }
 }
