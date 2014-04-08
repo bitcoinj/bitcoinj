@@ -23,22 +23,23 @@ import com.google.bitcoin.crypto.TransactionSignature;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import org.bitcoin.NativeSecp256k1;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.bouncycastle.asn1.*;
 import org.bouncycastle.asn1.sec.SECNamedCurves;
 import org.bouncycastle.asn1.x9.X9ECParameters;
 import org.bouncycastle.asn1.x9.X9IntegerConverter;
 import org.bouncycastle.crypto.AsymmetricCipherKeyPair;
 import org.bouncycastle.crypto.digests.SHA256Digest;
+import org.bouncycastle.crypto.ec.CustomNamedCurves;
 import org.bouncycastle.crypto.generators.ECKeyPairGenerator;
 import org.bouncycastle.crypto.params.*;
 import org.bouncycastle.crypto.signers.ECDSASigner;
 import org.bouncycastle.crypto.signers.HMacDSAKCalculator;
 import org.bouncycastle.math.ec.ECAlgorithms;
-import org.bouncycastle.math.ec.ECCurve;
 import org.bouncycastle.math.ec.ECPoint;
+import org.bouncycastle.math.ec.custom.sec.SecP256K1Curve;
 import org.bouncycastle.util.encoders.Base64;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 import java.io.ByteArrayOutputStream;
@@ -87,7 +88,7 @@ public class ECKey implements Serializable {
 
     static {
         // All clients must agree on the curve to use by agreement. Bitcoin uses secp256k1.
-        X9ECParameters params = SECNamedCurves.getByName("secp256k1");
+        X9ECParameters params = CustomNamedCurves.getByName("secp256k1");
         CURVE = new ECDomainParameters(params.getCurve(), params.getG(), params.getN(), params.getH());
         HALF_CURVE_ORDER = params.getN().shiftRight(1);
         secureRandom = new SecureRandom();
@@ -743,8 +744,7 @@ public class ECKey implements Serializable {
         //        do another iteration of Step 1.
         //
         // More concisely, what these points mean is to use X as a compressed public key.
-        ECCurve.Fp curve = (ECCurve.Fp) CURVE.getCurve();
-        BigInteger prime = curve.getQ();  // Bouncy Castle is not consistent about the letter it uses for the prime.
+        BigInteger prime = SecP256K1Curve.q;
         if (x.compareTo(prime) >= 0) {
             // Cannot have point co-ordinates larger than this as everything takes place modulo Q.
             return null;
@@ -772,7 +772,7 @@ public class ECKey implements Serializable {
         BigInteger rInv = sig.r.modInverse(n);
         BigInteger srInv = rInv.multiply(sig.s).mod(n);
         BigInteger eInvrInv = rInv.multiply(eInv).mod(n);
-        ECPoint.Fp q = (ECPoint.Fp) ECAlgorithms.sumOfTwoMultiplies(CURVE.getG(), eInvrInv, R, srInv);
+        ECPoint q = ECAlgorithms.sumOfTwoMultiplies(CURVE.getG(), eInvrInv, R, srInv);
         return new ECKey((byte[])null, q.getEncoded(compressed));
     }
 
