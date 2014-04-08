@@ -52,16 +52,8 @@ public final class HDUtils {
         return hmacSha512(createHmacSha512Digest(key), data);
     }
 
-    static ECPoint compressedCopy(ECPoint pubKPoint) {
-        return ECKey.CURVE.getCurve().createPoint(pubKPoint.getX().toBigInteger(), pubKPoint.getY().toBigInteger(), true);
-    }
-
-    static ECPoint toUncompressed(ECPoint pubKPoint) {
-        return ECKey.CURVE.getCurve().createPoint(pubKPoint.getX().toBigInteger(), pubKPoint.getY().toBigInteger(), false);
-    }
-
     static byte[] toCompressed(byte[] uncompressedPoint) {
-        return compressedCopy(ECKey.CURVE.getCurve().decodePoint(uncompressedPoint)).getEncoded();
+        return ECKey.CURVE.getCurve().decodePoint(uncompressedPoint).getEncoded(true);
     }
 
     static byte[] longTo4ByteArray(long n) {
@@ -71,7 +63,7 @@ public final class HDUtils {
     }
 
     static byte[] getBytes(ECPoint pubKPoint) {
-        return compressedCopy(pubKPoint).getEncoded();
+        return pubKPoint.getEncoded(true);
     }
 
     static ImmutableList<ChildNumber> append(ImmutableList<ChildNumber> path, ChildNumber childNumber) {

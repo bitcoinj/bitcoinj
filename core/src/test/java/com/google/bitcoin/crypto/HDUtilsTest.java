@@ -10,7 +10,6 @@ import org.spongycastle.math.ec.ECCurve;
 import org.spongycastle.math.ec.ECPoint;
 import org.spongycastle.util.encoders.Hex;
 
-import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.List;
 
@@ -126,14 +125,11 @@ public class HDUtilsTest {
         for (String testpkStr : testPubKey) {
             byte[] testpk = Hex.decode(testpkStr);
 
-            BigInteger pubX = new BigInteger(1, Arrays.copyOfRange(testpk, 1, 33));
-            BigInteger pubY = new BigInteger(1, Arrays.copyOfRange(testpk, 33, 65));
-
-            ECPoint ptFlat = curve.createPoint(pubX, pubY, false); // 65
-            ECPoint ptComp = curve.createPoint(pubX, pubY, true);  // 33
-            ECPoint uncompressed = HDUtils.toUncompressed(ptComp);
-            ECPoint recompressed = HDUtils.compressedCopy(uncompressed);
             ECPoint orig = curve.decodePoint(testpk);
+            ECPoint ptFlat = curve.decodePoint(orig.getEncoded(false));
+            ECPoint ptComp = curve.decodePoint(ptFlat.getEncoded(true));
+            ECPoint uncompressed = curve.decodePoint(ptComp.getEncoded(false));
+            ECPoint recompressed = curve.decodePoint(uncompressed.getEncoded(true));
 
             log.info("====================");
             log.info("Flat:              {}", asHexStr(ptFlat));
