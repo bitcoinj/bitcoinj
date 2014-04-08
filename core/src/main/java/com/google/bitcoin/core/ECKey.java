@@ -52,6 +52,9 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
+// TODO: Move this class to tracking compression state itself.
+// The Bouncy Castle guys are deprecating their own tracking of the compression state.
+
 /**
  * <p>Represents an elliptic curve public and (optionally) private key, usable for digital signatures but not encryption.
  * Creating a new ECKey with the empty constructor will generate a new random keypair. Other static methods can be used
@@ -151,16 +154,16 @@ public class ECKey implements EncryptableItem, Serializable {
      * Utility for compressing an elliptic curve point. Returns the same point if it's already compressed.
      * See the ECKey class docs for a discussion of point compression.
      */
-    public static ECPoint.Fp compressPoint(ECPoint uncompressed) {
-        return new ECPoint.Fp(CURVE.getCurve(), uncompressed.getX(), uncompressed.getY(), true);
+    public static ECPoint compressPoint(ECPoint uncompressed) {
+        return CURVE.getCurve().decodePoint(uncompressed.getEncoded(true));
     }
 
     /**
      * Utility for decompressing an elliptic curve point. Returns the same point if it's already compressed.
      * See the ECKey class docs for a discussion of point compression.
      */
-    public static ECPoint.Fp decompressPoint(ECPoint compressed) {
-        return new ECPoint.Fp(CURVE.getCurve(), compressed.getX(), compressed.getY(), false);
+    public static ECPoint decompressPoint(ECPoint compressed) {
+        return CURVE.getCurve().decodePoint(compressed.getEncoded(false));
     }
 
     /**
