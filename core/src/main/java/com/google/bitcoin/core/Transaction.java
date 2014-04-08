@@ -16,6 +16,7 @@
 
 package com.google.bitcoin.core;
 
+import com.google.bitcoin.core.ECKey.MissingPrivateKeyException;
 import com.google.bitcoin.core.TransactionConfidence.ConfidenceType;
 import com.google.bitcoin.crypto.TransactionSignature;
 import com.google.bitcoin.script.Script;
@@ -813,6 +814,7 @@ public class Transaction extends ChildMessage implements Serializable {
     public synchronized void signInputs(SigHash hashType, Wallet wallet, @Nullable KeyParameter aesKey) throws ScriptException {
         checkState(inputs.size() > 0);
         checkState(outputs.size() > 0);
+        TransactionSignature dummySig = TransactionSignature.dummy();
 
         // I don't currently have an easy way to test other modes work, as the official client does not use them.
         checkArgument(hashType == SigHash.ALL, "Only SIGHASH_ALL is currently supported");
@@ -860,7 +862,7 @@ public class Transaction extends ChildMessage implements Serializable {
                 // Create a dummy signature to ensure the transaction is of the correct size when we try to ensure
                 // the right fee-per-kb is attached. If the wallet doesn't have the privkey, the user is assumed to
                 // be doing something special and that they will replace the dummy signature with a real one later.
-                signatures[i] = TransactionSignature.dummy();
+                signatures[i] = dummySig;
             }
         }
 
@@ -885,6 +887,11 @@ public class Transaction extends ChildMessage implements Serializable {
                 // have failed above when fetching the key to sign with.
                 throw new RuntimeException("Do not understand script type: " + scriptPubKey);
             }
+        }
+
+        for (int i = 0; i < inputs.size(); i++) {
+            if (signatures[i] == dummySig)
+                throw new MissingPrivateKeyException();
         }
 
         // Every input is now complete.
