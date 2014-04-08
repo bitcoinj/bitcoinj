@@ -8,12 +8,14 @@ Usage: wallet-tool --flags action-name
   raw-dump             Prints the wallet as a raw protobuf with no parsing or sanity checking applied.
   create               Makes a new wallet in the file specified by --wallet.
                        Will complain and require --force if the wallet already exists.
+                       If --seed is present, it should specify either a mnemonic code or hex/base58 raw seed bytes.
   add-key              Adds a new key to the wallet, either specified or freshly generated.
                        If --date is specified, that's the creation date.
                        If --unixtime is specified, that's the creation time and it overrides --date.
                        If --privkey is specified, use as a hex/base58 encoded private key.
                        Don't specify --pubkey in that case, it will be derived automatically.
                        If --pubkey is specified, use as a hex/base58 encoded non-compressed public key.
+                       If --lookahead-size is specified, pre-generate at least this many keys ahead of where we are.
   add-addr             Requires --addr to be specified, and adds it as a watching address.
   delete-key           Removes the key specified by --pubkey or --addr from the wallet.
   sync                 Sync the wallet with the latest block chain (download new transactions).
