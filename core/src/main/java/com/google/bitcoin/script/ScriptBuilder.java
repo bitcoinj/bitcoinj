@@ -123,12 +123,12 @@ public class ScriptBuilder {
     public static Script createMultiSigInputScript(TransactionSignature... signatures) {
         return createMultiSigInputScript(Arrays.asList(signatures));
     }
-    
+
     /** Create a program that satisfies an OP_CHECKMULTISIG program, using pre-encoded signatures. */
     public static Script createMultiSigInputScriptBytes(List<byte[]> signatures) {
     	return createMultiSigInputScriptBytes(signatures, null);
     }
-    
+
     /** Create a program that satisfies a pay-to-script hashed OP_CHECKMULTISIG program. */
     public static Script createP2SHMultiSigInputScript(List<TransactionSignature> signatures, byte[] multisigProgramBytes) {
     	List<byte[]> sigs = new ArrayList<byte[]>(signatures.size());
@@ -137,7 +137,10 @@ public class ScriptBuilder {
         return createMultiSigInputScriptBytes(sigs, multisigProgramBytes);
     }
 
-    /** Create a program that satisfies an OP_CHECKMULTISIG program, using pre-encoded signatures and appends the script program bytes if the program was pay-to-script hashed */
+    /** 
+     * Create a program that satisfies an OP_CHECKMULTISIG program, using pre-encoded signatures. 
+     * Appends the script program bytes if the program was pay-to-script hashed 
+     */
     public static Script createMultiSigInputScriptBytes(List<byte[]> signatures, byte[] multisigProgramBytes) {
         checkArgument(signatures.size() <= 16);
         ScriptBuilder builder = new ScriptBuilder();
