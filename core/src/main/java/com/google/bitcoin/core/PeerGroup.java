@@ -1418,6 +1418,8 @@ public class PeerGroup extends AbstractExecutionThreadService implements Transac
      */
     public static int getMostCommonChainHeight(final List<Peer> peers) {
         int s = peers.size();
+        if (s == 0)
+            return 0;
         int[] heights = new int[s];
         int[] counts = new int[s];
         int maxCount = 0;
