@@ -214,6 +214,10 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
         return new Wallet(params, new KeyChainGroup(seed));
     }
 
+    public static Wallet fromWatchingKey(NetworkParameters params, DeterministicKey watchKey, long creationTimeSeconds) {
+        return new Wallet(params, new KeyChainGroup(watchKey, creationTimeSeconds));
+    }
+
     public static Wallet fromWatchingKey(NetworkParameters params, DeterministicKey watchKey) {
         return new Wallet(params, new KeyChainGroup(watchKey));
     }

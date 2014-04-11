@@ -81,6 +81,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
     private DeterministicHierarchy hierarchy;
     private DeterministicKey rootKey;
     private DeterministicSeed seed;
+    private long creationTimeSeconds = MnemonicCode.BIP39_STANDARDISATION_TIME_SECS;
 
     // Paths through the key tree. External keys are ones that are communicated to other parties. Internal keys are
     // keys created for change addresses, coinbases, mixing, etc - anything that isn't communicated. The distinction
@@ -141,15 +142,25 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
      * balances and generally follow along, but spending is not possible with such a chain. Currently you can't use
      * this method to watch an arbitrary fragment of some other tree, this limitation may be removed in future.
      */
-    public DeterministicKeyChain(DeterministicKey watchingKey) {
+    public DeterministicKeyChain(DeterministicKey watchingKey, long creationTimeSeconds) {
         checkArgument(watchingKey.isPubKeyOnly(), "Private subtrees not currently supported");
         checkArgument(watchingKey.getPath().size() == 1, "You can only watch an account key currently");
         basicKeyChain = new BasicKeyChain();
+        this.creationTimeSeconds = creationTimeSeconds;
+        this.seed = null;
         initializeHierarchyUnencrypted(watchingKey);
+    }
+
+    public DeterministicKeyChain(DeterministicKey watchingKey) {
+        this(watchingKey, Utils.currentTimeSeconds());
     }
 
     public static DeterministicKeyChain watch(DeterministicKey accountKey) {
         return new DeterministicKeyChain(accountKey);
+    }
+
+    public static DeterministicKeyChain watch(DeterministicKey accountKey, long seedCreationTimeSecs) {
+        return new DeterministicKeyChain(accountKey, seedCreationTimeSecs);
     }
 
     DeterministicKeyChain(DeterministicSeed seed, @Nullable KeyCrypter crypter) {
@@ -325,7 +336,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
 
     @Override
     public long getEarliestKeyCreationTime() {
-        return seed != null ? seed.getCreationTimeSeconds() : Utils.currentTimeSeconds();
+        return seed != null ? seed.getCreationTimeSeconds() : creationTimeSeconds;
     }
 
     @Override
