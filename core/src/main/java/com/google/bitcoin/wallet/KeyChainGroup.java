@@ -227,6 +227,18 @@ public class KeyChainGroup {
         return null;
     }
 
+    /**
+     * Mark the DeterministicKeys as used, if they match the pubkeyHash
+     * See {@link com.google.bitcoin.wallet.DeterministicKeyChain#markKeyAsUsed(DeterministicKey)} for more info on this.
+     */
+    public void markPubKeyHashAsUsed(byte[] pubkeyHash) {
+        for (DeterministicKeyChain chain : chains) {
+            if (chain.markPubHashAsUsed(pubkeyHash))
+                return;
+        }
+    }
+
+
     public boolean hasKey(ECKey key) {
         if (basic.hasKey(key))
             return true;
@@ -246,6 +258,17 @@ public class KeyChainGroup {
                 return result;
         }
         return null;
+    }
+
+    /**
+     * Mark the DeterministicKeys as used, if they match the pubkey
+     * See {@link com.google.bitcoin.wallet.DeterministicKeyChain#markKeyAsUsed(DeterministicKey)} for more info on this.
+     */
+    public void markPubKeyAsUsed(byte[] pubkey) {
+        for (DeterministicKeyChain chain : chains) {
+            if (chain.markPubKeyAsUsed(pubkey))
+                return;
+        }
     }
 
     /** Returns the number of keys managed by this group, including the lookahead buffers. */
