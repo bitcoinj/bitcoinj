@@ -21,6 +21,7 @@ import com.google.bitcoin.core.ECKey;
 import com.google.bitcoin.crypto.TransactionSignature;
 import com.google.common.collect.Lists;
 
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -116,10 +117,7 @@ public class ScriptBuilder {
 
     /** Create a program that satisfies an OP_CHECKMULTISIG program. */
     public static Script createMultiSigInputScript(List<TransactionSignature> signatures) {
-        List<byte[]> sigs = new ArrayList<byte[]>(signatures.size());
-        for (TransactionSignature signature : signatures)
-            sigs.add(signature.encodeToBitcoin());
-        return createMultiSigInputScriptBytes(sigs);
+        return createP2SHMultiSigInputScript(signatures, null);
     }
 
     /** Create a program that satisfies an OP_CHECKMULTISIG program. */
@@ -129,11 +127,30 @@ public class ScriptBuilder {
 
     /** Create a program that satisfies an OP_CHECKMULTISIG program, using pre-encoded signatures. */
     public static Script createMultiSigInputScriptBytes(List<byte[]> signatures) {
+    	return createMultiSigInputScriptBytes(signatures, null);
+    }
+
+    /** Create a program that satisfies a pay-to-script hashed OP_CHECKMULTISIG program. */
+    public static Script createP2SHMultiSigInputScript(List<TransactionSignature> signatures,
+                                                       byte[] multisigProgramBytes) {
+        List<byte[]> sigs = new ArrayList<byte[]>(signatures.size());
+        for (TransactionSignature signature : signatures)
+            sigs.add(signature.encodeToBitcoin());
+        return createMultiSigInputScriptBytes(sigs, multisigProgramBytes);
+    }
+
+    /** 
+     * Create a program that satisfies an OP_CHECKMULTISIG program, using pre-encoded signatures. 
+     * Optionally, appends the script program bytes if spending a P2SH output.
+     */
+    public static Script createMultiSigInputScriptBytes(List<byte[]> signatures, @Nullable byte[] multisigProgramBytes) {
         checkArgument(signatures.size() <= 16);
         ScriptBuilder builder = new ScriptBuilder();
         builder.smallNum(0);  // Work around a bug in CHECKMULTISIG that is now a required part of the protocol.
         for (byte[] signature : signatures)
             builder.data(signature);
+        if (multisigProgramBytes!= null)
+        	builder.data(multisigProgramBytes);
         return builder.build();
     }
 
