@@ -638,6 +638,33 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
     }
 
     /**
+     * Marks all keys used in the transaction output as used in the wallet.
+     * See {@link com.google.bitcoin.wallet.DeterministicKeyChain#markKeyAsUsed(DeterministicKey)} for more info on this.
+     */
+    private void markKeysAsUsed(Transaction tx) {
+        lock.lock();
+        try {
+            for (TransactionOutput o : tx.getOutputs()) {
+                try {
+                    Script script = o.getScriptPubKey();
+                    if (script.isSentToRawPubKey()) {
+                        byte[] pubkey = script.getPubKey();
+                        keychain.markPubKeyAsUsed(pubkey);
+                    } else if (script.isSentToAddress()) {
+                        byte[] pubkeyHash = script.getPubKeyHash();
+                        keychain.markPubKeyHashAsUsed(pubkeyHash);
+                    }
+                } catch (ScriptException e) {
+                    // Just means we didn't understand the output of this transaction: ignore it.
+                    log.warn("Could not parse tx output script: {}", e.toString());
+                }
+            }
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
      * Returns the immutable seed for the current active HD chain.
      * @throws com.google.bitcoin.core.ECKey.MissingPrivateKeyException if the seed is unavailable (watching wallet)
      */
@@ -1229,6 +1256,9 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
         log.info("Received tx{} for {} BTC: {} [{}] in block {}", sideChain ? " on a side chain" : "",
                 bitcoinValueToFriendlyString(valueDifference), tx.getHashAsString(), relativityOffset,
                 block != null ? block.getHeader().getHash() : "(unit test)");
+
+        // mark the deterministic keys in this transaction as used
+        markKeysAsUsed(tx);
 
         onWalletChangedSuppressions++;
 
