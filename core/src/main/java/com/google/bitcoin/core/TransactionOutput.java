@@ -298,6 +298,26 @@ public class TransactionOutput extends ChildMessage implements Serializable {
     }
 
     /**
+     * Marks all keys used in the output as used in the wallet.
+     * See {@link com.google.bitcoin.wallet.DeterministicKeyChain#markKeyAsUsed(DeterministicKey)} for more info on this.
+     */
+    public void markKeysAsUsed(Wallet wallet) {
+        try {
+            Script script = getScriptPubKey();
+            if (script.isSentToRawPubKey()) {
+                byte[] pubkey = script.getPubKey();
+                wallet.markPubKeyAsUsed(pubkey);
+            } else {
+                byte[] pubkeyHash = script.getPubKeyHash();
+                wallet.markPubKeyHashAsUsed(pubkeyHash);
+            }
+        } catch (ScriptException e) {
+            // Just means we didn't understand the output of this transaction: ignore it.
+            log.debug("Could not parse tx output script: {}", e.toString());
+        }
+    }
+
+    /**
      * Returns a human readable debug string.
      */
     public String toString() {

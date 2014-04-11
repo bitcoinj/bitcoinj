@@ -368,6 +368,18 @@ public class Transaction extends ChildMessage implements Serializable {
     }
 
     /**
+     * Marks all keys used in the outputs as used in the wallet.
+     * See {@link com.google.bitcoin.wallet.DeterministicKeyChain#markKeyAsUsed(DeterministicKey)} for more info on this.
+     */
+    public void markKeysAsUsed(Wallet wallet) {
+        maybeParse();
+        // This is tested in WalletTest.
+        for (TransactionOutput o : outputs) {
+            o.markKeysAsUsed(wallet);
+        }
+    }
+
+    /**
      * Returns the difference of {@link Transaction#getValueSentFromMe(Wallet)} and {@link Transaction#getValueSentToMe(Wallet)}.
      */
     public BigInteger getValue(Wallet wallet) throws ScriptException {
