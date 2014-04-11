@@ -57,6 +57,7 @@ public class KeyChainGroup {
     private final EnumMap<KeyChain.KeyPurpose, DeterministicKey> currentKeys;
     @Nullable private KeyCrypter keyCrypter;
     private int lookaheadSize = -1;
+    private int lookaheadThreshold = -1;
 
     /** Creates a keychain group with no basic chain, and a single randomly initialized HD chain. */
     public KeyChainGroup() {
@@ -99,6 +100,8 @@ public class KeyChainGroup {
             chain.addEventListener(registration.listener, registration.executor);
         if (lookaheadSize >= 0)
             chain.setLookaheadSize(lookaheadSize);
+        if (lookaheadThreshold >= 0)
+            chain.setLookaheadThreshold(lookaheadThreshold);
         chains.add(chain);
     }
 
@@ -155,6 +158,26 @@ public class KeyChainGroup {
      */
     public int getLookaheadSize() {
         return lookaheadSize;
+    }
+
+    /**
+     * Sets the lookahead buffer threshold for ALL deterministic key chains, see
+     * {@link com.google.bitcoin.wallet.DeterministicKeyChain#setLookaheadThreshold(int)}
+     * for more information.
+     */
+    public void setLookaheadThreshold(int num) {
+        for (DeterministicKeyChain chain : chains) {
+            chain.setLookaheadThreshold(num);
+        }
+    }
+
+    /**
+     * Gets the current lookahead threshold being used for ALL deterministic key chains. See
+     * {@link com.google.bitcoin.wallet.DeterministicKeyChain#setLookaheadThreshold(int)}
+     * for more information.
+     */
+    public int getLookaheadThreshold() {
+        return lookaheadThreshold;
     }
 
     /** Imports the given keys into the basic chain, creating it if necessary. */

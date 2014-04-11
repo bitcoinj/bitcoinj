@@ -468,6 +468,28 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
         return keychain.getLookaheadSize();
     }
 
+    /** See {@link com.google.bitcoin.wallet.DeterministicKeyChain#setLookaheadThreshold(int)} for more info on this. */
+    public void setLookaheadThreshold(int num) {
+        lock.lock();
+        try {
+            keychain.setLookaheadThreshold(num);
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /** See {@link com.google.bitcoin.wallet.DeterministicKeyChain#setLookaheadThreshold(int)} for more info on this. */
+    public int getKeychainLookaheadThreshold() {
+        int threshold = 0;
+        lock.lock();
+        try {
+            threshold = keychain.getLookaheadThreshold();
+        } finally {
+            lock.unlock();
+        }
+        return threshold;
+    }
+
     /**
      * Returns a public-only DeterministicKey that can be used to set up a watching wallet: that is, a wallet that
      * can import transactions from the block chain just as the normal wallet can, but which cannot spend. Watching
