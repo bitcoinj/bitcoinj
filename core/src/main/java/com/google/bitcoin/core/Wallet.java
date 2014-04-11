@@ -558,6 +558,20 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
         }
     }
 
+    /**
+     * Mark the keys related to the pubkeyHash as used
+     * See {@link com.google.bitcoin.wallet.DeterministicKeyChain#markKeyAsUsed(DeterministicKey)} for more info on this.
+     */
+    public void markPubKeyHashAsUsed(byte[] pubkeyHash) {
+        lock.lock();
+        try {
+            keychain.markPubKeyHashAsUsed(pubkeyHash);
+        } finally {
+            lock.unlock();
+        }
+    }
+
+
     /** Returns true if the given key is in the wallet, false otherwise. Currently an O(N) operation. */
     public boolean hasKey(ECKey key) {
         lock.lock();
@@ -594,6 +608,19 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
         lock.lock();
         try {
             return keychain.findKeyFromPubKey(pubkey);
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
+     * Mark the keys related to the pubkey as used
+     * See {@link com.google.bitcoin.wallet.DeterministicKeyChain#markKeyAsUsed(DeterministicKey)} for more info on this.
+     */
+    public void markPubKeyAsUsed(byte[] pubkey) {
+        lock.lock();
+        try {
+            keychain.markPubKeyAsUsed(pubkey);
         } finally {
             lock.unlock();
         }
@@ -1188,6 +1215,9 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
         BigInteger valueSentFromMe = tx.getValueSentFromMe(this);
         BigInteger valueSentToMe = tx.getValueSentToMe(this);
         BigInteger valueDifference = valueSentToMe.subtract(valueSentFromMe);
+
+        // mark the deterministic keys in this transaction as used
+        tx.markKeysAsUsed(this);
 
         log.info("Received tx{} for {} BTC: {} [{}] in block {}", sideChain ? " on a side chain" : "",
                 bitcoinValueToFriendlyString(valueDifference), tx.getHashAsString(), relativityOffset,

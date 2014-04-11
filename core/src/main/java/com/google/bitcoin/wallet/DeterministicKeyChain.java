@@ -267,6 +267,28 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         basicKeyChain.importKeys(ImmutableList.of(key));
     }
 
+    /**
+     * Mark the DeterministicKey as used.
+     * Also correct the issued{Internal|External}Keys counter, because all lower children seem to be requested already.
+     * If the counter was updated, we also might want to update the lookahead keys.
+     */
+    public DeterministicKey markKeyAsUsed(DeterministicKey k) {
+        if (k == null)
+            return null;
+        if (k.getParent() == internalKey) {
+            if (issuedInternalKeys < k.getChildNumber().i()+1) {
+                issuedInternalKeys = k.getChildNumber().i()+1;
+                maybeLookAhead();
+            }
+        } else if (k.getParent() == externalKey) {
+            if (issuedExternalKeys < k.getChildNumber().i()+1) {
+                issuedExternalKeys = k.getChildNumber().i()+1;
+                maybeLookAhead();
+            }
+        }
+        return k;
+    }
+
     @Override
     public DeterministicKey findKeyFromPubHash(byte[] pubkeyHash) {
         lock.lock();
@@ -286,6 +308,45 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
             lock.unlock();
         }
     }
+
+    /**
+     * Mark the DeterministicKeys as used, if they match the pubkeyHash
+     * See {@link com.google.bitcoin.wallet.DeterministicKeyChain#markKeyAsUsed(DeterministicKey)} for more info on this.
+     */
+    public boolean markPubHashAsUsed(byte[] pubkeyHash) {
+        lock.lock();
+        boolean found = false;
+        try {
+            DeterministicKey k = (DeterministicKey) basicKeyChain.findKeyFromPubHash(pubkeyHash);
+            if (k != null) {
+                found = true;
+                markKeyAsUsed(k);
+            }
+        } finally {
+            lock.unlock();
+        }
+        return found;
+    }
+
+    /**
+     * Mark the DeterministicKeys as used, if they match the pubkey
+     * See {@link com.google.bitcoin.wallet.DeterministicKeyChain#markKeyAsUsed(DeterministicKey)} for more info on this.
+     */
+    public boolean markPubKeyAsUsed(byte[] pubkey) {
+        lock.lock();
+        boolean found = false;
+        try {
+            DeterministicKey k = (DeterministicKey) basicKeyChain.findKeyFromPubKey(pubkey);
+            if (k != null) {
+                found = true;
+                markKeyAsUsed(k);
+            }
+        } finally {
+            lock.unlock();
+        }
+        return found;
+    }
+
 
     @Override
     public boolean hasKey(ECKey key) {
