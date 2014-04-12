@@ -17,17 +17,20 @@
 
 package com.google.bitcoin.protocols.payments;
 
+import java.security.GeneralSecurityException;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.Signature;
 import java.security.SignatureException;
 import java.security.cert.CertPath;
 import java.security.cert.CertPathValidator;
 import java.security.cert.CertPathValidatorException;
+import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.CertificateParsingException;
@@ -47,6 +50,46 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 
 public class PaymentProtocol {
+
+    /**
+     * Sign the provided payment request.
+     * 
+     * @param paymentRequest
+     *            Payment request to sign, in its builder form.
+     * @param certificateChain
+     *            Certificate chain to send with the payment request, ordered from client certificate to root
+     *            certificate. The root certificate itself may be omitted.
+     * @param privateKey
+     *            The key to sign with. Must match the public key from the first certificate of the certificate chain.
+     */
+    public static void signPaymentRequestPki(Protos.PaymentRequest.Builder paymentRequest,
+            X509Certificate[] certificateChain, PrivateKey privateKey) {
+        try {
+            final Protos.X509Certificates.Builder certificates = Protos.X509Certificates.newBuilder();
+            for (final Certificate certificate : certificateChain)
+                certificates.addCertificate(ByteString.copyFrom(certificate.getEncoded()));
+
+            paymentRequest.setPkiType("x509+sha256");
+            paymentRequest.setPkiData(certificates.build().toByteString());
+            paymentRequest.setSignature(ByteString.EMPTY);
+            final Protos.PaymentRequest paymentRequestToSign = paymentRequest.build();
+
+            final String algorithm;
+            if (privateKey.getAlgorithm().equalsIgnoreCase("RSA"))
+                algorithm = "SHA256withRSA";
+            else
+                throw new IllegalStateException(privateKey.getAlgorithm());
+
+            final Signature signature = Signature.getInstance(algorithm);
+            signature.initSign(privateKey);
+            signature.update(paymentRequestToSign.toByteArray());
+
+            paymentRequest.setSignature(ByteString.copyFrom(signature.sign()));
+        } catch (final GeneralSecurityException x) {
+            // Should never happen so don't make users have to think about it.
+            throw new RuntimeException(x);
+        }
+    }
 
     /**
      * Uses the provided PKI method to find the corresponding public key and verify the provided signature.
