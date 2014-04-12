@@ -19,13 +19,12 @@ package com.google.bitcoin.protocols.payments;
 
 import com.google.bitcoin.core.*;
 import com.google.bitcoin.crypto.TrustStoreLoader;
-import com.google.bitcoin.crypto.X509Utils;
 import com.google.bitcoin.params.MainNetParams;
+import com.google.bitcoin.protocols.payments.PaymentProtocol.PkiVerificationData;
 import com.google.bitcoin.script.ScriptBuilder;
 import com.google.bitcoin.uri.BitcoinURI;
 import com.google.bitcoin.utils.Threading;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.protobuf.ByteString;
@@ -36,8 +35,7 @@ import javax.annotation.Nullable;
 import java.io.*;
 import java.math.BigInteger;
 import java.net.*;
-import java.security.*;
-import java.security.cert.*;
+import java.security.KeyStoreException;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -83,7 +81,7 @@ public class PaymentSession {
      * Stores the calculated PKI verification data, or null if none is available.
      * Only valid after the session is created with verifyPki set to true, or verifyPki() is manually called.
      */
-    public PkiVerificationData pkiVerificationData;
+    public final PkiVerificationData pkiVerificationData;
 
     /**
      * Returns a future that will be notified with a PaymentSession object after it is fetched using the provided uri.
@@ -210,8 +208,17 @@ public class PaymentSession {
     public PaymentSession(Protos.PaymentRequest request, boolean verifyPki, @Nullable final TrustStoreLoader trustStoreLoader) throws PaymentRequestException {
         this.trustStoreLoader = trustStoreLoader != null ? trustStoreLoader : new TrustStoreLoader.DefaultTrustStoreLoader();
         parsePaymentRequest(request);
-        if (verifyPki)
-            verifyPki();
+        if (verifyPki) {
+            try {
+                pkiVerificationData = PaymentProtocol.verifyPaymentRequestPki(request, this.trustStoreLoader.getKeyStore());
+            } catch (IOException x) {
+                throw new PaymentRequestException(x);
+            } catch (KeyStoreException x) {
+                throw new PaymentRequestException(x);
+            }
+        } else {
+            pkiVerificationData = null;
+        }
     }
 
     /**
@@ -375,125 +382,6 @@ public class PaymentSession {
                 return new Ack(memo);
             }
         });
-    }
-
-    /**
-     * Information about the X509 signature's issuer and subject.
-     */
-    public static class PkiVerificationData {
-        /** Display name of the payment requestor, could be a domain name, email address, legal name, etc */
-        public final String displayName;
-        /** SSL public key that was used to sign. */
-        public final PublicKey merchantSigningKey;
-        /** Object representing the CA that verified the merchant's ID */
-        public final TrustAnchor rootAuthority;
-        /** String representing the display name of the CA that verified the merchant's ID */
-        public final String rootAuthorityName;
-
-        private PkiVerificationData(@Nullable String displayName, PublicKey merchantSigningKey,
-                                    TrustAnchor rootAuthority) throws PaymentRequestException.PkiVerificationException {
-            try {
-                this.displayName = displayName;
-                this.merchantSigningKey = merchantSigningKey;
-                this.rootAuthority = rootAuthority;
-                this.rootAuthorityName = X509Utils.getDisplayNameFromCertificate(rootAuthority.getTrustedCert(), true);
-            } catch (CertificateParsingException x) {
-                throw new PaymentRequestException.PkiVerificationException(x);
-            }
-        }
-    }
-
-    /**
-     * Uses the provided PKI method to find the corresponding public key and verify the provided signature.
-     * Returns null if no PKI method was specified in the {@link Protos.PaymentRequest}.
-     */
-    public @Nullable PkiVerificationData verifyPki() throws PaymentRequestException {
-        List<X509Certificate> certs = null;
-        try {
-            if (pkiVerificationData != null)
-                return pkiVerificationData;
-            if (paymentRequest.getPkiType().equals("none"))
-                // Nothing to verify. Everything is fine. Move along.
-                return null;
-
-            String algorithm;
-            if (paymentRequest.getPkiType().equals("x509+sha256"))
-                algorithm = "SHA256withRSA";
-            else if (paymentRequest.getPkiType().equals("x509+sha1"))
-                algorithm = "SHA1withRSA";
-            else
-                throw new PaymentRequestException.InvalidPkiType("Unsupported PKI type: " + paymentRequest.getPkiType());
-
-            Protos.X509Certificates protoCerts = Protos.X509Certificates.parseFrom(paymentRequest.getPkiData());
-            if (protoCerts.getCertificateCount() == 0)
-                throw new PaymentRequestException.InvalidPkiData("No certificates provided in message: server config error");
-
-            // Parse the certs and turn into a certificate chain object. Cert factories can parse both DER and base64.
-            // The ordering of certificates is defined by the payment protocol spec to be the same as what the Java
-            // crypto API requires - convenient!
-            CertificateFactory certificateFactory = CertificateFactory.getInstance("X.509");
-            certs = Lists.newArrayList();
-            for (ByteString bytes : protoCerts.getCertificateList())
-                certs.add((X509Certificate) certificateFactory.generateCertificate(bytes.newInput()));
-            CertPath path = certificateFactory.generateCertPath(certs);
-
-            // Retrieves the most-trusted CAs from keystore.
-            PKIXParameters params = new PKIXParameters(trustStoreLoader.getKeyStore());
-            // Revocation not supported in the current version.
-            params.setRevocationEnabled(false);
-
-            // Now verify the certificate chain is correct and trusted. This let's us get an identity linked pubkey.
-            CertPathValidator validator = CertPathValidator.getInstance("PKIX");
-            PKIXCertPathValidatorResult result = (PKIXCertPathValidatorResult) validator.validate(path, params);
-            PublicKey publicKey = result.getPublicKey();
-            // OK, we got an identity, now check it was used to sign this message.
-            Signature signature = Signature.getInstance(algorithm);
-            // Note that we don't use signature.initVerify(certs.get(0)) here despite it being the most obvious
-            // way to set it up, because we don't care about the constraints specified on the certificates: any
-            // cert that links a key to a domain name or other identity will do for us.
-            signature.initVerify(publicKey);
-            Protos.PaymentRequest.Builder reqToCheck = paymentRequest.toBuilder();
-            reqToCheck.setSignature(ByteString.EMPTY);
-            signature.update(reqToCheck.build().toByteArray());
-            if (!signature.verify(paymentRequest.getSignature().toByteArray()))
-                throw new PaymentRequestException.PkiVerificationException("Invalid signature, this payment request is not valid.");
-
-            // Signature verifies, get the names from the identity we just verified for presentation to the user.
-            final X509Certificate cert = certs.get(0);
-            String displayName = X509Utils.getDisplayNameFromCertificate(cert, true);
-            if (displayName == null)
-                throw new PaymentRequestException.PkiVerificationException("Could not extract name from certificate");
-            // Everything is peachy. Return some useful data to the caller.
-            PkiVerificationData data = new PkiVerificationData(displayName, publicKey, result.getTrustAnchor());
-            // Cache the result so we don't have to re-verify if this method is called again.
-            pkiVerificationData = data;
-            return data;
-        } catch (InvalidProtocolBufferException e) {
-            // Data structures are malformed.
-            throw new PaymentRequestException.InvalidPkiData(e);
-        } catch (CertificateException e) {
-            // The X.509 certificate data didn't parse correctly.
-            throw new PaymentRequestException.PkiVerificationException(e);
-        } catch (NoSuchAlgorithmException e) {
-            // Should never happen so don't make users have to think about it. PKIX is always present.
-            throw new RuntimeException(e);
-        } catch (InvalidAlgorithmParameterException e) {
-            throw new RuntimeException(e);
-        } catch (CertPathValidatorException e) {
-            // The certificate chain isn't known or trusted, probably, the server is using an SSL root we don't
-            // know about and the user needs to upgrade to a new version of the software (or import a root cert).
-            throw new PaymentRequestException.PkiVerificationException(e, certs);
-        } catch (InvalidKeyException e) {
-            // Shouldn't happen if the certs verified correctly.
-            throw new PaymentRequestException.PkiVerificationException(e);
-        } catch (SignatureException e) {
-            // Something went wrong during hashing (yes, despite the name, this does not mean the sig was invalid).
-            throw new PaymentRequestException.PkiVerificationException(e);
-        } catch (IOException e) {
-            throw new PaymentRequestException.PkiVerificationException(e);
-        } catch (KeyStoreException e) {
-            throw new RuntimeException(e);
-        }
     }
 
     private void parsePaymentRequest(Protos.PaymentRequest request) throws PaymentRequestException {
