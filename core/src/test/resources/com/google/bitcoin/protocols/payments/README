@@ -1,0 +1,6 @@
+# Create key store for CA certificate
+keytool -keystore test-cacerts -importcert -file test-cacert.pem -alias test-cacert -deststorepass password
+
+# Create key store for certificate and private key
+openssl pkcs12 -export -in test-valid-cert.pem -inkey test-valid-key.pem -passin pass:password -out test-valid.p12 -passout pass:password -name test-valid
+keytool -importkeystore -deststorepass password -destkeypass password -destkeystore test-valid-cert -srckeystore test-valid.p12 -srcstoretype PKCS12 -srcstorepass password -alias test-valid
