@@ -51,6 +51,11 @@ import com.google.protobuf.InvalidProtocolBufferException;
 
 public class PaymentProtocol {
 
+    // MIME types as defined in BIP71.
+    public static final String MIMETYPE_PAYMENTREQUEST = "application/bitcoin-paymentrequest";
+    public static final String MIMETYPE_PAYMENT = "application/bitcoin-payment";
+    public static final String MIMETYPE_PAYMENTACK = "application/bitcoin-paymentack";
+
     /**
      * Sign the provided payment request.
      * 

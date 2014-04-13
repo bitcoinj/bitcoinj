@@ -176,7 +176,7 @@ public class PaymentSession {
             @Override
             public PaymentSession call() throws Exception {
                 HttpURLConnection connection = (HttpURLConnection)uri.toURL().openConnection();
-                connection.setRequestProperty("Accept", "application/bitcoin-paymentrequest");
+                connection.setRequestProperty("Accept", PaymentProtocol.MIMETYPE_PAYMENTREQUEST);
                 connection.setUseCaches(false);
                 Protos.PaymentRequest paymentRequest = Protos.PaymentRequest.parseFrom(connection.getInputStream());
                 return new PaymentSession(paymentRequest, verifyPki, trustStoreLoader);
@@ -359,8 +359,8 @@ public class PaymentSession {
             public Ack call() throws Exception {
                 HttpURLConnection connection = (HttpURLConnection) url.openConnection();
                 connection.setRequestMethod("POST");
-                connection.setRequestProperty("Content-Type", "application/bitcoin-payment");
-                connection.setRequestProperty("Accept", "application/bitcoin-paymentack");
+                connection.setRequestProperty("Content-Type", PaymentProtocol.MIMETYPE_PAYMENT);
+                connection.setRequestProperty("Accept", PaymentProtocol.MIMETYPE_PAYMENTACK);
                 connection.setRequestProperty("Content-Length", Integer.toString(payment.getSerializedSize()));
                 connection.setUseCaches(false);
                 connection.setDoInput(true);
