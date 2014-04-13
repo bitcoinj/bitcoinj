@@ -34,7 +34,7 @@ import java.util.concurrent.ExecutionException;
 import static java.lang.String.format;
 
 /** Takes a URL or bitcoin URI and prints information about the payment request. */
-public class PaymentProtocol {
+public class PaymentProtocolTool {
     public static void main(String[] args) {
         if (args.length < 1) {
             System.err.println("Provide a bitcoin URI or URL as the argument.");
