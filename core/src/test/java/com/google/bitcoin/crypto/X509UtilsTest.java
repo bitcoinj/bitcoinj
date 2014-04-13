@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.google.bitcoin.protocols.payments;
+package com.google.bitcoin.crypto;
 
 import com.google.bitcoin.crypto.X509Utils;
 import org.junit.Test;
