@@ -18,11 +18,14 @@ package com.google.bitcoin.script;
 
 import com.google.bitcoin.core.Address;
 import com.google.bitcoin.core.ECKey;
+import com.google.bitcoin.core.Utils;
 import com.google.bitcoin.crypto.TransactionSignature;
+import com.google.bitcoin.utils.KeyComparator;
 import com.google.common.collect.Lists;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import static com.google.bitcoin.script.ScriptOpCodes.*;
@@ -145,5 +148,23 @@ public class ScriptBuilder {
     public static Script createP2SHOutputScript(byte[] hash) {
         checkArgument(hash.length == 20);
         return new ScriptBuilder().op(OP_HASH160).data(hash).op(OP_EQUAL).build();
+    }
+    
+    /**
+     * Take a list of pubkeys, generate a multi-sig script, 
+     * and create a p2sh script from hashing the multi-sig script. 
+     * @param threshold is the minimum required amount of signatures to release a transaction
+     * @param pubkeys a list of keys that will construct a multi-sig address
+     * @return a P2SH output script  
+     */
+    public static Script createP2SHOutputScript(int threshold, List<ECKey> pubkeys) {
+    	//sort keys
+    	Collections.sort(pubkeys, new KeyComparator());
+    	//construct script
+    	Script redeemScript = ScriptBuilder.createMultiSigOutputScript(threshold, pubkeys);
+    	//hash
+    	byte[] hash = Utils.sha256hash160(redeemScript.getProgram());
+        //create output script
+        return ScriptBuilder.createP2SHOutputScript(hash);
     }
 }
