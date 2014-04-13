@@ -18,11 +18,14 @@ package com.google.bitcoin.core;
 
 import com.google.bitcoin.params.MainNetParams;
 import com.google.bitcoin.params.TestNet3Params;
+import com.google.bitcoin.script.Script;
 import com.google.bitcoin.script.ScriptBuilder;
 import org.junit.Test;
 import org.spongycastle.util.encoders.Hex;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 import static org.junit.Assert.*;
 
@@ -118,5 +121,25 @@ public class AddressTest {
         assertEquals("2MuVSxtfivPKJe93EC1Tb9UhJtGhsoWEHCe", b.toString());
         Address c = Address.fromP2SHScript(mainParams, ScriptBuilder.createP2SHOutputScript(hex));
         assertEquals("35b9vsyH1KoFT5a5KtrKusaCcPLkiSo1tU", c.toString());
+    }
+    
+    @Test
+    public void p2shAddressValidation() throws Exception {
+    	//import some keys from this example: https://gist.github.com/gavinandresen/3966071
+    	ECKey key1 = new DumpedPrivateKey(mainParams, "5JaTXbAUmfPYZFRwrYaALK48fN6sFJp4rHqq2QSXs8ucfpE4yQU").getKey();
+    	key1 = ECKey.fromPrivate(key1.getPrivKeyBytes());
+        ECKey key2 = new DumpedPrivateKey(mainParams, "5Jb7fCeh1Wtm4yBBg3q3XbT6B525i17kVhy3vMC9AqfR6FH2qGk").getKey();
+        key2 = ECKey.fromPrivate(key2.getPrivKeyBytes());
+        ECKey key3 = new DumpedPrivateKey(mainParams, "5JFjmGo5Fww9p8gvx48qBYDJNAzR9pmH5S389axMtDyPT8ddqmw").getKey();
+        key3 = ECKey.fromPrivate(key3.getPrivKeyBytes());
+        //sort and create 
+        List<ECKey> keys = new ArrayList<ECKey>();
+        keys.add(key1);
+        keys.add(key2);
+        keys.add(key3);
+        Script p2shScript = ScriptBuilder.createP2SHOutputScript(2, keys);
+        Address address = Address.fromP2SHScript(mainParams, p2shScript);
+        //verified by bitcoind command: ./bitcoin-cli addmultisigaddress 2 '["02865c40293a680cb9c020e7b1e106d8c1916d3cef99aa431a56d253e69256dac0","0291bba2510912a5bd37da1fb5b1673010e43d2c6d812c514e91bfa9f2eb129e1c","038d2455d2403e08708fc1f556002f1b6cd83f992d085097f9974ab08a28838f07"]'
+        assertEquals("3N25saC4dT24RphDAwLtD8LUN4E2gZPJke", address.toString());
     }
 }
