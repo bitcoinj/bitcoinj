@@ -1,7 +1,4 @@
 /**
- * Copyright 2013 Google Inc.
- * Copyright 2014 Andreas Schildbach
- *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -65,8 +62,6 @@ import java.util.concurrent.Callable;
  * as a confirmation message that the payment is now "processing" or that an error occurred, and then broadcast the
  * tx itself later if needed.</p>
  *
- * @author Kevin Greene
- * @author Andreas Schildbach
  * @see <a href="https://github.com/bitcoin/bips/blob/master/bip-0070.mediawiki">BIP 0070</a>
  */
 public class PaymentSession {
@@ -79,9 +74,9 @@ public class PaymentSession {
 
     /**
      * Stores the calculated PKI verification data, or null if none is available.
-     * Only valid after the session is created with verifyPki set to true, or verifyPki() is manually called.
+     * Only valid after the session is created with the verifyPki parameter set to true.
      */
-    public final PkiVerificationData pkiVerificationData;
+    @Nullable public final PkiVerificationData pkiVerificationData;
 
     /**
      * Returns a future that will be notified with a PaymentSession object after it is fetched using the provided uri.
@@ -415,6 +410,11 @@ public class PaymentSession {
         } catch (InvalidProtocolBufferException e) {
             throw new PaymentRequestException(e);
         }
+    }
+
+    /** Returns the value of pkiVerificationData or null if it wasn't verified at construction time. */
+    @Nullable public PkiVerificationData verifyPki() {
+        return pkiVerificationData;
     }
 
     /** Gets the params as read from the PaymentRequest.network field: main is the default if missing. */
