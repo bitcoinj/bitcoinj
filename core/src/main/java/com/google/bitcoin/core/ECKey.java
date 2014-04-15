@@ -36,6 +36,7 @@ import org.bouncycastle.crypto.signers.ECDSASigner;
 import org.bouncycastle.crypto.signers.HMacDSAKCalculator;
 import org.bouncycastle.math.ec.ECAlgorithms;
 import org.bouncycastle.math.ec.ECPoint;
+import org.bouncycastle.math.ec.FixedPointUtil;
 import org.bouncycastle.math.ec.custom.sec.SecP256K1Curve;
 import org.bouncycastle.util.encoders.Base64;
 import org.slf4j.Logger;
@@ -89,6 +90,10 @@ public class ECKey implements Serializable {
     static {
         // All clients must agree on the curve to use by agreement. Bitcoin uses secp256k1.
         X9ECParameters params = CustomNamedCurves.getByName("secp256k1");
+        // Tell Bouncy Castle to precompute data that's needed during secp256k1 calculations. Increasing the width
+        // number makes calculations faster, but at a cost of extra memory usage and with decreasing returns. 12 was
+        // picked after consulting with the BC team.
+        FixedPointUtil.precompute(params.getG(), 12);
         CURVE = new ECDomainParameters(params.getCurve(), params.getG(), params.getN(), params.getH());
         HALF_CURVE_ORDER = params.getN().shiftRight(1);
         secureRandom = new SecureRandom();
