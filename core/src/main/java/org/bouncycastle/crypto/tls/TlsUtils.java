@@ -850,6 +850,14 @@ public class TlsUtils
         return buf;
     }
 
+    public static byte[] PRF_legacy(byte[] secret, String asciiLabel, byte[] seed, int size)
+    {
+        byte[] label = Strings.toByteArray(asciiLabel);
+        byte[] labelSeed = concat(label, seed);
+
+        return PRF_legacy(secret, label, labelSeed, size);
+    }
+
     static byte[] PRF_legacy(byte[] secret, byte[] label, byte[] labelSeed, int size)
     {
         int s_half = (secret.length + 1) / 2;
@@ -880,7 +888,7 @@ public class TlsUtils
     static void hmac_hash(Digest digest, byte[] secret, byte[] seed, byte[] out)
     {
         HMac mac = new HMac(digest);
-        KeyParameter param = new KeyParameter(secret);
+        mac.init(new KeyParameter(secret));
         byte[] a = seed;
         int size = digest.getDigestSize();
         int iterations = (out.length + size - 1) / size;
@@ -888,11 +896,9 @@ public class TlsUtils
         byte[] buf2 = new byte[mac.getMacSize()];
         for (int i = 0; i < iterations; i++)
         {
-            mac.init(param);
             mac.update(a, 0, a.length);
             mac.doFinal(buf, 0);
             a = buf;
-            mac.init(param);
             mac.update(a, 0, a.length);
             mac.update(seed, 0, seed.length);
             mac.doFinal(buf2, 0);

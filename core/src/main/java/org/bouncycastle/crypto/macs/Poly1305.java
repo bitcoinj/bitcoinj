@@ -7,7 +7,7 @@ import org.bouncycastle.crypto.Mac;
 import org.bouncycastle.crypto.generators.Poly1305KeyGenerator;
 import org.bouncycastle.crypto.params.KeyParameter;
 import org.bouncycastle.crypto.params.ParametersWithIV;
-import org.bouncycastle.crypto.util.Pack;
+import org.bouncycastle.util.Pack;
 
 /**
  * Poly1305 message authentication code, designed by D. J. Bernstein.

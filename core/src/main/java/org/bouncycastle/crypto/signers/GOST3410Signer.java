@@ -1,11 +1,15 @@
 package org.bouncycastle.crypto.signers;
 
+import java.math.BigInteger;
+import java.security.SecureRandom;
+
 import org.bouncycastle.crypto.CipherParameters;
 import org.bouncycastle.crypto.DSA;
-import org.bouncycastle.crypto.params.*;
-
-import java.security.SecureRandom;
-import java.math.BigInteger;
+import org.bouncycastle.crypto.params.GOST3410KeyParameters;
+import org.bouncycastle.crypto.params.GOST3410Parameters;
+import org.bouncycastle.crypto.params.GOST3410PrivateKeyParameters;
+import org.bouncycastle.crypto.params.GOST3410PublicKeyParameters;
+import org.bouncycastle.crypto.params.ParametersWithRandom;
 
 /**
  * GOST R 34.10-94 Signature Algorithm
@@ -25,7 +29,7 @@ public class GOST3410Signer
             {
                 if (param instanceof ParametersWithRandom)
                 {
-                    ParametersWithRandom    rParam = (ParametersWithRandom)param;
+                    ParametersWithRandom rParam = (ParametersWithRandom)param;
 
                     this.random = rParam.getRandom();
                     this.key = (GOST3410PrivateKeyParameters)rParam.getParameters();
@@ -99,7 +103,7 @@ public class GOST3410Signer
             }
             
             BigInteger           m = new BigInteger(1, mRev);
-            GOST3410Parameters   params = key.getParameters();
+            GOST3410Parameters params = key.getParameters();
             BigInteger           zero = BigInteger.valueOf(0);
 
             if (zero.compareTo(r) >= 0 || params.getQ().compareTo(r) <= 0)

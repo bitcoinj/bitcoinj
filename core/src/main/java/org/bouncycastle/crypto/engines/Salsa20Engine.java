@@ -7,7 +7,7 @@ import org.bouncycastle.crypto.OutputLengthException;
 import org.bouncycastle.crypto.StreamCipher;
 import org.bouncycastle.crypto.params.KeyParameter;
 import org.bouncycastle.crypto.params.ParametersWithIV;
-import org.bouncycastle.crypto.util.Pack;
+import org.bouncycastle.util.Pack;
 import org.bouncycastle.util.Strings;
 
 /**

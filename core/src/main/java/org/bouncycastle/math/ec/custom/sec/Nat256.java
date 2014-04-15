@@ -2,8 +2,8 @@ package org.bouncycastle.math.ec.custom.sec;
 
 import java.math.BigInteger;
 
-import org.bouncycastle.crypto.util.Pack;
 import org.bouncycastle.math.ec.Nat;
+import org.bouncycastle.util.Pack;
 
 public abstract class Nat256
 {

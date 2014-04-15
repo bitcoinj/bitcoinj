@@ -12,8 +12,8 @@ import org.bouncycastle.crypto.modes.gcm.Tables8kGCMMultiplier;
 import org.bouncycastle.crypto.params.AEADParameters;
 import org.bouncycastle.crypto.params.KeyParameter;
 import org.bouncycastle.crypto.params.ParametersWithIV;
-import org.bouncycastle.crypto.util.Pack;
 import org.bouncycastle.util.Arrays;
+import org.bouncycastle.util.Pack;
 
 /**
  * Implements the Galois/Counter mode (GCM) detailed in

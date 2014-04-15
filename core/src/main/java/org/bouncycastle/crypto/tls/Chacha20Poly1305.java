@@ -8,8 +8,8 @@ import org.bouncycastle.crypto.generators.Poly1305KeyGenerator;
 import org.bouncycastle.crypto.macs.Poly1305;
 import org.bouncycastle.crypto.params.KeyParameter;
 import org.bouncycastle.crypto.params.ParametersWithIV;
-import org.bouncycastle.crypto.util.Pack;
 import org.bouncycastle.util.Arrays;
+import org.bouncycastle.util.Pack;
 
 public class Chacha20Poly1305 implements TlsCipher
 {

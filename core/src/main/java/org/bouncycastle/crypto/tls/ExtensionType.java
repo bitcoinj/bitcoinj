@@ -29,11 +29,6 @@ public class ExtensionType
     public static final int srp = 12;
 
     /*
-     * RFC 5077 7.
-     */
-    public static final int session_ticket = 35;
-
-    /*
      * RFC 5246 7.4.1.4.
      */
     public static final int signature_algorithms = 13;
@@ -47,6 +42,11 @@ public class ExtensionType
      * RFC 6520 6.
      */
     public static final int heartbeat = 15;
+
+    /*
+     * RFC 5077 7.
+     */
+    public static final int session_ticket = 35;
 
     /*
      * draft-gutmann-tls-encrypt-then-mac-05

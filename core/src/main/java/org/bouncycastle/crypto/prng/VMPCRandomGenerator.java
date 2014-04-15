@@ -1,6 +1,6 @@
 package org.bouncycastle.crypto.prng;
 
-import org.bouncycastle.crypto.util.Pack;
+import org.bouncycastle.util.Pack;
 
 public class VMPCRandomGenerator implements RandomGenerator
 {

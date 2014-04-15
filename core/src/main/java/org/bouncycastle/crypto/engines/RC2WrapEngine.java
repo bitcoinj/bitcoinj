@@ -350,10 +350,11 @@ public class RC2WrapEngine
      * - Compute the 20 octet SHA-1 hash on the key being wrapped.
      * - Use the first 8 octets of this hash as the checksum value.
      *
+     * For details see  http://www.w3.org/TR/xmlenc-core/#sec-CMSKeyChecksum
      * @param key
      * @return
      * @throws RuntimeException
-     * @see http://www.w3.org/TR/xmlenc-core/#sec-CMSKeyChecksum
+     *
      */
     private byte[] calculateCMSKeyChecksum(
         byte[] key)
@@ -369,10 +370,11 @@ public class RC2WrapEngine
     }
 
     /**
+     * For details see  http://www.w3.org/TR/xmlenc-core/#sec-CMSKeyChecksum
+     *
      * @param key
      * @param checksum
      * @return
-     * @see http://www.w3.org/TR/xmlenc-core/#sec-CMSKeyChecksum
      */
     private boolean checkCMSKeyChecksum(
         byte[] key,

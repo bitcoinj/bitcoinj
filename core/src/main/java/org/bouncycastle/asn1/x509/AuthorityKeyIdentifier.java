@@ -101,7 +101,7 @@ public class AuthorityKeyIdentifier
      *       publicKey.getEncoded()).readObject());
      *   AuthorityKeyIdentifier aki = new AuthorityKeyIdentifier(apki);
      * </pre>
-     *
+     * @deprecated create the extension using org.bouncycastle.cert.X509ExtensionUtils
      **/
     public AuthorityKeyIdentifier(
         SubjectPublicKeyInfo    spki)
@@ -118,6 +118,7 @@ public class AuthorityKeyIdentifier
     /**
      * create an AuthorityKeyIdentifier with the GeneralNames tag and
      * the serial number provided as well.
+     * @deprecated create the extension using org.bouncycastle.cert.X509ExtensionUtils
      */
     public AuthorityKeyIdentifier(
         SubjectPublicKeyInfo    spki,

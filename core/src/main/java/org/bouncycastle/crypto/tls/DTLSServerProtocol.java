@@ -46,7 +46,8 @@ public class DTLSServerProtocol
 
         SecurityParameters securityParameters = new SecurityParameters();
         securityParameters.entity = ConnectionEnd.server;
-        securityParameters.serverRandom = TlsProtocol.createRandomBlock(server.shouldUseGMTUnixTime(), secureRandom);
+        securityParameters.serverRandom = TlsProtocol.createRandomBlock(server.shouldUseGMTUnixTime(), secureRandom,
+            ExporterLabel.server_random);
 
         ServerHandshakeState state = new ServerHandshakeState();
         state.server = server;

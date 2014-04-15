@@ -12,7 +12,7 @@ import org.bouncycastle.crypto.DataLengthException;
 import org.bouncycastle.crypto.DerivationFunction;
 import org.bouncycastle.crypto.DerivationParameters;
 import org.bouncycastle.crypto.Digest;
-import org.bouncycastle.crypto.util.Pack;
+import org.bouncycastle.util.Pack;
 
 /**
  * RFC 2631 Diffie-hellman KEK derivation function.

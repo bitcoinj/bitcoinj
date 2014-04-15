@@ -4,8 +4,8 @@ import org.bouncycastle.crypto.PBEParametersGenerator;
 import org.bouncycastle.crypto.digests.SHA256Digest;
 import org.bouncycastle.crypto.engines.Salsa20Engine;
 import org.bouncycastle.crypto.params.KeyParameter;
-import org.bouncycastle.crypto.util.Pack;
 import org.bouncycastle.util.Arrays;
+import org.bouncycastle.util.Pack;
 
 public class SCrypt
 {

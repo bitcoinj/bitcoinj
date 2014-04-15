@@ -16,7 +16,7 @@ import org.bouncycastle.crypto.Digest;
 import org.bouncycastle.crypto.DigestDerivationFunction;
 import org.bouncycastle.crypto.generators.KDF2BytesGenerator;
 import org.bouncycastle.crypto.params.KDFParameters;
-import org.bouncycastle.crypto.util.Pack;
+import org.bouncycastle.util.Pack;
 
 /**
  * X9.63 based key derivation function for ECDH CMS.

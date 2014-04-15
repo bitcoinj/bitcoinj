@@ -1,7 +1,7 @@
 package org.bouncycastle.crypto.digests;
 
-import org.bouncycastle.crypto.util.Pack;
 import org.bouncycastle.util.Memoable;
+import org.bouncycastle.util.Pack;
 
 /**
  * Implementation of Chinese SM3 digest as described at

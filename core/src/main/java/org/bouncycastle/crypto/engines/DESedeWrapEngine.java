@@ -58,8 +58,8 @@ public class DESedeWrapEngine
    /**
     * Method init
     *
-    * @param forWrapping
-    * @param param
+    * @param forWrapping true if for wrapping, false otherwise.
+    * @param param necessary parameters, may include KeyParameter, ParametersWithRandom, and ParametersWithIV
     */
     public void init(boolean forWrapping, CipherParameters param)
     {
@@ -128,9 +128,9 @@ public class DESedeWrapEngine
    /**
     * Method wrap
     *
-    * @param in
-    * @param inOff
-    * @param inLen
+    * @param in byte array containing the encoded key.
+    * @param inOff off set into in that the data starts at.
+    * @param inLen  length of the data.
     * @return the wrapped bytes.
     */
    public byte[] wrap(byte[] in, int inOff, int inLen) 
@@ -199,9 +199,9 @@ public class DESedeWrapEngine
    /**
     * Method unwrap
     *
-    * @param in
-    * @param inOff
-    * @param inLen
+    * @param in byte array containing the wrapped key.
+    * @param inOff off set into in that the data starts at.
+    * @param inLen  length of the data.
     * @return the unwrapped bytes.
     * @throws InvalidCipherTextException
     */
@@ -305,10 +305,11 @@ public class DESedeWrapEngine
      * - Compute the 20 octet SHA-1 hash on the key being wrapped.
      * - Use the first 8 octets of this hash as the checksum value.
      *
-     * @param key
+     * For details see http://www.w3.org/TR/xmlenc-core/#sec-CMSKeyChecksum.
+     *
+     * @param key the key to check,
      * @return the CMS checksum.
      * @throws RuntimeException
-     * @see http://www.w3.org/TR/xmlenc-core/#sec-CMSKeyChecksum
      */
     private byte[] calculateCMSKeyChecksum(
         byte[] key)
@@ -324,10 +325,11 @@ public class DESedeWrapEngine
     }
 
     /**
-     * @param key
-     * @param checksum
+     * For details see http://www.w3.org/TR/xmlenc-core/#sec-CMSKeyChecksum
+     *
+     * @param key key to be validated.
+     * @param checksum the checksum.
      * @return true if okay, false otherwise.
-     * @see http://www.w3.org/TR/xmlenc-core/#sec-CMSKeyChecksum
      */
     private boolean checkCMSKeyChecksum(
         byte[] key,

@@ -150,7 +150,7 @@ public class CipherOutputStream
      * Ensure the ciphertext buffer has space sufficient to accept an upcoming output.
      *
      * @param updateSize the size of the pending update.
-     * @param <code>true</code> iff this the cipher is to be finalised.
+     * @param finalOutput <code>true</code> iff this the cipher is to be finalised.
      */
     private void ensureCapacity(int updateSize, boolean finalOutput)
     {

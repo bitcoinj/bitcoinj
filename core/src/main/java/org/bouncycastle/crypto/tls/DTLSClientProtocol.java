@@ -32,7 +32,8 @@ public class DTLSClientProtocol
 
         SecurityParameters securityParameters = new SecurityParameters();
         securityParameters.entity = ConnectionEnd.client;
-        securityParameters.clientRandom = TlsProtocol.createRandomBlock(client.shouldUseGMTUnixTime(), secureRandom);
+        securityParameters.clientRandom = TlsProtocol.createRandomBlock(client.shouldUseGMTUnixTime(), secureRandom,
+            ExporterLabel.client_random);
 
         ClientHandshakeState state = new ClientHandshakeState();
         state.client = client;

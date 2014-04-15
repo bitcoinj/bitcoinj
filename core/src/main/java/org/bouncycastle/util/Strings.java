@@ -241,6 +241,17 @@ public final class Strings
         return bytes;
     }
 
+    public static int toByteArray(String s, byte[] buf, int off)
+    {
+        int count = s.length();
+        for (int i = 0; i < count; ++i)
+        {
+            char c = s.charAt(i);
+            buf[off + i] = (byte)c;
+        }
+        return count;
+    }
+
     /**
      * Convert an array of 8 bit characters into a string.
      *

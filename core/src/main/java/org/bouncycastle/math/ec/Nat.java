@@ -2,7 +2,7 @@ package org.bouncycastle.math.ec;
 
 import java.math.BigInteger;
 
-import org.bouncycastle.crypto.util.Pack;
+import org.bouncycastle.util.Pack;
 
 public abstract class Nat
 {

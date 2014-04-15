@@ -11,6 +11,13 @@ public class FixedPointPreCompInfo implements PreCompInfo
      */
     protected ECPoint[] preComp = null;
 
+    /**
+     * The width used for the precomputation. If a larger width precomputation
+     * is already available this may be larger than was requested, so calling
+     * code should refer to the actual width.
+     */
+    protected int width = -1;
+
     public ECPoint[] getPreComp()
     {
         return preComp;
@@ -19,5 +26,15 @@ public class FixedPointPreCompInfo implements PreCompInfo
     public void setPreComp(ECPoint[] preComp)
     {
         this.preComp = preComp;
+    }
+
+    public int getWidth()
+    {
+        return width;
+    }
+
+    public void setWidth(int width)
+    {
+        this.width = width;
     }
 }

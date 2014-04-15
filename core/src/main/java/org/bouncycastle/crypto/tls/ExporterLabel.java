@@ -6,6 +6,12 @@ package org.bouncycastle.crypto.tls;
 public class ExporterLabel
 {
     /*
+     * BC-specific
+     */
+    static final String client_random = "client random";
+    static final String server_random = "server random";
+
+    /*
      * RFC 5246
      */
     public static final String client_finished = "client finished";

@@ -19,9 +19,9 @@ import org.bouncycastle.crypto.params.IESWithCipherParameters;
 import org.bouncycastle.crypto.params.KDFParameters;
 import org.bouncycastle.crypto.params.KeyParameter;
 import org.bouncycastle.crypto.params.ParametersWithIV;
-import org.bouncycastle.crypto.util.Pack;
 import org.bouncycastle.util.Arrays;
 import org.bouncycastle.util.BigIntegers;
+import org.bouncycastle.util.Pack;
 
 /**
  * Support class for constructing integrated encryption ciphers

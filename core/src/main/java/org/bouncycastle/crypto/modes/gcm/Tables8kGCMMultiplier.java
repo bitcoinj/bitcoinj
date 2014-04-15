@@ -1,7 +1,7 @@
 package org.bouncycastle.crypto.modes.gcm;
 
-import org.bouncycastle.crypto.util.Pack;
 import org.bouncycastle.util.Arrays;
+import org.bouncycastle.util.Pack;
 
 public class Tables8kGCMMultiplier  implements GCMMultiplier
 {

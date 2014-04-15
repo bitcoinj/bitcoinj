@@ -1,6 +1,6 @@
 package org.bouncycastle.crypto.engines;
 
-import org.bouncycastle.crypto.util.Pack;
+import org.bouncycastle.util.Pack;
 
 /**
  * Implementation of Daniel J. Bernstein's ChaCha stream cipher.
