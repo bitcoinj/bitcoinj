@@ -654,7 +654,8 @@ public class WalletTool {
                 break;
 
         }
-        peers.startAsync();
+        if (!peers.isRunning())
+            peers.startAsync();
         try {
             latch.await();
         } catch (InterruptedException e) {
