@@ -18,9 +18,6 @@ package com.google.bitcoin.core;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 
 /**
  * A message sent by nodes when a message we sent was rejected (ie a transaction had too little fee/was invalid/etc)
@@ -142,11 +139,31 @@ public class RejectMessage extends Message {
     }
 
     @Override
+    public String toString() {
+        Sha256Hash hash = getRejectedObjectHash();
+        if (hash != null)
+            return String.format("Reject: %s %s for reason '%s' (%d)", getRejectedMessage(), getRejectedObjectHash(),
+                getReasonString(), getReasonCode().code);
+        else
+            return String.format("Reject: %s for reason '%s' (%d)", getRejectedMessage(),
+                    getReasonString(), getReasonCode().code);
+    }
+
+    @Override
     public boolean equals(Object o) {
         return o instanceof RejectMessage &&
                 ((RejectMessage) o).message.equals(message) &&
                 ((RejectMessage) o).code.equals(code) &&
                 ((RejectMessage) o).reason.equals(reason) &&
                 ((RejectMessage) o).messageHash.equals(messageHash);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = message.hashCode();
+        result = 31 * result + reason.hashCode();
+        result = 31 * result + code.hashCode();
+        result = 31 * result + messageHash.hashCode();
+        return result;
     }
 }
