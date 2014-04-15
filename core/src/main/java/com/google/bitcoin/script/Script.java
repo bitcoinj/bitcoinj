@@ -238,15 +238,11 @@ public class Script {
     }
 
     /**
-     * Returns true if this script is of the form OP_HASH160 <scriptHash> OP_EQUAL, ie, payment to an
-     * address like 35b9vsyH1KoFT5a5KtrKusaCcPLkiSo1tU. This form was codified as part of BIP13 and BIP16,
-     * for pay to script hash type addresses.
+     * An alias for isPayToScriptHash.
      */
+    @Deprecated
     public boolean isSentToP2SH() {
-        return chunks.size() == 3 &&
-               chunks.get(0).equalsOpCode(OP_HASH160) &&
-               chunks.get(1).data.length == Address.LENGTH &&
-               chunks.get(2).equalsOpCode(OP_EQUAL);
+        return isPayToScriptHash();
     }
 
     /**
@@ -258,7 +254,7 @@ public class Script {
     public byte[] getPubKeyHash() throws ScriptException {
         if (isSentToAddress())
             return chunks.get(2).data;
-        else if (isSentToP2SH())
+        else if (isPayToScriptHash())
             return chunks.get(1).data;
         else
             throw new ScriptException("Script not in the standard scriptPubKey form");
@@ -303,7 +299,7 @@ public class Script {
     public Address getToAddress(NetworkParameters params) throws ScriptException {
         if (isSentToAddress())
             return new Address(params, getPubKeyHash());
-        else if (isSentToP2SH())
+        else if (isPayToScriptHash())
             return Address.fromP2SHScript(params, this);
         else
             throw new ScriptException("Cannot cast this script to a pay-to-address type");
