@@ -25,6 +25,7 @@ import com.google.bitcoin.core.Wallet;
 
 import javax.annotation.Nullable;
 
+import java.math.BigInteger;
 import java.util.List;
 
 import static com.google.common.base.Preconditions.checkState;
@@ -34,6 +35,13 @@ import static com.google.common.base.Preconditions.checkState;
  * of specialised protocols you should not encounter non-final transactions.
  */
 public class DefaultRiskAnalysis implements RiskAnalysis {
+    /**
+     * Any standard output smaller than this value (in satoshis) will be considered risky, as it's most likely be
+     * rejected by the network. Currently it's 546 satoshis. This is different from {@link Transaction#MIN_NONDUST_OUTPUT}
+     * because of an upcoming fee change in Bitcoin Core 0.9.
+     */
+    public static final BigInteger MIN_ANALYSIS_NONDUST_OUTPUT = BigInteger.valueOf(546);
+
     protected final Transaction tx;
     protected final List<Transaction> dependencies;
     protected final Wallet wallet;
@@ -114,7 +122,7 @@ public class DefaultRiskAnalysis implements RiskAnalysis {
             return tx;
 
         for (TransactionOutput output : tx.getOutputs()) {
-            if (output.getMinNonDustValue().compareTo(output.getValue()) > 0)
+            if (MIN_ANALYSIS_NONDUST_OUTPUT.compareTo(output.getValue()) > 0)
                 return tx;
         }
 
