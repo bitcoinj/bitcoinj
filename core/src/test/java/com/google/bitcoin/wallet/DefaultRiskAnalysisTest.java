@@ -138,7 +138,7 @@ public class DefaultRiskAnalysisTest {
 
         Transaction edgeCaseTx = new Transaction(params);
         edgeCaseTx.addInput(params.getGenesisBlock().getTransactions().get(0).getOutput(0));
-        edgeCaseTx.addOutput(dustTx.getOutput(0).getMinNonDustValue(), key1); // Dust threshold
+        edgeCaseTx.addOutput(DefaultRiskAnalysis.MIN_ANALYSIS_NONDUST_OUTPUT, key1); // Dust threshold
         assertEquals(RiskAnalysis.Result.OK, DefaultRiskAnalysis.FACTORY.create(wallet, edgeCaseTx, NO_DEPS).analyze());
     }
 }
