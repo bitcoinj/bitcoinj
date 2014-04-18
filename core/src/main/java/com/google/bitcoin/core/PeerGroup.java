@@ -94,6 +94,8 @@ public class PeerGroup extends AbstractExecutionThreadService implements Transac
     private final CopyOnWriteArraySet<PeerDiscovery> peerDiscoverers;
     // The version message to use for new connections.
     @GuardedBy("lock") private VersionMessage versionMessage;
+    // Switch for enabling download of pending transaction dependencies.
+    @GuardedBy("lock") private boolean downloadTxDependencies;
     // A class that tracks recent transactions that have been broadcast across the network, counts how many
     // peers announced them and updates the transaction confidence data. It is passed to each Peer.
     private final MemoryPool memoryPool;
@@ -290,6 +292,7 @@ public class PeerGroup extends AbstractExecutionThreadService implements Transac
         int height = chain == null ? 0 : chain.getBestChainHeight();
         // We never request that the remote node wait for a bloom filter yet, as we have no wallets
         this.versionMessage = new VersionMessage(params, height, true);
+        this.downloadTxDependencies = true;
 
         memoryPool = new MemoryPool();
 
@@ -335,6 +338,18 @@ public class PeerGroup extends AbstractExecutionThreadService implements Transac
             channels.closeConnections(-adjustment);
     }
 
+    /**
+     * Switch for enabling download of pending transaction dependencies. A change of value only takes effect for newly
+     * connected peers.
+     */
+    public void setDownloadTxDependencies(boolean downloadTxDependencies) {
+        lock.lock();
+        try {
+            this.downloadTxDependencies = downloadTxDependencies;
+        } finally {
+            lock.unlock();
+        }
+    }
 
     private Runnable triggerConnectionsJob = new Runnable() {
         @Override
@@ -895,7 +910,7 @@ public class PeerGroup extends AbstractExecutionThreadService implements Transac
         ver.bestHeight = chain == null ? 0 : chain.getBestChainHeight();
         ver.time = Utils.currentTimeSeconds();
 
-        Peer peer = new Peer(params, ver, address, chain, memoryPool);
+        Peer peer = new Peer(params, ver, address, chain, memoryPool, downloadTxDependencies);
         peer.addEventListener(startupListener, Threading.SAME_THREAD);
         peer.setMinProtocolVersion(vMinRequiredProtocolVersion);
         pendingPeers.add(peer);
