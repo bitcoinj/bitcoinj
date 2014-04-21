@@ -32,6 +32,7 @@ import org.spongycastle.crypto.params.ParametersWithIV;
 
 import java.io.Serializable;
 import java.security.SecureRandom;
+import java.util.Arrays;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -173,11 +174,10 @@ public class KeyCrypterScrypt implements KeyCrypter, Serializable {
             BufferedBlockCipher cipher = new PaddedBufferedBlockCipher(new CBCBlockCipher(new AESFastEngine()));
             cipher.init(true, keyWithIv);
             byte[] encryptedBytes = new byte[cipher.getOutputSize(plainBytes.length)];
-            int length = cipher.processBytes(plainBytes, 0, plainBytes.length, encryptedBytes, 0);
+            final int length1 = cipher.processBytes(plainBytes, 0, plainBytes.length, encryptedBytes, 0);
+            final int length2 = cipher.doFinal(encryptedBytes, length1);
 
-            cipher.doFinal(encryptedBytes, length);
-
-            return new EncryptedPrivateKey(iv, encryptedBytes);
+            return new EncryptedPrivateKey(iv, Arrays.copyOf(encryptedBytes, length1 + length2));
         } catch (Exception e) {
             throw new KeyCrypterException("Could not encrypt bytes.", e);
         }
@@ -204,16 +204,11 @@ public class KeyCrypterScrypt implements KeyCrypter, Serializable {
             cipher.init(false, keyWithIv);
 
             byte[] cipherBytes = privateKeyToDecode.getEncryptedBytes();
-            int minimumSize = cipher.getOutputSize(cipherBytes.length);
-            byte[] outputBuffer = new byte[minimumSize];
-            int length1 = cipher.processBytes(cipherBytes, 0, cipherBytes.length, outputBuffer, 0);
-            int length2 = cipher.doFinal(outputBuffer, length1);
-            int actualLength = length1 + length2;
+            byte[] decryptedBytes = new byte[cipher.getOutputSize(cipherBytes.length)];
+            final int length1 = cipher.processBytes(cipherBytes, 0, cipherBytes.length, decryptedBytes, 0);
+            final int length2 = cipher.doFinal(decryptedBytes, length1);
 
-            byte[] decryptedBytes = new byte[actualLength];
-            System.arraycopy(outputBuffer, 0, decryptedBytes, 0, actualLength);
-
-            return decryptedBytes;
+            return Arrays.copyOf(decryptedBytes, length1 + length2);
         } catch (Exception e) {
             throw new KeyCrypterException("Could not decrypt bytes", e);
         }
