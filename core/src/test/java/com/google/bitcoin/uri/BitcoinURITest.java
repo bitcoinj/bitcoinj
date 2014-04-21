@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 the original author or authors.
+ * Copyright 2012, 2014 the original author or authors.
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -271,38 +271,16 @@ public class BitcoinURITest {
         }
     }
 
-    /**
-     * Handles a badly formatted label field
-     * 
-     * @throws BitcoinURIParseException
-     *             If something goes wrong
-     */
     @Test
-    public void testBad_Label() throws BitcoinURIParseException {
-        try {
-            testObject = new BitcoinURI(MainNetParams.get(), BitcoinURI.BITCOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS
-                    + "?label=");
-            fail("Expecting BitcoinURIParseException");
-        } catch (BitcoinURIParseException e) {
-            assertTrue(e.getMessage().contains("label"));
-        }
+    public void testEmpty_Label() throws BitcoinURIParseException {
+        assertNull(new BitcoinURI(MainNetParams.get(), BitcoinURI.BITCOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS
+                + "?label=").getLabel());
     }
 
-    /**
-     * Handles a badly formatted message field
-     * 
-     * @throws BitcoinURIParseException
-     *             If something goes wrong
-     */
     @Test
-    public void testBad_Message() throws BitcoinURIParseException {
-        try {
-            testObject = new BitcoinURI(MainNetParams.get(), BitcoinURI.BITCOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS
-                    + "?message=");
-            fail("Expecting BitcoinURIParseException");
-        } catch (BitcoinURIParseException e) {
-            assertTrue(e.getMessage().contains("message"));
-        }
+    public void testEmpty_Message() throws BitcoinURIParseException {
+        assertNull(new BitcoinURI(MainNetParams.get(), BitcoinURI.BITCOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS
+                + "?message=").getMessage());
     }
 
     /**
@@ -322,21 +300,10 @@ public class BitcoinURITest {
         }
     }
 
-    /**
-     * Handles case when there are too many equals
-     * 
-     * @throws BitcoinURIParseException
-     *             If something goes wrong
-     */
     @Test
-    public void testBad_TooManyEquals() throws BitcoinURIParseException {
-        try {
-            testObject = new BitcoinURI(MainNetParams.get(), BitcoinURI.BITCOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS
-                    + "?label=aardvark=zebra");
-            fail("Expecting BitcoinURIParseException");
-        } catch (BitcoinURIParseException e) {
-            assertTrue(e.getMessage().contains("cannot parse name value pair"));
-        }
+    public void testGood_ManyEquals() throws BitcoinURIParseException {
+        assertEquals("aardvark=zebra", new BitcoinURI(MainNetParams.get(), BitcoinURI.BITCOIN_SCHEME + ":"
+                + MAINNET_GOOD_ADDRESS + "?label=aardvark=zebra").getLabel());
     }
 
     /**
@@ -377,7 +344,7 @@ public class BitcoinURITest {
                     + "?aardvark");
             fail("Expecting BitcoinURIParseException");
         } catch (BitcoinURIParseException e) {
-            assertTrue(e.getMessage().contains("cannot parse name value pair"));
+            assertTrue(e.getMessage().contains("no separator"));
         }
 
         // Unknown and required field
