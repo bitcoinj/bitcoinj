@@ -32,16 +32,12 @@ import com.google.common.util.concurrent.MoreExecutors;
 import com.google.protobuf.ByteString;
 import org.bitcoinj.wallet.Protos;
 import org.bitcoinj.wallet.Protos.ScryptParameters;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.spongycastle.crypto.params.ECDomainParameters;
 import org.spongycastle.crypto.params.KeyParameter;
 import org.spongycastle.util.encoders.DecoderException;
-import org.spongycastle.math.ec.ECCurve;
-import org.spongycastle.math.ec.ECPoint;
 import org.spongycastle.util.encoders.Hex;
 
 import java.io.InputStream;
@@ -273,7 +269,7 @@ public class ECKeyTest {
         assertEquals(time, encryptedKey.getCreationTimeSeconds());
         assertTrue(encryptedKey.isEncrypted());
         assertNull(encryptedKey.getSecretBytes());
-        key = encryptedKey.decrypt(keyCrypter, keyCrypter.deriveKey(PASSWORD1));
+        key = encryptedKey.decrypt(keyCrypter.deriveKey(PASSWORD1));
         assertTrue(!key.isEncrypted());
         assertArrayEquals(originalPrivateKeyBytes, key.getPrivKeyBytes());
     }
@@ -287,7 +283,7 @@ public class ECKeyTest {
         ECKey encryptedKey = ECKey.fromEncrypted(encryptedPrivateKey, keyCrypter, unencryptedKey.getPubKey());
         assertTrue(encryptedKey.isEncrypted());
         assertNull(encryptedKey.getSecretBytes());
-        ECKey rebornUnencryptedKey = encryptedKey.decrypt(keyCrypter, keyCrypter.deriveKey(PASSWORD1));
+        ECKey rebornUnencryptedKey = encryptedKey.decrypt(keyCrypter.deriveKey(PASSWORD1));
         assertTrue(!rebornUnencryptedKey.isEncrypted());
         assertArrayEquals(originalPrivateKeyBytes, rebornUnencryptedKey.getPrivKeyBytes());
     }
