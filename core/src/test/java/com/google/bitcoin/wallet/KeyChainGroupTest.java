@@ -27,6 +27,7 @@ import com.google.bitcoin.utils.BriefLogFormatter;
 import com.google.bitcoin.utils.Threading;
 import com.google.common.collect.ImmutableList;
 import org.bitcoinj.wallet.Protos;
+import org.junit.Before;
 import org.junit.Test;
 import org.spongycastle.crypto.params.KeyParameter;
 
@@ -43,7 +44,8 @@ public class KeyChainGroupTest {
     private static final int LOOKAHEAD_SIZE = 5;
     private KeyChainGroup group;
 
-    public KeyChainGroupTest() {
+    @Before
+    public void setup() {
         BriefLogFormatter.init();
         Utils.setMockClock();
         group = new KeyChainGroup();
@@ -92,7 +94,6 @@ public class KeyChainGroupTest {
     @Test
     public void findKey() throws Exception {
         ECKey a = group.freshKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
-        assertTrue(a instanceof DeterministicKey);
         ECKey b = group.freshKey(KeyChain.KeyPurpose.CHANGE);
         ECKey c = new ECKey();
         ECKey d = new ECKey();   // Not imported.
