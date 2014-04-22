@@ -33,6 +33,7 @@ import com.google.bitcoin.utils.ListenerRegistration;
 import com.google.bitcoin.utils.Threading;
 import com.google.bitcoin.wallet.*;
 import com.google.bitcoin.wallet.WalletTransaction.Pool;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.*;
 import com.google.common.primitives.Ints;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -124,13 +125,13 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
     //           to the user in the UI, etc). A transaction can leave dead and move into spent/unspent if there is a
     //           re-org to a chain that doesn't include the double spend.
 
-    final Map<Sha256Hash, Transaction> pending;
-    final Map<Sha256Hash, Transaction> unspent;
-    final Map<Sha256Hash, Transaction> spent;
-    final Map<Sha256Hash, Transaction> dead;
+    @VisibleForTesting final Map<Sha256Hash, Transaction> pending;
+    @VisibleForTesting final Map<Sha256Hash, Transaction> unspent;
+    @VisibleForTesting final Map<Sha256Hash, Transaction> spent;
+    @VisibleForTesting final Map<Sha256Hash, Transaction> dead;
 
     // All transactions together.
-    final Map<Sha256Hash, Transaction> transactions;
+    protected final Map<Sha256Hash, Transaction> transactions;
 
     // The key chain group is not thread safe, and generally the whole hierarchy of objects should not be mutated
     // outside the wallet lock. So don't expose this object directly via any accessors!
@@ -139,7 +140,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
     // A list of scripts watched by this wallet.
     private Set<Script> watchedScripts;
 
-    private final NetworkParameters params;
+    protected final NetworkParameters params;
 
     @Nullable private Sha256Hash lastBlockSeenHash;
     private int lastBlockSeenHeight;
