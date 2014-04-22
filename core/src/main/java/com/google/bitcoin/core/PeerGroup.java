@@ -1417,39 +1417,11 @@ public class PeerGroup extends AbstractExecutionThreadService implements Transac
      * If multiple heights are tied, the highest is returned. If no peers are connected, returns zero.
      */
     public static int getMostCommonChainHeight(final List<Peer> peers) {
-        int s = peers.size();
-        int[] heights = new int[s];
-        int[] counts = new int[s];
-        int maxCount = 0;
-        // Calculate the frequencies of each reported height.
-        for (Peer peer : peers) {
-            int h = (int) peer.getBestHeight();
-            // Find the index of the peers height in the heights array.
-            for (int cursor = 0; cursor < s; cursor++) {
-                if (heights[cursor] == h) {
-                    maxCount = Math.max(++counts[cursor], maxCount);
-                    break;
-                } else if (heights[cursor] == 0) {
-                    // A new height we didn't see before.
-                    checkState(counts[cursor] == 0);
-                    heights[cursor] = h;
-                    counts[cursor] = 1;
-                    maxCount = Math.max(maxCount, 1);
-                    break;
-                }
-            }
-        }
-        // Find the heights that have the highest frequencies.
-        int[] freqHeights = new int[s];
-        int cursor = 0;
-        for (int i = 0; i < s; i++) {
-            if (counts[i] == maxCount) {
-                freqHeights[cursor++] = heights[i];
-            }
-        }
-        // Return the highest of the most common heights.
-        Arrays.sort(freqHeights);
-        return freqHeights[s - 1];
+        if (peers.isEmpty())
+            return 0;
+        List<Integer> heights = new ArrayList<Integer>(peers.size());
+        for (Peer peer : peers) heights.add((int) peer.getBestHeight());
+        return Utils.maxOfMostFreq(heights);
     }
 
     private static class PeerAndPing {

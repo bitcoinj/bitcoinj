@@ -115,4 +115,13 @@ public class UtilsTest {
         Assert.assertArrayEquals(new byte[0], Utils.reverseDwordBytes(new byte[] {4,3,2,1,8,7,6,5}, 0));
         Assert.assertArrayEquals(new byte[0], Utils.reverseDwordBytes(new byte[0], 0));
     }
+
+    @Test
+    public void testMaxOfMostFreq() throws Exception {
+        assertEquals(0, Utils.maxOfMostFreq());
+        assertEquals(0, Utils.maxOfMostFreq(0, 0, 1));
+        assertEquals(2, Utils.maxOfMostFreq(1, 1, 2, 2));
+        assertEquals(1, Utils.maxOfMostFreq(1, 1, 2, 2, 1));
+        assertEquals(-1, Utils.maxOfMostFreq(-1, -1, 2, 2, -1));
+    }
 }

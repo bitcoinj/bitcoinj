@@ -18,6 +18,9 @@
 package com.google.bitcoin.core;
 
 import com.google.common.base.Charsets;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Ordering;
+import com.google.common.primitives.Ints;
 import com.google.common.primitives.UnsignedLongs;
 import org.spongycastle.crypto.digests.RIPEMD160Digest;
 import org.spongycastle.util.encoders.Hex;
@@ -29,8 +32,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Arrays;
-import java.util.Date;
+import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -608,5 +610,44 @@ public class Utils {
         if (mockSleepQueue != null) {
             mockSleepQueue.offer(true);
         }
+    }
+
+    private static class Pair implements Comparable<Pair> {
+        int item, count;
+        public Pair(int item, int count) { this.count = count; this.item = item; }
+        @Override public int compareTo(Pair o) { return -Ints.compare(count, o.count); }
+    }
+
+    public static int maxOfMostFreq(int... items) {
+        // Java 6 sucks.
+        ArrayList<Integer> list = new ArrayList<Integer>(items.length);
+        for (int item : items) list.add(item);
+        return maxOfMostFreq(list);
+    }
+
+    public static int maxOfMostFreq(List<Integer> items) {
+        if (items.isEmpty())
+            return 0;
+        // This would be much easier in a functional language (or in Java 8).
+        items = Ordering.natural().reverse().sortedCopy(items);
+        LinkedList<Pair> pairs = Lists.newLinkedList();
+        pairs.add(new Pair(items.get(0), 0));
+        for (int item : items) {
+            Pair pair = pairs.getLast();
+            if (pair.item != item)
+                pairs.add((pair = new Pair(item, 0)));
+            pair.count++;
+        }
+        // pairs now contains a uniqified list of the sorted inputs, with counts for how often that item appeared.
+        // Now sort by how frequently they occur, and pick the max of the most frequent.
+        Collections.sort(pairs);
+        int maxCount = pairs.getFirst().count;
+        int maxItem = pairs.getFirst().item;
+        for (Pair pair : pairs) {
+            if (pair.count != maxCount)
+                break;
+            maxItem = Math.max(maxItem, pair.item);
+        }
+        return maxItem;
     }
 }
