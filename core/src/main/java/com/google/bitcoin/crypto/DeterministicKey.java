@@ -289,6 +289,9 @@ public class DeterministicKey extends ECKey {
         return checkNotNull(downCursor.priv);
     }
 
+    /**
+     * Derives a child at the given index (note: not the "i" value).
+     */
     public DeterministicKey derive(int child) {
         return HDKeyDerivation.deriveChildKey(this, new ChildNumber(child, true));
     }
