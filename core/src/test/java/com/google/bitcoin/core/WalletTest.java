@@ -2187,7 +2187,6 @@ public class WalletTest extends TestWithWallet {
         Utils.setMockClock();
         // Watch out for wallet-initiated broadcasts.
         MockTransactionBroadcaster broadcaster = new MockTransactionBroadcaster(wallet);
-        wallet.setTransactionBroadcaster(broadcaster);
         wallet.setKeyRotationEnabled(true);
         // Send three cents to two different keys, then add a key and mark the initial keys as compromised.
         ECKey key1 = new ECKey();
@@ -2251,7 +2250,7 @@ public class WalletTest extends TestWithWallet {
         assertArrayEquals(address.getHash160(), tx.getOutput(0).getScriptPubKey().getPubKeyHash());
     }
 
-    //@Test   - this test is slow, disable for now.
+    //@Test   //- this test is slow, disable for now.
     public void fragmentedReKeying() throws Exception {
         // Send lots of small coins and check the fee is correct.
         ECKey key = new ECKey();
@@ -2264,7 +2263,6 @@ public class WalletTest extends TestWithWallet {
         }
 
         MockTransactionBroadcaster broadcaster = new MockTransactionBroadcaster(wallet);
-        wallet.setTransactionBroadcaster(broadcaster);
         wallet.setKeyRotationEnabled(true);
 
         Date compromise = Utils.now();

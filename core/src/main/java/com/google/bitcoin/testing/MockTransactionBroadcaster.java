@@ -30,8 +30,9 @@ import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * A mock transaction broadcaster can be used in unit tests as a stand-in for a PeerGroup. It catches any transactions
- * broadcast through it and makes them available via the {@link #broadcasts} member. Reading from that
- * {@link LinkedBlockingQueue} will block the thread until a transaction is available.
+ * broadcast through it and makes them available via the {@link #waitForTransaction()} method. Using that will cause
+ * the broadcast to be seen as if it never propagated though, so you may instead use {@link #waitForTxFuture()} and then
+ * set the returned future when you want the "broadcast" to be completed.
  */
 public class MockTransactionBroadcaster implements TransactionBroadcaster {
     private final ReentrantLock lock = Threading.lock("mock tx broadcaster");
@@ -49,12 +50,14 @@ public class MockTransactionBroadcaster implements TransactionBroadcaster {
 
     private final LinkedBlockingQueue<TxFuturePair> broadcasts = new LinkedBlockingQueue<TxFuturePair>();
 
+    /** Sets this mock broadcaster on the given wallet. */
     public MockTransactionBroadcaster(Wallet wallet) {
         // This code achieves nothing directly, but it sets up the broadcaster/peergroup > wallet lock ordering
         // so inversions can be caught.
         lock.lock();
         try {
             this.wallet = wallet;
+            wallet.setTransactionBroadcaster(this);
             wallet.getPendingTransactions();
         } finally {
             lock.unlock();
