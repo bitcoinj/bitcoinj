@@ -162,15 +162,15 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
     private int onWalletChangedSuppressions;
     private boolean insideReorg;
     private Map<Transaction, TransactionConfidence.Listener.ChangeReason> confidenceChanged;
-    private volatile WalletFiles vFileManager;
+    protected volatile WalletFiles vFileManager;
     // Object that is used to send transactions asynchronously when the wallet requires it.
-    private volatile TransactionBroadcaster vTransactionBroadcaster;
+    protected volatile TransactionBroadcaster vTransactionBroadcaster;
     // UNIX time in seconds. Money controlled by keys created before this time will be automatically respent to a key
     // that was created after it. Useful when you believe some keys have been compromised.
     private volatile long vKeyRotationTimestamp;
     private volatile boolean vKeyRotationEnabled;
 
-    private transient CoinSelector coinSelector = new DefaultCoinSelector();
+    protected transient CoinSelector coinSelector = new DefaultCoinSelector();
 
     // The keyCrypter for the wallet. This specifies the algorithm used for encrypting and decrypting the private keys.
     private KeyCrypter keyCrypter;
