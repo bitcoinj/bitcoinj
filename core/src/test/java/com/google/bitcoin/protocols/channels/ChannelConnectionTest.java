@@ -69,7 +69,6 @@ public class ChannelConnectionTest extends TestWithWallet {
         sendMoneyToWallet(Utils.COIN, AbstractBlockChain.NewBlockType.BEST_CHAIN);
         wallet.addExtension(new StoredPaymentChannelClientStates(wallet, failBroadcaster));
         serverWallet = new Wallet(params);
-        serverWallet.setKeychainLookaheadSize(5);
         serverWallet.addExtension(new StoredPaymentChannelServerStates(serverWallet, failBroadcaster));
         serverWallet.freshReceiveKey();
         serverChain = new BlockChain(params, serverWallet, blockStore);
@@ -544,7 +543,6 @@ public class ChannelConnectionTest extends TestWithWallet {
     @Test
     public void testEmptyWallet() throws Exception {
         Wallet emptyWallet = new Wallet(params);
-        emptyWallet.setKeychainLookaheadSize(5);
         emptyWallet.freshReceiveKey();
         ChannelTestUtils.RecordingPair pair = ChannelTestUtils.makeRecorders(serverWallet, mockBroadcaster);
         PaymentChannelServer server = pair.server;

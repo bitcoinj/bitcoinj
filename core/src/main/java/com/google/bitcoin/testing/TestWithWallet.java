@@ -20,7 +20,6 @@ import com.google.bitcoin.core.*;
 import com.google.bitcoin.params.UnitTestParams;
 import com.google.bitcoin.store.BlockStore;
 import com.google.bitcoin.store.MemoryBlockStore;
-import com.google.bitcoin.testing.FakeTxBuilder;
 import com.google.bitcoin.utils.BriefLogFormatter;
 
 import javax.annotation.Nullable;
@@ -52,7 +51,6 @@ public class TestWithWallet {
         BriefLogFormatter.init();
         Wallet.SendRequest.DEFAULT_FEE_PER_KB = BigInteger.ZERO;
         wallet = new Wallet(params);
-        wallet.setKeychainLookaheadSize(5);
         myKey = wallet.currentReceiveKey();
         myAddress = myKey.toAddress(params);
         blockStore = new MemoryBlockStore(params);
