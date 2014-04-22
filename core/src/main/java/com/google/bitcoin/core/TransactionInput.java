@@ -24,6 +24,7 @@ import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.io.Serializable;
 import java.lang.ref.WeakReference;
+import java.util.Arrays;
 import java.util.Map;
 
 import static com.google.common.base.Preconditions.checkElementIndex;
@@ -421,5 +422,35 @@ public class TransactionInput extends ChildMessage implements Serializable {
     @Nullable
     public TransactionOutput getConnectedOutput() {
         return getOutpoint().getConnectedOutput();
+    }
+
+    /** Returns a copy of the input detached from its containing transaction, if need be. */
+    public TransactionInput duplicateDetached() {
+        return new TransactionInput(params, null, bitcoinSerialize(), 0);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        TransactionInput input = (TransactionInput) o;
+
+        if (sequence != input.sequence) return false;
+        if (!outpoint.equals(input.outpoint)) return false;
+        if (!Arrays.equals(scriptBytes, input.scriptBytes)) return false;
+        if (scriptSig != null ? !scriptSig.equals(input.scriptSig) : input.scriptSig != null) return false;
+        if (parentTransaction != input.parentTransaction) return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = (int) (sequence ^ (sequence >>> 32));
+        result = 31 * result + outpoint.hashCode();
+        result = 31 * result + (scriptBytes != null ? Arrays.hashCode(scriptBytes) : 0);
+        result = 31 * result + (scriptSig != null ? scriptSig.hashCode() : 0);
+        return result;
     }
 }
