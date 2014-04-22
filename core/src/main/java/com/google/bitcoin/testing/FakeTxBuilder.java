@@ -14,19 +14,18 @@
  * limitations under the License.
  */
 
-package com.google.bitcoin.utils;
+package com.google.bitcoin.testing;
 
 import com.google.bitcoin.core.*;
 import com.google.bitcoin.store.BlockStore;
 import com.google.bitcoin.store.BlockStoreException;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 
-public class TestUtils {
+public class FakeTxBuilder {
     public static Transaction createFakeTxWithChangeAddress(NetworkParameters params, BigInteger nanocoins, Address to, Address changeOutput)
             throws IOException, ProtocolException {
         // Create a fake TX of sufficient realism to exercise the unit tests. Two outputs, one to us, one to somewhere

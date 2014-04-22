@@ -19,7 +19,8 @@ package com.google.bitcoin.core;
 
 import com.google.bitcoin.params.UnitTestParams;
 import com.google.bitcoin.store.MemoryBlockStore;
-import com.google.bitcoin.utils.TestUtils;
+import com.google.bitcoin.testing.FakeTxBuilder;
+import com.google.bitcoin.testing.InboundMessageQueuer;
 import com.google.bitcoin.utils.Threading;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.junit.After;
@@ -106,7 +107,7 @@ public class TransactionBroadcastTest extends TestWithPeerGroup {
         connectPeer(2);
 
         // Send ourselves a bit of money.
-        Block b1 = TestUtils.makeSolvedTestBlock(blockStore, address);
+        Block b1 = FakeTxBuilder.makeSolvedTestBlock(blockStore, address);
         inbound(p1, b1);
         assertNull(outbound(p1));
         assertEquals(Utils.toNanoCoins(50, 0), wallet.getBalance());
@@ -140,7 +141,7 @@ public class TransactionBroadcastTest extends TestWithPeerGroup {
         InboundMessageQueuer p2 = connectPeer(2);
 
         // Send ourselves a bit of money.
-        Block b1 = TestUtils.makeSolvedTestBlock(blockStore, address);
+        Block b1 = FakeTxBuilder.makeSolvedTestBlock(blockStore, address);
         inbound(p1, b1);
         pingAndWait(p1);
         assertNull(outbound(p1));
@@ -178,7 +179,7 @@ public class TransactionBroadcastTest extends TestWithPeerGroup {
         assertEquals(transactions[0], sendResult.tx);
         assertEquals(1, transactions[0].getConfidence().numBroadcastPeers());
         // Confirm it.
-        Block b2 = TestUtils.createFakeBlock(blockStore, t1).block;
+        Block b2 = FakeTxBuilder.createFakeBlock(blockStore, t1).block;
         inbound(p1, b2);
         pingAndWait(p1);
         assertNull(outbound(p1));

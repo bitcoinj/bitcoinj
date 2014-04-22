@@ -20,6 +20,8 @@ import com.google.bitcoin.net.BlockingClientManager;
 import com.google.bitcoin.net.NioClientManager;
 import com.google.bitcoin.params.UnitTestParams;
 import com.google.bitcoin.store.BlockStore;
+import com.google.bitcoin.testing.InboundMessageQueuer;
+import com.google.bitcoin.testing.TestWithNetworkConnections;
 import com.google.common.base.Preconditions;
 
 import java.net.InetSocketAddress;

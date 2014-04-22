@@ -22,8 +22,8 @@ import com.google.bitcoin.params.TestNet2Params;
 import com.google.bitcoin.params.UnitTestParams;
 import com.google.bitcoin.store.BlockStore;
 import com.google.bitcoin.store.MemoryBlockStore;
+import com.google.bitcoin.testing.FakeTxBuilder;
 import com.google.bitcoin.utils.BriefLogFormatter;
-import com.google.bitcoin.utils.TestUtils;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.junit.After;
 import org.junit.Before;
@@ -33,8 +33,8 @@ import java.math.BigInteger;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-import static com.google.bitcoin.utils.TestUtils.createFakeBlock;
-import static com.google.bitcoin.utils.TestUtils.createFakeTx;
+import static com.google.bitcoin.testing.FakeTxBuilder.createFakeBlock;
+import static com.google.bitcoin.testing.FakeTxBuilder.createFakeTx;
 import static org.junit.Assert.*;
 
 // Handling of chain splits/reorgs are in ChainSplitTests.
@@ -272,7 +272,7 @@ public class BlockChainTest {
         wallet.addKey(key);
         Address addr = key.toAddress(unitTestParams);
         // Create a tx that gives us some coins, and another that spends it to someone else in the same block.
-        Transaction t1 = TestUtils.createFakeTx(unitTestParams, Utils.toNanoCoins(1, 0), addr);
+        Transaction t1 = FakeTxBuilder.createFakeTx(unitTestParams, Utils.toNanoCoins(1, 0), addr);
         Transaction t2 = new Transaction(unitTestParams);
         t2.addInput(t1.getOutputs().get(0));
         t2.addOutput(Utils.toNanoCoins(2, 0), somebodyElse);

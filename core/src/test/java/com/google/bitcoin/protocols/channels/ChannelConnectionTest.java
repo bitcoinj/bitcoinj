@@ -18,7 +18,7 @@ package com.google.bitcoin.protocols.channels;
 
 import com.google.bitcoin.core.*;
 import com.google.bitcoin.store.WalletProtobufSerializer;
-import com.google.bitcoin.utils.TestWithWallet;
+import com.google.bitcoin.testing.TestWithWallet;
 import com.google.bitcoin.utils.Threading;
 import com.google.bitcoin.wallet.WalletFiles;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -40,7 +40,7 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.google.bitcoin.protocols.channels.PaymentChannelCloseException.CloseReason;
-import static com.google.bitcoin.utils.TestUtils.createFakeBlock;
+import static com.google.bitcoin.testing.FakeTxBuilder.createFakeBlock;
 import static org.bitcoin.paymentchannel.Protos.TwoWayChannelMessage.MessageType;
 import static org.junit.Assert.*;
 

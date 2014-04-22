@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-package com.google.bitcoin.utils;
+package com.google.bitcoin.testing;
 
 import com.google.bitcoin.core.Transaction;
 import com.google.bitcoin.core.TransactionBroadcaster;
 import com.google.bitcoin.core.VerificationException;
 import com.google.bitcoin.core.Wallet;
+import com.google.bitcoin.utils.Threading;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.SettableFuture;

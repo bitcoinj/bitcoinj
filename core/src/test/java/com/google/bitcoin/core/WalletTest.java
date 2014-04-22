@@ -24,9 +24,9 @@ import com.google.bitcoin.crypto.KeyCrypterException;
 import com.google.bitcoin.crypto.KeyCrypterScrypt;
 import com.google.bitcoin.crypto.TransactionSignature;
 import com.google.bitcoin.store.WalletProtobufSerializer;
-import com.google.bitcoin.utils.MockTransactionBroadcaster;
-import com.google.bitcoin.utils.TestUtils;
-import com.google.bitcoin.utils.TestWithWallet;
+import com.google.bitcoin.testing.FakeTxBuilder;
+import com.google.bitcoin.testing.MockTransactionBroadcaster;
+import com.google.bitcoin.testing.TestWithWallet;
 import com.google.bitcoin.utils.Threading;
 import com.google.bitcoin.wallet.*;
 import com.google.bitcoin.wallet.WalletTransaction.Pool;
@@ -54,7 +54,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.google.bitcoin.core.Utils.*;
-import static com.google.bitcoin.utils.TestUtils.*;
+import static com.google.bitcoin.testing.FakeTxBuilder.*;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.junit.Assert.*;
 
@@ -771,7 +771,7 @@ public class WalletTest extends TestWithWallet {
                 send1.getConfidence().getConfidenceType());
         assertEquals(send2, received.getOutput(0).getSpentBy().getParentTransaction());
 
-        TestUtils.DoubleSpends doubleSpends = TestUtils.createFakeDoubleSpendTxns(params, myAddress);
+        FakeTxBuilder.DoubleSpends doubleSpends = FakeTxBuilder.createFakeDoubleSpendTxns(params, myAddress);
         // t1 spends to our wallet. t2 double spends somewhere else.
         wallet.receivePending(doubleSpends.t1, null);
         assertEquals(TransactionConfidence.ConfidenceType.PENDING,

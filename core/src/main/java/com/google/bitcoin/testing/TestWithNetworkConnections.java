@@ -15,8 +15,9 @@
  * limitations under the License.
  */
 
-package com.google.bitcoin.core;
+package com.google.bitcoin.testing;
 
+import com.google.bitcoin.core.*;
 import com.google.bitcoin.net.*;
 import com.google.bitcoin.params.UnitTestParams;
 import com.google.bitcoin.store.BlockStore;
@@ -37,7 +38,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static org.junit.Assert.assertTrue;
+import static com.google.common.base.Preconditions.checkState;
 
 /**
  * Utility class that makes it easy to work with mock NetworkConnections.
@@ -56,7 +57,7 @@ public class TestWithNetworkConnections {
     private final ClientConnectionManager channels;
     protected final BlockingQueue<InboundMessageQueuer> newPeerWriteTargetQueue = new LinkedBlockingQueue<InboundMessageQueuer>();
 
-    enum ClientType {
+    public enum ClientType {
         NIO_CLIENT_MANAGER,
         BLOCKING_CLIENT_MANAGER,
         NIO_CLIENT,
@@ -168,8 +169,8 @@ public class TestWithNetworkConnections {
         writeTarget.sendMessage(versionMessage);
         writeTarget.sendMessage(new VersionAck());
         try {
-            assertTrue(writeTarget.nextMessageBlocking() instanceof VersionMessage);
-            assertTrue(writeTarget.nextMessageBlocking() instanceof VersionAck);
+            checkState(writeTarget.nextMessageBlocking() instanceof VersionMessage);
+            checkState(writeTarget.nextMessageBlocking() instanceof VersionAck);
             synchronized (doneConnecting) {
                 doneConnecting.set(true);
             }

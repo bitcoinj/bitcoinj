@@ -17,8 +17,8 @@
 package com.google.bitcoin.core;
 
 import com.google.bitcoin.params.UnitTestParams;
+import com.google.bitcoin.testing.FakeTxBuilder;
 import com.google.bitcoin.utils.BriefLogFormatter;
-import com.google.bitcoin.utils.TestUtils;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -35,7 +35,7 @@ public class MemoryPoolTest {
     @Before
     public void setup() throws Exception {
         BriefLogFormatter.init();
-        tx1 = TestUtils.createFakeTx(params, Utils.toNanoCoins(1, 0), new ECKey().toAddress(params));
+        tx1 = FakeTxBuilder.createFakeTx(params, Utils.toNanoCoins(1, 0), new ECKey().toAddress(params));
         tx2 = new Transaction(params, tx1.bitcoinSerialize());
 
         address1 = new PeerAddress(InetAddress.getByAddress(new byte[] { 127, 0, 0, 1 }));

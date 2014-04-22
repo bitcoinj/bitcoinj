@@ -19,7 +19,7 @@ package com.google.bitcoin.protocols.channels;
 import com.google.bitcoin.core.*;
 import com.google.bitcoin.script.Script;
 import com.google.bitcoin.script.ScriptBuilder;
-import com.google.bitcoin.utils.TestWithWallet;
+import com.google.bitcoin.testing.TestWithWallet;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
@@ -34,8 +34,8 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.LinkedBlockingQueue;
 
-import static com.google.bitcoin.utils.TestUtils.createFakeTx;
-import static com.google.bitcoin.utils.TestUtils.makeSolvedTestBlock;
+import static com.google.bitcoin.testing.FakeTxBuilder.createFakeTx;
+import static com.google.bitcoin.testing.FakeTxBuilder.makeSolvedTestBlock;
 import static org.junit.Assert.*;
 
 public class PaymentChannelStateTest extends TestWithWallet {

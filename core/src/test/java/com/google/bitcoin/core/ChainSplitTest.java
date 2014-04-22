@@ -19,8 +19,8 @@ package com.google.bitcoin.core;
 import com.google.bitcoin.core.TransactionConfidence.ConfidenceType;
 import com.google.bitcoin.params.UnitTestParams;
 import com.google.bitcoin.store.MemoryBlockStore;
+import com.google.bitcoin.testing.FakeTxBuilder;
 import com.google.bitcoin.utils.BriefLogFormatter;
-import com.google.bitcoin.utils.TestUtils;
 import com.google.bitcoin.utils.Threading;
 import org.junit.Before;
 import org.junit.Test;
@@ -540,8 +540,8 @@ public class ChainSplitTest {
         // This covers issue 468.
 
         // Receive some money to the wallet.
-        Transaction t1 = TestUtils.createFakeTx(unitTestParams, Utils.COIN, coinsTo);
-        final Block b1 = TestUtils.makeSolvedTestBlock(unitTestParams.genesisBlock, t1);
+        Transaction t1 = FakeTxBuilder.createFakeTx(unitTestParams, Utils.COIN, coinsTo);
+        final Block b1 = FakeTxBuilder.makeSolvedTestBlock(unitTestParams.genesisBlock, t1);
         chain.add(b1);
 
         // Send a couple of payments one after the other (so the second depends on the change output of the first).
@@ -550,7 +550,7 @@ public class ChainSplitTest {
         wallet.commitTx(t2);
         Transaction t3 = checkNotNull(wallet.createSend(new ECKey().toAddress(unitTestParams), Utils.CENT));
         wallet.commitTx(t3);
-        chain.add(TestUtils.makeSolvedTestBlock(b1, t2, t3));
+        chain.add(FakeTxBuilder.makeSolvedTestBlock(b1, t2, t3));
 
         final BigInteger coins0point98 = Utils.COIN.subtract(Utils.CENT).subtract(Utils.CENT);
         assertEquals(coins0point98, wallet.getBalance());
@@ -559,8 +559,8 @@ public class ChainSplitTest {
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         wallet.saveToFileStream(bos);
         wallet = Wallet.loadFromFileStream(new ByteArrayInputStream(bos.toByteArray()));
-        final Block b2 = TestUtils.makeSolvedTestBlock(b1, t2, t3);
-        final Block b3 = TestUtils.makeSolvedTestBlock(b2);
+        final Block b2 = FakeTxBuilder.makeSolvedTestBlock(b1, t2, t3);
+        final Block b3 = FakeTxBuilder.makeSolvedTestBlock(b2);
         chain.add(b2);
         chain.add(b3);
 
