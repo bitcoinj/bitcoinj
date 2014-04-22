@@ -34,21 +34,7 @@ import java.util.concurrent.Executor;
  * restrictions is to support key chains that may be handled by external hardware or software, or which are derived
  * deterministically from a seed (and thus the notion of importing a key is meaningless).</p>
  */
-public interface KeyChain {
-    /**
-     * Locates a keypair from the keychain given the hash of the public key. This is needed when finding out which
-     * key we need to use to redeem a transaction output.
-     *
-     * @return ECKey object or null if no such key was found.
-     */
-    public ECKey findKeyFromPubHash(byte[] pubkeyHash);
-
-    /**
-     * Locates a keypair from the keychain given the raw public key bytes.
-     * @return ECKey or null if no such key was found.
-     */
-    public ECKey findKeyFromPubKey(byte[] pubkey);
-
+public interface KeyChain extends KeyBag {
     /** Returns true if the given key is in the chain. */
     public boolean hasKey(ECKey key);
 

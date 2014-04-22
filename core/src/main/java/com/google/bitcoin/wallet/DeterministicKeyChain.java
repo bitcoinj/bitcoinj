@@ -583,7 +583,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         checkNotNull(aesKey);
         checkState(getKeyCrypter() != null, "Key chain not encrypted");
         try {
-            return rootKey.decrypt(getKeyCrypter(), aesKey).getPubKeyPoint().equals(rootKey.getPubKeyPoint());
+            return rootKey.decrypt(aesKey).getPubKeyPoint().equals(rootKey.getPubKeyPoint());
         } catch (KeyCrypterException e) {
             return false;
         }

@@ -571,7 +571,7 @@ public class ECKey implements EncryptableItem, Serializable {
         if (crypter != null) {
             if (aesKey == null)
                 throw new KeyIsEncryptedException();
-            return decrypt(crypter, aesKey).sign(input);
+            return decrypt(aesKey).sign(input);
         } else {
             // No decryption of private key required.
             if (priv == null)
@@ -970,7 +970,6 @@ public class ECKey implements EncryptableItem, Serializable {
      *
      * @param keyCrypter The keyCrypter that specifies exactly how the decrypted bytes are created.
      * @param aesKey The KeyParameter with the AES encryption key (usually constructed with keyCrypter#deriveKey and cached).
-     * @return unencryptedKey
      */
     public ECKey decrypt(KeyCrypter keyCrypter, KeyParameter aesKey) throws KeyCrypterException {
         checkNotNull(keyCrypter);
@@ -986,6 +985,20 @@ public class ECKey implements EncryptableItem, Serializable {
             throw new KeyCrypterException("Provided AES key is wrong");
         key.setCreationTimeSeconds(creationTimeSeconds);
         return key;
+    }
+
+    /**
+     * Create a decrypted private key with AES key. Note that if the AES key is wrong, this
+     * has some chance of throwing KeyCrypterException due to the corrupted padding that will result, but it can also
+     * just yield a garbage key.
+     *
+     * @param aesKey The KeyParameter with the AES encryption key (usually constructed with keyCrypter#deriveKey and cached).
+     */
+    public ECKey decrypt(KeyParameter aesKey) throws KeyCrypterException {
+        final KeyCrypter crypter = getKeyCrypter();
+        if (crypter == null)
+            throw new KeyCrypterException("No key crypter available");
+        return decrypt(crypter, aesKey);
     }
 
     /**

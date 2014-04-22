@@ -133,13 +133,13 @@ public class ChildKeyDerivationTest {
 
         DeterministicKey key1 = HDKeyDerivation.createMasterPrivateKey("it was all a hoax".getBytes());
         DeterministicKey encryptedKey1 = key1.encrypt(scrypter, aesKey, null);
-        DeterministicKey decryptedKey1 = encryptedKey1.decrypt(scrypter, aesKey);
+        DeterministicKey decryptedKey1 = encryptedKey1.decrypt(aesKey);
         assertEquals(key1, decryptedKey1);
 
         DeterministicKey key2 = HDKeyDerivation.deriveChildKey(key1, ChildNumber.ZERO);
         DeterministicKey derivedKey2 = HDKeyDerivation.deriveChildKey(encryptedKey1, ChildNumber.ZERO);
         assertTrue(derivedKey2.isEncrypted());   // parent is encrypted.
-        DeterministicKey decryptedKey2 = derivedKey2.decrypt(scrypter, aesKey);
+        DeterministicKey decryptedKey2 = derivedKey2.decrypt(aesKey);
         assertFalse(decryptedKey2.isEncrypted());
         assertEquals(key2, decryptedKey2);
 

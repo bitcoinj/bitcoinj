@@ -240,6 +240,11 @@ public class DeterministicKey extends ECKey {
         return key;
     }
 
+    @Override
+    public DeterministicKey decrypt(KeyParameter aesKey) throws KeyCrypterException {
+        return (DeterministicKey) super.decrypt(aesKey);
+    }
+
     // For when a key is encrypted, either decrypt our encrypted private key bytes, or work up the tree asking parents
     // to decrypt and re-derive.
     private BigInteger findOrDeriveEncryptedPrivateKey(KeyCrypter keyCrypter, KeyParameter aesKey) {

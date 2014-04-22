@@ -21,7 +21,8 @@ import com.google.bitcoin.crypto.TransactionSignature;
 import com.google.bitcoin.script.Script;
 import com.google.bitcoin.script.ScriptBuilder;
 import com.google.bitcoin.script.ScriptOpCodes;
-import com.google.common.collect.ImmutableList;
+import com.google.bitcoin.wallet.DecryptingKeyBag;
+import com.google.bitcoin.wallet.KeyBag;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.primitives.Ints;
 import com.google.common.primitives.Longs;
@@ -811,7 +812,22 @@ public class Transaction extends ChildMessage implements Serializable {
      * @param wallet  A wallet is required to fetch the keys needed for signing.
      * @param aesKey The AES key to use to decrypt the key before signing. Null if no decryption is required.
      */
-    public synchronized void signInputs(SigHash hashType, Wallet wallet, @Nullable KeyParameter aesKey) throws ScriptException {
+    public void signInputs(SigHash hashType, Wallet wallet, @Nullable KeyParameter aesKey) throws ScriptException {
+        if (aesKey == null) {
+            signInputs(hashType, false, wallet);
+        } else {
+            signInputs(hashType, false, new DecryptingKeyBag(wallet, aesKey));
+        }
+    }
+
+    /**
+     * Signs as many inputs as possible using keys from the given key bag, which are expected to be usable for
+     * signing, i.e. not encrypted and not missing the private key part.
+     *
+     * @param hashType This should always be set to SigHash.ALL currently. Other types are unused.
+     * @param keyBag a provider of keys that are usable as-is for signing.
+     */
+    public synchronized void signInputs(SigHash hashType, boolean anyoneCanPay, KeyBag keyBag) throws ScriptException {
         checkState(inputs.size() > 0);
         checkState(outputs.size() > 0);
 
@@ -847,16 +863,15 @@ public class Transaction extends ChildMessage implements Serializable {
             if (input.getScriptBytes().length != 0)
                 log.warn("Re-signing an already signed transaction! Be sure this is what you want.");
             // Find the signing key we'll need to use.
-            ECKey key = input.getOutpoint().getConnectedKey(wallet);
+            ECKey key = input.getOutpoint().getConnectedKey(keyBag);
             // This assert should never fire. If it does, it means the wallet is inconsistent.
             checkNotNull(key, "Transaction exists in wallet that we cannot redeem: %s", input.getOutpoint().getHash());
             // Keep the key around for the script creation step below.
             signingKeys[i] = key;
             // The anyoneCanPay feature isn't used at the moment.
-            boolean anyoneCanPay = false;
             byte[] connectedPubKeyScript = input.getOutpoint().getConnectedPubKeyScript();
             try {
-                signatures[i] = calculateSignature(i, key, aesKey, connectedPubKeyScript, hashType, anyoneCanPay);
+                signatures[i] = calculateSignature(i, key, connectedPubKeyScript, hashType, anyoneCanPay);
             } catch (ECKey.KeyIsEncryptedException e) {
                 throw e;
             } catch (ECKey.MissingPrivateKeyException e) {
@@ -897,22 +912,21 @@ public class Transaction extends ChildMessage implements Serializable {
     /**
      * Calculates a signature that is valid for being inserted into the input at the given position. This is simply
      * a wrapper around calling {@link Transaction#hashForSignature(int, byte[], com.google.bitcoin.core.Transaction.SigHash, boolean)}
-     * followed by {@link ECKey#sign(Sha256Hash, org.spongycastle.crypto.params.KeyParameter)} and then returning
-     * a new {@link TransactionSignature}.
+     * followed by {@link ECKey#sign(Sha256Hash)} and then returning a new {@link TransactionSignature}. The key
+     * must be usable for signing as-is: if the key is encrypted it must be decrypted first external to this method.
      *
      * @param inputIndex Which input to calculate the signature for, as an index.
      * @param key The private key used to calculate the signature.
-     * @param aesKey If not null, this will be used to decrypt the key.
      * @param connectedPubKeyScript Byte-exact contents of the scriptPubKey that is being satisified.
      * @param hashType Signing mode, see the enum for documentation.
      * @param anyoneCanPay Signing mode, see the SigHash enum for documentation.
      * @return A newly calculated signature object that wraps the r, s and sighash components.
      */
-    public synchronized  TransactionSignature calculateSignature(int inputIndex, ECKey key, @Nullable KeyParameter aesKey,
-                                                                 byte[] connectedPubKeyScript,
-                                                                 SigHash hashType, boolean anyoneCanPay) {
+    public synchronized TransactionSignature calculateSignature(int inputIndex, ECKey key,
+                                                                byte[] connectedPubKeyScript,
+                                                                SigHash hashType, boolean anyoneCanPay) {
         Sha256Hash hash = hashForSignature(inputIndex, connectedPubKeyScript, hashType, anyoneCanPay);
-        return new TransactionSignature(key.sign(hash, aesKey), hashType, anyoneCanPay);
+        return new TransactionSignature(key.sign(hash), hashType, anyoneCanPay);
     }
 
     /**

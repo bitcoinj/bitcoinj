@@ -424,7 +424,7 @@ public class BasicKeyChain implements EncryptableKeyChain {
                 throw new KeyCrypterException("Password/key was incorrect.");
             BasicKeyChain decrypted = new BasicKeyChain();
             for (ECKey key : hashToKeys.values()) {
-                decrypted.importKeyLocked(key.decrypt(keyCrypter, aesKey));
+                decrypted.importKeyLocked(key.decrypt(aesKey));
             }
             return decrypted;
         } finally {
@@ -467,7 +467,7 @@ public class BasicKeyChain implements EncryptableKeyChain {
             checkState(first != null, "No encrypted keys in the wallet");
 
             try {
-                ECKey rebornKey = first.decrypt(keyCrypter, aesKey);
+                ECKey rebornKey = first.decrypt(aesKey);
                 return Arrays.equals(first.getPubKey(), rebornKey.getPubKey());
             } catch (KeyCrypterException e) {
                 // The AES key supplied is incorrect.
