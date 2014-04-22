@@ -80,7 +80,6 @@ public class WalletTest extends TestWithWallet {
     public void setUp() throws Exception {
         super.setUp();
         encryptedWallet = new Wallet(params);
-        encryptedWallet.setKeychainLookaheadSize(5);  // For speed.
         myEncryptedAddress = encryptedWallet.freshReceiveKey().toAddress(params);
         encryptedWallet.encrypt(PASSWORD1);
         keyCrypter = encryptedWallet.getKeyCrypter();
@@ -985,7 +984,6 @@ public class WalletTest extends TestWithWallet {
     @Test
     public void keyCreationTime() throws Exception {
         wallet = new Wallet(params);
-        wallet.setKeychainLookaheadSize(5);  // For speed.
         Utils.setMockClock();
         long now = Utils.currentTimeSeconds();
         // No keys returns current time.
@@ -1001,7 +999,6 @@ public class WalletTest extends TestWithWallet {
     @Test
     public void scriptCreationTime() throws Exception {
         wallet = new Wallet(params);
-        wallet.setKeychainLookaheadSize(5);  // For speed.
         Utils.setMockClock();
         long now = Utils.currentTimeSeconds();
         // No keys returns current time.
@@ -2316,7 +2313,6 @@ public class WalletTest extends TestWithWallet {
                 keys.addAll(k);
             }
         }, Threading.SAME_THREAD);
-        wallet.setKeychainLookaheadSize(5);
         wallet.freshReceiveKey();
         assertEquals(6, keys.size());
     }
