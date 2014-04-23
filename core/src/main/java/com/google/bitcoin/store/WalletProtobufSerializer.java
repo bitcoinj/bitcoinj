@@ -73,8 +73,24 @@ public class WalletProtobufSerializer {
 
     private boolean requireMandatoryExtensions = true;
 
+    public interface WalletFactory {
+        Wallet create(NetworkParameters params, KeyChainGroup keyChainGroup);
+    }
+
+    private final WalletFactory factory;
+
     public WalletProtobufSerializer() {
+        this(new WalletFactory() {
+            @Override
+            public Wallet create(NetworkParameters params, KeyChainGroup keyChainGroup) {
+                return new Wallet(params, keyChainGroup);
+            }
+        });
+    }
+
+    public WalletProtobufSerializer(WalletFactory factory) {
         txMap = new HashMap<ByteString, Transaction>();
+        this.factory = factory;
     }
 
     /**
@@ -372,7 +388,7 @@ public class WalletProtobufSerializer {
         } else {
             chain = KeyChainGroup.fromProtobufUnencrypted(walletProto.getKeyList());
         }
-        Wallet wallet = new Wallet(params, chain);
+        Wallet wallet = factory.create(params, chain);
 
         List<Script> scripts = Lists.newArrayList();
         for (Protos.Script protoScript : walletProto.getWatchedScriptList()) {
