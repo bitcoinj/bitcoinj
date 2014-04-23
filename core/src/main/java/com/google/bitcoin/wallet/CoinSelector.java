@@ -12,5 +12,10 @@ import java.util.LinkedList;
  * enough money in the wallet.
  */
 public interface CoinSelector {
+    /**
+     * Creates a CoinSelection that tries to meet the target amount of value. The candidates list is given to
+     * this call and can be edited freely. See the docs for CoinSelection to learn more, or look a the implementation
+     * of {@link com.google.bitcoin.wallet.DefaultCoinSelector}.
+     */
     public CoinSelection select(BigInteger target, LinkedList<TransactionOutput> candidates);
 }

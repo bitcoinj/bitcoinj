@@ -1923,6 +1923,7 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
                 checkState(req.tx.getOutputs().size() == 1, "Empty wallet TX must have a single output only.");
                 CoinSelector selector = req.coinSelector == null ? coinSelector : req.coinSelector;
                 bestCoinSelection = selector.select(NetworkParameters.MAX_MONEY, candidates);
+                candidates = null;  // Selector took ownership and might have changed candidates. Don't access again.
                 req.tx.getOutput(0).setValue(bestCoinSelection.valueGathered);
                 totalOutput = bestCoinSelection.valueGathered;
             }
@@ -3450,6 +3451,7 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
                 // Of the coins we could spend, pick some that we actually will spend.
                 CoinSelector selector = req.coinSelector == null ? coinSelector : req.coinSelector;
                 CoinSelection selection = selector.select(valueNeeded, candidates);
+                candidates = null;  // Selector took ownership and might have changed candidates. Don't access again.
                 // Can we afford this?
                 if (selection.valueGathered.compareTo(valueNeeded) < 0) {
                     valueMissing = valueNeeded.subtract(selection.valueGathered);
