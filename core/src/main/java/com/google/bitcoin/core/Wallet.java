@@ -248,7 +248,40 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
         return params;
     }
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Address retrieval
+    //
+    
+    public Address currentAddress(KeyChain.KeyPurpose purpose) {
+        lock.lock();
+        try {
+        	return keychain.currentAddress(purpose, params);
+        } finally {
+            lock.unlock();
+        }
+    }
 
+    public Address currentReceiveAddress() {
+    	return currentAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
+    }
+
+    public Address freshAddress(KeyChain.KeyPurpose purpose) {
+        lock.lock();
+        try {
+            Address address = keychain.freshAddress(purpose, params);
+            // Do we really need an immediate hard save? Arguably all this is doing is saving the 'current' key
+            // and that's not quite so important, so we could coalesce for more performance.
+            saveNow();
+            return address;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public Address freshReceiveAddress() {
+        return freshAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
+    }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //

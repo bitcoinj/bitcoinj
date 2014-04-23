@@ -16,21 +16,11 @@
 
 package com.google.bitcoin.wallet;
 
-import com.google.bitcoin.core.BloomFilter;
-import com.google.bitcoin.core.ECKey;
-import com.google.bitcoin.core.Utils;
-import com.google.bitcoin.crypto.*;
-import com.google.bitcoin.store.UnreadableWalletException;
-import com.google.bitcoin.utils.Threading;
-import com.google.common.collect.ImmutableList;
-import com.google.protobuf.ByteString;
-import org.bitcoinj.wallet.Protos;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.spongycastle.crypto.params.KeyParameter;
-import org.spongycastle.math.ec.ECPoint;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
+import static com.google.common.collect.Lists.newLinkedList;
 
-import javax.annotation.Nullable;
 import java.math.BigInteger;
 import java.security.SecureRandom;
 import java.util.ArrayList;
@@ -40,8 +30,33 @@ import java.util.Map;
 import java.util.concurrent.Executor;
 import java.util.concurrent.locks.ReentrantLock;
 
-import static com.google.common.base.Preconditions.*;
-import static com.google.common.collect.Lists.newLinkedList;
+import javax.annotation.Nullable;
+
+import org.bitcoinj.wallet.Protos;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.spongycastle.crypto.params.KeyParameter;
+import org.spongycastle.math.ec.ECPoint;
+
+import com.google.bitcoin.core.Address;
+import com.google.bitcoin.core.BloomFilter;
+import com.google.bitcoin.core.ECKey;
+import com.google.bitcoin.core.Utils;
+import com.google.bitcoin.crypto.ChildNumber;
+import com.google.bitcoin.crypto.DeterministicHierarchy;
+import com.google.bitcoin.crypto.DeterministicKey;
+import com.google.bitcoin.crypto.EncryptedData;
+import com.google.bitcoin.crypto.HDKeyDerivation;
+import com.google.bitcoin.crypto.HDUtils;
+import com.google.bitcoin.crypto.KeyCrypter;
+import com.google.bitcoin.crypto.KeyCrypterException;
+import com.google.bitcoin.crypto.KeyCrypterScrypt;
+import com.google.bitcoin.params.MainNetParams;
+import com.google.bitcoin.script.Script;
+import com.google.bitcoin.store.UnreadableWalletException;
+import com.google.bitcoin.utils.Threading;
+import com.google.common.collect.ImmutableList;
+import com.google.protobuf.ByteString;
 
 /**
  * <p>A deterministic key chain is a {@link KeyChain} that uses the
@@ -80,7 +95,9 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
 
     private DeterministicHierarchy hierarchy;
     private DeterministicKey rootKey;
+    private byte[] masterRefence;
     private DeterministicSeed seed;
+    private KeyChainGroup group;
 
     // Paths through the key tree. External keys are ones that are communicated to other parties. Internal keys are
     // keys created for change addresses, coinbases, mixing, etc - anything that isn't communicated. The distinction
@@ -147,6 +164,25 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         basicKeyChain = new BasicKeyChain();
         initializeHierarchyUnencrypted(watchingKey);
     }
+    
+    public DeterministicKeyChain(DeterministicKey watchingKey, DeterministicKeyChain master) {
+        checkArgument(watchingKey.isPubKeyOnly(), "Private subtrees not currently supported");
+        checkArgument(watchingKey.getPath().size() == 1, "You can only watch an account key currently");
+        basicKeyChain = new BasicKeyChain();
+        lookaheadSize = 0;
+        setMasterReference(master.getWatchingKey().getPubKeyHash());
+        initializeHierarchyUnencrypted(watchingKey);
+    }
+    
+    public DeterministicKeyChain(SecureRandom random, DeterministicKeyChain master) {
+    	basicKeyChain = new BasicKeyChain();
+    	lookaheadSize = 0;
+    	DeterministicSeed seed = new DeterministicSeed(getRandomSeed(random), Utils.currentTimeMillis() / 1000);
+    	setMasterReference(master.getWatchingKey().getPubKeyHash());
+    	rootKey = HDKeyDerivation.createMasterPrivateKey(checkNotNull(seed.getSecretBytes()));
+        initializeHierarchyUnencrypted(rootKey);
+    }
+
 
     public static DeterministicKeyChain watch(DeterministicKey accountKey) {
         return new DeterministicKeyChain(accountKey);
@@ -196,6 +232,10 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
             basicKeyChain.importKey(key);
         }
     }
+    
+    public void setGroup(KeyChainGroup group){
+    	this.group = group;
+    }
 
     private DeterministicKey encryptNonLeaf(KeyParameter aesKey, DeterministicKeyChain chain,
                                             DeterministicKey parent, ImmutableList<ChildNumber> path) {
@@ -227,6 +267,18 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         addToBasicChain(externalKey);
         addToBasicChain(internalKey);
     }
+    
+    public boolean isShadowChain(){
+    	return this.masterRefence!=null
+    			&& this.masterRefence.length > 0
+    			&& !this.masterRefence.equals(KeyChainGroup.MASTER_CHAIN);
+    }
+    
+    public boolean isMasterChain(){
+    	return this.masterRefence!=null
+    			&& this.masterRefence.length > 0
+    			&& this.masterRefence.equals(KeyChainGroup.MASTER_CHAIN);
+    }
 
     /** Returns a freshly derived key that has not been returned by this method before. */
     @Override
@@ -254,7 +306,17 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
             }
             // TODO: Handle the case where the derived key is >= curve order.
             List<DeterministicKey> lookahead = maybeLookAhead(parentKey, index);
-            basicKeyChain.importKeys(lookahead);
+            if (isMasterChain()){
+            	for (DeterministicKey importKey: lookahead){
+            		Script script = group.createP2SHOutputScriptFromMultiSig(importKey);
+            		basicKeyChain.importKey(importKey, script);
+            	}
+            	//add hash to basic keychain
+            }else if (isShadowChain()){
+            	//nothing
+            }else{
+            	basicKeyChain.importKeys(lookahead);
+            }
             key = hierarchy.get(HDUtils.append(parentKey.getPath(), new ChildNumber(index - 1, false)), false, false);
             return key;
         } finally {
@@ -304,6 +366,11 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
     /** Returns the deterministic key for the given absolute path in the hierarchy. */
     protected DeterministicKey getKeyByPath(ImmutableList<ChildNumber> path) {
         return hierarchy.get(path, false, false);
+    }
+    
+    /** Returns the deterministic key for the given absolute path in the hierarchy. */
+    protected DeterministicKey getKeyByPath(ImmutableList<ChildNumber> path, boolean create) {
+        return hierarchy.get(path, false, create);
     }
 
     /**
@@ -372,14 +439,20 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                 entries.add(seedEntry.build());
             }
             Map<ECKey, Protos.Key.Builder> keys = basicKeyChain.serializeToEditableProtobufs();
+            boolean addedMasterRef = false;
             for (Map.Entry<ECKey, Protos.Key.Builder> entry : keys.entrySet()) {
                 DeterministicKey key = (DeterministicKey) entry.getKey();
                 Protos.Key.Builder proto = entry.getValue();
                 proto.setType(Protos.Key.Type.DETERMINISTIC_KEY);
                 final Protos.DeterministicKey.Builder detKey = proto.getDeterministicKeyBuilder();
                 detKey.setChainCode(ByteString.copyFrom(key.getChainCode()));
-                for (ChildNumber num : key.getPath())
+                if (isShadowChain() && !addedMasterRef){
+                	detKey.setMasterReference(ByteString.copyFrom(masterRefence));
+                	addedMasterRef = true;
+                }
+                for (ChildNumber num : key.getPath()){
                     detKey.addPath(num.i());
+                }
                 if (key.equals(externalKey)) {
                     detKey.setIssuedSubkeys(issuedExternalKeys);
                     detKey.setLookaheadSize(lookaheadSize);
@@ -432,8 +505,9 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                 byte[] chainCode = key.getDeterministicKey().getChainCode().toByteArray();
                 // Deserialize the path through the tree.
                 LinkedList<ChildNumber> path = newLinkedList();
-                for (int i : key.getDeterministicKey().getPathList())
+                for (int i : key.getDeterministicKey().getPathList()){
                     path.add(new ChildNumber(i));
+                }
                 // Deserialize the public key and path.
                 ECPoint pubkey = ECKey.CURVE.getCurve().decodePoint(key.getPublicKey().toByteArray());
                 final ImmutableList<ChildNumber> immutablePath = ImmutableList.copyOf(path);
@@ -502,6 +576,10 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                         }
                     }
                 }
+                //inflate shadows
+                ByteString mr = key.getDeterministicKey().getMasterReference();
+                if (mr!=null&&!mr.isEmpty())
+                    chain.masterRefence = mr.toByteArray();
                 chain.hierarchy.putKey(detkey);
                 chain.basicKeyChain.importKey(detkey);
             }
@@ -609,8 +687,24 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
 
     @Override
     public BloomFilter getFilter(int size, double falsePositiveRate, long tweak) {
-        checkArgument(size >= numBloomFilterEntries());
-        return basicKeyChain.getFilter(size, falsePositiveRate, tweak);
+    	if (isShadowChain()){
+    		return new BloomFilter(size, falsePositiveRate, tweak);
+    	}else if (isMasterChain()){
+    		BloomFilter filter = new BloomFilter(size, falsePositiveRate, tweak);
+            for (ECKey key : basicKeyChain.getKeys()) {
+            	if (key instanceof DeterministicKey){
+            		DeterministicKey dKey = (DeterministicKey)key;
+            		Script script =  group.createP2SHOutputScriptFromMultiSig(dKey);
+            		Address a = Address.fromP2SHScript(MainNetParams.get(), script);
+            		filter.insert(a.getHash160());
+            		filter.insert(script.getProgram());
+            	}
+            }
+            return filter;
+    	}else{
+    		checkArgument(size >= numBloomFilterEntries());
+    		return basicKeyChain.getFilter(size, falsePositiveRate, tweak);
+    	}
     }
 
     /**
@@ -695,4 +789,13 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
     /* package */ List<ECKey> getKeys() {
         return basicKeyChain.getKeys();
     }
+
+	public void setMasterReference(byte[] masterReference) {
+		this.masterRefence = masterReference;
+	}
+
+	public byte[] getMasterReference() {
+		return this.masterRefence;
+	}
 }
+

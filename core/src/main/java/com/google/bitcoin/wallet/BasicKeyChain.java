@@ -16,24 +16,38 @@
 
 package com.google.bitcoin.wallet;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.Executor;
+import java.util.concurrent.locks.ReentrantLock;
+
+import javax.annotation.Nullable;
+
+import org.bitcoinj.wallet.Protos;
+import org.spongycastle.crypto.params.KeyParameter;
+
 import com.google.bitcoin.core.BloomFilter;
 import com.google.bitcoin.core.ECKey;
-import com.google.bitcoin.crypto.*;
+import com.google.bitcoin.crypto.EncryptableItem;
+import com.google.bitcoin.crypto.EncryptedData;
+import com.google.bitcoin.crypto.KeyCrypter;
+import com.google.bitcoin.crypto.KeyCrypterException;
+import com.google.bitcoin.crypto.KeyCrypterScrypt;
+import com.google.bitcoin.script.Script;
 import com.google.bitcoin.store.UnreadableWalletException;
 import com.google.bitcoin.utils.ListenerRegistration;
 import com.google.bitcoin.utils.Threading;
 import com.google.common.collect.ImmutableList;
 import com.google.protobuf.ByteString;
-import org.bitcoinj.wallet.Protos;
-import org.spongycastle.crypto.params.KeyParameter;
-
-import javax.annotation.Nullable;
-import java.util.*;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.Executor;
-import java.util.concurrent.locks.ReentrantLock;
-
-import static com.google.common.base.Preconditions.*;
 
 /**
  * A {@link KeyChain} that implements the simplest model possible: it can have keys imported into it, and just acts as
@@ -139,7 +153,21 @@ public class BasicKeyChain implements EncryptableKeyChain {
         pubkeyToKeys.put(ByteString.copyFrom(key.getPubKey()), key);
         hashToKeys.put(ByteString.copyFrom(key.getPubKeyHash()), key);
     }
+    
+    private void importKeyLocked(ECKey key, Script script) {
+        hashToKeys.put(ByteString.copyFrom(script.getProgram()), key);
+    }
 
+    /* package */ void importKey(ECKey key, Script script) {
+        lock.lock();
+        try {
+            importKeyLocked(key, script);
+            queueOnKeysAdded(ImmutableList.of(key));
+        } finally {
+            lock.unlock();
+        }
+    }
+    
     /* package */ void importKey(ECKey key) {
         lock.lock();
         try {

@@ -286,7 +286,7 @@ public class TransactionOutput extends ChildMessage implements Serializable {
             if (script.isSentToRawPubKey()) {
                 byte[] pubkey = script.getPubKey();
                 return wallet.isPubKeyMine(pubkey);
-            } else {
+        	}else {
                 byte[] pubkeyHash = script.getPubKeyHash();
                 return wallet.isPubKeyHashMine(pubkeyHash);
             }

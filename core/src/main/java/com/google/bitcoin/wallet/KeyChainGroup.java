@@ -16,24 +16,45 @@
 
 package com.google.bitcoin.wallet;
 
-import com.google.bitcoin.core.*;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
+
+import java.security.SecureRandom;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.EnumMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.Executor;
+
+import javax.annotation.Nullable;
+
+import org.bitcoinj.wallet.Protos;
+import org.spongycastle.crypto.params.KeyParameter;
+
+import com.google.bitcoin.core.Address;
+import com.google.bitcoin.core.BloomFilter;
+import com.google.bitcoin.core.ECKey;
+import com.google.bitcoin.core.NetworkParameters;
+import com.google.bitcoin.core.PeerFilterProvider;
+import com.google.bitcoin.core.Utils;
 import com.google.bitcoin.crypto.DeterministicKey;
 import com.google.bitcoin.crypto.KeyCrypter;
+import com.google.bitcoin.script.Script;
+import com.google.bitcoin.script.ScriptBuilder;
 import com.google.bitcoin.store.UnreadableWalletException;
 import com.google.bitcoin.utils.ListenerRegistration;
 import com.google.bitcoin.utils.Threading;
 import com.google.common.base.Joiner;
+import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
-import org.bitcoinj.wallet.Protos;
-import org.spongycastle.crypto.params.KeyParameter;
-
-import javax.annotation.Nullable;
-import java.security.SecureRandom;
-import java.util.*;
-import java.util.concurrent.Executor;
-
-import static com.google.common.base.Preconditions.*;
+import com.google.common.collect.Multimap;
 
 /**
  * <p>A KeyChainGroup is used by the {@link com.google.bitcoin.core.Wallet} and
@@ -52,8 +73,10 @@ import static com.google.common.base.Preconditions.*;
  * combining their responses together when necessary.</p>
  */
 public class KeyChainGroup implements PeerFilterProvider {
+	public static final byte[] MASTER_CHAIN = "MASTER_CHAIN_LABEL".getBytes();
     private BasicKeyChain basic;
     private final List<DeterministicKeyChain> chains;
+    private Multimap<DeterministicKeyChain, DeterministicKeyChain> shadowMap = null;
     private final EnumMap<KeyChain.KeyPurpose, DeterministicKey> currentKeys;
     @Nullable private KeyCrypter keyCrypter;
     private int lookaheadSize = -1;
@@ -80,8 +103,34 @@ public class KeyChainGroup implements PeerFilterProvider {
     private KeyChainGroup(@Nullable BasicKeyChain basicKeyChain, List<DeterministicKeyChain> chains, @Nullable KeyCrypter crypter) {
         this.basic = basicKeyChain == null ? new BasicKeyChain() : basicKeyChain;
         this.chains = checkNotNull(chains);
+        //reasign shadows to their masters
+        Set<DeterministicKeyChain> unasignedShadows = new HashSet<DeterministicKeyChain>();
+        for (DeterministicKeyChain chain: chains){
+        	chain.setGroup(this);
+        	if (chain.isShadowChain()){
+        		unasignedShadows.add(chain); 
+        	}else {
+        		Iterator<DeterministicKeyChain> i = unasignedShadows.iterator();
+        		while (i.hasNext()){
+        			DeterministicKeyChain shadowChain = i.next();
+    				DeterministicKey dk = chain.findKeyFromPubHash(shadowChain.getMasterReference());
+    				if (dk!=null){
+	    				if (null==shadowMap)
+	    					shadowMap = HashMultimap.create();
+	    				shadowMap.put(chain, shadowChain);
+	    				i.remove();
+    				}
+        		}
+        	}
+        }
+        if (unasignedShadows.size()>0)
+        	throw new RuntimeException("reasigning shadows failed, " + unasignedShadows.size() + " left over.");
         this.keyCrypter = crypter;
         this.currentKeys = new EnumMap<KeyChain.KeyPurpose, DeterministicKey>(KeyChain.KeyPurpose.class);
+    }
+    
+    public KeyChainGroup(List<DeterministicKeyChain> chains){
+    	this(null, chains, null);
     }
 
     private void createAndActivateNewHDChain() {
@@ -91,6 +140,106 @@ public class KeyChainGroup implements PeerFilterProvider {
         if (lookaheadSize >= 0)
             chain.setLookaheadSize(lookaheadSize);
         chains.add(chain);
+    }
+    
+    /**
+     * Tells us if a {@link com.google.bitcoin.wallet.DeterministicKeyChain} has any shadows. 
+     */
+    public boolean isMarried(DeterministicKeyChain keychain){
+    	return null==shadowMap ? false : shadowMap.get(keychain).size() > 0;
+    }
+    
+    /**
+     *  Get a collection of married chains
+     */
+    public Collection<DeterministicKeyChain> getMarriedChains(DeterministicKeyChain keychain){
+    	if (null==shadowMap){
+    		return null;
+    	}
+    	Set<DeterministicKeyChain> rv = new HashSet<DeterministicKeyChain>(shadowMap.get(keychain));
+    	return rv;
+    }
+    
+    /**
+     * Looks up a chain by key
+     * @param key
+     * @return
+     */
+    public DeterministicKeyChain getChain(DeterministicKey key){
+    	for (int i = chains.size() -1; i>=0;i--){
+    		DeterministicKey lookup = chains.get(i).findKeyFromPubHash(key.getPubKeyHash());
+    		if (lookup.equals(key)){
+    			return chains.get(i);
+    		}
+    	}
+    	return null;
+    }
+    
+    /**
+     * Tells us the shadow keys of a specific key
+     * @param key
+     * @return
+     */
+    public Collection<DeterministicKey> getShadows(DeterministicKey key){
+    	DeterministicKeyChain chain = getChain(key);
+    	if (null==chain)
+    		return null;
+    	//get all shadows of keychain
+    	Collection<DeterministicKeyChain> shadows = getMarriedChains(chain);
+    	if (null==shadows)
+    		return null;
+    	//collect keys by path
+    	Set<DeterministicKey> keys = new HashSet<DeterministicKey>();
+    	for (DeterministicKeyChain shadow: shadows){
+    		keys.add(shadow.getKeyByPath(key.getPath(),true));
+    	}
+    	return keys;
+    }
+    
+
+    /**
+     * Returns an address that hasn't been seen in a transaction yet, and which is suitable for displaying in a wallet
+     * user interface as "a convenient address to receive funds on" when the purpose parameter is
+     * {@link com.google.bitcoin.wallet.KeyChain.KeyPurpose#RECEIVE_FUNDS}. The returned address is stable until
+     * it's actually seen in a pending or confirmed transaction, at which point this method will start returning
+     * a different address (for each purpose independently).
+     */
+    public Address currentAddress(KeyChain.KeyPurpose purpose, NetworkParameters params) {
+        final DeterministicKey current = currentKeys.get(purpose);
+        DeterministicKey key = current != null ? current : freshKey(purpose);
+        if (!isMarried(getChain(key))){
+        	return key.toAddress(params);
+        }else{
+        	Script script = createP2SHOutputScriptFromMultiSig(key);
+        	return Address.fromP2SHScript(params, script);
+        }
+    }
+    
+    public Script createP2SHOutputScriptFromMultiSig(DeterministicKey current){
+    	List<ECKey> pubkeys = new ArrayList<ECKey>(getShadows(current));
+    	pubkeys.add(current);
+    	return ScriptBuilder.createP2SHOutputScript(2, pubkeys);
+    }
+
+    
+    /**
+     * Returns a key that has not been returned by this method before (fresh). You can think of this as being
+     * a newly created key, although the notion of "create" is not really valid for a
+     * {@link com.google.bitcoin.wallet.DeterministicKeyChain}. When the parameter is
+     * {@link com.google.bitcoin.wallet.KeyChain.KeyPurpose#RECEIVE_FUNDS} the returned key is suitable for being put
+     * into a receive coins wizard type UI. You should use this when the user is definitely going to hand this key out
+     * to someone who wishes to send money.
+     */
+    public Address freshAddress(KeyChain.KeyPurpose purpose, NetworkParameters params) {
+        DeterministicKeyChain chain = getActiveKeyChain();
+        DeterministicKey key = chain.getKey(purpose);   // Always returns the next key along the key chain.
+        currentKeys.put(purpose, key);
+        if (!isMarried(chain)){
+        	return key.toAddress(params);
+        }else{
+        	Script script = createP2SHOutputScriptFromMultiSig(key);
+        	return Address.fromP2SHScript(params, script);
+        }
     }
 
     /**
