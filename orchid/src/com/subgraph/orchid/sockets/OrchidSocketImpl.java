@@ -53,13 +53,16 @@ public class OrchidSocketImpl extends SocketImpl {
 
 	@Override
 	protected void connect(String host, int port) throws IOException {
-		throw new UnsupportedOperationException();
+        SocketAddress endpoint =
+                InetSocketAddress.createUnresolved(host, port);
+        connect(endpoint, 0);
 	}
 
 	@Override
 	protected void connect(InetAddress address, int port) throws IOException {
-		throw new UnsupportedOperationException();
-		
+        SocketAddress endpoint =
+                InetSocketAddress.createUnresolved(address.getHostAddress(), port);
+        connect(endpoint, 0);
 	}
 
 	@Override
