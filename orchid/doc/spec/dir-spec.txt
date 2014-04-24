@@ -1,0 +1,2132 @@
+
+                      Tor directory protocol, version 3
+
+0. Scope and preliminaries
+
+   This directory protocol is used by Tor version 0.2.0.x-alpha and later.
+   See dir-spec-v1.txt for information on the protocol used up to the
+   0.1.0.x series, and dir-spec-v2.txt for information on the protocol
+   used by the 0.1.1.x and 0.1.2.x series.
+
+   Caches and authorities must still support older versions of the
+   directory protocols, until the versions of Tor that require them are
+   finally out of commission.  See Section XXXX on backward compatibility.
+
+   This document merges and supersedes the following proposals:
+
+       101  Voting on the Tor Directory System
+       103  Splitting identity key from regularly used signing key
+       104  Long and Short Router Descriptors
+
+   AS OF 14 JUNE 2007, THIS SPECIFICATION HAS NOT YET BEEN COMPLETELY
+   IMPLEMENTED, OR COMPLETELY COMPLETED.
+
+   XXX when to download certificates.
+   XXX timeline
+   XXX fill in XXXXs
+
+0.1. History
+
+   The earliest versions of Onion Routing shipped with a list of known
+   routers and their keys.  When the set of routers changed, users needed to
+   fetch a new list.
+
+   The Version 1 Directory protocol
+   --------------------------------
+
+   Early versions of Tor (0.0.2) introduced "Directory authorities": servers
+   that served signed "directory" documents containing a list of signed
+   "router descriptors", along with short summary of the status of each
+   router.  Thus, clients could get up-to-date information on the state of
+   the network automatically, and be certain that the list they were getting
+   was attested by a trusted directory authority.
+
+   Later versions (0.0.8) added directory caches, which download
+   directories from the authorities and serve them to clients.  Non-caches
+   fetch from the caches in preference to fetching from the authorities, thus
+   distributing bandwidth requirements.
+
+   Also added during the version 1 directory protocol were "router status"
+   documents: short documents that listed only the up/down status of the
+   routers on the network, rather than a complete list of all the
+   descriptors.  Clients and caches would fetch these documents far more
+   frequently than they would fetch full directories.
+
+   The Version 2 Directory Protocol
+   --------------------------------
+
+   During the Tor 0.1.1.x series, Tor revised its handling of directory
+   documents in order to address two major problems:
+
+      * Directories had grown quite large (over 1MB), and most directory
+        downloads consisted mainly of router descriptors that clients
+        already had.
+
+      * Every directory authority was a trust bottleneck: if a single
+        directory authority lied, it could make clients believe for a time
+        an arbitrarily distorted view of the Tor network.  (Clients
+        trusted the most recent signed document they downloaded.) Thus,
+        adding more authorities would make the system less secure, not
+        more.
+
+   To address these, we extended the directory protocol so that
+   authorities now published signed "network status" documents.  Each
+   network status listed, for every router in the network: a hash of its
+   identity key, a hash of its most recent descriptor, and a summary of
+   what the authority believed about its status.  Clients would download
+   the authorities' network status documents in turn, and believe
+   statements about routers iff they were attested to by more than half of
+   the authorities.
+
+   Instead of downloading all router descriptors at once, clients
+   downloaded only the descriptors that they did not have.  Descriptors
+   were indexed by their digests, in order to prevent malicious caches
+   from giving different versions of a router descriptor to different
+   clients.
+
+   Routers began working harder to upload new descriptors only when their
+   contents were substantially changed.
+
+
+0.2. Goals of the version 3 protocol
+
+   Version 3 of the Tor directory protocol tries to solve the following
+   issues:
+
+      * A great deal of bandwidth used to transmit router descriptors was
+        used by two fields that are not actually used by Tor routers
+        (namely read-history and write-history).  We save about 60% by
+        moving them into a separate document that most clients do not
+        fetch or use.
+
+      * It was possible under certain perverse circumstances for clients
+        to download an unusual set of network status documents, thus
+        partitioning themselves from clients who have a more recent and/or
+        typical set of documents.  Even under the best of circumstances,
+        clients were sensitive to the ages of the network status documents
+        they downloaded.  Therefore, instead of having the clients
+        correlate multiple network status documents, we have the
+        authorities collectively vote on a single consensus network status
+        document.
+
+      * The most sensitive data in the entire network (the identity keys
+        of the directory authorities) needed to be stored unencrypted so
+        that the authorities can sign network-status documents on the fly.
+        Now, the authorities' identity keys are stored offline, and used
+        to certify medium-term signing keys that can be rotated.
+
+0.3. Some Remaining questions
+
+   Things we could solve on a v3 timeframe:
+
+     The SHA-1 hash is showing its age.  We should do something about our
+     dependency on it.  We could probably future-proof ourselves here in
+     this revision, at least so far as documents from the authorities are
+     concerned.
+
+     Too many things about the authorities are hardcoded by IP.
+
+     Perhaps we should start accepting longer identity keys for routers
+     too.
+
+   Things to solve eventually:
+
+     Requiring every client to know about every router won't scale forever.
+
+     Requiring every directory cache to know every router won't scale
+     forever.
+
+
+1. Outline
+
+   There is a small set (say, around 5-10) of semi-trusted directory
+   authorities.  A default list of authorities is shipped with the Tor
+   software.  Users can change this list, but are encouraged not to do so,
+   in order to avoid partitioning attacks.
+
+   Every authority has a very-secret, long-term "Authority Identity Key".
+   This is stored encrypted and/or offline, and is used to sign "key
+   certificate" documents.  Every key certificate contains a medium-term
+   (3-12 months) "authority signing key", that is used by the authority to
+   sign other directory information.  (Note that the authority identity
+   key is distinct from the router identity key that the authority uses
+   in its role as an ordinary router.)
+
+   Routers periodically upload signed "routers descriptors" to the
+   directory authorities describing their keys, capabilities, and other
+   information.  Routers may also upload signed "extra info documents"
+   containing information that is not required for the Tor protocol.
+   Directory authorities serve router descriptors indexed by router
+   identity, or by hash of the descriptor.
+
+   Routers may act as directory caches to reduce load on the directory
+   authorities.  They announce this in their descriptors.
+
+   Periodically, each directory authority generates a view of
+   the current descriptors and status for known routers.  They send a
+   signed summary of this view (a "status vote") to the other
+   authorities.  The authorities compute the result of this vote, and sign
+   a "consensus status" document containing the result of the vote.
+
+   Directory caches download, cache, and re-serve consensus documents.
+
+   Clients, directory caches, and directory authorities all use consensus
+   documents to find out when their list of routers is out-of-date.
+   (Directory authorities also use vote statuses.) If it is, they download
+   any missing router descriptors.  Clients download missing descriptors
+   from caches; caches and authorities download from authorities.
+   Descriptors are downloaded by the hash of the descriptor, not by the
+   server's identity key: this prevents servers from attacking clients by
+   giving them descriptors nobody else uses.
+
+   All directory information is uploaded and downloaded with HTTP.
+
+   [Authorities also generate and caches also cache documents produced and
+   used by earlier versions of this protocol; see section XXX for notes.]
+
+1.1. What's different from version 2?
+
+   Clients used to download multiple network status documents,
+   corresponding roughly to "status votes" above.  They would compute the
+   result of the vote on the client side.
+
+   Authorities used to sign documents using the same private keys they used
+   for their roles as routers.  This forced them to keep these extremely
+   sensitive keys in memory unencrypted.
+
+   All of the information in extra-info documents used to be kept in the
+   main descriptors.
+
+1.2. Document meta-format
+
+  Router descriptors, directories, and running-routers documents all obey the
+  following lightweight extensible information format.
+
+  The highest level object is a Document, which consists of one or more
+  Items.  Every Item begins with a KeywordLine, followed by zero or more
+  Objects. A KeywordLine begins with a Keyword, optionally followed by
+  whitespace and more non-newline characters, and ends with a newline.  A
+  Keyword is a sequence of one or more characters in the set [A-Za-z0-9-].
+  An Object is a block of encoded data in pseudo-Open-PGP-style
+  armor. (cf. RFC 2440)
+
+  More formally:
+
+    NL = The ascii LF character (hex value 0x0a).
+    Document ::= (Item | NL)+
+    Item ::= KeywordLine Object*
+    KeywordLine ::= Keyword NL | Keyword WS ArgumentChar+ NL
+    Keyword = KeywordChar+
+    KeywordChar ::= 'A' ... 'Z' | 'a' ... 'z' | '0' ... '9' | '-'
+    ArgumentChar ::= any printing ASCII character except NL.
+    WS = (SP | TAB)+
+    Object ::= BeginLine Base-64-encoded-data EndLine
+    BeginLine ::= "-----BEGIN " Keyword "-----" NL
+    EndLine ::= "-----END " Keyword "-----" NL
+
+    The BeginLine and EndLine of an Object must use the same keyword.
+
+  When interpreting a Document, software MUST ignore any KeywordLine that
+  starts with a keyword it doesn't recognize; future implementations MUST NOT
+  require current clients to understand any KeywordLine not currently
+  described.
+
+  The "opt" keyword was used until Tor 0.1.2.5-alpha for non-critical future
+  extensions.  All implementations MUST ignore any item of the form "opt
+  keyword ....." when they would not recognize "keyword ....."; and MUST
+  treat "opt keyword ....."  as synonymous with "keyword ......" when keyword
+  is recognized.
+
+  Implementations before 0.1.2.5-alpha rejected any document with a
+  KeywordLine that started with a keyword that they didn't recognize.
+  When generating documents that need to be read by older versions of Tor,
+  implementations MUST prefix items not recognized by older versions of
+  Tor with an "opt" until those versions of Tor are obsolete.  [Note that
+  key certificates, status vote documents, extra info documents, and
+  status consensus documents will never be read by older versions of Tor.]
+
+  Other implementations that want to extend Tor's directory format MAY
+  introduce their own items.  The keywords for extension items SHOULD start
+  with the characters "x-" or "X-", to guarantee that they will not conflict
+  with keywords used by future versions of Tor.
+
+  In our document descriptions below, we tag Items with a multiplicity in
+  brackets.  Possible tags are:
+
+    "At start, exactly once": These items MUST occur in every instance of
+      the document type, and MUST appear exactly once, and MUST be the
+      first item in their documents.
+
+    "Exactly once": These items MUST occur exactly one time in every
+      instance of the document type.
+
+    "At end, exactly once": These items MUST occur in every instance of
+      the document type, and MUST appear exactly once, and MUST be the
+      last item in their documents.
+
+    "At most once": These items MAY occur zero or one times in any
+      instance of the document type, but MUST NOT occur more than once.
+
+    "Any number": These items MAY occur zero, one, or more times in any
+      instance of the document type.
+
+    "Once or more": These items MUST occur at least once in any instance
+      of the document type, and MAY occur more.
+
+1.3. Signing documents
+
+   Every signable document below is signed in a similar manner, using a
+   given "Initial Item", a final "Signature Item", a digest algorithm, and
+   a signing key.
+
+   The Initial Item must be the first item in the document.
+
+   The Signature Item has the following format:
+
+     <signature item keyword> [arguments] NL SIGNATURE NL
+
+   The "SIGNATURE" Object contains a signature (using the signing key) of
+   the PKCS1-padded digest of the entire document, taken from the
+   beginning of the Initial item, through the newline after the Signature
+   Item's keyword and its arguments.
+
+   Unless otherwise, the digest algorithm is SHA-1.
+
+   All documents are invalid unless signed with the correct signing key.
+
+   The "Digest" of a document, unless stated otherwise, is its digest *as
+   signed by this signature scheme*.
+
+1.4. Voting timeline
+
+   Every consensus document has a "valid-after" (VA) time, a "fresh-until"
+   (FU) time and a "valid-until" (VU) time.  VA MUST precede FU, which MUST
+   in turn precede VU.  Times are chosen so that every consensus will be
+   "fresh" until the next consensus becomes valid, and "valid" for a while
+   after.  At least 3 consensuses should be valid at any given time.
+
+   The timeline for a given consensus is as follows:
+
+   VA-DistSeconds-VoteSeconds: The authorities exchange votes.
+
+   VA-DistSeconds-VoteSeconds/2: The authorities try to download any
+   votes they don't have.
+
+   VA-DistSeconds: The authorities calculate the consensus and exchange
+   signatures.
+
+   VA-DistSeconds/2: The authorities try to download any signatures
+   they don't have.
+
+   VA: All authorities have a multiply signed consensus.
+
+   VA ... FU: Caches download the consensus.  (Note that since caches have
+        no way of telling what VA and FU are until they have downloaded
+        the consensus, they assume that the present consensus's VA is
+        equal to the previous one's FU, and that its FU is one interval after
+        that.)
+
+   FU: The consensus is no longer the freshest consensus.
+
+   FU ... (the current consensus's VU): Clients download the consensus.
+        (See note above: clients guess that the next consensus's FU will be
+        two intervals after the current VA.)
+
+   VU: The consensus is no longer valid.
+
+   VoteSeconds and DistSeconds MUST each be at least 20 seconds; FU-VA and
+   VU-FU MUST each be at least 5 minutes.
+
+2. Router operation and formats
+
+   ORs SHOULD generate a new router descriptor and a new extra-info
+   document whenever any of the following events have occurred:
+
+      - A period of time (18 hrs by default) has passed since the last
+        time a descriptor was generated.
+
+      - A descriptor field other than bandwidth or uptime has changed.
+
+      - Bandwidth has changed by a factor of 2 from the last time a
+        descriptor was generated, and at least a given interval of time
+        (20 mins by default) has passed since then.
+
+      - Its uptime has been reset (by restarting).
+
+      [XXX this list is incomplete; see router_differences_are_cosmetic()
+       in routerlist.c for others]
+
+   ORs SHOULD NOT publish a new router descriptor or extra-info document
+   if none of the above events have occurred and not much time has passed
+   (12 hours by default).
+
+   After generating a descriptor, ORs upload them to every directory
+   authority they know, by posting them (in order) to the URL
+
+      http://<hostname:port>/tor/
+
+2.1. Router descriptor format
+
+   Router descriptors consist of the following items.  For backward
+   compatibility, there should be an extra NL at the end of each router
+   descriptor.
+
+   In lines that take multiple arguments, extra arguments SHOULD be
+   accepted and ignored.  Many of the nonterminals below are defined in
+   section 2.3.
+
+     "router" nickname address ORPort SOCKSPort DirPort NL
+
+       [At start, exactly once.]
+
+       Indicates the beginning of a router descriptor.  "nickname" must be a
+       valid router nickname as specified in 2.3.  "address" must be an IPv4
+       address in dotted-quad format.  The last three numbers indicate the
+       TCP ports at which this OR exposes functionality. ORPort is a port at
+       which this OR accepts TLS connections for the main OR protocol;
+       SOCKSPort is deprecated and should always be 0; and DirPort is the
+       port at which this OR accepts directory-related HTTP connections.  If
+       any port is not supported, the value 0 is given instead of a port
+       number.  (At least one of DirPort and ORPort SHOULD be set;
+       authorities MAY reject any descriptor with both DirPort and ORPort of
+       0.)
+
+    "bandwidth" bandwidth-avg bandwidth-burst bandwidth-observed NL
+
+       [Exactly once]
+
+       Estimated bandwidth for this router, in bytes per second.  The
+       "average" bandwidth is the volume per second that the OR is willing to
+       sustain over long periods; the "burst" bandwidth is the volume that
+       the OR is willing to sustain in very short intervals.  The "observed"
+       value is an estimate of the capacity this server can handle.  The
+       server remembers the max bandwidth sustained output over any ten
+       second period in the past day, and another sustained input.  The
+       "observed" value is the lesser of these two numbers.
+
+    "platform" string NL
+
+       [At most once]
+
+       A human-readable string describing the system on which this OR is
+       running.  This MAY include the operating system, and SHOULD include
+       the name and version of the software implementing the Tor protocol.
+
+    "published" YYYY-MM-DD HH:MM:SS NL
+
+       [Exactly once]
+
+       The time, in GMT, when this descriptor (and its corresponding
+       extra-info document if any)  was generated.
+
+    "fingerprint" fingerprint NL
+
+       [At most once]
+
+       A fingerprint (a HASH_LEN-byte of asn1 encoded public key, encoded in
+       hex, with a single space after every 4 characters) for this router's
+       identity key. A descriptor is considered invalid (and MUST be
+       rejected) if the fingerprint line does not match the public key.
+
+       [We didn't start parsing this line until Tor 0.1.0.6-rc; it should
+        be marked with "opt" until earlier versions of Tor are obsolete.]
+
+    "hibernating" bool NL
+
+       [At most once]
+
+       If the value is 1, then the Tor server was hibernating when the
+       descriptor was published, and shouldn't be used to build circuits.
+
+       [We didn't start parsing this line until Tor 0.1.0.6-rc; it should be
+        marked with "opt" until earlier versions of Tor are obsolete.]
+
+    "uptime" number NL
+
+       [At most once]
+
+       The number of seconds that this OR process has been running.
+
+    "onion-key" NL a public key in PEM format
+
+       [Exactly once]
+
+       This key is used to encrypt EXTEND cells for this OR.  The key MUST be
+       accepted for at least 1 week after any new key is published in a
+       subsequent descriptor. It MUST be 1024 bits.
+
+    "signing-key" NL a public key in PEM format
+
+       [Exactly once]
+
+       The OR's long-term identity key.  It MUST be 1024 bits.
+
+    "accept" exitpattern NL
+    "reject" exitpattern NL
+
+       [Any number]
+
+       These lines describe an "exit policy": the rules that an OR follows
+       when deciding whether to allow a new stream to a given address.  The
+       'exitpattern' syntax is described below.  There MUST be at least one
+       such entry.  The rules are considered in order; if no rule matches,
+       the address will be accepted.  For clarity, the last such entry SHOULD
+       be accept *:* or reject *:*.
+
+    "router-signature" NL Signature NL
+
+       [At end, exactly once]
+
+       The "SIGNATURE" object contains a signature of the PKCS1-padded
+       hash of the entire router descriptor, taken from the beginning of the
+       "router" line, through the newline after the "router-signature" line.
+       The router descriptor is invalid unless the signature is performed
+       with the router's identity key.
+
+    "contact" info NL
+
+       [At most once]
+
+       Describes a way to contact the server's administrator, preferably
+       including an email address and a PGP key fingerprint.
+
+    "family" names NL
+
+        [At most once]
+
+        'Names' is a space-separated list of server nicknames or
+        hexdigests. If two ORs list one another in their "family" entries,
+        then OPs should treat them as a single OR for the purpose of path
+        selection.
+
+        For example, if node A's descriptor contains "family B", and node B's
+        descriptor contains "family A", then node A and node B should never
+        be used on the same circuit.
+
+    "read-history" YYYY-MM-DD HH:MM:SS (NSEC s) NUM,NUM,NUM,NUM,NUM... NL
+        [At most once]
+    "write-history" YYYY-MM-DD HH:MM:SS (NSEC s) NUM,NUM,NUM,NUM,NUM... NL
+        [At most once]
+
+        Declare how much bandwidth the OR has used recently. Usage is divided
+        into intervals of NSEC seconds.  The YYYY-MM-DD HH:MM:SS field
+        defines the end of the most recent interval.  The numbers are the
+        number of bytes used in the most recent intervals, ordered from
+        oldest to newest.
+
+        [We didn't start parsing these lines until Tor 0.1.0.6-rc; they should
+         be marked with "opt" until earlier versions of Tor are obsolete.]
+
+        [See also migration notes in section 2.2.1.]
+
+    "eventdns" bool NL
+
+        [At most once]
+
+        Declare whether this version of Tor is using the newer enhanced
+        dns logic.  Versions of Tor with this field set to false SHOULD NOT
+        be used for reverse hostname lookups.
+
+        [All versions of Tor before 0.1.2.2-alpha should be assumed to have
+         this option set to 0 if it is not present.  All Tor versions at
+         0.1.2.2-alpha or later should be assumed to have this option set to
+         1 if it is not present.  Until 0.1.2.1-alpha-dev, this option was
+         not generated, even when the new DNS code was in use.  Versions of Tor
+         before 0.1.2.1-alpha-dev did not parse this option, so it should be
+         marked "opt".  The dnsworker logic has been removed, so this option
+         should not be used by new server code.  However, it can still be
+         used, and should still be recognized by new code until Tor 0.1.2.x
+         is obsolete.]
+
+   "caches-extra-info" NL
+
+       [At most once.]
+
+       Present only if this router is a directory cache that provides
+       extra-info documents.
+
+       [Versions before 0.2.0.1-alpha don't recognize this, and versions
+        before 0.1.2.5-alpha will reject descriptors containing it unless
+        it is prefixed with "opt"; it should be so prefixed until these
+        versions are obsolete.]
+
+   "extra-info-digest" digest NL
+
+       [At most once]
+
+       "Digest" is a hex-encoded digest (using upper-case characters) of the
+       router's extra-info document, as signed in the router's extra-info
+       (that is, not including the signature).  (If this field is absent, the
+       router is not uploading a corresponding extra-info document.)
+
+       [Versions before 0.2.0.1-alpha don't recognize this, and versions
+        before 0.1.2.5-alpha will reject descriptors containing it unless
+        it is prefixed with "opt"; it should be so prefixed until these
+        versions are obsolete.]
+
+   "hidden-service-dir" *(SP VersionNum) NL
+
+       [At most once.]
+
+       Present only if this router stores and serves hidden service
+       descriptors. If any VersionNum(s) are specified, this router
+       supports those descriptor versions. If none are specified, it
+       defaults to version 2 descriptors.
+
+       [Versions of Tor before 0.1.2.5-alpha rejected router descriptors
+        with unrecognized items; the protocols line should be preceded with
+        an "opt" until these Tors are obsolete.]
+
+   "protocols" SP "Link" SP LINK-VERSION-LIST SP "Circuit" SP
+          CIRCUIT-VERSION-LIST NL
+
+       [At most once.]
+
+       Both lists are space-separated sequences of numbers, to indicate which
+       protocols the server supports.  As of 30 Mar 2008, specified
+       protocols are "Link 1 2 Circuit 1".  See section 4.1 of tor-spec.txt
+       for more information about link protocol versions.
+
+       [Versions of Tor before 0.1.2.5-alpha rejected router descriptors
+        with unrecognized items; the protocols line should be preceded with
+        an "opt" until these Tors are obsolete.]
+
+   "allow-single-hop-exits"
+
+       [At most once.]
+
+       Present only if the router allows single-hop circuits to make exit
+       connections.  Most Tor servers do not support this: this is
+       included for specialized controllers designed to support perspective
+       access and such.
+
+
+2.2. Extra-info documents
+
+   Extra-info documents consist of the following items:
+
+    "extra-info" Nickname Fingerprint NL
+        [At start, exactly once.]
+
+        Identifies what router this is an extra info descriptor for.
+        Fingerprint is encoded in hex (using upper-case letters), with
+        no spaces.
+
+    "published"
+
+       [Exactly once.]
+
+       The time, in GMT, when this document (and its corresponding router
+       descriptor if any) was generated.  It MUST match the published time
+       in the corresponding router descriptor.
+
+    "read-history" YYYY-MM-DD HH:MM:SS (NSEC s) NUM,NUM,NUM,NUM,NUM... NL
+        [At most once.]
+    "write-history" YYYY-MM-DD HH:MM:SS (NSEC s) NUM,NUM,NUM,NUM,NUM... NL
+        [At most once.]
+
+        As documented in 2.1 above.  See migration notes in section 2.2.1.
+
+    "geoip-start" YYYY-MM-DD HH:MM:SS NL
+    "geoip-client-origins" CC=N,CC=N,... NL
+
+        Only generated by bridge routers (see blocking.pdf), and only
+        when they have been configured with a geoip database.
+        Non-bridges SHOULD NOT generate these fields.  Contains a list
+        of mappings from two-letter country codes (CC) to the number
+        of clients that have connected to that bridge from that
+        country (approximate, and rounded up to the nearest multiple of 8
+        in order to hamper traffic analysis).  A country is included
+        only if it has at least one address.  The time in
+        "geoip-start" is the time at which we began collecting geoip
+        statistics.
+
+    "dirreq-stats-end" YYYY-MM-DD HH:MM:SS (NSEC s) NL
+        [At most once.]
+
+        YYYY-MM-DD HH:MM:SS defines the end of the included measurement
+        interval of length NSEC seconds (86400 seconds by default).
+
+        A "dirreq-stats-end" line, as well as any other "dirreq-*" line,
+        is only added when the relay has opened its Dir port and after 24
+        hours of measuring directory requests.
+
+    "dirreq-v2-ips" CC=N,CC=N,... NL
+        [At most once.]
+    "dirreq-v3-ips" CC=N,CC=N,... NL
+        [At most once.]
+
+        List of mappings from two-letter country codes to the number of
+        unique IP addresses that have connected from that country to
+        request a v2/v3 network status, rounded up to the nearest multiple
+        of 8. Only those IP addresses are counted that the directory can
+        answer with a 200 OK status code.
+
+    "dirreq-v2-reqs" CC=N,CC=N,... NL
+        [At most once.]
+    "dirreq-v3-reqs" CC=N,CC=N,... NL
+        [At most once.]
+
+        List of mappings from two-letter country codes to the number of
+        requests for v2/v3 network statuses from that country, rounded up
+        to the nearest multiple of 8. Only those requests are counted that
+        the directory can answer with a 200 OK status code.
+
+    "dirreq-v2-share" num% NL
+        [At most once.]
+    "dirreq-v3-share" num% NL
+        [At most once.]
+
+        The share of v2/v3 network status requests that the directory
+        expects to receive from clients based on its advertised bandwidth
+        compared to the overall network bandwidth capacity. Shares are
+        formatted in percent with two decimal places. Shares are
+        calculated as means over the whole 24-hour interval.
+
+    "dirreq-v2-resp" status=num,... NL
+        [At most once.]
+    "dirreq-v3-resp" status=nul,... NL
+        [At most once.]
+
+        List of mappings from response statuses to the number of requests
+        for v2/v3 network statuses that were answered with that response
+        status, rounded up to the nearest multiple of 4. Only response
+        statuses with at least 1 response are reported. New response
+        statuses can be added at any time. The current list of response
+        statuses is as follows:
+
+        "ok": a network status request is answered; this number
+           corresponds to the sum of all requests as reported in
+           "dirreq-v2-reqs" or "dirreq-v3-reqs", respectively, before
+           rounding up.
+        "not-enough-sigs: a version 3 network status is not signed by a
+           sufficient number of requested authorities.
+        "unavailable": a requested network status object is unavailable.
+        "not-found": a requested network status is not found.
+        "not-modified": a network status has not been modified since the
+           If-Modified-Since time that is included in the request.
+        "busy": the directory is busy.
+
+    "dirreq-v2-direct-dl" key=val,... NL
+        [At most once.]
+    "dirreq-v3-direct-dl" key=val,... NL
+        [At most once.]
+    "dirreq-v2-tunneled-dl" key=val,... NL
+        [At most once.]
+    "dirreq-v3-tunneled-dl" key=val,... NL
+        [At most once.]
+
+        List of statistics about possible failures in the download process
+        of v2/v3 network statuses. Requests are either "direct"
+        HTTP-encoded requests over the relay's directory port, or
+        "tunneled" requests using a BEGIN_DIR cell over the relay's OR
+        port. The list of possible statistics can change, and statistics
+        can be left out from reporting. The current list of statistics is
+        as follows:
+
+        Successful downloads and failures:
+
+        "complete": a client has finished the download successfully.
+        "timeout": a download did not finish within 10 minutes after
+           starting to send the response.
+        "running": a download is still running at the end of the
+           measurement period for less than 10 minutes after starting to
+           send the response.
+
+        Download times:
+
+        "min", "max": smallest and largest measured bandwidth in B/s.
+        "d[1-4,6-9]": 1st to 4th and 6th to 9th decile of measured
+           bandwidth in B/s. For a given decile i, i/10 of all downloads
+           had a smaller bandwidth than di, and (10-i)/10 of all downloads
+           had a larger bandwidth than di.
+        "q[1,3]": 1st and 3rd quartile of measured bandwidth in B/s. One
+           fourth of all downloads had a smaller bandwidth than q1, one
+           fourth of all downloads had a larger bandwidth than q3, and the
+           remaining half of all downloads had a bandwidth between q1 and
+           q3.
+        "md": median of measured bandwidth in B/s. Half of the downloads
+           had a smaller bandwidth than md, the other half had a larger
+           bandwidth than md.
+
+    "entry-stats-end" YYYY-MM-DD HH:MM:SS (NSEC s) NL
+        [At most once.]
+
+        YYYY-MM-DD HH:MM:SS defines the end of the included measurement
+        interval of length NSEC seconds (86400 seconds by default).
+
+        An "entry-stats-end" line, as well as any other "entry-*"
+        line, is first added after the relay has been running for at least
+        24 hours.
+
+    "entry-ips" CC=N,CC=N,... NL
+        [At most once.]
+
+        List of mappings from two-letter country codes to the number of
+        unique IP addresses that have connected from that country to the
+        relay and which are no known other relays, rounded up to the
+        nearest multiple of 8.
+
+    "cell-stats-end" YYYY-MM-DD HH:MM:SS (NSEC s) NL
+        [At most once.]
+
+        YYYY-MM-DD HH:MM:SS defines the end of the included measurement
+        interval of length NSEC seconds (86400 seconds by default).
+
+        A "cell-stats-end" line, as well as any other "cell-*" line,
+        is first added after the relay has been running for at least 24
+        hours.
+
+    "cell-processed-cells" num,...,num NL
+        [At most once.]
+
+        Mean number of processed cells per circuit, subdivided into
+        deciles of circuits by the number of cells they have processed in
+        descending order from loudest to quietest circuits.
+
+    "cell-queued-cells" num,...,num NL
+        [At most once.]
+
+        Mean number of cells contained in queues by circuit decile. These
+        means are calculated by 1) determining the mean number of cells in
+        a single circuit between its creation and its termination and 2)
+        calculating the mean for all circuits in a given decile as
+        determined in "cell-processed-cells". Numbers have a precision of
+        two decimal places.
+
+    "cell-time-in-queue" num,...,num NL
+        [At most once.]
+
+        Mean time cells spend in circuit queues in milliseconds. Times are
+        calculated by 1) determining the mean time cells spend in the
+        queue of a single circuit and 2) calculating the mean for all
+        circuits in a given decile as determined in
+        "cell-processed-cells".
+
+    "cell-circuits-per-decile" num NL
+        [At most once.]
+
+        Mean number of circuits that are included in any of the deciles,
+        rounded up to the next integer.
+
+    "exit-stats-end" YYYY-MM-DD HH:MM:SS (NSEC s) NL
+        [At most once.]
+
+        YYYY-MM-DD HH:MM:SS defines the end of the included measurement
+        interval of length NSEC seconds (86400 seconds by default).
+
+        An "exit-stats-end" line, as well as any other "exit-*" line, is
+        first added after the relay has been running for at least 24 hours
+        and only if the relay permits exiting (where exiting to a single
+        port and IP address is sufficient).
+
+    "exit-kibibytes-written" port=N,port=N,... NL
+        [At most once.]
+    "exit-kibibytes-read" port=N,port=N,... NL
+        [At most once.]
+
+        List of mappings from ports to the number of kibibytes that the
+        relay has written to or read from exit connections to that port,
+        rounded up to the next full kibibyte.
+
+    "exit-streams-opened" port=N,port=N,... NL
+        [At most once.]
+
+        List of mappings from ports to the number of opened exit streams
+        to that port, rounded up to the nearest multiple of 4.
+
+    "router-signature" NL Signature NL
+        [At end, exactly once.]
+
+        A document signature as documented in section 1.3, using the
+        initial item "extra-info" and the final item "router-signature",
+        signed with the router's identity key.
+
+2.2.1. Moving history fields to extra-info documents.
+
+   Tools that want to use the read-history and write-history values SHOULD
+   download extra-info documents as well as router descriptors.  Such
+   tools SHOULD accept history values from both sources; if they appear in
+   both documents, the values in the extra-info documents are authoritative.
+
+   New versions of Tor no longer generate router descriptors
+   containing read-history or write-history.  Tools should continue to
+   accept read-history and write-history values in router descriptors
+   produced by older versions of Tor until all Tor versions earlier
+   than 0.2.0.x are obsolete.
+
+2.3. Nonterminals in router descriptors
+
+   nickname ::= between 1 and 19 alphanumeric characters ([A-Za-z0-9]),
+      case-insensitive.
+   hexdigest ::= a '$', followed by 40 hexadecimal characters
+      ([A-Fa-f0-9]). [Represents a server by the digest of its identity
+      key.]
+
+   exitpattern ::= addrspec ":" portspec
+   portspec ::= "*" | port | port "-" port
+   port ::= an integer between 1 and 65535, inclusive.
+
+      [Some implementations incorrectly generate ports with value 0.
+       Implementations SHOULD accept this, and SHOULD NOT generate it.
+       Connections to port 0 are never permitted.]
+
+   addrspec ::= "*" | ip4spec | ip6spec
+   ipv4spec ::= ip4 | ip4 "/" num_ip4_bits | ip4 "/" ip4mask
+   ip4 ::= an IPv4 address in dotted-quad format
+   ip4mask ::= an IPv4 mask in dotted-quad format
+   num_ip4_bits ::= an integer between 0 and 32
+   ip6spec ::= ip6 | ip6 "/" num_ip6_bits
+   ip6 ::= an IPv6 address, surrounded by square brackets.
+   num_ip6_bits ::= an integer between 0 and 128
+
+   bool ::= "0" | "1"
+
+3. Formats produced by directory authorities.
+
+   Every authority has two keys used in this protocol: a signing key, and
+   an authority identity key.  (Authorities also have a router identity
+   key used in their role as a router and by earlier versions of the
+   directory protocol.)  The identity key is used from time to time to
+   sign new key certificates using new signing keys; it is very sensitive.
+   The signing key is used to sign key certificates and status documents.
+
+   There are three kinds of documents generated by directory authorities:
+
+     Key certificates
+     Status votes
+     Status consensuses
+
+   Each is discussed below.
+
+3.1. Key certificates
+
+   Key certificates consist of the following items:
+
+    "dir-key-certificate-version" version NL
+
+        [At start, exactly once.]
+
+        Determines the version of the key certificate.  MUST be "3" for
+        the protocol described in this document.  Implementations MUST
+        reject formats they don't understand.
+
+    "dir-address" IPPort NL
+        [At most once]
+
+        An IP:Port for this authority's directory port.
+
+    "fingerprint" fingerprint NL
+
+        [Exactly once.]
+
+        Hexadecimal encoding without spaces based on the authority's
+        identity key.
+
+    "dir-identity-key" NL a public key in PEM format
+
+        [Exactly once.]
+
+        The long-term authority identity key for this authority.  This key
+        SHOULD be at least 2048 bits long; it MUST NOT be shorter than
+        1024 bits.
+
+    "dir-key-published" YYYY-MM-DD HH:MM:SS NL
+
+        [Exactly once.]
+
+        The time (in GMT) when this document and corresponding key were
+        last generated.
+
+    "dir-key-expires" YYYY-MM-DD HH:MM:SS NL
+
+        [Exactly once.]
+
+        A time (in GMT) after which this key is no longer valid.
+
+    "dir-signing-key" NL a key in PEM format
+
+        [Exactly once.]
+
+        The directory server's public signing key.  This key MUST be at
+        least 1024 bits, and MAY be longer.
+
+    "dir-key-crosscert" NL CrossSignature NL
+
+        [At most once.]
+
+        NOTE: Authorities MUST include this field in all newly generated
+        certificates.  A future version of this specification will make
+        the field required.
+
+        CrossSignature is a signature, made using the certificate's signing
+        key, of the digest of the PKCS1-padded hash of the certificate's
+        identity key.  For backward compatibility with broken versions of the
+        parser, we wrap the base64-encoded signature in -----BEGIN ID
+        SIGNATURE---- and -----END ID SIGNATURE----- tags.  Implementations
+        MUST allow the "ID " portion to be omitted, however.
+
+        When encountering a certificate with a dir-key-crosscert entry,
+        implementations MUST verify that the signature is a correct signature
+        of the hash of the identity key using the signing key.
+
+    "dir-key-certification" NL Signature NL
+
+        [At end, exactly once.]
+
+        A document signature as documented in section 1.3, using the
+        initial item "dir-key-certificate-version" and the final item
+        "dir-key-certification", signed with the authority identity key.
+
+   Authorities MUST generate a new signing key and corresponding
+   certificate before the key expires.
+
+3.2. Vote and consensus status documents
+
+   Votes and consensuses are more strictly formatted then other documents
+   in this specification, since different authorities must be able to
+   generate exactly the same consensus given the same set of votes.
+
+   The procedure for deciding when to generate vote and consensus status
+   documents are described in section XXX below.
+
+   Status documents contain a preamble, an authority section, a list of
+   router status entries, and one or more footer signature, in that order.
+
+   Unlike other formats described above, a SP in these documents must be a
+   single space character (hex 20).
+
+   Some items appear only in votes, and some items appear only in
+   consensuses.  Unless specified, items occur in both.
+
+   The preamble contains the following items.  They MUST occur in the
+   order given here:
+
+    "network-status-version" SP version NL.
+
+        [At start, exactly once.]
+
+        A document format version.  For this specification, the version is
+        "3".
+
+    "vote-status" SP type NL
+
+        [Exactly once.]
+
+        The status MUST be "vote" or "consensus", depending on the type of
+        the document.
+
+    "consensus-methods" SP IntegerList NL
+
+        [Exactly once for votes; does not occur in consensuses.]
+
+        A space-separated list of supported methods for generating
+        consensuses from votes.  See section 3.4.1 for details.  Method "1"
+        MUST be included.
+
+    "consensus-method" SP Integer NL
+
+        [Exactly once for consensuses; does not occur in votes.]
+
+        See section 3.4.1 for details.
+
+        (Only included when the vote is generated with consensus-method 2 or
+        later.)
+
+    "published" SP YYYY-MM-DD SP HH:MM:SS NL
+
+        [Exactly once for votes; does not occur in consensuses.]
+
+        The publication time for this status document (if a vote).
+
+    "valid-after" SP YYYY-MM-DD SP HH:MM:SS NL
+
+        [Exactly once.]
+
+        The start of the Interval for this vote.  Before this time, the
+        consensus document produced from this vote should not be used.
+        See 1.4 for voting timeline information.
+
+    "fresh-until" SP YYYY-MM-DD SP HH:MM:SS NL
+
+        [Exactly once.]
+
+        The time at which the next consensus should be produced; before this
+        time, there is no point in downloading another consensus, since there
+        won't be a new one.  See 1.4 for voting timeline information.
+
+    "valid-until" SP YYYY-MM-DD SP HH:MM:SS NL
+
+        [Exactly once.]
+
+        The end of the Interval for this vote.  After this time, the
+        consensus produced by this vote should not be used.  See 1.4 for
+        voting timeline information.
+
+    "voting-delay" SP VoteSeconds SP DistSeconds NL
+
+        [Exactly once.]
+
+        VoteSeconds is the number of seconds that we will allow to collect
+        votes from all authorities; DistSeconds is the number of seconds
+        we'll allow to collect signatures from all authorities. See 1.4 for
+        voting timeline information.
+
+    "client-versions" SP VersionList NL
+
+        [At most once.]
+
+        A comma-separated list of recommended client versions, in
+        ascending order.  If absent, no opinion is held about client
+        versions.
+
+    "server-versions" SP VersionList NL
+
+        [At most once.]
+
+        A comma-separated list of recommended server versions, in
+        ascending order.  If absent, no opinion is held about server
+        versions.
+
+    "known-flags" SP FlagList NL
+
+        [Exactly once.]
+
+        A space-separated list of all of the flags that this document
+        might contain.  A flag is "known" either because the authority
+        knows about them and might set them (if in a vote), or because
+        enough votes were counted for the consensus for an authoritative
+        opinion to have been formed about their status.
+
+    "params" SP [Parameters] NL
+
+        [At most once]
+
+        Parameter ::= Keyword '=' Int32
+        Int32 ::= A decimal integer between -2147483648 and 2147483647.
+        Parameters ::= Parameter | Parameters SP Parameter
+
+        The parameters list, if present, contains a space-separated list of
+        key-value pairs, sorted in lexical order by their keyword.  Each
+        parameter has its own meaning.
+
+        (Only included when the vote is generated with consensus-method 7 or
+        later.)
+
+   The authority section of a vote contains the following items, followed
+   in turn by the authority's current key certificate:
+
+    "dir-source" SP nickname SP identity SP address SP IP SP dirport SP
+       orport NL
+
+        [Exactly once, at start]
+
+        Describes this authority.  The nickname is a convenient identifier
+        for the authority.  The identity is an uppercase hex fingerprint of
+        the authority's current (v3 authority) identity key.  The address is
+        the server's hostname.  The IP is the server's current IP address,
+        and dirport is its current directory port. XXXXorport
+
+    "contact" SP string NL
+
+        [At most once.]
+
+        An arbitrary string describing how to contact the directory
+        server's administrator.  Administrators should include at least an
+        email address and a PGP fingerprint.
+
+    "legacy-key" SP FINGERPRINT NL
+
+        [At most once]
+
+        Lists a fingerprint for an obsolete _identity_ key still used
+        by this authority to keep older clients working.  This option
+        is used to keep key around for a little while in case the
+        authorities need to migrate many identity keys at once.
+        (Generally, this would only happen because of a security
+        vulnerability that affected multiple authorities, like the
+        Debian OpenSSL RNG bug of May 2008.)
+
+   The authority section of a consensus contains groups the following items,
+   in the order given, with one group for each authority that contributed to
+   the consensus, with groups sorted by authority identity digest:
+
+    "dir-source" SP nickname SP identity SP address SP IP SP dirport SP
+       orport NL
+
+        [Exactly once, at start]
+
+        As in the authority section of a vote.
+
+    "contact" SP string NL
+
+        [At most once.]
+
+        As in the authority section of a vote.
+
+    "vote-digest" SP digest NL
+
+        [Exactly once.]
+
+        A digest of the vote from the authority that contributed to this
+        consensus, as signed (that is, not including the signature).
+        (Hex, upper-case.)
+
+   Each router status entry contains the following items.  Router status
+   entries are sorted in ascending order by identity digest.
+
+    "r" SP nickname SP identity SP digest SP publication SP IP SP ORPort
+        SP DirPort NL
+
+        [At start, exactly once.]
+
+        "Nickname" is the OR's nickname.  "Identity" is a hash of its
+        identity key, encoded in base64, with trailing equals sign(s)
+        removed.  "Digest" is a hash of its most recent descriptor as
+        signed (that is, not including the signature), encoded in base64.
+        "Publication" is the
+        publication time of its most recent descriptor, in the form
+        YYYY-MM-DD HH:MM:SS, in GMT.  "IP" is its current IP address;
+        ORPort is its current OR port, "DirPort" is it's current directory
+        port, or "0" for "none".
+
+    "s" SP Flags NL
+
+        [At most once.]
+
+        A series of space-separated status flags, in alphabetical order.
+        Currently documented flags are:
+
+          "Authority" if the router is a directory authority.
+          "BadExit" if the router is believed to be useless as an exit node
+             (because its ISP censors it, because it is behind a restrictive
+             proxy, or for some similar reason).
+          "BadDirectory" if the router is believed to be useless as a
+             directory cache (because its directory port isn't working,
+             its bandwidth is always throttled, or for some similar
+             reason).
+          "Exit" if the router is more useful for building
+             general-purpose exit circuits than for relay circuits.  The
+             path building algorithm uses this flag; see path-spec.txt.
+          "Fast" if the router is suitable for high-bandwidth circuits.
+          "Guard" if the router is suitable for use as an entry guard.
+          "HSDir" if the router is considered a v2 hidden service directory.
+          "Named" if the router's identity-nickname mapping is canonical,
+             and this authority binds names.
+          "Stable" if the router is suitable for long-lived circuits.
+          "Running" if the router is currently usable.
+          "Unnamed" if another router has bound the name used by this
+             router, and this authority binds names.
+          "Valid" if the router has been 'validated'.
+          "V2Dir" if the router implements the v2 directory protocol.
+          "V3Dir" if the router implements this protocol.
+
+    "v" SP version NL
+
+        [At most once.]
+
+        The version of the Tor protocol that this server is running.  If
+        the value begins with "Tor" SP, the rest of the string is a Tor
+        version number, and the protocol is "The Tor protocol as supported
+        by the given version of Tor."  Otherwise, if the value begins with
+        some other string, Tor has upgraded to a more sophisticated
+        protocol versioning system, and the protocol is "a version of the
+        Tor protocol more recent than any we recognize."
+
+        Directory authorities SHOULD omit version strings they receive from
+        descriptors if they would cause "v" lines to be over 128 characters
+        long.
+
+    "w" SP "Bandwidth=" INT [SP "Measured=" INT] NL
+
+        [At most once.]
+
+        An estimate of the bandwidth of this server, in an arbitrary
+        unit (currently kilobytes per second).  Used to weight router
+        selection. 
+
+        Additionally, the Measured= keyword is present in votes by 
+        participating bandwidth measurement authorites to indicate
+        a measured bandwidth currently produced by measuring stream 
+        capacities. 
+
+        Other weighting keywords may be added later.
+        Clients MUST ignore keywords they do not recognize.
+
+    "p" SP ("accept" / "reject") SP PortList NL
+
+        [At most once.]
+
+        PortList = PortOrRange
+        PortList = PortList "," PortOrRange
+        PortOrRange = INT "-" INT / INT
+
+        A list of those ports that this router supports (if 'accept')
+        or does not support (if 'reject') for exit to "most
+        addresses".
+
+   The signature section contains the following item, which appears
+   Exactly Once for a vote, and At Least Once for a consensus.
+
+    "directory-signature" SP identity SP signing-key-digest NL Signature
+
+        This is a signature of the status document, with the initial item
+        "network-status-version", and the signature item
+        "directory-signature", using the signing key.  (In this case, we take
+        the hash through the _space_ after directory-signature, not the
+        newline: this ensures that all authorities sign the same thing.)
+        "identity" is the hex-encoded digest of the authority identity key of
+        the signing authority, and "signing-key-digest" is the hex-encoded
+        digest of the current authority signing key of the signing authority.
+
+3.3. Deciding how to vote.
+
+   (This section describes how directory authorities choose which status
+   flags to apply to routers, as of Tor 0.2.0.0-alpha-dev. Later directory
+   authorities MAY do things differently, so long as clients keep working
+   well.  Clients MUST NOT depend on the exact behaviors in this section.)
+
+   In the below definitions, a router is considered "active" if it is
+   running, valid, and not hibernating.
+
+   "Valid" -- a router is 'Valid' if it is running a version of Tor not
+   known to be broken, and the directory authority has not blacklisted
+   it as suspicious.
+
+   "Named" -- Directory authority administrators may decide to support name
+   binding.  If they do, then they must maintain a file of
+   nickname-to-identity-key mappings, and try to keep this file consistent
+   with other directory authorities.  If they don't, they act as clients, and
+   report bindings made by other directory authorities (name X is bound to
+   identity Y if at least one binding directory lists it, and no directory
+   binds X to some other Y'.)  A router is called 'Named' if the router
+   believes the given name should be bound to the given key.
+
+        Two strategies exist on the current network for deciding on
+        values for the Named flag.  In the original version, server
+        operators were asked to send nickname-identity pairs to a
+        mailing list of Naming directory authorities operators.  The
+        operators were then supposed to add the pairs to their
+        mapping files; in practice, they didn't get to this often.
+
+        Newer Naming authorities run a script that registers routers
+        in their mapping files once the routers have been online at
+        least two weeks, no other router has that nickname, and no
+        other router has wanted the nickname for a month.  If a router
+        has not been online for six months, the router is removed.
+
+   "Unnamed" -- Directory authorities that support naming should vote for a
+   router to be 'Unnamed' if its given nickname is mapped to a different
+   identity.
+
+   "Running" -- A router is 'Running' if the authority managed to connect to
+   it successfully within the last 30 minutes.
+
+   "Stable" -- A router is 'Stable' if it is active, and either its Weighted
+   MTBF is at least the median for known active routers or its Weighted MTBF
+   corresponds to at least 7 days. Routers are never called Stable if they are
+   running a version of Tor known to drop circuits stupidly.  (0.1.1.10-alpha
+   through 0.1.1.16-rc are stupid this way.)
+
+        To calculate weighted MTBF, compute the weighted mean of the lengths
+        of all intervals when the router was observed to be up, weighting
+        intervals by $\alpha^n$, where $n$ is the amount of time that has
+        passed since the interval ended, and $\alpha$ is chosen so that
+        measurements over approximately one month old no longer influence the
+        weighted MTBF much.
+
+        [XXXX what happens when we have less than 4 days of MTBF info.]
+
+   "Exit" -- A router is called an 'Exit' iff it allows exits to at
+    least two of the ports 80, 443, and 6667 and allows exits to at
+    least one /8 address space.
+
+   "Fast" -- A router is 'Fast' if it is active, and its bandwidth is
+   either in the top 7/8ths for known active routers or at least 100KB/s.
+
+   "Guard" -- A router is a possible 'Guard' if its Weighted Fractional
+   Uptime is at least the median for "familiar" active routers, and if
+   its bandwidth is at least median or at least 250KB/s.
+   If the total bandwidth of active non-BadExit Exit servers is less
+   than one third of the total bandwidth of all active servers, no Exit is
+   listed as a Guard.
+
+        To calculate weighted fractional uptime, compute the fraction
+        of time that the router is up in any given day, weighting so that
+        downtime and uptime in the past counts less.
+
+        A node is 'familiar' if 1/8 of all active nodes have appeared more
+        recently than it, OR it has been around for a few weeks.
+
+   "Authority" -- A router is called an 'Authority' if the authority
+   generating the network-status document believes it is an authority.
+
+   "V2Dir" -- A router supports the v2 directory protocol if it has an open
+   directory port, and it is running a version of the directory protocol that
+   supports the functionality clients need.  (Currently, this is
+   0.1.1.9-alpha or later.)
+
+   "V3Dir" -- A router supports the v3 directory protocol if it has an open
+   directory port, and it is running a version of the directory protocol that
+   supports the functionality clients need.  (Currently, this is
+   0.2.0.?????-alpha or later.)
+
+   "HSDir" -- A router is a v2 hidden service directory if it stores and
+   serves v2 hidden service descriptors and the authority managed to connect
+   to it successfully within the last 24 hours.
+
+   Directory server administrators may label some servers or IPs as
+   blacklisted, and elect not to include them in their network-status lists.
+
+   Authorities SHOULD 'disable' any servers in excess of 3 on any single IP.
+   When there are more than 3 to choose from, authorities should first prefer
+   authorities to non-authorities, then prefer Running to non-Running, and
+   then prefer high-bandwidth to low-bandwidth.  To 'disable' a server, the
+   authority *should* advertise it without the Running or Valid flag.
+
+   Thus, the network-status vote includes all non-blacklisted,
+   non-expired, non-superseded descriptors.
+
+   The bandwidth in a "w" line should be taken as the best estimate
+   of the router's actual capacity that the authority has.  For now,
+   this should be the lesser of the observed bandwidth and bandwidth
+   rate limit from the router descriptor.  It is given in kilobytes
+   per second, and capped at some arbitrary value (currently 10 MB/s).
+
+   The Measured= keyword on a "w" line vote is currently computed
+   by multiplying the previous published consensus bandwidth by the 
+   ratio of the measured average node stream capacity to the network 
+   average. If 3 or more authorities provide a Measured= keyword for 
+   a router, the authorites produce a consensus containing a "w" 
+   Bandwidth= keyword equal to the median of the Measured= votes.
+
+   The ports listed in a "p" line should be taken as those ports for
+   which the router's exit policy permits 'most' addresses, ignoring any
+   accept not for all addresses, ignoring all rejects for private
+   netblocks.  "Most" addresses are permitted if no more than 2^25
+   IPv4 addresses (two /8 networks) were blocked.  The list is encoded
+   as described in 3.4.2.
+
+3.4. Computing a consensus from a set of votes
+
+   Given a set of votes, authorities compute the contents of the consensus
+   document as follows:
+
+     The "valid-after", "valid-until", and "fresh-until" times are taken as
+     the median of the respective values from all the votes.
+
+     The times in the "voting-delay" line are taken as the median of the
+     VoteSeconds and DistSeconds times in the votes.
+
+     Known-flags is the union of all flags known by any voter.
+
+     Entries are given on the "params" line for every keyword on which any
+     authority voted.  The values given are the low-median of all votes on
+     that keyword.
+
+    "client-versions" and "server-versions" are sorted in ascending
+     order; A version is recommended in the consensus if it is recommended
+     by more than half of the voting authorities that included a
+     client-versions or server-versions lines in their votes.
+
+     The authority item groups (dir-source, contact, fingerprint,
+     vote-digest) are taken from the votes of the voting
+     authorities. These groups are sorted by the digests of the
+     authorities identity keys, in ascending order.  If the consensus
+     method is 3 or later, a dir-source line must be included for
+     every vote with legacy-key entry, using the legacy-key's
+     fingerprint, the voter's ordinary nickname with the string
+     "-legacy" appended, and all other fields as from the original
+     vote's dir-source line.
+
+     A router status entry:
+        * is included in the result if some router status entry with the same
+          identity is included by more than half of the authorities (total
+          authorities, not just those whose votes we have).
+
+        * For any given identity, we include at most one router status entry.
+
+        * A router entry has a flag set if that is included by more than half
+          of the authorities who care about that flag.
+
+        * Two router entries are "the same" if they have the same
+          <descriptor digest, published time, nickname, IP, ports> tuple.
+          We choose the tuple for a given router as whichever tuple appears
+          for that router in the most votes.  We break ties first in favor of
+          the more recently published, then in favor of smaller server
+          descriptor digest.
+
+        * The Named flag appears if it is included for this routerstatus by
+          _any_ authority, and if all authorities that list it list the same
+          nickname. However, if consensus-method 2 or later is in use, and
+          any authority calls this identity/nickname pair Unnamed, then
+          this routerstatus does not get the Named flag.
+
+        * If consensus-method 2 or later is in use, the Unnamed flag is
+          set for a routerstatus if any authorities have voted for a different
+          identities to be Named with that nickname, or if any authority
+          lists that nickname/ID pair as Unnamed.
+
+          (With consensus-method 1, Unnamed is set like any other flag.)
+
+        * The version is given as whichever version is listed by the most
+          voters, with ties decided in favor of more recent versions.
+
+        * If consensus-method 4 or later is in use, then routers that
+          do not have the Running flag are not listed at all.
+
+        * If consensus-method 5 or later is in use, then the "w" line
+          is generated using a low-median of the bandwidth values from
+          the votes that included "w" lines for this router.
+
+        * If consensus-method 5 or later is in use, then the "p" line
+          is taken from the votes that have the same policy summary
+          for the descriptor we are listing.  (They should all be the
+          same.  If they are not, we pick the most commonly listed
+          one, breaking ties in favor of the lexicographically larger
+          vote.)  The port list is encoded as specified in 3.4.2.
+
+        * If consensus-method 6 or later is in use and if 3 or more 
+          authorities provide a Measured= keyword in their votes for 
+          a router, the authorities produce a consensus containing a 
+          Bandwidth= keyword equal to the median of the Measured= votes.
+
+        * If consensus-method 7 or later is in use, the params line is
+          included in the output.
+
+     The signatures at the end of a consensus document are sorted in
+     ascending order by identity digest.
+
+   All ties in computing medians are broken in favor of the smaller or
+   earlier item.
+
+3.4.1. Forward compatibility
+
+   Future versions of Tor will need to include new information in the
+   consensus documents, but it is important that all authorities (or at least
+   half) generate and sign the same signed consensus.
+
+   To achieve this, authorities list in their votes their supported methods
+   for generating consensuses from votes.  Later methods will be assigned
+   higher numbers.  Currently recognized methods:
+     "1" -- The first implemented version.
+     "2" -- Added support for the Unnamed flag.
+     "3" -- Added legacy ID key support to aid in authority ID key rollovers
+     "4" -- No longer list routers that are not running in the consensus
+     "5" -- adds support for "w" and "p" lines.
+     "6" -- Prefers measured bandwidth values rather than advertised
+
+   Before generating a consensus, an authority must decide which consensus
+   method to use.  To do this, it looks for the highest version number
+   supported by more than 2/3 of the authorities voting.  If it supports this
+   method, then it uses it.  Otherwise, it falls back to method 1.
+
+   (The consensuses generated by new methods must be parsable by
+   implementations that only understand the old methods, and must not cause
+   those implementations to compromise their anonymity.  This is a means for
+   making changes in the contents of consensus; not for making
+   backward-incompatible changes in their format.)
+
+3.4.2. Encoding port lists
+
+  Whether the summary shows the list of accepted ports or the list of
+  rejected ports depends on which list is shorter (has a shorter string
+  representation).  In case of ties we choose the list of accepted
+  ports.  As an exception to this rule an allow-all policy is
+  represented as "accept 1-65535" instead of "reject " and a reject-all
+  policy is similarly given as "reject 1-65535".
+
+  Summary items are compressed, that is instead of "80-88,89-100" there
+  only is a single item of "80-100", similarly instead of "20,21" a
+  summary will say "20-21".
+
+  Port lists are sorted in ascending order.
+
+  The maximum allowed length of a policy summary (including the "accept "
+  or "reject ") is 1000 characters.  If a summary exceeds that length we
+  use an accept-style summary and list as much of the port list as is
+  possible within these 1000 bytes.  [XXXX be more specific.]
+
+3.5. Detached signatures
+
+   Assuming full connectivity, every authority should compute and sign the
+   same consensus directory in each period.  Therefore, it isn't necessary to
+   download the consensus computed by each authority; instead, the
+   authorities only push/fetch each others' signatures.  A "detached
+   signature" document contains items as follows:
+
+    "consensus-digest" SP Digest NL
+
+        [At start, at most once.]
+
+        The digest of the consensus being signed.
+
+    "valid-after" SP YYYY-MM-DD SP HH:MM:SS NL
+    "fresh-until" SP YYYY-MM-DD SP HH:MM:SS NL
+    "valid-until" SP YYYY-MM-DD SP HH:MM:SS NL
+
+        [As in the consensus]
+
+    "directory-signature"
+
+        [As in the consensus; the signature object is the same as in the
+        consensus document.]
+
+
+4. Directory server operation
+
+   All directory authorities and directory caches ("directory servers")
+   implement this section, except as noted.
+
+4.1. Accepting uploads (authorities only)
+
+   When a router posts a signed descriptor to a directory authority, the
+   authority first checks whether it is well-formed and correctly
+   self-signed.  If it is, the authority next verifies that the nickname
+   in question is not already assigned to a router with a different
+   public key.
+   Finally, the authority MAY check that the router is not blacklisted
+   because of its key, IP, or another reason.
+
+   If the descriptor passes these tests, and the authority does not already
+   have a descriptor for a router with this public key, it accepts the
+   descriptor and remembers it.
+
+   If the authority _does_ have a descriptor with the same public key, the
+   newly uploaded descriptor is remembered if its publication time is more
+   recent than the most recent old descriptor for that router, and either:
+      - There are non-cosmetic differences between the old descriptor and the
+        new one.
+      - Enough time has passed between the descriptors' publication times.
+        (Currently, 12 hours.)
+
+   Differences between router descriptors are "non-cosmetic" if they would be
+   sufficient to force an upload as described in section 2 above.
+
+   Note that the "cosmetic difference" test only applies to uploaded
+   descriptors, not to descriptors that the authority downloads from other
+   authorities.
+
+   When a router posts a signed extra-info document to a directory authority,
+   the authority again checks it for well-formedness and correct signature,
+   and checks that its matches the extra-info-digest in some router
+   descriptor that it believes is currently useful.  If so, it accepts it and
+   stores it and serves it as requested.  If not, it drops it.
+
+4.2. Voting (authorities only)
+
+   Authorities divide time into Intervals.  Authority administrators SHOULD
+   try to all pick the same interval length, and SHOULD pick intervals that
+   are commonly used divisions of time (e.g., 5 minutes, 15 minutes, 30
+   minutes, 60 minutes, 90 minutes).  Voting intervals SHOULD be chosen to
+   divide evenly into a 24-hour day.
+
+   Authorities SHOULD act according to interval and delays in the
+   latest consensus.  Lacking a latest consensus, they SHOULD default to a
+   30-minute Interval, a 5 minute VotingDelay, and a 5 minute DistDelay.
+
+   Authorities MUST take pains to ensure that their clocks remain accurate
+   within a few seconds.  (Running NTP is usually sufficient.)
+
+   The first voting period of each day begins at 00:00 (midnight) GMT.  If
+   the last period of the day would be truncated by one-half or more, it is
+   merged with the second-to-last period.
+
+   An authority SHOULD publish its vote immediately at the start of each voting
+   period (minus VoteSeconds+DistSeconds).  It does this by making it
+   available at
+     http://<hostname>/tor/status-vote/next/authority.z
+   and sending it in an HTTP POST request to each other authority at the URL
+     http://<hostname>/tor/post/vote
+
+   If, at the start of the voting period, minus DistSeconds, an authority
+   does not have a current statement from another authority, the first
+   authority downloads the other's statement.
+
+   Once an authority has a vote from another authority, it makes it available
+   at
+      http://<hostname>/tor/status-vote/next/<fp>.z
+   where <fp> is the fingerprint of the other authority's identity key.
+   And at
+      http://<hostname>/tor/status-vote/next/d/<d>.z
+   where <d> is the digest of the vote document.
+
+   The consensus status, along with as many signatures as the server
+   currently knows, should be available at
+      http://<hostname>/tor/status-vote/next/consensus.z
+   All of the detached signatures it knows for consensus status should be
+   available at:
+      http://<hostname>/tor/status-vote/next/consensus-signatures.z
+
+   Once there are enough signatures, or once the voting period starts,
+   these documents are available at
+      http://<hostname>/tor/status-vote/current/consensus.z
+   and
+      http://<hostname>/tor/status-vote/current/consensus-signatures.z
+   [XXX current/consensus-signatures is not currently implemented, as it
+    is not used in the voting protocol.]
+
+   The other vote documents are analogously made available under
+     http://<hostname>/tor/status-vote/current/authority.z
+     http://<hostname>/tor/status-vote/current/<fp>.z
+     http://<hostname>/tor/status-vote/current/d/<d>.z
+   once the consensus is complete.
+
+   Once an authority has computed and signed a consensus network status, it
+   should send its detached signature to each other authority in an HTTP POST
+   request to the URL:
+      http://<hostname>/tor/post/consensus-signature
+
+   [XXX Note why we support push-and-then-pull.]
+
+   [XXX possible future features include support for downloading old
+    consensuses.]
+
+4.3. Downloading consensus status documents (caches only)
+
+   All directory servers (authorities and caches) try to keep a recent
+   network-status consensus document to serve to clients.  A cache ALWAYS
+   downloads a network-status consensus if any of the following are true:
+     - The cache has no consensus document.
+     - The cache's consensus document is no longer valid.
+   Otherwise, the cache downloads a new consensus document at a randomly
+   chosen time in the first half-interval after its current consensus
+   stops being fresh.  (This time is chosen at random to avoid swarming
+   the authorities at the start of each period.  The interval size is
+   inferred from the difference between the valid-after time and the
+   fresh-until time on the consensus.)
+
+   [For example, if a cache has a consensus that became valid at 1:00,
+    and is fresh until 2:00, that cache will fetch a new consensus at
+    a random time between 2:00 and 2:30.]
+
+4.4. Downloading and storing router descriptors (authorities and caches)
+
+   Periodically (currently, every 10 seconds), directory servers check
+   whether there are any specific descriptors that they do not have and that
+   they are not currently trying to download.  Caches identify these
+   descriptors by hash in the recent network-status consensus documents;
+   authorities identify them by hash in vote (if publication date is more
+   recent than the descriptor we currently have).
+
+ [XXXX need a way to fetch descriptors ahead of the vote?  v2 status docs can
+ do that for now.]
+
+   If so, the directory server launches requests to the authorities for these
+   descriptors, such that each authority is only asked for descriptors listed
+   in its most recent vote (if the requester is an authority) or in the
+   consensus (if the requester is a cache).  If we're an authority, and more
+   than one authority lists the descriptor, we choose which to ask at random.
+
+   If one of these downloads fails, we do not try to download that descriptor
+   from the authority that failed to serve it again unless we receive a newer
+   network-status (consensus or vote) from that authority that lists the same
+   descriptor.
+
+   Directory servers must potentially cache multiple descriptors for each
+   router. Servers must not discard any descriptor listed by any recent
+   consensus.  If there is enough space to store additional descriptors,
+   servers SHOULD try to hold those which clients are likely to download the
+   most.  (Currently, this is judged based on the interval for which each
+   descriptor seemed newest.)
+[XXXX define recent]
+
+   Authorities SHOULD NOT download descriptors for routers that they would
+   immediately reject for reasons listed in 3.1.
+
+4.5. Downloading and storing extra-info documents
+
+   All authorities, and any cache that chooses to cache extra-info documents,
+   and any client that uses extra-info documents, should implement this
+   section.
+
+   Note that generally, clients don't need extra-info documents.
+
+   Periodically, the Tor instance checks whether it is missing any extra-info
+   documents: in other words, if it has any router descriptors with an
+   extra-info-digest field that does not match any of the extra-info
+   documents currently held.  If so, it downloads whatever extra-info
+   documents are missing.  Caches download from authorities; non-caches try
+   to download from caches.  We follow the same splitting and back-off rules
+   as in 4.4 (if a cache) or 5.3 (if a client).
+
+4.6. General-use HTTP URLs
+
+   "Fingerprints" in these URLs are base-16-encoded SHA1 hashes.
+
+   The most recent v3 consensus should be available at:
+      http://<hostname>/tor/status-vote/current/consensus.z
+
+   Starting with Tor version 0.2.1.1-alpha is also available at:
+      http://<hostname>/tor/status-vote/current/consensus/<F1>+<F2>+<F3>.z
+
+   Where F1, F2, etc. are authority identity fingerprints the client trusts.
+   Servers will only return a consensus if more than half of the requested
+   authorities have signed the document, otherwise a 404 error will be sent
+   back.  The fingerprints can be shortened to a length of any multiple of
+   two, using only the leftmost part of the encoded fingerprint.  Tor uses
+   3 bytes (6 hex characters) of the fingerprint.
+
+   Clients SHOULD sort the fingerprints in ascending order.  Server MUST
+   accept any order.
+
+   Clients SHOULD use this format when requesting consensus documents from
+   directory authority servers and from caches running a version of Tor
+   that is known to support this URL format.
+
+   A concatenated set of all the current key certificates should be available
+   at:
+      http://<hostname>/tor/keys/all.z
+
+   The key certificate for this server (if it is an authority) should be
+   available at:
+      http://<hostname>/tor/keys/authority.z
+
+   The key certificate for an authority whose authority identity fingerprint
+   is <F> should be available at:
+      http://<hostname>/tor/keys/fp/<F>.z
+
+   The key certificate whose signing key fingerprint is <F> should be
+   available at:
+      http://<hostname>/tor/keys/sk/<F>.z
+
+   The key certificate whose identity key fingerprint is <F> and whose signing
+   key fingerprint is <S> should be available at:
+
+      http://<hostname>/tor/keys/fp-sk/<F>-<S>.z
+
+   (As usual, clients may request multiple certificates using:
+       http://<hostname>/tor/keys/fp-sk/<F1>-<S1>+<F2>-<S2>.z  )
+   [The above fp-sk format was not supported before Tor 0.2.1.9-alpha.]
+
+   The most recent descriptor for a server whose identity key has a
+   fingerprint of <F> should be available at:
+      http://<hostname>/tor/server/fp/<F>.z
+
+   The most recent descriptors for servers with identity fingerprints
+   <F1>,<F2>,<F3> should be available at:
+      http://<hostname>/tor/server/fp/<F1>+<F2>+<F3>.z
+
+   (NOTE: Implementations SHOULD NOT download descriptors by identity key
+   fingerprint. This allows a corrupted server (in collusion with a cache) to
+   provide a unique descriptor to a client, and thereby partition that client
+   from the rest of the network.)
+
+   The server descriptor with (descriptor) digest <D> (in hex) should be
+   available at:
+      http://<hostname>/tor/server/d/<D>.z
+
+   The most recent descriptors with digests <D1>,<D2>,<D3> should be
+   available at:
+      http://<hostname>/tor/server/d/<D1>+<D2>+<D3>.z
+
+   The most recent descriptor for this server should be at:
+      http://<hostname>/tor/server/authority.z
+    [Nothing in the Tor protocol uses this resource yet, but it is useful
+     for debugging purposes. Also, the official Tor implementations
+     (starting at 0.1.1.x) use this resource to test whether a server's
+     own DirPort is reachable.]
+
+   A concatenated set of the most recent descriptors for all known servers
+   should be available at:
+      http://<hostname>/tor/server/all.z
+
+   Extra-info documents are available at the URLS
+      http://<hostname>/tor/extra/d/...
+      http://<hostname>/tor/extra/fp/...
+      http://<hostname>/tor/extra/all[.z]
+      http://<hostname>/tor/extra/authority[.z]
+         (As for /tor/server/ URLs: supports fetching extra-info
+         documents by their digest, by the fingerprint of their servers,
+         or all at once. When serving by fingerprint, we serve the
+         extra-info that corresponds to the descriptor we would serve by
+         that fingerprint. Only directory authorities of version
+         0.2.0.1-alpha or later are guaranteed to support the first
+         three classes of URLs.  Caches may support them, and MUST
+         support them if they have advertised "caches-extra-info".)
+
+   For debugging, directories SHOULD expose non-compressed objects at URLs like
+   the above, but without the final ".z".
+   Clients MUST handle compressed concatenated information in two forms:
+     - A concatenated list of zlib-compressed objects.
+     - A zlib-compressed concatenated list of objects.
+   Directory servers MAY generate either format: the former requires less
+   CPU, but the latter requires less bandwidth.
+
+   Clients SHOULD use upper case letters (A-F) when base16-encoding
+   fingerprints.  Servers MUST accept both upper and lower case fingerprints
+   in requests.
+
+5. Client operation: downloading information
+
+   Every Tor that is not a directory server (that is, those that do
+   not have a DirPort set) implements this section.
+
+5.1. Downloading network-status documents
+
+   Each client maintains a list of directory authorities.  Insofar as
+   possible, clients SHOULD all use the same list.
+
+   Clients try to have a live consensus network-status document at all times.
+   A network-status document is "live" if the time in its valid-until field
+   has not passed.
+
+   If a client is missing a live network-status document, it tries to fetch
+   it from a directory cache (or from an authority if it knows no caches).
+   On failure, the client waits briefly, then tries that network-status
+   document again from another cache.  The client does not build circuits
+   until it has a live network-status consensus document, and it has
+   descriptors for more than 1/4 of the routers that it believes are running.
+
+   (Note: clients can and should pick caches based on the network-status
+   information they have: once they have first fetched network-status info
+   from an authority, they should not need to go to the authority directly
+   again.)
+
+   To avoid swarming the caches whenever a consensus expires, the
+   clients download new consensuses at a randomly chosen time after the
+   caches are expected to have a fresh consensus, but before their
+   consensus will expire.  (This time is chosen uniformly at random from
+   the interval between the time 3/4 into the first interval after the
+   consensus is no longer fresh, and 7/8 of the time remaining after
+   that before the consensus is invalid.)
+
+   [For example, if a cache has a consensus that became valid at 1:00,
+    and is fresh until 2:00, and expires at 4:00, that cache will fetch
+    a new consensus at a random time between 2:45 and 3:50, since 3/4
+    of the one-hour interval is 45 minutes, and 7/8 of the remaining 75
+    minutes is 65 minutes.]
+
+5.2. Downloading and storing router descriptors
+
+   Clients try to have the best descriptor for each router.  A descriptor is
+   "best" if:
+      * It is listed in the consensus network-status document.
+
+   Periodically (currently every 10 seconds) clients check whether there are
+   any "downloadable" descriptors.  A descriptor is downloadable if:
+      - It is the "best" descriptor for some router.
+      - The descriptor was published at least 10 minutes in the past.
+        (This prevents clients from trying to fetch descriptors that the
+        mirrors have probably not yet retrieved and cached.)
+      - The client does not currently have it.
+      - The client is not currently trying to download it.
+      - The client would not discard it immediately upon receiving it.
+      - The client thinks it is running and valid (see 6.1 below).
+
+   If at least 16 known routers have downloadable descriptors, or if
+   enough time (currently 10 minutes) has passed since the last time the
+   client tried to download descriptors, it launches requests for all
+   downloadable descriptors, as described in 5.3 below.
+
+   When a descriptor download fails, the client notes it, and does not
+   consider the descriptor downloadable again until a certain amount of time
+   has passed. (Currently 0 seconds for the first failure, 60 seconds for the
+   second, 5 minutes for the third, 10 minutes for the fourth, and 1 day
+   thereafter.)  Periodically (currently once an hour) clients reset the
+   failure count.
+
+   Clients retain the most recent descriptor they have downloaded for each
+   router so long as it is not too old (currently, 48 hours), OR so long as
+   no better descriptor has been downloaded for the same router.
+
+   [Versions of Tor before 0.1.2.3-alpha would discard descriptors simply for
+   being published too far in the past.]  [The code seems to discard
+   descriptors in all cases after they're 5 days old. True? -RD]
+
+5.3. Managing downloads
+
+   When a client has no consensus network-status document, it downloads it
+   from a randomly chosen authority.  In all other cases, the client
+   downloads from caches randomly chosen from among those believed to be V2
+   directory servers.  (This information comes from the network-status
+   documents; see 6 below.)
+
+   When downloading multiple router descriptors, the client chooses multiple
+   mirrors so that:
+     - At least 3 different mirrors are used, except when this would result
+       in more than one request for under 4 descriptors.
+     - No more than 128 descriptors are requested from a single mirror.
+     - Otherwise, as few mirrors as possible are used.
+   After choosing mirrors, the client divides the descriptors among them
+   randomly.
+
+   After receiving any response client MUST discard any network-status
+   documents and descriptors that it did not request.
+
+6. Using directory information
+
+   Everyone besides directory authorities uses the approaches in this section
+   to decide which servers to use and what their keys are likely to be.
+   (Directory authorities just believe their own opinions, as in 3.1 above.)
+
+6.1. Choosing routers for circuits.
+
+   Circuits SHOULD NOT be built until the client has enough directory
+   information: a live consensus network status [XXXX fallback?]  and
+   descriptors for at least 1/4 of the servers believed to be running.
+
+   A server is "listed" if it is included by the consensus network-status
+   document.  Clients SHOULD NOT use unlisted servers.
+
+   These flags are used as follows:
+
+     - Clients SHOULD NOT use non-'Valid' or non-'Running' routers unless
+       requested to do so.
+
+     - Clients SHOULD NOT use non-'Fast' routers for any purpose other than
+       very-low-bandwidth circuits (such as introduction circuits).
+
+     - Clients SHOULD NOT use non-'Stable' routers for circuits that are
+       likely to need to be open for a very long time (such as those used for
+       IRC or SSH connections).
+
+     - Clients SHOULD NOT choose non-'Guard' nodes when picking entry guard
+       nodes.
+
+     - Clients SHOULD NOT download directory information from non-'V2Dir'
+       caches.
+
+   See the "path-spec.txt" document for more details.
+
+6.2. Managing naming
+
+   In order to provide human-memorable names for individual server
+   identities, some directory servers bind names to IDs.  Clients handle
+   names in two ways:
+
+   When a client encounters a name it has not mapped before:
+
+      If the consensus lists any router with that name as "Named", or if
+      consensus-method 2 or later is in use and the consensus lists any
+      router with that name as having the "Unnamed" flag, then the name is
+      bound.  (It's bound to the ID listed in the entry with the Named,
+      or to an unknown ID if no name is found.)
+
+   When the user refers to a bound name, the implementation SHOULD provide
+   only the router with ID bound to that name, and no other router, even
+   if the router with the right ID can't be found.
+
+   When a user tries to refer to a non-bound name, the implementation SHOULD
+   warn the user. After warning the user, the implementation MAY use any
+   router that advertises the name.
+
+   Not every router needs a nickname.  When a router doesn't configure a
+   nickname, it publishes with the default nickname "Unnamed".  Authorities
+   SHOULD NOT ever mark a router with this nickname as Named; client software
+   SHOULD NOT ever use a router in response to a user request for a router
+   called "Unnamed".
+
+6.3. Software versions
+
+   An implementation of Tor SHOULD warn when it has fetched a consensus
+   network-status, and it is running a software version not listed.
+
+6.4. Warning about a router's status.
+
+   If a router tries to publish its descriptor to a Naming authority
+   that has its nickname mapped to another key, the router SHOULD
+   warn the operator that it is either using the wrong key or is using
+   an already claimed nickname.
+
+   If a router has fetched a consensus document,, and the
+   authorities do not publish a binding for the router's nickname, the
+   router MAY remind the operator that the chosen nickname is not
+   bound to this key at the authorities, and suggest contacting the
+   authority operators.
+
+   ...
+
+6.5. Router protocol versions
+
+   A client should believe that a router supports a given feature if that
+   feature is supported by the router or protocol versions in more than half
+   of the live networkstatuses' "v" entries for that router.  In other words,
+   if the "v" entries for some router are:
+       v Tor 0.0.8pre1                (from authority 1)
+       v Tor 0.1.2.11                 (from authority 2)
+       v FutureProtocolDescription 99 (from authority 3)
+   then the client should believe that the router supports any feature
+   supported by 0.1.2.11.
+
+   This is currently equivalent to believing the median declared version for
+   a router in all live networkstatuses.
+
+7. Standards compliance
+
+   All clients and servers MUST support HTTP 1.0.  Clients and servers MAY
+   support later versions of HTTP as well.
+
+7.1. HTTP headers
+
+  Servers MAY set the Content-Length: header.  Servers SHOULD set
+  Content-Encoding to "deflate" or "identity".
+
+  Servers MAY include an X-Your-Address-Is: header, whose value is the
+  apparent IP address of the client connecting to them (as a dotted quad).
+  For directory connections tunneled over a BEGIN_DIR stream, servers SHOULD
+  report the IP from which the circuit carrying the BEGIN_DIR stream reached
+  them.  [Servers before version 0.1.2.5-alpha reported 127.0.0.1 for all
+  BEGIN_DIR-tunneled connections.]
+
+  Servers SHOULD disable caching of multiple network statuses or multiple
+  router descriptors.  Servers MAY enable caching of single descriptors,
+  single network statuses, the list of all router descriptors, a v1
+  directory, or a v1 running routers document.  XXX mention times.
+
+7.2. HTTP status codes
+
+  Tor delivers the following status codes.  Some were chosen without much
+  thought; other code SHOULD NOT rely on specific status codes yet.
+
+  200 -- the operation completed successfully
+      -- the user requested statuses or serverdescs, and none of the ones we
+         requested were found (0.2.0.4-alpha and earlier).
+
+  304 -- the client specified an if-modified-since time, and none of the
+         requested resources have changed since that time.
+
+  400 -- the request is malformed, or
+      -- the URL is for a malformed variation of one of the URLs we support,
+          or
+      -- the client tried to post to a non-authority, or
+      -- the authority rejected a malformed posted document, or
+
+  404 -- the requested document was not found.
+      -- the user requested statuses or serverdescs, and none of the ones
+         requested were found (0.2.0.5-alpha and later).
+
+  503 -- we are declining the request in order to save bandwidth
+      -- user requested some items that we ordinarily generate or store,
+         but we do not have any available.
+
+9. Backward compatibility and migration plans
+
+  Until Tor versions before 0.1.1.x are completely obsolete, directory
+  authorities should generate, and mirrors should download and cache, v1
+  directories and running-routers lists, and allow old clients to download
+  them.  These documents and the rules for retrieving, serving, and caching
+  them are described in dir-spec-v1.txt.
+
+  Until Tor versions before 0.2.0.x are completely obsolete, directory
+  authorities should generate, mirrors should download and cache, v2
+  network-status documents, and allow old clients to download them.
+  Additionally, all directory servers and caches should download, store, and
+  serve any router descriptor that is required because of v2 network-status
+  documents. These documents and the rules for retrieving, serving, and
+  caching them are described in dir-spec-v1.txt.
+
+A. Consensus-negotiation timeline.
+
+
+   Period begins: this is the Published time.
+     Everybody sends votes
+   Reconciliation: everybody tries to fetch missing votes.
+     consensus may exist at this point.
+   End of voting period:
+     everyone swaps signatures.
+   Now it's okay for caches to download
+     Now it's okay for clients to download.
+
+   Valid-after/valid-until switchover
+

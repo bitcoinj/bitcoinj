@@ -1,0 +1,78 @@
+Tor's extensions to the SOCKS protocol
+
+1. Overview
+
+  The SOCKS protocol provides a generic interface for TCP proxies.  Client
+  software connects to a SOCKS server via TCP, and requests a TCP connection
+  to another address and port.  The SOCKS server establishes the connection,
+  and reports success or failure to the client.  After the connection has
+  been established, the client application uses the TCP stream as usual.
+
+  Tor supports SOCKS4 as defined in [1], SOCKS4A as defined in [2], and
+  SOCKS5 as defined in [3].
+
+  The stickiest issue for Tor in supporting clients, in practice, is forcing
+  DNS lookups to occur at the OR side: if clients do their own DNS lookup,
+  the DNS server can learn which addresses the client wants to reach.
+  SOCKS4 supports addressing by IPv4 address; SOCKS4A is a kludge on top of
+  SOCKS4 to allow addressing by hostname; SOCKS5 supports IPv4, IPv6, and
+  hostnames.
+
+1.1. Extent of support
+
+  Tor supports the SOCKS4, SOCKS4A, and SOCKS5 standards, except as follows:
+
+  BOTH:
+  - The BIND command is not supported.
+
+  SOCKS4,4A:
+  - SOCKS4 usernames are ignored.
+
+  SOCKS5:
+  - The (SOCKS5) "UDP ASSOCIATE" command is not supported.
+  - IPv6 is not supported in CONNECT commands.
+  - Only the "NO AUTHENTICATION" (SOCKS5) authentication method [00] is
+    supported.
+
+2. Name lookup
+
+  As an extension to SOCKS4A and SOCKS5, Tor implements a new command value,
+  "RESOLVE" [F0].  When Tor receives a "RESOLVE" SOCKS command, it initiates
+  a remote lookup of the hostname provided as the target address in the SOCKS
+  request.  The reply is either an error (if the address couldn't be
+  resolved) or a success response.  In the case of success, the address is
+  stored in the portion of the SOCKS response reserved for remote IP address.
+
+  (We support RESOLVE in SOCKS4 too, even though it is unnecessary.)
+
+  For SOCKS5 only, we support reverse resolution with a new command value,
+  "RESOLVE_PTR" [F1]. In response to a "RESOLVE_PTR" SOCKS5 command with
+  an IPv4 address as its target, Tor attempts to find the canonical
+  hostname for that IPv4 record, and returns it in the "server bound
+  address" portion of the reply.
+  (This command was not supported before Tor 0.1.2.2-alpha.)
+
+3. Other command extensions.
+
+  Tor 0.1.2.4-alpha added a new command value: "CONNECT_DIR" [F2].
+  In this case, Tor will open an encrypted direct TCP connection to the
+  directory port of the Tor server specified by address:port (the port
+  specified should be the ORPort of the server). It uses a one-hop tunnel
+  and a "BEGIN_DIR" relay cell to accomplish this secure connection.
+
+  The F2 command value was removed in Tor 0.2.0.10-alpha in favor of a
+  new use_begindir flag in edge_connection_t.
+
+4. HTTP-resistance
+
+  Tor checks the first byte of each SOCKS request to see whether it looks
+  more like an HTTP request (that is, it starts with a "G", "H", or "P").  If
+  so, Tor returns a small webpage, telling the user that his/her browser is
+  misconfigured.  This is helpful for the many users who mistakenly try to
+  use Tor as an HTTP proxy instead of a SOCKS proxy.
+
+References:
+ [1] http://archive.socks.permeo.com/protocol/socks4.protocol
+ [2] http://archive.socks.permeo.com/protocol/socks4a.protocol
+ [3] SOCKS5: RFC1928
+
