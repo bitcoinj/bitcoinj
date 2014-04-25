@@ -1,5 +1,6 @@
 /*
  * Copyright 2013 Ken Sedgwick
+ * Copyright 2014 Andreas Schildbach
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -77,6 +78,13 @@ public class MnemonicCode {
             if (!hexdigest.equals(wordListDigest))
                 throw new IllegalArgumentException("wordlist digest mismatch");
         }
+    }
+
+    /**
+     * Gets the word list this code uses.
+     */
+    public List<String> getWordList() {
+        return wordList;
     }
 
     /**
