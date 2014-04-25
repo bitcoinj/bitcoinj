@@ -39,12 +39,17 @@ public class MockTransactionBroadcaster implements TransactionBroadcaster {
     private final Wallet wallet;
 
     public static class TxFuturePair {
-        public Transaction tx;
-        public SettableFuture<Transaction> future;
+        public final Transaction tx;
+        public final SettableFuture<Transaction> future;
 
         public TxFuturePair(Transaction tx, SettableFuture<Transaction> future) {
             this.tx = tx;
             this.future = future;
+        }
+
+        /** Tells the broadcasting code that the broadcast was a success, just does future.set(tx) */
+        public void succeed() {
+            future.set(tx);
         }
     }
 
