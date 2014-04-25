@@ -3450,8 +3450,8 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
 
                 // Of the coins we could spend, pick some that we actually will spend.
                 CoinSelector selector = req.coinSelector == null ? coinSelector : req.coinSelector;
-                CoinSelection selection = selector.select(valueNeeded, candidates);
-                candidates = null;  // Selector took ownership and might have changed candidates. Don't access again.
+                // selector is allowed to modify candidates list.
+                CoinSelection selection = selector.select(valueNeeded, new LinkedList<TransactionOutput>(candidates));
                 // Can we afford this?
                 if (selection.valueGathered.compareTo(valueNeeded) < 0) {
                     valueMissing = valueNeeded.subtract(selection.valueGathered);
