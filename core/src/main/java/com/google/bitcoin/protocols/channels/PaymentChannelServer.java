@@ -27,7 +27,6 @@ import org.bitcoin.paymentchannel.Protos;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
-import java.math.BigInteger;
 import java.util.concurrent.locks.ReentrantLock;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -102,7 +101,7 @@ public class PaymentChannelServer {
          * @param by The increase in total payment
          * @param to The new total payment to us (not including fees which may be required to claim the payment)
          */
-        public void paymentIncrease(BigInteger by, BigInteger to);
+        public void paymentIncrease(Coin by, Coin to);
     }
     private final ServerConnection conn;
 
@@ -119,7 +118,7 @@ public class PaymentChannelServer {
     @GuardedBy("lock") private ECKey myKey;
 
     // The minimum accepted channel value
-    private final BigInteger minAcceptedChannelSize;
+    private final Coin minAcceptedChannelSize;
 
     // The state manager for this channel
     @GuardedBy("lock") private PaymentChannelServerState state;
@@ -151,7 +150,7 @@ public class PaymentChannelServer {
      *             the client and will close the connection on request)
      */
     public PaymentChannelServer(TransactionBroadcaster broadcaster, Wallet wallet,
-                                BigInteger minAcceptedChannelSize, ServerConnection conn) {
+                                Coin minAcceptedChannelSize, ServerConnection conn) {
         this.broadcaster = checkNotNull(broadcaster);
         this.wallet = checkNotNull(wallet);
         this.minAcceptedChannelSize = checkNotNull(minAcceptedChannelSize);
@@ -310,10 +309,10 @@ public class PaymentChannelServer {
     private void receiveUpdatePaymentMessage(Protos.UpdatePayment msg, boolean sendAck) throws VerificationException, ValueOutOfRangeException, InsufficientMoneyException {
         log.info("Got a payment update");
 
-        BigInteger lastBestPayment = state.getBestValueToMe();
-        final BigInteger refundSize = BigInteger.valueOf(msg.getClientChangeValue());
+        Coin lastBestPayment = state.getBestValueToMe();
+        final Coin refundSize = Coin.valueOf(msg.getClientChangeValue());
         boolean stillUsable = state.incrementPayment(refundSize, msg.getSignature().toByteArray());
-        BigInteger bestPaymentChange = state.getBestValueToMe().subtract(lastBestPayment);
+        Coin bestPaymentChange = state.getBestValueToMe().subtract(lastBestPayment);
 
         if (bestPaymentChange.signum() > 0)
             conn.paymentIncrease(bestPaymentChange, state.getBestValueToMe());

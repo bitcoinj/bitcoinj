@@ -45,7 +45,7 @@ import static com.google.common.util.concurrent.Uninterruptibles.sleepUninterrup
  * To enable debug logging from the library, run with -Dbitcoinj.logging=true on your command line.
  */
 public class Utils {
-    public static final BigInteger NEGATIVE_ONE = BigInteger.valueOf(-1);
+    public static final Coin NEGATIVE_ONE = Coin.valueOf(-1);
     private static final MessageDigest digest;
     static {
         try {
@@ -68,7 +68,7 @@ public class Utils {
      * The term nanocoin is very misleading, though, because there are only 100 million
      * of them in a coin (whereas one would expect 1 billion.
      */
-    public static final BigInteger COIN = new BigInteger("100000000", 10);
+    public static final Coin COIN = new Coin("100000000", 10);
 
     /**
      * How many "nanocoins" there are in 0.01 BitCoins.
@@ -77,19 +77,19 @@ public class Utils {
      * The term nanocoin is very misleading, though, because there are only 100 million
      * of them in a coin (whereas one would expect 1 billion).
      */
-    public static final BigInteger CENT = new BigInteger("1000000", 10);
+    public static final Coin CENT = new Coin("1000000", 10);
     private static BlockingQueue<Boolean> mockSleepQueue;
 
     /**
      * Convert an amount expressed in the way humans are used to into nanocoins.
      */
-    public static BigInteger toNanoCoins(int coins, int cents) {
+    public static Coin toNanoCoins(int coins, int cents) {
         checkArgument(cents < 100);
         checkArgument(cents >= 0);
         checkArgument(coins >= 0);
         checkArgument(coins < NetworkParameters.MAX_MONEY.divide(Utils.COIN).longValue());
-        BigInteger bi = BigInteger.valueOf(coins).multiply(COIN);
-        bi = bi.add(BigInteger.valueOf(cents).multiply(CENT));
+        Coin bi = Coin.valueOf(coins).multiply(COIN);
+        bi = bi.add(Coin.valueOf(cents).multiply(CENT));
         return bi;
     }
 
@@ -121,12 +121,12 @@ public class Utils {
      *
      * @throws ArithmeticException if you try to specify fractional nanocoins, or nanocoins out of range.
      */
-    public static BigInteger toNanoCoins(String coins) {
-        BigInteger bigint = new BigDecimal(coins).movePointRight(8).toBigIntegerExact();
+    public static Coin toNanoCoins(String coins) {
+        Coin bigint = new Coin(new BigDecimal(coins).movePointRight(8).toBigIntegerExact());
         if (bigint.signum() < 0)
             throw new ArithmeticException("Negative coins specified");
         if (bigint.compareTo(NetworkParameters.MAX_MONEY) > 0)
-            throw new ArithmeticException("Amount larger than the total quantity of Bitcoins possible specified.");
+            throw new ArithmeticException("Coin larger than the total quantity of Bitcoins possible specified.");
         return bigint;
     }
 
@@ -332,12 +332,12 @@ public class Utils {
      * Returns the given value in nanocoins as a 0.12 type string. More digits after the decimal place will be used
      * if necessary, but two will always be present.
      */
-    public static String bitcoinValueToFriendlyString(BigInteger value) {
+    public static String bitcoinValueToFriendlyString(Coin value) {
         // TODO: This API is crap. This method should go away when we encapsulate money values.
         boolean negative = value.signum() < 0;
         if (negative)
             value = value.negate();
-        BigDecimal bd = new BigDecimal(value, 8);
+        BigDecimal bd = new BigDecimal(value.toBigInteger(), 8);
         String formatted = bd.toPlainString();   // Don't use scientific notation.
         int decimalPoint = formatted.indexOf(".");
         // Drop unnecessary zeros from the end.
@@ -355,19 +355,19 @@ public class Utils {
      * <p>
      * Returns the given value as a plain string denominated in BTC.   
      * The result is unformatted with no trailing zeroes.
-     * For instance, an input value of BigInteger.valueOf(150000) nanocoin gives an output string of "0.0015" BTC
+     * For instance, an input value of Coin.valueOf(150000) nanocoin gives an output string of "0.0015" BTC
      * </p>
      * 
      * @param value The value in nanocoins to convert to a string (denominated in BTC)
      * @throws IllegalArgumentException
      *            If the input value is null
      */
-    public static String bitcoinValueToPlainString(BigInteger value) {
+    public static String bitcoinValueToPlainString(Coin value) {
         if (value == null) {
             throw new IllegalArgumentException("Value cannot be null");
         }
                 
-        BigDecimal valueInBTC = new BigDecimal(value).divide(new BigDecimal(Utils.COIN));
+        BigDecimal valueInBTC = new BigDecimal(value.toBigInteger()).divide(new BigDecimal(Utils.COIN.toBigInteger()));
         return valueInBTC.toPlainString();
     }
 

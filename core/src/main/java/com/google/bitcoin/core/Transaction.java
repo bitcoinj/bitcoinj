@@ -33,7 +33,6 @@ import org.spongycastle.crypto.params.KeyParameter;
 
 import javax.annotation.Nullable;
 import java.io.*;
-import java.math.BigInteger;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -87,14 +86,14 @@ public class Transaction extends ChildMessage implements Serializable {
      * If fee is lower than this value (in satoshis), a default reference client will treat it as if there were no fee.
      * Currently this is 10000 satoshis.
      */
-    public static final BigInteger REFERENCE_DEFAULT_MIN_TX_FEE = BigInteger.valueOf(10000);
+    public static final Coin REFERENCE_DEFAULT_MIN_TX_FEE = Coin.valueOf(10000);
 
     /**
      * Any standard (ie pay-to-address) output smaller than this value (in satoshis) will most likely be rejected by the network.
      * This is calculated by assuming a standard output will be 34 bytes, and then using the formula used in
-     * {@link TransactionOutput#getMinNonDustValue(BigInteger)}. Currently it's 5460 satoshis.
+     * {@link TransactionOutput#getMinNonDustValue(Coin)}. Currently it's 5460 satoshis.
      */
-    public static final BigInteger MIN_NONDUST_OUTPUT = BigInteger.valueOf(5460);
+    public static final Coin MIN_NONDUST_OUTPUT = Coin.valueOf(5460);
 
     // These are serialized in both bitcoin and java serialization.
     private long version;
@@ -237,10 +236,10 @@ public class Transaction extends ChildMessage implements Serializable {
      * Calculates the sum of the outputs that are sending coins to a key in the wallet. The flag controls whether to
      * include spent outputs or not.
      */
-    BigInteger getValueSentToMe(Wallet wallet, boolean includeSpent) {
+    Coin getValueSentToMe(Wallet wallet, boolean includeSpent) {
         maybeParse();
         // This is tested in WalletTest.
-        BigInteger v = BigInteger.ZERO;
+        Coin v = Coin.ZERO;
         for (TransactionOutput o : outputs) {
             if (!o.isMineOrWatched(wallet)) continue;
             if (!includeSpent && !o.isAvailableForSpending()) continue;
@@ -275,7 +274,7 @@ public class Transaction extends ChildMessage implements Serializable {
     /**
      * Calculates the sum of the outputs that are sending coins to a key in the wallet.
      */
-    public BigInteger getValueSentToMe(Wallet wallet) {
+    public Coin getValueSentToMe(Wallet wallet) {
         return getValueSentToMe(wallet, true);
     }
 
@@ -347,10 +346,10 @@ public class Transaction extends ChildMessage implements Serializable {
      *
      * @return sum in nanocoins.
      */
-    public BigInteger getValueSentFromMe(Wallet wallet) throws ScriptException {
+    public Coin getValueSentFromMe(Wallet wallet) throws ScriptException {
         maybeParse();
         // This is tested in WalletTest.
-        BigInteger v = BigInteger.ZERO;
+        Coin v = Coin.ZERO;
         for (TransactionInput input : inputs) {
             // This input is taking value from a transaction in our wallet. To discover the value,
             // we must find the connected transaction.
@@ -373,7 +372,7 @@ public class Transaction extends ChildMessage implements Serializable {
     /**
      * Returns the difference of {@link Transaction#getValueSentFromMe(Wallet)} and {@link Transaction#getValueSentToMe(Wallet)}.
      */
-    public BigInteger getValue(Wallet wallet) throws ScriptException {
+    public Coin getValue(Wallet wallet) throws ScriptException {
         return getValueSentToMe(wallet).subtract(getValueSentFromMe(wallet));
     }
 
@@ -383,8 +382,8 @@ public class Transaction extends ChildMessage implements Serializable {
      * 
      * @return fee, or null if it cannot be determined
      */
-    public BigInteger getFee() {
-        BigInteger fee = BigInteger.ZERO;
+    public Coin getFee() {
+        Coin fee = Coin.ZERO;
         for (TransactionInput input : inputs) {
             if (input.getValue() == null)
                 return null;
@@ -807,7 +806,7 @@ public class Transaction extends ChildMessage implements Serializable {
     /**
      * Creates an output based on the given address and value, adds it to this transaction, and returns the new output.
      */
-    public TransactionOutput addOutput(BigInteger value, Address address) {
+    public TransactionOutput addOutput(Coin value, Address address) {
         return addOutput(new TransactionOutput(params, this, value, address));
     }
 
@@ -815,7 +814,7 @@ public class Transaction extends ChildMessage implements Serializable {
      * Creates an output that pays to the given pubkey directly (no address) with the given value, adds it to this
      * transaction, and returns the new output.
      */
-    public TransactionOutput addOutput(BigInteger value, ECKey pubkey) {
+    public TransactionOutput addOutput(Coin value, ECKey pubkey) {
         return addOutput(new TransactionOutput(params, this, value, pubkey));
     }
 
@@ -823,7 +822,7 @@ public class Transaction extends ChildMessage implements Serializable {
      * Creates an output that pays to the given script. The address and key forms are specialisations of this method,
      * you won't normally need to use it unless you're doing unusual things.
      */
-    public TransactionOutput addOutput(BigInteger value, Script script) {
+    public TransactionOutput addOutput(Coin value, Script script) {
         return addOutput(new TransactionOutput(params, this, value, script.getProgram()));
     }
 
@@ -1263,7 +1262,7 @@ public class Transaction extends ChildMessage implements Serializable {
         if (this.getMessageSize() > Block.MAX_BLOCK_SIZE)
             throw new VerificationException("Transaction larger than MAX_BLOCK_SIZE");
 
-        BigInteger valueOut = BigInteger.ZERO;
+        Coin valueOut = Coin.ZERO;
         for (TransactionOutput output : outputs) {
             if (output.getValue().signum() < 0)
                 throw new VerificationException("Transaction output negative");

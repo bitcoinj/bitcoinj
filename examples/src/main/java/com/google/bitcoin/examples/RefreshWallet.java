@@ -23,7 +23,6 @@ import com.google.bitcoin.store.BlockStore;
 import com.google.bitcoin.store.MemoryBlockStore;
 
 import java.io.File;
-import java.math.BigInteger;
 import java.net.InetAddress;
 
 /**
@@ -46,7 +45,7 @@ public class RefreshWallet {
 
         wallet.addEventListener(new AbstractWalletEventListener() {
             @Override
-            public synchronized void onCoinsReceived(Wallet w, Transaction tx, BigInteger prevBalance, BigInteger newBalance) {
+            public synchronized void onCoinsReceived(Wallet w, Transaction tx, Coin prevBalance, Coin newBalance) {
                 System.out.println("\nReceived tx " + tx.getHashAsString());
                 System.out.println(tx.toString());
             }

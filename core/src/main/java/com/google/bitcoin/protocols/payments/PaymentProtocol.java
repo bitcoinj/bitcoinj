@@ -18,6 +18,7 @@
 package com.google.bitcoin.protocols.payments;
 
 import com.google.bitcoin.core.Address;
+import com.google.bitcoin.core.Coin;
 import com.google.bitcoin.core.NetworkParameters;
 import com.google.bitcoin.core.Transaction;
 import com.google.bitcoin.crypto.X509Utils;
@@ -30,7 +31,6 @@ import org.bitcoin.protocols.payments.Protos;
 
 import javax.annotation.Nullable;
 import java.io.Serializable;
-import java.math.BigInteger;
 import java.security.*;
 import java.security.cert.*;
 import java.security.cert.Certificate;
@@ -67,7 +67,7 @@ public class PaymentProtocol {
      * @return created payment request, in its builder form
      */
     public static Protos.PaymentRequest.Builder createPaymentRequest(NetworkParameters params,
-            @Nullable BigInteger amount, Address toAddress, @Nullable String memo, @Nullable String paymentUrl,
+            @Nullable Coin amount, Address toAddress, @Nullable String memo, @Nullable String paymentUrl,
             @Nullable byte[] merchantData) {
         return createPaymentRequest(params, ImmutableList.of(createPayToAddressOutput(amount, toAddress)), memo,
                 paymentUrl, merchantData);
@@ -282,7 +282,7 @@ public class PaymentProtocol {
      * @return created payment message
      */
     public static Protos.Payment createPaymentMessage(List<Transaction> transactions,
-            @Nullable BigInteger refundAmount, @Nullable Address refundAddress, @Nullable String memo,
+            @Nullable Coin refundAmount, @Nullable Address refundAddress, @Nullable String memo,
             @Nullable byte[] merchantData) {
         if (refundAddress != null) {
             if (refundAmount == null)
@@ -387,7 +387,7 @@ public class PaymentProtocol {
      * @param address address to pay to
      * @return output
      */
-    public static Protos.Output createPayToAddressOutput(@Nullable BigInteger amount, Address address) {
+    public static Protos.Output createPayToAddressOutput(@Nullable Coin amount, Address address) {
         Protos.Output.Builder output = Protos.Output.newBuilder();
         if (amount != null) {
             if (amount.compareTo(NetworkParameters.MAX_MONEY) > 0)
@@ -404,10 +404,10 @@ public class PaymentProtocol {
      * Value object to hold amount/script pairs.
      */
     public static class Output implements Serializable {
-        public final @Nullable BigInteger amount;
+        public final @Nullable Coin amount;
         public final byte[] scriptData;
 
-        public Output(@Nullable BigInteger amount, byte[] scriptData) {
+        public Output(@Nullable Coin amount, byte[] scriptData) {
             this.amount = amount;
             this.scriptData = scriptData;
         }

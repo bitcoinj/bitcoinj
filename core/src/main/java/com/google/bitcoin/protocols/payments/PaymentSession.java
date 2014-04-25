@@ -30,7 +30,6 @@ import org.bitcoin.protocols.payments.Protos;
 import javax.annotation.Nullable;
 
 import java.io.*;
-import java.math.BigInteger;
 import java.net.*;
 import java.security.KeyStoreException;
 import java.util.ArrayList;
@@ -71,7 +70,7 @@ public class PaymentSession {
     private final TrustStoreLoader trustStoreLoader;
     private Protos.PaymentRequest paymentRequest;
     private Protos.PaymentDetails paymentDetails;
-    private BigInteger totalValue = BigInteger.ZERO;
+    private Coin totalValue = Coin.ZERO;
 
     /**
      * Stores the calculated PKI verification data, or null if none is available.
@@ -224,7 +223,7 @@ public class PaymentSession {
     public List<PaymentProtocol.Output> getOutputs() {
         List<PaymentProtocol.Output> outputs = new ArrayList<PaymentProtocol.Output>(paymentDetails.getOutputsCount());
         for (Protos.Output output : paymentDetails.getOutputsList()) {
-            BigInteger amount = output.hasAmount() ? BigInteger.valueOf(output.getAmount()) : null;
+            Coin amount = output.hasAmount() ? Coin.valueOf(output.getAmount()) : null;
             outputs.add(new PaymentProtocol.Output(amount, output.getScript().toByteArray()));
         }
         return outputs;
@@ -243,7 +242,7 @@ public class PaymentSession {
     /**
      * Returns the total amount of bitcoins requested.
      */
-    public BigInteger getValue() {
+    public Coin getValue() {
         return totalValue;
     }
 
@@ -297,7 +296,7 @@ public class PaymentSession {
     public Wallet.SendRequest getSendRequest() {
         Transaction tx = new Transaction(params);
         for (Protos.Output output : paymentDetails.getOutputsList())
-            tx.addOutput(new TransactionOutput(params, tx, BigInteger.valueOf(output.getAmount()), output.getScript().toByteArray()));
+            tx.addOutput(new TransactionOutput(params, tx, Coin.valueOf(output.getAmount()), output.getScript().toByteArray()));
         return Wallet.SendRequest.forTx(tx);
     }
 
@@ -397,7 +396,7 @@ public class PaymentSession {
                 throw new PaymentProtocolException.InvalidOutputs("No outputs");
             for (Protos.Output output : paymentDetails.getOutputsList()) {
                 if (output.hasAmount())
-                    totalValue = totalValue.add(BigInteger.valueOf(output.getAmount()));
+                    totalValue = totalValue.add(Coin.valueOf(output.getAmount()));
             }
             // This won't ever happen in practice. It would only happen if the user provided outputs
             // that are obviously invalid. Still, we don't want to silently overflow.

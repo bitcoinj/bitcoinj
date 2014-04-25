@@ -29,7 +29,6 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.MoreExecutors;
 
 import java.io.File;
-import java.math.BigInteger;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -81,11 +80,11 @@ public class ForwardingService {
         // We want to know when we receive money.
         kit.wallet().addEventListener(new AbstractWalletEventListener() {
             @Override
-            public void onCoinsReceived(Wallet w, Transaction tx, BigInteger prevBalance, BigInteger newBalance) {
+            public void onCoinsReceived(Wallet w, Transaction tx, Coin prevBalance, Coin newBalance) {
                 // Runs in the dedicated "user thread" (see bitcoinj docs for more info on this).
                 //
                 // The transaction "tx" can either be pending, or included into a block (we didn't see the broadcast).
-                BigInteger value = tx.getValueSentToMe(w);
+                Coin value = tx.getValueSentToMe(w);
                 System.out.println("Received tx for " + Utils.bitcoinValueToFriendlyString(value) + ": " + tx);
                 System.out.println("Transaction will be forwarded after it confirms.");
                 // Wait until it's made it into the block chain (may run immediately if it's already there).
@@ -121,10 +120,10 @@ public class ForwardingService {
 
     private static void forwardCoins(Transaction tx) {
         try {
-            BigInteger value = tx.getValueSentToMe(kit.wallet());
+            Coin value = tx.getValueSentToMe(kit.wallet());
             System.out.println("Forwarding " + Utils.bitcoinValueToFriendlyString(value) + " BTC");
             // Now send the coins back! Send with a small fee attached to ensure rapid confirmation.
-            final BigInteger amountToSend = value.subtract(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE);
+            final Coin amountToSend = value.subtract(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE);
             final Wallet.SendResult sendResult = kit.wallet().sendCoins(kit.peerGroup(), forwardingAddress, amountToSend);
             checkNotNull(sendResult);  // We should never try to send more coins than we have!
             System.out.println("Sending ...");

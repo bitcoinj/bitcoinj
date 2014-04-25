@@ -65,7 +65,7 @@ public class BlockChainTest {
     public void setUp() throws Exception {
         BriefLogFormatter.initVerbose();
         testNetChain = new BlockChain(testNet, new Wallet(testNet), new MemoryBlockStore(testNet));
-        Wallet.SendRequest.DEFAULT_FEE_PER_KB = BigInteger.ZERO;
+        Wallet.SendRequest.DEFAULT_FEE_PER_KB = Coin.ZERO;
 
         unitTestParams = UnitTestParams.get();
         wallet = new Wallet(unitTestParams) {
@@ -278,7 +278,7 @@ public class BlockChainTest {
         b1.addTransaction(t2);
         b1.solve();
         chain.add(b1);
-        assertEquals(BigInteger.ZERO, wallet.getBalance());
+        assertEquals(Coin.ZERO, wallet.getBalance());
     }
 
     @Test
@@ -300,7 +300,7 @@ public class BlockChainTest {
         assertNotNull(coinbaseTransaction);
 
         // The coinbase tx is not yet available to spend.
-        assertEquals(BigInteger.ZERO, wallet.getBalance());
+        assertEquals(Coin.ZERO, wallet.getBalance());
         assertEquals(wallet.getBalance(BalanceType.ESTIMATED), Utils.toNanoCoins(50, 0));
         assertTrue(!coinbaseTransaction.isMature());
 
@@ -321,7 +321,7 @@ public class BlockChainTest {
             chain.add(b2);
 
             // Wallet still does not have the coinbase transaction available for spend.
-            assertEquals(BigInteger.ZERO, wallet.getBalance());
+            assertEquals(Coin.ZERO, wallet.getBalance());
             assertEquals(wallet.getBalance(BalanceType.ESTIMATED), Utils.toNanoCoins(50, 0));
 
             // The coinbase transaction is still not mature.

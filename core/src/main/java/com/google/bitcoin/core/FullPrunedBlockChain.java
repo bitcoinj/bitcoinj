@@ -23,7 +23,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -175,12 +174,12 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
                         sigOps += tx.getSigOpCount();
                 }
             }
-            BigInteger totalFees = BigInteger.ZERO;
-            BigInteger coinbaseValue = null;
+            Coin totalFees = Coin.ZERO;
+            Coin coinbaseValue = null;
             for (final Transaction tx : block.transactions) {
                 boolean isCoinBase = tx.isCoinBase();
-                BigInteger valueIn = BigInteger.ZERO;
-                BigInteger valueOut = BigInteger.ZERO;
+                Coin valueIn = Coin.ZERO;
+                Coin valueOut = Coin.ZERO;
                 final List<Script> prevOutScripts = new LinkedList<Script>();
                 if (!isCoinBase) {
                     // For each input of the transaction remove the corresponding output from the set of unspent
@@ -300,16 +299,16 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
                             throw new VerificationException("Block failed BIP30 test!");
                     }
                 }
-                BigInteger totalFees = BigInteger.ZERO;
-                BigInteger coinbaseValue = null;
+                Coin totalFees = Coin.ZERO;
+                Coin coinbaseValue = null;
                 
                 if (scriptVerificationExecutor.isShutdown())
                     scriptVerificationExecutor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
                 List<Future<VerificationException>> listScriptVerificationResults = new ArrayList<Future<VerificationException>>(transactions.size());
                 for(final Transaction tx : transactions) {
                     boolean isCoinBase = tx.isCoinBase();
-                    BigInteger valueIn = BigInteger.ZERO;
-                    BigInteger valueOut = BigInteger.ZERO;
+                    Coin valueIn = Coin.ZERO;
+                    Coin valueOut = Coin.ZERO;
                     final List<Script> prevOutScripts = new LinkedList<Script>();
                     if (!isCoinBase) {
                         for (int index = 0; index < tx.getInputs().size(); index++) {

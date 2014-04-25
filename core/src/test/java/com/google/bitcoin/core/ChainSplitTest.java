@@ -22,6 +22,7 @@ import com.google.bitcoin.store.MemoryBlockStore;
 import com.google.bitcoin.testing.FakeTxBuilder;
 import com.google.bitcoin.utils.BriefLogFormatter;
 import com.google.bitcoin.utils.Threading;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -53,7 +54,7 @@ public class ChainSplitTest {
     public void setUp() throws Exception {
         BriefLogFormatter.init();
         Utils.setMockClock(); // Use mock clock
-        Wallet.SendRequest.DEFAULT_FEE_PER_KB = BigInteger.ZERO;
+        Wallet.SendRequest.DEFAULT_FEE_PER_KB = Coin.ZERO;
         unitTestParams = UnitTestParams.get();
         wallet = new Wallet(unitTestParams);
         ECKey key1 = wallet.freshReceiveKey();
@@ -164,11 +165,11 @@ public class ChainSplitTest {
         assertTrue(chain.add(b2));
         //     genesis -> b1 -> b2
         //                  \-> b3 -> b4
-        assertEquals(BigInteger.ZERO, wallet.getBalance());
+        assertEquals(Coin.ZERO, wallet.getBalance());
         Block b3 = b1.createNextBlock(coinsTo);
         Block b4 = b3.createNextBlock(someOtherGuy);
         assertTrue(chain.add(b3));
-        assertEquals(BigInteger.ZERO, wallet.getBalance());
+        assertEquals(Coin.ZERO, wallet.getBalance());
         assertTrue(chain.add(b4));
         assertEquals("50.00", Utils.bitcoinValueToFriendlyString(wallet.getBalance()));
     }
@@ -183,7 +184,7 @@ public class ChainSplitTest {
         Transaction spend = wallet.createSend(dest, Utils.toNanoCoins(10, 0));
         wallet.commitTx(spend);
         // Waiting for confirmation ... make it eligible for selection.
-        assertEquals(BigInteger.ZERO, wallet.getBalance());
+        assertEquals(Coin.ZERO, wallet.getBalance());
         spend.getConfidence().markBroadcastBy(new PeerAddress(InetAddress.getByAddress(new byte[]{1, 2, 3, 4})));
         spend.getConfidence().markBroadcastBy(new PeerAddress(InetAddress.getByAddress(new byte[]{5,6,7,8})));
         assertEquals(ConfidenceType.PENDING, spend.getConfidence().getConfidenceType());
@@ -276,7 +277,7 @@ public class ChainSplitTest {
         //         -> b2
         Block b2 = unitTestParams.getGenesisBlock().createNextBlock(coinsTo);
         chain.add(b2);
-        assertEquals(BigInteger.ZERO, wallet.getBalance());
+        assertEquals(Coin.ZERO, wallet.getBalance());
         // genesis -> b1 -> b3
         //         -> b2
         Block b3 = b1.createNextBlock(someOtherGuy);
@@ -399,7 +400,7 @@ public class ChainSplitTest {
         final ArrayList<Transaction> txns = new ArrayList<Transaction>(3);
         wallet.addEventListener(new AbstractWalletEventListener() {
             @Override
-            public void onCoinsReceived(Wallet wallet, Transaction tx, BigInteger prevBalance, BigInteger newBalance) {
+            public void onCoinsReceived(Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
                 txns.add(tx);
             }
         });
@@ -552,7 +553,7 @@ public class ChainSplitTest {
         wallet.commitTx(t3);
         chain.add(FakeTxBuilder.makeSolvedTestBlock(b1, t2, t3));
 
-        final BigInteger coins0point98 = Utils.COIN.subtract(Utils.CENT).subtract(Utils.CENT);
+        final Coin coins0point98 = Utils.COIN.subtract(Utils.CENT).subtract(Utils.CENT);
         assertEquals(coins0point98, wallet.getBalance());
 
         // Now round trip the wallet and force a re-org.
@@ -577,7 +578,7 @@ public class ChainSplitTest {
         final ArrayList<Transaction> txns = new ArrayList<Transaction>(3);
         wallet.addEventListener(new AbstractWalletEventListener() {
             @Override
-            public void onCoinsReceived(Wallet wallet, Transaction tx, BigInteger prevBalance, BigInteger newBalance) {
+            public void onCoinsReceived(Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
                 txns.add(tx);
             }
         }, Threading.SAME_THREAD);

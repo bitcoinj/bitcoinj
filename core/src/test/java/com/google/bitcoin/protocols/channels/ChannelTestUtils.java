@@ -1,12 +1,13 @@
 package com.google.bitcoin.protocols.channels;
 
+import com.google.bitcoin.core.Coin;
 import com.google.bitcoin.core.Sha256Hash;
 import com.google.bitcoin.core.TransactionBroadcaster;
 import com.google.bitcoin.core.Utils;
 import com.google.bitcoin.core.Wallet;
+
 import org.bitcoin.paymentchannel.Protos;
 
-import java.math.BigInteger;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -35,7 +36,7 @@ public class ChannelTestUtils {
         }
 
         @Override
-        public void paymentIncrease(BigInteger by, BigInteger to) {
+        public void paymentIncrease(Coin by, Coin to) {
             q.add(to);
         }
 
@@ -49,8 +50,8 @@ public class ChannelTestUtils {
             return msg;
         }
 
-        public void checkTotalPayment(BigInteger valueSoFar) throws InterruptedException {
-            BigInteger lastSeen = (BigInteger) q.take();
+        public void checkTotalPayment(Coin valueSoFar) throws InterruptedException {
+            Coin lastSeen = (Coin) q.take();
             assertEquals(lastSeen, valueSoFar);
         }
     }

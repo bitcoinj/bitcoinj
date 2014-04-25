@@ -19,7 +19,6 @@ package com.google.bitcoin.protocols.channels;
 import com.google.bitcoin.core.*;
 
 import javax.annotation.Nullable;
-import java.math.BigInteger;
 import java.util.Date;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -30,7 +29,7 @@ import static com.google.common.base.Preconditions.checkArgument;
  * time approaches.
  */
 public class StoredServerChannel {
-    BigInteger bestValueToMe;
+    Coin bestValueToMe;
     byte[] bestValueSignature;
     long refundTransactionUnlockTimeSecs;
     Transaction contract;
@@ -43,7 +42,7 @@ public class StoredServerChannel {
     PaymentChannelServerState state = null;
 
     StoredServerChannel(@Nullable PaymentChannelServerState state, Transaction contract, TransactionOutput clientOutput,
-                        long refundTransactionUnlockTimeSecs, ECKey myKey, BigInteger bestValueToMe, @Nullable byte[] bestValueSignature) {
+                        long refundTransactionUnlockTimeSecs, ECKey myKey, Coin bestValueToMe, @Nullable byte[] bestValueSignature) {
         this.contract = contract;
         this.clientOutput = clientOutput;
         this.refundTransactionUnlockTimeSecs = refundTransactionUnlockTimeSecs;
@@ -57,7 +56,7 @@ public class StoredServerChannel {
      * <p>Updates the best value to the server to the given newValue and newSignature without any checking.</p>
      * <p>Does <i>NOT</i> notify the wallet of an update to the {@link StoredPaymentChannelServerStates}.</p>
      */
-    synchronized void updateValueToMe(BigInteger newValue, byte[] newSignature) {
+    synchronized void updateValueToMe(Coin newValue, byte[] newSignature) {
         this.bestValueToMe = newValue;
         this.bestValueSignature = newSignature;
     }
@@ -107,11 +106,11 @@ public class StoredServerChannel {
         final String newline = String.format("%n");
         return String.format("Stored server channel (%s)%n" +
                 "    Key:           %s%n" +
-                "    Value to me:   %d%n" +
+                "    Value to me:   %s%n" +
                 "    Client output: %s%n" +
                 "    Refund unlock: %s (%d unix time)%n" +
                 "    Contract:    %s%n",
-                connectedHandler != null ? "connected" : "disconnected", myKey, bestValueToMe,
+                connectedHandler != null ? "connected" : "disconnected", myKey, bestValueToMe.toString(),
                 clientOutput,  new Date(refundTransactionUnlockTimeSecs * 1000), refundTransactionUnlockTimeSecs,
                 contract.toString().replaceAll(newline, newline + "    "));
     }

@@ -20,7 +20,6 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
-import java.math.BigInteger;
 import java.security.KeyStore;
 import java.security.PrivateKey;
 import java.security.cert.X509Certificate;
@@ -35,6 +34,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.google.bitcoin.core.Address;
+import com.google.bitcoin.core.Coin;
 import com.google.bitcoin.core.ECKey;
 import com.google.bitcoin.core.NetworkParameters;
 import com.google.bitcoin.core.Transaction;
@@ -50,7 +50,7 @@ public class PaymentProtocolTest {
 
     // static test data
     private static final NetworkParameters NETWORK_PARAMS = UnitTestParams.get();
-    private static final BigInteger AMOUNT = BigInteger.ONE;
+    private static final Coin AMOUNT = Coin.ONE;
     private static final Address TO_ADDRESS = new ECKey().toAddress(NETWORK_PARAMS);
     private static final String MEMO = "memo";
     private static final String PAYMENT_URL = "https://example.com";
@@ -128,7 +128,7 @@ public class PaymentProtocolTest {
         // Create
         List<Transaction> transactions = new LinkedList<Transaction>();
         transactions.add(FakeTxBuilder.createFakeTx(NETWORK_PARAMS, AMOUNT, TO_ADDRESS));
-        BigInteger refundAmount = BigInteger.ONE;
+        Coin refundAmount = Coin.ONE;
         Address refundAddress = new ECKey().toAddress(NETWORK_PARAMS);
         Payment payment = PaymentProtocol.createPaymentMessage(transactions, refundAmount, refundAddress, MEMO,
                 MERCHANT_DATA);

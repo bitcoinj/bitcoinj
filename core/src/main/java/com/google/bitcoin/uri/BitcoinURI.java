@@ -20,14 +20,16 @@ package com.google.bitcoin.uri;
 
 import com.google.bitcoin.core.Address;
 import com.google.bitcoin.core.AddressFormatException;
+import com.google.bitcoin.core.Coin;
 import com.google.bitcoin.core.NetworkParameters;
 import com.google.bitcoin.core.Utils;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
+
 import java.io.UnsupportedEncodingException;
-import java.math.BigInteger;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLDecoder;
@@ -207,7 +209,7 @@ public class BitcoinURI {
             if (FIELD_AMOUNT.equals(nameToken)) {
                 // Decode the amount (contains an optional decimal component to 8dp).
                 try {
-                    BigInteger amount = Utils.toNanoCoins(valueToken);
+                    Coin amount = Utils.toNanoCoins(valueToken);
                     putWithValidation(FIELD_AMOUNT, amount);
                 } catch (NumberFormatException e) {
                     throw new OptionalFieldValidationException(String.format("'%s' is not a valid amount", valueToken), e);
@@ -263,8 +265,8 @@ public class BitcoinURI {
      * @return The amount name encoded using a pure integer value based at
      *         10,000,000 units is 1 BTC. May be null if no amount is specified
      */
-    public BigInteger getAmount() {
-        return (BigInteger) parameterMap.get(FIELD_AMOUNT);
+    public Coin getAmount() {
+        return (Coin) parameterMap.get(FIELD_AMOUNT);
     }
 
     /**
@@ -313,7 +315,7 @@ public class BitcoinURI {
         return builder.toString();
     }
 
-    public static String convertToBitcoinURI(Address address, BigInteger amount, String label, String message) {
+    public static String convertToBitcoinURI(Address address, Coin amount, String label, String message) {
         return convertToBitcoinURI(address.toString(), amount, label, message);
     }
 
@@ -326,11 +328,11 @@ public class BitcoinURI {
      * @param message A message
      * @return A String containing the Bitcoin URI
      */
-    public static String convertToBitcoinURI(String address, @Nullable BigInteger amount, @Nullable String label,
+    public static String convertToBitcoinURI(String address, @Nullable Coin amount, @Nullable String label,
                                              @Nullable String message) {
         checkNotNull(address);
         if (amount != null && amount.signum() < 0) {
-            throw new IllegalArgumentException("Amount must be positive");
+            throw new IllegalArgumentException("Coin must be positive");
         }
         
         StringBuilder builder = new StringBuilder();

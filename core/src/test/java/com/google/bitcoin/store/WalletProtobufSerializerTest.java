@@ -74,7 +74,7 @@ public class WalletProtobufSerializerTest {
         // Check the base case of a wallet with one key and no transactions.
         Wallet wallet1 = roundTrip(myWallet);
         assertEquals(0, wallet1.getTransactions(true).size());
-        assertEquals(BigInteger.ZERO, wallet1.getBalance());
+        assertEquals(Coin.ZERO, wallet1.getBalance());
         assertArrayEquals(myKey.getPubKey(),
                 wallet1.findKeyFromPubHash(myKey.getPubKeyHash()).getPubKey());
         assertArrayEquals(myKey.getPrivKeyBytes(),
@@ -92,7 +92,7 @@ public class WalletProtobufSerializerTest {
     @Test
     public void oneTx() throws Exception {
         // Check basic tx serialization.
-        BigInteger v1 = Utils.toNanoCoins(1, 0);
+        Coin v1 = Utils.toNanoCoins(1, 0);
         Transaction t1 = createFakeTx(params, v1, myAddress);
         t1.getConfidence().markBroadcastBy(new PeerAddress(InetAddress.getByName("1.2.3.4")));
         t1.getConfidence().markBroadcastBy(new PeerAddress(InetAddress.getByName("5.6.7.8")));
@@ -136,7 +136,7 @@ public class WalletProtobufSerializerTest {
         assertEquals(1, wallet1.getTransactions(true).size());
         Transaction t1 = wallet1.getTransaction(doubleSpends.t1.getHash());
         assertEquals(ConfidenceType.DEAD, t1.getConfidence().getConfidenceType());
-        assertEquals(BigInteger.ZERO, wallet1.getBalance());
+        assertEquals(Coin.ZERO, wallet1.getBalance());
 
         // TODO: Wallet should store overriding transactions even if they are not wallet-relevant.
         // assertEquals(doubleSpends.t2, t1.getConfidence().getOverridingTransaction());
@@ -192,7 +192,7 @@ public class WalletProtobufSerializerTest {
         final ArrayList<Transaction> txns = new ArrayList<Transaction>(2);
         myWallet.addEventListener(new AbstractWalletEventListener() {
             @Override
-            public void onCoinsReceived(Wallet wallet, Transaction tx, BigInteger prevBalance, BigInteger newBalance) {
+            public void onCoinsReceived(Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
                 txns.add(tx);
             }
         });
@@ -275,7 +275,7 @@ public class WalletProtobufSerializerTest {
     public void testRoundTripNormalWallet() throws Exception {
         Wallet wallet1 = roundTrip(myWallet);     
         assertEquals(0, wallet1.getTransactions(true).size());
-        assertEquals(BigInteger.ZERO, wallet1.getBalance());
+        assertEquals(Coin.ZERO, wallet1.getBalance());
         assertArrayEquals(myKey.getPubKey(),
                 wallet1.findKeyFromPubHash(myKey.getPubKeyHash()).getPubKey());
         assertArrayEquals(myKey.getPrivKeyBytes(),

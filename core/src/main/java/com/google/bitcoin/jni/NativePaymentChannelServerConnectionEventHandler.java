@@ -4,8 +4,6 @@ import com.google.bitcoin.core.*;
 import com.google.bitcoin.protocols.channels.PaymentChannelCloseException;
 import com.google.bitcoin.protocols.channels.ServerConnectionEventHandler;
 
-import java.math.BigInteger;
-
 /**
  * An event listener that relays events to a native C++ object. A pointer to that object is stored in
  * this class using JNI on the native side, thus several instances of this can point to different actual
@@ -18,7 +16,7 @@ public class NativePaymentChannelServerConnectionEventHandler extends ServerConn
     public native void channelOpen(Sha256Hash channelId);
 
     @Override
-    public native void paymentIncrease(BigInteger by, BigInteger to);
+    public native void paymentIncrease(Coin by, Coin to);
 
     @Override
     public native void channelClosed(PaymentChannelCloseException.CloseReason reason);

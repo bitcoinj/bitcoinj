@@ -16,10 +16,10 @@
 
 package com.google.bitcoin.protocols.channels;
 
-import java.math.BigInteger;
-
+import com.google.bitcoin.core.Coin;
 import com.google.bitcoin.core.Sha256Hash;
 import com.google.bitcoin.net.ProtobufParser;
+
 import org.bitcoin.paymentchannel.Protos;
 
 import javax.annotation.Nullable;
@@ -70,7 +70,7 @@ public abstract class ServerConnectionEventHandler {
      * @param by The increase in total payment
      * @param to The new total payment to us (not including fees which may be required to claim the payment)
      */
-    public abstract void paymentIncrease(BigInteger by, BigInteger to);
+    public abstract void paymentIncrease(Coin by, Coin to);
 
     /**
      * <p>Called when the channel was closed for some reason. May be called without a call to

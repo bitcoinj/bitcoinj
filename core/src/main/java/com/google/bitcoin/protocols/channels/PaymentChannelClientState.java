@@ -31,7 +31,6 @@ import com.google.common.util.concurrent.ListenableFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.math.BigInteger;
 import java.util.List;
 
 import static com.google.common.base.Preconditions.*;
@@ -75,20 +74,20 @@ public class PaymentChannelClientState {
     // and transactions that spend it.
     private final ECKey myKey, serverMultisigKey;
     // How much value (in satoshis) is locked up into the channel.
-    private final BigInteger totalValue;
+    private final Coin totalValue;
     // When the channel will automatically settle in favor of the client, if the server halts before protocol termination
     // specified in terms of block timestamps (so it can off real time by a few hours).
     private final long expiryTime;
 
     // The refund is a time locked transaction that spends all the money of the channel back to the client.
     private Transaction refundTx;
-    private BigInteger refundFees;
+    private Coin refundFees;
     // The multi-sig contract locks the value of the channel up such that the agreement of both parties is required
     // to spend it.
     private Transaction multisigContract;
     private Script multisigScript;
     // How much value is currently allocated to us. Starts as being same as totalValue.
-    private BigInteger valueToMe;
+    private Coin valueToMe;
 
     /**
      * The different logical states the channel can be in. The channel starts out as NEW, and then steps through the
@@ -156,7 +155,7 @@ public class PaymentChannelClientState {
      * @throws VerificationException If either myKey's pubkey or serverMultisigKey's pubkey are non-canonical (ie invalid)
      */
     public PaymentChannelClientState(Wallet wallet, ECKey myKey, ECKey serverMultisigKey,
-                                     BigInteger value, long expiryTimeInSeconds) throws VerificationException {
+                                     Coin value, long expiryTimeInSeconds) throws VerificationException {
         checkArgument(value.signum() > 0);
         this.wallet = checkNotNull(wallet);
         initWalletListeners();
@@ -174,7 +173,7 @@ public class PaymentChannelClientState {
         }
         wallet.addEventListener(new AbstractWalletEventListener() {
             @Override
-            public void onCoinsReceived(Wallet wallet, Transaction tx, BigInteger prevBalance, BigInteger newBalance) {
+            public void onCoinsReceived(Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
                 synchronized (PaymentChannelClientState.this) {
                     if (multisigContract == null) return;
                     if (isSettlementTransaction(tx)) {
@@ -253,7 +252,7 @@ public class PaymentChannelClientState {
         editContractSendRequest(req);
         req.shuffleOutputs = false;   // TODO: Fix things so shuffling is usable.
         wallet.completeTx(req);
-        BigInteger multisigFee = req.fee;
+        Coin multisigFee = req.fee;
         multisigContract = req.tx;
         // Build a refund transaction that protects us in the case of a bad server that's just trying to cause havoc
         // by locking up peoples money (perhaps as a precursor to a ransom attempt). We time lock it so the server
@@ -266,7 +265,7 @@ public class PaymentChannelClientState {
         refundTx.setLockTime(expiryTime);
         if (totalValue.compareTo(Utils.CENT) < 0) {
             // Must pay min fee.
-            final BigInteger valueAfterFee = totalValue.subtract(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE);
+            final Coin valueAfterFee = totalValue.subtract(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE);
             if (Transaction.MIN_NONDUST_OUTPUT.compareTo(valueAfterFee) > 0)
                 throw new ValueOutOfRangeException("totalValue too small to use");
             refundTx.addOutput(valueAfterFee, myKey.toAddress(params));
@@ -292,7 +291,7 @@ public class PaymentChannelClientState {
 
     /**
      * Returns the transaction that locks the money to the agreement of both parties. Do not mutate the result.
-     * Once this step is done, you can use {@link PaymentChannelClientState#incrementPaymentBy(java.math.BigInteger)} to
+     * Once this step is done, you can use {@link PaymentChannelClientState#incrementPaymentBy(java.math.Coin)} to
      * start paying the server.
      */
     public synchronized Transaction getMultisigContract() {
@@ -348,7 +347,7 @@ public class PaymentChannelClientState {
         state = State.SAVE_STATE_IN_WALLET;
     }
 
-    private synchronized Transaction makeUnsignedChannelContract(BigInteger valueToMe) throws ValueOutOfRangeException {
+    private synchronized Transaction makeUnsignedChannelContract(Coin valueToMe) throws ValueOutOfRangeException {
         Transaction tx = new Transaction(wallet.getParams());
         tx.addInput(multisigContract.getOutput(0));
         // Our output always comes first.
@@ -373,7 +372,7 @@ public class PaymentChannelClientState {
     /** Container for a signature and an amount that was sent. */
     public static class IncrementedPayment {
         public TransactionSignature signature;
-        public BigInteger amount;
+        public Coin amount;
     }
 
     /**
@@ -391,17 +390,17 @@ public class PaymentChannelClientState {
      * @throws ValueOutOfRangeException If size is negative or the channel does not have sufficient money in it to
      *                                  complete this payment.
      */
-    public synchronized IncrementedPayment incrementPaymentBy(BigInteger size) throws ValueOutOfRangeException {
+    public synchronized IncrementedPayment incrementPaymentBy(Coin size) throws ValueOutOfRangeException {
         checkState(state == State.READY);
         checkNotExpired();
         checkNotNull(size);  // Validity of size will be checked by makeUnsignedChannelContract.
         if (size.signum() < 0)
             throw new ValueOutOfRangeException("Tried to decrement payment");
-        BigInteger newValueToMe = valueToMe.subtract(size);
+        Coin newValueToMe = valueToMe.subtract(size);
         if (newValueToMe.compareTo(Transaction.MIN_NONDUST_OUTPUT) < 0 && newValueToMe.signum() > 0) {
             log.info("New value being sent back as change was smaller than minimum nondust output, sending all");
             size = valueToMe;
-            newValueToMe = BigInteger.ZERO;
+            newValueToMe = Coin.ZERO;
         }
         if (newValueToMe.signum() < 0)
             throw new ValueOutOfRangeException("Channel has too little money to pay " + size + " satoshis");
@@ -410,7 +409,7 @@ public class PaymentChannelClientState {
         Transaction.SigHash mode;
         // If we spent all the money we put into this channel, we (by definition) don't care what the outputs are, so
         // we sign with SIGHASH_NONE to let the server do what it wants.
-        if (newValueToMe.equals(BigInteger.ZERO))
+        if (newValueToMe.equals(Coin.ZERO))
             mode = Transaction.SigHash.NONE;
         else
             mode = Transaction.SigHash.SINGLE;
@@ -500,7 +499,7 @@ public class PaymentChannelClientState {
      * Returns the fees that will be paid if the refund transaction has to be claimed because the server failed to settle
      * the channel properly. May only be called after {@link PaymentChannelClientState#initiate()}
      */
-    public synchronized BigInteger getRefundTxFees() {
+    public synchronized Coin getRefundTxFees() {
         checkState(state.compareTo(State.NEW) > 0);
         return refundFees;
     }
@@ -518,14 +517,14 @@ public class PaymentChannelClientState {
     /**
      * Gets the total value of this channel (ie the maximum payment possible)
      */
-    public BigInteger getTotalValue() {
+    public Coin getTotalValue() {
         return totalValue;
     }
 
     /**
      * Gets the current amount refunded to us from the multisig contract (ie totalValue-valueSentToServer)
      */
-    public synchronized BigInteger getValueRefunded() {
+    public synchronized Coin getValueRefunded() {
         checkState(state == State.READY);
         return valueToMe;
     }
@@ -533,7 +532,7 @@ public class PaymentChannelClientState {
     /**
      * Returns the amount of money sent on this channel so far.
      */
-    public synchronized BigInteger getValueSpent() {
+    public synchronized Coin getValueSpent() {
         return getTotalValue().subtract(getValueRefunded());
     }
 }

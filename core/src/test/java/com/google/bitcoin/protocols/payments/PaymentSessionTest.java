@@ -28,7 +28,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.InputStream;
-import java.math.BigInteger;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Date;
@@ -45,7 +44,7 @@ public class PaymentSessionTest {
     private ECKey serverKey;
     private Transaction tx;
     private TransactionOutput outputToMe;
-    BigInteger nanoCoins = Utils.toNanoCoins(1, 0);
+    Coin nanoCoins = Utils.toNanoCoins(1, 0);
 
     @Before
     public void setUp() throws Exception {
@@ -97,7 +96,7 @@ public class PaymentSessionTest {
                 .setSerializedPaymentDetails(paymentDetails.toByteString())
                 .build();
         MockPaymentSession paymentSession = new MockPaymentSession(paymentRequest);
-        assertEquals(BigInteger.ZERO, paymentSession.getValue());
+        assertEquals(Coin.ZERO, paymentSession.getValue());
         assertNull(paymentSession.getPaymentUrl());
         assertNull(paymentSession.getMemo());
     }

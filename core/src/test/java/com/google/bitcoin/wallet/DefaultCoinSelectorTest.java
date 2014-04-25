@@ -25,7 +25,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.math.BigInteger;
 import java.net.InetAddress;
 import java.util.ArrayList;
 
@@ -97,7 +96,7 @@ public class DefaultCoinSelectorTest extends TestWithWallet {
         Transaction t1 = checkNotNull(sendMoneyToWallet(Utils.COIN, AbstractBlockChain.NewBlockType.BEST_CHAIN));
         // Padding block.
         wallet.notifyNewBestBlock(FakeTxBuilder.createFakeBlock(blockStore).storedBlock);
-        final BigInteger TWO_COINS = Utils.COIN.multiply(BigInteger.valueOf(2));
+        final Coin TWO_COINS = Utils.COIN.multiply(Coin.valueOf(2));
         Transaction t2 = checkNotNull(sendMoneyToWallet(TWO_COINS, AbstractBlockChain.NewBlockType.BEST_CHAIN));
         Transaction t3 = checkNotNull(sendMoneyToWallet(Utils.CENT, AbstractBlockChain.NewBlockType.BEST_CHAIN));
 

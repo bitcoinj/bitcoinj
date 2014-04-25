@@ -17,6 +17,7 @@
 
 package com.google.bitcoin.wallet;
 
+import com.google.bitcoin.core.Coin;
 import com.google.bitcoin.core.NetworkParameters;
 import com.google.bitcoin.core.Transaction;
 import com.google.bitcoin.core.TransactionConfidence;
@@ -24,13 +25,11 @@ import com.google.bitcoin.core.TransactionInput;
 import com.google.bitcoin.core.TransactionOutput;
 import com.google.bitcoin.core.Wallet;
 import com.google.bitcoin.script.ScriptChunk;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 
-import java.math.BigInteger;
 import java.util.List;
 
 import static com.google.common.base.Preconditions.checkState;
@@ -48,7 +47,7 @@ public class DefaultRiskAnalysis implements RiskAnalysis {
      * rejected by the network. Currently it's 546 satoshis. This is different from {@link Transaction#MIN_NONDUST_OUTPUT}
      * because of an upcoming fee change in Bitcoin Core 0.9.
      */
-    public static final BigInteger MIN_ANALYSIS_NONDUST_OUTPUT = BigInteger.valueOf(546);
+    public static final Coin MIN_ANALYSIS_NONDUST_OUTPUT = Coin.valueOf(546);
 
     protected final Transaction tx;
     protected final List<Transaction> dependencies;

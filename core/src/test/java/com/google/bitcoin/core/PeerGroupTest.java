@@ -34,7 +34,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
-import java.math.BigInteger;
 import java.net.InetSocketAddress;
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
@@ -179,7 +178,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         expectedPeers.add(peerOf(p2));
         assertEquals(tmp, expectedPeers);
 
-        BigInteger value = Utils.toNanoCoins(1, 0);
+        Coin value = Utils.toNanoCoins(1, 0);
         Transaction t1 = FakeTxBuilder.createFakeTx(unitTestParams, value, address);
         InventoryMessage inv = new InventoryMessage(unitTestParams);
         inv.addTransaction(t1);

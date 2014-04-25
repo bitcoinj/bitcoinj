@@ -40,7 +40,7 @@ import static org.junit.Assert.*;
 
 public class PaymentChannelStateTest extends TestWithWallet {
     private ECKey serverKey;
-    private BigInteger halfCoin;
+    private Coin halfCoin;
     private Wallet serverWallet;
     private PaymentChannelServerState serverState;
     private PaymentChannelClientState clientState;
@@ -94,7 +94,7 @@ public class PaymentChannelStateTest extends TestWithWallet {
     @Test
     public void stateErrors() throws Exception {
         PaymentChannelClientState channelState = new PaymentChannelClientState(wallet, myKey, serverKey,
-                Utils.COIN.multiply(BigInteger.TEN), 20);
+                Utils.COIN.multiply(Coin.TEN), 20);
         assertEquals(PaymentChannelClientState.State.NEW, channelState.getState());
         try {
             channelState.getMultisigContract();
@@ -164,8 +164,8 @@ public class PaymentChannelStateTest extends TestWithWallet {
         assertFalse(clientWalletMultisigContract.getInput(0).getConnectedOutput().getSpentBy().getParentTransaction().getHash().equals(refund.getHash()));
 
         // Both client and server are now in the ready state. Simulate a few micropayments of 0.005 bitcoins.
-        BigInteger size = halfCoin.divide(BigInteger.TEN).divide(BigInteger.TEN);
-        BigInteger totalPayment = BigInteger.ZERO;
+        Coin size = halfCoin.divide(Coin.TEN).divide(Coin.TEN);
+        Coin totalPayment = Coin.ZERO;
         for (int i = 0; i < 4; i++) {
             byte[] signature = clientState.incrementPaymentBy(size).signature.encodeToBitcoin();
             totalPayment = totalPayment.add(size);
@@ -194,10 +194,10 @@ public class PaymentChannelStateTest extends TestWithWallet {
         // Create a block with the payment transaction in it and give it to both wallets
         chain.add(makeSolvedTestBlock(blockStore.getChainHead().getHeader(), reserializedCloseTx));
 
-        assertEquals(size.multiply(BigInteger.valueOf(5)), serverWallet.getBalance());
+        assertEquals(size.multiply(Coin.valueOf(5)), serverWallet.getBalance());
         assertEquals(0, serverWallet.getPendingTransactions().size());
 
-        assertEquals(Utils.COIN.subtract(size.multiply(BigInteger.valueOf(5))), wallet.getBalance());
+        assertEquals(Utils.COIN.subtract(size.multiply(Coin.valueOf(5))), wallet.getBalance());
         assertEquals(0, wallet.getPendingTransactions().size());
         assertEquals(3, wallet.getTransactions(false).size());
 
@@ -218,7 +218,7 @@ public class PaymentChannelStateTest extends TestWithWallet {
 
         // Spend the client wallet's one coin
         Transaction spendCoinTx = wallet.sendCoinsOffline(Wallet.SendRequest.to(new ECKey().toAddress(params), Utils.COIN));
-        assertEquals(BigInteger.ZERO, wallet.getBalance());
+        assertEquals(Coin.ZERO, wallet.getBalance());
         chain.add(makeSolvedTestBlock(blockStore.getChainHead().getHeader(), spendCoinTx, createFakeTx(params, Utils.CENT, myAddress)));
         assertEquals(Utils.CENT, wallet.getBalance());
 
@@ -233,12 +233,12 @@ public class PaymentChannelStateTest extends TestWithWallet {
         assertEquals(PaymentChannelServerState.State.WAITING_FOR_REFUND_TRANSACTION, serverState.getState());
 
         clientState = new PaymentChannelClientState(wallet, myKey, ECKey.fromPublicOnly(serverKey.getPubKey()),
-                                                    Utils.CENT.divide(BigInteger.valueOf(2)), EXPIRE_TIME);
+                                                    Utils.CENT.divide(Coin.valueOf(2)), EXPIRE_TIME);
         assertEquals(PaymentChannelClientState.State.NEW, clientState.getState());
-        assertEquals(Utils.CENT.divide(BigInteger.valueOf(2)), clientState.getTotalValue());
+        assertEquals(Utils.CENT.divide(Coin.valueOf(2)), clientState.getTotalValue());
         clientState.initiate();
         // We will have to pay min_tx_fee twice - both the multisig contract and the refund tx
-        assertEquals(clientState.getRefundTxFees(), Transaction.REFERENCE_DEFAULT_MIN_TX_FEE.multiply(BigInteger.valueOf(2)));
+        assertEquals(clientState.getRefundTxFees(), Transaction.REFERENCE_DEFAULT_MIN_TX_FEE.multiply(Coin.valueOf(2)));
         assertEquals(PaymentChannelClientState.State.INITIATED, clientState.getState());
 
         // Send the refund tx from client to server and get back the signature.
@@ -269,8 +269,8 @@ public class PaymentChannelStateTest extends TestWithWallet {
         assertEquals(PaymentChannelServerState.State.READY, serverState.getState());
 
         // Pay a tiny bit
-        serverState.incrementPayment(Utils.CENT.divide(BigInteger.valueOf(2)).subtract(Utils.CENT.divide(BigInteger.TEN)),
-                clientState.incrementPaymentBy(Utils.CENT.divide(BigInteger.TEN)).signature.encodeToBitcoin());
+        serverState.incrementPayment(Utils.CENT.divide(Coin.valueOf(2)).subtract(Utils.CENT.divide(Coin.TEN)),
+                clientState.incrementPaymentBy(Utils.CENT.divide(Coin.TEN)).signature.encodeToBitcoin());
 
         // Advance time until our we get close enough to lock time that server should rebroadcast
         Utils.rollMockClock(60*60*22);
@@ -313,7 +313,7 @@ public class PaymentChannelStateTest extends TestWithWallet {
         chain.add(makeSolvedTestBlock(blockStore.getChainHead().getHeader(), multisigContract,clientBroadcastedRefund));
 
         // Make sure we actually had to pay what initialize() told us we would
-        assertEquals(wallet.getBalance(), Utils.CENT.subtract(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE.multiply(BigInteger.valueOf(2))));
+        assertEquals(wallet.getBalance(), Utils.CENT.subtract(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE.multiply(Coin.valueOf(2))));
 
         try {
             // After its expired, we cant still increment payment
@@ -341,7 +341,7 @@ public class PaymentChannelStateTest extends TestWithWallet {
         // Test refund transaction with any number of issues
         byte[] refundTxBytes = clientState.getIncompleteRefundTransaction().bitcoinSerialize();
         Transaction refund = new Transaction(params, refundTxBytes);
-        refund.addOutput(BigInteger.ZERO, new ECKey().toAddress(params));
+        refund.addOutput(Coin.ZERO, new ECKey().toAddress(params));
         try {
             serverState.provideRefundTransaction(refund, myKey.getPubKey());
             fail();
@@ -408,7 +408,7 @@ public class PaymentChannelStateTest extends TestWithWallet {
         clientState.fakeSave();
         assertEquals(PaymentChannelClientState.State.PROVIDE_MULTISIG_CONTRACT_TO_SERVER, clientState.getState());
 
-        try { clientState.incrementPaymentBy(BigInteger.ONE); fail(); } catch (IllegalStateException e) {}
+        try { clientState.incrementPaymentBy(Coin.ONE); fail(); } catch (IllegalStateException e) {}
 
         byte[] multisigContractSerialized = clientState.getMultisigContract().bitcoinSerialize();
 
@@ -424,7 +424,7 @@ public class PaymentChannelStateTest extends TestWithWallet {
 
         multisigContract = new Transaction(params, multisigContractSerialized);
         multisigContract.clearOutputs();
-        multisigContract.addOutput(BigInteger.ZERO, ScriptBuilder.createMultiSigOutputScript(2, Lists.newArrayList(myKey, serverKey)));
+        multisigContract.addOutput(Coin.ZERO, ScriptBuilder.createMultiSigOutputScript(2, Lists.newArrayList(myKey, serverKey)));
         try {
             serverState.provideMultiSigContract(multisigContract);
             fail();
@@ -451,8 +451,8 @@ public class PaymentChannelStateTest extends TestWithWallet {
         assertEquals(PaymentChannelServerState.State.READY, serverState.getState());
 
         // Both client and server are now in the ready state. Simulate a few micropayments of 0.005 bitcoins.
-        BigInteger size = halfCoin.divide(BigInteger.TEN).divide(BigInteger.TEN);
-        BigInteger totalPayment = BigInteger.ZERO;
+        Coin size = halfCoin.divide(Coin.TEN).divide(Coin.TEN);
+        Coin totalPayment = Coin.ZERO;
         try {
             clientState.incrementPaymentBy(Utils.COIN);
             fail();
@@ -510,12 +510,12 @@ public class PaymentChannelStateTest extends TestWithWallet {
         assertEquals(serverState.getBestValueToMe(), totalPayment);
 
         try {
-            clientState.incrementPaymentBy(BigInteger.ONE.negate());
+            clientState.incrementPaymentBy(Coin.ONE.negate());
             fail();
         } catch (ValueOutOfRangeException e) {}
 
         try {
-            clientState.incrementPaymentBy(halfCoin.subtract(size).add(BigInteger.ONE));
+            clientState.incrementPaymentBy(halfCoin.subtract(size).add(Coin.ONE));
             fail();
         } catch (ValueOutOfRangeException e) {}
     }
@@ -526,7 +526,7 @@ public class PaymentChannelStateTest extends TestWithWallet {
 
         // Spend the client wallet's one coin
         wallet.sendCoinsOffline(Wallet.SendRequest.to(new ECKey().toAddress(params), Utils.COIN));
-        assertEquals(BigInteger.ZERO, wallet.getBalance());
+        assertEquals(Coin.ZERO, wallet.getBalance());
 
         chain.add(makeSolvedTestBlock(blockStore.getChainHead().getHeader(), createFakeTx(params, Utils.CENT, myAddress)));
         assertEquals(Utils.CENT, wallet.getBalance());
@@ -538,7 +538,7 @@ public class PaymentChannelStateTest extends TestWithWallet {
         assertEquals(PaymentChannelServerState.State.WAITING_FOR_REFUND_TRANSACTION, serverState.getState());
 
         // Clearly ONE is far too small to be useful
-        clientState = new PaymentChannelClientState(wallet, myKey, ECKey.fromPublicOnly(serverKey.getPubKey()), BigInteger.ONE, EXPIRE_TIME);
+        clientState = new PaymentChannelClientState(wallet, myKey, ECKey.fromPublicOnly(serverKey.getPubKey()), Coin.ONE, EXPIRE_TIME);
         assertEquals(PaymentChannelClientState.State.NEW, clientState.getState());
         try {
             clientState.initiate();
@@ -546,7 +546,7 @@ public class PaymentChannelStateTest extends TestWithWallet {
         } catch (ValueOutOfRangeException e) {}
 
         clientState = new PaymentChannelClientState(wallet, myKey, ECKey.fromPublicOnly(serverKey.getPubKey()),
-                                                    Transaction.MIN_NONDUST_OUTPUT.subtract(BigInteger.ONE).add(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE),
+                                                    Transaction.MIN_NONDUST_OUTPUT.subtract(Coin.ONE).add(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE),
                 EXPIRE_TIME);
         assertEquals(PaymentChannelClientState.State.NEW, clientState.getState());
         try {
@@ -560,14 +560,14 @@ public class PaymentChannelStateTest extends TestWithWallet {
         assertEquals(PaymentChannelClientState.State.NEW, clientState.getState());
         // We'll have to pay REFERENCE_DEFAULT_MIN_TX_FEE twice (multisig+refund), and we'll end up getting back nearly nothing...
         clientState.initiate();
-        assertEquals(clientState.getRefundTxFees(), Transaction.REFERENCE_DEFAULT_MIN_TX_FEE.multiply(BigInteger.valueOf(2)));
+        assertEquals(clientState.getRefundTxFees(), Transaction.REFERENCE_DEFAULT_MIN_TX_FEE.multiply(Coin.valueOf(2)));
         assertEquals(PaymentChannelClientState.State.INITIATED, clientState.getState());
 
         // Now actually use a more useful CENT
         clientState = new PaymentChannelClientState(wallet, myKey, ECKey.fromPublicOnly(serverKey.getPubKey()), Utils.CENT, EXPIRE_TIME);
         assertEquals(PaymentChannelClientState.State.NEW, clientState.getState());
         clientState.initiate();
-        assertEquals(clientState.getRefundTxFees(), BigInteger.ZERO);
+        assertEquals(clientState.getRefundTxFees(), Coin.ZERO);
         assertEquals(PaymentChannelClientState.State.INITIATED, clientState.getState());
 
         // Send the refund tx from client to server and get back the signature.
@@ -592,16 +592,16 @@ public class PaymentChannelStateTest extends TestWithWallet {
         assertEquals(PaymentChannelServerState.State.READY, serverState.getState());
 
         // Both client and server are now in the ready state. Simulate a few micropayments
-        BigInteger totalPayment = BigInteger.ZERO;
+        Coin totalPayment = Coin.ZERO;
 
         // We can send as little as we want - its up to the server to get the fees right
-        byte[] signature = clientState.incrementPaymentBy(BigInteger.ONE).signature.encodeToBitcoin();
-        totalPayment = totalPayment.add(BigInteger.ONE);
+        byte[] signature = clientState.incrementPaymentBy(Coin.ONE).signature.encodeToBitcoin();
+        totalPayment = totalPayment.add(Coin.ONE);
         serverState.incrementPayment(Utils.CENT.subtract(totalPayment), signature);
 
         // We can't refund more than the contract is worth...
         try {
-            serverState.incrementPayment(Utils.CENT.add(BigInteger.ONE), signature);
+            serverState.incrementPayment(Utils.CENT.add(Coin.ONE), signature);
             fail();
         } catch (ValueOutOfRangeException e) {}
 
@@ -609,12 +609,12 @@ public class PaymentChannelStateTest extends TestWithWallet {
         // will correct it for us to be larger than the requested amount, to make the change output zero.
         PaymentChannelClientState.IncrementedPayment payment =
                 clientState.incrementPaymentBy(Utils.CENT.subtract(Transaction.MIN_NONDUST_OUTPUT));
-        assertEquals(Utils.CENT.subtract(BigInteger.ONE), payment.amount);
+        assertEquals(Utils.CENT.subtract(Coin.ONE), payment.amount);
         totalPayment = totalPayment.add(payment.amount);
 
         // The server also won't accept it if we do that.
         try {
-            serverState.incrementPayment(Transaction.MIN_NONDUST_OUTPUT.subtract(BigInteger.ONE), signature);
+            serverState.incrementPayment(Transaction.MIN_NONDUST_OUTPUT.subtract(Coin.ONE), signature);
             fail();
         } catch (ValueOutOfRangeException e) {}
 
@@ -678,9 +678,9 @@ public class PaymentChannelStateTest extends TestWithWallet {
         assertEquals(PaymentChannelServerState.State.READY, serverState.getState());
 
         // Both client and server are now in the ready state, split the channel in half
-        byte[] signature = clientState.incrementPaymentBy(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE.subtract(BigInteger.ONE))
+        byte[] signature = clientState.incrementPaymentBy(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE.subtract(Coin.ONE))
                 .signature.encodeToBitcoin();
-        BigInteger totalRefund = Utils.CENT.subtract(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE.subtract(BigInteger.ONE));
+        Coin totalRefund = Utils.CENT.subtract(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE.subtract(Coin.ONE));
         serverState.incrementPayment(totalRefund, signature);
 
         // We need to pay MIN_TX_FEE, but we only have MIN_NONDUST_OUTPUT
@@ -703,8 +703,8 @@ public class PaymentChannelStateTest extends TestWithWallet {
             assertTrue(e.getMessage().contains("more in fees"));
         }
 
-        signature = clientState.incrementPaymentBy(BigInteger.ONE.shiftLeft(1)).signature.encodeToBitcoin();
-        totalRefund = totalRefund.subtract(BigInteger.ONE.shiftLeft(1));
+        signature = clientState.incrementPaymentBy(Coin.ONE.shiftLeft(1)).signature.encodeToBitcoin();
+        totalRefund = totalRefund.subtract(Coin.ONE.shiftLeft(1));
         serverState.incrementPayment(totalRefund, signature);
 
         // And settle the channel.
@@ -772,8 +772,8 @@ public class PaymentChannelStateTest extends TestWithWallet {
         assertFalse(clientWalletMultisigContract.getInput(0).getConnectedOutput().getSpentBy().getParentTransaction().getHash().equals(refund.getHash()));
 
         // Both client and server are now in the ready state. Simulate a few micropayments of 0.005 bitcoins.
-        BigInteger size = halfCoin.divide(BigInteger.TEN).divide(BigInteger.TEN);
-        BigInteger totalPayment = BigInteger.ZERO;
+        Coin size = halfCoin.divide(Coin.TEN).divide(Coin.TEN);
+        Coin totalPayment = Coin.ZERO;
         for (int i = 0; i < 5; i++) {
             byte[] signature = clientState.incrementPaymentBy(size).signature.encodeToBitcoin();
             totalPayment = totalPayment.add(size);

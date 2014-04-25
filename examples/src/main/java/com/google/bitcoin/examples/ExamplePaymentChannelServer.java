@@ -17,6 +17,7 @@
 
 package com.google.bitcoin.examples;
 
+import com.google.bitcoin.core.Coin;
 import com.google.bitcoin.core.NetworkParameters;
 import com.google.bitcoin.core.Sha256Hash;
 import com.google.bitcoin.core.VerificationException;
@@ -26,10 +27,10 @@ import com.google.bitcoin.params.RegTestParams;
 import com.google.bitcoin.protocols.channels.*;
 import com.google.bitcoin.utils.BriefLogFormatter;
 import com.google.common.collect.ImmutableList;
+
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.math.BigInteger;
 import java.net.SocketAddress;
 import java.util.List;
 
@@ -71,7 +72,7 @@ public class ExamplePaymentChannelServer implements PaymentChannelServerListener
         // We provide a peer group, a wallet, a timeout in seconds, the amount we require to start a channel and
         // an implementation of HandlerFactory, which we just implement ourselves.
         final int MILLI = 100000;
-        new PaymentChannelServerListener(appKit.peerGroup(), appKit.wallet(), 15, BigInteger.valueOf(MILLI), this).bindAndStart(4242);
+        new PaymentChannelServerListener(appKit.peerGroup(), appKit.wallet(), 15, Coin.valueOf(MILLI), this).bindAndStart(4242);
     }
 
     @Override
@@ -101,7 +102,7 @@ public class ExamplePaymentChannelServer implements PaymentChannelServerListener
             }
 
             @Override
-            public void paymentIncrease(BigInteger by, BigInteger to) {
+            public void paymentIncrease(Coin by, Coin to) {
                 log.info("Client {} paid increased payment by {} for a total of " + to.toString(), clientAddress, by);
             }
 

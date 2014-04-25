@@ -17,7 +17,6 @@
 package com.google.bitcoin.core;
 
 import java.io.*;
-import java.math.BigInteger;
 
 /**
  * A StoredTransactionOutput message contains the information necessary to check a spending transaction.
@@ -31,7 +30,7 @@ public class StoredTransactionOutput implements Serializable {
      *  A transaction output has some value and a script used for authenticating that the redeemer is allowed to spend
      *  this output.
      */
-    private BigInteger value;
+    private Coin value;
     private byte[] scriptBytes;
 
     /** Hash of the transaction to which we refer. */
@@ -53,7 +52,7 @@ public class StoredTransactionOutput implements Serializable {
      * @param height the height this output was created in
      * @param scriptBytes
      */
-    public StoredTransactionOutput(Sha256Hash hash, long index, BigInteger value, int height, boolean isCoinbase, byte[] scriptBytes) {
+    public StoredTransactionOutput(Sha256Hash hash, long index, Coin value, int height, boolean isCoinbase, byte[] scriptBytes) {
         this.hash = hash;
         this.index = index;
         this.value = value;
@@ -73,7 +72,7 @@ public class StoredTransactionOutput implements Serializable {
         byte[] valueBytes = new byte[8];
         if (in.read(valueBytes, 0, 8) != 8)
             throw new EOFException();
-        value = BigInteger.valueOf(Utils.readInt64(valueBytes, 0));
+        value = Coin.valueOf(Utils.readInt64(valueBytes, 0));
         
         int scriptBytesLength = ((in.read() & 0xFF) << 0) |
                                 ((in.read() & 0xFF) << 8) |
@@ -103,7 +102,7 @@ public class StoredTransactionOutput implements Serializable {
      * The value which this Transaction output holds
      * @return the value
      */
-    public BigInteger getValue() {
+    public Coin getValue() {
         return value;
     }
 
@@ -157,7 +156,7 @@ public class StoredTransactionOutput implements Serializable {
     }
 
     public void serializeToStream(OutputStream bos) throws IOException {
-        Utils.uint64ToByteStreamLE(value, bos);
+        Utils.uint64ToByteStreamLE(value.toBigInteger(), bos);
         
         bos.write(0xFF & scriptBytes.length >> 0);
         bos.write(0xFF & scriptBytes.length >> 8);
