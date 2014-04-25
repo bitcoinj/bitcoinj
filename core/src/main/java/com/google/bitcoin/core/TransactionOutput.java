@@ -111,7 +111,7 @@ public class TransactionOutput extends ChildMessage implements Serializable {
         super(params);
         // Negative values obviously make no sense, except for -1 which is used as a sentinel value when calculating
         // SIGHASH_SINGLE signatures, so unfortunately we have to allow that here.
-        checkArgument(value.signum() >= 0 || value.equals(Utils.NEGATIVE_ONE), "Negative values not allowed");
+        checkArgument(value.signum() >= 0 || value.equals(Coin.NEGATIVE_ONE), "Negative values not allowed");
         checkArgument(value.compareTo(NetworkParameters.MAX_MONEY) < 0, "Values larger than MAX_MONEY not allowed");
         this.value = value;
         this.scriptBytes = scriptBytes;
@@ -306,7 +306,7 @@ public class TransactionOutput extends ChildMessage implements Serializable {
         try {
             Script script = getScriptPubKey();
             StringBuilder buf = new StringBuilder("TxOut of ");
-            buf.append(Utils.bitcoinValueToFriendlyString(value));
+            buf.append(value.toFriendlyString());
             if (script.isSentToAddress() || script.isPayToScriptHash())
                 buf.append(" to ").append(script.getToAddress(params));
             else if (script.isSentToRawPubKey())

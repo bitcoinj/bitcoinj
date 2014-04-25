@@ -39,8 +39,8 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 
+import static com.google.bitcoin.core.Coin.CENT;
 import static com.google.bitcoin.core.Coin.TEN;
-import static com.google.bitcoin.core.Utils.CENT;
 
 /**
  * Simple client that connects to the given host, opens a channel, and pays one cent.
@@ -169,7 +169,7 @@ public class ExamplePaymentChannelClient {
         // ESTIMATED because we don't really need to wait for confirmation.
         ListenableFuture<Coin> balanceFuture = appKit.wallet().getBalanceFuture(amountPlusFee, Wallet.BalanceType.ESTIMATED);
         if (!balanceFuture.isDone()) {
-            System.out.println("Please send " + Utils.bitcoinValueToFriendlyString(amountPlusFee) +
+            System.out.println("Please send " + amountPlusFee.toFriendlyString() +
                     " BTC to " + myKey.toAddress(params));
             Futures.getUnchecked(balanceFuture);
         }

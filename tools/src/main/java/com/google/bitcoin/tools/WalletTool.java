@@ -66,6 +66,8 @@ import java.util.concurrent.TimeoutException;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
 
+import static com.google.bitcoin.core.Coin.toNanoCoins;
+
 /**
  * A command line tool for manipulating wallets and working with Bitcoin.
  */
@@ -126,7 +128,7 @@ public class WalletTool {
 
         public boolean matchBitcoins(Coin comparison) {
             try {
-                Coin units = Utils.toNanoCoins(value);
+                Coin units = toNanoCoins(value);
                 switch (type) {
                     case LT: return comparison.compareTo(units) < 0;
                     case GT: return comparison.compareTo(units) > 0;
@@ -325,7 +327,7 @@ public class WalletTool {
                 } else if (options.has(outputFlag)) {
                     Coin fee = Coin.ZERO;
                     if (options.has("fee")) {
-                        fee = Utils.toNanoCoins((String)options.valueOf("fee"));
+                        fee = toNanoCoins((String)options.valueOf("fee"));
                     }
                     String lockTime = null;
                     if (options.has("locktime")) {
@@ -425,7 +427,7 @@ public class WalletTool {
                 }
                 String destination = parts[0];
                 try {
-                    Coin value = Utils.toNanoCoins(parts[1]);
+                    Coin value = toNanoCoins(parts[1]);
                     if (destination.startsWith("0")) {
                         // Treat as a raw public key.
                         byte[] pubKey = new BigInteger(destination, 16).toByteArray();
@@ -505,7 +507,7 @@ public class WalletTool {
         } catch (ExecutionException e) {
             throw new RuntimeException(e);
         } catch (InsufficientMoneyException e) {
-            System.err.println("Insufficient funds: have " + Utils.bitcoinValueToFriendlyString(wallet.getBalance()));
+            System.err.println("Insufficient funds: have " + wallet.getBalance().toFriendlyString());
         }
     }
 
@@ -615,7 +617,7 @@ public class WalletTool {
         } catch (InterruptedException e1) {
             // Ignore.
         } catch (InsufficientMoneyException e) {
-            System.err.println("Insufficient funds: have " + Utils.bitcoinValueToFriendlyString(wallet.getBalance()));
+            System.err.println("Insufficient funds: have " + wallet.getBalance().toFriendlyString());
         } catch (BlockStoreException e) {
             throw new RuntimeException(e);
         }
@@ -679,7 +681,7 @@ public class WalletTool {
                         saveWallet(walletFile);
                         Coin balance = wallet.getBalance(Wallet.BalanceType.ESTIMATED);
                         if (condition.matchBitcoins(balance)) {
-                            System.out.println(Utils.bitcoinValueToFriendlyString(balance));
+                            System.out.println(balance.toFriendlyString());
                             latch.countDown();
                         }
                     }

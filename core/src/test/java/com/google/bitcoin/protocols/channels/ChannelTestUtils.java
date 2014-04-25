@@ -3,7 +3,6 @@ package com.google.bitcoin.protocols.channels;
 import com.google.bitcoin.core.Coin;
 import com.google.bitcoin.core.Sha256Hash;
 import com.google.bitcoin.core.TransactionBroadcaster;
-import com.google.bitcoin.core.Utils;
 import com.google.bitcoin.core.Wallet;
 
 import org.bitcoin.paymentchannel.Protos;
@@ -109,7 +108,7 @@ public class ChannelTestUtils {
     public static RecordingPair makeRecorders(final Wallet serverWallet, final TransactionBroadcaster mockBroadcaster) {
         RecordingPair pair = new RecordingPair();
         pair.serverRecorder = new RecordingServerConnection();
-        pair.server = new PaymentChannelServer(mockBroadcaster, serverWallet, Utils.COIN, pair.serverRecorder);
+        pair.server = new PaymentChannelServer(mockBroadcaster, serverWallet, Coin.COIN, pair.serverRecorder);
         pair.clientRecorder = new RecordingClientConnection();
         return pair;
     }

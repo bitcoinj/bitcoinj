@@ -28,7 +28,6 @@ import org.spongycastle.util.encoders.Hex;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -45,7 +44,6 @@ import static com.google.common.util.concurrent.Uninterruptibles.sleepUninterrup
  * To enable debug logging from the library, run with -Dbitcoinj.logging=true on your command line.
  */
 public class Utils {
-    public static final Coin NEGATIVE_ONE = Coin.valueOf(-1);
     private static final MessageDigest digest;
     static {
         try {
@@ -59,39 +57,7 @@ public class Utils {
     public static final String BITCOIN_SIGNED_MESSAGE_HEADER = "Bitcoin Signed Message:\n";
     public static final byte[] BITCOIN_SIGNED_MESSAGE_HEADER_BYTES = BITCOIN_SIGNED_MESSAGE_HEADER.getBytes(Charsets.UTF_8);
 
-    // TODO: Replace this nanocoins business with something better.
-
-    /**
-     * How many "nanocoins" there are in a Bitcoin.
-     * <p/>
-     * A nanocoin is the smallest unit that can be transferred using Bitcoin.
-     * The term nanocoin is very misleading, though, because there are only 100 million
-     * of them in a coin (whereas one would expect 1 billion.
-     */
-    public static final Coin COIN = new Coin("100000000", 10);
-
-    /**
-     * How many "nanocoins" there are in 0.01 BitCoins.
-     * <p/>
-     * A nanocoin is the smallest unit that can be transferred using Bitcoin.
-     * The term nanocoin is very misleading, though, because there are only 100 million
-     * of them in a coin (whereas one would expect 1 billion).
-     */
-    public static final Coin CENT = new Coin("1000000", 10);
     private static BlockingQueue<Boolean> mockSleepQueue;
-
-    /**
-     * Convert an amount expressed in the way humans are used to into nanocoins.
-     */
-    public static Coin toNanoCoins(int coins, int cents) {
-        checkArgument(cents < 100);
-        checkArgument(cents >= 0);
-        checkArgument(coins >= 0);
-        checkArgument(coins < NetworkParameters.MAX_MONEY.divide(Utils.COIN).longValue());
-        Coin bi = Coin.valueOf(coins).multiply(COIN);
-        bi = bi.add(Coin.valueOf(cents).multiply(CENT));
-        return bi;
-    }
 
     /**
      * The regular {@link java.math.BigInteger#toByteArray()} method isn't quite what we often need: it appends a
@@ -111,23 +77,6 @@ public class Utils {
         int length = Math.min(biBytes.length, numBytes);
         System.arraycopy(biBytes, start, bytes, numBytes - length, length);
         return bytes;        
-    }
-
-    /**
-     * Convert an amount expressed in the way humans are used to into nanocoins.<p>
-     * <p/>
-     * This takes string in a format understood by {@link BigDecimal#BigDecimal(String)},
-     * for example "0", "1", "0.10", "1.23E3", "1234.5E-5".
-     *
-     * @throws ArithmeticException if you try to specify fractional nanocoins, or nanocoins out of range.
-     */
-    public static Coin toNanoCoins(String coins) {
-        Coin bigint = new Coin(new BigDecimal(coins).movePointRight(8).toBigIntegerExact());
-        if (bigint.signum() < 0)
-            throw new ArithmeticException("Negative coins specified");
-        if (bigint.compareTo(NetworkParameters.MAX_MONEY) > 0)
-            throw new ArithmeticException("Coin larger than the total quantity of Bitcoins possible specified.");
-        return bigint;
     }
 
     public static void uint32ToByteArrayBE(long val, byte[] out, int offset) {
@@ -326,49 +275,6 @@ public class Utils {
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException(e);  // Cannot happen.
         }
-    }
-
-    /**
-     * Returns the given value in nanocoins as a 0.12 type string. More digits after the decimal place will be used
-     * if necessary, but two will always be present.
-     */
-    public static String bitcoinValueToFriendlyString(Coin value) {
-        // TODO: This API is crap. This method should go away when we encapsulate money values.
-        boolean negative = value.signum() < 0;
-        if (negative)
-            value = value.negate();
-        BigDecimal bd = new BigDecimal(value.toBigInteger(), 8);
-        String formatted = bd.toPlainString();   // Don't use scientific notation.
-        int decimalPoint = formatted.indexOf(".");
-        // Drop unnecessary zeros from the end.
-        int toDelete = 0;
-        for (int i = formatted.length() - 1; i > decimalPoint + 2; i--) {
-            if (formatted.charAt(i) == '0')
-                toDelete++;
-            else
-                break;
-        }
-        return (negative ? "-" : "") + formatted.substring(0, formatted.length() - toDelete);
-    }
-    
-    /**
-     * <p>
-     * Returns the given value as a plain string denominated in BTC.   
-     * The result is unformatted with no trailing zeroes.
-     * For instance, an input value of Coin.valueOf(150000) nanocoin gives an output string of "0.0015" BTC
-     * </p>
-     * 
-     * @param value The value in nanocoins to convert to a string (denominated in BTC)
-     * @throws IllegalArgumentException
-     *            If the input value is null
-     */
-    public static String bitcoinValueToPlainString(Coin value) {
-        if (value == null) {
-            throw new IllegalArgumentException("Value cannot be null");
-        }
-                
-        BigDecimal valueInBTC = new BigDecimal(value.toBigInteger()).divide(new BigDecimal(Utils.COIN.toBigInteger()));
-        return valueInBTC.toPlainString();
     }
 
     /**

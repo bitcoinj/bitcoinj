@@ -47,6 +47,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static com.google.bitcoin.core.Coin.toNanoCoins;
 import static com.google.bitcoin.testing.FakeTxBuilder.*;
 import static org.junit.Assert.*;
 
@@ -244,7 +245,7 @@ public class PeerTest extends TestWithNetworkConnections {
 
         peer.setDownloadData(true);
         // Make a transaction and tell the peer we have it.
-        Coin value = Utils.toNanoCoins(1, 0);
+        Coin value = toNanoCoins(1, 0);
         Transaction tx = createFakeTx(unitTestParams, value, address);
         InventoryMessage inv = new InventoryMessage(unitTestParams);
         InventoryItem item = new InventoryItem(InventoryItem.Type.Transaction, tx.getHash());
@@ -277,7 +278,7 @@ public class PeerTest extends TestWithNetworkConnections {
         InboundMessageQueuer writeTarget2 = connect(peer2, peerVersion);
 
         // Make a tx and advertise it to one of the peers.
-        Coin value = Utils.toNanoCoins(1, 0);
+        Coin value = toNanoCoins(1, 0);
         Transaction tx = createFakeTx(unitTestParams, value, this.address);
         InventoryMessage inv = new InventoryMessage(unitTestParams);
         InventoryItem item = new InventoryItem(InventoryItem.Type.Transaction, tx.getHash());
@@ -542,14 +543,14 @@ public class PeerTest extends TestWithNetworkConnections {
         //      -> [t7]
         //      -> [t8]
         // The ones in brackets are assumed to be in the chain and are represented only by hashes.
-        Transaction t2 = FakeTxBuilder.createFakeTx(unitTestParams, Utils.toNanoCoins(1, 0), to);
+        Transaction t2 = FakeTxBuilder.createFakeTx(unitTestParams, toNanoCoins(1, 0), to);
         Sha256Hash t5 = t2.getInput(0).getOutpoint().getHash();
-        Transaction t4 = FakeTxBuilder.createFakeTx(unitTestParams, Utils.toNanoCoins(1, 0), new ECKey());
+        Transaction t4 = FakeTxBuilder.createFakeTx(unitTestParams, toNanoCoins(1, 0), new ECKey());
         Sha256Hash t6 = t4.getInput(0).getOutpoint().getHash();
-        t4.addOutput(Utils.toNanoCoins(1, 0), new ECKey());
+        t4.addOutput(toNanoCoins(1, 0), new ECKey());
         Transaction t3 = new Transaction(unitTestParams);
         t3.addInput(t4.getOutput(0));
-        t3.addOutput(Utils.toNanoCoins(1, 0), new ECKey());
+        t3.addOutput(toNanoCoins(1, 0), new ECKey());
         Transaction t1 = new Transaction(unitTestParams);
         t1.addInput(t2.getOutput(0));
         t1.addInput(t3.getOutput(0));
@@ -557,7 +558,7 @@ public class PeerTest extends TestWithNetworkConnections {
         t1.addInput(new TransactionInput(unitTestParams, t1, new byte[]{}, new TransactionOutPoint(unitTestParams, 0, someHash)));
         Sha256Hash anotherHash = new Sha256Hash("3b801dd82f01d17bbde881687bf72bc62e2faa8ab8133d36fcb8c3abe7459da6");
         t1.addInput(new TransactionInput(unitTestParams, t1, new byte[]{}, new TransactionOutPoint(unitTestParams, 1, anotherHash)));
-        t1.addOutput(Utils.toNanoCoins(1, 0), to);
+        t1.addOutput(toNanoCoins(1, 0), to);
         t1 = FakeTxBuilder.roundTripTransaction(unitTestParams, t1);
         t2 = FakeTxBuilder.roundTripTransaction(unitTestParams, t2);
         t3 = FakeTxBuilder.roundTripTransaction(unitTestParams, t3);
@@ -663,7 +664,7 @@ public class PeerTest extends TestWithNetworkConnections {
             }
         });
         // Send a normal relevant transaction, it's received correctly.
-        Transaction t1 = FakeTxBuilder.createFakeTx(unitTestParams, Utils.toNanoCoins(1, 0), key);
+        Transaction t1 = FakeTxBuilder.createFakeTx(unitTestParams, toNanoCoins(1, 0), key);
         inbound(writeTarget, t1);
         GetDataMessage getdata = (GetDataMessage) outbound(writeTarget);
         if (useNotFound) {
@@ -676,7 +677,7 @@ public class PeerTest extends TestWithNetworkConnections {
         assertNotNull(vtx[0]);
         vtx[0] = null;
         // Send a timelocked transaction, nothing happens.
-        Transaction t2 = FakeTxBuilder.createFakeTx(unitTestParams, Utils.toNanoCoins(2, 0), key);
+        Transaction t2 = FakeTxBuilder.createFakeTx(unitTestParams, toNanoCoins(2, 0), key);
         t2.setLockTime(999999);
         inbound(writeTarget, t2);
         Threading.waitForUserCode();
@@ -742,10 +743,10 @@ public class PeerTest extends TestWithNetworkConnections {
         Sha256Hash t3 = Sha256Hash.create("abc".getBytes(Charset.forName("UTF-8")));
         t2.addInput(new TransactionInput(unitTestParams, t2, new byte[]{}, new TransactionOutPoint(unitTestParams, 0, t3)));
         t2.getInput(0).setSequenceNumber(0xDEADBEEF);
-        t2.addOutput(Utils.toNanoCoins(1, 0), new ECKey());
+        t2.addOutput(toNanoCoins(1, 0), new ECKey());
         Transaction t1 = new Transaction(unitTestParams);
         t1.addInput(t2.getOutput(0));
-        t1.addOutput(Utils.toNanoCoins(1, 0), key);  // Make it relevant.
+        t1.addOutput(toNanoCoins(1, 0), key);  // Make it relevant.
         // Announce t1.
         InventoryMessage inv = new InventoryMessage(unitTestParams);
         inv.addTransaction(t1);
@@ -839,10 +840,10 @@ public class PeerTest extends TestWithNetworkConnections {
         connect();
         Transaction t1 = new Transaction(unitTestParams);
         t1.addInput(new TransactionInput(unitTestParams, t1, new byte[]{}));
-        t1.addOutput(Utils.toNanoCoins(1, 0), new ECKey().toAddress(unitTestParams));
+        t1.addOutput(toNanoCoins(1, 0), new ECKey().toAddress(unitTestParams));
         Transaction t2 = new Transaction(unitTestParams);
         t2.addInput(t1.getOutput(0));
-        t2.addOutput(Utils.toNanoCoins(1, 0), wallet.getChangeAddress());
+        t2.addOutput(toNanoCoins(1, 0), wallet.getChangeAddress());
         inbound(writeTarget, t2);
         final InventoryItem inventoryItem = new InventoryItem(InventoryItem.Type.Transaction, t2.getInput(0).getOutpoint().getHash());
         final NotFoundMessage nfm = new NotFoundMessage(unitTestParams, Lists.newArrayList(inventoryItem));

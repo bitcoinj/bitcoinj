@@ -32,6 +32,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Date;
 
+import static com.google.bitcoin.core.Coin.toNanoCoins;
 import static org.junit.Assert.*;
 
 public class PaymentSessionTest {
@@ -44,7 +45,7 @@ public class PaymentSessionTest {
     private ECKey serverKey;
     private Transaction tx;
     private TransactionOutput outputToMe;
-    Coin nanoCoins = Utils.toNanoCoins(1, 0);
+    private Coin nanoCoins = toNanoCoins(1, 0);
 
     @Before
     public void setUp() throws Exception {

@@ -43,6 +43,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static com.google.bitcoin.core.Coin.*;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.junit.Assert.*;
 
@@ -178,7 +179,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         expectedPeers.add(peerOf(p2));
         assertEquals(tmp, expectedPeers);
 
-        Coin value = Utils.toNanoCoins(1, 0);
+        Coin value = toNanoCoins(1, 0);
         Transaction t1 = FakeTxBuilder.createFakeTx(unitTestParams, value, address);
         InventoryMessage inv = new InventoryMessage(unitTestParams);
         inv.addTransaction(t1);
@@ -301,7 +302,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         InboundMessageQueuer p2 = connectPeer(2);
         InboundMessageQueuer p3 = connectPeer(3);
 
-        Transaction tx = FakeTxBuilder.createFakeTx(params, Utils.toNanoCoins(20, 0), address);
+        Transaction tx = FakeTxBuilder.createFakeTx(params, toNanoCoins(20, 0), address);
         InventoryMessage inv = new InventoryMessage(params);
         inv.addTransaction(tx);
         
@@ -539,7 +540,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         InboundMessageQueuer p1 = connectPeer(1);
         InboundMessageQueuer p2 = connectPeer(2);
         // Create a pay to pubkey tx.
-        Transaction tx = FakeTxBuilder.createFakeTx(params, Utils.COIN, key);
+        Transaction tx = FakeTxBuilder.createFakeTx(params, COIN, key);
         Transaction tx2 = new Transaction(params);
         tx2.addInput(tx.getOutput(0));
         TransactionOutPoint outpoint = tx2.getInput(0).getOutpoint();

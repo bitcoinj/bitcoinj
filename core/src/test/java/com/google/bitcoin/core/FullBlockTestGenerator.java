@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.util.*;
 
+import static com.google.bitcoin.core.Coin.toNanoCoins;
 import static com.google.bitcoin.script.ScriptOpCodes.*;
 
 /**
@@ -133,14 +134,14 @@ public class FullBlockTestGenerator {
         blocks.add(new BlockAndValidity(blockToHeightMap, chainHead, true, false, chainHead.getHash(), 1, "Initial Block"));
         spendableOutputs.offer(new TransactionOutPointWithValue(
                 new TransactionOutPoint(params, 0, chainHead.getTransactions().get(0).getHash()),
-                Utils.toNanoCoins(50, 0), chainHead.getTransactions().get(0).getOutputs().get(0).getScriptPubKey()));
+                toNanoCoins(50, 0), chainHead.getTransactions().get(0).getOutputs().get(0).getScriptPubKey()));
         for (int i = 1; i < params.getSpendableCoinbaseDepth(); i++) {
             chainHead = chainHead.createNextBlockWithCoinbase(coinbaseOutKeyPubKey);
             chainHeadHeight++;
             blocks.add(new BlockAndValidity(blockToHeightMap, chainHead, true, false, chainHead.getHash(), i+1, "Initial Block chain output generation"));
             spendableOutputs.offer(new TransactionOutPointWithValue(
                     new TransactionOutPoint(params, 0, chainHead.getTransactions().get(0).getHash()),
-                    Utils.toNanoCoins(50, 0), chainHead.getTransactions().get(0).getOutputs().get(0).getScriptPubKey()));
+                    toNanoCoins(50, 0), chainHead.getTransactions().get(0).getOutputs().get(0).getScriptPubKey()));
         }
         
         // Start by building a couple of blocks on top of the genesis block.
@@ -1624,7 +1625,7 @@ public class FullBlockTestGenerator {
         Integer height = blockToHeightMap.get(baseBlock.getHash());
         if (height != null)
             Preconditions.checkState(height == nextBlockHeight - 1);
-        Coin coinbaseValue = Utils.toNanoCoins(50, 0).shiftRight(nextBlockHeight / params.getSubsidyDecreaseBlockCount())
+        Coin coinbaseValue = toNanoCoins(50, 0).shiftRight(nextBlockHeight / params.getSubsidyDecreaseBlockCount())
                 .add((prevOut != null ? prevOut.value.subtract(Coin.ONE) : Coin.ZERO))
                 .add(additionalCoinbaseValue == null ? Coin.ZERO : additionalCoinbaseValue);
         Block block = baseBlock.createNextBlockWithCoinbase(coinbaseOutKeyPubKey, coinbaseValue);

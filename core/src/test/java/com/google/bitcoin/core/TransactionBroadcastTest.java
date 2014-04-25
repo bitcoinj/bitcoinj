@@ -33,6 +33,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Random;
 
+import static com.google.bitcoin.core.Coin.toNanoCoins;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.junit.Assert.*;
 
@@ -107,11 +108,11 @@ public class TransactionBroadcastTest extends TestWithPeerGroup {
         Block b1 = FakeTxBuilder.makeSolvedTestBlock(blockStore, address);
         inbound(p1, b1);
         assertNull(outbound(p1));
-        assertEquals(Utils.toNanoCoins(50, 0), wallet.getBalance());
+        assertEquals(toNanoCoins(50, 0), wallet.getBalance());
 
         // Now create a spend, and expect the announcement on p1.
         Address dest = new ECKey().toAddress(params);
-        Wallet.SendResult sendResult = wallet.sendCoins(peerGroup, dest, Utils.toNanoCoins(1, 0));
+        Wallet.SendResult sendResult = wallet.sendCoins(peerGroup, dest, toNanoCoins(1, 0));
         assertFalse(sendResult.broadcastComplete.isDone());
         Transaction t1;
         {
@@ -147,7 +148,7 @@ public class TransactionBroadcastTest extends TestWithPeerGroup {
         inbound(p1, b1);
         pingAndWait(p1);
         assertNull(outbound(p1));
-        assertEquals(Utils.toNanoCoins(50, 0), wallet.getBalance());
+        assertEquals(toNanoCoins(50, 0), wallet.getBalance());
 
         // Check that the wallet informs us of changes in confidence as the transaction ripples across the network.
         final Transaction[] transactions = new Transaction[1];
@@ -160,7 +161,7 @@ public class TransactionBroadcastTest extends TestWithPeerGroup {
 
         // Now create a spend, and expect the announcement on p1.
         Address dest = new ECKey().toAddress(params);
-        Wallet.SendResult sendResult = wallet.sendCoins(peerGroup, dest, Utils.toNanoCoins(1, 0));
+        Wallet.SendResult sendResult = wallet.sendCoins(peerGroup, dest, toNanoCoins(1, 0));
         assertNotNull(sendResult.tx);
         Threading.waitForUserCode();
         assertFalse(sendResult.broadcastComplete.isDone());
@@ -178,7 +179,7 @@ public class TransactionBroadcastTest extends TestWithPeerGroup {
         }
         assertNotNull(t1);
         // 49 BTC in change.
-        assertEquals(Utils.toNanoCoins(49, 0), t1.getValueSentToMe(wallet));
+        assertEquals(toNanoCoins(49, 0), t1.getValueSentToMe(wallet));
         // The future won't complete until it's heard back from the network on p2.
         InventoryMessage inv = new InventoryMessage(params);
         inv.addTransaction(t1);
@@ -196,7 +197,7 @@ public class TransactionBroadcastTest extends TestWithPeerGroup {
 
         // Do the same thing with an offline transaction.
         peerGroup.removeWallet(wallet);
-        Wallet.SendRequest req = Wallet.SendRequest.to(dest, Utils.toNanoCoins(2, 0));
+        Wallet.SendRequest req = Wallet.SendRequest.to(dest, toNanoCoins(2, 0));
         req.ensureMinRequiredFee = false;
         Transaction t3 = checkNotNull(wallet.sendCoinsOffline(req));
         assertNull(outbound(p1));  // Nothing sent.
