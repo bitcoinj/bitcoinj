@@ -34,7 +34,6 @@ import org.junit.runners.Parameterized;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.math.BigInteger;
 import java.net.InetSocketAddress;
 import java.net.SocketException;
 import java.nio.channels.CancelledKeyException;
@@ -245,7 +244,7 @@ public class PeerTest extends TestWithNetworkConnections {
 
         peer.setDownloadData(true);
         // Make a transaction and tell the peer we have it.
-        BigInteger value = Utils.toNanoCoins(1, 0);
+        Coin value = Utils.toNanoCoins(1, 0);
         Transaction tx = createFakeTx(unitTestParams, value, address);
         InventoryMessage inv = new InventoryMessage(unitTestParams);
         InventoryItem item = new InventoryItem(InventoryItem.Type.Transaction, tx.getHash());
@@ -278,7 +277,7 @@ public class PeerTest extends TestWithNetworkConnections {
         InboundMessageQueuer writeTarget2 = connect(peer2, peerVersion);
 
         // Make a tx and advertise it to one of the peers.
-        BigInteger value = Utils.toNanoCoins(1, 0);
+        Coin value = Utils.toNanoCoins(1, 0);
         Transaction tx = createFakeTx(unitTestParams, value, this.address);
         InventoryMessage inv = new InventoryMessage(unitTestParams);
         InventoryItem item = new InventoryItem(InventoryItem.Type.Transaction, tx.getHash());
@@ -418,7 +417,7 @@ public class PeerTest extends TestWithNetworkConnections {
         Block b2 = makeSolvedTestBlock(b1);
         Transaction t = new Transaction(unitTestParams);
         t.addInput(b1.getTransactions().get(0).getOutput(0));
-        t.addOutput(new TransactionOutput(unitTestParams, t, BigInteger.ZERO, new byte[Block.MAX_BLOCK_SIZE - 1000]));
+        t.addOutput(new TransactionOutput(unitTestParams, t, Coin.ZERO, new byte[Block.MAX_BLOCK_SIZE - 1000]));
         b2.addTransaction(t);
 
         // Request the block.
@@ -659,7 +658,7 @@ public class PeerTest extends TestWithNetworkConnections {
         final Transaction[] vtx = new Transaction[1];
         wallet.addEventListener(new AbstractWalletEventListener() {
             @Override
-            public void onCoinsReceived(Wallet wallet, Transaction tx, BigInteger prevBalance, BigInteger newBalance) {
+            public void onCoinsReceived(Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
                 vtx[0] = tx;
             }
         });
@@ -732,7 +731,7 @@ public class PeerTest extends TestWithNetworkConnections {
         final Transaction[] vtx = new Transaction[1];
         wallet.addEventListener(new AbstractWalletEventListener() {
             @Override
-            public void onCoinsReceived(Wallet wallet, Transaction tx, BigInteger prevBalance, BigInteger newBalance) {
+            public void onCoinsReceived(Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
                 vtx[0] = tx;
             }
         });
@@ -817,7 +816,7 @@ public class PeerTest extends TestWithNetworkConnections {
     public void exceptionListener() throws Exception {
         wallet.addEventListener(new AbstractWalletEventListener() {
             @Override
-            public void onCoinsReceived(Wallet wallet, Transaction tx, BigInteger prevBalance, BigInteger newBalance) {
+            public void onCoinsReceived(Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
                 throw new NullPointerException("boo!");
             }
         });

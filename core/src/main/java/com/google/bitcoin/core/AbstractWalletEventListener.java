@@ -19,7 +19,6 @@ package com.google.bitcoin.core;
 import com.google.bitcoin.script.Script;
 import com.google.bitcoin.wallet.AbstractKeyChainEventListener;
 
-import java.math.BigInteger;
 import java.util.List;
 
 /**
@@ -27,12 +26,12 @@ import java.util.List;
  */
 public abstract class AbstractWalletEventListener extends AbstractKeyChainEventListener implements WalletEventListener {
     @Override
-    public void onCoinsReceived(Wallet wallet, Transaction tx, BigInteger prevBalance, BigInteger newBalance) {
+    public void onCoinsReceived(Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
         onChange();
     }
 
     @Override
-    public void onCoinsSent(Wallet wallet, Transaction tx, BigInteger prevBalance, BigInteger newBalance) {
+    public void onCoinsSent(Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
         onChange();
     }
 

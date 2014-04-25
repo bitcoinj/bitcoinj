@@ -16,13 +16,13 @@
 
 package com.google.bitcoin.jni;
 
+import com.google.bitcoin.core.Coin;
 import com.google.bitcoin.core.ECKey;
 import com.google.bitcoin.core.Transaction;
 import com.google.bitcoin.core.Wallet;
 import com.google.bitcoin.core.WalletEventListener;
 import com.google.bitcoin.script.Script;
 
-import java.math.BigInteger;
 import java.util.List;
 
 /**
@@ -34,10 +34,10 @@ public class NativeWalletEventListener implements WalletEventListener {
     public long ptr;
 
     @Override
-    public native void onCoinsReceived(Wallet wallet, Transaction tx, BigInteger prevBalance, BigInteger newBalance);
+    public native void onCoinsReceived(Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance);
 
     @Override
-    public native void onCoinsSent(Wallet wallet, Transaction tx, BigInteger prevBalance, BigInteger newBalance);
+    public native void onCoinsSent(Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance);
 
     @Override
     public native void onReorganize(Wallet wallet);

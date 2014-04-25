@@ -1,5 +1,6 @@
 package com.google.bitcoin.wallet;
 
+import com.google.bitcoin.core.Coin;
 import com.google.bitcoin.core.NetworkParameters;
 import com.google.bitcoin.core.Transaction;
 import com.google.bitcoin.core.TransactionConfidence;
@@ -16,7 +17,7 @@ import java.util.*;
  * "spending" more priority than would be required to get the transaction we are creating confirmed.
  */
 public class DefaultCoinSelector implements CoinSelector {
-    public CoinSelection select(BigInteger biTarget, LinkedList<TransactionOutput> candidates) {
+    public CoinSelection select(Coin biTarget, LinkedList<TransactionOutput> candidates) {
         long target = biTarget.longValue();
         HashSet<TransactionOutput> selected = new HashSet<TransactionOutput>();
         // Sort the inputs by age*value so we get the highest "coindays" spent.
@@ -39,7 +40,7 @@ public class DefaultCoinSelector implements CoinSelector {
         }
         // Total may be lower than target here, if the given candidates were insufficient to create to requested
         // transaction.
-        return new CoinSelection(BigInteger.valueOf(total), selected);
+        return new CoinSelection(Coin.valueOf(total), selected);
     }
 
     @VisibleForTesting static void sortOutputs(ArrayList<TransactionOutput> outputs) {
@@ -53,10 +54,10 @@ public class DefaultCoinSelector implements CoinSelector {
                     depth1 = conf1.getDepthInBlocks();
                 if (conf2.getConfidenceType() == TransactionConfidence.ConfidenceType.BUILDING)
                     depth2 = conf2.getDepthInBlocks();
-                BigInteger aValue = a.getValue();
-                BigInteger bValue = b.getValue();
-                BigInteger aCoinDepth = aValue.multiply(BigInteger.valueOf(depth1));
-                BigInteger bCoinDepth = bValue.multiply(BigInteger.valueOf(depth2));
+                Coin aValue = a.getValue();
+                Coin bValue = b.getValue();
+                BigInteger aCoinDepth = aValue.toBigInteger().multiply(BigInteger.valueOf(depth1));
+                BigInteger bCoinDepth = bValue.toBigInteger().multiply(BigInteger.valueOf(depth2));
                 int c1 = bCoinDepth.compareTo(aCoinDepth);
                 if (c1 != 0) return c1;
                 // The "coin*days" destroyed are equal, sort by value alone to get the lowest transaction size.

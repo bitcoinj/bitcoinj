@@ -34,14 +34,13 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.math.BigInteger;
 import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 
+import static com.google.bitcoin.core.Coin.TEN;
 import static com.google.bitcoin.core.Utils.CENT;
-import static java.math.BigInteger.TEN;
 
 /**
  * Simple client that connects to the given host, opens a channel, and pays one cent.
@@ -49,7 +48,7 @@ import static java.math.BigInteger.TEN;
 public class ExamplePaymentChannelClient {
     private static final org.slf4j.Logger log = LoggerFactory.getLogger(ExamplePaymentChannelClient.class);
     private WalletAppKit appKit;
-    private final BigInteger channelSize;
+    private final Coin channelSize;
     private final ECKey myKey;
     private final NetworkParameters params;
 
@@ -124,7 +123,7 @@ public class ExamplePaymentChannelClient {
                 // we are not allowed to have payment channels that pay nothing at all.
                 log.info("Success! Trying to make {} micropayments. Already paid {} satoshis on this channel",
                         times, client.state().getValueSpent());
-                final BigInteger MICROPAYMENT_SIZE = CENT.divide(TEN);
+                final Coin MICROPAYMENT_SIZE = CENT.divide(TEN);
                 for (int i = 0; i < times; i++) {
                     try {
                         // Wait because the act of making a micropayment is async, and we're not allowed to overlap.
@@ -164,11 +163,11 @@ public class ExamplePaymentChannelClient {
         latch.await();
     }
 
-    private void waitForSufficientBalance(BigInteger amount) {
+    private void waitForSufficientBalance(Coin amount) {
         // Not enough money in the wallet.
-        BigInteger amountPlusFee = amount.add(Wallet.SendRequest.DEFAULT_FEE_PER_KB);
+        Coin amountPlusFee = amount.add(Wallet.SendRequest.DEFAULT_FEE_PER_KB);
         // ESTIMATED because we don't really need to wait for confirmation.
-        ListenableFuture<BigInteger> balanceFuture = appKit.wallet().getBalanceFuture(amountPlusFee, Wallet.BalanceType.ESTIMATED);
+        ListenableFuture<Coin> balanceFuture = appKit.wallet().getBalanceFuture(amountPlusFee, Wallet.BalanceType.ESTIMATED);
         if (!balanceFuture.isDone()) {
             System.out.println("Please send " + Utils.bitcoinValueToFriendlyString(amountPlusFee) +
                     " BTC to " + myKey.toAddress(params));

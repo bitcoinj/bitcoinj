@@ -29,7 +29,6 @@ import org.bitcoin.paymentchannel.Protos;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
-import java.math.BigInteger;
 import java.util.concurrent.locks.ReentrantLock;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -85,14 +84,14 @@ public class PaymentChannelClient implements IPaymentChannelClient {
 
     // Information used during channel initialization to send to the server or check what the server sends to us
     private final ECKey myKey;
-    private final BigInteger maxValue;
+    private final Coin maxValue;
 
-    private BigInteger missing;
+    private Coin missing;
 
     @GuardedBy("lock") private long minPayment;
 
-    @GuardedBy("lock") SettableFuture<BigInteger> increasePaymentFuture;
-    @GuardedBy("lock") BigInteger lastPaymentActualAmount;
+    @GuardedBy("lock") SettableFuture<Coin> increasePaymentFuture;
+    @GuardedBy("lock") Coin lastPaymentActualAmount;
 
     /**
      * <p>The maximum amount of time for which we will accept the server locking up our funds for the multisig
@@ -122,7 +121,7 @@ public class PaymentChannelClient implements IPaymentChannelClient {
      * @param conn A callback listener which represents the connection to the server (forwards messages we generate to
      *             the server)
      */
-    public PaymentChannelClient(Wallet wallet, ECKey myKey, BigInteger maxValue, Sha256Hash serverId, ClientConnection conn) {
+    public PaymentChannelClient(Wallet wallet, ECKey myKey, Coin maxValue, Sha256Hash serverId, ClientConnection conn) {
         this.wallet = checkNotNull(wallet);
         this.myKey = checkNotNull(myKey);
         this.maxValue = checkNotNull(maxValue);
@@ -136,13 +135,13 @@ public class PaymentChannelClient implements IPaymentChannelClient {
      * <p>When InsufficientMoneyException is thrown due to the server requesting too much value, an instance of 
      * PaymentChannelClient needs access to how many satoshis are missing.</p>
      */
-    public BigInteger getMissing() {
+    public Coin getMissing() {
         return missing;
     }
 
     @Nullable
     @GuardedBy("lock")
-    private CloseReason receiveInitiate(Protos.Initiate initiate, BigInteger contractValue, Protos.Error.Builder errorBuilder) throws VerificationException, InsufficientMoneyException {
+    private CloseReason receiveInitiate(Protos.Initiate initiate, Coin contractValue, Protos.Error.Builder errorBuilder) throws VerificationException, InsufficientMoneyException {
         log.info("Got INITIATE message:\n{}", initiate.toString());
 
         checkState(initiate.getExpireTimeSecs() > 0 && initiate.getMinAcceptedChannelSize() >= 0);
@@ -156,7 +155,7 @@ public class PaymentChannelClient implements IPaymentChannelClient {
             return CloseReason.TIME_WINDOW_TOO_LARGE;
         }
 
-        BigInteger minChannelSize = BigInteger.valueOf(initiate.getMinAcceptedChannelSize());
+        Coin minChannelSize = Coin.valueOf(initiate.getMinAcceptedChannelSize());
         if (contractValue.compareTo(minChannelSize) < 0) {
             log.error("Server requested too much value");
             errorBuilder.setCode(Protos.Error.ErrorCode.CHANNEL_VALUE_TOO_LARGE);
@@ -171,7 +170,7 @@ public class PaymentChannelClient implements IPaymentChannelClient {
             log.error("Server requested a min payment of {} but we expected {}", initiate.getMinPayment(), MIN_PAYMENT);
             errorBuilder.setCode(Protos.Error.ErrorCode.MIN_PAYMENT_TOO_LARGE);
             errorBuilder.setExpectedValue(MIN_PAYMENT);
-            missing = BigInteger.valueOf(initiate.getMinPayment() - MIN_PAYMENT);
+            missing = Coin.valueOf(initiate.getMinPayment() - MIN_PAYMENT);
             return CloseReason.SERVER_REQUESTED_TOO_MUCH_VALUE;
         }
 
@@ -218,7 +217,7 @@ public class PaymentChannelClient implements IPaymentChannelClient {
         try {
             // Make an initial payment of the dust limit, and put it into the message as well. The size of the
             // server-requested dust limit was already sanity checked by this point.
-            PaymentChannelClientState.IncrementedPayment payment = state().incrementPaymentBy(BigInteger.valueOf(minPayment));
+            PaymentChannelClientState.IncrementedPayment payment = state().incrementPaymentBy(Coin.valueOf(minPayment));
             Protos.UpdatePayment.Builder initialMsg = contractMsg.getInitialPaymentBuilder();
             initialMsg.setSignature(ByteString.copyFrom(payment.signature.encodeToBitcoin()));
             initialMsg.setClientChangeValue(state.getValueRefunded().longValue());
@@ -470,7 +469,7 @@ public class PaymentChannelClient implements IPaymentChannelClient {
      * @return a future that completes when the server acknowledges receipt and acceptance of the payment.
      */
     @Override
-    public ListenableFuture<BigInteger> incrementPayment(BigInteger size) throws ValueOutOfRangeException, IllegalStateException {
+    public ListenableFuture<Coin> incrementPayment(Coin size) throws ValueOutOfRangeException, IllegalStateException {
         lock.lock();
         try {
             if (state() == null || !connectionOpen || step != InitStep.CHANNEL_OPEN)
@@ -505,8 +504,8 @@ public class PaymentChannelClient implements IPaymentChannelClient {
     }
 
     private void receivePaymentAck() {
-        SettableFuture<BigInteger> future;
-        BigInteger value;
+        SettableFuture<Coin> future;
+        Coin value;
 
         lock.lock();
         try {

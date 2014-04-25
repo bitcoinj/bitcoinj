@@ -503,7 +503,7 @@ public class WalletProtobufSerializer {
         }
         
         for (Protos.TransactionOutput outputProto : txProto.getTransactionOutputList()) {
-            BigInteger value = BigInteger.valueOf(outputProto.getValue());
+            Coin value = Coin.valueOf(outputProto.getValue());
             byte[] scriptBytes = outputProto.getScriptBytes().toByteArray();
             TransactionOutput output = new TransactionOutput(params, tx, value, scriptBytes);
             tx.addOutput(output);
@@ -515,7 +515,7 @@ public class WalletProtobufSerializer {
                     inputProto.getTransactionOutPointIndex() & 0xFFFFFFFFL,
                     byteStringToHash(inputProto.getTransactionOutPointHash())
             );
-            BigInteger value = inputProto.hasValue() ? BigInteger.valueOf(inputProto.getValue()) : null;
+            Coin value = inputProto.hasValue() ? Coin.valueOf(inputProto.getValue()) : null;
             TransactionInput input = new TransactionInput(params, tx, scriptBytes, outpoint, value);
             if (inputProto.hasSequence()) {
                 input.setSequenceNumber(inputProto.getSequence());

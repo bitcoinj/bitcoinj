@@ -1094,8 +1094,8 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
                 log.warn("There are now {} risk dropped transactions being kept in memory", riskDropped.size());
                 return;
             }
-            BigInteger valueSentToMe = tx.getValueSentToMe(this);
-            BigInteger valueSentFromMe = tx.getValueSentFromMe(this);
+            Coin valueSentToMe = tx.getValueSentToMe(this);
+            Coin valueSentFromMe = tx.getValueSentFromMe(this);
             if (log.isInfoEnabled()) {
                 log.info(String.format("Received a pending transaction %s that spends %s BTC from our own wallet," +
                         " and sends us %s BTC", tx.getHashAsString(), Utils.bitcoinValueToFriendlyString(valueSentFromMe),
@@ -1272,14 +1272,14 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
                          int relativityOffset) throws VerificationException {
         // Runs in a peer thread.
         checkState(lock.isHeldByCurrentThread());
-        BigInteger prevBalance = getBalance();
+        Coin prevBalance = getBalance();
         Sha256Hash txHash = tx.getHash();
         boolean bestChain = blockType == BlockChain.NewBlockType.BEST_CHAIN;
         boolean sideChain = blockType == BlockChain.NewBlockType.SIDE_CHAIN;
 
-        BigInteger valueSentFromMe = tx.getValueSentFromMe(this);
-        BigInteger valueSentToMe = tx.getValueSentToMe(this);
-        BigInteger valueDifference = valueSentToMe.subtract(valueSentFromMe);
+        Coin valueSentFromMe = tx.getValueSentFromMe(this);
+        Coin valueSentToMe = tx.getValueSentToMe(this);
+        Coin valueDifference = valueSentToMe.subtract(valueSentFromMe);
 
         log.info("Received tx{} for {} BTC: {} [{}] in block {}", sideChain ? " on a side chain" : "",
                 bitcoinValueToFriendlyString(valueDifference), tx.getHashAsString(), relativityOffset,
@@ -1364,7 +1364,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
         //    own spends. If users want to know when a broadcast tx becomes confirmed, they need to use tx confidence
         //    listeners.
         if (!insideReorg && bestChain) {
-            BigInteger newBalance = getBalance();  // This is slow.
+            Coin newBalance = getBalance();  // This is slow.
             log.info("Balance is now: " + bitcoinValueToFriendlyString(newBalance));
             if (!wasPending) {
                 int diff = valueDifference.signum();
@@ -1694,7 +1694,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
             if (pending.containsKey(tx.getHash()))
                 return false;
             log.info("commitTx of {}", tx.getHashAsString());
-            BigInteger balance = getBalance();
+            Coin balance = getBalance();
             tx.setUpdateTime(Utils.now());
             // Mark the outputs we're spending as spent so we won't try and use them in future creations. This will also
             // move any transactions that are now fully spent to the spent map so we can skip them when creating future
@@ -1708,9 +1708,9 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
             addWalletTransaction(Pool.PENDING, tx);
 
             try {
-                BigInteger valueSentFromMe = tx.getValueSentFromMe(this);
-                BigInteger valueSentToMe = tx.getValueSentToMe(this);
-                BigInteger newBalance = balance.add(valueSentToMe).subtract(valueSentFromMe);
+                Coin valueSentFromMe = tx.getValueSentFromMe(this);
+                Coin valueSentToMe = tx.getValueSentToMe(this);
+                Coin newBalance = balance.add(valueSentToMe).subtract(valueSentFromMe);
                 if (valueSentToMe.signum() > 0) {
                     checkBalanceFuturesLocked(null);
                     queueOnCoinsReceived(tx, balance, newBalance);
@@ -2015,7 +2015,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
          * fees) - the wallet will calculate all that for you and update tx later.</p>
          *
          * <p>Be careful when adding outputs that you check the min output value
-         * ({@link TransactionOutput#getMinNonDustValue(BigInteger)}) to avoid the whole transaction being rejected
+         * ({@link TransactionOutput#getMinNonDustValue(Coin)}) to avoid the whole transaction being rejected
          * because one output is dust.</p>
          *
          * <p>If there are already inputs to the transaction, make sure their out point has a connected output,
@@ -2056,7 +2056,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
          * <p>You might also consider adding a {@link SendRequest#feePerKb} to set the fee per kb of transaction size
          * (rounded down to the nearest kb) as that is how transactions are sorted when added to a block by miners.</p>
          */
-        public BigInteger fee = null;
+        public Coin fee = null;
 
         /**
          * <p>A transaction can have a fee attached, which is defined as the difference between the input values
@@ -2072,13 +2072,13 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
          *
          * <p>You might also consider using a {@link SendRequest#fee} to set the fee added for the first kb of size.</p>
          */
-        public BigInteger feePerKb = DEFAULT_FEE_PER_KB;
+        public Coin feePerKb = DEFAULT_FEE_PER_KB;
 
         /**
          * If you want to modify the default fee for your entire app without having to change each SendRequest you make,
          * you can do it here. This is primarily useful for unit tests.
          */
-        public static BigInteger DEFAULT_FEE_PER_KB = Transaction.REFERENCE_DEFAULT_MIN_TX_FEE;
+        public static Coin DEFAULT_FEE_PER_KB = Transaction.REFERENCE_DEFAULT_MIN_TX_FEE;
 
         /**
          * <p>Requires that there be enough fee for a default reference client to at least relay the transaction.
@@ -2123,7 +2123,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
          * <p>Be very careful when value is smaller than {@link Transaction#MIN_NONDUST_OUTPUT} as the transaction will
          * likely be rejected by the network in this case.</p>
          */
-        public static SendRequest to(Address destination, BigInteger value) {
+        public static SendRequest to(Address destination, Coin value) {
             SendRequest req = new SendRequest();
             final NetworkParameters parameters = destination.getParameters();
             checkNotNull(parameters, "Address is for an unknown network");
@@ -2136,11 +2136,11 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
          * <p>Creates a new SendRequest to the given pubkey for the given value.</p>
          *
          * <p>Be careful to check the output's value is reasonable using
-         * {@link TransactionOutput#getMinNonDustValue(BigInteger)} afterwards or you risk having the transaction
-         * rejected by the network. Note that using {@link SendRequest#to(Address, java.math.BigInteger)} will result
+         * {@link TransactionOutput#getMinNonDustValue(Coin)} afterwards or you risk having the transaction
+         * rejected by the network. Note that using {@link SendRequest#to(Address, java.math.Coin)} will result
          * in a smaller output, and thus the ability to use a smaller output value without rejection.</p>
          */
-        public static SendRequest to(NetworkParameters params, ECKey destination, BigInteger value) {
+        public static SendRequest to(NetworkParameters params, ECKey destination, Coin value) {
             SendRequest req = new SendRequest();
             req.tx = new Transaction(params);
             req.tx.addOutput(value, destination);
@@ -2159,7 +2159,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
             final NetworkParameters parameters = destination.getParameters();
             checkNotNull(parameters, "Address is for an unknown network");
             req.tx = new Transaction(parameters);
-            req.tx.addOutput(BigInteger.ZERO, destination);
+            req.tx.addOutput(Coin.ZERO, destination);
             req.emptyWallet = true;
             return req;
         }
@@ -2170,11 +2170,11 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
      * {@link Wallet#getChangeAddress()}, so you must have added at least one key.</p>
      *
      * <p>If you just want to send money quickly, you probably want
-     * {@link Wallet#sendCoins(TransactionBroadcaster, Address, java.math.BigInteger)} instead. That will create the sending
+     * {@link Wallet#sendCoins(TransactionBroadcaster, Address, java.math.Coin)} instead. That will create the sending
      * transaction, commit to the wallet and broadcast it to the network all in one go. This method is lower level
      * and lets you see the proposed transaction before anything is done with it.</p>
      *
-     * <p>This is a helper method that is equivalent to using {@link Wallet.SendRequest#to(Address, java.math.BigInteger)}
+     * <p>This is a helper method that is equivalent to using {@link Wallet.SendRequest#to(Address, java.math.Coin)}
      * followed by {@link Wallet#completeTx(Wallet.SendRequest)} and returning the requests transaction object.
      * Note that this means a fee may be automatically added if required, if you want more control over the process,
      * just do those two steps yourself.</p>
@@ -2193,7 +2193,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
      * coins as spent until commitTx is called on the result.
      * @throws InsufficientMoneyException if the request could not be completed due to not enough balance.
      */
-    public Transaction createSend(Address address, BigInteger nanocoins) throws InsufficientMoneyException {
+    public Transaction createSend(Address address, Coin nanocoins) throws InsufficientMoneyException {
         SendRequest req = SendRequest.to(address, nanocoins);
         if (params == UnitTestParams.get())
             req.shuffleOutputs = false;
@@ -2243,7 +2243,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
      * @return An object containing the transaction that was created, and a future for the broadcast of it.
      * @throws InsufficientMoneyException if the request could not be completed due to not enough balance.
      */
-    public SendResult sendCoins(TransactionBroadcaster broadcaster, Address to, BigInteger value) throws InsufficientMoneyException {
+    public SendResult sendCoins(TransactionBroadcaster broadcaster, Address to, Coin value) throws InsufficientMoneyException {
         SendRequest request = SendRequest.to(to, value);
         return sendCoins(broadcaster, request);
     }
@@ -2335,17 +2335,17 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
         try {
             checkArgument(!req.completed, "Given SendRequest has already been completed.");
             // Calculate the amount of value we need to import.
-            BigInteger value = BigInteger.ZERO;
+            Coin value = Coin.ZERO;
             for (TransactionOutput output : req.tx.getOutputs()) {
                 value = value.add(output.getValue());
             }
-            BigInteger totalOutput = value;
+            Coin totalOutput = value;
 
             log.info("Completing send tx with {} outputs totalling {} satoshis (not including fees)",
                     req.tx.getOutputs().size(), value);
 
             // If any inputs have already been added, we don't need to get their value from wallet
-            BigInteger totalInput = BigInteger.ZERO;
+            Coin totalInput = Coin.ZERO;
             for (TransactionInput input : req.tx.getInputs())
                 if (input.getConnectedOutput() != null)
                     totalInput = totalInput.add(input.getConnectedOutput().getValue());
@@ -2397,8 +2397,8 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
                 req.tx.addInput(output);
 
             if (req.ensureMinRequiredFee && req.emptyWallet) {
-                final BigInteger baseFee = req.fee == null ? BigInteger.ZERO : req.fee;
-                final BigInteger feePerKb = req.feePerKb == null ? BigInteger.ZERO : req.feePerKb;
+                final Coin baseFee = req.fee == null ? Coin.ZERO : req.fee;
+                final Coin feePerKb = req.feePerKb == null ? Coin.ZERO : req.feePerKb;
                 Transaction tx = req.tx;
                 if (!adjustOutputDownwardsForFee(tx, bestCoinSelection, baseFee, feePerKb))
                     throw new CouldNotAdjustDownwards();
@@ -2411,7 +2411,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
                 totalOutput = totalOutput.add(bestChangeOutput.getValue());
                 log.info("  with {} coins change", bitcoinValueToFriendlyString(bestChangeOutput.getValue()));
             }
-            final BigInteger calculatedFee = totalInput.subtract(totalOutput);
+            final Coin calculatedFee = totalInput.subtract(totalOutput);
             if (calculatedFee.signum() > 0) {
                 log.info("  with a fee of {}", bitcoinValueToFriendlyString(calculatedFee));
             }
@@ -2445,12 +2445,12 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
     }
 
     /** Reduce the value of the first output of a transaction to pay the given feePerKb as appropriate for its size. */
-    private boolean adjustOutputDownwardsForFee(Transaction tx, CoinSelection coinSelection, BigInteger baseFee, BigInteger feePerKb) {
+    private boolean adjustOutputDownwardsForFee(Transaction tx, CoinSelection coinSelection, Coin baseFee, Coin feePerKb) {
         TransactionOutput output = tx.getOutput(0);
         // Check if we need additional fee due to the transaction's size
         int size = tx.bitcoinSerialize().length;
         size += estimateBytesForSigning(coinSelection);
-        BigInteger fee = baseFee.add(BigInteger.valueOf((size / 1000) + 1).multiply(feePerKb));
+        Coin fee = baseFee.add(Coin.valueOf((size / 1000) + 1).multiply(feePerKb));
         output.setValue(output.getValue().subtract(fee));
         // Check if we need additional fee due to the output's value
         if (output.getValue().compareTo(Utils.CENT) < 0 && fee.compareTo(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE) < 0)
@@ -2538,21 +2538,21 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
      * Returns the AVAILABLE balance of this wallet. See {@link BalanceType#AVAILABLE} for details on what this
      * means.
      */
-    public BigInteger getBalance() {
+    public Coin getBalance() {
         return getBalance(BalanceType.AVAILABLE);
     }
 
     /**
      * Returns the balance of this wallet as calculated by the provided balanceType.
      */
-    public BigInteger getBalance(BalanceType balanceType) {
+    public Coin getBalance(BalanceType balanceType) {
         lock.lock();
         try {
             if (balanceType == BalanceType.AVAILABLE) {
                 return getBalance(coinSelector);
             } else if (balanceType == BalanceType.ESTIMATED) {
                 LinkedList<TransactionOutput> all = calculateAllSpendCandidates(false);
-                BigInteger value = BigInteger.ZERO;
+                Coin value = Coin.ZERO;
                 for (TransactionOutput out : all) value = value.add(out.getValue());
                 return value;
             } else {
@@ -2567,7 +2567,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
      * Returns the balance that would be considered spendable by the given coin selector. Just asks it to select
      * as many coins as possible and returns the total.
      */
-    public BigInteger getBalance(CoinSelector selector) {
+    public Coin getBalance(CoinSelector selector) {
         lock.lock();
         try {
             checkNotNull(selector);
@@ -2580,7 +2580,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
     }
 
     /** Returns the available balance, including any unspent balance at watched addresses */
-    public BigInteger getWatchedBalance() {
+    public Coin getWatchedBalance() {
         return getWatchedBalance(coinSelector);
     }
 
@@ -2588,7 +2588,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
      * Returns the balance that would be considered spendable by the given coin selector, including
      * any unspent balance at watched addresses.
      */
-    public BigInteger getWatchedBalance(CoinSelector selector) {
+    public Coin getWatchedBalance(CoinSelector selector) {
         lock.lock();
         try {
             checkNotNull(selector);
@@ -2619,8 +2619,8 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
         lock.lock();
         try {
             StringBuilder builder = new StringBuilder();
-            BigInteger estimatedBalance = getBalance(BalanceType.ESTIMATED);
-            BigInteger availableBalance = getBalance(BalanceType.AVAILABLE);
+            Coin estimatedBalance = getBalance(BalanceType.ESTIMATED);
+            Coin availableBalance = getBalance(BalanceType.AVAILABLE);
             builder.append(String.format("Wallet containing %s BTC (available: %s BTC) in:%n",
                     bitcoinValueToPlainString(estimatedBalance), bitcoinValueToPlainString(availableBalance)));
             builder.append(String.format("  %d pending transactions%n", pending.size()));
@@ -2861,7 +2861,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
                 notifyNewBestBlock(block);
             }
             checkState(isConsistent());
-            final BigInteger balance = getBalance();
+            final Coin balance = getBalance();
             log.info("post-reorg balance is {}", Utils.bitcoinValueToFriendlyString(balance));
             // Inform event listeners that a re-org took place.
             queueOnReorganize();
@@ -3307,8 +3307,8 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
     }
 
     private static class BalanceFutureRequest {
-        public SettableFuture<BigInteger> future;
-        public BigInteger value;
+        public SettableFuture<Coin> future;
+        public Coin value;
         public BalanceType type;
     }
     @GuardedBy("lock") private List<BalanceFutureRequest> balanceFutureRequests = Lists.newLinkedList();
@@ -3327,11 +3327,11 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
      * you can use {@link com.google.bitcoin.utils.Threading#waitForUserCode()} to block until the future had a
      * chance to be updated.</p>
      */
-    public ListenableFuture<BigInteger> getBalanceFuture(final BigInteger value, final BalanceType type) {
+    public ListenableFuture<Coin> getBalanceFuture(final Coin value, final BalanceType type) {
         lock.lock();
         try {
-            final SettableFuture<BigInteger> future = SettableFuture.create();
-            final BigInteger current = getBalance(type);
+            final SettableFuture<Coin> future = SettableFuture.create();
+            final Coin current = getBalance(type);
             if (current.compareTo(value) >= 0) {
                 // Already have enough.
                 future.set(current);
@@ -3352,13 +3352,13 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
     }
 
     // Runs any balance futures in the user code thread.
-    private void checkBalanceFuturesLocked(@Nullable BigInteger avail) {
+    private void checkBalanceFuturesLocked(@Nullable Coin avail) {
         checkState(lock.isHeldByCurrentThread());
-        BigInteger estimated = null;
+        Coin estimated = null;
         final ListIterator<BalanceFutureRequest> it = balanceFutureRequests.listIterator();
         while (it.hasNext()) {
             final BalanceFutureRequest req = it.next();
-            BigInteger val = null;
+            Coin val = null;
             if (req.type == BalanceType.AVAILABLE) {
                 if (avail == null) avail = getBalance(BalanceType.AVAILABLE);
                 if (avail.compareTo(req.value) < 0) continue;
@@ -3370,7 +3370,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
             }
             // Found one that's finished.
             it.remove();
-            final BigInteger v = checkNotNull(val);
+            final Coin v = checkNotNull(val);
             // Don't run any user-provided future listeners with our lock held.
             Threading.USER_THREAD.execute(new Runnable() {
                 @Override public void run() {
@@ -3483,7 +3483,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
         }
     }
 
-    private void queueOnCoinsReceived(final Transaction tx, final BigInteger balance, final BigInteger newBalance) {
+    private void queueOnCoinsReceived(final Transaction tx, final Coin balance, final Coin newBalance) {
         checkState(lock.isHeldByCurrentThread());
         for (final ListenerRegistration<WalletEventListener> registration : eventListeners) {
             registration.executor.execute(new Runnable() {
@@ -3495,7 +3495,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
         }
     }
 
-    private void queueOnCoinsSent(final Transaction tx, final BigInteger prevBalance, final BigInteger newBalance) {
+    private void queueOnCoinsSent(final Transaction tx, final Coin prevBalance, final Coin newBalance) {
         checkState(lock.isHeldByCurrentThread());
         for (final ListenerRegistration<WalletEventListener> registration : eventListeners) {
             registration.executor.execute(new Runnable() {
@@ -3540,7 +3540,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
         private CoinSelection bestCoinSelection;
         private TransactionOutput bestChangeOutput;
 
-        public FeeCalculation(SendRequest req, BigInteger value, List<TransactionInput> originalInputs,
+        public FeeCalculation(SendRequest req, Coin value, List<TransactionInput> originalInputs,
                               boolean needAtLeastReferenceFee, LinkedList<TransactionOutput> candidates) throws InsufficientMoneyException {
             checkState(lock.isHeldByCurrentThread());
             // There are 3 possibilities for what adding change might do:
@@ -3550,7 +3550,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
             // If we get either of the last 2, we keep note of what the inputs looked like at the time and try to
             // add inputs as we go up the list (keeping track of minimum inputs for each category).  At the end, we pick
             // the best input set as the one which generates the lowest total fee.
-            BigInteger additionalValueForNextCategory = null;
+            Coin additionalValueForNextCategory = null;
             CoinSelection selection3 = null;
             CoinSelection selection2 = null;
             TransactionOutput selection2Change = null;
@@ -3559,14 +3559,14 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
             // We keep track of the last size of the transaction we calculated but only if the act of adding inputs and
             // change resulted in the size crossing a 1000 byte boundary. Otherwise it stays at zero.
             int lastCalculatedSize = 0;
-            BigInteger valueNeeded, valueMissing = null;
+            Coin valueNeeded, valueMissing = null;
             while (true) {
                 resetTxInputs(req, originalInputs);
 
-                BigInteger fees = req.fee == null ? BigInteger.ZERO : req.fee;
+                Coin fees = req.fee == null ? Coin.ZERO : req.fee;
                 if (lastCalculatedSize > 0) {
                     // If the size is exactly 1000 bytes then we'll over-pay, but this should be rare.
-                    fees = fees.add(BigInteger.valueOf((lastCalculatedSize / 1000) + 1).multiply(req.feePerKb));
+                    fees = fees.add(Coin.valueOf((lastCalculatedSize / 1000) + 1).multiply(req.feePerKb));
                 } else {
                     fees = fees.add(req.feePerKb);  // First time around the loop.
                 }
@@ -3576,7 +3576,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
                 valueNeeded = value.add(fees);
                 if (additionalValueForNextCategory != null)
                     valueNeeded = valueNeeded.add(additionalValueForNextCategory);
-                BigInteger additionalValueSelected = additionalValueForNextCategory;
+                Coin additionalValueSelected = additionalValueForNextCategory;
 
                 // Of the coins we could spend, pick some that we actually will spend.
                 CoinSelector selector = req.coinSelector == null ? coinSelector : req.coinSelector;
@@ -3598,12 +3598,12 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
                 boolean eitherCategory2Or3 = false;
                 boolean isCategory3 = false;
 
-                BigInteger change = selection.valueGathered.subtract(valueNeeded);
+                Coin change = selection.valueGathered.subtract(valueNeeded);
                 if (additionalValueSelected != null)
                     change = change.add(additionalValueSelected);
 
                 // If change is < 0.01 BTC, we will need to have at least minfee to be accepted by the network
-                if (req.ensureMinRequiredFee && !change.equals(BigInteger.ZERO) &&
+                if (req.ensureMinRequiredFee && !change.equals(Coin.ZERO) &&
                         change.compareTo(Utils.CENT) < 0 && fees.compareTo(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE) < 0) {
                     // This solution may fit into category 2, but it may also be category 3, we'll check that later
                     eitherCategory2Or3 = true;
@@ -3627,7 +3627,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
                         // This solution definitely fits in category 3
                         isCategory3 = true;
                         additionalValueForNextCategory = Transaction.REFERENCE_DEFAULT_MIN_TX_FEE.add(
-                                                         Transaction.MIN_NONDUST_OUTPUT.add(BigInteger.ONE));
+                                                         Transaction.MIN_NONDUST_OUTPUT.add(Coin.ONE));
                     } else {
                         size += changeOutput.bitcoinSerialize().length + VarInt.sizeOf(req.tx.getOutputs().size()) - VarInt.sizeOf(req.tx.getOutputs().size() - 1);
                         // This solution is either category 1 or 2
@@ -3638,7 +3638,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
                     if (eitherCategory2Or3) {
                         // This solution definitely fits in category 3 (we threw away change because it was smaller than MIN_TX_FEE)
                         isCategory3 = true;
-                        additionalValueForNextCategory = Transaction.REFERENCE_DEFAULT_MIN_TX_FEE.add(BigInteger.ONE);
+                        additionalValueForNextCategory = Transaction.REFERENCE_DEFAULT_MIN_TX_FEE.add(Coin.ONE);
                     }
                 }
 
@@ -3694,7 +3694,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
                 throw new InsufficientMoneyException(valueMissing);
             }
 
-            BigInteger lowestFee = null;
+            Coin lowestFee = null;
             bestCoinSelection = null;
             bestChangeOutput = null;
             if (selection1 != null) {
@@ -3707,7 +3707,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
             }
 
             if (selection2 != null) {
-                BigInteger fee = selection2.valueGathered.subtract(checkNotNull(selection2Change).getValue());
+                Coin fee = selection2.valueGathered.subtract(checkNotNull(selection2Change).getValue());
                 if (lowestFee == null || fee.compareTo(lowestFee) < 0) {
                     lowestFee = fee;
                     bestCoinSelection = selection2;
@@ -3896,14 +3896,14 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
             // bug that was fixed in 0.10, thus, making a re-key transaction depend on those would cause it to
             // never confirm at all.
             CoinSelector selector = new KeyTimeCoinSelector(this, keyRotationTimestamp, true);
-            CoinSelection toMove = selector.select(BigInteger.ZERO, calculateAllSpendCandidates(true));
-            if (toMove.valueGathered.equals(BigInteger.ZERO)) return null;  // Nothing to do.
+            CoinSelection toMove = selector.select(Coin.ZERO, calculateAllSpendCandidates(true));
+            if (toMove.valueGathered.equals(Coin.ZERO)) return null;  // Nothing to do.
             rekeyTx = new Transaction(params);
             for (TransactionOutput output : toMove.gathered) {
                 rekeyTx.addInput(output);
             }
             rekeyTx.addOutput(toMove.valueGathered, safeKey);
-            if (!adjustOutputDownwardsForFee(rekeyTx, toMove, BigInteger.ZERO, Transaction.REFERENCE_DEFAULT_MIN_TX_FEE)) {
+            if (!adjustOutputDownwardsForFee(rekeyTx, toMove, Coin.ZERO, Transaction.REFERENCE_DEFAULT_MIN_TX_FEE)) {
                 log.error("Failed to adjust rekey tx for fees.");
                 return null;
             }

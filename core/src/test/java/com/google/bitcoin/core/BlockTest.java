@@ -164,7 +164,7 @@ public class BlockTest {
         //assertTrue(tx.length == tx.bitcoinSerialize().length && tx.length == 8);
         byte[] outputScript = new byte[10];
         Arrays.fill(outputScript, (byte) ScriptOpCodes.OP_FALSE);
-        tx.addOutput(new TransactionOutput(params, null, BigInteger.valueOf(1), outputScript));
+        tx.addOutput(new TransactionOutput(params, null, Coin.valueOf(1), outputScript));
         tx.addInput(new TransactionInput(params, null, new byte[] {(byte) ScriptOpCodes.OP_FALSE},
                 new TransactionOutPoint(params, 0, Sha256Hash.create(new byte[] {1}))));
         int origTxLength = 8 + 2 + 8 + 1 + 10 + 40 + 1 + 1;

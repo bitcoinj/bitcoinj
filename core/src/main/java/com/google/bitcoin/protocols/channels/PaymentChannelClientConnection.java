@@ -16,6 +16,7 @@
 
 package com.google.bitcoin.protocols.channels;
 
+import com.google.bitcoin.core.Coin;
 import com.google.bitcoin.core.ECKey;
 import com.google.bitcoin.core.InsufficientMoneyException;
 import com.google.bitcoin.core.Sha256Hash;
@@ -24,10 +25,10 @@ import com.google.bitcoin.net.NioClient;
 import com.google.bitcoin.net.ProtobufParser;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
+
 import org.bitcoin.paymentchannel.Protos;
 
 import java.io.IOException;
-import java.math.BigInteger;
 import java.net.InetSocketAddress;
 
 /**
@@ -60,7 +61,7 @@ public class PaymentChannelClientConnection {
      * @throws ValueOutOfRangeException if the balance of wallet is lower than maxValue.
      */
     public PaymentChannelClientConnection(InetSocketAddress server, int timeoutSeconds, Wallet wallet, ECKey myKey,
-                                          BigInteger maxValue, String serverId) throws IOException, ValueOutOfRangeException {
+                                          Coin maxValue, String serverId) throws IOException, ValueOutOfRangeException {
         // Glue the object which vends/ingests protobuf messages in order to manage state to the network object which
         // reads/writes them to the wire in length prefixed form.
         channelClient = new PaymentChannelClient(wallet, myKey, maxValue, Sha256Hash.create(serverId.getBytes()),
@@ -119,7 +120,7 @@ public class PaymentChannelClientConnection {
      * an error before the channel has reached the open state.</p>
      *
      * <p>After this future completes successfully, you may call
-     * {@link PaymentChannelClientConnection#incrementPayment(java.math.BigInteger)} to begin paying the server.</p>
+     * {@link PaymentChannelClientConnection#incrementPayment(java.math.Coin)} to begin paying the server.</p>
      */
     public ListenableFuture<PaymentChannelClientConnection> getChannelOpenFuture() {
         return channelOpenFuture;
@@ -134,7 +135,7 @@ public class PaymentChannelClientConnection {
      * @throws IllegalStateException If the channel has been closed or is not yet open
      *                               (see {@link PaymentChannelClientConnection#getChannelOpenFuture()} for the second)
      */
-    public ListenableFuture<BigInteger> incrementPayment(BigInteger size) throws ValueOutOfRangeException, IllegalStateException {
+    public ListenableFuture<Coin> incrementPayment(Coin size) throws ValueOutOfRangeException, IllegalStateException {
         return channelClient.incrementPayment(size);
     }
 

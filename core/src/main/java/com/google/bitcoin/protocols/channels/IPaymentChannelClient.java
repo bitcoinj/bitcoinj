@@ -16,11 +16,11 @@
 
 package com.google.bitcoin.protocols.channels;
 
+import com.google.bitcoin.core.Coin;
 import com.google.bitcoin.core.InsufficientMoneyException;
 import com.google.common.util.concurrent.ListenableFuture;
-import org.bitcoin.paymentchannel.Protos;
 
-import java.math.BigInteger;
+import org.bitcoin.paymentchannel.Protos;
 
 /**
  * A class implementing this interface supports the basic operations of a payment channel. An implementation is provided
@@ -80,7 +80,7 @@ public interface IPaymentChannelClient {
      *                               (see {@link PaymentChannelClientConnection#getChannelOpenFuture()} for the second)
      * @return a future that completes when the server acknowledges receipt and acceptance of the payment.
      */
-    ListenableFuture<BigInteger> incrementPayment(BigInteger size) throws ValueOutOfRangeException, IllegalStateException;
+    ListenableFuture<Coin> incrementPayment(Coin size) throws ValueOutOfRangeException, IllegalStateException;
 
     /**
      * Implements the connection between this client and the server, providing an interface which allows messages to be
@@ -118,7 +118,7 @@ public interface IPaymentChannelClient {
 
         /**
          * <p>Indicates the channel has been successfully opened and
-         * {@link com.google.bitcoin.protocols.channels.PaymentChannelClient#incrementPayment(java.math.BigInteger)}
+         * {@link com.google.bitcoin.protocols.channels.PaymentChannelClient#incrementPayment(java.math.Coin)}
          * may be called at will.</p>
          *
          * <p>Called while holding a lock on the {@link com.google.bitcoin.protocols.channels.PaymentChannelClient}

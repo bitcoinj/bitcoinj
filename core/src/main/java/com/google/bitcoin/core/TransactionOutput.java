@@ -18,16 +18,17 @@ package com.google.bitcoin.core;
 
 import com.google.bitcoin.script.Script;
 import com.google.bitcoin.script.ScriptBuilder;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
+
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.io.Serializable;
 import java.lang.ref.WeakReference;
-import java.math.BigInteger;
 import java.util.Arrays;
 
 import static com.google.common.base.Preconditions.*;
@@ -42,7 +43,7 @@ public class TransactionOutput extends ChildMessage implements Serializable {
 
     // A transaction output has some value and a script used for authenticating that the redeemer is allowed to spend
     // this output.
-    private BigInteger value;
+    private Coin value;
     private byte[] scriptBytes;
 
     // The script bytes are parsed and turned into a Script on demand.
@@ -91,22 +92,22 @@ public class TransactionOutput extends ChildMessage implements Serializable {
     /**
      * Creates an output that sends 'value' to the given address (public key hash). The amount should be created with
      * something like {@link Utils#toNanoCoins(int, int)}. Typically you would use
-     * {@link Transaction#addOutput(java.math.BigInteger, Address)} instead of creating a TransactionOutput directly.
+     * {@link Transaction#addOutput(java.math.Coin, Address)} instead of creating a TransactionOutput directly.
      */
-    public TransactionOutput(NetworkParameters params, @Nullable Transaction parent, BigInteger value, Address to) {
+    public TransactionOutput(NetworkParameters params, @Nullable Transaction parent, Coin value, Address to) {
         this(params, parent, value, ScriptBuilder.createOutputScript(to).getProgram());
     }
 
     /**
      * Creates an output that sends 'value' to the given public key using a simple CHECKSIG script (no addresses). The
      * amount should be created with something like {@link Utils#toNanoCoins(int, int)}. Typically you would use
-     * {@link Transaction#addOutput(java.math.BigInteger, ECKey)} instead of creating an output directly.
+     * {@link Transaction#addOutput(java.math.Coin, ECKey)} instead of creating an output directly.
      */
-    public TransactionOutput(NetworkParameters params, @Nullable Transaction parent, BigInteger value, ECKey to) {
+    public TransactionOutput(NetworkParameters params, @Nullable Transaction parent, Coin value, ECKey to) {
         this(params, parent, value, ScriptBuilder.createOutputScript(to).getProgram());
     }
 
-    public TransactionOutput(NetworkParameters params, @Nullable Transaction parent, BigInteger value, byte[] scriptBytes) {
+    public TransactionOutput(NetworkParameters params, @Nullable Transaction parent, Coin value, byte[] scriptBytes) {
         super(params);
         // Negative values obviously make no sense, except for -1 which is used as a sentinel value when calculating
         // SIGHASH_SINGLE signatures, so unfortunately we have to allow that here.
@@ -134,11 +135,11 @@ public class TransactionOutput extends ChildMessage implements Serializable {
     }
 
     protected void parseLite() throws ProtocolException {
-        // TODO: There is no reason to use BigInteger for values, they are always smaller than 21 million * COIN
-        // The only reason to use BigInteger would be to properly read values from the reference implementation, however
+        // TODO: There is no reason to use Coin for values, they are always smaller than 21 million * COIN
+        // The only reason to use Coin would be to properly read values from the reference implementation, however
         // the reference implementation uses signed 64-bit integers for its values as well (though it probably shouldn't)
         long outputValue = readInt64();
-        value = BigInteger.valueOf(outputValue);
+        value = Coin.valueOf(outputValue);
         scriptLen = (int) readVarInt();
         length = cursor - offset + scriptLen;
     }
@@ -160,7 +161,7 @@ public class TransactionOutput extends ChildMessage implements Serializable {
      * Returns the value of this output in nanocoins. This is the amount of currency that the destination address
      * receives.
      */
-    public BigInteger getValue() {
+    public Coin getValue() {
         maybeParse();
         return value;
     }
@@ -168,7 +169,7 @@ public class TransactionOutput extends ChildMessage implements Serializable {
     /**
      * Sets the value of this output in nanocoins.
      */
-    public void setValue(BigInteger value) {
+    public void setValue(Coin value) {
         checkNotNull(value);
         unCache();
         this.value = value;
@@ -197,15 +198,15 @@ public class TransactionOutput extends ChildMessage implements Serializable {
      * @param feePerKbRequired The fee required per kilobyte. Note that this is the same as the reference client's -minrelaytxfee * 3
      *                         If you want a safe default, use {@link Transaction#REFERENCE_DEFAULT_MIN_TX_FEE}*3
      */
-    public BigInteger getMinNonDustValue(BigInteger feePerKbRequired) {
+    public Coin getMinNonDustValue(Coin feePerKbRequired) {
         // A typical output is 33 bytes (pubkey hash + opcodes) and requires an input of 148 bytes to spend so we add
         // that together to find out the total amount of data used to transfer this amount of value. Note that this
         // formula is wrong for anything that's not a pay-to-address output, unfortunately, we must follow the reference
         // clients wrongness in order to ensure we're considered standard. A better formula would either estimate the
         // size of data needed to satisfy all different script types, or just hard code 33 below.
-        final BigInteger size = BigInteger.valueOf(this.bitcoinSerialize().length + 148);
-        BigInteger[] nonDustAndRemainder = feePerKbRequired.multiply(size).divideAndRemainder(BigInteger.valueOf(1000));
-        return nonDustAndRemainder[1].equals(BigInteger.ZERO) ? nonDustAndRemainder[0] : nonDustAndRemainder[0].add(BigInteger.ONE);
+        final long size = this.bitcoinSerialize().length + 148;
+        Coin[] nonDustAndRemainder = feePerKbRequired.multiply(size).divideAndRemainder(Coin.valueOf(1000));
+        return nonDustAndRemainder[1].equals(Coin.ZERO) ? nonDustAndRemainder[0] : nonDustAndRemainder[0].add(Coin.ONE);
     }
 
     /**
@@ -213,8 +214,8 @@ public class TransactionOutput extends ChildMessage implements Serializable {
      * and mined by default miners. For normal pay to address outputs, this is 5460 satoshis, the same as
      * {@link Transaction#MIN_NONDUST_OUTPUT}.
      */
-    public BigInteger getMinNonDustValue() {
-        return getMinNonDustValue(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE.multiply(BigInteger.valueOf(3)));
+    public Coin getMinNonDustValue() {
+        return getMinNonDustValue(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE.multiply(Coin.valueOf(3)));
     }
 
     /**

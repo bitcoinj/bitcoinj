@@ -45,7 +45,6 @@ import javax.annotation.Nullable;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.*;
@@ -179,7 +178,7 @@ public class PeerGroup extends AbstractExecutionThreadService implements Transac
         }
 
         @Override
-        public void onCoinsReceived(Wallet wallet, Transaction tx, BigInteger prevBalance, BigInteger newBalance) {
+        public void onCoinsReceived(Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
             // We received a relevant transaction. We MAY need to recalculate and resend the Bloom filter, but only
             // if we have received a transaction that includes a relevant pay-to-pubkey output.
             //

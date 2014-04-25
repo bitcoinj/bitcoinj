@@ -19,7 +19,6 @@ package com.google.bitcoin.core;
 import com.google.bitcoin.script.Script;
 import com.google.bitcoin.wallet.KeyChainEventListener;
 
-import java.math.BigInteger;
 import java.util.List;
 
 /**
@@ -40,7 +39,7 @@ public interface WalletEventListener extends KeyChainEventListener {
      * @param prevBalance Balance before the coins were received.
      * @param newBalance  Current balance of the wallet. This is the 'estimated' balance.
      */
-    void onCoinsReceived(Wallet wallet, Transaction tx, BigInteger prevBalance, BigInteger newBalance);
+    void onCoinsReceived(Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance);
 
     /**
      * This is called when a transaction is seen that sends coins <b>from</b> this wallet, either
@@ -58,7 +57,7 @@ public interface WalletEventListener extends KeyChainEventListener {
      * @param prevBalance  The wallets balance before this transaction was seen.
      * @param newBalance   The wallets balance after this transaction was seen. This is the 'estimated' balance.
      */
-    void onCoinsSent(Wallet wallet, Transaction tx, BigInteger prevBalance, BigInteger newBalance);
+    void onCoinsSent(Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance);
 
     // TODO: Finish onReorganize to be more useful.
     /**

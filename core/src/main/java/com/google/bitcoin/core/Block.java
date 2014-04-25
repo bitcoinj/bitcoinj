@@ -166,7 +166,7 @@ public class Block extends Message {
      * <p>The half-life is controlled by {@link com.google.bitcoin.core.NetworkParameters#getSubsidyDecreaseBlockCount()}.
      * </p>
      */
-    public BigInteger getBlockInflation(int height) {
+    public Coin getBlockInflation(int height) {
         return Utils.toNanoCoins(50, 0).shiftRight(height / params.getSubsidyDecreaseBlockCount());
     }
 
@@ -953,7 +953,7 @@ public class Block extends Message {
     static private int txCounter;
 
     /** Adds a coinbase transaction to the block. This exists for unit tests. */
-    void addCoinbaseTransaction(byte[] pubKeyTo, BigInteger value) {
+    void addCoinbaseTransaction(byte[] pubKeyTo, Coin value) {
         unCacheTransactions();
         transactions = new ArrayList<Transaction>();
         Transaction coinbase = new Transaction(params);
@@ -989,7 +989,7 @@ public class Block extends Message {
      * In this variant you can specify a public key (pubkey) for use in generating coinbase blocks.
      */
     Block createNextBlock(@Nullable Address to, @Nullable TransactionOutPoint prevOut, long time,
-                          byte[] pubKey, BigInteger coinbaseValue) {
+                          byte[] pubKey, Coin coinbaseValue) {
         Block b = new Block(params);
         b.setDifficultyTarget(difficultyTarget);
         b.addCoinbaseTransaction(pubKey, coinbaseValue);
@@ -1036,7 +1036,7 @@ public class Block extends Message {
     }
 
     @VisibleForTesting
-    public Block createNextBlock(@Nullable Address to, BigInteger value) {
+    public Block createNextBlock(@Nullable Address to, Coin value) {
         return createNextBlock(to, null, Utils.currentTimeSeconds(), pubkeyForTesting, value);
     }
 
@@ -1046,7 +1046,7 @@ public class Block extends Message {
     }
 
     @VisibleForTesting
-    public Block createNextBlockWithCoinbase(byte[] pubKey, BigInteger coinbaseValue) {
+    public Block createNextBlockWithCoinbase(byte[] pubKey, Coin coinbaseValue) {
         return createNextBlock(null, null, Utils.currentTimeSeconds(), pubKey, coinbaseValue);
     }
 

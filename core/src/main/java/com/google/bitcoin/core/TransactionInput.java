@@ -25,7 +25,6 @@ import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.io.Serializable;
 import java.lang.ref.WeakReference;
-import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Map;
 
@@ -58,7 +57,7 @@ public class TransactionInput extends ChildMessage implements Serializable {
     transient private WeakReference<Script> scriptSig;
     /** Value of the output connected to the input, if known. This field does not participate in equals()/hashCode(). */
     @Nullable
-    private final BigInteger value;
+    private final Coin value;
     // A pointer to the transaction that owns this input.
     private final Transaction parentTransaction;
 
@@ -75,7 +74,7 @@ public class TransactionInput extends ChildMessage implements Serializable {
     }
 
     public TransactionInput(NetworkParameters params, @Nullable Transaction parentTransaction, byte[] scriptBytes,
-            TransactionOutPoint outpoint, @Nullable BigInteger value) {
+            TransactionOutPoint outpoint, @Nullable Coin value) {
         super(params);
         this.scriptBytes = scriptBytes;
         this.outpoint = outpoint;
@@ -267,7 +266,7 @@ public class TransactionInput extends ChildMessage implements Serializable {
      * @return Value of the output connected to this input, if known. Null if unknown.
      */
     @Nullable
-    public BigInteger getValue() {
+    public Coin getValue() {
         return value;
     }
 

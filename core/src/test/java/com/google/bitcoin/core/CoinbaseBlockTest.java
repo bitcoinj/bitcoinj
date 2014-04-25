@@ -42,7 +42,7 @@ public class CoinbaseBlockTest {
     private static final int BLOCK_OF_INTEREST = 169482;
     private static final int BLOCK_LENGTH_AS_HEX = 37357;
     private static final long BLOCK_NONCE = 3973947400L;
-    private static final BigInteger BALANCE_AFTER_BLOCK = BigInteger.valueOf(22223642);
+    private static final Coin BALANCE_AFTER_BLOCK = Coin.valueOf(22223642);
 
     @Test
     public void testReceiveCoinbaseTransaction() throws Exception {
@@ -70,7 +70,7 @@ public class CoinbaseBlockTest {
         wallet.importKey(miningKey);
 
         // Initial balance should be zero by construction.
-        assertEquals(BigInteger.ZERO, wallet.getBalance());
+        assertEquals(Coin.ZERO, wallet.getBalance());
 
         // Give the wallet the first transaction in the block - this is the coinbase tx.
         List<Transaction> transactions = block.getTransactions();
@@ -79,7 +79,7 @@ public class CoinbaseBlockTest {
 
         // Coinbase transaction should have been received successfully but be unavailable to spend (too young).
         assertEquals(BALANCE_AFTER_BLOCK, wallet.getBalance(BalanceType.ESTIMATED));
-        assertEquals(BigInteger.ZERO, wallet.getBalance(BalanceType.AVAILABLE));
+        assertEquals(Coin.ZERO, wallet.getBalance(BalanceType.AVAILABLE));
     }
 
     /**

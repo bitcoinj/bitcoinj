@@ -124,9 +124,9 @@ public class WalletTool {
             value = s;
         }
 
-        public boolean matchBitcoins(BigInteger comparison) {
+        public boolean matchBitcoins(Coin comparison) {
             try {
-                BigInteger units = Utils.toNanoCoins(value);
+                Coin units = Utils.toNanoCoins(value);
                 switch (type) {
                     case LT: return comparison.compareTo(units) < 0;
                     case GT: return comparison.compareTo(units) > 0;
@@ -323,7 +323,7 @@ public class WalletTool {
                     System.err.println("--payment-request and --output cannot be used together.");
                     return;
                 } else if (options.has(outputFlag)) {
-                    BigInteger fee = BigInteger.ZERO;
+                    Coin fee = Coin.ZERO;
                     if (options.has("fee")) {
                         fee = Utils.toNanoCoins((String)options.valueOf("fee"));
                     }
@@ -413,7 +413,7 @@ public class WalletTool {
         }
     }
 
-    private static void send(List<String> outputs, BigInteger fee, String lockTimeStr, boolean allowUnconfirmed) throws VerificationException {
+    private static void send(List<String> outputs, Coin fee, String lockTimeStr, boolean allowUnconfirmed) throws VerificationException {
         try {
             // Convert the input strings to outputs.
             Transaction t = new Transaction(params);
@@ -425,7 +425,7 @@ public class WalletTool {
                 }
                 String destination = parts[0];
                 try {
-                    BigInteger value = Utils.toNanoCoins(parts[1]);
+                    Coin value = Utils.toNanoCoins(parts[1]);
                     if (destination.startsWith("0")) {
                         // Treat as a raw public key.
                         byte[] pubKey = new BigInteger(destination, 16).toByteArray();
@@ -567,7 +567,7 @@ public class WalletTool {
     private static void send(PaymentSession session) {
         try {
             System.out.println("Payment Request");
-            System.out.println("Amount: " + session.getValue().doubleValue() / 100000 + "mBTC");
+            System.out.println("Coin: " + session.getValue().doubleValue() / 100000 + "mBTC");
             System.out.println("Date: " + session.getDate());
             System.out.println("Memo: " + session.getMemo());
             if (session.pkiVerificationData != null) {
@@ -636,15 +636,15 @@ public class WalletTool {
                     }
 
                     @Override
-                    public void onCoinsReceived(Wallet wallet, Transaction tx, BigInteger prevBalance, BigInteger newBalance) {
+                    public void onCoinsReceived(Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
                         // Runs in a peer thread.
                         super.onCoinsReceived(wallet, tx, prevBalance, newBalance);
                         handleTx(tx);
                     }
 
                     @Override
-                    public void onCoinsSent(Wallet wallet, Transaction tx, BigInteger prevBalance,
-                                            BigInteger newBalance) {
+                    public void onCoinsSent(Wallet wallet, Transaction tx, Coin prevBalance,
+                                            Coin newBalance) {
                         // Runs in a peer thread.
                         super.onCoinsSent(wallet, tx, prevBalance, newBalance);
                         handleTx(tx);
@@ -677,7 +677,7 @@ public class WalletTool {
                     public synchronized void onChange() {
                         super.onChange();
                         saveWallet(walletFile);
-                        BigInteger balance = wallet.getBalance(Wallet.BalanceType.ESTIMATED);
+                        Coin balance = wallet.getBalance(Wallet.BalanceType.ESTIMATED);
                         if (condition.matchBitcoins(balance)) {
                             System.out.println(Utils.bitcoinValueToFriendlyString(balance));
                             latch.countDown();

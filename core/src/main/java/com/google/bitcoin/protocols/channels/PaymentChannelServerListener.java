@@ -17,17 +17,19 @@
 
 package com.google.bitcoin.protocols.channels;
 
+import com.google.bitcoin.core.Coin;
 import com.google.bitcoin.core.Sha256Hash;
 import com.google.bitcoin.core.TransactionBroadcaster;
 import com.google.bitcoin.core.Wallet;
 import com.google.bitcoin.net.NioServer;
 import com.google.bitcoin.net.ProtobufParser;
 import com.google.bitcoin.net.StreamParserFactory;
+
 import org.bitcoin.paymentchannel.Protos;
 
 import javax.annotation.Nullable;
+
 import java.io.IOException;
-import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
@@ -46,7 +48,7 @@ public class PaymentChannelServerListener {
 
     // The event handler factory which creates new ServerConnectionEventHandler per connection
     private final HandlerFactory eventHandlerFactory;
-    private final BigInteger minAcceptedChannelSize;
+    private final Coin minAcceptedChannelSize;
 
     private NioServer server;
     private final int timeoutSeconds;
@@ -80,7 +82,7 @@ public class PaymentChannelServerListener {
                     eventHandler.channelOpen(contractHash);
                 }
 
-                @Override public void paymentIncrease(BigInteger by, BigInteger to) {
+                @Override public void paymentIncrease(Coin by, Coin to) {
                     eventHandler.paymentIncrease(by, to);
                 }
             });
@@ -161,7 +163,7 @@ public class PaymentChannelServerListener {
      * @param eventHandlerFactory A factory which generates event handlers which are created for each new connection
      */
     public PaymentChannelServerListener(TransactionBroadcaster broadcaster, Wallet wallet,
-                                        final int timeoutSeconds, BigInteger minAcceptedChannelSize,
+                                        final int timeoutSeconds, Coin minAcceptedChannelSize,
                                         HandlerFactory eventHandlerFactory) throws IOException {
         this.wallet = checkNotNull(wallet);
         this.broadcaster = checkNotNull(broadcaster);

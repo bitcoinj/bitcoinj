@@ -22,7 +22,6 @@ import com.google.bitcoin.store.BlockStoreException;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.math.BigInteger;
 import java.nio.ByteBuffer;
 
 /**
@@ -33,7 +32,7 @@ public class FakeTxBuilder {
      * Create a fake TX of sufficient realism to exercise the unit tests. Two outputs, one to us, one to somewhere
      * else to simulate change. There is one random input.
      */
-    public static Transaction createFakeTxWithChangeAddress(NetworkParameters params, BigInteger nanocoins, Address to, Address changeOutput) {
+    public static Transaction createFakeTxWithChangeAddress(NetworkParameters params, Coin nanocoins, Address to, Address changeOutput) {
         Transaction t = new Transaction(params);
         TransactionOutput outputToMe = new TransactionOutput(params, t, nanocoins, to);
         t.addOutput(outputToMe);
@@ -54,7 +53,7 @@ public class FakeTxBuilder {
      * Create a fake TX of sufficient realism to exercise the unit tests. Two outputs, one to us, one to somewhere
      * else to simulate change. There is one random input.
      */
-    public static Transaction createFakeTx(NetworkParameters params, BigInteger nanocoins, Address to) {
+    public static Transaction createFakeTx(NetworkParameters params, Coin nanocoins, Address to) {
         return createFakeTxWithChangeAddress(params, nanocoins, to, new ECKey().toAddress(params));
     }
 
@@ -62,7 +61,7 @@ public class FakeTxBuilder {
      * Create a fake TX of sufficient realism to exercise the unit tests. Two outputs, one to us, one to somewhere
      * else to simulate change. There is one random input.
      */
-    public static Transaction createFakeTx(NetworkParameters params, BigInteger nanocoins, ECKey to) {
+    public static Transaction createFakeTx(NetworkParameters params, Coin nanocoins, ECKey to) {
         Transaction t = new Transaction(params);
         TransactionOutput outputToMe = new TransactionOutput(params, t, nanocoins, to);
         t.addOutput(outputToMe);
@@ -82,7 +81,7 @@ public class FakeTxBuilder {
     /**
      * Transaction[0] is a feeder transaction, supplying BTC to Transaction[1]
      */
-    public static Transaction[] createFakeTx(NetworkParameters params, BigInteger nanocoins,
+    public static Transaction[] createFakeTx(NetworkParameters params, Coin nanocoins,
                                              Address to, Address from) {
         // Create fake TXes of sufficient realism to exercise the unit tests. This transaction send BTC from the
         // from address, to the to address with to one to somewhere else to simulate change.
@@ -134,7 +133,7 @@ public class FakeTxBuilder {
      */
     public static DoubleSpends createFakeDoubleSpendTxns(NetworkParameters params, Address to) {
         DoubleSpends doubleSpends = new DoubleSpends();
-        BigInteger value = Utils.toNanoCoins(1, 0);
+        Coin value = Utils.toNanoCoins(1, 0);
         Address someBadGuy = new ECKey().toAddress(params);
 
         doubleSpends.t1 = new Transaction(params);

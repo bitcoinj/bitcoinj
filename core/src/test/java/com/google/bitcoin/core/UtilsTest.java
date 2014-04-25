@@ -16,10 +16,9 @@
 
 package com.google.bitcoin.core;
 
+import java.math.BigInteger;
 import org.junit.Assert;
 import org.junit.Test;
-
-import java.math.BigInteger;
 
 import static com.google.bitcoin.core.Utils.*;
 import static org.junit.Assert.*;
@@ -59,7 +58,7 @@ public class UtilsTest {
     public void testFormatting() {
         assertEquals("1.00", bitcoinValueToFriendlyString(toNanoCoins(1, 0)));
         assertEquals("1.23", bitcoinValueToFriendlyString(toNanoCoins(1, 23)));
-        assertEquals("0.001", bitcoinValueToFriendlyString(BigInteger.valueOf(COIN.longValue() / 1000)));
+        assertEquals("0.001", bitcoinValueToFriendlyString(Coin.valueOf(COIN.longValue() / 1000)));
         assertEquals("-1.23", bitcoinValueToFriendlyString(toNanoCoins(1, 23).negate()));
     }
     
@@ -76,7 +75,7 @@ public class UtilsTest {
             assertTrue(e.getMessage().contains("Value cannot be null"));
         }
 
-        assertEquals("0.0015", bitcoinValueToPlainString(BigInteger.valueOf(150000)));
+        assertEquals("0.0015", bitcoinValueToPlainString(Coin.valueOf(150000)));
         assertEquals("1.23", bitcoinValueToPlainString(toNanoCoins("1.23")));
 
         assertEquals("0.1", bitcoinValueToPlainString(toNanoCoins("0.1")));

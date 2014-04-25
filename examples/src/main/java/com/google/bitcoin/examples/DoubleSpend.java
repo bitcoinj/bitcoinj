@@ -7,7 +7,6 @@ import com.google.bitcoin.utils.BriefLogFormatter;
 import com.google.bitcoin.utils.Threading;
 
 import java.io.File;
-import java.math.BigInteger;
 
 /**
  * This is a little test app that waits for a coin on a local regtest node, then  generates two transactions that double
@@ -28,7 +27,7 @@ public class DoubleSpend {
 
         kit.wallet().getBalanceFuture(Utils.COIN, Wallet.BalanceType.AVAILABLE).get();
         Transaction tx1 = kit.wallet().createSend(new Address(params, "muYPFNCv7KQEG2ZLM7Z3y96kJnNyXJ53wm"), Utils.CENT);
-        Transaction tx2 = kit.wallet().createSend(new Address(params, "muYPFNCv7KQEG2ZLM7Z3y96kJnNyXJ53wm"), Utils.CENT.add(BigInteger.TEN));
+        Transaction tx2 = kit.wallet().createSend(new Address(params, "muYPFNCv7KQEG2ZLM7Z3y96kJnNyXJ53wm"), Utils.CENT.add(Coin.TEN));
         final Peer peer = kit.peerGroup().getConnectedPeers().get(0);
         peer.addEventListener(new AbstractPeerEventListener() {
             @Override

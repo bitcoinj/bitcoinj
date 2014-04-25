@@ -8,7 +8,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.math.BigInteger;
 
 /**
  * A program that sends a transaction with the specified fee and measures how long it takes to confirm.
@@ -26,7 +25,7 @@ public class TestFeeLevel {
             return;
         }
 
-        BigInteger feeToTest = new BigInteger(args[0]);
+        Coin feeToTest = Coin.valueOf(Long.parseLong(args[0]));
 
         kit = new WalletAppKit(PARAMS, new File("."), "testfeelevel");
         kit.startAsync();
@@ -39,7 +38,7 @@ public class TestFeeLevel {
         }
     }
 
-    private static void go(BigInteger feeToTest) throws InterruptedException, java.util.concurrent.ExecutionException, InsufficientMoneyException {
+    private static void go(Coin feeToTest) throws InterruptedException, java.util.concurrent.ExecutionException, InsufficientMoneyException {
         kit.peerGroup().setMaxConnections(50);
 
         final Address address = kit.wallet().currentReceiveKey().toAddress(PARAMS);
