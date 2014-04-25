@@ -33,6 +33,7 @@ import java.io.File;
 import java.lang.ref.WeakReference;
 import java.util.Arrays;
 
+import static com.google.bitcoin.core.Coin.toNanoCoins;
 import static org.junit.Assert.*;
 
 /**
@@ -131,7 +132,7 @@ public abstract class AbstractFullPrunedBlockChainTest
 
         rollingBlock = rollingBlock.createNextBlock(null);
         Transaction t = new Transaction(params);
-        t.addOutput(new TransactionOutput(params, t, Utils.toNanoCoins(50, 0), new byte[] {}));
+        t.addOutput(new TransactionOutput(params, t, toNanoCoins(50, 0), new byte[] {}));
         TransactionInput input = t.addInput(spendableOutput);
         // Invalid script.
         input.setScriptBytes(new byte[]{});
@@ -173,7 +174,7 @@ public abstract class AbstractFullPrunedBlockChainTest
         
         Transaction t = new Transaction(params);
         // Entirely invalid scriptPubKey
-        t.addOutput(new TransactionOutput(params, t, Utils.toNanoCoins(50, 0), new byte[] {}));
+        t.addOutput(new TransactionOutput(params, t, toNanoCoins(50, 0), new byte[] {}));
         t.addSignedInput(spendableOutput, new Script(spendableOutputScriptPubKey), outKey);
         rollingBlock.addTransaction(t);
         rollingBlock.solve();

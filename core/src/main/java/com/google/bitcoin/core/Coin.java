@@ -16,7 +16,10 @@
 
 package com.google.bitcoin.core;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.math.BigInteger;
 
 import com.google.common.math.LongMath;
@@ -29,6 +32,25 @@ public final class Coin implements Comparable<Coin>, Serializable {
     public static final Coin ZERO = new Coin(BigInteger.ZERO);
     public static final Coin ONE = new Coin(BigInteger.ONE);
     public static final Coin TEN = new Coin(BigInteger.TEN);
+    public static final Coin NEGATIVE_ONE = Coin.valueOf(-1);
+
+    /**
+     * How many "nanocoins" there are in a Bitcoin.
+     * <p/>
+     * A nanocoin is the smallest unit that can be transferred using Bitcoin.
+     * The term nanocoin is very misleading, though, because there are only 100 million
+     * of them in a coin (whereas one would expect 1 billion.
+     */
+    public static final Coin COIN = new Coin("100000000", 10);
+
+    /**
+     * How many "nanocoins" there are in 0.01 BitCoins.
+     * <p/>
+     * A nanocoin is the smallest unit that can be transferred using Bitcoin.
+     * The term nanocoin is very misleading, though, because there are only 100 million
+     * of them in a coin (whereas one would expect 1 billion).
+     */
+    public static final Coin CENT = new Coin("1000000", 10);
 
     private final long value;
 
@@ -108,6 +130,71 @@ public final class Coin implements Comparable<Coin>, Serializable {
 
     public BigInteger toBigInteger() {
         return BigInteger.valueOf(value);
+    }
+
+    /**
+     * Convert an amount expressed in the way humans are used to into nanocoins.<p>
+     * <p/>
+     * This takes string in a format understood by {@link BigDecimal#BigDecimal(String)},
+     * for example "0", "1", "0.10", "1.23E3", "1234.5E-5".
+     *
+     * @throws ArithmeticException if you try to specify fractional nanocoins, or nanocoins out of range.
+     */
+    public static Coin toNanoCoins(String coins) {
+        Coin bigint = new Coin(new BigDecimal(coins).movePointRight(8).toBigIntegerExact());
+        if (bigint.signum() < 0)
+            throw new ArithmeticException("Negative coins specified");
+        if (bigint.compareTo(NetworkParameters.MAX_MONEY) > 0)
+            throw new ArithmeticException("Amount larger than the total quantity of Bitcoins possible specified.");
+        return bigint;
+    }
+
+    /**
+     * Convert an amount expressed in the way humans are used to into nanocoins.
+     */
+    public static Coin toNanoCoins(int coins, int cents) {
+        checkArgument(cents < 100);
+        checkArgument(cents >= 0);
+        checkArgument(coins >= 0);
+        checkArgument(coins < NetworkParameters.MAX_MONEY.divide(COIN).longValue());
+        Coin bi = Coin.valueOf(coins).multiply(COIN);
+        bi = bi.add(Coin.valueOf(cents).multiply(CENT));
+        return bi;
+    }
+
+    /**
+     * Returns the value as a 0.12 type string. More digits after the decimal place will be used
+     * if necessary, but two will always be present.
+     */
+    public String toFriendlyString() {
+        Coin value = this;
+        boolean negative = value.signum() < 0;
+        if (negative)
+            value = value.negate();
+        BigDecimal bd = new BigDecimal(value.toBigInteger(), 8);
+        String formatted = bd.toPlainString();   // Don't use scientific notation.
+        int decimalPoint = formatted.indexOf(".");
+        // Drop unnecessary zeros from the end.
+        int toDelete = 0;
+        for (int i = formatted.length() - 1; i > decimalPoint + 2; i--) {
+            if (formatted.charAt(i) == '0')
+                toDelete++;
+            else
+                break;
+        }
+        return (negative ? "-" : "") + formatted.substring(0, formatted.length() - toDelete);
+    }
+
+    /**
+     * <p>
+     * Returns the value as a plain string denominated in BTC.
+     * The result is unformatted with no trailing zeroes.
+     * For instance, a value of 150000 satoshis gives an output string of "0.0015" BTC
+     * </p>
+     */
+    public String toPlainString() {
+        BigDecimal valueInBTC = new BigDecimal(toBigInteger()).divide(new BigDecimal(COIN.toBigInteger()));
+        return valueInBTC.toPlainString();
     }
 
     @Override

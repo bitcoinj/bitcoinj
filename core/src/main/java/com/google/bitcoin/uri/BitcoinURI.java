@@ -22,7 +22,6 @@ import com.google.bitcoin.core.Address;
 import com.google.bitcoin.core.AddressFormatException;
 import com.google.bitcoin.core.Coin;
 import com.google.bitcoin.core.NetworkParameters;
-import com.google.bitcoin.core.Utils;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -209,7 +208,7 @@ public class BitcoinURI {
             if (FIELD_AMOUNT.equals(nameToken)) {
                 // Decode the amount (contains an optional decimal component to 8dp).
                 try {
-                    Coin amount = Utils.toNanoCoins(valueToken);
+                    Coin amount = Coin.toNanoCoins(valueToken);
                     putWithValidation(FIELD_AMOUNT, amount);
                 } catch (NumberFormatException e) {
                     throw new OptionalFieldValidationException(String.format("'%s' is not a valid amount", valueToken), e);
@@ -342,7 +341,7 @@ public class BitcoinURI {
         
         if (amount != null) {
             builder.append(QUESTION_MARK_SEPARATOR).append(FIELD_AMOUNT).append("=");
-            builder.append(Utils.bitcoinValueToPlainString(amount));
+            builder.append(amount.toPlainString());
             questionMarkHasBeenOutput = true;
         }
         

@@ -138,7 +138,7 @@ public class StoredTransactionOutput implements Serializable {
     }
 
     public String toString() {
-        return String.format("Stored TxOut of %s (%s:%d)", Utils.bitcoinValueToFriendlyString(value), hash.toString(), index);
+        return String.format("Stored TxOut of %s (%s:%d)", value.toFriendlyString(), hash.toString(), index);
     }
 
     @Override

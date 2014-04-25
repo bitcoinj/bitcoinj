@@ -40,6 +40,7 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.Set;
 
+import static com.google.bitcoin.core.Coin.toNanoCoins;
 import static com.google.bitcoin.testing.FakeTxBuilder.createFakeTx;
 import static org.junit.Assert.*;
 
@@ -92,7 +93,7 @@ public class WalletProtobufSerializerTest {
     @Test
     public void oneTx() throws Exception {
         // Check basic tx serialization.
-        Coin v1 = Utils.toNanoCoins(1, 0);
+        Coin v1 = toNanoCoins(1, 0);
         Transaction t1 = createFakeTx(params, v1, myAddress);
         t1.getConfidence().markBroadcastBy(new PeerAddress(InetAddress.getByName("1.2.3.4")));
         t1.getConfidence().markBroadcastBy(new PeerAddress(InetAddress.getByName("5.6.7.8")));
@@ -287,7 +288,7 @@ public class WalletProtobufSerializerTest {
     @Test
     public void coinbaseTxns() throws Exception {
         // Covers issue 420 where the outpoint index of a coinbase tx input was being mis-serialized.
-        Block b = params.getGenesisBlock().createNextBlockWithCoinbase(myKey.getPubKey(), Utils.toNanoCoins(50, 0));
+        Block b = params.getGenesisBlock().createNextBlockWithCoinbase(myKey.getPubKey(), toNanoCoins(50, 0));
         Transaction coinbase = b.getTransactions().get(0);
         assertTrue(coinbase.isCoinBase());
         BlockChain chain = new BlockChain(params, myWallet, new MemoryBlockStore(params));

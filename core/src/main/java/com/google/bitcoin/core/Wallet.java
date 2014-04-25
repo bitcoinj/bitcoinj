@@ -56,8 +56,6 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
-import static com.google.bitcoin.core.Utils.bitcoinValueToFriendlyString;
-import static com.google.bitcoin.core.Utils.bitcoinValueToPlainString;
 import static com.google.common.base.Preconditions.*;
 
 // To do list:
@@ -1098,8 +1096,8 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
             Coin valueSentFromMe = tx.getValueSentFromMe(this);
             if (log.isInfoEnabled()) {
                 log.info(String.format("Received a pending transaction %s that spends %s BTC from our own wallet," +
-                        " and sends us %s BTC", tx.getHashAsString(), Utils.bitcoinValueToFriendlyString(valueSentFromMe),
-                        Utils.bitcoinValueToFriendlyString(valueSentToMe)));
+                        " and sends us %s BTC", tx.getHashAsString(), valueSentFromMe.toFriendlyString(),
+                        valueSentToMe.toFriendlyString()));
             }
             if (tx.getConfidence().getSource().equals(TransactionConfidence.Source.UNKNOWN)) {
                 log.warn("Wallet received transaction with an unknown source. Consider tagging it!");
@@ -1282,7 +1280,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
         Coin valueDifference = valueSentToMe.subtract(valueSentFromMe);
 
         log.info("Received tx{} for {} BTC: {} [{}] in block {}", sideChain ? " on a side chain" : "",
-                bitcoinValueToFriendlyString(valueDifference), tx.getHashAsString(), relativityOffset,
+                valueDifference.toFriendlyString(), tx.getHashAsString(), relativityOffset,
                 block != null ? block.getHeader().getHash() : "(unit test)");
 
         // Inform the key chains that the issued keys were observed in a transaction, so they know to
@@ -1365,7 +1363,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
         //    listeners.
         if (!insideReorg && bestChain) {
             Coin newBalance = getBalance();  // This is slow.
-            log.info("Balance is now: " + bitcoinValueToFriendlyString(newBalance));
+            log.info("Balance is now: " + newBalance.toFriendlyString());
             if (!wasPending) {
                 int diff = valueDifference.signum();
                 // We pick one callback based on the value difference, though a tx can of course both send and receive
@@ -2359,7 +2357,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
             boolean needAtLeastReferenceFee = false;
             if (req.ensureMinRequiredFee && !req.emptyWallet) { // min fee checking is handled later for emptyWallet
                 for (TransactionOutput output : req.tx.getOutputs())
-                    if (output.getValue().compareTo(Utils.CENT) < 0) {
+                    if (output.getValue().compareTo(Coin.CENT) < 0) {
                         if (output.getValue().compareTo(output.getMinNonDustValue()) < 0)
                             throw new DustySendRequested();
                         needAtLeastReferenceFee = true;
@@ -2409,11 +2407,11 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
             if (bestChangeOutput != null) {
                 req.tx.addOutput(bestChangeOutput);
                 totalOutput = totalOutput.add(bestChangeOutput.getValue());
-                log.info("  with {} coins change", bitcoinValueToFriendlyString(bestChangeOutput.getValue()));
+                log.info("  with {} coins change", bestChangeOutput.getValue().toFriendlyString());
             }
             final Coin calculatedFee = totalInput.subtract(totalOutput);
             if (calculatedFee.signum() > 0) {
-                log.info("  with a fee of {}", bitcoinValueToFriendlyString(calculatedFee));
+                log.info("  with a fee of {}", calculatedFee.toFriendlyString());
             }
 
             // Now shuffle the outputs to obfuscate which is the change.
@@ -2453,7 +2451,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
         Coin fee = baseFee.add(Coin.valueOf((size / 1000) + 1).multiply(feePerKb));
         output.setValue(output.getValue().subtract(fee));
         // Check if we need additional fee due to the output's value
-        if (output.getValue().compareTo(Utils.CENT) < 0 && fee.compareTo(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE) < 0)
+        if (output.getValue().compareTo(Coin.CENT) < 0 && fee.compareTo(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE) < 0)
             output.setValue(output.getValue().subtract(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE.subtract(fee)));
         return output.getMinNonDustValue().compareTo(output.getValue()) <= 0;
     }
@@ -2622,7 +2620,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
             Coin estimatedBalance = getBalance(BalanceType.ESTIMATED);
             Coin availableBalance = getBalance(BalanceType.AVAILABLE);
             builder.append(String.format("Wallet containing %s BTC (available: %s BTC) in:%n",
-                    bitcoinValueToPlainString(estimatedBalance), bitcoinValueToPlainString(availableBalance)));
+                    estimatedBalance.toPlainString(), availableBalance.toPlainString()));
             builder.append(String.format("  %d pending transactions%n", pending.size()));
             builder.append(String.format("  %d unspent transactions%n", unspent.size()));
             builder.append(String.format("  %d spent transactions%n", spent.size()));
@@ -2694,11 +2692,11 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
         for (Transaction tx : txns) {
             try {
                 builder.append("Sends ");
-                builder.append(Utils.bitcoinValueToFriendlyString(tx.getValueSentFromMe(this)));
+                builder.append(tx.getValueSentFromMe(this).toFriendlyString());
                 builder.append(" and receives ");
-                builder.append(Utils.bitcoinValueToFriendlyString(tx.getValueSentToMe(this)));
+                builder.append(tx.getValueSentToMe(this).toFriendlyString());
                 builder.append(", total value ");
-                builder.append(Utils.bitcoinValueToFriendlyString(tx.getValue(this)));
+                builder.append(tx.getValue(this).toFriendlyString());
                 builder.append(".\n");
             } catch (ScriptException e) {
                 // Ignore and don't print this line.
@@ -2862,7 +2860,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
             }
             checkState(isConsistent());
             final Coin balance = getBalance();
-            log.info("post-reorg balance is {}", Utils.bitcoinValueToFriendlyString(balance));
+            log.info("post-reorg balance is {}", balance.toFriendlyString());
             // Inform event listeners that a re-org took place.
             queueOnReorganize();
             insideReorg = false;
@@ -3604,10 +3602,10 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
 
                 // If change is < 0.01 BTC, we will need to have at least minfee to be accepted by the network
                 if (req.ensureMinRequiredFee && !change.equals(Coin.ZERO) &&
-                        change.compareTo(Utils.CENT) < 0 && fees.compareTo(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE) < 0) {
+                        change.compareTo(Coin.CENT) < 0 && fees.compareTo(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE) < 0) {
                     // This solution may fit into category 2, but it may also be category 3, we'll check that later
                     eitherCategory2Or3 = true;
-                    additionalValueForNextCategory = Utils.CENT;
+                    additionalValueForNextCategory = Coin.CENT;
                     // If the change is smaller than the fee we want to add, this will be negative
                     change = change.subtract(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE.subtract(fees));
                 }
@@ -3667,7 +3665,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
                     // If we are in selection2, we will require at least CENT additional. If we do that, there is no way
                     // we can end up back here because CENT additional will always get us to 1
                     checkState(selection2 == null);
-                    checkState(additionalValueForNextCategory.equals(Utils.CENT));
+                    checkState(additionalValueForNextCategory.equals(Coin.CENT));
                     selection2 = selection;
                     selection2Change = checkNotNull(changeOutput); // If we get no change in category 2, we are actually in category 3
                 } else {
@@ -3690,7 +3688,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
 
             if (selection3 == null && selection2 == null && selection1 == null) {
                 checkNotNull(valueMissing);
-                log.warn("Insufficient value in wallet for send: needed {} more", bitcoinValueToFriendlyString(valueMissing));
+                log.warn("Insufficient value in wallet for send: needed {} more", valueMissing.toFriendlyString());
                 throw new InsufficientMoneyException(valueMissing);
             }
 
