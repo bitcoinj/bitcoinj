@@ -22,6 +22,7 @@ import com.google.bitcoin.net.discovery.DnsDiscovery;
 import com.google.bitcoin.store.BlockStoreException;
 import com.google.bitcoin.store.SPVBlockStore;
 import com.google.bitcoin.store.WalletProtobufSerializer;
+import com.google.bitcoin.wallet.KeyChainGroup;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -83,6 +84,7 @@ public class WalletAppKit extends AbstractIdleService {
     protected boolean blockingStartup = true;
     protected boolean useTor = false;   // Perhaps in future we can change this to true.
     protected String userAgent, version;
+    protected WalletProtobufSerializer.WalletFactory walletFactory;
 
     public WalletAppKit(NetworkParameters params, File directory, String filePrefix) {
         this.params = checkNotNull(params);
@@ -226,14 +228,19 @@ public class WalletAppKit extends AbstractIdleService {
                     vWallet = new Wallet(params);
                     WalletExtension[] extArray = extensions.toArray(new WalletExtension[extensions.size()]);
                     Protos.Wallet proto = WalletProtobufSerializer.parseToProto(walletStream);
-                    vWallet = new WalletProtobufSerializer().readWallet(params, extArray, proto);
+                    final WalletProtobufSerializer serializer;
+                    if (walletFactory != null)
+                        serializer = new WalletProtobufSerializer(walletFactory);
+                    else
+                        serializer = new WalletProtobufSerializer();
+                    vWallet = serializer.readWallet(params, extArray, proto);
                     if (shouldReplayWallet)
                         vWallet.clearTransactions(0);
                 } finally {
                     walletStream.close();
                 }
             } else {
-                vWallet = new Wallet(params);
+                vWallet = walletFactory != null ? walletFactory.create(params, new KeyChainGroup()) : new Wallet(params);
                 vWallet.freshReceiveKey();
                 for (WalletExtension e : provideWalletExtensions()) {
                     vWallet.addExtension(e);
