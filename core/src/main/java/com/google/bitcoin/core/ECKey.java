@@ -873,7 +873,7 @@ public class ECKey implements EncryptableItem, Serializable {
         BigInteger srInv = rInv.multiply(sig.s).mod(n);
         BigInteger eInvrInv = rInv.multiply(eInv).mod(n);
         ECPoint.Fp q = (ECPoint.Fp) ECAlgorithms.sumOfTwoMultiplies(CURVE.getG(), eInvrInv, R, srInv);
-        return ECKey.fromPublicOnly(q.getEncoded(true));
+        return ECKey.fromPublicOnly(q.getEncoded(compressed));
     }
 
     /** Decompress a compressed public key (x co-ord and low-bit of y-coord). */
