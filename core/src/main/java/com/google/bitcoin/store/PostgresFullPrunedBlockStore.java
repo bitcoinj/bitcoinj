@@ -808,7 +808,7 @@ public class PostgresFullPrunedBlockStore implements FullPrunedBlockStore {
             // index is actually an unsigned int
             s.setInt(2, (int)out.getIndex());
             s.setInt(3, out.getHeight());
-            s.setBytes(4, out.getValue().toByteArray());
+            s.setBytes(4, BigInteger.valueOf(out.getValue().longValue()).toByteArray());
             s.setBytes(5, out.getScriptBytes());
             s.setString(6, dbAddress);
             s.setInt(7, type);

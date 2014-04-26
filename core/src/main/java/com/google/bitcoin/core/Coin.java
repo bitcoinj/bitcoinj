@@ -104,20 +104,8 @@ public final class Coin implements Comparable<Coin>, Serializable {
         return new Coin(-this.value);
     }
 
-    public byte[] toByteArray() {
-        return BigInteger.valueOf(this.value).toByteArray();
-    }
-
     public long longValue() {
         return this.value;
-    }
-
-    public double doubleValue() {
-        return this.value;
-    }
-
-    public BigInteger toBigInteger() {
-        return BigInteger.valueOf(value);
     }
 
     /**
@@ -158,7 +146,7 @@ public final class Coin implements Comparable<Coin>, Serializable {
         boolean negative = value.signum() < 0;
         if (negative)
             value = value.negate();
-        BigDecimal bd = new BigDecimal(value.toBigInteger(), 8);
+        BigDecimal bd = new BigDecimal(BigInteger.valueOf(value.longValue()), 8);
         String formatted = bd.toPlainString();   // Don't use scientific notation.
         int decimalPoint = formatted.indexOf(".");
         // Drop unnecessary zeros from the end.
@@ -180,7 +168,7 @@ public final class Coin implements Comparable<Coin>, Serializable {
      * </p>
      */
     public String toPlainString() {
-        BigDecimal valueInBTC = new BigDecimal(toBigInteger()).divide(new BigDecimal(COIN.toBigInteger()));
+        BigDecimal valueInBTC = new BigDecimal(BigInteger.valueOf(value)).divide(new BigDecimal(BigInteger.valueOf(COIN.longValue())));
         return valueInBTC.toPlainString();
     }
 

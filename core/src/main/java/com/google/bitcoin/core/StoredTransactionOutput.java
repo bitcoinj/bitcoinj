@@ -17,6 +17,7 @@
 package com.google.bitcoin.core;
 
 import java.io.*;
+import java.math.BigInteger;
 
 /**
  * A StoredTransactionOutput message contains the information necessary to check a spending transaction.
@@ -156,7 +157,7 @@ public class StoredTransactionOutput implements Serializable {
     }
 
     public void serializeToStream(OutputStream bos) throws IOException {
-        Utils.uint64ToByteStreamLE(value.toBigInteger(), bos);
+        Utils.uint64ToByteStreamLE(BigInteger.valueOf(value.longValue()), bos);
         
         bos.write(0xFF & scriptBytes.length >> 0);
         bos.write(0xFF & scriptBytes.length >> 8);
