@@ -24,7 +24,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
-import static com.google.bitcoin.core.Coin.toNanoCoins;
+import static com.google.bitcoin.core.Coin.valueOf;
 
 public class FakeTxBuilder {
     /**
@@ -35,7 +35,7 @@ public class FakeTxBuilder {
         Transaction t = new Transaction(params);
         TransactionOutput outputToMe = new TransactionOutput(params, t, nanocoins, to);
         t.addOutput(outputToMe);
-        TransactionOutput change = new TransactionOutput(params, t, toNanoCoins(1, 11), changeOutput);
+        TransactionOutput change = new TransactionOutput(params, t, valueOf(1, 11), changeOutput);
         t.addOutput(change);
         // Make a previous tx simply to send us sufficient coins. This prev tx is not really valid but it doesn't
         // matter for our purposes.
@@ -64,7 +64,7 @@ public class FakeTxBuilder {
         Transaction t = new Transaction(params);
         TransactionOutput outputToMe = new TransactionOutput(params, t, nanocoins, to);
         t.addOutput(outputToMe);
-        TransactionOutput change = new TransactionOutput(params, t, toNanoCoins(1, 11), new ECKey());
+        TransactionOutput change = new TransactionOutput(params, t, valueOf(1, 11), new ECKey());
         t.addOutput(change);
         // Make a previous tx simply to send us sufficient coins. This prev tx is not really valid but it doesn't
         // matter for our purposes.
@@ -87,7 +87,7 @@ public class FakeTxBuilder {
         Transaction t = new Transaction(params);
         TransactionOutput outputToMe = new TransactionOutput(params, t, nanocoins, to);
         t.addOutput(outputToMe);
-        TransactionOutput change = new TransactionOutput(params, t, toNanoCoins(1, 11), new ECKey().toAddress(params));
+        TransactionOutput change = new TransactionOutput(params, t, valueOf(1, 11), new ECKey().toAddress(params));
         t.addOutput(change);
         // Make a feeder tx that sends to the from address specified. This feeder tx is not really valid but it doesn't
         // matter for our purposes.
@@ -132,7 +132,7 @@ public class FakeTxBuilder {
      */
     public static DoubleSpends createFakeDoubleSpendTxns(NetworkParameters params, Address to) {
         DoubleSpends doubleSpends = new DoubleSpends();
-        Coin value = toNanoCoins(1, 0);
+        Coin value = valueOf(1, 0);
         Address someBadGuy = new ECKey().toAddress(params);
 
         doubleSpends.t1 = new Transaction(params);

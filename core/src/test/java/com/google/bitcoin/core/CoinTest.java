@@ -38,14 +38,14 @@ public class CoinTest {
         }
 
         // int version
-        assertEquals(CENT, toNanoCoins(0, 1));
+        assertEquals(CENT, valueOf(0, 1));
 
         try {
-            toNanoCoins(1, -1);
+            valueOf(1, -1);
             fail();
         } catch (IllegalArgumentException e) {}
         try {
-            toNanoCoins(-1, 0);
+            valueOf(-1, 0);
             fail();
         } catch (IllegalArgumentException e) {}
         try {
@@ -56,10 +56,10 @@ public class CoinTest {
 
     @Test
     public void testToFriendlyString() {
-        assertEquals("1.00", toNanoCoins(1, 0).toFriendlyString());
-        assertEquals("1.23", toNanoCoins(1, 23).toFriendlyString());
+        assertEquals("1.00", valueOf(1, 0).toFriendlyString());
+        assertEquals("1.23", valueOf(1, 23).toFriendlyString());
         assertEquals("0.001", Coin.valueOf(COIN.longValue() / 1000).toFriendlyString());
-        assertEquals("-1.23", toNanoCoins(1, 23).negate().toFriendlyString());
+        assertEquals("-1.23", valueOf(1, 23).negate().toFriendlyString());
     }
 
     /**

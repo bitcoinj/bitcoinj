@@ -73,7 +73,7 @@ public class PaymentChannelStateTest extends TestWithWallet {
         serverWallet = new Wallet(params);
         serverKey = serverWallet.freshReceiveKey();
         chain.addWallet(serverWallet);
-        halfCoin = toNanoCoins(0, 50);
+        halfCoin = valueOf(0, 50);
 
         broadcasts = new LinkedBlockingQueue<TxFuturePair>();
         mockBroadcaster = new TransactionBroadcaster() {
