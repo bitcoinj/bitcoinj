@@ -56,8 +56,8 @@ public class DefaultCoinSelector implements CoinSelector {
                     depth2 = conf2.getDepthInBlocks();
                 Coin aValue = a.getValue();
                 Coin bValue = b.getValue();
-                BigInteger aCoinDepth = aValue.toBigInteger().multiply(BigInteger.valueOf(depth1));
-                BigInteger bCoinDepth = bValue.toBigInteger().multiply(BigInteger.valueOf(depth2));
+                BigInteger aCoinDepth = BigInteger.valueOf(aValue.longValue()).multiply(BigInteger.valueOf(depth1));
+                BigInteger bCoinDepth = BigInteger.valueOf(bValue.longValue()).multiply(BigInteger.valueOf(depth2));
                 int c1 = bCoinDepth.compareTo(aCoinDepth);
                 if (c1 != 0) return c1;
                 // The "coin*days" destroyed are equal, sort by value alone to get the lowest transaction size.
