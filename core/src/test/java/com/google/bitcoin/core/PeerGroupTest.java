@@ -179,7 +179,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         expectedPeers.add(peerOf(p2));
         assertEquals(tmp, expectedPeers);
 
-        Coin value = toNanoCoins(1, 0);
+        Coin value = valueOf(1, 0);
         Transaction t1 = FakeTxBuilder.createFakeTx(unitTestParams, value, address);
         InventoryMessage inv = new InventoryMessage(unitTestParams);
         inv.addTransaction(t1);
@@ -302,7 +302,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         InboundMessageQueuer p2 = connectPeer(2);
         InboundMessageQueuer p3 = connectPeer(3);
 
-        Transaction tx = FakeTxBuilder.createFakeTx(params, toNanoCoins(20, 0), address);
+        Transaction tx = FakeTxBuilder.createFakeTx(params, valueOf(20, 0), address);
         InventoryMessage inv = new InventoryMessage(params);
         inv.addTransaction(tx);
         

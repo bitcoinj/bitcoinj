@@ -63,6 +63,18 @@ public final class Coin implements Comparable<Coin>, Serializable {
     }
 
     /**
+     * Convert an amount expressed in the way humans are used to into satoshis.
+     */
+    public static Coin valueOf(final int coins, final int cents) {
+        checkArgument(cents < 100);
+        checkArgument(cents >= 0);
+        checkArgument(coins >= 0);
+        final Coin coin = COIN.multiply(coins).add(CENT.multiply(cents));
+        checkArgument(coin.compareTo(NetworkParameters.MAX_MONEY) <= 0);
+        return coin;
+    }
+
+    /**
      * Parses an amount expressed in the way humans are used to.<p>
      * <p/>
      * This takes string in a format understood by {@link BigDecimal#BigDecimal(String)},
@@ -123,18 +135,6 @@ public final class Coin implements Comparable<Coin>, Serializable {
 
     public long longValue() {
         return this.value;
-    }
-
-    /**
-     * Convert an amount expressed in the way humans are used to into nanocoins.
-     */
-    public static Coin toNanoCoins(int coins, int cents) {
-        checkArgument(cents < 100);
-        checkArgument(cents >= 0);
-        checkArgument(coins >= 0);
-        final Coin coin = COIN.multiply(coins).add(CENT.multiply(cents));
-        checkArgument(coin.compareTo(NetworkParameters.MAX_MONEY) <= 0);
-        return coin;
     }
 
     /**
