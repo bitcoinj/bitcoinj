@@ -29,9 +29,9 @@ import com.google.common.math.LongMath;
  */
 public final class Coin implements Comparable<Coin>, Serializable {
 
-    public static final Coin ZERO = new Coin(BigInteger.ZERO);
-    public static final Coin ONE = new Coin(BigInteger.ONE);
-    public static final Coin TEN = new Coin(BigInteger.TEN);
+    public static final Coin ZERO = Coin.valueOf(0);
+    public static final Coin ONE = Coin.valueOf(1);
+    public static final Coin TEN = Coin.valueOf(10);
     public static final Coin NEGATIVE_ONE = Coin.valueOf(-1);
 
     /**
@@ -41,7 +41,7 @@ public final class Coin implements Comparable<Coin>, Serializable {
      * The term nanocoin is very misleading, though, because there are only 100 million
      * of them in a coin (whereas one would expect 1 billion.
      */
-    public static final Coin COIN = new Coin("100000000", 10);
+    public static final Coin COIN = Coin.valueOf(100000000);
 
     /**
      * How many "nanocoins" there are in 0.01 BitCoins.
@@ -50,24 +50,12 @@ public final class Coin implements Comparable<Coin>, Serializable {
      * The term nanocoin is very misleading, though, because there are only 100 million
      * of them in a coin (whereas one would expect 1 billion).
      */
-    public static final Coin CENT = new Coin("1000000", 10);
+    public static final Coin CENT = Coin.valueOf(1000000);
 
     private final long value;
 
     private Coin(final long satoshis) {
         this.value = satoshis;
-    }
-
-    public Coin(final BigInteger value) {
-        this.value = value.longValue();
-    }
-
-    public Coin(final String value, final int radix) {
-        this(new BigInteger(value, radix));
-    }
-
-    public Coin(final byte[] value) {
-        this(new BigInteger(value));
     }
 
     public static Coin valueOf(final long satoshis) {
@@ -141,7 +129,7 @@ public final class Coin implements Comparable<Coin>, Serializable {
      * @throws ArithmeticException if you try to specify fractional nanocoins, or nanocoins out of range.
      */
     public static Coin toNanoCoins(String coins) {
-        Coin bigint = new Coin(new BigDecimal(coins).movePointRight(8).toBigIntegerExact());
+        Coin bigint = Coin.valueOf(new BigDecimal(coins).movePointRight(8).toBigIntegerExact().longValue());
         if (bigint.signum() < 0)
             throw new ArithmeticException("Negative coins specified");
         if (bigint.compareTo(NetworkParameters.MAX_MONEY) > 0)

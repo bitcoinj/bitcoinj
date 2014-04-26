@@ -744,7 +744,7 @@ public class PostgresFullPrunedBlockStore implements FullPrunedBlockStore {
             }
             // Parse it.
             int height = results.getInt(1);
-            Coin value = new Coin(results.getBytes(2));
+            Coin value = Coin.valueOf(new BigInteger(results.getBytes(2)).longValue());
             // Tell the StoredTransactionOutput that we are a coinbase, as that is encoded in height
             StoredTransactionOutput txout = new StoredTransactionOutput(hash, index, value, height, true, results.getBytes(3));
             return txout;
