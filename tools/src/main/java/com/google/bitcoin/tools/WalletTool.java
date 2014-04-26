@@ -66,7 +66,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
 
-import static com.google.bitcoin.core.Coin.toNanoCoins;
+import static com.google.bitcoin.core.Coin.parseCoin;
 
 /**
  * A command line tool for manipulating wallets and working with Bitcoin.
@@ -128,7 +128,7 @@ public class WalletTool {
 
         public boolean matchBitcoins(Coin comparison) {
             try {
-                Coin units = toNanoCoins(value);
+                Coin units = parseCoin(value);
                 switch (type) {
                     case LT: return comparison.compareTo(units) < 0;
                     case GT: return comparison.compareTo(units) > 0;
@@ -327,7 +327,7 @@ public class WalletTool {
                 } else if (options.has(outputFlag)) {
                     Coin fee = Coin.ZERO;
                     if (options.has("fee")) {
-                        fee = toNanoCoins((String)options.valueOf("fee"));
+                        fee = parseCoin((String)options.valueOf("fee"));
                     }
                     String lockTime = null;
                     if (options.has("locktime")) {
@@ -427,7 +427,7 @@ public class WalletTool {
                 }
                 String destination = parts[0];
                 try {
-                    Coin value = toNanoCoins(parts[1]);
+                    Coin value = parseCoin(parts[1]);
                     if (destination.startsWith("0")) {
                         // Treat as a raw public key.
                         byte[] pubKey = new BigInteger(destination, 16).toByteArray();

@@ -208,7 +208,7 @@ public class BitcoinURI {
             if (FIELD_AMOUNT.equals(nameToken)) {
                 // Decode the amount (contains an optional decimal component to 8dp).
                 try {
-                    Coin amount = Coin.toNanoCoins(valueToken);
+                    Coin amount = Coin.parseCoin(valueToken);
                     putWithValidation(FIELD_AMOUNT, amount);
                 } catch (NumberFormatException e) {
                     throw new OptionalFieldValidationException(String.format("'%s' is not a valid amount", valueToken), e);

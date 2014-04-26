@@ -62,6 +62,23 @@ public final class Coin implements Comparable<Coin>, Serializable {
         return new Coin(satoshis);
     }
 
+    /**
+     * Parses an amount expressed in the way humans are used to.<p>
+     * <p/>
+     * This takes string in a format understood by {@link BigDecimal#BigDecimal(String)},
+     * for example "0", "1", "0.10", "1.23E3", "1234.5E-5".
+     *
+     * @throws ArithmeticException if you try to specify fractional satoshis, or a value out of range.
+     */
+    public static Coin parseCoin(final String str) {
+        Coin coin = Coin.valueOf(new BigDecimal(str).movePointRight(8).toBigIntegerExact().longValue());
+        if (coin.signum() < 0)
+            throw new ArithmeticException("Negative coins specified");
+        if (coin.compareTo(NetworkParameters.MAX_MONEY) > 0)
+            throw new ArithmeticException("Amount larger than the total quantity of Bitcoins possible specified.");
+        return coin;
+    }
+
     public Coin add(final Coin value) {
         return new Coin(LongMath.checkedAdd(this.value, value.value));
     }
@@ -106,23 +123,6 @@ public final class Coin implements Comparable<Coin>, Serializable {
 
     public long longValue() {
         return this.value;
-    }
-
-    /**
-     * Convert an amount expressed in the way humans are used to into nanocoins.<p>
-     * <p/>
-     * This takes string in a format understood by {@link BigDecimal#BigDecimal(String)},
-     * for example "0", "1", "0.10", "1.23E3", "1234.5E-5".
-     *
-     * @throws ArithmeticException if you try to specify fractional nanocoins, or nanocoins out of range.
-     */
-    public static Coin toNanoCoins(String coins) {
-        Coin bigint = Coin.valueOf(new BigDecimal(coins).movePointRight(8).toBigIntegerExact().longValue());
-        if (bigint.signum() < 0)
-            throw new ArithmeticException("Negative coins specified");
-        if (bigint.compareTo(NetworkParameters.MAX_MONEY) > 0)
-            throw new ArithmeticException("Amount larger than the total quantity of Bitcoins possible specified.");
-        return bigint;
     }
 
     /**
