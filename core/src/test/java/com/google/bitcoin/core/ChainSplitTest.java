@@ -140,7 +140,7 @@ public class ChainSplitTest {
         //                  \-> b3 -> b4
         // We lost some coins! b2 is no longer a part of the best chain so our available balance should drop to 50.
         // It's now pending reconfirmation.
-        assertEquals("50.00", wallet.getBalance().toFriendlyString());
+        assertEquals(FIFTY_COINS, wallet.getBalance());
         // ... and back to the first chain.
         Block b5 = b2.createNextBlock(coinsTo);
         Block b6 = b5.createNextBlock(coinsTo);
@@ -172,7 +172,7 @@ public class ChainSplitTest {
         assertTrue(chain.add(b3));
         assertEquals(Coin.ZERO, wallet.getBalance());
         assertTrue(chain.add(b4));
-        assertEquals("50.00", wallet.getBalance().toFriendlyString());
+        assertEquals(FIFTY_COINS, wallet.getBalance());
     }
 
     @Test
@@ -180,7 +180,7 @@ public class ChainSplitTest {
         // Check that we can handle our own spends being rolled back by a fork.
         Block b1 = unitTestParams.getGenesisBlock().createNextBlock(coinsTo);
         chain.add(b1);
-        assertEquals("50.00", wallet.getBalance().toFriendlyString());
+        assertEquals(FIFTY_COINS, wallet.getBalance());
         Address dest = new ECKey().toAddress(unitTestParams);
         Transaction spend = wallet.createSend(dest, valueOf(10, 0));
         wallet.commitTx(spend);
@@ -214,9 +214,9 @@ public class ChainSplitTest {
         // keys are being shared between wallets.
         Block b1 = unitTestParams.getGenesisBlock().createNextBlock(coinsTo);
         chain.add(b1);
-        assertEquals("50.00", wallet.getBalance().toFriendlyString());
+        assertEquals(FIFTY_COINS, wallet.getBalance());
         Address dest = new ECKey().toAddress(unitTestParams);
-        Transaction spend = wallet.createSend(dest, valueOf(50, 0));
+        Transaction spend = wallet.createSend(dest, FIFTY_COINS);
         // We do NOT confirm the spend here. That means it's not considered to be pending because createSend is
         // stateless. For our purposes it is as if some other program with our keys created the tx.
         //
@@ -229,13 +229,13 @@ public class ChainSplitTest {
         b3.solve();
         chain.add(roundtrip(b3));
         // The external spend is now pending.
-        assertEquals(valueOf(0, 0), wallet.getBalance());
+        assertEquals(ZERO, wallet.getBalance());
         Transaction tx = wallet.getTransaction(spend.getHash());
         assertEquals(ConfidenceType.PENDING, tx.getConfidence().getConfidenceType());
         Block b4 = b3.createNextBlock(someOtherGuy);
         chain.add(b4);
         // The external spend is now active.
-        assertEquals(valueOf(0, 0), wallet.getBalance());
+        assertEquals(ZERO, wallet.getBalance());
         assertEquals(ConfidenceType.BUILDING, tx.getConfidence().getConfidenceType());
     }
 
@@ -245,7 +245,7 @@ public class ChainSplitTest {
         Block b1 = unitTestParams.getGenesisBlock().createNextBlock(coinsTo);
         chain.add(b1);
         final Transaction t = b1.transactions.get(1);
-        assertEquals("50.00", wallet.getBalance().toFriendlyString());
+        assertEquals(FIFTY_COINS, wallet.getBalance());
         // genesis -> b1
         //         -> b2
         Block b2 = unitTestParams.getGenesisBlock().createNextBlock(coinsTo);
@@ -255,13 +255,13 @@ public class ChainSplitTest {
         b2.addTransaction(t);
         b2.solve();
         chain.add(roundtrip(b2));
-        assertEquals("50.00", wallet.getBalance().toFriendlyString());
+        assertEquals(FIFTY_COINS, wallet.getBalance());
         assertTrue(wallet.isConsistent());
         assertEquals(2, wallet.getTransaction(t.getHash()).getAppearsInHashes().size());
         //          -> b2 -> b3
         Block b3 = b2.createNextBlock(someOtherGuy);
         chain.add(b3);
-        assertEquals("50.00", wallet.getBalance().toFriendlyString());
+        assertEquals(FIFTY_COINS, wallet.getBalance());
 
     }
 
@@ -285,7 +285,7 @@ public class ChainSplitTest {
         b3.addTransaction(b2.transactions.get(1));
         b3.solve();
         chain.add(roundtrip(b3));
-        assertEquals("50.00", wallet.getBalance().toFriendlyString());
+        assertEquals(FIFTY_COINS, wallet.getBalance());
     }
 
     @Test
@@ -358,7 +358,7 @@ public class ChainSplitTest {
         // t1 is still pending ...
         Block b2 = b1.createNextBlock(new ECKey().toAddress(unitTestParams));
         chain.add(b2);
-        assertEquals(valueOf(0, 0), wallet.getBalance());
+        assertEquals(ZERO, wallet.getBalance());
         assertEquals(valueOf(40, 0), wallet.getBalance(Wallet.BalanceType.ESTIMATED));
 
         // Now we make a double spend become active after a re-org.
@@ -385,7 +385,7 @@ public class ChainSplitTest {
         chain.add(b6);
         // genesis -> b1 -> b2 -> b5 -> b6 [t1 still dead]
         //              \-> b3 [t2 resurrected and now pending] -> b4
-        assertEquals(valueOf(0, 0), wallet.getBalance());
+        assertEquals(ZERO, wallet.getBalance());
         // t2 is pending - resurrected double spends take precedence over our dead transactions (which are in nobodies
         // mempool by this point).
         t1 = checkNotNull(wallet.getTransaction(t1.getHash()));
@@ -618,7 +618,7 @@ public class ChainSplitTest {
             chain.add(firstTip);
         }
         // ... and spend.
-        Transaction fodder = wallet.createSend(new ECKey().toAddress(unitTestParams), valueOf(50, 0));
+        Transaction fodder = wallet.createSend(new ECKey().toAddress(unitTestParams), FIFTY_COINS);
         wallet.commitTx(fodder);
         final AtomicBoolean fodderIsDead = new AtomicBoolean(false);
         fodder.getConfidence().addEventListener(new TransactionConfidence.Listener() {

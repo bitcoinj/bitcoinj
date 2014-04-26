@@ -206,7 +206,7 @@ public class TransactionOutput extends ChildMessage implements Serializable {
         // size of data needed to satisfy all different script types, or just hard code 33 below.
         final long size = this.bitcoinSerialize().length + 148;
         Coin[] nonDustAndRemainder = feePerKbRequired.multiply(size).divideAndRemainder(1000);
-        return nonDustAndRemainder[1].equals(Coin.ZERO) ? nonDustAndRemainder[0] : nonDustAndRemainder[0].add(Coin.ONE);
+        return nonDustAndRemainder[1].equals(Coin.ZERO) ? nonDustAndRemainder[0] : nonDustAndRemainder[0].add(Coin.SATOSHI);
     }
 
     /**

@@ -50,7 +50,7 @@ public class PaymentProtocolTest {
 
     // static test data
     private static final NetworkParameters NETWORK_PARAMS = UnitTestParams.get();
-    private static final Coin AMOUNT = Coin.ONE;
+    private static final Coin AMOUNT = Coin.SATOSHI;
     private static final Address TO_ADDRESS = new ECKey().toAddress(NETWORK_PARAMS);
     private static final String MEMO = "memo";
     private static final String PAYMENT_URL = "https://example.com";
@@ -128,7 +128,7 @@ public class PaymentProtocolTest {
         // Create
         List<Transaction> transactions = new LinkedList<Transaction>();
         transactions.add(FakeTxBuilder.createFakeTx(NETWORK_PARAMS, AMOUNT, TO_ADDRESS));
-        Coin refundAmount = Coin.ONE;
+        Coin refundAmount = Coin.SATOSHI;
         Address refundAddress = new ECKey().toAddress(NETWORK_PARAMS);
         Payment payment = PaymentProtocol.createPaymentMessage(transactions, refundAmount, refundAddress, MEMO,
                 MERCHANT_DATA);
