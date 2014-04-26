@@ -463,7 +463,7 @@ public class ChannelConnectionTest extends TestWithWallet {
         assertEquals(CloseReason.NO_ACCEPTABLE_VERSION, pair.clientRecorder.q.take());
         // Double-check that we cant do anything that requires an open channel
         try {
-            client.incrementPayment(Coin.ONE);
+            client.incrementPayment(Coin.SATOSHI);
             fail();
         } catch (IllegalStateException e) { }
     }
@@ -489,7 +489,7 @@ public class ChannelConnectionTest extends TestWithWallet {
         assertEquals(CloseReason.TIME_WINDOW_TOO_LARGE, pair.clientRecorder.q.take());
         // Double-check that we cant do anything that requires an open channel
         try {
-            client.incrementPayment(Coin.ONE);
+            client.incrementPayment(Coin.SATOSHI);
             fail();
         } catch (IllegalStateException e) { }
     }
@@ -505,7 +505,7 @@ public class ChannelConnectionTest extends TestWithWallet {
         client.receiveMessage(pair.serverRecorder.checkNextMsg(MessageType.SERVER_VERSION));
         client.receiveMessage(Protos.TwoWayChannelMessage.newBuilder()
                 .setInitiate(Protos.Initiate.newBuilder().setExpireTimeSecs(Utils.currentTimeSeconds())
-                        .setMinAcceptedChannelSize(COIN.add(ONE).longValue())
+                        .setMinAcceptedChannelSize(COIN.add(SATOSHI).longValue())
                         .setMultisigKey(ByteString.copyFrom(new ECKey().getPubKey()))
                         .setMinPayment(Transaction.MIN_NONDUST_OUTPUT.longValue()))
                 .setType(MessageType.INITIATE).build());
@@ -513,7 +513,7 @@ public class ChannelConnectionTest extends TestWithWallet {
         assertEquals(CloseReason.SERVER_REQUESTED_TOO_MUCH_VALUE, pair.clientRecorder.q.take());
         // Double-check that we cant do anything that requires an open channel
         try {
-            client.incrementPayment(Coin.ONE);
+            client.incrementPayment(Coin.SATOSHI);
             fail();
         } catch (IllegalStateException e) { }
 
@@ -531,7 +531,7 @@ public class ChannelConnectionTest extends TestWithWallet {
         client.receiveMessage(pair.serverRecorder.checkNextMsg(MessageType.SERVER_VERSION));
         client.receiveMessage(Protos.TwoWayChannelMessage.newBuilder()
                 .setInitiate(Protos.Initiate.newBuilder().setExpireTimeSecs(Utils.currentTimeSeconds())
-                        .setMinAcceptedChannelSize(COIN.add(ONE).longValue())
+                        .setMinAcceptedChannelSize(COIN.add(SATOSHI).longValue())
                         .setMultisigKey(ByteString.copyFrom(new ECKey().getPubKey()))
                         .setMinPayment(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE.longValue()))
                 .setType(MessageType.INITIATE).build());

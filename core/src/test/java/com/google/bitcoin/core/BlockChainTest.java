@@ -33,7 +33,7 @@ import java.math.BigInteger;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-import static com.google.bitcoin.core.Coin.valueOf;
+import static com.google.bitcoin.core.Coin.*;
 import static com.google.bitcoin.testing.FakeTxBuilder.createFakeBlock;
 import static com.google.bitcoin.testing.FakeTxBuilder.createFakeTx;
 import static org.junit.Assert.*;
@@ -124,7 +124,7 @@ public class BlockChainTest {
     public void receiveCoins() throws Exception {
         // Quick check that we can actually receive coins.
         Transaction tx1 = createFakeTx(unitTestParams,
-                                       valueOf(1, 0),
+                                       COIN,
                                        wallet.currentReceiveKey().toAddress(unitTestParams));
         Block b1 = createFakeBlock(blockStore, tx1).block;
         chain.add(b1);
@@ -136,7 +136,7 @@ public class BlockChainTest {
         // Test that merkle root verification takes place when a relevant transaction is present and doesn't when
         // there isn't any such tx present (as an optimization).
         Transaction tx1 = createFakeTx(unitTestParams,
-                                       valueOf(1, 0),
+                                       COIN,
                                        wallet.currentReceiveKey().toAddress(unitTestParams));
         Block b1 = createFakeBlock(blockStore, tx1).block;
         chain.add(b1);
@@ -151,7 +151,7 @@ public class BlockChainTest {
             b1.setMerkleRoot(hash);
         }
         // Now add a second block with no relevant transactions and then break it.
-        Transaction tx2 = createFakeTx(unitTestParams, valueOf(1, 0),
+        Transaction tx2 = createFakeTx(unitTestParams, COIN,
                                        new ECKey().toAddress(unitTestParams));
         Block b2 = createFakeBlock(blockStore, tx2).block;
         b2.getMerkleRoot();
@@ -271,7 +271,7 @@ public class BlockChainTest {
         ECKey key = wallet.freshReceiveKey();
         Address addr = key.toAddress(unitTestParams);
         // Create a tx that gives us some coins, and another that spends it to someone else in the same block.
-        Transaction t1 = FakeTxBuilder.createFakeTx(unitTestParams, valueOf(1, 0), addr);
+        Transaction t1 = FakeTxBuilder.createFakeTx(unitTestParams, COIN, addr);
         Transaction t2 = new Transaction(unitTestParams);
         t2.addInput(t1.getOutputs().get(0));
         t2.addOutput(valueOf(2, 0), somebodyElse);
@@ -302,7 +302,7 @@ public class BlockChainTest {
 
         // The coinbase tx is not yet available to spend.
         assertEquals(Coin.ZERO, wallet.getBalance());
-        assertEquals(wallet.getBalance(BalanceType.ESTIMATED), valueOf(50, 0));
+        assertEquals(wallet.getBalance(BalanceType.ESTIMATED), FIFTY_COINS);
         assertTrue(!coinbaseTransaction.isMature());
 
         // Attempt to spend the coinbase - this should fail as the coinbase is not mature yet.
@@ -315,7 +315,7 @@ public class BlockChainTest {
         // Check that the coinbase is unavailable to spend for the next spendableCoinbaseDepth - 2 blocks.
         for (int i = 0; i < unitTestParams.getSpendableCoinbaseDepth() - 2; i++) {
             // Non relevant tx - just for fake block creation.
-            Transaction tx2 = createFakeTx(unitTestParams, valueOf(1, 0),
+            Transaction tx2 = createFakeTx(unitTestParams, COIN,
                 new ECKey().toAddress(unitTestParams));
 
             Block b2 = createFakeBlock(blockStore, tx2).block;
@@ -323,7 +323,7 @@ public class BlockChainTest {
 
             // Wallet still does not have the coinbase transaction available for spend.
             assertEquals(Coin.ZERO, wallet.getBalance());
-            assertEquals(wallet.getBalance(BalanceType.ESTIMATED), valueOf(50, 0));
+            assertEquals(wallet.getBalance(BalanceType.ESTIMATED), FIFTY_COINS);
 
             // The coinbase transaction is still not mature.
             assertTrue(!coinbaseTransaction.isMature());
@@ -337,13 +337,13 @@ public class BlockChainTest {
         }
 
         // Give it one more block - should now be able to spend coinbase transaction. Non relevant tx.
-        Transaction tx3 = createFakeTx(unitTestParams, valueOf(1, 0), new ECKey().toAddress(unitTestParams));
+        Transaction tx3 = createFakeTx(unitTestParams, COIN, new ECKey().toAddress(unitTestParams));
         Block b3 = createFakeBlock(blockStore, tx3).block;
         chain.add(b3);
 
         // Wallet now has the coinbase transaction available for spend.
-        assertEquals(wallet.getBalance(), valueOf(50, 0));
-        assertEquals(wallet.getBalance(BalanceType.ESTIMATED), valueOf(50, 0));
+        assertEquals(wallet.getBalance(), FIFTY_COINS);
+        assertEquals(wallet.getBalance(BalanceType.ESTIMATED), FIFTY_COINS);
         assertTrue(coinbaseTransaction.isMature());
 
         // Create a spend with the coinbase BTC to the address in the second wallet - this should now succeed.
@@ -352,14 +352,14 @@ public class BlockChainTest {
 
         // Commit the coinbaseSpend to the first wallet and check the balances decrement.
         wallet.commitTx(coinbaseSend2);
-        assertEquals(wallet.getBalance(BalanceType.ESTIMATED), valueOf(1, 0));
+        assertEquals(wallet.getBalance(BalanceType.ESTIMATED), COIN);
         // Available balance is zero as change has not been received from a block yet.
-        assertEquals(wallet.getBalance(BalanceType.AVAILABLE), valueOf(0, 0));
+        assertEquals(wallet.getBalance(BalanceType.AVAILABLE), ZERO);
 
         // Give it one more block - change from coinbaseSpend should now be available in the first wallet.
         Block b4 = createFakeBlock(blockStore, coinbaseSend2).block;
         chain.add(b4);
-        assertEquals(wallet.getBalance(BalanceType.AVAILABLE), valueOf(1, 0));
+        assertEquals(wallet.getBalance(BalanceType.AVAILABLE), COIN);
 
         // Check the balances in the second wallet.
         assertEquals(wallet2.getBalance(BalanceType.ESTIMATED), valueOf(49, 0));

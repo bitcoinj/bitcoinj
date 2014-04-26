@@ -33,7 +33,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Random;
 
-import static com.google.bitcoin.core.Coin.valueOf;
+import static com.google.bitcoin.core.Coin.*;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.junit.Assert.*;
 
@@ -108,11 +108,11 @@ public class TransactionBroadcastTest extends TestWithPeerGroup {
         Block b1 = FakeTxBuilder.makeSolvedTestBlock(blockStore, address);
         inbound(p1, b1);
         assertNull(outbound(p1));
-        assertEquals(valueOf(50, 0), wallet.getBalance());
+        assertEquals(FIFTY_COINS, wallet.getBalance());
 
         // Now create a spend, and expect the announcement on p1.
         Address dest = new ECKey().toAddress(params);
-        Wallet.SendResult sendResult = wallet.sendCoins(peerGroup, dest, valueOf(1, 0));
+        Wallet.SendResult sendResult = wallet.sendCoins(peerGroup, dest, COIN);
         assertFalse(sendResult.broadcastComplete.isDone());
         Transaction t1;
         {
@@ -148,7 +148,7 @@ public class TransactionBroadcastTest extends TestWithPeerGroup {
         inbound(p1, b1);
         pingAndWait(p1);
         assertNull(outbound(p1));
-        assertEquals(valueOf(50, 0), wallet.getBalance());
+        assertEquals(FIFTY_COINS, wallet.getBalance());
 
         // Check that the wallet informs us of changes in confidence as the transaction ripples across the network.
         final Transaction[] transactions = new Transaction[1];
@@ -161,7 +161,7 @@ public class TransactionBroadcastTest extends TestWithPeerGroup {
 
         // Now create a spend, and expect the announcement on p1.
         Address dest = new ECKey().toAddress(params);
-        Wallet.SendResult sendResult = wallet.sendCoins(peerGroup, dest, valueOf(1, 0));
+        Wallet.SendResult sendResult = wallet.sendCoins(peerGroup, dest, COIN);
         assertNotNull(sendResult.tx);
         Threading.waitForUserCode();
         assertFalse(sendResult.broadcastComplete.isDone());

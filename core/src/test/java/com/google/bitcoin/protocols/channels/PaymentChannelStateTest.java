@@ -409,7 +409,7 @@ public class PaymentChannelStateTest extends TestWithWallet {
         clientState.fakeSave();
         assertEquals(PaymentChannelClientState.State.PROVIDE_MULTISIG_CONTRACT_TO_SERVER, clientState.getState());
 
-        try { clientState.incrementPaymentBy(Coin.ONE); fail(); } catch (IllegalStateException e) {}
+        try { clientState.incrementPaymentBy(Coin.SATOSHI); fail(); } catch (IllegalStateException e) {}
 
         byte[] multisigContractSerialized = clientState.getMultisigContract().bitcoinSerialize();
 
@@ -511,12 +511,12 @@ public class PaymentChannelStateTest extends TestWithWallet {
         assertEquals(serverState.getBestValueToMe(), totalPayment);
 
         try {
-            clientState.incrementPaymentBy(Coin.ONE.negate());
+            clientState.incrementPaymentBy(Coin.SATOSHI.negate());
             fail();
         } catch (ValueOutOfRangeException e) {}
 
         try {
-            clientState.incrementPaymentBy(halfCoin.subtract(size).add(Coin.ONE));
+            clientState.incrementPaymentBy(halfCoin.subtract(size).add(Coin.SATOSHI));
             fail();
         } catch (ValueOutOfRangeException e) {}
     }
@@ -538,8 +538,8 @@ public class PaymentChannelStateTest extends TestWithWallet {
         serverState = new PaymentChannelServerState(mockBroadcaster, serverWallet, serverKey, EXPIRE_TIME);
         assertEquals(PaymentChannelServerState.State.WAITING_FOR_REFUND_TRANSACTION, serverState.getState());
 
-        // Clearly ONE is far too small to be useful
-        clientState = new PaymentChannelClientState(wallet, myKey, ECKey.fromPublicOnly(serverKey.getPubKey()), Coin.ONE, EXPIRE_TIME);
+        // Clearly SATOSHI is far too small to be useful
+        clientState = new PaymentChannelClientState(wallet, myKey, ECKey.fromPublicOnly(serverKey.getPubKey()), Coin.SATOSHI, EXPIRE_TIME);
         assertEquals(PaymentChannelClientState.State.NEW, clientState.getState());
         try {
             clientState.initiate();
@@ -547,7 +547,7 @@ public class PaymentChannelStateTest extends TestWithWallet {
         } catch (ValueOutOfRangeException e) {}
 
         clientState = new PaymentChannelClientState(wallet, myKey, ECKey.fromPublicOnly(serverKey.getPubKey()),
-                                                    Transaction.MIN_NONDUST_OUTPUT.subtract(Coin.ONE).add(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE),
+                                                    Transaction.MIN_NONDUST_OUTPUT.subtract(Coin.SATOSHI).add(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE),
                 EXPIRE_TIME);
         assertEquals(PaymentChannelClientState.State.NEW, clientState.getState());
         try {
@@ -596,13 +596,13 @@ public class PaymentChannelStateTest extends TestWithWallet {
         Coin totalPayment = Coin.ZERO;
 
         // We can send as little as we want - its up to the server to get the fees right
-        byte[] signature = clientState.incrementPaymentBy(Coin.ONE).signature.encodeToBitcoin();
-        totalPayment = totalPayment.add(Coin.ONE);
+        byte[] signature = clientState.incrementPaymentBy(Coin.SATOSHI).signature.encodeToBitcoin();
+        totalPayment = totalPayment.add(Coin.SATOSHI);
         serverState.incrementPayment(CENT.subtract(totalPayment), signature);
 
         // We can't refund more than the contract is worth...
         try {
-            serverState.incrementPayment(CENT.add(ONE), signature);
+            serverState.incrementPayment(CENT.add(SATOSHI), signature);
             fail();
         } catch (ValueOutOfRangeException e) {}
 
@@ -610,12 +610,12 @@ public class PaymentChannelStateTest extends TestWithWallet {
         // will correct it for us to be larger than the requested amount, to make the change output zero.
         PaymentChannelClientState.IncrementedPayment payment =
                 clientState.incrementPaymentBy(CENT.subtract(Transaction.MIN_NONDUST_OUTPUT));
-        assertEquals(CENT.subtract(ONE), payment.amount);
+        assertEquals(CENT.subtract(SATOSHI), payment.amount);
         totalPayment = totalPayment.add(payment.amount);
 
         // The server also won't accept it if we do that.
         try {
-            serverState.incrementPayment(Transaction.MIN_NONDUST_OUTPUT.subtract(Coin.ONE), signature);
+            serverState.incrementPayment(Transaction.MIN_NONDUST_OUTPUT.subtract(Coin.SATOSHI), signature);
             fail();
         } catch (ValueOutOfRangeException e) {}
 
@@ -679,9 +679,9 @@ public class PaymentChannelStateTest extends TestWithWallet {
         assertEquals(PaymentChannelServerState.State.READY, serverState.getState());
 
         // Both client and server are now in the ready state, split the channel in half
-        byte[] signature = clientState.incrementPaymentBy(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE.subtract(Coin.ONE))
+        byte[] signature = clientState.incrementPaymentBy(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE.subtract(Coin.SATOSHI))
                 .signature.encodeToBitcoin();
-        Coin totalRefund = CENT.subtract(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE.subtract(ONE));
+        Coin totalRefund = CENT.subtract(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE.subtract(SATOSHI));
         serverState.incrementPayment(totalRefund, signature);
 
         // We need to pay MIN_TX_FEE, but we only have MIN_NONDUST_OUTPUT
@@ -704,8 +704,8 @@ public class PaymentChannelStateTest extends TestWithWallet {
             assertTrue(e.getMessage().contains("more in fees"));
         }
 
-        signature = clientState.incrementPaymentBy(Coin.valueOf(2)).signature.encodeToBitcoin();
-        totalRefund = totalRefund.subtract(Coin.valueOf(2));
+        signature = clientState.incrementPaymentBy(SATOSHI.multiply(2)).signature.encodeToBitcoin();
+        totalRefund = totalRefund.subtract(SATOSHI.multiply(2));
         serverState.incrementPayment(totalRefund, signature);
 
         // And settle the channel.

@@ -24,7 +24,7 @@ import org.junit.Test;
 
 import java.net.InetAddress;
 
-import static com.google.bitcoin.core.Coin.valueOf;
+import static com.google.bitcoin.core.Coin.COIN;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -36,7 +36,7 @@ public class MemoryPoolTest {
     @Before
     public void setup() throws Exception {
         BriefLogFormatter.init();
-        tx1 = FakeTxBuilder.createFakeTx(params, valueOf(1, 0), new ECKey().toAddress(params));
+        tx1 = FakeTxBuilder.createFakeTx(params, COIN, new ECKey().toAddress(params));
         tx2 = new Transaction(params, tx1.bitcoinSerialize());
 
         address1 = new PeerAddress(InetAddress.getByAddress(new byte[] { 127, 0, 0, 1 }));

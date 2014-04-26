@@ -3625,7 +3625,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
                         // This solution definitely fits in category 3
                         isCategory3 = true;
                         additionalValueForNextCategory = Transaction.REFERENCE_DEFAULT_MIN_TX_FEE.add(
-                                                         Transaction.MIN_NONDUST_OUTPUT.add(Coin.ONE));
+                                                         Transaction.MIN_NONDUST_OUTPUT.add(Coin.SATOSHI));
                     } else {
                         size += changeOutput.bitcoinSerialize().length + VarInt.sizeOf(req.tx.getOutputs().size()) - VarInt.sizeOf(req.tx.getOutputs().size() - 1);
                         // This solution is either category 1 or 2
@@ -3636,7 +3636,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
                     if (eitherCategory2Or3) {
                         // This solution definitely fits in category 3 (we threw away change because it was smaller than MIN_TX_FEE)
                         isCategory3 = true;
-                        additionalValueForNextCategory = Transaction.REFERENCE_DEFAULT_MIN_TX_FEE.add(Coin.ONE);
+                        additionalValueForNextCategory = Transaction.REFERENCE_DEFAULT_MIN_TX_FEE.add(Coin.SATOSHI);
                     }
                 }
 

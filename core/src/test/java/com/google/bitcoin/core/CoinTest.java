@@ -56,7 +56,7 @@ public class CoinTest {
 
     @Test
     public void testToFriendlyString() {
-        assertEquals("1.00", valueOf(1, 0).toFriendlyString());
+        assertEquals("1.00", COIN.toFriendlyString());
         assertEquals("1.23", valueOf(1, 23).toFriendlyString());
         assertEquals("0.001", Coin.valueOf(COIN.longValue() / 1000).toFriendlyString());
         assertEquals("-1.23", valueOf(1, 23).negate().toFriendlyString());

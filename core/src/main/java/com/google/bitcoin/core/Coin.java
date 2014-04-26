@@ -29,28 +29,38 @@ import com.google.common.math.LongMath;
  */
 public final class Coin implements Comparable<Coin>, Serializable {
 
+    /**
+     * Zero Bitcoins.
+     */
     public static final Coin ZERO = Coin.valueOf(0);
-    public static final Coin ONE = Coin.valueOf(1);
-    public static final Coin TEN = Coin.valueOf(10);
-    public static final Coin NEGATIVE_ONE = Coin.valueOf(-1);
 
     /**
-     * How many "nanocoins" there are in a Bitcoin.
-     * <p/>
-     * A nanocoin is the smallest unit that can be transferred using Bitcoin.
-     * The term nanocoin is very misleading, though, because there are only 100 million
-     * of them in a coin (whereas one would expect 1 billion.
+     * One Bitcoin.
      */
     public static final Coin COIN = Coin.valueOf(100000000);
 
     /**
-     * How many "nanocoins" there are in 0.01 BitCoins.
-     * <p/>
-     * A nanocoin is the smallest unit that can be transferred using Bitcoin.
-     * The term nanocoin is very misleading, though, because there are only 100 million
-     * of them in a coin (whereas one would expect 1 billion).
+     * 0.01 Bitcoins. This unit is not really used much.
      */
-    public static final Coin CENT = Coin.valueOf(1000000);
+    public static final Coin CENT = COIN.divide(100);
+
+    /**
+     * 0.001 Bitcoins, also known as 1 mBTC.
+     */
+    public static final Coin MILLICOIN = COIN.divide(1000);
+
+    /**
+     * 0.000001 Bitcoins, also known as 1 µBTC or 1 uBTC.
+     */
+    public static final Coin NANOCOIN = MILLICOIN.divide(1000);
+
+    /**
+     * A satoshi is the smallest unit that can be transferred. 100 million of them fit into a Bitcoin.
+     */
+    public static final Coin SATOSHI = Coin.valueOf(1);
+
+    public static final Coin FIFTY_COINS = COIN.multiply(50);
+    public static final Coin NEGATIVE_ONE = Coin.valueOf(-1);
 
     private final long value;
 

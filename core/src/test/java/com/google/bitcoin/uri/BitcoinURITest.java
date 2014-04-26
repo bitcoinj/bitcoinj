@@ -362,7 +362,7 @@ public class BitcoinURITest {
         String str = "bitcoin://1KzTSfqjF2iKCduwz59nv2uqh1W2JsTxZH?amount=0.01000000";
         BitcoinURI uri = new BitcoinURI(str);
         assertEquals("1KzTSfqjF2iKCduwz59nv2uqh1W2JsTxZH", uri.getAddress().toString());
-        assertEquals(valueOf(0, 1), uri.getAmount());
+        assertEquals(CENT, uri.getAmount());
     }
 
     @Test(expected = BitcoinURIParseException.class)

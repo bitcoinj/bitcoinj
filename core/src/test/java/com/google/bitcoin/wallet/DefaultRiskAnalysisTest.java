@@ -135,7 +135,7 @@ public class DefaultRiskAnalysisTest {
 
         Transaction dustTx = new Transaction(params);
         dustTx.addInput(params.getGenesisBlock().getTransactions().get(0).getOutput(0));
-        dustTx.addOutput(Coin.ONE, key1); // 1 Satoshi
+        dustTx.addOutput(Coin.SATOSHI, key1); // 1 Satoshi
         assertEquals(RiskAnalysis.Result.NON_STANDARD, DefaultRiskAnalysis.FACTORY.create(wallet, dustTx, NO_DEPS).analyze());
 
         Transaction edgeCaseTx = new Transaction(params);

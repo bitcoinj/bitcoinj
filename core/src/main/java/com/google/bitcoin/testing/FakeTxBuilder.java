@@ -24,7 +24,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
-import static com.google.bitcoin.core.Coin.valueOf;
+import static com.google.bitcoin.core.Coin.*;
 
 public class FakeTxBuilder {
     /**
@@ -132,7 +132,7 @@ public class FakeTxBuilder {
      */
     public static DoubleSpends createFakeDoubleSpendTxns(NetworkParameters params, Address to) {
         DoubleSpends doubleSpends = new DoubleSpends();
-        Coin value = valueOf(1, 0);
+        Coin value = COIN;
         Address someBadGuy = new ECKey().toAddress(params);
 
         doubleSpends.t1 = new Transaction(params);

@@ -28,7 +28,7 @@ import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
-import static com.google.bitcoin.core.Coin.valueOf;
+import static com.google.bitcoin.core.Coin.*;
 import static com.google.bitcoin.testing.FakeTxBuilder.createFakeBlock;
 import static com.google.bitcoin.testing.FakeTxBuilder.createFakeTx;
 import static org.junit.Assert.*;
@@ -92,12 +92,12 @@ public class LazyParseByteCacheTest {
         
         //add a second input so can test granularity of byte cache.
         Transaction prevTx = new Transaction(unitTestParams);
-        TransactionOutput prevOut = new TransactionOutput(unitTestParams, prevTx, valueOf(1, 0), wallet.currentReceiveKey().toAddress(unitTestParams));
+        TransactionOutput prevOut = new TransactionOutput(unitTestParams, prevTx, COIN, wallet.currentReceiveKey().toAddress(unitTestParams));
         prevTx.addOutput(prevOut);
         // Connect it.
         tx1.addInput(prevOut);
         
-        Transaction tx2 = createFakeTx(unitTestParams, valueOf(1, 0),
+        Transaction tx2 = createFakeTx(unitTestParams, COIN,
                 new ECKey().toAddress(unitTestParams));
 
         Block b1 = createFakeBlock(blockStore, tx1, tx2).block;
