@@ -19,6 +19,8 @@ package com.google.bitcoin.core;
 import java.io.Serializable;
 import java.math.BigInteger;
 
+import com.google.common.math.LongMath;
+
 /**
  * Represents a monetary Bitcoin value. This class is immutable.
  */
@@ -28,10 +30,14 @@ public final class Coin implements Comparable<Coin>, Serializable {
     public static final Coin ONE = new Coin(BigInteger.ONE);
     public static final Coin TEN = new Coin(BigInteger.TEN);
 
-    private final BigInteger value;
+    private final long value;
+
+    private Coin(final long satoshis) {
+        this.value = satoshis;
+    }
 
     public Coin(final BigInteger value) {
-        this.value = value;
+        this.value = value.longValue();
     }
 
     public Coin(final String value, final int radix) {
@@ -42,70 +48,71 @@ public final class Coin implements Comparable<Coin>, Serializable {
         this(new BigInteger(value));
     }
 
-    public static Coin valueOf(final long value) {
-        return new Coin(BigInteger.valueOf(value));
+    public static Coin valueOf(final long satoshis) {
+        return new Coin(satoshis);
     }
 
     public Coin add(final Coin value) {
-        return new Coin(this.value.add(value.value));
+        return new Coin(LongMath.checkedAdd(this.value, value.value));
     }
 
     public Coin subtract(final Coin value) {
-        return new Coin(this.value.subtract(value.value));
+        return new Coin(LongMath.checkedSubtract(this.value, value.value));
     }
 
     public Coin multiply(final Coin value) {
-        return new Coin(this.value.multiply(value.value));
+        return new Coin(LongMath.checkedMultiply(this.value, value.value));
     }
 
     public Coin multiply(final long value) {
-        return multiply(Coin.valueOf(value));
+        return new Coin(LongMath.checkedMultiply(this.value, value));
     }
 
     public Coin divide(final Coin value) {
-        return new Coin(this.value.divide(value.value));
+        return new Coin(this.value / value.value);
     }
 
     public Coin[] divideAndRemainder(final Coin value) {
-        final BigInteger[] result = this.value.divideAndRemainder(value.value);
-        return new Coin[] { new Coin(result[0]), new Coin(result[1]) };
+        return new Coin[] { new Coin(this.value / value.value), new Coin(this.value % value.value) };
     }
 
     public Coin shiftLeft(final int n) {
-        return new Coin(this.value.shiftLeft(n));
+        return new Coin(this.value << n);
     }
 
     public Coin shiftRight(final int n) {
-        return new Coin(this.value.shiftRight(n));
+        return new Coin(this.value >> n);
     }
 
     public int signum() {
-        return this.value.signum();
+        if (this.value == 0)
+            return 0;
+        return this.value < 0 ? -1 : 1;
     }
 
     public Coin negate() {
-        return new Coin(this.value.negate());
+        return new Coin(-this.value);
     }
 
     public byte[] toByteArray() {
-        return this.value.toByteArray();
+        return BigInteger.valueOf(this.value).toByteArray();
     }
 
     public long longValue() {
-        return this.value.longValue();
+        return this.value;
     }
 
     public double doubleValue() {
-        return this.value.doubleValue();
+        return this.value;
     }
 
     public BigInteger toBigInteger() {
-        return value;
+        return BigInteger.valueOf(value);
     }
 
     @Override
     public String toString() {
-        return value.toString();
+        return Long.toString(value);
     }
 
     @Override
@@ -115,18 +122,20 @@ public final class Coin implements Comparable<Coin>, Serializable {
         if (o == null || o.getClass() != getClass())
             return false;
         final Coin other = (Coin) o;
-        if (!this.value.equals(other.value))
+        if (this.value != other.value)
             return false;
         return true;
     }
 
     @Override
     public int hashCode() {
-        return this.value.hashCode();
+        return (int) this.value;
     }
 
     @Override
     public int compareTo(final Coin other) {
-        return this.value.compareTo(other.value);
+        if (this.value == other.value)
+            return 0;
+        return this.value > other.value ? 1 : -1;
     }
 }
