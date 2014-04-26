@@ -26,13 +26,13 @@ import org.junit.Test;
 public class CoinTest {
 
     @Test
-    public void testToNanoCoins() {
+    public void testParseCoin() {
         // String version
-        assertEquals(CENT, toNanoCoins("0.01"));
-        assertEquals(CENT, toNanoCoins("1E-2"));
-        assertEquals(COIN.add(CENT), toNanoCoins("1.01"));
+        assertEquals(CENT, parseCoin("0.01"));
+        assertEquals(CENT, parseCoin("1E-2"));
+        assertEquals(COIN.add(CENT), parseCoin("1.01"));
         try {
-            toNanoCoins("2E-20");
+            parseCoin("2E-20");
             org.junit.Assert.fail("should not have accepted fractional nanocoins");
         } catch (ArithmeticException e) {
         }
@@ -49,7 +49,7 @@ public class CoinTest {
             fail();
         } catch (IllegalArgumentException e) {}
         try {
-            toNanoCoins("-1");
+            parseCoin("-1");
             fail();
         } catch (ArithmeticException e) {}
     }
@@ -68,29 +68,29 @@ public class CoinTest {
     @Test
     public void testToPlainString() {
         assertEquals("0.0015", Coin.valueOf(150000).toPlainString());
-        assertEquals("1.23", toNanoCoins("1.23").toPlainString());
+        assertEquals("1.23", parseCoin("1.23").toPlainString());
 
-        assertEquals("0.1", toNanoCoins("0.1").toPlainString());
-        assertEquals("1.1", toNanoCoins("1.1").toPlainString());
-        assertEquals("21.12", toNanoCoins("21.12").toPlainString());
-        assertEquals("321.123", toNanoCoins("321.123").toPlainString());
-        assertEquals("4321.1234", toNanoCoins("4321.1234").toPlainString());
-        assertEquals("54321.12345", toNanoCoins("54321.12345").toPlainString());
-        assertEquals("654321.123456", toNanoCoins("654321.123456").toPlainString());
-        assertEquals("7654321.1234567", toNanoCoins("7654321.1234567").toPlainString());
+        assertEquals("0.1", parseCoin("0.1").toPlainString());
+        assertEquals("1.1", parseCoin("1.1").toPlainString());
+        assertEquals("21.12", parseCoin("21.12").toPlainString());
+        assertEquals("321.123", parseCoin("321.123").toPlainString());
+        assertEquals("4321.1234", parseCoin("4321.1234").toPlainString());
+        assertEquals("54321.12345", parseCoin("54321.12345").toPlainString());
+        assertEquals("654321.123456", parseCoin("654321.123456").toPlainString());
+        assertEquals("7654321.1234567", parseCoin("7654321.1234567").toPlainString());
         try {
-            assertEquals("87654321.12345678", toNanoCoins("87654321.12345678").toPlainString());
+            assertEquals("87654321.12345678", parseCoin("87654321.12345678").toPlainString());
             Assert.fail();  // More than MAX_MONEY
         } catch (Exception e) {}
 
         // check there are no trailing zeros
-        assertEquals("1", toNanoCoins("1.0").toPlainString());
-        assertEquals("2", toNanoCoins("2.00").toPlainString());
-        assertEquals("3", toNanoCoins("3.000").toPlainString());
-        assertEquals("4", toNanoCoins("4.0000").toPlainString());
-        assertEquals("5", toNanoCoins("5.00000").toPlainString());
-        assertEquals("6", toNanoCoins("6.000000").toPlainString());
-        assertEquals("7", toNanoCoins("7.0000000").toPlainString());
-        assertEquals("8", toNanoCoins("8.00000000").toPlainString());
+        assertEquals("1", parseCoin("1.0").toPlainString());
+        assertEquals("2", parseCoin("2.00").toPlainString());
+        assertEquals("3", parseCoin("3.000").toPlainString());
+        assertEquals("4", parseCoin("4.0000").toPlainString());
+        assertEquals("5", parseCoin("5.00000").toPlainString());
+        assertEquals("6", parseCoin("6.000000").toPlainString());
+        assertEquals("7", parseCoin("7.0000000").toPlainString());
+        assertEquals("8", parseCoin("8.00000000").toPlainString());
     }
 }
