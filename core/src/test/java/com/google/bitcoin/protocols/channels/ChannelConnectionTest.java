@@ -519,11 +519,11 @@ public class ChannelConnectionTest extends TestWithWallet {
 
         // Now check that if the server has a lower min size than what we are willing to spend, we do actually open
         // a channel of that size.
-        sendMoneyToWallet(COIN.multiply(TEN), AbstractBlockChain.NewBlockType.BEST_CHAIN);
+        sendMoneyToWallet(COIN.multiply(10), AbstractBlockChain.NewBlockType.BEST_CHAIN);
 
         pair = ChannelTestUtils.makeRecorders(serverWallet, mockBroadcaster);
         server = pair.server;
-        final Coin myValue = COIN.multiply(TEN);
+        final Coin myValue = COIN.multiply(10);
         client = new PaymentChannelClient(wallet, myKey, myValue, Sha256Hash.ZERO_HASH, pair.clientRecorder);
         client.connectionOpen();
         server.connectionOpen();

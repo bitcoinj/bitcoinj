@@ -2448,7 +2448,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
         // Check if we need additional fee due to the transaction's size
         int size = tx.bitcoinSerialize().length;
         size += estimateBytesForSigning(coinSelection);
-        Coin fee = baseFee.add(Coin.valueOf((size / 1000) + 1).multiply(feePerKb));
+        Coin fee = baseFee.add(feePerKb.multiply((size / 1000) + 1));
         output.setValue(output.getValue().subtract(fee));
         // Check if we need additional fee due to the output's value
         if (output.getValue().compareTo(Coin.CENT) < 0 && fee.compareTo(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE) < 0)
@@ -3564,7 +3564,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
                 Coin fees = req.fee == null ? Coin.ZERO : req.fee;
                 if (lastCalculatedSize > 0) {
                     // If the size is exactly 1000 bytes then we'll over-pay, but this should be rare.
-                    fees = fees.add(Coin.valueOf((lastCalculatedSize / 1000) + 1).multiply(req.feePerKb));
+                    fees = fees.add(req.feePerKb.multiply((lastCalculatedSize / 1000) + 1));
                 } else {
                     fees = fees.add(req.feePerKb);  // First time around the loop.
                 }
