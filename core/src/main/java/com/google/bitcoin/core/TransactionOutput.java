@@ -205,7 +205,7 @@ public class TransactionOutput extends ChildMessage implements Serializable {
         // clients wrongness in order to ensure we're considered standard. A better formula would either estimate the
         // size of data needed to satisfy all different script types, or just hard code 33 below.
         final long size = this.bitcoinSerialize().length + 148;
-        Coin[] nonDustAndRemainder = feePerKbRequired.multiply(size).divideAndRemainder(Coin.valueOf(1000));
+        Coin[] nonDustAndRemainder = feePerKbRequired.multiply(size).divideAndRemainder(1000);
         return nonDustAndRemainder[1].equals(Coin.ZERO) ? nonDustAndRemainder[0] : nonDustAndRemainder[0].add(Coin.ONE);
     }
 
@@ -215,7 +215,7 @@ public class TransactionOutput extends ChildMessage implements Serializable {
      * {@link Transaction#MIN_NONDUST_OUTPUT}.
      */
     public Coin getMinNonDustValue() {
-        return getMinNonDustValue(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE.multiply(Coin.valueOf(3)));
+        return getMinNonDustValue(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE.multiply(3));
     }
 
     /**

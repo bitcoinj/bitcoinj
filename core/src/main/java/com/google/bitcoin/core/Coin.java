@@ -82,20 +82,20 @@ public final class Coin implements Comparable<Coin>, Serializable {
         return new Coin(LongMath.checkedSubtract(this.value, value.value));
     }
 
-    public Coin multiply(final Coin value) {
-        return new Coin(LongMath.checkedMultiply(this.value, value.value));
+    public Coin multiply(final long factor) {
+        return new Coin(LongMath.checkedMultiply(this.value, factor));
     }
 
-    public Coin multiply(final long value) {
-        return new Coin(LongMath.checkedMultiply(this.value, value));
+    public Coin divide(final long divisor) {
+        return new Coin(this.value / divisor);
     }
 
-    public Coin divide(final Coin value) {
-        return new Coin(this.value / value.value);
+    public Coin[] divideAndRemainder(final long divisor) {
+        return new Coin[] { new Coin(this.value / divisor), new Coin(this.value % divisor) };
     }
 
-    public Coin[] divideAndRemainder(final Coin value) {
-        return new Coin[] { new Coin(this.value / value.value), new Coin(this.value % value.value) };
+    public long divide(final Coin divisor) {
+        return this.value / divisor.value;
     }
 
     public Coin shiftLeft(final int n) {
@@ -156,10 +156,9 @@ public final class Coin implements Comparable<Coin>, Serializable {
         checkArgument(cents < 100);
         checkArgument(cents >= 0);
         checkArgument(coins >= 0);
-        checkArgument(coins < NetworkParameters.MAX_MONEY.divide(COIN).longValue());
-        Coin bi = Coin.valueOf(coins).multiply(COIN);
-        bi = bi.add(Coin.valueOf(cents).multiply(CENT));
-        return bi;
+        final Coin coin = COIN.multiply(coins).add(CENT.multiply(cents));
+        checkArgument(coin.compareTo(NetworkParameters.MAX_MONEY) <= 0);
+        return coin;
     }
 
     /**
