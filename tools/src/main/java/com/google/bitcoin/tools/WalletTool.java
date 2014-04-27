@@ -20,7 +20,6 @@ package com.google.bitcoin.tools;
 import com.google.bitcoin.core.*;
 import com.google.bitcoin.crypto.KeyCrypterException;
 import com.google.bitcoin.net.discovery.DnsDiscovery;
-import com.google.bitcoin.net.discovery.PeerDiscovery;
 import com.google.bitcoin.params.MainNetParams;
 import com.google.bitcoin.params.RegTestParams;
 import com.google.bitcoin.params.TestNet3Params;
@@ -78,11 +77,9 @@ public class WalletTool {
     private static PeerGroup peers;
     private static Wallet wallet;
     private static File chainFileName;
-    private static PeerDiscovery discovery;
     private static ValidationMode mode;
     private static String password;
     private static org.bitcoin.protocols.payments.Protos.PaymentRequest paymentRequest;
-    private static TorClient torClient;
 
     public static class Condition {
         public enum Type {
