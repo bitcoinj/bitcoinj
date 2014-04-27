@@ -1,0 +1,437 @@
+
+                           Tor Path Specification
+
+                              Roger Dingledine
+                               Nick Mathewson
+
+Note: This is an attempt to specify Tor as currently implemented.  Future
+versions of Tor will implement improved algorithms.
+
+This document tries to cover how Tor chooses to build circuits and assign
+streams to circuits.  Other implementations MAY take other approaches, but
+implementors should be aware of the anonymity and load-balancing implications
+of their choices.
+
+                    THIS SPEC ISN'T DONE YET.
+
+1. General operation
+
+   Tor begins building circuits as soon as it has enough directory
+   information to do so (see section 5 of dir-spec.txt).  Some circuits are
+   built preemptively because we expect to need them later (for user
+   traffic), and some are built because of immediate need (for user traffic
+   that no current circuit can handle, for testing the network or our
+   reachability, and so on).
+
+   When a client application creates a new stream (by opening a SOCKS
+   connection or launching a resolve request), we attach it to an appropriate
+   open circuit if one exists, or wait if an appropriate circuit is
+   in-progress. We launch a new circuit only
+   if no current circuit can handle the request.  We rotate circuits over
+   time to avoid some profiling attacks.
+
+   To build a circuit, we choose all the nodes we want to use, and then
+   construct the circuit.  Sometimes, when we want a circuit that ends at a
+   given hop, and we have an appropriate unused circuit, we "cannibalize" the
+   existing circuit and extend it to the new terminus.
+
+   These processes are described in more detail below.
+
+   This document describes Tor's automatic path selection logic only; path
+   selection can be overridden by a controller (with the EXTENDCIRCUIT and
+   ATTACHSTREAM commands).  Paths constructed through these means may
+   violate some constraints given below.
+
+1.1. Terminology
+
+   A "path" is an ordered sequence of nodes, not yet built as a circuit.
+
+   A "clean" circuit is one that has not yet been used for any traffic.
+
+   A "fast" or "stable" or "valid" node is one that has the 'Fast' or
+   'Stable' or 'Valid' flag
+   set respectively, based on our current directory information.  A "fast"
+   or "stable" circuit is one consisting only of "fast" or "stable" nodes.
+
+   In an "exit" circuit, the final node is chosen based on waiting stream
+   requests if any, and in any case it avoids nodes with exit policy of
+   "reject *:*". An "internal" circuit, on the other hand, is one where
+   the final node is chosen just like a middle node (ignoring its exit
+   policy).
+
+   A "request" is a client-side stream or DNS resolve that needs to be
+   served by a circuit.
+
+   A "pending" circuit is one that we have started to build, but which has
+   not yet completed.
+
+   A circuit or path "supports" a request if it is okay to use the
+   circuit/path to fulfill the request, according to the rules given below.
+   A circuit or path "might support" a request if some aspect of the request
+   is unknown (usually its target IP), but we believe the path probably
+   supports the request according to the rules given below.
+
+1.1. A server's bandwidth
+
+   Old versions of Tor did not report bandwidths in network status
+   documents, so clients had to learn them from the routers' advertised
+   server descriptors.
+
+   For versions of Tor prior to 0.2.1.17-rc, everywhere below where we
+   refer to a server's "bandwidth", we mean its clipped advertised
+   bandwidth, computed by taking the smaller of the 'rate' and
+   'observed' arguments to the "bandwidth" element in the server's
+   descriptor.  If a router's advertised bandwidth is greater than
+   MAX_BELIEVABLE_BANDWIDTH (currently 10 MB/s), we clipped to that
+   value.
+
+   For more recent versions of Tor, we take the bandwidth value declared
+   in the consensus, and fall back to the clipped advertised bandwidth
+   only if the consensus does not have bandwidths listed.
+
+2. Building circuits
+
+2.1. When we build
+
+2.1.1. Clients build circuits preemptively
+
+   When running as a client, Tor tries to maintain at least a certain
+   number of clean circuits, so that new streams can be handled
+   quickly.  To increase the likelihood of success, Tor tries to
+   predict what circuits will be useful by choosing from among nodes
+   that support the ports we have used in the recent past (by default
+   one hour). Specifically, on startup Tor tries to maintain one clean
+   fast exit circuit that allows connections to port 80, and at least
+   two fast clean stable internal circuits in case we get a resolve
+   request or hidden service request (at least three if we _run_ a
+   hidden service).
+
+   After that, Tor will adapt the circuits that it preemptively builds
+   based on the requests it sees from the user: it tries to have two fast
+   clean exit circuits available for every port seen within the past hour
+   (each circuit can be adequate for many predicted ports -- it doesn't
+   need two separate circuits for each port), and it tries to have the
+   above internal circuits available if we've seen resolves or hidden
+   service activity within the past hour. If there are 12 or more clean
+   circuits open, it doesn't open more even if it has more predictions.
+
+   Only stable circuits can "cover" a port that is listed in the
+   LongLivedPorts config option. Similarly, hidden service requests
+   to ports listed in LongLivedPorts make us create stable internal
+   circuits.
+
+   Note that if there are no requests from the user for an hour, Tor
+   will predict no use and build no preemptive circuits.
+
+   The Tor client SHOULD NOT store its list of predicted requests to a
+   persistent medium.
+
+2.1.2. Clients build circuits on demand
+
+   Additionally, when a client request exists that no circuit (built or
+   pending) might support, we create a new circuit to support the request.
+   For exit connections, we pick an exit node that will handle the
+   most pending requests (choosing arbitrarily among ties), launch a
+   circuit to end there, and repeat until every unattached request
+   might be supported by a pending or built circuit. For internal
+   circuits, we pick an arbitrary acceptable path, repeating as needed.
+
+   In some cases we can reuse an already established circuit if it's
+   clean; see Section 2.3 (cannibalizing circuits) for details.
+
+2.1.3. Servers build circuits for testing reachability and bandwidth
+
+   Tor servers test reachability of their ORPort once they have
+   successfully built a circuit (on start and whenever their IP address
+   changes). They build an ordinary fast internal circuit with themselves
+   as the last hop. As soon as any testing circuit succeeds, the Tor
+   server decides it's reachable and is willing to publish a descriptor.
+
+   We launch multiple testing circuits (one at a time), until we
+   have NUM_PARALLEL_TESTING_CIRC (4) such circuits open. Then we
+   do a "bandwidth test" by sending a certain number of relay drop
+   cells down each circuit: BandwidthRate * 10 / CELL_NETWORK_SIZE
+   total cells divided across the four circuits, but never more than
+   CIRCWINDOW_START (1000) cells total. This exercises both outgoing and
+   incoming bandwidth, and helps to jumpstart the observed bandwidth
+   (see dir-spec.txt).
+
+   Tor servers also test reachability of their DirPort once they have
+   established a circuit, but they use an ordinary exit circuit for
+   this purpose.
+
+2.1.4. Hidden-service circuits
+
+   See section 4 below.
+
+2.1.5. Rate limiting of failed circuits
+
+   If we fail to build a circuit N times in a X second period (see Section
+   2.3 for how this works), we stop building circuits until the X seconds
+   have elapsed.
+   XXXX
+
+2.1.6. When to tear down circuits
+
+   XXXX
+
+2.2. Path selection and constraints
+
+   We choose the path for each new circuit before we build it.  We choose the
+   exit node first, followed by the other nodes in the circuit.  All paths
+   we generate obey the following constraints:
+     - We do not choose the same router twice for the same path.
+     - We do not choose any router in the same family as another in the same
+       path.
+     - We do not choose more than one router in a given /16 subnet
+       (unless EnforceDistinctSubnets is 0).
+     - We don't choose any non-running or non-valid router unless we have
+       been configured to do so. By default, we are configured to allow
+       non-valid routers in "middle" and "rendezvous" positions.
+     - If we're using Guard nodes, the first node must be a Guard (see 5
+       below)
+     - XXXX Choosing the length
+
+   For circuits that do not need to be "fast", when choosing among
+   multiple candidates for a path element, we choose randomly.
+
+   For "fast" circuits, we pick a given router as an exit with probability
+   proportional to its bandwidth.
+
+   For non-exit positions on "fast" circuits, we pick routers as above, but
+   we weight the bandwidth of Exit-flagged nodes depending
+   on the fraction of bandwidth available from non-Exit nodes.  Call the
+   total bandwidth for Exit nodes under consideration E,
+   and the total bandwidth for all nodes under
+   consideration T.  If E<T/3, we do not consider Exit-flagged nodes.
+   Otherwise, we weight their bandwidth with the factor (E-T/3)/E. This 
+   ensures that bandwidth is evenly distributed over nodes in 3-hop paths.
+
+   Similarly, guard nodes are weighted by the factor (G-T/3)/G, and not
+   considered for non-guard positions if this value is less than 0.
+
+   Additionally, we may be building circuits with one or more requests in
+   mind.  Each kind of request puts certain constraints on paths:
+
+     - All service-side introduction circuits and all rendezvous paths
+       should be Stable.
+     - All connection requests for connections that we think will need to
+       stay open a long time require Stable circuits.  Currently, Tor decides
+       this by examining the request's target port, and comparing it to a
+       list of "long-lived" ports. (Default: 21, 22, 706, 1863, 5050,
+       5190, 5222, 5223, 6667, 6697, 8300.)
+     - DNS resolves require an exit node whose exit policy is not equivalent
+       to "reject *:*".
+     - Reverse DNS resolves require a version of Tor with advertised eventdns
+       support (available in Tor 0.1.2.1-alpha-dev and later).
+     - All connection requests require an exit node whose exit policy
+       supports their target address and port (if known), or which "might
+       support it" (if the address isn't known).  See 2.2.1.
+     - Rules for Fast? XXXXX
+
+2.2.1. Choosing an exit
+
+   If we know what IP address we want to connect to or resolve, we can
+   trivially tell whether a given router will support it by simulating
+   its declared exit policy.
+
+   Because we often connect to addresses of the form hostname:port, we do not
+   always know the target IP address when we select an exit node.  In these
+   cases, we need to pick an exit node that "might support" connections to a
+   given address port with an unknown address.  An exit node "might support"
+   such a connection if any clause that accepts any connections to that port
+   precedes all clauses (if any) that reject all connections to that port.
+
+   Unless requested to do so by the user, we never choose an exit server
+   flagged as "BadExit" by more than half of the authorities who advertise
+   themselves as listing bad exits.
+
+2.2.2. User configuration
+
+   Users can alter the default behavior for path selection with configuration
+   options.
+
+   - If "ExitNodes" is provided, then every request requires an exit node on
+     the ExitNodes list.  (If a request is supported by no nodes on that list,
+     and StrictExitNodes is false, then Tor treats that request as if
+     ExitNodes were not provided.)
+
+   - "EntryNodes" and "StrictEntryNodes" behave analogously.
+
+   - If a user tries to connect to or resolve a hostname of the form
+     <target>.<servername>.exit, the request is rewritten to a request for
+     <target>, and the request is only supported by the exit whose nickname
+     or fingerprint is <servername>.
+
+2.3. Cannibalizing circuits
+
+   If we need a circuit and have a clean one already established, in
+   some cases we can adapt the clean circuit for our new
+   purpose. Specifically,
+
+   For hidden service interactions, we can "cannibalize" a clean internal
+   circuit if one is available, so we don't need to build those circuits
+   from scratch on demand.
+
+   We can also cannibalize clean circuits when the client asks to exit
+   at a given node -- either via the ".exit" notation or because the
+   destination is running at the same location as an exit node.
+
+
+2.4. Handling failure
+
+   If an attempt to extend a circuit fails (either because the first create
+   failed or a subsequent extend failed) then the circuit is torn down and is
+   no longer pending.  (XXXX really?)  Requests that might have been
+   supported by the pending circuit thus become unsupported, and a new
+   circuit needs to be constructed.
+
+   If a stream "begin" attempt fails with an EXITPOLICY error, we
+   decide that the exit node's exit policy is not correctly advertised,
+   so we treat the exit node as if it were a non-exit until we retrieve
+   a fresh descriptor for it.
+
+   XXXX
+
+3. Attaching streams to circuits
+
+   When a circuit that might support a request is built, Tor tries to attach
+   the request's stream to the circuit and sends a BEGIN, BEGIN_DIR,
+   or RESOLVE relay
+   cell as appropriate.  If the request completes unsuccessfully, Tor
+   considers the reason given in the CLOSE relay cell. [XXX yes, and?]
+
+
+   After a request has remained unattached for SocksTimeout (2 minutes
+   by default), Tor abandons the attempt and signals an error to the
+   client as appropriate (e.g., by closing the SOCKS connection).
+
+   XXX Timeouts and when Tor auto-retries.
+    * What stream-end-reasons are appropriate for retrying.
+
+   If no reply to BEGIN/RESOLVE, then the stream will timeout and fail.
+
+4. Hidden-service related circuits
+
+  XXX Tracking expected hidden service use (client-side and hidserv-side)
+
+5. Guard nodes
+
+  We use Guard nodes (also called "helper nodes" in the literature) to
+  prevent certain profiling attacks.  Here's the risk: if we choose entry and
+  exit nodes at random, and an attacker controls C out of N servers
+  (ignoring bandwidth), then the
+  attacker will control the entry and exit node of any given circuit with
+  probability (C/N)^2.  But as we make many different circuits over time,
+  then the probability that the attacker will see a sample of about (C/N)^2
+  of our traffic goes to 1.  Since statistical sampling works, the attacker
+  can be sure of learning a profile of our behavior.
+
+  If, on the other hand, we picked an entry node and held it fixed, we would
+  have probability C/N of choosing a bad entry and being profiled, and
+  probability (N-C)/N of choosing a good entry and not being profiled.
+
+  When guard nodes are enabled, Tor maintains an ordered list of entry nodes
+  as our chosen guards, and stores this list persistently to disk.  If a Guard
+  node becomes unusable, rather than replacing it, Tor adds new guards to the
+  end of the list.  When choosing the first hop of a circuit, Tor
+  chooses at
+  random from among the first NumEntryGuards (default 3) usable guards on the
+  list.  If there are not at least 2 usable guards on the list, Tor adds
+  routers until there are, or until there are no more usable routers to add.
+
+  A guard is unusable if any of the following hold:
+    - it is not marked as a Guard by the networkstatuses,
+    - it is not marked Valid (and the user hasn't set AllowInvalid entry)
+    - it is not marked Running
+    - Tor couldn't reach it the last time it tried to connect
+
+  A guard is unusable for a particular circuit if any of the rules for path
+  selection in 2.2 are not met.  In particular, if the circuit is "fast"
+  and the guard is not Fast, or if the circuit is "stable" and the guard is
+  not Stable, or if the guard has already been chosen as the exit node in
+  that circuit, Tor can't use it as a guard node for that circuit.
+
+  If the guard is excluded because of its status in the networkstatuses for
+  over 30 days, Tor removes it from the list entirely, preserving order.
+
+  If Tor fails to connect to an otherwise usable guard, it retries
+  periodically: every hour for six hours, every 4 hours for 3 days, every
+  18 hours for a week, and every 36 hours thereafter.  Additionally, Tor
+  retries unreachable guards the first time it adds a new guard to the list,
+  since it is possible that the old guards were only marked as unreachable
+  because the network was unreachable or down.
+
+  Tor does not add a guard persistently to the list until the first time we
+  have connected to it successfully.
+
+6. Router descriptor purposes
+
+  There are currently three "purposes" supported for router descriptors:
+  general, controller, and bridge. Most descriptors are of type general
+  -- these are the ones listed in the consensus, and the ones fetched
+  and used in normal cases.
+
+  Controller-purpose descriptors are those delivered by the controller
+  and labelled as such: they will be kept around (and expire like
+  normal descriptors), and they can be used by the controller in its
+  CIRCUITEXTEND commands. Otherwise they are ignored by Tor when it
+  chooses paths.
+
+  Bridge-purpose descriptors are for routers that are used as bridges. See
+  doc/design-paper/blocking.pdf for more design explanation, or proposal
+  125 for specific details. Currently bridge descriptors are used in place
+  of normal entry guards, for Tor clients that have UseBridges enabled.
+
+
+X. Old notes
+
+X.1. Do we actually do this?
+
+How to deal with network down.
+  - While all helpers are down/unreachable and there are no established
+    or on-the-way testing circuits, launch a testing circuit. (Do this
+    periodically in the same way we try to establish normal circuits
+    when things are working normally.)
+    (Testing circuits are a special type of circuit, that streams won't
+    attach to by accident.)
+  - When a testing circuit succeeds, mark all helpers up and hold
+    the testing circuit open.
+  - If a connection to a helper succeeds, close all testing circuits.
+    Else mark that helper down and try another.
+  - If the last helper is marked down and we already have a testing
+    circuit established, then add the first hop of that testing circuit
+    to the end of our helper node list, close that testing circuit,
+    and go back to square one. (Actually, rather than closing the
+    testing circuit, can we get away with converting it to a normal
+    circuit and beginning to use it immediately?)
+
+  [Do we actually do any of the above?  If so, let's spec it.  If not, let's
+  remove it. -NM]
+
+X.2. A thing we could do to deal with reachability.
+
+And as a bonus, it leads to an answer to Nick's attack ("If I pick
+my helper nodes all on 18.0.0.0:*, then I move, you'll know where I
+bootstrapped") -- the answer is to pick your original three helper nodes
+without regard for reachability. Then the above algorithm will add some
+more that are reachable for you, and if you move somewhere, it's more
+likely (though not certain) that some of the originals will become useful.
+Is that smart or just complex?
+
+X.3. Some stuff that worries me about entry guards. 2006 Jun, Nickm.
+
+  It is unlikely for two users to have the same set of entry guards.
+  Observing a user is sufficient to learn its entry guards.  So, as we move
+  around, entry guards make us linkable.  If we want to change guards when
+  our location (IP? subnet?) changes, we have two bad options.  We could
+    - Drop the old guards.  But if we go back to our old location,
+      we'll not use our old guards.  For a laptop that sometimes gets used
+      from work and sometimes from home, this is pretty fatal.
+    - Remember the old guards as associated with the old location, and use
+      them again if we ever go back to the old location.  This would be
+      nasty, since it would force us to record where we've been.
+
+  [Do we do any of this now? If not, this should move into 099-misc or
+  098-todo. -NM]
+

@@ -11,6 +11,7 @@
     <module>core</module>
     <module>examples</module>
     <module>tools</module>
+    <module>orchid</module>
   </modules>
 
   <parent>

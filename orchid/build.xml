@@ -1,0 +1,116 @@
+<project name="orchid" default="all">
+
+  <exec executable="git" outputproperty="orchid.gittag" logError="true" failifexecutionfails="false">
+    <arg value="rev-parse"/>
+    <arg value="--short"/>
+    <arg value="HEAD"/>
+  </exec>
+
+  <property name="orchid.version" value="1.0.0" />
+
+  <condition property="orchid.basename" value="orchid-${orchid.version}.${orchid.gittag}">
+    <isset property="orchid.gittag"/>
+  </condition>
+
+  <property name="orchid.basename" value="orchid-${orchid.version}" />
+
+  <property name="orchid.jarfile" value="${orchid.basename}.jar" />
+  <property name="orchid.sourcefile" value="${orchid.basename}-src.zip" />
+
+  <path id="compile.classpath">
+    <fileset dir="lib">
+      <include name="*.jar"/>
+    </fileset>
+  </path>
+
+  <path id="test.classpath">
+    <fileset dir="lib/testing">
+      <include name="*.jar"/>
+    </fileset>
+  </path>
+
+  <path id="bin">
+    <pathelement location="${basedir}/bin"/>
+  </path>
+
+  <condition property="xmlrpc.present">
+    <and>
+      <available classname="org.apache.xmlrpc.client.XmlRpcTransportFactory" classpathref="compile.classpath"/>
+      <available classname="org.apache.xmlrpc.XmlRpcException" classpathref="compile.classpath"/>
+    </and>
+  </condition>
+
+  <target name="all" depends="write-revision,compile,compile-xmlrpc,package,source"/>
+			
+  <target name="clean">
+    <delete dir="${basedir}/bin" />
+  </target>
+
+  <target name="write-revision">
+    <echo message="${orchid.gittag}${line.separator}" file="build-revision" />
+  </target>
+
+  <target name="init">
+    <mkdir dir="${basedir}/bin" />
+  </target>
+
+  <target name="compile" depends="init">
+      <javac source="1.5" target="1.5" destdir="${basedir}/bin" includeantruntime="false">
+        <src path="${basedir}/src" />
+	    <classpath refid="compile.classpath"/>
+      </javac>
+  </target>
+
+  <target name="compile-xmlrpc" depends="init" if="xmlrpc.present">
+    <echo message="compiling optional xmlrpc classes"/>
+    <javac source="1.5" target="1.5" srcdir="opt/xmlrpc" destdir="bin" classpathref="compile.classpath" includeantruntime="false"/>
+  </target>
+
+  <target name="package">
+    <jar destfile="${orchid.jarfile}">
+      <manifest>
+        <attribute name="Main-Class" value="com.subgraph.orchid.TorClient"/>
+      </manifest>
+      <fileset dir="${basedir}/bin" />
+      <zipfileset dir="${basedir}/data" includes="GeoIP.dat" fullpath="data/GeoIP.dat" />
+      <zipfileset dir="${basedir}" includes="build-revision" />
+    </jar>
+  </target>
+
+  <target name="source">
+    <zip destfile="${orchid.sourcefile}">
+      <zipfileset dir="src" prefix="${orchid.basename}/src" />
+      <zipfileset dir="opt/xmlrpc" prefix="${orchid.basename}/src" />
+    </zip>
+  </target>
+
+  <target name="compile-test" depends="compile">
+    <javac source="1.5" target="1.5" destdir="${basedir}/bin" includeantruntime="false">
+      <src path="${basedir}/test"/>
+      <classpath>
+        <path refid="compile.classpath"/>
+        <path refid="test.classpath"/>
+      </classpath>
+   </javac>
+  </target>
+
+  <target name="test" depends="compile-test">
+    <junit printsummary="on" fork="yes" forkmode="once">
+      <assertions>
+        <enable/>
+      </assertions>
+      <classpath>
+        <path refid="compile.classpath"/>
+        <path refid="test.classpath"/>
+        <path refid="bin"/>
+      </classpath>
+      <test name="com.subgraph.orchid.TorConfigTest"/>
+      <test name="com.subgraph.orchid.circuits.TorInputStreamTest"/>
+      <test name="com.subgraph.orchid.circuits.path.ConfigNodeFilterTest"/>
+      <test name="com.subgraph.orchid.circuits.path.ConfigNodeFilterTest"/>
+      <test name="com.subgraph.orchid.crypto.ASN1ParserTest"/>
+      <test name="com.subgraph.orchid.crypto.RSAKeyEncoderTest"/>
+      <test name="com.subgraph.orchid.geoip.CountryCodeServiceTest"/>
+    </junit>
+  </target>
+</project>

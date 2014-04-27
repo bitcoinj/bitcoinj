@@ -23,6 +23,7 @@ import javax.net.SocketFactory;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
@@ -72,6 +73,7 @@ public class BlockingClient implements MessageWriteTarget {
                 if (clientSet != null)
                     clientSet.add(BlockingClient.this);
                 try {
+                    InetSocketAddress iServerAddress = (InetSocketAddress)serverAddress;
                     socket.connect(serverAddress, connectTimeoutMillis);
                     parser.connectionOpened();
                     InputStream stream = socket.getInputStream();
