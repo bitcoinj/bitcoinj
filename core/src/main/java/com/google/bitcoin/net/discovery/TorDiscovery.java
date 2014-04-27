@@ -49,6 +49,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import static java.util.Collections.singleton;
+
 /**
  * <p>Supports peer discovery through Tor.</p>
  *
@@ -160,11 +162,10 @@ public class TorDiscovery implements PeerDiscovery {
                 }
             }
 
-            List<Circuit> circuits;
             try {
-                circuits = Futures.successfulAsList(circuitFutures).get();
+                List<Circuit> circuits = new ArrayList<Circuit>(Futures.successfulAsList(circuitFutures).get());
                 // Any failures will result in null entries.  Remove them.
-                circuits.removeAll(Collections.singleton(null));
+                circuits.removeAll(singleton(null));
                 return circuits;
             } catch (ExecutionException e) {
                 // Cannot happen, successfulAsList accepts failures
@@ -199,9 +200,9 @@ public class TorDiscovery implements PeerDiscovery {
             }
 
             try {
-                List<Lookup> lookups = Futures.successfulAsList(lookupFutures).get();
+                List<Lookup> lookups = new ArrayList<Lookup>(Futures.successfulAsList(lookupFutures).get());
                 // Any failures will result in null entries.  Remove them.
-                lookups.removeAll(Collections.singleton(null));
+                lookups.removeAll(singleton(null));
 
                 // Use a map to enforce one result per exit node
                 // TODO: randomize result selection better
