@@ -154,13 +154,16 @@ public class TorDiscovery implements PeerDiscovery {
                 }));
             }
 
+            int timeouts = 0;
             threadPool.awaitTermination(timeoutValue, timeoutUnit);
             for (ListenableFuture<Circuit> future : circuitFutures) {
                 if (!future.isDone()) {
-                    log.warn("circuit timed out");
+                    timeouts++;
                     future.cancel(true);
                 }
             }
+            if (timeouts > 0)
+                log.warn("{} DNS lookup circuits timed out", timeouts);
 
             try {
                 List<Circuit> circuits = new ArrayList<Circuit>(Futures.successfulAsList(circuitFutures).get());
@@ -192,12 +195,15 @@ public class TorDiscovery implements PeerDiscovery {
             }
 
             threadPool.awaitTermination(timeoutValue, timeoutUnit);
+            int timeouts = 0;
             for (ListenableFuture<Lookup> future : lookupFutures) {
                 if (!future.isDone()) {
-                    log.warn("circuit timed out");
+                    timeouts++;
                     future.cancel(true);
                 }
             }
+            if (timeouts > 0)
+                log.warn("{} DNS lookup circuits timed out", timeouts);
 
             try {
                 List<Lookup> lookups = new ArrayList<Lookup>(Futures.successfulAsList(lookupFutures).get());
