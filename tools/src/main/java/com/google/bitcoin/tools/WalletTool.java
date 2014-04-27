@@ -19,10 +19,8 @@ package com.google.bitcoin.tools;
 
 import com.google.bitcoin.core.*;
 import com.google.bitcoin.crypto.KeyCrypterException;
-import com.google.bitcoin.net.BlockingClientManager;
 import com.google.bitcoin.net.discovery.DnsDiscovery;
 import com.google.bitcoin.net.discovery.PeerDiscovery;
-import com.google.bitcoin.net.discovery.TorDiscovery;
 import com.google.bitcoin.params.MainNetParams;
 import com.google.bitcoin.params.RegTestParams;
 import com.google.bitcoin.params.TestNet3Params;
@@ -37,7 +35,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.io.Resources;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.subgraph.orchid.TorClient;
-
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
 import joptsimple.OptionSpec;
@@ -60,6 +57,7 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
 
@@ -695,10 +693,13 @@ public class WalletTool {
         // This will ensure the wallet is saved when it changes.
         wallet.autosaveToFile(walletFile, 200, TimeUnit.MILLISECONDS, null);
         if (options.has("tor")) {
-            torClient = new TorClient();
-            torClient.start();
-            peers = new PeerGroup(params, chain, new BlockingClientManager(torClient.getSocketFactory()));
-        } else {
+            try {
+                peers = PeerGroup.newWithTor(params, chain, new TorClient());
+            } catch (TimeoutException e) {
+                System.err.println("Tor startup timed out, falling back to clear net ...");
+            }
+        }
+        if (peers == null) {
             peers = new PeerGroup(params, chain);
         }
         peers.setUserAgent("WalletTool", "1.0");
@@ -714,9 +715,8 @@ public class WalletTool {
                     System.exit(1);
                 }
             }
-        } else if (options.has("tor")) {
-            peers.addPeerDiscovery(new TorDiscovery(params, torClient));
-        } else {
+        } else if (!options.has("tor")) {
+            // If Tor mode then PeerGroup already has discovery set up.
             if (params == RegTestParams.get()) {
                 log.info("Assuming regtest node on localhost");
                 peers.addAddress(PeerAddress.localhost(params));

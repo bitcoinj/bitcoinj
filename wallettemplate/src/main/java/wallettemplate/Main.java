@@ -86,6 +86,8 @@ public class Main extends Application {
             // Checkpoint files are made using the BuildCheckpoints tool and usually we have to download the
             // last months worth or more (takes a few seconds).
             bitcoin.setCheckpoints(getClass().getResourceAsStream("checkpoints"));
+            // As an example!
+            bitcoin.useTor();
         }
 
         // Now configure and start the appkit. This will take a second or two - we could show a temporary splash screen
@@ -165,7 +167,8 @@ public class Main extends Application {
     public void stop() throws Exception {
         bitcoin.stopAsync();
         bitcoin.awaitTerminated();
-        super.stop();
+        // Forcibly terminate the JVM because Orchid likes to spew non-daemon threads everywhere.
+        Runtime.getRuntime().exit(0);
     }
 
     public static void main(String[] args) {

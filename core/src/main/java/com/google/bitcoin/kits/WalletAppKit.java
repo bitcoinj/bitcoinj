@@ -23,10 +23,9 @@ import com.google.bitcoin.store.BlockStoreException;
 import com.google.bitcoin.store.SPVBlockStore;
 import com.google.bitcoin.store.WalletProtobufSerializer;
 import com.google.common.util.concurrent.AbstractIdleService;
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.Service;
+import com.subgraph.orchid.TorClient;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -35,6 +34,7 @@ import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
@@ -78,6 +78,7 @@ public class WalletAppKit extends AbstractIdleService {
     protected boolean autoStop = true;
     protected InputStream checkpoints;
     protected boolean blockingStartup = true;
+    protected boolean useTor = false;   // Perhaps in future we can change this to true.
     protected String userAgent, version;
 
     public WalletAppKit(NetworkParameters params, File directory, String filePrefix) {
@@ -154,6 +155,15 @@ public class WalletAppKit extends AbstractIdleService {
     public WalletAppKit setUserAgent(String userAgent, String version) {
         this.userAgent = checkNotNull(userAgent);
         this.version = checkNotNull(version);
+        return this;
+    }
+
+    /**
+     * If called, then an embedded Tor client library will be used to connect to the P2P network. The user does not need
+     * any additional software for this: it's all pure Java. As of April 2014 <b>this mode is experimental</b>.
+     */
+    public WalletAppKit useTor() {
+        this.useTor = true;
         return this;
     }
 
@@ -262,8 +272,12 @@ public class WalletAppKit extends AbstractIdleService {
         }
     }
 
-    protected PeerGroup createPeerGroup() {
-        return new PeerGroup(params, vChain);
+    protected PeerGroup createPeerGroup() throws TimeoutException {
+        if (useTor) {
+            return PeerGroup.newWithTor(params, vChain, new TorClient());
+        }
+        else
+            return new PeerGroup(params, vChain);
     }
 
     private void installShutdownHook() {
