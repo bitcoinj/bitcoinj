@@ -226,8 +226,11 @@ public class WalletAppKit extends AbstractIdleService {
                 vWallet = new Wallet(params);
                 vWallet.addKey(new ECKey());
                 addWalletExtensions();
+                vWallet.saveToFile(vWalletFile);
             }
-            if (useAutoSave) vWallet.autosaveToFile(vWalletFile, 1, TimeUnit.SECONDS, null);
+            if (useAutoSave) {
+                vWallet.autosaveToFile(vWalletFile, 200, TimeUnit.MILLISECONDS, null);
+            }
             // Set up peer addresses or discovery first, so if wallet extensions try to broadcast a transaction
             // before we're actually connected the broadcast waits for an appropriate number of connections.
             if (peerAddresses != null) {
