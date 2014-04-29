@@ -456,14 +456,15 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
         }
     }
 
-    private void saveLater() {
+    /** Requests an asynchronous save on a background thread */
+    protected void saveLater() {
         WalletFiles files = vFileManager;
         if (files != null)
             files.saveLater();
     }
 
     /** If auto saving is enabled, do an immediate sync write to disk ignoring any delays. */
-    private void saveNow() {
+    protected void saveNow() {
         WalletFiles files = vFileManager;
         if (files != null) {
             try {
