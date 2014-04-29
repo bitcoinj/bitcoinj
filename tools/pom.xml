@@ -90,5 +90,10 @@
       <artifactId>h2</artifactId>
       <version>1.3.167</version>
     </dependency>
+    <dependency>
+      <groupId>com.subgraph</groupId>
+      <artifactId>orchid</artifactId>
+      <version>1.0-SNAPSHOT</version>
+    </dependency>
   </dependencies>
 </project>
