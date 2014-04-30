@@ -3318,7 +3318,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
     }
 
     /**
-     * Atomically adds extension or returns an existing extension if there is one with the same id alreadypresent.
+     * Atomically adds extension or returns an existing extension if there is one with the same id already present.
      */
     public WalletExtension addOrGetExistingExtension(WalletExtension extension) {
         String id = checkNotNull(extension).getWalletExtensionID();
