@@ -457,6 +457,9 @@ public class WalletProtobufSerializer {
         final Map<String, WalletExtension> extensions = new HashMap<String, WalletExtension>();
         for (WalletExtension e : extensionsList)
             extensions.put(e.getWalletExtensionID(), e);
+        // The Wallet object, if subclassed, might have added some extensions to itself already. In that case, don't
+        // expect them to be passed in, just fetch them here and don't re-add.
+        extensions.putAll(wallet.getExtensions());
         for (Protos.Extension extProto : walletProto.getExtensionList()) {
             String id = extProto.getId();
             WalletExtension extension = extensions.get(id);
@@ -471,7 +474,7 @@ public class WalletProtobufSerializer {
                 log.info("Loading wallet extension {}", id);
                 try {
                     extension.deserializeWalletExtension(wallet, extProto.getData().toByteArray());
-                    wallet.addExtension(extension);
+                    wallet.addOrGetExistingExtension(extension);
                 } catch (Exception e) {
                     if (extProto.getMandatory() && requireMandatoryExtensions)
                         throw new UnreadableWalletException("Could not parse mandatory extension in wallet: " + id);
