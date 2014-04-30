@@ -323,9 +323,11 @@ public class PaymentSession {
      * @param memo is a message to include in the payment message sent to the merchant.
      */
     public @Nullable Protos.Payment getPayment(List<Transaction> txns, @Nullable Address refundAddr, @Nullable String memo)
-            throws IOException {
+            throws IOException, PaymentRequestException.InvalidNetwork {
         if (!paymentDetails.hasPaymentUrl())
             return null;
+        if (!txns.get(0).getParams().equals(params))
+            throw new PaymentRequestException.InvalidNetwork(params.getPaymentProtocolId());
         Protos.Payment.Builder payment = Protos.Payment.newBuilder();
         if (paymentDetails.hasMerchantData())
             payment.setMerchantData(paymentDetails.getMerchantData());

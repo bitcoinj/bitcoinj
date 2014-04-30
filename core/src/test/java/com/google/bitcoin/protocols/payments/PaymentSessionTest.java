@@ -19,6 +19,7 @@ package com.google.bitcoin.protocols.payments;
 
 import com.google.bitcoin.core.*;
 import com.google.bitcoin.crypto.TrustStoreLoader;
+import com.google.bitcoin.params.MainNetParams;
 import com.google.bitcoin.params.TestNet3Params;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.protobuf.ByteString;
@@ -57,7 +58,7 @@ public class PaymentSessionTest {
     @Test
     public void testSimplePayment() throws Exception {
         // Create a PaymentRequest and make sure the correct values are parsed by the PaymentSession.
-        MockPaymentSession paymentSession = new MockPaymentSession(newSimplePaymentRequest());
+        MockPaymentSession paymentSession = new MockPaymentSession(newSimplePaymentRequest("test"));
         assertEquals(paymentRequestMemo, paymentSession.getMemo());
         assertEquals(nanoCoins, paymentSession.getValue());
         assertEquals(simplePaymentUrl, paymentSession.getPaymentUrl());
@@ -130,24 +131,39 @@ public class PaymentSessionTest {
         assertEquals("The USERTRUST Network, Salt Lake City, US", pkiData.rootAuthorityName);
     }
 
-    private Protos.PaymentRequest newSimplePaymentRequest() {
+    @Test(expected = PaymentRequestException.InvalidNetwork.class)
+    public void testWrongNetwork() throws Exception {
+        // Create a PaymentRequest and make sure the correct values are parsed by the PaymentSession.
+        MockPaymentSession paymentSession = new MockPaymentSession(newSimplePaymentRequest("main"));
+        assertEquals(MainNetParams.get(), paymentSession.getNetworkParameters());
+
+        // Send the payment and verify that the correct information is sent.
+        // Add a dummy input to tx so it is considered valid.
+        tx.addInput(new TransactionInput(params, tx, outputToMe.getScriptBytes()));
+        ArrayList<Transaction> txns = new ArrayList<Transaction>();
+        txns.add(tx);
+        Address refundAddr = new Address(params, serverKey.getPubKeyHash());
+        paymentSession.sendPayment(txns, refundAddr, paymentMemo);
+        assertEquals(1, paymentSession.getPaymentLog().size());
+    }
+
+    private Protos.PaymentRequest newSimplePaymentRequest(String netID) {
         Protos.Output.Builder outputBuilder = Protos.Output.newBuilder()
                 .setAmount(nanoCoins.longValue())
                 .setScript(ByteString.copyFrom(outputToMe.getScriptBytes()));
         Protos.PaymentDetails paymentDetails = Protos.PaymentDetails.newBuilder()
-                .setNetwork("test")
+                .setNetwork(netID)
                 .setTime(time)
                 .setPaymentUrl(simplePaymentUrl)
                 .addOutputs(outputBuilder)
                 .setMemo(paymentRequestMemo)
                 .setMerchantData(merchantData)
                 .build();
-        Protos.PaymentRequest paymentRequest = Protos.PaymentRequest.newBuilder()
+        return Protos.PaymentRequest.newBuilder()
                 .setPaymentDetailsVersion(1)
                 .setPkiType("none")
                 .setSerializedPaymentDetails(paymentDetails.toByteString())
                 .build();
-        return paymentRequest;
     }
 
     private Protos.PaymentRequest newExpiredPaymentRequest() {
@@ -163,12 +179,11 @@ public class PaymentSessionTest {
                 .setMemo(paymentRequestMemo)
                 .setMerchantData(merchantData)
                 .build();
-        Protos.PaymentRequest paymentRequest  = Protos.PaymentRequest.newBuilder()
+        return Protos.PaymentRequest.newBuilder()
                 .setPaymentDetailsVersion(1)
                 .setPkiType("none")
                 .setSerializedPaymentDetails(paymentDetails.toByteString())
                 .build();
-        return paymentRequest ;
     }
 
     private class MockPaymentSession extends PaymentSession {
