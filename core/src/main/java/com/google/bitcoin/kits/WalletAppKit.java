@@ -252,6 +252,7 @@ public class WalletAppKit extends AbstractIdleService {
             // before we're actually connected the broadcast waits for an appropriate number of connections.
             if (peerAddresses != null) {
                 for (PeerAddress addr : peerAddresses) vPeerGroup.addAddress(addr);
+                vPeerGroup.setMaxConnections(peerAddresses.length);
                 peerAddresses = null;
             } else {
                 vPeerGroup.addPeerDiscovery(new DnsDiscovery(params));
