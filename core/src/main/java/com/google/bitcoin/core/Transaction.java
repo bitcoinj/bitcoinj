@@ -21,6 +21,7 @@ import com.google.bitcoin.crypto.TransactionSignature;
 import com.google.bitcoin.script.Script;
 import com.google.bitcoin.script.ScriptBuilder;
 import com.google.bitcoin.script.ScriptOpCodes;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.primitives.Ints;
 import com.google.common.primitives.Longs;
@@ -1127,6 +1128,12 @@ public class Transaction extends ChildMessage implements Serializable {
     public List<TransactionOutput> getOutputs() {
         maybeParse();
         return Collections.unmodifiableList(outputs);
+    }
+
+    /** Randomly re-orders the transaction outputs: good for privacy */
+    public void shuffleOutputs() {
+        maybeParse();
+        Collections.shuffle(outputs);
     }
 
     /** @return the given transaction: same as getInputs().get(index). */

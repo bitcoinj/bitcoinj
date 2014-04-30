@@ -283,6 +283,7 @@ public class WalletTest extends TestWithWallet {
         }
 
         // Complete the transaction successfully.
+        req.shuffleOutputs = false;
         wallet.completeTx(req);
 
         Transaction t2 = req.tx;
@@ -371,6 +372,7 @@ public class WalletTest extends TestWithWallet {
         req.aesKey = aesKey;
         Address a = req.changeAddress = new ECKey().toAddress(params);
         req.ensureMinRequiredFee = false;
+        req.shuffleOutputs = false;
         wallet.completeTx(req);
         Transaction t3 = req.tx;
         assertEquals(a, t3.getOutput(1).getScriptPubKey().getToAddress(params));
@@ -1760,6 +1762,7 @@ public class WalletTest extends TestWithWallet {
         request19.tx.clearInputs();
         request19 = SendRequest.forTx(request19.tx);
         request19.feePerKb = BigInteger.ONE;
+        request19.shuffleOutputs = false;
         wallet.completeTx(request19);
         assertEquals(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE, request19.fee);
         assertEquals(2, request19.tx.getInputs().size());
@@ -1767,7 +1770,6 @@ public class WalletTest extends TestWithWallet {
         for (TransactionOutput out : request19.tx.getOutputs())
             outValue19 = outValue19.add(out.getValue());
         // But now our change output is CENT-minfee, so we have to pay min fee
-        // Change this assert when we eventually randomize output order
         assertEquals(request19.tx.getOutput(request19.tx.getOutputs().size() - 1).getValue(), CENT.subtract(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE));
         assertEquals(outValue19, Utils.COIN.add(CENT).subtract(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE));
 
@@ -1827,6 +1829,7 @@ public class WalletTest extends TestWithWallet {
         request25 = SendRequest.forTx(request25.tx);
         request25.feePerKb = CENT.divide(BigInteger.valueOf(3));
         request25.ensureMinRequiredFee = false;
+        request25.shuffleOutputs = false;
         wallet.completeTx(request25);
         assertEquals(CENT.subtract(BigInteger.ONE), request25.fee);
         assertEquals(2, request25.tx.getInputs().size());
@@ -1834,7 +1837,6 @@ public class WalletTest extends TestWithWallet {
         for (TransactionOutput out : request25.tx.getOutputs())
             outValue25 = outValue25.add(out.getValue());
         // Our change output should be one satoshi
-        // Change this assert when we eventually randomize output order
         assertEquals(BigInteger.ONE, request25.tx.getOutput(request25.tx.getOutputs().size() - 1).getValue());
         // and our fee should be CENT-1 satoshi
         assertEquals(outValue25, Utils.COIN.add(BigInteger.ONE));
@@ -2044,6 +2046,7 @@ public class WalletTest extends TestWithWallet {
         SendRequest request1 = SendRequest.to(notMyAddr, CENT);
         // If we just complete as-is, we will use one of the COIN outputs to get higher priority,
         // resulting in a change output
+        request1.shuffleOutputs = false;
         wallet.completeTx(request1);
         assertEquals(1, request1.tx.getInputs().size());
         assertEquals(2, request1.tx.getOutputs().size());
@@ -2066,6 +2069,7 @@ public class WalletTest extends TestWithWallet {
         request3.tx.addInput(new TransactionInput(params, request3.tx, new byte[]{}, new TransactionOutPoint(params, 0, tx3.getHash())));
         // Now completeTx will result in two inputs, two outputs and a fee of a CENT
         // Note that it is simply assumed that the inputs are correctly signed, though in fact the first is not
+        request3.shuffleOutputs = false;
         wallet.completeTx(request3);
         assertEquals(2, request3.tx.getInputs().size());
         assertEquals(2, request3.tx.getOutputs().size());

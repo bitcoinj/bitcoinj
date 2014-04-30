@@ -394,7 +394,8 @@ public class PaymentChannelServerState {
             // die. We could probably add features to the SendRequest API to make this a bit more efficient.
             signMultisigInput(tx, Transaction.SigHash.NONE, true);
             // Let wallet handle adding additional inputs/fee as necessary.
-            wallet.completeTx(req);
+            req.shuffleOutputs = false;
+            wallet.completeTx(req);  // TODO: Fix things so shuffling is usable.
             feePaidForPayment = req.fee;
             log.info("Calculated fee is {}", feePaidForPayment);
             if (feePaidForPayment.compareTo(bestValueToMe) >= 0) {

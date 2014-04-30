@@ -21,6 +21,7 @@ import com.google.bitcoin.core.TransactionConfidence.ConfidenceType;
 import com.google.bitcoin.crypto.KeyCrypter;
 import com.google.bitcoin.crypto.KeyCrypterException;
 import com.google.bitcoin.crypto.KeyCrypterScrypt;
+import com.google.bitcoin.params.UnitTestParams;
 import com.google.bitcoin.script.Script;
 import com.google.bitcoin.script.ScriptBuilder;
 import com.google.bitcoin.script.ScriptChunk;
@@ -1655,6 +1656,13 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
          */
         public CoinSelector coinSelector = null;
 
+        /**
+         * If true (the default), the outputs will be shuffled during completion to randomize the location of the change
+         * output, if any. This is normally what you want for privacy reasons but in unit tests it can be annoying
+         * so it can be disabled here.
+         */
+        public boolean shuffleOutputs = true;
+
         // Tracks if this has been passed to wallet.completeTx already: just a safety check.
         private boolean completed;
 
@@ -1738,6 +1746,8 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
      */
     public Transaction createSend(Address address, BigInteger nanocoins) throws InsufficientMoneyException {
         SendRequest req = SendRequest.to(address, nanocoins);
+        if (params == UnitTestParams.get())
+            req.shuffleOutputs = false;
         completeTx(req);
         return req.tx;
     }
@@ -1951,6 +1961,10 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
             if (calculatedFee.signum() > 0) {
                 log.info("  with a fee of {}", bitcoinValueToFriendlyString(calculatedFee));
             }
+
+            // Now shuffle the outputs to obfuscate which is the change.
+            if (req.shuffleOutputs)
+                req.tx.shuffleOutputs();
 
             // Now sign the inputs, thus proving that we are entitled to redeem the connected outputs.
             req.tx.signInputs(Transaction.SigHash.ALL, this, req.aesKey);

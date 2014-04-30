@@ -253,6 +253,7 @@ public class PaymentChannelClientState {
         Wallet.SendRequest req = Wallet.SendRequest.forTx(template);
         req.coinSelector = AllowUnconfirmedCoinSelector.get();
         editContractSendRequest(req);
+        req.shuffleOutputs = false;   // TODO: Fix things so shuffling is usable.
         wallet.completeTx(req);
         BigInteger multisigFee = req.fee;
         multisigContract = req.tx;
