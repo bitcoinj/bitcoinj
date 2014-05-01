@@ -79,7 +79,7 @@ public class KeyChainGroup {
     // Used for deserialization.
     private KeyChainGroup(@Nullable BasicKeyChain basicKeyChain, List<DeterministicKeyChain> chains, @Nullable KeyCrypter crypter) {
         this.basic = basicKeyChain == null ? new BasicKeyChain() : basicKeyChain;
-        this.chains = checkNotNull(chains);
+        this.chains = new ArrayList<DeterministicKeyChain>(checkNotNull(chains));
         this.keyCrypter = crypter;
         this.currentKeys = new EnumMap<KeyChain.KeyPurpose, DeterministicKey>(KeyChain.KeyPurpose.class);
     }
