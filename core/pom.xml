@@ -21,18 +21,18 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>com.google</groupId>
-        <artifactId>bitcoinj-parent</artifactId>
+        <artifactId>riecoinj-parent</artifactId>
         <version>0.12-SNAPSHOT</version>
     </parent>
 
-    <artifactId>bitcoinj</artifactId>
+    <artifactId>riecoinj</artifactId>
 
-    <name>bitcoinj</name>
-    <description>A Java Bitcoin library</description>
+    <name>riecoinj</name>
+    <description>A Java Riecoin library</description>
 
     <packaging>jar</packaging>
 
-    <url>https://code.google.com/p/bitcoinj</url>
+    <url>https://github.com/AshleyDDD/riecoinj</url>
 
     <licenses>
         <license>

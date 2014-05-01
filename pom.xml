@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>com.google</groupId>
-  <artifactId>bitcoinj-parent</artifactId>
+  <artifactId>riecoinj-parent</artifactId>
   <version>0.12-SNAPSHOT</version>
   <packaging>pom</packaging>
 
@@ -21,14 +21,14 @@
   </parent>
 
   <scm>
-    <connection>scm:git:https://code.google.com/p/bitcoinj/</connection>
-    <developerConnection>scm:git:https://code.google.com/p/bitcoinj/</developerConnection>
-    <url>http://code.google.com/p/bitcoinj/source/browse</url>
+    <connection>scm:git:https://github.com/AshleyDDD/riecoinj</connection>
+    <developerConnection>scm:git:https://github.com/AshleyDDD/riecoinj</developerConnection>
+    <url>https://github.com/AshleyDDD/riecoinj</url>
   </scm>
 
-  <name>bitcoinj Parent</name>
+  <name>riecoinj Parent</name>
   <description>Provides the common configuration for the BitCoinJ modules</description>
-  <url>http://code.google.com/p/bitcoinj</url>
+  <url>https://github.com/AshleyDDD/riecoinj</url>
 
   <licenses>
     <license>
@@ -40,21 +40,21 @@
   </licenses>
 
   <issueManagement>
-    <system>Google Code</system>
-    <url>http://code.google.com/p/bitcoinj/issues/list</url>
+    <system>Github</system>
+    <url>https://github.com/AshleyDDD/riecoinj</url>
   </issueManagement>
-
+<!--
   <mailingLists>
     <mailingList>
       <name>bitcoinj Google Group</name>
       <post>https://groups.google.com/forum/#!forum/bitcoinj</post>
     </mailingList>
   </mailingLists>
-
+!-->
   <repositories>
     <repository>
         <id>bitcoinj-distribution</id>
-        <url>https://distribution.bitcoinj.googlecode.com/git/releases</url>
+        <url>https://github.com/AshleyDDD/riecoinj</url>
     </repository>
   </repositories>
 
