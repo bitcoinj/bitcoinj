@@ -104,11 +104,11 @@ public class PaymentProtocol {
      * @param trustStore
      *            KeyStory of trusted root certificate authorities.
      * @return verification data, or null if no PKI method was specified in the {@link Protos.PaymentRequest}.
-     * @throws PaymentRequestException
+     * @throws PaymentProtocolException
      *             if payment request could not be verified.
      */
     public static @Nullable PkiVerificationData verifyPaymentRequestPki(Protos.PaymentRequest paymentRequest, KeyStore trustStore)
-            throws PaymentRequestException {
+            throws PaymentProtocolException {
         List<X509Certificate> certs = null;
         try {
             final String pkiType = paymentRequest.getPkiType();
@@ -122,11 +122,11 @@ public class PaymentProtocol {
             else if (pkiType.equals("x509+sha1"))
                 algorithm = "SHA1withRSA";
             else
-                throw new PaymentRequestException.InvalidPkiType("Unsupported PKI type: " + pkiType);
+                throw new PaymentProtocolException.InvalidPkiType("Unsupported PKI type: " + pkiType);
 
             Protos.X509Certificates protoCerts = Protos.X509Certificates.parseFrom(paymentRequest.getPkiData());
             if (protoCerts.getCertificateCount() == 0)
-                throw new PaymentRequestException.InvalidPkiData("No certificates provided in message: server config error");
+                throw new PaymentProtocolException.InvalidPkiData("No certificates provided in message: server config error");
 
             // Parse the certs and turn into a certificate chain object. Cert factories can parse both DER and base64.
             // The ordering of certificates is defined by the payment protocol spec to be the same as what the Java
@@ -156,21 +156,21 @@ public class PaymentProtocol {
             reqToCheck.setSignature(ByteString.EMPTY);
             signature.update(reqToCheck.build().toByteArray());
             if (!signature.verify(paymentRequest.getSignature().toByteArray()))
-                throw new PaymentRequestException.PkiVerificationException("Invalid signature, this payment request is not valid.");
+                throw new PaymentProtocolException.PkiVerificationException("Invalid signature, this payment request is not valid.");
 
             // Signature verifies, get the names from the identity we just verified for presentation to the user.
             final X509Certificate cert = certs.get(0);
             String displayName = X509Utils.getDisplayNameFromCertificate(cert, true);
             if (displayName == null)
-                throw new PaymentRequestException.PkiVerificationException("Could not extract name from certificate");
+                throw new PaymentProtocolException.PkiVerificationException("Could not extract name from certificate");
             // Everything is peachy. Return some useful data to the caller.
             return new PkiVerificationData(displayName, publicKey, result.getTrustAnchor());
         } catch (InvalidProtocolBufferException e) {
             // Data structures are malformed.
-            throw new PaymentRequestException.InvalidPkiData(e);
+            throw new PaymentProtocolException.InvalidPkiData(e);
         } catch (CertificateException e) {
             // The X.509 certificate data didn't parse correctly.
-            throw new PaymentRequestException.PkiVerificationException(e);
+            throw new PaymentProtocolException.PkiVerificationException(e);
         } catch (NoSuchAlgorithmException e) {
             // Should never happen so don't make users have to think about it. PKIX is always present.
             throw new RuntimeException(e);
@@ -179,13 +179,13 @@ public class PaymentProtocol {
         } catch (CertPathValidatorException e) {
             // The certificate chain isn't known or trusted, probably, the server is using an SSL root we don't
             // know about and the user needs to upgrade to a new version of the software (or import a root cert).
-            throw new PaymentRequestException.PkiVerificationException(e, certs);
+            throw new PaymentProtocolException.PkiVerificationException(e, certs);
         } catch (InvalidKeyException e) {
             // Shouldn't happen if the certs verified correctly.
-            throw new PaymentRequestException.PkiVerificationException(e);
+            throw new PaymentProtocolException.PkiVerificationException(e);
         } catch (SignatureException e) {
             // Something went wrong during hashing (yes, despite the name, this does not mean the sig was invalid).
-            throw new PaymentRequestException.PkiVerificationException(e);
+            throw new PaymentProtocolException.PkiVerificationException(e);
         } catch (KeyStoreException e) {
             throw new RuntimeException(e);
         }
@@ -205,14 +205,14 @@ public class PaymentProtocol {
         public final String rootAuthorityName;
 
         private PkiVerificationData(@Nullable String displayName, PublicKey merchantSigningKey,
-                                    TrustAnchor rootAuthority) throws PaymentRequestException.PkiVerificationException {
+                                    TrustAnchor rootAuthority) throws PaymentProtocolException.PkiVerificationException {
             try {
                 this.displayName = displayName;
                 this.merchantSigningKey = merchantSigningKey;
                 this.rootAuthority = rootAuthority;
                 this.rootAuthorityName = X509Utils.getDisplayNameFromCertificate(rootAuthority.getTrustedCert(), true);
             } catch (CertificateParsingException x) {
-                throw new PaymentRequestException.PkiVerificationException(x);
+                throw new PaymentProtocolException.PkiVerificationException(x);
             }
         }
     }
