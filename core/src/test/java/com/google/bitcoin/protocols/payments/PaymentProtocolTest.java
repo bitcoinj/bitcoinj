@@ -16,22 +16,45 @@
 
 package com.google.bitcoin.protocols.payments;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
+import java.math.BigInteger;
 import java.security.KeyStore;
 import java.security.PrivateKey;
 import java.security.cert.X509Certificate;
+import java.util.LinkedList;
+import java.util.List;
 
 import org.bitcoin.protocols.payments.Protos;
+import org.bitcoin.protocols.payments.Protos.Payment;
+import org.bitcoin.protocols.payments.Protos.PaymentACK;
+import org.bitcoin.protocols.payments.Protos.PaymentRequest;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.google.bitcoin.core.Address;
+import com.google.bitcoin.core.ECKey;
+import com.google.bitcoin.core.NetworkParameters;
+import com.google.bitcoin.core.Transaction;
 import com.google.bitcoin.crypto.X509Utils;
+import com.google.bitcoin.params.UnitTestParams;
+import com.google.bitcoin.protocols.payments.PaymentProtocol.Output;
 import com.google.bitcoin.protocols.payments.PaymentProtocol.PkiVerificationData;
 import com.google.bitcoin.protocols.payments.PaymentProtocolException.PkiVerificationException;
+import com.google.bitcoin.script.ScriptBuilder;
+import com.google.bitcoin.testing.FakeTxBuilder;
 
 public class PaymentProtocolTest {
+
+    // static test data
+    private static final NetworkParameters NETWORK_PARAMS = UnitTestParams.get();
+    private static final BigInteger AMOUNT = BigInteger.ONE;
+    private static final Address TO_ADDRESS = new ECKey().toAddress(NETWORK_PARAMS);
+    private static final String MEMO = "memo";
+    private static final String PAYMENT_URL = "https://example.com";
+    private static final byte[] MERCHANT_DATA = new byte[] { 0, 1, 2 };
 
     private KeyStore caStore;
     private X509Certificate caCert;
@@ -80,5 +103,57 @@ public class PaymentProtocolTest {
         Protos.PaymentRequest.Builder paymentRequest = Protos.PaymentRequest.newBuilder();
         paymentRequest.setSerializedPaymentDetails(paymentDetails.build().toByteString());
         return paymentRequest.build();
+    }
+
+    public void testPaymentRequest() throws Exception {
+        // Create
+        PaymentRequest paymentRequest = PaymentProtocol.createPaymentRequest(NETWORK_PARAMS, AMOUNT, TO_ADDRESS, MEMO,
+                PAYMENT_URL, MERCHANT_DATA).build();
+        byte[] paymentRequestBytes = paymentRequest.toByteArray();
+
+        // Parse
+        PaymentSession parsedPaymentRequest = PaymentProtocol.parsePaymentRequest(PaymentRequest
+                .parseFrom(paymentRequestBytes));
+        final List<Output> parsedOutputs = parsedPaymentRequest.getOutputs();
+        assertEquals(1, parsedOutputs.size());
+        assertEquals(AMOUNT, parsedOutputs.get(0).amount);
+        assertEquals(ScriptBuilder.createOutputScript(TO_ADDRESS).getProgram(), parsedOutputs.get(0).scriptData);
+        assertEquals(MEMO, parsedPaymentRequest.getMemo());
+        assertEquals(PAYMENT_URL, parsedPaymentRequest.getPaymentUrl());
+        assertEquals(MERCHANT_DATA, parsedPaymentRequest.getMerchantData());
+    }
+
+    @Test
+    public void testPaymentMessage() throws Exception {
+        // Create
+        List<Transaction> transactions = new LinkedList<Transaction>();
+        transactions.add(FakeTxBuilder.createFakeTx(NETWORK_PARAMS, AMOUNT, TO_ADDRESS));
+        BigInteger refundAmount = BigInteger.ONE;
+        Address refundAddress = new ECKey().toAddress(NETWORK_PARAMS);
+        Payment payment = PaymentProtocol.createPaymentMessage(transactions, refundAmount, refundAddress, MEMO,
+                MERCHANT_DATA);
+        byte[] paymentBytes = payment.toByteArray();
+
+        // Parse
+        Payment parsedPayment = Payment.parseFrom(paymentBytes);
+        List<Transaction> parsedTransactions = PaymentProtocol.parseTransactionsFromPaymentMessage(NETWORK_PARAMS,
+                parsedPayment);
+        assertEquals(transactions, parsedTransactions);
+        assertEquals(1, parsedPayment.getRefundToCount());
+        assertEquals(MEMO, parsedPayment.getMemo());
+        assertArrayEquals(MERCHANT_DATA, parsedPayment.getMerchantData().toByteArray());
+    }
+
+    @Test
+    public void testPaymentAck() throws Exception {
+        // Create
+        Payment paymentMessage = Protos.Payment.newBuilder().build();
+        PaymentACK paymentAck = PaymentProtocol.createPaymentAck(paymentMessage, MEMO);
+        byte[] paymentAckBytes = paymentAck.toByteArray();
+
+        // Parse
+        PaymentACK parsedPaymentAck = PaymentACK.parseFrom(paymentAckBytes);
+        assertEquals(paymentMessage, parsedPaymentAck.getPayment());
+        assertEquals(MEMO, parsedPaymentAck.getMemo());
     }
 }

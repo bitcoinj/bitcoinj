@@ -197,7 +197,7 @@ public class PaymentSessionTest {
             return paymentLog;
         }
 
-        protected ListenableFuture<Ack> sendPayment(final URL url, final Protos.Payment payment) {
+        protected ListenableFuture<PaymentProtocol.Ack> sendPayment(final URL url, final Protos.Payment payment) {
             paymentLog.add(new PaymentLogItem(url, payment));
             return null;
         }

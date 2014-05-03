@@ -18,21 +18,22 @@ import com.google.bitcoin.core.*;
 import com.google.bitcoin.crypto.TrustStoreLoader;
 import com.google.bitcoin.params.MainNetParams;
 import com.google.bitcoin.protocols.payments.PaymentProtocol.PkiVerificationData;
-import com.google.bitcoin.script.ScriptBuilder;
 import com.google.bitcoin.uri.BitcoinURI;
 import com.google.bitcoin.utils.Threading;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
-import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
+
 import org.bitcoin.protocols.payments.Protos;
 
 import javax.annotation.Nullable;
+
 import java.io.*;
 import java.math.BigInteger;
 import java.net.*;
 import java.security.KeyStoreException;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -217,23 +218,15 @@ public class PaymentSession {
     }
 
     /**
-     * Message returned by the merchant in response to a Payment message.
+     * Returns the outputs of the payment request.
      */
-    public class Ack {
-        @Nullable private String memo;
-
-        Ack(@Nullable String memo) {
-            this.memo = memo;
+    public List<PaymentProtocol.Output> getOutputs() {
+        List<PaymentProtocol.Output> outputs = new ArrayList<PaymentProtocol.Output>(paymentDetails.getOutputsCount());
+        for (Protos.Output output : paymentDetails.getOutputsList()) {
+            BigInteger amount = output.hasAmount() ? BigInteger.valueOf(output.getAmount()) : null;
+            outputs.add(new PaymentProtocol.Output(amount, output.getScript().toByteArray()));
         }
-
-        /**
-         * Returns the memo included by the merchant in the payment ack. This message is typically displayed to the user
-         * as a notification (e.g. "Your payment was received and is being processed"). If none was provided, returns
-         * null.
-         */
-        @Nullable public String getMemo() {
-            return memo;
-        }
+        return outputs;
     }
 
     /**
@@ -261,6 +254,16 @@ public class PaymentSession {
     }
 
     /**
+     * Returns the expires time of the payment request, or null if none.
+     */
+    @Nullable public Date getExpires() {
+        if (paymentDetails.hasExpires())
+            return new Date(paymentDetails.getExpires() * 1000);
+        else
+            return null;
+    }
+
+    /**
      * This should always be called before attempting to call sendPayment.
      */
     public boolean isExpired() {
@@ -275,6 +278,16 @@ public class PaymentSession {
         if (paymentDetails.hasPaymentUrl())
             return paymentDetails.getPaymentUrl();
         return null;
+    }
+
+    /**
+     * Returns the merchant data included by the merchant in the payment request, or null if none.
+     */
+    @Nullable public byte[] getMerchantData() {
+        if (paymentDetails.hasMerchantData())
+            return paymentDetails.getMerchantData().toByteArray();
+        else
+            return null;
     }
 
     /**
@@ -298,7 +311,7 @@ public class PaymentSession {
      * @param refundAddr will be used by the merchant to send money back if there was a problem.
      * @param memo is a message to include in the payment message sent to the merchant.
      */
-    public @Nullable ListenableFuture<Ack> sendPayment(List<Transaction> txns, @Nullable Address refundAddr, @Nullable String memo)
+    public @Nullable ListenableFuture<PaymentProtocol.Ack> sendPayment(List<Transaction> txns, @Nullable Address refundAddr, @Nullable String memo)
             throws PaymentProtocolException, VerificationException, IOException {
         Protos.Payment payment = getPayment(txns, refundAddr, memo);
         if (payment == null)
@@ -324,36 +337,21 @@ public class PaymentSession {
      */
     public @Nullable Protos.Payment getPayment(List<Transaction> txns, @Nullable Address refundAddr, @Nullable String memo)
             throws IOException, PaymentProtocolException.InvalidNetwork {
-        if (!paymentDetails.hasPaymentUrl())
+        if (paymentDetails.hasPaymentUrl()) {
+            for (Transaction tx : txns)
+                if (!tx.getParams().equals(params))
+                    throw new PaymentProtocolException.InvalidNetwork(params.getPaymentProtocolId());
+            return PaymentProtocol.createPaymentMessage(txns, totalValue, refundAddr, memo, getMerchantData());
+        } else {
             return null;
-        if (!txns.get(0).getParams().equals(params))
-            throw new PaymentProtocolException.InvalidNetwork(params.getPaymentProtocolId());
-        Protos.Payment.Builder payment = Protos.Payment.newBuilder();
-        if (paymentDetails.hasMerchantData())
-            payment.setMerchantData(paymentDetails.getMerchantData());
-        if (refundAddr != null) {
-            Protos.Output.Builder refundOutput = Protos.Output.newBuilder();
-            refundOutput.setAmount(totalValue.longValue());
-            refundOutput.setScript(ByteString.copyFrom(ScriptBuilder.createOutputScript(refundAddr).getProgram()));
-            payment.addRefundTo(refundOutput);
         }
-        if (memo != null) {
-            payment.setMemo(memo);
-        }
-        for (Transaction txn : txns) {
-            txn.verify();
-            ByteArrayOutputStream o = new ByteArrayOutputStream();
-            txn.bitcoinSerialize(o);
-            payment.addTransactions(ByteString.copyFrom(o.toByteArray()));
-        }
-        return payment.build();
     }
 
     @VisibleForTesting
-    protected ListenableFuture<Ack> sendPayment(final URL url, final Protos.Payment payment) {
-        return executor.submit(new Callable<Ack>() {
+    protected ListenableFuture<PaymentProtocol.Ack> sendPayment(final URL url, final Protos.Payment payment) {
+        return executor.submit(new Callable<PaymentProtocol.Ack>() {
             @Override
-            public Ack call() throws Exception {
+            public PaymentProtocol.Ack call() throws Exception {
                 HttpURLConnection connection = (HttpURLConnection) url.openConnection();
                 connection.setRequestMethod("POST");
                 connection.setRequestProperty("Content-Type", PaymentProtocol.MIMETYPE_PAYMENT);
@@ -370,13 +368,8 @@ public class PaymentSession {
                 outStream.close();
 
                 // Get response.
-                InputStream inStream = connection.getInputStream();
-                Protos.PaymentACK.Builder paymentAckBuilder = Protos.PaymentACK.newBuilder().mergeFrom(inStream);
-                Protos.PaymentACK paymentAck = paymentAckBuilder.build();
-                String memo = null;
-                if (paymentAck.hasMemo())
-                    memo = paymentAck.getMemo();
-                return new Ack(memo);
+                Protos.PaymentACK paymentAck = Protos.PaymentACK.parseFrom(connection.getInputStream());
+                return PaymentProtocol.parsePaymentAck(paymentAck);
             }
         });
     }
