@@ -29,7 +29,7 @@ import org.junit.Test;
 
 import com.google.bitcoin.crypto.X509Utils;
 import com.google.bitcoin.protocols.payments.PaymentProtocol.PkiVerificationData;
-import com.google.bitcoin.protocols.payments.PaymentRequestException.PkiVerificationException;
+import com.google.bitcoin.protocols.payments.PaymentProtocolException.PkiVerificationException;
 
 public class PaymentProtocolTest {
 

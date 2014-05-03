@@ -113,7 +113,7 @@ public class PaymentSessionTest {
         txns.add(tx);
         try {
             paymentSession.sendPayment(txns, null, null);
-        } catch(PaymentRequestException.Expired e) {
+        } catch(PaymentProtocolException.Expired e) {
             assertEquals(0, paymentSession.getPaymentLog().size());
             assertEquals(e.getMessage(), "PaymentRequest is expired");
             return;
@@ -131,7 +131,7 @@ public class PaymentSessionTest {
         assertEquals("The USERTRUST Network, Salt Lake City, US", pkiData.rootAuthorityName);
     }
 
-    @Test(expected = PaymentRequestException.InvalidNetwork.class)
+    @Test(expected = PaymentProtocolException.InvalidNetwork.class)
     public void testWrongNetwork() throws Exception {
         // Create a PaymentRequest and make sure the correct values are parsed by the PaymentSession.
         MockPaymentSession paymentSession = new MockPaymentSession(newSimplePaymentRequest("main"));
@@ -189,7 +189,7 @@ public class PaymentSessionTest {
     private class MockPaymentSession extends PaymentSession {
         private ArrayList<PaymentLogItem> paymentLog = new ArrayList<PaymentLogItem>();
 
-        public MockPaymentSession(Protos.PaymentRequest request) throws PaymentRequestException {
+        public MockPaymentSession(Protos.PaymentRequest request) throws PaymentProtocolException {
             super(request);
         }
 

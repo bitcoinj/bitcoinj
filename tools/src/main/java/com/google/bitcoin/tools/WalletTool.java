@@ -23,7 +23,7 @@ import com.google.bitcoin.net.discovery.DnsDiscovery;
 import com.google.bitcoin.params.MainNetParams;
 import com.google.bitcoin.params.RegTestParams;
 import com.google.bitcoin.params.TestNet3Params;
-import com.google.bitcoin.protocols.payments.PaymentRequestException;
+import com.google.bitcoin.protocols.payments.PaymentProtocolException;
 import com.google.bitcoin.protocols.payments.PaymentSession;
 import com.google.bitcoin.store.*;
 import com.google.bitcoin.uri.BitcoinURI;
@@ -494,7 +494,7 @@ public class WalletTool {
                     System.err.println("Server returned null session");
                     System.exit(1);
                 }
-            } catch (PaymentRequestException e) {
+            } catch (PaymentProtocolException e) {
                 System.err.println("Error creating payment session " + e.getMessage());
                 System.exit(1);
             } catch (BitcoinURIParseException e) {
@@ -524,7 +524,7 @@ public class WalletTool {
             PaymentSession session = null;
             try {
                 session = new PaymentSession(paymentRequest, verifyPki);
-            } catch (PaymentRequestException e) {
+            } catch (PaymentProtocolException e) {
                 System.err.println("Error creating payment session " + e.getMessage());
                 System.exit(1);
             }
@@ -568,7 +568,7 @@ public class WalletTool {
                 wallet.commitTx(req.tx);
                 System.out.println("Memo from server: " + ack.getMemo());
             }
-        } catch (PaymentRequestException e) {
+        } catch (PaymentProtocolException e) {
             System.err.println("Failed to send payment " + e.getMessage());
             System.exit(1);
         } catch (VerificationException e) {
