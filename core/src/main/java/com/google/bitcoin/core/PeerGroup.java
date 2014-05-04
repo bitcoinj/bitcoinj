@@ -956,6 +956,16 @@ public class PeerGroup extends AbstractExecutionThreadService implements Transac
         return connectTo(peerAddress, true);
     }
 
+    /**
+     * Helper for forcing a connection to localhost. Useful when using regtest mode. Returns the peer object.
+     */
+    @Nullable
+    public Peer connectToLocalHost() {
+        final PeerAddress localhost = PeerAddress.localhost(params);
+        backoffMap.put(localhost, new ExponentialBackoff(peerBackoffParams));
+        return connectTo(localhost, true);
+    }
+
     // Internal version.
     @Nullable
     protected Peer connectTo(PeerAddress address, boolean incrementMaxConnections) {
