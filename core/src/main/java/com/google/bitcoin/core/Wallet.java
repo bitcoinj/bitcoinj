@@ -312,7 +312,8 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
             if (Utils.isWindows()) {
                 // Work around an issue on Windows whereby you can't rename over existing files.
                 File canonical = destFile.getCanonicalFile();
-                canonical.delete();
+                if (!canonical.delete())
+                    throw new IOException("Failed to delete canonical wallet file for replacement with autosave");
                 if (temp.renameTo(canonical))
                     return;  // else fall through.
                 throw new IOException("Failed to rename " + temp + " to " + canonical);
@@ -327,8 +328,8 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
             if (stream != null) {
                 stream.close();
             }
-            if (temp.delete()) {
-                log.warn("Deleted temp file after failed save.");
+            if (temp.exists()) {
+                log.warn("Temp file still exists after failed save.");
             }
         }
     }
