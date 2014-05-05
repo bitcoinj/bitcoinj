@@ -19,22 +19,22 @@ package com.google.bitcoin.protocols.payments;
 import java.security.cert.X509Certificate;
 import java.util.List;
 
-public class PaymentRequestException extends Exception {
-    public PaymentRequestException(String msg) {
+public class PaymentProtocolException extends Exception {
+    public PaymentProtocolException(String msg) {
         super(msg);
     }
 
-    public PaymentRequestException(Exception e) {
+    public PaymentProtocolException(Exception e) {
         super(e);
     }
 
-    public static class Expired extends PaymentRequestException {
+    public static class Expired extends PaymentProtocolException {
         public Expired(String msg) {
             super(msg);
         }
     }
 
-    public static class InvalidPaymentRequestURL extends PaymentRequestException {
+    public static class InvalidPaymentRequestURL extends PaymentProtocolException {
         public InvalidPaymentRequestURL(String msg) {
             super(msg);
         }
@@ -44,7 +44,7 @@ public class PaymentRequestException extends Exception {
         }
     }
 
-    public static class InvalidPaymentURL extends PaymentRequestException {
+    public static class InvalidPaymentURL extends PaymentProtocolException {
         public InvalidPaymentURL(Exception e) {
             super(e);
         }
@@ -54,31 +54,31 @@ public class PaymentRequestException extends Exception {
         }
     }
 
-    public static class InvalidOutputs extends PaymentRequestException {
+    public static class InvalidOutputs extends PaymentProtocolException {
         public InvalidOutputs(String msg) {
             super(msg);
         }
     }
 
-    public static class InvalidVersion extends PaymentRequestException {
+    public static class InvalidVersion extends PaymentProtocolException {
         public InvalidVersion(String msg) {
             super(msg);
         }
     }
 
-    public static class InvalidNetwork extends PaymentRequestException {
+    public static class InvalidNetwork extends PaymentProtocolException {
         public InvalidNetwork(String msg) {
             super(msg);
         }
     }
 
-    public static class InvalidPkiType extends PaymentRequestException {
+    public static class InvalidPkiType extends PaymentProtocolException {
         public InvalidPkiType(String msg) {
             super(msg);
         }
     }
 
-    public static class InvalidPkiData extends PaymentRequestException {
+    public static class InvalidPkiData extends PaymentProtocolException {
         public InvalidPkiData(String msg) {
             super(msg);
         }
@@ -88,7 +88,7 @@ public class PaymentRequestException extends Exception {
         }
     }
 
-    public static class PkiVerificationException extends PaymentRequestException {
+    public static class PkiVerificationException extends PaymentProtocolException {
         public List<X509Certificate> certificates;
 
         public PkiVerificationException(String msg) {

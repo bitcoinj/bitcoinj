@@ -17,6 +17,8 @@
 
 package com.google.bitcoin.protocols.payments;
 
+import java.io.Serializable;
+import java.math.BigInteger;
 import java.security.GeneralSecurityException;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
@@ -38,13 +40,19 @@ import java.security.cert.PKIXCertPathValidatorResult;
 import java.security.cert.PKIXParameters;
 import java.security.cert.TrustAnchor;
 import java.security.cert.X509Certificate;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.annotation.Nullable;
 
 import org.bitcoin.protocols.payments.Protos;
 
+import com.google.bitcoin.core.Address;
+import com.google.bitcoin.core.NetworkParameters;
+import com.google.bitcoin.core.Transaction;
 import com.google.bitcoin.crypto.X509Utils;
+import com.google.bitcoin.script.ScriptBuilder;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
@@ -55,6 +63,81 @@ public class PaymentProtocol {
     public static final String MIMETYPE_PAYMENTREQUEST = "application/bitcoin-paymentrequest";
     public static final String MIMETYPE_PAYMENT = "application/bitcoin-payment";
     public static final String MIMETYPE_PAYMENTACK = "application/bitcoin-paymentack";
+
+    /**
+     * Create a payment request with one standard pay to address output. You may want to sign the request using
+     * {@link #signPaymentRequestPki}. Use {@link Protos.PaymentRequest.Builder#build} to get the actual payment
+     * request.
+     * 
+     * @param params
+     *            network parameters
+     * @param amount
+     *            amount of coins to request, or null
+     * @param toAddress
+     *            address to request coins to
+     * @param memo
+     *            arbitrary, user readable memo, or null if none
+     * @param paymentUrl
+     *            URL to send payment message to, or null if none
+     * @param merchantData
+     *            arbitrary merchant data, or null if none
+     * @return created payment request, in its builder form
+     */
+    public static Protos.PaymentRequest.Builder createPaymentRequest(NetworkParameters params,
+            @Nullable BigInteger amount, Address toAddress, @Nullable String memo, @Nullable String paymentUrl,
+            @Nullable byte[] merchantData) {
+        return createPaymentRequest(params, ImmutableList.of(createPayToAddressOutput(amount, toAddress)), memo,
+                paymentUrl, merchantData);
+    }
+
+    /**
+     * Create a payment request. You may want to sign the request using {@link #signPaymentRequestPki}. Use
+     * {@link Protos.PaymentRequest.Builder#build} to get the actual payment request.
+     * 
+     * @param params
+     *            network parameters
+     * @param outputs
+     *            list of outputs to request coins to
+     * @param memo
+     *            arbitrary, user readable memo, or null if none
+     * @param paymentUrl
+     *            URL to send payment message to, or null if none
+     * @param merchantData
+     *            arbitrary merchant data, or null if none
+     * @return created payment request, in its builder form
+     */
+    public static Protos.PaymentRequest.Builder createPaymentRequest(NetworkParameters params,
+            List<Protos.Output> outputs, @Nullable String memo, @Nullable String paymentUrl,
+            @Nullable byte[] merchantData) {
+        final Protos.PaymentDetails.Builder paymentDetails = Protos.PaymentDetails.newBuilder();
+        paymentDetails.setNetwork(params.getPaymentProtocolId());
+        for (Protos.Output output : outputs)
+            paymentDetails.addOutputs(output);
+        if (memo != null)
+            paymentDetails.setMemo(memo);
+        if (paymentUrl != null)
+            paymentDetails.setPaymentUrl(paymentUrl);
+        if (merchantData != null)
+            paymentDetails.setMerchantData(ByteString.copyFrom(merchantData));
+        paymentDetails.setTime(System.currentTimeMillis());
+
+        final Protos.PaymentRequest.Builder paymentRequest = Protos.PaymentRequest.newBuilder();
+        paymentRequest.setSerializedPaymentDetails(paymentDetails.build().toByteString());
+        return paymentRequest;
+    }
+
+    /**
+     * Parse a payment request.
+     * 
+     * @param paymentRequest
+     *            payment request to parse
+     * @return instance of {@link PaymentSession}, used as a value object
+     * @throws PaymentProtocolException
+     */
+    public static PaymentSession parsePaymentRequest(Protos.PaymentRequest paymentRequest)
+            throws PaymentProtocolException {
+        return new PaymentSession(paymentRequest, false, null);
+    }
 
     /**
      * Sign the provided payment request.
@@ -104,11 +187,11 @@ public class PaymentProtocol {
      * @param trustStore
      *            KeyStory of trusted root certificate authorities.
      * @return verification data, or null if no PKI method was specified in the {@link Protos.PaymentRequest}.
-     * @throws PaymentRequestException
+     * @throws PaymentProtocolException
      *             if payment request could not be verified.
      */
     public static @Nullable PkiVerificationData verifyPaymentRequestPki(Protos.PaymentRequest paymentRequest, KeyStore trustStore)
-            throws PaymentRequestException {
+            throws PaymentProtocolException {
         List<X509Certificate> certs = null;
         try {
             final String pkiType = paymentRequest.getPkiType();
@@ -122,11 +205,11 @@ public class PaymentProtocol {
             else if (pkiType.equals("x509+sha1"))
                 algorithm = "SHA1withRSA";
             else
-                throw new PaymentRequestException.InvalidPkiType("Unsupported PKI type: " + pkiType);
+                throw new PaymentProtocolException.InvalidPkiType("Unsupported PKI type: " + pkiType);
 
             Protos.X509Certificates protoCerts = Protos.X509Certificates.parseFrom(paymentRequest.getPkiData());
             if (protoCerts.getCertificateCount() == 0)
-                throw new PaymentRequestException.InvalidPkiData("No certificates provided in message: server config error");
+                throw new PaymentProtocolException.InvalidPkiData("No certificates provided in message: server config error");
 
             // Parse the certs and turn into a certificate chain object. Cert factories can parse both DER and base64.
             // The ordering of certificates is defined by the payment protocol spec to be the same as what the Java
@@ -156,21 +239,21 @@ public class PaymentProtocol {
             reqToCheck.setSignature(ByteString.EMPTY);
             signature.update(reqToCheck.build().toByteArray());
             if (!signature.verify(paymentRequest.getSignature().toByteArray()))
-                throw new PaymentRequestException.PkiVerificationException("Invalid signature, this payment request is not valid.");
+                throw new PaymentProtocolException.PkiVerificationException("Invalid signature, this payment request is not valid.");
 
             // Signature verifies, get the names from the identity we just verified for presentation to the user.
             final X509Certificate cert = certs.get(0);
             String displayName = X509Utils.getDisplayNameFromCertificate(cert, true);
             if (displayName == null)
-                throw new PaymentRequestException.PkiVerificationException("Could not extract name from certificate");
+                throw new PaymentProtocolException.PkiVerificationException("Could not extract name from certificate");
             // Everything is peachy. Return some useful data to the caller.
             return new PkiVerificationData(displayName, publicKey, result.getTrustAnchor());
         } catch (InvalidProtocolBufferException e) {
             // Data structures are malformed.
-            throw new PaymentRequestException.InvalidPkiData(e);
+            throw new PaymentProtocolException.InvalidPkiData(e);
         } catch (CertificateException e) {
             // The X.509 certificate data didn't parse correctly.
-            throw new PaymentRequestException.PkiVerificationException(e);
+            throw new PaymentProtocolException.PkiVerificationException(e);
         } catch (NoSuchAlgorithmException e) {
             // Should never happen so don't make users have to think about it. PKIX is always present.
             throw new RuntimeException(e);
@@ -179,13 +262,13 @@ public class PaymentProtocol {
         } catch (CertPathValidatorException e) {
             // The certificate chain isn't known or trusted, probably, the server is using an SSL root we don't
             // know about and the user needs to upgrade to a new version of the software (or import a root cert).
-            throw new PaymentRequestException.PkiVerificationException(e, certs);
+            throw new PaymentProtocolException.PkiVerificationException(e, certs);
         } catch (InvalidKeyException e) {
             // Shouldn't happen if the certs verified correctly.
-            throw new PaymentRequestException.PkiVerificationException(e);
+            throw new PaymentProtocolException.PkiVerificationException(e);
         } catch (SignatureException e) {
             // Something went wrong during hashing (yes, despite the name, this does not mean the sig was invalid).
-            throw new PaymentRequestException.PkiVerificationException(e);
+            throw new PaymentProtocolException.PkiVerificationException(e);
         } catch (KeyStoreException e) {
             throw new RuntimeException(e);
         }
@@ -205,15 +288,176 @@ public class PaymentProtocol {
         public final String rootAuthorityName;
 
         private PkiVerificationData(@Nullable String displayName, PublicKey merchantSigningKey,
-                                    TrustAnchor rootAuthority) throws PaymentRequestException.PkiVerificationException {
+                                    TrustAnchor rootAuthority) throws PaymentProtocolException.PkiVerificationException {
             try {
                 this.displayName = displayName;
                 this.merchantSigningKey = merchantSigningKey;
                 this.rootAuthority = rootAuthority;
                 this.rootAuthorityName = X509Utils.getDisplayNameFromCertificate(rootAuthority.getTrustedCert(), true);
             } catch (CertificateParsingException x) {
-                throw new PaymentRequestException.PkiVerificationException(x);
+                throw new PaymentProtocolException.PkiVerificationException(x);
             }
+        }
+    }
+
+    /**
+     * Create a payment message with one standard pay to address output.
+     * 
+     * @param transactions
+     *            transactions to include with the payment message
+     * @param refundAmount
+     *            amount of coins to refund, or null
+     * @param refundAddress
+     *            address to refund coins to
+     * @param memo
+     *            arbitrary, user readable memo, or null if none
+     * @param merchantData
+     *            arbitrary merchant data, or null if none
+     * @return created payment message
+     */
+    public static Protos.Payment createPaymentMessage(List<Transaction> transactions,
+            @Nullable BigInteger refundAmount, @Nullable Address refundAddress, @Nullable String memo,
+            @Nullable byte[] merchantData) {
+        if (refundAddress != null) {
+            if (refundAmount == null)
+                throw new IllegalArgumentException("Specify refund amount if refund address is specified.");
+            return createPaymentMessage(transactions,
+                    ImmutableList.of(createPayToAddressOutput(refundAmount, refundAddress)), memo, merchantData);
+        } else {
+            return createPaymentMessage(transactions, null, memo, merchantData);
+        }
+    }
+
+    /**
+     * Create a payment message.
+     * 
+     * @param transactions
+     *            transactions to include with the payment message
+     * @param refundOutputs
+     *            list of outputs to refund coins to, or null
+     * @param memo
+     *            arbitrary, user readable memo, or null if none
+     * @param merchantData
+     *            arbitrary merchant data, or null if none
+     * @return created payment message
+     */
+    public static Protos.Payment createPaymentMessage(List<Transaction> transactions,
+            @Nullable List<Protos.Output> refundOutputs, @Nullable String memo, @Nullable byte[] merchantData) {
+        Protos.Payment.Builder builder = Protos.Payment.newBuilder();
+        for (Transaction transaction : transactions) {
+            transaction.verify();
+            builder.addTransactions(ByteString.copyFrom(transaction.unsafeBitcoinSerialize()));
+        }
+        if (refundOutputs != null) {
+            for (Protos.Output output : refundOutputs)
+                builder.addRefundTo(output);
+        }
+        if (memo != null)
+            builder.setMemo(memo);
+        if (merchantData != null)
+            builder.setMerchantData(ByteString.copyFrom(merchantData));
+        return builder.build();
+    }
+
+    /**
+     * Parse transactions from payment message.
+     * 
+     * @param params
+     *            network parameters (needed for transaction deserialization)
+     * @param paymentMessage
+     *            payment message to parse
+     * @return list of transactions
+     */
+    public static List<Transaction> parseTransactionsFromPaymentMessage(NetworkParameters params,
+            Protos.Payment paymentMessage) {
+        final List<Transaction> transactions = new ArrayList<Transaction>(paymentMessage.getTransactionsCount());
+        for (final ByteString transaction : paymentMessage.getTransactionsList())
+            transactions.add(new Transaction(params, transaction.toByteArray()));
+        return transactions;
+    }
+
+    /**
+     * Message returned by the merchant in response to a Payment message.
+     */
+    public static class Ack {
+        @Nullable private final String memo;
+
+        Ack(@Nullable String memo) {
+            this.memo = memo;
+        }
+
+        /**
+         * Returns the memo included by the merchant in the payment ack. This message is typically displayed to the user
+         * as a notification (e.g. "Your payment was received and is being processed"). If none was provided, returns
+         * null.
+         */
+        @Nullable public String getMemo() {
+            return memo;
+        }
+    }
+
+    /**
+     * Create a payment ack.
+     * 
+     * @param paymentMessage
+     *            payment message to send with the ack
+     * @param memo
+     *            arbitrary, user readable memo, or null if none
+     * @return created payment ack
+     */
+    public static Protos.PaymentACK createPaymentAck(Protos.Payment paymentMessage, @Nullable String memo) {
+        final Protos.PaymentACK.Builder builder = Protos.PaymentACK.newBuilder();
+        builder.setPayment(paymentMessage);
+        if (memo != null)
+            builder.setMemo(memo);
+        return builder.build();
+    }
+
+    /**
+     * Parse payment ack.
+     * 
+     * @param payment
+     *            ack to parse
+     * @return instance of {@link Ack}
+     */
+    public static Ack parsePaymentAck(Protos.PaymentACK paymentAck) {
+        final String memo = paymentAck.hasMemo() ? paymentAck.getMemo() : null;
+        return new Ack(memo);
+    }
+
+    /**
+     * Create a standard pay to address output for usage in {@link #createPaymentRequest} and
+     * {@link #createPaymentMessage}.
+     * 
+     * @param amount
+     *            amount to pay, or null
+     * @param address
+     *            address to pay to
+     * @return output
+     */
+    public static Protos.Output createPayToAddressOutput(@Nullable BigInteger amount, Address address) {
+        Protos.Output.Builder output = Protos.Output.newBuilder();
+        if (amount != null) {
+            if (amount.compareTo(NetworkParameters.MAX_MONEY) > 0)
+                throw new IllegalArgumentException("Amount too big: " + amount);
+            output.setAmount(amount.longValue());
+        } else {
+            output.setAmount(0);
+        }
+        output.setScript(ByteString.copyFrom(ScriptBuilder.createOutputScript(address).getProgram()));
+        return output.build();
+    }
+
+    /**
+     * Value object to hold amount/script pairs.
+     */
+    public static class Output implements Serializable {
+        public final @Nullable BigInteger amount;
+        public final byte[] scriptData;
+
+        public Output(@Nullable BigInteger amount, byte[] scriptData) {
+            this.amount = amount;
+            this.scriptData = scriptData;
         }
     }
 }

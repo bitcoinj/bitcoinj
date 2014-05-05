@@ -18,7 +18,7 @@ package com.google.bitcoin.tools;
 
 import com.google.bitcoin.crypto.TrustStoreLoader;
 import com.google.bitcoin.protocols.payments.PaymentProtocol;
-import com.google.bitcoin.protocols.payments.PaymentRequestException;
+import com.google.bitcoin.protocols.payments.PaymentProtocolException;
 import com.google.bitcoin.protocols.payments.PaymentSession;
 import com.google.bitcoin.uri.BitcoinURI;
 import com.google.bitcoin.uri.BitcoinURIParseException;
@@ -89,14 +89,14 @@ public class PaymentProtocolTool {
             System.err.println("Could not parse URI: " + e.getMessage());
         } catch (BitcoinURIParseException e) {
             System.err.println("Could not parse URI: " + e.getMessage());
-        } catch (PaymentRequestException.PkiVerificationException e) {
+        } catch (PaymentProtocolException.PkiVerificationException e) {
             System.err.println(e.getMessage());
             if (e.certificates != null) {
                 for (X509Certificate certificate : e.certificates) {
                     System.err.println("  " + certificate);
                 }
             }
-        } catch (PaymentRequestException e) {
+        } catch (PaymentProtocolException e) {
             System.err.println("Could not handle payment request: " + e.getMessage());
         } catch (InterruptedException e) {
             System.err.println("Interrupted whilst processing/downloading.");

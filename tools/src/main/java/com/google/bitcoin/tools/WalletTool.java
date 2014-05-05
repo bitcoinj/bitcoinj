@@ -23,7 +23,8 @@ import com.google.bitcoin.net.discovery.DnsDiscovery;
 import com.google.bitcoin.params.MainNetParams;
 import com.google.bitcoin.params.RegTestParams;
 import com.google.bitcoin.params.TestNet3Params;
-import com.google.bitcoin.protocols.payments.PaymentRequestException;
+import com.google.bitcoin.protocols.payments.PaymentProtocol;
+import com.google.bitcoin.protocols.payments.PaymentProtocolException;
 import com.google.bitcoin.protocols.payments.PaymentSession;
 import com.google.bitcoin.store.*;
 import com.google.bitcoin.uri.BitcoinURI;
@@ -494,7 +495,7 @@ public class WalletTool {
                     System.err.println("Server returned null session");
                     System.exit(1);
                 }
-            } catch (PaymentRequestException e) {
+            } catch (PaymentProtocolException e) {
                 System.err.println("Error creating payment session " + e.getMessage());
                 System.exit(1);
             } catch (BitcoinURIParseException e) {
@@ -524,7 +525,7 @@ public class WalletTool {
             PaymentSession session = null;
             try {
                 session = new PaymentSession(paymentRequest, verifyPki);
-            } catch (PaymentRequestException e) {
+            } catch (PaymentProtocolException e) {
                 System.err.println("Error creating payment session " + e.getMessage());
                 System.exit(1);
             }
@@ -557,18 +558,18 @@ public class WalletTool {
             }
             setup();
             // No refund address specified, no user-specified memo field.
-            ListenableFuture<PaymentSession.Ack> future = session.sendPayment(ImmutableList.of(req.tx), null, null);
+            ListenableFuture<PaymentProtocol.Ack> future = session.sendPayment(ImmutableList.of(req.tx), null, null);
             if (future == null) {
                 // No payment_url for submission so, broadcast and wait.
                 peers.startAsync();
                 peers.awaitRunning();
                 peers.broadcastTransaction(req.tx).get();
             } else {
-                PaymentSession.Ack ack = future.get();
+                PaymentProtocol.Ack ack = future.get();
                 wallet.commitTx(req.tx);
                 System.out.println("Memo from server: " + ack.getMemo());
             }
-        } catch (PaymentRequestException e) {
+        } catch (PaymentProtocolException e) {
             System.err.println("Failed to send payment " + e.getMessage());
             System.exit(1);
         } catch (VerificationException e) {
