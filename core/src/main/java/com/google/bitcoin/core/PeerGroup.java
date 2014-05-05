@@ -740,6 +740,10 @@ public class PeerGroup extends AbstractExecutionThreadService implements Transac
     @Override
     protected void startUp() throws Exception {
         // This is run in a background thread by the Service implementation.
+        if (chain == null) {
+            // Just try to help catch what might be a programming error.
+            log.warn("Starting up with no attached block chain. Did you forget to pass one to the constructor?");
+        }
         vPingTimer = new Timer("Peer pinging thread", true);
         if (torClient != null) {
             log.info("Starting Tor/Orchid ...");
