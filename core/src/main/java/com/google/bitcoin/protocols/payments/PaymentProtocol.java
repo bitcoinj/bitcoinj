@@ -17,36 +17,6 @@
 
 package com.google.bitcoin.protocols.payments;
 
-import java.io.Serializable;
-import java.math.BigInteger;
-import java.security.GeneralSecurityException;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.InvalidKeyException;
-import java.security.KeyStore;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.PrivateKey;
-import java.security.PublicKey;
-import java.security.Signature;
-import java.security.SignatureException;
-import java.security.cert.CertPath;
-import java.security.cert.CertPathValidator;
-import java.security.cert.CertPathValidatorException;
-import java.security.cert.Certificate;
-import java.security.cert.CertificateException;
-import java.security.cert.CertificateFactory;
-import java.security.cert.CertificateParsingException;
-import java.security.cert.PKIXCertPathValidatorResult;
-import java.security.cert.PKIXParameters;
-import java.security.cert.TrustAnchor;
-import java.security.cert.X509Certificate;
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.annotation.Nullable;
-
-import org.bitcoin.protocols.payments.Protos;
-
 import com.google.bitcoin.core.Address;
 import com.google.bitcoin.core.NetworkParameters;
 import com.google.bitcoin.core.Transaction;
@@ -56,7 +26,26 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
+import org.bitcoin.protocols.payments.Protos;
 
+import javax.annotation.Nullable;
+import java.io.Serializable;
+import java.math.BigInteger;
+import java.security.*;
+import java.security.cert.*;
+import java.security.cert.Certificate;
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * <p>Utility methods and constants for working with <a href="https://github.com/bitcoin/bips/blob/master/bip-0070.mediawiki">
+ * BIP 70 aka the payment protocol</a>. These are low level wrappers around the protocol buffers. If you're implementing
+ * a wallet app, look at {@link PaymentSession} for a higher level API that should simplify working with the protocol.</p>
+ *
+ * <p>BIP 70 defines a binary, protobuf based protocol that runs directly between sender and receiver of funds. Payment
+ * protocol data does not flow over the Bitcoin P2P network or enter the block chain. It's instead for data that is only
+ * of interest to the parties involved but isn't otherwise needed for consensus.</p>
+ */
 public class PaymentProtocol {
 
     // MIME types as defined in BIP71.
@@ -66,21 +55,15 @@ public class PaymentProtocol {
 
     /**
      * Create a payment request with one standard pay to address output. You may want to sign the request using
-     * {@link #signPaymentRequestPki}. Use {@link Protos.PaymentRequest.Builder#build} to get the actual payment
+     * {@link #signPaymentRequest}. Use {@link Protos.PaymentRequest.Builder#build} to get the actual payment
      * request.
-     * 
-     * @param params
-     *            network parameters
-     * @param amount
-     *            amount of coins to request, or null
-     * @param toAddress
-     *            address to request coins to
-     * @param memo
-     *            arbitrary, user readable memo, or null if none
-     * @param paymentUrl
-     *            URL to send payment message to, or null if none
-     * @param merchantData
-     *            arbitrary merchant data, or null if none
+     *
+     * @param params network parameters
+     * @param amount amount of coins to request, or null
+     * @param toAddress address to request coins to
+     * @param memo arbitrary, user readable memo, or null if none
+     * @param paymentUrl URL to send payment message to, or null if none
+     * @param merchantData arbitrary merchant data, or null if none
      * @return created payment request, in its builder form
      */
     public static Protos.PaymentRequest.Builder createPaymentRequest(NetworkParameters params,
@@ -91,19 +74,14 @@ public class PaymentProtocol {
     }
 
     /**
-     * Create a payment request. You may want to sign the request using {@link #signPaymentRequestPki}. Use
+     * Create a payment request. You may want to sign the request using {@link #signPaymentRequest}. Use
      * {@link Protos.PaymentRequest.Builder#build} to get the actual payment request.
      * 
-     * @param params
-     *            network parameters
-     * @param outputs
-     *            list of outputs to request coins to
-     * @param memo
-     *            arbitrary, user readable memo, or null if none
-     * @param paymentUrl
-     *            URL to send payment message to, or null if none
-     * @param merchantData
-     *            arbitrary merchant data, or null if none
+     * @param params network parameters
+     * @param outputs list of outputs to request coins to
+     * @param memo arbitrary, user readable memo, or null if none
+     * @param paymentUrl URL to send payment message to, or null if none
+     * @param merchantData arbitrary merchant data, or null if none
      * @return created payment request, in its builder form
      */
     public static Protos.PaymentRequest.Builder createPaymentRequest(NetworkParameters params,
@@ -129,8 +107,7 @@ public class PaymentProtocol {
     /**
      * Parse a payment request.
      * 
-     * @param paymentRequest
-     *            payment request to parse
+     * @param paymentRequest payment request to parse
      * @return instance of {@link PaymentSession}, used as a value object
      * @throws PaymentProtocolException
      */
@@ -142,16 +119,13 @@ public class PaymentProtocol {
     /**
      * Sign the provided payment request.
      * 
-     * @param paymentRequest
-     *            Payment request to sign, in its builder form.
-     * @param certificateChain
-     *            Certificate chain to send with the payment request, ordered from client certificate to root
+     * @param paymentRequest Payment request to sign, in its builder form.
+     * @param certificateChain Certificate chain to send with the payment request, ordered from client certificate to root
      *            certificate. The root certificate itself may be omitted.
-     * @param privateKey
-     *            The key to sign with. Must match the public key from the first certificate of the certificate chain.
+     * @param privateKey The key to sign with. Must match the public key from the first certificate of the certificate chain.
      */
-    public static void signPaymentRequestPki(Protos.PaymentRequest.Builder paymentRequest,
-            X509Certificate[] certificateChain, PrivateKey privateKey) {
+    public static void signPaymentRequest(Protos.PaymentRequest.Builder paymentRequest,
+                                          X509Certificate[] certificateChain, PrivateKey privateKey) {
         try {
             final Protos.X509Certificates.Builder certificates = Protos.X509Certificates.newBuilder();
             for (final Certificate certificate : certificateChain)
@@ -182,13 +156,10 @@ public class PaymentProtocol {
     /**
      * Uses the provided PKI method to find the corresponding public key and verify the provided signature.
      * 
-     * @param paymentRequest
-     *            Payment request to verify.
-     * @param trustStore
-     *            KeyStory of trusted root certificate authorities.
+     * @param paymentRequest Payment request to verify.
+     * @param trustStore KeyStore of trusted root certificate authorities.
      * @return verification data, or null if no PKI method was specified in the {@link Protos.PaymentRequest}.
-     * @throws PaymentProtocolException
-     *             if payment request could not be verified.
+     * @throws PaymentProtocolException if payment request could not be verified.
      */
     public static @Nullable PkiVerificationData verifyPaymentRequestPki(Protos.PaymentRequest paymentRequest, KeyStore trustStore)
             throws PaymentProtocolException {
@@ -275,7 +246,7 @@ public class PaymentProtocol {
     }
 
     /**
-     * Information about the X509 signature's issuer and subject.
+     * Information about the X.509 signature's issuer and subject.
      */
     public static class PkiVerificationData {
         /** Display name of the payment requestor, could be a domain name, email address, legal name, etc */
@@ -303,16 +274,11 @@ public class PaymentProtocol {
     /**
      * Create a payment message with one standard pay to address output.
      * 
-     * @param transactions
-     *            transactions to include with the payment message
-     * @param refundAmount
-     *            amount of coins to refund, or null
-     * @param refundAddress
-     *            address to refund coins to
-     * @param memo
-     *            arbitrary, user readable memo, or null if none
-     * @param merchantData
-     *            arbitrary merchant data, or null if none
+     * @param transactions one or more transactions that satisfy the requested outputs.
+     * @param refundAmount amount of coins to request as a refund, or null if no refund.
+     * @param refundAddress address to refund coins to
+     * @param memo arbitrary, user readable memo, or null if none
+     * @param merchantData arbitrary merchant data, or null if none
      * @return created payment message
      */
     public static Protos.Payment createPaymentMessage(List<Transaction> transactions,
@@ -329,16 +295,12 @@ public class PaymentProtocol {
     }
 
     /**
-     * Create a payment message.
+     * Create a payment message. This wraps up transaction data along with anything else useful for making a payment.
      * 
-     * @param transactions
-     *            transactions to include with the payment message
-     * @param refundOutputs
-     *            list of outputs to refund coins to, or null
-     * @param memo
-     *            arbitrary, user readable memo, or null if none
-     * @param merchantData
-     *            arbitrary merchant data, or null if none
+     * @param transactions transactions to include with the payment message
+     * @param refundOutputs list of outputs to refund coins to, or null
+     * @param memo arbitrary, user readable memo, or null if none
+     * @param merchantData arbitrary merchant data, or null if none
      * @return created payment message
      */
     public static Protos.Payment createPaymentMessage(List<Transaction> transactions,
@@ -362,10 +324,8 @@ public class PaymentProtocol {
     /**
      * Parse transactions from payment message.
      * 
-     * @param params
-     *            network parameters (needed for transaction deserialization)
-     * @param paymentMessage
-     *            payment message to parse
+     * @param params network parameters (needed for transaction deserialization)
+     * @param paymentMessage payment message to parse
      * @return list of transactions
      */
     public static List<Transaction> parseTransactionsFromPaymentMessage(NetworkParameters params,
@@ -399,10 +359,8 @@ public class PaymentProtocol {
     /**
      * Create a payment ack.
      * 
-     * @param paymentMessage
-     *            payment message to send with the ack
-     * @param memo
-     *            arbitrary, user readable memo, or null if none
+     * @param paymentMessage payment message to send with the ack
+     * @param memo arbitrary, user readable memo, or null if none
      * @return created payment ack
      */
     public static Protos.PaymentACK createPaymentAck(Protos.Payment paymentMessage, @Nullable String memo) {
@@ -414,11 +372,7 @@ public class PaymentProtocol {
     }
 
     /**
-     * Parse payment ack.
-     * 
-     * @param payment
-     *            ack to parse
-     * @return instance of {@link Ack}
+     * Parse payment ack into an object.
      */
     public static Ack parsePaymentAck(Protos.PaymentACK paymentAck) {
         final String memo = paymentAck.hasMemo() ? paymentAck.getMemo() : null;
@@ -429,10 +383,8 @@ public class PaymentProtocol {
      * Create a standard pay to address output for usage in {@link #createPaymentRequest} and
      * {@link #createPaymentMessage}.
      * 
-     * @param amount
-     *            amount to pay, or null
-     * @param address
-     *            address to pay to
+     * @param amount amount to pay, or null
+     * @param address address to pay to
      * @return output
      */
     public static Protos.Output createPayToAddressOutput(@Nullable BigInteger amount, Address address) {

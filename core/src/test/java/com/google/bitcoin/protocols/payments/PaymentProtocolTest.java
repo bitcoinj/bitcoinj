@@ -74,7 +74,7 @@ public class PaymentProtocolTest {
                 .loadKeyStore("JKS", "password", getClass().getResourceAsStream("test-valid-cert"));
         PrivateKey privateKey = (PrivateKey) keyStore.getKey("test-valid", "password".toCharArray());
         X509Certificate clientCert = (X509Certificate) keyStore.getCertificate("test-valid");
-        PaymentProtocol.signPaymentRequestPki(paymentRequest, new X509Certificate[] { clientCert }, privateKey);
+        PaymentProtocol.signPaymentRequest(paymentRequest, new X509Certificate[]{clientCert}, privateKey);
 
         // Verify
         PkiVerificationData verificationData = PaymentProtocol.verifyPaymentRequestPki(paymentRequest.build(), caStore);
@@ -91,7 +91,7 @@ public class PaymentProtocolTest {
                 getClass().getResourceAsStream("test-expired-cert"));
         PrivateKey privateKey = (PrivateKey) keyStore.getKey("test-expired", "password".toCharArray());
         X509Certificate clientCert = (X509Certificate) keyStore.getCertificate("test-expired");
-        PaymentProtocol.signPaymentRequestPki(paymentRequest, new X509Certificate[] { clientCert }, privateKey);
+        PaymentProtocol.signPaymentRequest(paymentRequest, new X509Certificate[]{clientCert}, privateKey);
 
         // Verify
         PaymentProtocol.verifyPaymentRequestPki(paymentRequest.build(), caStore);

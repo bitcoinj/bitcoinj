@@ -80,12 +80,13 @@ public class PaymentSession {
     @Nullable public final PkiVerificationData pkiVerificationData;
 
     /**
-     * Returns a future that will be notified with a PaymentSession object after it is fetched using the provided uri.
+     * <p>Returns a future that will be notified with a PaymentSession object after it is fetched using the provided uri.
      * uri is a BIP-72-style BitcoinURI object that specifies where the {@link Protos.PaymentRequest} object may
-     * be fetched in the r= parameter.
-     * If the payment request object specifies a PKI method, then the system trust store will
-     * be used to verify the signature provided by the payment request. An exception is thrown by the future if the
-     * signature cannot be verified.
+     * be fetched in the r= parameter.</p>
+     *
+     * <p>If the payment request object specifies a PKI method, then the system trust store will be used to verify
+     * the signature provided by the payment request. An exception is thrown by the future if the signature cannot
+     * be verified.</p>
      */
     public static ListenableFuture<PaymentSession> createFromBitcoinUri(final BitcoinURI uri) throws PaymentProtocolException {
         return createFromBitcoinUri(uri, true, null);
