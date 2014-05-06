@@ -173,7 +173,7 @@ public abstract class AbstractBlockChain {
      * Adds a generic {@link BlockChainListener} listener to the chain.
      */
     public void addListener(BlockChainListener listener) {
-        addListener(listener, Threading.SAME_THREAD);
+        addListener(listener, Threading.USER_THREAD);
     }
 
     /**
