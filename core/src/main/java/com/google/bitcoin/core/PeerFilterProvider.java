@@ -16,6 +16,8 @@
 
 package com.google.bitcoin.core;
 
+import java.util.concurrent.locks.Lock;
+
 /**
  * An interface which provides the information required to properly filter data downloaded from Peers.
  * Note that an implementer is responsible for calling {@link PeerGroup#recalculateFastCatchupAndFilter(boolean)} whenever a
@@ -43,4 +45,15 @@ public interface PeerFilterProvider {
 
     /** Whether this filter provider depends on the server updating the filter on all matches */
     boolean isRequiringUpdateAllBloomFilter();
+
+    /**
+     * Returns an object that will be locked before any other methods are called and unlocked afterwards. You must
+     * provide one of these because the results from calling the above methods must be consistent. Otherwise it's
+     * possible for the {@link com.google.bitcoin.net.FilterMerger} to request the counts of a bunch of providers
+     * with {@link #getBloomFilterElementCount()}, create a filter of the right size, call {@link #getBloomFilter(int, double, long)}
+     * and then the filter provider discovers it's been mutated in the mean time and now has a different number of
+     * elements. For instance, a Wallet that has keys added to it whilst a filter recalc is in progress could cause
+     * experience this race.
+     */
+    public Lock getLock();
 }

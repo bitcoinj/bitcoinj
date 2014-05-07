@@ -3834,4 +3834,17 @@ public class Wallet implements Serializable, BlockChainListener, PeerFilterProvi
         }.start();
         return rekeyTx;
     }
+
+    /**
+     * Returns the wallet lock under which most operations happen. This is here to satisfy the
+     * {@link com.google.bitcoin.core.PeerFilterProvider} interface and generally should not be used directly by apps.
+     * In particular, do <b>not</b> hold this lock if you're display a send confirm screen to the user or for any other
+     * long length of time, as it may cause processing holdups elsewhere. Instead, for the "confirm payment screen"
+     * use case you should complete a candidate transaction, present it to the user (e.g. for fee purposes) and then
+     * when they confirm - which may be quite some time later - recalculate the transaction and check if it's the same.
+     * If not, redisplay the confirm window and try again.
+     */
+    public ReentrantLock getLock() {
+        return lock;
+    }
 }
