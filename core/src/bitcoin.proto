@@ -239,6 +239,16 @@ message Extension {
   required bool mandatory = 3;
 }
 
+/**
+ * A simple key->value mapping that has no interpreted content at all. A bit like the extensions mechanism except
+ * an extension is keyed by the ID of a piece of code that's loaded with the given data, and has the concept of
+ * being mandatory if that code isn't found. Whereas this is just a blind key/value store.
+ */
+message Tag {
+    required string tag = 1;
+    required bytes data = 2;
+}
+
 /** A bitcoin wallet */
 message Wallet {
   /**
@@ -289,5 +299,7 @@ message Wallet {
   // can be used to recover a compromised wallet, or just as part of preventative defence-in-depth measures.
   optional uint64 key_rotation_time = 13;
 
-  // Next tag: 16
+  repeated Tag tags = 16;
+
+  // Next tag: 17
 }

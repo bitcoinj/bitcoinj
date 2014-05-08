@@ -10534,6 +10534,591 @@ public final class Protos {
     // @@protoc_insertion_point(class_scope:wallet.Extension)
   }
 
+  public interface TagOrBuilder
+      extends com.google.protobuf.MessageOrBuilder {
+
+    // required string tag = 1;
+    /**
+     * <code>required string tag = 1;</code>
+     */
+    boolean hasTag();
+    /**
+     * <code>required string tag = 1;</code>
+     */
+    java.lang.String getTag();
+    /**
+     * <code>required string tag = 1;</code>
+     */
+    com.google.protobuf.ByteString
+        getTagBytes();
+
+    // required bytes data = 2;
+    /**
+     * <code>required bytes data = 2;</code>
+     */
+    boolean hasData();
+    /**
+     * <code>required bytes data = 2;</code>
+     */
+    com.google.protobuf.ByteString getData();
+  }
+  /**
+   * Protobuf type {@code wallet.Tag}
+   *
+   * <pre>
+   **
+   * A simple key-&gt;value mapping that has no interpreted content at all. A bit like the extensions mechanism except
+   * an extension is keyed by the ID of a piece of code that's loaded with the given data, and has the concept of
+   * being mandatory if that code isn't found. Whereas this is just a blind key/value store.
+   * </pre>
+   */
+  public static final class Tag extends
+      com.google.protobuf.GeneratedMessage
+      implements TagOrBuilder {
+    // Use Tag.newBuilder() to construct.
+    private Tag(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+      super(builder);
+      this.unknownFields = builder.getUnknownFields();
+    }
+    private Tag(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
+
+    private static final Tag defaultInstance;
+    public static Tag getDefaultInstance() {
+      return defaultInstance;
+    }
+
+    public Tag getDefaultInstanceForType() {
+      return defaultInstance;
+    }
+
+    private final com.google.protobuf.UnknownFieldSet unknownFields;
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+        getUnknownFields() {
+      return this.unknownFields;
+    }
+    private Tag(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      initFields();
+      int mutable_bitField0_ = 0;
+      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+          com.google.protobuf.UnknownFieldSet.newBuilder();
+      try {
+        boolean done = false;
+        while (!done) {
+          int tag = input.readTag();
+          switch (tag) {
+            case 0:
+              done = true;
+              break;
+            default: {
+              if (!parseUnknownField(input, unknownFields,
+                                     extensionRegistry, tag)) {
+                done = true;
+              }
+              break;
+            }
+            case 10: {
+              bitField0_ |= 0x00000001;
+              tag_ = input.readBytes();
+              break;
+            }
+            case 18: {
+              bitField0_ |= 0x00000002;
+              data_ = input.readBytes();
+              break;
+            }
+          }
+        }
+      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+        throw e.setUnfinishedMessage(this);
+      } catch (java.io.IOException e) {
+        throw new com.google.protobuf.InvalidProtocolBufferException(
+            e.getMessage()).setUnfinishedMessage(this);
+      } finally {
+        this.unknownFields = unknownFields.build();
+        makeExtensionsImmutable();
+      }
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return org.bitcoinj.wallet.Protos.internal_static_wallet_Tag_descriptor;
+    }
+
+    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return org.bitcoinj.wallet.Protos.internal_static_wallet_Tag_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              org.bitcoinj.wallet.Protos.Tag.class, org.bitcoinj.wallet.Protos.Tag.Builder.class);
+    }
+
+    public static com.google.protobuf.Parser<Tag> PARSER =
+        new com.google.protobuf.AbstractParser<Tag>() {
+      public Tag parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return new Tag(input, extensionRegistry);
+      }
+    };
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<Tag> getParserForType() {
+      return PARSER;
+    }
+
+    private int bitField0_;
+    // required string tag = 1;
+    public static final int TAG_FIELD_NUMBER = 1;
+    private java.lang.Object tag_;
+    /**
+     * <code>required string tag = 1;</code>
+     */
+    public boolean hasTag() {
+      return ((bitField0_ & 0x00000001) == 0x00000001);
+    }
+    /**
+     * <code>required string tag = 1;</code>
+     */
+    public java.lang.String getTag() {
+      java.lang.Object ref = tag_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        if (bs.isValidUtf8()) {
+          tag_ = s;
+        }
+        return s;
+      }
+    }
+    /**
+     * <code>required string tag = 1;</code>
+     */
+    public com.google.protobuf.ByteString
+        getTagBytes() {
+      java.lang.Object ref = tag_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        tag_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    // required bytes data = 2;
+    public static final int DATA_FIELD_NUMBER = 2;
+    private com.google.protobuf.ByteString data_;
+    /**
+     * <code>required bytes data = 2;</code>
+     */
+    public boolean hasData() {
+      return ((bitField0_ & 0x00000002) == 0x00000002);
+    }
+    /**
+     * <code>required bytes data = 2;</code>
+     */
+    public com.google.protobuf.ByteString getData() {
+      return data_;
+    }
+
+    private void initFields() {
+      tag_ = "";
+      data_ = com.google.protobuf.ByteString.EMPTY;
+    }
+    private byte memoizedIsInitialized = -1;
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized != -1) return isInitialized == 1;
+
+      if (!hasTag()) {
+        memoizedIsInitialized = 0;
+        return false;
+      }
+      if (!hasData()) {
+        memoizedIsInitialized = 0;
+        return false;
+      }
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      getSerializedSize();
+      if (((bitField0_ & 0x00000001) == 0x00000001)) {
+        output.writeBytes(1, getTagBytes());
+      }
+      if (((bitField0_ & 0x00000002) == 0x00000002)) {
+        output.writeBytes(2, data_);
+      }
+      getUnknownFields().writeTo(output);
+    }
+
+    private int memoizedSerializedSize = -1;
+    public int getSerializedSize() {
+      int size = memoizedSerializedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (((bitField0_ & 0x00000001) == 0x00000001)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBytesSize(1, getTagBytes());
+      }
+      if (((bitField0_ & 0x00000002) == 0x00000002)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBytesSize(2, data_);
+      }
+      size += getUnknownFields().getSerializedSize();
+      memoizedSerializedSize = size;
+      return size;
+    }
+
+    private static final long serialVersionUID = 0L;
+    @java.lang.Override
+    protected java.lang.Object writeReplace()
+        throws java.io.ObjectStreamException {
+      return super.writeReplace();
+    }
+
+    public static org.bitcoinj.wallet.Protos.Tag parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static org.bitcoinj.wallet.Protos.Tag parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static org.bitcoinj.wallet.Protos.Tag parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static org.bitcoinj.wallet.Protos.Tag parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static org.bitcoinj.wallet.Protos.Tag parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input);
+    }
+    public static org.bitcoinj.wallet.Protos.Tag parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input, extensionRegistry);
+    }
+    public static org.bitcoinj.wallet.Protos.Tag parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return PARSER.parseDelimitedFrom(input);
+    }
+    public static org.bitcoinj.wallet.Protos.Tag parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return PARSER.parseDelimitedFrom(input, extensionRegistry);
+    }
+    public static org.bitcoinj.wallet.Protos.Tag parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input);
+    }
+    public static org.bitcoinj.wallet.Protos.Tag parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input, extensionRegistry);
+    }
+
+    public static Builder newBuilder() { return Builder.create(); }
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder(org.bitcoinj.wallet.Protos.Tag prototype) {
+      return newBuilder().mergeFrom(prototype);
+    }
+    public Builder toBuilder() { return newBuilder(this); }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code wallet.Tag}
+     *
+     * <pre>
+     **
+     * A simple key-&gt;value mapping that has no interpreted content at all. A bit like the extensions mechanism except
+     * an extension is keyed by the ID of a piece of code that's loaded with the given data, and has the concept of
+     * being mandatory if that code isn't found. Whereas this is just a blind key/value store.
+     * </pre>
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessage.Builder<Builder>
+       implements org.bitcoinj.wallet.Protos.TagOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return org.bitcoinj.wallet.Protos.internal_static_wallet_Tag_descriptor;
+      }
+
+      protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return org.bitcoinj.wallet.Protos.internal_static_wallet_Tag_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                org.bitcoinj.wallet.Protos.Tag.class, org.bitcoinj.wallet.Protos.Tag.Builder.class);
+      }
+
+      // Construct using org.bitcoinj.wallet.Protos.Tag.newBuilder()
+      private Builder() {
+        maybeForceBuilderInitialization();
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        super(parent);
+        maybeForceBuilderInitialization();
+      }
+      private void maybeForceBuilderInitialization() {
+        if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+        }
+      }
+      private static Builder create() {
+        return new Builder();
+      }
+
+      public Builder clear() {
+        super.clear();
+        tag_ = "";
+        bitField0_ = (bitField0_ & ~0x00000001);
+        data_ = com.google.protobuf.ByteString.EMPTY;
+        bitField0_ = (bitField0_ & ~0x00000002);
+        return this;
+      }
+
+      public Builder clone() {
+        return create().mergeFrom(buildPartial());
+      }
+
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return org.bitcoinj.wallet.Protos.internal_static_wallet_Tag_descriptor;
+      }
+
+      public org.bitcoinj.wallet.Protos.Tag getDefaultInstanceForType() {
+        return org.bitcoinj.wallet.Protos.Tag.getDefaultInstance();
+      }
+
+      public org.bitcoinj.wallet.Protos.Tag build() {
+        org.bitcoinj.wallet.Protos.Tag result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      public org.bitcoinj.wallet.Protos.Tag buildPartial() {
+        org.bitcoinj.wallet.Protos.Tag result = new org.bitcoinj.wallet.Protos.Tag(this);
+        int from_bitField0_ = bitField0_;
+        int to_bitField0_ = 0;
+        if (((from_bitField0_ & 0x00000001) == 0x00000001)) {
+          to_bitField0_ |= 0x00000001;
+        }
+        result.tag_ = tag_;
+        if (((from_bitField0_ & 0x00000002) == 0x00000002)) {
+          to_bitField0_ |= 0x00000002;
+        }
+        result.data_ = data_;
+        result.bitField0_ = to_bitField0_;
+        onBuilt();
+        return result;
+      }
+
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof org.bitcoinj.wallet.Protos.Tag) {
+          return mergeFrom((org.bitcoinj.wallet.Protos.Tag)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(org.bitcoinj.wallet.Protos.Tag other) {
+        if (other == org.bitcoinj.wallet.Protos.Tag.getDefaultInstance()) return this;
+        if (other.hasTag()) {
+          bitField0_ |= 0x00000001;
+          tag_ = other.tag_;
+          onChanged();
+        }
+        if (other.hasData()) {
+          setData(other.getData());
+        }
+        this.mergeUnknownFields(other.getUnknownFields());
+        return this;
+      }
+
+      public final boolean isInitialized() {
+        if (!hasTag()) {
+          
+          return false;
+        }
+        if (!hasData()) {
+          
+          return false;
+        }
+        return true;
+      }
+
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        org.bitcoinj.wallet.Protos.Tag parsedMessage = null;
+        try {
+          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          parsedMessage = (org.bitcoinj.wallet.Protos.Tag) e.getUnfinishedMessage();
+          throw e;
+        } finally {
+          if (parsedMessage != null) {
+            mergeFrom(parsedMessage);
+          }
+        }
+        return this;
+      }
+      private int bitField0_;
+
+      // required string tag = 1;
+      private java.lang.Object tag_ = "";
+      /**
+       * <code>required string tag = 1;</code>
+       */
+      public boolean hasTag() {
+        return ((bitField0_ & 0x00000001) == 0x00000001);
+      }
+      /**
+       * <code>required string tag = 1;</code>
+       */
+      public java.lang.String getTag() {
+        java.lang.Object ref = tag_;
+        if (!(ref instanceof java.lang.String)) {
+          java.lang.String s = ((com.google.protobuf.ByteString) ref)
+              .toStringUtf8();
+          tag_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>required string tag = 1;</code>
+       */
+      public com.google.protobuf.ByteString
+          getTagBytes() {
+        java.lang.Object ref = tag_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          tag_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>required string tag = 1;</code>
+       */
+      public Builder setTag(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000001;
+        tag_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>required string tag = 1;</code>
+       */
+      public Builder clearTag() {
+        bitField0_ = (bitField0_ & ~0x00000001);
+        tag_ = getDefaultInstance().getTag();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>required string tag = 1;</code>
+       */
+      public Builder setTagBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000001;
+        tag_ = value;
+        onChanged();
+        return this;
+      }
+
+      // required bytes data = 2;
+      private com.google.protobuf.ByteString data_ = com.google.protobuf.ByteString.EMPTY;
+      /**
+       * <code>required bytes data = 2;</code>
+       */
+      public boolean hasData() {
+        return ((bitField0_ & 0x00000002) == 0x00000002);
+      }
+      /**
+       * <code>required bytes data = 2;</code>
+       */
+      public com.google.protobuf.ByteString getData() {
+        return data_;
+      }
+      /**
+       * <code>required bytes data = 2;</code>
+       */
+      public Builder setData(com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000002;
+        data_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>required bytes data = 2;</code>
+       */
+      public Builder clearData() {
+        bitField0_ = (bitField0_ & ~0x00000002);
+        data_ = getDefaultInstance().getData();
+        onChanged();
+        return this;
+      }
+
+      // @@protoc_insertion_point(builder_scope:wallet.Tag)
+    }
+
+    static {
+      defaultInstance = new Tag(true);
+      defaultInstance.initFields();
+    }
+
+    // @@protoc_insertion_point(class_scope:wallet.Tag)
+  }
+
   public interface WalletOrBuilder
       extends com.google.protobuf.MessageOrBuilder {
 
@@ -10802,6 +11387,31 @@ public final class Protos {
      * </pre>
      */
     long getKeyRotationTime();
+
+    // repeated .wallet.Tag tags = 16;
+    /**
+     * <code>repeated .wallet.Tag tags = 16;</code>
+     */
+    java.util.List<org.bitcoinj.wallet.Protos.Tag> 
+        getTagsList();
+    /**
+     * <code>repeated .wallet.Tag tags = 16;</code>
+     */
+    org.bitcoinj.wallet.Protos.Tag getTags(int index);
+    /**
+     * <code>repeated .wallet.Tag tags = 16;</code>
+     */
+    int getTagsCount();
+    /**
+     * <code>repeated .wallet.Tag tags = 16;</code>
+     */
+    java.util.List<? extends org.bitcoinj.wallet.Protos.TagOrBuilder> 
+        getTagsOrBuilderList();
+    /**
+     * <code>repeated .wallet.Tag tags = 16;</code>
+     */
+    org.bitcoinj.wallet.Protos.TagOrBuilder getTagsOrBuilder(
+        int index);
   }
   /**
    * Protobuf type {@code wallet.Wallet}
@@ -10949,6 +11559,14 @@ public final class Protos {
               watchedScript_.add(input.readMessage(org.bitcoinj.wallet.Protos.Script.PARSER, extensionRegistry));
               break;
             }
+            case 130: {
+              if (!((mutable_bitField0_ & 0x00002000) == 0x00002000)) {
+                tags_ = new java.util.ArrayList<org.bitcoinj.wallet.Protos.Tag>();
+                mutable_bitField0_ |= 0x00002000;
+              }
+              tags_.add(input.readMessage(org.bitcoinj.wallet.Protos.Tag.PARSER, extensionRegistry));
+              break;
+            }
           }
         }
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
@@ -10968,6 +11586,9 @@ public final class Protos {
         }
         if (((mutable_bitField0_ & 0x00000040) == 0x00000040)) {
           watchedScript_ = java.util.Collections.unmodifiableList(watchedScript_);
+        }
+        if (((mutable_bitField0_ & 0x00002000) == 0x00002000)) {
+          tags_ = java.util.Collections.unmodifiableList(tags_);
         }
         this.unknownFields = unknownFields.build();
         makeExtensionsImmutable();
@@ -11518,6 +12139,42 @@ public final class Protos {
       return keyRotationTime_;
     }
 
+    // repeated .wallet.Tag tags = 16;
+    public static final int TAGS_FIELD_NUMBER = 16;
+    private java.util.List<org.bitcoinj.wallet.Protos.Tag> tags_;
+    /**
+     * <code>repeated .wallet.Tag tags = 16;</code>
+     */
+    public java.util.List<org.bitcoinj.wallet.Protos.Tag> getTagsList() {
+      return tags_;
+    }
+    /**
+     * <code>repeated .wallet.Tag tags = 16;</code>
+     */
+    public java.util.List<? extends org.bitcoinj.wallet.Protos.TagOrBuilder> 
+        getTagsOrBuilderList() {
+      return tags_;
+    }
+    /**
+     * <code>repeated .wallet.Tag tags = 16;</code>
+     */
+    public int getTagsCount() {
+      return tags_.size();
+    }
+    /**
+     * <code>repeated .wallet.Tag tags = 16;</code>
+     */
+    public org.bitcoinj.wallet.Protos.Tag getTags(int index) {
+      return tags_.get(index);
+    }
+    /**
+     * <code>repeated .wallet.Tag tags = 16;</code>
+     */
+    public org.bitcoinj.wallet.Protos.TagOrBuilder getTagsOrBuilder(
+        int index) {
+      return tags_.get(index);
+    }
+
     private void initFields() {
       networkIdentifier_ = "";
       lastSeenBlockHash_ = com.google.protobuf.ByteString.EMPTY;
@@ -11532,6 +12189,7 @@ public final class Protos {
       extension_ = java.util.Collections.emptyList();
       description_ = "";
       keyRotationTime_ = 0L;
+      tags_ = java.util.Collections.emptyList();
     }
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
@@ -11568,6 +12226,12 @@ public final class Protos {
       }
       for (int i = 0; i < getExtensionCount(); i++) {
         if (!getExtension(i).isInitialized()) {
+          memoizedIsInitialized = 0;
+          return false;
+        }
+      }
+      for (int i = 0; i < getTagsCount(); i++) {
+        if (!getTags(i).isInitialized()) {
           memoizedIsInitialized = 0;
           return false;
         }
@@ -11617,6 +12281,9 @@ public final class Protos {
       }
       for (int i = 0; i < watchedScript_.size(); i++) {
         output.writeMessage(15, watchedScript_.get(i));
+      }
+      for (int i = 0; i < tags_.size(); i++) {
+        output.writeMessage(16, tags_.get(i));
       }
       getUnknownFields().writeTo(output);
     }
@@ -11678,6 +12345,10 @@ public final class Protos {
       for (int i = 0; i < watchedScript_.size(); i++) {
         size += com.google.protobuf.CodedOutputStream
           .computeMessageSize(15, watchedScript_.get(i));
+      }
+      for (int i = 0; i < tags_.size(); i++) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeMessageSize(16, tags_.get(i));
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSerializedSize = size;
@@ -11796,6 +12467,7 @@ public final class Protos {
           getWatchedScriptFieldBuilder();
           getEncryptionParametersFieldBuilder();
           getExtensionFieldBuilder();
+          getTagsFieldBuilder();
         }
       }
       private static Builder create() {
@@ -11850,6 +12522,12 @@ public final class Protos {
         bitField0_ = (bitField0_ & ~0x00000800);
         keyRotationTime_ = 0L;
         bitField0_ = (bitField0_ & ~0x00001000);
+        if (tagsBuilder_ == null) {
+          tags_ = java.util.Collections.emptyList();
+          bitField0_ = (bitField0_ & ~0x00002000);
+        } else {
+          tagsBuilder_.clear();
+        }
         return this;
       }
 
@@ -11954,6 +12632,15 @@ public final class Protos {
           to_bitField0_ |= 0x00000100;
         }
         result.keyRotationTime_ = keyRotationTime_;
+        if (tagsBuilder_ == null) {
+          if (((bitField0_ & 0x00002000) == 0x00002000)) {
+            tags_ = java.util.Collections.unmodifiableList(tags_);
+            bitField0_ = (bitField0_ & ~0x00002000);
+          }
+          result.tags_ = tags_;
+        } else {
+          result.tags_ = tagsBuilder_.build();
+        }
         result.bitField0_ = to_bitField0_;
         onBuilt();
         return result;
@@ -12105,6 +12792,32 @@ public final class Protos {
         if (other.hasKeyRotationTime()) {
           setKeyRotationTime(other.getKeyRotationTime());
         }
+        if (tagsBuilder_ == null) {
+          if (!other.tags_.isEmpty()) {
+            if (tags_.isEmpty()) {
+              tags_ = other.tags_;
+              bitField0_ = (bitField0_ & ~0x00002000);
+            } else {
+              ensureTagsIsMutable();
+              tags_.addAll(other.tags_);
+            }
+            onChanged();
+          }
+        } else {
+          if (!other.tags_.isEmpty()) {
+            if (tagsBuilder_.isEmpty()) {
+              tagsBuilder_.dispose();
+              tagsBuilder_ = null;
+              tags_ = other.tags_;
+              bitField0_ = (bitField0_ & ~0x00002000);
+              tagsBuilder_ = 
+                com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders ?
+                   getTagsFieldBuilder() : null;
+            } else {
+              tagsBuilder_.addAllMessages(other.tags_);
+            }
+          }
+        }
         this.mergeUnknownFields(other.getUnknownFields());
         return this;
       }
@@ -12140,6 +12853,12 @@ public final class Protos {
         }
         for (int i = 0; i < getExtensionCount(); i++) {
           if (!getExtension(i).isInitialized()) {
+            
+            return false;
+          }
+        }
+        for (int i = 0; i < getTagsCount(); i++) {
+          if (!getTags(i).isInitialized()) {
             
             return false;
           }
@@ -13719,6 +14438,246 @@ public final class Protos {
         return this;
       }
 
+      // repeated .wallet.Tag tags = 16;
+      private java.util.List<org.bitcoinj.wallet.Protos.Tag> tags_ =
+        java.util.Collections.emptyList();
+      private void ensureTagsIsMutable() {
+        if (!((bitField0_ & 0x00002000) == 0x00002000)) {
+          tags_ = new java.util.ArrayList<org.bitcoinj.wallet.Protos.Tag>(tags_);
+          bitField0_ |= 0x00002000;
+         }
+      }
+
+      private com.google.protobuf.RepeatedFieldBuilder<
+          org.bitcoinj.wallet.Protos.Tag, org.bitcoinj.wallet.Protos.Tag.Builder, org.bitcoinj.wallet.Protos.TagOrBuilder> tagsBuilder_;
+
+      /**
+       * <code>repeated .wallet.Tag tags = 16;</code>
+       */
+      public java.util.List<org.bitcoinj.wallet.Protos.Tag> getTagsList() {
+        if (tagsBuilder_ == null) {
+          return java.util.Collections.unmodifiableList(tags_);
+        } else {
+          return tagsBuilder_.getMessageList();
+        }
+      }
+      /**
+       * <code>repeated .wallet.Tag tags = 16;</code>
+       */
+      public int getTagsCount() {
+        if (tagsBuilder_ == null) {
+          return tags_.size();
+        } else {
+          return tagsBuilder_.getCount();
+        }
+      }
+      /**
+       * <code>repeated .wallet.Tag tags = 16;</code>
+       */
+      public org.bitcoinj.wallet.Protos.Tag getTags(int index) {
+        if (tagsBuilder_ == null) {
+          return tags_.get(index);
+        } else {
+          return tagsBuilder_.getMessage(index);
+        }
+      }
+      /**
+       * <code>repeated .wallet.Tag tags = 16;</code>
+       */
+      public Builder setTags(
+          int index, org.bitcoinj.wallet.Protos.Tag value) {
+        if (tagsBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          ensureTagsIsMutable();
+          tags_.set(index, value);
+          onChanged();
+        } else {
+          tagsBuilder_.setMessage(index, value);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .wallet.Tag tags = 16;</code>
+       */
+      public Builder setTags(
+          int index, org.bitcoinj.wallet.Protos.Tag.Builder builderForValue) {
+        if (tagsBuilder_ == null) {
+          ensureTagsIsMutable();
+          tags_.set(index, builderForValue.build());
+          onChanged();
+        } else {
+          tagsBuilder_.setMessage(index, builderForValue.build());
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .wallet.Tag tags = 16;</code>
+       */
+      public Builder addTags(org.bitcoinj.wallet.Protos.Tag value) {
+        if (tagsBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          ensureTagsIsMutable();
+          tags_.add(value);
+          onChanged();
+        } else {
+          tagsBuilder_.addMessage(value);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .wallet.Tag tags = 16;</code>
+       */
+      public Builder addTags(
+          int index, org.bitcoinj.wallet.Protos.Tag value) {
+        if (tagsBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          ensureTagsIsMutable();
+          tags_.add(index, value);
+          onChanged();
+        } else {
+          tagsBuilder_.addMessage(index, value);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .wallet.Tag tags = 16;</code>
+       */
+      public Builder addTags(
+          org.bitcoinj.wallet.Protos.Tag.Builder builderForValue) {
+        if (tagsBuilder_ == null) {
+          ensureTagsIsMutable();
+          tags_.add(builderForValue.build());
+          onChanged();
+        } else {
+          tagsBuilder_.addMessage(builderForValue.build());
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .wallet.Tag tags = 16;</code>
+       */
+      public Builder addTags(
+          int index, org.bitcoinj.wallet.Protos.Tag.Builder builderForValue) {
+        if (tagsBuilder_ == null) {
+          ensureTagsIsMutable();
+          tags_.add(index, builderForValue.build());
+          onChanged();
+        } else {
+          tagsBuilder_.addMessage(index, builderForValue.build());
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .wallet.Tag tags = 16;</code>
+       */
+      public Builder addAllTags(
+          java.lang.Iterable<? extends org.bitcoinj.wallet.Protos.Tag> values) {
+        if (tagsBuilder_ == null) {
+          ensureTagsIsMutable();
+          super.addAll(values, tags_);
+          onChanged();
+        } else {
+          tagsBuilder_.addAllMessages(values);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .wallet.Tag tags = 16;</code>
+       */
+      public Builder clearTags() {
+        if (tagsBuilder_ == null) {
+          tags_ = java.util.Collections.emptyList();
+          bitField0_ = (bitField0_ & ~0x00002000);
+          onChanged();
+        } else {
+          tagsBuilder_.clear();
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .wallet.Tag tags = 16;</code>
+       */
+      public Builder removeTags(int index) {
+        if (tagsBuilder_ == null) {
+          ensureTagsIsMutable();
+          tags_.remove(index);
+          onChanged();
+        } else {
+          tagsBuilder_.remove(index);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .wallet.Tag tags = 16;</code>
+       */
+      public org.bitcoinj.wallet.Protos.Tag.Builder getTagsBuilder(
+          int index) {
+        return getTagsFieldBuilder().getBuilder(index);
+      }
+      /**
+       * <code>repeated .wallet.Tag tags = 16;</code>
+       */
+      public org.bitcoinj.wallet.Protos.TagOrBuilder getTagsOrBuilder(
+          int index) {
+        if (tagsBuilder_ == null) {
+          return tags_.get(index);  } else {
+          return tagsBuilder_.getMessageOrBuilder(index);
+        }
+      }
+      /**
+       * <code>repeated .wallet.Tag tags = 16;</code>
+       */
+      public java.util.List<? extends org.bitcoinj.wallet.Protos.TagOrBuilder> 
+           getTagsOrBuilderList() {
+        if (tagsBuilder_ != null) {
+          return tagsBuilder_.getMessageOrBuilderList();
+        } else {
+          return java.util.Collections.unmodifiableList(tags_);
+        }
+      }
+      /**
+       * <code>repeated .wallet.Tag tags = 16;</code>
+       */
+      public org.bitcoinj.wallet.Protos.Tag.Builder addTagsBuilder() {
+        return getTagsFieldBuilder().addBuilder(
+            org.bitcoinj.wallet.Protos.Tag.getDefaultInstance());
+      }
+      /**
+       * <code>repeated .wallet.Tag tags = 16;</code>
+       */
+      public org.bitcoinj.wallet.Protos.Tag.Builder addTagsBuilder(
+          int index) {
+        return getTagsFieldBuilder().addBuilder(
+            index, org.bitcoinj.wallet.Protos.Tag.getDefaultInstance());
+      }
+      /**
+       * <code>repeated .wallet.Tag tags = 16;</code>
+       */
+      public java.util.List<org.bitcoinj.wallet.Protos.Tag.Builder> 
+           getTagsBuilderList() {
+        return getTagsFieldBuilder().getBuilderList();
+      }
+      private com.google.protobuf.RepeatedFieldBuilder<
+          org.bitcoinj.wallet.Protos.Tag, org.bitcoinj.wallet.Protos.Tag.Builder, org.bitcoinj.wallet.Protos.TagOrBuilder> 
+          getTagsFieldBuilder() {
+        if (tagsBuilder_ == null) {
+          tagsBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
+              org.bitcoinj.wallet.Protos.Tag, org.bitcoinj.wallet.Protos.Tag.Builder, org.bitcoinj.wallet.Protos.TagOrBuilder>(
+                  tags_,
+                  ((bitField0_ & 0x00002000) == 0x00002000),
+                  getParentForChildren(),
+                  isClean());
+          tags_ = null;
+        }
+        return tagsBuilder_;
+      }
+
       // @@protoc_insertion_point(builder_scope:wallet.Wallet)
     }
 
@@ -13781,6 +14740,11 @@ public final class Protos {
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_wallet_Extension_fieldAccessorTable;
   private static com.google.protobuf.Descriptors.Descriptor
+    internal_static_wallet_Tag_descriptor;
+  private static
+    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+      internal_static_wallet_Tag_fieldAccessorTable;
+  private static com.google.protobuf.Descriptors.Descriptor
     internal_static_wallet_Wallet_descriptor;
   private static
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
@@ -13839,21 +14803,23 @@ public final class Protos {
       "ION\020\002\"N\n\020ScryptParameters\022\014\n\004salt\030\001 \002(\014\022" +
       "\020\n\001n\030\002 \001(\003:\00516384\022\014\n\001r\030\003 \001(\005:\0018\022\014\n\001p\030\004 \001" +
       "(\005:\0011\"8\n\tExtension\022\n\n\002id\030\001 \002(\t\022\014\n\004data\030\002" +
-      " \002(\014\022\021\n\tmandatory\030\003 \002(\010\"\223\004\n\006Wallet\022\032\n\022ne" +
-      "twork_identifier\030\001 \002(\t\022\034\n\024last_seen_bloc" +
-      "k_hash\030\002 \001(\014\022\036\n\026last_seen_block_height\030\014" +
-      " \001(\r\022!\n\031last_seen_block_time_secs\030\016 \001(\003\022" +
-      "\030\n\003key\030\003 \003(\0132\013.wallet.Key\022(\n\013transaction",
-      "\030\004 \003(\0132\023.wallet.Transaction\022&\n\016watched_s" +
-      "cript\030\017 \003(\0132\016.wallet.Script\022C\n\017encryptio" +
-      "n_type\030\005 \001(\0162\035.wallet.Wallet.EncryptionT" +
-      "ype:\013UNENCRYPTED\0227\n\025encryption_parameter" +
-      "s\030\006 \001(\0132\030.wallet.ScryptParameters\022\017\n\007ver" +
-      "sion\030\007 \001(\005\022$\n\textension\030\n \003(\0132\021.wallet.E" +
-      "xtension\022\023\n\013description\030\013 \001(\t\022\031\n\021key_rot" +
-      "ation_time\030\r \001(\004\";\n\016EncryptionType\022\017\n\013UN" +
-      "ENCRYPTED\020\001\022\030\n\024ENCRYPTED_SCRYPT_AES\020\002B\035\n" +
-      "\023org.bitcoinj.walletB\006Protos"
+      " \002(\014\022\021\n\tmandatory\030\003 \002(\010\" \n\003Tag\022\013\n\003tag\030\001 " +
+      "\002(\t\022\014\n\004data\030\002 \002(\014\"\256\004\n\006Wallet\022\032\n\022network_" +
+      "identifier\030\001 \002(\t\022\034\n\024last_seen_block_hash" +
+      "\030\002 \001(\014\022\036\n\026last_seen_block_height\030\014 \001(\r\022!" +
+      "\n\031last_seen_block_time_secs\030\016 \001(\003\022\030\n\003key",
+      "\030\003 \003(\0132\013.wallet.Key\022(\n\013transaction\030\004 \003(\013" +
+      "2\023.wallet.Transaction\022&\n\016watched_script\030" +
+      "\017 \003(\0132\016.wallet.Script\022C\n\017encryption_type" +
+      "\030\005 \001(\0162\035.wallet.Wallet.EncryptionType:\013U" +
+      "NENCRYPTED\0227\n\025encryption_parameters\030\006 \001(" +
+      "\0132\030.wallet.ScryptParameters\022\017\n\007version\030\007" +
+      " \001(\005\022$\n\textension\030\n \003(\0132\021.wallet.Extensi" +
+      "on\022\023\n\013description\030\013 \001(\t\022\031\n\021key_rotation_" +
+      "time\030\r \001(\004\022\031\n\004tags\030\020 \003(\0132\013.wallet.Tag\";\n" +
+      "\016EncryptionType\022\017\n\013UNENCRYPTED\020\001\022\030\n\024ENCR",
+      "YPTED_SCRYPT_AES\020\002B\035\n\023org.bitcoinj.walle" +
+      "tB\006Protos"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
       new com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner() {
@@ -13920,12 +14886,18 @@ public final class Protos {
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_wallet_Extension_descriptor,
               new java.lang.String[] { "Id", "Data", "Mandatory", });
-          internal_static_wallet_Wallet_descriptor =
+          internal_static_wallet_Tag_descriptor =
             getDescriptor().getMessageTypes().get(10);
+          internal_static_wallet_Tag_fieldAccessorTable = new
+            com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+              internal_static_wallet_Tag_descriptor,
+              new java.lang.String[] { "Tag", "Data", });
+          internal_static_wallet_Wallet_descriptor =
+            getDescriptor().getMessageTypes().get(11);
           internal_static_wallet_Wallet_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_wallet_Wallet_descriptor,
-              new java.lang.String[] { "NetworkIdentifier", "LastSeenBlockHash", "LastSeenBlockHeight", "LastSeenBlockTimeSecs", "Key", "Transaction", "WatchedScript", "EncryptionType", "EncryptionParameters", "Version", "Extension", "Description", "KeyRotationTime", });
+              new java.lang.String[] { "NetworkIdentifier", "LastSeenBlockHash", "LastSeenBlockHeight", "LastSeenBlockTimeSecs", "Key", "Transaction", "WatchedScript", "EncryptionType", "EncryptionParameters", "Version", "Extension", "Description", "KeyRotationTime", "Tags", });
           return null;
         }
       };
