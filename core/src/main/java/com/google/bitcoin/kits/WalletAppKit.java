@@ -189,7 +189,6 @@ public class WalletAppKit extends AbstractIdleService {
                 throw new IOException("Could not create named directory.");
             }
         }
-        FileInputStream walletStream = null;
         try {
             File chainFile = new File(directory, filePrefix + ".spvchain");
             boolean chainFileExists = chainFile.exists();
@@ -216,12 +215,16 @@ public class WalletAppKit extends AbstractIdleService {
             if (this.userAgent != null)
                 vPeerGroup.setUserAgent(userAgent, version);
             if (vWalletFile.exists()) {
-                walletStream = new FileInputStream(vWalletFile);
-                vWallet = new Wallet(params);
-                addWalletExtensions(); // All extensions must be present before we deserialize
-                new WalletProtobufSerializer().readWallet(WalletProtobufSerializer.parseToProto(walletStream), vWallet);
-                if (shouldReplayWallet)
-                    vWallet.clearTransactions(0);
+                FileInputStream walletStream = new FileInputStream(vWalletFile);
+                try {
+                    vWallet = new Wallet(params);
+                    addWalletExtensions(); // All extensions must be present before we deserialize
+                    new WalletProtobufSerializer().readWallet(WalletProtobufSerializer.parseToProto(walletStream), vWallet);
+                    if (shouldReplayWallet)
+                        vWallet.clearTransactions(0);
+                } finally {
+                    walletStream.close();
+                }
             } else {
                 vWallet = new Wallet(params);
                 vWallet.addKey(new ECKey());
@@ -270,8 +273,6 @@ public class WalletAppKit extends AbstractIdleService {
             }
         } catch (BlockStoreException e) {
             throw new IOException(e);
-        } finally {
-            if (walletStream != null) walletStream.close();
         }
     }
 
