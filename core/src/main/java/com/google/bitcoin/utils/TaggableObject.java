@@ -31,6 +31,6 @@ public interface TaggableObject {
     /** Associates the given immutable byte array with the string tag. See the docs for TaggableObject to learn more. */
     void setTag(String tag, ByteString value);
 
-    /** Returns a copy of all the tags held by this wallet. */
+    /** Returns a copy of all the tags held by this object. */
     public Map<String, ByteString> getTags();
 }
