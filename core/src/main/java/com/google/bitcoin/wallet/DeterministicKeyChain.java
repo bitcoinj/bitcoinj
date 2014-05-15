@@ -34,6 +34,7 @@ import javax.annotation.Nullable;
 import java.math.BigInteger;
 import java.security.SecureRandom;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -97,6 +98,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
     // chains, it will be calculated on demand from the number of loaded keys.
     private static final int LAZY_CALCULATE_LOOKAHEAD = -1;
     private int lookaheadSize = 100;
+    private int lookaheadThreshold = 33;
 
     // The parent keys for external keys (handed out to other people) and internal keys (used for change addresses).
     private DeterministicKey externalKey, internalKey;
@@ -172,6 +174,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         this.issuedInternalKeys = chain.issuedInternalKeys;
 
         this.lookaheadSize = chain.lookaheadSize;
+        this.lookaheadThreshold = chain.lookaheadThreshold;
 
         this.seed = chain.seed.encrypt(crypter, aesKey);
         basicKeyChain = new BasicKeyChain(crypter);
@@ -266,6 +269,28 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         basicKeyChain.importKeys(ImmutableList.of(key));
     }
 
+    /**
+     * Mark the DeterministicKey as used.
+     * Also correct the issued{Internal|External}Keys counter, because all lower children seem to be requested already.
+     * If the counter was updated, we also might want to update the lookahead keys.
+     */
+    public DeterministicKey markKeyAsUsed(DeterministicKey k) {
+        int numchilds = k.getChildNumber().i() + 1;
+
+        if (k.getParent() == internalKey) {
+            if (issuedInternalKeys < numchilds) {
+                issuedInternalKeys = numchilds;
+                maybeLookAhead();
+            }
+        } else if (k.getParent() == externalKey) {
+            if (issuedExternalKeys < numchilds) {
+                issuedExternalKeys = numchilds;
+                maybeLookAhead();
+            }
+        }
+        return k;
+    }
+
     @Override
     public DeterministicKey findKeyFromPubHash(byte[] pubkeyHash) {
         lock.lock();
@@ -281,6 +306,38 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         lock.lock();
         try {
             return (DeterministicKey) basicKeyChain.findKeyFromPubKey(pubkey);
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
+     * Mark the DeterministicKeys as used, if they match the pubkeyHash
+     * See {@link com.google.bitcoin.wallet.DeterministicKeyChain#markKeyAsUsed(DeterministicKey)} for more info on this.
+     */
+    public boolean markPubHashAsUsed(byte[] pubkeyHash) {
+        lock.lock();
+        try {
+            DeterministicKey k = (DeterministicKey) basicKeyChain.findKeyFromPubHash(pubkeyHash);
+            if (k != null)
+                markKeyAsUsed(k);
+            return k != null;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
+     * Mark the DeterministicKeys as used, if they match the pubkey
+     * See {@link com.google.bitcoin.wallet.DeterministicKeyChain#markKeyAsUsed(DeterministicKey)} for more info on this.
+     */
+    public boolean markPubKeyAsUsed(byte[] pubkey) {
+        lock.lock();
+        try {
+            DeterministicKey k = (DeterministicKey) basicKeyChain.findKeyFromPubKey(pubkey);
+            if (k != null)
+                markKeyAsUsed(k);
+            return k != null;
         } finally {
             lock.unlock();
         }
@@ -647,6 +704,40 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         }
     }
 
+    /**
+     * Sets the threshold for the key pre-generation.
+     * If a key is used in a transaction, the keychain would pre-generate a new key, for every issued key,
+     * even if it is only one. If the blockchain is replayed, every key would trigger a regeneration
+     * of the bloom filter sent to the peers as a consequence.
+     * To prevent this, new keys are only generated, if more than the threshold value are needed.
+     */
+    public void setLookaheadThreshold(int num) {
+        lock.lock();
+        if (num >= lookaheadSize)
+            throw new IllegalArgumentException("Threshold larger or equal to the lookaheadSize");
+
+        try {
+            this.lookaheadThreshold = num;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
+     * Gets the threshold for the key pre-generation.
+     * See {@link #setLookaheadThreshold(int)} for details on what this is.
+     */
+    public int getLookaheadThreshold() {
+        lock.lock();
+        try {
+            if (lookaheadThreshold >= lookaheadSize)
+                return 0;
+            return lookaheadThreshold;
+        } finally {
+            lock.unlock();
+        }
+    }
+
     // Pre-generate enough keys to reach the lookahead size.
     private void maybeLookAhead() {
         lock.lock();
@@ -662,16 +753,28 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         }
     }
 
-    // Returned keys must be inserted into the basic key chain.
+    /**
+     * Pre-generate enough keys to reach the lookahead size, but only if there are more than the lookaheadThreshold to
+     * be generated, so that the Bloom filter does not have to be regenerated that often.
+     *
+     * Returned keys must be inserted into the basic key chain.
+     */
     private List<DeterministicKey> maybeLookAhead(DeterministicKey parent, int issued) {
         checkState(lock.isHeldByCurrentThread());
         final int numChildren = hierarchy.getNumChildren(parent.getPath());
-        int needed = issued + getLookaheadSize() - numChildren;
-        checkState(needed >= 0, "needed = " + needed);
+        final int needed = issued + getLookaheadSize() - numChildren;
+
+        log.info("maybeLookAhead(): {} needed = lookaheadSize({}) - (numChildren({}) - issued({}) = {} < lookaheadThreshold({}))",
+            parent.getPathAsString(), getLookaheadSize(), numChildren,
+            issued, needed, getLookaheadThreshold());
+
+        /* Even if needed is negative, we have more than enough */
+        if (needed <= getLookaheadThreshold())
+            return Collections.emptyList();
+
         List<DeterministicKey> result  = new ArrayList<DeterministicKey>(needed);
-        if (needed == 0) return result;
         long now = System.currentTimeMillis();
-        log.info("Pre-generating {} keys for {}", needed, parent.getPathAsString());
+        log.info("maybeLookAhead(): Pre-generating {} keys for {}", needed, parent.getPathAsString());
         for (int i = 0; i < needed; i++) {
             // TODO: Handle the case where the derived key is >= curve order.
             DeterministicKey key = HDKeyDerivation.deriveChildKey(parent, numChildren + i);
@@ -679,7 +782,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
             hierarchy.putKey(key);
             result.add(key);
         }
-        log.info("Took {} msec", System.currentTimeMillis() - now);
+        log.info("maybeLookAhead(): Took {} msec", System.currentTimeMillis() - now);
         return result;
     }
 

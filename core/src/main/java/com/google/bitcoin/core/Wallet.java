@@ -450,6 +450,28 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
         return keychain.getLookaheadSize();
     }
 
+    /** See {@link com.google.bitcoin.wallet.DeterministicKeyChain#setLookaheadThreshold(int)} for more info on this. */
+    public void setLookaheadThreshold(int num) {
+        lock.lock();
+        try {
+            keychain.setLookaheadThreshold(num);
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /** See {@link com.google.bitcoin.wallet.DeterministicKeyChain#setLookaheadThreshold(int)} for more info on this. */
+    public int getKeychainLookaheadThreshold() {
+        int threshold = 0;
+        lock.lock();
+        try {
+            threshold = keychain.getLookaheadThreshold();
+        } finally {
+            lock.unlock();
+        }
+        return threshold;
+    }
+
     /**
      * Returns a public-only DeterministicKey that can be used to set up a watching wallet: that is, a wallet that
      * can import transactions from the block chain just as the normal wallet can, but which cannot spend. Watching
@@ -595,6 +617,33 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
      */
     public boolean isPubKeyMine(byte[] pubkey) {
         return findKeyFromPubKey(pubkey) != null;
+    }
+
+    /**
+     * Marks all keys used in the transaction output as used in the wallet.
+     * See {@link com.google.bitcoin.wallet.DeterministicKeyChain#markKeyAsUsed(DeterministicKey)} for more info on this.
+     */
+    private void markKeysAsUsed(Transaction tx) {
+        lock.lock();
+        try {
+            for (TransactionOutput o : tx.getOutputs()) {
+                try {
+                    Script script = o.getScriptPubKey();
+                    if (script.isSentToRawPubKey()) {
+                        byte[] pubkey = script.getPubKey();
+                        keychain.markPubKeyAsUsed(pubkey);
+                    } else if (script.isSentToAddress()) {
+                        byte[] pubkeyHash = script.getPubKeyHash();
+                        keychain.markPubKeyHashAsUsed(pubkeyHash);
+                    }
+                } catch (ScriptException e) {
+                    // Just means we didn't understand the output of this transaction: ignore it.
+                    log.warn("Could not parse tx output script: {}", e.toString());
+                }
+            }
+        } finally {
+            lock.unlock();
+        }
     }
 
     /**
@@ -1185,6 +1234,9 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
         log.info("Received tx{} for {} BTC: {} [{}] in block {}", sideChain ? " on a side chain" : "",
                 bitcoinValueToFriendlyString(valueDifference), tx.getHashAsString(), relativityOffset,
                 block != null ? block.getHeader().getHash() : "(unit test)");
+
+        // mark the deterministic keys in this transaction as used
+        markKeysAsUsed(tx);
 
         onWalletChangedSuppressions++;
 
