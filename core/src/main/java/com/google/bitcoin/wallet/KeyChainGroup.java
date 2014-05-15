@@ -76,6 +76,10 @@ public class KeyChainGroup {
         this(null, ImmutableList.of(new DeterministicKeyChain(watchKey)), null);
     }
 
+    public KeyChainGroup(DeterministicKey watchKey, long creationTimeSeconds) {
+        this(null, ImmutableList.of(new DeterministicKeyChain(watchKey, creationTimeSeconds)), null);
+    }
+
     // Used for deserialization.
     private KeyChainGroup(@Nullable BasicKeyChain basicKeyChain, List<DeterministicKeyChain> chains, @Nullable KeyCrypter crypter) {
         this.basic = basicKeyChain == null ? new BasicKeyChain() : basicKeyChain;
