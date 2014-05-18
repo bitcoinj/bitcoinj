@@ -41,25 +41,25 @@ import static com.google.common.base.Preconditions.checkState;
 
 /**
  * <p>Utility class that wraps the boilerplate needed to set up a new SPV bitcoinj app. Instantiate it with a directory
- * and file prefix, optionally configure a few things, then use start or startAndWait. The object will construct and
- * configure a {@link BlockChain}, {@link SPVBlockStore}, {@link Wallet} and {@link PeerGroup}. Depending on the value
- * of the blockingStartup property, startup will be considered complete once the block chain has fully synchronized,
- * so it can take a while.</p>
+ * and file prefix, optionally configure a few things, then use startAsync and optionally awaitRunning. The object will
+ * construct and configure a {@link BlockChain}, {@link SPVBlockStore}, {@link Wallet} and {@link PeerGroup}. Depending
+ * on the value of the blockingStartup property, startup will be considered complete once the block chain has fully
+ * synchronized, so it can take a while.</p>
  *
  * <p>To add listeners and modify the objects that are constructed, you can either do that by overriding the
  * {@link #onSetupCompleted()} method (which will run on a background thread) and make your changes there,
  * or by waiting for the service to start and then accessing the objects from wherever you want. However, you cannot
  * access the objects this class creates until startup is complete.</p>
  *
- * <p>The asynchronous design of this class may seem puzzling (just use {@link #startAndWait()} if you don't want that).
+ * <p>The asynchronous design of this class may seem puzzling (just use {@link #awaitRunning()} if you don't want that).
  * It is to make it easier to fit bitcoinj into GUI apps, which require a high degree of responsiveness on their main
  * thread which handles all the animation and user interaction. Even when blockingStart is false, initializing bitcoinj
  * means doing potentially blocking file IO, generating keys and other potentially intensive operations. By running it
  * on a background thread, there's no risk of accidentally causing UI lag.</p>
  *
- * <p>Note that {@link #startAndWait()} can throw an unchecked {@link com.google.common.util.concurrent.UncheckedExecutionException}
+ * <p>Note that {@link #awaitRunning()} can throw an unchecked {@link java.lang.IllegalStateException}
  * if anything goes wrong during startup - you should probably handle it and use {@link Exception#getCause()} to figure
- * out what went wrong more precisely. Same thing if you use the async start() method.</p>
+ * out what went wrong more precisely. Same thing if you just use the {@link #startAsync()} method.</p>
  */
 public class WalletAppKit extends AbstractIdleService {
     protected final String filePrefix;
