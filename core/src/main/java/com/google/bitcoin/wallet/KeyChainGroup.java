@@ -73,11 +73,16 @@ public class KeyChainGroup {
      * This HAS to be an account key as returned by {@link DeterministicKeyChain#getWatchingKey()}.
      */
     public KeyChainGroup(DeterministicKey watchKey) {
-        this(null, ImmutableList.of(new DeterministicKeyChain(watchKey)), null);
+        this(null, ImmutableList.of(DeterministicKeyChain.watch(watchKey)), null);
     }
 
-    public KeyChainGroup(DeterministicKey watchKey, long creationTimeSeconds) {
-        this(null, ImmutableList.of(new DeterministicKeyChain(watchKey, creationTimeSeconds)), null);
+    /**
+     * Creates a keychain group with no basic chain, and an HD chain that is watching the given watching key which
+     * was assumed to be first used at the given UNIX time.
+     * This HAS to be an account key as returned by {@link DeterministicKeyChain#getWatchingKey()}.
+     */
+    public KeyChainGroup(DeterministicKey watchKey, long creationTimeSecondsSecs) {
+        this(null, ImmutableList.of(DeterministicKeyChain.watch(watchKey, creationTimeSecondsSecs)), null);
     }
 
     // Used for deserialization.
