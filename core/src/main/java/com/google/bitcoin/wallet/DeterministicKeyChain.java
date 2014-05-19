@@ -81,6 +81,8 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
     private DeterministicHierarchy hierarchy;
     private DeterministicKey rootKey;
     private DeterministicSeed seed;
+
+    // Ignored if seed != null. Useful for watching hierarchies.
     private long creationTimeSeconds = MnemonicCode.BIP39_STANDARDISATION_TIME_SECS;
 
     // Paths through the key tree. External keys are ones that are communicated to other parties. Internal keys are
@@ -133,7 +135,11 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         this(new DeterministicSeed(seed, seedCreationTimeSecs));
     }
 
-    public DeterministicKeyChain(DeterministicSeed seed) {
+    /**
+     * Creates a deterministic key chain starting from the given seed. All keys yielded by this chain will be the same
+     * if the starting seed is the same.
+     */
+    protected DeterministicKeyChain(DeterministicSeed seed) {
         this(seed, null);
     }
 
@@ -155,10 +161,19 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         this(watchingKey, Utils.currentTimeSeconds());
     }
 
+    /**
+     * Creates a key chain that watches the given account key. The creation time is taken to be the time that BIP 32
+     * was standardised: most likely, you can optimise by selecting a more accurate creation time for your key and
+     * using the other watch method.
+     */
     public static DeterministicKeyChain watch(DeterministicKey accountKey) {
-        return new DeterministicKeyChain(accountKey);
+        return watch(accountKey, DeterministicHierarchy.BIP32_STANDARDISATION_TIME_SECS);
     }
 
+    /**
+     * Creates a key chain that watches the given account key, and assumes there are no transactions involving it until
+     * the given time (this is an optimisation for chain scanning purposes).
+     */
     public static DeterministicKeyChain watch(DeterministicKey accountKey, long seedCreationTimeSecs) {
         return new DeterministicKeyChain(accountKey, seedCreationTimeSecs);
     }

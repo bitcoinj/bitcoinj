@@ -52,6 +52,8 @@ public class DeterministicHierarchy implements Serializable {
     // Keep track of how many child keys each node has. This is kind of weak.
     private final Map<ImmutableList<ChildNumber>, ChildNumber> lastChildNumbers = Maps.newHashMap();
 
+    public static final int BIP32_STANDARDISATION_TIME_SECS = 1369267200;
+
     /**
      * Constructs a new hierarchy rooted at the given key. Note that this does not have to be the top of the tree.
      * You can construct a DeterministicHierarchy for a subtree of a larger tree that you may not own.

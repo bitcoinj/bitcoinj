@@ -1,4 +1,5 @@
-- Switch to the tree format agreed on with slush/stick
+- Switch to the tree format agreed on with slush/stick.
+- Store the account key creation time for an HD hierarchy.
 - Support seeds up to 512 bits in size. Test compatibility with greenaddress, at least for some keys.
 - Make Wallet notify key chains when a key has been observed in a transaction.
 - Make DeterministicKeyChain auto-extend when a key was observed, to keep a gap limit in place.
