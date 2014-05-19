@@ -480,14 +480,12 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
 
     /** See {@link com.google.bitcoin.wallet.DeterministicKeyChain#setLookaheadThreshold(int)} for more info on this. */
     public int getKeychainLookaheadThreshold() {
-        int threshold = 0;
         lock.lock();
         try {
-            threshold = keychain.getLookaheadThreshold();
+            return keychain.getLookaheadThreshold();
         } finally {
             lock.unlock();
         }
-        return threshold;
     }
 
     /**
@@ -1257,7 +1255,8 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
                 bitcoinValueToFriendlyString(valueDifference), tx.getHashAsString(), relativityOffset,
                 block != null ? block.getHeader().getHash() : "(unit test)");
 
-        // mark the deterministic keys in this transaction as used
+        // Inform the key chains that the issued keys were observed in a transaction, so they know to
+        // calculate more keys for the next Bloom filters.
         markKeysAsUsed(tx);
 
         onWalletChangedSuppressions++;
