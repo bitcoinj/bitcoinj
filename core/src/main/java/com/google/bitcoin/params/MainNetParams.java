@@ -62,6 +62,7 @@ public class MainNetParams extends NetworkParameters {
                 "dnsseed.bluematt.me",         // Matt Corallo
                 "dnsseed.bitcoin.dashjr.org",  // Luke Dashjr
                 "seed.bitcoinstats.com",       // Chris Decker
+                "seed.bitnodes.io",            // Addy Yeow
         };
     }
 
