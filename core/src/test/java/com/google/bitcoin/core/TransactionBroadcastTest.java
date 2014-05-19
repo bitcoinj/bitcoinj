@@ -116,7 +116,12 @@ public class TransactionBroadcastTest extends TestWithPeerGroup {
         Address dest = new ECKey().toAddress(params);
         Wallet.SendResult sendResult = wallet.sendCoins(peerGroup, dest, Utils.toNanoCoins(1, 0));
         assertFalse(sendResult.broadcastComplete.isDone());
-        Transaction t1 = (Transaction) outbound(p1);
+        Transaction t1;
+        {
+            Message m;
+            while (!((m = outbound(p1)) instanceof Transaction));
+            t1 = (Transaction) m;
+        }
         assertFalse(sendResult.broadcastComplete.isDone());
 
         // p1 eats it :( A bit later the PeerGroup is taken down.
@@ -165,7 +170,15 @@ public class TransactionBroadcastTest extends TestWithPeerGroup {
         assertEquals(transactions[0], sendResult.tx);
         assertEquals(0, transactions[0].getConfidence().numBroadcastPeers());
         transactions[0] = null;
-        Transaction t1 = (Transaction) outbound(p1);
+        Transaction t1;
+        {
+            peerGroup.waitForJobQueue();
+            Message m = outbound(p1);
+            // Hack: bloom filters are recalculated asynchronously to sending transactions to avoid lock
+            // inversion, so we might or might not get the filter/mempool message first or second.
+            while (!(m instanceof Transaction)) m = outbound(p1);
+            t1 = (Transaction) m;
+        }
         assertNotNull(t1);
         // 49 BTC in change.
         assertEquals(Utils.toNanoCoins(49, 0), t1.getValueSentToMe(wallet));
@@ -192,7 +205,7 @@ public class TransactionBroadcastTest extends TestWithPeerGroup {
         assertNull(outbound(p1));  // Nothing sent.
         // Add the wallet to the peer group (simulate initialization). Transactions should be announced.
         peerGroup.addWallet(wallet);
-        // Transaction announced to the first peer.
+        // Transaction announced to the first peer. No extra Bloom filter because no change address was needed.
         assertEquals(t3.getHash(), ((Transaction) outbound(p1)).getHash());
     }
 }

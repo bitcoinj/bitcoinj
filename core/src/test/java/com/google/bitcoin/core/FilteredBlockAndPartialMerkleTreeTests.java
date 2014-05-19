@@ -100,10 +100,10 @@ public class FilteredBlockAndPartialMerkleTreeTests extends TestWithPeerGroup {
         
         // A wallet which contains a pubkey used in each transaction from above
         Wallet wallet = new Wallet(unitTestParams);
-        wallet.addKey(new ECKey(null, Hex.decode("04b27f7e9475ccf5d9a431cb86d665b8302c140144ec2397fce792f4a4e7765fecf8128534eaa71df04f93c74676ae8279195128a1506ebf7379d23dab8fca0f63")));
-        wallet.addKey(new ECKey(null, Hex.decode("04732012cb962afa90d31b25d8fb0e32c94e513ab7a17805c14ca4c3423e18b4fb5d0e676841733cb83abaf975845c9f6f2a8097b7d04f4908b18368d6fc2d68ec")));
-        wallet.addKey(new ECKey(null, Hex.decode("04cfb4113b3387637131ebec76871fd2760fc430dd16de0110f0eb07bb31ffac85e2607c189cb8582ea1ccaeb64ffd655409106589778f3000fdfe3263440b0350")));
-        wallet.addKey(new ECKey(null, Hex.decode("04b2f30018908a59e829c1534bfa5010d7ef7f79994159bba0f534d863ef9e4e973af6a8de20dc41dbea50bc622263ec8a770b2c9406599d39e4c9afe61f8b1613")));
+        wallet.importKey(ECKey.fromPublicOnly(Hex.decode("04b27f7e9475ccf5d9a431cb86d665b8302c140144ec2397fce792f4a4e7765fecf8128534eaa71df04f93c74676ae8279195128a1506ebf7379d23dab8fca0f63")));
+        wallet.importKey(ECKey.fromPublicOnly(Hex.decode("04732012cb962afa90d31b25d8fb0e32c94e513ab7a17805c14ca4c3423e18b4fb5d0e676841733cb83abaf975845c9f6f2a8097b7d04f4908b18368d6fc2d68ec")));
+        wallet.importKey(ECKey.fromPublicOnly(Hex.decode("04cfb4113b3387637131ebec76871fd2760fc430dd16de0110f0eb07bb31ffac85e2607c189cb8582ea1ccaeb64ffd655409106589778f3000fdfe3263440b0350")));
+        wallet.importKey(ECKey.fromPublicOnly(Hex.decode("04b2f30018908a59e829c1534bfa5010d7ef7f79994159bba0f534d863ef9e4e973af6a8de20dc41dbea50bc622263ec8a770b2c9406599d39e4c9afe61f8b1613")));
         
         BloomFilter filter = wallet.getBloomFilter(wallet.getKeychainSize()*2, 0.001, 0xDEADBEEF);
         // Compare the serialized bloom filter to a known-good value

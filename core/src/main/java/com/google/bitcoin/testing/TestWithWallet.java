@@ -20,7 +20,6 @@ import com.google.bitcoin.core.*;
 import com.google.bitcoin.params.UnitTestParams;
 import com.google.bitcoin.store.BlockStore;
 import com.google.bitcoin.store.MemoryBlockStore;
-import com.google.bitcoin.testing.FakeTxBuilder;
 import com.google.bitcoin.utils.BriefLogFormatter;
 
 import javax.annotation.Nullable;
@@ -51,10 +50,9 @@ public class TestWithWallet {
     public void setUp() throws Exception {
         BriefLogFormatter.init();
         Wallet.SendRequest.DEFAULT_FEE_PER_KB = BigInteger.ZERO;
-        myKey = new ECKey();
-        myAddress = myKey.toAddress(params);
         wallet = new Wallet(params);
-        wallet.addKey(myKey);
+        myKey = wallet.currentReceiveKey();
+        myAddress = myKey.toAddress(params);
         blockStore = new MemoryBlockStore(params);
         chain = new BlockChain(params, wallet, blockStore);
     }

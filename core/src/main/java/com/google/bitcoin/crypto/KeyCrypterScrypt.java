@@ -159,7 +159,7 @@ public class KeyCrypterScrypt implements KeyCrypter, Serializable {
      * Password based encryption using AES - CBC 256 bits.
      */
     @Override
-    public EncryptedPrivateKey encrypt(byte[] plainBytes, KeyParameter aesKey) throws KeyCrypterException {
+    public EncryptedData encrypt(byte[] plainBytes, KeyParameter aesKey) throws KeyCrypterException {
         checkNotNull(plainBytes);
         checkNotNull(aesKey);
 
@@ -177,7 +177,7 @@ public class KeyCrypterScrypt implements KeyCrypter, Serializable {
             final int length1 = cipher.processBytes(plainBytes, 0, plainBytes.length, encryptedBytes, 0);
             final int length2 = cipher.doFinal(encryptedBytes, length1);
 
-            return new EncryptedPrivateKey(iv, Arrays.copyOf(encryptedBytes, length1 + length2));
+            return new EncryptedData(iv, Arrays.copyOf(encryptedBytes, length1 + length2));
         } catch (Exception e) {
             throw new KeyCrypterException("Could not encrypt bytes.", e);
         }
@@ -192,18 +192,18 @@ public class KeyCrypterScrypt implements KeyCrypter, Serializable {
      * @throws                 KeyCrypterException if bytes could not be decoded to a valid key
      */
     @Override
-    public byte[] decrypt(EncryptedPrivateKey privateKeyToDecode, KeyParameter aesKey) throws KeyCrypterException {
+    public byte[] decrypt(EncryptedData privateKeyToDecode, KeyParameter aesKey) throws KeyCrypterException {
         checkNotNull(privateKeyToDecode);
         checkNotNull(aesKey);
 
         try {
-            ParametersWithIV keyWithIv = new ParametersWithIV(new KeyParameter(aesKey.getKey()), privateKeyToDecode.getInitialisationVector());
+            ParametersWithIV keyWithIv = new ParametersWithIV(new KeyParameter(aesKey.getKey()), privateKeyToDecode.initialisationVector);
 
             // Decrypt the message.
             BufferedBlockCipher cipher = new PaddedBufferedBlockCipher(new CBCBlockCipher(new AESFastEngine()));
             cipher.init(false, keyWithIv);
 
-            byte[] cipherBytes = privateKeyToDecode.getEncryptedBytes();
+            byte[] cipherBytes = privateKeyToDecode.encryptedBytes;
             byte[] decryptedBytes = new byte[cipher.getOutputSize(cipherBytes.length)];
             final int length1 = cipher.processBytes(cipherBytes, 0, cipherBytes.length, decryptedBytes, 0);
             final int length2 = cipher.doFinal(decryptedBytes, length1);
