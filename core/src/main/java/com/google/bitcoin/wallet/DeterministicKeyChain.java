@@ -34,7 +34,6 @@ import javax.annotation.Nullable;
 import java.math.BigInteger;
 import java.security.SecureRandom;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -101,7 +100,10 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
     // chains, it will be calculated on demand from the number of loaded keys.
     private static final int LAZY_CALCULATE_LOOKAHEAD = -1;
     private int lookaheadSize = 100;
-    private int lookaheadThreshold = 33;
+    // The lookahead threshold causes us to batch up creation of new keys to minimize the frequency of Bloom filter
+    // regenerations, which are expensive and will (in future) trigger chain download stalls/retries. One third
+    // is an efficiency tradeoff.
+    private int lookaheadThreshold = lookaheadSize / 3;
 
     // The parent keys for external keys (handed out to other people) and internal keys (used for change addresses).
     private DeterministicKey externalKey, internalKey;
@@ -298,19 +300,19 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
     /**
      * Mark the DeterministicKey as used.
      * Also correct the issued{Internal|External}Keys counter, because all lower children seem to be requested already.
-     * If the counter was updated, we also might want to update the lookahead keys.
+     * If the counter was updated, we also might trigger lookahead.
      */
     public DeterministicKey markKeyAsUsed(DeterministicKey k) {
-        int numchilds = k.getChildNumber().i() + 1;
+        int numChildren = k.getChildNumber().i() + 1;
 
         if (k.getParent() == internalKey) {
-            if (issuedInternalKeys < numchilds) {
-                issuedInternalKeys = numchilds;
+            if (issuedInternalKeys < numChildren) {
+                issuedInternalKeys = numChildren;
                 maybeLookAhead();
             }
         } else if (k.getParent() == externalKey) {
-            if (issuedExternalKeys < numchilds) {
-                issuedExternalKeys = numchilds;
+            if (issuedExternalKeys < numChildren) {
+                issuedExternalKeys = numChildren;
                 maybeLookAhead();
             }
         }
@@ -739,10 +741,9 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
      */
     public void setLookaheadThreshold(int num) {
         lock.lock();
-        if (num >= lookaheadSize)
-            throw new IllegalArgumentException("Threshold larger or equal to the lookaheadSize");
-
         try {
+            if (num >= lookaheadSize)
+                throw new IllegalArgumentException("Threshold larger or equal to the lookaheadSize");
             this.lookaheadThreshold = num;
         } finally {
             lock.unlock();
@@ -783,7 +784,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
      * Pre-generate enough keys to reach the lookahead size, but only if there are more than the lookaheadThreshold to
      * be generated, so that the Bloom filter does not have to be regenerated that often.
      *
-     * Returned keys must be inserted into the basic key chain.
+     * The return mutable list of keys must be inserted into the basic key chain.
      */
     private List<DeterministicKey> maybeLookAhead(DeterministicKey parent, int issued) {
         checkState(lock.isHeldByCurrentThread());
@@ -791,12 +792,12 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         final int needed = issued + getLookaheadSize() - numChildren;
 
         log.info("maybeLookAhead(): {} needed = lookaheadSize({}) - (numChildren({}) - issued({}) = {} < lookaheadThreshold({}))",
-            parent.getPathAsString(), getLookaheadSize(), numChildren,
-            issued, needed, getLookaheadThreshold());
+                parent.getPathAsString(), getLookaheadSize(), numChildren,
+                issued, needed, getLookaheadThreshold());
 
         /* Even if needed is negative, we have more than enough */
         if (needed <= getLookaheadThreshold())
-            return Collections.emptyList();
+            return new ArrayList<DeterministicKey>();
 
         List<DeterministicKey> result  = new ArrayList<DeterministicKey>(needed);
         long now = System.currentTimeMillis();
