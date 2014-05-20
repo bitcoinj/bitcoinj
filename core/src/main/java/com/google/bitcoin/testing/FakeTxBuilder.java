@@ -25,10 +25,15 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 
+/**
+ * Utility methods for building fake/invalid transactions, often useful for unit testing.
+ */
 public class FakeTxBuilder {
+    /**
+     * Create a fake TX of sufficient realism to exercise the unit tests. Two outputs, one to us, one to somewhere
+     * else to simulate change. There is one random input.
+     */
     public static Transaction createFakeTxWithChangeAddress(NetworkParameters params, BigInteger nanocoins, Address to, Address changeOutput) {
-        // Create a fake TX of sufficient realism to exercise the unit tests. Two outputs, one to us, one to somewhere
-        // else to simulate change.
         Transaction t = new Transaction(params);
         TransactionOutput outputToMe = new TransactionOutput(params, t, nanocoins, to);
         t.addOutput(outputToMe);
@@ -45,13 +50,19 @@ public class FakeTxBuilder {
         return roundTripTransaction(params, t);
     }
 
+    /**
+     * Create a fake TX of sufficient realism to exercise the unit tests. Two outputs, one to us, one to somewhere
+     * else to simulate change. There is one random input.
+     */
     public static Transaction createFakeTx(NetworkParameters params, BigInteger nanocoins, Address to) {
         return createFakeTxWithChangeAddress(params, nanocoins, to, new ECKey().toAddress(params));
     }
 
+    /**
+     * Create a fake TX of sufficient realism to exercise the unit tests. Two outputs, one to us, one to somewhere
+     * else to simulate change. There is one random input.
+     */
     public static Transaction createFakeTx(NetworkParameters params, BigInteger nanocoins, ECKey to) {
-        // Create a fake TX of sufficient realism to exercise the unit tests. Two outputs, one to us, one to somewhere
-        // else to simulate change.
         Transaction t = new Transaction(params);
         TransactionOutput outputToMe = new TransactionOutput(params, t, nanocoins, to);
         t.addOutput(outputToMe);
@@ -69,7 +80,7 @@ public class FakeTxBuilder {
     }
 
     /**
-     * @return Transaction[] Transaction[0] is a feeder transaction, supplying BTC to Transaction[1]
+     * Transaction[0] is a feeder transaction, supplying BTC to Transaction[1]
      */
     public static Transaction[] createFakeTx(NetworkParameters params, BigInteger nanocoins,
                                              Address to, Address from) {
@@ -154,7 +165,7 @@ public class FakeTxBuilder {
         public Block block;
     }
 
-    // Emulates receiving a valid block that builds on top of the chain.
+    /** Emulates receiving a valid block that builds on top of the chain. */
     public static BlockPair createFakeBlock(BlockStore blockStore, long timeSeconds, Transaction... transactions) {
         try {
             Block chainHead = blockStore.getChainHead().getHeader();
