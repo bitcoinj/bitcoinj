@@ -20,9 +20,9 @@ package com.google.bitcoin.core;
 import com.google.bitcoin.net.discovery.PeerDiscovery;
 import com.google.bitcoin.net.discovery.PeerDiscoveryException;
 import com.google.bitcoin.params.UnitTestParams;
-import com.google.bitcoin.store.MemoryBlockStore;
 import com.google.bitcoin.testing.FakeTxBuilder;
 import com.google.bitcoin.testing.InboundMessageQueuer;
+import com.google.bitcoin.testing.TestWithPeerGroup;
 import com.google.bitcoin.utils.Threading;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
@@ -70,6 +70,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
     @Override
     @Before
     public void setUp() throws Exception {
+        super.setUp();
         peerToMessageCount = new HashMap<Peer, AtomicInteger>();
         connectedPeers = new LinkedBlockingQueue<Peer>();
         disconnectedPeers = new LinkedBlockingQueue<Peer>();
@@ -96,16 +97,12 @@ public class PeerGroupTest extends TestWithPeerGroup {
                 return m;
             }
         };
-        super.setUp(new MemoryBlockStore(UnitTestParams.get()));
-        peerGroup.addWallet(wallet);
     }
 
+    @Override
     @After
-    public void tearDown() throws Exception {
+    public void tearDown() {
         super.tearDown();
-        Utils.finishMockSleep();
-        peerGroup.stopAsync();
-        peerGroup.awaitTerminated();
     }
 
     @Test

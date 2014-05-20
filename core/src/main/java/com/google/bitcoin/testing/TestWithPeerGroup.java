@@ -14,20 +14,20 @@
  * limitations under the License.
  */
 
-package com.google.bitcoin.core;
+package com.google.bitcoin.testing;
 
+import com.google.bitcoin.core.*;
 import com.google.bitcoin.net.BlockingClientManager;
 import com.google.bitcoin.net.NioClientManager;
 import com.google.bitcoin.params.UnitTestParams;
 import com.google.bitcoin.store.BlockStore;
-import com.google.bitcoin.testing.InboundMessageQueuer;
-import com.google.bitcoin.testing.TestWithNetworkConnections;
+import com.google.bitcoin.store.MemoryBlockStore;
 import com.google.common.base.Preconditions;
 
 import java.net.InetSocketAddress;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static org.junit.Assert.assertTrue;
+import static com.google.common.base.Preconditions.checkState;
 
 /**
  * Utility class that makes it easy to work with mock NetworkConnections in PeerGroups.
@@ -46,6 +46,11 @@ public class TestWithPeerGroup extends TestWithNetworkConnections {
         this.clientType = clientType;
     }
 
+    @Override
+    public void setUp() throws Exception {
+        setUp(new MemoryBlockStore(params));
+    }
+
     public void setUp(BlockStore blockStore) throws Exception {
         super.setUp(blockStore);
 
@@ -55,12 +60,25 @@ public class TestWithPeerGroup extends TestWithNetworkConnections {
         initPeerGroup();
     }
 
+    @Override
+    public void tearDown() {
+        try {
+            super.tearDown();
+            Utils.finishMockSleep();
+            peerGroup.stopAsync();
+            peerGroup.awaitTerminated();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     protected void initPeerGroup() {
         if (clientType == ClientType.NIO_CLIENT_MANAGER)
             peerGroup = new PeerGroup(unitTestParams, blockChain, new NioClientManager());
         else
             peerGroup = new PeerGroup(unitTestParams, blockChain, new BlockingClientManager());
         peerGroup.setPingIntervalMsec(0);  // Disable the pings as they just get in the way of most tests.
+        peerGroup.addWallet(wallet);
     }
 
     protected InboundMessageQueuer connectPeerWithoutVersionExchange(int id) throws Exception {
@@ -82,12 +100,7 @@ public class TestWithPeerGroup extends TestWithNetworkConnections {
         // Complete handshake with the peer - send/receive version(ack)s, receive bloom filter
         writeTarget.sendMessage(versionMessage);
         writeTarget.sendMessage(new VersionAck());
-        assertTrue(writeTarget.nextMessageBlocking() instanceof VersionMessage);
-        assertTrue(writeTarget.nextMessageBlocking() instanceof VersionAck);
-        if (versionMessage.isBloomFilteringSupported()) {
-            assertTrue(writeTarget.nextMessageBlocking() instanceof BloomFilter);
-            assertTrue(writeTarget.nextMessageBlocking() instanceof MemoryPoolMessage);
-        }
+        stepThroughInit(versionMessage, writeTarget);
         return writeTarget;
     }
 
@@ -103,12 +116,16 @@ public class TestWithPeerGroup extends TestWithNetworkConnections {
         // Complete handshake with the peer - send/receive version(ack)s, receive bloom filter
         writeTarget.sendMessage(versionMessage);
         writeTarget.sendMessage(new VersionAck());
-        assertTrue(writeTarget.nextMessageBlocking() instanceof VersionMessage);
-        assertTrue(writeTarget.nextMessageBlocking() instanceof VersionAck);
-        if (versionMessage.isBloomFilteringSupported()) {
-            assertTrue(writeTarget.nextMessageBlocking() instanceof BloomFilter);
-            assertTrue(writeTarget.nextMessageBlocking() instanceof MemoryPoolMessage);
-        }
+        stepThroughInit(versionMessage, writeTarget);
         return writeTarget;
+    }
+
+    private void stepThroughInit(VersionMessage versionMessage, InboundMessageQueuer writeTarget) throws InterruptedException {
+        checkState(writeTarget.nextMessageBlocking() instanceof VersionMessage);
+        checkState(writeTarget.nextMessageBlocking() instanceof VersionAck);
+        if (versionMessage.isBloomFilteringSupported()) {
+            checkState(writeTarget.nextMessageBlocking() instanceof BloomFilter);
+            checkState(writeTarget.nextMessageBlocking() instanceof MemoryPoolMessage);
+        }
     }
 }

@@ -18,9 +18,9 @@
 package com.google.bitcoin.core;
 
 import com.google.bitcoin.params.UnitTestParams;
-import com.google.bitcoin.store.MemoryBlockStore;
 import com.google.bitcoin.testing.FakeTxBuilder;
 import com.google.bitcoin.testing.InboundMessageQueuer;
+import com.google.bitcoin.testing.TestWithPeerGroup;
 import com.google.bitcoin.utils.Threading;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.junit.After;
@@ -35,7 +35,6 @@ import java.util.Random;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.junit.Assert.*;
-import static org.junit.Assert.assertEquals;
 
 @RunWith(value = Parameterized.class)
 public class TransactionBroadcastTest extends TestWithPeerGroup {
@@ -55,8 +54,7 @@ public class TransactionBroadcastTest extends TestWithPeerGroup {
     @Before
     public void setUp() throws Exception {
         Utils.setMockClock(); // Use mock clock
-        super.setUp(new MemoryBlockStore(UnitTestParams.get()));
-        peerGroup.addWallet(wallet);
+        super.setUp();
         // Fix the random permutation that TransactionBroadcast uses to shuffle the peers.
         TransactionBroadcast.random = new Random(0);
         peerGroup.setMinBroadcastConnections(2);
@@ -64,11 +62,10 @@ public class TransactionBroadcastTest extends TestWithPeerGroup {
         peerGroup.awaitRunning();
     }
 
+    @Override
     @After
-    public void tearDown() throws Exception {
+    public void tearDown() {
         super.tearDown();
-        peerGroup.stopAsync();
-        peerGroup.awaitTerminated();
     }
 
     @Test
