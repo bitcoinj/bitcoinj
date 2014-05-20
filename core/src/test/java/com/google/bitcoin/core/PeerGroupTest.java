@@ -26,6 +26,7 @@ import com.google.bitcoin.testing.InboundMessageQueuer;
 import com.google.bitcoin.utils.Threading;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import org.junit.After;
 import org.junit.Before;
@@ -36,7 +37,10 @@ import org.junit.runners.Parameterized;
 import java.math.BigInteger;
 import java.net.InetSocketAddress;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -580,5 +584,47 @@ public class PeerGroupTest extends TestWithPeerGroup {
         assertTrue(f3.contains(key.getPubKeyHash()));
         assertFalse(f1.contains(key.getPubKey()));
         assertFalse(f1.contains(key.getPubKeyHash()));
+    }
+
+    @Test
+    public void waitForNumPeers1() throws Exception {
+        ListenableFuture<PeerGroup> future = peerGroup.waitForPeers(3);
+        peerGroup.startAsync();
+        peerGroup.awaitRunning();
+        assertFalse(future.isDone());
+        connectPeer(1);
+        assertFalse(future.isDone());
+        connectPeer(2);
+        assertFalse(future.isDone());
+        assertTrue(peerGroup.waitForPeers(2).isDone());   // Immediate completion.
+        connectPeer(3);
+        future.get();
+        assertTrue(future.isDone());
+    }
+
+    @Test
+    public void waitForPeersOfVersion() throws Exception {
+        final int baseVer = peerGroup.getMinRequiredProtocolVersion() + 3000;
+        final int newVer = baseVer + 1000;
+
+        ListenableFuture<PeerGroup> future = peerGroup.waitForPeersOfVersion(2, newVer);
+
+        VersionMessage ver1 = new VersionMessage(params, 10);
+        ver1.clientVersion = baseVer;
+        ver1.localServices = VersionMessage.NODE_NETWORK;
+        VersionMessage ver2 = new VersionMessage(params, 10);
+        ver2.clientVersion = newVer;
+        ver2.localServices = VersionMessage.NODE_NETWORK;
+        peerGroup.startAsync();
+        peerGroup.awaitRunning();
+        assertFalse(future.isDone());
+        connectPeer(1, ver1);
+        assertFalse(future.isDone());
+        connectPeer(2, ver2);
+        assertFalse(future.isDone());
+        assertTrue(peerGroup.waitForPeersOfVersion(1, newVer).isDone());   // Immediate completion.
+        connectPeer(3, ver2);
+        future.get();
+        assertTrue(future.isDone());
     }
 }
