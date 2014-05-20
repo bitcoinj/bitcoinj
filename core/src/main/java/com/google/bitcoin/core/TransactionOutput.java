@@ -334,6 +334,14 @@ public class TransactionOutput extends ChildMessage implements Serializable {
         out.defaultWriteObject();
     }
 
+    /**
+     * Returns a new {@link TransactionOutPoint}, which is essentially a structure pointing to this output.
+     * Requires that this output is not detached.
+     */
+    public TransactionOutPoint getOutPointFor() {
+        return new TransactionOutPoint(params, getIndex(), getParentTransaction());
+    }
+
     /** Returns a copy of the output detached from its containing transaction, if need be. */
     public TransactionOutput duplicateDetached() {
         return new TransactionOutput(params, null, value, org.spongycastle.util.Arrays.clone(scriptBytes));

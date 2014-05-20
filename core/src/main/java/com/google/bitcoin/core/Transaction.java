@@ -741,6 +741,22 @@ public class Transaction extends ChildMessage implements Serializable {
     }
 
     /**
+     * Adds an input that points to the given output and contains a valid signature for it, calculated using the
+     * signing key.
+     */
+    public TransactionInput addSignedInput(TransactionOutput output, ECKey signingKey) {
+        return addSignedInput(output.getOutPointFor(), output.getScriptPubKey(), signingKey);
+    }
+
+    /**
+     * Adds an input that points to the given output and contains a valid signature for it, calculated using the
+     * signing key.
+     */
+    public TransactionInput addSignedInput(TransactionOutput output, ECKey signingKey, SigHash sigHash, boolean anyoneCanPay) {
+        return addSignedInput(output.getOutPointFor(), output.getScriptPubKey(), signingKey, sigHash, anyoneCanPay);
+    }
+
+    /**
      * Removes all the inputs from this transaction.
      * Note that this also invalidates the length attribute
      */
