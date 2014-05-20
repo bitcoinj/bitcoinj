@@ -585,7 +585,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
 
     @Test
     public void waitForNumPeers1() throws Exception {
-        ListenableFuture<PeerGroup> future = peerGroup.waitForPeers(3);
+        ListenableFuture<List<Peer>> future = peerGroup.waitForPeers(3);
         peerGroup.startAsync();
         peerGroup.awaitRunning();
         assertFalse(future.isDone());
@@ -604,7 +604,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         final int baseVer = peerGroup.getMinRequiredProtocolVersion() + 3000;
         final int newVer = baseVer + 1000;
 
-        ListenableFuture<PeerGroup> future = peerGroup.waitForPeersOfVersion(2, newVer);
+        ListenableFuture<List<Peer>> future = peerGroup.waitForPeersOfVersion(2, newVer);
 
         VersionMessage ver1 = new VersionMessage(params, 10);
         ver1.clientVersion = baseVer;

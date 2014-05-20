@@ -1283,7 +1283,7 @@ public class PeerGroup extends AbstractExecutionThreadService implements Transac
      * @param numPeers How many peers to wait for.
      * @return a future that will be triggered when the number of connected peers >= numPeers
      */
-    public ListenableFuture<PeerGroup> waitForPeers(final int numPeers) {
+    public ListenableFuture<List<Peer>> waitForPeers(final int numPeers) {
         return waitForPeersOfVersion(numPeers, 0);
     }
 
@@ -1295,16 +1295,17 @@ public class PeerGroup extends AbstractExecutionThreadService implements Transac
      * @param protocolVersion The protocol version the awaited peers must implement (or better).
      * @return a future that will be triggered when the number of connected peers implementing protocolVersion or higher >= numPeers
      */
-    public ListenableFuture<PeerGroup> waitForPeersOfVersion(final int numPeers, final long protocolVersion) {
-        int foundPeers = countPeersOfAtLeastVersion(protocolVersion);
-        if (foundPeers >= numPeers) {
-            return Futures.immediateFuture(this);
+    public ListenableFuture<List<Peer>> waitForPeersOfVersion(final int numPeers, final long protocolVersion) {
+        List<Peer> foundPeers = findPeersOfAtLeastVersion(protocolVersion);
+        if (foundPeers.size() >= numPeers) {
+            return Futures.immediateFuture(foundPeers);
         }
-        final SettableFuture<PeerGroup> future = SettableFuture.create();
+        final SettableFuture<List<Peer>> future = SettableFuture.create();
         addEventListener(new AbstractPeerEventListener() {
             @Override public void onPeerConnected(Peer peer, int peerCount) {
-                if (countPeersOfAtLeastVersion(protocolVersion) >= numPeers) {
-                    future.set(PeerGroup.this);
+                final List<Peer> peers = findPeersOfAtLeastVersion(protocolVersion);
+                if (peers.size() >= numPeers) {
+                    future.set(peers);
                     removeEventListener(this);
                 }
             }
@@ -1312,14 +1313,17 @@ public class PeerGroup extends AbstractExecutionThreadService implements Transac
         return future;
     }
 
-    private int countPeersOfAtLeastVersion(long protocolVersion) {
+    /**
+     * Returns a mutable array list of peers that implement the given protocol version or better.
+     */
+    public List<Peer> findPeersOfAtLeastVersion(long protocolVersion) {
         lock.lock();
         try {
-            int foundPeers = 0;
+            ArrayList<Peer> results = new ArrayList<Peer>(peers.size());
             for (Peer peer : peers)
                 if (peer.getPeerVersionMessage().clientVersion >= protocolVersion)
-                    foundPeers++;
-            return foundPeers;
+                    results.add(peer);
+            return results;
         } finally {
             lock.unlock();
         }

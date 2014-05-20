@@ -65,8 +65,7 @@ public class TransactionBroadcast {
 
     public ListenableFuture<Transaction> broadcast() {
         log.info("Waiting for {} peers required for broadcast ...", minConnections);
-        ListenableFuture<PeerGroup> peerAvailabilityFuture = peerGroup.waitForPeers(minConnections);
-        peerAvailabilityFuture.addListener(new EnoughAvailablePeers(), Threading.SAME_THREAD);
+        peerGroup.waitForPeers(minConnections).addListener(new EnoughAvailablePeers(), Threading.SAME_THREAD);
         return future;
     }
 
