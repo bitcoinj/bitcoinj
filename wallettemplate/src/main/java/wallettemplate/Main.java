@@ -87,7 +87,7 @@ public class Main extends Application {
             // last months worth or more (takes a few seconds).
             bitcoin.setCheckpoints(getClass().getResourceAsStream("checkpoints"));
             // As an example!
-            bitcoin.useTor();
+            // bitcoin.useTor();
         }
 
         // Now configure and start the appkit. This will take a second or two - we could show a temporary splash screen

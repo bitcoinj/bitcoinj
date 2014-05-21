@@ -1463,7 +1463,7 @@ public class WalletTest extends TestWithWallet {
         }
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test(expected = Wallet.ExceededMaxTransactionSize.class)
     public void respectMaxStandardSize() throws Exception {
         // Check that we won't create txns > 100kb. Average tx size is ~220 bytes so this would have to be enormous.
         sendMoneyToWallet(Utils.toNanoCoins(100, 0), AbstractBlockChain.NewBlockType.BEST_CHAIN);
@@ -1498,11 +1498,12 @@ public class WalletTest extends TestWithWallet {
         Transaction tx3 = createFakeTx(params, BigInteger.TEN, myAddress);
         wallet.receiveFromBlock(tx3, block, AbstractBlockChain.NewBlockType.BEST_CHAIN, 2);
 
-        // No way we can add nearly enough fee
+        // Not allowed to send dust.
         try {
             wallet.createSend(notMyAddr, BigInteger.ONE);
             fail();
-        } catch (IllegalArgumentException e) {
+        } catch (Wallet.DustySendRequested e) {
+            // Expected.
         }
         // Spend it all without fee enforcement
         SendRequest req = SendRequest.to(notMyAddr, BigInteger.TEN.add(BigInteger.ONE.add(BigInteger.ONE)));
@@ -2179,7 +2180,7 @@ public class WalletTest extends TestWithWallet {
         try {
             wallet.completeTx(request);
             fail();
-        } catch (InsufficientMoneyException.CouldNotAdjustDownwards e) {}
+        } catch (Wallet.CouldNotAdjustDownwards e) {}
         request.ensureMinRequiredFee = false;
         wallet.completeTx(request);
         wallet.commitTx(request.tx);

@@ -1884,6 +1884,11 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
         return tx;
     }
 
+    public static class CompletionException extends RuntimeException {}
+    public static class DustySendRequested extends CompletionException {}
+    public static class CouldNotAdjustDownwards extends CompletionException {}
+    public static class ExceededMaxTransactionSize extends CompletionException {}
+
     /**
      * Given a spend request containing an incomplete transaction, makes it valid by adding outputs and signed inputs
      * according to the instructions in the request. The transaction in the request is modified by this method, as is
@@ -1891,8 +1896,10 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
      *
      * @param req a SendRequest that contains the incomplete transaction and details for how to make it valid.
      * @throws InsufficientMoneyException if the request could not be completed due to not enough balance.
-     * @throws IllegalArgumentException if you try and complete the same SendRequest twice, or if the given send request
-     *         cannot be completed without violating the protocol rules.
+     * @throws IllegalArgumentException if you try and complete the same SendRequest twice
+     * @throws DustySendRequested if the resultant transaction would violate the dust rules (an output that's too small to be worthwhile)
+     * @throws CouldNotAdjustDownwards if emptying the wallet was requested and the output can't be shrunk for fees without violating a protocol rule.
+     * @throws ExceededMaxTransactionSize if the resultant transaction is too big for Bitcoin to process (try breaking up the amounts of value)
      */
     public void completeTx(SendRequest req) throws InsufficientMoneyException {
         lock.lock();
@@ -1925,7 +1932,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
                 for (TransactionOutput output : req.tx.getOutputs())
                     if (output.getValue().compareTo(Utils.CENT) < 0) {
                         if (output.getValue().compareTo(output.getMinNonDustValue()) < 0)
-                            throw new IllegalArgumentException("Tried to send dust with ensureMinRequiredFee set - no way to complete this");
+                            throw new DustySendRequested();
                         needAtLeastReferenceFee = true;
                         break;
                     }
@@ -1967,7 +1974,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
                 final BigInteger feePerKb = req.feePerKb == null ? BigInteger.ZERO : req.feePerKb;
                 Transaction tx = req.tx;
                 if (!adjustOutputDownwardsForFee(tx, bestCoinSelection, baseFee, feePerKb))
-                    throw new InsufficientMoneyException.CouldNotAdjustDownwards();
+                    throw new CouldNotAdjustDownwards();
             }
 
             totalInput = totalInput.add(bestCoinSelection.valueGathered);
@@ -1991,11 +1998,8 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
 
             // Check size.
             int size = req.tx.bitcoinSerialize().length;
-            if (size > Transaction.MAX_STANDARD_TX_SIZE) {
-                throw new IllegalArgumentException(
-                        String.format("Transaction could not be created without exceeding max size: %d vs %d", size,
-                            Transaction.MAX_STANDARD_TX_SIZE));
-            }
+            if (size > Transaction.MAX_STANDARD_TX_SIZE)
+                throw new ExceededMaxTransactionSize();
 
             // Label the transaction as being self created. We can use this later to spend its change output even before
             // the transaction is confirmed. We deliberately won't bother notifying listeners here as there's not much
