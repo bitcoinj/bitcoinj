@@ -105,15 +105,15 @@ public class UtilsTest {
     
     @Test
     public void testReverseBytes() {
-        Assert.assertArrayEquals(new byte[] {1,2,3,4,5}, Utils.reverseBytes(new byte[] {5,4,3,2,1}));
+        assertArrayEquals(new byte[]{1, 2, 3, 4, 5}, Utils.reverseBytes(new byte[]{5, 4, 3, 2, 1}));
     }
 
     @Test
     public void testReverseDwordBytes() {
-        Assert.assertArrayEquals(new byte[] {1,2,3,4,5,6,7,8}, Utils.reverseDwordBytes(new byte[] {4,3,2,1,8,7,6,5}, -1));
-        Assert.assertArrayEquals(new byte[] {1,2,3,4}, Utils.reverseDwordBytes(new byte[] {4,3,2,1,8,7,6,5}, 4));
-        Assert.assertArrayEquals(new byte[0], Utils.reverseDwordBytes(new byte[] {4,3,2,1,8,7,6,5}, 0));
-        Assert.assertArrayEquals(new byte[0], Utils.reverseDwordBytes(new byte[0], 0));
+        assertArrayEquals(new byte[]{1, 2, 3, 4, 5, 6, 7, 8}, Utils.reverseDwordBytes(new byte[]{4, 3, 2, 1, 8, 7, 6, 5}, -1));
+        assertArrayEquals(new byte[]{1, 2, 3, 4}, Utils.reverseDwordBytes(new byte[]{4, 3, 2, 1, 8, 7, 6, 5}, 4));
+        assertArrayEquals(new byte[0], Utils.reverseDwordBytes(new byte[]{4, 3, 2, 1, 8, 7, 6, 5}, 0));
+        assertArrayEquals(new byte[0], Utils.reverseDwordBytes(new byte[0], 0));
     }
 
     @Test
@@ -123,5 +123,13 @@ public class UtilsTest {
         assertEquals(2, Utils.maxOfMostFreq(1, 1, 2, 2));
         assertEquals(1, Utils.maxOfMostFreq(1, 1, 2, 2, 1));
         assertEquals(-1, Utils.maxOfMostFreq(-1, -1, 2, 2, -1));
+    }
+
+    @Test
+    public void compactEncoding() throws Exception {
+        assertEquals(new BigInteger("1234560000", 16), Utils.decodeCompactBits(0x05123456L));
+        assertEquals(new BigInteger("c0de000000", 16), Utils.decodeCompactBits(0x0600c0de));
+        assertEquals(0x05123456L, Utils.encodeCompactBits(new BigInteger("1234560000", 16)));
+        assertEquals(0x0600c0deL, Utils.encodeCompactBits(new BigInteger("c0de000000", 16)));
     }
 }
