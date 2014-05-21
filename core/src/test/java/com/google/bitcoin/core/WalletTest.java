@@ -51,6 +51,7 @@ import java.security.SecureRandom;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.google.bitcoin.core.Utils.*;
@@ -2318,5 +2319,39 @@ public class WalletTest extends TestWithWallet {
             }
         }
         assertTrue(TransactionSignature.isEncodingCanonical(dummySig));
+    }
+
+    @Test
+    public void riskAnalysis() throws Exception {
+        // Send a tx that is considered risky to the wallet, verify it doesn't show up in the balances.
+        final Transaction tx = createFakeTx(params, Utils.COIN, myAddress);
+        final AtomicBoolean bool = new AtomicBoolean();
+        wallet.setRiskAnalyzer(new RiskAnalysis.Analyzer() {
+            @Override
+            public RiskAnalysis create(Wallet wallet, Transaction wtx, List<Transaction> dependencies) {
+                RiskAnalysis.Result result = RiskAnalysis.Result.OK;
+                if (wtx.getHash().equals(tx.getHash()))
+                    result = RiskAnalysis.Result.NON_STANDARD;
+                final RiskAnalysis.Result finalResult = result;
+                return new RiskAnalysis() {
+                    @Override
+                    public Result analyze() {
+                        bool.set(true);
+                        return finalResult;
+                    }
+                };
+            }
+        });
+        assertTrue(wallet.isPendingTransactionRelevant(tx));
+        assertEquals(BigInteger.ZERO, wallet.getBalance());
+        assertEquals(BigInteger.ZERO, wallet.getBalance(Wallet.BalanceType.ESTIMATED));
+        wallet.receivePending(tx, null);
+        assertEquals(BigInteger.ZERO, wallet.getBalance());
+        assertEquals(BigInteger.ZERO, wallet.getBalance(Wallet.BalanceType.ESTIMATED));
+        assertTrue(bool.get());
+        // Confirm it in the same manner as how Bloom filtered blocks do. Verify it shows up.
+        StoredBlock block = createFakeBlock(blockStore, tx).storedBlock;
+        wallet.notifyTransactionIsInBlock(tx.getHash(), block, AbstractBlockChain.NewBlockType.BEST_CHAIN, 1);
+        assertEquals(Utils.COIN, wallet.getBalance());
     }
 }

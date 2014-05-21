@@ -134,6 +134,20 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
     // All transactions together.
     final Map<Sha256Hash, Transaction> transactions;
 
+    // Transactions that were dropped by the risk analysis system. These are not in any pools and not serialized
+    // to disk. We have to keep them around because if we ignore a tx because we think it will never confirm, but
+    // then it actually does confirm and does so within the same network session, remote peers will not resend us
+    // the tx data along with the Bloom filtered block, as they know we already received it once before
+    // (so it would be wasteful to repeat). Thus we keep them around here for a while. If we drop our network
+    // connections then the remote peers will forget that we were sent the tx data previously and send it again
+    // when relaying a filtered merkleblock.
+    private final LinkedHashMap<Sha256Hash, Transaction> riskDropped = new LinkedHashMap<Sha256Hash, Transaction>() {
+        @Override
+        protected boolean removeEldestEntry(Map.Entry<Sha256Hash, Transaction> eldest) {
+            return size() > 1000;
+        }
+    };
+
     // A list of public/private EC keys owned by this user. Access it using addKey[s], hasKey[s] and findPubKeyFromHash.
     private ArrayList<ECKey> keychain;
 
@@ -610,8 +624,14 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
         try {
             Transaction tx = transactions.get(txHash);
             if (tx == null) {
-                log.error("TX {} not found despite being sent to wallet", txHash);
-                return;
+                tx = riskDropped.get(txHash);
+                if (tx != null) {
+                    // If this happens our risk analysis is probably wrong and should be improved.
+                    log.info("Risk analysis dropped tx {} but was included in block anyway", tx.getHash());
+                } else {
+                    log.error("TX {} not found despite being sent to wallet", txHash);
+                    return;
+                }
             }
             receive(tx, block, blockType, relativityOffset);
         } finally {
@@ -655,8 +675,12 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
             // race conditions where receivePending may be being called in parallel.
             if (!overrideIsRelevant && !isPendingTransactionRelevant(tx))
                 return;
-            if (isTransactionRisky(tx, dependencies) && !acceptRiskyTransactions)
+            if (isTransactionRisky(tx, dependencies) && !acceptRiskyTransactions) {
+                // isTransactionRisky already logged the reason.
+                riskDropped.put(tx.getHash(), tx);
+                log.warn("There are now {} risk dropped transactions being kept in memory", riskDropped.size());
                 return;
+            }
             BigInteger valueSentToMe = tx.getValueSentToMe(this);
             BigInteger valueSentFromMe = tx.getValueSentFromMe(this);
             if (log.isInfoEnabled()) {
@@ -733,18 +757,11 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
                 log.debug("Received tx we already saw in a block or created ourselves: " + tx.getHashAsString());
                 return false;
             }
-
             // We only care about transactions that:
             //   - Send us coins
             //   - Spend our coins
             if (!isTransactionRelevant(tx)) {
                 log.debug("Received tx that isn't relevant to this wallet, discarding.");
-                return false;
-            }
-
-            if (isTransactionRisky(tx, null) && !acceptRiskyTransactions) {
-                log.warn("Received transaction {} with a lock time of {}, but not configured to accept these, discarding",
-                        tx.getHashAsString(), tx.getLockTime());
                 return false;
             }
             return true;
