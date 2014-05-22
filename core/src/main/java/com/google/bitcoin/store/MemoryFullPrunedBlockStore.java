@@ -60,7 +60,8 @@ class StoredTransactionOutPoint implements Serializable {
     long getIndex() {
         return index;
     }
-    
+
+    @Override
     public int hashCode() {
         return this.hash.hashCode() + (int)index;
     }
@@ -68,11 +69,14 @@ class StoredTransactionOutPoint implements Serializable {
     public String toString() {
         return "Stored transaction out point: " + hash.toString() + ":" + index;
     }
-    
+
+    @Override
     public boolean equals(Object o) {
-        if (!(o instanceof StoredTransactionOutPoint)) return false;
-        return ((StoredTransactionOutPoint)o).getIndex() == this.index &&
-                Objects.equal(this.getHash(), ((StoredTransactionOutPoint)o).getHash());
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        StoredTransactionOutPoint other = (StoredTransactionOutPoint) o;
+        return getIndex() == other.getIndex() &&
+               Objects.equal(getHash(), other.getHash());
     }
 }
 

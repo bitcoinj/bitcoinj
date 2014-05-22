@@ -181,10 +181,11 @@ public abstract class NetworkParameters implements Serializable {
     public abstract String getPaymentProtocolId();
 
     @Override
-    public boolean equals(Object other) {
-        if (!(other instanceof NetworkParameters)) return false;
-        NetworkParameters o = (NetworkParameters) other;
-        return o.getId().equals(getId());
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        NetworkParameters other = (NetworkParameters) o;
+        return getId().equals(other.getId());
     }
 
     @Override

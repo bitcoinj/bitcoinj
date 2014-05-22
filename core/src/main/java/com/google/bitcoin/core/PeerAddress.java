@@ -246,13 +246,14 @@ public class PeerAddress extends ChildMessage {
 
     @Override
     public boolean equals(Object o) {
-        if (!(o instanceof PeerAddress)) return false;
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
         PeerAddress other = (PeerAddress) o;
         return other.addr.equals(addr) &&
                 other.port == port &&
                 other.services.equals(services) &&
                 other.time == time;
-        //FIXME including services and time could cause same peer to be added multiple times in collections
+        //TODO: including services and time could cause same peer to be added multiple times in collections
     }
 
     @Override

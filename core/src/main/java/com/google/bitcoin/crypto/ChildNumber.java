@@ -64,7 +64,10 @@ public class ChildNumber {
 
     @Override
     public boolean equals(Object o) {
-        return this == o || !(o == null || getClass() != o.getClass()) && i == ((ChildNumber) o).i;
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        ChildNumber other = (ChildNumber) o;
+        return i == other.i;
     }
 
     @Override

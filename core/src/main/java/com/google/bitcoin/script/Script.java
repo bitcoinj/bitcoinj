@@ -1279,11 +1279,11 @@ public class Script {
     }
 
     @Override
-    public boolean equals(Object obj) {
-        if (!(obj instanceof Script))
-            return false;
-        Script s = (Script)obj;
-        return Arrays.equals(getQuickProgram(), s.getQuickProgram());
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Script other = (Script) o;
+        return Arrays.equals(getQuickProgram(), other.getQuickProgram());
     }
 
     @Override

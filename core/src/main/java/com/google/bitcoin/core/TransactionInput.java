@@ -89,7 +89,6 @@ public class TransactionInput extends ChildMessage implements Serializable {
         scriptBytes = EMPTY_ARRAY;
         sequence = NO_SEQUENCE;
         this.parentTransaction = parentTransaction;
-
         length = 41;
     }
 

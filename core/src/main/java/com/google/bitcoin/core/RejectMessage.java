@@ -151,11 +151,13 @@ public class RejectMessage extends Message {
 
     @Override
     public boolean equals(Object o) {
-        return o instanceof RejectMessage &&
-                ((RejectMessage) o).message.equals(message) &&
-                ((RejectMessage) o).code.equals(code) &&
-                ((RejectMessage) o).reason.equals(reason) &&
-                ((RejectMessage) o).messageHash.equals(messageHash);
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        RejectMessage other = (RejectMessage) o;
+        return message.equals(other.message) &&
+               code.equals(other.code) &&
+               reason.equals(other.reason) &&
+               messageHash.equals(other.messageHash);
     }
 
     @Override

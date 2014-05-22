@@ -266,11 +266,13 @@ public class BloomFilter extends Message {
     }
     
     @Override
-    public boolean equals(Object other) {
-        return other instanceof BloomFilter &&
-                ((BloomFilter) other).hashFuncs == this.hashFuncs &&
-                ((BloomFilter) other).nTweak == this.nTweak &&
-                Arrays.equals(((BloomFilter) other).data, this.data);
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        BloomFilter other = (BloomFilter) o;
+        return hashFuncs == other.hashFuncs &&
+               nTweak == other.nTweak &&
+               Arrays.equals(data, other.data);
     }
 
     @Override

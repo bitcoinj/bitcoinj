@@ -16,6 +16,7 @@
  */
 package com.google.bitcoin.crypto;
 
+import com.google.common.base.Objects;
 import com.google.protobuf.ByteString;
 import com.lambdaworks.crypto.SCrypt;
 import org.bitcoinj.wallet.Protos;
@@ -255,15 +256,10 @@ public class KeyCrypterScrypt implements KeyCrypter, Serializable {
     }
 
     @Override
-    public boolean equals(Object obj) {
-        if (obj == null) {
-            return false;
-        }
-        if (getClass() != obj.getClass()) {
-            return false;
-        }
-        final KeyCrypterScrypt other = (KeyCrypterScrypt) obj;
-
-        return com.google.common.base.Objects.equal(this.scryptParameters, other.scryptParameters);
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        KeyCrypterScrypt other = (KeyCrypterScrypt) o;
+        return Objects.equal(scryptParameters, other.scryptParameters);
     }
 }

@@ -402,13 +402,9 @@ public class ECKey implements Serializable {
         public boolean equals(Object o) {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
-
-            ECDSASignature signature = (ECDSASignature) o;
-
-            if (!r.equals(signature.r)) return false;
-            if (!s.equals(signature.s)) return false;
-
-            return true;
+            ECDSASignature other = (ECDSASignature) o;
+            return r.equals(other.r) &&
+                   s.equals(other.s);
         }
 
         @Override
@@ -828,10 +824,8 @@ public class ECKey implements Serializable {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-
-        ECKey ecKey = (ECKey) o;
-
-        return Arrays.equals(pub, ecKey.pub);
+        ECKey other = (ECKey) o;
+        return Arrays.equals(pub, other.pub);
     }
 
     @Override

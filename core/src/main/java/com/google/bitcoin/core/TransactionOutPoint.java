@@ -190,10 +190,12 @@ public class TransactionOutPoint extends ChildMessage implements Serializable {
     }
 
     @Override
-    public boolean equals(Object other) {
-        if (!(other instanceof TransactionOutPoint)) return false;
-        TransactionOutPoint o = (TransactionOutPoint) other;
-        return o.getIndex() == getIndex() && o.getHash().equals(getHash());
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        TransactionOutPoint other = (TransactionOutPoint) o;
+        return getIndex() == other.getIndex() &&
+               getHash().equals(other.getHash());
     }
 
     @Override

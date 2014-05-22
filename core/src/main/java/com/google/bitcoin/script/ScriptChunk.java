@@ -102,11 +102,11 @@ public class ScriptChunk {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        ScriptChunk chunk = (ScriptChunk) o;
+        ScriptChunk other = (ScriptChunk) o;
 
-        if (opcode != chunk.opcode) return false;
-        if (startLocationInProgram != chunk.startLocationInProgram) return false;
-        if (!Arrays.equals(data, chunk.data)) return false;
+        if (opcode != other.opcode) return false;
+        if (startLocationInProgram != other.startLocationInProgram) return false;
+        if (!Arrays.equals(data, other.data)) return false;
 
         return true;
     }
