@@ -168,8 +168,8 @@ class TransactionalHashMap<KeyType, ValueType> {
 /**
  * A Map with multiple key types that is DB per-thread-transaction-aware.
  * However, this class is not thread-safe.
- * @param UniqueKeyType is a key that must be unique per object
- * @param MultiKeyType is a key that can have multiple values
+ * @param <UniqueKeyType> is a key that must be unique per object
+ * @param <MultiKeyType> is a key that can have multiple values
  */
 class TransactionalMultiKeyHashMap<UniqueKeyType, MultiKeyType, ValueType> {
     TransactionalHashMap<UniqueKeyType, ValueType> mapValues;
