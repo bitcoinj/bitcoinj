@@ -1,0 +1,135 @@
+/*
+ * Gradle build file to create address seeds resource file
+ *
+ * Requires Gradle installed and on your classpath
+ * http://www.gradle.org/downloads
+ * Recommended Gradle 1.11 or later
+ *
+ * To list available tasks run the gradle command from this directory:
+ *
+ * # gradle tasks
+ *
+ * The tasks defined in this build file are listed in the 'Seeds' group.
+ * 
+ * Copyright 2014 Michael Sean Gilligan
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+// Specify repositories and dependencies for this build script
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'de.undercouch:gradle-download-task:0.5'
+        classpath 'com.google.guava:guava:16.0.1'
+    }
+}
+
+import de.undercouch.gradle.tasks.download.Download
+
+def sipasSeedsUrl = "http://bitcoin.sipa.be/seeds.txt"  // URL do download seeds file from
+def dataDir = "data"                                    // Dir for local copy of seeds.txt & hand-made -seeds.txt files
+def resourceDir = "../../core/src/main/resources/com/google/bitcoin/net/discovery"
+def sipasSeedsFile = file("${buildDir}/seeds.txt")       // path to local seeds file
+def addrResourceFile = file("${buildDir}/org.bitcoin.production-seeds.txt")    // path to output addr file
+def numSeeds = 600                                      // num of addresses to go in resource file
+def reachabilityTimeout = 1000                          // msecs
+
+task downloadSeeds(type: Download,
+    group: 'seeds') {
+    description = "Download ${sipasSeedsUrl} to ${sipasSeedsFile} if newer"
+    src sipasSeedsUrl
+    dest sipasSeedsFile
+    onlyIfNewer true
+}
+
+task buildAddrs(description: "Build ${addrResourceFile} from ${sipasSeedsFile}",
+    group: 'seeds' ) << {
+    buildDir.mkdirs()
+    SeedsParser parser = new SeedsParser(sipasSeedsFile)
+    List<InetSocketAddress> addrs = parser.parse(numSeeds)
+    addrResourceFile.withPrintWriter { writer ->
+        addrs.each { addr ->
+            writer.println addr.hostString
+        }
+    }
+}
+
+task copyToCore(type: Copy, dependsOn: buildAddrs,
+    description: "Copy data/*-seeds.txt and build/*-seeds.txt to core resources",
+    group: 'seeds' ) {
+    from dataDir, buildDir
+    into resourceDir
+    include '*-seeds.txt'
+}
+
+task testAddrs(dependsOn: buildAddrs,
+    group: 'seeds',
+    description: "Test all addresses in ${addrResourceFile}" ) << {
+    int count = 0;
+    int unreachable = 0;
+    addrResourceFile.eachLine { line ->
+        count++
+        InetAddress addr = InetAddress.getByName(line)
+        boolean reachable = false
+        try {
+           reachable = addr.isReachable(reachabilityTimeout);
+        } catch (Exception e) {
+            println "Exception testing reachability of ${addr}: ${e}"
+        }
+        if (!reachable) {
+            unreachable++
+            println "${addr} is not reachable"
+        }
+    }
+    if (count < numSeeds) {
+        println "${addrResourceFile} has fewer than ${numSeeds} lines"
+    }
+    if (unreachable > 0) {
+        println "${addrResourceFile} has ${unreachable} unreachable addresses"
+    }
+}
+
+import com.google.common.net.HostAndPort
+import com.google.common.net.InetAddresses
+
+class SeedsParser {
+    File input
+
+    public SeedsParser(File input) {
+        this.input = input
+    }
+
+    List<InetSocketAddress> parse(int max) {
+        int count = 0;
+        List<InetSocketAddress> addrs = []
+
+        input.eachLine { line, lineno ->
+            if (lineno > 1 && count < max) {
+                String addrPort = line.split()[0]
+                HostAndPort hostAndPort = HostAndPort.fromString(addrPort)
+
+                // Filter out hostnames (there are a few in seeds.txt)
+                if (InetAddresses.isInetAddress(hostAndPort.hostText)) {
+                    def sockAddr = new InetSocketAddress(hostAndPort.hostText, hostAndPort.port)
+                    // We could do some validation/qualification here if we want
+                    addrs.add(sockAddr)
+                    count++
+                }
+            }
+        }
+        return addrs                       
+    }
+}
