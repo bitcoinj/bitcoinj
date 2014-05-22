@@ -41,7 +41,7 @@ public class EncryptedPrivateKey {
     }
 
     /**
-     * @param iv
+     * @param initialisationVector
      * @param encryptedPrivateKeys
      */
     public EncryptedPrivateKey(byte[] initialisationVector, byte[] encryptedPrivateKeys) {
