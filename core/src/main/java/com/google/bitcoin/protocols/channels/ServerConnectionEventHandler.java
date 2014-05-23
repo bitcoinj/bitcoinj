@@ -44,10 +44,13 @@ public abstract class ServerConnectionEventHandler {
      * {@link StoredPaymentChannelServerStates#getChannel(com.google.bitcoin.core.Sha256Hash)} with the id provided in
      * {@link ServerConnectionEventHandler#channelOpen(com.google.bitcoin.core.Sha256Hash)}</p>
      */
+    @SuppressWarnings("unchecked")
+    // The warning 'unchecked call to write(MessageType)' being suppressed here comes from the build()
+    // formally returning MessageLite-derived class that cannot be statically guaranteed to be the same MessageType
+    // that is used in connectionChannel.
     protected final synchronized void closeChannel() {
         if (connectionChannel == null)
             throw new IllegalStateException("Channel is not fully initialized/has already been closed");
-
         connectionChannel.write(Protos.TwoWayChannelMessage.newBuilder()
                 .setType(Protos.TwoWayChannelMessage.MessageType.CLOSE)
                 .build());

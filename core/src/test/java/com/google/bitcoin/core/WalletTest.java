@@ -335,6 +335,8 @@ public class WalletTest extends TestWithWallet {
         assertTrue(depthFuture.isDone());
     }
 
+    @SuppressWarnings("deprecation")
+    // Having a test for deprecated method getFromAddress() is no evil so we suppress the warning here.
     private void basicSanityChecks(Wallet wallet, Transaction t, Address fromAddress, Address destination) throws VerificationException {
         assertEquals("Wrong number of tx inputs", 1, t.getInputs().size());
         assertEquals(fromAddress, t.getInputs().get(0).getScriptSig().getFromAddress(params));
@@ -389,6 +391,8 @@ public class WalletTest extends TestWithWallet {
     }
 
     @Test
+    @SuppressWarnings("deprecation")
+    // Having a test for deprecated method getFromAddress() is no evil so we suppress the warning here.
     public void customTransactionSpending() throws Exception {
         // We'll set up a wallet that receives a coin, then sends a coin of lesser value and keeps the change.
         BigInteger v1 = Utils.toNanoCoins(3, 0);
