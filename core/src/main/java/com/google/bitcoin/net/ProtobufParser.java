@@ -122,6 +122,9 @@ public class ProtobufParser<MessageType extends MessageLite> extends AbstractTim
 
     // Deserializes and provides a listener event (buff must not have the length prefix in it)
     // Does set the buffers's position to its limit
+    @SuppressWarnings("unchecked")
+    // The warning 'unchecked cast' being suppressed here comes from the build() formally returning
+    // a MessageLite-derived class that cannot be statically guaranteed to be the MessageType.
     private void deserializeMessage(ByteBuffer buff) throws Exception {
         MessageType msg = (MessageType) prototype.newBuilderForType().mergeFrom(ByteString.copyFrom(buff)).build();
         resetTimeout();

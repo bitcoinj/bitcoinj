@@ -765,7 +765,7 @@ public class PostgresFullPrunedBlockStore implements FullPrunedBlockStore {
         // Calculate the toAddress (if any)
         String dbAddress = "";
         int type = 0;
-        Script  outputScript = null;
+        Script outputScript = null;
         try
         {
             outputScript = new Script(out.getScriptBytes());
