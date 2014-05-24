@@ -34,7 +34,6 @@ public abstract class ListMessage extends Message {
 
     public static final long MAX_INVENTORY_ITEMS = 50000;
 
-
     public ListMessage(NetworkParameters params, byte[] bytes) throws ProtocolException {
         super(params, bytes, 0);
     }
@@ -43,7 +42,6 @@ public abstract class ListMessage extends Message {
             throws ProtocolException {
         super(params, msg, 0, parseLazy, parseRetain, length);
     }
-
 
     public ListMessage(NetworkParameters params) {
         super(params);
@@ -124,7 +122,14 @@ public abstract class ListMessage extends Message {
 
     @Override
     public boolean equals(Object o) {
-        return o.getClass() == this.getClass() &&
-                ((ListMessage)o).items.equals(this.items);
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        ListMessage other = (ListMessage) o;
+        return items.equals(other.items);
+    }
+
+    @Override
+    public int hashCode() {
+        return items.hashCode();
     }
 }

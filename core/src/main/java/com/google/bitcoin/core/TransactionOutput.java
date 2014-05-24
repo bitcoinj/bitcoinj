@@ -352,11 +352,11 @@ public class TransactionOutput extends ChildMessage implements Serializable {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        TransactionOutput output = (TransactionOutput) o;
+        TransactionOutput other = (TransactionOutput) o;
 
-        if (!Arrays.equals(scriptBytes, output.scriptBytes)) return false;
-        if (value != null ? !value.equals(output.value) : output.value != null) return false;
-        if (parentTransaction != null && parentTransaction != output.parentTransaction) return false;
+        if (!Arrays.equals(scriptBytes, other.scriptBytes)) return false;
+        if (value != null ? !value.equals(other.value) : other.value != null) return false;
+        if (parentTransaction != null && parentTransaction != other.parentTransaction) return false;
 
         return true;
     }

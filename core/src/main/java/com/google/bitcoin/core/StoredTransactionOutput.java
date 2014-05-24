@@ -142,14 +142,18 @@ public class StoredTransactionOutput implements Serializable {
         return String.format("Stored TxOut of %s (%s:%d)", Utils.bitcoinValueToFriendlyString(value), hash.toString(), index);
     }
 
+    @Override
     public int hashCode() {
         return hash.hashCode() + (int)index;
     }
 
+    @Override
     public boolean equals(Object o) {
-        if (!(o instanceof StoredTransactionOutput)) return false;
-        return ((StoredTransactionOutput) o).getIndex() == this.getIndex() &&
-                ((StoredTransactionOutput) o).getHash().equals(this.getHash());
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        StoredTransactionOutput other = (StoredTransactionOutput) o;
+        return getHash().equals(other.getHash()) &&
+               getIndex() == other.getIndex();
     }
 
     public void serializeToStream(OutputStream bos) throws IOException {

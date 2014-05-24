@@ -65,7 +65,7 @@ public abstract class NetworkParameters implements Serializable {
     // TODO: Seed nodes should be here as well.
 
     protected Block genesisBlock;
-    protected BigInteger proofOfWorkLimit;
+    protected BigInteger maxTarget;
     protected int port;
     protected long packetMagic;
     protected int addressHeader;
@@ -181,10 +181,11 @@ public abstract class NetworkParameters implements Serializable {
     public abstract String getPaymentProtocolId();
 
     @Override
-    public boolean equals(Object other) {
-        if (!(other instanceof NetworkParameters)) return false;
-        NetworkParameters o = (NetworkParameters) other;
-        return o.getId().equals(getId());
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        NetworkParameters other = (NetworkParameters) o;
+        return getId().equals(other.getId());
     }
 
     @Override
@@ -323,9 +324,9 @@ public abstract class NetworkParameters implements Serializable {
         return interval;
     }
 
-    /** What the easiest allowable proof of work should be. */
-    public BigInteger getProofOfWorkLimit() {
-        return proofOfWorkLimit;
+    /** Maximum target represents the easiest allowable proof of work. */
+    public BigInteger getMaxTarget() {
+        return maxTarget;
     }
 
     /**

@@ -18,7 +18,7 @@ package com.google.bitcoin.crypto;
 
 /**
  * <p>This is just a wrapper for the i (child number) as per BIP 32 with a boolean getter for the first bit and a getter
- * for the actual 0-based child number. A {@link List} of these forms a <i>path</i> through a
+ * for the actual 0-based child number. A {@link java.util.List} of these forms a <i>path</i> through a
  * {@link DeterministicHierarchy}. This class is immutable.
  */
 public class ChildNumber {
@@ -64,7 +64,10 @@ public class ChildNumber {
 
     @Override
     public boolean equals(Object o) {
-        return this == o || !(o == null || getClass() != o.getClass()) && i == ((ChildNumber) o).i;
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        ChildNumber other = (ChildNumber) o;
+        return i == other.i;
     }
 
     @Override

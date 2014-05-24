@@ -79,19 +79,13 @@ public class DumpedPrivateKey extends VersionedChecksummedBytes {
     }
 
     @Override
-    public boolean equals(Object other) {
-        // This odd construction is to avoid anti-symmetry of equality: where a.equals(b) != b.equals(a).
-        boolean result = false;
-        if (other instanceof VersionedChecksummedBytes) {
-            result = Arrays.equals(bytes, ((VersionedChecksummedBytes)other).bytes);
-        }
-        if (other instanceof DumpedPrivateKey) {
-            DumpedPrivateKey o = (DumpedPrivateKey) other;
-            result = Arrays.equals(bytes, o.bytes) &&
-                     version == o.version &&
-                     compressed == o.compressed;
-        }
-        return result;
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        DumpedPrivateKey other = (DumpedPrivateKey) o;
+        return Arrays.equals(bytes, other.bytes) &&
+               version == other.version &&
+               compressed == other.compressed;
     }
 
     @Override

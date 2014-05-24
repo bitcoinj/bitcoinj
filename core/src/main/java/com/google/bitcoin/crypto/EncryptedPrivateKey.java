@@ -15,6 +15,8 @@
  */
 package com.google.bitcoin.crypto;
 
+import com.google.common.base.Objects;
+
 import java.util.Arrays;
 
 /**
@@ -41,7 +43,7 @@ public class EncryptedPrivateKey {
     }
 
     /**
-     * @param iv
+     * @param initialisationVector
      * @param encryptedPrivateKeys
      */
     public EncryptedPrivateKey(byte[] initialisationVector, byte[] encryptedPrivateKeys) {
@@ -99,17 +101,12 @@ public class EncryptedPrivateKey {
     }
 
     @Override
-    public boolean equals(Object obj) {
-        if (obj == null) {
-            return false;
-        }
-        if (getClass() != obj.getClass()) {
-            return false;
-        }
-        final EncryptedPrivateKey other = (EncryptedPrivateKey) obj;
-
-        return com.google.common.base.Objects.equal(this.initialisationVector, other.initialisationVector)
-                && com.google.common.base.Objects.equal(this.encryptedPrivateBytes, other.encryptedPrivateBytes);
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        EncryptedPrivateKey other = (EncryptedPrivateKey) o;
+        return Objects.equal(initialisationVector, other.initialisationVector) &&
+               Objects.equal(encryptedPrivateBytes, other.encryptedPrivateBytes);
     }
 
     @Override

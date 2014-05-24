@@ -664,9 +664,9 @@ public class Peer extends PeerSocketHandler {
         log.info("{}: Downloading dependencies of {}", getAddress(), tx.getHashAsString());
         final LinkedList<Transaction> results = new LinkedList<Transaction>();
         // future will be invoked when the entire dependency tree has been walked and the results compiled.
-        final ListenableFuture future = downloadDependenciesInternal(tx, new Object(), results);
+        final ListenableFuture<Object> future = downloadDependenciesInternal(tx, new Object(), results);
         final SettableFuture<List<Transaction>> resultFuture = SettableFuture.create();
-        Futures.addCallback(future, new FutureCallback() {
+        Futures.addCallback(future, new FutureCallback<Object>() {
             public void onSuccess(Object ignored) {
                 resultFuture.set(results);
             }
@@ -1083,6 +1083,10 @@ public class Peer extends PeerSocketHandler {
      * If you want the block right away and don't mind waiting for it, just call .get() on the result. Your thread
      * will block until the peer answers.
      */
+    @SuppressWarnings("unchecked")
+    // The 'unchecked conversion' warning being suppressed here comes from the sendSingleGetData() formally returning
+    // ListenableFuture instead of ListenableFuture<Block>. This is okay as sendSingleGetData() actually returns
+    // ListenableFuture<Block> in this context. Note that sendSingleGetData() is also used for Transactions.
     public ListenableFuture<Block> getBlock(Sha256Hash blockHash) {
         // This does not need to be locked.
         log.info("Request to fetch block {}", blockHash);
@@ -1096,6 +1100,10 @@ public class Peer extends PeerSocketHandler {
      * retrieved this way because peers don't have a transaction ID to transaction-pos-on-disk index, and besides,
      * in future many peers will delete old transaction data they don't need.
      */
+    @SuppressWarnings("unchecked")
+    // The 'unchecked conversion' warning being suppressed here comes from the sendSingleGetData() formally returning
+    // ListenableFuture instead of ListenableFuture<Transaction>. This is okay as sendSingleGetData() actually returns
+    // ListenableFuture<Transaction> in this context. Note that sendSingleGetData() is also used for Blocks.
     public ListenableFuture<Transaction> getPeerMempoolTransaction(Sha256Hash hash) {
         // This does not need to be locked.
         // TODO: Unit test this method.

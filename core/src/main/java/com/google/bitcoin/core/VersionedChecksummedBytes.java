@@ -58,6 +58,7 @@ public class VersionedChecksummedBytes {
         return Base58.encode(addressBytes);
     }
 
+    // TODO: shouldn't hashCode be also based on the version?
     @Override
     public int hashCode() {
         return Arrays.hashCode(bytes);
@@ -65,9 +66,10 @@ public class VersionedChecksummedBytes {
 
     @Override
     public boolean equals(Object o) {
-        if (!(o instanceof VersionedChecksummedBytes)) return false;
-        VersionedChecksummedBytes vcb = (VersionedChecksummedBytes) o;
-        return Arrays.equals(vcb.bytes, bytes);
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        VersionedChecksummedBytes other = (VersionedChecksummedBytes) o;
+        return Arrays.equals(bytes, other.bytes);
     }
 
     /**

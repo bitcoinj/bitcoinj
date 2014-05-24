@@ -1176,11 +1176,11 @@ public class Transaction extends ChildMessage implements Serializable {
     }
 
     @Override
-    public boolean equals(Object other) {
-        if (!(other instanceof Transaction)) return false;
-        Transaction t = (Transaction) other;
-
-        return t.getHash().equals(getHash());
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Transaction other = (Transaction) o;
+        return getHash().equals(other.getHash());
     }
 
     @Override

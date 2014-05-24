@@ -82,10 +82,13 @@ public class StoredBlock implements Serializable {
     }
 
     @Override
-    public boolean equals(Object other) {
-        if (!(other instanceof StoredBlock)) return false;
-        StoredBlock o = (StoredBlock) other;
-        return o.header.equals(header) && o.chainWork.equals(chainWork) && o.height == height;
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        StoredBlock other = (StoredBlock) o;
+        return header.equals(other.header) &&
+               chainWork.equals(other.chainWork) &&
+               height == other.height;
     }
 
     @Override
@@ -93,7 +96,6 @@ public class StoredBlock implements Serializable {
         // A better hashCode is possible, but this works for now.
         return header.hashCode() ^ chainWork.hashCode() ^ height;
     }
-
 
     /**
      * Creates a new StoredBlock, calculating the additional fields by adding to the values in this block.
