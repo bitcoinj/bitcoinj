@@ -51,8 +51,8 @@ public class BlockChainTest {
     private Transaction coinbaseTransaction;
 
     private static class TweakableTestNet2Params extends TestNet2Params {
-        public void setProofOfWorkLimit(BigInteger limit) {
-            proofOfWorkLimit = limit;
+        public void setMaxTarget(BigInteger limit) {
+            maxTarget = limit;
         }
     }
     private static final TweakableTestNet2Params testNet = new TweakableTestNet2Params();
@@ -228,9 +228,8 @@ public class BlockChainTest {
         }
 
         // Accept any level of difficulty now.
-        BigInteger oldVal = testNet.getProofOfWorkLimit();
-        testNet.setProofOfWorkLimit(new BigInteger
-                ("00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", 16));
+        BigInteger oldVal = testNet.getMaxTarget();
+        testNet.setMaxTarget(new BigInteger("00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", 16));
         try {
             testNetChain.add(bad);
             // We should not get here as the difficulty target should not be changing at this point.
@@ -238,7 +237,7 @@ public class BlockChainTest {
         } catch (VerificationException e) {
             assertTrue(e.getMessage(), e.getCause().getMessage().contains("Unexpected change in difficulty"));
         }
-        testNet.setProofOfWorkLimit(oldVal);
+        testNet.setMaxTarget(oldVal);
 
         // TODO: Test difficulty change is not out of range when a transition period becomes valid.
     }
