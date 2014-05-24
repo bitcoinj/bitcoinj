@@ -844,26 +844,26 @@ public abstract class AbstractBlockChain {
         if (timespan > targetTimespan * 4)
             timespan = targetTimespan * 4;
 
-        BigInteger newDifficulty = Utils.decodeCompactBits(prev.getDifficultyTarget());
-        newDifficulty = newDifficulty.multiply(BigInteger.valueOf(timespan));
-        newDifficulty = newDifficulty.divide(BigInteger.valueOf(targetTimespan));
+        BigInteger newTarget = Utils.decodeCompactBits(prev.getDifficultyTarget());
+        newTarget = newTarget.multiply(BigInteger.valueOf(timespan));
+        newTarget = newTarget.divide(BigInteger.valueOf(targetTimespan));
 
-        if (newDifficulty.compareTo(params.getProofOfWorkLimit()) > 0) {
-            log.info("Difficulty hit proof of work limit: {}", newDifficulty.toString(16));
-            newDifficulty = params.getProofOfWorkLimit();
+        if (newTarget.compareTo(params.getMaxTarget()) > 0) {
+            log.info("Difficulty hit proof of work limit: {}", newTarget.toString(16));
+            newTarget = params.getMaxTarget();
         }
 
         int accuracyBytes = (int) (nextBlock.getDifficultyTarget() >>> 24) - 3;
-        long receivedDifficultyCompact = nextBlock.getDifficultyTarget();
+        long receivedTargetCompact = nextBlock.getDifficultyTarget();
 
         // The calculated difficulty is to a higher precision than received, so reduce here.
         BigInteger mask = BigInteger.valueOf(0xFFFFFFL).shiftLeft(accuracyBytes * 8);
-        newDifficulty = newDifficulty.and(mask);
-        long newDifficultyCompact = Utils.encodeCompactBits(newDifficulty);
+        newTarget = newTarget.and(mask);
+        long newTargetCompact = Utils.encodeCompactBits(newTarget);
 
-        if (newDifficultyCompact != receivedDifficultyCompact)
+        if (newTargetCompact != receivedTargetCompact)
             throw new VerificationException("Network provided difficulty bits do not match what was calculated: " +
-                    newDifficultyCompact + " vs " + receivedDifficultyCompact);
+                    newTargetCompact + " vs " + receivedTargetCompact);
     }
 
     private void checkTestnetDifficulty(StoredBlock storedPrev, Block prev, Block next) throws VerificationException, BlockStoreException {
@@ -880,11 +880,11 @@ public abstract class AbstractBlockChain {
             StoredBlock cursor = storedPrev;
             while (!cursor.getHeader().equals(params.getGenesisBlock()) &&
                    cursor.getHeight() % params.getInterval() != 0 &&
-                   cursor.getHeader().getDifficultyTargetAsInteger().equals(params.getProofOfWorkLimit()))
+                   cursor.getHeader().getDifficultyTargetAsInteger().equals(params.getMaxTarget()))
                 cursor = cursor.getPrev(blockStore);
-            BigInteger cursorDifficulty = cursor.getHeader().getDifficultyTargetAsInteger();
-            BigInteger newDifficulty = next.getDifficultyTargetAsInteger();
-            if (!cursorDifficulty.equals(newDifficulty))
+            BigInteger cursorTarget = cursor.getHeader().getDifficultyTargetAsInteger();
+            BigInteger newTarget = next.getDifficultyTargetAsInteger();
+            if (!cursorTarget.equals(newTarget))
                 throw new VerificationException("Testnet block transition that is not allowed: " +
                     Long.toHexString(cursor.getHeader().getDifficultyTarget()) + " vs " +
                     Long.toHexString(next.getDifficultyTarget()));

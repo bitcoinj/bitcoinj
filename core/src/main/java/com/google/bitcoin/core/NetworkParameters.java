@@ -65,7 +65,7 @@ public abstract class NetworkParameters implements Serializable {
     // TODO: Seed nodes should be here as well.
 
     protected Block genesisBlock;
-    protected BigInteger proofOfWorkLimit;
+    protected BigInteger maxTarget;
     protected int port;
     protected long packetMagic;
     protected int addressHeader;
@@ -324,9 +324,9 @@ public abstract class NetworkParameters implements Serializable {
         return interval;
     }
 
-    /** What the easiest allowable proof of work should be. */
-    public BigInteger getProofOfWorkLimit() {
-        return proofOfWorkLimit;
+    /** Maximum target represents the easiest allowable proof of work. */
+    public BigInteger getMaxTarget() {
+        return maxTarget;
     }
 
     /**
