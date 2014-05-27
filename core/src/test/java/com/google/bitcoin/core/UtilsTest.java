@@ -17,7 +17,6 @@
 package com.google.bitcoin.core;
 
 import java.math.BigInteger;
-import org.junit.Assert;
 import org.junit.Test;
 
 import static org.junit.Assert.*;

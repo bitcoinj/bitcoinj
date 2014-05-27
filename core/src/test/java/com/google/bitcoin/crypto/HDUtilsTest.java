@@ -2,11 +2,7 @@ package com.google.bitcoin.crypto;
 
 import org.junit.Assert;
 import org.junit.Test;
-import org.spongycastle.crypto.params.ECDomainParameters;
 import org.spongycastle.util.encoders.Hex;
-
-import java.util.Arrays;
-import java.util.List;
 
 /**
  * @author Matija Mazi <br/>

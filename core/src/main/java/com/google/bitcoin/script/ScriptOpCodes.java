@@ -18,7 +18,6 @@ package com.google.bitcoin.script;
 
 import com.google.common.collect.ImmutableMap;
 
-import java.util.HashMap;
 import java.util.Map;
 
 /**

@@ -26,9 +26,6 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
-
 /**
  * Creates a simple server listener which listens for incoming client connections and uses a {@link StreamParser} to
  * process data.

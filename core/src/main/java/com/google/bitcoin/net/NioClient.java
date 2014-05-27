@@ -21,8 +21,6 @@ import java.io.IOException;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 
-import static com.google.common.base.Preconditions.checkState;
-
 /**
  * Creates a simple connection to a server using a {@link StreamParser} to process data.
  */
