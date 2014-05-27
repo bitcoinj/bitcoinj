@@ -88,7 +88,7 @@ public class PaymentChannelClientConnection {
         // And glue back in the opposite direction - network to the channelClient.
         wireParser = new ProtobufParser<Protos.TwoWayChannelMessage>(new ProtobufParser.Listener<Protos.TwoWayChannelMessage>() {
             @Override
-            public void messageReceived(ProtobufParser handler, Protos.TwoWayChannelMessage msg) {
+            public void messageReceived(ProtobufParser<Protos.TwoWayChannelMessage> handler, Protos.TwoWayChannelMessage msg) {
                 try {
                     channelClient.receiveMessage(msg);
                 } catch (InsufficientMoneyException e) {
@@ -98,12 +98,12 @@ public class PaymentChannelClientConnection {
             }
 
             @Override
-            public void connectionOpen(ProtobufParser handler) {
+            public void connectionOpen(ProtobufParser<Protos.TwoWayChannelMessage> handler) {
                 channelClient.connectionOpen();
             }
 
             @Override
-            public void connectionClosed(ProtobufParser handler) {
+            public void connectionClosed(ProtobufParser<Protos.TwoWayChannelMessage> handler) {
                 channelClient.connectionClosed();
                 channelOpenFuture.setException(new PaymentChannelCloseException("The TCP socket died",
                         PaymentChannelCloseException.CloseReason.CONNECTION_CLOSED));

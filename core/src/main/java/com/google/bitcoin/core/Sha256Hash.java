@@ -34,7 +34,7 @@ import static com.google.common.base.Preconditions.checkArgument;
  * A Sha256Hash just wraps a byte[] so that equals and hashcode work correctly, allowing it to be used as keys in a
  * map. It also checks that the length is correct and provides a bit more type safety.
  */
-public class Sha256Hash implements Serializable, Comparable {
+public class Sha256Hash implements Serializable, Comparable<Sha256Hash> {
     private byte[] bytes;
     public static final Sha256Hash ZERO_HASH = new Sha256Hash(new byte[32]);
 
@@ -128,8 +128,7 @@ public class Sha256Hash implements Serializable, Comparable {
     }
 
     @Override
-    public int compareTo(Object o) {
-        checkArgument(o instanceof Sha256Hash);
+    public int compareTo(Sha256Hash o) {
         int thisCode = this.hashCode();
         int oCode = ((Sha256Hash)o).hashCode();
         return thisCode > oCode ? 1 : (thisCode == oCode ? 0 : -1);

@@ -89,12 +89,12 @@ public class PaymentChannelServerListener {
 
             protobufHandlerListener = new ProtobufParser.Listener<Protos.TwoWayChannelMessage>() {
                 @Override
-                public synchronized void messageReceived(ProtobufParser handler, Protos.TwoWayChannelMessage msg) {
+                public synchronized void messageReceived(ProtobufParser<Protos.TwoWayChannelMessage> handler, Protos.TwoWayChannelMessage msg) {
                     paymentChannelManager.receiveMessage(msg);
                 }
 
                 @Override
-                public synchronized void connectionClosed(ProtobufParser handler) {
+                public synchronized void connectionClosed(ProtobufParser<Protos.TwoWayChannelMessage> handler) {
                     paymentChannelManager.connectionClosed();
                     if (closeReason != null)
                         eventHandler.channelClosed(closeReason);
@@ -104,7 +104,7 @@ public class PaymentChannelServerListener {
                 }
 
                 @Override
-                public synchronized void connectionOpen(ProtobufParser handler) {
+                public synchronized void connectionOpen(ProtobufParser<Protos.TwoWayChannelMessage> handler) {
                     ServerConnectionEventHandler eventHandler = eventHandlerFactory.onNewConnection(address);
                     if (eventHandler == null)
                         handler.closeConnection();
@@ -141,7 +141,7 @@ public class PaymentChannelServerListener {
     public void bindAndStart(int port) throws Exception {
         server = new NioServer(new StreamParserFactory() {
             @Override
-            public ProtobufParser getNewParser(InetAddress inetAddress, int port) {
+            public ProtobufParser<Protos.TwoWayChannelMessage> getNewParser(InetAddress inetAddress, int port) {
                 return new ServerHandler(new InetSocketAddress(inetAddress, port), timeoutSeconds).socketProtobufHandler;
             }
         }, new InetSocketAddress(port));

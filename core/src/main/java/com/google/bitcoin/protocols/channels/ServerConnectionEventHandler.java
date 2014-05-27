@@ -29,10 +29,10 @@ import javax.annotation.Nullable;
  * {@link PaymentChannelServerListener}
 */
 public abstract class ServerConnectionEventHandler {
-    private ProtobufParser connectionChannel;
+    private ProtobufParser<Protos.TwoWayChannelMessage> connectionChannel;
     // Called by ServerListener before channelOpen to set connectionChannel when it is ready to received application messages
     // Also called with null to clear connectionChannel after channelClosed()
-    synchronized void setConnectionChannel(@Nullable ProtobufParser connectionChannel) { this.connectionChannel = connectionChannel; }
+    synchronized void setConnectionChannel(@Nullable ProtobufParser<Protos.TwoWayChannelMessage> connectionChannel) { this.connectionChannel = connectionChannel; }
 
     /**
      * <p>Closes the channel with the client (will generate a

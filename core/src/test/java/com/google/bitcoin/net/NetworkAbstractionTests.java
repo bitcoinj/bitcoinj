@@ -21,6 +21,7 @@ import com.google.bitcoin.core.Utils;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.protobuf.ByteString;
 import org.bitcoin.paymentchannel.Protos;
+import org.bitcoin.paymentchannel.Protos.TwoWayChannelMessage;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -62,7 +63,7 @@ public class NetworkAbstractionTests {
             channels = null;
     }
 
-    private MessageWriteTarget openConnection(SocketAddress addr, ProtobufParser parser) throws Exception {
+    private MessageWriteTarget openConnection(SocketAddress addr, ProtobufParser<Protos.TwoWayChannelMessage> parser) throws Exception {
         if (clientType == 0 || clientType == 1) {
             channels.openConnection(addr, parser);
             if (parser.writeTarget.get() == null)
@@ -98,7 +99,7 @@ public class NetworkAbstractionTests {
         final SettableFuture<Protos.TwoWayChannelMessage> clientMessage2Received = SettableFuture.create();
         NioServer server = new NioServer(new StreamParserFactory() {
             @Override
-            public ProtobufParser getNewParser(InetAddress inetAddress, int port) {
+            public ProtobufParser<TwoWayChannelMessage> getNewParser(InetAddress inetAddress, int port) {
                 return new ProtobufParser<Protos.TwoWayChannelMessage>(new ProtobufParser.Listener<Protos.TwoWayChannelMessage>() {
                     @Override
                     public void messageReceived(ProtobufParser<Protos.TwoWayChannelMessage> handler, Protos.TwoWayChannelMessage msg) {
@@ -107,12 +108,12 @@ public class NetworkAbstractionTests {
                     }
 
                     @Override
-                    public void connectionOpen(ProtobufParser handler) {
+                    public void connectionOpen(ProtobufParser<Protos.TwoWayChannelMessage> handler) {
                         serverConnectionOpen.set(null);
                     }
 
                     @Override
-                    public void connectionClosed(ProtobufParser handler) {
+                    public void connectionClosed(ProtobufParser<Protos.TwoWayChannelMessage> handler) {
                         serverConnectionClosed.set(null);
                     }
                 }, Protos.TwoWayChannelMessage.getDefaultInstance(), 1000, 0);
@@ -124,7 +125,7 @@ public class NetworkAbstractionTests {
         ProtobufParser<Protos.TwoWayChannelMessage> clientHandler = new ProtobufParser<Protos.TwoWayChannelMessage>(
                 new ProtobufParser.Listener<Protos.TwoWayChannelMessage>() {
                     @Override
-                    public synchronized void messageReceived(ProtobufParser handler, Protos.TwoWayChannelMessage msg) {
+                    public synchronized void messageReceived(ProtobufParser<Protos.TwoWayChannelMessage> handler, Protos.TwoWayChannelMessage msg) {
                         if (clientMessage1Received.isDone())
                             clientMessage2Received.set(msg);
                         else
@@ -132,12 +133,12 @@ public class NetworkAbstractionTests {
                     }
 
                     @Override
-                    public void connectionOpen(ProtobufParser handler) {
+                    public void connectionOpen(ProtobufParser<Protos.TwoWayChannelMessage> handler) {
                         clientConnectionOpen.set(null);
                     }
 
                     @Override
-                    public void connectionClosed(ProtobufParser handler) {
+                    public void connectionClosed(ProtobufParser<Protos.TwoWayChannelMessage> handler) {
                         clientConnectionClosed.set(null);
                     }
                 }, Protos.TwoWayChannelMessage.getDefaultInstance(), 1000, 0);
@@ -176,15 +177,15 @@ public class NetworkAbstractionTests {
         final SettableFuture<Void> clientConnection2Closed = SettableFuture.create();
         NioServer server = new NioServer(new StreamParserFactory() {
             @Override
-            public ProtobufParser getNewParser(InetAddress inetAddress, int port) {
+            public ProtobufParser<Protos.TwoWayChannelMessage> getNewParser(InetAddress inetAddress, int port) {
                 return new ProtobufParser<Protos.TwoWayChannelMessage>(new ProtobufParser.Listener<Protos.TwoWayChannelMessage>() {
                     @Override
-                    public void messageReceived(ProtobufParser handler, Protos.TwoWayChannelMessage msg) {
+                    public void messageReceived(ProtobufParser<Protos.TwoWayChannelMessage> handler, Protos.TwoWayChannelMessage msg) {
                         fail.set(true);
                     }
 
                     @Override
-                    public synchronized void connectionOpen(ProtobufParser handler) {
+                    public synchronized void connectionOpen(ProtobufParser<Protos.TwoWayChannelMessage> handler) {
                         if (serverConnection1Open.isDone()) {
                             handler.setSocketTimeout(0);
                             serverConnection2Open.set(null);
@@ -193,7 +194,7 @@ public class NetworkAbstractionTests {
                     }
 
                     @Override
-                    public synchronized void connectionClosed(ProtobufParser handler) {
+                    public synchronized void connectionClosed(ProtobufParser<Protos.TwoWayChannelMessage> handler) {
                         if (serverConnection1Closed.isDone()) {
                             serverConnection2Closed.set(null);
                         } else
@@ -208,17 +209,17 @@ public class NetworkAbstractionTests {
         openConnection(new InetSocketAddress("localhost", 4243), new ProtobufParser<Protos.TwoWayChannelMessage>(
                 new ProtobufParser.Listener<Protos.TwoWayChannelMessage>() {
                     @Override
-                    public void messageReceived(ProtobufParser handler, Protos.TwoWayChannelMessage msg) {
+                    public void messageReceived(ProtobufParser<Protos.TwoWayChannelMessage> handler, Protos.TwoWayChannelMessage msg) {
                         fail.set(true);
                     }
 
                     @Override
-                    public void connectionOpen(ProtobufParser handler) {
+                    public void connectionOpen(ProtobufParser<Protos.TwoWayChannelMessage> handler) {
                         clientConnection1Open.set(null);
                     }
 
                     @Override
-                    public void connectionClosed(ProtobufParser handler) {
+                    public void connectionClosed(ProtobufParser<Protos.TwoWayChannelMessage> handler) {
                         clientConnection1Closed.set(null);
                     }
                 }, Protos.TwoWayChannelMessage.getDefaultInstance(), 1000, 0));
@@ -233,17 +234,17 @@ public class NetworkAbstractionTests {
         ProtobufParser<Protos.TwoWayChannelMessage> client2Handler = new ProtobufParser<Protos.TwoWayChannelMessage>(
                 new ProtobufParser.Listener<Protos.TwoWayChannelMessage>() {
                     @Override
-                    public void messageReceived(ProtobufParser handler, Protos.TwoWayChannelMessage msg) {
+                    public void messageReceived(ProtobufParser<Protos.TwoWayChannelMessage> handler, Protos.TwoWayChannelMessage msg) {
                         fail.set(true);
                     }
 
                     @Override
-                    public void connectionOpen(ProtobufParser handler) {
+                    public void connectionOpen(ProtobufParser<Protos.TwoWayChannelMessage> handler) {
                         clientConnection2Open.set(null);
                     }
 
                     @Override
-                    public void connectionClosed(ProtobufParser handler) {
+                    public void connectionClosed(ProtobufParser<Protos.TwoWayChannelMessage> handler) {
                         clientConnection2Closed.set(null);
                     }
                 }, Protos.TwoWayChannelMessage.getDefaultInstance(), 1000, 0);
@@ -275,7 +276,7 @@ public class NetworkAbstractionTests {
         final SettableFuture<Protos.TwoWayChannelMessage> clientMessage4Received = SettableFuture.create();
         NioServer server = new NioServer(new StreamParserFactory() {
             @Override
-            public ProtobufParser getNewParser(InetAddress inetAddress, int port) {
+            public ProtobufParser<Protos.TwoWayChannelMessage> getNewParser(InetAddress inetAddress, int port) {
                 return new ProtobufParser<Protos.TwoWayChannelMessage>(new ProtobufParser.Listener<Protos.TwoWayChannelMessage>() {
                     @Override
                     public void messageReceived(ProtobufParser<Protos.TwoWayChannelMessage> handler, Protos.TwoWayChannelMessage msg) {
@@ -283,12 +284,12 @@ public class NetworkAbstractionTests {
                     }
 
                     @Override
-                    public void connectionOpen(ProtobufParser handler) {
+                    public void connectionOpen(ProtobufParser<Protos.TwoWayChannelMessage> handler) {
                         serverConnectionOpen.set(null);
                     }
 
                     @Override
-                    public void connectionClosed(ProtobufParser handler) {
+                    public void connectionClosed(ProtobufParser<Protos.TwoWayChannelMessage> handler) {
                         serverConnectionClosed.set(null);
                     }
                 }, Protos.TwoWayChannelMessage.getDefaultInstance(), 0x10000, 0);
@@ -300,7 +301,7 @@ public class NetworkAbstractionTests {
         ProtobufParser<Protos.TwoWayChannelMessage> clientHandler = new ProtobufParser<Protos.TwoWayChannelMessage>(
                 new ProtobufParser.Listener<Protos.TwoWayChannelMessage>() {
                     @Override
-                    public synchronized void messageReceived(ProtobufParser handler, Protos.TwoWayChannelMessage msg) {
+                    public synchronized void messageReceived(ProtobufParser<Protos.TwoWayChannelMessage> handler, Protos.TwoWayChannelMessage msg) {
                         if (clientMessage1Received.isDone()) {
                             if (clientMessage2Received.isDone()) {
                                 if (clientMessage3Received.isDone()) {
@@ -316,12 +317,12 @@ public class NetworkAbstractionTests {
                     }
 
                     @Override
-                    public void connectionOpen(ProtobufParser handler) {
+                    public void connectionOpen(ProtobufParser<Protos.TwoWayChannelMessage> handler) {
                         clientConnectionOpen.set(null);
                     }
 
                     @Override
-                    public void connectionClosed(ProtobufParser handler) {
+                    public void connectionClosed(ProtobufParser<Protos.TwoWayChannelMessage> handler) {
                         clientConnectionClosed.set(null);
                     }
                 }, Protos.TwoWayChannelMessage.getDefaultInstance(), 0x10000, 0);
@@ -426,7 +427,7 @@ public class NetworkAbstractionTests {
         final SettableFuture<Protos.TwoWayChannelMessage> client3MessageReceived = SettableFuture.create();
         NioServer server = new NioServer(new StreamParserFactory() {
             @Override
-            public ProtobufParser getNewParser(InetAddress inetAddress, int port) {
+            public ProtobufParser<Protos.TwoWayChannelMessage> getNewParser(InetAddress inetAddress, int port) {
                 return new ProtobufParser<Protos.TwoWayChannelMessage>(new ProtobufParser.Listener<Protos.TwoWayChannelMessage>() {
                     @Override
                     public void messageReceived(ProtobufParser<Protos.TwoWayChannelMessage> handler, Protos.TwoWayChannelMessage msg) {
@@ -434,7 +435,7 @@ public class NetworkAbstractionTests {
                     }
 
                     @Override
-                    public synchronized void connectionOpen(ProtobufParser handler) {
+                    public synchronized void connectionOpen(ProtobufParser<Protos.TwoWayChannelMessage> handler) {
                         if (serverConnection1Open.isDone()) {
                             if (serverConnection2Open.isDone())
                                 serverConnection3Open.set(null);
@@ -445,7 +446,7 @@ public class NetworkAbstractionTests {
                     }
 
                     @Override
-                    public synchronized void connectionClosed(ProtobufParser handler) {
+                    public synchronized void connectionClosed(ProtobufParser<Protos.TwoWayChannelMessage> handler) {
                         if (serverConnectionClosed1.isDone()) {
                             if (serverConnectionClosed2.isDone()) {
                                 checkState(!serverConnectionClosed3.isDone());
@@ -464,17 +465,17 @@ public class NetworkAbstractionTests {
         ProtobufParser<Protos.TwoWayChannelMessage> client1Handler = new ProtobufParser<Protos.TwoWayChannelMessage>(
                 new ProtobufParser.Listener<Protos.TwoWayChannelMessage>() {
                     @Override
-                    public void messageReceived(ProtobufParser handler, Protos.TwoWayChannelMessage msg) {
+                    public void messageReceived(ProtobufParser<Protos.TwoWayChannelMessage> handler, Protos.TwoWayChannelMessage msg) {
                         client1MessageReceived.set(msg);
                     }
 
                     @Override
-                    public void connectionOpen(ProtobufParser handler) {
+                    public void connectionOpen(ProtobufParser<Protos.TwoWayChannelMessage> handler) {
                         client1ConnectionOpen.set(null);
                     }
 
                     @Override
-                    public void connectionClosed(ProtobufParser handler) {
+                    public void connectionClosed(ProtobufParser<Protos.TwoWayChannelMessage> handler) {
                         client1ConnectionClosed.set(null);
                     }
                 }, Protos.TwoWayChannelMessage.getDefaultInstance(), 1000, 0);
@@ -486,17 +487,17 @@ public class NetworkAbstractionTests {
         ProtobufParser<Protos.TwoWayChannelMessage> client2Handler = new ProtobufParser<Protos.TwoWayChannelMessage>(
                 new ProtobufParser.Listener<Protos.TwoWayChannelMessage>() {
                     @Override
-                    public void messageReceived(ProtobufParser handler, Protos.TwoWayChannelMessage msg) {
+                    public void messageReceived(ProtobufParser<Protos.TwoWayChannelMessage> handler, Protos.TwoWayChannelMessage msg) {
                         client2MessageReceived.set(msg);
                     }
 
                     @Override
-                    public void connectionOpen(ProtobufParser handler) {
+                    public void connectionOpen(ProtobufParser<Protos.TwoWayChannelMessage> handler) {
                         client2ConnectionOpen.set(null);
                     }
 
                     @Override
-                    public void connectionClosed(ProtobufParser handler) {
+                    public void connectionClosed(ProtobufParser<Protos.TwoWayChannelMessage> handler) {
                         client2ConnectionClosed.set(null);
                     }
                 }, Protos.TwoWayChannelMessage.getDefaultInstance(), 1000, 0);
@@ -508,17 +509,17 @@ public class NetworkAbstractionTests {
         ProtobufParser<Protos.TwoWayChannelMessage> client3Handler = new ProtobufParser<Protos.TwoWayChannelMessage>(
                 new ProtobufParser.Listener<Protos.TwoWayChannelMessage>() {
                     @Override
-                    public void messageReceived(ProtobufParser handler, Protos.TwoWayChannelMessage msg) {
+                    public void messageReceived(ProtobufParser<Protos.TwoWayChannelMessage> handler, Protos.TwoWayChannelMessage msg) {
                         client3MessageReceived.set(msg);
                     }
 
                     @Override
-                    public void connectionOpen(ProtobufParser handler) {
+                    public void connectionOpen(ProtobufParser<Protos.TwoWayChannelMessage> handler) {
                         client3ConnectionOpen.set(null);
                     }
 
                     @Override
-                    public synchronized void connectionClosed(ProtobufParser handler) {
+                    public synchronized void connectionClosed(ProtobufParser<Protos.TwoWayChannelMessage> handler) {
                         checkState(!client3ConnectionClosed.isDone());
                         client3ConnectionClosed.set(null);
                     }
