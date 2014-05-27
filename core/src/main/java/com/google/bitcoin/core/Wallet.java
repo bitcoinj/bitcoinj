@@ -605,6 +605,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
      *
      * @return ECKey object or null if no such key was found.
      */
+    @Override
     @Nullable
     public ECKey findKeyFromPubHash(byte[] pubkeyHash) {
         lock.lock();
@@ -646,6 +647,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
      * Locates a keypair from the basicKeyChain given the raw public key bytes.
      * @return ECKey or null if no such key was found.
      */
+    @Override
     @Nullable
     public ECKey findKeyFromPubKey(byte[] pubkey) {
         lock.lock();
@@ -1027,6 +1029,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
      * inactive side chain. We must still record these transactions and the blocks they appear in because a future
      * block might change which chain is best causing a reorganize. A re-org can totally change our balance!
      */
+    @Override
     public boolean notifyTransactionIsInBlock(Sha256Hash txHash, StoredBlock block,
                                               BlockChain.NewBlockType blockType,
                                               int relativityOffset) throws VerificationException {
@@ -1189,6 +1192,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
      * <p>Note that if the tx has inputs containing one of our keys, but the connected transaction is not in the wallet,
      * it will not be considered relevant.</p>
      */
+    @Override
     public boolean isTransactionRelevant(Transaction tx) throws ScriptException {
         lock.lock();
         try {
@@ -1402,6 +1406,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
      * <p>Used to update confidence data in each transaction and last seen block hash. Triggers auto saving.
      * Invokes the onWalletChanged event listener if there were any affected transactions.</p>
      */
+    @Override
     public void notifyNewBestBlock(StoredBlock block) throws VerificationException {
         // Check to see if this block has been seen before.
         Sha256Hash newBlockHash = block.getHeader().getHash();
@@ -1859,6 +1864,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
             ArrayList<Transaction> all = new ArrayList<Transaction>(getTransactions(includeDead));
             // Order by date.
             Collections.sort(all, Collections.reverseOrder(new Comparator<Transaction>() {
+                @Override
                 public int compare(Transaction t1, Transaction t2) {
                     return t1.getUpdateTime().compareTo(t2.getUpdateTime());
                 }
@@ -2728,6 +2734,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
      *
      * <p>The oldBlocks/newBlocks lists are ordered height-wise from top first to bottom last.</p>
      */
+    @Override
     public void reorganize(StoredBlock splitPoint, List<StoredBlock> oldBlocks, List<StoredBlock> newBlocks) throws VerificationException {
         lock.lock();
         try {
@@ -3957,6 +3964,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
      * when they confirm - which may be quite some time later - recalculate the transaction and check if it's the same.
      * If not, redisplay the confirm window and try again.
      */
+    @Override
     public ReentrantLock getLock() {
         return lock;
     }

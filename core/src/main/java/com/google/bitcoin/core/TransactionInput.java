@@ -128,6 +128,7 @@ public class TransactionInput extends ChildMessage implements Serializable {
         this.value = null;
     }
 
+    @Override
     protected void parseLite() throws ProtocolException {
         int curs = cursor;
         int scriptLen = (int) readVarInt(36);
@@ -135,6 +136,7 @@ public class TransactionInput extends ChildMessage implements Serializable {
         cursor = curs;
     }
 
+    @Override
     void parse() throws ProtocolException {
         outpoint = new TransactionOutPoint(params, bytes, cursor, this, parseLazy, parseRetain);
         cursor += outpoint.getMessageSize();
@@ -273,6 +275,7 @@ public class TransactionInput extends ChildMessage implements Serializable {
     /**
      * Returns a human readable debug string.
      */
+    @Override
     public String toString() {
         if (isCoinBase())
             return "TxIn: COINBASE";

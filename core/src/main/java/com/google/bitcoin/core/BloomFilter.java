@@ -140,6 +140,7 @@ public class BloomFilter extends Message {
     /**
      * Serializes this message to the provided stream. If you just want the raw bytes use bitcoinSerialize().
      */
+    @Override
     void bitcoinSerializeToStream(OutputStream stream) throws IOException {
         stream.write(new VarInt(data.length).encode());
         stream.write(data);

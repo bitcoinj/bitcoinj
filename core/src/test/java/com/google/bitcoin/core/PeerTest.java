@@ -84,6 +84,7 @@ public class PeerTest extends TestWithNetworkConnections {
         peer.addWallet(wallet);
     }
 
+    @Override
     @After
     public void tearDown() throws Exception {
         super.tearDown();

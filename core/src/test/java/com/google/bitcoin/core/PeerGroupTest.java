@@ -140,6 +140,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         final CountDownLatch latch = new CountDownLatch(1);
         final AtomicBoolean result = new AtomicBoolean();
         peerGroup.addPeerDiscovery(new PeerDiscovery() {
+            @Override
             public InetSocketAddress[] getPeers(long unused, TimeUnit unused2) throws PeerDiscoveryException {
                 if (!result.getAndSet(true)) {
                     // Pretend we are not connected to the internet.
@@ -150,6 +151,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
                     return new InetSocketAddress[]{new InetSocketAddress("localhost", 1)};
                 }
             }
+            @Override
             public void shutdown() {
             }
         });
@@ -331,6 +333,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         assertTrue(tx.getConfidence().wasBroadcastBy(peerOf(p2).getAddress()));
 
         tx.getConfidence().addEventListener(new TransactionConfidence.Listener() {
+            @Override
             public void onConfidenceChanged(Transaction tx, TransactionConfidence.Listener.ChangeReason reason) {
                 event[1] = tx;
             }
@@ -470,10 +473,12 @@ public class PeerGroupTest extends TestWithPeerGroup {
         );
         peerGroup.addEventListener(listener);
         peerGroup.addPeerDiscovery(new PeerDiscovery() {
+            @Override
             public InetSocketAddress[] getPeers(long unused, TimeUnit unused2) throws PeerDiscoveryException {
                 return addresses.toArray(new InetSocketAddress[addresses.size()]);
             }
 
+            @Override
             public void shutdown() {
             }
         });

@@ -17,6 +17,7 @@ import java.util.*;
  * "spending" more priority than would be required to get the transaction we are creating confirmed.
  */
 public class DefaultCoinSelector implements CoinSelector {
+    @Override
     public CoinSelection select(Coin biTarget, LinkedList<TransactionOutput> candidates) {
         long target = biTarget.longValue();
         HashSet<TransactionOutput> selected = new HashSet<TransactionOutput>();
@@ -45,6 +46,7 @@ public class DefaultCoinSelector implements CoinSelector {
 
     @VisibleForTesting static void sortOutputs(ArrayList<TransactionOutput> outputs) {
         Collections.sort(outputs, new Comparator<TransactionOutput>() {
+            @Override
             public int compare(TransactionOutput a, TransactionOutput b) {
                 int depth1 = 0;
                 int depth2 = 0;

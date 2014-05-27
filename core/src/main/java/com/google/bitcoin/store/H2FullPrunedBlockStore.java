@@ -157,6 +157,7 @@ public class H2FullPrunedBlockStore implements FullPrunedBlockStore {
         }
     }
     
+    @Override
     public synchronized void close() {
         for (Connection conn : allConnections) {
             try {
@@ -377,6 +378,7 @@ public class H2FullPrunedBlockStore implements FullPrunedBlockStore {
         }
     }
 
+    @Override
     public void put(StoredBlock storedBlock) throws BlockStoreException {
         maybeConnect();
         try {
@@ -386,6 +388,7 @@ public class H2FullPrunedBlockStore implements FullPrunedBlockStore {
         }
     }
     
+    @Override
     public void put(StoredBlock storedBlock, StoredUndoableBlock undoableBlock) throws BlockStoreException {
         maybeConnect();
         // We skip the first 4 bytes because (on prodnet) the minimum target has 4 0-bytes
@@ -506,16 +509,19 @@ public class H2FullPrunedBlockStore implements FullPrunedBlockStore {
         }
     }
     
+    @Override
     @Nullable
     public StoredBlock get(Sha256Hash hash) throws BlockStoreException {
         return get(hash, false);
     }
     
+    @Override
     @Nullable
     public StoredBlock getOnceUndoableStoredBlock(Sha256Hash hash) throws BlockStoreException {
         return get(hash, true);
     }
     
+    @Override
     @Nullable
     public StoredUndoableBlock getUndoBlock(Sha256Hash hash) throws BlockStoreException {
         maybeConnect();
@@ -576,10 +582,12 @@ public class H2FullPrunedBlockStore implements FullPrunedBlockStore {
         }
     }
 
+    @Override
     public StoredBlock getChainHead() throws BlockStoreException {
         return chainHeadBlock;
     }
 
+    @Override
     public void setChainHead(StoredBlock chainHead) throws BlockStoreException {
         Sha256Hash hash = chainHead.getHeader().getHash();
         this.chainHeadHash = hash;
@@ -597,10 +605,12 @@ public class H2FullPrunedBlockStore implements FullPrunedBlockStore {
         }
     }
     
+    @Override
     public StoredBlock getVerifiedChainHead() throws BlockStoreException {
         return verifiedChainHeadBlock;
     }
 
+    @Override
     public void setVerifiedChainHead(StoredBlock chainHead) throws BlockStoreException {
         Sha256Hash hash = chainHead.getHeader().getHash();
         this.verifiedChainHeadHash = hash;
@@ -633,6 +643,7 @@ public class H2FullPrunedBlockStore implements FullPrunedBlockStore {
         }
     }
 
+    @Override
     @Nullable
     public StoredTransactionOutput getTransactionOutput(Sha256Hash hash, long index) throws BlockStoreException {
         maybeConnect();
@@ -663,6 +674,7 @@ public class H2FullPrunedBlockStore implements FullPrunedBlockStore {
         }
     }
 
+    @Override
     public void addUnspentTransactionOutput(StoredTransactionOutput out) throws BlockStoreException {
         maybeConnect();
         PreparedStatement s = null;
@@ -688,6 +700,7 @@ public class H2FullPrunedBlockStore implements FullPrunedBlockStore {
         }
     }
 
+    @Override
     public void removeUnspentTransactionOutput(StoredTransactionOutput out) throws BlockStoreException {
         maybeConnect();
         try {
@@ -706,6 +719,7 @@ public class H2FullPrunedBlockStore implements FullPrunedBlockStore {
         }
     }
 
+    @Override
     public void beginDatabaseBatchWrite() throws BlockStoreException {
         maybeConnect();
         try {
@@ -715,6 +729,7 @@ public class H2FullPrunedBlockStore implements FullPrunedBlockStore {
         }
     }
 
+    @Override
     public void commitDatabaseBatchWrite() throws BlockStoreException {
         maybeConnect();
         try {
@@ -725,6 +740,7 @@ public class H2FullPrunedBlockStore implements FullPrunedBlockStore {
         }
     }
 
+    @Override
     public void abortDatabaseBatchWrite() throws BlockStoreException {
         maybeConnect();
         try {
@@ -735,6 +751,7 @@ public class H2FullPrunedBlockStore implements FullPrunedBlockStore {
         }
     }
 
+    @Override
     public boolean hasUnspentOutputs(Sha256Hash hash, int numOutputs) throws BlockStoreException {
         maybeConnect();
         PreparedStatement s = null;

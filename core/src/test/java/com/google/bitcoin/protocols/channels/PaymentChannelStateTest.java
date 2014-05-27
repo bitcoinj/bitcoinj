@@ -58,6 +58,7 @@ public class PaymentChannelStateTest extends TestWithWallet {
         }
     }
 
+    @Override
     @Before
     public void setUp() throws Exception {
         super.setUp();

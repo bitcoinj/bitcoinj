@@ -88,6 +88,7 @@ public class AddressMessage extends Message {
         }
     }
 
+    @Override
     public int getMessageSize() {
         if (length != UNKNOWN_LENGTH)
             return length;

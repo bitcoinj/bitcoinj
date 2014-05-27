@@ -62,6 +62,7 @@ public class BasicKeyChain implements EncryptableKeyChain {
     }
 
     /** Returns the {@link KeyCrypter} in use or null if the key chain is not encrypted. */
+    @Override
     @Nullable
     public KeyCrypter getKeyCrypter() {
         lock.lock();

@@ -69,6 +69,7 @@ public class ChildNumber {
         return i & (~HARDENED_BIT);
     }
 
+    @Override
     public String toString() {
         return String.format("%d%s", num(), isHardened() ? "'" : "");
     }

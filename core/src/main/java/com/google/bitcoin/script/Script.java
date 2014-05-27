@@ -104,6 +104,7 @@ public class Script {
     /**
      * Returns the program opcodes as a string, for example "[1234] DUP HASH160"
      */
+    @Override
     public String toString() {
         StringBuilder buf = new StringBuilder();
         for (ScriptChunk chunk : chunks)

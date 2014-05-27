@@ -54,6 +54,7 @@ public class UnitTestParams extends NetworkParameters {
         return instance;
     }
 
+    @Override
     public String getPaymentProtocolId() {
         return null;
     }

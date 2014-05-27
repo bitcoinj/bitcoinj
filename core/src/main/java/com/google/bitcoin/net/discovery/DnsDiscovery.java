@@ -64,6 +64,7 @@ public class DnsDiscovery implements PeerDiscovery {
         this.netParams = netParams;
     }
 
+    @Override
     public InetSocketAddress[] getPeers(long timeoutValue, TimeUnit timeoutUnit) throws PeerDiscoveryException {
         if (dnsSeeds == null || dnsSeeds.length == 0)
             throw new PeerDiscoveryException("No DNS seeds configured; unable to find any peers");
@@ -75,6 +76,7 @@ public class DnsDiscovery implements PeerDiscovery {
             List<Callable<InetAddress[]>> tasks = Lists.newArrayList();
             for (final String seed : dnsSeeds) {
                 tasks.add(new Callable<InetAddress[]>() {
+                    @Override
                     public InetAddress[] call() throws Exception {
                         return InetAddress.getAllByName(seed);
                     }
@@ -113,6 +115,7 @@ public class DnsDiscovery implements PeerDiscovery {
     }
 
     /** We don't have a way to abort a DNS lookup, so this does nothing */
+    @Override
     public void shutdown() {
     }
 }

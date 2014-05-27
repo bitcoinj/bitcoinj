@@ -75,6 +75,7 @@ public class IrcDiscovery implements PeerDiscovery {
     protected void onIRCReceive(String message) {
     }
 
+    @Override
     public void shutdown() {
         try {
             if (connection != null) {
@@ -89,6 +90,7 @@ public class IrcDiscovery implements PeerDiscovery {
      * does not mean it is accepting connections. The given time out value is applied for every IP returned by DNS
      * for the given server, so a timeout value of 1 second may result in 5 seconds delay if 5 servers are advertised.
      */
+    @Override
     public InetSocketAddress[] getPeers(long timeoutValue, TimeUnit timeoutUnit) throws PeerDiscoveryException {
         ArrayList<InetSocketAddress> addresses = new ArrayList<InetSocketAddress>();
         connection = null;

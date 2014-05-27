@@ -120,6 +120,7 @@ public class BlockingClient implements MessageWriteTarget {
      * Closes the connection to the server, triggering the {@link StreamParser#connectionClosed()}
      * event on the network-handling thread where all callbacks occur.
      */
+    @Override
     public void closeConnection() {
         // Closes the channel, triggering an exception in the network-handling thread triggering connectionClosed()
         try {

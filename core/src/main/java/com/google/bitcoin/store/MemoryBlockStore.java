@@ -47,27 +47,32 @@ public class MemoryBlockStore implements BlockStore {
         }
     }
 
+    @Override
     public synchronized void put(StoredBlock block) throws BlockStoreException {
         if (blockMap == null) throw new BlockStoreException("MemoryBlockStore is closed");
         Sha256Hash hash = block.getHeader().getHash();
         blockMap.put(hash, block);
     }
 
+    @Override
     public synchronized StoredBlock get(Sha256Hash hash) throws BlockStoreException {
         if (blockMap == null) throw new BlockStoreException("MemoryBlockStore is closed");
         return blockMap.get(hash);
     }
 
+    @Override
     public StoredBlock getChainHead() throws BlockStoreException {
         if (blockMap == null) throw new BlockStoreException("MemoryBlockStore is closed");
         return chainHead;
     }
 
+    @Override
     public void setChainHead(StoredBlock chainHead) throws BlockStoreException {
         if (blockMap == null) throw new BlockStoreException("MemoryBlockStore is closed");
         this.chainHead = chainHead;
     }
     
+    @Override
     public void close() {
         blockMap = null;
     }

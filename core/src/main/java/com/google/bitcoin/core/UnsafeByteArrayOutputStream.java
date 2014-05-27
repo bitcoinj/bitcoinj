@@ -44,6 +44,7 @@ public class UnsafeByteArrayOutputStream extends ByteArrayOutputStream {
      *
      * @param b the byte to be written.
      */
+    @Override
     public void write(int b) {
         int newcount = count + 1;
         if (newcount > buf.length) {
@@ -61,6 +62,7 @@ public class UnsafeByteArrayOutputStream extends ByteArrayOutputStream {
      * @param off the start offset in the data.
      * @param len the number of bytes to write.
      */
+    @Override
     public void write(byte b[], int off, int len) {
         if ((off < 0) || (off > b.length) || (len < 0) ||
                 ((off + len) > b.length) || ((off + len) < 0)) {
@@ -84,6 +86,7 @@ public class UnsafeByteArrayOutputStream extends ByteArrayOutputStream {
      * @param out the output stream to which to write the data.
      * @throws IOException if an I/O error occurs.
      */
+    @Override
     public void writeTo(OutputStream out) throws IOException {
         out.write(buf, 0, count);
     }
@@ -96,6 +99,7 @@ public class UnsafeByteArrayOutputStream extends ByteArrayOutputStream {
      *
      * @see java.io.ByteArrayInputStream#count
      */
+    @Override
     public void reset() {
         count = 0;
     }
@@ -108,6 +112,7 @@ public class UnsafeByteArrayOutputStream extends ByteArrayOutputStream {
      * @return the current contents of this output stream, as a byte array.
      * @see java.io.ByteArrayOutputStream#size()
      */
+    @Override
     public byte toByteArray()[] {
         return count == buf.length ? buf : Utils.copyOf(buf, count);
     }
@@ -119,6 +124,7 @@ public class UnsafeByteArrayOutputStream extends ByteArrayOutputStream {
      *         of valid bytes in this output stream.
      * @see java.io.ByteArrayOutputStream#count
      */
+    @Override
     public int size() {
         return count;
     }

@@ -112,6 +112,7 @@ public class TorDiscovery implements PeerDiscovery {
         }
     }
 
+    @Override
     public InetSocketAddress[] getPeers(long timeoutValue, TimeUnit timeoutUnit) throws PeerDiscoveryException {
         if (hostNames == null)
             throw new PeerDiscoveryException("Unable to find any peers via DNS");
@@ -148,6 +149,7 @@ public class TorDiscovery implements PeerDiscovery {
             List<ListenableFuture<Circuit>> circuitFutures = Lists.newArrayList();
             for (final Router router : routers) {
                 circuitFutures.add(threadPool.submit(new Callable<Circuit>() {
+                    @Override
                     public Circuit call() throws Exception {
                         return torClient.getCircuitManager().openInternalCircuitTo(Lists.newArrayList(router));
                     }
@@ -187,6 +189,7 @@ public class TorDiscovery implements PeerDiscovery {
             for (final Circuit circuit : circuits) {
                 for (final String seed : hostNames) {
                     lookupFutures.add(threadPool.submit(new Callable<Lookup>() {
+                        @Override
                         public Lookup call() throws Exception {
                             return new Lookup(circuit.getFinalCircuitNode().getRouter(), lookup(circuit, seed));
                         }
@@ -269,6 +272,7 @@ public class TorDiscovery implements PeerDiscovery {
         throw new RuntimeException("Could not look up " + seed);
     }
 
+    @Override
     public synchronized void shutdown() {
         if (threadPool != null) {
             shutdownThreadPool();

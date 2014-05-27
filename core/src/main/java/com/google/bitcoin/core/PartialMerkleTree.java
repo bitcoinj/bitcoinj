@@ -64,6 +64,7 @@ public class PartialMerkleTree extends Message {
         super(params, payloadBytes, offset);
     }
     
+    @Override
     public void bitcoinSerializeToStream(OutputStream stream) throws IOException {
         Utils.uint32ToByteStreamLE(transactionCount, stream);
 

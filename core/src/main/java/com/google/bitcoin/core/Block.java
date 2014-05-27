@@ -226,6 +226,7 @@ public class Block extends Message {
         transactionBytesValid = parseRetain;
     }
 
+    @Override
     void parse() throws ProtocolException {
         parseHeader();
         parseTransactions();
@@ -242,6 +243,7 @@ public class Block extends Message {
         return optimalEncodingMessageSize;
     }
 
+    @Override
     protected void parseLite() throws ProtocolException {
         // Ignore the header since it has fixed length. If length is not provided we will have to
         // invoke a light parse of transactions to calculate the length.
@@ -304,6 +306,7 @@ public class Block extends Message {
      * Ensure the object is parsed if needed. This should be called in every getter before returning a value. If the
      * lazy parse flag is not set this is a method returns immediately.
      */
+    @Override
     protected void maybeParse() {
         throw new LazyParseException(
                 "checkParse() should never be called on a Block.  Instead use checkParseHeader() and checkParseTransactions()");
@@ -319,6 +322,7 @@ public class Block extends Message {
      *
      * @throws ProtocolException
      */
+    @Override
     public void ensureParsed() throws ProtocolException {
         try {
             maybeParseHeader();
@@ -414,6 +418,7 @@ public class Block extends Message {
      *
      * @throws IOException
      */
+    @Override
     public byte[] bitcoinSerialize() {
         // we have completely cached byte array.
         if (headerBytesValid && transactionBytesValid) {
@@ -468,6 +473,7 @@ public class Block extends Message {
         return len;
     }
 
+    @Override
     protected void unCache() {
         // Since we have alternate uncache methods to use internally this will only ever be called by a child
         // transaction so we only need to invalidate that part of the cache.
@@ -523,6 +529,7 @@ public class Block extends Message {
      * Returns the hash of the block (which for a valid, solved block should be
      * below the target). Big endian.
      */
+    @Override
     public Sha256Hash getHash() {
         if (hash == null)
             hash = calculateHash();

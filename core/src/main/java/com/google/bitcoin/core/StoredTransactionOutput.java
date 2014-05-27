@@ -138,6 +138,7 @@ public class StoredTransactionOutput implements Serializable {
         return height;
     }
 
+    @Override
     public String toString() {
         return String.format("Stored TxOut of %s (%s:%d)", value.toFriendlyString(), hash.toString(), index);
     }

@@ -404,6 +404,7 @@ public class ECKey implements EncryptableItem, Serializable {
         return pub.isCompressed();
     }
 
+    @Override
     public String toString() {
         StringBuilder b = new StringBuilder();
         b.append("pub:").append(Utils.bytesToHexString(pub.getEncoded()));
@@ -1028,6 +1029,7 @@ public class ECKey implements EncryptableItem, Serializable {
      * Indicates whether the private key is encrypted (true) or not (false).
      * A private key is deemed to be encrypted when there is both a KeyCrypter and the encryptedPrivateKey is non-zero.
      */
+    @Override
     public boolean isEncrypted() {
         return keyCrypter != null && encryptedPrivateKey != null && encryptedPrivateKey.encryptedBytes.length > 0;
     }

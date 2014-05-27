@@ -41,6 +41,7 @@ public class FilteredBlock extends Message {
         super(params, payloadBytes, 0);
     }
     
+    @Override
     public void bitcoinSerializeToStream(OutputStream stream) throws IOException {
         if (header.transactions == null)
             header.bitcoinSerializeToStream(stream);
@@ -89,6 +90,7 @@ public class FilteredBlock extends Message {
     }
     
     /** Gets the hash of the block represented in this Filtered Block */
+    @Override
     public Sha256Hash getHash() {
         return header.getHash();
     }

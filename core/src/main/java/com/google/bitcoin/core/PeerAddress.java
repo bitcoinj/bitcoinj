@@ -132,6 +132,7 @@ public class PeerAddress extends ChildMessage {
         stream.write((byte) (0xFF & port));
     }
 
+    @Override
     protected void parseLite() {
         length = protocolVersion > 31402 ? MESSAGE_SIZE : MESSAGE_SIZE - 4;
     }

@@ -215,6 +215,7 @@ public class PostgresFullPrunedBlockStore implements FullPrunedBlockStore {
         }
     }
 
+    @Override
     public synchronized void close() {
         for (Connection conn : allConnections) {
             try {
@@ -445,6 +446,7 @@ public class PostgresFullPrunedBlockStore implements FullPrunedBlockStore {
         }
     }
 
+    @Override
     public void put(StoredBlock storedBlock) throws BlockStoreException {
         maybeConnect();
         try {
@@ -454,6 +456,7 @@ public class PostgresFullPrunedBlockStore implements FullPrunedBlockStore {
         }
     }
 
+    @Override
     public void put(StoredBlock storedBlock, StoredUndoableBlock undoableBlock) throws BlockStoreException {
         maybeConnect();
         // We skip the first 4 bytes because (on prodnet) the minimum target has 4 0-bytes
@@ -598,14 +601,17 @@ public class PostgresFullPrunedBlockStore implements FullPrunedBlockStore {
         }
     }
 
+    @Override
     public StoredBlock get(Sha256Hash hash) throws BlockStoreException {
         return get(hash, false);
     }
 
+    @Override
     public StoredBlock getOnceUndoableStoredBlock(Sha256Hash hash) throws BlockStoreException {
         return get(hash, true);
     }
 
+    @Override
     public StoredUndoableBlock getUndoBlock(Sha256Hash hash) throws BlockStoreException {
         maybeConnect();
         PreparedStatement s = null;
@@ -666,10 +672,12 @@ public class PostgresFullPrunedBlockStore implements FullPrunedBlockStore {
         }
     }
 
+    @Override
     public StoredBlock getChainHead() throws BlockStoreException {
         return chainHeadBlock;
     }
 
+    @Override
     public void setChainHead(StoredBlock chainHead) throws BlockStoreException {
         Sha256Hash hash = chainHead.getHeader().getHash();
         this.chainHeadHash = hash;
@@ -687,10 +695,12 @@ public class PostgresFullPrunedBlockStore implements FullPrunedBlockStore {
         }
     }
 
+    @Override
     public StoredBlock getVerifiedChainHead() throws BlockStoreException {
         return verifiedChainHeadBlock;
     }
 
+    @Override
     public void setVerifiedChainHead(StoredBlock chainHead) throws BlockStoreException {
         Sha256Hash hash = chainHead.getHeader().getHash();
         this.verifiedChainHeadHash = hash;
@@ -728,6 +738,7 @@ public class PostgresFullPrunedBlockStore implements FullPrunedBlockStore {
         }
     }
 
+    @Override
     public StoredTransactionOutput getTransactionOutput(Sha256Hash hash, long index) throws BlockStoreException {
         maybeConnect();
         PreparedStatement s = null;
@@ -758,6 +769,7 @@ public class PostgresFullPrunedBlockStore implements FullPrunedBlockStore {
         }
     }
 
+    @Override
     public void addUnspentTransactionOutput(StoredTransactionOutput out) throws BlockStoreException {
         maybeConnect();
         PreparedStatement s = null;
@@ -825,6 +837,7 @@ public class PostgresFullPrunedBlockStore implements FullPrunedBlockStore {
         }
     }
 
+    @Override
     public void removeUnspentTransactionOutput(StoredTransactionOutput out) throws BlockStoreException {
         maybeConnect();
         // TODO: This should only need one query (maybe a stored procedure)
@@ -843,6 +856,7 @@ public class PostgresFullPrunedBlockStore implements FullPrunedBlockStore {
         }
     }
 
+    @Override
     public void beginDatabaseBatchWrite() throws BlockStoreException {
 
         maybeConnect();
@@ -857,6 +871,7 @@ public class PostgresFullPrunedBlockStore implements FullPrunedBlockStore {
         }
     }
 
+    @Override
     public void commitDatabaseBatchWrite() throws BlockStoreException {
         maybeConnect();
 
@@ -872,6 +887,7 @@ public class PostgresFullPrunedBlockStore implements FullPrunedBlockStore {
         }
     }
 
+    @Override
     public void abortDatabaseBatchWrite() throws BlockStoreException {
 
         maybeConnect();
@@ -890,6 +906,7 @@ public class PostgresFullPrunedBlockStore implements FullPrunedBlockStore {
         }
     }
 
+    @Override
     public boolean hasUnspentOutputs(Sha256Hash hash, int numOutputs) throws BlockStoreException {
         maybeConnect();
         PreparedStatement s = null;

@@ -61,6 +61,7 @@ public class ChannelConnectionTest extends TestWithWallet {
         }
     };
 
+    @Override
     @Before
     public void setUp() throws Exception {
         super.setUp();

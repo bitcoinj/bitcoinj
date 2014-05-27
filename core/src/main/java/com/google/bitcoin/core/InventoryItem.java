@@ -39,6 +39,7 @@ public class InventoryItem {
     }
 
 
+    @Override
     public String toString() {
         return type.toString() + ": " + hash;
     }

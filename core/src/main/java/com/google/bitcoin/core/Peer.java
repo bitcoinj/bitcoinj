@@ -303,6 +303,7 @@ public class Peer extends PeerSocketHandler {
         return connectionOpenFuture;
     }
 
+    @Override
     protected void processMessage(Message m) throws Exception {
         // Allow event listeners to filter the message stream. Listeners are allowed to drop messages by
         // returning null.
@@ -601,6 +602,7 @@ public class Peer extends PeerSocketHandler {
 
                         if (downloadTxDependencies) {
                             Futures.addCallback(downloadDependencies(fTx), new FutureCallback<List<Transaction>>() {
+                                @Override
                                 public void onSuccess(List<Transaction> dependencies) {
                                     try {
                                         log.info("{}: Dependency download complete!", getAddress());
@@ -613,6 +615,7 @@ public class Peer extends PeerSocketHandler {
                                     }
                                 }
 
+                                @Override
                                 public void onFailure(Throwable throwable) {
                                     log.error("Could not download dependencies of tx {}", fTx.getHashAsString());
                                     log.error("Error was: ", throwable);
@@ -667,10 +670,12 @@ public class Peer extends PeerSocketHandler {
         final ListenableFuture<Object> future = downloadDependenciesInternal(tx, new Object(), results);
         final SettableFuture<List<Transaction>> resultFuture = SettableFuture.create();
         Futures.addCallback(future, new FutureCallback<Object>() {
+            @Override
             public void onSuccess(Object ignored) {
                 resultFuture.set(results);
             }
 
+            @Override
             public void onFailure(Throwable throwable) {
                 resultFuture.setException(throwable);
             }
@@ -730,6 +735,7 @@ public class Peer extends PeerSocketHandler {
             }
             ListenableFuture<List<Transaction>> successful = Futures.successfulAsList(futures);
             Futures.addCallback(successful, new FutureCallback<List<Transaction>>() {
+                @Override
                 public void onSuccess(List<Transaction> transactions) {
                     // Once all transactions either were received, or we know there are no more to come ...
                     // Note that transactions will contain "null" for any positions that weren't successful.
@@ -748,10 +754,12 @@ public class Peer extends PeerSocketHandler {
                         // There are some children to download. Wait until it's done (and their children and their
                         // children...) to inform the caller that we're finished.
                         Futures.addCallback(Futures.successfulAsList(childFutures), new FutureCallback<List<Object>>() {
+                            @Override
                             public void onSuccess(List<Object> objects) {
                                 resultFuture.set(marker);
                             }
 
+                            @Override
                             public void onFailure(Throwable throwable) {
                                 resultFuture.setException(throwable);
                             }
@@ -759,6 +767,7 @@ public class Peer extends PeerSocketHandler {
                     }
                 }
 
+                @Override
                 public void onFailure(Throwable throwable) {
                     resultFuture.setException(throwable);
                 }
@@ -771,6 +780,7 @@ public class Peer extends PeerSocketHandler {
                 // from getdata are done, so we can watch for the pong message as a substitute.
                 log.info("{}: Dep resolution waiting for a pong with nonce {}", this, nonce);
                 ping(nonce).addListener(new Runnable() {
+                    @Override
                     public void run() {
                         // The pong came back so clear out any transactions we requested but didn't get.
                         for (GetDataRequest req : getDataFutures) {

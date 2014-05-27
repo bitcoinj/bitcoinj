@@ -774,6 +774,7 @@ public class PeerGroup extends AbstractExecutionThreadService implements Transac
     protected void triggerShutdown() {
         // Force the thread to wake up.
         Uninterruptibles.putUninterruptibly(jobQueue, new Runnable() {
+            @Override
             public void run() {
             }
         });
@@ -1093,6 +1094,7 @@ public class PeerGroup extends AbstractExecutionThreadService implements Transac
         final Runnable[] pingRunnable = new Runnable[1];
         pingRunnable[0] = new Runnable() {
             private boolean firstRun = true;
+            @Override
             public void run() {
                 // Ensure that the first ping happens immediately and later pings after the requested delay.
                 if (firstRun) {
@@ -1372,6 +1374,7 @@ public class PeerGroup extends AbstractExecutionThreadService implements Transac
      * Calls {@link PeerGroup#broadcastTransaction(Transaction,int)} with getMinBroadcastConnections() as the number
      * of connections to wait for before commencing broadcast.
      */
+    @Override
     public ListenableFuture<Transaction> broadcastTransaction(final Transaction tx) {
         return broadcastTransaction(tx, Math.max(1, getMinBroadcastConnections()));
     }
@@ -1550,6 +1553,7 @@ public class PeerGroup extends AbstractExecutionThreadService implements Transac
         }
         // Sort by ping time.
         Collections.sort(candidates2, new Comparator<PeerAndPing>() {
+            @Override
             public int compare(PeerAndPing peerAndPing, PeerAndPing peerAndPing2) {
                 return Longs.compare(peerAndPing.pingTime, peerAndPing2.pingTime);
             }

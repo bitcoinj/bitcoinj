@@ -836,6 +836,7 @@ public class WalletTest extends TestWithWallet {
         flags[0] = flags[1] = false;
         final TransactionConfidence.Listener.ChangeReason[] reasons = new TransactionConfidence.Listener.ChangeReason[1];
         notifiedTx[0].getConfidence().addEventListener(new TransactionConfidence.Listener() {
+            @Override
             public void onConfidenceChanged(Transaction tx, TransactionConfidence.Listener.ChangeReason reason) {
                 flags[1] = true;
                 reasons[0] = reason;
@@ -919,6 +920,7 @@ public class WalletTest extends TestWithWallet {
 
         final Transaction[] called = new Transaction[2];
         wallet.addEventListener(new AbstractWalletEventListener() {
+            @Override
             public void onCoinsReceived(Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
                 called[0] = tx;
             }
@@ -1211,10 +1213,12 @@ public class WalletTest extends TestWithWallet {
         Sha256Hash hash1 = Sha256Hash.hashFileContents(f);
         wallet.autosaveToFile(f, 1, TimeUnit.SECONDS,
                 new WalletFiles.Listener() {
+                    @Override
                     public void onBeforeAutoSave(File tempFile) {
                         results[0] = tempFile;
                     }
 
+                    @Override
                     public void onAfterAutoSave(File newlySavedFile) {
                         results[1] = newlySavedFile;
                         latch.countDown();

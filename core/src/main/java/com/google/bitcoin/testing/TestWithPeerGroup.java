@@ -51,6 +51,7 @@ public class TestWithPeerGroup extends TestWithNetworkConnections {
         setUp(new MemoryBlockStore(params));
     }
 
+    @Override
     public void setUp(BlockStore blockStore) throws Exception {
         super.setUp(blockStore);
 

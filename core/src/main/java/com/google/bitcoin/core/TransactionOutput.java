@@ -134,6 +134,7 @@ public class TransactionOutput extends ChildMessage implements Serializable {
         return script;
     }
 
+    @Override
     protected void parseLite() throws ProtocolException {
         // TODO: There is no reason to use Coin for values, they are always smaller than 21 million * COIN
         // The only reason to use Coin would be to properly read values from the reference implementation, however
@@ -144,6 +145,7 @@ public class TransactionOutput extends ChildMessage implements Serializable {
         length = cursor - offset + scriptLen;
     }
 
+    @Override
     void parse() throws ProtocolException {
         scriptBytes = readBytes(scriptLen);
     }

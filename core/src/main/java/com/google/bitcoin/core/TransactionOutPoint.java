@@ -87,6 +87,7 @@ public class TransactionOutPoint extends ChildMessage implements Serializable {
         super(params, payload, offset, parent, parseLazy, parseRetain, MESSAGE_LENGTH);
     }
 
+    @Override
     protected void parseLite() throws ProtocolException {
         length = MESSAGE_LENGTH;
     }
@@ -163,6 +164,7 @@ public class TransactionOutPoint extends ChildMessage implements Serializable {
     /**
      * Returns the hash of the transaction this outpoint references/spends/is connected to.
      */
+    @Override
     public Sha256Hash getHash() {
         maybeParse();
         return hash;

@@ -42,6 +42,7 @@ public class GetBlocksMessage extends Message {
         super(params, msg, 0);
     }
 
+    @Override
     protected void parseLite() throws ProtocolException {
         cursor = offset;
         version = readUint32();
@@ -51,6 +52,7 @@ public class GetBlocksMessage extends Message {
         length = (int) (cursor - offset + ((startCount + 1) * 32));
     }
 
+    @Override
     public void parse() throws ProtocolException {
         cursor = offset;
         version = readUint32();
@@ -72,6 +74,7 @@ public class GetBlocksMessage extends Message {
         return stopHash;
     }
 
+    @Override
     public String toString() {
         StringBuffer b = new StringBuffer();
         b.append("getblocks: ");
@@ -82,6 +85,7 @@ public class GetBlocksMessage extends Message {
         return b.toString();
     }
 
+    @Override
     protected void bitcoinSerializeToStream(OutputStream stream) throws IOException {
         // Version, for some reason.
         Utils.uint32ToByteStreamLE(NetworkParameters.PROTOCOL_VERSION, stream);
