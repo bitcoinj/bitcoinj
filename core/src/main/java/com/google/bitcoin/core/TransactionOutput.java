@@ -300,10 +300,23 @@ public class TransactionOutput extends ChildMessage implements Serializable {
     /**
      * Returns a human readable debug string.
      */
+    @Override
     public String toString() {
         try {
-            return "TxOut of " + Utils.bitcoinValueToFriendlyString(value) + " to " +
-                    getScriptPubKey().getToAddress(params).toString() + " script:" + getScriptPubKey().toString();
+            Script script = getScriptPubKey();
+            StringBuilder buf = new StringBuilder("TxOut of ");
+            buf.append(Utils.bitcoinValueToFriendlyString(value));
+            if (script.isSentToAddress() || script.isPayToScriptHash())
+                buf.append(" to ").append(script.getToAddress(params));
+            else if (script.isSentToRawPubKey())
+                buf.append(" to pubkey ").append(Utils.bytesToHexString(script.getPubKey()));
+            else if (script.isSentToMultiSig())
+                buf.append(" to multisig");
+            else
+                buf.append(" (unknown type)");
+            buf.append(" script:");
+            buf.append(script);
+            return buf.toString();
         } catch (ScriptException e) {
             throw new RuntimeException(e);
         }
