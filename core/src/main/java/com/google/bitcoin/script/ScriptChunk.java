@@ -25,9 +25,12 @@ import java.util.Arrays;
 
 import javax.annotation.Nullable;
 
+import static com.google.bitcoin.core.Utils.bytesToHexString;
 import static com.google.bitcoin.script.ScriptOpCodes.OP_PUSHDATA1;
 import static com.google.bitcoin.script.ScriptOpCodes.OP_PUSHDATA2;
 import static com.google.bitcoin.script.ScriptOpCodes.OP_PUSHDATA4;
+import static com.google.bitcoin.script.ScriptOpCodes.getOpCodeName;
+import static com.google.bitcoin.script.ScriptOpCodes.getPushDataName;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
@@ -95,6 +98,24 @@ public class ScriptChunk {
         } else {
             stream.write(opcode); // smallNum
         }
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder buf = new StringBuilder();
+        if (isOpCode()) {
+            buf.append(getOpCodeName(opcode));
+        } else if (data != null) {
+            // Data chunk
+            buf.append(getPushDataName(opcode));
+            buf.append("[");
+            buf.append(bytesToHexString(data));
+            buf.append("]");
+        } else {
+            // Small num
+            buf.append(Script.decodeFromOpN(opcode));
+        }
+        return buf.toString();
     }
 
     @Override

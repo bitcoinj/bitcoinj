@@ -36,7 +36,6 @@ import java.security.NoSuchAlgorithmException;
 import java.util.*;
 
 import static com.google.bitcoin.script.ScriptOpCodes.*;
-import static com.google.bitcoin.core.Utils.bytesToHexString;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
 
@@ -107,22 +106,11 @@ public class Script {
      */
     public String toString() {
         StringBuilder buf = new StringBuilder();
-        for (ScriptChunk chunk : chunks) {
-            if (chunk.isOpCode()) {
-                buf.append(getOpCodeName(chunk.opcode));
-                buf.append(" ");
-            } else if (chunk.data != null) {
-                // Data chunk
-                buf.append(getPushDataName(chunk.opcode));
-                buf.append("[");
-                buf.append(bytesToHexString(chunk.data));
-                buf.append("] ");
-            } else {
-                // Small num
-                buf.append(decodeFromOpN(chunk.opcode));
-            }
-        }
-        return buf.toString().trim();
+        for (ScriptChunk chunk : chunks)
+            buf.append(chunk).append(' ');
+        if (buf.length() > 0)
+            buf.setLength(buf.length() - 1);
+        return buf.toString();
     }
 
     /** Returns the serialized program as a newly created byte array. */
