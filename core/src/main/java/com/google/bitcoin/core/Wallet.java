@@ -617,9 +617,9 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
      * inactive side chain. We must still record these transactions and the blocks they appear in because a future
      * block might change which chain is best causing a reorganize. A re-org can totally change our balance!
      */
-    public void notifyTransactionIsInBlock(Sha256Hash txHash, StoredBlock block,
-                                           BlockChain.NewBlockType blockType,
-                                           int relativityOffset) throws VerificationException {
+    public boolean notifyTransactionIsInBlock(Sha256Hash txHash, StoredBlock block,
+                                              BlockChain.NewBlockType blockType,
+                                              int relativityOffset) throws VerificationException {
         lock.lock();
         try {
             Transaction tx = transactions.get(txHash);
@@ -629,8 +629,8 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
                     // If this happens our risk analysis is probably wrong and should be improved.
                     log.info("Risk analysis dropped tx {} but was included in block anyway", tx.getHash());
                 } else {
-                    log.error("TX {} not found despite being sent to wallet", txHash);
-                    return;
+                    // False positive that was broadcast to us and ignored by us because it was irrelevant to our keys.
+                    return false;
                 }
             }
             receive(tx, block, blockType, relativityOffset);
@@ -642,6 +642,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
             // This has to run outside the wallet lock as it may trigger broadcasting of new transactions.
             maybeRotateKeys();
         }
+        return true;
     }
 
     /**
