@@ -81,8 +81,14 @@ public interface BlockChainListener {
      * <p>The relativityOffset parameter in this case is an arbitrary (meaningless) number, that is useful only when
      * compared to the relativity count of another transaction received inside the same block. It is used to establish
      * an ordering of transactions relative to one another.</p>
+     *
+     * <p>This method should return false if the given tx hash isn't known about, e.g. because the the transaction was
+     * a Bloom false positive. If it was known about and stored, it should return true. The caller may need to know
+     * this to calculate the effective FP rate.</p>
+     *
+     * @return whether the transaction is known about i.e. was considered relevant previously.
      */
-    void notifyTransactionIsInBlock(Sha256Hash txHash, StoredBlock block,
-                                    BlockChain.NewBlockType blockType,
-                                    int relativityOffset) throws VerificationException;
+    boolean notifyTransactionIsInBlock(Sha256Hash txHash, StoredBlock block,
+                                       BlockChain.NewBlockType blockType,
+                                       int relativityOffset) throws VerificationException;
 }
