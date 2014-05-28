@@ -304,6 +304,21 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
     }
 
     /**
+     * Returns address for a {@link #currentKey(com.google.bitcoin.wallet.KeyChain.KeyPurpose)}
+     */
+    public Address currentAddress(KeyChain.KeyPurpose purpose) {
+        return currentKey(purpose).toAddress(params);
+    }
+
+    /**
+     * An alias for calling {@link #currentAddress(com.google.bitcoin.wallet.KeyChain.KeyPurpose)} with
+     * {@link com.google.bitcoin.wallet.KeyChain.KeyPurpose#RECEIVE_FUNDS} as the parameter.
+     */
+    public Address currentReceiveAddress() {
+        return currentAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
+    }
+
+    /**
      * Returns a key that has not been returned by this method before (fresh). You can think of this as being
      * a newly created key, although the notion of "create" is not really valid for a
      * {@link com.google.bitcoin.wallet.DeterministicKeyChain}. When the parameter is
@@ -330,6 +345,21 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
      */
     public DeterministicKey freshReceiveKey() {
         return freshKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
+    }
+
+    /**
+     * Returns address for a {@link #freshKey(com.google.bitcoin.wallet.KeyChain.KeyPurpose)}
+     */
+    public Address freshAddress(KeyChain.KeyPurpose purpose) {
+        return freshKey(purpose).toAddress(params);
+    }
+
+    /**
+     * An alias for calling {@link #freshAddress(com.google.bitcoin.wallet.KeyChain.KeyPurpose)} with
+     * {@link com.google.bitcoin.wallet.KeyChain.KeyPurpose#RECEIVE_FUNDS} as the parameter.
+     */
+    public Address freshReceiveAddress() {
+        return freshAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
     }
 
     /**
