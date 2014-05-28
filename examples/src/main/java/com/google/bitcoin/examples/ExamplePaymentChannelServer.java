@@ -17,9 +17,11 @@
 
 package com.google.bitcoin.examples;
 
-import com.google.bitcoin.core.*;
+import com.google.bitcoin.core.NetworkParameters;
+import com.google.bitcoin.core.Sha256Hash;
+import com.google.bitcoin.core.VerificationException;
 import com.google.bitcoin.kits.WalletAppKit;
-import com.google.bitcoin.params.TestNet3Params;
+import com.google.bitcoin.params.RegTestParams;
 import com.google.bitcoin.protocols.channels.*;
 import com.google.bitcoin.utils.BriefLogFormatter;
 import org.slf4j.LoggerFactory;
@@ -43,7 +45,7 @@ public class ExamplePaymentChannelServer implements PaymentChannelServerListener
     }
 
     public void run() throws Exception {
-        NetworkParameters params = TestNet3Params.get();
+        NetworkParameters params = RegTestParams.get();
 
         // Bring up all the objects we need, create/load a wallet, sync the chain, etc. We override WalletAppKit so we
         // can customize it by adding the extension objects - we have to do this before the wallet file is loaded so
@@ -58,6 +60,7 @@ public class ExamplePaymentChannelServer implements PaymentChannelServerListener
                 wallet().addExtension(storedStates);
             }
         };
+        appKit.connectToLocalHost();
         appKit.startAsync();
         appKit.awaitRunning();
 
