@@ -149,7 +149,7 @@
                                         <urn>com.google.guava:guava:16.0.1:jar:null:compile:5fa98cd1a63c99a44dd8d3b77e4762b066a5d0c5</urn>
                                         <urn>com.google.protobuf:protobuf-java:2.5.0:jar:null:compile:a10732c76bfacdbd633a7eb0f7968b1059a65dfa</urn>
                                         <urn>com.h2database:h2:1.3.167:jar:null:compile:d3867d586f087e53eb12fc65e5693d8ee9a5da17</urn>
-                                        <urn>com.lambdaworks:scrypt:1.3.3:jar:null:compile:06d6813de41e177189e1722717979b4fb5454b1d</urn>
+                                        <urn>com.lambdaworks:scrypt:1.4.0:jar:null:compile:906506b74f30c8c20bccd9ed4a11112d8941fe87</urn>
                                         <urn>com.madgag.spongycastle:core:1.50.0.0:jar:null:compile:13e93b00ec9790315debd61fa25ab6a47d3a1c52</urn>
                                         <urn>net.jcip:jcip-annotations:1.0:jar:null:compile:afba4942caaeaf46aab0b976afd57cc7c181467e</urn>
                                         <urn>org.slf4j:slf4j-api:1.7.6:jar:null:compile:562424e36df3d2327e8e9301a76027fca17d54ea</urn>
