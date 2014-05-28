@@ -21,10 +21,13 @@ import java.math.BigInteger;
 
 import com.google.bitcoin.core.*;
 import com.google.bitcoin.params.MainNetParams;
+import com.google.bitcoin.script.ScriptBuilder;
+import com.google.bitcoin.script.ScriptChunk;
 import com.google.common.collect.ImmutableList;
 import org.junit.Before;
 import org.junit.Test;
 
+import static com.google.bitcoin.script.ScriptOpCodes.OP_PUSHDATA1;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
@@ -140,5 +143,21 @@ public class DefaultRiskAnalysisTest {
         edgeCaseTx.addInput(params.getGenesisBlock().getTransactions().get(0).getOutput(0));
         edgeCaseTx.addOutput(DefaultRiskAnalysis.MIN_ANALYSIS_NONDUST_OUTPUT, key1); // Dust threshold
         assertEquals(RiskAnalysis.Result.OK, DefaultRiskAnalysis.FACTORY.create(wallet, edgeCaseTx, NO_DEPS).analyze());
+    }
+
+    @Test
+    public void nonShortestPossiblePushData() {
+        ScriptChunk nonStandardChunk = new ScriptChunk(OP_PUSHDATA1, new byte[75]);
+        byte[] nonStandardScript = new ScriptBuilder().addChunk(nonStandardChunk).build().getProgram();
+        // Test non-standard script as an input.
+        Transaction tx = new Transaction(params);
+        assertEquals(DefaultRiskAnalysis.RuleViolation.NONE, DefaultRiskAnalysis.isStandard(tx));
+        tx.addInput(new TransactionInput(params, null, nonStandardScript));
+        assertEquals(DefaultRiskAnalysis.RuleViolation.SHORTEST_POSSIBLE_PUSHDATA, DefaultRiskAnalysis.isStandard(tx));
+        // Test non-standard script as an output.
+        tx.clearInputs();
+        assertEquals(DefaultRiskAnalysis.RuleViolation.NONE, DefaultRiskAnalysis.isStandard(tx));
+        tx.addOutput(new TransactionOutput(params, null, Utils.COIN, nonStandardScript));
+        assertEquals(DefaultRiskAnalysis.RuleViolation.SHORTEST_POSSIBLE_PUSHDATA, DefaultRiskAnalysis.isStandard(tx));
     }
 }

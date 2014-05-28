@@ -144,7 +144,7 @@ public class DefaultRiskAnalysis implements RiskAnalysis {
         for (int i = 0; i < inputs.size(); i++) {
             TransactionInput input = inputs.get(i);
             for (ScriptChunk chunk : input.getScriptSig().getChunks()) {
-                if (chunk.data != null && chunk.isShortestPossiblePushData()) {
+                if (chunk.data != null && !chunk.isShortestPossiblePushData()) {
                     log.warn("TX considered non-standard due to input {} having a longer than necessary data push: {}",
                             i, chunk);
                     return RuleViolation.SHORTEST_POSSIBLE_PUSHDATA;
