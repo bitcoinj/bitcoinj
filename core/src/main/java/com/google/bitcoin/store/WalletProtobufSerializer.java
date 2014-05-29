@@ -67,6 +67,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * by anyone else.<p>
  * 
  * @author Miron Cuperman
+ * @author Andreas Schildbach
  */
 public class WalletProtobufSerializer {
     private static final Logger log = LoggerFactory.getLogger(WalletProtobufSerializer.class);
@@ -248,9 +249,10 @@ public class WalletProtobufSerializer {
                 .setScriptBytes(ByteString.copyFrom(input.getScriptBytes()))
                 .setTransactionOutPointHash(hashToByteString(input.getOutpoint().getHash()))
                 .setTransactionOutPointIndex((int) input.getOutpoint().getIndex());
-            if (input.hasSequence()) {
-                inputBuilder.setSequence((int)input.getSequenceNumber());
-            }
+            if (input.hasSequence())
+                inputBuilder.setSequence((int) input.getSequenceNumber());
+            if (input.getValue() != null)
+                inputBuilder.setValue(input.getValue().longValue());
             txBuilder.addTransactionInput(inputBuilder);
         }
         
@@ -541,15 +543,16 @@ public class WalletProtobufSerializer {
             tx.addOutput(output);
         }
 
-        for (Protos.TransactionInput transactionInput : txProto.getTransactionInputList()) {
-            byte[] scriptBytes = transactionInput.getScriptBytes().toByteArray();
+        for (Protos.TransactionInput inputProto : txProto.getTransactionInputList()) {
+            byte[] scriptBytes = inputProto.getScriptBytes().toByteArray();
             TransactionOutPoint outpoint = new TransactionOutPoint(params,
-                    transactionInput.getTransactionOutPointIndex() & 0xFFFFFFFFL,
-                    byteStringToHash(transactionInput.getTransactionOutPointHash())
+                    inputProto.getTransactionOutPointIndex() & 0xFFFFFFFFL,
+                    byteStringToHash(inputProto.getTransactionOutPointHash())
             );
-            TransactionInput input = new TransactionInput(params, tx, scriptBytes, outpoint);
-            if (transactionInput.hasSequence()) {
-                input.setSequenceNumber(transactionInput.getSequence());
+            BigInteger value = inputProto.hasValue() ? BigInteger.valueOf(inputProto.getValue()) : null;
+            TransactionInput input = new TransactionInput(params, tx, scriptBytes, outpoint, value);
+            if (inputProto.hasSequence()) {
+                input.setSequenceNumber(inputProto.getSequence());
             }
             tx.addInput(input);
         }
