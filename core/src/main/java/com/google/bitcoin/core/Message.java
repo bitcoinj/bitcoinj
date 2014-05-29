@@ -34,7 +34,7 @@ public abstract class Message implements Serializable {
     private static final Logger log = LoggerFactory.getLogger(Message.class);
     private static final long serialVersionUID = -3561053461717079135L;
 
-    public static final int MAX_SIZE = 0x02000000;
+    public static final int MAX_SIZE = 0x02000000; // 32MB
 
     public static final int UNKNOWN_LENGTH = Integer.MIN_VALUE;
 
@@ -98,8 +98,7 @@ public abstract class Message implements Serializable {
      * as the length will be provided as part of the header.  If unknown then set to Message.UNKNOWN_LENGTH
      * @throws ProtocolException
      */
-    Message(NetworkParameters params, byte[] msg, int offset, int protocolVersion, final boolean parseLazy,
-            final boolean parseRetain, int length) throws ProtocolException {
+    Message(NetworkParameters params, byte[] msg, int offset, int protocolVersion, boolean parseLazy, boolean parseRetain, int length) throws ProtocolException {
         this.parseLazy = parseLazy;
         this.parseRetain = parseRetain;
         this.protocolVersion = protocolVersion;
@@ -146,7 +145,7 @@ public abstract class Message implements Serializable {
         this(params, msg, offset, NetworkParameters.PROTOCOL_VERSION, false, false, UNKNOWN_LENGTH);
     }
 
-    Message(NetworkParameters params, byte[] msg, int offset, final boolean parseLazy, final boolean parseRetain, int length) throws ProtocolException {
+    Message(NetworkParameters params, byte[] msg, int offset, boolean parseLazy, boolean parseRetain, int length) throws ProtocolException {
         this(params, msg, offset, NetworkParameters.PROTOCOL_VERSION, parseLazy, parseRetain, length);
     }
 
@@ -158,7 +157,7 @@ public abstract class Message implements Serializable {
 
     /**
      * Perform the most minimal parse possible to calculate the length of the message.
-     * This is only required for subclasses of ChildClass as root level messages will have their length passed
+     * This is only required for subclasses of ChildMessage as root level messages will have their length passed
      * into the constructor.
      * <p/>
      * Implementations should adhere to the following contract:  If parseLazy = true the 'length'
