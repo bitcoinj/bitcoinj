@@ -420,7 +420,7 @@ public class PostgresFullPrunedBlockStore implements FullPrunedBlockStore {
                             + " VALUES(?, ?, ?, ?, ?)");
             // We skip the first 4 bytes because (on prodnet) the minimum target has 4 0-bytes
             byte[] hashBytes = new byte[28];
-            System.arraycopy(storedBlock.getHeader().getHash().getBytes(), 3, hashBytes, 0, 28);
+            System.arraycopy(storedBlock.getHeader().getHash().getBytes(), 4, hashBytes, 0, 28);
             s.setBytes(1, hashBytes);
             s.setBytes(2, storedBlock.getChainWork().toByteArray());
             s.setInt(3, storedBlock.getHeight());
@@ -438,7 +438,7 @@ public class PostgresFullPrunedBlockStore implements FullPrunedBlockStore {
             s.setBoolean(1, true);
             // We skip the first 4 bytes because (on prodnet) the minimum target has 4 0-bytes
             byte[] hashBytes = new byte[28];
-            System.arraycopy(storedBlock.getHeader().getHash().getBytes(), 3, hashBytes, 0, 28);
+            System.arraycopy(storedBlock.getHeader().getHash().getBytes(), 4, hashBytes, 0, 28);
             s.setBytes(2, hashBytes);
             s.executeUpdate();
             s.close();
@@ -458,7 +458,7 @@ public class PostgresFullPrunedBlockStore implements FullPrunedBlockStore {
         maybeConnect();
         // We skip the first 4 bytes because (on prodnet) the minimum target has 4 0-bytes
         byte[] hashBytes = new byte[28];
-        System.arraycopy(storedBlock.getHeader().getHash().getBytes(), 3, hashBytes, 0, 28);
+        System.arraycopy(storedBlock.getHeader().getHash().getBytes(), 4, hashBytes, 0, 28);
         int height = storedBlock.getHeight();
         byte[] transactions = null;
         byte[] txOutChanges = null;
@@ -564,7 +564,7 @@ public class PostgresFullPrunedBlockStore implements FullPrunedBlockStore {
                     .prepareStatement("SELECT chainWork, height, header, wasUndoable FROM headers WHERE hash = ?");
             // We skip the first 4 bytes because (on prodnet) the minimum target has 4 0-bytes
             byte[] hashBytes = new byte[28];
-            System.arraycopy(hash.getBytes(), 3, hashBytes, 0, 28);
+            System.arraycopy(hash.getBytes(), 4, hashBytes, 0, 28);
             s.setBytes(1, hashBytes);
             ResultSet results = s.executeQuery();
             if (!results.next()) {
@@ -615,7 +615,7 @@ public class PostgresFullPrunedBlockStore implements FullPrunedBlockStore {
             // We skip the first 4 bytes because (on prodnet) the minimum target has 4 0-bytes
 
             byte[] hashBytes = new byte[28];
-            System.arraycopy(hash.getBytes(), 3, hashBytes, 0, 28);
+            System.arraycopy(hash.getBytes(), 4, hashBytes, 0, 28);
             s.setBytes(1, hashBytes);
             ResultSet results = s.executeQuery();
             if (!results.next()) {
