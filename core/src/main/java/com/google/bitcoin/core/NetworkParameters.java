@@ -67,7 +67,7 @@ public abstract class NetworkParameters implements Serializable {
     protected Block genesisBlock;
     protected BigInteger maxTarget;
     protected int port;
-    protected long packetMagic;
+    protected long packetMagic;  // Indicates message origin network and is used to seek to the next message when stream state is unknown.
     protected int addressHeader;
     protected int p2shHeader;
     protected int dumpedPrivateKeyHeader;
