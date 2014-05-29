@@ -1984,6 +1984,23 @@ public class WalletTest extends TestWithWallet {
     }
 
     @Test
+    public void transactionGetFeeTest() throws Exception {
+        Address notMyAddr = new ECKey().toAddress(params);
+
+        // Prepare wallet to spend
+        StoredBlock block = new StoredBlock(makeSolvedTestBlock(blockStore, notMyAddr), BigInteger.ONE, 1);
+        Transaction tx = createFakeTx(params, Utils.COIN, myAddress);
+        wallet.receiveFromBlock(tx, block, AbstractBlockChain.NewBlockType.BEST_CHAIN, 0);
+
+        // Create a transaction
+        SendRequest request = SendRequest.to(notMyAddr, Utils.CENT);
+        request.feePerKb = Transaction.REFERENCE_DEFAULT_MIN_TX_FEE;
+        wallet.completeTx(request);
+        assertEquals(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE, request.fee);
+        assertEquals(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE, request.tx.getFee());
+    }
+
+    @Test
     public void feePerKbCategoryJumpTest() throws Exception {
         // Simple test of boundary condition on fee per kb in category fee solver
 

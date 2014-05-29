@@ -1,5 +1,6 @@
 /**
  * Copyright 2011 Google Inc.
+ * Copyright 2014 Andreas Schildbach
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -375,6 +376,25 @@ public class Transaction extends ChildMessage implements Serializable {
         return getValueSentToMe(wallet).subtract(getValueSentFromMe(wallet));
     }
 
+    /**
+     * The transaction fee is the difference of the value of all inputs and the value of all outputs. Currently, the fee
+     * can only be determined for transactions created by us.
+     * 
+     * @return fee, or null if it cannot be determined
+     */
+    public BigInteger getFee() {
+        BigInteger fee = BigInteger.ZERO;
+        for (TransactionInput input : inputs) {
+            if (input.getValue() == null)
+                return null;
+            fee = fee.add(input.getValue());
+        }
+        for (TransactionOutput output : outputs) {
+            fee = fee.subtract(output.getValue());
+        }
+        return fee;
+    }
+
     boolean disconnectInputs() {
         boolean disconnected = false;
         maybeParse();
@@ -635,6 +655,8 @@ public class Transaction extends ChildMessage implements Serializable {
             try {
                 Script scriptSig = in.getScriptSig();
                 s.append(scriptSig);
+                if (in.getValue() != null)
+                    s.append(" ").append(bitcoinValueToFriendlyString(in.getValue())).append(" BTC");
                 s.append("\n          ");
                 s.append("outpoint:");
                 final TransactionOutPoint outpoint = in.getOutpoint();
