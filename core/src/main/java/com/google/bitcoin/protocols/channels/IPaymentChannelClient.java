@@ -118,7 +118,7 @@ public interface IPaymentChannelClient {
 
         /**
          * <p>Indicates the channel has been successfully opened and
-         * {@link com.google.bitcoin.protocols.channels.PaymentChannelClient#incrementPayment(java.math.Coin)}
+         * {@link com.google.bitcoin.protocols.channels.PaymentChannelClient#incrementPayment(Coin)}
          * may be called at will.</p>
          *
          * <p>Called while holding a lock on the {@link com.google.bitcoin.protocols.channels.PaymentChannelClient}

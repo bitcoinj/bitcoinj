@@ -120,7 +120,7 @@ public class PaymentChannelClientConnection {
      * an error before the channel has reached the open state.</p>
      *
      * <p>After this future completes successfully, you may call
-     * {@link PaymentChannelClientConnection#incrementPayment(java.math.Coin)} to begin paying the server.</p>
+     * {@link PaymentChannelClientConnection#incrementPayment(Coin)} to begin paying the server.</p>
      */
     public ListenableFuture<PaymentChannelClientConnection> getChannelOpenFuture() {
         return channelOpenFuture;

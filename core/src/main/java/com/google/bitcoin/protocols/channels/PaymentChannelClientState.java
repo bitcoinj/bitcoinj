@@ -291,7 +291,7 @@ public class PaymentChannelClientState {
 
     /**
      * Returns the transaction that locks the money to the agreement of both parties. Do not mutate the result.
-     * Once this step is done, you can use {@link PaymentChannelClientState#incrementPaymentBy(java.math.Coin)} to
+     * Once this step is done, you can use {@link PaymentChannelClientState#incrementPaymentBy(Coin)} to
      * start paying the server.
      */
     public synchronized Transaction getMultisigContract() {

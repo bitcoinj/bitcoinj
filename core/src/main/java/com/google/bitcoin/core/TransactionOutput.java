@@ -92,7 +92,7 @@ public class TransactionOutput extends ChildMessage implements Serializable {
     /**
      * Creates an output that sends 'value' to the given address (public key hash). The amount should be created with
      * something like {@link Utils#valueOf(int, int)}. Typically you would use
-     * {@link Transaction#addOutput(java.math.Coin, Address)} instead of creating a TransactionOutput directly.
+     * {@link Transaction#addOutput(Coin, Address)} instead of creating a TransactionOutput directly.
      */
     public TransactionOutput(NetworkParameters params, @Nullable Transaction parent, Coin value, Address to) {
         this(params, parent, value, ScriptBuilder.createOutputScript(to).getProgram());
@@ -101,7 +101,7 @@ public class TransactionOutput extends ChildMessage implements Serializable {
     /**
      * Creates an output that sends 'value' to the given public key using a simple CHECKSIG script (no addresses). The
      * amount should be created with something like {@link Utils#valueOf(int, int)}. Typically you would use
-     * {@link Transaction#addOutput(java.math.Coin, ECKey)} instead of creating an output directly.
+     * {@link Transaction#addOutput(Coin, ECKey)} instead of creating an output directly.
      */
     public TransactionOutput(NetworkParameters params, @Nullable Transaction parent, Coin value, ECKey to) {
         this(params, parent, value, ScriptBuilder.createOutputScript(to).getProgram());

@@ -2141,7 +2141,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
          *
          * <p>Be careful to check the output's value is reasonable using
          * {@link TransactionOutput#getMinNonDustValue(Coin)} afterwards or you risk having the transaction
-         * rejected by the network. Note that using {@link SendRequest#to(Address, java.math.Coin)} will result
+         * rejected by the network. Note that using {@link SendRequest#to(Address, Coin)} will result
          * in a smaller output, and thus the ability to use a smaller output value without rejection.</p>
          */
         public static SendRequest to(NetworkParameters params, ECKey destination, Coin value) {
@@ -2174,11 +2174,11 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
      * {@link Wallet#getChangeAddress()}, so you must have added at least one key.</p>
      *
      * <p>If you just want to send money quickly, you probably want
-     * {@link Wallet#sendCoins(TransactionBroadcaster, Address, java.math.Coin)} instead. That will create the sending
+     * {@link Wallet#sendCoins(TransactionBroadcaster, Address, Coin)} instead. That will create the sending
      * transaction, commit to the wallet and broadcast it to the network all in one go. This method is lower level
      * and lets you see the proposed transaction before anything is done with it.</p>
      *
-     * <p>This is a helper method that is equivalent to using {@link Wallet.SendRequest#to(Address, java.math.Coin)}
+     * <p>This is a helper method that is equivalent to using {@link Wallet.SendRequest#to(Address, Coin)}
      * followed by {@link Wallet#completeTx(Wallet.SendRequest)} and returning the requests transaction object.
      * Note that this means a fee may be automatically added if required, if you want more control over the process,
      * just do those two steps yourself.</p>
