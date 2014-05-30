@@ -140,7 +140,7 @@ public class KeyChainGroup {
     public List<DeterministicKey> freshKeys(KeyChain.KeyPurpose purpose, int numberOfKeys) {
         DeterministicKeyChain chain = getActiveKeyChain();
         List<DeterministicKey> keys = chain.getKeys(purpose, numberOfKeys);   // Always returns the next key along the key chain.
-        currentKeys.put(purpose, keys.get(keys.size()-1));
+        currentKeys.put(purpose, keys.get(keys.size() - 1));
         return keys;
     }
 

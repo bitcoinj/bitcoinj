@@ -94,14 +94,14 @@ public class BasicKeyChain implements EncryptableKeyChain {
         lock.lock();
         try {
             if (hashToKeys.size() < numberOfKeys) {
-                checkState(keyCrypter == null);   // We will refuse to encrypt an empty key chain.
+                checkState(keyCrypter == null);
 
                 List<ECKey> keys = new ArrayList<ECKey>();
-                for (int i =0; i < numberOfKeys-hashToKeys.size(); i++) {
+                for (int i = 0; i < numberOfKeys - hashToKeys.size(); i++) {
                     keys.add(new ECKey());
                 }
 
-                ImmutableList immutableKeys = ImmutableList.copyOf(keys);
+                ImmutableList<ECKey> immutableKeys = ImmutableList.copyOf(keys);
                 importKeysLocked(immutableKeys);
                 queueOnKeysAdded(immutableKeys);
             }

@@ -295,9 +295,9 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
             // TODO: Handle the case where the derived key is >= curve order.
             List<DeterministicKey> lookahead = maybeLookAhead(parentKey, index);
             basicKeyChain.importKeys(lookahead);
-            List keys = new ArrayList<DeterministicKey>(numberOfKeys);
+            List<DeterministicKey> keys = new ArrayList<DeterministicKey>(numberOfKeys);
 
-            for (int i=1; i<=numberOfKeys; i++) {
+            for (int i = 1; i <= numberOfKeys; i++) {
                 keys.add(hierarchy.get(HDUtils.append(parentKey.getPath(), new ChildNumber((index-numberOfKeys+i) - 1, false)), false, false));
             }
             return keys;
