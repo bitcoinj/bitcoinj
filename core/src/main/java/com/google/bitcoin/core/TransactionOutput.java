@@ -160,7 +160,7 @@ public class TransactionOutput extends ChildMessage implements Serializable {
     }
 
     /**
-     * Returns the value of this output in nanocoins. This is the amount of currency that the destination address
+     * Returns the value of this output. This is the amount of currency that the destination address
      * receives.
      */
     public Coin getValue() {
@@ -169,7 +169,7 @@ public class TransactionOutput extends ChildMessage implements Serializable {
     }
 
     /**
-     * Sets the value of this output in nanocoins.
+     * Sets the value of this output.
      */
     public void setValue(Coin value) {
         checkNotNull(value);

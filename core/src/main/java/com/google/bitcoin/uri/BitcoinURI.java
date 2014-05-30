@@ -322,7 +322,7 @@ public class BitcoinURI {
      * Simple Bitcoin URI builder using known good fields.
      * 
      * @param address The Bitcoin address
-     * @param amount The amount in nanocoins (decimal)
+     * @param amount The amount
      * @param label A label
      * @param message A message
      * @return A String containing the Bitcoin URI

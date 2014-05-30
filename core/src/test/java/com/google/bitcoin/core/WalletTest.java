@@ -1572,7 +1572,7 @@ public class WalletTest extends TestWithWallet {
         wallet.completeTx(request7);
         assertEquals(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE, request7.fee);
         Transaction spend7 = request7.tx;
-        // If change is 0.1-nanocoin and we already have a 0.1-nanocoin output, fee should be reference fee
+        // If change is 0.1-satoshi and we already have a 0.1-satoshi output, fee should be reference fee
         assertEquals(3, spend7.getOutputs().size());
         // We optimize for priority, so the output selected should be the largest one.
         assertEquals(spend7.getOutput(0).getValue().add(spend7.getOutput(1).getValue()).add(spend7.getOutput(2).getValue()),

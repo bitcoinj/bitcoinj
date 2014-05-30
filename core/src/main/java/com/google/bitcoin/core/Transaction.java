@@ -345,7 +345,7 @@ public class Transaction extends ChildMessage implements Serializable {
      * transactions sending coins to those keys to be in the wallet. This method will not attempt to download the
      * blocks containing the input transactions if the key is in the wallet but the transactions are not.
      *
-     * @return sum in nanocoins.
+     * @return sum of the inputs that are spending coins with keys in the wallet
      */
     public Coin getValueSentFromMe(Wallet wallet) throws ScriptException {
         maybeParse();

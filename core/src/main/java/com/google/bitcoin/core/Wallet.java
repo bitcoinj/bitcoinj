@@ -2188,17 +2188,17 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
      * prevent this, but that should only occur once the transaction has been accepted by the network. This implies
      * you cannot have more than one outstanding sending tx at once.</p>
      *
-     * <p>You MUST ensure that nanocoins is not smaller than {@link Transaction#MIN_NONDUST_OUTPUT} or the transaction
+     * <p>You MUST ensure that the value is not smaller than {@link Transaction#MIN_NONDUST_OUTPUT} or the transaction
      * will almost certainly be rejected by the network as dust.</p>
      *
-     * @param address       The Bitcoin address to send the money to.
-     * @param nanocoins     How much currency to send, in nanocoins.
+     * @param address The Bitcoin address to send the money to.
+     * @param value How much currency to send.
      * @return either the created Transaction or null if there are insufficient coins.
      * coins as spent until commitTx is called on the result.
      * @throws InsufficientMoneyException if the request could not be completed due to not enough balance.
      */
-    public Transaction createSend(Address address, Coin nanocoins) throws InsufficientMoneyException {
-        SendRequest req = SendRequest.to(address, nanocoins);
+    public Transaction createSend(Address address, Coin value) throws InsufficientMoneyException {
+        SendRequest req = SendRequest.to(address, value);
         if (params == UnitTestParams.get())
             req.shuffleOutputs = false;
         completeTx(req);
@@ -2242,8 +2242,8 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
      * almost certainly be rejected by the network as dust.</p>
      *
      * @param broadcaster a {@link TransactionBroadcaster} to use to send the transactions out.
-     * @param to        Which address to send coins to.
-     * @param value     How much value to send. You can use Utils.toNanoCoins() to calculate this.
+     * @param to Which address to send coins to.
+     * @param value How much value to send.
      * @return An object containing the transaction that was created, and a future for the broadcast of it.
      * @throws InsufficientMoneyException if the request could not be completed due to not enough balance.
      */

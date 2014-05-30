@@ -33,7 +33,7 @@ public class CoinTest {
         assertEquals(COIN.add(CENT), parseCoin("1.01"));
         try {
             parseCoin("2E-20");
-            org.junit.Assert.fail("should not have accepted fractional nanocoins");
+            org.junit.Assert.fail("should not have accepted fractional satoshis");
         } catch (ArithmeticException e) {
         }
 
