@@ -329,13 +329,25 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
      * to someone who wishes to send money.
      */
     public DeterministicKey freshKey(KeyChain.KeyPurpose purpose) {
+        return freshKeys(purpose, 1).get(0);
+    }
+
+    /**
+     * Returns a key/s that has not been returned by this method before (fresh). You can think of this as being
+     * a newly created key/s, although the notion of "create" is not really valid for a
+     * {@link com.google.bitcoin.wallet.DeterministicKeyChain}. When the parameter is
+     * {@link com.google.bitcoin.wallet.KeyChain.KeyPurpose#RECEIVE_FUNDS} the returned key is suitable for being put
+     * into a receive coins wizard type UI. You should use this when the user is definitely going to hand this key/s out
+     * to someone who wishes to send money.
+     */
+    public List<DeterministicKey> freshKeys(KeyChain.KeyPurpose purpose, int numberOfKeys) {
         lock.lock();
         try {
-            DeterministicKey key = keychain.freshKey(purpose);
+            List<DeterministicKey> keys = keychain.freshKeys(purpose, numberOfKeys);
             // Do we really need an immediate hard save? Arguably all this is doing is saving the 'current' key
             // and that's not quite so important, so we could coalesce for more performance.
             saveNow();
-            return key;
+            return keys;
         } finally {
             lock.unlock();
         }

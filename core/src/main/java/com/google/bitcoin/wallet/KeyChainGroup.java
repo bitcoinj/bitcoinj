@@ -134,10 +134,22 @@ public class KeyChainGroup {
      * to someone who wishes to send money.
      */
     public DeterministicKey freshKey(KeyChain.KeyPurpose purpose) {
+        return freshKeys(purpose,1).get(0);
+    }
+
+    /**
+     * Returns a key/s that have not been returned by this method before (fresh). You can think of this as being
+     * newly created key/s, although the notion of "create" is not really valid for a
+     * {@link com.google.bitcoin.wallet.DeterministicKeyChain}. When the parameter is
+     * {@link com.google.bitcoin.wallet.KeyChain.KeyPurpose#RECEIVE_FUNDS} the returned key is suitable for being put
+     * into a receive coins wizard type UI. You should use this when the user is definitely going to hand this key out
+     * to someone who wishes to send money.
+     */
+    public List<DeterministicKey> freshKeys(KeyChain.KeyPurpose purpose, int numberOfKeys) {
         DeterministicKeyChain chain = getActiveKeyChain();
-        DeterministicKey key = chain.getKey(purpose);   // Always returns the next key along the key chain.
-        currentKeys.put(purpose, key);
-        return key;
+        List<DeterministicKey> keys = chain.getKeys(purpose, numberOfKeys);   // Always returns the next key along the key chain.
+        currentKeys.put(purpose, keys.get(keys.size() - 1));
+        return keys;
     }
 
     /**
