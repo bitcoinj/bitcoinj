@@ -62,7 +62,10 @@ public final class Coin implements Comparable<Coin>, Serializable {
     public static final Coin FIFTY_COINS = COIN.multiply(50);
     public static final Coin NEGATIVE_ONE = Coin.valueOf(-1);
 
-    private final long value;
+    /**
+     * The number of satoshis of this monetary value.
+     */
+    public final long value;
 
     private Coin(final long satoshis) {
         this.value = satoshis;
@@ -143,6 +146,10 @@ public final class Coin implements Comparable<Coin>, Serializable {
         return new Coin(-this.value);
     }
 
+    /**
+     * Returns the number of satoshis of this monetary value. It's deprecated in favour of accessing {@link #value}
+     * directly.
+     */
     public long longValue() {
         return this.value;
     }
@@ -156,7 +163,7 @@ public final class Coin implements Comparable<Coin>, Serializable {
         boolean negative = value.signum() < 0;
         if (negative)
             value = value.negate();
-        BigDecimal bd = new BigDecimal(BigInteger.valueOf(value.longValue()), 8);
+        BigDecimal bd = new BigDecimal(BigInteger.valueOf(value.value), 8);
         String formatted = bd.toPlainString();   // Don't use scientific notation.
         int decimalPoint = formatted.indexOf(".");
         // Drop unnecessary zeros from the end.
@@ -178,7 +185,7 @@ public final class Coin implements Comparable<Coin>, Serializable {
      * </p>
      */
     public String toPlainString() {
-        BigDecimal valueInBTC = new BigDecimal(BigInteger.valueOf(value)).divide(new BigDecimal(BigInteger.valueOf(COIN.longValue())));
+        BigDecimal valueInBTC = new BigDecimal(BigInteger.valueOf(value)).divide(new BigDecimal(BigInteger.valueOf(COIN.value)));
         return valueInBTC.toPlainString();
     }
 

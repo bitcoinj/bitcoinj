@@ -228,8 +228,8 @@ public class StoredPaymentChannelClientStates implements WalletExtension {
                         .setContractTransaction(ByteString.copyFrom(channel.contract.bitcoinSerialize()))
                         .setRefundTransaction(ByteString.copyFrom(channel.refund.bitcoinSerialize()))
                         .setMyKey(ByteString.copyFrom(channel.myKey.getPrivKeyBytes()))
-                        .setValueToMe(channel.valueToMe.longValue())
-                        .setRefundFees(channel.refundFees.longValue());
+                        .setValueToMe(channel.valueToMe.value)
+                        .setRefundFees(channel.refundFees.value);
                 if (channel.close != null)
                     value.setCloseTransactionHash(ByteString.copyFrom(channel.close.getHash().getBytes()));
                 builder.addChannels(value);

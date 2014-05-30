@@ -79,7 +79,7 @@ public class PaymentSessionTest {
         assertEquals(paymentMemo, payment.getMemo());
         assertEquals(merchantData, payment.getMerchantData());
         assertEquals(1, payment.getRefundToCount());
-        assertEquals(nanoCoins.longValue(), payment.getRefundTo(0).getAmount());
+        assertEquals(nanoCoins.value, payment.getRefundTo(0).getAmount());
         TransactionOutput refundOutput = new TransactionOutput(params, null, nanoCoins, refundAddr);
         ByteString refundScript = ByteString.copyFrom(refundOutput.getScriptBytes());
         assertTrue(refundScript.equals(payment.getRefundTo(0).getScript()));
@@ -149,7 +149,7 @@ public class PaymentSessionTest {
 
     private Protos.PaymentRequest newSimplePaymentRequest(String netID) {
         Protos.Output.Builder outputBuilder = Protos.Output.newBuilder()
-                .setAmount(nanoCoins.longValue())
+                .setAmount(nanoCoins.value)
                 .setScript(ByteString.copyFrom(outputToMe.getScriptBytes()));
         Protos.PaymentDetails paymentDetails = Protos.PaymentDetails.newBuilder()
                 .setNetwork(netID)
@@ -168,7 +168,7 @@ public class PaymentSessionTest {
 
     private Protos.PaymentRequest newExpiredPaymentRequest() {
         Protos.Output.Builder outputBuilder = Protos.Output.newBuilder()
-                .setAmount(nanoCoins.longValue())
+                .setAmount(nanoCoins.value)
                 .setScript(ByteString.copyFrom(outputToMe.getScriptBytes()));
         Protos.PaymentDetails paymentDetails = Protos.PaymentDetails.newBuilder()
                 .setNetwork("test")

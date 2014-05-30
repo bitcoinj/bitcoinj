@@ -158,7 +158,7 @@ public class StoredTransactionOutput implements Serializable {
     }
 
     public void serializeToStream(OutputStream bos) throws IOException {
-        Utils.uint64ToByteStreamLE(BigInteger.valueOf(value.longValue()), bos);
+        Utils.uint64ToByteStreamLE(BigInteger.valueOf(value.value), bos);
         
         bos.write(0xFF & scriptBytes.length >> 0);
         bos.write(0xFF & scriptBytes.length >> 8);

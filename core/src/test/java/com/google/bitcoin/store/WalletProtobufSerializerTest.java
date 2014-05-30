@@ -122,7 +122,7 @@ public class WalletProtobufSerializerTest {
         assertArrayEquals(t1.getInputs().get(0).getOutpoint().getHash().getBytes(),
                 t1p.getTransactionInput(0).getTransactionOutPointHash().toByteArray());
         assertEquals(0, t1p.getTransactionInput(0).getTransactionOutPointIndex());
-        assertEquals(t1p.getTransactionOutput(0).getValue(), v1.longValue());
+        assertEquals(t1p.getTransactionOutput(0).getValue(), v1.value);
     }
 
     @Test

@@ -165,7 +165,7 @@ public class PaymentChannelClient implements IPaymentChannelClient {
 
         // For now we require a hard-coded value. In future this will have to get more complex and dynamic as the fees
         // start to float.
-        final long MIN_PAYMENT = Transaction.REFERENCE_DEFAULT_MIN_TX_FEE.longValue();
+        final long MIN_PAYMENT = Transaction.REFERENCE_DEFAULT_MIN_TX_FEE.value;
         if (initiate.getMinPayment() != MIN_PAYMENT) {
             log.error("Server requested a min payment of {} but we expected {}", initiate.getMinPayment(), MIN_PAYMENT);
             errorBuilder.setCode(Protos.Error.ErrorCode.MIN_PAYMENT_TOO_LARGE);
@@ -220,7 +220,7 @@ public class PaymentChannelClient implements IPaymentChannelClient {
             PaymentChannelClientState.IncrementedPayment payment = state().incrementPaymentBy(Coin.valueOf(minPayment));
             Protos.UpdatePayment.Builder initialMsg = contractMsg.getInitialPaymentBuilder();
             initialMsg.setSignature(ByteString.copyFrom(payment.signature.encodeToBitcoin()));
-            initialMsg.setClientChangeValue(state.getValueRefunded().longValue());
+            initialMsg.setClientChangeValue(state.getValueRefunded().value);
         } catch (ValueOutOfRangeException e) {
             throw new IllegalStateException(e);  // This cannot happen.
         }
@@ -480,7 +480,7 @@ public class PaymentChannelClient implements IPaymentChannelClient {
             PaymentChannelClientState.IncrementedPayment payment = state().incrementPaymentBy(size);
             Protos.UpdatePayment.Builder updatePaymentBuilder = Protos.UpdatePayment.newBuilder()
                     .setSignature(ByteString.copyFrom(payment.signature.encodeToBitcoin()))
-                    .setClientChangeValue(state.getValueRefunded().longValue());
+                    .setClientChangeValue(state.getValueRefunded().value);
 
             increasePaymentFuture = SettableFuture.create();
             increasePaymentFuture.addListener(new Runnable() {

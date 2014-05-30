@@ -153,7 +153,7 @@ public class TransactionOutput extends ChildMessage implements Serializable {
     @Override
     protected void bitcoinSerializeToStream(OutputStream stream) throws IOException {
         checkNotNull(scriptBytes);
-        Utils.int64ToByteStreamLE(getValue().longValue(), stream);
+        Utils.int64ToByteStreamLE(getValue().value, stream);
         // TODO: Move script serialization into the Script class, where it belongs.
         stream.write(new VarInt(scriptBytes.length).encode());
         stream.write(scriptBytes);

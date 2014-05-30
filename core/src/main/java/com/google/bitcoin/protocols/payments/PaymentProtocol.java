@@ -392,7 +392,7 @@ public class PaymentProtocol {
         if (amount != null) {
             if (amount.compareTo(NetworkParameters.MAX_MONEY) > 0)
                 throw new IllegalArgumentException("Amount too big: " + amount);
-            output.setAmount(amount.longValue());
+            output.setAmount(amount.value);
         } else {
             output.setAmount(0);
         }
