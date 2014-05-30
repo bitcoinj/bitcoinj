@@ -29,8 +29,8 @@ public class GetHeadersMessage extends GetBlocksMessage {
         super(params, locator, stopHash);
     }
 
-    public GetHeadersMessage(NetworkParameters params, byte[] msg) throws ProtocolException {
-        super(params, msg);
+    public GetHeadersMessage(NetworkParameters params, byte[] payload) throws ProtocolException {
+        super(params, payload);
     }
 
     @Override

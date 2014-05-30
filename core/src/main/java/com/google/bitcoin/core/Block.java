@@ -190,7 +190,7 @@ public class Block extends Message {
         difficultyTarget = readUint32();
         nonce = readUint32();
 
-        hash = new Sha256Hash(Utils.reverseBytes(Utils.doubleDigest(bytes, offset, cursor)));
+        hash = new Sha256Hash(Utils.reverseBytes(Utils.doubleDigest(payload, offset, cursor)));
 
         headerParsed = true;
         headerBytesValid = parseRetain;
@@ -202,7 +202,7 @@ public class Block extends Message {
 
         cursor = offset + HEADER_SIZE;
         optimalEncodingMessageSize = HEADER_SIZE;
-        if (bytes.length == cursor) {
+        if (payload.length == cursor) {
             // This message is just a header, it has no transactions.
             transactionsParsed = true;
             transactionBytesValid = false;
@@ -213,7 +213,7 @@ public class Block extends Message {
         optimalEncodingMessageSize += VarInt.sizeOf(numTransactions);
         transactions = new ArrayList<Transaction>(numTransactions);
         for (int i = 0; i < numTransactions; i++) {
-            Transaction tx = new Transaction(params, bytes, cursor, this, parseLazy, parseRetain, UNKNOWN_LENGTH);
+            Transaction tx = new Transaction(params, payload, cursor, this, parseLazy, parseRetain, UNKNOWN_LENGTH);
             // Label the transaction as coming from the P2P network, so code that cares where we first saw it knows.
             tx.getConfidence().setSource(TransactionConfidence.Source.NETWORK);
             transactions.add(tx);
@@ -272,12 +272,12 @@ public class Block extends Message {
      * the cached header bytes.
      */
     private void maybeParseHeader() {
-        if (headerParsed || bytes == null)
+        if (headerParsed || payload == null)
             return;
         try {
             parseHeader();
             if (!(headerBytesValid || transactionBytesValid))
-                bytes = null;
+                payload = null;
         } catch (ProtocolException e) {
             throw new LazyParseException(
                     "ProtocolException caught during lazy parse.  For safe access to fields call ensureParsed before attempting read or write access",
@@ -286,14 +286,14 @@ public class Block extends Message {
     }
 
     private void maybeParseTransactions() {
-        if (transactionsParsed || bytes == null)
+        if (transactionsParsed || payload == null)
             return;
         try {
             parseTransactions();
             if (!parseRetain) {
                 transactionBytesValid = false;
                 if (headerParsed)
-                    bytes = null;
+                    payload = null;
             }
         } catch (ProtocolException e) {
             throw new LazyParseException(
@@ -377,8 +377,8 @@ public class Block extends Message {
     // default for testing
     void writeHeader(OutputStream stream) throws IOException {
         // try for cached write first
-        if (headerBytesValid && bytes != null && bytes.length >= offset + HEADER_SIZE) {
-            stream.write(bytes, offset, HEADER_SIZE);
+        if (headerBytesValid && payload != null && payload.length >= offset + HEADER_SIZE) {
+            stream.write(payload, offset, HEADER_SIZE);
             return;
         }
         // fall back to manual write
@@ -399,8 +399,8 @@ public class Block extends Message {
         }
 
         // confirmed we must have transactions either cached or as objects.
-        if (transactionBytesValid && bytes != null && bytes.length >= offset + length) {
-            stream.write(bytes, offset + HEADER_SIZE, length - HEADER_SIZE);
+        if (transactionBytesValid && payload != null && payload.length >= offset + length) {
+            stream.write(payload, offset + HEADER_SIZE, length - HEADER_SIZE);
             return;
         }
 
@@ -422,13 +422,13 @@ public class Block extends Message {
     public byte[] bitcoinSerialize() {
         // we have completely cached byte array.
         if (headerBytesValid && transactionBytesValid) {
-            Preconditions.checkNotNull(bytes, "Bytes should never be null if headerBytesValid && transactionBytesValid");
-            if (length == bytes.length) {
-                return bytes;
+            Preconditions.checkNotNull(payload, "Bytes should never be null if headerBytesValid && transactionBytesValid");
+            if (length == payload.length) {
+                return payload;
             } else {
                 // byte array is offset so copy out the correct range.
                 byte[] buf = new byte[length];
-                System.arraycopy(bytes, offset, buf, 0, length);
+                System.arraycopy(payload, offset, buf, 0, length);
                 return buf;
             }
         }
@@ -462,7 +462,7 @@ public class Block extends Message {
      */
     private int guessTransactionsLength() {
         if (transactionBytesValid)
-            return bytes.length - HEADER_SIZE;
+            return payload.length - HEADER_SIZE;
         if (transactions == null)
             return 0;
         int len = VarInt.sizeOf(transactions.size());
@@ -484,7 +484,7 @@ public class Block extends Message {
         maybeParseHeader();
         headerBytesValid = false;
         if (!transactionBytesValid)
-            bytes = null;
+            payload = null;
         hash = null;
         checksum = null;
     }
@@ -493,7 +493,7 @@ public class Block extends Message {
         maybeParseTransactions();
         transactionBytesValid = false;
         if (!headerBytesValid)
-            bytes = null;
+            payload = null;
         // Current implementation has to uncache headers as well as any change to a tx will alter the merkle root. In
         // future we can go more granular and cache merkle root separately so rest of the header does not need to be
         // rewritten.

@@ -35,23 +35,23 @@ public abstract class ChildMessage extends Message {
         super(params);
     }
 
-    public ChildMessage(NetworkParameters params, byte[] msg, int offset, int protocolVersion) throws ProtocolException {
-        super(params, msg, offset, protocolVersion);
+    public ChildMessage(NetworkParameters params, byte[] payload, int offset, int protocolVersion) throws ProtocolException {
+        super(params, payload, offset, protocolVersion);
     }
 
-    public ChildMessage(NetworkParameters params, byte[] msg, int offset, int protocolVersion, Message parent, boolean parseLazy,
+    public ChildMessage(NetworkParameters params, byte[] payload, int offset, int protocolVersion, Message parent, boolean parseLazy,
                         boolean parseRetain, int length) throws ProtocolException {
-        super(params, msg, offset, protocolVersion, parseLazy, parseRetain, length);
+        super(params, payload, offset, protocolVersion, parseLazy, parseRetain, length);
         this.parent = parent;
     }
 
-    public ChildMessage(NetworkParameters params, byte[] msg, int offset) throws ProtocolException {
-        super(params, msg, offset);
+    public ChildMessage(NetworkParameters params, byte[] payload, int offset) throws ProtocolException {
+        super(params, payload, offset);
     }
 
-    public ChildMessage(NetworkParameters params, byte[] msg, int offset, @Nullable Message parent, boolean parseLazy, boolean parseRetain, int length)
+    public ChildMessage(NetworkParameters params, byte[] payload, int offset, @Nullable Message parent, boolean parseLazy, boolean parseRetain, int length)
             throws ProtocolException {
-        super(params, msg, offset, parseLazy, parseRetain, length);
+        super(params, payload, offset, parseLazy, parseRetain, length);
         this.parent = parent;
     }
 

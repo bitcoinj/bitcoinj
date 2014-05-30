@@ -27,7 +27,7 @@ public class UnknownMessage extends EmptyMessage {
 
     @Override
     public String toString() {
-        return "Unknown message [" + name + "]: " + (bytes == null ? "" : Utils.bytesToHexString(bytes));
+        return "Unknown message [" + name + "]: " + (payload == null ? "" : Utils.bytesToHexString(payload));
     }
 
 }

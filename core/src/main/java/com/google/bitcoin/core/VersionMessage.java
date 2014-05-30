@@ -78,8 +78,8 @@ public class VersionMessage extends Message {
     /** The value that is prepended to the subVer field of this application. */
     public static final String LIBRARY_SUBVER = "/BitCoinJ:" + BITCOINJ_VERSION + "/";
 
-    public VersionMessage(NetworkParameters params, byte[] msg) throws ProtocolException {
-        super(params, msg, 0);
+    public VersionMessage(NetworkParameters params, byte[] payload) throws ProtocolException {
+        super(params, payload, 0);
     }
 
     // It doesn't really make sense to ever lazily parse a version message or to retain the backing bytes.
@@ -131,9 +131,9 @@ public class VersionMessage extends Message {
         clientVersion = (int) readUint32();
         localServices = readUint64().longValue();
         time = readUint64().longValue();
-        myAddr = new PeerAddress(params, bytes, cursor, 0);
+        myAddr = new PeerAddress(params, payload, cursor, 0);
         cursor += myAddr.getMessageSize();
-        theirAddr = new PeerAddress(params, bytes, cursor, 0);
+        theirAddr = new PeerAddress(params, payload, cursor, 0);
         cursor += theirAddr.getMessageSize();
         // uint64 localHostNonce  (random data)
         // We don't care about the localhost nonce. It's used to detect connecting back to yourself in cases where

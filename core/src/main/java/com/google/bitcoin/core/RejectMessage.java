@@ -68,13 +68,12 @@ public class RejectMessage extends Message {
     private RejectCode code;
     private Sha256Hash messageHash;
 
-    public RejectMessage(NetworkParameters params, byte[] bytes) throws ProtocolException {
-        super(params, bytes, 0);
+    public RejectMessage(NetworkParameters params, byte[] payload) throws ProtocolException {
+        super(params, payload, 0);
     }
 
-    public RejectMessage(NetworkParameters params, byte[] msg, boolean parseLazy, boolean parseRetain, int length)
-            throws ProtocolException {
-        super(params, msg, 0, parseLazy, parseRetain, length);
+    public RejectMessage(NetworkParameters params, byte[] payload, boolean parseLazy, boolean parseRetain, int length) throws ProtocolException {
+        super(params, payload, 0, parseLazy, parseRetain, length);
     }
 
     @Override
