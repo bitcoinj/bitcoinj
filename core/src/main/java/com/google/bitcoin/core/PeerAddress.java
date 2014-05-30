@@ -52,8 +52,8 @@ public class PeerAddress extends ChildMessage {
     /**
      * Construct a peer address from a serialized payload.
      * @param params NetworkParameters object.
-     * @param msg Bitcoin protocol formatted byte array containing message content.
-     * @param offset The location of the first msg byte within the array.
+     * @param payload Bitcoin protocol formatted byte array containing message content.
+     * @param offset The location of the first payload byte within the array.
      * @param protocolVersion Bitcoin protocol version.
      * @param parseLazy Whether to perform a full parse immediately or delay until a read is requested.
      * @param parseRetain Whether to retain the backing byte array for quick reserialization.  
@@ -61,9 +61,9 @@ public class PeerAddress extends ChildMessage {
      * the cached bytes may be repopulated and retained if the message is serialized again in the future.
      * @throws ProtocolException
      */
-    public PeerAddress(NetworkParameters params, byte[] msg, int offset, int protocolVersion, Message parent, boolean parseLazy,
+    public PeerAddress(NetworkParameters params, byte[] payload, int offset, int protocolVersion, Message parent, boolean parseLazy,
                        boolean parseRetain) throws ProtocolException {
-        super(params, msg, offset, protocolVersion, parent, parseLazy, parseRetain, UNKNOWN_LENGTH);
+        super(params, payload, offset, protocolVersion, parent, parseLazy, parseRetain, UNKNOWN_LENGTH);
         // Message length is calculated in parseLite which is guaranteed to be called before it is ever read.
         // Even though message length is static for a PeerAddress it is safer to leave it there 
         // as it will be set regardless of which constructor was used.
@@ -155,7 +155,7 @@ public class PeerAddress extends ChildMessage {
         } catch (UnknownHostException e) {
             throw new RuntimeException(e);  // Cannot happen.
         }
-        port = ((0xFF & bytes[cursor++]) << 8) | (0xFF & bytes[cursor++]);
+        port = ((0xFF & payload[cursor++]) << 8) | (0xFF & payload[cursor++]);
     }
 
     /* (non-Javadoc)

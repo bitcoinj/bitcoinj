@@ -41,16 +41,16 @@ public abstract class Message implements Serializable {
     // Useful to ensure serialize/deserialize are consistent with each other.
     private static final boolean SELF_CHECK = false;
 
-    // The offset is how many bytes into the provided byte array this message starts at.
+    // The offset is how many bytes into the provided byte array this message payload starts at.
     protected transient int offset;
     // The cursor keeps track of where we are in the byte array as we parse it.
-    // Note that it's relative to the start of the array NOT the start of the message.
+    // Note that it's relative to the start of the array NOT the start of the message payload.
     protected transient int cursor;
 
     protected transient int length = UNKNOWN_LENGTH;
 
-    // The raw message bytes themselves.
-    protected transient byte[] bytes;
+    // The raw message payload bytes themselves.
+    protected transient byte[] payload;
 
     protected transient boolean parsed = false;
     protected transient boolean recached = false;
@@ -80,30 +80,30 @@ public abstract class Message implements Serializable {
         parseRetain = false;
     }
 
-    Message(NetworkParameters params, byte[] msg, int offset, int protocolVersion) throws ProtocolException {
-        this(params, msg, offset, protocolVersion, false, false, UNKNOWN_LENGTH);
+    Message(NetworkParameters params, byte[] payload, int offset, int protocolVersion) throws ProtocolException {
+        this(params, payload, offset, protocolVersion, false, false, UNKNOWN_LENGTH);
     }
 
     /**
      * 
      * @param params NetworkParameters object.
-     * @param msg Bitcoin protocol formatted byte array containing message content.
-     * @param offset The location of the first msg byte within the array.
+     * @param payload Bitcoin protocol formatted byte array containing message content.
+     * @param offset The location of the first payload byte within the array.
      * @param protocolVersion Bitcoin protocol version.
      * @param parseLazy Whether to perform a full parse immediately or delay until a read is requested.
      * @param parseRetain Whether to retain the backing byte array for quick reserialization.  
      * If true and the backing byte array is invalidated due to modification of a field then 
      * the cached bytes may be repopulated and retained if the message is serialized again in the future.
-     * @param length The length of message if known.  Usually this is provided when deserializing of the wire
+     * @param length The length of message payload if known.  Usually this is provided when deserializing of the wire
      * as the length will be provided as part of the header.  If unknown then set to Message.UNKNOWN_LENGTH
      * @throws ProtocolException
      */
-    Message(NetworkParameters params, byte[] msg, int offset, int protocolVersion, boolean parseLazy, boolean parseRetain, int length) throws ProtocolException {
+    Message(NetworkParameters params, byte[] payload, int offset, int protocolVersion, boolean parseLazy, boolean parseRetain, int length) throws ProtocolException {
         this.parseLazy = parseLazy;
         this.parseRetain = parseRetain;
         this.protocolVersion = protocolVersion;
         this.params = params;
-        this.bytes = msg;
+        this.payload = payload;
         this.cursor = this.offset = offset;
         this.length = length;
         if (parseLazy) {
@@ -120,43 +120,43 @@ public abstract class Message implements Serializable {
                        getClass().getSimpleName(), parseLazy ? "lite" : "full");
         
         if (SELF_CHECK) {
-            selfCheck(msg, offset);
+            selfCheck(payload, offset);
         }
         
         if (parseRetain || !parsed)
             return;
-        this.bytes = null;
+        this.payload = null;
     }
 
-    private void selfCheck(byte[] msg, int offset) {
+    private void selfCheck(byte[] payload, int offset) {
         if (!(this instanceof VersionMessage)) {
             maybeParse();
-            byte[] msgbytes = new byte[cursor - offset];
-            System.arraycopy(msg, offset, msgbytes, 0, cursor - offset);
+            byte[] payloadBytes = new byte[cursor - offset];
+            System.arraycopy(payload, offset, payloadBytes, 0, cursor - offset);
             byte[] reserialized = bitcoinSerialize();
-            if (!Arrays.equals(reserialized, msgbytes))
+            if (!Arrays.equals(reserialized, payloadBytes))
                 throw new RuntimeException("Serialization is wrong: \n" +
                         Utils.bytesToHexString(reserialized) + " vs \n" +
-                        Utils.bytesToHexString(msgbytes));
+                        Utils.bytesToHexString(payloadBytes));
         }
     }
 
-    Message(NetworkParameters params, byte[] msg, int offset) throws ProtocolException {
-        this(params, msg, offset, NetworkParameters.PROTOCOL_VERSION, false, false, UNKNOWN_LENGTH);
+    Message(NetworkParameters params, byte[] payload, int offset) throws ProtocolException {
+        this(params, payload, offset, NetworkParameters.PROTOCOL_VERSION, false, false, UNKNOWN_LENGTH);
     }
 
-    Message(NetworkParameters params, byte[] msg, int offset, boolean parseLazy, boolean parseRetain, int length) throws ProtocolException {
-        this(params, msg, offset, NetworkParameters.PROTOCOL_VERSION, parseLazy, parseRetain, length);
+    Message(NetworkParameters params, byte[] payload, int offset, boolean parseLazy, boolean parseRetain, int length) throws ProtocolException {
+        this(params, payload, offset, NetworkParameters.PROTOCOL_VERSION, parseLazy, parseRetain, length);
     }
 
     // These methods handle the serialization/deserialization using the custom Bitcoin protocol.
-    // It's somewhat painful to work with in Java, so some of these objects support a second 
-    // serialization mechanism - the standard Java serialization system. This is used when things 
+    // It's somewhat painful to work with in Java, so some of these objects support a second
+    // serialization mechanism - the standard Java serialization system. This is used when things
     // are serialized to the wallet.
     abstract void parse() throws ProtocolException;
 
     /**
-     * Perform the most minimal parse possible to calculate the length of the message.
+     * Perform the most minimal parse possible to calculate the length of the message payload.
      * This is only required for subclasses of ChildMessage as root level messages will have their length passed
      * into the constructor.
      * <p/>
@@ -175,13 +175,13 @@ public abstract class Message implements Serializable {
      * If the lazy parse flag is not set this is a method returns immediately.
      */
     protected synchronized void maybeParse() {
-        if (parsed || bytes == null)
+        if (parsed || payload == null)
             return;
         try {
             parse();
             parsed = true;
             if (!parseRetain)
-                bytes = null;
+                payload = null;
         } catch (ProtocolException e) {
             throw new LazyParseException("ProtocolException caught during lazy parse.  For safe access to fields call ensureParsed before attempting read or write access", e);
         }
@@ -216,7 +216,7 @@ public abstract class Message implements Serializable {
     protected void unCache() {
         maybeParse();
         checksum = null;
-        bytes = null;
+        payload = null;
         recached = false;
     }
 
@@ -247,8 +247,7 @@ public abstract class Message implements Serializable {
      * used for unit testing
      */
     public boolean isCached() {
-        //return parseLazy ? parsed && bytes != null : bytes != null;
-        return bytes != null;
+        return payload != null;
     }
 
     public boolean isRecached() {
@@ -307,15 +306,15 @@ public abstract class Message implements Serializable {
      */
     public byte[] unsafeBitcoinSerialize() {
         // 1st attempt to use a cached array.
-        if (bytes != null) {
-            if (offset == 0 && length == bytes.length) {
+        if (payload != null) {
+            if (offset == 0 && length == payload.length) {
                 // Cached byte array is the entire message with no extras so we can return as is and avoid an array
                 // copy.
-                return bytes;
+                return payload;
             }
 
             byte[] buf = new byte[length];
-            System.arraycopy(bytes, offset, buf, 0, length);
+            System.arraycopy(payload, offset, buf, 0, length);
             return buf;
         }
 
@@ -336,12 +335,12 @@ public abstract class Message implements Serializable {
             // merkle root calls this method.  It is will frequently happen prior to serializing the block
             // which means another call to bitcoinSerialize is coming.  If we didn't recache then internal
             // serialization would occur a 2nd time and every subsequent time the message is serialized.
-            bytes = stream.toByteArray();
+            payload = stream.toByteArray();
             cursor = cursor - offset;
             offset = 0;
             recached = true;
-            length = bytes.length;
-            return bytes;
+            length = payload.length;
+            return payload;
         }
         // Record length. If this Message wasn't parsed from a byte stream it won't have length field
         // set (except for static length message types).  Setting it makes future streaming more efficient
@@ -359,8 +358,8 @@ public abstract class Message implements Serializable {
      */
     final public void bitcoinSerialize(OutputStream stream) throws IOException {
         // 1st check for cached bytes.
-        if (bytes != null && length != UNKNOWN_LENGTH) {
-            stream.write(bytes, offset, length);
+        if (payload != null && length != UNKNOWN_LENGTH) {
+            stream.write(payload, offset, length);
             return;
         }
 
@@ -399,7 +398,7 @@ public abstract class Message implements Serializable {
 
     long readUint32() throws ProtocolException {
         try {
-            long u = Utils.readUint32(bytes, cursor);
+            long u = Utils.readUint32(payload, cursor);
             cursor += 4;
             return u;
         } catch (ArrayIndexOutOfBoundsException e) {
@@ -410,7 +409,7 @@ public abstract class Message implements Serializable {
     Sha256Hash readHash() throws ProtocolException {
         try {
             byte[] hash = new byte[32];
-            System.arraycopy(bytes, cursor, hash, 0, 32);
+            System.arraycopy(payload, cursor, hash, 0, 32);
             // We have to flip it around, as it's been read off the wire in little endian.
             // Not the most efficient way to do this but the clearest.
             hash = Utils.reverseBytes(hash);
@@ -423,7 +422,7 @@ public abstract class Message implements Serializable {
 
     long readInt64() throws ProtocolException {
         try {
-            long u = Utils.readInt64(bytes, cursor);
+            long u = Utils.readInt64(payload, cursor);
             cursor += 8;
             return u;
         } catch (ArrayIndexOutOfBoundsException e) {
@@ -435,7 +434,7 @@ public abstract class Message implements Serializable {
         try {
             // Java does not have an unsigned 64 bit type. So scrape it off the wire then flip.
             byte[] valbytes = new byte[8];
-            System.arraycopy(bytes, cursor, valbytes, 0, 8);
+            System.arraycopy(payload, cursor, valbytes, 0, 8);
             valbytes = Utils.reverseBytes(valbytes);
             cursor += valbytes.length;
             return new BigInteger(valbytes);
@@ -450,7 +449,7 @@ public abstract class Message implements Serializable {
 
     long readVarInt(int offset) throws ProtocolException {
         try {
-            VarInt varint = new VarInt(bytes, cursor + offset);
+            VarInt varint = new VarInt(payload, cursor + offset);
             cursor += offset + varint.getOriginalSizeInBytes();
             return varint.value;
         } catch (ArrayIndexOutOfBoundsException e) {
@@ -462,7 +461,7 @@ public abstract class Message implements Serializable {
     byte[] readBytes(int length) throws ProtocolException {
         try {
             byte[] b = new byte[length];
-            System.arraycopy(bytes, cursor, b, 0, length);
+            System.arraycopy(payload, cursor, b, 0, length);
             cursor += length;
             return b;
         } catch (IndexOutOfBoundsException e) {
@@ -477,14 +476,14 @@ public abstract class Message implements Serializable {
 
     String readStr() throws ProtocolException {
         try {
-            VarInt varInt = new VarInt(bytes, cursor);
+            VarInt varInt = new VarInt(payload, cursor);
             if (varInt.value == 0) {
                 cursor += 1;
                 return "";
             }
             cursor += varInt.getOriginalSizeInBytes();
             byte[] characters = new byte[(int) varInt.value];
-            System.arraycopy(bytes, cursor, characters, 0, characters.length);
+            System.arraycopy(payload, cursor, characters, 0, characters.length);
             cursor += characters.length;
             try {
                 return new String(characters, "UTF-8");
@@ -499,7 +498,7 @@ public abstract class Message implements Serializable {
     }
     
     boolean hasMoreBytes() {
-        return cursor < bytes.length;
+        return cursor < payload.length;
     }
 
     /** Network parameters this message was created with. */

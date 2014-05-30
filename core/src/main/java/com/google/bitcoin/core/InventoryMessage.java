@@ -34,7 +34,7 @@ public class InventoryMessage extends ListMessage {
     /**
      * Deserializes an 'inv' message.
      * @param params NetworkParameters object.
-     * @param msg Bitcoin protocol formatted byte array containing message content.
+     * @param payload Bitcoin protocol formatted byte array containing message content.
      * @param parseLazy Whether to perform a full parse immediately or delay until a read is requested.
      * @param parseRetain Whether to retain the backing byte array for quick reserialization.  
      * If true and the backing byte array is invalidated due to modification of a field then 
@@ -43,9 +43,9 @@ public class InventoryMessage extends ListMessage {
      * as the length will be provided as part of the header.  If unknown then set to Message.UNKNOWN_LENGTH
      * @throws ProtocolException
      */
-    public InventoryMessage(NetworkParameters params, byte[] msg, boolean parseLazy, boolean parseRetain, int length)
+    public InventoryMessage(NetworkParameters params, byte[] payload, boolean parseLazy, boolean parseRetain, int length)
             throws ProtocolException {
-        super(params, msg, parseLazy, parseRetain, length);
+        super(params, payload, parseLazy, parseRetain, length);
     }
 
     public InventoryMessage(NetworkParameters params) {

@@ -111,8 +111,8 @@ public class TransactionInput extends ChildMessage implements Serializable {
     /**
      * Deserializes an input message. This is usually part of a transaction message.
      * @param params NetworkParameters object.
-     * @param msg Bitcoin protocol formatted byte array containing message content.
-     * @param offset The location of the first msg byte within the array.
+     * @param payload Bitcoin protocol formatted byte array containing message content.
+     * @param offset The location of the first payload byte within the array.
      * @param parseLazy Whether to perform a full parse immediately or delay until a read is requested.
      * @param parseRetain Whether to retain the backing byte array for quick reserialization.  
      * If true and the backing byte array is invalidated due to modification of a field then 
@@ -120,10 +120,10 @@ public class TransactionInput extends ChildMessage implements Serializable {
      * as the length will be provided as part of the header.  If unknown then set to Message.UNKNOWN_LENGTH
      * @throws ProtocolException
      */
-    public TransactionInput(NetworkParameters params, Transaction parentTransaction, byte[] msg, int offset,
+    public TransactionInput(NetworkParameters params, Transaction parentTransaction, byte[] payload, int offset,
                             boolean parseLazy, boolean parseRetain)
             throws ProtocolException {
-        super(params, msg, offset, parentTransaction, parseLazy, parseRetain, UNKNOWN_LENGTH);
+        super(params, payload, offset, parentTransaction, parseLazy, parseRetain, UNKNOWN_LENGTH);
         this.parentTransaction = parentTransaction;
         this.value = null;
     }
@@ -138,7 +138,7 @@ public class TransactionInput extends ChildMessage implements Serializable {
 
     @Override
     void parse() throws ProtocolException {
-        outpoint = new TransactionOutPoint(params, bytes, cursor, this, parseLazy, parseRetain);
+        outpoint = new TransactionOutPoint(params, payload, cursor, this, parseLazy, parseRetain);
         cursor += outpoint.getMessageSize();
         int scriptLen = (int) readVarInt();
         scriptBytes = readBytes(scriptLen);

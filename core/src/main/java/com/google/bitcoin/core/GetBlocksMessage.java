@@ -38,8 +38,8 @@ public class GetBlocksMessage extends Message {
         this.stopHash = stopHash;
     }
 
-    public GetBlocksMessage(NetworkParameters params, byte[] msg) throws ProtocolException {
-        super(params, msg, 0);
+    public GetBlocksMessage(NetworkParameters params, byte[] payload) throws ProtocolException {
+        super(params, payload, 0);
     }
 
     @Override

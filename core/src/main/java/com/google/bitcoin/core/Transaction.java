@@ -184,8 +184,8 @@ public class Transaction extends ChildMessage implements Serializable {
     /**
      * Creates a transaction by reading payload starting from offset bytes in. Length of a transaction is fixed.
      * @param params NetworkParameters object.
-     * @param msg Bitcoin protocol formatted byte array containing message content.
-     * @param offset The location of the first msg byte within the array.
+     * @param payload Bitcoin protocol formatted byte array containing message content.
+     * @param offset The location of the first payload byte within the array.
      * @param parseLazy Whether to perform a full parse immediately or delay until a read is requested.
      * @param parseRetain Whether to retain the backing byte array for quick reserialization.  
      * If true and the backing byte array is invalidated due to modification of a field then 
@@ -194,17 +194,17 @@ public class Transaction extends ChildMessage implements Serializable {
      * as the length will be provided as part of the header.  If unknown then set to Message.UNKNOWN_LENGTH
      * @throws ProtocolException
      */
-    public Transaction(NetworkParameters params, byte[] msg, int offset, @Nullable Message parent, boolean parseLazy, boolean parseRetain, int length)
+    public Transaction(NetworkParameters params, byte[] payload, int offset, @Nullable Message parent, boolean parseLazy, boolean parseRetain, int length)
             throws ProtocolException {
-        super(params, msg, offset, parent, parseLazy, parseRetain, length);
+        super(params, payload, offset, parent, parseLazy, parseRetain, length);
     }
 
     /**
      * Creates a transaction by reading payload starting from offset bytes in. Length of a transaction is fixed.
      */
-    public Transaction(NetworkParameters params, byte[] msg, @Nullable Message parent, boolean parseLazy, boolean parseRetain, int length)
+    public Transaction(NetworkParameters params, byte[] payload, @Nullable Message parent, boolean parseLazy, boolean parseRetain, int length)
             throws ProtocolException {
-        super(params, msg, 0, parent, parseLazy, parseRetain, length);
+        super(params, payload, 0, parent, parseLazy, parseRetain, length);
     }
 
     /**
@@ -497,7 +497,7 @@ public class Transaction extends ChildMessage implements Serializable {
 
             //parse();
             //parsed = true;
-            length = calcLength(bytes, offset);
+            length = calcLength(payload, offset);
             cursor = offset + length;
         }
     }
@@ -554,7 +554,7 @@ public class Transaction extends ChildMessage implements Serializable {
         optimalEncodingMessageSize += VarInt.sizeOf(numInputs);
         inputs = new ArrayList<TransactionInput>((int) numInputs);
         for (long i = 0; i < numInputs; i++) {
-            TransactionInput input = new TransactionInput(params, this, bytes, cursor, parseLazy, parseRetain);
+            TransactionInput input = new TransactionInput(params, this, payload, cursor, parseLazy, parseRetain);
             inputs.add(input);
             long scriptLen = readVarInt(TransactionOutPoint.MESSAGE_LENGTH);
             optimalEncodingMessageSize += TransactionOutPoint.MESSAGE_LENGTH + VarInt.sizeOf(scriptLen) + scriptLen + 4;
@@ -565,7 +565,7 @@ public class Transaction extends ChildMessage implements Serializable {
         optimalEncodingMessageSize += VarInt.sizeOf(numOutputs);
         outputs = new ArrayList<TransactionOutput>((int) numOutputs);
         for (long i = 0; i < numOutputs; i++) {
-            TransactionOutput output = new TransactionOutput(params, this, bytes, cursor, parseLazy, parseRetain);
+            TransactionOutput output = new TransactionOutput(params, this, payload, cursor, parseLazy, parseRetain);
             outputs.add(output);
             long scriptLen = readVarInt(8);
             optimalEncodingMessageSize += 8 + VarInt.sizeOf(scriptLen) + scriptLen;
