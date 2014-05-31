@@ -12548,9 +12548,9 @@ public final class Protos {
      */
     org.bitcoinj.wallet.Protos.ScryptParametersOrBuilder getEncryptionParametersOrBuilder();
 
-    // optional int32 version = 7;
+    // optional int32 version = 7 [default = 1];
     /**
-     * <code>optional int32 version = 7;</code>
+     * <code>optional int32 version = 7 [default = 1];</code>
      *
      * <pre>
      * The version number of the wallet - used to detect wallets that were produced in the future
@@ -12559,7 +12559,7 @@ public final class Protos {
      */
     boolean hasVersion();
     /**
-     * <code>optional int32 version = 7;</code>
+     * <code>optional int32 version = 7 [default = 1];</code>
      *
      * <pre>
      * The version number of the wallet - used to detect wallets that were produced in the future
@@ -13248,11 +13248,11 @@ public final class Protos {
       return encryptionParameters_;
     }
 
-    // optional int32 version = 7;
+    // optional int32 version = 7 [default = 1];
     public static final int VERSION_FIELD_NUMBER = 7;
     private int version_;
     /**
-     * <code>optional int32 version = 7;</code>
+     * <code>optional int32 version = 7 [default = 1];</code>
      *
      * <pre>
      * The version number of the wallet - used to detect wallets that were produced in the future
@@ -13263,7 +13263,7 @@ public final class Protos {
       return ((bitField0_ & 0x00000040) == 0x00000040);
     }
     /**
-     * <code>optional int32 version = 7;</code>
+     * <code>optional int32 version = 7 [default = 1];</code>
      *
      * <pre>
      * The version number of the wallet - used to detect wallets that were produced in the future
@@ -13439,7 +13439,7 @@ public final class Protos {
       watchedScript_ = java.util.Collections.emptyList();
       encryptionType_ = org.bitcoinj.wallet.Protos.Wallet.EncryptionType.UNENCRYPTED;
       encryptionParameters_ = org.bitcoinj.wallet.Protos.ScryptParameters.getDefaultInstance();
-      version_ = 0;
+      version_ = 1;
       extension_ = java.util.Collections.emptyList();
       description_ = "";
       keyRotationTime_ = 0L;
@@ -13764,7 +13764,7 @@ public final class Protos {
           encryptionParametersBuilder_.clear();
         }
         bitField0_ = (bitField0_ & ~0x00000100);
-        version_ = 0;
+        version_ = 1;
         bitField0_ = (bitField0_ & ~0x00000200);
         if (extensionBuilder_ == null) {
           extension_ = java.util.Collections.emptyList();
@@ -15244,10 +15244,10 @@ public final class Protos {
         return encryptionParametersBuilder_;
       }
 
-      // optional int32 version = 7;
-      private int version_ ;
+      // optional int32 version = 7 [default = 1];
+      private int version_ = 1;
       /**
-       * <code>optional int32 version = 7;</code>
+       * <code>optional int32 version = 7 [default = 1];</code>
        *
        * <pre>
        * The version number of the wallet - used to detect wallets that were produced in the future
@@ -15258,7 +15258,7 @@ public final class Protos {
         return ((bitField0_ & 0x00000200) == 0x00000200);
       }
       /**
-       * <code>optional int32 version = 7;</code>
+       * <code>optional int32 version = 7 [default = 1];</code>
        *
        * <pre>
        * The version number of the wallet - used to detect wallets that were produced in the future
@@ -15269,7 +15269,7 @@ public final class Protos {
         return version_;
       }
       /**
-       * <code>optional int32 version = 7;</code>
+       * <code>optional int32 version = 7 [default = 1];</code>
        *
        * <pre>
        * The version number of the wallet - used to detect wallets that were produced in the future
@@ -15283,7 +15283,7 @@ public final class Protos {
         return this;
       }
       /**
-       * <code>optional int32 version = 7;</code>
+       * <code>optional int32 version = 7 [default = 1];</code>
        *
        * <pre>
        * The version number of the wallet - used to detect wallets that were produced in the future
@@ -15292,7 +15292,7 @@ public final class Protos {
        */
       public Builder clearVersion() {
         bitField0_ = (bitField0_ & ~0x00000200);
-        version_ = 0;
+        version_ = 1;
         onChanged();
         return this;
       }
@@ -16068,7 +16068,7 @@ public final class Protos {
       "(\014\022\020\n\001n\030\002 \001(\003:\00516384\022\014\n\001r\030\003 \001(\005:\0018\022\014\n\001p\030" +
       "\004 \001(\005:\0011\"8\n\tExtension\022\n\n\002id\030\001 \002(\t\022\014\n\004dat",
       "a\030\002 \002(\014\022\021\n\tmandatory\030\003 \002(\010\" \n\003Tag\022\013\n\003tag" +
-      "\030\001 \002(\t\022\014\n\004data\030\002 \002(\014\"\256\004\n\006Wallet\022\032\n\022netwo" +
+      "\030\001 \002(\t\022\014\n\004data\030\002 \002(\014\"\261\004\n\006Wallet\022\032\n\022netwo" +
       "rk_identifier\030\001 \002(\t\022\034\n\024last_seen_block_h" +
       "ash\030\002 \001(\014\022\036\n\026last_seen_block_height\030\014 \001(" +
       "\r\022!\n\031last_seen_block_time_secs\030\016 \001(\003\022\030\n\003" +
@@ -16077,13 +16077,13 @@ public final class Protos {
       "pt\030\017 \003(\0132\016.wallet.Script\022C\n\017encryption_t" +
       "ype\030\005 \001(\0162\035.wallet.Wallet.EncryptionType" +
       ":\013UNENCRYPTED\0227\n\025encryption_parameters\030\006",
-      " \001(\0132\030.wallet.ScryptParameters\022\017\n\007versio" +
-      "n\030\007 \001(\005\022$\n\textension\030\n \003(\0132\021.wallet.Exte" +
-      "nsion\022\023\n\013description\030\013 \001(\t\022\031\n\021key_rotati" +
-      "on_time\030\r \001(\004\022\031\n\004tags\030\020 \003(\0132\013.wallet.Tag" +
-      "\";\n\016EncryptionType\022\017\n\013UNENCRYPTED\020\001\022\030\n\024E" +
-      "NCRYPTED_SCRYPT_AES\020\002B\035\n\023org.bitcoinj.wa" +
-      "lletB\006Protos"
+      " \001(\0132\030.wallet.ScryptParameters\022\022\n\007versio" +
+      "n\030\007 \001(\005:\0011\022$\n\textension\030\n \003(\0132\021.wallet.E" +
+      "xtension\022\023\n\013description\030\013 \001(\t\022\031\n\021key_rot" +
+      "ation_time\030\r \001(\004\022\031\n\004tags\030\020 \003(\0132\013.wallet." +
+      "Tag\";\n\016EncryptionType\022\017\n\013UNENCRYPTED\020\001\022\030" +
+      "\n\024ENCRYPTED_SCRYPT_AES\020\002B\035\n\023org.bitcoinj" +
+      ".walletB\006Protos"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
       new com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner() {

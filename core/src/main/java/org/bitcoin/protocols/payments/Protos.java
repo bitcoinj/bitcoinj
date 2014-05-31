@@ -5978,7 +5978,7 @@ public final class Protos {
           internal_static_payments_Output_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_payments_Output_descriptor,
-              new java.lang.String[] { "Coin", "Script", });
+              new java.lang.String[] { "Amount", "Script", });
           internal_static_payments_PaymentDetails_descriptor =
             getDescriptor().getMessageTypes().get(1);
           internal_static_payments_PaymentDetails_fieldAccessorTable = new
