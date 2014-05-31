@@ -21,12 +21,15 @@ import com.google.bitcoin.core.*;
 import com.google.bitcoin.crypto.ChildNumber;
 import com.google.bitcoin.crypto.DeterministicKey;
 import com.google.bitcoin.crypto.KeyCrypter;
+import com.google.bitcoin.script.ScriptBuilder;
 import com.google.bitcoin.store.UnreadableWalletException;
 import com.google.bitcoin.utils.ListenerRegistration;
 import com.google.bitcoin.utils.Threading;
 import com.google.common.base.Joiner;
+import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Multimap;
 import org.bitcoinj.wallet.Protos;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,28 +61,34 @@ import static com.google.common.base.Preconditions.*;
 public class KeyChainGroup {
     private static final Logger log = LoggerFactory.getLogger(KeyChainGroup.class);
     private BasicKeyChain basic;
+    private NetworkParameters params;
     private final List<DeterministicKeyChain> chains;
     private final EnumMap<KeyChain.KeyPurpose, DeterministicKey> currentKeys;
+
+    // The map keys are the watching keys of the followed chains and values are the following chains
+    private Multimap<DeterministicKey, DeterministicKeyChain> followingKeychains;
+
+    private EnumMap<KeyChain.KeyPurpose, Address> currentAddresses;
     @Nullable private KeyCrypter keyCrypter;
     private int lookaheadSize = -1;
     private int lookaheadThreshold = -1;
 
     /** Creates a keychain group with no basic chain, and a single, lazily created HD chain. */
-    public KeyChainGroup() {
-        this(null, new ArrayList<DeterministicKeyChain>(1), null, null);
+    public KeyChainGroup(NetworkParameters params) {
+        this(params, null, new ArrayList<DeterministicKeyChain>(1), null, null, null);
     }
 
     /** Creates a keychain group with no basic chain, and an HD chain initialized from the given seed. */
-    public KeyChainGroup(DeterministicSeed seed) {
-        this(null, ImmutableList.of(new DeterministicKeyChain(seed)), null, null);
+    public KeyChainGroup(NetworkParameters params, DeterministicSeed seed) {
+        this(params, null, ImmutableList.of(new DeterministicKeyChain(seed)), null, null, null);
     }
 
     /**
      * Creates a keychain group with no basic chain, and an HD chain that is watching the given watching key.
      * This HAS to be an account key as returned by {@link DeterministicKeyChain#getWatchingKey()}.
      */
-    public KeyChainGroup(DeterministicKey watchKey) {
-        this(null, ImmutableList.of(DeterministicKeyChain.watch(watchKey)), null, null);
+    public KeyChainGroup(NetworkParameters params, DeterministicKey watchKey) {
+        this(params, null, ImmutableList.of(DeterministicKeyChain.watch(watchKey)), null, null, null);
     }
 
     /**
@@ -87,18 +96,55 @@ public class KeyChainGroup {
      * was assumed to be first used at the given UNIX time.
      * This HAS to be an account key as returned by {@link DeterministicKeyChain#getWatchingKey()}.
      */
-    public KeyChainGroup(DeterministicKey watchKey, long creationTimeSecondsSecs) {
-        this(null, ImmutableList.of(DeterministicKeyChain.watch(watchKey, creationTimeSecondsSecs)), null, null);
+    public KeyChainGroup(NetworkParameters params, DeterministicKey watchKey, long creationTimeSecondsSecs) {
+        this(params, null, ImmutableList.of(DeterministicKeyChain.watch(watchKey, creationTimeSecondsSecs)), null, null, null);
+    }
+
+    /**
+     * Creates a keychain group with no basic chain, with an HD chain initialized from the given seed and being followed
+     * by given list of watch keys. Watch keys have to be account keys.
+     */
+    public KeyChainGroup(NetworkParameters params, DeterministicSeed seed, List<DeterministicKey> followingAccountKeys) {
+        this(params, seed);
+
+        addFollowingAccounts(followingAccountKeys);
+    }
+
+    /**
+     * Makes given account keys follow the account key of the active keychain. After that you will be able
+     * to get P2SH addresses to receive coins to.
+     * This method should be called only once before key rotation, otherwise it will throw an IllegalStateException.
+     */
+    public void addFollowingAccounts(List<DeterministicKey> followingAccountKeys) {
+        if (isMarried()) {
+            throw new IllegalStateException("KeyChainGroup is married already");
+        }
+
+        DeterministicKey accountKey = getActiveKeyChain().getWatchingKey();
+        for (DeterministicKey key : followingAccountKeys) {
+            checkArgument(key.getPath().size() == 1, "Following keys have to be account keys");
+            DeterministicKeyChain chain = DeterministicKeyChain.watchAndFollow(key);
+            if (lookaheadSize > 0) {
+                chain.setLookaheadSize(lookaheadSize);
+            }
+            followingKeychains.put(accountKey, chain);
+        }
     }
 
     // Used for deserialization.
-    private KeyChainGroup(@Nullable BasicKeyChain basicKeyChain, List<DeterministicKeyChain> chains, @Nullable EnumMap<KeyChain.KeyPurpose, DeterministicKey> currentKeys, @Nullable KeyCrypter crypter) {
+    private KeyChainGroup(NetworkParameters params, @Nullable BasicKeyChain basicKeyChain, List<DeterministicKeyChain> chains, @Nullable EnumMap<KeyChain.KeyPurpose, DeterministicKey> currentKeys, Multimap<DeterministicKey, DeterministicKeyChain> followingKeychains, @Nullable KeyCrypter crypter) {
+        this.params = params;
         this.basic = basicKeyChain == null ? new BasicKeyChain() : basicKeyChain;
         this.chains = new ArrayList<DeterministicKeyChain>(checkNotNull(chains));
         this.keyCrypter = crypter;
         this.currentKeys = currentKeys == null
                 ? new EnumMap<KeyChain.KeyPurpose, DeterministicKey>(KeyChain.KeyPurpose.class)
                 : currentKeys;
+        this.currentAddresses = new EnumMap<KeyChain.KeyPurpose, Address>(KeyChain.KeyPurpose.class);
+        this.followingKeychains = HashMultimap.create();
+        if (followingKeychains != null) {
+            this.followingKeychains.putAll(followingKeychains);
+        }
     }
 
     private void createAndActivateNewHDChain() {
@@ -119,8 +165,17 @@ public class KeyChainGroup {
      * {@link com.google.bitcoin.wallet.KeyChain.KeyPurpose#RECEIVE_FUNDS}. The returned key is stable until
      * it's actually seen in a pending or confirmed transaction, at which point this method will start returning
      * a different key (for each purpose independently).
+     * <p>This method is not supposed to be used for married keychains and will throw UnsupportedOperationException if
+     * the active chain is married.
+     * For married keychains use {@link #currentAddress(com.google.bitcoin.wallet.KeyChain.KeyPurpose)}
+     * to get a proper P2SH address</p>
      */
     public DeterministicKey currentKey(KeyChain.KeyPurpose purpose) {
+        DeterministicKeyChain chain = getActiveKeyChain();
+        if (isMarried(chain)) {
+            throw new UnsupportedOperationException("Key is not suitable to receive coins for married keychains." +
+                                                    " Use freshAddress to get P2SH address instead");
+        }
         final DeterministicKey current = currentKeys.get(purpose);
         return current != null ? current  : freshKey(purpose);
     }
@@ -128,8 +183,14 @@ public class KeyChainGroup {
     /**
      * Returns address for a {@link #currentKey(com.google.bitcoin.wallet.KeyChain.KeyPurpose)}
      */
-    public Address currentAddress(KeyChain.KeyPurpose purpose, NetworkParameters params) {
-        return currentKey(purpose).toAddress(params);
+    public Address currentAddress(KeyChain.KeyPurpose purpose) {
+        DeterministicKeyChain chain = getActiveKeyChain();
+        if (isMarried(chain)) {
+            Address current = currentAddresses.get(purpose);
+            return current != null ? current : freshAddress(purpose);
+        } else {
+            return currentKey(purpose).toAddress(params);
+        }
     }
 
     /**
@@ -139,6 +200,10 @@ public class KeyChainGroup {
      * {@link com.google.bitcoin.wallet.KeyChain.KeyPurpose#RECEIVE_FUNDS} the returned key is suitable for being put
      * into a receive coins wizard type UI. You should use this when the user is definitely going to hand this key out
      * to someone who wishes to send money.
+     * <p>This method is not supposed to be used for married keychains and will throw UnsupportedOperationException if
+     * the active chain is married.
+     * For married keychains use {@link #freshAddress(com.google.bitcoin.wallet.KeyChain.KeyPurpose)}
+     * to get a proper P2SH address</p>
      */
     public DeterministicKey freshKey(KeyChain.KeyPurpose purpose) {
         return freshKeys(purpose, 1).get(0);
@@ -151,9 +216,18 @@ public class KeyChainGroup {
      * {@link com.google.bitcoin.wallet.KeyChain.KeyPurpose#RECEIVE_FUNDS} the returned key is suitable for being put
      * into a receive coins wizard type UI. You should use this when the user is definitely going to hand this key out
      * to someone who wishes to send money.
+     * <p>This method is not supposed to be used for married keychains and will throw UnsupportedOperationException if
+     * the active chain is married.
+     * For married keychains use {@link #freshAddress(com.google.bitcoin.wallet.KeyChain.KeyPurpose)}
+     * to get a proper P2SH address</p>
      */
     public List<DeterministicKey> freshKeys(KeyChain.KeyPurpose purpose, int numberOfKeys) {
         DeterministicKeyChain chain = getActiveKeyChain();
+        if (isMarried(chain)) {
+            throw new UnsupportedOperationException("Key is not suitable to receive coins for married keychains." +
+                    " Use freshAddress to get P2SH address instead");
+        }
+
         List<DeterministicKey> keys = chain.getKeys(purpose, numberOfKeys);   // Always returns the next key along the key chain.
         currentKeys.put(purpose, keys.get(keys.size() - 1));
         return keys;
@@ -162,8 +236,28 @@ public class KeyChainGroup {
     /**
      * Returns address for a {@link #freshKey(com.google.bitcoin.wallet.KeyChain.KeyPurpose)}
      */
-    public Address freshAddress(KeyChain.KeyPurpose purpose, NetworkParameters params) {
-        return freshKey(purpose).toAddress(params);
+    public Address freshAddress(KeyChain.KeyPurpose purpose) {
+        DeterministicKeyChain chain = getActiveKeyChain();
+        DeterministicKey key = chain.getKey(purpose);
+        if (isMarried(chain)) {
+            List<ECKey> keys = ImmutableList.<ECKey>builder()
+                    .addAll(getFollowingKeys(purpose, chain.getWatchingKey()))
+                    .add(key).build();
+            Address freshAddress = Address.fromP2SHScript(params, ScriptBuilder.createP2SHOutputScript(2, keys));
+            currentAddresses.put(purpose, freshAddress);
+            return freshAddress;
+        } else {
+            return freshKey(purpose).toAddress(params);
+        }
+    }
+
+    private List<ECKey> getFollowingKeys(KeyChain.KeyPurpose purpose, DeterministicKey followedChainWatchKey) {
+        List<ECKey> keys = new ArrayList<ECKey>();
+        Collection<DeterministicKeyChain> keyChains = followingKeychains.get(followedChainWatchKey);
+        for (DeterministicKeyChain keyChain : keyChains) {
+            keys.add(keyChain.getKey(purpose));
+        }
+        return keys;
     }
 
     /** Returns the key chain that's used for generation of fresh/current keys. This is always the newest HD chain. */
@@ -182,13 +276,16 @@ public class KeyChainGroup {
     }
 
     /**
-     * Sets the lookahead buffer size for ALL deterministic key chains, see
-     * {@link com.google.bitcoin.wallet.DeterministicKeyChain#setLookaheadSize(int)}
+     * Sets the lookahead buffer size for ALL deterministic key chains as well as for following key chains if any exist,
+     * see {@link com.google.bitcoin.wallet.DeterministicKeyChain#setLookaheadSize(int)}
      * for more information.
      */
     public void setLookaheadSize(int lookaheadSize) {
         this.lookaheadSize = lookaheadSize;
         for (DeterministicKeyChain chain : chains) {
+            chain.setLookaheadSize(lookaheadSize);
+        }
+        for (DeterministicKeyChain chain : followingKeychains.values()) {
             chain.setLookaheadSize(lookaheadSize);
         }
     }
@@ -332,6 +429,21 @@ public class KeyChainGroup {
     }
 
     /**
+     * Returns true if the given keychain is being followed by at least one another keychain
+     */
+    public boolean isMarried(DeterministicKeyChain keychain) {
+        DeterministicKey watchingKey = keychain.getWatchingKey();
+        return followingKeychains.containsKey(watchingKey) && followingKeychains.get(watchingKey).size() > 0;
+    }
+
+    /**
+     * An alias for {@link #isMarried(DeterministicKeyChain)} called for the active keychain
+     */
+    public boolean isMarried() {
+        return isMarried(getActiveKeyChain());
+    }
+
+    /**
      * Encrypt the keys in the group using the KeyCrypter and the AES key. A good default KeyCrypter to use is
      * {@link com.google.bitcoin.crypto.KeyCrypterScrypt}.
      *
@@ -451,29 +563,35 @@ public class KeyChainGroup {
         else
             result = Lists.newArrayList();
         for (DeterministicKeyChain chain : chains) {
+            // prepend each chain with it's following chains if any
+            for (DeterministicKeyChain followingChain : followingKeychains.get(chain.getWatchingKey())) {
+                result.addAll(followingChain.serializeToProtobuf());
+            }
             List<Protos.Key> protos = chain.serializeToProtobuf();
             result.addAll(protos);
         }
         return result;
     }
 
-    public static KeyChainGroup fromProtobufUnencrypted(List<Protos.Key> keys) throws UnreadableWalletException {
+    public static KeyChainGroup fromProtobufUnencrypted(NetworkParameters params, List<Protos.Key> keys) throws UnreadableWalletException {
         BasicKeyChain basicKeyChain = BasicKeyChain.fromProtobufUnencrypted(keys);
         List<DeterministicKeyChain> chains = DeterministicKeyChain.fromProtobuf(keys, null);
         EnumMap<KeyChain.KeyPurpose, DeterministicKey> currentKeys = null;
         if (!chains.isEmpty())
             currentKeys = createCurrentKeysMap(chains);
-        return new KeyChainGroup(basicKeyChain, chains, currentKeys, null);
+        Multimap<DeterministicKey, DeterministicKeyChain> followingKeychains = extractFollowingKeychains(chains);
+        return new KeyChainGroup(params, basicKeyChain, chains, currentKeys, followingKeychains, null);
     }
 
-    public static KeyChainGroup fromProtobufEncrypted(List<Protos.Key> keys, KeyCrypter crypter) throws UnreadableWalletException {
+    public static KeyChainGroup fromProtobufEncrypted(NetworkParameters params, List<Protos.Key> keys, KeyCrypter crypter) throws UnreadableWalletException {
         checkNotNull(crypter);
         BasicKeyChain basicKeyChain = BasicKeyChain.fromProtobufEncrypted(keys, crypter);
         List<DeterministicKeyChain> chains = DeterministicKeyChain.fromProtobuf(keys, crypter);
         EnumMap<KeyChain.KeyPurpose, DeterministicKey> currentKeys = null;
         if (!chains.isEmpty())
             currentKeys = createCurrentKeysMap(chains);
-        return new KeyChainGroup(basicKeyChain, chains, currentKeys, crypter);
+        Multimap<DeterministicKey, DeterministicKeyChain> followingKeychains = extractFollowingKeychains(chains);
+        return new KeyChainGroup(params, basicKeyChain, chains, currentKeys, followingKeychains, crypter);
     }
 
     /**
@@ -567,11 +685,28 @@ public class KeyChainGroup {
         return currentKeys;
     }
 
-    public String toString(@Nullable NetworkParameters params, boolean includePrivateKeys) {
+    private static Multimap<DeterministicKey, DeterministicKeyChain> extractFollowingKeychains(List<DeterministicKeyChain> chains) {
+        // look for following key chains and map them to the watch keys of followed keychains
+        Multimap<DeterministicKey, DeterministicKeyChain> followingKeychains = HashMultimap.create();
+        List<DeterministicKeyChain> followingChains = new ArrayList<DeterministicKeyChain>();
+        for (Iterator<DeterministicKeyChain> it = chains.iterator(); it.hasNext(); ) {
+            DeterministicKeyChain chain = it.next();
+            if (chain.isFollowing()) {
+                followingChains.add(chain);
+                it.remove();
+            } else if (!followingChains.isEmpty()) {
+                followingKeychains.putAll(chain.getWatchingKey(), followingChains);
+                followingChains.clear();
+            }
+        }
+        return followingKeychains;
+    }
+
+    public String toString(boolean includePrivateKeys) {
         final StringBuilder builder = new StringBuilder();
         if (basic != null) {
             for (ECKey key : basic.getKeys())
-                formatKeyWithAddress(params, includePrivateKeys, key, builder);
+                formatKeyWithAddress(includePrivateKeys, key, builder);
         }
         for (DeterministicKeyChain chain : chains) {
             DeterministicSeed seed = chain.getSeed();
@@ -596,18 +731,15 @@ public class KeyChainGroup {
                 builder.append(String.format("Key to watch:  %s%n%n", watchingKey.serializePubB58()));
             }
             for (ECKey key : chain.getKeys())
-                formatKeyWithAddress(params, includePrivateKeys, key, builder);
+                formatKeyWithAddress(includePrivateKeys, key, builder);
         }
         return builder.toString();
     }
 
-    private void formatKeyWithAddress(@Nullable NetworkParameters params, boolean includePrivateKeys,
-                                      ECKey key, StringBuilder builder) {
-        if (params != null) {
-            final Address address = key.toAddress(params);
-            builder.append("  addr:");
-            builder.append(address.toString());
-        }
+    private void formatKeyWithAddress(boolean includePrivateKeys, ECKey key, StringBuilder builder) {
+        final Address address = key.toAddress(params);
+        builder.append("  addr:");
+        builder.append(address.toString());
         builder.append("  hash160:");
         builder.append(Utils.HEX.encode(key.getPubKeyHash()));
         builder.append(" ");

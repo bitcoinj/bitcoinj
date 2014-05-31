@@ -19,10 +19,12 @@ package com.google.bitcoin.core;
 
 import com.google.bitcoin.params.MainNetParams;
 import com.google.bitcoin.params.TestNet3Params;
+import com.google.bitcoin.script.Script;
 import com.google.bitcoin.script.ScriptBuilder;
 import org.junit.Test;
 
 import java.util.Arrays;
+import java.util.List;
 
 import static com.google.bitcoin.core.Utils.HEX;
 import static org.junit.Assert.*;
@@ -119,5 +121,21 @@ public class AddressTest {
         assertEquals("2MuVSxtfivPKJe93EC1Tb9UhJtGhsoWEHCe", b.toString());
         Address c = Address.fromP2SHScript(mainParams, ScriptBuilder.createP2SHOutputScript(hex));
         assertEquals("35b9vsyH1KoFT5a5KtrKusaCcPLkiSo1tU", c.toString());
+    }
+
+    @Test
+    public void p2shAddressCreationFromKeys() throws Exception {
+        // import some keys from this example: https://gist.github.com/gavinandresen/3966071
+        ECKey key1 = new DumpedPrivateKey(mainParams, "5JaTXbAUmfPYZFRwrYaALK48fN6sFJp4rHqq2QSXs8ucfpE4yQU").getKey();
+        key1 = ECKey.fromPrivate(key1.getPrivKeyBytes());
+        ECKey key2 = new DumpedPrivateKey(mainParams, "5Jb7fCeh1Wtm4yBBg3q3XbT6B525i17kVhy3vMC9AqfR6FH2qGk").getKey();
+        key2 = ECKey.fromPrivate(key2.getPrivKeyBytes());
+        ECKey key3 = new DumpedPrivateKey(mainParams, "5JFjmGo5Fww9p8gvx48qBYDJNAzR9pmH5S389axMtDyPT8ddqmw").getKey();
+        key3 = ECKey.fromPrivate(key3.getPrivKeyBytes());
+
+        List<ECKey> keys = Arrays.asList(key1, key2, key3);
+        Script p2shScript = ScriptBuilder.createP2SHOutputScript(2, keys);
+        Address address = Address.fromP2SHScript(mainParams, p2shScript);
+        assertEquals("3N25saC4dT24RphDAwLtD8LUN4E2gZPJke", address.toString());
     }
 }

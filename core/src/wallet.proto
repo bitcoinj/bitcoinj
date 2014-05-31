@@ -59,6 +59,13 @@ message DeterministicKey {
   // If this field is missing it means we're not issuing subkeys of this key to users.
   optional uint32 issued_subkeys = 3;
   optional uint32 lookahead_size = 4;
+
+  /**
+   * Flag indicating that this key is a root of a following chain. This chain is following the next non-following chain.
+   * Following/followed chains concept is used for married keychains, where the set of keys combined together to produce
+   * a single P2SH multisignature address
+   */
+  optional bool isFollowing = 5;
 }
 
 /**

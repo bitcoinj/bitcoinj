@@ -1245,6 +1245,30 @@ public final class Protos {
      * <code>optional uint32 lookahead_size = 4;</code>
      */
     int getLookaheadSize();
+
+    // optional bool isFollowing = 5;
+    /**
+     * <code>optional bool isFollowing = 5;</code>
+     *
+     * <pre>
+     **
+     * Flag indicating that this key is a root of a following chain. This chain is following the next non-following chain.
+     * Following/followed chains concept is used for married keychains, where the set of keys combined together to produce
+     * a single P2SH multisignature address
+     * </pre>
+     */
+    boolean hasIsFollowing();
+    /**
+     * <code>optional bool isFollowing = 5;</code>
+     *
+     * <pre>
+     **
+     * Flag indicating that this key is a root of a following chain. This chain is following the next non-following chain.
+     * Following/followed chains concept is used for married keychains, where the set of keys combined together to produce
+     * a single P2SH multisignature address
+     * </pre>
+     */
+    boolean getIsFollowing();
   }
   /**
    * Protobuf type {@code wallet.DeterministicKey}
@@ -1336,6 +1360,11 @@ public final class Protos {
             case 32: {
               bitField0_ |= 0x00000004;
               lookaheadSize_ = input.readUInt32();
+              break;
+            }
+            case 40: {
+              bitField0_ |= 0x00000008;
+              isFollowing_ = input.readBool();
               break;
             }
           }
@@ -1495,11 +1524,42 @@ public final class Protos {
       return lookaheadSize_;
     }
 
+    // optional bool isFollowing = 5;
+    public static final int ISFOLLOWING_FIELD_NUMBER = 5;
+    private boolean isFollowing_;
+    /**
+     * <code>optional bool isFollowing = 5;</code>
+     *
+     * <pre>
+     **
+     * Flag indicating that this key is a root of a following chain. This chain is following the next non-following chain.
+     * Following/followed chains concept is used for married keychains, where the set of keys combined together to produce
+     * a single P2SH multisignature address
+     * </pre>
+     */
+    public boolean hasIsFollowing() {
+      return ((bitField0_ & 0x00000008) == 0x00000008);
+    }
+    /**
+     * <code>optional bool isFollowing = 5;</code>
+     *
+     * <pre>
+     **
+     * Flag indicating that this key is a root of a following chain. This chain is following the next non-following chain.
+     * Following/followed chains concept is used for married keychains, where the set of keys combined together to produce
+     * a single P2SH multisignature address
+     * </pre>
+     */
+    public boolean getIsFollowing() {
+      return isFollowing_;
+    }
+
     private void initFields() {
       chainCode_ = com.google.protobuf.ByteString.EMPTY;
       path_ = java.util.Collections.emptyList();
       issuedSubkeys_ = 0;
       lookaheadSize_ = 0;
+      isFollowing_ = false;
     }
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
@@ -1528,6 +1588,9 @@ public final class Protos {
       }
       if (((bitField0_ & 0x00000004) == 0x00000004)) {
         output.writeUInt32(4, lookaheadSize_);
+      }
+      if (((bitField0_ & 0x00000008) == 0x00000008)) {
+        output.writeBool(5, isFollowing_);
       }
       getUnknownFields().writeTo(output);
     }
@@ -1558,6 +1621,10 @@ public final class Protos {
       if (((bitField0_ & 0x00000004) == 0x00000004)) {
         size += com.google.protobuf.CodedOutputStream
           .computeUInt32Size(4, lookaheadSize_);
+      }
+      if (((bitField0_ & 0x00000008) == 0x00000008)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBoolSize(5, isFollowing_);
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSerializedSize = size;
@@ -1688,6 +1755,8 @@ public final class Protos {
         bitField0_ = (bitField0_ & ~0x00000004);
         lookaheadSize_ = 0;
         bitField0_ = (bitField0_ & ~0x00000008);
+        isFollowing_ = false;
+        bitField0_ = (bitField0_ & ~0x00000010);
         return this;
       }
 
@@ -1733,6 +1802,10 @@ public final class Protos {
           to_bitField0_ |= 0x00000004;
         }
         result.lookaheadSize_ = lookaheadSize_;
+        if (((from_bitField0_ & 0x00000010) == 0x00000010)) {
+          to_bitField0_ |= 0x00000008;
+        }
+        result.isFollowing_ = isFollowing_;
         result.bitField0_ = to_bitField0_;
         onBuilt();
         return result;
@@ -1767,6 +1840,9 @@ public final class Protos {
         }
         if (other.hasLookaheadSize()) {
           setLookaheadSize(other.getLookaheadSize());
+        }
+        if (other.hasIsFollowing()) {
+          setIsFollowing(other.getIsFollowing());
         }
         this.mergeUnknownFields(other.getUnknownFields());
         return this;
@@ -2054,6 +2130,67 @@ public final class Protos {
       public Builder clearLookaheadSize() {
         bitField0_ = (bitField0_ & ~0x00000008);
         lookaheadSize_ = 0;
+        onChanged();
+        return this;
+      }
+
+      // optional bool isFollowing = 5;
+      private boolean isFollowing_ ;
+      /**
+       * <code>optional bool isFollowing = 5;</code>
+       *
+       * <pre>
+       **
+       * Flag indicating that this key is a root of a following chain. This chain is following the next non-following chain.
+       * Following/followed chains concept is used for married keychains, where the set of keys combined together to produce
+       * a single P2SH multisignature address
+       * </pre>
+       */
+      public boolean hasIsFollowing() {
+        return ((bitField0_ & 0x00000010) == 0x00000010);
+      }
+      /**
+       * <code>optional bool isFollowing = 5;</code>
+       *
+       * <pre>
+       **
+       * Flag indicating that this key is a root of a following chain. This chain is following the next non-following chain.
+       * Following/followed chains concept is used for married keychains, where the set of keys combined together to produce
+       * a single P2SH multisignature address
+       * </pre>
+       */
+      public boolean getIsFollowing() {
+        return isFollowing_;
+      }
+      /**
+       * <code>optional bool isFollowing = 5;</code>
+       *
+       * <pre>
+       **
+       * Flag indicating that this key is a root of a following chain. This chain is following the next non-following chain.
+       * Following/followed chains concept is used for married keychains, where the set of keys combined together to produce
+       * a single P2SH multisignature address
+       * </pre>
+       */
+      public Builder setIsFollowing(boolean value) {
+        bitField0_ |= 0x00000010;
+        isFollowing_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional bool isFollowing = 5;</code>
+       *
+       * <pre>
+       **
+       * Flag indicating that this key is a root of a following chain. This chain is following the next non-following chain.
+       * Following/followed chains concept is used for married keychains, where the set of keys combined together to produce
+       * a single P2SH multisignature address
+       * </pre>
+       */
+      public Builder clearIsFollowing() {
+        bitField0_ = (bitField0_ & ~0x00000010);
+        isFollowing_ = false;
         onChanged();
         return this;
       }
@@ -16021,69 +16158,69 @@ public final class Protos {
       "\nip_address\030\001 \002(\014\022\014\n\004port\030\002 \002(\r\022\020\n\010servi" +
       "ces\030\003 \002(\004\"M\n\rEncryptedData\022\035\n\025initialisa" +
       "tion_vector\030\001 \002(\014\022\035\n\025encrypted_private_k" +
-      "ey\030\002 \002(\014\"d\n\020DeterministicKey\022\022\n\nchain_co" +
+      "ey\030\002 \002(\014\"y\n\020DeterministicKey\022\022\n\nchain_co" +
       "de\030\001 \002(\014\022\014\n\004path\030\002 \003(\r\022\026\n\016issued_subkeys" +
-      "\030\003 \001(\r\022\026\n\016lookahead_size\030\004 \001(\r\"\302\002\n\003Key\022\036" +
-      "\n\004type\030\001 \002(\0162\020.wallet.Key.Type\022\024\n\014secret" +
-      "_bytes\030\002 \001(\014\022-\n\016encrypted_data\030\006 \001(\0132\025.w" +
-      "allet.EncryptedData\022\022\n\npublic_key\030\003 \001(\014\022",
-      "\r\n\005label\030\004 \001(\t\022\032\n\022creation_timestamp\030\005 \001" +
-      "(\003\0223\n\021deterministic_key\030\007 \001(\0132\030.wallet.D" +
-      "eterministicKey\"b\n\004Type\022\014\n\010ORIGINAL\020\001\022\030\n" +
-      "\024ENCRYPTED_SCRYPT_AES\020\002\022\033\n\027DETERMINISTIC" +
-      "_ROOT_SEED\020\003\022\025\n\021DETERMINISTIC_KEY\020\004\"5\n\006S" +
-      "cript\022\017\n\007program\030\001 \002(\014\022\032\n\022creation_times" +
-      "tamp\030\002 \002(\003\"\222\001\n\020TransactionInput\022\"\n\032trans" +
-      "action_out_point_hash\030\001 \002(\014\022#\n\033transacti" +
-      "on_out_point_index\030\002 \002(\r\022\024\n\014script_bytes" +
-      "\030\003 \002(\014\022\020\n\010sequence\030\004 \001(\r\022\r\n\005value\030\005 \001(\003\"",
-      "\177\n\021TransactionOutput\022\r\n\005value\030\001 \002(\003\022\024\n\014s" +
-      "cript_bytes\030\002 \002(\014\022!\n\031spent_by_transactio" +
-      "n_hash\030\003 \001(\014\022\"\n\032spent_by_transaction_ind" +
-      "ex\030\004 \001(\005\"\234\003\n\025TransactionConfidence\0220\n\004ty" +
-      "pe\030\001 \001(\0162\".wallet.TransactionConfidence." +
-      "Type\022\032\n\022appeared_at_height\030\002 \001(\005\022\036\n\026over" +
-      "riding_transaction\030\003 \001(\014\022\r\n\005depth\030\004 \001(\005\022" +
-      "\021\n\twork_done\030\005 \001(\003\022)\n\014broadcast_by\030\006 \003(\013" +
-      "2\023.wallet.PeerAddress\0224\n\006source\030\007 \001(\0162$." +
-      "wallet.TransactionConfidence.Source\"O\n\004T",
-      "ype\022\013\n\007UNKNOWN\020\000\022\014\n\010BUILDING\020\001\022\013\n\007PENDIN" +
-      "G\020\002\022\025\n\021NOT_IN_BEST_CHAIN\020\003\022\010\n\004DEAD\020\004\"A\n\006" +
-      "Source\022\022\n\016SOURCE_UNKNOWN\020\000\022\022\n\016SOURCE_NET" +
-      "WORK\020\001\022\017\n\013SOURCE_SELF\020\002\"\236\004\n\013Transaction\022" +
-      "\017\n\007version\030\001 \002(\005\022\014\n\004hash\030\002 \002(\014\022&\n\004pool\030\003" +
-      " \001(\0162\030.wallet.Transaction.Pool\022\021\n\tlock_t" +
-      "ime\030\004 \001(\r\022\022\n\nupdated_at\030\005 \001(\003\0223\n\021transac" +
-      "tion_input\030\006 \003(\0132\030.wallet.TransactionInp" +
-      "ut\0225\n\022transaction_output\030\007 \003(\0132\031.wallet." +
-      "TransactionOutput\022\022\n\nblock_hash\030\010 \003(\014\022 \n",
-      "\030block_relativity_offsets\030\013 \003(\005\0221\n\nconfi" +
-      "dence\030\t \001(\0132\035.wallet.TransactionConfiden" +
-      "ce\0225\n\007purpose\030\n \001(\0162\033.wallet.Transaction" +
-      ".Purpose:\007UNKNOWN\"Y\n\004Pool\022\013\n\007UNSPENT\020\004\022\t" +
-      "\n\005SPENT\020\005\022\014\n\010INACTIVE\020\002\022\010\n\004DEAD\020\n\022\013\n\007PEN" +
-      "DING\020\020\022\024\n\020PENDING_INACTIVE\020\022\":\n\007Purpose\022" +
-      "\013\n\007UNKNOWN\020\000\022\020\n\014USER_PAYMENT\020\001\022\020\n\014KEY_RO" +
-      "TATION\020\002\"N\n\020ScryptParameters\022\014\n\004salt\030\001 \002" +
-      "(\014\022\020\n\001n\030\002 \001(\003:\00516384\022\014\n\001r\030\003 \001(\005:\0018\022\014\n\001p\030" +
-      "\004 \001(\005:\0011\"8\n\tExtension\022\n\n\002id\030\001 \002(\t\022\014\n\004dat",
-      "a\030\002 \002(\014\022\021\n\tmandatory\030\003 \002(\010\" \n\003Tag\022\013\n\003tag" +
-      "\030\001 \002(\t\022\014\n\004data\030\002 \002(\014\"\261\004\n\006Wallet\022\032\n\022netwo" +
-      "rk_identifier\030\001 \002(\t\022\034\n\024last_seen_block_h" +
-      "ash\030\002 \001(\014\022\036\n\026last_seen_block_height\030\014 \001(" +
-      "\r\022!\n\031last_seen_block_time_secs\030\016 \001(\003\022\030\n\003" +
-      "key\030\003 \003(\0132\013.wallet.Key\022(\n\013transaction\030\004 " +
-      "\003(\0132\023.wallet.Transaction\022&\n\016watched_scri" +
-      "pt\030\017 \003(\0132\016.wallet.Script\022C\n\017encryption_t" +
-      "ype\030\005 \001(\0162\035.wallet.Wallet.EncryptionType" +
-      ":\013UNENCRYPTED\0227\n\025encryption_parameters\030\006",
-      " \001(\0132\030.wallet.ScryptParameters\022\022\n\007versio" +
-      "n\030\007 \001(\005:\0011\022$\n\textension\030\n \003(\0132\021.wallet.E" +
-      "xtension\022\023\n\013description\030\013 \001(\t\022\031\n\021key_rot" +
-      "ation_time\030\r \001(\004\022\031\n\004tags\030\020 \003(\0132\013.wallet." +
-      "Tag\";\n\016EncryptionType\022\017\n\013UNENCRYPTED\020\001\022\030" +
-      "\n\024ENCRYPTED_SCRYPT_AES\020\002B\035\n\023org.bitcoinj" +
-      ".walletB\006Protos"
+      "\030\003 \001(\r\022\026\n\016lookahead_size\030\004 \001(\r\022\023\n\013isFoll" +
+      "owing\030\005 \001(\010\"\302\002\n\003Key\022\036\n\004type\030\001 \002(\0162\020.wall" +
+      "et.Key.Type\022\024\n\014secret_bytes\030\002 \001(\014\022-\n\016enc" +
+      "rypted_data\030\006 \001(\0132\025.wallet.EncryptedData",
+      "\022\022\n\npublic_key\030\003 \001(\014\022\r\n\005label\030\004 \001(\t\022\032\n\022c" +
+      "reation_timestamp\030\005 \001(\003\0223\n\021deterministic" +
+      "_key\030\007 \001(\0132\030.wallet.DeterministicKey\"b\n\004" +
+      "Type\022\014\n\010ORIGINAL\020\001\022\030\n\024ENCRYPTED_SCRYPT_A" +
+      "ES\020\002\022\033\n\027DETERMINISTIC_ROOT_SEED\020\003\022\025\n\021DET" +
+      "ERMINISTIC_KEY\020\004\"5\n\006Script\022\017\n\007program\030\001 " +
+      "\002(\014\022\032\n\022creation_timestamp\030\002 \002(\003\"\222\001\n\020Tran" +
+      "sactionInput\022\"\n\032transaction_out_point_ha" +
+      "sh\030\001 \002(\014\022#\n\033transaction_out_point_index\030" +
+      "\002 \002(\r\022\024\n\014script_bytes\030\003 \002(\014\022\020\n\010sequence\030",
+      "\004 \001(\r\022\r\n\005value\030\005 \001(\003\"\177\n\021TransactionOutpu" +
+      "t\022\r\n\005value\030\001 \002(\003\022\024\n\014script_bytes\030\002 \002(\014\022!" +
+      "\n\031spent_by_transaction_hash\030\003 \001(\014\022\"\n\032spe" +
+      "nt_by_transaction_index\030\004 \001(\005\"\234\003\n\025Transa" +
+      "ctionConfidence\0220\n\004type\030\001 \001(\0162\".wallet.T" +
+      "ransactionConfidence.Type\022\032\n\022appeared_at" +
+      "_height\030\002 \001(\005\022\036\n\026overriding_transaction\030" +
+      "\003 \001(\014\022\r\n\005depth\030\004 \001(\005\022\021\n\twork_done\030\005 \001(\003\022" +
+      ")\n\014broadcast_by\030\006 \003(\0132\023.wallet.PeerAddre" +
+      "ss\0224\n\006source\030\007 \001(\0162$.wallet.TransactionC",
+      "onfidence.Source\"O\n\004Type\022\013\n\007UNKNOWN\020\000\022\014\n" +
+      "\010BUILDING\020\001\022\013\n\007PENDING\020\002\022\025\n\021NOT_IN_BEST_" +
+      "CHAIN\020\003\022\010\n\004DEAD\020\004\"A\n\006Source\022\022\n\016SOURCE_UN" +
+      "KNOWN\020\000\022\022\n\016SOURCE_NETWORK\020\001\022\017\n\013SOURCE_SE" +
+      "LF\020\002\"\236\004\n\013Transaction\022\017\n\007version\030\001 \002(\005\022\014\n" +
+      "\004hash\030\002 \002(\014\022&\n\004pool\030\003 \001(\0162\030.wallet.Trans" +
+      "action.Pool\022\021\n\tlock_time\030\004 \001(\r\022\022\n\nupdate" +
+      "d_at\030\005 \001(\003\0223\n\021transaction_input\030\006 \003(\0132\030." +
+      "wallet.TransactionInput\0225\n\022transaction_o" +
+      "utput\030\007 \003(\0132\031.wallet.TransactionOutput\022\022",
+      "\n\nblock_hash\030\010 \003(\014\022 \n\030block_relativity_o" +
+      "ffsets\030\013 \003(\005\0221\n\nconfidence\030\t \001(\0132\035.walle" +
+      "t.TransactionConfidence\0225\n\007purpose\030\n \001(\016" +
+      "2\033.wallet.Transaction.Purpose:\007UNKNOWN\"Y" +
+      "\n\004Pool\022\013\n\007UNSPENT\020\004\022\t\n\005SPENT\020\005\022\014\n\010INACTI" +
+      "VE\020\002\022\010\n\004DEAD\020\n\022\013\n\007PENDING\020\020\022\024\n\020PENDING_I" +
+      "NACTIVE\020\022\":\n\007Purpose\022\013\n\007UNKNOWN\020\000\022\020\n\014USE" +
+      "R_PAYMENT\020\001\022\020\n\014KEY_ROTATION\020\002\"N\n\020ScryptP" +
+      "arameters\022\014\n\004salt\030\001 \002(\014\022\020\n\001n\030\002 \001(\003:\0051638" +
+      "4\022\014\n\001r\030\003 \001(\005:\0018\022\014\n\001p\030\004 \001(\005:\0011\"8\n\tExtensi",
+      "on\022\n\n\002id\030\001 \002(\t\022\014\n\004data\030\002 \002(\014\022\021\n\tmandator" +
+      "y\030\003 \002(\010\" \n\003Tag\022\013\n\003tag\030\001 \002(\t\022\014\n\004data\030\002 \002(" +
+      "\014\"\261\004\n\006Wallet\022\032\n\022network_identifier\030\001 \002(\t" +
+      "\022\034\n\024last_seen_block_hash\030\002 \001(\014\022\036\n\026last_s" +
+      "een_block_height\030\014 \001(\r\022!\n\031last_seen_bloc" +
+      "k_time_secs\030\016 \001(\003\022\030\n\003key\030\003 \003(\0132\013.wallet." +
+      "Key\022(\n\013transaction\030\004 \003(\0132\023.wallet.Transa" +
+      "ction\022&\n\016watched_script\030\017 \003(\0132\016.wallet.S" +
+      "cript\022C\n\017encryption_type\030\005 \001(\0162\035.wallet." +
+      "Wallet.EncryptionType:\013UNENCRYPTED\0227\n\025en",
+      "cryption_parameters\030\006 \001(\0132\030.wallet.Scryp" +
+      "tParameters\022\022\n\007version\030\007 \001(\005:\0011\022$\n\texten" +
+      "sion\030\n \003(\0132\021.wallet.Extension\022\023\n\013descrip" +
+      "tion\030\013 \001(\t\022\031\n\021key_rotation_time\030\r \001(\004\022\031\n" +
+      "\004tags\030\020 \003(\0132\013.wallet.Tag\";\n\016EncryptionTy" +
+      "pe\022\017\n\013UNENCRYPTED\020\001\022\030\n\024ENCRYPTED_SCRYPT_" +
+      "AES\020\002B\035\n\023org.bitcoinj.walletB\006Protos"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
       new com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner() {
@@ -16107,7 +16244,7 @@ public final class Protos {
           internal_static_wallet_DeterministicKey_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_wallet_DeterministicKey_descriptor,
-              new java.lang.String[] { "ChainCode", "Path", "IssuedSubkeys", "LookaheadSize", });
+              new java.lang.String[] { "ChainCode", "Path", "IssuedSubkeys", "LookaheadSize", "IsFollowing", });
           internal_static_wallet_Key_descriptor =
             getDescriptor().getMessageTypes().get(3);
           internal_static_wallet_Key_fieldAccessorTable = new
