@@ -1,9 +1,6 @@
 package wallettemplate;
 
-import com.google.bitcoin.core.AbstractWalletEventListener;
-import com.google.bitcoin.core.DownloadListener;
-import com.google.bitcoin.core.Utils;
-import com.google.bitcoin.core.Wallet;
+import com.google.bitcoin.core.*;
 import javafx.animation.*;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
@@ -15,7 +12,6 @@ import javafx.scene.layout.VBox;
 import javafx.util.Duration;
 import wallettemplate.controls.ClickableBitcoinAddress;
 
-import java.math.BigInteger;
 import java.util.Date;
 
 import static wallettemplate.Main.bitcoin;
@@ -94,7 +90,7 @@ public class Controller {
     }
 
     public void refreshBalanceLabel() {
-        final BigInteger amount = bitcoin.wallet().getBalance(Wallet.BalanceType.ESTIMATED);
-        balance.setText(Utils.bitcoinValueToFriendlyString(amount));
+        final Coin amount = bitcoin.wallet().getBalance(Wallet.BalanceType.ESTIMATED);
+        balance.setText(amount.toFriendlyString());
     }
 }
