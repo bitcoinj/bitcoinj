@@ -1,5 +1,6 @@
 /**
  * Copyright 2011 Steve Coughlan.
+ * Copyright 2014 Andreas Schildbach
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -510,8 +511,8 @@ public class LazyParseByteCacheTest {
         if (sup.length < sub.length)
             return false;       
         
-        String superstring = Utils.bytesToHexString(sup);
-        String substring = Utils.bytesToHexString(sub);
+        String superstring = Utils.HEX.encode(sup);
+        String substring = Utils.HEX.encode(sub);
         
         int ind = superstring.indexOf(substring);
         

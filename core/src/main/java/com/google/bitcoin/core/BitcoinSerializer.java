@@ -1,5 +1,6 @@
 /**
  * Copyright 2011 Google Inc.
+ * Copyright 2014 Andreas Schildbach
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +16,6 @@
  */
 
 package com.google.bitcoin.core;
-
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -116,7 +116,7 @@ public class BitcoinSerializer {
         out.write(message);
 
         if (log.isDebugEnabled())
-            log.debug("Sending {} message: {}", name, bytesToHexString(header) + bytesToHexString(message));
+            log.debug("Sending {} message: {}", name, HEX.encode(header) + HEX.encode(message));
     }
 
     /**
@@ -176,19 +176,19 @@ public class BitcoinSerializer {
         if (header.checksum[0] != hash[0] || header.checksum[1] != hash[1] ||
                 header.checksum[2] != hash[2] || header.checksum[3] != hash[3]) {
             throw new ProtocolException("Checksum failed to verify, actual " +
-                    bytesToHexString(hash) +
-                    " vs " + bytesToHexString(header.checksum));
+                    HEX.encode(hash) +
+                    " vs " + HEX.encode(header.checksum));
         }
 
         if (log.isDebugEnabled()) {
             log.debug("Received {} byte '{}' message: {}", header.size, header.command,
-                    Utils.bytesToHexString(payloadBytes));
+                    HEX.encode(payloadBytes));
         }
 
         try {
             return makeMessage(header.command, header.size, payloadBytes, hash, header.checksum);
         } catch (Exception e) {
-            throw new ProtocolException("Error deserializing message " + Utils.bytesToHexString(payloadBytes) + "\n", e);
+            throw new ProtocolException("Error deserializing message " + HEX.encode(payloadBytes) + "\n", e);
         }
     }
 
