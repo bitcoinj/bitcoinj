@@ -1,5 +1,6 @@
 /**
  * Copyright 2013 Matija Mazi.
+ * Copyright 2014 Andreas Schildbach
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,11 +25,11 @@ import com.google.common.collect.Iterables;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.spongycastle.util.encoders.Hex;
 
 import java.util.Arrays;
 import java.util.List;
 
+import static com.google.bitcoin.core.Utils.HEX;
 import static org.junit.Assert.assertEquals;
 
 /**
@@ -127,7 +128,7 @@ public class BIP32Test {
     private void testVector(int testCase) throws AddressFormatException {
         log.info("=======  Test vector {}", testCase);
         HDWTestVector tv = tvs[testCase];
-        DeterministicKey masterPrivateKey = HDKeyDerivation.createMasterPrivateKey(Hex.decode(tv.seed));
+        DeterministicKey masterPrivateKey = HDKeyDerivation.createMasterPrivateKey(HEX.decode(tv.seed));
         assertEquals(testEncode(tv.priv), testEncode(masterPrivateKey.serializePrivB58()));
         assertEquals(testEncode(tv.pub), testEncode(masterPrivateKey.serializePubB58()));
         DeterministicHierarchy dh = new DeterministicHierarchy(masterPrivateKey);
@@ -143,7 +144,7 @@ public class BIP32Test {
     }
 
     private String testEncode(String what) throws AddressFormatException {
-        return new String(Hex.encode(Base58.decodeChecked(what)));
+        return new String(HEX.encode(Base58.decodeChecked(what)));
     }
 
     static class HDWTestVector {

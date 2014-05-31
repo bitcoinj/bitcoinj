@@ -38,8 +38,6 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.crypto.params.KeyParameter;
-import org.spongycastle.util.encoders.DecoderException;
-import org.spongycastle.util.encoders.Hex;
 
 import java.io.InputStream;
 import java.math.BigInteger;
@@ -51,6 +49,7 @@ import java.util.Random;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
 
+import static com.google.bitcoin.core.Utils.HEX;
 import static com.google.bitcoin.core.Utils.reverseBytes;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.junit.Assert.*;
@@ -108,20 +107,20 @@ public class ECKeyTest {
     public void testSignatures() throws Exception {
         // Test that we can construct an ECKey from a private key (deriving the public from the private), then signing
         // a message with it.
-        BigInteger privkey = new BigInteger(1, Hex.decode("180cb41c7c600be951b5d3d0a7334acc7506173875834f7a6c4c786a28fcbb19"));
+        BigInteger privkey = new BigInteger(1, HEX.decode("180cb41c7c600be951b5d3d0a7334acc7506173875834f7a6c4c786a28fcbb19"));
         ECKey key = ECKey.fromPrivate(privkey);
         byte[] output = key.sign(Sha256Hash.ZERO_HASH).encodeToDER();
         assertTrue(key.verify(Sha256Hash.ZERO_HASH.getBytes(), output));
 
         // Test interop with a signature from elsewhere.
-        byte[] sig = Hex.decode(
+        byte[] sig = HEX.decode(
                 "3046022100dffbc26774fc841bbe1c1362fd643609c6e42dcb274763476d87af2c0597e89e022100c59e3c13b96b316cae9fa0ab0260612c7a133a6fe2b3445b6bf80b3123bf274d");
         assertTrue(key.verify(Sha256Hash.ZERO_HASH.getBytes(), sig));
     }
 
     @Test
     public void testASN1Roundtrip() throws Exception {
-        byte[] privkeyASN1 = Hex.decode(
+        byte[] privkeyASN1 = HEX.decode(
                 "3082011302010104205c0b98e524ad188ddef35dc6abba13c34a351a05409e5d285403718b93336a4aa081a53081a2020101302c06072a8648ce3d0101022100fffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f300604010004010704410479be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8022100fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141020101a144034200042af7a2aafe8dafd7dc7f9cfb58ce09bda7dce28653ab229b98d1d3d759660c672dd0db18c8c2d76aa470448e876fc2089ab1354c01a6e72cefc50915f4a963ee");
         ECKey decodedKey = ECKey.fromASN1(privkeyASN1);
 
@@ -132,18 +131,18 @@ public class ECKeyTest {
         assertArrayEquals(decodedKey.getPrivKeyBytes(), roundtripKey.getPrivKeyBytes());
 
         for (ECKey key : new ECKey[] {decodedKey, roundtripKey}) {
-            byte[] message = reverseBytes(Hex.decode(
+            byte[] message = reverseBytes(HEX.decode(
                     "11da3761e86431e4a54c176789e41f1651b324d240d599a7067bee23d328ec2a"));
             byte[] output = key.sign(new Sha256Hash(message)).encodeToDER();
             assertTrue(key.verify(message, output));
 
-            output = Hex.decode(
+            output = HEX.decode(
                     "304502206faa2ebc614bf4a0b31f0ce4ed9012eb193302ec2bcaccc7ae8bb40577f47549022100c73a1a1acc209f3f860bf9b9f5e13e9433db6f8b7bd527a088a0e0cd0a4c83e9");
             assertTrue(key.verify(message, output));
         }
         
         // Try to sign with one key and verify with the other.
-        byte[] message = reverseBytes(Hex.decode(
+        byte[] message = reverseBytes(HEX.decode(
             "11da3761e86431e4a54c176789e41f1651b324d240d599a7067bee23d328ec2a"));
         assertTrue(roundtripKey.verify(message, decodedKey.sign(new Sha256Hash(message)).encodeToDER()));
         assertTrue(decodedKey.verify(message, roundtripKey.sign(new Sha256Hash(message)).encodeToDER()));
@@ -151,7 +150,7 @@ public class ECKeyTest {
 
     @Test
     public void testKeyPairRoundtrip() throws Exception {
-        byte[] privkeyASN1 = Hex.decode(
+        byte[] privkeyASN1 = HEX.decode(
                 "3082011302010104205c0b98e524ad188ddef35dc6abba13c34a351a05409e5d285403718b93336a4aa081a53081a2020101302c06072a8648ce3d0101022100fffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f300604010004010704410479be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8022100fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141020101a144034200042af7a2aafe8dafd7dc7f9cfb58ce09bda7dce28653ab229b98d1d3d759660c672dd0db18c8c2d76aa470448e876fc2089ab1354c01a6e72cefc50915f4a963ee");
         ECKey decodedKey = ECKey.fromASN1(privkeyASN1);
 
@@ -161,18 +160,18 @@ public class ECKeyTest {
             ECKey.fromPrivateAndPrecalculatedPublic(decodedKey.getPrivKey(), decodedKey.getPubKeyPoint());
 
         for (ECKey key : new ECKey[] {decodedKey, roundtripKey}) {
-            byte[] message = reverseBytes(Hex.decode(
+            byte[] message = reverseBytes(HEX.decode(
                     "11da3761e86431e4a54c176789e41f1651b324d240d599a7067bee23d328ec2a"));
             byte[] output = key.sign(new Sha256Hash(message)).encodeToDER();
             assertTrue(key.verify(message, output));
 
-            output = Hex.decode(
+            output = HEX.decode(
                     "304502206faa2ebc614bf4a0b31f0ce4ed9012eb193302ec2bcaccc7ae8bb40577f47549022100c73a1a1acc209f3f860bf9b9f5e13e9433db6f8b7bd527a088a0e0cd0a4c83e9");
             assertTrue(key.verify(message, output));
         }
         
         // Try to sign with one key and verify with the other.
-        byte[] message = reverseBytes(Hex.decode(
+        byte[] message = reverseBytes(HEX.decode(
             "11da3761e86431e4a54c176789e41f1651b324d240d599a7067bee23d328ec2a"));
         assertTrue(roundtripKey.verify(message, decodedKey.sign(new Sha256Hash(message)).encodeToDER()));
         assertTrue(decodedKey.verify(message, roundtripKey.sign(new Sha256Hash(message)).encodeToDER()));
@@ -388,7 +387,7 @@ public class ECKeyTest {
             while (in.available() > 0 && (c = in.read()) != '"')
                 sig.append((char)c);
 
-            assertTrue(TransactionSignature.isEncodingCanonical(Hex.decode(sig.toString())));
+            assertTrue(TransactionSignature.isEncodingCanonical(HEX.decode(sig.toString())));
         }
         in.close();
     }
@@ -411,8 +410,8 @@ public class ECKeyTest {
 
             try {
                 final String sigStr = sig.toString();
-                assertFalse(TransactionSignature.isEncodingCanonical(Hex.decode(sigStr)));
-            } catch (DecoderException e) {
+                assertFalse(TransactionSignature.isEncodingCanonical(HEX.decode(sigStr)));
+            } catch (IllegalArgumentException e) {
                 // Expected for non-hex strings in the JSON that we should ignore
             }
         }

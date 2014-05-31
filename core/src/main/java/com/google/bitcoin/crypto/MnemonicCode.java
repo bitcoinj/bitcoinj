@@ -19,7 +19,6 @@ package com.google.bitcoin.crypto;
 
 import com.google.bitcoin.core.Sha256Hash;
 import com.google.common.base.Joiner;
-import org.spongycastle.util.encoders.Hex;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -30,6 +29,8 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import static com.google.bitcoin.core.Utils.HEX;
 
 /**
  * A MnemonicCode object may be used to convert between binary seed values and
@@ -77,7 +78,7 @@ public class MnemonicCode {
         // If a wordListDigest is supplied check to make sure it matches.
         if (wordListDigest != null) {
             byte[] digest = md.digest();
-            String hexdigest = new String(Hex.encode(digest));
+            String hexdigest = new String(HEX.encode(digest));
             if (!hexdigest.equals(wordListDigest))
                 throw new IllegalArgumentException("wordlist digest mismatch");
         }

@@ -18,7 +18,6 @@
 package com.google.bitcoin.core;
 
 import com.google.common.io.ByteStreams;
-import org.spongycastle.util.encoders.Hex;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -53,7 +52,7 @@ public class Sha256Hash implements Serializable, Comparable<Sha256Hash> {
      */
     public Sha256Hash(String hexString) {
         checkArgument(hexString.length() == 64);
-        this.bytes = Hex.decode(hexString);
+        this.bytes = Utils.HEX.decode(hexString);
     }
 
     /**

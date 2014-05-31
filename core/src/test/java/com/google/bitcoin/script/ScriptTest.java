@@ -29,7 +29,6 @@ import org.hamcrest.core.IsEqual;
 import org.hamcrest.core.IsNot;
 import org.junit.Assert;
 import org.junit.Test;
-import org.spongycastle.util.encoders.Hex;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -41,13 +40,14 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 
+import static com.google.bitcoin.core.Utils.HEX;
 import static com.google.bitcoin.script.ScriptOpCodes.OP_INVALIDOPCODE;
 import static org.junit.Assert.*;
 
 public class ScriptTest {
     // From tx 05e04c26c12fe408a3c1b71aa7996403f6acad1045252b1c62e055496f4d2cb1 on the testnet.
 
-    static final String sigProg = "473    04402202b4da291cc39faf8433911988f9f49fc5c995812ca2f94db61468839c228c3e90220628bff3ff32ec95825092fa051cba28558a981fcf59ce184b14f2e215e69106701410414b38f4be3bb9fa0f4f32b74af07152b2f2f630bc02122a491137b6c523e46f18a0d5034418966f93dfc37cc3739ef7b2007213a302b7fba161557f4ad644a1c";
+    static final String sigProg = "47304402202b4da291cc39faf8433911988f9f49fc5c995812ca2f94db61468839c228c3e90220628bff3ff32ec95825092fa051cba28558a981fcf59ce184b14f2e215e69106701410414b38f4be3bb9fa0f4f32b74af07152b2f2f630bc02122a491137b6c523e46f18a0d5034418966f93dfc37cc3739ef7b2007213a302b7fba161557f4ad644a1c";
 
     static final String pubkeyProg = "76a91433e81a941e64cda12c6a299ed322ddbdd03f8d0e88ac";
 
@@ -56,7 +56,7 @@ public class ScriptTest {
 
     @Test
     public void testScriptSig() throws Exception {
-        byte[] sigProgBytes = Hex.decode(sigProg);
+        byte[] sigProgBytes = HEX.decode(sigProg);
         Script script = new Script(sigProgBytes);
         // Test we can extract the from address.
         byte[] hash160 = Utils.sha256hash160(script.getPubKey());
@@ -67,7 +67,7 @@ public class ScriptTest {
     @Test
     public void testScriptPubKey() throws Exception {
         // Check we can extract the to address
-        byte[] pubkeyBytes = Hex.decode(pubkeyProg);
+        byte[] pubkeyBytes = HEX.decode(pubkeyProg);
         Script pubkey = new Script(pubkeyBytes);
         assertEquals("DUP HASH160 PUSHDATA(20)[33e81a941e64cda12c6a299ed322ddbdd03f8d0e] EQUALVERIFY CHECKSIG", pubkey.toString());
         Address toAddr = new Address(params, pubkey.getPubKeyHash());
@@ -104,7 +104,7 @@ public class ScriptTest {
 
     @Test
     public void testIp() throws Exception {
-        byte[] bytes = Hex.decode("41043e96222332ea7848323c08116dddafbfa917b8e37f0bdf63841628267148588a09a43540942d58d49717ad3fabfe14978cf4f0a8b84d2435dad16e9aa4d7f935ac");
+        byte[] bytes = HEX.decode("41043e96222332ea7848323c08116dddafbfa917b8e37f0bdf63841628267148588a09a43540942d58d49717ad3fabfe14978cf4f0a8b84d2435dad16e9aa4d7f935ac");
         Script s = new Script(bytes);
         assertTrue(s.isSentToRawPubKey());
     }
@@ -116,7 +116,7 @@ public class ScriptTest {
         ECKey key2 = new DumpedPrivateKey(params, "cTine92s8GLpVqvebi8rYce3FrUYq78ZGQffBYCS1HmDPJdSTxUo").getKey();
         ECKey key3 = new DumpedPrivateKey(params, "cVHwXSPRZmL9adctwBwmn4oTZdZMbaCsR5XF6VznqMgcvt1FDDxg").getKey();
         Script multisigScript = ScriptBuilder.createMultiSigOutputScript(2, Arrays.asList(key1, key2, key3));
-        byte[] bytes = Hex.decode("01000000013df681ff83b43b6585fa32dd0e12b0b502e6481e04ee52ff0fdaf55a16a4ef61000000006b483045022100a84acca7906c13c5895a1314c165d33621cdcf8696145080895cbf301119b7cf0220730ff511106aa0e0a8570ff00ee57d7a6f24e30f592a10cae1deffac9e13b990012102b8d567bcd6328fd48a429f9cf4b315b859a58fd28c5088ef3cb1d98125fc4e8dffffffff02364f1c00000000001976a91439a02793b418de8ec748dd75382656453dc99bcb88ac40420f000000000017a9145780b80be32e117f675d6e0ada13ba799bf248e98700000000");
+        byte[] bytes = HEX.decode("01000000013df681ff83b43b6585fa32dd0e12b0b502e6481e04ee52ff0fdaf55a16a4ef61000000006b483045022100a84acca7906c13c5895a1314c165d33621cdcf8696145080895cbf301119b7cf0220730ff511106aa0e0a8570ff00ee57d7a6f24e30f592a10cae1deffac9e13b990012102b8d567bcd6328fd48a429f9cf4b315b859a58fd28c5088ef3cb1d98125fc4e8dffffffff02364f1c00000000001976a91439a02793b418de8ec748dd75382656453dc99bcb88ac40420f000000000017a9145780b80be32e117f675d6e0ada13ba799bf248e98700000000");
         Transaction transaction = new Transaction(params, bytes);
         TransactionOutput output = transaction.getOutput(1);
         Transaction spendTx = new Transaction(params);
@@ -170,7 +170,7 @@ public class ScriptTest {
                     Script.writeBytes(out, Utils.reverseBytes(Utils.encodeMPI(BigInteger.valueOf(val), false)));
             } else if (w.matches("^0x[0-9a-fA-F]*$")) {
                 // Raw hex data, inserted NOT pushed onto stack:
-                out.write(Hex.decode(w.substring(2)));
+                out.write(HEX.decode(w.substring(2).toLowerCase()));
             } else if (w.length() >= 2 && w.startsWith("'") && w.endsWith("'")) {
                 // Single-quoted string, pushed as data. NOTE: this is poor-man's
                 // parsing, spaces/tabs/newlines in single-quoted strings won't work.
@@ -383,12 +383,11 @@ public class ScriptTest {
                         String hash = input.list.get(0).string;
                         int index = input.list.get(1).integer;
                         String script = input.list.get(2).string;
-                        Sha256Hash sha256Hash = new Sha256Hash(Hex.decode(hash.getBytes(Charset.forName("UTF-8"))));
+                        Sha256Hash sha256Hash = new Sha256Hash(HEX.decode(hash));
                         scriptPubKeys.put(new TransactionOutPoint(params, index, sha256Hash), parseScriptString(script));
                     }
 
-                    byte[] bytes = tx.get(0).list.get(1).string.getBytes(Charset.forName("UTF-8"));
-                    transaction = new Transaction(params, Hex.decode(bytes));
+                    transaction = new Transaction(params, HEX.decode(tx.get(0).list.get(1).string.toLowerCase()));
                     boolean enforceP2SH = tx.get(0).list.get(2).booleanValue;
                     assertTrue(tx.get(0).list.get(2).isBoolean());
 
@@ -440,12 +439,11 @@ public class ScriptTest {
                     String hash = input.list.get(0).string;
                     int index = input.list.get(1).integer;
                     String script = input.list.get(2).string;
-                    Sha256Hash sha256Hash = new Sha256Hash(Hex.decode(hash.getBytes(Charset.forName("UTF-8"))));
+                    Sha256Hash sha256Hash = new Sha256Hash(HEX.decode(hash));
                     scriptPubKeys.put(new TransactionOutPoint(params, index, sha256Hash), parseScriptString(script));
                 }
 
-                byte[] bytes = tx.get(0).list.get(1).string.getBytes(Charset.forName("UTF-8"));
-                Transaction transaction = new Transaction(params, Hex.decode(bytes));
+                Transaction transaction = new Transaction(params, HEX.decode(tx.get(0).list.get(1).string));
                 boolean enforceP2SH = tx.get(0).list.get(2).booleanValue;
                 assertTrue(tx.get(0).list.get(2).isBoolean());
                 

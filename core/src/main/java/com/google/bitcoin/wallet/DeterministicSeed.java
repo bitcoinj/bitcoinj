@@ -1,5 +1,6 @@
 /**
  * Copyright 2014 Google Inc.
+ * Copyright 2014 Andreas Schildbach
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,12 +20,12 @@ package com.google.bitcoin.wallet;
 import com.google.bitcoin.crypto.*;
 import org.bitcoinj.wallet.Protos;
 import org.spongycastle.crypto.params.KeyParameter;
-import org.spongycastle.util.encoders.Hex;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.util.List;
 
+import static com.google.bitcoin.core.Utils.HEX;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
@@ -92,7 +93,7 @@ public class DeterministicSeed implements EncryptableItem {
     @Nullable
     public String toHexString() {
         if (unencryptedSeed != null)
-            return new String(Hex.encode(unencryptedSeed));
+            return new String(HEX.encode(unencryptedSeed));
         else
             return null;
     }
