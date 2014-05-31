@@ -118,6 +118,13 @@ public class KeyChainGroup {
     }
 
     /**
+     * Returns address for a {@link #currentKey(com.google.bitcoin.wallet.KeyChain.KeyPurpose)}
+     */
+    public Address currentAddress(KeyChain.KeyPurpose purpose, NetworkParameters params) {
+        return currentKey(purpose).toAddress(params);
+    }
+
+    /**
      * Returns a key that has not been returned by this method before (fresh). You can think of this as being
      * a newly created key, although the notion of "create" is not really valid for a
      * {@link com.google.bitcoin.wallet.DeterministicKeyChain}. When the parameter is
@@ -130,6 +137,13 @@ public class KeyChainGroup {
         DeterministicKey key = chain.getKey(purpose);   // Always returns the next key along the key chain.
         currentKeys.put(purpose, key);
         return key;
+    }
+
+    /**
+     * Returns address for a {@link #freshKey(com.google.bitcoin.wallet.KeyChain.KeyPurpose)}
+     */
+    public Address freshAddress(KeyChain.KeyPurpose purpose, NetworkParameters params) {
+        return freshKey(purpose).toAddress(params);
     }
 
     /** Returns the key chain that's used for generation of fresh/current keys. This is always the newest HD chain. */
