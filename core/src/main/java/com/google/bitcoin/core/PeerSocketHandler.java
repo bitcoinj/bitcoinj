@@ -31,7 +31,6 @@ import java.net.InetSocketAddress;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.nio.channels.NotYetConnectedException;
-import java.util.concurrent.locks.Lock;
 
 import static com.google.common.base.Preconditions.*;
 
@@ -56,7 +55,7 @@ public abstract class PeerSocketHandler extends AbstractTimeoutHandler implement
     private int largeReadBufferPos;
     private BitcoinSerializer.BitcoinPacketHeader header;
 
-    private Lock lock = Threading.lock("PeerSocketHandler");
+    private final Object lock = new Object();
 
     public PeerSocketHandler(NetworkParameters params, InetSocketAddress remoteIp) {
         serializer = new BitcoinSerializer(checkNotNull(params));
@@ -74,13 +73,8 @@ public abstract class PeerSocketHandler extends AbstractTimeoutHandler implement
      * TODO: Maybe use something other than the unchecked NotYetConnectedException here
      */
     public void sendMessage(Message message) throws NotYetConnectedException {
-        lock.lock();
-        try {
-            if (writeTarget == null)
-                throw new NotYetConnectedException();
-        } finally {
-            lock.unlock();
-        }
+        if (writeTarget == null)
+            throw new NotYetConnectedException();
         // TODO: Some round-tripping could be avoided here
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         try {
@@ -95,14 +89,11 @@ public abstract class PeerSocketHandler extends AbstractTimeoutHandler implement
      * Closes the connection to the peer if one exists, or immediately closes the connection as soon as it opens
      */
     public void close() {
-        lock.lock();
-        try {
+        synchronized (lock) {
             if (writeTarget == null) {
                 closePending = true;
                 return;
             }
-        } finally {
-            lock.unlock();
         }
         writeTarget.closeConnection();
     }
@@ -189,19 +180,16 @@ public abstract class PeerSocketHandler extends AbstractTimeoutHandler implement
      * {@link com.google.bitcoin.net.NioClientManager} once the socket finishes initialization.
      */
     @Override
-    public void setWriteTarget(MessageWriteTarget writeTarget) {
-        checkArgument(writeTarget != null);
-        lock.lock();
-        boolean closeNow = false;
-        try {
-            checkArgument(this.writeTarget == null);
+    public void setWriteTarget(MessageWriteTarget newWriteTarget) {
+        checkArgument(newWriteTarget != null);
+        boolean closeNow;
+        synchronized (lock) {
+            checkArgument(writeTarget == null);
             closeNow = closePending;
-            this.writeTarget = writeTarget;
-        } finally {
-            lock.unlock();
+            this.writeTarget = newWriteTarget;
         }
         if (closeNow)
-            writeTarget.closeConnection();
+            newWriteTarget.closeConnection();
     }
 
     @Override
