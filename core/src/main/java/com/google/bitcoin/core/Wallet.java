@@ -305,7 +305,12 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
      * Returns address for a {@link #currentKey(com.google.bitcoin.wallet.KeyChain.KeyPurpose)}
      */
     public Address currentAddress(KeyChain.KeyPurpose purpose) {
-        return currentKey(purpose).toAddress(params);
+        lock.lock();
+        try {
+            return keychain.currentAddress(purpose, params);
+        } finally {
+            lock.unlock();
+        }
     }
 
     /**
@@ -349,7 +354,14 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
      * Returns address for a {@link #freshKey(com.google.bitcoin.wallet.KeyChain.KeyPurpose)}
      */
     public Address freshAddress(KeyChain.KeyPurpose purpose) {
-        return freshKey(purpose).toAddress(params);
+        lock.lock();
+        try {
+            Address key = keychain.freshAddress(purpose, params);
+            saveNow();
+            return key;
+        } finally {
+            lock.unlock();
+        }
     }
 
     /**
