@@ -25,7 +25,6 @@ import java.util.Arrays;
 
 import javax.annotation.Nullable;
 
-import static com.google.bitcoin.core.Utils.bytesToHexString;
 import static com.google.bitcoin.script.ScriptOpCodes.OP_0;
 import static com.google.bitcoin.script.ScriptOpCodes.OP_1;
 import static com.google.bitcoin.script.ScriptOpCodes.OP_16;
@@ -145,7 +144,7 @@ public class ScriptChunk {
             // Data chunk
             buf.append(getPushDataName(opcode));
             buf.append("[");
-            buf.append(bytesToHexString(data));
+            buf.append(Utils.HEX.encode(data));
             buf.append("]");
         } else {
             // Small num

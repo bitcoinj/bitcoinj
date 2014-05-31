@@ -1,5 +1,6 @@
 /*
  * Copyright 2014 BitPOS Pty Ltd.
+ * Copyright 2014 Andreas Schildbach
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -488,7 +489,7 @@ public class PostgresFullPrunedBlockStore implements FullPrunedBlockStore {
 
         try {
             if (log.isDebugEnabled())
-                log.debug("Looking for undoable block with hash: " + Utils.bytesToHexString(hashBytes));
+                log.debug("Looking for undoable block with hash: " + Utils.HEX.encode(hashBytes));
 
             PreparedStatement findS = conn.get().prepareStatement("select 1 from undoableBlocks where hash = ?");
             findS.setBytes(1, hashBytes);
@@ -507,8 +508,7 @@ public class PostgresFullPrunedBlockStore implements FullPrunedBlockStore {
                 s.setBytes(3, hashBytes);
 
                 if (log.isDebugEnabled())
-                    log.debug("Updating undoable block with hash: " + Utils.bytesToHexString(hashBytes));
-
+                    log.debug("Updating undoable block with hash: " + Utils.HEX.encode(hashBytes));
 
                 if (transactions == null) {
                     s.setBytes(1, txOutChanges);
@@ -530,8 +530,7 @@ public class PostgresFullPrunedBlockStore implements FullPrunedBlockStore {
             s.setInt(2, height);
 
             if (log.isDebugEnabled())
-                log.debug("Inserting undoable block with hash: " + Utils.bytesToHexString(hashBytes)  + " at height " + height);
-
+                log.debug("Inserting undoable block with hash: " + Utils.HEX.encode(hashBytes)  + " at height " + height);
 
             if (transactions == null) {
                 s.setBytes(3, txOutChanges);

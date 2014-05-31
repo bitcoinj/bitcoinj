@@ -1,5 +1,6 @@
 /**
  * Copyright 2014 Mike Hearn
+ * Copyright 2014 Andreas Schildbach
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -488,7 +489,7 @@ public class KeyChainGroup {
             builder.append(address.toString());
         }
         builder.append("  hash160:");
-        builder.append(Utils.bytesToHexString(key.getPubKeyHash()));
+        builder.append(Utils.HEX.encode(key.getPubKeyHash()));
         builder.append(" ");
         builder.append(includePrivateKeys ? key.toStringWithPrivate() : key.toString());
         builder.append("\n");

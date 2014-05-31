@@ -669,7 +669,7 @@ public class Transaction extends ChildMessage implements Serializable {
                 final TransactionOutput connectedOutput = outpoint.getConnectedOutput();
                 if (connectedOutput != null) {
                     s.append(" hash160:");
-                    s.append(Utils.bytesToHexString(connectedOutput.getScriptPubKey().getPubKeyHash()));
+                    s.append(Utils.HEX.encode(connectedOutput.getScriptPubKey().getPubKeyHash()));
                 }
             } catch (Exception e) {
                 s.append("[exception: ").append(e.getMessage()).append("]");

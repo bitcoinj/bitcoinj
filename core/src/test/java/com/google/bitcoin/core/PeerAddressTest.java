@@ -1,5 +1,6 @@
 /*
  * Copyright 2011 Google Inc.
+ * Copyright 2014 Andreas Schildbach
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +33,7 @@ public class PeerAddressTest
         String fromSpec = "010000000000000000000000000000000000ffff0a000001208d";
         PeerAddress pa = new PeerAddress(MainNetParams.get(),
                 Hex.decode(fromSpec), 0, 0);
-        String reserialized = Utils.bytesToHexString(pa.bitcoinSerialize());
+        String reserialized = Utils.HEX.encode(pa.bitcoinSerialize());
         assertEquals(reserialized,fromSpec );
     }
 
@@ -40,6 +41,6 @@ public class PeerAddressTest
     public void testBitcoinSerialize() throws Exception {
         PeerAddress pa = new PeerAddress(InetAddress.getByName(null), 8333, 0);
         assertEquals("000000000000000000000000000000000000ffff7f000001208d",
-                Utils.bytesToHexString(pa.bitcoinSerialize()));
+                Utils.HEX.encode(pa.bitcoinSerialize()));
     }
 }

@@ -1,5 +1,6 @@
 /**
  * Copyright 2011 Google Inc.
+ * Copyright 2014 Andreas Schildbach
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -136,8 +137,8 @@ public abstract class Message implements Serializable {
             byte[] reserialized = bitcoinSerialize();
             if (!Arrays.equals(reserialized, payloadBytes))
                 throw new RuntimeException("Serialization is wrong: \n" +
-                        Utils.bytesToHexString(reserialized) + " vs \n" +
-                        Utils.bytesToHexString(payloadBytes));
+                        Utils.HEX.encode(reserialized) + " vs \n" +
+                        Utils.HEX.encode(payloadBytes));
         }
     }
 

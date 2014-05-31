@@ -1,5 +1,6 @@
 /**
  * Copyright 2011 Google Inc.
+ * Copyright 2014 Andreas Schildbach
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -312,7 +313,7 @@ public class TransactionOutput extends ChildMessage implements Serializable {
             if (script.isSentToAddress() || script.isPayToScriptHash())
                 buf.append(" to ").append(script.getToAddress(params));
             else if (script.isSentToRawPubKey())
-                buf.append(" to pubkey ").append(Utils.bytesToHexString(script.getPubKey()));
+                buf.append(" to pubkey ").append(Utils.HEX.encode(script.getPubKey()));
             else if (script.isSentToMultiSig())
                 buf.append(" to multisig");
             else

@@ -1,5 +1,6 @@
 /**
  * Copyright 2011 Google Inc.
+ * Copyright 2014 Andreas Schildbach
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -206,8 +207,8 @@ public class ECKeyTest {
             ECKey key = new ECKey();
             ECKey key1 = new DumpedPrivateKey(TestNet3Params.get(),
                     key.getPrivateKeyEncoded(TestNet3Params.get()).toString()).getKey();
-            assertEquals(Utils.bytesToHexString(key.getPrivKeyBytes()),
-                    Utils.bytesToHexString(key1.getPrivKeyBytes()));
+            assertEquals(Utils.HEX.encode(key.getPrivKeyBytes()),
+                    Utils.HEX.encode(key1.getPrivKeyBytes()));
         }
     }
 
@@ -278,7 +279,7 @@ public class ECKeyTest {
     public void testEncryptedCreate() throws Exception {
         ECKey unencryptedKey = new ECKey();
         byte[] originalPrivateKeyBytes = checkNotNull(unencryptedKey.getPrivKeyBytes());
-        log.info("Original private key = " + Utils.bytesToHexString(originalPrivateKeyBytes));
+        log.info("Original private key = " + Utils.HEX.encode(originalPrivateKeyBytes));
         EncryptedData encryptedPrivateKey = keyCrypter.encrypt(unencryptedKey.getPrivKeyBytes(), keyCrypter.deriveKey(PASSWORD1));
         ECKey encryptedKey = ECKey.fromEncrypted(encryptedPrivateKey, keyCrypter, unencryptedKey.getPubKey());
         assertTrue(encryptedKey.isEncrypted());
@@ -424,7 +425,7 @@ public class ECKeyTest {
         // We dump failed data to error log because this test is not expected to be deterministic
         ECKey key = new ECKey();
         if (!ECKey.isPubKeyCanonical(key.getPubKey())) {
-            log.error(Utils.bytesToHexString(key.getPubKey()));
+            log.error(Utils.HEX.encode(key.getPubKey()));
             fail();
         }
 
@@ -434,7 +435,7 @@ public class ECKeyTest {
         byte[] encodedSig = Arrays.copyOf(sigBytes, sigBytes.length + 1);
         encodedSig[sigBytes.length] = (byte) (Transaction.SigHash.ALL.ordinal() + 1);
         if (!TransactionSignature.isEncodingCanonical(encodedSig)) {
-            log.error(Utils.bytesToHexString(sigBytes));
+            log.error(Utils.HEX.encode(sigBytes));
             fail();
         }
     }
