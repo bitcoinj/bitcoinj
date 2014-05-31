@@ -1,5 +1,6 @@
 /**
  * Copyright 2013 Matija Mazi.
+ * Copyright 2014 Andreas Schildbach
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,8 +21,8 @@ import com.google.bitcoin.core.ECKey;
 import com.google.bitcoin.core.Sha256Hash;
 import org.junit.Test;
 import org.spongycastle.crypto.params.KeyParameter;
-import org.spongycastle.util.encoders.Hex;
 
+import static com.google.bitcoin.core.Utils.HEX;
 import static org.junit.Assert.*;
 
 /**
@@ -50,9 +51,9 @@ public class ChildKeyDerivationTest {
         };
 
         for(int i = 0; i < 1; i++) {
-            byte[] priv  = Hex.decode(ckdTestVectors[3 * i]);
-            byte[] pub   = Hex.decode(ckdTestVectors[3 * i + 1]);
-            byte[] chain = Hex.decode(ckdTestVectors[3 * i + 2]); // chain code
+            byte[] priv  = HEX.decode(ckdTestVectors[3 * i]);
+            byte[] pub   = HEX.decode(ckdTestVectors[3 * i + 1]);
+            byte[] chain = HEX.decode(ckdTestVectors[3 * i + 2]); // chain code
 
             //////////////////////////////////////////////////////////////////////////
             // Start with an extended PRIVATE key
@@ -184,10 +185,6 @@ public class ChildKeyDerivationTest {
     }
 
     private static String hexEncodePub(DeterministicKey pubKey) {
-        return hexEncode(pubKey.getPubKey());
-    }
-
-    private static String hexEncode(byte[] bytes) {
-        return new String(Hex.encode(bytes));
+        return HEX.encode(pubKey.getPubKey());
     }
 }

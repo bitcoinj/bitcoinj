@@ -25,7 +25,6 @@ import com.google.common.primitives.Ints;
 import com.google.common.primitives.UnsignedLongs;
 
 import org.spongycastle.crypto.digests.RIPEMD160Digest;
-import org.spongycastle.util.encoders.Hex;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -456,7 +455,7 @@ public class Utils {
      */
     public static byte[] parseAsHexOrBase58(String data) {
         try {
-            return Hex.decode(data);
+            return HEX.decode(data);
         } catch (Exception e) {
             // Didn't decode as hex, try base58.
             try {
