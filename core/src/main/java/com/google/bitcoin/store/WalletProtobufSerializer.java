@@ -386,9 +386,9 @@ public class WalletProtobufSerializer {
         if (walletProto.hasEncryptionParameters()) {
             Protos.ScryptParameters encryptionParameters = walletProto.getEncryptionParameters();
             final KeyCrypterScrypt keyCrypter = new KeyCrypterScrypt(encryptionParameters);
-            chain = KeyChainGroup.fromProtobufEncrypted(walletProto.getKeyList(), keyCrypter);
+            chain = KeyChainGroup.fromProtobufEncrypted(params, walletProto.getKeyList(), keyCrypter);
         } else {
-            chain = KeyChainGroup.fromProtobufUnencrypted(walletProto.getKeyList());
+            chain = KeyChainGroup.fromProtobufUnencrypted(params, walletProto.getKeyList());
         }
         Wallet wallet = factory.create(params, chain);
 

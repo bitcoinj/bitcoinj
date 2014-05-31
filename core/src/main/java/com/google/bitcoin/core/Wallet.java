@@ -206,19 +206,19 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
      * see loadFromFile.
      */
     public Wallet(NetworkParameters params) {
-        this(params, new KeyChainGroup());
+        this(params, new KeyChainGroup(params));
     }
 
     public static Wallet fromSeed(NetworkParameters params, DeterministicSeed seed) {
-        return new Wallet(params, new KeyChainGroup(seed));
+        return new Wallet(params, new KeyChainGroup(params, seed));
     }
 
     public static Wallet fromWatchingKey(NetworkParameters params, DeterministicKey watchKey, long creationTimeSeconds) {
-        return new Wallet(params, new KeyChainGroup(watchKey, creationTimeSeconds));
+        return new Wallet(params, new KeyChainGroup(params, watchKey, creationTimeSeconds));
     }
 
     public static Wallet fromWatchingKey(NetworkParameters params, DeterministicKey watchKey) {
-        return new Wallet(params, new KeyChainGroup(watchKey));
+        return new Wallet(params, new KeyChainGroup(params, watchKey));
     }
 
     // TODO: When this class moves to the Wallet package, along with the protobuf serializer, then hide this.
@@ -310,7 +310,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
         lock.lock();
         try {
             maybeUpgradeToHD();
-            return keychain.currentAddress(purpose, params);
+            return keychain.currentAddress(purpose);
         } finally {
             lock.unlock();
         }
@@ -372,8 +372,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
     public Address freshAddress(KeyChain.KeyPurpose purpose) {
         lock.lock();
         try {
-            maybeUpgradeToHD();
-            Address key = keychain.freshAddress(purpose, params);
+            Address key = keychain.freshAddress(purpose);
             saveNow();
             return key;
         } finally {
@@ -550,6 +549,20 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
         lock.lock();
         try {
             return keychain.importKeysAndEncrypt(keys, aesKey);
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
+     * Makes given account keys follow the account key of the active keychain. After that you will be able
+     * to get P2SH addresses to receive coins to.
+     * This method should be called only once before key rotation, otherwise it will throw an IllegalStateException.
+     */
+    public void addFollowingAccounts(List<DeterministicKey> followingAccountKeys) {
+        lock.lock();
+        try {
+            keychain.addFollowingAccounts(followingAccountKeys);
         } finally {
             lock.unlock();
         }
@@ -2765,7 +2778,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
 
             // Do the keys.
             builder.append("\nKeys:\n");
-            builder.append(keychain.toString(params, includePrivateKeys));
+            builder.append(keychain.toString(includePrivateKeys));
 
             if (!watchedScripts.isEmpty()) {
                 builder.append("\nWatched scripts:\n");

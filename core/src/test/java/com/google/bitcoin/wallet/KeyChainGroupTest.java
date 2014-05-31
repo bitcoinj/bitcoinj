@@ -16,13 +16,9 @@
 
 package com.google.bitcoin.wallet;
 
-import com.google.bitcoin.core.BloomFilter;
-import com.google.bitcoin.core.ECKey;
-import com.google.bitcoin.core.Sha256Hash;
-import com.google.bitcoin.core.Utils;
-import com.google.bitcoin.crypto.DeterministicKey;
-import com.google.bitcoin.crypto.KeyCrypterException;
-import com.google.bitcoin.crypto.KeyCrypterScrypt;
+import com.google.bitcoin.core.*;
+import com.google.bitcoin.crypto.*;
+import com.google.bitcoin.params.MainNetParams;
 import com.google.bitcoin.utils.BriefLogFormatter;
 import com.google.bitcoin.utils.Threading;
 import com.google.common.collect.ImmutableList;
@@ -43,15 +39,27 @@ public class KeyChainGroupTest {
     // Number of initial keys in this tests HD wallet, including interior keys.
     private static final int INITIAL_KEYS = 4;
     private static final int LOOKAHEAD_SIZE = 5;
+    private static final NetworkParameters params = MainNetParams.get();
+    private static final String XPUB = "xpub68KFnj3bqUx1s7mHejLDBPywCAKdJEu1b49uniEEn2WSbHmZ7xbLqFTjJbtx1LUcAt1DwhoqWHmo2s5WMJp6wi38CiF2hYD49qVViKVvAoi";
     private KeyChainGroup group;
 
     @Before
     public void setup() {
         BriefLogFormatter.init();
         Utils.setMockClock();
-        group = new KeyChainGroup();
+        group = new KeyChainGroup(params);
         group.setLookaheadSize(LOOKAHEAD_SIZE);   // Don't want slow tests.
         group.getActiveKeyChain();  // Force create a chain.
+    }
+
+    private KeyChainGroup createMarriedKeyChainGroup() {
+        byte[] seedBytes = Sha256Hash.create("don't use a string seed like this in real life".getBytes()).getBytes();
+        DeterministicSeed seed = new DeterministicSeed(seedBytes, MnemonicCode.BIP39_STANDARDISATION_TIME_SECS);
+        DeterministicKey watchingKey = DeterministicKey.deserializeB58(null, XPUB);
+        KeyChainGroup group = new KeyChainGroup(params, seed, ImmutableList.of(watchingKey));
+        group.setLookaheadSize(LOOKAHEAD_SIZE);
+        group.getActiveKeyChain();
+        return group;
     }
 
     @Test
@@ -80,6 +88,23 @@ public class KeyChainGroupTest {
         assertEquals(r3, r4);
         ECKey c3 = group.currentKey(KeyChain.KeyPurpose.CHANGE);
         assertEquals(c2, c3);
+    }
+
+    @Test
+    public void freshCurrentKeysForMarriedKeychain() throws Exception {
+        group = createMarriedKeyChainGroup();
+
+        try {
+            group.freshKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
+            fail();
+        } catch (UnsupportedOperationException e) {
+        }
+
+        try {
+            group.currentKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
+            fail();
+        } catch (UnsupportedOperationException e) {
+        }
     }
 
     @Test
@@ -117,6 +142,36 @@ public class KeyChainGroupTest {
         assertEquals(c, result);
         assertNull(group.findKeyFromPubKey(d.getPubKey()));
         assertNull(group.findKeyFromPubHash(d.getPubKeyHash()));
+    }
+
+    @Test
+    public void currentP2SHAddress() throws Exception {
+        group = createMarriedKeyChainGroup();
+
+        assertEquals(INITIAL_KEYS, group.numKeys());
+        Address a1 = group.currentAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
+        assertEquals(INITIAL_KEYS + 1 + LOOKAHEAD_SIZE, group.numKeys());
+        assertTrue(a1.isP2SHAddress());
+
+        Address a2 = group.currentAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
+        assertEquals(a1, a2);
+        assertEquals(INITIAL_KEYS + 1 + LOOKAHEAD_SIZE, group.numKeys());
+
+        Address a3 = group.currentAddress(KeyChain.KeyPurpose.CHANGE);
+        assertNotEquals(a2, a3);
+    }
+
+    @Test
+    public void freshAddress() throws Exception {
+        group = createMarriedKeyChainGroup();
+        Address a1 = group.freshAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
+        Address a2 = group.freshAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
+        assertTrue(a1.isP2SHAddress());
+        assertNotEquals(a1, a2);
+        assertEquals(INITIAL_KEYS + 2 + LOOKAHEAD_SIZE, group.numKeys());
+
+        Address a3 = group.currentAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
+        assertEquals(a2, a3);
     }
 
     // Check encryption with and without a basic keychain.
@@ -206,7 +261,7 @@ public class KeyChainGroupTest {
 
     @Test
     public void encryptionWhilstEmpty() throws Exception {
-        group = new KeyChainGroup();
+        group = new KeyChainGroup(params);
         group.setLookaheadSize(5);
         KeyCrypterScrypt scrypt = new KeyCrypterScrypt(2);
         final KeyParameter aesKey = scrypt.deriveKey("password");
@@ -286,7 +341,7 @@ public class KeyChainGroupTest {
     @Test
     public void serialization() throws Exception {
         assertEquals(INITIAL_KEYS + 1 /* for the seed */, group.serializeToProtobuf().size());
-        group = KeyChainGroup.fromProtobufUnencrypted(group.serializeToProtobuf());
+        group = KeyChainGroup.fromProtobufUnencrypted(params, group.serializeToProtobuf());
         group.freshKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         DeterministicKey key1 = group.freshKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         DeterministicKey key2 = group.freshKey(KeyChain.KeyPurpose.CHANGE);
@@ -296,13 +351,13 @@ public class KeyChainGroupTest {
         List<Protos.Key> protoKeys2 = group.serializeToProtobuf();
         assertEquals(INITIAL_KEYS + ((LOOKAHEAD_SIZE + 1) * 2) + 1 /* for the seed */ + 2, protoKeys2.size());
 
-        group = KeyChainGroup.fromProtobufUnencrypted(protoKeys1);
+        group = KeyChainGroup.fromProtobufUnencrypted(params, protoKeys1);
         assertEquals(INITIAL_KEYS + ((LOOKAHEAD_SIZE + 1)  * 2)  + 1 /* for the seed */ + 1, protoKeys1.size());
         assertTrue(group.hasKey(key1));
         assertTrue(group.hasKey(key2));
         assertEquals(key2, group.currentKey(KeyChain.KeyPurpose.CHANGE));
         assertEquals(key1, group.currentKey(KeyChain.KeyPurpose.RECEIVE_FUNDS));
-        group = KeyChainGroup.fromProtobufUnencrypted(protoKeys2);
+        group = KeyChainGroup.fromProtobufUnencrypted(params, protoKeys2);
         assertEquals(INITIAL_KEYS + ((LOOKAHEAD_SIZE + 1) * 2) + 1 /* for the seed */ + 2, protoKeys2.size());
         assertTrue(group.hasKey(key1));
         assertTrue(group.hasKey(key2));
@@ -311,7 +366,7 @@ public class KeyChainGroupTest {
         final KeyParameter aesKey = scrypt.deriveKey("password");
         group.encrypt(scrypt, aesKey);
         List<Protos.Key> protoKeys3 = group.serializeToProtobuf();
-        group = KeyChainGroup.fromProtobufEncrypted(protoKeys3, scrypt);
+        group = KeyChainGroup.fromProtobufEncrypted(params, protoKeys3, scrypt);
         assertTrue(group.isEncrypted());
         assertTrue(group.checkPassword("password"));
         group.decrypt(aesKey);
@@ -320,10 +375,52 @@ public class KeyChainGroupTest {
     }
 
     @Test
+    public void serializeWatching() throws Exception {
+        group = new KeyChainGroup(params, DeterministicKey.deserializeB58(null, XPUB));
+        group.setLookaheadSize(LOOKAHEAD_SIZE);
+        group.freshKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
+        group.freshKey(KeyChain.KeyPurpose.CHANGE);
+        List<Protos.Key> protoKeys1 = group.serializeToProtobuf();
+        assertEquals(3 + (LOOKAHEAD_SIZE + 1) * 2, protoKeys1.size());
+        group = KeyChainGroup.fromProtobufUnencrypted(params, protoKeys1);
+        assertEquals(3 + (LOOKAHEAD_SIZE + 1) * 2, group.serializeToProtobuf().size());
+    }
+
+    @Test
+    public void serializeMarried() throws Exception {
+        group = createMarriedKeyChainGroup();
+        DeterministicKeyChain keyChain = group.getActiveKeyChain();
+        keyChain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
+        DeterministicKey key1 = keyChain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
+        ImmutableList<ChildNumber> path = key1.getPath();
+        assertTrue(group.isMarried(keyChain));
+
+        List<Protos.Key> protoKeys3 = group.serializeToProtobuf();
+        group = KeyChainGroup.fromProtobufUnencrypted(params, protoKeys3);
+        assertTrue(group.isMarried(keyChain));
+        DeterministicKey key2 = keyChain.getKeyByPath(path);
+        assertEquals(key1, key2);
+    }
+
+    @Test
+    public void addFollowingAccounts() throws Exception {
+        assertFalse(group.isMarried());
+        group.addFollowingAccounts(ImmutableList.of(DeterministicKey.deserializeB58(null, XPUB)));
+        assertTrue(group.isMarried());
+    }
+
+    @Test (expected = IllegalStateException.class)
+    public void addFollowingAccountsTwiceShouldFail() {
+        ImmutableList<DeterministicKey> followingKeys = ImmutableList.of(DeterministicKey.deserializeB58(null, XPUB));
+        group.addFollowingAccounts(followingKeys);
+        group.addFollowingAccounts(followingKeys);
+    }
+
+    @Test
     public void constructFromSeed() throws Exception {
         ECKey key1 = group.freshKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         final DeterministicSeed seed = checkNotNull(group.getActiveKeyChain().getSeed());
-        KeyChainGroup group2 = new KeyChainGroup(seed);
+        KeyChainGroup group2 = new KeyChainGroup(params, seed);
         group2.setLookaheadSize(5);
         ECKey key2 = group2.freshKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         assertEquals(key1, key2);
@@ -332,7 +429,7 @@ public class KeyChainGroupTest {
     @Test(expected = DeterministicUpgradeRequiredException.class)
     public void deterministicUpgradeRequired() throws Exception {
         // Check that if we try to use HD features in a KCG that only has random keys, we get an exception.
-        group = new KeyChainGroup();
+        group = new KeyChainGroup(params);
         group.importKeys(new ECKey(), new ECKey());
         assertTrue(group.isDeterministicUpgradeRequired());
         group.freshKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);   // throws
@@ -342,7 +439,7 @@ public class KeyChainGroupTest {
     public void deterministicUpgradeUnencrypted() throws Exception {
         // Check that a group that contains only random keys has its HD chain created using the private key bytes of
         // the oldest random key, so upgrading the same wallet twice gives the same outcome.
-        group = new KeyChainGroup();
+        group = new KeyChainGroup(params);
         group.setLookaheadSize(LOOKAHEAD_SIZE);   // Don't want slow tests.
         ECKey key1 = new ECKey();
         Utils.rollMockClock(86400);
@@ -356,7 +453,7 @@ public class KeyChainGroupTest {
         DeterministicSeed seed1 = group.getActiveKeyChain().getSeed();
         assertNotNull(seed1);
 
-        group = KeyChainGroup.fromProtobufUnencrypted(protobufs);
+        group = KeyChainGroup.fromProtobufUnencrypted(params, protobufs);
         group.upgradeToDeterministic(0, null);  // Should give same result as last time.
         DeterministicKey dkey2 = group.freshKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         DeterministicSeed seed2 = group.getActiveKeyChain().getSeed();
@@ -370,7 +467,7 @@ public class KeyChainGroupTest {
 
     @Test
     public void deterministicUpgradeRotating() throws Exception {
-        group = new KeyChainGroup();
+        group = new KeyChainGroup(params);
         group.setLookaheadSize(LOOKAHEAD_SIZE);   // Don't want slow tests.
         long now = Utils.currentTimeSeconds();
         ECKey key1 = new ECKey();
@@ -389,7 +486,7 @@ public class KeyChainGroupTest {
 
     @Test
     public void deterministicUpgradeEncrypted() throws Exception {
-        group = new KeyChainGroup();
+        group = new KeyChainGroup(params);
         final ECKey key = new ECKey();
         group.importKeys(key);
         final KeyCrypterScrypt crypter = new KeyCrypterScrypt();

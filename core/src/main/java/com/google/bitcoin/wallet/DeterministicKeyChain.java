@@ -116,6 +116,9 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
     // money.
     private final BasicKeyChain basicKeyChain;
 
+    // If set this chain is following another chain in a married KeyChainGroup
+    private boolean isFollowing;
+
     /**
      * Generates a new key chain with a 128 bit seed selected randomly from the given {@link java.security.SecureRandom}
      * object.
@@ -163,6 +166,25 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
 
     public DeterministicKeyChain(DeterministicKey watchingKey) {
         this(watchingKey, Utils.currentTimeSeconds());
+    }
+
+    /**
+     * <p>Creates a deterministic key chain with the given watch key. If <code>isFollowing</code> flag is set then this keychain follows
+     * some other keychain. In a married wallet following keychain represents "spouse's" keychain.</p>
+     * <p>Watch key has to be an account key.</p>
+     */
+    private DeterministicKeyChain(DeterministicKey watchKey, boolean isFollowing) {
+        this(watchKey, Utils.currentTimeSeconds());
+        this.isFollowing = isFollowing;
+    }
+
+    /**
+     * Creates a deterministic key chain with the given watch key and that follows some other keychain. In a married
+     * wallet following keychain represents "spouse"
+     * Watch key has to be an account key.
+     */
+    public static DeterministicKeyChain watchAndFollow(DeterministicKey watchKey) {
+        return new DeterministicKeyChain(watchKey, true);
     }
 
     /**
@@ -451,6 +473,13 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         }
     }
 
+    /**
+     * Return true if this keychain is following another keychain
+     */
+    public boolean isFollowing() {
+        return isFollowing;
+    }
+
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //
     // Serialization support
@@ -484,6 +513,10 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                 } else if (key.equals(internalKey)) {
                     detKey.setIssuedSubkeys(issuedInternalKeys);
                     detKey.setLookaheadSize(lookaheadSize);
+                }
+                // flag the very first key of following keychain
+                if (entries.isEmpty() && isFollowing()) {
+                    detKey.setIsFollowing(true);
                 }
                 entries.add(proto.build());
             }
@@ -537,13 +570,27 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                 final ImmutableList<ChildNumber> immutablePath = ImmutableList.copyOf(path);
                 // Possibly create the chain, if we didn't already do so yet.
                 boolean isWatchingAccountKey = false;
+                boolean isFollowingKey = false;
+                // save previous chain if any if the key is marked as following. Current key and the next ones are to be
+                // placed in new following key chain
+                if (key.getDeterministicKey().getIsFollowing()) {
+                    if (chain != null) {
+                        checkState(lookaheadSize >= 0);
+                        chain.setLookaheadSize(lookaheadSize);
+                        chain.maybeLookAhead();
+                        chains.add(chain);
+                        chain = null;
+                        seed = null;
+                    }
+                    isFollowingKey = true;
+                }
                 if (chain == null) {
                     if (seed == null) {
                         DeterministicKey accountKey = new DeterministicKey(immutablePath, chainCode, pubkey, null, null);
                         if (!accountKey.getPath().equals(ACCOUNT_ZERO_PATH))
                             throw new UnreadableWalletException("Expecting account key but found key with path: " +
                                     HDUtils.formatPath(accountKey.getPath()));
-                        chain = new DeterministicKeyChain(accountKey);
+                        chain = new DeterministicKeyChain(accountKey, isFollowingKey);
                         isWatchingAccountKey = true;
                     } else {
                         chain = new DeterministicKeyChain(seed, crypter);
