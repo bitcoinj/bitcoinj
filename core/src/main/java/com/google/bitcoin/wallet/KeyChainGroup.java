@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2014 Mike Hearn
  * Copyright 2014 Andreas Schildbach
  *

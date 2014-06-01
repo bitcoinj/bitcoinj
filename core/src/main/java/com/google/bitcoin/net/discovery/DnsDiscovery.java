@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2011 John Sample
  * Copyright 2014 Andreas Schildbach
  *

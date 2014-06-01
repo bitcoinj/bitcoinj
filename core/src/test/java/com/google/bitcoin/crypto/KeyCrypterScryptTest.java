@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2013 Jim Burton.
  * Copyright 2014 Andreas Schildbach
  *

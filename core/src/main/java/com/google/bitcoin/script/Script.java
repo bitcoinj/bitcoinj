@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2011 Google Inc.
  * Copyright 2012 Matt Corallo.
  * Copyright 2014 Andreas Schildbach

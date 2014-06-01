@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2013 Jim Burton.
  *
  * Licensed under the MIT license (the "License");
