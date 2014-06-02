@@ -739,7 +739,10 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
     public void setLookaheadSize(int lookaheadSize) {
         lock.lock();
         try {
+            int oldlookaheadSize = this.lookaheadSize;
             this.lookaheadSize = lookaheadSize;
+            if (oldlookaheadSize != lookaheadSize)
+                maybeLookAhead();
         } finally {
             lock.unlock();
         }
@@ -755,9 +758,12 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
     public void setLookaheadThreshold(int num) {
         lock.lock();
         try {
+            int oldthreshold = this.lookaheadThreshold;
             if (num >= lookaheadSize)
                 throw new IllegalArgumentException("Threshold larger or equal to the lookaheadSize");
             this.lookaheadThreshold = num;
+            if (oldthreshold != num)
+                maybeLookAhead();
         } finally {
             lock.unlock();
         }
