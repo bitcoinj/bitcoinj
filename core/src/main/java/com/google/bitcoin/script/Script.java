@@ -20,7 +20,6 @@ package com.google.bitcoin.script;
 
 import com.google.bitcoin.core.*;
 import com.google.bitcoin.crypto.TransactionSignature;
-import com.google.bitcoin.params.MainNetParams;
 import com.google.common.collect.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -136,16 +135,14 @@ public class Script {
         return Collections.unmodifiableList(chunks);
     }
 
-    private static final ScriptChunk INTERN_TABLE[];
+    private static final ScriptChunk STANDARD_TRANSACTION_SCRIPT_CHUNKS[];
 
     static {
-        Script examplePayToAddress = ScriptBuilder.createOutputScript(new Address(MainNetParams.get(), new byte[20]));
-        examplePayToAddress = new Script(examplePayToAddress.getProgram());
-        INTERN_TABLE = new ScriptChunk[] {
-                examplePayToAddress.chunks.get(0),  // DUP
-                examplePayToAddress.chunks.get(1),  // HASH160
-                examplePayToAddress.chunks.get(3),  // EQUALVERIFY
-                examplePayToAddress.chunks.get(4),  // CHECKSIG
+        STANDARD_TRANSACTION_SCRIPT_CHUNKS = new ScriptChunk[] {
+            new ScriptChunk(ScriptOpCodes.OP_DUP, null, 0),
+            new ScriptChunk(ScriptOpCodes.OP_HASH160, null, 1),
+            new ScriptChunk(ScriptOpCodes.OP_EQUALVERIFY, null, 23),
+            new ScriptChunk(ScriptOpCodes.OP_CHECKSIG, null, 24),
         };
     }
 
@@ -194,12 +191,9 @@ public class Script {
                 checkState(dataToRead == 0 || bis.read(data, 0, (int)dataToRead) == dataToRead);
                 chunk = new ScriptChunk(opcode, data, startLocationInProgram);
             }
-            // Save some memory by eliminating redundant copies of the same chunk objects. INTERN_TABLE can be null
-            // here because this method is called whilst setting it up.
-            if (INTERN_TABLE != null) {
-                for (ScriptChunk c : INTERN_TABLE) {
-                    if (c.equals(chunk)) chunk = c;
-                }
+            // Save some memory by eliminating redundant copies of the same chunk objects.
+            for (ScriptChunk c : STANDARD_TRANSACTION_SCRIPT_CHUNKS) {
+                if (c.equals(chunk)) chunk = c;
             }
             chunks.add(chunk);
         }
