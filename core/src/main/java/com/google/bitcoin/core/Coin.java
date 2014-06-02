@@ -20,14 +20,20 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
-import java.math.BigInteger;
 
+import com.google.bitcoin.utils.CoinFormat;
 import com.google.common.math.LongMath;
 
 /**
  * Represents a monetary Bitcoin value. This class is immutable.
  */
 public final class Coin implements Comparable<Coin>, Serializable {
+
+    /**
+     * Number of decimals for one Bitcoin. This constant is useful for quick adapting to other coins because a lot of
+     * constants derive from it.
+     */
+    public static final int NUM_COIN_DECIMALS = 8;
 
     /**
      * Zero Bitcoins.
@@ -37,7 +43,7 @@ public final class Coin implements Comparable<Coin>, Serializable {
     /**
      * One Bitcoin.
      */
-    public static final Coin COIN = Coin.valueOf(100000000);
+    public static final Coin COIN = Coin.valueOf(LongMath.pow(10, NUM_COIN_DECIMALS));
 
     /**
      * 0.01 Bitcoins. This unit is not really used much.
@@ -154,28 +160,17 @@ public final class Coin implements Comparable<Coin>, Serializable {
         return this.value;
     }
 
+    private static final CoinFormat FRIENDLY_FORMAT = CoinFormat.BTC.minDecimals(2).repeatOptionalDecimals(1, 6);
+
     /**
      * Returns the value as a 0.12 type string. More digits after the decimal place will be used
      * if necessary, but two will always be present.
      */
     public String toFriendlyString() {
-        Coin value = this;
-        boolean negative = value.signum() < 0;
-        if (negative)
-            value = value.negate();
-        BigDecimal bd = new BigDecimal(BigInteger.valueOf(value.value), 8);
-        String formatted = bd.toPlainString();   // Don't use scientific notation.
-        int decimalPoint = formatted.indexOf(".");
-        // Drop unnecessary zeros from the end.
-        int toDelete = 0;
-        for (int i = formatted.length() - 1; i > decimalPoint + 2; i--) {
-            if (formatted.charAt(i) == '0')
-                toDelete++;
-            else
-                break;
-        }
-        return (negative ? "-" : "") + formatted.substring(0, formatted.length() - toDelete);
+        return FRIENDLY_FORMAT.format(this).toString();
     }
+
+    private static final CoinFormat PLAIN_FORMAT = CoinFormat.BTC.minDecimals(0).repeatOptionalDecimals(1, 8);
 
     /**
      * <p>
@@ -185,8 +180,7 @@ public final class Coin implements Comparable<Coin>, Serializable {
      * </p>
      */
     public String toPlainString() {
-        BigDecimal valueInBTC = new BigDecimal(BigInteger.valueOf(value)).divide(new BigDecimal(BigInteger.valueOf(COIN.value)));
-        return valueInBTC.toPlainString();
+        return PLAIN_FORMAT.format(this).toString();
     }
 
     @Override
