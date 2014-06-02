@@ -20,10 +20,11 @@ package com.google.bitcoin.core;
 import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Ordering;
+import com.google.common.io.BaseEncoding;
 import com.google.common.primitives.Ints;
 import com.google.common.primitives.UnsignedLongs;
+
 import org.spongycastle.crypto.digests.RIPEMD160Digest;
-import org.spongycastle.util.encoders.Hex;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -185,19 +186,9 @@ public class Utils {
     }
 
     /**
-     * Returns the given byte array hex encoded.
+     * Hex encoding used throughout the framework. Use with HEX.encode(byte[]) or HEX.decode(CharSequence).
      */
-    public static String bytesToHexString(byte[] bytes) {
-        StringBuffer buf = new StringBuffer(bytes.length * 2);
-        for (byte b : bytes) {
-            String s = Integer.toString(0xFF & b, 16);
-            if (s.length() < 2)
-                buf.append('0');
-            buf.append(s);
-        }
-        return buf.toString();
-    }
-
+    public static final BaseEncoding HEX = BaseEncoding.base16().lowerCase();
 
     /**
      * Returns a copy of the given byte array in reverse order.
@@ -464,7 +455,7 @@ public class Utils {
      */
     public static byte[] parseAsHexOrBase58(String data) {
         try {
-            return Hex.decode(data);
+            return HEX.decode(data);
         } catch (Exception e) {
             // Didn't decode as hex, try base58.
             try {

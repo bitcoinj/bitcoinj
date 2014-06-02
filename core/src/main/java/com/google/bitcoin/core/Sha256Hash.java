@@ -1,5 +1,6 @@
 /**
  * Copyright 2011 Google Inc.
+ * Copyright 2014 Andreas Schildbach
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +18,6 @@
 package com.google.bitcoin.core;
 
 import com.google.common.io.ByteStreams;
-import org.spongycastle.util.encoders.Hex;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -52,7 +52,7 @@ public class Sha256Hash implements Serializable, Comparable<Sha256Hash> {
      */
     public Sha256Hash(String hexString) {
         checkArgument(hexString.length() == 64);
-        this.bytes = Hex.decode(hexString);
+        this.bytes = Utils.HEX.decode(hexString);
     }
 
     /**
@@ -109,7 +109,7 @@ public class Sha256Hash implements Serializable, Comparable<Sha256Hash> {
 
     @Override
     public String toString() {
-        return Utils.bytesToHexString(bytes);
+        return Utils.HEX.encode(bytes);
     }
 
     /**

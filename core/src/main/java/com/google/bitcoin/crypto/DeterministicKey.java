@@ -1,5 +1,6 @@
 /**
  * Copyright 2013 Matija Mazi.
+ * Copyright 2014 Andreas Schildbach
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,13 +20,13 @@ import com.google.bitcoin.core.*;
 import com.google.common.collect.ImmutableList;
 import org.spongycastle.crypto.params.KeyParameter;
 import org.spongycastle.math.ec.ECPoint;
-import org.spongycastle.util.encoders.Hex;
 
 import javax.annotation.Nullable;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
+import static com.google.bitcoin.core.Utils.HEX;
 import static com.google.common.base.Preconditions.*;
 
 /**
@@ -422,7 +423,7 @@ public class DeterministicKey extends ECKey {
 
     @Override
     public String toString() {
-        return String.format("pub:%s chaincode:%s path:%s", new String(Hex.encode(getPubKey())),
-                new String(Hex.encode(getChainCode())), getPathAsString());
+        return String.format("pub:%s chaincode:%s path:%s", new String(HEX.encode(getPubKey())),
+                new String(HEX.encode(getChainCode())), getPathAsString());
     }
 }

@@ -1,5 +1,6 @@
 /**
  * Copyright 2011 Google Inc.
+ * Copyright 2014 Andreas Schildbach
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -407,7 +408,7 @@ public class ECKey implements EncryptableItem, Serializable {
     @Override
     public String toString() {
         StringBuilder b = new StringBuilder();
-        b.append("pub:").append(Utils.bytesToHexString(pub.getEncoded()));
+        b.append("pub:").append(Utils.HEX.encode(pub.getEncoded()));
         if (creationTimeSeconds != 0) {
             b.append(" timestamp:").append(creationTimeSeconds);
         }
@@ -425,7 +426,7 @@ public class ECKey implements EncryptableItem, Serializable {
         StringBuilder b = new StringBuilder();
         b.append(toString());
         if (priv != null) {
-            b.append(" priv:").append(Utils.bytesToHexString(priv.toByteArray()));
+            b.append(" priv:").append(Utils.HEX.encode(priv.toByteArray()));
         }
         return b.toString();
     }

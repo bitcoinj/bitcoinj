@@ -1,5 +1,6 @@
 /*
  * Copyright 2013 Ken Sedgwick
+ * Copyright 2014 Andreas Schildbach
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,13 +20,13 @@ package com.google.bitcoin.crypto;
 import com.google.common.base.Joiner;
 import org.junit.Before;
 import org.junit.Test;
-import org.spongycastle.util.encoders.Hex;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import static com.google.bitcoin.core.Utils.HEX;
 import static org.junit.Assert.assertEquals;
 
 public class MnemonicCodeTest {
@@ -164,19 +165,19 @@ public class MnemonicCodeTest {
             String vecCode = vectors[ii+1];
             String vecSeed = vectors[ii+2];
 
-            List<String> code = mc.toMnemonic(Hex.decode(vecData));
+            List<String> code = mc.toMnemonic(HEX.decode(vecData));
             byte[] seed = MnemonicCode.toSeed(code, "TREZOR");
             byte[] entropy = mc.toEntropy(split(vecCode));
 
-            assertEquals(vecData, new String(Hex.encode(entropy)));
+            assertEquals(vecData, new String(HEX.encode(entropy)));
             assertEquals(vecCode, Joiner.on(' ').join(code));
-            assertEquals(vecSeed, new String(Hex.encode(seed)));
+            assertEquals(vecSeed, new String(HEX.encode(seed)));
         }
     }
 
     @Test(expected = MnemonicException.MnemonicLengthException.class)
     public void testBadEntropyLength() throws Exception {
-        byte[] entropy = Hex.decode("7f7f7f7f7f7f7f7f7f7f7f7f7f7f");
+        byte[] entropy = HEX.decode("7f7f7f7f7f7f7f7f7f7f7f7f7f7f");
         mc.toMnemonic(entropy);
     }    
 
