@@ -52,7 +52,7 @@ public final class Coin implements Comparable<Coin>, Serializable {
     /**
      * 0.000001 Bitcoins, also known as 1 µBTC or 1 uBTC.
      */
-    public static final Coin NANOCOIN = MILLICOIN.divide(1000);
+    public static final Coin MICROCOIN = MILLICOIN.divide(1000);
 
     /**
      * A satoshi is the smallest unit that can be transferred. 100 million of them fit into a Bitcoin.
