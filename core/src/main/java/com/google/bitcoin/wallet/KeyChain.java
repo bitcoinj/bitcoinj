@@ -44,6 +44,9 @@ public interface KeyChain extends KeyBag {
         REFUND
     }
 
+    /** Obtains a number of key/s intended for the given purpose. The chain may create new key/s, derive, or re-use an old one. */
+    public List<? extends ECKey> getKeys(KeyPurpose purpose, int numberOfKeys);
+
     /** Obtains a key intended for the given purpose. The chain may create a new key, derive one, or re-use an old one. */
     public ECKey getKey(KeyPurpose purpose);
 

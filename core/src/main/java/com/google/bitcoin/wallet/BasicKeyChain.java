@@ -89,6 +89,36 @@ public class BasicKeyChain implements EncryptableKeyChain {
         }
     }
 
+    @Override
+    public List<ECKey> getKeys(@Nullable KeyPurpose purpose, int numberOfKeys) {
+        checkArgument(numberOfKeys > 0);
+        lock.lock();
+        try {
+            if (hashToKeys.size() < numberOfKeys) {
+                checkState(keyCrypter == null);
+
+                List<ECKey> keys = new ArrayList<ECKey>();
+                for (int i = 0; i < numberOfKeys - hashToKeys.size(); i++) {
+                    keys.add(new ECKey());
+                }
+
+                ImmutableList<ECKey> immutableKeys = ImmutableList.copyOf(keys);
+                importKeysLocked(immutableKeys);
+                queueOnKeysAdded(immutableKeys);
+            }
+
+            List<ECKey> keysToReturn = new ArrayList<ECKey>();
+            int count = 0;
+            while (hashToKeys.values().iterator().hasNext() && numberOfKeys != count) {
+                keysToReturn.add(hashToKeys.values().iterator().next());
+                count++;
+            }
+            return keysToReturn;
+        } finally {
+            lock.unlock();
+        }
+    }
+
     /** Returns a copy of the list of keys that this chain is managing. */
     public List<ECKey> getKeys() {
         lock.lock();
@@ -139,6 +169,12 @@ public class BasicKeyChain implements EncryptableKeyChain {
     private void importKeyLocked(ECKey key) {
         pubkeyToKeys.put(ByteString.copyFrom(key.getPubKey()), key);
         hashToKeys.put(ByteString.copyFrom(key.getPubKeyHash()), key);
+    }
+
+    private void importKeysLocked(List<ECKey> keys) {
+        for (ECKey key : keys) {
+            importKeyLocked(key);
+        }
     }
 
     /* package */ void importKey(ECKey key) {

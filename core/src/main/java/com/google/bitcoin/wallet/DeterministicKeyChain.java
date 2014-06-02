@@ -262,9 +262,16 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
     /** Returns a freshly derived key that has not been returned by this method before. */
     @Override
     public DeterministicKey getKey(KeyPurpose purpose) {
+        return getKeys(purpose,1).get(0);
+    }
+
+    /** Returns freshly derived key/s that have not been returned by this method before. */
+    @Override
+    public List<DeterministicKey> getKeys(KeyPurpose purpose,int numberOfKeys) {
+        checkArgument(numberOfKeys > 0);
         lock.lock();
         try {
-            DeterministicKey key, parentKey;
+            DeterministicKey parentKey;
             int index;
             switch (purpose) {
                 // Map both REFUND and RECEIVE_KEYS to the same branch for now. Refunds are a feature of the BIP 70
@@ -273,11 +280,13 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                 // (i.e. spends) or refunds. Might be useful for auditing ...
                 case RECEIVE_FUNDS:
                 case REFUND:
-                    index = ++issuedExternalKeys;
+                    issuedExternalKeys += numberOfKeys;
+                    index = issuedExternalKeys;
                     parentKey = externalKey;
                     break;
                 case CHANGE:
-                    index = ++issuedInternalKeys;
+                    issuedInternalKeys += numberOfKeys;
+                    index = issuedInternalKeys;
                     parentKey = internalKey;
                     break;
                 default:
@@ -286,8 +295,12 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
             // TODO: Handle the case where the derived key is >= curve order.
             List<DeterministicKey> lookahead = maybeLookAhead(parentKey, index);
             basicKeyChain.importKeys(lookahead);
-            key = hierarchy.get(HDUtils.append(parentKey.getPath(), new ChildNumber(index - 1, false)), false, false);
-            return key;
+            List<DeterministicKey> keys = new ArrayList<DeterministicKey>(numberOfKeys);
+
+            for (int i = 1; i <= numberOfKeys; i++) {
+                keys.add(hierarchy.get(HDUtils.append(parentKey.getPath(), new ChildNumber((index-numberOfKeys+i) - 1, false)), false, false));
+            }
+            return keys;
         } finally {
             lock.unlock();
         }
