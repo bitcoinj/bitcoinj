@@ -321,20 +321,22 @@ public class PeerGroup extends AbstractExecutionThreadService implements Transac
     private PeerGroup(NetworkParameters params, @Nullable AbstractBlockChain chain, ClientConnectionManager connectionManager, @Nullable TorClient torClient) {
         this.params = checkNotNull(params);
         this.chain = chain;
-        this.fastCatchupTimeSecs = params.getGenesisBlock().getTimeSeconds();
-        this.wallets = new CopyOnWriteArrayList<Wallet>();
-        this.peerFilterProviders = new CopyOnWriteArrayList<PeerFilterProvider>();
+        fastCatchupTimeSecs = params.getGenesisBlock().getTimeSeconds();
+        wallets = new CopyOnWriteArrayList<Wallet>();
+        peerFilterProviders = new CopyOnWriteArrayList<PeerFilterProvider>();
         this.torClient = torClient;
 
         // This default sentinel value will be overridden by one of two actions:
         //   - adding a peer discovery source sets it to the default
         //   - using connectTo() will increment it by one
-        this.maxConnections = 0;
+        maxConnections = 0;
 
         int height = chain == null ? 0 : chain.getBestChainHeight();
+        versionMessage = new VersionMessage(params, height);
         // We never request that the remote node wait for a bloom filter yet, as we have no wallets
-        this.versionMessage = new VersionMessage(params, height, true);
-        this.downloadTxDependencies = true;
+        versionMessage.relayTxesBeforeFilter = true;
+
+        downloadTxDependencies = true;
 
         memoryPool = new MemoryPool();
 
@@ -495,7 +497,8 @@ public class PeerGroup extends AbstractExecutionThreadService implements Transac
     public void setUserAgent(String name, String version, @Nullable String comments) {
         //TODO Check that height is needed here (it wasnt, but it should be, no?)
         int height = chain == null ? 0 : chain.getBestChainHeight();
-        VersionMessage ver = new VersionMessage(params, height, false);
+        VersionMessage ver = new VersionMessage(params, height);
+        ver.relayTxesBeforeFilter = false;
         updateVersionMessageRelayTxesBeforeFilter(ver);
         ver.appendToSubVer(name, version, comments);
         setVersionMessage(ver);
