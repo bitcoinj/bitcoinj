@@ -26,8 +26,8 @@ import java.net.UnknownHostException;
  * A VersionMessage holds information exchanged during connection setup with another peer. Most of the fields are not
  * particularly interesting. The subVer field, since BIP 14, acts as a User-Agent string would. You can and should 
  * append to or change the subVer for your own software so other implementations can identify it, and you can look at
- * the subVer field received from other nodes to see what they are running. If blank, it means the Satoshi client.<p>
- *     
+ * the subVer field received from other nodes to see what they are running. <p>
+ *
  * After creating yourself a VersionMessage, you can pass it to {@link PeerGroup#setVersionMessage(VersionMessage)}
  * to ensure it will be used for each new connection.
  */
@@ -60,8 +60,8 @@ public class VersionMessage extends Message {
      */
     public PeerAddress theirAddr;
     /**
-     * An additional string that today the official client sets to the empty string. We treat it as something like an
-     * HTTP User-Agent header.
+     * User-Agent as defined in <a href="https://github.com/bitcoin/bips/blob/master/bip-0014.mediawiki">BIP 14</a>.
+     * The official client sets it to something like "/Satoshi:0.9.1/".
      */
     public String subVer;
     /**
@@ -69,7 +69,8 @@ public class VersionMessage extends Message {
      */
     public long bestHeight;
     /**
-     * Whether or not to relay tx invs before a filter is received
+     * Whether or not to relay tx invs before a filter is received.
+     * See <a href="https://github.com/bitcoin/bips/blob/master/bip-0037.mediawiki#extensions-to-existing-messages">BIP 37</a>.
      */
     public boolean relayTxesBeforeFilter;
 
@@ -86,12 +87,7 @@ public class VersionMessage extends Message {
     // If you're receiving this on the wire you need to check the protocol version and it will never need to be sent
     // back down the wire.
     
-    /** Equivalent to VersionMessage(params, newBestHeight, true) */
     public VersionMessage(NetworkParameters params, int newBestHeight) {
-        this(params, newBestHeight, true);
-    }
-
-    public VersionMessage(NetworkParameters params, int newBestHeight, boolean relayTxesBeforeFilter) {
         super(params);
         clientVersion = NetworkParameters.PROTOCOL_VERSION;
         localServices = 0;
@@ -109,7 +105,7 @@ public class VersionMessage extends Message {
         }
         subVer = LIBRARY_SUBVER;
         bestHeight = newBestHeight;
-        this.relayTxesBeforeFilter = relayTxesBeforeFilter;
+        relayTxesBeforeFilter = true;
 
         length = 85;
         if (protocolVersion > 31402)
@@ -247,18 +243,19 @@ public class VersionMessage extends Message {
         sb.append("their addr:     ").append(theirAddr).append("\n");
         sb.append("sub version:    ").append(subVer).append("\n");
         sb.append("best height:    ").append(bestHeight).append("\n");
-        sb.append("delay tx relay: ").append(relayTxesBeforeFilter).append("\n");
+        sb.append("delay tx relay: ").append(!relayTxesBeforeFilter).append("\n");
         return sb.toString();
     }
 
     public VersionMessage duplicate() {
-        VersionMessage v = new VersionMessage(params, (int) bestHeight, relayTxesBeforeFilter);
+        VersionMessage v = new VersionMessage(params, (int) bestHeight);
         v.clientVersion = clientVersion;
         v.localServices = localServices;
         v.time = time;
         v.myAddr = myAddr;
         v.theirAddr = theirAddr;
         v.subVer = subVer;
+        v.relayTxesBeforeFilter = relayTxesBeforeFilter;
         return v;
     }
 
@@ -274,7 +271,7 @@ public class VersionMessage extends Message {
      *
      * Anything put in the "comments" field will appear in brackets and may be used for platform info, or anything
      * else. For example, calling <tt>appendToSubVer("MultiBit", "1.0", "Windows")</tt> will result in a subVer being
-     * set of "/BitCoinJ:1.0/MultiBit:1.0(Windows)/. Therefore the / ( and ) characters are reserved in all these
+     * set of "/BitCoinJ:1.0/MultiBit:1.0(Windows)/". Therefore the / ( and ) characters are reserved in all these
      * components. If you don't want to add a comment (recommended), pass null.<p>
      *
      * See <a href="https://github.com/bitcoin/bips/blob/master/bip-0014.mediawiki">BIP 14</a> for more information.
