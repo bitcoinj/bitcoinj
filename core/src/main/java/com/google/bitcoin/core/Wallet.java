@@ -520,7 +520,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
     }
 
     /** See {@link com.google.bitcoin.wallet.DeterministicKeyChain#setLookaheadThreshold(int)} for more info on this. */
-    public void setLookaheadThreshold(int num) {
+    public void setKeychainLookaheadThreshold(int num) {
         lock.lock();
         try {
             keychain.setLookaheadThreshold(num);
