@@ -826,6 +826,32 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         return result;
     }
 
+    /**
+     * Returns number of keys used on external path. This may be fewer than the number that have been deserialized
+     * or held in memory, because of the lookahead zone.
+     */
+    public int getIssuedExternalKeys() {
+        lock.lock();
+        try {
+            return issuedExternalKeys;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
+     * Returns number of keys used on internal path. This may be fewer than the number that have been deserialized
+     * or held in memory, because of the lookahead zone.
+     */
+    public int getIssuedInternalKeys() {
+        lock.lock();
+        try {
+            return issuedInternalKeys;
+        } finally {
+            lock.unlock();
+        }
+    }
+
     /** Returns the seed or null if this chain is encrypted or watching. */
     @Nullable
     public DeterministicSeed getSeed() {
