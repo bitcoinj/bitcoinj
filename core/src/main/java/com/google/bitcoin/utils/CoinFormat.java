@@ -153,7 +153,7 @@ public final class CoinFormat {
      *            number of repetitions
      */
     public CoinFormat repeatOptionalDecimals(int decimals, int repetitions) {
-        checkArgument(repetitions > 0);
+        checkArgument(repetitions >= 0);
         List<Integer> decimalGroups = new ArrayList<Integer>(repetitions);
         for (int i = 0; i < repetitions; i++)
             decimalGroups.add(decimals);
