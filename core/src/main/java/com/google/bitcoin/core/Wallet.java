@@ -2364,6 +2364,11 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
 
     public static class CompletionException extends RuntimeException {}
     public static class DustySendRequested extends CompletionException {}
+    /**
+     * Thrown when we were trying to empty the wallet, and the total amount of money we were trying to empty after
+     * being reduced for the fee was smaller than the min payment. Note that the missing field will be null in this
+     * case.
+     */
     public static class CouldNotAdjustDownwards extends CompletionException {}
     public static class ExceededMaxTransactionSize extends CompletionException {}
 
