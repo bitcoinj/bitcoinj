@@ -458,8 +458,10 @@ public abstract class Message implements Serializable {
         }
     }
 
-
     byte[] readBytes(int length) throws ProtocolException {
+        if (length > MAX_SIZE) {
+            throw new ProtocolException("Claimed byte array length too large: " + length);
+        }
         try {
             byte[] b = new byte[length];
             System.arraycopy(payload, cursor, b, 0, length);
@@ -483,6 +485,9 @@ public abstract class Message implements Serializable {
                 return "";
             }
             cursor += varInt.getOriginalSizeInBytes();
+            if (varInt.value > MAX_SIZE) {
+                throw new ProtocolException("Claimed var_str length too large: " + varInt.value);
+            }
             byte[] characters = new byte[(int) varInt.value];
             System.arraycopy(payload, cursor, characters, 0, characters.length);
             cursor += characters.length;
