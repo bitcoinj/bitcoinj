@@ -347,10 +347,17 @@ public class DeterministicKey extends ECKey {
 
     public static DeterministicKey deserializeB58(@Nullable DeterministicKey parent, String base58) {
         try {
-            ByteBuffer buffer = ByteBuffer.wrap(Base58.decodeChecked(base58));
+	return deserialize(parent, Base58.decodeChecked(base58));
+        } catch (AddressFormatException e) {
+            throw new IllegalArgumentException(e);
+        }
+    }
+
+    public static DeterministicKey deserialize(@Nullable DeterministicKey parent, byte[] serializedKey) {
+            ByteBuffer buffer = ByteBuffer.wrap(serializedKey);
             int header = buffer.getInt();
             if (header != HEADER_PRIV && header != HEADER_PUB)
-                throw new IllegalArgumentException("Unknown header bytes: " + base58.substring(0, 4));
+                throw new IllegalArgumentException("Unknown header bytes: " + toBase58(serializedKey).substring(0, 4));
             boolean pub = header == HEADER_PUB;
             byte depth = buffer.get();
             byte[] parentFingerprint = new byte[4];
@@ -390,9 +397,6 @@ public class DeterministicKey extends ECKey {
             } else {
                 return new DeterministicKey(path, chainCode, new BigInteger(1, data), parent);
             }
-        } catch (AddressFormatException e) {
-            throw new IllegalArgumentException(e);
-        }
     }
 
     /**
