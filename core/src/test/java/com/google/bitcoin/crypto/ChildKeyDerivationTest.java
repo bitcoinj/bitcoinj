@@ -165,22 +165,32 @@ public class ChildKeyDerivationTest {
     }
 
     @Test
-    public void serializeToText() {
+    public void serializeToTextAndBytes() {
         DeterministicKey key1 = HDKeyDerivation.createMasterPrivateKey("satoshi lives!".getBytes());
         DeterministicKey key2 = HDKeyDerivation.deriveChildKey(key1, ChildNumber.ZERO_HARDENED);
         {
             final String pub58 = key1.serializePubB58();
             final String priv58 = key1.serializePrivB58();
+            final byte[] pub = key1.serializePublic();
+            final byte[] priv = key1.serializePrivate();
             assertEquals("xpub661MyMwAqRbcF7mq7Aejj5xZNzFfgi3ABamE9FedDHVmViSzSxYTgAQGcATDo2J821q7Y9EAagjg5EP3L7uBZk11PxZU3hikL59dexfLkz3", pub58);
             assertEquals("xprv9s21ZrQH143K2dhN197jMx1ppxRBHFKJpMqdLsF1ewxncv7quRED8N5nksxphju3W7naj1arF56L5PUEWfuSk8h73Sb2uh7bSwyXNrjzhAZ", priv58);
+            assertArrayEquals(new byte[]{4, -120, -78, 30, 0, 0, 0, 0, 0, 0, 0, 0, 0, 57, -68, 93, -104, -97, 31, -105, -18, 109, 112, 104, 45, -77, -77, 18, 85, -29, -120, 86, -113, 26, 48, -18, -79, -110, -6, -27, 87, 86, 24, 124, 99, 3, 96, -33, -14, 67, -19, -47, 16, 76, -49, -11, -30, -123, 7, 56, 101, 91, 74, 125, -127, 61, 42, -103, 90, -93, 66, -36, 2, -126, -107, 30, 24, -111}, pub);
+            assertArrayEquals(new byte[]{4, -120, -83, -28, 0, 0, 0, 0, 0, 0, 0, 0, 0, 57, -68, 93, -104, -97, 31, -105, -18, 109, 112, 104, 45, -77, -77, 18, 85, -29, -120, 86, -113, 26, 48, -18, -79, -110, -6, -27, 87, 86, 24, 124, 99, 0, -96, -75, 47, 90, -49, 92, -74, 92, -128, -125, 23, 38, -10, 97, -66, -19, 50, -112, 30, -111, -57, -124, 118, -86, 126, -35, -4, -51, 19, 109, 67, 116}, priv);
             assertEquals(DeterministicKey.deserializeB58(null, priv58), key1);
             assertEquals(DeterministicKey.deserializeB58(null, pub58).getPubKeyPoint(), key1.getPubKeyPoint());
+            assertEquals(DeterministicKey.deserialize(null, priv), key1);
+            assertEquals(DeterministicKey.deserialize(null, pub).getPubKeyPoint(), key1.getPubKeyPoint());
         }
         {
             final String pub58 = key2.serializePubB58();
             final String priv58 = key2.serializePrivB58();
+            final byte[] pub = key2.serializePublic();
+            final byte[] priv = key2.serializePrivate();
             assertEquals(DeterministicKey.deserializeB58(key1, priv58), key2);
             assertEquals(DeterministicKey.deserializeB58(key1, pub58).getPubKeyPoint(), key2.getPubKeyPoint());
+            assertEquals(DeterministicKey.deserialize(key1, priv), key2);
+            assertEquals(DeterministicKey.deserialize(key1, pub).getPubKeyPoint(), key2.getPubKeyPoint());
         }
     }
 
