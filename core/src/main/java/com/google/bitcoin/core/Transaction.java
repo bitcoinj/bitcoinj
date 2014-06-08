@@ -108,8 +108,10 @@ public class Transaction extends ChildMessage implements Serializable {
     // list of transactions from a wallet, which is helpful for presenting to users.
     private Date updatedAt;
 
-    // This is an in memory helper only.
-    private transient Sha256Hash hash;
+    // This is a hash forced by constructor. If set, the hash will not be derived any more.
+    private final Sha256Hash hash;
+    // This is the cached derived hash.
+    private transient Sha256Hash derivedHash;
 
     // Data about how confirmed this tx is. Serialized, may be null. 
     private TransactionConfidence confidence;
@@ -154,8 +156,13 @@ public class Transaction extends ChildMessage implements Serializable {
         outputs = new ArrayList<TransactionOutput>();
         // We don't initialize appearsIn deliberately as it's only useful for transactions stored in the wallet.
         length = 8; // 8 for std fields
+        this.hash = null;
     }
 
+    /**
+     * Creates a transaction using a fixed hash. It will not change even if the value of any of the other fields
+     * changes. This is useful to construct an incomplete wallet from an unspent-output-API.
+     */
     public Transaction(NetworkParameters params, int version, Sha256Hash hash) {
         super(params);
         this.version = version & ((1L<<32) - 1); // this field is unsigned - remove any sign extension
@@ -169,8 +176,8 @@ public class Transaction extends ChildMessage implements Serializable {
     /**
      * Creates a transaction from the given serialized bytes, eg, from a block or a tx network message.
      */
-    public Transaction(NetworkParameters params, byte[] payloadBytes) throws ProtocolException {
-        super(params, payloadBytes, 0);
+    public Transaction(NetworkParameters params, byte[] payload) throws ProtocolException {
+        this(params, payload, 0);
     }
 
     /**
@@ -178,6 +185,7 @@ public class Transaction extends ChildMessage implements Serializable {
      */
     public Transaction(NetworkParameters params, byte[] payload, int offset) throws ProtocolException {
         super(params, payload, offset);
+        this.hash = null;
         // inputs/outputs will be created in parse()
     }
 
@@ -197,6 +205,7 @@ public class Transaction extends ChildMessage implements Serializable {
     public Transaction(NetworkParameters params, byte[] payload, int offset, @Nullable Message parent, boolean parseLazy, boolean parseRetain, int length)
             throws ProtocolException {
         super(params, payload, offset, parent, parseLazy, parseRetain, length);
+        this.hash = null;
     }
 
     /**
@@ -204,7 +213,7 @@ public class Transaction extends ChildMessage implements Serializable {
      */
     public Transaction(NetworkParameters params, byte[] payload, @Nullable Message parent, boolean parseLazy, boolean parseRetain, int length)
             throws ProtocolException {
-        super(params, payload, 0, parent, parseLazy, parseRetain, length);
+        this(params, payload, 0, parent, parseLazy, parseRetain, length);
     }
 
     /**
@@ -212,11 +221,13 @@ public class Transaction extends ChildMessage implements Serializable {
      */
     @Override
     public Sha256Hash getHash() {
-        if (hash == null) {
+        if (hash != null)
+            return hash;
+        if (derivedHash == null) {
             byte[] bits = bitcoinSerialize();
-            hash = new Sha256Hash(reverseBytes(doubleDigest(bits)));
+            derivedHash = new Sha256Hash(reverseBytes(doubleDigest(bits)));
         }
-        return hash;
+        return derivedHash;
     }
 
     /**
@@ -226,7 +237,7 @@ public class Transaction extends ChildMessage implements Serializable {
      * No verification is performed on this hash.
      */
     void setHash(Sha256Hash hash) {
-        this.hash = hash;
+        this.derivedHash = hash;
     }
 
     public String getHashAsString() {
@@ -476,7 +487,7 @@ public class Transaction extends ChildMessage implements Serializable {
     @Override
     protected void unCache() {
         super.unCache();
-        hash = null;
+        derivedHash = null;
     }
 
     @Override
