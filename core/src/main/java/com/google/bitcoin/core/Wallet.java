@@ -1209,7 +1209,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
 
     /**
      * <p>Returns true if the given transaction sends coins to any of our keys, or has inputs spending any of our outputs,
-     * and if includeDoubleSpending is true, also returns true if tx has inputs that are spending outputs which are
+     * and also returns true if tx has inputs that are spending outputs which are
      * not ours but which are spent by pending transactions.</p>
      *
      * <p>Note that if the tx has inputs containing one of our keys, but the connected transaction is not in the wallet,
