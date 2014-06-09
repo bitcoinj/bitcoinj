@@ -1229,7 +1229,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
 
     /**
      * Checks if "tx" is spending any inputs of pending transactions. Not a general check, but it can work even if
-     * the double spent inputs are not ours. Returns the pending tx that was double spent or null if none found.
+     * the double spent inputs are not ours.
      */
     private boolean checkForDoubleSpendAgainstPending(Transaction tx, boolean takeAction) {
         checkState(lock.isHeldByCurrentThread());
