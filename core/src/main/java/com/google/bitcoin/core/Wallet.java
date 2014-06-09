@@ -1036,7 +1036,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
     
     /**
      * Called by the {@link BlockChain} when we receive a new filtered block that contains a transactions previously
-     * received by a call to @{link receivePending}.<p>
+     * received by a call to {@link #receivePending}.<p>
      *
      * This is necessary for the internal book-keeping Wallet does. When a transaction is received that sends us
      * coins it is added to a pool so we can use it later to create spends. When a transaction is received that
