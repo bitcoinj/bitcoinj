@@ -156,16 +156,6 @@ public class Transaction extends ChildMessage implements Serializable {
         length = 8; // 8 for std fields
     }
 
-    public Transaction(NetworkParameters params, int version, Sha256Hash hash) {
-        super(params);
-        this.version = version & ((1L<<32) - 1); // this field is unsigned - remove any sign extension
-        inputs = new ArrayList<TransactionInput>();
-        outputs = new ArrayList<TransactionOutput>();
-        this.hash = hash;
-        // We don't initialize appearsIn deliberately as it's only useful for transactions stored in the wallet.
-        length = 8; //8 for std fields
-    }
-
     /**
      * Creates a transaction from the given serialized bytes, eg, from a block or a tx network message.
      */
