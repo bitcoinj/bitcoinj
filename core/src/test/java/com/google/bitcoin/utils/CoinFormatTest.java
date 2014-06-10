@@ -17,6 +17,7 @@
 package com.google.bitcoin.utils;
 
 import static com.google.bitcoin.core.Coin.COIN;
+import static com.google.bitcoin.core.Coin.CENT;
 import static com.google.bitcoin.core.Coin.SATOSHI;
 import static com.google.bitcoin.core.Coin.ZERO;
 import static org.junit.Assert.assertEquals;
@@ -177,6 +178,26 @@ public class CoinFormatTest {
     private String format(Coin coin, int shift, int minDecimals, int... decimalGroups) {
         return new CoinFormat().shift(shift).minDecimals(minDecimals).optionalDecimals(decimalGroups).format(coin)
                 .toString();
+    }
+
+    @Test
+    public void repeatOptionalDecimals() {
+        assertEquals("0.00000001", formatRepeat(SATOSHI, 2, 4));
+        assertEquals("0.00000010", formatRepeat(SATOSHI.multiply(10), 2, 4));
+        assertEquals("0.01", formatRepeat(CENT, 2, 4));
+        assertEquals("0.10", formatRepeat(CENT.multiply(10), 2, 4));
+
+        assertEquals("0", formatRepeat(SATOSHI, 2, 2));
+        assertEquals("0", formatRepeat(SATOSHI.multiply(10), 2, 2));
+        assertEquals("0.01", formatRepeat(CENT, 2, 2));
+        assertEquals("0.10", formatRepeat(CENT.multiply(10), 2, 2));
+
+        assertEquals("0", formatRepeat(CENT, 2, 0));
+        assertEquals("0", formatRepeat(CENT.multiply(10), 2, 0));
+    }
+
+    private String formatRepeat(Coin coin, int decimals, int repetitions) {
+        return new CoinFormat().minDecimals(0).repeatOptionalDecimals(decimals, repetitions).format(coin).toString();
     }
 
     @Test
