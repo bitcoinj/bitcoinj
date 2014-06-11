@@ -524,12 +524,17 @@ public class BasicKeyChain implements EncryptableKeyChain {
 
     @Override
     public BloomFilter getFilter(int size, double falsePositiveRate, long tweak) {
-        BloomFilter filter = new BloomFilter(size, falsePositiveRate, tweak);
-        for (ECKey key : hashToKeys.values()) {
-            filter.insert(key.getPubKey());
-            filter.insert(key.getPubKeyHash());
+        lock.lock();
+        try {
+            BloomFilter filter = new BloomFilter(size, falsePositiveRate, tweak);
+            for (ECKey key : hashToKeys.values()) {
+                filter.insert(key.getPubKey());
+                filter.insert(key.getPubKeyHash());
+            }
+            return filter;
+        } finally {
+            lock.unlock();
         }
-        return filter;
     }
 
     @Override
