@@ -347,7 +347,7 @@ public class DeterministicKey extends ECKey {
 
     public static DeterministicKey deserializeB58(@Nullable DeterministicKey parent, String base58) {
         try {
-	return deserialize(parent, Base58.decodeChecked(base58));
+	    return deserialize(parent, Base58.decodeChecked(base58));
         } catch (AddressFormatException e) {
             throw new IllegalArgumentException(e);
         }
