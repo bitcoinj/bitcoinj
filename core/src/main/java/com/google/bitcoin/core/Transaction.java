@@ -61,7 +61,9 @@ public class Transaction extends ChildMessage implements Serializable {
         public int compare(final Transaction tx1, final Transaction tx2) {
             final long time1 = tx1.getUpdateTime().getTime();
             final long time2 = tx2.getUpdateTime().getTime();
-            return -(Longs.compare(time1, time2));
+            final int updateTimeComparison = -(Longs.compare(time1, time2));
+            //If time1==time2, compare by tx hash to make comparator consistent with equals
+            return updateTimeComparison != 0 ? updateTimeComparison : tx1.getHash().compareTo(tx2.getHash());
         }
     };
     /** A comparator that can be used to sort transactions by their chain height. */
@@ -70,7 +72,9 @@ public class Transaction extends ChildMessage implements Serializable {
         public int compare(final Transaction tx1, final Transaction tx2) {
             final int height1 = tx1.getConfidence().getAppearedAtChainHeight();
             final int height2 = tx2.getConfidence().getAppearedAtChainHeight();
-            return -(Ints.compare(height1, height2));
+            final int heightComparison = -(Ints.compare(height1, height2));
+            //If height1==height2, compare by tx hash to make comparator consistent with equals
+            return heightComparison != 0 ? heightComparison : tx1.getHash().compareTo(tx2.getHash());            
         }
     };
     private static final Logger log = LoggerFactory.getLogger(Transaction.class);
