@@ -468,19 +468,25 @@ public class KeyChainGroup {
 
     private static EnumMap<KeyChain.KeyPurpose, DeterministicKey> createCurrentKeysMap(List<DeterministicKeyChain> chains) {
         DeterministicKeyChain activeChain = chains.get(chains.size() - 1);
-        DeterministicKey currentExternalKey = activeChain.getKeyByPath(
-                ImmutableList.of(ChildNumber.ZERO_HARDENED, ChildNumber.ZERO, new ChildNumber(activeChain.getIssuedExternalKeys() - 1))
-        );
-        DeterministicKey currentInternalKey = activeChain.getKeyByPath(
-                ImmutableList.of(ChildNumber.ZERO_HARDENED, new ChildNumber(1), new ChildNumber(activeChain.getIssuedInternalKeys() - 1))
-        );
 
         EnumMap<KeyChain.KeyPurpose, DeterministicKey> currentKeys = new EnumMap<KeyChain.KeyPurpose, DeterministicKey>(KeyChain.KeyPurpose.class);
+
         // assuming that only RECEIVE and CHANGE keys are being used at the moment, we will treat latest issued external key
         // as current RECEIVE key and latest issued internal key as CHANGE key. This should be changed as soon as other
         // kinds of KeyPurpose are introduced.
-        currentKeys.put(KeyChain.KeyPurpose.RECEIVE_FUNDS, currentExternalKey);
-        currentKeys.put(KeyChain.KeyPurpose.CHANGE, currentInternalKey);
+        if (activeChain.getIssuedExternalKeys() > 0) {
+            DeterministicKey currentExternalKey = activeChain.getKeyByPath(
+                    ImmutableList.of(ChildNumber.ZERO_HARDENED, ChildNumber.ZERO, new ChildNumber(activeChain.getIssuedExternalKeys() - 1))
+            );
+            currentKeys.put(KeyChain.KeyPurpose.RECEIVE_FUNDS, currentExternalKey);
+        }
+
+        if (activeChain.getIssuedInternalKeys() > 0) {
+            DeterministicKey currentInternalKey = activeChain.getKeyByPath(
+                    ImmutableList.of(ChildNumber.ZERO_HARDENED, new ChildNumber(1), new ChildNumber(activeChain.getIssuedInternalKeys() - 1))
+            );
+            currentKeys.put(KeyChain.KeyPurpose.CHANGE, currentInternalKey);
+        }
         return currentKeys;
     }
 
