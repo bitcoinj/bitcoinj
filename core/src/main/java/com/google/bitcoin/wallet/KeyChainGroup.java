@@ -446,10 +446,12 @@ public class KeyChainGroup {
     public static KeyChainGroup fromProtobufUnencrypted(List<Protos.Key> keys) throws UnreadableWalletException {
         BasicKeyChain basicKeyChain = BasicKeyChain.fromProtobufUnencrypted(keys);
         List<DeterministicKeyChain> chains = DeterministicKeyChain.fromProtobuf(keys, null);
-        EnumMap<KeyChain.KeyPurpose, DeterministicKey> currentKeys = createCurrentKeysMap(chains);
+        EnumMap<KeyChain.KeyPurpose, DeterministicKey> currentKeys = null;
 
         if (chains.isEmpty()) {
             // TODO: Old bag-of-keys style wallet only! Auto-upgrade time!
+        } else {
+            currentKeys = createCurrentKeysMap(chains);
         }
         return new KeyChainGroup(basicKeyChain, chains, currentKeys, null);
     }
@@ -458,10 +460,12 @@ public class KeyChainGroup {
         checkNotNull(crypter);
         BasicKeyChain basicKeyChain = BasicKeyChain.fromProtobufEncrypted(keys, crypter);
         List<DeterministicKeyChain> chains = DeterministicKeyChain.fromProtobuf(keys, crypter);
-        EnumMap<KeyChain.KeyPurpose, DeterministicKey> currentKeys = createCurrentKeysMap(chains);
+        EnumMap<KeyChain.KeyPurpose, DeterministicKey> currentKeys = null;
 
         if (chains.isEmpty()) {
             // TODO: Old bag-of-keys style wallet only! Auto-upgrade time!
+        } else {
+            currentKeys = createCurrentKeysMap(chains);
         }
         return new KeyChainGroup(basicKeyChain, chains, currentKeys, crypter);
     }
