@@ -347,51 +347,55 @@ public class DeterministicKey extends ECKey {
 
     public static DeterministicKey deserializeB58(@Nullable DeterministicKey parent, String base58) {
         try {
-            ByteBuffer buffer = ByteBuffer.wrap(Base58.decodeChecked(base58));
-            int header = buffer.getInt();
-            if (header != HEADER_PRIV && header != HEADER_PUB)
-                throw new IllegalArgumentException("Unknown header bytes: " + base58.substring(0, 4));
-            boolean pub = header == HEADER_PUB;
-            byte depth = buffer.get();
-            byte[] parentFingerprint = new byte[4];
-            buffer.get(parentFingerprint);
-            final int i = buffer.getInt();
-            final ChildNumber childNumber = new ChildNumber(i);
-            ImmutableList<ChildNumber> path;
-            if (parent != null) {
-                if (Arrays.equals(parentFingerprint, HDUtils.longTo4ByteArray(0)))
-                    throw new IllegalArgumentException("Parent was provided but this key doesn't have one");
-                if (!Arrays.equals(parent.getFingerprint(), parentFingerprint))
-                    throw new IllegalArgumentException("Parent fingerprints don't match");
-                path = HDUtils.append(parent.getPath(), childNumber);
-                if (path.size() != depth)
-                    throw new IllegalArgumentException("Depth does not match");
-            } else {
-                if (depth == 0) {
-                    path = ImmutableList.of();
-                } else if (depth == 1) {
-                    // We have been given a key that is not a root key, yet we also don't have any object representing
-                    // the parent. This can happen when deserializing an account key for a watching wallet. In this case,
-                    // we assume that the parent has a path of zero.
-                    path = ImmutableList.of(childNumber);
-                } else {
-                    throw new IllegalArgumentException("Depth is " + depth + " and no parent key was provided, so we " +
-                        "cannot reconstruct the key path from the provided data.");
-                }
-            }
-            byte[] chainCode = new byte[32];
-            buffer.get(chainCode);
-            byte[] data = new byte[33];
-            buffer.get(data);
-            checkArgument(!buffer.hasRemaining(), "Found unexpected data in key");
-            if (pub) {
-                ECPoint point = ECKey.CURVE.getCurve().decodePoint(data);
-                return new DeterministicKey(path, chainCode, point, null, parent);
-            } else {
-                return new DeterministicKey(path, chainCode, new BigInteger(1, data), parent);
-            }
+            return deserialize(parent, Base58.decodeChecked(base58));
         } catch (AddressFormatException e) {
             throw new IllegalArgumentException(e);
+        }
+    }
+
+    public static DeterministicKey deserialize(@Nullable DeterministicKey parent, byte[] serializedKey) {
+        ByteBuffer buffer = ByteBuffer.wrap(serializedKey);
+        int header = buffer.getInt();
+        if (header != HEADER_PRIV && header != HEADER_PUB)
+            throw new IllegalArgumentException("Unknown header bytes: " + toBase58(serializedKey).substring(0, 4));
+        boolean pub = header == HEADER_PUB;
+        byte depth = buffer.get();
+        byte[] parentFingerprint = new byte[4];
+        buffer.get(parentFingerprint);
+        final int i = buffer.getInt();
+        final ChildNumber childNumber = new ChildNumber(i);
+        ImmutableList<ChildNumber> path;
+        if (parent != null) {
+            if (Arrays.equals(parentFingerprint, HDUtils.longTo4ByteArray(0)))
+                throw new IllegalArgumentException("Parent was provided but this key doesn't have one");
+            if (!Arrays.equals(parent.getFingerprint(), parentFingerprint))
+                throw new IllegalArgumentException("Parent fingerprints don't match");
+            path = HDUtils.append(parent.getPath(), childNumber);
+            if (path.size() != depth)
+                throw new IllegalArgumentException("Depth does not match");
+        } else {
+            if (depth == 0) {
+                path = ImmutableList.of();
+            } else if (depth == 1) {
+                // We have been given a key that is not a root key, yet we also don't have any object representing
+                // the parent. This can happen when deserializing an account key for a watching wallet. In this case,
+                // we assume that the parent has a path of zero.
+                path = ImmutableList.of(childNumber);
+            } else {
+                throw new IllegalArgumentException("Depth is " + depth + " and no parent key was provided, so we " +
+                                                   "cannot reconstruct the key path from the provided data.");
+            }
+        }
+        byte[] chainCode = new byte[32];
+        buffer.get(chainCode);
+        byte[] data = new byte[33];
+        buffer.get(data);
+        checkArgument(!buffer.hasRemaining(), "Found unexpected data in key");
+        if (pub) {
+            ECPoint point = ECKey.CURVE.getCurve().decodePoint(data);
+            return new DeterministicKey(path, chainCode, point, null, parent);
+        } else {
+            return new DeterministicKey(path, chainCode, new BigInteger(1, data), parent);
         }
     }
 
