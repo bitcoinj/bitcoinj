@@ -284,6 +284,7 @@ public class KeyChainGroupTest {
     @Test
     public void serialization() throws Exception {
         assertEquals(INITIAL_KEYS + 1 /* for the seed */, group.serializeToProtobuf().size());
+        group = KeyChainGroup.fromProtobufUnencrypted(group.serializeToProtobuf());
         group.freshKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         DeterministicKey key1 = group.freshKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         DeterministicKey key2 = group.freshKey(KeyChain.KeyPurpose.CHANGE);
