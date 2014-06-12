@@ -852,7 +852,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         }
     }
 
-    /** Returns the seed or null if this chain is encrypted or watching. */
+    /** Returns the seed or null if this chain is a watching chain. */
     @Nullable
     public DeterministicSeed getSeed() {
         lock.lock();

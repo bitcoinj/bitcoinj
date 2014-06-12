@@ -2378,4 +2378,41 @@ public class WalletTest extends TestWithWallet {
         wallet.freshReceiveKey();
         assertEquals(6, keys.size());
     }
+
+    @Test
+    public void upgradeToHDUnencrypted() throws Exception {
+        // This isn't very deep because most of it is tested in KeyChainGroupTest and Wallet just forwards most logic
+        // there. We're mostly concerned with the slightly different auto upgrade logic: KeyChainGroup won't do an
+        // on-demand auto upgrade of the wallet to HD even in the unencrypted case, because the key rotation time is
+        // a property of the Wallet, not the KeyChainGroup (it should perhaps be moved at some point - it doesn't matter
+        // much where it goes). Wallet on the other hand will try to auto-upgrade you when possible.
+
+        // Create an old-style random wallet.
+        wallet = new Wallet(params);
+        wallet.importKey(new ECKey());
+        wallet.importKey(new ECKey());
+        assertTrue(wallet.isDeterministicUpgradeRequired());
+        // Use an HD feature.
+        wallet.freshReceiveKey();
+        assertFalse(wallet.isDeterministicUpgradeRequired());
+    }
+
+    public void upgradeToHDEncrypted() throws Exception {
+        // Create an old-style random wallet.
+        wallet = new Wallet(params);
+        wallet.importKey(new ECKey());
+        wallet.importKey(new ECKey());
+        assertTrue(wallet.isDeterministicUpgradeRequired());
+        KeyCrypter crypter = new KeyCrypterScrypt();
+        KeyParameter aesKey = crypter.deriveKey("abc");
+        wallet.encrypt(crypter, aesKey);
+        try {
+            wallet.freshReceiveKey();
+        } catch (DeterministicUpgradeRequiredException e) {
+            // Expected.
+        }
+        wallet.upgradeToDeterministic(aesKey);
+        assertFalse(wallet.isDeterministicUpgradeRequired());
+        wallet.freshReceiveKey();  // works.
+    }
 }

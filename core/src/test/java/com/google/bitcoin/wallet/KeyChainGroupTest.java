@@ -30,12 +30,14 @@ import org.bitcoinj.wallet.Protos;
 import org.junit.Before;
 import org.junit.Test;
 import org.spongycastle.crypto.params.KeyParameter;
+import org.spongycastle.util.Arrays;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.junit.Assert.*;
+import static org.junit.Assert.assertArrayEquals;
 
 public class KeyChainGroupTest {
     // Number of initial keys in this tests HD wallet, including interior keys.
@@ -325,5 +327,90 @@ public class KeyChainGroupTest {
         group2.setLookaheadSize(5);
         ECKey key2 = group2.freshKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         assertEquals(key1, key2);
+    }
+
+    @Test(expected = DeterministicUpgradeRequiredException.class)
+    public void deterministicUpgradeRequired() throws Exception {
+        // Check that if we try to use HD features in a KCG that only has random keys, we get an exception.
+        group = new KeyChainGroup();
+        group.importKeys(new ECKey(), new ECKey());
+        assertTrue(group.isDeterministicUpgradeRequired());
+        group.freshKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);   // throws
+    }
+
+    @Test
+    public void deterministicUpgradeUnencrypted() throws Exception {
+        // Check that a group that contains only random keys has its HD chain created using the private key bytes of
+        // the oldest random key, so upgrading the same wallet twice gives the same outcome.
+        group = new KeyChainGroup();
+        group.setLookaheadSize(LOOKAHEAD_SIZE);   // Don't want slow tests.
+        ECKey key1 = new ECKey();
+        Utils.rollMockClock(86400);
+        ECKey key2 = new ECKey();
+        group.importKeys(key2, key1);
+
+        List<Protos.Key> protobufs = group.serializeToProtobuf();
+        group.upgradeToDeterministic(0, null);
+        assertFalse(group.isDeterministicUpgradeRequired());
+        DeterministicKey dkey1 = group.freshKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
+        DeterministicSeed seed1 = group.getActiveKeyChain().getSeed();
+        assertNotNull(seed1);
+
+        group = KeyChainGroup.fromProtobufUnencrypted(protobufs);
+        group.upgradeToDeterministic(0, null);  // Should give same result as last time.
+        DeterministicKey dkey2 = group.freshKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
+        DeterministicSeed seed2 = group.getActiveKeyChain().getSeed();
+        assertEquals(seed1, seed2);
+        assertEquals(dkey1, dkey2);
+
+        // Check we used the right (oldest) key despite backwards import order.
+        byte[] truncatedBytes = Arrays.copyOfRange(key1.getSecretBytes(), 0, 16);
+        assertArrayEquals(seed1.getSecretBytes(), truncatedBytes);
+    }
+
+    @Test
+    public void deterministicUpgradeRotating() throws Exception {
+        group = new KeyChainGroup();
+        group.setLookaheadSize(LOOKAHEAD_SIZE);   // Don't want slow tests.
+        long now = Utils.currentTimeSeconds();
+        ECKey key1 = new ECKey();
+        Utils.rollMockClock(86400);
+        ECKey key2 = new ECKey();
+        Utils.rollMockClock(86400);
+        ECKey key3 = new ECKey();
+        group.importKeys(key2, key1, key3);
+        group.upgradeToDeterministic(now + 10, null);
+        DeterministicSeed seed = group.getActiveKeyChain().getSeed();
+        assertNotNull(seed);
+        // Check we used the right key: oldest non rotating.
+        byte[] truncatedBytes = Arrays.copyOfRange(key2.getSecretBytes(), 0, 16);
+        assertArrayEquals(seed.getSecretBytes(), truncatedBytes);
+    }
+
+    @Test
+    public void deterministicUpgradeEncrypted() throws Exception {
+        group = new KeyChainGroup();
+        final ECKey key = new ECKey();
+        group.importKeys(key);
+        final KeyCrypterScrypt crypter = new KeyCrypterScrypt();
+        final KeyParameter aesKey = crypter.deriveKey("abc");
+        assertTrue(group.isDeterministicUpgradeRequired());
+        group.encrypt(crypter, aesKey);
+        assertTrue(group.isDeterministicUpgradeRequired());
+        try {
+            group.upgradeToDeterministic(0, null);
+            fail();
+        } catch (DeterministicUpgradeRequiresPassword e) {
+            // Expected.
+        }
+        group.upgradeToDeterministic(0, aesKey);
+        assertFalse(group.isDeterministicUpgradeRequired());
+        final DeterministicSeed deterministicSeed = group.getActiveKeyChain().getSeed();
+        assertNotNull(deterministicSeed);
+        assertTrue(deterministicSeed.isEncrypted());
+        byte[] seed = checkNotNull(group.getActiveKeyChain().toDecrypted(aesKey).getSeed()).getSecretBytes();
+        // Check we used the right key: oldest non rotating.
+        byte[] truncatedBytes = Arrays.copyOfRange(key.getSecretBytes(), 0, 16);
+        assertArrayEquals(seed, truncatedBytes);
     }
 }

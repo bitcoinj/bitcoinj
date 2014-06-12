@@ -343,7 +343,20 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
     public List<DeterministicKey> freshKeys(KeyChain.KeyPurpose purpose, int numberOfKeys) {
         lock.lock();
         try {
-            List<DeterministicKey> keys = keychain.freshKeys(purpose, numberOfKeys);
+            List<DeterministicKey> keys;
+            try {
+                keys = keychain.freshKeys(purpose, numberOfKeys);
+            } catch (DeterministicUpgradeRequiredException e) {
+                log.info("Attempt to request a fresh HD key on a non-upgraded wallet, trying to upgrade ...");
+                try {
+                    upgradeToDeterministic(null);
+                    keys = keychain.freshKeys(purpose, numberOfKeys);
+                } catch (DeterministicUpgradeRequiresPassword e2) {
+                    // Nope, can't do it. Rethrow the original exception.
+                    log.error("Failed to auto upgrade because wallet is encrypted, giving up. You should call wallet.upgradeToDeterministic yourself to avoid this situation.");
+                    throw e;
+                }
+            }
             // Do we really need an immediate hard save? Arguably all this is doing is saving the 'current' key
             // and that's not quite so important, so we could coalesce for more performance.
             saveNow();
@@ -381,6 +394,37 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
      */
     public Address freshReceiveAddress() {
         return freshAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
+    }
+
+
+    /**
+     * Upgrades the wallet to be deterministic (BIP32). You should call this, possibly providing the users encryption
+     * key, after loading a wallet produced by previous versions of bitcoinj. If the wallet is encrypted the key
+     * <b>must</b> be provided, due to the way the seed is derived deterministically from private key bytes: failing
+     * to do this will result in an exception being thrown. For non-encrypted wallets, the upgrade will be done for
+     * you automatically the first time a new key is requested (this happens when spending due to the change address).
+     */
+    public void upgradeToDeterministic(@Nullable KeyParameter aesKey) throws DeterministicUpgradeRequiresPassword {
+        lock.lock();
+        try {
+            keychain.upgradeToDeterministic(vKeyRotationEnabled ? vKeyRotationTimestamp : 0, aesKey);
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
+     * Returns true if the wallet contains random keys and no HD chains, in which case you should call
+     * {@link #upgradeToDeterministic(org.spongycastle.crypto.params.KeyParameter)} before attempting to do anything
+     * that would require a new address or key.
+     */
+    public boolean isDeterministicUpgradeRequired() {
+        lock.lock();
+        try {
+            return keychain.isDeterministicUpgradeRequired();
+        } finally {
+            lock.unlock();
+        }
     }
 
     /**

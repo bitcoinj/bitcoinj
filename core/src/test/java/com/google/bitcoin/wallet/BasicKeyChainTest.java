@@ -253,4 +253,19 @@ public class BasicKeyChainTest {
         ECKey key3 = new ECKey();
         assertFalse(filter.contains(key3.getPubKey()));
     }
+
+    @Test
+    public void oldestKeyAfter() throws Exception {
+        Utils.setMockClock();
+        long now = Utils.currentTimeSeconds();
+        final ECKey key1 = new ECKey();
+        Utils.rollMockClock(86400);
+        final ECKey key2 = new ECKey();
+        final ArrayList<ECKey> keys = Lists.newArrayList(key1, key2);
+        assertEquals(2, chain.importKeys(keys));
+
+        assertNull(chain.findOldestKeyAfter(now + 86400 * 2));
+        assertEquals(key1, chain.findOldestKeyAfter(now - 1));
+        assertEquals(key2, chain.findOldestKeyAfter(now + 86400 - 1));
+    }
 }
