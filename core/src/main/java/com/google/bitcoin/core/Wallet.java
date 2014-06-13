@@ -3591,7 +3591,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
     //
     // Fee calculation code.
 
-    private class FeeCalculation {
+    public class FeeCalculation {
         private CoinSelection bestCoinSelection;
         private TransactionOutput bestChangeOutput;
 
