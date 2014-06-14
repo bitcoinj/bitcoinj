@@ -18,6 +18,7 @@
 package com.google.bitcoin.wallet;
 
 import com.google.bitcoin.core.*;
+import com.google.bitcoin.crypto.ChildNumber;
 import com.google.bitcoin.crypto.DeterministicKey;
 import com.google.bitcoin.crypto.KeyCrypter;
 import com.google.bitcoin.store.UnreadableWalletException;
@@ -62,12 +63,12 @@ public class KeyChainGroup {
 
     /** Creates a keychain group with no basic chain, and a single randomly initialized HD chain. */
     public KeyChainGroup() {
-        this(null, new ArrayList<DeterministicKeyChain>(1), null);
+        this(null, new ArrayList<DeterministicKeyChain>(1), null, null);
     }
 
     /** Creates a keychain group with no basic chain, and an HD chain initialized from the given seed. */
     public KeyChainGroup(DeterministicSeed seed) {
-        this(null, ImmutableList.of(new DeterministicKeyChain(seed)), null);
+        this(null, ImmutableList.of(new DeterministicKeyChain(seed)), null, null);
     }
 
     /**
@@ -75,7 +76,7 @@ public class KeyChainGroup {
      * This HAS to be an account key as returned by {@link DeterministicKeyChain#getWatchingKey()}.
      */
     public KeyChainGroup(DeterministicKey watchKey) {
-        this(null, ImmutableList.of(DeterministicKeyChain.watch(watchKey)), null);
+        this(null, ImmutableList.of(DeterministicKeyChain.watch(watchKey)), null, null);
     }
 
     /**
@@ -84,15 +85,17 @@ public class KeyChainGroup {
      * This HAS to be an account key as returned by {@link DeterministicKeyChain#getWatchingKey()}.
      */
     public KeyChainGroup(DeterministicKey watchKey, long creationTimeSecondsSecs) {
-        this(null, ImmutableList.of(DeterministicKeyChain.watch(watchKey, creationTimeSecondsSecs)), null);
+        this(null, ImmutableList.of(DeterministicKeyChain.watch(watchKey, creationTimeSecondsSecs)), null, null);
     }
 
     // Used for deserialization.
-    private KeyChainGroup(@Nullable BasicKeyChain basicKeyChain, List<DeterministicKeyChain> chains, @Nullable KeyCrypter crypter) {
+    private KeyChainGroup(@Nullable BasicKeyChain basicKeyChain, List<DeterministicKeyChain> chains, @Nullable EnumMap<KeyChain.KeyPurpose, DeterministicKey> currentKeys, @Nullable KeyCrypter crypter) {
         this.basic = basicKeyChain == null ? new BasicKeyChain() : basicKeyChain;
         this.chains = new ArrayList<DeterministicKeyChain>(checkNotNull(chains));
         this.keyCrypter = crypter;
-        this.currentKeys = new EnumMap<KeyChain.KeyPurpose, DeterministicKey>(KeyChain.KeyPurpose.class);
+        this.currentKeys = currentKeys == null
+                ? new EnumMap<KeyChain.KeyPurpose, DeterministicKey>(KeyChain.KeyPurpose.class)
+                : currentKeys;
     }
 
     private void createAndActivateNewHDChain() {
@@ -443,20 +446,52 @@ public class KeyChainGroup {
     public static KeyChainGroup fromProtobufUnencrypted(List<Protos.Key> keys) throws UnreadableWalletException {
         BasicKeyChain basicKeyChain = BasicKeyChain.fromProtobufUnencrypted(keys);
         List<DeterministicKeyChain> chains = DeterministicKeyChain.fromProtobuf(keys, null);
+        EnumMap<KeyChain.KeyPurpose, DeterministicKey> currentKeys = null;
+
         if (chains.isEmpty()) {
             // TODO: Old bag-of-keys style wallet only! Auto-upgrade time!
+        } else {
+            currentKeys = createCurrentKeysMap(chains);
         }
-        return new KeyChainGroup(basicKeyChain, chains, null);
+        return new KeyChainGroup(basicKeyChain, chains, currentKeys, null);
     }
 
     public static KeyChainGroup fromProtobufEncrypted(List<Protos.Key> keys, KeyCrypter crypter) throws UnreadableWalletException {
         checkNotNull(crypter);
         BasicKeyChain basicKeyChain = BasicKeyChain.fromProtobufEncrypted(keys, crypter);
         List<DeterministicKeyChain> chains = DeterministicKeyChain.fromProtobuf(keys, crypter);
+        EnumMap<KeyChain.KeyPurpose, DeterministicKey> currentKeys = null;
+
         if (chains.isEmpty()) {
             // TODO: Old bag-of-keys style wallet only! Auto-upgrade time!
+        } else {
+            currentKeys = createCurrentKeysMap(chains);
         }
-        return new KeyChainGroup(basicKeyChain, chains, crypter);
+        return new KeyChainGroup(basicKeyChain, chains, currentKeys, crypter);
+    }
+
+    private static EnumMap<KeyChain.KeyPurpose, DeterministicKey> createCurrentKeysMap(List<DeterministicKeyChain> chains) {
+        DeterministicKeyChain activeChain = chains.get(chains.size() - 1);
+
+        EnumMap<KeyChain.KeyPurpose, DeterministicKey> currentKeys = new EnumMap<KeyChain.KeyPurpose, DeterministicKey>(KeyChain.KeyPurpose.class);
+
+        // assuming that only RECEIVE and CHANGE keys are being used at the moment, we will treat latest issued external key
+        // as current RECEIVE key and latest issued internal key as CHANGE key. This should be changed as soon as other
+        // kinds of KeyPurpose are introduced.
+        if (activeChain.getIssuedExternalKeys() > 0) {
+            DeterministicKey currentExternalKey = activeChain.getKeyByPath(
+                    ImmutableList.of(ChildNumber.ZERO_HARDENED, ChildNumber.ZERO, new ChildNumber(activeChain.getIssuedExternalKeys() - 1))
+            );
+            currentKeys.put(KeyChain.KeyPurpose.RECEIVE_FUNDS, currentExternalKey);
+        }
+
+        if (activeChain.getIssuedInternalKeys() > 0) {
+            DeterministicKey currentInternalKey = activeChain.getKeyByPath(
+                    ImmutableList.of(ChildNumber.ZERO_HARDENED, new ChildNumber(1), new ChildNumber(activeChain.getIssuedInternalKeys() - 1))
+            );
+            currentKeys.put(KeyChain.KeyPurpose.CHANGE, currentInternalKey);
+        }
+        return currentKeys;
     }
 
     public String toString(@Nullable NetworkParameters params, boolean includePrivateKeys) {

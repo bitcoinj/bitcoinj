@@ -1036,7 +1036,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
     
     /**
      * Called by the {@link BlockChain} when we receive a new filtered block that contains a transactions previously
-     * received by a call to @{link receivePending}.<p>
+     * received by a call to {@link #receivePending}.<p>
      *
      * This is necessary for the internal book-keeping Wallet does. When a transaction is received that sends us
      * coins it is added to a pool so we can use it later to create spends. When a transaction is received that
@@ -1209,7 +1209,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
 
     /**
      * <p>Returns true if the given transaction sends coins to any of our keys, or has inputs spending any of our outputs,
-     * and if includeDoubleSpending is true, also returns true if tx has inputs that are spending outputs which are
+     * and also returns true if tx has inputs that are spending outputs which are
      * not ours but which are spent by pending transactions.</p>
      *
      * <p>Note that if the tx has inputs containing one of our keys, but the connected transaction is not in the wallet,
@@ -1229,7 +1229,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
 
     /**
      * Checks if "tx" is spending any inputs of pending transactions. Not a general check, but it can work even if
-     * the double spent inputs are not ours. Returns the pending tx that was double spent or null if none found.
+     * the double spent inputs are not ours.
      */
     private boolean checkForDoubleSpendAgainstPending(Transaction tx, boolean takeAction) {
         checkState(lock.isHeldByCurrentThread());
@@ -2219,6 +2219,9 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
      * @return either the created Transaction or null if there are insufficient coins.
      * coins as spent until commitTx is called on the result.
      * @throws InsufficientMoneyException if the request could not be completed due to not enough balance.
+     * @throws DustySendRequested if the resultant transaction would violate the dust rules (an output that's too small to be worthwhile)
+     * @throws CouldNotAdjustDownwards if emptying the wallet was requested and the output can't be shrunk for fees without violating a protocol rule.
+     * @throws ExceededMaxTransactionSize if the resultant transaction is too big for Bitcoin to process (try breaking up the amounts of value)
      */
     public Transaction createSend(Address address, Coin value) throws InsufficientMoneyException {
         SendRequest req = SendRequest.to(address, value);
@@ -2236,6 +2239,10 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
      *
      * @return the Transaction that was created
      * @throws InsufficientMoneyException if the request could not be completed due to not enough balance.
+     * @throws IllegalArgumentException if you try and complete the same SendRequest twice
+     * @throws DustySendRequested if the resultant transaction would violate the dust rules (an output that's too small to be worthwhile)
+     * @throws CouldNotAdjustDownwards if emptying the wallet was requested and the output can't be shrunk for fees without violating a protocol rule.
+     * @throws ExceededMaxTransactionSize if the resultant transaction is too big for Bitcoin to process (try breaking up the amounts of value)
      */
     public Transaction sendCoinsOffline(SendRequest request) throws InsufficientMoneyException {
         lock.lock();
@@ -2269,6 +2276,9 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
      * @param value How much value to send.
      * @return An object containing the transaction that was created, and a future for the broadcast of it.
      * @throws InsufficientMoneyException if the request could not be completed due to not enough balance.
+     * @throws DustySendRequested if the resultant transaction would violate the dust rules (an output that's too small to be worthwhile)
+     * @throws CouldNotAdjustDownwards if emptying the wallet was requested and the output can't be shrunk for fees without violating a protocol rule.
+     * @throws ExceededMaxTransactionSize if the resultant transaction is too big for Bitcoin to process (try breaking up the amounts of value)
      */
     public SendResult sendCoins(TransactionBroadcaster broadcaster, Address to, Coin value) throws InsufficientMoneyException {
         SendRequest request = SendRequest.to(to, value);
@@ -2290,6 +2300,10 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
      * @param request the SendRequest that describes what to do, get one using static methods on SendRequest itself.
      * @return An object containing the transaction that was created, and a future for the broadcast of it.
      * @throws InsufficientMoneyException if the request could not be completed due to not enough balance.
+     * @throws IllegalArgumentException if you try and complete the same SendRequest twice
+     * @throws DustySendRequested if the resultant transaction would violate the dust rules (an output that's too small to be worthwhile)
+     * @throws CouldNotAdjustDownwards if emptying the wallet was requested and the output can't be shrunk for fees without violating a protocol rule.
+     * @throws ExceededMaxTransactionSize if the resultant transaction is too big for Bitcoin to process (try breaking up the amounts of value)
      */
     public SendResult sendCoins(TransactionBroadcaster broadcaster, SendRequest request) throws InsufficientMoneyException {
         // Should not be locked here, as we're going to call into the broadcaster and that might want to hold its
@@ -2318,6 +2332,10 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
      * @return An object containing the transaction that was created, and a future for the broadcast of it.
      * @throws IllegalStateException if no transaction broadcaster has been configured.
      * @throws InsufficientMoneyException if the request could not be completed due to not enough balance.
+     * @throws IllegalArgumentException if you try and complete the same SendRequest twice
+     * @throws DustySendRequested if the resultant transaction would violate the dust rules (an output that's too small to be worthwhile)
+     * @throws CouldNotAdjustDownwards if emptying the wallet was requested and the output can't be shrunk for fees without violating a protocol rule.
+     * @throws ExceededMaxTransactionSize if the resultant transaction is too big for Bitcoin to process (try breaking up the amounts of value)
      */
     public SendResult sendCoins(SendRequest request) throws InsufficientMoneyException {
         TransactionBroadcaster broadcaster = vTransactionBroadcaster;
@@ -2333,6 +2351,10 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
      *
      * @return The {@link Transaction} that was created or null if there was insufficient balance to send the coins.
      * @throws InsufficientMoneyException if the request could not be completed due to not enough balance.
+     * @throws IllegalArgumentException if you try and complete the same SendRequest twice
+     * @throws DustySendRequested if the resultant transaction would violate the dust rules (an output that's too small to be worthwhile)
+     * @throws CouldNotAdjustDownwards if emptying the wallet was requested and the output can't be shrunk for fees without violating a protocol rule.
+     * @throws ExceededMaxTransactionSize if the resultant transaction is too big for Bitcoin to process (try breaking up the amounts of value)
      */
     public Transaction sendCoins(Peer peer, SendRequest request) throws InsufficientMoneyException {
         Transaction tx = sendCoinsOffline(request);
@@ -2342,6 +2364,11 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
 
     public static class CompletionException extends RuntimeException {}
     public static class DustySendRequested extends CompletionException {}
+    /**
+     * Thrown when we were trying to empty the wallet, and the total amount of money we were trying to empty after
+     * being reduced for the fee was smaller than the min payment. Note that the missing field will be null in this
+     * case.
+     */
     public static class CouldNotAdjustDownwards extends CompletionException {}
     public static class ExceededMaxTransactionSize extends CompletionException {}
 
