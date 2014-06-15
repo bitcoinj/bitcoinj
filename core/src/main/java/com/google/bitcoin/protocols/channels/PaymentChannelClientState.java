@@ -252,7 +252,7 @@ public class PaymentChannelClientState {
         editContractSendRequest(req);
         req.shuffleOutputs = false;   // TODO: Fix things so shuffling is usable.
         wallet.completeTx(req);
-        Coin multisigFee = req.fee;
+        Coin multisigFee = req.tx.getFee();
         multisigContract = req.tx;
         // Build a refund transaction that protects us in the case of a bad server that's just trying to cause havoc
         // by locking up peoples money (perhaps as a precursor to a ransom attempt). We time lock it so the server
