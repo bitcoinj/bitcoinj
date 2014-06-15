@@ -2160,6 +2160,11 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
         public boolean ensureMinRequiredFee = true;
 
         /**
+         * If true (the default), the inputs will be signed.
+         */
+        public boolean signInputs = true;
+
+        /**
          * The AES key to use to decrypt the private keys before signing.
          * If null then no decryption will be performed and if decryption is required an exception will be thrown.
          * You can get this from a password by doing wallet.getKeyCrypter().deriveKey(password).
@@ -2511,7 +2516,8 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
                 req.tx.shuffleOutputs();
 
             // Now sign the inputs, thus proving that we are entitled to redeem the connected outputs.
-            req.tx.signInputs(Transaction.SigHash.ALL, this, req.aesKey);
+            if (req.signInputs)
+                req.tx.signInputs(Transaction.SigHash.ALL, this, req.aesKey);
 
             // Check size.
             int size = req.tx.bitcoinSerialize().length;
