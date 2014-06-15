@@ -36,6 +36,11 @@ public final class Coin implements Comparable<Coin>, Serializable {
     public static final int NUM_COIN_DECIMALS = 8;
 
     /**
+     * The number of satoshis equal to one bitcoin.
+     */
+    private static final long COIN_VALUE = LongMath.pow(10, NUM_COIN_DECIMALS);
+
+    /**
      * Zero Bitcoins.
      */
     public static final Coin ZERO = Coin.valueOf(0);
@@ -43,7 +48,7 @@ public final class Coin implements Comparable<Coin>, Serializable {
     /**
      * One Bitcoin.
      */
-    public static final Coin COIN = Coin.valueOf(LongMath.pow(10, NUM_COIN_DECIMALS));
+    public static final Coin COIN = Coin.valueOf(COIN_VALUE);
 
     /**
      * 0.01 Bitcoins. This unit is not really used much.
@@ -66,7 +71,11 @@ public final class Coin implements Comparable<Coin>, Serializable {
     public static final Coin SATOSHI = Coin.valueOf(1);
 
     public static final Coin FIFTY_COINS = COIN.multiply(50);
-    public static final Coin NEGATIVE_ONE = Coin.valueOf(-1);
+
+    /**
+     * Represents a monetary value of minus one satoshi.
+     */
+    public static final Coin NEGATIVE_SATOSHI = Coin.valueOf(-1);
 
     /**
      * The number of satoshis of this monetary value.
@@ -74,6 +83,8 @@ public final class Coin implements Comparable<Coin>, Serializable {
     public final long value;
 
     private Coin(final long satoshis) {
+        checkArgument(Math.abs(satoshis) <= COIN_VALUE * NetworkParameters.MAX_COINS,
+                      "%s satoshis exceeds maximum possible quantity of Bitcoin.", satoshis);
         this.value = satoshis;
     }
 
@@ -99,15 +110,10 @@ public final class Coin implements Comparable<Coin>, Serializable {
      * This takes string in a format understood by {@link BigDecimal#BigDecimal(String)},
      * for example "0", "1", "0.10", "1.23E3", "1234.5E-5".
      *
-     * @throws ArithmeticException if you try to specify fractional satoshis, or a value out of range.
+     * @throws IllegalArgumentException if you try to specify fractional satoshis, or a value out of range.
      */
     public static Coin parseCoin(final String str) {
-        Coin coin = Coin.valueOf(new BigDecimal(str).movePointRight(8).toBigIntegerExact().longValue());
-        if (coin.signum() < 0)
-            throw new ArithmeticException("Negative coins specified");
-        if (coin.compareTo(NetworkParameters.MAX_MONEY) > 0)
-            throw new ArithmeticException("Amount larger than the total quantity of Bitcoins possible specified.");
-        return coin;
+        return Coin.valueOf(new BigDecimal(str).movePointRight(8).toBigIntegerExact().longValue());
     }
 
     public Coin add(final Coin value) {
@@ -132,6 +138,46 @@ public final class Coin implements Comparable<Coin>, Serializable {
 
     public long divide(final Coin divisor) {
         return this.value / divisor.value;
+    }
+
+    /**
+     * Returns true if and only if this instance represents a monetary value greater than zero,
+     * otherwise false.
+     */
+    public boolean isPositive() {
+        return signum() == 1;
+    }
+
+    /**
+     * Returns true if and only if this instance represents a monetary value less than zero,
+     * otherwise false.
+     */
+    public boolean isNegative() {
+        return signum() == -1;
+    }
+
+    /**
+     * Returns true if and only if this instance represents zero monetary value,
+     * otherwise false.
+     */
+    public boolean isZero() {
+        return signum() == 0;
+    }
+
+    /**
+     * Returns true if the monetary value represented by this instance is greater than that
+     * of the given other Coin, otherwise false.
+     */
+    public boolean isGreaterThan(Coin other) {
+        return compareTo(other) > 0;
+    }
+
+    /**
+     * Returns true if the monetary value represented by this instance is less than that
+     * of the given other Coin, otherwise false.
+     */
+    public boolean isLessThan(Coin other) {
+        return compareTo(other) < 0;
     }
 
     public Coin shiftLeft(final int n) {
