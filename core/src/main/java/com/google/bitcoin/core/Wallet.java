@@ -2121,9 +2121,6 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
          * at least {@link Transaction#REFERENCE_DEFAULT_MIN_TX_FEE} if it is set, as default reference clients will
          * otherwise simply treat the transaction as if there were no fee at all.</p>
          *
-         * <p>Once {@link Wallet#completeTx(com.google.bitcoin.core.Wallet.SendRequest)} is called, this is set to the
-         * value of the fee that was added.</p>
-         *
          * <p>You might also consider adding a {@link SendRequest#feePerKb} to set the fee per kb of transaction size
          * (rounded down to the nearest kb) as that is how transactions are sorted when added to a block by miners.</p>
          */
@@ -2418,8 +2415,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
 
     /**
      * Given a spend request containing an incomplete transaction, makes it valid by adding outputs and signed inputs
-     * according to the instructions in the request. The transaction in the request is modified by this method, as is
-     * the fee parameter.
+     * according to the instructions in the request. The transaction in the request is modified by this method.
      *
      * @param req a SendRequest that contains the incomplete transaction and details for how to make it valid.
      * @throws InsufficientMoneyException if the request could not be completed due to not enough balance.
@@ -2509,10 +2505,6 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
                 totalOutput = totalOutput.add(bestChangeOutput.getValue());
                 log.info("  with {} coins change", bestChangeOutput.getValue().toFriendlyString());
             }
-            final Coin calculatedFee = totalInput.subtract(totalOutput);
-            if (calculatedFee.signum() > 0) {
-                log.info("  with a fee of {}", calculatedFee.toFriendlyString());
-            }
 
             // Now shuffle the outputs to obfuscate which is the change.
             if (req.shuffleOutputs)
@@ -2525,6 +2517,11 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
             int size = req.tx.bitcoinSerialize().length;
             if (size > Transaction.MAX_STANDARD_TX_SIZE)
                 throw new ExceededMaxTransactionSize();
+
+            final Coin calculatedFee = req.tx.getFee();
+            if (calculatedFee != null) {
+                log.info("  with a fee of {}", calculatedFee.toFriendlyString());
+            }
 
             // Label the transaction as being self created. We can use this later to spend its change output even before
             // the transaction is confirmed. We deliberately won't bother notifying listeners here as there's not much
