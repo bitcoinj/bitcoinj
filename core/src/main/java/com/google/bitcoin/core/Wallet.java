@@ -34,6 +34,8 @@ import com.google.bitcoin.utils.Threading;
 import com.google.bitcoin.wallet.*;
 import com.google.bitcoin.wallet.WalletTransaction.Pool;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Objects;
+import com.google.common.base.Objects.ToStringHelper;
 import com.google.common.collect.*;
 import com.google.common.primitives.Ints;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -2235,6 +2237,22 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
             req.tx.addOutput(Coin.ZERO, destination);
             req.emptyWallet = true;
             return req;
+        }
+
+        @Override
+        public String toString() {
+            // print only the user-settable fields
+            ToStringHelper helper = Objects.toStringHelper(this).omitNullValues();
+            helper.add("emptyWallet", emptyWallet);
+            helper.add("changeAddress", changeAddress);
+            helper.add("fee", fee);
+            helper.add("feePerKb", feePerKb);
+            helper.add("ensureMinRequiredFee", ensureMinRequiredFee);
+            helper.add("signInputs", signInputs);
+            helper.add("aesKey", aesKey != null ? "set" : null); // careful to not leak the key
+            helper.add("coinSelector", coinSelector);
+            helper.add("shuffleOutputs", shuffleOutputs);
+            return helper.toString();
         }
     }
 
