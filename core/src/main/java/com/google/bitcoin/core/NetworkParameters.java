@@ -131,9 +131,14 @@ public abstract class NetworkParameters implements Serializable {
     public static final int BIP16_ENFORCE_TIME = 1333238400;
     
     /**
+     * The maximum number of coins to be generated
+     */
+    public static final long MAX_COINS = 21000000;
+
+    /**
      * The maximum money to be generated
      */
-    public static final Coin MAX_MONEY = COIN.multiply(21000000);
+    public static final Coin MAX_MONEY = COIN.multiply(MAX_COINS);
 
     /** Alias for TestNet3Params.get(), use that instead. */
     @Deprecated

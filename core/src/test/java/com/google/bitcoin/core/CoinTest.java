@@ -17,7 +17,11 @@
 package com.google.bitcoin.core;
 
 import static com.google.bitcoin.core.Coin.*;
+import static com.google.bitcoin.core.NetworkParameters.MAX_MONEY;
+
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.fail;
 
 import org.junit.Assert;
@@ -31,14 +35,32 @@ public class CoinTest {
         assertEquals(CENT, parseCoin("0.01"));
         assertEquals(CENT, parseCoin("1E-2"));
         assertEquals(COIN.add(CENT), parseCoin("1.01"));
+        assertEquals(COIN.negate(), parseCoin("-1"));
         try {
             parseCoin("2E-20");
             org.junit.Assert.fail("should not have accepted fractional satoshis");
         } catch (ArithmeticException e) {
         }
+    }
 
+    @Test
+    public void testValueOf() {
         // int version
         assertEquals(CENT, valueOf(0, 1));
+        assertEquals(SATOSHI, valueOf(1));
+        assertEquals(NEGATIVE_SATOSHI, valueOf(-1));
+        assertEquals(MAX_MONEY, valueOf(MAX_MONEY.value));
+        assertEquals(MAX_MONEY.negate(), valueOf(MAX_MONEY.value * -1));
+        try {
+            valueOf(MAX_MONEY.value + 1);
+            org.junit.Assert.fail("should not have accepted too-great a monetary value");
+        } catch (IllegalArgumentException e) {
+        }
+        try {
+            valueOf( (MAX_MONEY.value * -1) - 1);
+            org.junit.Assert.fail("should not have accepted too-little a monetary value");
+        } catch (IllegalArgumentException e) {
+        }
 
         try {
             valueOf(1, -1);
@@ -48,10 +70,26 @@ public class CoinTest {
             valueOf(-1, 0);
             fail();
         } catch (IllegalArgumentException e) {}
-        try {
-            parseCoin("-1");
-            fail();
-        } catch (ArithmeticException e) {}
+    }
+
+    @Test
+    public void testOperators() {
+        assertTrue(SATOSHI.isPositive());
+        assertFalse(SATOSHI.isNegative());
+        assertFalse(SATOSHI.isZero());
+        assertFalse(NEGATIVE_SATOSHI.isPositive());
+        assertTrue(NEGATIVE_SATOSHI.isNegative());
+        assertFalse(NEGATIVE_SATOSHI.isZero());
+        assertFalse(ZERO.isPositive());
+        assertFalse(ZERO.isNegative());
+        assertTrue(ZERO.isZero());
+
+        assertTrue(valueOf(2).isGreaterThan(valueOf(1)));
+        assertFalse(valueOf(2).isGreaterThan(valueOf(2)));
+        assertFalse(valueOf(1).isGreaterThan(valueOf(2)));
+        assertTrue(valueOf(1).isLessThan(valueOf(2)));
+        assertFalse(valueOf(2).isLessThan(valueOf(2)));
+        assertFalse(valueOf(2).isLessThan(valueOf(1)));
     }
 
     @Test
