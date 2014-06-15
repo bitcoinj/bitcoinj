@@ -2396,8 +2396,8 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
             }
             Coin totalOutput = value;
 
-            log.info("Completing send tx with {} outputs totalling {} satoshis (not including fees)",
-                    req.tx.getOutputs().size(), value);
+            log.info("Completing send tx with {} outputs totalling {} BTC (not including fees)",
+                    req.tx.getOutputs().size(), value.toFriendlyString());
 
             // If any inputs have already been added, we don't need to get their value from wallet
             Coin totalInput = Coin.ZERO;
@@ -2446,6 +2446,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
                 candidates = null;  // Selector took ownership and might have changed candidates. Don't access again.
                 req.tx.getOutput(0).setValue(bestCoinSelection.valueGathered);
                 totalOutput = bestCoinSelection.valueGathered;
+                log.info("  emptying {} BTC", bestCoinSelection.valueGathered.toFriendlyString());
             }
 
             for (TransactionOutput output : bestCoinSelection.gathered)
@@ -2464,7 +2465,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
             if (bestChangeOutput != null) {
                 req.tx.addOutput(bestChangeOutput);
                 totalOutput = totalOutput.add(bestChangeOutput.getValue());
-                log.info("  with {} coins change", bestChangeOutput.getValue().toFriendlyString());
+                log.info("  with {} BTC change", bestChangeOutput.getValue().toFriendlyString());
             }
 
             // Now shuffle the outputs to obfuscate which is the change.
@@ -2482,7 +2483,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
 
             final Coin calculatedFee = req.tx.getFee();
             if (calculatedFee != null) {
-                log.info("  with a fee of {}", calculatedFee.toFriendlyString());
+                log.info("  with a fee of {} BTC", calculatedFee.toFriendlyString());
             }
 
             // Label the transaction as being self created. We can use this later to spend its change output even before
