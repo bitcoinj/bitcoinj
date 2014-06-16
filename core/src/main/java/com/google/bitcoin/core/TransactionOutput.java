@@ -44,7 +44,7 @@ public class TransactionOutput extends ChildMessage implements Serializable {
 
     // A transaction output has some value and a script used for authenticating that the redeemer is allowed to spend
     // this output.
-    private Coin value;
+    private long value;
     private byte[] scriptBytes;
 
     // The script bytes are parsed and turned into a Script on demand.
@@ -114,7 +114,7 @@ public class TransactionOutput extends ChildMessage implements Serializable {
         // SIGHASH_SINGLE signatures, so unfortunately we have to allow that here.
         checkArgument(value.signum() >= 0 || value.equals(Coin.NEGATIVE_SATOSHI), "Negative values not allowed");
         checkArgument(value.compareTo(NetworkParameters.MAX_MONEY) < 0, "Values larger than MAX_MONEY not allowed");
-        this.value = value;
+        this.value = value.value;
         this.scriptBytes = scriptBytes;
         parentTransaction = parent;
         availableForSpending = true;
@@ -137,11 +137,7 @@ public class TransactionOutput extends ChildMessage implements Serializable {
 
     @Override
     protected void parseLite() throws ProtocolException {
-        // TODO: There is no reason to use Coin for values, they are always smaller than 21 million * COIN
-        // The only reason to use Coin would be to properly read values from the reference implementation, however
-        // the reference implementation uses signed 64-bit integers for its values as well (though it probably shouldn't)
-        long outputValue = readInt64();
-        value = Coin.valueOf(outputValue);
+        value = readInt64();
         scriptLen = (int) readVarInt();
         length = cursor - offset + scriptLen;
     }
@@ -154,7 +150,8 @@ public class TransactionOutput extends ChildMessage implements Serializable {
     @Override
     protected void bitcoinSerializeToStream(OutputStream stream) throws IOException {
         checkNotNull(scriptBytes);
-        Utils.int64ToByteStreamLE(getValue().value, stream);
+        maybeParse();
+        Utils.int64ToByteStreamLE(value, stream);
         // TODO: Move script serialization into the Script class, where it belongs.
         stream.write(new VarInt(scriptBytes.length).encode());
         stream.write(scriptBytes);
@@ -166,7 +163,11 @@ public class TransactionOutput extends ChildMessage implements Serializable {
      */
     public Coin getValue() {
         maybeParse();
-        return value;
+        try {
+            return Coin.valueOf(value);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalStateException(e.getMessage(), e);
+        }
     }
 
     /**
@@ -175,7 +176,7 @@ public class TransactionOutput extends ChildMessage implements Serializable {
     public void setValue(Coin value) {
         checkNotNull(value);
         unCache();
-        this.value = value;
+        this.value = value.value;
     }
 
     int getIndex() {
@@ -309,7 +310,7 @@ public class TransactionOutput extends ChildMessage implements Serializable {
         try {
             Script script = getScriptPubKey();
             StringBuilder buf = new StringBuilder("TxOut of ");
-            buf.append(value.toFriendlyString());
+            buf.append(Coin.valueOf(value).toFriendlyString());
             if (script.isSentToAddress() || script.isPayToScriptHash())
                 buf.append(" to ").append(script.getToAddress(params));
             else if (script.isSentToRawPubKey())
@@ -361,7 +362,7 @@ public class TransactionOutput extends ChildMessage implements Serializable {
 
     /** Returns a copy of the output detached from its containing transaction, if need be. */
     public TransactionOutput duplicateDetached() {
-        return new TransactionOutput(params, null, value, org.spongycastle.util.Arrays.clone(scriptBytes));
+        return new TransactionOutput(params, null, Coin.valueOf(value), org.spongycastle.util.Arrays.clone(scriptBytes));
     }
 
     @Override
@@ -372,7 +373,7 @@ public class TransactionOutput extends ChildMessage implements Serializable {
         TransactionOutput other = (TransactionOutput) o;
 
         if (!Arrays.equals(scriptBytes, other.scriptBytes)) return false;
-        if (value != null ? !value.equals(other.value) : other.value != null) return false;
+        if (value != other.value) return false;
         if (parentTransaction != null && parentTransaction != other.parentTransaction) return false;
 
         return true;
@@ -380,8 +381,7 @@ public class TransactionOutput extends ChildMessage implements Serializable {
 
     @Override
     public int hashCode() {
-        int result = value != null ? value.hashCode() : 0;
-        result = 31 * result + (scriptBytes != null ? Arrays.hashCode(scriptBytes) : 0);
+        int result = 31 * (int) value + (scriptBytes != null ? Arrays.hashCode(scriptBytes) : 0);
         return result;
     }
 }
