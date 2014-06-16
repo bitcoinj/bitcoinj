@@ -1265,13 +1265,17 @@ public class Transaction extends ChildMessage implements Serializable {
             throw new VerificationException("Transaction larger than MAX_BLOCK_SIZE");
 
         Coin valueOut = Coin.ZERO;
-        for (TransactionOutput output : outputs) {
-            if (output.getValue().signum() < 0)
-                throw new VerificationException("Transaction output negative");
-            valueOut = valueOut.add(output.getValue());
-        }
-        if (valueOut.compareTo(NetworkParameters.MAX_MONEY) > 0)
+        try {
+            for (TransactionOutput output : outputs) {
+                if (output.getValue().signum() < 0)
+                    throw new VerificationException("Transaction output negative");
+                valueOut = valueOut.add(output.getValue());
+            }
+        } catch (IllegalStateException e) {
+            throw new VerificationException("A transaction output value exceeds maximum possible");
+        } catch (IllegalArgumentException e) {
             throw new VerificationException("Total transaction output value greater than possible");
+        }
 
         if (isCoinBase()) {
             if (inputs.get(0).getScriptBytes().length < 2 || inputs.get(0).getScriptBytes().length > 100)
