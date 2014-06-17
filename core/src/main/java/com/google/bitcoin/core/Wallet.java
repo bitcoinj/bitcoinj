@@ -288,6 +288,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
     public DeterministicKey currentKey(KeyChain.KeyPurpose purpose) {
         lock.lock();
         try {
+            maybeUpgradeToHD();
             return keychain.currentKey(purpose);
         } finally {
             lock.unlock();
@@ -308,6 +309,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
     public Address currentAddress(KeyChain.KeyPurpose purpose) {
         lock.lock();
         try {
+            maybeUpgradeToHD();
             return keychain.currentAddress(purpose, params);
         } finally {
             lock.unlock();
@@ -345,20 +347,8 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
     public List<DeterministicKey> freshKeys(KeyChain.KeyPurpose purpose, int numberOfKeys) {
         lock.lock();
         try {
-            List<DeterministicKey> keys;
-            try {
-                keys = keychain.freshKeys(purpose, numberOfKeys);
-            } catch (DeterministicUpgradeRequiredException e) {
-                log.info("Attempt to request a fresh HD key on a non-upgraded wallet, trying to upgrade ...");
-                try {
-                    upgradeToDeterministic(null);
-                    keys = keychain.freshKeys(purpose, numberOfKeys);
-                } catch (DeterministicUpgradeRequiresPassword e2) {
-                    // Nope, can't do it. Rethrow the original exception.
-                    log.error("Failed to auto upgrade because wallet is encrypted, giving up. You should call wallet.upgradeToDeterministic yourself to avoid this situation.");
-                    throw e;
-                }
-            }
+            maybeUpgradeToHD();
+            List<DeterministicKey> keys = keychain.freshKeys(purpose, numberOfKeys);
             // Do we really need an immediate hard save? Arguably all this is doing is saving the 'current' key
             // and that's not quite so important, so we could coalesce for more performance.
             saveNow();
@@ -382,6 +372,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
     public Address freshAddress(KeyChain.KeyPurpose purpose) {
         lock.lock();
         try {
+            maybeUpgradeToHD();
             Address key = keychain.freshAddress(purpose, params);
             saveNow();
             return key;
@@ -426,6 +417,20 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
             return keychain.isDeterministicUpgradeRequired();
         } finally {
             lock.unlock();
+        }
+    }
+
+    private void maybeUpgradeToHD() throws DeterministicUpgradeRequiresPassword {
+        checkState(lock.isHeldByCurrentThread());
+        if (keychain.isDeterministicUpgradeRequired()) {
+            log.info("Upgrade to HD wallets is required, attempting to do so.");
+            try {
+                upgradeToDeterministic(null);
+            } catch (DeterministicUpgradeRequiresPassword e) {
+                log.error("Failed to auto upgrade due to encryption. You should call wallet.upgradeToDeterministic " +
+                        "with the users AES key to avoid this error.");
+                throw e;
+            }
         }
     }
 
@@ -569,6 +574,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
     public void setKeychainLookaheadThreshold(int num) {
         lock.lock();
         try {
+            maybeUpgradeToHD();
             keychain.setLookaheadThreshold(num);
         } finally {
             lock.unlock();
@@ -579,6 +585,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
     public int getKeychainLookaheadThreshold() {
         lock.lock();
         try {
+            maybeUpgradeToHD();
             return keychain.getLookaheadThreshold();
         } finally {
             lock.unlock();
@@ -593,6 +600,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
     public DeterministicKey getWatchingKey() {
         lock.lock();
         try {
+            maybeUpgradeToHD();
             return keychain.getActiveKeyChain().getWatchingKey();
         } finally {
             lock.unlock();

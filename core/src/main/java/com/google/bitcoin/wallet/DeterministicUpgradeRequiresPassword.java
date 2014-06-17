@@ -5,4 +5,4 @@ package com.google.bitcoin.wallet;
  * users password. This is required because HD wallets are upgraded from random using the private key bytes of
  * the oldest non-rotating key, in order to make the upgrade process itself deterministic.
  */
-public class DeterministicUpgradeRequiresPassword extends Exception {}
+public class DeterministicUpgradeRequiresPassword extends RuntimeException {}
