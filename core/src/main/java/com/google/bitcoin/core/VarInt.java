@@ -101,7 +101,7 @@ public class VarInt {
             return new byte[]{(byte) value};
         } else if (isLessThanUnsigned(value, 65536)) {
             return new byte[]{(byte) 253, (byte) (value), (byte) (value >> 8)};
-        } else if (isLessThanUnsigned(value, UnsignedInteger.MAX_VALUE.longValue())) {
+        } else if (isLessThanUnsigned(value, 4294967296L)) {
             byte[] bytes = new byte[5];
             bytes[0] = (byte) 254;
             Utils.uint32ToByteArrayLE(value, bytes, 1);
