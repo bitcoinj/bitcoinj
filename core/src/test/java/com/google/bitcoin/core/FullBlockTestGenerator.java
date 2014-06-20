@@ -1276,7 +1276,7 @@ public class FullBlockTestGenerator {
         Block b68 = createNextBlock(b65, chainHeadHeight + 21, null, SATOSHI.multiply(10));
         {
             Transaction tx = new Transaction(params);
-            tx.addOutput(out20.value.subtract(9), OP_TRUE_SCRIPT);
+            tx.addOutput(out20.value.subtract(Coin.valueOf(9)), OP_TRUE_SCRIPT);
             addOnlyInputToTransaction(tx, out20, 0);
             b68.addTransaction(tx);
         }
@@ -1286,7 +1286,7 @@ public class FullBlockTestGenerator {
         Block b69 = createNextBlock(b65, chainHeadHeight + 21, null, SATOSHI.multiply(10));
         {
             Transaction tx = new Transaction(params);
-            tx.addOutput(out20.value.subtract(10), OP_TRUE_SCRIPT);
+            tx.addOutput(out20.value.subtract(Coin.valueOf(10)), OP_TRUE_SCRIPT);
             addOnlyInputToTransaction(tx, out20, 0);
             b69.addTransaction(tx);
         }

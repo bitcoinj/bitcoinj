@@ -118,10 +118,6 @@ public final class Coin implements Comparable<Coin>, Serializable {
         return new Coin(LongMath.checkedSubtract(this.value, value.value));
     }
 
-    public Coin subtract(final long value) {
-        return new Coin(LongMath.checkedSubtract(this.value, value));
-    }
-
     public Coin multiply(final long factor) {
         return new Coin(LongMath.checkedMultiply(this.value, factor));
     }
