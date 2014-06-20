@@ -20,6 +20,7 @@ package com.google.bitcoin.core;
 import com.google.bitcoin.core.Transaction.SigHash;
 import com.google.bitcoin.core.Wallet.SendRequest;
 import com.google.bitcoin.crypto.*;
+import com.google.bitcoin.store.MemoryBlockStore;
 import com.google.bitcoin.store.WalletProtobufSerializer;
 import com.google.bitcoin.testing.FakeTxBuilder;
 import com.google.bitcoin.testing.MockTransactionBroadcaster;
@@ -1182,6 +1183,29 @@ public class WalletTest extends TestWithWallet {
 
         wallet.receiveFromBlock(t1, b1, BlockChain.NewBlockType.BEST_CHAIN, 0);
         assertTrue(wallet.getBloomFilter(1e-12).contains(outPoint.bitcoinSerialize()));
+    }
+
+    @Test
+    public void marriedKeychainBloomFilter() throws Exception {
+        wallet = new Wallet(params);
+        blockStore = new MemoryBlockStore(params);
+        chain = new BlockChain(params, wallet, blockStore);
+
+        String XPUB = "xpub68KFnj3bqUx1s7mHejLDBPywCAKdJEu1b49uniEEn2WSbHmZ7xbLqFTjJbtx1LUcAt1DwhoqWHmo2s5WMJp6wi38CiF2hYD49qVViKVvAoi";
+        wallet.addFollowingAccountKeys(ImmutableList.of(DeterministicKey.deserializeB58(null, XPUB)));
+        Address address = wallet.currentReceiveAddress();
+
+        assertTrue(wallet.getBloomFilter(0.001).contains(address.getHash160()));
+
+        Transaction t1 = createFakeTx(params, CENT, address);
+        StoredBlock b1 = createFakeBlock(blockStore, t1).storedBlock;
+
+        TransactionOutPoint outPoint = new TransactionOutPoint(params, 0, t1);
+
+        assertFalse(wallet.getBloomFilter(0.001).contains(outPoint.bitcoinSerialize()));
+
+        wallet.receiveFromBlock(t1, b1, BlockChain.NewBlockType.BEST_CHAIN, 0);
+        assertTrue(wallet.getBloomFilter(0.001).contains(outPoint.bitcoinSerialize()));
     }
 
     @Test

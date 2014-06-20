@@ -756,6 +756,27 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
     }
 
     /**
+     * <p>Locates a script from the KeyChainGroup given the script hash. This is needed when finding out which
+     * script we need to use to redeem a transaction output.</p>
+     * Returns null if no such script found
+     */
+    @Nullable
+    public Script findRedeemScriptFromPubHash(byte[] payToScriptHash) {
+        lock.lock();
+        try {
+            return keychain.findRedeemScriptFromPubHash(payToScriptHash);
+        } finally {
+            lock.unlock();
+        }
+    }
+    /**
+     * Returns true if this wallet knows the script corresponding to the given hash
+     */
+    public boolean isPayToScriptHashMine(byte[] payToScriptHash) {
+        return findRedeemScriptFromPubHash(payToScriptHash) != null;
+    }
+
+    /**
      * Marks all keys used in the transaction output as used in the wallet.
      * See {@link com.google.bitcoin.wallet.DeterministicKeyChain#markKeyAsUsed(DeterministicKey)} for more info on this.
      */
@@ -3405,7 +3426,8 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
     }
 
     private boolean isTxOutputBloomFilterable(TransactionOutput out) {
-        return (out.isMine(this) && out.getScriptPubKey().isSentToRawPubKey()) ||
+        boolean isScriptTypeSupported = out.getScriptPubKey().isSentToRawPubKey() || out.getScriptPubKey().isPayToScriptHash();
+        return (out.isMine(this) && isScriptTypeSupported) ||
                 out.isWatched(this);
     }
 

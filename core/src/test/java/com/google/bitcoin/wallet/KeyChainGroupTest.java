@@ -56,7 +56,7 @@ public class KeyChainGroupTest {
     }
 
     private KeyChainGroup createMarriedKeyChainGroup() {
-        byte[] seedBytes = Sha256Hash.create("don't use a string seed like this in real life".getBytes()).getBytes();
+        byte[] seedBytes = Sha256Hash.create("don't use a seed like this in real life".getBytes()).getBytes();
         DeterministicSeed seed = new DeterministicSeed(seedBytes, MnemonicCode.BIP39_STANDARDISATION_TIME_SECS);
         KeyChainGroup group = new KeyChainGroup(params, seed, ImmutableList.of(watchingAccountKey));
         group.setLookaheadSize(LOOKAHEAD_SIZE);
@@ -301,6 +301,44 @@ public class KeyChainGroupTest {
     }
 
     @Test
+    public void findRedeemScriptFromPubHash() throws Exception {
+        group = createMarriedKeyChainGroup();
+        Address address = group.freshAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
+        assertTrue(group.findRedeemScriptFromPubHash(address.getHash160()) != null);
+        KeyChainGroup group2 = createMarriedKeyChainGroup();
+        group2.freshAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
+        // test address from lookahead zone
+        for (int i = 0; i < LOOKAHEAD_SIZE; i++) {
+            address = group.freshAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
+            assertTrue(group2.findRedeemScriptFromPubHash(address.getHash160()) != null);
+        }
+        assertFalse(group2.findRedeemScriptFromPubHash(group.freshAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS).getHash160()) != null);
+    }
+
+    @Test
+    public void bloomFilterForMarriedChains() throws Exception {
+        group = createMarriedKeyChainGroup();
+        // only leaf keys are used for populating bloom filter, so initial number is zero
+        assertEquals(0, group.getBloomFilterElementCount());
+        Address address1 = group.freshAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
+        final int size = (LOOKAHEAD_SIZE + 1 /* for the just created key */) * 2;
+        assertEquals(size, group.getBloomFilterElementCount());
+        BloomFilter filter = group.getBloomFilter(size, 0.001, (long)(Math.random() * Long.MAX_VALUE));
+        assertTrue(filter.contains(address1.getHash160()));
+
+        Address address2 = group.freshAddress(KeyChain.KeyPurpose.CHANGE);
+        assertFalse(filter.contains(address2.getHash160()));
+
+        // Check that the filter contains the lookahead buffer.
+        for (int i = 0; i < LOOKAHEAD_SIZE; i++) {
+            Address address = group.freshAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
+            assertTrue(filter.contains(address.getHash160()));
+        }
+        // We ran ahead of the lookahead buffer.
+        assertFalse(filter.contains(group.freshAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS).getHash160()));
+    }
+
+    @Test
     public void earliestKeyTime() throws Exception {
         long now = Utils.currentTimeSeconds();   // mock
         long yesterday = now - 86400;
@@ -391,17 +429,14 @@ public class KeyChainGroupTest {
     @Test
     public void serializeMarried() throws Exception {
         group = createMarriedKeyChainGroup();
-        DeterministicKeyChain keyChain = group.getActiveKeyChain();
-        keyChain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
-        DeterministicKey key1 = keyChain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
-        ImmutableList<ChildNumber> path = key1.getPath();
-        assertTrue(group.isMarried(keyChain));
+        Address address1 = group.currentAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
+        assertTrue(group.isMarried());
 
-        List<Protos.Key> protoKeys3 = group.serializeToProtobuf();
-        group = KeyChainGroup.fromProtobufUnencrypted(params, protoKeys3);
-        assertTrue(group.isMarried(keyChain));
-        DeterministicKey key2 = keyChain.getKeyByPath(path);
-        assertEquals(key1, key2);
+        List<Protos.Key> protoKeys = group.serializeToProtobuf();
+        KeyChainGroup group2 = KeyChainGroup.fromProtobufUnencrypted(params, protoKeys);
+        assertTrue(group2.isMarried());
+        Address address2 = group2.currentAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
+        assertEquals(address1, address2);
     }
 
     @Test
