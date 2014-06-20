@@ -21,6 +21,7 @@ import com.google.bitcoin.core.*;
 import com.google.bitcoin.crypto.ChildNumber;
 import com.google.bitcoin.crypto.DeterministicKey;
 import com.google.bitcoin.crypto.KeyCrypter;
+import com.google.bitcoin.script.Script;
 import com.google.bitcoin.script.ScriptBuilder;
 import com.google.bitcoin.store.UnreadableWalletException;
 import com.google.bitcoin.utils.ListenerRegistration;
@@ -30,6 +31,7 @@ import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
+import com.google.protobuf.ByteString;
 import org.bitcoinj.wallet.Protos;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -67,6 +69,9 @@ public class KeyChainGroup {
 
     // The map keys are the watching keys of the followed chains and values are the following chains
     private Multimap<DeterministicKey, DeterministicKeyChain> followingKeychains;
+
+    // The map holds P2SH redeem scripts issued by this KeyChainGroup (including lookahead) mapped to their scriptPubKey hashes.
+    private LinkedHashMap<ByteString, Script> marriedKeysScripts;
 
     private EnumMap<KeyChain.KeyPurpose, Address> currentAddresses;
     @Nullable private KeyCrypter keyCrypter;
@@ -143,6 +148,39 @@ public class KeyChainGroup {
         this.followingKeychains = HashMultimap.create();
         if (followingKeychains != null) {
             this.followingKeychains.putAll(followingKeychains);
+        }
+        marriedKeysScripts = new LinkedHashMap<ByteString, Script>();
+        maybeLookaheadScripts();
+
+        if (!this.currentKeys.isEmpty()) {
+            DeterministicKey followedWatchKey = getActiveKeyChain().getWatchingKey();
+            for (Map.Entry<KeyChain.KeyPurpose, DeterministicKey> entry : this.currentKeys.entrySet()) {
+                Address address = makeP2SHOutputScript(entry.getValue(), followedWatchKey).getToAddress(params);
+                currentAddresses.put(entry.getKey(), address);
+            }
+        }
+    }
+
+    /**
+     * This keeps {@link #marriedKeysScripts} in sync with the number of keys issued
+     */
+    private void maybeLookaheadScripts() {
+        if (chains.isEmpty())
+            return;
+
+        int numLeafKeys = chains.get(chains.size() - 1).getLeafKeys().size();
+        checkState(marriedKeysScripts.size() <= numLeafKeys, "Number of scripts is greater than number of leaf keys");
+        if (marriedKeysScripts.size() == numLeafKeys)
+            return;
+
+        for (DeterministicKeyChain chain : chains) {
+            if (isMarried(chain)) {
+                for (DeterministicKey followedKey : chain.getLeafKeys()) {
+                    Script redeemScript = makeRedeemScript(followedKey, chain.getWatchingKey());
+                    Script scriptPubKey = ScriptBuilder.createP2SHOutputScript(redeemScript);
+                    marriedKeysScripts.put(ByteString.copyFrom(scriptPubKey.getPubKeyHash()), redeemScript);
+                }
+            }
         }
     }
 
@@ -239,7 +277,9 @@ public class KeyChainGroup {
         DeterministicKeyChain chain = getActiveKeyChain();
         if (isMarried(chain)) {
             List<ECKey> marriedKeys = freshMarriedKeys(purpose, chain);
-            Address freshAddress = Address.fromP2SHScript(params, ScriptBuilder.createP2SHOutputScript(2, marriedKeys));
+            Script p2shScript = makeP2SHOutputScript(marriedKeys);
+            Address freshAddress = Address.fromP2SHScript(params, p2shScript);
+            maybeLookaheadScripts();
             currentAddresses.put(purpose, freshAddress);
             return freshAddress;
         } else {
@@ -256,6 +296,15 @@ public class KeyChainGroup {
             checkState(followedKey.getChildNumber().equals(followingKey.getChildNumber()), "Following keychains should be in sync");
             keys.add(followingKey);
         }
+        return keys.build();
+    }
+
+    private List<ECKey> getMarriedKeysWithFollowed(DeterministicKey followedKey, Collection<DeterministicKeyChain> followingChains) {
+        ImmutableList.Builder<ECKey> keys = ImmutableList.builder();
+        for (DeterministicKeyChain keyChain : followingChains) {
+            keys.add(keyChain.getKeyByPath(followedKey.getPath()));
+        }
+        keys.add(followedKey);
         return keys.build();
     }
 
@@ -351,6 +400,15 @@ public class KeyChainGroup {
             encryptedKeys.add(key.encrypt(keyCrypter, aesKey));
         }
         return importKeys(encryptedKeys);
+    }
+
+    /**
+     * <p>Returns redeem script for the given scriptPubKey hash.
+     * Returns null if no such script found
+     */
+    @Nullable
+    public Script findRedeemScriptFromPubHash(byte[] payToScriptHash) {
+        return marriedKeysScripts.get(ByteString.copyFrom(payToScriptHash));
     }
 
     @Nullable
@@ -513,8 +571,13 @@ public class KeyChainGroup {
 
     public int getBloomFilterElementCount() {
         int result = basic.numBloomFilterEntries();
-        for (DeterministicKeyChain chain : chains)
-            result += chain.numBloomFilterEntries();
+        for (DeterministicKeyChain chain : chains) {
+            if (isMarried(chain)) {
+                result += chain.getLeafKeys().size() * 2;
+            } else {
+                result += chain.numBloomFilterEntries();
+            }
+        }
         return result;
     }
 
@@ -522,14 +585,40 @@ public class KeyChainGroup {
         BloomFilter filter = new BloomFilter(size, falsePositiveRate, nTweak);
         if (basic.numKeys() > 0)
             filter.merge(basic.getFilter(size, falsePositiveRate, nTweak));
-        for (DeterministicKeyChain chain : chains)
-            filter.merge(chain.getFilter(size, falsePositiveRate, nTweak));
+        for (DeterministicKeyChain chain : chains) {
+            if (isMarried(chain)) {
+                for (Map.Entry<ByteString, Script> entry : marriedKeysScripts.entrySet()) {
+                    filter.insert(entry.getKey().toByteArray());
+                    filter.insert(ScriptBuilder.createP2SHOutputScript(entry.getValue()).getProgram());
+                }
+            } else {
+                filter.merge(chain.getFilter(size, falsePositiveRate, nTweak));
+            }
+        }
         return filter;
     }
 
     /** {@inheritDoc} */
     public boolean isRequiringUpdateAllBloomFilter() {
         throw new UnsupportedOperationException();   // Unused.
+    }
+
+    private Script makeP2SHOutputScript(List<ECKey> marriedKeys) {
+        return ScriptBuilder.createP2SHOutputScript(makeRedeemScript(marriedKeys));
+    }
+
+    private Script makeP2SHOutputScript(DeterministicKey followedKey, DeterministicKey followedAccountKey) {
+        return ScriptBuilder.createP2SHOutputScript(makeRedeemScript(followedKey, followedAccountKey));
+    }
+
+    private Script makeRedeemScript(DeterministicKey followedKey, DeterministicKey followedAccountKey) {
+        Collection<DeterministicKeyChain> followingChains = followingKeychains.get(followedAccountKey);
+        List<ECKey> marriedKeys = getMarriedKeysWithFollowed(followedKey, followingChains);
+        return makeRedeemScript(marriedKeys);
+    }
+
+    private Script makeRedeemScript(List<ECKey> marriedKeys) {
+        return ScriptBuilder.createRedeemScript((marriedKeys.size() / 2) + 1, marriedKeys);
     }
 
     /** Adds a listener for events that are run when keys are added, on the user thread. */
@@ -729,10 +818,28 @@ public class KeyChainGroup {
             if (watchingKey.getParent() != null) {
                 builder.append(String.format("Key to watch:  %s%n%n", watchingKey.serializePubB58()));
             }
-            for (ECKey key : chain.getKeys())
-                formatKeyWithAddress(includePrivateKeys, key, builder);
+            if (isMarried(chain)) {
+                Collection<DeterministicKeyChain> followingChains = followingKeychains.get(chain.getWatchingKey());
+                for (DeterministicKeyChain followingChain : followingChains) {
+                    builder.append(String.format("Following chain:  %s%n", followingChain.getWatchingKey().serializePubB58()));
+                }
+                builder.append("\n");
+                for (Script script : marriedKeysScripts.values())
+                    formatScript(ScriptBuilder.createP2SHOutputScript(script), builder);
+            } else {
+                for (ECKey key : chain.getKeys())
+                    formatKeyWithAddress(includePrivateKeys, key, builder);
+            }
         }
         return builder.toString();
+    }
+
+    private void formatScript(Script script, StringBuilder builder) {
+        builder.append("  addr:");
+        builder.append(script.getToAddress(params));
+        builder.append("  hash160:");
+        builder.append(Utils.HEX.encode(script.getPubKeyHash()));
+        builder.append("\n");
     }
 
     private void formatKeyWithAddress(boolean includePrivateKeys, ECKey key, StringBuilder builder) {

@@ -927,4 +927,19 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
     /* package */ List<ECKey> getKeys() {
         return basicKeyChain.getKeys();
     }
+
+
+    /**
+     * Returns leaf keys issued by this chain (not including lookahead zone)
+     */
+    public List<DeterministicKey> getLeafKeys() {
+        ImmutableList.Builder<DeterministicKey> keys = ImmutableList.builder();
+        for (ECKey key : getKeys()) {
+            DeterministicKey dKey = (DeterministicKey) key;
+            if (dKey.getPath().size() > 2) {
+                keys.add(dKey);
+            }
+        }
+        return keys.build();
+    }
 }

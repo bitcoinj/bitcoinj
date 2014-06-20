@@ -80,6 +80,7 @@ public class WalletTool {
     private static OptionSpec<Date> dateFlag;
     private static OptionSpec<Integer> unixtimeFlag;
     private static OptionSpec<String> seedFlag, watchFlag;
+    private static OptionSpec<String> xpubkeysFlag;
 
     private static NetworkParameters params;
     private static File walletFile;
@@ -162,6 +163,7 @@ public class WalletTool {
         SEND,
         ENCRYPT,
         DECRYPT,
+        MARRY
     }
 
     public enum WaitForEnum {
@@ -202,6 +204,7 @@ public class WalletTool {
         parser.accepts("privkey").withRequiredArg();
         parser.accepts("addr").withRequiredArg();
         parser.accepts("peers").withRequiredArg();
+        xpubkeysFlag = parser.accepts("xpubkeys").withRequiredArg();
         OptionSpec<String> outputFlag = parser.accepts("output").withRequiredArg();
         parser.accepts("value").withRequiredArg();
         parser.accepts("fee").withRequiredArg();
@@ -352,6 +355,7 @@ public class WalletTool {
                 break;
             case ENCRYPT: encrypt(); break;
             case DECRYPT: decrypt(); break;
+            case MARRY: marry(); break;
         }
 
         if (!wallet.isConsistent()) {
@@ -378,6 +382,19 @@ public class WalletTool {
             saveWallet(walletFile);
         }
         shutdown();
+    }
+
+    private static void marry() {
+        if (!options.has(xpubkeysFlag)) {
+            throw new IllegalStateException();
+        }
+
+        String[] xpubkeys = options.valueOf(xpubkeysFlag).split(",");
+        ImmutableList.Builder<DeterministicKey> keys = ImmutableList.builder();
+        for (String xpubkey : xpubkeys) {
+            keys.add(DeterministicKey.deserializeB58(null, xpubkey.trim()));
+        }
+        wallet.addFollowingAccountKeys(keys.build());
     }
 
     private static void encrypt() {
