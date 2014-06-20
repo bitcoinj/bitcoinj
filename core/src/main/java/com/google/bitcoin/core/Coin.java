@@ -16,13 +16,13 @@
 
 package com.google.bitcoin.core;
 
-import static com.google.common.base.Preconditions.checkArgument;
+import com.google.bitcoin.utils.CoinFormat;
+import com.google.common.math.LongMath;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
 
-import com.google.bitcoin.utils.CoinFormat;
-import com.google.common.math.LongMath;
+import static com.google.common.base.Preconditions.checkArgument;
 
 /**
  * Represents a monetary Bitcoin value. This class is immutable.

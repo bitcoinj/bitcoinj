@@ -34,6 +34,8 @@ import com.google.bitcoin.utils.Threading;
 import com.google.bitcoin.wallet.*;
 import com.google.bitcoin.wallet.WalletTransaction.Pool;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Objects;
+import com.google.common.base.Objects.ToStringHelper;
 import com.google.common.collect.*;
 import com.google.common.primitives.Ints;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -286,6 +288,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
     public DeterministicKey currentKey(KeyChain.KeyPurpose purpose) {
         lock.lock();
         try {
+            maybeUpgradeToHD();
             return keychain.currentKey(purpose);
         } finally {
             lock.unlock();
@@ -306,6 +309,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
     public Address currentAddress(KeyChain.KeyPurpose purpose) {
         lock.lock();
         try {
+            maybeUpgradeToHD();
             return keychain.currentAddress(purpose, params);
         } finally {
             lock.unlock();
@@ -343,6 +347,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
     public List<DeterministicKey> freshKeys(KeyChain.KeyPurpose purpose, int numberOfKeys) {
         lock.lock();
         try {
+            maybeUpgradeToHD();
             List<DeterministicKey> keys = keychain.freshKeys(purpose, numberOfKeys);
             // Do we really need an immediate hard save? Arguably all this is doing is saving the 'current' key
             // and that's not quite so important, so we could coalesce for more performance.
@@ -367,6 +372,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
     public Address freshAddress(KeyChain.KeyPurpose purpose) {
         lock.lock();
         try {
+            maybeUpgradeToHD();
             Address key = keychain.freshAddress(purpose, params);
             saveNow();
             return key;
@@ -381,6 +387,51 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
      */
     public Address freshReceiveAddress() {
         return freshAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
+    }
+
+
+    /**
+     * Upgrades the wallet to be deterministic (BIP32). You should call this, possibly providing the users encryption
+     * key, after loading a wallet produced by previous versions of bitcoinj. If the wallet is encrypted the key
+     * <b>must</b> be provided, due to the way the seed is derived deterministically from private key bytes: failing
+     * to do this will result in an exception being thrown. For non-encrypted wallets, the upgrade will be done for
+     * you automatically the first time a new key is requested (this happens when spending due to the change address).
+     */
+    public void upgradeToDeterministic(@Nullable KeyParameter aesKey) throws DeterministicUpgradeRequiresPassword {
+        lock.lock();
+        try {
+            keychain.upgradeToDeterministic(vKeyRotationEnabled ? vKeyRotationTimestamp : 0, aesKey);
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
+     * Returns true if the wallet contains random keys and no HD chains, in which case you should call
+     * {@link #upgradeToDeterministic(org.spongycastle.crypto.params.KeyParameter)} before attempting to do anything
+     * that would require a new address or key.
+     */
+    public boolean isDeterministicUpgradeRequired() {
+        lock.lock();
+        try {
+            return keychain.isDeterministicUpgradeRequired();
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    private void maybeUpgradeToHD() throws DeterministicUpgradeRequiresPassword {
+        checkState(lock.isHeldByCurrentThread());
+        if (keychain.isDeterministicUpgradeRequired()) {
+            log.info("Upgrade to HD wallets is required, attempting to do so.");
+            try {
+                upgradeToDeterministic(null);
+            } catch (DeterministicUpgradeRequiresPassword e) {
+                log.error("Failed to auto upgrade due to encryption. You should call wallet.upgradeToDeterministic " +
+                        "with the users AES key to avoid this error.");
+                throw e;
+            }
+        }
     }
 
     /**
@@ -523,6 +574,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
     public void setKeychainLookaheadThreshold(int num) {
         lock.lock();
         try {
+            maybeUpgradeToHD();
             keychain.setLookaheadThreshold(num);
         } finally {
             lock.unlock();
@@ -533,6 +585,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
     public int getKeychainLookaheadThreshold() {
         lock.lock();
         try {
+            maybeUpgradeToHD();
             return keychain.getLookaheadThreshold();
         } finally {
             lock.unlock();
@@ -547,6 +600,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
     public DeterministicKey getWatchingKey() {
         lock.lock();
         try {
+            maybeUpgradeToHD();
             return keychain.getActiveKeyChain().getWatchingKey();
         } finally {
             lock.unlock();
@@ -2077,9 +2131,6 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
          * at least {@link Transaction#REFERENCE_DEFAULT_MIN_TX_FEE} if it is set, as default reference clients will
          * otherwise simply treat the transaction as if there were no fee at all.</p>
          *
-         * <p>Once {@link Wallet#completeTx(com.google.bitcoin.core.Wallet.SendRequest)} is called, this is set to the
-         * value of the fee that was added.</p>
-         *
          * <p>You might also consider adding a {@link SendRequest#feePerKb} to set the fee per kb of transaction size
          * (rounded down to the nearest kb) as that is how transactions are sorted when added to a block by miners.</p>
          */
@@ -2117,6 +2168,11 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
          * {@link Transaction#REFERENCE_DEFAULT_MIN_TX_FEE}.</p>
          */
         public boolean ensureMinRequiredFee = true;
+
+        /**
+         * If true (the default), the inputs will be signed.
+         */
+        public boolean signInputs = true;
 
         /**
          * The AES key to use to decrypt the private keys before signing.
@@ -2189,6 +2245,22 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
             req.tx.addOutput(Coin.ZERO, destination);
             req.emptyWallet = true;
             return req;
+        }
+
+        @Override
+        public String toString() {
+            // print only the user-settable fields
+            ToStringHelper helper = Objects.toStringHelper(this).omitNullValues();
+            helper.add("emptyWallet", emptyWallet);
+            helper.add("changeAddress", changeAddress);
+            helper.add("fee", fee);
+            helper.add("feePerKb", feePerKb);
+            helper.add("ensureMinRequiredFee", ensureMinRequiredFee);
+            helper.add("signInputs", signInputs);
+            helper.add("aesKey", aesKey != null ? "set" : null); // careful to not leak the key
+            helper.add("coinSelector", coinSelector);
+            helper.add("shuffleOutputs", shuffleOutputs);
+            return helper.toString();
         }
     }
 
@@ -2374,8 +2446,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
 
     /**
      * Given a spend request containing an incomplete transaction, makes it valid by adding outputs and signed inputs
-     * according to the instructions in the request. The transaction in the request is modified by this method, as is
-     * the fee parameter.
+     * according to the instructions in the request. The transaction in the request is modified by this method.
      *
      * @param req a SendRequest that contains the incomplete transaction and details for how to make it valid.
      * @throws InsufficientMoneyException if the request could not be completed due to not enough balance.
@@ -2395,8 +2466,8 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
             }
             Coin totalOutput = value;
 
-            log.info("Completing send tx with {} outputs totalling {} satoshis (not including fees)",
-                    req.tx.getOutputs().size(), value);
+            log.info("Completing send tx with {} outputs totalling {} BTC (not including fees)",
+                    req.tx.getOutputs().size(), value.toFriendlyString());
 
             // If any inputs have already been added, we don't need to get their value from wallet
             Coin totalInput = Coin.ZERO;
@@ -2445,6 +2516,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
                 candidates = null;  // Selector took ownership and might have changed candidates. Don't access again.
                 req.tx.getOutput(0).setValue(bestCoinSelection.valueGathered);
                 totalOutput = bestCoinSelection.valueGathered;
+                log.info("  emptying {} BTC", bestCoinSelection.valueGathered.toFriendlyString());
             }
 
             for (TransactionOutput output : bestCoinSelection.gathered)
@@ -2463,11 +2535,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
             if (bestChangeOutput != null) {
                 req.tx.addOutput(bestChangeOutput);
                 totalOutput = totalOutput.add(bestChangeOutput.getValue());
-                log.info("  with {} coins change", bestChangeOutput.getValue().toFriendlyString());
-            }
-            final Coin calculatedFee = totalInput.subtract(totalOutput);
-            if (calculatedFee.signum() > 0) {
-                log.info("  with a fee of {}", calculatedFee.toFriendlyString());
+                log.info("  with {} BTC change", bestChangeOutput.getValue().toFriendlyString());
             }
 
             // Now shuffle the outputs to obfuscate which is the change.
@@ -2475,12 +2543,18 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
                 req.tx.shuffleOutputs();
 
             // Now sign the inputs, thus proving that we are entitled to redeem the connected outputs.
-            req.tx.signInputs(Transaction.SigHash.ALL, this, req.aesKey);
+            if (req.signInputs)
+                req.tx.signInputs(Transaction.SigHash.ALL, this, req.aesKey);
 
             // Check size.
             int size = req.tx.bitcoinSerialize().length;
             if (size > Transaction.MAX_STANDARD_TX_SIZE)
                 throw new ExceededMaxTransactionSize();
+
+            final Coin calculatedFee = req.tx.getFee();
+            if (calculatedFee != null) {
+                log.info("  with a fee of {} BTC", calculatedFee.toFriendlyString());
+            }
 
             // Label the transaction as being self created. We can use this later to spend its change output even before
             // the transaction is confirmed. We deliberately won't bother notifying listeners here as there's not much

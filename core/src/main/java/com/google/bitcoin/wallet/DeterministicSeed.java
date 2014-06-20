@@ -23,6 +23,7 @@ import org.spongycastle.crypto.params.KeyParameter;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 
 import static com.google.bitcoin.core.Utils.HEX;
@@ -148,5 +149,30 @@ public class DeterministicSeed implements EncryptableItem {
     /** Returns a list of words that represent the seed, or IllegalStateException if the seed is encrypted or missing. */
     public List<String> toMnemonicCode() {
         return toMnemonicCode(getCachedMnemonicCode());
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        DeterministicSeed seed = (DeterministicSeed) o;
+
+        if (creationTimeSeconds != seed.creationTimeSeconds) return false;
+        if (encryptedSeed != null) {
+            if (seed.encryptedSeed == null) return false;
+            if (!encryptedSeed.equals(seed.encryptedSeed)) return false;
+        } else {
+            if (!Arrays.equals(unencryptedSeed, seed.unencryptedSeed)) return false;
+        }
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = encryptedSeed != null ? encryptedSeed.hashCode() : Arrays.hashCode(unencryptedSeed);
+        result = 31 * result + (int) (creationTimeSeconds ^ (creationTimeSeconds >>> 32));
+        return result;
     }
 }

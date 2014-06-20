@@ -186,6 +186,13 @@ public class Utils {
     }
 
     /**
+     * Work around lack of unsigned types in Java.
+     */
+    public static boolean isLessThanOrEqualToUnsigned(long n1, long n2) {
+        return UnsignedLongs.compare(n1, n2) <= 0;
+    }
+
+    /**
      * Hex encoding used throughout the framework. Use with HEX.encode(byte[]) or HEX.decode(CharSequence).
      */
     public static final BaseEncoding HEX = BaseEncoding.base16().lowerCase();

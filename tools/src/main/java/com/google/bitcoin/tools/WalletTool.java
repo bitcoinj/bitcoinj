@@ -34,6 +34,8 @@ import com.google.bitcoin.uri.BitcoinURI;
 import com.google.bitcoin.uri.BitcoinURIParseException;
 import com.google.bitcoin.utils.BriefLogFormatter;
 import com.google.bitcoin.wallet.DeterministicSeed;
+import com.google.bitcoin.wallet.DeterministicUpgradeRequiredException;
+import com.google.bitcoin.wallet.DeterministicUpgradeRequiresPassword;
 import com.google.common.base.Charsets;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
@@ -47,8 +49,10 @@ import joptsimple.util.DateConverter;
 import org.bitcoinj.wallet.Protos;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.spongycastle.crypto.params.KeyParameter;
 import org.spongycastle.util.encoders.Hex;
 
+import javax.annotation.Nullable;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -67,6 +71,7 @@ import java.util.logging.Level;
 import java.util.logging.LogManager;
 
 import static com.google.bitcoin.core.Coin.parseCoin;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * A command line tool for manipulating wallets and working with Bitcoin.
@@ -458,11 +463,9 @@ public class WalletTool {
                 wallet.allowSpendingUnconfirmedTransactions();
             }
             if (password != null) {
-                if (!wallet.checkPassword(password)) {
-                    System.err.println("Password is incorrect.");
-                    return;
-                }
-                req.aesKey = wallet.getKeyCrypter().deriveKey(password);
+                req.aesKey = passwordToKey(true);
+                if (req.aesKey == null)
+                    return;  // Error message already printed.
             }
             wallet.completeTx(req);
 
@@ -578,11 +581,9 @@ public class WalletTool {
             }
             final Wallet.SendRequest req = session.getSendRequest();
             if (password != null) {
-                if (!wallet.checkPassword(password)) {
-                    System.err.println("Password is incorrect.");
-                    return;
-                }
-                req.aesKey = wallet.getKeyCrypter().deriveKey(password);
+                req.aesKey = passwordToKey(true);
+                if (req.aesKey == null)
+                    return;   // Error message already printed.
             }
             wallet.completeTx(req);  // may throw InsufficientMoneyException.
             if (options.has("offline")) {
@@ -862,9 +863,36 @@ public class WalletTool {
                 log.info("Setting keychain lookahead size to {}", size);
                 wallet.setKeychainLookaheadSize(size);
             }
-            ECKey key = wallet.freshReceiveKey();
+            ECKey key;
+            try {
+                key = wallet.freshReceiveKey();
+            } catch (DeterministicUpgradeRequiredException e) {
+                try {
+                    KeyParameter aesKey = passwordToKey(false);
+                    wallet.upgradeToDeterministic(aesKey);
+                } catch (DeterministicUpgradeRequiresPassword e2) {
+                    System.err.println("This wallet must be upgraded to be deterministic, but it's encrypted: please supply the password and try again.");
+                    return;
+                }
+                key = wallet.freshReceiveKey();
+            }
             System.out.println(key.toAddress(params) + " " + key);
         }
+    }
+
+    @Nullable
+    private static KeyParameter passwordToKey(boolean printError) {
+        if (password == null) {
+            if (printError)
+                System.err.println("You must provide a password.");
+            return null;
+        }
+        if (!wallet.checkPassword(password)) {
+            if (printError)
+                System.err.println("The password is incorrect.");
+            return null;
+        }
+        return checkNotNull(wallet.getKeyCrypter()).deriveKey(password);
     }
 
     private static void importKey() {
@@ -907,11 +935,10 @@ public class WalletTool {
         }
         try {
             if (wallet.isEncrypted()) {
-                if (password == null || !wallet.checkPassword(password)) {
-                    System.err.println("The password is incorrect.");
-                    return;
-                }
-                key = key.encrypt(wallet.getKeyCrypter(), wallet.getKeyCrypter().deriveKey(password));
+                KeyParameter aesKey = passwordToKey(true);
+                if (aesKey == null)
+                    return;   // Error message already printed.
+                key = key.encrypt(checkNotNull(wallet.getKeyCrypter()), aesKey);
             }
             wallet.importKey(key);
             System.out.println(key.toAddress(params) + " " + key);

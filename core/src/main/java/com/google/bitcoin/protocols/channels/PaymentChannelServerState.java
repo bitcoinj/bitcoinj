@@ -395,7 +395,7 @@ public class PaymentChannelServerState {
             // Let wallet handle adding additional inputs/fee as necessary.
             req.shuffleOutputs = false;
             wallet.completeTx(req);  // TODO: Fix things so shuffling is usable.
-            feePaidForPayment = req.fee;
+            feePaidForPayment = req.tx.getFee();
             log.info("Calculated fee is {}", feePaidForPayment);
             if (feePaidForPayment.compareTo(bestValueToMe) >= 0) {
                 final String msg = String.format("Had to pay more in fees (%s) than the channel was worth (%s)",

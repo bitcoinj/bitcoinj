@@ -541,4 +541,30 @@ public class BasicKeyChain implements EncryptableKeyChain {
     public int numBloomFilterEntries() {
         return numKeys() * 2;
     }
+
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Key rotation support
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    /** Returns the first ECKey created after the given UNIX time, or null if there is none. */
+    @Nullable
+    public ECKey findOldestKeyAfter(long timeSecs) {
+        lock.lock();
+        try {
+            ECKey oldest = null;
+            for (ECKey key : hashToKeys.values()) {
+                final long keyTime = key.getCreationTimeSeconds();
+                if (keyTime > timeSecs) {
+                    if (oldest == null || oldest.getCreationTimeSeconds() > keyTime)
+                        oldest = key;
+                }
+            }
+            return oldest;
+        } finally {
+            lock.unlock();
+        }
+    }
 }

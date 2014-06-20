@@ -718,15 +718,18 @@ public class Transaction extends ChildMessage implements Serializable {
         return addInput(new TransactionInput(params, this, from));
     }
 
-    /**
-     * Adds an input directly, with no checking that it's valid. Returns the new input.
-     */
+    /** Adds an input directly, with no checking that it's valid. Returns the new input. */
     public TransactionInput addInput(TransactionInput input) {
         unCache();
         input.setParent(this);
         inputs.add(input);
         adjustLength(inputs.size(), input.length);
         return input;
+    }
+
+    /** Adds an input directly, with no checking that it's valid. Returns the new input. */
+    public TransactionInput addInput(Sha256Hash spendTxHash, long outputIndex, Script script) {
+        return addInput(new TransactionInput(params, this, script.getProgram(), new TransactionOutPoint(params, outputIndex, spendTxHash)));
     }
 
     /**

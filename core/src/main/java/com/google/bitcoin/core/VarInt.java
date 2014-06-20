@@ -16,9 +16,8 @@
 
 package com.google.bitcoin.core;
 
-import com.google.common.primitives.UnsignedInteger;
-
 import static com.google.bitcoin.core.Utils.isLessThanUnsigned;
+import static com.google.bitcoin.core.Utils.isLessThanOrEqualToUnsigned;
 
 /**
  * A variable-length encoded integer using Satoshis encoding.
@@ -88,9 +87,9 @@ public class VarInt {
     public static int sizeOf(long value) {
         if (isLessThanUnsigned(value, 253))
             return 1;
-        else if (isLessThanUnsigned(value, 65536))
+        else if (isLessThanOrEqualToUnsigned(value, 0xFFFFL))
             return 3;  // 1 marker + 2 data bytes
-        else if (isLessThanUnsigned(value, UnsignedInteger.MAX_VALUE.longValue()))
+        else if (isLessThanOrEqualToUnsigned(value, 0xFFFFFFFFL))
             return 5;  // 1 marker + 4 data bytes
         else
             return 9;  // 1 marker + 8 data bytes
@@ -99,9 +98,9 @@ public class VarInt {
     public byte[] encode() {
         if (isLessThanUnsigned(value, 253)) {
             return new byte[]{(byte) value};
-        } else if (isLessThanUnsigned(value, 65536)) {
+        } else if (isLessThanOrEqualToUnsigned(value, 0xFFFFL)) {
             return new byte[]{(byte) 253, (byte) (value), (byte) (value >> 8)};
-        } else if (isLessThanUnsigned(value, UnsignedInteger.MAX_VALUE.longValue())) {
+        } else if (isLessThanOrEqualToUnsigned(value, 0xFFFFFFFFL)) {
             byte[] bytes = new byte[5];
             bytes[0] = (byte) 254;
             Utils.uint32ToByteArrayLE(value, bytes, 1);

@@ -33,12 +33,27 @@ public class VarIntTest extends TestCase {
         assertEquals(64000, new VarInt(a.encode(), 0).value);
     }
 
+    public void testShortFFFF() throws Exception {
+        VarInt a = new VarInt(0xFFFFL);
+        assertEquals(3, a.getSizeInBytes());
+        assertEquals(3, a.encode().length);
+        assertEquals(0xFFFFL, new VarInt(a.encode(), 0).value);
+    }
+
     public void testInts() throws Exception {
         VarInt a = new VarInt(0xAABBCCDDL);
         assertEquals(5, a.getSizeInBytes());
         assertEquals(5, a.encode().length);
         byte[] bytes = a.encode();
         assertEquals(0xAABBCCDDL, 0xFFFFFFFFL & new VarInt(bytes, 0).value);
+    }
+
+    public void testIntFFFFFFFF() throws Exception {
+        VarInt a = new VarInt(0xFFFFFFFFL);
+        assertEquals(5, a.getSizeInBytes());
+        assertEquals(5, a.encode().length);
+        byte[] bytes = a.encode();
+        assertEquals(0xFFFFFFFFL, 0xFFFFFFFFL & new VarInt(bytes, 0).value);
     }
 
     public void testLong() throws Exception {
