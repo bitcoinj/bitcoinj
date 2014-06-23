@@ -42,9 +42,11 @@ public class TransactionOutput extends ChildMessage implements Serializable {
     private static final Logger log = LoggerFactory.getLogger(TransactionOutput.class);
     private static final long serialVersionUID = -590332479859256824L;
 
-    // A transaction output has some value and a script used for authenticating that the redeemer is allowed to spend
-    // this output.
+    // The output's value is kept as a native type in order to save class instances.
     private long value;
+
+    // A transaction output has a script used for authenticating that the redeemer is allowed to spend
+    // this output.
     private byte[] scriptBytes;
 
     // The script bytes are parsed and turned into a Script on demand.
