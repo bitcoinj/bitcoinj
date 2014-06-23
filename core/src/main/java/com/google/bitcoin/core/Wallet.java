@@ -3588,6 +3588,12 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
         }
     }
 
+    @Override
+    public synchronized void setTag(String tag, ByteString value) {
+        super.setTag(tag, value);
+        saveNow();
+    }
+
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //
     // Boilerplate for running event listeners - dispatches events onto the user code thread (where we don't do
@@ -4104,11 +4110,5 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
     @Override
     public ReentrantLock getLock() {
         return lock;
-    }
-
-    @Override
-    public synchronized void setTag(String tag, ByteString value) {
-        super.setTag(tag, value);
-        saveNow();
     }
 }
