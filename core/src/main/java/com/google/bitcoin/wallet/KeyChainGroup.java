@@ -111,15 +111,14 @@ public class KeyChainGroup {
     }
 
     /**
-     * Makes given account keys follow the account key of the active keychain. After that you will be able
-     * to get P2SH addresses to receive coins to.
-     * This method should be called only once before key rotation, otherwise it will throw an IllegalStateException.
+     * Makes given account keys follow the account key of the active keychain. After that active keychain will be
+     * treated as married and you will be able to get P2SH addresses to receive coins to.
+     * This method will throw an IllegalStateException, if active keychain is already married or already has leaf keys
+     * issued. In future this behaviour may be replaced with key rotation
      */
     public void addFollowingAccounts(List<DeterministicKey> followingAccountKeys) {
-        if (isMarried()) {
-            throw new IllegalStateException("KeyChainGroup is married already");
-        }
-
+        checkState(!isMarried(), "KeyChainGroup is married already");
+        checkState(getActiveKeyChain().numLeafKeysIssued() == 0, "Active keychain already has keys in use");
         DeterministicKey accountKey = getActiveKeyChain().getWatchingKey();
         for (DeterministicKey key : followingAccountKeys) {
             checkArgument(key.getPath().size() == 1, "Following keys have to be account keys");

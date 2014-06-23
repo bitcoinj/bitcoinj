@@ -42,6 +42,7 @@ public class KeyChainGroupTest {
     private static final NetworkParameters params = MainNetParams.get();
     private static final String XPUB = "xpub68KFnj3bqUx1s7mHejLDBPywCAKdJEu1b49uniEEn2WSbHmZ7xbLqFTjJbtx1LUcAt1DwhoqWHmo2s5WMJp6wi38CiF2hYD49qVViKVvAoi";
     private KeyChainGroup group;
+    private DeterministicKey watchingAccountKey;
 
     @Before
     public void setup() {
@@ -50,13 +51,14 @@ public class KeyChainGroupTest {
         group = new KeyChainGroup(params);
         group.setLookaheadSize(LOOKAHEAD_SIZE);   // Don't want slow tests.
         group.getActiveKeyChain();  // Force create a chain.
+
+        watchingAccountKey = DeterministicKey.deserializeB58(null, XPUB);
     }
 
     private KeyChainGroup createMarriedKeyChainGroup() {
         byte[] seedBytes = Sha256Hash.create("don't use a string seed like this in real life".getBytes()).getBytes();
         DeterministicSeed seed = new DeterministicSeed(seedBytes, MnemonicCode.BIP39_STANDARDISATION_TIME_SECS);
-        DeterministicKey watchingKey = DeterministicKey.deserializeB58(null, XPUB);
-        KeyChainGroup group = new KeyChainGroup(params, seed, ImmutableList.of(watchingKey));
+        KeyChainGroup group = new KeyChainGroup(params, seed, ImmutableList.of(watchingAccountKey));
         group.setLookaheadSize(LOOKAHEAD_SIZE);
         group.getActiveKeyChain();
         return group;
@@ -376,7 +378,7 @@ public class KeyChainGroupTest {
 
     @Test
     public void serializeWatching() throws Exception {
-        group = new KeyChainGroup(params, DeterministicKey.deserializeB58(null, XPUB));
+        group = new KeyChainGroup(params, watchingAccountKey);
         group.setLookaheadSize(LOOKAHEAD_SIZE);
         group.freshKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         group.freshKey(KeyChain.KeyPurpose.CHANGE);
@@ -405,15 +407,21 @@ public class KeyChainGroupTest {
     @Test
     public void addFollowingAccounts() throws Exception {
         assertFalse(group.isMarried());
-        group.addFollowingAccounts(ImmutableList.of(DeterministicKey.deserializeB58(null, XPUB)));
+        group.addFollowingAccounts(ImmutableList.of(watchingAccountKey));
         assertTrue(group.isMarried());
     }
 
     @Test (expected = IllegalStateException.class)
     public void addFollowingAccountsTwiceShouldFail() {
-        ImmutableList<DeterministicKey> followingKeys = ImmutableList.of(DeterministicKey.deserializeB58(null, XPUB));
+        ImmutableList<DeterministicKey> followingKeys = ImmutableList.of(watchingAccountKey);
         group.addFollowingAccounts(followingKeys);
         group.addFollowingAccounts(followingKeys);
+    }
+
+    @Test (expected = IllegalStateException.class)
+    public void addFollowingAccountsForUsedKeychainShouldFail() {
+        group.freshAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
+        group.addFollowingAccounts(ImmutableList.of(watchingAccountKey));
     }
 
     @Test
