@@ -443,6 +443,19 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         return basicKeyChain.numKeys();
     }
 
+    /**
+     * Returns number of leaf keys used including both internal and external paths. This may be fewer than the number
+     * that have been deserialized or held in memory, because of the lookahead zone.
+     */
+    public int numLeafKeysIssued() {
+        lock.lock();
+        try {
+            return issuedExternalKeys + issuedInternalKeys;
+        } finally {
+            lock.unlock();
+        }
+    }
+
     @Override
     public long getEarliestKeyCreationTime() {
         return seed != null ? seed.getCreationTimeSeconds() : creationTimeSeconds;
