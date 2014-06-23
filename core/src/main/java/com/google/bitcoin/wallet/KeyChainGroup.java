@@ -238,12 +238,9 @@ public class KeyChainGroup {
      */
     public Address freshAddress(KeyChain.KeyPurpose purpose) {
         DeterministicKeyChain chain = getActiveKeyChain();
-        DeterministicKey key = chain.getKey(purpose);
         if (isMarried(chain)) {
-            List<ECKey> keys = ImmutableList.<ECKey>builder()
-                    .addAll(getFollowingKeys(purpose, chain.getWatchingKey()))
-                    .add(key).build();
-            Address freshAddress = Address.fromP2SHScript(params, ScriptBuilder.createP2SHOutputScript(2, keys));
+            List<ECKey> marriedKeys = freshMarriedKeys(purpose, chain);
+            Address freshAddress = Address.fromP2SHScript(params, ScriptBuilder.createP2SHOutputScript(2, marriedKeys));
             currentAddresses.put(purpose, freshAddress);
             return freshAddress;
         } else {
@@ -251,13 +248,16 @@ public class KeyChainGroup {
         }
     }
 
-    private List<ECKey> getFollowingKeys(KeyChain.KeyPurpose purpose, DeterministicKey followedChainWatchKey) {
-        List<ECKey> keys = new ArrayList<ECKey>();
-        Collection<DeterministicKeyChain> keyChains = followingKeychains.get(followedChainWatchKey);
+    private List<ECKey> freshMarriedKeys(KeyChain.KeyPurpose purpose, DeterministicKeyChain followedKeyChain) {
+        DeterministicKey followedKey = followedKeyChain.getKey(purpose);
+        ImmutableList.Builder<ECKey> keys = ImmutableList.<ECKey>builder().add(followedKey);
+        Collection<DeterministicKeyChain> keyChains = followingKeychains.get(followedKeyChain.getWatchingKey());
         for (DeterministicKeyChain keyChain : keyChains) {
-            keys.add(keyChain.getKey(purpose));
+            DeterministicKey followingKey = keyChain.getKey(purpose);
+            checkState(followedKey.getChildNumber().equals(followingKey.getChildNumber()), "Following keychains should be in sync");
+            keys.add(followingKey);
         }
-        return keys;
+        return keys.build();
     }
 
     /** Returns the key chain that's used for generation of fresh/current keys. This is always the newest HD chain. */
