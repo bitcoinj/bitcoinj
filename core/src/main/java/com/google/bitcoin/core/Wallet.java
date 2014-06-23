@@ -2477,7 +2477,6 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
             for (TransactionOutput output : req.tx.getOutputs()) {
                 value = value.add(output.getValue());
             }
-            Coin totalOutput = value;
 
             log.info("Completing send tx with {} outputs totalling {} BTC (not including fees)",
                     req.tx.getOutputs().size(), value.toFriendlyString());
@@ -2528,7 +2527,6 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
                 bestCoinSelection = selector.select(NetworkParameters.MAX_MONEY, candidates);
                 candidates = null;  // Selector took ownership and might have changed candidates. Don't access again.
                 req.tx.getOutput(0).setValue(bestCoinSelection.valueGathered);
-                totalOutput = bestCoinSelection.valueGathered;
                 log.info("  emptying {} BTC", bestCoinSelection.valueGathered.toFriendlyString());
             }
 
@@ -2543,11 +2541,8 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
                     throw new CouldNotAdjustDownwards();
             }
 
-            totalInput = totalInput.add(bestCoinSelection.valueGathered);
-
             if (bestChangeOutput != null) {
                 req.tx.addOutput(bestChangeOutput);
-                totalOutput = totalOutput.add(bestChangeOutput.getValue());
                 log.info("  with {} BTC change", bestChangeOutput.getValue().toFriendlyString());
             }
 
