@@ -2400,6 +2400,7 @@ public class WalletTest extends TestWithWallet {
         assertFalse(wallet.isDeterministicUpgradeRequired());
     }
 
+    @Test
     public void upgradeToHDEncrypted() throws Exception {
         // Create an old-style random wallet.
         wallet = new Wallet(params);
@@ -2411,7 +2412,7 @@ public class WalletTest extends TestWithWallet {
         wallet.encrypt(crypter, aesKey);
         try {
             wallet.freshReceiveKey();
-        } catch (DeterministicUpgradeRequiredException e) {
+        } catch (DeterministicUpgradeRequiresPassword e) {
             // Expected.
         }
         wallet.upgradeToDeterministic(aesKey);
