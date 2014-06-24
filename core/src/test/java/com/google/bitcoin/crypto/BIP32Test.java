@@ -144,7 +144,7 @@ public class BIP32Test {
     }
 
     private String testEncode(String what) throws AddressFormatException {
-        return new String(HEX.encode(Base58.decodeChecked(what)));
+        return HEX.encode(Base58.decodeChecked(what));
     }
 
     static class HDWTestVector {

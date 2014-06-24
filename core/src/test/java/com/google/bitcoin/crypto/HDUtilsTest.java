@@ -122,6 +122,6 @@ public class HDUtilsTest {
     @Test
     public void testLongToByteArray() throws Exception {
         byte[] bytes = HDUtils.longTo4ByteArray(1026);
-        Assert.assertEquals("00000402", new String(HEX.encode(bytes)));
+        Assert.assertEquals("00000402", HEX.encode(bytes));
     }
 }

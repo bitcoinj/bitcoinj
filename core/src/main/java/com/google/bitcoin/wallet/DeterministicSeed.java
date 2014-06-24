@@ -94,7 +94,7 @@ public class DeterministicSeed implements EncryptableItem {
     @Nullable
     public String toHexString() {
         if (unencryptedSeed != null)
-            return new String(HEX.encode(unencryptedSeed));
+            return HEX.encode(unencryptedSeed);
         else
             return null;
     }
