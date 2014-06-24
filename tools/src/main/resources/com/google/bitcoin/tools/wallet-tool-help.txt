@@ -47,6 +47,10 @@ Usage: wallet-tool --flags action-name
                           --no-pki disables pki verification for payment requests.
   encrypt              Requires --password and uses it to encrypt the wallet in place.
   decrypt              Requires --password and uses it to decrypt the wallet in place.
+  rotate               Takes --date and sets that as the key rotation time. Any coins controlled by keys or HD chains
+                       created before this date will be re-spent to a key (from an HD tree) that was created after it.
+                       If --date is missing, the current time is assumed. If the time covers all keys, a new HD tree
+                       will be created from a new random seed.
 
 >>> GENERAL OPTIONS
   --debuglog           Enables logging from the core library.

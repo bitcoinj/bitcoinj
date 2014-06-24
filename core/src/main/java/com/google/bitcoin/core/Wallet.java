@@ -38,6 +38,8 @@ import com.google.common.base.Objects;
 import com.google.common.base.Objects.ToStringHelper;
 import com.google.common.collect.*;
 import com.google.common.primitives.Ints;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.protobuf.ByteString;
@@ -420,6 +422,10 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
     }
 
     private void maybeUpgradeToHD() throws DeterministicUpgradeRequiresPassword {
+        maybeUpgradeToHD(null);
+    }
+
+    private void maybeUpgradeToHD(@Nullable KeyParameter aesKey) throws DeterministicUpgradeRequiresPassword {
         checkState(lock.isHeldByCurrentThread());
         if (keychain.isDeterministicUpgradeRequired()) {
             log.info("Upgrade to HD wallets is required, attempting to do so.");
@@ -1158,15 +1164,10 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
                 }
             }
             receive(tx, block, blockType, relativityOffset);
+            return true;
         } finally {
             lock.unlock();
         }
-        if (blockType == AbstractBlockChain.NewBlockType.BEST_CHAIN) {
-            // If some keys are considered to be bad, possibly move money assigned to them now.
-            // This has to run outside the wallet lock as it may trigger broadcasting of new transactions.
-            maybeRotateKeys();
-        }
-        return true;
     }
 
     /**
@@ -1373,11 +1374,6 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
             receive(tx, block, blockType, relativityOffset);
         } finally {
             lock.unlock();
-        }
-        if (blockType == AbstractBlockChain.NewBlockType.BEST_CHAIN) {
-            // If some keys are considered to be bad, possibly move money assigned to them now.
-            // This has to run outside the wallet lock as it may trigger broadcasting of new transactions.
-            maybeRotateKeys();
         }
     }
 
@@ -3918,7 +3914,13 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //
-    // Managing wallet-triggered transaction broadcast and key rotation.
+    // Wallet maintenance transactions. These transactions may not be directly connected to a payment the user is
+    // making. They may be instead key rotation transactions for when old keys are suspected to be compromised,
+    // de/re-fragmentation transactions for when our output sizes are inappropriate or suboptimal, privacy transactions
+    // and so on. Because these transactions may require user intervention in some way (e.g. entering their password)
+    // the wallet application is expected to poll the Wallet class to get SendRequests. Ideally security systems like
+    // hardware wallets or risk analysis providers are programmed to auto-approve transactions that send from our own
+    // keys back to our own keys.
 
     /**
      * <p>Specifies that the given {@link TransactionBroadcaster}, typically a {@link PeerGroup}, should be used for
@@ -3981,27 +3983,28 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
     /**
      * <p>When a key rotation time is set, and money controlled by keys created before the given timestamp T will be
      * automatically respent to any key that was created after T. This can be used to recover from a situation where
-     * a set of keys is believed to be compromised. Once the time is set transactions will be created and broadcast
-     * immediately. New coins that come in after calling this method will be automatically respent immediately. The
-     * rotation time is persisted to the wallet. You can stop key rotation by calling this method again with zero
-     * as the argument, or by using {@link #setKeyRotationEnabled(boolean)}.</p>
+     * a set of keys is believed to be compromised. You can stop key rotation by calling this method again with zero
+     * as the argument, or by using {@link #setKeyRotationEnabled(boolean)}. Once set up, calling
+     * {@link #maybeDoMaintenance(org.spongycastle.crypto.params.KeyParameter, boolean)} will create and possibly
+     * send rotation transactions: but it won't be done automatically (because you might have to ask for the users
+     * password).</p>
      *
      * <p>Note that this method won't do anything unless you call {@link #setKeyRotationEnabled(boolean)} first.</p>
+     *
+     * <p>The given time cannot be in the future.</p>
      */
     public void setKeyRotationTime(long unixTimeSeconds) {
+        checkArgument(unixTimeSeconds <= Utils.currentTimeSeconds());
         vKeyRotationTimestamp = unixTimeSeconds;
         if (unixTimeSeconds > 0) {
             log.info("Key rotation time set: {}", unixTimeSeconds);
-            maybeRotateKeys();
         }
         saveNow();
     }
 
-    /** Toggles key rotation on and off. Note that this state is not serialized. Activating it can trigger tx sends. */
+    /** Toggles key rotation on and off. Note that this state is not serialized. */
     public void setKeyRotationEnabled(boolean enabled) {
         vKeyRotationEnabled = enabled;
-        if (enabled)
-            maybeRotateKeys();
     }
 
     /** Returns whether the keys creation time is before the key rotation time, if one was set. */
@@ -4010,48 +4013,90 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
         return time != 0 && key.getCreationTimeSeconds() < time;
     }
 
-    // Checks to see if any coins are controlled by rotating keys and if so, spends them.
-    private void maybeRotateKeys() {
+    /**
+     * A wallet app should call this from time to time if key rotation is enabled in order to let the wallet craft and
+     * send transactions needed to re-organise coins internally. A good time to call this would be after receiving coins
+     * for an unencrypted wallet, or after sending money for an encrypted wallet. If you have an encrypted wallet and
+     * just want to know if some maintenance needs doing, call this method with doSend set to false and look at the
+     * returned list of transactions.
+     *
+     * @param aesKey the users password, if any.
+     * @param andSend if true, send the transactions via the tx broadcaster and return them, if false just return them.
+     * @return A list of transactions that the wallet just made/will make for internal maintenance. Might be empty.
+     */
+    public ListenableFuture<List<Transaction>> maybeDoMaintenance(@Nullable KeyParameter aesKey, boolean andSend) {
+        List<Transaction> txns;
+        lock.lock();
+        try {
+            txns = maybeRotateKeys(aesKey);
+            if (!andSend)
+                return Futures.immediateFuture(txns);
+        } finally {
+            lock.unlock();
+        }
         checkState(!lock.isHeldByCurrentThread());
-        // TODO: Handle chain replays and encrypted wallets here.
-        if (!vKeyRotationEnabled) return;
+        ArrayList<ListenableFuture<Transaction>> futures = new ArrayList<ListenableFuture<Transaction>>(txns.size());
+        TransactionBroadcaster broadcaster = vTransactionBroadcaster;
+        for (Transaction tx : txns) {
+            try {
+                final ListenableFuture<Transaction> future = broadcaster.broadcastTransaction(tx);
+                futures.add(future);
+                Futures.addCallback(future, new FutureCallback<Transaction>() {
+                    @Override
+                    public void onSuccess(Transaction transaction) {
+                        log.info("Successfully broadcast key rotation tx: {}", transaction);
+                    }
+
+                    @Override
+                    public void onFailure(Throwable throwable) {
+                        log.error("Failed to broadcast key rotation tx", throwable);
+                    }
+                });
+            } catch (Exception e) {
+                log.error("Failed to broadcast rekey tx", e);
+            }
+        }
+        return Futures.allAsList(futures);
+    }
+
+    // Checks to see if any coins are controlled by rotating keys and if so, spends them.
+    private List<Transaction> maybeRotateKeys(@Nullable KeyParameter aesKey) {
+        checkState(lock.isHeldByCurrentThread());
+        List<Transaction> results = Lists.newLinkedList();
+        // TODO: Handle chain replays here.
+        if (!vKeyRotationEnabled) return results;
         // Snapshot volatiles so this method has an atomic view.
         long keyRotationTimestamp = vKeyRotationTimestamp;
-        if (keyRotationTimestamp == 0) return;  // Nothing to do.
-        TransactionBroadcaster broadcaster = vTransactionBroadcaster;
+        if (keyRotationTimestamp == 0) return results;  // Nothing to do.
+
+        // We might have to create a new HD hierarchy if the previous ones are now rotating.
+        boolean allChainsRotating = true;
+        for (DeterministicKeyChain chain : keychain.getDeterministicKeyChains()) {
+            if (chain.getEarliestKeyCreationTime() > vKeyRotationTimestamp) {
+                allChainsRotating = false;
+                break;
+            }
+        }
+        if (allChainsRotating) {
+            log.info("All HD chains are currently rotating, creating a new one");
+            keychain.createAndActivateNewHDChain();
+        }
 
         // Because transactions are size limited, we might not be able to re-key the entire wallet in one go. So
         // loop around here until we no longer produce transactions with the max number of inputs. That means we're
         // fully done, at least for now (we may still get more transactions later and this method will be reinvoked).
         Transaction tx;
         do {
-            tx = rekeyOneBatch(keyRotationTimestamp, broadcaster);
+            tx = rekeyOneBatch(keyRotationTimestamp, aesKey, results);
+            if (tx != null) results.add(tx);
         } while (tx != null && tx.getInputs().size() == KeyTimeCoinSelector.MAX_SIMULTANEOUS_INPUTS);
+        return results;
     }
 
     @Nullable
-    private Transaction rekeyOneBatch(long keyRotationTimestamp, final TransactionBroadcaster broadcaster) {
-        /*final Transaction rekeyTx;
-
+    private Transaction rekeyOneBatch(long timeSecs, @Nullable KeyParameter aesKey, List<Transaction> others) {
         lock.lock();
         try {
-            // Firstly, see if we have any keys that are beyond the rotation time, and any before.
-            ECKey safeKey = null;
-            boolean haveRotatingKeys = false;
-            for (ECKey key : basicKeyChain) {
-                final long t = key.getCreationTimeSeconds();
-                if (t < keyRotationTimestamp) {
-                    haveRotatingKeys = true;
-                } else {
-                    safeKey = key;
-                }
-            }
-            if (!haveRotatingKeys)
-                return null;
-            if (safeKey == null) {
-                log.warn("Key rotation requested but no keys newer than the timestamp are available.");
-                return null;
-            }
             // Build the transaction using some custom logic for our special needs. Last parameter to
             // KeyTimeCoinSelector is whether to ignore pending transactions or not.
             //
@@ -4060,59 +4105,34 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
             // have already got stuck double spends in their wallet due to the Bloom-filtering block reordering
             // bug that was fixed in 0.10, thus, making a re-key transaction depend on those would cause it to
             // never confirm at all.
-            CoinSelector selector = new KeyTimeCoinSelector(this, keyRotationTimestamp, true);
+            CoinSelector keyTimeSelector = new KeyTimeCoinSelector(this, timeSecs, true);
+            FilteringCoinSelector selector = new FilteringCoinSelector(keyTimeSelector);
+            for (Transaction other : others)
+                selector.excludeOutputsSpentBy(other);
+            // TODO: Make this use the standard SendRequest.
             CoinSelection toMove = selector.select(Coin.ZERO, calculateAllSpendCandidates(true));
             if (toMove.valueGathered.equals(Coin.ZERO)) return null;  // Nothing to do.
-            rekeyTx = new Transaction(params);
+            maybeUpgradeToHD(aesKey);
+            Transaction rekeyTx = new Transaction(params);
             for (TransactionOutput output : toMove.gathered) {
                 rekeyTx.addInput(output);
             }
-            rekeyTx.addOutput(toMove.valueGathered, safeKey);
+            rekeyTx.addOutput(toMove.valueGathered, freshReceiveAddress());
             if (!adjustOutputDownwardsForFee(rekeyTx, toMove, Coin.ZERO, Transaction.REFERENCE_DEFAULT_MIN_TX_FEE)) {
                 log.error("Failed to adjust rekey tx for fees.");
                 return null;
             }
             rekeyTx.getConfidence().setSource(TransactionConfidence.Source.SELF);
             rekeyTx.setPurpose(Transaction.Purpose.KEY_ROTATION);
-            rekeyTx.signInputs(Transaction.SigHash.ALL, this);
+            rekeyTx.signInputs(Transaction.SigHash.ALL, this, aesKey);
             // KeyTimeCoinSelector should never select enough inputs to push us oversize.
             checkState(rekeyTx.bitcoinSerialize().length < Transaction.MAX_STANDARD_TX_SIZE);
-            commitTx(rekeyTx);
+            return rekeyTx;
         } catch (VerificationException e) {
             throw new RuntimeException(e);  // Cannot happen.
         } finally {
             lock.unlock();
         }
-        if (broadcaster == null)
-            return rekeyTx;
-
-        log.info("Attempting to send key rotation tx: {}", rekeyTx);
-        // We must broadcast the tx in a separate thread to avoid inverting any locks. Otherwise we may be running
-        // with the blockchain lock held (whilst receiving a block) and thus re-entering the peerGroup would invert
-        // blockchain <-> peergroup.
-        new Thread() {
-            @Override
-            public void run() {
-                // Handle the future results just for logging.
-                try {
-                    Futures.addCallback(broadcaster.broadcastTransaction(rekeyTx), new FutureCallback<Transaction>() {
-                        @Override
-                        public void onSuccess(Transaction transaction) {
-                            log.info("Successfully broadcast key rotation tx: {}", transaction);
-                        }
-
-                        @Override
-                        public void onFailure(Throwable throwable) {
-                            log.error("Failed to broadcast key rotation tx", throwable);
-                        }
-                    });
-                } catch (Exception e) {
-                    log.error("Failed to broadcast rekey tx, will try again later", e);
-                }
-            }
-        }.start();
-        return rekeyTx;*/
-        throw new RuntimeException("FIXME");
     }
 
     /**

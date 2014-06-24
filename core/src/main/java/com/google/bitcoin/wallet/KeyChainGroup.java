@@ -184,9 +184,11 @@ public class KeyChainGroup {
         }
     }
 
-    private void createAndActivateNewHDChain() {
+    /** Adds a new HD chain to the chains list, and make it the default chain (from which keys are issued). */
+    public void createAndActivateNewHDChain() {
         // We can't do auto upgrade here because we don't know the rotation time, if any.
         final DeterministicKeyChain chain = new DeterministicKeyChain(new SecureRandom());
+        log.info("Creating and activating a new HD chain: {}", chain);
         for (ListenerRegistration<KeyChainEventListener> registration : basic.getListeners())
             chain.addEventListener(registration.listener, registration.executor);
         if (lookaheadSize >= 0)
@@ -796,19 +798,21 @@ public class KeyChainGroup {
             for (ECKey key : basic.getKeys())
                 formatKeyWithAddress(includePrivateKeys, key, builder);
         }
+        List<String> chainStrs = Lists.newLinkedList();
         for (DeterministicKeyChain chain : chains) {
+            final StringBuilder builder2 = new StringBuilder();
             DeterministicSeed seed = chain.getSeed();
             if (seed != null) {
                 if (seed.isEncrypted()) {
-                    builder.append(String.format("Seed is encrypted%n"));
+                    builder2.append(String.format("Seed is encrypted%n"));
                 } else if (includePrivateKeys) {
                     final List<String> words = seed.toMnemonicCode();
-                    builder.append(
+                    builder2.append(
                             String.format("Seed as words: %s%nSeed as hex:   %s%n", Joiner.on(' ').join(words),
                                     seed.toHexString())
                     );
                 }
-                builder.append(String.format("Seed birthday: %d  [%s]%n", seed.getCreationTimeSeconds(), new Date(seed.getCreationTimeSeconds() * 1000)));
+                builder2.append(String.format("Seed birthday: %d  [%s]%n", seed.getCreationTimeSeconds(), new Date(seed.getCreationTimeSeconds() * 1000)));
             }
             final DeterministicKey watchingKey = chain.getWatchingKey();
             // Don't show if it's been imported from a watching wallet already, because it'd result in a weird/
@@ -816,21 +820,25 @@ public class KeyChainGroup {
             // due to the parent fingerprint being missing/not stored. In future we could store the parent fingerprint
             // optionally as well to fix this, but it seems unimportant for now.
             if (watchingKey.getParent() != null) {
-                builder.append(String.format("Key to watch:  %s%n%n", watchingKey.serializePubB58()));
+                builder2.append(String.format("Key to watch:  %s%n", watchingKey.serializePubB58()));
             }
             if (isMarried(chain)) {
                 Collection<DeterministicKeyChain> followingChains = followingKeychains.get(chain.getWatchingKey());
                 for (DeterministicKeyChain followingChain : followingChains) {
-                    builder.append(String.format("Following chain:  %s%n", followingChain.getWatchingKey().serializePubB58()));
+                    builder2.append(String.format("Following chain:  %s%n", followingChain.getWatchingKey().serializePubB58()));
                 }
-                builder.append("\n");
+                builder2.append(String.format("%n"));
                 for (Script script : marriedKeysScripts.values())
-                    formatScript(ScriptBuilder.createP2SHOutputScript(script), builder);
+                    formatScript(ScriptBuilder.createP2SHOutputScript(script), builder2);
             } else {
                 for (ECKey key : chain.getKeys())
-                    formatKeyWithAddress(includePrivateKeys, key, builder);
+                    formatKeyWithAddress(includePrivateKeys, key, builder2);
             }
+            for (ECKey key : chain.getKeys())
+                formatKeyWithAddress(includePrivateKeys, key, builder2);
+            chainStrs.add(builder2.toString());
         }
+        builder.append(Joiner.on(String.format("%n")).join(chainStrs));
         return builder.toString();
     }
 
@@ -851,5 +859,10 @@ public class KeyChainGroup {
         builder.append(" ");
         builder.append(includePrivateKeys ? key.toStringWithPrivate() : key.toString());
         builder.append("\n");
+    }
+
+    /** Returns a copy of the current list of chains. */
+    public List<DeterministicKeyChain> getDeterministicKeyChains() {
+        return new ArrayList<DeterministicKeyChain>(chains);
     }
 }
