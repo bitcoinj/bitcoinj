@@ -53,10 +53,7 @@ import org.spongycastle.crypto.params.KeyParameter;
 import org.spongycastle.util.encoders.Hex;
 
 import javax.annotation.Nullable;
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
+import java.io.*;
 import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -301,11 +298,13 @@ public class WalletTool {
             }
         }
 
+        InputStream walletInputStream = null;
         try {
             WalletProtobufSerializer loader = new WalletProtobufSerializer();
             if (options.has("ignore-mandatory-extensions"))
                 loader.setRequireMandatoryExtensions(false);
-            wallet = loader.readWallet(new BufferedInputStream(new FileInputStream(walletFile)));
+            walletInputStream = new BufferedInputStream(new FileInputStream(walletFile));
+            wallet = loader.readWallet(walletInputStream);
             if (!wallet.getParams().equals(params)) {
                 System.err.println("Wallet does not match requested network parameters: " +
                         wallet.getParams().getId() + " vs " + params.getId());
@@ -315,6 +314,10 @@ public class WalletTool {
             System.err.println("Failed to load wallet '" + walletFile + "': " + e.getMessage());
             e.printStackTrace();
             return;
+        } finally {
+            if (walletInputStream != null) {
+                walletInputStream.close();
+            }
         }
 
         // What should we do?
