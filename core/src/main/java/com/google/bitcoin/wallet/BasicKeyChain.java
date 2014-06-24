@@ -23,6 +23,7 @@ import com.google.bitcoin.store.UnreadableWalletException;
 import com.google.bitcoin.utils.ListenerRegistration;
 import com.google.bitcoin.utils.Threading;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
 import com.google.protobuf.ByteString;
 import org.bitcoinj.wallet.Protos;
 import org.spongycastle.crypto.params.KeyParameter;
@@ -563,6 +564,23 @@ public class BasicKeyChain implements EncryptableKeyChain {
                 }
             }
             return oldest;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /** Returns a list of all ECKeys created after the given UNIX time. */
+    public List<ECKey> findKeysBefore(long timeSecs) {
+        lock.lock();
+        try {
+            List<ECKey> results = Lists.newLinkedList();
+            for (ECKey key : hashToKeys.values()) {
+                final long keyTime = key.getCreationTimeSeconds();
+                if (keyTime < timeSecs) {
+                    results.add(key);
+                }
+            }
+            return results;
         } finally {
             lock.unlock();
         }

@@ -40,6 +40,7 @@ import com.google.common.base.Charsets;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.Resources;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.subgraph.orchid.TorClient;
 import joptsimple.OptionParser;
@@ -162,6 +163,7 @@ public class WalletTool {
         SEND,
         ENCRYPT,
         DECRYPT,
+        ROTATE,
     }
 
     public enum WaitForEnum {
@@ -352,6 +354,7 @@ public class WalletTool {
                 break;
             case ENCRYPT: encrypt(); break;
             case DECRYPT: decrypt(); break;
+            case ROTATE: rotate(); break;
         }
 
         if (!wallet.isConsistent()) {
@@ -378,6 +381,27 @@ public class WalletTool {
             saveWallet(walletFile);
         }
         shutdown();
+    }
+
+    private static void rotate() throws BlockStoreException {
+        setup();
+        peers.startAsync();
+        peers.awaitRunning();
+        // Set a key rotation time and possibly broadcast the resulting maintenance transactions.
+        long rotationTimeSecs = Utils.currentTimeSeconds();
+        if (options.has(dateFlag)) {
+            rotationTimeSecs = options.valueOf(dateFlag).getTime() / 1000;
+        }
+        log.info("Setting wallet key rotation time to {}", rotationTimeSecs);
+        wallet.setKeyRotationEnabled(true);
+        wallet.setKeyRotationTime(rotationTimeSecs);
+        KeyParameter aesKey = null;
+        if (wallet.isEncrypted()) {
+            aesKey = passwordToKey(true);
+            if (aesKey == null)
+                return;
+        }
+        Futures.getUnchecked(wallet.maybeDoMaintenance(aesKey, true));
     }
 
     private static void encrypt() {

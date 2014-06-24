@@ -185,7 +185,10 @@ public class DeterministicKey extends ECKey {
         final byte[] privKeyBytes = getPrivKeyBytes();
         checkState(privKeyBytes != null, "Private key is not available");
         EncryptedData encryptedPrivateKey = keyCrypter.encrypt(privKeyBytes, aesKey);
-        return new DeterministicKey(childNumberPath, chainCode, keyCrypter, pub, encryptedPrivateKey, newParent);
+        DeterministicKey key = new DeterministicKey(childNumberPath, chainCode, keyCrypter, pub, encryptedPrivateKey, newParent);
+        if (newParent == null)
+            key.setCreationTimeSeconds(getCreationTimeSeconds());
+        return key;
     }
 
     /**
@@ -238,6 +241,8 @@ public class DeterministicKey extends ECKey {
         DeterministicKey key = new DeterministicKey(childNumberPath, chainCode, privKey, parent);
         if (!Arrays.equals(key.getPubKey(), getPubKey()))
             throw new KeyCrypterException("Provided AES key is wrong");
+        if (parent == null)
+            key.setCreationTimeSeconds(getCreationTimeSeconds());
         return key;
     }
 
@@ -427,7 +432,19 @@ public class DeterministicKey extends ECKey {
 
     @Override
     public String toString() {
-        return String.format("pub:%s chaincode:%s path:%s", HEX.encode(getPubKey()),
-                HEX.encode(getChainCode()), getPathAsString());
+        return String.format("pub:%s chaincode:%s path:%s time:%d", HEX.encode(getPubKey()),
+                HEX.encode(getChainCode()), getPathAsString(), getCreationTimeSeconds());
+    }
+
+    /**
+     * The creation time of a deterministic key is equal to that of its parent, unless this key is the root of a tree
+     * in which case the time is stored alongside the key as per normal, see {@link com.google.bitcoin.core.ECKey#getCreationTimeSeconds()}.
+     */
+    @Override
+    public long getCreationTimeSeconds() {
+        if (parent != null)
+            return parent.getCreationTimeSeconds();
+        else
+            return super.getCreationTimeSeconds();
     }
 }

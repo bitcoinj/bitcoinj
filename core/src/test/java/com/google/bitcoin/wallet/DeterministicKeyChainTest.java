@@ -229,6 +229,7 @@ public class DeterministicKeyChainTest {
         final String pub58 = watchingKey.serializePubB58();
         assertEquals("xpub68KFnj3bqUx1s7mHejLDBPywCAKdJEu1b49uniEEn2WSbHmZ7xbLqFTjJbtx1LUcAt1DwhoqWHmo2s5WMJp6wi38CiF2hYD49qVViKVvAoi", pub58);
         watchingKey = DeterministicKey.deserializeB58(null, pub58);
+        watchingKey.setCreationTimeSeconds(100000);
         chain = DeterministicKeyChain.watch(watchingKey);
         assertEquals(DeterministicHierarchy.BIP32_STANDARDISATION_TIME_SECS, chain.getEarliestKeyCreationTime());
         chain.setLookaheadSize(10);
