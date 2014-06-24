@@ -107,7 +107,7 @@ public class KeyChainGroup {
     public KeyChainGroup(NetworkParameters params, DeterministicSeed seed, List<DeterministicKey> followingAccountKeys) {
         this(params, seed);
 
-        addFollowingAccounts(followingAccountKeys);
+        addFollowingAccountKeys(followingAccountKeys);
     }
 
     /**
@@ -116,7 +116,7 @@ public class KeyChainGroup {
      * This method will throw an IllegalStateException, if active keychain is already married or already has leaf keys
      * issued. In future this behaviour may be replaced with key rotation
      */
-    public void addFollowingAccounts(List<DeterministicKey> followingAccountKeys) {
+    public void addFollowingAccountKeys(List<DeterministicKey> followingAccountKeys) {
         checkState(!isMarried(), "KeyChainGroup is married already");
         checkState(getActiveKeyChain().numLeafKeysIssued() == 0, "Active keychain already has keys in use");
         DeterministicKey accountKey = getActiveKeyChain().getWatchingKey();

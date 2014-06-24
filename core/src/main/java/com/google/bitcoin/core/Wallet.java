@@ -559,10 +559,10 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
      * to get P2SH addresses to receive coins to.
      * This method should be called only once before key rotation, otherwise it will throw an IllegalStateException.
      */
-    public void addFollowingAccounts(List<DeterministicKey> followingAccountKeys) {
+    public void addFollowingAccountKeys(List<DeterministicKey> followingAccountKeys) {
         lock.lock();
         try {
-            keychain.addFollowingAccounts(followingAccountKeys);
+            keychain.addFollowingAccountKeys(followingAccountKeys);
         } finally {
             lock.unlock();
         }

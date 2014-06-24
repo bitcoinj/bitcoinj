@@ -407,21 +407,21 @@ public class KeyChainGroupTest {
     @Test
     public void addFollowingAccounts() throws Exception {
         assertFalse(group.isMarried());
-        group.addFollowingAccounts(ImmutableList.of(watchingAccountKey));
+        group.addFollowingAccountKeys(ImmutableList.of(watchingAccountKey));
         assertTrue(group.isMarried());
     }
 
     @Test (expected = IllegalStateException.class)
     public void addFollowingAccountsTwiceShouldFail() {
         ImmutableList<DeterministicKey> followingKeys = ImmutableList.of(watchingAccountKey);
-        group.addFollowingAccounts(followingKeys);
-        group.addFollowingAccounts(followingKeys);
+        group.addFollowingAccountKeys(followingKeys);
+        group.addFollowingAccountKeys(followingKeys);
     }
 
     @Test (expected = IllegalStateException.class)
     public void addFollowingAccountsForUsedKeychainShouldFail() {
         group.freshAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
-        group.addFollowingAccounts(ImmutableList.of(watchingAccountKey));
+        group.addFollowingAccountKeys(ImmutableList.of(watchingAccountKey));
     }
 
     @Test
