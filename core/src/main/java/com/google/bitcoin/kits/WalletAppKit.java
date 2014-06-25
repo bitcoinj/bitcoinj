@@ -240,7 +240,7 @@ public class WalletAppKit extends AbstractIdleService {
                     walletStream.close();
                 }
             } else {
-                vWallet = walletFactory != null ? walletFactory.create(params, new KeyChainGroup()) : new Wallet(params);
+                vWallet = walletFactory != null ? walletFactory.create(params, new KeyChainGroup(params)) : new Wallet(params);
                 vWallet.freshReceiveKey();
                 for (WalletExtension e : provideWalletExtensions()) {
                     vWallet.addExtension(e);

@@ -34,6 +34,7 @@ public class RegTestParams extends TestNet2Params {
         maxTarget = MAX_TARGET;
         subsidyDecreaseBlockCount = 150;
         port = 18444;
+        id = ID_REGTEST;
     }
 
     @Override

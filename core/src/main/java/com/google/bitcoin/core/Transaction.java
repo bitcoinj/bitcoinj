@@ -1093,7 +1093,7 @@ public class Transaction extends ChildMessage implements Serializable {
                 // that position are "nulled out". Unintuitively, the value in a "null" transaction is set to -1.
                 this.outputs = new ArrayList<TransactionOutput>(this.outputs.subList(0, inputIndex + 1));
                 for (int i = 0; i < inputIndex; i++)
-                    this.outputs.set(i, new TransactionOutput(params, this, Coin.NEGATIVE_ONE, new byte[] {}));
+                    this.outputs.set(i, new TransactionOutput(params, this, Coin.NEGATIVE_SATOSHI, new byte[] {}));
                 // The signature isn't broken by new versions of the transaction issued by other parties.
                 for (int i = 0; i < inputs.size(); i++)
                     if (i != inputIndex)
@@ -1265,13 +1265,17 @@ public class Transaction extends ChildMessage implements Serializable {
             throw new VerificationException("Transaction larger than MAX_BLOCK_SIZE");
 
         Coin valueOut = Coin.ZERO;
-        for (TransactionOutput output : outputs) {
-            if (output.getValue().signum() < 0)
-                throw new VerificationException("Transaction output negative");
-            valueOut = valueOut.add(output.getValue());
-        }
-        if (valueOut.compareTo(NetworkParameters.MAX_MONEY) > 0)
+        try {
+            for (TransactionOutput output : outputs) {
+                if (output.getValue().signum() < 0)
+                    throw new VerificationException("Transaction output negative");
+                valueOut = valueOut.add(output.getValue());
+            }
+        } catch (IllegalStateException e) {
+            throw new VerificationException("A transaction output value exceeds maximum possible");
+        } catch (IllegalArgumentException e) {
             throw new VerificationException("Total transaction output value greater than possible");
+        }
 
         if (isCoinBase()) {
             if (inputs.get(0).getScriptBytes().length < 2 || inputs.get(0).getScriptBytes().length > 100)

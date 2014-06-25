@@ -169,9 +169,9 @@ public class MnemonicCodeTest {
             byte[] seed = MnemonicCode.toSeed(code, "TREZOR");
             byte[] entropy = mc.toEntropy(split(vecCode));
 
-            assertEquals(vecData, new String(HEX.encode(entropy)));
+            assertEquals(vecData, HEX.encode(entropy));
             assertEquals(vecCode, Joiner.on(' ').join(code));
-            assertEquals(vecSeed, new String(HEX.encode(seed)));
+            assertEquals(vecSeed, HEX.encode(seed));
         }
     }
 

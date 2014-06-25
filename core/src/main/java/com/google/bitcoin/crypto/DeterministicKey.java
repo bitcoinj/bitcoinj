@@ -427,7 +427,7 @@ public class DeterministicKey extends ECKey {
 
     @Override
     public String toString() {
-        return String.format("pub:%s chaincode:%s path:%s", new String(HEX.encode(getPubKey())),
-                new String(HEX.encode(getChainCode())), getPathAsString());
+        return String.format("pub:%s chaincode:%s path:%s", HEX.encode(getPubKey()),
+                HEX.encode(getChainCode()), getPathAsString());
     }
 }

@@ -54,6 +54,8 @@ public abstract class NetworkParameters implements Serializable {
     public static final String ID_MAINNET = "org.bitcoin.production";
     /** The string returned by getId() for the testnet. */
     public static final String ID_TESTNET = "org.bitcoin.test";
+    /** The string returned by getId() for regtest mode. */
+    public static final String ID_REGTEST = "org.bitcoin.regtest";
     /** Unit test network. */
     public static final String ID_UNITTESTNET = "com.google.bitcoin.unittest";
 
@@ -131,9 +133,14 @@ public abstract class NetworkParameters implements Serializable {
     public static final int BIP16_ENFORCE_TIME = 1333238400;
     
     /**
+     * The maximum number of coins to be generated
+     */
+    public static final long MAX_COINS = 21000000;
+
+    /**
      * The maximum money to be generated
      */
-    public static final Coin MAX_MONEY = COIN.multiply(21000000);
+    public static final Coin MAX_MONEY = COIN.multiply(MAX_COINS);
 
     /** Alias for TestNet3Params.get(), use that instead. */
     @Deprecated
@@ -202,6 +209,8 @@ public abstract class NetworkParameters implements Serializable {
             return TestNet3Params.get();
         } else if (id.equals(ID_UNITTESTNET)) {
             return UnitTestParams.get();
+        } else if (id.equals(ID_REGTEST)) {
+            return RegTestParams.get();
         } else {
             return null;
         }

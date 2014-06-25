@@ -18,13 +18,14 @@ package com.google.bitcoin.script;
 
 import com.google.bitcoin.core.Address;
 import com.google.bitcoin.core.ECKey;
+import com.google.bitcoin.core.Utils;
 import com.google.bitcoin.crypto.TransactionSignature;
 import com.google.common.collect.Lists;
+import com.google.common.primitives.UnsignedBytes;
 
 import javax.annotation.Nullable;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.math.BigInteger;
+import java.util.*;
 
 import static com.google.bitcoin.script.ScriptOpCodes.*;
 import static com.google.common.base.Preconditions.checkArgument;
@@ -184,5 +185,23 @@ public class ScriptBuilder {
     public static Script createP2SHOutputScript(byte[] hash) {
         checkArgument(hash.length == 20);
         return new ScriptBuilder().op(OP_HASH160).data(hash).op(OP_EQUAL).build();
+    }
+
+    /**
+     * Creates a P2SH output script with given public keys and threshold. Given public keys will be placed in
+     * redeem script in the lexicographical sorting order.
+     */
+    public static Script createP2SHOutputScript(int threshold, List<ECKey> pubkeys) {
+        pubkeys = new ArrayList<ECKey>(pubkeys);
+        final Comparator comparator = UnsignedBytes.lexicographicalComparator();
+        Collections.sort(pubkeys, new Comparator<ECKey>() {
+            @Override
+            public int compare(ECKey k1, ECKey k2) {
+                return comparator.compare(k1.getPubKey(), k2.getPubKey());
+            }
+        });
+        Script redeemScript = ScriptBuilder.createMultiSigOutputScript(threshold, pubkeys);
+        byte[] hash = Utils.sha256hash160(redeemScript.getProgram());
+        return ScriptBuilder.createP2SHOutputScript(hash);
     }
 }

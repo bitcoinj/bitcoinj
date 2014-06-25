@@ -12,4 +12,4 @@ if [ ! -e target/bitcoinj-tools-*.jar ] || [[ "$ALWAYS_BUILD_WALLETTOOL" != "" ]
   mvn package -DskipTests
 fi
 
-java -server -jar target/bitcoinj-tools-*.jar $*
+java -jar target/bitcoinj-tools-*.jar $*
