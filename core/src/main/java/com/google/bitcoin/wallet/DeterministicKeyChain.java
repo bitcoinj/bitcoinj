@@ -124,7 +124,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
      * object.
      */
     public DeterministicKeyChain(SecureRandom random) {
-        this(getRandomSeed(random), Utils.currentTimeMillis() / 1000);
+        this(getRandomSeed(random), Utils.currentTimeSeconds());
     }
 
     private static byte[] getRandomSeed(SecureRandom random) {
@@ -209,6 +209,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         basicKeyChain = new BasicKeyChain(crypter);
         if (!seed.isEncrypted()) {
             rootKey = HDKeyDerivation.createMasterPrivateKey(checkNotNull(seed.getSecretBytes()));
+            rootKey.setCreationTimeSeconds(seed.getCreationTimeSeconds());
             initializeHierarchyUnencrypted(rootKey);
         } else {
             // We can't initialize ourselves with just an encrypted seed, so we expected deserialization code to do the
@@ -527,9 +528,13 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                     detKey.setIssuedSubkeys(issuedInternalKeys);
                     detKey.setLookaheadSize(lookaheadSize);
                 }
-                // flag the very first key of following keychain
+                // Flag the very first key of following keychain.
                 if (entries.isEmpty() && isFollowing()) {
                     detKey.setIsFollowing(true);
+                }
+                if (key.getParent() != null) {
+                    // HD keys inherit the timestamp of their parent if they have one, so no need to serialize it.
+                    proto.clearCreationTimestamp();
                 }
                 entries.add(proto.build());
             }
@@ -638,6 +643,8 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                         detkey = new DeterministicKey(immutablePath, chainCode, pubkey, null, parent);
                     }
                 }
+                if (key.hasCreationTimestamp())
+                    detkey.setCreationTimeSeconds(key.getCreationTimestamp() / 1000);
                 if (log.isDebugEnabled())
                     log.debug("Deserializing: DETERMINISTIC_KEY: {}", detkey);
                 if (!isWatchingAccountKey) {

@@ -17,6 +17,7 @@
 package com.google.bitcoin.crypto;
 
 import com.google.bitcoin.core.ECKey;
+import com.google.bitcoin.core.Utils;
 import com.google.common.collect.ImmutableList;
 import org.spongycastle.crypto.macs.HMac;
 import org.spongycastle.math.ec.ECPoint;
@@ -60,6 +61,8 @@ public final class HDKeyDerivation {
         DeterministicKey masterPrivKey = createMasterPrivKeyFromBytes(il, ir);
         Arrays.fill(il, (byte)0);
         Arrays.fill(ir, (byte)0);
+        // Child deterministic keys will chain up to their parents to find the keys.
+        masterPrivKey.setCreationTimeSeconds(Utils.currentTimeSeconds());
         return masterPrivKey;
     }
 

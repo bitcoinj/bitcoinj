@@ -255,17 +255,21 @@ public class BasicKeyChainTest {
     }
 
     @Test
-    public void oldestKeyAfter() throws Exception {
+    public void keysBeforeAndAfter() throws Exception {
         Utils.setMockClock();
         long now = Utils.currentTimeSeconds();
         final ECKey key1 = new ECKey();
         Utils.rollMockClock(86400);
         final ECKey key2 = new ECKey();
-        final ArrayList<ECKey> keys = Lists.newArrayList(key1, key2);
+        final List<ECKey> keys = Lists.newArrayList(key1, key2);
         assertEquals(2, chain.importKeys(keys));
 
         assertNull(chain.findOldestKeyAfter(now + 86400 * 2));
         assertEquals(key1, chain.findOldestKeyAfter(now - 1));
         assertEquals(key2, chain.findOldestKeyAfter(now + 86400 - 1));
+
+        assertEquals(2, chain.findKeysBefore(now + 86400 * 2).size());
+        assertEquals(1, chain.findKeysBefore(now + 1).size());
+        assertEquals(0, chain.findKeysBefore(now - 1).size());
     }
 }

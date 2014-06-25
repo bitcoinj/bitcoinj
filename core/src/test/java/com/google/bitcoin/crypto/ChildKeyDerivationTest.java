@@ -168,6 +168,11 @@ public class ChildKeyDerivationTest {
     public void serializeToTextAndBytes() {
         DeterministicKey key1 = HDKeyDerivation.createMasterPrivateKey("satoshi lives!".getBytes());
         DeterministicKey key2 = HDKeyDerivation.deriveChildKey(key1, ChildNumber.ZERO_HARDENED);
+
+        // Creation time can't survive the xpub serialization format unfortunately.
+        key1.setCreationTimeSeconds(0);
+        key2.setCreationTimeSeconds(0);
+
         {
             final String pub58 = key1.serializePubB58();
             final String priv58 = key1.serializePrivB58();

@@ -1,7 +1,6 @@
 - Switch to the tree format agreed on with slush/stick.
 - Store the account key creation time for an HD hierarchy.
 - Support seeds up to 512 bits in size. Test compatibility with greenaddress, at least for some keys.
-- Support for key rotation
 - Calculate lookahead keys on a background thread.
 - Redo internals of DKC to support arbitrary tree structures.
 - Add a REFUND key purpose and map to the receive tree (for now).
