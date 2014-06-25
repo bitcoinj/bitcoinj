@@ -1004,6 +1004,8 @@ public class PeerGroup extends AbstractExecutionThreadService implements Transac
         try {
             if (downloadPeer != null && this.downloadListener != null)
                 downloadPeer.removeEventListener(this.downloadListener);
+            if (downloadPeer != null && listener != null)
+                downloadPeer.addEventListener(listener);
             this.downloadListener = listener;
             // TODO: be more nuanced about which peer to download from.  We can also try
             // downloading from multiple peers and handle the case when a new peer comes along
