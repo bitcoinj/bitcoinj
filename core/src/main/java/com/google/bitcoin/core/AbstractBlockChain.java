@@ -927,10 +927,11 @@ public abstract class AbstractBlockChain {
     /**
      * An orphan block is one that does not connect to the chain anywhere (ie we can't find its parent, therefore
      * it's an orphan). Typically this occurs when we are downloading the chain and didn't reach the head yet, and/or
-     * if a block is solved whilst we are downloading. It's possible that we see a small amount of orphan blocks which
-     * chain together, this method tries walking backwards through the known orphan blocks to find the bottom-most.
+     * if a block is solved whilst we are downloading. It's possible that we see a small sequence of orphan blocks that
+     * chain together; this method tries walking backwards through that chain of known orphan blocks to find the earliest.
      *
-     * @return from or one of froms parents, or null if "from" does not identify an orphan block
+     * @return <code>from</code> or one of <code>from</code>'s ancestors, or <code>null</code> if
+     *         <code>from</code> does not identify an orphan block
      */
     @Nullable
     public Block getOrphanRoot(Sha256Hash from) {
