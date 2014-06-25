@@ -1227,7 +1227,7 @@ public class Peer extends PeerSocketHandler {
         //   https://en.bitcoin.it/wiki/Protocol_specification#getblocks
         //
         // This is because it requires scanning all the block chain headers, which is very slow. Instead we add the top
-        // 50 block headers. If there is a re-org deeper than that, we'll end up downloading the entire chain. We
+        // 100 block headers. If there is a re-org deeper than that, we'll end up downloading the entire chain. We
         // must always put the genesis block as the first entry.
         BlockStore store = checkNotNull(blockChain).getBlockStore();
         StoredBlock chainHead = blockChain.getChainHead();
