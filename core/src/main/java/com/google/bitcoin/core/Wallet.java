@@ -491,7 +491,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
 
     /** Returns the address used for change outputs. Note: this will probably go away in future. */
     public Address getChangeAddress() {
-        return currentKey(KeyChain.KeyPurpose.CHANGE).toAddress(params);
+        return keychain.currentAddress(KeyChain.KeyPurpose.CHANGE);
     }
 
     /**
@@ -3895,14 +3895,17 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
         int size = 0;
         for (TransactionOutput output : selection.gathered) {
             try {
-                if (output.getScriptPubKey().isSentToAddress()) {
-                    // Send-to-address spends usually take maximum pubkey.length (as it may be compressed or not) + 75 bytes
-                    final ECKey key = findKeyFromPubHash(output.getScriptPubKey().getPubKeyHash());
-                    size += checkNotNull(key, "Coin selection includes unspendable outputs").getPubKey().length + 75;
-                } else if (output.getScriptPubKey().isSentToRawPubKey())
-                    size += 74; // Send-to-pubkey spends usually take maximum 74 bytes to spend
-                else
-                    throw new IllegalStateException("Unknown output type returned in coin selection");
+                Script script = output.getScriptPubKey();
+                ECKey key = null;
+                Script redeemScript = null;
+                if (script.isSentToAddress()) {
+                    key = findKeyFromPubHash(script.getPubKeyHash());
+                    checkNotNull(key, "Coin selection includes unspendable outputs");
+                } else if (script.isPayToScriptHash()) {
+                    redeemScript = keychain.findRedeemScriptFromPubHash(script.getPubKeyHash());
+                    checkNotNull(redeemScript, "Coin selection includes unspendable outputs");
+                }
+                size += script.getNumberOfBytesRequiredToSpend(key, redeemScript);
             } catch (ScriptException e) {
                 // If this happens it means an output script in a wallet tx could not be understood. That should never
                 // happen, if it does it means the wallet has got into an inconsistent state.
