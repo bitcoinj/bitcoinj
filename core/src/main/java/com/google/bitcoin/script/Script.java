@@ -25,6 +25,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.crypto.digests.RIPEMD160Digest;
 
+import javax.annotation.Nullable;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -54,6 +55,7 @@ import static com.google.common.base.Preconditions.checkState;
 public class Script {
     private static final Logger log = LoggerFactory.getLogger(Script.class);
     public static final long MAX_SCRIPT_ELEMENT_SIZE = 520;  // bytes
+    public static final int SIG_SIZE = 75;
 
     // The program is a set of chunks where each element is either [opcode] or [data, data, data ...]
     protected List<ScriptChunk> chunks;
@@ -444,6 +446,36 @@ public class Script {
                 return getSigOpCount(subScript.chunks, true);
             }
         return 0;
+    }
+
+    /**
+     * Returns number of bytes required to spend this script. It accepts optional ECKey and redeemScript that may
+     * be required for certain types of script to estimate target size.
+     */
+    public int getNumberOfBytesRequiredToSpend(@Nullable ECKey pubKey, @Nullable Script redeemScript) {
+        if (isPayToScriptHash()) {
+            // scriptSig: <sig> [sig] [sig...] <redeemscript>
+            checkArgument(redeemScript != null, "P2SH script requires redeemScript to be spent");
+            // for N of M CHECKMULTISIG redeem script we will need N signatures to spend
+            ScriptChunk nChunk = redeemScript.getChunks().get(0);
+            int n = Script.decodeFromOpN(nChunk.opcode);
+            return n * SIG_SIZE + getProgram().length;
+        } else if (isSentToMultiSig()) {
+            // scriptSig: OP_0 <sig> [sig] [sig...]
+            // for N of M CHECKMULTISIG script we will need N signatures to spend
+            ScriptChunk nChunk = chunks.get(0);
+            int n = Script.decodeFromOpN(nChunk.opcode);
+            return n * SIG_SIZE + 1;
+        } else if (isSentToRawPubKey()) {
+            // scriptSig: <sig>
+            return SIG_SIZE;
+        } else if (isSentToAddress()) {
+            // scriptSig: <sig> <pubkey>
+            int uncompressedPubKeySize = 65;
+            return SIG_SIZE + (pubKey != null ? pubKey.getPubKey().length : uncompressedPubKeySize);
+        } else {
+            throw new IllegalStateException("Unsupported script type");
+        }
     }
 
     /**
