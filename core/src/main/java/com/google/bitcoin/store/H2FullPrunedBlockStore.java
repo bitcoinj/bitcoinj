@@ -162,6 +162,7 @@ public class H2FullPrunedBlockStore implements FullPrunedBlockStore {
         for (Connection conn : allConnections) {
             try {
                 conn.rollback();
+                conn.close();
             } catch (SQLException ex) {
                 throw new RuntimeException(ex);
             }
