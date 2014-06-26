@@ -1234,7 +1234,8 @@ public class Peer extends PeerSocketHandler {
         Sha256Hash chainHeadHash = chainHead.getHeader().getHash();
         // Did we already make this request? If so, don't do it again.
         if (Objects.equal(lastGetBlocksBegin, chainHeadHash) && Objects.equal(lastGetBlocksEnd, toHash)) {
-            log.info("blockChainDownloadLocked({}): ignoring duplicated request", toHash.toString());
+            StackTraceElement[] s = Thread.currentThread().getStackTrace();
+            log.info("{}.{}({}): ignoring duplicated request", s[2].getMethodName(), s[1].getMethodName(), toHash.toString());
             return;
         }
         log.debug("{}: blockChainDownloadLocked({}) current head = {}",
