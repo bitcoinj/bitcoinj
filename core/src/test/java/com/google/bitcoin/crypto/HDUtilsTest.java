@@ -17,14 +17,13 @@
 
 package com.google.bitcoin.crypto;
 
+import com.google.common.collect.ImmutableList;
 import org.junit.Assert;
 import org.junit.Test;
 
 import static com.google.bitcoin.core.Utils.HEX;
+import java.util.List;
 
-/**
- * @author Matija Mazi <br/>
- */
 public class HDUtilsTest {
     @Test
     public void testHmac() throws Exception {
@@ -123,5 +122,30 @@ public class HDUtilsTest {
     public void testLongToByteArray() throws Exception {
         byte[] bytes = HDUtils.longTo4ByteArray(1026);
         Assert.assertEquals("00000402", HEX.encode(bytes));
+    }
+
+    @Test
+    public void testParsePath() {
+        Object tv[] = {
+                "44' / 0' / 0' / 1 / 1",
+                ImmutableList.of(new ChildNumber(44, true), new ChildNumber(0, true), new ChildNumber(0, true),
+                        new ChildNumber(1, false), new ChildNumber(1, false)),
+
+                "/7'/3/3/1'/",
+                ImmutableList.of(new ChildNumber(7, true), new ChildNumber(3, false), new ChildNumber(3, false),
+                        new ChildNumber(1, true)),
+
+                "1 ' / 2 ' / 3 ' /",
+                ImmutableList.of(new ChildNumber(1, true), new ChildNumber(2, true), new ChildNumber(3, true)),
+
+                "1 ' / 2 ' / 3 ' /",
+                ImmutableList.of(new ChildNumber(1, true), new ChildNumber(2, true), new ChildNumber(3, true))
+        };
+
+        for (int i = 0; i < tv.length; i += 2) {
+            List<ChildNumber> path = HDUtils.parsePath((String) tv[i]);
+
+            Assert.assertEquals(path, tv[i+1]);
+        }
     }
 }
