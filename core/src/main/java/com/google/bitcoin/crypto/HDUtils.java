@@ -1,5 +1,6 @@
 /**
  * Copyright 2013 Matija Mazi.
+ * Copyright 2014 Giannis Dzegoutanis.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,10 +25,14 @@ import org.spongycastle.crypto.digests.SHA512Digest;
 import org.spongycastle.crypto.macs.HMac;
 import org.spongycastle.crypto.params.KeyParameter;
 
+import javax.annotation.Nonnull;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Static utilities used in BIP 32 Hierarchical Deterministic Wallets (HDW).
@@ -70,5 +75,28 @@ public final class HDUtils {
 
     public static String formatPath(List<ChildNumber> path) {
         return PATH_JOINER.join(Iterables.concat(Collections.singleton("M"), path));
+    }
+
+    /**
+     * The path is a human-friendly representation of the deterministic path. For example:
+     *
+     * "44' / 0' / 0' / 1 / 1"
+     *
+     * Where a single quote (') means hardened key. Spaces are ignored.
+     */
+    public static List<ChildNumber> parsePath(@Nonnull String path) {
+        String[] parsedNodes = path.split("/");
+        List<ChildNumber> nodes = new ArrayList<ChildNumber>();
+
+        for (String n : parsedNodes) {
+            n = n.replaceAll(" ", "");
+            if (n.length() == 0) continue;
+            boolean isHard = n.endsWith("'");
+            if (isHard) n = n.substring(0, n.length() - 1);
+            int nodeNumber = Integer.parseInt(n);
+            nodes.add(new ChildNumber(nodeNumber, isHard));
+        }
+
+        return nodes;
     }
 }
