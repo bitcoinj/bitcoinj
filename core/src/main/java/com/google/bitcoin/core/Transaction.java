@@ -956,15 +956,15 @@ public class Transaction extends ChildMessage implements Serializable {
      *
      * @param inputIndex Which input to calculate the signature for, as an index.
      * @param key The private key used to calculate the signature.
-     * @param connectedPubKeyScript Byte-exact contents of the scriptPubKey that is being satisified.
+     * @param redeemScript Byte-exact contents of the scriptPubKey that is being satisified, or the P2SH redeem script.
      * @param hashType Signing mode, see the enum for documentation.
      * @param anyoneCanPay Signing mode, see the SigHash enum for documentation.
      * @return A newly calculated signature object that wraps the r, s and sighash components.
      */
     public synchronized TransactionSignature calculateSignature(int inputIndex, ECKey key,
-                                                                byte[] connectedPubKeyScript,
+                                                                byte[] redeemScript,
                                                                 SigHash hashType, boolean anyoneCanPay) {
-        Sha256Hash hash = hashForSignature(inputIndex, connectedPubKeyScript, hashType, anyoneCanPay);
+        Sha256Hash hash = hashForSignature(inputIndex, redeemScript, hashType, anyoneCanPay);
         return new TransactionSignature(key.sign(hash), hashType, anyoneCanPay);
     }
 
@@ -975,14 +975,15 @@ public class Transaction extends ChildMessage implements Serializable {
      *
      * @param inputIndex Which input to calculate the signature for, as an index.
      * @param key The private key used to calculate the signature.
-     * @param connectedPubKeyScript The scriptPubKey that is being satisified.
+     * @param redeemScript The scriptPubKey that is being satisified, or the P2SH redeem script.
      * @param hashType Signing mode, see the enum for documentation.
      * @param anyoneCanPay Signing mode, see the SigHash enum for documentation.
      * @return A newly calculated signature object that wraps the r, s and sighash components.
      */
-    public synchronized  TransactionSignature calculateSignature(int inputIndex, ECKey key, Script connectedPubKeyScript,
+    public synchronized  TransactionSignature calculateSignature(int inputIndex, ECKey key,
+                                                                 Script redeemScript,
                                                                  SigHash hashType, boolean anyoneCanPay) {
-        Sha256Hash hash = hashForSignature(inputIndex, connectedPubKeyScript.getProgram(), hashType, anyoneCanPay);
+        Sha256Hash hash = hashForSignature(inputIndex, redeemScript.getProgram(), hashType, anyoneCanPay);
         return new TransactionSignature(key.sign(hash), hashType, anyoneCanPay);
     }
 
@@ -990,36 +991,40 @@ public class Transaction extends ChildMessage implements Serializable {
      * <p>Calculates a signature hash, that is, a hash of a simplified form of the transaction. How exactly the transaction
      * is simplified is specified by the type and anyoneCanPay parameters.</p>
      *
-     * <p>You don't normally ever need to call this yourself. It will become more useful in future as the contracts
-     * features of Bitcoin are developed.</p>
+     * <p>This is a low level API and when using the regular {@link Wallet} class you don't have to call this yourself.
+     * When working with more complex transaction types and contracts, it can be necessary. When signing a P2SH output
+     * the redeemScript should be the script encoded into the scriptSig field, for normal transactions, it's the
+     * scriptPubKey of the output you're signing for.</p>
      *
      * @param inputIndex input the signature is being calculated for. Tx signatures are always relative to an input.
-     * @param connectedScript the bytes that should be in the given input during signing.
+     * @param redeemScript the bytes that should be in the given input during signing.
      * @param type Should be SigHash.ALL
      * @param anyoneCanPay should be false.
      */
-    public synchronized Sha256Hash hashForSignature(int inputIndex, byte[] connectedScript,
+    public synchronized Sha256Hash hashForSignature(int inputIndex, byte[] redeemScript,
                                                     SigHash type, boolean anyoneCanPay) {
         byte sigHashType = (byte) TransactionSignature.calcSigHashValue(type, anyoneCanPay);
-        return hashForSignature(inputIndex, connectedScript, sigHashType);
+        return hashForSignature(inputIndex, redeemScript, sigHashType);
     }
 
     /**
      * <p>Calculates a signature hash, that is, a hash of a simplified form of the transaction. How exactly the transaction
      * is simplified is specified by the type and anyoneCanPay parameters.</p>
      *
-     * <p>You don't normally ever need to call this yourself. It will become more useful in future as the contracts
-     * features of Bitcoin are developed.</p>
+     * <p>This is a low level API and when using the regular {@link Wallet} class you don't have to call this yourself.
+     * When working with more complex transaction types and contracts, it can be necessary. When signing a P2SH output
+     * the redeemScript should be the script encoded into the scriptSig field, for normal transactions, it's the
+     * scriptPubKey of the output you're signing for.</p>
      *
      * @param inputIndex input the signature is being calculated for. Tx signatures are always relative to an input.
-     * @param connectedScript the script that should be in the given input during signing.
+     * @param redeemScript the script that should be in the given input during signing.
      * @param type Should be SigHash.ALL
      * @param anyoneCanPay should be false.
      */
-    public synchronized Sha256Hash hashForSignature(int inputIndex, Script connectedScript,
+    public synchronized Sha256Hash hashForSignature(int inputIndex, Script redeemScript,
                                                     SigHash type, boolean anyoneCanPay) {
         int sigHash = TransactionSignature.calcSigHashValue(type, anyoneCanPay);
-        return hashForSignature(inputIndex, connectedScript.getProgram(), (byte) sigHash);
+        return hashForSignature(inputIndex, redeemScript.getProgram(), (byte) sigHash);
     }
 
     /**
