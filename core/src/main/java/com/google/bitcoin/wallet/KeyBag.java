@@ -31,6 +31,7 @@ public interface KeyBag {
      *
      * @return ECKey object or null if no such key was found.
      */
+    @Nullable
     public ECKey findKeyFromPubHash(byte[] pubkeyHash);
 
     /**
@@ -38,6 +39,7 @@ public interface KeyBag {
      *
      * @return ECKey or null if no such key was found.
      */
+    @Nullable
     public ECKey findKeyFromPubKey(byte[] pubkey);
 
     /**

@@ -22,6 +22,8 @@ import com.google.bitcoin.core.TransactionConfidence.ConfidenceType;
 import com.google.bitcoin.crypto.KeyCrypter;
 import com.google.bitcoin.crypto.KeyCrypterScrypt;
 import com.google.bitcoin.script.Script;
+import com.google.bitcoin.signers.LocalTransactionSigner;
+import com.google.bitcoin.signers.TransactionSigner;
 import com.google.bitcoin.wallet.KeyChainGroup;
 import com.google.bitcoin.wallet.WalletTransaction;
 import com.google.common.collect.Lists;
@@ -189,6 +191,16 @@ public class WalletProtobufSerializer {
         for (Map.Entry<String, ByteString> entry : wallet.getTags().entrySet()) {
             Protos.Tag.Builder tag = Protos.Tag.newBuilder().setTag(entry.getKey()).setData(entry.getValue());
             walletBuilder.addTags(tag);
+        }
+
+        for (TransactionSigner signer : wallet.getTransactionSigners()) {
+            // do not serialize LocalTransactionSigner as it's being added implicitly
+            if (signer instanceof LocalTransactionSigner)
+                continue;
+            Protos.TransactionSigner.Builder protoSigner = Protos.TransactionSigner.newBuilder();
+            protoSigner.setClassName(signer.getClass().getName());
+            protoSigner.setData(ByteString.copyFrom(signer.serialize()));
+            walletBuilder.addTransactionSigners(protoSigner);
         }
 
         // Populate the wallet version.
@@ -448,6 +460,18 @@ public class WalletProtobufSerializer {
 
         for (Protos.Tag tag : walletProto.getTagsList()) {
             wallet.setTag(tag.getTag(), tag.getData());
+        }
+
+        for (Protos.TransactionSigner signerProto : walletProto.getTransactionSignersList()) {
+            try {
+                Class signerClass = Class.forName(signerProto.getClassName());
+                TransactionSigner signer = (TransactionSigner)signerClass.newInstance();
+                signer.deserialize(signerProto.getData().toByteArray());
+                wallet.addTransactionSigner(signer);
+            } catch (Exception e) {
+                throw new UnreadableWalletException("Unable to deserialize TransactionSigner instance: " +
+                        signerProto.getClassName(), e);
+            }
         }
 
         if (walletProto.hasVersion()) {

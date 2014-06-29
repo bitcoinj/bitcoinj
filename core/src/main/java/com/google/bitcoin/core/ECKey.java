@@ -973,6 +973,13 @@ public class ECKey implements EncryptableItem, Serializable {
     }
 
     /**
+     * Creates decrypted private key if needed.
+     */
+    public ECKey maybeDecrypt(@Nullable KeyParameter aesKey) throws KeyCrypterException {
+        return isEncrypted() && aesKey != null ? decrypt(aesKey) : this;
+    }
+
+    /**
      * <p>Check that it is possible to decrypt the key with the keyCrypter and that the original key is returned.</p>
      *
      * <p>Because it is a critical failure if the private keys cannot be decrypted successfully (resulting of loss of all
