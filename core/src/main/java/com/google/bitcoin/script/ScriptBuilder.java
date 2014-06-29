@@ -161,7 +161,7 @@ public class ScriptBuilder {
         return createMultiSigInputScriptBytes(sigs, multisigProgramBytes);
     }
 
-    /** 
+    /**
      * Create a program that satisfies an OP_CHECKMULTISIG program, using pre-encoded signatures. 
      * Optionally, appends the script program bytes if spending a P2SH output.
      */

@@ -26,6 +26,8 @@ import com.google.bitcoin.params.UnitTestParams;
 import com.google.bitcoin.script.Script;
 import com.google.bitcoin.script.ScriptBuilder;
 import com.google.bitcoin.script.ScriptChunk;
+import com.google.bitcoin.signers.LocalTransactionSigner;
+import com.google.bitcoin.signers.TransactionSigner;
 import com.google.bitcoin.store.UnreadableWalletException;
 import com.google.bitcoin.store.WalletProtobufSerializer;
 import com.google.bitcoin.utils.BaseTaggableObject;
@@ -203,6 +205,9 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
     // a high risk of being a double spending attack.
     private RiskAnalysis.Analyzer riskAnalyzer = DefaultRiskAnalysis.FACTORY;
 
+    // Objects that perform transaction signing. Applied subsequently one after another
+    @GuardedBy("lock") private List<TransactionSigner> signers;
+
     /**
      * Creates a new, empty wallet with no keys and no transactions. If you want to restore a wallet from disk instead,
      * see loadFromFile.
@@ -248,6 +253,8 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
         extensions = new HashMap<String, WalletExtension>();
         // Use a linked hash map to ensure ordering of event listeners is correct.
         confidenceChanged = new LinkedHashMap<Transaction, TransactionConfidence.Listener.ChangeReason>();
+        signers = new ArrayList<TransactionSigner>();
+        addTransactionSigner(new LocalTransactionSigner());
         createTransientState();
     }
 
@@ -279,6 +286,33 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
 
     public NetworkParameters getNetworkParameters() {
         return params;
+    }
+
+    /**
+     * <p>Adds given transaction signer to the list of signers. It will be added to the end of the signers list, so if
+     * this wallet already has some signers added, given signer will be executed after all of them.</p>
+     * <p>Transaction signer should be fully initialized before adding to the wallet, otherwise {@link IllegalStateException}
+     * will be thrown</p>
+     */
+    public void addTransactionSigner(TransactionSigner signer) {
+        lock.lock();
+        try {
+            if (signer.isReady())
+                signers.add(signer);
+            else
+                throw new IllegalStateException("Signer instance is not ready to be added into Wallet: " + signer.getClass());
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public List<TransactionSigner> getTransactionSigners() {
+        lock.lock();
+        try {
+            return ImmutableList.copyOf(signers);
+        } finally {
+            lock.unlock();
+        }
     }
 
     /******************************************************************************************************************/
@@ -3283,8 +3317,9 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
                 req.tx.shuffleOutputs();
 
             // Now sign the inputs, thus proving that we are entitled to redeem the connected outputs.
-            if (req.signInputs)
-                req.tx.signInputs(Transaction.SigHash.ALL, this, req.aesKey);
+            if (req.signInputs) {
+                signTransaction(req.tx, Transaction.SigHash.ALL, req.aesKey);
+            }
 
             // Check size.
             int size = req.tx.bitcoinSerialize().length;
@@ -3307,6 +3342,33 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
             req.completed = true;
             req.fee = calculatedFee;
             log.info("  completed: {}", req.tx);
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
+     * <p>Signs given transaction. Actual signing is done by pluggable {@link #signers} and it's not guaranteed that
+     * transaction will be complete in the end.</p>
+     * <p>Only {@link com.google.bitcoin.core.Transaction.SigHash#ALL} signing mode is currently supported</p>
+     * <p>Optional aesKey should be provided if this wallet is encrypted</p>
+     */
+    public void signTransaction(Transaction tx, Transaction.SigHash hashType, @Nullable KeyParameter aesKey) {
+        lock.lock();
+        try {
+            List<TransactionInput> inputs = tx.getInputs();
+            List<TransactionOutput> outputs = tx.getOutputs();
+            checkState(inputs.size() > 0);
+            checkState(outputs.size() > 0);
+
+            // I don't currently have an easy way to test other modes work, as the official client does not use them.
+            checkArgument(hashType == Transaction.SigHash.ALL, "Only SIGHASH_ALL is currently supported");
+
+            KeyBag maybeDecryptingKeyBag = aesKey != null ? new DecryptingKeyBag(this, aesKey) : this;
+            for (TransactionSigner signer : signers) {
+                if (!signer.signInputs(tx, maybeDecryptingKeyBag))
+                    log.info("{} returned false for the tx", signer.getClass().getName());
+            }
         } finally {
             lock.unlock();
         }
@@ -4193,7 +4255,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
             }
             rekeyTx.getConfidence().setSource(TransactionConfidence.Source.SELF);
             rekeyTx.setPurpose(Transaction.Purpose.KEY_ROTATION);
-            rekeyTx.signInputs(Transaction.SigHash.ALL, this, aesKey);
+            signTransaction(rekeyTx, Transaction.SigHash.ALL, aesKey);
             // KeyTimeCoinSelector should never select enough inputs to push us oversize.
             checkState(rekeyTx.bitcoinSerialize().length < Transaction.MAX_STANDARD_TX_SIZE);
             return rekeyTx;

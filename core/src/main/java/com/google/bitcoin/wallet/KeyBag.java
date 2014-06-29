@@ -18,6 +18,8 @@ package com.google.bitcoin.wallet;
 
 import com.google.bitcoin.core.ECKey;
 
+import javax.annotation.Nullable;
+
 /**
  * A KeyBag is simply an object that can map public keys and their 160-bit hashes to ECKey objects. All
  * {@link com.google.bitcoin.wallet.KeyChain}s are key bags.
@@ -29,6 +31,7 @@ public interface KeyBag {
      *
      * @return ECKey object or null if no such key was found.
      */
+    @Nullable
     public ECKey findKeyFromPubHash(byte[] pubkeyHash);
 
     /**
@@ -36,5 +39,6 @@ public interface KeyBag {
      *
      * @return ECKey or null if no such key was found.
      */
+    @Nullable
     public ECKey findKeyFromPubKey(byte[] pubkey);
 }

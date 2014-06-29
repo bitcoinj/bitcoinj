@@ -22,14 +22,11 @@ import com.google.bitcoin.crypto.TransactionSignature;
 import com.google.bitcoin.script.Script;
 import com.google.bitcoin.script.ScriptBuilder;
 import com.google.bitcoin.script.ScriptOpCodes;
-import com.google.bitcoin.wallet.DecryptingKeyBag;
-import com.google.bitcoin.wallet.KeyBag;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.primitives.Ints;
 import com.google.common.primitives.Longs;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.spongycastle.crypto.params.KeyParameter;
 
 import javax.annotation.Nullable;
 import java.io.*;
@@ -38,7 +35,6 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 
 import static com.google.bitcoin.core.Utils.*;
-import static com.google.common.base.Preconditions.*;
 
 /**
  * <p>A transaction represents the movement of coins from some addresses to some other addresses. It can also represent
@@ -832,125 +828,6 @@ public class Transaction extends ChildMessage implements Serializable {
         return addOutput(new TransactionOutput(params, this, value, script.getProgram()));
     }
 
-    /**
-     * Once a transaction has some inputs and outputs added, the signatures in the inputs can be calculated. The
-     * signature is over the transaction itself, to prove the redeemer actually created that transaction,
-     * so we have to do this step last.<p>
-     * <p/>
-     * This method is similar to SignatureHash in script.cpp
-     *
-     * @param hashType This should always be set to SigHash.ALL currently. Other types are unused.
-     * @param wallet   A wallet is required to fetch the keys needed for signing.
-     */
-    public synchronized void signInputs(SigHash hashType, Wallet wallet) throws ScriptException {
-        signInputs(hashType, wallet, null);
-    }
-
-    /**
-     * <p>Once a transaction has some inputs and outputs added, the signatures in the inputs can be calculated. The
-     * signature is over the transaction itself, to prove the redeemer actually created that transaction,
-     * so we have to do this step last.</p>
-     *
-     * @param hashType This should always be set to SigHash.ALL currently. Other types are unused.
-     * @param wallet  A wallet is required to fetch the keys needed for signing.
-     * @param aesKey The AES key to use to decrypt the key before signing. Null if no decryption is required.
-     */
-    public void signInputs(SigHash hashType, Wallet wallet, @Nullable KeyParameter aesKey) throws ScriptException {
-        if (aesKey == null) {
-            signInputs(hashType, false, wallet);
-        } else {
-            signInputs(hashType, false, new DecryptingKeyBag(wallet, aesKey));
-        }
-    }
-
-    /**
-     * Signs as many inputs as possible using keys from the given key bag, which are expected to be usable for
-     * signing, i.e. not encrypted and not missing the private key part.
-     *
-     * @param hashType This should always be set to SigHash.ALL currently. Other types are unused.
-     * @param keyBag a provider of keys that are usable as-is for signing.
-     */
-    public synchronized void signInputs(SigHash hashType, boolean anyoneCanPay, KeyBag keyBag) throws ScriptException {
-        checkState(inputs.size() > 0);
-        checkState(outputs.size() > 0);
-
-        // I don't currently have an easy way to test other modes work, as the official client does not use them.
-        checkArgument(hashType == SigHash.ALL, "Only SIGHASH_ALL is currently supported");
-
-        // The transaction is signed with the input scripts empty except for the input we are signing. In the case
-        // where addInput has been used to set up a new transaction, they are already all empty. The input being signed
-        // has to have the connected OUTPUT program in it when the hash is calculated!
-        //
-        // Note that each input may be claiming an output sent to a different key. So we have to look at the outputs
-        // to figure out which key to sign with.
-
-        TransactionSignature[] signatures = new TransactionSignature[inputs.size()];
-        ECKey[] signingKeys = new ECKey[inputs.size()];
-        for (int i = 0; i < inputs.size(); i++) {
-            TransactionInput input = inputs.get(i);
-            // We don't have the connected output, we assume it was signed already and move on
-            if (input.getOutpoint().getConnectedOutput() == null) {
-                log.warn("Missing connected output, assuming input {} is already signed.", i);
-                continue;
-            }
-            try {
-                // We assume if its already signed, its hopefully got a SIGHASH type that will not invalidate when
-                // we sign missing pieces (to check this would require either assuming any signatures are signing
-                // standard output types or a way to get processed signatures out of script execution)
-                input.getScriptSig().correctlySpends(this, i, input.getOutpoint().getConnectedOutput().getScriptPubKey(), true);
-                log.warn("Input {} already correctly spends output, assuming SIGHASH type used will be safe and skipping signing.", i);
-                continue;
-            } catch (ScriptException e) {
-                // Expected.
-            }
-            if (input.getScriptBytes().length != 0)
-                log.warn("Re-signing an already signed transaction! Be sure this is what you want.");
-            // Find the signing key we'll need to use.
-            ECKey key = input.getOutpoint().getConnectedKey(keyBag);
-            // This assert should never fire. If it does, it means the wallet is inconsistent.
-            checkNotNull(key, "Transaction exists in wallet that we cannot redeem: %s", input.getOutpoint().getHash());
-            // Keep the key around for the script creation step below.
-            signingKeys[i] = key;
-            // The anyoneCanPay feature isn't used at the moment.
-            byte[] connectedPubKeyScript = input.getOutpoint().getConnectedPubKeyScript();
-            try {
-                signatures[i] = calculateSignature(i, key, connectedPubKeyScript, hashType, anyoneCanPay);
-            } catch (ECKey.KeyIsEncryptedException e) {
-                throw e;
-            } catch (ECKey.MissingPrivateKeyException e) {
-                // Create a dummy signature to ensure the transaction is of the correct size when we try to ensure
-                // the right fee-per-kb is attached. If the wallet doesn't have the privkey, the user is assumed to
-                // be doing something special and that they will replace the dummy signature with a real one later.
-                signatures[i] = TransactionSignature.dummy();
-                log.info("Used dummy signature for input {} due to failure during signing (most likely missing privkey)", i);
-            }
-        }
-
-        // Now we have calculated each signature, go through and create the scripts. Reminder: the script consists:
-        // 1) For pay-to-address outputs: a signature (over a hash of the simplified transaction) and the complete
-        //    public key needed to sign for the connected output. The output script checks the provided pubkey hashes
-        //    to the address and then checks the signature.
-        // 2) For pay-to-key outputs: just a signature.
-        for (int i = 0; i < inputs.size(); i++) {
-            if (signatures[i] == null)
-                continue;
-            TransactionInput input = inputs.get(i);
-            final TransactionOutput connectedOutput = input.getOutpoint().getConnectedOutput();
-            checkNotNull(connectedOutput);  // Quiet static analysis: is never null here but cannot be statically proven
-            Script scriptPubKey = connectedOutput.getScriptPubKey();
-            if (scriptPubKey.isSentToAddress()) {
-                input.setScriptSig(ScriptBuilder.createInputScript(signatures[i], signingKeys[i]));
-            } else if (scriptPubKey.isSentToRawPubKey()) {
-                input.setScriptSig(ScriptBuilder.createInputScript(signatures[i]));
-            } else {
-                // Should be unreachable - if we don't recognize the type of script we're trying to sign for, we should
-                // have failed above when fetching the key to sign with.
-                throw new RuntimeException("Do not understand script type: " + scriptPubKey);
-            }
-        }
-
-        // Every input is now complete.
-    }
 
     /**
      * Calculates a signature that is valid for being inserted into the input at the given position. This is simply

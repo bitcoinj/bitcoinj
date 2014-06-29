@@ -127,7 +127,7 @@ public class TransactionOutPoint extends ChildMessage implements Serializable {
      * Returns the pubkey script from the connected output.
      * @throws java.lang.NullPointerException if there is no connected output.
      */
-    byte[] getConnectedPubKeyScript() {
+    public byte[] getConnectedPubKeyScript() {
         byte[] result = checkNotNull(getConnectedOutput()).getScriptBytes();
         checkState(result.length > 0);
         return result;

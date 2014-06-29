@@ -17,13 +17,15 @@
 
 package com.google.bitcoin.core;
 
-import com.google.bitcoin.core.Transaction.SigHash;
 import com.google.bitcoin.core.Wallet.SendRequest;
 import com.google.bitcoin.crypto.*;
+import com.google.bitcoin.signers.TransactionSigner;
+import com.google.bitcoin.store.BlockStoreException;
 import com.google.bitcoin.store.MemoryBlockStore;
 import com.google.bitcoin.store.WalletProtobufSerializer;
 import com.google.bitcoin.testing.FakeTxBuilder;
 import com.google.bitcoin.testing.MockTransactionBroadcaster;
+import com.google.bitcoin.testing.NopTransactionSigner;
 import com.google.bitcoin.testing.TestWithWallet;
 import com.google.bitcoin.utils.Threading;
 import com.google.bitcoin.wallet.*;
@@ -94,6 +96,17 @@ public class WalletTest extends TestWithWallet {
         super.tearDown();
     }
 
+    private void createMarriedWallet() throws BlockStoreException {
+        wallet = new Wallet(params);
+        blockStore = new MemoryBlockStore(params);
+        chain = new BlockChain(params, wallet, blockStore);
+
+        final DeterministicKeyChain keyChain = new DeterministicKeyChain(new SecureRandom());
+        DeterministicKey partnerKey = DeterministicKey.deserializeB58(null, keyChain.getWatchingKey().serializePubB58());
+
+        wallet.addFollowingAccountKeys(ImmutableList.of(partnerKey));
+    }
+
     @Test
     public void getSeedAsWords1() {
         // Can't verify much here as the wallet is random each time. We could fix the RNG for the unit tests and solve.
@@ -119,6 +132,12 @@ public class WalletTest extends TestWithWallet {
     @Test
     public void basicSpendingWithEncryptedWallet() throws Exception {
         basicSpendingCommon(encryptedWallet, myEncryptedAddress, new ECKey().toAddress(params), true);
+    }
+
+    @Test
+    public void spendingWithIncompatibleSigners() throws Exception {
+        wallet.addTransactionSigner(new NopTransactionSigner(true));
+        basicSpendingCommon(wallet, myAddress, new ECKey().toAddress(params), false);
     }
 
     static class TestRiskAnalysis implements RiskAnalysis {
@@ -1203,12 +1222,7 @@ public class WalletTest extends TestWithWallet {
 
     @Test
     public void marriedKeychainBloomFilter() throws Exception {
-        wallet = new Wallet(params);
-        blockStore = new MemoryBlockStore(params);
-        chain = new BlockChain(params, wallet, blockStore);
-
-        String XPUB = "xpub68KFnj3bqUx1s7mHejLDBPywCAKdJEu1b49uniEEn2WSbHmZ7xbLqFTjJbtx1LUcAt1DwhoqWHmo2s5WMJp6wi38CiF2hYD49qVViKVvAoi";
-        wallet.addFollowingAccountKeys(ImmutableList.of(DeterministicKey.deserializeB58(null, XPUB)));
+        createMarriedWallet();
         Address address = wallet.currentReceiveAddress();
 
         assertTrue(wallet.getBloomFilter(0.001).contains(address.getHash160()));
@@ -1342,7 +1356,7 @@ public class WalletTest extends TestWithWallet {
         Transaction t3 = new Transaction(params);
         t3.addOutput(v3, k3.toAddress(params));
         t3.addInput(o2);
-        t3.signInputs(SigHash.ALL, wallet);
+        wallet.signTransaction(t3, Transaction.SigHash.ALL, null);
 
         // Commit t3, so the coins from the pending t2 are spent
         wallet.commitTx(t3);
@@ -1883,7 +1897,8 @@ public class WalletTest extends TestWithWallet {
         Transaction spendTx5 = new Transaction(params);
         spendTx5.addOutput(CENT, notMyAddr);
         spendTx5.addInput(tx5.getOutput(0));
-        spendTx5.signInputs(SigHash.ALL, wallet);
+        wallet.signTransaction(spendTx5, Transaction.SigHash.ALL, null);
+
         wallet.receiveFromBlock(spendTx5, block, AbstractBlockChain.NewBlockType.BEST_CHAIN, 4);
         assertEquals(COIN, wallet.getBalance());
 
@@ -2133,7 +2148,7 @@ public class WalletTest extends TestWithWallet {
         SendRequest request4 = SendRequest.to(notMyAddr, CENT);
         request4.tx.addInput(tx3.getOutput(0));
         // Now if we manually sign it, completeTx will not replace our signature
-        request4.tx.signInputs(SigHash.ALL, wallet);
+        wallet.signTransaction(request4.tx, Transaction.SigHash.ALL, null);
         byte[] scriptSig = request4.tx.getInput(0).getScriptBytes();
         wallet.completeTx(request4);
         assertEquals(1, request4.tx.getInputs().size());
@@ -2496,4 +2511,21 @@ public class WalletTest extends TestWithWallet {
         assertFalse(wallet.isDeterministicUpgradeRequired());
         wallet.freshReceiveKey();  // works.
     }
+
+    @Test(expected = IllegalStateException.class)
+    public void shouldNotAddTransactionSignerThatIsNotReady() throws Exception {
+        wallet.addTransactionSigner(new NopTransactionSigner(false));
+    }
+
+    @Test
+    public void transactionSignersShouldBeSerializedAlongWithWallet() throws Exception {
+        final TransactionSigner signer = new NopTransactionSigner(true);
+        wallet.addTransactionSigner(signer);
+        assertEquals(2, wallet.getTransactionSigners().size());
+        Protos.Wallet protos = new WalletProtobufSerializer().walletToProto(wallet);
+        wallet = new WalletProtobufSerializer().readWallet(params, null, protos);
+        assertEquals(2, wallet.getTransactionSigners().size());
+        assertTrue(wallet.getTransactionSigners().get(1).isReady());
+    }
+
 }
