@@ -76,6 +76,7 @@ import static com.google.common.collect.Lists.newLinkedList;
  */
 public class DeterministicKeyChain implements EncryptableKeyChain {
     private static final Logger log = LoggerFactory.getLogger(DeterministicKeyChain.class);
+    public static final int DEFAULT_SEED_BITS = 128;
     private final ReentrantLock lock = Threading.lock("DeterministicKeyChain");
 
     private DeterministicHierarchy hierarchy;
@@ -123,12 +124,12 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
      * Generates a new key chain with a 128 bit seed selected randomly from the given {@link java.security.SecureRandom}
      * object.
      */
-    public DeterministicKeyChain(SecureRandom random) {
-        this(getRandomSeed(random), Utils.currentTimeSeconds());
+    public DeterministicKeyChain(SecureRandom random, int bits) {
+        this(getRandomSeed(random, bits), Utils.currentTimeSeconds());
     }
 
-    private static byte[] getRandomSeed(SecureRandom random) {
-        byte[] seed = new byte[128 / 8];
+    private static byte[] getRandomSeed(SecureRandom random, int bits) {
+        byte[] seed = new byte[bits / 8];
         random.nextBytes(seed);
         return seed;
     }

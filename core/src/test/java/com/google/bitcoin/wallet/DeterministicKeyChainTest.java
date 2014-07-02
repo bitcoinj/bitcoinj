@@ -121,7 +121,7 @@ public class DeterministicKeyChainTest {
     public void random() {
         // Can't test much here but verify the constructor worked and the class is functional. The other tests rely on
         // a fixed seed to be deterministic.
-        chain = new DeterministicKeyChain(new SecureRandom());
+        chain = new DeterministicKeyChain(new SecureRandom(), 384);
         chain.setLookaheadSize(10);
         chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS).sign(Sha256Hash.ZERO_HASH);
         chain.getKey(KeyChain.KeyPurpose.CHANGE).sign(Sha256Hash.ZERO_HASH);

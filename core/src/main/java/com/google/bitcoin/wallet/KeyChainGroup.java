@@ -62,6 +62,10 @@ import static com.google.common.base.Preconditions.*;
  */
 public class KeyChainGroup {
     private static final Logger log = LoggerFactory.getLogger(KeyChainGroup.class);
+
+    /** Default and minimum length of HD seed, in bits */
+    public static final int DEFAULT_SEED_BITS = 128;
+
     private BasicKeyChain basic;
     private NetworkParameters params;
     private final List<DeterministicKeyChain> chains;
@@ -187,7 +191,7 @@ public class KeyChainGroup {
     /** Adds a new HD chain to the chains list, and make it the default chain (from which keys are issued). */
     public void createAndActivateNewHDChain() {
         // We can't do auto upgrade here because we don't know the rotation time, if any.
-        final DeterministicKeyChain chain = new DeterministicKeyChain(new SecureRandom());
+        final DeterministicKeyChain chain = new DeterministicKeyChain(new SecureRandom(), DEFAULT_SEED_BITS);
         log.info("Creating and activating a new HD chain: {}", chain);
         for (ListenerRegistration<KeyChainEventListener> registration : basic.getListeners())
             chain.addEventListener(registration.listener, registration.executor);
@@ -732,12 +736,12 @@ public class KeyChainGroup {
         log.info("Auto-upgrading pre-HD wallet using oldest non-rotating private key");
         byte[] seed = checkNotNull(keyToUse.getSecretBytes());
         // Private keys should be at least 128 bits long.
-        checkState(seed.length >= 128 / 8);
+        checkState(seed.length >= DEFAULT_SEED_BITS / 8);
         // We reduce the entropy here to 128 bits because people like to write their seeds down on paper, and 128
         // bits should be sufficient forever unless the laws of the universe change or ECC is broken; in either case
         // we all have bigger problems.
-        seed = Arrays.copyOfRange(seed, 0, 128 / 8);    // final argument is exclusive range.
-        checkState(seed.length == 128 / 8);
+        seed = Arrays.copyOfRange(seed, 0, DEFAULT_SEED_BITS / 8);    // final argument is exclusive range.
+        checkState(seed.length == DEFAULT_SEED_BITS / 8);
         DeterministicKeyChain chain = new DeterministicKeyChain(seed, keyToUse.getCreationTimeSeconds());
         if (aesKey != null) {
             chain = chain.toEncrypted(checkNotNull(basic.getKeyCrypter()), aesKey);
