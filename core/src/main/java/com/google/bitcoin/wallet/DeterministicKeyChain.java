@@ -22,6 +22,7 @@ import com.google.bitcoin.core.Utils;
 import com.google.bitcoin.crypto.*;
 import com.google.bitcoin.store.UnreadableWalletException;
 import com.google.bitcoin.utils.Threading;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.protobuf.ByteString;
 import org.bitcoinj.wallet.Protos;
@@ -76,7 +77,11 @@ import static com.google.common.collect.Lists.newLinkedList;
  */
 public class DeterministicKeyChain implements EncryptableKeyChain {
     private static final Logger log = LoggerFactory.getLogger(DeterministicKeyChain.class);
+    // It would take more than 10^12 years to brute-force a 128 bit seed using $1B worth
+    // of computing equipment.
     public static final int DEFAULT_SEED_BITS = 128;
+    public static final int MAX_SEED_BITS = 512;
+
     private final ReentrantLock lock = Threading.lock("DeterministicKeyChain");
 
     private DeterministicHierarchy hierarchy;
@@ -121,14 +126,26 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
     private boolean isFollowing;
 
     /**
-     * Generates a new key chain with a 128 bit seed selected randomly from the given {@link java.security.SecureRandom}
-     * object.
+     * Generates a new key chain with a seed selected randomly from the given {@link java.security.SecureRandom}
+     * object and the default seed size.
+     */
+    public DeterministicKeyChain(SecureRandom random) {
+        this(getRandomSeed(random, DEFAULT_SEED_BITS), Utils.currentTimeSeconds());
+    }
+
+    /**
+     * Generates a new key chain with a seed selected randomly from the given {@link java.security.SecureRandom}
+     * object and of the requested size in bits.
      */
     public DeterministicKeyChain(SecureRandom random, int bits) {
         this(getRandomSeed(random, bits), Utils.currentTimeSeconds());
     }
 
     private static byte[] getRandomSeed(SecureRandom random, int bits) {
+        Preconditions.checkArgument(bits >= DEFAULT_SEED_BITS, "requested seed size too small");
+        Preconditions.checkArgument(bits <= MAX_SEED_BITS, "requested seed size too large");
+        Preconditions.checkArgument(bits % 8 == 0, "requested seed size not an even number of bytes");
+
         byte[] seed = new byte[bits / 8];
         random.nextBytes(seed);
         return seed;
