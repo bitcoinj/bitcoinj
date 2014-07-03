@@ -857,7 +857,7 @@ public class KeyChainGroup {
         builder.append(address.toString());
         builder.append("  hash160:");
         builder.append(Utils.HEX.encode(key.getPubKeyHash()));
-        builder.append(" ");
+        builder.append("\n  ");
         builder.append(includePrivateKeys ? key.toStringWithPrivate() : key.toString());
         builder.append("\n");
     }
