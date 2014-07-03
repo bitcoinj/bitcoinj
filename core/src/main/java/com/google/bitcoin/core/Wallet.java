@@ -491,7 +491,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
 
     /** Returns the address used for change outputs. Note: this will probably go away in future. */
     public Address getChangeAddress() {
-        return keychain.currentAddress(KeyChain.KeyPurpose.CHANGE);
+        return currentAddress(KeyChain.KeyPurpose.CHANGE);
     }
 
     /**
