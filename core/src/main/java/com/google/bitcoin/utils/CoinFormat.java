@@ -24,8 +24,10 @@ import static com.google.common.math.LongMath.divide;
 
 import java.math.RoundingMode;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 import com.google.bitcoin.core.Coin;
 
@@ -48,6 +50,12 @@ public final class CoinFormat {
     public static final CoinFormat MBTC = new CoinFormat().shift(3).minDecimals(2).optionalDecimals(2);
     /** Standard format for the µBTC denomination. */
     public static final CoinFormat UBTC = new CoinFormat().shift(6).minDecimals(0).optionalDecimals(2);
+    /** Currency code for base 1 Bitcoin. */
+    public static final String CODE_BTC = "BTC";
+    /** Currency code for base 1/1000 Bitcoin. */
+    public static final String CODE_MBTC = "mBTC";
+    /** Currency code for base 1/1000000 Bitcoin. */
+    public static final String CODE_UBTC = "µBTC";
 
     private final char negativeSign;
     private final char positiveSign;
@@ -56,6 +64,9 @@ public final class CoinFormat {
     private final List<Integer> decimalGroups;
     private final int shift;
     private final RoundingMode roundingMode;
+    private final Map<Integer, String> codes;
+    private final char codeSeparator;
+    private final boolean codePrefixed;
 
     private static final String DECIMALS_PADDING = "0000000000000000"; // a few more than necessary for Bitcoin
 
@@ -69,7 +80,7 @@ public final class CoinFormat {
             return this;
         else
             return new CoinFormat(negativeSign, positiveSign, decimalMark, minDecimals, decimalGroups, shift,
-                    roundingMode);
+                    roundingMode, codes, codeSeparator, codePrefixed);
     }
 
     /**
@@ -82,7 +93,7 @@ public final class CoinFormat {
             return this;
         else
             return new CoinFormat(negativeSign, positiveSign, decimalMark, minDecimals, decimalGroups, shift,
-                    roundingMode);
+                    roundingMode, codes, codeSeparator, codePrefixed);
     }
 
     /**
@@ -96,7 +107,7 @@ public final class CoinFormat {
             return this;
         else
             return new CoinFormat(negativeSign, positiveSign, decimalMark, minDecimals, decimalGroups, shift,
-                    roundingMode);
+                    roundingMode, codes, codeSeparator, codePrefixed);
     }
 
     /**
@@ -110,7 +121,7 @@ public final class CoinFormat {
             return this;
         else
             return new CoinFormat(negativeSign, positiveSign, decimalMark, minDecimals, decimalGroups, shift,
-                    roundingMode);
+                    roundingMode, codes, codeSeparator, codePrefixed);
     }
 
     /**
@@ -132,7 +143,8 @@ public final class CoinFormat {
         List<Integer> decimalGroups = new ArrayList<Integer>(groups.length);
         for (int group : groups)
             decimalGroups.add(group);
-        return new CoinFormat(negativeSign, positiveSign, decimalMark, minDecimals, decimalGroups, shift, roundingMode);
+        return new CoinFormat(negativeSign, positiveSign, decimalMark, minDecimals, decimalGroups, shift, roundingMode,
+                codes, codeSeparator, codePrefixed);
     }
 
     /**
@@ -157,19 +169,20 @@ public final class CoinFormat {
         List<Integer> decimalGroups = new ArrayList<Integer>(repetitions);
         for (int i = 0; i < repetitions; i++)
             decimalGroups.add(decimals);
-        return new CoinFormat(negativeSign, positiveSign, decimalMark, minDecimals, decimalGroups, shift, roundingMode);
+        return new CoinFormat(negativeSign, positiveSign, decimalMark, minDecimals, decimalGroups, shift, roundingMode,
+                codes, codeSeparator, codePrefixed);
     }
 
     /**
      * Set number of digits to shift the decimal separator to the right, coming from the standard BTC notation that was
-     * common pre-2014.
+     * common pre-2014. Note this will change the currency code if enabled.
      */
     public CoinFormat shift(int shift) {
         if (shift == this.shift)
             return this;
         else
             return new CoinFormat(negativeSign, positiveSign, decimalMark, minDecimals, decimalGroups, shift,
-                    roundingMode);
+                    roundingMode, codes, codeSeparator, codePrefixed);
     }
 
     /**
@@ -180,7 +193,71 @@ public final class CoinFormat {
             return this;
         else
             return new CoinFormat(negativeSign, positiveSign, decimalMark, minDecimals, decimalGroups, shift,
-                    roundingMode);
+                    roundingMode, codes, codeSeparator, codePrefixed);
+    }
+
+    /**
+     * Don't display currency code when formatting. This configuration is not relevant for parsing.
+     */
+    public CoinFormat noCode() {
+        if (codes == null)
+            return this;
+        else
+            return new CoinFormat(negativeSign, positiveSign, decimalMark, minDecimals, decimalGroups, shift,
+                    roundingMode, null, codeSeparator, codePrefixed);
+    }
+
+    /**
+     * Configure currency code for given decimal separator shift. This configuration is not relevant for parsing.
+     * 
+     * @param codeShift
+     *            decimal separator shift, see {@link #shift()}
+     * @param code
+     *            currency code
+     */
+    public CoinFormat code(int codeShift, String code) {
+        checkArgument(codeShift >= 0);
+        Map<Integer, String> codes = new HashMap<Integer, String>();
+        if (this.codes != null)
+            codes.putAll(this.codes);
+        codes.put(codeShift, code);
+        return new CoinFormat(negativeSign, positiveSign, decimalMark, minDecimals, decimalGroups, shift, roundingMode,
+                codes, codeSeparator, codePrefixed);
+    }
+
+    /**
+     * Separator between currency code and formatted value. This configuration is not relevant for parsing.
+     */
+    public CoinFormat codeSeparator(char codeSeparator) {
+        checkArgument(!Character.isDigit(codeSeparator));
+        checkArgument(codeSeparator > 0);
+        if (codeSeparator == this.codeSeparator)
+            return this;
+        else
+            return new CoinFormat(negativeSign, positiveSign, decimalMark, minDecimals, decimalGroups, shift,
+                    roundingMode, codes, codeSeparator, codePrefixed);
+    }
+
+    /**
+     * Prefix formatted output by currency code. This configuration is not relevant for parsing.
+     */
+    public CoinFormat prefixCode() {
+        if (codePrefixed)
+            return this;
+        else
+            return new CoinFormat(negativeSign, positiveSign, decimalMark, minDecimals, decimalGroups, shift,
+                    roundingMode, codes, codeSeparator, true);
+    }
+
+    /**
+     * Postfix formatted output with currency code. This configuration is not relevant for parsing.
+     */
+    public CoinFormat postfixCode() {
+        if (!codePrefixed)
+            return this;
+        else
+            return new CoinFormat(negativeSign, positiveSign, decimalMark, minDecimals, decimalGroups, shift,
+                    roundingMode, codes, codeSeparator, false);
     }
 
     public CoinFormat() {
@@ -192,10 +269,17 @@ public final class CoinFormat {
         this.decimalGroups = null;
         this.shift = 0;
         this.roundingMode = RoundingMode.HALF_UP;
+        this.codes = new HashMap<Integer, String>();
+        this.codes.put(0, CODE_BTC);
+        this.codes.put(3, CODE_MBTC);
+        this.codes.put(6, CODE_UBTC);
+        this.codeSeparator = ' ';
+        this.codePrefixed = true;
     }
 
     private CoinFormat(char negativeSign, char positiveSign, char decimalMark, int minDecimals,
-            List<Integer> decimalGroups, int shift, RoundingMode roundingMode) {
+            List<Integer> decimalGroups, int shift, RoundingMode roundingMode, Map<Integer, String> codes,
+            char codeSeparator, boolean codePrefixed) {
         this.negativeSign = negativeSign;
         this.positiveSign = positiveSign;
         this.decimalMark = decimalMark;
@@ -203,6 +287,9 @@ public final class CoinFormat {
         this.decimalGroups = decimalGroups;
         this.shift = shift;
         this.roundingMode = roundingMode;
+        this.codes = codes;
+        this.codeSeparator = codeSeparator;
+        this.codePrefixed = codePrefixed;
     }
 
     /**
@@ -249,6 +336,15 @@ public final class CoinFormat {
             str.insert(0, negativeSign);
         else if (positiveSign != 0)
             str.insert(0, positiveSign);
+        if (codes != null) {
+            if (codePrefixed) {
+                str.insert(0, codeSeparator);
+                str.insert(0, code());
+            } else {
+                str.append(codeSeparator);
+                str.append(code());
+            }
+        }
         return str;
     }
 
@@ -285,5 +381,17 @@ public final class CoinFormat {
         if (first == negativeSign)
             coin = coin.negate();
         return coin;
+    }
+
+    /**
+     * Get currency code that will be used for current shift.
+     */
+    public String code() {
+        if (codes == null)
+            return null;
+        String code = codes.get(shift);
+        if (code == null)
+            throw new NumberFormatException("missing code for shift: " + shift);
+        return code;
     }
 }
