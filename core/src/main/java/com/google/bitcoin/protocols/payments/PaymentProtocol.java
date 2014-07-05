@@ -23,6 +23,7 @@ import com.google.bitcoin.core.NetworkParameters;
 import com.google.bitcoin.core.Transaction;
 import com.google.bitcoin.crypto.X509Utils;
 import com.google.bitcoin.script.ScriptBuilder;
+import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.protobuf.ByteString;
@@ -268,6 +269,16 @@ public class PaymentProtocol {
             } catch (CertificateParsingException x) {
                 throw new PaymentProtocolException.PkiVerificationException(x);
             }
+        }
+
+        @Override
+        public String toString() {
+            return Objects.toStringHelper(this)
+                    .add("displayName", displayName)
+                    .add("rootAuthorityName", rootAuthorityName)
+                    .add("merchantSigningKey", merchantSigningKey)
+                    .add("rootAuthority", rootAuthority)
+                    .toString();
         }
     }
 
