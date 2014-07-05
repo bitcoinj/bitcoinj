@@ -19,6 +19,8 @@ package com.google.bitcoin.core;
 
 import com.google.bitcoin.crypto.*;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Objects;
+import com.google.common.base.Objects.ToStringHelper;
 import com.google.common.base.Preconditions;
 import org.bitcoin.NativeSecp256k1;
 import org.bitcoinj.wallet.Protos;
@@ -403,32 +405,6 @@ public class ECKey implements EncryptableItem, Serializable {
      */
     public boolean isCompressed() {
         return pub.isCompressed();
-    }
-
-    @Override
-    public String toString() {
-        StringBuilder b = new StringBuilder();
-        b.append("pub:").append(Utils.HEX.encode(pub.getEncoded()));
-        if (creationTimeSeconds != 0) {
-            b.append(" timestamp:").append(creationTimeSeconds);
-        }
-        if (isEncrypted()) {
-            b.append(" encrypted");
-        }
-        return b.toString();
-    }
-
-    /**
-     * Produce a string rendering of the ECKey INCLUDING the private key.
-     * Unless you absolutely need the private key it is better for security reasons to just use toString().
-     */
-    public String toStringWithPrivate() {
-        StringBuilder b = new StringBuilder();
-        b.append(toString());
-        if (priv != null) {
-            b.append(" priv:").append(Utils.HEX.encode(priv.toByteArray()));
-        }
-        return b.toString();
     }
 
     /**
@@ -921,29 +897,6 @@ public class ECKey implements EncryptableItem, Serializable {
         creationTimeSeconds = newCreationTimeSeconds;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || !(o instanceof ECKey)) return false;
-
-        ECKey ecKey = (ECKey) o;
-
-        if (creationTimeSeconds != ecKey.creationTimeSeconds) return false;
-        if (keyCrypter != null ? !keyCrypter.equals(ecKey.keyCrypter) : ecKey.keyCrypter != null) return false;
-        if (priv != null && !priv.equals(ecKey.priv)) return false;
-        if (pub != null && !pub.equals(ecKey.pub)) return false;
-
-        return true;
-    }
-
-    @Override
-    public int hashCode() {
-        // Public keys are random already so we can just use a part of them as the hashcode. Read from the start to
-        // avoid picking up the type code (compressed vs uncompressed) which is tacked on the end.
-        byte[] bits = getPubKey();
-        return (bits[0] & 0xFF) | ((bits[1] & 0xFF) << 8) | ((bits[2] & 0xFF) << 16) | ((bits[3] & 0xFF) << 24);
-    }
-
     /**
      * Create an encrypted private key with the keyCrypter and the AES key supplied.
      * This method returns a new encrypted key and leaves the original unchanged.
@@ -1082,5 +1035,54 @@ public class ECKey implements EncryptableItem, Serializable {
     }
 
     public static class KeyIsEncryptedException extends MissingPrivateKeyException {
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || !(o instanceof ECKey)) return false;
+
+        ECKey other = (ECKey) o;
+
+        return Objects.equal(this.priv, other.priv)
+                && Objects.equal(this.pub, other.pub)
+                && Objects.equal(this.creationTimeSeconds, other.creationTimeSeconds)
+                && Objects.equal(this.keyCrypter, other.keyCrypter)
+                && Objects.equal(this.encryptedPrivateKey, other.encryptedPrivateKey);
+    }
+
+    @Override
+    public int hashCode() {
+        // Public keys are random already so we can just use a part of them as the hashcode. Read from the start to
+        // avoid picking up the type code (compressed vs uncompressed) which is tacked on the end.
+        byte[] bits = getPubKey();
+        return (bits[0] & 0xFF) | ((bits[1] & 0xFF) << 8) | ((bits[2] & 0xFF) << 16) | ((bits[3] & 0xFF) << 24);
+    }
+
+    @Override
+    public String toString() {
+        return toString(false);
+    }
+
+    /**
+     * Produce a string rendering of the ECKey INCLUDING the private key.
+     * Unless you absolutely need the private key it is better for security reasons to just use {@link #toString()}.
+     */
+    public String toStringWithPrivate() {
+        return toString(true);
+    }
+
+    private String toString(boolean includePrivate) {
+        final ToStringHelper helper = Objects.toStringHelper(this).omitNullValues();
+        helper.add("pub", Utils.HEX.encode(pub.getEncoded()));
+        if (includePrivate)
+            helper.add("priv", Utils.HEX.encode(priv.toByteArray()));
+        if (creationTimeSeconds > 0)
+            helper.add("creationTimeSeconds", creationTimeSeconds);
+        helper.add("keyCrypter", keyCrypter);
+        if (includePrivate)
+            helper.add("encryptedPrivateKey", encryptedPrivateKey);
+        helper.add("isEncrypted", isEncrypted());
+        return helper.toString();
     }
 }

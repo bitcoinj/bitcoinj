@@ -17,6 +17,8 @@
 package com.google.bitcoin.crypto;
 
 import com.google.bitcoin.core.*;
+import com.google.common.base.Objects;
+import com.google.common.base.Objects.ToStringHelper;
 import com.google.common.collect.ImmutableList;
 import org.spongycastle.crypto.params.KeyParameter;
 import org.spongycastle.math.ec.ECPoint;
@@ -405,6 +407,18 @@ public class DeterministicKey extends ECKey {
     }
 
     /**
+     * The creation time of a deterministic key is equal to that of its parent, unless this key is the root of a tree
+     * in which case the time is stored alongside the key as per normal, see {@link com.google.bitcoin.core.ECKey#getCreationTimeSeconds()}.
+     */
+    @Override
+    public long getCreationTimeSeconds() {
+        if (parent != null)
+            return parent.getCreationTimeSeconds();
+        else
+            return super.getCreationTimeSeconds();
+    }
+
+    /**
      * Verifies equality of all fields but NOT the parent pointer (thus the same key derived in two separate heirarchy
      * objects will equal each other.
      */
@@ -412,14 +426,12 @@ public class DeterministicKey extends ECKey {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        if (!super.equals(o)) return false;
 
-        DeterministicKey key = (DeterministicKey) o;
+        DeterministicKey other = (DeterministicKey) o;
 
-        if (!Arrays.equals(chainCode, key.chainCode)) return false;
-        if (!childNumberPath.equals(key.childNumberPath)) return false;
-
-        return true;
+        return super.equals(other)
+                && Arrays.equals(this.chainCode, other.chainCode)
+                && Objects.equal(this.childNumberPath, other.childNumberPath);
     }
 
     @Override
@@ -432,19 +444,12 @@ public class DeterministicKey extends ECKey {
 
     @Override
     public String toString() {
-        return String.format("pub:%s chaincode:%s path:%s time:%d", HEX.encode(getPubKey()),
-                HEX.encode(getChainCode()), getPathAsString(), getCreationTimeSeconds());
-    }
-
-    /**
-     * The creation time of a deterministic key is equal to that of its parent, unless this key is the root of a tree
-     * in which case the time is stored alongside the key as per normal, see {@link com.google.bitcoin.core.ECKey#getCreationTimeSeconds()}.
-     */
-    @Override
-    public long getCreationTimeSeconds() {
-        if (parent != null)
-            return parent.getCreationTimeSeconds();
-        else
-            return super.getCreationTimeSeconds();
+        final ToStringHelper helper = Objects.toStringHelper(this).omitNullValues();
+        helper.add("pub", Utils.HEX.encode(pub.getEncoded()));
+        helper.add("chainCode", HEX.encode(chainCode));
+        helper.add("path", getPathAsString());
+        if (creationTimeSeconds > 0)
+            helper.add("creationTimeSeconds", creationTimeSeconds);
+        return helper.toString();
     }
 }
