@@ -655,7 +655,7 @@ public class Transaction extends ChildMessage implements Serializable {
                 Script scriptSig = in.getScriptSig();
                 s.append(scriptSig);
                 if (in.getValue() != null)
-                    s.append(" ").append(in.getValue().toFriendlyString()).append(" BTC");
+                    s.append(" ").append(in.getValue().toFriendlyString());
                 s.append("\n          ");
                 s.append("outpoint:");
                 final TransactionOutPoint outpoint = in.getOutpoint();
@@ -678,7 +678,6 @@ public class Transaction extends ChildMessage implements Serializable {
                 s.append(scriptPubKey);
                 s.append(" ");
                 s.append(out.getValue().toFriendlyString());
-                s.append(" BTC");
                 if (!out.isAvailableForSpending()) {
                     s.append(" Spent");
                 }

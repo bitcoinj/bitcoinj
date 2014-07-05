@@ -94,7 +94,7 @@ public class ChainSplitTest {
         assertFalse(reorgHappened.get());
         assertEquals(2, walletChanged.get());
         // We got two blocks which sent 50 coins each to us.
-        assertEquals("100.00", wallet.getBalance().toFriendlyString());
+        assertEquals(Coin.valueOf(100, 0), wallet.getBalance());
         // We now have the following chain:
         //     genesis -> b1 -> b2
         //
@@ -109,7 +109,7 @@ public class ChainSplitTest {
         Threading.waitForUserCode();
         assertFalse(reorgHappened.get());  // No re-org took place.
         assertEquals(2, walletChanged.get());
-        assertEquals("100.00", wallet.getBalance().toFriendlyString());
+        assertEquals(Coin.valueOf(100, 0), wallet.getBalance());
         // Check we can handle multi-way splits: this is almost certainly going to be extremely rare, but we have to
         // handle it anyway. The same transaction appears in b7/b8 (side chain) but not b2 or b3.
         //     genesis -> b1--> b2
@@ -128,7 +128,7 @@ public class ChainSplitTest {
         assertEquals(2, wallet.getTransaction(tHash).getAppearsInHashes().size());
         assertFalse(reorgHappened.get());  // No re-org took place.
         assertEquals(5, walletChanged.get());
-        assertEquals("100.00", wallet.getBalance().toFriendlyString());
+        assertEquals(Coin.valueOf(100, 0), wallet.getBalance());
         // Now we add another block to make the alternative chain longer.
         assertTrue(chain.add(b3.createNextBlock(someOtherGuy)));
         Threading.waitForUserCode();
@@ -153,7 +153,7 @@ public class ChainSplitTest {
         Threading.waitForUserCode();
         assertTrue(reorgHappened.get());
         assertEquals(9, walletChanged.get());
-        assertEquals("200.00", wallet.getBalance().toFriendlyString());
+        assertEquals(Coin.valueOf(200, 0), wallet.getBalance());
     }
 
     @Test
@@ -520,7 +520,7 @@ public class ChainSplitTest {
         BigInteger newWork3 = work3.add(work7).add(work8);
         assertEquals(newWork3, txns.get(2).getConfidence().getWorkDone());
 
-        assertEquals("250.00", wallet.getBalance().toFriendlyString());
+        assertEquals(Coin.valueOf(250, 0), wallet.getBalance());
 
         // Now add two more blocks that don't send coins to us. Despite being irrelevant the wallet should still update.
         Block b9 = b8.createNextBlock(someOtherGuy);

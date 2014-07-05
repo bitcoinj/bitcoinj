@@ -616,7 +616,7 @@ public class WalletTool {
     private static void send(PaymentSession session) {
         try {
             System.out.println("Payment Request");
-            System.out.println("Coin: " + session.getValue().toFriendlyString() + " BTC");
+            System.out.println("Coin: " + session.getValue().toFriendlyString());
             System.out.println("Date: " + session.getDate());
             System.out.println("Memo: " + session.getMemo());
             if (session.pkiVerificationData != null) {

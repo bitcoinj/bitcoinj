@@ -206,7 +206,7 @@ public final class Coin implements Comparable<Coin>, Serializable {
         return this.value;
     }
 
-    private static final CoinFormat FRIENDLY_FORMAT = CoinFormat.BTC.minDecimals(2).repeatOptionalDecimals(1, 6).noCode();
+    private static final CoinFormat FRIENDLY_FORMAT = CoinFormat.BTC.minDecimals(2).repeatOptionalDecimals(1, 6).postfixCode();
 
     /**
      * Returns the value as a 0.12 type string. More digits after the decimal place will be used
