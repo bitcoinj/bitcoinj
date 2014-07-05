@@ -16,6 +16,7 @@
 
 package com.google.bitcoin.core;
 
+import java.io.Serializable;
 import java.util.Arrays;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -28,8 +29,8 @@ import static com.google.common.base.Preconditions.checkArgument;
  * <p>and the result is then Base58 encoded. This format is used for addresses, and private keys exported using the
  * dumpprivkey command.</p>
  */
-public class VersionedChecksummedBytes {
-    protected int version;
+public class VersionedChecksummedBytes implements Serializable {
+    protected final int version;
     protected byte[] bytes;
 
     protected VersionedChecksummedBytes(String encoded) throws AddressFormatException {
