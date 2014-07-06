@@ -16,10 +16,14 @@
 
 package com.google.bitcoin.core;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 import java.io.Serializable;
 import java.util.Arrays;
 
-import static com.google.common.base.Preconditions.checkArgument;
+import org.spongycastle.util.Integers;
+
+import com.google.common.base.Objects;
 
 /**
  * <p>In Bitcoin the following format is often used to represent some type of key:</p>
@@ -59,10 +63,9 @@ public class VersionedChecksummedBytes implements Serializable {
         return Base58.encode(addressBytes);
     }
 
-    // TODO: shouldn't hashCode be also based on the version?
     @Override
     public int hashCode() {
-        return Arrays.hashCode(bytes);
+        return Objects.hashCode(version, Arrays.hashCode(bytes));
     }
 
     @Override
@@ -70,7 +73,8 @@ public class VersionedChecksummedBytes implements Serializable {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         VersionedChecksummedBytes other = (VersionedChecksummedBytes) o;
-        return Arrays.equals(bytes, other.bytes);
+        return this.version == other.version
+                && Arrays.equals(this.bytes, other.bytes);
     }
 
     /**
