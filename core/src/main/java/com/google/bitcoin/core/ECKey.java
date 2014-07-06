@@ -90,6 +90,9 @@ public class ECKey implements EncryptableItem, Serializable {
     private static final Logger log = LoggerFactory.getLogger(ECKey.class);
 
     /** The parameters of the secp256k1 curve that Bitcoin uses. */
+    public static final X9ECParameters CURVE_PARAMS = SECNamedCurves.getByName("secp256k1");
+
+    /** The parameters of the secp256k1 curve that Bitcoin uses. */
     public static final ECDomainParameters CURVE;
 
     /**
@@ -103,9 +106,9 @@ public class ECKey implements EncryptableItem, Serializable {
 
     static {
         // All clients must agree on the curve to use by agreement. Bitcoin uses secp256k1.
-        X9ECParameters params = SECNamedCurves.getByName("secp256k1");
-        CURVE = new ECDomainParameters(params.getCurve(), params.getG(), params.getN(), params.getH());
-        HALF_CURVE_ORDER = params.getN().shiftRight(1);
+        CURVE = new ECDomainParameters(CURVE_PARAMS.getCurve(), CURVE_PARAMS.getG(), CURVE_PARAMS.getN(),
+                CURVE_PARAMS.getH());
+        HALF_CURVE_ORDER = CURVE_PARAMS.getN().shiftRight(1);
         secureRandom = new SecureRandom();
     }
 
@@ -178,19 +181,36 @@ public class ECKey implements EncryptableItem, Serializable {
     }
 
     /**
-     * Creates an ECKey given the private key only.  The public key is calculated from it (this is slow). Note that
-     * the resulting public key is compressed.
+     * Creates an ECKey given the private key only. The public key is calculated from it (this is slow). The resulting
+     * public key is compressed.
      */
     public static ECKey fromPrivate(BigInteger privKey) {
-        return new ECKey(privKey, compressPoint(CURVE.getG().multiply(privKey)));
+        return fromPrivate(privKey, true);
     }
 
     /**
-     * Creates an ECKey given the private key only.  The public key is calculated from it (this is slow). The resulting
+     * Creates an ECKey given the private key only. The public key is calculated from it (this is slow), either
+     * compressed or not.
+     */
+    public static ECKey fromPrivate(BigInteger privKey, boolean compressed) {
+        ECPoint point = CURVE.getG().multiply(privKey);
+        return new ECKey(privKey, compressed ? compressPoint(point) : decompressPoint(point));
+    }
+
+    /**
+     * Creates an ECKey given the private key only. The public key is calculated from it (this is slow). The resulting
      * public key is compressed.
      */
     public static ECKey fromPrivate(byte[] privKeyBytes) {
         return fromPrivate(new BigInteger(1, privKeyBytes));
+    }
+
+    /**
+     * Creates an ECKey given the private key only. The public key is calculated from it (this is slow), either
+     * compressed or not.
+     */
+    public static ECKey fromPrivate(byte[] privKeyBytes, boolean compressed) {
+        return fromPrivate(new BigInteger(1, privKeyBytes), compressed);
     }
 
     /**
@@ -350,7 +370,7 @@ public class ECKey implements EncryptableItem, Serializable {
             DERSequenceGenerator seq = new DERSequenceGenerator(baos);
             seq.addObject(new ASN1Integer(1)); // version
             seq.addObject(new DEROctetString(privKeyBytes));
-            seq.addObject(new DERTaggedObject(0, SECNamedCurves.getByName("secp256k1").toASN1Primitive()));
+            seq.addObject(new DERTaggedObject(0, CURVE_PARAMS.toASN1Primitive()));
             seq.addObject(new DERTaggedObject(1, new DERBitString(getPubKey())));
             seq.close();
             return baos.toByteArray();
