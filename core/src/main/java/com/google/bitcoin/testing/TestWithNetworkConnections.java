@@ -83,7 +83,9 @@ public class TestWithNetworkConnections {
         unitTestParams = UnitTestParams.get();
         Wallet.SendRequest.DEFAULT_FEE_PER_KB = Coin.ZERO;
         this.blockStore = blockStore;
-        wallet = new Wallet(unitTestParams);
+        // Allow subclasses to override the wallet object with their own.
+        if (wallet == null)
+            wallet = new Wallet(unitTestParams);
         key = wallet.freshReceiveKey();
         address = key.toAddress(unitTestParams);
         blockChain = new BlockChain(unitTestParams, wallet, blockStore);
