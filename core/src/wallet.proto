@@ -86,10 +86,10 @@ message Key {
     ENCRYPTED_SCRYPT_AES = 2;
 
     /**
-     * Not really a key, but rather contains the seed for a deterministic key hierarchy in the private_key field.
-     * The label and public_key fields are missing. Creation timestamp will exist.
-     */
-    DETERMINISTIC_ROOT_SEED = 3;
+    * Not really a key, but rather contains the mnemonic phrase for a deterministic key hierarchy in the private_key field.
+    * The label and public_key fields are missing. Creation timestamp will exist.
+    */
+    DETERMINISTIC_MNEMONIC = 3;
 
     /**
      * A key that was derived deterministically. Note that the root seed that created it may NOT be present in the
@@ -99,13 +99,6 @@ message Key {
      * key can be rederived on the fly.
      */
     DETERMINISTIC_KEY = 4;
-
-    /**
-     * Not really a key, but rather contains the mnemonic phrase for a deterministic key hierarchy in the private_key field.
-     * The label and public_key fields are missing. Creation timestamp will exist.
-     * Must be immediately after DETERMINISTIC_KEY
-     */
-    DETERMINISTIC_MNEMONIC = 5;
   }
   required Type type = 1;
 
@@ -116,7 +109,7 @@ message Key {
   optional EncryptedData encrypted_data = 6;
 
   // The public EC key derived from the private key. We allow both to be stored to avoid mobile clients having to
-  // do lots of slow EC math on startup. For DETERMINISTIC_ROOT_SEED and DETERMINISTIC_MNEMONIC entries this is missing.
+  // do lots of slow EC math on startup. For DETERMINISTIC_MNEMONIC entries this is missing.
   optional bytes public_key = 3;
 
   // User-provided label associated with the key.
