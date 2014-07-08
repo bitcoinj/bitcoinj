@@ -55,14 +55,6 @@ public class DeterministicKeyChainTest {
     }
 
     @Test
-    public void mnemonicCode() throws Exception {
-        final List<String> words = chain.toMnemonicCode();
-        assertEquals("aerobic toe save section draw warm cute upon raccoon mother priority pilot taste sweet next traffic fatal sword dentist original crisp team caution rebel",
-                Joiner.on(" ").join(words));
-        new DeterministicSeed(words, checkNotNull(chain.getSeed()).getCreationTimeSeconds());
-    }
-
-    @Test
     public void derive() throws Exception {
         ECKey key1 = chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         ECKey key2 = chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);

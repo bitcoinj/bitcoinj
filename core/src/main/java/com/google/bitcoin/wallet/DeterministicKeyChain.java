@@ -22,7 +22,8 @@ import com.google.bitcoin.core.Utils;
 import com.google.bitcoin.crypto.*;
 import com.google.bitcoin.store.UnreadableWalletException;
 import com.google.bitcoin.utils.Threading;
-import com.google.common.base.Preconditions;
+import com.google.common.base.Joiner;
+import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.protobuf.ByteString;
 import org.bitcoinj.wallet.Protos;
@@ -32,6 +33,8 @@ import org.spongycastle.crypto.params.KeyParameter;
 import org.spongycastle.math.ec.ECPoint;
 
 import javax.annotation.Nullable;
+
+import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.security.SecureRandom;
 import java.util.ArrayList;
@@ -77,10 +80,6 @@ import static com.google.common.collect.Lists.newLinkedList;
  */
 public class DeterministicKeyChain implements EncryptableKeyChain {
     private static final Logger log = LoggerFactory.getLogger(DeterministicKeyChain.class);
-    // It would take more than 10^12 years to brute-force a 128 bit seed using $1B worth
-    // of computing equipment.
-    public static final int DEFAULT_SEED_BITS = 128;
-    public static final int MAX_SEED_BITS = 512;
 
     private final ReentrantLock lock = Threading.lock("DeterministicKeyChain");
 
@@ -126,29 +125,28 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
     private boolean isFollowing;
 
     /**
-     * Generates a new key chain with a seed selected randomly from the given {@link java.security.SecureRandom}
-     * object and the default seed size.
+     * Generates a new key chain with entropy selected randomly from the given {@link java.security.SecureRandom}
+     * object and the default entropy size.
      */
     public DeterministicKeyChain(SecureRandom random) {
-        this(getRandomSeed(random, DEFAULT_SEED_BITS), Utils.currentTimeSeconds());
+        this(random, DeterministicSeed.DEFAULT_SEED_ENTROPY_BITS, "", Utils.currentTimeSeconds());
     }
 
     /**
-     * Generates a new key chain with a seed selected randomly from the given {@link java.security.SecureRandom}
+     * Generates a new key chain with entropy selected randomly from the given {@link java.security.SecureRandom}
      * object and of the requested size in bits.
      */
     public DeterministicKeyChain(SecureRandom random, int bits) {
-        this(getRandomSeed(random, bits), Utils.currentTimeSeconds());
+        this(random, bits, "", Utils.currentTimeSeconds());
     }
 
-    private static byte[] getRandomSeed(SecureRandom random, int bits) {
-        Preconditions.checkArgument(bits >= DEFAULT_SEED_BITS, "requested seed size too small");
-        Preconditions.checkArgument(bits <= MAX_SEED_BITS, "requested seed size too large");
-        Preconditions.checkArgument(bits % 8 == 0, "requested seed size not an even number of bytes");
-
-        byte[] seed = new byte[bits / 8];
-        random.nextBytes(seed);
-        return seed;
+    /**
+     * Generates a new key chain with entropy selected randomly from the given {@link java.security.SecureRandom}
+     * object and of the requested size in bits.  The derived seed is further protected with a user selected passphrase
+     * (see BIP 39).
+     */
+    public DeterministicKeyChain(SecureRandom random, int bits, String passphrase, long seedCreationTimeSecs) {
+        this(new DeterministicSeed(random, bits, passphrase, seedCreationTimeSecs));
     }
 
     /**
@@ -496,10 +494,10 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
     }
 
     /** Returns a list of words that represent the seed. */
-    public List<String> toMnemonicCode() {
+    public List<String> getMnemonicCode() {
         lock.lock();
         try {
-            return seed.toMnemonicCode();
+            return seed.getMnemonicCode();
         } finally {
             lock.unlock();
         }
@@ -529,6 +527,11 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                 Protos.Key.Builder seedEntry = BasicKeyChain.serializeEncryptableItem(seed);
                 seedEntry.setType(Protos.Key.Type.DETERMINISTIC_ROOT_SEED);
                 entries.add(seedEntry.build());
+                if (seed.hasMnemonicCode()) {
+                    Protos.Key.Builder mnemonicEntry = BasicKeyChain.serializeEncryptableItem(seed.getMnemonicEncryptableItem());
+                    mnemonicEntry.setType(Protos.Key.Type.DETERMINISTIC_MNEMONIC);
+                    entries.add(mnemonicEntry.build());
+                }
             }
             Map<ECKey, Protos.Key.Builder> keys = basicKeyChain.serializeToEditableProtobufs();
             for (Map.Entry<ECKey, Protos.Key.Builder> entry : keys.entrySet()) {
@@ -573,7 +576,19 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         int lookaheadSize = -1;
         for (Protos.Key key : keys) {
             final Protos.Key.Type t = key.getType();
-            if (t == Protos.Key.Type.DETERMINISTIC_ROOT_SEED) {
+            if (t == Protos.Key.Type.DETERMINISTIC_MNEMONIC) {
+                checkState(chain == null);
+                checkState(seed != null);
+                if (key.hasSecretBytes()) {
+                    seed.setMnemonicCode(key.getSecretBytes().toByteArray());
+                } else if (key.hasEncryptedData()) {
+                    EncryptedData data = new EncryptedData(key.getEncryptedData().getInitialisationVector().toByteArray(),
+                            key.getEncryptedData().getEncryptedPrivateKey().toByteArray());
+                    seed.setEncryptedMnemonicCode(data);
+                } else {
+                    throw new UnreadableWalletException("Malformed key proto: " + key.toString());
+                }
+            } else if (t == Protos.Key.Type.DETERMINISTIC_ROOT_SEED) {
                 if (chain != null) {
                     checkState(lookaheadSize >= 0);
                     chain.setLookaheadSize(lookaheadSize);

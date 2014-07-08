@@ -380,25 +380,25 @@ public class KeyChainGroupTest {
 
     @Test
     public void serialization() throws Exception {
-        assertEquals(INITIAL_KEYS + 1 /* for the seed */, group.serializeToProtobuf().size());
+        assertEquals(INITIAL_KEYS + 2 /* for the seed */, group.serializeToProtobuf().size());
         group = KeyChainGroup.fromProtobufUnencrypted(params, group.serializeToProtobuf());
         group.freshKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         DeterministicKey key1 = group.freshKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         DeterministicKey key2 = group.freshKey(KeyChain.KeyPurpose.CHANGE);
         List<Protos.Key> protoKeys1 = group.serializeToProtobuf();
-        assertEquals(INITIAL_KEYS + ((LOOKAHEAD_SIZE + 1) * 2) + 1 /* for the seed */ + 1, protoKeys1.size());
+        assertEquals(INITIAL_KEYS + ((LOOKAHEAD_SIZE + 1) * 2) + 2 /* for the seed */ + 1, protoKeys1.size());
         group.importKeys(new ECKey());
         List<Protos.Key> protoKeys2 = group.serializeToProtobuf();
-        assertEquals(INITIAL_KEYS + ((LOOKAHEAD_SIZE + 1) * 2) + 1 /* for the seed */ + 2, protoKeys2.size());
+        assertEquals(INITIAL_KEYS + ((LOOKAHEAD_SIZE + 1) * 2) + 2 /* for the seed */ + 2, protoKeys2.size());
 
         group = KeyChainGroup.fromProtobufUnencrypted(params, protoKeys1);
-        assertEquals(INITIAL_KEYS + ((LOOKAHEAD_SIZE + 1)  * 2)  + 1 /* for the seed */ + 1, protoKeys1.size());
+        assertEquals(INITIAL_KEYS + ((LOOKAHEAD_SIZE + 1)  * 2)  + 2 /* for the seed */ + 1, protoKeys1.size());
         assertTrue(group.hasKey(key1));
         assertTrue(group.hasKey(key2));
         assertEquals(key2, group.currentKey(KeyChain.KeyPurpose.CHANGE));
         assertEquals(key1, group.currentKey(KeyChain.KeyPurpose.RECEIVE_FUNDS));
         group = KeyChainGroup.fromProtobufUnencrypted(params, protoKeys2);
-        assertEquals(INITIAL_KEYS + ((LOOKAHEAD_SIZE + 1) * 2) + 1 /* for the seed */ + 2, protoKeys2.size());
+        assertEquals(INITIAL_KEYS + ((LOOKAHEAD_SIZE + 1) * 2) + 2 /* for the seed */ + 2, protoKeys2.size());
         assertTrue(group.hasKey(key1));
         assertTrue(group.hasKey(key2));
 

@@ -188,7 +188,7 @@ public class KeyChainGroup {
     /** Adds a new HD chain to the chains list, and make it the default chain (from which keys are issued). */
     public void createAndActivateNewHDChain() {
         // We can't do auto upgrade here because we don't know the rotation time, if any.
-        final DeterministicKeyChain chain = new DeterministicKeyChain(new SecureRandom(), DeterministicKeyChain.DEFAULT_SEED_BITS);
+        final DeterministicKeyChain chain = new DeterministicKeyChain(new SecureRandom());
         log.info("Creating and activating a new HD chain: {}", chain);
         for (ListenerRegistration<KeyChainEventListener> registration : basic.getListeners())
             chain.addEventListener(registration.listener, registration.executor);
@@ -733,12 +733,12 @@ public class KeyChainGroup {
         log.info("Auto-upgrading pre-HD wallet using oldest non-rotating private key");
         byte[] seed = checkNotNull(keyToUse.getSecretBytes());
         // Private keys should be at least 128 bits long.
-        checkState(seed.length >= DeterministicKeyChain.DEFAULT_SEED_BITS / 8);
+        checkState(seed.length >= DeterministicSeed.DEFAULT_SEED_ENTROPY_BITS / 8);
         // We reduce the entropy here to 128 bits because people like to write their seeds down on paper, and 128
         // bits should be sufficient forever unless the laws of the universe change or ECC is broken; in either case
         // we all have bigger problems.
-        seed = Arrays.copyOfRange(seed, 0, DeterministicKeyChain.DEFAULT_SEED_BITS / 8);    // final argument is exclusive range.
-        checkState(seed.length == DeterministicKeyChain.DEFAULT_SEED_BITS / 8);
+        seed = Arrays.copyOfRange(seed, 0, DeterministicSeed.DEFAULT_SEED_ENTROPY_BITS / 8);    // final argument is exclusive range.
+        checkState(seed.length == DeterministicSeed.DEFAULT_SEED_ENTROPY_BITS / 8);
         DeterministicKeyChain chain = new DeterministicKeyChain(seed, keyToUse.getCreationTimeSeconds());
         if (aesKey != null) {
             chain = chain.toEncrypted(checkNotNull(basic.getKeyCrypter()), aesKey);
@@ -807,7 +807,7 @@ public class KeyChainGroup {
                 if (seed.isEncrypted()) {
                     builder2.append(String.format("Seed is encrypted%n"));
                 } else if (includePrivateKeys) {
-                    final List<String> words = seed.toMnemonicCode();
+                    final List<String> words = seed.getMnemonicCode();
                     builder2.append(
                             String.format("Seed as words: %s%nSeed as hex:   %s%n", Joiner.on(' ').join(words),
                                     seed.toHexString())
