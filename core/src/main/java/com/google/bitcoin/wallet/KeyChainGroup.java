@@ -731,15 +731,16 @@ public class KeyChainGroup {
         }
 
         log.info("Auto-upgrading pre-HD wallet using oldest non-rotating private key");
-        byte[] seed = checkNotNull(keyToUse.getSecretBytes());
+        byte[] entropy = checkNotNull(keyToUse.getSecretBytes());
         // Private keys should be at least 128 bits long.
-        checkState(seed.length >= DeterministicSeed.DEFAULT_SEED_ENTROPY_BITS / 8);
+        checkState(entropy.length >= DeterministicSeed.DEFAULT_SEED_ENTROPY_BITS / 8);
         // We reduce the entropy here to 128 bits because people like to write their seeds down on paper, and 128
         // bits should be sufficient forever unless the laws of the universe change or ECC is broken; in either case
         // we all have bigger problems.
-        seed = Arrays.copyOfRange(seed, 0, DeterministicSeed.DEFAULT_SEED_ENTROPY_BITS / 8);    // final argument is exclusive range.
-        checkState(seed.length == DeterministicSeed.DEFAULT_SEED_ENTROPY_BITS / 8);
-        DeterministicKeyChain chain = new DeterministicKeyChain(seed, keyToUse.getCreationTimeSeconds());
+        entropy = Arrays.copyOfRange(entropy, 0, DeterministicSeed.DEFAULT_SEED_ENTROPY_BITS / 8);    // final argument is exclusive range.
+        checkState(entropy.length == DeterministicSeed.DEFAULT_SEED_ENTROPY_BITS / 8);
+        String passphrase = ""; // FIXME allow non-empty passphrase
+        DeterministicKeyChain chain = new DeterministicKeyChain(entropy, passphrase, keyToUse.getCreationTimeSeconds());
         if (aesKey != null) {
             chain = chain.toEncrypted(checkNotNull(basic.getKeyCrypter()), aesKey);
         }

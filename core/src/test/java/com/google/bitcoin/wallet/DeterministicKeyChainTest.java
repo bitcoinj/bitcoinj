@@ -24,7 +24,6 @@ import com.google.bitcoin.store.UnreadableWalletException;
 import com.google.bitcoin.utils.BriefLogFormatter;
 import com.google.bitcoin.utils.Threading;
 import com.google.common.base.Charsets;
-import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
 import com.google.common.io.Resources;
 import org.bitcoinj.wallet.Protos;
@@ -41,7 +40,7 @@ import static org.junit.Assert.*;
 
 public class DeterministicKeyChainTest {
     private DeterministicKeyChain chain;
-    private final byte[] SEED = Sha256Hash.create("don't use a string seed like this in real life".getBytes()).getBytes();
+    private final byte[] ENTROPY = Sha256Hash.create("don't use a string seed like this in real life".getBytes()).getBytes();
 
     @Before
     public void setup() {
@@ -49,7 +48,7 @@ public class DeterministicKeyChainTest {
         // You should use a random seed instead. The secs constant comes from the unit test file, so we can compare
         // serialized data properly.
         long secs = 1389353062L;
-        chain = new DeterministicKeyChain(SEED, secs);
+        chain = new DeterministicKeyChain(ENTROPY, "", secs);
         chain.setLookaheadSize(10);
         assertEquals(secs, checkNotNull(chain.getSeed()).getCreationTimeSeconds());
     }
@@ -59,16 +58,16 @@ public class DeterministicKeyChainTest {
         ECKey key1 = chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         ECKey key2 = chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
 
-        final Address address = new Address(UnitTestParams.get(), "n1GyUANZand9Kw6hGSV9837cCC9FFUQzQa");
+        final Address address = new Address(UnitTestParams.get(), "n1bQNoEx8uhmCzzA5JPG6sFdtsUQhwiQJV");
         assertEquals(address, key1.toAddress(UnitTestParams.get()));
-        assertEquals("n2fiWrHqD6GM5GiEqkbWAc6aaZQp3ba93X", key2.toAddress(UnitTestParams.get()).toString());
+        assertEquals("mnHUcqUVvrfi5kAaXJDQzBb9HsWs78b42R", key2.toAddress(UnitTestParams.get()).toString());
         assertEquals(key1, chain.findKeyFromPubHash(address.getHash160()));
         assertEquals(key2, chain.findKeyFromPubKey(key2.getPubKey()));
 
         key1.sign(Sha256Hash.ZERO_HASH);
 
         ECKey key3 = chain.getKey(KeyChain.KeyPurpose.CHANGE);
-        assertEquals("mnXiDR4MKsFxcKJEZjx4353oXvo55iuptn", key3.toAddress(UnitTestParams.get()).toString());
+        assertEquals("mqumHgVDqNzuXNrszBmi7A2UpmwaPMx4HQ", key3.toAddress(UnitTestParams.get()).toString());
         key3.sign(Sha256Hash.ZERO_HASH);
     }
 
@@ -77,7 +76,7 @@ public class DeterministicKeyChainTest {
         // Check that we get the right events at the right time.
         final List<List<ECKey>> listenerKeys = Lists.newArrayList();
         long secs = 1389353062L;
-        chain = new DeterministicKeyChain(SEED, secs);
+        chain = new DeterministicKeyChain(ENTROPY, "", secs);
         chain.addEventListener(new AbstractKeyChainEventListener() {
             @Override
             public void onKeysAdded(List<ECKey> keys) {
@@ -219,7 +218,7 @@ public class DeterministicKeyChainTest {
 
         DeterministicKey watchingKey = chain.getWatchingKey();
         final String pub58 = watchingKey.serializePubB58();
-        assertEquals("xpub68KFnj3bqUx1s7mHejLDBPywCAKdJEu1b49uniEEn2WSbHmZ7xbLqFTjJbtx1LUcAt1DwhoqWHmo2s5WMJp6wi38CiF2hYD49qVViKVvAoi", pub58);
+        assertEquals("xpub69KR9epSNBM59KLuasxMU5CyKytMJjBP5HEZ5p8YoGUCpM6cM9hqxB9DDPCpUUtqmw5duTckvPfwpoWGQUFPmRLpxs5jYiTf2u6xRMcdhDf", pub58);
         watchingKey = DeterministicKey.deserializeB58(null, pub58);
         watchingKey.setCreationTimeSeconds(100000);
         chain = DeterministicKeyChain.watch(watchingKey);

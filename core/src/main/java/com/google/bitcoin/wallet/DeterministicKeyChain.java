@@ -80,6 +80,7 @@ import static com.google.common.collect.Lists.newLinkedList;
  */
 public class DeterministicKeyChain implements EncryptableKeyChain {
     private static final Logger log = LoggerFactory.getLogger(DeterministicKeyChain.class);
+    public static final String DEFAULT_PASSPHRASE_FOR_MNEMONIC = "";
 
     private final ReentrantLock lock = Threading.lock("DeterministicKeyChain");
 
@@ -129,7 +130,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
      * object and the default entropy size.
      */
     public DeterministicKeyChain(SecureRandom random) {
-        this(random, DeterministicSeed.DEFAULT_SEED_ENTROPY_BITS, "", Utils.currentTimeSeconds());
+        this(random, DeterministicSeed.DEFAULT_SEED_ENTROPY_BITS, DEFAULT_PASSPHRASE_FOR_MNEMONIC, Utils.currentTimeSeconds());
     }
 
     /**
@@ -137,7 +138,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
      * object and of the requested size in bits.
      */
     public DeterministicKeyChain(SecureRandom random, int bits) {
-        this(random, bits, "", Utils.currentTimeSeconds());
+        this(random, bits, DEFAULT_PASSPHRASE_FOR_MNEMONIC, Utils.currentTimeSeconds());
     }
 
     /**
@@ -154,8 +155,8 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
      * if the starting seed is the same. You should provide the creation time in seconds since the UNIX epoch for the
      * seed: this lets us know from what part of the chain we can expect to see derived keys appear.
      */
-    public DeterministicKeyChain(byte[] seed, long seedCreationTimeSecs) {
-        this(new DeterministicSeed(seed, seedCreationTimeSecs));
+    public DeterministicKeyChain(byte[] entropy, String passphrase, long seedCreationTimeSecs) {
+        this(new DeterministicSeed(entropy, passphrase, seedCreationTimeSecs));
     }
 
     /**
@@ -224,7 +225,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         this.seed = seed;
         basicKeyChain = new BasicKeyChain(crypter);
         if (!seed.isEncrypted()) {
-            rootKey = HDKeyDerivation.createMasterPrivateKey(checkNotNull(seed.getSecretBytes()));
+            rootKey = HDKeyDerivation.createMasterPrivateKey(checkNotNull(seed.getSeedBytes()));
             rootKey.setCreationTimeSeconds(seed.getCreationTimeSeconds());
             initializeHierarchyUnencrypted(rootKey);
         } else {
@@ -524,14 +525,9 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
             // data (handling encryption along the way), and letting us patch it up with the extra data we care about.
             LinkedList<Protos.Key> entries = newLinkedList();
             if (seed != null) {
-                Protos.Key.Builder seedEntry = BasicKeyChain.serializeEncryptableItem(seed);
-                seedEntry.setType(Protos.Key.Type.DETERMINISTIC_ROOT_SEED);
-                entries.add(seedEntry.build());
-                if (seed.hasMnemonicCode()) {
-                    Protos.Key.Builder mnemonicEntry = BasicKeyChain.serializeEncryptableItem(seed.getMnemonicEncryptableItem());
-                    mnemonicEntry.setType(Protos.Key.Type.DETERMINISTIC_MNEMONIC);
-                    entries.add(mnemonicEntry.build());
-                }
+                Protos.Key.Builder mnemonicEntry = BasicKeyChain.serializeEncryptableItem(seed);
+                mnemonicEntry.setType(Protos.Key.Type.DETERMINISTIC_MNEMONIC);
+                entries.add(mnemonicEntry.build());
             }
             Map<ECKey, Protos.Key.Builder> keys = basicKeyChain.serializeToEditableProtobufs();
             for (Map.Entry<ECKey, Protos.Key.Builder> entry : keys.entrySet()) {
@@ -577,18 +573,6 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         for (Protos.Key key : keys) {
             final Protos.Key.Type t = key.getType();
             if (t == Protos.Key.Type.DETERMINISTIC_MNEMONIC) {
-                checkState(chain == null);
-                checkState(seed != null);
-                if (key.hasSecretBytes()) {
-                    seed.setMnemonicCode(key.getSecretBytes().toByteArray());
-                } else if (key.hasEncryptedData()) {
-                    EncryptedData data = new EncryptedData(key.getEncryptedData().getInitialisationVector().toByteArray(),
-                            key.getEncryptedData().getEncryptedPrivateKey().toByteArray());
-                    seed.setEncryptedMnemonicCode(data);
-                } else {
-                    throw new UnreadableWalletException("Malformed key proto: " + key.toString());
-                }
-            } else if (t == Protos.Key.Type.DETERMINISTIC_ROOT_SEED) {
                 if (chain != null) {
                     checkState(lookaheadSize >= 0);
                     chain.setLookaheadSize(lookaheadSize);
@@ -597,8 +581,9 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                     chain = null;
                 }
                 long timestamp = key.getCreationTimestamp() / 1000;
+                String passphrase = DEFAULT_PASSPHRASE_FOR_MNEMONIC; // FIXME allow non-empty passphrase
                 if (key.hasSecretBytes()) {
-                    seed = new DeterministicSeed(key.getSecretBytes().toByteArray(), timestamp);
+                    seed = new DeterministicSeed(key.getSecretBytes().toStringUtf8(), passphrase, timestamp);
                 } else if (key.hasEncryptedData()) {
                     EncryptedData data = new EncryptedData(key.getEncryptedData().getInitialisationVector().toByteArray(),
                             key.getEncryptedData().getEncryptedPrivateKey().toByteArray());
@@ -607,7 +592,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                     throw new UnreadableWalletException("Malformed key proto: " + key.toString());
                 }
                 if (log.isDebugEnabled())
-                    log.debug("Deserializing: DETERMINISTIC_ROOT_SEED: {}", seed);
+                    log.debug("Deserializing: DETERMINISTIC_MNEMONIC: {}", seed);
             } else if (t == Protos.Key.Type.DETERMINISTIC_KEY) {
                 if (!key.hasDeterministicKey())
                     throw new UnreadableWalletException("Deterministic key missing extra data: " + key.toString());
@@ -749,7 +734,8 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
     public DeterministicKeyChain toDecrypted(KeyParameter aesKey) {
         checkState(getKeyCrypter() != null, "Key chain not encrypted");
         checkState(seed.isEncrypted());
-        DeterministicSeed decSeed = seed.decrypt(getKeyCrypter(), aesKey);
+        String passphrase = DEFAULT_PASSPHRASE_FOR_MNEMONIC; // FIXME allow non-empty passphrase
+        DeterministicSeed decSeed = seed.decrypt(getKeyCrypter(), passphrase, aesKey);
         DeterministicKeyChain chain = new DeterministicKeyChain(decSeed);
         // Now double check that the keys match to catch the case where the key is wrong but padding didn't catch it.
         if (!chain.getWatchingKey().getPubKeyPoint().equals(getWatchingKey().getPubKeyPoint()))
