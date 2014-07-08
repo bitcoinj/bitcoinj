@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.google.bitcoin.core.utils;
+package com.google.bitcoin.utils;
 
 import com.google.bitcoin.core.Utils;
 import com.google.bitcoin.utils.ExponentialBackoff;
