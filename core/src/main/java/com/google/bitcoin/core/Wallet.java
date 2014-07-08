@@ -2817,7 +2817,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
                 }
                 if (dead.size() > 0) {
                     builder.append("\n>>> DEAD:\n");
-                    toStringHelper(builder, dead, chain, Transaction.SORT_TX_BY_HEIGHT);
+                    toStringHelper(builder, dead, chain, Transaction.SORT_TX_BY_UPDATE_TIME);
                 }
             }
             if (includeExtensions && extensions.size() > 0) {
