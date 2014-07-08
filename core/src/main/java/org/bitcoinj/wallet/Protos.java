@@ -2271,7 +2271,7 @@ public final class Protos {
      *
      * <pre>
      * The public EC key derived from the private key. We allow both to be stored to avoid mobile clients having to
-     * do lots of slow EC math on startup. For DETERMINISTIC_ROOT_SEED entries this is missing.
+     * do lots of slow EC math on startup. For DETERMINISTIC_ROOT_SEED and DETERMINISTIC_MNEMONIC entries this is missing.
      * </pre>
      */
     boolean hasPublicKey();
@@ -2280,7 +2280,7 @@ public final class Protos {
      *
      * <pre>
      * The public EC key derived from the private key. We allow both to be stored to avoid mobile clients having to
-     * do lots of slow EC math on startup. For DETERMINISTIC_ROOT_SEED entries this is missing.
+     * do lots of slow EC math on startup. For DETERMINISTIC_ROOT_SEED and DETERMINISTIC_MNEMONIC entries this is missing.
      * </pre>
      */
     com.google.protobuf.ByteString getPublicKey();
@@ -2548,6 +2548,17 @@ public final class Protos {
        * </pre>
        */
       DETERMINISTIC_KEY(3, 4),
+      /**
+       * <code>DETERMINISTIC_MNEMONIC = 5;</code>
+       *
+       * <pre>
+       **
+       * Not really a key, but rather contains the mnemonic phrase for a deterministic key hierarchy in the private_key field.
+       * The label and public_key fields are missing. Creation timestamp will exist.
+       * Must be immediately after DETERMINISTIC_KEY
+       * </pre>
+       */
+      DETERMINISTIC_MNEMONIC(4, 5),
       ;
 
       /**
@@ -2589,6 +2600,17 @@ public final class Protos {
        * </pre>
        */
       public static final int DETERMINISTIC_KEY_VALUE = 4;
+      /**
+       * <code>DETERMINISTIC_MNEMONIC = 5;</code>
+       *
+       * <pre>
+       **
+       * Not really a key, but rather contains the mnemonic phrase for a deterministic key hierarchy in the private_key field.
+       * The label and public_key fields are missing. Creation timestamp will exist.
+       * Must be immediately after DETERMINISTIC_KEY
+       * </pre>
+       */
+      public static final int DETERMINISTIC_MNEMONIC_VALUE = 5;
 
 
       public final int getNumber() { return value; }
@@ -2599,6 +2621,7 @@ public final class Protos {
           case 2: return ENCRYPTED_SCRYPT_AES;
           case 3: return DETERMINISTIC_ROOT_SEED;
           case 4: return DETERMINISTIC_KEY;
+          case 5: return DETERMINISTIC_MNEMONIC;
           default: return null;
         }
       }
@@ -2735,7 +2758,7 @@ public final class Protos {
      *
      * <pre>
      * The public EC key derived from the private key. We allow both to be stored to avoid mobile clients having to
-     * do lots of slow EC math on startup. For DETERMINISTIC_ROOT_SEED entries this is missing.
+     * do lots of slow EC math on startup. For DETERMINISTIC_ROOT_SEED and DETERMINISTIC_MNEMONIC entries this is missing.
      * </pre>
      */
     public boolean hasPublicKey() {
@@ -2746,7 +2769,7 @@ public final class Protos {
      *
      * <pre>
      * The public EC key derived from the private key. We allow both to be stored to avoid mobile clients having to
-     * do lots of slow EC math on startup. For DETERMINISTIC_ROOT_SEED entries this is missing.
+     * do lots of slow EC math on startup. For DETERMINISTIC_ROOT_SEED and DETERMINISTIC_MNEMONIC entries this is missing.
      * </pre>
      */
     public com.google.protobuf.ByteString getPublicKey() {
@@ -3500,7 +3523,7 @@ public final class Protos {
        *
        * <pre>
        * The public EC key derived from the private key. We allow both to be stored to avoid mobile clients having to
-       * do lots of slow EC math on startup. For DETERMINISTIC_ROOT_SEED entries this is missing.
+       * do lots of slow EC math on startup. For DETERMINISTIC_ROOT_SEED and DETERMINISTIC_MNEMONIC entries this is missing.
        * </pre>
        */
       public boolean hasPublicKey() {
@@ -3511,7 +3534,7 @@ public final class Protos {
        *
        * <pre>
        * The public EC key derived from the private key. We allow both to be stored to avoid mobile clients having to
-       * do lots of slow EC math on startup. For DETERMINISTIC_ROOT_SEED entries this is missing.
+       * do lots of slow EC math on startup. For DETERMINISTIC_ROOT_SEED and DETERMINISTIC_MNEMONIC entries this is missing.
        * </pre>
        */
       public com.google.protobuf.ByteString getPublicKey() {
@@ -3522,7 +3545,7 @@ public final class Protos {
        *
        * <pre>
        * The public EC key derived from the private key. We allow both to be stored to avoid mobile clients having to
-       * do lots of slow EC math on startup. For DETERMINISTIC_ROOT_SEED entries this is missing.
+       * do lots of slow EC math on startup. For DETERMINISTIC_ROOT_SEED and DETERMINISTIC_MNEMONIC entries this is missing.
        * </pre>
        */
       public Builder setPublicKey(com.google.protobuf.ByteString value) {
@@ -3539,7 +3562,7 @@ public final class Protos {
        *
        * <pre>
        * The public EC key derived from the private key. We allow both to be stored to avoid mobile clients having to
-       * do lots of slow EC math on startup. For DETERMINISTIC_ROOT_SEED entries this is missing.
+       * do lots of slow EC math on startup. For DETERMINISTIC_ROOT_SEED and DETERMINISTIC_MNEMONIC entries this is missing.
        * </pre>
        */
       public Builder clearPublicKey() {
@@ -16161,66 +16184,67 @@ public final class Protos {
       "ey\030\002 \002(\014\"y\n\020DeterministicKey\022\022\n\nchain_co" +
       "de\030\001 \002(\014\022\014\n\004path\030\002 \003(\r\022\026\n\016issued_subkeys" +
       "\030\003 \001(\r\022\026\n\016lookahead_size\030\004 \001(\r\022\023\n\013isFoll" +
-      "owing\030\005 \001(\010\"\302\002\n\003Key\022\036\n\004type\030\001 \002(\0162\020.wall" +
+      "owing\030\005 \001(\010\"\336\002\n\003Key\022\036\n\004type\030\001 \002(\0162\020.wall" +
       "et.Key.Type\022\024\n\014secret_bytes\030\002 \001(\014\022-\n\016enc" +
       "rypted_data\030\006 \001(\0132\025.wallet.EncryptedData",
       "\022\022\n\npublic_key\030\003 \001(\014\022\r\n\005label\030\004 \001(\t\022\032\n\022c" +
       "reation_timestamp\030\005 \001(\003\0223\n\021deterministic" +
-      "_key\030\007 \001(\0132\030.wallet.DeterministicKey\"b\n\004" +
+      "_key\030\007 \001(\0132\030.wallet.DeterministicKey\"~\n\004" +
       "Type\022\014\n\010ORIGINAL\020\001\022\030\n\024ENCRYPTED_SCRYPT_A" +
       "ES\020\002\022\033\n\027DETERMINISTIC_ROOT_SEED\020\003\022\025\n\021DET" +
-      "ERMINISTIC_KEY\020\004\"5\n\006Script\022\017\n\007program\030\001 " +
-      "\002(\014\022\032\n\022creation_timestamp\030\002 \002(\003\"\222\001\n\020Tran" +
-      "sactionInput\022\"\n\032transaction_out_point_ha" +
-      "sh\030\001 \002(\014\022#\n\033transaction_out_point_index\030" +
-      "\002 \002(\r\022\024\n\014script_bytes\030\003 \002(\014\022\020\n\010sequence\030",
-      "\004 \001(\r\022\r\n\005value\030\005 \001(\003\"\177\n\021TransactionOutpu" +
-      "t\022\r\n\005value\030\001 \002(\003\022\024\n\014script_bytes\030\002 \002(\014\022!" +
-      "\n\031spent_by_transaction_hash\030\003 \001(\014\022\"\n\032spe" +
-      "nt_by_transaction_index\030\004 \001(\005\"\234\003\n\025Transa" +
-      "ctionConfidence\0220\n\004type\030\001 \001(\0162\".wallet.T" +
-      "ransactionConfidence.Type\022\032\n\022appeared_at" +
-      "_height\030\002 \001(\005\022\036\n\026overriding_transaction\030" +
-      "\003 \001(\014\022\r\n\005depth\030\004 \001(\005\022\021\n\twork_done\030\005 \001(\003\022" +
-      ")\n\014broadcast_by\030\006 \003(\0132\023.wallet.PeerAddre" +
-      "ss\0224\n\006source\030\007 \001(\0162$.wallet.TransactionC",
-      "onfidence.Source\"O\n\004Type\022\013\n\007UNKNOWN\020\000\022\014\n" +
-      "\010BUILDING\020\001\022\013\n\007PENDING\020\002\022\025\n\021NOT_IN_BEST_" +
-      "CHAIN\020\003\022\010\n\004DEAD\020\004\"A\n\006Source\022\022\n\016SOURCE_UN" +
-      "KNOWN\020\000\022\022\n\016SOURCE_NETWORK\020\001\022\017\n\013SOURCE_SE" +
-      "LF\020\002\"\236\004\n\013Transaction\022\017\n\007version\030\001 \002(\005\022\014\n" +
-      "\004hash\030\002 \002(\014\022&\n\004pool\030\003 \001(\0162\030.wallet.Trans" +
-      "action.Pool\022\021\n\tlock_time\030\004 \001(\r\022\022\n\nupdate" +
-      "d_at\030\005 \001(\003\0223\n\021transaction_input\030\006 \003(\0132\030." +
-      "wallet.TransactionInput\0225\n\022transaction_o" +
-      "utput\030\007 \003(\0132\031.wallet.TransactionOutput\022\022",
-      "\n\nblock_hash\030\010 \003(\014\022 \n\030block_relativity_o" +
-      "ffsets\030\013 \003(\005\0221\n\nconfidence\030\t \001(\0132\035.walle" +
-      "t.TransactionConfidence\0225\n\007purpose\030\n \001(\016" +
-      "2\033.wallet.Transaction.Purpose:\007UNKNOWN\"Y" +
-      "\n\004Pool\022\013\n\007UNSPENT\020\004\022\t\n\005SPENT\020\005\022\014\n\010INACTI" +
-      "VE\020\002\022\010\n\004DEAD\020\n\022\013\n\007PENDING\020\020\022\024\n\020PENDING_I" +
-      "NACTIVE\020\022\":\n\007Purpose\022\013\n\007UNKNOWN\020\000\022\020\n\014USE" +
-      "R_PAYMENT\020\001\022\020\n\014KEY_ROTATION\020\002\"N\n\020ScryptP" +
-      "arameters\022\014\n\004salt\030\001 \002(\014\022\020\n\001n\030\002 \001(\003:\0051638" +
-      "4\022\014\n\001r\030\003 \001(\005:\0018\022\014\n\001p\030\004 \001(\005:\0011\"8\n\tExtensi",
-      "on\022\n\n\002id\030\001 \002(\t\022\014\n\004data\030\002 \002(\014\022\021\n\tmandator" +
-      "y\030\003 \002(\010\" \n\003Tag\022\013\n\003tag\030\001 \002(\t\022\014\n\004data\030\002 \002(" +
-      "\014\"\261\004\n\006Wallet\022\032\n\022network_identifier\030\001 \002(\t" +
-      "\022\034\n\024last_seen_block_hash\030\002 \001(\014\022\036\n\026last_s" +
-      "een_block_height\030\014 \001(\r\022!\n\031last_seen_bloc" +
-      "k_time_secs\030\016 \001(\003\022\030\n\003key\030\003 \003(\0132\013.wallet." +
-      "Key\022(\n\013transaction\030\004 \003(\0132\023.wallet.Transa" +
-      "ction\022&\n\016watched_script\030\017 \003(\0132\016.wallet.S" +
-      "cript\022C\n\017encryption_type\030\005 \001(\0162\035.wallet." +
-      "Wallet.EncryptionType:\013UNENCRYPTED\0227\n\025en",
-      "cryption_parameters\030\006 \001(\0132\030.wallet.Scryp" +
-      "tParameters\022\022\n\007version\030\007 \001(\005:\0011\022$\n\texten" +
-      "sion\030\n \003(\0132\021.wallet.Extension\022\023\n\013descrip" +
-      "tion\030\013 \001(\t\022\031\n\021key_rotation_time\030\r \001(\004\022\031\n" +
-      "\004tags\030\020 \003(\0132\013.wallet.Tag\";\n\016EncryptionTy" +
-      "pe\022\017\n\013UNENCRYPTED\020\001\022\030\n\024ENCRYPTED_SCRYPT_" +
-      "AES\020\002B\035\n\023org.bitcoinj.walletB\006Protos"
+      "ERMINISTIC_KEY\020\004\022\032\n\026DETERMINISTIC_MNEMON" +
+      "IC\020\005\"5\n\006Script\022\017\n\007program\030\001 \002(\014\022\032\n\022creat" +
+      "ion_timestamp\030\002 \002(\003\"\222\001\n\020TransactionInput" +
+      "\022\"\n\032transaction_out_point_hash\030\001 \002(\014\022#\n\033" +
+      "transaction_out_point_index\030\002 \002(\r\022\024\n\014scr",
+      "ipt_bytes\030\003 \002(\014\022\020\n\010sequence\030\004 \001(\r\022\r\n\005val" +
+      "ue\030\005 \001(\003\"\177\n\021TransactionOutput\022\r\n\005value\030\001" +
+      " \002(\003\022\024\n\014script_bytes\030\002 \002(\014\022!\n\031spent_by_t" +
+      "ransaction_hash\030\003 \001(\014\022\"\n\032spent_by_transa" +
+      "ction_index\030\004 \001(\005\"\234\003\n\025TransactionConfide" +
+      "nce\0220\n\004type\030\001 \001(\0162\".wallet.TransactionCo" +
+      "nfidence.Type\022\032\n\022appeared_at_height\030\002 \001(" +
+      "\005\022\036\n\026overriding_transaction\030\003 \001(\014\022\r\n\005dep" +
+      "th\030\004 \001(\005\022\021\n\twork_done\030\005 \001(\003\022)\n\014broadcast" +
+      "_by\030\006 \003(\0132\023.wallet.PeerAddress\0224\n\006source",
+      "\030\007 \001(\0162$.wallet.TransactionConfidence.So" +
+      "urce\"O\n\004Type\022\013\n\007UNKNOWN\020\000\022\014\n\010BUILDING\020\001\022" +
+      "\013\n\007PENDING\020\002\022\025\n\021NOT_IN_BEST_CHAIN\020\003\022\010\n\004D" +
+      "EAD\020\004\"A\n\006Source\022\022\n\016SOURCE_UNKNOWN\020\000\022\022\n\016S" +
+      "OURCE_NETWORK\020\001\022\017\n\013SOURCE_SELF\020\002\"\236\004\n\013Tra" +
+      "nsaction\022\017\n\007version\030\001 \002(\005\022\014\n\004hash\030\002 \002(\014\022" +
+      "&\n\004pool\030\003 \001(\0162\030.wallet.Transaction.Pool\022" +
+      "\021\n\tlock_time\030\004 \001(\r\022\022\n\nupdated_at\030\005 \001(\003\0223" +
+      "\n\021transaction_input\030\006 \003(\0132\030.wallet.Trans" +
+      "actionInput\0225\n\022transaction_output\030\007 \003(\0132",
+      "\031.wallet.TransactionOutput\022\022\n\nblock_hash" +
+      "\030\010 \003(\014\022 \n\030block_relativity_offsets\030\013 \003(\005" +
+      "\0221\n\nconfidence\030\t \001(\0132\035.wallet.Transactio" +
+      "nConfidence\0225\n\007purpose\030\n \001(\0162\033.wallet.Tr" +
+      "ansaction.Purpose:\007UNKNOWN\"Y\n\004Pool\022\013\n\007UN" +
+      "SPENT\020\004\022\t\n\005SPENT\020\005\022\014\n\010INACTIVE\020\002\022\010\n\004DEAD" +
+      "\020\n\022\013\n\007PENDING\020\020\022\024\n\020PENDING_INACTIVE\020\022\":\n" +
+      "\007Purpose\022\013\n\007UNKNOWN\020\000\022\020\n\014USER_PAYMENT\020\001\022" +
+      "\020\n\014KEY_ROTATION\020\002\"N\n\020ScryptParameters\022\014\n" +
+      "\004salt\030\001 \002(\014\022\020\n\001n\030\002 \001(\003:\00516384\022\014\n\001r\030\003 \001(\005",
+      ":\0018\022\014\n\001p\030\004 \001(\005:\0011\"8\n\tExtension\022\n\n\002id\030\001 \002" +
+      "(\t\022\014\n\004data\030\002 \002(\014\022\021\n\tmandatory\030\003 \002(\010\" \n\003T" +
+      "ag\022\013\n\003tag\030\001 \002(\t\022\014\n\004data\030\002 \002(\014\"\261\004\n\006Wallet" +
+      "\022\032\n\022network_identifier\030\001 \002(\t\022\034\n\024last_see" +
+      "n_block_hash\030\002 \001(\014\022\036\n\026last_seen_block_he" +
+      "ight\030\014 \001(\r\022!\n\031last_seen_block_time_secs\030" +
+      "\016 \001(\003\022\030\n\003key\030\003 \003(\0132\013.wallet.Key\022(\n\013trans" +
+      "action\030\004 \003(\0132\023.wallet.Transaction\022&\n\016wat" +
+      "ched_script\030\017 \003(\0132\016.wallet.Script\022C\n\017enc" +
+      "ryption_type\030\005 \001(\0162\035.wallet.Wallet.Encry",
+      "ptionType:\013UNENCRYPTED\0227\n\025encryption_par" +
+      "ameters\030\006 \001(\0132\030.wallet.ScryptParameters\022" +
+      "\022\n\007version\030\007 \001(\005:\0011\022$\n\textension\030\n \003(\0132\021" +
+      ".wallet.Extension\022\023\n\013description\030\013 \001(\t\022\031" +
+      "\n\021key_rotation_time\030\r \001(\004\022\031\n\004tags\030\020 \003(\0132" +
+      "\013.wallet.Tag\";\n\016EncryptionType\022\017\n\013UNENCR" +
+      "YPTED\020\001\022\030\n\024ENCRYPTED_SCRYPT_AES\020\002B\035\n\023org" +
+      ".bitcoinj.walletB\006Protos"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
       new com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner() {
