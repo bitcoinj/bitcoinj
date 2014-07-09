@@ -124,28 +124,61 @@ public class HDUtilsTest {
         Assert.assertEquals("00000402", HEX.encode(bytes));
     }
 
+
     @Test
-    public void testParsePath() {
+    public void testFormatPath() {
         Object tv[] = {
-                "44' / 0' / 0' / 1 / 1",
+                "M/44'/0'/0'/1/1",
                 ImmutableList.of(new ChildNumber(44, true), new ChildNumber(0, true), new ChildNumber(0, true),
                         new ChildNumber(1, false), new ChildNumber(1, false)),
 
-                "/7'/3/3/1'/",
+                "M/7'/3/3/1'",
+                ImmutableList.of(new ChildNumber(7, true), new ChildNumber(3, false), new ChildNumber(3, false),
+                        new ChildNumber(1, true)),
+
+                "M/1'/2'/3'",
+                ImmutableList.of(new ChildNumber(1, true), new ChildNumber(2, true), new ChildNumber(3, true)),
+
+                "M/1/2/3",
+                ImmutableList.of(new ChildNumber(1, false), new ChildNumber(2, false), new ChildNumber(3, false))
+        };
+
+        for (int i = 0; i < tv.length; i += 2) {
+            String expectedStrPath = (String) tv[i];
+            List<ChildNumber> path = (List<ChildNumber>) tv[i+1];
+
+            String generatedStrPath = HDUtils.formatPath(path);
+
+            Assert.assertEquals(generatedStrPath, expectedStrPath);
+        }
+
+    }
+
+    @Test
+    public void testParsePath() {
+        Object tv[] = {
+                "M / 44' / 0' / 0' / 1 / 1",
+                ImmutableList.of(new ChildNumber(44, true), new ChildNumber(0, true), new ChildNumber(0, true),
+                        new ChildNumber(1, false), new ChildNumber(1, false)),
+
+                "M/7'/3/3/1'/",
                 ImmutableList.of(new ChildNumber(7, true), new ChildNumber(3, false), new ChildNumber(3, false),
                         new ChildNumber(1, true)),
 
                 "1 ' / 2 ' / 3 ' /",
                 ImmutableList.of(new ChildNumber(1, true), new ChildNumber(2, true), new ChildNumber(3, true)),
 
-                "1 ' / 2 ' / 3 ' /",
-                ImmutableList.of(new ChildNumber(1, true), new ChildNumber(2, true), new ChildNumber(3, true))
+                "1 / 2 / 3 /",
+                ImmutableList.of(new ChildNumber(1, false), new ChildNumber(2, false), new ChildNumber(3, false))
         };
 
         for (int i = 0; i < tv.length; i += 2) {
-            List<ChildNumber> path = HDUtils.parsePath((String) tv[i]);
+            String strPath = (String) tv[i];
+            List<ChildNumber> expectedPath = (List<ChildNumber>) tv[i+1];
 
-            Assert.assertEquals(path, tv[i+1]);
+            List<ChildNumber> path = HDUtils.parsePath(strPath);
+
+            Assert.assertEquals(path, expectedPath);
         }
     }
 }

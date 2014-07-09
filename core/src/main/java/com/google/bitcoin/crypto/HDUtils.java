@@ -32,8 +32,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 /**
  * Static utilities used in BIP 32 Hierarchical Deterministic Wallets (HDW).
  */
@@ -85,7 +83,7 @@ public final class HDUtils {
      * Where a single quote (') means hardened key. Spaces are ignored.
      */
     public static List<ChildNumber> parsePath(@Nonnull String path) {
-        String[] parsedNodes = path.split("/");
+        String[] parsedNodes = path.replace("M", "").split("/");
         List<ChildNumber> nodes = new ArrayList<ChildNumber>();
 
         for (String n : parsedNodes) {
