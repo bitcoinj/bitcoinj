@@ -45,8 +45,9 @@ public class TransactionBroadcast {
     private int minConnections;
     private int numWaitingFor, numToBroadcastTo;
 
-    // Used for the peers permutation: unit tests replace this to make themselves deterministic.
-    @VisibleForTesting static Random random = new Random();
+    /** Used for shuffling the peers before broadcast: unit tests can replace this to make themselves deterministic. */
+    @VisibleForTesting
+    public static Random random = new Random();
     private Transaction pinnedTx;
 
     public TransactionBroadcast(PeerGroup peerGroup, Transaction tx) {
