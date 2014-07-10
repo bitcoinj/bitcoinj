@@ -871,6 +871,9 @@ public class WalletTool {
                     throw new RuntimeException(e);
                 }
             } else {
+                System.err.println("Seed string must be mnemonic words");
+                return;
+                /*
                 // Parse as hex or base58
                 byte[] bits = Utils.parseAsHexOrBase58(seedStr);
                 if (bits.length != 16) {
@@ -878,6 +881,7 @@ public class WalletTool {
                     return;
                 }
                 seed = new DeterministicSeed(bits, creationTimeSecs);
+                */
             }
             wallet = Wallet.fromSeed(params, seed);
         } else if (options.has(watchFlag)) {
