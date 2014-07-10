@@ -1513,7 +1513,7 @@ public class Peer extends PeerSocketHandler {
         if (ver == null || !ver.isBloomFilteringSupported())
             return;
         vBloomFilter = filter;
-        log.info("{}: Sending Bloom filter{}", this, andQueryMemPool ? " and querying mempool" : "");
+        log.debug("{}: Sending Bloom filter{}", this, andQueryMemPool ? " and querying mempool" : "");
         sendMessage(filter);
         if (andQueryMemPool)
             sendMessage(new MemoryPoolMessage());
