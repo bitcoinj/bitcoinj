@@ -16,25 +16,20 @@
 
 package com.google.bitcoin.crypto;
 
-import static com.google.common.base.Preconditions.checkState;
+import com.google.bitcoin.core.*;
+import com.google.common.base.Charsets;
+import com.google.common.base.Objects;
+import com.google.common.primitives.Bytes;
+import com.lambdaworks.crypto.SCrypt;
 
+import javax.crypto.Cipher;
+import javax.crypto.spec.SecretKeySpec;
 import java.math.BigInteger;
 import java.security.GeneralSecurityException;
 import java.text.Normalizer;
 import java.util.Arrays;
 
-import javax.crypto.Cipher;
-import javax.crypto.spec.SecretKeySpec;
-
-import com.google.bitcoin.core.AddressFormatException;
-import com.google.bitcoin.core.ECKey;
-import com.google.bitcoin.core.NetworkParameters;
-import com.google.bitcoin.core.Sha256Hash;
-import com.google.bitcoin.core.VersionedChecksummedBytes;
-import com.google.common.base.Charsets;
-import com.google.common.base.Objects;
-import com.google.common.primitives.Bytes;
-import com.lambdaworks.crypto.SCrypt;
+import static com.google.common.base.Preconditions.checkState;
 
 /**
  * Implementation of <a href="https://github.com/bitcoin/bips/blob/master/bip-0038.mediawiki">BIP 38</a>
@@ -104,7 +99,10 @@ public class BIP38PrivateKey extends VersionedChecksummedBytes {
             byte[] derived = SCrypt.scrypt(normalizedPassphrase.getBytes(Charsets.UTF_8), addressHash, 16384, 8, 8, 64);
             byte[] key = Arrays.copyOfRange(derived, 32, 64);
             SecretKeySpec keyspec = new SecretKeySpec(key, "AES");
+
+            DRMWorkaround.maybeDisableExportControls();
             Cipher cipher = Cipher.getInstance("AES/ECB/NoPadding");
+
             cipher.init(Cipher.DECRYPT_MODE, keyspec);
             byte[] decrypted = cipher.doFinal(content, 0, 32);
             for (int i = 0; i < 32; i++)

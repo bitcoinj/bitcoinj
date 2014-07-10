@@ -17,6 +17,7 @@
 
 package com.google.bitcoin.core;
 
+import com.google.bitcoin.crypto.DRMWorkaround;
 import com.google.bitcoin.net.BlockingClientManager;
 import com.google.bitcoin.net.ClientConnectionManager;
 import com.google.bitcoin.net.FilterMerger;
@@ -35,16 +36,12 @@ import com.google.common.collect.Sets;
 import com.google.common.primitives.Ints;
 import com.google.common.primitives.Longs;
 import com.google.common.util.concurrent.*;
-import com.subgraph.orchid.Tor;
 import com.subgraph.orchid.TorClient;
 import net.jcip.annotations.GuardedBy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.*;
@@ -296,7 +293,7 @@ public class PeerGroup extends AbstractExecutionThreadService implements Transac
      */
     public static PeerGroup newWithTor(NetworkParameters params, @Nullable AbstractBlockChain chain, TorClient torClient) throws TimeoutException {
         checkNotNull(torClient);
-        maybeDisableExportControls();
+        DRMWorkaround.maybeDisableExportControls();
         BlockingClientManager manager = new BlockingClientManager(torClient.getSocketFactory());
         final int CONNECT_TIMEOUT_MSEC = TOR_TIMEOUT_SECONDS * 1000;
         manager.setConnectTimeoutMillis(CONNECT_TIMEOUT_MSEC);
@@ -1583,31 +1580,4 @@ public class PeerGroup extends AbstractExecutionThreadService implements Transac
         return torClient;
     }
 
-    private static void maybeDisableExportControls() {
-        // This sorry story is documented in https://bugs.openjdk.java.net/browse/JDK-7024850
-        // Oracle received permission to ship AES-256 by default in 2011, but didn't get around to it for Java 8
-        // even though that shipped in 2014! That's dumb. So we disable the ridiculous US government mandated DRM
-        // for AES-256 here, as Tor requires it.
-        if (Tor.isAndroidRuntime())
-            return;
-        try {
-            Field gate = Class.forName("javax.crypto.JceSecurity").getDeclaredField("isRestricted");
-            gate.setAccessible(true);
-            gate.setBoolean(null, false);
-            final Field allPerm = Class.forName("javax.crypto.CryptoAllPermission").getDeclaredField("INSTANCE");
-            allPerm.setAccessible(true);
-            Object accessAllAreasCard = allPerm.get(null);
-            final Constructor<?> constructor = Class.forName("javax.crypto.CryptoPermissions").getDeclaredConstructor();
-            constructor.setAccessible(true);
-            Object coll = constructor.newInstance();
-            Method addPerm = Class.forName("javax.crypto.CryptoPermissions").getDeclaredMethod("add", java.security.Permission.class);
-            addPerm.setAccessible(true);
-            addPerm.invoke(coll, accessAllAreasCard);
-            Field defaultPolicy = Class.forName("javax.crypto.JceSecurity").getDeclaredField("defaultPolicy");
-            defaultPolicy.setAccessible(true);
-            defaultPolicy.set(null, coll);
-        } catch (Exception e) {
-            log.warn("Failed to deactivate AES-256 barrier logic, Tor mode may crash if this JVM requires it: " + e.getMessage());
-        }
-    }
 }
