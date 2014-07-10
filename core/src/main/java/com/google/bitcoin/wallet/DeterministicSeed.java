@@ -93,7 +93,7 @@ public class DeterministicSeed implements EncryptableItem {
      * @param creationTimeSeconds When the seed was originally created, UNIX time.
      */
     public DeterministicSeed(List<String> mnemonicCode, String passphrase, long creationTimeSeconds) {
-        this(getCachedMnemonicCodec().toSeed(mnemonicCode, passphrase), mnemonicCode, creationTimeSeconds);
+        this(MnemonicCode.toSeed(mnemonicCode, passphrase), mnemonicCode, creationTimeSeconds);
     }
 
     /**
@@ -125,7 +125,7 @@ public class DeterministicSeed implements EncryptableItem {
             // cannot happen
             throw new RuntimeException(e);
         }
-        this.seed = getCachedMnemonicCodec().toSeed(mnemonicCode, passphrase);
+        this.seed = MnemonicCode.toSeed(mnemonicCode, passphrase);
         this.encryptedMnemonicCode = null;
         this.creationTimeSeconds = creationTimeSeconds;
     }
