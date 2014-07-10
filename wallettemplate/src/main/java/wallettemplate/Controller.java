@@ -46,6 +46,10 @@ public class Controller {
         Main.instance.overlayUI("send_money.fxml");
     }
 
+    public void settingsClicked(ActionEvent event) {
+        Main.instance.overlayUI("wallet_settings.fxml");
+    }
+
     public class ProgressBarUpdater extends DownloadListener {
         @Override
         protected void progress(double pct, int blocksSoFar, Date date) {
@@ -58,6 +62,20 @@ public class Controller {
             super.doneDownload();
             Platform.runLater(Controller.this::readyToGoAnimation);
         }
+    }
+
+    public void restoreFromSeedAnimation() {
+        // Buttons slide out ...
+        TranslateTransition leave = new TranslateTransition(Duration.millis(600), controlsBox);
+        leave.setByY(80.0);
+        // Sync bar slides in ...
+        TranslateTransition arrive = new TranslateTransition(Duration.millis(600), syncBox);
+        arrive.setToY(0.0);
+        // Slide out happens then slide in/fade happens.
+        SequentialTransition both = new SequentialTransition(leave, arrive);
+        both.setCycleCount(1);
+        both.setInterpolator(Interpolator.EASE_BOTH);
+        both.play();
     }
 
     public void readyToGoAnimation() {

@@ -15,7 +15,7 @@
 <?import wallettemplate.controls.*?>
 <?import wallettemplate.controls.ClickableBitcoinAddress ?>
 
-<AnchorPane id="AnchorPane" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="200.0" minWidth="300.0" prefHeight="400.0" prefWidth="600.0" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" fx:controller="wallettemplate.Controller">
+<AnchorPane styleClass="root-pane" maxHeight="Infinity" maxWidth="Infinity" minHeight="200.0" minWidth="300.0" prefHeight="400.0" prefWidth="800.0" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" fx:controller="wallettemplate.Controller">
   <children>
     <Label layoutX="14.0" layoutY="14.0" text="Balance">
       <font>
@@ -64,11 +64,14 @@
       </image>
     </ImageView>
     <ClickableBitcoinAddress fx:id="addressControl" layoutY="45.0" prefHeight="21.0" prefWidth="391.0" AnchorPane.leftAnchor="14.0" AnchorPane.rightAnchor="195.0" />
-    <StackPane id="connectionsListView" layoutX="14.0" layoutY="81.0" prefHeight="249.0" prefWidth="572.0">
+    <StackPane style="-fx-border-color: lightgrey; -fx-border-style: dashed" layoutX="14.0" layoutY="81.0" prefHeight="249.0" prefWidth="572.0" AnchorPane.leftAnchor="15.0" AnchorPane.rightAnchor="15.0">
       <children>
         <Label text="Your content goes here" />
       </children>
     </StackPane>
-    <Button id="sendMoneyOut" fx:id="sendMoneyOutBtn" alignment="CENTER" mnemonicParsing="false" onAction="#sendMoneyOut" text="Send money out" AnchorPane.rightAnchor="14.0" AnchorPane.topAnchor="17.0" />
+    <HBox AnchorPane.rightAnchor="14.0" AnchorPane.topAnchor="17.0" spacing="20">
+        <Button onAction="#settingsClicked" text="Settings"/>
+        <Button id="sendMoneyOut" fx:id="sendMoneyOutBtn" alignment="CENTER" mnemonicParsing="false" onAction="#sendMoneyOut" text="Send money out" />
+    </HBox>
   </children>
 </AnchorPane>

@@ -1,0 +1,16 @@
+.mnemonic-area *.text {
+    -fx-text-alignment: center;
+}
+
+.title-banner {
+    -fx-background-color: #b3fbc4;
+}
+
+.title-label {
+    -fx-background-color: darkseagreen;
+    -fx-text-fill: white;
+}
+
+.root-pane {
+    -fx-background-color: white;
+}
