@@ -37,15 +37,15 @@ public class WalletSettingsController {
 
     // Called by FXMLLoader
     public void initialize() {
-        final DeterministicSeed seed = Main.bitcoin.wallet().getKeyChainSeed();
+        DeterministicSeed seed = Main.bitcoin.wallet().getKeyChainSeed();
 
         // Set the date picker to show the birthday of this wallet.
         Instant creationTime = Instant.ofEpochSecond(seed.getCreationTimeSeconds());
-        final LocalDate origDate = creationTime.atZone(ZoneId.systemDefault()).toLocalDate();
+        LocalDate origDate = creationTime.atZone(ZoneId.systemDefault()).toLocalDate();
         datePicker.setValue(origDate);
 
         // Set the mnemonic seed words.
-        final String origWords = Joiner.on(" ").join(seed.getMnemonicCode());
+        String origWords = Joiner.on(" ").join(seed.getMnemonicCode());
         wordsArea.setText(origWords);
 
         // Validate words as they are being typed.
@@ -66,7 +66,7 @@ public class WalletSettingsController {
 
                 createBooleanBinding(() ->
                         datePicker.getValue().isAfter(LocalDate.now())
-                        , /* depends on */ datePicker.valueProperty())
+                , /* depends on */ datePicker.valueProperty())
         );
 
         // Don't let the user click restore if the words area contains the current wallet words, or are an invalid set,
@@ -118,7 +118,6 @@ public class WalletSettingsController {
         Main.bitcoin.addListener(new Service.Listener() {
             @Override
             public void terminated(Service.State from) {
-                super.terminated(from);
                 Main.instance.setupWalletKit(seed);
                 Main.bitcoin.startAsync();
             }
