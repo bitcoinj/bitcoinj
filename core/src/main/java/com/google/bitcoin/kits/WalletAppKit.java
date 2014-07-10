@@ -30,12 +30,10 @@ import com.google.common.util.concurrent.Service;
 import com.subgraph.orchid.TorClient;
 import org.bitcoinj.wallet.Protos;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.nio.channels.FileLock;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -187,6 +185,29 @@ public class WalletAppKit extends AbstractIdleService {
      * or block chain download is started. You can tweak the objects configuration here.
      */
     protected void onSetupCompleted() { }
+
+    /**
+     * Tests to see if the spvchain file has an operating system file lock on it. Useful for checking if your app
+     * is already running. If another copy of your app is running and you start the appkit anyway, an exception will
+     * be thrown during the startup process. Returns false if the chain file does not exist.
+     */
+    public boolean isChainFileLocked() throws IOException {
+        RandomAccessFile file2 = null;
+        try {
+            File file = new File(directory, filePrefix + ".spvchain");
+            if (!file.exists())
+                return false;
+            file2 = new RandomAccessFile(file, "rw");
+            FileLock lock = file2.getChannel().tryLock();
+            if (lock == null)
+                return true;
+            lock.close();
+            return false;
+        } finally {
+            if (file2 != null)
+                file2.close();
+        }
+    }
 
     @Override
     protected void startUp() throws Exception {

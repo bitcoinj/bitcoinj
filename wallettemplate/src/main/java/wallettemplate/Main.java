@@ -5,10 +5,8 @@ import com.google.bitcoin.core.NetworkParameters;
 import com.google.bitcoin.kits.WalletAppKit;
 import com.google.bitcoin.params.MainNetParams;
 import com.google.bitcoin.params.RegTestParams;
-import com.google.bitcoin.store.BlockStoreException;
 import com.google.bitcoin.utils.BriefLogFormatter;
 import com.google.bitcoin.utils.Threading;
-import com.google.common.base.Throwables;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
@@ -41,22 +39,12 @@ public class Main extends Application {
         instance = this;
         // Show the crash dialog for any exceptions that we don't handle and that hit the main loop.
         GuiUtils.handleCrashesOnThisThread();
-        try {
-            init(mainWindow);
-        } catch (Throwable t) {
-            // Nicer message for the case where the block store file is locked.
-            if (Throwables.getRootCause(t) instanceof BlockStoreException) {
-                GuiUtils.informationalAlert("Already running", "This application is already running and cannot be started twice.");
-            } else {
-                throw t;
-            }
-        }
-    }
 
-    private void init(Stage mainWindow) throws IOException {
+        // Match Aqua UI style.
         if (System.getProperty("os.name").toLowerCase().contains("mac")) {
             AquaFx.style();
         }
+
         // Load the GUI. The Controller class will be automagically created and wired up.
         URL location = getClass().getResource("main.fxml");
         FXMLLoader loader = new FXMLLoader(location);
@@ -78,6 +66,16 @@ public class Main extends Application {
         Threading.USER_THREAD = Platform::runLater;
         // Create the app kit. It won't do any heavyweight initialization until after we start it.
         bitcoin = new WalletAppKit(params, new File("."), APP_NAME);
+        if (bitcoin.isChainFileLocked()) {
+            informationalAlert("Already running", "This application is already running and cannot be started twice.");
+            Platform.exit();
+            return;
+        }
+
+        mainWindow.show();
+
+        // Now configure and start the appkit. This will take a second or two - we could show a temporary splash screen
+        // or progress widget to keep the user engaged whilst we initialise, but we don't.
         if (params == RegTestParams.get()) {
             bitcoin.connectToLocalHost();   // You should run a regtest mode bitcoind locally.
         } else if (params == MainNetParams.get()) {
@@ -89,9 +87,6 @@ public class Main extends Application {
             // As an example!
             // bitcoin.useTor();
         }
-
-        // Now configure and start the appkit. This will take a second or two - we could show a temporary splash screen
-        // or progress widget to keep the user engaged whilst we initialise, but we don't.
         bitcoin.setDownloadListener(controller.progressBarUpdater())
                .setBlockingStartup(false)
                .setUserAgent(APP_NAME, "1.0");
@@ -102,7 +97,6 @@ public class Main extends Application {
         bitcoin.peerGroup().setMaxConnections(11);
         System.out.println(bitcoin.wallet());
         controller.onBitcoinSetup();
-        mainWindow.show();
     }
 
     public class OverlayUI<T> {
