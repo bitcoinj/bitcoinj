@@ -91,6 +91,6 @@ public class Controller {
 
     public void refreshBalanceLabel() {
         final Coin amount = bitcoin.wallet().getBalance(Wallet.BalanceType.ESTIMATED);
-        balance.setText(amount.toFriendlyString());
+        balance.setText(amount.toPlainString());
     }
 }
