@@ -84,7 +84,7 @@ public class BIP38PrivateKey extends VersionedChecksummedBytes {
         content = Arrays.copyOfRange(bytes, 6, 38);
     }
 
-    public ECKey decrypt(String passphrase) throws AddressFormatException, BadPassphraseException {
+    public ECKey decrypt(String passphrase) throws BadPassphraseException {
         String normalizedPassphrase = Normalizer.normalize(passphrase, Normalizer.Form.NFC);
         ECKey key = ecMultiply ? decryptEC(normalizedPassphrase) : decryptNoEC(normalizedPassphrase);
         Sha256Hash hash = Sha256Hash.createDouble(key.toAddress(params).toString().getBytes(Charsets.US_ASCII));
