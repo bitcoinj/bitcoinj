@@ -850,38 +850,24 @@ public class WalletTool {
                 creationTimeSecs = options.valueOf(dateFlag).getTime() / 1000;
             String seedStr = options.valueOf(seedFlag);
             DeterministicSeed seed;
-            if (seedStr.contains(" ")) {
-                // Parse as mnemonic code.
-                final List<String> split = ImmutableList.copyOf(Splitter.on(" ").omitEmptyStrings().split(seedStr));
-                String passphrase = ""; // TODO allow user to specify a passphrase
-                seed = new DeterministicSeed(split, passphrase, creationTimeSecs);
-                try {
-                    seed.check();
-                } catch (MnemonicException.MnemonicLengthException e) {
-                    System.err.println("The seed did not have 12 words in, perhaps you need quotes around it?");
-                    return;
-                } catch (MnemonicException.MnemonicWordException e) {
-                    System.err.println("The seed contained an unrecognised word: " + e.badWord);
-                    return;
-                } catch (MnemonicException.MnemonicChecksumException e) {
-                    System.err.println("The seed did not pass checksumming, perhaps one of the words is wrong?");
-                    return;
-                } catch (MnemonicException e) {
-                    // not reached - all subclasses handled above
-                    throw new RuntimeException(e);
-                }
-            } else {
-                System.err.println("Seed string must be mnemonic words");
+            // Parse as mnemonic code.
+            final List<String> split = ImmutableList.copyOf(Splitter.on(" ").omitEmptyStrings().split(seedStr));
+            String passphrase = ""; // TODO allow user to specify a passphrase
+            seed = new DeterministicSeed(split, passphrase, creationTimeSecs);
+            try {
+                seed.check();
+            } catch (MnemonicException.MnemonicLengthException e) {
+                System.err.println("The seed did not have 12 words in, perhaps you need quotes around it?");
                 return;
-                /*
-                // Parse as hex or base58
-                byte[] bits = Utils.parseAsHexOrBase58(seedStr);
-                if (bits.length != 16) {
-                    System.err.println("The given hex/base58 string is not 16 bytes");
-                    return;
-                }
-                seed = new DeterministicSeed(bits, creationTimeSecs);
-                */
+            } catch (MnemonicException.MnemonicWordException e) {
+                System.err.println("The seed contained an unrecognised word: " + e.badWord);
+                return;
+            } catch (MnemonicException.MnemonicChecksumException e) {
+                System.err.println("The seed did not pass checksumming, perhaps one of the words is wrong?");
+                return;
+            } catch (MnemonicException e) {
+                // not reached - all subclasses handled above
+                throw new RuntimeException(e);
             }
             wallet = Wallet.fromSeed(params, seed);
         } else if (options.has(watchFlag)) {
