@@ -221,7 +221,7 @@ public class WalletAppKit extends AbstractIdleService {
             FileLock lock = file2.getChannel().tryLock();
             if (lock == null)
                 return true;
-            lock.close();
+            lock.release();
             return false;
         } finally {
             if (file2 != null)
