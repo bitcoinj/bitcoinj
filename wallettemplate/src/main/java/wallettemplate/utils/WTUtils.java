@@ -1,7 +1,11 @@
 package wallettemplate.utils;
 
+import javafx.beans.binding.StringBinding;
+import javafx.beans.value.ObservableValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.function.Function;
 
 /**
  * Some generic utilities to make Java a bit less annoying.
@@ -66,5 +70,19 @@ public class WTUtils {
         } catch (Throwable throwable) {
             return true;
         }
+    }
+
+    // Why isn't this a part of the JFX Bindings class?
+    public static <T> StringBinding bindToString(ObservableValue<T> value, Function<T, String> function) {
+        return new StringBinding() {
+            {
+                super.bind(value);
+            }
+
+            @Override
+            protected String computeValue() {
+                return function.apply(value.getValue());
+            }
+        };
     }
 }

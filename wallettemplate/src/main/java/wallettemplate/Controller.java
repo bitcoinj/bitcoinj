@@ -1,9 +1,7 @@
 package wallettemplate;
 
-import com.google.bitcoin.core.AbstractWalletEventListener;
 import com.google.bitcoin.core.Coin;
 import com.google.bitcoin.core.DownloadListener;
-import com.google.bitcoin.core.Wallet;
 import javafx.animation.*;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
@@ -14,11 +12,12 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.util.Duration;
 import wallettemplate.controls.ClickableBitcoinAddress;
+import wallettemplate.utils.BitcoinUIModel;
+import wallettemplate.utils.WTUtils;
 
 import java.util.Date;
 
 import static wallettemplate.Main.bitcoin;
-import static wallettemplate.utils.GuiUtils.checkGuiThread;
 
 /**
  * Gets created auto-magically by FXMLLoader via reflection. The widget fields are set to the GUI controls they're named
@@ -32,6 +31,8 @@ public class Controller {
     public Button sendMoneyOutBtn;
     public ClickableBitcoinAddress addressControl;
 
+    private BitcoinUIModel model;
+
     // Called by FXMLLoader.
     public void initialize() {
         syncProgress.setProgress(-1);
@@ -39,9 +40,11 @@ public class Controller {
     }
 
     public void onBitcoinSetup() {
-        bitcoin.wallet().addEventListener(new BalanceUpdater());
-        addressControl.setAddress(bitcoin.wallet().currentReceiveKey().toAddress(Main.params).toString());
-        refreshBalanceLabel();
+        model = new BitcoinUIModel(bitcoin.wallet());
+        addressControl.addressProperty().bind(model.addressProperty());
+        balance.textProperty().bind(WTUtils.bindToString(model.balanceProperty(), Coin::toPlainString));
+        // Don't let the user click send money when the wallet is empty.
+        sendMoneyOutBtn.disableProperty().bind(model.balanceProperty().isEqualTo(Coin.ZERO));
     }
 
     public void sendMoneyOut(ActionEvent event) {
@@ -101,19 +104,5 @@ public class Controller {
 
     public ProgressBarUpdater progressBarUpdater() {
         return new ProgressBarUpdater();
-    }
-
-    public class BalanceUpdater extends AbstractWalletEventListener {
-        @Override
-        public void onWalletChanged(Wallet wallet) {
-            checkGuiThread();
-            refreshBalanceLabel();
-            // TODO: Refresh clickable address here.
-        }
-    }
-
-    public void refreshBalanceLabel() {
-        final Coin amount = bitcoin.wallet().getBalance(Wallet.BalanceType.ESTIMATED);
-        balance.setText(amount.toPlainString());
     }
 }
