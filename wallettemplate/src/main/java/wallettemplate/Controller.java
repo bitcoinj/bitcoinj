@@ -1,6 +1,9 @@
 package wallettemplate;
 
-import com.google.bitcoin.core.*;
+import com.google.bitcoin.core.AbstractWalletEventListener;
+import com.google.bitcoin.core.Coin;
+import com.google.bitcoin.core.DownloadListener;
+import com.google.bitcoin.core.Wallet;
 import javafx.animation.*;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
@@ -47,7 +50,8 @@ public class Controller {
     }
 
     public void settingsClicked(ActionEvent event) {
-        Main.instance.overlayUI("wallet_settings.fxml");
+        Main.OverlayUI<WalletSettingsController> screen = Main.instance.overlayUI("wallet_settings.fxml");
+        screen.controller.initialize(null);
     }
 
     public class ProgressBarUpdater extends DownloadListener {
@@ -104,6 +108,7 @@ public class Controller {
         public void onWalletChanged(Wallet wallet) {
             checkGuiThread();
             refreshBalanceLabel();
+            // TODO: Refresh clickable address here.
         }
     }
 

@@ -14,14 +14,19 @@ import javafx.scene.control.DatePicker;
 import javafx.scene.control.TextArea;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.spongycastle.crypto.params.KeyParameter;
 import wallettemplate.utils.TextFieldValidator;
 
+import javax.annotation.Nullable;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
+import java.util.List;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static javafx.beans.binding.Bindings.*;
+import static wallettemplate.utils.GuiUtils.checkGuiThread;
 import static wallettemplate.utils.GuiUtils.informationalAlert;
 import static wallettemplate.utils.WTUtils.didThrow;
 import static wallettemplate.utils.WTUtils.unchecked;
@@ -29,15 +34,31 @@ import static wallettemplate.utils.WTUtils.unchecked;
 public class WalletSettingsController {
     private static final Logger log = LoggerFactory.getLogger(WalletSettingsController.class);
 
+    @FXML Button passwordButton;
     @FXML DatePicker datePicker;
     @FXML TextArea wordsArea;
     @FXML Button restoreButton;
 
-    public Main.OverlayUI overlayUi;
+    public Main.OverlayUI overlayUI;
 
-    // Called by FXMLLoader
-    public void initialize() {
+    private KeyParameter aesKey;
+
+    // Note: NOT called by FXMLLoader!
+    public void initialize(@Nullable KeyParameter aesKey) {
         DeterministicSeed seed = Main.bitcoin.wallet().getKeyChainSeed();
+        if (aesKey == null) {
+            if (seed.isEncrypted()) {
+                log.info("Wallet is encrypted, requesting password first.");
+                // Delay execution of this until after we've finished initialising this screen.
+                Platform.runLater(() -> askForPasswordAndRetry());
+                return;
+            }
+        } else {
+            this.aesKey = aesKey;
+            seed = seed.decrypt(checkNotNull(Main.bitcoin.wallet().getKeyCrypter()), "", aesKey);
+            // Now we can display the wallet seed as appropriate.
+            passwordButton.setText("Remove password");
+        }
 
         // Set the date picker to show the birthday of this wallet.
         Instant creationTime = Instant.ofEpochSecond(seed.getCreationTimeSeconds());
@@ -45,7 +66,9 @@ public class WalletSettingsController {
         datePicker.setValue(origDate);
 
         // Set the mnemonic seed words.
-        String origWords = Joiner.on(" ").join(seed.getMnemonicCode());
+        final List<String> mnemonicCode = seed.getMnemonicCode();
+        checkNotNull(mnemonicCode);    // Already checked for encryption.
+        String origWords = Joiner.on(" ").join(mnemonicCode);
         wordsArea.setText(origWords);
 
         // Validate words as they are being typed.
@@ -92,8 +115,19 @@ public class WalletSettingsController {
         });
     }
 
+    private void askForPasswordAndRetry() {
+        Main.OverlayUI<WalletPasswordController> pwd = Main.instance.overlayUI("wallet_password.fxml");
+        pwd.controller.aesKeyProperty().addListener((observable, old, cur) -> {
+            // We only get here if the user found the right password. If they don't or they cancel, we end up back on
+            // the main UI screen.
+            checkGuiThread();
+            Main.OverlayUI<WalletSettingsController> screen = Main.instance.overlayUI("wallet_settings.fxml");
+            screen.controller.initialize(cur);
+        });
+    }
+
     public void closeClicked(ActionEvent event) {
-        overlayUi.done();
+        overlayUI.done();
     }
 
     public void restoreClicked(ActionEvent event) {
@@ -106,10 +140,16 @@ public class WalletSettingsController {
             return;
         }
 
+        if (aesKey != null) {
+            // This is weak. We should encrypt the new seed here.
+            informationalAlert("Wallet is encrypted",
+                    "After restore, the wallet will no longer be encrypted and you must set a new password.");
+        }
+
         log.info("Attempting wallet restore using seed '{}' from date {}", wordsArea.getText(), datePicker.getValue());
         informationalAlert("Wallet restore in progress",
                 "Your wallet will now be resynced from the Bitcoin network. This can take a long time for old wallets.");
-        overlayUi.done();
+        overlayUI.done();
         Main.instance.controller.restoreFromSeedAnimation();
 
         long birthday = datePicker.getValue().atStartOfDay().toEpochSecond(ZoneOffset.UTC);
@@ -123,5 +163,16 @@ public class WalletSettingsController {
             }
         }, Platform::runLater);
         Main.bitcoin.stopAsync();
+    }
+
+
+    public void passwordButtonClicked(ActionEvent event) {
+        if (aesKey == null) {
+            Main.instance.overlayUI("wallet_set_password.fxml");
+        } else {
+            Main.bitcoin.wallet().decrypt(aesKey);
+            informationalAlert("Wallet decrypted", "A password will no longer be required to send money or edit settings.");
+            passwordButton.setText("Set password");
+        }
     }
 }

@@ -28,7 +28,7 @@ import static wallettemplate.utils.GuiUtils.*;
 public class Main extends Application {
     public static String APP_NAME = "WalletTemplate";
 
-    public static NetworkParameters params = MainNetParams.get();
+    public static NetworkParameters params = RegTestParams.get();
     public static WalletAppKit bitcoin;
     public static Main instance;
 
@@ -90,7 +90,8 @@ public class Main extends Application {
                 // Don't make the user wait for confirmations for now, as the intention is they're sending it
                 // their own money!
                 bitcoin.wallet().allowSpendingUnconfirmedTransactions();
-                bitcoin.peerGroup().setMaxConnections(11);
+                if (params != RegTestParams.get())
+                    bitcoin.peerGroup().setMaxConnections(11);
                 bitcoin.peerGroup().setBloomFilterFalsePositiveRate(0.00001);
                 Platform.runLater(controller::onBitcoinSetup);
             }
@@ -115,6 +116,8 @@ public class Main extends Application {
             bitcoin.restoreWalletFromSeed(seed);
     }
 
+    private Node stopClickPane = new Pane();
+
     public class OverlayUI<T> {
         public Node ui;
         public T controller;
@@ -125,26 +128,53 @@ public class Main extends Application {
         }
 
         public void show() {
-            blurOut(mainUI);
-            uiStack.getChildren().add(ui);
-            fadeIn(ui);
+            checkGuiThread();
+            if (currentOverlay == null) {
+                uiStack.getChildren().add(stopClickPane);
+                uiStack.getChildren().add(ui);
+                blurOut(mainUI);
+                //darken(mainUI);
+                fadeIn(ui);
+                zoomIn(ui);
+            } else {
+                // Do a quick transition between the current overlay and the next.
+                // Bug here: we don't pay attention to changes in outsideClickDismisses.
+                explodeOut(currentOverlay.ui);
+                fadeOutAndRemove(uiStack, currentOverlay.ui);
+                uiStack.getChildren().add(ui);
+                ui.setOpacity(0.0);
+                fadeIn(ui, 100);
+                zoomIn(ui, 100);
+            }
+            currentOverlay = this;
+        }
+
+        public void outsideClickDismisses() {
+            stopClickPane.setOnMouseClicked((ev) -> done());
         }
 
         public void done() {
             checkGuiThread();
-            fadeOutAndRemove(ui, uiStack);
+            if (ui == null) return;  // In the middle of being dismissed and got an extra click.
+            explodeOut(ui);
+            fadeOutAndRemove(uiStack, ui, stopClickPane);
             blurIn(mainUI);
+            //undark(mainUI);
             this.ui = null;
             this.controller = null;
+            currentOverlay = null;
         }
     }
+
+    @Nullable
+    private OverlayUI currentOverlay;
 
     public <T> OverlayUI<T> overlayUI(Node node, T controller) {
         checkGuiThread();
         OverlayUI<T> pair = new OverlayUI<T>(node, controller);
-        // Auto-magically set the overlayUi member, if it's there.
+        // Auto-magically set the overlayUI member, if it's there.
         try {
-            controller.getClass().getDeclaredField("overlayUi").set(controller, pair);
+            controller.getClass().getField("overlayUI").set(controller, pair);
         } catch (IllegalAccessException | NoSuchFieldException ignored) {
         }
         pair.show();
@@ -156,15 +186,17 @@ public class Main extends Application {
         try {
             checkGuiThread();
             // Load the UI from disk.
-            URL location = getClass().getResource(name);
+            URL location = GuiUtils.getResource(name);
             FXMLLoader loader = new FXMLLoader(location);
             Pane ui = loader.load();
             T controller = loader.getController();
             OverlayUI<T> pair = new OverlayUI<T>(ui, controller);
-            // Auto-magically set the overlayUi member, if it's there.
+            // Auto-magically set the overlayUI member, if it's there.
             try {
-                controller.getClass().getDeclaredField("overlayUi").set(controller, pair);
+                if (controller != null)
+                    controller.getClass().getField("overlayUI").set(controller, pair);
             } catch (IllegalAccessException | NoSuchFieldException ignored) {
+                ignored.printStackTrace();
             }
             pair.show();
             return pair;
