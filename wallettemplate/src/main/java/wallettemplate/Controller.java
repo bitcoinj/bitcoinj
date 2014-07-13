@@ -11,9 +11,9 @@ import javafx.scene.control.ProgressBar;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.util.Duration;
+import org.fxmisc.easybind.EasyBind;
 import wallettemplate.controls.ClickableBitcoinAddress;
 import wallettemplate.utils.BitcoinUIModel;
-import wallettemplate.utils.WTUtils;
 
 import java.util.Date;
 
@@ -42,7 +42,7 @@ public class Controller {
     public void onBitcoinSetup() {
         model = new BitcoinUIModel(bitcoin.wallet());
         addressControl.addressProperty().bind(model.addressProperty());
-        balance.textProperty().bind(WTUtils.bindToString(model.balanceProperty(), Coin::toPlainString));
+        balance.textProperty().bind(EasyBind.map(model.balanceProperty(), Coin::toPlainString));
         // Don't let the user click send money when the wallet is empty.
         sendMoneyOutBtn.disableProperty().bind(model.balanceProperty().isEqualTo(Coin.ZERO));
     }
