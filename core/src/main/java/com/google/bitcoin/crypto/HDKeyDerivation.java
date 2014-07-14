@@ -37,6 +37,12 @@ public final class HDKeyDerivation {
 
     private HDKeyDerivation() { }
 
+    /**
+     * Child derivation may fail (although with extremely low probability); in such case it is re-attempted.
+     * This is the maximum number of re-attempts (to avoid an infinite loop in case of bugs etc.).
+     */
+    public static final int MAX_CHILD_DERIVATION_ATTEMPTS = 100;
+
     private static final HMac MASTER_HMAC_SHA512 = HDUtils.createHmacSha512Digest("Bitcoin seed".getBytes());
 
     /**
@@ -86,6 +92,25 @@ public final class HDKeyDerivation {
      */
     public static DeterministicKey deriveChildKey(DeterministicKey parent, int childNumber) {
         return deriveChildKey(parent, new ChildNumber(childNumber));
+    }
+
+    /**
+     * Derives a key of the "extended" child number, ie. with the 0x80000000 bit specifying whether to use
+     * hardened derivation or not. If derivation fails, tries a next child.
+     */
+    public static DeterministicKey deriveThisOrNextChildKey(DeterministicKey parent, int childNumber) {
+        int nAttempts = 0;
+        ChildNumber child = new ChildNumber(childNumber);
+        boolean isHardened = child.isHardened();
+        while (nAttempts < MAX_CHILD_DERIVATION_ATTEMPTS) {
+            try {
+                child = new ChildNumber(child.num() + nAttempts, isHardened);
+                return deriveChildKey(parent, child);
+            } catch (HDDerivationException ignore) { }
+            nAttempts++;
+        }
+        throw new HDDerivationException("Maximum number of child derivation attempts reached, this is probably an indication of a bug.");
+
     }
 
     /**
@@ -147,20 +172,25 @@ public final class HDKeyDerivation {
         byte[] il = Arrays.copyOfRange(i, 0, 32);
         byte[] chainCode = Arrays.copyOfRange(i, 32, 64);
         BigInteger ilInt = new BigInteger(1, il);
-        // TODO: Throw a specific exception here to make sure the caller iterates.
         assertLessThanN(ilInt, "Illegal derived key: I_L >= n");
         ECPoint Ki = ECKey.CURVE.getG().multiply(ilInt).add(parent.getPubKeyPoint());
-        checkArgument(!Ki.equals(ECKey.CURVE.getCurve().getInfinity()),
-                "Illegal derived key: derived public key equals infinity.");
+        assertNonInfinity(Ki, "Illegal derived key: derived public key equals infinity.");
         return new RawKeyBytes(Ki.getEncoded(true), chainCode);
     }
 
     private static void assertNonZero(BigInteger integer, String errorMessage) {
-        checkArgument(!integer.equals(BigInteger.ZERO), errorMessage);
+        if (integer.equals(BigInteger.ZERO))
+            throw new HDDerivationException(errorMessage);
+    }
+
+    private static void assertNonInfinity(ECPoint point, String errorMessage) {
+        if (point.equals(ECKey.CURVE.getCurve().getInfinity()))
+            throw new HDDerivationException(errorMessage);
     }
 
     private static void assertLessThanN(BigInteger integer, String errorMessage) {
-        checkArgument(integer.compareTo(ECKey.CURVE.getN()) < 0, errorMessage);
+        if (integer.compareTo(ECKey.CURVE.getN()) > 0)
+            throw new HDDerivationException(errorMessage);
     }
 
     private static class RawKeyBytes {
