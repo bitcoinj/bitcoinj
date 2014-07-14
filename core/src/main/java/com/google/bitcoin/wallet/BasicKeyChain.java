@@ -55,7 +55,7 @@ public class BasicKeyChain implements EncryptableKeyChain {
         this(null);
     }
 
-    BasicKeyChain(@Nullable KeyCrypter crypter) {
+    public BasicKeyChain(@Nullable KeyCrypter crypter) {
         this.keyCrypter = crypter;
         hashToKeys = new LinkedHashMap<ByteString, ECKey>();
         pubkeyToKeys = new LinkedHashMap<ByteString, ECKey>();
@@ -178,9 +178,14 @@ public class BasicKeyChain implements EncryptableKeyChain {
         }
     }
 
-    /* package */ void importKey(ECKey key) {
+    /**
+     * Imports a key to the key chain. If key is present in the key chain, ignore it.
+     */
+    public void importKey(ECKey key) {
         lock.lock();
         try {
+            checkKeyEncryptionStateMatches(key);
+            if (hasKey(key)) return;
             importKeyLocked(key);
             queueOnKeysAdded(ImmutableList.of(key));
         } finally {
