@@ -84,7 +84,7 @@ public class Transaction extends ChildMessage implements Serializable {
     public static final int LOCKTIME_THRESHOLD = 500000000; // Tue Nov  5 00:53:20 1985 UTC
 
     /** How many bytes a transaction can be before it won't be relayed anymore. Currently 100kb. */
-    public static final int MAX_STANDARD_TX_SIZE = 100 * 1024;
+    public static final int MAX_STANDARD_TX_SIZE = 100000;
 
     /**
      * If fee is lower than this value (in satoshis), a default reference client will treat it as if there were no fee.
