@@ -63,17 +63,14 @@ import static com.google.common.base.Preconditions.*;
 
 // To do list:
 //
-// This whole class has evolved over a period of years and needs a ground-up rewrite.
-//
 // - Take all wallet-relevant data out of Transaction and put it into WalletTransaction. Make Transaction immutable.
-// - Only store relevant transaction outputs, don't bother storing the rest of the data.
+// - Only store relevant transaction outputs, don't bother storing the rest of the data. Big RAM saving.
 // - Split block chain and tx output tracking into a superclass that doesn't have any key or spending related code.
 // - Simplify how transactions are tracked and stored: in particular, have the wallet maintain positioning information
 //   for transactions independent of the transactions themselves, so the timeline can be walked without having to
 //   process and sort every single transaction.
-// - Decompose the class where possible: break logic out into classes that can be customized/replaced by the user.
-//     - [Auto]saving to a backing store
-//     - just generally make Wallet smaller and easier to work with
+// - Split data persistence out into a backend class and make the wallet transactional, so we can store a wallet
+//   in a database not just in RAM.
 // - Make clearing of transactions able to only rewind the wallet a certain distance instead of all blocks.
 // - Make it scale:
 //     - eliminate all the algorithms with quadratic complexity (or worse)
