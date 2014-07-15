@@ -696,6 +696,22 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
     }
 
     /**
+     * Returns all addresses watched by this wallet.
+     */
+    public List<Address> getWatchedAddresses() {
+        lock.lock();
+        try {
+            List<Address> addresses = new LinkedList<Address>();
+            for (Script script : watchedScripts)
+                if (script.isSentToAddress())
+                    addresses.add(script.getToAddress(params));
+            return addresses;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
      * Locates a keypair from the basicKeyChain given the hash of the public key. This is needed when finding out which
      * key we need to use to redeem a transaction output.
      *
