@@ -54,7 +54,7 @@ public class BIP38PrivateKeyTest {
     }
 
     @Test
-    @Ignore("Test disabled because this test vector appears to be broken in the spec, see discussion on bitcoin-development in July 2014")
+    @Ignore("Test disabled because Java doesn't seem to do unicode the same way as other platforms")
     public void bip38testvector_noCompression_noEcMultiply_test3() throws Exception {
         BIP38PrivateKey encryptedKey = new BIP38PrivateKey(MAINNET,
                 "6PRW5o9FLp4gJDDVqJQKJFTpMvdsSGJxMYHtHaQBF3ooa8mwD69bapcDQn");
