@@ -220,8 +220,12 @@ public class KeyChainGroup {
             throw new UnsupportedOperationException("Key is not suitable to receive coins for married keychains." +
                                                     " Use freshAddress to get P2SH address instead");
         }
-        final DeterministicKey current = currentKeys.get(purpose);
-        return current != null ? current  : freshKey(purpose);
+        DeterministicKey current = currentKeys.get(purpose);
+        if (current == null) {
+            current = freshKey(purpose);
+            currentKeys.put(purpose, current);
+        }
+        return current;
     }
 
     /**
@@ -231,7 +235,11 @@ public class KeyChainGroup {
         DeterministicKeyChain chain = getActiveKeyChain();
         if (isMarried(chain)) {
             Address current = currentAddresses.get(purpose);
-            return current != null ? current : freshAddress(purpose);
+            if (current == null) {
+                current = freshAddress(purpose);
+                currentAddresses.put(purpose, current);
+            }
+            return current;
         } else {
             return currentKey(purpose).toAddress(params);
         }
@@ -271,10 +279,7 @@ public class KeyChainGroup {
             throw new UnsupportedOperationException("Key is not suitable to receive coins for married keychains." +
                     " Use freshAddress to get P2SH address instead");
         }
-
-        List<DeterministicKey> keys = chain.getKeys(purpose, numberOfKeys);   // Always returns the next key along the key chain.
-        currentKeys.put(purpose, keys.get(keys.size() - 1));
-        return keys;
+        return chain.getKeys(purpose, numberOfKeys);   // Always returns the next key along the key chain.
     }
 
     /**
@@ -453,9 +458,10 @@ public class KeyChainGroup {
     /** If the given key is "current", advance the current key to a new one. */
     private void markKeyAsUsed(DeterministicKey key) {
         for (Map.Entry<KeyChain.KeyPurpose, DeterministicKey> entry : currentKeys.entrySet()) {
-            if (entry.getValue().equals(key)) {
+            if (entry.getValue() != null && entry.getValue().equals(key)) {
                 log.info("Marking key as used: {}", key);
-                freshKey(entry.getKey());
+                currentKeys.put(entry.getKey(), null);
+                return;
             }
         }
     }

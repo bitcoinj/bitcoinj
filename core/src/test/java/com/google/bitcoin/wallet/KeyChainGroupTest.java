@@ -86,10 +86,15 @@ public class KeyChainGroupTest {
         assertNotEquals(r1, r3);
         ECKey c2 = group.freshKey(KeyChain.KeyPurpose.CHANGE);
         assertNotEquals(r3, c2);
+        // Current key has not moved and will not under marked as used.
         ECKey r4 = group.currentKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
-        assertEquals(r3, r4);
+        assertEquals(r2, r4);
         ECKey c3 = group.currentKey(KeyChain.KeyPurpose.CHANGE);
-        assertEquals(c2, c3);
+        assertEquals(c1, c3);
+        // Mark as used. Current key is now different.
+        group.markPubKeyAsUsed(r4.getPubKey());
+        ECKey r5 = group.currentKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
+        assertNotEquals(r4, r5);
     }
 
     @Test
