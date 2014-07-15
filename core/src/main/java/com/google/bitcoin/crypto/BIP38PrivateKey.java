@@ -57,9 +57,9 @@ public class BIP38PrivateKey extends VersionedChecksummedBytes {
         hasLotAndSequence = (bytes[1] & 0x04) != 0; // bit 2
         compressed = (bytes[1] & 0x20) != 0; // bit 5
         if ((bytes[1] & 0x01) != 0) // bit 0
-            throw new AddressFormatException("Bit 0x40 reserved for future use.");
+            throw new AddressFormatException("Bit 0x01 reserved for future use.");
         if ((bytes[1] & 0x02) != 0) // bit 1
-            throw new AddressFormatException("Bit 0x80 reserved for future use.");
+            throw new AddressFormatException("Bit 0x02 reserved for future use.");
         if ((bytes[1] & 0x08) != 0) // bit 3
             throw new AddressFormatException("Bit 0x08 reserved for future use.");
         if ((bytes[1] & 0x10) != 0) // bit 4
