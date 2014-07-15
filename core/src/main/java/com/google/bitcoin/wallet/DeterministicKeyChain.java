@@ -22,8 +22,6 @@ import com.google.bitcoin.core.Utils;
 import com.google.bitcoin.crypto.*;
 import com.google.bitcoin.store.UnreadableWalletException;
 import com.google.bitcoin.utils.Threading;
-import com.google.common.base.Joiner;
-import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.protobuf.ByteString;
 import org.bitcoinj.wallet.Protos;
@@ -33,8 +31,6 @@ import org.spongycastle.crypto.params.KeyParameter;
 import org.spongycastle.math.ec.ECPoint;
 
 import javax.annotation.Nullable;
-
-import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.security.SecureRandom;
 import java.util.ArrayList;
@@ -85,8 +81,8 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
     private final ReentrantLock lock = Threading.lock("DeterministicKeyChain");
 
     private DeterministicHierarchy hierarchy;
-    private DeterministicKey rootKey;
-    private DeterministicSeed seed;
+    @Nullable private DeterministicKey rootKey;
+    @Nullable private DeterministicSeed seed;
 
     // Ignored if seed != null. Useful for watching hierarchies.
     private long creationTimeSeconds = MnemonicCode.BIP39_STANDARDISATION_TIME_SECS;
@@ -98,7 +94,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
     // a payment request that can generate lots of addresses independently.
     public static final ImmutableList<ChildNumber> ACCOUNT_ZERO_PATH = ImmutableList.of(ChildNumber.ZERO_HARDENED);
     public static final ImmutableList<ChildNumber> EXTERNAL_PATH = ImmutableList.of(ChildNumber.ZERO_HARDENED, ChildNumber.ZERO);
-    public static final ImmutableList<ChildNumber> INTERNAL_PATH = ImmutableList.of(ChildNumber.ZERO_HARDENED, new ChildNumber(1, false));
+    public static final ImmutableList<ChildNumber> INTERNAL_PATH = ImmutableList.of(ChildNumber.ZERO_HARDENED, ChildNumber.ONE);
 
     // We try to ensure we have at least this many keys ready and waiting to be handed out via getKey().
     // See docs for getLookaheadSize() for more info on what this is for. The -1 value means it hasn't been calculated
@@ -228,10 +224,10 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
             rootKey = HDKeyDerivation.createMasterPrivateKey(checkNotNull(seed.getSeedBytes()));
             rootKey.setCreationTimeSeconds(seed.getCreationTimeSeconds());
             initializeHierarchyUnencrypted(rootKey);
-        } else {
-            // We can't initialize ourselves with just an encrypted seed, so we expected deserialization code to do the
-            // rest of the setup (loading the root key).
         }
+        // Else...
+        // We can't initialize ourselves with just an encrypted seed, so we expected deserialization code to do the
+        // rest of the setup (loading the root key).
     }
 
     // For use in encryption.
@@ -332,7 +328,6 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                 default:
                     throw new UnsupportedOperationException();
             }
-            // TODO: Handle the case where the derived key is >= curve order.
             List<DeterministicKey> lookahead = maybeLookAhead(parentKey, index);
             basicKeyChain.importKeys(lookahead);
             List<DeterministicKey> keys = new ArrayList<DeterministicKey>(numberOfKeys);
@@ -494,8 +489,11 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         return basicKeyChain.removeEventListener(listener);
     }
 
-    /** Returns a list of words that represent the seed. */
+    /** Returns a list of words that represent the seed or null if this chain is a watching chain. */
+    @Nullable
     public List<String> getMnemonicCode() {
+        if (seed == null) return null;
+
         lock.lock();
         try {
             return seed.getMnemonicCode();
@@ -901,12 +899,13 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         List<DeterministicKey> result  = new ArrayList<DeterministicKey>(needed);
         long now = System.currentTimeMillis();
         log.info("maybeLookAhead(): Pre-generating {} keys for {}", needed, parent.getPathAsString());
+        int nextChild = numChildren;
         for (int i = 0; i < needed; i++) {
-            // TODO: Handle the case where the derived key is >= curve order.
-            DeterministicKey key = HDKeyDerivation.deriveChildKey(parent, numChildren + i);
+            DeterministicKey key = HDKeyDerivation.deriveThisOrNextChildKey(parent, nextChild);
             key = key.getPubOnly();
             hierarchy.putKey(key);
             result.add(key);
+            nextChild = key.getChildNumber().num() + 1;
         }
         log.info("maybeLookAhead(): Took {} msec", System.currentTimeMillis() - now);
         return result;

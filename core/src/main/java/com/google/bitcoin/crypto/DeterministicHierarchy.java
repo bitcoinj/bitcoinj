@@ -41,12 +41,6 @@ import static com.google.common.base.Preconditions.checkArgument;
  * is a list of {@link ChildNumber}s.</p>
  */
 public class DeterministicHierarchy implements Serializable {
-    /**
-     * Child derivation may fail (although with extremely low probability); in such case it is re-attempted.
-     * This is the maximum number of re-attempts (to avoid an infinite loop in case of bugs etc.).
-     */
-    private static final int MAX_CHILD_DERIVATION_ATTEMPTS = 100;
-
     private final Map<ImmutableList<ChildNumber>, DeterministicKey> keys = Maps.newHashMap();
     private final ImmutableList<ChildNumber> rootPath;
     // Keep track of how many child keys each node has. This is kind of weak.
@@ -115,7 +109,7 @@ public class DeterministicHierarchy implements Serializable {
     public DeterministicKey deriveNextChild(ImmutableList<ChildNumber> parentPath, boolean relative, boolean createParent, boolean privateDerivation) {
         DeterministicKey parent = get(parentPath, relative, createParent);
         int nAttempts = 0;
-        while (nAttempts++ < MAX_CHILD_DERIVATION_ATTEMPTS) {
+        while (nAttempts++ < HDKeyDerivation.MAX_CHILD_DERIVATION_ATTEMPTS) {
             try {
                 ChildNumber createChildNumber = getNextChildNumberToDerive(parent.getPath(), privateDerivation);
                 return deriveChild(parent, createChildNumber);
