@@ -2443,7 +2443,7 @@ public class WalletTest extends TestWithWallet {
             }
         }, Threading.SAME_THREAD);
         wallet.freshReceiveKey();
-        assertEquals(6, keys.size());
+        assertEquals(7, keys.size());
     }
 
     @Test

@@ -89,23 +89,17 @@ public class DeterministicKeyChainTest {
         ECKey key = chain.getKey(KeyChain.KeyPurpose.CHANGE);
         assertEquals(1, listenerKeys.size());  // 1 event
         final List<ECKey> firstEvent = listenerKeys.get(0);
-        assertEquals(6, firstEvent.size());  // 5 lookahead keys and 1 to satisfy the request.
+        assertEquals(7, firstEvent.size());  // 5 lookahead keys, +1 lookahead threhsold, +1 to satisfy the request.
         assertTrue(firstEvent.contains(key));   // order is not specified.
         listenerKeys.clear();
-        key = chain.getKey(KeyChain.KeyPurpose.CHANGE);
+        chain.getKey(KeyChain.KeyPurpose.CHANGE);
+        // At this point we've entered the threshold zone so more keys won't immediately trigger more generations.
+        assertEquals(0, listenerKeys.size());  // 1 event
+        final int lookaheadThreshold = chain.getLookaheadThreshold();
+        for (int i = 0; i < lookaheadThreshold; i++)
+            chain.getKey(KeyChain.KeyPurpose.CHANGE);
         assertEquals(1, listenerKeys.size());  // 1 event
-        assertEquals(1, listenerKeys.get(0).size());  // 1 key.
-        DeterministicKey eventKey = (DeterministicKey) listenerKeys.get(0).get(0);
-        assertNotEquals(key, eventKey);  // The key added is not the one that's served.
-        assertEquals(6, eventKey.getChildNumber().i());
-        listenerKeys.clear();
-        key = chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
-        assertEquals(1, listenerKeys.size());  // 1 event
-        assertEquals(6, listenerKeys.get(0).size());  // 1 key.
-        eventKey = (DeterministicKey) listenerKeys.get(0).get(0);
-        // The key added IS the one that's served because we did not previously request any RECEIVE_FUNDS keys.
-        assertEquals(key, eventKey);
-        assertEquals(0, eventKey.getChildNumber().i());
+        assertEquals(lookaheadThreshold + 1, listenerKeys.get(0).size());  // 1 key.
     }
 
     @Test
@@ -125,8 +119,8 @@ public class DeterministicKeyChainTest {
         DeterministicKey key3 = chain.getKey(KeyChain.KeyPurpose.CHANGE);
 
         List<Protos.Key> keys = chain.serializeToProtobuf();
-        // 1 root seed, 1 master key, 1 account key, 2 internal keys, 3 derived and 20 lookahead.
-        assertEquals(28, keys.size());
+        // 1 root seed, 1 master key, 1 account key, 2 internal keys, 3 derived, 20 lookahead and 5 lookahead threshold.
+        assertEquals(33, keys.size());
 
         // Get another key that will be lost during round-tripping, to ensure we can derive it again.
         DeterministicKey key4 = chain.getKey(KeyChain.KeyPurpose.CHANGE);
@@ -253,12 +247,12 @@ public class DeterministicKeyChainTest {
 
     @Test
     public void bloom() {
-        DeterministicKey key1 = chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         DeterministicKey key2 = chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
+        DeterministicKey key1 = chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         // The filter includes the internal keys as well (for now), although I'm not sure if we should allow funds to
         // be received on them or not ....
-        assertEquals(32, chain.numBloomFilterEntries());
-        BloomFilter filter = chain.getFilter(32, 0.001, 1);
+        assertEquals(36, chain.numBloomFilterEntries());
+        BloomFilter filter = chain.getFilter(36, 0.001, 1);
         assertTrue(filter.contains(key1.getPubKey()));
         assertTrue(filter.contains(key1.getPubKeyHash()));
         assertTrue(filter.contains(key2.getPubKey()));

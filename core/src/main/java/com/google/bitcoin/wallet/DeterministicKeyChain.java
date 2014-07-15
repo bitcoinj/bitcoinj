@@ -22,8 +22,6 @@ import com.google.bitcoin.core.Utils;
 import com.google.bitcoin.crypto.*;
 import com.google.bitcoin.store.UnreadableWalletException;
 import com.google.bitcoin.utils.Threading;
-import com.google.common.base.Joiner;
-import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.protobuf.ByteString;
 import org.bitcoinj.wallet.Protos;
@@ -33,8 +31,6 @@ import org.spongycastle.crypto.params.KeyParameter;
 import org.spongycastle.math.ec.ECPoint;
 
 import javax.annotation.Nullable;
-
-import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.security.SecureRandom;
 import java.util.ArrayList;
@@ -77,6 +73,23 @@ import static com.google.common.collect.Lists.newLinkedList;
  * and finally the actual leaf keys that users use hanging off the end. The leaf keys are special in that they don't
  * internally store the private part at all, instead choosing to rederive the private key from the parent when
  * needed for signing. This simplifies the design for encrypted key chains.</p>
+ *
+ * <p>The key chain manages a <i>lookahead zone</i>. This zone is required because when scanning the chain, you don't
+ * know exactly which keys might receive payments. The user may have handed out several addresses and received payments
+ * on them, but for latency reasons the block chain is requested from remote peers in bulk, meaning you must
+ * "look ahead" when calculating keys to put in the Bloom filter. The default lookahead zone is 100 keys, meaning if
+ * the user hands out more than 100 addresses and receives payment on them before the chain is next scanned, some
+ * transactions might be missed. 100 is a reasonable choice for consumer wallets running on CPU constrained devices.
+ * For industrial wallets that are receiving keys all the time, a higher value is more appropriate. Ideally DKC and the
+ * wallet would know how to adjust this value automatically, but that's not implemented at the moment.</p>
+ *
+ * <p>In fact the real size of the lookahead zone is larger than requested, by default, it's one third larger. This
+ * is because the act of deriving new keys means recalculating the Bloom filters and this is an expensive operation.
+ * Thus, to ensure we don't have to recalculate on every single new key/address requested or seen we add more buffer
+ * space and only extend the lookahead zone when that buffer is exhausted. For example with a lookahead zone of 100
+ * keys, you can request 33 keys before more keys will be calculated and the Bloom filter rebuilt and rebroadcast.
+ * But even when you are requesting the 33rd key, you will still be looking 100 keys ahead.
+ * </p>
  */
 public class DeterministicKeyChain implements EncryptableKeyChain {
     private static final Logger log = LoggerFactory.getLogger(DeterministicKeyChain.class);
@@ -109,7 +122,11 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
     // The lookahead threshold causes us to batch up creation of new keys to minimize the frequency of Bloom filter
     // regenerations, which are expensive and will (in future) trigger chain download stalls/retries. One third
     // is an efficiency tradeoff.
-    private int lookaheadThreshold = lookaheadSize / 3;
+    private int lookaheadThreshold = calcDefaultLookaheadThreshold();
+
+    private int calcDefaultLookaheadThreshold() {
+        return lookaheadSize / 3;
+    }
 
     // The parent keys for external keys (handed out to other people) and internal keys (used for change addresses).
     private DeterministicKey externalKey, internalKey;
@@ -307,7 +324,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
 
     /** Returns freshly derived key/s that have not been returned by this method before. */
     @Override
-    public List<DeterministicKey> getKeys(KeyPurpose purpose,int numberOfKeys) {
+    public List<DeterministicKey> getKeys(KeyPurpose purpose, int numberOfKeys) {
         checkArgument(numberOfKeys > 0);
         lock.lock();
         try {
@@ -396,13 +413,14 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
      * Mark the DeterministicKeys as used, if they match the pubkeyHash
      * See {@link com.google.bitcoin.wallet.DeterministicKeyChain#markKeyAsUsed(DeterministicKey)} for more info on this.
      */
-    public boolean markPubHashAsUsed(byte[] pubkeyHash) {
+    @Nullable
+    public DeterministicKey markPubHashAsUsed(byte[] pubkeyHash) {
         lock.lock();
         try {
             DeterministicKey k = (DeterministicKey) basicKeyChain.findKeyFromPubHash(pubkeyHash);
             if (k != null)
                 markKeyAsUsed(k);
-            return k != null;
+            return k;
         } finally {
             lock.unlock();
         }
@@ -412,13 +430,14 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
      * Mark the DeterministicKeys as used, if they match the pubkey
      * See {@link com.google.bitcoin.wallet.DeterministicKeyChain#markKeyAsUsed(DeterministicKey)} for more info on this.
      */
-    public boolean markPubKeyAsUsed(byte[] pubkey) {
+    @Nullable
+    public DeterministicKey markPubKeyAsUsed(byte[] pubkey) {
         lock.lock();
         try {
             DeterministicKey k = (DeterministicKey) basicKeyChain.findKeyFromPubKey(pubkey);
             if (k != null)
                 markKeyAsUsed(k);
-            return k != null;
+            return k;
         } finally {
             lock.unlock();
         }
@@ -820,23 +839,25 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
      * Sets a new lookahead size. See {@link #getLookaheadSize()} for details on what this is. Setting a new size
      * that's larger than the current size will return immediately and the new size will only take effect next time
      * a fresh filter is requested (e.g. due to a new peer being connected). So you should set this before starting
-     * to sync the chain, if you want to modify it.
+     * to sync the chain, if you want to modify it. If you haven't modified the lookahead threshold manually then
+     * it will be automatically set to be a third of the new size.
      */
     public void setLookaheadSize(int lookaheadSize) {
         lock.lock();
         try {
+            boolean readjustThreshold = this.lookaheadThreshold == calcDefaultLookaheadThreshold();
             this.lookaheadSize = lookaheadSize;
+            if (readjustThreshold)
+                this.lookaheadThreshold = calcDefaultLookaheadThreshold();
         } finally {
             lock.unlock();
         }
     }
 
     /**
-     * Sets the threshold for the key pre-generation.
-     * If a key is used in a transaction, the keychain would pre-generate a new key, for every issued key,
-     * even if it is only one. If the blockchain is replayed, every key would trigger a regeneration
-     * of the bloom filter sent to the peers as a consequence.
-     * To prevent this, new keys are only generated, if more than the threshold value are needed.
+     * Sets the threshold for the key pre-generation. This is used to avoid adding new keys and thus
+     * re-calculating Bloom filters every time a new key is calculated. Without a lookahead threshold, every time we
+     * received a relevant transaction we'd extend the lookahead zone and generate a new filter, which is inefficient.
      */
     public void setLookaheadThreshold(int num) {
         lock.lock();
@@ -883,24 +904,24 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
      * Pre-generate enough keys to reach the lookahead size, but only if there are more than the lookaheadThreshold to
      * be generated, so that the Bloom filter does not have to be regenerated that often.
      *
-     * The return mutable list of keys must be inserted into the basic key chain.
+     * The returned mutable list of keys must be inserted into the basic key chain.
      */
     private List<DeterministicKey> maybeLookAhead(DeterministicKey parent, int issued) {
         checkState(lock.isHeldByCurrentThread());
         final int numChildren = hierarchy.getNumChildren(parent.getPath());
-        final int needed = issued + getLookaheadSize() - numChildren;
+        final int lookaheadSize = getLookaheadSize();
+        final int lookaheadThreshold = getLookaheadThreshold();
+        final int needed = issued + lookaheadSize + lookaheadThreshold - numChildren;
 
-        log.info("maybeLookAhead(): {} needed = lookaheadSize({}) - (numChildren({}) - issued({}) = {} < lookaheadThreshold({}))",
-                parent.getPathAsString(), getLookaheadSize(), numChildren,
-                issued, needed, getLookaheadThreshold());
+        log.info("{} keys needed = {} issued + {} lookahead size + {} lookahead threshold - {} num children",
+                needed, issued, lookaheadSize, lookaheadThreshold, numChildren);
 
-        /* Even if needed is negative, we have more than enough */
-        if (needed <= getLookaheadThreshold())
+        if (needed <= lookaheadThreshold)
             return new ArrayList<DeterministicKey>();
 
         List<DeterministicKey> result  = new ArrayList<DeterministicKey>(needed);
         long now = System.currentTimeMillis();
-        log.info("maybeLookAhead(): Pre-generating {} keys for {}", needed, parent.getPathAsString());
+        log.info("Pre-generating {} keys for {}", needed, parent.getPathAsString());
         for (int i = 0; i < needed; i++) {
             // TODO: Handle the case where the derived key is >= curve order.
             DeterministicKey key = HDKeyDerivation.deriveChildKey(parent, numChildren + i);
@@ -908,7 +929,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
             hierarchy.putKey(key);
             result.add(key);
         }
-        log.info("maybeLookAhead(): Took {} msec", System.currentTimeMillis() - now);
+        log.info("Took {} msec", System.currentTimeMillis() - now);
         return result;
     }
 

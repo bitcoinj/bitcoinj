@@ -59,6 +59,9 @@ import static com.google.common.base.Preconditions.*;
  * <p>The wallet delegates most key management tasks to this class. It is <b>not</b> thread safe and requires external
  * locking, i.e. by the wallet lock. The group then in turn delegates most operations to the key chain objects,
  * combining their responses together when necessary.</p>
+ *
+ * <p>Deterministic key chains have a concept of a lookahead size and threshold. Please see the discussion in the
+ * class docs for {@link com.google.bitcoin.wallet.DeterministicKeyChain} for more information on this topic.</p>
  */
 public class KeyChainGroup {
     private static final Logger log = LoggerFactory.getLogger(KeyChainGroup.class);
@@ -129,9 +132,10 @@ public class KeyChainGroup {
         for (DeterministicKey key : followingAccountKeys) {
             checkArgument(key.getPath().size() == 1, "Following keys have to be account keys");
             DeterministicKeyChain chain = DeterministicKeyChain.watchAndFollow(key);
-            if (lookaheadSize > 0) {
+            if (lookaheadSize >= 0)
                 chain.setLookaheadSize(lookaheadSize);
-            }
+            if (lookaheadThreshold >= 0)
+                chain.setLookaheadThreshold(lookaheadThreshold);
             followingKeychains.put(accountKey, chain);
         }
     }
@@ -347,7 +351,10 @@ public class KeyChainGroup {
      * for more information.
      */
     public int getLookaheadSize() {
-        return lookaheadSize;
+        if (lookaheadSize == -1)
+            return getActiveKeyChain().getLookaheadSize();
+        else
+            return lookaheadSize;
     }
 
     /**
@@ -367,7 +374,10 @@ public class KeyChainGroup {
      * for more information.
      */
     public int getLookaheadThreshold() {
-        return lookaheadThreshold;
+        if (lookaheadThreshold == -1)
+            return getActiveKeyChain().getLookaheadThreshold();
+        else
+            return lookaheadThreshold;
     }
 
     /** Imports the given keys into the basic chain, creating it if necessary. */
@@ -432,8 +442,21 @@ public class KeyChainGroup {
      */
     public void markPubKeyHashAsUsed(byte[] pubkeyHash) {
         for (DeterministicKeyChain chain : chains) {
-            if (chain.markPubHashAsUsed(pubkeyHash))
+            DeterministicKey key;
+            if ((key = chain.markPubHashAsUsed(pubkeyHash)) != null) {
+                markKeyAsUsed(key);
                 return;
+            }
+        }
+    }
+
+    /** If the given key is "current", advance the current key to a new one. */
+    private void markKeyAsUsed(DeterministicKey key) {
+        for (Map.Entry<KeyChain.KeyPurpose, DeterministicKey> entry : currentKeys.entrySet()) {
+            if (entry.getValue().equals(key)) {
+                log.info("Marking key as used: {}", key);
+                freshKey(entry.getKey());
+            }
         }
     }
 
@@ -465,8 +488,11 @@ public class KeyChainGroup {
      */
     public void markPubKeyAsUsed(byte[] pubkey) {
         for (DeterministicKeyChain chain : chains) {
-            if (chain.markPubKeyAsUsed(pubkey))
+            DeterministicKey key;
+            if ((key = chain.markPubKeyAsUsed(pubkey)) != null) {
+                markKeyAsUsed(key);
                 return;
+            }
         }
     }
 

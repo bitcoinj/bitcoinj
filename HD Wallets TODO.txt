@@ -2,7 +2,6 @@
 - Calculate lookahead keys on a background thread.
 - Redo internals of DKC to support arbitrary tree structures.
 - Add a REFUND key purpose and map to the receive tree (for now).
-- Write unit tests for auto key lookahead code from Harold.
 - Pre-check the keys for all attached BlockChainListeners and reset the chain download if any of them throw an exception
   then use this to ensure that we can't accidentally run off the end of an HDW heirarchy when downloading the chain.
 

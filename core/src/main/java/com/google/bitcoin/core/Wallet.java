@@ -1816,7 +1816,9 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
             tx.getConfidence().setConfidenceType(ConfidenceType.PENDING);
             confidenceChanged.put(tx, TransactionConfidence.Listener.ChangeReason.TYPE);
             addWalletTransaction(Pool.PENDING, tx);
-
+            // Mark any keys used in the outputs as "used", this allows wallet UI's to auto-advance the current key
+            // they are showing to the user in qr codes etc.
+            markKeysAsUsed(tx);
             try {
                 Coin valueSentFromMe = tx.getValueSentFromMe(this);
                 Coin valueSentToMe = tx.getValueSentToMe(this);
