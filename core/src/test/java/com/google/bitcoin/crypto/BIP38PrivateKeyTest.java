@@ -16,20 +16,19 @@
 
 package com.google.bitcoin.crypto;
 
-import static org.junit.Assert.assertEquals;
+import com.google.bitcoin.core.ECKey;
+import com.google.bitcoin.crypto.BIP38PrivateKey.BadPassphraseException;
+import com.google.bitcoin.params.MainNetParams;
+import com.google.bitcoin.params.TestNet3Params;
+import org.junit.Ignore;
+import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 
-import org.junit.Ignore;
-import org.junit.Test;
-
-import com.google.bitcoin.core.ECKey;
-import com.google.bitcoin.crypto.BIP38PrivateKey.BadPassphraseException;
-import com.google.bitcoin.params.MainNetParams;
-import com.google.bitcoin.params.TestNet3Params;
+import static org.junit.Assert.assertEquals;
 
 public class BIP38PrivateKeyTest {
 
@@ -55,7 +54,7 @@ public class BIP38PrivateKeyTest {
     }
 
     @Test
-    @Ignore("Test disabled because you cannot pass \\u0000 in Strings.")
+    @Ignore("Test disabled because this test vector appears to be broken in the spec, see discussion on bitcoin-development in July 2014")
     public void bip38testvector_noCompression_noEcMultiply_test3() throws Exception {
         BIP38PrivateKey encryptedKey = new BIP38PrivateKey(MAINNET,
                 "6PRW5o9FLp4gJDDVqJQKJFTpMvdsSGJxMYHtHaQBF3ooa8mwD69bapcDQn");
