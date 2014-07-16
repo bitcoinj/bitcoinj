@@ -96,8 +96,7 @@ public class BIP38PrivateKey extends VersionedChecksummedBytes {
 
     private ECKey decryptNoEC(String normalizedPassphrase) {
         try {
-            final byte[] passwd = normalizedPassphrase.getBytes(Charsets.UTF_8);
-            byte[] derived = SCrypt.scrypt(passwd, addressHash, 16384, 8, 8, 64);
+            byte[] derived = SCrypt.scrypt(normalizedPassphrase.getBytes(Charsets.UTF_8), addressHash, 16384, 8, 8, 64);
             byte[] key = Arrays.copyOfRange(derived, 32, 64);
             SecretKeySpec keyspec = new SecretKeySpec(key, "AES");
 

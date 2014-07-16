@@ -54,11 +54,16 @@ public class BIP38PrivateKeyTest {
     }
 
     @Test
-    @Ignore("Test disabled because Java doesn't seem to do unicode the same way as other platforms")
     public void bip38testvector_noCompression_noEcMultiply_test3() throws Exception {
         BIP38PrivateKey encryptedKey = new BIP38PrivateKey(MAINNET,
                 "6PRW5o9FLp4gJDDVqJQKJFTpMvdsSGJxMYHtHaQBF3ooa8mwD69bapcDQn");
-        ECKey key = encryptedKey.decrypt("\u03d2\u0301\u0000\u00010400\u0001f4a9");
+        StringBuilder passphrase = new StringBuilder();
+        passphrase.appendCodePoint(0x03d2); // GREEK UPSILON WITH HOOK
+        passphrase.appendCodePoint(0x0301); // COMBINING ACUTE ACCENT
+        passphrase.appendCodePoint(0x0000); // NULL
+        passphrase.appendCodePoint(0x010400); // DESERET CAPITAL LETTER LONG I
+        passphrase.appendCodePoint(0x01f4a9); // PILE OF POO
+        ECKey key = encryptedKey.decrypt(passphrase.toString());
         assertEquals("5Jajm8eQ22H3pGWLEVCXyvND8dQZhiQhoLJNKjYXk9roUFTMSZ4", key.getPrivateKeyEncoded(MAINNET)
                 .toString());
     }
