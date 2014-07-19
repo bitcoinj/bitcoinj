@@ -1059,9 +1059,8 @@ public class Transaction extends ChildMessage implements Serializable {
             // do it, we could split off the main chain.
             connectedScript = Script.removeAllInstancesOfOp(connectedScript, ScriptOpCodes.OP_CODESEPARATOR);
 
-            // Set the input to the script of its output. Satoshi does this but the step has no obvious purpose as
-            // the signature covers the hash of the prevout transaction which obviously includes the output script
-            // already. Perhaps it felt safer to him in some way, or is another leftover from how the code was written.
+            // Set the input to the script of its output. Satoshi does this probably to make offline multisig safe
+            // in case of keys reusage.
             TransactionInput input = inputs.get(inputIndex);
             input.setScriptBytes(connectedScript);
 
