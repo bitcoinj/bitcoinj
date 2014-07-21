@@ -173,6 +173,7 @@ public class WalletSettingsController {
             Main.bitcoin.wallet().decrypt(aesKey);
             informationalAlert("Wallet decrypted", "A password will no longer be required to send money or edit settings.");
             passwordButton.setText("Set password");
+            aesKey = null;
         }
     }
 }

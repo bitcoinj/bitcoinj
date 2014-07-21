@@ -65,11 +65,9 @@ public class WalletSetPasswordController {
             protected void onFinish(KeyParameter aesKey) {
                 // The actual encryption part doesn't take very long as most private keys are derived on demand.
                 Main.bitcoin.wallet().encrypt(scrypt, aesKey);
-                fadeIn(explanationLabel);
-                fadeIn(widgetGrid);
-                fadeIn(closeButton);
-                fadeOut(progressMeter);
-                fadeOut(padlockImage);
+                informationalAlert("Wallet encrypted",
+                        "You can remove the password at any time from the settings screen.");
+                overlayUI.done();
             }
         };
         progressMeter.progressProperty().bind(tasks.progress);
