@@ -21,7 +21,7 @@ import com.google.bitcoin.core.*;
 
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedList;
+import java.util.List;
 
 /**
  * A filtering coin selector delegates to another coin selector, but won't select outputs spent by the given transactions.
@@ -41,7 +41,7 @@ public class FilteringCoinSelector implements CoinSelector {
     }
 
     @Override
-    public CoinSelection select(Coin target, LinkedList<TransactionOutput> candidates) {
+    public CoinSelection select(Coin target, List<TransactionOutput> candidates) {
         Iterator<TransactionOutput> iter = candidates.iterator();
         while (iter.hasNext()) {
             TransactionOutput output = iter.next();

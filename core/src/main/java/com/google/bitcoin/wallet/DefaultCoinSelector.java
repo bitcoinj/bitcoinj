@@ -18,7 +18,7 @@ import java.util.*;
  */
 public class DefaultCoinSelector implements CoinSelector {
     @Override
-    public CoinSelection select(Coin biTarget, LinkedList<TransactionOutput> candidates) {
+    public CoinSelection select(Coin biTarget, List<TransactionOutput> candidates) {
         long target = biTarget.value;
         HashSet<TransactionOutput> selected = new HashSet<TransactionOutput>();
         // Sort the inputs by age*value so we get the highest "coindays" spent.
