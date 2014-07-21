@@ -23,6 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.LinkedList;
+import java.util.List;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -47,7 +48,7 @@ public class KeyTimeCoinSelector implements CoinSelector {
     }
 
     @Override
-    public CoinSelection select(Coin target, LinkedList<TransactionOutput> candidates) {
+    public CoinSelection select(Coin target, List<TransactionOutput> candidates) {
         try {
             LinkedList<TransactionOutput> gathered = Lists.newLinkedList();
             Coin valueGathered = Coin.ZERO;
