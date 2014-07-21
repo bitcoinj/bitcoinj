@@ -145,7 +145,12 @@ public class Transaction extends ChildMessage implements Serializable {
         USER_PAYMENT,
         /** Transaction automatically created and broadcast in order to reallocate money from old to new keys. */
         KEY_ROTATION,
-
+        /** Transaction that uses up pledges to an assurance contract */
+        ASSURANCE_CONTRACT_CLAIM,
+        /** Transaction that makes a pledge to an assurance contract. */
+        ASSURANCE_CONTRACT_PLEDGE,
+        /** Send-to-self transaction that exists just to create an output of the right size we can pledge. */
+        ASSURANCE_CONTRACT_STUB
         // In future: de/refragmentation, privacy boosting/mixing, child-pays-for-parent fees, etc.
     }
 

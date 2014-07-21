@@ -256,6 +256,10 @@ message Transaction {
     USER_PAYMENT = 1;
     // Created automatically to move money from rotated keys.
     KEY_ROTATION = 2;
+    // Stuff used by Lighthouse.
+    ASSURANCE_CONTRACT_CLAIM = 3;
+    ASSURANCE_CONTRACT_PLEDGE = 4;
+    ASSURANCE_CONTRACT_STUB = 5;
     // In future: de/refragmentation, privacy boosting/mixing, child-pays-for-parent fees, etc.
   }
   optional Purpose purpose = 10 [default = UNKNOWN];

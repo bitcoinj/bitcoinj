@@ -2271,7 +2271,7 @@ public final class Protos {
      *
      * <pre>
      * The public EC key derived from the private key. We allow both to be stored to avoid mobile clients having to
-     * do lots of slow EC math on startup. For DETERMINISTIC_ROOT_SEED and DETERMINISTIC_MNEMONIC entries this is missing.
+     * do lots of slow EC math on startup. For DETERMINISTIC_MNEMONIC entries this is missing.
      * </pre>
      */
     boolean hasPublicKey();
@@ -2280,7 +2280,7 @@ public final class Protos {
      *
      * <pre>
      * The public EC key derived from the private key. We allow both to be stored to avoid mobile clients having to
-     * do lots of slow EC math on startup. For DETERMINISTIC_ROOT_SEED and DETERMINISTIC_MNEMONIC entries this is missing.
+     * do lots of slow EC math on startup. For DETERMINISTIC_MNEMONIC entries this is missing.
      * </pre>
      */
     com.google.protobuf.ByteString getPublicKey();
@@ -2735,7 +2735,7 @@ public final class Protos {
      *
      * <pre>
      * The public EC key derived from the private key. We allow both to be stored to avoid mobile clients having to
-     * do lots of slow EC math on startup. For DETERMINISTIC_ROOT_SEED and DETERMINISTIC_MNEMONIC entries this is missing.
+     * do lots of slow EC math on startup. For DETERMINISTIC_MNEMONIC entries this is missing.
      * </pre>
      */
     public boolean hasPublicKey() {
@@ -2746,7 +2746,7 @@ public final class Protos {
      *
      * <pre>
      * The public EC key derived from the private key. We allow both to be stored to avoid mobile clients having to
-     * do lots of slow EC math on startup. For DETERMINISTIC_ROOT_SEED and DETERMINISTIC_MNEMONIC entries this is missing.
+     * do lots of slow EC math on startup. For DETERMINISTIC_MNEMONIC entries this is missing.
      * </pre>
      */
     public com.google.protobuf.ByteString getPublicKey() {
@@ -3500,7 +3500,7 @@ public final class Protos {
        *
        * <pre>
        * The public EC key derived from the private key. We allow both to be stored to avoid mobile clients having to
-       * do lots of slow EC math on startup. For DETERMINISTIC_ROOT_SEED and DETERMINISTIC_MNEMONIC entries this is missing.
+       * do lots of slow EC math on startup. For DETERMINISTIC_MNEMONIC entries this is missing.
        * </pre>
        */
       public boolean hasPublicKey() {
@@ -3511,7 +3511,7 @@ public final class Protos {
        *
        * <pre>
        * The public EC key derived from the private key. We allow both to be stored to avoid mobile clients having to
-       * do lots of slow EC math on startup. For DETERMINISTIC_ROOT_SEED and DETERMINISTIC_MNEMONIC entries this is missing.
+       * do lots of slow EC math on startup. For DETERMINISTIC_MNEMONIC entries this is missing.
        * </pre>
        */
       public com.google.protobuf.ByteString getPublicKey() {
@@ -3522,7 +3522,7 @@ public final class Protos {
        *
        * <pre>
        * The public EC key derived from the private key. We allow both to be stored to avoid mobile clients having to
-       * do lots of slow EC math on startup. For DETERMINISTIC_ROOT_SEED and DETERMINISTIC_MNEMONIC entries this is missing.
+       * do lots of slow EC math on startup. For DETERMINISTIC_MNEMONIC entries this is missing.
        * </pre>
        */
       public Builder setPublicKey(com.google.protobuf.ByteString value) {
@@ -3539,7 +3539,7 @@ public final class Protos {
        *
        * <pre>
        * The public EC key derived from the private key. We allow both to be stored to avoid mobile clients having to
-       * do lots of slow EC math on startup. For DETERMINISTIC_ROOT_SEED and DETERMINISTIC_MNEMONIC entries this is missing.
+       * do lots of slow EC math on startup. For DETERMINISTIC_MNEMONIC entries this is missing.
        * </pre>
        */
       public Builder clearPublicKey() {
@@ -8329,6 +8329,26 @@ public final class Protos {
        * </pre>
        */
       KEY_ROTATION(2, 2),
+      /**
+       * <code>ASSURANCE_CONTRACT_CLAIM = 3;</code>
+       *
+       * <pre>
+       * Stuff used by Lighthouse.
+       * </pre>
+       */
+      ASSURANCE_CONTRACT_CLAIM(3, 3),
+      /**
+       * <code>ASSURANCE_CONTRACT_PLEDGE = 4;</code>
+       */
+      ASSURANCE_CONTRACT_PLEDGE(4, 4),
+      /**
+       * <code>ASSURANCE_CONTRACT_STUB = 5;</code>
+       *
+       * <pre>
+       * In future: de/refragmentation, privacy boosting/mixing, child-pays-for-parent fees, etc.
+       * </pre>
+       */
+      ASSURANCE_CONTRACT_STUB(5, 5),
       ;
 
       /**
@@ -8355,6 +8375,26 @@ public final class Protos {
        * </pre>
        */
       public static final int KEY_ROTATION_VALUE = 2;
+      /**
+       * <code>ASSURANCE_CONTRACT_CLAIM = 3;</code>
+       *
+       * <pre>
+       * Stuff used by Lighthouse.
+       * </pre>
+       */
+      public static final int ASSURANCE_CONTRACT_CLAIM_VALUE = 3;
+      /**
+       * <code>ASSURANCE_CONTRACT_PLEDGE = 4;</code>
+       */
+      public static final int ASSURANCE_CONTRACT_PLEDGE_VALUE = 4;
+      /**
+       * <code>ASSURANCE_CONTRACT_STUB = 5;</code>
+       *
+       * <pre>
+       * In future: de/refragmentation, privacy boosting/mixing, child-pays-for-parent fees, etc.
+       * </pre>
+       */
+      public static final int ASSURANCE_CONTRACT_STUB_VALUE = 5;
 
 
       public final int getNumber() { return value; }
@@ -8364,6 +8404,9 @@ public final class Protos {
           case 0: return UNKNOWN;
           case 1: return USER_PAYMENT;
           case 2: return KEY_ROTATION;
+          case 3: return ASSURANCE_CONTRACT_CLAIM;
+          case 4: return ASSURANCE_CONTRACT_PLEDGE;
+          case 5: return ASSURANCE_CONTRACT_STUB;
           default: return null;
         }
       }
@@ -16188,7 +16231,7 @@ public final class Protos {
       "BUILDING\020\001\022\013\n\007PENDING\020\002\022\025\n\021NOT_IN_BEST_C" +
       "HAIN\020\003\022\010\n\004DEAD\020\004\"A\n\006Source\022\022\n\016SOURCE_UNK" +
       "NOWN\020\000\022\022\n\016SOURCE_NETWORK\020\001\022\017\n\013SOURCE_SEL" +
-      "F\020\002\"\236\004\n\013Transaction\022\017\n\007version\030\001 \002(\005\022\014\n\004" +
+      "F\020\002\"\371\004\n\013Transaction\022\017\n\007version\030\001 \002(\005\022\014\n\004" +
       "hash\030\002 \002(\014\022&\n\004pool\030\003 \001(\0162\030.wallet.Transa" +
       "ction.Pool\022\021\n\tlock_time\030\004 \001(\r\022\022\n\nupdated" +
       "_at\030\005 \001(\003\0223\n\021transaction_input\030\006 \003(\0132\030.w" +
@@ -16200,27 +16243,30 @@ public final class Protos {
       "\033.wallet.Transaction.Purpose:\007UNKNOWN\"Y\n" +
       "\004Pool\022\013\n\007UNSPENT\020\004\022\t\n\005SPENT\020\005\022\014\n\010INACTIV" +
       "E\020\002\022\010\n\004DEAD\020\n\022\013\n\007PENDING\020\020\022\024\n\020PENDING_IN" +
-      "ACTIVE\020\022\":\n\007Purpose\022\013\n\007UNKNOWN\020\000\022\020\n\014USER" +
-      "_PAYMENT\020\001\022\020\n\014KEY_ROTATION\020\002\"N\n\020ScryptPa" +
-      "rameters\022\014\n\004salt\030\001 \002(\014\022\020\n\001n\030\002 \001(\003:\00516384" +
-      "\022\014\n\001r\030\003 \001(\005:\0018\022\014\n\001p\030\004 \001(\005:\0011\"8\n\tExtensio",
-      "n\022\n\n\002id\030\001 \002(\t\022\014\n\004data\030\002 \002(\014\022\021\n\tmandatory" +
-      "\030\003 \002(\010\" \n\003Tag\022\013\n\003tag\030\001 \002(\t\022\014\n\004data\030\002 \002(\014" +
-      "\"\261\004\n\006Wallet\022\032\n\022network_identifier\030\001 \002(\t\022" +
-      "\034\n\024last_seen_block_hash\030\002 \001(\014\022\036\n\026last_se" +
-      "en_block_height\030\014 \001(\r\022!\n\031last_seen_block" +
-      "_time_secs\030\016 \001(\003\022\030\n\003key\030\003 \003(\0132\013.wallet.K" +
-      "ey\022(\n\013transaction\030\004 \003(\0132\023.wallet.Transac" +
-      "tion\022&\n\016watched_script\030\017 \003(\0132\016.wallet.Sc" +
-      "ript\022C\n\017encryption_type\030\005 \001(\0162\035.wallet.W" +
-      "allet.EncryptionType:\013UNENCRYPTED\0227\n\025enc",
-      "ryption_parameters\030\006 \001(\0132\030.wallet.Scrypt" +
-      "Parameters\022\022\n\007version\030\007 \001(\005:\0011\022$\n\textens" +
-      "ion\030\n \003(\0132\021.wallet.Extension\022\023\n\013descript" +
-      "ion\030\013 \001(\t\022\031\n\021key_rotation_time\030\r \001(\004\022\031\n\004" +
-      "tags\030\020 \003(\0132\013.wallet.Tag\";\n\016EncryptionTyp" +
-      "e\022\017\n\013UNENCRYPTED\020\001\022\030\n\024ENCRYPTED_SCRYPT_A" +
-      "ES\020\002B\035\n\023org.bitcoinj.walletB\006Protos"
+      "ACTIVE\020\022\"\224\001\n\007Purpose\022\013\n\007UNKNOWN\020\000\022\020\n\014USE" +
+      "R_PAYMENT\020\001\022\020\n\014KEY_ROTATION\020\002\022\034\n\030ASSURAN" +
+      "CE_CONTRACT_CLAIM\020\003\022\035\n\031ASSURANCE_CONTRAC" +
+      "T_PLEDGE\020\004\022\033\n\027ASSURANCE_CONTRACT_STUB\020\005\"",
+      "N\n\020ScryptParameters\022\014\n\004salt\030\001 \002(\014\022\020\n\001n\030\002" +
+      " \001(\003:\00516384\022\014\n\001r\030\003 \001(\005:\0018\022\014\n\001p\030\004 \001(\005:\0011\"" +
+      "8\n\tExtension\022\n\n\002id\030\001 \002(\t\022\014\n\004data\030\002 \002(\014\022\021" +
+      "\n\tmandatory\030\003 \002(\010\" \n\003Tag\022\013\n\003tag\030\001 \002(\t\022\014\n" +
+      "\004data\030\002 \002(\014\"\261\004\n\006Wallet\022\032\n\022network_identi" +
+      "fier\030\001 \002(\t\022\034\n\024last_seen_block_hash\030\002 \001(\014" +
+      "\022\036\n\026last_seen_block_height\030\014 \001(\r\022!\n\031last" +
+      "_seen_block_time_secs\030\016 \001(\003\022\030\n\003key\030\003 \003(\013" +
+      "2\013.wallet.Key\022(\n\013transaction\030\004 \003(\0132\023.wal" +
+      "let.Transaction\022&\n\016watched_script\030\017 \003(\0132",
+      "\016.wallet.Script\022C\n\017encryption_type\030\005 \001(\016" +
+      "2\035.wallet.Wallet.EncryptionType:\013UNENCRY" +
+      "PTED\0227\n\025encryption_parameters\030\006 \001(\0132\030.wa" +
+      "llet.ScryptParameters\022\022\n\007version\030\007 \001(\005:\001" +
+      "1\022$\n\textension\030\n \003(\0132\021.wallet.Extension\022" +
+      "\023\n\013description\030\013 \001(\t\022\031\n\021key_rotation_tim" +
+      "e\030\r \001(\004\022\031\n\004tags\030\020 \003(\0132\013.wallet.Tag\";\n\016En" +
+      "cryptionType\022\017\n\013UNENCRYPTED\020\001\022\030\n\024ENCRYPT" +
+      "ED_SCRYPT_AES\020\002B\035\n\023org.bitcoinj.walletB\006" +
+      "Protos"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
       new com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner() {

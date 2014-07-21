@@ -271,6 +271,9 @@ public class WalletProtobufSerializer {
             case UNKNOWN: purpose = Protos.Transaction.Purpose.UNKNOWN; break;
             case USER_PAYMENT: purpose = Protos.Transaction.Purpose.USER_PAYMENT; break;
             case KEY_ROTATION: purpose = Protos.Transaction.Purpose.KEY_ROTATION; break;
+            case ASSURANCE_CONTRACT_CLAIM: purpose = Protos.Transaction.Purpose.ASSURANCE_CONTRACT_CLAIM; break;
+            case ASSURANCE_CONTRACT_PLEDGE: purpose = Protos.Transaction.Purpose.ASSURANCE_CONTRACT_PLEDGE; break;
+            case ASSURANCE_CONTRACT_STUB: purpose = Protos.Transaction.Purpose.ASSURANCE_CONTRACT_STUB; break;
             default:
                 throw new RuntimeException("New tx purpose serialization not implemented.");
         }
