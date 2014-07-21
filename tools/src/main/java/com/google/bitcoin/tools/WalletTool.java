@@ -42,6 +42,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.io.Resources;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.protobuf.ByteString;
 import com.subgraph.orchid.TorClient;
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
@@ -296,6 +297,7 @@ public class WalletTool {
             FileInputStream stream = new FileInputStream(walletFile);
             try {
                 Protos.Wallet proto = WalletProtobufSerializer.parseToProto(stream);
+                proto = attemptHexConversion(proto);
                 System.out.println(proto.toString());
                 return;
             } finally {
@@ -385,6 +387,34 @@ public class WalletTool {
             saveWallet(walletFile);
         }
         shutdown();
+    }
+
+    private static Protos.Wallet attemptHexConversion(Protos.Wallet proto) {
+        // Try to convert any raw hashes and such to textual equivalents for easier debugging. This makes it a bit
+        // less "raw" but we will just abort on any errors.
+        try {
+            Protos.Wallet.Builder builder = proto.toBuilder();
+            for (Protos.Transaction.Builder tx : builder.getTransactionBuilderList()) {
+                tx.setHash(bytesToHex(tx.getHash()));
+                for (int i = 0; i < tx.getBlockHashCount(); i++)
+                    tx.setBlockHash(i, bytesToHex(tx.getBlockHash(i)));
+                for (Protos.TransactionInput.Builder input : tx.getTransactionInputBuilderList())
+                    input.setTransactionOutPointHash(bytesToHex(input.getTransactionOutPointHash()));
+                for (Protos.TransactionOutput.Builder output : tx.getTransactionOutputBuilderList()) {
+                    if (output.hasSpentByTransactionHash())
+                        output.setSpentByTransactionHash(bytesToHex(output.getSpentByTransactionHash()));
+                }
+                // TODO: keys, ip addresses etc.
+            }
+            return builder.build();
+        } catch (Throwable throwable) {
+            log.error("Failed to do hex conversion on wallet proto", throwable);
+            return proto;
+        }
+    }
+
+    private static ByteString bytesToHex(ByteString bytes) {
+        return ByteString.copyFrom(Utils.HEX.encode(bytes.toByteArray()).getBytes());
     }
 
     private static void marry() {
