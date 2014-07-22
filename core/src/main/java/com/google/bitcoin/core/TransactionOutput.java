@@ -233,12 +233,20 @@ public class TransactionOutput extends ChildMessage implements Serializable {
         checkState(availableForSpending);
         availableForSpending = false;
         spentBy = input;
+        if (parentTransaction != null)
+            log.info("Marked {}:{} as spent by {}", parentTransaction.getHash(), getIndex(), input);
+        else
+            log.info("Marked floating output as spent by {}", input);
     }
 
     /**
      * Resets the spent pointer / availableForSpending flag to null.
      */
     public void markAsUnspent() {
+        if (parentTransaction != null)
+            log.info("Un-marked {}:{} as spent by {}", parentTransaction.getHash(), getIndex(), spentBy);
+        else
+            log.info("Un-marked floating output as spent by {}", spentBy);
         availableForSpending = true;
         spentBy = null;
     }
