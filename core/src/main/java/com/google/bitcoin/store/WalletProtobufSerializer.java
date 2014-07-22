@@ -543,6 +543,9 @@ public class WalletProtobufSerializer {
                 case UNKNOWN: tx.setPurpose(Transaction.Purpose.UNKNOWN); break;
                 case USER_PAYMENT: tx.setPurpose(Transaction.Purpose.USER_PAYMENT); break;
                 case KEY_ROTATION: tx.setPurpose(Transaction.Purpose.KEY_ROTATION); break;
+                case ASSURANCE_CONTRACT_CLAIM: tx.setPurpose(Transaction.Purpose.ASSURANCE_CONTRACT_CLAIM); break;
+                case ASSURANCE_CONTRACT_PLEDGE: tx.setPurpose(Transaction.Purpose.ASSURANCE_CONTRACT_PLEDGE); break;
+                case ASSURANCE_CONTRACT_STUB: tx.setPurpose(Transaction.Purpose.ASSURANCE_CONTRACT_STUB); break;
                 default: throw new RuntimeException("New purpose serialization not implemented");
             }
         } else {
