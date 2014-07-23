@@ -143,6 +143,8 @@ public class Peer extends PeerSocketHandler {
 
     // A settable future which completes (with this) when the connection is open
     private final SettableFuture<Peer> connectionOpenFuture = SettableFuture.create();
+    // A future representing the results of doing a getUTXOs call.
+    @Nullable private SettableFuture<UTXOSMessage> utxosFuture;
 
     /**
      * <p>Construct a peer that reads/writes from the given block chain.</p>
@@ -324,7 +326,12 @@ public class Peer extends PeerSocketHandler {
             currentFilteredBlock = null;
         }
 
-        if (m instanceof NotFoundMessage) {
+        if (m instanceof Ping) {
+            if (((Ping) m).hasNonce())
+                sendMessage(new Pong(((Ping) m).getNonce()));
+        } else if (m instanceof Pong) {
+            processPong((Pong) m);
+        } else if (m instanceof NotFoundMessage) {
             // This is sent to us when we did a getdata on some transactions that aren't in the peers memory pool.
             // Because NotFoundMessage is a subclass of InventoryMessage, the test for it must come before the next.
             processNotFoundMessage((NotFoundMessage) m);
@@ -373,11 +380,12 @@ public class Peer extends PeerSocketHandler {
                         vPeerVersionMessage.clientVersion, version);
                 close();
             }
-        } else if (m instanceof Ping) {
-            if (((Ping) m).hasNonce())
-                sendMessage(new Pong(((Ping) m).getNonce()));
-        } else if (m instanceof Pong) {
-            processPong((Pong)m);
+        } else if (m instanceof UTXOSMessage) {
+            if (utxosFuture != null) {
+                SettableFuture<UTXOSMessage> future = utxosFuture;
+                utxosFuture = null;
+                future.set((UTXOSMessage)m);
+            }
         } else {
             log.warn("Received unhandled message: {}", m);
         }
@@ -1525,5 +1533,21 @@ public class Peer extends PeerSocketHandler {
      */
     public BloomFilter getBloomFilter() {
         return vBloomFilter;
+    }
+
+    /**
+     * Sends a query to the remote peer asking for the unspent transaction outputs (UTXOs) for the given outpoints,
+     * with the memory pool included. The result should be treated only as a hint: it's possible for the returned
+     * outputs to be fictional and not exist in any transaction, and it's possible for them to be spent the moment
+     * after the query returns.
+     */
+    public ListenableFuture<UTXOSMessage> getUTXOs(List<TransactionOutPoint> outPoints) {
+        if (utxosFuture != null)
+            throw new IllegalStateException("Already fetching UTXOs, wait for previous query to complete first.");
+        if (getPeerVersionMessage().clientVersion < GetUTXOSMessage.MIN_PROTOCOL_VERSION)
+            throw new IllegalStateException("Peer does not support getutxos protocol version");
+        utxosFuture = SettableFuture.create();
+        sendMessage(new GetUTXOSMessage(params, outPoints, true));
+        return utxosFuture;
     }
 }

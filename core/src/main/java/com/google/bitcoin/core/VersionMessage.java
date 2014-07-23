@@ -34,17 +34,17 @@ import java.net.UnknownHostException;
 public class VersionMessage extends Message {
     private static final long serialVersionUID = 7313594258967483180L;
 
-    /**
-     * A services flag that denotes whether the peer has a copy of the block chain or not.
-     */
+    /** A services flag that denotes whether the peer has a copy of the block chain or not. */
     public static final int NODE_NETWORK = 1;
+    /** A flag that denotes whether the peer supports the getutxos message or not. */
+    public static final int NODE_GETUTXOS = 2;
 
     /**
      * The version number of the protocol spoken.
      */
     public int clientVersion;
     /**
-     * Flags defining what is supported. Right now {@link #NODE_NETWORK} is the only flag defined.
+     * Flags defining what optional services are supported.
      */
     public long localServices;
     /**
@@ -308,5 +308,11 @@ public class VersionMessage extends Message {
      */
     public boolean isBloomFilteringSupported() {
         return clientVersion >= FilteredBlock.MIN_PROTOCOL_VERSION;
+    }
+
+    /** Returns true if the protocol version and service bits both indicate support for the getutxos message. */
+    public boolean isGetUTXOsSupported() {
+        return clientVersion >= GetUTXOSMessage.MIN_PROTOCOL_VERSION &&
+                (localServices & NODE_GETUTXOS) == NODE_GETUTXOS;
     }
 }

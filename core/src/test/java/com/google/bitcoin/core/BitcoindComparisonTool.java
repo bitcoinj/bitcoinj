@@ -165,6 +165,7 @@ public class BitcoindComparisonTool {
         int differingBlocks = 0;
         int invalidBlocks = 0;
         int mempoolRulesFailed = 0;
+        int utxoRulesFailed = 0;
         for (Rule rule : blockList.list) {
             if (rule instanceof BlockAndValidity) {
                 BlockAndValidity block = (BlockAndValidity) rule;
@@ -245,8 +246,19 @@ public class BitcoindComparisonTool {
                     mempoolRulesFailed++;
                 }
                 mostRecentInv = null;
+            } else if (rule instanceof UTXORule) {
+                UTXORule r = (UTXORule) rule;
+                UTXOSMessage result = bitcoind.getUTXOs(r.query).get();
+                if (!result.equals(r.result)) {
+                    log.error("utxo result was not what we expected.");
+                    log.error("Wanted  {}", r.result);
+                    log.error("but got {}", result);
+                    utxoRulesFailed++;
+                } else {
+                    log.info("Successful utxo query {}: {}", r.ruleName, result);
+                }
             } else {
-                log.error("Unknown rule");
+                throw new RuntimeException("Unknown rule");
             }
         }
 
@@ -254,7 +266,8 @@ public class BitcoindComparisonTool {
                 "Blocks which were not handled the same between bitcoind/bitcoinj: " + differingBlocks + "\n" +
                 "Blocks which should/should not have been accepted but weren't/were: " + invalidBlocks + "\n" +
                 "Transactions which were/weren't in memory pool but shouldn't/should have been: " + mempoolRulesFailed + "\n" +
+                "UTXO query mismatches: " + utxoRulesFailed + "\n" +
                 "Unexpected inv messages: " + unexpectedInvs.get());
-        System.exit(differingBlocks > 0 || invalidBlocks > 0 || mempoolRulesFailed > 0 || unexpectedInvs.get() > 0 ? 1 : 0);
+        System.exit(differingBlocks > 0 || invalidBlocks > 0 || mempoolRulesFailed > 0 || utxoRulesFailed > 0 || unexpectedInvs.get() > 0 ? 1 : 0);
     }
 }

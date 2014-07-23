@@ -1,10 +1,14 @@
 package com.google.bitcoin.core;
 
 import com.google.bitcoin.core.Transaction.SigHash;
+import com.google.bitcoin.crypto.TransactionSignature;
 import com.google.bitcoin.script.Script;
 import com.google.bitcoin.script.ScriptBuilder;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
 
+import javax.annotation.Nullable;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -16,6 +20,32 @@ import static com.google.bitcoin.core.Coin.*;
 import static com.google.bitcoin.script.ScriptOpCodes.*;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static java.util.Collections.singletonList;
+
+class TransactionOutPointWithValue {
+    public TransactionOutPoint outpoint;
+    public Coin value;
+    public Script scriptPubKey;
+
+    public TransactionOutPointWithValue(TransactionOutPoint outpoint, Coin value, Script scriptPubKey) {
+        this.outpoint = outpoint;
+        this.value = value;
+        this.scriptPubKey = scriptPubKey;
+    }
+
+    public TransactionOutPointWithValue(Transaction tx, int output) {
+        this(new TransactionOutPoint(tx.getParams(), output, tx.getHash()),
+                tx.getOutput(output).getValue(), tx.getOutput(output).getScriptPubKey());
+    }
+}
+
+/** An arbitrary rule which the testing client must match */
+class Rule {
+    String ruleName;
+    Rule(String ruleName) {
+        this.ruleName = ruleName;
+    }
+}
 
 /**
  * Represents a block which is sent to the tested application and which the application must either reject or accept,
@@ -58,22 +88,20 @@ class MemoryPoolState extends Rule {
     }
 }
 
-/** An arbitrary rule which the testing client must match */
-class Rule {
-    String ruleName;
-    Rule(String ruleName) {
-        this.ruleName = ruleName;
-    }
-}
+class UTXORule extends Rule {
+    List<TransactionOutPoint> query;
+    UTXOSMessage result;
 
-class TransactionOutPointWithValue {
-    public TransactionOutPoint outpoint;
-    public Coin value;
-    Script scriptPubKey;
-    public TransactionOutPointWithValue(TransactionOutPoint outpoint, Coin value, Script scriptPubKey) {
-        this.outpoint = outpoint;
-        this.value = value;
-        this.scriptPubKey = scriptPubKey;
+    public UTXORule(String ruleName, TransactionOutPoint query, UTXOSMessage result) {
+        super(ruleName);
+        this.query = singletonList(query);
+        this.result = result;
+    }
+
+    public UTXORule(String ruleName, List<TransactionOutPoint> query, UTXOSMessage result) {
+        super(ruleName);
+        this.query = query;
+        this.result = result;
     }
 }
 
@@ -108,6 +136,7 @@ public class FullBlockTestGenerator {
         final Script OP_TRUE_SCRIPT = new ScriptBuilder().op(OP_TRUE).build();
         final Script OP_NOP_SCRIPT = new ScriptBuilder().op(OP_NOP).build();
 
+        // TODO: Rename this variable.
         List<Rule> blocks = new LinkedList<Rule>() {
             @Override
             public boolean add(Rule element) {
@@ -164,8 +193,8 @@ public class FullBlockTestGenerator {
         blocks.add(new BlockAndValidity(blockToHeightMap, b2, true, false, b2.getHash(), chainHeadHeight + 2, "b2"));
         spendableOutputs.offer(new TransactionOutPointWithValue(
                 new TransactionOutPoint(params, 0, b2.getTransactions().get(0).getHash()),
-                b2.getTransactions().get(0).getOutputs().get(0).getValue(),
-                b2.getTransactions().get(0).getOutputs().get(0).getScriptPubKey()));
+                b2.getTransactions().get(0).getOutput(0).getValue(),
+                b2.getTransactions().get(0).getOutput(0).getScriptPubKey()));
         // We now have the following chain (which output is spent is in parentheses):
         //     genesis -> b1 (0) -> b2 (1)
         //
@@ -179,15 +208,39 @@ public class FullBlockTestGenerator {
         blocks.add(new BlockAndValidity(blockToHeightMap, b3, true, false, b2.getHash(), chainHeadHeight + 2, "b3"));
         // Make sure nothing breaks if we add b3 twice
         blocks.add(new BlockAndValidity(blockToHeightMap, b3, true, false, b2.getHash(), chainHeadHeight + 2, "b3"));
-        // Now we add another block to make the alternative chain longer.
-        TransactionOutPointWithValue out2 = spendableOutputs.poll(); checkState(out2 != null);
 
-        Block b4 = createNextBlock(b3, chainHeadHeight + 3, out2, null);
-        blocks.add(new BlockAndValidity(blockToHeightMap, b4, true, false, b4.getHash(), chainHeadHeight + 3, "b4"));
+        // Do a simple UTXO query.
+        UTXORule utxo1;
+        {
+            Transaction coinbase = b2.getTransactions().get(0);
+            TransactionOutPoint outpoint = new TransactionOutPoint(params, 0, coinbase.getHash());
+            long[] heights = new long[] {chainHeadHeight + 2};
+            UTXOSMessage result = new UTXOSMessage(params, ImmutableList.of(coinbase.getOutput(0)), heights, b2.getHash(), chainHeadHeight + 2);
+            utxo1 = new UTXORule("utxo1", outpoint, result);
+            blocks.add(utxo1);
+        }
+
+        // Now we add another block to make the alternative chain longer.
         //
         //     genesis -> b1 (0) -> b2 (1)
         //                      \-> b3 (1) -> b4 (2)
         //
+        TransactionOutPointWithValue out2 = checkNotNull(spendableOutputs.poll());
+        Block b4 = createNextBlock(b3, chainHeadHeight + 3, out2, null);
+        blocks.add(new BlockAndValidity(blockToHeightMap, b4, true, false, b4.getHash(), chainHeadHeight + 3, "b4"));
+
+        // Check that the old coinbase is no longer in the UTXO set and the new one is.
+        {
+            Transaction coinbase = b4.getTransactions().get(0);
+            TransactionOutPoint outpoint = new TransactionOutPoint(params, 0, coinbase.getHash());
+            List<TransactionOutPoint> queries = ImmutableList.of(utxo1.query.get(0), outpoint);
+            List<TransactionOutput> results = Lists.asList(null, coinbase.getOutput(0), new TransactionOutput[] {});
+            long[] heights = new long[] {chainHeadHeight + 3};
+            UTXOSMessage result = new UTXOSMessage(params, results, heights, b4.getHash(), chainHeadHeight + 3);
+            UTXORule utxo2 = new UTXORule("utxo2", queries, result);
+            blocks.add(utxo2);
+        }
+
         // ... and back to the first chain.
         Block b5 = createNextBlock(b2, chainHeadHeight + 3, out2, null);
         blocks.add(new BlockAndValidity(blockToHeightMap, b5, true, false, b4.getHash(), chainHeadHeight + 3, "b5"));
@@ -1514,6 +1567,19 @@ public class FullBlockTestGenerator {
         post82Mempool.add(new InventoryItem(InventoryItem.Type.Transaction, b79tx.getHash()));
         blocks.add(new MemoryPoolState(post82Mempool, "post-b82 tx resurrection"));
 
+        System.err.println("b78tx: " + b78tx);
+        System.err.println("b79tx: " + b79tx);
+        System.err.flush();
+
+        // Check the UTXO query takes mempool into account.
+        {
+            TransactionOutPoint outpoint = new TransactionOutPoint(params, 0, b79tx.getHash());
+            long[] heights = new long[] { UTXOSMessage.MEMPOOL_HEIGHT };
+            UTXOSMessage result = new UTXOSMessage(params, ImmutableList.of(b79tx.getOutput(0)), heights, b82.getHash(), chainHeadHeight + 28);
+            UTXORule utxo3 = new UTXORule("utxo3", outpoint, result);
+            blocks.add(utxo3);
+        }
+
         // The remaining tests arent designed to fit in the standard flow, and thus must always come last
         // Add new tests here.
         //TODO: Explicitly address MoneyRange() checks
@@ -1527,10 +1593,6 @@ public class FullBlockTestGenerator {
 
         Block b1001 = createNextBlock(b82, chainHeadHeight + 29, out28, null);
         blocks.add(new BlockAndValidity(blockToHeightMap, b1001, true, false, b1001.getHash(), chainHeadHeight + 29, "b1001"));
-        spendableOutputs.offer(new TransactionOutPointWithValue(
-                new TransactionOutPoint(params, 0, b1001.getTransactions().get(0).getHash()),
-                b1001.getTransactions().get(0).getOutput(0).getValue(),
-                b1001.getTransactions().get(0).getOutput(0).getScriptPubKey()));
         int nextHeight = chainHeadHeight + 30;
         
         if (runLargeReorgs) {
@@ -1623,7 +1685,7 @@ public class FullBlockTestGenerator {
     }
 
     private byte uniquenessCounter = 0;
-    private Block createNextBlock(Block baseBlock, int nextBlockHeight, TransactionOutPointWithValue prevOut,
+    private Block createNextBlock(Block baseBlock, int nextBlockHeight, @Nullable TransactionOutPointWithValue prevOut,
             Coin additionalCoinbaseValue) throws ScriptException {
         Integer height = blockToHeightMap.get(baseBlock.getHash());
         if (height != null)
@@ -1656,20 +1718,15 @@ public class FullBlockTestGenerator {
         input.setSequenceNumber(sequence);
         t.addInput(input);
 
-        byte[] connectedPubKeyScript = prevOut.scriptPubKey.getProgram();
-        Sha256Hash hash = t.hashForSignature(0, connectedPubKeyScript, SigHash.ALL, false);
-
-        // Sign input
-        try {
-            ByteArrayOutputStream bos = new UnsafeByteArrayOutputStream(73);
-            bos.write(coinbaseOutKey.sign(hash).encodeToDER());
-            bos.write(SigHash.ALL.ordinal() + 1);
-            byte[] signature = bos.toByteArray();
-            
+        if (prevOut.scriptPubKey.getChunks().get(0).equalsOpCode(OP_TRUE)) {
+            input.setScriptSig(new ScriptBuilder().op(OP_1).build());
+        } else {
+            // Sign input
             checkState(prevOut.scriptPubKey.isSentToRawPubKey());
-            input.setScriptBytes(Script.createInputScript(signature));
-        } catch (IOException e) {
-            throw new RuntimeException(e);  // Cannot happen.
+            Sha256Hash hash = t.hashForSignature(0, prevOut.scriptPubKey, SigHash.ALL, false);
+            input.setScriptSig(ScriptBuilder.createInputScript(
+                new TransactionSignature(coinbaseOutKey.sign(hash), SigHash.ALL, false))
+            );
         }
     }
 }

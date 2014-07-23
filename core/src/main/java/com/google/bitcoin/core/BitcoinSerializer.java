@@ -71,6 +71,8 @@ public class BitcoinSerializer {
         names.put(NotFoundMessage.class, "notfound");
         names.put(MemoryPoolMessage.class, "mempool");
         names.put(RejectMessage.class, "reject");
+        names.put(GetUTXOSMessage.class, "getutxos");
+        names.put(UTXOSMessage.class, "utxos");
     }
 
     /**
@@ -234,6 +236,10 @@ public class BitcoinSerializer {
             return new MemoryPoolMessage();
         } else if (command.equals("reject")) {
             return new RejectMessage(params, payloadBytes);
+        } else if (command.equals("utxos")) {
+            return new UTXOSMessage(params, payloadBytes);
+        } else if (command.equals("getutxos")) {
+            return new GetUTXOSMessage(params, payloadBytes);
         } else {
             log.warn("No support for deserializing message with name {}", command);
             return new UnknownMessage(params, command, payloadBytes);
