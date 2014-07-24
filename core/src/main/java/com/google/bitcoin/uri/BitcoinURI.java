@@ -32,7 +32,10 @@ import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLDecoder;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
@@ -291,7 +294,25 @@ public class BitcoinURI {
     public String getPaymentRequestUrl() {
         return (String) parameterMap.get(FIELD_PAYMENT_REQUEST_URL);
     }
-    
+
+    /**
+     * Returns the URLs where a payment request (as specified in BIP 70) may be fetched. The first URL is the main URL,
+     * all subsequent URLs are fallbacks.
+     */
+    public List<String> getPaymentRequestUrls() {
+        ArrayList<String> urls = new ArrayList<String>();
+        while (true) {
+            int i = urls.size();
+            String paramName = FIELD_PAYMENT_REQUEST_URL + (i > 0 ? Integer.toString(i) : "");
+            String url = (String) parameterMap.get(paramName);
+            if (url == null)
+                break;
+            urls.add(url);
+        }
+        Collections.reverse(urls);
+        return urls;
+    }
+
     /**
      * @param name The name of the parameter
      * @return The parameter value, or null if not present
