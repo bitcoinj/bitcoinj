@@ -27,18 +27,19 @@ import org.bitcoinj.wallet.Protos;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.asn1.*;
-import org.spongycastle.asn1.sec.SECNamedCurves;
 import org.spongycastle.asn1.x9.X9ECParameters;
 import org.spongycastle.asn1.x9.X9IntegerConverter;
 import org.spongycastle.crypto.AsymmetricCipherKeyPair;
 import org.spongycastle.crypto.digests.SHA256Digest;
+import org.spongycastle.crypto.ec.CustomNamedCurves;
 import org.spongycastle.crypto.generators.ECKeyPairGenerator;
 import org.spongycastle.crypto.params.*;
 import org.spongycastle.crypto.signers.ECDSASigner;
 import org.spongycastle.crypto.signers.HMacDSAKCalculator;
 import org.spongycastle.math.ec.ECAlgorithms;
-import org.spongycastle.math.ec.ECCurve;
 import org.spongycastle.math.ec.ECPoint;
+import org.spongycastle.math.ec.FixedPointUtil;
+import org.spongycastle.math.ec.custom.sec.SecP256K1Curve;
 import org.spongycastle.util.encoders.Base64;
 
 import javax.annotation.Nullable;
@@ -51,9 +52,7 @@ import java.security.SecureRandom;
 import java.security.SignatureException;
 import java.util.Arrays;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
+import static com.google.common.base.Preconditions.*;
 
 // TODO: Move this class to tracking compression state itself.
 // The Bouncy Castle guys are deprecating their own tracking of the compression state.
@@ -90,7 +89,7 @@ public class ECKey implements EncryptableItem, Serializable {
     private static final Logger log = LoggerFactory.getLogger(ECKey.class);
 
     /** The parameters of the secp256k1 curve that Bitcoin uses. */
-    public static final X9ECParameters CURVE_PARAMS = SECNamedCurves.getByName("secp256k1");
+    public static final X9ECParameters CURVE_PARAMS = CustomNamedCurves.getByName("secp256k1");
 
     /** The parameters of the secp256k1 curve that Bitcoin uses. */
     public static final ECDomainParameters CURVE;
@@ -105,7 +104,10 @@ public class ECKey implements EncryptableItem, Serializable {
     private static final long serialVersionUID = -728224901792295832L;
 
     static {
-        // All clients must agree on the curve to use by agreement. Bitcoin uses secp256k1.
+        // Tell Bouncy Castle to precompute data that's needed during secp256k1 calculations. Increasing the width
+        // number makes calculations faster, but at a cost of extra memory usage and with decreasing returns. 12 was
+        // picked after consulting with the BC team.
+        FixedPointUtil.precompute(CURVE_PARAMS.getG(), 12);
         CURVE = new ECDomainParameters(CURVE_PARAMS.getCurve(), CURVE_PARAMS.getG(), CURVE_PARAMS.getN(),
                 CURVE_PARAMS.getH());
         HALF_CURVE_ORDER = CURVE_PARAMS.getN().shiftRight(1);
@@ -837,8 +839,7 @@ public class ECKey implements EncryptableItem, Serializable {
         //        do another iteration of Step 1.
         //
         // More concisely, what these points mean is to use X as a compressed public key.
-        ECCurve.Fp curve = (ECCurve.Fp) CURVE.getCurve();
-        BigInteger prime = curve.getQ();  // Bouncy Castle is not consistent about the letter it uses for the prime.
+        BigInteger prime = SecP256K1Curve.q;
         if (x.compareTo(prime) >= 0) {
             // Cannot have point co-ordinates larger than this as everything takes place modulo Q.
             return null;
@@ -866,7 +867,7 @@ public class ECKey implements EncryptableItem, Serializable {
         BigInteger rInv = sig.r.modInverse(n);
         BigInteger srInv = rInv.multiply(sig.s).mod(n);
         BigInteger eInvrInv = rInv.multiply(eInv).mod(n);
-        ECPoint.Fp q = (ECPoint.Fp) ECAlgorithms.sumOfTwoMultiplies(CURVE.getG(), eInvrInv, R, srInv);
+        ECPoint q = ECAlgorithms.sumOfTwoMultiplies(CURVE.getG(), eInvrInv, R, srInv);
         return ECKey.fromPublicOnly(q.getEncoded(compressed));
     }
 
