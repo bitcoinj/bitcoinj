@@ -1195,6 +1195,23 @@ public class Transaction extends ChildMessage implements Serializable {
         return Collections.unmodifiableList(outputs);
     }
 
+    /** Returns an unmodifiable list of outputs matching a wallet or of watched wallet outputs
+     * i.e., transaction outputs whose script's pubkey belongs to the given wallet or whose script is watched by the wallet.
+     * including spent outputs **/
+    public List<TransactionOutput> getWalletOutputs(Wallet w){
+        maybeParse();
+
+        List<TransactionOutput> walletOutputs = new LinkedList<TransactionOutput>();
+
+        Coin v = Coin.ZERO;
+        for (TransactionOutput o : outputs) {
+            if (!o.isMineOrWatched(w)) continue;
+            walletOutputs.add(o);
+        }
+
+        return Collections.unmodifiableList(walletOutputs);
+    }
+
     /** Randomly re-orders the transaction outputs: good for privacy */
     public void shuffleOutputs() {
         maybeParse();

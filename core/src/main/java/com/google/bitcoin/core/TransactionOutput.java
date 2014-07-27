@@ -137,6 +137,28 @@ public class TransactionOutput extends ChildMessage implements Serializable {
         return script;
     }
 
+    /*
+     * If the output script pays to an address, returns the address i.e., a base-58 hash of the public key
+     * in the Pay-To-Public-Key-Hash (P2PKH) script
+     */
+    public Address getAddressFromPubKey(NetworkParameters networkParameters) throws ScriptException{
+        if (getScriptPubKey().isSentToAddress())
+            return getScriptPubKey().getToAddress(networkParameters);
+
+        return null;
+    }
+
+    /*
+     * If the output script pays to an script, returns the address i.e., a 20-byte hash of the script
+     * in the Pay-To-Public-Script-Hash (P2PSH) script
+     */
+    public Address getAddressFromScript(NetworkParameters networkParameters) throws ScriptException{
+        if (getScriptPubKey().isPayToScriptHash())
+            return getScriptPubKey().getToAddress(networkParameters);
+
+        return null;
+    }
+
     @Override
     protected void parseLite() throws ProtocolException {
         value = readInt64();

@@ -563,6 +563,7 @@ public class WalletTest extends TestWithWallet {
         Coin nanos = COIN;
         Transaction tx1 = sendMoneyToWallet(nanos, AbstractBlockChain.NewBlockType.BEST_CHAIN);
         assertEquals(nanos, tx1.getValueSentToMe(wallet, true));
+        assertTrue(tx1.getWalletOutputs(wallet).size() >= 1);
         // Send 0.10 to somebody else.
         Transaction send1 = wallet.createSend(new ECKey().toAddress(params), valueOf(0, 10));
         // Reserialize.
@@ -656,9 +657,11 @@ public class WalletTest extends TestWithWallet {
         Transaction outbound1 = wallet.createSend(someOtherGuy, coinHalf);
         wallet.commitTx(outbound1);
         sendMoneyToWallet(outbound1, AbstractBlockChain.NewBlockType.BEST_CHAIN);
+        assertTrue(outbound1.getWalletOutputs(wallet).size() <= 1); //the change address at most
         // That other guy gives us the coins right back.
         Transaction inbound2 = new Transaction(params);
         inbound2.addOutput(new TransactionOutput(params, inbound2, coinHalf, myAddress));
+        assertTrue(outbound1.getWalletOutputs(wallet).size() >= 1);
         inbound2.addInput(outbound1.getOutputs().get(0));
         sendMoneyToWallet(inbound2, AbstractBlockChain.NewBlockType.BEST_CHAIN);
         assertEquals(coin1, wallet.getBalance());
@@ -1123,6 +1126,7 @@ public class WalletTest extends TestWithWallet {
         wallet.addWatchedAddress(watchedAddress);
         Coin value = valueOf(5, 0);
         Transaction t1 = createFakeTx(params, value, watchedAddress);
+        assertTrue(t1.getWalletOutputs(wallet).size() >= 1);
         assertTrue(wallet.isPendingTransactionRelevant(t1));
     }
 
