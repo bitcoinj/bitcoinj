@@ -459,7 +459,7 @@ public class Script {
             // for N of M CHECKMULTISIG redeem script we will need N signatures to spend
             ScriptChunk nChunk = redeemScript.getChunks().get(0);
             int n = Script.decodeFromOpN(nChunk.opcode);
-            return n * SIG_SIZE + getProgram().length;
+            return n * SIG_SIZE + redeemScript.getProgram().length;
         } else if (isSentToMultiSig()) {
             // scriptSig: OP_0 <sig> [sig] [sig...]
             // for N of M CHECKMULTISIG script we will need N signatures to spend
