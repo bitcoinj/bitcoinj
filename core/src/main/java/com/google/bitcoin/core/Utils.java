@@ -548,6 +548,11 @@ public class Utils {
         }
     }
 
+    public static boolean isAndroidRuntime() {
+        final String runtime = System.getProperty("java.runtime.name");
+        return runtime != null && runtime.equals("Android Runtime");
+    }
+
     private static class Pair implements Comparable<Pair> {
         int item, count;
         public Pair(int item, int count) { this.count = count; this.item = item; }

@@ -19,15 +19,14 @@ package com.google.bitcoin.wallet;
 
 import com.google.bitcoin.crypto.*;
 import com.google.bitcoin.store.UnreadableWalletException;
+import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
-
 import org.bitcoinj.wallet.Protos;
 import org.spongycastle.crypto.params.KeyParameter;
 
 import javax.annotation.Nullable;
-import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.security.SecureRandom;
 import java.util.List;
@@ -42,30 +41,14 @@ import static com.google.common.base.Preconditions.checkState;
  * code.
  */
 public class DeterministicSeed implements EncryptableItem {
-    // It would take more than 10^12 years to brute-force a 128 bit seed using $1B worth
-    // of computing equipment.
+    // It would take more than 10^12 years to brute-force a 128 bit seed using $1B worth of computing equipment.
     public static final int DEFAULT_SEED_ENTROPY_BITS = 128;
     public static final int MAX_SEED_ENTROPY_BITS = 512;
-    public static final String UTF_8 = "UTF-8";
 
     @Nullable private final byte[] seed;
     @Nullable private List<String> mnemonicCode;
     @Nullable private EncryptedData encryptedMnemonicCode;
     private final long creationTimeSeconds;
-
-    private static MnemonicCode MNEMONIC_CODEC;
-
-    private static synchronized MnemonicCode getCachedMnemonicCodec() {
-        try {
-            // This object can be large and has to load the word list from disk, so we lazy cache it.
-            if (MNEMONIC_CODEC == null) {
-                MNEMONIC_CODEC = new MnemonicCode();
-            }
-            return MNEMONIC_CODEC;
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
 
     DeterministicSeed(String mnemonicCode, String passphrase, long creationTimeSeconds) throws UnreadableWalletException {
         this(decodeMnemonicCode(mnemonicCode), passphrase, creationTimeSeconds);
@@ -120,7 +103,7 @@ public class DeterministicSeed implements EncryptableItem {
         Preconditions.checkArgument(entropy.length * 8 >= DEFAULT_SEED_ENTROPY_BITS, "entropy size too small");
 
         try {
-            this.mnemonicCode = getCachedMnemonicCodec().toMnemonic(entropy);
+            this.mnemonicCode = MnemonicCode.INSTANCE.toMnemonic(entropy);
         } catch (MnemonicException.MnemonicLengthException e) {
             // cannot happen
             throw new RuntimeException(e);
@@ -168,6 +151,7 @@ public class DeterministicSeed implements EncryptableItem {
         return getMnemonicAsBytes();
     }
 
+    @Nullable
     public byte[] getSeedBytes() {
         return seed;
     }
@@ -196,11 +180,7 @@ public class DeterministicSeed implements EncryptableItem {
     }
 
     private byte[] getMnemonicAsBytes() {
-        try {
-            return Joiner.on(" ").join(mnemonicCode).getBytes(UTF_8);
-        } catch (UnsupportedEncodingException e) {
-            throw new RuntimeException(e);
-        }
+        return Joiner.on(" ").join(mnemonicCode).getBytes(Charsets.UTF_8);
     }
 
     public DeterministicSeed decrypt(KeyCrypter crypter, String passphrase, KeyParameter aesKey) {
@@ -249,11 +229,11 @@ public class DeterministicSeed implements EncryptableItem {
      */
     public void check() throws MnemonicException {
         if (mnemonicCode != null)
-            getCachedMnemonicCodec().check(mnemonicCode);
+            MnemonicCode.INSTANCE.check(mnemonicCode);
     }
 
     byte[] getEntropyBytes() throws MnemonicException {
-        return getCachedMnemonicCodec().toEntropy(mnemonicCode);
+        return MnemonicCode.INSTANCE.toEntropy(mnemonicCode);
     }
 
     /** Get the mnemonic code, or null if unknown. */
@@ -263,13 +243,11 @@ public class DeterministicSeed implements EncryptableItem {
     }
 
     private static List<String> decodeMnemonicCode(byte[] mnemonicCode) throws UnreadableWalletException {
-        String code = null;
         try {
-            code = new String(mnemonicCode, "UTF-8");
+            return Splitter.on(" ").splitToList(new String(mnemonicCode, "UTF-8"));
         } catch (UnsupportedEncodingException e) {
             throw new UnreadableWalletException(e.toString());
         }
-        return Splitter.on(" ").splitToList(code);
     }
 
     private static List<String> decodeMnemonicCode(String mnemonicCode) {
