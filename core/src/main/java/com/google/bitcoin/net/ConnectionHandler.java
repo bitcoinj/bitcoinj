@@ -92,11 +92,11 @@ class ConnectionHandler implements MessageWriteTarget {
         try {
             alreadyClosed = closeCalled;
             this.connectedHandlers = connectedHandlers;
+            if (!alreadyClosed)
+                checkState(connectedHandlers.add(this));
         } finally {
             lock.unlock();
         }
-        if (!alreadyClosed)
-            checkState(connectedHandlers.add(this));
     }
 
     @GuardedBy("lock")
