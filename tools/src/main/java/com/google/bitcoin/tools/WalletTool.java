@@ -823,12 +823,12 @@ public class WalletTool {
             }
         } else if (!options.has("tor")) {
             // If Tor mode then PeerGroup already has discovery set up.
-            if (params == RegTestParams.get()) {
-                log.info("Assuming regtest node on localhost");
-                peers.addAddress(PeerAddress.localhost(params));
-            } else {
+//            if (params == RegTestParams.get()) {
+//                log.info("Assuming regtest node on localhost");
+//                peers.addAddress(PeerAddress.localhost(params));
+//            } else {
                 peers.addPeerDiscovery(new DnsDiscovery(params));
-            }
+            //}
         }
     }
 

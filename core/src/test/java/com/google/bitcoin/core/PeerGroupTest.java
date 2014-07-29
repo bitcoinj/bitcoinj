@@ -34,7 +34,10 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
+import java.io.IOException;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.ServerSocket;
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
@@ -644,5 +647,22 @@ public class PeerGroupTest extends TestWithPeerGroup {
         connectPeer(3, ver2);
         future.get();
         assertTrue(future.isDone());
+    }
+
+    @Test
+    public void preferLocalPeer() throws IOException {
+        // Check that if we have a localhost port 8333 then it's used instead of the p2p network.
+        ServerSocket local = new ServerSocket(params.getPort(), 100, InetAddress.getLoopbackAddress());
+        try {
+            peerGroup.startAsync();
+            peerGroup.awaitRunning();
+            local.accept().close();   // Probe connect
+            local.accept();   // Real connect
+            // If we get here it used the local peer. Check no others are in use.
+            assertEquals(1, peerGroup.getMaxConnections());
+            assertEquals(PeerAddress.localhost(params), peerGroup.getPendingPeers().get(0).getAddress());
+        } finally {
+            local.close();
+        }
     }
 }
