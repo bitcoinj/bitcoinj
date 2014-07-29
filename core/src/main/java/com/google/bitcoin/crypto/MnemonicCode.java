@@ -18,7 +18,10 @@
 package com.google.bitcoin.crypto;
 
 import com.google.bitcoin.core.Sha256Hash;
+import com.google.bitcoin.core.Utils;
 import com.google.common.base.Joiner;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -39,6 +42,8 @@ import static com.google.bitcoin.core.Utils.HEX;
  */
 
 public class MnemonicCode {
+    private static final Logger log = LoggerFactory.getLogger(MnemonicCode.class);
+
     private ArrayList<String> wordList;
 
     public static String BIP39_ENGLISH_SHA256 = "ad90bf3beb7b0eb7e5acd74727dc0da96e0a280a258354e7293fb7e211ac03db";
@@ -48,6 +53,19 @@ public class MnemonicCode {
 
     private static final int PBKDF2_ROUNDS = 2048;
 
+    public static MnemonicCode INSTANCE;
+
+    static {
+        try {
+            INSTANCE = new MnemonicCode();
+        } catch (IOException e) {
+            // We expect failure on Android. The developer has to set INSTANCE themselves.
+            if (!Utils.isAndroidRuntime())
+                log.error("Failed to load word list", e);
+        }
+    }
+
+    /** Initialise from the included word list. Won't work on Android. */
     public MnemonicCode() throws IOException {
         this(MnemonicCode.class.getResourceAsStream("mnemonic/wordlist/english.txt"), BIP39_ENGLISH_SHA256);
     }

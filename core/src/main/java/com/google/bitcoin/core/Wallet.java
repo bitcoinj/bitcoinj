@@ -2276,7 +2276,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
      * {@link #addWatchedScripts(java.util.List)}.
      * @param excludeImmatureCoinbases Whether to ignore outputs that are unspendable due to being immature.
      */
-    public LinkedList<TransactionOutput> getWatchedOutputs(boolean excludeImmatureCoinbases) {
+    public List<TransactionOutput> getWatchedOutputs(boolean excludeImmatureCoinbases) {
         lock.lock();
         try {
             LinkedList<TransactionOutput> candidates = Lists.newLinkedList();
@@ -2723,7 +2723,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
         lock.lock();
         try {
             checkNotNull(selector);
-            LinkedList<TransactionOutput> candidates = getWatchedOutputs(true);
+            List<TransactionOutput> candidates = getWatchedOutputs(true);
             CoinSelection selection = selector.select(NetworkParameters.MAX_MONEY, candidates);
             return selection.valueGathered;
         } finally {
