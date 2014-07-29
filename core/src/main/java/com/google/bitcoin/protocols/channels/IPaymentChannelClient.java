@@ -20,7 +20,10 @@ import com.google.bitcoin.core.Coin;
 import com.google.bitcoin.core.InsufficientMoneyException;
 import com.google.common.util.concurrent.ListenableFuture;
 
+import com.google.protobuf.ByteString;
 import org.bitcoin.paymentchannel.Protos;
+
+import javax.annotation.Nullable;
 
 /**
  * A class implementing this interface supports the basic operations of a payment channel. An implementation is provided
@@ -74,13 +77,14 @@ public interface IPaymentChannelClient {
      * you wait for the previous increase payment future to complete before incrementing the payment again.
      *
      * @param size How many satoshis to increment the payment by (note: not the new total).
+     * @param info Information about this update, used to extend this protocol.
      * @throws ValueOutOfRangeException If the size is negative or would pay more than this channel's total value
      *                                  ({@link PaymentChannelClientConnection#state()}.getTotalValue())
      * @throws IllegalStateException If the channel has been closed or is not yet open
      *                               (see {@link PaymentChannelClientConnection#getChannelOpenFuture()} for the second)
      * @return a future that completes when the server acknowledges receipt and acceptance of the payment.
      */
-    ListenableFuture<Coin> incrementPayment(Coin size) throws ValueOutOfRangeException, IllegalStateException;
+    ListenableFuture<Coin> incrementPayment(Coin size, @Nullable ByteString info) throws ValueOutOfRangeException, IllegalStateException;
 
     /**
      * Implements the connection between this client and the server, providing an interface which allows messages to be

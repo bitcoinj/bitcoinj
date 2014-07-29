@@ -6582,6 +6582,24 @@ public final class Protos {
      * </pre>
      */
     com.google.protobuf.ByteString getSignature();
+
+    // optional bytes info = 3;
+    /**
+     * <code>optional bytes info = 3;</code>
+     *
+     * <pre>
+     * Information about the this update. Used to extend this protocol.
+     * </pre>
+     */
+    boolean hasInfo();
+    /**
+     * <code>optional bytes info = 3;</code>
+     *
+     * <pre>
+     * Information about the this update. Used to extend this protocol.
+     * </pre>
+     */
+    com.google.protobuf.ByteString getInfo();
   }
   /**
    * Protobuf type {@code paymentchannels.UpdatePayment}
@@ -6658,6 +6676,11 @@ public final class Protos {
             case 18: {
               bitField0_ |= 0x00000002;
               signature_ = input.readBytes();
+              break;
+            }
+            case 26: {
+              bitField0_ |= 0x00000004;
+              info_ = input.readBytes();
               break;
             }
           }
@@ -6756,9 +6779,34 @@ public final class Protos {
       return signature_;
     }
 
+    // optional bytes info = 3;
+    public static final int INFO_FIELD_NUMBER = 3;
+    private com.google.protobuf.ByteString info_;
+    /**
+     * <code>optional bytes info = 3;</code>
+     *
+     * <pre>
+     * Information about the this update. Used to extend this protocol.
+     * </pre>
+     */
+    public boolean hasInfo() {
+      return ((bitField0_ & 0x00000004) == 0x00000004);
+    }
+    /**
+     * <code>optional bytes info = 3;</code>
+     *
+     * <pre>
+     * Information about the this update. Used to extend this protocol.
+     * </pre>
+     */
+    public com.google.protobuf.ByteString getInfo() {
+      return info_;
+    }
+
     private void initFields() {
       clientChangeValue_ = 0L;
       signature_ = com.google.protobuf.ByteString.EMPTY;
+      info_ = com.google.protobuf.ByteString.EMPTY;
     }
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
@@ -6786,6 +6834,9 @@ public final class Protos {
       if (((bitField0_ & 0x00000002) == 0x00000002)) {
         output.writeBytes(2, signature_);
       }
+      if (((bitField0_ & 0x00000004) == 0x00000004)) {
+        output.writeBytes(3, info_);
+      }
       getUnknownFields().writeTo(output);
     }
 
@@ -6802,6 +6853,10 @@ public final class Protos {
       if (((bitField0_ & 0x00000002) == 0x00000002)) {
         size += com.google.protobuf.CodedOutputStream
           .computeBytesSize(2, signature_);
+      }
+      if (((bitField0_ & 0x00000004) == 0x00000004)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBytesSize(3, info_);
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSerializedSize = size;
@@ -6939,6 +6994,8 @@ public final class Protos {
         bitField0_ = (bitField0_ & ~0x00000001);
         signature_ = com.google.protobuf.ByteString.EMPTY;
         bitField0_ = (bitField0_ & ~0x00000002);
+        info_ = com.google.protobuf.ByteString.EMPTY;
+        bitField0_ = (bitField0_ & ~0x00000004);
         return this;
       }
 
@@ -6975,6 +7032,10 @@ public final class Protos {
           to_bitField0_ |= 0x00000002;
         }
         result.signature_ = signature_;
+        if (((from_bitField0_ & 0x00000004) == 0x00000004)) {
+          to_bitField0_ |= 0x00000004;
+        }
+        result.info_ = info_;
         result.bitField0_ = to_bitField0_;
         onBuilt();
         return result;
@@ -6996,6 +7057,9 @@ public final class Protos {
         }
         if (other.hasSignature()) {
           setSignature(other.getSignature());
+        }
+        if (other.hasInfo()) {
+          setInfo(other.getInfo());
         }
         this.mergeUnknownFields(other.getUnknownFields());
         return this;
@@ -7145,6 +7209,58 @@ public final class Protos {
       public Builder clearSignature() {
         bitField0_ = (bitField0_ & ~0x00000002);
         signature_ = getDefaultInstance().getSignature();
+        onChanged();
+        return this;
+      }
+
+      // optional bytes info = 3;
+      private com.google.protobuf.ByteString info_ = com.google.protobuf.ByteString.EMPTY;
+      /**
+       * <code>optional bytes info = 3;</code>
+       *
+       * <pre>
+       * Information about the this update. Used to extend this protocol.
+       * </pre>
+       */
+      public boolean hasInfo() {
+        return ((bitField0_ & 0x00000004) == 0x00000004);
+      }
+      /**
+       * <code>optional bytes info = 3;</code>
+       *
+       * <pre>
+       * Information about the this update. Used to extend this protocol.
+       * </pre>
+       */
+      public com.google.protobuf.ByteString getInfo() {
+        return info_;
+      }
+      /**
+       * <code>optional bytes info = 3;</code>
+       *
+       * <pre>
+       * Information about the this update. Used to extend this protocol.
+       * </pre>
+       */
+      public Builder setInfo(com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000004;
+        info_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional bytes info = 3;</code>
+       *
+       * <pre>
+       * Information about the this update. Used to extend this protocol.
+       * </pre>
+       */
+      public Builder clearInfo() {
+        bitField0_ = (bitField0_ & ~0x00000004);
+        info_ = getDefaultInstance().getInfo();
         onChanged();
         return this;
       }
@@ -8624,18 +8740,18 @@ public final class Protos {
       "d\022\024\n\014multisig_key\030\001 \002(\014\022\n\n\002tx\030\002 \002(\014\"!\n\014R" +
       "eturnRefund\022\021\n\tsignature\030\001 \002(\014\"V\n\017Provid" +
       "eContract\022\n\n\002tx\030\001 \002(\014\0227\n\017initial_payment",
-      "\030\002 \002(\0132\036.paymentchannels.UpdatePayment\"?" +
+      "\030\002 \002(\0132\036.paymentchannels.UpdatePayment\"M" +
       "\n\rUpdatePayment\022\033\n\023client_change_value\030\001" +
-      " \002(\004\022\021\n\tsignature\030\002 \002(\014\"\030\n\nSettlement\022\n\n" +
-      "\002tx\030\003 \002(\014\"\246\002\n\005Error\0225\n\004code\030\001 \001(\0162 .paym" +
-      "entchannels.Error.ErrorCode:\005OTHER\022\023\n\013ex" +
-      "planation\030\002 \001(\t\022\026\n\016expected_value\030\003 \001(\004\"" +
-      "\270\001\n\tErrorCode\022\013\n\007TIMEOUT\020\001\022\020\n\014SYNTAX_ERR" +
-      "OR\020\002\022\031\n\025NO_ACCEPTABLE_VERSION\020\003\022\023\n\017BAD_T" +
-      "RANSACTION\020\004\022\031\n\025TIME_WINDOW_TOO_LARGE\020\005\022" +
-      "\033\n\027CHANNEL_VALUE_TOO_LARGE\020\006\022\031\n\025MIN_PAYM",
-      "ENT_TOO_LARGE\020\007\022\t\n\005OTHER\020\010B$\n\032org.bitcoi" +
-      "n.paymentchannelB\006Protos"
+      " \002(\004\022\021\n\tsignature\030\002 \002(\014\022\014\n\004info\030\003 \001(\014\"\030\n" +
+      "\nSettlement\022\n\n\002tx\030\003 \002(\014\"\246\002\n\005Error\0225\n\004cod" +
+      "e\030\001 \001(\0162 .paymentchannels.Error.ErrorCod" +
+      "e:\005OTHER\022\023\n\013explanation\030\002 \001(\t\022\026\n\016expecte" +
+      "d_value\030\003 \001(\004\"\270\001\n\tErrorCode\022\013\n\007TIMEOUT\020\001" +
+      "\022\020\n\014SYNTAX_ERROR\020\002\022\031\n\025NO_ACCEPTABLE_VERS" +
+      "ION\020\003\022\023\n\017BAD_TRANSACTION\020\004\022\031\n\025TIME_WINDO" +
+      "W_TOO_LARGE\020\005\022\033\n\027CHANNEL_VALUE_TOO_LARGE",
+      "\020\006\022\031\n\025MIN_PAYMENT_TOO_LARGE\020\007\022\t\n\005OTHER\020\010" +
+      "B$\n\032org.bitcoin.paymentchannelB\006Protos"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
       new com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner() {
@@ -8689,7 +8805,7 @@ public final class Protos {
           internal_static_paymentchannels_UpdatePayment_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_paymentchannels_UpdatePayment_descriptor,
-              new java.lang.String[] { "ClientChangeValue", "Signature", });
+              new java.lang.String[] { "ClientChangeValue", "Signature", "Info", });
           internal_static_paymentchannels_Settlement_descriptor =
             getDescriptor().getMessageTypes().get(8);
           internal_static_paymentchannels_Settlement_fieldAccessorTable = new

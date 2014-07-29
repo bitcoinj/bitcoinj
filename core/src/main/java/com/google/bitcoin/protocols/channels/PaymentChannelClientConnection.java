@@ -26,6 +26,7 @@ import com.google.bitcoin.net.ProtobufParser;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 
+import com.google.protobuf.ByteString;
 import org.bitcoin.paymentchannel.Protos;
 
 import java.io.IOException;
@@ -120,7 +121,7 @@ public class PaymentChannelClientConnection {
      * an error before the channel has reached the open state.</p>
      *
      * <p>After this future completes successfully, you may call
-     * {@link PaymentChannelClientConnection#incrementPayment(Coin)} to begin paying the server.</p>
+     * {@link PaymentChannelClientConnection#incrementPayment(Coin)} or {@link PaymentChannelClientConnection#incrementPayment(Coin, com.google.protobuf.ByteString)} to begin paying the server.</p>
      */
     public ListenableFuture<PaymentChannelClientConnection> getChannelOpenFuture() {
         return channelOpenFuture;
@@ -136,7 +137,20 @@ public class PaymentChannelClientConnection {
      *                               (see {@link PaymentChannelClientConnection#getChannelOpenFuture()} for the second)
      */
     public ListenableFuture<Coin> incrementPayment(Coin size) throws ValueOutOfRangeException, IllegalStateException {
-        return channelClient.incrementPayment(size);
+        return channelClient.incrementPayment(size, ByteString.EMPTY);
+    }
+    /**
+     * Increments the total value which we pay the server.
+     *
+     * @param size How many satoshis to increment the payment by (note: not the new total).
+     * @param info Information about this payment increment, used to extend this protocol.
+     * @throws ValueOutOfRangeException If the size is negative or would pay more than this channel's total value
+     *                                  ({@link PaymentChannelClientConnection#state()}.getTotalValue())
+     * @throws IllegalStateException If the channel has been closed or is not yet open
+     *                               (see {@link PaymentChannelClientConnection#getChannelOpenFuture()} for the second)
+     */
+    public ListenableFuture<Coin> incrementPayment(Coin size, ByteString info) throws ValueOutOfRangeException, IllegalStateException {
+        return channelClient.incrementPayment(size, info);
     }
 
     /**
