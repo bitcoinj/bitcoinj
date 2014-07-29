@@ -1,5 +1,6 @@
 package com.google.bitcoin.crypto;
 
+import com.google.bitcoin.core.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -9,11 +10,6 @@ import java.lang.reflect.Method;
 
 public class DRMWorkaround {
     private static Logger log = LoggerFactory.getLogger(DRMWorkaround.class);
-
-    public static boolean isAndroidRuntime() {
-        final String runtime = System.getProperty("java.runtime.name");
-        return runtime != null && runtime.equals("Android Runtime");
-    }
 
     private static boolean done = false;
 
@@ -26,7 +22,7 @@ public class DRMWorkaround {
         if (done) return;
         done = true;
 
-        if (isAndroidRuntime())
+        if (Utils.isAndroidRuntime())
             return;
         try {
             Field gate = Class.forName("javax.crypto.JceSecurity").getDeclaredField("isRestricted");

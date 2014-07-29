@@ -100,11 +100,7 @@ public class PeerAddress extends ChildMessage {
     }
 
     public static PeerAddress localhost(NetworkParameters params) {
-        try {
-            return new PeerAddress(InetAddress.getLocalHost(), params.getPort());
-        } catch (UnknownHostException e) {
-            throw new RuntimeException(e);  // Broken system.
-        }
+        return new PeerAddress(InetAddress.getLoopbackAddress(), params.getPort());
     }
 
     @Override
