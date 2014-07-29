@@ -222,7 +222,10 @@ public class PostgresFullPrunedBlockStore implements FullPrunedBlockStore {
             try {
                 if(!conn.getAutoCommit()) {
                     conn.rollback();
-                    conn.close();
+                }
+                conn.close();
+                if(conn == this.conn.get()) {
+                    this.conn.set(null);
                 }
             } catch (SQLException ex) {
                 throw new RuntimeException(ex);
