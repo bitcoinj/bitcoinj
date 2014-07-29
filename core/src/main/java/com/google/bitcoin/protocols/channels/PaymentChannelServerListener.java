@@ -25,6 +25,7 @@ import com.google.bitcoin.net.NioServer;
 import com.google.bitcoin.net.ProtobufParser;
 import com.google.bitcoin.net.StreamParserFactory;
 
+import com.google.protobuf.ByteString;
 import org.bitcoin.paymentchannel.Protos;
 
 import javax.annotation.Nullable;
@@ -82,8 +83,8 @@ public class PaymentChannelServerListener {
                     eventHandler.channelOpen(contractHash);
                 }
 
-                @Override public void paymentIncrease(Coin by, Coin to) {
-                    eventHandler.paymentIncrease(by, to);
+                @Override public void paymentIncrease(Coin by, Coin to, @Nullable ByteString info) {
+                    eventHandler.paymentIncrease(by, to, info);
                 }
             });
 

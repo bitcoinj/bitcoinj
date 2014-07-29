@@ -209,6 +209,9 @@ message UpdatePayment {
     // the primary's refund output and thus the secondary is free to do what they wish with their
     // part of the multisig output.
     required bytes signature = 2;
+    // Information about this update. Used to extend this protocol.
+    optional bytes info =  3;
+
 }
 
 message Settlement {

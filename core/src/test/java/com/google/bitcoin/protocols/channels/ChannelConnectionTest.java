@@ -117,7 +117,7 @@ public class ChannelConnectionTest extends TestWithWallet {
         // Test with network code and without any issues. We'll broadcast two txns: multisig contract and settle transaction.
         final SettableFuture<ListenableFuture<PaymentChannelServerState>> serverCloseFuture = SettableFuture.create();
         final SettableFuture<Sha256Hash> channelOpenFuture = SettableFuture.create();
-        final BlockingQueue<Coin> q = new LinkedBlockingQueue<Coin>();
+        final BlockingQueue<ChannelTestUtils.UpdatePair> q = new LinkedBlockingQueue<ChannelTestUtils.UpdatePair>();
         final PaymentChannelServerListener server = new PaymentChannelServerListener(mockBroadcaster, serverWallet, 30, COIN,
                 new PaymentChannelServerListener.HandlerFactory() {
                     @Nullable
@@ -130,8 +130,8 @@ public class ChannelConnectionTest extends TestWithWallet {
                             }
 
                             @Override
-                            public void paymentIncrease(Coin by, Coin to) {
-                                q.add(to);
+                            public void paymentIncrease(Coin by, Coin to, ByteString info) {
+                                q.add(new ChannelTestUtils.UpdatePair(to, info));
                             }
 
                             @Override
@@ -171,16 +171,13 @@ public class ChannelConnectionTest extends TestWithWallet {
 
         Thread.sleep(1250); // No timeouts once the channel is open
         Coin amount = client.state().getValueSpent();
-        assertEquals(amount, q.take());
-        client.incrementPayment(CENT).get();
-        amount = amount.add(CENT);
-        assertEquals(amount, q.take());
-        client.incrementPayment(CENT).get();
-        amount = amount.add(CENT);
-        assertEquals(amount, q.take());
-        client.incrementPayment(CENT).get();
-        amount = amount.add(CENT);
-        assertEquals(amount, q.take());
+        q.take().assertPair(amount, ByteString.EMPTY);
+        ByteString[] infos = new ByteString[]{ByteString.EMPTY, ByteString.copyFromUtf8("one"),ByteString.copyFromUtf8("two")};
+        for (ByteString info : infos) {
+            client.incrementPayment(CENT, info).get();
+            amount = amount.add(CENT);
+            q.take().assertPair(amount, info);
+        }
         latch.await();
 
         StoredPaymentChannelServerStates channels = (StoredPaymentChannelServerStates)serverWallet.getExtensions().get(StoredPaymentChannelServerStates.EXTENSION_ID);
@@ -301,7 +298,7 @@ public class ChannelConnectionTest extends TestWithWallet {
         Coin amount = minPayment.add(CENT);
         client.incrementPayment(CENT);
         server.receiveMessage(pair.clientRecorder.checkNextMsg(MessageType.UPDATE_PAYMENT));
-        assertEquals(amount, pair.serverRecorder.q.take());
+        assertEquals(amount, ((ChannelTestUtils.UpdatePair)pair.serverRecorder.q.take()).amount);
         server.close();
         server.connectionClosed();
         client.receiveMessage(pair.serverRecorder.checkNextMsg(MessageType.PAYMENT_ACK));

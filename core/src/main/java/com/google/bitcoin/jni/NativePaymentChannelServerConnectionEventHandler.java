@@ -3,6 +3,7 @@ package com.google.bitcoin.jni;
 import com.google.bitcoin.core.*;
 import com.google.bitcoin.protocols.channels.PaymentChannelCloseException;
 import com.google.bitcoin.protocols.channels.ServerConnectionEventHandler;
+import com.google.protobuf.ByteString;
 
 /**
  * An event listener that relays events to a native C++ object. A pointer to that object is stored in
@@ -16,7 +17,7 @@ public class NativePaymentChannelServerConnectionEventHandler extends ServerConn
     public native void channelOpen(Sha256Hash channelId);
 
     @Override
-    public native void paymentIncrease(Coin by, Coin to);
+    public native void paymentIncrease(Coin by, Coin to, ByteString info);
 
     @Override
     public native void channelClosed(PaymentChannelCloseException.CloseReason reason);
