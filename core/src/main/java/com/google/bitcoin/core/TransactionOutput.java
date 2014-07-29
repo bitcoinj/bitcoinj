@@ -137,22 +137,37 @@ public class TransactionOutput extends ChildMessage implements Serializable {
         return script;
     }
 
-    /*
-     * If the output script pays to an address, returns the address i.e., a base-58 hash of the public key
-     * in the Pay-To-Public-Key-Hash (P2PKH) script
+    /**
+     * <p>If the output script pays to an address as in <a href="https://bitcoin.org/en/developer-guide#term-p2pkh">
+     * P2PKH</a>, return the address of the receiver, i.e., a base58 encoded hash of the public key in the script. </p>
+     *
+     * @param networkParameters needed to specify an address
+     * @return null, if the output script is not the form <i>OP_DUP OP_HASH160 <PubkeyHash> OP_EQUALVERIFY OP_CHECKSIG</i>,
+     * i.e., not P2PKH
+     * @return an address made out of the public key hash
      */
-    public Address getAddressFromPubKey(NetworkParameters networkParameters) throws ScriptException{
+    @Nullable
+    public Address getAddressFromP2PKHScript(NetworkParameters networkParameters) throws ScriptException{
         if (getScriptPubKey().isSentToAddress())
             return getScriptPubKey().getToAddress(networkParameters);
 
         return null;
     }
 
-    /*
-     * If the output script pays to an script, returns the address i.e., a 20-byte hash of the script
-     * in the Pay-To-Public-Script-Hash (P2PSH) script
+    /**
+     * <p>If the output script pays to a redeem script, return the address of the redeem script as described by,
+     * i.e., a base58 encoding of [one-byte version][20-byte hash][4-byte checksum], where the 20-byte hash refers to
+     * the redeem script.</p>
+     *
+     * <p>P2SH is described by <a href="https://github.com/bitcoin/bips/blob/master/bip-0016.mediawiki">BIP 16</a> and
+     * <a href="https://bitcoin.org/en/developer-guide#p2sh-scripts">documented in the Bitcoin Developer Guide</a>.</p>
+     *
+     * @param networkParameters needed to specify an address
+     * @return null if the output script does not pay to a script hash
+     * @return an address that belongs to the redeem script
      */
-    public Address getAddressFromScript(NetworkParameters networkParameters) throws ScriptException{
+    @Nullable
+    public Address getAddressFromP2SH(NetworkParameters networkParameters) throws ScriptException{
         if (getScriptPubKey().isPayToScriptHash())
             return getScriptPubKey().getToAddress(networkParameters);
 
