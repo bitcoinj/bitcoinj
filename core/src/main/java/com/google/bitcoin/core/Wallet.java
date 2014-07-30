@@ -215,10 +215,18 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
         return new Wallet(params, new KeyChainGroup(params, seed));
     }
 
+    /**
+     * Creates a wallet that tracks payments to and from the HD key hierarchy rooted by the given watching key. A
+     * watching key corresponds to account zero in the recommended BIP32 key hierarchy.
+     */
     public static Wallet fromWatchingKey(NetworkParameters params, DeterministicKey watchKey, long creationTimeSeconds) {
         return new Wallet(params, new KeyChainGroup(params, watchKey, creationTimeSeconds));
     }
 
+    /**
+     * Creates a wallet that tracks payments to and from the HD key hierarchy rooted by the given watching key. A
+     * watching key corresponds to account zero in the recommended BIP32 key hierarchy.
+     */
     public static Wallet fromWatchingKey(NetworkParameters params, DeterministicKey watchKey) {
         return new Wallet(params, new KeyChainGroup(params, watchKey));
     }
@@ -611,7 +619,8 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
     /**
      * Returns a public-only DeterministicKey that can be used to set up a watching wallet: that is, a wallet that
      * can import transactions from the block chain just as the normal wallet can, but which cannot spend. Watching
-     * wallets are very useful for things like web servers that accept payments.
+     * wallets are very useful for things like web servers that accept payments. This key corresponds to the account
+     * zero key in the recommended BIP32 hierarchy.
      */
     public DeterministicKey getWatchingKey() {
         lock.lock();
