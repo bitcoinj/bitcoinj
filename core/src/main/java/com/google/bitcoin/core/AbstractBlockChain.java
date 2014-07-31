@@ -132,6 +132,9 @@ public abstract class AbstractBlockChain {
     /** False positive estimation uses a double exponential moving average. */
     public static final double FP_ESTIMATOR_BETA = 0.01;
 
+    // This objct is meant to be synchronized upon whenever falsePositiveRate, falsePositiveTrend or
+    // previousFalsePositiveRate need to be read or updated
+    private final Object falsePositiveLock = new Object();
     private double falsePositiveRate;
     private double falsePositiveTrend;
     private double previousFalsePositiveRate;
@@ -358,21 +361,13 @@ public abstract class AbstractBlockChain {
                 return true;
             }
 
-            // Does this block contain any transactions we might care about? Check this up front before verifying the
-            // blocks validity so we can skip the merkle root verification if the contents aren't interesting. This saves
-            // a lot of time for big blocks.
-            boolean contentsImportant = shouldVerifyTransactions();
-            if (block.transactions != null) {
-                contentsImportant = contentsImportant || containsRelevantTransactions(block);
-            }
-
             // Prove the block is internally valid: hash is lower than target, etc. This only checks the block contents
-            // if there is a tx sending or receiving coins using an address in one of our wallets. And those transactions
-            // are only lightly verified: presence in a valid connecting block is taken as proof of validity. See the
-            // article here for more details: http://code.google.com/p/bitcoinj/wiki/SecurityModel
+            // if we are processing a full block. The block's transactions are only lightly verified: presence in a
+            // valid connecting block is taken as proof of validity. See the article here for more details:
+            // http://code.google.com/p/bitcoinj/wiki/SecurityModel
             try {
                 block.verifyHeader();
-                if (contentsImportant)
+                if (block.transactions != null)
                     block.verifyTransactions();
             } catch (VerificationException e) {
                 log.error("Failed to verify block: ", e);
@@ -497,57 +492,46 @@ public abstract class AbstractBlockChain {
         // Notify the listeners of the new block, so the depth and workDone of stored transactions can be updated
         // (in the case of the listener being a wallet). Wallets need to know how deep each transaction is so
         // coinbases aren't used before maturity.
-        boolean first = true;
-        Set<Sha256Hash> falsePositives = Sets.newHashSet();
+        final Set<Sha256Hash> falsePositives = Sets.newHashSet();
         if (filteredTxHashList != null) falsePositives.addAll(filteredTxHashList);
+        // We only clone the transaction if we have more than one listener to avoid the overhead
+        // in the common case where there is only one listener
+        final boolean cloneTransaction = listeners.size() > 1;
         for (final ListenerRegistration<BlockChainListener> registration : listeners) {
-            if (registration.executor == Threading.SAME_THREAD) {
-                informListenerForNewTransactions(block, newBlockType, filteredTxHashList, filteredTxn,
-                        newStoredBlock, first, registration.listener, falsePositives);
-                if (newBlockType == NewBlockType.BEST_CHAIN)
-                    registration.listener.notifyNewBestBlock(newStoredBlock);
-            } else {
-                // Listener wants to be run on some other thread, so marshal it across here.
-                final boolean notFirst = !first;
-                registration.executor.execute(new Runnable() {
-                    @Override
-                    public void run() {
-                        try {
-                            // We can't do false-positive handling when executing on another thread
-                            Set<Sha256Hash> ignoredFalsePositives = Sets.newHashSet();
-                            informListenerForNewTransactions(block, newBlockType, filteredTxHashList, filteredTxn,
-                                    newStoredBlock, notFirst, registration.listener, ignoredFalsePositives);
-                            if (newBlockType == NewBlockType.BEST_CHAIN)
-                                registration.listener.notifyNewBestBlock(newStoredBlock);
-                        } catch (VerificationException e) {
-                            log.error("Block chain listener threw exception: ", e);
-                            // Don't attempt to relay this back to the original peer thread if this was an async
-                            // listener invocation.
-                            // TODO: Make exception reporting a global feature and use it here.
-                        }
+            registration.executor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        informListenerForNewTransactions(block, newBlockType, filteredTxHashList, filteredTxn,
+                                newStoredBlock, cloneTransaction, registration.listener, falsePositives);
+                        if (newBlockType == NewBlockType.BEST_CHAIN)
+                            registration.listener.notifyNewBestBlock(newStoredBlock);
+                        trackFalsePositives(falsePositives.size());
+                    } catch (VerificationException e) {
+                        log.error("Block chain listener threw exception: ", e);
+                        // Don't attempt to relay this back to the original peer thread if this was an async
+                        // listener invocation.
+                        // TODO: Make exception reporting a global feature and use it here.
                     }
-                });
-            }
-            first = false;
+                }
+            });
         }
-
-        trackFalsePositives(falsePositives.size());
     }
 
+    /**
+     * @param cloneTransaction If two wallets are interested in the same transaction, we should clone the transaction
+     *                         to ensure that they don't end up accidentally sharing the same object (which can result
+     *                         in temporary in-memory corruption during re-orgs). See bug 257.
+     */
     private static void informListenerForNewTransactions(Block block, NewBlockType newBlockType,
                                                          @Nullable List<Sha256Hash> filteredTxHashList,
                                                          @Nullable Map<Sha256Hash, Transaction> filteredTxn,
-                                                         StoredBlock newStoredBlock, boolean first,
+                                                         StoredBlock newStoredBlock, boolean cloneTransaction,
                                                          BlockChainListener listener,
                                                          Set<Sha256Hash> falsePositives) throws VerificationException {
         if (block.transactions != null) {
-            // If this is not the first wallet, ask for the transactions to be duplicated before being given
-            // to the wallet when relevant. This ensures that if we have two connected wallets and a tx that
-            // is relevant to both of them, they don't end up accidentally sharing the same object (which can
-            // result in temporary in-memory corruption during re-orgs). See bug 257. We only duplicate in
-            // the case of multiple wallets to avoid an unnecessary efficiency hit in the common case.
             sendTransactionsToListener(newStoredBlock, newBlockType, listener, 0, block.transactions,
-                    !first, falsePositives);
+                    cloneTransaction, falsePositives);
         } else if (filteredTxHashList != null) {
             checkNotNull(filteredTxn);
             // We must send transactions to listeners in the order they appeared in the block - thus we iterate over the
@@ -558,7 +542,7 @@ public abstract class AbstractBlockChain {
                 Transaction tx = filteredTxn.get(hash);
                 if (tx != null) {
                     sendTransactionsToListener(newStoredBlock, newBlockType, listener, relativityOffset,
-                            Arrays.asList(tx), !first, falsePositives);
+                            Arrays.asList(tx), cloneTransaction, falsePositives);
                 } else {
                     if (listener.notifyTransactionIsInBlock(hash, newStoredBlock, newBlockType, relativityOffset)) {
                         falsePositives.remove(hash);
@@ -895,26 +879,6 @@ public abstract class AbstractBlockChain {
     }
 
     /**
-     * Returns true if any connected wallet considers any transaction in the block to be relevant.
-     */
-    private boolean containsRelevantTransactions(Block block) {
-        // Does not need to be locked.
-        for (Transaction tx : block.transactions) {
-            try {
-                for (final ListenerRegistration<BlockChainListener> registration : listeners) {
-                    if (registration.executor != Threading.SAME_THREAD) continue;
-                    if (registration.listener.isTransactionRelevant(tx)) return true;
-                }
-            } catch (ScriptException e) {
-                // We don't want scripts we don't understand to break the block chain so just note that this tx was
-                // not scanned here and continue.
-                log.warn("Failed to parse a script: " + e.toString());
-            }
-        }
-        return false;
-    }
-
-    /**
      * Returns the block at the head of the current best chain. This is the block which represents the greatest
      * amount of cumulative work done.
      */
@@ -1001,7 +965,9 @@ public abstract class AbstractBlockChain {
      * - 0.0 if the transaction was relevant or filtered out
      */
     public double getFalsePositiveRate() {
-        return falsePositiveRate;
+        synchronized (falsePositiveLock) {
+            return falsePositiveRate;
+        }
     }
 
     /*
@@ -1019,37 +985,42 @@ public abstract class AbstractBlockChain {
         // which counts FP as if they came at the beginning of the block.  Assuming uniform FP
         // spread in a block, this will somewhat underestimate the FP rate (5% for 1000 tx block).
         double alphaDecay = Math.pow(1 - FP_ESTIMATOR_ALPHA, count);
-
-        // new_rate = alpha_decay * new_rate
-        falsePositiveRate = alphaDecay * falsePositiveRate;
-
         double betaDecay = Math.pow(1 - FP_ESTIMATOR_BETA, count);
 
-        // trend = beta * (new_rate - old_rate) + beta_decay * trend
-        falsePositiveTrend =
-                FP_ESTIMATOR_BETA * count * (falsePositiveRate - previousFalsePositiveRate) +
-                betaDecay * falsePositiveTrend;
+        synchronized (falsePositiveLock) {
+            // new_rate = alpha_decay * new_rate
+            falsePositiveRate = alphaDecay * falsePositiveRate;
 
-        // new_rate += alpha_decay * trend
-        falsePositiveRate += alphaDecay * falsePositiveTrend;
+            // trend = beta * (new_rate - old_rate) + beta_decay * trend
+            falsePositiveTrend =
+                    FP_ESTIMATOR_BETA * count * (falsePositiveRate - previousFalsePositiveRate) +
+                            betaDecay * falsePositiveTrend;
 
-        // Stash new_rate in old_rate
-        previousFalsePositiveRate = falsePositiveRate;
+            // new_rate += alpha_decay * trend
+            falsePositiveRate += alphaDecay * falsePositiveTrend;
+
+            // Stash new_rate in old_rate
+            previousFalsePositiveRate = falsePositiveRate;
+        }
     }
 
     /* Irrelevant transactions were received.  Update false-positive estimate. */
     void trackFalsePositives(int count) {
         // Track false positives in batch by adding alpha to the false positive estimate once per count.
         // Each false positive counts as 1.0 towards the estimate.
-        falsePositiveRate += FP_ESTIMATOR_ALPHA * count;
-        if (count > 0)
-            log.debug("{} false positives, current rate = {} trend = {}", count, falsePositiveRate, falsePositiveTrend);
+        synchronized (falsePositiveLock) {
+            falsePositiveRate += FP_ESTIMATOR_ALPHA * count;
+            if (count > 0)
+                log.debug("{} false positives, current rate = {} trend = {}", count, falsePositiveRate, falsePositiveTrend);
+        }
     }
 
     /** Resets estimates of false positives. Used when the filter is sent to the peer. */
     public void resetFalsePositiveEstimate() {
-        falsePositiveRate = 0;
-        falsePositiveTrend = 0;
-        previousFalsePositiveRate = 0;
+        synchronized (falsePositiveLock) {
+            falsePositiveRate = 0;
+            falsePositiveTrend = 0;
+            previousFalsePositiveRate = 0;
+        }
     }
 }
