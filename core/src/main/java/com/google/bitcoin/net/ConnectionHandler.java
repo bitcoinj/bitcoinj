@@ -86,7 +86,9 @@ class ConnectionHandler implements MessageWriteTarget {
     public ConnectionHandler(StreamParser parser, SelectionKey key, Set<ConnectionHandler> connectedHandlers) {
         this(checkNotNull(parser), key);
 
-        // closeConnection() may have already happened, in which case we shouldn't add ourselves to the connectedHandlers set
+        // closeConnection() may have already happened because we invoked the other c'tor above, which called
+        // parser.setWriteTarget which might have re-entered already. In this case we shouldn't add ourselves
+        // to the connectedHandlers set.
         lock.lock();
         boolean alreadyClosed = false;
         try {
