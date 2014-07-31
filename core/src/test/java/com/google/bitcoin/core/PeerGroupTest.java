@@ -26,6 +26,7 @@ import com.google.bitcoin.testing.TestWithPeerGroup;
 import com.google.bitcoin.utils.Threading;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import com.google.common.net.InetAddresses;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import org.junit.After;
@@ -652,7 +653,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
     @Test
     public void preferLocalPeer() throws IOException {
         // Check that if we have a localhost port 8333 then it's used instead of the p2p network.
-        ServerSocket local = new ServerSocket(params.getPort(), 100, InetAddress.getLoopbackAddress());
+        ServerSocket local = new ServerSocket(params.getPort(), 100, InetAddresses.forString("127.0.0.1"));
         try {
             peerGroup.startAsync();
             peerGroup.awaitRunning();

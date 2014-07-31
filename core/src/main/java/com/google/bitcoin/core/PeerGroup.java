@@ -34,6 +34,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
 import com.google.common.io.Closeables;
+import com.google.common.net.InetAddresses;
 import com.google.common.primitives.Ints;
 import com.google.common.primitives.Longs;
 import com.google.common.util.concurrent.*;
@@ -706,9 +707,13 @@ public class PeerGroup extends AbstractExecutionThreadService implements Transac
             // Do a fast blocking connect to see if anything is listening.
             try {
                 Socket socket = new Socket();
-                socket.connect(new InetSocketAddress(InetAddress.getLoopbackAddress(), params.getPort()), vConnectTimeoutMillis);
+                socket.connect(new InetSocketAddress(InetAddresses.forString("127.0.0.1"), params.getPort()), vConnectTimeoutMillis);
                 localhostCheckState = LocalhostCheckState.FOUND;
-                Closeables.close(socket, true);
+                try {
+                    socket.close();
+                } catch (IOException e) {
+                    // Ignore.
+                }
                 return true;
             } catch (IOException e) {
                 log.info("Localhost peer not detected.");
