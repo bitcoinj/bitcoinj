@@ -83,6 +83,7 @@ message TwoWayChannelMessage {
     optional ReturnRefund return_refund = 6;
     optional ProvideContract provide_contract = 7;
     optional UpdatePayment update_payment = 8;
+    optional PaymentAck payment_ack = 11;
     optional Settlement settlement = 9;
 
     optional Error error = 10;
@@ -212,6 +213,12 @@ message UpdatePayment {
     // Information about this update. Used to extend this protocol.
     optional bytes info =  3;
 
+}
+
+// This message is sent as an acknowledgement of an UpdatePayment message
+message PaymentAck {
+    // Information about this update. Used to extend this protocol
+    optional bytes info = 1;
 }
 
 message Settlement {
