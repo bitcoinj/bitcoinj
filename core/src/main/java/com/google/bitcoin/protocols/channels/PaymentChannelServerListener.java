@@ -83,8 +83,8 @@ public class PaymentChannelServerListener {
                     eventHandler.channelOpen(contractHash);
                 }
 
-                @Override public void paymentIncrease(Coin by, Coin to, @Nullable ByteString info) {
-                    eventHandler.paymentIncrease(by, to, info);
+                @Override public ByteString paymentIncrease(Coin by, Coin to, @Nullable ByteString info) {
+                    return eventHandler.paymentIncrease(by, to, info);
                 }
             });
 

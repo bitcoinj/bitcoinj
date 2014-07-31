@@ -90,7 +90,7 @@ public class PaymentChannelClient implements IPaymentChannelClient {
 
     @GuardedBy("lock") private long minPayment;
 
-    @GuardedBy("lock") SettableFuture<Coin> increasePaymentFuture;
+    @GuardedBy("lock") SettableFuture<PaymentIncrementAck> increasePaymentFuture;
     @GuardedBy("lock") Coin lastPaymentActualAmount;
 
     /**
@@ -290,7 +290,7 @@ public class PaymentChannelClient implements IPaymentChannelClient {
                         receiveChannelOpen();
                         return;
                     case PAYMENT_ACK:
-                        receivePaymentAck();
+                        receivePaymentAck(msg.getPaymentAck());
                         return;
                     case CLOSE:
                         receiveClose(msg);
@@ -462,13 +462,13 @@ public class PaymentChannelClient implements IPaymentChannelClient {
      * you wait for the previous increase payment future to complete before incrementing the payment again.
      *
      * @param size How many satoshis to increment the payment by (note: not the new total).
+     * @return a future that completes when the server acknowledges receipt and acceptance of the payment.
      * @throws ValueOutOfRangeException If the size is negative or would pay more than this channel's total value
      *                                  ({@link PaymentChannelClientConnection#state()}.getTotalValue())
      * @throws IllegalStateException If the channel has been closed or is not yet open
      *                               (see {@link PaymentChannelClientConnection#getChannelOpenFuture()} for the second)
-     * @return a future that completes when the server acknowledges receipt and acceptance of the payment.
      */
-    public ListenableFuture<Coin> incrementPayment(Coin size) throws ValueOutOfRangeException, IllegalStateException {
+    public ListenableFuture<PaymentIncrementAck> incrementPayment(Coin size) throws ValueOutOfRangeException, IllegalStateException {
         return  incrementPayment(size, null);
     }
 
@@ -481,14 +481,14 @@ public class PaymentChannelClient implements IPaymentChannelClient {
      *
      * @param size How many satoshis to increment the payment by (note: not the new total).
      * @param info Information about this update, used to extend this protocol.
+     * @return a future that completes when the server acknowledges receipt and acceptance of the payment.
      * @throws ValueOutOfRangeException If the size is negative or would pay more than this channel's total value
      *                                  ({@link PaymentChannelClientConnection#state()}.getTotalValue())
      * @throws IllegalStateException If the channel has been closed or is not yet open
      *                               (see {@link PaymentChannelClientConnection#getChannelOpenFuture()} for the second)
-     * @return a future that completes when the server acknowledges receipt and acceptance of the payment.
      */
     @Override
-    public ListenableFuture<Coin> incrementPayment(Coin size, @Nullable ByteString info) throws ValueOutOfRangeException, IllegalStateException {
+    public ListenableFuture<PaymentIncrementAck> incrementPayment(Coin size, @Nullable ByteString info) throws ValueOutOfRangeException, IllegalStateException {
         lock.lock();
         try {
             if (state() == null || !connectionOpen || step != InitStep.CHANNEL_OPEN)
@@ -523,8 +523,8 @@ public class PaymentChannelClient implements IPaymentChannelClient {
         }
     }
 
-    private void receivePaymentAck() {
-        SettableFuture<Coin> future;
+    private void receivePaymentAck(Protos.PaymentAck paymentAck) {
+        SettableFuture<PaymentIncrementAck> future;
         Coin value;
 
         lock.lock();
@@ -539,6 +539,6 @@ public class PaymentChannelClient implements IPaymentChannelClient {
         }
 
         // Ensure the future runs without the client lock held.
-        future.set(value);
+        future.set(new PaymentIncrementAck(value, paymentAck.getInfo()));
     }
 }

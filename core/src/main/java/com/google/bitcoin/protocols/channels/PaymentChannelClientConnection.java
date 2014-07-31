@@ -136,7 +136,7 @@ public class PaymentChannelClientConnection {
      * @throws IllegalStateException If the channel has been closed or is not yet open
      *                               (see {@link PaymentChannelClientConnection#getChannelOpenFuture()} for the second)
      */
-    public ListenableFuture<Coin> incrementPayment(Coin size) throws ValueOutOfRangeException, IllegalStateException {
+    public ListenableFuture<PaymentIncrementAck> incrementPayment(Coin size) throws ValueOutOfRangeException, IllegalStateException {
         return channelClient.incrementPayment(size, null);
     }
     /**
@@ -149,7 +149,7 @@ public class PaymentChannelClientConnection {
      * @throws IllegalStateException If the channel has been closed or is not yet open
      *                               (see {@link PaymentChannelClientConnection#getChannelOpenFuture()} for the second)
      */
-    public ListenableFuture<Coin> incrementPayment(Coin size, ByteString info) throws ValueOutOfRangeException, IllegalStateException {
+    public ListenableFuture<PaymentIncrementAck> incrementPayment(Coin size, ByteString info) throws ValueOutOfRangeException, IllegalStateException {
         return channelClient.incrementPayment(size, info);
     }
 

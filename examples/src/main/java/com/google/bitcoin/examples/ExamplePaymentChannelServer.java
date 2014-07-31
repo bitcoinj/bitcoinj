@@ -102,8 +102,9 @@ public class ExamplePaymentChannelServer implements PaymentChannelServerListener
             }
 
             @Override
-            public void paymentIncrease(Coin by, Coin to, ByteString info) {
+            public ByteString paymentIncrease(Coin by, Coin to, ByteString info) {
                 log.info("Client {} paid increased payment by {} for a total of " + to.toString(), clientAddress, by);
+                return null;
             }
 
             @Override
