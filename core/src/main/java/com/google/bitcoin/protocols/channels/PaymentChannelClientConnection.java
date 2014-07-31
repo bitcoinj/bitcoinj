@@ -137,7 +137,7 @@ public class PaymentChannelClientConnection {
      *                               (see {@link PaymentChannelClientConnection#getChannelOpenFuture()} for the second)
      */
     public ListenableFuture<Coin> incrementPayment(Coin size) throws ValueOutOfRangeException, IllegalStateException {
-        return channelClient.incrementPayment(size, ByteString.EMPTY);
+        return channelClient.incrementPayment(size, null);
     }
     /**
      * Increments the total value which we pay the server.

@@ -469,7 +469,7 @@ public class PaymentChannelClient implements IPaymentChannelClient {
      * @return a future that completes when the server acknowledges receipt and acceptance of the payment.
      */
     public ListenableFuture<Coin> incrementPayment(Coin size) throws ValueOutOfRangeException, IllegalStateException {
-        return  incrementPayment(size, ByteString.EMPTY);
+        return  incrementPayment(size, null);
     }
 
     /**

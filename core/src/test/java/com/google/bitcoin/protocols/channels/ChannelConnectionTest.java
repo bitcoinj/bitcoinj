@@ -171,8 +171,8 @@ public class ChannelConnectionTest extends TestWithWallet {
 
         Thread.sleep(1250); // No timeouts once the channel is open
         Coin amount = client.state().getValueSpent();
-        q.take().assertPair(amount, ByteString.EMPTY);
-        ByteString[] infos = new ByteString[]{ByteString.EMPTY, ByteString.copyFromUtf8("one"),ByteString.copyFromUtf8("two")};
+        q.take().assertPair(amount, null);
+        ByteString[] infos = new ByteString[]{null, ByteString.copyFromUtf8("one"),ByteString.copyFromUtf8("two")};
         for (ByteString info : infos) {
             client.incrementPayment(CENT, info).get();
             amount = amount.add(CENT);
