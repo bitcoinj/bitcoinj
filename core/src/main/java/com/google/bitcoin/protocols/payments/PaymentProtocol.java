@@ -98,7 +98,7 @@ public class PaymentProtocol {
             paymentDetails.setPaymentUrl(paymentUrl);
         if (merchantData != null)
             paymentDetails.setMerchantData(ByteString.copyFrom(merchantData));
-        paymentDetails.setTime(System.currentTimeMillis());
+        paymentDetails.setTime(System.currentTimeMillis() / 1000);
 
         final Protos.PaymentRequest.Builder paymentRequest = Protos.PaymentRequest.newBuilder();
         paymentRequest.setSerializedPaymentDetails(paymentDetails.build().toByteString());
