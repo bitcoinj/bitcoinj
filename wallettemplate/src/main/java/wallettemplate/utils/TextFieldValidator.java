@@ -1,25 +1,27 @@
 package wallettemplate.utils;
 
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.scene.Scene;
-import javafx.scene.control.TextField;
+import javafx.scene.control.TextInputControl;
 
 import java.util.function.Predicate;
 
 public class TextFieldValidator {
-    private boolean valid;
+    public final BooleanProperty valid = new SimpleBooleanProperty(false);
 
-    public TextFieldValidator(TextField textField, Predicate<String> validator) {
-        this.valid = validator.test(textField.getText());
-        apply(textField, valid);
-        textField.textProperty().addListener((observableValue, prev, current) -> {
+    public TextFieldValidator(TextInputControl control, Predicate<String> validator) {
+        this.valid.set(validator.test(control.getText()));
+        apply(control, valid.get());
+        control.textProperty().addListener((observableValue, prev, current) -> {
             boolean nowValid = validator.test(current);
-            if (nowValid == valid) return;
-            apply(textField, nowValid);
-            valid = nowValid;
+            if (nowValid == valid.get()) return;
+            valid.set(nowValid);
         });
+        valid.addListener(o -> apply(control, valid.get()));
     }
 
-    private static void apply(TextField textField, boolean nowValid) {
+    private static void apply(TextInputControl textField, boolean nowValid) {
         if (nowValid) {
             textField.getStyleClass().remove("validation_error");
         } else {

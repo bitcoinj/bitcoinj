@@ -84,7 +84,7 @@ public class Transaction extends ChildMessage implements Serializable {
     public static final int LOCKTIME_THRESHOLD = 500000000; // Tue Nov  5 00:53:20 1985 UTC
 
     /** How many bytes a transaction can be before it won't be relayed anymore. Currently 100kb. */
-    public static final int MAX_STANDARD_TX_SIZE = 100 * 1024;
+    public static final int MAX_STANDARD_TX_SIZE = 100000;
 
     /**
      * If fee is lower than this value (in satoshis), a default reference client will treat it as if there were no fee.
@@ -145,7 +145,12 @@ public class Transaction extends ChildMessage implements Serializable {
         USER_PAYMENT,
         /** Transaction automatically created and broadcast in order to reallocate money from old to new keys. */
         KEY_ROTATION,
-
+        /** Transaction that uses up pledges to an assurance contract */
+        ASSURANCE_CONTRACT_CLAIM,
+        /** Transaction that makes a pledge to an assurance contract. */
+        ASSURANCE_CONTRACT_PLEDGE,
+        /** Send-to-self transaction that exists just to create an output of the right size we can pledge. */
+        ASSURANCE_CONTRACT_STUB
         // In future: de/refragmentation, privacy boosting/mixing, child-pays-for-parent fees, etc.
     }
 
@@ -655,7 +660,7 @@ public class Transaction extends ChildMessage implements Serializable {
                 Script scriptSig = in.getScriptSig();
                 s.append(scriptSig);
                 if (in.getValue() != null)
-                    s.append(" ").append(in.getValue().toFriendlyString()).append(" BTC");
+                    s.append(" ").append(in.getValue().toFriendlyString());
                 s.append("\n          ");
                 s.append("outpoint:");
                 final TransactionOutPoint outpoint = in.getOutpoint();
@@ -678,7 +683,6 @@ public class Transaction extends ChildMessage implements Serializable {
                 s.append(scriptPubKey);
                 s.append(" ");
                 s.append(out.getValue().toFriendlyString());
-                s.append(" BTC");
                 if (!out.isAvailableForSpending()) {
                     s.append(" Spent");
                 }
@@ -956,15 +960,15 @@ public class Transaction extends ChildMessage implements Serializable {
      *
      * @param inputIndex Which input to calculate the signature for, as an index.
      * @param key The private key used to calculate the signature.
-     * @param connectedPubKeyScript Byte-exact contents of the scriptPubKey that is being satisified.
+     * @param redeemScript Byte-exact contents of the scriptPubKey that is being satisified, or the P2SH redeem script.
      * @param hashType Signing mode, see the enum for documentation.
      * @param anyoneCanPay Signing mode, see the SigHash enum for documentation.
      * @return A newly calculated signature object that wraps the r, s and sighash components.
      */
     public synchronized TransactionSignature calculateSignature(int inputIndex, ECKey key,
-                                                                byte[] connectedPubKeyScript,
+                                                                byte[] redeemScript,
                                                                 SigHash hashType, boolean anyoneCanPay) {
-        Sha256Hash hash = hashForSignature(inputIndex, connectedPubKeyScript, hashType, anyoneCanPay);
+        Sha256Hash hash = hashForSignature(inputIndex, redeemScript, hashType, anyoneCanPay);
         return new TransactionSignature(key.sign(hash), hashType, anyoneCanPay);
     }
 
@@ -975,14 +979,15 @@ public class Transaction extends ChildMessage implements Serializable {
      *
      * @param inputIndex Which input to calculate the signature for, as an index.
      * @param key The private key used to calculate the signature.
-     * @param connectedPubKeyScript The scriptPubKey that is being satisified.
+     * @param redeemScript The scriptPubKey that is being satisified, or the P2SH redeem script.
      * @param hashType Signing mode, see the enum for documentation.
      * @param anyoneCanPay Signing mode, see the SigHash enum for documentation.
      * @return A newly calculated signature object that wraps the r, s and sighash components.
      */
-    public synchronized  TransactionSignature calculateSignature(int inputIndex, ECKey key, Script connectedPubKeyScript,
+    public synchronized  TransactionSignature calculateSignature(int inputIndex, ECKey key,
+                                                                 Script redeemScript,
                                                                  SigHash hashType, boolean anyoneCanPay) {
-        Sha256Hash hash = hashForSignature(inputIndex, connectedPubKeyScript.getProgram(), hashType, anyoneCanPay);
+        Sha256Hash hash = hashForSignature(inputIndex, redeemScript.getProgram(), hashType, anyoneCanPay);
         return new TransactionSignature(key.sign(hash), hashType, anyoneCanPay);
     }
 
@@ -990,36 +995,40 @@ public class Transaction extends ChildMessage implements Serializable {
      * <p>Calculates a signature hash, that is, a hash of a simplified form of the transaction. How exactly the transaction
      * is simplified is specified by the type and anyoneCanPay parameters.</p>
      *
-     * <p>You don't normally ever need to call this yourself. It will become more useful in future as the contracts
-     * features of Bitcoin are developed.</p>
+     * <p>This is a low level API and when using the regular {@link Wallet} class you don't have to call this yourself.
+     * When working with more complex transaction types and contracts, it can be necessary. When signing a P2SH output
+     * the redeemScript should be the script encoded into the scriptSig field, for normal transactions, it's the
+     * scriptPubKey of the output you're signing for.</p>
      *
      * @param inputIndex input the signature is being calculated for. Tx signatures are always relative to an input.
-     * @param connectedScript the bytes that should be in the given input during signing.
+     * @param redeemScript the bytes that should be in the given input during signing.
      * @param type Should be SigHash.ALL
      * @param anyoneCanPay should be false.
      */
-    public synchronized Sha256Hash hashForSignature(int inputIndex, byte[] connectedScript,
+    public synchronized Sha256Hash hashForSignature(int inputIndex, byte[] redeemScript,
                                                     SigHash type, boolean anyoneCanPay) {
         byte sigHashType = (byte) TransactionSignature.calcSigHashValue(type, anyoneCanPay);
-        return hashForSignature(inputIndex, connectedScript, sigHashType);
+        return hashForSignature(inputIndex, redeemScript, sigHashType);
     }
 
     /**
      * <p>Calculates a signature hash, that is, a hash of a simplified form of the transaction. How exactly the transaction
      * is simplified is specified by the type and anyoneCanPay parameters.</p>
      *
-     * <p>You don't normally ever need to call this yourself. It will become more useful in future as the contracts
-     * features of Bitcoin are developed.</p>
+     * <p>This is a low level API and when using the regular {@link Wallet} class you don't have to call this yourself.
+     * When working with more complex transaction types and contracts, it can be necessary. When signing a P2SH output
+     * the redeemScript should be the script encoded into the scriptSig field, for normal transactions, it's the
+     * scriptPubKey of the output you're signing for.</p>
      *
      * @param inputIndex input the signature is being calculated for. Tx signatures are always relative to an input.
-     * @param connectedScript the script that should be in the given input during signing.
+     * @param redeemScript the script that should be in the given input during signing.
      * @param type Should be SigHash.ALL
      * @param anyoneCanPay should be false.
      */
-    public synchronized Sha256Hash hashForSignature(int inputIndex, Script connectedScript,
+    public synchronized Sha256Hash hashForSignature(int inputIndex, Script redeemScript,
                                                     SigHash type, boolean anyoneCanPay) {
         int sigHash = TransactionSignature.calcSigHashValue(type, anyoneCanPay);
-        return hashForSignature(inputIndex, connectedScript.getProgram(), (byte) sigHash);
+        return hashForSignature(inputIndex, redeemScript.getProgram(), (byte) sigHash);
     }
 
     /**
@@ -1184,6 +1193,26 @@ public class Transaction extends ChildMessage implements Serializable {
     public List<TransactionOutput> getOutputs() {
         maybeParse();
         return Collections.unmodifiableList(outputs);
+    }
+
+    /**
+     * <p>Returns the list of transacion outputs, whether spent or unspent, that match a wallet by address or that are
+     * watched by a wallet, i.e., transaction outputs whose script's address is controlled by the wallet and transaction
+     * outputs whose script is watched by the wallet.</p>
+     *
+     * @param wallet The wallet that controls addresses and watches scripts.
+     * @return linked list of outputs relevant to the wallet in this transaction
+     */
+    public List<TransactionOutput> getWalletOutputs(Wallet wallet){
+        maybeParse();
+        List<TransactionOutput> walletOutputs = new LinkedList<TransactionOutput>();
+        Coin v = Coin.ZERO;
+        for (TransactionOutput o : outputs) {
+            if (!o.isMineOrWatched(wallet)) continue;
+            walletOutputs.add(o);
+        }
+
+        return walletOutputs;
     }
 
     /** Randomly re-orders the transaction outputs: good for privacy */

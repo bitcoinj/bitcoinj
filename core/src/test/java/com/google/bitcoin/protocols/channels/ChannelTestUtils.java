@@ -5,8 +5,10 @@ import com.google.bitcoin.core.Sha256Hash;
 import com.google.bitcoin.core.TransactionBroadcaster;
 import com.google.bitcoin.core.Wallet;
 
+import com.google.protobuf.ByteString;
 import org.bitcoin.paymentchannel.Protos;
 
+import javax.annotation.Nullable;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -35,8 +37,8 @@ public class ChannelTestUtils {
         }
 
         @Override
-        public void paymentIncrease(Coin by, Coin to) {
-            q.add(to);
+        public void paymentIncrease(Coin by, Coin to, @Nullable ByteString info) {
+            q.add(new UpdatePair(to, info));
         }
 
         public Protos.TwoWayChannelMessage getNextMsg() throws InterruptedException {
@@ -50,7 +52,7 @@ public class ChannelTestUtils {
         }
 
         public void checkTotalPayment(Coin valueSoFar) throws InterruptedException {
-            Coin lastSeen = (Coin) q.take();
+            Coin lastSeen = ((UpdatePair) q.take()).amount;
             assertEquals(lastSeen, valueSoFar);
         }
     }
@@ -112,4 +114,40 @@ public class ChannelTestUtils {
         pair.clientRecorder = new RecordingClientConnection();
         return pair;
     }
+
+    public static class UpdatePair {
+        public Coin amount;
+        public ByteString info;
+
+        public UpdatePair(Coin amount, ByteString info) {
+            this.amount = amount;
+            this.info = info;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            UpdatePair that = (UpdatePair) o;
+
+            if (amount != null ? !amount.equals(that.amount) : that.amount != null) return false;
+            if (info != null ? !info.equals(that.info) : that.info != null) return false;
+
+            return true;
+        }
+
+        @Override
+        public int hashCode() {
+            int result = amount != null ? amount.hashCode() : 0;
+            result = 31 * result + (info != null ? info.hashCode() : 0);
+            return result;
+        }
+
+        public void assertPair(Coin amount, ByteString info) {
+            assertEquals(amount, this.amount);
+            assertEquals(info, this.info);
+        }
+    }
+
 }

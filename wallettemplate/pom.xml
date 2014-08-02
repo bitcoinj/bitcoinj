@@ -39,10 +39,17 @@
             <artifactId>guava</artifactId>
             <version>16.0.1</version>
         </dependency>
+        <!-- Native Mac skin (there's also AeroFX, MetroFX, etc)
         <dependency>
             <groupId>com.aquafx-project</groupId>
             <artifactId>aquafx</artifactId>
             <version>0.1</version>
+        </dependency>
+        -->
+        <dependency>
+            <groupId>org.fxmisc.easybind</groupId>
+            <artifactId>easybind</artifactId>
+            <version>1.0.2</version>
         </dependency>
         <dependency>
             <groupId>de.jensd</groupId>

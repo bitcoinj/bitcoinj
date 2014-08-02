@@ -17,6 +17,7 @@
 package com.google.bitcoin.core;
 
 import com.google.bitcoin.params.MainNetParams;
+import com.google.common.net.InetAddresses;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -100,11 +101,7 @@ public class PeerAddress extends ChildMessage {
     }
 
     public static PeerAddress localhost(NetworkParameters params) {
-        try {
-            return new PeerAddress(InetAddress.getLocalHost(), params.getPort());
-        } catch (UnknownHostException e) {
-            throw new RuntimeException(e);  // Broken system.
-        }
+        return new PeerAddress(InetAddresses.forString("127.0.0.1"), params.getPort());
     }
 
     @Override

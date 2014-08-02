@@ -21,14 +21,14 @@
   </parent>
 
   <scm>
-    <connection>scm:git:https://code.google.com/p/bitcoinj/</connection>
-    <developerConnection>scm:git:https://code.google.com/p/bitcoinj/</developerConnection>
-    <url>http://code.google.com/p/bitcoinj/source/browse</url>
+    <connection>scm:git:https://github.com/bitcoinj/bitcoinj</connection>
+    <developerConnection>scm:git:https://github.com/bitcoinj/bitcoinj</developerConnection>
+    <url>scm:git:https://github.com/bitcoinj/bitcoinj</url>
   </scm>
 
   <name>bitcoinj Parent</name>
   <description>Provides the common configuration for the BitCoinJ modules</description>
-  <url>http://code.google.com/p/bitcoinj</url>
+  <url>http://www.bitcoinj.org/</url>
 
   <licenses>
     <license>
@@ -50,13 +50,6 @@
       <post>https://groups.google.com/forum/#!forum/bitcoinj</post>
     </mailingList>
   </mailingLists>
-
-  <repositories>
-    <repository>
-        <id>bitcoinj-distribution</id>
-        <url>https://distribution.bitcoinj.googlecode.com/git/releases</url>
-    </repository>
-  </repositories>
 
   <!-- Common build plugin configuration -->
   <build>

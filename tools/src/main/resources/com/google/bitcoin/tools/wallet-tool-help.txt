@@ -9,6 +9,8 @@ Usage: wallet-tool --flags action-name
   create               Makes a new wallet in the file specified by --wallet.
                        Will complain and require --force if the wallet already exists.
                        If --seed is present, it should specify either a mnemonic code or hex/base58 raw seed bytes.
+  marry                Makes the wallet married with other parties, requiring multisig to spend funds.
+                       External public keys for other signing parties must be specified with --xpubkeys (comma separated).
   add-key              Adds a new key to the wallet, either specified or freshly generated.
                        If --date is specified, that's the creation date.
                        If --unixtime is specified, that's the creation time and it overrides --date.
@@ -43,6 +45,12 @@ Usage: wallet-tool --flags action-name
                           --locktime=2013/01/01  sets the lock time to 1st Jan 2013
                           --allow-unconfirmed will let you create spends of pending non-change outputs.
                           --no-pki disables pki verification for payment requests.
+  encrypt              Requires --password and uses it to encrypt the wallet in place.
+  decrypt              Requires --password and uses it to decrypt the wallet in place.
+  rotate               Takes --date and sets that as the key rotation time. Any coins controlled by keys or HD chains
+                       created before this date will be re-spent to a key (from an HD tree) that was created after it.
+                       If --date is missing, the current time is assumed. If the time covers all keys, a new HD tree
+                       will be created from a new random seed.
 
 >>> GENERAL OPTIONS
   --debuglog           Enables logging from the core library.

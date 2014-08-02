@@ -22,6 +22,7 @@ import com.google.bitcoin.net.discovery.DnsDiscovery;
 import com.google.bitcoin.store.BlockStoreException;
 import com.google.bitcoin.store.SPVBlockStore;
 import com.google.bitcoin.store.WalletProtobufSerializer;
+import com.google.bitcoin.wallet.DeterministicSeed;
 import com.google.bitcoin.wallet.KeyChainGroup;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.AbstractIdleService;
@@ -29,13 +30,14 @@ import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.Service;
 import com.subgraph.orchid.TorClient;
 import org.bitcoinj.wallet.Protos;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import javax.annotation.Nullable;
+import java.io.*;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.nio.channels.FileLock;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -66,6 +68,8 @@ import static com.google.common.base.Preconditions.checkState;
  * out what went wrong more precisely. Same thing if you just use the {@link #startAsync()} method.</p>
  */
 public class WalletAppKit extends AbstractIdleService {
+    protected static final Logger log = LoggerFactory.getLogger(WalletAppKit.class);
+
     protected final String filePrefix;
     protected final NetworkParameters params;
     protected volatile BlockChain vChain;
@@ -85,6 +89,7 @@ public class WalletAppKit extends AbstractIdleService {
     protected boolean useTor = false;   // Perhaps in future we can change this to true.
     protected String userAgent, version;
     protected WalletProtobufSerializer.WalletFactory walletFactory;
+    @Nullable protected DeterministicSeed restoreFromSeed;
 
     public WalletAppKit(NetworkParameters params, File directory, String filePrefix) {
         this.params = checkNotNull(params);
@@ -173,6 +178,19 @@ public class WalletAppKit extends AbstractIdleService {
     }
 
     /**
+     * If a seed is set here then any existing wallet that matches the file name will be renamed to a backup name,
+     * the chain file will be deleted, and the wallet object will be instantiated with the given seed instead of
+     * a fresh one being created. This is intended for restoring a wallet from the original seed. To implement restore
+     * you would shut down the existing appkit, if any, then recreate it with the seed given by the user, then start
+     * up the new kit. The next time your app starts it should work as normal (that is, don't keep calling this each
+     * time).
+     */
+    public WalletAppKit restoreWalletFromSeed(DeterministicSeed seed) {
+        this.restoreFromSeed = seed;
+        return this;
+    }
+
+    /**
      * <p>Override this to return wallet extensions if any are necessary.</p>
      *
      * <p>When this is called, chain(), store(), and peerGroup() will return the created objects, however they are not
@@ -188,6 +206,29 @@ public class WalletAppKit extends AbstractIdleService {
      */
     protected void onSetupCompleted() { }
 
+    /**
+     * Tests to see if the spvchain file has an operating system file lock on it. Useful for checking if your app
+     * is already running. If another copy of your app is running and you start the appkit anyway, an exception will
+     * be thrown during the startup process. Returns false if the chain file does not exist.
+     */
+    public boolean isChainFileLocked() throws IOException {
+        RandomAccessFile file2 = null;
+        try {
+            File file = new File(directory, filePrefix + ".spvchain");
+            if (!file.exists())
+                return false;
+            file2 = new RandomAccessFile(file, "rw");
+            FileLock lock = file2.getChannel().tryLock();
+            if (lock == null)
+                return true;
+            lock.release();
+            return false;
+        } finally {
+            if (file2 != null)
+                file2.close();
+        }
+    }
+
     @Override
     protected void startUp() throws Exception {
         // Runs in a separate thread.
@@ -196,24 +237,36 @@ public class WalletAppKit extends AbstractIdleService {
                 throw new IOException("Could not create named directory.");
             }
         }
+        log.info("Starting up with directory = {}", directory);
         try {
             File chainFile = new File(directory, filePrefix + ".spvchain");
             boolean chainFileExists = chainFile.exists();
             vWalletFile = new File(directory, filePrefix + ".wallet");
-            boolean shouldReplayWallet = vWalletFile.exists() && !chainFileExists;
-
+            boolean shouldReplayWallet = (vWalletFile.exists() && !chainFileExists) || restoreFromSeed != null;
             vStore = new SPVBlockStore(params, chainFile);
-            if (!chainFileExists && checkpoints != null) {
-                // Ugly hack! We have to create the wallet once here to learn the earliest key time, and then throw it
-                // away. The reason is that wallet extensions might need access to peergroups/chains/etc so we have to
-                // create the wallet later, but we need to know the time early here before we create the BlockChain
-                // object.
+            if ((!chainFileExists || restoreFromSeed != null) && checkpoints != null) {
+                // Initialize the chain file with a checkpoint to speed up first-run sync.
                 long time = Long.MAX_VALUE;
-                if (vWalletFile.exists()) {
-                    FileInputStream stream = new FileInputStream(vWalletFile);
-                    final WalletProtobufSerializer serializer = new WalletProtobufSerializer();
-                    final Wallet wallet = serializer.readWallet(params, null, WalletProtobufSerializer.parseToProto(stream));
-                    time = wallet.getEarliestKeyCreationTime();
+                if (restoreFromSeed != null) {
+                    time = restoreFromSeed.getCreationTimeSeconds();
+                    if (chainFileExists) {
+                        log.info("Deleting the chain file in preparation from restore.");
+                        vStore.close();
+                        if (!chainFile.delete())
+                            throw new Exception("Failed to delete chain file in preparation for restore.");
+                        vStore = new SPVBlockStore(params, chainFile);
+                    }
+                } else {
+                    // Ugly hack! We have to create the wallet once here to learn the earliest key time, and then throw it
+                    // away. The reason is that wallet extensions might need access to peergroups/chains/etc so we have to
+                    // create the wallet later, but we need to know the time early here before we create the BlockChain
+                    // object.
+                    if (vWalletFile.exists()) {
+                        FileInputStream stream = new FileInputStream(vWalletFile);
+                        final WalletProtobufSerializer serializer = new WalletProtobufSerializer();
+                        final Wallet wallet = serializer.readWallet(params, null, WalletProtobufSerializer.parseToProto(stream));
+                        time = wallet.getEarliestKeyCreationTime();
+                    }
                 }
                 CheckpointManager.checkpoint(params, checkpoints, vStore, time);
             }
@@ -221,6 +274,9 @@ public class WalletAppKit extends AbstractIdleService {
             vPeerGroup = createPeerGroup();
             if (this.userAgent != null)
                 vPeerGroup.setUserAgent(userAgent, version);
+
+            maybeMoveOldWalletOutOfTheWay();
+
             if (vWalletFile.exists()) {
                 FileInputStream walletStream = new FileInputStream(vWalletFile);
                 try {
@@ -240,7 +296,7 @@ public class WalletAppKit extends AbstractIdleService {
                     walletStream.close();
                 }
             } else {
-                vWallet = walletFactory != null ? walletFactory.create(params, new KeyChainGroup(params)) : new Wallet(params);
+                vWallet = createWallet();
                 vWallet.freshReceiveKey();
                 for (WalletExtension e : provideWalletExtensions()) {
                     vWallet.addExtension(e);
@@ -288,6 +344,35 @@ public class WalletAppKit extends AbstractIdleService {
             }
         } catch (BlockStoreException e) {
             throw new IOException(e);
+        }
+    }
+
+    protected Wallet createWallet() {
+        KeyChainGroup kcg;
+        if (restoreFromSeed != null)
+            kcg = new KeyChainGroup(params, restoreFromSeed);
+        else
+            kcg = new KeyChainGroup(params);
+        if (walletFactory != null) {
+            return walletFactory.create(params, kcg);
+        } else {
+            return new Wallet(params, kcg);  // default
+        }
+    }
+
+    private void maybeMoveOldWalletOutOfTheWay() {
+        if (restoreFromSeed == null) return;
+        if (!vWalletFile.exists()) return;
+        int counter = 1;
+        File newName;
+        do {
+            newName = new File(vWalletFile.getParent(), "Backup " + counter + " for " + vWalletFile.getName());
+            counter++;
+        } while (newName.exists());
+        log.info("Renaming old wallet file {} to {}", vWalletFile, newName);
+        if (!vWalletFile.renameTo(newName)) {
+            // This should not happen unless something is really messed up.
+            throw new RuntimeException("Failed to rename wallet for restore");
         }
     }
 

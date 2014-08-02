@@ -102,6 +102,12 @@ public class MockTransactionBroadcaster implements TransactionBroadcaster {
         return waitForTxFuture().tx;
     }
 
+    public Transaction waitForTransactionAndSucceed() {
+        TxFuturePair pair = waitForTxFuture();
+        pair.succeed();
+        return pair.tx;
+    }
+
     public TxFuturePair waitForTxFuture() {
         try {
             return broadcasts.take();

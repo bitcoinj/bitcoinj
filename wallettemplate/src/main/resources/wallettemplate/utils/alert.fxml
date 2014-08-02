@@ -53,7 +53,7 @@
         </Button>
         <HBox id="HBox" fx:id="okParent" alignment="CENTER">
           <children>
-            <Button fx:id="okButton" minWidth="80.0" mnemonicParsing="false" text="Ok" HBox.hgrow="NEVER">
+            <Button fx:id="okButton" minWidth="80.0" mnemonicParsing="false" text="OK" HBox.hgrow="NEVER">
               <HBox.margin>
                 <Insets left="14.0" />
               </HBox.margin>

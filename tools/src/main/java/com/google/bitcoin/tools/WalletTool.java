@@ -40,7 +40,9 @@ import com.google.common.base.Charsets;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.Resources;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.protobuf.ByteString;
 import com.subgraph.orchid.TorClient;
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
@@ -80,6 +82,7 @@ public class WalletTool {
     private static OptionSpec<Date> dateFlag;
     private static OptionSpec<Integer> unixtimeFlag;
     private static OptionSpec<String> seedFlag, watchFlag;
+    private static OptionSpec<String> xpubkeysFlag;
 
     private static NetworkParameters params;
     private static File walletFile;
@@ -162,6 +165,8 @@ public class WalletTool {
         SEND,
         ENCRYPT,
         DECRYPT,
+        MARRY,
+        ROTATE,
     }
 
     public enum WaitForEnum {
@@ -202,6 +207,7 @@ public class WalletTool {
         parser.accepts("privkey").withRequiredArg();
         parser.accepts("addr").withRequiredArg();
         parser.accepts("peers").withRequiredArg();
+        xpubkeysFlag = parser.accepts("xpubkeys").withRequiredArg();
         OptionSpec<String> outputFlag = parser.accepts("output").withRequiredArg();
         parser.accepts("value").withRequiredArg();
         parser.accepts("fee").withRequiredArg();
@@ -291,6 +297,7 @@ public class WalletTool {
             FileInputStream stream = new FileInputStream(walletFile);
             try {
                 Protos.Wallet proto = WalletProtobufSerializer.parseToProto(stream);
+                proto = attemptHexConversion(proto);
                 System.out.println(proto.toString());
                 return;
             } finally {
@@ -352,6 +359,8 @@ public class WalletTool {
                 break;
             case ENCRYPT: encrypt(); break;
             case DECRYPT: decrypt(); break;
+            case MARRY: marry(); break;
+            case ROTATE: rotate(); break;
         }
 
         if (!wallet.isConsistent()) {
@@ -378,6 +387,68 @@ public class WalletTool {
             saveWallet(walletFile);
         }
         shutdown();
+    }
+
+    private static Protos.Wallet attemptHexConversion(Protos.Wallet proto) {
+        // Try to convert any raw hashes and such to textual equivalents for easier debugging. This makes it a bit
+        // less "raw" but we will just abort on any errors.
+        try {
+            Protos.Wallet.Builder builder = proto.toBuilder();
+            for (Protos.Transaction.Builder tx : builder.getTransactionBuilderList()) {
+                tx.setHash(bytesToHex(tx.getHash()));
+                for (int i = 0; i < tx.getBlockHashCount(); i++)
+                    tx.setBlockHash(i, bytesToHex(tx.getBlockHash(i)));
+                for (Protos.TransactionInput.Builder input : tx.getTransactionInputBuilderList())
+                    input.setTransactionOutPointHash(bytesToHex(input.getTransactionOutPointHash()));
+                for (Protos.TransactionOutput.Builder output : tx.getTransactionOutputBuilderList()) {
+                    if (output.hasSpentByTransactionHash())
+                        output.setSpentByTransactionHash(bytesToHex(output.getSpentByTransactionHash()));
+                }
+                // TODO: keys, ip addresses etc.
+            }
+            return builder.build();
+        } catch (Throwable throwable) {
+            log.error("Failed to do hex conversion on wallet proto", throwable);
+            return proto;
+        }
+    }
+
+    private static ByteString bytesToHex(ByteString bytes) {
+        return ByteString.copyFrom(Utils.HEX.encode(bytes.toByteArray()).getBytes());
+    }
+
+    private static void marry() {
+        if (!options.has(xpubkeysFlag)) {
+            throw new IllegalStateException();
+        }
+
+        String[] xpubkeys = options.valueOf(xpubkeysFlag).split(",");
+        ImmutableList.Builder<DeterministicKey> keys = ImmutableList.builder();
+        for (String xpubkey : xpubkeys) {
+            keys.add(DeterministicKey.deserializeB58(null, xpubkey.trim()));
+        }
+        wallet.addFollowingAccountKeys(keys.build());
+    }
+
+    private static void rotate() throws BlockStoreException {
+        setup();
+        peers.startAsync();
+        peers.awaitRunning();
+        // Set a key rotation time and possibly broadcast the resulting maintenance transactions.
+        long rotationTimeSecs = Utils.currentTimeSeconds();
+        if (options.has(dateFlag)) {
+            rotationTimeSecs = options.valueOf(dateFlag).getTime() / 1000;
+        }
+        log.info("Setting wallet key rotation time to {}", rotationTimeSecs);
+        wallet.setKeyRotationEnabled(true);
+        wallet.setKeyRotationTime(rotationTimeSecs);
+        KeyParameter aesKey = null;
+        if (wallet.isEncrypted()) {
+            aesKey = passwordToKey(true);
+            if (aesKey == null)
+                return;
+        }
+        Futures.getUnchecked(wallet.maybeDoMaintenance(aesKey, true));
     }
 
     private static void encrypt() {
@@ -575,7 +646,7 @@ public class WalletTool {
     private static void send(PaymentSession session) {
         try {
             System.out.println("Payment Request");
-            System.out.println("Coin: " + session.getValue().toFriendlyString() + " BTC");
+            System.out.println("Coin: " + session.getValue().toFriendlyString());
             System.out.println("Date: " + session.getDate());
             System.out.println("Memo: " + session.getMemo());
             if (session.pkiVerificationData != null) {
@@ -752,12 +823,12 @@ public class WalletTool {
             }
         } else if (!options.has("tor")) {
             // If Tor mode then PeerGroup already has discovery set up.
-            if (params == RegTestParams.get()) {
-                log.info("Assuming regtest node on localhost");
-                peers.addAddress(PeerAddress.localhost(params));
-            } else {
+//            if (params == RegTestParams.get()) {
+//                log.info("Assuming regtest node on localhost");
+//                peers.addAddress(PeerAddress.localhost(params));
+//            } else {
                 peers.addPeerDiscovery(new DnsDiscovery(params));
-            }
+            //}
         }
     }
 
@@ -809,29 +880,24 @@ public class WalletTool {
                 creationTimeSecs = options.valueOf(dateFlag).getTime() / 1000;
             String seedStr = options.valueOf(seedFlag);
             DeterministicSeed seed;
-            if (seedStr.contains(" ")) {
-                // Parse as mnemonic code.
-                final List<String> split = ImmutableList.copyOf(Splitter.on(" ").omitEmptyStrings().split(seedStr));
-                try {
-                    seed = new DeterministicSeed(split, creationTimeSecs);
-                } catch (MnemonicException.MnemonicLengthException e) {
-                    System.err.println("The seed did not have 12 words in, perhaps you need quotes around it?");
-                    return;
-                } catch (MnemonicException.MnemonicWordException e) {
-                    System.err.println("The seed contained an unrecognised word: " + e.badWord);
-                    return;
-                } catch (MnemonicException.MnemonicChecksumException e) {
-                    System.err.println("The seed did not pass checksumming, perhaps one of the words is wrong?");
-                    return;
-                }
-            } else {
-                // Parse as hex or base58
-                byte[] bits = Utils.parseAsHexOrBase58(seedStr);
-                if (bits.length != 16) {
-                    System.err.println("The given hex/base58 string is not 16 bytes");
-                    return;
-                }
-                seed = new DeterministicSeed(bits, creationTimeSecs);
+            // Parse as mnemonic code.
+            final List<String> split = ImmutableList.copyOf(Splitter.on(" ").omitEmptyStrings().split(seedStr));
+            String passphrase = ""; // TODO allow user to specify a passphrase
+            seed = new DeterministicSeed(split, passphrase, creationTimeSecs);
+            try {
+                seed.check();
+            } catch (MnemonicException.MnemonicLengthException e) {
+                System.err.println("The seed did not have 12 words in, perhaps you need quotes around it?");
+                return;
+            } catch (MnemonicException.MnemonicWordException e) {
+                System.err.println("The seed contained an unrecognised word: " + e.badWord);
+                return;
+            } catch (MnemonicException.MnemonicChecksumException e) {
+                System.err.println("The seed did not pass checksumming, perhaps one of the words is wrong?");
+                return;
+            } catch (MnemonicException e) {
+                // not reached - all subclasses handled above
+                throw new RuntimeException(e);
             }
             wallet = Wallet.fromSeed(params, seed);
         } else if (options.has(watchFlag)) {

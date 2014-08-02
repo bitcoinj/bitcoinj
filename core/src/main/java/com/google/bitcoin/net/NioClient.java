@@ -32,6 +32,7 @@ public class NioClient implements MessageWriteTarget {
         private final StreamParser upstreamParser;
         private MessageWriteTarget writeTarget;
         private boolean closeOnOpen = false;
+        private boolean closeCalled = false;
         Handler(StreamParser upstreamParser, int connectTimeoutMillis) {
             this.upstreamParser = upstreamParser;
             setSocketTimeout(connectTimeoutMillis);
@@ -40,14 +41,17 @@ public class NioClient implements MessageWriteTarget {
 
         @Override
         protected synchronized void timeoutOccurred() {
-            upstreamParser.connectionClosed();
             closeOnOpen = true;
+            connectionClosed();
         }
 
         @Override
-        public void connectionClosed() {
-            upstreamParser.connectionClosed();
+        public synchronized void connectionClosed() {
             manager.stopAsync();
+            if (!closeCalled) {
+                closeCalled = true;
+                upstreamParser.connectionClosed();
+            }
         }
 
         @Override

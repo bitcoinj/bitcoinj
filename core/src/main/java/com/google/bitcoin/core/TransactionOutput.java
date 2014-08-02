@@ -137,6 +137,43 @@ public class TransactionOutput extends ChildMessage implements Serializable {
         return script;
     }
 
+    /**
+     * <p>If the output script pays to an address as in <a href="https://bitcoin.org/en/developer-guide#term-p2pkh">
+     * P2PKH</a>, return the address of the receiver, i.e., a base58 encoded hash of the public key in the script. </p>
+     *
+     * @param networkParameters needed to specify an address
+     * @return null, if the output script is not the form <i>OP_DUP OP_HASH160 <PubkeyHash> OP_EQUALVERIFY OP_CHECKSIG</i>,
+     * i.e., not P2PKH
+     * @return an address made out of the public key hash
+     */
+    @Nullable
+    public Address getAddressFromP2PKHScript(NetworkParameters networkParameters) throws ScriptException{
+        if (getScriptPubKey().isSentToAddress())
+            return getScriptPubKey().getToAddress(networkParameters);
+
+        return null;
+    }
+
+    /**
+     * <p>If the output script pays to a redeem script, return the address of the redeem script as described by,
+     * i.e., a base58 encoding of [one-byte version][20-byte hash][4-byte checksum], where the 20-byte hash refers to
+     * the redeem script.</p>
+     *
+     * <p>P2SH is described by <a href="https://github.com/bitcoin/bips/blob/master/bip-0016.mediawiki">BIP 16</a> and
+     * <a href="https://bitcoin.org/en/developer-guide#p2sh-scripts">documented in the Bitcoin Developer Guide</a>.</p>
+     *
+     * @param networkParameters needed to specify an address
+     * @return null if the output script does not pay to a script hash
+     * @return an address that belongs to the redeem script
+     */
+    @Nullable
+    public Address getAddressFromP2SH(NetworkParameters networkParameters) throws ScriptException{
+        if (getScriptPubKey().isPayToScriptHash())
+            return getScriptPubKey().getToAddress(networkParameters);
+
+        return null;
+    }
+
     @Override
     protected void parseLite() throws ProtocolException {
         value = readInt64();
@@ -233,12 +270,20 @@ public class TransactionOutput extends ChildMessage implements Serializable {
         checkState(availableForSpending);
         availableForSpending = false;
         spentBy = input;
+        if (parentTransaction != null)
+            log.info("Marked {}:{} as spent by {}", parentTransaction.getHash(), getIndex(), input);
+        else
+            log.info("Marked floating output as spent by {}", input);
     }
 
     /**
      * Resets the spent pointer / availableForSpending flag to null.
      */
     public void markAsUnspent() {
+        if (parentTransaction != null)
+            log.info("Un-marked {}:{} as spent by {}", parentTransaction.getHash(), getIndex(), spentBy);
+        else
+            log.info("Un-marked floating output as spent by {}", spentBy);
         availableForSpending = true;
         spentBy = null;
     }
@@ -293,6 +338,8 @@ public class TransactionOutput extends ChildMessage implements Serializable {
             if (script.isSentToRawPubKey()) {
                 byte[] pubkey = script.getPubKey();
                 return wallet.isPubKeyMine(pubkey);
+            } if (script.isPayToScriptHash()) {
+                return wallet.isPayToScriptHashMine(script.getPubKeyHash());
             } else {
                 byte[] pubkeyHash = script.getPubKeyHash();
                 return wallet.isPubKeyHashMine(pubkeyHash);

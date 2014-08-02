@@ -16,16 +16,15 @@
 
 package com.google.bitcoin.protocols.payments;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-
-import java.security.KeyStore;
-import java.security.PrivateKey;
-import java.security.cert.X509Certificate;
-import java.util.LinkedList;
-import java.util.List;
-
+import com.google.bitcoin.core.*;
+import com.google.bitcoin.crypto.X509Utils;
+import com.google.bitcoin.params.TestNet3Params;
+import com.google.bitcoin.params.UnitTestParams;
+import com.google.bitcoin.protocols.payments.PaymentProtocol.Output;
+import com.google.bitcoin.protocols.payments.PaymentProtocol.PkiVerificationData;
+import com.google.bitcoin.protocols.payments.PaymentProtocolException.PkiVerificationException;
+import com.google.bitcoin.script.ScriptBuilder;
+import com.google.bitcoin.testing.FakeTxBuilder;
 import org.bitcoin.protocols.payments.Protos;
 import org.bitcoin.protocols.payments.Protos.Payment;
 import org.bitcoin.protocols.payments.Protos.PaymentACK;
@@ -33,18 +32,13 @@ import org.bitcoin.protocols.payments.Protos.PaymentRequest;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.google.bitcoin.core.Address;
-import com.google.bitcoin.core.Coin;
-import com.google.bitcoin.core.ECKey;
-import com.google.bitcoin.core.NetworkParameters;
-import com.google.bitcoin.core.Transaction;
-import com.google.bitcoin.crypto.X509Utils;
-import com.google.bitcoin.params.UnitTestParams;
-import com.google.bitcoin.protocols.payments.PaymentProtocol.Output;
-import com.google.bitcoin.protocols.payments.PaymentProtocol.PkiVerificationData;
-import com.google.bitcoin.protocols.payments.PaymentProtocolException.PkiVerificationException;
-import com.google.bitcoin.script.ScriptBuilder;
-import com.google.bitcoin.testing.FakeTxBuilder;
+import java.security.KeyStore;
+import java.security.PrivateKey;
+import java.security.cert.X509Certificate;
+import java.util.LinkedList;
+import java.util.List;
+
+import static org.junit.Assert.*;
 
 public class PaymentProtocolTest {
 
@@ -105,9 +99,10 @@ public class PaymentProtocolTest {
         return paymentRequest.build();
     }
 
+    @Test
     public void testPaymentRequest() throws Exception {
         // Create
-        PaymentRequest paymentRequest = PaymentProtocol.createPaymentRequest(NETWORK_PARAMS, AMOUNT, TO_ADDRESS, MEMO,
+        PaymentRequest paymentRequest = PaymentProtocol.createPaymentRequest(TestNet3Params.get(), AMOUNT, TO_ADDRESS, MEMO,
                 PAYMENT_URL, MERCHANT_DATA).build();
         byte[] paymentRequestBytes = paymentRequest.toByteArray();
 
@@ -117,10 +112,10 @@ public class PaymentProtocolTest {
         final List<Output> parsedOutputs = parsedPaymentRequest.getOutputs();
         assertEquals(1, parsedOutputs.size());
         assertEquals(AMOUNT, parsedOutputs.get(0).amount);
-        assertEquals(ScriptBuilder.createOutputScript(TO_ADDRESS).getProgram(), parsedOutputs.get(0).scriptData);
+        assertArrayEquals(ScriptBuilder.createOutputScript(TO_ADDRESS).getProgram(), parsedOutputs.get(0).scriptData);
         assertEquals(MEMO, parsedPaymentRequest.getMemo());
         assertEquals(PAYMENT_URL, parsedPaymentRequest.getPaymentUrl());
-        assertEquals(MERCHANT_DATA, parsedPaymentRequest.getMerchantData());
+        assertArrayEquals(MERCHANT_DATA, parsedPaymentRequest.getMerchantData());
     }
 
     @Test

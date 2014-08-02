@@ -28,18 +28,20 @@ import com.google.bitcoin.core.Coin;
 
 public class CoinFormatTest {
 
+    private static final CoinFormat NO_CODE = CoinFormat.BTC.noCode();
+
     @Test
     public void testSigns() throws Exception {
-        assertEquals("-1.00", CoinFormat.BTC.format(Coin.COIN.negate()).toString());
-        assertEquals("@1.00", CoinFormat.BTC.negativeSign('@').format(Coin.COIN.negate()).toString());
-        assertEquals("1.00", CoinFormat.BTC.format(Coin.COIN).toString());
-        assertEquals("+1.00", CoinFormat.BTC.positiveSign('+').format(Coin.COIN).toString());
+        assertEquals("-1.00", NO_CODE.format(Coin.COIN.negate()).toString());
+        assertEquals("@1.00", NO_CODE.negativeSign('@').format(Coin.COIN.negate()).toString());
+        assertEquals("1.00", NO_CODE.format(Coin.COIN).toString());
+        assertEquals("+1.00", NO_CODE.positiveSign('+').format(Coin.COIN).toString());
     }
 
     @Test
     public void testDecimalMark() throws Exception {
-        assertEquals("1.00", CoinFormat.BTC.format(Coin.COIN).toString());
-        assertEquals("1,00", CoinFormat.BTC.decimalMark(',').format(Coin.COIN).toString());
+        assertEquals("1.00", NO_CODE.format(Coin.COIN).toString());
+        assertEquals("1,00", NO_CODE.decimalMark(',').format(Coin.COIN).toString());
     }
 
     @Test
@@ -176,8 +178,7 @@ public class CoinFormatTest {
     }
 
     private String format(Coin coin, int shift, int minDecimals, int... decimalGroups) {
-        return new CoinFormat().shift(shift).minDecimals(minDecimals).optionalDecimals(decimalGroups).format(coin)
-                .toString();
+        return NO_CODE.shift(shift).minDecimals(minDecimals).optionalDecimals(decimalGroups).format(coin).toString();
     }
 
     @Test
@@ -197,21 +198,49 @@ public class CoinFormatTest {
     }
 
     private String formatRepeat(Coin coin, int decimals, int repetitions) {
-        return new CoinFormat().minDecimals(0).repeatOptionalDecimals(decimals, repetitions).format(coin).toString();
+        return NO_CODE.minDecimals(0).repeatOptionalDecimals(decimals, repetitions).format(coin).toString();
+    }
+
+    @Test
+    public void standardCodes() throws Exception {
+        assertEquals("BTC 0.00", CoinFormat.BTC.format(Coin.ZERO).toString());
+        assertEquals("mBTC 0.00", CoinFormat.MBTC.format(Coin.ZERO).toString());
+        assertEquals("µBTC 0", CoinFormat.UBTC.format(Coin.ZERO).toString());
+    }
+
+    @Test
+    public void customCode() throws Exception {
+        assertEquals("dBTC 0", CoinFormat.UBTC.code(1, "dBTC").shift(1).format(Coin.ZERO).toString());
+    }
+
+    @Test
+    public void codeOrientation() throws Exception {
+        assertEquals("BTC 0.00", CoinFormat.BTC.prefixCode().format(Coin.ZERO).toString());
+        assertEquals("0.00 BTC", CoinFormat.BTC.postfixCode().format(Coin.ZERO).toString());
+    }
+
+    @Test
+    public void codeSeparator() throws Exception {
+        assertEquals("BTC@0.00", CoinFormat.BTC.codeSeparator('@').format(Coin.ZERO).toString());
+    }
+
+    @Test(expected = NumberFormatException.class)
+    public void missingCode() throws Exception {
+        CoinFormat.UBTC.shift(1).format(Coin.ZERO);
     }
 
     @Test
     public void parse() throws Exception {
-        assertEquals(Coin.COIN, CoinFormat.BTC.parse("1"));
-        assertEquals(Coin.COIN, CoinFormat.BTC.parse("1."));
-        assertEquals(Coin.COIN, CoinFormat.BTC.parse("1.0"));
-        assertEquals(Coin.COIN, CoinFormat.BTC.decimalMark(',').parse("1,0"));
-        assertEquals(Coin.COIN, CoinFormat.BTC.parse("01.0000000000"));
-        assertEquals(Coin.COIN, CoinFormat.BTC.positiveSign('+').parse("+1.0"));
-        assertEquals(Coin.COIN.negate(), CoinFormat.BTC.parse("-1"));
-        assertEquals(Coin.COIN.negate(), CoinFormat.BTC.parse("-1.0"));
+        assertEquals(Coin.COIN, NO_CODE.parse("1"));
+        assertEquals(Coin.COIN, NO_CODE.parse("1."));
+        assertEquals(Coin.COIN, NO_CODE.parse("1.0"));
+        assertEquals(Coin.COIN, NO_CODE.decimalMark(',').parse("1,0"));
+        assertEquals(Coin.COIN, NO_CODE.parse("01.0000000000"));
+        assertEquals(Coin.COIN, NO_CODE.positiveSign('+').parse("+1.0"));
+        assertEquals(Coin.COIN.negate(), NO_CODE.parse("-1"));
+        assertEquals(Coin.COIN.negate(), NO_CODE.parse("-1.0"));
 
-        assertEquals(Coin.CENT, CoinFormat.BTC.parse(".01"));
+        assertEquals(Coin.CENT, NO_CODE.parse(".01"));
 
         assertEquals(Coin.MILLICOIN, CoinFormat.MBTC.parse("1"));
         assertEquals(Coin.MILLICOIN, CoinFormat.MBTC.parse("1.0"));
@@ -230,51 +259,51 @@ public class CoinFormatTest {
 
     @Test(expected = NumberFormatException.class)
     public void parseInvalidEmpty() throws Exception {
-        CoinFormat.BTC.parse("");
+        NO_CODE.parse("");
     }
 
     @Test(expected = NumberFormatException.class)
     public void parseInvalidWhitespaceBefore() throws Exception {
-        CoinFormat.BTC.parse(" 1");
+        NO_CODE.parse(" 1");
     }
 
     @Test(expected = NumberFormatException.class)
     public void parseInvalidWhitespaceSign() throws Exception {
-        CoinFormat.BTC.parse("- 1");
+        NO_CODE.parse("- 1");
     }
 
     @Test(expected = NumberFormatException.class)
     public void parseInvalidWhitespaceAfter() throws Exception {
-        CoinFormat.BTC.parse("1 ");
+        NO_CODE.parse("1 ");
     }
 
     @Test(expected = NumberFormatException.class)
     public void parseInvalidMultipleDecimalMarks() throws Exception {
-        CoinFormat.BTC.parse("1.0.0");
+        NO_CODE.parse("1.0.0");
     }
 
     @Test(expected = NumberFormatException.class)
     public void parseInvalidDecimalMark() throws Exception {
-        CoinFormat.BTC.decimalMark(',').parse("1.0");
+        NO_CODE.decimalMark(',').parse("1.0");
     }
 
     @Test(expected = NumberFormatException.class)
     public void parseInvalidPositiveSign() throws Exception {
-        CoinFormat.BTC.positiveSign('@').parse("+1.0");
+        NO_CODE.positiveSign('@').parse("+1.0");
     }
 
     @Test(expected = NumberFormatException.class)
     public void parseInvalidNegativeSign() throws Exception {
-        CoinFormat.BTC.negativeSign('@').parse("-1.0");
+        NO_CODE.negativeSign('@').parse("-1.0");
     }
 
     @Test(expected = NumberFormatException.class)
     public void parseInvalidHugeNumber() throws Exception {
-        System.out.println(CoinFormat.BTC.parse("99999999999999999999"));
+        NO_CODE.parse("99999999999999999999");
     }
 
     @Test(expected = NumberFormatException.class)
     public void parseInvalidHugeNegativeNumber() throws Exception {
-        System.out.println(CoinFormat.BTC.parse("-99999999999999999999"));
+        NO_CODE.parse("-99999999999999999999");
     }
 }

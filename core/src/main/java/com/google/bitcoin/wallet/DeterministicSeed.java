@@ -18,12 +18,17 @@
 package com.google.bitcoin.wallet;
 
 import com.google.bitcoin.crypto.*;
+import com.google.bitcoin.store.UnreadableWalletException;
+import com.google.common.base.Charsets;
+import com.google.common.base.Joiner;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Splitter;
 import org.bitcoinj.wallet.Protos;
 import org.spongycastle.crypto.params.KeyParameter;
 
 import javax.annotation.Nullable;
-import java.io.IOException;
-import java.util.Arrays;
+import java.io.UnsupportedEncodingException;
+import java.security.SecureRandom;
 import java.util.List;
 
 import static com.google.bitcoin.core.Utils.HEX;
@@ -36,50 +41,90 @@ import static com.google.common.base.Preconditions.checkState;
  * code.
  */
 public class DeterministicSeed implements EncryptableItem {
-    @Nullable private final byte[] unencryptedSeed;
-    @Nullable private final EncryptedData encryptedSeed;
+    // It would take more than 10^12 years to brute-force a 128 bit seed using $1B worth of computing equipment.
+    public static final int DEFAULT_SEED_ENTROPY_BITS = 128;
+    public static final int MAX_SEED_ENTROPY_BITS = 512;
+
+    @Nullable private final byte[] seed;
+    @Nullable private List<String> mnemonicCode;
+    @Nullable private EncryptedData encryptedMnemonicCode;
     private final long creationTimeSeconds;
 
-    private static MnemonicCode MNEMONIC_CODE;
-    private static synchronized MnemonicCode getCachedMnemonicCode() {
-        try {
-            // This object can be large and has to load the word list from disk, so we lazy cache it.
-            if (MNEMONIC_CODE == null) {
-                MNEMONIC_CODE = new MnemonicCode();
-            }
-            return MNEMONIC_CODE;
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+    DeterministicSeed(String mnemonicCode, String passphrase, long creationTimeSeconds) throws UnreadableWalletException {
+        this(decodeMnemonicCode(mnemonicCode), passphrase, creationTimeSeconds);
     }
 
-    public DeterministicSeed(byte[] unencryptedSeed, long creationTimeSeconds) {
-        this.unencryptedSeed = checkNotNull(unencryptedSeed);
-        this.encryptedSeed = null;
+    DeterministicSeed(byte[] seed, List<String> mnemonic, long creationTimeSeconds) {
+        this.seed = checkNotNull(seed);
+        this.mnemonicCode = checkNotNull(mnemonic);
+        this.encryptedMnemonicCode = null;
         this.creationTimeSeconds = creationTimeSeconds;
     }
 
-    public DeterministicSeed(EncryptedData encryptedSeed, long creationTimeSeconds) {
-        this.unencryptedSeed = null;
-        this.encryptedSeed = checkNotNull(encryptedSeed);
+    DeterministicSeed(EncryptedData encryptedMnemonic, long creationTimeSeconds) {
+        this.seed = null;
+        this.mnemonicCode = null;
+        this.encryptedMnemonicCode = checkNotNull(encryptedMnemonic);
         this.creationTimeSeconds = creationTimeSeconds;
     }
 
     /**
      * Constructs a seed from a BIP 39 mnemonic code. See {@link com.google.bitcoin.crypto.MnemonicCode} for more
      * details on this scheme.
-     * @param words A list of words.
+     * @param mnemonicCode A list of words.
+     * @param passphrase A user supplied passphrase, or an empty string if there is no passphrase
      * @param creationTimeSeconds When the seed was originally created, UNIX time.
-     * @throws MnemonicException if there is a problem decoding the words.
      */
-    public DeterministicSeed(List<String> words, long creationTimeSeconds) throws MnemonicException.MnemonicChecksumException, MnemonicException.MnemonicLengthException, MnemonicException.MnemonicWordException {
-        this(getCachedMnemonicCode().toEntropy(words), creationTimeSeconds);
+    public DeterministicSeed(List<String> mnemonicCode, String passphrase, long creationTimeSeconds) {
+        this(MnemonicCode.toSeed(mnemonicCode, passphrase), mnemonicCode, creationTimeSeconds);
+    }
+
+    /**
+     * Constructs a seed from a BIP 39 mnemonic code. See {@link com.google.bitcoin.crypto.MnemonicCode} for more
+     * details on this scheme.
+     * @param random Entropy source
+     * @param bits number of bits, must be divisible by 32
+     * @param passphrase A user supplied passphrase, or an empty string if there is no passphrase
+     * @param creationTimeSeconds When the seed was originally created, UNIX time.
+     */
+    public DeterministicSeed(SecureRandom random, int bits, String passphrase, long creationTimeSeconds) {
+        this(getEntropy(random, bits), passphrase, creationTimeSeconds);
+    }
+
+    /**
+     * Constructs a seed from a BIP 39 mnemonic code. See {@link com.google.bitcoin.crypto.MnemonicCode} for more
+     * details on this scheme.
+     * @param entropy entropy bits, length must be divisible by 32
+     * @param passphrase A user supplied passphrase, or an empty string if there is no passphrase
+     * @param creationTimeSeconds When the seed was originally created, UNIX time.
+     */
+    public DeterministicSeed(byte[] entropy, String passphrase, long creationTimeSeconds) {
+        Preconditions.checkArgument(entropy.length % 4 == 0, "entropy size in bits not divisible by 32");
+        Preconditions.checkArgument(entropy.length * 8 >= DEFAULT_SEED_ENTROPY_BITS, "entropy size too small");
+
+        try {
+            this.mnemonicCode = MnemonicCode.INSTANCE.toMnemonic(entropy);
+        } catch (MnemonicException.MnemonicLengthException e) {
+            // cannot happen
+            throw new RuntimeException(e);
+        }
+        this.seed = MnemonicCode.toSeed(mnemonicCode, passphrase);
+        this.encryptedMnemonicCode = null;
+        this.creationTimeSeconds = creationTimeSeconds;
+    }
+
+    private static byte[] getEntropy(SecureRandom random, int bits) {
+        Preconditions.checkArgument(bits <= MAX_SEED_ENTROPY_BITS, "requested entropy size too large");
+
+        byte[] seed = new byte[bits / 8];
+        random.nextBytes(seed);
+        return seed;
     }
 
     @Override
     public boolean isEncrypted() {
-        checkState(unencryptedSeed != null || encryptedSeed != null);
-        return encryptedSeed != null;
+        checkState(mnemonicCode != null || encryptedMnemonicCode != null);
+        return encryptedMnemonicCode != null;
     }
 
     @Override
@@ -87,14 +132,15 @@ public class DeterministicSeed implements EncryptableItem {
         if (isEncrypted())
             return "DeterministicSeed [encrypted]";
         else
-            return "DeterministicSeed " + toHexString();
+            return "DeterministicSeed " + toHexString() +
+                    ((mnemonicCode != null) ? " " + Joiner.on(" ").join(mnemonicCode) : "");
     }
 
     /** Returns the seed as hex or null if encrypted. */
     @Nullable
     public String toHexString() {
-        if (unencryptedSeed != null)
-            return HEX.encode(unencryptedSeed);
+        if (seed != null)
+            return HEX.encode(seed);
         else
             return null;
     }
@@ -102,13 +148,18 @@ public class DeterministicSeed implements EncryptableItem {
     @Nullable
     @Override
     public byte[] getSecretBytes() {
-        return unencryptedSeed;
+        return getMnemonicAsBytes();
+    }
+
+    @Nullable
+    public byte[] getSeedBytes() {
+        return seed;
     }
 
     @Nullable
     @Override
     public EncryptedData getEncryptedData() {
-        return encryptedSeed;
+        return encryptedMnemonicCode;
     }
 
     @Override
@@ -122,33 +173,27 @@ public class DeterministicSeed implements EncryptableItem {
     }
 
     public DeterministicSeed encrypt(KeyCrypter keyCrypter, KeyParameter aesKey) {
-        checkState(encryptedSeed == null, "Trying to encrypt seed twice");
-        checkState(unencryptedSeed != null, "Seed bytes missing so cannot encrypt");
-        EncryptedData data = keyCrypter.encrypt(unencryptedSeed, aesKey);
-        return new DeterministicSeed(data, creationTimeSeconds);
+        checkState(encryptedMnemonicCode == null, "Trying to encrypt seed twice");
+        checkState(mnemonicCode != null, "Mnemonic missing so cannot encrypt");
+        EncryptedData mnemonic = keyCrypter.encrypt(getMnemonicAsBytes(), aesKey);
+        return new DeterministicSeed(mnemonic, creationTimeSeconds);
     }
 
-    public DeterministicSeed decrypt(KeyCrypter crypter, KeyParameter aesKey) {
+    private byte[] getMnemonicAsBytes() {
+        return Joiner.on(" ").join(mnemonicCode).getBytes(Charsets.UTF_8);
+    }
+
+    public DeterministicSeed decrypt(KeyCrypter crypter, String passphrase, KeyParameter aesKey) {
         checkState(isEncrypted());
-        checkNotNull(encryptedSeed);
-        return new DeterministicSeed(crypter.decrypt(encryptedSeed, aesKey), creationTimeSeconds);
-    }
-
-    /** Returns a list of words that represent the seed, or IllegalStateException if the seed is encrypted or missing. */
-    public List<String> toMnemonicCode(MnemonicCode code) {
+        checkNotNull(encryptedMnemonicCode);
+        List<String> mnemonic = null;
         try {
-            if (isEncrypted())
-                throw new IllegalStateException("The seed is encrypted");
-            final byte[] seed = checkNotNull(getSecretBytes());
-            return code.toMnemonic(seed);
-        } catch (MnemonicException.MnemonicLengthException e) {
-            throw new RuntimeException(e);  // Cannot happen.
+            mnemonic = decodeMnemonicCode(crypter.decrypt(encryptedMnemonicCode, aesKey));
+        } catch (UnreadableWalletException e) {
+            // TODO what is the best way to handle this exception?
+            throw new RuntimeException(e);
         }
-    }
-
-    /** Returns a list of words that represent the seed, or IllegalStateException if the seed is encrypted or missing. */
-    public List<String> toMnemonicCode() {
-        return toMnemonicCode(getCachedMnemonicCode());
+        return new DeterministicSeed(mnemonic, passphrase, creationTimeSeconds);
     }
 
     @Override
@@ -159,11 +204,11 @@ public class DeterministicSeed implements EncryptableItem {
         DeterministicSeed seed = (DeterministicSeed) o;
 
         if (creationTimeSeconds != seed.creationTimeSeconds) return false;
-        if (encryptedSeed != null) {
-            if (seed.encryptedSeed == null) return false;
-            if (!encryptedSeed.equals(seed.encryptedSeed)) return false;
+        if (encryptedMnemonicCode != null) {
+            if (seed.encryptedMnemonicCode == null) return false;
+            if (!encryptedMnemonicCode.equals(seed.encryptedMnemonicCode)) return false;
         } else {
-            if (!Arrays.equals(unencryptedSeed, seed.unencryptedSeed)) return false;
+            if (!mnemonicCode.equals(seed.mnemonicCode)) return false;
         }
 
         return true;
@@ -171,8 +216,41 @@ public class DeterministicSeed implements EncryptableItem {
 
     @Override
     public int hashCode() {
-        int result = encryptedSeed != null ? encryptedSeed.hashCode() : Arrays.hashCode(unencryptedSeed);
+        int result = encryptedMnemonicCode != null ? encryptedMnemonicCode.hashCode() : mnemonicCode.hashCode();
         result = 31 * result + (int) (creationTimeSeconds ^ (creationTimeSeconds >>> 32));
         return result;
+    }
+
+    /**
+     * Check if our mnemonic is a valid mnemonic phrase for our word list.
+     * Does nothing if we are encrypted.
+     *
+     * @throws com.google.bitcoin.crypto.MnemonicException if check fails
+     */
+    public void check() throws MnemonicException {
+        if (mnemonicCode != null)
+            MnemonicCode.INSTANCE.check(mnemonicCode);
+    }
+
+    byte[] getEntropyBytes() throws MnemonicException {
+        return MnemonicCode.INSTANCE.toEntropy(mnemonicCode);
+    }
+
+    /** Get the mnemonic code, or null if unknown. */
+    @Nullable
+    public List<String> getMnemonicCode() {
+        return mnemonicCode;
+    }
+
+    private static List<String> decodeMnemonicCode(byte[] mnemonicCode) throws UnreadableWalletException {
+        try {
+            return Splitter.on(" ").splitToList(new String(mnemonicCode, "UTF-8"));
+        } catch (UnsupportedEncodingException e) {
+            throw new UnreadableWalletException(e.toString());
+        }
+    }
+
+    private static List<String> decodeMnemonicCode(String mnemonicCode) {
+        return Splitter.on(" ").splitToList(mnemonicCode);
     }
 }

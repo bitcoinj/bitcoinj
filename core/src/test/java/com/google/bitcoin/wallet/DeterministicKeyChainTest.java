@@ -24,7 +24,6 @@ import com.google.bitcoin.store.UnreadableWalletException;
 import com.google.bitcoin.utils.BriefLogFormatter;
 import com.google.bitcoin.utils.Threading;
 import com.google.common.base.Charsets;
-import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
 import com.google.common.io.Resources;
 import org.bitcoinj.wallet.Protos;
@@ -41,7 +40,7 @@ import static org.junit.Assert.*;
 
 public class DeterministicKeyChainTest {
     private DeterministicKeyChain chain;
-    private final byte[] SEED = Sha256Hash.create("don't use a string seed like this in real life".getBytes()).getBytes();
+    private final byte[] ENTROPY = Sha256Hash.create("don't use a string seed like this in real life".getBytes()).getBytes();
 
     @Before
     public void setup() {
@@ -49,17 +48,9 @@ public class DeterministicKeyChainTest {
         // You should use a random seed instead. The secs constant comes from the unit test file, so we can compare
         // serialized data properly.
         long secs = 1389353062L;
-        chain = new DeterministicKeyChain(SEED, secs);
+        chain = new DeterministicKeyChain(ENTROPY, "", secs);
         chain.setLookaheadSize(10);
         assertEquals(secs, checkNotNull(chain.getSeed()).getCreationTimeSeconds());
-    }
-
-    @Test
-    public void mnemonicCode() throws Exception {
-        final List<String> words = chain.toMnemonicCode();
-        assertEquals("aerobic toe save section draw warm cute upon raccoon mother priority pilot taste sweet next traffic fatal sword dentist original crisp team caution rebel",
-                Joiner.on(" ").join(words));
-        new DeterministicSeed(words, checkNotNull(chain.getSeed()).getCreationTimeSeconds());
     }
 
     @Test
@@ -67,16 +58,16 @@ public class DeterministicKeyChainTest {
         ECKey key1 = chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         ECKey key2 = chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
 
-        final Address address = new Address(UnitTestParams.get(), "n1GyUANZand9Kw6hGSV9837cCC9FFUQzQa");
+        final Address address = new Address(UnitTestParams.get(), "n1bQNoEx8uhmCzzA5JPG6sFdtsUQhwiQJV");
         assertEquals(address, key1.toAddress(UnitTestParams.get()));
-        assertEquals("n2fiWrHqD6GM5GiEqkbWAc6aaZQp3ba93X", key2.toAddress(UnitTestParams.get()).toString());
+        assertEquals("mnHUcqUVvrfi5kAaXJDQzBb9HsWs78b42R", key2.toAddress(UnitTestParams.get()).toString());
         assertEquals(key1, chain.findKeyFromPubHash(address.getHash160()));
         assertEquals(key2, chain.findKeyFromPubKey(key2.getPubKey()));
 
         key1.sign(Sha256Hash.ZERO_HASH);
 
         ECKey key3 = chain.getKey(KeyChain.KeyPurpose.CHANGE);
-        assertEquals("mnXiDR4MKsFxcKJEZjx4353oXvo55iuptn", key3.toAddress(UnitTestParams.get()).toString());
+        assertEquals("mqumHgVDqNzuXNrszBmi7A2UpmwaPMx4HQ", key3.toAddress(UnitTestParams.get()).toString());
         key3.sign(Sha256Hash.ZERO_HASH);
     }
 
@@ -85,7 +76,7 @@ public class DeterministicKeyChainTest {
         // Check that we get the right events at the right time.
         final List<List<ECKey>> listenerKeys = Lists.newArrayList();
         long secs = 1389353062L;
-        chain = new DeterministicKeyChain(SEED, secs);
+        chain = new DeterministicKeyChain(ENTROPY, "", secs);
         chain.addEventListener(new AbstractKeyChainEventListener() {
             @Override
             public void onKeysAdded(List<ECKey> keys) {
@@ -98,30 +89,24 @@ public class DeterministicKeyChainTest {
         ECKey key = chain.getKey(KeyChain.KeyPurpose.CHANGE);
         assertEquals(1, listenerKeys.size());  // 1 event
         final List<ECKey> firstEvent = listenerKeys.get(0);
-        assertEquals(6, firstEvent.size());  // 5 lookahead keys and 1 to satisfy the request.
+        assertEquals(7, firstEvent.size());  // 5 lookahead keys, +1 lookahead threhsold, +1 to satisfy the request.
         assertTrue(firstEvent.contains(key));   // order is not specified.
         listenerKeys.clear();
-        key = chain.getKey(KeyChain.KeyPurpose.CHANGE);
+        chain.getKey(KeyChain.KeyPurpose.CHANGE);
+        // At this point we've entered the threshold zone so more keys won't immediately trigger more generations.
+        assertEquals(0, listenerKeys.size());  // 1 event
+        final int lookaheadThreshold = chain.getLookaheadThreshold();
+        for (int i = 0; i < lookaheadThreshold; i++)
+            chain.getKey(KeyChain.KeyPurpose.CHANGE);
         assertEquals(1, listenerKeys.size());  // 1 event
-        assertEquals(1, listenerKeys.get(0).size());  // 1 key.
-        DeterministicKey eventKey = (DeterministicKey) listenerKeys.get(0).get(0);
-        assertNotEquals(key, eventKey);  // The key added is not the one that's served.
-        assertEquals(6, eventKey.getChildNumber().i());
-        listenerKeys.clear();
-        key = chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
-        assertEquals(1, listenerKeys.size());  // 1 event
-        assertEquals(6, listenerKeys.get(0).size());  // 1 key.
-        eventKey = (DeterministicKey) listenerKeys.get(0).get(0);
-        // The key added IS the one that's served because we did not previously request any RECEIVE_FUNDS keys.
-        assertEquals(key, eventKey);
-        assertEquals(0, eventKey.getChildNumber().i());
+        assertEquals(lookaheadThreshold + 1, listenerKeys.get(0).size());  // 1 key.
     }
 
     @Test
     public void random() {
         // Can't test much here but verify the constructor worked and the class is functional. The other tests rely on
         // a fixed seed to be deterministic.
-        chain = new DeterministicKeyChain(new SecureRandom());
+        chain = new DeterministicKeyChain(new SecureRandom(), 384);
         chain.setLookaheadSize(10);
         chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS).sign(Sha256Hash.ZERO_HASH);
         chain.getKey(KeyChain.KeyPurpose.CHANGE).sign(Sha256Hash.ZERO_HASH);
@@ -134,8 +119,8 @@ public class DeterministicKeyChainTest {
         DeterministicKey key3 = chain.getKey(KeyChain.KeyPurpose.CHANGE);
 
         List<Protos.Key> keys = chain.serializeToProtobuf();
-        // 1 root seed, 1 master key, 1 account key, 2 internal keys, 3 derived and 20 lookahead.
-        assertEquals(28, keys.size());
+        // 1 root seed, 1 master key, 1 account key, 2 internal keys, 3 derived, 20 lookahead and 5 lookahead threshold.
+        assertEquals(33, keys.size());
 
         // Get another key that will be lost during round-tripping, to ensure we can derive it again.
         DeterministicKey key4 = chain.getKey(KeyChain.KeyPurpose.CHANGE);
@@ -227,8 +212,9 @@ public class DeterministicKeyChainTest {
 
         DeterministicKey watchingKey = chain.getWatchingKey();
         final String pub58 = watchingKey.serializePubB58();
-        assertEquals("xpub68KFnj3bqUx1s7mHejLDBPywCAKdJEu1b49uniEEn2WSbHmZ7xbLqFTjJbtx1LUcAt1DwhoqWHmo2s5WMJp6wi38CiF2hYD49qVViKVvAoi", pub58);
+        assertEquals("xpub69KR9epSNBM59KLuasxMU5CyKytMJjBP5HEZ5p8YoGUCpM6cM9hqxB9DDPCpUUtqmw5duTckvPfwpoWGQUFPmRLpxs5jYiTf2u6xRMcdhDf", pub58);
         watchingKey = DeterministicKey.deserializeB58(null, pub58);
+        watchingKey.setCreationTimeSeconds(100000);
         chain = DeterministicKeyChain.watch(watchingKey);
         assertEquals(DeterministicHierarchy.BIP32_STANDARDISATION_TIME_SECS, chain.getEarliestKeyCreationTime());
         chain.setLookaheadSize(10);
@@ -261,12 +247,12 @@ public class DeterministicKeyChainTest {
 
     @Test
     public void bloom() {
-        DeterministicKey key1 = chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         DeterministicKey key2 = chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
+        DeterministicKey key1 = chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         // The filter includes the internal keys as well (for now), although I'm not sure if we should allow funds to
         // be received on them or not ....
-        assertEquals(32, chain.numBloomFilterEntries());
-        BloomFilter filter = chain.getFilter(32, 0.001, 1);
+        assertEquals(36, chain.numBloomFilterEntries());
+        BloomFilter filter = chain.getFilter(36, 0.001, 1);
         assertTrue(filter.contains(key1.getPubKey()));
         assertTrue(filter.contains(key1.getPubKeyHash()));
         assertTrue(filter.contains(key2.getPubKey()));

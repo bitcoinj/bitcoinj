@@ -19,24 +19,27 @@ package com.google.bitcoin.core;
 
 import com.google.bitcoin.crypto.*;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Objects;
+import com.google.common.base.Objects.ToStringHelper;
 import com.google.common.base.Preconditions;
 import org.bitcoin.NativeSecp256k1;
 import org.bitcoinj.wallet.Protos;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.asn1.*;
-import org.spongycastle.asn1.sec.SECNamedCurves;
 import org.spongycastle.asn1.x9.X9ECParameters;
 import org.spongycastle.asn1.x9.X9IntegerConverter;
 import org.spongycastle.crypto.AsymmetricCipherKeyPair;
 import org.spongycastle.crypto.digests.SHA256Digest;
+import org.spongycastle.crypto.ec.CustomNamedCurves;
 import org.spongycastle.crypto.generators.ECKeyPairGenerator;
 import org.spongycastle.crypto.params.*;
 import org.spongycastle.crypto.signers.ECDSASigner;
 import org.spongycastle.crypto.signers.HMacDSAKCalculator;
 import org.spongycastle.math.ec.ECAlgorithms;
-import org.spongycastle.math.ec.ECCurve;
 import org.spongycastle.math.ec.ECPoint;
+import org.spongycastle.math.ec.FixedPointUtil;
+import org.spongycastle.math.ec.custom.sec.SecP256K1Curve;
 import org.spongycastle.util.encoders.Base64;
 
 import javax.annotation.Nullable;
@@ -49,9 +52,7 @@ import java.security.SecureRandom;
 import java.security.SignatureException;
 import java.util.Arrays;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
+import static com.google.common.base.Preconditions.*;
 
 // TODO: Move this class to tracking compression state itself.
 // The Bouncy Castle guys are deprecating their own tracking of the compression state.
@@ -88,6 +89,9 @@ public class ECKey implements EncryptableItem, Serializable {
     private static final Logger log = LoggerFactory.getLogger(ECKey.class);
 
     /** The parameters of the secp256k1 curve that Bitcoin uses. */
+    public static final X9ECParameters CURVE_PARAMS = CustomNamedCurves.getByName("secp256k1");
+
+    /** The parameters of the secp256k1 curve that Bitcoin uses. */
     public static final ECDomainParameters CURVE;
 
     /**
@@ -100,10 +104,13 @@ public class ECKey implements EncryptableItem, Serializable {
     private static final long serialVersionUID = -728224901792295832L;
 
     static {
-        // All clients must agree on the curve to use by agreement. Bitcoin uses secp256k1.
-        X9ECParameters params = SECNamedCurves.getByName("secp256k1");
-        CURVE = new ECDomainParameters(params.getCurve(), params.getG(), params.getN(), params.getH());
-        HALF_CURVE_ORDER = params.getN().shiftRight(1);
+        // Tell Bouncy Castle to precompute data that's needed during secp256k1 calculations. Increasing the width
+        // number makes calculations faster, but at a cost of extra memory usage and with decreasing returns. 12 was
+        // picked after consulting with the BC team.
+        FixedPointUtil.precompute(CURVE_PARAMS.getG(), 12);
+        CURVE = new ECDomainParameters(CURVE_PARAMS.getCurve(), CURVE_PARAMS.getG(), CURVE_PARAMS.getN(),
+                CURVE_PARAMS.getH());
+        HALF_CURVE_ORDER = CURVE_PARAMS.getN().shiftRight(1);
         secureRandom = new SecureRandom();
     }
 
@@ -176,19 +183,36 @@ public class ECKey implements EncryptableItem, Serializable {
     }
 
     /**
-     * Creates an ECKey given the private key only.  The public key is calculated from it (this is slow). Note that
-     * the resulting public key is compressed.
+     * Creates an ECKey given the private key only. The public key is calculated from it (this is slow). The resulting
+     * public key is compressed.
      */
     public static ECKey fromPrivate(BigInteger privKey) {
-        return new ECKey(privKey, compressPoint(CURVE.getG().multiply(privKey)));
+        return fromPrivate(privKey, true);
     }
 
     /**
-     * Creates an ECKey given the private key only.  The public key is calculated from it (this is slow). The resulting
+     * Creates an ECKey given the private key only. The public key is calculated from it (this is slow), either
+     * compressed or not.
+     */
+    public static ECKey fromPrivate(BigInteger privKey, boolean compressed) {
+        ECPoint point = CURVE.getG().multiply(privKey);
+        return new ECKey(privKey, compressed ? compressPoint(point) : decompressPoint(point));
+    }
+
+    /**
+     * Creates an ECKey given the private key only. The public key is calculated from it (this is slow). The resulting
      * public key is compressed.
      */
     public static ECKey fromPrivate(byte[] privKeyBytes) {
         return fromPrivate(new BigInteger(1, privKeyBytes));
+    }
+
+    /**
+     * Creates an ECKey given the private key only. The public key is calculated from it (this is slow), either
+     * compressed or not.
+     */
+    public static ECKey fromPrivate(byte[] privKeyBytes, boolean compressed) {
+        return fromPrivate(new BigInteger(1, privKeyBytes), compressed);
     }
 
     /**
@@ -348,7 +372,7 @@ public class ECKey implements EncryptableItem, Serializable {
             DERSequenceGenerator seq = new DERSequenceGenerator(baos);
             seq.addObject(new ASN1Integer(1)); // version
             seq.addObject(new DEROctetString(privKeyBytes));
-            seq.addObject(new DERTaggedObject(0, SECNamedCurves.getByName("secp256k1").toASN1Primitive()));
+            seq.addObject(new DERTaggedObject(0, CURVE_PARAMS.toASN1Primitive()));
             seq.addObject(new DERTaggedObject(1, new DERBitString(getPubKey())));
             seq.close();
             return baos.toByteArray();
@@ -403,32 +427,6 @@ public class ECKey implements EncryptableItem, Serializable {
      */
     public boolean isCompressed() {
         return pub.isCompressed();
-    }
-
-    @Override
-    public String toString() {
-        StringBuilder b = new StringBuilder();
-        b.append("pub:").append(Utils.HEX.encode(pub.getEncoded()));
-        if (creationTimeSeconds != 0) {
-            b.append(" timestamp:").append(creationTimeSeconds);
-        }
-        if (isEncrypted()) {
-            b.append(" encrypted");
-        }
-        return b.toString();
-    }
-
-    /**
-     * Produce a string rendering of the ECKey INCLUDING the private key.
-     * Unless you absolutely need the private key it is better for security reasons to just use toString().
-     */
-    public String toStringWithPrivate() {
-        StringBuilder b = new StringBuilder();
-        b.append(toString());
-        if (priv != null) {
-            b.append(" priv:").append(Utils.HEX.encode(priv.toByteArray()));
-        }
-        return b.toString();
     }
 
     /**
@@ -841,8 +839,7 @@ public class ECKey implements EncryptableItem, Serializable {
         //        do another iteration of Step 1.
         //
         // More concisely, what these points mean is to use X as a compressed public key.
-        ECCurve.Fp curve = (ECCurve.Fp) CURVE.getCurve();
-        BigInteger prime = curve.getQ();  // Bouncy Castle is not consistent about the letter it uses for the prime.
+        BigInteger prime = SecP256K1Curve.q;
         if (x.compareTo(prime) >= 0) {
             // Cannot have point co-ordinates larger than this as everything takes place modulo Q.
             return null;
@@ -870,7 +867,7 @@ public class ECKey implements EncryptableItem, Serializable {
         BigInteger rInv = sig.r.modInverse(n);
         BigInteger srInv = rInv.multiply(sig.s).mod(n);
         BigInteger eInvrInv = rInv.multiply(eInv).mod(n);
-        ECPoint.Fp q = (ECPoint.Fp) ECAlgorithms.sumOfTwoMultiplies(CURVE.getG(), eInvrInv, R, srInv);
+        ECPoint q = ECAlgorithms.sumOfTwoMultiplies(CURVE.getG(), eInvrInv, R, srInv);
         return ECKey.fromPublicOnly(q.getEncoded(compressed));
     }
 
@@ -919,29 +916,6 @@ public class ECKey implements EncryptableItem, Serializable {
         if (newCreationTimeSeconds < 0)
             throw new IllegalArgumentException("Cannot set creation time to negative value: " + newCreationTimeSeconds);
         creationTimeSeconds = newCreationTimeSeconds;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || !(o instanceof ECKey)) return false;
-
-        ECKey ecKey = (ECKey) o;
-
-        if (creationTimeSeconds != ecKey.creationTimeSeconds) return false;
-        if (keyCrypter != null ? !keyCrypter.equals(ecKey.keyCrypter) : ecKey.keyCrypter != null) return false;
-        if (priv != null && !priv.equals(ecKey.priv)) return false;
-        if (pub != null && !pub.equals(ecKey.pub)) return false;
-
-        return true;
-    }
-
-    @Override
-    public int hashCode() {
-        // Public keys are random already so we can just use a part of them as the hashcode. Read from the start to
-        // avoid picking up the type code (compressed vs uncompressed) which is tacked on the end.
-        byte[] bits = getPubKey();
-        return (bits[0] & 0xFF) | ((bits[1] & 0xFF) << 8) | ((bits[2] & 0xFF) << 16) | ((bits[3] & 0xFF) << 24);
     }
 
     /**
@@ -1082,5 +1056,54 @@ public class ECKey implements EncryptableItem, Serializable {
     }
 
     public static class KeyIsEncryptedException extends MissingPrivateKeyException {
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || !(o instanceof ECKey)) return false;
+
+        ECKey other = (ECKey) o;
+
+        return Objects.equal(this.priv, other.priv)
+                && Objects.equal(this.pub, other.pub)
+                && Objects.equal(this.creationTimeSeconds, other.creationTimeSeconds)
+                && Objects.equal(this.keyCrypter, other.keyCrypter)
+                && Objects.equal(this.encryptedPrivateKey, other.encryptedPrivateKey);
+    }
+
+    @Override
+    public int hashCode() {
+        // Public keys are random already so we can just use a part of them as the hashcode. Read from the start to
+        // avoid picking up the type code (compressed vs uncompressed) which is tacked on the end.
+        byte[] bits = getPubKey();
+        return (bits[0] & 0xFF) | ((bits[1] & 0xFF) << 8) | ((bits[2] & 0xFF) << 16) | ((bits[3] & 0xFF) << 24);
+    }
+
+    @Override
+    public String toString() {
+        return toString(false);
+    }
+
+    /**
+     * Produce a string rendering of the ECKey INCLUDING the private key.
+     * Unless you absolutely need the private key it is better for security reasons to just use {@link #toString()}.
+     */
+    public String toStringWithPrivate() {
+        return toString(true);
+    }
+
+    private String toString(boolean includePrivate) {
+        final ToStringHelper helper = Objects.toStringHelper(this).omitNullValues();
+        helper.add("pub", Utils.HEX.encode(pub.getEncoded()));
+        if (includePrivate && priv != null)
+            helper.add("priv", Utils.HEX.encode(priv.toByteArray()));
+        if (creationTimeSeconds > 0)
+            helper.add("creationTimeSeconds", creationTimeSeconds);
+        helper.add("keyCrypter", keyCrypter);
+        if (includePrivate)
+            helper.add("encryptedPrivateKey", encryptedPrivateKey);
+        helper.add("isEncrypted", isEncrypted());
+        return helper.toString();
     }
 }

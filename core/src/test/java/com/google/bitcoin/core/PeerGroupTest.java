@@ -26,6 +26,7 @@ import com.google.bitcoin.testing.TestWithPeerGroup;
 import com.google.bitcoin.utils.Threading;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import com.google.common.net.InetAddresses;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import org.junit.After;
@@ -34,7 +35,10 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
+import java.io.IOException;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.ServerSocket;
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
@@ -43,8 +47,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static com.google.bitcoin.core.Coin.*;
-import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.bitcoin.core.Coin.COIN;
+import static com.google.bitcoin.core.Coin.valueOf;
 import static org.junit.Assert.*;
 
 
@@ -568,7 +572,9 @@ public class PeerGroupTest extends TestWithPeerGroup {
 
     @Test
     public void testBloomResendOnNewKey() throws Exception {
-        // Check that when we add a new key to the wallet, the Bloom filter is re-calculated and re-sent.
+        // Check that when we add a new key to the wallet, the Bloom filter is re-calculated and re-sent but only once
+        // we exceed the lookahead threshold.
+        wallet.setKeychainLookaheadSize(20);
         peerGroup.startAsync();
         peerGroup.awaitRunning();
         // Create a couple of peers.
@@ -576,36 +582,26 @@ public class PeerGroupTest extends TestWithPeerGroup {
         InboundMessageQueuer p2 = connectPeer(2);
         peerGroup.waitForJobQueue();
         BloomFilter f1 = p1.lastReceivedFilter;
-        BloomFilter f2 = p2.lastReceivedFilter;
+        int threshold = wallet.getKeychainLookaheadThreshold();
+        wallet.freshReceiveKey();  // Force generation with the new lookahead size.
+        peerGroup.waitForJobQueue();
+        assertEquals(BloomFilter.class, outbound(p1).getClass());
+        assertEquals(MemoryPoolMessage.class, outbound(p1).getClass());
         ECKey key = null;
-        // We have to run ahead of the lookahead zone for this test.
-        for (int i = 0; i < wallet.getKeychainLookaheadSize() + 1; i++) {
+        // We have to run ahead of the lookahead zone for this test. There should only be one bloom filter recalc.
+        for (int i = 0; i < threshold + 2; i++) {
             key = wallet.freshReceiveKey();
-            // Wait here. Bloom filters are recalculated asynchronously so if we didn't wait, we might not pass the
-            // test below where we expect each key to generate a new filter because this thread could generate all
-            // the keys before the peergroup thread does the recalculation, causing only one filter to be sent.
-            peerGroup.waitForJobQueue();
         }
-        BloomFilter f3 = null;
-        BloomFilter f4 = null;
-        // Each time we request a fresh key, a new filter is sent. That's because the lookahead buffer is NOT an
-        // optimisation (currently), but rather is intended to try and ensure we don't miss transactions when
-        // catching up through the chain.
-        for (int i = 0; i < wallet.getKeychainLookaheadSize(); i++) {
-            f3 = (BloomFilter) outbound(p1);
-            assertNotNull(f3);
-            assertEquals(MemoryPoolMessage.class, outbound(p1).getClass());
-            f4 = (BloomFilter) outbound(p2);
-            assertNotNull(f4);
-            assertEquals(MemoryPoolMessage.class, outbound(p2).getClass());
-        }
-        checkNotNull(f3);
-        checkNotNull(f4);
-        checkNotNull(key);
+        // Wait here. Bloom filters are recalculated asynchronously so if we didn't wait, we might not pass the
+        // test below where we expect each key to generate a new filter because this thread could generate all
+        // the keys before the peergroup thread does the recalculation, causing only one filter to be sent.
+        peerGroup.waitForJobQueue();
+        BloomFilter f3 = (BloomFilter) outbound(p1);
+        assertNotNull(f3);
+        assertEquals(MemoryPoolMessage.class, outbound(p1).getClass());
+        assertNull(outbound(p1));
         // Check the last filter received.
         assertNotEquals(f1, f3);
-        assertNotEquals(f2, f4);
-        assertEquals(f3, f4);
         assertTrue(f3.contains(key.getPubKey()));
         assertTrue(f3.contains(key.getPubKeyHash()));
         assertFalse(f1.contains(key.getPubKey()));
@@ -652,5 +648,22 @@ public class PeerGroupTest extends TestWithPeerGroup {
         connectPeer(3, ver2);
         future.get();
         assertTrue(future.isDone());
+    }
+
+    @Test
+    public void preferLocalPeer() throws IOException {
+        // Check that if we have a localhost port 8333 then it's used instead of the p2p network.
+        ServerSocket local = new ServerSocket(params.getPort(), 100, InetAddresses.forString("127.0.0.1"));
+        try {
+            peerGroup.startAsync();
+            peerGroup.awaitRunning();
+            local.accept().close();   // Probe connect
+            local.accept();   // Real connect
+            // If we get here it used the local peer. Check no others are in use.
+            assertEquals(1, peerGroup.getMaxConnections());
+            assertEquals(PeerAddress.localhost(params), peerGroup.getPendingPeers().get(0).getAddress());
+        } finally {
+            local.close();
+        }
     }
 }

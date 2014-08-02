@@ -271,6 +271,9 @@ public class WalletProtobufSerializer {
             case UNKNOWN: purpose = Protos.Transaction.Purpose.UNKNOWN; break;
             case USER_PAYMENT: purpose = Protos.Transaction.Purpose.USER_PAYMENT; break;
             case KEY_ROTATION: purpose = Protos.Transaction.Purpose.KEY_ROTATION; break;
+            case ASSURANCE_CONTRACT_CLAIM: purpose = Protos.Transaction.Purpose.ASSURANCE_CONTRACT_CLAIM; break;
+            case ASSURANCE_CONTRACT_PLEDGE: purpose = Protos.Transaction.Purpose.ASSURANCE_CONTRACT_PLEDGE; break;
+            case ASSURANCE_CONTRACT_STUB: purpose = Protos.Transaction.Purpose.ASSURANCE_CONTRACT_STUB; break;
             default:
                 throw new RuntimeException("New tx purpose serialization not implemented.");
         }
@@ -481,7 +484,7 @@ public class WalletProtobufSerializer {
                     if (extProto.getMandatory() && requireMandatoryExtensions)
                         throw new UnreadableWalletException("Could not parse mandatory extension in wallet: " + id);
                     else
-                        log.error("Error whilst reading extension {}, ignoring: {}", id, e);
+                        log.error("Error whilst reading extension {}, ignoring", id, e);
                 }
             }
         }
@@ -540,6 +543,9 @@ public class WalletProtobufSerializer {
                 case UNKNOWN: tx.setPurpose(Transaction.Purpose.UNKNOWN); break;
                 case USER_PAYMENT: tx.setPurpose(Transaction.Purpose.USER_PAYMENT); break;
                 case KEY_ROTATION: tx.setPurpose(Transaction.Purpose.KEY_ROTATION); break;
+                case ASSURANCE_CONTRACT_CLAIM: tx.setPurpose(Transaction.Purpose.ASSURANCE_CONTRACT_CLAIM); break;
+                case ASSURANCE_CONTRACT_PLEDGE: tx.setPurpose(Transaction.Purpose.ASSURANCE_CONTRACT_PLEDGE); break;
+                case ASSURANCE_CONTRACT_STUB: tx.setPurpose(Transaction.Purpose.ASSURANCE_CONTRACT_STUB); break;
                 default: throw new RuntimeException("New purpose serialization not implemented");
             }
         } else {
