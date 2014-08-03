@@ -101,6 +101,7 @@ public class PaymentProtocolTest {
 
     @Test
     public void testPaymentRequest() throws Exception {
+        long timeBefore = System.currentTimeMillis() - 1000;
         // Create
         PaymentRequest paymentRequest = PaymentProtocol.createPaymentRequest(TestNet3Params.get(), AMOUNT, TO_ADDRESS, MEMO,
                 PAYMENT_URL, MERCHANT_DATA).build();
@@ -116,6 +117,8 @@ public class PaymentProtocolTest {
         assertEquals(MEMO, parsedPaymentRequest.getMemo());
         assertEquals(PAYMENT_URL, parsedPaymentRequest.getPaymentUrl());
         assertArrayEquals(MERCHANT_DATA, parsedPaymentRequest.getMerchantData());
+        assertTrue(timeBefore <= parsedPaymentRequest.getDate().getTime());
+        assertTrue(System.currentTimeMillis()+1000 >= parsedPaymentRequest.getDate().getTime());
     }
 
     @Test
