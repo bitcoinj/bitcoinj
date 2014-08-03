@@ -17,10 +17,7 @@
 
 package com.google.bitcoin.protocols.payments;
 
-import com.google.bitcoin.core.Address;
-import com.google.bitcoin.core.Coin;
-import com.google.bitcoin.core.NetworkParameters;
-import com.google.bitcoin.core.Transaction;
+import com.google.bitcoin.core.*;
 import com.google.bitcoin.crypto.X509Utils;
 import com.google.bitcoin.script.ScriptBuilder;
 import com.google.common.base.Objects;
@@ -98,7 +95,7 @@ public class PaymentProtocol {
             paymentDetails.setPaymentUrl(paymentUrl);
         if (merchantData != null)
             paymentDetails.setMerchantData(ByteString.copyFrom(merchantData));
-        paymentDetails.setTime(System.currentTimeMillis());
+        paymentDetails.setTime(Utils.currentTimeSeconds());
 
         final Protos.PaymentRequest.Builder paymentRequest = Protos.PaymentRequest.newBuilder();
         paymentRequest.setSerializedPaymentDetails(paymentDetails.build().toByteString());
