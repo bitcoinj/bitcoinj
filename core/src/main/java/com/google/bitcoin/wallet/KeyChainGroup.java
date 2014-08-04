@@ -868,8 +868,6 @@ public class KeyChainGroup {
                 for (ECKey key : chain.getKeys())
                     formatKeyWithAddress(includePrivateKeys, key, builder2);
             }
-            for (ECKey key : chain.getKeys())
-                formatKeyWithAddress(includePrivateKeys, key, builder2);
             chainStrs.add(builder2.toString());
         }
         builder.append(Joiner.on(String.format("%n")).join(chainStrs));
