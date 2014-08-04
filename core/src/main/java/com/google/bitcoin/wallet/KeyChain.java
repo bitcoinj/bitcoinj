@@ -34,7 +34,7 @@ import java.util.concurrent.Executor;
  * restrictions is to support key chains that may be handled by external hardware or software, or which are derived
  * deterministically from a seed (and thus the notion of importing a key is meaningless).</p>
  */
-public interface KeyChain extends KeyBag {
+public interface KeyChain {
     /** Returns true if the given key is in the chain. */
     public boolean hasKey(ECKey key);
 

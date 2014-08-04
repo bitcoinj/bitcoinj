@@ -193,7 +193,6 @@ public class BasicKeyChain implements EncryptableKeyChain {
         }
     }
 
-    @Override
     public ECKey findKeyFromPubHash(byte[] pubkeyHash) {
         lock.lock();
         try {
@@ -203,7 +202,6 @@ public class BasicKeyChain implements EncryptableKeyChain {
         }
     }
 
-    @Override
     public ECKey findKeyFromPubKey(byte[] pubkey) {
         lock.lock();
         try {

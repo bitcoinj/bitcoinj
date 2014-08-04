@@ -182,6 +182,21 @@ public class KeyChainGroupTest {
         assertEquals(a2, a3);
     }
 
+    @Test
+    public void findRedeemData() throws Exception {
+        group = createMarriedKeyChainGroup();
+
+        // test script hash that we don't have
+        assertNull(group.findRedeemDataFromScriptHash(new ECKey().getPubKey()));
+
+        // test our script hash
+        Address address = group.currentAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
+        RedeemData redeemData = group.findRedeemDataFromScriptHash(address.getHash160());
+        assertNotNull(redeemData);
+        assertNotNull(redeemData.redeemScript);
+        assertEquals(2, redeemData.keys.size());
+    }
+
     // Check encryption with and without a basic keychain.
 
     @Test
@@ -310,15 +325,15 @@ public class KeyChainGroupTest {
     public void findRedeemScriptFromPubHash() throws Exception {
         group = createMarriedKeyChainGroup();
         Address address = group.freshAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
-        assertTrue(group.findRedeemScriptFromPubHash(address.getHash160()) != null);
+        assertTrue(group.findRedeemDataFromScriptHash(address.getHash160()) != null);
         KeyChainGroup group2 = createMarriedKeyChainGroup();
         group2.freshAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         // test address from lookahead zone and lookahead threshold zone
         for (int i = 0; i < LOOKAHEAD_SIZE + group.getLookaheadThreshold(); i++) {
             address = group.freshAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
-            assertTrue(group2.findRedeemScriptFromPubHash(address.getHash160()) != null);
+            assertTrue(group2.findRedeemDataFromScriptHash(address.getHash160()) != null);
         }
-        assertFalse(group2.findRedeemScriptFromPubHash(group.freshAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS).getHash160()) != null);
+        assertFalse(group2.findRedeemDataFromScriptHash(group.freshAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS).getHash160()) != null);
     }
 
     @Test
