@@ -1,5 +1,6 @@
 /*
  * Copyright 2011 Google Inc.
+ * Copyright 2014 Andreas Schildbach
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +19,6 @@ package com.google.bitcoin.core;
 
 import com.google.bitcoin.utils.ListenerRegistration;
 import com.google.bitcoin.utils.Threading;
-import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 
@@ -28,6 +28,8 @@ import java.math.BigInteger;
 import java.util.ListIterator;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executor;
+
+import static com.google.common.base.Preconditions.*;
 
 /**
  * <p>A TransactionConfidence object tracks data you can use to make a confidence decision about a transaction.
@@ -187,7 +189,7 @@ public class TransactionConfidence implements Serializable {
      * a future from {@link #getDepthFuture(int)}.</p>
      */
     public void addEventListener(Listener listener, Executor executor) {
-        Preconditions.checkNotNull(listener);
+        checkNotNull(listener);
         listeners.addIfAbsent(new ListenerRegistration<Listener>(listener, executor));
     }
 
@@ -206,7 +208,7 @@ public class TransactionConfidence implements Serializable {
     }
 
     public boolean removeEventListener(Listener listener) {
-        Preconditions.checkNotNull(listener);
+        checkNotNull(listener);
         return ListenerRegistration.removeFromList(listener, listeners);
     }
 
@@ -335,6 +337,7 @@ public class TransactionConfidence implements Serializable {
 
         this.depth++;
         this.workDone = this.workDone.add(block.getWork());
+        checkState(workDone.signum() >= 0);
         return true;
     }
 
@@ -371,6 +374,7 @@ public class TransactionConfidence implements Serializable {
     }
 
     public synchronized void setWorkDone(BigInteger workDone) {
+        checkArgument(workDone.signum() >= 0);
         this.workDone = workDone;
     }
 
