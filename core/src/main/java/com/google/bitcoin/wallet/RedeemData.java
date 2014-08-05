@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.bitcoin.core;
+package com.google.bitcoin.wallet;
 
+import com.google.bitcoin.core.ECKey;
 import com.google.bitcoin.script.Script;
 
 import javax.annotation.Nullable;
@@ -23,15 +24,13 @@ import java.util.List;
 /**
  * This class aggregates portion of data required to spend transaction output.
  *
- * For pay-to-address and pay-to-pubkey transactions it will has only single key and no redeem script.
+ * For pay-to-address and pay-to-pubkey transactions it will have only a single key and no redeem script.
  * For multisignature transactions there will be multiple keys one of which will be a full key and the rest are watch only.
- * In theory, it's possible for one party to possess several private keys for the same transaction, but this will eliminate
- * multisig's main benefit of enhanced security, so it's not expected.
  * For P2SH transactions there also will be a redeem script.
  */
 public class RedeemData {
-    @Nullable private Script redeemScript;
-    private List<ECKey> keys;
+    @Nullable public final Script redeemScript;
+    public final List<ECKey> keys;
 
     private RedeemData(List<ECKey> keys, @Nullable Script redeemScript) {
         this.redeemScript = redeemScript;
@@ -42,20 +41,13 @@ public class RedeemData {
         return new RedeemData(keys, redeemScript);
     }
 
-    @Nullable
-    public Script getRedeemScript() {
-        return redeemScript;
-    }
-
-    public List<ECKey> getKeys() {
-        return keys;
-    }
-
     /**
      * Returns the first key that has private bytes
      */
     public ECKey getFullKey() {
         for (ECKey key : keys) {
+            //TODO: don't use exception catching here to test. It's better to use hasPrivKey, but currently it's not working
+            // as expected for DeterministicKeys (it doesn't test if it's possible to derive private key)
             try {
                 if (key.getPrivKey() != null)
                     return key;

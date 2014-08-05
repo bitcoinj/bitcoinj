@@ -17,7 +17,6 @@
 package com.google.bitcoin.wallet;
 
 import com.google.bitcoin.core.ECKey;
-import com.google.bitcoin.core.RedeemData;
 import org.spongycastle.crypto.params.KeyParameter;
 
 import javax.annotation.Nullable;
@@ -62,9 +61,9 @@ public class DecryptingKeyBag implements MultisigKeyBag {
     public RedeemData findRedeemDataFromScriptHash(byte[] scriptHash) {
         RedeemData redeemData = target.findRedeemDataFromScriptHash(scriptHash);
         List<ECKey> decryptedKeys = new ArrayList<ECKey>();
-        for (ECKey key : redeemData.getKeys()) {
+        for (ECKey key : redeemData.keys) {
             decryptedKeys.add(maybeDecrypt(key));
         }
-        return RedeemData.of(decryptedKeys, redeemData.getRedeemScript());
+        return RedeemData.of(decryptedKeys, redeemData.redeemScript);
     }
 }

@@ -19,6 +19,7 @@ package com.google.bitcoin.core;
 import com.google.bitcoin.script.Script;
 import com.google.bitcoin.wallet.KeyBag;
 import com.google.bitcoin.wallet.MultisigKeyBag;
+import com.google.bitcoin.wallet.RedeemData;
 
 import javax.annotation.Nullable;
 import java.io.IOException;

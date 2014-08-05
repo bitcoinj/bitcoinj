@@ -15,8 +15,6 @@
  */
 package com.google.bitcoin.wallet;
 
-import com.google.bitcoin.core.RedeemData;
-
 import javax.annotation.Nullable;
 
 /**

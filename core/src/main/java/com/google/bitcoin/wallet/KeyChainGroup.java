@@ -183,7 +183,7 @@ public class KeyChainGroup implements MultisigKeyBag {
             if (isMarried(chain)) {
                 for (DeterministicKey followedKey : chain.getLeafKeys()) {
                     RedeemData redeemData = getRedeemData(followedKey, chain.getWatchingKey());
-                    Script scriptPubKey = ScriptBuilder.createP2SHOutputScript(redeemData.getRedeemScript());
+                    Script scriptPubKey = ScriptBuilder.createP2SHOutputScript(redeemData.redeemScript);
                     marriedKeysRedeemData.put(ByteString.copyFrom(scriptPubKey.getPubKeyHash()), redeemData);
                 }
             }
@@ -623,7 +623,7 @@ public class KeyChainGroup implements MultisigKeyBag {
             if (isMarried(chain)) {
                 for (Map.Entry<ByteString, RedeemData> entry : marriedKeysRedeemData.entrySet()) {
                     filter.insert(entry.getKey().toByteArray());
-                    filter.insert(ScriptBuilder.createP2SHOutputScript(entry.getValue().getRedeemScript()).getProgram());
+                    filter.insert(ScriptBuilder.createP2SHOutputScript(entry.getValue().redeemScript).getProgram());
                 }
             } else {
                 filter.merge(chain.getFilter(size, falsePositiveRate, nTweak));
@@ -642,7 +642,7 @@ public class KeyChainGroup implements MultisigKeyBag {
     }
 
     private Script makeP2SHOutputScript(DeterministicKey followedKey, DeterministicKey followedAccountKey) {
-        return ScriptBuilder.createP2SHOutputScript(getRedeemData(followedKey, followedAccountKey).getRedeemScript());
+        return ScriptBuilder.createP2SHOutputScript(getRedeemData(followedKey, followedAccountKey).redeemScript);
     }
 
     private RedeemData getRedeemData(DeterministicKey followedKey, DeterministicKey followedAccountKey) {
@@ -862,7 +862,7 @@ public class KeyChainGroup implements MultisigKeyBag {
                 }
                 builder2.append(String.format("%n"));
                 for (RedeemData redeemData : marriedKeysRedeemData.values())
-                    formatScript(ScriptBuilder.createP2SHOutputScript(redeemData.getRedeemScript()), builder2);
+                    formatScript(ScriptBuilder.createP2SHOutputScript(redeemData.redeemScript), builder2);
             } else {
                 for (ECKey key : chain.getKeys())
                     formatKeyWithAddress(includePrivateKeys, key, builder2);

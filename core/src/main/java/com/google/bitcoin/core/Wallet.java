@@ -3964,7 +3964,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
                     key = findKeyFromPubHash(script.getPubKeyHash());
                     checkNotNull(key, "Coin selection includes unspendable outputs");
                 } else if (script.isPayToScriptHash()) {
-                    redeemScript = findRedeemDataFromScriptHash(script.getPubKeyHash()).getRedeemScript();
+                    redeemScript = findRedeemDataFromScriptHash(script.getPubKeyHash()).redeemScript;
                     checkNotNull(redeemScript, "Coin selection includes unspendable outputs");
                 }
                 size += script.getNumberOfBytesRequiredToSpend(key, redeemScript);
