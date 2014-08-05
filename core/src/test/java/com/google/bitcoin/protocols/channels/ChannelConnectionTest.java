@@ -68,9 +68,13 @@ public class ChannelConnectionTest extends TestWithWallet {
         Utils.setMockClock(); // Use mock clock
         sendMoneyToWallet(COIN, AbstractBlockChain.NewBlockType.BEST_CHAIN);
         sendMoneyToWallet(COIN, AbstractBlockChain.NewBlockType.BEST_CHAIN);
-        wallet.addExtension(new StoredPaymentChannelClientStates(wallet, failBroadcaster));
+        StoredPaymentChannelClientStates clientChannels = new StoredPaymentChannelClientStates(wallet);
+        clientChannels.startWalletExtension(failBroadcaster);
+        wallet.addExtension(clientChannels);
         serverWallet = new Wallet(params);
-        serverWallet.addExtension(new StoredPaymentChannelServerStates(serverWallet, failBroadcaster));
+        StoredPaymentChannelServerStates serverChannels = new StoredPaymentChannelServerStates(serverWallet);
+        serverChannels.startWalletExtension(failBroadcaster);
+        serverWallet.addExtension(serverChannels);
         serverWallet.freshReceiveKey();
         serverChain = new BlockChain(params, serverWallet, blockStore);
         // Use an atomic boolean to indicate failure because fail()/assert*() dont work in network threads
@@ -398,8 +402,9 @@ public class ChannelConnectionTest extends TestWithWallet {
         // Now roll the mock clock and recreate the client object so that it removes the channels and announces refunds.
         assertEquals(86640, clientStoredChannels.getSecondsUntilExpiry(someServerId));
         Utils.rollMockClock(60 * 60 * 24 + 60 * 5);   // Client announces refund 5 minutes after expire time
-        StoredPaymentChannelClientStates newClientStates = new StoredPaymentChannelClientStates(wallet, mockBroadcaster);
+        StoredPaymentChannelClientStates newClientStates = new StoredPaymentChannelClientStates(wallet);
         newClientStates.deserializeWalletExtension(wallet, clientStoredChannels.serializeWalletExtension());
+        newClientStates.startWalletExtension(mockBroadcaster);
         broadcastTxPause.release();
         assertTrue(broadcasts.take().getOutput(0).getScriptPubKey().isSentToMultiSig());
         broadcastTxPause.release();
@@ -407,7 +412,8 @@ public class ChannelConnectionTest extends TestWithWallet {
         assertTrue(broadcasts.isEmpty());
         assertTrue(newClientStates.mapChannels.isEmpty());
         // Server also knows it's too late.
-        StoredPaymentChannelServerStates serverStoredChannels = new StoredPaymentChannelServerStates(serverWallet, mockBroadcaster);
+        StoredPaymentChannelServerStates serverStoredChannels = new StoredPaymentChannelServerStates(serverWallet);
+        serverStoredChannels.startWalletExtension(mockBroadcaster);
         Thread.sleep(2000);   // TODO: Fix this stupid hack.
         assertTrue(serverStoredChannels.mapChannels.isEmpty());
     }
@@ -416,14 +422,16 @@ public class ChannelConnectionTest extends TestWithWallet {
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         new WalletProtobufSerializer().writeWallet(wallet, bos);
         org.bitcoinj.wallet.Protos.Wallet proto = WalletProtobufSerializer.parseToProto(new ByteArrayInputStream(bos.toByteArray()));
-        StoredPaymentChannelClientStates state = new StoredPaymentChannelClientStates(null, failBroadcaster);
+        StoredPaymentChannelClientStates state = new StoredPaymentChannelClientStates(null);
+        state.startWalletExtension(failBroadcaster);
         return new WalletProtobufSerializer().readWallet(wallet.getParams(), new WalletExtension[] { state }, proto);
     }
 
     private static Wallet roundTripServerWallet(Wallet wallet) throws Exception {
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         new WalletProtobufSerializer().writeWallet(wallet, bos);
-        StoredPaymentChannelServerStates state = new StoredPaymentChannelServerStates(null, failBroadcaster);
+        StoredPaymentChannelServerStates state = new StoredPaymentChannelServerStates(null);
+        state.startWalletExtension(failBroadcaster);
         org.bitcoinj.wallet.Protos.Wallet proto = WalletProtobufSerializer.parseToProto(new ByteArrayInputStream(bos.toByteArray()));
         return new WalletProtobufSerializer().readWallet(wallet.getParams(), new WalletExtension[] { state }, proto);
     }

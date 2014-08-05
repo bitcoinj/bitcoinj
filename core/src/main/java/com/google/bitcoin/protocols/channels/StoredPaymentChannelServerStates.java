@@ -40,7 +40,7 @@ public class StoredPaymentChannelServerStates implements WalletExtension {
 
     @GuardedBy("lock") @VisibleForTesting final Map<Sha256Hash, StoredServerChannel> mapChannels = new HashMap<Sha256Hash, StoredServerChannel>();
     private Wallet wallet;
-    private final TransactionBroadcaster broadcaster;
+    @Nullable private TransactionBroadcaster broadcaster;
 
     private final Timer channelTimeoutHandler = new Timer(true);
 
@@ -56,12 +56,10 @@ public class StoredPaymentChannelServerStates implements WalletExtension {
     public static final long CHANNEL_EXPIRE_OFFSET = -2*60*60;
 
     /**
-     * Creates a new PaymentChannelServerStateManager and associates it with the given {@link Wallet} and
-     * {@link TransactionBroadcaster} which are used to complete and announce payment transactions.
+     * Creates a new PaymentChannelServerStateManager and associates it with the given {@link Wallet}
      */
-    public StoredPaymentChannelServerStates(@Nullable Wallet wallet, TransactionBroadcaster broadcaster) {
+    public StoredPaymentChannelServerStates(@Nullable Wallet wallet) {
         this.wallet = wallet;
-        this.broadcaster = checkNotNull(broadcaster);
     }
 
     /**
@@ -73,6 +71,7 @@ public class StoredPaymentChannelServerStates implements WalletExtension {
      * this wallet extension.</p>
      */
     public void closeChannel(StoredServerChannel channel) {
+        checkNotNull(broadcaster, "Channel cannot be closed before it has been started.");
         lock.lock();
         try {
             if (mapChannels.remove(channel.contract.getHash()) == null)
@@ -109,25 +108,23 @@ public class StoredPaymentChannelServerStates implements WalletExtension {
     /**
      * <p>Puts the given channel in the channels map and automatically closes it 2 hours before its refund transaction
      * becomes spendable.</p>
+     */
+    public void putChannel(final StoredServerChannel channel) {
+        checkNotNull(broadcaster, "Channel cannot be added without a broadcaster.");
+        putChannelIntoMap(channel);
+        scheduleChannelForClosure(channel);
+    }
+
+    /**
+     * <p>Puts the given channel in the channels map.</p>
      *
      * <p>Because there must be only one, canonical {@link StoredServerChannel} per channel, this method throws if the
      * channel is already present in the set of channels.</p>
      */
-    public void putChannel(final StoredServerChannel channel) {
+    private void putChannelIntoMap(final StoredServerChannel channel) {
         lock.lock();
         try {
             checkArgument(mapChannels.put(channel.contract.getHash(), checkNotNull(channel)) == null);
-            // Add the difference between real time and Utils.now() so that test-cases can use a mock clock.
-            Date autocloseTime = new Date((channel.refundTransactionUnlockTimeSecs + CHANNEL_EXPIRE_OFFSET) * 1000L
-                    + (System.currentTimeMillis() - Utils.currentTimeMillis()));
-            log.info("Scheduling channel for automatic closure at {}: {}", autocloseTime, channel);
-            channelTimeoutHandler.schedule(new TimerTask() {
-                @Override
-                public void run() {
-                    log.info("Auto-closing channel: {}", channel);
-                    closeChannel(channel);
-                }
-            }, autocloseTime);
         } finally {
             lock.unlock();
         }
@@ -184,11 +181,45 @@ public class StoredPaymentChannelServerStates implements WalletExtension {
                         ECKey.fromPrivate(storedState.getMyKey().toByteArray()),
                         Coin.valueOf(storedState.getBestValueToMe()),
                         storedState.hasBestValueSignature() ? storedState.getBestValueSignature().toByteArray() : null);
-                putChannel(channel);
+                putChannelIntoMap(channel);
             }
         } finally {
             lock.unlock();
         }
+    }
+
+    /*
+     * Sets the {@link TransactionBroadcaster} which are used to complete and announce payment transactions,
+     * and schedules all channels for closure.
+     */
+    @Override
+    public void startWalletExtension(TransactionBroadcaster broadcaster) {
+        lock.lock();
+        try {
+            this.broadcaster = checkNotNull(broadcaster);
+            for (StoredServerChannel channel : mapChannels.values()) {
+                scheduleChannelForClosure(channel);
+            }
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
+     * Automatically closes the channel 2 hours before its refund transaction becomes spendable.
+     * (If the closure time is in the past, the channel will be closed immediately)
+     */
+    private void scheduleChannelForClosure(final StoredServerChannel channel) {
+        Date autocloseTime = new Date((channel.refundTransactionUnlockTimeSecs + CHANNEL_EXPIRE_OFFSET) * 1000L
+          + (System.currentTimeMillis() - Utils.currentTimeMillis()));
+        log.info("Scheduling channel for automatic closure at {}: {}", autocloseTime, channel);
+        channelTimeoutHandler.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                log.info("Auto-closing channel: {}", channel);
+                closeChannel(channel);
+            }
+        }, autocloseTime);
     }
 
     @Override

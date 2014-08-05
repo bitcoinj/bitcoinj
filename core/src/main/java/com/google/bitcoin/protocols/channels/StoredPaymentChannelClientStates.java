@@ -47,17 +47,14 @@ public class StoredPaymentChannelClientStates implements WalletExtension {
     @VisibleForTesting final Timer channelTimeoutHandler = new Timer(true);
 
     private Wallet containingWallet;
-    private final TransactionBroadcaster announcePeerGroup;
+    @Nullable private TransactionBroadcaster announcePeerGroup;
 
     protected final ReentrantLock lock = Threading.lock("StoredPaymentChannelClientStates");
 
     /**
-     * Creates a new StoredPaymentChannelClientStates and associates it with the given {@link Wallet} and
-     * {@link TransactionBroadcaster} which are used to complete and announce contract and refund
-     * transactions.
+     * Creates a new StoredPaymentChannelClientStates and associates it with the given {@link Wallet}
      */
-    public StoredPaymentChannelClientStates(@Nullable Wallet containingWallet, TransactionBroadcaster announcePeerGroup) {
-        this.announcePeerGroup = checkNotNull(announcePeerGroup);
+    public StoredPaymentChannelClientStates(@Nullable Wallet containingWallet) {
         this.containingWallet = containingWallet;
     }
 
@@ -165,18 +162,17 @@ public class StoredPaymentChannelClientStates implements WalletExtension {
 
     // Adds this channel and optionally notifies the wallet of an update to this extension (used during deserialize)
     private void putChannel(final StoredClientChannel channel, boolean updateWallet) {
+        putChannelIntoMap(channel, updateWallet);
+        scheduleChannelForRefund(channel);
+    }
+
+    /**
+     * Adds the given channel to this set of stored states and notifies the wallet of an update to this wallet extension
+     */
+    private void putChannelIntoMap(final StoredClientChannel channel, boolean updateWallet) {
         lock.lock();
         try {
             mapChannels.put(channel.id, channel);
-            channelTimeoutHandler.schedule(new TimerTask() {
-                @Override
-                public void run() {
-                    removeChannel(channel);
-                    announcePeerGroup.broadcastTransaction(channel.contract);
-                    announcePeerGroup.broadcastTransaction(channel.refund);
-                }
-                // Add the difference between real time and Utils.now() so that test-cases can use a mock clock.
-            }, new Date(channel.expiryTimeSeconds() * 1000 + (System.currentTimeMillis() - Utils.currentTimeMillis())));
         } finally {
             lock.unlock();
         }
@@ -259,11 +255,44 @@ public class StoredPaymentChannelClientStates implements WalletExtension {
                         Coin.valueOf(storedState.getRefundFees()), false);
                 if (storedState.hasCloseTransactionHash())
                     channel.close = containingWallet.getTransaction(new Sha256Hash(storedState.toByteArray()));
-                putChannel(channel, false);
+                putChannelIntoMap(channel, false);
             }
         } finally {
             lock.unlock();
         }
+    }
+
+    /*
+     * Sets the {@link TransactionBroadcaster} which are used to complete and announce payment contract and refund
+     * transactions, and schedules all channels for refund.
+     */
+    @Override
+    public void startWalletExtension(TransactionBroadcaster broadcaster) {
+        lock.lock();
+        try {
+            this.announcePeerGroup = checkNotNull(broadcaster);
+            for (StoredClientChannel channel : mapChannels.values()) {
+                scheduleChannelForRefund(channel);
+            }
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
+     * Automatically closes the channel as soon as the refund transaction becomes spendable.
+     * (If the closure time is in the past, the channel will be closed immediately)
+     */
+    private void scheduleChannelForRefund(final StoredClientChannel channel) {
+        channelTimeoutHandler.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                removeChannel(channel);
+                announcePeerGroup.broadcastTransaction(channel.contract);
+                announcePeerGroup.broadcastTransaction(channel.refund);
+            }
+            // Add the difference between real time and Utils.now() so that test-cases can use a mock clock.
+        }, new Date(channel.expiryTimeSeconds() * 1000 + (System.currentTimeMillis() - Utils.currentTimeMillis())));
     }
 
     @Override
