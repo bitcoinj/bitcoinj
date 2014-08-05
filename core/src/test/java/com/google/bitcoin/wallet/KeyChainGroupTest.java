@@ -182,6 +182,21 @@ public class KeyChainGroupTest {
         assertEquals(a2, a3);
     }
 
+    @Test
+    public void findRedeemData() throws Exception {
+        group = createMarriedKeyChainGroup();
+
+        // test script hash that we don't have
+        assertNull(group.findRedeemDataFromScriptHash(new ECKey().getPubKey()));
+
+        // test our script hash
+        Address address = group.currentAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
+        RedeemData redeemData = group.findRedeemDataFromScriptHash(address.getHash160());
+        assertNotNull(redeemData);
+        assertNotNull(redeemData.redeemScript);
+        assertEquals(2, redeemData.keys.size());
+    }
+
     // Check encryption with and without a basic keychain.
 
     @Test
