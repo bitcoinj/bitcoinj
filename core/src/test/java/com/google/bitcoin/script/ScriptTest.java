@@ -24,8 +24,6 @@ import com.google.bitcoin.params.MainNetParams;
 import com.google.bitcoin.params.TestNet3Params;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
-
-import org.hamcrest.core.IsEqual;
 import org.hamcrest.core.IsNot;
 import org.junit.Assert;
 import org.junit.Test;
@@ -34,14 +32,12 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.math.BigInteger;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 
 import static com.google.bitcoin.core.Utils.HEX;
+import static com.google.bitcoin.script.ScriptOpCodes.OP_0;
 import static com.google.bitcoin.script.ScriptOpCodes.OP_INVALIDOPCODE;
+import static org.hamcrest.core.IsEqual.equalTo;
 import static org.junit.Assert.*;
 
 public class ScriptTest {
@@ -131,7 +127,7 @@ public class ScriptTest {
         TransactionSignature party2TransactionSignature = new TransactionSignature(party2Signature, SigHash.ALL, false);
 
         // Create p2sh multisig input script
-        Script inputScript = ScriptBuilder.createP2SHMultiSigInputScript(ImmutableList.of(party1TransactionSignature, party2TransactionSignature), multisigScript.getProgram());
+        Script inputScript = ScriptBuilder.createP2SHMultiSigInputScript(ImmutableList.of(party1TransactionSignature, party2TransactionSignature), multisigScript);
 
         // Assert that the input script contains 4 chunks
         assertTrue(inputScript.getChunks().size() == 4);
@@ -150,7 +146,41 @@ public class ScriptTest {
         // Assert that the input script created does not end with the original
         // multisig script
         scriptChunk = inputScript.getChunks().get(inputScript.getChunks().size() - 1);
-        Assert.assertThat(scriptChunk.data, IsNot.not(IsEqual.equalTo(multisigScript.getProgram())));
+        Assert.assertThat(scriptChunk.data, IsNot.not(equalTo(multisigScript.getProgram())));
+    }
+
+    @Test
+    public void testCreateEmptyInputScript() throws Exception {
+        TransactionSignature dummySig = TransactionSignature.dummy();
+        ECKey key = new ECKey();
+
+        // pay-to-pubkey
+        Script inputScript = ScriptBuilder.createInputScript(dummySig);
+        assertThat(inputScript.getChunks().get(0).data, equalTo(dummySig.encodeToBitcoin()));
+        inputScript = ScriptBuilder.createInputScript(null);
+        assertThat(inputScript.getChunks().get(0).opcode, equalTo(OP_0));
+
+        // pay-to-address
+        inputScript = ScriptBuilder.createInputScript(dummySig, key);
+        assertThat(inputScript.getChunks().get(0).data, equalTo(dummySig.encodeToBitcoin()));
+        inputScript = ScriptBuilder.createInputScript(null, key);
+        assertThat(inputScript.getChunks().get(0).opcode, equalTo(OP_0));
+        assertThat(inputScript.getChunks().get(1).data, equalTo(key.getPubKey()));
+
+        // pay-to-script-hash
+        ECKey key2 = new ECKey();
+        Script multisigScript = ScriptBuilder.createMultiSigOutputScript(2, Arrays.asList(key, key2));
+        inputScript = ScriptBuilder.createP2SHMultiSigInputScript(Arrays.asList(dummySig, dummySig), multisigScript);
+        assertThat(inputScript.getChunks().get(0).opcode, equalTo(OP_0));
+        assertThat(inputScript.getChunks().get(1).data, equalTo(dummySig.encodeToBitcoin()));
+        assertThat(inputScript.getChunks().get(2).data, equalTo(dummySig.encodeToBitcoin()));
+        assertThat(inputScript.getChunks().get(3).data, equalTo(multisigScript.getProgram()));
+
+        inputScript = ScriptBuilder.createP2SHMultiSigInputScript(null, multisigScript);
+        assertThat(inputScript.getChunks().get(0).opcode, equalTo(OP_0));
+        assertThat(inputScript.getChunks().get(1).opcode, equalTo(OP_0));
+        assertThat(inputScript.getChunks().get(2).opcode, equalTo(OP_0));
+        assertThat(inputScript.getChunks().get(3).data, equalTo(multisigScript.getProgram()));
     }
     
     private Script parseScriptString(String string) throws Exception {

@@ -111,15 +111,23 @@ public class ScriptBuilder {
         return new ScriptBuilder().data(key.getPubKey()).op(OP_CHECKSIG).build();
     }
 
-    /** Creates a scriptSig that can redeem a pay-to-address output. */
-    public static Script createInputScript(TransactionSignature signature, ECKey pubKey) {
+    /**
+     * Creates a scriptSig that can redeem a pay-to-address output.
+     * If given signature is null, incomplete scriptSig will be created with OP_0 instead of signature
+     */
+    public static Script createInputScript(@Nullable TransactionSignature signature, ECKey pubKey) {
         byte[] pubkeyBytes = pubKey.getPubKey();
-        return new ScriptBuilder().data(signature.encodeToBitcoin()).data(pubkeyBytes).build();
+        byte[] sigBytes = signature != null ? signature.encodeToBitcoin() : new byte[]{};
+        return new ScriptBuilder().data(sigBytes).data(pubkeyBytes).build();
     }
 
-    /** Creates a scriptSig that can redeem a pay-to-pubkey output. */
-    public static Script createInputScript(TransactionSignature signature) {
-        return new ScriptBuilder().data(signature.encodeToBitcoin()).build();
+    /**
+     * Creates a scriptSig that can redeem a pay-to-pubkey output.
+     * If given signature is null, incomplete scriptSig will be created with OP_0 instead of signature
+     */
+    public static Script createInputScript(@Nullable TransactionSignature signature) {
+        byte[] sigBytes = signature != null ? signature.encodeToBitcoin() : new byte[]{};
+        return new ScriptBuilder().data(sigBytes).build();
     }
 
     /** Creates a program that requires at least N of the given keys to sign, using OP_CHECKMULTISIG. */
@@ -139,7 +147,12 @@ public class ScriptBuilder {
 
     /** Create a program that satisfies an OP_CHECKMULTISIG program. */
     public static Script createMultiSigInputScript(List<TransactionSignature> signatures) {
-        return createP2SHMultiSigInputScript(signatures, null);
+        List<byte[]> sigs = new ArrayList<byte[]>(signatures.size());
+        for (TransactionSignature signature : signatures) {
+            sigs.add(signature.encodeToBitcoin());
+        }
+
+        return createMultiSigInputScriptBytes(sigs, null);
     }
 
     /** Create a program that satisfies an OP_CHECKMULTISIG program. */
@@ -152,13 +165,24 @@ public class ScriptBuilder {
     	return createMultiSigInputScriptBytes(signatures, null);
     }
 
-    /** Create a program that satisfies a pay-to-script hashed OP_CHECKMULTISIG program. */
-    public static Script createP2SHMultiSigInputScript(List<TransactionSignature> signatures,
-                                                       byte[] multisigProgramBytes) {
-        List<byte[]> sigs = new ArrayList<byte[]>(signatures.size());
-        for (TransactionSignature signature : signatures)
-            sigs.add(signature.encodeToBitcoin());
-        return createMultiSigInputScriptBytes(sigs, multisigProgramBytes);
+    /**
+     * Create a program that satisfies a pay-to-script hashed OP_CHECKMULTISIG program.
+     * If given signature list is null, incomplete scriptSig will be created with OP_0 instead of signatures
+     */
+    public static Script createP2SHMultiSigInputScript(@Nullable List<TransactionSignature> signatures,
+                                                       Script multisigProgram) {
+        List<byte[]> sigs = new ArrayList<byte[]>();
+        if (signatures == null) {
+            // create correct number of empty signatures
+            int numSigs = multisigProgram.getNumberOfSignaturesRequiredToSpend();
+            for (int i = 0; i < numSigs; i++)
+                sigs.add(new byte[]{});
+        } else {
+            for (TransactionSignature signature : signatures) {
+                sigs.add(signature.encodeToBitcoin());
+            }
+        }
+        return createMultiSigInputScriptBytes(sigs, multisigProgram.getProgram());
     }
 
     /** 

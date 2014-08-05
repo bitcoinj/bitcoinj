@@ -367,7 +367,28 @@ public class Script {
             throw new RuntimeException(e);
         }
     }
-    
+
+    /**
+     * Creates an incomplete scriptSig that, once filled with signatures, can redeem output containing this scriptPubKey.
+     * Instead of the signatures resulting script has OP_0.
+     * Having incomplete input script allows to pass around partially signed tx.
+     * It is expected that this program later on will be updated with proper signatures.
+     */
+    public Script createEmptyInputScript(@Nullable ECKey key, @Nullable Script redeemScript) {
+        if (isSentToAddress()) {
+            checkArgument(key != null, "Key required to create pay-to-address input script");
+            return ScriptBuilder.createInputScript(null, key);
+        } else if (isSentToRawPubKey()) {
+            return ScriptBuilder.createInputScript(null);
+        } else if (isPayToScriptHash()) {
+            checkArgument(redeemScript != null, "Redeem script required to create P2SH input script");
+            return ScriptBuilder.createP2SHMultiSigInputScript(null, redeemScript);
+        } else {
+            throw new ScriptException("Do not understand script type: " + this);
+        }
+    }
+
+
     ////////////////////// Interface used during verification of transactions/blocks ////////////////////////////////
     
     private static int getSigOpCount(List<ScriptChunk> chunks, boolean accurate) throws ScriptException {
@@ -449,6 +470,24 @@ public class Script {
     }
 
     /**
+     * Returns number of signatures required to satisfy this script.
+     */
+    public int getNumberOfSignaturesRequiredToSpend() {
+        if (isSentToMultiSig()) {
+            // for N of M CHECKMULTISIG script we will need N signatures to spend
+            ScriptChunk nChunk = chunks.get(0);
+            return Script.decodeFromOpN(nChunk.opcode);
+        } else if (isSentToAddress() || isSentToRawPubKey()) {
+            // pay-to-address and pay-to-pubkey require single sig
+            return 1;
+        } else if (isPayToScriptHash()) {
+            throw new IllegalStateException("For P2SH number of signatures depends on redeem script");
+        } else {
+            throw new IllegalStateException("Unsupported script type");
+        }
+    }
+
+    /**
      * Returns number of bytes required to spend this script. It accepts optional ECKey and redeemScript that may
      * be required for certain types of script to estimate target size.
      */
@@ -456,16 +495,10 @@ public class Script {
         if (isPayToScriptHash()) {
             // scriptSig: <sig> [sig] [sig...] <redeemscript>
             checkArgument(redeemScript != null, "P2SH script requires redeemScript to be spent");
-            // for N of M CHECKMULTISIG redeem script we will need N signatures to spend
-            ScriptChunk nChunk = redeemScript.getChunks().get(0);
-            int n = Script.decodeFromOpN(nChunk.opcode);
-            return n * SIG_SIZE + redeemScript.getProgram().length;
+            return redeemScript.getNumberOfSignaturesRequiredToSpend() * SIG_SIZE + redeemScript.getProgram().length;
         } else if (isSentToMultiSig()) {
             // scriptSig: OP_0 <sig> [sig] [sig...]
-            // for N of M CHECKMULTISIG script we will need N signatures to spend
-            ScriptChunk nChunk = chunks.get(0);
-            int n = Script.decodeFromOpN(nChunk.opcode);
-            return n * SIG_SIZE + 1;
+            return getNumberOfSignaturesRequiredToSpend() * SIG_SIZE + 1;
         } else if (isSentToRawPubKey()) {
             // scriptSig: <sig>
             return SIG_SIZE;
