@@ -1,6 +1,6 @@
 @echo off
 rem Check if the jar has been built.
-set TARGET_JAR=bitcoinj-tools-*.jar
+set TARGET_JAR=wallet-tool.jar
 
 if not exist "target/%TARGET_JAR%" goto BUILD
 if defined ALWAYS_BUILD_WALLETTOOL goto BUILD
@@ -9,11 +9,9 @@ goto RUN
 :BUILD
 
 echo Compiling WalletTool to a JAR
-cd ../core
-call mvn install -DskipTests
-cd ../tools
-if exist "target/%TARGET_JAR%" del "target\%TARGET_JAR%"
+cd ..
 call mvn package -DskipTests
+cd tools
 
 :RUN
 
