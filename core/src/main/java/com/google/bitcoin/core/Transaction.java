@@ -23,7 +23,7 @@ import com.google.bitcoin.script.Script;
 import com.google.bitcoin.script.ScriptBuilder;
 import com.google.bitcoin.script.ScriptOpCodes;
 import com.google.bitcoin.wallet.DecryptingKeyBag;
-import com.google.bitcoin.wallet.MultisigKeyBag;
+import com.google.bitcoin.wallet.KeyBag;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.primitives.Ints;
 import com.google.common.primitives.Longs;
@@ -870,7 +870,7 @@ public class Transaction extends ChildMessage implements Serializable {
      * @param hashType This should always be set to SigHash.ALL currently. Other types are unused.
      * @param keyBag a provider of keys that are usable as-is for signing.
      */
-    public synchronized void signInputs(SigHash hashType, boolean anyoneCanPay, MultisigKeyBag keyBag) throws ScriptException {
+    public synchronized void signInputs(SigHash hashType, boolean anyoneCanPay, KeyBag keyBag) throws ScriptException {
         checkState(inputs.size() > 0);
         checkState(outputs.size() > 0);
 

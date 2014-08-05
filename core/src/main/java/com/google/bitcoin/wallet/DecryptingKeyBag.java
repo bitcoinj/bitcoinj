@@ -30,11 +30,11 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * A DecryptingKeyBag filters a pre-existing key bag, decrypting keys as they are requested using the provided
  * AES key.
  */
-public class DecryptingKeyBag implements MultisigKeyBag {
-    protected final MultisigKeyBag target;
+public class DecryptingKeyBag implements KeyBag {
+    protected final KeyBag target;
     protected final KeyParameter aesKey;
 
-    public DecryptingKeyBag(MultisigKeyBag target, KeyParameter aesKey) {
+    public DecryptingKeyBag(KeyBag target, KeyParameter aesKey) {
         this.target = checkNotNull(target);
         this.aesKey = checkNotNull(aesKey);
     }

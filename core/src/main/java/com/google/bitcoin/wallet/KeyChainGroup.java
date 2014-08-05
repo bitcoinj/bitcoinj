@@ -63,7 +63,7 @@ import static com.google.common.base.Preconditions.*;
  * <p>Deterministic key chains have a concept of a lookahead size and threshold. Please see the discussion in the
  * class docs for {@link com.google.bitcoin.wallet.DeterministicKeyChain} for more information on this topic.</p>
  */
-public class KeyChainGroup implements MultisigKeyBag {
+public class KeyChainGroup implements KeyBag {
     private static final Logger log = LoggerFactory.getLogger(KeyChainGroup.class);
 
     private BasicKeyChain basic;

@@ -18,7 +18,6 @@ package com.google.bitcoin.core;
 
 import com.google.bitcoin.script.Script;
 import com.google.bitcoin.wallet.KeyBag;
-import com.google.bitcoin.wallet.MultisigKeyBag;
 import com.google.bitcoin.wallet.RedeemData;
 
 import javax.annotation.Nullable;
@@ -152,9 +151,9 @@ public class TransactionOutPoint extends ChildMessage implements Serializable {
         } else if (connectedScript.isSentToRawPubKey()) {
             byte[] pubkeyBytes = connectedScript.getPubKey();
             return keyBag.findKeyFromPubKey(pubkeyBytes);
-        } else if (connectedScript.isPayToScriptHash() && keyBag instanceof MultisigKeyBag) {
+        } else if (connectedScript.isPayToScriptHash()) {
             byte[] scriptHash = connectedScript.getPubKeyHash();
-            RedeemData redeemData = ((MultisigKeyBag)keyBag).findRedeemDataFromScriptHash(scriptHash);
+            RedeemData redeemData = keyBag.findRedeemDataFromScriptHash(scriptHash);
             if (redeemData == null)
                 return null;
             return redeemData.getFullKey();

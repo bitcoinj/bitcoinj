@@ -388,7 +388,6 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         return k;
     }
 
-    @Override
     public DeterministicKey findKeyFromPubHash(byte[] pubkeyHash) {
         lock.lock();
         try {
@@ -398,7 +397,6 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         }
     }
 
-    @Override
     public DeterministicKey findKeyFromPubKey(byte[] pubkey) {
         lock.lock();
         try {
