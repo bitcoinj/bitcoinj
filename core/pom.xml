@@ -201,30 +201,102 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
-                <version>1.6</version>
-                <configuration>
-                    <minimizeJar>false</minimizeJar>
-                    <filters>
-                        <filter>
-                            <!-- exclude signatures, the bundling process breaks them for some reason -->
-                            <artifact>*:*</artifact>
-                            <excludes>
-                                <exclude>META-INF/*.SF</exclude>
-                                <exclude>META-INF/*.DSA</exclude>
-                                <exclude>META-INF/*.RSA</exclude>
-                            </excludes>
-                        </filter>
-                    </filters>
-                </configuration>
+                <version>2.3</version>
                 <executions>
+                    <!-- Create the bundled JAR, it's easier for some people -->
                     <execution>
                         <phase>package</phase>
                         <goals>
                             <goal>shade</goal>
                         </goals>
                         <configuration>
+                            <minimizeJar>false</minimizeJar>
+                            <filters>
+                                <filter>
+                                    <!-- exclude signatures, the bundling process breaks them for some reason -->
+                                    <artifact>*:*</artifact>
+                                    <excludes>
+                                        <exclude>META-INF/*.SF</exclude>
+                                        <exclude>META-INF/*.DSA</exclude>
+                                        <exclude>META-INF/*.RSA</exclude>
+                                    </excludes>
+                                </filter>
+                            </filters>
                             <shadedArtifactAttached>true</shadedArtifactAttached>
                             <shadedClassifierName>bundled</shadedClassifierName>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- Create a bundled executable test jar that runs the regtester/pulltester.
+                 The comparison tool is kind of messy and badly needs a seriously refactoring.
+                 It depends on classes which are only in the test tree so we must do some
+                 Maven kung fu here to create a bundle of it, as I couldn't make Maven Shade
+                 do bundling on the test jar for some reason. Maven kind of sucks ...
+              -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>unzip-lib</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>unpack</goal>
+                        </goals>
+                        <configuration>
+                            <overWriteReleases>false</overWriteReleases>
+                            <overWriteSnapshots>false</overWriteSnapshots>
+                            <overWriteIfNewer>true</overWriteIfNewer>
+                            <artifactItems>
+                                <artifactItem>
+                                    <outputDirectory>target/test-classes/</outputDirectory>
+                                    <groupId>com.google</groupId>
+                                    <artifactId>bitcoinj</artifactId>
+                                    <version>0.12-SNAPSHOT</version>
+                                </artifactItem>
+                            </artifactItems>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>unzip-deps</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>unpack-dependencies</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>target/test-classes/</outputDirectory>
+                            <overWriteReleases>false</overWriteReleases>
+                            <overWriteSnapshots>false</overWriteSnapshots>
+                            <overWriteIfNewer>true</overWriteIfNewer>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>2.4</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>test-jar</goal>
+                        </goals>
+                        <configuration>
+                            <archive>
+                                <manifest>
+                                    <mainClass>com.google.bitcoin.core.BitcoindComparisonTool</mainClass>
+                                    <addClasspath>false</addClasspath>
+                                </manifest>
+                            </archive>
+                            <finalName>pull</finalName>    <!-- becomes pull-tests.jar on disk (hacky) -->
+                            <excludes>
+                                <exclude>META-INF/*.SF</exclude>
+                                <exclude>META-INF/*.DSA</exclude>
+                                <exclude>META-INF/*.RSA</exclude>
+                            </excludes>
                         </configuration>
                     </execution>
                 </executions>
