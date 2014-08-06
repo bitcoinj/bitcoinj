@@ -20,7 +20,7 @@ public class TorInitializationTracker {
 		messageMap.put(Tor.BOOTSTRAP_STATUS_HANDSHAKE_DIR, "Finishing handshake with directory server");
 		messageMap.put(Tor.BOOTSTRAP_STATUS_ONEHOP_CREATE, "Establishing an encrypted directory connection");
 		messageMap.put(Tor.BOOTSTRAP_STATUS_REQUESTING_STATUS, "Asking for network status consensus");
-		messageMap.put(Tor.BOOTSTRAP_STATUS_LOADING_STATUS, "Loading networkstatus consensus");
+		messageMap.put(Tor.BOOTSTRAP_STATUS_LOADING_STATUS, "Loading network status consensus");
 		messageMap.put(Tor.BOOTSTRAP_STATUS_REQUESTING_KEYS, "Asking for authority key certs");
 		messageMap.put(Tor.BOOTSTRAP_STATUS_LOADING_KEYS, "Loading authority key certs");
 		messageMap.put(Tor.BOOTSTRAP_STATUS_REQUESTING_DESCRIPTORS, "Asking for relay descriptors");
