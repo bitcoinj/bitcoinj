@@ -3,16 +3,21 @@ package wallettemplate;
 import com.google.bitcoin.core.Coin;
 import com.google.bitcoin.core.DownloadListener;
 import com.google.bitcoin.utils.CoinFormat;
-import javafx.animation.*;
+import com.subgraph.orchid.TorClient;
+import com.subgraph.orchid.TorInitializationListener;
+import javafx.animation.FadeTransition;
+import javafx.animation.ParallelTransition;
+import javafx.animation.TranslateTransition;
+import javafx.application.Platform;
+import javafx.beans.property.SimpleDoubleProperty;
 import javafx.event.ActionEvent;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
-import javafx.scene.control.ProgressBar;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.VBox;
 import javafx.util.Duration;
 import org.fxmisc.easybind.EasyBind;
 import wallettemplate.controls.ClickableBitcoinAddress;
+import wallettemplate.controls.NotificationBarPane;
 import wallettemplate.utils.BitcoinUIModel;
 import wallettemplate.utils.easing.EasingMode;
 import wallettemplate.utils.easing.ElasticInterpolator;
@@ -24,18 +29,16 @@ import static wallettemplate.Main.bitcoin;
  * after. This class handles all the updates and event handling for the main UI.
  */
 public class MainController {
-    public ProgressBar syncProgress;
-    public VBox syncBox;
     public HBox controlsBox;
     public Label balance;
     public Button sendMoneyOutBtn;
     public ClickableBitcoinAddress addressControl;
 
     private BitcoinUIModel model = new BitcoinUIModel();
+    private NotificationBarPane.Item syncItem;
 
     // Called by FXMLLoader.
     public void initialize() {
-        syncProgress.setProgress(-1);
         addressControl.setOpacity(0.0);
     }
 
@@ -45,11 +48,47 @@ public class MainController {
         balance.textProperty().bind(EasyBind.map(model.balanceProperty(), coin -> CoinFormat.BTC.noCode().format(coin).toString()));
         // Don't let the user click send money when the wallet is empty.
         sendMoneyOutBtn.disableProperty().bind(model.balanceProperty().isEqualTo(Coin.ZERO));
-        syncProgress.progressProperty().bind(model.syncProgressProperty());
+
+        TorClient torClient = Main.bitcoin.peerGroup().getTorClient();
+        if (torClient != null) {
+            SimpleDoubleProperty torProgress = new SimpleDoubleProperty(-1);
+            String torMsg = "Initialising Tor";
+            syncItem = Main.instance.notificationBar.pushItem(torMsg, torProgress);
+            torClient.addInitializationListener(new TorInitializationListener() {
+                @Override
+                public void initializationProgress(String message, int percent) {
+                    Platform.runLater(() -> {
+                        syncItem.label.set(torMsg + ": " + message);
+                        torProgress.set(percent / 100.0);
+                    });
+                }
+
+                @Override
+                public void initializationCompleted() {
+                    Platform.runLater(() -> {
+                        syncItem.cancel();
+                        showBitcoinSyncMessage();
+                    });
+                }
+            });
+        } else {
+            showBitcoinSyncMessage();
+        }
         model.syncProgressProperty().addListener(x -> {
-            if (model.syncProgressProperty().get() >= 1.0)
+            if (model.syncProgressProperty().get() >= 1.0) {
                 readyToGoAnimation();
+                if (syncItem != null) {
+                    syncItem.cancel();
+                    syncItem = null;
+                }
+            } else if (syncItem == null) {
+                showBitcoinSyncMessage();
+            }
         });
+    }
+
+    private void showBitcoinSyncMessage() {
+        syncItem = Main.instance.notificationBar.pushItem("Synchronising with the Bitcoin network", model.syncProgressProperty());
     }
 
     public void sendMoneyOut(ActionEvent event) {
@@ -64,34 +103,22 @@ public class MainController {
 
     public void restoreFromSeedAnimation() {
         // Buttons slide out ...
-        TranslateTransition leave = new TranslateTransition(Duration.millis(600), controlsBox);
+        TranslateTransition leave = new TranslateTransition(Duration.millis(1200), controlsBox);
         leave.setByY(80.0);
-        // Sync bar slides in ...
-        TranslateTransition arrive = new TranslateTransition(Duration.millis(600), syncBox);
-        arrive.setToY(0.0);
-        // Slide out happens then slide in/fade happens.
-        SequentialTransition both = new SequentialTransition(leave, arrive);
-        both.setCycleCount(1);
-        both.setInterpolator(Interpolator.EASE_BOTH);
-        both.play();
+        leave.play();
     }
 
     public void readyToGoAnimation() {
-        // Sync progress bar slides out ...
-        TranslateTransition leave = new TranslateTransition(Duration.millis(600), syncBox);
-        leave.setByY(80.0);
         // Buttons slide in and clickable address appears simultaneously.
-        TranslateTransition arrive = new TranslateTransition(Duration.millis(600).multiply(2.0), controlsBox);
-        arrive.setInterpolator(new ElasticInterpolator(EasingMode.EASE_OUT));
+        TranslateTransition arrive = new TranslateTransition(Duration.millis(1200), controlsBox);
+        arrive.setInterpolator(new ElasticInterpolator(EasingMode.EASE_OUT, 1, 2));
         arrive.setToY(0.0);
-        FadeTransition reveal = new FadeTransition(Duration.millis(500), addressControl);
+        FadeTransition reveal = new FadeTransition(Duration.millis(1200), addressControl);
         reveal.setToValue(1.0);
         ParallelTransition group = new ParallelTransition(arrive, reveal);
-        // Slide out happens then slide in/fade happens.
-        SequentialTransition both = new SequentialTransition(leave, group);
-        both.setCycleCount(1);
-        both.setInterpolator(Interpolator.EASE_BOTH);
-        both.play();
+        group.setDelay(NotificationBarPane.ANIM_OUT_DURATION);
+        group.setCycleCount(1);
+        group.play();
     }
 
     public DownloadListener progressBarUpdater() {

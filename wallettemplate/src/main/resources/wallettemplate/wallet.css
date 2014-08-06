@@ -14,3 +14,18 @@
 .root-pane {
     -fx-background-color: white;
 }
+
+.info-bar {
+    -fx-background-color: linear-gradient(to bottom, black, darkslategray);
+    -fx-padding: 10;
+}
+.info-bar > Label {
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+}
+.info-bar > .progress-bar > .bar {
+    -fx-padding: 8;
+}
+.info-bar > .progress-bar > .track {
+    -fx-opacity: 0.0;
+}

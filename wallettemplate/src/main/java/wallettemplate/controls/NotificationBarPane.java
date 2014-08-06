@@ -1,9 +1,11 @@
 package wallettemplate.controls;
 
 
+import javafx.animation.Interpolator;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
+import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.value.ObservableDoubleValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
@@ -14,6 +16,7 @@ import javafx.scene.control.ProgressBar;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
+import javafx.util.Duration;
 import wallettemplate.utils.GuiUtils;
 import wallettemplate.utils.easing.EasingMode;
 import wallettemplate.utils.easing.ElasticInterpolator;
@@ -27,17 +30,20 @@ import javax.annotation.Nullable;
  * and/or a progress bar.
  */
 public class NotificationBarPane extends BorderPane {
+    public static final Duration ANIM_IN_DURATION = GuiUtils.UI_ANIMATION_TIME.multiply(2);
+    public static final Duration ANIM_OUT_DURATION = GuiUtils.UI_ANIMATION_TIME;
+
     private HBox bar;
     private Label label;
     private double barHeight;
     private ProgressBar progressBar;
 
     public class Item {
-        public final String label;
+        public final SimpleStringProperty label;
         @Nullable public final ObservableDoubleValue progress;
 
         public Item(String label, @Nullable ObservableDoubleValue progress) {
-            this.label = label;
+            this.label = new SimpleStringProperty(label);
             this.progress = progress;
         }
 
@@ -77,7 +83,7 @@ public class NotificationBarPane extends BorderPane {
         Item item = items.get(0);
 
         bar.getChildren().clear();
-        label.setText(item.label);
+        label.textProperty().bind(item.label);
         label.setMaxWidth(Double.MAX_VALUE);
         HBox.setHgrow(label, Priority.ALWAYS);
         bar.getChildren().add(label);
@@ -113,8 +119,16 @@ public class NotificationBarPane extends BorderPane {
             timeline.stop();
             timeline = null;
         }
-        KeyFrame kf = new KeyFrame(GuiUtils.UI_ANIMATION_TIME.multiply(2.0), new KeyValue(bar.prefHeightProperty(),
-                target, new ElasticInterpolator(EasingMode.EASE_OUT)));
+        Duration duration;
+        Interpolator interpolator;
+        if (target.intValue() > 0) {
+            interpolator = new ElasticInterpolator(EasingMode.EASE_OUT, 1, 2);
+            duration = ANIM_IN_DURATION;
+        } else {
+            interpolator = Interpolator.EASE_OUT;
+            duration = ANIM_OUT_DURATION;
+        }
+        KeyFrame kf = new KeyFrame(duration, new KeyValue(bar.prefHeightProperty(), target, interpolator));
         timeline = new Timeline(kf);
         timeline.setOnFinished(x -> timeline = null);
         timeline.play();
