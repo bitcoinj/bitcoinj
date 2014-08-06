@@ -33,7 +33,6 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
-import com.google.common.io.Closeables;
 import com.google.common.net.InetAddresses;
 import com.google.common.primitives.Ints;
 import com.google.common.primitives.Longs;
@@ -80,7 +79,7 @@ import static com.google.common.base.Preconditions.checkState;
 public class PeerGroup extends AbstractExecutionThreadService implements TransactionBroadcaster {
     private static final Logger log = LoggerFactory.getLogger(PeerGroup.class);
     private static final int DEFAULT_CONNECTIONS = 4;
-    private static final int TOR_TIMEOUT_SECONDS = 20;
+    private static final int TOR_TIMEOUT_SECONDS = 60;
 
     protected final ReentrantLock lock = Threading.lock("peergroup");
 
