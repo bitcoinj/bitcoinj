@@ -38,6 +38,15 @@ public class Main extends Application {
 
     @Override
     public void start(Stage mainWindow) throws Exception {
+        try {
+            realStart(mainWindow);
+        } catch (Throwable e) {
+            GuiUtils.crashAlert(e);
+            throw e;
+        }
+    }
+
+    private void realStart(Stage mainWindow) throws IOException {
         instance = this;
         // Show the crash dialog for any exceptions that we don't handle and that hit the main loop.
         GuiUtils.handleCrashesOnThisThread();

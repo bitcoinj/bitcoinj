@@ -2,8 +2,8 @@ package wallettemplate;
 
 import com.google.bitcoin.core.Coin;
 import com.google.bitcoin.core.DownloadListener;
+import com.google.bitcoin.utils.CoinFormat;
 import javafx.animation.*;
-import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -14,8 +14,8 @@ import javafx.util.Duration;
 import org.fxmisc.easybind.EasyBind;
 import wallettemplate.controls.ClickableBitcoinAddress;
 import wallettemplate.utils.BitcoinUIModel;
-
-import java.util.Date;
+import wallettemplate.utils.easing.EasingMode;
+import wallettemplate.utils.easing.ElasticInterpolator;
 
 import static wallettemplate.Main.bitcoin;
 
@@ -31,7 +31,7 @@ public class MainController {
     public Button sendMoneyOutBtn;
     public ClickableBitcoinAddress addressControl;
 
-    private BitcoinUIModel model;
+    private BitcoinUIModel model = new BitcoinUIModel();
 
     // Called by FXMLLoader.
     public void initialize() {
@@ -40,11 +40,16 @@ public class MainController {
     }
 
     public void onBitcoinSetup() {
-        model = new BitcoinUIModel(bitcoin.wallet());
+        model.setWallet(bitcoin.wallet());
         addressControl.addressProperty().bind(model.addressProperty());
-        balance.textProperty().bind(EasyBind.map(model.balanceProperty(), Coin::toPlainString));
+        balance.textProperty().bind(EasyBind.map(model.balanceProperty(), coin -> CoinFormat.BTC.noCode().format(coin).toString()));
         // Don't let the user click send money when the wallet is empty.
         sendMoneyOutBtn.disableProperty().bind(model.balanceProperty().isEqualTo(Coin.ZERO));
+        syncProgress.progressProperty().bind(model.syncProgressProperty());
+        model.syncProgressProperty().addListener(x -> {
+            if (model.syncProgressProperty().get() >= 1.0)
+                readyToGoAnimation();
+        });
     }
 
     public void sendMoneyOut(ActionEvent event) {
@@ -55,20 +60,6 @@ public class MainController {
     public void settingsClicked(ActionEvent event) {
         Main.OverlayUI<WalletSettingsController> screen = Main.instance.overlayUI("wallet_settings.fxml");
         screen.controller.initialize(null);
-    }
-
-    public class ProgressBarUpdater extends DownloadListener {
-        @Override
-        protected void progress(double pct, int blocksSoFar, Date date) {
-            super.progress(pct, blocksSoFar, date);
-            Platform.runLater(() -> syncProgress.setProgress(pct / 100.0));
-        }
-
-        @Override
-        protected void doneDownload() {
-            super.doneDownload();
-            Platform.runLater(MainController.this::readyToGoAnimation);
-        }
     }
 
     public void restoreFromSeedAnimation() {
@@ -90,7 +81,8 @@ public class MainController {
         TranslateTransition leave = new TranslateTransition(Duration.millis(600), syncBox);
         leave.setByY(80.0);
         // Buttons slide in and clickable address appears simultaneously.
-        TranslateTransition arrive = new TranslateTransition(Duration.millis(600), controlsBox);
+        TranslateTransition arrive = new TranslateTransition(Duration.millis(600).multiply(2.0), controlsBox);
+        arrive.setInterpolator(new ElasticInterpolator(EasingMode.EASE_OUT));
         arrive.setToY(0.0);
         FadeTransition reveal = new FadeTransition(Duration.millis(500), addressControl);
         reveal.setToValue(1.0);
@@ -102,7 +94,7 @@ public class MainController {
         both.play();
     }
 
-    public ProgressBarUpdater progressBarUpdater() {
-        return new ProgressBarUpdater();
+    public DownloadListener progressBarUpdater() {
+        return model.getDownloadListener();
     }
 }
