@@ -67,7 +67,14 @@ public class MnemonicCode {
 
     /** Initialise from the included word list. Won't work on Android. */
     public MnemonicCode() throws IOException {
-        this(MnemonicCode.class.getResourceAsStream("mnemonic/wordlist/english.txt"), BIP39_ENGLISH_SHA256);
+        this(openDefaultWords(), BIP39_ENGLISH_SHA256);
+    }
+
+    private static InputStream openDefaultWords() throws IOException {
+        InputStream stream = MnemonicCode.class.getResourceAsStream("mnemonic/wordlist/english.txt");
+        if (stream == null)
+            throw new IOException();   // Handle Dalvik vs ART divergence.
+        return stream;
     }
 
     /**
