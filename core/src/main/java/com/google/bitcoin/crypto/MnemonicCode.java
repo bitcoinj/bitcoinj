@@ -24,6 +24,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -46,7 +47,8 @@ public class MnemonicCode {
 
     private ArrayList<String> wordList;
 
-    public static String BIP39_ENGLISH_SHA256 = "ad90bf3beb7b0eb7e5acd74727dc0da96e0a280a258354e7293fb7e211ac03db";
+    private static final String BIP39_ENGLISH_RESOURCE_NAME = "mnemonic/wordlist/english.txt";
+    private static String BIP39_ENGLISH_SHA256 = "ad90bf3beb7b0eb7e5acd74727dc0da96e0a280a258354e7293fb7e211ac03db";
 
     /** UNIX time for when the BIP39 standard was finalised. This can be used as a default seed birthday. */
     public static long BIP39_STANDARDISATION_TIME_SECS = 1381276800;
@@ -58,10 +60,12 @@ public class MnemonicCode {
     static {
         try {
             INSTANCE = new MnemonicCode();
-        } catch (IOException e) {
+        } catch (FileNotFoundException e) {
             // We expect failure on Android. The developer has to set INSTANCE themselves.
             if (!Utils.isAndroidRuntime())
-                log.error("Failed to load word list", e);
+                log.error("Could not find word list", e);
+        } catch (IOException e) {
+            log.error("Failed to load word list", e);
         }
     }
 
@@ -71,9 +75,9 @@ public class MnemonicCode {
     }
 
     private static InputStream openDefaultWords() throws IOException {
-        InputStream stream = MnemonicCode.class.getResourceAsStream("mnemonic/wordlist/english.txt");
+        InputStream stream = MnemonicCode.class.getResourceAsStream(BIP39_ENGLISH_RESOURCE_NAME);
         if (stream == null)
-            throw new IOException();   // Handle Dalvik vs ART divergence.
+            throw new FileNotFoundException(BIP39_ENGLISH_RESOURCE_NAME);
         return stream;
     }
 
@@ -83,14 +87,14 @@ public class MnemonicCode {
      */
     public MnemonicCode(InputStream wordstream, String wordListDigest) throws IOException, IllegalArgumentException {
         BufferedReader br = new BufferedReader(new InputStreamReader(wordstream, "UTF-8"));
-        String word;
-        this.wordList = new ArrayList<String>();
+        this.wordList = new ArrayList<String>(2048);
         MessageDigest md;
         try {
             md = MessageDigest.getInstance("SHA-256");
         } catch (NoSuchAlgorithmException ex) {
             throw new RuntimeException(ex);		// Can't happen.
         }
+        String word;
         while ((word = br.readLine()) != null) {
             md.update(word.getBytes());
             this.wordList.add(word);
