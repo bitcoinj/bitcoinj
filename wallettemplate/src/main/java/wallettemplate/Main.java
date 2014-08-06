@@ -34,7 +34,7 @@ public class Main extends Application {
 
     private StackPane uiStack;
     private Pane mainUI;
-    public Controller controller;
+    public MainController controller;
 
     @Override
     public void start(Stage mainWindow) throws Exception {
@@ -48,7 +48,7 @@ public class Main extends Application {
             // AquaFx.style();
         }
 
-        // Load the GUI. The Controller class will be automagically created and wired up.
+        // Load the GUI. The MainController class will be automagically created and wired up.
         URL location = getClass().getResource("main.fxml");
         FXMLLoader loader = new FXMLLoader(location);
         mainUI = loader.load();

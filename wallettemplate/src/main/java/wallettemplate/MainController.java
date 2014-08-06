@@ -23,7 +23,7 @@ import static wallettemplate.Main.bitcoin;
  * Gets created auto-magically by FXMLLoader via reflection. The widget fields are set to the GUI controls they're named
  * after. This class handles all the updates and event handling for the main UI.
  */
-public class Controller {
+public class MainController {
     public ProgressBar syncProgress;
     public VBox syncBox;
     public HBox controlsBox;
@@ -67,7 +67,7 @@ public class Controller {
         @Override
         protected void doneDownload() {
             super.doneDownload();
-            Platform.runLater(Controller.this::readyToGoAnimation);
+            Platform.runLater(MainController.this::readyToGoAnimation);
         }
     }
 
