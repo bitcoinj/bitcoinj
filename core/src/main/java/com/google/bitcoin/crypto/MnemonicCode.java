@@ -87,7 +87,7 @@ public class MnemonicCode {
      */
     public MnemonicCode(InputStream wordstream, String wordListDigest) throws IOException, IllegalArgumentException {
         BufferedReader br = new BufferedReader(new InputStreamReader(wordstream, "UTF-8"));
-        this.wordList = new ArrayList<String>();
+        this.wordList = new ArrayList<String>(2048);
         MessageDigest md;
         try {
             md = MessageDigest.getInstance("SHA-256");
