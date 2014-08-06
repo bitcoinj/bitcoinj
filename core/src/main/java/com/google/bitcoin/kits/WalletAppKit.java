@@ -378,7 +378,9 @@ public class WalletAppKit extends AbstractIdleService {
 
     protected PeerGroup createPeerGroup() throws TimeoutException {
         if (useTor) {
-            return PeerGroup.newWithTor(params, vChain, new TorClient());
+            TorClient torClient = new TorClient();
+            torClient.getConfig().setDataDirectory(directory);
+            return PeerGroup.newWithTor(params, vChain, torClient);
         }
         else
             return new PeerGroup(params, vChain);
