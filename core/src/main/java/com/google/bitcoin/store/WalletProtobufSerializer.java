@@ -383,6 +383,8 @@ public class WalletProtobufSerializer {
                              Protos.Wallet walletProto) throws UnreadableWalletException {
         if (walletProto.getVersion() > 1)
             throw new UnreadableWalletException.FutureVersion();
+        if (!walletProto.getNetworkIdentifier().equals(params.getId()))
+            throw new UnreadableWalletException.WrongNetwork();
 
         // Read the scrypt parameters that specify how encryption and decryption is performed.
         KeyChainGroup chain;
