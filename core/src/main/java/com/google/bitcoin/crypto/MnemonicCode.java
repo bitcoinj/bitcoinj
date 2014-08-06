@@ -77,7 +77,7 @@ public class MnemonicCode {
     private static InputStream openDefaultWords() throws IOException {
         InputStream stream = MnemonicCode.class.getResourceAsStream(BIP39_ENGLISH_RESOURCE_NAME);
         if (stream == null)
-            throw new FileNotFoundException(BIP39_ENGLISH_RESOURCE_NAME); // Handle Dalvik vs ART vs JVM divergence.
+            throw new FileNotFoundException(BIP39_ENGLISH_RESOURCE_NAME);
         return stream;
     }
 
