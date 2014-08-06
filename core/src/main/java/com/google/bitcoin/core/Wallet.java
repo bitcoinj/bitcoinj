@@ -2044,7 +2044,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
         }
     }
 
-    private void maybeQueueOnWalletChanged() {
+    protected void maybeQueueOnWalletChanged() {
         // Don't invoke the callback in some circumstances, eg, whilst we are re-organizing or fiddling with
         // transactions due to a new block arriving. It will be called later instead.
         checkState(lock.isHeldByCurrentThread());
@@ -2060,7 +2060,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
         }
     }
 
-    private void queueOnCoinsReceived(final Transaction tx, final Coin balance, final Coin newBalance) {
+    protected void queueOnCoinsReceived(final Transaction tx, final Coin balance, final Coin newBalance) {
         checkState(lock.isHeldByCurrentThread());
         for (final ListenerRegistration<WalletEventListener> registration : eventListeners) {
             registration.executor.execute(new Runnable() {
@@ -2072,7 +2072,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
         }
     }
 
-    private void queueOnCoinsSent(final Transaction tx, final Coin prevBalance, final Coin newBalance) {
+    protected void queueOnCoinsSent(final Transaction tx, final Coin prevBalance, final Coin newBalance) {
         checkState(lock.isHeldByCurrentThread());
         for (final ListenerRegistration<WalletEventListener> registration : eventListeners) {
             registration.executor.execute(new Runnable() {
@@ -2084,7 +2084,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
         }
     }
 
-    private void queueOnReorganize() {
+    protected void queueOnReorganize() {
         checkState(lock.isHeldByCurrentThread());
         checkState(insideReorg);
         for (final ListenerRegistration<WalletEventListener> registration : eventListeners) {
@@ -2097,7 +2097,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
         }
     }
 
-    private void queueOnScriptsAdded(final List<Script> scripts) {
+    protected void queueOnScriptsAdded(final List<Script> scripts) {
         checkState(lock.isHeldByCurrentThread());
         for (final ListenerRegistration<WalletEventListener> registration : eventListeners) {
             registration.executor.execute(new Runnable() {
