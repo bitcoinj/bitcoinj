@@ -560,7 +560,8 @@ public class ECKey implements EncryptableItem, Serializable {
      * EC maths on them.
      *
      * @param aesKey The AES key to use for decryption of the private key. If null then no decryption is required.
-     * @throws KeyCrypterException if this ECKey doesn't have a private part.
+     * @throws KeyCrypterException if there's something wrong with aesKey.
+     * @throws ECKey.MissingPrivateKeyException if this key cannot sign because it's pubkey only.
      */
     public ECDSASignature sign(Sha256Hash input, @Nullable KeyParameter aesKey) throws KeyCrypterException {
         KeyCrypter crypter = getKeyCrypter();
@@ -721,8 +722,6 @@ public class ECKey implements EncryptableItem, Serializable {
      * @throws KeyCrypterException if this ECKey is encrypted and no AESKey is provided or it does not decrypt the ECKey.
      */
     public String signMessage(String message, @Nullable KeyParameter aesKey) throws KeyCrypterException {
-        if (priv == null)
-            throw new MissingPrivateKeyException();
         byte[] data = Utils.formatMessageForSigning(message);
         Sha256Hash hash = Sha256Hash.createDouble(data);
         ECDSASignature sig = sign(hash, aesKey);
