@@ -84,6 +84,10 @@
           <artifactId>maven-enforcer-plugin</artifactId>
           <version>1.2</version>
         </plugin>
+        <plugin>
+          <artifactId>maven-install-plugin</artifactId>
+          <version>2.5.1</version>
+        </plugin>
       </plugins>
     </pluginManagement>
   </build>
