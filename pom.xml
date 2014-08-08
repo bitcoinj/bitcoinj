@@ -109,8 +109,9 @@
           <version>2.1.2</version>
         </plugin>
         <plugin>
-          <artifactId>maven-surefire-plugin</artifactId>
-          <version>2.12.4</version>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>cobertura-maven-plugin</artifactId>
+          <version>2.6</version>
         </plugin>
       </plugins>
     </pluginManagement>
