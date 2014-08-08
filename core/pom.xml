@@ -97,14 +97,7 @@
     <build>
         <plugins>
             <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>cobertura-maven-plugin</artifactId>
-                <version>2.6</version>
-            </plugin>
-
-            <plugin>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.0</version>
                 <configuration>
                     <source>1.6</source>
                     <target>1.6</target>
@@ -114,7 +107,6 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-source-plugin</artifactId>
-                <version>2.1.2</version>
                 <executions>
                     <execution>
                         <id>attach-sources</id>
@@ -132,7 +124,6 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-enforcer-plugin</artifactId>
-                <version>1.2</version>
                 <executions>
                     <execution>
                         <id>enforce</id>
@@ -162,13 +153,14 @@
                                         <urn>junit:junit:4.11:jar:null:test:4e031bb61df09069aeb2bffb4019e7a5034a4ee0</urn>
                                         <urn>net.jcip:jcip-annotations:1.0:jar:null:compile:afba4942caaeaf46aab0b976afd57cc7c181467e</urn>
                                         <urn>org.apache.maven.plugins:maven-clean-plugin:2.5:maven-plugin:null:runtime:75653decaefa85ca8114ff3a4f869bb2ee6d605d</urn>
-                                        <urn>org.apache.maven.plugins:maven-compiler-plugin:3.0:maven-plugin:null:runtime:aeba83cc279f61d8717a622481f1623875e19fcb</urn>
+                                        <urn>org.apache.maven.plugins:maven-compiler-plugin:3.1:maven-plugin:null:runtime:9977a8d04e75609cf01badc4eb6a9c7198c4c5ea</urn>
+                                        <urn>org.apache.maven.plugins:maven-dependency-plugin:2.8:maven-plugin:null:runtime:04c8dedf3d9b2a3f45f3daa93e11ca547d2063ca</urn>
                                         <urn>org.apache.maven.plugins:maven-deploy-plugin:2.7:maven-plugin:null:runtime:6dadfb75679ca010b41286794f737088ebfe12fd</urn>
                                         <urn>org.apache.maven.plugins:maven-enforcer-plugin:1.2:maven-plugin:null:runtime:6b755a9a0d618f8f57c0b5c4a0737a012e710a46</urn>
-                                        <urn>org.apache.maven.plugins:maven-install-plugin:2.4:maven-plugin:null:runtime:9d1316166fe4c313f56276935e08df11f45267c2</urn>
-                                        <urn>org.apache.maven.plugins:maven-jar-plugin:2.4:maven-plugin:null:runtime:e3200bcf357b5c5e26df072d27df160546bb079a</urn>
+                                        <urn>org.apache.maven.plugins:maven-install-plugin:2.5.1:maven-plugin:null:runtime:b6f5a4b621b9c26699c8deadb20fdc35ce568e35</urn>
+                                        <urn>org.apache.maven.plugins:maven-jar-plugin:2.5:maven-plugin:null:runtime:344d667f5ec8b90d03d698d096a1147672fc522f</urn>
                                         <urn>org.apache.maven.plugins:maven-resources-plugin:2.6:maven-plugin:null:runtime:dd093ff6a4b680eae7ae83b5ab04310249fc6590</urn>
-                                        <urn>org.apache.maven.plugins:maven-shade-plugin:1.6:maven-plugin:null:runtime:cd862864faa26636c013a21a79bbc57c8bcc1cf4</urn>
+                                        <urn>org.apache.maven.plugins:maven-shade-plugin:2.3:maven-plugin:null:runtime:d136adc7abccc9c12adcad6ae7a9bc51b2b7184b</urn>
                                         <urn>org.apache.maven.plugins:maven-site-plugin:3.3:maven-plugin:null:runtime:77ba1752b1ac4c4339d6f11554800960a56a4ae1</urn>
                                         <urn>org.apache.maven.plugins:maven-source-plugin:2.1.2:maven-plugin:null:runtime:35154aa8e6e0e84c2b5c10c3d5220d65670ba984</urn>
                                         <urn>org.apache.maven.plugins:maven-surefire-plugin:2.12.4:maven-plugin:null:runtime:2b435f7f77777d2e62354fdc690da3f1dc47a26b</urn>
@@ -201,7 +193,6 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
-                <version>2.3</version>
                 <executions>
                     <!-- Create the bundled JAR, it's easier for some people -->
                     <execution>
@@ -277,7 +268,6 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
-                <version>2.4</version>
                 <executions>
                     <execution>
                         <phase>package</phase>
