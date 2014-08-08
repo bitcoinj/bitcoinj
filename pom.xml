@@ -108,6 +108,10 @@
           <artifactId>maven-source-plugin</artifactId>
           <version>2.1.2</version>
         </plugin>
+        <plugin>
+          <artifactId>maven-surefire-plugin</artifactId>
+          <version>2.12.4</version>
+        </plugin>
       </plugins>
     </pluginManagement>
   </build>
