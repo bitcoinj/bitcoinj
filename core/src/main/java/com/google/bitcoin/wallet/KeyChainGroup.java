@@ -157,7 +157,7 @@ public class KeyChainGroup {
         marriedKeysScripts = new LinkedHashMap<ByteString, Script>();
         maybeLookaheadScripts();
 
-        if (!this.currentKeys.isEmpty()) {
+        if (!this.followingKeychains.isEmpty()) {
             DeterministicKey followedWatchKey = getActiveKeyChain().getWatchingKey();
             for (Map.Entry<KeyChain.KeyPurpose, DeterministicKey> entry : this.currentKeys.entrySet()) {
                 Address address = makeP2SHOutputScript(entry.getValue(), followedWatchKey).getToAddress(params);
