@@ -784,24 +784,24 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
     }
 
     /**
-     * <p>Locates a script from the KeyChainGroup given the script hash. This is needed when finding out which
-     * script we need to use to redeem a transaction output.</p>
-     * Returns null if no such script found
+     * Locates a redeem data (redeem script and keys) from the keychain given the hash of the script.
+     * Returns RedeemData object or null if no such data was found.
      */
     @Nullable
-    public Script findRedeemScriptFromPubHash(byte[] payToScriptHash) {
+    public RedeemData findRedeemDataFromScriptHash(byte[] payToScriptHash) {
         lock.lock();
         try {
-            return keychain.findRedeemScriptFromPubHash(payToScriptHash);
+            return keychain.findRedeemDataFromScriptHash(payToScriptHash);
         } finally {
             lock.unlock();
         }
     }
+
     /**
      * Returns true if this wallet knows the script corresponding to the given hash
      */
     public boolean isPayToScriptHashMine(byte[] payToScriptHash) {
-        return findRedeemScriptFromPubHash(payToScriptHash) != null;
+        return findRedeemDataFromScriptHash(payToScriptHash) != null;
     }
 
     /**
@@ -3964,7 +3964,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
                     key = findKeyFromPubHash(script.getPubKeyHash());
                     checkNotNull(key, "Coin selection includes unspendable outputs");
                 } else if (script.isPayToScriptHash()) {
-                    redeemScript = keychain.findRedeemScriptFromPubHash(script.getPubKeyHash());
+                    redeemScript = findRedeemDataFromScriptHash(script.getPubKeyHash()).redeemScript;
                     checkNotNull(redeemScript, "Coin selection includes unspendable outputs");
                 }
                 size += script.getNumberOfBytesRequiredToSpend(key, redeemScript);

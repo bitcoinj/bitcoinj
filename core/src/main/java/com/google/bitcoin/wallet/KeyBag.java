@@ -18,9 +18,11 @@ package com.google.bitcoin.wallet;
 
 import com.google.bitcoin.core.ECKey;
 
+import javax.annotation.Nullable;
+
 /**
- * A KeyBag is simply an object that can map public keys and their 160-bit hashes to ECKey objects. All
- * {@link com.google.bitcoin.wallet.KeyChain}s are key bags.
+ * A KeyBag is simply an object that can map public keys, their 160-bit hashes and script hashes to ECKey
+ * and {@link RedeemData} objects.
  */
 public interface KeyBag {
     /**
@@ -37,4 +39,15 @@ public interface KeyBag {
      * @return ECKey or null if no such key was found.
      */
     public ECKey findKeyFromPubKey(byte[] pubkey);
+
+    /**
+     * Locates a redeem data (redeem script and keys) from the keychain given the hash of the script.
+     * This is needed when finding out which key and script we need to use to locally sign a P2SH transaction input.
+     * It is assumed that wallet should not have more than one private key for a single P2SH tx for security reasons.
+     *
+     * Returns RedeemData object or null if no such data was found.
+     */
+    @Nullable
+    public RedeemData findRedeemDataFromScriptHash(byte[] scriptHash);
+
 }

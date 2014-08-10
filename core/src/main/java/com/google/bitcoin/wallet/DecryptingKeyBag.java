@@ -21,6 +21,9 @@ import org.spongycastle.crypto.params.KeyParameter;
 
 import javax.annotation.Nullable;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
@@ -51,5 +54,16 @@ public class DecryptingKeyBag implements KeyBag {
     @Override
     public ECKey findKeyFromPubKey(byte[] pubkey) {
         return maybeDecrypt(target.findKeyFromPubKey(pubkey));
+    }
+
+    @Nullable
+    @Override
+    public RedeemData findRedeemDataFromScriptHash(byte[] scriptHash) {
+        RedeemData redeemData = target.findRedeemDataFromScriptHash(scriptHash);
+        List<ECKey> decryptedKeys = new ArrayList<ECKey>();
+        for (ECKey key : redeemData.keys) {
+            decryptedKeys.add(maybeDecrypt(key));
+        }
+        return RedeemData.of(decryptedKeys, redeemData.redeemScript);
     }
 }
