@@ -173,8 +173,13 @@ public class KeyChainGroup {
         if (chains.isEmpty())
             return;
 
-        int numLeafKeys = chains.get(chains.size() - 1).getLeafKeys().size();
+        int numLeafKeys = 0;
+        for (DeterministicKeyChain chain : chains) {
+            numLeafKeys += chain.getLeafKeys().size();
+        }
+
         checkState(marriedKeysScripts.size() <= numLeafKeys, "Number of scripts is greater than number of leaf keys");
+
         if (marriedKeysScripts.size() == numLeafKeys)
             return;
 
@@ -620,13 +625,14 @@ public class KeyChainGroup {
         BloomFilter filter = new BloomFilter(size, falsePositiveRate, nTweak);
         if (basic.numKeys() > 0)
             filter.merge(basic.getFilter(size, falsePositiveRate, nTweak));
+
+        for (Map.Entry<ByteString, Script> entry : marriedKeysScripts.entrySet()) {
+            filter.insert(entry.getKey().toByteArray());
+            filter.insert(ScriptBuilder.createP2SHOutputScript(entry.getValue()).getProgram());
+        }
+
         for (DeterministicKeyChain chain : chains) {
-            if (isMarried(chain)) {
-                for (Map.Entry<ByteString, Script> entry : marriedKeysScripts.entrySet()) {
-                    filter.insert(entry.getKey().toByteArray());
-                    filter.insert(ScriptBuilder.createP2SHOutputScript(entry.getValue()).getProgram());
-                }
-            } else {
+            if (!isMarried(chain)) {
                 filter.merge(chain.getFilter(size, falsePositiveRate, nTweak));
             }
         }
