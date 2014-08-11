@@ -1007,18 +1007,33 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         }
     }
 
-    // For internal usage only (for printing keys in KeyChainGroup).
-    /* package */ List<ECKey> getKeys() {
-        return basicKeyChain.getKeys();
+    // For internal usage only
+    /* package */ List<ECKey> getKeys(boolean includeLookahead) {
+        List<ECKey> keys = basicKeyChain.getKeys();
+        if (!includeLookahead) {
+            int treeSize = internalKey.getPath().size();
+            List<ECKey> issuedKeys = new LinkedList<ECKey>();
+            for (ECKey key : keys) {
+                DeterministicKey detkey = (DeterministicKey) key;
+                DeterministicKey parent = detkey.getParent();
+                if (parent == null) continue;
+                if (detkey.getPath().size() <= treeSize) continue;
+                if (parent.equals(internalKey) && detkey.getChildNumber().i() > issuedInternalKeys) continue;
+                if (parent.equals(externalKey) && detkey.getChildNumber().i() > issuedExternalKeys) continue;
+                issuedKeys.add(detkey);
+            }
+            return issuedKeys;
+        }
+        return keys;
     }
 
 
     /**
-     * Returns leaf keys issued by this chain (not including lookahead zone)
+     * Returns leaf keys issued by this chain (including lookahead zone)
      */
     public List<DeterministicKey> getLeafKeys() {
         ImmutableList.Builder<DeterministicKey> keys = ImmutableList.builder();
-        for (ECKey key : getKeys()) {
+        for (ECKey key : getKeys(true)) {
             DeterministicKey dKey = (DeterministicKey) key;
             if (dKey.getPath().size() > 2) {
                 keys.add(dKey);

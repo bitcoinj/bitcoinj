@@ -872,7 +872,7 @@ public class KeyChainGroup implements KeyBag {
                 for (RedeemData redeemData : marriedKeysRedeemData.values())
                     formatScript(ScriptBuilder.createP2SHOutputScript(redeemData.redeemScript), builder2);
             } else {
-                for (ECKey key : chain.getKeys())
+                for (ECKey key : chain.getKeys(false))
                     formatKeyWithAddress(includePrivateKeys, key, builder2);
             }
             chainStrs.add(builder2.toString());
@@ -895,9 +895,17 @@ public class KeyChainGroup implements KeyBag {
         builder.append(address.toString());
         builder.append("  hash160:");
         builder.append(Utils.HEX.encode(key.getPubKeyHash()));
-        builder.append("\n  ");
-        builder.append(includePrivateKeys ? key.toStringWithPrivate() : key.toString());
+        if (key instanceof DeterministicKey) {
+            builder.append("  (");
+            builder.append((((DeterministicKey) key).getPathAsString()));
+            builder.append(")");
+        }
         builder.append("\n");
+        if (includePrivateKeys) {
+            builder.append("  ");
+            builder.append(key.toStringWithPrivate());
+            builder.append("\n");
+        }
     }
 
     /** Returns a copy of the current list of chains. */

@@ -4,7 +4,8 @@ Usage: wallet-tool --flags action-name
        wallet-tool action-name --flags
 
 >>> ACTIONS
-  dump                 Loads and prints the given wallet in textual form to stdout.
+  dump                 Loads and prints the given wallet in textual form to stdout. Private keys are only printed
+                       if --dump-privkeys is specified.
   raw-dump             Prints the wallet as a raw protobuf with no parsing or sanity checking applied.
   create               Makes a new wallet in the file specified by --wallet.
                        Will complain and require --force if the wallet already exists.

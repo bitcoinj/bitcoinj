@@ -1095,8 +1095,13 @@ public class ECKey implements EncryptableItem, Serializable {
     private String toString(boolean includePrivate) {
         final ToStringHelper helper = Objects.toStringHelper(this).omitNullValues();
         helper.add("pub", Utils.HEX.encode(pub.getEncoded()));
-        if (includePrivate && priv != null)
-            helper.add("priv", Utils.HEX.encode(priv.toByteArray()));
+        if (includePrivate) {
+            try {
+                helper.add("priv", Utils.HEX.encode(getPrivKey().toByteArray()));
+            } catch (IllegalStateException e) {
+                // TODO: Make hasPrivKey() work for deterministic keys and fix this.
+            }
+        }
         if (creationTimeSeconds > 0)
             helper.add("creationTimeSeconds", creationTimeSeconds);
         helper.add("keyCrypter", keyCrypter);
