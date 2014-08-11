@@ -357,8 +357,8 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
             basicKeyChain.importKeys(lookahead);
             List<DeterministicKey> keys = new ArrayList<DeterministicKey>(numberOfKeys);
 
-            for (int i = 1; i <= numberOfKeys; i++) {
-                keys.add(hierarchy.get(HDUtils.append(parentKey.getPath(), new ChildNumber((index-numberOfKeys+i) - 1, false)), false, false));
+            for (int i = 0; i < numberOfKeys; i++) {
+                keys.add(hierarchy.get(HDUtils.append(parentKey.getPath(), new ChildNumber(index - numberOfKeys + i, false)), false, false));
             }
             return keys;
         } finally {
