@@ -50,13 +50,13 @@ import java.util.List;
  */
 public class PartialMerkleTree extends Message {
     // the total number of transactions in the block
-    int transactionCount;
+    private int transactionCount;
 
     // node-is-parent-of-matched-txid bits
-    byte[] matchedChildBits;
+    private byte[] matchedChildBits;
 
     // txids and internal hashes
-    List<Sha256Hash> hashes;
+    private List<Sha256Hash> hashes;
     
     public PartialMerkleTree(NetworkParameters params, byte[] payloadBytes, int offset) throws ProtocolException {
         super(params, payloadBytes, offset);
@@ -175,5 +175,9 @@ public class PartialMerkleTree extends Message {
             throw new VerificationException("Got a CPartialMerkleTree that didn't need all the data it provided");
         
         return merkleRoot;
+    }
+
+    public int getTransactionCount() {
+        return transactionCount;
     }
 }
