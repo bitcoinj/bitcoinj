@@ -323,7 +323,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
     /** Returns a freshly derived key that has not been returned by this method before. */
     @Override
     public DeterministicKey getKey(KeyPurpose purpose) {
-        return getKeys(purpose,1).get(0);
+        return getKeys(purpose, 1).get(0);
     }
 
     /** Returns freshly derived key/s that have not been returned by this method before. */
@@ -353,12 +353,23 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                 default:
                     throw new UnsupportedOperationException();
             }
-            List<DeterministicKey> lookahead = maybeLookAhead(parentKey, index);
+            // Optimization: potentially do a very quick key generation for just the number of keys we need if we
+            // didn't already create them, ignoring the configured lookahead size. This ensures we'll be able to
+            // retrieve the keys in the following loop, but if we're totally fresh and didn't get a chance to
+            // calculate the lookahead keys yet, this will not block waiting to calculate 100+ EC point multiplies.
+            // On slow/crappy Android phones looking ahead 100 keys can take ~5 seconds but the OS will kill us
+            // if we block for just one second on the UI thread. Because UI threads may need an address in order
+            // to render the screen, we need getKeys to be fast even if the wallet is totally brand new and lookahead
+            // didn't happen yet.
+            //
+            // It's safe to do this because when a network thread tries to calculate a Bloom filter, we'll go ahead
+            // and calculate the full lookahead zone there, so network requests will always use the right amount.
+            List<DeterministicKey> lookahead = maybeLookAhead(parentKey, index, 0, 0);
             basicKeyChain.importKeys(lookahead);
             List<DeterministicKey> keys = new ArrayList<DeterministicKey>(numberOfKeys);
-
             for (int i = 0; i < numberOfKeys; i++) {
-                keys.add(hierarchy.get(HDUtils.append(parentKey.getPath(), new ChildNumber(index - numberOfKeys + i, false)), false, false));
+                ImmutableList<ChildNumber> path = HDUtils.append(parentKey.getPath(), new ChildNumber(index - numberOfKeys + i, false));
+                keys.add(hierarchy.get(path, false, false));
             }
             return keys;
         } finally {
@@ -905,8 +916,11 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         }
     }
 
-    // Pre-generate enough keys to reach the lookahead size.
-    private void maybeLookAhead() {
+    /**
+     * Pre-generate enough keys to reach the lookahead size. You can call this if you need to explicitly invoke
+     * the lookahead procedure, but it's normally unnecessary as it will be done automatically when needed.
+     */
+    public void maybeLookAhead() {
         lock.lock();
         try {
             List<DeterministicKey> keys = maybeLookAhead(externalKey, issuedExternalKeys);
@@ -920,17 +934,20 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         }
     }
 
+    private List<DeterministicKey> maybeLookAhead(DeterministicKey parent, int issued) {
+        checkState(lock.isHeldByCurrentThread());
+        return maybeLookAhead(parent, issued, getLookaheadSize(), getLookaheadThreshold());
+    }
+
     /**
      * Pre-generate enough keys to reach the lookahead size, but only if there are more than the lookaheadThreshold to
      * be generated, so that the Bloom filter does not have to be regenerated that often.
      *
      * The returned mutable list of keys must be inserted into the basic key chain.
      */
-    private List<DeterministicKey> maybeLookAhead(DeterministicKey parent, int issued) {
+    private List<DeterministicKey> maybeLookAhead(DeterministicKey parent, int issued, int lookaheadSize, int lookaheadThreshold) {
         checkState(lock.isHeldByCurrentThread());
         final int numChildren = hierarchy.getNumChildren(parent.getPath());
-        final int lookaheadSize = getLookaheadSize();
-        final int lookaheadThreshold = getLookaheadThreshold();
         final int needed = issued + lookaheadSize + lookaheadThreshold - numChildren;
 
         if (needed <= lookaheadThreshold)

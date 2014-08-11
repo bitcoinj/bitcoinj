@@ -95,17 +95,23 @@ public class DeterministicKeyChainTest {
         ECKey key = chain.getKey(KeyChain.KeyPurpose.CHANGE);
         assertEquals(1, listenerKeys.size());  // 1 event
         final List<ECKey> firstEvent = listenerKeys.get(0);
-        assertEquals(7, firstEvent.size());  // 5 lookahead keys, +1 lookahead threhsold, +1 to satisfy the request.
+        assertEquals(1, firstEvent.size());
         assertTrue(firstEvent.contains(key));   // order is not specified.
         listenerKeys.clear();
+
+        chain.maybeLookAhead();
+        final List<ECKey> secondEvent = listenerKeys.get(0);
+        assertEquals(12, secondEvent.size());  // (5 lookahead keys, +1 lookahead threshold) * 2 chains
+        listenerKeys.clear();
+
         chain.getKey(KeyChain.KeyPurpose.CHANGE);
         // At this point we've entered the threshold zone so more keys won't immediately trigger more generations.
         assertEquals(0, listenerKeys.size());  // 1 event
-        final int lookaheadThreshold = chain.getLookaheadThreshold();
+        final int lookaheadThreshold = chain.getLookaheadThreshold() + chain.getLookaheadSize();
         for (int i = 0; i < lookaheadThreshold; i++)
             chain.getKey(KeyChain.KeyPurpose.CHANGE);
         assertEquals(1, listenerKeys.size());  // 1 event
-        assertEquals(lookaheadThreshold + 1, listenerKeys.get(0).size());  // 1 key.
+        assertEquals(1, listenerKeys.get(0).size());  // 1 key.
     }
 
     @Test
@@ -120,13 +126,20 @@ public class DeterministicKeyChainTest {
 
     @Test
     public void serializeUnencrypted() throws UnreadableWalletException {
+        chain.maybeLookAhead();
         DeterministicKey key1 = chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         DeterministicKey key2 = chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         DeterministicKey key3 = chain.getKey(KeyChain.KeyPurpose.CHANGE);
-
         List<Protos.Key> keys = chain.serializeToProtobuf();
         // 1 root seed, 1 master key, 1 account key, 2 internal keys, 3 derived, 20 lookahead and 5 lookahead threshold.
-        assertEquals(33, keys.size());
+        int numItems =
+                1  // root seed
+              + 1  // master key
+              + 1  // account key
+              + 2  // ext/int parent keys
+              + (chain.getLookaheadSize() + chain.getLookaheadThreshold()) * 2   // lookahead zone on each chain
+        ;
+        assertEquals(numItems, keys.size());
 
         // Get another key that will be lost during round-tripping, to ensure we can derive it again.
         DeterministicKey key4 = chain.getKey(KeyChain.KeyPurpose.CHANGE);
@@ -224,6 +237,7 @@ public class DeterministicKeyChainTest {
         chain = DeterministicKeyChain.watch(watchingKey);
         assertEquals(DeterministicHierarchy.BIP32_STANDARDISATION_TIME_SECS, chain.getEarliestKeyCreationTime());
         chain.setLookaheadSize(10);
+        chain.maybeLookAhead();
 
         assertEquals(key1.getPubKeyPoint(), chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS).getPubKeyPoint());
         assertEquals(key2.getPubKeyPoint(), chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS).getPubKeyPoint());
@@ -255,11 +269,11 @@ public class DeterministicKeyChainTest {
     public void bloom1() {
         DeterministicKey key2 = chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         DeterministicKey key1 = chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
-        // ((13*2)+2+3)*2
+
         int numEntries =
                 (((chain.getLookaheadSize() + chain.getLookaheadThreshold()) * 2)   // * 2 because of internal/external
               + chain.numLeafKeysIssued()
-              + 3  // one account key + two chain keys (internal/external)
+              + 4  // one root key + one account key + two chain keys (internal/external)
                 ) * 2;  // because the filter contains keys and key hashes.
         assertEquals(numEntries, chain.numBloomFilterEntries());
         BloomFilter filter = chain.getFilter(numEntries, 0.001, 1);

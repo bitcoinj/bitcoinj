@@ -185,6 +185,7 @@ public class KeyChainGroup implements KeyBag {
 
         for (DeterministicKeyChain chain : chains) {
             if (isMarried(chain)) {
+                chain.maybeLookAhead();
                 for (DeterministicKey followedKey : chain.getLeafKeys()) {
                     RedeemData redeemData = getRedeemData(followedKey, chain.getWatchingKey());
                     Script scriptPubKey = ScriptBuilder.createP2SHOutputScript(redeemData.redeemScript);
@@ -319,6 +320,7 @@ public class KeyChainGroup implements KeyBag {
     private List<ECKey> getMarriedKeysWithFollowed(DeterministicKey followedKey, Collection<DeterministicKeyChain> followingChains) {
         ImmutableList.Builder<ECKey> keys = ImmutableList.builder();
         for (DeterministicKeyChain keyChain : followingChains) {
+            keyChain.maybeLookAhead();
             keys.add(keyChain.getKeyByPath(followedKey.getPath()));
         }
         keys.add(followedKey);
@@ -611,6 +613,7 @@ public class KeyChainGroup implements KeyBag {
         int result = basic.numBloomFilterEntries();
         for (DeterministicKeyChain chain : chains) {
             if (isMarried(chain)) {
+                chain.maybeLookAhead();
                 result += chain.getLeafKeys().size() * 2;
             } else {
                 result += chain.numBloomFilterEntries();

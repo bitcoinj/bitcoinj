@@ -144,15 +144,6 @@ deterministic_key {
 }
 
 type: DETERMINISTIC_KEY
-public_key: "\003?\v\222\341\321\"@\2624\336H\221\2570bC\251\377\000vm\032\357U\250Dl:\200\020Q-"
-deterministic_key {
-  chain_code: "\205R\372F\245\232*\0351Y??\321\362I\222ne\277H+\304\rL\234\313\016|\a\372a\a"
-  path: 2147483648
-  path: 0
-  path: 13
-}
-
-type: DETERMINISTIC_KEY
 public_key: "\002\225b\3515\202\233\335\320.7\265\274uh\230N\242\254\317J\364\331\2345\220)\362\334\216\202\\"
 deterministic_key {
   chain_code: "\202:\344\3109?\350\345\001\314(\244q\370\233Rk\261}\302(\275\326\305R\342:\246\036\nV\330"
@@ -267,13 +258,4 @@ deterministic_key {
   path: 2147483648
   path: 1
   path: 12
-}
-
-type: DETERMINISTIC_KEY
-public_key: "\003\301\302\254\214C}\362f\315GV\033]\257\a\231\t[\001=\0046\213\220\341S\324\266\202&\206N"
-deterministic_key {
-  chain_code: "\272\\\225\354.UQ8\264\346\a\310h\350\031\227\024c\340\337;W7\f\322\301\304\232P\360\373\035"
-  path: 2147483648
-  path: 1
-  path: 13
 }
