@@ -253,6 +253,10 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
 
     // For use in encryption.
     private DeterministicKeyChain(KeyCrypter crypter, KeyParameter aesKey, DeterministicKeyChain chain) {
+        // Can't encrypt a watching chain.
+        checkNotNull(chain.rootKey);
+        checkNotNull(chain.seed);
+
         checkArgument(!chain.rootKey.isEncrypted(), "Chain already encrypted");
 
         this.issuedExternalKeys = chain.issuedExternalKeys;
@@ -752,6 +756,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
     @Override
     public DeterministicKeyChain toDecrypted(KeyParameter aesKey) {
         checkState(getKeyCrypter() != null, "Key chain not encrypted");
+        checkState(seed != null, "Can't decrypt a watching chain");
         checkState(seed.isEncrypted());
         String passphrase = DEFAULT_PASSPHRASE_FOR_MNEMONIC; // FIXME allow non-empty passphrase
         DeterministicSeed decSeed = seed.decrypt(getKeyCrypter(), passphrase, aesKey);
@@ -786,6 +791,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
 
     @Override
     public boolean checkAESKey(KeyParameter aesKey) {
+        checkState(rootKey != null, "Can't check password for a watching chain");
         checkNotNull(aesKey);
         checkState(getKeyCrypter() != null, "Key chain not encrypted");
         try {
