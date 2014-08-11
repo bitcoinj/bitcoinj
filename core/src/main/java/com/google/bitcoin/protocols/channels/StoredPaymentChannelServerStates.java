@@ -19,12 +19,16 @@ package com.google.bitcoin.protocols.channels;
 import com.google.bitcoin.core.*;
 import com.google.bitcoin.utils.Threading;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.util.concurrent.SettableFuture;
 import com.google.protobuf.ByteString;
 import net.jcip.annotations.GuardedBy;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.ReentrantLock;
 
 import static com.google.common.base.Preconditions.*;
@@ -37,10 +41,11 @@ public class StoredPaymentChannelServerStates implements WalletExtension {
     private static final org.slf4j.Logger log = LoggerFactory.getLogger(StoredPaymentChannelServerStates.class);
 
     static final String EXTENSION_ID = StoredPaymentChannelServerStates.class.getName();
+    static final int MAX_SECONDS_TO_WAIT_FOR_BROADCASTER_TO_BE_SET = 10;
 
     @GuardedBy("lock") @VisibleForTesting final Map<Sha256Hash, StoredServerChannel> mapChannels = new HashMap<Sha256Hash, StoredServerChannel>();
     private Wallet wallet;
-    private final TransactionBroadcaster broadcaster;
+    private final SettableFuture<TransactionBroadcaster> broadcasterFuture = SettableFuture.create();
 
     private final Timer channelTimeoutHandler = new Timer(true);
 
@@ -60,8 +65,27 @@ public class StoredPaymentChannelServerStates implements WalletExtension {
      * {@link TransactionBroadcaster} which are used to complete and announce payment transactions.
      */
     public StoredPaymentChannelServerStates(@Nullable Wallet wallet, TransactionBroadcaster broadcaster) {
+        setTransactionBroadcaster(broadcaster);
         this.wallet = wallet;
-        this.broadcaster = checkNotNull(broadcaster);
+    }
+
+    /**
+     * Creates a new PaymentChannelServerStateManager and associates it with the given {@link Wallet}
+     *
+     * Use this constructor if you use WalletAppKit, it will provide the broadcaster for you (no need to call the setter)
+     */
+    public StoredPaymentChannelServerStates(@Nullable Wallet wallet) {
+        this.wallet = wallet;
+    }
+
+    /**
+     * Use this setter if the broadcaster is not available during instantiation and you're not using WalletAppKit.
+     * This setter will let you delay the setting of the broadcaster until the Bitcoin network is ready.
+     *
+     * @param broadcaster Used when the payment channels are closed
+     */
+    public void setTransactionBroadcaster(TransactionBroadcaster broadcaster) {
+        this.broadcasterFuture.set(checkNotNull(broadcaster));
     }
 
     /**
@@ -83,6 +107,7 @@ public class StoredPaymentChannelServerStates implements WalletExtension {
         synchronized (channel) {
             channel.closeConnectedHandler();
             try {
+                TransactionBroadcaster broadcaster = getBroadcaster();
                 channel.getOrCreateState(wallet, broadcaster).close();
             } catch (InsufficientMoneyException e) {
                 e.printStackTrace();
@@ -92,6 +117,24 @@ public class StoredPaymentChannelServerStates implements WalletExtension {
             channel.state = null;
         }
         wallet.addOrUpdateExtension(this);
+    }
+
+    /**
+     * If the broadcaster has not been set for MAX_SECONDS_TO_WAIT_FOR_BROADCASTER_TO_BE_SET seconds, then
+     * the programmer probably forgot to set it and we should throw exception.
+     */
+    private TransactionBroadcaster getBroadcaster() {
+        try {
+            return broadcasterFuture.get(MAX_SECONDS_TO_WAIT_FOR_BROADCASTER_TO_BE_SET, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        } catch (ExecutionException e) {
+            throw new RuntimeException(e);
+        } catch (TimeoutException e) {
+            String err = "Transaction broadcaster not set";
+            log.error(err);
+            throw new RuntimeException(err,e);
+        }
     }
 
     /**

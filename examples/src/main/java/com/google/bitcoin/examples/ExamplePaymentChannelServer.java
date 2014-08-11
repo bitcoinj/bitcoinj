@@ -61,7 +61,7 @@ public class ExamplePaymentChannelServer implements PaymentChannelServerListener
                 // The StoredPaymentChannelClientStates object is responsible for, amongst other things, broadcasting
                 // the refund transaction if its lock time has expired. It also persists channels so we can resume them
                 // after a restart.
-                return ImmutableList.<WalletExtension>of(new StoredPaymentChannelServerStates(null, peerGroup()));
+                return ImmutableList.<WalletExtension>of(new StoredPaymentChannelServerStates(null));
             }
         };
         appKit.connectToLocalHost();
