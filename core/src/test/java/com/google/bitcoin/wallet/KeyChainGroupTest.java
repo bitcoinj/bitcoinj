@@ -66,17 +66,20 @@ public class KeyChainGroupTest {
 
     @Test
     public void freshCurrentKeys() throws Exception {
-        assertEquals(INITIAL_KEYS, group.numKeys());
-        assertEquals(2 * INITIAL_KEYS, group.getBloomFilterElementCount());
+        int numKeys = ((group.getLookaheadSize() + group.getLookaheadThreshold()) * 2)   // * 2 because of internal/external
+                + 1  // keys issued
+                + 3  /* account key + int/ext parent keys */;
+        assertEquals(numKeys, group.numKeys());
+        assertEquals(2 * numKeys, group.getBloomFilterElementCount());
         ECKey r1 = group.currentKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
-        final int keys = INITIAL_KEYS + LOOKAHEAD_SIZE + group.getLookaheadThreshold() + 1;
-        assertEquals(keys, group.numKeys());
-        assertEquals(2 * keys, group.getBloomFilterElementCount());
+        assertEquals(numKeys, group.numKeys());
+        assertEquals(2 * numKeys, group.getBloomFilterElementCount());
 
         ECKey i1 = new ECKey();
         group.importKeys(i1);
-        assertEquals(keys + 1, group.numKeys());
-        assertEquals(2 * (keys + 1), group.getBloomFilterElementCount());
+        numKeys++;
+        assertEquals(numKeys, group.numKeys());
+        assertEquals(2 * numKeys, group.getBloomFilterElementCount());
 
         ECKey r2 = group.currentKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         assertEquals(r1, r2);
@@ -117,11 +120,12 @@ public class KeyChainGroupTest {
     @Test
     public void imports() throws Exception {
         ECKey key1 = new ECKey();
+        int numKeys = group.numKeys();
         assertFalse(group.removeImportedKey(key1));
         assertEquals(1, group.importKeys(ImmutableList.of(key1)));
-        assertEquals(INITIAL_KEYS + 1, group.numKeys());   // Lookahead is triggered by requesting a key, so none yet.
+        assertEquals(numKeys + 1, group.numKeys());   // Lookahead is triggered by requesting a key, so none yet.
         group.removeImportedKey(key1);
-        assertEquals(INITIAL_KEYS, group.numKeys());
+        assertEquals(numKeys, group.numKeys());
     }
 
     @Test
@@ -154,16 +158,10 @@ public class KeyChainGroupTest {
     @Test
     public void currentP2SHAddress() throws Exception {
         group = createMarriedKeyChainGroup();
-
-        assertEquals(INITIAL_KEYS, group.numKeys());
         Address a1 = group.currentAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
-        assertEquals(INITIAL_KEYS + 1 + LOOKAHEAD_SIZE + group.getLookaheadThreshold(), group.numKeys());
         assertTrue(a1.isP2SHAddress());
-
         Address a2 = group.currentAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         assertEquals(a1, a2);
-        assertEquals(INITIAL_KEYS + 1 + LOOKAHEAD_SIZE + group.getLookaheadThreshold(), group.numKeys());
-
         Address a3 = group.currentAddress(KeyChain.KeyPurpose.CHANGE);
         assertNotEquals(a2, a3);
     }
@@ -175,8 +173,9 @@ public class KeyChainGroupTest {
         Address a2 = group.freshAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         assertTrue(a1.isP2SHAddress());
         assertNotEquals(a1, a2);
-        // numKeys does not include following chains. Possibly it should.
-        assertEquals(INITIAL_KEYS + 1 + group.getLookaheadSize() + group.getLookaheadThreshold(), group.numKeys());
+        assertEquals(((group.getLookaheadSize() + group.getLookaheadThreshold()) * 2)   // * 2 because of internal/external
+                + 2  // keys issued
+                + 3, group.numKeys());
 
         Address a3 = group.currentAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         assertEquals(a2, a3);
@@ -289,7 +288,6 @@ public class KeyChainGroupTest {
         KeyCrypterScrypt scrypt = new KeyCrypterScrypt(2);
         final KeyParameter aesKey = scrypt.deriveKey("password");
         group.encrypt(scrypt, aesKey);
-        assertEquals(4, group.numKeys());
         assertTrue(group.freshKey(KeyChain.KeyPurpose.RECEIVE_FUNDS).isEncrypted());
         final ECKey key = group.currentKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         group.decrypt(aesKey);
@@ -298,12 +296,9 @@ public class KeyChainGroupTest {
 
     @Test
     public void bloom() throws Exception {
-        assertEquals(INITIAL_KEYS * 2, group.getBloomFilterElementCount());
         ECKey key1 = group.freshKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         ECKey key2 = new ECKey();
-        final int size = (INITIAL_KEYS + LOOKAHEAD_SIZE + group.getLookaheadThreshold() + 1 /* for the just created key */) * 2;
-        assertEquals(size, group.getBloomFilterElementCount());
-        BloomFilter filter = group.getBloomFilter(size, 0.001, (long)(Math.random() * Long.MAX_VALUE));
+        BloomFilter filter = group.getBloomFilter(group.getBloomFilterElementCount(), 0.001, (long)(Math.random() * Long.MAX_VALUE));
         assertTrue(filter.contains(key1.getPubKeyHash()));
         assertTrue(filter.contains(key1.getPubKey()));
         assertFalse(filter.contains(key2.getPubKey()));

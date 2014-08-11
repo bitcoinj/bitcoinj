@@ -252,17 +252,36 @@ public class DeterministicKeyChainTest {
     }
 
     @Test
-    public void bloom() {
+    public void bloom1() {
         DeterministicKey key2 = chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         DeterministicKey key1 = chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
-        // The filter includes the internal keys as well (for now), although I'm not sure if we should allow funds to
-        // be received on them or not ....
-        assertEquals(36, chain.numBloomFilterEntries());
-        BloomFilter filter = chain.getFilter(36, 0.001, 1);
+        // ((13*2)+2+3)*2
+        int numEntries =
+                (((chain.getLookaheadSize() + chain.getLookaheadThreshold()) * 2)   // * 2 because of internal/external
+              + chain.numLeafKeysIssued()
+              + 3  // one account key + two chain keys (internal/external)
+                ) * 2;  // because the filter contains keys and key hashes.
+        assertEquals(numEntries, chain.numBloomFilterEntries());
+        BloomFilter filter = chain.getFilter(numEntries, 0.001, 1);
         assertTrue(filter.contains(key1.getPubKey()));
         assertTrue(filter.contains(key1.getPubKeyHash()));
         assertTrue(filter.contains(key2.getPubKey()));
         assertTrue(filter.contains(key2.getPubKeyHash()));
+
+        // The lookahead zone is tested in bloom2 and via KeyChainGroupTest.bloom
+    }
+
+    @Test
+    public void bloom2() throws Exception {
+        // Verify that if when we watch a key, the filter contains at least 100 keys.
+        DeterministicKey[] keys = new DeterministicKey[100];
+        for (int i = 0; i < keys.length; i++)
+            keys[i] = chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
+        chain = DeterministicKeyChain.watch(chain.getWatchingKey());
+        int e = chain.numBloomFilterEntries();
+        BloomFilter filter = chain.getFilter(e, 0.001, 1);
+        for (DeterministicKey key : keys)
+            assertTrue("key " + key, filter.contains(key.getPubKeyHash()));
     }
 
     private String protoToString(List<Protos.Key> keys) {

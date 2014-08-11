@@ -478,7 +478,14 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
     public int numKeys() {
         // We need to return here the total number of keys including the lookahead zone, not the number of keys we
         // have issued via getKey/freshReceiveKey.
-        return basicKeyChain.numKeys();
+        lock.lock();
+        try {
+            maybeLookAhead();
+            return basicKeyChain.numKeys();
+        } finally {
+            lock.unlock();
+        }
+
     }
 
     /**
@@ -821,8 +828,15 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
 
     @Override
     public BloomFilter getFilter(int size, double falsePositiveRate, long tweak) {
-        checkArgument(size >= numBloomFilterEntries());
-        return basicKeyChain.getFilter(size, falsePositiveRate, tweak);
+        lock.lock();
+        try {
+            checkArgument(size >= numBloomFilterEntries());
+            maybeLookAhead();
+            return basicKeyChain.getFilter(size, falsePositiveRate, tweak);
+        } finally {
+            lock.unlock();
+        }
+
     }
 
     /**
@@ -919,15 +933,14 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         final int lookaheadThreshold = getLookaheadThreshold();
         final int needed = issued + lookaheadSize + lookaheadThreshold - numChildren;
 
-        log.info("{} keys needed = {} issued + {} lookahead size + {} lookahead threshold - {} num children",
-                needed, issued, lookaheadSize, lookaheadThreshold, numChildren);
-
         if (needed <= lookaheadThreshold)
             return new ArrayList<DeterministicKey>();
 
+        log.info("{} keys needed for {} = {} issued + {} lookahead size + {} lookahead threshold - {} num children",
+                needed, parent.getPathAsString(), issued, lookaheadSize, lookaheadThreshold, numChildren);
+
         List<DeterministicKey> result  = new ArrayList<DeterministicKey>(needed);
         long now = System.currentTimeMillis();
-        log.info("Pre-generating {} keys for {}", needed, parent.getPathAsString());
         int nextChild = numChildren;
         for (int i = 0; i < needed; i++) {
             DeterministicKey key = HDKeyDerivation.deriveThisOrNextChildKey(parent, nextChild);
