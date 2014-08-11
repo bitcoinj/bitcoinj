@@ -370,5 +370,10 @@ public class WalletProtobufSerializerTest {
         public void deserializeWalletExtension(Wallet wallet, byte[] data) {
             assertArrayEquals(this.data, data);
         }
+
+        @Override
+        public void startWalletExtension(TransactionBroadcaster transactionBroadcaster) {
+           // do nothing
+        }
     }
 }

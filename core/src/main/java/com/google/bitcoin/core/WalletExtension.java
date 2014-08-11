@@ -41,4 +41,15 @@ public interface WalletExtension {
     public byte[] serializeWalletExtension();
     /** Loads the contents of this object from the wallet. */
     public void deserializeWalletExtension(Wallet containingWallet, byte[] data) throws Exception;
+
+    /**
+     * This method must be called during extension startup phase, but after deserializeWalletExtension() and
+     * after the bitcoin network has been initialized.
+     * When this method runs, the extension will use the transaction broadcaster to access the Bitcoin network,
+     * and any initialization logic that needs Bitcoin network should be done here.
+     *
+     * (If you use WalletAppKit, then WalletAppKit calls this method for you, but if you don't you have to call this
+     * method somewhere in your code)
+     */
+    public void startWalletExtension(TransactionBroadcaster broadcaster);
 }
