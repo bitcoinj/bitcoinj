@@ -239,7 +239,7 @@ public class Block extends Message {
         maybeParseTransactions();
         if (optimalEncodingMessageSize != 0)
             return optimalEncodingMessageSize;
-        optimalEncodingMessageSize = getMessageSize();
+        optimalEncodingMessageSize = bitcoinSerialize().length;
         return optimalEncodingMessageSize;
     }
 
