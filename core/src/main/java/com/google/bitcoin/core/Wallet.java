@@ -435,7 +435,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
         if (keychain.isDeterministicUpgradeRequired()) {
             log.info("Upgrade to HD wallets is required, attempting to do so.");
             try {
-                upgradeToDeterministic(null);
+                upgradeToDeterministic(aesKey);
             } catch (DeterministicUpgradeRequiresPassword e) {
                 log.error("Failed to auto upgrade due to encryption. You should call wallet.upgradeToDeterministic " +
                         "with the users AES key to avoid this error.");
