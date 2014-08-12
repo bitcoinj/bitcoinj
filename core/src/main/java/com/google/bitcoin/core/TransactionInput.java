@@ -99,10 +99,9 @@ public class TransactionInput extends ChildMessage implements Serializable {
     /**
      * Deserializes an input message. This is usually part of a transaction message.
      */
-    public TransactionInput(NetworkParameters params, Transaction parentTransaction,
-                            byte[] payload, int offset) throws ProtocolException {
+    public TransactionInput(NetworkParameters params, @Nullable Transaction parentTransaction, byte[] payload, int offset) throws ProtocolException {
         super(params, payload, offset);
-        setParent(checkNotNull(parentTransaction));
+        setParent(parentTransaction);
         this.value = null;
     }
 
