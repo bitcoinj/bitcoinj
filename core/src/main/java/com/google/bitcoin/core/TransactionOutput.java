@@ -59,8 +59,6 @@ public class TransactionOutput extends ChildMessage implements Serializable {
     private boolean availableForSpending;
     @Nullable private TransactionInput spentBy;
 
-    // A reference to the transaction which holds this output, if any.
-    @Nullable Transaction parentTransaction;
     private transient int scriptLen;
 
     /**
@@ -69,7 +67,7 @@ public class TransactionOutput extends ChildMessage implements Serializable {
     public TransactionOutput(NetworkParameters params, @Nullable Transaction parent, byte[] payload,
                              int offset) throws ProtocolException {
         super(params, payload, offset);
-        parentTransaction = parent;
+        setParent(parent);
         availableForSpending = true;
     }
 
@@ -88,7 +86,6 @@ public class TransactionOutput extends ChildMessage implements Serializable {
     public TransactionOutput(NetworkParameters params, @Nullable Transaction parent, byte[] payload, int offset,
                              boolean parseLazy, boolean parseRetain) throws ProtocolException {
         super(params, payload, offset, parent, parseLazy, parseRetain, UNKNOWN_LENGTH);
-        parentTransaction = parent;
         availableForSpending = true;
     }
 
@@ -118,7 +115,7 @@ public class TransactionOutput extends ChildMessage implements Serializable {
         checkArgument(value.compareTo(NetworkParameters.MAX_MONEY) < 0, "Values larger than MAX_MONEY not allowed");
         this.value = value.value;
         this.scriptBytes = scriptBytes;
-        parentTransaction = parent;
+        setParent(parent);
         availableForSpending = true;
         length = 8 + VarInt.sizeOf(scriptBytes.length) + scriptBytes.length;
     }
@@ -218,14 +215,16 @@ public class TransactionOutput extends ChildMessage implements Serializable {
         this.value = value.value;
     }
 
-    int getIndex() {
-        checkNotNull(parentTransaction, "This output is not attached to a parent transaction.");
-        for (int i = 0; i < parentTransaction.getOutputs().size(); i++) {
-            if (parentTransaction.getOutputs().get(i) == this)
+    /**
+     * Gets the index of this output in the parent transaction, or throws if this output is free standing. Iterates
+     * over the parents list to discover this.
+     */
+    public int getIndex() {
+        for (int i = 0; i < getParentTransaction().getOutputs().size(); i++) {
+            if (getParentTransaction().getOutputs().get(i) == this)
                 return i;
         }
-        // Should never happen.
-        throw new RuntimeException("Output linked to wrong parent transaction?");
+        throw new IllegalStateException("Output linked to wrong parent transaction?");
     }
 
     /**
@@ -270,8 +269,8 @@ public class TransactionOutput extends ChildMessage implements Serializable {
         checkState(availableForSpending);
         availableForSpending = false;
         spentBy = input;
-        if (parentTransaction != null)
-            log.info("Marked {}:{} as spent by {}", parentTransaction.getHash(), getIndex(), input);
+        if (parent != null)
+            log.info("Marked {}:{} as spent by {}", getParentTransaction().getHash(), getIndex(), input);
         else
             log.info("Marked floating output as spent by {}", input);
     }
@@ -280,8 +279,8 @@ public class TransactionOutput extends ChildMessage implements Serializable {
      * Resets the spent pointer / availableForSpending flag to null.
      */
     public void markAsUnspent() {
-        if (parentTransaction != null)
-            log.info("Un-marked {}:{} as spent by {}", parentTransaction.getHash(), getIndex(), spentBy);
+        if (parent != null)
+            log.info("Un-marked {}:{} as spent by {}", getParentTransaction().getHash(), getIndex(), spentBy);
         else
             log.info("Un-marked floating output as spent by {}", spentBy);
         availableForSpending = true;
@@ -388,7 +387,7 @@ public class TransactionOutput extends ChildMessage implements Serializable {
      * Returns the transaction that owns this output, or throws NullPointerException if unowned.
      */
     public Transaction getParentTransaction() {
-        return checkNotNull(parentTransaction, "Free-standing TransactionOutput");
+        return checkNotNull((Transaction) parent, "Free-standing TransactionOutput");
     }
 
     /**
@@ -423,14 +422,13 @@ public class TransactionOutput extends ChildMessage implements Serializable {
 
         if (!Arrays.equals(scriptBytes, other.scriptBytes)) return false;
         if (value != other.value) return false;
-        if (parentTransaction != null && parentTransaction != other.parentTransaction) return false;
+        if (parent != null && parent != other.parent) return false;
 
         return true;
     }
 
     @Override
     public int hashCode() {
-        int result = 31 * (int) value + (scriptBytes != null ? Arrays.hashCode(scriptBytes) : 0);
-        return result;
+        return 31 * (int) value + (scriptBytes != null ? Arrays.hashCode(scriptBytes) : 0);
     }
 }
