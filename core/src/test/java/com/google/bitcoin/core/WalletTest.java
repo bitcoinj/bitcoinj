@@ -1356,7 +1356,7 @@ public class WalletTest extends TestWithWallet {
         Transaction t3 = new Transaction(params);
         t3.addOutput(v3, k3.toAddress(params));
         t3.addInput(o2);
-        wallet.signTransaction(t3, Transaction.SigHash.ALL, null);
+        wallet.signTransaction(t3, null);
 
         // Commit t3, so the coins from the pending t2 are spent
         wallet.commitTx(t3);
@@ -1897,7 +1897,7 @@ public class WalletTest extends TestWithWallet {
         Transaction spendTx5 = new Transaction(params);
         spendTx5.addOutput(CENT, notMyAddr);
         spendTx5.addInput(tx5.getOutput(0));
-        wallet.signTransaction(spendTx5, Transaction.SigHash.ALL, null);
+        wallet.signTransaction(spendTx5, null);
 
         wallet.receiveFromBlock(spendTx5, block, AbstractBlockChain.NewBlockType.BEST_CHAIN, 4);
         assertEquals(COIN, wallet.getBalance());
@@ -2148,7 +2148,7 @@ public class WalletTest extends TestWithWallet {
         SendRequest request4 = SendRequest.to(notMyAddr, CENT);
         request4.tx.addInput(tx3.getOutput(0));
         // Now if we manually sign it, completeTx will not replace our signature
-        wallet.signTransaction(request4.tx, Transaction.SigHash.ALL, null);
+        wallet.signTransaction(request4.tx, null);
         byte[] scriptSig = request4.tx.getInput(0).getScriptBytes();
         wallet.completeTx(request4);
         assertEquals(1, request4.tx.getInputs().size());

@@ -3318,7 +3318,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
 
             // Now sign the inputs, thus proving that we are entitled to redeem the connected outputs.
             if (req.signInputs) {
-                signTransaction(req.tx, Transaction.SigHash.ALL, req.aesKey);
+                signTransaction(req.tx, req.aesKey);
             }
 
             // Check size.
@@ -3349,21 +3349,15 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
 
     /**
      * <p>Signs given transaction. Actual signing is done by pluggable {@link #signers} and it's not guaranteed that
-     * transaction will be complete in the end.</p>
-     * <p>Only {@link com.google.bitcoin.core.Transaction.SigHash#ALL} signing mode is currently supported</p>
-     * <p>Optional aesKey should be provided if this wallet is encrypted</p>
+     * transaction will be complete in the end. Optional aesKey should be provided if this wallet is encrypted</p>
      */
-    public void signTransaction(Transaction tx, Transaction.SigHash hashType, @Nullable KeyParameter aesKey) {
+    public void signTransaction(Transaction tx, @Nullable KeyParameter aesKey) {
         lock.lock();
         try {
             List<TransactionInput> inputs = tx.getInputs();
             List<TransactionOutput> outputs = tx.getOutputs();
             checkState(inputs.size() > 0);
             checkState(outputs.size() > 0);
-
-            // I don't currently have an easy way to test other modes work, as the official client does not use them.
-            checkArgument(hashType == Transaction.SigHash.ALL, "Only SIGHASH_ALL is currently supported");
-
             KeyBag maybeDecryptingKeyBag = aesKey != null ? new DecryptingKeyBag(this, aesKey) : this;
             for (TransactionSigner signer : signers) {
                 if (!signer.signInputs(tx, maybeDecryptingKeyBag))
@@ -4270,7 +4264,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
             }
             rekeyTx.getConfidence().setSource(TransactionConfidence.Source.SELF);
             rekeyTx.setPurpose(Transaction.Purpose.KEY_ROTATION);
-            signTransaction(rekeyTx, Transaction.SigHash.ALL, aesKey);
+            signTransaction(rekeyTx, aesKey);
             // KeyTimeCoinSelector should never select enough inputs to push us oversize.
             checkState(rekeyTx.bitcoinSerialize().length < Transaction.MAX_STANDARD_TX_SIZE);
             return rekeyTx;
