@@ -1482,7 +1482,7 @@ public class PeerGroup extends AbstractExecutionThreadService implements Transac
             }
         });
         // Keep a reference to the TransactionBroadcast object. This is important because otherwise, the entire tree
-        // of objects we just created would become garbage if the user doens't hold on to the returned future, and
+        // of objects we just created would become garbage if the user doesn't hold on to the returned future, and
         // eventually be collected. This in turn could result in the transaction not being committed to the wallet
         // at all.
         runningBroadcasts.add(broadcast);
