@@ -181,8 +181,14 @@ public class ScriptTest {
         assertThat(inputScript.getChunks().get(1).opcode, equalTo(OP_0));
         assertThat(inputScript.getChunks().get(2).opcode, equalTo(OP_0));
         assertThat(inputScript.getChunks().get(3).data, equalTo(multisigScript.getProgram()));
+
+        inputScript = ScriptBuilder.updateScriptWithSignature(inputScript, dummySig.encodeToBitcoin(), 1, true);
+        assertThat(inputScript.getChunks().get(0).opcode, equalTo(OP_0));
+        assertThat(inputScript.getChunks().get(1).opcode, equalTo(OP_0));
+        assertThat(inputScript.getChunks().get(2).data, equalTo(dummySig.encodeToBitcoin()));
+        assertThat(inputScript.getChunks().get(3).data, equalTo(multisigScript.getProgram()));
     }
-    
+
     private Script parseScriptString(String string) throws Exception {
         String[] words = string.split("[ \\t\\n]");
         

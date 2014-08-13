@@ -135,8 +135,10 @@ public class TransactionOutPoint extends ChildMessage implements Serializable {
     }
 
     /**
-     * Returns the ECKey identified in the connected output, for either pay-to-address scripts, pay-to-key or P2SH scripts.
-     * If the script forms cannot be understood, throws ScriptException.
+     * Returns the ECKey identified in the connected output, for either pay-to-address scripts or pay-to-key scripts.
+     * For P2SH scripts you can use {@link #getConnectedRedeemData(com.google.bitcoin.wallet.KeyBag)} and then get the
+     * key from RedeemData.
+     * If the script form cannot be understood, throws ScriptException.
      *
      * @return an ECKey or null if the connected key cannot be found in the wallet.
      */
@@ -151,12 +153,32 @@ public class TransactionOutPoint extends ChildMessage implements Serializable {
         } else if (connectedScript.isSentToRawPubKey()) {
             byte[] pubkeyBytes = connectedScript.getPubKey();
             return keyBag.findKeyFromPubKey(pubkeyBytes);
+        } else {
+            throw new ScriptException("Could not understand form of connected output script: " + connectedScript);
+        }
+    }
+
+    /**
+     * Returns the RedeemData identified in the connected output, for either pay-to-address scripts, pay-to-key
+     * or P2SH scripts.
+     * If the script forms cannot be understood, throws ScriptException.
+     *
+     * @return a RedeemData or null if the connected data cannot be found in the wallet.
+     */
+    @Nullable
+    public RedeemData getConnectedRedeemData(KeyBag keyBag) throws ScriptException {
+        TransactionOutput connectedOutput = getConnectedOutput();
+        checkNotNull(connectedOutput, "Input is not connected so cannot retrieve key");
+        Script connectedScript = connectedOutput.getScriptPubKey();
+        if (connectedScript.isSentToAddress()) {
+            byte[] addressBytes = connectedScript.getPubKeyHash();
+            return RedeemData.of(keyBag.findKeyFromPubHash(addressBytes), connectedScript);
+        } else if (connectedScript.isSentToRawPubKey()) {
+            byte[] pubkeyBytes = connectedScript.getPubKey();
+            return RedeemData.of(keyBag.findKeyFromPubKey(pubkeyBytes), connectedScript);
         } else if (connectedScript.isPayToScriptHash()) {
             byte[] scriptHash = connectedScript.getPubKeyHash();
-            RedeemData redeemData = keyBag.findRedeemDataFromScriptHash(scriptHash);
-            if (redeemData == null)
-                return null;
-            return redeemData.getFullKey();
+            return keyBag.findRedeemDataFromScriptHash(scriptHash);
         } else {
             throw new ScriptException("Could not understand form of connected output script: " + connectedScript);
         }

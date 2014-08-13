@@ -15,7 +15,6 @@
  */
 package com.google.bitcoin.testing;
 
-import com.google.bitcoin.core.Transaction;
 import com.google.bitcoin.signers.TransactionSigner;
 import com.google.bitcoin.wallet.KeyBag;
 
@@ -46,7 +45,7 @@ public class NopTransactionSigner implements TransactionSigner {
     }
 
     @Override
-    public boolean signInputs(Transaction t, KeyBag keyBag) {
+    public boolean signInputs(ProposedTransaction t, KeyBag keyBag) {
         return false;
     }
 }

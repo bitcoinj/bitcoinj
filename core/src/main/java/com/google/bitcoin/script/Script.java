@@ -388,6 +388,14 @@ public class Script {
         }
     }
 
+    /**
+     * Returns a copy of the given scriptSig with a signature placeholder on the given position replaced with the given signature.
+     */
+    public Script getScriptSigWithSignature(Script scriptSig, byte[] sigBytes, int index) {
+        return ScriptBuilder.updateScriptWithSignature(scriptSig, sigBytes, index, isPayToScriptHash());
+    }
+
+
 
     ////////////////////// Interface used during verification of transactions/blocks ////////////////////////////////
     
