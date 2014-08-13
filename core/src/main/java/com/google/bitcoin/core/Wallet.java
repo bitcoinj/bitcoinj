@@ -3648,23 +3648,30 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
      */
     @Override
     public int getBloomFilterElementCount() {
-        int size = keychain.getBloomFilterElementCount();
-        for (Transaction tx : getTransactions(false)) {
-            for (TransactionOutput out : tx.getOutputs()) {
-                try {
-                    if (isTxOutputBloomFilterable(out))
-                        size++;
-                } catch (ScriptException e) {
-                    throw new RuntimeException(e); // If it is ours, we parsed the script correctly, so this shouldn't happen
+        // This is typically called by the PeerGroup, in which case it will have already explicitly taken the lock
+        // before calling, but because this is public API we must still lock again regardless.
+        lock.lock();
+        try {
+            int size = keychain.getBloomFilterElementCount();
+            for (Transaction tx : getTransactions(false)) {
+                for (TransactionOutput out : tx.getOutputs()) {
+                    try {
+                        if (isTxOutputBloomFilterable(out))
+                            size++;
+                    } catch (ScriptException e) {
+                        throw new RuntimeException(e); // If it is ours, we parsed the script correctly, so this shouldn't happen
+                    }
                 }
             }
+
+            // Some scripts may have more than one bloom element.  That should normally be okay,
+            // because under-counting just increases false-positive rate.
+            size += watchedScripts.size();
+
+            return size;
+        } finally {
+            lock.unlock();
         }
-
-        // Some scripts may have more than one bloom element.  That should normally be okay,
-        // because under-counting just increases false-positive rate.
-        size += watchedScripts.size();
-
-        return size;
     }
 
     /**
@@ -3674,7 +3681,14 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
      */
     @Override
     public boolean isRequiringUpdateAllBloomFilter() {
-        return !watchedScripts.isEmpty();
+        // This is typically called by the PeerGroup, in which case it will have already explicitly taken the lock
+        // before calling, but because this is public API we must still lock again regardless.
+        lock.lock();
+        try {
+            return !watchedScripts.isEmpty();
+        } finally {
+            lock.unlock();
+        }
     }
 
     /**
@@ -3698,10 +3712,11 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
      */
     @Override
     public BloomFilter getBloomFilter(int size, double falsePositiveRate, long nTweak) {
-        BloomFilter filter;
+        // This is typically called by the PeerGroup, in which case it will have already explicitly taken the lock
+        // before calling, but because this is public API we must still lock again regardless.
         lock.lock();
         try {
-            filter = keychain.getBloomFilter(size, falsePositiveRate, nTweak);
+            BloomFilter filter = keychain.getBloomFilter(size, falsePositiveRate, nTweak);
 
             for (Script script : watchedScripts) {
                 for (ScriptChunk chunk : script.getChunks()) {
@@ -3713,27 +3728,27 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
                     }
                 }
             }
+            for (Transaction tx : getTransactions(false)) {
+                for (int i = 0; i < tx.getOutputs().size(); i++) {
+                    TransactionOutput out = tx.getOutputs().get(i);
+                    try {
+                        if (isTxOutputBloomFilterable(out)) {
+                            TransactionOutPoint outPoint = new TransactionOutPoint(params, i, tx);
+                            filter.insert(outPoint.bitcoinSerialize());
+                        }
+                    } catch (ScriptException e) {
+                        throw new RuntimeException(e); // If it is ours, we parsed the script correctly, so this shouldn't happen
+                    }
+                }
+            }
+            return filter;
         } finally {
             lock.unlock();
         }
-        for (Transaction tx : getTransactions(false)) {
-            for (int i = 0; i < tx.getOutputs().size(); i++) {
-                TransactionOutput out = tx.getOutputs().get(i);
-                try {
-                    if (isTxOutputBloomFilterable(out)) {
-                        TransactionOutPoint outPoint = new TransactionOutPoint(params, i, tx);
-                        filter.insert(outPoint.bitcoinSerialize());
-                    }
-                } catch (ScriptException e) {
-                    throw new RuntimeException(e); // If it is ours, we parsed the script correctly, so this shouldn't happen
-                }
-            }
-        }
-
-        return filter;
     }
 
     private boolean isTxOutputBloomFilterable(TransactionOutput out) {
+        checkState(lock.isHeldByCurrentThread());
         boolean isScriptTypeSupported = out.getScriptPubKey().isSentToRawPubKey() || out.getScriptPubKey().isPayToScriptHash();
         return (out.isMine(this) && isScriptTypeSupported) ||
                 out.isWatched(this);
