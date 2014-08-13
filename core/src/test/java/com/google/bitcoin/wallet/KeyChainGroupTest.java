@@ -490,6 +490,14 @@ public class KeyChainGroupTest {
         assertEquals(key1, key2);
     }
 
+    @Test
+    public void isDeterministic() throws Exception {
+        group = new KeyChainGroup(params);
+        assertFalse(group.isDeterministic());
+        group = new KeyChainGroup(params, new DeterministicSeed(new byte[32], "", 0));
+        assertTrue(group.isDeterministic());
+    }
+
     @Test(expected = DeterministicUpgradeRequiredException.class)
     public void deterministicUpgradeRequired() throws Exception {
         // Check that if we try to use HD features in a KCG that only has random keys, we get an exception.
