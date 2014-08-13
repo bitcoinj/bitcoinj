@@ -23,6 +23,7 @@ import com.google.bitcoin.params.UnitTestParams;
 import com.google.bitcoin.script.Script;
 import com.google.bitcoin.script.ScriptBuilder;
 import com.google.bitcoin.script.ScriptChunk;
+import com.google.bitcoin.signers.DummySigSigner;
 import com.google.bitcoin.signers.LocalTransactionSigner;
 import com.google.bitcoin.signers.TransactionSigner;
 import com.google.bitcoin.store.UnreadableWalletException;
@@ -823,6 +824,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
      * Returns RedeemData object or null if no such data was found.
      */
     @Nullable
+    @Override
     public RedeemData findRedeemDataFromScriptHash(byte[] payToScriptHash) {
         lock.lock();
         try {
@@ -2989,6 +2991,15 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
          */
         public boolean shuffleOutputs = true;
 
+        /**
+         * If this flag is set (the default), any signature this wallet failed to obtain during completion will be
+         * replaced with dummy signature ({@link com.google.bitcoin.crypto.TransactionSignature#dummy() }). This is
+         * useful when you'd like to know the fee for a transaction without knowing the user's password, as fee depends
+         * on size. If flag set to false, missing signatures will appear as empty sigs (OP_0) in transaction
+         * inputs' scriptSigs.
+         */
+        public boolean useDummySignatures = true;
+
         // Tracks if this has been passed to wallet.completeTx already: just a safety check.
         private boolean completed;
 
@@ -3333,7 +3344,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
 
             // Now sign the inputs, thus proving that we are entitled to redeem the connected outputs.
             if (req.signInputs) {
-                signTransaction(req.tx, req.aesKey);
+                signTransaction(req);
             }
 
             // Check size.
@@ -3363,21 +3374,55 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
     }
 
     /**
-     * <p>Signs given transaction. Actual signing is done by pluggable {@link #signers} and it's not guaranteed that
-     * transaction will be complete in the end. Optional aesKey should be provided if this wallet is encrypted</p>
+     * <p>Given a send request containing transaction, attempts to sign it's inputs. This method expects transaction
+     * to have all necessary inputs connected or they will be ignored.</p>
+     * <p>Actual signing is done by pluggable {@link #signers} and it's not guaranteed that
+     * transaction will be complete in the end.</p>
      */
-    public void signTransaction(Transaction tx, @Nullable KeyParameter aesKey) {
+    public void signTransaction(SendRequest req) {
         lock.lock();
         try {
+            Transaction tx = req.tx;
             List<TransactionInput> inputs = tx.getInputs();
             List<TransactionOutput> outputs = tx.getOutputs();
             checkState(inputs.size() > 0);
             checkState(outputs.size() > 0);
-            KeyBag maybeDecryptingKeyBag = aesKey != null ? new DecryptingKeyBag(this, aesKey) : this;
+
+            KeyBag maybeDecryptingKeyBag = new DecryptingKeyBag(this, req.aesKey);
+
+            int numInputs = tx.getInputs().size();
+            for (int i = 0; i < numInputs; i++) {
+                TransactionInput txIn = tx.getInput(i);
+                if (txIn.getConnectedOutput() == null) {
+                    log.warn("Missing connected output, assuming input {} is already signed.", i);
+                    continue;
+                }
+
+                try {
+                    // We assume if its already signed, its hopefully got a SIGHASH type that will not invalidate when
+                    // we sign missing pieces (to check this would require either assuming any signatures are signing
+                    // standard output types or a way to get processed signatures out of script execution)
+                    txIn.getScriptSig().correctlySpends(tx, i, txIn.getConnectedOutput().getScriptPubKey(), true);
+                    log.warn("Input {} already correctly spends output, assuming SIGHASH type used will be safe and skipping signing.", i);
+                    continue;
+                } catch (ScriptException e) {
+                    // Expected.
+                }
+
+                Script scriptPubKey = txIn.getConnectedOutput().getScriptPubKey();
+                RedeemData redeemData = txIn.getConnectedRedeemData(maybeDecryptingKeyBag);
+                checkNotNull(redeemData, "Transaction exists in wallet that we cannot redeem: %s", txIn.getOutpoint().getHash());
+                txIn.setScriptSig(scriptPubKey.createEmptyInputScript(redeemData.keys.get(0), redeemData.redeemScript));
+            }
+
+            TransactionSigner.ProposedTransaction proposal = new TransactionSigner.ProposedTransaction(tx);
             for (TransactionSigner signer : signers) {
-                if (!signer.signInputs(tx, maybeDecryptingKeyBag))
+                if (!signer.signInputs(proposal, maybeDecryptingKeyBag))
                     log.info("{} returned false for the tx", signer.getClass().getName());
             }
+
+            if (req.useDummySignatures)
+                new DummySigSigner().signInputs(proposal, maybeDecryptingKeyBag);
         } finally {
             lock.unlock();
         }
@@ -4273,7 +4318,9 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
             }
             rekeyTx.getConfidence().setSource(TransactionConfidence.Source.SELF);
             rekeyTx.setPurpose(Transaction.Purpose.KEY_ROTATION);
-            signTransaction(rekeyTx, aesKey);
+            SendRequest req = SendRequest.forTx(rekeyTx);
+            req.aesKey = aesKey;
+            signTransaction(req);
             // KeyTimeCoinSelector should never select enough inputs to push us oversize.
             checkState(rekeyTx.bitcoinSerialize().length < Transaction.MAX_STANDARD_TX_SIZE);
             return rekeyTx;

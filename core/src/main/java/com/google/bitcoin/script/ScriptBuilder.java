@@ -23,10 +23,7 @@ import com.google.bitcoin.crypto.TransactionSignature;
 import com.google.common.collect.Lists;
 
 import javax.annotation.Nullable;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 import static com.google.bitcoin.script.ScriptOpCodes.*;
 import static com.google.common.base.Preconditions.checkArgument;
@@ -199,6 +196,32 @@ public class ScriptBuilder {
             builder.data(signature);
         if (multisigProgramBytes!= null)
         	builder.data(multisigProgramBytes);
+        return builder.build();
+    }
+
+    /**
+     * Returns a copy of the given scriptSig with a signature placeholder on the given position replaced with the given signature.
+     */
+    public static Script updateScriptWithSignature(Script scriptSig, byte[] signature, int index, boolean isMultisig) {
+        ScriptBuilder builder = new ScriptBuilder();
+        Iterator<ScriptChunk> it = scriptSig.getChunks().iterator();
+        int numChunks = 0;
+        // skip first OP_0 for multisig scripts
+        if (isMultisig)
+            builder.addChunk(it.next());
+        for (; it.hasNext(); ) {
+            ScriptChunk chunk = it.next();
+            // replace the first OP_0 with signature data
+            if (chunk.equalsOpCode(OP_0)) {
+                if (numChunks == index)
+                    builder.data(signature);
+                else
+                    builder.addChunk(chunk);
+            } else {
+                builder.addChunk(chunk);
+            }
+            numChunks++;
+        }
         return builder.build();
     }
 

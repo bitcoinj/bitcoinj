@@ -18,32 +18,43 @@ package com.google.bitcoin.wallet;
 import com.google.bitcoin.core.ECKey;
 import com.google.bitcoin.script.Script;
 
-import javax.annotation.Nullable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 /**
- * This class aggregates portion of data required to spend transaction output.
+ * This class aggregates data required to spend transaction output.
  *
- * For pay-to-address and pay-to-pubkey transactions it will have only a single key and no redeem script.
- * For multisignature transactions there will be multiple keys one of which will be a full key and the rest are watch only.
- * These keys will be sorted in the same order they appear in a program (lexicographical order).
- * For P2SH transactions there also will be a redeem script.
+ * For pay-to-address and pay-to-pubkey transactions it will have only a single key and CHECKSIG program as redeemScript.
+ * For multisignature transactions there will be multiple keys one of which will be a full key and the rest are watch only,
+ * redeem script will be a CHECKMULTISIG program. Keys will be sorted in the same order they appear in
+ * a program (lexicographical order).
  */
 public class RedeemData {
-    @Nullable public final Script redeemScript;
+    public final Script redeemScript;
     public final List<ECKey> keys;
 
-    private RedeemData(List<ECKey> keys, @Nullable Script redeemScript) {
+    private RedeemData(List<ECKey> keys, Script redeemScript) {
         this.redeemScript = redeemScript;
         List<ECKey> sortedKeys = new ArrayList<ECKey>(keys);
         Collections.sort(sortedKeys, ECKey.PUBKEY_COMPARATOR);
         this.keys = sortedKeys;
     }
 
-    public static RedeemData of(List<ECKey> keys, @Nullable Script redeemScript) {
+    public static RedeemData of(List<ECKey> keys, Script redeemScript) {
         return new RedeemData(keys, redeemScript);
+    }
+
+    /**
+     * Creates RedeemData for pay-to-address or pay-to-pubkey input. Provided key is a single private key needed
+     * to spend such inputs and provided program should be a proper CHECKSIG program.
+     */
+    public static RedeemData of(ECKey key, Script program) {
+        checkArgument(program.isSentToAddress() || program.isSentToRawPubKey());
+        return key != null ? new RedeemData(Arrays.asList(key), program) : null;
     }
 
     /**
@@ -58,8 +69,30 @@ public class RedeemData {
                     return key;
             } catch (IllegalStateException e) {
                 // no private bytes. Proceed to the next key
+            } catch (ECKey.MissingPrivateKeyException e) {
+
             }
         }
         return null;
+    }
+
+    /**
+     * Returns index of the given key in program that this RedeemData satisfies. For CHECKSIG programs this
+     * will always be 0. Returned index may be used to insert corresponding signature into proper place in input script.
+     * If key is not found, -1 is returned.
+     */
+    public int getKeyIndex(ECKey key) {
+        boolean isMultisig = keys.size() > 0;
+        if (isMultisig) {
+            for (int i = 0; i < keys.size(); i++) {
+                byte[] pubKey = keys.get(i).getPubKey();
+                if (Arrays.equals(pubKey, key.getPubKey()))
+                    return i;
+            }
+            return -1;
+        } else {
+            return 0;
+        }
+
     }
 }

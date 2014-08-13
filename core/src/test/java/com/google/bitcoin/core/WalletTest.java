@@ -19,6 +19,7 @@ package com.google.bitcoin.core;
 
 import com.google.bitcoin.core.Wallet.SendRequest;
 import com.google.bitcoin.crypto.*;
+import com.google.bitcoin.signers.CustomTransactionSigner;
 import com.google.bitcoin.signers.TransactionSigner;
 import com.google.bitcoin.store.BlockStoreException;
 import com.google.bitcoin.store.MemoryBlockStore;
@@ -104,6 +105,16 @@ public class WalletTest extends TestWithWallet {
         final DeterministicKeyChain keyChain = new DeterministicKeyChain(new SecureRandom());
         DeterministicKey partnerKey = DeterministicKey.deserializeB58(null, keyChain.getWatchingKey().serializePubB58());
 
+        CustomTransactionSigner signer = new CustomTransactionSigner() {
+            @Override
+            protected SignatureAndKey getSignature(Sha256Hash sighash, List<ChildNumber> derivationPath) {
+                ImmutableList<ChildNumber> keyPath = ImmutableList.copyOf(derivationPath);
+                DeterministicKey key = keyChain.getKeyByPath(keyPath, true);
+                return new SignatureAndKey(key.sign(sighash), key.getPubOnly());
+            }
+        };
+        wallet.addTransactionSigner(signer);
+
         wallet.addFollowingAccountKeys(ImmutableList.of(partnerKey));
     }
 
@@ -132,6 +143,14 @@ public class WalletTest extends TestWithWallet {
     @Test
     public void basicSpendingWithEncryptedWallet() throws Exception {
         basicSpendingCommon(encryptedWallet, myEncryptedAddress, new ECKey().toAddress(params), true);
+    }
+
+    @Test
+    public void basicSpendingFromP2SH() throws Exception {
+        createMarriedWallet();
+        Address destination = new ECKey().toAddress(params);
+        myAddress = wallet.currentAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
+        basicSpendingCommon(wallet, myAddress, destination, false);
     }
 
     @Test
@@ -319,7 +338,7 @@ public class WalletTest extends TestWithWallet {
         assertEquals(wallet.getChangeAddress(), t2.getOutput(1).getScriptPubKey().getToAddress(params));
 
         // Do some basic sanity checks.
-        basicSanityChecks(wallet, t2, toAddress, destination);
+        basicSanityChecks(wallet, t2, destination);
 
         // Broadcast the transaction and commit.
         broadcastAndCommit(wallet, t2);
@@ -359,11 +378,8 @@ public class WalletTest extends TestWithWallet {
         assertTrue(depthFuture.isDone());
     }
 
-    @SuppressWarnings("deprecation")
-    // Having a test for deprecated method getFromAddress() is no evil so we suppress the warning here.
-    private void basicSanityChecks(Wallet wallet, Transaction t, Address fromAddress, Address destination) throws VerificationException {
+    private void basicSanityChecks(Wallet wallet, Transaction t, Address destination) throws VerificationException {
         assertEquals("Wrong number of tx inputs", 1, t.getInputs().size());
-        assertEquals(fromAddress, t.getInput(0).getScriptSig().getFromAddress(params));
         assertEquals("Wrong number of tx outputs",2, t.getOutputs().size());
         assertEquals(destination, t.getOutput(0).getScriptPubKey().getToAddress(params));
         assertEquals(wallet.getChangeAddress(), t.getOutputs().get(1).getScriptPubKey().getToAddress(params));
@@ -1349,7 +1365,7 @@ public class WalletTest extends TestWithWallet {
         Transaction t3 = new Transaction(params);
         t3.addOutput(v3, k3.toAddress(params));
         t3.addInput(o2);
-        wallet.signTransaction(t3, null);
+        wallet.signTransaction(SendRequest.forTx(t3));
 
         // Commit t3, so the coins from the pending t2 are spent
         wallet.commitTx(t3);
@@ -1890,7 +1906,7 @@ public class WalletTest extends TestWithWallet {
         Transaction spendTx5 = new Transaction(params);
         spendTx5.addOutput(CENT, notMyAddr);
         spendTx5.addInput(tx5.getOutput(0));
-        wallet.signTransaction(spendTx5, null);
+        wallet.signTransaction(SendRequest.forTx(spendTx5));
 
         wallet.receiveFromBlock(spendTx5, block, AbstractBlockChain.NewBlockType.BEST_CHAIN, 4);
         assertEquals(COIN, wallet.getBalance());
@@ -2141,7 +2157,7 @@ public class WalletTest extends TestWithWallet {
         SendRequest request4 = SendRequest.to(notMyAddr, CENT);
         request4.tx.addInput(tx3.getOutput(0));
         // Now if we manually sign it, completeTx will not replace our signature
-        wallet.signTransaction(request4.tx, null);
+        wallet.signTransaction(request4);
         byte[] scriptSig = request4.tx.getInput(0).getScriptBytes();
         wallet.completeTx(request4);
         assertEquals(1, request4.tx.getInputs().size());
@@ -2385,9 +2401,20 @@ public class WalletTest extends TestWithWallet {
         assertEquals(200, tx.getInputs().size());
     }
 
-    @SuppressWarnings("ConstantConditions")
     @Test
-    public void completeTxPartiallySigned() throws Exception {
+    public void completeTxPartiallySignedWithDummySigs() throws Exception {
+        byte[] dummySig = TransactionSignature.dummy().encodeToBitcoin();
+        completeTxPartiallySigned(true, dummySig);
+    }
+
+    @Test
+    public void completeTxPartiallySignedWithoutDummySigs() throws Exception {
+        byte[] emptySig = new byte[]{};
+        completeTxPartiallySigned(false, emptySig);
+    }
+
+    @SuppressWarnings("ConstantConditions")
+    public void completeTxPartiallySigned(boolean useDummySignatures, byte[] expectedSig) throws Exception {
         // Check the wallet will write dummy scriptSigs for inputs that we have only pubkeys for without the privkey.
         ECKey priv = new ECKey();
         ECKey pub = ECKey.fromPublicOnly(priv.getPubKeyPoint());
@@ -2402,15 +2429,16 @@ public class WalletTest extends TestWithWallet {
 
         ECKey dest = new ECKey();
         Wallet.SendRequest req = Wallet.SendRequest.emptyWallet(dest.toAddress(params));
+        req.useDummySignatures = useDummySignatures;
         wallet.completeTx(req);
         byte[] dummySig = TransactionSignature.dummy().encodeToBitcoin();
         // Selected inputs can be in any order.
         for (int i = 0; i < req.tx.getInputs().size(); i++) {
             TransactionInput input = req.tx.getInput(i);
             if (input.getConnectedOutput().getParentTransaction().equals(t1)) {
-                assertArrayEquals(dummySig, input.getScriptSig().getChunks().get(0).data);
+                assertArrayEquals(expectedSig, input.getScriptSig().getChunks().get(0).data);
             } else if (input.getConnectedOutput().getParentTransaction().equals(t2)) {
-                assertArrayEquals(dummySig, input.getScriptSig().getChunks().get(0).data);
+                assertArrayEquals(expectedSig, input.getScriptSig().getChunks().get(0).data);
             } else if (input.getConnectedOutput().getParentTransaction().equals(t3)) {
                 input.getScriptSig().correctlySpends(req.tx, i, t3.getOutput(0).getScriptPubKey(), true);
             }
@@ -2512,7 +2540,7 @@ public class WalletTest extends TestWithWallet {
 
     @Test
     public void transactionSignersShouldBeSerializedAlongWithWallet() throws Exception {
-        final TransactionSigner signer = new NopTransactionSigner(true);
+        TransactionSigner signer = new NopTransactionSigner(true);
         wallet.addTransactionSigner(signer);
         assertEquals(2, wallet.getTransactionSigners().size());
         Protos.Wallet protos = new WalletProtobufSerializer().walletToProto(wallet);

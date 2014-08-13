@@ -19,22 +19,27 @@ import com.google.bitcoin.core.ECKey;
 import com.google.bitcoin.core.ScriptException;
 import com.google.bitcoin.core.Transaction;
 import com.google.bitcoin.core.TransactionInput;
+import com.google.bitcoin.crypto.DeterministicKey;
 import com.google.bitcoin.crypto.TransactionSignature;
 import com.google.bitcoin.script.Script;
-import com.google.bitcoin.script.ScriptBuilder;
 import com.google.bitcoin.wallet.KeyBag;
+import com.google.bitcoin.wallet.RedeemData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 /**
- * <p>{@link TransactionSigner} implementation for signing inputs using keys from provided {@link com.google.bitcoin.wallet.KeyBag}.
- * It always uses {@link com.google.bitcoin.core.Transaction.SigHash#ALL} signing mode.</p>
- * <p>At the moment it works for pay-to-address and pay-to-pubkey outputs only and will throw {@link RuntimeException} for
- * other script types</p>
+ * <p>{@link TransactionSigner} implementation for signing inputs using keys from provided {@link com.google.bitcoin.wallet.KeyBag}.</p>
+ * <p>This signer doesn't create input scripts for tx inputs. Instead it expects inputs to contain scripts with
+ * empty sigs and replaces one of the empty sigs with calculated signature.
+ * </p>
+ * <p>This signer is always implicitly added into every wallet and it is the first signer to be executed during tx
+ * completion. As the first signer to create a signature, it stores derivation path of the signing key in a given
+ * {@link ProposedTransaction} object that will be also passed then to the next signer in chain. This allows other
+ * signers to use correct signing key for P2SH inputs, because all the keys involved in a single P2SH address have
+ * the same derivation path.</p>
+ * <p>This signer always uses {@link com.google.bitcoin.core.Transaction.SigHash#ALL} signing mode.</p>
  */
-public class LocalTransactionSigner implements TransactionSigner {
+public class LocalTransactionSigner extends StatelessTransactionSigner {
     private static final Logger log = LoggerFactory.getLogger(LocalTransactionSigner.class);
 
     @Override
@@ -43,16 +48,8 @@ public class LocalTransactionSigner implements TransactionSigner {
     }
 
     @Override
-    public byte[] serialize() {
-        return new byte[0];
-    }
-
-    @Override
-    public void deserialize(byte[] data) {
-    }
-
-    @Override
-    public boolean signInputs(Transaction tx, KeyBag keyBag) {
+    public boolean signInputs(ProposedTransaction propTx, KeyBag keyBag) {
+        Transaction tx = propTx.partialTx;
         int numInputs = tx.getInputs().size();
         for (int i = 0; i < numInputs; i++) {
             TransactionInput txIn = tx.getInput(i);
@@ -60,14 +57,6 @@ public class LocalTransactionSigner implements TransactionSigner {
                 log.warn("Missing connected output, assuming input {} is already signed.", i);
                 continue;
             }
-
-            Script scriptPubKey = txIn.getConnectedOutput().getScriptPubKey();
-
-            // skip input if it spends not pay-to-address or pay-to-pubkey tx
-            // we're not returning false here as this signer theoretically could still sign
-            // some of the inputs (if someday it would be possible to have inputs mixed with multisig)
-            if (!scriptPubKey.isSentToAddress() && !scriptPubKey.isSentToRawPubKey())
-                continue;
 
             try {
                 // We assume if its already signed, its hopefully got a SIGHASH type that will not invalidate when
@@ -80,30 +69,44 @@ public class LocalTransactionSigner implements TransactionSigner {
                 // Expected.
             }
 
-            ECKey key = txIn.getOutpoint().getConnectedKey(keyBag);
-            // This assert should never fire. If it does, it means the wallet is inconsistent.
-            checkNotNull(key, "Transaction exists in wallet that we cannot redeem: %s", txIn.getOutpoint().getHash());
-            byte[] connectedPubKeyScript = txIn.getOutpoint().getConnectedPubKeyScript();
-            TransactionSignature signature;
+            RedeemData redeemData = txIn.getConnectedRedeemData(keyBag);
+            ECKey key;
+            // locate private key in redeem data. For pay-to-address and pay-to-key inputs RedeemData will always contain
+            // only one key (with private bytes). For P2SH inputs RedeemData will contain multiple keys, one of which MAY
+            // have private bytes
+            if (redeemData == null || (key = redeemData.getFullKey()) == null) {
+                log.warn("No local key found for input {}", i);
+                continue;
+            }
+
+            Script scriptPubKey = txIn.getConnectedOutput().getScriptPubKey();
+            Script inputScript = txIn.getScriptSig();
+            // script here would be either a standard CHECKSIG program for pay-to-address or pay-to-pubkey inputs or
+            // a CHECKMULTISIG program for P2SH inputs
+            byte[] script = redeemData.redeemScript.getProgram();
             try {
-                signature = tx.calculateSignature(i, key, connectedPubKeyScript, Transaction.SigHash.ALL, false);
+                TransactionSignature signature = tx.calculateSignature(i, key, script, Transaction.SigHash.ALL, false);
+
+                // at this point we have incomplete inputScript with OP_0 in place of one or more signatures. We already
+                // have calculated the signature using the local key and now need to insert it in the correct place
+                // within inputScript. For pay-to-address and pay-to-key script there is only one signature and it always
+                // goes first in an inputScript (sigIndex = 0). In P2SH input scripts we need to get an index of the
+                // signing key within CHECKMULTISIG program as signatures are placed in the same order as public keys
+                // in redeem script
+                int sigIndex = redeemData.getKeyIndex(key);
+                // update input script with the signature at the proper position
+                inputScript = scriptPubKey.getScriptSigWithSignature(inputScript, signature.encodeToBitcoin(), sigIndex);
+                txIn.setScriptSig(inputScript);
+
+                // for P2SH inputs we need to share derivation path of the signing key with other signers, so that they
+                // use correct key to calculate their signatures
+                if (key instanceof DeterministicKey)
+                    propTx.keyPaths.put(txIn, (((DeterministicKey) key).getPath()));
             } catch (ECKey.KeyIsEncryptedException e) {
                 throw e;
             } catch (ECKey.MissingPrivateKeyException e) {
-                // Create a dummy signature to ensure the transaction is of the correct size when we try to ensure
-                // the right fee-per-kb is attached. If the wallet doesn't have the privkey, the user is assumed to
-                // be doing something special and that they will replace the dummy signature with a real one later.
-                signature = TransactionSignature.dummy();
-                log.info("Used dummy signature for input {} due to failure during signing (most likely missing privkey)", i);
+                log.warn("No private key in keypair for input {}", i);
             }
-            if (scriptPubKey.isSentToAddress()) {
-                txIn.setScriptSig(ScriptBuilder.createInputScript(signature, key));
-            } else if (scriptPubKey.isSentToRawPubKey()) {
-                txIn.setScriptSig(ScriptBuilder.createInputScript(signature));
-            }
-            // if input spends not pay-to-address or pay-to-pubkey tx
-            // we're not returning false here as this signer theoretically could still sign
-            // some of the inputs (if someday it would be possible to have inputs mixed with multisig)
 
         }
         return true;

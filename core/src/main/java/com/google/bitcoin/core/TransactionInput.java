@@ -18,6 +18,8 @@
 package com.google.bitcoin.core;
 
 import com.google.bitcoin.script.Script;
+import com.google.bitcoin.wallet.KeyBag;
+import com.google.bitcoin.wallet.RedeemData;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
@@ -302,6 +304,16 @@ public class TransactionInput extends ChildMessage implements Serializable {
             return null;
         return tx.getOutputs().get((int) outpoint.getIndex());
     }
+
+    /**
+     * Alias for getOutpoint().getConnectedRedeemData(keyBag)
+     * @see TransactionOutPoint#getConnectedRedeemData(com.google.bitcoin.wallet.KeyBag)
+     */
+    @Nullable
+    public RedeemData getConnectedRedeemData(KeyBag keyBag) throws ScriptException {
+        return getOutpoint().getConnectedRedeemData(keyBag);
+    }
+
 
     public enum ConnectMode {
         DISCONNECT_ON_CONFLICT,

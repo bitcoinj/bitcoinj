@@ -16,20 +16,45 @@
 package com.google.bitcoin.signers;
 
 import com.google.bitcoin.core.Transaction;
+import com.google.bitcoin.core.TransactionInput;
+import com.google.bitcoin.crypto.ChildNumber;
 import com.google.bitcoin.wallet.KeyBag;
-import org.spongycastle.crypto.params.KeyParameter;
 
-import javax.annotation.Nullable;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * <p>Implementations of this interface are intended to sign inputs of the given transaction. Given transaction may already
  * be partially signed or somehow altered by other signers.</p>
  * <p>To make use of the signer, you need to add it into the  wallet by
  * calling {@link com.google.bitcoin.core.Wallet#addTransactionSigner(TransactionSigner)}. Signer will be serialized
- * along with the wallet data. In order for wallet to recreate signer after deserialization, each signer
+ * along with the wallet data. In order for a wallet to recreate signer after deserialization, each signer
  * should have no-args constructor</p>
  */
 public interface TransactionSigner {
+
+    /**
+     * This class wraps transaction proposed to complete keeping a metadata that may be updated, used and effectively
+     * shared by transaction signers.
+     */
+    public class ProposedTransaction {
+
+        public final Transaction partialTx;
+
+        /**
+         * HD key paths used for each input to derive a signing key. It's useful for multisig inputs only.
+         * The keys used to create a single P2SH address have the same derivation path, so to use a correct key each signer
+         * has to know a derivation path of signing keys used by previous signers. For each input signers will use the
+         * same derivation path and we need to store only one key path per input.
+         */
+        public final Map<TransactionInput, List<ChildNumber>> keyPaths;
+
+        public ProposedTransaction(Transaction partialTx) {
+            this.partialTx = partialTx;
+            this.keyPaths = new HashMap<TransactionInput, List<ChildNumber>>();
+        }
+    }
 
     /**
      * Returns true if this signer is ready to be used.
@@ -51,6 +76,6 @@ public interface TransactionSigner {
      * Returns true if signer is compatible with given transaction (can do something meaningful with it).
      * Otherwise this method returns false
      */
-    boolean signInputs(Transaction tx, KeyBag keyBag);
+    boolean signInputs(ProposedTransaction propTx, KeyBag keyBag);
 
 }
