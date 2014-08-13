@@ -2464,6 +2464,9 @@ public class WalletTest extends TestWithWallet {
         Wallet deterministicWallet = Wallet.fromSeed(params, new DeterministicSeed(new byte[32], "", 0));
         assertTrue(deterministicWallet.isDeterministic());
 
+        Wallet deterministicRandomWallet = Wallet.fromRandomSeed(params);
+        assertTrue(deterministicRandomWallet.isDeterministic());
+
         MnemonicCode backup = MnemonicCode.INSTANCE;
         MnemonicCode.INSTANCE = null; // should not be required for non-deterministic wallets
         Wallet nonDeterministicWallet = Wallet.newNonDeterministicWallet(params);

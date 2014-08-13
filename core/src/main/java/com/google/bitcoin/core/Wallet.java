@@ -212,8 +212,20 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
         this(params, new KeyChainGroup(params));
     }
 
+    /**
+     * Creates a deterministic wallet from a given seed.
+     */
     public static Wallet fromSeed(NetworkParameters params, DeterministicSeed seed) {
         return new Wallet(params, new KeyChainGroup(params, seed));
+    }
+
+    /**
+     * Creates a deterministic wallet from a random seed.
+     */
+    public static Wallet fromRandomSeed(NetworkParameters params) {
+        Wallet wallet = new Wallet(params);
+        wallet.keychain.createAndActivateNewHDChain();
+        return wallet;
     }
 
     /**
