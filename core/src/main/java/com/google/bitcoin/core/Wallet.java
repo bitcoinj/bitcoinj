@@ -3648,7 +3648,6 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
      */
     @Override
     public int getBloomFilterElementCount() {
-        checkState(lock.isHeldByCurrentThread());
         int size = keychain.getBloomFilterElementCount();
         for (Transaction tx : getTransactions(false)) {
             for (TransactionOutput out : tx.getOutputs()) {
@@ -3675,7 +3674,6 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
      */
     @Override
     public boolean isRequiringUpdateAllBloomFilter() {
-        checkState(lock.isHeldByCurrentThread());
         return !watchedScripts.isEmpty();
     }
 
@@ -3700,17 +3698,23 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
      */
     @Override
     public BloomFilter getBloomFilter(int size, double falsePositiveRate, long nTweak) {
-        checkState(lock.isHeldByCurrentThread());
-        BloomFilter filter = keychain.getBloomFilter(size, falsePositiveRate, nTweak);
-        for (Script script : watchedScripts) {
-            for (ScriptChunk chunk : script.getChunks()) {
-                // Only add long (at least 64 bit) data to the bloom filter.
-                // If any long constants become popular in scripts, we will need logic
-                // here to exclude them.
-                if (!chunk.isOpCode() && chunk.data.length >= MINIMUM_BLOOM_DATA_LENGTH) {
-                    filter.insert(chunk.data);
+        BloomFilter filter;
+        lock.lock();
+        try {
+            filter = keychain.getBloomFilter(size, falsePositiveRate, nTweak);
+
+            for (Script script : watchedScripts) {
+                for (ScriptChunk chunk : script.getChunks()) {
+                    // Only add long (at least 64 bit) data to the bloom filter.
+                    // If any long constants become popular in scripts, we will need logic
+                    // here to exclude them.
+                    if (!chunk.isOpCode() && chunk.data.length >= MINIMUM_BLOOM_DATA_LENGTH) {
+                        filter.insert(chunk.data);
+                    }
                 }
             }
+        } finally {
+            lock.unlock();
         }
         for (Transaction tx : getTransactions(false)) {
             for (int i = 0; i < tx.getOutputs().size(); i++) {
