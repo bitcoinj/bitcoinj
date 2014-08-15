@@ -33,10 +33,7 @@ import org.spongycastle.math.ec.ECPoint;
 import javax.annotation.Nullable;
 import java.math.BigInteger;
 import java.security.SecureRandom;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.Executor;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -369,12 +366,27 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
             List<DeterministicKey> keys = new ArrayList<DeterministicKey>(numberOfKeys);
             for (int i = 0; i < numberOfKeys; i++) {
                 ImmutableList<ChildNumber> path = HDUtils.append(parentKey.getPath(), new ChildNumber(index - numberOfKeys + i, false));
-                keys.add(hierarchy.get(path, false, false));
+                DeterministicKey k = hierarchy.get(path, false, false);
+                // Just a last minute sanity check before we hand the key out to the app for usage. This isn't inspired
+                // by any real problem reports from bitcoinj users, but I've heard of cases via the grapevine of
+                // places that lost money due to bitflips causing addresses to not match keys. Of course in an
+                // environment with flaky RAM there's no real way to always win: bitflips could be introduced at any
+                // other layer. But as we're potentially retrieving from long term storage here, check anyway.
+                checkForBitFlip(k);
+                keys.add(k);
             }
             return keys;
         } finally {
             lock.unlock();
         }
+    }
+
+    private void checkForBitFlip(DeterministicKey k) {
+        DeterministicKey parent = checkNotNull(k.getParent());
+        byte[] rederived = HDKeyDerivation.deriveChildKeyBytesFromPublic(parent, k.getChildNumber(), HDKeyDerivation.PublicDeriveMode.WITH_INVERSION).keyBytes;
+        byte[] actual = k.getPubKey();
+        if (!Arrays.equals(rederived, actual))
+            throw new IllegalStateException(String.format("Bit-flip check failed: %s vs %s", Arrays.toString(rederived), Arrays.toString(actual)));
     }
 
     private void addToBasicChain(DeterministicKey key) {
@@ -471,12 +483,12 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
     }
 
     /** Returns the deterministic key for the given absolute path in the hierarchy. */
-    protected DeterministicKey getKeyByPath(ImmutableList<ChildNumber> path) {
+    protected DeterministicKey getKeyByPath(List<ChildNumber> path) {
         return getKeyByPath(path, false);
     }
 
     /** Returns the deterministic key for the given absolute path in the hierarchy, optionally creating it */
-    public DeterministicKey getKeyByPath(ImmutableList<ChildNumber> path, boolean create) {
+    public DeterministicKey getKeyByPath(List<ChildNumber> path, boolean create) {
         return hierarchy.get(path, false, create);
     }
 

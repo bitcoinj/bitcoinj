@@ -18,10 +18,7 @@
 package com.google.bitcoin.core;
 
 import com.google.bitcoin.core.TransactionConfidence.ConfidenceType;
-import com.google.bitcoin.crypto.DeterministicKey;
-import com.google.bitcoin.crypto.KeyCrypter;
-import com.google.bitcoin.crypto.KeyCrypterException;
-import com.google.bitcoin.crypto.KeyCrypterScrypt;
+import com.google.bitcoin.crypto.*;
 import com.google.bitcoin.params.UnitTestParams;
 import com.google.bitcoin.script.Script;
 import com.google.bitcoin.script.ScriptBuilder;
@@ -881,6 +878,20 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
             if (seed == null)
                 throw new ECKey.MissingPrivateKeyException();
             return seed;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
+     * Returns a key for the given HD path, assuming it's already been derived. You normally shouldn't use this:
+     * use currentReceiveKey/freshReceiveKey instead.
+     */
+    public DeterministicKey getKeyByPath(List<ChildNumber> path) {
+        lock.lock();
+        try {
+            maybeUpgradeToHD();
+            return keychain.getActiveKeyChain().getKeyByPath(path, false);
         } finally {
             lock.unlock();
         }
