@@ -22,6 +22,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Objects;
 import com.google.common.base.Objects.ToStringHelper;
 import com.google.common.base.Preconditions;
+import com.google.common.primitives.UnsignedBytes;
 import org.bitcoin.NativeSecp256k1;
 import org.bitcoinj.wallet.Protos;
 import org.slf4j.Logger;
@@ -51,6 +52,7 @@ import java.nio.charset.Charset;
 import java.security.SecureRandom;
 import java.security.SignatureException;
 import java.util.Arrays;
+import java.util.Comparator;
 
 import static com.google.common.base.Preconditions.*;
 
@@ -87,6 +89,16 @@ import static com.google.common.base.Preconditions.*;
  */
 public class ECKey implements EncryptableItem, Serializable {
     private static final Logger log = LoggerFactory.getLogger(ECKey.class);
+
+    /** Compares pub key bytes using {@link com.google.common.primitives.UnsignedBytes#lexicographicalComparator()} **/
+    public static final Comparator<ECKey> PUBKEY_COMPARATOR = new Comparator<ECKey>() {
+        private Comparator comparator = UnsignedBytes.lexicographicalComparator();
+
+        @Override
+        public int compare(ECKey k1, ECKey k2) {
+            return comparator.compare(k1.getPubKey(), k2.getPubKey());
+        }
+    };
 
     /** The parameters of the secp256k1 curve that Bitcoin uses. */
     public static final X9ECParameters CURVE_PARAMS = CustomNamedCurves.getByName("secp256k1");

@@ -19,6 +19,8 @@ import com.google.bitcoin.core.ECKey;
 import com.google.bitcoin.script.Script;
 
 import javax.annotation.Nullable;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -26,6 +28,7 @@ import java.util.List;
  *
  * For pay-to-address and pay-to-pubkey transactions it will have only a single key and no redeem script.
  * For multisignature transactions there will be multiple keys one of which will be a full key and the rest are watch only.
+ * These keys will be sorted in the same order they appear in a program (lexicographical order).
  * For P2SH transactions there also will be a redeem script.
  */
 public class RedeemData {
@@ -34,7 +37,9 @@ public class RedeemData {
 
     private RedeemData(List<ECKey> keys, @Nullable Script redeemScript) {
         this.redeemScript = redeemScript;
-        this.keys = keys;
+        List<ECKey> sortedKeys = new ArrayList<ECKey>(keys);
+        Collections.sort(sortedKeys, ECKey.PUBKEY_COMPARATOR);
+        this.keys = sortedKeys;
     }
 
     public static RedeemData of(List<ECKey> keys, @Nullable Script redeemScript) {

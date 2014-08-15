@@ -21,10 +21,12 @@ import com.google.bitcoin.core.ECKey;
 import com.google.bitcoin.core.Utils;
 import com.google.bitcoin.crypto.TransactionSignature;
 import com.google.common.collect.Lists;
-import com.google.common.primitives.UnsignedBytes;
 
 import javax.annotation.Nullable;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 import static com.google.bitcoin.script.ScriptOpCodes.*;
 import static com.google.common.base.Preconditions.checkArgument;
@@ -233,14 +235,7 @@ public class ScriptBuilder {
      */
     public static Script createRedeemScript(int threshold, List<ECKey> pubkeys) {
         pubkeys = new ArrayList<ECKey>(pubkeys);
-        final Comparator comparator = UnsignedBytes.lexicographicalComparator();
-        Collections.sort(pubkeys, new Comparator<ECKey>() {
-            @Override
-            public int compare(ECKey k1, ECKey k2) {
-                return comparator.compare(k1.getPubKey(), k2.getPubKey());
-            }
-        });
-
+        Collections.sort(pubkeys, ECKey.PUBKEY_COMPARATOR);
         return ScriptBuilder.createMultiSigOutputScript(threshold, pubkeys);
     }
 }
