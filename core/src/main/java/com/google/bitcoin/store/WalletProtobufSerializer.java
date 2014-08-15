@@ -672,7 +672,13 @@ public class WalletProtobufSerializer {
                 log.warn("Have workDone but not BUILDING for tx {}", tx.getHashAsString());
                 return;
             }
-            confidence.setWorkDone(BigInteger.valueOf(confidenceProto.getWorkDone()));
+            long workDone = confidenceProto.getWorkDone();
+            if (workDone < 0) {
+                // Somehow these values get negative and we don't know how. Reset bad values so wallets still load.
+                log.warn("Repairing negative work done: ", workDone);
+                workDone = 0;
+            }
+            confidence.setWorkDone(BigInteger.valueOf(workDone));
         }
         if (confidenceProto.hasOverridingTransaction()) {
             if (confidence.getConfidenceType() != ConfidenceType.DEAD) {
