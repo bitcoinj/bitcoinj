@@ -51,7 +51,6 @@ import org.spongycastle.crypto.params.KeyParameter;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.GuardedBy;
 import java.io.*;
-import java.math.BigInteger;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executor;
@@ -1657,7 +1656,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
 
         if (block != null) {
             // Mark the tx as appearing in this block so we can find it later after a re-org. This also tells the tx
-            // confidence object about the block and sets its work done/depth appropriately.
+            // confidence object about the block and sets its depth appropriately.
             tx.setBlockAppearance(block, bestChain, relativityOffset);
             if (bestChain) {
                 // Don't notify this tx of work done in notifyNewBestBlock which will be called immediately after
@@ -1739,15 +1738,15 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
             setLastBlockSeenTimeSecs(block.getHeader().getTimeSeconds());
             // TODO: Clarify the code below.
             // Notify all the BUILDING transactions of the new block.
-            // This is so that they can update their work done and depth.
+            // This is so that they can update their depth.
             Set<Transaction> transactions = getTransactions(true);
             for (Transaction tx : transactions) {
                 if (ignoreNextNewBlock.contains(tx.getHash())) {
                     // tx was already processed in receive() due to it appearing in this block, so we don't want to
-                    // notify the tx confidence of work done twice, it'd result in miscounting.
+                    // increment the tx confidence depth twice, it'd result in miscounting.
                     ignoreNextNewBlock.remove(tx.getHash());
                 } else if (tx.getConfidence().getConfidenceType() == ConfidenceType.BUILDING) {
-                    tx.getConfidence().notifyWorkDone(block.getHeader());
+                    tx.getConfidence().incrementDepthInBlocks();
                     confidenceChanged.put(tx, TransactionConfidence.Listener.ChangeReason.DEPTH);
                 }
             }
@@ -3583,19 +3582,15 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
             // doesn't matter - the miners deleted T1 from their mempool, will resurrect T2 and put that into the
             // mempool and so T1 is still seen as a losing double spend.
 
-            // The old blocks have contributed to the depth and work done for all the transactions in the
+            // The old blocks have contributed to the depth for all the transactions in the
             // wallet that are in blocks up to and including the chain split block.
-            // The total depth and work done is calculated here and then subtracted from the appropriate transactions.
+            // The total depth is calculated here and then subtracted from the appropriate transactions.
             int depthToSubtract = oldBlocks.size();
-            BigInteger workDoneToSubtract = BigInteger.ZERO;
-            for (StoredBlock b : oldBlocks) {
-                workDoneToSubtract = workDoneToSubtract.add(b.getHeader().getWork());
-            }
-            log.info("depthToSubtract = " + depthToSubtract + ", workDoneToSubtract = " + workDoneToSubtract);
-            // Remove depthToSubtract and workDoneToSubtract from all transactions in the wallet except for pending.
-            subtractDepthAndWorkDone(depthToSubtract, workDoneToSubtract, spent.values());
-            subtractDepthAndWorkDone(depthToSubtract, workDoneToSubtract, unspent.values());
-            subtractDepthAndWorkDone(depthToSubtract, workDoneToSubtract, dead.values());
+            log.info("depthToSubtract = " + depthToSubtract);
+            // Remove depthToSubtract from all transactions in the wallet except for pending.
+            subtractDepth(depthToSubtract, spent.values());
+            subtractDepth(depthToSubtract, unspent.values());
+            subtractDepth(depthToSubtract, dead.values());
 
             // The effective last seen block is now the split point so set the lastSeenBlockHash.
             setLastBlockSeenHash(splitPoint.getHeader().getHash());
@@ -3633,14 +3628,12 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
     }
 
     /**
-     * Subtract the supplied depth and work done from the given transactions.
+     * Subtract the supplied depth from the given transactions.
      */
-    private void subtractDepthAndWorkDone(int depthToSubtract, BigInteger workDoneToSubtract,
-                                          Collection<Transaction> transactions) {
+    private void subtractDepth(int depthToSubtract, Collection<Transaction> transactions) {
         for (Transaction tx : transactions) {
             if (tx.getConfidence().getConfidenceType() == ConfidenceType.BUILDING) {
                 tx.getConfidence().setDepthInBlocks(tx.getConfidence().getDepthInBlocks() - depthToSubtract);
-                tx.getConfidence().setWorkDone(tx.getConfidence().getWorkDone().subtract(workDoneToSubtract));
                 confidenceChanged.put(tx, TransactionConfidence.Listener.ChangeReason.DEPTH);
             }
         }
