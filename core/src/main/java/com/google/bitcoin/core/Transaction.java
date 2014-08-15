@@ -316,12 +316,6 @@ public class Transaction extends ChildMessage implements Serializable {
 
         if (bestChain) {
             TransactionConfidence transactionConfidence = getConfidence();
-            // Reset the work done.
-            try {
-                transactionConfidence.setWorkDone(block.getHeader().getWork());
-            } catch (VerificationException e) {
-                throw new RuntimeException(e);  // Cannot happen.
-            }
             // This sets type to BUILDING and depth to one.
             transactionConfidence.setAppearedAtChainHeight(block.getHeight());
         }

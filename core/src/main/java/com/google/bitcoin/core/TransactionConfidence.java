@@ -55,8 +55,8 @@ import static com.google.common.base.Preconditions.*;
  * <p>Alternatively, you may know that the transaction is "dead", that is, one or more of its inputs have
  * been double spent and will never confirm unless there is another re-org.</p>
  *
- * <p>TransactionConfidence is updated via the {@link com.google.bitcoin.core.TransactionConfidence#notifyWorkDone(Block)}
- * method to ensure the block depth and work done are up to date.</p>
+ * <p>TransactionConfidence is updated via the {@link com.google.bitcoin.core.TransactionConfidence#incrementDepthInBlocks()}
+ * method to ensure the block depth is up to date.</p>
  * To make a copy that won't be changed, use {@link com.google.bitcoin.core.TransactionConfidence#duplicate()}.
  */
 public class TransactionConfidence implements Serializable {
@@ -75,8 +75,6 @@ public class TransactionConfidence implements Serializable {
 
     // The depth of the transaction on the best chain in blocks. An unconfirmed block has depth 0.
     private int depth;
-    // The cumulative work done for the blocks that bury this transaction.
-    private BigInteger workDone = BigInteger.ZERO;
 
     /** Describes the state of the transaction in general terms. Properties can be read to learn specifics. */
     public enum ConfidenceType {
@@ -255,7 +253,6 @@ public class TransactionConfidence implements Serializable {
         if (confidenceType == ConfidenceType.PENDING) {
             depth = 0;
             appearedAtChainHeight = -1;
-            workDone = BigInteger.ZERO;
         }
     }
 
@@ -319,26 +316,19 @@ public class TransactionConfidence implements Serializable {
                 builder.append("Pending/unconfirmed.");
                 break;
             case BUILDING:
-                builder.append(String.format("Appeared in best chain at height %d, depth %d, work done %s.",
-                        getAppearedAtChainHeight(), getDepthInBlocks(), getWorkDone()));
+                builder.append(String.format("Appeared in best chain at height %d, depth %d.",
+                        getAppearedAtChainHeight(), getDepthInBlocks()));
                 break;
         }
         return builder.toString();
     }
 
     /**
-     * Called by the wallet when the tx appears on the best chain and a new block is added to the top.
-     * Updates the internal counter that tracks how deeply buried the block is.
-     * Work is the value of block.getWork().
+     * Called by the wallet when the tx appears on the best chain and a new block is added to the top. Updates the
+     * internal counter that tracks how deeply buried the block is.
      */
-    public synchronized boolean notifyWorkDone(Block block) throws VerificationException {
-        if (getConfidenceType() != ConfidenceType.BUILDING)
-            return false;   // Should this be an assert?
-
+    public synchronized void incrementDepthInBlocks() {
         this.depth++;
-        this.workDone = this.workDone.add(block.getWork());
-        checkState(workDone.signum() >= 0);
-        return true;
     }
 
     /**
@@ -360,22 +350,6 @@ public class TransactionConfidence implements Serializable {
      */
     public synchronized void setDepthInBlocks(int depth) {
         this.depth = depth;
-    }
-
-    /**
-     * Returns the estimated amount of work (number of hashes performed) on this transaction. Work done is a measure of
-     * security that is related to depth in blocks, but more predictable: the network will always attempt to produce six
-     * blocks per hour by adjusting the difficulty target. So to know how much real computation effort is needed to
-     * reverse a transaction, counting blocks is not enough. If a transaction has not confirmed, the result is zero.
-     * @return estimated number of hashes needed to reverse the transaction.
-     */
-    public synchronized BigInteger getWorkDone() {
-        return workDone;
-    }
-
-    public synchronized void setWorkDone(BigInteger workDone) {
-        checkArgument(workDone.signum() >= 0);
-        this.workDone = workDone;
     }
 
     /**
