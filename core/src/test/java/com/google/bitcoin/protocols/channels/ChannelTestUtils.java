@@ -60,10 +60,16 @@ public class ChannelTestUtils {
 
     public static class RecordingClientConnection implements PaymentChannelClient.ClientConnection {
         public BlockingQueue<Object> q = new LinkedBlockingQueue<Object>();
+        final static int IGNORE_EXPIRE = -1;
+        private final int maxExpireTime;
 
         // An arbitrary sentinel object for equality testing.
         public static final Object CHANNEL_INITIATED = new Object();
         public static final Object CHANNEL_OPEN = new Object();
+
+        public RecordingClientConnection(int maxExpireTime) {
+            this.maxExpireTime = maxExpireTime;
+        }
 
         @Override
         public void sendToServer(Protos.TwoWayChannelMessage msg) {
@@ -73,6 +79,11 @@ public class ChannelTestUtils {
         @Override
         public void destroyConnection(PaymentChannelCloseException.CloseReason reason) {
             q.add(reason);
+        }
+
+        @Override
+        public boolean acceptExpireTime(long expireTime) {
+            return this.maxExpireTime == IGNORE_EXPIRE || expireTime <= maxExpireTime;
         }
 
         @Override
@@ -109,10 +120,13 @@ public class ChannelTestUtils {
     }
 
     public static RecordingPair makeRecorders(final Wallet serverWallet, final TransactionBroadcaster mockBroadcaster) {
+        return makeRecorders(serverWallet, mockBroadcaster, RecordingClientConnection.IGNORE_EXPIRE);
+    }
+    public static RecordingPair makeRecorders(final Wallet serverWallet, final TransactionBroadcaster mockBroadcaster, int maxExpireTime) {
         RecordingPair pair = new RecordingPair();
         pair.serverRecorder = new RecordingServerConnection();
         pair.server = new PaymentChannelServer(mockBroadcaster, serverWallet, Coin.COIN, pair.serverRecorder);
-        pair.clientRecorder = new RecordingClientConnection();
+        pair.clientRecorder = new RecordingClientConnection(maxExpireTime);
         return pair;
     }
 

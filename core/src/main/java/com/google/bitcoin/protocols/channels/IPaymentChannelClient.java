@@ -120,6 +120,15 @@ public interface IPaymentChannelClient {
          */
         void destroyConnection(PaymentChannelCloseException.CloseReason reason);
 
+
+        /**
+         * <p>Queries if the expire time proposed by server is acceptable. If <code>false</code> is return the channel
+         * will be closed with a  {@link com.google.bitcoin.protocols.channels.PaymentChannelCloseException.CloseReason#TIME_WINDOW_UNACCEPTABLE}.</p>
+         * @param expireTime The time, in seconds,  when this channel will be closed by the server. Note this is in absolute time, i.e. seconds since 1970-01-01T00:00:00.
+         * @return <code>true</code> if the proposed time is acceptable <code>false</code> otherwise.
+         */
+        public boolean acceptExpireTime(long expireTime);
+
         /**
          * <p>Indicates the channel has been successfully opened and
          * {@link com.google.bitcoin.protocols.channels.PaymentChannelClient#incrementPayment(Coin)}

@@ -46,6 +46,7 @@ import static org.bitcoin.paymentchannel.Protos.TwoWayChannelMessage.MessageType
 import static org.junit.Assert.*;
 
 public class ChannelConnectionTest extends TestWithWallet {
+    private static final int CLIENT_MAJOR_VERSION = 1;
     private Wallet serverWallet;
     private BlockChain serverChain;
     private AtomicBoolean fail;
@@ -321,7 +322,7 @@ public class ChannelConnectionTest extends TestWithWallet {
                 .setType(MessageType.CLIENT_VERSION)
                 .setClientVersion(Protos.ClientVersion.newBuilder()
                         .setPreviousChannelContractHash(ByteString.copyFrom(Sha256Hash.create(new byte[]{0x03}).getBytes()))
-                        .setMajor(1).setMinor(42))
+                        .setMajor(CLIENT_MAJOR_VERSION).setMinor(42))
                 .build());
         pair.serverRecorder.checkNextMsg(MessageType.SERVER_VERSION);
         pair.serverRecorder.checkNextMsg(MessageType.INITIATE);
@@ -382,7 +383,7 @@ public class ChannelConnectionTest extends TestWithWallet {
                 .setType(MessageType.CLIENT_VERSION)
                 .setClientVersion(Protos.ClientVersion.newBuilder()
                         .setPreviousChannelContractHash(ByteString.copyFrom(contractHash.getBytes()))
-                        .setMajor(1).setMinor(42))
+                        .setMajor(CLIENT_MAJOR_VERSION).setMinor(42))
                 .build());
         // We get the usual resume sequence.
         pair.serverRecorder.checkNextMsg(MessageType.SERVER_VERSION);
@@ -440,7 +441,7 @@ public class ChannelConnectionTest extends TestWithWallet {
                 .setType(MessageType.CLIENT_VERSION)
                 .setClientVersion(Protos.ClientVersion.newBuilder()
                         .setPreviousChannelContractHash(ByteString.copyFrom(new byte[]{0x00, 0x01}))
-                        .setMajor(1).setMinor(42))
+                        .setMajor(CLIENT_MAJOR_VERSION).setMinor(42))
                 .build());
 
         srv.serverRecorder.checkNextMsg(MessageType.SERVER_VERSION);
@@ -456,7 +457,7 @@ public class ChannelConnectionTest extends TestWithWallet {
         client.connectionOpen();
         pair.clientRecorder.checkNextMsg(MessageType.CLIENT_VERSION);
         client.receiveMessage(Protos.TwoWayChannelMessage.newBuilder()
-                .setServerVersion(Protos.ServerVersion.newBuilder().setMajor(2))
+                .setServerVersion(Protos.ServerVersion.newBuilder().setMajor(-1))
                 .setType(MessageType.SERVER_VERSION).build());
         pair.clientRecorder.checkNextMsg(MessageType.ERROR);
         assertEquals(CloseReason.NO_ACCEPTABLE_VERSION, pair.clientRecorder.q.take());
@@ -468,9 +469,9 @@ public class ChannelConnectionTest extends TestWithWallet {
     }
 
     @Test
-    public void testClientTimeWindowTooLarge() throws Exception {
+    public void testClientTimeWindowUnacceptable() throws Exception {
         // Tests that clients reject too large time windows
-        ChannelTestUtils.RecordingPair pair = ChannelTestUtils.makeRecorders(serverWallet, mockBroadcaster);
+        ChannelTestUtils.RecordingPair pair = ChannelTestUtils.makeRecorders(serverWallet, mockBroadcaster, 100);
         PaymentChannelServer server = pair.server;
         PaymentChannelClient client = new PaymentChannelClient(wallet, myKey, COIN, Sha256Hash.ZERO_HASH, pair.clientRecorder);
         client.connectionOpen();
@@ -485,7 +486,7 @@ public class ChannelConnectionTest extends TestWithWallet {
                 .setType(MessageType.INITIATE).build());
 
         pair.clientRecorder.checkNextMsg(MessageType.ERROR);
-        assertEquals(CloseReason.TIME_WINDOW_TOO_LARGE, pair.clientRecorder.q.take());
+        assertEquals(CloseReason.TIME_WINDOW_UNACCEPTABLE, pair.clientRecorder.q.take());
         // Double-check that we cant do anything that requires an open channel
         try {
             client.incrementPayment(Coin.SATOSHI);

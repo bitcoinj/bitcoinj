@@ -46,6 +46,8 @@ public class PaymentChannelServer {
     private static final org.slf4j.Logger log = LoggerFactory.getLogger(PaymentChannelServer.class);
 
     protected final ReentrantLock lock = Threading.lock("channelserver");
+    public final int SERVER_MAJOR_VERSION = 1;
+    public final int SERVER_MINOR_VERSION = 0;
 
     // The step in the initialization process we are in, some of this is duplicated in the PaymentChannelServerState
     private enum InitStep {
@@ -129,17 +131,26 @@ public class PaymentChannelServer {
     // The time this channel expires (ie the refund transaction's locktime)
     @GuardedBy("lock") private long expireTime;
 
-    /**
-     * <p>The amount of time we request the client lock in their funds.</p>
-     *
-     * <p>The value defaults to 24 hours - 60 seconds and should always be greater than 2 hours plus the amount of time
-     * the channel is expected to be used and smaller than 24 hours minus the client <-> server latency minus some
-     * factor to account for client clock inaccuracy.</p>
-     */
-    public long timeWindow = 24*60*60 - 60;
+    public static final long DEFAULT_MAX_TIME_WINDOW = 7 * 24 * 60 * 60;
 
     /**
-     * Creates a new server-side state manager which handles a single client connection.
+     * Maximum channel duration, in seconds, that the client can request. Defaults to 1 week.
+     * Note that the server need to be online for the whole time the channel is open.
+     * Failure to do this could cause loss of all payments received on the channel.
+     */
+    protected final long maxTimeWindow;
+
+    public static final long DEFAULT_MIN_TIME_WINDOW = 4 * 60 * 60;
+    public static final long HARD_MIN_TIME_WINDOW = -StoredPaymentChannelServerStates.CHANNEL_EXPIRE_OFFSET;
+    /**
+     * Minimum channel duration, in seconds, that the client can request. Should always be larger than  than 2 hours, defaults to 4 hours
+     */
+    protected final long minTimeWindow;
+
+    /**
+     * Creates a new server-side state manager which handles a single client connection. The server will only accept
+     * a channel with time window between 4 hours and 1 week. Note that the server need to be online for the whole time the channel is open.
+     * Failure to do this could cause loss of all payments received on the channel.
      *
      * @param broadcaster The PeerGroup on which transactions will be broadcast - should have multiple connections.
      * @param wallet The wallet which will be used to complete transactions.
@@ -154,10 +165,36 @@ public class PaymentChannelServer {
      */
     public PaymentChannelServer(TransactionBroadcaster broadcaster, Wallet wallet,
                                 Coin minAcceptedChannelSize, ServerConnection conn) {
+        this(broadcaster, wallet, minAcceptedChannelSize, DEFAULT_MIN_TIME_WINDOW, DEFAULT_MAX_TIME_WINDOW, conn);
+    }
+
+    /**
+     * Creates a new server-side state manager which handles a single client connection.
+     *
+     * @param broadcaster The PeerGroup on which transactions will be broadcast - should have multiple connections.
+     * @param wallet The wallet which will be used to complete transactions.
+     *               Unlike {@link PaymentChannelClient}, this does not have to already contain a StoredState manager
+     * @param minAcceptedChannelSize The minimum value the client must lock into this channel. A value too large will be
+     *                               rejected by clients, and a value too low will require excessive channel reopening
+     *                               and may cause fees to be require to settle the channel. A reasonable value depends
+     *                               entirely on the expected maximum for the channel, and should likely be somewhere
+     *                               between a few bitcents and a bitcoin.
+     * @param minTimeWindow The minimum allowed channel time window in seconds, must be larger than 7200.
+     * @param maxTimeWindow The maximum allowed channel time window in seconds. Note that the server need to be online for the whole time the channel is open.
+     *                              Failure to do this could cause loss of all payments received on the channel.
+     * @param conn A callback listener which represents the connection to the client (forwards messages we generate to
+     *              the client and will close the connection on request)
+     */
+    public PaymentChannelServer(TransactionBroadcaster broadcaster, Wallet wallet,
+                                Coin minAcceptedChannelSize, long minTimeWindow, long maxTimeWindow, ServerConnection conn) {
+        if (minTimeWindow > maxTimeWindow) throw new IllegalArgumentException("minTimeWindow must be less or equal to maxTimeWindow");
+        if (minTimeWindow < HARD_MIN_TIME_WINDOW) throw new IllegalArgumentException("minTimeWindow must be larger than" + HARD_MIN_TIME_WINDOW  + " seconds");
         this.broadcaster = checkNotNull(broadcaster);
         this.wallet = checkNotNull(wallet);
         this.minAcceptedChannelSize = checkNotNull(minAcceptedChannelSize);
         this.conn = checkNotNull(conn);
+        this.minTimeWindow = minTimeWindow;
+        this.maxTimeWindow = maxTimeWindow;
     }
 
     /**
@@ -172,19 +209,21 @@ public class PaymentChannelServer {
     @GuardedBy("lock")
     private void receiveVersionMessage(Protos.TwoWayChannelMessage msg) throws VerificationException {
         checkState(step == InitStep.WAITING_ON_CLIENT_VERSION && msg.hasClientVersion());
-        if (msg.getClientVersion().getMajor() != 1) {
-            error("This server needs protocol v1", Protos.Error.ErrorCode.NO_ACCEPTABLE_VERSION,
-                    CloseReason.NO_ACCEPTABLE_VERSION);
+        final Protos.ClientVersion clientVersion = msg.getClientVersion();
+        final int major = clientVersion.getMajor();
+        if (major != SERVER_MAJOR_VERSION) {
+            error("This server needs protocol version " + SERVER_MAJOR_VERSION + " , client offered " + major,
+                    Protos.Error.ErrorCode.NO_ACCEPTABLE_VERSION, CloseReason.NO_ACCEPTABLE_VERSION);
             return;
         }
 
         Protos.ServerVersion.Builder versionNegotiationBuilder = Protos.ServerVersion.newBuilder()
-                .setMajor(1).setMinor(0);
+                .setMajor(SERVER_MAJOR_VERSION).setMinor(SERVER_MINOR_VERSION);
         conn.sendToClient(Protos.TwoWayChannelMessage.newBuilder()
                 .setType(Protos.TwoWayChannelMessage.MessageType.SERVER_VERSION)
                 .setServerVersion(versionNegotiationBuilder)
                 .build());
-        ByteString reopenChannelContractHash = msg.getClientVersion().getPreviousChannelContractHash();
+        ByteString reopenChannelContractHash = clientVersion.getPreviousChannelContractHash();
         if (reopenChannelContractHash != null && reopenChannelContractHash.size() == 32) {
             Sha256Hash contractHash = new Sha256Hash(reopenChannelContractHash.toByteArray());
             log.info("New client that wants to resume {}", contractHash);
@@ -221,7 +260,7 @@ public class PaymentChannelServer {
         myKey = new ECKey();
         wallet.freshReceiveKey();
 
-        expireTime = Utils.currentTimeSeconds() + timeWindow;
+        expireTime = Utils.currentTimeSeconds() + truncateTimeWindow(clientVersion.getTimeWindowSecs());
         step = InitStep.WAITING_ON_UNSIGNED_REFUND;
 
         Protos.Initiate.Builder initiateBuilder = Protos.Initiate.newBuilder()
@@ -234,6 +273,18 @@ public class PaymentChannelServer {
                 .setInitiate(initiateBuilder)
                 .setType(Protos.TwoWayChannelMessage.MessageType.INITIATE)
                 .build());
+    }
+
+    private long truncateTimeWindow(long timeWindow) {
+        if (timeWindow < minTimeWindow) {
+            log.info("client requested time window {} s to short, offering {} s", timeWindow, minTimeWindow);
+            return minTimeWindow;
+        }
+        if (timeWindow > maxTimeWindow) {
+            log.info("client requested time window {} s to long, offering {} s", timeWindow, minTimeWindow);
+            return maxTimeWindow;
+        }
+        return timeWindow;
     }
 
     @GuardedBy("lock")

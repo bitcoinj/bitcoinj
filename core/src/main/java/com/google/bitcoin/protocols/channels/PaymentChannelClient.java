@@ -29,6 +29,8 @@ import org.bitcoin.paymentchannel.Protos;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.concurrent.locks.ReentrantLock;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -50,6 +52,9 @@ import static com.google.common.base.Preconditions.checkState;
  */
 public class PaymentChannelClient implements IPaymentChannelClient {
     private static final org.slf4j.Logger log = LoggerFactory.getLogger(PaymentChannelClient.class);
+    private static final int CLIENT_MAJOR_VERSION = 1;
+    public final int CLIENT_MINOR_VERSION = 0;
+    private static final int SERVER_MAJOR_VERSION = 1;
 
     protected final ReentrantLock lock = Threading.lock("channelclient");
 
@@ -60,6 +65,8 @@ public class PaymentChannelClient implements IPaymentChannelClient {
 
     // The state object used to step through initialization and pay the server
     @GuardedBy("lock") private PaymentChannelClientState state;
+
+    public static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");
 
     // The step we are at in initialization, this is partially duplicated in the state object
     private enum InitStep {
@@ -88,25 +95,25 @@ public class PaymentChannelClient implements IPaymentChannelClient {
 
     private Coin missing;
 
+    private final long timeWindow;
+
     @GuardedBy("lock") private long minPayment;
 
     @GuardedBy("lock") SettableFuture<PaymentIncrementAck> increasePaymentFuture;
     @GuardedBy("lock") Coin lastPaymentActualAmount;
 
     /**
-     * <p>The maximum amount of time for which we will accept the server locking up our funds for the multisig
+     * <p>The default maximum amount of time for which we will accept the server locking up our funds for the multisig
      * contract.</p>
      *
-     * <p>Note that though this is not final, it is in all caps because it should generally not be modified unless you
-     * have some guarantee that the server will not request at least this (channels will fail if this is too small).</p>
-     *
-     * <p>24 hours is the default as it is expected that clients limit risk exposure by limiting channel size instead of
+     * <p>24 hours less a minute  is the default as it is expected that clients limit risk exposure by limiting channel size instead of
      * limiting lock time when dealing with potentially malicious servers.</p>
      */
-    public long MAX_TIME_WINDOW = 24*60*60;
+    public static final long DEFAULT_TIME_WINDOW = 24*60*60-60;
 
     /**
      * Constructs a new channel manager which waits for {@link PaymentChannelClient#connectionOpen()} before acting.
+     * A default time window of {@link #DEFAULT_TIME_WINDOW} will be used.
      *
      * @param wallet The wallet which will be paid from, and where completed transactions will be committed.
      *               Must already have a {@link StoredPaymentChannelClientStates} object in its extensions set.
@@ -122,10 +129,35 @@ public class PaymentChannelClient implements IPaymentChannelClient {
      *             the server)
      */
     public PaymentChannelClient(Wallet wallet, ECKey myKey, Coin maxValue, Sha256Hash serverId, ClientConnection conn) {
+      this(wallet,myKey,maxValue,serverId, DEFAULT_TIME_WINDOW, conn);
+    }
+
+    /**
+     * Constructs a new channel manager which waits for {@link PaymentChannelClient#connectionOpen()} before acting.
+     *
+     * @param wallet The wallet which will be paid from, and where completed transactions will be committed.
+     *               Must already have a {@link StoredPaymentChannelClientStates} object in its extensions set.
+     * @param myKey A freshly generated keypair used for the multisig contract and refund output.
+     * @param maxValue The maximum value the server is allowed to request that we lock into this channel until the
+     *                 refund transaction unlocks. Note that if there is a previously open channel, the refund
+     *                 transaction used in this channel may be larger than maxValue. Thus, maxValue is not a method for
+     *                 limiting the amount payable through this channel.
+     * @param serverId An arbitrary hash representing this channel. This must uniquely identify the server. If an
+     *                 existing stored channel exists in the wallet's {@link StoredPaymentChannelClientStates}, then an
+     *                 attempt will be made to resume that channel.
+     * @param timeWindow The time in seconds, relative to now, on how long this channel should be kept open. Note that is is
+     *                   a proposal to the server. The server may in turn propose something different.
+     *                   See {@link com.google.bitcoin.protocols.channels.IPaymentChannelClient.ClientConnection#acceptExpireTime(long)}
+     * @param conn A callback listener which represents the connection to the server (forwards messages we generate to
+     *             the server)
+     */
+    public PaymentChannelClient(Wallet wallet, ECKey myKey, Coin maxValue, Sha256Hash serverId, long timeWindow, ClientConnection conn) {
         this.wallet = checkNotNull(wallet);
         this.myKey = checkNotNull(myKey);
         this.maxValue = checkNotNull(maxValue);
         this.serverId = checkNotNull(serverId);
+        checkState(timeWindow >= 0);
+        this.timeWindow = timeWindow;
         this.conn = checkNotNull(conn);
     }
 
@@ -144,15 +176,13 @@ public class PaymentChannelClient implements IPaymentChannelClient {
     private CloseReason receiveInitiate(Protos.Initiate initiate, Coin contractValue, Protos.Error.Builder errorBuilder) throws VerificationException, InsufficientMoneyException {
         log.info("Got INITIATE message:\n{}", initiate.toString());
 
-        checkState(initiate.getExpireTimeSecs() > 0 && initiate.getMinAcceptedChannelSize() >= 0);
+        final long expireTime = initiate.getExpireTimeSecs();
+        checkState( expireTime >= 0 && initiate.getMinAcceptedChannelSize() >= 0);
 
-        final long MAX_EXPIRY_TIME = Utils.currentTimeSeconds() + MAX_TIME_WINDOW;
-        if (initiate.getExpireTimeSecs() > MAX_EXPIRY_TIME) {
-            log.error("Server expiry time was out of our allowed bounds: {} vs {}", initiate.getExpireTimeSecs(),
-                    MAX_EXPIRY_TIME);
-            errorBuilder.setCode(Protos.Error.ErrorCode.TIME_WINDOW_TOO_LARGE);
-            errorBuilder.setExpectedValue(MAX_EXPIRY_TIME);
-            return CloseReason.TIME_WINDOW_TOO_LARGE;
+        if (! conn.acceptExpireTime(expireTime)) {
+            log.error("Server suggested expire time was out of our allowed bounds: {} ({} s)", dateFormat.format(new Date(expireTime * 1000)), expireTime);
+            errorBuilder.setCode(Protos.Error.ErrorCode.TIME_WINDOW_UNACCEPTABLE);
+            return CloseReason.TIME_WINDOW_UNACCEPTABLE;
         }
 
         Coin minChannelSize = Coin.valueOf(initiate.getMinAcceptedChannelSize());
@@ -177,8 +207,7 @@ public class PaymentChannelClient implements IPaymentChannelClient {
         final byte[] pubKeyBytes = initiate.getMultisigKey().toByteArray();
         if (!ECKey.isPubKeyCanonical(pubKeyBytes))
             throw new VerificationException("Server gave us a non-canonical public key, protocol error.");
-        state = new PaymentChannelClientState(wallet, myKey, ECKey.fromPublicOnly(pubKeyBytes),
-                contractValue, initiate.getExpireTimeSecs());
+        state = new PaymentChannelClientState(wallet, myKey, ECKey.fromPublicOnly(pubKeyBytes), contractValue, expireTime);
         try {
             state.initiate();
         } catch (ValueOutOfRangeException e) {
@@ -265,7 +294,7 @@ public class PaymentChannelClient implements IPaymentChannelClient {
                         checkState(step == InitStep.WAITING_FOR_VERSION_NEGOTIATION && msg.hasServerVersion());
                         // Server might send back a major version lower than our own if they want to fallback to a
                         // lower version. We can't handle that, so we just close the channel.
-                        if (msg.getServerVersion().getMajor() != 1) {
+                        if (msg.getServerVersion().getMajor() != SERVER_MAJOR_VERSION) {
                             errorBuilder = Protos.Error.newBuilder()
                                     .setCode(Protos.Error.ErrorCode.NO_ACCEPTABLE_VERSION);
                             closeReason = CloseReason.NO_ACCEPTABLE_VERSION;
@@ -421,7 +450,9 @@ public class PaymentChannelClient implements IPaymentChannelClient {
             step = InitStep.WAITING_FOR_VERSION_NEGOTIATION;
 
             Protos.ClientVersion.Builder versionNegotiationBuilder = Protos.ClientVersion.newBuilder()
-                    .setMajor(1).setMinor(0);
+                    .setMajor(CLIENT_MAJOR_VERSION)
+                    .setMinor(CLIENT_MINOR_VERSION)
+                    .setTimeWindowSecs(timeWindow);
 
             if (storedChannel != null) {
                 versionNegotiationBuilder.setPreviousChannelContractHash(ByteString.copyFrom(storedChannel.contract.getHash().getBytes()));

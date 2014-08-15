@@ -2838,6 +2838,26 @@ public final class Protos {
      * </pre>
      */
     com.google.protobuf.ByteString getPreviousChannelContractHash();
+
+    // optional uint64 time_window_secs = 4 [default = 86340];
+    /**
+     * <code>optional uint64 time_window_secs = 4 [default = 86340];</code>
+     *
+     * <pre>
+     * How many seconds should the channel be open, only used when a new channel is created.
+     * Defaults to 24 h minus 60 seconds, 24*60*60 - 60
+     * </pre>
+     */
+    boolean hasTimeWindowSecs();
+    /**
+     * <code>optional uint64 time_window_secs = 4 [default = 86340];</code>
+     *
+     * <pre>
+     * How many seconds should the channel be open, only used when a new channel is created.
+     * Defaults to 24 h minus 60 seconds, 24*60*60 - 60
+     * </pre>
+     */
+    long getTimeWindowSecs();
   }
   /**
    * Protobuf type {@code paymentchannels.ClientVersion}
@@ -2908,6 +2928,11 @@ public final class Protos {
             case 26: {
               bitField0_ |= 0x00000004;
               previousChannelContractHash_ = input.readBytes();
+              break;
+            }
+            case 32: {
+              bitField0_ |= 0x00000008;
+              timeWindowSecs_ = input.readUInt64();
               break;
             }
           }
@@ -3012,10 +3037,37 @@ public final class Protos {
       return previousChannelContractHash_;
     }
 
+    // optional uint64 time_window_secs = 4 [default = 86340];
+    public static final int TIME_WINDOW_SECS_FIELD_NUMBER = 4;
+    private long timeWindowSecs_;
+    /**
+     * <code>optional uint64 time_window_secs = 4 [default = 86340];</code>
+     *
+     * <pre>
+     * How many seconds should the channel be open, only used when a new channel is created.
+     * Defaults to 24 h minus 60 seconds, 24*60*60 - 60
+     * </pre>
+     */
+    public boolean hasTimeWindowSecs() {
+      return ((bitField0_ & 0x00000008) == 0x00000008);
+    }
+    /**
+     * <code>optional uint64 time_window_secs = 4 [default = 86340];</code>
+     *
+     * <pre>
+     * How many seconds should the channel be open, only used when a new channel is created.
+     * Defaults to 24 h minus 60 seconds, 24*60*60 - 60
+     * </pre>
+     */
+    public long getTimeWindowSecs() {
+      return timeWindowSecs_;
+    }
+
     private void initFields() {
       major_ = 0;
       minor_ = 0;
       previousChannelContractHash_ = com.google.protobuf.ByteString.EMPTY;
+      timeWindowSecs_ = 86340L;
     }
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
@@ -3042,6 +3094,9 @@ public final class Protos {
       if (((bitField0_ & 0x00000004) == 0x00000004)) {
         output.writeBytes(3, previousChannelContractHash_);
       }
+      if (((bitField0_ & 0x00000008) == 0x00000008)) {
+        output.writeUInt64(4, timeWindowSecs_);
+      }
       getUnknownFields().writeTo(output);
     }
 
@@ -3062,6 +3117,10 @@ public final class Protos {
       if (((bitField0_ & 0x00000004) == 0x00000004)) {
         size += com.google.protobuf.CodedOutputStream
           .computeBytesSize(3, previousChannelContractHash_);
+      }
+      if (((bitField0_ & 0x00000008) == 0x00000008)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeUInt64Size(4, timeWindowSecs_);
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSerializedSize = size;
@@ -3190,6 +3249,8 @@ public final class Protos {
         bitField0_ = (bitField0_ & ~0x00000002);
         previousChannelContractHash_ = com.google.protobuf.ByteString.EMPTY;
         bitField0_ = (bitField0_ & ~0x00000004);
+        timeWindowSecs_ = 86340L;
+        bitField0_ = (bitField0_ & ~0x00000008);
         return this;
       }
 
@@ -3230,6 +3291,10 @@ public final class Protos {
           to_bitField0_ |= 0x00000004;
         }
         result.previousChannelContractHash_ = previousChannelContractHash_;
+        if (((from_bitField0_ & 0x00000008) == 0x00000008)) {
+          to_bitField0_ |= 0x00000008;
+        }
+        result.timeWindowSecs_ = timeWindowSecs_;
         result.bitField0_ = to_bitField0_;
         onBuilt();
         return result;
@@ -3254,6 +3319,9 @@ public final class Protos {
         }
         if (other.hasPreviousChannelContractHash()) {
           setPreviousChannelContractHash(other.getPreviousChannelContractHash());
+        }
+        if (other.hasTimeWindowSecs()) {
+          setTimeWindowSecs(other.getTimeWindowSecs());
         }
         this.mergeUnknownFields(other.getUnknownFields());
         return this;
@@ -3412,6 +3480,59 @@ public final class Protos {
       public Builder clearPreviousChannelContractHash() {
         bitField0_ = (bitField0_ & ~0x00000004);
         previousChannelContractHash_ = getDefaultInstance().getPreviousChannelContractHash();
+        onChanged();
+        return this;
+      }
+
+      // optional uint64 time_window_secs = 4 [default = 86340];
+      private long timeWindowSecs_ = 86340L;
+      /**
+       * <code>optional uint64 time_window_secs = 4 [default = 86340];</code>
+       *
+       * <pre>
+       * How many seconds should the channel be open, only used when a new channel is created.
+       * Defaults to 24 h minus 60 seconds, 24*60*60 - 60
+       * </pre>
+       */
+      public boolean hasTimeWindowSecs() {
+        return ((bitField0_ & 0x00000008) == 0x00000008);
+      }
+      /**
+       * <code>optional uint64 time_window_secs = 4 [default = 86340];</code>
+       *
+       * <pre>
+       * How many seconds should the channel be open, only used when a new channel is created.
+       * Defaults to 24 h minus 60 seconds, 24*60*60 - 60
+       * </pre>
+       */
+      public long getTimeWindowSecs() {
+        return timeWindowSecs_;
+      }
+      /**
+       * <code>optional uint64 time_window_secs = 4 [default = 86340];</code>
+       *
+       * <pre>
+       * How many seconds should the channel be open, only used when a new channel is created.
+       * Defaults to 24 h minus 60 seconds, 24*60*60 - 60
+       * </pre>
+       */
+      public Builder setTimeWindowSecs(long value) {
+        bitField0_ |= 0x00000008;
+        timeWindowSecs_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional uint64 time_window_secs = 4 [default = 86340];</code>
+       *
+       * <pre>
+       * How many seconds should the channel be open, only used when a new channel is created.
+       * Defaults to 24 h minus 60 seconds, 24*60*60 - 60
+       * </pre>
+       */
+      public Builder clearTimeWindowSecs() {
+        bitField0_ = (bitField0_ & ~0x00000008);
+        timeWindowSecs_ = 86340L;
         onChanged();
         return this;
       }
@@ -8567,14 +8688,14 @@ public final class Protos {
        */
       BAD_TRANSACTION(3, 4),
       /**
-       * <code>TIME_WINDOW_TOO_LARGE = 5;</code>
+       * <code>TIME_WINDOW_UNACCEPTABLE = 5;</code>
        *
        * <pre>
        * (wrong inputs/outputs, sequence, lock time, signature,
        * etc)
        * </pre>
        */
-      TIME_WINDOW_TOO_LARGE(4, 5),
+      TIME_WINDOW_UNACCEPTABLE(4, 5),
       /**
        * <code>CHANNEL_VALUE_TOO_LARGE = 6;</code>
        *
@@ -8630,14 +8751,14 @@ public final class Protos {
        */
       public static final int BAD_TRANSACTION_VALUE = 4;
       /**
-       * <code>TIME_WINDOW_TOO_LARGE = 5;</code>
+       * <code>TIME_WINDOW_UNACCEPTABLE = 5;</code>
        *
        * <pre>
        * (wrong inputs/outputs, sequence, lock time, signature,
        * etc)
        * </pre>
        */
-      public static final int TIME_WINDOW_TOO_LARGE_VALUE = 5;
+      public static final int TIME_WINDOW_UNACCEPTABLE_VALUE = 5;
       /**
        * <code>CHANNEL_VALUE_TOO_LARGE = 6;</code>
        *
@@ -8668,7 +8789,7 @@ public final class Protos {
           case 2: return SYNTAX_ERROR;
           case 3: return NO_ACCEPTABLE_VERSION;
           case 4: return BAD_TRANSACTION;
-          case 5: return TIME_WINDOW_TOO_LARGE;
+          case 5: return TIME_WINDOW_UNACCEPTABLE;
           case 6: return CHANNEL_VALUE_TOO_LARGE;
           case 7: return MIN_PAYMENT_TOO_LARGE;
           case 8: return OTHER;
@@ -9367,29 +9488,30 @@ public final class Protos {
       "\022\022\n\016PROVIDE_REFUND\020\004\022\021\n\rRETURN_REFUND\020\005\022" +
       "\024\n\020PROVIDE_CONTRACT\020\006\022\020\n\014CHANNEL_OPEN\020\007\022",
       "\022\n\016UPDATE_PAYMENT\020\010\022\017\n\013PAYMENT_ACK\020\013\022\t\n\005" +
-      "CLOSE\020\t\022\t\n\005ERROR\020\n\"X\n\rClientVersion\022\r\n\005m" +
+      "CLOSE\020\t\022\t\n\005ERROR\020\n\"y\n\rClientVersion\022\r\n\005m" +
       "ajor\030\001 \002(\005\022\020\n\005minor\030\002 \001(\005:\0010\022&\n\036previous" +
-      "_channel_contract_hash\030\003 \001(\014\"0\n\rServerVe" +
-      "rsion\022\r\n\005major\030\001 \002(\005\022\020\n\005minor\030\002 \001(\005:\0010\"r" +
-      "\n\010Initiate\022\024\n\014multisig_key\030\001 \002(\014\022!\n\031min_" +
-      "accepted_channel_size\030\002 \002(\004\022\030\n\020expire_ti" +
-      "me_secs\030\003 \002(\004\022\023\n\013min_payment\030\004 \002(\004\"1\n\rPr" +
-      "ovideRefund\022\024\n\014multisig_key\030\001 \002(\014\022\n\n\002tx\030" +
-      "\002 \002(\014\"!\n\014ReturnRefund\022\021\n\tsignature\030\001 \002(\014",
-      "\"V\n\017ProvideContract\022\n\n\002tx\030\001 \002(\014\0227\n\017initi" +
-      "al_payment\030\002 \002(\0132\036.paymentchannels.Updat" +
-      "ePayment\"M\n\rUpdatePayment\022\033\n\023client_chan" +
-      "ge_value\030\001 \002(\004\022\021\n\tsignature\030\002 \002(\014\022\014\n\004inf" +
-      "o\030\003 \001(\014\"\032\n\nPaymentAck\022\014\n\004info\030\001 \001(\014\"\030\n\nS" +
-      "ettlement\022\n\n\002tx\030\003 \002(\014\"\246\002\n\005Error\0225\n\004code\030" +
-      "\001 \001(\0162 .paymentchannels.Error.ErrorCode:" +
-      "\005OTHER\022\023\n\013explanation\030\002 \001(\t\022\026\n\016expected_" +
-      "value\030\003 \001(\004\"\270\001\n\tErrorCode\022\013\n\007TIMEOUT\020\001\022\020" +
-      "\n\014SYNTAX_ERROR\020\002\022\031\n\025NO_ACCEPTABLE_VERSIO",
-      "N\020\003\022\023\n\017BAD_TRANSACTION\020\004\022\031\n\025TIME_WINDOW_" +
-      "TOO_LARGE\020\005\022\033\n\027CHANNEL_VALUE_TOO_LARGE\020\006" +
-      "\022\031\n\025MIN_PAYMENT_TOO_LARGE\020\007\022\t\n\005OTHER\020\010B$" +
-      "\n\032org.bitcoin.paymentchannelB\006Protos"
+      "_channel_contract_hash\030\003 \001(\014\022\037\n\020time_win" +
+      "dow_secs\030\004 \001(\004:\00586340\"0\n\rServerVersion\022\r" +
+      "\n\005major\030\001 \002(\005\022\020\n\005minor\030\002 \001(\005:\0010\"r\n\010Initi" +
+      "ate\022\024\n\014multisig_key\030\001 \002(\014\022!\n\031min_accepte" +
+      "d_channel_size\030\002 \002(\004\022\030\n\020expire_time_secs" +
+      "\030\003 \002(\004\022\023\n\013min_payment\030\004 \002(\004\"1\n\rProvideRe" +
+      "fund\022\024\n\014multisig_key\030\001 \002(\014\022\n\n\002tx\030\002 \002(\014\"!",
+      "\n\014ReturnRefund\022\021\n\tsignature\030\001 \002(\014\"V\n\017Pro" +
+      "videContract\022\n\n\002tx\030\001 \002(\014\0227\n\017initial_paym" +
+      "ent\030\002 \002(\0132\036.paymentchannels.UpdatePaymen" +
+      "t\"M\n\rUpdatePayment\022\033\n\023client_change_valu" +
+      "e\030\001 \002(\004\022\021\n\tsignature\030\002 \002(\014\022\014\n\004info\030\003 \001(\014" +
+      "\"\032\n\nPaymentAck\022\014\n\004info\030\001 \001(\014\"\030\n\nSettleme" +
+      "nt\022\n\n\002tx\030\003 \002(\014\"\251\002\n\005Error\0225\n\004code\030\001 \001(\0162 " +
+      ".paymentchannels.Error.ErrorCode:\005OTHER\022" +
+      "\023\n\013explanation\030\002 \001(\t\022\026\n\016expected_value\030\003" +
+      " \001(\004\"\273\001\n\tErrorCode\022\013\n\007TIMEOUT\020\001\022\020\n\014SYNTA",
+      "X_ERROR\020\002\022\031\n\025NO_ACCEPTABLE_VERSION\020\003\022\023\n\017" +
+      "BAD_TRANSACTION\020\004\022\034\n\030TIME_WINDOW_UNACCEP" +
+      "TABLE\020\005\022\033\n\027CHANNEL_VALUE_TOO_LARGE\020\006\022\031\n\025" +
+      "MIN_PAYMENT_TOO_LARGE\020\007\022\t\n\005OTHER\020\010B$\n\032or" +
+      "g.bitcoin.paymentchannelB\006Protos"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
       new com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner() {
@@ -9407,7 +9529,7 @@ public final class Protos {
           internal_static_paymentchannels_ClientVersion_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_paymentchannels_ClientVersion_descriptor,
-              new java.lang.String[] { "Major", "Minor", "PreviousChannelContractHash", });
+              new java.lang.String[] { "Major", "Minor", "PreviousChannelContractHash", "TimeWindowSecs", });
           internal_static_paymentchannels_ServerVersion_descriptor =
             getDescriptor().getMessageTypes().get(2);
           internal_static_paymentchannels_ServerVersion_fieldAccessorTable = new

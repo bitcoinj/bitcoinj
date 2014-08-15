@@ -42,6 +42,7 @@ import static org.junit.Assert.assertFalse;
 
 @RunWith(value = Parameterized.class)
 public class NetworkAbstractionTests {
+    private static final int CLIENT_MAJOR_VERSION = 1;
     private AtomicBoolean fail;
     private final int clientType;
     private final ClientConnectionManager channels;
@@ -433,14 +434,14 @@ public class NetworkAbstractionTests {
         Protos.TwoWayChannelMessage msg = Protos.TwoWayChannelMessage.newBuilder()
                 .setType(Protos.TwoWayChannelMessage.MessageType.CHANNEL_OPEN)
                 .setClientVersion(Protos.ClientVersion.newBuilder()
-                        .setMajor(1)
+                        .setMajor(CLIENT_MAJOR_VERSION)
                         .setPreviousChannelContractHash(ByteString.copyFrom(new byte[0x10000 - 12])))
                 .build();
         // Small message that fits in the buffer
         Protos.TwoWayChannelMessage msg2 = Protos.TwoWayChannelMessage.newBuilder()
                 .setType(Protos.TwoWayChannelMessage.MessageType.CHANNEL_OPEN)
                 .setClientVersion(Protos.ClientVersion.newBuilder()
-                        .setMajor(1)
+                        .setMajor(CLIENT_MAJOR_VERSION)
                         .setPreviousChannelContractHash(ByteString.copyFrom(new byte[1])))
                 .build();
         // Break up the message into chunks to simulate packet network (with strange MTUs...)
@@ -486,7 +487,7 @@ public class NetworkAbstractionTests {
         Protos.TwoWayChannelMessage msg5 = Protos.TwoWayChannelMessage.newBuilder()
                 .setType(Protos.TwoWayChannelMessage.MessageType.CHANNEL_OPEN)
                 .setClientVersion(Protos.ClientVersion.newBuilder()
-                        .setMajor(1)
+                        .setMajor(CLIENT_MAJOR_VERSION)
                         .setPreviousChannelContractHash(ByteString.copyFrom(new byte[0x10000 - 11])))
                 .build();
         try {
