@@ -210,14 +210,27 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
 
     /**
      * Creates a new, empty wallet with no keys and no transactions. If you want to restore a wallet from disk instead,
-     * see loadFromFile.
+     * see loadFromFile. Currently this constructor does the same as
+     * {@link #newNonDeterministicWallet(NetworkParameters)}.
      */
     public Wallet(NetworkParameters params) {
         this(params, new KeyChainGroup(params));
     }
 
+    /**
+     * Creates a deterministic wallet from a given seed.
+     */
     public static Wallet fromSeed(NetworkParameters params, DeterministicSeed seed) {
         return new Wallet(params, new KeyChainGroup(params, seed));
+    }
+
+    /**
+     * Creates a deterministic wallet from a random seed.
+     */
+    public static Wallet fromRandomSeed(NetworkParameters params) {
+        Wallet wallet = new Wallet(params);
+        wallet.keychain.createAndActivateNewHDChain();
+        return wallet;
     }
 
     /**
@@ -234,6 +247,16 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
      */
     public static Wallet fromWatchingKey(NetworkParameters params, DeterministicKey watchKey) {
         return new Wallet(params, new KeyChainGroup(params, watchKey));
+    }
+
+    /**
+     * Creates a new, empty non-deterministic wallet with no keys and no transactions. Generally you should prefer
+     * creating a deterministic wallet using {@link #fromSeed(NetworkParameters, DeterministicSeed)}. However, for some
+     * usecases the old, non-deterministic model might be more appropriate. Make sure you don't accidently upgrade to
+     * deterministic by calling one of the related methods.
+     */
+    public static Wallet newNonDeterministicWallet(NetworkParameters params) {
+        return new Wallet(params, new KeyChainGroup(params));
     }
 
     // TODO: When this class moves to the Wallet package, along with the protobuf serializer, then hide this.
@@ -441,6 +464,18 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
         lock.lock();
         try {
             keychain.upgradeToDeterministic(vKeyRotationEnabled ? vKeyRotationTimestamp : 0, aesKey);
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
+     * Returns true if the wallet contains HD chains.
+     */
+    public boolean isDeterministic() {
+        lock.lock();
+        try {
+            return keychain.isDeterministic();
         } finally {
             lock.unlock();
         }

@@ -2475,6 +2475,21 @@ public class WalletTest extends TestWithWallet {
     }
 
     @Test
+    public void isDeterministic() {
+        Wallet deterministicWallet = Wallet.fromSeed(params, new DeterministicSeed(new byte[32], "", 0));
+        assertTrue(deterministicWallet.isDeterministic());
+
+        Wallet deterministicRandomWallet = Wallet.fromRandomSeed(params);
+        assertTrue(deterministicRandomWallet.isDeterministic());
+
+        MnemonicCode backup = MnemonicCode.INSTANCE;
+        MnemonicCode.INSTANCE = null; // should not be required for non-deterministic wallets
+        Wallet nonDeterministicWallet = Wallet.newNonDeterministicWallet(params);
+        assertFalse(nonDeterministicWallet.isDeterministic());
+        MnemonicCode.INSTANCE = backup;
+    }
+
+    @Test
     public void upgradeToHDUnencrypted() throws Exception {
         // This isn't very deep because most of it is tested in KeyChainGroupTest and Wallet just forwards most logic
         // there. We're mostly concerned with the slightly different auto upgrade logic: KeyChainGroup won't do an

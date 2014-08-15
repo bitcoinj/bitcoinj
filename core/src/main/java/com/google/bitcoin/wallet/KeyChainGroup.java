@@ -171,7 +171,7 @@ public class KeyChainGroup implements KeyBag {
      * This keeps {@link #marriedKeysRedeemData} in sync with the number of keys issued
      */
     private void maybeLookaheadScripts() {
-        if (chains.isEmpty())
+        if (!isDeterministic())
             return;
 
         int numLeafKeys = 0;
@@ -329,7 +329,7 @@ public class KeyChainGroup implements KeyBag {
 
     /** Returns the key chain that's used for generation of fresh/current keys. This is always the newest HD chain. */
     public DeterministicKeyChain getActiveKeyChain() {
-        if (chains.isEmpty()) {
+        if (!isDeterministic()) {
             if (basic.numKeys() > 0) {
                 log.warn("No HD chain present but random keys are: you probably deserialized an old wallet.");
                 // If called from the wallet (most likely) it'll try to upgrade us, as it knows the rotation time
@@ -554,7 +554,7 @@ public class KeyChainGroup implements KeyBag {
         // This code must be exception safe.
         BasicKeyChain newBasic = basic.toEncrypted(keyCrypter, aesKey);
         List<DeterministicKeyChain> newChains = new ArrayList<DeterministicKeyChain>(chains.size());
-        if (chains.isEmpty() && basic.numKeys() == 0) {
+        if (!isDeterministic() && basic.numKeys() == 0) {
             // No HD chains and no random keys: encrypting an entirely empty keychain group. But we can't do that, we
             // must have something to encrypt: so instantiate a new HD chain here.
             createAndActivateNewHDChain();
@@ -742,7 +742,7 @@ public class KeyChainGroup implements KeyBag {
      * @return the DeterministicKeyChain that was created by the upgrade.
      */
     public DeterministicKeyChain upgradeToDeterministic(long keyRotationTimeSecs, @Nullable KeyParameter aesKey) throws DeterministicUpgradeRequiresPassword {
-        checkState(chains.isEmpty());
+        checkState(!isDeterministic());
         checkState(basic.numKeys() > 0);
         checkArgument(keyRotationTimeSecs >= 0);
         ECKey keyToUse = basic.findOldestKeyAfter(keyRotationTimeSecs);
@@ -789,7 +789,14 @@ public class KeyChainGroup implements KeyBag {
 
     /** Returns true if the group contains random keys but no HD chains. */
     public boolean isDeterministicUpgradeRequired() {
-        return basic.numKeys() > 0 && chains.isEmpty();
+        return basic.numKeys() > 0 && !isDeterministic();
+    }
+
+    /**
+     * Returns true if the group contains HD chains.
+     */
+    public boolean isDeterministic() {
+        return !chains.isEmpty();
     }
 
     private static EnumMap<KeyChain.KeyPurpose, DeterministicKey> createCurrentKeysMap(List<DeterministicKeyChain> chains) {
