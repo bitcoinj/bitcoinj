@@ -18,6 +18,7 @@
 package com.google.bitcoin.core;
 
 import com.google.bitcoin.params.MainNetParams;
+import com.google.bitcoin.wallet.KeyChainGroup;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -72,11 +73,11 @@ public class BloomFilterTest {
         
         Address addr = privKey.getKey().toAddress(params);
         assertTrue(addr.toString().equals("17Wx1GQfyPTNWpQMHrTwRSMTCAonSiZx9e"));
-        
-        Wallet wallet = new Wallet(params);
-        wallet.importKey(privKey.getKey());
+
+        KeyChainGroup group = new KeyChainGroup(params);
         // Add a random key which happens to have been used in a recent generation
-        wallet.importKey(ECKey.fromPublicOnly(HEX.decode("03cb219f69f1b49468bd563239a86667e74a06fcba69ac50a08a5cbc42a5808e99")));
+        group.importKeys(privKey.getKey(), ECKey.fromPublicOnly(HEX.decode("03cb219f69f1b49468bd563239a86667e74a06fcba69ac50a08a5cbc42a5808e99")));
+        Wallet wallet = new Wallet(params, group);
         wallet.commitTx(new Transaction(params, HEX.decode("01000000010000000000000000000000000000000000000000000000000000000000000000ffffffff0d038754030114062f503253482fffffffff01c05e559500000000232103cb219f69f1b49468bd563239a86667e74a06fcba69ac50a08a5cbc42a5808e99ac00000000")));
         
         // We should have 2 per pubkey, and one for the pay-2-pubkey output we have

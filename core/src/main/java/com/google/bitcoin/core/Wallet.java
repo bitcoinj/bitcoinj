@@ -243,6 +243,11 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
         this.keychain = checkNotNull(keyChainGroup);
         if (params == UnitTestParams.get())
             this.keychain.setLookaheadSize(5);  // Cut down excess computation for unit tests.
+        // If this keychain was created fresh just now (new wallet), make HD so a backup can be made immediately
+        // without having to call current/freshReceiveKey. If there are already keys in the chain of any kind then
+        // we're probably being deserialized so leave things alone: the API user can upgrade later.
+        if (this.keychain.numKeys() == 0)
+            this.keychain.createAndActivateNewHDChain();
         watchedScripts = Sets.newHashSet();
         unspent = new HashMap<Sha256Hash, Transaction>();
         spent = new HashMap<Sha256Hash, Transaction>();

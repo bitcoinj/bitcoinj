@@ -1017,32 +1017,25 @@ public class WalletTest extends TestWithWallet {
 
     @Test
     public void keyCreationTime() throws Exception {
-        wallet = new Wallet(params);
         Utils.setMockClock();
         long now = Utils.currentTimeSeconds();
-        // No keys returns current time.
+        wallet = new Wallet(params);
         assertEquals(now, wallet.getEarliestKeyCreationTime());
         Utils.rollMockClock(60);
         wallet.freshReceiveKey();
-        assertEquals(now + 60, wallet.getEarliestKeyCreationTime());
-        Utils.rollMockClock(60);
-        wallet.freshReceiveKey();
-        assertEquals(now + 60, wallet.getEarliestKeyCreationTime());
+        assertEquals(now, wallet.getEarliestKeyCreationTime());
     }
 
     @Test
     public void scriptCreationTime() throws Exception {
-        wallet = new Wallet(params);
         Utils.setMockClock();
         long now = Utils.currentTimeSeconds();
-        // No keys returns current time.
+        wallet = new Wallet(params);
         assertEquals(now, wallet.getEarliestKeyCreationTime());
-        Utils.rollMockClock(60);
+        Utils.rollMockClock(-120);
         wallet.addWatchedAddress(new ECKey().toAddress(params));
-
-        Utils.rollMockClock(60);
         wallet.freshReceiveKey();
-        assertEquals(now + 60, wallet.getEarliestKeyCreationTime());
+        assertEquals(now - 120, wallet.getEarliestKeyCreationTime());
     }
 
     @Test
@@ -2483,9 +2476,9 @@ public class WalletTest extends TestWithWallet {
         // much where it goes). Wallet on the other hand will try to auto-upgrade you when possible.
 
         // Create an old-style random wallet.
-        wallet = new Wallet(params);
-        wallet.importKey(new ECKey());
-        wallet.importKey(new ECKey());
+        KeyChainGroup group = new KeyChainGroup(params);
+        group.importKeys(new ECKey(), new ECKey());
+        wallet = new Wallet(params, group);
         assertTrue(wallet.isDeterministicUpgradeRequired());
         // Use an HD feature.
         wallet.freshReceiveKey();
@@ -2495,9 +2488,9 @@ public class WalletTest extends TestWithWallet {
     @Test
     public void upgradeToHDEncrypted() throws Exception {
         // Create an old-style random wallet.
-        wallet = new Wallet(params);
-        wallet.importKey(new ECKey());
-        wallet.importKey(new ECKey());
+        KeyChainGroup group = new KeyChainGroup(params);
+        group.importKeys(new ECKey(), new ECKey());
+        wallet = new Wallet(params, group);
         assertTrue(wallet.isDeterministicUpgradeRequired());
         KeyCrypter crypter = new KeyCrypterScrypt();
         KeyParameter aesKey = crypter.deriveKey("abc");
