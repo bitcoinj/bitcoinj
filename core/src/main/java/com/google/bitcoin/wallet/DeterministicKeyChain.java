@@ -342,6 +342,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                     index = issuedExternalKeys;
                     parentKey = externalKey;
                     break;
+                case AUTHENTICATION:
                 case CHANGE:
                     issuedInternalKeys += numberOfKeys;
                     index = issuedInternalKeys;
