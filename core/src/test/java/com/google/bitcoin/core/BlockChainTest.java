@@ -1,5 +1,6 @@
 /**
  * Copyright 2011 Google Inc.
+ * Copyright 2014 Andreas Schildbach
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -423,5 +424,34 @@ public class BlockChainTest {
         assertEquals(decay * 55, chain.getFalsePositiveRate(), 1e-4);
         chain.trackFilteredTransactions(550);
         assertEquals(rate1, chain.getFalsePositiveRate(), 1e-4);
+    }
+
+    @Test
+    public void rollbackBlockStore() throws Exception {
+        // This test simulates an issue on Android, that causes the VM to crash while receiving a block, so that the
+        // block store is persisted but the wallet is not.
+        Block b1 = unitTestParams.getGenesisBlock().createNextBlock(coinbaseTo);
+        Block b2 = b1.createNextBlock(coinbaseTo);
+        // Add block 1, no frills.
+        assertTrue(chain.add(b1));
+        assertEquals(b1.cloneAsHeader(), chain.getChainHead().getHeader());
+        assertEquals(1, chain.getBestChainHeight());
+        assertEquals(1, wallet.getLastBlockSeenHeight());
+        // Add block 2 while wallet is disconnected, to simulate crash.
+        chain.removeWallet(wallet);
+        assertTrue(chain.add(b2));
+        assertEquals(b2.cloneAsHeader(), chain.getChainHead().getHeader());
+        assertEquals(2, chain.getBestChainHeight());
+        assertEquals(1, wallet.getLastBlockSeenHeight());
+        // Add wallet back. This will detect the height mismatch and repair the damage done.
+        chain.addWallet(wallet);
+        assertEquals(b1.cloneAsHeader(), chain.getChainHead().getHeader());
+        assertEquals(1, chain.getBestChainHeight());
+        assertEquals(1, wallet.getLastBlockSeenHeight());
+        // Now add block 2 correctly.
+        assertTrue(chain.add(b2));
+        assertEquals(b2.cloneAsHeader(), chain.getChainHead().getHeader());
+        assertEquals(2, chain.getBestChainHeight());
+        assertEquals(2, wallet.getLastBlockSeenHeight());
     }
 }
