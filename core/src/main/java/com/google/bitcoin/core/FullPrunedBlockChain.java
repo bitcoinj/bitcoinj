@@ -1,5 +1,6 @@
 /*
  * Copyright 2012 Matt Corallo.
+ * Copyright 2014 Andreas Schildbach
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -91,6 +92,11 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
         StoredBlock newBlock = storedPrev.build(block);
         blockStore.put(newBlock, new StoredUndoableBlock(newBlock.getHeader().getHash(), block.transactions));
         return newBlock;
+    }
+
+    @Override
+    protected void rollbackBlockStore(int height) throws BlockStoreException {
+        throw new BlockStoreException("Unsupported");
     }
 
     @Override

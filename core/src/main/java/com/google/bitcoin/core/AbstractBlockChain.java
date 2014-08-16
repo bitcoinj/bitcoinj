@@ -1,5 +1,6 @@
 /*
  * Copyright 2012 Google Inc.
+ * Copyright 2014 Andreas Schildbach
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -158,9 +159,23 @@ public abstract class AbstractBlockChain {
      */
     public void addWallet(Wallet wallet) {
         addListener(wallet, Threading.SAME_THREAD);
-        if (wallet.getLastBlockSeenHeight() != getBestChainHeight()) {
-            log.warn("Wallet/chain height mismatch: {} vs {}", wallet.getLastBlockSeenHeight(), getBestChainHeight());
+        int walletHeight = wallet.getLastBlockSeenHeight();
+        int chainHeight = getBestChainHeight();
+        if (walletHeight != chainHeight) {
+            log.warn("Wallet/chain height mismatch: {} vs {}", walletHeight, chainHeight);
             log.warn("Hashes: {} vs {}", wallet.getLastBlockSeenHash(), getChainHead().getHeader().getHash());
+
+            // This special case happens when the VM crashes because of a transaction received. It causes the updated
+            // block store to persist, but not the wallet. In order to fix the issue, we roll back the block store to
+            // the wallet height to make it look like as if the block has never been received.
+            if (walletHeight < chainHeight && walletHeight > -1) {
+                try {
+                    rollbackBlockStore(walletHeight);
+                    log.info("Rolled back block store to height {}.", walletHeight);
+                } catch (BlockStoreException x) {
+                    log.warn("Rollback of block store failed, continuing with mismatched heights.", x);
+                }
+            }
         }
     }
 
@@ -219,7 +234,15 @@ public abstract class AbstractBlockChain {
     protected abstract StoredBlock addToBlockStore(StoredBlock storedPrev, Block header,
                                                    @Nullable TransactionOutputChanges txOutputChanges)
             throws BlockStoreException, VerificationException;
-    
+
+    /**
+     * Rollback the block store to a given height. This is currently only supported by {@link BlockChain} instances.
+     * 
+     * @throws BlockStoreException
+     *             if the operation fails or is unsupported.
+     */
+    protected abstract void rollbackBlockStore(int height) throws BlockStoreException;
+
     /**
      * Called before setting chain head in memory.
      * Should write the new head to block store and then commit any database transactions

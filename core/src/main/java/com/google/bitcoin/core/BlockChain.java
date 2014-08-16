@@ -1,5 +1,6 @@
 /**
  * Copyright 2011 Google Inc.
+ * Copyright 2014 Andreas Schildbach
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +16,8 @@
  */
 
 package com.google.bitcoin.core;
+
+import static com.google.common.base.Preconditions.checkArgument;
 
 import com.google.bitcoin.store.BlockStore;
 import com.google.bitcoin.store.BlockStoreException;
@@ -78,6 +81,31 @@ public class BlockChain extends AbstractBlockChain {
         StoredBlock newBlock = storedPrev.build(blockHeader);
         blockStore.put(newBlock);
         return newBlock;
+    }
+
+    @Override
+    protected void rollbackBlockStore(int height) throws BlockStoreException {
+        lock.lock();
+        try {
+            int currentHeight = getBestChainHeight();
+            checkArgument(height >= 0 && height <= currentHeight, "Bad height: %s", height);
+            if (height == currentHeight)
+                return; // nothing to do
+
+            // Look for the block we want to be the new chain head
+            StoredBlock newChainHead = blockStore.getChainHead();
+            while (newChainHead.getHeight() > height) {
+                newChainHead = newChainHead.getPrev(blockStore);
+                if (newChainHead == null)
+                    throw new BlockStoreException("Unreachable height");
+            }
+
+            // Modify store directly
+            blockStore.put(newChainHead);
+            this.setChainHead(newChainHead);
+        } finally {
+            lock.unlock();
+        }
     }
 
     @Override
