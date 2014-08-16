@@ -23,9 +23,7 @@ import com.google.bitcoin.params.UnitTestParams;
 import com.google.bitcoin.store.UnreadableWalletException;
 import com.google.bitcoin.utils.BriefLogFormatter;
 import com.google.bitcoin.utils.Threading;
-import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
-import com.google.common.io.Resources;
 import org.bitcoinj.wallet.Protos;
 import org.junit.Before;
 import org.junit.Test;
@@ -310,7 +308,7 @@ public class DeterministicKeyChainTest {
     private String checkSerialization(List<Protos.Key> keys, String filename) {
         try {
             String sb = protoToString(keys);
-            String expected = Resources.toString(getClass().getResource(filename), Charsets.UTF_8);
+            String expected = Utils.getResourceAsString(getClass().getResource(filename));
             assertEquals(expected, sb);
             return expected;
         } catch (IOException e) {
