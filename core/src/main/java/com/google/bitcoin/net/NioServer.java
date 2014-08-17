@@ -23,6 +23,7 @@ import java.nio.channels.spi.SelectorProvider;
 import java.util.Iterator;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import org.slf4j.LoggerFactory;
 
@@ -45,9 +46,15 @@ public class NioServer extends AbstractExecutionThreadService {
             SocketChannel newChannel = sc.accept();
             newChannel.configureBlocking(false);
             SelectionKey newKey = newChannel.register(selector, SelectionKey.OP_READ);
-            ConnectionHandler handler = new ConnectionHandler(parserFactory, newKey);
-            newKey.attach(handler);
-            handler.parser.connectionOpened();
+            try {
+                ConnectionHandler handler = new ConnectionHandler(parserFactory, newKey);
+                newKey.attach(handler);
+                handler.parser.connectionOpened();
+            } catch (IOException e) {
+                // This can happen if ConnectionHandler's call to get a new handler returned null
+                log.error("Error handling new connection", Throwables.getRootCause(e).getMessage());
+                newKey.channel().close();
+            }
         } else { // Got a closing channel or a channel to a client connection
             ConnectionHandler.handleKey(key);
         }
