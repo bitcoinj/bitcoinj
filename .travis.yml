@@ -1,0 +1,5 @@
+# configuration for https://travis-ci.org/bitcoinj/bitcoinj
+language: java
+jdk: openjdk6
+before_install: lsb_release -a
+script: mvn clean install
