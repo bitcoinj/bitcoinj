@@ -57,7 +57,7 @@ public class NioClientManager extends AbstractExecutionThreadService implements 
             try {
                 if (sc.finishConnect()) {
                     log.info("Successfully connected to {}", sc.socket().getRemoteSocketAddress());
-                    key.interestOps(SelectionKey.OP_READ).attach(handler);
+                    key.interestOps(key.interestOps() | SelectionKey.OP_READ).attach(handler);
                     handler.parser.connectionOpened();
                 } else {
                     log.error("Failed to connect to {}", sc.socket().getRemoteSocketAddress());
