@@ -3,3 +3,9 @@ language: java
 jdk: openjdk6
 before_install: lsb_release -a
 script: mvn clean install
+
+notifications:
+  irc:
+    channels: "irc.freenode.net#bitcoinj"
+    use_notice: true
+    skip_join: true
