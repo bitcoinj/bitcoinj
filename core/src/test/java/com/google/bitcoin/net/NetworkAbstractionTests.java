@@ -88,6 +88,103 @@ public class NetworkAbstractionTests {
     }
 
     @Test
+    public void testNullGetNewParser() throws Exception {
+        final SettableFuture<Void> client1ConnectionOpened = SettableFuture.create();
+        final SettableFuture<Void> client1Disconnected = SettableFuture.create();
+        final SettableFuture<Protos.TwoWayChannelMessage> client2MessageReceived = SettableFuture.create();
+        final SettableFuture<Void> serverConnectionOpen = SettableFuture.create();
+        final SettableFuture<Void> client2ConnectionOpened = SettableFuture.create();
+        final SettableFuture<Void> serverConnectionClosed = SettableFuture.create();
+        final SettableFuture<Void> client2Disconnected = SettableFuture.create();
+        NioServer server = new NioServer(new StreamParserFactory() {
+            boolean finishedFirst = false;
+            @Override
+            public ProtobufParser<TwoWayChannelMessage> getNewParser(InetAddress inetAddress, int port) {
+                if (!finishedFirst) {
+                    finishedFirst = true;
+                    return null;
+                }
+
+                return new ProtobufParser<Protos.TwoWayChannelMessage>(new ProtobufParser.Listener<Protos.TwoWayChannelMessage>() {
+                    @Override
+                    public void messageReceived(ProtobufParser<Protos.TwoWayChannelMessage> handler, Protos.TwoWayChannelMessage msg) {
+                        handler.write(msg);
+                    }
+
+                    @Override
+                    public void connectionOpen(ProtobufParser<Protos.TwoWayChannelMessage> handler) {
+                        serverConnectionOpen.set(null);
+                    }
+
+                    @Override
+                    public void connectionClosed(ProtobufParser<Protos.TwoWayChannelMessage> handler) {
+                        serverConnectionClosed.set(null);
+                    }
+                }, Protos.TwoWayChannelMessage.getDefaultInstance(), 1000, 0);
+            }
+        }, new InetSocketAddress("localhost", 4243));
+        server.startAsync();
+        server.awaitRunning();
+
+        ProtobufParser<Protos.TwoWayChannelMessage> clientHandler = new ProtobufParser<Protos.TwoWayChannelMessage>(
+                new ProtobufParser.Listener<Protos.TwoWayChannelMessage>() {
+                    @Override
+                    public synchronized void messageReceived(ProtobufParser<Protos.TwoWayChannelMessage> handler, Protos.TwoWayChannelMessage msg) {
+                        fail.set(true);
+                    }
+
+                    @Override
+                    public void connectionOpen(ProtobufParser<Protos.TwoWayChannelMessage> handler) {
+                        client1ConnectionOpened.set(null);
+                    }
+
+                    @Override
+                    public void connectionClosed(ProtobufParser<Protos.TwoWayChannelMessage> handler) {
+                        client1Disconnected.set(null);
+                    }
+                }, Protos.TwoWayChannelMessage.getDefaultInstance(), 1000, 0);
+        openConnection(new InetSocketAddress("localhost", 4243), clientHandler);
+
+        client1ConnectionOpened.get();
+        client1Disconnected.get();
+
+        clientHandler = new ProtobufParser<Protos.TwoWayChannelMessage>(
+                new ProtobufParser.Listener<Protos.TwoWayChannelMessage>() {
+                    @Override
+                    public synchronized void messageReceived(ProtobufParser<Protos.TwoWayChannelMessage> handler, Protos.TwoWayChannelMessage msg) {
+                        if (client2MessageReceived.isDone())
+                            fail.set(true);
+                        client2MessageReceived.set(msg);
+                    }
+
+                    @Override
+                    public void connectionOpen(ProtobufParser<Protos.TwoWayChannelMessage> handler) {
+                        client2ConnectionOpened.set(null);
+                    }
+
+                    @Override
+                    public void connectionClosed(ProtobufParser<Protos.TwoWayChannelMessage> handler) {
+                        client2Disconnected.set(null);
+                    }
+                }, Protos.TwoWayChannelMessage.getDefaultInstance(), 1000, 0);
+        MessageWriteTarget client = openConnection(new InetSocketAddress("localhost", 4243), clientHandler);
+
+        serverConnectionOpen.get();
+        client2ConnectionOpened.get();
+
+        Protos.TwoWayChannelMessage msg = Protos.TwoWayChannelMessage.newBuilder().setType(Protos.TwoWayChannelMessage.MessageType.CHANNEL_OPEN).build();
+        clientHandler.write(msg);
+
+        assertEquals(msg, client2MessageReceived.get());
+
+        client.closeConnection();
+        serverConnectionClosed.get();
+        client2Disconnected.get();
+
+        server.stopAsync().awaitTerminated();
+    }
+
+    @Test
     public void basicClientServerTest() throws Exception {
         // Tests creating a basic server, opening a client connection and sending a few messages
 
