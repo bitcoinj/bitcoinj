@@ -37,8 +37,10 @@ public class CircuitIO implements DashboardRenderable {
 	private final BlockingQueue<Cell> controlCellResponseQueue;
 	private final Map<Integer, StreamImpl> streamMap;
 	private final Object relaySendLock = new Object();
-	
+
+	/** LOCKING: streamMap */
 	private boolean isMarkedForClose;
+	/** LOCKING: streamMap */
 	private boolean isClosed;
 	
 	CircuitIO(CircuitImpl circuit, Connection connection, int circuitId) {
@@ -233,19 +235,22 @@ public class CircuitIO implements DashboardRenderable {
 	}
 
 	void markForClose() {
+		boolean shouldClose;
 		synchronized (streamMap) {
 			if(isMarkedForClose) {
 				return;
 			}
 			isMarkedForClose = true;
-			if(streamMap.isEmpty()) {
-				closeCircuit();
-			}
+			shouldClose = streamMap.isEmpty();
 		}
+		if(shouldClose)
+			closeCircuit();
 	}
 
 	boolean isMarkedForClose() {
-		return isMarkedForClose;
+		synchronized (streamMap) {
+			return isMarkedForClose;
+		}
 	}
 
 	private void closeCircuit() {
@@ -295,12 +300,13 @@ public class CircuitIO implements DashboardRenderable {
 	}
 
 	void removeStream(StreamImpl stream) {
+		boolean shouldClose;
 		synchronized(streamMap) {
 			streamMap.remove(stream.getStreamId());
-			if(streamMap.isEmpty() && isMarkedForClose) {
-				closeCircuit();
-			}
+			shouldClose = streamMap.isEmpty() && isMarkedForClose;
 		}
+		if(shouldClose)
+			closeCircuit();
 	}
 	
 	List<Stream> getActiveStreams() {
