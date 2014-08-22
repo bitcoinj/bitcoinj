@@ -144,7 +144,7 @@ public class Peer extends PeerSocketHandler {
     // A settable future which completes (with this) when the connection is open
     private final SettableFuture<Peer> connectionOpenFuture = SettableFuture.create();
     // A future representing the results of doing a getUTXOs call.
-    @Nullable private SettableFuture<UTXOSMessage> utxosFuture;
+    @Nullable private SettableFuture<UTXOsMessage> utxosFuture;
 
     /**
      * <p>Construct a peer that reads/writes from the given block chain.</p>
@@ -380,11 +380,11 @@ public class Peer extends PeerSocketHandler {
                         vPeerVersionMessage.clientVersion, version);
                 close();
             }
-        } else if (m instanceof UTXOSMessage) {
+        } else if (m instanceof UTXOsMessage) {
             if (utxosFuture != null) {
-                SettableFuture<UTXOSMessage> future = utxosFuture;
+                SettableFuture<UTXOsMessage> future = utxosFuture;
                 utxosFuture = null;
-                future.set((UTXOSMessage)m);
+                future.set((UTXOsMessage)m);
             }
         } else {
             log.warn("Received unhandled message: {}", m);
@@ -1541,13 +1541,13 @@ public class Peer extends PeerSocketHandler {
      * outputs to be fictional and not exist in any transaction, and it's possible for them to be spent the moment
      * after the query returns.
      */
-    public ListenableFuture<UTXOSMessage> getUTXOs(List<TransactionOutPoint> outPoints) {
+    public ListenableFuture<UTXOsMessage> getUTXOs(List<TransactionOutPoint> outPoints) {
         if (utxosFuture != null)
             throw new IllegalStateException("Already fetching UTXOs, wait for previous query to complete first.");
-        if (getPeerVersionMessage().clientVersion < GetUTXOSMessage.MIN_PROTOCOL_VERSION)
+        if (getPeerVersionMessage().clientVersion < GetUTXOsMessage.MIN_PROTOCOL_VERSION)
             throw new IllegalStateException("Peer does not support getutxos protocol version");
         utxosFuture = SettableFuture.create();
-        sendMessage(new GetUTXOSMessage(params, outPoints, true));
+        sendMessage(new GetUTXOsMessage(params, outPoints, true));
         return utxosFuture;
     }
 }

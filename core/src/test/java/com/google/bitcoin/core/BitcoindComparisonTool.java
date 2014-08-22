@@ -248,7 +248,7 @@ public class BitcoindComparisonTool {
                 mostRecentInv = null;
             } else if (rule instanceof UTXORule) {
                 UTXORule r = (UTXORule) rule;
-                UTXOSMessage result = bitcoind.getUTXOs(r.query).get();
+                UTXOsMessage result = bitcoind.getUTXOs(r.query).get();
                 if (!result.equals(r.result)) {
                     log.error("utxo result was not what we expected.");
                     log.error("Wanted  {}", r.result);

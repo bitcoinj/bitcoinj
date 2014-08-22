@@ -90,15 +90,15 @@ class MemoryPoolState extends Rule {
 
 class UTXORule extends Rule {
     List<TransactionOutPoint> query;
-    UTXOSMessage result;
+    UTXOsMessage result;
 
-    public UTXORule(String ruleName, TransactionOutPoint query, UTXOSMessage result) {
+    public UTXORule(String ruleName, TransactionOutPoint query, UTXOsMessage result) {
         super(ruleName);
         this.query = singletonList(query);
         this.result = result;
     }
 
-    public UTXORule(String ruleName, List<TransactionOutPoint> query, UTXOSMessage result) {
+    public UTXORule(String ruleName, List<TransactionOutPoint> query, UTXOsMessage result) {
         super(ruleName);
         this.query = query;
         this.result = result;
@@ -215,7 +215,7 @@ public class FullBlockTestGenerator {
             Transaction coinbase = b2.getTransactions().get(0);
             TransactionOutPoint outpoint = new TransactionOutPoint(params, 0, coinbase.getHash());
             long[] heights = new long[] {chainHeadHeight + 2};
-            UTXOSMessage result = new UTXOSMessage(params, ImmutableList.of(coinbase.getOutput(0)), heights, b2.getHash(), chainHeadHeight + 2);
+            UTXOsMessage result = new UTXOsMessage(params, ImmutableList.of(coinbase.getOutput(0)), heights, b2.getHash(), chainHeadHeight + 2);
             utxo1 = new UTXORule("utxo1", outpoint, result);
             blocks.add(utxo1);
         }
@@ -236,7 +236,7 @@ public class FullBlockTestGenerator {
             List<TransactionOutPoint> queries = ImmutableList.of(utxo1.query.get(0), outpoint);
             List<TransactionOutput> results = Lists.asList(null, coinbase.getOutput(0), new TransactionOutput[] {});
             long[] heights = new long[] {chainHeadHeight + 3};
-            UTXOSMessage result = new UTXOSMessage(params, results, heights, b4.getHash(), chainHeadHeight + 3);
+            UTXOsMessage result = new UTXOsMessage(params, results, heights, b4.getHash(), chainHeadHeight + 3);
             UTXORule utxo2 = new UTXORule("utxo2", queries, result);
             blocks.add(utxo2);
         }
@@ -1574,8 +1574,8 @@ public class FullBlockTestGenerator {
         // Check the UTXO query takes mempool into account.
         {
             TransactionOutPoint outpoint = new TransactionOutPoint(params, 0, b79tx.getHash());
-            long[] heights = new long[] { UTXOSMessage.MEMPOOL_HEIGHT };
-            UTXOSMessage result = new UTXOSMessage(params, ImmutableList.of(b79tx.getOutput(0)), heights, b82.getHash(), chainHeadHeight + 28);
+            long[] heights = new long[] { UTXOsMessage.MEMPOOL_HEIGHT };
+            UTXOsMessage result = new UTXOsMessage(params, ImmutableList.of(b79tx.getOutput(0)), heights, b82.getHash(), chainHeadHeight + 28);
             UTXORule utxo3 = new UTXORule("utxo3", outpoint, result);
             blocks.add(utxo3);
         }

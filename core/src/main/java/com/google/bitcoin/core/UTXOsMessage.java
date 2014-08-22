@@ -22,8 +22,8 @@ import java.util.Arrays;
 import java.util.BitSet;
 import java.util.List;
 
-/** Message representing a list of unspent transaction outputs, returned in response to sending a GetUTXOSMessage. */
-public class UTXOSMessage extends Message {
+/** Message representing a list of unspent transaction outputs, returned in response to sending a GetUTXOsMessage. */
+public class UTXOsMessage extends Message {
     private long height;
     private Sha256Hash chainHead;
     private byte[] hits;   // little-endian bitset indicating whether an output was found or not.
@@ -34,7 +34,7 @@ public class UTXOSMessage extends Message {
     /** This is a special sentinel value that can appear in the heights field if the given tx is in the mempool. */
     public static long MEMPOOL_HEIGHT = 0x7FFFFFFFL;
 
-    public UTXOSMessage(NetworkParameters params, byte[] payloadBytes) {
+    public UTXOsMessage(NetworkParameters params, byte[] payloadBytes) {
         super(params, payloadBytes, 0);
     }
 
@@ -42,7 +42,7 @@ public class UTXOSMessage extends Message {
      * Provide an array of output objects, with nulls indicating that the output was missing. The bitset will
      * be calculated from this.
      */
-    public UTXOSMessage(NetworkParameters params, List<TransactionOutput> outputs, long[] heights, Sha256Hash chainHead, long height) {
+    public UTXOsMessage(NetworkParameters params, List<TransactionOutput> outputs, long[] heights, Sha256Hash chainHead, long height) {
         super(params);
         hits = new byte[(int) Math.ceil(outputs.size() / 8.0)];
         for (int i = 0; i < outputs.size(); i++) {
@@ -125,7 +125,7 @@ public class UTXOSMessage extends Message {
 
     @Override
     public String toString() {
-        return "UTXOSMessage{" +
+        return "UTXOsMessage{" +
                 "height=" + height +
                 ", chainHead=" + chainHead +
                 ", hitMap=" + Arrays.toString(hits) +
@@ -139,7 +139,7 @@ public class UTXOSMessage extends Message {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        UTXOSMessage message = (UTXOSMessage) o;
+        UTXOsMessage message = (UTXOsMessage) o;
 
         if (height != message.height) return false;
         if (!chainHead.equals(message.chainHead)) return false;

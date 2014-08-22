@@ -312,7 +312,7 @@ public class VersionMessage extends Message {
 
     /** Returns true if the protocol version and service bits both indicate support for the getutxos message. */
     public boolean isGetUTXOsSupported() {
-        return clientVersion >= GetUTXOSMessage.MIN_PROTOCOL_VERSION &&
+        return clientVersion >= GetUTXOsMessage.MIN_PROTOCOL_VERSION &&
                 (localServices & NODE_GETUTXOS) == NODE_GETUTXOS;
     }
 }

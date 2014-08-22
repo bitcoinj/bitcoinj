@@ -22,19 +22,19 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.List;
 
-public class GetUTXOSMessage extends Message {
+public class GetUTXOsMessage extends Message {
     public static final int MIN_PROTOCOL_VERSION = 70003;
 
     private boolean includeMempool;
     private ImmutableList<TransactionOutPoint> outPoints;
 
-    public GetUTXOSMessage(NetworkParameters params, List<TransactionOutPoint> outPoints, boolean includeMempool) {
+    public GetUTXOsMessage(NetworkParameters params, List<TransactionOutPoint> outPoints, boolean includeMempool) {
         super(params);
         this.outPoints = ImmutableList.copyOf(outPoints);
         this.includeMempool = includeMempool;
     }
 
-    public GetUTXOSMessage(NetworkParameters params, byte[] payloadBytes) {
+    public GetUTXOsMessage(NetworkParameters params, byte[] payloadBytes) {
         super(params, payloadBytes, 0);
     }
 
@@ -79,7 +79,7 @@ public class GetUTXOSMessage extends Message {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        GetUTXOSMessage that = (GetUTXOSMessage) o;
+        GetUTXOsMessage that = (GetUTXOsMessage) o;
 
         if (includeMempool != that.includeMempool) return false;
         if (!outPoints.equals(that.outPoints)) return false;
