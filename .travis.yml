@@ -3,7 +3,11 @@ language: java
 jdk: openjdk6
 before_install: lsb_release -a
 install: true # remove default
-script: mvn -q clean install
+script:
+  - mvn -q clean install
+  - cd wallettemplate
+  - jdk_switcher use oraclejdk8
+  - mvn -q clean install
 
 notifications:
   irc:
