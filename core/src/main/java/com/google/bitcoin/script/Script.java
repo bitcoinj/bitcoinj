@@ -291,10 +291,23 @@ public class Script {
      * Gets the destination address from this script, if it's in the required form (see getPubKey).
      */
     public Address getToAddress(NetworkParameters params) throws ScriptException {
+        return getToAddress(params, false);
+    }
+
+    /**
+     * Gets the destination address from this script, if it's in the required form (see getPubKey).
+     * 
+     * @param forcePayToPubKey
+     *            If true, allow payToPubKey to be casted to the corresponding address. This is useful if you prefer
+     *            showing addresses rather than pubkeys.
+     */
+    public Address getToAddress(NetworkParameters params, boolean forcePayToPubKey) throws ScriptException {
         if (isSentToAddress())
             return new Address(params, getPubKeyHash());
         else if (isPayToScriptHash())
             return Address.fromP2SHScript(params, this);
+        else if (forcePayToPubKey && isSentToRawPubKey())
+            return ECKey.fromPublicOnly(getPubKey()).toAddress(params);
         else
             throw new ScriptException("Cannot cast this script to a pay-to-address type");
     }
