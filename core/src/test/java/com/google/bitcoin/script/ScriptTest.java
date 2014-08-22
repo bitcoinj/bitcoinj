@@ -518,4 +518,23 @@ public class ScriptTest {
         }
         in.close();
     }
+
+    @Test
+    public void getToAddress() throws Exception {
+        // pay to pubkey
+        ECKey toKey = new ECKey();
+        Address toAddress = toKey.toAddress(params);
+        assertEquals(toAddress, ScriptBuilder.createOutputScript(toKey).getToAddress(params, true));
+        // pay to pubkey hash
+        assertEquals(toAddress, ScriptBuilder.createOutputScript(toAddress).getToAddress(params, true));
+        // pay to script hash
+        Script p2shScript = ScriptBuilder.createP2SHOutputScript(new byte[20]);
+        Address scriptAddress = Address.fromP2SHScript(params, p2shScript);
+        assertEquals(scriptAddress, p2shScript.getToAddress(params, true));
+    }
+
+    @Test(expected = ScriptException.class)
+    public void getToAddressNoPubKey() throws Exception {
+        ScriptBuilder.createOutputScript(new ECKey()).getToAddress(params, false);
+    }
 }
