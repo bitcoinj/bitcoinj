@@ -115,6 +115,6 @@ public class FilteredBlock extends Message {
 
     /** Number of transactions in this block, before it was filtered */
     public int getTransactionCount() {
-        return merkleTree.transactionCount;
+        return merkleTree.getTransactionCount();
     }
 }

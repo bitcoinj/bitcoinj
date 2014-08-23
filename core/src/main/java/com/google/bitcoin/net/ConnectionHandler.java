@@ -74,7 +74,6 @@ class ConnectionHandler implements MessageWriteTarget {
         this.channel = checkNotNull(((SocketChannel)key.channel()));
         if (parser == null) {
             readBuff = null;
-            closeConnection();
             return;
         }
         this.parser = parser;

@@ -23,6 +23,8 @@ import java.text.DateFormat;
 import java.util.Date;
 import java.util.concurrent.Semaphore;
 
+// TODO: Rename this to DownloadProgressTracker or something more appropriate.
+
 /**
  * <p>An implementation of {@link AbstractPeerEventListener} that listens to chain download events and tracks progress
  * as a percentage. The default implementation prints progress to stdout, but you can subclass it and override the
@@ -38,7 +40,12 @@ public class DownloadListener extends AbstractPeerEventListener {
     @Override
     public void onChainDownloadStarted(Peer peer, int blocksLeft) {
         startDownload(blocksLeft);
-        originalBlocksLeft = blocksLeft;
+        // Only mark this the first time, because this method can be called more than once during a chain download
+        // if we switch peers during it.
+        if (originalBlocksLeft == -1)
+            originalBlocksLeft = blocksLeft;
+        else
+            log.info("Chain download switched to {}", peer);
         if (blocksLeft == 0) {
             doneDownload();
             done.release();
@@ -83,9 +90,10 @@ public class DownloadListener extends AbstractPeerEventListener {
      * @param blocks the number of blocks to download, estimated
      */
     protected void startDownload(int blocks) {
-        if (blocks > 0)
+        if (blocks > 0 && originalBlocksLeft == -1)
             log.info("Downloading block chain of size " + blocks + ". " +
                     (blocks > 1000 ? "This may take a while." : ""));
+
     }
 
     /**

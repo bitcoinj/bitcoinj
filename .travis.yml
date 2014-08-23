@@ -1,0 +1,15 @@
+# configuration for https://travis-ci.org/bitcoinj/bitcoinj
+language: java
+jdk: openjdk6
+before_install: lsb_release -a
+install: true # remove default
+script:
+  - mvn -q clean install
+  - cd wallettemplate
+  - jdk_switcher use oraclejdk8
+  - mvn -q clean install
+
+notifications:
+  irc:
+    channels: "irc.freenode.net#bitcoinj"
+    skip_join: true

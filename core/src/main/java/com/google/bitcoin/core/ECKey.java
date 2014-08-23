@@ -22,6 +22,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Objects;
 import com.google.common.base.Objects.ToStringHelper;
 import com.google.common.base.Preconditions;
+import com.google.common.primitives.UnsignedBytes;
 import org.bitcoin.NativeSecp256k1;
 import org.bitcoinj.wallet.Protos;
 import org.slf4j.Logger;
@@ -51,6 +52,7 @@ import java.nio.charset.Charset;
 import java.security.SecureRandom;
 import java.security.SignatureException;
 import java.util.Arrays;
+import java.util.Comparator;
 
 import static com.google.common.base.Preconditions.*;
 
@@ -87,6 +89,16 @@ import static com.google.common.base.Preconditions.*;
  */
 public class ECKey implements EncryptableItem, Serializable {
     private static final Logger log = LoggerFactory.getLogger(ECKey.class);
+
+    /** Compares pub key bytes using {@link com.google.common.primitives.UnsignedBytes#lexicographicalComparator()} **/
+    public static final Comparator<ECKey> PUBKEY_COMPARATOR = new Comparator<ECKey>() {
+        private Comparator comparator = UnsignedBytes.lexicographicalComparator();
+
+        @Override
+        public int compare(ECKey k1, ECKey k2) {
+            return comparator.compare(k1.getPubKey(), k2.getPubKey());
+        }
+    };
 
     /** The parameters of the secp256k1 curve that Bitcoin uses. */
     public static final X9ECParameters CURVE_PARAMS = CustomNamedCurves.getByName("secp256k1");
@@ -560,7 +572,8 @@ public class ECKey implements EncryptableItem, Serializable {
      * EC maths on them.
      *
      * @param aesKey The AES key to use for decryption of the private key. If null then no decryption is required.
-     * @throws KeyCrypterException if this ECKey doesn't have a private part.
+     * @throws KeyCrypterException if there's something wrong with aesKey.
+     * @throws ECKey.MissingPrivateKeyException if this key cannot sign because it's pubkey only.
      */
     public ECDSASignature sign(Sha256Hash input, @Nullable KeyParameter aesKey) throws KeyCrypterException {
         KeyCrypter crypter = getKeyCrypter();
@@ -721,8 +734,6 @@ public class ECKey implements EncryptableItem, Serializable {
      * @throws KeyCrypterException if this ECKey is encrypted and no AESKey is provided or it does not decrypt the ECKey.
      */
     public String signMessage(String message, @Nullable KeyParameter aesKey) throws KeyCrypterException {
-        if (priv == null)
-            throw new MissingPrivateKeyException();
         byte[] data = Utils.formatMessageForSigning(message);
         Sha256Hash hash = Sha256Hash.createDouble(data);
         ECDSASignature sig = sign(hash, aesKey);
@@ -974,6 +985,13 @@ public class ECKey implements EncryptableItem, Serializable {
     }
 
     /**
+     * Creates decrypted private key if needed.
+     */
+    public ECKey maybeDecrypt(@Nullable KeyParameter aesKey) throws KeyCrypterException {
+        return isEncrypted() && aesKey != null ? decrypt(aesKey) : this;
+    }
+
+    /**
      * <p>Check that it is possible to decrypt the key with the keyCrypter and that the original key is returned.</p>
      *
      * <p>Because it is a critical failure if the private keys cannot be decrypted successfully (resulting of loss of all
@@ -1096,8 +1114,13 @@ public class ECKey implements EncryptableItem, Serializable {
     private String toString(boolean includePrivate) {
         final ToStringHelper helper = Objects.toStringHelper(this).omitNullValues();
         helper.add("pub", Utils.HEX.encode(pub.getEncoded()));
-        if (includePrivate && priv != null)
-            helper.add("priv", Utils.HEX.encode(priv.toByteArray()));
+        if (includePrivate) {
+            try {
+                helper.add("priv", Utils.HEX.encode(getPrivKey().toByteArray()));
+            } catch (IllegalStateException e) {
+                // TODO: Make hasPrivKey() work for deterministic keys and fix this.
+            }
+        }
         if (creationTimeSeconds > 0)
             helper.add("creationTimeSeconds", creationTimeSeconds);
         helper.add("keyCrypter", keyCrypter);

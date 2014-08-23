@@ -1,5 +1,6 @@
 /*
  * Copyright 2012 Google Inc.
+ * Copyright 2014 Andreas Schildbach
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -429,10 +430,6 @@ public class ChainSplitTest {
         assertEquals(2, txns.get(1).getConfidence().getDepthInBlocks());
         assertEquals(1, txns.get(2).getConfidence().getDepthInBlocks());
 
-        assertEquals(work1.add(work2).add(work3), txns.get(0).getConfidence().getWorkDone());
-        assertEquals(work2.add(work3),  txns.get(1).getConfidence().getWorkDone());
-        assertEquals(work3,  txns.get(2).getConfidence().getWorkDone());
-
         // We now have the following chain:
         //     genesis -> b1 -> b2 -> b3
         //
@@ -461,10 +458,6 @@ public class ChainSplitTest {
         assertEquals(2, txns.get(1).getConfidence().getDepthInBlocks());
         assertEquals(1, txns.get(2).getConfidence().getDepthInBlocks());
 
-        assertEquals(work1.add(work2).add(work3), txns.get(0).getConfidence().getWorkDone());
-        assertEquals(work2.add(work3),  txns.get(1).getConfidence().getWorkDone());
-        assertEquals(work3,  txns.get(2).getConfidence().getWorkDone());
-
         // Now we add another block to make the alternative chain longer.
         Block b6 = b5.createNextBlock(someOtherGuy);
         BigInteger work6 = b6.getWork();
@@ -477,7 +470,6 @@ public class ChainSplitTest {
         assertEquals(3, txns.size());
         assertEquals(1, txns.get(0).getConfidence().getAppearedAtChainHeight());
         assertEquals(4, txns.get(0).getConfidence().getDepthInBlocks());
-        assertEquals(work1.add(work4).add(work5).add(work6), txns.get(0).getConfidence().getWorkDone());
 
         // Transaction 1 (in block b2) is now on a side chain, so it goes pending (not see in chain).
         assertEquals(ConfidenceType.PENDING, txns.get(1).getConfidence().getConfidenceType());
@@ -486,7 +478,6 @@ public class ChainSplitTest {
             fail();
         } catch (IllegalStateException e) {}
         assertEquals(0, txns.get(1).getConfidence().getDepthInBlocks());
-        assertEquals(BigInteger.ZERO, txns.get(1).getConfidence().getWorkDone());
 
         // ... and back to the first chain.
         Block b7 = b3.createNextBlock(coinsTo);
@@ -513,13 +504,6 @@ public class ChainSplitTest {
         assertEquals(4, txns.get(1).getConfidence().getDepthInBlocks());
         assertEquals(3, txns.get(2).getConfidence().getDepthInBlocks());
 
-        BigInteger newWork1 = work1.add(work2).add(work3).add(work7).add(work8);
-        assertEquals(newWork1, txns.get(0).getConfidence().getWorkDone());
-        BigInteger newWork2 = work2.add(work3).add(work7).add(work8);
-        assertEquals(newWork2, txns.get(1).getConfidence().getWorkDone());
-        BigInteger newWork3 = work3.add(work7).add(work8);
-        assertEquals(newWork3, txns.get(2).getConfidence().getWorkDone());
-
         assertEquals(Coin.valueOf(250, 0), wallet.getBalance());
 
         // Now add two more blocks that don't send coins to us. Despite being irrelevant the wallet should still update.
@@ -531,9 +515,6 @@ public class ChainSplitTest {
         assertEquals(7, txns.get(0).getConfidence().getDepthInBlocks());
         assertEquals(6, txns.get(1).getConfidence().getDepthInBlocks());
         assertEquals(5, txns.get(2).getConfidence().getDepthInBlocks());
-        assertEquals(newWork1.add(extraWork), txns.get(0).getConfidence().getWorkDone());
-        assertEquals(newWork2.add(extraWork), txns.get(1).getConfidence().getWorkDone());
-        assertEquals(newWork3.add(extraWork), txns.get(2).getConfidence().getWorkDone());
     }
 
     @Test

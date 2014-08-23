@@ -37,8 +37,9 @@ public class ChannelTestUtils {
         }
 
         @Override
-        public void paymentIncrease(Coin by, Coin to, @Nullable ByteString info) {
+        public ByteString paymentIncrease(Coin by, Coin to, @Nullable ByteString info) {
             q.add(new UpdatePair(to, info));
+            return ByteString.copyFromUtf8(by.toPlainString());
         }
 
         public Protos.TwoWayChannelMessage getNextMsg() throws InterruptedException {

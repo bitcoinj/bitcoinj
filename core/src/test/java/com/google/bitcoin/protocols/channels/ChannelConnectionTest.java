@@ -130,8 +130,9 @@ public class ChannelConnectionTest extends TestWithWallet {
                             }
 
                             @Override
-                            public void paymentIncrease(Coin by, Coin to, ByteString info) {
+                            public ByteString paymentIncrease(Coin by, Coin to, ByteString info) {
                                 q.add(new ChannelTestUtils.UpdatePair(to, info));
+                                return null;
                             }
 
                             @Override
@@ -682,20 +683,20 @@ public class ChannelConnectionTest extends TestWithWallet {
             pair.clientRecorder.checkInitiated();
             assertNull(pair.serverRecorder.q.poll());
             assertNull(pair.clientRecorder.q.poll());
-            ListenableFuture<Coin> future = client.incrementPayment(CENT);
-            server.receiveMessage(pair.clientRecorder.checkNextMsg(MessageType.UPDATE_PAYMENT));
-            pair.serverRecorder.q.take();
-            client.receiveMessage(pair.serverRecorder.checkNextMsg(MessageType.PAYMENT_ACK));
-            assertTrue(future.isDone());
-            client.incrementPayment(CENT);
-            server.receiveMessage(pair.clientRecorder.checkNextMsg(MessageType.UPDATE_PAYMENT));
-            pair.serverRecorder.q.take();
-            client.receiveMessage(pair.serverRecorder.checkNextMsg(MessageType.PAYMENT_ACK));
-
-            client.incrementPayment(CENT);
-            server.receiveMessage(pair.clientRecorder.checkNextMsg(MessageType.UPDATE_PAYMENT));
-            pair.serverRecorder.q.take();
-            client.receiveMessage(pair.serverRecorder.checkNextMsg(MessageType.PAYMENT_ACK));
+            for (int i = 0; i < 3; i++) {
+                ListenableFuture<PaymentIncrementAck> future = client.incrementPayment(CENT);
+                server.receiveMessage(pair.clientRecorder.checkNextMsg(MessageType.UPDATE_PAYMENT));
+                pair.serverRecorder.q.take();
+                final Protos.TwoWayChannelMessage msg = pair.serverRecorder.checkNextMsg(MessageType.PAYMENT_ACK);
+                final Protos.PaymentAck paymentAck = msg.getPaymentAck();
+                assertTrue("No PaymentAck.Info", paymentAck.hasInfo());
+                assertEquals("Wrong PaymentAck info", ByteString.copyFromUtf8(CENT.toPlainString()), paymentAck.getInfo());
+                client.receiveMessage(msg);
+                assertTrue(future.isDone());
+                final PaymentIncrementAck paymentIncrementAck = future.get();
+                assertEquals("Wrong value returned from increasePayment", CENT, paymentIncrementAck.getValue());
+                assertEquals("Wrong info returned from increasePayment", ByteString.copyFromUtf8(CENT.toPlainString()), paymentIncrementAck.getInfo());
+            }
 
             // Settle it and verify it's considered to be settled.
             broadcastTxPause.release();

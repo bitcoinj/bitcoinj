@@ -22,6 +22,8 @@ import com.google.bitcoin.core.TransactionConfidence.ConfidenceType;
 import com.google.bitcoin.crypto.KeyCrypter;
 import com.google.bitcoin.crypto.KeyCrypterScrypt;
 import com.google.bitcoin.script.Script;
+import com.google.bitcoin.signers.LocalTransactionSigner;
+import com.google.bitcoin.signers.TransactionSigner;
 import com.google.bitcoin.wallet.KeyChainGroup;
 import com.google.bitcoin.wallet.WalletTransaction;
 import com.google.common.collect.Lists;
@@ -191,6 +193,16 @@ public class WalletProtobufSerializer {
             walletBuilder.addTags(tag);
         }
 
+        for (TransactionSigner signer : wallet.getTransactionSigners()) {
+            // do not serialize LocalTransactionSigner as it's being added implicitly
+            if (signer instanceof LocalTransactionSigner)
+                continue;
+            Protos.TransactionSigner.Builder protoSigner = Protos.TransactionSigner.newBuilder();
+            protoSigner.setClassName(signer.getClass().getName());
+            protoSigner.setData(ByteString.copyFrom(signer.serialize()));
+            walletBuilder.addTransactionSigners(protoSigner);
+        }
+
         // Populate the wallet version.
         walletBuilder.setVersion(wallet.getVersion());
 
@@ -301,9 +313,6 @@ public class WalletProtobufSerializer {
             if (confidence.getConfidenceType() == ConfidenceType.BUILDING) {
                 confidenceBuilder.setAppearedAtHeight(confidence.getAppearedAtChainHeight());
                 confidenceBuilder.setDepth(confidence.getDepthInBlocks());
-                if (confidence.getWorkDone() != null) {
-                    confidenceBuilder.setWorkDone(confidence.getWorkDone().longValue());
-                }
             }
             if (confidence.getConfidenceType() == ConfidenceType.DEAD) {
                 // Copy in the overriding transaction, if available.
@@ -383,6 +392,8 @@ public class WalletProtobufSerializer {
                              Protos.Wallet walletProto) throws UnreadableWalletException {
         if (walletProto.getVersion() > 1)
             throw new UnreadableWalletException.FutureVersion();
+        if (!walletProto.getNetworkIdentifier().equals(params.getId()))
+            throw new UnreadableWalletException.WrongNetwork();
 
         // Read the scrypt parameters that specify how encryption and decryption is performed.
         KeyChainGroup chain;
@@ -446,6 +457,18 @@ public class WalletProtobufSerializer {
 
         for (Protos.Tag tag : walletProto.getTagsList()) {
             wallet.setTag(tag.getTag(), tag.getData());
+        }
+
+        for (Protos.TransactionSigner signerProto : walletProto.getTransactionSignersList()) {
+            try {
+                Class signerClass = Class.forName(signerProto.getClassName());
+                TransactionSigner signer = (TransactionSigner)signerClass.newInstance();
+                signer.deserialize(signerProto.getData().toByteArray());
+                wallet.addTransactionSigner(signer);
+            } catch (Exception e) {
+                throw new UnreadableWalletException("Unable to deserialize TransactionSigner instance: " +
+                        signerProto.getClassName(), e);
+            }
         }
 
         if (walletProto.hasVersion()) {
@@ -640,13 +663,6 @@ public class WalletProtobufSerializer {
                 return;
             }
             confidence.setDepthInBlocks(confidenceProto.getDepth());
-        }
-        if (confidenceProto.hasWorkDone()) {
-            if (confidence.getConfidenceType() != ConfidenceType.BUILDING) {
-                log.warn("Have workDone but not BUILDING for tx {}", tx.getHashAsString());
-                return;
-            }
-            confidence.setWorkDone(BigInteger.valueOf(confidenceProto.getWorkDone()));
         }
         if (confidenceProto.hasOverridingTransaction()) {
             if (confidence.getConfidenceType() != ConfidenceType.DEAD) {

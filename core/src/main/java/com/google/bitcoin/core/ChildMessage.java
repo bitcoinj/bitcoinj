@@ -20,13 +20,11 @@ import javax.annotation.Nullable;
 /**
  * Represents a Message type that can be contained within another Message.  ChildMessages that have a cached
  * backing byte array need to invalidate their parent's caches as well as their own if they are modified.
- *
- * @author git
  */
 public abstract class ChildMessage extends Message {
     private static final long serialVersionUID = -7657113383624517931L;
 
-    @Nullable private Message parent;
+    @Nullable protected Message parent;
 
     protected ChildMessage() {
     }

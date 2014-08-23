@@ -36,7 +36,6 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 import java.io.IOException;
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.util.*;
@@ -574,7 +573,8 @@ public class PeerGroupTest extends TestWithPeerGroup {
     public void testBloomResendOnNewKey() throws Exception {
         // Check that when we add a new key to the wallet, the Bloom filter is re-calculated and re-sent but only once
         // we exceed the lookahead threshold.
-        wallet.setKeychainLookaheadSize(20);
+        wallet.setKeychainLookaheadSize(5);
+        wallet.setKeychainLookaheadThreshold(4);
         peerGroup.startAsync();
         peerGroup.awaitRunning();
         // Create a couple of peers.
@@ -582,28 +582,24 @@ public class PeerGroupTest extends TestWithPeerGroup {
         InboundMessageQueuer p2 = connectPeer(2);
         peerGroup.waitForJobQueue();
         BloomFilter f1 = p1.lastReceivedFilter;
-        int threshold = wallet.getKeychainLookaheadThreshold();
-        wallet.freshReceiveKey();  // Force generation with the new lookahead size.
-        peerGroup.waitForJobQueue();
-        assertEquals(BloomFilter.class, outbound(p1).getClass());
-        assertEquals(MemoryPoolMessage.class, outbound(p1).getClass());
         ECKey key = null;
         // We have to run ahead of the lookahead zone for this test. There should only be one bloom filter recalc.
-        for (int i = 0; i < threshold + 2; i++) {
+        for (int i = 0; i < wallet.getKeychainLookaheadSize() + wallet.getKeychainLookaheadThreshold() + 1; i++) {
             key = wallet.freshReceiveKey();
         }
-        // Wait here. Bloom filters are recalculated asynchronously so if we didn't wait, we might not pass the
-        // test below where we expect each key to generate a new filter because this thread could generate all
-        // the keys before the peergroup thread does the recalculation, causing only one filter to be sent.
         peerGroup.waitForJobQueue();
-        BloomFilter f3 = (BloomFilter) outbound(p1);
-        assertNotNull(f3);
-        assertEquals(MemoryPoolMessage.class, outbound(p1).getClass());
+        BloomFilter bf, f2 = null;
+        while ((bf = (BloomFilter) outbound(p1)) != null) {
+            assertEquals(MemoryPoolMessage.class, outbound(p1).getClass());
+            f2 = bf;
+        }
+        assertNotNull(key);
+        assertNotNull(f2);
         assertNull(outbound(p1));
         // Check the last filter received.
-        assertNotEquals(f1, f3);
-        assertTrue(f3.contains(key.getPubKey()));
-        assertTrue(f3.contains(key.getPubKeyHash()));
+        assertNotEquals(f1, f2);
+        assertTrue(f2.contains(key.getPubKey()));
+        assertTrue(f2.contains(key.getPubKeyHash()));
         assertFalse(f1.contains(key.getPubKey()));
         assertFalse(f1.contains(key.getPubKeyHash()));
     }

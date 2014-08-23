@@ -11,7 +11,7 @@ import javafx.scene.layout.Pane;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.util.Duration;
-import wallettemplate.Controller;
+import wallettemplate.MainController;
 
 import java.io.IOException;
 import java.net.URL;
@@ -69,7 +69,8 @@ public class GuiUtils {
             Platform.runLater(r);
     }
 
-    private static final int UI_ANIMATION_TIME_MSEC = 600;
+    public static final int UI_ANIMATION_TIME_MSEC = 600;
+    public static final Duration UI_ANIMATION_TIME = Duration.millis(UI_ANIMATION_TIME_MSEC);
 
     public static Animation fadeIn(Node ui) {
         return fadeIn(ui, 0);
@@ -161,7 +162,7 @@ public class GuiUtils {
         if (false)
             return unchecked(() -> new URL("file:///your/path/here/src/main/wallettemplate/" + name));
         else
-            return Controller.class.getResource(name);
+            return MainController.class.getResource(name);
     }
 
     public static void checkGuiThread() {

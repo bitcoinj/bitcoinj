@@ -101,8 +101,10 @@ public class PaymentChannelServer {
          * @param by The increase in total payment
          * @param to The new total payment to us (not including fees which may be required to claim the payment)
          * @param info Information about this payment increase, used to extend this protocol.
+         * @return An ack message that will be included in the PaymentAck message to the client. Use null for no ack message.
          */
-        public void paymentIncrease(Coin by, Coin to, @Nullable ByteString info);
+        @Nullable
+        public ByteString paymentIncrease(Coin by, Coin to, @Nullable ByteString info);
     }
     private final ServerConnection conn;
 
@@ -315,14 +317,16 @@ public class PaymentChannelServer {
         boolean stillUsable = state.incrementPayment(refundSize, msg.getSignature().toByteArray());
         Coin bestPaymentChange = state.getBestValueToMe().subtract(lastBestPayment);
 
+        ByteString ackInfo = null;
         if (bestPaymentChange.signum() > 0) {
             ByteString info = (msg.hasInfo()) ? msg.getInfo() : null;
-            conn.paymentIncrease(bestPaymentChange, state.getBestValueToMe(), info);
+            ackInfo = conn.paymentIncrease(bestPaymentChange, state.getBestValueToMe(), info);
         }
 
         if (sendAck) {
             Protos.TwoWayChannelMessage.Builder ack = Protos.TwoWayChannelMessage.newBuilder();
             ack.setType(Protos.TwoWayChannelMessage.MessageType.PAYMENT_ACK);
+            if (ackInfo != null) ack.setPaymentAck(ack.getPaymentAckBuilder().setInfo(ackInfo));
             conn.sendToClient(ack.build());
         }
 

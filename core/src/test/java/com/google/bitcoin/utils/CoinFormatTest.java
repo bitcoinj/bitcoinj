@@ -306,4 +306,11 @@ public class CoinFormatTest {
     public void parseInvalidHugeNegativeNumber() throws Exception {
         NO_CODE.parse("-99999999999999999999");
     }
+
+    private static final Fiat ONE_EURO = Fiat.parseFiat("EUR", "1");
+
+    @Test
+    public void fiat() throws Exception {
+        assertEquals(ONE_EURO, NO_CODE.parseFiat("EUR", "1"));
+    }
 }

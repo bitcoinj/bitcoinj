@@ -18,6 +18,8 @@
 package com.google.bitcoin.core;
 
 import com.google.bitcoin.script.Script;
+import com.google.bitcoin.wallet.KeyBag;
+import com.google.bitcoin.wallet.RedeemData;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
@@ -58,13 +60,11 @@ public class TransactionInput extends ChildMessage implements Serializable {
     /** Value of the output connected to the input, if known. This field does not participate in equals()/hashCode(). */
     @Nullable
     private final Coin value;
-    // A pointer to the transaction that owns this input.
-    private final Transaction parentTransaction;
 
     /**
      * Creates an input that connects to nothing - used only in creation of coinbase transactions.
      */
-    public TransactionInput(NetworkParameters params, Transaction parentTransaction, byte[] scriptBytes) {
+    public TransactionInput(NetworkParameters params, @Nullable Transaction parentTransaction, byte[] scriptBytes) {
         this(params, parentTransaction, scriptBytes, new TransactionOutPoint(params, NO_SEQUENCE, (Transaction) null));
     }
 
@@ -79,8 +79,8 @@ public class TransactionInput extends ChildMessage implements Serializable {
         this.scriptBytes = scriptBytes;
         this.outpoint = outpoint;
         this.sequence = NO_SEQUENCE;
-        this.parentTransaction = parentTransaction;
         this.value = value;
+        setParent(parentTransaction);
         length = 40 + (scriptBytes == null ? 1 : VarInt.sizeOf(scriptBytes.length) + scriptBytes.length);
     }
 
@@ -90,10 +90,10 @@ public class TransactionInput extends ChildMessage implements Serializable {
     TransactionInput(NetworkParameters params, Transaction parentTransaction, TransactionOutput output) {
         super(params);
         long outputIndex = output.getIndex();
-        outpoint = new TransactionOutPoint(params, outputIndex, output.parentTransaction);
+        outpoint = new TransactionOutPoint(params, outputIndex, output.getParentTransaction());
         scriptBytes = EMPTY_ARRAY;
         sequence = NO_SEQUENCE;
-        this.parentTransaction = parentTransaction;
+        setParent(parentTransaction);
         this.value = output.getValue();
         length = 41;
     }
@@ -101,10 +101,9 @@ public class TransactionInput extends ChildMessage implements Serializable {
     /**
      * Deserializes an input message. This is usually part of a transaction message.
      */
-    public TransactionInput(NetworkParameters params, Transaction parentTransaction,
-                            byte[] payload, int offset) throws ProtocolException {
+    public TransactionInput(NetworkParameters params, @Nullable Transaction parentTransaction, byte[] payload, int offset) throws ProtocolException {
         super(params, payload, offset);
-        this.parentTransaction = parentTransaction;
+        setParent(parentTransaction);
         this.value = null;
     }
 
@@ -124,7 +123,6 @@ public class TransactionInput extends ChildMessage implements Serializable {
                             boolean parseLazy, boolean parseRetain)
             throws ProtocolException {
         super(params, payload, offset, parentTransaction, parseLazy, parseRetain, UNKNOWN_LENGTH);
-        this.parentTransaction = parentTransaction;
         this.value = null;
     }
 
@@ -261,7 +259,7 @@ public class TransactionInput extends ChildMessage implements Serializable {
      * @return The Transaction that owns this input.
      */
     public Transaction getParentTransaction() {
-        return parentTransaction;
+        return (Transaction) parent;
     }
 
     /**
@@ -307,6 +305,16 @@ public class TransactionInput extends ChildMessage implements Serializable {
         return tx.getOutputs().get((int) outpoint.getIndex());
     }
 
+    /**
+     * Alias for getOutpoint().getConnectedRedeemData(keyBag)
+     * @see TransactionOutPoint#getConnectedRedeemData(com.google.bitcoin.wallet.KeyBag)
+     */
+    @Nullable
+    public RedeemData getConnectedRedeemData(KeyBag keyBag) throws ScriptException {
+        return getOutpoint().getConnectedRedeemData(keyBag);
+    }
+
+
     public enum ConnectMode {
         DISCONNECT_ON_CONFLICT,
         ABORT_ON_CONFLICT
@@ -344,13 +352,13 @@ public class TransactionInput extends ChildMessage implements Serializable {
         checkElementIndex((int) outpoint.getIndex(), transaction.getOutputs().size(), "Corrupt transaction");
         TransactionOutput out = transaction.getOutput((int) outpoint.getIndex());
         if (!out.isAvailableForSpending()) {
-            if (out.parentTransaction.equals(outpoint.fromTx)) {
+            if (getParentTransaction().equals(outpoint.fromTx)) {
                 // Already connected.
                 return ConnectionResult.SUCCESS;
             } else if (mode == ConnectMode.DISCONNECT_ON_CONFLICT) {
                 out.markAsUnspent();
             } else if (mode == ConnectMode.ABORT_ON_CONFLICT) {
-                outpoint.fromTx = checkNotNull(out.parentTransaction);
+                outpoint.fromTx = out.getParentTransaction();
                 return TransactionInput.ConnectionResult.ALREADY_SPENT;
             }
         }
@@ -360,7 +368,7 @@ public class TransactionInput extends ChildMessage implements Serializable {
 
     /** Internal use only: connects this TransactionInput to the given output (updates pointers and spent flags) */
     public void connect(TransactionOutput out) {
-        outpoint.fromTx = checkNotNull(out.parentTransaction);
+        outpoint.fromTx = out.getParentTransaction();
         out.markAsSpent(this);
     }
 
@@ -421,15 +429,15 @@ public class TransactionInput extends ChildMessage implements Serializable {
      * @throws VerificationException If the outpoint doesn't match the given output.
      */
     public void verify(TransactionOutput output) throws VerificationException {
-        if (output.parentTransaction != null) {
-            if (!getOutpoint().getHash().equals(output.parentTransaction.getHash()))
+        if (output.parent != null) {
+            if (!getOutpoint().getHash().equals(output.getParentTransaction().getHash()))
                 throw new VerificationException("This input does not refer to the tx containing the output.");
             if (getOutpoint().getIndex() != output.getIndex())
                 throw new VerificationException("This input refers to a different output on the given tx.");
         }
         Script pubKey = output.getScriptPubKey();
-        int myIndex = parentTransaction.getInputs().indexOf(this);
-        getScriptSig().correctlySpends(parentTransaction, myIndex, pubKey, true);
+        int myIndex = getParentTransaction().getInputs().indexOf(this);
+        getScriptSig().correctlySpends(getParentTransaction(), myIndex, pubKey, true);
     }
 
     /**
@@ -458,7 +466,7 @@ public class TransactionInput extends ChildMessage implements Serializable {
         if (!outpoint.equals(input.outpoint)) return false;
         if (!Arrays.equals(scriptBytes, input.scriptBytes)) return false;
         if (scriptSig != null ? !scriptSig.equals(input.scriptSig) : input.scriptSig != null) return false;
-        if (parentTransaction != input.parentTransaction) return false;
+        if (parent != input.parent) return false;
 
         return true;
     }

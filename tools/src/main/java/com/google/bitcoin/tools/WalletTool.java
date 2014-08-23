@@ -222,6 +222,7 @@ public class WalletTool {
         OptionSpec<String> paymentRequestLocation = parser.accepts("payment-request").withRequiredArg();
         parser.accepts("no-pki");
         parser.accepts("tor");
+        parser.accepts("dump-privkeys");
         options = parser.parse(args);
 
         final String HELP_TEXT = Resources.toString(WalletTool.class.getResource("wallet-tool-help.txt"), Charsets.UTF_8);
@@ -549,7 +550,7 @@ public class WalletTool {
                     // For lock times to take effect, at least one output must have a non-final sequence number.
                     t.getInputs().get(0).setSequenceNumber(0);
                     // And because we modified the transaction after it was completed, we must re-sign the inputs.
-                    t.signInputs(Transaction.SigHash.ALL, wallet);
+                    wallet.signTransaction(req);
                 }
             } catch (ParseException e) {
                 System.err.println("Could not understand --locktime of " + lockTimeStr);
@@ -1057,6 +1058,6 @@ public class WalletTool {
         // there just for the dump case.
         if (chainFileName.exists())
             setup();
-        System.out.println(wallet.toString(true, true, true, chain));
+        System.out.println(wallet.toString(options.has("dump-privkeys"), true, true, chain));
     }
 }

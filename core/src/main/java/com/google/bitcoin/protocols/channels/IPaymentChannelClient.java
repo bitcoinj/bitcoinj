@@ -84,7 +84,7 @@ public interface IPaymentChannelClient {
      *                               (see {@link PaymentChannelClientConnection#getChannelOpenFuture()} for the second)
      * @return a future that completes when the server acknowledges receipt and acceptance of the payment.
      */
-    ListenableFuture<Coin> incrementPayment(Coin size, @Nullable ByteString info) throws ValueOutOfRangeException, IllegalStateException;
+    ListenableFuture<PaymentIncrementAck> incrementPayment(Coin size, @Nullable ByteString info) throws ValueOutOfRangeException, IllegalStateException;
 
     /**
      * Implements the connection between this client and the server, providing an interface which allows messages to be

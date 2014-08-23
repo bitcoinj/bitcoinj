@@ -30,6 +30,7 @@ import java.util.Locale;
 import java.util.Map;
 
 import com.google.bitcoin.core.Coin;
+import com.google.bitcoin.core.Monetary;
 
 /**
  * <p>
@@ -50,6 +51,8 @@ public final class CoinFormat {
     public static final CoinFormat MBTC = new CoinFormat().shift(3).minDecimals(2).optionalDecimals(2);
     /** Standard format for the µBTC denomination. */
     public static final CoinFormat UBTC = new CoinFormat().shift(6).minDecimals(0).optionalDecimals(2);
+    /** Standard format for fiat amounts. */
+    public static final CoinFormat FIAT = new CoinFormat().shift(0).minDecimals(2).repeatOptionalDecimals(2, 1);
     /** Currency code for base 1 Bitcoin. */
     public static final String CODE_BTC = "BTC";
     /** Currency code for base 1/1000 Bitcoin. */
@@ -295,26 +298,26 @@ public final class CoinFormat {
     /**
      * Format the given value to a human readable form.
      */
-    public CharSequence format(Coin coin) {
+    public CharSequence format(Monetary coin) {
         // preparation
         int maxDecimals = minDecimals;
         if (decimalGroups != null)
             for (int group : decimalGroups)
                 maxDecimals += group;
-        checkState(maxDecimals <= Coin.NUM_COIN_DECIMALS);
+        checkState(maxDecimals <= coin.smallestUnitExponent());
 
         // rounding
-        long satoshis = Math.abs(coin.value);
-        long precisionDivisor = checkedPow(10, Coin.NUM_COIN_DECIMALS - shift - maxDecimals);
+        long satoshis = Math.abs(coin.getValue());
+        long precisionDivisor = checkedPow(10, coin.smallestUnitExponent() - shift - maxDecimals);
         satoshis = checkedMultiply(divide(satoshis, precisionDivisor, roundingMode), precisionDivisor);
 
         // shifting
-        long shiftDivisor = checkedPow(10, Coin.NUM_COIN_DECIMALS - shift);
+        long shiftDivisor = checkedPow(10, coin.smallestUnitExponent() - shift);
         long numbers = satoshis / shiftDivisor;
         long decimals = satoshis % shiftDivisor;
 
         // formatting
-        String decimalsStr = String.format(Locale.US, "%0" + (Coin.NUM_COIN_DECIMALS - shift) + "d", decimals);
+        String decimalsStr = String.format(Locale.US, "%0" + (coin.smallestUnitExponent() - shift) + "d", decimals);
         StringBuilder str = new StringBuilder(decimalsStr);
         while (str.length() > minDecimals && str.charAt(str.length() - 1) == '0')
             str.setLength(str.length() - 1); // trim trailing zero
@@ -332,7 +335,7 @@ public final class CoinFormat {
         if (str.length() > 0)
             str.insert(0, decimalMark);
         str.insert(0, numbers);
-        if (coin.value < 0)
+        if (coin.getValue() < 0)
             str.insert(0, negativeSign);
         else if (positiveSign != 0)
             str.insert(0, positiveSign);
@@ -355,7 +358,21 @@ public final class CoinFormat {
      *             if the string cannot be parsed for some reason
      */
     public Coin parse(String str) throws NumberFormatException {
-        checkState(DECIMALS_PADDING.length() >= Coin.NUM_COIN_DECIMALS);
+        return Coin.valueOf(parseValue(str, Coin.SMALLEST_UNIT_EXPONENT));
+    }
+
+    /**
+     * Parse a human readable fiat value to a {@link com.google.bitcoin.core.Fiat} instance.
+     * 
+     * @throws NumberFormatException
+     *             if the string cannot be parsed for some reason
+     */
+    public Fiat parseFiat(String currencyCode, String str) throws NumberFormatException {
+        return Fiat.valueOf(currencyCode, parseValue(str, Fiat.SMALLEST_UNIT_EXPONENT));
+    }
+
+    private long parseValue(String str, int smallestUnitExponent) {
+        checkState(DECIMALS_PADDING.length() >= smallestUnitExponent);
         if (str.isEmpty())
             throw new NumberFormatException("empty string");
         char first = str.charAt(0);
@@ -373,14 +390,14 @@ public final class CoinFormat {
             numbers = str;
             decimals = DECIMALS_PADDING;
         }
-        String satoshis = numbers + decimals.substring(0, Coin.NUM_COIN_DECIMALS - shift);
+        String satoshis = numbers + decimals.substring(0, smallestUnitExponent - shift);
         for (char c : satoshis.toCharArray())
             if (!Character.isDigit(c))
                 throw new NumberFormatException("illegal character: " + c);
-        Coin coin = Coin.valueOf(Long.parseLong(satoshis));
+        long value = Long.parseLong(satoshis);
         if (first == negativeSign)
-            coin = coin.negate();
-        return coin;
+            value = -value;
+        return value;
     }
 
     /**

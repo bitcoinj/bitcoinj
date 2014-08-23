@@ -18,6 +18,7 @@ package com.google.bitcoin.core;
 
 import com.google.bitcoin.script.Script;
 import com.google.bitcoin.wallet.KeyBag;
+import com.google.bitcoin.wallet.RedeemData;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
@@ -127,7 +128,7 @@ public class TransactionOutPoint extends ChildMessage implements Serializable {
      * Returns the pubkey script from the connected output.
      * @throws java.lang.NullPointerException if there is no connected output.
      */
-    byte[] getConnectedPubKeyScript() {
+    public byte[] getConnectedPubKeyScript() {
         byte[] result = checkNotNull(getConnectedOutput()).getScriptBytes();
         checkState(result.length > 0);
         return result;
@@ -135,7 +136,9 @@ public class TransactionOutPoint extends ChildMessage implements Serializable {
 
     /**
      * Returns the ECKey identified in the connected output, for either pay-to-address scripts or pay-to-key scripts.
-     * If the script forms cannot be understood, throws ScriptException.
+     * For P2SH scripts you can use {@link #getConnectedRedeemData(com.google.bitcoin.wallet.KeyBag)} and then get the
+     * key from RedeemData.
+     * If the script form cannot be understood, throws ScriptException.
      *
      * @return an ECKey or null if the connected key cannot be found in the wallet.
      */
@@ -150,6 +153,32 @@ public class TransactionOutPoint extends ChildMessage implements Serializable {
         } else if (connectedScript.isSentToRawPubKey()) {
             byte[] pubkeyBytes = connectedScript.getPubKey();
             return keyBag.findKeyFromPubKey(pubkeyBytes);
+        } else {
+            throw new ScriptException("Could not understand form of connected output script: " + connectedScript);
+        }
+    }
+
+    /**
+     * Returns the RedeemData identified in the connected output, for either pay-to-address scripts, pay-to-key
+     * or P2SH scripts.
+     * If the script forms cannot be understood, throws ScriptException.
+     *
+     * @return a RedeemData or null if the connected data cannot be found in the wallet.
+     */
+    @Nullable
+    public RedeemData getConnectedRedeemData(KeyBag keyBag) throws ScriptException {
+        TransactionOutput connectedOutput = getConnectedOutput();
+        checkNotNull(connectedOutput, "Input is not connected so cannot retrieve key");
+        Script connectedScript = connectedOutput.getScriptPubKey();
+        if (connectedScript.isSentToAddress()) {
+            byte[] addressBytes = connectedScript.getPubKeyHash();
+            return RedeemData.of(keyBag.findKeyFromPubHash(addressBytes), connectedScript);
+        } else if (connectedScript.isSentToRawPubKey()) {
+            byte[] pubkeyBytes = connectedScript.getPubKey();
+            return RedeemData.of(keyBag.findKeyFromPubKey(pubkeyBytes), connectedScript);
+        } else if (connectedScript.isPayToScriptHash()) {
+            byte[] scriptHash = connectedScript.getPubKeyHash();
+            return keyBag.findRedeemDataFromScriptHash(scriptHash);
         } else {
             throw new ScriptException("Could not understand form of connected output script: " + connectedScript);
         }

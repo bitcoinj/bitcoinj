@@ -18,9 +18,11 @@
 package com.google.bitcoin.core;
 
 import com.google.common.base.Charsets;
+import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Ordering;
 import com.google.common.io.BaseEncoding;
+import com.google.common.io.Resources;
 import com.google.common.primitives.Ints;
 import com.google.common.primitives.UnsignedLongs;
 
@@ -30,6 +32,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.math.BigInteger;
+import java.net.URL;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
@@ -500,12 +503,12 @@ public class Utils {
     // 00000001, 00000010, 00000100, 00001000, ...
     private static final int bitMask[] = {0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80};
     
-    // Checks if the given bit is set in data
+    /** Checks if the given bit is set in data, using little endian (not the same as Java native big endian) */
     public static boolean checkBitLE(byte[] data, int index) {
         return (data[index >>> 3] & bitMask[7 & index]) != 0;
     }
     
-    // Sets the given bit in data to one
+    /** Sets the given bit in data to one, using little endian (not the same as Java native big endian) */
     public static void setBitLE(byte[] data, int index) {
         data[index >>> 3] |= bitMask[7 & index];
     }
@@ -591,4 +594,13 @@ public class Utils {
         }
         return maxItem;
     }
+
+    /**
+     * Reads and joins together with LF char (\n) all the lines from given file. It's assumed that file is in UTF-8.
+     */
+    public static String getResourceAsString(URL url) throws IOException {
+        List<String> lines = Resources.readLines(url, Charsets.UTF_8);
+        return Joiner.on('\n').join(lines);
+    }
+
 }

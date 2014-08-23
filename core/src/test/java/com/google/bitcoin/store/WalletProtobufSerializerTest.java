@@ -111,7 +111,7 @@ public class WalletProtobufSerializerTest {
         assertEquals(Protos.Key.Type.ORIGINAL, walletProto.getKey(0).getType());
         assertEquals(0, walletProto.getExtensionCount());
         assertEquals(1, walletProto.getTransactionCount());
-        assertEquals(1, walletProto.getKeyCount());
+        assertEquals(6, walletProto.getKeyCount());
         
         Protos.Transaction t1p = walletProto.getTransaction(0);
         assertEquals(0, t1p.getBlockHashCount());
@@ -226,9 +226,6 @@ public class WalletProtobufSerializerTest {
         assertEquals(2, confidence0.getDepthInBlocks());
         assertEquals(1, confidence1.getDepthInBlocks());
 
-        assertEquals(work1.add(work2), confidence0.getWorkDone());
-        assertEquals(work2, confidence1.getWorkDone());
-
         // Roundtrip the wallet and check it has stored the depth and workDone.
         Wallet rebornWallet = roundTrip(myWallet);
 
@@ -257,9 +254,6 @@ public class WalletProtobufSerializerTest {
 
         assertEquals(2, rebornConfidence0.getDepthInBlocks());
         assertEquals(1, rebornConfidence1.getDepthInBlocks());
-
-        assertEquals(work1.add(work2), rebornConfidence0.getWorkDone());
-        assertEquals(work2, rebornConfidence1.getWorkDone());
     }
 
     private static Wallet roundTrip(Wallet wallet) throws Exception {

@@ -20,6 +20,7 @@ import com.google.bitcoin.core.*;
 import com.google.bitcoin.utils.Threading;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.HashMultimap;
+import com.google.common.util.concurrent.SettableFuture;
 import com.google.protobuf.ByteString;
 import net.jcip.annotations.GuardedBy;
 import org.slf4j.Logger;
@@ -30,6 +31,9 @@ import java.util.Date;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.ReentrantLock;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -42,12 +46,13 @@ import static com.google.common.base.Preconditions.checkState;
 public class StoredPaymentChannelClientStates implements WalletExtension {
     private static final Logger log = LoggerFactory.getLogger(StoredPaymentChannelClientStates.class);
     static final String EXTENSION_ID = StoredPaymentChannelClientStates.class.getName();
+    static final int MAX_SECONDS_TO_WAIT_FOR_BROADCASTER_TO_BE_SET = 10;
 
     @GuardedBy("lock") @VisibleForTesting final HashMultimap<Sha256Hash, StoredClientChannel> mapChannels = HashMultimap.create();
     @VisibleForTesting final Timer channelTimeoutHandler = new Timer(true);
 
     private Wallet containingWallet;
-    private final TransactionBroadcaster announcePeerGroup;
+    private final SettableFuture<TransactionBroadcaster> announcePeerGroupFuture = SettableFuture.create();
 
     protected final ReentrantLock lock = Threading.lock("StoredPaymentChannelClientStates");
 
@@ -57,8 +62,27 @@ public class StoredPaymentChannelClientStates implements WalletExtension {
      * transactions.
      */
     public StoredPaymentChannelClientStates(@Nullable Wallet containingWallet, TransactionBroadcaster announcePeerGroup) {
-        this.announcePeerGroup = checkNotNull(announcePeerGroup);
+        setTransactionBroadcaster(announcePeerGroup);
         this.containingWallet = containingWallet;
+    }
+
+    /**
+     * Creates a new StoredPaymentChannelClientStates and associates it with the given {@link Wallet}
+     *
+     * Use this constructor if you use WalletAppKit, it will provide the broadcaster for you (no need to call the setter)
+     */
+    public StoredPaymentChannelClientStates(@Nullable Wallet containingWallet) {
+        this.containingWallet = containingWallet;
+    }
+
+    /**
+     * Use this setter if the broadcaster is not available during instantiation and you're not using WalletAppKit.
+     * This setter will let you delay the setting of the broadcaster until the Bitcoin network is ready.
+     *
+     * @param transactionBroadcaster which is used to complete and announce contract and refund transactions.
+     */
+    public void setTransactionBroadcaster(TransactionBroadcaster transactionBroadcaster) {
+        this.announcePeerGroupFuture.set(checkNotNull(transactionBroadcaster));
     }
 
     /** Returns this extension from the given wallet, or null if no such extension was added. */
@@ -171,6 +195,7 @@ public class StoredPaymentChannelClientStates implements WalletExtension {
             channelTimeoutHandler.schedule(new TimerTask() {
                 @Override
                 public void run() {
+                    TransactionBroadcaster announcePeerGroup = getAnnouncePeerGroup();
                     removeChannel(channel);
                     announcePeerGroup.broadcastTransaction(channel.contract);
                     announcePeerGroup.broadcastTransaction(channel.refund);
@@ -182,6 +207,24 @@ public class StoredPaymentChannelClientStates implements WalletExtension {
         }
         if (updateWallet)
             containingWallet.addOrUpdateExtension(this);
+    }
+
+    /**
+     * If the peer group has not been set for MAX_SECONDS_TO_WAIT_FOR_BROADCASTER_TO_BE_SET seconds, then
+     * the programmer probably forgot to set it and we should throw exception.
+     */
+    private TransactionBroadcaster getAnnouncePeerGroup() {
+        try {
+            return announcePeerGroupFuture.get(MAX_SECONDS_TO_WAIT_FOR_BROADCASTER_TO_BE_SET, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        } catch (ExecutionException e) {
+            throw new RuntimeException(e);
+        } catch (TimeoutException e) {
+            String err = "Transaction broadcaster not set";
+            log.error(err);
+            throw new RuntimeException(err, e);
+        }
     }
 
     /**

@@ -15,6 +15,7 @@ import javafx.scene.Scene;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
+import wallettemplate.controls.NotificationBarPane;
 import wallettemplate.utils.GuiUtils;
 import wallettemplate.utils.TextFieldValidator;
 
@@ -28,16 +29,26 @@ import static wallettemplate.utils.GuiUtils.*;
 public class Main extends Application {
     public static String APP_NAME = "WalletTemplate";
 
-    public static NetworkParameters params = RegTestParams.get();
+    public static NetworkParameters params = MainNetParams.get();
     public static WalletAppKit bitcoin;
     public static Main instance;
 
     private StackPane uiStack;
     private Pane mainUI;
-    public Controller controller;
+    public MainController controller;
+    public NotificationBarPane notificationBar;
 
     @Override
     public void start(Stage mainWindow) throws Exception {
+        try {
+            realStart(mainWindow);
+        } catch (Throwable e) {
+            GuiUtils.crashAlert(e);
+            throw e;
+        }
+    }
+
+    private void realStart(Stage mainWindow) throws IOException {
         instance = this;
         // Show the crash dialog for any exceptions that we don't handle and that hit the main loop.
         GuiUtils.handleCrashesOnThisThread();
@@ -48,17 +59,22 @@ public class Main extends Application {
             // AquaFx.style();
         }
 
-        // Load the GUI. The Controller class will be automagically created and wired up.
+        // Load the GUI. The MainController class will be automagically created and wired up.
         URL location = getClass().getResource("main.fxml");
         FXMLLoader loader = new FXMLLoader(location);
         mainUI = loader.load();
         controller = loader.getController();
-        // Configure the window with a StackPane so we can overlay things on top of the main UI.
-        uiStack = new StackPane(mainUI);
+        // Configure the window with a StackPane so we can overlay things on top of the main UI, and a
+        // NotificationBarPane so we can slide messages and progress bars in from the bottom. Note that
+        // ordering of the construction and connection matters here, otherwise we get (harmless) CSS error
+        // spew to the logs.
+        notificationBar = new NotificationBarPane(mainUI);
         mainWindow.setTitle(APP_NAME);
-        final Scene scene = new Scene(uiStack);
+        uiStack = new StackPane();
+        Scene scene = new Scene(uiStack);
         TextFieldValidator.configureScene(scene);   // Add CSS that we need.
         scene.getStylesheets().add(getClass().getResource("wallet.css").toString());
+        uiStack.getChildren().add(notificationBar);
         mainWindow.setScene(scene);
 
         // Make log output concise.
@@ -107,7 +123,7 @@ public class Main extends Application {
             // last months worth or more (takes a few seconds).
             bitcoin.setCheckpoints(getClass().getResourceAsStream("checkpoints"));
             // As an example!
-            // bitcoin.useTor();
+            bitcoin.useTor();
         }
         bitcoin.setDownloadListener(controller.progressBarUpdater())
                .setBlockingStartup(false)

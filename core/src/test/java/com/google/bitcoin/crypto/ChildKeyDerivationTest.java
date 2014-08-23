@@ -126,6 +126,15 @@ public class ChildKeyDerivationTest {
     }
 
     @Test
+    public void inverseEqualsNormal() throws Exception {
+        DeterministicKey key1 = HDKeyDerivation.createMasterPrivateKey("Wired / Aug 13th 2014 / Snowden: I Left the NSA Clues, But They Couldn't Find Them".getBytes());
+        HDKeyDerivation.RawKeyBytes key2 = HDKeyDerivation.deriveChildKeyBytesFromPublic(key1.getPubOnly(), ChildNumber.ZERO, HDKeyDerivation.PublicDeriveMode.NORMAL);
+        HDKeyDerivation.RawKeyBytes key3 = HDKeyDerivation.deriveChildKeyBytesFromPublic(key1.getPubOnly(), ChildNumber.ZERO, HDKeyDerivation.PublicDeriveMode.WITH_INVERSION);
+        assertArrayEquals(key2.keyBytes, key3.keyBytes);
+        assertArrayEquals(key2.chainCode, key3.chainCode);
+    }
+
+    @Test
     public void encryptedDerivation() throws Exception {
         // Check that encrypting a parent key in the heirarchy and then deriving from it yields a DeterministicKey
         // with no private key component, and that the private key bytes are derived on demand.

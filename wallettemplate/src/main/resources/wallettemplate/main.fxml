@@ -15,7 +15,7 @@
 <?import wallettemplate.controls.*?>
 <?import wallettemplate.controls.ClickableBitcoinAddress ?>
 
-<AnchorPane styleClass="root-pane" maxHeight="Infinity" maxWidth="Infinity" minHeight="200.0" minWidth="300.0" prefHeight="400.0" prefWidth="800.0" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" fx:controller="wallettemplate.Controller">
+<AnchorPane styleClass="root-pane" maxHeight="Infinity" maxWidth="Infinity" minHeight="200.0" minWidth="300.0" prefHeight="400.0" prefWidth="800.0" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" fx:controller="wallettemplate.MainController">
   <children>
     <Label layoutX="14.0" layoutY="14.0" text="Balance">
       <font>
@@ -35,12 +35,6 @@
         <Label font="$x1" text="BTC" textFill="$x2" />
       </children>
     </HBox>
-    <VBox fx:id="syncBox" maxHeight="-1.0" prefHeight="46.0" prefWidth="243.0" spacing="10.0" translateY="0.0" AnchorPane.bottomAnchor="14.0" AnchorPane.leftAnchor="14.0">
-      <children>
-        <Label text="Synchronizing with network ..." />
-        <ProgressBar fx:id="syncProgress" maxWidth="1.7976931348623157E308" prefWidth="200.0" progress="0.0" />
-      </children>
-    </VBox>
     <HBox fx:id="controlsBox" alignment="TOP_LEFT" fillHeight="true" layoutX="14.0" minHeight="16.0" prefHeight="16.0" prefWidth="205.0" spacing="10.0" translateY="60.0" visible="true" AnchorPane.bottomAnchor="29.0">
       <children>
         <Button id="connectBtn" defaultButton="true" mnemonicParsing="false" text="Primary">

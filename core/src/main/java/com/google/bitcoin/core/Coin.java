@@ -27,18 +27,18 @@ import static com.google.common.base.Preconditions.checkArgument;
 /**
  * Represents a monetary Bitcoin value. This class is immutable.
  */
-public final class Coin implements Comparable<Coin>, Serializable {
+public final class Coin implements Monetary, Comparable<Coin>, Serializable {
 
     /**
      * Number of decimals for one Bitcoin. This constant is useful for quick adapting to other coins because a lot of
      * constants derive from it.
      */
-    public static final int NUM_COIN_DECIMALS = 8;
+    public static final int SMALLEST_UNIT_EXPONENT = 8;
 
     /**
      * The number of satoshis equal to one bitcoin.
      */
-    private static final long COIN_VALUE = LongMath.pow(10, NUM_COIN_DECIMALS);
+    private static final long COIN_VALUE = LongMath.pow(10, SMALLEST_UNIT_EXPONENT);
 
     /**
      * Zero Bitcoins.
@@ -92,6 +92,19 @@ public final class Coin implements Comparable<Coin>, Serializable {
         return new Coin(satoshis);
     }
 
+    @Override
+    public int smallestUnitExponent() {
+        return SMALLEST_UNIT_EXPONENT;
+    }
+
+    /**
+     * Returns the number of satoshis of this monetary value.
+     */
+    @Override
+    public long getValue() {
+        return value;
+    }
+
     /**
      * Convert an amount expressed in the way humans are used to into satoshis.
      */
@@ -113,7 +126,7 @@ public final class Coin implements Comparable<Coin>, Serializable {
      * @throws IllegalArgumentException if you try to specify fractional satoshis, or a value out of range.
      */
     public static Coin parseCoin(final String str) {
-        return Coin.valueOf(new BigDecimal(str).movePointRight(8).toBigIntegerExact().longValue());
+        return Coin.valueOf(new BigDecimal(str).movePointRight(SMALLEST_UNIT_EXPONENT).toBigIntegerExact().longValue());
     }
 
     public Coin add(final Coin value) {
@@ -188,6 +201,7 @@ public final class Coin implements Comparable<Coin>, Serializable {
         return new Coin(this.value >> n);
     }
 
+    @Override
     public int signum() {
         if (this.value == 0)
             return 0;

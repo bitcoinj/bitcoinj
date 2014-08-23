@@ -61,7 +61,7 @@ public class ExamplePaymentChannelServer implements PaymentChannelServerListener
                 // The StoredPaymentChannelClientStates object is responsible for, amongst other things, broadcasting
                 // the refund transaction if its lock time has expired. It also persists channels so we can resume them
                 // after a restart.
-                return ImmutableList.<WalletExtension>of(new StoredPaymentChannelServerStates(null, peerGroup()));
+                return ImmutableList.<WalletExtension>of(new StoredPaymentChannelServerStates(null));
             }
         };
         appKit.connectToLocalHost();
@@ -102,8 +102,9 @@ public class ExamplePaymentChannelServer implements PaymentChannelServerListener
             }
 
             @Override
-            public void paymentIncrease(Coin by, Coin to, ByteString info) {
+            public ByteString paymentIncrease(Coin by, Coin to, ByteString info) {
                 log.info("Client {} paid increased payment by {} for a total of " + to.toString(), clientAddress, by);
+                return null;
             }
 
             @Override

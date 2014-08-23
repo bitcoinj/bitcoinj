@@ -51,6 +51,7 @@ public class TestNet3Params extends NetworkParameters {
 
         dnsSeeds = new String[] {
                 "testnet-seed.alexykot.me",           // Alex Kotenko
+                "testnet-seed.bitcoin.schildbach.de", // Andreas Schildbach
                 "testnet-seed.bitcoin.petertodd.org"  // Peter Todd
         };
     }

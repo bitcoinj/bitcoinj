@@ -34,15 +34,6 @@ import java.net.URI;
 
 import static javafx.beans.binding.Bindings.convert;
 
-// This control can be used with Scene Builder as long as we don't use any Java 8 features yet. Once Oracle release
-// a new Scene Builder compiled against Java 8, we'll be able to use lambdas and so on here. Until that day comes,
-// this file specifically must be recompiled against Java 7 for main.fxml to be editable visually.
-//
-// From the java directory:
-//
-// javac -cp $HOME/.m2/repository/net/glxn/qrgen/1.3/qrgen-1.3.jar:$HOME/.m2/repository/de/jensd/fontawesomefx/8.0.0/fontawesomefx-8.0.0.jar:../../../target/classes:../../../../core/target/bitcoinj-0.12-SNAPSHOT.jar -d ../../../target/classes/ -source 1.7 -target 1.7 wallettemplate/controls/ClickableBitcoinAddress.java
-
-
 /**
  * A custom control that implements a clickable, copyable Bitcoin address. Clicking it opens a local wallet app. The
  * address looks like a blue hyperlink. Next to it there are two icons, one that copies to the clipboard and another
