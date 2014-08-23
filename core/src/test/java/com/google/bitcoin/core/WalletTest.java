@@ -2370,6 +2370,11 @@ public class WalletTest extends TestWithWallet {
         assertNotEquals(watchKey1, watchKey2);
     }
 
+    @Test(expected = IllegalArgumentException.class)
+    public void importOfHDKeyForbidden() throws Exception {
+        wallet.importKey(wallet.freshReceiveKey());
+    }
+
     //@Test   //- this test is slow, disable for now.
     public void fragmentedReKeying() throws Exception {
         // Send lots of small coins and check the fee is correct.

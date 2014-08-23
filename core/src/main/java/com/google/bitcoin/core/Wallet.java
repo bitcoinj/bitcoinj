@@ -572,12 +572,21 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
     public int importKeys(final List<ECKey> keys) {
         lock.lock();
         try {
+            // API usage check.
+            checkNoDeterministicKeys(keys);
             int result = keychain.importKeys(keys);
             saveNow();
             return result;
         } finally {
             lock.unlock();
         }
+    }
+
+    private void checkNoDeterministicKeys(List<ECKey> keys) {
+        // Watch out for someone doing wallet.importKey(wallet.freshReceiveKey()); or equivalent: we never tested this.
+        for (ECKey key : keys)
+            if (key instanceof DeterministicKey)
+                throw new IllegalArgumentException("Cannot import HD keys back into the wallet");
     }
 
     /** Takes a list of keys and a password, then encrypts and imports them in one step using the current keycrypter. */
@@ -595,6 +604,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
     public int importKeysAndEncrypt(final List<ECKey> keys, KeyParameter aesKey) {
         lock.lock();
         try {
+            checkNoDeterministicKeys(keys);
             return keychain.importKeysAndEncrypt(keys, aesKey);
         } finally {
             lock.unlock();
