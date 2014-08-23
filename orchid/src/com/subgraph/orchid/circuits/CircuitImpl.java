@@ -229,7 +229,10 @@ public abstract class CircuitImpl implements Circuit, DashboardRenderable {
 	}
 
 	public void destroyCircuit() {
-		io.destroyCircuit();
+		// We might not have bound this circuit yet
+		if (io != null) {
+			io.destroyCircuit();
+		}
 		circuitManager.removeActiveCircuit(this);
 	}
 
