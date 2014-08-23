@@ -1175,7 +1175,9 @@ public class Script {
         } catch (Exception e1) {
             // There is (at least) one exception that could be hit here (EOFException, if the sig is too short)
             // Because I can't verify there aren't more, we use a very generic Exception catch
-            log.warn(e1.toString());
+            log.warn("Signature checking failed! {}", e1.toString());
+            // Don't dump a stack trace here because we sometimes expect this to fail inside
+            // LocalTransactionSigner.signInputs().
         }
 
         if (opcode == OP_CHECKSIG)
