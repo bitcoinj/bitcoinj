@@ -251,7 +251,7 @@ public class WalletAppKit extends AbstractIdleService {
             vStore = new SPVBlockStore(params, chainFile);
             if ((!chainFileExists || restoreFromSeed != null) && checkpoints != null) {
                 // Initialize the chain file with a checkpoint to speed up first-run sync.
-                long time = Long.MAX_VALUE;
+                long time;
                 if (restoreFromSeed != null) {
                     time = restoreFromSeed.getCreationTimeSeconds();
                     if (chainFileExists) {
