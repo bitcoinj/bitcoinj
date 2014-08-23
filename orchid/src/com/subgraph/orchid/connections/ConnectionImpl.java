@@ -289,28 +289,32 @@ public class ConnectionImpl implements Connection, DashboardRenderable {
 	}
 
 	private void processRelayCell(Cell cell) {
+		Circuit circuit;
 		circuitsLock.lock();
 		try {
-			final Circuit circuit = circuitMap.get(cell.getCircuitId());
+			circuit = circuitMap.get(cell.getCircuitId());
 			if(circuit == null) {
 				logger.warning("Could not deliver relay cell for circuit id = "+ cell.getCircuitId() +" on connection "+ this +". Circuit not found");
 				return;
 			}
-			circuit.deliverRelayCell(cell);
 		} finally {
 			circuitsLock.unlock();
 		}
+
+		circuit.deliverRelayCell(cell);
 	}
 
 	private void processControlCell(Cell cell) {
+		Circuit circuit;
 		circuitsLock.lock();
 		try {
-			final Circuit circuit = circuitMap.get(cell.getCircuitId());
-			if(circuit != null) {
-				circuit.deliverControlCell(cell);
-			}
+			circuit = circuitMap.get(cell.getCircuitId());
 		} finally {
 			circuitsLock.unlock();
+		}
+
+		if(circuit != null) {
+			circuit.deliverControlCell(cell);
 		}
 	}
 
