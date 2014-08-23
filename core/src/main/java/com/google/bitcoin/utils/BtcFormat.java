@@ -520,7 +520,7 @@ public abstract class BtcFormat extends Format {
      *  units indicated by the given scale differs from that same value denominated in satoshis */
     private static int offSatoshis(int scale) { return Coin.SMALLEST_UNIT_EXPONENT - scale; }
 
-    private static Locale defaultLocale() { return Locale.getDefault(Locale.Category.FORMAT); }
+    private static Locale defaultLocale() { return Locale.getDefault(); }
 
     /**
      * <p>This class constructs new instances of {@link BtcFormat}, allowing for the
