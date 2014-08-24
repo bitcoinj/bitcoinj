@@ -101,7 +101,7 @@ public class LocalTransactionSigner extends StatelessTransactionSigner {
                 // for P2SH inputs we need to share derivation path of the signing key with other signers, so that they
                 // use correct key to calculate their signatures
                 if (key instanceof DeterministicKey)
-                    propTx.keyPaths.put(txIn, (((DeterministicKey) key).getPath()));
+                    propTx.keyPaths.put(scriptPubKey, (((DeterministicKey) key).getPath()));
             } catch (ECKey.KeyIsEncryptedException e) {
                 throw e;
             } catch (ECKey.MissingPrivateKeyException e) {
