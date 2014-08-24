@@ -101,6 +101,11 @@ public class ConnectionCacheImpl implements ConnectionCache, DashboardRenderable
 		scheduledExecutor.shutdownNow();
 	}
 
+	@Override
+	public boolean isClosed() {
+		return isClosed;
+	}
+
 	public Connection getConnectionTo(Router router, boolean isDirectoryConnection) throws InterruptedException, ConnectionTimeoutException, ConnectionFailedException, ConnectionHandshakeException {
 		if(isClosed) {
 			throw new IllegalStateException("ConnectionCache has been closed");
