@@ -129,19 +129,20 @@ public class CircuitManagerImpl implements CircuitManager, DashboardRenderable {
 	}
 
 	void addActiveCircuit(CircuitImpl circuit) {
+		synchronized (activeCircuits) {
+			activeCircuits.add(circuit);
+			activeCircuits.notifyAll();
+		}
+
 		lock.lock();
 
 		try {
 			if (!isBuilding) {
+				// we were asked to stop since this circuit was started
 				circuit.destroyCircuit();
 			}
 		} finally {
 			lock.unlock();
-		}
-
-		synchronized (activeCircuits) {
-			activeCircuits.add(circuit);
-			activeCircuits.notifyAll();
 		}
 	}
 	

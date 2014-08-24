@@ -94,6 +94,9 @@ public class ConnectionCacheImpl implements ConnectionCache, DashboardRenderable
 					logger.warning("Exception closing connection: "+ e.getCause());
 				}
 			} else {
+				// FIXME this doesn't close the socket, so the connection task lingers
+				// A proper fix would require maintaining pending connections in a separate
+				// collection.
 				f.cancel(true);
 			}
 		}
