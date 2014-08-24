@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 
@@ -31,7 +32,15 @@ public class DirectoryDownloadTask implements Runnable {
 	private final TorRandom random;
 	private final DescriptorProcessor descriptorProcessor;
 
-	private final ExecutorService executor = Executors.newCachedThreadPool();
+	private final ExecutorService executor = Executors.newCachedThreadPool(new ThreadFactory() {
+		@Override
+		public Thread newThread(Runnable r) {
+			Thread t = new Thread(r);
+			t.setName("DirectoryDownloadTask worker");
+			t.setDaemon(true);
+			return t;
+		}
+	});
 
 	private volatile boolean isDownloadingCertificates;
 	private volatile boolean isDownloadingConsensus;

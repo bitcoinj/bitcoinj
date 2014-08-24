@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
@@ -23,7 +24,16 @@ public abstract class DescriptorCache <T extends Descriptor> {
 	private final DescriptorCacheData<T> data;
 
 	private final DirectoryStore store;
-	private final ScheduledExecutorService rebuildExecutor = Executors.newScheduledThreadPool(1);
+	private final ScheduledExecutorService rebuildExecutor = Executors.newScheduledThreadPool(1, new ThreadFactory() {
+		@Override
+		public Thread newThread(Runnable r) {
+			Thread t = new Thread(r);
+			t.setName("DescriptorCache rebuild worker");
+			t.setDaemon(true);
+			return t;
+		}
+	});
+
 	private final CacheFile cacheFile;
 	private final CacheFile journalFile;
 	

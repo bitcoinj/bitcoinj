@@ -11,6 +11,7 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.ReentrantLock;
@@ -59,12 +60,22 @@ public class CircuitManagerImpl implements CircuitManager, DashboardRenderable {
 	private int pendingInternalCircuitCount = 0;
 	private final TorRandom random;
 	private final PendingExitStreams pendingExitStreams;
-	private final ScheduledExecutorService scheduledExecutor = Executors.newSingleThreadScheduledExecutor();
+	private final ScheduledExecutorService scheduledExecutor = Executors.newSingleThreadScheduledExecutor(new ThreadFactory() {
+		@Override
+		public Thread newThread(Runnable r) {
+			Thread t = new Thread(r);
+			t.setName("CircuitManager worker");
+			t.setDaemon(true);
+			return t;
+		}
+	});
 	private final CircuitCreationTask circuitCreationTask;
 	private final TorInitializationTracker initializationTracker;
 	private final CircuitPathChooser pathChooser;
 	private final HiddenServiceManager hiddenServiceManager;
 	private final ReentrantLock lock = Threading.lock("circuitManager");
+
+	private boolean isBuilding = false;
 
 	public CircuitManagerImpl(TorConfig config, DirectoryDownloaderImpl directoryDownloader, Directory directory, ConnectionCache connectionCache, TorInitializationTracker initializationTracker) {
 		this.config = config;
@@ -87,13 +98,20 @@ public class CircuitManagerImpl implements CircuitManager, DashboardRenderable {
 	}
 
 	public void startBuildingCircuits() {
-		scheduledExecutor.scheduleAtFixedRate(circuitCreationTask, 0, 1000, TimeUnit.MILLISECONDS);
+		lock.lock();
+		try {
+			isBuilding = true;
+			scheduledExecutor.scheduleAtFixedRate(circuitCreationTask, 0, 1000, TimeUnit.MILLISECONDS);
+		} finally {
+			lock.unlock();
+		}
 	}
 
 	public void stopBuildingCircuits(boolean killCircuits) {
 		lock.lock();
 
 		try {
+			isBuilding = false;
 			scheduledExecutor.shutdownNow();
 			if (killCircuits) {
 				List<CircuitImpl> circuits = new ArrayList<CircuitImpl>(activeCircuits);
@@ -111,6 +129,16 @@ public class CircuitManagerImpl implements CircuitManager, DashboardRenderable {
 	}
 
 	void addActiveCircuit(CircuitImpl circuit) {
+		lock.lock();
+
+		try {
+			if (!isBuilding) {
+				circuit.destroyCircuit();
+			}
+		} finally {
+			lock.unlock();
+		}
+
 		synchronized (activeCircuits) {
 			activeCircuits.add(circuit);
 			activeCircuits.notifyAll();
