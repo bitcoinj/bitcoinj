@@ -376,10 +376,9 @@ public final class CoinFormat {
             }
         }
 
-        // convert to non-arabic digits
+        // Convert to non-arabic digits.
         if (zeroDigit != '0') {
             int offset = zeroDigit - '0';
-            System.out.println(offset);
             for (int d = 0; d < str.length(); d++) {
                 char c = str.charAt(d);
                 if(Character.isDigit(c))
@@ -432,7 +431,7 @@ public final class CoinFormat {
         for (char c : satoshis.toCharArray())
             if (!Character.isDigit(c))
                 throw new NumberFormatException("illegal character: " + c);
-        long value = Long.parseLong(satoshis); // non-arabic digits allowed here
+        long value = Long.parseLong(satoshis); // Non-arabic digits allowed here.
         if (first == negativeSign)
             value = -value;
         return value;
