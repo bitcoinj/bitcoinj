@@ -39,6 +39,11 @@ public class CoinFormatTest {
     }
 
     @Test
+    public void testDigits() throws Exception {
+        assertEquals("١٢.٣٤٥٦٧٨٩٠", NO_CODE.digits('\u0660').format(Coin.valueOf(1234567890l)).toString());
+    }
+
+    @Test
     public void testDecimalMark() throws Exception {
         assertEquals("1.00", NO_CODE.format(Coin.COIN).toString());
         assertEquals("1,00", NO_CODE.decimalMark(',').format(Coin.COIN).toString());
