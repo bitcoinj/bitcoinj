@@ -205,6 +205,8 @@ public class WalletProtobufSerializer {
             walletBuilder.addTransactionSigners(protoSigner);
         }
 
+        walletBuilder.setSigsRequiredToSpend(wallet.getSigsRequiredToSpend());
+
         // Populate the wallet version.
         walletBuilder.setVersion(wallet.getVersion());
 
@@ -408,14 +410,16 @@ public class WalletProtobufSerializer {
         if (!walletProto.getNetworkIdentifier().equals(params.getId()))
             throw new UnreadableWalletException.WrongNetwork();
 
+        int sigsRequiredToSpend = walletProto.getSigsRequiredToSpend();
+
         // Read the scrypt parameters that specify how encryption and decryption is performed.
         KeyChainGroup chain;
         if (walletProto.hasEncryptionParameters()) {
             Protos.ScryptParameters encryptionParameters = walletProto.getEncryptionParameters();
             final KeyCrypterScrypt keyCrypter = new KeyCrypterScrypt(encryptionParameters);
-            chain = KeyChainGroup.fromProtobufEncrypted(params, walletProto.getKeyList(), keyCrypter);
+            chain = KeyChainGroup.fromProtobufEncrypted(params, walletProto.getKeyList(), sigsRequiredToSpend, keyCrypter);
         } else {
-            chain = KeyChainGroup.fromProtobufUnencrypted(params, walletProto.getKeyList());
+            chain = KeyChainGroup.fromProtobufUnencrypted(params, walletProto.getKeyList(), sigsRequiredToSpend);
         }
         Wallet wallet = factory.create(params, chain);
 
