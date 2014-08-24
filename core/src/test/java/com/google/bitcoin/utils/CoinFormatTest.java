@@ -22,6 +22,8 @@ import static com.google.bitcoin.core.Coin.SATOSHI;
 import static com.google.bitcoin.core.Coin.ZERO;
 import static org.junit.Assert.assertEquals;
 
+import java.util.Locale;
+
 import org.junit.Test;
 
 import com.google.bitcoin.core.Coin;
@@ -36,6 +38,11 @@ public class CoinFormatTest {
         assertEquals("@1.00", NO_CODE.negativeSign('@').format(Coin.COIN.negate()).toString());
         assertEquals("1.00", NO_CODE.format(Coin.COIN).toString());
         assertEquals("+1.00", NO_CODE.positiveSign('+').format(Coin.COIN).toString());
+    }
+
+    @Test
+    public void testDigits() throws Exception {
+        assertEquals("١٢.٣٤٥٦٧٨٩٠", NO_CODE.digits('\u0660').format(Coin.valueOf(1234567890l)).toString());
     }
 
     @Test
@@ -230,6 +237,14 @@ public class CoinFormatTest {
     }
 
     @Test
+    public void withLocale() throws Exception {
+        final Coin value = Coin.valueOf(-1234567890l);
+        assertEquals("-12.34567890", NO_CODE.withLocale(Locale.US).format(value).toString());
+        assertEquals("-12,34567890", NO_CODE.withLocale(Locale.GERMANY).format(value).toString());
+        assertEquals("-१२.३४५६७८९०", NO_CODE.withLocale(new Locale("hi", "IN")).format(value).toString()); // Devanagari
+    }
+
+    @Test
     public void parse() throws Exception {
         assertEquals(Coin.COIN, NO_CODE.parse("1"));
         assertEquals(Coin.COIN, NO_CODE.parse("1."));
@@ -255,6 +270,8 @@ public class CoinFormatTest {
         assertEquals(Coin.MICROCOIN, CoinFormat.UBTC.positiveSign('+').parse("+1.0"));
         assertEquals(Coin.MICROCOIN.negate(), CoinFormat.UBTC.parse("-1"));
         assertEquals(Coin.MICROCOIN.negate(), CoinFormat.UBTC.parse("-1.0"));
+
+        assertEquals(Coin.CENT, NO_CODE.withLocale(new Locale("hi", "IN")).parse(".०१")); // Devanagari
     }
 
     @Test(expected = NumberFormatException.class)

@@ -23,6 +23,7 @@ import static com.google.common.math.LongMath.checkedPow;
 import static com.google.common.math.LongMath.divide;
 
 import java.math.RoundingMode;
+import java.text.DecimalFormatSymbols;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -62,6 +63,7 @@ public final class CoinFormat {
 
     private final char negativeSign;
     private final char positiveSign;
+    private final char zeroDigit;
     private final char decimalMark;
     private final int minDecimals;
     private final List<Integer> decimalGroups;
@@ -82,8 +84,8 @@ public final class CoinFormat {
         if (negativeSign == this.negativeSign)
             return this;
         else
-            return new CoinFormat(negativeSign, positiveSign, decimalMark, minDecimals, decimalGroups, shift,
-                    roundingMode, codes, codeSeparator, codePrefixed);
+            return new CoinFormat(negativeSign, positiveSign, zeroDigit, decimalMark, minDecimals, decimalGroups,
+                    shift, roundingMode, codes, codeSeparator, codePrefixed);
     }
 
     /**
@@ -95,8 +97,19 @@ public final class CoinFormat {
         if (positiveSign == this.positiveSign)
             return this;
         else
-            return new CoinFormat(negativeSign, positiveSign, decimalMark, minDecimals, decimalGroups, shift,
-                    roundingMode, codes, codeSeparator, codePrefixed);
+            return new CoinFormat(negativeSign, positiveSign, zeroDigit, decimalMark, minDecimals, decimalGroups,
+                    shift, roundingMode, codes, codeSeparator, codePrefixed);
+    }
+
+    /**
+     * Set character range to use for representing digits. It starts with the specified character representing zero.
+     */
+    public CoinFormat digits(char zeroDigit) {
+        if (zeroDigit == this.zeroDigit)
+            return this;
+        else
+            return new CoinFormat(negativeSign, positiveSign, zeroDigit, decimalMark, minDecimals, decimalGroups,
+                    shift, roundingMode, codes, codeSeparator, codePrefixed);
     }
 
     /**
@@ -109,8 +122,8 @@ public final class CoinFormat {
         if (decimalMark == this.decimalMark)
             return this;
         else
-            return new CoinFormat(negativeSign, positiveSign, decimalMark, minDecimals, decimalGroups, shift,
-                    roundingMode, codes, codeSeparator, codePrefixed);
+            return new CoinFormat(negativeSign, positiveSign, zeroDigit, decimalMark, minDecimals, decimalGroups,
+                    shift, roundingMode, codes, codeSeparator, codePrefixed);
     }
 
     /**
@@ -123,8 +136,8 @@ public final class CoinFormat {
         if (minDecimals == this.minDecimals)
             return this;
         else
-            return new CoinFormat(negativeSign, positiveSign, decimalMark, minDecimals, decimalGroups, shift,
-                    roundingMode, codes, codeSeparator, codePrefixed);
+            return new CoinFormat(negativeSign, positiveSign, zeroDigit, decimalMark, minDecimals, decimalGroups,
+                    shift, roundingMode, codes, codeSeparator, codePrefixed);
     }
 
     /**
@@ -146,8 +159,8 @@ public final class CoinFormat {
         List<Integer> decimalGroups = new ArrayList<Integer>(groups.length);
         for (int group : groups)
             decimalGroups.add(group);
-        return new CoinFormat(negativeSign, positiveSign, decimalMark, minDecimals, decimalGroups, shift, roundingMode,
-                codes, codeSeparator, codePrefixed);
+        return new CoinFormat(negativeSign, positiveSign, zeroDigit, decimalMark, minDecimals, decimalGroups, shift,
+                roundingMode, codes, codeSeparator, codePrefixed);
     }
 
     /**
@@ -172,8 +185,8 @@ public final class CoinFormat {
         List<Integer> decimalGroups = new ArrayList<Integer>(repetitions);
         for (int i = 0; i < repetitions; i++)
             decimalGroups.add(decimals);
-        return new CoinFormat(negativeSign, positiveSign, decimalMark, minDecimals, decimalGroups, shift, roundingMode,
-                codes, codeSeparator, codePrefixed);
+        return new CoinFormat(negativeSign, positiveSign, zeroDigit, decimalMark, minDecimals, decimalGroups, shift,
+                roundingMode, codes, codeSeparator, codePrefixed);
     }
 
     /**
@@ -184,8 +197,8 @@ public final class CoinFormat {
         if (shift == this.shift)
             return this;
         else
-            return new CoinFormat(negativeSign, positiveSign, decimalMark, minDecimals, decimalGroups, shift,
-                    roundingMode, codes, codeSeparator, codePrefixed);
+            return new CoinFormat(negativeSign, positiveSign, zeroDigit, decimalMark, minDecimals, decimalGroups,
+                    shift, roundingMode, codes, codeSeparator, codePrefixed);
     }
 
     /**
@@ -195,8 +208,8 @@ public final class CoinFormat {
         if (roundingMode == this.roundingMode)
             return this;
         else
-            return new CoinFormat(negativeSign, positiveSign, decimalMark, minDecimals, decimalGroups, shift,
-                    roundingMode, codes, codeSeparator, codePrefixed);
+            return new CoinFormat(negativeSign, positiveSign, zeroDigit, decimalMark, minDecimals, decimalGroups,
+                    shift, roundingMode, codes, codeSeparator, codePrefixed);
     }
 
     /**
@@ -206,8 +219,8 @@ public final class CoinFormat {
         if (codes == null)
             return this;
         else
-            return new CoinFormat(negativeSign, positiveSign, decimalMark, minDecimals, decimalGroups, shift,
-                    roundingMode, null, codeSeparator, codePrefixed);
+            return new CoinFormat(negativeSign, positiveSign, zeroDigit, decimalMark, minDecimals, decimalGroups,
+                    shift, roundingMode, null, codeSeparator, codePrefixed);
     }
 
     /**
@@ -224,8 +237,8 @@ public final class CoinFormat {
         if (this.codes != null)
             codes.putAll(this.codes);
         codes.put(codeShift, code);
-        return new CoinFormat(negativeSign, positiveSign, decimalMark, minDecimals, decimalGroups, shift, roundingMode,
-                codes, codeSeparator, codePrefixed);
+        return new CoinFormat(negativeSign, positiveSign, zeroDigit, decimalMark, minDecimals, decimalGroups, shift,
+                roundingMode, codes, codeSeparator, codePrefixed);
     }
 
     /**
@@ -237,8 +250,8 @@ public final class CoinFormat {
         if (codeSeparator == this.codeSeparator)
             return this;
         else
-            return new CoinFormat(negativeSign, positiveSign, decimalMark, minDecimals, decimalGroups, shift,
-                    roundingMode, codes, codeSeparator, codePrefixed);
+            return new CoinFormat(negativeSign, positiveSign, zeroDigit, decimalMark, minDecimals, decimalGroups,
+                    shift, roundingMode, codes, codeSeparator, codePrefixed);
     }
 
     /**
@@ -248,8 +261,8 @@ public final class CoinFormat {
         if (codePrefixed)
             return this;
         else
-            return new CoinFormat(negativeSign, positiveSign, decimalMark, minDecimals, decimalGroups, shift,
-                    roundingMode, codes, codeSeparator, true);
+            return new CoinFormat(negativeSign, positiveSign, zeroDigit, decimalMark, minDecimals, decimalGroups,
+                    shift, roundingMode, codes, codeSeparator, true);
     }
 
     /**
@@ -259,14 +272,27 @@ public final class CoinFormat {
         if (!codePrefixed)
             return this;
         else
-            return new CoinFormat(negativeSign, positiveSign, decimalMark, minDecimals, decimalGroups, shift,
-                    roundingMode, codes, codeSeparator, false);
+            return new CoinFormat(negativeSign, positiveSign, zeroDigit, decimalMark, minDecimals, decimalGroups,
+                    shift, roundingMode, codes, codeSeparator, false);
+    }
+
+    /**
+     * Configure this instance with values from a {@link Locale}.
+     */
+    public CoinFormat withLocale(Locale locale) {
+        DecimalFormatSymbols dfs = new DecimalFormatSymbols(locale);
+        char negativeSign = dfs.getMinusSign();
+        char zeroDigit = dfs.getZeroDigit();
+        char decimalMark = dfs.getMonetaryDecimalSeparator();
+        return new CoinFormat(negativeSign, positiveSign, zeroDigit, decimalMark, minDecimals, decimalGroups, shift,
+                roundingMode, codes, codeSeparator, codePrefixed);
     }
 
     public CoinFormat() {
         // defaults
         this.negativeSign = '-';
         this.positiveSign = 0; // none
+        this.zeroDigit = '0';
         this.decimalMark = '.';
         this.minDecimals = 2;
         this.decimalGroups = null;
@@ -280,11 +306,12 @@ public final class CoinFormat {
         this.codePrefixed = true;
     }
 
-    private CoinFormat(char negativeSign, char positiveSign, char decimalMark, int minDecimals,
+    private CoinFormat(char negativeSign, char positiveSign, char zeroDigit, char decimalMark, int minDecimals,
             List<Integer> decimalGroups, int shift, RoundingMode roundingMode, Map<Integer, String> codes,
             char codeSeparator, boolean codePrefixed) {
         this.negativeSign = negativeSign;
         this.positiveSign = positiveSign;
+        this.zeroDigit = zeroDigit;
         this.decimalMark = decimalMark;
         this.minDecimals = minDecimals;
         this.decimalGroups = decimalGroups;
@@ -348,6 +375,17 @@ public final class CoinFormat {
                 str.append(code());
             }
         }
+
+        // convert to non-arabic digits
+        if (zeroDigit != '0') {
+            int offset = zeroDigit - '0';
+            System.out.println(offset);
+            for (int d = 0; d < str.length(); d++) {
+                char c = str.charAt(d);
+                if(Character.isDigit(c))
+                    str.setCharAt(d, (char) (c + offset));
+            }
+        }
         return str;
     }
 
@@ -394,7 +432,7 @@ public final class CoinFormat {
         for (char c : satoshis.toCharArray())
             if (!Character.isDigit(c))
                 throw new NumberFormatException("illegal character: " + c);
-        long value = Long.parseLong(satoshis);
+        long value = Long.parseLong(satoshis); // non-arabic digits allowed here
         if (first == negativeSign)
             value = -value;
         return value;
