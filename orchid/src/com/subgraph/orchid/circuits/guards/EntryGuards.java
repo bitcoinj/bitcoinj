@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
@@ -47,7 +49,15 @@ public class EntryGuards {
 		this.pendingProbes = new HashSet<GuardEntry>();
 		this.bridges = new Bridges(config, directoryDownloader);
 		this.lock = new Object();
-		this.executor = Executors.newCachedThreadPool();
+		this.executor = Executors.newCachedThreadPool(new ThreadFactory() {
+			@Override
+			public Thread newThread(Runnable r) {
+				Thread t = new Thread(r);
+				t.setName("EntryGuards worker");
+				t.setDaemon(true);
+				return t;
+			}
+		});
 	}
 
 	public boolean isUsingBridges() {

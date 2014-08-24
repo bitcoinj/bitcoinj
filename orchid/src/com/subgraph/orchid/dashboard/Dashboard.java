@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 import java.util.logging.Logger;
 
 import com.subgraph.orchid.data.IPv4Address;
@@ -37,7 +38,15 @@ public class Dashboard implements DashboardRenderable, DashboardRenderer {
 	public Dashboard() {
 		renderables = new CopyOnWriteArrayList<DashboardRenderable>();
 		renderables.add(this);
-		executor = Executors.newCachedThreadPool();
+		executor = Executors.newCachedThreadPool(new ThreadFactory() {
+			@Override
+			public Thread newThread(Runnable r) {
+				Thread t = new Thread(r);
+				t.setName("Dashboard worker");
+				t.setDaemon(true);
+				return t;
+			}
+		});
 		listeningPort = chooseListeningPort();
 	}
 	
