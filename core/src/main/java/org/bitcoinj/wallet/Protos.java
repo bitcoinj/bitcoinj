@@ -13903,6 +13903,26 @@ public final class Protos {
      */
     org.bitcoinj.wallet.Protos.TransactionSignerOrBuilder getTransactionSignersOrBuilder(
         int index);
+
+    // optional uint32 sigsRequiredToSpend = 18 [default = 1];
+    /**
+     * <code>optional uint32 sigsRequiredToSpend = 18 [default = 1];</code>
+     *
+     * <pre>
+     * Number of signatures required to spend. This field is needed only for married wallets to reconstruct KeyChainGroup
+     * and represents the N value from N-of-M CHECKMULTISIG script. For regular single wallets it will always be 1.
+     * </pre>
+     */
+    boolean hasSigsRequiredToSpend();
+    /**
+     * <code>optional uint32 sigsRequiredToSpend = 18 [default = 1];</code>
+     *
+     * <pre>
+     * Number of signatures required to spend. This field is needed only for married wallets to reconstruct KeyChainGroup
+     * and represents the N value from N-of-M CHECKMULTISIG script. For regular single wallets it will always be 1.
+     * </pre>
+     */
+    int getSigsRequiredToSpend();
   }
   /**
    * Protobuf type {@code wallet.Wallet}
@@ -14064,6 +14084,11 @@ public final class Protos {
                 mutable_bitField0_ |= 0x00004000;
               }
               transactionSigners_.add(input.readMessage(org.bitcoinj.wallet.Protos.TransactionSigner.PARSER, extensionRegistry));
+              break;
+            }
+            case 144: {
+              bitField0_ |= 0x00000200;
+              sigsRequiredToSpend_ = input.readUInt32();
               break;
             }
           }
@@ -14733,6 +14758,32 @@ public final class Protos {
       return transactionSigners_.get(index);
     }
 
+    // optional uint32 sigsRequiredToSpend = 18 [default = 1];
+    public static final int SIGSREQUIREDTOSPEND_FIELD_NUMBER = 18;
+    private int sigsRequiredToSpend_;
+    /**
+     * <code>optional uint32 sigsRequiredToSpend = 18 [default = 1];</code>
+     *
+     * <pre>
+     * Number of signatures required to spend. This field is needed only for married wallets to reconstruct KeyChainGroup
+     * and represents the N value from N-of-M CHECKMULTISIG script. For regular single wallets it will always be 1.
+     * </pre>
+     */
+    public boolean hasSigsRequiredToSpend() {
+      return ((bitField0_ & 0x00000200) == 0x00000200);
+    }
+    /**
+     * <code>optional uint32 sigsRequiredToSpend = 18 [default = 1];</code>
+     *
+     * <pre>
+     * Number of signatures required to spend. This field is needed only for married wallets to reconstruct KeyChainGroup
+     * and represents the N value from N-of-M CHECKMULTISIG script. For regular single wallets it will always be 1.
+     * </pre>
+     */
+    public int getSigsRequiredToSpend() {
+      return sigsRequiredToSpend_;
+    }
+
     private void initFields() {
       networkIdentifier_ = "";
       lastSeenBlockHash_ = com.google.protobuf.ByteString.EMPTY;
@@ -14749,6 +14800,7 @@ public final class Protos {
       keyRotationTime_ = 0L;
       tags_ = java.util.Collections.emptyList();
       transactionSigners_ = java.util.Collections.emptyList();
+      sigsRequiredToSpend_ = 1;
     }
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
@@ -14853,6 +14905,9 @@ public final class Protos {
       for (int i = 0; i < transactionSigners_.size(); i++) {
         output.writeMessage(17, transactionSigners_.get(i));
       }
+      if (((bitField0_ & 0x00000200) == 0x00000200)) {
+        output.writeUInt32(18, sigsRequiredToSpend_);
+      }
       getUnknownFields().writeTo(output);
     }
 
@@ -14921,6 +14976,10 @@ public final class Protos {
       for (int i = 0; i < transactionSigners_.size(); i++) {
         size += com.google.protobuf.CodedOutputStream
           .computeMessageSize(17, transactionSigners_.get(i));
+      }
+      if (((bitField0_ & 0x00000200) == 0x00000200)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeUInt32Size(18, sigsRequiredToSpend_);
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSerializedSize = size;
@@ -15107,6 +15166,8 @@ public final class Protos {
         } else {
           transactionSignersBuilder_.clear();
         }
+        sigsRequiredToSpend_ = 1;
+        bitField0_ = (bitField0_ & ~0x00008000);
         return this;
       }
 
@@ -15229,6 +15290,10 @@ public final class Protos {
         } else {
           result.transactionSigners_ = transactionSignersBuilder_.build();
         }
+        if (((from_bitField0_ & 0x00008000) == 0x00008000)) {
+          to_bitField0_ |= 0x00000200;
+        }
+        result.sigsRequiredToSpend_ = sigsRequiredToSpend_;
         result.bitField0_ = to_bitField0_;
         onBuilt();
         return result;
@@ -15431,6 +15496,9 @@ public final class Protos {
               transactionSignersBuilder_.addAllMessages(other.transactionSigners_);
             }
           }
+        }
+        if (other.hasSigsRequiredToSpend()) {
+          setSigsRequiredToSpend(other.getSigsRequiredToSpend());
         }
         this.mergeUnknownFields(other.getUnknownFields());
         return this;
@@ -17610,6 +17678,59 @@ public final class Protos {
         return transactionSignersBuilder_;
       }
 
+      // optional uint32 sigsRequiredToSpend = 18 [default = 1];
+      private int sigsRequiredToSpend_ = 1;
+      /**
+       * <code>optional uint32 sigsRequiredToSpend = 18 [default = 1];</code>
+       *
+       * <pre>
+       * Number of signatures required to spend. This field is needed only for married wallets to reconstruct KeyChainGroup
+       * and represents the N value from N-of-M CHECKMULTISIG script. For regular single wallets it will always be 1.
+       * </pre>
+       */
+      public boolean hasSigsRequiredToSpend() {
+        return ((bitField0_ & 0x00008000) == 0x00008000);
+      }
+      /**
+       * <code>optional uint32 sigsRequiredToSpend = 18 [default = 1];</code>
+       *
+       * <pre>
+       * Number of signatures required to spend. This field is needed only for married wallets to reconstruct KeyChainGroup
+       * and represents the N value from N-of-M CHECKMULTISIG script. For regular single wallets it will always be 1.
+       * </pre>
+       */
+      public int getSigsRequiredToSpend() {
+        return sigsRequiredToSpend_;
+      }
+      /**
+       * <code>optional uint32 sigsRequiredToSpend = 18 [default = 1];</code>
+       *
+       * <pre>
+       * Number of signatures required to spend. This field is needed only for married wallets to reconstruct KeyChainGroup
+       * and represents the N value from N-of-M CHECKMULTISIG script. For regular single wallets it will always be 1.
+       * </pre>
+       */
+      public Builder setSigsRequiredToSpend(int value) {
+        bitField0_ |= 0x00008000;
+        sigsRequiredToSpend_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional uint32 sigsRequiredToSpend = 18 [default = 1];</code>
+       *
+       * <pre>
+       * Number of signatures required to spend. This field is needed only for married wallets to reconstruct KeyChainGroup
+       * and represents the N value from N-of-M CHECKMULTISIG script. For regular single wallets it will always be 1.
+       * </pre>
+       */
+      public Builder clearSigsRequiredToSpend() {
+        bitField0_ = (bitField0_ & ~0x00008000);
+        sigsRequiredToSpend_ = 1;
+        onChanged();
+        return this;
+      }
+
       // @@protoc_insertion_point(builder_scope:wallet.Wallet)
     }
 
@@ -18538,7 +18659,7 @@ public final class Protos {
       "8\n\tExtension\022\n\n\002id\030\001 \002(\t\022\014\n\004data\030\002 \002(\014\022\021" +
       "\n\tmandatory\030\003 \002(\010\" \n\003Tag\022\013\n\003tag\030\001 \002(\t\022\014\n" +
       "\004data\030\002 \002(\014\"5\n\021TransactionSigner\022\022\n\nclas" +
-      "s_name\030\001 \002(\t\022\014\n\004data\030\002 \001(\014\"\351\004\n\006Wallet\022\032\n" +
+      "s_name\030\001 \002(\t\022\014\n\004data\030\002 \001(\014\"\211\005\n\006Wallet\022\032\n" +
       "\022network_identifier\030\001 \002(\t\022\034\n\024last_seen_b" +
       "lock_hash\030\002 \001(\014\022\036\n\026last_seen_block_heigh" +
       "t\030\014 \001(\r\022!\n\031last_seen_block_time_secs\030\016 \001",
@@ -18552,12 +18673,12 @@ public final class Protos {
       "llet.Extension\022\023\n\013description\030\013 \001(\t\022\031\n\021k" +
       "ey_rotation_time\030\r \001(\004\022\031\n\004tags\030\020 \003(\0132\013.w" +
       "allet.Tag\0226\n\023transaction_signers\030\021 \003(\0132\031",
-      ".wallet.TransactionSigner\";\n\016EncryptionT" +
-      "ype\022\017\n\013UNENCRYPTED\020\001\022\030\n\024ENCRYPTED_SCRYPT" +
-      "_AES\020\002\"R\n\014ExchangeRate\022\022\n\ncoin_value\030\001 \002" +
-      "(\003\022\022\n\nfiat_value\030\002 \002(\003\022\032\n\022fiat_currency_" +
-      "code\030\003 \002(\tB\035\n\023org.bitcoinj.walletB\006Proto" +
-      "s"
+      ".wallet.TransactionSigner\022\036\n\023sigsRequire" +
+      "dToSpend\030\022 \001(\r:\0011\";\n\016EncryptionType\022\017\n\013U" +
+      "NENCRYPTED\020\001\022\030\n\024ENCRYPTED_SCRYPT_AES\020\002\"R" +
+      "\n\014ExchangeRate\022\022\n\ncoin_value\030\001 \002(\003\022\022\n\nfi" +
+      "at_value\030\002 \002(\003\022\032\n\022fiat_currency_code\030\003 \002" +
+      "(\tB\035\n\023org.bitcoinj.walletB\006Protos"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
       new com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner() {
@@ -18647,7 +18768,7 @@ public final class Protos {
           internal_static_wallet_Wallet_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_wallet_Wallet_descriptor,
-              new java.lang.String[] { "NetworkIdentifier", "LastSeenBlockHash", "LastSeenBlockHeight", "LastSeenBlockTimeSecs", "Key", "Transaction", "WatchedScript", "EncryptionType", "EncryptionParameters", "Version", "Extension", "Description", "KeyRotationTime", "Tags", "TransactionSigners", });
+              new java.lang.String[] { "NetworkIdentifier", "LastSeenBlockHash", "LastSeenBlockHeight", "LastSeenBlockTimeSecs", "Key", "Transaction", "WatchedScript", "EncryptionType", "EncryptionParameters", "Version", "Extension", "Description", "KeyRotationTime", "Tags", "TransactionSigners", "SigsRequiredToSpend", });
           internal_static_wallet_ExchangeRate_descriptor =
             getDescriptor().getMessageTypes().get(14);
           internal_static_wallet_ExchangeRate_fieldAccessorTable = new

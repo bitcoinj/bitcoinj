@@ -19,15 +19,11 @@ package com.google.bitcoin.core;
 
 import com.google.bitcoin.core.Wallet.SendRequest;
 import com.google.bitcoin.crypto.*;
-import com.google.bitcoin.signers.CustomTransactionSigner;
 import com.google.bitcoin.signers.TransactionSigner;
 import com.google.bitcoin.store.BlockStoreException;
 import com.google.bitcoin.store.MemoryBlockStore;
 import com.google.bitcoin.store.WalletProtobufSerializer;
-import com.google.bitcoin.testing.FakeTxBuilder;
-import com.google.bitcoin.testing.MockTransactionBroadcaster;
-import com.google.bitcoin.testing.NopTransactionSigner;
-import com.google.bitcoin.testing.TestWithWallet;
+import com.google.bitcoin.testing.*;
 import com.google.bitcoin.utils.ExchangeRate;
 import com.google.bitcoin.utils.Fiat;
 import com.google.bitcoin.utils.Threading;
@@ -96,31 +92,26 @@ public class WalletTest extends TestWithWallet {
         super.tearDown();
     }
 
-    private void createMarriedWalletWithSigner() throws BlockStoreException {
-        createMarriedWallet(true);
+    private void createMarriedWallet(int threshold, int numKeys) throws BlockStoreException {
+        createMarriedWallet(threshold, numKeys, true);
     }
 
-    private void createMarriedWallet(boolean addSigners) throws BlockStoreException {
+    
+    private void createMarriedWallet(int threshold, int numKeys, boolean addSigners) throws BlockStoreException {
         wallet = new Wallet(params);
         blockStore = new MemoryBlockStore(params);
         chain = new BlockChain(params, wallet, blockStore);
 
-        final DeterministicKeyChain keyChain = new DeterministicKeyChain(new SecureRandom());
-        DeterministicKey partnerKey = DeterministicKey.deserializeB58(null, keyChain.getWatchingKey().serializePubB58());
-
-        if (addSigners) {
-            CustomTransactionSigner signer = new CustomTransactionSigner() {
-                @Override
-                protected SignatureAndKey getSignature(Sha256Hash sighash, List<ChildNumber> derivationPath) {
-                    ImmutableList<ChildNumber> keyPath = ImmutableList.copyOf(derivationPath);
-                    DeterministicKey key = keyChain.getKeyByPath(keyPath, true);
-                    return new SignatureAndKey(key.sign(sighash), key.getPubOnly());
-                }
-            };
-            wallet.addTransactionSigner(signer);
+        List<DeterministicKey> followingKeys = Lists.newArrayList();
+        for (int i = 0; i < numKeys - 1; i++) {
+            final DeterministicKeyChain keyChain = new DeterministicKeyChain(new SecureRandom());
+            DeterministicKey partnerKey = DeterministicKey.deserializeB58(null, keyChain.getWatchingKey().serializePubB58());
+            followingKeys.add(partnerKey);
+            if (addSigners && i < threshold)
+                wallet.addTransactionSigner(new KeyChainTransactionSigner(keyChain));
         }
 
-        wallet.addFollowingAccountKeys(ImmutableList.of(partnerKey));
+        wallet.addFollowingAccountKeys(followingKeys, threshold);
     }
 
     @Test
@@ -152,10 +143,22 @@ public class WalletTest extends TestWithWallet {
 
     @Test
     public void basicSpendingFromP2SH() throws Exception {
-        createMarriedWalletWithSigner();
-        Address destination = new ECKey().toAddress(params);
+        createMarriedWallet(2, 2);
         myAddress = wallet.currentAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
-        basicSpendingCommon(wallet, myAddress, destination, false);
+        basicSpendingCommon(wallet, myAddress, new ECKey().toAddress(params), false);
+
+        createMarriedWallet(2, 3);
+        myAddress = wallet.currentAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
+        basicSpendingCommon(wallet, myAddress, new ECKey().toAddress(params), false);
+
+        createMarriedWallet(3, 3);
+        myAddress = wallet.currentAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
+        basicSpendingCommon(wallet, myAddress, new ECKey().toAddress(params), false);
+    }
+
+    @Test (expected = IllegalArgumentException.class)
+    public void thresholdShouldNotExceedNumberOfKeys() throws Exception {
+        createMarriedWallet(3, 2);
     }
 
     @Test
@@ -1236,7 +1239,7 @@ public class WalletTest extends TestWithWallet {
 
     @Test
     public void marriedKeychainBloomFilter() throws Exception {
-        createMarriedWalletWithSigner();
+        createMarriedWallet(2, 2);
         Address address = wallet.currentReceiveAddress();
 
         assertTrue(wallet.getBloomFilter(0.001).contains(address.getHash160()));
@@ -2451,7 +2454,7 @@ public class WalletTest extends TestWithWallet {
 
     @Test (expected = TransactionSigner.MissingSignatureException.class)
     public void completeTxPartiallySignedMarriedThrowsByDefault() throws Exception {
-        createMarriedWallet(false);
+        createMarriedWallet(2, 2, false);
         myAddress = wallet.currentAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         sendMoneyToWallet(wallet, COIN, myAddress, AbstractBlockChain.NewBlockType.BEST_CHAIN);
 
@@ -2461,7 +2464,7 @@ public class WalletTest extends TestWithWallet {
 
     public void completeTxPartiallySignedMarried(Wallet.MissingSigsMode missSigMode, byte[] expectedSig) throws Exception {
         // create married wallet without signer
-        createMarriedWallet(false);
+        createMarriedWallet(2, 2, false);
         myAddress = wallet.currentAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         sendMoneyToWallet(wallet, COIN, myAddress, AbstractBlockChain.NewBlockType.BEST_CHAIN);
 

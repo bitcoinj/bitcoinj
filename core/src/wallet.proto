@@ -105,6 +105,7 @@ message Key {
   // Either the private EC key bytes (without any ASN.1 wrapping), or the deterministic root seed.
   // If the secret is encrypted, or this is a "watching entry" then this is missing.
   optional bytes secret_bytes = 2;
+
   // If the secret data is encrypted, then secret_bytes is missing and this field is set.
   optional EncryptedData encrypted_data = 6;
 
@@ -371,7 +372,11 @@ message Wallet {
   // transaction signers added to the wallet
   repeated TransactionSigner transaction_signers = 17;
 
-  // Next tag: 18
+  // Number of signatures required to spend. This field is needed only for married wallets to reconstruct KeyChainGroup
+  // and represents the N value from N-of-M CHECKMULTISIG script. For regular single wallets it will always be 1.
+  optional uint32 sigsRequiredToSpend = 18 [default = 1];
+
+  // Next tag: 19
 }
 
 /** An exchange rate between Bitcoin and some fiat currency. */
