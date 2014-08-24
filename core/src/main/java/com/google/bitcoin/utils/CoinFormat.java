@@ -23,6 +23,7 @@ import static com.google.common.math.LongMath.checkedPow;
 import static com.google.common.math.LongMath.divide;
 
 import java.math.RoundingMode;
+import java.text.DecimalFormatSymbols;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -275,6 +276,18 @@ public final class CoinFormat {
                     shift, roundingMode, codes, codeSeparator, false);
     }
 
+    /**
+     * Configure this instance with values from a {@link Locale}.
+     */
+    public CoinFormat withLocale(Locale locale) {
+        DecimalFormatSymbols dfs = new DecimalFormatSymbols(locale);
+        char negativeSign = dfs.getMinusSign();
+        char zeroDigit = dfs.getZeroDigit();
+        char decimalMark = dfs.getMonetaryDecimalSeparator();
+        return new CoinFormat(negativeSign, positiveSign, zeroDigit, decimalMark, minDecimals, decimalGroups, shift,
+                roundingMode, codes, codeSeparator, codePrefixed);
+    }
+
     public CoinFormat() {
         // defaults
         this.negativeSign = '-';
@@ -419,7 +432,7 @@ public final class CoinFormat {
         for (char c : satoshis.toCharArray())
             if (!Character.isDigit(c))
                 throw new NumberFormatException("illegal character: " + c);
-        long value = Long.parseLong(satoshis);
+        long value = Long.parseLong(satoshis); // non-arabic digits allowed here
         if (first == negativeSign)
             value = -value;
         return value;
