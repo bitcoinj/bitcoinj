@@ -16,8 +16,8 @@
 package com.google.bitcoin.signers;
 
 import com.google.bitcoin.core.Transaction;
-import com.google.bitcoin.core.TransactionInput;
 import com.google.bitcoin.crypto.ChildNumber;
+import com.google.bitcoin.script.Script;
 import com.google.bitcoin.wallet.KeyBag;
 
 import java.util.HashMap;
@@ -46,13 +46,14 @@ public interface TransactionSigner {
          * HD key paths used for each input to derive a signing key. It's useful for multisig inputs only.
          * The keys used to create a single P2SH address have the same derivation path, so to use a correct key each signer
          * has to know a derivation path of signing keys used by previous signers. For each input signers will use the
-         * same derivation path and we need to store only one key path per input.
+         * same derivation path and we need to store only one key path per input. As TransactionInput is mutable, inputs
+         * are identified by their scriptPubKeys (keys in this map).
          */
-        public final Map<TransactionInput, List<ChildNumber>> keyPaths;
+        public final Map<Script, List<ChildNumber>> keyPaths;
 
         public ProposedTransaction(Transaction partialTx) {
             this.partialTx = partialTx;
-            this.keyPaths = new HashMap<TransactionInput, List<ChildNumber>>();
+            this.keyPaths = new HashMap<Script, List<ChildNumber>>();
         }
     }
 

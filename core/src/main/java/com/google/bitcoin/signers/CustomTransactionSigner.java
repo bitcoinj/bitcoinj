@@ -55,8 +55,8 @@ public abstract class CustomTransactionSigner extends StatelessTransactionSigner
             if (txOut == null) {
                 continue;
             }
-
-            if (!txOut.getScriptPubKey().isPayToScriptHash()) {
+            Script scriptPubKey = txOut.getScriptPubKey();
+            if (!scriptPubKey.isPayToScriptHash()) {
                 log.warn("CustomTransactionSigner works only with P2SH transactions");
                 return false;
             }
@@ -69,12 +69,12 @@ public abstract class CustomTransactionSigner extends StatelessTransactionSigner
             }
 
             Sha256Hash sighash = tx.hashForSignature(i, redeemData.redeemScript, Transaction.SigHash.ALL, false);
-            SignatureAndKey sigKey = getSignature(sighash, propTx.keyPaths.get(txIn));
+            SignatureAndKey sigKey = getSignature(sighash, propTx.keyPaths.get(scriptPubKey));
             TransactionSignature txSig = new TransactionSignature(sigKey.sig, Transaction.SigHash.ALL, false);
             int sigIndex = redeemData.getKeyIndex(sigKey.pubKey);
             if (sigIndex < 0)
                 throw new RuntimeException("Redeem script doesn't contain our key"); // This should not happen
-            inputScript = txOut.getScriptPubKey().getScriptSigWithSignature(inputScript, txSig.encodeToBitcoin(), sigIndex);
+            inputScript = scriptPubKey.getScriptSigWithSignature(inputScript, txSig.encodeToBitcoin(), sigIndex);
             txIn.setScriptSig(inputScript);
         }
         return true;
