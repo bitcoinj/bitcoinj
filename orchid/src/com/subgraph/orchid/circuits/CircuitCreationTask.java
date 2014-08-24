@@ -142,6 +142,11 @@ public class CircuitCreationTask implements Runnable {
 	}
 
 	private void buildCircuitIfNeeded() {
+		if (connectionCache.isClosed()) {
+			logger.warning("Not building circuits, because connection cache is closed");
+			return;
+		}
+
 		final List<StreamExitRequest> pendingExitStreams = circuitManager.getPendingExitStreams();
 		final List<PredictedPortTarget> predictedPorts = predictor.getPredictedPortTargets();
 		final List<ExitTarget> exitTargets = new ArrayList<ExitTarget>();
