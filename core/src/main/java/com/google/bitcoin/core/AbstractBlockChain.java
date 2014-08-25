@@ -168,12 +168,12 @@ public abstract class AbstractBlockChain {
             // This special case happens when the VM crashes because of a transaction received. It causes the updated
             // block store to persist, but not the wallet. In order to fix the issue, we roll back the block store to
             // the wallet height to make it look like as if the block has never been received.
-            if (walletHeight < chainHeight && walletHeight > -1) {
+            if (walletHeight < chainHeight && walletHeight > 0) {
                 try {
                     rollbackBlockStore(walletHeight);
                     log.info("Rolled back block store to height {}.", walletHeight);
                 } catch (BlockStoreException x) {
-                    log.warn("Rollback of block store failed, continuing with mismatched heights.", x);
+                    log.warn("Rollback of block store failed, continuing with mismatched heights. This can happen due to a replay.");
                 }
             }
         }
