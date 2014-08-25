@@ -168,7 +168,7 @@ public final class Fiat implements Monetary, Comparable<Fiat>, Serializable {
         return this.value;
     }
 
-    private static final CoinFormat FRIENDLY_FORMAT = CoinFormat.FIAT.postfixCode();
+    private static final MonetaryFormat FRIENDLY_FORMAT = MonetaryFormat.FIAT.postfixCode();
 
     /**
      * Returns the value as a 0.12 type string. More digits after the decimal place will be used if necessary, but two
@@ -178,7 +178,7 @@ public final class Fiat implements Monetary, Comparable<Fiat>, Serializable {
         return FRIENDLY_FORMAT.code(0, currencyCode).format(this).toString();
     }
 
-    private static final CoinFormat PLAIN_FORMAT = CoinFormat.FIAT.minDecimals(0).repeatOptionalDecimals(1, 4).noCode();
+    private static final MonetaryFormat PLAIN_FORMAT = MonetaryFormat.FIAT.minDecimals(0).repeatOptionalDecimals(1, 4).noCode();
 
     /**
      * <p>

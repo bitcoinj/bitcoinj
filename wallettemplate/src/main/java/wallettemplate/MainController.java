@@ -2,7 +2,7 @@ package wallettemplate;
 
 import com.google.bitcoin.core.Coin;
 import com.google.bitcoin.core.DownloadListener;
-import com.google.bitcoin.utils.CoinFormat;
+import com.google.bitcoin.utils.MonetaryFormat;
 import com.subgraph.orchid.TorClient;
 import com.subgraph.orchid.TorInitializationListener;
 import javafx.animation.FadeTransition;
@@ -45,7 +45,7 @@ public class MainController {
     public void onBitcoinSetup() {
         model.setWallet(bitcoin.wallet());
         addressControl.addressProperty().bind(model.addressProperty());
-        balance.textProperty().bind(EasyBind.map(model.balanceProperty(), coin -> CoinFormat.BTC.noCode().format(coin).toString()));
+        balance.textProperty().bind(EasyBind.map(model.balanceProperty(), coin -> MonetaryFormat.BTC.noCode().format(coin).toString()));
         // Don't let the user click send money when the wallet is empty.
         sendMoneyOutBtn.disableProperty().bind(model.balanceProperty().isEqualTo(Coin.ZERO));
 
