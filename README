@@ -1,3 +1,5 @@
+Build status: [![Build Status](https://travis-ci.org/bitcoinj/bitcoinj.png?branch=master)](https://travis-ci.org/bitcoinj/bitcoinj)
+
 To get started, ensure you have the latest JDK installed, and download Maven from:
 
   http://maven.apache.org/
