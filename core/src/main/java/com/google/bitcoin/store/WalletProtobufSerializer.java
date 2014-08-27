@@ -24,6 +24,8 @@ import com.google.bitcoin.crypto.KeyCrypterScrypt;
 import com.google.bitcoin.script.Script;
 import com.google.bitcoin.signers.LocalTransactionSigner;
 import com.google.bitcoin.signers.TransactionSigner;
+import com.google.bitcoin.utils.ExchangeRate;
+import com.google.bitcoin.utils.Fiat;
 import com.google.bitcoin.wallet.KeyChainGroup;
 import com.google.bitcoin.wallet.WalletTransaction;
 import com.google.common.collect.Lists;
@@ -290,6 +292,14 @@ public class WalletProtobufSerializer {
                 throw new RuntimeException("New tx purpose serialization not implemented.");
         }
         txBuilder.setPurpose(purpose);
+
+        ExchangeRate exchangeRate = tx.getExchangeRate();
+        if (exchangeRate != null) {
+            Protos.ExchangeRate.Builder exchangeRateBuilder = Protos.ExchangeRate.newBuilder()
+                    .setCoinValue(exchangeRate.coin.value).setFiatValue(exchangeRate.fiat.value)
+                    .setFiatCurrencyCode(exchangeRate.fiat.currencyCode);
+            txBuilder.setExchangeRate(exchangeRateBuilder);
+        }
         
         return txBuilder.build();
     }
@@ -574,6 +584,12 @@ public class WalletProtobufSerializer {
         } else {
             // Old wallet: assume a user payment as that's the only reason a new tx would have been created back then.
             tx.setPurpose(Transaction.Purpose.USER_PAYMENT);
+        }
+
+        if (txProto.hasExchangeRate()) {
+            Protos.ExchangeRate exchangeRateProto = txProto.getExchangeRate();
+            tx.setExchangeRate(new ExchangeRate(Coin.valueOf(exchangeRateProto.getCoinValue()), Fiat.valueOf(
+                    exchangeRateProto.getFiatCurrencyCode(), exchangeRateProto.getFiatValue())));
         }
 
         // Transaction should now be complete.

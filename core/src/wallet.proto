@@ -263,7 +263,10 @@ message Transaction {
   }
   optional Purpose purpose = 10 [default = UNKNOWN];
 
-  // Next tag: 12
+  // Exchange rate that was valid when the transaction was sent.
+  optional ExchangeRate exchange_rate = 12;
+
+  // Next tag: 13
 }
 
 /** The parameters used in the scrypt key derivation function.
@@ -365,4 +368,16 @@ message Wallet {
   repeated TransactionSigner transaction_signers = 17;
 
   // Next tag: 18
+}
+
+/** An exchange rate between Bitcoin and some fiat currency. */
+message ExchangeRate {
+  // This much of satoshis (1E-8 fractions)…
+  required int64 coin_value = 1;
+  // …is worth this much of fiat (1E-4 fractions).
+  required int64 fiat_value = 2;
+  // ISO 4217 currency code (if available) of the fiat currency.
+  required string fiat_currency_code = 3;
+
+  // Next tag: 4
 }

@@ -28,6 +28,8 @@ import com.google.bitcoin.testing.FakeTxBuilder;
 import com.google.bitcoin.testing.MockTransactionBroadcaster;
 import com.google.bitcoin.testing.NopTransactionSigner;
 import com.google.bitcoin.testing.TestWithWallet;
+import com.google.bitcoin.utils.ExchangeRate;
+import com.google.bitcoin.utils.Fiat;
 import com.google.bitcoin.utils.Threading;
 import com.google.bitcoin.wallet.*;
 import com.google.bitcoin.wallet.WalletTransaction.Pool;
@@ -2555,4 +2557,12 @@ public class WalletTest extends TestWithWallet {
         assertTrue(wallet.getTransactionSigners().get(1).isReady());
     }
 
+    @Test
+    public void sendRequestExchangeRate() throws Exception {
+        receiveATransaction(wallet, myAddress);
+        SendRequest sendRequest = SendRequest.to(myAddress, Coin.COIN);
+        sendRequest.exchangeRate = new ExchangeRate(Fiat.parseFiat("EUR", "500"));
+        wallet.completeTx(sendRequest);
+        assertEquals(sendRequest.exchangeRate, sendRequest.tx.getExchangeRate());
+    }
 }
