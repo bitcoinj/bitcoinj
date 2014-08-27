@@ -29,6 +29,7 @@ import com.google.bitcoin.signers.TransactionSigner;
 import com.google.bitcoin.store.UnreadableWalletException;
 import com.google.bitcoin.store.WalletProtobufSerializer;
 import com.google.bitcoin.utils.BaseTaggableObject;
+import com.google.bitcoin.utils.ExchangeRate;
 import com.google.bitcoin.utils.ListenerRegistration;
 import com.google.bitcoin.utils.Threading;
 import com.google.bitcoin.wallet.*;
@@ -3010,6 +3011,11 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
          */
         public boolean useDummySignatures = true;
 
+        /**
+         * If not null, this exchange rate is recorded with the transaction during completion.
+         */
+        public ExchangeRate exchangeRate = null;
+
         // Tracks if this has been passed to wallet.completeTx already: just a safety check.
         private boolean completed;
 
@@ -3375,6 +3381,8 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
             // transaction lists more appropriately, especially when the wallet starts to generate transactions itself
             // for internal purposes.
             req.tx.setPurpose(Transaction.Purpose.USER_PAYMENT);
+            // Record the exchange rate that was valid when the transaction was completed.
+            req.tx.setExchangeRate(req.exchangeRate);
             req.completed = true;
             req.fee = calculatedFee;
             log.info("  completed: {}", req.tx);

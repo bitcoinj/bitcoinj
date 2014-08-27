@@ -22,6 +22,7 @@ import com.google.bitcoin.crypto.TransactionSignature;
 import com.google.bitcoin.script.Script;
 import com.google.bitcoin.script.ScriptBuilder;
 import com.google.bitcoin.script.ScriptOpCodes;
+import com.google.bitcoin.utils.ExchangeRate;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.primitives.Ints;
 import com.google.common.primitives.Longs;
@@ -151,6 +152,13 @@ public class Transaction extends ChildMessage implements Serializable {
     }
 
     private Purpose purpose = Purpose.UNKNOWN;
+
+    /**
+     * This field can be used by applications to record the exchange rate that was valid when the transaction happened.
+     * It's optional.
+     */
+    @Nullable
+    private ExchangeRate exchangeRate;
 
     public Transaction(NetworkParameters params) {
         super(params);
@@ -1258,5 +1266,20 @@ public class Transaction extends ChildMessage implements Serializable {
      */
     public void setPurpose(Purpose purpose) {
         this.purpose = purpose;
+    }
+
+    /**
+     * Getter for {@link #exchangeRate}.
+     */
+    @Nullable
+    public ExchangeRate getExchangeRate() {
+        return exchangeRate;
+    }
+
+    /**
+     * Setter for {@link #exchangeRate}.
+     */
+    public void setExchangeRate(ExchangeRate exchangeRate) {
+        this.exchangeRate = exchangeRate;
     }
 }
