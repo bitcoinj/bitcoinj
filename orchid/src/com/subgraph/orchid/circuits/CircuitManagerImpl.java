@@ -104,14 +104,18 @@ public class CircuitManagerImpl implements CircuitManager, DashboardRenderable {
 		try {
 			isBuilding = false;
 			scheduledExecutor.shutdownNow();
-			if (killCircuits) {
-				List<CircuitImpl> circuits = new ArrayList<CircuitImpl>(activeCircuits);
-				for (CircuitImpl c : circuits) {
-					c.destroyCircuit();
-				}
-			}
 		} finally {
 			lock.unlock();
+		}
+
+		if (killCircuits) {
+			ArrayList<CircuitImpl> circuits;
+			synchronized (activeCircuits) {
+				circuits = new ArrayList<CircuitImpl>(activeCircuits);
+			}
+			for (CircuitImpl c : circuits) {
+				c.destroyCircuit();
+			}
 		}
 	}
 
@@ -125,14 +129,17 @@ public class CircuitManagerImpl implements CircuitManager, DashboardRenderable {
 			activeCircuits.notifyAll();
 		}
 
+		boolean doDestroy;
 		lock.lock();
 		try {
-			if (!isBuilding) {
-				// we were asked to stop since this circuit was started
-				circuit.destroyCircuit();
-			}
+			doDestroy = !isBuilding;
 		} finally {
 			lock.unlock();
+		}
+
+		if (doDestroy) {
+			// we were asked to stop since this circuit was started
+			circuit.destroyCircuit();
 		}
 	}
 	
