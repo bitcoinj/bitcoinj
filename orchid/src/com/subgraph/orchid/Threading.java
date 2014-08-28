@@ -1,7 +1,12 @@
 package com.subgraph.orchid;
 
 import com.google.common.util.concurrent.CycleDetectingLockFactory;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
@@ -41,5 +46,26 @@ public class Threading {
 
 	public static CycleDetectingLockFactory.Policy getPolicy() {
 		return policy;
+	}
+
+	public static ExecutorService newPool(final String name) {
+		ThreadFactory factory = new ThreadFactoryBuilder()
+				.setDaemon(true)
+				.setNameFormat("name-%d").build();
+		return Executors.newCachedThreadPool(factory);
+	}
+
+	public static ScheduledExecutorService newSingleThreadScheduledPool(final String name) {
+		ThreadFactory factory = new ThreadFactoryBuilder()
+				.setDaemon(true)
+				.setNameFormat("name-%d").build();
+		return Executors.newSingleThreadScheduledExecutor(factory);
+	}
+
+	public static ScheduledExecutorService newScheduledPool(final String name) {
+		ThreadFactory factory = new ThreadFactoryBuilder()
+				.setDaemon(true)
+				.setNameFormat("name-%d").build();
+		return Executors.newScheduledThreadPool(1, factory);
 	}
 }
