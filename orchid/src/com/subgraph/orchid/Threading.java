@@ -51,21 +51,21 @@ public class Threading {
 	public static ExecutorService newPool(final String name) {
 		ThreadFactory factory = new ThreadFactoryBuilder()
 				.setDaemon(true)
-				.setNameFormat("name-%d").build();
+				.setNameFormat(name + "-%d").build();
 		return Executors.newCachedThreadPool(factory);
 	}
 
 	public static ScheduledExecutorService newSingleThreadScheduledPool(final String name) {
 		ThreadFactory factory = new ThreadFactoryBuilder()
 				.setDaemon(true)
-				.setNameFormat("name-%d").build();
+				.setNameFormat(name + "-%d").build();
 		return Executors.newSingleThreadScheduledExecutor(factory);
 	}
 
 	public static ScheduledExecutorService newScheduledPool(final String name) {
 		ThreadFactory factory = new ThreadFactoryBuilder()
 				.setDaemon(true)
-				.setNameFormat("name-%d").build();
+				.setNameFormat(name + "-%d").build();
 		return Executors.newScheduledThreadPool(1, factory);
 	}
 }
