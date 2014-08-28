@@ -60,15 +60,7 @@ public class CircuitManagerImpl implements CircuitManager, DashboardRenderable {
 	private int pendingInternalCircuitCount = 0;
 	private final TorRandom random;
 	private final PendingExitStreams pendingExitStreams;
-	private final ScheduledExecutorService scheduledExecutor = Executors.newSingleThreadScheduledExecutor(new ThreadFactory() {
-		@Override
-		public Thread newThread(Runnable r) {
-			Thread t = new Thread(r);
-			t.setName("CircuitManager worker");
-			t.setDaemon(true);
-			return t;
-		}
-	});
+	private final ScheduledExecutorService scheduledExecutor = Threading.newSingleThreadScheduledPool("CircuitManager worker");
 	private final CircuitCreationTask circuitCreationTask;
 	private final TorInitializationTracker initializationTracker;
 	private final CircuitPathChooser pathChooser;
@@ -109,7 +101,6 @@ public class CircuitManagerImpl implements CircuitManager, DashboardRenderable {
 
 	public void stopBuildingCircuits(boolean killCircuits) {
 		lock.lock();
-
 		try {
 			isBuilding = false;
 			scheduledExecutor.shutdownNow();
@@ -135,7 +126,6 @@ public class CircuitManagerImpl implements CircuitManager, DashboardRenderable {
 		}
 
 		lock.lock();
-
 		try {
 			if (!isBuilding) {
 				// we were asked to stop since this circuit was started
@@ -168,7 +158,6 @@ public class CircuitManagerImpl implements CircuitManager, DashboardRenderable {
 
 	int getPendingCircuitCount() {
 		lock.lock();
-
 		try {
 			return getPendingCircuits().size();
 		} finally {

@@ -5,8 +5,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -20,6 +18,7 @@ import com.subgraph.orchid.Directory;
 import com.subgraph.orchid.ExitCircuit;
 import com.subgraph.orchid.InternalCircuit;
 import com.subgraph.orchid.Router;
+import com.subgraph.orchid.Threading;
 import com.subgraph.orchid.TorConfig;
 import com.subgraph.orchid.circuits.CircuitManagerImpl.CircuitFilter;
 import com.subgraph.orchid.circuits.path.CircuitPathChooser;
@@ -53,15 +52,7 @@ public class CircuitCreationTask implements Runnable {
 		this.circuitManager = circuitManager;
 		this.initializationTracker = initializationTracker;
 		this.pathChooser = pathChooser;
-		this.executor = Executors.newCachedThreadPool(new ThreadFactory() {
-			@Override
-			public Thread newThread(Runnable r) {
-				Thread t = new Thread(r);
-				t.setName("CircuitCreationTask worker");
-				t.setDaemon(true);
-				return t;
-			}
-		});
+		this.executor = Threading.newPool("CircuitCreationTask worker");
 		this.buildHandler = createCircuitBuildHandler();
 		this.internalBuildHandler = createInternalCircuitBuildHandler();
 		this.predictor = new CircuitPredictor();
