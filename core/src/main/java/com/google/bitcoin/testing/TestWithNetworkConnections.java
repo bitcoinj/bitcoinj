@@ -166,11 +166,13 @@ public class TestWithNetworkConnections {
         InboundMessageQueuer writeTarget = newPeerWriteTargetQueue.take();
         writeTarget.peer = peer;
         // Complete handshake with the peer - send/receive version(ack)s, receive bloom filter
+        checkState(!peer.getVersionHandshakeFuture().isDone());
         writeTarget.sendMessage(versionMessage);
         writeTarget.sendMessage(new VersionAck());
         try {
             checkState(writeTarget.nextMessageBlocking() instanceof VersionMessage);
             checkState(writeTarget.nextMessageBlocking() instanceof VersionAck);
+            checkState(peer.getVersionHandshakeFuture().isDone());
             synchronized (doneConnecting) {
                 doneConnecting.set(true);
             }

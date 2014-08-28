@@ -27,6 +27,9 @@ import static com.google.common.base.Preconditions.checkArgument;
 public class InventoryMessage extends ListMessage {
     private static final long serialVersionUID = -7050246551646107066L;
 
+    /** A hard coded constant in the protocol. */
+    public static final int MAX_INV_SIZE = 50000;
+
     public InventoryMessage(NetworkParameters params, byte[] bytes) throws ProtocolException {
         super(params, bytes);
     }

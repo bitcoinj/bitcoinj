@@ -143,6 +143,7 @@ public class Peer extends PeerSocketHandler {
 
     // A settable future which completes (with this) when the connection is open
     private final SettableFuture<Peer> connectionOpenFuture = SettableFuture.create();
+    private final SettableFuture<Peer> versionHandshakeFuture = SettableFuture.create();
     // A future representing the results of doing a getUTXOs call.
     @Nullable private SettableFuture<UTXOsMessage> utxosFuture;
 
@@ -305,6 +306,10 @@ public class Peer extends PeerSocketHandler {
         return connectionOpenFuture;
     }
 
+    public ListenableFuture<Peer> getVersionHandshakeFuture() {
+        return versionHandshakeFuture;
+    }
+
     @Override
     protected void processMessage(Message m) throws Exception {
         // Allow event listeners to filter the message stream. Listeners are allowed to drop messages by
@@ -418,6 +423,7 @@ public class Peer extends PeerSocketHandler {
             // Shut down the channel
             throw new ProtocolException("Peer does not have a copy of the block chain.");
         }
+        versionHandshakeFuture.set(this);
     }
 
     private void startFilteredBlock(FilteredBlock m) {
