@@ -123,10 +123,10 @@ public class Main extends Application {
             // Checkpoint files are made using the BuildCheckpoints tool and usually we have to download the
             // last months worth or more (takes a few seconds).
             bitcoin.setCheckpoints(getClass().getResourceAsStream("checkpoints"));
-            // As an example!
-            // bitcoin.useTor();
         } else if (params == TestNet3Params.get()) {
             bitcoin.setCheckpoints(getClass().getResourceAsStream("checkpoints.testnet"));
+            // As an example!
+            bitcoin.useTor();
         }
         bitcoin.setDownloadListener(controller.progressBarUpdater())
                .setBlockingStartup(false)
