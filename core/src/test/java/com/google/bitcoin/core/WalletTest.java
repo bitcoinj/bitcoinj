@@ -2223,9 +2223,11 @@ public class WalletTest extends TestWithWallet {
         SendRequest request = SendRequest.emptyWallet(outputKey);
         wallet.completeTx(request);
         assertEquals(Wallet.SendRequest.DEFAULT_FEE_PER_KB, request.tx.getFee());
+        assertEquals(1, request.tx.getOutputs().size()); // no change
+        assertEquals(CENT.subtract(Wallet.SendRequest.DEFAULT_FEE_PER_KB), request.tx.getOutput(0).getValue());
+        assertEquals(CENT, request.tx.getValueSentFromMe(wallet));
         wallet.commitTx(request.tx);
         assertEquals(ZERO, wallet.getBalance());
-        assertEquals(CENT, request.tx.getOutput(0).getValue());
 
         // Add 1 confirmed cent and 1 unconfirmed cent. Verify only one cent is emptied because of the coin selection
         // policies that are in use by default.
@@ -2237,9 +2239,11 @@ public class WalletTest extends TestWithWallet {
         request = SendRequest.emptyWallet(outputKey);
         wallet.completeTx(request);
         assertEquals(Wallet.SendRequest.DEFAULT_FEE_PER_KB, request.tx.getFee());
+        assertEquals(1, request.tx.getOutputs().size()); // no change
+        assertEquals(CENT.subtract(Wallet.SendRequest.DEFAULT_FEE_PER_KB), request.tx.getOutput(0).getValue());
+        assertEquals(CENT, request.tx.getValueSentFromMe(wallet));
         wallet.commitTx(request.tx);
         assertEquals(ZERO, wallet.getBalance());
-        assertEquals(CENT, request.tx.getOutput(0).getValue());
 
         // Add just under 0.01
         StoredBlock block2 = new StoredBlock(block.getHeader().createNextBlock(outputKey), BigInteger.ONE, 2);
@@ -2248,9 +2252,11 @@ public class WalletTest extends TestWithWallet {
         request = SendRequest.emptyWallet(outputKey);
         wallet.completeTx(request);
         assertEquals(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE, request.tx.getFee());
+        assertEquals(1, request.tx.getOutputs().size()); // no change
+        assertEquals(CENT.subtract(SATOSHI).subtract(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE), request.tx.getOutput(0).getValue());
+        assertEquals(CENT.subtract(SATOSHI), request.tx.getValueSentFromMe(wallet));
         wallet.commitTx(request.tx);
         assertEquals(ZERO, wallet.getBalance());
-        assertEquals(CENT.subtract(SATOSHI).subtract(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE), request.tx.getOutput(0).getValue());
 
         // Add an unsendable value
         StoredBlock block3 = new StoredBlock(block2.getHeader().createNextBlock(outputKey), BigInteger.ONE, 3);
@@ -2265,9 +2271,11 @@ public class WalletTest extends TestWithWallet {
         request.ensureMinRequiredFee = false;
         wallet.completeTx(request);
         assertEquals(outputValue, request.tx.getFee());
+        assertEquals(1, request.tx.getOutputs().size()); // no change
+        assertEquals(outputValue, request.tx.getOutput(0).getValue());
+        assertEquals(outputValue, request.tx.getValueSentFromMe(wallet));
         wallet.commitTx(request.tx);
         assertEquals(ZERO, wallet.getBalance());
-        assertEquals(outputValue, request.tx.getOutput(0).getValue());
     }
 
     @Test
