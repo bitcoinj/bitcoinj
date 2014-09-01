@@ -2260,14 +2260,15 @@ public class WalletTest extends TestWithWallet {
         Coin outputValue = Transaction.MIN_NONDUST_OUTPUT.add(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE).subtract(SATOSHI);
         tx = createFakeTx(params, outputValue, myAddress);
         wallet.receiveFromBlock(tx, block3, AbstractBlockChain.NewBlockType.BEST_CHAIN, 0);
-        request = SendRequest.emptyWallet(outputKey);
         try {
+            request = SendRequest.emptyWallet(outputKey);
             wallet.completeTx(request);
             fail();
         } catch (Wallet.CouldNotAdjustDownwards e) {}
+        request = SendRequest.emptyWallet(outputKey);
         request.ensureMinRequiredFee = false;
         wallet.completeTx(request);
-        assertEquals(outputValue, request.tx.getFee());
+        assertEquals(ZERO, request.tx.getFee());
         wallet.commitTx(request.tx);
         assertEquals(ZERO, wallet.getBalance());
         assertEquals(outputValue, request.tx.getOutput(0).getValue());

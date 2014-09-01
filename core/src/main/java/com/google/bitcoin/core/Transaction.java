@@ -1163,38 +1163,57 @@ public class Transaction extends ChildMessage implements Serializable {
     }
 
     /**
-     * Checks the transaction contents for sanity, in ways that can be done in a standalone manner.
+     * <p>Checks the transaction contents for sanity, in ways that can be done in a standalone manner.
      * Does <b>not</b> perform all checks on a transaction such as whether the inputs are already spent.
+     * Specifically this method verifies:</p>
+     *
+     * <ul>
+     *     <li>That there is at least one input and output.</li>
+     *     <li>That the serialized size is not larger than the max block size.</li>
+     *     <li>That no outputs have negative value.</li>
+     *     <li>That the outputs do not sum to larger than the max allowed quantity of coin in the system.</li>
+     *     <li>If the tx is a coinbase tx, the coinbase scriptSig size is within range. Otherwise that there are no
+     *     coinbase inputs in the tx.</li>
+     * </ul>
      *
      * @throws VerificationException
      */
     public void verify() throws VerificationException {
         maybeParse();
         if (inputs.size() == 0 || outputs.size() == 0)
-            throw new VerificationException("Transaction had no inputs or no outputs.");
+            throw new VerificationException.EmptyInputsOrOutputs();
         if (this.getMessageSize() > Block.MAX_BLOCK_SIZE)
-            throw new VerificationException("Transaction larger than MAX_BLOCK_SIZE");
+            throw new VerificationException.LargerThanMaxBlockSize();
 
         Coin valueOut = Coin.ZERO;
+        HashSet<TransactionOutPoint> outpoints = new HashSet<TransactionOutPoint>();
+        for (TransactionInput input : inputs) {
+            if (outpoints.contains(input.getOutpoint()))
+                throw new VerificationException.DuplicatedOutPoint();
+            outpoints.add(input.getOutpoint());
+        }
         try {
             for (TransactionOutput output : outputs) {
-                if (output.getValue().signum() < 0)
-                    throw new VerificationException("Transaction output negative");
+                if (output.getValue().signum() < 0)    // getValue() can throw IllegalStateException
+                    throw new VerificationException.NegativeValueOutput();
                 valueOut = valueOut.add(output.getValue());
+                // Duplicate the MAX_MONEY check from Coin.add() in case someone accidentally removes it.
+                if (valueOut.compareTo(NetworkParameters.MAX_MONEY) > 0)
+                    throw new IllegalArgumentException();
             }
         } catch (IllegalStateException e) {
-            throw new VerificationException("A transaction output value exceeds maximum possible");
+            throw new VerificationException.ExcessiveValue();
         } catch (IllegalArgumentException e) {
-            throw new VerificationException("Total transaction output value greater than possible");
+            throw new VerificationException.ExcessiveValue();
         }
 
         if (isCoinBase()) {
             if (inputs.get(0).getScriptBytes().length < 2 || inputs.get(0).getScriptBytes().length > 100)
-                throw new VerificationException("Coinbase script size out of range");
+                throw new VerificationException.CoinbaseScriptSizeOutOfRange();
         } else {
             for (TransactionInput input : inputs)
                 if (input.isCoinBase())
-                    throw new VerificationException("Coinbase input as input in non-coinbase transaction");
+                    throw new VerificationException.UnexpectedCoinbaseInput();
         }
     }
 
