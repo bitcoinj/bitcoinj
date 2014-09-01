@@ -172,7 +172,7 @@ public class TestWithNetworkConnections {
         try {
             checkState(writeTarget.nextMessageBlocking() instanceof VersionMessage);
             checkState(writeTarget.nextMessageBlocking() instanceof VersionAck);
-            checkState(peer.getVersionHandshakeFuture().isDone());
+            peer.getVersionHandshakeFuture().get();
             synchronized (doneConnecting) {
                 doneConnecting.set(true);
             }
