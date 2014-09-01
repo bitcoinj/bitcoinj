@@ -52,7 +52,7 @@ public class DummySigSigner extends StatelessTransactionSigner {
                 for (int j = 1; j < inputScript.getChunks().size() - 1; j++) {
                     ScriptChunk scriptChunk = inputScript.getChunks().get(j);
                     if (scriptChunk.equalsOpCode(0)) {
-                        txIn.setScriptSig(scriptPubKey.getScriptSigWithSignature(inputScript, dummySig, j));
+                        txIn.setScriptSig(scriptPubKey.getScriptSigWithSignature(inputScript, dummySig, j - 1));
                     }
                 }
             } else {
