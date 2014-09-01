@@ -57,6 +57,9 @@ public interface TransactionSigner {
         }
     }
 
+    public static class MissingSignatureException extends RuntimeException {
+    }
+
     /**
      * Returns true if this signer is ready to be used.
      */

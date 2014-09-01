@@ -23,7 +23,7 @@ import com.google.bitcoin.params.UnitTestParams;
 import com.google.bitcoin.script.Script;
 import com.google.bitcoin.script.ScriptBuilder;
 import com.google.bitcoin.script.ScriptChunk;
-import com.google.bitcoin.signers.DummySigSigner;
+import com.google.bitcoin.signers.MissingSigResolutionSigner;
 import com.google.bitcoin.signers.LocalTransactionSigner;
 import com.google.bitcoin.signers.TransactionSigner;
 import com.google.bitcoin.store.UnreadableWalletException;
@@ -2891,6 +2891,24 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
     }
 
     /**
+     * Enumerates possible resolutions for missing signatures.
+     */
+    public enum MissingSigsMode {
+        /** Input script will have OP_0 instead of missing signatures */
+        USE_OP_ZERO,
+        /**
+         * Missing signatures will be replaced by dummy sigs. This is useful when you'd like to know the fee for
+         * a transaction without knowing the user's password, as fee depends on size.
+         */
+        USE_DUMMY_SIG,
+        /**
+         * If signature is missing, {@link com.google.bitcoin.signers.TransactionSigner.MissingSignatureException}
+         * will be thrown for P2SH and {@link ECKey.MissingPrivateKeyException} for other tx types.
+         */
+        THROW
+    }
+
+    /**
      * A SendRequest gives the wallet information about precisely how to send money to a recipient or set of recipients.
      * Static methods are provided to help you create SendRequests and there are a few helper methods on the wallet that
      * just simplify the most common use cases. You may wish to customize a SendRequest if you want to attach a fee or
@@ -3003,13 +3021,11 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
         public boolean shuffleOutputs = true;
 
         /**
-         * If this flag is set (the default), any signature this wallet failed to obtain during completion will be
-         * replaced with dummy signature ({@link com.google.bitcoin.crypto.TransactionSignature#dummy() }). This is
-         * useful when you'd like to know the fee for a transaction without knowing the user's password, as fee depends
-         * on size. If flag set to false, missing signatures will appear as empty sigs (OP_0) in transaction
-         * inputs' scriptSigs.
+         * Specifies what to do with missing signatures left after completing this request. Default strategy is to
+         * replace missing signatures with dummy sigs ({@link MissingSigsMode#USE_DUMMY_SIG}).
+         * @see MissingSigsMode
          */
-        public boolean useDummySignatures = true;
+        public MissingSigsMode missingSigsMode = MissingSigsMode.USE_DUMMY_SIG;
 
         /**
          * If not null, this exchange rate is recorded with the transaction during completion.
@@ -3439,8 +3455,8 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
                     log.info("{} returned false for the tx", signer.getClass().getName());
             }
 
-            if (req.useDummySignatures)
-                new DummySigSigner().signInputs(proposal, maybeDecryptingKeyBag);
+            // resolve missing sigs if any
+            new MissingSigResolutionSigner(req.missingSigsMode).signInputs(proposal, maybeDecryptingKeyBag);
         } finally {
             lock.unlock();
         }

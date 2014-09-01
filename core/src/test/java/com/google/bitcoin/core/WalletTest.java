@@ -51,10 +51,7 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.net.InetAddress;
 import java.security.SecureRandom;
-import java.util.Date;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -99,7 +96,11 @@ public class WalletTest extends TestWithWallet {
         super.tearDown();
     }
 
-    private void createMarriedWallet() throws BlockStoreException {
+    private void createMarriedWalletWithSigner() throws BlockStoreException {
+        createMarriedWallet(true);
+    }
+
+    private void createMarriedWallet(boolean addSigners) throws BlockStoreException {
         wallet = new Wallet(params);
         blockStore = new MemoryBlockStore(params);
         chain = new BlockChain(params, wallet, blockStore);
@@ -107,15 +108,17 @@ public class WalletTest extends TestWithWallet {
         final DeterministicKeyChain keyChain = new DeterministicKeyChain(new SecureRandom());
         DeterministicKey partnerKey = DeterministicKey.deserializeB58(null, keyChain.getWatchingKey().serializePubB58());
 
-        CustomTransactionSigner signer = new CustomTransactionSigner() {
-            @Override
-            protected SignatureAndKey getSignature(Sha256Hash sighash, List<ChildNumber> derivationPath) {
-                ImmutableList<ChildNumber> keyPath = ImmutableList.copyOf(derivationPath);
-                DeterministicKey key = keyChain.getKeyByPath(keyPath, true);
-                return new SignatureAndKey(key.sign(sighash), key.getPubOnly());
-            }
-        };
-        wallet.addTransactionSigner(signer);
+        if (addSigners) {
+            CustomTransactionSigner signer = new CustomTransactionSigner() {
+                @Override
+                protected SignatureAndKey getSignature(Sha256Hash sighash, List<ChildNumber> derivationPath) {
+                    ImmutableList<ChildNumber> keyPath = ImmutableList.copyOf(derivationPath);
+                    DeterministicKey key = keyChain.getKeyByPath(keyPath, true);
+                    return new SignatureAndKey(key.sign(sighash), key.getPubOnly());
+                }
+            };
+            wallet.addTransactionSigner(signer);
+        }
 
         wallet.addFollowingAccountKeys(ImmutableList.of(partnerKey));
     }
@@ -149,7 +152,7 @@ public class WalletTest extends TestWithWallet {
 
     @Test
     public void basicSpendingFromP2SH() throws Exception {
-        createMarriedWallet();
+        createMarriedWalletWithSigner();
         Address destination = new ECKey().toAddress(params);
         myAddress = wallet.currentAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         basicSpendingCommon(wallet, myAddress, destination, false);
@@ -1233,7 +1236,7 @@ public class WalletTest extends TestWithWallet {
 
     @Test
     public void marriedKeychainBloomFilter() throws Exception {
-        createMarriedWallet();
+        createMarriedWalletWithSigner();
         Address address = wallet.currentReceiveAddress();
 
         assertTrue(wallet.getBloomFilter(0.001).contains(address.getHash160()));
@@ -2412,17 +2415,62 @@ public class WalletTest extends TestWithWallet {
     @Test
     public void completeTxPartiallySignedWithDummySigs() throws Exception {
         byte[] dummySig = TransactionSignature.dummy().encodeToBitcoin();
-        completeTxPartiallySigned(true, dummySig);
+        completeTxPartiallySigned(Wallet.MissingSigsMode.USE_DUMMY_SIG, dummySig);
     }
 
     @Test
-    public void completeTxPartiallySignedWithoutDummySigs() throws Exception {
+    public void completeTxPartiallySignedWithEmptySig() throws Exception {
         byte[] emptySig = new byte[]{};
-        completeTxPartiallySigned(false, emptySig);
+        completeTxPartiallySigned(Wallet.MissingSigsMode.USE_OP_ZERO, emptySig);
     }
 
+    @Test (expected = ECKey.MissingPrivateKeyException.class)
+    public void completeTxPartiallySignedThrows() throws Exception {
+        byte[] emptySig = new byte[]{};
+        completeTxPartiallySigned(Wallet.MissingSigsMode.THROW, emptySig);
+    }
+
+    @Test
+    public void completeTxPartiallySignedMarriedWithDummySigs() throws Exception {
+        byte[] dummySig = TransactionSignature.dummy().encodeToBitcoin();
+        completeTxPartiallySignedMarried(Wallet.MissingSigsMode.USE_DUMMY_SIG, dummySig);
+    }
+
+    @Test
+    public void completeTxPartiallySignedMarriedWithEmptySig() throws Exception {
+        byte[] emptySig = new byte[]{};
+        completeTxPartiallySignedMarried(Wallet.MissingSigsMode.USE_OP_ZERO, emptySig);
+    }
+
+    @Test (expected = TransactionSigner.MissingSignatureException.class)
+    public void completeTxPartiallySignedMarriedThrows() throws Exception {
+        byte[] emptySig = new byte[]{};
+        completeTxPartiallySignedMarried(Wallet.MissingSigsMode.THROW, emptySig);
+    }
+
+    public void completeTxPartiallySignedMarried(Wallet.MissingSigsMode missSigMode, byte[] expectedSig) throws Exception {
+        // create married wallet without signer
+        createMarriedWallet(false);
+        myAddress = wallet.currentAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
+        sendMoneyToWallet(wallet, COIN, myAddress, AbstractBlockChain.NewBlockType.BEST_CHAIN);
+
+        ECKey dest = new ECKey();
+        Wallet.SendRequest req = Wallet.SendRequest.emptyWallet(dest.toAddress(params));
+        req.missingSigsMode = missSigMode;
+        wallet.completeTx(req);
+        TransactionInput input = req.tx.getInput(0);
+
+        boolean firstSigIsMissing = Arrays.equals(expectedSig, input.getScriptSig().getChunks().get(1).data);
+        boolean secondSigIsMissing = Arrays.equals(expectedSig, input.getScriptSig().getChunks().get(2).data);
+
+        assertTrue("Only one of the signatures should be missing/dummy", firstSigIsMissing ^ secondSigIsMissing);
+        int localSigIndex = firstSigIsMissing ? 2 : 1;
+        assertTrue("Local sig should be present", input.getScriptSig().getChunks().get(localSigIndex).data.length > 70);
+    }
+
+
     @SuppressWarnings("ConstantConditions")
-    public void completeTxPartiallySigned(boolean useDummySignatures, byte[] expectedSig) throws Exception {
+    public void completeTxPartiallySigned(Wallet.MissingSigsMode missSigMode, byte[] expectedSig) throws Exception {
         // Check the wallet will write dummy scriptSigs for inputs that we have only pubkeys for without the privkey.
         ECKey priv = new ECKey();
         ECKey pub = ECKey.fromPublicOnly(priv.getPubKeyPoint());
@@ -2437,7 +2485,7 @@ public class WalletTest extends TestWithWallet {
 
         ECKey dest = new ECKey();
         Wallet.SendRequest req = Wallet.SendRequest.emptyWallet(dest.toAddress(params));
-        req.useDummySignatures = useDummySignatures;
+        req.missingSigsMode = missSigMode;
         wallet.completeTx(req);
         byte[] dummySig = TransactionSignature.dummy().encodeToBitcoin();
         // Selected inputs can be in any order.
