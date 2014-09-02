@@ -86,6 +86,7 @@ public class MissingSigResolutionSigner extends StatelessTransactionSigner {
                     }
                 }
             }
+            // TODO handle non-P2SH multisig
         }
         return true;
     }

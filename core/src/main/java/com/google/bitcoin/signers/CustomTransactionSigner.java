@@ -71,9 +71,7 @@ public abstract class CustomTransactionSigner extends StatelessTransactionSigner
             Sha256Hash sighash = tx.hashForSignature(i, redeemData.redeemScript, Transaction.SigHash.ALL, false);
             SignatureAndKey sigKey = getSignature(sighash, propTx.keyPaths.get(scriptPubKey));
             TransactionSignature txSig = new TransactionSignature(sigKey.sig, Transaction.SigHash.ALL, false);
-            int sigIndex = redeemData.getKeyIndex(sigKey.pubKey);
-            if (sigIndex < 0)
-                throw new RuntimeException("Redeem script doesn't contain our key"); // This should not happen
+            int sigIndex = inputScript.getSigInsertionIndex(sighash, sigKey.pubKey);
             inputScript = scriptPubKey.getScriptSigWithSignature(inputScript, txSig.encodeToBitcoin(), sigIndex);
             txIn.setScriptSig(inputScript);
         }

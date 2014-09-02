@@ -75,24 +75,4 @@ public class RedeemData {
         }
         return null;
     }
-
-    /**
-     * Returns index of the given key in program that this RedeemData satisfies. For CHECKSIG programs this
-     * will always be 0. Returned index may be used to insert corresponding signature into proper place in input script.
-     * If key is not found, -1 is returned.
-     */
-    public int getKeyIndex(ECKey key) {
-        boolean isMultisig = keys.size() > 0;
-        if (isMultisig) {
-            for (int i = 0; i < keys.size(); i++) {
-                byte[] pubKey = keys.get(i).getPubKey();
-                if (Arrays.equals(pubKey, key.getPubKey()))
-                    return i;
-            }
-            return -1;
-        } else {
-            return 0;
-        }
-
-    }
 }

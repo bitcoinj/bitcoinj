@@ -27,6 +27,7 @@ import java.util.*;
 
 import static com.google.bitcoin.script.ScriptOpCodes.*;
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkState;
 
 /**
  * <p>Tools for the construction of commonly used script types. You don't normally need this as it's hidden behind
@@ -200,28 +201,56 @@ public class ScriptBuilder {
     }
 
     /**
-     * Returns a copy of the given scriptSig with a signature placeholder on the given position replaced with the given signature.
+     * Returns a copy of the given scriptSig with the signature inserted in the given position.
+     *
+     * This function assumes that any missing sigs have OP_0 placeholders.
+     *
+     * @param targetIndex where to insert the signature
+     * @param sigsPrefixCount how many items to copy verbatim (e.g. initial OP_0 for multisig)
+     * @param sigsSuffixCount how many items to copy verbatim at end (e.g. redeemScript for P2SH)
      */
-    public static Script updateScriptWithSignature(Script scriptSig, byte[] signature, int index, boolean isMultisig) {
+    public static Script updateScriptWithSignature(Script scriptSig, byte[] signature, int targetIndex,
+                                                   int sigsPrefixCount, int sigsSuffixCount) {
         ScriptBuilder builder = new ScriptBuilder();
-        Iterator<ScriptChunk> it = scriptSig.getChunks().iterator();
-        int numChunks = 0;
-        // skip first OP_0 for multisig scripts
-        if (isMultisig)
-            builder.addChunk(it.next());
-        for (; it.hasNext(); ) {
-            ScriptChunk chunk = it.next();
-            // replace the first OP_0 with signature data
-            if (chunk.equalsOpCode(OP_0)) {
-                if (numChunks == index)
-                    builder.data(signature);
-                else
-                    builder.addChunk(chunk);
-            } else {
-                builder.addChunk(chunk);
+        List<ScriptChunk> inputChunks = scriptSig.getChunks();
+        int totalChunks = inputChunks.size();
+
+        // copy the prefix
+        for (ScriptChunk chunk: inputChunks.subList(0, sigsPrefixCount))
+            builder.addChunk(chunk);
+
+        // copy the sigs
+        int pos = 0;
+        boolean inserted = false;
+        for (ScriptChunk chunk: inputChunks.subList(sigsPrefixCount, totalChunks - sigsSuffixCount)) {
+            if (pos == targetIndex) {
+                inserted = true;
+                builder.data(signature);
+                pos++;
             }
-            numChunks++;
+            if (!chunk.equalsOpCode(OP_0)) {
+                builder.addChunk(chunk);
+                pos++;
+            }
         }
+
+        // add OP_0's if needed, since we skipped them in the previous loop
+        while (pos < totalChunks - sigsPrefixCount - sigsSuffixCount) {
+            if (pos == targetIndex) {
+                inserted = true;
+                builder.data(signature);
+            }
+            else {
+                builder.addChunk(new ScriptChunk(OP_0, null));
+            }
+            pos++;
+        }
+
+        // copy the suffix
+        for (ScriptChunk chunk: inputChunks.subList(totalChunks - sigsSuffixCount, totalChunks))
+            builder.addChunk(chunk);
+
+        checkState(inserted);
         return builder.build();
     }
 

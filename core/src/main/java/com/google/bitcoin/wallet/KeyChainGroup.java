@@ -629,7 +629,7 @@ public class KeyChainGroup implements KeyBag {
 
         for (Map.Entry<ByteString, RedeemData> entry : marriedKeysRedeemData.entrySet()) {
             filter.insert(entry.getKey().toByteArray());
-            filter.insert(ScriptBuilder.createP2SHOutputScript(entry.getValue().redeemScript).getProgram());
+            filter.insert(entry.getValue().redeemScript.getProgram());
         }
 
         for (DeterministicKeyChain chain : chains) {
