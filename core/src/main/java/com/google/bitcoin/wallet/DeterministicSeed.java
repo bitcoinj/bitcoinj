@@ -50,18 +50,18 @@ public class DeterministicSeed implements EncryptableItem {
     @Nullable private EncryptedData encryptedMnemonicCode;
     private final long creationTimeSeconds;
 
-    DeterministicSeed(String mnemonicCode, String passphrase, long creationTimeSeconds) throws UnreadableWalletException {
+    public DeterministicSeed(String mnemonicCode, String passphrase, long creationTimeSeconds) throws UnreadableWalletException {
         this(decodeMnemonicCode(mnemonicCode), passphrase, creationTimeSeconds);
     }
 
-    DeterministicSeed(byte[] seed, List<String> mnemonic, long creationTimeSeconds) {
+    public DeterministicSeed(byte[] seed, List<String> mnemonic, long creationTimeSeconds) {
         this.seed = checkNotNull(seed);
         this.mnemonicCode = checkNotNull(mnemonic);
         this.encryptedMnemonicCode = null;
         this.creationTimeSeconds = creationTimeSeconds;
     }
 
-    DeterministicSeed(EncryptedData encryptedMnemonic, long creationTimeSeconds) {
+    public DeterministicSeed(EncryptedData encryptedMnemonic, long creationTimeSeconds) {
         this.seed = null;
         this.mnemonicCode = null;
         this.encryptedMnemonicCode = checkNotNull(encryptedMnemonic);
