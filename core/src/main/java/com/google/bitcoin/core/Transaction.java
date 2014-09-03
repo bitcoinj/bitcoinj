@@ -1262,7 +1262,7 @@ public class Transaction extends ChildMessage implements Serializable {
      */
     public static long parseLockTimeStr(String lockTimeStr) throws ParseException {
         if (lockTimeStr.indexOf("/") != -1) {
-            SimpleDateFormat format = new SimpleDateFormat("yyyy/MM/dd");
+            SimpleDateFormat format = new SimpleDateFormat("yyyy/MM/dd", Locale.US);
             Date date = format.parse(lockTimeStr);
             return date.getTime() / 1000;
         }
