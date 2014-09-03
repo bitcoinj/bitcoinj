@@ -1868,8 +1868,12 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
 
             if (result == TransactionInput.ConnectionResult.ALREADY_SPENT) {
                 if (fromChain) {
-                    // Double spend from chain: this will be handled later by checkForDoubleSpendAgainstPending.
-                    log.warn("updateForSpends: saw double spend from chain, handling later.");
+                    // Can be:
+                    // (1) We already marked this output as spent when we saw the pending transaction (most likely).
+                    //     Now it's being confirmed of course, we cannot mark it as spent again.
+                    // (2) A double spend from chain: this will be handled later by checkForDoubleSpendAgainstPending.
+                    //
+                    // In any case, nothing to do here.
                 } else {
                     // We saw two pending transactions that double spend each other. We don't know which will win.
                     // This can happen in the case of bad network nodes that mutate transactions. Do a hex dump
