@@ -44,6 +44,8 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.protobuf.ByteString;
+
+import org.bitcoin.protocols.payments.Protos.PaymentDetails;
 import org.bitcoinj.wallet.Protos;
 import org.bitcoinj.wallet.Protos.Wallet.EncryptionType;
 import org.slf4j.Logger;
@@ -3032,6 +3034,12 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
          */
         public ExchangeRate exchangeRate = null;
 
+        /**
+         * If not null, this memo is recorded with the transaction during completion. It can be used to record the memo
+         * of the payment request that initiated the transaction.
+         */
+        public String memo = null;
+
         // Tracks if this has been passed to wallet.completeTx already: just a safety check.
         private boolean completed;
 
@@ -3082,6 +3090,13 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
             req.tx.addOutput(Coin.ZERO, destination);
             req.emptyWallet = true;
             return req;
+        }
+
+        /** Copy data from payment request. */
+        public SendRequest fromPaymentDetails(PaymentDetails paymentDetails) {
+            if (paymentDetails.hasMemo())
+                this.memo = paymentDetails.getMemo();
+            return this;
         }
 
         @Override
@@ -3399,6 +3414,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
             req.tx.setPurpose(Transaction.Purpose.USER_PAYMENT);
             // Record the exchange rate that was valid when the transaction was completed.
             req.tx.setExchangeRate(req.exchangeRate);
+            req.tx.setMemo(req.memo);
             req.completed = true;
             req.fee = calculatedFee;
             log.info("  completed: {}", req.tx);

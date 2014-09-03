@@ -7819,6 +7819,36 @@ public final class Protos {
      * </pre>
      */
     org.bitcoinj.wallet.Protos.ExchangeRateOrBuilder getExchangeRateOrBuilder();
+
+    // optional string memo = 13;
+    /**
+     * <code>optional string memo = 13;</code>
+     *
+     * <pre>
+     * Memo of the transaction. It can be used to record the memo of the payment request that initiated the
+     * transaction.
+     * </pre>
+     */
+    boolean hasMemo();
+    /**
+     * <code>optional string memo = 13;</code>
+     *
+     * <pre>
+     * Memo of the transaction. It can be used to record the memo of the payment request that initiated the
+     * transaction.
+     * </pre>
+     */
+    java.lang.String getMemo();
+    /**
+     * <code>optional string memo = 13;</code>
+     *
+     * <pre>
+     * Memo of the transaction. It can be used to record the memo of the payment request that initiated the
+     * transaction.
+     * </pre>
+     */
+    com.google.protobuf.ByteString
+        getMemoBytes();
   }
   /**
    * Protobuf type {@code wallet.Transaction}
@@ -7982,6 +8012,11 @@ public final class Protos {
                 exchangeRate_ = subBuilder.buildPartial();
               }
               bitField0_ |= 0x00000080;
+              break;
+            }
+            case 106: {
+              bitField0_ |= 0x00000100;
+              memo_ = input.readBytes();
               break;
             }
           }
@@ -8712,6 +8747,64 @@ public final class Protos {
       return exchangeRate_;
     }
 
+    // optional string memo = 13;
+    public static final int MEMO_FIELD_NUMBER = 13;
+    private java.lang.Object memo_;
+    /**
+     * <code>optional string memo = 13;</code>
+     *
+     * <pre>
+     * Memo of the transaction. It can be used to record the memo of the payment request that initiated the
+     * transaction.
+     * </pre>
+     */
+    public boolean hasMemo() {
+      return ((bitField0_ & 0x00000100) == 0x00000100);
+    }
+    /**
+     * <code>optional string memo = 13;</code>
+     *
+     * <pre>
+     * Memo of the transaction. It can be used to record the memo of the payment request that initiated the
+     * transaction.
+     * </pre>
+     */
+    public java.lang.String getMemo() {
+      java.lang.Object ref = memo_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        if (bs.isValidUtf8()) {
+          memo_ = s;
+        }
+        return s;
+      }
+    }
+    /**
+     * <code>optional string memo = 13;</code>
+     *
+     * <pre>
+     * Memo of the transaction. It can be used to record the memo of the payment request that initiated the
+     * transaction.
+     * </pre>
+     */
+    public com.google.protobuf.ByteString
+        getMemoBytes() {
+      java.lang.Object ref = memo_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        memo_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
     private void initFields() {
       version_ = 0;
       hash_ = com.google.protobuf.ByteString.EMPTY;
@@ -8725,6 +8818,7 @@ public final class Protos {
       confidence_ = org.bitcoinj.wallet.Protos.TransactionConfidence.getDefaultInstance();
       purpose_ = org.bitcoinj.wallet.Protos.Transaction.Purpose.UNKNOWN;
       exchangeRate_ = org.bitcoinj.wallet.Protos.ExchangeRate.getDefaultInstance();
+      memo_ = "";
     }
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
@@ -8806,6 +8900,9 @@ public final class Protos {
       if (((bitField0_ & 0x00000080) == 0x00000080)) {
         output.writeMessage(12, exchangeRate_);
       }
+      if (((bitField0_ & 0x00000100) == 0x00000100)) {
+        output.writeBytes(13, getMemoBytes());
+      }
       getUnknownFields().writeTo(output);
     }
 
@@ -8872,6 +8969,10 @@ public final class Protos {
       if (((bitField0_ & 0x00000080) == 0x00000080)) {
         size += com.google.protobuf.CodedOutputStream
           .computeMessageSize(12, exchangeRate_);
+      }
+      if (((bitField0_ & 0x00000100) == 0x00000100)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBytesSize(13, getMemoBytes());
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSerializedSize = size;
@@ -9033,6 +9134,8 @@ public final class Protos {
           exchangeRateBuilder_.clear();
         }
         bitField0_ = (bitField0_ & ~0x00000800);
+        memo_ = "";
+        bitField0_ = (bitField0_ & ~0x00001000);
         return this;
       }
 
@@ -9129,6 +9232,10 @@ public final class Protos {
         } else {
           result.exchangeRate_ = exchangeRateBuilder_.build();
         }
+        if (((from_bitField0_ & 0x00001000) == 0x00001000)) {
+          to_bitField0_ |= 0x00000100;
+        }
+        result.memo_ = memo_;
         result.bitField0_ = to_bitField0_;
         onBuilt();
         return result;
@@ -9240,6 +9347,11 @@ public final class Protos {
         }
         if (other.hasExchangeRate()) {
           mergeExchangeRate(other.getExchangeRate());
+        }
+        if (other.hasMemo()) {
+          bitField0_ |= 0x00001000;
+          memo_ = other.memo_;
+          onChanged();
         }
         this.mergeUnknownFields(other.getUnknownFields());
         return this;
@@ -10540,6 +10652,110 @@ public final class Protos {
           exchangeRate_ = null;
         }
         return exchangeRateBuilder_;
+      }
+
+      // optional string memo = 13;
+      private java.lang.Object memo_ = "";
+      /**
+       * <code>optional string memo = 13;</code>
+       *
+       * <pre>
+       * Memo of the transaction. It can be used to record the memo of the payment request that initiated the
+       * transaction.
+       * </pre>
+       */
+      public boolean hasMemo() {
+        return ((bitField0_ & 0x00001000) == 0x00001000);
+      }
+      /**
+       * <code>optional string memo = 13;</code>
+       *
+       * <pre>
+       * Memo of the transaction. It can be used to record the memo of the payment request that initiated the
+       * transaction.
+       * </pre>
+       */
+      public java.lang.String getMemo() {
+        java.lang.Object ref = memo_;
+        if (!(ref instanceof java.lang.String)) {
+          java.lang.String s = ((com.google.protobuf.ByteString) ref)
+              .toStringUtf8();
+          memo_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>optional string memo = 13;</code>
+       *
+       * <pre>
+       * Memo of the transaction. It can be used to record the memo of the payment request that initiated the
+       * transaction.
+       * </pre>
+       */
+      public com.google.protobuf.ByteString
+          getMemoBytes() {
+        java.lang.Object ref = memo_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          memo_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>optional string memo = 13;</code>
+       *
+       * <pre>
+       * Memo of the transaction. It can be used to record the memo of the payment request that initiated the
+       * transaction.
+       * </pre>
+       */
+      public Builder setMemo(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00001000;
+        memo_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional string memo = 13;</code>
+       *
+       * <pre>
+       * Memo of the transaction. It can be used to record the memo of the payment request that initiated the
+       * transaction.
+       * </pre>
+       */
+      public Builder clearMemo() {
+        bitField0_ = (bitField0_ & ~0x00001000);
+        memo_ = getDefaultInstance().getMemo();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional string memo = 13;</code>
+       *
+       * <pre>
+       * Memo of the transaction. It can be used to record the memo of the payment request that initiated the
+       * transaction.
+       * </pre>
+       */
+      public Builder setMemoBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00001000;
+        memo_ = value;
+        onChanged();
+        return this;
       }
 
       // @@protoc_insertion_point(builder_scope:wallet.Transaction)
@@ -18299,7 +18515,7 @@ public final class Protos {
       "Type\022\013\n\007UNKNOWN\020\000\022\014\n\010BUILDING\020\001\022\013\n\007PENDI" +
       "NG\020\002\022\025\n\021NOT_IN_BEST_CHAIN\020\003\022\010\n\004DEAD\020\004\"A\n" +
       "\006Source\022\022\n\016SOURCE_UNKNOWN\020\000\022\022\n\016SOURCE_NE" +
-      "TWORK\020\001\022\017\n\013SOURCE_SELF\020\002\"\246\005\n\013Transaction" +
+      "TWORK\020\001\022\017\n\013SOURCE_SELF\020\002\"\264\005\n\013Transaction" +
       "\022\017\n\007version\030\001 \002(\005\022\014\n\004hash\030\002 \002(\014\022&\n\004pool\030" +
       "\003 \001(\0162\030.wallet.Transaction.Pool\022\021\n\tlock_" +
       "time\030\004 \001(\r\022\022\n\nupdated_at\030\005 \001(\003\0223\n\021transa" +
@@ -18310,37 +18526,38 @@ public final class Protos {
       "idence\030\t \001(\0132\035.wallet.TransactionConfide" +
       "nce\0225\n\007purpose\030\n \001(\0162\033.wallet.Transactio" +
       "n.Purpose:\007UNKNOWN\022+\n\rexchange_rate\030\014 \001(" +
-      "\0132\024.wallet.ExchangeRate\"Y\n\004Pool\022\013\n\007UNSPE" +
-      "NT\020\004\022\t\n\005SPENT\020\005\022\014\n\010INACTIVE\020\002\022\010\n\004DEAD\020\n\022" +
-      "\013\n\007PENDING\020\020\022\024\n\020PENDING_INACTIVE\020\022\"\224\001\n\007P" +
-      "urpose\022\013\n\007UNKNOWN\020\000\022\020\n\014USER_PAYMENT\020\001\022\020\n" +
-      "\014KEY_ROTATION\020\002\022\034\n\030ASSURANCE_CONTRACT_CL" +
-      "AIM\020\003\022\035\n\031ASSURANCE_CONTRACT_PLEDGE\020\004\022\033\n\027",
-      "ASSURANCE_CONTRACT_STUB\020\005\"N\n\020ScryptParam" +
-      "eters\022\014\n\004salt\030\001 \002(\014\022\020\n\001n\030\002 \001(\003:\00516384\022\014\n" +
-      "\001r\030\003 \001(\005:\0018\022\014\n\001p\030\004 \001(\005:\0011\"8\n\tExtension\022\n" +
-      "\n\002id\030\001 \002(\t\022\014\n\004data\030\002 \002(\014\022\021\n\tmandatory\030\003 " +
-      "\002(\010\" \n\003Tag\022\013\n\003tag\030\001 \002(\t\022\014\n\004data\030\002 \002(\014\"5\n" +
-      "\021TransactionSigner\022\022\n\nclass_name\030\001 \002(\t\022\014" +
-      "\n\004data\030\002 \001(\014\"\351\004\n\006Wallet\022\032\n\022network_ident" +
-      "ifier\030\001 \002(\t\022\034\n\024last_seen_block_hash\030\002 \001(" +
-      "\014\022\036\n\026last_seen_block_height\030\014 \001(\r\022!\n\031las" +
-      "t_seen_block_time_secs\030\016 \001(\003\022\030\n\003key\030\003 \003(",
-      "\0132\013.wallet.Key\022(\n\013transaction\030\004 \003(\0132\023.wa" +
-      "llet.Transaction\022&\n\016watched_script\030\017 \003(\013" +
-      "2\016.wallet.Script\022C\n\017encryption_type\030\005 \001(" +
-      "\0162\035.wallet.Wallet.EncryptionType:\013UNENCR" +
-      "YPTED\0227\n\025encryption_parameters\030\006 \001(\0132\030.w" +
-      "allet.ScryptParameters\022\022\n\007version\030\007 \001(\005:" +
-      "\0011\022$\n\textension\030\n \003(\0132\021.wallet.Extension" +
-      "\022\023\n\013description\030\013 \001(\t\022\031\n\021key_rotation_ti" +
-      "me\030\r \001(\004\022\031\n\004tags\030\020 \003(\0132\013.wallet.Tag\0226\n\023t" +
-      "ransaction_signers\030\021 \003(\0132\031.wallet.Transa",
-      "ctionSigner\";\n\016EncryptionType\022\017\n\013UNENCRY" +
-      "PTED\020\001\022\030\n\024ENCRYPTED_SCRYPT_AES\020\002\"R\n\014Exch" +
-      "angeRate\022\022\n\ncoin_value\030\001 \002(\003\022\022\n\nfiat_val" +
-      "ue\030\002 \002(\003\022\032\n\022fiat_currency_code\030\003 \002(\tB\035\n\023" +
-      "org.bitcoinj.walletB\006Protos"
+      "\0132\024.wallet.ExchangeRate\022\014\n\004memo\030\r \001(\t\"Y\n" +
+      "\004Pool\022\013\n\007UNSPENT\020\004\022\t\n\005SPENT\020\005\022\014\n\010INACTIV" +
+      "E\020\002\022\010\n\004DEAD\020\n\022\013\n\007PENDING\020\020\022\024\n\020PENDING_IN" +
+      "ACTIVE\020\022\"\224\001\n\007Purpose\022\013\n\007UNKNOWN\020\000\022\020\n\014USE" +
+      "R_PAYMENT\020\001\022\020\n\014KEY_ROTATION\020\002\022\034\n\030ASSURAN" +
+      "CE_CONTRACT_CLAIM\020\003\022\035\n\031ASSURANCE_CONTRAC",
+      "T_PLEDGE\020\004\022\033\n\027ASSURANCE_CONTRACT_STUB\020\005\"" +
+      "N\n\020ScryptParameters\022\014\n\004salt\030\001 \002(\014\022\020\n\001n\030\002" +
+      " \001(\003:\00516384\022\014\n\001r\030\003 \001(\005:\0018\022\014\n\001p\030\004 \001(\005:\0011\"" +
+      "8\n\tExtension\022\n\n\002id\030\001 \002(\t\022\014\n\004data\030\002 \002(\014\022\021" +
+      "\n\tmandatory\030\003 \002(\010\" \n\003Tag\022\013\n\003tag\030\001 \002(\t\022\014\n" +
+      "\004data\030\002 \002(\014\"5\n\021TransactionSigner\022\022\n\nclas" +
+      "s_name\030\001 \002(\t\022\014\n\004data\030\002 \001(\014\"\351\004\n\006Wallet\022\032\n" +
+      "\022network_identifier\030\001 \002(\t\022\034\n\024last_seen_b" +
+      "lock_hash\030\002 \001(\014\022\036\n\026last_seen_block_heigh" +
+      "t\030\014 \001(\r\022!\n\031last_seen_block_time_secs\030\016 \001",
+      "(\003\022\030\n\003key\030\003 \003(\0132\013.wallet.Key\022(\n\013transact" +
+      "ion\030\004 \003(\0132\023.wallet.Transaction\022&\n\016watche" +
+      "d_script\030\017 \003(\0132\016.wallet.Script\022C\n\017encryp" +
+      "tion_type\030\005 \001(\0162\035.wallet.Wallet.Encrypti" +
+      "onType:\013UNENCRYPTED\0227\n\025encryption_parame" +
+      "ters\030\006 \001(\0132\030.wallet.ScryptParameters\022\022\n\007" +
+      "version\030\007 \001(\005:\0011\022$\n\textension\030\n \003(\0132\021.wa" +
+      "llet.Extension\022\023\n\013description\030\013 \001(\t\022\031\n\021k" +
+      "ey_rotation_time\030\r \001(\004\022\031\n\004tags\030\020 \003(\0132\013.w" +
+      "allet.Tag\0226\n\023transaction_signers\030\021 \003(\0132\031",
+      ".wallet.TransactionSigner\";\n\016EncryptionT" +
+      "ype\022\017\n\013UNENCRYPTED\020\001\022\030\n\024ENCRYPTED_SCRYPT" +
+      "_AES\020\002\"R\n\014ExchangeRate\022\022\n\ncoin_value\030\001 \002" +
+      "(\003\022\022\n\nfiat_value\030\002 \002(\003\022\032\n\022fiat_currency_" +
+      "code\030\003 \002(\tB\035\n\023org.bitcoinj.walletB\006Proto" +
+      "s"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
       new com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner() {
@@ -18400,7 +18617,7 @@ public final class Protos {
           internal_static_wallet_Transaction_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_wallet_Transaction_descriptor,
-              new java.lang.String[] { "Version", "Hash", "Pool", "LockTime", "UpdatedAt", "TransactionInput", "TransactionOutput", "BlockHash", "BlockRelativityOffsets", "Confidence", "Purpose", "ExchangeRate", });
+              new java.lang.String[] { "Version", "Hash", "Pool", "LockTime", "UpdatedAt", "TransactionInput", "TransactionOutput", "BlockHash", "BlockRelativityOffsets", "Confidence", "Purpose", "ExchangeRate", "Memo", });
           internal_static_wallet_ScryptParameters_descriptor =
             getDescriptor().getMessageTypes().get(9);
           internal_static_wallet_ScryptParameters_fieldAccessorTable = new

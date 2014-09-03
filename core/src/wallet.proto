@@ -266,7 +266,11 @@ message Transaction {
   // Exchange rate that was valid when the transaction was sent.
   optional ExchangeRate exchange_rate = 12;
 
-  // Next tag: 13
+  // Memo of the transaction. It can be used to record the memo of the payment request that initiated the
+  // transaction.
+  optional string memo = 13;
+
+  // Next tag: 14
 }
 
 /** The parameters used in the scrypt key derivation function.

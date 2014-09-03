@@ -161,6 +161,12 @@ public class Transaction extends ChildMessage implements Serializable {
     @Nullable
     private ExchangeRate exchangeRate;
 
+    /**
+     * This field can be used to record the memo of the payment request that initiated the transaction. It's optional.
+     */
+    @Nullable
+    private String memo;
+
     public Transaction(NetworkParameters params) {
         super(params);
         version = 1;
@@ -1303,5 +1309,20 @@ public class Transaction extends ChildMessage implements Serializable {
      */
     public void setExchangeRate(ExchangeRate exchangeRate) {
         this.exchangeRate = exchangeRate;
+    }
+
+    /**
+     * Returns the transaction {@link #memo}.
+     */
+    public String getMemo() {
+        return memo;
+    }
+
+    /**
+     * Set the transaction {@link #memo}. It can be used to record the memo of the payment request that initiated the
+     * transaction.
+     */
+    public void setMemo(String memo) {
+        this.memo = memo;
     }
 }

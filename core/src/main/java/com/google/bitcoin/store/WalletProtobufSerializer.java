@@ -300,6 +300,9 @@ public class WalletProtobufSerializer {
                     .setFiatCurrencyCode(exchangeRate.fiat.currencyCode);
             txBuilder.setExchangeRate(exchangeRateBuilder);
         }
+
+        if (tx.getMemo() != null)
+            txBuilder.setMemo(tx.getMemo());
         
         return txBuilder.build();
     }
@@ -591,6 +594,9 @@ public class WalletProtobufSerializer {
             tx.setExchangeRate(new ExchangeRate(Coin.valueOf(exchangeRateProto.getCoinValue()), Fiat.valueOf(
                     exchangeRateProto.getFiatCurrencyCode(), exchangeRateProto.getFiatValue())));
         }
+
+        if (txProto.hasMemo())
+            tx.setMemo(txProto.getMemo());
 
         // Transaction should now be complete.
         Sha256Hash protoHash = byteStringToHash(txProto.getHash());

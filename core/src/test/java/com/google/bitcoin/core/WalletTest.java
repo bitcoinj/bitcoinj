@@ -2614,4 +2614,13 @@ public class WalletTest extends TestWithWallet {
         wallet.completeTx(sendRequest);
         assertEquals(sendRequest.exchangeRate, sendRequest.tx.getExchangeRate());
     }
+
+    @Test
+    public void sendRequestMemo() throws Exception {
+        receiveATransaction(wallet, myAddress);
+        SendRequest sendRequest = SendRequest.to(myAddress, Coin.COIN);
+        sendRequest.memo = "memo";
+        wallet.completeTx(sendRequest);
+        assertEquals(sendRequest.memo, sendRequest.tx.getMemo());
+    }
 }

@@ -15,6 +15,7 @@
 package com.google.bitcoin.protocols.payments;
 
 import com.google.bitcoin.core.*;
+import com.google.bitcoin.core.Wallet.SendRequest;
 import com.google.bitcoin.crypto.TrustStoreLoader;
 import com.google.bitcoin.params.MainNetParams;
 import com.google.bitcoin.protocols.payments.PaymentProtocol.PkiVerificationData;
@@ -297,7 +298,7 @@ public class PaymentSession {
         Transaction tx = new Transaction(params);
         for (Protos.Output output : paymentDetails.getOutputsList())
             tx.addOutput(new TransactionOutput(params, tx, Coin.valueOf(output.getAmount()), output.getScript().toByteArray()));
-        return Wallet.SendRequest.forTx(tx);
+        return Wallet.SendRequest.forTx(tx).fromPaymentDetails(paymentDetails);
     }
 
     /**
