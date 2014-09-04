@@ -146,6 +146,9 @@ public class NioClientManager extends AbstractExecutionThreadService implements 
         } catch (IOException e) {
             log.error("Could not connect to " + serverAddress);
             throw new RuntimeException(e); // This should only happen if we are, eg, out of system resources
+        } catch (AssertionError e) {
+            log.error("Could not connect to " + serverAddress);
+            throw new RuntimeException(e); // Happens on Android when libcore.io.Posix.getsockname() throws libcore.io.ErrnoException.
         }
     }
 
