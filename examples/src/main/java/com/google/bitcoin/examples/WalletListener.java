@@ -10,6 +10,7 @@ import com.google.bitcoin.core.Wallet;
 import com.google.bitcoin.core.WalletEventListener;
 import com.google.bitcoin.script.Script;
 
+// have a look at the Kit.java example to see a usage of this EventListener
 public class WalletListener implements WalletEventListener {
 
     @Override
