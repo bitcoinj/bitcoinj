@@ -158,7 +158,10 @@ public class ScriptTest {
         Script inputScript = ScriptBuilder.createInputScript(dummySig);
         assertThat(inputScript.getChunks().get(0).data, equalTo(dummySig.encodeToBitcoin()));
         inputScript = ScriptBuilder.createInputScript(null);
+        assertEquals(0, inputScript.getFirstEmptySigIndex(false));
         assertThat(inputScript.getChunks().get(0).opcode, equalTo(OP_0));
+        inputScript = ScriptBuilder.updateScriptWithSignature(inputScript, dummySig.encodeToBitcoin(), 0, false);
+        assertEquals(-1, inputScript.getFirstEmptySigIndex(false));
 
         // pay-to-address
         inputScript = ScriptBuilder.createInputScript(dummySig, key);
@@ -177,16 +180,26 @@ public class ScriptTest {
         assertThat(inputScript.getChunks().get(3).data, equalTo(multisigScript.getProgram()));
 
         inputScript = ScriptBuilder.createP2SHMultiSigInputScript(null, multisigScript);
+        assertEquals(0, inputScript.getFirstEmptySigIndex(true));
         assertThat(inputScript.getChunks().get(0).opcode, equalTo(OP_0));
         assertThat(inputScript.getChunks().get(1).opcode, equalTo(OP_0));
         assertThat(inputScript.getChunks().get(2).opcode, equalTo(OP_0));
         assertThat(inputScript.getChunks().get(3).data, equalTo(multisigScript.getProgram()));
 
-        inputScript = ScriptBuilder.updateScriptWithSignature(inputScript, dummySig.encodeToBitcoin(), 1, true);
+        inputScript = ScriptBuilder.updateScriptWithSignature(inputScript, dummySig.encodeToBitcoin(), 0, true);
+        assertEquals(1, inputScript.getFirstEmptySigIndex(true));
         assertThat(inputScript.getChunks().get(0).opcode, equalTo(OP_0));
-        assertThat(inputScript.getChunks().get(1).opcode, equalTo(OP_0));
-        assertThat(inputScript.getChunks().get(2).data, equalTo(dummySig.encodeToBitcoin()));
+        assertThat(inputScript.getChunks().get(1).data, equalTo(dummySig.encodeToBitcoin()));
+        assertThat(inputScript.getChunks().get(2).opcode, equalTo(OP_0));
         assertThat(inputScript.getChunks().get(3).data, equalTo(multisigScript.getProgram()));
+
+        inputScript = ScriptBuilder.updateScriptWithSignature(inputScript, dummySig.encodeToBitcoin(), 1, true);
+        assertEquals(-1, inputScript.getFirstEmptySigIndex(true));
+    }
+
+    @Test
+    public void findNextEmptySigIndex() throws Exception {
+
     }
 
     private Script parseScriptString(String string) throws Exception {

@@ -319,11 +319,11 @@ public class KeyChainGroup implements KeyBag {
 
     private List<ECKey> getMarriedKeysWithFollowed(DeterministicKey followedKey, Collection<DeterministicKeyChain> followingChains) {
         ImmutableList.Builder<ECKey> keys = ImmutableList.builder();
+        keys.add(followedKey);
         for (DeterministicKeyChain keyChain : followingChains) {
             keyChain.maybeLookAhead();
             keys.add(keyChain.getKeyByPath(followedKey.getPath()));
         }
-        keys.add(followedKey);
         return keys.build();
     }
 

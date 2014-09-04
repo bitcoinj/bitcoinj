@@ -402,6 +402,24 @@ public class Script {
     }
 
     /**
+     * Assuming this Script is a scriptSig, returns an index of the first empty signature in this script.
+     * Empty signature is designated by OP_0. This method tries to mitigate the off-by-one error in multisig scripts and
+     * returned index doesn't include offset for such script. For instance, for empty multisig scriptSig this method will
+     * return 0 even though first empty signature is located in a second chunk (chunk index 1). The caller should take
+     * this into account and act accordingly.
+     * If no empty sigs found, -1 will be returned.
+     */
+    public int getFirstEmptySigIndex(boolean isMultisig) {
+        int offset = isMultisig ? 1 : 0;
+        for (int i = offset; i < chunks.size(); i++) {
+            ScriptChunk chunk = chunks.get(i);
+            if (chunk.equalsOpCode(OP_0))
+                return i - offset; // compensate multisig offset
+        }
+        return -1;
+    }
+
+    /**
      * Returns a copy of the given scriptSig with a signature placeholder on the given position replaced with the given signature.
      */
     public Script getScriptSigWithSignature(Script scriptSig, byte[] sigBytes, int index) {

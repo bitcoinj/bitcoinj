@@ -203,26 +203,11 @@ public class ScriptBuilder {
      * Returns a copy of the given scriptSig with a signature placeholder on the given position replaced with the given signature.
      */
     public static Script updateScriptWithSignature(Script scriptSig, byte[] signature, int index, boolean isMultisig) {
-        ScriptBuilder builder = new ScriptBuilder();
-        Iterator<ScriptChunk> it = scriptSig.getChunks().iterator();
-        int numChunks = 0;
-        // skip first OP_0 for multisig scripts
-        if (isMultisig)
-            builder.addChunk(it.next());
-        for (; it.hasNext(); ) {
-            ScriptChunk chunk = it.next();
-            // replace the first OP_0 with signature data
-            if (chunk.equalsOpCode(OP_0)) {
-                if (numChunks == index)
-                    builder.data(signature);
-                else
-                    builder.addChunk(chunk);
-            } else {
-                builder.addChunk(chunk);
-            }
-            numChunks++;
-        }
-        return builder.build();
+        int offset = isMultisig ? 1 : 0;
+        List<ScriptChunk> chunks = new ArrayList<ScriptChunk>(scriptSig.getChunks());
+        if (index >= 0)
+            chunks.set(offset + index, new ScriptChunk(signature.length, signature));
+        return new Script(chunks);
     }
 
     /**
@@ -253,12 +238,9 @@ public class ScriptBuilder {
     }
 
     /**
-     * Creates redeem script with given public keys and threshold. Given public keys will be placed in
-     * redeem script in the lexicographical sorting order.
+     * Creates redeem script with given public keys and threshold.
      */
     public static Script createRedeemScript(int threshold, List<ECKey> pubkeys) {
-        pubkeys = new ArrayList<ECKey>(pubkeys);
-        Collections.sort(pubkeys, ECKey.PUBKEY_COMPARATOR);
         return ScriptBuilder.createMultiSigOutputScript(threshold, pubkeys);
     }
 }

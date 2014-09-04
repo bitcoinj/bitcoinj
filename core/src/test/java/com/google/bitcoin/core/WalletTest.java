@@ -78,6 +78,9 @@ public class WalletTest extends TestWithWallet {
     private KeyCrypter keyCrypter;
     private SecureRandom secureRandom = new SecureRandom();
 
+    private DeterministicKeyChain oracleKeyChain;
+    private DeterministicKeyChain backupKeyChain;
+
     @Before
     @Override
     public void setUp() throws Exception {
@@ -105,22 +108,27 @@ public class WalletTest extends TestWithWallet {
         blockStore = new MemoryBlockStore(params);
         chain = new BlockChain(params, wallet, blockStore);
 
-        final DeterministicKeyChain keyChain = new DeterministicKeyChain(new SecureRandom());
-        DeterministicKey partnerKey = DeterministicKey.deserializeB58(null, keyChain.getWatchingKey().serializePubB58());
+        // create 2-of-3 married wallet. To spend we will need only two signatures and we already have local signer, so
+        // only one third-party signer should be added.
+        oracleKeyChain = new DeterministicKeyChain(new SecureRandom());
+        DeterministicKey oraclePubKey = DeterministicKey.deserializeB58(null, oracleKeyChain.getWatchingKey().serializePubB58());
+
+        backupKeyChain = new DeterministicKeyChain(new SecureRandom());
+        DeterministicKey backupPubKey = DeterministicKey.deserializeB58(null, backupKeyChain.getWatchingKey().serializePubB58());
 
         if (addSigners) {
             CustomTransactionSigner signer = new CustomTransactionSigner() {
                 @Override
                 protected SignatureAndKey getSignature(Sha256Hash sighash, List<ChildNumber> derivationPath) {
                     ImmutableList<ChildNumber> keyPath = ImmutableList.copyOf(derivationPath);
-                    DeterministicKey key = keyChain.getKeyByPath(keyPath, true);
+                    DeterministicKey key = oracleKeyChain.getKeyByPath(keyPath, true);
                     return new SignatureAndKey(key.sign(sighash), key.getPubOnly());
                 }
             };
             wallet.addTransactionSigner(signer);
         }
 
-        wallet.addFollowingAccountKeys(ImmutableList.of(partnerKey));
+        wallet.addFollowingAccountKeys(ImmutableList.of(oraclePubKey, backupPubKey));
     }
 
     @Test
@@ -153,6 +161,24 @@ public class WalletTest extends TestWithWallet {
     @Test
     public void basicSpendingFromP2SH() throws Exception {
         createMarriedWalletWithSigner();
+        Address destination = new ECKey().toAddress(params);
+        myAddress = wallet.currentAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
+        basicSpendingCommon(wallet, myAddress, destination, false);
+    }
+
+    @Test
+    public void basicSpendingFromP2SHWithBackupKey() throws Exception {
+        createMarriedWallet(false);
+        CustomTransactionSigner backupKeySigner = new CustomTransactionSigner() {
+            @Override
+            protected SignatureAndKey getSignature(Sha256Hash sighash, List<ChildNumber> derivationPath) {
+                ImmutableList<ChildNumber> keyPath = ImmutableList.copyOf(derivationPath);
+                DeterministicKey key = backupKeyChain.getKeyByPath(keyPath, true);
+                return new SignatureAndKey(key.sign(sighash), key.getPubOnly());
+            }
+        };
+        wallet.addTransactionSigner(backupKeySigner);
+
         Address destination = new ECKey().toAddress(params);
         myAddress = wallet.currentAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         basicSpendingCommon(wallet, myAddress, destination, false);
