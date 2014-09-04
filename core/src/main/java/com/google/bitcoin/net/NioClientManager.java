@@ -143,7 +143,7 @@ public class NioClientManager extends AbstractExecutionThreadService implements 
             sc.connect(serverAddress);
             newConnectionChannels.offer(new SocketChannelAndParser(sc, parser));
             selector.wakeup();
-        } catch (IOException e) {
+        } catch (Exception e) { // Android throws libcore.io.ErrnoException (extends Exception) in sc.connect().
             log.error("Could not connect to " + serverAddress);
             throw new RuntimeException(e); // This should only happen if we are, eg, out of system resources
         }
