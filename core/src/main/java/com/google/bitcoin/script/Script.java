@@ -20,6 +20,7 @@ package com.google.bitcoin.script;
 
 import com.google.bitcoin.core.*;
 import com.google.bitcoin.crypto.TransactionSignature;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,6 +38,7 @@ import java.util.*;
 
 import static com.google.bitcoin.script.ScriptOpCodes.*;
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
 // TODO: Make this class a superclass with derived classes giving accessor methods for the various common templates.
@@ -409,9 +411,72 @@ public class Script {
     }
 
 
+    /**
+     * Returns the index where a signature by the key should be inserted.  Only applicable to
+     * a P2SH scriptSig.
+     */
+    public int getSigInsertionIndex(Sha256Hash hash, ECKey signingKey) {
+        List<byte[]> sigs = Lists.newArrayList();
+
+        // Collect existing signatures, skipping the initial OP_0, the final redeem script
+        // and any placeholder OP_0 sigs.
+        List<ScriptChunk> existingChunks = chunks.subList(1, chunks.size() - 1);
+        ScriptChunk scriptChunk = chunks.get(chunks.size() - 1);
+        checkNotNull(scriptChunk.data);
+        Script redeemScript = new Script(scriptChunk.data);
+
+        for (ScriptChunk chunk : existingChunks) {
+            if (chunk.opcode == OP_0) {
+                // OP_0, skip
+            } else {
+                checkNotNull(chunk.data);
+                sigs.add(chunk.data);
+            }
+        }
+
+        int myIndex = redeemScript.findKeyInRedeem(signingKey);
+
+        // Identify location to insert the new sig
+        for (ListIterator<byte[]> iter = sigs.listIterator() ; iter.hasNext() ;) {
+            byte[] sig = iter.next();
+            if (myIndex < redeemScript.findSigInRedeem(sig, hash)) {
+                // We should go before this signature
+                return iter.previousIndex();
+            }
+        }
+
+        return sigs.size();
+    }
+
+    private int findKeyInRedeem(ECKey key) {
+        Preconditions.checkArgument(chunks.get(0).isOpCode()); // P2SH scriptSig
+        int numKeys = chunks.get(chunks.size() - 2).opcode - ScriptOpCodes.OP_1 + 1;
+        for (int i = 0 ; i < numKeys ; i++) {
+            if (Arrays.equals(chunks.get(1 + i).data, key.getPubKey())) {
+                return i;
+            }
+        }
+
+        throw new RuntimeException("Could not find matching key " + key.toString() + " in script " + this);
+    }
+
+    private int findSigInRedeem(byte[] signatureBytes, Sha256Hash hash) {
+        Preconditions.checkArgument(chunks.get(0).isOpCode()); // P2SH scriptSig
+        int numKeys = chunks.get(chunks.size() - 2).opcode - ScriptOpCodes.OP_1 + 1;
+        TransactionSignature signature = TransactionSignature.decodeFromBitcoin(signatureBytes, true);
+        for (int i = 0 ; i < numKeys ; i++) {
+            if (ECKey.fromPublicOnly(chunks.get(i + 1).data).verify(hash, signature)) {
+                return i;
+            }
+        }
+
+        throw new RuntimeException("Could not find matching key for signature on " + hash.toString() + " sig " + Utils.HEX.encode(signatureBytes));
+    }
+
+
 
     ////////////////////// Interface used during verification of transactions/blocks ////////////////////////////////
-    
+
     private static int getSigOpCount(List<ScriptChunk> chunks, boolean accurate) throws ScriptException {
         int sigOps = 0;
         int lastOpCode = OP_INVALIDOPCODE;

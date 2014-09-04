@@ -27,6 +27,7 @@ import java.util.*;
 
 import static com.google.bitcoin.script.ScriptOpCodes.*;
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkState;
 
 /**
  * <p>Tools for the construction of commonly used script types. You don't normally need this as it's hidden behind
@@ -200,28 +201,54 @@ public class ScriptBuilder {
     }
 
     /**
-     * Returns a copy of the given scriptSig with a signature placeholder on the given position replaced with the given signature.
+     * Returns a copy of the given scriptSig with the signature inserted in the given position.
+     * Only applicable to P2SH scriptSig
      */
-    public static Script updateScriptWithSignature(Script scriptSig, byte[] signature, int index, boolean isMultisig) {
+    public static Script updateScriptWithSignature(Script scriptSig, byte[] signature, int index, boolean isPayToScriptHash) {
         ScriptBuilder builder = new ScriptBuilder();
         Iterator<ScriptChunk> it = scriptSig.getChunks().iterator();
         int numChunks = 0;
+        int i = 0;
+
         // skip first OP_0 for multisig scripts
-        if (isMultisig)
+        if (isPayToScriptHash)
             builder.addChunk(it.next());
+
+        boolean inserted = false;
         for (; it.hasNext(); ) {
             ScriptChunk chunk = it.next();
-            // replace the first OP_0 with signature data
-            if (chunk.equalsOpCode(OP_0)) {
-                if (numChunks == index)
-                    builder.data(signature);
-                else
-                    builder.addChunk(chunk);
-            } else {
+            if (i == index) {
+                inserted = true;
+                builder.data(signature);
+                i++;
+            }
+
+            // Add any placeholders before redeem script
+            if (isPayToScriptHash && !it.hasNext()) {
+                while (i < numChunks) {
+                    builder.addChunk(new ScriptChunk(OP_0, null));
+                    i++;
+                }
+            }
+
+            if (!chunk.equalsOpCode(OP_0)) {
                 builder.addChunk(chunk);
+                i++;
             }
             numChunks++;
         }
+
+        if (!isPayToScriptHash) {
+            while (i < numChunks) {
+                builder.addChunk(new ScriptChunk(OP_0, null));
+                i++;
+            }
+        }
+
+        checkState(inserted);
+
+        checkState(numChunks == i);
+
         return builder.build();
     }
 
