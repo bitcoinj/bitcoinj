@@ -404,7 +404,8 @@ public class Script {
     }
 
     /**
-     * Returns a copy of the given scriptSig with a signature placeholder on the given position replaced with the given signature.
+     * Returns a copy of the given scriptSig with the signature inserted in the given position.
+     * Only applicable to P2SH scriptSig.
      */
     public Script getScriptSigWithSignature(Script scriptSig, byte[] sigBytes, int index) {
         return ScriptBuilder.updateScriptWithSignature(scriptSig, sigBytes, index, isPayToScriptHash());
@@ -449,8 +450,8 @@ public class Script {
     }
 
     private int findKeyInRedeem(ECKey key) {
-        Preconditions.checkArgument(chunks.get(0).isOpCode()); // P2SH scriptSig
-        int numKeys = chunks.get(chunks.size() - 2).opcode - ScriptOpCodes.OP_1 + 1;
+        checkArgument(chunks.get(0).isOpCode()); // P2SH scriptSig
+        int numKeys = Script.decodeFromOpN(chunks.get(chunks.size() - 2).opcode);
         for (int i = 0 ; i < numKeys ; i++) {
             if (Arrays.equals(chunks.get(1 + i).data, key.getPubKey())) {
                 return i;
@@ -461,8 +462,8 @@ public class Script {
     }
 
     private int findSigInRedeem(byte[] signatureBytes, Sha256Hash hash) {
-        Preconditions.checkArgument(chunks.get(0).isOpCode()); // P2SH scriptSig
-        int numKeys = chunks.get(chunks.size() - 2).opcode - ScriptOpCodes.OP_1 + 1;
+        checkArgument(chunks.get(0).isOpCode()); // P2SH scriptSig
+        int numKeys = Script.decodeFromOpN(chunks.get(chunks.size() - 2).opcode);
         TransactionSignature signature = TransactionSignature.decodeFromBitcoin(signatureBytes, true);
         for (int i = 0 ; i < numKeys ; i++) {
             if (ECKey.fromPublicOnly(chunks.get(i + 1).data).verify(hash, signature)) {

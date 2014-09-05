@@ -202,7 +202,7 @@ public class ScriptBuilder {
 
     /**
      * Returns a copy of the given scriptSig with the signature inserted in the given position.
-     * Only applicable to P2SH scriptSig
+     * Only applicable to P2SH scriptSig.
      */
     public static Script updateScriptWithSignature(Script scriptSig, byte[] signature, int index, boolean isPayToScriptHash) {
         ScriptBuilder builder = new ScriptBuilder();
