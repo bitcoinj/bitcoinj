@@ -53,7 +53,10 @@ import static com.google.common.base.Preconditions.checkState;
  * are building a wallet, how to present confidence to your users is something to consider carefully.</p>
  */
 public class Transaction extends ChildMessage implements Serializable {
-    /** A comparator that can be used to sort transactions by their updateTime field. */
+    /**
+     * A comparator that can be used to sort transactions by their updateTime field. The ordering goes from most recent
+     * into the past.
+     */
     public static final Comparator<Transaction> SORT_TX_BY_UPDATE_TIME = new Comparator<Transaction>() {
         @Override
         public int compare(final Transaction tx1, final Transaction tx2) {

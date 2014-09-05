@@ -2294,13 +2294,8 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
                 numTransactions = size;
             }
             ArrayList<Transaction> all = new ArrayList<Transaction>(getTransactions(includeDead));
-            // Order by date.
-            Collections.sort(all, Collections.reverseOrder(new Comparator<Transaction>() {
-                @Override
-                public int compare(Transaction t1, Transaction t2) {
-                    return t1.getUpdateTime().compareTo(t2.getUpdateTime());
-                }
-            }));
+            // Order by update time.
+            Collections.sort(all, Transaction.SORT_TX_BY_UPDATE_TIME);
             if (numTransactions == all.size()) {
                 return all;
             } else {
