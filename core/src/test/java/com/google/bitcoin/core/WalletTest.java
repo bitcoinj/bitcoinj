@@ -108,7 +108,7 @@ public class WalletTest extends TestWithWallet {
             final DeterministicKeyChain keyChain = new DeterministicKeyChain(new SecureRandom());
             DeterministicKey partnerKey = DeterministicKey.deserializeB58(null, keyChain.getWatchingKey().serializePubB58());
             followingKeys.add(partnerKey);
-            if (addSigners && i < threshold)
+            if (addSigners && i < threshold - 1)
                 wallet.addTransactionSigner(new KeyChainTransactionSigner(keyChain));
         }
 
