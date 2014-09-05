@@ -19,6 +19,7 @@ package com.google.bitcoin.core;
 
 import com.google.bitcoin.core.Wallet.SendRequest;
 import com.google.bitcoin.crypto.*;
+import com.google.bitcoin.signers.StatelessTransactionSigner;
 import com.google.bitcoin.signers.TransactionSigner;
 import com.google.bitcoin.store.BlockStoreException;
 import com.google.bitcoin.store.MemoryBlockStore;
@@ -2618,6 +2619,49 @@ public class WalletTest extends TestWithWallet {
         wallet = new WalletProtobufSerializer().readWallet(params, null, protos);
         assertEquals(2, wallet.getTransactionSigners().size());
         assertTrue(wallet.getTransactionSigners().get(1).isReady());
+    }
+
+    @Test
+    public void watchingMarriedWallet() throws Exception {
+        DeterministicKey watchKey = wallet.getWatchingKey();
+        String serialized = watchKey.serializePubB58();
+        watchKey = DeterministicKey.deserializeB58(null, serialized);
+        Wallet wallet = Wallet.fromWatchingKey(params, watchKey);
+        blockStore = new MemoryBlockStore(params);
+        chain = new BlockChain(params, wallet, blockStore);
+
+        final DeterministicKeyChain keyChain = new DeterministicKeyChain(new SecureRandom());
+        DeterministicKey partnerKey = DeterministicKey.deserializeB58(null, keyChain.getWatchingKey().serializePubB58());
+
+        TransactionSigner signer = new StatelessTransactionSigner() {
+            @Override
+            public boolean isReady() {
+                return true;
+            }
+
+            @Override
+            public boolean signInputs(ProposedTransaction propTx, KeyBag keyBag) {
+                assertEquals(propTx.partialTx.getInputs().size(), propTx.keyPaths.size());
+                List<ChildNumber> externalZeroLeaf = ImmutableList.<ChildNumber>builder()
+                                                        .addAll(DeterministicKeyChain.EXTERNAL_PATH).add(ChildNumber.ZERO).build();
+                for (TransactionInput input : propTx.partialTx.getInputs()) {
+                    List<ChildNumber> keypath = propTx.keyPaths.get(input.getConnectedOutput().getScriptPubKey());
+                    assertNotNull(keypath);
+                    assertEquals(externalZeroLeaf, keypath);
+                }
+                return true;
+            }
+        };
+        wallet.addTransactionSigner(signer);
+        wallet.addFollowingAccountKeys(ImmutableList.of(partnerKey));
+
+        myAddress = wallet.currentAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
+        sendMoneyToWallet(wallet, COIN, myAddress, AbstractBlockChain.NewBlockType.BEST_CHAIN);
+
+        ECKey dest = new ECKey();
+        Wallet.SendRequest req = Wallet.SendRequest.emptyWallet(dest.toAddress(params));
+        req.missingSigsMode = Wallet.MissingSigsMode.USE_DUMMY_SIG;
+        wallet.completeTx(req);
     }
 
     @Test
