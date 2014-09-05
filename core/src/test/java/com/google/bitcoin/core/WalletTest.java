@@ -2449,6 +2449,16 @@ public class WalletTest extends TestWithWallet {
         completeTxPartiallySignedMarried(Wallet.MissingSigsMode.THROW, emptySig);
     }
 
+    @Test (expected = TransactionSigner.MissingSignatureException.class)
+    public void completeTxPartiallySignedMarriedThrowsByDefault() throws Exception {
+        createMarriedWallet(false);
+        myAddress = wallet.currentAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
+        sendMoneyToWallet(wallet, COIN, myAddress, AbstractBlockChain.NewBlockType.BEST_CHAIN);
+
+        Wallet.SendRequest req = Wallet.SendRequest.emptyWallet(new ECKey().toAddress(params));
+        wallet.completeTx(req);
+    }
+
     public void completeTxPartiallySignedMarried(Wallet.MissingSigsMode missSigMode, byte[] expectedSig) throws Exception {
         // create married wallet without signer
         createMarriedWallet(false);

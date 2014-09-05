@@ -394,6 +394,7 @@ public class PaymentChannelServerState {
             signMultisigInput(tx, Transaction.SigHash.NONE, true);
             // Let wallet handle adding additional inputs/fee as necessary.
             req.shuffleOutputs = false;
+            req.missingSigsMode = Wallet.MissingSigsMode.USE_DUMMY_SIG;
             wallet.completeTx(req);  // TODO: Fix things so shuffling is usable.
             feePaidForPayment = req.tx.getFee();
             log.info("Calculated fee is {}", feePaidForPayment);
