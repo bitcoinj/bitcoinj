@@ -70,6 +70,16 @@ public class LocalTransactionSigner extends StatelessTransactionSigner {
             }
 
             RedeemData redeemData = txIn.getConnectedRedeemData(keyBag);
+
+            Script scriptPubKey = txIn.getConnectedOutput().getScriptPubKey();
+
+            // For P2SH inputs we need to share derivation path of the signing key with other signers, so that they
+            // use correct key to calculate their signatures.
+            // Married keys all have the same derivation path, so we can safely just take first one here.
+            ECKey pubKey = redeemData.keys.get(0);
+            if (pubKey instanceof DeterministicKey)
+                propTx.keyPaths.put(scriptPubKey, (((DeterministicKey) pubKey).getPath()));
+
             ECKey key;
             // locate private key in redeem data. For pay-to-address and pay-to-key inputs RedeemData will always contain
             // only one key (with private bytes). For P2SH inputs RedeemData will contain multiple keys, one of which MAY
@@ -79,7 +89,6 @@ public class LocalTransactionSigner extends StatelessTransactionSigner {
                 continue;
             }
 
-            Script scriptPubKey = txIn.getConnectedOutput().getScriptPubKey();
             Script inputScript = txIn.getScriptSig();
             // script here would be either a standard CHECKSIG program for pay-to-address or pay-to-pubkey inputs or
             // a CHECKMULTISIG program for P2SH inputs
@@ -98,10 +107,6 @@ public class LocalTransactionSigner extends StatelessTransactionSigner {
                 inputScript = scriptPubKey.getScriptSigWithSignature(inputScript, signature.encodeToBitcoin(), sigIndex);
                 txIn.setScriptSig(inputScript);
 
-                // for P2SH inputs we need to share derivation path of the signing key with other signers, so that they
-                // use correct key to calculate their signatures
-                if (key instanceof DeterministicKey)
-                    propTx.keyPaths.put(scriptPubKey, (((DeterministicKey) key).getPath()));
             } catch (ECKey.KeyIsEncryptedException e) {
                 throw e;
             } catch (ECKey.MissingPrivateKeyException e) {
