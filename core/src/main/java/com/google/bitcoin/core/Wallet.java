@@ -3028,10 +3028,10 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
 
         /**
          * Specifies what to do with missing signatures left after completing this request. Default strategy is to
-         * replace missing signatures with dummy sigs ({@link MissingSigsMode#USE_DUMMY_SIG}).
+         * throw an exception on missing signature ({@link MissingSigsMode#THROW}).
          * @see MissingSigsMode
          */
-        public MissingSigsMode missingSigsMode = MissingSigsMode.USE_DUMMY_SIG;
+        public MissingSigsMode missingSigsMode = MissingSigsMode.THROW;
 
         /**
          * If not null, this exchange rate is recorded with the transaction during completion.
