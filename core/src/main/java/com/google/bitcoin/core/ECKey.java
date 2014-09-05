@@ -90,16 +90,6 @@ import static com.google.common.base.Preconditions.*;
 public class ECKey implements EncryptableItem, Serializable {
     private static final Logger log = LoggerFactory.getLogger(ECKey.class);
 
-    /** Compares pub key bytes using {@link com.google.common.primitives.UnsignedBytes#lexicographicalComparator()} **/
-    public static final Comparator<ECKey> PUBKEY_COMPARATOR = new Comparator<ECKey>() {
-        private Comparator comparator = UnsignedBytes.lexicographicalComparator();
-
-        @Override
-        public int compare(ECKey k1, ECKey k2) {
-            return comparator.compare(k1.getPubKey(), k2.getPubKey());
-        }
-    };
-
     /** The parameters of the secp256k1 curve that Bitcoin uses. */
     public static final X9ECParameters CURVE_PARAMS = CustomNamedCurves.getByName("secp256k1");
 

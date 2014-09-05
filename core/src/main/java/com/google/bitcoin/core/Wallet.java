@@ -295,7 +295,16 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
 
     /**
      * <p>Adds given transaction signer to the list of signers. It will be added to the end of the signers list, so if
-     * this wallet already has some signers added, given signer will be executed after all of them.</p>
+     * this wallet already has some signers added, given signer will be executed after all of them.
+     * {@link LocalTransactionSigner} is always implicitly added as a very first signer, thus the first signature
+     * will be made with key from a local keychain (if it has private bytes).</p>
+     * <p>The order of the signers in the wallet should correspond to the order of following keys used to set up this
+     * married wallet (see {@link Wallet#addFollowingAccountKeys(java.util.List)}). Produced signatures will be placed
+     * in scriptSig in the same order (first goes local signature, second goes signature made by the second signer and so on).
+     * In case multisig threshold is less then number of keys involved, signers for some of the keys
+     * may be omitted. For instance, for 2-of-3 married wallet to spend you will need just two signers added in the same
+     * order as xpubs of their keychains added to this wallet. If your wallet has local keychain with private bytes, you
+     * will need to add just one signer (either for the second or for the third key).</p>
      * <p>Transaction signer should be fully initialized before adding to the wallet, otherwise {@link IllegalStateException}
      * will be thrown</p>
      */
@@ -615,9 +624,17 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
     }
 
     /**
-     * Makes given account keys follow the account key of the active keychain. After that you will be able
-     * to get P2SH addresses to receive coins to.
-     * This method should be called only once before key rotation, otherwise it will throw an IllegalStateException.
+     * <p>Makes given account keys follow the account key of the active keychain. After that you will be able
+     * to get P2SH addresses to receive coins to. The order of the keys matters: keys going first will be used to sign first.
+     * That also implies that you need to add corresponding TransactionSigners in the same order.
+     * The very first key will always be a local(followed) key, so as the very first signer is always LocalTransactionSigner.</p>
+     *
+     * <p>For instance, imagine you need to set up 2-of-3 married wallet involving local keychain, some RA oracle keychain and
+     * a backup keychain. Normally, you are going to use local keychain and oracle keychain for spending, therefore oracle
+     * xpub key should be the first in given followingAccountKeys list. If you add oracle transaction signer to this
+     * wallet it will be used to get a second sig to spend.</p>
+     *
+     * <p>This method should be called only once before key rotation, otherwise it will throw an IllegalStateException.</p>
      */
     public void addFollowingAccountKeys(List<DeterministicKey> followingAccountKeys) {
         lock.lock();

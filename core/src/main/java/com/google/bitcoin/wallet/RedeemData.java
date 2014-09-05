@@ -29,9 +29,8 @@ import static com.google.common.base.Preconditions.checkArgument;
  * This class aggregates data required to spend transaction output.
  *
  * For pay-to-address and pay-to-pubkey transactions it will have only a single key and CHECKSIG program as redeemScript.
- * For multisignature transactions there will be multiple keys one of which will be a full key and the rest are watch only,
- * redeem script will be a CHECKMULTISIG program. Keys will be sorted in the same order they appear in
- * a program (lexicographical order).
+ * For multisignature transactions there will be multiple keys one of which may (or may not) be a full key and the rest
+ * are watch only, redeem script will be a CHECKMULTISIG program.
  */
 public class RedeemData {
     public final Script redeemScript;
@@ -39,9 +38,7 @@ public class RedeemData {
 
     private RedeemData(List<ECKey> keys, Script redeemScript) {
         this.redeemScript = redeemScript;
-        List<ECKey> sortedKeys = new ArrayList<ECKey>(keys);
-        Collections.sort(sortedKeys, ECKey.PUBKEY_COMPARATOR);
-        this.keys = sortedKeys;
+        this.keys = keys;
     }
 
     public static RedeemData of(List<ECKey> keys, Script redeemScript) {
@@ -76,23 +73,4 @@ public class RedeemData {
         return null;
     }
 
-    /**
-     * Returns index of the given key in program that this RedeemData satisfies. For CHECKSIG programs this
-     * will always be 0. Returned index may be used to insert corresponding signature into proper place in input script.
-     * If key is not found, -1 is returned.
-     */
-    public int getKeyIndex(ECKey key) {
-        boolean isMultisig = keys.size() > 0;
-        if (isMultisig) {
-            for (int i = 0; i < keys.size(); i++) {
-                byte[] pubKey = keys.get(i).getPubKey();
-                if (Arrays.equals(pubKey, key.getPubKey()))
-                    return i;
-            }
-            return -1;
-        } else {
-            return 0;
-        }
-
-    }
 }
