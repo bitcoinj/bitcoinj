@@ -23,11 +23,15 @@ import com.google.bitcoin.store.BlockStore;
 import com.google.bitcoin.store.MemoryBlockStore;
 import com.google.bitcoin.utils.BriefLogFormatter;
 import com.google.bitcoin.utils.Threading;
+import com.google.common.base.Charsets;
 
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
 import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.security.DigestOutputStream;
@@ -44,12 +48,13 @@ import static com.google.common.base.Preconditions.checkState;
 public class BuildCheckpoints {
 
     private static final NetworkParameters PARAMS = MainNetParams.get();
-    private static final File CHECKPOINTS_FILE = new File("checkpoints");
+    private static final File PLAIN_CHECKPOINTS_FILE = new File("checkpoints");
+    private static final File TEXTUAL_CHECKPOINTS_FILE = new File("checkpoints.txt");
 
     public static void main(String[] args) throws Exception {
         BriefLogFormatter.init();
 
-        // Sorted map of UNIX time of block to StoredBlock object.
+        // Sorted map of block height to StoredBlock object.
         final TreeMap<Integer, StoredBlock> checkpoints = new TreeMap<Integer, StoredBlock>();
 
         // Configure bitcoinj to fetch only headers, not save them to disk, connect to a local fully synced/validated
@@ -82,7 +87,20 @@ public class BuildCheckpoints {
         checkState(checkpoints.size() > 0);
 
         // Write checkpoint data out.
-        final FileOutputStream fileOutputStream = new FileOutputStream(CHECKPOINTS_FILE, false);
+        writeBinaryCheckpoints(checkpoints, PLAIN_CHECKPOINTS_FILE);
+        writeTextualCheckpoints(checkpoints, TEXTUAL_CHECKPOINTS_FILE);
+
+        peerGroup.stopAsync();
+        peerGroup.awaitTerminated();
+        store.close();
+
+        // Sanity check the created files.
+        sanityCheck(PLAIN_CHECKPOINTS_FILE, checkpoints.size());
+        sanityCheck(TEXTUAL_CHECKPOINTS_FILE, checkpoints.size());
+    }
+
+    private static void writeBinaryCheckpoints(TreeMap<Integer, StoredBlock> checkpoints, File file) throws Exception {
+        final FileOutputStream fileOutputStream = new FileOutputStream(file, false);
         MessageDigest digest = MessageDigest.getInstance("SHA-256");
         final DigestOutputStream digestOutputStream = new DigestOutputStream(fileOutputStream, digest);
         digestOutputStream.on(false);
@@ -102,14 +120,27 @@ public class BuildCheckpoints {
         System.out.println("Hash of checkpoints data is " + checkpointsHash);
         digestOutputStream.close();
         fileOutputStream.close();
+        System.out.println("Checkpoints written to '" + file.getCanonicalPath() + "'.");
+    }
 
-        peerGroup.stopAsync();
-        peerGroup.awaitTerminated();
-        store.close();
+    private static void writeTextualCheckpoints(TreeMap<Integer, StoredBlock> checkpoints, File file) throws IOException {
+        PrintWriter writer = new PrintWriter(new OutputStreamWriter(new FileOutputStream(file), Charsets.US_ASCII));
+        writer.println("TXT CHECKPOINTS 1");
+        writer.println("0"); // Number of signatures to read. Do this later.
+        writer.println(checkpoints.size());
+        ByteBuffer buffer = ByteBuffer.allocate(StoredBlock.COMPACT_SERIALIZED_SIZE);
+        for (StoredBlock block : checkpoints.values()) {
+            block.serializeCompact(buffer);
+            writer.println(CheckpointManager.BASE64.encode(buffer.array()));
+            buffer.position(0);
+        }
+        writer.close();
+        System.out.println("Checkpoints written to '" + file.getCanonicalPath() + "'.");
+    }
 
-        // Sanity check the created file.
-        CheckpointManager manager = new CheckpointManager(PARAMS, new FileInputStream(CHECKPOINTS_FILE));
-        checkState(manager.numCheckpoints() == checkpoints.size());
+    private static void sanityCheck(File file, int expectedSize) throws IOException {
+        CheckpointManager manager = new CheckpointManager(PARAMS, new FileInputStream(file));
+        checkState(manager.numCheckpoints() == expectedSize);
 
         if (PARAMS.getId().equals(NetworkParameters.ID_MAINNET)) {
             StoredBlock test = manager.getCheckpointBefore(1390500000); // Thu Jan 23 19:00:00 CET 2014
@@ -122,7 +153,5 @@ public class BuildCheckpoints {
             checkState(test.getHeader().getHashAsString()
                     .equals("0000000000035ae7d5025c2538067fe7adb1cf5d5d9c31b024137d9090ed13a9"));
         }
-
-        System.out.println("Checkpoints written to '" + CHECKPOINTS_FILE.getCanonicalPath() + "'.");
     }
 }

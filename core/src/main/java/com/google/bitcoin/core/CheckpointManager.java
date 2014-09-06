@@ -19,14 +19,23 @@ package com.google.bitcoin.core;
 import com.google.bitcoin.store.BlockStore;
 import com.google.bitcoin.store.BlockStoreException;
 import com.google.bitcoin.store.FullPrunedBlockStore;
+import com.google.common.base.Charsets;
+import com.google.common.hash.HashCode;
+import com.google.common.hash.Hasher;
+import com.google.common.hash.Hashing;
+import com.google.common.io.BaseEncoding;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedInputStream;
+import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -62,6 +71,8 @@ import static com.google.common.base.Preconditions.*;
 public class CheckpointManager {
     private static final Logger log = LoggerFactory.getLogger(CheckpointManager.class);
 
+    private static final String BINARY_MAGIC = "CHECKPOINTS 1";
+    private static final String TEXTUAL_MAGIC = "TXT CHECKPOINTS 1";
     private static final int MAX_SIGNATURES = 256;
 
     // Map of block header time to data.
@@ -70,19 +81,33 @@ public class CheckpointManager {
     protected final NetworkParameters params;
     protected final Sha256Hash dataHash;
 
+    public static final BaseEncoding BASE64 = BaseEncoding.base64().omitPadding();
+
     public CheckpointManager(NetworkParameters params, InputStream inputStream) throws IOException {
         this.params = checkNotNull(params);
         checkNotNull(inputStream);
+        inputStream = new BufferedInputStream(inputStream);
+        inputStream.mark(1);
+        int first = inputStream.read();
+        inputStream.reset();
+        if (first == BINARY_MAGIC.charAt(0))
+            dataHash = readBinary(inputStream);
+        else if (first == TEXTUAL_MAGIC.charAt(0))
+            dataHash = readTextual(inputStream);
+        else
+            throw new IOException("Unsupported format.");
+    }
+
+    private Sha256Hash readBinary(InputStream inputStream) throws IOException {
         DataInputStream dis = null;
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
             DigestInputStream digestInputStream = new DigestInputStream(inputStream, digest);
             dis = new DataInputStream(digestInputStream);
             digestInputStream.on(false);
-            String magic = "CHECKPOINTS 1";
-            byte[] header = new byte[magic.length()];
+            byte[] header = new byte[BINARY_MAGIC.length()];
             dis.readFully(header);
-            if (!Arrays.equals(header, magic.getBytes("US-ASCII")))
+            if (!Arrays.equals(header, BINARY_MAGIC.getBytes("US-ASCII")))
                 throw new IOException("Header bytes did not match expected version");
             int numSignatures = checkPositionIndex(dis.readInt(), MAX_SIGNATURES, "Num signatures out of range");
             for (int i = 0; i < numSignatures; i++) {
@@ -102,8 +127,9 @@ public class CheckpointManager {
                 buffer.position(0);
                 checkpoints.put(block.getHeader().getTimeSeconds(), block);
             }
-            dataHash = new Sha256Hash(digest.digest());
+            Sha256Hash dataHash = new Sha256Hash(digest.digest());
             log.info("Read {} checkpoints, hash is {}", checkpoints.size(), dataHash);
+            return dataHash;
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException(e);  // Cannot happen.
         } catch (ProtocolException e) {
@@ -111,6 +137,40 @@ public class CheckpointManager {
         } finally {
             if (dis != null) dis.close();
             inputStream.close();
+        }
+    }
+
+    private Sha256Hash readTextual(InputStream inputStream) throws IOException {
+        Hasher hasher = Hashing.sha256().newHasher();
+        BufferedReader reader = null;
+        try {
+            reader = new BufferedReader(new InputStreamReader(inputStream, Charsets.US_ASCII));
+            String magic = reader.readLine();
+            if (!TEXTUAL_MAGIC.equals(magic))
+                throw new IOException("unexpected magic: " + magic);
+            int numSigs = Integer.parseInt(reader.readLine());
+            for (int i = 0; i < numSigs; i++)
+                reader.readLine(); // Skip sigs for now.
+            int numCheckpoints = Integer.parseInt(reader.readLine());
+            checkState(numCheckpoints > 0);
+            // Hash numCheckpoints in a way compatible to the binary format.
+            hasher.putBytes(ByteBuffer.allocate(4).order(ByteOrder.BIG_ENDIAN).putInt(numCheckpoints).array());
+            final int size = StoredBlock.COMPACT_SERIALIZED_SIZE;
+            ByteBuffer buffer = ByteBuffer.allocate(size);
+            for (int i = 0; i < numCheckpoints; i++) {
+                byte[] bytes = BASE64.decode(reader.readLine());
+                hasher.putBytes(bytes);
+                buffer.position(0);
+                buffer.put(bytes);
+                buffer.position(0);
+                StoredBlock block = StoredBlock.deserializeCompact(params, buffer);
+                checkpoints.put(block.getHeader().getTimeSeconds(), block);
+            }
+            HashCode hash = hasher.hash();
+            log.info("Read {} checkpoints, hash is {}", checkpoints.size(), hash);
+            return new Sha256Hash(hash.asBytes());
+        } finally {
+            if (reader != null) reader.close();
         }
     }
 
