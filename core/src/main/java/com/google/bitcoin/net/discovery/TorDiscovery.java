@@ -128,6 +128,9 @@ public class TorDiscovery implements PeerDiscovery {
 
         try {
             List<Circuit> circuits = getCircuits(timeoutValue, timeoutUnit, routers);
+            if (circuits.isEmpty())
+                throw new PeerDiscoveryException("Failed to open any circuit within " +
+                                                 String.valueOf(timeoutValue) + " " + timeoutUnit);
 
             Collection<InetSocketAddress> addresses = lookupAddresses(timeoutValue, timeoutUnit, circuits);
 
