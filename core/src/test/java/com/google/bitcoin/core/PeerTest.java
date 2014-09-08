@@ -515,16 +515,34 @@ public class PeerTest extends TestWithNetworkConnections {
     }
 
     @Test
+    public void recursiveDependencyDownloadDisabled() throws Exception {
+        peer.setDownloadTxDependencies(false);
+        connect();
+        // Check that if we request dependency download to be disabled and receive a relevant tx, things work correctly.
+        Transaction tx = FakeTxBuilder.createFakeTx(unitTestParams, COIN, address);
+        final Transaction[] result = new Transaction[1];
+        wallet.addEventListener(new AbstractWalletEventListener() {
+            @Override
+            public void onCoinsReceived(Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
+                result[0] = tx;
+            }
+        });
+        inbound(writeTarget, tx);
+        pingAndWait(writeTarget);
+        assertEquals(tx, result[0]);
+    }
+
+    @Test
     public void recursiveDownloadNew() throws Exception {
-        recursiveDownload(true);
+        recursiveDependencyDownload(true);
     }
 
     @Test
     public void recursiveDownloadOld() throws Exception {
-        recursiveDownload(false);
+        recursiveDependencyDownload(false);
     }
 
-    public void recursiveDownload(boolean useNotFound) throws Exception {
+    public void recursiveDependencyDownload(boolean useNotFound) throws Exception {
         // Using ping or notfound?
         connectWithVersion(useNotFound ? 70001 : 60001);
         // Check that we can download all dependencies of an unconfirmed relevant transaction from the mempool.

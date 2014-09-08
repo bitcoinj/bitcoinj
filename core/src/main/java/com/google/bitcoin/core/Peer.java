@@ -82,7 +82,7 @@ public class Peer extends PeerSocketHandler {
     // equivalent and other things.
     private final VersionMessage versionMessage;
     // Switch for enabling download of pending transaction dependencies.
-    private final boolean downloadTxDependencies;
+    private volatile boolean vDownloadTxDependencies;
     // How many block messages the peer has announced to us. Peers only announce blocks that attach to their best chain
     // so we can use this to calculate the height of the peers chain, by adding it to the initial height in the version
     // message. This method can go wrong if the peer re-orgs onto a shorter (but harder) chain, however, this is rare.
@@ -201,7 +201,7 @@ public class Peer extends PeerSocketHandler {
         super(params, remoteAddress);
         this.params = Preconditions.checkNotNull(params);
         this.versionMessage = Preconditions.checkNotNull(ver);
-        this.downloadTxDependencies = downloadTxDependencies;
+        this.vDownloadTxDependencies = downloadTxDependencies;
         this.blockChain = chain;  // Allowed to be null.
         this.vDownloadData = chain != null;
         this.getDataFutures = new CopyOnWriteArrayList<GetDataRequest>();
@@ -605,16 +605,22 @@ public class Peer extends PeerSocketHandler {
             for (final Wallet wallet : wallets) {
                 try {
                     if (wallet.isPendingTransactionRelevant(fTx)) {
-                        // This transaction seems interesting to us, so let's download its dependencies. This has several
-                        // purposes: we can check that the sender isn't attacking us by engaging in protocol abuse games,
-                        // like depending on a time-locked transaction that will never confirm, or building huge chains
-                        // of unconfirmed transactions (again - so they don't confirm and the money can be taken
-                        // back with a Finney attack). Knowing the dependencies also lets us store them in a serialized
-                        // wallet so we always have enough data to re-announce to the network and get the payment into
-                        // the chain, in case the sender goes away and the network starts to forget.
-                        // TODO: Not all the above things are implemented.
-
-                        if (downloadTxDependencies) {
+                        if (vDownloadTxDependencies) {
+                            // This transaction seems interesting to us, so let's download its dependencies. This has
+                            // several purposes: we can check that the sender isn't attacking us by engaging in protocol
+                            // abuse games, like depending on a time-locked transaction that will never confirm, or
+                            // building huge chains of unconfirmed transactions (again - so they don't confirm and the
+                            // money can be taken back with a Finney attack). Knowing the dependencies also lets us
+                            // store them in a serialized wallet so we always have enough data to re-announce to the
+                            // network and get the payment into the chain, in case the sender goes away and the network
+                            // starts to forget.
+                            //
+                            // TODO: Not all the above things are implemented.
+                            //
+                            // Note that downloading of dependencies can end up walking around 15 minutes back even
+                            // through transactions that have confirmed, as getdata on the remote peer also checks
+                            // relay memory not only the mempool. Unfortunately we have no way to know that here. In
+                            // practice it should not matter much.
                             Futures.addCallback(downloadDependencies(fTx), new FutureCallback<List<Transaction>>() {
                                 @Override
                                 public void onSuccess(List<Transaction> dependencies) {
@@ -636,6 +642,8 @@ public class Peer extends PeerSocketHandler {
                                     // Not much more we can do at this point.
                                 }
                             });
+                        } else {
+                            wallet.receivePending(fTx, null);
                         }
                     }
                 } catch (VerificationException e) {
@@ -1555,5 +1563,23 @@ public class Peer extends PeerSocketHandler {
         utxosFuture = SettableFuture.create();
         sendMessage(new GetUTXOsMessage(params, outPoints, true));
         return utxosFuture;
+    }
+
+    /**
+     * Returns true if this peer will use getdata/notfound messages to walk backwards through transaction dependencies
+     * before handing the transaction off to the wallet. The wallet can do risk analysis on pending/recent transactions
+     * to try and discover if a pending tx might be at risk of double spending.
+     */
+    public boolean getDownloadTxDependencies() {
+        return vDownloadTxDependencies;
+    }
+
+    /**
+     * Sets if this peer will use getdata/notfound messages to walk backwards through transaction dependencies
+     * before handing the transaction off to the wallet. The wallet can do risk analysis on pending/recent transactions
+     * to try and discover if a pending tx might be at risk of double spending.
+     */
+    public void setDownloadTxDependencies(boolean value) {
+        vDownloadTxDependencies = value;
     }
 }
