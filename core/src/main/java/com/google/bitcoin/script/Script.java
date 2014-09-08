@@ -434,9 +434,7 @@ public class Script {
         Script redeemScript = new Script(redeemScriptChunk.data);
 
         int sigCount = 0;
-
         int myIndex = redeemScript.findKeyInRedeem(signingKey);
-
         for (ScriptChunk chunk : existingChunks) {
             if (chunk.opcode == OP_0) {
                 // OP_0, skip
@@ -447,7 +445,6 @@ public class Script {
                 sigCount++;
             }
         }
-
         return sigCount;
     }
 
