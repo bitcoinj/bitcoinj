@@ -204,7 +204,7 @@ public class Script {
     }
 
     /**
-     * Returns true if this script is of the form <sig> OP_CHECKSIG. This form was originally intended for transactions
+     * Returns true if this script is of the form <pubkey> OP_CHECKSIG. This form was originally intended for transactions
      * where the peers talked to each other directly via TCP/IP, but has fallen out of favor with time due to that mode
      * of operation being susceptible to man-in-the-middle attacks. It is still used in coinbase outputs and can be
      * useful more exotic types of transaction, but today most payments are to addresses.
@@ -405,10 +405,19 @@ public class Script {
 
     /**
      * Returns a copy of the given scriptSig with the signature inserted in the given position.
-     * Only applicable to P2SH scriptSig.
      */
     public Script getScriptSigWithSignature(Script scriptSig, byte[] sigBytes, int index) {
-        return ScriptBuilder.updateScriptWithSignature(scriptSig, sigBytes, index, isPayToScriptHash());
+        int sigsPrefixCount = 0;
+        int sigsSuffixCount = 0;
+        if (isPayToScriptHash()) {
+            sigsPrefixCount = 1; // OP_0 <sig>* <redeemScript>
+            sigsSuffixCount = 1;
+        } else if (isSentToMultiSig()) {
+            sigsPrefixCount = 1; // OP_0 <sig>*
+        } else if (isSentToAddress()) {
+            sigsSuffixCount = 1; // <sig> <pubkey>
+        }
+        return ScriptBuilder.updateScriptWithSignature(scriptSig, sigBytes, index, sigsPrefixCount, sigsSuffixCount);
     }
 
 
@@ -417,36 +426,29 @@ public class Script {
      * a P2SH scriptSig.
      */
     public int getSigInsertionIndex(Sha256Hash hash, ECKey signingKey) {
-        List<byte[]> sigs = Lists.newArrayList();
-
-        // Collect existing signatures, skipping the initial OP_0, the final redeem script
+        // Iterate over existing signatures, skipping the initial OP_0, the final redeem script
         // and any placeholder OP_0 sigs.
         List<ScriptChunk> existingChunks = chunks.subList(1, chunks.size() - 1);
-        ScriptChunk scriptChunk = chunks.get(chunks.size() - 1);
-        checkNotNull(scriptChunk.data);
-        Script redeemScript = new Script(scriptChunk.data);
+        ScriptChunk redeemScriptChunk = chunks.get(chunks.size() - 1);
+        checkNotNull(redeemScriptChunk.data);
+        Script redeemScript = new Script(redeemScriptChunk.data);
+
+        int sigCount = 0;
+
+        int myIndex = redeemScript.findKeyInRedeem(signingKey);
 
         for (ScriptChunk chunk : existingChunks) {
             if (chunk.opcode == OP_0) {
                 // OP_0, skip
             } else {
                 checkNotNull(chunk.data);
-                sigs.add(chunk.data);
+                if (myIndex < redeemScript.findSigInRedeem(chunk.data, hash))
+                    return sigCount;
+                sigCount++;
             }
         }
 
-        int myIndex = redeemScript.findKeyInRedeem(signingKey);
-
-        // Identify location to insert the new sig
-        for (ListIterator<byte[]> iter = sigs.listIterator() ; iter.hasNext() ;) {
-            byte[] sig = iter.next();
-            if (myIndex < redeemScript.findSigInRedeem(sig, hash)) {
-                // We should go before this signature
-                return iter.previousIndex();
-            }
-        }
-
-        return sigs.size();
+        return sigCount;
     }
 
     private int findKeyInRedeem(ECKey key) {
@@ -458,7 +460,7 @@ public class Script {
             }
         }
 
-        throw new RuntimeException("Could not find matching key " + key.toString() + " in script " + this);
+        throw new IllegalStateException("Could not find matching key " + key.toString() + " in script " + this);
     }
 
     private int findSigInRedeem(byte[] signatureBytes, Sha256Hash hash) {
@@ -471,7 +473,7 @@ public class Script {
             }
         }
 
-        throw new RuntimeException("Could not find matching key for signature on " + hash.toString() + " sig " + Utils.HEX.encode(signatureBytes));
+        throw new IllegalStateException("Could not find matching key for signature on " + hash.toString() + " sig " + Utils.HEX.encode(signatureBytes));
     }
 
 

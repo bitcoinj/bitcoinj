@@ -202,53 +202,55 @@ public class ScriptBuilder {
 
     /**
      * Returns a copy of the given scriptSig with the signature inserted in the given position.
-     * Only applicable to P2SH scriptSig.
+     *
+     * This function assumes that any missing sigs have OP_0 placeholders.
+     *
+     * @param targetIndex where to insert the signature
+     * @param sigsPrefixCount how many items to copy verbatim (e.g. initial OP_0 for multisig)
+     * @param sigsSuffixCount how many items to copy verbatim at end (e.g. redeemScript for P2SH)
      */
-    public static Script updateScriptWithSignature(Script scriptSig, byte[] signature, int index, boolean isPayToScriptHash) {
+    public static Script updateScriptWithSignature(Script scriptSig, byte[] signature, int targetIndex,
+                                                   int sigsPrefixCount, int sigsSuffixCount) {
         ScriptBuilder builder = new ScriptBuilder();
-        Iterator<ScriptChunk> it = scriptSig.getChunks().iterator();
-        int numChunks = 0;
-        int i = 0;
+        List<ScriptChunk> inputChunks = scriptSig.getChunks();
+        int totalChunks = inputChunks.size();
 
-        // skip first OP_0 for multisig scripts
-        if (isPayToScriptHash)
-            builder.addChunk(it.next());
+        // copy the prefix
+        for (ScriptChunk chunk: inputChunks.subList(0, sigsPrefixCount))
+            builder.addChunk(chunk);
 
+        // copy the sigs
+        int pos = 0;
         boolean inserted = false;
-        for (; it.hasNext(); ) {
-            ScriptChunk chunk = it.next();
-            if (i == index) {
+        for (ScriptChunk chunk: inputChunks.subList(sigsPrefixCount, totalChunks - sigsSuffixCount)) {
+            if (pos == targetIndex) {
                 inserted = true;
                 builder.data(signature);
-                i++;
+                pos++;
             }
-
-            // Add any placeholders before redeem script
-            if (isPayToScriptHash && !it.hasNext()) {
-                while (i < numChunks) {
-                    builder.addChunk(new ScriptChunk(OP_0, null));
-                    i++;
-                }
-            }
-
             if (!chunk.equalsOpCode(OP_0)) {
                 builder.addChunk(chunk);
-                i++;
+                pos++;
             }
-            numChunks++;
         }
 
-        if (!isPayToScriptHash) {
-            while (i < numChunks) {
-                builder.addChunk(new ScriptChunk(OP_0, null));
-                i++;
+        // add OP_0's if needed, since we skipped them in the previous loop
+        while (pos < totalChunks - sigsPrefixCount - sigsSuffixCount) {
+            if (pos == targetIndex) {
+                inserted = true;
+                builder.data(signature);
             }
+            else {
+                builder.addChunk(new ScriptChunk(OP_0, null));
+            }
+            pos++;
         }
+
+        // copy the suffix
+        for (ScriptChunk chunk: inputChunks.subList(totalChunks - sigsSuffixCount, totalChunks))
+            builder.addChunk(chunk);
 
         checkState(inserted);
-
-        checkState(numChunks == i);
-
         return builder.build();
     }
 
