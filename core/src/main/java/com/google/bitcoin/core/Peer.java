@@ -178,11 +178,11 @@ public class Peer extends PeerSocketHandler {
      * used to keep track of which peers relayed transactions and offer more descriptive logging.</p>
      */
     public Peer(NetworkParameters params, VersionMessage ver, PeerAddress remoteAddress,
-            @Nullable AbstractBlockChain chain, @Nullable MemoryPool mempool) {
+                @Nullable AbstractBlockChain chain, @Nullable MemoryPool mempool) {
         this(params, ver, remoteAddress, chain, mempool, true);
     }
 
-   /**
+    /**
      * <p>Construct a peer that reads/writes from the given block chain and memory pool. Transactions stored in a memory
      * pool will have their confidence levels updated when a peer announces it, to reflect the greater likelyhood that
      * the transaction is valid.</p>
@@ -197,7 +197,7 @@ public class Peer extends PeerSocketHandler {
      * used to keep track of which peers relayed transactions and offer more descriptive logging.</p>
      */
     public Peer(NetworkParameters params, VersionMessage ver, PeerAddress remoteAddress,
-				@Nullable AbstractBlockChain chain, @Nullable MemoryPool mempool, boolean downloadTxDependencies) {
+                @Nullable AbstractBlockChain chain, @Nullable MemoryPool mempool, boolean downloadTxDependencies) {
         super(params, remoteAddress);
         this.params = Preconditions.checkNotNull(params);
         this.versionMessage = Preconditions.checkNotNull(ver);
@@ -1466,19 +1466,19 @@ public class Peer extends PeerSocketHandler {
 
     /** Returns version data announced by the remote peer. */
     public VersionMessage getPeerVersionMessage() {
-      return vPeerVersionMessage;
+        return vPeerVersionMessage;
     }
 
     /** Returns version data we announce to our remote peers. */
     public VersionMessage getVersionMessage() {
-      return versionMessage;
+        return versionMessage;
     }
 
     /**
      * @return the height of the best chain as claimed by peer: sum of its ver announcement and blocks announced since.
      */
     public long getBestHeight() {
-      return vPeerVersionMessage.bestHeight + blocksAnnounced.get();
+        return vPeerVersionMessage.bestHeight + blocksAnnounced.get();
     }
 
     /**
